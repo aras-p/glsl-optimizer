@@ -413,7 +413,7 @@ typedef void ( * PFNGLXDESTROYGLXVIDEOSOURCESGIXPROC) (Display *dpy, GLXVideoSou
 #ifdef GLX_GLXEXT_PROTOTYPES
 extern Display * glXGetCurrentDisplayEXT (void);
 extern int glXQueryContextInfoEXT (Display *, GLXContext, int, int *);
-extern GLXContextID glXGetContextIDEXT (GLXContext);
+extern GLXContextID glXGetContextIDEXT (const GLXContext);
 extern GLXContext glXImportContextEXT (Display *, GLXContextID);
 extern void glXFreeContextEXT (Display *, GLXContext);
 #endif /* GLX_GLXEXT_PROTOTYPES */
