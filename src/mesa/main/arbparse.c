@@ -2603,12 +2603,13 @@ grammar_load_from_text (const GLubyte * text)
 /**
  * checks if a null-terminated text matches given grammar
  * returns 0 on error (call grammar_get_last_error to retrieve the error text)
- * returns 1 on success, the prod points to newly allocated buffer with production and size
- * is filled with the production size
+ * returns 1 on success, the prod points to newly allocated buffer with
+ * production and size is filled with the production size
  *
  * \param id         - The grammar returned from grammar_load_from_text()
  * \param text       - The program string
- * \param production - The return parameter for the binary array holding the parsed results
+ * \param production - The return parameter for the binary array holding the
+ *                     parsed results
  * \param size       - The return parameter for the size of production 
  *
  * \return 1 on sucess, 0 on parser error
@@ -3071,8 +3072,6 @@ parse_clipplane_num (GLcontext * ctx, GLubyte ** inst,
 }
 
 
-
-
 /**
  * \return 0 on front face, 1 on back face
  */
@@ -3088,6 +3087,7 @@ parse_face_type (GLubyte ** inst)
    }
    return 0;
 }
+
 
 /**
  * Given a matrix and a modifier token on the binary array, return tokens

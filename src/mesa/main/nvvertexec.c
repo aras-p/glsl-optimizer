@@ -64,23 +64,20 @@ _mesa_init_vp_registers(GLcontext *ctx)
    }
 
    /* The program parameters aren't touched */
-	/* XXX: This should be moved to glBegin() time, but its safe (and slow!) 
-	 *       here - Karl
-	 */
+   /* XXX: This should be moved to glBegin() time, but its safe (and slow!) 
+    * here - Karl
+    */
    if (ctx->VertexProgram.Current->Parameters) {
-
       /* Grab the state */			  
       _mesa_load_state_parameters(ctx, ctx->VertexProgram.Current->Parameters);
 
-		/* And copy it into the program state */
+      /* And copy it into the program state */
       for (i=0; i<ctx->VertexProgram.Current->Parameters->NumParameters; i++) {
          MEMCPY(ctx->VertexProgram.Parameters[i], 
-            &ctx->VertexProgram.Current->Parameters->Parameters[i].Values,	
-            4*sizeof(GLfloat));				
+                &ctx->VertexProgram.Current->Parameters->Parameters[i].Values,
+                4*sizeof(GLfloat));				
       }				  
-				  
    }
-
 }
 
 
