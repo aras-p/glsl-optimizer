@@ -991,7 +991,7 @@ sunos5-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_XSHM" \
-	"CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame_pointer -D_REENTRANT" \
+	"CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT" \
 	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
