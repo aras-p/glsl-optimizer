@@ -32,6 +32,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "arbvertparse.h"
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
@@ -175,7 +176,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    GLuint retval;
    struct arb_program ap;
 	
-	retval = _mesa_parse_arb_program(ctx, str, len, &ap);
+   retval = _mesa_parse_arb_program(ctx, str, len, &ap);
 
    /* XXX: Parse error. Cleanup things and return */	
    if (retval)
@@ -191,6 +192,8 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
 	
 #if DEBUG_VP
    debug_vp_inst(ap.Base.NumInstructions, ap.VPInstructions);
+#else
+   (void) debug_vp_inst;
 #endif
 
    /* copy the relvant contents of the arb_program struct into the 

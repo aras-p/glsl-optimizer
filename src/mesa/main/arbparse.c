@@ -42,9 +42,6 @@
 #include "nvfragprog.h"
 #include "arbparse.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 /* TODO:
  *    Fragment Program Stuff:
@@ -667,8 +664,10 @@ static const byte *OUT_OF_MEMORY =
    (byte *) "internal error 1001: out of physical memory";
 static const byte *UNRESOLVED_REFERENCE =
    (byte *) "internal error 1002: unresolved reference '$'";
+/*
 static const byte *INVALID_PARAMETER =
    (byte *) "internal error 1003: invalid parameter";
+*/
 
 static const byte *error_message = NULL;
 static byte *error_param = NULL;        /* this is inserted into error_message in place of $ */
@@ -2346,7 +2345,7 @@ match (dict * di, const byte * text, GLuint * index, defntn * de,
 static byte *
 error_get_token (error * er, dict * di, const byte * text, unsigned int ind)
 {
-   byte *str = NULL, *result = NULL;
+   byte *str = NULL;
 
    if (er->m_token) {
       barray *ba;
@@ -3039,6 +3038,7 @@ parse_face_type (byte ** inst)
       case FACE_BACK:
          return 1;
    }
+   return 0;
 }
 
 /**
@@ -3590,7 +3590,6 @@ static GLuint
 parse_result_binding (GLcontext * ctx, byte ** inst, GLuint * binding,
                       GLuint * binding_idx, struct arb_program *Program)
 {
-   GLint a;
    GLuint b;
 
    switch (*(*inst)++) {
@@ -3723,10 +3722,9 @@ parse_param_elements (GLcontext * ctx, byte ** inst,
                       struct arb_program *Program, GLboolean use)
 {
    GLint idx;
-   GLuint found, specified_length, err;
+   GLuint err;
    GLint state_tokens[6];
    GLfloat const_values[4];
-   char *error_msg;
 
    err = 0;
 
@@ -3864,8 +3862,6 @@ parse_param (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
              struct arb_program *Program)
 {
    GLuint found, specified_length, err;
-   GLint state_tokens[6];
-   GLfloat const_values[4];
    char *error_msg;
    struct var_cache *param_var;
 
@@ -4205,7 +4201,7 @@ parse_masked_dst_reg (GLcontext * ctx, byte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       GLint * File, GLint * Index, GLboolean * WriteMask)
 {
-   GLuint err, result;
+   GLuint result;
    byte mask;
    struct var_cache *dst;
 
@@ -4293,9 +4289,8 @@ parse_masked_address_reg (GLcontext * ctx, byte ** inst,
                           struct arb_program *Program, GLint * Index,
                           GLboolean * WriteMask)
 {
-   GLuint err, result;
-   byte mask;
    struct var_cache *dst;
+   GLuint result;
 
    dst = parse_string (inst, vc_head, Program, &result);
    Program->Position = parse_position (inst);
@@ -4572,8 +4567,6 @@ parse_scalar_src_reg (GLcontext * ctx, byte ** inst,
                       GLint * File, GLint * Index, GLboolean * Negate,
                       GLubyte * Swizzle)
 {
-   GLint a;
-
    /* Grab the sign */
    *Negate = parse_sign (inst);
 

@@ -147,6 +147,9 @@ debug_fp_inst(GLint num, struct fp_instruction *fp)
 
          case  FP_OPCODE_X2D:
             fprintf(stderr, "FP_OPCODE_XPD"); break;
+
+         default:
+            _mesa_warning(NULL, "Bad opcode in debug_fg_inst()");
       }
 
       fprintf(stderr, " D(0x%x:%d:%d%d%d%d) ", 
@@ -200,6 +203,8 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 
 #if DEBUG_FP
    debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
+#else
+   (void) debug_fp_inst;
 #endif
 
    /* copy the relvant contents of the arb_program struct into the 
@@ -214,7 +219,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->Instructions   = ap.FPInstructions;
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
-   for  (retval=0; retval<MAX_TEXTURE_IMAGE_UNITS; retval++)
+   for (retval=0; retval<MAX_TEXTURE_IMAGE_UNITS; retval++)
       program->TexturesUsed[retval] = ap.TexturesUsed[retval];
    program->NumAluInstructions = ap.NumAluInstructions;
    program->NumTexInstructions = ap.NumTexInstructions;
