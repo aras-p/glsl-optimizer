@@ -1,10 +1,10 @@
-/* $Id: s_lines.c,v 1.33 2002/11/14 03:48:03 brianp Exp $ */
+/* $Id: s_lines.c,v 1.34 2003/01/20 15:21:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -304,7 +304,7 @@ _swrast_choose_line( GLcontext *ctx )
       if (ctx->Line.SmoothFlag) {
          /* antialiased lines */
          _swrast_choose_aa_line_function(ctx);
-         ASSERT(swrast->Triangle);
+         ASSERT(swrast->Line);
       }
       else if (ctx->Texture._EnabledUnits) {
          /* textured lines */
