@@ -1,60 +1,9 @@
-/* $Id: tessdemo.c,v 1.5 2000/01/24 22:54:05 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.6 2000/03/27 15:46:12 brianp Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
- * This demo isn't built by the Makefile because it needs GLUT.  After you've
- * installed GLUT you can try this demo.
- * Here's the command for IRIX, for example:
-   cc -g -ansi -prototypes -fullwarn -float -I../include -DSHM tess_demo.c -L../lib -lglut -lMesaGLU -lMesaGL -lm -lX11 -lXext -lXmu -lfpe -lXext -o tess_demo
- */
-
-/*
  * Updated for GLU 1.3 tessellation by Gareth Hughes <garethh@bell-labs.com>
  */
-
-/*
- * $Log: tessdemo.c,v $
- * Revision 1.5  2000/01/24 22:54:05  gareth
- * Removed '#if 0' from second pass.
- *
- * Revision 1.4  2000/01/23 21:25:39  gareth
- * Merged 3.2 updates, namely combine callback for intersecting
- * contours.
- *
- * Revision 1.3.2.1  1999/11/16 11:09:09  gareth
- * Added combine callback.  Converted vertices from ints to floats.
- *
- * Revision 1.3  1999/11/04 04:00:42  gareth
- * Updated demo for new GLU 1.3 tessellation.  Added optimized rendering
- * by saving the output of the tessellation into display lists.
- *
- * Revision 1.2  1999/09/19 20:09:00  tanner
- *
- * lots of autoconf updates
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.5  1999/03/28 18:24:37  brianp
- * minor clean-up
- *
- * Revision 3.4  1999/02/14 03:37:07  brianp
- * fixed callback problem
- *
- * Revision 3.3  1998/07/26 01:25:26  brianp
- * removed include of gl.h and glu.h
- *
- * Revision 3.2  1998/06/29 02:37:30  brianp
- * minor changes for Windows (Ted Jump)
- *
- * Revision 3.1  1998/06/09 01:53:49  brianp
- * main() should return an int
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <GL/glut.h>
 #include <stdio.h>
@@ -397,6 +346,8 @@ void display( void )
 	    glVertex2i( i, 0 );
 	 }
       }
+
+      glEnd();
 
       glColor3f( 1.0, 1.0, 0.0 );
 
