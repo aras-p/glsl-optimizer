@@ -1,8 +1,8 @@
-/* $Id: matrix.c,v 1.18 2000/06/27 22:10:00 brianp Exp $ */
+/* $Id: matrix.c,v 1.19 2000/07/31 15:31:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -597,7 +597,7 @@ void gl_rotation_matrix( GLfloat angle, GLfloat x, GLfloat y, GLfloat z,
 
    mag = GL_SQRT( x*x + y*y + z*z );
 
-   if (mag == 0.0) {
+   if (mag <= 1.0e-4) {
       /* generate an identity matrix and return */
       MEMCPY(m, Identity, sizeof(GLfloat)*16);
       return;
