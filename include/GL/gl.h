@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.41 2000/05/22 19:40:43 brianp Exp $ */
+/* $Id: gl.h,v 1.42 2000/05/23 22:41:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2226,7 +2226,7 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #else  /* GL_GLEXT_LEGACY */
 
-#include "glext.h"
+#include <GL/glext.h>
 
 #endif  /* GL_GLEXT_LEGACY */
 
