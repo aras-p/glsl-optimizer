@@ -1,4 +1,4 @@
-/* $Id: texwrap.c,v 1.4 2002/10/18 17:47:36 kschultz Exp $ */
+/* $Id: texwrap.c,v 1.5 2003/02/04 02:35:00 brianp Exp $ */
 
 /*
  * Test texture wrap modes.
@@ -119,7 +119,7 @@ static void Display( void )
 #if 0
    /* draw texture as image */
    glDisable(GL_TEXTURE_2D);
-   glWindowPos2iMESA(1, 1);
+   glWindowPos2iARB(1, 1);
    glDrawPixels(6, 6, GL_RGBA, GL_UNSIGNED_BYTE, (void *) TexImage);
 #endif
 
@@ -183,7 +183,7 @@ static void Display( void )
    offset = 0;
    for (i = 0; i < modes[i].mode != 0; i++) {
       if ( modes[i].supported ) {
-         glWindowPos2iMESA( offset * 150 + 10, 5 + ((offset & 1) * 15) );
+         glWindowPos2iARB( offset * 150 + 10, 5 + ((offset & 1) * 15) );
 	 PrintString(modes[i].name);
 	 offset++;
       }
