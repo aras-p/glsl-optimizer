@@ -18,6 +18,7 @@ CORE_SRCS = \
 	accum.c \
 	attrib.c \
 	blend.c \
+	bufferobj.c \
 	buffers.c \
 	clip.c \
 	colortab.c \

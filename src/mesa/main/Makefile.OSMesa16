@@ -1,8 +1,8 @@
-# $Id: Makefile.OSMesa16,v 1.13 2003/03/25 02:26:29 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.14 2003/03/29 17:01:02 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  5.0
-# Copyright (C) 1995-2002  Brian Paul
+# Version:  5.1
+# Copyright (C) 1995-2003  Brian Paul
 
 # Makefile for building Mesa for 16/32-bit/channel rendering with the OSMesa
 # driver.
@@ -29,6 +29,7 @@ CORE_SOURCES = \
 	accum.c \
 	attrib.c \
 	blend.c \
+	bufferobj.c \
 	buffers.c \
 	clip.c \
 	colortab.c \

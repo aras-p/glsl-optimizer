@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.88 2003/01/21 21:47:49 brianp Exp $ */
+/* $Id: extensions.c,v 1.89 2003/03/29 17:01:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,6 +67,7 @@ static struct {
    { OFF, "GL_ARB_texture_env_dot3",           F(ARB_texture_env_dot3) },
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { ON,  "GL_ARB_transpose_matrix",           0 },
+   { OFF, "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
    { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},

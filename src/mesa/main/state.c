@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.101 2003/03/29 16:37:07 brianp Exp $ */
+/* $Id: state.c,v 1.102 2003/03/29 17:01:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,8 +26,8 @@
 
 
 /*
- * This file manages recalculation of derived values in the
- * __GLcontext.
+ * /brief This file manages recalculation of derived values in the
+ * __GLcontext.  Also, this is where we initialize the API dispatch table.
  */
 
 
@@ -36,6 +36,9 @@
 #include "api_loopback.h"
 #include "attrib.h"
 #include "blend.h"
+#if FEATURE_ARB_vertex_buffer_object
+#include "bufferobj.h"
+#endif
 #include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
@@ -550,6 +553,21 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
    /* ARB 14. GL_ARB_point_parameters */
    /* reuse EXT_point_parameters functions */
+
+   /* ARB 28. GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
+   exec->BindBufferARB = _mesa_BindBufferARB;
+   exec->DeleteBuffersARB = _mesa_DeleteBuffersARB;
+   exec->GenBuffersARB = _mesa_GenBuffersARB;
+   exec->IsBufferARB = _mesa_IsBufferARB;
+   exec->BufferDataARB = _mesa_BufferDataARB;
+   exec->BufferSubDataARB = _mesa_BufferSubDataARB;
+   exec->GetBufferSubDataARB = _mesa_GetBufferSubDataARB;
+   exec->MapBufferARB = _mesa_MapBufferARB;
+   exec->UnmapBufferARB = _mesa_UnmapBufferARB;
+   exec->GetBufferParameterivARB = _mesa_GetBufferParameterivARB;
+   exec->GetBufferPointervARB = _mesa_GetBufferPointervARB;
+#endif
 }
 
 

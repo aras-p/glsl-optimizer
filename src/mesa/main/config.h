@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.44 2003/02/25 19:30:59 brianp Exp $ */
+/* $Id: config.h,v 1.45 2003/03/29 17:01:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -228,5 +228,6 @@
 
 #define FEATURE_NV_fragment_program 1
 
+#define FEATURE_ARB_vertex_buffer_object 1
 
 #endif /* CONFIG_H */

@@ -21,6 +21,7 @@ CORE_SOURCES =accum.c \
 	api_validate.c \
  	attrib.c \
 	blend.c \
+	bufferobj.c \
 	buffers.c \
 	clip.c \
 	colortab.c \
@@ -90,6 +91,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_alphabuf.c \
 [.swrast]s_bitmap.c \
 [.swrast]s_blend.c \
+[.swrast]s_bufferobj.c \
 [.swrast]s_buffers.c \
 [.swrast]s_copypix.c \
 [.swrast]s_context.c \
