@@ -1,4 +1,4 @@
-/* $Id: gears.c,v 1.1 1999/08/21 06:27:37 jtaylor Exp $ */
+/* $Id: gears.c,v 1.2 1999/08/21 08:53:27 jtaylor Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
@@ -7,26 +7,6 @@
  */
 
 /* Conversion to GLUT by Mark J. Kilgard */
-
-/*
- * $Log: gears.c,v $
- * Revision 1.1  1999/08/21 06:27:37  jtaylor
- * *** empty log message ***
- *
- * Revision 1.5  1999/07/31 21:51:09  jtaylor
- * *** empty log message ***
- *
- * Revision 3.2  1999/06/03 17:07:36  brianp
- * an extra quad was being drawn in front and back faces
- *
- * Revision 3.1  1998/11/03 02:49:10  brianp
- * added fps output
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <math.h>
 #include <stdlib.h>

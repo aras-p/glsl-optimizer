@@ -31,5 +31,5 @@
 #define FB_TYPE uint8
 #define FB_BITS 8
 
-#include "../common/linear.c"
+#include "linear.c"
 

@@ -31,8 +31,8 @@ ggi_visual_t vis,vis_mem;
 
 GGIMesaContext ctx;
 
-int screen_x=320,screen_y=200;
-ggi_graphtype bpp=GT_16BIT;
+int screen_x=GGI_AUTO,screen_y=GGI_AUTO;
+ggi_graphtype bpp=GT_AUTO;
 
 //#define ZBUFFER
 
@@ -318,9 +318,32 @@ double Display(GLuint l,int *maxframes)
 	return len;
 }
 
-
-int main(int argc,char **argv)
+void visible(int vis)
 {
+	if (vis == GLUT_VISIBLE)
+	  glutIdleFunc(idle);
+	else
+	  glutIdleFunc(NULL);
+}
+
+int main(int argc, char *argv[])
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+	
+	glutInitWindowPosition(0, 0);
+	glutInitWindowSize(300, 300);
+	glutCreateWindow("asc-view");
+	init();
+	
+	glutDisplayFunc(draw);
+	glutReshapeFunc(reshape);
+	glutKeyboardFunc(key);
+	glutSpecialFunc(special);
+	glutVisibilityFunc(visible);
+	
+	glutMainLoop();
+#if 0
 	GLuint l;
 	char *file;
 	int maxframes=0;
@@ -348,6 +371,7 @@ int main(int argc,char **argv)
 	ggiClose(vis);
 	ggiClose(vis_mem);
 	ggiExit();
+#endif
 	return 0;
 }
 
