@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.4 2001/02/09 23:23:43 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.5 2001/03/03 21:11:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,8 +68,8 @@ GLNAME( katmai_test_dummy ):
 	SEG_TEXT
 
 ALIGNTEXT4
-GLOBL GLNAME( gl_identify_x86_cpu_features )
-GLNAME( gl_identify_x86_cpu_features ):
+GLOBL GLNAME( _mesa_identify_x86_cpu_features )
+GLNAME( _mesa_identify_x86_cpu_features ):
 
 	PUSH_L	( EBX )
 
@@ -165,8 +165,8 @@ LLBL ( cpuid_done ):
  * application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( gl_test_os_katmai_support )
-GLNAME( gl_test_os_katmai_support ):
+GLOBL GLNAME( _mesa_test_os_katmai_support )
+GLNAME( _mesa_test_os_katmai_support ):
 
 	XORPS	( XMM0, XMM0 )
 
@@ -179,8 +179,8 @@ GLNAME( gl_test_os_katmai_support ):
  * otherwise this could kill the client application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( gl_test_os_katmai_exception_support )
-GLNAME( gl_test_os_katmai_exception_support ):
+GLOBL GLNAME( _mesa_test_os_katmai_exception_support )
+GLNAME( _mesa_test_os_katmai_exception_support ):
 
 	PUSH_L	( EBP )
 	MOV_L	( ESP, EBP )

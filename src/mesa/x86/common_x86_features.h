@@ -1,4 +1,4 @@
-/* $Id: common_x86_features.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: common_x86_features.h,v 1.3 2001/03/03 21:11:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,7 +26,7 @@
 
 /*
  * x86 CPUID feature information.  The raw data is returned by
- * gl_identify_x86_cpu_features() and interpreted with the cpu_has_*
+ * _mesa_identify_x86_cpu_features() and interpreted with the cpu_has_*
  * helper macros.
  *
  * Gareth Hughes <gareth@valinux.com>
@@ -70,8 +70,8 @@
 #define X86_FEATURE_3DNOWEXT	0x40000000
 #define X86_FEATURE_3DNOW	0x80000000
 
-#define cpu_has_mmx		(gl_x86_cpu_features & X86_FEATURE_MMX)
-#define cpu_has_xmm		(gl_x86_cpu_features & X86_FEATURE_XMM)
-#define cpu_has_3dnow		(gl_x86_cpu_features & X86_FEATURE_3DNOW)
+#define cpu_has_mmx		(_mesa_x86_cpu_features & X86_FEATURE_MMX)
+#define cpu_has_xmm		(_mesa_x86_cpu_features & X86_FEATURE_XMM)
+#define cpu_has_3dnow		(_mesa_x86_cpu_features & X86_FEATURE_3DNOW)
 
 #endif

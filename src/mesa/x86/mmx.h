@@ -1,10 +1,10 @@
-/* $Id: mmx.h,v 1.4 2000/11/05 18:41:00 keithw Exp $ */
+/* $Id: mmx.h,v 1.5 2001/03/03 21:11:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,17 +25,13 @@
  */
 
 
-
-
-
 #ifndef ASM_MMX_H
 #define ASM_MMX_H
 
 
 extern void _ASMAPI
-gl_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
-						   GLubyte rgba[][4], const GLubyte dest[][4] );
-
+_mesa_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
+                              GLubyte rgba[][4], const GLubyte dest[][4] );
 
 
 #endif

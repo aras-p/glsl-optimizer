@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: common_x86.c,v 1.11 2001/03/03 21:11:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,11 +44,11 @@
 #include "common_x86_asm.h"
 
 
-int gl_x86_cpu_features = 0;
+int _mesa_x86_cpu_features = 0;
 
 /* No reason for this to be public.
  */
-extern int gl_identify_x86_cpu_features( void );
+extern int _mesa_identify_x86_cpu_features( void );
 
 
 static void message( const char *msg )
@@ -105,7 +105,7 @@ static void sigill_handler( int signal, struct sigcontext sc )
     */
    sc.eip += 3;
 
-   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
 }
 
 static void sigfpe_handler( int signal, struct sigcontext sc )
@@ -212,7 +212,7 @@ static void check_os_katmai_support( void )
     * SSE, so we disable it by default.
     */
    message( "Cannot test OS support for SSE, disabling to be safe.\n" );
-   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
 #endif /* _POSIX_SOURCE */
 #else
    /* Do nothing on non-Linux platforms for now.
@@ -227,13 +227,13 @@ static void check_os_katmai_support( void )
 void _mesa_init_all_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
-   gl_x86_cpu_features = gl_identify_x86_cpu_features();
+   _mesa_x86_cpu_features = _mesa_identify_x86_cpu_features();
 
    if ( getenv( "MESA_NO_ASM" ) ) {
-      gl_x86_cpu_features = 0;
+      _mesa_x86_cpu_features = 0;
    }
 
-   if ( gl_x86_cpu_features ) {
+   if ( _mesa_x86_cpu_features ) {
       _mesa_init_x86_transform_asm();
    }
 
@@ -242,7 +242,7 @@ void _mesa_init_all_x86_transform_asm( void )
       if ( getenv( "MESA_NO_MMX" ) == 0 ) {
          message( "MMX cpu detected.\n" );
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_MMX);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
       }
    }
 #endif
@@ -253,7 +253,7 @@ void _mesa_init_all_x86_transform_asm( void )
          message( "3DNow! cpu detected.\n" );
          _mesa_init_3dnow_transform_asm();
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
       }
    }
 #endif
@@ -267,7 +267,7 @@ void _mesa_init_all_x86_transform_asm( void )
          message( "Katmai cpu detected.\n" );
          _mesa_init_katmai_transform_asm();
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
    }
 #endif
@@ -275,12 +275,12 @@ void _mesa_init_all_x86_transform_asm( void )
 }
 
 /* Note: the above function must be called before this one, so that
- * gl_x86_cpu_features gets correctly initialized.
+ * _mesa_x86_cpu_features gets correctly initialized.
  */
 void _mesa_init_all_x86_vertex_asm( void )
 {
 #ifdef USE_X86_ASM
-   if ( gl_x86_cpu_features ) {
+   if ( _mesa_x86_cpu_features ) {
       _mesa_init_x86_vertex_asm();
    }
 

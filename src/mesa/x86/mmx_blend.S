@@ -5,9 +5,9 @@ SEG_TEXT
 
 
 ALIGNTEXT16
-GLOBL GLNAME(gl_mmx_blend_transparency)
+GLOBL GLNAME(_mesa_mmx_blend_transparency)
 
-GLNAME( gl_mmx_blend_transparency ):
+GLNAME( _mesa_mmx_blend_transparency ):
     PUSH_L    ( EBP )
     MOV_L     ( ESP, EBP )
     SUB_L     ( CONST(52), ESP )
