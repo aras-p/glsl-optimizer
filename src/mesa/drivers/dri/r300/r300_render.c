@@ -143,7 +143,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
    if(start+min_vertices>end){
 	static int warn_once=1;
 	if(warn_once){
-		fprintf(stderr, "%s:%s Not enough vertices to draw primitive %02x - help me !\n",
+		fprintf(stderr, "%s:%s ***WARN_ONCE*** Not enough vertices to draw primitive %02x - help me !\n",
 				__FILE__, __FUNCTION__,
 				prim & PRIM_MODE_MASK);
 			warn_once=0;
