@@ -2673,6 +2673,33 @@ typedef void (APIENTRY * PFNGLGETQUERYOBJECTUIVARBPROC)(GLuint id, GLenum pname,
 #endif /* GL_ARB_occlusion_query */
 
 
+#ifndef GL_MESA_program_debug
+#define GL_MESA_program_debug 1
+
+#define GL_FRAGMENT_PROGRAM_POSITION_MESA       0x9900
+#define GL_FRAGMENT_PROGRAM_CALLBACK_MESA       0x9901
+#define GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA  0x9902
+#define GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA  0x9903
+#define GL_VERTEX_PROGRAM_POSITION_MESA         0x9904
+#define GL_VERTEX_PROGRAM_CALLBACK_MESA         0x9905
+#define GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA    0x9906
+#define GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA    0x9907
+
+typedef void (*GLprogramcallbackMESA)(GLenum target, GLvoid *data);
+
+extern void
+glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
+                      GLvoid *data);
+
+extern void
+glGetProgramRegisterfvMESA(GLenum target,
+                           GLsizei len, const GLubyte *registerName,
+                           GLfloat *v);
+
+#endif /* GL_MESA_program_debug */
+
+
+
 /**********************************************************************
  * Begin system-specific stuff
  */
