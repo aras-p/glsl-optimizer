@@ -1520,11 +1520,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_NV_light_max_exponent */
       case GL_MAX_SHININESS_NV:
-         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
          *params = FLOAT_TO_BOOL(ctx->Const.MaxShininess);
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
          *params = FLOAT_TO_BOOL(ctx->Const.MaxSpotExponent);
          break;
          
@@ -3028,11 +3026,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_NV_light_max_exponent */
       case GL_MAX_SHININESS_NV:
-         CHECK_EXTENSION_D(NV_light_max_exponent, pname);
          *params = (GLdouble) ctx->Const.MaxShininess;
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXTENSION_D(NV_light_max_exponent, pname);
          *params = (GLdouble) ctx->Const.MaxSpotExponent;
          break;
 
@@ -4512,11 +4508,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_NV_light_max_exponent */
       case GL_MAX_SHININESS_NV:
-         CHECK_EXTENSION_F(NV_light_max_exponent, pname);
          *params = ctx->Const.MaxShininess;
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXTENSION_F(NV_light_max_exponent, pname);
          *params = ctx->Const.MaxSpotExponent;
          break;
 
@@ -6034,11 +6028,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_NV_light_max_exponent */
       case GL_MAX_SHININESS_NV:
-         CHECK_EXTENSION_I(NV_light_max_exponent, pname);
          *params = (GLint) ctx->Const.MaxShininess;
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXTENSION_I(NV_light_max_exponent, pname);
          *params = (GLint) ctx->Const.MaxSpotExponent;
          break;
 
