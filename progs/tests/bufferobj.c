@@ -159,11 +159,29 @@ static void SpecialKey( int key, int x, int y )
 static void MakeObject1(struct object *obj)
 {
    GLfloat *v, *c;
+   void *p;
+   int i;
 
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
    v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+
+   /* do some sanity tests */
+   glGetBufferPointervARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAP_POINTER_ARB, &p);
+   assert(p == v);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &i);
+   assert(i == 1000);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_ACCESS_ARB, &i);
+   assert(i == GL_WRITE_ONLY_ARB);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_USAGE_ARB, &i);
+   assert(i == GL_STATIC_DRAW_ARB);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAPPED_ARB, &i);
+   assert(i);
 
    /* Make rectangle */
    v[0] = -1;  v[1] = -1;  v[2] = 0;
@@ -181,6 +199,12 @@ static void MakeObject1(struct object *obj)
    obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+
+   glGetBufferPointervARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAP_POINTER_ARB, &p);
+   assert(!p);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAPPED_ARB, &i);
+   assert(!i);
 }
 
 
@@ -212,20 +236,18 @@ static void MakeObject2(struct object *obj)
 
 static void MakeObject3(struct object *obj)
 {
+   GLfloat vertexData[1000];
    GLfloat *v, *c;
    GLuint *i;
-
-   glGenBuffersARB(1, &obj->BufferID);
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
-   glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
-   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
+   int bytes;
 
    /* Make rectangle */
+   v = vertexData;
    v[0] = -1;  v[1] = -0.5;  v[2] = 0;
    v[3] =  1;  v[4] = -0.5;  v[5] = 0;
    v[6] =  1;  v[7] =  0.5;  v[8] = 0;
    v[9] = -1;  v[10] = 0.5;  v[11] = 0;
-   c = v + 12;
+   c = vertexData + 12;
    c[0] = 0;  c[1] = 0;  c[2] = 1;
    c[3] = 0;  c[4] = 0;  c[5] = 1;
    c[6] = 0;  c[7] = 1;  c[8] = 1;
@@ -234,7 +256,12 @@ static void MakeObject3(struct object *obj)
    obj->VertexOffset = 0;
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
 
-   glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+   bytes = obj->NumVerts * (3 + 3) * sizeof(GLfloat);
+
+   /* Don't use glMap/UnmapBuffer for this object */
+   glGenBuffersARB(1, &obj->BufferID);
+   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
+   glBufferDataARB(GL_ARRAY_BUFFER_ARB, bytes, vertexData, GL_STATIC_DRAW_ARB);
 
    /* Setup a buffer of indices to test the ELEMENTS path */
    glGenBuffersARB(1, &obj->ElementsBufferID);
