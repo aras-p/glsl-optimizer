@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.13 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: ss_vb.c,v 1.14 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,15 +30,60 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "macros.h"
+#include "mem.h"
 
 #include "swrast/swrast.h"
-
 #include "tnl/t_context.h"
-
 #include "math/m_vector.h"
+#include "math/m_translate.h"
+
 #include "ss_context.h"
 #include "ss_vb.h"
 
+static void do_import( struct vertex_buffer *VB,
+		       struct gl_client_array *to,
+		       struct gl_client_array *from )
+{
+   GLuint count = VB->Count;
+
+   if (!to->Ptr) {
+      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLchan), 32 );
+      to->Type = CHAN_TYPE;
+   }
+
+   /* No need to transform the same value 3000 times.
+    */
+   if (!from->StrideB) {
+      to->StrideB = 0;
+      count = 1;
+   }
+   else
+      to->StrideB = 4 * sizeof(GLchan);
+   
+   _math_trans_4chan( (GLchan (*)[4]) to->Ptr,
+		      from->Ptr,
+		      from->StrideB,
+		      from->Type,
+		      from->Size,
+		      0,
+		      count);
+}
+
+static void import_float_colors( GLcontext *ctx )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct gl_client_array *to = &SWSETUP_CONTEXT(ctx)->ChanColor;
+   do_import( VB, to, VB->ColorPtr[0] );
+   VB->ColorPtr[0] = to;
+}
+
+static void import_float_spec_colors( GLcontext *ctx )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct gl_client_array *to = &SWSETUP_CONTEXT(ctx)->ChanSecondaryColor;
+   do_import( VB, to, VB->SecondaryColorPtr[0] );
+   VB->SecondaryColorPtr[0] = to;
+}
 
 
 /* Provides a RasterSetup function which prebuilds vertices for the
@@ -182,7 +227,7 @@ static copy_pv_func copy_pv_tab[MAX_SETUPFUNC];
  *      Additional setup and interp for back color and edgeflag. 
  ***********************************************************************/
 
-#define GET_COLOR(ptr, idx) (((GLfloat (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
 
 static void interp_extras( GLcontext *ctx,
 			   GLfloat t,
@@ -192,13 +237,13 @@ static void interp_extras( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4F( t,
+      INTERP_4CHAN( t,
 		 GET_COLOR(VB->ColorPtr[1], dst),
 		 GET_COLOR(VB->ColorPtr[1], out),
 		 GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3F( t,
+	 INTERP_3CHAN( t,
 		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		    GET_COLOR(VB->SecondaryColorPtr[1], out),
 		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
@@ -224,12 +269,12 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
-		   GET_COLOR(VB->ColorPtr[1], src) );
-
+	 COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
+		     GET_COLOR(VB->ColorPtr[1], src) );
+	 
 	 if (VB->SecondaryColorPtr[1]) {
-	    COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
-		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	    COPY_3V( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+		     GET_COLOR(VB->SecondaryColorPtr[1], src) );
 	 }
    }
    else if (VB->IndexPtr[1]) {
@@ -238,6 +283,9 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 
    copy_pv_tab[SWSETUP_CONTEXT(ctx)->SetupIndex](ctx, dst, src);
 }
+
+
+
 
 /***********************************************************************
  *                         Initialization 

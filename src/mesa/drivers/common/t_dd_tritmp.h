@@ -1,4 +1,4 @@
-/* $Id: t_dd_tritmp.h,v 1.11 2001/06/01 12:07:15 keithw Exp $ */
+/* $Id: t_dd_tritmp.h,v 1.12 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,9 +177,9 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  }
 	       }
 	       else {
-		  GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
-		  ASSERT(VB->ColorPtr[1]->Type == GL_FLOAT);
-		  ASSERT(VB->ColorPtr[1]->StrideB == 4*sizeof(GLfloat));
+		  GLchan (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
+		  ASSERT(VB->ColorPtr[1]->Type == CHAN_TYPE);
+		  ASSERT(VB->ColorPtr[1]->StrideB == 4*sizeof(GLchan));
 		  (void) vbcolor;
 
 		  if (!DO_FLAT) {
@@ -192,7 +192,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  VERT_SET_RGBA( v[2], vbcolor[e2] );
 
 		  if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
+		     GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
 
 		     if (!DO_FLAT) {
 			VERT_SAVE_SPEC( 0 );
@@ -385,7 +385,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 if (DO_TWOSIDE && facing == 1)
 	 {
 	    if (HAVE_RGBA) {
-	       GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
+	       GLchan (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
 	       (void)vbcolor;
 
 	       if (HAVE_BACK_COLORS) {
@@ -426,7 +426,7 @@ static void TAG(quad)( GLcontext *ctx,
 
 	          if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
 		     GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
-		     ASSERT(VB->SecondaryColorPtr[1]->StrideB==4*sizeof(GLfloat));
+		     ASSERT(VB->SecondaryColorPtr[1]->StrideB==4*sizeof(GLchan));
 
 		     if (!DO_FLAT) {
 		        VERT_SAVE_SPEC( 0 );

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.15 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,8 @@
 #include "simple_list.h"
 #include "mtypes.h"
 
+#include "math/m_translate.h"
+
 #include "t_context.h"
 #include "t_pipeline.h"
 
@@ -49,13 +51,50 @@ typedef void (*light_func)( GLcontext *ctx,
 			    GLvector4f *input );
 
 struct light_stage_data {
+   struct gl_client_array FloatColor; 
    struct gl_client_array LitColor[2];
    struct gl_client_array LitSecondary[2];
    GLvector1ui LitIndex[2];
    light_func *light_func_tab;
 };
 
+
 #define LIGHT_STAGE_DATA(stage) ((struct light_stage_data *)(stage->privatePtr))
+
+
+static void import_color_material( GLcontext *ctx,
+				   struct gl_pipeline_stage *stage )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct gl_client_array *to = &LIGHT_STAGE_DATA(stage)->FloatColor;
+   struct gl_client_array *from = VB->ColorPtr[0];
+   GLuint count = VB->Count;
+
+   if (!to->Ptr) {
+      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLfloat), 32 );
+      to->Type = GL_FLOAT;
+   }
+
+   /* No need to transform the same value 3000 times.
+    */
+   if (!from->StrideB) {
+      to->StrideB = 0;
+      count = 1;
+   }
+   else
+      to->StrideB = 4 * sizeof(GLfloat);
+   
+   _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
+		   from->Ptr,
+		   from->StrideB,
+		   from->Type,
+		   from->Size,
+		   0,
+		   count);
+
+   VB->ColorPtr[0] = to;
+}
+
 
 /* Tables for all the shading functions.
  */
@@ -201,21 +240,17 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    return stage->run( ctx, stage );
 }
 
-static void alloc_4f( struct gl_client_array *a, GLuint sz )
+static void alloc_4chan( struct gl_client_array *a, GLuint sz )
 {
-   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLfloat) * 4, 32 );
+   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLchan) * 4, 32 );
    a->Size = 4;
-   a->Type = GL_FLOAT;
+   a->Type = CHAN_TYPE;
    a->Stride = 0;
-   a->StrideB = sizeof(GLfloat) * 4;
+   a->StrideB = sizeof(GLchan) * 4;
    a->Enabled = 0;
    a->Flags = 0;
 }
 
-static void free_4f( struct gl_client_array *a )
-{
-   ALIGN_FREE( a->Ptr );
-}
 
 /* Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
@@ -236,10 +271,12 @@ static GLboolean run_init_lighting( GLcontext *ctx,
     */
    init_lighting();
 
-   alloc_4f( &store->LitColor[0], size );
-   alloc_4f( &store->LitColor[1], size );
-   alloc_4f( &store->LitSecondary[0], size );
-   alloc_4f( &store->LitSecondary[1], size );
+   store->FloatColor.Ptr = 0;
+
+   alloc_4chan( &store->LitColor[0], size );
+   alloc_4chan( &store->LitColor[1], size );
+   alloc_4chan( &store->LitSecondary[0], size );
+   alloc_4chan( &store->LitSecondary[1], size );
 
    _mesa_vector1ui_alloc( &store->LitIndex[0], 0, size, 32 );
    _mesa_vector1ui_alloc( &store->LitIndex[1], 0, size, 32 );
@@ -280,10 +317,14 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-      free_4f( &store->LitColor[0] );
-      free_4f( &store->LitColor[1] );
-      free_4f( &store->LitSecondary[0] );
-      free_4f( &store->LitSecondary[1] );
+      ALIGN_FREE( store->LitColor[0].Ptr );
+      ALIGN_FREE( store->LitColor[1].Ptr );
+      ALIGN_FREE( store->LitSecondary[0].Ptr );
+      ALIGN_FREE( store->LitSecondary[1].Ptr );
+
+      if (store->FloatColor.Ptr)
+	 ALIGN_FREE( store->FloatColor.Ptr );
+
       _mesa_vector1ui_free( &store->LitIndex[0] );
       _mesa_vector1ui_free( &store->LitIndex[1] );
       FREE( store );

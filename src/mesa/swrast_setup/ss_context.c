@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.14 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: ss_context.c,v 1.15 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,11 +78,19 @@ _swsetup_CreateContext( GLcontext *ctx )
 void
 _swsetup_DestroyContext( GLcontext *ctx )
 {
-   if (SWSETUP_CONTEXT(ctx)) {
-      if (SWSETUP_CONTEXT(ctx)->verts)
-	 ALIGN_FREE(SWSETUP_CONTEXT(ctx)->verts);
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);
 
-      FREE(SWSETUP_CONTEXT(ctx));
+   if (swsetup) {
+      if (swsetup->verts)
+	 ALIGN_FREE(swsetup->verts);
+
+      if (swsetup->ChanSecondaryColor.Ptr) 
+	 ALIGN_FREE(swsetup->ChanSecondaryColor.Ptr);
+
+      if (swsetup->ChanColor.Ptr) 
+	 ALIGN_FREE(swsetup->ChanColor.Ptr);
+
+      FREE(swsetup);
       ctx->swsetup_context = 0;
    }
 }

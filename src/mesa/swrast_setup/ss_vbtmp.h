@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.16 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: ss_vbtmp.h,v 1.17 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,8 +36,8 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    SWvertex *v;
    GLfloat *proj;		/* projected clip coordinates */
    GLfloat *tc[MAX_TEXTURE_UNITS];
-   GLfloat *color;
-   GLfloat *spec;
+   GLchan *color;
+   GLchan *spec;
    GLuint *index;
    GLfloat *fog;
    GLfloat *pointSize;
@@ -81,10 +81,16 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       fog_stride = VB->FogCoordPtr->stride;
    }
    if (IND & COLOR) {
+      if (VB->ColorPtr[0]->Type != CHAN_TYPE)
+	 import_float_colors( ctx );
+
       color = VB->ColorPtr[0]->Ptr;
       color_stride = VB->ColorPtr[0]->StrideB;
    }
    if (IND & SPEC) {
+      if (VB->SecondaryColorPtr[0]->Type != CHAN_TYPE)
+	 import_float_spec_colors( ctx );
+
       spec = VB->SecondaryColorPtr[0]->Ptr;
       spec_stride = VB->SecondaryColorPtr[0]->StrideB;
    }
@@ -123,17 +129,13 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       }
 
       if (IND & COLOR) {
-	 UNCLAMPED_FLOAT_TO_RGBA_CHAN(v->color, color);
-	 STRIDE_F(color, color_stride);
-/*  	 COPY_CHAN4(v->color, color); */
-/*  	 STRIDE_CHAN(color, color_stride); */
+	 COPY_CHAN4(v->color, color);
+	 STRIDE_CHAN(color, color_stride);
       }
 
       if (IND & SPEC) {
-	 UNCLAMPED_FLOAT_TO_RGB_CHAN(v->specular, spec);
-	 STRIDE_F(spec, spec_stride);
-/*  	 COPY_CHAN4(v->specular, spec); */
-/*  	 STRIDE_CHAN(spec, spec_stride); */
+	 COPY_CHAN4(v->specular, spec);
+	 STRIDE_CHAN(spec, spec_stride);
       }
 
       if (IND & FOG) {
@@ -150,7 +152,6 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
 	 v->pointSize = pointSize[0];
 	 STRIDE_F(pointSize, pointSize_stride);
       }
-
    }
 }
 
@@ -180,10 +181,6 @@ static void TAG(interp)( GLcontext *ctx,
       dst->win[3] =                   oow;
    }
    
-/*     fprintf(stderr, "%s edst %d win %f %f %f %f\n", */
-/*  	   __FUNCTION__, edst,  */
-/*  	   dst->win[0], dst->win[1], dst->win[2], dst->win[3]); */
-
    if (IND & TEX0) {
       INTERP_4F( t, dst->texcoord[0], out->texcoord[0], in->texcoord[0] );
    }

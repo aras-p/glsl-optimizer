@@ -1,4 +1,4 @@
-/* $Id: ss_triangle.c,v 1.14 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: ss_triangle.c,v 1.15 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,8 +141,8 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    }
 }
 
-#define SS_COLOR(a,b) UNCLAMPED_FLOAT_TO_RGBA_CHAN(a,b)
-#define SS_SPEC(a,b) UNCLAMPED_FLOAT_TO_RGB_CHAN(a,b)
+#define SS_COLOR(a,b) COPY_CHAN4(a,b)
+#define SS_SPEC(a,b) COPY_3V(a,b)
 #define SS_IND(a,b) (a = b)
 
 #define IND (0)

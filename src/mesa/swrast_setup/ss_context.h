@@ -1,4 +1,4 @@
-/* $Id: ss_context.h,v 1.8 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: ss_context.h,v 1.9 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,12 @@ typedef struct {
    SWvertex *verts;
    GLenum render_prim;
    GLuint SetupIndex;
+
+   /* Temporaries for translating away float colors:
+    */
+   struct gl_client_array ChanColor;
+   struct gl_client_array ChanSecondaryColor;
+
 
    struct {
       void (*Start)( GLcontext * );
