@@ -86,12 +86,13 @@ void
 _mesa_print_tri_caps( const char *name, GLuint flags )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
 	   (flags & DD_FLATSHADE)           ? "flat-shade, " : "",
 	   (flags & DD_SEPARATE_SPECULAR)   ? "separate-specular, " : "",
 	   (flags & DD_TRI_LIGHT_TWOSIDE)   ? "tri-light-twoside, " : "",
+	   (flags & DD_TRI_TWOSTENCIL)      ? "tri-twostencil, " : "",
 	   (flags & DD_TRI_UNFILLED)        ? "tri-unfilled, " : "",
 	   (flags & DD_TRI_STIPPLE)         ? "tri-stipple, " : "",
 	   (flags & DD_TRI_OFFSET)          ? "tri-offset, " : "",

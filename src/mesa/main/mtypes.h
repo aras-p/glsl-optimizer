@@ -2179,6 +2179,7 @@ struct matrix_stack
 #define DD_POINT_SMOOTH             0x800
 #define DD_POINT_SIZE               0x1000
 #define DD_POINT_ATTEN              0x2000
+#define DD_TRI_TWOSTENCIL           0x4000
 /*@}*/
 
 
