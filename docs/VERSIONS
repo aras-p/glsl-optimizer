@@ -1297,6 +1297,23 @@ Mesa Version History
 	- fixed color index mode glDrawPixels bug (Karl Schultz)
 
 
+6.2.1  December 9, 2004
+    Bug fixes:
+	- don't apply regular fog or color sum when using a fragment program
+	- glProgramEnvParameter4fARB always generated an error on
+	  GL_FRAGMENT_PROGRAM_ARB (fdo bug 1645)
+	- glVertexAttrib3svNV and glVertexAttrib3svARB were broken
+	- fixed width/height mix-up in glSeparableFilter2D()
+	- fixed regression in glCopyPixels + convolution
+	- glReadPixels from a clipped front color buffer didn't always work
+	- glTexImage didn't accept GL_RED/GREEN/BLUE as the format
+	- Attempting queries/accesses of VBO 0 weren't detected as errors
+	- paletted textures failed if the palette had fewer that 256 entries
+    Changes:
+	- fixed a bunch of compiler warnings found with gcc 3.4
+	- bug reports should to go bugzilla.freedesktop.org
+
+
 6.3  Month day, 2004
     New:
 	- GL_ARB_draw_buffers extension

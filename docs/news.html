@@ -7,6 +7,40 @@
 <H1>News</H1>
 
 
+<h2>December 9, 2004</h2>
+<p>
+Mesa 6.2.1 has been released.
+This is a stable release which just fixes bugs since the 6.2 release.
+</p>
+<pre>
+    Bug fixes:
+	- don't apply regular fog or color sum when using a fragment program
+	- glProgramEnvParameter4fARB always generated an error on
+	  GL_FRAGMENT_PROGRAM_ARB (fdo bug 1645)
+	- glVertexAttrib3svNV and glVertexAttrib3svARB were broken
+	- fixed width/height mix-up in glSeparableFilter2D()
+	- fixed regression in glCopyPixels + convolution
+	- glReadPixels from a clipped front color buffer didn't always work
+	- glTexImage didn't accept GL_RED/GREEN/BLUE as the format
+	- Attempting queries/accesses of VBO 0 weren't detected as errors
+	- paletted textures failed if the palette had fewer that 256 entries
+    Changes:
+	- fixed a bunch of compiler warnings found with gcc 3.4
+	- bug reports should to go bugzilla.freedesktop.org
+</pre>
+<p>
+The MD5 checksums are:
+</p>
+<pre>
+80008a92f6e055d3bfdde2cf331ec3fa  MesaLib-6.2.1.tar.gz
+f43228cd2bf70f583ef3275c1c545421  MesaLib-6.2.1.tar.bz2
+dec26cfd40116ad021020fea2d94f652  MesaLib-6.2.1.zip
+2c7af3c986a7571c8713c8bfee7e49e3  MesaDemos-6.2.1.tar.gz
+3cac74667b50bcbd4f67f594fb4224a2  MesaDemos-6.2.1.tar.bz2
+75b3edd12eb2b370caf05f29b99e508a  MesaDemos-6.2.1.zip
+</pre>
+
+
 <h2>October 2, 2004</h2>
 <p>
 Mesa 6.2 has been released.
@@ -31,6 +65,17 @@ This is a stable release which just fixes bugs since the 6.1 release.
 	- spriteblast demo didn't handle window size changes correctly
 	- glTexSubImage didn't handle pixels=NULL correctly for PBOs
 	- fixed color index mode glDrawPixels bug (Karl Schultz)
+</pre>
+<p>
+The MD5 checksums are:
+</p>
+<pre>
+9e8f34b059272dbb8e1f2c968b33bbf0  MesaLib-6.2.tar.gz
+3d6a6362390b6a37d3cb2e615f3ac7db  MesaLib-6.2.tar.bz2
+6cfd7895d28e695c0dbbed9469564091  MesaLib-6.2.zip
+3e06e33b0809f09855cb60883b8bdfef  MesaDemos-6.2.tar.gz
+9d160009c3dfdb35fe7e4088c9ba8f85  MesaDemos-6.2.tar.bz2
+856f7ec947122eb3c8985ebc2f654dcd  MesaDemos-6.2.zip
 </pre>
 
 
@@ -913,6 +958,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.15 2004/10/02 15:26:25 brianp Exp $
+$Id: news.html,v 3.16 2004/12/09 23:21:36 brianp Exp $
 </body>
 </html>
