@@ -1656,8 +1656,8 @@ void r200UpdateViewportOffset( GLcontext *ctx )
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   GLfloat tx = v[MAT_TX] + xoffset;
-   GLfloat ty = (- v[MAT_TY]) + yoffset;
+   GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
+   GLfloat ty = (- v[MAT_TY]) + yoffset + SUBPIXEL_Y;
 
    if ( rmesa->hw.vpt.cmd[VPT_SE_VPORT_XOFFSET] != *(GLuint *)&tx ||
 	rmesa->hw.vpt.cmd[VPT_SE_VPORT_YOFFSET] != *(GLuint *)&ty )
