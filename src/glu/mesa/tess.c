@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.14 1999/10/12 18:49:28 gareth Exp $ */
+/* $Id: tess.c,v 1.15 1999/10/12 21:26:06 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.15  1999/10/12 21:26:06  gareth
+ * Fixed delete_all_contours memory deallocation.
+ *
  * Revision 1.14  1999/10/12 18:49:28  gareth
  * Updated memory allocation to allow new macros to be used.
  *
@@ -347,12 +350,9 @@ void GLAPIENTRY gluTessEndContour( GLUtesselator *tobj )
 	return;
     }
 
-    if ( tobj->current_contour->vertex_count > 0 )
-    {
+    if ( tobj->current_contour->vertex_count > 0 ) {
 	inspect_current_contour( tobj );
-    }
-    else
-    {
+    } else {
 	delete_current_contour( tobj );
     }
 
@@ -383,8 +383,7 @@ void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
      * Ensure we have at least one contour to tessellate.  If we have none,
      *  clean up and exit gracefully.
      */
-    if ( tobj->contour_count == 0 )
-    {
+    if ( tobj->contour_count == 0 ) {
 	tess_cleanup( tobj );
 	return;
     }
@@ -946,25 +945,22 @@ static void delete_current_contour( GLUtesselator *tobj )
 static void delete_all_contours( GLUtesselator *tobj )
 {
     tess_contour_t	*current = tobj->current_contour, *next_contour;
-    tess_vertex_t	*vertex, *next_vertex;
-    GLuint			i;
+    GLuint		i;
 
     if ( current != NULL ) {
 	delete_current_contour( tobj );
     }
 
-    for ( current = tobj->contours, i = 0; i < tobj->contour_count; i++ )
+    for ( current = tobj->contours, i = 0 ; i < tobj->contour_count ; i++ )
     {
-	vertex = current->vertices;
+	tess_vertex_t	*vertex = current->vertices, *next_vertex;
+	GLuint		j;
 
-	while ( vertex != current->last_vertex )
+	for ( j = 0 ; j < current->vertex_count ; j ++ )
 	{
 	    next_vertex = vertex->next;
 	    free( vertex );
 	    vertex = next_vertex;
-	}
-	if ( vertex ) {
-	    free( vertex );
 	}
 	next_contour = current->next;
 
