@@ -167,7 +167,7 @@ tags:
 
 clean:
 	-rm -f */*.o
-	rm -f depend
+	rm -f depend mesa.a
 	for dir in $(SUBDIRS) ; do \
 		(cd $$dir ; make clean) ; \
 	done
