@@ -72,9 +72,8 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf);
 static __inline GLuint *viaCheckDma(viaContextPtr vmesa, int bytes)
 {
     if (vmesa->dmaLow + bytes > vmesa->dmaHigh) {
-#ifdef DEBUG
-	if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
-#endif
+	if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
+			       vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
 	viaFlushPrims(vmesa);
     }
 

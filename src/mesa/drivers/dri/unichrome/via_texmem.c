@@ -44,9 +44,7 @@ GLuint agpFullCount = 0;
 
 void viaDestroyTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif    
     if (!t) 
 	return;
 
@@ -77,16 +75,12 @@ void viaDestroyTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
 
     remove_from_list(t);
     free(t);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 void viaSwapOutTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     if (t->bufAddr) {
 	via_free_texture(vmesa, t);
 
@@ -96,9 +90,7 @@ void viaSwapOutTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
 
     t->dirtyImages = ~0;
     move_to_tail(&(vmesa->SwappedOut), t);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 /* Upload an image from mesa's internal copy.
@@ -107,21 +99,17 @@ static void viaUploadTexLevel(viaTextureObjectPtr t, int level)
 {
     const struct gl_texture_image *image = t->image[level].image;
     int i, j;
-#ifdef DEBUG
     if (VIA_DEBUG) {
 	fprintf(stderr, "%s - in\n", __FUNCTION__);    
 	fprintf(stderr, "width = %d, height = %d \n", image->Width, image->Height);    
     }	
-#endif
     switch (t->image[level].internalFormat) {
     case GL_RGB:
     {
 	if (image->TexFormat->MesaFormat == MESA_FORMAT_ARGB8888) {
 	    GLuint *dst = (GLuint *)(t->bufAddr + t->image[level].offset);
 	    GLuint *src = (GLuint *)image->Data;
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "GL_RGB MESA_FORMAT_ARGB8888\n");    
-#endif    	    
 	    if (image->Width < 8) {
 		 for (i = 0; i < image->Height ; i++) {
 		    for (j = 0; j < image->Width ; j++) {
@@ -143,9 +131,7 @@ static void viaUploadTexLevel(viaTextureObjectPtr t, int level)
 	else {
 	    GLushort *dst = (GLushort *)(t->bufAddr + t->image[level].offset);
 	    GLushort *src = (GLushort *)image->Data;
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "GL_RGB !MESA_FORMAT_ARGB8888\n");    
-#endif	    
 	    if (image->Width < 16) {
 		 for (i = 0; i < image->Height ; i++) {
 		    for (j = 0; j < image->Width ; j++) {
@@ -190,16 +176,12 @@ static void viaUploadTexLevel(viaTextureObjectPtr t, int level)
         	}
 	    }
 	    /*memcpy(dst, src, image->Height * image->Width * sizeof(GLushort));*/
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "GL_RGBA MESA_FORMAT_ARGB4444\n");    
-#endif
         }
 	else if(image->TexFormat->MesaFormat == MESA_FORMAT_ARGB8888) {
             GLuint *dst = (GLuint *)(t->bufAddr + t->image[level].offset);
             GLuint *src = (GLuint *)image->Data;
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "GL_RGBA !MESA_FORMAT_ARGB4444\n");    
-#endif
 	    if (image->Width < 8) {
 		 for (i = 0; i < image->Height ; i++) {
 		    for (j = 0; j < image->Width ; j++) {
@@ -238,9 +220,7 @@ static void viaUploadTexLevel(viaTextureObjectPtr t, int level)
         	}
 	    }
 	    /*memcpy(dst, src, image->Height * image->Width * sizeof(GLushort));*/
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "GL_RGBA MESA_FORMAT_ARGB1555\n");    
-#endif
         }
     }
     break;
@@ -313,14 +293,10 @@ static void viaUploadTexLevel(viaTextureObjectPtr t, int level)
     break;
 
     default:;
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Not supported texture format %s\n",
                 _mesa_lookup_enum_by_nr(image->Format));
-#endif
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 void viaPrintLocalLRU(viaContextPtr vmesa)
@@ -329,7 +305,6 @@ void viaPrintLocalLRU(viaContextPtr vmesa)
 
     foreach (t, &vmesa->TexObjList) {
         if (!t->globj) {
-#ifdef DEBUG
             if (VIA_DEBUG) {
 		fprintf(stderr, "offset = %x, index = %x, size = %x\n",
                     t->texMem.offset,
@@ -343,7 +318,6 @@ void viaPrintLocalLRU(viaContextPtr vmesa)
                     t->texMem.size);
 		}
 	    }
-#endif
 	}	    	    
     }
 }
@@ -354,17 +328,13 @@ void viaPrintGlobalLRU(viaContextPtr vmesa)
     drm_via_tex_region_t *list = vmesa->sarea->texList;
 
     for (i = 0, j = VIA_NR_TEX_REGIONS; i < VIA_NR_TEX_REGIONS; i++) {
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "list[%d] age %d next %d prev %d\n",
                 j, list[j].age, list[j].next, list[j].prev);
-#endif
         j = list[j].next;
         if (j == VIA_NR_TEX_REGIONS) break;
     }
-#ifdef DEBUG
     if (j != VIA_NR_TEX_REGIONS)
        if (VIA_DEBUG) fprintf(stderr, "Loop detected in global LRU\n");
-#endif
 }
 
 void viaResetGlobalLRU(viaContextPtr vmesa)
@@ -413,15 +383,11 @@ void viaTexturesGone(viaContextPtr vmesa,
                      GLuint inUse)
 {
     viaTextureObjectPtr t, tmp;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
     foreach_s (t, tmp, &vmesa->TexObjList) {
         viaSwapOutTexObj(vmesa, t);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 /* This is called with the lock held.  May have to eject our own and/or
@@ -431,9 +397,7 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
     int i, j;
     int numLevels;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     LOCK_HARDWARE(vmesa);
 
      j = 0;
@@ -449,18 +413,14 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
 	    agpFullCount++; 
             if (vmesa->TexObjList.prev == vmesa->CurrentTexObj[0] ||
                 vmesa->TexObjList.prev == vmesa->CurrentTexObj[1]) {
-#ifdef DEBUG
                 if (VIA_DEBUG) fprintf(stderr, "Hit bound texture in upload\n");
-#endif
                 viaPrintLocalLRU(vmesa);
                 UNLOCK_HARDWARE(vmesa);
                 return;
             }
 
             if (vmesa->TexObjList.prev == &(vmesa->TexObjList)) {
-#ifdef DEBUG
                 if (VIA_DEBUG) fprintf(stderr, "Failed to upload texture, sz %d\n", t->totalSize);
-#endif
                 mmDumpMemInfo(vmesa->texHeap);
                 UNLOCK_HARDWARE(vmesa);
                 return;
@@ -491,7 +451,5 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
     t->dirtyImages = 0;
 
     UNLOCK_HARDWARE(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }

@@ -293,9 +293,7 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                       GLuint bufferBit)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (bufferBit == DD_FRONT_LEFT_BIT) {
 	vmesa->drawMap = (char *)vmesa->driScreen->pFB;
         vmesa->readMap = (char *)vmesa->driScreen->pFB;
@@ -311,9 +309,7 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
     else {
         ASSERT(0);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -323,9 +319,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
     struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
     swdd->SetBuffer = viaSetBuffer;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (vmesa->viaScreen->bitsPerPixel == 0x10) {
 	swdd->WriteRGBASpan = viaWriteRGBASpan_565;
 	swdd->WriteRGBSpan = viaWriteRGBSpan_565;
@@ -361,7 +355,5 @@ void viaInitSpanFuncs(GLcontext *ctx)
     swdd->WriteMonoCIPixels = NULL;
     swdd->ReadCI32Span = NULL;
     swdd->ReadCI32Pixels = NULL;	
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }

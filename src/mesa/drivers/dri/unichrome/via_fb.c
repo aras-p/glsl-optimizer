@@ -35,15 +35,11 @@ via_alloc_back_buffer(viaContextPtr vmesa)
 {
     drm_via_mem_t fb;
     unsigned char *pFB;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     fb.context = vmesa->hHWContext;
     fb.size = vmesa->back.size;
     fb.type = VIDEO;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "context = %d, size =%d, type = %d\n", fb.context, fb.size, fb.type);
-#endif
     if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb))
         return GL_FALSE;
     
@@ -52,14 +48,12 @@ via_alloc_back_buffer(viaContextPtr vmesa)
     vmesa->back.offset = fb.offset;
     vmesa->back.map = (char *)(fb.offset + (GLuint)pFB);
     vmesa->back.index = fb.index;
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "back offset = %08x\n", vmesa->back.offset);
 	fprintf(stderr, "back index = %d\n", vmesa->back.index);
     }
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif    
     return GL_TRUE;
 }
 
@@ -68,15 +62,11 @@ via_alloc_front_buffer(viaContextPtr vmesa)
 {
     drm_via_mem_t fb;
     unsigned char *pFB;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     fb.context = vmesa->hHWContext;
     fb.size = vmesa->back.size;
     fb.type = VIDEO;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "context = %d, size =%d, type = %d\n", fb.context, fb.size, fb.type);
-#endif
     if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb))
         return GL_FALSE;
     
@@ -85,7 +75,6 @@ via_alloc_front_buffer(viaContextPtr vmesa)
     vmesa->front.offset = fb.offset;
     vmesa->front.map = (char *)(fb.offset + (GLuint)pFB);
     vmesa->front.index = fb.index;
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "front offset = %08x\n", vmesa->front.offset);
 	fprintf(stderr, "front index = %d\n", vmesa->front.index);
@@ -93,7 +82,6 @@ via_alloc_front_buffer(viaContextPtr vmesa)
 
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif    
     return GL_TRUE;
 }
 
@@ -128,9 +116,7 @@ via_alloc_depth_buffer(viaContextPtr vmesa)
 {
     drm_via_mem_t fb;
     unsigned char *pFB;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif	
     fb.context = vmesa->hHWContext;
     fb.size = vmesa->depth.size;
     fb.type = VIDEO;
@@ -144,14 +130,12 @@ via_alloc_depth_buffer(viaContextPtr vmesa)
     vmesa->depth.offset = fb.offset;
     vmesa->depth.map = (char *)(fb.offset + (GLuint)pFB);
     vmesa->depth.index = fb.index;
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "depth offset = %08x\n", vmesa->depth.offset);
 	fprintf(stderr, "depth index = %d\n", vmesa->depth.index);    
     }	
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     return GL_TRUE;
 }
 
@@ -173,9 +157,7 @@ via_alloc_dma_buffer(viaContextPtr vmesa)
 {
   drmVIADMAInit init;
 
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     vmesa->dma = (GLuint *) malloc(VIA_DMA_BUFSIZ);
     
     /*
@@ -191,9 +173,7 @@ via_alloc_dma_buffer(viaContextPtr vmesa)
     else
         printf("unichrome_dri.so: Using PCI.\n");
       
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
     return ((vmesa->dma) ? GL_TRUE : GL_FALSE);
 }
 
@@ -209,18 +189,14 @@ GLboolean
 via_alloc_texture(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
     drm_via_mem_t fb;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     fb.context = vmesa->hHWContext;
     fb.size = t->texMem.size;
     fb.type = VIDEO;
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "texture size = %d\n", fb.size);
 	fprintf(stderr, "texture type = %d\n", fb.type);
     }
-#endif
     if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb)) {
 	fprintf(stderr, "via_alloc_texture fail\n");
         return GL_FALSE;
@@ -228,14 +204,10 @@ via_alloc_texture(viaContextPtr vmesa, viaTextureObjectPtr t)
     
     t->texMem.offset = fb.offset;
     t->texMem.index = fb.index;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "texture index = %d\n", (GLuint)fb.index);
-#endif
     
     t->bufAddr = (unsigned char *)(fb.offset + (GLuint)vmesa->driScreen->pFB);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     return GL_TRUE;
 }
 /*=* John Sheng [2003.5.31]  agp tex *=*/
@@ -243,18 +215,14 @@ GLboolean
 via_alloc_texture_agp(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
     drm_via_mem_t fb;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     fb.context = vmesa->hHWContext;
     fb.size = t->texMem.size;
     fb.type = AGP;
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "texture_agp size = %d\n", fb.size);
 	fprintf(stderr, "texture type = %d\n", fb.type);
     }
-#endif
     if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb)) {
 	fprintf(stderr, "via_alloc_texture_agp fail\n");
         return GL_FALSE;
@@ -262,16 +230,12 @@ via_alloc_texture_agp(viaContextPtr vmesa, viaTextureObjectPtr t)
     
     t->texMem.offset = fb.offset;
     t->texMem.index = fb.index;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "texture agp index = %d\n", (GLuint)fb.index);
-#endif
     
     t->bufAddr = (unsigned char *)((GLuint)vmesa->viaScreen->agpLinearStart + fb.offset); 	
     /*=* John Sheng [2003.5.31]  agp tex *=*/
     t->inAGP = GL_TRUE;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     return GL_TRUE;
 }
 
@@ -279,14 +243,12 @@ void
 via_free_texture(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
     drm_via_mem_t fb;
-#ifdef DEBUG    	
     if (VIA_DEBUG) {
 	fprintf(stderr, "via_free_texture: index = %d\n",
             t->texMem.index);
 	fprintf(stderr, "via_free_texture: size = %d\n",
             t->texMem.size);
     }
-#endif
     if (!vmesa) {
 	fprintf(stderr, "!mesa\n");
 	return;

@@ -100,9 +100,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
     GLuint scrn = 0, i = 0, side = 0;
     scrn = vmesa->saam & S_MASK;
     side = vmesa->saam & P_MASK;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
-#endif
     VIA_FIREVERTICES(vmesa);
 
     if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0) {
@@ -148,9 +146,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    
     	    if (!vmesa->saam) {
 		if (!all) {
-#ifdef DEBUG    
 		    if (VIA_DEBUG) fprintf(stderr,"!all");
-#endif        
             	    for (; i < nr; i++) {
                 	GLint x = box[i].x1;
                 	GLint y = box[i].y1;
@@ -308,9 +304,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
     if (mask)
         _swrast_Clear(ctx, mask, all, cx, cy, cw, ch);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
 }
 
 /*
@@ -322,9 +316,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     drm_clip_rect_t *pbox;
     int nbox, i;
     GLuint scrn = 0, side = 0;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);        
-#endif
     assert(dPriv);
     assert(dPriv->driContextPriv);
     assert(dPriv->driContextPriv->driverPrivate);
@@ -340,17 +332,13 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     pbox = vmesa->pClipRects;
     nbox = vmesa->numClipRects;
 
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s %d cliprects (%d), SAAM (%d)\n", 
     	__FUNCTION__, nbox, vmesa->drawType, vmesa->saam);
-#endif
     
 	
     if (vmesa->drawType == GLX_PBUFFER_BIT) {
 	viaDoSwapPBuffers(vmesa);
-#ifdef DEBUG    
         if (VIA_DEBUG) fprintf(stderr, "%s SwapPBuffers\n", __FUNCTION__);    
-#endif	/*=* [DBG] for pbuffer *=*/
     }
     else {
 	GLuint scrn = 0;
@@ -365,9 +353,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     		for (; i < nr; i++)
         	    *b++ = pbox[i];
 		viaDoSwapBuffers(vmesa);
-#ifdef DEBUG    
 		if (VIA_DEBUG) fprintf(stderr, "%s SwapBuffers\n", __FUNCTION__);    
-#endif
 	    }
 	}
 	else if (scrn == S0 || scrn == S1) {
@@ -414,9 +400,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     }
     UNLOCK_HARDWARE(vmesa);
     vmesa->uploadCliprects = GL_TRUE;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);        
-#endif
 }
 
 /*
@@ -431,9 +415,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     viaBuffer buffer_tmp;
     GLcontext *ctx;
 
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);        
-#endif
     assert(dPriv);
     assert(dPriv->driContextPriv);
     assert(dPriv->driContextPriv->driverPrivate);
@@ -516,9 +498,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 		ctx->Driver.DrawBuffer(ctx, GL_FRONT);
 	}
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
-#endif
 
 }
 
@@ -526,15 +506,11 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
  */
 void viaDmaFinish(viaContextPtr vmesa)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);        
-#endif
     VIA_FIREVERTICES(vmesa);
     LOCK_HARDWARE(vmesa);
     UNLOCK_HARDWARE(vmesa);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
 }
 
 void viaRegetLockQuiescent(viaContextPtr vmesa)
@@ -624,7 +600,7 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
         vmesa->uploadCliprects = GL_TRUE;
     }
 /*=* John Sheng [2003.5.31] flip *=*/
-/*#ifdef DEBUG    
+/*
     if (VIA_DEBUG) {
 	GLuint i;
 	GLuint *data = (GLuint *)vmesa->dmaAddr;
@@ -636,7 +612,7 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
 	}
 	fprintf(stderr, "******************************************\n");
     }   
-#endif*/
+*/
     if (!nbox || !vmesa->uploadCliprects) {
         if (nbox == 1)
             sarea->nbox = 0;
@@ -788,7 +764,6 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
 	    }
         }
     }
-#ifdef DEBUG        
     if (VIA_DEBUG) {
 	GLuint i;
 	GLuint *data = (GLuint *)vmesa->dmaAddr;
@@ -800,7 +775,6 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
 	}
 	fprintf(stderr, "******************************************\n");
     }  
-#endif
     /* Reset vmesa vars:
      */
     vmesa->dmaLow = DMA_OFFSET;
@@ -811,38 +785,28 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
 
 void viaFlushPrims(viaContextPtr vmesa)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
 
     if (vmesa->dmaLow) {
       LOCK_HARDWARE(vmesa); 
         viaFlushPrimsLocked(vmesa);
       UNLOCK_HARDWARE(vmesa);
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
 }
 
 static void viaFlush(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
-#endif    
     VIA_FIREVERTICES(vmesa);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaFinish(GLcontext *ctx)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
     return;
 }
 
@@ -987,9 +951,7 @@ void viaFillFrontPBuffer(viaContextPtr vmesa)
     GLuint pixel = (GLuint)vmesa->ClearColor;
 
     offset = vmesa->front.offset;
-#ifdef DEBUG        
     if (VIA_DEBUG) fprintf(stderr, "Fill PFront offset = %08x\n", offset);
-#endif    
     nDestBase = offset;
     nDestPitch = vmesa->front.pitch;
 
@@ -1012,9 +974,7 @@ void viaFillBackBuffer(viaContextPtr vmesa)
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
 
     offset = vmesa->back.offset;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "Fill Back offset = %08x\n", offset);
-#endif
     nDestBase = offset;
     nDestPitch = vmesa->back.pitch;
     offsetX = vmesa->drawXoff;
@@ -1042,12 +1002,10 @@ void viaFillBackBuffer(viaContextPtr vmesa)
 	    b++;
 	}
     }
-#ifdef DEBUG    	
     if (VIA_DEBUG) {
 	fprintf(stderr," width = %08x\n", nDestWidth);	
 	fprintf(stderr," height = %08x\n", nDestHeight);	
     }	     
-#endif
 }
 
 void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel)
@@ -1056,9 +1014,7 @@ void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel)
     GLuint *vb = viaCheckDma(vmesa, VIA_BLITSIZE);
     
     offset = vmesa->depth.offset;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "Fill Stencil Depth offset = %08x\n", offset);
-#endif    
     nDestBase = offset;
     nDestPitch = vmesa->depth.pitch;
     offsetX = vmesa->drawXoff;
@@ -1081,9 +1037,7 @@ void viaFillStencilBuffer(viaContextPtr vmesa, GLuint pixel)
     GLuint *vb = viaCheckDma(vmesa, VIA_BLITSIZE);
     
     offset = vmesa->depth.offset;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "Fill Stencil offset = %08x\n", offset);
-#endif
     nDestBase = offset;
     nDestPitch = vmesa->depth.pitch;
     offsetX = vmesa->drawXoff;	
@@ -1106,9 +1060,7 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel)
     GLuint *vb = viaCheckDma(vmesa, VIA_BLITSIZE);
 
     offset = vmesa->depth.offset;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "Fill Depth offset = %08x\n", offset);
-#endif
     nDestBase = offset;
     nDestPitch = vmesa->depth.pitch;
     offsetX = vmesa->drawXoff;
@@ -1161,9 +1113,7 @@ void viaDoSwapBuffers(viaContextPtr vmesa)
     }
 
     viaFlushPrimsLocked(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "Do Swap Buffer\n");
-#endif
 }
 
 void viaDoSwapBuffersSaam(viaContextPtr vmesa)
@@ -1237,9 +1187,7 @@ void viaDoSwapBuffersSaam(viaContextPtr vmesa)
     }
 
     viaFlushPrimsLocked(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "Do Swap Buffer\n");
-#endif
 }
 
 void viaDoSwapPBuffers(viaContextPtr vmesa)
@@ -1303,9 +1251,7 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
     SetReg2DAGP(0x0, 0x1 | 0xCC000000);
 
     viaFlushPrimsLocked(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "Do Swap PBuffer\n");
-#endif
 }
 
 

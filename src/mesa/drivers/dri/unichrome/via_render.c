@@ -81,18 +81,14 @@ static void VERT_FALLBACK(GLcontext *ctx,
                           GLuint flags)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     fprintf(stderr, "VERT_FALLBACK\n");
     tnl->Driver.Render.PrimitiveNotify(ctx, flags & PRIM_MODE_MASK);
     tnl->Driver.Render.BuildVertices(ctx, start, count, ~0);
     tnl->Driver.Render.PrimTabVerts[flags & PRIM_MODE_MASK](ctx, start,
                                                             count, flags);
     VIA_CONTEXT(ctx)->setupNewInputs = VERT_BIT_CLIP;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -150,19 +146,15 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
 #endif
     
     if (VB->ClipOrMask || vmesa->renderIndex != 0 || VB->Elts) {
-#ifdef DEBUG
 	if (VIA_DEBUG) { 
 	    fprintf(stderr, "slow path\n");    
 	    fprintf(stderr, "ClipOrMask = %08x\n", VB->ClipOrMask);
 	    fprintf(stderr, "renderIndex = %08x\n", vmesa->renderIndex);	
 	    fprintf(stderr, "Elts = %08x\n", (GLuint)VB->Elts);	
 	}	    
-#endif
         return GL_TRUE;
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif    
     vmesa->setupNewInputs = VERT_BIT_CLIP;
     vmesa->primitiveRendered = GL_TRUE;
 
@@ -181,9 +173,7 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     /*=* DBG - viewperf7.0 : fix command buffer overflow *=*/
     if (vmesa->dmaLow > (VIA_DMA_BUFSIZ / 2))
 	viaFlushPrims(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     return GL_FALSE;            /* finished the pipe */
 }
 
@@ -426,9 +416,7 @@ static GLboolean via_run_render(GLcontext *ctx,
     tnl_render_func *tab;
     GLuint pass = 0;
     
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -470,9 +458,7 @@ static GLboolean via_run_render(GLcontext *ctx,
     /*=* DBG viewperf7.0 : fix command buffer overflow *=*/
     if (vmesa->dmaLow > (VIA_DMA_BUFSIZ / 2))
 	viaFlushPrims(vmesa);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     return GL_FALSE;            /* finished the pipe */
 }
 

@@ -230,7 +230,6 @@ static void init_setup_tab(void) {
 }
 
 void viaPrintSetupFlags(char *msg, GLuint flags) {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s(%x): %s%s%s%s%s%s\n",
             msg,
             (int)flags,
@@ -240,18 +239,15 @@ void viaPrintSetupFlags(char *msg, GLuint flags) {
             (flags & VIA_FOG_BIT)      ? " fog," : "",
             (flags & VIA_TEX0_BIT)     ? " tex-0," : "",
             (flags & VIA_TEX1_BIT)     ? " tex-1," : "");
-#endif
 }
 
 void viaCheckTexSizes(GLcontext *ctx) {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG    
     if (VIA_DEBUG) {    
 	fprintf(stderr, "%s - in\n", __FUNCTION__);
 	fprintf(stderr, "setupIndex = %x\n", vmesa->setupIndex);
     }	
-#endif
     if (!setup_tab[vmesa->setupIndex].check_tex_sizes(ctx)) {
         /* Invalidate stored verts
          */
@@ -264,9 +260,7 @@ void viaCheckTexSizes(GLcontext *ctx) {
             tnl->Driver.Render.CopyPV = setup_tab[vmesa->setupIndex].copyPv;
         }
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaBuildVertices(GLcontext *ctx,
@@ -277,9 +271,7 @@ void viaBuildVertices(GLcontext *ctx,
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLubyte *v = ((GLubyte *)vmesa->verts + (start << vmesa->vertexStrideShift));
     GLuint stride = 1 << vmesa->vertexStrideShift;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     newinputs |= vmesa->setupNewInputs;
     vmesa->setupNewInputs = 0;
     if (!newinputs)
@@ -315,18 +307,14 @@ void viaBuildVertices(GLcontext *ctx,
             setup_tab[ind].emit(ctx, start, count, v, stride);
         }
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaChooseVertexState(GLcontext *ctx) {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint ind = VIA_XYZW_BIT | VIA_RGBA_BIT;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
         ind |= VIA_SPEC_BIT;
 
@@ -339,9 +327,7 @@ void viaChooseVertexState(GLcontext *ctx) {
         ind |= VIA_TEX0_BIT;
 
     vmesa->setupIndex = ind;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "setupIndex = %x\n", vmesa->setupIndex);
-#endif
 
     if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
         tnl->Driver.Render.Interp = via_interp_extras;
@@ -354,9 +340,7 @@ void viaChooseVertexState(GLcontext *ctx) {
 
         vmesa->vertexSize = setup_tab[ind].vertexSize;
         vmesa->vertexStrideShift = setup_tab[ind].vertexStrideShift;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
     
 }
 
@@ -366,16 +350,12 @@ void via_emit_contiguous_verts(GLcontext *ctx,
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint vertexSize = vmesa->vertexSize * 4;
     GLuint *dest = viaCheckDma(vmesa, (count - start) * vertexSize);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     
     if (VIA_DEBUG) fprintf(stderr, "choose setup_tab[0x%x]\n", vmesa->setupIndex);    
-#endif
     setup_tab[vmesa->setupIndex].emit(ctx, start, count, dest, vertexSize);
     vmesa->dmaLow += (count - start) * vertexSize;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaInitVB(GLcontext *ctx) {

@@ -170,9 +170,7 @@ static void viaSetTexImages(viaContextPtr vmesa,
     GLuint basH = 0;
     GLuint widthExp = 0;
     GLuint heightExp = 0;    
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
-#endif
     switch (baseImage->TexFormat->MesaFormat) {
     case MESA_FORMAT_ARGB8888:
 	if (t->image[tObj->BaseLevel].internalFormat == GL_RGB)
@@ -272,7 +270,6 @@ static void viaSetTexImages(viaContextPtr vmesa,
     t->texMem.size = t->totalSize;
     t->maxLevel = i - 1;
     t->dirty = VIA_UPLOAD_TEX0 | VIA_UPLOAD_TEX1;
-#ifdef DEBUG
     if (VIA_DEBUG) {
 	fprintf(stderr, "log2Width = %d\n", log2Width);  
 	fprintf(stderr, "log2Height = %d\n", log2Height);    
@@ -282,7 +279,6 @@ static void viaSetTexImages(viaContextPtr vmesa,
 	fprintf(stderr, "actual level = %d\n", t->actualLevel);
         fprintf(stderr, "numlevel = %d\n", numLevels);    
     }	
-#endif
 
     {
 	w = log2Width;
@@ -318,14 +314,12 @@ static void viaSetTexImages(viaContextPtr vmesa,
                 texBase = (GLuint)vmesa->agpBase + t->texMem.offset + t->image[i].offset;
             else
 		texBase = t->texMem.offset + t->image[i].offset;
-#ifdef DEBUG
 	    if (VIA_DEBUG) {
 		fprintf(stderr, "texmem offset = %x\n", t->texMem.offset);    
 		fprintf(stderr, "mipmap%d addr = %x\n", i, t->image[i].offset);    
 		fprintf(stderr, "mipmap%d size = %d, h = %d, w = %d\n", i, (*texSize)[h][w], h, w);    
 		fprintf(stderr, "texBase%d = %x\n", i, texBase);
 	    }	
-#endif      
 	    t->regTexBaseAndPitch[i].baseL = ((HC_SubA_HTXnL0BasL + i) << 24) | (texBase & 0xFFFFFF);
             
 	    if (p < 5) {
@@ -367,9 +361,7 @@ static void viaSetTexImages(viaContextPtr vmesa,
             t->regTexHeightLog2[l] = ((l + HC_SubA_HTXnL0_5HE) << 24 | heightExp);
         }    
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 /* ================================================================
@@ -541,9 +533,7 @@ static void viaUpdateTexEnv(GLcontext *ctx, GLuint unit)
     const struct gl_texture_object *tObj = texUnit->_Current;
     const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
     GLuint color_combine, alpha_combine;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
-#endif
     switch (texUnit->EnvMode) {
     case GL_REPLACE:
         if (format == GL_ALPHA) {
@@ -649,18 +639,14 @@ static void viaUpdateTexEnv(GLcontext *ctx, GLuint unit)
     default:
         return;
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);     
-#endif
     if (texUnit->_ReallyEnabled) {
         struct gl_texture_object *tObj = texUnit->_Current;
         viaTextureObjectPtr t = (viaTextureObjectPtr)tObj->DriverData;
@@ -704,22 +690,16 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
         vmesa->dirty &= ~(VIA_UPLOAD_TEX0 << unit);
         VIA_STATECHANGE(vmesa, VIA_UPLOAD_CTX);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 void viaUpdateTextureState(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
-#endif
     FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_FALSE);
     viaUpdateTexUnit(ctx, 0);
     viaUpdateTexUnit(ctx, 1);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 

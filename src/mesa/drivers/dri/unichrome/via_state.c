@@ -77,9 +77,7 @@ static __inline__ GLuint viaPackColor(GLuint format,
     case 0x20:
         return PACK_COLOR_8888(a, r, g, b);        
     default:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "unknown format %d\n", (int)format);
-#endif
         return PACK_COLOR_8888(a, r, g, b);
    }
 }
@@ -92,9 +90,7 @@ static void viaAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 
 static void viaBlendEquationSeparate(GLcontext *ctx, GLenum rgbMode, GLenum aMode)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
 
     /* GL_EXT_blend_equation_separate not supported */
     ASSERT(rgbMode == aMode);
@@ -108,18 +104,14 @@ static void viaBlendEquationSeparate(GLcontext *ctx, GLenum rgbMode, GLenum aMod
     FALLBACK(VIA_CONTEXT(ctx), VIA_FALLBACK_LOGICOP,
              (ctx->Color.ColorLogicOpEnabled &&
               ctx->Color.LogicOp != GL_COPY));
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLboolean fallback = GL_FALSE;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     switch (ctx->Color.BlendSrcRGB) {
     case GL_ZERO:                break;
     case GL_SRC_ALPHA:           break;
@@ -160,9 +152,7 @@ static void viaBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
     }
 
     FALLBACK(vmesa, VIA_FALLBACK_BLEND_FUNC, fallback);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 /* Shouldn't be called as the extension is disabled.
@@ -205,9 +195,7 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
                        GLsizei w, GLsizei h)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
-#endif
     if (ctx->Scissor.Enabled) {
         VIA_FIREVERTICES(vmesa); /* don't pipeline cliprect changes */
         vmesa->uploadCliprects = GL_TRUE;
@@ -217,19 +205,15 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
     vmesa->scissorRect.y1 = vmesa->driDrawable->h - (y + h);
     vmesa->scissorRect.x2 = x + w;
     vmesa->scissorRect.y2 = vmesa->driDrawable->h - y;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
 }
 
 
 static void viaLogicOp(GLcontext *ctx, GLenum opcode)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (VIA_DEBUG) fprintf(stderr, "opcode = %x\n", opcode);
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 /* Fallback to swrast for select and feedback.
@@ -237,22 +221,16 @@ static void viaLogicOp(GLcontext *ctx, GLenum opcode)
 static void viaRenderMode(GLcontext *ctx, GLenum mode)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     FALLBACK(vmesa, VIA_FALLBACK_RENDERMODE, (mode != GL_RENDER));
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
 static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (mode == GL_FRONT) {
         VIA_FIREVERTICES(vmesa);
         VIA_STATECHANGE(vmesa, VIA_UPLOAD_BUFFERS);
@@ -279,9 +257,7 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
         return;
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
@@ -478,7 +454,6 @@ static void viaDepthRange(GLcontext *ctx,
 
 void viaPrintDirty(const char *msg, GLuint state)
 {
-#ifdef DEBUG
     if (VIA_DEBUG)
 	fprintf(stderr, "%s (0x%x): %s%s%s%s\n",
             msg,
@@ -488,7 +463,6 @@ void viaPrintDirty(const char *msg, GLuint state)
             (state & VIA_UPLOAD_CTX)    ? "upload-ctx, " : "",
             (state & VIA_UPLOAD_BUFFERS)    ? "upload-bufs, " : ""
             );
-#endif
 }
 
 
@@ -556,18 +530,13 @@ void viaChooseTextureState(GLcontext *ctx)
     struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
     /*=* John Sheng [2003.7.18] texture combine *=*/
 
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif    
     if (texUnit0->_ReallyEnabled || texUnit1->_ReallyEnabled) {
-#ifdef DEBUG
 	if (VIA_DEBUG) {
 	    fprintf(stderr, "Texture._ReallyEnabled - in\n");    
 	    fprintf(stderr, "texUnit0->_ReallyEnabled = %x\n",texUnit0->_ReallyEnabled);
 	}
-#endif
 
-#ifdef DEBUG
 	if (VIA_DEBUG) {
             struct gl_texture_object *texObj0 = texUnit0->_Current;
             struct gl_texture_object *texObj1 = texUnit1->_Current;
@@ -580,16 +549,13 @@ void viaChooseTextureState(GLcontext *ctx)
 	    if ( (texObj1 != NULL) && (texObj1->Image[0][0] != NULL) )
 	      fprintf(stderr, "format 1: 0x%04x\n", texObj1->Image[0][0]->Format);
 	}
-#endif
 
 
         if (texUnit0->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit0->_Current;
             struct gl_texture_image *texImage = texObj->Image[0][0];
 
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "texUnit0->_ReallyEnabled\n");    
-#endif            
             if (texImage->Border) {
                 FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
                 return;
@@ -643,9 +609,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	    vmesa->regHTXnMPMD_0 |= get_wrap_mode( texObj->WrapS,
 						   texObj->WrapT );
 
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "texUnit0->EnvMode %x\n",texUnit0->EnvMode);    
-#endif
 
 	    viaTexCombineState( vmesa, texUnit0->_CurrentCombine, 0 );
         }
@@ -714,7 +678,6 @@ void viaChooseTextureState(GLcontext *ctx)
         }
         vmesa->dirty |= VIA_UPLOAD_TEXTURE;
 	
-#ifdef DEBUG
 	if (VIA_DEBUG) {
 	    fprintf( stderr, "Csat_0 / Cop_0 = 0x%08x / 0x%08x\n",
 		     vmesa->regHTXnTBLCsat_0, vmesa->regHTXnTBLCop_0 );
@@ -727,7 +690,6 @@ void viaChooseTextureState(GLcontext *ctx)
 	    fprintf( stderr, "RCbias_0      = 0x%08x\n",
 		     vmesa->regHTXnTBLRCbias_0 );
 	}
-#endif
     }
     else {
 	if (ctx->Fog.Enabled)
@@ -737,9 +699,7 @@ void viaChooseTextureState(GLcontext *ctx)
         vmesa->regEnable &= (~(HC_HenTXMP_MASK | HC_HenTXCH_MASK | HC_HenTXPP_MASK));
         vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
     
 }
 
@@ -752,9 +712,7 @@ void viaChooseColorState(GLcontext *ctx)
     /* The HW's blending equation is:
      * (Ca * FCa + Cbias + Cb * FCb) << Cshift
      */
-#ifdef DEBUG
      if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 
     if (ctx->Color.BlendEnabled) {
         vmesa->regEnable |= HC_HenABL_MASK;
@@ -1039,9 +997,7 @@ void viaChooseColorState(GLcontext *ctx)
     else
         vmesa->regEnable &= (~HC_HenAW_MASK);
     vmesa->dirty |= VIA_UPLOAD_ENABLE;  
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaChooseFogState(GLcontext *ctx) 
@@ -1180,9 +1136,7 @@ void viaChoosePolygonState(GLcontext *ctx)
 void viaChooseStencilState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
     
     if (ctx->Stencil.Enabled) {
         GLuint temp;
@@ -1265,9 +1219,7 @@ void viaChooseStencilState(GLcontext *ctx)
         vmesa->regEnable &= ~HC_HenST_MASK;
         vmesa->dirty |= VIA_UPLOAD_ENABLE;
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaChoosePoint(GLcontext *ctx) 
@@ -1283,17 +1235,15 @@ void viaChooseLine(GLcontext *ctx)
 void viaChooseTriangle(GLcontext *ctx) 
 {       
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-    
-    if (VIA_DEBUG) fprintf(stderr, "GL_CULL_FACE = %x\n", GL_CULL_FACE);    
-    if (VIA_DEBUG) fprintf(stderr, "ctx->Polygon.CullFlag = %x\n", ctx->Polygon.CullFlag);    
-    
-    if (VIA_DEBUG) fprintf(stderr, "GL_FRONT = %x\n", GL_FRONT);    
-    if (VIA_DEBUG) fprintf(stderr, "ctx->Polygon.CullFaceMode = %x\n", ctx->Polygon.CullFaceMode);    
-    if (VIA_DEBUG) fprintf(stderr, "GL_CCW = %x\n", GL_CCW);    
-    if (VIA_DEBUG) fprintf(stderr, "ctx->Polygon.FrontFace = %x\n", ctx->Polygon.FrontFace);    
-#endif
+    if (VIA_DEBUG) {
+       fprintf(stderr, "%s - in\n", __FUNCTION__);        
+       fprintf(stderr, "GL_CULL_FACE = %x\n", GL_CULL_FACE);    
+       fprintf(stderr, "ctx->Polygon.CullFlag = %x\n", ctx->Polygon.CullFlag);       
+       fprintf(stderr, "GL_FRONT = %x\n", GL_FRONT);    
+       fprintf(stderr, "ctx->Polygon.CullFaceMode = %x\n", ctx->Polygon.CullFaceMode);    
+       fprintf(stderr, "GL_CCW = %x\n", GL_CCW);    
+       fprintf(stderr, "ctx->Polygon.FrontFace = %x\n", ctx->Polygon.FrontFace);    
+    }
     if (ctx->Polygon.CullFlag == GL_TRUE) {
         switch (ctx->Polygon.CullFaceMode) {
         case GL_FRONT:
@@ -1312,9 +1262,7 @@ void viaChooseTriangle(GLcontext *ctx)
             return;
         }
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaChooseState(GLcontext *ctx, GLuint newState)
@@ -1322,11 +1270,9 @@ static void viaChooseState(GLcontext *ctx, GLuint newState)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     struct gl_texture_unit *texUnit0 = &ctx->Texture.Unit[0];
     struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-    
     if (VIA_DEBUG) fprintf(stderr, "newState = %x\n", newState);        
-#endif    
+
     if (!(newState & (_NEW_COLOR |
                       _NEW_TEXTURE |
                       _NEW_DEPTH |
@@ -1374,9 +1320,7 @@ static void viaChooseState(GLcontext *ctx, GLuint newState)
     
     viaChooseTriangle(ctx);
             
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
-#endif
 }
 
 static void viaInvalidateState(GLcontext *ctx, GLuint newState)

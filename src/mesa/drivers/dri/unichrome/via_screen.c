@@ -69,9 +69,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 
 
     /* Allocate the private area */
@@ -95,7 +93,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 #ifdef USE_XINERAMA
     viaScreen->drixinerama = gDRIPriv->drixinerama;
 #endif
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "deviceID = %08x\n", viaScreen->deviceID);
 	fprintf(stderr, "width = %08x\n", viaScreen->width);	
@@ -103,7 +100,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	fprintf(stderr, "cpp = %08x\n", viaScreen->cpp);	
 	fprintf(stderr, "fbOffset = %08x\n", viaScreen->fbOffset);	
     }
-#endif
     /* DBG */
     /*
     if (gDRIPriv->bitsPerPixel == 15)
@@ -145,9 +141,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	viaScreen->agpLinearStart = 0;
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
     return GL_TRUE;
 }
 
@@ -156,15 +150,11 @@ viaDestroyScreen(__DRIscreenPrivate *sPriv)
 {
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     drmUnmap(viaScreen->reg, gDRIPriv->regs.size);
     if (gDRIPriv->agp.size)
         drmUnmap(viaScreen->agpLinearStart, gDRIPriv->agp.size);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);	
-#endif    
     FREE(viaScreen);
     sPriv->private = NULL;
 }
@@ -176,9 +166,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 GLboolean isPixmap)
 {
     viaContextPtr vmesa = current_mesa;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif    
     /*=* John Sheng [2003.7.2] for visual config & patch viewperf *=*/
     if (mesaVis->depthBits == 32 && vmesa->depthBits == 16) {
 	vmesa->depthBits = mesaVis->depthBits;
@@ -204,9 +192,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                                      GL_FALSE 	/* s/w alpha planes */);
 
 	if (vmesa) vmesa->drawType = GLX_PBUFFER_BIT;
-#ifdef DEBUG    
         if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);				     
-#endif	
         return (driDrawPriv->driverPrivate != NULL);
     }
     else {
@@ -218,9 +204,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                                      GL_FALSE 	/* s/w alpha planes */);
 	
 	if (vmesa) vmesa->drawType = GLX_WINDOW_BIT;
-#ifdef DEBUG    
         if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);				     
-#endif	
         return (driDrawPriv->driverPrivate != NULL);
    }
 }
@@ -229,13 +213,9 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 static void
 viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     _mesa_destroy_framebuffer((GLframebuffer *)(driDrawPriv->driverPrivate));
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 

@@ -427,7 +427,13 @@ extern hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
     } while (0)
 
 
+#ifdef DEBUG
 extern GLuint VIA_DEBUG;
+#else
+#define VIA_DEBUG 0
+#endif
+
+
 extern GLuint DRAW_FRONT;
 extern void viaGetLock(viaContextPtr vmesa, GLuint flags);
 extern void viaLock(viaContextPtr vmesa, GLuint flags);

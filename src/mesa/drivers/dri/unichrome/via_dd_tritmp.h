@@ -76,9 +76,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
     GLuint facing;
     LOCAL_VARS(3);
 
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -293,9 +291,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
         }
     }
     SET_PRIMITIVE_RENDERED  
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 #endif
 
@@ -311,9 +307,7 @@ static void TAG(quad)(GLcontext *ctx,
     GLenum mode = GL_FILL;
     GLuint facing;
     LOCAL_VARS(4);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif        
@@ -553,17 +547,13 @@ static void TAG(quad)(GLcontext *ctx,
 	    VERT_RESTORE_IND(2);
         }
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 #else
 static void TAG(quad)(GLcontext *ctx, GLuint e0,
 		      GLuint e1, GLuint e2, GLuint e3)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -582,9 +572,7 @@ static void TAG(quad)(GLcontext *ctx, GLuint e0,
         TAG(triangle)(ctx, e0, e1, e3);
         TAG(triangle)(ctx, e1, e2, e3);
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 #endif
 #endif
@@ -595,9 +583,7 @@ static void TAG(line)(GLcontext *ctx, GLuint e0, GLuint e1)
     struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
     VERTEX *v[2];
     LOCAL_VARS(2);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -634,9 +620,7 @@ static void TAG(line)(GLcontext *ctx, GLuint e0, GLuint e1)
         }
     }
     SET_PRIMITIVE_RENDERED   
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 #endif
 
@@ -646,9 +630,7 @@ static void TAG(points)(GLcontext *ctx, GLuint first, GLuint last)
     struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
     int i;
     LOCAL_VARS(1);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -671,9 +653,7 @@ static void TAG(points)(GLcontext *ctx, GLuint first, GLuint last)
 	    }
         }
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 #endif
 

@@ -78,9 +78,7 @@ static void __inline__ via_draw_triangle(viaContextPtr vmesa,
     GLuint *vb = viaCheckDma(vmesa, 3 * 4 * vertsize);
     int j;
     
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -89,9 +87,7 @@ static void __inline__ via_draw_triangle(viaContextPtr vmesa,
     COPY_DWORDS(j, vb, vertsize, v2);
     vmesa->dmaLow += 3 * 4 * vertsize;
     vmesa->primitiveRendered = GL_TRUE;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -104,9 +100,7 @@ static void __inline__ via_draw_quad(viaContextPtr vmesa,
     GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, 6 * 4 * vertsize);
     int j;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -118,9 +112,7 @@ static void __inline__ via_draw_quad(viaContextPtr vmesa,
     COPY_DWORDS(j, vb, vertsize, v3);
     vmesa->dmaLow += 6 * 4 * vertsize;
     vmesa->primitiveRendered = GL_TRUE;    
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -132,18 +124,14 @@ static __inline__ void via_draw_point(viaContextPtr vmesa,
     /*GLuint *vb = viaCheckDma(vmesa, 2 * 4 * vertsize);*/
     GLuint *vb = viaCheckDma(vmesa, 4 * vertsize);
     int j;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif
     COPY_DWORDS(j, vb, vertsize, v0);
     vmesa->dmaLow += 4 * vertsize;
     vmesa->primitiveRendered = GL_TRUE;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -158,9 +146,7 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
     GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, 2 * 4 * vertsize);
     int j;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -168,9 +154,7 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
     COPY_DWORDS(j, vb, vertsize, v1);
     vmesa->dmaLow += 2 * 4 * vertsize;
     vmesa->primitiveRendered = GL_TRUE;    
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -585,9 +569,7 @@ static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -600,27 +582,21 @@ static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                                                    PRIM_BEGIN|PRIM_END);
         VB->Elts = tmp;
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);	
-#endif
 }
 
 static void viaRenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif    
     vmesa->primitiveRendered = GL_TRUE;
     
     tnl->Driver.Render.Line(ctx, ii, jj);
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
@@ -635,9 +611,7 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
     GLuint *temp1;
     GLuint *temp2;
     int i,j;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -655,16 +629,12 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 	temp1 = (GLuint *)V(elts[i - 1]);
 	COPY_DWORDS(j, vb, vertsize, start);	
 	temp2 = (GLuint *)V(elts[i]);
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "start = %d -  x = %f, y = %f, z = %f, w = %f, u = %f, v = %f\n", elts[0], *(GLfloat *)&start[0], *(GLfloat *)&start[1], *(GLfloat *)&start[2], *(GLfloat *)&start[3], *(GLfloat *)&start[6], *(GLfloat *)&start[7]);
 	if (VIA_DEBUG) fprintf(stderr, "%d -  x = %f, y = %f, z = %f, w = %f, u = %f, v = %f\n", elts[i - 1], *(GLfloat *)&temp1[0], *(GLfloat *)&temp1[1], *(GLfloat *)&temp1[2], *(GLfloat *)&temp1[3], *(GLfloat *)&temp1[6], *(GLfloat *)&temp1[7]);
 	if (VIA_DEBUG) fprintf(stderr, "%d -  x = %f, y = %f, z = %f, w = %f, u = %f, v = %f\n", elts[i], *(GLfloat *)&temp2[0], *(GLfloat *)&temp2[1], *(GLfloat *)&temp2[2], *(GLfloat *)&temp2[3], *(GLfloat *)&temp2[6], *(GLfloat *)&temp2[7]);	
-#endif
     }
     vmesa->dmaLow += (n - 2) * 3 * 4 * vertsize;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 /**********************************************************************/
@@ -694,11 +664,9 @@ static void viaChooseRenderState(GLcontext *ctx)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint flags = ctx->_TriangleCaps;
     GLuint index = 0;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     
     if (VIA_DEBUG) fprintf(stderr, "_TriangleCaps = %x\n", flags);    
-#endif
     if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
         if (flags & ANY_RASTER_FLAGS) {
             if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= VIA_TWOSIDE_BIT;
@@ -725,21 +693,17 @@ static void viaChooseRenderState(GLcontext *ctx)
             index |= VIA_FALLBACK_BIT;
         }
     }
-#ifdef DEBUG
     if (VIA_DEBUG) {
 	fprintf(stderr, "index = %x\n", index);    
 	fprintf(stderr, "renderIndex = %x\n", vmesa->renderIndex);
     }	
-#endif
     if (vmesa->renderIndex != index) {
         vmesa->renderIndex = index;
 
         tnl->Driver.Render.Points = rast_tab[index].points;
         tnl->Driver.Render.Line = rast_tab[index].line;
         tnl->Driver.Render.Triangle = rast_tab[index].triangle;
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "tnl->Driver.Render.xxx = rast_tab[index].xxx = %x\n", (unsigned int)tnl->Driver.Render.Triangle);
-#endif
         tnl->Driver.Render.Quad = rast_tab[index].quad;
 
         if (index == 0) {
@@ -755,9 +719,7 @@ static void viaChooseRenderState(GLcontext *ctx)
             tnl->Driver.Render.ClippedPolygon = viaRenderClippedPoly;
         }
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static const GLenum reducedPrim[GL_POLYGON + 1] = {
@@ -780,9 +742,7 @@ static void emit_all_state(viaContextPtr vmesa)
     GLuint *vb = viaCheckDma(vmesa, 0x110);
     GLuint i = 0;
     GLuint j = 0;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -821,15 +781,11 @@ static void emit_all_state(viaContextPtr vmesa)
 	    /* We haven't support 16bit depth yet */
 	    format = HC_HZWBFM_16;
 	    /*format = HC_HZWBFM_32;*/
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "z format = 16\n");
-#endif
 	}	    
 	else {
 	    format = HC_HZWBFM_32;
-#ifdef DEBUG
 	    if (VIA_DEBUG) fprintf(stderr, "z format = 32\n");
-#endif
 	}
 	    
 	    
@@ -924,9 +880,7 @@ static void emit_all_state(viaContextPtr vmesa)
             *vb++ = (HC_ParaType_Tex << 16) | (HC_SubType_TexGeneral << 24);
 
 	    if (ctx->Texture._EnabledUnits > 1) {
-#ifdef DEBUG
 		if (VIA_DEBUG) fprintf(stderr, "multi texture\n");
-#endif                
 		nDummyValue = (HC_SubA_HTXSMD << 24) | (1 << 3);
                 
 		if (t && t->needClearCache) {
@@ -939,9 +893,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 }
             }
             else {
-#ifdef DEBUG
 		if (VIA_DEBUG) fprintf(stderr, "single texture\n");
-#endif                
 		nDummyValue = (HC_SubA_HTXSMD << 24) | 0;
                 
 		if (t && t->needClearCache) {
@@ -965,12 +917,10 @@ static void emit_all_state(viaContextPtr vmesa)
 	    viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
 	    GLuint numLevels = t->lastLevel - t->firstLevel + 1;
 	    GLuint nDummyValue = 0;
-#ifdef DEBUG
 	    if (VIA_DEBUG) {
 		fprintf(stderr, "texture0 enabled\n");
 		fprintf(stderr, "texture level %d\n", t->actualLevel);
 	    }		
-#endif	    
             if (numLevels == 8) {
                 nDummyValue = t->regTexFM;
                 *vb++ = HC_HEADER2;
@@ -1097,12 +1047,10 @@ static void emit_all_state(viaContextPtr vmesa)
 	    viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
 	    GLuint numLevels = t->lastLevel - t->firstLevel + 1;
 	    GLuint nDummyValue = 0;
-#ifdef DEBUG
 	    if (VIA_DEBUG) {
 		fprintf(stderr, "texture1 enabled\n");
 		fprintf(stderr, "texture level %d\n", t->actualLevel);
 	    }		
-#endif	    
             if (numLevels == 8) {
                 nDummyValue = t->regTexFM;
                 *vb++ = HC_HEADER2;
@@ -1270,9 +1218,7 @@ static void emit_all_state(viaContextPtr vmesa)
     vmesa->dmaLow += (i << 2);
 
     vmesa->dirty = 0;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -1283,9 +1229,7 @@ static void emit_partial_state(viaContextPtr vmesa)
     GLuint *vb = viaCheckDma(vmesa, 0x110);
     GLuint i = 0;
 
-#ifdef DEBUG    
     if( VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif    
 
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M;
@@ -1367,9 +1311,7 @@ static void emit_partial_state(viaContextPtr vmesa)
     vmesa->dmaLow += (i << 2);
 
     vmesa->dirty = 0;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif    
 }
 
 /**********************************************************************/
@@ -1388,24 +1330,18 @@ static void viaRenderPrimitive(GLcontext *ctx, GLenum prim)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint rprim = reducedPrim[prim];
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif    
     vmesa->renderPrimitive = prim;
     viaRasterPrimitive(ctx, rprim, rprim);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void viaRunPipeline(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
     
     if (VIA_DEBUG) fprintf(stderr, "newState = %x\n", vmesa->newState);        
-#endif
     
     if (vmesa->newState) {
         if (vmesa->newState & _NEW_TEXTURE)
@@ -1422,36 +1358,26 @@ static void viaRunPipeline(GLcontext *ctx)
         emit_partial_state(vmesa);
 
     _tnl_run_pipeline(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
-#endif
 }
 
 static void viaRenderStart(GLcontext *ctx)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
     
     /* Check for projective texturing.  Make sure all texcoord
      * pointers point to something.  (fix in mesa?)
      */
     viaCheckTexSizes(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 static void viaRenderFinish(GLcontext *ctx)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif    
     if (VIA_CONTEXT(ctx)->renderIndex & VIA_FALLBACK_BIT)
         _swrast_flush(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);	
-#endif
 }
 
 
@@ -1465,12 +1391,10 @@ void viaRasterPrimitive(GLcontext *ctx,
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     GLuint *vb = viaCheckDma(vmesa, 32);
     GLuint regCmdB;
-#ifdef DEBUG
     if (VIA_DEBUG) {
 	fprintf(stderr, "%s - in\n", __FUNCTION__);
 	fprintf(stderr, "hwprim = %x\n", hwprim);
     }
-#endif    
     /*=* [DBG] exy : fix wireframe + clipping error *=*/
     if (((rprim == GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED)))) {
 	hwprim = GL_LINES;
@@ -1478,9 +1402,7 @@ void viaRasterPrimitive(GLcontext *ctx,
     
     if (RasterCounter > 0) {
     
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "enter twice:%d\n",RasterCounter);
-#endif
 	RasterCounter++;
 	return;
     }
@@ -1491,26 +1413,20 @@ void viaRasterPrimitive(GLcontext *ctx,
 
     switch (hwprim) {
     case GL_POINTS:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Points\n");
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Point | HC_HVCycle_Full;
         if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatA;
         break;
     case GL_LINES:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Lines\n");    
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_Full;
         if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
         break;
     case GL_LINE_LOOP:
     case GL_LINE_STRIP:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Line Loop / Line Strip\n");
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_AFP |
                              HC_HVCycle_AB | HC_HVCycle_NewB;
         regCmdB |= HC_HVCycle_AB | HC_HVCycle_NewB | HC_HLPrst_MASK;
@@ -1518,17 +1434,13 @@ void viaRasterPrimitive(GLcontext *ctx,
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
         break;
     case GL_TRIANGLES:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Triangles\n");        
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_Full;
         if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
         break;
     case GL_TRIANGLE_STRIP:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Triangle Strip\n");
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
                              HC_HVCycle_AC | HC_HVCycle_BB | HC_HVCycle_NewC;
         regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
@@ -1536,9 +1448,7 @@ void viaRasterPrimitive(GLcontext *ctx,
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
         break;
     case GL_TRIANGLE_FAN:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Triangle Fan\n");
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
                              HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
         regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
@@ -1546,19 +1456,13 @@ void viaRasterPrimitive(GLcontext *ctx,
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
         break;
     case GL_QUADS:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "No HW Quads\n");
-#endif
         return;
     case GL_QUAD_STRIP:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "No HW Quad Strip\n");
-#endif
         return;
     case GL_POLYGON:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Polygon\n");        
-#endif
         vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
                              HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
         regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
@@ -1566,9 +1470,7 @@ void viaRasterPrimitive(GLcontext *ctx,
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
         break;                          
     default:
-#ifdef DEBUG
         if (VIA_DEBUG) fprintf(stderr, "Unknow\n");        
-#endif
         return;
     }
     
@@ -1585,24 +1487,18 @@ void viaRasterPrimitive(GLcontext *ctx,
     
     vmesa->reducedPrimitive = rprim;
     vmesa->hwPrimitive = rprim;    
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 void viaRasterPrimitiveFinish(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     
     if (VIA_DEBUG) fprintf(stderr, "primitiveRendered = %x\n", vmesa->primitiveRendered);    
-#endif    
     if (RasterCounter > 1) {
 	RasterCounter--;
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "finish enter twice: %d\n",RasterCounter);
-#endif
 	return;
     }
     RasterCounter = 0;
@@ -1646,9 +1542,7 @@ void viaRasterPrimitiveFinish(GLcontext *ctx)
 	}
 #endif
     }	
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -1662,17 +1556,13 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
     GLcontext *ctx = vmesa->glCtx;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     GLuint oldfallback = vmesa->Fallback;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s old %x bit %x mode %d\n", __FUNCTION__,
                    vmesa->Fallback, bit, mode);
-#endif
     
     if (mode) {
         vmesa->Fallback |= bit;
         if (oldfallback == 0) {
-#ifdef DEBUG
             if (VIA_DEBUG) fprintf(stderr, "ENTER FALLBACK\n");
-#endif
 	    VIA_FIREVERTICES(vmesa);
             _swsetup_Wakeup(ctx);
             vmesa->renderIndex = ~0;
@@ -1681,9 +1571,7 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
     else {
         vmesa->Fallback &= ~bit;
         if (oldfallback == bit) {
-#ifdef DEBUG
             if (VIA_DEBUG) fprintf(stderr, "LEAVE FALLBACK\n");
-#endif
 	    tnl->Driver.Render.Start = viaRenderStart;
             tnl->Driver.Render.PrimitiveNotify = viaRenderPrimitive;
             tnl->Driver.Render.Finish = viaRenderFinish;

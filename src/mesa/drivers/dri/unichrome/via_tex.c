@@ -105,9 +105,7 @@ static void viaTexImage1D(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
     viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaTexImage1D - in\n");
-#endif
     if (t) {
         if (level == 0) {
     	    viaSwapOutTexObj(VIA_CONTEXT(ctx), t);
@@ -127,9 +125,7 @@ static void viaTexImage1D(GLcontext *ctx, GLenum target, GLint level,
     _mesa_store_teximage1d(ctx, target, level, internalFormat,
                            width, border, format, type,
                            pixels, packing, texObj, texImage);
-#ifdef DEBUG    		   
     if (VIA_DEBUG) fprintf(stderr, "viaTexImage1D - out\n");
-#endif
 }
 static void viaTexSubImage1D(GLcontext *ctx,
                              GLenum target,
@@ -164,9 +160,7 @@ static void viaTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
     viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaTexImage2D - in\n");
-#endif    
     if (t) {
         if (level == 0) {
     	    viaSwapOutTexObj(VIA_CONTEXT(ctx), t);
@@ -186,9 +180,7 @@ static void viaTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     _mesa_store_teximage2d(ctx, target, level, internalFormat,
                            width, height, border, format, type,
                            pixels, packing, texObj, texImage);
-#ifdef DEBUG    		   
     if (VIA_DEBUG) fprintf(stderr, "viaTexImage2D - out\n");
-#endif
 }
 
 static void viaTexSubImage2D(GLcontext *ctx,
@@ -221,9 +213,7 @@ static void viaTexSubImage2D(GLcontext *ctx,
 static void viaBindTexture(GLcontext *ctx, GLenum target,
                            struct gl_texture_object *texObj)
 {
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaBindTexture - in\n");
-#endif
     if (target == GL_TEXTURE_2D) {
         viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
 
@@ -237,17 +227,13 @@ static void viaBindTexture(GLcontext *ctx, GLenum target,
             texObj->DriverData = t;
         }
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaBindTexture - out\n");
-#endif
 }
 
 static void viaDeleteTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 {
     viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaDeleteTexture - in\n");    
-#endif
     if (t) {
         viaContextPtr vmesa = VIA_CONTEXT(ctx);
         if (vmesa) {
@@ -260,9 +246,7 @@ static void viaDeleteTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	}
         texObj->DriverData = 0;
     }
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaDeleteTexture - out\n");    
-#endif
 
    /* Free mipmap images and the texture object itself */
    _mesa_delete_texture_object(ctx, texObj);
@@ -283,10 +267,8 @@ viaChooseTexFormat(GLcontext *ctx, GLint internalFormat,
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     (void)format;
     (void)type;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
     if (VIA_DEBUG) fprintf(stderr, "internalFormat:%d format:%d\n", internalFormat, format);    
-#endif    
     switch (internalFormat) {
     case 1:
     case GL_LUMINANCE:
@@ -307,9 +289,7 @@ viaChooseTexFormat(GLcontext *ctx, GLint internalFormat,
     case GL_R3_G3_B2:	
     case GL_RGB4:    
     case GL_RGB5:
-#ifdef DEBUG    
 	if (VIA_DEBUG) fprintf(stderr, "2 &_mesa_texformat_arg565\n");    
-#endif
         return &_mesa_texformat_rgb565;    
     case 3:
     case GL_RGB:
@@ -318,50 +298,36 @@ viaChooseTexFormat(GLcontext *ctx, GLint internalFormat,
     case GL_RGB12:    
     case GL_RGB16:
 	if (vmesa->viaScreen->bitsPerPixel == 0x20) {
-#ifdef DEBUG    
 	    if (VIA_DEBUG) fprintf(stderr,"3 argb8888\n");
-#endif
 	    return &_mesa_texformat_argb8888;
 	}	    
 	else {
-#ifdef DEBUG    
 	    if (VIA_DEBUG) fprintf(stderr,"3 rgb565\n");	
-#endif
             return &_mesa_texformat_rgb565;
 	}
     case 4:
 	if (vmesa->viaScreen->bitsPerPixel == 0x20) {
-#ifdef DEBUG    
 	    if (VIA_DEBUG) fprintf(stderr, "4 &_mesa_texformat_argb8888\n");
-#endif
     	    return &_mesa_texformat_argb8888;
 	}
 	else {
-#ifdef DEBUG    
 	    if (VIA_DEBUG) fprintf(stderr, "4 &_mesa_texformat_argb4444\n");
-#endif
     	    return &_mesa_texformat_argb4444;		    
 	}
     case GL_RGBA2:    
     case GL_RGBA4:	    
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "GL_RGBA4 &_mesa_texformat_argb4444\n");    
-#endif
         return &_mesa_texformat_argb4444;
 
     case GL_RGB5_A1:
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "GL_RGB5_A1 &_mesa_texformat_argb1555\n");
-#endif
         return &_mesa_texformat_argb1555;    
     case GL_RGBA:
     case GL_RGBA8:
     case GL_RGBA12:
     case GL_RGBA16:    
     case GL_RGB10_A2:
-#ifdef DEBUG
 	if (VIA_DEBUG) fprintf(stderr, "GL_RGBA &_mesa_texformat_argb8888\n");
-#endif
         return &_mesa_texformat_argb8888;
     case GL_ALPHA:	
     case GL_ALPHA4:    	
@@ -391,9 +357,7 @@ viaChooseTexFormat(GLcontext *ctx, GLint internalFormat,
 
 void viaInitTextureFuncs(struct dd_function_table * functions)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "viaInitTextureFuncs - in\n");
-#endif    
     functions->TexEnv = viaTexEnv;
     functions->ChooseTextureFormat = viaChooseTexFormat;
     functions->TexImage1D = viaTexImage1D;
@@ -416,9 +380,7 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
     functions->IsTextureResident = viaIsTextureResident;
     functions->TestProxyTexImage = _mesa_test_proxy_teximage;
 
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "viaInitTextureFuncs - out\n");
-#endif
 }
 
 void viaInitTextures(GLcontext *ctx)

@@ -77,9 +77,7 @@ static void TAG(render_points_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_POINTS) {
         LOCAL_VARS;
         int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
@@ -102,9 +100,7 @@ static void TAG(render_points_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 static void TAG(render_lines_verts)(GLcontext *ctx,
@@ -115,9 +111,7 @@ static void TAG(render_lines_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_LINES) {
         LOCAL_VARS;
         int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
@@ -146,9 +140,7 @@ static void TAG(render_lines_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -160,9 +152,7 @@ static void TAG(render_line_strip_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_LINE_STRIPS) {
         LOCAL_VARS;
         int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
@@ -185,9 +175,7 @@ static void TAG(render_line_strip_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -199,9 +187,7 @@ static void TAG(render_line_loop_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_LINE_STRIPS) {
         LOCAL_VARS;
         int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
@@ -237,9 +223,7 @@ static void TAG(render_line_loop_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -252,9 +236,7 @@ static void TAG(render_triangles_verts)(GLcontext *ctx,
     int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS() / 3) * 3;
     int currentsz = (GET_CURRENT_VB_MAX_VERTS() / 3) * 3;
     GLuint j, nr;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif    
@@ -274,9 +256,7 @@ static void TAG(render_triangles_verts)(GLcontext *ctx,
          currentsz = dmasz;
      }
      FINISH;
-#ifdef DEBUG
      if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -288,9 +268,7 @@ static void TAG(render_tri_strip_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_TRI_STRIPS) {
         LOCAL_VARS;
         GLuint j, nr;
@@ -320,9 +298,7 @@ static void TAG(render_tri_strip_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 static void TAG(render_tri_fan_verts)(GLcontext *ctx,
@@ -330,9 +306,7 @@ static void TAG(render_tri_fan_verts)(GLcontext *ctx,
                                       GLuint count,
                                       GLuint flags)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif    
@@ -364,9 +338,7 @@ static void TAG(render_tri_fan_verts)(GLcontext *ctx,
          */
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -378,9 +350,7 @@ static void TAG(render_poly_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_POLYGONS) {
         LOCAL_VARS;
         GLuint j, nr;
@@ -409,9 +379,7 @@ static void TAG(render_poly_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 static void TAG(render_quad_strip_verts)(GLcontext *ctx,
@@ -423,9 +391,7 @@ static void TAG(render_quad_strip_verts)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-#endif
     if (HAVE_QUAD_STRIPS) {
         LOCAL_VARS;
         GLuint j, nr;
@@ -483,9 +449,7 @@ static void TAG(render_quad_strip_verts)(GLcontext *ctx,
     else {
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
-#endif
 }
 
 
@@ -494,9 +458,7 @@ static void TAG(render_quads_verts)(GLcontext *ctx,
                                     GLuint count,
                                     GLuint flags)
 {
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE
     if (VIA_PERFORMANCE) P_M_X;
 #endif    
@@ -566,9 +528,7 @@ static void TAG(render_quads_verts)(GLcontext *ctx,
          */
         VERT_FALLBACK(ctx, start, count, flags);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_noop)(GLcontext *ctx,

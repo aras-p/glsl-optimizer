@@ -131,9 +131,7 @@ static void TAG(emit)(GLcontext *ctx,
     const GLubyte *mask = VB->ClipMask;
     int i;
 
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "TAG-emit for HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICE\n");
-#endif    
     
     if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
         (void) s;
@@ -352,12 +350,10 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
     (void) s;
 
     /*ASSERT(stride == 4);*/
-#ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "TAG-emit for DO_XYZW\n");
 	fprintf(stderr, "%s\n", __FUNCTION__);	
     }	
-#endif
 
     col = VB->ColorPtr[0]->data;
     col_stride = VB->ColorPtr[0]->stride;
@@ -396,12 +392,10 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
     GLuint col_stride;
     GLfloat *v = (GLfloat *)dest;
     int i;
-#ifdef DEBUG
     if (VIA_DEBUG) {
 	fprintf(stderr, "TAG-emit for No DO_XYZW\n");
 	fprintf(stderr, "%s\n", __FUNCTION__);
     }
-#endif	
 
     if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
         IMPORT_FLOAT_COLORS( ctx );
@@ -446,9 +440,7 @@ static GLboolean TAG(check_tex_sizes)(GLcontext *ctx)
 
     /* Force 'missing' texcoords to something valid.
      */
-#ifdef DEBUG
-    fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
+    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
         VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
 
@@ -466,9 +458,7 @@ static GLboolean TAG(check_tex_sizes)(GLcontext *ctx)
         (DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4) ||
         (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4))
         return GL_FALSE;
-#ifdef DEBUG
-    fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
+    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
     return GL_TRUE;
 }
 #else
@@ -528,9 +518,7 @@ static void TAG(interp)(GLcontext *ctx,
     VERTEX *out = (VERTEX *)(ddverts + (eout << shift));
 
     (void)s;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
     if (HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
         VIEWPORT_X(dst->v.x, dstclip[0]);
         VIEWPORT_Y(dst->v.y, dstclip[1]);
@@ -631,9 +619,7 @@ static void TAG(interp)(GLcontext *ctx,
         INTERP_UB(t, dst->ub4[3][2], out->ub4[3][2], in->ub4[3][2]);
         INTERP_UB(t, dst->ub4[3][3], out->ub4[3][3], in->ub4[3][3]);
     }
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 #endif /* rgba && xyzw */

@@ -122,9 +122,7 @@ TAG(clip_line)(GLcontext *ctx, GLuint i, GLuint j, GLubyte mask)
     tnl_interp_func interp = tnl->Driver.Render.Interp;
     GLfloat (*coord)[4] = VB->ClipPtr->data;
     GLuint ii = i, jj = j, p;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -155,9 +153,7 @@ TAG(clip_line)(GLcontext *ctx, GLuint i, GLuint j, GLubyte mask)
         tnl->Driver.Render.CopyPV(ctx, jj, j);
 
     tnl->Driver.Render.ClippedLine(ctx, ii, jj);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 
@@ -232,9 +228,7 @@ TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
     GLuint p;
     GLubyte *clipmask = VB->ClipMask;
     GLuint n = 4;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -271,9 +265,7 @@ TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
     }
 
     tnl->Driver.Render.ClippedPolygon(ctx, inlist, n);
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 #undef W

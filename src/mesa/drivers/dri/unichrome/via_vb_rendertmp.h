@@ -105,9 +105,7 @@ static void TAG(render_line_strip)(GLcontext *ctx,
     GLuint j;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif
@@ -122,9 +120,7 @@ static void TAG(render_line_strip)(GLcontext *ctx,
         RENDER_LINE(ELT(j - 1), ELT(j));
 
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_line_loop)(GLcontext *ctx,
@@ -135,9 +131,7 @@ static void TAG(render_line_loop)(GLcontext *ctx,
     GLuint i;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -160,9 +154,7 @@ static void TAG(render_line_loop)(GLcontext *ctx,
     }
 
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_triangles)(GLcontext *ctx,
@@ -173,9 +165,7 @@ static void TAG(render_triangles)(GLcontext *ctx,
     GLuint j;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -194,9 +184,7 @@ static void TAG(render_triangles)(GLcontext *ctx,
         }
     }
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 static void TAG(render_tri_strip)(GLcontext *ctx,
@@ -207,9 +195,7 @@ static void TAG(render_tri_strip)(GLcontext *ctx,
     GLuint j;
     GLuint parity = 0;
     LOCAL_VARS;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -241,9 +227,7 @@ static void TAG(render_tri_strip)(GLcontext *ctx,
         }
     }
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_tri_fan)(GLcontext *ctx,
@@ -254,9 +238,7 @@ static void TAG(render_tri_fan)(GLcontext *ctx,
     GLuint j;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -290,9 +272,7 @@ static void TAG(render_tri_fan)(GLcontext *ctx,
     }
     
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-#endif
 }
 
 static void TAG(render_poly)(GLcontext *ctx,
@@ -303,9 +283,7 @@ static void TAG(render_poly)(GLcontext *ctx,
     GLuint j = start + 2;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -370,9 +348,7 @@ static void TAG(render_poly)(GLcontext *ctx,
         }
     }
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_quads)(GLcontext *ctx,
@@ -383,9 +359,7 @@ static void TAG(render_quads)(GLcontext *ctx,
     GLuint j;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -404,9 +378,7 @@ static void TAG(render_quads)(GLcontext *ctx,
         }
     }
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_quad_strip)(GLcontext *ctx,
@@ -417,9 +389,7 @@ static void TAG(render_quad_strip)(GLcontext *ctx,
     GLuint j;
     LOCAL_VARS;
     (void)flags;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#endif
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
@@ -453,9 +423,7 @@ static void TAG(render_quad_strip)(GLcontext *ctx,
         }
     }
     POSTFIX;
-#ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-#endif
 }
 
 static void TAG(render_noop)(GLcontext *ctx,
