@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.15 2000/04/11 20:42:22 brianp Exp $ */
+/* $Id: stencil.c,v 1.16 2000/04/11 21:26:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -542,9 +542,9 @@ do_stencil_test( GLcontext *ctx, GLuint n, GLstencil stencil[],
  * 
  */
 static GLboolean
-stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                             const GLdepth z[], GLstencil stencil[],
-                             GLubyte mask[] )
+stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                        const GLdepth z[], GLstencil stencil[],
+                        GLubyte mask[] )
 {
    ASSERT(ctx->Stencil.Enabled);
    ASSERT(n <= PB_SIZE);
@@ -625,8 +625,8 @@ stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * 
  */
 GLboolean
-gl_stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                                const GLdepth z[], GLubyte mask[] )
+_mesa_stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                              const GLdepth z[], GLubyte mask[] )
 {
    GLstencil stencilRow[MAX_WIDTH];
    GLstencil *stencil;
@@ -648,7 +648,7 @@ gl_stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
 
    /* do all the stencil/depth testing/updating */
-   result = stencil_and_depth_test_span( ctx, n, x, y, z, stencil, mask );
+   result = stencil_and_ztest_span( ctx, n, x, y, z, stencil, mask );
 
    if (ctx->Driver.WriteStencilSpan) {
       /* Write updated stencil values into hardware stencil buffer */
@@ -1017,7 +1017,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint n,
  * This is used both for software and hardware stencil buffers.
  *
  * The comments in this function are a bit sparse but the code is
- * almost identical to stencil_and_depth_test_span(), which is well
+ * almost identical to stencil_and_ztest_span(), which is well
  * commented.
  * 
  * Input:  n - number of pixels in the array
@@ -1029,9 +1029,9 @@ stencil_test_pixels( GLcontext *ctx, GLuint n,
  *         GL_FALSE - one or more fragments passed the testing
  */
 GLboolean
-gl_stencil_and_depth_test_pixels( GLcontext *ctx,
-                                  GLuint n, const GLint x[], const GLint y[],
-                                  const GLdepth z[], GLubyte mask[] )
+_mesa_stencil_and_ztest_pixels( GLcontext *ctx,
+                                GLuint n, const GLint x[], const GLint y[],
+                                const GLdepth z[], GLubyte mask[] )
 {
    ASSERT(ctx->Stencil.Enabled);
    ASSERT(n <= PB_SIZE);
@@ -1225,7 +1225,8 @@ _mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
  * Allocate a new stencil buffer.  If there's an old one it will be
  * deallocated first.  The new stencil buffer will be uninitialized.
  */
-void gl_alloc_stencil_buffer( GLcontext *ctx )
+void
+_mesa_alloc_stencil_buffer( GLcontext *ctx )
 {
    GLuint buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
 
@@ -1240,7 +1241,7 @@ void gl_alloc_stencil_buffer( GLcontext *ctx )
    if (!ctx->DrawBuffer->Stencil) {
       /* out of memory */
       _mesa_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE );
-      gl_error( ctx, GL_OUT_OF_MEMORY, "gl_alloc_stencil_buffer" );
+      gl_error( ctx, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
    }
 }
 
@@ -1412,7 +1413,8 @@ clear_hardware_stencil_buffer( GLcontext *ctx )
 /*
  * Clear the stencil buffer.
  */
-void gl_clear_stencil_buffer( GLcontext *ctx )
+void
+_mesa_clear_stencil_buffer( GLcontext *ctx )
 {
    if (ctx->Driver.WriteStencilSpan) {
       ASSERT(ctx->Driver.ReadStencilSpan);

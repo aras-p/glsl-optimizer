@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.4 2000/04/05 14:40:04 brianp Exp $ */
+/* $Id: buffers.c,v 1.5 2000/04/11 21:26:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -291,10 +291,10 @@ _mesa_Clear( GLbitfield mask )
 
       /* do software clearing here */
       if (newMask) {
-         if (newMask & ctx->Color.DrawDestMask)   clear_color_buffers( ctx );
-         if (newMask & GL_DEPTH_BUFFER_BIT)    _mesa_clear_depth_buffer( ctx );
-         if (newMask & GL_ACCUM_BUFFER_BIT)    _mesa_clear_accum_buffer( ctx );
-         if (newMask & GL_STENCIL_BUFFER_BIT)  gl_clear_stencil_buffer( ctx );
+         if (newMask & ctx->Color.DrawDestMask)   clear_color_buffers(ctx);
+         if (newMask & GL_DEPTH_BUFFER_BIT)    _mesa_clear_depth_buffer(ctx);
+         if (newMask & GL_ACCUM_BUFFER_BIT)    _mesa_clear_accum_buffer(ctx);
+         if (newMask & GL_STENCIL_BUFFER_BIT)  _mesa_clear_stencil_buffer(ctx);
       }
 
       /* clear software-based alpha buffer(s) */
@@ -553,7 +553,7 @@ _mesa_ResizeBuffersMESA( void )
       _mesa_alloc_depth_buffer( ctx );
    }
    if (ctx->DrawBuffer->UseSoftwareStencilBuffer) {
-      gl_alloc_stencil_buffer( ctx );
+      _mesa_alloc_stencil_buffer( ctx );
    }
    if (ctx->DrawBuffer->UseSoftwareAccumBuffer) {
       _mesa_alloc_accum_buffer( ctx );
