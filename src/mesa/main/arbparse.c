@@ -2942,13 +2942,13 @@ parse_float (GLubyte ** inst, struct arb_program *Program)
    denom = 1; 
    while (denom < tmp[2])
       denom *= 10;
-   denom *= _mesa_pow( 10, leading_zeros );
+   denom *= (GLint) _mesa_pow( 10, leading_zeros );
    value += (GLfloat) tmp[2] / (GLfloat) denom;
 #if 0
    if (tmp[0])
       value *= -1;
 #endif
-   value *= _mesa_pow (10, (GLfloat) tmp[3] * (GLfloat) tmp[4]);
+   value *= (GLfloat) _mesa_pow (10, (GLfloat) tmp[3] * (GLfloat) tmp[4]);
 
    return value;
 }
@@ -4503,10 +4503,10 @@ parse_masked_dst_reg (GLcontext * ctx, GLubyte ** inst,
     */
    mask = *(*inst)++;
 
-   WriteMask[0] = (mask & (1 << 3)) >> 3;
-   WriteMask[1] = (mask & (1 << 2)) >> 2;
-   WriteMask[2] = (mask & (1 << 1)) >> 1;
-   WriteMask[3] = (mask & (1));
+   WriteMask[0] = (GLboolean) (mask & (1 << 3)) >> 3;
+   WriteMask[1] = (GLboolean) (mask & (1 << 2)) >> 2;
+   WriteMask[2] = (GLboolean) (mask & (1 << 1)) >> 1;
+   WriteMask[3] = (GLboolean) (mask & (1));
 
    return 0;
 }
