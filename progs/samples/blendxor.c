@@ -19,6 +19,8 @@
 
 GLenum doubleBuffer;
 int dithering = 0;
+int use11ops = 0;
+int supportlogops = 0;
 GLint windW, windH;
 
 static void Init(void)
@@ -50,6 +52,13 @@ static void Key(unsigned char key, int x, int y)
       case 'd':
 	dithering = !dithering;
 	break;
+      case 'l':
+        if (supportlogops == 3)
+           use11ops = (!use11ops);
+        if (use11ops)
+           printf("Using GL 1.1 color logic ops.\n");
+        else printf("Using GL_EXT_blend_logic_op.\n");
+        break;
       default:
 	return;
     }
@@ -62,6 +71,8 @@ static void Draw(void)
     int i;
 
     glDisable(GL_BLEND);
+    if (supportlogops & 2)
+       glDisable(GL_COLOR_LOGIC_OP);
 
     (dithering) ? glEnable(GL_DITHER) : glDisable(GL_DITHER);
 
@@ -83,7 +94,10 @@ static void Draw(void)
     glEnd();
 
     glEnable(GL_BLEND);
-    glBlendEquationEXT(GL_LOGIC_OP);
+    if (!use11ops)
+       glBlendEquationEXT(GL_LOGIC_OP);
+    else
+       glEnable(GL_COLOR_LOGIC_OP);
     glLogicOp(GL_XOR);
 
     /* Draw a set of rectangles across the window */
@@ -142,6 +156,7 @@ int main(int argc, char **argv)
     GLenum type;
     char *s;
     char *extName = "GL_EXT_blend_logic_op";
+    char *version;
 
     glutInit(&argc, argv);
 
@@ -161,10 +176,21 @@ int main(int argc, char **argv)
 
     /* Make sure blend_logic_op extension is there. */
     s = (char *) glGetString(GL_EXTENSIONS);
+    version = (char*) glGetString(GL_VERSION);
     if (!s)
 	exit(1);
-    if (strstr(s,extName) == 0) {
-	printf("Blend_logic_op extension is not present.\n");
+    if (strstr(s,extName)) {
+	supportlogops = 1;
+        use11ops = 0;
+        printf("blend_logic_op extension available.\n");
+    }
+    if (strncmp(version,"1.1",3)>=0) {
+    	supportlogops += 2;
+        use11ops = 1;
+	printf("1.1 color logic ops available.\n");
+    }
+    if (supportlogops == 0) {
+    	printf("Blend_logic_op extension and GL 1.1 not present.\n");
 	exit(1);
     }
 
