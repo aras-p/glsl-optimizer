@@ -207,6 +207,11 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    
    if(type<0)return;
 
+   /* A packet cannot have more than 16383 data words.. */
+   if(((end-start)*8+4*rmesa->state.texture.tc_count)>16380){
+   	fprintf(stderr, "%s:%s: Too many vertices to paint. Fix me !\n");
+	return;
+   	}
 
    start_immediate_packet(end-start, type, 8+4*rmesa->state.texture.tc_count);
 
@@ -484,7 +489,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
 		
    #if 1
 	
-   	#if 0
+   	#if 1
         return r300_run_immediate_render(ctx, stage);
 	#else 
         return r300_run_vb_render(ctx, stage);
@@ -584,7 +589,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
 
 	/* One step at a time - let one texture pass.. */
-	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
+	for (i = 2; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
 

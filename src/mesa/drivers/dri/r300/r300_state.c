@@ -964,7 +964,8 @@ void r300_setup_textures(GLcontext *ctx)
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
 			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format, t->base.tObj->Image[0][0]->IntFormat);
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format,
+			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3);
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
