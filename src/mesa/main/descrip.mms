@@ -21,10 +21,6 @@ SOURCES =accum.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
-	arbparse.c \
-	arbfragparse.c \
-	arbprogram.c \
-	arbvertparse.c \
  	attrib.c \
 	blend.c \
 	bufferobj.c \
@@ -53,15 +49,10 @@ SOURCES =accum.c \
 	light.c \
 	lines.c \
 	matrix.c \
-	nvprogram.c \
-	nvfragparse.c \
-	nvvertexec.c \
-	nvvertparse.c \
 	occlude.c \
 	pixel.c \
 	points.c \
 	polygon.c \
-	program.c \
 	rastpos.c \
 	state.c \
 	stencil.c \
@@ -80,10 +71,6 @@ api_arrayelt.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
-arbparse.obj,\
-arbfragparse.obj,\
-arbprogram.obj,\
-arbvertparse.obj,\
 attrib.obj,\
 blend.obj,\
 bufferobj.obj,\
@@ -112,15 +99,10 @@ imports.obj,\
 light.obj,\
 lines.obj,\
 matrix.obj,\
-nvprogram.obj,\
-nvfragparse.obj,\
-nvvertexec.obj,\
-nvvertparse.obj,\
 occlude.obj,\
 pixel.obj,\
 points.obj,\
 polygon.obj,\
-program.obj,\
 rastpos.obj,\
 state.obj,\
 stencil.obj,\
@@ -153,10 +135,6 @@ api_arrayelt.obj : api_arrayelt.c
 api_loopback.obj : api_loopback.c
 api_noop.obj : api_noop.c
 api_validate.obj : api_validate.c
-arbparse.obj : arbparse.c
-arbfragparse.obj : arbfragparse.c
-arbprogram.obj : arbprogram.c
-arbvertparse.obj : arbvertparse.c
 attrib.obj : attrib.c
 blend.obj : blend.c
 bufferobj.obj : bufferobj.c
@@ -185,15 +163,10 @@ imports.obj : imports.c vsnprintf.c
 light.obj : light.c
 lines.obj : lines.c
 matrix.obj : matrix.c
-nvprogram.obj : nvprogram.c
-nvfragparse.obj : nvfragparse.c
-nvvertexec.obj : nvvertexec.c
-nvvertparse.obj : nvvertparse.c
 occlude.obj : occlude.c
 pixel.obj : pixel.c
 points.obj : points.c
 polygon.obj : polygon.c
-program.obj : program.c
 rastpos.obj : rastpos.c
 state.obj : state.c
 stencil.obj : stencil.c
