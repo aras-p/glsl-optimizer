@@ -1,8 +1,8 @@
-/* $Id: state.h,v 1.2 2000/05/24 15:04:45 brianp Exp $ */
+/* $Id: state.h,v 1.3 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -37,15 +37,17 @@ _mesa_init_no_op_table(struct _glapi_table *exec, GLuint tableSize);
 extern void
 _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize);
 
+extern void
+gl_update_state( GLcontext *ctx );
 
-extern void gl_update_state( GLcontext *ctx );
+extern void
+gl_print_state( const char *msg, GLuint state );
 
+extern void
+gl_print_enable_flags( const char *msg, GLuint flags );
 
-/* for debugging */
-extern void gl_print_state( const char *msg, GLuint state );
-
-/* for debugging */
-extern void gl_print_enable_flags( const char *msg, GLuint flags );
+extern void
+_mesa_update_image_transfer_state(GLcontext *ctx);
 
 
 #endif

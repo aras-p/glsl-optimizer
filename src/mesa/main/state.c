@@ -1,8 +1,8 @@
-/* $Id: state.c,v 1.21 2000/06/30 14:14:37 brianp Exp $ */
+/* $Id: state.c,v 1.22 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -1229,4 +1229,62 @@ void gl_update_state( GLcontext *ctx )
 
    gl_update_pipelines(ctx);
    ctx->NewState = 0;
+}
+
+
+
+
+/*
+ * Return a bitmask of IMAGE_*_BIT flags which to indicate which
+ * pixel transfer operations are enabled.
+ */
+void
+_mesa_update_image_transfer_state(GLcontext *ctx)
+{
+   GLuint mask = 0;
+
+   if (ctx->Pixel.RedScale   != 1.0F || ctx->Pixel.RedBias   != 0.0F ||
+       ctx->Pixel.GreenScale != 1.0F || ctx->Pixel.GreenBias != 0.0F ||
+       ctx->Pixel.BlueScale  != 1.0F || ctx->Pixel.BlueBias  != 0.0F ||
+       ctx->Pixel.AlphaScale != 1.0F || ctx->Pixel.AlphaBias != 0.0F)
+      mask |= IMAGE_SCALE_BIAS_BIT;
+
+   if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset)
+      mask |= IMAGE_SHIFT_OFFSET_BIT;
+   
+   if (ctx->Pixel.MapColorFlag)
+      mask |= IMAGE_MAP_COLOR_BIT;
+
+   if (ctx->Pixel.ColorTableEnabled)
+      mask |= IMAGE_COLOR_TABLE_BIT;
+
+   if (ctx->Pixel.Convolution1DEnabled ||
+       ctx->Pixel.Convolution2DEnabled ||
+       ctx->Pixel.Separable2DEnabled)
+      mask |= IMAGE_CONVOLUTION_BIT;
+
+   if (ctx->Pixel.PostConvolutionColorTableEnabled)
+      mask |= IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT;
+
+   if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+       ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[1]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[2] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[2]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[3] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[3]  != 0.0F)
+      mask |= IMAGE_COLOR_MATRIX_BIT;
+
+   if (ctx->Pixel.PostColorMatrixColorTableEnabled)
+      mask |= IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT;
+
+   if (ctx->Pixel.HistogramEnabled)
+      mask |= IMAGE_HISTOGRAM_BIT;
+
+   if (ctx->Pixel.MinMaxEnabled)
+      mask |= IMAGE_MIN_MAX_BIT;
+
+   ctx->ImageTransferState = mask;
 }

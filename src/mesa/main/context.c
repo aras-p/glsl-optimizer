@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.79 2000/07/19 20:58:59 brianp Exp $ */
+/* $Id: context.c,v 1.80 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1036,7 +1036,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.BlueScale = 1.0;
    ctx->Pixel.AlphaBias = 0.0;
    ctx->Pixel.AlphaScale = 1.0;
-   ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
    ctx->Pixel.DepthBias = 0.0;
    ctx->Pixel.DepthScale = 1.0;
    ctx->Pixel.IndexOffset = 0;
@@ -1283,6 +1282,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->StippleCounter = 0;
    ctx->NeedNormals = GL_FALSE;
    ctx->DoViewportMapping = GL_TRUE;
+   ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 
    ctx->NeedEyeCoords = GL_FALSE;
    ctx->NeedEyeNormals = GL_FALSE;

@@ -1,8 +1,8 @@
-/* $Id: image.c,v 1.35 2000/06/30 22:12:00 brianp Exp $ */
+/* $Id: image.c,v 1.36 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -604,31 +604,23 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
  *         type - dest packing datatype
  *         destination - destination packing address
  *         packing - pixel packing parameters
- *         applyTransferOps - apply scale/bias/lookup-table ops?
+ *         transferOps - bitmask of IMAGE_*_BIT operations to apply
  */
 void
 _mesa_pack_rgba_span( GLcontext *ctx,
                       GLuint n, CONST GLubyte srcRgba[][4],
                       GLenum format, GLenum type, GLvoid *destination,
                       const struct gl_pixelstore_attrib *packing,
-                      GLboolean applyTransferOps )
+                      GLuint transferOps)
 {
-   applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
-                        ctx->Pixel.MapColorFlag ||
-                        ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-                        ctx->Pixel.ScaleOrBiasRGBApcm ||
-                        ctx->Pixel.ColorTableEnabled ||
-                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.PostConvolutionColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled ||
-                        ctx->Pixel.HistogramEnabled);
+   ASSERT(ctx->ImageTransferState != UPDATE_IMAGE_TRANSFER_STATE);
 
    /* Test for optimized case first */
-   if (!applyTransferOps && format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+   if (transferOps == 0 && format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
       /* common simple case */
       MEMCPY( destination, srcRgba, n * 4 * sizeof(GLubyte) );
    }
-   else if (!applyTransferOps && format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+   else if (transferOps == 0 && format == GL_RGB && type == GL_UNSIGNED_BYTE) {
       /* common simple case */
       GLint i;
       GLubyte *dest = (GLubyte *) destination;
@@ -662,49 +654,51 @@ _mesa_pack_rgba_span( GLcontext *ctx,
       /*
        * Apply scale, bias and lookup-tables if enabled.
        */
-      if (applyTransferOps) {
+      if (transferOps) {
          /* scale & bias */
-         if (ctx->Pixel.ScaleOrBiasRGBA) {
+         if (transferOps & IMAGE_SCALE_BIAS_BIT) {
             _mesa_scale_and_bias_rgba( ctx, n, rgba );
          }
          /* color map lookup */
-         if (ctx->Pixel.MapColorFlag) {
+         if (transferOps & IMAGE_MAP_COLOR_BIT) {
             _mesa_map_rgba( ctx, n, rgba );
          }
          /* GL_COLOR_TABLE lookup */
-         if (ctx->Pixel.ColorTableEnabled) {
+         if (transferOps & IMAGE_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
-         /* XXX convolution here */
+         /* convolution */
+         if (transferOps & IMAGE_CONVOLUTION_BIT) {
+            /* XXX to do */
+         }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+         if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
          }
          /* color matrix transform */
-         if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-             ctx->Pixel.ScaleOrBiasRGBApcm) {
+         if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
             _mesa_transform_rgba(ctx, n, rgba);
          }
          /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+         if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
          /* update histogram count */
-         if (ctx->Pixel.HistogramEnabled) {
+         if (transferOps & IMAGE_HISTOGRAM_BIT) {
             _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
-         /* XXX min/max here */
-         if (ctx->Pixel.MinMaxEnabled) {
+         /* min/max here */
+         if (transferOps & IMAGE_MIN_MAX_BIT) {
             _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
             if (ctx->MinMax.Sink)
                return;
          }
       }
 
-      if (format==GL_LUMINANCE || format==GL_LUMINANCE_ALPHA) {
-         for (i=0;i<n;i++) {
+      if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
+         for (i = 0; i < n; i++) {
             GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
-            luminance[i] = CLAMP( sum, 0.0F, 1.0F );
+            luminance[i] = CLAMP(sum, 0.0F, 1.0F);
          }
       }
 
@@ -2130,8 +2124,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 
 /*
  * Unpack a row of color image data from a client buffer according to
- * the pixel unpacking parameters.  Apply any enabled pixel transfer
- * ops (PixelMap, scale/bias) if the applyTransferOps flag is enabled.
+ * the pixel unpacking parameters.
  * Return GLubyte values in the specified dest image format.
  * This is (or will be) used by glDrawPixels and glTexImage?D().
  * Input:  ctx - the context
@@ -2142,7 +2135,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  *         srcType - source image  datatype
  *         source - source image pointer
  *         unpacking - pixel unpacking parameters
- *         applyTransferOps - apply scale/bias/lookup-table ops?
+ *         transferOps - bitmask of IMAGE_*_BIT values of operations to apply
  *
  * XXX perhaps expand this to process whole images someday.
  */
@@ -2152,7 +2145,7 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *unpacking,
-                               GLboolean applyTransferOps )
+                               GLuint transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE || 
@@ -2200,18 +2193,8 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
    /* this is intended for RGBA mode only */
    assert(ctx->Visual->RGBAflag);
 
-   applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
-                        ctx->Pixel.MapColorFlag ||
-                        ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-                        ctx->Pixel.ScaleOrBiasRGBApcm ||
-                        ctx->Pixel.ColorTableEnabled ||
-                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.PostConvolutionColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled ||
-                        ctx->Pixel.HistogramEnabled);
-
    /* Try simple cases first */
-   if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE) {
+   if (transferOps == 0 && srcType == GL_UNSIGNED_BYTE) {
       if (dstFormat == GL_RGBA) {
          if (srcFormat == GL_RGBA) {
             MEMCPY( dest, source, n * 4 * sizeof(GLubyte) );
@@ -2280,13 +2263,11 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               unpacking);
 
-         if (applyTransferOps) {
-            if (ctx->Pixel.MapColorFlag) {
-               _mesa_map_ci(ctx, n, indexes);
-            }
-            if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-               _mesa_shift_and_offset_ci(ctx, n, indexes);
-            }
+         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+            _mesa_map_ci(ctx, n, indexes);
+         }
+         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+            _mesa_shift_and_offset_ci(ctx, n, indexes);
          }
 
          if (dstFormat == GL_COLOR_INDEX) {
@@ -2306,43 +2287,43 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          extract_float_rgba(n, rgba, srcFormat, srcType, source,
                             unpacking->SwapBytes);
 
-         if (applyTransferOps) {
-            /* scale and bias colors */
-            if (ctx->Pixel.ScaleOrBiasRGBA) {
-               _mesa_scale_and_bias_rgba(ctx, n, rgba);
-            }
-            /* color map lookup */
-            if (ctx->Pixel.MapColorFlag) {
-               _mesa_map_rgba(ctx, n, rgba);
-            }
+         /* scale and bias colors */
+         if (transferOps & IMAGE_SCALE_BIAS_BIT) {
+            _mesa_scale_and_bias_rgba(ctx, n, rgba);
+         }
+         /* color map lookup */
+         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+            _mesa_map_rgba(ctx, n, rgba);
          }
       }
 
-      if (applyTransferOps) {
+      if (transferOps) {
          /* GL_COLOR_TABLE lookup */
-         if (ctx->Pixel.ColorTableEnabled) {
+         if (transferOps & IMAGE_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
-         /* XXX convolution here */
+         /* convolution */
+         if (transferOps & IMAGE_CONVOLUTION_BIT) {
+            /* XXX to do */
+         }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+         if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
          }
          /* color matrix transform */
-         if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-             ctx->Pixel.ScaleOrBiasRGBApcm) {
+         if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
             _mesa_transform_rgba(ctx, n, rgba);
          }
          /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+         if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
          /* update histogram count */
-         if (ctx->Pixel.HistogramEnabled) {
+         if (transferOps & IMAGE_HISTOGRAM_BIT) {
             _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
-         /* XXX min/max here */
-         if (ctx->Pixel.MinMaxEnabled) {
+         /* min/max here */
+         if (transferOps & IMAGE_MIN_MAX_BIT) {
             _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
       }
@@ -2471,7 +2452,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *unpacking,
-                               GLboolean applyTransferOps, GLboolean clamp )
+                               GLuint transferOps, GLboolean clamp )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE || 
@@ -2519,16 +2500,6 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
    /* this is intended for RGBA mode only */
    assert(ctx->Visual->RGBAflag);
 
-   applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
-                        ctx->Pixel.MapColorFlag ||
-                        ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-                        ctx->Pixel.ScaleOrBiasRGBApcm ||
-                        ctx->Pixel.ColorTableEnabled ||
-                        ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.PostConvolutionColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled ||
-                        ctx->Pixel.HistogramEnabled);
-
    /* general solution, no special cases, yet */
    {
       GLfloat rgba[MAX_WIDTH][4];
@@ -2549,13 +2520,11 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               unpacking);
 
-         if (applyTransferOps) {
-            if (ctx->Pixel.MapColorFlag) {
-               _mesa_map_ci(ctx, n, indexes);
-            }
-            if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-               _mesa_shift_and_offset_ci(ctx, n, indexes);
-            }
+         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+            _mesa_map_ci(ctx, n, indexes);
+         }
+         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+            _mesa_shift_and_offset_ci(ctx, n, indexes);
          }
 
          if (dstFormat == GL_COLOR_INDEX) {
@@ -2575,43 +2544,43 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          extract_float_rgba(n, rgba, srcFormat, srcType, source,
                             unpacking->SwapBytes);
 
-         if (applyTransferOps) {
-            /* scale and bias colors */
-            if (ctx->Pixel.ScaleOrBiasRGBA) {
-               _mesa_scale_and_bias_rgba(ctx, n, rgba);
-            }
-            /* color map lookup */
-            if (ctx->Pixel.MapColorFlag) {
-               _mesa_map_rgba(ctx, n, rgba);
-            }
+         /* scale and bias colors */
+         if (transferOps & IMAGE_SCALE_BIAS_BIT) {
+            _mesa_scale_and_bias_rgba(ctx, n, rgba);
+         }
+         /* color map lookup */
+         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+            _mesa_map_rgba(ctx, n, rgba);
          }
       }
 
-      if (applyTransferOps) {
+      if (transferOps) {
          /* GL_COLOR_TABLE lookup */
-         if (ctx->Pixel.ColorTableEnabled) {
+         if (transferOps & IMAGE_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
-         /* XXX convolution here */
+         /* convolution */
+         if (transferOps & IMAGE_CONVOLUTION_BIT) {
+            /* XXX to do */
+         }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+         if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
          }
          /* color matrix transform */
-         if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
-             ctx->Pixel.ScaleOrBiasRGBApcm) {
+         if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
             _mesa_transform_rgba(ctx, n, rgba);
          }
          /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+         if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
          /* update histogram count */
-         if (ctx->Pixel.HistogramEnabled) {
+         if (transferOps & IMAGE_HISTOGRAM_BIT) {
             _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
-         /* XXX min/max here */
-         if (ctx->Pixel.MinMaxEnabled) {
+         /* min/max here */
+         if (transferOps & IMAGE_MIN_MAX_BIT) {
             _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
       }
@@ -2666,11 +2635,11 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
          default:
-            gl_problem(ctx, "bad dstFormat in _mesa_unpack_float_span()");
+            gl_problem(ctx, "bad dstFormat in _mesa_unpack_float_color_span()");
             return;
       }
 
-      /* Now pack results in teh requested dstFormat */
+      /* Now pack results in the requested dstFormat */
       if (dstRedIndex >= 0) {
          GLfloat *dst = dest;
          GLuint i;
@@ -2736,8 +2705,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
 
 /*
  * Unpack a row of color index data from a client buffer according to
- * the pixel unpacking parameters.  Apply pixel transfer ops if enabled
- * and applyTransferOps is true.
+ * the pixel unpacking parameters.
  * This is (or will be) used by glDrawPixels, glTexImage[123]D, etc.
  *
  * Args:  ctx - the context
@@ -2747,14 +2715,14 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
  *        srcType - source pixel type
  *        source - source data pointer
  *        unpacking - pixel unpacking parameters
- *        applyTransferOps - apply offset/bias/lookup ops?
+ *        transferOps - the pixel transfer operations to apply
  */
 void
 _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *unpacking,
-                         GLboolean applyTransferOps )
+                         GLuint transferOps )
 {
    ASSERT(srcType == GL_BITMAP ||
           srcType == GL_UNSIGNED_BYTE ||
@@ -2769,16 +2737,17 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
           dstType == GL_UNSIGNED_SHORT ||
           dstType == GL_UNSIGNED_INT);
 
-   applyTransferOps &= (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset || ctx->Pixel.MapColorFlag);
+
+   transferOps &= (IMAGE_MAP_COLOR_BIT | IMAGE_SHIFT_OFFSET_BIT);
 
    /*
     * Try simple cases first
     */
-   if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE
+   if (transferOps == 0 && srcType == GL_UNSIGNED_BYTE
        && dstType == GL_UNSIGNED_BYTE) {
       MEMCPY(dest, source, n * sizeof(GLubyte));
    }
-   else if (!applyTransferOps && srcType == GL_UNSIGNED_INT
+   else if (transferOps == 0 && srcType == GL_UNSIGNED_INT
             && dstType == GL_UNSIGNED_INT && !unpacking->SwapBytes) {
       MEMCPY(dest, source, n * sizeof(GLuint));
    }
@@ -2792,15 +2761,13 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
       extract_uint_indexes(n, indexes, GL_COLOR_INDEX, srcType, source,
                            unpacking);
 
-      if (applyTransferOps) {
-         if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
-            /* shift and offset indexes */
-            _mesa_shift_and_offset_ci(ctx, n, indexes);
-         }
-         if (ctx->Pixel.MapColorFlag) {
-            /* Apply lookup table */
-            _mesa_map_ci(ctx, n, indexes);
-         }
+      if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+         /* shift and offset indexes */
+         _mesa_shift_and_offset_ci(ctx, n, indexes);
+      }
+      if (transferOps & IMAGE_MAP_COLOR_BIT) {
+         /* Apply lookup table */
+         _mesa_map_ci(ctx, n, indexes);
       }
 
       /* convert to dest type */
@@ -2835,8 +2802,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
 
 /*
  * Unpack a row of stencil data from a client buffer according to
- * the pixel unpacking parameters.  Apply pixel transfer ops if enabled
- * and applyTransferOps is true.
+ * the pixel unpacking parameters.
  * This is (or will be) used by glDrawPixels
  *
  * Args:  ctx - the context
@@ -2846,14 +2812,14 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
  *        srcType - source pixel type
  *        source - source data pointer
  *        unpacking - pixel unpacking parameters
- *        applyTransferOps - apply offset/bias/lookup ops?
+ *        transferOps - apply offset/bias/lookup ops?
  */
 void
 _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *unpacking,
-                           GLboolean applyTransferOps )
+                           GLuint transferOps )
 {
    ASSERT(srcType == GL_BITMAP ||
           srcType == GL_UNSIGNED_BYTE ||
@@ -2868,17 +2834,21 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
           dstType == GL_UNSIGNED_SHORT ||
           dstType == GL_UNSIGNED_INT);
 
-   applyTransferOps &= (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset || ctx->Pixel.MapColorFlag);
+   /* only shift and offset apply to stencil */
+   transferOps &= IMAGE_SHIFT_OFFSET_BIT;
 
    /*
     * Try simple cases first
     */
-   if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE
-       && dstType == GL_UNSIGNED_BYTE) {
+   if (transferOps == 0 &&
+       srcType == GL_UNSIGNED_BYTE &&
+       dstType == GL_UNSIGNED_BYTE) {
       MEMCPY(dest, source, n * sizeof(GLubyte));
    }
-   else if (!applyTransferOps && srcType == GL_UNSIGNED_INT
-            && dstType == GL_UNSIGNED_INT && !unpacking->SwapBytes) {
+   else if (transferOps == 0 &&
+            srcType == GL_UNSIGNED_INT &&
+            dstType == GL_UNSIGNED_INT &&
+            !unpacking->SwapBytes) {
       MEMCPY(dest, source, n * sizeof(GLuint));
    }
    else {
@@ -2891,8 +2861,8 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
       extract_uint_indexes(n, indexes, GL_COLOR_INDEX, srcType, source,
                            unpacking);
 
-      if (applyTransferOps) {
-         if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset) {
+      if (transferOps) {
+         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
             /* shift and offset indexes */
             _mesa_shift_and_offset_ci(ctx, n, indexes);
          }
@@ -2942,7 +2912,7 @@ void
 _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *unpacking,
-                         GLboolean applyTransferOps )
+                         GLuint transferOps )
 {
    GLfloat *depth = MALLOC(n * sizeof(GLfloat));
    if (!depth)

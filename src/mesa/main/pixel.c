@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.11 2000/05/07 20:41:30 brianp Exp $ */
+/* $Id: pixel.c,v 1.12 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -610,29 +610,8 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
          return;
    }
 
-   if (ctx->Pixel.RedScale!=1.0F   || ctx->Pixel.RedBias!=0.0F ||
-       ctx->Pixel.GreenScale!=1.0F || ctx->Pixel.GreenBias!=0.0F ||
-       ctx->Pixel.BlueScale!=1.0F  || ctx->Pixel.BlueBias!=0.0F ||
-       ctx->Pixel.AlphaScale!=1.0F || ctx->Pixel.AlphaBias!=0.0F) {
-      ctx->Pixel.ScaleOrBiasRGBA = GL_TRUE;
-   }
-   else {
-      ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
-   }
-
-   if (ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[1]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[2] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[2]  != 0.0F ||
-       ctx->Pixel.PostColorMatrixScale[3] != 1.0F ||
-       ctx->Pixel.PostColorMatrixBias[3]  != 0.0F) {
-      ctx->Pixel.ScaleOrBiasRGBApcm = GL_TRUE;
-   }
-   else {
-      ctx->Pixel.ScaleOrBiasRGBApcm = GL_FALSE;
-   }
+   /* signal to recompute the bitmask */
+   ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 }
 
 

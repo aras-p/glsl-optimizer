@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.25 2000/07/19 18:34:00 brianp Exp $ */
+/* $Id: attrib.c,v 1.26 2000/08/21 14:22:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -806,6 +806,7 @@ _mesa_PopAttrib(void)
    }
 
    ctx->NewState = NEW_ALL;
+   ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
 }
 
 
