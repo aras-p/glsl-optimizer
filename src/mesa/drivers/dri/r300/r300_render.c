@@ -262,7 +262,6 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
    
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
-   cp_delay(PASS_PREFIX 15);
    
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    setup_AOS(PASS_PREFIX vb_arrays, 2);
@@ -274,20 +273,14 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 	r300_render_flat_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   /* This sequence is required after any 3d drawing packet
+      I suspect it work arounds a bug (or deficiency) in hardware */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
-   
-   sync_VAP(PASS_PREFIX_VOID);
-   
-   end_3d(PASS_PREFIX_VOID);
-   
-   /* Flush state - this reduces the chance that something else will mess with 
-      the hardware in between */
-   r300Flush(ctx);
-   //fprintf(stderr, "\n");
+      
    return GL_FALSE;
 }
 
@@ -430,7 +423,10 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
 	r300_render_vb_flat_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+    /* This sequence is required after any 3d drawing packet
+      I suspect it work arounds a bug (or deficiency) in hardware */
+  
+  reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
    
    reg_start(0x4f18,0);
@@ -519,8 +515,8 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
    
-   fprintf(stderr, "You can enable texture drawing in %s:%s \n", __FILE__, __FUNCTION__);
-   return GL_TRUE;
+   //fprintf(stderr, "You can enable texture drawing in %s:%s \n", __FILE__, __FUNCTION__);
+   //return GL_TRUE;
    
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -554,7 +550,7 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    vb_arrays[2].reg=REG_TEX0;
 
    /* Fill texture with some random data */
-//   for(i=0;i<1000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
+   for(i=0;i<100000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
      
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -628,10 +624,7 @@ reg_start(R300_RS_INTERP_0,7);
 	e32(0x0000000c);
    
    program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
-   
-   sync_VAP(PASS_PREFIX_VOID);
-   cp_delay(PASS_PREFIX 15);
-      
+         
    /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
    setup_AOS(PASS_PREFIX vb_arrays, 3);
    
@@ -642,20 +635,15 @@ reg_start(R300_RS_INTERP_0,7);
 	r300_render_tex_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+    /* This sequence is required after any 3d drawing packet
+      I suspect it work arounds a bug (or deficiency) in hardware */
+  
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
-   
-   sync_VAP(PASS_PREFIX_VOID);
-   
-   end_3d(PASS_PREFIX_VOID);
-   
-   /* Flush state - this reduces the chance that something else will mess with 
-      the hardware in between */
-   r300Flush(ctx);
-   
+         
    fprintf(stderr, "\n");
    return GL_FALSE;
 }
