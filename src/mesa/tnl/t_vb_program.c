@@ -333,8 +333,10 @@ static GLboolean run_init_vp( GLcontext *ctx,
       return GL_FALSE;
 
    /* Allocate arrays of vertex output values */
-   for (i = 0; i < 15; i++)
+   for (i = 0; i < 15; i++) {
       _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
+      store->attribs[i].size = 4;
+   }
 
    /* Make the color0[] and color1[] arrays point into the attribs[] arrays */
    init_color_array( &store->color0[0], &store->attribs[VERT_RESULT_COL0] );
