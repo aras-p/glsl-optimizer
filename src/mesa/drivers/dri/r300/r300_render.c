@@ -72,81 +72,69 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   int type=-1;
+   int type=-1, min_vertices=0;
+   char *name="UNKNOWN";
    
    if(end<=start)return -1; /* do we need to watch for this ? */
    
-	fprintf(stderr, "[%d-%d]", start, end);
 	switch (prim & PRIM_MODE_MASK) {
-		case GL_LINES:
-   		fprintf(stderr, "L ");
+	case GL_POINTS:
+   		name="P";
+	        type=R300_VAP_VF_CNTL__PRIM_POINTS;
+		min_vertices=1;
+      		break;		
+	case GL_LINES:
+   		name="L";
 	        type=R300_VAP_VF_CNTL__PRIM_LINES;
-		if(end<start+2){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
-      		break;
-		case GL_LINE_STRIP:
-   		fprintf(stderr, "LS ");
+		min_vertices=2;
+      		break;		
+	case GL_LINE_STRIP:
+   		name="LS";
 	        type=R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-		if(end<start+2){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=2;
       		break;
-		case GL_LINE_LOOP:
-   		fprintf(stderr, "LL ");
+	case GL_LINE_LOOP:
+   		name="LL";
+		min_vertices=2;
 		return -1;
-		if(end<start+2){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
       		break;
-    		case GL_TRIANGLES:
-   		fprintf(stderr, "T ");
+    	case GL_TRIANGLES:
+   		name="T";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-		if(end<start+3){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=3;
       		break;
-   		case GL_TRIANGLE_STRIP:
-   		fprintf(stderr, "TS ");
+   	case GL_TRIANGLE_STRIP:
+   		name="TS";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-		if(end<start+3){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=3;
       		break;
-   		case GL_TRIANGLE_FAN:
-   		fprintf(stderr, "TF ");
+   	case GL_TRIANGLE_FAN:
+   		name="TF";
 	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-		if(end<start+3){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=3;
       		break;
-		case GL_QUADS:
-   		fprintf(stderr, "Q ");
+	case GL_QUADS:
+   		name="Q";
 	        type=R300_VAP_VF_CNTL__PRIM_QUADS;
-		if(end<start+4){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=4;
       		break;
-		case GL_QUAD_STRIP:
-   		fprintf(stderr, "QS ");
+	case GL_QUAD_STRIP:
+   		name="QS";
 	        type=R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-		if(end<start+4){
-			fprintf(stderr, "Not enough vertices\n");
-			return -1; /* need enough vertices for Q */
-			}
+		min_vertices=4;
       		break;
-   		default:
+   	default:
    		fprintf(stderr, "Cannot handle primitive %02x ", prim & PRIM_MODE_MASK);
 		return -1;
          	break;
-   		}
+   	}
+   #if 1
+   fprintf(stderr, "[%d-%d]%s ", start, end, name);
+   #endif
+   if(start+min_vertices>=end){
+	fprintf(stderr, "Not enough vertices\n");
+	return -1;
+   	}
    return type;
 }
 
