@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.21 2000/04/07 16:27:54 brianp Exp $ */
+/* $Id: attrib.c,v 1.22 2000/05/07 20:37:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -167,6 +167,9 @@ _mesa_PushAttrib(GLbitfield mask)
          attr->ClipPlane[i] = ctx->Transform.ClipEnabled[i];
       }
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
+      attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
+      attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
+      attr->Separable2D = ctx->Pixel.Separable2DEnabled;
       attr->CullFace = ctx->Polygon.CullFlag;
       attr->DepthTest = ctx->Depth.Test;
       attr->Dither = ctx->Color.DitherFlag;
@@ -508,6 +511,9 @@ _mesa_PopAttrib(void)
                TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
                TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
                TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
+               TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D, GL_CONVOLUTION_1D);
+               TEST_AND_UPDATE(ctx->Pixel.Convolution2DEnabled, enable->Convolution2D, GL_CONVOLUTION_2D);
+               TEST_AND_UPDATE(ctx->Pixel.Separable2DEnabled, enable->Separable2D, GL_SEPARABLE_2D);
                TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
                TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);
                TEST_AND_UPDATE(ctx->Line.SmoothFlag, enable->LineSmooth, GL_LINE_SMOOTH);

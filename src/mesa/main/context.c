@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.62 2000/05/04 13:53:55 brianp Exp $ */
+/* $Id: context.c,v 1.63 2000/05/07 20:37:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -711,6 +711,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.LineWidthGranularity = LINE_WIDTH_GRANULARITY;
    ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
+   ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
+   ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
 
    /* Modelview matrix */
    gl_matrix_ctr( &ctx->ModelView );
@@ -1022,25 +1024,24 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.PixelTextureEnabled = GL_FALSE;
    ctx->Pixel.FragmentRgbSource = GL_PIXEL_GROUP_COLOR_SGIS;
    ctx->Pixel.FragmentAlphaSource = GL_PIXEL_GROUP_COLOR_SGIS;
-   ctx->Pixel.PostColorMatrixRedBias = 0.0;
-   ctx->Pixel.PostColorMatrixRedScale = 1.0;
-   ctx->Pixel.PostColorMatrixGreenBias = 0.0;
-   ctx->Pixel.PostColorMatrixGreenScale = 1.0;
-   ctx->Pixel.PostColorMatrixBlueBias = 0.0;
-   ctx->Pixel.PostColorMatrixBlueScale = 1.0;
-   ctx->Pixel.PostColorMatrixAlphaBias = 0.0;
-   ctx->Pixel.PostColorMatrixAlphaScale = 1.0;
-   ctx->Pixel.ColorTableScale[0] = 1.0F;
-   ctx->Pixel.ColorTableScale[1] = 1.0F;
-   ctx->Pixel.ColorTableScale[2] = 1.0F;
-   ctx->Pixel.ColorTableScale[3] = 1.0F;
-   ctx->Pixel.ColorTableBias[0] = 0.0F;
-   ctx->Pixel.ColorTableBias[1] = 0.0F;
-   ctx->Pixel.ColorTableBias[2] = 0.0F;
-   ctx->Pixel.ColorTableBias[3] = 0.0F;
+   ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
    ctx->Pixel.ColorTableEnabled = GL_FALSE;
    ctx->Pixel.PostConvolutionColorTableEnabled = GL_FALSE;
    ctx->Pixel.PostColorMatrixColorTableEnabled = GL_FALSE;
+   ctx->Pixel.Convolution1DEnabled = GL_FALSE;
+   ctx->Pixel.Convolution2DEnabled = GL_FALSE;
+   ctx->Pixel.Separable2DEnabled = GL_FALSE;
+   for (i = 0; i < 3; i++) {
+      ASSIGN_4V(ctx->Pixel.ConvolutionBorderColor[i], 0.0, 0.0, 0.0, 0.0);
+      ctx->Pixel.ConvolutionBorderMode[i] = GL_REDUCE;
+      ASSIGN_4V(ctx->Pixel.ConvolutionFilterScale[i], 1.0, 1.0, 1.0, 1.0);
+      ASSIGN_4V(ctx->Pixel.ConvolutionFilterBias[i], 0.0, 0.0, 0.0, 0.0);
+   }
+   ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;

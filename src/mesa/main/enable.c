@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.17 2000/05/05 23:41:52 brianp Exp $ */
+/* $Id: enable.c,v 1.18 2000/05/07 20:37:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -495,6 +495,17 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Pixel.PostColorMatrixColorTableEnabled = state;
          break;
 
+      /* GL_EXT_convolution */
+      case GL_CONVOLUTION_1D:
+         ctx->Pixel.Convolution1DEnabled = state;
+         break;
+      case GL_CONVOLUTION_2D:
+         ctx->Pixel.Convolution2DEnabled = state;
+         break;
+      case GL_SEPARABLE_2D:
+         ctx->Pixel.Separable2DEnabled = state;
+         break;
+
       default:
 	 if (state) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glEnable" );
@@ -718,6 +729,14 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Pixel.PostConvolutionColorTableEnabled;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          return ctx->Pixel.PostColorMatrixColorTableEnabled;
+
+      /* GL_EXT_convolution */
+      case GL_CONVOLUTION_1D:
+         return ctx->Pixel.Convolution1DEnabled;
+      case GL_CONVOLUTION_2D:
+         return ctx->Pixel.Convolution2DEnabled;
+      case GL_SEPARABLE_2D:
+         return ctx->Pixel.Separable2DEnabled;
 
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

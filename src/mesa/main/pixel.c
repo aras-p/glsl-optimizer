@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.9 2000/04/17 17:57:04 brianp Exp $ */
+/* $Id: pixel.c,v 1.10 2000/05/07 20:37:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -558,28 +558,52 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
          ctx->Pixel.DepthBias = param;
 	 break;
       case GL_POST_COLOR_MATRIX_RED_SCALE:
-         ctx->Pixel.PostColorMatrixRedScale = param;
+         ctx->Pixel.PostColorMatrixScale[0] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_RED_BIAS:
-         ctx->Pixel.PostColorMatrixRedBias = param;
+         ctx->Pixel.PostColorMatrixBias[0] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE:
-         ctx->Pixel.PostColorMatrixGreenScale = param;
+         ctx->Pixel.PostColorMatrixScale[1] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS:
-         ctx->Pixel.PostColorMatrixGreenBias = param;
+         ctx->Pixel.PostColorMatrixBias[1] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE:
-         ctx->Pixel.PostColorMatrixBlueScale = param;
+         ctx->Pixel.PostColorMatrixScale[2] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS:
-         ctx->Pixel.PostColorMatrixBlueBias = param;
+         ctx->Pixel.PostColorMatrixBias[2] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE:
-         ctx->Pixel.PostColorMatrixAlphaScale = param;
+         ctx->Pixel.PostColorMatrixScale[3] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS:
-         ctx->Pixel.PostColorMatrixAlphaBias = param;
+         ctx->Pixel.PostColorMatrixBias[3] = param;
+	 break;
+      case GL_POST_CONVOLUTION_RED_SCALE:
+         ctx->Pixel.PostConvolutionScale[0] = param;
+	 break;
+      case GL_POST_CONVOLUTION_RED_BIAS:
+         ctx->Pixel.PostConvolutionBias[0] = param;
+	 break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE:
+         ctx->Pixel.PostConvolutionScale[1] = param;
+	 break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS:
+         ctx->Pixel.PostConvolutionBias[1] = param;
+	 break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE:
+         ctx->Pixel.PostConvolutionScale[2] = param;
+	 break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS:
+         ctx->Pixel.PostConvolutionBias[2] = param;
+	 break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE:
+         ctx->Pixel.PostConvolutionScale[2] = param;
+	 break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS:
+         ctx->Pixel.PostConvolutionBias[2] = param;
 	 break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
@@ -596,14 +620,14 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
       ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
    }
 
-   if (ctx->Pixel.PostColorMatrixRedScale!=1.0F   ||
-       ctx->Pixel.PostColorMatrixRedBias!=0.0F    ||
-       ctx->Pixel.PostColorMatrixGreenScale!=1.0F ||
-       ctx->Pixel.PostColorMatrixGreenBias!=0.0F  ||
-       ctx->Pixel.PostColorMatrixBlueScale!=1.0F  ||
-       ctx->Pixel.PostColorMatrixBlueBias!=0.0F   ||
-       ctx->Pixel.PostColorMatrixAlphaScale!=1.0F ||
-       ctx->Pixel.PostColorMatrixAlphaBias!=0.0F) {
+   if (ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[1]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[2] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[2]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[3] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[3]  != 0.0F) {
       ctx->Pixel.ScaleOrBiasRGBApcm = GL_TRUE;
    }
    else {
@@ -696,14 +720,14 @@ _mesa_map_rgba( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
 void
 _mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
 {
-   const GLfloat rs = ctx->Pixel.PostColorMatrixRedScale;
-   const GLfloat rb = ctx->Pixel.PostColorMatrixRedBias;
-   const GLfloat gs = ctx->Pixel.PostColorMatrixGreenScale;
-   const GLfloat gb = ctx->Pixel.PostColorMatrixGreenBias;
-   const GLfloat bs = ctx->Pixel.PostColorMatrixBlueScale;
-   const GLfloat bb = ctx->Pixel.PostColorMatrixBlueBias;
-   const GLfloat as = ctx->Pixel.PostColorMatrixAlphaScale;
-   const GLfloat ab = ctx->Pixel.PostColorMatrixAlphaBias;
+   const GLfloat rs = ctx->Pixel.PostColorMatrixScale[0];
+   const GLfloat rb = ctx->Pixel.PostColorMatrixBias[0];
+   const GLfloat gs = ctx->Pixel.PostColorMatrixScale[1];
+   const GLfloat gb = ctx->Pixel.PostColorMatrixBias[1];
+   const GLfloat bs = ctx->Pixel.PostColorMatrixScale[2];
+   const GLfloat bb = ctx->Pixel.PostColorMatrixBias[2];
+   const GLfloat as = ctx->Pixel.PostColorMatrixScale[3];
+   const GLfloat ab = ctx->Pixel.PostColorMatrixBias[3];
    const GLfloat *m = ctx->ColorMatrix.m;
    GLuint i;
    for (i = 0; i < n; i++) {

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.22 2000/05/04 13:48:49 brianp Exp $ */
+/* $Id: get.c,v 1.23 2000/05/07 20:37:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1096,28 +1096,60 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(MAX_COLOR_STACK_DEPTH);
          break;
       case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixRedScale);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixScale[0]);
          break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixGreenScale);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixScale[1]);
          break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBlueScale);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixScale[2]);
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixAlphaScale);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixScale[3]);
          break;
       case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixRedBias);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBias[0]);
          break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixGreenBias);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBias[1]);
          break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBlueBias);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBias[2]);
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
-         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixAlphaBias);
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBias[3]);
+         break;
+
+      /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionWidth);
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionHeight);
+         break;
+      case GL_POST_CONVOLUTION_RED_SCALE_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionScale[0]);
+         break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionScale[1]);
+         break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionScale[2]);
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionScale[3]);
+         break;
+      case GL_POST_CONVOLUTION_RED_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionBias[0]);
+         break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionBias[1]);
+         break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionBias[2]);
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionBias[2]);
          break;
 
       /* GL_SGI_color_table (also in 1.2 imaging */
@@ -2155,28 +2187,60 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) MAX_COLOR_STACK_DEPTH;
          break;
       case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixRedScale;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixScale[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixGreenScale;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixScale[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixBlueScale;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixScale[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixAlphaScale;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixScale[3];
          break;
       case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixRedBias;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBias[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixGreenBias;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBias[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixBlueBias;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBias[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
-         *params = (GLdouble) ctx->Pixel.PostColorMatrixAlphaBias;
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBias[3];
+         break;
+
+      /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = (GLdouble) ctx->Const.MaxConvolutionWidth;
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = (GLdouble) ctx->Const.MaxConvolutionHeight;
+         break;
+      case GL_POST_CONVOLUTION_RED_SCALE_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionScale[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionScale[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionScale[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionScale[3];
+         break;
+      case GL_POST_CONVOLUTION_RED_BIAS_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionBias[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionBias[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionBias[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
+         *params = (GLdouble) ctx->Pixel.PostConvolutionBias[2];
          break;
 
       /* GL_SGI_color_table (also in 1.2 imaging */
@@ -3191,28 +3255,60 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) MAX_COLOR_STACK_DEPTH;
          break;
       case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
-         *params = ctx->Pixel.PostColorMatrixRedScale;
+         *params = ctx->Pixel.PostColorMatrixScale[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
-         *params = ctx->Pixel.PostColorMatrixGreenScale;
+         *params = ctx->Pixel.PostColorMatrixScale[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
-         *params = ctx->Pixel.PostColorMatrixBlueScale;
+         *params = ctx->Pixel.PostColorMatrixScale[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
-         *params = ctx->Pixel.PostColorMatrixAlphaScale;
+         *params = ctx->Pixel.PostColorMatrixScale[3];
          break;
       case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
-         *params = ctx->Pixel.PostColorMatrixRedBias;
+         *params = ctx->Pixel.PostColorMatrixBias[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
-         *params = ctx->Pixel.PostColorMatrixGreenBias;
+         *params = ctx->Pixel.PostColorMatrixBias[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
-         *params = ctx->Pixel.PostColorMatrixBlueBias;
+         *params = ctx->Pixel.PostColorMatrixBias[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
-         *params = ctx->Pixel.PostColorMatrixAlphaBias;
+         *params = ctx->Pixel.PostColorMatrixBias[3];
+         break;
+
+      /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = (GLfloat) ctx->Const.MaxConvolutionWidth;
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = (GLfloat) ctx->Const.MaxConvolutionHeight;
+         break;
+      case GL_POST_CONVOLUTION_RED_SCALE_EXT:
+         *params = ctx->Pixel.PostConvolutionScale[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
+         *params = ctx->Pixel.PostConvolutionScale[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
+         *params = ctx->Pixel.PostConvolutionScale[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
+         *params = ctx->Pixel.PostConvolutionScale[3];
+         break;
+      case GL_POST_CONVOLUTION_RED_BIAS_EXT:
+         *params = ctx->Pixel.PostConvolutionBias[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
+         *params = ctx->Pixel.PostConvolutionBias[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
+         *params = ctx->Pixel.PostConvolutionBias[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
+         *params = ctx->Pixel.PostConvolutionBias[2];
          break;
 
       /* GL_SGI_color_table (also in 1.2 imaging */
@@ -4250,28 +4346,60 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = MAX_COLOR_STACK_DEPTH;
          break;
       case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixRedScale;
+         *params = (GLint) ctx->Pixel.PostColorMatrixScale[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixGreenScale;
+         *params = (GLint) ctx->Pixel.PostColorMatrixScale[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixBlueScale;
+         *params = (GLint) ctx->Pixel.PostColorMatrixScale[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixAlphaScale;
+         *params = (GLint) ctx->Pixel.PostColorMatrixScale[3];
          break;
       case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixRedBias;
+         *params = (GLint) ctx->Pixel.PostColorMatrixBias[0];
          break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixGreenBias;
+         *params = (GLint) ctx->Pixel.PostColorMatrixBias[1];
          break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixBlueBias;
+         *params = (GLint) ctx->Pixel.PostColorMatrixBias[2];
          break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
-         *params = (GLint) ctx->Pixel.PostColorMatrixAlphaBias;
+         *params = (GLint) ctx->Pixel.PostColorMatrixBias[3];
+         break;
+
+      /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = ctx->Const.MaxConvolutionWidth;
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = ctx->Const.MaxConvolutionHeight;
+         break;
+      case GL_POST_CONVOLUTION_RED_SCALE_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionScale[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionScale[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionScale[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionScale[3];
+         break;
+      case GL_POST_CONVOLUTION_RED_BIAS_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionBias[0];
+         break;
+      case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionBias[1];
+         break;
+      case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionBias[2];
+         break;
+      case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
+         *params = (GLint) ctx->Pixel.PostConvolutionBias[2];
          break;
 
       /* GL_SGI_color_table (also in 1.2 imaging */
