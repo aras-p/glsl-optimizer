@@ -697,6 +697,7 @@ _mesa_GetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
          params[0] = ctx->Array.VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+	 FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[index]);
          break;
       default:
@@ -732,6 +733,7 @@ _mesa_GetVertexAttribfvNV(GLuint index, GLenum pname, GLfloat *params)
          params[0] = (GLfloat) ctx->Array.VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+	 FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[index]);
          break;
       default:
@@ -767,6 +769,7 @@ _mesa_GetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
          params[0] = ctx->Array.VertexAttrib[index].Type;
          break;
       case GL_CURRENT_ATTRIB_NV:
+	 FLUSH_CURRENT(ctx, 0);
          COPY_4V_CAST(params, ctx->Current.Attrib[index], GLint);
          break;
       case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:

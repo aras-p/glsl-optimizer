@@ -142,6 +142,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          params[0] = ctx->Array.VertexAttrib[index].Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
+	 FLUSH_CURRENT(ctx, 0);
          COPY_4V(params, ctx->Current.Attrib[index]);
          break;
       default:
