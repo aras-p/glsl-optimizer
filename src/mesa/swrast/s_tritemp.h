@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.16 2001/05/14 16:23:04 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.17 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,7 @@
  *
  * Optionally, one may provide one-time setup code per triangle:
  *    SETUP_CODE    - code which is to be executed once per triangle
+ *    CLEANUP_CODE    - code to execute at end of triangle
  *
  * The following macro MUST be defined:
  *    RENDER_SPAN(span) - code to write a span of pixels.
@@ -1187,10 +1188,14 @@
          } /* for subTriangle */
 
       }
+#ifdef CLEANUP_CODE
+      CLEANUP_CODE
+#endif
    }
 }
 
 #undef SETUP_CODE
+#undef CLEANUP_CODE
 #undef RENDER_SPAN
 
 #undef PIXEL_TYPE

@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.17 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.18 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -432,8 +432,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (transferOps) {
          const GLfloat scale = (1.0F / CHAN_MAXF);
-         GLfloat rgbaFloat[MAX_WIDTH][4];
          GLint k;
+         DEFMARRAY(GLfloat, rgbaFloat, MAX_WIDTH, 4);  /* mac 32k limitation */
+         CHECKARRAY(rgbaFloat, return);
+
          /* convert chan to float */
          for (k = 0; k < width; k++) {
             rgbaFloat[k][RCOMP] = (GLfloat) rgba[k][RCOMP] * scale;
@@ -504,14 +506,22 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             rgba[k][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
             rgba[k][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
          }
+         UNDEFARRAY(rgbaFloat);  /* mac 32k limitation */
       }
 
       if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
-         GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
-         GLchan primary_rgba[MAX_WIDTH][4];
          GLuint unit;
-         /* XXX not sure how multitexture is supposed to work here */
+         GLchan primary_rgba[MAX_WIDTH][4];
+         DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
+         DEFARRAY(GLfloat, t, MAX_WIDTH);  /* mac 32k limitation */
+         DEFARRAY(GLfloat, r, MAX_WIDTH);  /* mac 32k limitation */
+         DEFARRAY(GLfloat, q, MAX_WIDTH);  /* mac 32k limitation */
+         CHECKARRAY(s, return); /* mac 32k limitation */
+         CHECKARRAY(t, return);
+         CHECKARRAY(r, return);
+         CHECKARRAY(q, return);
 
+         /* XXX not sure how multitexture is supposed to work here */
          MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
          for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -521,6 +531,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                       (CONST GLchan (*)[4]) primary_rgba,
                                       rgba);
          }
+
+         UNDEFARRAY(s);  /* mac 32k limitation */
+         UNDEFARRAY(t);
+         UNDEFARRAY(r);
+         UNDEFARRAY(q);
       }
 
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {
@@ -673,14 +688,16 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLdepth zspan[MAX_WIDTH];
    GLfloat *p, *tmpImage;
    GLuint indexes[MAX_WIDTH];
-   GLchan rgba[MAX_WIDTH][4];
    GLint sy, dy, stepy;
    GLint i, j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
+   DEFMARRAY(GLubyte, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+   CHECKARRAY(rgba, return);  /* mac 32k limitation */
 
    if (!ctx->Visual.depthBits) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
+      UNDEFARRAY(rgba);  /* mac 32k limitation */
       return;
    }
 
@@ -720,6 +737,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       tmpImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
+         UNDEFARRAY(rgba);  /* mac 32k limitation */
          return;
       }
       p = tmpImage;
@@ -770,8 +788,10 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-  if (overlapping)
-     FREE(tmpImage);
+   UNDEFARRAY(rgba);  /* mac 32k limitation */
+
+   if (overlapping)
+      FREE(tmpImage);
 }
 
 

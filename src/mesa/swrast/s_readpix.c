@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.11 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_readpix.c,v 1.12 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -451,13 +451,15 @@ read_rgba_pixels( GLcontext *ctx,
              * there.  This fixes conformance failures with 16-bit color
              * buffers, for example.
              */
-            GLfloat rgbaf[MAX_WIDTH][4];
+            DEFMARRAY(GLfloat, rgbaf, MAX_WIDTH, 4);  /* mac 32k limitation */
+            CHECKARRAY(rgbaf, return);  /* mac 32k limitation */
             _mesa_chan_to_float_span(ctx, readWidth,
                                      (CONST GLchan (*)[4]) rgba, rgbaf);
             _mesa_pack_float_rgba_span(ctx, readWidth,
                                        (CONST GLfloat (*)[4]) rgbaf,
                                        format, type, dst, packing,
                                        ctx->_ImageTransferState);
+            UNDEFARRAY(rgbaf);  /* mac 32k limitation */
          }
          else {
             /* GLubytes are fine */

@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.15 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.16 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,7 +54,7 @@
    GLfloat majDx, majDy;  /* major (i.e. long) edge dx and dy */
 
 #ifdef DO_Z
-   GLfloat zPlane[4];                                       /* Z (depth) */
+   GLfloat zPlane[4];
    GLdepth z[MAX_WIDTH];
 #endif
 #ifdef DO_FOG
@@ -64,37 +64,52 @@
    GLfloat *fog = NULL;
 #endif
 #ifdef DO_RGBA
-   GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];      /* color */
-   GLchan rgba[MAX_WIDTH][4];
+   GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
+   DEFMARRAY(GLubyte, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
 #endif
 #ifdef DO_INDEX
-   GLfloat iPlane[4];                                       /* color index */
+   GLfloat iPlane[4];
    GLuint index[MAX_WIDTH];
    GLint icoverageSpan[MAX_WIDTH];
 #else
    GLfloat coverageSpan[MAX_WIDTH];
 #endif
 #ifdef DO_SPEC
-   GLfloat srPlane[4], sgPlane[4], sbPlane[4];              /* spec color */
-   GLchan spec[MAX_WIDTH][4];
+   GLfloat srPlane[4], sgPlane[4], sbPlane[4];
+   DEFMARRAY(GLubyte, spec, MAX_WIDTH, 4);
 #endif
 #ifdef DO_TEX
    GLfloat sPlane[4], tPlane[4], uPlane[4], vPlane[4];
    GLfloat texWidth, texHeight;
-   GLfloat s[MAX_WIDTH], t[MAX_WIDTH], u[MAX_WIDTH];
-   GLfloat lambda[MAX_WIDTH];
+   DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
+   DEFARRAY(GLfloat, t, MAX_WIDTH);
+   DEFARRAY(GLfloat, u, MAX_WIDTH);
+   DEFARRAY(GLfloat, lambda, MAX_WIDTH);
 #elif defined(DO_MULTITEX)
    GLfloat sPlane[MAX_TEXTURE_UNITS][4];
    GLfloat tPlane[MAX_TEXTURE_UNITS][4];
    GLfloat uPlane[MAX_TEXTURE_UNITS][4];
    GLfloat vPlane[MAX_TEXTURE_UNITS][4];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
-   GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
+   DEFMARRAY(GLfloat, s, MAX_TEXTURE_UNITS, MAX_WIDTH);  /* mac 32k limit */
+   DEFMARRAY(GLfloat, t, MAX_TEXTURE_UNITS, MAX_WIDTH);
+   DEFMARRAY(GLfloat, u, MAX_TEXTURE_UNITS, MAX_WIDTH);
+   DEFMARRAY(GLfloat, lambda, MAX_TEXTURE_UNITS, MAX_WIDTH);
 #endif
    GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
+
+#ifdef DO_RGBA
+   CHECKARRAY(rgba, return);  /* mac 32k limitation */
+#endif
+#ifdef DO_SPEC
+   CHECKARRAY(spec, return);
+#endif
+#if defined(DO_TEX) || defined(DO_MULTITEX)
+   CHECKARRAY(s, return);
+   CHECKARRAY(t, return);
+   CHECKARRAY(u, return);
+   CHECKARRAY(lambda, return);
+#endif
 
    /* determine bottom to top order of vertices */
    {
@@ -532,6 +547,19 @@
 #endif
       }
    }
+
+#ifdef DO_RGBA
+   UNDEFARRAY(rgba);  /* mac 32k limitation */
+#endif
+#ifdef DO_SPEC
+   UNDEFARRAY(spec);
+#endif
+#if defined(DO_TEX) || defined(DO_MULTITEX)
+   UNDEFARRAY(s);
+   UNDEFARRAY(t);
+   UNDEFARRAY(u);
+   UNDEFARRAY(lambda);
+#endif
 }
 
 

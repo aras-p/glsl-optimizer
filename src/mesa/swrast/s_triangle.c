@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.27 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.28 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1606,17 +1606,33 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
 static void
 rasterize_span(GLcontext *ctx, const struct triangle_span *span)
 {
-   GLchan rgba[MAX_WIDTH][4];
-   GLchan spec[MAX_WIDTH][4];
-   GLuint index[MAX_WIDTH];
-   GLuint z[MAX_WIDTH];
-   GLfloat fog[MAX_WIDTH];
-   GLfloat sTex[MAX_WIDTH], tTex[MAX_WIDTH], rTex[MAX_WIDTH];
-   GLfloat lambda[MAX_WIDTH];
-   GLfloat msTex[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat mtTex[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat mrTex[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat mLambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
+   DEFMARRAY(GLchan, rgba, MAX_WIDTH, 4);
+   DEFMARRAY(GLchan, spec, MAX_WIDTH, 4);
+   DEFARRAY(GLuint, index, MAX_WIDTH);
+   DEFARRAY(GLuint, z, MAX_WIDTH);
+   DEFARRAY(GLfloat, fog, MAX_WIDTH);
+   DEFARRAY(GLfloat, sTex, MAX_WIDTH);
+   DEFARRAY(GLfloat, tTex, MAX_WIDTH);
+   DEFARRAY(GLfloat, rTex, MAX_WIDTH);
+   DEFARRAY(GLfloat, lambda, MAX_WIDTH);
+   DEFMARRAY(GLfloat, msTex, MAX_TEXTURE_UNITS, MAX_WIDTH);
+   DEFMARRAY(GLfloat, mtTex, MAX_TEXTURE_UNITS, MAX_WIDTH);
+   DEFMARRAY(GLfloat, mrTex, MAX_TEXTURE_UNITS, MAX_WIDTH);
+   DEFMARRAY(GLfloat, mLambda, MAX_TEXTURE_UNITS, MAX_WIDTH);
+
+   CHECKARRAY(rgba, return);
+   CHECKARRAY(spec, return);
+   CHECKARRAY(index, return);
+   CHECKARRAY(z, return);
+   CHECKARRAY(fog, return);
+   CHECKARRAY(sTex, return);
+   CHECKARRAY(tTex, return);
+   CHECKARRAY(rTex, return);
+   CHECKARRAY(lambda, return);
+   CHECKARRAY(msTex, return);
+   CHECKARRAY(mtTex, return);
+   CHECKARRAY(mrTex, return);
+   CHECKARRAY(mLambda, return);
 
    if (span->activeMask & SPAN_RGBA) {
       GLfixed r = span->red;
@@ -1837,6 +1853,20 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
    else {
       _mesa_problem(ctx, "rasterize_span() should only be used for texturing");
    }
+
+   UNDEFARRAY(rgba);
+   UNDEFARRAY(spec);
+   UNDEFARRAY(index);
+   UNDEFARRAY(z);
+   UNDEFARRAY(fog);
+   UNDEFARRAY(sTex);
+   UNDEFARRAY(tTex);
+   UNDEFARRAY(rTex);
+   UNDEFARRAY(lambda);
+   UNDEFARRAY(msTex);
+   UNDEFARRAY(mtTex);
+   UNDEFARRAY(mrTex);
+   UNDEFARRAY(mLambda);
 }
 
                 
@@ -1863,6 +1893,12 @@ static void general_textured_triangle( GLcontext *ctx,
    const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
    const GLboolean flatShade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLfixed rFlat, gFlat, bFlat, aFlat;					\
+   DEFARRAY(GLfloat, sSpan, MAX_WIDTH);  /* mac 32k limitation */	\
+   DEFARRAY(GLfloat, tSpan, MAX_WIDTH);  /* mac 32k limitation */	\
+   DEFARRAY(GLfloat, uSpan, MAX_WIDTH);  /* mac 32k limitation */	\
+   CHECKARRAY(sSpan, return);  /* mac 32k limitation */			\
+   CHECKARRAY(tSpan, return);  /* mac 32k limitation */			\
+   CHECKARRAY(uSpan, return);  /* mac 32k limitation */			\
    if (flatShade) {							\
       rFlat = IntToFixed(v2->color[RCOMP]);				\
       gFlat = IntToFixed(v2->color[GCOMP]);				\
@@ -1877,7 +1913,6 @@ static void general_textured_triangle( GLcontext *ctx,
    GLdepth zSpan[MAX_WIDTH];						\
    GLfloat fogSpan[MAX_WIDTH];						\
    GLchan rgbaSpan[MAX_WIDTH][4];					\
-   GLfloat sSpan[MAX_WIDTH], tSpan[MAX_WIDTH], uSpan[MAX_WIDTH];	\
    GLuint i;								\
    if (flatShade) {							\
       span.red = rFlat;    span.redStep = 0;				\
@@ -1911,6 +1946,11 @@ static void general_textured_triangle( GLcontext *ctx,
    _mesa_write_texture_span(ctx, span.count, span.x, span.y,		\
                             zSpan, fogSpan, sSpan, tSpan, uSpan,	\
                             NULL, rgbaSpan, NULL, NULL, GL_POLYGON );
+
+#define CLEANUP_CODE				\
+   UNDEFARRAY(sSpan);  /* mac 32k limitation */	\
+   UNDEFARRAY(tSpan);				\
+   UNDEFARRAY(uSpan);
 
 #include "s_tritemp.h"
 }

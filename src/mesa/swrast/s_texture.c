@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.29 2001/05/14 23:11:13 brianp Exp $ */
+/* $Id: s_texture.c,v 1.30 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1743,12 +1743,13 @@ texture_combine(const GLcontext *ctx,
                 CONST GLchan (*texel)[4],
                 GLchan (*rgba)[4])
 {
-   GLchan ccolor [3][3*MAX_WIDTH][4];
    const GLchan (*argRGB [3])[4];
    const GLchan (*argA [3])[4];
    GLuint i, j;
    const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
    const GLuint Ashift   = textureUnit->CombineScaleShiftA;
+   DEFMNARRAY(GLubyte, ccolor, 3, 3 * MAX_WIDTH, 4);  /* mac 32k limitation */
+   CHECKARRAY(ccolor, return);  /* mac 32k limitation */
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
@@ -2084,6 +2085,7 @@ texture_combine(const GLcontext *ctx,
 	 rgba[i][ACOMP] = rgba[i][RCOMP];
       }
    }
+   UNDEFARRAY(ccolor);  /* mac 32k limitation */
 }
 #undef PROD
 

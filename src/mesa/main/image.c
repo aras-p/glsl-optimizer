@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.60 2001/05/15 21:21:08 brianp Exp $ */
+/* $Id: image.c,v 1.61 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -805,7 +805,9 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 
    if (transferOps) {
       /* make copy of incoming data */
-      GLfloat rgbaCopy[MAX_WIDTH][4];
+      DEFMARRAY(GLfloat, rgbaCopy, MAX_WIDTH, 4);  /* mac 32k limitation */
+      CHECKARRAY(rgbaCopy, return);  /* mac 32k limitation */
+
       for (i = 0; i < n; i++) {
          rgbaCopy[i][0] = rgbaIn[i][0];
          rgbaCopy[i][1] = rgbaIn[i][1];
@@ -866,9 +868,12 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
       /* min/max here */
       if (transferOps & IMAGE_MIN_MAX_BIT) {
          _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
-         if (ctx->MinMax.Sink)
+         if (ctx->MinMax.Sink) {
+            UNDEFARRAY(rgbaCopy);  /* mac 32k limitation */
             return;
+         }
       }
+      UNDEFARRAY(rgbaCopy);  /* mac 32k limitation */
    }
    else {
       /* use incoming data, not a copy */
@@ -1735,8 +1740,10 @@ _mesa_pack_rgba_span( GLcontext *ctx,
    }
    else {
       /* general solution */
-      GLfloat rgba[MAX_WIDTH][4];
       GLuint i;
+      DEFMARRAY(GLfloat, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+      CHECKARRAY(rgba, return);  /* mac 32k limitation */
+
       assert(n <= MAX_WIDTH);
       /* convert color components to floating point */
       for (i=0;i<n;i++) {
@@ -1748,6 +1755,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
       _mesa_pack_float_rgba_span(ctx, n, (const GLfloat (*)[4]) rgba,
                                  dstFormat, dstType, dstAddr,
                                  dstPacking, transferOps);
+      UNDEFARRAY(rgba);  /* mac 32k limitation */
    }
 }
 
@@ -2555,10 +2563,11 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
 
    /* general solution begins here */
    {
-      GLfloat rgba[MAX_WIDTH][4];
       GLint dstComponents;
       GLint dstRedIndex, dstGreenIndex, dstBlueIndex, dstAlphaIndex;
       GLint dstLuminanceIndex, dstIntensityIndex;
+      DEFMARRAY(GLfloat, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+      CHECKARRAY(rgba, return);  /* mac 32k limitation */
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -2587,6 +2596,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            UNDEFARRAY(rgba);  /* mac 32k limitation */
             return;
          }
          else {
@@ -2706,6 +2716,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             break;
          default:
             _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_chan_span()");
+            UNDEFARRAY(rgba);  /* mac 32k limitation */
             return;
       }
 
@@ -2769,6 +2780,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             dst += dstComponents;
          }
       }
+      UNDEFARRAY(rgba);  /* mac 32k limitation */
    }
 }
 
@@ -2826,10 +2838,11 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
 
    /* general solution, no special cases, yet */
    {
-      GLfloat rgba[MAX_WIDTH][4];
       GLint dstComponents;
       GLint dstRedIndex, dstGreenIndex, dstBlueIndex, dstAlphaIndex;
       GLint dstLuminanceIndex, dstIntensityIndex;
+      DEFMARRAY(GLfloat, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+      CHECKARRAY(rgba, return);  /* mac 32k limitation */
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -2858,6 +2871,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            UNDEFARRAY(rgba);  /* mac 32k limitation */
             return;
          }
          else {
@@ -2977,6 +2991,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             break;
          default:
             _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_float_color_span()");
+            UNDEFARRAY(rgba);  /* mac 32k limitation */
             return;
       }
 
@@ -3038,6 +3053,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             dst += dstComponents;
          }
       }
+      UNDEFARRAY(rgba);  /* mac 32k limitation */
    }
 }
 

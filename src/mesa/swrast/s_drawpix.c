@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.18 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.19 2001/05/16 20:27:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -818,11 +818,18 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             continue;
 
          if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
-            GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
             GLchan primary_rgba[MAX_WIDTH][4];
             GLuint unit;
-            /* XXX not sure how multitexture is supposed to work here */
+            DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
+            DEFARRAY(GLfloat, t, MAX_WIDTH);
+            DEFARRAY(GLfloat, r, MAX_WIDTH);
+            DEFARRAY(GLfloat, q, MAX_WIDTH);
+            CHECKARRAY(s, return);  /* mac 32k limitation */
+            CHECKARRAY(t, return);
+            CHECKARRAY(r, return);
+            CHECKARRAY(q, return);
 
+            /* XXX not sure how multitexture is supposed to work here */
             MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -834,6 +841,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                             rgba);
                }
             }
+            UNDEFARRAY(s);  /* mac 32k limitation */
+            UNDEFARRAY(t);
+            UNDEFARRAY(r);
+            UNDEFARRAY(q);
          }
 
          if (quickDraw) {
