@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.2 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.3 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -433,16 +433,12 @@ static void copy_vertices( GLcontext *ctx,
 
    ASSERT(prev == tnl->ExecCopySource);
 
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   tnl->ExecCopySource->id, tnl->ExecCopySource->ref_count-1); */
-
    if (--tnl->ExecCopySource->ref_count == 0)
       _tnl_free_immediate( tnl->ExecCopySource );
    
    next->ref_count++;
    tnl->ExecCopySource = next;
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   next->id, next->ref_count); */
+
    tnl->ExecCopyElts[0] = next->Start-3;
    tnl->ExecCopyElts[1] = next->Start-2;
    tnl->ExecCopyElts[2] = next->Start-1;
@@ -732,14 +728,10 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
    
 
    if (tnl->ExecCopySource != IM) {
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      tnl->ExecCopySource->id, tnl->ExecCopySource->ref_count-1); */
       if (--tnl->ExecCopySource->ref_count == 0)
 	 _tnl_free_immediate( tnl->ExecCopySource );
       IM->ref_count++;
       tnl->ExecCopySource = IM;
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      tnl->ExecCopySource->id, tnl->ExecCopySource->ref_count); */
    }
 
    if (prim == GL_POLYGON+1) {

@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.7 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.8 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,7 +115,6 @@ void _tnl_run_pipeline( GLcontext *ctx )
    GLuint changed_inputs = pipe->run_input_changes;
    GLboolean running = GL_TRUE;
    GLuint i;
-
    unsigned short __tmp;
 
    /* Done elsewhere.

@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.2 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,9 +101,9 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
        * because the array range is too large to process in a single
        * VB.  In GL_EXECUTE mode, this introduces two redundant
        * operations: producing the flag array and computing the orflag
-       * of the flag array. 
+       * of the flag array.
        */
-#if 0
+#if 1
       if (_tnl_hard_begin( ctx, mode )) {
 	 GLuint j;
 	 for (j = 0 ; j < count ; ) {
@@ -127,8 +127,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 #else
       /* Simple alternative to above code.
        */
-/*        if (_tnl_hard_begin( ctx, mode ))  */
-      _tnl_begin(ctx,mode);
+      if (_tnl_hard_begin( ctx, mode )) 
       {
 	 GLuint i;
 	 for (i=start;i<count;i++) {

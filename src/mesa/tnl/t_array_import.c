@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.5 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.6 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,9 +195,6 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
-/*     fprintf(stderr, "%s %d before wr %d ptr %p\n", __FUNCTION__, i, writeable, */
-/*  	   inputs->TexCoord[i].data); */
-
    tmp = _ac_import_texcoord(ctx, i, GL_FLOAT, 
 			     stride ? 4*sizeof(GLfloat) : 0, 
 			     0,
@@ -213,9 +210,6 @@ static void _tnl_import_texcoord( GLcontext *ctx,
       inputs->TexCoord[i].flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->TexCoord[i].flags |= VEC_NOT_WRITEABLE;
-
-/*     fprintf(stderr, "%s %d before wr %d ptr %p\n", __FUNCTION__, i, is_writeable, */
-/*  	   inputs->TexCoord[i].data); */
 }
  
   

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.h,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_dlist.h,v 1.2 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,6 @@ extern void _tnl_dlist_init( GLcontext *ctx );
 extern void _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM );
 extern void _tnl_EndList( GLcontext *ctx );
 extern void _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode );
-extern void _tnl_save_Begin( GLenum mode );
 
 extern void _tnl_EndCallList( GLcontext *ctx );
 extern void _tnl_BeginCallList( GLcontext *ctx, GLuint list );

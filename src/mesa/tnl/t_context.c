@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.8 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: t_context.c,v 1.9 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,7 @@
 #include "t_array_api.h"
 #include "t_eval_api.h"
 #include "t_imm_alloc.h"
+#include "t_imm_api.h"
 #include "t_imm_exec.h"
 #include "t_imm_dlist.h"
 #include "t_pipeline.h"
@@ -84,6 +85,7 @@ _tnl_CreateContext( GLcontext *ctx )
    /* Create the TNLcontext structure
     */
    ctx->swtnl_context = tnl = CALLOC( sizeof(TNLcontext) );
+
    if (!tnl) {
       return GL_FALSE;
    }
@@ -117,7 +119,6 @@ _tnl_CreateContext( GLcontext *ctx )
    ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
-
    return GL_TRUE;
 }
 

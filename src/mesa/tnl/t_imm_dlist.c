@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.4 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.5 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,8 +112,6 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       return;
    
    node->IM = im; im->ref_count++;
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   im->id, im->ref_count); */
    node->Start = im->Start;
    node->Count = im->Count;
    node->BeginState = im->BeginState;
@@ -144,10 +142,6 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       if (!new_im) return;
       new_im->ref_count++;
       im->ref_count--;		/* remove CURRENT_IM reference */
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      im->id, im->ref_count); */
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      new_im->id, new_im->ref_count); */
       ASSERT(im->ref_count > 0);
       SET_IMMEDIATE( ctx, new_im );
       _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS,
@@ -343,15 +337,9 @@ _tnl_EndList( GLcontext *ctx )
 
    ctx->swtnl_im = 0;
    IM->ref_count--;
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   IM->id, IM->ref_count); */
    if (IM == tnl->ExecCopySource) {
       IM->ref_count--;
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      IM->id, IM->ref_count); */
    } else {
-/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	      tnl->ExecCopySource->id, tnl->ExecCopySource->ref_count-1); */
       if ( --tnl->ExecCopySource->ref_count == 0 )
 	 _tnl_free_immediate( tnl->ExecCopySource );
    }
@@ -366,14 +354,10 @@ _tnl_EndList( GLcontext *ctx )
 
    tnl->ExecCopySource = IM;
    IM->ref_count++;
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   IM->id, IM->ref_count); */
 
 
    SET_IMMEDIATE( ctx, IM );
    IM->ref_count++;
-/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
-/*  	   IM->id, IM->ref_count); */
 
    _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );	
 
@@ -417,31 +401,3 @@ _tnl_dlist_init( GLcontext *ctx )
 			  print_compiled_cassette );
 }
 
-/* Need to do this to get the correct begin/end error behaviour from
- * functions like ColorPointerEXT which are still active in
- * SAVE_AND_EXEC modes.  
- */
-void
-_tnl_save_Begin( GLenum mode )
-{
-   GET_CURRENT_CONTEXT(ctx);
-  
-    if (mode > GL_POLYGON) {
-      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
-      return;		     
-   }
-
-   if (ctx->ExecuteFlag) {
-      /* Preserve vtxfmt invarient:
-       */
-      if (ctx->NewState)
-	 gl_update_state( ctx );
-
-      /* Slot in geomexec: No need to call setdispatch as we know
-       * CurrentDispatch is Save.
-       */
-      ASSERT(ctx->CurrentDispatch == ctx->Save);
-   }
-
-   _tnl_begin( ctx, mode );
-}

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.h,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_api.h,v 1.2 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,9 +32,10 @@
 #include "t_context.h"
 
 
+extern void _tnl_save_Begin( GLenum mode );
+
 /* TNL-private internal functions for building higher-level operations:
  */
-extern void _tnl_begin( GLcontext *ctx, GLenum p );
 extern GLboolean _tnl_hard_begin( GLcontext *ctx, GLenum p );
 extern void _tnl_end( GLcontext *ctx );
 extern void _tnl_vertex2f( GLcontext *ctx, GLfloat x, GLfloat y );

@@ -480,8 +480,10 @@ fx_null_tri( GLcontext *ctx,
    grDrawTriangle( &v[i2].v, &v[i1].v, &v[i].v )
 
 #define TAG(x) fx_##x##_verts
-#define LOCAL_VARS \
-    fxVertex *v = FX_CONTEXT(ctx)->verts;	
+#define LOCAL_VARS						\
+    fxVertex *v = FX_CONTEXT(ctx)->verts;			\
+    const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
+    (void) elt;
 
 /* Verts, no clipping.
  */
@@ -496,12 +498,8 @@ fx_null_tri( GLcontext *ctx,
  */
 #undef ELT
 #undef TAG
-#undef LOCAL_VARS
 #define TAG(x) fx_##x##_elts
 #define ELT(x) elt[x]
-#define LOCAL_VARS  				\
-    fxVertex *v = FX_CONTEXT(ctx)->verts;   \
-    const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	
 #include "tnl/t_vb_rendertmp.h"
 
 

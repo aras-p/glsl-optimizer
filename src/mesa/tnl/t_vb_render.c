@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.8 2001/01/08 17:41:15 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.9 2001/01/08 21:56:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -603,6 +603,8 @@ static GLboolean run_render( GLcontext *ctx,
 	 length= VB->PrimitiveLength[i];	
 	 ASSERT(length || (flags & PRIM_LAST));
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
+/*  	 fprintf(stderr, "Render %s %d..%d\n", */
+/*  		 _mesa_prim_name[flags&PRIM_MODE_MASK], i, i+length); */
 	 if (length)
 	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
       }

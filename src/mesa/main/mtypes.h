@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.12 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: mtypes.h,v 1.13 2001/01/08 21:55:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1576,13 +1576,14 @@ struct __GLcontextRec {
    /* Dither disable via MESA_NO_DITHER env var */
    GLboolean NoDither;
 
-#ifdef DEBUG
    GLboolean Rendering;
-#endif
 
 #if defined(MESA_TRACE)
    struct _glapi_table *TraceDispatch;
    trace_context_t     *TraceCtx;
+#else
+   void *TraceDispatch;
+   void *TraceCtx;
 #endif
 
    /* Hooks for module contexts.  These will eventually live

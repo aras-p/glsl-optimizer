@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.38 2001/01/05 05:31:42 keithw Exp $
+# $Id: Makefile.X11,v 1.39 2001/01/08 21:55:59 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -188,8 +188,8 @@ ASM_SOURCES =
 ADDITIONAL_OBJ = 
 
 OBJECTS = $(ASM_SOURCES:.S=.o) \
-	$(CORE_SOURCES:.c=.o) \
 	$(DRIVER_SOURCES:.c=.o) \
+	$(CORE_SOURCES:.c=.o) \
 	$(ADDITIONAL_OBJ)
 
 

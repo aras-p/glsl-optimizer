@@ -68,7 +68,7 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
 }
 
 
-void
+static void
 _tnl_begin( GLcontext *ctx, GLenum p )
 {
    struct immediate *IM = TNL_CURRENT_IM(ctx);
@@ -172,6 +172,10 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
     */
    if (!ctx->CompileFlag) {
       _tnl_begin( ctx, p );
+
+      /* Set this for the duration:
+       */
+      ctx->Driver.CurrentExecPrimitive = p;
       return GL_TRUE;
    }
        
@@ -182,19 +186,15 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
  
    switch (IM->BeginState & (VERT_BEGIN_0|VERT_BEGIN_1)) {
    case VERT_BEGIN_0|VERT_BEGIN_1:
-      /* In this case we know for sure that the list is going to be
-       * inside a begin/end object at this point when run.  Rather
-       * than saving the redundant data, compile in an error and
-       * return.
+      /* This is an immediate known to be inside a begin/end object.
        */
       IM->BeginState |= (VERT_ERROR_1|VERT_ERROR_0);
       return GL_FALSE;
       
    case VERT_BEGIN_0:
    case VERT_BEGIN_1:
-      /* This is a normal (non-hard) immediate, in an unknown
-       * begin/end state.  Assert it is empty and conviert it to a
-       * 'hard' one.  
+      /* This is a display-list immediate in an unknown begin/end
+       * state.  Assert it is empty and conviert it to a 'hard' one.  
        */
       ASSERT (IM->SavedBeginState == 0);
       
@@ -207,6 +207,9 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       
       /* FALLTHROUGH */
    case 0: 
+      /* Unless we have fallen through, this is an immediate known to 
+       * be outside begin/end objects.
+       */
       
       IM->BeginState |= VERT_BEGIN_0|VERT_BEGIN_1;
 	 
@@ -229,6 +232,7 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
        * vertices before the next state change.
        */
       ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+
       return GL_TRUE;
       
    default:
@@ -236,6 +240,40 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       return GL_TRUE;      
    }
 }
+
+
+
+/* Need to do this to get the correct begin/end error behaviour from
+ * functions like ColorPointerEXT which are still active in
+ * SAVE_AND_EXEC modes.  
+ */
+void
+_tnl_save_Begin( GLenum mode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+  
+    if (mode > GL_POLYGON) {
+      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
+      return;		     
+   }
+
+   if (ctx->ExecuteFlag) {
+      /* Preserve vtxfmt invarient:
+       */
+      if (ctx->NewState)
+	 gl_update_state( ctx );
+
+      /* Slot in geomexec: No need to call setdispatch as we know
+       * CurrentDispatch is Save.
+       */
+      ASSERT(ctx->CurrentDispatch == ctx->Save);
+   }
+
+   _tnl_begin( ctx, mode );
+}
+
+
+
 
 /* Note the continuation of a partially completed primitive.  For
  * driver t&l fallbacks between begin/end primitives.  Has basically
@@ -297,6 +335,10 @@ _tnl_end( GLcontext *ctx )
 
    IM->BeginState = state;      
 
+   if (!ctx->CompileFlag)
+      ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
+
+
    /* You can set this flag to get the old 'flush_vb on glEnd()'
     * behaviour.
     */
@@ -316,10 +358,6 @@ _tnl_End(void)
     */
    if (ctx->CompileFlag) 
       ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
-   else
-      ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
-   
-   
 }
 
 
