@@ -209,6 +209,8 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(NV_texture_env_combine4),        VER(0,0), Y, N, N, N },
    { GL(NV_texture_rectangle),           VER(0,0), Y, N, N, N },
    { GL(OES_read_format),                VER(0,0), Y, N, N, N },
+   { GL(SGI_color_matrix),               VER(0,0), Y, N, N, N },
+   { GL(SGI_texture_color_table),        VER(0,0), Y, N, N, N },
    { GL(SGIS_generate_mipmap),           VER(1,4), Y, N, N, N },
    { GL(SGIS_multisample),               VER(0,0), Y, N, N, N },
    { GL(SGIS_texture_border_clamp),      VER(1,3), Y, N, N, N },

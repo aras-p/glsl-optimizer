@@ -3199,6 +3199,18 @@ glx:
         <size name="GetMinmaxParameteriv" mode="get"/>
     </enum>
 
+    <enum name="COLOR_MATRIX"                             value="0x80B1"/>
+    <enum name="COLOR_MATRIX_STACK_DEPTH"                 value="0x80B2"/>
+    <enum name="MAX_COLOR_MATRIX_STACK_DEPTH"             value="0x80B3"/>
+    <enum name="POST_COLOR_MATRIX_RED_SCALE"              value="0x80B4"/>
+    <enum name="POST_COLOR_MATRIX_GREEN_SCALE"            value="0x80B5"/>
+    <enum name="POST_COLOR_MATRIX_BLUE_SCALE"             value="0x80B6"/>
+    <enum name="POST_COLOR_MATRIX_ALPHA_SCALE"            value="0x80B7"/>
+    <enum name="POST_COLOR_MATRIX_RED_BIAS"               value="0x80B8"/>
+    <enum name="POST_COLOR_MATRIX_GREEN_BIAS"             value="0x80B9"/>
+    <enum name="POST_COLOR_MATRIX_BLUE_BIAS"              value="0x80BA"/>
+    <enum name="POST_COLOR_MATRIX_ALPHA_BIAS"             value="0x80BB"/>
+
     <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
         <size name="ColorTableParameterfv"/>
         <size name="ColorTableParameteriv"/>
@@ -3647,7 +3659,6 @@ glx:
     <enum name="NUM_COMPRESSED_TEXTURE_FORMATS"           value="0x86A2"/>
     <enum name="COMPRESSED_TEXTURE_FORMATS"               value="0x86A3"/>
     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
-    <enum name="CLAMP_TO_BORDER_SGIS"                     value="0x812D"/>
     <enum name="COMBINE"                                  value="0x8570"/>
     <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
         <size name="TexEnvfv"/>
@@ -4960,6 +4971,12 @@ glx:
         <param name="target" type="GLenum"/>
         <param name="level" type="GLint"/>
         <param name="img" type="GLvoid *" output="true"/>
+
+	<!-- This has to be hand coded because the image size is in the
+	     "wrong" place.  Technically, this should be a
+	     'always_array="true"' case.  The size field in the reply would
+	     be at offset 12.  However, the size is actually at offset 16.
+	     This is where the 'width' is in a GetTexImage reply. -->
         <glx sop="160" handcode="true"/>
     </function>
 </category>
@@ -6727,13 +6744,6 @@ glx:
         <size name="GetConvolutionParameterfv" mode="get"/>
         <size name="GetConvolutionParameteriv" mode="get"/>
     </enum>
-    <!-- FIXME: Should this be in a section for HP_convolution_border_modes? -->
-    <enum name="CONVOLUTION_BORDER_COLOR_HP"   count="4"  value="0x8154">
-        <size name="ConvolutionParameterfv"/>
-        <size name="ConvolutionParameteriv"/>
-        <size name="GetConvolutionParameterfv" mode="get"/>
-        <size name="GetConvolutionParameteriv" mode="get"/>
-    </enum>
     <enum name="CONVOLUTION_FILTER_SCALE_EXT"  count="4"  value="0x8014">
         <size name="ConvolutionParameterfv"/>
         <size name="ConvolutionParameteriv"/>
@@ -6880,6 +6890,20 @@ glx:
     </function>
 </category>
 
+<category name="GL_SGI_color_matrix" number="13">
+    <enum name="COLOR_MATRIX_SGI"                         value="0x80B1"/>
+    <enum name="COLOR_MATRIX_STACK_DEPTH_SGI"             value="0x80B2"/>
+    <enum name="MAX_COLOR_MATRIX_STACK_DEPTH_SGI"         value="0x80B3"/>
+    <enum name="POST_COLOR_MATRIX_RED_SCALE_SGI"          value="0x80B4"/>
+    <enum name="POST_COLOR_MATRIX_GREEN_SCALE_SGI"        value="0x80B5"/>
+    <enum name="POST_COLOR_MATRIX_BLUE_SCALE_SGI"         value="0x80B6"/>
+    <enum name="POST_COLOR_MATRIX_ALPHA_SCALE_SGI"        value="0x80B7"/>
+    <enum name="POST_COLOR_MATRIX_RED_BIAS_SGI"           value="0x80B8"/>
+    <enum name="POST_COLOR_MATRIX_GREEN_BIAS_SGI"         value="0x80B9"/>
+    <enum name="POST_COLOR_MATRIX_BLUE_BIAS_SGI"          value="0x80BA"/>
+    <enum name="POST_COLOR_MATRIX_ALPHA_BIAS_SGI"         value="0x80BB"/>
+</category>
+
 <category name="GL_SGI_color_table" number="14">
     <function name="ColorTableSGI" alias="ColorTable">
         <param name="target" type="GLenum"/>
@@ -7005,6 +7029,11 @@ glx:
     </function>
 </category>
 
+<category name="GL_SGI_texture_color_table" number="17">
+    <enum name="TEXTURE_COLOR_TABLE_SGI"                  value="0x80BC"/>
+    <enum name="PROXY_TEXTURE_COLOR_TABLE_SGI"            value="0x80BD"/>
+</category>
+
 <!-- Extension number 19 is not listed in the extension registry. -->
 
 <category name="GL_EXT_texture_object" number="20">
@@ -7092,6 +7121,12 @@ glx:
     </function>
 </category>
 
+<!-- Extension number 26 is not listed in the extension registry. -->
+
+<category name="GL_EXT_rescale_normal" number="27">
+    <enum name="RESCALE_NORMAL_EXT"                       value="0x803A"/>
+</category>
+
 <!-- Extension number 28 is a GLX extension. -->
 <!-- Extension number 29 is not listed in the extension registry. -->
 
@@ -7162,7 +7197,7 @@ glx:
     </function>
 </category>
 
-<category name="GL_SGIS_generate_mipmap" number="33">
+<category name="GL_SGIS_generate_mipmap" number="32">
     <enum name="GENERATE_MIPMAP_SGIS"          count="1"  value="0x8191">
         <size name="TexParameterfv"/>
         <size name="TexParameteriv"/>
@@ -7222,6 +7257,14 @@ glx:
     </enum>
     <enum name="TEXTURE_LEQUAL_R_SGIX"                    value="0x819C"/>
     <enum name="TEXTURE_GEQUAL_R_SGIX"                    value="0x819D"/>
+</category>
+
+<category name="GL_SGIS_texture_edge_clamp" number="35">
+    <enum name="CLAMP_TO_EDGE_SGIS"                       value="0x812F"/>
+</category>
+
+<category name="GL_SGIS_texture_border_clamp" number="36">
+    <enum name="CLAMP_TO_BORDER_SGIS"                     value="0x812D"/>
 </category>
 
 <category name="GL_EXT_blend_minmax" number="37">
@@ -7439,6 +7482,18 @@ glx:
     </function>
 </category>
 
+<category name="GL_HP_convolution_border_modes" number="67">
+    <enum name="IGNORE_BORDER_HP"                         value="0x8150"/>
+    <enum name="CONSTANT_BORDER_HP"                       value="0x8151"/>
+    <enum name="REPLICATE_BORDER_HP"                      value="0x8153"/>
+    <enum name="CONVOLUTION_BORDER_COLOR_HP"   count="4"  value="0x8154">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
+        <size name="GetConvolutionParameterfv" mode="get"/>
+        <size name="GetConvolutionParameteriv" mode="get"/>
+    </enum>
+</category>
+
 <!-- Extension number 68 is not listed in the extension registry. -->
 <!-- Extension number 70 is not listed in the extension registry. -->
 <!-- Extension number 71 is not listed in the extension registry. -->
@@ -7542,6 +7597,10 @@ glx:
         <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
+</category>
+
+<category name="GL_EXT_clip_volume_hint" number="79">
+    <enum name="CLIP_VOLUME_CLIPPING_HINT_EXT"            value="0x80F0"/>
 </category>
 
 <category name="GL_SGIX_list_priority" number="80">
@@ -7817,6 +7876,10 @@ glx:
 <!-- Extension number 108 is not listed in the extension registry. -->
 <!-- Extension number 109 is not listed in the extension registry. -->
 
+<category name="GL_IBM_rasterpos_clip" number="110">
+    <enum name="RASTER_POSITION_UNCLIPPED_IBM"            value="0x19262"/>
+</category>
+
 <category name="GL_EXT_draw_range_elements" number="112">
     <function name="DrawRangeElementsEXT" alias="DrawRangeElements">
         <param name="mode" type="GLenum"/>
@@ -7914,6 +7977,11 @@ glx:
     </function>
 </category>
 
+<category name="GL_HP_occlusion_test" number="137">
+    <enum name="OCCLUSION_TEST_HP"                        value="0x8165"/>
+    <enum name="OCCLUSION_TEST_RESULT_HP"                 value="0x8166"/>
+</category>
+
 <category name="GL_EXT_pixel_transform" number="138">
     <function name="PixelTransformParameteriEXT" offset="?">
         <param name="target" type="GLenum"/>
@@ -7941,8 +8009,22 @@ glx:
 </category>
 
 <!-- Extension number 140 is not listed in the extension registry. -->
+
+<category name="GL_EXT_shared_texture_palette" number="141">
+    <enum name="SHARED_TEXTURE_PALETTE_EXT"    count="1"  value="0x81FB"/>
+</category>
+
 <!-- Extension number 142 is a GLX extension. -->
 <!-- Extension number 143 is not listed in the extension registry. -->
+
+<category name="GL_EXT_separate_specular_color" number="144">
+    <enum name="LIGHT_MODEL_COLOR_CONTROL_EXT" count="1"  value="0x81F8">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
+    </enum>
+    <enum name="SINGLE_COLOR_EXT"                         value="0x81F9"/>
+    <enum name="SEPARATE_SPECULAR_COLOR_EXT"              value="0x81FA"/>
+</category>
 
 <category name="GL_EXT_secondary_color" number="145">
     <function name="SecondaryColor3bEXT" offset="561" vectorequiv="SecondaryColor3bvEXT">
@@ -8215,6 +8297,30 @@ glx:
 </category>
 
 <!-- Extension number 157 is not listed in the extension registry. -->
+
+<category name="GL_EXT_texture_env_combine" number="158">
+    <enum name="COMBINE_EXT"                              value="0x8570"/>
+    <enum name="COMBINE_RGB_EXT"               count="1"  value="0x8571"/>
+    <enum name="COMBINE_ALPHA_EXT"             count="1"  value="0x8572"/>
+    <enum name="RGB_SCALE_EXT"                 count="1"  value="0x8573"/>
+    <enum name="ADD_SIGNED_EXT"                           value="0x8574"/>
+    <enum name="INTERPOLATE_EXT"                          value="0x8575"/>
+    <enum name="CONSTANT_EXT"                             value="0x8576"/>
+    <enum name="PRIMARY_COLOR_EXT"                        value="0x8577"/>
+    <enum name="PREVIOUS_EXT"                             value="0x8578"/>
+    <enum name="SOURCE0_RGB_EXT"               count="1"  value="0x8580"/>
+    <enum name="SOURCE1_RGB_EXT"               count="1"  value="0x8581"/>
+    <enum name="SOURCE2_RGB_EXT"               count="1"  value="0x8582"/>
+    <enum name="SOURCE0_ALPHA_EXT"             count="1"  value="0x8588"/>
+    <enum name="SOURCE1_ALPHA_EXT"             count="1"  value="0x8589"/>
+    <enum name="SOURCE2_ALPHA_EXT"             count="1"  value="0x858A"/>
+    <enum name="OPERAND0_RGB_EXT"              count="1"  value="0x8590"/>
+    <enum name="OPERAND1_RGB_EXT"              count="1"  value="0x8591"/>
+    <enum name="OPERAND2_RGB_EXT"              count="1"  value="0x8592"/>
+    <enum name="OPERAND0_ALPHA_EXT"            count="1"  value="0x8598"/>
+    <enum name="OPERAND1_ALPHA_EXT"            count="1"  value="0x8599"/>
+    <enum name="OPERAND2_ALPHA_EXT"            count="1"  value="0x859A"/>
+</category>
 
 <category name="GL_SGIX_pixel_texture" number="160">
     <function name="PixelTexGenSGIX" offset="430">
@@ -8660,7 +8766,18 @@ glx:
     </function>
 </category>
 
+<category name="GL_EXT_stencil_wrap" number="176">
+    <enum name="INCR_WRAP_EXT"                            value="0x8507"/>
+    <enum name="DECR_WRAP_EXT"                            value="0x8508"/>
+</category>
+
 <!-- Extension number 177 is a WGL extension. -->
+
+<category name="GL_NV_texgen_reflection" number="179">
+    <enum name="NORMAL_MAP_NV"                            value="0x8511"/>
+    <enum name="REFLECTION_MAP_NV"                        value="0x8512"/>
+</category>
+
 <!-- Extension number 180 is not listed in the extension registry. -->
 
 <category name="GL_SUN_convolution_border_modes" number="182">
@@ -8669,6 +8786,10 @@ glx:
 
 <!-- Extension number 183 is a GLX extension. -->
 <!-- Extension number 184 is not listed in the extension registry. -->
+
+<category name="GL_EXT_texture_env_add" number="185">
+    <!-- No new functions, types, enums. -->
+</category>
 
 <category name="GL_EXT_texture_lod_bias" number="186">
     <enum name="TEXTURE_LOD_BIAS_EXT"          count="1"  value="0x8501">
@@ -8707,6 +8828,11 @@ glx:
         <param name="pointer" type="const GLvoid *"/>
         <glx handcode="true" ignore="true"/>
     </function>
+</category>
+
+<category name="GL_NV_light_max_exponent" number="189">
+    <enum name="MAX_SHININESS_NV"                         value="0x8504"/>
+    <enum name="MAX_SPOT_EXPONENT_NV"                     value="0x8505"/>
 </category>
 
 <category name="GL_NV_vertex_array_range" number="190">
@@ -8834,6 +8960,10 @@ glx:
     </enum>
     <enum name="EYE_RADIAL_NV"                            value="0x855B"/>
     <enum name="EYE_PLANE_ABSOLUTE_NV"                    value="0x855C"/>
+</category>
+
+<category name="GL_NV_blend_square" number="194">
+    <!-- No new functions, types, enums. -->
 </category>
 
 <category name="GL_NV_texture_env_combine4" number="195">
@@ -9015,6 +9145,13 @@ glx:
     </function>
 </category>
 
+<category name="GL_EXT_texture_compression_s3tc" number="198">
+    <enum name="COMPRESSED_RGB_S3TC_DXT1_EXT"             value="0x83F0"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT1_EXT"            value="0x83F1"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT3_EXT"            value="0x83F2"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT5_EXT"            value="0x83F3"/>
+</category>
+
 <category name="GL_IBM_multimode_draw_arrays" number="200">
     <function name="MultiModeDrawArraysIBM" offset="708">
         <param name="mode" type="const GLenum *"/>
@@ -9101,6 +9238,18 @@ glx:
 <!-- Extension number 203 is not listed in the extension registry. -->
 <!-- Extension number 204 is not listed in the extension registry. -->
 <!-- Extension number 205 is not listed in the extension registry. -->
+
+<category name="GL_3DFX_texture_compression_FXT1" number="206">
+    <enum name="COMPRESSED_RGB_FXT1_3DFX"                 value="0x86B0"/>
+    <enum name="COMPRESSED_RGBA_FXT1_3DFX"                value="0x86B1"/>
+</category>
+
+<category name="GL_3DFX_multisample" number="207">
+    <enum name="MULTISAMPLE_3DFX"                         value="0x86B2"/>
+    <enum name="SAMPLE_BUFFERS_3DFX"                      value="0x86B3"/>
+    <enum name="SAMPLES_3DFX"                             value="0x86B4"/>
+    <enum name="MULTISAMPLE_BIT_3DFX"                     value="0x20000000"/>
+</category>
 
 <category name="GL_3DFX_tbuffer" number="208">
     <function name="TbufferMask3DFX" offset="553">
@@ -9283,6 +9432,13 @@ glx:
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
     </function>
+</category>
+
+<category name="GL_NV_texture_compression_vtc" number="228">
+    <enum name="COMPRESSED_RGB_S3TC_DXT1_EXT"             value="0x83F0"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT1_EXT"            value="0x83F1"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT3_EXT"            value="0x83F2"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT5_EXT"            value="0x83F3"/>
 </category>
 
 <category name="GL_NV_texture_rectangle" number="229">
@@ -9824,6 +9980,11 @@ glx:
 <!-- Extension number 238 is a GLX extension. -->
 <!-- Extension number 242 is a WGL extension. -->
 
+<category name="GL_NV_copy_depth_to_color" number="243">
+    <enum name="DEPTH_STENCIL_TO_RGBA_NV"                 value="0x886E"/>
+    <enum name="DEPTH_STENCIL_TO_BGRA_NV"                 value="0x886F"/>
+</category>
+
 <category name="GL_ATI_fragment_shader" number="245">
     <function name="GenFragmentShadersATI" offset="782">
       <return type="GLuint"/>
@@ -9970,6 +10131,18 @@ glx:
     </function>
 </category>
 
+<category name="GL_SUN_slice_accum" number="258">
+    <enum name="SLICE_ACCUM_SUN"                          value="0x85CC"/>
+</category>
+
+<category name="GL_NV_multisample_filter_hint" number="259">
+    <enum name="MULTISAMPLE_FILTER_HINT_NV"               value="0x8534"/>
+</category>
+
+<category name="GL_NV_depth_clamp" number="260">
+    <enum name="DEPTH_CLAMP_NV"                           value="0x864F"/>
+</category>
+
 <category name="GL_NV_point_sprite" number="262">
     <!-- These existing enums can be passed as a parameter to the function
          added for this extension. -->
@@ -10015,11 +10188,30 @@ glx:
 <!-- Extension number 263 is a WGL extension. -->
 <!-- Extension number 264 is a WGL extension. -->
 
+<category name="GL_EXT_shadow_funcs" number="267">
+    <!-- No new functions, types, enums. -->
+</category>
+
 <category name="EXT_stencil_two_side" number="268">
     <function name="ActiveStencilFaceEXT" offset="646">
         <param name="face" type="GLenum"/>
         <glx rop="4220"/>
     </function>
+</category>
+
+<category name="GL_APPLE_ycbcr_422" number="275">
+    <enum name="YCBCR_422_APPLE"                          value="0x85B9"/>
+    <enum name="UNSIGNED_SHORT_8_8_APPLE"                 value="0x85BA"/>
+    <enum name="UNSIGNED_SHORT_8_8_REV_APPLE"             value="0x85BB"/>
+</category>
+
+<category name="GL_S3_s3tc" number="276">
+    <enum name="RGB_S3TC"                                 value="0x83A0"/>
+    <enum name="RGB4_S3TC"                                value="0x83A1"/>
+    <enum name="RGBA_S3TC"                                value="0x83A2"/>
+    <enum name="RGBA4_S3TC"                               value="0x83A3"/>
+    <enum name="RGBA_DXT5_S3TC"                           value="0x83A4"/>
+    <enum name="RGBA4_DXT5_S3TC"                          value="0x83A5"/>
 </category>
 
 <category name="GL_ATI_draw_buffers" number="277">
@@ -10031,6 +10223,12 @@ glx:
 </category>
 
 <!-- Extension number 278 is a WGL extension. -->
+
+<category name="GL_ATI_texture_env_combine3" number="279">
+    <enum name="MODULATE_ADD_ATI"                         value="0x8744"/>
+    <enum name="MODULATE_SIGNED_ADD_ATI"                  value="0x8745"/>
+    <enum name="MODULATE_SUBTRACT_ATI"                    value="0x8746"/>
+</category>
 
 <category name="GL_NV_fragment_program" number="282">
     <function name="ProgramNamedParameter4fNV" offset="682" vectorequiv="ProgramNamedParameter4fvNV">
@@ -10124,11 +10322,29 @@ glx:
     </function>
 </category>
 
+<category name="GL_MESA_pack_invert" number="300">
+    <enum name="PACK_INVERT_MESA"                         value="0x8758"/>
+</category>
+
+<category name="GL_MESA_ycbcr_texture" number="301">
+    <enum name="YCBCR_MESA"                               value="0x8757"/>
+    <enum name="UNSIGNED_SHORT_8_8_MESA"                  value="0x85BA"/>
+    <enum name="UNSIGNED_SHORT_8_8_REV_MESA"              value="0x85BB"/>
+</category>
+
 <category name="GL_EXT_pixel_buffer_object" number="302">
     <enum name="PIXEL_PACK_BUFFER_EXT"                    value="0x88EB"/>
     <enum name="PIXEL_UNPACK_BUFFER_EXT"                  value="0x88EC"/>
     <enum name="PIXEL_PACK_BUFFER_BINDING_EXT"            value="0x88ED"/>
     <enum name="PIXEL_UNPACK_BUFFER_BINDING_EXT"          value="0x88EF"/>
+</category>
+
+<!-- Extension number 307 is a GLX extension. -->
+<!-- Extension number 308 is a GLX extension. -->
+
+<category name="GL_EXT_texture_compression_dxt1" number="309">
+    <enum name="COMPRESSED_RGB_S3TC_DXT1_EXT"             value="0x83F0"/>
+    <enum name="COMPRESSED_RGBA_S3TC_DXT1_EXT"            value="0x83F1"/>
 </category>
 
 <!-- Unnumbered extensions sorted by name. -->

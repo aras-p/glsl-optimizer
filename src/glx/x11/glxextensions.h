@@ -165,6 +165,8 @@ enum {
    GL_NV_texture_compression_vtc_bit,
    GL_NV_texture_env_combine4_bit,
    GL_OES_read_format_bit,
+   GL_SGI_color_matrix_bit,
+   GL_SGI_texture_color_table_bit,
    GL_SGIS_generate_mipmap_bit,
    GL_SGIS_multisample_bit,
    GL_SGIS_texture_lod_bit,
