@@ -210,6 +210,12 @@ DRI_CONF_OPT_BEGIN_V(dither_mode,enum,def,"0:2") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_FLOAT_DEPTH(def) \
+DRI_CONF_OPT_BEGIN(float_depth,bool,def) \
+        DRI_CONF_DESC(en,"Floating point depth buffer") \
+        DRI_CONF_DESC(de,"Fließkomma z-Puffer") \
+DRI_CONF_OPT_END
+
 /** \brief Performance-related options */
 #define DRI_CONF_SECTION_PERFORMANCE \
 DRI_CONF_SECTION_BEGIN \
