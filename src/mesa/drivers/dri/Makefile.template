@@ -18,7 +18,7 @@ WINOBJ=
 WINLIB=-L$(MESA)/src/glx/mini
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 INCLUDES = $(MINIGLX_INCLUDES) \
-	   -I$(DRM_SOURCE_PATH)/shared \
+	   -I$(DRM_SOURCE_PATH)/shared-core \
 	   -I$(DRM_SOURCE_PATH)/libdrm \
 	   $(SHARED_INCLUDES)
 
@@ -36,8 +36,7 @@ SHARED_INCLUDES = \
 	-I. \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
-	-I$(DRM_SOURCE_PATH)/shared \
-	-I$(DRM_SOURCE_PATH)/linux \
+	-I$(DRM_SOURCE_PATH)/shared-core \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
@@ -95,7 +94,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o $(SYMLINKS)
+	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
 	-rm -f depend depend.bak
 
 include depend
