@@ -3620,6 +3620,216 @@ KEYWORD1 void KEYWORD2 NAME(MultiModeDrawElementsIBM)(const GLenum * mode, const
    DISPATCH(MultiModeDrawElementsIBM, (mode, count, type, indices, primcount, modestride), (F, "glMultiModeDrawElementsIBM(%p, %p, 0x%x, %p, %d, %d);\n", (const void *) mode, (const void *) count, type, (const void *) indices, primcount, modestride));
 }
 
+KEYWORD1 void KEYWORD2 NAME(DeleteObjectARB)(GLhandleARB obj)
+{
+   DISPATCH(DeleteObjectARB, (obj), (F, "glDeleteObjectARB(%d);\n", obj));
+}
+
+KEYWORD1 GLhandleARB KEYWORD2 NAME(GetHandleARB)(GLenum pname)
+{
+   RETURN_DISPATCH(GetHandleARB, (pname), (F, "glGetHandleARB(0x%x);\n", pname));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DetachObjectARB)(GLhandleARB containerObj, GLhandleARB attachedObj)
+{
+   DISPATCH(DetachObjectARB, (containerObj, attachedObj), (F, "glDetachObjectARB(%d, %d);\n", containerObj, attachedObj));
+}
+
+KEYWORD1 GLhandleARB KEYWORD2 NAME(CreateShaderObjectARB)(GLenum shaderType)
+{
+   RETURN_DISPATCH(CreateShaderObjectARB, (shaderType), (F, "glCreateShaderObjectARB(0x%x);\n", shaderType));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ShaderSourceARB)(GLhandleARB shaderObj, GLsizei count, const GLcharARB ** string, const GLint * length)
+{
+   DISPATCH(ShaderSourceARB, (shaderObj, count, string, length), (F, "glShaderSourceARB(%d, %d, %p, %p);\n", shaderObj, count, (const void *) string, (const void *) length));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CompileShaderARB)(GLhandleARB shaderObj)
+{
+   DISPATCH(CompileShaderARB, (shaderObj), (F, "glCompileShaderARB(%d);\n", shaderObj));
+}
+
+KEYWORD1 GLhandleARB KEYWORD2 NAME(CreateProgramObjectARB)(void)
+{
+   RETURN_DISPATCH(CreateProgramObjectARB, (), (F, "glCreateProgramObjectARB();\n"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(AttachObjectARB)(GLhandleARB containerObj, GLhandleARB obj)
+{
+   DISPATCH(AttachObjectARB, (containerObj, obj), (F, "glAttachObjectARB(%d, %d);\n", containerObj, obj));
+}
+
+KEYWORD1 void KEYWORD2 NAME(LinkProgramARB)(GLhandleARB programObj)
+{
+   DISPATCH(LinkProgramARB, (programObj), (F, "glLinkProgramARB(%d);\n", programObj));
+}
+
+KEYWORD1 void KEYWORD2 NAME(UseProgramObjectARB)(GLhandleARB programObj)
+{
+   DISPATCH(UseProgramObjectARB, (programObj), (F, "glUseProgramObjectARB(%d);\n", programObj));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ValidateProgramARB)(GLhandleARB programObj)
+{
+   DISPATCH(ValidateProgramARB, (programObj), (F, "glValidateProgramARB(%d);\n", programObj));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform1fARB)(GLint location, GLfloat v0)
+{
+   DISPATCH(Uniform1fARB, (location, v0), (F, "glUniform1fARB(%d, %f);\n", location, v0));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform2fARB)(GLint location, GLfloat v0, GLfloat v1)
+{
+   DISPATCH(Uniform2fARB, (location, v0, v1), (F, "glUniform2fARB(%d, %f, %f);\n", location, v0, v1));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform3fARB)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
+{
+   DISPATCH(Uniform3fARB, (location, v0, v1, v2), (F, "glUniform3fARB(%d, %f, %f, %f);\n", location, v0, v1, v2));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform4fARB)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
+{
+   DISPATCH(Uniform4fARB, (location, v0, v1, v2, v3), (F, "glUniform4fARB(%d, %f, %f, %f, %f);\n", location, v0, v1, v2, v3));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform1iARB)(GLint location, GLint v0)
+{
+   DISPATCH(Uniform1iARB, (location, v0), (F, "glUniform1iARB(%d, %d);\n", location, v0));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform2iARB)(GLint location, GLint v0, GLint v1)
+{
+   DISPATCH(Uniform2iARB, (location, v0, v1), (F, "glUniform2iARB(%d, %d, %d);\n", location, v0, v1));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform3iARB)(GLint location, GLint v0, GLint v1, GLint v2)
+{
+   DISPATCH(Uniform3iARB, (location, v0, v1, v2), (F, "glUniform3iARB(%d, %d, %d, %d);\n", location, v0, v1, v2));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform4iARB)(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
+{
+   DISPATCH(Uniform4iARB, (location, v0, v1, v2, v3), (F, "glUniform4iARB(%d, %d, %d, %d, %d);\n", location, v0, v1, v2, v3));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform1fvARB)(GLint location, GLsizei count, const GLfloat * value)
+{
+   DISPATCH(Uniform1fvARB, (location, count, value), (F, "glUniform1fvARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform2fvARB)(GLint location, GLsizei count, const GLfloat * value)
+{
+   DISPATCH(Uniform2fvARB, (location, count, value), (F, "glUniform2fvARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform3fvARB)(GLint location, GLsizei count, const GLfloat * value)
+{
+   DISPATCH(Uniform3fvARB, (location, count, value), (F, "glUniform3fvARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform4fvARB)(GLint location, GLsizei count, const GLfloat * value)
+{
+   DISPATCH(Uniform4fvARB, (location, count, value), (F, "glUniform4fvARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform1ivARB)(GLint location, GLsizei count, const GLint * value)
+{
+   DISPATCH(Uniform1ivARB, (location, count, value), (F, "glUniform1ivARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform2ivARB)(GLint location, GLsizei count, const GLint * value)
+{
+   DISPATCH(Uniform2ivARB, (location, count, value), (F, "glUniform2ivARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform3ivARB)(GLint location, GLsizei count, const GLint * value)
+{
+   DISPATCH(Uniform3ivARB, (location, count, value), (F, "glUniform3ivARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(Uniform4ivARB)(GLint location, GLsizei count, const GLint * value)
+{
+   DISPATCH(Uniform4ivARB, (location, count, value), (F, "glUniform4ivARB(%d, %d, %p);\n", location, count, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(UniformMatrix2fvARB)(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+{
+   DISPATCH(UniformMatrix2fvARB, (location, count, transpose, value), (F, "glUniformMatrix2fvARB(%d, %d, %d, %p);\n", location, count, transpose, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(UniformMatrix3fvARB)(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+{
+   DISPATCH(UniformMatrix3fvARB, (location, count, transpose, value), (F, "glUniformMatrix3fvARB(%d, %d, %d, %p);\n", location, count, transpose, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(UniformMatrix4fvARB)(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
+{
+   DISPATCH(UniformMatrix4fvARB, (location, count, transpose, value), (F, "glUniformMatrix4fvARB(%d, %d, %d, %p);\n", location, count, transpose, (const void *) value));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetObjectParameterfvARB)(GLhandleARB obj, GLenum pname, GLfloat * params)
+{
+   DISPATCH(GetObjectParameterfvARB, (obj, pname, params), (F, "glGetObjectParameterfvARB(%d, 0x%x, %p);\n", obj, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetObjectParameterivARB)(GLhandleARB obj, GLenum pname, GLint * params)
+{
+   DISPATCH(GetObjectParameterivARB, (obj, pname, params), (F, "glGetObjectParameterivARB(%d, 0x%x, %p);\n", obj, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetInfoLogARB)(GLhandleARB obj, GLsizei , GLsizei * , GLcharARB * )
+{
+   DISPATCH(GetInfoLogARB, (obj, , , ), (F, "glGetInfoLogARB(%d, %d, %p, %p);\n", obj, , (const void *) , (const void *) ));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetAttachedObjectsARB)(GLhandleARB containerObj, GLsizei maxLength, GLsizei * length, GLhandleARB * infoLog)
+{
+   DISPATCH(GetAttachedObjectsARB, (containerObj, maxLength, length, infoLog), (F, "glGetAttachedObjectsARB(%d, %d, %p, %p);\n", containerObj, maxLength, (const void *) length, (const void *) infoLog));
+}
+
+KEYWORD1 GLint KEYWORD2 NAME(GetUniformLocationARB)(GLhandleARB programObj, const GLcharARB * name)
+{
+   RETURN_DISPATCH(GetUniformLocationARB, (programObj, name), (F, "glGetUniformLocationARB(%d, %p);\n", programObj, (const void *) name));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetActiveUniformARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * lenght, GLint * size, GLenum * type, GLcharARB * name)
+{
+   DISPATCH(GetActiveUniformARB, (programObj, index, maxLength, lenght, size, type, name), (F, "glGetActiveUniformARB(%d, %d, %d, %p, %p, %p, %p);\n", programObj, index, maxLength, (const void *) lenght, (const void *) size, (const void *) type, (const void *) name));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetUniformfvARB)(GLhandleARB programObj, GLint location, GLfloat * params)
+{
+   DISPATCH(GetUniformfvARB, (programObj, location, params), (F, "glGetUniformfvARB(%d, %d, %p);\n", programObj, location, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetUniformivARB)(GLhandleARB programObj, GLint location, GLint * params)
+{
+   DISPATCH(GetUniformivARB, (programObj, location, params), (F, "glGetUniformivARB(%d, %d, %p);\n", programObj, location, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetShaderSourceARB)(GLhandleARB obj, GLsizei maxLength, GLsizei * length, GLcharARB * source)
+{
+   DISPATCH(GetShaderSourceARB, (obj, maxLength, length, source), (F, "glGetShaderSourceARB(%d, %d, %p, %p);\n", obj, maxLength, (const void *) length, (const void *) source));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BindAttribLocationARB)(GLhandleARB programObj, GLuint index, const GLcharARB * name)
+{
+   DISPATCH(BindAttribLocationARB, (programObj, index, name), (F, "glBindAttribLocationARB(%d, %d, %p);\n", programObj, index, (const void *) name));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetActiveAttribARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, const GLcharARB * name)
+{
+   DISPATCH(GetActiveAttribARB, (programObj, index, maxLength, length, size, type, name), (F, "glGetActiveAttribARB(%d, %d, %d, %p, %p, %p, %p);\n", programObj, index, maxLength, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
+}
+
+KEYWORD1 GLint KEYWORD2 NAME(GetAttribLocationARB)(GLhandleARB programObj, const GLcharARB * name)
+{
+   RETURN_DISPATCH(GetAttribLocationARB, (programObj, name), (F, "glGetAttribLocationARB(%d, %p);\n", programObj, (const void *) name));
+}
+
 KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateEXT)(GLenum modeRGB, GLenum modeA)
 {
    DISPATCH(BlendEquationSeparateEXT, (modeRGB, modeA), (F, "glBlendEquationSeparateEXT(0x%x, 0x%x);\n", modeRGB, modeA));
@@ -5384,6 +5594,48 @@ static void * DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetQueryObjectuivARB),
    TABLE_ENTRY(MultiModeDrawArraysIBM),
    TABLE_ENTRY(MultiModeDrawElementsIBM),
+   TABLE_ENTRY(DeleteObjectARB),
+   TABLE_ENTRY(GetHandleARB),
+   TABLE_ENTRY(DetachObjectARB),
+   TABLE_ENTRY(CreateShaderObjectARB),
+   TABLE_ENTRY(ShaderSourceARB),
+   TABLE_ENTRY(CompileShaderARB),
+   TABLE_ENTRY(CreateProgramObjectARB),
+   TABLE_ENTRY(AttachObjectARB),
+   TABLE_ENTRY(LinkProgramARB),
+   TABLE_ENTRY(UseProgramObjectARB),
+   TABLE_ENTRY(ValidateProgramARB),
+   TABLE_ENTRY(Uniform1fARB),
+   TABLE_ENTRY(Uniform2fARB),
+   TABLE_ENTRY(Uniform3fARB),
+   TABLE_ENTRY(Uniform4fARB),
+   TABLE_ENTRY(Uniform1iARB),
+   TABLE_ENTRY(Uniform2iARB),
+   TABLE_ENTRY(Uniform3iARB),
+   TABLE_ENTRY(Uniform4iARB),
+   TABLE_ENTRY(Uniform1fvARB),
+   TABLE_ENTRY(Uniform2fvARB),
+   TABLE_ENTRY(Uniform3fvARB),
+   TABLE_ENTRY(Uniform4fvARB),
+   TABLE_ENTRY(Uniform1ivARB),
+   TABLE_ENTRY(Uniform2ivARB),
+   TABLE_ENTRY(Uniform3ivARB),
+   TABLE_ENTRY(Uniform4ivARB),
+   TABLE_ENTRY(UniformMatrix2fvARB),
+   TABLE_ENTRY(UniformMatrix3fvARB),
+   TABLE_ENTRY(UniformMatrix4fvARB),
+   TABLE_ENTRY(GetObjectParameterfvARB),
+   TABLE_ENTRY(GetObjectParameterivARB),
+   TABLE_ENTRY(GetInfoLogARB),
+   TABLE_ENTRY(GetAttachedObjectsARB),
+   TABLE_ENTRY(GetUniformLocationARB),
+   TABLE_ENTRY(GetActiveUniformARB),
+   TABLE_ENTRY(GetUniformfvARB),
+   TABLE_ENTRY(GetUniformivARB),
+   TABLE_ENTRY(GetShaderSourceARB),
+   TABLE_ENTRY(BindAttribLocationARB),
+   TABLE_ENTRY(GetActiveAttribARB),
+   TABLE_ENTRY(GetAttribLocationARB),
    TABLE_ENTRY(BlendEquationSeparateEXT),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
