@@ -33,6 +33,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "matrix.h"
+#include "state.h"
 #include "simple_list.h"
 #include "extensions.h"
 
@@ -178,8 +179,8 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 	 return GL_FALSE;
    }
    else {
-      /* KW: mem leak if vmesa->hasBack ever changes:
-       */
+      if (vmesa->back.map)
+	 via_free_draw_buffer(vmesa, &vmesa->back);
       (void) memset( &vmesa->back, 0, sizeof( vmesa->back ) );
    }
 
@@ -200,8 +201,8 @@ calculate_buffer_parameters( viaContextPtr vmesa )
       }
    }
    else {
-      /* KW: mem leak if vmesa->hasStencil/hasDepth ever changes:
-       */
+      if (vmesa->depth.map)
+   	 via_free_draw_buffer(vmesa, &vmesa->depth);
       (void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
    }
 
@@ -548,9 +549,17 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 void
 viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
+    GET_CURRENT_CONTEXT(ctx);
     viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
+    viaContextPtr current = ctx ? VIA_CONTEXT(ctx) : NULL;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
     assert(vmesa); /* should never be null */
+
+    /* check if we're deleting the currently bound context */
+    if (vmesa == current) {
+      VIA_FLUSH_DMA(vmesa);
+      _mesa_make_current2(NULL, NULL, NULL);
+    }
 
     if (vmesa) {
 	/*=* John Sheng [2003.5.31]  agp tex *=*/
@@ -643,15 +652,13 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
   
     if (VIA_DEBUG) {
 	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driContextPriv);
-	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driDrawPriv);    
-	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driReadPriv);
+	fprintf(stderr, "driDrawPriv = %08x\n", (GLuint)driDrawPriv);    
+	fprintf(stderr, "driReadPriv = %08x\n", (GLuint)driReadPriv);
     }	
 
     if (driContextPriv) {
         viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
 	GLcontext *ctx = vmesa->glCtx;
-
-	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
 	if ( vmesa->driDrawable != driDrawPriv ) {
 	   driDrawableInitVBlank( driDrawPriv, vmesa->vblank_flags );
@@ -661,22 +668,15 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	   }
 	   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 	}
+	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
         _mesa_make_current2(vmesa->glCtx,
                             (GLframebuffer *)driDrawPriv->driverPrivate,
                             (GLframebuffer *)driReadPriv->driverPrivate);
 	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
 	
-	/* These are probably needed only the first time a context is
-	 * made current:
-	 */
-	viaXMesaWindowMoved(vmesa);
-	ctx->Driver.Scissor(ctx, 
-			    ctx->Scissor.X,
-			    ctx->Scissor.Y,
-			    ctx->Scissor.Width,
-			    ctx->Scissor.Height);
-
+	_mesa_update_state(vmesa->glCtx);
+	viaValidateState(vmesa->glCtx);
     }
     else {
         _mesa_make_current(0,0);
