@@ -115,6 +115,16 @@
 				: "=r" (p) : "r" (p) );                 \
        ((GLuint *)rgba)[0] = p;                                         \
     } while (0)
+# elif defined( MESA_BIG_ENDIAN )
+    /* On PowerPC with GCC 3.4.2 the shift madness below becomes a single
+     * rotlwi instruction.  It also produces good code on SPARC.
+     */
+#  define READ_RGBA( rgba, _x, _y )				        \
+     do {								\
+        GLuint p = *(volatile GLuint *) GET_SRC_PTR(_x, _y);            \
+        GLuint t = p;                                                   \
+        *((uint32_t *) rgba) = (t >> 24) | (p << 8);                    \
+     } while (0)
 # else
 #  define READ_RGBA( rgba, _x, _y )				        \
      do {								\
