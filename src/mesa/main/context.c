@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.153 2002/01/05 21:53:20 brianp Exp $ */
+/* $Id: context.c,v 1.154 2002/02/05 23:21:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -505,6 +505,7 @@ free_matrix_stack( struct matrix_stack *stack )
    for (i = 0; i < stack->MaxDepth; i++) {
       _math_matrix_dtr(&stack->Stack[i]);
    }
+   FREE(stack->Stack);
    stack->Stack = stack->Top = NULL;
 }
 
@@ -1708,6 +1709,8 @@ _mesa_free_context_data( GLcontext *ctx )
       FREE( ctx->EvalMap.Map1Texture3.Points );
    if (ctx->EvalMap.Map1Texture4.Points)
       FREE( ctx->EvalMap.Map1Texture4.Points );
+   for (i = 0; i < 16; i++)
+      FREE((ctx->EvalMap.Map1Attrib[i].Points));
 
    if (ctx->EvalMap.Map2Vertex3.Points)
       FREE( ctx->EvalMap.Map2Vertex3.Points );
@@ -1727,6 +1730,8 @@ _mesa_free_context_data( GLcontext *ctx )
       FREE( ctx->EvalMap.Map2Texture3.Points );
    if (ctx->EvalMap.Map2Texture4.Points)
       FREE( ctx->EvalMap.Map2Texture4.Points );
+   for (i = 0; i < 16; i++)
+      FREE((ctx->EvalMap.Map2Attrib[i].Points));
 
    _mesa_free_colortable_data( &ctx->ColorTable );
    _mesa_free_colortable_data( &ctx->PostConvolutionColorTable );
