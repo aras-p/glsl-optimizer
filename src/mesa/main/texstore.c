@@ -3455,8 +3455,8 @@ _mesa_upscale_teximage2d (GLsizei inWidth, GLsizei inHeight,
 
    ASSERT(outWidth >= inWidth);
    ASSERT(outHeight >= inHeight);
-   ASSERT(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
 #if 0
+   ASSERT(inWidth == 1 || inWidth == 2 || inHeight == 1 || inHeight == 2);
    ASSERT((outWidth & 3) == 0);
    ASSERT((outHeight & 3) == 0);
 #endif
