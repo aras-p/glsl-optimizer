@@ -15,6 +15,7 @@ LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
 PROGS = \
 	arbfplight \
+	arbocclude \
 	bounce \
 	clearspd \
 	cubemap \
