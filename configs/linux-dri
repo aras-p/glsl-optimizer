@@ -27,7 +27,7 @@ ASM_SOURCES =
 
 # Library/program dependencies
 DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -ldl
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
 
 GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib -lXt -lX11
