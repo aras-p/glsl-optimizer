@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.7 2000/04/12 18:54:48 brianp Exp $ */
+/* $Id: pixel.c,v 1.8 2000/04/17 15:13:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -730,7 +730,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_INTENSITY:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace RGBA with I */
             for (i = 0; i < n; i++) {
@@ -744,7 +744,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_LUMINANCE:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace RGB with L */
             for (i = 0; i < n; i++) {
@@ -757,7 +757,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_ALPHA:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace A with A */
             for (i = 0; i < n; i++) {
@@ -769,7 +769,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_LUMINANCE_ALPHA:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace RGBA with LLLA */
             for (i = 0; i < n; i++) {
@@ -785,7 +785,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_RGB:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace RGB with RGB */
             for (i = 0; i < n; i++) {
@@ -801,7 +801,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
       case GL_RGBA:
          {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLubyte *lut = table->Table;
+            const GLfloat *lut = table->TableF;
             GLuint i;
             /* replace RGBA with RGBA */
             for (i = 0; i < n; i++) {

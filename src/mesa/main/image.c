@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.27 2000/04/15 23:05:39 brianp Exp $ */
+/* $Id: image.c,v 1.28 2000/04/17 15:13:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -612,7 +612,8 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                         ctx->Pixel.MapColorFlag ||
                         ctx->ColorMatrix.type != MATRIX_IDENTITY ||
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
-                        ctx->Pixel.ColorTableEnabled);
+                        ctx->Pixel.ColorTableEnabled ||
+                        ctx->Pixel.PostColorMatrixColorTableEnabled);
 
    /* Test for optimized case first */
    if (!applyTransferOps && format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
@@ -658,19 +659,27 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
          if (ctx->Pixel.ScaleOrBiasRGBA) {
             _mesa_scale_and_bias_rgba( ctx, n, rgba );
          }
-         /* color table lookup */
+         /* color map lookup */
          if (ctx->Pixel.MapColorFlag) {
             _mesa_map_rgba( ctx, n, rgba );
          }
+         /* GL_COLOR_TABLE lookup */
+         if (ctx->Pixel.ColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+         }
+         /* XXX convolution here */
+         /* XXX post-convolution color table look-up here */
          /* color matrix */
          if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
              ctx->Pixel.ScaleOrBiasRGBApcm) {
             _mesa_transform_rgba(ctx, n, rgba);
          }
-         /* GL_SGI_color_table lookup */
-         if (ctx->Pixel.ColorTableEnabled) {
-            _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+         /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
+         /* XXX histogram here */
+         /* XXX min/max here */
       }
 
       if (format==GL_LUMINANCE || format==GL_LUMINANCE_ALPHA) {
@@ -2176,7 +2185,8 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
                         ctx->Pixel.MapColorFlag ||
                         ctx->ColorMatrix.type != MATRIX_IDENTITY ||
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
-                        ctx->Pixel.ColorTableEnabled);
+                        ctx->Pixel.ColorTableEnabled ||
+                        ctx->Pixel.PostColorMatrixColorTableEnabled);
 
    /* Try simple cases first */
    if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE) {
@@ -2281,19 +2291,27 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
          if (applyTransferOps) {
             /* scale and bias colors */
             _mesa_scale_and_bias_rgba(ctx, n, rgba);
-            /* color table lookup */
+            /* color map lookup */
             if (ctx->Pixel.MapColorFlag) {
                _mesa_map_rgba(ctx, n, rgba);
             }
+            /* GL_COLOR_TABLE lookup */
+            if (ctx->Pixel.ColorTableEnabled) {
+               _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+            }
+            /* XXX convolution here */
+            /* XXX post-convolution color table look-up here */
             /* color matrix transform */
             if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
                 ctx->Pixel.ScaleOrBiasRGBApcm) {
                _mesa_transform_rgba(ctx, n, rgba);
             }
-            /* GL_SGI_color_table lookup */
-            if (ctx->Pixel.ColorTableEnabled) {
-               _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
+            /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
+            if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
+               _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
             }
+            /* XXX histogram here */
+            /* XXX min/max here */
          }
       }
 

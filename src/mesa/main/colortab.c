@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.13 2000/04/12 00:27:37 brianp Exp $ */
+/* $Id: colortab.c,v 1.14 2000/04/17 15:13:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,6 +115,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    GLint baseFormat;
    GLfloat rScale = 1.0, gScale = 1.0, bScale = 1.0, aScale = 1.0;
    GLfloat rBias  = 0.0, gBias  = 0.0, bBias  = 0.0, aBias  = 0.0;
+   GLboolean floatTable = GL_FALSE;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTable");
 
@@ -151,6 +152,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_COLOR_TABLE:
          table = &ctx->ColorTable;
+         floatTable = GL_TRUE;
          rScale = ctx->Pixel.ColorTableScale[0];
          gScale = ctx->Pixel.ColorTableScale[1];
          bScale = ctx->Pixel.ColorTableScale[2];
@@ -166,6 +168,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE:
          table = &ctx->PostConvolutionColorTable;
+         floatTable = GL_TRUE;
          rScale = ctx->Pixel.PCCTscale[0];
          gScale = ctx->Pixel.PCCTscale[1];
          bScale = ctx->Pixel.PCCTscale[2];
@@ -181,6 +184,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE:
          table = &ctx->PostColorMatrixColorTable;
+         floatTable = GL_TRUE;
          rScale = ctx->Pixel.PCMCTscale[0];
          gScale = ctx->Pixel.PCMCTscale[1];
          bScale = ctx->Pixel.PCMCTscale[2];
@@ -237,10 +241,57 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                                     table->Table,  /* dest */
                                     format, type, data,
                                     &ctx->Unpack, GL_TRUE);
-      if (rScale != 1.0 || gScale != 1.0 || bScale != 1.0 || aScale != 1.0 ||
-          rBias != 0.0 || gBias != 0.0 || bBias != 0.0 || aBias != 0.0) {
-         /* XXX apply scale and bias */
 
+      if (floatTable) {
+         /* Apply scale and bias and convert GLubyte values to GLfloats
+          * in [0, 1].  Store results in the tableF[].
+          */
+         GLuint i;
+         rScale /= 255.0;
+         gScale /= 255.0;
+         bScale /= 255.0;
+         aScale /= 255.0;
+         switch (table->Format) {
+            case GL_INTENSITY:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i] = table->Table[i] * rScale + rBias;
+               }
+               break;
+            case GL_LUMINANCE:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i] = table->Table[i] * rScale + rBias;
+               }
+               break;
+            case GL_ALPHA:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i] = table->Table[i] * aScale + aBias;
+               }
+               break;
+            case GL_LUMINANCE_ALPHA:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i*2+0] = table->Table[i*2+0] * rScale + rBias;
+                  table->TableF[i*2+1] = table->Table[i*2+1] * aScale + aBias;
+               }
+               break;
+            case GL_RGB:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i*3+0] = table->Table[i*3+0] * rScale + rBias;
+                  table->TableF[i*3+1] = table->Table[i*3+1] * gScale + gBias;
+                  table->TableF[i*3+2] = table->Table[i*3+2] * bScale + bBias;
+               }
+               break;
+            case GL_RGBA:
+               for (i = 0; i < width; i++) {
+                  table->TableF[i*4+0] = table->Table[i*4+0] * rScale + rBias;
+                  table->TableF[i*4+1] = table->Table[i*4+1] * gScale + gBias;
+                  table->TableF[i*4+2] = table->Table[i*4+2] * bScale + bBias;
+                  table->TableF[i*4+3] = table->Table[i*4+3] * aScale + aBias;
+               }
+               break;
+            default:
+               gl_problem(ctx, "Bad format in _mesa_ColorTable");
+               return;
+         }
       }
    }
 
@@ -399,6 +450,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_color_table *table = NULL;
    GLubyte rgba[MAX_COLOR_TABLE_SIZE][4];
+   GLboolean floatTable = GL_FALSE;
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTable");
@@ -418,12 +470,15 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          break;
       case GL_COLOR_TABLE:
          table = &ctx->ColorTable;
+         floatTable = GL_TRUE;
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE:
          table = &ctx->PostConvolutionColorTable;
+         floatTable = GL_TRUE;
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE:
          table = &ctx->PostColorMatrixColorTable;
+         floatTable = GL_TRUE;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
@@ -434,51 +489,111 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
    switch (table->Format) {
       case GL_ALPHA:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = 0;
-            rgba[i][GCOMP] = 0;
-            rgba[i][BCOMP] = 0;
-            rgba[i][ACOMP] = table->Table[i];
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = 0;
+               rgba[i][GCOMP] = 0;
+               rgba[i][BCOMP] = 0;
+               rgba[i][ACOMP] = (GLint) (table->TableF[i] * 255.0F);
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = 0;
+               rgba[i][GCOMP] = 0;
+               rgba[i][BCOMP] = 0;
+               rgba[i][ACOMP] = table->Table[i];
+            }
          }
          break;
       case GL_LUMINANCE:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = table->Table[i];
-            rgba[i][GCOMP] = table->Table[i];
-            rgba[i][BCOMP] = table->Table[i];
-            rgba[i][ACOMP] = 255;
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][ACOMP] = 255;
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = table->Table[i];
+               rgba[i][GCOMP] = table->Table[i];
+               rgba[i][BCOMP] = table->Table[i];
+               rgba[i][ACOMP] = 255;
+            }
          }
          break;
       case GL_LUMINANCE_ALPHA:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = table->Table[i*2+0];
-            rgba[i][GCOMP] = table->Table[i*2+0];
-            rgba[i][BCOMP] = table->Table[i*2+0];
-            rgba[i][ACOMP] = table->Table[i*2+1];
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (table->Table[i*2+1] * 255.0F);
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = table->Table[i*2+0];
+               rgba[i][GCOMP] = table->Table[i*2+0];
+               rgba[i][BCOMP] = table->Table[i*2+0];
+               rgba[i][ACOMP] = table->Table[i*2+1];
+            }
          }
          break;
       case GL_INTENSITY:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = table->Table[i];
-            rgba[i][GCOMP] = table->Table[i];
-            rgba[i][BCOMP] = table->Table[i];
-            rgba[i][ACOMP] = 255;
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][ACOMP] = 255;
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = table->Table[i];
+               rgba[i][GCOMP] = table->Table[i];
+               rgba[i][BCOMP] = table->Table[i];
+               rgba[i][ACOMP] = 255;
+            }
          }
          break;
       case GL_RGB:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = table->Table[i*3+0];
-            rgba[i][GCOMP] = table->Table[i*3+1];
-            rgba[i][BCOMP] = table->Table[i*3+2];
-            rgba[i][ACOMP] = 255;
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = (GLint) (table->Table[i*3+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (table->Table[i*3+1] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (table->Table[i*3+2] * 255.0F);
+               rgba[i][ACOMP] = 255;
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = table->Table[i*3+0];
+               rgba[i][GCOMP] = table->Table[i*3+1];
+               rgba[i][BCOMP] = table->Table[i*3+2];
+               rgba[i][ACOMP] = 255;
+            }
          }
          break;
       case GL_RGBA:
-         for (i = 0; i < table->Size; i++) {
-            rgba[i][RCOMP] = table->Table[i*4+0];
-            rgba[i][GCOMP] = table->Table[i*4+1];
-            rgba[i][BCOMP] = table->Table[i*4+2];
-            rgba[i][ACOMP] = table->Table[i*4+3];
+         if (floatTable) {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = (GLint) (table->Table[i*4+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (table->Table[i*4+1] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (table->Table[i*4+2] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (table->Table[i*4+3] * 255.0F);
+            }
+         }
+         else {
+            for (i = 0; i < table->Size; i++) {
+               rgba[i][RCOMP] = table->Table[i*4+0];
+               rgba[i][GCOMP] = table->Table[i*4+1];
+               rgba[i][BCOMP] = table->Table[i*4+2];
+               rgba[i][ACOMP] = table->Table[i*4+3];
+            }
          }
          break;
       default:
