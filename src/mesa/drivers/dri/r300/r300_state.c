@@ -671,6 +671,95 @@ static void r300LineWidth(GLcontext *ctx, GLfloat widthf)
 	r300->hw.lcntl.cmd[1] |= R300_LINE_CNT_UNK1;
 }
 
+/*
+
+glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); :  00000091 (  1001 0001)
+glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); : 00000001 (          1)
+
+glPolygonMode(GL_FRONT, GL_LINE); :           00000111 (1 0001 0001)
+glPolygonMode(GL_FRONT, GL_POINT); :          00000101 (1 0000 0001)
+
+glPolygonMode(GL_BACK, GL_LINE); :            000000a1 (  1010 0001)
+glPolygonMode(GL_BACK, GL_POINT); :           00000021 (    10 0001)
+
+*/
+
+/* exclusive */
+#define PM_NOT_BACK   (1<<8)
+#define PM_NOT_FRONT  (1<<5)
+
+#define PM_FRONT_LINE (1<<4)
+#define PM_BACK_LINE  (1<<7)
+
+static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	unsigned long hw_mode=0;
+	
+	hw_mode=r300->hw.unk4288.cmd[1];
+	hw_mode |= 1; /* enables point mode by default */
+
+	switch (face) {
+	case GL_FRONT:
+		//fprintf(stderr, "front\n");
+		hw_mode &= ~PM_NOT_FRONT;
+		switch (mode) {
+		case GL_LINE:
+			hw_mode |= PM_FRONT_LINE;
+		break;
+		case GL_POINT:
+			hw_mode &= ~PM_FRONT_LINE;
+		break;
+		case GL_FILL: /* No idea */
+			hw_mode = 0;
+		break;
+		}
+	break;
+	
+	case GL_BACK:
+		//fprintf(stderr, "back\n");
+		hw_mode &= ~PM_NOT_BACK;
+		switch (mode) {
+		case GL_LINE:
+			hw_mode |= PM_BACK_LINE;
+		break;
+		case GL_POINT:
+			hw_mode &= ~PM_BACK_LINE;
+		break;
+		case GL_FILL: /* No idea */
+			hw_mode = 0;
+		break;
+		}
+	break;
+	
+	case GL_FRONT_AND_BACK:
+		//fprintf(stderr, "front and back\n");
+		hw_mode &= ~PM_NOT_FRONT;
+		hw_mode &= ~PM_NOT_BACK;
+		switch (mode) {
+		case GL_LINE:
+			hw_mode |= PM_FRONT_LINE;
+			hw_mode |= PM_BACK_LINE;
+		break;
+		case GL_POINT:
+			hw_mode &= ~PM_FRONT_LINE;
+			hw_mode &= ~PM_BACK_LINE;
+		break;
+		case GL_FILL:
+			hw_mode = 0;
+		break;
+		}
+	break;
+	}
+	
+	//if( front and back fill) hw_mode=0;
+	
+	if(r300->hw.unk4288.cmd[1] != hw_mode){
+		R300_STATECHANGE(r300, unk4288);
+		r300->hw.unk4288.cmd[1] = hw_mode;
+	}
+}
+
 /* =============================================================
  * Stencil
  */
@@ -1823,7 +1912,11 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4274.cmd[3] = 0x00000000;
 	r300->hw.unk4274.cmd[4] = 0x00000000;
 
+	r300PolygonMode(ctx, GL_FRONT, ctx->Polygon.FrontMode);
+	r300PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
+#if 0
 	r300->hw.unk4288.cmd[1] = 0x00000000;
+#endif	
 	r300->hw.unk4288.cmd[2] = 0x00000001;
 	r300->hw.unk4288.cmd[3] = 0x00000000;
 	r300->hw.unk4288.cmd[4] = 0x00000000;
@@ -2040,4 +2133,5 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->LineWidth = r300LineWidth;
 	
 	functions->PolygonOffset = r300PolygonOffset;
+	functions->PolygonMode = r300PolygonMode;
 }

@@ -436,6 +436,9 @@ probably work also. --aet
 
 /* Linestipple factor. 3a088889 == 1.0, 3baaaaa9 == 10.0 */
 #define R300_RE_LINE_STIPPLE_FACTOR           0x4238
+
+#define R300_RE_POLYGON_MODE                  0x4288
+
 #define R300_RE_LINE_STIPPLE_PTRN1            0x43E0
 #define R300_RE_LINE_STIPPLE_PTRN2            0x43E4
 
