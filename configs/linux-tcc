@@ -12,7 +12,7 @@ TCC_DIR=/home/progs/tcc-0.9.20
 
 CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DUSE_TCC -I$(TCC_DIR)
 
-CXXFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG
+CXXFLAGS = -g -ansi -pedantic -Wall -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG
 
 GLUT_CFLAGS = -fexceptions
 
