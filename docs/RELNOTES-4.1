@@ -84,5 +84,32 @@ DOS			needs updating
 
 
 
+
+XXX Things To Do Yet XXXX
+-------------------------
+
+Verify x86 code for normal transformation works with new 4-element normal
+vector arrays.  Pretty sure the SSE code is wrong.
+
+Finish up NV_vertex_program support for evaluators.  Vertex arrays seem
+to work as of 4/21/2002.
+
+Move sw_span struct into swrast context instead of allocating it on
+the stack.  Allow multiple points to be rendered into one sw_span.
+
+Investigate the normal transformation bug when using non-uniform
+scale matrices.
+
+_tnl_end() has flushing forced on.
+
+improve point/line rendering speed.
+
+readpixels from stencil/z should respect ctx->ReadBuffer
+
+glVertexAttrib*NV(index>15) should cause an error.
+
+GL_ARB_texture_env_crossbar: Allows any texture combine stage to reference
+any texture source unit
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.6 2002/04/02 16:19:21 brianp Exp $
+$Id: RELNOTES-4.1,v 1.7 2002/04/21 21:12:49 brianp Exp $
