@@ -38,8 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_TEX_H__
 #define __RADEON_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void radeonUpdateTextureState( GLcontext *ctx );
 
 extern int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t,
@@ -49,5 +47,4 @@ extern void radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t );
 
 extern void radeonInitTextureFuncs( struct dd_function_table *functions );
 
-#endif
 #endif /* __RADEON_TEX_H__ */

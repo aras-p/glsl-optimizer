@@ -31,9 +31,6 @@
 #ifndef __MACH64_SPAN_H__
 #define __MACH64_SPAN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void mach64DDInitSpanFuncs( GLcontext *ctx );
 
-#endif
 #endif

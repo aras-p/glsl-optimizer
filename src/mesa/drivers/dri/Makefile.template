@@ -48,11 +48,6 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup
 
-# Of course we're direct rendering.  Redundant #ifdefs in the code
-# from prehistory require this:
-#
-DEFINES += -DGLX_DIRECT_RENDERING 
-
 ##### RULES #####
 
 .c.o:

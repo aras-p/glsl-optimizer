@@ -32,8 +32,6 @@
 #ifndef __MACH64_REG_H__
 #define __MACH64_REG_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 /*
  * Not sure how this compares with the G200, but the Rage Pro has two
  * banks of registers, with bank 0 at (aperture base + memmap offset - 1KB)
@@ -405,5 +403,4 @@
 #define MACH64_LAST_FRAME_REG			MACH64_PAT_REG0
 #define MACH64_LAST_DISPATCH_REG		MACH64_PAT_REG1
 
-#endif
 #endif /* __MACH64_REG_H__ */

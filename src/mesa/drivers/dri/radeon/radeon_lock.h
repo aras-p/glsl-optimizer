@@ -37,8 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_LOCK_H__
 #define __RADEON_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void radeonGetLock( radeonContextPtr rmesa, GLuint flags );
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -107,5 +105,4 @@ extern int prevLockLine;
       DEBUG_RESET();							\
    } while (0)
 
-#endif
 #endif /* __RADEON_LOCK_H__ */

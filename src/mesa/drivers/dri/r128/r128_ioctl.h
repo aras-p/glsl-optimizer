@@ -35,8 +35,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_IOCTL_H__
 #define __R128_IOCTL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r128_dri.h"
 #include "r128_reg.h"
 #include "r128_lock.h"
@@ -143,5 +141,4 @@ do {									\
       UNLOCK_HARDWARE( rmesa );						\
    } while (0)
 
-#endif
 #endif /* __R128_IOCTL_H__ */

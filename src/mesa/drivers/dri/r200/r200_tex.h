@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_TEX_H__
 #define __R200_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r200UpdateTextureState( GLcontext *ctx );
 
 extern int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint face );
@@ -46,5 +44,4 @@ extern void r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t );
 
 extern void r200InitTextureFuncs( struct dd_function_table *functions );
 
-#endif
 #endif /* __R200_TEX_H__ */

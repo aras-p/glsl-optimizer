@@ -37,8 +37,6 @@
 #ifndef __TDFX_SCREEN_H__
 #define __TDFX_SCREEN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 typedef struct {
    drm_handle_t handle;
    drmSize size;
@@ -69,5 +67,4 @@ typedef struct {
 } tdfxScreenPrivate;
 
 
-#endif
 #endif

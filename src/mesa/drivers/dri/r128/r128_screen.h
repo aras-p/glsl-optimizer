@@ -36,8 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_SCREEN_H__
 #define __R128_SCREEN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "xmlconfig.h"
 
 typedef struct {
@@ -83,5 +81,4 @@ typedef struct {
 } r128ScreenRec, *r128ScreenPtr;
 
 
-#endif
 #endif /* __R128_SCREEN_H__ */

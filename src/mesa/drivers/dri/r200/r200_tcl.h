@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_TCL_H__
 #define __R200_TCL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r200_context.h"
 
 extern void r200TclPrimitive( GLcontext *ctx, GLenum prim, int hw_prim );
@@ -68,6 +66,4 @@ extern float r200ComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord );
 
 #define TCL_FALLBACK( ctx, bit, mode )	r200TclFallback( ctx, bit, mode )
 
-
-#endif
 #endif

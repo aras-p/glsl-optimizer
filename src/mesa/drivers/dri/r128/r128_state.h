@@ -36,8 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_STATE_H__
 #define __R128_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r128_context.h"
 
 extern void r128DDInitState( r128ContextPtr rmesa );
@@ -50,5 +48,4 @@ extern void r128UpdateWindow( GLcontext *ctx );
 
 extern void r128EmitHwStateLocked( r128ContextPtr rmesa );
 
-#endif
 #endif

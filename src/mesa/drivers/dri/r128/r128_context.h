@@ -36,8 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_CONTEXT_H__
 #define __R128_CONTEXT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "dri_util.h"
 #include "drm.h"
 #include "r128_drm.h"
@@ -268,5 +266,4 @@ extern int R128_DEBUG;
 #define DEBUG_VERBOSE_2D	0x40
 #define DEBUG_VERBOSE_FALL	0x80
 
-#endif
 #endif /* __R128_CONTEXT_H__ */

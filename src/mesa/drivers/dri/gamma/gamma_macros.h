@@ -35,8 +35,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _GAMMA_MACROS_H_
 #define _GAMMA_MACROS_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 #define DEBUG_DRMDMA
 #define DEBUG_ERRORS
 #define DEBUG_COMMANDS_NOT
@@ -322,7 +320,5 @@ do {                                          \
     l2 = 0;                                   \
     while (__s > 1) { ++l2; __s >>= 1; }      \
 } while (0)
-
-#endif
 
 #endif /* _GAMMA_MACROS_H_ */

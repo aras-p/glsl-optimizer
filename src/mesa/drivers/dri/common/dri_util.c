@@ -25,8 +25,6 @@
  */
 
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <assert.h>
 #include <stdarg.h>
 #include <unistd.h>
@@ -1689,5 +1687,3 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
 }
 
 /*@}*/
-
-#endif /* GLX_DIRECT_RENDERING */

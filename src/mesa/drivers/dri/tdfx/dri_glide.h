@@ -37,8 +37,6 @@
 #ifndef __DRI_GLIDE_H__
 #define __DRI_GLIDE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <glide.h>
 #include "dri_mesaint.h"
 
@@ -59,5 +57,4 @@ extern void grDRIImportFifo( int fifoPtr, int fifoRead );
 extern void grDRIInvalidateAll( void );
 extern void grDRIResetSAREA( void );
 extern void grDRIBufferSwap( FxU32 swapInterval );
-#endif
 #endif

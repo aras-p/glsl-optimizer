@@ -38,11 +38,8 @@
 #ifndef __TDFX_SPAN_H__
 #define __TDFX_SPAN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "context.h"
 
 extern void tdfxDDInitSpanFuncs( GLcontext *ctx );
 
-#endif
 #endif

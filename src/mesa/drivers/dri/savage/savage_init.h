@@ -26,8 +26,6 @@
 #ifndef _SAVAGE_INIT_H_
 #define _SAVAGE_INIT_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <sys/time.h>
 #include "dri_util.h"
 #include "mtypes.h"
@@ -159,5 +157,4 @@ enum S3CHIPTAGS {
     S3_LAST
 };
 
-#endif
 #endif

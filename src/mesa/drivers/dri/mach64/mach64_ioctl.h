@@ -32,8 +32,6 @@
 #ifndef __MACH64_IOCTL_H__
 #define __MACH64_IOCTL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "mach64_dri.h"
 #include "mach64_reg.h"
 #include "mach64_lock.h"
@@ -147,5 +145,4 @@ do {						\
 } while (0)
 
 
-#endif
 #endif /* __MACH64_IOCTL_H__ */

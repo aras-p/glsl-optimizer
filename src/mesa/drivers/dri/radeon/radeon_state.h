@@ -38,8 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_STATE_H__
 #define __RADEON_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "radeon_context.h"
 
 extern void radeonInitState( radeonContextPtr rmesa );
@@ -73,5 +71,4 @@ extern void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define TEXMAT_1   4
 #define TEXMAT_2   5
 
-#endif
 #endif

@@ -23,8 +23,6 @@
  */
 
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <X11/Xlibint.h>
 #include <stdio.h>
 
@@ -940,5 +938,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
    return (void *) psp;
 }
 #endif /* USE_NEW_INTERFACE */
-
-#endif

@@ -32,8 +32,6 @@
 #ifndef __MACH64_CONTEXT_H__
 #define __MACH64_CONTEXT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "dri_util.h"
 #include "drm.h"
 #include "mach64_drm.h"
@@ -403,5 +401,4 @@ extern int MACH64_DEBUG;
 #define DEBUG_VERBOSE_PRIMS	0x040
 #define DEBUG_VERBOSE_COUNT	0x080
 #define DEBUG_NOWAIT		0x100
-#endif
 #endif /* __MACH64_CONTEXT_H__ */

@@ -36,8 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_TEX_H__
 #define __R128_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r128UpdateTextureState( GLcontext *ctx );
 
 extern void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
@@ -84,5 +82,4 @@ static __inline__ u_int32_t r128PackColor( GLuint cpp,
     }
 }
 
-#endif
 #endif /* __R128_TEX_H__ */

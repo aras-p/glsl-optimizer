@@ -44,10 +44,9 @@ extern void *sis_debug_malloc(int x);
 #include "sis_debug.h"
 #endif
 
-#ifdef GLX_DIRECT_RENDERING
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 typedef struct _Box
 {
   short x1, y1, x2, y2;
@@ -55,7 +54,6 @@ typedef struct _Box
 BoxRec;
 #define NullBox ((BoxPtr)0)
 typedef struct _Box *BoxPtr;
-#endif /* GLX_DIRECT_RENDERING */
 
 /* BitBlt Commands */
 #define CMD0_DD_ENABLE      0x06

@@ -7,8 +7,6 @@
 
 #include <sys/ioctl.h>
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void s3vGetLock( s3vContextPtr vmesa, GLuint flags );
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -77,8 +75,6 @@ extern int prevLockLine;
 		  vmesa->hHWContext ); \
       DEBUG_RESET(); \
    } while (0)
-
-#endif
 
 #define S3VHW_LOCK( vmesa )	\
    DRM_UNLOCK(vmesa->driFd, vmesa->driHwLock, vmesa->hHWContext); \

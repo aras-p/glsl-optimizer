@@ -36,8 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_LOCK_H__
 #define __R128_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r128GetLock( r128ContextPtr rmesa, GLuint flags );
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -107,5 +105,4 @@ extern int prevLockLine;
       DEBUG_RESET();							\
    } while (0)
 
-#endif
 #endif /* __R128_LOCK_H__ */

@@ -32,11 +32,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_DD_H__
 #define __SIS_DD_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void sisUpdateBufferSize( sisContextPtr smesa );
 
 extern void sisInitDriverFuncs( struct dd_function_table *functions );
 
-#endif
 #endif

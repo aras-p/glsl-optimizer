@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_IOCTL_H__
 #define __R200_IOCTL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "simple_list.h"
 #include "radeon_dri.h"
 #include "r200_lock.h"
@@ -214,8 +212,4 @@ static __inline char *r200AllocCmdBuf( r200ContextPtr rmesa,
    return head;
 }
 
-
-
-
-#endif
 #endif /* __R200_IOCTL_H__ */

@@ -32,9 +32,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_STENCIL_H__
 #define __SIS_STENCIL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void sisDDInitStencilFuncs( GLcontext *ctx );
 
-#endif
 #endif

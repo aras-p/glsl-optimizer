@@ -36,9 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_SPAN_H__
 #define __R200_SPAN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r200InitSpanFuncs( GLcontext *ctx );
 
-#endif
 #endif

@@ -37,8 +37,6 @@
 #ifndef __TDFX_LOCK_H__
 #define __TDFX_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 /* You can turn this on to find locking conflicts.
  */
 #define DEBUG_LOCKING		0
@@ -142,8 +140,5 @@ extern void tdfxGetLock( tdfxContextPtr fxMesa );
     END_CLIP_LOOP_LOCKED( fxMesa );		\
     UNLOCK_HARDWARE( fxMesa );			\
   } while (0)
-
-
-#endif /* GLX_DIRECT_RENDERING */
 
 #endif /* __TDFX_LOCK_H__ */

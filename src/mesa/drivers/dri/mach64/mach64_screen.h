@@ -32,8 +32,6 @@
 #ifndef __MACH64_SCREEN_H__
 #define __MACH64_SCREEN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "xmlconfig.h"
 
 typedef struct {
@@ -77,5 +75,4 @@ typedef struct {
    driOptionCache optionCache;
 } mach64ScreenRec, *mach64ScreenPtr;
 
-#endif
 #endif /* __MACH64_SCREEN_H__ */

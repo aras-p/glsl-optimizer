@@ -49,8 +49,6 @@
 #ifndef _DRI_UTIL_H_
 #define _DRI_UTIL_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 #define CAPI  /* XXX this should be globally defined somewhere */
 
 #ifdef DRI_NEW_INTERFACE_ONLY
@@ -574,7 +572,5 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 extern void 
 (*glXGetProcAddress(const GLubyte *procname))( void );
 #endif
-
-#endif /* GLX_DIRECT_RENDERING */
 
 #endif /* _DRI_UTIL_H_ */

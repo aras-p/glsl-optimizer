@@ -38,8 +38,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_CONTEXT_H__
 #define __RADEON_CONTEXT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "dri_util.h"
 #include "drm.h"
 #include "radeon_drm.h"
@@ -850,5 +848,4 @@ extern int RADEON_DEBUG;
 #define DEBUG_SANITY    0x800
 #define DEBUG_SYNC     0x1000
 
-#endif
 #endif /* __RADEON_CONTEXT_H__ */

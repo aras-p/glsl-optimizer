@@ -5,8 +5,6 @@
 #ifndef _S3V_MACROS_H_
 #define _S3V_MACROS_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 /**************/
 /* DRI macros */
 /**************/
@@ -203,8 +201,6 @@ do { \
 	} \
 	DEBUG(("GOING HOME\n")); \
 } while (0)
-
-#endif
 
 /**************************/
 /* generic, global macros */

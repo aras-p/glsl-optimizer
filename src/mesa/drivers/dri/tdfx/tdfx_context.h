@@ -40,8 +40,6 @@
 #ifndef __TDFX_CONTEXT_H__
 #define __TDFX_CONTEXT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <sys/time.h>
 #include "dri_util.h"
 #ifdef XFree86Server
@@ -1004,7 +1002,5 @@ extern int TDFX_DEBUG;
 /* conf */
 #define FX_COMPRESS_S3TC_AS_FXT1_HACK 1
 #define FX_TC_NAPALM 0
-
-#endif /* GLX_DIRECT_RENDERING */
 
 #endif /* __TDFX_CONTEXT_H__ */

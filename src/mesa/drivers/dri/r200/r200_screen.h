@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_SCREEN_H__
 #define __R200_SCREEN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "xf86drm.h"
 #include "drm.h"
 #include "radeon_drm.h"
@@ -103,5 +101,4 @@ typedef struct {
    driOptionCache optionCache;
 } r200ScreenRec, *r200ScreenPtr;
 
-#endif
 #endif /* __R200_SCREEN_H__ */

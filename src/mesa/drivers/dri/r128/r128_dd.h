@@ -36,9 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_DD_H__
 #define __R128_DD_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r128InitDriverFuncs( struct dd_function_table *functions );
 
-#endif
 #endif

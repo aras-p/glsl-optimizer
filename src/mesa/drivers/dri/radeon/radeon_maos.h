@@ -36,12 +36,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_MAOS_H__
 #define __RADEON_MAOS_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "radeon_context.h"
 
 extern void radeonEmitArrays( GLcontext *ctx, GLuint inputs );
 extern void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs );
 
-#endif
 #endif

@@ -37,8 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_TCL_H__
 #define __RADEON_TCL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "radeon_context.h"
 
 extern void radeonTclPrimitive( GLcontext *ctx, GLenum prim, int hw_prim );
@@ -65,6 +63,4 @@ extern void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 
 #define TCL_FALLBACK( ctx, bit, mode )	radeonTclFallback( ctx, bit, mode )
 
-
-#endif
 #endif

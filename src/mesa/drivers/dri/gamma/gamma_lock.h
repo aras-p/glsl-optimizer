@@ -1,8 +1,6 @@
 #ifndef __GAMMA_LOCK_H__
 #define __GAMMA_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void gammaGetLock( gammaContextPtr gmesa, GLuint flags );
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -71,8 +69,6 @@ extern int prevLockLine;
 		  gmesa->hHWContext );					\
       DEBUG_RESET();							\
    } while (0)
-
-#endif
 
 #define GAMMAHW_LOCK( gmesa )						\
    DRM_UNLOCK(gmesa->driFd, gmesa->driHwLock, gmesa->hHWContext);	\

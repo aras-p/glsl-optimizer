@@ -37,8 +37,6 @@
 #ifndef __TDFX_RENDER_H__
 #define __TDFX_RENDER_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "tdfx_context.h"
 
 extern void tdfxInitRenderFuncs( struct dd_function_table *functions );
@@ -49,6 +47,4 @@ extern void tdfxUploadClipping( tdfxContextPtr fxMesa );
 
 #define FLUSH_BATCH( fxMesa )
 
-
-#endif
 #endif

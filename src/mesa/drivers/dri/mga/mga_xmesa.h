@@ -29,8 +29,6 @@
 #ifndef _MGA_INIT_H_
 #define _MGA_INIT_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <sys/time.h>
 #include "dri_util.h"
 #include "mga_drm.h"
@@ -148,5 +146,4 @@ do {						\
 #define MGA_READ( reg )		MGA_DEREF( reg )
 #define MGA_WRITE( reg, val )	do { MGA_DEREF( reg ) = val; } while (0)
 
-#endif
 #endif

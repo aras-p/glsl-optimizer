@@ -32,8 +32,6 @@
 #ifndef __MACH64_TEX_H__
 #define __MACH64_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void mach64UpdateTextureState( GLcontext *ctx );
 
 extern void mach64SwapOutTexObj( mach64ContextPtr mach64ctx,
@@ -98,5 +96,4 @@ static __inline__ GLuint mach64PackColor( GLuint cpp,
    }
 }
 
-#endif
 #endif

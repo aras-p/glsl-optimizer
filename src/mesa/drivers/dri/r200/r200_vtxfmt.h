@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_VTXFMT_H__
 #define __R200_VTXFMT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r200_context.h"
 
 
@@ -122,6 +120,4 @@ struct dynfn *r200_makeX86MultiTexCoord2fvARB( GLcontext *, const int * );
 struct dynfn *r200_makeX86MultiTexCoord1fARB( GLcontext *, const int * );
 struct dynfn *r200_makeX86MultiTexCoord1fvARB( GLcontext *, const int * );
 
-
-#endif
 #endif

@@ -3,8 +3,6 @@
 #ifndef _FFB_XMESA_H_
 #define _FFB_XMESA_H_
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include <sys/time.h>
 #include "dri_util.h"
 #include "mtypes.h"
@@ -24,7 +22,5 @@ typedef struct {
 	int				fifo_cache;
 	int				rp_active;
 } ffbScreenPrivate;
-
-#endif /* GLX_DIRECT_RENDERING */
 
 #endif /* !(_FFB_XMESA_H) */

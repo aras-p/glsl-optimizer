@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_STATE_H__
 #define __R200_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r200_context.h"
 
 extern void r200InitState( r200ContextPtr rmesa );
@@ -66,5 +64,4 @@ extern void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 
 extern void r200LightingSpaceChange( GLcontext *ctx );
 
-#endif
 #endif

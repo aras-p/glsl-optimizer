@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_CONTEXT_H__
 #define __R200_CONTEXT_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "tnl/t_vertex.h"
 #include "drm.h"
 #include "radeon_drm.h"
@@ -990,5 +988,4 @@ extern int R200_DEBUG;
 #define DEBUG_PIXEL     0x2000
 #define DEBUG_MEMORY    0x4000
 
-#endif
 #endif /* __R200_CONTEXT_H__ */

@@ -31,9 +31,6 @@
 #ifndef __MACH64_DD_H__
 #define __MACH64_DD_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void mach64InitDriverFuncs( struct dd_function_table *functions );
 
-#endif
 #endif

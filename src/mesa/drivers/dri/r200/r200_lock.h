@@ -36,8 +36,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_LOCK_H__
 #define __R200_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r200GetLock( r200ContextPtr rmesa, GLuint flags );
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -106,5 +104,4 @@ extern int prevLockLine;
       DEBUG_RESET();							\
    } while (0)
 
-#endif
 #endif /* __R200_LOCK_H__ */

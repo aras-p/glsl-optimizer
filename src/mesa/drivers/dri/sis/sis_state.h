@@ -32,8 +32,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_STATE_H__
 #define __SIS_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "sis_context.h"
 
 extern void sisDDInitState( sisContextPtr smesa );
@@ -53,5 +51,4 @@ extern void sisUpdateZStencilPattern( sisContextPtr smesa, GLclampd z,
 extern void sisDDDrawBuffer( GLcontext *ctx, GLenum mode );
 extern void sisUpdateHWState( GLcontext *ctx );
 
-#endif
 #endif

@@ -39,8 +39,6 @@
 #ifndef __TDFX_PIXELS_H__
 #define __TDFX_PIXELS_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "context.h"
 
 extern void
@@ -76,5 +74,4 @@ tdfx_drawpixels_R8G8B8A8( GLcontext *ctx, GLint x, GLint y,
 			  const struct gl_pixelstore_attrib *unpack,
 			  const GLvoid *pixels );
 
-#endif
 #endif

@@ -38,8 +38,6 @@
 #ifndef __TDFX_STATE_H__
 #define __TDFX_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "context.h"
 #include "tdfx_context.h"
 
@@ -60,5 +58,4 @@ extern void tdfxUpdateStipple( GLcontext *ctx );
 extern void tdfxUpdateViewport( GLcontext *ctx );
 
 
-#endif
 #endif

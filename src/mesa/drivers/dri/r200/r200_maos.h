@@ -36,12 +36,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_MAOS_H__
 #define __R200_MAOS_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r200_context.h"
 
 extern void r200EmitArrays( GLcontext *ctx, GLuint inputs );
 extern void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs );
 
-#endif
 #endif

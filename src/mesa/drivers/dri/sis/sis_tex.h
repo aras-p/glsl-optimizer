@@ -32,10 +32,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_TEX_H__
 #define __SIS_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void sisInitTextureFuncs( struct dd_function_table *table );
 extern void sisUpdateTextureState( GLcontext *ctx );
 
-#endif /* GLX_DIRECT_RENDERING */
 #endif /* __SIS_TEX_H__ */

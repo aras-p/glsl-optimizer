@@ -36,9 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R128_SPAN_H__
 #define __R128_SPAN_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void r128DDInitSpanFuncs( GLcontext *ctx );
 
-#endif
 #endif

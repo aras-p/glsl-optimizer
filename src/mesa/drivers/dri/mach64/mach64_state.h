@@ -31,8 +31,6 @@
 #ifndef __MACH64_STATE_H__
 #define __MACH64_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "mach64_context.h"
 
 extern void mach64DDInitState( mach64ContextPtr mmesa );
@@ -46,5 +44,4 @@ extern void mach64DDUpdateHWState( GLcontext *ctx );
 
 extern void mach64EmitHwStateLocked( mach64ContextPtr mmesa );
 
-#endif
 #endif

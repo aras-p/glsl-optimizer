@@ -25,8 +25,6 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "ffb_xmesa.h"
 #include "context.h"
 #include "matrix.h"
@@ -580,6 +578,3 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &ffbAPI);
    return (void *) psp;
 }
-
-
-#endif /* GLX_DIRECT_RENDERING */

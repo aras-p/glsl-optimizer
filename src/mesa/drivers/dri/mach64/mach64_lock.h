@@ -31,8 +31,6 @@
 #ifndef __MACH64_LOCK_H__
 #define __MACH64_LOCK_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 extern void mach64GetLock( mach64ContextPtr mmesa, GLuint flags );
 
 
@@ -103,5 +101,4 @@ extern int   prevLockLine;
       DEBUG_RESET();							\
    } while (0)
 
-#endif
 #endif /* __MACH64_LOCK_H__ */
