@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.8 2001/03/29 16:50:33 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.9 2001/05/30 10:01:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -303,6 +303,7 @@ const struct gl_pipeline_stage _tnl_vertex_transform_stage =
 {
    "modelview/project/cliptest/divide",
    0,				/* re-check -- always on */
+   _MESA_NEW_NEED_EYE_COORDS |
    _NEW_MODELVIEW|
    _NEW_PROJECTION|
    _NEW_TRANSFORM,		/* re-run */
