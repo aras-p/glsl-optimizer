@@ -27,7 +27,6 @@
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
-/* $XFree86: xc/lib/GL/glx/glxextensions.h,v 1.2tsi Exp $ */
 
 #ifndef GLX_GLXEXTENSIONS_H
 #define GLX_GLXEXTENSIONS_H
@@ -129,6 +128,7 @@ enum {
    GL_EXT_subtexture_bit,
    GL_EXT_texture_bit,
    GL_EXT_texture3D_bit,
+   GL_EXT_texture_compression_dxt1_bit,
    GL_EXT_texture_compression_s3tc_bit,
    GL_EXT_texture_edge_clamp_bit,
    GL_EXT_texture_env_combine_bit,
@@ -164,6 +164,7 @@ enum {
    GL_NV_texgen_reflection_bit,
    GL_NV_texture_compression_vtc_bit,
    GL_NV_texture_env_combine4_bit,
+   GL_OES_compressed_paletted_texture_bit,
    GL_OES_read_format_bit,
    GL_SGI_color_matrix_bit,
    GL_SGI_texture_color_table_bit,

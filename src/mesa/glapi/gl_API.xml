@@ -10295,6 +10295,19 @@ glx:
     </enum>
 </category>
 
+<category name="GL_OES_compressed_paletted_texture" number="294">
+    <enum name="PALETTE4_RGB8_OES"                        value="0x8B90"/>
+    <enum name="PALETTE4_RGBA8_OES"                       value="0x8B91"/>
+    <enum name="PALETTE4_R5_G6_B5_OES"                    value="0x8B92"/>
+    <enum name="PALETTE4_RGBA4_OES"                       value="0x8B93"/>
+    <enum name="PALETTE4_RGB5_A1_OES"                     value="0x8B94"/>
+    <enum name="PALETTE8_RGB8_OES"                        value="0x8B95"/>
+    <enum name="PALETTE8_RGBA8_OES"                       value="0x8B96"/>
+    <enum name="PALETTE8_R5_G6_B5_OES"                    value="0x8B97"/>
+    <enum name="PALETTE8_RGBA4_OES"                       value="0x8B98"/>
+    <enum name="PALETTE8_RGB5_A1_OES"                     value="0x8B99"/>
+</category>
+
 <category name="GL_OES_read_format" number="295">
     <enum name="IMPLEMENTATION_COLOR_READ_TYPE_OES"       value="0x8B9A"/>
     <enum name="IMPLEMENTATION_COLOR_READ_FORMAT_OES"     value="0x8B9B"/>
