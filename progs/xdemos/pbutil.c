@@ -78,6 +78,29 @@ ChooseFBConfig(Display *dpy, int screen, const int attribs[], int *nConfigs)
 }
 
 
+FBCONFIG *
+GetAllFBConfigs(Display *dpy, int screen, int *nConfigs)
+{
+   int pbSupport = QueryPbuffers(dpy, screen);
+#if defined(GLX_VERSION_1_3)
+   if (pbSupport == 1) {
+      return glXGetFBConfigs(dpy, screen, nConfigs);
+   }
+#endif
+#if defined(GLX_SGIX_fbconfig) && defined(GLX_SGIX_pbuffer)
+   if (pbSupport == 2) {
+      /* this *seems* to work, but may not be perfect */
+      static int fbAttribs[] = {
+         GLX_RENDER_TYPE, 0,
+         GLX_DRAWABLE_TYPE, 0,
+         None
+      };
+      return glXChooseFBConfigSGIX(dpy, screen, fbAttribs, nConfigs);
+   }
+#endif
+   return NULL;
+}
+
 
 XVisualInfo *
 GetVisualFromFBConfig(Display *dpy, int screen, FBCONFIG config)
