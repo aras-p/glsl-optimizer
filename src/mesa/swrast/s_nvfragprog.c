@@ -494,6 +494,12 @@ init_machine_deriv( GLcontext *ctx,
          }
       }
    }
+
+   /* init condition codes */
+   dMachine->CondCodes[0] = COND_EQ;
+   dMachine->CondCodes[1] = COND_EQ;
+   dMachine->CondCodes[2] = COND_EQ;
+   dMachine->CondCodes[3] = COND_EQ;
 }
 
 
@@ -659,8 +665,9 @@ execute_program( GLcontext *ctx,
                if (test_cc(machine->CondCodes[swizzle[0]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[1]], condMask) ||
                    test_cc(machine->CondCodes[swizzle[2]], condMask) ||
-                   test_cc(machine->CondCodes[swizzle[3]], condMask))
+                   test_cc(machine->CondCodes[swizzle[3]], condMask)) {
                   return GL_FALSE;
+               }
             }
             break;
          case FP_OPCODE_LG2:  /* log base 2 */
@@ -1147,6 +1154,12 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
          ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);
       }
    }
+
+   /* init condition codes */
+   machine->CondCodes[0] = COND_EQ;
+   machine->CondCodes[1] = COND_EQ;
+   machine->CondCodes[2] = COND_EQ;
+   machine->CondCodes[3] = COND_EQ;
 }
 
 
@@ -1162,8 +1175,9 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
                       ctx->FragmentProgram.Current, span, i);
 
          if (!execute_program(ctx, program, ~0,
-                              &ctx->FragmentProgram.Machine, span, i))
+                              &ctx->FragmentProgram.Machine, span, i)) {
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
+         }
 
          /* Store output registers */
          {
@@ -1175,7 +1189,7 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
             UNCLAMPED_FLOAT_TO_CHAN(span->array->rgba[i][ACOMP], colOut[3]);
          }
          /* depth value */
-         if (ctx->FragmentProgram.Current->OutputsWritten & 2)
+         if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR))
             span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Registers[FP_OUTPUT_REG_START + 2][0] * ctx->DepthMaxF);
       }
    }
