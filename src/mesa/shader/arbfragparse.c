@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -221,20 +221,6 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->NumTexIndirections = ap.NumTexIndirections;
    program->Parameters         = ap.Parameters;
    program->FogOption          = ap.FogOption;
-
-   /* XXX: Eh.. we parsed something that wasn't a fragment program. doh! */
-   /* this wont happen any more */
-/*
-   if (ap.Base.Target != GL_FRAGMENT_PROGRAM_ARB)
-   {
-      program->Instructions = (struct fp_instruction *) _mesa_malloc (
-                                     sizeof(struct fp_instruction) );
-      program->Instructions[0].Opcode = FP_OPCODE_END;
-
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Parsed a non-fragment program as a fragment program");
-      return;
-   }
-*/
 
 #if DEBUG_FP
    _mesa_debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);

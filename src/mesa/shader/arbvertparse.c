@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -205,20 +205,6 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    program->InputsRead     = ap.InputsRead;
    program->OutputsWritten = ap.OutputsWritten;
    program->Parameters     = ap.Parameters; 
-
-   /* Eh.. we parsed something that wasn't a vertex program. doh! */
-   /* this wont happen any more */
-/*
-   if (ap.Base.Target != GL_VERTEX_PROGRAM_ARB)
-   {
-      program->Instructions = (struct vp_instruction *) _mesa_malloc (
-                                     sizeof(struct vp_instruction) );
-      program->Instructions[0].Opcode = VP_OPCODE_END;
-
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Parsed a non-vertex program as a vertex program");
-      return;
-   }
-*/
 
    program->Instructions   = ap.VPInstructions;
 
