@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +24,7 @@
 
 
 /*
- * This file generates all the gl* function entyrpoints.
+ * This file generates all the gl* function entrypoints.
  * But if we're using X86-optimized dispatch (X86/glapi_x86.S) then
  * we don't use this code.
  *
