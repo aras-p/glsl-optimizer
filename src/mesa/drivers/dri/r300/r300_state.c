@@ -827,15 +827,19 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 	int i=0; /* number of alpha args .. */
 	GLuint fmt;
 	
+	fprintf(stderr, "_ReallyEnabled=%d EnvMode=%s\n", 
+		texUnit->_ReallyEnabled, 
+		_mesa_lookup_enum_by_nr(texUnit->EnvMode));
+	
 	switch(IntFormat){
 		case 4:
 		case GL_RGBA:
 		case GL_RGBA8:
-			fmt=R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8);
+			fmt=R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8);
 			break;
 		case 3:
 		case GL_RGB8:
-			fmt=R300_EASY_TX_FORMAT(Z, Y, X, ONE, R8G8B8A8);
+			fmt=R300_EASY_TX_FORMAT(Z, Y, X, ONE, W8Z8Y8X8);
 			break;
 		default:
 			return 0;
@@ -881,14 +885,14 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		/* tested with:
 			kfiresaver.kss 
 			*/
-		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
 		return 0x4b60c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00005547, 4):
 		/* tested with:
 			kfiresaver.kss
 			kfountain.kss
 			*/
-		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
 		return 0x51a0c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00008847, 3):
 		/* tested with
@@ -908,7 +912,7 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		/* Tested with:
 			Quake3demo
 			*/
-		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, R8G8B8A8);
+		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
 		return 0x53a0c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007847, GL_RGBA8):
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00006747, GL_RGBA8):
@@ -917,14 +921,14 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		/* Tested with:
 			Quake3demo
 			*/
-		return R300_EASY_TX_FORMAT(Y, Z, W, W, R8G8B8A8);
+		return R300_EASY_TX_FORMAT(Y, Z, W, W, W8Z8Y8X8);
 		return 0x5360c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007747, GL_RGBA8):
-		return R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8) ;
+		return R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8) ;
 	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008845, 0x00008056):
 		//return 0;
 		fprintf(stderr, "***\n");
-		return R300_EASY_TX_FORMAT(Y, Z, W, W, R8G8B8A8);
+		return R300_EASY_TX_FORMAT(Y, Z, W, W, W8Z8Y8X8);
 		return 0x53a23;
 	}
 		
@@ -1004,6 +1008,14 @@ void r300_setup_textures(GLcontext *ctx)
 			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3);
 			
 			
+			fprintf(stderr, "Format=%s IntFormat=%08x MesaFormat=%08x BaseFormat=%s IsCompressed=%d Target=%s\n",
+				_mesa_lookup_enum_by_nr(t->base.tObj->Image[0][0]->Format), 
+				t->base.tObj->Image[0][0]->IntFormat, 
+				t->base.tObj->Image[0][0]->TexFormat->MesaFormat, 
+				_mesa_lookup_enum_by_nr(t->base.tObj->Image[0][0]->TexFormat->BaseFormat),
+				t->base.tObj->Image[0][0]->IsCompressed,
+				_mesa_lookup_enum_by_nr(t->base.tObj->Target));
+			
 			#if 0
 			fprintf(stderr, "pitch=%08x filter=%08x format=%08x\n", t->pitch, t->filter, r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]);
 			fprintf(stderr, "unknown1=%08x size=%08x\n", r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i],
@@ -1044,7 +1056,7 @@ void r300_setup_textures(GLcontext *ctx)
 						}
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=known_formats[fmt];
 					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=
-						R300_EASY_TX_FORMAT(Z, Y, X, W, R8G8B8A8)  | (fmt<<21);
+						R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)  | (fmt<<21);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x08a0c | (fmt<<16);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x58a00 | (fmt);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c | (fmt<<24);
