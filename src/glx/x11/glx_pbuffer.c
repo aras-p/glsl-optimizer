@@ -278,14 +278,16 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
 {
    xGLXCreateWindowReq * req;
    CARD32 * data;
-   unsigned int  i;
+   unsigned int i;
 
-
-   for ( i = 0 ; attrib_list[i * 2] != None ; i++ )
-      /* empty */ ;
+   i = 0;
+   if (attrib_list) {
+       while (attrib_list[i * 2] != None)
+	   i++;
+   }
 
    LockDisplay(dpy);
-   GetReqExtra( GLXCreateWindow, 20 + (8 * i), req );
+   GetReqExtra( GLXCreateWindow, 8 * i, req );
    data = (CARD32 *) (req + 1);
 
    req->reqType = __glXSetupForCommand(dpy);
@@ -293,12 +295,15 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
    req->screen = (CARD32) fbconfig->screen;
    req->fbconfig = fbconfig->fbconfigID;
    req->window = (GLXPbuffer) drawable;
+   req->glxwindow = (GLXWindow) XAllocID(dpy);
    req->numAttribs = (CARD32) i;
 
+   memcpy( data, attrib_list, 8 * i );
+   
    UnlockDisplay(dpy);
    SyncHandle();
    
-   return drawable;
+   return (GLXDrawable)req->glxwindow;
 }
 
 
@@ -355,10 +360,11 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
    CARD32 * data;
    unsigned int  i;
 
-
-   for ( i = 0 ; attrib_list[i * 2] != None ; i++ )
-      /* empty */ ;
-
+   i = 0;
+   if (attrib_list) {
+       while (attrib_list[i * 2])
+	   i++;
+   }
 
    LockDisplay(dpy);
    id = XAllocID(dpy);
