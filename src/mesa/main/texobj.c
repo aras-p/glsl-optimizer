@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.13 2000/01/31 23:11:39 brianp Exp $ */
+/* $Id: texobj.c,v 1.14 2000/02/12 01:59:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -376,26 +376,29 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
          t = (struct gl_texture_object *)
             _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
          if (t) {
+            /* First check if this texture is currently bound.
+             * If so, unbind it and decrement the reference count.
+             */
             GLuint u;
-            for (u=0; u<MAX_TEXTURE_UNITS; u++) {
+            for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
                struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
 	       GLuint d;
 	       for (d = 1 ; d <= 3 ; d++) {
-		  if (unit->CurrentD[d]==t) {
+		  if (unit->CurrentD[d] == t) {
 		     unit->CurrentD[d] = ctx->Shared->DefaultD[d];
 		     ctx->Shared->DefaultD[d]->RefCount++;
 		     t->RefCount--;
-		     assert( t->RefCount >= 0 );
+		     ASSERT( t->RefCount >= 0 );
 		  }
 	       }
             }
 
-            /* tell device driver to delete texture */
-            if (ctx->Driver.DeleteTexture) {
-               (*ctx->Driver.DeleteTexture)( ctx, t );
-            }
-
-            if (t->RefCount==0) {
+            /* Decrement reference count and delete if zero */
+            t->RefCount--;
+            ASSERT( t->RefCount >= 0 );
+            if (t->RefCount == 0) {
+               if (ctx->Driver.DeleteTexture)
+                  (*ctx->Driver.DeleteTexture)( ctx, t );
                gl_free_texture_object(ctx->Shared, t);
             }
          }
