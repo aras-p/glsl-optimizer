@@ -1268,3 +1268,4 @@ Mesa Version History
 	- GL_INTENSITY was mistakenly accepted as a <format> to glTexImage
 	- fragment program writes to RC/HC register were broken
 	- fixed a few glitches in GL_HP_occlusion_test extension
+	- glBeginQueryARB and glEndQueryARB didn't work inside display lists
