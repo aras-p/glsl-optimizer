@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.27 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_span.c,v 1.28 2002/01/31 00:27:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -720,6 +720,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    GLboolean monoColor;
 
    ASSERT((span->interpMask & span->arrayMask) == 0);
+   ASSERT((span->interpMask | span->arrayMask) & SPAN_RGBA);
 
    MEMSET(span->mask, 1, span->end);
    span->writeAll = GL_TRUE;
@@ -748,17 +749,9 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
       stipple_polygon_span(ctx, span);
    }
 
-   /* Now we may need to interpolate the colors */
-   if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0) {
-      interpolate_colors(ctx, span);
-      /* clear the bit - this allows the WriteMonoCISpan optimization below */
-      span->interpMask &= ~SPAN_RGBA;
-   }
-
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      if (!_mesa_alpha_test(ctx, span,
-                            (const GLchan (*)[4]) span->color.rgba)) {
+      if (!_mesa_alpha_test(ctx, span)) {
          span->interpMask = origInterpMask;
          span->arrayMask = origArrayMask;
 	 return;
@@ -797,6 +790,13 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
       span->interpMask = origInterpMask;
       span->arrayMask = origArrayMask;
       return;
+   }
+
+   /* Now we may need to interpolate the colors */
+   if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0) {
+      interpolate_colors(ctx, span);
+      /* clear the bit - this allows the WriteMonoCISpan optimization below */
+      span->interpMask &= ~SPAN_RGBA;
    }
 
    /* Fog */
@@ -919,10 +919,11 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    const GLuint origArrayMask = span->arrayMask;
 
    ASSERT((span->interpMask & span->arrayMask) == 0);
-
-   /*   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);*/
-
    ASSERT(ctx->Texture._ReallyEnabled);
+
+   /*
+   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);
+   */
 
    MEMSET(span->mask, 1, span->end);
    span->writeAll = GL_TRUE;
@@ -964,11 +965,9 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
       _swrast_multitexture_fragments( ctx, span );
 
       /* Do the alpha test */
-      if (!_old_alpha_test(ctx, span->end,
-                           (CONST GLchan (*)[4]) span->color.rgba,
-                           span->mask)) {
+      if (!_mesa_alpha_test(ctx, span)) {
          span->arrayMask = origArrayMask;
-         return;
+	 return;
       }
    }
 

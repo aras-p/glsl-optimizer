@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.31 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.32 2002/01/31 00:27:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -272,10 +272,12 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 		       (const GLchan (*)[4])span.color.rgba, NULL );
       }
       else if (zoom) {
-         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, span.zArray,
-                                       span.fogArray,
-                                       (const GLchan (*)[4])span.color.rgba,
-                                       desty);
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_zoomed_rgba_span(ctx, &span, 
+                                     (CONST GLchan (*)[4])span.color.rgba,
+                                     desty);
       }
       else {
          span.x = destx;
@@ -511,10 +513,12 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])span.color.rgba, NULL );
       }
       else if (zoom) {
-         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, span.zArray,
-                                       span.fogArray,
-                                       (const GLchan (*)[4]) span.color.rgba,
-                                       desty);
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_zoomed_rgba_span(ctx, &span,
+                                     (CONST GLchan (*)[4]) span.color.rgba,
+                                     desty);
       }
       else {
          span.x = destx;
@@ -629,17 +633,13 @@ static void copy_ci_pixels( GLcontext *ctx,
          _mesa_map_ci( ctx, width, span.color.index );
       }
 
-      if (zoom) {
-         _mesa_write_zoomed_index_span(ctx, width, destx, dy,
-                                       span.zArray, span.fogArray,
-                                       span.color.index, desty );
-      }
-      else {
-         span.x = destx;
-         span.y = dy;
-         span.end = width;
+      span.x = destx;
+      span.y = dy;
+      span.end = width;
+      if (zoom)
+         _mesa_write_zoomed_index_span(ctx, &span, desty);
+      else
          _mesa_write_index_span(ctx, &span, GL_BITMAP);
-      }
    }
 
    /* Restore pixel source to be the draw buffer (for blending, etc) */
@@ -729,32 +729,22 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          span.zArray[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
       }
 
+      span.x = destx;
+      span.y = dy;
+      span.end = width;
       if (ctx->Visual.rgbMode) {
-         if (zoom) {
-            _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, span.zArray,
-                                          span.fogArray,
+         if (zoom)
+            _mesa_write_zoomed_rgba_span( ctx, &span, 
                                           (const GLchan (*)[4])span.color.rgba,
                                           desty );
-         }
-         else {
-            span.x = destx;
-            span.y = dy;
-            span.end = width;
+         else
             _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
-         }
       }
       else {
-         if (zoom) {
-            _mesa_write_zoomed_index_span( ctx, width, destx, dy,
-                                           span.zArray, span.fogArray,
-                                           span.color.index, desty );
-         }
-         else {
-            span.x = destx;
-            span.y = dy;
-            span.end = width;
+         if (zoom)
+            _mesa_write_zoomed_index_span( ctx, &span, desty );
+         else
             _mesa_write_index_span(ctx, &span, GL_BITMAP);
-         }
       }
    }
 

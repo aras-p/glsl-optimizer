@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.7 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.8 2002/01/31 00:27:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "mmath.h"
 
 #include "s_alpha.h"
+#include "s_context.h"
 
 
 /*
@@ -42,67 +43,174 @@
  *          1 = one or more pixels passed the alpha test.
  */
 GLint
-_mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
-                  CONST GLchan rgba[][4])
+_mesa_alpha_test( const GLcontext *ctx, struct sw_span *span )
 {
-   GLuint i;
+   const GLchan (*rgba)[4] = (const GLchan (*)[4]) span->color.rgba;
    const GLchan ref = ctx->Color.AlphaRef;
+   const GLuint n = span->end;
    GLubyte *mask = span->mask;
+   GLuint i;
 
-   ASSERT(span->arrayMask & SPAN_RGBA);
-
-   /* switch cases ordered from most frequent to less frequent */
-   switch (ctx->Color.AlphaFunc) {
-      case GL_LESS:
-         for (i=span->start; i<span->end; i++) {
-	    mask[i] &= (rgba[i][ACOMP] < ref);
-	 }
-	 break;
-      case GL_LEQUAL:
-         for (i=span->start; i<span->end; i++)
-	    mask[i] &= (rgba[i][ACOMP] <= ref);
-	 break;
-      case GL_GEQUAL:
-         for (i=span->start; i<span->end; i++) {
-	    mask[i] &= (rgba[i][ACOMP] >= ref);
-	 }
-	 break;
-      case GL_GREATER:
-         for (i=span->start; i<span->end; i++) {
-	    mask[i] &= (rgba[i][ACOMP] > ref);
-	 }
-	 break;
-      case GL_NOTEQUAL:
-         for (i=span->start; i<span->end; i++) {
-	    mask[i] &= (rgba[i][ACOMP] != ref);
-	 }
-	 break;
-      case GL_EQUAL:
-         for (i=span->start; i<span->end; i++) {
-	    mask[i] &= (rgba[i][ACOMP] == ref);
-	 }
-	 break;
-      case GL_ALWAYS:
-	 /* do nothing */
-	 return 1;
-      case GL_NEVER:
-         /* caller should check for zero! */
-	 return 0;
-      default:
-	 _mesa_problem( ctx, "Invalid alpha test in gl_alpha_test" );
-         return 0;
+   if (span->arrayMask & SPAN_RGBA) {
+      /* Use the array values */
+      switch (ctx->Color.AlphaFunc) {
+         case GL_LESS:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] < ref);
+            break;
+         case GL_LEQUAL:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] <= ref);
+            break;
+         case GL_GEQUAL:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] >= ref);
+            break;
+         case GL_GREATER:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] > ref);
+            break;
+         case GL_NOTEQUAL:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] != ref);
+            break;
+         case GL_EQUAL:
+            for (i = 0; i < n; i++)
+               mask[i] &= (rgba[i][ACOMP] == ref);
+            break;
+         case GL_ALWAYS:
+            /* do nothing */
+            return 1;
+         case GL_NEVER:
+            /* caller should check for zero! */
+            span->writeAll = GL_FALSE;
+            return 0;
+         default:
+            _mesa_problem( ctx, "Invalid alpha test in _mesa_alpha_test" );
+            return 0;
+      }
+   }
+   else {
+      /* Use the interpolation values */
+#if CHAN_TYPE == GL_FLOAT
+      const GLfloat alphaStep = span->alphaStep;
+      GLfloat alpha = span->alpha;
+      ASSERT(span->interpMask & SPAN_RGBA);
+      switch (ctx->Color.AlphaFunc) {
+         case GL_LESS:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha < ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_LEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha <= ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_GEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha >= ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_GREATER:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha > ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_NOTEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha != ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_EQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (alpha == ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_ALWAYS:
+            /* do nothing */
+            return 1;
+         case GL_NEVER:
+            /* caller should check for zero! */
+            span->writeAll = GL_FALSE;
+            return 0;
+         default:
+            _mesa_problem( ctx, "Invalid alpha test in gl_alpha_test" );
+            return 0;
+      }
+#else
+      /* 8 or 16-bit channel interpolation */
+      const GLfixed alphaStep = span->alphaStep;
+      GLfixed alpha = span->alpha;
+      ASSERT(span->interpMask & SPAN_RGBA);
+      switch (ctx->Color.AlphaFunc) {
+         case GL_LESS:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) < ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_LEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) <= ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_GEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) >= ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_GREATER:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) > ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_NOTEQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) != ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_EQUAL:
+            for (i = 0; i < n; i++) {
+               mask[i] &= (FixedToChan(alpha) == ref);
+               alpha += alphaStep;
+            }
+            break;
+         case GL_ALWAYS:
+            /* do nothing */
+            return 1;
+         case GL_NEVER:
+            /* caller should check for zero! */
+            span->writeAll = GL_FALSE;
+            return 0;
+         default:
+            _mesa_problem( ctx, "Invalid alpha test in gl_alpha_test" );
+            return 0;
+      }
+#endif /* CHAN_TYPE */
    }
 
 #if 0
    /* XXXX This causes conformance failures!!!! */
    while ((span->start <= span->end)  &&
-	  (mask[span->start] == 0))
+          (mask[span->start] == 0))
      span->start ++;
 
    while ((span->end >= span->start)  &&
-	  (mask[span->end] == 0))
+          (mask[span->end] == 0))
      span->end --;
 #endif
+
    span->writeAll = GL_FALSE;
 
    if (span->start >= span->end)
@@ -122,7 +230,7 @@ _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
  */
 GLint
 _old_alpha_test( const GLcontext *ctx,
-		 GLuint n, CONST GLchan rgba[][4], GLubyte mask[] )
+                 GLuint n, CONST GLchan rgba[][4], GLubyte mask[] )
 {
    GLuint i;
    const GLchan ref = ctx->Color.AlphaRef;
