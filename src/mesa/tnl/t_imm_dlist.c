@@ -1,5 +1,3 @@
-/* $Id: t_imm_dlist.c,v 1.49 2003/03/31 23:06:50 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -634,6 +632,7 @@ loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    }
 	 }
 
+         /* XXX Maybe we should jump through _glapi->Dispatch all the time?? */
 	 if (flags[i] & VERT_BIT_NORMAL) 
 	    glNormal3fv(IM->Attrib[VERT_ATTRIB_NORMAL][i]);
 
