@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.11 2000/02/05 01:52:05 brianp Exp $ */
+/* $Id: get.c,v 1.12 2000/02/06 03:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -969,6 +969,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = 0;
 	 break;
 
+      /* GL_EXT_compiled_vertex_array */
+      case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
+	 *params = ctx->Array.LockFirst ? GL_TRUE : GL_FALSE;
+	 break;
+      case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
+	 *params = ctx->Array.LockCount ? GL_TRUE : GL_FALSE;
+	 break;
+
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
          /* don't have a color matrix */
@@ -1924,6 +1932,14 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = 0;
 	 break;
 
+      /* GL_EXT_compiled_vertex_array */
+      case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
+	 *params = (GLdouble) ctx->Array.LockFirst;
+	 break;
+      case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
+	 *params = (GLdouble) ctx->Array.LockCount;
+	 break;
+
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
          /* don't have a color matrix */
@@ -2875,6 +2891,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_NATIVE_GRAPHICS_HANDLE_PGI:
 	 *params = 0;
+	 break;
+
+      /* GL_EXT_compiled_vertex_array */
+      case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
+	 *params = (GLfloat) ctx->Array.LockFirst;
+	 break;
+      case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
+	 *params = (GLfloat) ctx->Array.LockCount;
 	 break;
 
       /* GL_ARB_transpose_matrix */
