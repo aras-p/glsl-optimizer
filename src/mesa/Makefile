@@ -32,7 +32,7 @@ default:
 ######################################################################
 # Linux solo DRI drivers
 
-SOLO_SOURCES = \
+SOLO_C_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
 	$(ARRAY_CACHE_SOURCES)	\
@@ -40,10 +40,10 @@ SOLO_SOURCES = \
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
 	$(SHADER_SOURCES)       \
-	$(ASM_C_SOURCES)	\
-	$(X86_SOURCES)
+	$(ASM_C_SOURCES)	
 
-SOLO_OBJECTS = $(SOLO_SOURCES:.c=.o)
+SOLO_OBJECTS = $(SOLO_C_SOURCES:.c=.o) \
+		$(ASM_SOURCES:.S=.o)
 
 
 linux-solo: depend mesa.a driver-dirs
@@ -54,6 +54,9 @@ mesa.a:	$(SOLO_OBJECTS)
 	ar rcv $@ $(SOLO_OBJECTS)
 	ranlib $@
 
+# note: cannot use the name of the directory ("drivers") as the
+# target, otherwise make will look & see that the "drivers" directory
+# already exists, so not try to rebuild it...
 driver-dirs:
 	cd drivers/dri ; make
 
