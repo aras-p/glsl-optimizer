@@ -142,6 +142,7 @@ setup_vendor_request( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
 			print "/* Missing GLX protocol for %s. */" % (f.name)
 
 	def print_generic_function(self, n):
+		size = (n + 3) & ~3
 		print """static FASTCALL NOINLINE void
 generic_%u_byte( GLint rop, const void * ptr )
 {
@@ -153,7 +154,7 @@ generic_%u_byte( GLint rop, const void * ptr )
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
-""" % (n, n + 4, n)
+""" % (n, size + 4, size)
 
 
 	def common_emit_one_arg(self, p, offset, pc, indent, adjust):

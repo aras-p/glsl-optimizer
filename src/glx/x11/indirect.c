@@ -119,10 +119,10 @@ static FASTCALL NOINLINE void
 generic_3_byte( GLint rop, const void * ptr )
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 7;
+    const GLuint cmdlen = 8;
 
     emit_header(gc->pc, rop, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), ptr, 3);
+    (void) memcpy((void *)(gc->pc + 4), ptr, 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
@@ -143,10 +143,10 @@ static FASTCALL NOINLINE void
 generic_6_byte( GLint rop, const void * ptr )
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 10;
+    const GLuint cmdlen = 12;
 
     emit_header(gc->pc, rop, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), ptr, 6);
+    (void) memcpy((void *)(gc->pc + 4), ptr, 8);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
