@@ -69,11 +69,7 @@
 #error RETURN_DISPATCH must be defined
 #endif
 
-#ifdef USE_MGL_NAMESPACE
-GLAPI void GLAPIENTRY mgl__unused413(void);  /* silence warning */
-#else
 GLAPI void GLAPIENTRY gl__unused413(void);  /* silence warning */
-#endif
 
 KEYWORD1 void KEYWORD2 NAME(NewList)(GLuint list, GLenum mode)
 {
