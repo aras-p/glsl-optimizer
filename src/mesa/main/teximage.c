@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.17 2000/02/21 16:34:21 brianp Exp $ */
+/* $Id: teximage.c,v 1.18 2000/03/01 23:28:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -585,7 +585,7 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
     * interesting instead of leaving it indeterminate.
     */
    if (texImage->Data) {
-      char message[8][32] = {
+      static const char message[8][32] = {
          "   X   X  XXXXX   XXX     X    ",
          "   XX XX  X      X   X   X X   ",
          "   X X X  X      X      X   X  ",
