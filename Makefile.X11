@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.25 2000/05/20 23:16:14 brianp Exp $
+# $Id: Makefile.X11,v 1.26 2000/06/05 14:40:11 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -502,6 +502,9 @@ LIB_FILES =	\
 	$(DIRECTORY)/util/Makefile.in				\
 	$(DIRECTORY)/util/*.[ch]				\
 	$(DIRECTORY)/util/sampleMakefile			\
+	$(DIRECTORY)/vms/analyze_map.com			\
+	$(DIRECTORY)/vms/xlib.opt				\
+	$(DIRECTORY)/vms/xlib_share.opt				\
 	$(DIRECTORY)/BeOS/Makefile				\
 	$(DIRECTORY)/BeOS/*.cpp					\
 	$(DIRECTORY)/WIN32/NMAKE.MAK				\
