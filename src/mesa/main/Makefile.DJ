@@ -1,7 +1,7 @@
-# $Id: Makefile.DJ,v 1.7 2000/04/07 16:28:37 brianp Exp $
+# $Id: Makefile.DJ,v 1.8 2000/08/21 14:25:25 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
+# Version:  3.5
 # Copyright (C) 1995-1998  Brian Paul
 #
 # This library is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@ CORE_SOURCES = \
 	colortab.c \
 	config.c \
 	context.c \
+	convolve.c \
 	copypix.c \
 	cva.c \
 	debug_xform.c \
