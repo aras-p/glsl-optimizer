@@ -79,6 +79,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexSubImage1D = _mesa_store_texsubimage1d;
    driver->TexSubImage2D = _mesa_store_texsubimage2d;
    driver->TexSubImage3D = _mesa_store_texsubimage3d;
+   driver->GetTexImage = _mesa_get_teximage;
    driver->CopyTexImage1D = _swrast_copy_teximage1d;
    driver->CopyTexImage2D = _swrast_copy_teximage2d;
    driver->CopyTexSubImage1D = _swrast_copy_texsubimage1d;
@@ -91,6 +92,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
    driver->CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
    driver->CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+   driver->GetCompressedTexImage = _mesa_get_compressed_teximage;
    driver->CompressedTextureSize = _mesa_compressed_texture_size;
    driver->BindTexture = NULL;
    driver->NewTextureObject = _mesa_new_texture_object;

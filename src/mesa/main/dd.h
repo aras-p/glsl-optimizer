@@ -157,10 +157,9 @@ struct dd_function_table {
     * This function must respect all rasterization state, glPixelTransfer(),
     * glPixelZoom(), etc.
     */
-   void (*CopyPixels)( GLcontext *ctx,
-                            GLint srcx, GLint srcy,
-                            GLsizei width, GLsizei height,
-                            GLint dstx, GLint dsty, GLenum type );
+   void (*CopyPixels)( GLcontext *ctx, GLint srcx, GLint srcy,
+                       GLsizei width, GLsizei height,
+                       GLint dstx, GLint dsty, GLenum type );
 
    /**
     * This is called by glBitmap().  
@@ -296,6 +295,14 @@ struct dd_function_table {
                           const struct gl_pixelstore_attrib *packing,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage );
+
+   /**
+    * Called by glGetTexImage().
+    */
+   void (*GetTexImage)( GLcontext *ctx, GLenum target, GLint level,
+                        GLenum format, GLenum type, GLvoid *pixels,
+                        const struct gl_texture_object *texObj,
+                        const struct gl_texture_image *texImage );
 
    /**
     * Called by glCopyTexImage1D().
@@ -453,6 +460,15 @@ struct dd_function_table {
                                    GLsizei imageSize, const GLvoid *data,
                                    struct gl_texture_object *texObj,
                                    struct gl_texture_image *texImage);
+
+
+   /**
+    * Called by glGetCompressedTexImage.
+    */
+   void (*GetCompressedTexImage)(GLcontext *ctx, GLenum target, GLint level,
+                                 GLvoid *img,
+                                 const struct gl_texture_object *texObj,
+                                 const struct gl_texture_image *texImage);
 
    /**
     * Called to query number of bytes of storage needed to store the

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -213,17 +213,32 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
 
 extern void
-_mesa_rescale_teximage2d (GLuint bytesPerPixel,
-			  GLuint srcStrideInPixels,
-			  GLuint dstRowStride,
-			  GLint srcWidth, GLint srcHeight,
-			  GLint dstWidth, GLint dstHeight,
-			  const GLvoid *srcImage, GLvoid *dstImage);
+_mesa_rescale_teximage2d(GLuint bytesPerPixel,
+                         GLuint srcStrideInPixels,
+                         GLuint dstRowStride,
+                         GLint srcWidth, GLint srcHeight,
+                         GLint dstWidth, GLint dstHeight,
+                         const GLvoid *srcImage, GLvoid *dstImage);
 
 extern void
-_mesa_upscale_teximage2d( GLsizei inWidth, GLsizei inHeight,
-                          GLsizei outWidth, GLsizei outHeight,
-                          GLint comps, const GLchan *src, GLint srcRowStride,
-                          GLchan *dest );
+_mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
+                         GLsizei outWidth, GLsizei outHeight,
+                         GLint comps, const GLchan *src, GLint srcRowStride,
+                         GLchan *dest);
+
+
+extern void
+_mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
+                   GLenum format, GLenum type, GLvoid *pixels,
+                   const struct gl_texture_object *texObj,
+                   const struct gl_texture_image *texImage);
+
+
+extern void
+_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
+                              GLvoid *img,
+                              const struct gl_texture_object *texObj,
+                              const struct gl_texture_image *texImage);
+
 
 #endif
