@@ -72,7 +72,7 @@ static struct {
 #define GET_VIEWPORT_MAT() VIA_CONTEXT(ctx)->ViewportMatrix.m
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() VIA_CONTEXT(ctx)->vertexSize
-#define GET_VERTEX_SIZE() VIA_CONTEXT(ctx)->vertexSize
+#define GET_VERTEX_SIZE() (1<<GET_VERTEX_STRIDE_SHIFT())
 #define GET_VERTEX_STORE() VIA_CONTEXT(ctx)->verts
 #define GET_VERTEX_STRIDE_SHIFT() VIA_CONTEXT(ctx)->vertexStrideShift
 #define GET_UBYTE_COLOR_STORE() &VIA_CONTEXT(ctx)->UbyteColor
