@@ -19,7 +19,7 @@ CORE_SOURCES = accum.c alpha.c alphabuf.c api1.c api2.c apiext.c attrib.c \
 bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
 get.c hash.c image.c light.c lines.c logic.c masking.c matrix.c \
-misc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
+glmisc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
 quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
 varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
@@ -43,7 +43,7 @@ dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 
 OBJECTS3=get.obj,hash.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,matrix.obj,\
-misc.obj,mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj,pointers.obj,polygon.obj,\
+glmisc.obj,mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj,pointers.obj,polygon.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj
 
 
