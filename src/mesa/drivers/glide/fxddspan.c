@@ -370,10 +370,14 @@ static void read_R5G6B5_span(const GLcontext *ctx,
                 &info)) {
     const GLint winX = fxMesa->x_offset;
     const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
-    const GLint dstStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
+#ifdef XF86DRI
+    const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
                           ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+#else
+    const GLint srcStride = info.strideInBytes / 2; /* stride in GLushorts */
+#endif
     const GLushort *data16 = (const GLushort *) info.lfbPtr
-                           + (winY - y) * dstStride
+                           + (winY - y) * srcStride
                            + (winX + x);
     const GLuint *data32 = (const GLuint *) data16;
     GLuint i, j;
