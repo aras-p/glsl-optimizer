@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.56 2001/09/14 21:36:43 brianp Exp $ */
+/* $Id: attrib.c,v 1.57 2001/09/18 15:27:18 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -599,14 +599,14 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
 
       _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + u);
       _mesa_set_enable(ctx, GL_TEXTURE_1D,
-              (GLboolean) (unit->Enabled & TEXTURE0_1D) ? GL_TRUE : GL_FALSE);
+              (GLboolean) (unit->Enabled & TEXTURE0_1D ? GL_TRUE : GL_FALSE));
       _mesa_set_enable(ctx, GL_TEXTURE_2D,
-              (GLboolean) (unit->Enabled & TEXTURE0_2D) ? GL_TRUE : GL_FALSE);
+              (GLboolean) (unit->Enabled & TEXTURE0_2D ? GL_TRUE : GL_FALSE));
       _mesa_set_enable(ctx, GL_TEXTURE_3D,
-              (GLboolean) (unit->Enabled & TEXTURE0_3D) ? GL_TRUE : GL_FALSE);
+              (GLboolean) (unit->Enabled & TEXTURE0_3D ? GL_TRUE : GL_FALSE));
       if (ctx->Extensions.ARB_texture_cube_map) {
          _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP_ARB,
-             (GLboolean) (unit->Enabled & TEXTURE0_CUBE) ? GL_TRUE : GL_FALSE);
+             (GLboolean) (unit->Enabled & TEXTURE0_CUBE ? GL_TRUE : GL_FALSE));
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
