@@ -59,7 +59,7 @@
 
 #define HAVE_ELTS        0
 
-#define LOCAL_VARS viaContextPtr vmesa = VIA_CONTEXT(ctx)
+#define LOCAL_VARS struct via_context *vmesa = VIA_CONTEXT(ctx)
 #define INIT(prim) do {					\
    viaRasterPrimitive(ctx, prim, prim);	\
 } while (0)
@@ -88,7 +88,7 @@
 static GLboolean via_run_fastrender(GLcontext *ctx,
                                     struct tnl_pipeline_stage *stage)
 {
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
+    struct via_context *vmesa = VIA_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &tnl->vb;
     GLuint i;
@@ -119,7 +119,8 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
 }
 
 
-static void via_check_fastrender(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+static void via_check_fastrender(GLcontext *ctx, 
+				 struct tnl_pipeline_stage *stage)
 {
    stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }

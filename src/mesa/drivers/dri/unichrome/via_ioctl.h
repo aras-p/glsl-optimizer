@@ -28,14 +28,21 @@
 #include "via_context.h"
 
 
-void viaFinishPrimitive(viaContextPtr vmesa);
-void viaFlushDma(viaContextPtr vmesa);
-void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags);
+void viaFinishPrimitive(struct via_context *vmesa);
+void viaFlushDma(struct via_context *vmesa);
+void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags);
 
 void viaInitIoctlFuncs(GLcontext *ctx);
 void viaCopyBuffer(const __DRIdrawablePrivate *dpriv);
 void viaPageFlip(const __DRIdrawablePrivate *dpriv);
-void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
+void viaCheckDma(struct via_context *vmesa, GLuint bytes);
+void viaResetPageFlippingLocked(struct via_context *vmesa);
+void viaWaitIdle(struct via_context *vmesa);
+void viaWaitIdleLocked(struct via_context *vmesa);
+
+GLboolean viaCheckBreadcrumb( struct via_context *vmesa, GLuint value );
+void viaEmitBreadcrumb( struct via_context *vmesa );
+
 
 #define VIA_FINISH_PRIM(vmesa) do {		\
    if (vmesa->dmaLastPrim)			\
@@ -49,9 +56,9 @@ void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
 } while (0)
     
 
-void viaWrapPrimitive( viaContextPtr vmesa );
+void viaWrapPrimitive( struct via_context *vmesa );
 
-static __inline__ GLuint *viaAllocDma(viaContextPtr vmesa, int bytes)
+static __inline__ GLuint *viaAllocDma(struct via_context *vmesa, int bytes)
 {
    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
       viaFlushDma(vmesa);
@@ -65,7 +72,7 @@ static __inline__ GLuint *viaAllocDma(viaContextPtr vmesa, int bytes)
 }
 
 
-static GLuint __inline__ *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
+static GLuint __inline__ *viaExtendPrimitive(struct via_context *vmesa, int bytes)
 {
    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
       viaWrapPrimitive(vmesa);

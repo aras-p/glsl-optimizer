@@ -20,16 +20,14 @@ COMMON_SOURCES = \
 DRIVER_SOURCES = \
 	via_context.c \
 	via_fb.c \
+	via_tex.c \
 	via_ioctl.c \
 	via_render.c \
 	via_screen.c \
 	via_span.c \
 	via_state.c \
-	via_tex.c \
-	via_texmem.c \
-	via_texstate.c \
-	via_tris.c \
-	via_texcombine.c
+	via_texcombine.c \
+	via_tris.c 
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

@@ -64,10 +64,7 @@
 #include "vblank.h"
 #include "utils.h"
 
-#ifdef DEBUG
 GLuint VIA_DEBUG = 0;
-#endif
-
 
 /**
  * Return various strings for \c glGetString.
@@ -92,8 +89,8 @@ static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
 	 "UniChrome (K8M800)",
 	 "UniChrome (PM8x0/CN400)",
       };
-      const viaContext * const via = VIA_CONTEXT(ctx);
-      const unsigned id = via->viaScreen->deviceID;
+      struct via_context *vmesa = VIA_CONTEXT(ctx);
+      unsigned id = vmesa->viaScreen->deviceID;
 
       offset = driGetRendererString( buffer, 
 				     chipset_names[(id > VIA_PM800) ? 0 : id],
@@ -134,7 +131,7 @@ buffer_align( unsigned width )
  * \sa AllocateBuffer
  */
 static GLboolean
-calculate_buffer_parameters( viaContextPtr vmesa )
+calculate_buffer_parameters( struct via_context *vmesa )
 {
    const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
    const unsigned extra = 32;
@@ -155,15 +152,17 @@ calculate_buffer_parameters( viaContextPtr vmesa )
       if (!via_alloc_draw_buffer(vmesa, &vmesa->front))
 	 return GL_FALSE;
 
-   }
-   else { 
+   } else {
       w = vmesa->viaScreen->width;
       h = vmesa->viaScreen->height;
 
       vmesa->front.bpp = vmesa->viaScreen->bitsPerPixel;
       vmesa->front.pitch = buffer_align( w ) << shift;
       vmesa->front.size = vmesa->front.pitch * h;
-      vmesa->front.offset = 0;
+      if (getenv("ALTERNATE_SCREEN")) 
+        vmesa->front.offset = vmesa->front.size;
+      else
+      	vmesa->front.offset = 0;
       vmesa->front.map = (char *) vmesa->driScreen->pFB;
    }
 
@@ -171,7 +170,9 @@ calculate_buffer_parameters( viaContextPtr vmesa )
    /* Allocate back-buffer */
    if (vmesa->hasBack) {
       vmesa->back.bpp = vmesa->viaScreen->bitsPerPixel;
-      vmesa->back.pitch = (buffer_align( vmesa->driDrawable->w ) << shift) + extra;
+      vmesa->back.pitch = (buffer_align( vmesa->driDrawable->w ) << shift);
+      vmesa->back.pitch += extra;
+      vmesa->back.pitch = MIN2(vmesa->back.pitch, vmesa->front.pitch);
       vmesa->back.size = vmesa->back.pitch * vmesa->driDrawable->h;
       if (vmesa->back.map)
 	 via_free_draw_buffer(vmesa, &vmesa->back);
@@ -191,7 +192,8 @@ calculate_buffer_parameters( viaContextPtr vmesa )
       if (vmesa->depth.bpp == 24)
 	 vmesa->depth.bpp = 32;
 
-      vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) * (vmesa->depth.bpp/8)) + extra;
+      vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) * 
+			    (vmesa->depth.bpp/8)) + extra;
       vmesa->depth.size = vmesa->depth.pitch * vmesa->driDrawable->h;
 
       if (vmesa->depth.map)
@@ -206,17 +208,10 @@ calculate_buffer_parameters( viaContextPtr vmesa )
       (void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
    }
 
-   /*=* John Sheng [2003.5.31] flip *=*/
    if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
        vmesa->viaScreen->height == vmesa->driDrawable->h ) {
-#define ALLOW_EXPERIMENTAL_PAGEFLIP 0
-#if ALLOW_EXPERIMENTAL_PAGEFLIP
-      vmesa->doPageFlip = GL_TRUE;
-      /* vmesa->currentPage = 0; */
+      vmesa->doPageFlip = vmesa->allowPageFlip;
       assert(vmesa->back.pitch == vmesa->front.pitch);
-#else
-      vmesa->doPageFlip = GL_FALSE;
-#endif
    }
    else
       vmesa->doPageFlip = GL_FALSE;
@@ -228,7 +223,7 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 {
     GET_CURRENT_CONTEXT(ctx);
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
+    struct via_context *vmesa = VIA_CONTEXT(ctx);
 
     _swrast_alloc_buffers( drawbuffer );
     calculate_buffer_parameters( vmesa );
@@ -237,7 +232,7 @@ void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
     GET_CURRENT_CONTEXT(ctx);
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);       
+    struct via_context *vmesa = VIA_CONTEXT(ctx);       
     *width = vmesa->driDrawable->w;
     *height = vmesa->driDrawable->h;
 }
@@ -281,8 +276,28 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
 };
 
 
+static const struct dri_debug_control debug_control[] =
+{
+    { "fall",  DEBUG_FALLBACKS },
+    { "tex",   DEBUG_TEXTURE },
+    { "ioctl", DEBUG_IOCTL },
+    { "prim",  DEBUG_PRIMS },
+    { "vert",  DEBUG_VERTS },
+    { "state", DEBUG_STATE },
+    { "verb",  DEBUG_VERBOSE },
+    { "dri",   DEBUG_DRI },
+    { "dma",   DEBUG_DMA },
+    { "san",   DEBUG_SANITY },
+    { "sync",  DEBUG_SYNC },
+    { "sleep", DEBUG_SLEEP },
+    { "pix",   DEBUG_PIXEL },
+    { "2d",    DEBUG_2D },
+    { NULL,    0 }
+};
+
+
 static GLboolean
-AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
+AllocateDmaBuffer(const GLvisual *visual, struct via_context *vmesa)
 {
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
@@ -296,7 +311,7 @@ AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 }
 
 static void
-FreeBuffer(viaContextPtr vmesa)
+FreeBuffer(struct via_context *vmesa)
 {
     if (vmesa->front.map && vmesa->drawType == GLX_PBUFFER_BIT)
 	via_free_draw_buffer(vmesa, &vmesa->front);
@@ -306,6 +321,9 @@ FreeBuffer(viaContextPtr vmesa)
 
     if (vmesa->depth.map)
         via_free_draw_buffer(vmesa, &vmesa->depth);
+
+    if (vmesa->breadcrumb.map)
+        via_free_draw_buffer(vmesa, &vmesa->breadcrumb);
 
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
@@ -324,7 +342,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
                  void *sharedContextPrivate)
 {
     GLcontext *ctx, *shareCtx;
-    viaContextPtr vmesa;
+    struct via_context *vmesa;
     __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     drm_via_sarea_t *saPriv = (drm_via_sarea_t *)
@@ -332,11 +350,10 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     struct dd_function_table functions;
 
     /* Allocate via context */
-    vmesa = (viaContextPtr) CALLOC_STRUCT(via_context_t);
+    vmesa = (struct via_context *) CALLOC_STRUCT(via_context);
     if (!vmesa) {
         return GL_FALSE;
     }
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
 
     /* Parse configuration files.
      */
@@ -391,17 +408,22 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        break;
     }
 
+    make_empty_list(&vmesa->freed_tex_buffers);
+    make_empty_list(&vmesa->tex_image_list[VIA_MEM_VIDEO]);
+    make_empty_list(&vmesa->tex_image_list[VIA_MEM_AGP]);
+    make_empty_list(&vmesa->tex_image_list[VIA_MEM_SYSTEM]);
 
     _mesa_init_driver_functions(&functions);
     viaInitTextureFuncs(&functions);
 
     /* Allocate the Mesa context */
     if (sharedContextPrivate)
-        shareCtx = ((viaContextPtr) sharedContextPrivate)->glCtx;
+        shareCtx = ((struct via_context *) sharedContextPrivate)->glCtx;
     else
         shareCtx = NULL;
 
-    vmesa->glCtx = _mesa_create_context(mesaVis, shareCtx, &functions, (void*) vmesa);
+    vmesa->glCtx = _mesa_create_context(mesaVis, shareCtx, &functions,
+					(void*) vmesa);
     
     vmesa->shareCtx = shareCtx;
     
@@ -466,9 +488,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->viaScreen = viaScreen;
     vmesa->driScreen = sPriv;
     vmesa->sarea = saPriv;
-    vmesa->glBuffer = NULL;
 
-    vmesa->texHeap = mmInit(0, viaScreen->textureSize);
     vmesa->renderIndex = ~0;
     vmesa->setupIndex = ~0;
     vmesa->hwPrimitive = GL_POLYGON+1;
@@ -479,12 +499,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->drawType = GLX_WINDOW_BIT;
 
 
-    make_empty_list(&vmesa->TexObjList);
-    make_empty_list(&vmesa->SwappedOut);
-
-    vmesa->CurrentTexObj[0] = 0;
-    vmesa->CurrentTexObj[1] = 0;
-    
     _math_matrix_ctr(&vmesa->ViewportMatrix);
 
     /* Do this early, before VIA_FLUSH_DMA can be called:
@@ -496,26 +510,32 @@ viaCreateContext(const __GLcontextModes *mesaVis,
         return GL_FALSE;
     }
 
+    /* Allocate a small piece of fb memory for synchronization:
+     */
+    vmesa->breadcrumb.bpp = 32;
+    vmesa->breadcrumb.pitch = buffer_align( 64 ) << 2;
+    vmesa->breadcrumb.size = vmesa->breadcrumb.pitch;
+
+    if (!via_alloc_draw_buffer(vmesa, &vmesa->breadcrumb)) {
+        fprintf(stderr ,"AllocateDmaBuffer fail\n");
+        FreeBuffer(vmesa);
+        FREE(vmesa);
+        return GL_FALSE;
+    }
+
     driInitExtensions( ctx, card_extensions, GL_TRUE );
     viaInitStateFuncs(ctx);
-    viaInitTextures(ctx);
     viaInitTriFuncs(ctx);
     viaInitSpanFuncs(ctx);
     viaInitIoctlFuncs(ctx);
     viaInitState(ctx);
         
-#ifdef DEBUG
     if (getenv("VIA_DEBUG"))
-	VIA_DEBUG = 1;
-    else
-	VIA_DEBUG = 0;	
-#endif	
+       VIA_DEBUG = driParseDebugString( getenv( "VIA_DEBUG" ),
+					debug_control );
 
     if (getenv("VIA_NO_RAST"))
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
-
-    if (getenv("VIA_CONFORM"))
-       vmesa->strictConformance = 1;
 
     /* I don't understand why this isn't working:
      */
@@ -525,10 +545,14 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     /* Hack this up in its place:
      */
-    vmesa->vblank_flags = getenv("VIA_VSYNC") ? VBLANK_FLAG_SYNC : VBLANK_FLAG_NO_IRQ;
+    vmesa->vblank_flags = (getenv("VIA_VSYNC") ? 
+			   VBLANK_FLAG_SYNC : VBLANK_FLAG_NO_IRQ);
 
-    
-    vmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
+    if (getenv("VIA_PAGEFLIP"))
+       vmesa->allowPageFlip = 1;
+   
+    vmesa->get_ust = 
+       (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
     if ( vmesa->get_ust == NULL ) {
        vmesa->get_ust = get_ust_nop;
     }
@@ -541,11 +565,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->regTranSet = (GLuint *)((GLuint)viaScreen->reg + 0x43C);
     vmesa->regTranSpace = (GLuint *)((GLuint)viaScreen->reg + 0x440);
     vmesa->agpBase = viaScreen->agpBase;
-    if (VIA_DEBUG) {
-	fprintf(stderr, "regEngineStatus = %x\n", *vmesa->regEngineStatus);
-    }
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
+
     return GL_TRUE;
 }
 
@@ -553,9 +573,9 @@ void
 viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
     GET_CURRENT_CONTEXT(ctx);
-    viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
-    viaContextPtr current = ctx ? VIA_CONTEXT(ctx) : NULL;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
+    struct via_context *vmesa = 
+       (struct via_context *)driContextPriv->driverPrivate;
+    struct via_context *current = ctx ? VIA_CONTEXT(ctx) : NULL;
     assert(vmesa); /* should never be null */
 
     /* check if we're deleting the currently bound context */
@@ -565,25 +585,36 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     }
 
     if (vmesa) {
-	/*=* John Sheng [2003.5.31]  agp tex *=*/
-        WAIT_IDLE(vmesa);
-	if(VIA_DEBUG) fprintf(stderr, "agpFullCount = %d\n", vmesa->agpFullCount);    
+        viaWaitIdle(vmesa);
+	if (vmesa->doPageFlip) {
+	   LOCK_HARDWARE(vmesa);
+	   if (vmesa->pfCurrentOffset != 0) {
+	      fprintf(stderr, "%s - reset pf\n", __FUNCTION__);
+	      viaResetPageFlippingLocked(vmesa);
+	   }
+	   UNLOCK_HARDWARE(vmesa);
+	}
 	
 	_swsetup_DestroyContext(vmesa->glCtx);
         _tnl_DestroyContext(vmesa->glCtx);
         _ac_DestroyContext(vmesa->glCtx);
         _swrast_DestroyContext(vmesa->glCtx);
-	FreeBuffer(vmesa);
         /* free the Mesa context */
 	_mesa_destroy_context(vmesa->glCtx);
+	/* release our data */
+	FreeBuffer(vmesa);
+
+	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_AGP]));
+	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_VIDEO]));
+	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_SYSTEM]));
+	assert (is_empty_list(&vmesa->freed_tex_buffers));
+
         FREE(vmesa);
     }
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
 
-void viaXMesaWindowMoved(viaContextPtr vmesa)
+void viaXMesaWindowMoved(struct via_context *vmesa)
 {
    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
@@ -615,7 +646,8 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
        vmesa->drawH != dPriv->h) 
       calculate_buffer_parameters( vmesa );
 
-   vmesa->drawXoff = (GLuint)(((dPriv->x * bytePerPixel) & 0x1f) / bytePerPixel);  
+   vmesa->drawXoff = (GLuint)(((dPriv->x * bytePerPixel) & 0x1f) / 
+			      bytePerPixel);  
    vmesa->drawX = dPriv->x - vmesa->drawXoff;
    vmesa->drawY = dPriv->y;
    vmesa->drawW = dPriv->w;
@@ -640,8 +672,6 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
 GLboolean
 viaUnbindContext(__DRIcontextPrivate *driContextPriv)
 {
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
     return GL_TRUE;
 }
 
@@ -650,16 +680,15 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
                __DRIdrawablePrivate *driDrawPriv,
                __DRIdrawablePrivate *driReadPriv)
 {
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-  
-    if (VIA_DEBUG) {
+    if (VIA_DEBUG & DEBUG_DRI) {
 	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driContextPriv);
 	fprintf(stderr, "driDrawPriv = %08x\n", (GLuint)driDrawPriv);    
 	fprintf(stderr, "driReadPriv = %08x\n", (GLuint)driReadPriv);
     }	
 
     if (driContextPriv) {
-        viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
+        struct via_context *vmesa = 
+	   (struct via_context *)driContextPriv->driverPrivate;
 	GLcontext *ctx = vmesa->glCtx;
 
 	if ( vmesa->driDrawable != driDrawPriv ) {
@@ -670,12 +699,10 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	   }
 	   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 	}
-	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
         _mesa_make_current2(vmesa->glCtx,
                             (GLframebuffer *)driDrawPriv->driverPrivate,
                             (GLframebuffer *)driReadPriv->driverPrivate);
-	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
 	
         viaXMesaWindowMoved(vmesa);
 	ctx->Driver.Scissor(vmesa->glCtx,
@@ -688,11 +715,10 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
         _mesa_make_current(0,0);
     }
         
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
     return GL_TRUE;
 }
 
-void viaGetLock(viaContextPtr vmesa, GLuint flags)
+void viaGetLock(struct via_context *vmesa, GLuint flags)
 {
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
     __DRIscreenPrivate *sPriv = vmesa->driScreen;
@@ -710,6 +736,12 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
        viaXMesaWindowMoved(vmesa);
        vmesa->lastStamp = dPriv->lastStamp;
     }
+
+    if (vmesa->doPageFlip &&
+	vmesa->pfCurrentOffset != vmesa->sarea->pfCurrentOffset) {
+       fprintf(stderr, "%s - reset pf\n", __FUNCTION__);
+       viaResetPageFlippingLocked(vmesa);
+    }
 }
 
 
@@ -717,13 +749,14 @@ void
 viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
 {
     __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *)drawablePrivate;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);	
-    if (dPriv && dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-        viaContextPtr vmesa;
-        GLcontext *ctx;
-	
-        vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
-        ctx = vmesa->glCtx;
+
+    if (dPriv && 
+	dPriv->driContextPriv && 
+	dPriv->driContextPriv->driverPrivate) {
+        struct via_context *vmesa = 
+	   (struct via_context *)dPriv->driContextPriv->driverPrivate;
+        GLcontext *ctx = vmesa->glCtx;
+
         if (ctx->Visual.doubleBufferMode) {
             _mesa_notifySwapBuffers(ctx);
             if (vmesa->doPageFlip) {
@@ -739,5 +772,4 @@ viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
     else {
         _mesa_problem(NULL, "viaSwapBuffers: drawable has no context!\n");
     }
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);	
 }

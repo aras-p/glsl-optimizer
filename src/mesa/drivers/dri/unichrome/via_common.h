@@ -99,8 +99,13 @@
 #define VIA_BACK    0x2
 #define VIA_DEPTH   0x4
 #define VIA_STENCIL 0x8
-#define VIDEO 0
-#define AGP 1
+
+#define VIA_MEM_VIDEO   0	/* matches drm constant */
+#define VIA_MEM_AGP     1	/* matches drm constant */
+#define VIA_MEM_SYSTEM  2		
+#define VIA_MEM_MIXED   3
+#define VIA_MEM_UNKNOWN 4
+
 typedef struct {
 	u_int32_t offset;
 	u_int32_t size;
@@ -172,7 +177,6 @@ typedef struct _drm_via_sarea {
 	unsigned int nbox;
 	drm_clip_rect_t boxes[VIA_NR_SAREA_CLIPRECTS];
 	drm_via_tex_region_t texList[VIA_NR_TEX_REGIONS + 1];
-	int texAge;		/* last time texture was uploaded */
 	int ctxOwner;		/* last context to upload state */
 	int vertexPrim;
 
@@ -187,6 +191,10 @@ typedef struct _drm_via_sarea {
 	unsigned int XvMCDisplaying[VIA_NR_XVMC_PORTS];
 	unsigned int XvMCSubPicOn[VIA_NR_XVMC_PORTS];
 	unsigned int XvMCCtxNoGrabbed;	/* Last context to hold decoder */
+
+	/* Used by the 3d driver only at this point, for pageflipping:
+	 */
+	unsigned int pfCurrentOffset;
 
 } drm_via_sarea_t;
 

@@ -9,10 +9,6 @@
 #define VIA_VERSION_MINOR		1
 
 typedef struct {
-    int CtxOwner;
-} VIASAREAPriv;
-
-typedef struct {
     drm_handle_t handle;
     drmSize size;
     drmAddress map;
@@ -29,6 +25,7 @@ typedef struct {
     int priv2;
     int fbOffset;
     int fbSize;
+    char drixinerama;
     int backOffset;
     int depthOffset;
     int textureOffset;
@@ -36,10 +33,8 @@ typedef struct {
     int irqEnabled;
     unsigned int scrnX, scrnY;
     int sarea_priv_offset;
-    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
-    int VQEnable;
-    int DRIIrqEnable;
     int ringBufActive;
+    unsigned int reg_pause_addr;
 } VIADRIRec, *VIADRIPtr;
 
 typedef struct {
@@ -50,13 +45,4 @@ typedef struct {
     int dummy;
 } VIADRIContextRec, *VIADRIContextPtr;
 
-#ifdef XFree86Server
-
-#include "screenint.h"
-
-Bool VIADRIScreenInit(ScreenPtr pScreen);
-void VIADRICloseScreen(ScreenPtr pScreen);
-Bool VIADRIFinishScreenInit(ScreenPtr pScreen);
-
-#endif
 #endif

@@ -36,21 +36,12 @@
 #include "macros.h"
 #include "colormac.h"
 #include "enums.h"
-#include "dd.h"
 
-#include "mm.h"
 #include "via_context.h"
 #include "via_state.h"
 #include "via_tex.h"
-#include "via_tris.h"
-#include "via_ioctl.h"
+#include "via_3d_reg.h"
 
-#include "swrast/swrast.h"
-#include "array_cache/acache.h"
-#include "tnl/tnl.h"
-#include "swrast_setup/swrast_setup.h"
-
-#include "tnl/t_pipeline.h"
 
 #define VIA_USE_ALPHA (HC_XTC_Adif - HC_XTC_Dif)
 
@@ -90,24 +81,18 @@ static const unsigned  a_shift_table[3] = {
  * Calculate the hardware state for the specified texture combine mode
  *
  * \bug
- * For the alpha combine, \c GL_CONSTANT is still probably wrong.
- *
- * \bug
  * All forms of DOT3 bumpmapping are completely untested, and are most
- * likely wrong.
- *
- * \bug
- * This code still fails progs/demos/texenv for all modes with \c GL_ALPHA
- * textures.  This was also the case with the code that Via supplied.  It
- * also fails for \c GL_REPLACE with \c GL_RGBA textures.  Everything else
- * that texenv tests looks good.
+ * likely wrong.  KW: Looks like it will never be quite right as the
+ * hardware seems to experience overflow in color calculation at the
+ * 4x shift levels, which need to be programed for DOT3.  Maybe newer
+ * hardware fixes these issues.
  *
  * \bug 
  * KW: needs attention to the case where texunit 1 is enabled but
  * texunit 0 is not.
  */
 GLboolean
-viaTexCombineState( viaContextPtr vmesa,
+viaTexCombineState( struct via_context *vmesa,
 		    const struct gl_tex_env_combine_state * combine,
 		    unsigned unit )
 {
@@ -126,7 +111,8 @@ viaTexCombineState( viaContextPtr vmesa,
    unsigned constant_alpha[3];
    unsigned bias_alpha = 0;
    unsigned abc_alpha = 0;
-   const struct gl_texture_unit const * texUnit = & vmesa->glCtx->Texture.Unit[unit];
+   const struct gl_texture_unit const * texUnit = 
+      &vmesa->glCtx->Texture.Unit[unit];
    unsigned env_color[4];
 
    /* It seems that the color clamping can be overwhelmed at the 4x
@@ -329,7 +315,9 @@ viaTexCombineState( viaContextPtr vmesa,
       case GL_PREVIOUS:
 	 alpha_arg[i] = (unit == 0) ? HC_XTA_Adif : HC_XTA_Acur;
 	 alpha_arg[i] += alpha_operand_modifier[op];
-	 bias_alpha_arg[i] = (unit == 0) ? HC_HTXnTBLAbias_Adif : HC_HTXnTBLAbias_Acur;
+	 bias_alpha_arg[i] = (unit == 0 ? 
+			      HC_HTXnTBLAbias_Adif : 
+			      HC_HTXnTBLAbias_Acur);
 	 bias_alpha_arg[i] += bias_alpha_operand_modifier[op];
 	 break;
       }
@@ -418,34 +406,18 @@ viaTexCombineState( viaContextPtr vmesa,
    op |= c_shift_table[ c_shift ] | a_shift_table[ a_shift ];
 
 
-   if ( unit == 0 ) {
-      vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
+   vmesa->regHTXnTBLMPfog[unit] = HC_HTXnTBLMPfog_Fog;
 
-      vmesa->regHTXnTBLCsat_0 = color;
-      vmesa->regHTXnTBLAsat_0 = alpha;
-      vmesa->regHTXnTBLCop_0 = op | bias;
-      vmesa->regHTXnTBLRAa_0 = abc_alpha;
-      vmesa->regHTXnTBLRFog_0 = bias_alpha;
+   vmesa->regHTXnTBLCsat[unit] = color;
+   vmesa->regHTXnTBLAsat[unit] = alpha;
+   vmesa->regHTXnTBLCop[unit] = op | bias;
+   vmesa->regHTXnTBLRAa[unit] = abc_alpha;
+   vmesa->regHTXnTBLRFog[unit] = bias_alpha;
 
-      vmesa->regHTXnTBLRCa_0 = ordered_constant_color[0];
-      vmesa->regHTXnTBLRCb_0 = ordered_constant_color[1];
-      vmesa->regHTXnTBLRCc_0 = ordered_constant_color[2];
-      vmesa->regHTXnTBLRCbias_0 = ordered_constant_color[3];
-   }
-   else {
-      vmesa->regHTXnTBLMPfog_1 = HC_HTXnTBLMPfog_Fog;
-
-      vmesa->regHTXnTBLCsat_1 = color;
-      vmesa->regHTXnTBLAsat_1 = alpha;
-      vmesa->regHTXnTBLCop_1 = op | bias;
-      vmesa->regHTXnTBLRAa_1 = abc_alpha;
-      vmesa->regHTXnTBLRFog_1 = bias_alpha;
-
-      vmesa->regHTXnTBLRCa_1 = ordered_constant_color[0];
-      vmesa->regHTXnTBLRCb_1 = ordered_constant_color[1];
-      vmesa->regHTXnTBLRCc_1 = ordered_constant_color[2];
-      vmesa->regHTXnTBLRCbias_1 = ordered_constant_color[3];
-   }
+   vmesa->regHTXnTBLRCa[unit] = ordered_constant_color[0];
+   vmesa->regHTXnTBLRCb[unit] = ordered_constant_color[1];
+   vmesa->regHTXnTBLRCc[unit] = ordered_constant_color[2];
+   vmesa->regHTXnTBLRCbias[unit] = ordered_constant_color[3];
 
    return GL_TRUE;
 }
