@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.4 2000/02/02 01:07:21 brianp Exp $ */
+/* $Id: multiarb.c,v 1.5 2000/02/02 17:31:45 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -12,6 +12,9 @@
 
 /*
  * $Log: multiarb.c,v $
+ * Revision 1.5  2000/02/02 17:31:45  brianp
+ * changed > to >=
+ *
  * Revision 1.4  2000/02/02 01:07:21  brianp
  * limit Drift to [0, 1]
  *
@@ -64,7 +67,7 @@ static void Idle( void )
 {
    if (Animate) {
       Drift += 0.05;
-      if (Drift > 1.0)
+      if (Drift >= 1.0)
          Drift = 0.0;
 
 #ifdef GL_ARB_multitexture
