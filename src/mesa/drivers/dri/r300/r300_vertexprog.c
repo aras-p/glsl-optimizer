@@ -10,6 +10,9 @@
 #define FLAG_MASK (1<<31)
 #define OPN(operator, ip, op) {#operator, VP_OPCODE_##operator, ip, op}
 
+#warning "This is just a hack to get everything to compile"
+struct ati_fragment_shader {};
+
 struct{
 	char *name;
 	int opcode;
