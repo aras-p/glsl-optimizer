@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.181 2002/10/09 19:36:24 brianp Exp $ */
+/* $Id: context.c,v 1.182 2002/10/10 00:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -592,7 +592,13 @@ one_time_init( GLcontext *ctx )
 #endif
       if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
+#ifndef GLX_DIRECT_RENDERING
+         /* libGL from before 2002/06/28 don't have this function.  Someday,
+          * when newer libGL libs are common, remove the #ifdef test.  This
+          * only serves to print warnings when calling undefined GL functions.
+          */
          _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
+#endif
       }
       else {
          _glapi_noop_enable_warnings(GL_FALSE);
