@@ -367,6 +367,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	case PCI_CHIP_R300_AF:
 	case PCI_CHIP_R300_AG:
 	case PCI_CHIP_RV350_AP:
+	case PCI_CHIP_RV350_AR:
 	case PCI_CHIP_RV350_AS:
 	case PCI_CHIP_RV350_NP:
 	case PCI_CHIP_RV350_NT:
