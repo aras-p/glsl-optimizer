@@ -46,7 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
 	DRI_CONF_SECTION_DEBUG
-		DRI_CONF_OPT_BEGIN(agp_disable,bool,true)
+		DRI_CONF_OPT_BEGIN(agp_disable,bool,false)
 		DRI_CONF_DESC(en,"Disable AGP vertex dispatch")
 		DRI_CONF_OPT_END
 		DRI_CONF_OPT_BEGIN(fallback_force,bool,false)

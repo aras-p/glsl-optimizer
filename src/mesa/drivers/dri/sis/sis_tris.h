@@ -51,6 +51,7 @@ do {							\
 static __inline GLuint *sisAllocDmaLow(sisContextPtr smesa, int bytes)
 {
    GLuint *start;
+
    if (smesa->vb_cur + bytes >= smesa->vb_end) {
       LOCK_HARDWARE();
       sisFlushPrimsLocked(smesa);

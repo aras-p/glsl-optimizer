@@ -889,7 +889,8 @@ static void sisRenderFinish( GLcontext *ctx )
 void
 sisFlushPrimsLocked(sisContextPtr smesa)
 {
-   GLuint *start;
+   if (smesa->vb_cur == smesa->vb_last)
+      return;
 
    sisUpdateHWState(smesa->glCtx);
 
@@ -898,7 +899,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
       mEndPrimitive();
       MMIO(REG_3D_AGPCmBase, (smesa->vb_last - smesa->vb) +
          smesa->vb_agp_offset);
-      MMIO(REG_3D_AGPTtDwNum, (smesa->vb_cur - smesa->vb_last) / 4 |
+      MMIO(REG_3D_AGPTtDwNum, ((smesa->vb_cur - smesa->vb_last) / 4) |
 	 0x50000000);
       MMIO(REG_3D_ParsingSet, smesa->AGPParseSet);
       MMIO(REG_3D_AGPCmFire, (GLint)(-1));
