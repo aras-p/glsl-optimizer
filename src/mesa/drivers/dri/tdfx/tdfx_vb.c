@@ -48,7 +48,7 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 }
 
 static struct {
-   tnl_emit_func	        emit;
+   void                (*emit)( GLcontext *, GLuint, GLuint, void * );
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
