@@ -234,7 +234,7 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
       int ret;
 
       gp.param = MACH64_PARAM_IRQ_NR;
-      gp.value = &mach64Screen->irq;
+      gp.value = (void *) &mach64Screen->irq;
 
       ret = drmCommandWriteRead( sPriv->fd, DRM_MACH64_GETPARAM,
 				    &gp, sizeof(gp));
