@@ -22,7 +22,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -177,51 +177,6 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #define CAPI _cdecl
 #endif
 #include <GL/internal/glcore.h>
-
-
-/* XXX temporary hack - remove when glext.h is updated */
-#ifndef GL_ARB_half_float_pixel
-#define GL_ARB_half_float_pixel 1
-#define GL_HALF_FLOAT_ARB 0x140B
-typedef GLushort GLhalfARB;
-#endif
-
-/* XXX temporary hack - remove when glext.h is updated */
-#ifndef GL_ARB_texture_float
-#define GL_ARB_texture_float 1
-#define GL_TEXTURE_RED_TYPE_ARB             0x9000
-#define GL_TEXTURE_GREEN_TYPE_ARB           0x9001
-#define GL_TEXTURE_BLUE_TYPE_ARB            0x9002
-#define GL_TEXTURE_ALPHA_TYPE_ARB           0x9003
-#define GL_TEXTURE_LUMINANCE_TYPE_ARB       0x9004
-#define GL_TEXTURE_INTENSITY_TYPE_ARB       0x9005
-#define GL_TEXTURE_DEPTH_TYPE_ARB           0x9006
-#define GL_UNSIGNED_NORMALIZED_ARB          0x9007
-#define GL_RGBA32F_ARB                      0x8814
-#define GL_RGB32F_ARB                       0x8815
-#define GL_ALPHA32F_ARB                     0x8816
-#define GL_INTENSITY32F_ARB                 0x8817
-#define GL_LUMINANCE32F_ARB                 0x8818
-#define GL_LUMINANCE_ALPHA32F_ARB           0x8819
-#define GL_RGBA16F_ARB                      0x881A
-#define GL_RGB16F_ARB                       0x881B
-#define GL_ALPHA16F_ARB                     0x881C
-#define GL_INTENSITY16F_ARB                 0x881D
-#define GL_LUMINANCE16F_ARB                 0x881E
-#define GL_LUMINANCE_ALPHA16F_ARB           0x881F
-#endif
-
-/* XXX temporary hack - remove when glext.h is updated */
-#ifndef GL_CURRENT_PROGRAM
-#define GL_CURRENT_PROGRAM		0x8B8D
-#define GL_POINT_SPRITE_COORD_ORIGIN	0x8CA0
-#define GL_LOWER_LEFT			0x8CA1
-#define GL_UPPER_LEFT			0x8CA2
-#define GL_STENCIL_BACK_REF		0x8CA3
-#define GL_STENCIL_BACK_VALUE_MASK	0x8CA4
-#define GL_STENCIL_BACK_WRITEMASK	0x8CA5
-#endif
-
 
 
 /* This is a macro on IRIX */
