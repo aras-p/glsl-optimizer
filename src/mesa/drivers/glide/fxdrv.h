@@ -100,7 +100,6 @@ typedef union {
 typedef struct {
    GrVertex v;
    GLfloat clip[4];
-   GLfloat win[4];	
    GLfloat texcoord[2][2];
    GLubyte mask;
    GLfloat normal[3];		/* for replay & fallback */
@@ -629,5 +628,9 @@ extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 extern void fxDDCheckVtxfmt( GLcontext *ctx );
 extern void fx_update_lighting( GLcontext *ctx );
 extern void fxDDInitVtxfmt( GLcontext *ctx );
+
+/* fxsimplerender
+ */
+extern const struct gl_pipeline_stage fx_render_stage; 
 
 #endif

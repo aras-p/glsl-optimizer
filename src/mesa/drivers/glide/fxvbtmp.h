@@ -56,8 +56,47 @@ static void NAME(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs)
    if (IND & SETUP_RGBA)
       color = VB->ColorPtr[0]->data;
 
-   for (i = start ; i < end ; i++, v++) {
-      if (!clipmask[i]) {
+   if (VB->ClipOrMask) {
+      for (i = start ; i < end ; i++, v++) {
+	 if (!clipmask[i]) {
+	    if (IND & SETUP_XYZW) {
+	       v->v.x   = s[0]  * proj[i][0] + s[12];	
+	       v->v.y   = s[5]  * proj[i][1] + s[13];	
+	       v->v.ooz = s[10] * proj[i][2] + s[14];	
+	       v->v.oow = proj[i][3];	
+		
+	       if (IND & SETUP_SNAP) {
+#if defined(USE_IEEE)
+		  const float snapper = (3L<<18);
+		  v->v.x   += snapper;
+		  v->v.x   -= snapper;
+		  v->v.y   += snapper;
+		  v->v.y   -= snapper;
+#else
+		  v->v.x = ((int)(v->v.x*16.0f)) * (1.0f/16.0f);
+		  v->v.y = ((int)(v->v.y*16.0f)) * (1.0f/16.0f);
+#endif
+	       }
+	    }
+	    if (IND & SETUP_RGBA) {
+	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.r, color[i][0]);
+	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.g, color[i][1]);
+	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.b, color[i][2]);
+	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.a, color[i][3]);
+	    }
+	    if (IND & SETUP_TMU0) {
+	       v->v.tmuvtx[0].sow = sscale0*tmu0_data[i][0]*v->v.oow; 
+	       v->v.tmuvtx[0].tow = tscale0*tmu0_data[i][1]*v->v.oow; 
+	    }
+	    if (IND & SETUP_TMU1) {
+	       v->v.tmuvtx[1].sow = sscale1*tmu1_data[i][0]*v->v.oow; 
+	       v->v.tmuvtx[1].tow = tscale1*tmu1_data[i][1]*v->v.oow; 
+	    }
+	 }
+      }
+   }
+   else {
+      for (i = start ; i < end ; i++, v++) {
 	 if (IND & SETUP_XYZW) {
 	    v->v.x   = s[0]  * proj[i][0] + s[12];	
 	    v->v.y   = s[5]  * proj[i][1] + s[13];	

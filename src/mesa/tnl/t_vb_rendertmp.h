@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.3 2000/12/28 22:11:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 #ifndef NEED_EDGEFLAG_SETUP
 #define NEED_EDGEFLAG_SETUP 0
 #define EDGEFLAG_GET(a) 0
-#define EDGEFLAG_SET(a,b) 
+#define EDGEFLAG_SET(a,b) (void)b 
 #endif
 
 #ifndef RESET_STIPPLE
@@ -68,6 +68,7 @@ static void TAG(render_points)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_POINTS);
    RENDER_POINTS( start, count );
@@ -83,6 +84,7 @@ static void TAG(render_lines)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
    for (j=start+1; j<count; j+=2 ) {
@@ -102,6 +104,7 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
 
@@ -125,6 +128,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    RESET_OCCLUSION;
    INIT(GL_LINES);
 
@@ -156,6 +160,7 @@ static void TAG(render_triangles)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2; j<count; j+=3) {
@@ -186,6 +191,7 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    if (TEST_PRIM_PARITY(flags))
       parity = 1;
    
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
@@ -225,6 +231,7 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++) {
@@ -270,6 +277,7 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       GLboolean efstart = EDGEFLAG_GET( ELT(start) );
@@ -335,6 +343,7 @@ static void TAG(render_poly)( GLcontext *ctx,
 			      GLuint count,
 			      GLuint flags )
 {
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    TAG(render_poly_pv)( ctx, start, count, flags, start );
 }
 
@@ -347,6 +356,7 @@ static void TAG(render_quads)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3; j<count; j+=4) {
@@ -372,6 +382,7 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
    LOCAL_VARS;
    (void) flags;
 
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+3;j<count;j+=2) {
@@ -406,10 +417,15 @@ static void TAG(render_noop)( GLcontext *ctx,
 			      GLuint count,
 			      GLuint flags )
 {
+/*     fprintf(stderr, "%s %d..%d\n", __FUNCTION__, start, count); */
    (void)(ctx && start && count && flags);
 }
 
-static render_func TAG(render_tab)[GL_POLYGON+2] = {
+static void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
+					     GLuint,
+					     GLuint,
+					     GLuint) = 
+{
    TAG(render_points),
    TAG(render_lines),
    TAG(render_line_loop),

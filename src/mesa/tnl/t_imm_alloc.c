@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.2 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,10 +34,10 @@
 #include "t_imm_alloc.h"
 
 
+   static int id = 0;
 
 struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
 {
-   static int id = 0;
    struct immediate *IM = ALIGN_MALLOC_STRUCT( immediate, 32 );
    GLuint j;
 
@@ -80,6 +80,7 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
 
 void _tnl_free_immediate( struct immediate *IM )
 {
+   static int freed = 0;
    GLuint j;
 
    if (IM->NormalLengths) {
@@ -92,12 +93,15 @@ void _tnl_free_immediate( struct immediate *IM )
       FREE( IM->MaterialMask );
       IM->Material = 0;
       IM->MaterialMask = 0;
-
-      for (j = 1; j < IM->MaxTextureUnits; j++) 
-	 ALIGN_FREE( IM->TexCoord[j] );
    }
 
+   for (j = 1; j < IM->MaxTextureUnits; j++) 
+      ALIGN_FREE( IM->TexCoord[j] );
+
+
    ALIGN_FREE( IM );
+   freed++;
+/*     printf("outstanding %d\n", id - freed);    */
 }
 
 

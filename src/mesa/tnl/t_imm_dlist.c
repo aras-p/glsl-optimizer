@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.3 2000/12/27 21:49:40 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.4 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,6 +112,8 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       return;
    
    node->IM = im; im->ref_count++;
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   im->id, im->ref_count); */
    node->Start = im->Start;
    node->Count = im->Count;
    node->BeginState = im->BeginState;
@@ -142,6 +144,10 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
       if (!new_im) return;
       new_im->ref_count++;
       im->ref_count--;		/* remove CURRENT_IM reference */
+/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	      im->id, im->ref_count); */
+/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	      new_im->id, new_im->ref_count); */
       ASSERT(im->ref_count > 0);
       SET_IMMEDIATE( ctx, new_im );
       _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS,
@@ -230,20 +236,23 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    }
 
 
-   /* Lazy optimization of the cassette.
+   /* Lazy optimization of the cassette.  Need to make these switchable
+    * or otherwise more useful for t&l cards.
     */
-/*     if (ctx->Transform.Normalize && !node->have_normal_lengths) { */
+#if 0
+   if (ctx->Transform.Normalize && !node->have_normal_lengths) {
 
-/*        if (!IM->NormalLengths) */
-/*  	 IM->NormalLengths = (GLfloat *)MALLOC(sizeof(GLfloat) * IMM_SIZE); */
+      if (!IM->NormalLengths)
+	 IM->NormalLengths = (GLfloat *)MALLOC(sizeof(GLfloat) * IMM_SIZE);
 
-/*        calc_normal_lengths( IM->NormalLengths + IM->Start, */
-/*  			   (const GLfloat (*)[3])(IM->Normal + IM->Start), */
-/*  			   IM->Flag + IM->Start, */
-/*  			   IM->Count - IM->Start); */
+      calc_normal_lengths( IM->NormalLengths + IM->Start,
+			   (const GLfloat (*)[3])(IM->Normal + IM->Start),
+			   IM->Flag + IM->Start,
+			   IM->Count - IM->Start);
 
-/*        node->have_normal_lengths = GL_TRUE; */
-/*     } */
+      node->have_normal_lengths = GL_TRUE;
+   }
+#endif
 
 
 #if 0
@@ -267,6 +276,10 @@ static void
 destroy_compiled_cassette( GLcontext *ctx, void *data )
 {
    TNLvertexcassette *node = (TNLvertexcassette *)data;
+
+/*     fprintf(stderr, "destroy_compiled_cassette node->IM id %d ref_count: %d\n", */
+/*  	   node->IM->id, */
+/*  	   node->IM->ref_count-1); */
 
    if ( --node->IM->ref_count == 0 )
       _tnl_free_immediate( node->IM );
@@ -328,9 +341,20 @@ _tnl_EndList( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *IM = TNL_CURRENT_IM(ctx);
 
+   ctx->swtnl_im = 0;
    IM->ref_count--;
-   if (IM == tnl->ExecCopySource)
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   IM->id, IM->ref_count); */
+   if (IM == tnl->ExecCopySource) {
       IM->ref_count--;
+/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	      IM->id, IM->ref_count); */
+   } else {
+/*        fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	      tnl->ExecCopySource->id, tnl->ExecCopySource->ref_count-1); */
+      if ( --tnl->ExecCopySource->ref_count == 0 )
+	 _tnl_free_immediate( tnl->ExecCopySource );
+   }
 
    /* If this one isn't free, get a clean one.  (Otherwise we'll be
     * using one that's already half full).
@@ -342,9 +366,14 @@ _tnl_EndList( GLcontext *ctx )
 
    tnl->ExecCopySource = IM;
    IM->ref_count++;
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   IM->id, IM->ref_count); */
+
 
    SET_IMMEDIATE( ctx, IM );
    IM->ref_count++;
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   IM->id, IM->ref_count); */
 
    _tnl_reset_input( ctx, IMM_MAX_COPIED_VERTS, 0, 0 );	
 

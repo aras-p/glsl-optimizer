@@ -61,6 +61,8 @@
 #include "tnl/tnl.h"
 #include "array_cache/acache.h"
 
+#include "tnl/t_pipeline.h"
+
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
  */
@@ -645,25 +647,21 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
   }
 }
 
-#if 0
-static const struct gl_pipeline_stage * const fx_pipeline[] = {
+static const struct gl_pipeline_stage *fx_pipeline[] = {
    &_tnl_update_material_stage, 
+				/* TODO: Add the fastpath here */
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
-   &_tnl_lighting_stage,	/* OMIT: fog coordinate stage */
+   &_tnl_lighting_stage,	
+   &_tnl_fog_coordinate_stage,	/* TODO: Omit fog stage */
    &_tnl_texgen_stage, 
    &_tnl_texture_transform_stage, 
    &_tnl_point_attenuation_stage, 
-   &_fx_fast_render_stage,	/* ADD: the fastpath as a render stage */
+   &fx_render_stage,	        /* ADD:  render simple unclipped vb's */
    &_tnl_render_stage,		/* KEEP: the old render stage for fallbacks */
-   0
+   0,
 };
-#else
-/* Need to turn off tnl fogging, both the stage and the clipping in
- * _tnl_render_stage.  Could insert a dummy stage that did nothing but
- * provided storage that clipping could spin on?
- */
-#endif
+
 
 
 
@@ -771,6 +769,9 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    _tnl_CreateContext( fxMesa->glCtx );
    _swsetup_CreateContext( fxMesa->glCtx );
 
+   _tnl_destroy_pipeline( fxMesa->glCtx );
+   _tnl_install_pipeline( fxMesa->glCtx, fx_pipeline );
+   
    fxAllocVB( fxMesa->glCtx );
 
    fxSetupDDPointers(fxMesa->glCtx);
@@ -779,6 +780,11 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
     */
    _swrast_allow_vertex_fog( fxMesa->glCtx, GL_FALSE );
    _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
+
+   /* Tell tnl not to calculate or use vertex fog factors.  (Needed to
+    * tell render stage not to clip fog coords).
+    */
+/*     _tnl_calculate_vertex_fog( fxMesa->glCtx, GL_FALSE ); */
 
    fxDDInitExtensions(fxMesa->glCtx);  
 

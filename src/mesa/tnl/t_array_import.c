@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.3 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,7 +62,7 @@ static void _tnl_import_vertex( GLcontext *ctx,
    inputs->Obj.stride = tmp->StrideB;
    inputs->Obj.size = tmp->Size;
    inputs->Obj.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != 4*sizeof(GLfloat))
+   if (inputs->Obj.stride != 4*sizeof(GLfloat))
       inputs->Obj.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->Obj.flags |= VEC_NOT_WRITEABLE;
@@ -84,7 +84,7 @@ static void _tnl_import_normal( GLcontext *ctx,
    inputs->Normal.start = (GLfloat *)tmp->Ptr;
    inputs->Normal.stride = tmp->StrideB;
    inputs->Normal.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != 3*sizeof(GLfloat))
+   if (inputs->Normal.stride != 3*sizeof(GLfloat))
       inputs->Normal.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->Normal.flags |= VEC_NOT_WRITEABLE;
@@ -110,7 +110,7 @@ static void _tnl_import_color( GLcontext *ctx,
    inputs->Color.start = (GLubyte *)tmp->Ptr;
    inputs->Color.stride = tmp->StrideB;
    inputs->Color.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != 4*sizeof(GLubyte))
+   if (inputs->Color.stride != 4*sizeof(GLubyte))
       inputs->Color.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->Color.flags |= VEC_NOT_WRITEABLE;
@@ -135,7 +135,7 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
    inputs->SecondaryColor.start = (GLubyte *)tmp->Ptr;
    inputs->SecondaryColor.stride = tmp->StrideB;
    inputs->SecondaryColor.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != 4*sizeof(GLubyte))
+   if (inputs->SecondaryColor.stride != 4*sizeof(GLubyte))
       inputs->SecondaryColor.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->SecondaryColor.flags |= VEC_NOT_WRITEABLE;
@@ -157,7 +157,7 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
    inputs->FogCoord.start = (GLfloat *)tmp->Ptr;
    inputs->FogCoord.stride = tmp->StrideB;
    inputs->FogCoord.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != sizeof(GLfloat))
+   if (inputs->FogCoord.stride != sizeof(GLfloat))
       inputs->FogCoord.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->FogCoord.flags |= VEC_NOT_WRITEABLE;
@@ -179,7 +179,7 @@ static void _tnl_import_index( GLcontext *ctx,
    inputs->Index.start = (GLuint *)tmp->Ptr;
    inputs->Index.stride = tmp->StrideB;
    inputs->Index.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != sizeof(GLuint))
+   if (inputs->Index.stride != sizeof(GLuint))
       inputs->Index.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->Index.flags |= VEC_NOT_WRITEABLE;
@@ -195,6 +195,9 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
 
+/*     fprintf(stderr, "%s %d before wr %d ptr %p\n", __FUNCTION__, i, writeable, */
+/*  	   inputs->TexCoord[i].data); */
+
    tmp = _ac_import_texcoord(ctx, i, GL_FLOAT, 
 			     stride ? 4*sizeof(GLfloat) : 0, 
 			     0,
@@ -206,10 +209,13 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    inputs->TexCoord[i].stride = tmp->StrideB;
    inputs->TexCoord[i].size = tmp->Size;
    inputs->TexCoord[i].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != 4*sizeof(GLfloat))
+   if (inputs->TexCoord[i].stride != 4*sizeof(GLfloat))
       inputs->TexCoord[i].flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->TexCoord[i].flags |= VEC_NOT_WRITEABLE;
+
+/*     fprintf(stderr, "%s %d before wr %d ptr %p\n", __FUNCTION__, i, is_writeable, */
+/*  	   inputs->TexCoord[i].data); */
 }
  
   
@@ -230,7 +236,7 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
    inputs->EdgeFlag.start = (GLubyte *)tmp->Ptr;
    inputs->EdgeFlag.stride = tmp->StrideB;
    inputs->EdgeFlag.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
-   if (stride != sizeof(GLubyte))
+   if (inputs->EdgeFlag.stride != sizeof(GLubyte))
       inputs->EdgeFlag.flags |= VEC_BAD_STRIDE;
    if (!is_writeable)
       inputs->EdgeFlag.flags |= VEC_NOT_WRITEABLE;
@@ -255,6 +261,8 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 
    if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr) 
       required |= VERT_OBJ;
+
+/*     _tnl_print_vert_flags("_tnl_upgrade_client_data", required); */
 
    if ((required & VERT_OBJ) && (VB->ObjPtr->flags & flags)) {
       ASSERT(VB->ObjPtr == &inputs->Obj);
@@ -330,9 +338,9 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    VB->Material = 0;
    VB->Flag = 0;
    
-/*     _tnl_print_vert_flags("_tnl_print_vert_flags: inputs", inputs); */
-/*     _tnl_print_vert_flags("_tnl_print_vert_flags: imports", imports); */
-/*     _tnl_print_vert_flags("_tnl_print_vert_flags: _Enabled", ctx->Array._Enabled); */
+/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: inputs", inputs); */
+/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: imports", imports); */
+/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: _Enabled", ctx->Array._Enabled); */
 
    if (inputs & VERT_OBJ) {
       if (imports & VERT_OBJ) {
@@ -409,7 +417,9 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    VB->Primitive = tnl->tmp_primitive;
    VB->PrimitiveLength = tnl->tmp_primitive_length;
    VB->import_data = _tnl_upgrade_client_data;
-   VB->importable_data = imports;
+   VB->importable_data = imports & VERT_FIXUP;
+/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: importable", VB->importable_data); */
+   
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.2 2000/11/19 23:42:33 jtaylor Exp $ */
+/* $Id: m_norm_tmp.h,v 1.3 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,8 +77,6 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
       }
    }
    else {
-      /* scale has been snapped to 1.0 if it is close.
-       */
       if (scale != 1.0) {
 	 m0 *= scale,  m4 *= scale,  m8 *= scale;
 	 m1 *= scale,  m5 *= scale,  m9 *= scale;

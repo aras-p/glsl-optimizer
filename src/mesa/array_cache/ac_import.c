@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.1 2000/12/26 15:14:04 keithw Exp $ */
+/* $Id: ac_import.c,v 1.2 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,8 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
+/*     fprintf(stderr, "%s %d\n", __FUNCTION__, unit); */
+
    if (ctx->Array._Enabled & _NEW_ARRAY_TEXCOORD(unit))
       ac->Current.TexCoord[unit] = &ctx->Array.TexCoord[unit];
    else {
@@ -69,6 +71,8 @@ static void reset_vertex( GLcontext *ctx )
    ac->Current.Vertex = &ctx->Array.Vertex;
    ac->Writeable.Vertex = GL_FALSE;
    ac->NewArrayState &= ~_NEW_ARRAY_VERTEX;
+   
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 }
 
 
@@ -178,6 +182,8 @@ static void import_texcoord( GLcontext *ctx, GLuint unit,
    ASSERT(stride == 4*sizeof(GLfloat) || stride == 0);
    ASSERT(ac->count - ac->start < ctx->Const.MaxArrayLockSize);
 
+/*     fprintf(stderr, "%s %d old ptr %p\n", __FUNCTION__, unit, from->Ptr); */
+   
    _math_trans_4f( to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
@@ -191,6 +197,8 @@ static void import_texcoord( GLcontext *ctx, GLuint unit,
    to->Type = GL_FLOAT;
    ac->Current.TexCoord[unit] = to;
    ac->Writeable.TexCoord[unit] = GL_TRUE;
+
+/*     fprintf(stderr, "%s %d new ptr %p\n", __FUNCTION__, unit, to->Ptr); */
 }
 
 static void import_vertex( GLcontext *ctx,
@@ -199,6 +207,8 @@ static void import_vertex( GLcontext *ctx,
    ACcontext *ac = AC_CONTEXT(ctx);
    struct gl_client_array *from = ac->Current.Vertex;
    struct gl_client_array *to = &ac->Cache.Vertex;
+
+/*     fprintf(stderr, "(ac) %s\n", __FUNCTION__); */
 
    /* Limited choices at this stage:
     */

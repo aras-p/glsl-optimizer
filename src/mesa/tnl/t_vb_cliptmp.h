@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.3 2000/12/27 21:49:40 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.4 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -361,7 +361,7 @@ static void TAG(viewclip_polygon)( GLcontext *ctx,
 	       newvert = interp( ctx, t, idxPrev, idx, GL_FALSE );	\
 	    }								\
             clipmask[newvert] = mask;					\
-            outlist[outcount++] = newvert;				\
+            outlist[outcount++] = newvert; 				\
 	 }								\
 									\
 	 idxPrev = idx;							\

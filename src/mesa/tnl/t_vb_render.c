@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.3 2000/12/27 21:49:40 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.4 2000/12/28 22:11:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -520,6 +520,8 @@ static GLboolean run_render( GLcontext *ctx,
    render_func *tab;
    GLint pass = 0;
 
+/*     return GL_FALSE; */
+
    VB->interpfunc = (void *)RENDER_STAGE_DATA(stage)->interp;
    
    if (new_inputs) {
@@ -615,7 +617,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 }
       }
    }
-   else if (ctx->Light.ShadeModel==GL_SMOOTH)
+   else 
    {
       interp |= INTERP_INDEX;
       inputs |= VERT_INDEX;

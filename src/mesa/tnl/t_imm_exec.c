@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.3 2000/12/27 22:52:45 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.4 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -474,11 +474,15 @@ void _tnl_imm_init( GLcontext *ctx )
 
    ctx->swtnl_im = _tnl_alloc_immediate( ctx );
    TNL_CURRENT_IM(ctx)->ref_count++;
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   TNL_CURRENT_IM(ctx)->id, TNL_CURRENT_IM(ctx)->ref_count); */
 
    tnl->ExecCopyTexSize = 0;
    tnl->ExecCopyCount = 0;
    tnl->ExecCopySource = TNL_CURRENT_IM(ctx);
    TNL_CURRENT_IM(ctx)->ref_count++;
+/*     fprintf(stderr, "%s id %d refcount %d\n", __FUNCTION__,  */
+/*  	   TNL_CURRENT_IM(ctx)->id, TNL_CURRENT_IM(ctx)->ref_count); */
    TNL_CURRENT_IM(ctx)->CopyStart = IMM_MAX_COPIED_VERTS;
 
    gl_vector4f_init( &tmp->Obj, 0, 0 );

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.34 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: varray.c,v 1.35 2000/12/28 22:11:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -410,6 +410,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
    ctx->Array.TexCoord[texUnit].Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+
+/*     fprintf(stderr, "%s ptr %p\n", __FUNCTION__, ptr); */
 
    if (ctx->Driver.TexCoordPointer)
       ctx->Driver.TexCoordPointer( ctx, size, type, stride, ptr );
