@@ -999,7 +999,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	if (!obj)
 		return NULL;
 	obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
-			rmesa->initialMaxAnisotropy);
+
 	r300AllocTexObj(obj);
 	return obj;
 }
