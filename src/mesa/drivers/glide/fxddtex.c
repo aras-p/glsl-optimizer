@@ -34,7 +34,7 @@
 /*************************** Texture Mapping ****************************/
 /************************************************************************/
 
-static void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
+void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   tfxTexInfo *ti;
