@@ -73,7 +73,8 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
    }
 
    RADEON_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset;
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
+					   + rmesa->radeonScreen->fbLocation;
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
 }
 

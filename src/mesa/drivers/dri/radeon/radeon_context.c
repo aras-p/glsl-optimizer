@@ -231,7 +231,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static int
-get_ust_nop( uint64_t * ust )
+get_ust_nop( int64_t * ust )
 {
    *ust = 1;
    return 0;
@@ -250,7 +250,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonContextPtr rmesa;
    GLcontext *ctx, *shareCtx;
    int i;
-   int tcl_mode, fthrottle_mode, preferred_bpt;
+   int tcl_mode, fthrottle_mode;
 
    assert(glVisual);
    assert(driContextPriv);

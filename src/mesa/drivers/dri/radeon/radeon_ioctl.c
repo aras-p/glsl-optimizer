@@ -803,7 +803,7 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv )
    radeonContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
-   uint64_t     ust;
+   int64_t     ust;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -923,7 +923,8 @@ void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
    }
 
    RADEON_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset;
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
+					   + rmesa->radeonScreen->fbLocation;
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
 }
 

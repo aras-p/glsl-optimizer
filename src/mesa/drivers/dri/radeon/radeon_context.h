@@ -97,6 +97,7 @@ typedef void (*radeon_point_func)( radeonContextPtr,
 struct radeon_colorbuffer_state {
    GLuint clear;
    GLint drawOffset, drawPitch;
+   int roundEnable;
 };
 
 

@@ -46,6 +46,8 @@
 #include "radeon_swtcl.h"
 #include "radeon_vtxfmt.h"
 
+#include "xmlpool.h"
+
 /* =============================================================
  * State initialization
  */
@@ -322,7 +324,7 @@ void radeonInitState( radeonContextPtr rmesa )
 					    RADEON_DST_BLEND_GL_ZERO );
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
-      rmesa->radeonScreen->depthOffset;
+      rmesa->radeonScreen->depthOffset + rmesa->radeonScreen->fbLocation;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] = 
       ((rmesa->radeonScreen->depthPitch &
@@ -344,10 +346,28 @@ void radeonInitState( radeonContextPtr rmesa )
 				       color_fmt |
 				       (1<<15));
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  RADEON_DITHER_ENABLE;
+   switch ( driQueryOptioni( &rmesa->optionCache, "dither_mode" ) ) {
+   case DRI_CONF_DITHER_XERRORDIFFRESET:
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_DITHER_INIT;
+      break;
+   case DRI_CONF_DITHER_ORDERED:
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_SCALE_DITHER_ENABLE;
+      break;
+   }
+   if ( driQueryOptioni( &rmesa->optionCache, "round_mode" ) ==
+	DRI_CONF_ROUND_ROUND )
+      rmesa->state.color.roundEnable = RADEON_ROUND_ENABLE;
+   else
+      rmesa->state.color.roundEnable = 0;
+   if ( driQueryOptioni (&rmesa->optionCache, "color_reduction" ) ==
+	DRI_CONF_COLOR_REDUCTION_DITHER )
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_DITHER_ENABLE;
+   else
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = (rmesa->state.color.drawOffset &
-					      RADEON_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
+					       rmesa->radeonScreen->fbLocation)
+					      & RADEON_COLOROFFSET_MASK);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
 					      RADEON_COLORPITCH_MASK) |
@@ -421,8 +441,9 @@ void radeonInitState( radeonContextPtr rmesa )
 	   (2 << RADEON_TXFORMAT_WIDTH_SHIFT) |
 	   (2 << RADEON_TXFORMAT_HEIGHT_SHIFT));
 
-      /* FIXME: What is this magic value? */
-      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] = 0x2000 << (2 * i);
+      /* Initialize the texture offset to the start of the card texture heap */
+      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
+	  rmesa->radeonScreen->texOffset[RADEON_CARD_HEAP];
 
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXCBLEND] =  

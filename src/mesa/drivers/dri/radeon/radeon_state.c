@@ -1626,8 +1626,9 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
    _swrast_DrawBuffer(ctx, mode);
 
    RADEON_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = (rmesa->state.color.drawOffset &
-					    RADEON_COLOROFFSET_MASK);
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
+					       rmesa->radeonScreen->fbLocation)
+					      & RADEON_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
 }
 
@@ -1734,8 +1735,10 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       RADEON_STATECHANGE(rmesa, ctx );
       if ( state ) {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  RADEON_DITHER_ENABLE;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~rmesa->state.color.roundEnable;
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~RADEON_DITHER_ENABLE;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  rmesa->state.color.roundEnable;
       }
       break;
 
