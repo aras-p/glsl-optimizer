@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.30 2002/06/16 01:09:16 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.31 2002/09/03 18:05:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -182,7 +182,7 @@ _tnl_Begin( GLenum mode )
    ASSERT (!ctx->CompileFlag);
 
    if (mode > GL_POLYGON) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "_tnl_Begin" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "_tnl_Begin(0x%x)", mode );
       return;
    }
 

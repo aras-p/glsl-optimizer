@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.111 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: teximage.c,v 1.112 2002/09/03 18:05:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1212,7 +1212,8 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    teximage = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!teximage) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyTexSubImage%dD(undefined texture)", dimensions);
+                  "glCopyTexSubImage%dD(undefined texture level: %d)",
+                  dimensions, level);
       return GL_TRUE;
    }
 
@@ -1536,6 +1537,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = GL_RGBA;
 
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
