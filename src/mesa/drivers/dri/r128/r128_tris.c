@@ -650,6 +650,31 @@ static void r128RenderFinish( GLcontext *ctx )
 /*           Transition to/from hardware rasterization.               */
 /**********************************************************************/
 
+static const char * const fallbackStrings[] = {
+   "Texture mode",
+   "glDrawBuffer(GL_FRONT_AND_BACK)",
+   "glReadBuffer",
+   "glEnable(GL_STENCIL) without hw stencil buffer",
+   "glRenderMode(selection or feedback)",
+   "glLogicOp (mode != GL_COPY)",
+   "GL_SEPARATE_SPECULAR_COLOR",
+   "glBlendEquation",
+   "glBlendFunc(mode != ADD)",
+   "Projective texture",
+   "Rasterization disable",
+};
+
+
+static const char *getFallbackString(GLuint bit)
+{
+   int i = 0;
+   while (bit > 1) {
+      i++;
+      bit >>= 1;
+   }
+   return fallbackStrings[i];
+}
+
 void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -662,6 +687,10 @@ void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 FLUSH_BATCH( rmesa );
 	 _swsetup_Wakeup( ctx );
 	 rmesa->RenderIndex = ~0;
+	 if ( R128_DEBUG & DEBUG_VERBOSE_FALL ) {
+	     fprintf(stderr, "R128 begin rasterization fallback: 0x%x %s\n",
+		     bit, getFallbackString(bit));
+	 }
       }
    }
    else {
@@ -684,6 +713,10 @@ void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 			     rmesa->hw_viewport, 0 ); 
 
 	 rmesa->NewGLState |= _R128_NEW_RENDER_STATE;
+	 if ( R128_DEBUG & DEBUG_VERBOSE_FALL ) {
+	     fprintf(stderr, "R128 end rasterization fallback: 0x%x %s\n",
+		     bit, getFallbackString(bit));
+	 }
       }
    }
 }
@@ -719,6 +752,4 @@ void r128InitTriFuncs( GLcontext *ctx )
    rmesa->tnl_state = -1;
 
    rmesa->NewGLState |= _R128_NEW_RENDER_STATE;
-
-/*     r128Fallback( ctx, 0x100000, 1 ); */
 }

@@ -77,12 +77,12 @@ typedef struct r128_context *r128ContextPtr;
 #define R128_FALLBACK_READ_BUFFER	0x0004
 #define R128_FALLBACK_STENCIL		0x0008
 #define R128_FALLBACK_RENDER_MODE	0x0010
-#define R128_FALLBACK_MULTIDRAW		0x0020
-#define R128_FALLBACK_LOGICOP		0x0040
-#define R128_FALLBACK_SEP_SPECULAR	0x0080
-#define R128_FALLBACK_BLEND_EQ		0x0100
-#define R128_FALLBACK_BLEND_FUNC	0x0200
-#define R128_FALLBACK_PROJTEX		0x0400
+#define R128_FALLBACK_LOGICOP		0x0020
+#define R128_FALLBACK_SEP_SPECULAR	0x0040
+#define R128_FALLBACK_BLEND_EQ		0x0080
+#define R128_FALLBACK_BLEND_FUNC	0x0100
+#define R128_FALLBACK_PROJTEX		0x0200
+#define R128_FALLBACK_DISABLE		0x0400
 
 
 /* Use the templated vertex format:
@@ -250,7 +250,7 @@ extern GLboolean r128UnbindContext( __DRIcontextPrivate *driContextPriv );
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		0
+#define DO_DEBUG		1
 #define ENABLE_PERF_BOXES	0
 
 #if DO_DEBUG
@@ -266,6 +266,7 @@ extern int R128_DEBUG;
 #define DEBUG_VERBOSE_DRI	0x10
 #define DEBUG_VERBOSE_IOCTL	0x20
 #define DEBUG_VERBOSE_2D	0x40
+#define DEBUG_VERBOSE_FALL	0x80
 
 #endif
 #endif /* __R128_CONTEXT_H__ */

@@ -89,6 +89,7 @@ static const struct dri_debug_control debug_control[] =
     { "2d",    DEBUG_VERBOSE_2D },
     { "sync",  DEBUG_ALWAYS_SYNC },
     { "api",   DEBUG_VERBOSE_API },
+    { "fall",  DEBUG_VERBOSE_FALL },
     { NULL,    0 }
 };
 
@@ -257,6 +258,11 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    R128_DEBUG = driParseDebugString( getenv( "R128_DEBUG" ),
 				     debug_control );
 #endif
+
+   if (driQueryOptionb(&rmesa->optionCache, "no_rast")) {
+      fprintf(stderr, "disabling 3D acceleration\n");
+      FALLBACK(rmesa, R128_FALLBACK_DISABLE, 1);
+   }
 
    return GL_TRUE;
 }
