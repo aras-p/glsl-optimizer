@@ -883,7 +883,9 @@ void _tnl_vtx_init( GLcontext *ctx )
       choose[ERROR_ATTRIB][2] = error_attrib;
       choose[ERROR_ATTRIB][3] = error_attrib;
 
-      _tnl_x86choosers(choose, do_choose); /* x86 INIT_CHOOSERS */
+      if (tnl->AllowCodegen) {
+         _tnl_x86choosers(choose, do_choose); /* x86 INIT_CHOOSERS */
+      }
 
       _tnl_generic_attr_table_init( generic_attr_func );
    }

@@ -151,7 +151,7 @@ do {						\
 
 #define DISPATCH_ATTR1F( ATTR, S ) DISPATCH_ATTRFV( ATTR, 1, &(S) )
 
-#ifdef USE_X86_ASM
+#if defined(USE_X86_ASM) && 0 /* will break register calling convention */
 /* Naughty cheat:
  */
 #define DISPATCH_ATTR2F( ATTR, S,T ) DISPATCH_ATTRFV( ATTR, 2, &(S) )
