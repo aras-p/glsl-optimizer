@@ -135,7 +135,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
       _tnl_print_vert_flags("copy to current", flag);
 
    for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) {
-      if (flag & (1 << attr)) {
+      if ((flag & (1 << attr)) && IM->Attrib[attr]) {
          COPY_4FV(ctx->Current.Attrib[attr], IM->Attrib[attr][count]);
       }
    }
