@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.63 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: glapi.c,v 1.64 2002/10/02 01:51:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,6 +43,11 @@
  *   2000/02/23  - original version for Mesa 3.3 and XFree86 4.0
  *   2001/01/16  - added dispatch override feature for Mesa 3.5
  *   2002/06/28  - added _glapi_set_warning_func(), Mesa 4.1.
+ *   2002/10/01  - _glapi_get_proc_address() will now generate new entrypoints
+ *                 itself (using offset ~0).  _glapi_add_entrypoint() can be
+ *                 called afterward and it'll fill in the correct dispatch
+ *                 offset.  This allows DRI libGL to avoid probing for DRI
+ *                 drivers!  No changes to the public glapi interface.
  */
 
 
@@ -186,10 +191,8 @@ struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_
 void *_glapi_Context = NULL;
 
 
-static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *) - 1;
-static GLboolean GetSizeCalled = GL_FALSE;
-
 static GLboolean DispatchOverride = GL_FALSE;
+
 
 
 /* strdup() is actually not a standard ANSI C or POSIX routine.
@@ -437,31 +440,6 @@ _glapi_get_override_dispatch(int layer)
 }
 
 
-
-/*
- * Return size of dispatch table struct as number of functions (or
- * slots).
- */
-GLuint
-_glapi_get_dispatch_table_size(void)
-{
-   /*   return sizeof(struct _glapi_table) / sizeof(void *);*/
-   GetSizeCalled = GL_TRUE;
-   return MaxDispatchOffset + 1;
-}
-
-
-
-/*
- * Get API dispatcher version string.
- */
-const char *
-_glapi_get_version(void)
-{
-   return "20020628";  /* YYYYMMDD */
-}
-
-
 struct name_address_offset {
    const char *Name;
    GLvoid *Address;
@@ -469,7 +447,7 @@ struct name_address_offset {
 };
 
 
-/* The code in this file is auto-generated */
+/* The code in this file is auto-generated with Python */
 #include "glprocs.h"
 
 
@@ -513,8 +491,20 @@ get_static_proc_address(const char *funcName)
  * Extension function management.
  */
 
+/*
+ * Number of extension functions which we can dynamically add at runtime.
+ */
+#define MAX_EXTENSION_FUNCS 300
 
-#define MAX_EXTENSION_FUNCS 1000
+
+/*
+ * The disptach table size (number of entries) is the sizeof the
+ * _glapi_table struct plus the number of dynamic entries we can add.
+ * The extra slots can be filled in by DRI drivers that register new extension
+ * functions.
+ */
+#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
+
 
 static struct name_address_offset ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
@@ -548,7 +538,7 @@ generate_entrypoint(GLuint functionOffset)
     * 14:   ff a0 10 32 54 76       jmp    *0x76543210(%eax)
     *       14 15 16 17 18 19
     */
-   static const unsigned char temp[] = {
+   static const unsigned char insn_template[] = {
       0xa1, 0x00, 0x00, 0x00, 0x00,
       0x85, 0xc0,
       0x74, 0x06,
@@ -556,10 +546,10 @@ generate_entrypoint(GLuint functionOffset)
       0xe8, 0x00, 0x00, 0x00, 0x00,
       0xff, 0xa0, 0x00, 0x00, 0x00, 0x00
    };
-   unsigned char *code = malloc(sizeof(temp));
+   unsigned char *code = malloc(sizeof(insn_template));
    unsigned int next_insn;
    if (code) {
-      memcpy(code, temp, sizeof(temp));
+      memcpy(code, insn_template, sizeof(insn_template));
 
       *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_Dispatch;
       *(unsigned int *)(code + 0x0b) = (unsigned int)functionOffset * 4;
@@ -619,9 +609,41 @@ generate_entrypoint(GLuint functionOffset)
    return code;
 #else
    return NULL;
-#endif
+#endif /* USE_*_ASM */
 }
 
+
+/*
+ * This function inserts a new dispatch offset into the assembly language
+ * stub that was generated with the preceeding function.
+ */
+static void
+fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
+{
+#if defined(USE_X86_ASM)
+
+   unsigned char *code = (unsigned char *) entrypoint;
+   *(unsigned int *)(code + 0x0b) = offset * 4;
+   *(unsigned int *)(code + 0x16) = offset * 4;
+
+#elif defined(USE_SPARC_ASM)
+
+   /* XXX this hasn't been tested! */
+   unsigned int *code = (unsigned int *) entrypoint;
+#ifdef __sparc_v9__
+   code[6] = 0x05000000;  /* sethi	%hi(8 * glapioffset), %g2	*/
+   code[7] = 0x8410a000;  /* or		%g2, %lo(8 * glapioffset), %g2	*/
+   code[6] |= ((offset * 8) >> 10);
+   code[7] |= ((offset * 8) & ((1 << 10) - 1));
+   __glapi_sparc_icache_flush(&code[6]);
+#else /* __sparc_v9__ */
+   code[2] = 0xc6006000;  /* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
+   code[2] |= (functionOffset * 4);
+   __glapi_sparc_icache_flush(&code[2]);
+#endif /* __sparc_v9__ */
+
+#endif /* USE_*_ASM */
+}
 
 
 /*
@@ -639,21 +661,30 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
       }
    }
 
+   /* make sure this offset/name pair is legal (this isn't really needed) */
    {
-      /* make sure this offset/name pair is legal */
       const char *name = _glapi_get_proc_name(offset);
       if (name && strcmp(name, funcName) != 0)
          return GL_FALSE;  /* bad name! */
    }
 
+   /* See if this function has already been dynamically added */
    {
-      /* be sure index and name match known data */
       GLuint i;
       for (i = 0; i < NumExtEntryPoints; i++) {
          if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-            /* function already registered with api */
+            /* function already registered */
             if (ExtEntryTable[i].Offset == offset) {
                return GL_TRUE;  /* offsets match */
+            }
+            else if (ExtEntryTable[i].Offset == ~0
+                     && offset < DISPATCH_TABLE_SIZE) {
+               /* need to patch-up the dispatch code */
+               if (offset != ~0) {
+                  fill_in_entrypoint_offset(ExtEntryTable[i].Address, offset);
+                  ExtEntryTable[i].Offset = offset;
+               }
+               return GL_TRUE;
             }
             else {
                return GL_FALSE;  /* bad offset! */
@@ -661,29 +692,22 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
          }
       }
 
-      /* Make sure we don't try to add a new entrypoint after someone
-       * has already called _glapi_get_dispatch_table_size()!  If that's
-       * happened the caller's information would become out of date.
-       */
-      if (GetSizeCalled)
-         return GL_FALSE;
-
-      /* make sure we have space */
-      if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS) {
+      /* This is a new function, try to add it.  */
+      if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS ||
+          offset >= DISPATCH_TABLE_SIZE) {
+         /* No space left */
          return GL_FALSE;
       }
       else {
          void *entrypoint = generate_entrypoint(offset);
          if (!entrypoint)
-            return GL_FALSE;
+            return GL_FALSE; /* couldn't generate assembly */
 
+         /* OK! */
          ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
          ExtEntryTable[NumExtEntryPoints].Offset = offset;
          ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
          NumExtEntryPoints++;
-
-         if (offset > MaxDispatchOffset)
-            MaxDispatchOffset = offset;
 
          return GL_TRUE;  /* success */
       }
@@ -692,48 +716,6 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
    /* should never get here, but play it safe */
    return GL_FALSE;
 }
-
-
-
-#if 0000 /* prototype code for dynamic extension slot allocation */
-
-static int NextFreeOffset = 409; /*XXX*/
-#define MAX_DISPATCH_TABLE_SIZE 1000
-
-/*
- * Dynamically allocate a dispatch slot for an extension entrypoint
- * and generate the assembly language dispatch stub.
- * Return the dispatch offset for the function or -1 if no room or error.
- */
-GLint
-_glapi_add_entrypoint2(const char *funcName)
-{
-   int offset;
-
-   /* first see if extension func is already known */
-   offset = _glapi_get_proc_offset(funcName);
-   if (offset >= 0)
-      return offset;
-
-   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS
-       && NextFreeOffset < MAX_DISPATCH_TABLE_SIZE) {
-      void *entryPoint;
-      offset = NextFreeOffset;
-      entryPoint = generate_entrypoint(offset);
-      if (entryPoint) {
-         NextFreeOffset++;
-         ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
-         ExtEntryTable[NumExtEntryPoints].Offset = offset;
-         ExtEntryTable[NumExtEntryPoints].Address = entryPoint;
-         NumExtEntryPoints++;
-         return offset;
-      }
-   }
-   return -1;
-}
-
-#endif
-
 
 
 /*
@@ -771,9 +753,35 @@ _glapi_get_proc_address(const char *funcName)
    }
 
    /* search static functions */
-   return get_static_proc_address(funcName);
-}
+   {
+      const GLvoid *func = get_static_proc_address(funcName);
+      if (func)
+         return func;
+   }
 
+   /* generate new entrypoint - use a temporary dispatch offset of
+    * ~0 (i.e. -1).  Later, when the driver calls _glapi_add_entrypoint()
+    * we'll put in the proper offset.  If that never happens, and the
+    * user calls this function, he'll segfault.  That's what you get
+    * when you try calling a GL function that doesn't really exist.
+    */
+   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
+      GLvoid *entrypoint = generate_entrypoint(~0);
+      if (!entrypoint)
+         return GL_FALSE;
+
+      ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
+      ExtEntryTable[NumExtEntryPoints].Offset = ~0;
+      ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
+      NumExtEntryPoints++;
+
+      return entrypoint;
+   }
+   else {
+      /* no space for new functions! */
+      return NULL;
+   }
+}
 
 
 
@@ -786,6 +794,8 @@ _glapi_get_proc_name(GLuint offset)
 {
    const GLuint n = sizeof(static_functions) / sizeof(struct name_address_offset);
    GLuint i;
+
+   /* search built-in functions */
    for (i = 0; i < n; i++) {
       if (static_functions[i].Offset == offset)
          return static_functions[i].Name;
@@ -798,6 +808,29 @@ _glapi_get_proc_name(GLuint offset)
       }
    }
    return NULL;
+}
+
+
+
+/*
+ * Return size of dispatch table struct as number of functions (or
+ * slots).
+ */
+GLuint
+_glapi_get_dispatch_table_size(void)
+{
+   return DISPATCH_TABLE_SIZE;
+}
+
+
+
+/*
+ * Get API dispatcher version string.
+ */
+const char *
+_glapi_get_version(void)
+{
+   return "20021001";  /* YYYYMMDD */
 }
 
 
@@ -877,6 +910,14 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(pointParameterivOffset == _gloffset_PointParameterivNV);
       assert(pointParameterivOffset == offset);
       assert(_glapi_get_proc_address("glPointParameterivNV") == (void *) &glPointParameterivNV);
+   }
+   {
+      GLuint setFenceOffset = _glapi_get_proc_offset("glSetFenceNV");
+      char *setFenceFunc = (char*) &table->SetFenceNV;
+      GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
+      assert(setFenceOffset == _gloffset_SetFenceNV);
+      assert(setFenceOffset == offset);
+      assert(_glapi_get_proc_address("glSetFenceNV") == (void *) &glSetFenceNV);
    }
 #endif
 }
