@@ -37,8 +37,6 @@ static PFNGLISPROGRAMARBPROC glIsProgramARB_func;
 static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB_func;
 
 /* These must match the indexes used in the fragment program */
-#define DIFFUSE 1
-#define SPECULAR 2
 #define LIGHTPOS 3
 
 /* Set to one to test ARB_fog_linear program option */
@@ -185,8 +183,8 @@ static void Init( void )
 #if DO_FRAGMENT_FOG
       "OPTION ARB_fog_linear; \n"
 #endif
-      "PARAM Diffuse = program.local[1]; \n"
-      "PARAM Specular = program.local[2]; \n"
+      "PARAM Diffuse = state.material.diffuse; \n"
+      "PARAM Specular = state.material.specular; \n"
       "PARAM LightPos = program.local[3]; \n"
       "TEMP lightDir, normal, len; \n"
       "TEMP dotProd, specAtten; \n"
@@ -303,9 +301,6 @@ static void Init( void )
    }
    assert(glIsProgramARB_func(FragProg));
 
-   glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, Diffuse);
-   glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB, SPECULAR, Specular);
-
    /*
     * Do some sanity tests
     */
@@ -318,11 +313,6 @@ static void Init( void )
       assert(v[1] == 20.0);
       assert(v[2] == 30.0);
       assert(v[3] == 40.0);
-      glGetProgramLocalParameterdvARB_func(GL_FRAGMENT_PROGRAM_ARB, DIFFUSE, v);
-      assert(v[0] == Diffuse[0]);
-      assert(v[1] == Diffuse[1]);
-      assert(v[2] == Diffuse[2]);
-      assert(v[3] == Diffuse[3]);
    }
 
    /*
