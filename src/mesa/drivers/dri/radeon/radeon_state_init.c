@@ -357,7 +357,7 @@ void radeonInitState( radeonContextPtr rmesa )
 
    rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = (RADEON_PLANE_MASK_ENABLE |
 				       color_fmt |
-				       (1<<15));
+				       RADEON_ZBLOCK16);
 
    switch ( driQueryOptioni( &rmesa->optionCache, "dither_mode" ) ) {
    case DRI_CONF_DITHER_XERRORDIFFRESET:

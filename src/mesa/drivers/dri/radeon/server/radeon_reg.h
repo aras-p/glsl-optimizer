@@ -1540,6 +1540,7 @@
 #       define RADEON_COLOR_FORMAT_aYUV444     (14 << 10)
 #       define RADEON_COLOR_FORMAT_ARGB4444    (15 << 10)
 #       define RADEON_CLRCMP_FLIP_ENABLE       (1  << 14)
+#       define RADEON_ZBLOCK16                 (1  << 15)
 #define RADEON_RB3D_COLOROFFSET             0x1c40
 #       define RADEON_COLOROFFSET_MASK      0xfffffff0
 #define RADEON_RB3D_COLORPITCH              0x1c48
