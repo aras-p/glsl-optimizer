@@ -31,11 +31,11 @@
  */
 
 typedef struct {
-    int Name_offset;
+    GLint Name_offset;
 #ifdef NEED_FUNCTION_POINTER
     _glapi_proc Address;
 #endif
-    unsigned int Offset;
+    GLuint Offset;
 } glprocs_table_t;
 
 #ifdef NEED_FUNCTION_POINTER
@@ -1969,7 +1969,7 @@ static const glprocs_table_t static_functions[] = {
     NAME_FUNC_OFFSET( 17136, glBlendFuncSeparateINGR, _gloffset_BlendFuncSeparateEXT ),
     NAME_FUNC_OFFSET( 17160, glPointParameterfSGIS, _gloffset_PointParameterfEXT ),
     NAME_FUNC_OFFSET( 17182, glPointParameterfvSGIS, _gloffset_PointParameterfvEXT ),
-    NAME_FUNC_OFFSET( -1, NULL, -1 )
+    NAME_FUNC_OFFSET( -1, NULL, 0 )
 };
 
 #undef NAME_FUNC_OFFSET

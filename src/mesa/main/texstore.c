@@ -1832,8 +1832,8 @@ validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
       return NULL;
    }
 
-   buf = ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                               GL_READ_ONLY_ARB, unpack->BufferObj);
+   buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                                          GL_READ_ONLY_ARB, unpack->BufferObj);
    if (!buf) {
       _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped");
       return NULL;
@@ -1869,8 +1869,8 @@ validate_pbo_compressed_teximage(GLcontext *ctx,
       return NULL;
    }
 
-   buf = ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                               GL_READ_ONLY_ARB, packing->BufferObj);
+   buf = (GLubyte*) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+                                         GL_READ_ONLY_ARB, packing->BufferObj);
    if (!buf) {
       _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped");
       return NULL;

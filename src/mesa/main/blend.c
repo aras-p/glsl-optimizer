@@ -219,7 +219,7 @@ static GLboolean
 _mesa_validate_blend_equation( GLcontext *ctx,
 			       GLenum mode, GLboolean is_separate )
 {
-       switch (mode) {
+   switch (mode) {
       case GL_FUNC_ADD:
          break;
       case GL_MIN:
@@ -285,6 +285,7 @@ _mesa_BlendEquation( GLenum mode )
    if (ctx->Driver.BlendEquationSeparate)
       (*ctx->Driver.BlendEquationSeparate)( ctx, mode, mode );
 }
+
 
 void GLAPIENTRY
 _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
@@ -527,6 +528,7 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
       ctx->Driver.ColorMask( ctx, red, green, blue, alpha );
 }
 
+
 /**********************************************************************/
 /** \name Initialization */
 /*@{*/
@@ -542,7 +544,7 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
 void _mesa_init_color( GLcontext * ctx )
 {
    /* Color buffer group */
-   ctx->Color.IndexMask = 0xffffffff;
+   ctx->Color.IndexMask = ~0u;
    ctx->Color.ColorMask[0] = 0xff;
    ctx->Color.ColorMask[1] = 0xff;
    ctx->Color.ColorMask[2] = 0xff;

@@ -4177,7 +4177,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
       *srcX = 0;
    }
    /* right clipping */
-   if (*srcX + *width > buffer->Width)
+   if (*srcX + *width > (GLsizei) buffer->Width)
       *width -= (*srcX + *width - buffer->Width);
 
    if (*width <= 0)
@@ -4190,7 +4190,7 @@ _mesa_clip_readpixels(const GLcontext *ctx,
       *srcY = 0;
    }
    /* top clipping */
-   if (*srcY + *height > buffer->Height)
+   if (*srcY + *height > (GLsizei) buffer->Height)
       *height -= (*srcY + *height - buffer->Height);
 
    if (*height <= 0)

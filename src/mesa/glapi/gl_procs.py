@@ -50,11 +50,11 @@ class PrintGlProcs(gl_XML.FilterGLAPISpecBase):
 		print ' */'
 		print ''
 		print 'typedef struct {'
-		print '    int Name_offset;'
+		print '    GLint Name_offset;'
 		print '#ifdef NEED_FUNCTION_POINTER'
 		print '    _glapi_proc Address;'
 		print '#endif'
-		print '    unsigned int Offset;'
+		print '    GLuint Offset;'
 		print '} glprocs_table_t;'
 		print ''
 		print '#ifdef NEED_FUNCTION_POINTER'
@@ -132,7 +132,7 @@ class PrintGlProcs(gl_XML.FilterGLAPISpecBase):
 
 			base_offset += len(self.functions[k].name) + 3
 
-		print '    NAME_FUNC_OFFSET( -1, NULL, -1 )'
+		print '    NAME_FUNC_OFFSET( -1, NULL, 0 )'
 		print '};'
 		return
 

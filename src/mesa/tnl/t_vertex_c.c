@@ -255,5 +255,5 @@ void _tnl_init_c_codegen( struct tnl_clipspace_codegen *p )
    make_empty_list(&p->codegen_list);
 
    p->buf_size = 2048;
-   p->buf = MALLOC(p->buf_size);
+   p->buf = (char *) MALLOC(p->buf_size);
 }

@@ -1424,7 +1424,7 @@ alloc_dispatch_table(void)
       (struct _glapi_table *) _mesa_malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
       _glapi_proc *entry = (_glapi_proc *) table;
-      GLuint i;
+      GLint i;
       for (i = 0; i < numEntries; i++) {
          entry[i] = (_glapi_proc) generic_nop;
       }

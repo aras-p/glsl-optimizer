@@ -287,7 +287,7 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
 #define ISTBLACK(v) (*((unsigned long *)(v)) == 0)
 
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__cplusplus)
 
 #define FX64_NATIVE 1
 
@@ -1007,7 +1007,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
    /* left microtile */
    if (maxColL == -1) {
       /* all transparent black */
-      cc[0] = -1;
+      cc[0] = ~0ul;
       for (i = 0; i < n_comp; i++) {
          vec[0][i] = 0;
          vec[1][i] = 0;
@@ -1041,7 +1041,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
    /* right microtile */
    if (maxColR == -1) {
       /* all transparent black */
-      cc[1] = -1;
+      cc[1] = ~0ul;
       for (i = 0; i < n_comp; i++) {
          vec[2][i] = 0;
          vec[3][i] = 0;
@@ -1328,7 +1328,7 @@ fxt1_quantize (unsigned long *cc, const unsigned char *lines[], int comps)
    if (trualpha) {
       fxt1_quantize_ALPHA1(cc, input);
    } else if (l == 0) {
-      cc[0] = cc[1] = cc[2] = -1;
+      cc[0] = cc[1] = cc[2] = ~0ul;
       cc[3] = 0;
    } else if (l < N_TEXELS) {
       fxt1_quantize_MIXED1(cc, input);
@@ -1349,23 +1349,25 @@ fxt1_encode (unsigned int width, unsigned int height, int comps,
 {
    unsigned int x, y;
    const unsigned char *data;
-   unsigned long *encoded = dest;
+   unsigned long *encoded = (unsigned long *) dest;
    unsigned char *newSource = NULL;
 
    /* Replicate image if width is not M8 or height is not M4 */
    if ((width & 7) | (height & 3)) {
       int newWidth = (width + 7) & ~7;
       int newHeight = (height + 3) & ~3;
-      newSource = malloc(comps * newWidth * newHeight * sizeof(unsigned char *));
+      newSource = (unsigned char *)
+         _mesa_malloc(comps * newWidth * newHeight * sizeof(unsigned char *));
       _mesa_upscale_teximage2d(width, height, newWidth, newHeight,
-                               comps, source, srcRowStride, newSource);
+                               comps, (const GLchan *) source,
+                               srcRowStride, newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;
       srcRowStride = comps * newWidth;
    }
 
-   data = source;
+   data = (const unsigned char *) source;
    destRowStride = (destRowStride - width * 2) / 4;
    for (y = 0; y < height; y += 4) {
       unsigned int offs = 0 + (y + 0) * srcRowStride;

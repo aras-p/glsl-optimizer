@@ -173,7 +173,7 @@ static GLuint
 supported_buffer_bitmask(const GLcontext *ctx)
 {
    GLuint mask = DD_FRONT_LEFT_BIT; /* always have this */
-   GLuint i;
+   GLint i;
 
    if (ctx->Visual.stereoMode) {
       mask |= DD_FRONT_RIGHT_BIT;
@@ -305,7 +305,7 @@ _mesa_DrawBuffer( GLenum mode )
     * Do error checking and compute the _DrawDestMask bitfield.
     */
    destMask = draw_buffer_enum_to_bitmask(mode);
-   if (destMask == ~0) {
+   if (destMask == ~0u) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(mode)");
       return;
    }
@@ -342,7 +342,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (n < 1 || n > ctx->Const.MaxDrawBuffers) {
+   if (n < 1 || n > (GLsizei) ctx->Const.MaxDrawBuffers) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDrawBuffersARB(n)" );
       return;
    }
@@ -351,7 +351,7 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    usedBufferMask = 0;
    for (i = 0; i < n; i++) {
       GLuint destMask = draw_buffer_enum_to_bitmask(buffers[i]);
-      if (destMask == ~0) {
+      if (destMask == ~0u ) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(buffer)");
          return;
       }         
@@ -406,7 +406,7 @@ _mesa_ReadBuffer( GLenum mode )
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
    srcMask = read_buffer_enum_to_bitmask(mode);
-   if (srcMask == ~0) {
+   if (srcMask == ~0u) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(mode)");
       return;
    }

@@ -115,7 +115,7 @@ warn(void)
 
 #define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
 
-static int NoOpUnused(void)
+static GLint NoOpUnused(void)
 {
    if (warn()) {
       warning_func(NULL, "GL User Error: calling extension function without a current context\n");
@@ -172,7 +172,7 @@ static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 
 #define TABLE_ENTRY(name) (_glapi_proc) gl##name
 
-static int glUnused(void)
+static GLint glUnused(void)
 {
    return 0;
 }
@@ -467,9 +467,9 @@ _glapi_get_override_dispatch(int layer)
 static const glprocs_table_t *
 find_entry( const char * n )
 {
-   unsigned   i;
+   GLuint i;
 
-   for ( i = 0 ; static_functions[i].Name_offset >= 0 ; i++ ) {
+   for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       const char * test_name;
 
       test_name = gl_string_table + static_functions[i].Name_offset;
@@ -549,9 +549,9 @@ get_static_proc_address(const char *funcName)
 static const char *
 get_static_proc_name( GLuint offset )
 {
-   unsigned   i;
+   GLuint i;
 
-   for ( i = 0 ; static_functions[i].Name_offset >= 0 ; i++ ) {
+   for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       if (static_functions[i].Offset == offset) {
 	 return gl_string_table + static_functions[i].Name_offset;
       }
@@ -1014,7 +1014,7 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (pointParameterivFunc - (char *) table) / sizeof(void *);
       assert(pointParameterivOffset == _gloffset_PointParameterivNV);
       assert(pointParameterivOffset == offset);
-      assert(_glapi_get_proc_address("glPointParameterivNV") == &glPointParameterivNV);
+      assert(_glapi_get_proc_address("glPointParameterivNV") == (_glapi_proc) &glPointParameterivNV);
    }
    {
       GLuint setFenceOffset = _glapi_get_proc_offset("glSetFenceNV");
@@ -1022,7 +1022,7 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
       assert(setFenceOffset == _gloffset_SetFenceNV);
       assert(setFenceOffset == offset);
-      assert(_glapi_get_proc_address("glSetFenceNV") == &glSetFenceNV);
+      assert(_glapi_get_proc_address("glSetFenceNV") == (_glapi_proc) &glSetFenceNV);
    }
 #else
    (void) table;
