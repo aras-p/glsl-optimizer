@@ -1412,16 +1412,18 @@ int DMesaGetIntegerv (GLenum pname, GLint *params)
 }
 
 
-#if USE_EXTERNAL_DXTN_LIB
+#if (((__DJGPP__ << 8) | __DJGPP_MINOR__) >= 0x204) && USE_EXTERNAL_DXTN_LIB
 #include <sys/dxe.h>
 
 extern_asm(___dj_assert);
 extern_asm(_free);
 extern_asm(_malloc);
+extern_asm(_memset);
 
 DXE_EXPORT_TABLE_AUTO (___dxe_eta___dxtn)
 	DXE_EXPORT_ASM (___dj_assert)
 	DXE_EXPORT_ASM (_free)
 	DXE_EXPORT_ASM (_malloc)
+	DXE_EXPORT_ASM (_memset)
 DXE_EXPORT_END
 #endif
