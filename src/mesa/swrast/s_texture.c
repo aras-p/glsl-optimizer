@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.36 2001/08/07 17:26:10 brianp Exp $ */
+/* $Id: s_texture.c,v 1.37 2001/08/07 22:05:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -875,8 +875,6 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
-   ASSERT(tObj->MinFilter==GL_NEAREST);
-   ASSERT(tObj->MagFilter==GL_NEAREST);
    ASSERT(img->Border==0);
    ASSERT(img->Format==GL_RGB);
 
@@ -918,8 +916,6 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
-   ASSERT(tObj->MinFilter==GL_NEAREST);
-   ASSERT(tObj->MagFilter==GL_NEAREST);
    ASSERT(img->Border==0);
    ASSERT(img->Format==GL_RGBA);
 
