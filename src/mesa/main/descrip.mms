@@ -28,7 +28,7 @@ varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
 zoom.c bbox.c cva.c vector.c vbindirect.c config.c enums.c extensions.c \
 pipeline.c stages.c vertices.c [.x86]x86.c
 
-DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]realglx.c [.x]xfonts.c \
+DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.x]xmesa1.c [.x]xmesa2.c [.x]xmesa3.c [.x]xmesa4.c \
 [.osmesa]osmesa.c \
 [.svga]svgamesa.c \
@@ -59,7 +59,7 @@ OBJECTS6=vbxform.obj,xform.obj,zoom.obj,bbox.obj,cva.obj,vector.obj,vbindirect.o
 	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,\
 	vertices.obj,[.x86]x86.obj
 
-OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]realglx.obj,[.x]xfonts.obj,\
+OBJECTS2=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
 [.x]xmesa1.obj,[.x]xmesa2.obj,[.x]xmesa3.obj,[.x]xmesa4.obj,\
 [.osmesa]osmesa.obj,\
 [.svga]svgamesa.obj
@@ -124,8 +124,6 @@ triangle.obj : triangle.c
 	$(CC) $(CFLAGS) /obj=[.x]glxapi.obj [.x]glxapi.c
 [.x]fakeglx.obj : [.x]fakeglx.c
 	$(CC) $(CFLAGS) /obj=[.x]fakeglx.obj [.x]fakeglx.c
-[.x]realglx.obj : [.x]realglx.c
-	$(CC) $(CFLAGS) /obj=[.x]realglx.obj [.x]realglx.c
 [.x]xfonts.obj : [.x]xfonts.c
 	$(CC) $(CFLAGS) /obj=[.x]xfonts.obj [.x]xfonts.c
 [.x]xmesa1.obj : [.x]xmesa1.c
