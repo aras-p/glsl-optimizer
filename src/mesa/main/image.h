@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.8 2000/04/18 14:32:10 brianp Exp $ */
+/* $Id: image.h,v 1.9 2000/05/10 14:39:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,7 +102,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
                                GLenum srcFormat, GLenum srcType,
                                const GLvoid *source,
                                const struct gl_pixelstore_attrib *unpacking,
-                               GLboolean applyTransferOps );
+                               GLboolean applyTransferOps, GLboolean clamp );
 
 
 extern void

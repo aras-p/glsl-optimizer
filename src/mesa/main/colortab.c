@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.16 2000/04/18 14:32:10 brianp Exp $ */
+/* $Id: colortab.c,v 1.17 2000/05/10 14:39:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -451,7 +451,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       GLfloat *dest = (GLfloat *) table->Table + start * comps * sizeof(GLfloat);
       ASSERT(table->TableType == GL_FLOAT);
       _mesa_unpack_float_color_span(ctx, count, table->Format, dest,
-                                    format, type, data, &ctx->Unpack, GL_TRUE);
+                                    format, type, data, &ctx->Unpack,
+                                    GL_FALSE, GL_TRUE);
    }
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
