@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.75 2001/12/14 03:16:06 brianp Exp $
+$Id: VERSIONS,v 1.76 2001/12/18 14:08:23 brianp Exp $
 
 
 Mesa Version History
@@ -899,8 +899,37 @@ Mesa Version History
 	- fixed 3DNow! code to not read past end of arrays (Andrew Lewycky)
 
 
+4.0.1 December 17, 2001
+    New:
+	- better sub-pixel sample positions for AA triangles (Ray Tice)
+	- slightly faster blending for (GL_ZERO, GL_ONE) and (GL_ONE, GL_ZERO)
+    Bug fixes:
+	- added missing break statements in glGet*() for multisample cases
+	- fixed uninitialized hash table mutex bug (display lists / texobjs)
+	- fixed bad teximage error check conditional (bug 476846)
+	- fixed demos readtex.c compilation problem on Windows (Karl Schultz)
+	- added missing glGet() query for GL_MAX_TEXTURE_LOD_BIAS_EXT
+	- silence some compiler warnings (gcc 2.96)
+	- enable the #define GL_VERSION_1_3 in GL/gl.h
+	- added GL 1.3 and GLX 1.4 entries to gl_mangle.h and glx_mangle.h
+	- fixed glu.h typedef problem found with MSDev 6.0
+	- build libGL.so with -Bsymbolic (fixes bug found with Chromium)
+	- added missing 'const' to glXGetContextIDEXT() in glxext.h
+	- fixed a few glXGetProcAddress() errors (texture compression, etc)
+	- fixed start index bug in compiled vertex arrays (Keith)
+	- fixed compilation problems in src/SPARC/glapi_sparc.S
+	- fixed triangle strip "parity" bug found in VTK medical1 demo (Keith)
+	- use glXGetProcAddressARB in GLUT to avoid extension linking problems
+	- provoking vertex of flat-shaded, color-index triangles was wrong
+	- fixed a few display list bugs (GLUT walker, molecule, etc) (Keith)
+	- glTexParameter didn't flush the vertex buffer (Ray Tice)
+	- feedback attributes for glDraw/CopyPixels and glBitmap were wrong
+	- fixed bug in normal length caching (ParaView lighting bug)
+
+
 4.1  Month, ??, 2002
     New:
+	- GL_NV_vertex_program extension
 	- GL_ARB_window_pos extension
 	- GL_ARB_depth_texture extension
 	- GL_ARB_shadow extension
