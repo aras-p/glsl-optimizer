@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.26 2000/01/17 19:45:37 brianp Exp $ */
+/* $Id: glapi.c,v 1.27 2000/01/27 00:26:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,9 @@
 
 
 
+#ifdef HAVE_CONFIG_H
+#include "conf.h"
+#endif
 #include <assert.h>
 #include <stdlib.h>  /* to get NULL */
 #include <string.h>
