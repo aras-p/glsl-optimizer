@@ -31,6 +31,7 @@ C_SOURCES = \
 	  glxext.c \
 	  glxextensions.c \
 	  indirect_init.c \
+	  indirect_transpose_matrix.c \
 	  pixel.c \
 	  pixelstore.c \
 	  render2.c \

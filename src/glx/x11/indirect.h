@@ -350,10 +350,11 @@ glxproto_Cv(LoadMatrixf, X_GLrop_LoadMatrixf, GLfloat, 16)
 glxproto_Cv(MultMatrixf, X_GLrop_MultMatrixf, GLfloat, 16)
 glxproto_Cv(LoadMatrixd, X_GLrop_LoadMatrixd, GLdouble, 16)
 glxproto_Cv(MultMatrixd, X_GLrop_MultMatrixd, GLdouble, 16)
-glxproto_Cv_transpose(LoadTransposeMatrixfARB, X_GLrop_LoadMatrixf, GLfloat, 4)
-glxproto_Cv_transpose(MultTransposeMatrixfARB, X_GLrop_MultMatrixf, GLfloat, 4)
-glxproto_Cv_transpose(LoadTransposeMatrixdARB, X_GLrop_LoadMatrixd, GLdouble, 4)
-glxproto_Cv_transpose(MultTransposeMatrixdARB, X_GLrop_MultMatrixd, GLdouble, 4)
+
+void __indirect_glLoadTransposeMatrixdARB( const GLdouble * m );
+void __indirect_glLoadTransposeMatrixfARB( const GLfloat * m );
+void __indirect_glMultTransposeMatrixdARB( const GLdouble * m );
+void __indirect_glMultTransposeMatrixfARB( const GLfloat * m );
 
 glxproto_6s(Ortho, X_GLrop_Ortho, GLdouble)
 
