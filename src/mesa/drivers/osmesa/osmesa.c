@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.77 2002/04/04 00:54:02 brianp Exp $ */
+/* $Id: osmesa.c,v 1.78 2002/04/04 16:58:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -620,6 +620,39 @@ OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
       return GL_TRUE;
    }
 }
+
+
+
+struct name_address {
+   const char *Name;
+   GLvoid *Address;
+};
+
+static struct name_address functions[] = {
+   { "OSMesaCreateContext", (void *) OSMesaCreateContext },
+   { "OSMesaCreateContextExt", (void *) OSMesaCreateContextExt },
+   { "OSMesaDestroyContext", (void *) OSMesaDestroyContext },
+   { "OSMesaMakeCurrent", (void *) OSMesaMakeCurrent },
+   { "OSMesaGetCurrentContext", (void *) OSMesaGetCurrentContext },
+   { "OSMesaPixelsStore", (void *) OSMesaPixelStore },
+   { "OSMesaGetIntegerv", (void *) OSMesaGetIntegerv },
+   { "OSMesaGetDepthBuffer", (void *) OSMesaGetDepthBuffer },
+   { "OSMesaGetColorBuffer", (void *) OSMesaGetColorBuffer },
+   { "OSMesaGetProcAddress", (void *) OSMesaGetProcAddress },
+   { NULL, NULL }
+};
+
+GLAPI void * GLAPIENTRY
+OSMesaGetProcAddress( const char *funcName )
+{
+   int i;
+   for (i = 0; functions[i].Name; i++) {
+      if (strcmp(functions[i].Name, funcName) == 0)
+         return (void *) functions[i].Address;
+   }
+   return (void *) _glapi_get_proc_address(funcName);
+}
+
 
 /**********************************************************************/
 /*** Device Driver Functions                                        ***/

@@ -1,10 +1,10 @@
-/* $Id: osmesa.h,v 1.9 2001/09/23 16:06:13 brianp Exp $ */
+/* $Id: osmesa.h,v 1.10 2002/04/04 16:58:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  * 
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,7 +63,7 @@ extern "C" {
 
 
 #define OSMESA_MAJOR_VERSION 4
-#define OSMESA_MINOR_VERSION 0
+#define OSMESA_MINOR_VERSION 1
 #define OSMESA_PATCH_VERSION 0
 
 
@@ -252,6 +252,15 @@ GLAPI GLboolean GLAPIENTRY
 OSMesaGetColorBuffer( OSMesaContext c, GLint *width, GLint *height,
                       GLint *format, void **buffer );
 
+
+
+/*
+ * Return pointer to the named function.
+ *
+ * New in Mesa 4.1
+ */
+GLAPI void * GLAPIENTRY
+OSMesaGetProcAddress( const char *funcName );
 
 
 #if defined(__BEOS__) || defined(__QUICKDRAW__)
