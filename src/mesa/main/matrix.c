@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.2 1999/09/05 19:59:33 keithw Exp $ */
+/* $Id: matrix.c,v 1.3 1999/09/09 18:49:36 miklos Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -912,8 +912,9 @@ void gl_Frustum( GLcontext *ctx,
 
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glFrustrum" );
 
-   if (nearval<=0.0 || farval<=0.0) {
+   if ((nearval<=0.0 || farval<=0.0) || (nearval == farval) || (left == right) || (top == bottom)) {
       gl_error( ctx,  GL_INVALID_VALUE, "glFrustum(near or far)" );
+      return;
    }
 
    x = (2.0*nearval) / (right-left);
@@ -961,6 +962,11 @@ void gl_Ortho( GLcontext *ctx,
    GLmatrix *mat = 0;
 
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glOrtho" );
+   
+   if ((left == right) || (bottom == top) || (nearval == farval)) {
+      gl_error( ctx,  GL_INVALID_VALUE, "gl_Ortho((l = r) or (b = top) or (n=f)" );
+      return;
+   }
 
    x = 2.0 / (right-left);
    y = 2.0 / (top-bottom);
