@@ -122,7 +122,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 				 11, /* max 2D texture size is 2048x2048 */
 				 8,  /* max 3D texture size is 256^3 */
 				 0,  /* max CUBE. not supported */
-				 0,  /* max RECT. supported, but not enabled */
+				 11, /* max RECT. supported */
 				 12,
 				 GL_FALSE );
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;

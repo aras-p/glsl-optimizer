@@ -173,7 +173,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
 				 11, /* max 2D texture size is 2048x2048 */
 				 8,  /* 3D texture */
 				 11, /* cube texture. */
-				 0,  /* max RECT. supported, but not enabled */
+				 11, /* rect texture */
 				 12,
 				 GL_FALSE );
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
