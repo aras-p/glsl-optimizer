@@ -70,6 +70,8 @@ _swrast_alloc_accum_buffer( GLframebuffer *buffer )
    GET_CURRENT_CONTEXT(ctx);
    GLint n;
 
+   ASSERT(buffer->UseSoftwareAccumBuffer);
+
    if (buffer->Accum) {
       MESA_PBUFFER_FREE( buffer->Accum );
       buffer->Accum = NULL;

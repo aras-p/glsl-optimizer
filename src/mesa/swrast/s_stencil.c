@@ -1127,6 +1127,8 @@ _swrast_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
 void
 _swrast_alloc_stencil_buffer( GLframebuffer *buffer )
 {
+   ASSERT(buffer->UseSoftwareStencilBuffer);
+
    /* deallocate current stencil buffer if present */
    if (buffer->Stencil) {
       MESA_PBUFFER_FREE(buffer->Stencil);

@@ -1620,8 +1620,7 @@ _swrast_read_depth_span_float( GLcontext *ctx,
 
 /**
  * Allocate a new depth buffer.  If there's already a depth buffer allocated
- * it will be free()'d.  The new depth buffer will be uniniitalized.
- * This function is only called through Driver.alloc_depth_buffer.
+ * it will be free()'d.  The new depth buffer will be uninitialized.
  */
 void
 _swrast_alloc_depth_buffer( GLframebuffer *buffer )

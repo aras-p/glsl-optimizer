@@ -41,6 +41,8 @@ _swrast_alloc_aux_buffers( GLframebuffer *buffer )
 {
    GLint i;
 
+   ASSERT(buffer->UseSoftwareAuxBuffers);
+
    for (i = 0; i < buffer->Visual.numAuxBuffers; i++) {
       if (buffer->AuxBuffers[i]) {
          _mesa_free(buffer->AuxBuffers[i]);
