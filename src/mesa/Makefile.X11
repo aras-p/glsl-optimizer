@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.12 1999/12/17 15:15:46 brianp Exp $
+# $Id: Makefile.X11,v 1.13 2000/01/18 17:40:05 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
-# Copyright (C) 1995-1999  Brian Paul
+# Copyright (C) 1995-2000  Brian Paul
 
 # Makefile for core library
 
@@ -60,8 +60,8 @@ CORE_SOURCES = \
 	mem.c \
 	mmath.c \
 	pb.c \
-	pixel.c \
 	pipeline.c \
+	pixel.c \
 	points.c \
 	polygon.c \
 	quads.c \
