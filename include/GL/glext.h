@@ -49,9 +49,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2002/05/30 */
+/* glext.h last updated 2002/07/18 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 15
+#define GL_GLEXT_VERSION 16
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -2287,6 +2287,11 @@ extern "C" {
 #endif
 
 #ifndef GL_EXT_shadow_funcs
+#endif
+
+#ifndef GL_EXT_stencil_two_side
+#define GL_STENCIL_TEST_TWO_SIDE_EXT      0x8910
+#define GL_ACTIVE_STENCIL_FACE_EXT        0x8911
 #endif
 
 
@@ -4640,6 +4645,14 @@ typedef void (APIENTRY * PFNGLPOINTPARAMETERIVNVPROC) (GLenum pname, const GLint
 
 #ifndef GL_EXT_shadow_funcs
 #define GL_EXT_shadow_funcs 1
+#endif
+
+#ifndef GL_EXT_stencil_two_side
+#define GL_EXT_stencil_two_side 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glActiveStencilFaceEXT (GLenum);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRY * PFNGLACTIVESTENCILFACEEXTPROC) (GLenum face);
 #endif
 
 
