@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.2 1999/10/21 22:13:58 brianp Exp $ */
+/* $Id: drawpix.c,v 1.3 1999/10/28 18:23:29 brianp Exp $ */
 
 /*
  * glDrawPixels demo/test/benchmark
@@ -8,6 +8,9 @@
 
 /*
  * $Log: drawpix.c,v $
+ * Revision 1.3  1999/10/28 18:23:29  brianp
+ * minor changes to Usage() function
+ *
  * Revision 1.2  1999/10/21 22:13:58  brianp
  * added f key to toggle front/back drawing
  *
@@ -276,21 +279,27 @@ static void Init( GLboolean ciMode )
 static void Usage(void)
 {
    printf("Keys:\n");
-   printf("       SPACE  Reset\n");
+   printf("       SPACE  Reset Parameters\n");
    printf("     Up/Down  Move image up/down\n");
    printf("  Left/Right  Move image left/right\n");
-   printf("           w  Decrease glDrawPixels width\n");
-   printf("           W  Increase glDrawPixels width\n");
-   printf("           h  Decrease glDrawPixels height\n");
-   printf("           H  Increase glDrawPixels height\n");
-   printf("           p  Decrease GL_UNPACK_SKIP_PIXELS\n");
-   printf("           P  Increase GL_UNPACK_SKIP_PIXELS\n");
-   printf("           r  Decrease GL_UNPACK_SKIP_ROWS\n");
-   printf("           R  Increase GL_UNPACK_SKIP_ROWS\n");
+   printf("           x  Decrease X-axis PixelZoom\n");
+   printf("           X  Increase X-axis PixelZoom\n");
+   printf("           y  Decrease Y-axis PixelZoom\n");
+   printf("           Y  Increase Y-axis PixelZoom\n");
+   printf("           w  Decrease glDrawPixels width*\n");
+   printf("           W  Increase glDrawPixels width*\n");
+   printf("           h  Decrease glDrawPixels height*\n");
+   printf("           H  Increase glDrawPixels height*\n");
+   printf("           p  Decrease GL_UNPACK_SKIP_PIXELS*\n");
+   printf("           P  Increase GL_UNPACK_SKIP_PIXELS*\n");
+   printf("           r  Decrease GL_UNPACK_SKIP_ROWS*\n");
+   printf("           R  Increase GL_UNPACK_SKIP_ROWS*\n");
    printf("           s  Toggle GL_SCISSOR_TEST\n");
    printf("           f  Toggle front/back buffer drawing\n");
    printf("           b  Benchmark test\n");
    printf("         ESC  Exit\n");
+   printf("* Warning: no limits are imposed on these parameters so it's\n");
+   printf("  possible to cause a segfault if you go too far.\n");
 }
 
 
