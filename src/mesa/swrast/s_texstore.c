@@ -1,10 +1,10 @@
-/* $Id: s_texstore.c,v 1.6 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.7 2002/09/16 17:57:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -192,7 +192,7 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, texUnit, texObj);
+      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    }
 }
 
@@ -251,7 +251,7 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, texUnit, texObj);
+      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    }
 }
 
@@ -323,7 +323,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, texUnit, texObj);
+      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    }
 }
 
@@ -399,7 +399,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, texUnit, texObj);
+      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    }
 }
 
@@ -474,6 +474,6 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, texUnit, texObj);
+      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    }
 }
