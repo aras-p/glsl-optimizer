@@ -1,4 +1,4 @@
-/* $Id: winpos.c,v 1.5 2002/04/22 16:03:37 brianp Exp $ */
+/* $Id: winpos.c,v 1.6 2002/12/03 03:13:17 brianp Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.
@@ -12,7 +12,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#define GL_GLEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
 #include "GL/glut.h"
 
 #include "readtex.c"  /* a hack, I know */
@@ -30,18 +30,12 @@ static GLubyte *Image;
 static int ImgWidth, ImgHeight;
 static GLenum ImgFormat;
 
+static void (*WindowPosFunc)(GLfloat x, GLfloat y);
 
 
 static void draw( void )
 {
    GLfloat angle;
-   char *extensions;
-
-   extensions = (char *) glGetString( GL_EXTENSIONS );
-   if (strstr( extensions, "GL_MESA_window_pos")==NULL) {
-      printf("Sorry, GL_MESA_window_pos extension not available.\n");
-      return;
-   }
 
    glClear( GL_COLOR_BUFFER_BIT );
 
@@ -50,14 +44,12 @@ static void draw( void )
       GLfloat y = 50.0 + 200.0 * sin( angle * M_PI / 180.0 );
 
       /* Don't need to worry about the modelview or projection matrices!!! */
-#ifdef GL_MESA_window_pos
-      glWindowPos2fMESA( x, y );
-#endif
+      (*WindowPosFunc)( x, y );
+
       glDrawPixels( ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image );
    }
+   glFinish();
 }
-
-
 
 
 static void key( unsigned char key, int x, int y )
@@ -71,7 +63,6 @@ static void key( unsigned char key, int x, int y )
 }
 
 
-
 /* new window size or exposure */
 static void reshape( int width, int height )
 {
@@ -81,6 +72,24 @@ static void reshape( int width, int height )
 
 static void init( void )
 {
+#ifdef GL_ARB_window_pos
+   if (glutExtensionSupported("GL_ARB_window_pos")) {
+      printf("Using GL_ARB_window_pos\n");
+      WindowPosFunc = &glWindowPos2fARB;
+   }
+   else
+#elif defined(GL_ARB_window_pos)
+   if (glutExtensionSupported("GL_MESA_window_pos")) {
+      printf("Using GL_MESA_window_pos\n");
+      WindowPosFunc = &glWindowPos2fMESA;
+   }
+   else
+#endif
+   {
+      printf("Sorry, GL_ARB/MESA_window_pos extension not available.\n");
+      exit(1);
+   }
+
    Image = LoadRGBImage( IMAGE_FILE, &ImgWidth, &ImgHeight, &ImgFormat );
    if (!Image) {
       printf("Couldn't read %s\n", IMAGE_FILE);
@@ -88,7 +97,6 @@ static void init( void )
    }
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
-
 
 
 int main( int argc, char *argv[] )

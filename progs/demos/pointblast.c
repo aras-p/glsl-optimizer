@@ -18,7 +18,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#define GL_GLEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 
 /* Some <math.h> files do not define M_PI... */
@@ -264,15 +264,15 @@ menu(int option)
   case 0:
     makePointList();
     break;
-#if GL_EXT_point_parameters
+#if GL_ARB_point_parameters
   case 1:
-    glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, constant);
+    glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, constant);
     break;
   case 2:
-    glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, linear);
+    glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, linear);
     break;
   case 3:
-    glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, theQuad);
+    glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, theQuad);
     break;
 #endif
   case 4:
@@ -281,12 +281,12 @@ menu(int option)
   case 5:
     blend = 0;
     break;
-#if GL_EXT_point_parameters
+#if GL_ARB_point_parameters
   case 6:
-    glPointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT, 1.0);
+    glPointParameterfARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, 1.0);
     break;
   case 7:
-    glPointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT, 10.0);
+    glPointParameterfARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, 10.0);
     break;
 #endif
   case 8:
@@ -468,8 +468,8 @@ main(int argc, char **argv)
   glEnable(GL_POINT_SMOOTH);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glPointSize(8.0);
-#if GL_EXT_point_parameters
-  glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, theQuad);
+#if GL_ARB_point_parameters
+  glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, theQuad);
 #endif
   glMatrixMode(GL_PROJECTION);
   gluPerspective( /* field of view in degree */ 40.0,
