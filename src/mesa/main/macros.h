@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.23 2001/06/08 15:46:30 brianp Exp $ */
+/* $Id: macros.h,v 1.24 2001/06/11 07:52:51 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,6 +129,7 @@ do {						\
 } while (0)
 #else
 /* The GLuint cast might fail if DST or SRC are not dword-aligned (RISC) */
+#define COPY_4UBV(DST, SRC)			\
 do {						\
    (DST)[0] = (SRC)[0];				\
    (DST)[1] = (SRC)[1];				\
