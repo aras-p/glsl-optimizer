@@ -767,102 +767,6 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
 		print 'extern HIDDEN %s __indirect_gl%s(%s);' % (f.fn_return_type, f.name, f.get_parameter_string())
 
 
-class PrintGlxSizeStubs(glX_XML.GlxProto):
-	def __init__(self):
-		glX_XML.GlxProto.__init__(self)
-		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
-		self.aliases = []
-		self.glx_enum_sigs = {}
-
-	def printRealHeader(self):
-		print ''
-		print '#include <GL/gl.h>'
-		print '#include "indirect_size.h"'
-		
-		print ''
-		glX_XML.printHaveAlias()
-		print ''
-		glX_XML.printPure()
-		print ''
-		glX_XML.printFastcall()
-		print ''
-		glX_XML.printVisibility( "INTERNAL", "internal" )
-		print ''
-		print ''
-		print '#ifdef HAVE_ALIAS'
-		print '#  define ALIAS2(from,to) \\'
-		print '    INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \\'
-		print '        __attribute__ ((alias( # to )));'
-		print '#  define ALIAS(from,to) ALIAS2( from, __gl ## to ## _size )'
-		print '#else'
-		print '#  define ALIAS(from,to) \\'
-		print '    INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \\'
-		print '    { return __gl ## to ## _size( e ); }'
-		print '#endif'
-		print ''
-		print ''
-
-	def printRealFooter(self):
-		for a in self.aliases:
-			print a
-
-	def printFunction(self, f):
-		if self.glx_enum_functions.has_key(f.name):
-			ef = self.glx_enum_functions[f.name]
-
-			sig = ef.signature();
-			if self.glx_enum_sigs.has_key(sig):
-				n = self.glx_enum_sigs[sig];
-				a = 'ALIAS( %s, %s )' % (f.name, n)
-				self.aliases.append(a)
-			else:
-				ef.Print( f.name )
-				self.glx_enum_sigs[sig] = f.name;
-
-
-				
-class PrintGlxSizeStubs_h(glX_XML.GlxProto):
-	def __init__(self):
-		glX_XML.GlxProto.__init__(self)
-		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
-		self.aliases = []
-		self.glx_enum_sigs = {}
-
-	def printRealHeader(self):
-		print """
-/**
- * \\file
- * Prototypes for functions used to determine the number of data elements in
- * various GLX protocol messages.
- *
- * \\author Ian Romanick <idr@us.ibm.com>
- */
-
-#if !defined( _GLXSIZE_H_ )
-#  define _GLXSIZE_H_
-
-"""
-		glX_XML.printPure();
-		print ''
-		glX_XML.printFastcall();
-		print ''
-		glX_XML.printVisibility( "INTERNAL", "internal" );
-		print ''
-
-	def printRealFooter(self):
-		print ''
-		print "#  undef INTERNAL"
-		print "#  undef PURE"
-		print "#  undef FASTCALL"
-		print "#endif /* !defined( _GLXSIZE_H_ ) */"
-
-
-	def printFunction(self, f):
-		if self.glx_enum_functions.has_key(f.name):
-			ef = self.glx_enum_functions[f.name]
-			print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (f.name)
-
-
 def show_usage():
 	print "Usage: %s [-f input_file_name] [-m output_mode]" % sys.argv[0]
 	sys.exit(1)
@@ -889,10 +793,6 @@ if __name__ == '__main__':
 		dh = PrintGlxProtoInit_c()
 	elif mode == "init_h":
 		dh = PrintGlxProtoInit_h()
-	elif mode == "size_c":
-		dh = PrintGlxSizeStubs()
-	elif mode == "size_h":
-		dh = PrintGlxSizeStubs_h()
 	else:
 		show_usage()
 
