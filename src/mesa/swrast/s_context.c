@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.6 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: s_context.c,v 1.7 2000/12/09 22:09:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -326,8 +326,8 @@ _swrast_validate_derived( GLcontext *ctx )
  	 _swrast_update_rasterflags( ctx );
 
       if (swrast->NewState & _NEW_TEXTURE)
-	 swrast->_MultiTextureEnabled = (ctx->Texture._ReallyEnabled &
-					 ~ENABLE_TEX0);
+	 swrast->_MultiTextureEnabled =
+            (ctx->Texture._ReallyEnabled > ENABLE_TEX0);
 
       if (swrast->NewState & _NEW_POLYGON)
 	 _swrast_update_polygon( ctx );
