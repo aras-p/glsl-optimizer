@@ -53,6 +53,7 @@ static const struct {
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
    { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
+   { OFF, "GL_ARB_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
    { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
