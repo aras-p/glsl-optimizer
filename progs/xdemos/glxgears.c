@@ -648,7 +648,7 @@ main(int argc, char *argv[])
          printf("  -display displayName    Specify X display\n");
          printf("  -info                   Display GL information\n");
          printf("  -swap N                 Swap no more than once per N vertical refreshes\n");
-         printf("  -forcgetrate            Try to use glXGetMscRateOML function\n");
+         printf("  -forcegetrate           Try to use glXGetMscRateOML function\n");
          return 0;
       }
    }
