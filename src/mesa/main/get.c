@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.108 2003/04/01 18:22:23 brianp Exp $ */
+/* $Id: get.c,v 1.109 2003/04/01 18:27:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1265,7 +1265,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
          CHECK_EXTENSION_B(EXT_secondary_color, pname);
-	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
+	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Size);
 	 break;
 
       /* GL_EXT_fog_coord */
@@ -2673,7 +2673,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
          CHECK_EXTENSION_D(EXT_secondary_color, pname);
-	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Size;
 	 break;
 
       /* GL_EXT_fog_coord */
@@ -4055,7 +4055,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
          CHECK_EXTENSION_F(EXT_secondary_color, pname);
-	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Size;
 	 break;
 
       /* GL_EXT_fog_coord */
@@ -5475,7 +5475,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
          CHECK_EXTENSION_I(EXT_secondary_color, pname);
-	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
+	 *params = (GLint) ctx->Array.SecondaryColor.Size;
 	 break;
 
       /* GL_EXT_fog_coord */
