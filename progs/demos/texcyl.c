@@ -115,6 +115,10 @@ static void ModeMenu(int entry)
 {
    if (entry==ANIMATE) {
       Animate = !Animate;
+      if (Animate)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
    }
    else if (entry==POINT_FILTER) {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -139,6 +143,13 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
+      case ' ':
+      Animate = !Animate;
+      if (Animate)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
+      break;
       case 27:
          exit(0);
          break;
