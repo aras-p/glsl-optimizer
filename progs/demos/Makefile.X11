@@ -45,6 +45,7 @@ PROGS = \
 	renormal \
 	shadowtex \
 	spectex \
+	spriteblast \
 	stex3d \
 	teapot \
 	terrain \
