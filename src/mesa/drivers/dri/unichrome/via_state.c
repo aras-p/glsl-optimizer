@@ -864,13 +864,17 @@ static void viaChooseTextureState(GLcontext *ctx)
                 break;
             }
 
-    	    if (texObj->MagFilter) {
+    	    switch (texObj->MagFilter) {
+	    case GL_LINEAR:
                 vmesa->regHTXnTB_0 |= HC_HTXnFLSe_Linear |
                                       HC_HTXnFLTe_Linear;
-            }
-            else {
+		break;
+	    case GL_NEAREST:
                 vmesa->regHTXnTB_0 |= HC_HTXnFLSe_Nearest |
                                       HC_HTXnFLTe_Nearest;
+		break;
+	    default:
+ 	       break;
             }
 
 	    vmesa->regHTXnMPMD_0 &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
@@ -928,14 +932,16 @@ static void viaChooseTextureState(GLcontext *ctx)
             }
 
 	    switch(texObj->MagFilter) {
-		case GL_NEAREST:
-            	    vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Nearest |
-                                     HC_HTXnFLTs_Nearest;
-            	    break;
-        	case GL_LINEAR:
-            	    vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Linear |
-                                     HC_HTXnFLTs_Linear;
-            	    break;
+	    case GL_NEAREST:
+	       vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Nearest |
+		  HC_HTXnFLTs_Nearest;
+	       break;
+	    case GL_LINEAR:
+	       vmesa->regHTXnTB_1 |= HC_HTXnFLSs_Linear |
+		  HC_HTXnFLTs_Linear;
+	       break;
+	    default:
+	       break;
 	    }
 	    
 	    vmesa->regHTXnMPMD_1 &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
