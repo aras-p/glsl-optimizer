@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -65,6 +65,7 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
       obj->RefCount = 1;
       obj->Name = name;
       obj->Dimensions = dimensions;
+      obj->Priority = 1.0F;
       obj->WrapS = GL_REPEAT;
       obj->WrapT = GL_REPEAT;
       obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
@@ -610,19 +611,17 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPrioritizeTextures");
-   if (n<0) {
+   if (n < 0) {
       gl_error( ctx, GL_INVALID_VALUE, "glPrioritizeTextures" );
       return;
    }
 
-   for (i=0;i<n;i++) {
-      struct gl_texture_object *t;
-      if (texName[i]>0) {
-         t = (struct gl_texture_object *)
+   for (i = 0; i < n; i++) {
+      if (texName[i] > 0) {
+         struct gl_texture_object *t = (struct gl_texture_object *)
             _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
          if (t) {
             t->Priority = CLAMP( priorities[i], 0.0F, 1.0F );
-
 	    if (ctx->Driver.PrioritizeTexture)
 	       ctx->Driver.PrioritizeTexture( ctx, t, t->Priority );
          }
