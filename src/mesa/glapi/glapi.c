@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.57 2001/09/14 02:48:53 brianp Exp $ */
+/* $Id: glapi.c,v 1.58 2001/10/17 13:34:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -902,7 +902,9 @@ static struct name_address_offset static_functions[] = {
 	{ "glMultTransposeMatrixd", (GLvoid *) NAME(glMultTransposeMatrixd), _gloffset_MultTransposeMatrixdARB },
 	{ "glMultTransposeMatrixf", (GLvoid *) NAME(glMultTransposeMatrixf), _gloffset_MultTransposeMatrixfARB },
 	{ "glSampleCoverage", (GLvoid *) NAME(glSampleCoverage), _gloffset_SampleCoverageARB },
+#if 0
 	{ "glSamplePass", (GLvoid *) NAME(glSamplePass), _gloffset_SamplePassARB },
+#endif
 #undef NAME
 
 	/* ARB 1. GL_ARB_multitexture */
