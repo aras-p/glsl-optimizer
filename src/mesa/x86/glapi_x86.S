@@ -14,7 +14,7 @@
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))
 
-#if defined(GNU_ASSEMBLER) && !defined(DJGPP)
+#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__)
 #define GLOBL_FN(x) GLOBL x ; .type x,@function
 #else
 #define GLOBL_FN(x) GLOBL x
