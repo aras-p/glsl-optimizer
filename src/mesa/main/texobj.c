@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,12 +59,6 @@
  * of GenTextures()
  *
  * \return pointer to new texture object.
- *
- * Allocate and initialize a gl_texture_object structure, and insert in the
- * shared state texture list while holding its mutex.
- * If <tt>name > 0</tt> then also insert the new texture object into the hash
- * table.
- * 
  */
 struct gl_texture_object *
 _mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target )
@@ -95,6 +89,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 
    /* init the non-zero fields */
    _glthread_INIT_MUTEX(obj->Mutex);
+   _mesa_bzero(obj, sizeof(*obj));
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
@@ -134,10 +129,6 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
  *
  * \param shared the shared GL state to which the object belongs.
  * \param texOjb the texture object to delete.
- *
- * Unlink the texture object from the shared state texture linked list while
- * holding its lock. If the texture is a name number it's also removed from the
- * hash table. Finally frees the texture images and the object itself.
  */
 void
 _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
