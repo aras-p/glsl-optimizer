@@ -1,10 +1,10 @@
-/* $Id: light.c,v 1.10 1999/11/22 18:58:53 brianp Exp $ */
+/* $Id: light.c,v 1.11 2000/01/13 00:29:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1160,8 +1160,8 @@ void gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
 
 
 
-
-void gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
+#if 0
+static void gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
 {
    GLuint i;
 
@@ -1181,7 +1181,7 @@ void gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
 	 insert_at_tail( &l->EnabledList, &l->Light[i] );
    }
 }
-
+#endif
 
 
 /*
