@@ -109,6 +109,13 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.vpt.cmd[R300_VPT_ZSCALE] = r300PackFloat32(1.0);
 	r300->hw.vpt.cmd[R300_VPT_ZOFFSET] = r300PackFloat32(0.0);
 
+	R300_STATECHANGE(r300, at);
+	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
+	
+	R300_STATECHANGE(r300, bld);
+	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
+	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
+	
 	R300_STATECHANGE(r300, cb);
 	r300->hw.cb.cmd[R300_CB_OFFSET] = cboffset;
 	r300->hw.cb.cmd[R300_CB_PITCH] = cbpitch | R300_COLOR_UNKNOWN_22_23;

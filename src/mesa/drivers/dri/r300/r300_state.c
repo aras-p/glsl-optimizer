@@ -100,6 +100,273 @@ static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 	rmesa->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
 }
 
+static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
+{
+	GLubyte color[4];
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	fprintf(stderr, "%s:%s is not implemented yet. Fixme !\n", __FILE__, __FUNCTION__);
+	#if 0
+	R200_STATECHANGE(rmesa, ctx);
+	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
+	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
+	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
+	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
+	if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
+		rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] =
+		    radeonPackColor(4, color[0], color[1], color[2], color[3]);
+	#endif
+}
+
+/**
+ * Calculate the hardware blend factor setting.  This same function is used
+ * for source and destination of both alpha and RGB.
+ *
+ * \returns
+ * The hardware register value for the specified blend factor.  This value
+ * will need to be shifted into the correct position for either source or
+ * destination factor.
+ *
+ * \todo
+ * Since the two cases where source and destination are handled differently
+ * are essentially error cases, they should never happen.  Determine if these
+ * cases can be removed.
+ */
+static int blend_factor(GLenum factor, GLboolean is_src)
+{
+	int func;
+
+	switch (factor) {
+	case GL_ZERO:
+		func = R200_BLEND_GL_ZERO;
+		break;
+	case GL_ONE:
+		func = R200_BLEND_GL_ONE;
+		break;
+	case GL_DST_COLOR:
+		func = R200_BLEND_GL_DST_COLOR;
+		break;
+	case GL_ONE_MINUS_DST_COLOR:
+		func = R200_BLEND_GL_ONE_MINUS_DST_COLOR;
+		break;
+	case GL_SRC_COLOR:
+		func = R200_BLEND_GL_SRC_COLOR;
+		break;
+	case GL_ONE_MINUS_SRC_COLOR:
+		func = R200_BLEND_GL_ONE_MINUS_SRC_COLOR;
+		break;
+	case GL_SRC_ALPHA:
+		func = R200_BLEND_GL_SRC_ALPHA;
+		break;
+	case GL_ONE_MINUS_SRC_ALPHA:
+		func = R200_BLEND_GL_ONE_MINUS_SRC_ALPHA;
+		break;
+	case GL_DST_ALPHA:
+		func = R200_BLEND_GL_DST_ALPHA;
+		break;
+	case GL_ONE_MINUS_DST_ALPHA:
+		func = R200_BLEND_GL_ONE_MINUS_DST_ALPHA;
+		break;
+	case GL_SRC_ALPHA_SATURATE:
+		func =
+		    (is_src) ? R200_BLEND_GL_SRC_ALPHA_SATURATE :
+		    R200_BLEND_GL_ZERO;
+		break;
+	case GL_CONSTANT_COLOR:
+		func = R200_BLEND_GL_CONST_COLOR;
+		break;
+	case GL_ONE_MINUS_CONSTANT_COLOR:
+		func = R200_BLEND_GL_ONE_MINUS_CONST_COLOR;
+		break;
+	case GL_CONSTANT_ALPHA:
+		func = R200_BLEND_GL_CONST_ALPHA;
+		break;
+	case GL_ONE_MINUS_CONSTANT_ALPHA:
+		func = R200_BLEND_GL_ONE_MINUS_CONST_ALPHA;
+		break;
+	default:
+		func = (is_src) ? R200_BLEND_GL_ONE : R200_BLEND_GL_ZERO;
+	}
+	return func;
+}
+
+/**
+ * Sets both the blend equation and the blend function.
+ * This is done in a single
+ * function because some blend equations (i.e., \c GL_MIN and \c GL_MAX)
+ * change the interpretation of the blend function.
+ * Also, make sure that blend function and blend equation are set to their default
+ * value if color blending is not enabled, since at least blend equations GL_MIN
+ * and GL_FUNC_REVERSE_SUBTRACT will cause wrong results otherwise for
+ * unknown reasons.
+ */
+static void r300_set_blend_state(GLcontext * ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	#if 0
+	GLuint cntl = rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &
+	    ~(R300_ROP_ENABLE | R300_ALPHA_BLEND_ENABLE |
+	      R300_SEPARATE_ALPHA_ENABLE);
+	#endif
+
+	int func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
+	int eqn = R200_COMB_FCN_ADD_CLAMP;
+	int funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
+	int eqnA = R200_COMB_FCN_ADD_CLAMP;
+
+	R300_STATECHANGE(rmesa, bld);
+
+	if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
+		if (ctx->Color._LogicOpEnabled) {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
+			    cntl | R300_ROP_ENABLE;
+			#endif
+			rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqn | func;
+			rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func;
+			return;
+		} else if (ctx->Color.BlendEnabled) {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
+			    cntl | R300_ALPHA_BLEND_ENABLE |
+			    R300_SEPARATE_ALPHA_ENABLE;
+			#endif
+		} else {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
+			#endif
+			rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqn | func;
+			rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func;
+			return;
+		}
+	} else {
+		if (ctx->Color._LogicOpEnabled) {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
+			    cntl | R300_ROP_ENABLE;
+			rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+			#endif
+			return;
+		} else if (ctx->Color.BlendEnabled) {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
+			    cntl | R300_ALPHA_BLEND_ENABLE;
+			#endif
+		} else {
+			#if 0
+			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
+			rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+			#endif
+			return;
+		}
+	}
+
+	func =
+	    (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) <<
+	     R200_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstRGB,
+						   GL_FALSE) <<
+				      R200_DST_BLEND_SHIFT);
+
+	switch (ctx->Color.BlendEquationRGB) {
+	case GL_FUNC_ADD:
+		eqn = R300_COMB_FCN_ADD_CLAMP;
+		break;
+
+	case GL_FUNC_SUBTRACT:
+		eqn = R300_COMB_FCN_SUB_CLAMP;
+		break;
+
+	case GL_FUNC_REVERSE_SUBTRACT:
+		eqn = R200_COMB_FCN_RSUB_CLAMP;
+		break;
+
+	case GL_MIN:
+		eqn = R200_COMB_FCN_MIN;
+		func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		break;
+
+	case GL_MAX:
+		eqn = R200_COMB_FCN_MAX;
+		func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		break;
+
+	default:
+		fprintf(stderr,
+			"[%s:%u] Invalid RGB blend equation (0x%04x).\n",
+			__func__, __LINE__, ctx->Color.BlendEquationRGB);
+		return;
+	}
+
+	if (!rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
+		#if 0
+		rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
+		#endif
+		return;
+	}
+
+	funcA =
+	    (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) <<
+	     R200_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstA,
+						   GL_FALSE) <<
+				      R200_DST_BLEND_SHIFT);
+
+	switch (ctx->Color.BlendEquationA) {
+	case GL_FUNC_ADD:
+		eqnA = R300_COMB_FCN_ADD_CLAMP;
+		break;
+
+	case GL_FUNC_SUBTRACT:
+		eqnA = R300_COMB_FCN_SUB_CLAMP;
+		break;
+
+	case GL_FUNC_REVERSE_SUBTRACT:
+		eqnA = R200_COMB_FCN_RSUB_CLAMP;
+		break;
+
+	case GL_MIN:
+		eqnA = R200_COMB_FCN_MIN;
+		funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		break;
+
+	case GL_MAX:
+		eqnA = R200_COMB_FCN_MAX;
+		funcA = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+		    (R200_BLEND_GL_ONE << R200_DST_BLEND_SHIFT);
+		break;
+
+	default:
+		fprintf(stderr, "[%s:%u] Invalid A blend equation (0x%04x).\n",
+			__func__, __LINE__, ctx->Color.BlendEquationA);
+		return;
+	}
+
+	rmesa->hw.bld.cmd[R300_BLD_ABLEND] = eqnA | funcA;
+	rmesa->hw.bld.cmd[R300_BLD_CBLEND] = eqn | func ;
+	if(rmesa->hw.bld.cmd[R300_BLD_ABLEND] == rmesa->hw.bld.cmd[R300_BLD_CBLEND]){
+		rmesa->hw.bld.cmd[R300_BLD_CBLEND] |= R300_BLEND_UNKNOWN | R300_BLEND_ENABLE | R300_BLEND_NO_SEPARATE;
+		} else {
+		rmesa->hw.bld.cmd[R300_BLD_CBLEND] |= R300_BLEND_UNKNOWN | R300_BLEND_ENABLE;
+		}
+
+}
+
+static void r300BlendEquationSeparate(GLcontext * ctx,
+				      GLenum modeRGB, GLenum modeA)
+{
+	r300_set_blend_state(ctx);
+}
+
+static void r300BlendFuncSeparate(GLcontext * ctx,
+				  GLenum sfactorRGB, GLenum dfactorRGB,
+				  GLenum sfactorA, GLenum dfactorA)
+{
+	r300_set_blend_state(ctx);
+}
+
 /**
  * Update our tracked culling state based on Mesa's state.
  */
@@ -524,7 +791,7 @@ void r300_setup_textures(GLcontext *ctx)
 		exit(-1);
 		}
 	for(i=0;i<mtu;i++){
-		if(ctx->Texture.Unit[i].Enabled!=NULL){
+		if(ctx->Texture.Unit[i].Enabled){
 			t=r300->state.texture.unit[i].texobj;
 			r300->state.texture.tc_count++;
 			if(t==NULL){
@@ -668,6 +935,10 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300UpdateTextureState(ctx);
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);
+	
+	
+	r300_set_blend_state(ctx);
+	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 
 //BEGIN: TODO
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
@@ -813,14 +1084,18 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4BC8.cmd[2] = 0;
 	r300->hw.unk4BC8.cmd[3] = 0;
 
+	#if 0
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
+	#endif
 
 	r300->hw.unk4BD8.cmd[1] = 0;
 
 	r300->hw.unk4E00.cmd[1] = 0;
 
+	#if 0
 	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
 	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
+	#endif
 
 	r300->hw.unk4E10.cmd[1] = 0;
 	r300->hw.unk4E10.cmd[2] = 0;
@@ -937,7 +1212,10 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	radeonInitStateFuncs(functions);
 
 	functions->UpdateState = r300InvalidateState;
-	functions->AlphaFunc = r300AlphaFunc;
+	//functions->AlphaFunc = r300AlphaFunc;
+	functions->BlendColor = r300BlendColor;
+	functions->BlendEquationSeparate = r300BlendEquationSeparate;
+	functions->BlendFuncSeparate = r300BlendFuncSeparate;
 	functions->Enable = r300Enable;
 	functions->ColorMask = r300ColorMask;
 	functions->DepthFunc = r300DepthFunc;

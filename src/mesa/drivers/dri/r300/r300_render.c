@@ -585,7 +585,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	#if 0 /* This should work now.. */
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
 	#endif
-	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
+	//FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG
 	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
 	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
