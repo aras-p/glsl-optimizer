@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.38 2001/03/22 04:54:58 brianp Exp $ */
+/* $Id: texstate.c,v 1.39 2001/03/26 19:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,10 @@
 #define GL_DOT3_RGBA_ARB 0x86AF
 #endif
 
+/* XXX this is temporary, until GL/glext.h is updated. */
+#ifndef GL_CLAMP_TO_BORDER_ARB
+#define GL_CLAMP_TO_BORDER_ARB 0x812D
+#endif
 
 
 /**********************************************************************/
@@ -722,8 +726,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_S:
          if (texObj->WrapS == eparam)
             return;
-
-         if (eparam==GL_CLAMP || eparam==GL_REPEAT || eparam==GL_CLAMP_TO_EDGE) {
+         if (eparam==GL_CLAMP ||
+             eparam==GL_REPEAT ||
+             eparam==GL_CLAMP_TO_EDGE ||
+             (eparam == GL_CLAMP_TO_BORDER_ARB &&
+              ctx->Extensions.ARB_texture_border_clamp)) {
             texObj->WrapS = eparam;
          }
          else {
@@ -734,8 +741,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_T:
          if (texObj->WrapT == eparam)
             return;
-
-         if (eparam==GL_CLAMP || eparam==GL_REPEAT || eparam==GL_CLAMP_TO_EDGE) {
+         if (eparam==GL_CLAMP ||
+             eparam==GL_REPEAT ||
+             eparam==GL_CLAMP_TO_EDGE ||
+             (eparam == GL_CLAMP_TO_BORDER_ARB &&
+              ctx->Extensions.ARB_texture_border_clamp)) {
             texObj->WrapT = eparam;
          }
          else {
@@ -746,8 +756,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_R_EXT:
          if (texObj->WrapR == eparam)
             return;
-
-         if (eparam==GL_CLAMP || eparam==GL_REPEAT || eparam==GL_CLAMP_TO_EDGE) {
+         if (eparam==GL_CLAMP ||
+             eparam==GL_REPEAT ||
+             eparam==GL_CLAMP_TO_EDGE ||
+             (eparam == GL_CLAMP_TO_BORDER_ARB &&
+              ctx->Extensions.ARB_texture_border_clamp)) {
             texObj->WrapR = eparam;
          }
          else {

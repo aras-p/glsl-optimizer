@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.31 2001/03/24 06:01:27 gareth Exp $ */
+/* $Id: mtypes.h,v 1.32 2001/03/26 19:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -798,8 +798,8 @@ struct gl_texture_format {
 /* Texture image record */
 struct gl_texture_image {
    GLenum Format;		/* GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
-				 * GL_INTENSITY, GL_RGB, GL_RGBA, or
-				 * GL_COLOR_INDEX only
+				 * GL_INTENSITY, GL_RGB, GL_RGBA,
+                                 * GL_COLOR_INDEX or GL_DEPTH_COMPONENT only.
 				 */
    GLenum Type;			/* Texel type: GL_UNSIGNED_BYTE, etc. */
    GLenum IntFormat;		/* Internal format as given by the user */
@@ -836,9 +836,9 @@ struct gl_texture_object {
    GLuint Dimensions;		/* 1 or 2 or 3 or 6 (cube map) */
    GLfloat Priority;		/* in [0,1] */
    GLchan BorderColor[4];
-   GLenum WrapS;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
-   GLenum WrapT;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
-   GLenum WrapR;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
+   GLenum WrapS;		/* Wrap modes are: GL_CLAMP, REPEAT */
+   GLenum WrapT;		/*   GL_CLAMP_TO_EDGE, and          */
+   GLenum WrapR;		/*   GL_CLAMP_TO_BORDER_ARB         */
    GLenum MinFilter;		/* minification filter */
    GLenum MagFilter;		/* magnification filter */
    GLfloat MinLod;		/* min lambda, OpenGL 1.2 */
@@ -1203,6 +1203,7 @@ struct gl_extensions {
     */
    GLboolean ARB_imaging;
    GLboolean ARB_multitexture;
+   GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;
    GLboolean EXT_blend_color;

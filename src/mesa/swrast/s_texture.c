@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.19 2001/03/23 18:53:26 brianp Exp $ */
+/* $Id: s_texture.c,v 1.20 2001/03/26 19:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,11 @@
 #define GL_DOT3_RGBA_ARB 0x86AF
 #endif
 
+/* XXX this is temporary, until GL/glext.h is updated. */
+#ifndef GL_CLAMP_TO_BORDER_ARB
+#define GL_CLAMP_TO_BORDER_ARB 0x812D
+#endif
+
 
 /*
  * These values are used in the fixed-point arithmetic used
@@ -58,7 +63,7 @@
 /*
  * Used to compute texel locations for linear sampling.
  * Input:
- *    wrapMode = GL_REPEAT, GL_CLAMP or GL_CLAMP_TO_EDGE
+ *    wrapMode = GL_REPEAT, GL_CLAMP, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER_ARB
  *    S = texcoord in [0,1]
  *    SIZE = width (or height or depth) of texture
  * Output:
@@ -72,22 +77,45 @@
       I0 = IFLOOR(U) & (SIZE - 1);					\
       I1 = (I0 + 1) & (SIZE - 1);					\
    }									\
-   else {								\
+   else if (wrapMode == GL_CLAMP_TO_EDGE) {				\
       if (S <= 0.0F)							\
          U = 0.0F;							\
       else if (S >= 1.0F)						\
          U = SIZE;							\
-      else							        \
-         U = S * SIZE;						        \
+      else								\
+         U = S * SIZE;							\
       U -= 0.5F;							\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
-      if (wrapMode == GL_CLAMP_TO_EDGE) {				\
-         if (I0 < 0)							\
-            I0 = 0;							\
-         if (I1 >= (GLint) SIZE)					\
-            I1 = SIZE - 1;						\
-      }									\
+      if (I0 < 0)							\
+         I0 = 0;							\
+      if (I1 >= (GLint) SIZE)						\
+         I1 = SIZE - 1;							\
+   }									\
+   else  if (wrapMode == GL_CLAMP_TO_BORDER_ARB) {			\
+      const GLfloat min = -1.0F / (2.0F * SIZE);			\
+      const GLfloat max = 1.0F - min;					\
+      if (S <= min)							\
+         U = min * SIZE;						\
+      else if (S >= max)						\
+         U = max * SIZE;						\
+      else								\
+         U = S * SIZE;							\
+      U -= 0.5F;							\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
+   }									\
+   else {								\
+      ASSERT(wrapMode == GL_CLAMP);					\
+      if (S <= 0.0F)							\
+         U = 0.0F;							\
+      else if (S >= 1.0F)						\
+         U = SIZE;							\
+      else								\
+         U = S * SIZE;							\
+      U -= 0.5F;							\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
    }									\
 }
 
@@ -99,13 +127,13 @@
 {									\
    if (wrapMode == GL_REPEAT) {						\
       /* s limited to [0,1) */						\
-      /* i limited to [0,width-1] */					\
-      I = (GLint) (S * SIZE);						\
-      if (S < 0.0F)							\
-         I -= 1;							\
+      /* i limited to [0,size-1] */					\
+      I = IFLOOR(S * SIZE);						\
       I &= (SIZE - 1);							\
    }									\
    else if (wrapMode == GL_CLAMP_TO_EDGE) {				\
+      /* s limited to [min,max] */					\
+      /* i limited to [0, size-1] */					\
       const GLfloat min = 1.0F / (2.0F * SIZE);				\
       const GLfloat max = 1.0F - min;					\
       if (S < min)							\
@@ -113,18 +141,30 @@
       else if (S > max)							\
          I = SIZE - 1;							\
       else								\
-         I = (GLint) (S * SIZE);					\
+         I = IFLOOR(S * SIZE);						\
+   }									\
+   else if (wrapMode == GL_CLAMP_TO_BORDER_ARB) {			\
+      /* s limited to [min,max] */					\
+      /* i limited to [-1, size] */					\
+      const GLfloat min = -1.0F / (2.0F * SIZE);			\
+      const GLfloat max = 1.0F - min;					\
+      if (S <= min)							\
+         I = -1;							\
+      else if (S >= max)						\
+         I = SIZE;							\
+      else								\
+         I = IFLOOR(S * SIZE);						\
    }									\
    else {								\
       ASSERT(wrapMode == GL_CLAMP);					\
       /* s limited to [0,1] */						\
-      /* i limited to [0,width-1] */					\
+      /* i limited to [0,size-1] */					\
       if (S <= 0.0F)							\
          I = 0;								\
       else if (S >= 1.0F)						\
          I = SIZE - 1;							\
       else								\
-         I = (GLint) (S * SIZE);					\
+         I = IFLOOR(S * SIZE);						\
    }									\
 }
 

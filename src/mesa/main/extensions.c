@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.55 2001/03/22 14:42:24 brianp Exp $ */
+/* $Id: extensions.c,v 1.56 2001/03/26 19:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,6 +58,7 @@ static struct {
 } default_extensions[] = {
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
+   { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
    { OFF, "GL_ARB_texture_compression",        F(ARB_texture_compression) },
    { OFF, "GL_ARB_texture_cube_map",           F(ARB_texture_cube_map) },
    { OFF, "GL_ARB_texture_env_add",            F(EXT_texture_env_add) },
@@ -106,6 +107,7 @@ static struct {
    { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
    { OFF, "GL_SGI_color_table",                F(SGI_color_table) },
    { OFF, "GL_SGIS_pixel_texture",             F(SGIS_pixel_texture) },
+   { OFF, "GL_SGIS_texture_border_clamp",      F(ARB_texture_border_clamp) },
    { OFF, "GL_SGIS_texture_edge_clamp",        F(SGIS_texture_edge_clamp) },
    { OFF, "GL_SGIX_depth_texture",             F(SGIX_depth_texture) },
    { OFF, "GL_SGIX_pixel_texture",             F(SGIX_pixel_texture) },
@@ -127,6 +129,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    const char *extensions[] = {
       "GL_ARB_imaging",
       "GL_ARB_multitexture",
+      "GL_ARB_texture_border_clamp",
       "GL_ARB_texture_cube_map",
       "GL_ARB_texture_env_add",
       "GL_ARB_texture_env_combine",
@@ -157,6 +160,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_SGI_color_table",
       "GL_SGIS_pixel_texture",
       "GL_SGIS_texture_edge_clamp",
+      "GL_SGIS_texture_border_clamp",
       "GL_SGIX_depth_texture",
       "GL_SGIX_pixel_texture",
       "GL_SGIX_shadow",
