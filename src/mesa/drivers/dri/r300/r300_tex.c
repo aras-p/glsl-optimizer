@@ -318,10 +318,12 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	(void)format;
 	
 	#if 0
-	fprintf(stderr, "InternalFormat=%s type=%s format=%s\n", 
-		_mesa_lookup_enum_by_nr(internalFormat),
+	fprintf(stderr, "InternalFormat=%s(%d) type=%s format=%s\n", 
+		_mesa_lookup_enum_by_nr(internalFormat), internalFormat,
 		_mesa_lookup_enum_by_nr(type),
 		_mesa_lookup_enum_by_nr(format));
+	fprintf(stderr, "do32bpt=%d force16bpt=%d\n", 	
+		do32bpt, force16bpt);
 	#endif
 	
 	switch (internalFormat) {

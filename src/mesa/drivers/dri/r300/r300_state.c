@@ -209,6 +209,9 @@ static void r300_set_blend_cntl(r300ContextPtr rmesa, int func, int eqn, int cbi
 {
 	GLuint new_ablend, new_cblend;
 
+	#if 0
+	fprintf(stderr, "eqnA=%08x funcA=%08x eqn=%08x func=%08x cbits=%08x\n", eqnA, funcA, eqn, func, cbits);
+	#endif
 	new_ablend = eqnA | funcA;
 	new_cblend = eqn | func;
 	if(funcA == func){

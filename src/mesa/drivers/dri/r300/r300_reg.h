@@ -655,7 +655,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 # 	define R300_TX_FORMAT_ALPHA_4CH		    0x600
 # 	define R300_TX_FORMAT_ALPHA_NONE	    0xA00
 	/* Swizzling */
-	/* constats */
+	/* constants */
 #	define R300_TX_FORMAT_X		0
 #	define R300_TX_FORMAT_Y		1
 #	define R300_TX_FORMAT_Z		2

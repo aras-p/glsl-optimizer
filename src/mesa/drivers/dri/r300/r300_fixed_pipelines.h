@@ -261,8 +261,16 @@ static struct r300_pixel_shader_state SINGLE_TEXTURE_PIXEL_SHADER={
 					{
 					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, SRC1C_XYZ, ZERO), 
 					EASY_PFS_INSTR1(0, 0, 1, 0 | PFS_FLAG_CONST, NONE, ALL), 
+					
+					#if 0
+					/* no alpha in textures */
 					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO), 
 					EASY_PFS_INSTR3(0, 1, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT)
+					#endif
+					
+					/* alpha in textures */
+					EASY_PFS_INSTR2(MAD, SRC0A, SRC1A, ZERO), 
+					EASY_PFS_INSTR3(0, 0, 1, 0 | PFS_FLAG_CONST, OUTPUT)
 					},
 					
 					{
