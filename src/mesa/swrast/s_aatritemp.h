@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.13 2001/05/10 18:01:19 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.14 2001/05/15 16:18:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,12 +51,17 @@
    GLint iyMin, iyMax;
    GLfloat yMin, yMax;
    GLboolean ltor;
-   GLfloat majDx, majDy;
+   GLfloat majDx, majDy;  /* major (i.e. long) edge dx and dy */
+
 #ifdef DO_Z
    GLfloat zPlane[4];                                       /* Z (depth) */
    GLdepth z[MAX_WIDTH];
+#endif
+#ifdef DO_FOG
    GLfloat fogPlane[4];
    GLfloat fog[MAX_WIDTH];
+#else
+   GLfloat *fog = NULL;
 #endif
 #ifdef DO_RGBA
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];      /* color */
@@ -134,14 +139,16 @@
    ctx->OcclusionResult = GL_TRUE;
 #endif
 
-   /* plane setup */
+   /* Plane equation setup:
+    * We evaluate plane equations at window (x,y) coordinates in order
+    * to compute color, Z, fog, texcoords, etc.  This isn't terribly
+    * efficient but it's easy and reliable.
+    */
 #ifdef DO_Z
    compute_plane(p0, p1, p2, p0[2], p1[2], p2[2], zPlane);
-   compute_plane(p0, p1, p2,
-		 v0->fog,
-		 v1->fog,
-		 v2->fog,
-		 fogPlane);
+#endif
+#ifdef DO_FOG
+   compute_plane(p0, p1, p2, v0->fog, v1->fog, v2->fog, fogPlane);
 #endif
 #ifdef DO_RGBA
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
@@ -238,6 +245,12 @@
    }
 #endif
 
+   /* Begin bottom-to-top scan over the triangle.
+    * The long edge will either be on the left or right side of the
+    * triangle.  We always scan from the long edge toward the shorter
+    * edges, stopping when we find that coverage = 0.  If the long edge
+    * is on the left we scan left-to-right.  Else, we scan right-to-left.
+    */
    yMin = vMin->win[1];
    yMax = vMax->win[1];
    iyMin = (int) yMin;
@@ -250,7 +263,7 @@
       const float *pMax = vMax->win;
       const float dxdy = majDx / majDy;
       const float xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
-      float x = vMin->win[0] - (yMin - iyMin) * dxdy;
+      float x = pMin[0] - (yMin - iyMin) * dxdy;
       int iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, startX = (GLint) (x - xAdj);
@@ -272,6 +285,8 @@
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
             z[count] = (GLdepth) solve_plane(cx, cy, zPlane);
+#endif
+#ifdef DO_FOG
 	    fog[count] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
@@ -366,7 +381,7 @@
       const GLfloat *pMax = vMax->win;
       const GLfloat dxdy = majDx / majDy;
       const GLfloat xAdj = dxdy > 0 ? dxdy : 0.0F;
-      GLfloat x = vMin->win[0] - (yMin - iyMin) * dxdy;
+      GLfloat x = pMin[0] - (yMin - iyMin) * dxdy;
       GLint iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, left, startX = (GLint) (x + xAdj);
@@ -394,6 +409,8 @@
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
             z[ix] = (GLdepth) solve_plane(cx, cy, zPlane);
+#endif
+#ifdef DO_FOG
             fog[ix] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
@@ -507,6 +524,10 @@
 
 #ifdef DO_Z
 #undef DO_Z
+#endif
+
+#ifdef DO_FOG
+#undef DO_FOG
 #endif
 
 #ifdef DO_RGBA

@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.14 2001/05/10 17:41:41 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.15 2001/05/15 16:18:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -309,6 +309,7 @@ rgba_aa_tri(GLcontext *ctx,
 	    const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #include "s_aatritemp.h"
 }
@@ -321,6 +322,7 @@ index_aa_tri(GLcontext *ctx,
 	     const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_INDEX
 #include "s_aatritemp.h"
 }
@@ -355,6 +357,7 @@ tex_aa_tri(GLcontext *ctx,
 	   const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_TEX
 #include "s_aatritemp.h"
@@ -368,6 +371,7 @@ spec_tex_aa_tri(GLcontext *ctx,
 		const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_TEX
 #define DO_SPEC
@@ -382,6 +386,7 @@ multitex_aa_tri(GLcontext *ctx,
 		const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_MULTITEX
 #include "s_aatritemp.h"
@@ -394,6 +399,7 @@ spec_multitex_aa_tri(GLcontext *ctx,
 		     const SWvertex *v2)
 {
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_MULTITEX
 #define DO_SPEC
