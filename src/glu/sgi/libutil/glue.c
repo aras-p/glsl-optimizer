@@ -31,14 +31,14 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/glue.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2001/09/20 21:50:53 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/glue.c,v 1.2 2001/09/20 21:50:53 kschultz Exp $
 */
 
 #include <stdlib.h>
 #include "gluint.h"
 
-static char *__gluNurbsErrors[] = {
+static unsigned char *__gluNurbsErrors[] = {
     " ",
     "spline order un-supported",
     "too few knots",
@@ -79,12 +79,12 @@ static char *__gluNurbsErrors[] = {
     "duplicate point on piecewise linear trimming curve",
 };
 
-const char *__gluNURBSErrorString( int errno )
+const unsigned char *__gluNURBSErrorString( int errnum )
 {
-    return __gluNurbsErrors[errno];
+    return __gluNurbsErrors[errnum];
 }
 
-static char *__gluTessErrors[] = {
+static unsigned char *__gluTessErrors[] = {
     " ",
     "gluTessBeginPolygon() must precede a gluTessEndPolygon()",
     "gluTessBeginContour() must precede a gluTessEndContour()",
@@ -94,7 +94,7 @@ static char *__gluTessErrors[] = {
     "need combine callback",
 };
 
-const char *__gluTessErrorString( int errno )
+const unsigned char *__gluTessErrorString( int errnum )
 {
-    return __gluTessErrors[errno];
+    return __gluTessErrors[errnum];
 } /* __glTessErrorString() */

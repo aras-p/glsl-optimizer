@@ -31,16 +31,16 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/gluint.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2001/09/20 21:50:53 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/gluint.h,v 1.2 2001/09/20 21:50:53 kschultz Exp $
 */
 
 #ifndef __gluint_h__
 #define __gluint_h__
 
-extern const char *__gluNURBSErrorString( int errno );
+extern const unsigned char *__gluNURBSErrorString( int errnum );
 
-extern const char *__gluTessErrorString( int errno );
+extern const unsigned char *__gluTessErrorString( int errnum );
 
 #ifdef _EXTENSIONS_
 #define COS cosf
