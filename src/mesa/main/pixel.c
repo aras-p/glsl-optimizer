@@ -1,8 +1,8 @@
-/* $Id: pixel.c,v 1.31 2001/09/18 16:16:21 kschultz Exp $ */
+/* $Id: pixel.c,v 1.32 2001/12/04 23:45:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -258,15 +258,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 
    if (map>=GL_PIXEL_MAP_S_TO_S && map<=GL_PIXEL_MAP_I_TO_A) {
       /* test that mapsize is a power of two */
-      GLuint p;
-      GLboolean ok = GL_FALSE;
-      for (p=1; p<=MAX_PIXEL_MAP_TABLE; p=p<<1) {
-	 if ( (p&mapsize) == p ) {
-	    ok = GL_TRUE;
-	    break;
-	 }
-      }
-      if (!ok) {
+      if (_mesa_bitcount((GLuint) mapsize) != 1) {
 	 _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
          return;
       }
@@ -353,15 +345,16 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 void
 _mesa_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 {
+   const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
    GLint i;
    if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
-      for (i=0;i<mapsize;i++) {
+      for (i=0;i<n;i++) {
          fvalues[i] = (GLfloat) values[i];
       }
    }
    else {
-      for (i=0;i<mapsize;i++) {
+      for (i=0;i<n;i++) {
          fvalues[i] = UINT_TO_FLOAT( values[i] );
       }
    }
@@ -373,15 +366,16 @@ _mesa_PixelMapuiv(GLenum map, GLint mapsize, const GLuint *values )
 void
 _mesa_PixelMapusv(GLenum map, GLint mapsize, const GLushort *values )
 {
+   const GLint n = MIN2(mapsize, MAX_PIXEL_MAP_TABLE);
    GLfloat fvalues[MAX_PIXEL_MAP_TABLE];
    GLint i;
    if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
-      for (i=0;i<mapsize;i++) {
+      for (i=0;i<n;i++) {
          fvalues[i] = (GLfloat) values[i];
       }
    }
    else {
-      for (i=0;i<mapsize;i++) {
+      for (i=0;i<n;i++) {
          fvalues[i] = USHORT_TO_FLOAT( values[i] );
       }
    }
