@@ -313,6 +313,13 @@ case $ARCH in
 	FINAL_LIBS=${LIBNAME}
 	;;
 
+    'MorphOS')
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making MorphOS library: " ${LIBNAME}
+	ppc-morphos-ar rc ${LIBNAME} ${OBJECTS}
+	FINAL_LIBS="${LIBNAME}"
+	;;
+
     'example')
 	# If you're adding support for a new architecture, you can
 	# start with this:
@@ -329,6 +336,7 @@ case $ARCH in
 	# XXX this is a total hack for Mesa - remove someday
 	# fall-back to an old mklib.* script
 	${MAKELIB} "lib${LIBNAME}.a" ${MAJOR} ${MINOR} ${PATCH} ${OBJECTS}
+	FINAL_LIBS="${LIBNAME}"
 	;;
 esac
 
