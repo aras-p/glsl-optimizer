@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glapitemp.py,v 1.4 2002/01/15 19:04:53 brianp Exp $
+# $Id: glapitemp.py,v 1.5 2002/11/30 17:18:46 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -171,7 +171,7 @@ def MakePrintfString(funcName, argTypeList, argNameList):
 		result = result + ', '
 	for pname in argNameList:
 		if isPointer[i]:
-			result = result + '(void *) '
+			result = result + '(const void *) '
 		result = result + pname
 		if floatv[i] == 2:
 			result = result + ', ' + pname + '[0], ' + pname + '[1]'
