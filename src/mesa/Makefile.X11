@@ -307,7 +307,7 @@ targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB) $(LIBMESA)
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 	$(TOP)/bin/mklib -o $(GL_LIB_NAME) -major $(GL_MAJOR) \
 		-minor $(GL_MINOR) -patch $(GL_TINY) -install $(LIBDIR) \
-		$(GL_LIB_DEPS) $(OBJECTS)
+		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS)
 
 
 # Make the OSMesa library
@@ -316,7 +316,7 @@ $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
 		$(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) -major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(GL_TINY) -L$(LIBDIR) \
 			-l$(GL_LIB_NAME) -install $(LIBDIR) \
-			$(OSMESA_OBJECTS) ; \
+			$(MKLIB_OPTIONS) $(OSMESA_OBJECTS) ; \
 	fi
 
 

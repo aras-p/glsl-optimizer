@@ -33,6 +33,7 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 # ASM_SOURCES    optional list of assembly language files to assemble
 # MAKELIB        the script or command to make a library file
 #                XXX MAKELIB is obsolete; edit bin/mklib to support new systems
+# MKLIB_OPTIONS  extra options to pass to the mklib script (like -arch)
 
 
 aix:
