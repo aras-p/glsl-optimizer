@@ -1,10 +1,10 @@
-/* $Id: pixel.c,v 1.33 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: pixel.c,v 1.34 2002/04/24 20:11:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -251,12 +251,12 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (mapsize<0 || mapsize>MAX_PIXEL_MAP_TABLE) {
+   if (mapsize < 1 || mapsize > MAX_PIXEL_MAP_TABLE) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
       return;
    }
 
-   if (map>=GL_PIXEL_MAP_S_TO_S && map<=GL_PIXEL_MAP_I_TO_A) {
+   if (map >= GL_PIXEL_MAP_S_TO_S && map <= GL_PIXEL_MAP_I_TO_A) {
       /* test that mapsize is a power of two */
       if (_mesa_bitcount((GLuint) mapsize) != 1) {
 	 _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
