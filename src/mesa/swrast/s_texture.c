@@ -1,10 +1,10 @@
-/* $Id: s_texture.c,v 1.9 2001/02/06 21:42:49 brianp Exp $ */
+/* $Id: s_texture.c,v 1.10 2001/02/07 03:55:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1509,15 +1509,20 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
                swrast->TextureSample[texUnit] = sample_linear_2d;
             }
             else {
+               GLint baseLevel = t->BaseLevel;
                ASSERT(t->MinFilter==GL_NEAREST);
-               if (t->WrapS==GL_REPEAT && t->WrapT==GL_REPEAT
-                   && t->Image[0]->Border==0 && t->Image[0]->Format==GL_RGB) {
-                  /* XXX check for well-known texture image format */
+               if (t->WrapS == GL_REPEAT &&
+                   t->WrapT == GL_REPEAT &&
+                   t->Image[baseLevel]->Border == 0 &&
+                   t->Image[baseLevel]->Format == GL_RGB &&
+                   t->Image[baseLevel]->Type == CHAN_TYPE) {
                   swrast->TextureSample[texUnit] = opt_sample_rgb_2d;
                }
-               else if (t->WrapS==GL_REPEAT && t->WrapT==GL_REPEAT
-                   && t->Image[0]->Border==0 && t->Image[0]->Format==GL_RGBA) {
-                  /* XXX check for well-known texture image format */
+               else if (t->WrapS == GL_REPEAT &&
+                        t->WrapT == GL_REPEAT &&
+                        t->Image[baseLevel]->Border == 0 &&
+                        t->Image[baseLevel]->Format==GL_RGBA &&
+                        t->Image[baseLevel]->Type == CHAN_TYPE) {
                   swrast->TextureSample[texUnit] = opt_sample_rgba_2d;
                }
                else
