@@ -120,14 +120,25 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
    span->arrayMask |= SPAN_TEXTURE;
-   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-      if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
-         const GLfloat q = vert->texcoord[u][3];
-         const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
-         texcoord[u][0] = vert->texcoord[u][0] * invQ;
-         texcoord[u][1] = vert->texcoord[u][1] * invQ;
-         texcoord[u][2] = vert->texcoord[u][2] * invQ;
-         texcoord[u][3] = q;
+   if (ctx->FragmentProgram._Enabled) {
+      /* Don't divide texture s,t,r by q (use TXP to do that) */
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
+            COPY_4V(texcoord[u], vert->texcoord[u]);
+         }
+      }
+   }
+   else {
+      /* Divide texture s,t,r by q here */
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
+            const GLfloat q = vert->texcoord[u][3];
+            const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
+            texcoord[u][0] = vert->texcoord[u][0] * invQ;
+            texcoord[u][1] = vert->texcoord[u][1] * invQ;
+            texcoord[u][2] = vert->texcoord[u][2] * invQ;
+            texcoord[u][3] = q;
+         }
       }
    }
    /* need these for fragment programs */
