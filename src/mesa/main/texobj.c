@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.45 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: texobj.c,v 1.46 2001/03/28 21:31:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -255,7 +255,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       /* Test dimension-independent attributes */
       for (i = minLevel; i <= maxLevel; i++) {
          if (t->Image[i]) {
-            if (t->Image[i]->Format != t->Image[baseLevel]->Format) {
+            if (t->Image[i]->TexFormat != t->Image[baseLevel]->TexFormat) {
                t->Complete = GL_FALSE;
                incomplete(t, "Format[i] != Format[baseLevel]");
                return;
