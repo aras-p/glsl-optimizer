@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.23 2001/01/30 18:08:51 brianp Exp $ */
+/* $Id: glu.c,v 1.24 2001/03/20 17:56:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,7 +43,9 @@
 #endif
 #define EPS 0.00001
 
-
+#ifndef GLU_INCOMPATIBLE_GL_VERSION
+#define GLU_INCOMPATIBLE_GL_VERSION     100903
+#endif
 
 
 void GLAPIENTRY
@@ -181,7 +183,7 @@ gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 
 void GLAPIENTRY
 gluPickMatrix(GLdouble x, GLdouble y,
-	      GLdouble width, GLdouble height, const GLint viewport[4])
+	      GLdouble width, GLdouble height, GLint viewport[4])
 {
    GLfloat m[16];
    GLfloat sx, sy;
@@ -392,16 +394,16 @@ void (GLAPIENTRY * gluGetProcAddressEXT(const GLubyte * procName)) ()
  */
 #ifdef GLU_VERSION_1_3
 GLboolean GLAPIENTRY
-gluCheckExtension(const char *extName, const GLubyte * extString)
+gluCheckExtension(const GLubyte *extName, const GLubyte * extString)
 {
    assert(extName);
    assert(extString);
    {
-      const int len = strlen(extName);
+      const int len = strlen((const char *) extName);
       const char *start = (const char *) extString;
 
       while (1) {
-	 const char *c = strstr(start, extName);
+	 const char *c = strstr(start, (const char *) extName);
 	 if (!c)
 	    return GL_FALSE;
 

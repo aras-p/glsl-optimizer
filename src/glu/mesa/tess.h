@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.17 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: tess.h,v 1.18 2001/03/20 17:56:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@ typedef struct polygon_str
 }
 tess_polygon;
 
-struct GLUtriangulatorObj
+struct GLUtesselator
 {
    tess_contour *contours, *last_contour;
    GLuint contour_cnt;

@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.25 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: tess.c,v 1.26 2001/03/20 17:56:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ gluNewTess(void)
    GLUtriangulatorObj *tobj;
 
    if ((tobj = (GLUtriangulatorObj *)
-	malloc(sizeof(struct GLUtriangulatorObj))) == NULL)
+	malloc(sizeof(struct GLUtesselator))) == NULL)
       return NULL;
    tobj->contours = tobj->last_contour = NULL;
    init_callbacks(&tobj->callbacks);
