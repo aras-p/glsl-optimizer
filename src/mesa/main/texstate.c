@@ -1,8 +1,8 @@
-/* $Id: texstate.c,v 1.15 2000/07/05 16:14:24 brianp Exp $ */
+/* $Id: texstate.c,v 1.16 2000/08/01 17:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -971,7 +971,14 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          params[3] = obj->BorderColor[3] / 255.0F;
          break;
       case GL_TEXTURE_RESIDENT:
-         *params = ENUM_TO_FLOAT(GL_TRUE);
+         {
+            GLboolean resident;
+            if (ctx->Driver.IsTextureResident)
+               resident = ctx->Driver.IsTextureResident(ctx, obj);
+            else
+               resident = GL_TRUE;
+            *params = ENUM_TO_FLOAT(resident);
+         }
          break;
       case GL_TEXTURE_PRIORITY:
          *params = obj->Priority;
@@ -1039,7 +1046,14 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          break;
       case GL_TEXTURE_RESIDENT:
-         *params = (GLint) GL_TRUE;
+         {
+            GLboolean resident;
+            if (ctx->Driver.IsTextureResident)
+               resident = ctx->Driver.IsTextureResident(ctx, obj);
+            else
+               resident = GL_TRUE;
+            *params = (GLint) resident;
+         }
          break;
       case GL_TEXTURE_PRIORITY:
          *params = (GLint) obj->Priority;
