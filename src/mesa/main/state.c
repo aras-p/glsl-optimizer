@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.43 2000/11/13 20:02:56 keithw Exp $ */
+/* $Id: state.c,v 1.44 2000/11/15 16:38:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,6 +84,7 @@
 #include "vbfill.h"
 #include "vbrender.h"
 #include "winpos.h"
+#include "xform.h"
 #include "swrast/swrast.h"
 #endif
 
