@@ -888,10 +888,6 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 	       _mesa_lookup_enum_by_nr( pname ) );
    }
 
-   if ( ( target != GL_TEXTURE_2D ) &&
-	( target != GL_TEXTURE_1D ) )
-      return;
-
    switch ( pname ) {
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
