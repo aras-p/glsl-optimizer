@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.18 2003/03/28 01:39:05 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.19 2003/03/29 17:09:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,8 +41,6 @@ static struct immediate *
 real_alloc_immediate( GLcontext *ctx )
 {
    struct immediate *immed = ALIGN_CALLOC_STRUCT( immediate, 32 );
-
-   printf("Sizeof(struct immed) = %d\n", sizeof(struct immediate));
 
    if (!immed)
       return NULL;
