@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.15 2000/06/29 04:56:30 brianp Exp $ */
+/* $Id: light.c,v 1.16 2000/07/18 16:55:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1119,26 +1119,27 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
  * Whenever the spotlight exponent for a light changes we must call
  * this function to recompute the exponent lookup table.
  */
-void gl_compute_spot_exp_table( struct gl_light *l )
+void
+gl_compute_spot_exp_table( struct gl_light *l )
 {
-   int i;
-   double exponent = l->SpotExponent;
-   double tmp = 0;
-   int clamp = 0;
+   GLint i;
+   GLdouble exponent = l->SpotExponent;
+   GLdouble tmp = 0;
+   GLint clamp = 0;
 
    l->SpotExpTable[0][0] = 0.0;
 
-   for (i=EXP_TABLE_SIZE-1;i>0;i--) {
+   for (i = EXP_TABLE_SIZE - 1; i > 0 ;i--) {
       if (clamp == 0) {
-         tmp = pow(i/(double)(EXP_TABLE_SIZE-1), exponent);
-         if (tmp < FLT_MIN*100.0) {
+         tmp = pow(i / (GLdouble) (EXP_TABLE_SIZE - 1), exponent);
+         if (tmp < FLT_MIN * 100.0) {
             tmp = 0.0;
             clamp = 1;
          }
       }
       l->SpotExpTable[i][0] = tmp;
    }
-   for (i=0;i<EXP_TABLE_SIZE-1;i++) {
+   for (i = 0; i < EXP_TABLE_SIZE - 1; i++) {
       l->SpotExpTable[i][1] = l->SpotExpTable[i+1][0] - l->SpotExpTable[i][0];
    }
    l->SpotExpTable[EXP_TABLE_SIZE-1][1] = 0.0;
@@ -1151,30 +1152,36 @@ void gl_compute_spot_exp_table( struct gl_light *l )
  * lighting, and the cost of doing it early may be partially offset
  * by keeping a MRU cache of shine tables for various shine values.
  */
-static void compute_shine_table( struct gl_shine_tab *tab, GLfloat shininess )
+static void
+compute_shine_table( struct gl_shine_tab *tab, GLfloat shininess )
 {
-   int i;
+   GLint i;
    GLfloat *m = tab->tab;
 
-   m[0] = 0;
-   if (shininess == 0) {
+   m[0] = 0.0;
+   if (shininess == 0.0) {
       for (i = 1 ; i <= SHINE_TABLE_SIZE ; i++)
-	 m[i] = 1;
-   } else {
-      for (i = 1 ; i <= SHINE_TABLE_SIZE ; i++) {
-	 double t = pow( i/(GLfloat)SHINE_TABLE_SIZE, shininess );
-	 m[i] = 0;
-	 if (t > 1e-20) m[i] = t;
+	 m[i] = 1.0;
+   }
+   else {
+      for (i = 1 ; i < SHINE_TABLE_SIZE ; i++) {
+	 GLdouble t = pow(i / (GLfloat) (SHINE_TABLE_SIZE - 1), shininess);
+	 if (t > 1e-20)
+            m[i] = t;
+         else
+            m[i] = 0.0;
       }      
+      m[SHINE_TABLE_SIZE] = 1.0;
    }
 
    tab->shininess = shininess;
 }
 
-#define DISTSQR(a,b) ((a-b)*(a-b))
 
-void gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
+void
+gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
 {
+#define DISTSQR(a,b) ((a-b)*(a-b))
    struct gl_shine_tab *list = ctx->ShineTabList;
    struct gl_shine_tab *s;
 
@@ -1182,10 +1189,10 @@ void gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
       if ( DISTSQR(s->shininess, shininess) < 1e-4 ) 
 	 break;
 
-   if (s == list) 
-   {
+   if (s == list) {
       foreach(s, list) 
-	 if (s->refcount == 0) break;
+	 if (s->refcount == 0)
+            break;
 
       compute_shine_table( s, shininess );
    }
@@ -1194,12 +1201,14 @@ void gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
    ctx->ShineTable[i] = s;
    move_to_tail( list, s );
    s->refcount++;
+#undef DISTSQR
 }
 
 
 
 #if 0
-static void gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
+static void
+gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
 {
    GLuint i;
 
@@ -1228,7 +1237,8 @@ static void gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
  * Also, precompute some lighting values such as the products of light
  * source and material ambient, diffuse and specular coefficients.
  */
-void gl_update_lighting( GLcontext *ctx )
+void
+gl_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
 
@@ -1303,7 +1313,8 @@ void gl_update_lighting( GLcontext *ctx )
 /* Need to seriously restrict the circumstances under which these
  * calc's are performed.
  */
-void gl_compute_light_positions( GLcontext *ctx )
+void
+gl_compute_light_positions( GLcontext *ctx )
 {
    struct gl_light *light;
    
@@ -1375,10 +1386,8 @@ void gl_compute_light_positions( GLcontext *ctx )
 }
 
 
-
-
-
-void gl_update_normal_transform( GLcontext *ctx )
+void
+gl_update_normal_transform( GLcontext *ctx )
 {
    GLuint new_flag = 0;
    normal_func *last = ctx->NormalTransform;
@@ -1399,20 +1408,18 @@ void gl_update_normal_transform( GLcontext *ctx )
 	 new_flag = ctx->NewState & NEW_MODELVIEW;
 	 ctx->vb_rescale_factor = ctx->rescale_factor;
 	       
-	 if (ctx->Transform.Normalize) 
-	 {
+	 if (ctx->Transform.Normalize) {
 	    ctx->NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
 	 } 
 	 else if (ctx->Transform.RescaleNormals &&
-		  ctx->rescale_factor != 1.0)
-	 {
+		  ctx->rescale_factor != 1.0) {
 	    ctx->NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
 	 }
-	 else 
-	 {
+	 else {
 	    ctx->NormalTransform = gl_normal_tab[transform];
 	 }
-      } else {
+      }
+      else {
 	 ctx->NormalTransform = 0;
       }
    }
@@ -1420,20 +1427,18 @@ void gl_update_normal_transform( GLcontext *ctx )
       if (ctx->NeedNormals) {
 	 ctx->vb_rescale_factor = 1.0/ctx->rescale_factor;
 
-	 if (ctx->Transform.Normalize) 
-	 {
+	 if (ctx->Transform.Normalize) {
 	    ctx->NormalTransform = gl_normal_tab[NORM_NORMALIZE];
 	 }
 	 else if (!ctx->Transform.RescaleNormals &&
-		  ctx->rescale_factor != 1.0)
-	 {
+		  ctx->rescale_factor != 1.0) {
 	    ctx->NormalTransform = gl_normal_tab[NORM_RESCALE];
 	 }
-	 else
-	 {
+	 else {
 	    ctx->NormalTransform = 0;
 	 }
-      } else {
+      }
+      else {
 	 ctx->NormalTransform = 0;
       }
    }
@@ -1441,4 +1446,3 @@ void gl_update_normal_transform( GLcontext *ctx )
    if (last != ctx->NormalTransform || new_flag)
       ctx->NewState |= NEW_NORMAL_TRANSFORM;
 }
-
