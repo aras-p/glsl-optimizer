@@ -26,7 +26,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/transform \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
-	-I$(TOP)/src/mesa/drivers/dri/drm/shared
+	-I$(DRM_SOURCE_PATH)/shared
 
 
 ##### RULES #####

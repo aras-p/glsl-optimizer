@@ -10,6 +10,8 @@ MESA_MAJOR=6
 MESA_MINOR=1
 MESA_TINY=0
 
+# external projects
+DRM_SOURCE_PATH=/home/dri/drm
 
 # Compiler and flags
 CC = cc

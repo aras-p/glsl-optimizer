@@ -52,7 +52,7 @@ INCLUDE_DIRS = \
 	-Iserver \
 	-I$(TOP)/src/glx/mini \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mesa/drivers/dri/drm/shared \
+	-I$(DRM_SOURCE_PATH)/shared \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
