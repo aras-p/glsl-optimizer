@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.8 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: s_context.c,v 1.9 2000/12/27 19:57:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -367,12 +367,17 @@ _swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
 void
 _swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _swrast_print_vertex( ctx, v0 ); */
+/*     _swrast_print_vertex( ctx, v1 ); */
    SWRAST_CONTEXT(ctx)->Line( ctx, v0, v1 );
 }
 
 void
 _swrast_Point( GLcontext *ctx, const SWvertex *v0 )
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _swrast_print_vertex( ctx, v0 ); */
    SWRAST_CONTEXT(ctx)->Point( ctx, v0 );
 }
 
@@ -474,7 +479,6 @@ void
 _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
 {
    GLuint i;
-   fprintf(stderr, "\n");
 
    fprintf(stderr, "win %f %f %f %f\n", 
 	   v->win[0], v->win[1], v->win[2], v->win[3]);
@@ -491,4 +495,5 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
    fprintf(stderr, "fog %f\n", v->fog);
    fprintf(stderr, "index %d\n", v->index);
    fprintf(stderr, "pointsize %f\n", v->pointSize);
+   fprintf(stderr, "\n");
 }

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -248,9 +248,10 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
 {
    GLuint i;
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    GLboolean writeable = (flags & VEC_NOT_WRITEABLE) != 0;
    GLboolean stride = (flags & VEC_BAD_STRIDE) != 0;
+   struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
+   (void) inputs;
 
    if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr) 
       required |= VERT_OBJ;

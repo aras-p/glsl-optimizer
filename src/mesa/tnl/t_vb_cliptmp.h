@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,10 +60,14 @@ static GLuint TAG(userclip_line)( GLcontext *ctx,
 	 if (flagI ^ flagJ) {
 	    if (flagJ) {
 	       GLfloat t = dpI / (dpI - dpJ);
+	       VB->ClipMask[jj] |= CLIP_USER_BIT;
 	       jj = interp( ctx, t, ii, jj, GL_FALSE );
+	       VB->ClipMask[jj] = 0;
 	    } else {
 	       GLfloat t = dpJ / (dpJ - dpI);
+	       VB->ClipMask[ii] |= CLIP_USER_BIT;
 	       ii = interp( ctx, t, jj, ii, GL_FALSE );
+	       VB->ClipMask[ii] = 0;
 	    }
 	 }
 	 else if (flagI) 
@@ -86,8 +90,15 @@ static GLuint TAG(userclip_polygon)( GLcontext *ctx,
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint vlist2[MAX_CLIPPED_VERTICES];
    GLuint *inlist = vlist, *outlist = vlist2;
+   GLubyte *clipmask = VB->ClipMask;
    GLuint p;
-
+   
+#define CLIP_DOTPROD(xx) d*W(xx) + c*Z(xx) + b*Y(xx) + a*X(xx)
+   
+   /* Can be speeded up to if vertex_stage actually saves the
+    * UserClipMask, and if it is used in this loop (after computing a
+    * UserClipOrMask).
+    */
    for (p=0;p<MAX_CLIP_PLANES;p++) {
       if (ctx->Transform.ClipEnabled[p]) {
 	 register float a = ctx->Transform._ClipUserPlane[p][0];
@@ -96,47 +107,63 @@ static GLuint TAG(userclip_polygon)( GLcontext *ctx,
 	 register float d = ctx->Transform._ClipUserPlane[p][3];
 
 	 /* initialize prev to be last in the input list */
-	 GLuint prevj = inlist[0];
-	 GLfloat dpJ = d*W(prevj) + c*Z(prevj) + b*Y(prevj) + a*X(prevj);
+	 GLuint idxPrev = inlist[n-1];
+	 GLfloat dpPrev = CLIP_DOTPROD(idxPrev);
 	 GLuint outcount = 0;
-	 GLuint curri;
+	 GLuint i;
+	 
+         for (i = 0 ; i < n ; i++) {	    
+	    GLuint idx = inlist[i];
+	    GLfloat dp = CLIP_DOTPROD(idx);
 
-	 inlist[n] = inlist[0];
-
-         for (curri=1;curri<n+1;curri++) {	    GLuint currj = inlist[curri];
-	    GLfloat dpI = d*W(currj) + c*Z(currj) + b*Y(currj) + a*X(currj);
-
-	    if (!NEGATIVE(dpJ)) {
-	       outlist[outcount++] = prevj;
-	       VB->ClipMask[prevj] &= ~CLIP_USER_BIT;
+	    if (!NEGATIVE(dpPrev)) {
+	       outlist[outcount++] = idxPrev;
+	       clipmask[idxPrev] &= ~CLIP_USER_BIT;
 	    } else {
-	       VB->ClipMask[prevj] |= CLIP_USER_BIT;
+	       clipmask[idxPrev] |= CLIP_USER_BIT;
 	    }
 
-	    if (DIFFERENT_SIGNS(dpI, dpJ)) {
-	       if (NEGATIVE(dpI)) {
-		  GLfloat t = dpI/(dpI-dpJ);
-		  outlist[outcount++] = interp( ctx, t, currj, prevj, GL_TRUE);
+
+	    if (DIFFERENT_SIGNS(dp, dpPrev)) {
+	       GLuint newvert;
+	       if (NEGATIVE(dp)) {
+		  /* Going out of bounds.  Avoid division by zero as we
+		   * know dp != dpPrev from DIFFERENT_SIGNS, above.
+		   */
+		  GLfloat t = dp / (dp - dpPrev);
+		  newvert = interp( ctx, t, idx, idxPrev, GL_TRUE );
+/*  		  fprintf(stderr,"Goint out: in: %d/%d out: %d/%d new: %d/%d\n", */
+/*  			  idxPrev, VB->EdgeFlagPtr->data[idxPrev], */
+/*  			  idx, VB->EdgeFlagPtr->data[idx], */
+/*  			  newvert, VB->EdgeFlagPtr->data[newvert]); */
 	       } else {
-		  GLfloat t = dpJ/(dpJ-dpI);
-		  outlist[outcount++] = interp( ctx, t, prevj, currj, GL_FALSE);
-	       }		  
+		  /* Coming back in.
+		   */
+		  GLfloat t = dpPrev / (dpPrev - dp);
+		  newvert = interp( ctx, t, idxPrev, idx, GL_FALSE );
+/*  		  fprintf(stderr,"coming in: in: %d/%d out: %d/%d new: %d/%d\n", */
+/*  			  idx, VB->EdgeFlagPtr->data[idx], */
+/*  			  idxPrev, VB->EdgeFlagPtr->data[idxPrev], */
+/*  			  newvert, VB->EdgeFlagPtr->data[newvert]); */
+	       }
+	       clipmask[newvert] = 0;
+	       outlist[outcount++] = newvert;
 	    }
-
-	    prevj = currj;
-	    dpJ = dpI;
-         } 
+	    
+	    idxPrev = idx;
+	    dpPrev = dp;
+	 }
 
 	 if (outcount < 3)
 	    return 0;
-	 else {
+
+	 {
             GLuint *tmp;
             tmp = inlist;
             inlist = outlist;
             outlist = tmp;
             n = outcount;
          }
-
       } /* if */
    } /* for p */
 
@@ -145,6 +172,10 @@ static GLuint TAG(userclip_polygon)( GLcontext *ctx,
       for (i = 0 ; i < n ; i++) 
 	 vlist[i] = inlist[i];
    }
+
+/*     fprintf(stderr, "%s: finally:\n", __FUNCTION__); */
+/*     for (i = 0 ; i < n ; i++)  */
+/*        fprintf(stderr, "%d: %d\n", vlist[i], VB->EdgeFlagPtr->data[vlist[i]]); */
 
    return n;
 }
@@ -168,25 +199,29 @@ static void TAG(viewclip_line)( GLcontext *ctx,
 /*
  * We use 6 instances of this code to clip against the 6 planes.
  */
-#define GENERAL_CLIP							\
-   if (mask & PLANE) {							\
-      GLfloat dpI = CLIP_DOTPROD( ii );					\
-      GLfloat dpJ = CLIP_DOTPROD( jj );					\
-									\
-      if (DIFFERENT_SIGNS(dpI, dpJ)) {					\
-	 if (NEGATIVE(dpJ)) {						\
-	    GLfloat t = dpI / (dpI - dpJ);				\
-	    jj = interp( ctx, t, ii, jj, GL_FALSE );			\
-	 } else {							\
-  	    GLfloat t = dpJ / (dpJ - dpI);				\
-	    ii = interp( ctx, t, jj, ii, GL_FALSE );			\
-	 }								\
-      }									\
-      else if (NEGATIVE(dpI))						\
-	 return;							\
-   }
+#define GENERAL_CLIP					\
+   if (mask & PLANE) {					\
+      GLfloat dpI = CLIP_DOTPROD( ii );			\
+      GLfloat dpJ = CLIP_DOTPROD( jj );			\
+							\
+      if (DIFFERENT_SIGNS(dpI, dpJ)) {			\
+	 if (NEGATIVE(dpJ)) {				\
+	    GLfloat t = dpI / (dpI - dpJ);		\
+            VB->ClipMask[jj] |= PLANE;			\
+	    jj = interp( ctx, t, ii, jj, GL_FALSE );	\
+            VB->ClipMask[jj] = 0;			\
+	 } else {					\
+  	    GLfloat t = dpJ / (dpJ - dpI);		\
+            VB->ClipMask[ii] |= PLANE;			\
+	    ii = interp( ctx, t, jj, ii, GL_FALSE );	\
+            VB->ClipMask[ii] = 0;			\
+	 }						\
+      }							\
+      else if (NEGATIVE(dpI))				\
+	 return;					\
+  }
 
-
+#undef CLIP_DOTPROD
 #define PLANE CLIP_RIGHT_BIT
 #define CLIP_DOTPROD(K) (- X(K) + W(K))
 
@@ -271,11 +306,12 @@ static void TAG(viewclip_line)( GLcontext *ctx,
       }
    }
 
-   if (ctx->Driver.BuildProjectedVertices)
+   if (ctx->Driver.BuildProjectedVertices) 
       ctx->Driver.BuildProjectedVertices(ctx, 
 					 VB->FirstClipped, 
 					 VB->LastClipped,
 					 ~0);
+   
 
    /* Render the new line.
     */

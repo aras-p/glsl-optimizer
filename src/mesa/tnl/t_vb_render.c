@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -630,6 +630,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
    if (ctx->_TriangleCaps & DD_TRI_UNFILLED) {
       inputs |= VERT_EDGE;
+      interp |= INTERP_EDGE;
    }
 
    if (ctx->RenderMode==GL_FEEDBACK) {

@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.2 2000/12/27 19:57:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,9 +105,8 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    RESET_OCCLUSION;
    INIT(GL_LINES);
 
-   for (j=start+1; j<count; j++ ) {
+   for (j=start+1; j<count; j++ ) 
       RENDER_LINE( ELT(j-1), ELT(j) );
-   }
 
    if (TEST_PRIM_END(flags))
       RESET_STIPPLE;
@@ -273,55 +272,51 @@ static void TAG(render_poly_pv)( GLcontext *ctx,
 
    INIT(GL_POLYGON);
    if (NEED_EDGEFLAG_SETUP) {
-      if (start+3 < count) {
-	 GLboolean efstart = EDGEFLAG_GET( ELT(start) );
-	 GLboolean efcount = EDGEFLAG_GET( ELT(count-1) );
+      GLboolean efstart = EDGEFLAG_GET( ELT(start) );
+      GLboolean efcount = EDGEFLAG_GET( ELT(count-1) );
 
-	 
-	 /* If the primitive does not begin here, the first edge
-	  * is non-boundary.
-	  */
-	 if (!TEST_PRIM_BEGIN(flags)) 
-	    EDGEFLAG_SET( ELT(start), GL_FALSE );
+      /* If the primitive does not begin here, the first edge
+       * is non-boundary.
+       */
+      if (!TEST_PRIM_BEGIN(flags)) 
+	 EDGEFLAG_SET( ELT(start), GL_FALSE );
 
-	 /* If the primitive does not end here, the final edge is
-	  * non-boundary.
-	  */
-	 if (!TEST_PRIM_END(flags))
-	    EDGEFLAG_SET( ELT(count-1), GL_FALSE );
+      /* If the primitive does not end here, the final edge is
+       * non-boundary.
+       */
+      if (!TEST_PRIM_END(flags)) 
+	 EDGEFLAG_SET( ELT(count-1), GL_FALSE );
 
-	 /* Draw the first triangle (possibly also the last).
-	  */
-	 if (j<count) {
-	    GLboolean ef = EDGEFLAG_GET( ELT(j) );
-	    EDGEFLAG_SET( ELT(j), GL_FALSE );
-	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
-	    EDGEFLAG_SET( ELT(j), ef );
-	    j++;
-	 }
+      /* Draw the first triangles (possibly zero)
+       */
+      if (j<count-1) {
+	 GLboolean ef = EDGEFLAG_GET( ELT(j) );
+	 EDGEFLAG_SET( ELT(j), GL_FALSE );
+	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
+	 EDGEFLAG_SET( ELT(j), ef );
+	 j++;
 	    
-	 /* For internal tris, the first and last edges are non-boundary.
+	 /* Don't render the first edge again:
 	  */
 	 EDGEFLAG_SET( ELT(start), GL_FALSE );
+
 	 for (;j<count-1;j++) {
-	    GLboolean ef = EDGEFLAG_GET( ELT(j) );
+	    GLboolean efj = EDGEFLAG_GET( ELT(j) );
 	    EDGEFLAG_SET( ELT(j), GL_FALSE );
 	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
-	    EDGEFLAG_SET( ELT(j), ef );
+	    EDGEFLAG_SET( ELT(j), efj );
 	 }
-
-	 /* Draw the last triangle
-	  */
-	 if (j < count) {
-	    RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
-	    j++;
-	 }
-
-	 /* Restore the first, last edgeflags:
-	  */
-	 EDGEFLAG_SET( ELT(count-1), efcount );
-	 EDGEFLAG_SET( ELT(start), efstart );
       }
+
+      /* Draw the last or only triangle
+       */
+      if (j < count)
+	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j), ELT(pv), 0 );
+
+      /* Restore the first and last edgeflags:
+       */
+      EDGEFLAG_SET( ELT(count-1), efcount );
+      EDGEFLAG_SET( ELT(start), efstart );
 	 
       if (TEST_PRIM_END(flags)) {
 	 RESET_STIPPLE;
