@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.60 2001/03/22 00:36:27 gareth Exp $ */
+/* $Id: dd.h,v 1.61 2001/04/04 21:54:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,6 +170,14 @@ struct dd_function_table {
    /***
     *** Texture image functions:
     ***/
+   const struct gl_texture_format *
+   (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
+                           GLenum srcFormat, GLenum srcType );
+   /* This is called by the _mesa_store_tex[sub]image[123]d() fallback
+    * functions.  The driver should examine <internalFormat> and return a
+    * pointer to an appropriate gl_texture_format.
+    */
+
    void (*TexImage1D)( GLcontext *ctx, GLenum target, GLint level,
                        GLint internalFormat,
                        GLint width, GLint border,

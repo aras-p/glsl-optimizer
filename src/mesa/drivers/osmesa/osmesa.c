@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.52 2001/03/29 17:15:21 brianp Exp $ */
+/* $Id: osmesa.c,v 1.53 2001/04/04 21:54:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
+#include "texformat.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
@@ -1786,6 +1787,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
+   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = _mesa_store_teximage2d;
    ctx->Driver.TexImage3D = _mesa_store_teximage3d;

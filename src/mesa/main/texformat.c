@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: texformat.c,v 1.8 2001/04/04 21:54:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -462,26 +462,24 @@ const struct gl_texture_format _mesa_null_texformat = {
 
 
 
+GLboolean
+_mesa_is_hardware_tex_format( const struct gl_texture_format *format )
+{
+   return (format->MesaFormat < MESA_FORMAT_RGBA);
+}
+
+
 /* Given an internal texture format or 1, 2, 3, 4 initialize the texture
  * image structure's default format and type information.  Drivers will
  * initialize these fields accordingly if they override the default
  * storage format.
  */
-void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
-			    struct gl_texture_image *texImage )
+const struct gl_texture_format *
+_mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
+                         GLenum format, GLenum type )
 {
-   const struct gl_texture_format *texFormat;
-
-   /* Ask the driver for the base format, if it doesn't know, it will
-    * return -1;
-    */
-   if ( ctx->Driver.BaseCompressedTexFormat ) {
-      GLint format = 0;			/* Silence compiler warning */
-      format = (*ctx->Driver.BaseCompressedTexFormat)( ctx, format );
-      if ( format >= 0 ) {
-	 internalFormat = format;
-      }
-   }
+   (void) format;
+   (void) type;
 
    switch ( internalFormat ) {
       /* GH: Bias towards GL_RGB, GL_RGBA texture formats.  This has
@@ -490,13 +488,11 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
        */
    case 4:				/* Quake3 uses this... */
    case GL_RGBA:
-      texFormat = &_mesa_texformat_rgba;
-      break;
+      return &_mesa_texformat_rgba;
 
    case 3:				/* ... and this. */
    case GL_RGB:
-      texFormat = &_mesa_texformat_rgb;
-      break;
+      return &_mesa_texformat_rgb;
 
       /* GH: Okay, keep checking as normal.  Still test for GL_RGB,
        * GL_RGBA formats first.
@@ -508,8 +504,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      texFormat = &_mesa_texformat_rgba;
-      break;
+      return &_mesa_texformat_rgba;
 
    case GL_R3_G3_B2:
    case GL_RGB4:
@@ -518,16 +513,14 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      texFormat = &_mesa_texformat_rgb;
-      break;
+      return &_mesa_texformat_rgb;
 
    case GL_ALPHA:
    case GL_ALPHA4:
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
-      texFormat = &_mesa_texformat_alpha;
-      break;
+      return &_mesa_texformat_alpha;
 
    case 1:
    case GL_LUMINANCE:
@@ -535,8 +528,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
-      texFormat = &_mesa_texformat_luminance;
-      break;
+      return &_mesa_texformat_luminance;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -546,16 +538,14 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
-      texFormat = &_mesa_texformat_luminance_alpha;
-      break;
+      return &_mesa_texformat_luminance_alpha;
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
-      texFormat = &_mesa_texformat_intensity;
-      break;
+      return &_mesa_texformat_intensity;
 
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
@@ -564,8 +554,7 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
-      texFormat = &_mesa_texformat_color_index;
-      break;
+      return &_mesa_texformat_color_index;
 
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16_SGIX:
@@ -573,13 +562,11 @@ void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
    case GL_DEPTH_COMPONENT32_SGIX:
       if ( !ctx->Extensions.SGIX_depth_texture )
 	 _mesa_problem( ctx, "depth format without GL_SGIX_depth_texture" );
-      texFormat = &_mesa_texformat_depth_component;
-      break;
+      return &_mesa_texformat_depth_component;
 
    default:
-      _mesa_problem( ctx, "unexpected format in _mesa_init_tex_format" );
-      return;
+      _mesa_problem( ctx, "unexpected format in _mesa_choose_tex_format()" );
+      printf("intformat = %d %x\n", internalFormat, internalFormat );
+      return NULL;
    }
-
-   texImage->TexFormat = texFormat;
 }

@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.21 2001/04/03 17:35:54 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.22 2001/04/04 21:54:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "mtypes.h"
 #include "state.h"
 #include "texstore.h"
+#include "texformat.h"
 #include "xmesaP.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
@@ -952,6 +953,7 @@ void xmesa_init_pointers( GLcontext *ctx )
 
    /* Software texture functions:
     */
+   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
    ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = _mesa_store_teximage2d;
    ctx->Driver.TexImage3D = _mesa_store_teximage3d;

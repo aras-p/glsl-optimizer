@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.5 2001/03/22 06:26:18 gareth Exp $ */
+/* $Id: texformat.h,v 1.6 2001/04/04 21:54:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,9 +83,12 @@ enum _format {
 };
 
 
-extern void
-_mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
-		       struct gl_texture_image *texImage );
+extern GLboolean
+_mesa_is_hardware_tex_format( const struct gl_texture_format *format );
+
+extern const struct gl_texture_format *
+_mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
+                         GLenum format, GLenum type );
 
 
 /* The default formats, GLchan per component:
