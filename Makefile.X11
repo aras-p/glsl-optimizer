@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.34 2000/08/02 20:14:23 brianp Exp $
+# $Id: Makefile.X11,v 1.35 2000/09/15 19:44:39 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -67,6 +67,7 @@ default:
 	@echo "  make irix6-64-dso         for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
 	@echo "  make linux                for Linux systems, make shared .so libs"
+	@echo "  make linux-trace          for Linux systems, make shared trace .so libs"
 	@echo "  make linux-static         for Linux systems, make static .a libs"
 	@echo "  make linux-386            for Linux on Intel, make shared .so libs"
 	@echo "  make linux-386-static     for Linux on Intel, make static .a libs"
@@ -140,7 +141,7 @@ hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
 linux-static-debug linux-elf-debug linux-prof linux-glide-debug \
-linux linux-static \
+linux linux-trace linux-static \
 linux-386 linux-386-static \
 linux-glide linux-386-glide linux-386-opt-glide \
 linux-386-opt-V2-glide \
