@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.12 2002/09/19 16:07:32 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.13 2002/11/09 17:43:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,6 +112,11 @@ GLNAME( _mesa_identify_x86_cpu_features ):
 	MOV_L	( CONST(0x1), EAX )
 	CPUID
 	MOV_L	( EDX, EAX )
+
+	/* Mask out highest bit, which is used by AMD for 3dnow
+         * Newer Intel have this bit set, but do not support 3dnow 
+ 	 */
+        AND_L   ( CONST(0X7FFFFFFF), EAX)
 	JMP	( LLBL(cpuid_done) )
 
 LLBL(cpuid_amd):
