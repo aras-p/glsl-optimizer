@@ -68,7 +68,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_YCBCR_REV) \
-			     && (tx_table[f].format != 0xffffffff) )
+			     && tx_table[f].flag )
+
+#define _ASSIGN(entry, format)	\
+	[ MESA_FORMAT_ ## entry ] = { format, 0, 1}
 
 static const struct {
 	GLuint format, filter;
@@ -95,60 +98,33 @@ static const struct {
 	    };
 
 static const struct {
-	GLuint format, filter;
+	GLuint format, filter, flag;
 } tx_table[] = {
-#ifdef MESA_BIG_ENDIAN
-/*
- * NOTE: As we can't do swapping (RBBM_GUI_CNTL doesn't seems to work
- *       on r300) we declare the texture format in swapped form. We
- *       should better find a way to ask the hardware to do the swapping.
- *       Jerome Glisse
- */
-	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
-	    {R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8), 0},
-	    {0xffffff02, 0},
-	    {0xffffff03, 0},
-	    {0xffffff04, 0},
-	    {0xffffff05, 0},
-	    {0xffffff06, 0},
-	    {0xffffff07, 0},
-	    {0xffffff08, 0},
-	    {0xffffff09, 0},
-	    {0xffffff10, 0},
-	    {0xffffff11, 0},
-	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
-	    {0xffffff13, 0},
-	    {0xffffff14, 0},
-	    {R300_EASY_TX_FORMAT(X, X, X, X, X8),  0},
-	    {0xffffff16,  0},
-	    {0xffffff17, 0},
+	    _ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
+	    _ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+	    _ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
+	    _ASSIGN(RGB888, 0xffffffff),
+	    _ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
+	    _ASSIGN(RGB565_REV, 0xffffff01),
+	    _ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(Y, Z, W, X, W4Z4Y4X4)),
+	    _ASSIGN(ARGB4444_REV, 0xffffff02),
+	    _ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(Z, Y, X, W, W1Z5Y5X5)),
+	    _ASSIGN(ARGB1555_REV, 0xffffff04),
+	    _ASSIGN(AL88, R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8)),
+	    _ASSIGN(AL88_REV, 0xffffff05),
+	    _ASSIGN(A8, 0xffffff06),
+	    _ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
+	    _ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
+	    _ASSIGN(YCBCR_REV, 0xffffff08),
 	    };
-#else
-	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
-	    {0xffffff01, 0},
-	    {0xffffff02, 0},
-	    {0xffffff03, 0},
-	    {0xffffff04, 0},
-	    {0xffffff05, 0},
-	    {R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5), 0},
-	    {0xffffff07, 0},
-	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W4Z4Y4X4), 0},
-	    {0xffffff09, 0},
-	    {0xffffff10, 0},
-	    {0xffffff11, 0},
-	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
-	    {0xffffff13, 0},
-	    {0xffffff14, 0},
-	    {R300_EASY_TX_FORMAT(X, X, X, X, X8),  0},
-	    {0xffffff16,  0},
-	    {0xffffff17, 0},
-	    };
-#endif
 
 #undef _COLOR
 #undef _ALPHA
 #undef _INVALID
-
+#undef _ASSIGN
 
 
 /**
