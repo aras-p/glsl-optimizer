@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.17 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: teximage.h,v 1.18 2001/03/26 20:02:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
 
 
 extern void
-_mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
+_mesa_TexImage3D( GLenum target, GLint level, GLenum internalformat,
                   GLsizei width, GLsizei height, GLsizei depth, GLint border,
                   GLenum format, GLenum type, const GLvoid *pixels );
 

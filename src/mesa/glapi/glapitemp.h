@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.25 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: glapitemp.h,v 1.26 2001/03/26 20:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1155,7 +1155,7 @@ KEYWORD1 void KEYWORD2 NAME(DrawRangeElements)(GLenum mode, GLuint start, GLuint
    DISPATCH(DrawRangeElements, (mode, start, end, count, type, indices), (F, ";"));
 }
 
-KEYWORD1 void KEYWORD2 NAME(TexImage3D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+KEYWORD1 void KEYWORD2 NAME(TexImage3D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
    DISPATCH(TexImage3D, (target, level, internalformat, width, height, depth, border, format, type, pixels), (F, ";"));
 }

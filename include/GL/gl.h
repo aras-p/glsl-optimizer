@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.53 2001/03/22 04:56:50 brianp Exp $ */
+/* $Id: gl.h,v 1.54 2001/03/26 20:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1591,7 +1591,7 @@ GLAPI void GLAPIENTRY glDrawRangeElements( GLenum mode, GLuint start,
 	GLuint end, GLsizei count, GLenum type, const GLvoid *indices );
 
 GLAPI void GLAPIENTRY glTexImage3D( GLenum target, GLint level,
-                                      GLint internalFormat,
+                                      GLenum internalFormat,
                                       GLsizei width, GLsizei height,
                                       GLsizei depth, GLint border,
                                       GLenum format, GLenum type,

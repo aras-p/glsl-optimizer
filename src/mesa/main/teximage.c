@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.86 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: teximage.c,v 1.87 2001/03/26 20:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1511,7 +1511,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
  * Note that width and height include the border.
  */
 void
-_mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
+_mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth,
                   GLint border, GLenum format, GLenum type,
                   const GLvoid *pixels )
@@ -1524,7 +1524,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
 
-      if (texture_error_check(ctx, target, level, internalFormat,
+      if (texture_error_check(ctx, target, level, (GLint) internalFormat,
                               format, type, 3, width, height, depth, border)) {
          return;   /* error was recorded */
       }
@@ -1554,7 +1554,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
       ASSERT(ctx->Driver.TexImage3D);
       if (pixels) {
-         (*ctx->Driver.TexImage3D)(ctx, target, level, internalFormat,
+         (*ctx->Driver.TexImage3D)(ctx, target, level, (GLint) internalFormat,
                                    width, height, depth, border,
                                    format, type, pixels,
                                    &ctx->Unpack, texObj, texImage);
@@ -1562,7 +1562,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       else {
          GLubyte *dummy = make_null_texture(width, height, depth, format);
          if (dummy) {
-            (*ctx->Driver.TexImage3D)(ctx, target, level, internalFormat,
+            (*ctx->Driver.TexImage3D)(ctx, target, level,
+                                      (GLint) internalFormat,
                                       width, height, depth, border,
                                       format, GL_UNSIGNED_BYTE, dummy,
                                       &_mesa_native_packing, texObj, texImage);
@@ -1618,7 +1619,7 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   _mesa_TexImage3D(target, level, (GLint) internalFormat, width, height,
+   _mesa_TexImage3D(target, level, internalFormat, width, height,
                     depth, border, format, type, pixels);
 }
 

@@ -377,7 +377,7 @@ struct _glapi_table
    void (*Minmax)(GLenum target, GLenum internalformat, GLboolean sink); /* 368 */
    void (*ResetHistogram)(GLenum target); /* 369 */
    void (*ResetMinmax)(GLenum target); /* 370 */
-   void (*TexImage3D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 371 */
+   void (*TexImage3D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 371 */
    void (*TexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels); /* 372 */
    void (*CopyTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height); /* 373 */
    void (*ActiveTextureARB)(GLenum texture); /* 374 */
