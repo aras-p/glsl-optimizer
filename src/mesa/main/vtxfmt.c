@@ -128,6 +128,7 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Begin = vfmt->Begin;
    tab->End = vfmt->End;
    tab->VertexAttrib4fNV = vfmt->VertexAttrib4fNV;
+   tab->VertexAttrib4fvNV = vfmt->VertexAttrib4fvNV;
    tab->Rectf = vfmt->Rectf;
    tab->DrawArrays = vfmt->DrawArrays;
    tab->DrawElements = vfmt->DrawElements;
