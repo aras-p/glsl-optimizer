@@ -1190,6 +1190,8 @@ Mesa Version History
     New:
 	- full OpenGL 1.5 support
 	- updated GL/glext.h file to version 21
+    Changes:
+	- changed max framebuffer size to 4Kx4K (MAX_WIDTH/HEIGHT in config.h)
     Bug fixes:
 	- fixed bug in UNCLAMPED_FLOAT_TO_UBYTE macro; solves a color
 	  clamping issue
@@ -1199,3 +1201,4 @@ Mesa Version History
 	- fixed program debug problem (bug 873011)
 	- building on AIX with gcc works now
 	- glDeleteProgramsARB failed for ARB fragment programs (bug 876160)
+	- glDrawRangeElements tried to modify potentially read-only storage
