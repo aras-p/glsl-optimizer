@@ -64,6 +64,7 @@ linux \
 linux-alpha \
 linux-alpha-static \
 linux-debug \
+linux-dri \
 linux-glide \
 linux-icc \
 linux-icc-static \
@@ -78,6 +79,7 @@ linux-sparc5 \
 linux-static \
 linux-ultrasparc \
 linux-x86 \
+linux-x86-debug \
 linux-x86-64 \
 linux-x86-64-static \
 linux-x86-glide \
@@ -94,7 +96,7 @@ sunos5 \
 sunos5-gcc \
 sunos5-smp \
 ultrix-gcc:
-	cp $(TOP)/configs/$@ $(TOP)/configs/current
+	(cd configs && rm -f current && ln -s $@ current)
 	make default
 
 

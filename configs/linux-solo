@@ -26,3 +26,5 @@ APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm -lpthread
 SRC_DIRS = mesa glx glu glw glut/mini
 DRIVER_DIRS = dri
 PROGRAM_DIRS = miniglx
+
+DRI_DIRS = fb gamma i810 i830 mach64 mga r128 r200 radeon sis tdfx

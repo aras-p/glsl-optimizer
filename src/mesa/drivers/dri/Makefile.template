@@ -1,0 +1,94 @@
+# -*-makefile-*-
+
+TOP = ../../../../..
+include $(TOP)/configs/current
+
+
+MESA_MODULES = $(TOP)/src/mesa/mesa.a
+
+
+ifeq ($(WINDOW_SYSTEM),dri)
+WINOBJ=../dri_client/dri.a
+WINLIB=
+INCLUDES = $(SHARED_INCLUDES) \
+	-I../dri_client \
+	-I../dri_client/imports
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+
+else
+WINOBJ=
+WINLIB=-L$(MESA)/src/glx/mini
+MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
+MINIGLX_SOURCES = 
+INCLUDES = $(MINIGLX_INCLUDES) \
+	   $(SHARED_INCLUDES)
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(MINIGLX_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+endif
+
+
+### Include directories
+SHARED_INCLUDES = \
+	-I. \
+	-I../common \
+	-Iserver \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/shader \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup
+
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+default: depend $(LIB_DIR)/$(LIBNAME)
+
+
+#$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
+#	@echo BUILDING FOR: $(WINDOW_SYSTEM)
+#	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
+#		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
+
+
+$(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) -lGL -lc -lm
+
+
+
+
+
+# Run 'make depend' to update the dependencies if you change
+# what's included by any source file.
+depend: $(C_SOURCES) $(ASM_SOURCES)
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
+		>& /dev/null
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+
+include depend
