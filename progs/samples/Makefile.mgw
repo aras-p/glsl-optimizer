@@ -40,8 +40,9 @@
 
 
 
-.PHONY : all
-.SUFFIXES : .c .o .exe
+.PHONY: all
+.SUFFIXES: .c .o .exe
+.SECONDARY: ../util/readtex.o ../util/showbuffer.o
 
 TOP = ../..
 CPU ?= pentium
@@ -63,8 +64,8 @@ LDLIBS = -lglut32 -lglu32 -lopengl32
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-.o.exe:
-	$(LD) -o $@ $(LDFLAGS) $< $(LDLIBS)
+%.exe: ../util/readtex.o ../util/showbuffer.o %.o
+	$(LD) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 all:
 	$(error Must specify <filename.exe> to build)
