@@ -826,7 +826,13 @@ static void *driCreateNewDrawable(Display *dpy,
     pdp->getInfo = (GetDrawableInfo *)
 	glXGetProcAddress( (const GLubyte *) "__glXGetDrawableInfo" );
     if ( pdp->getInfo == NULL ) {
+#ifdef DRI_NEW_INTERFACE_ONLY
+        (void)XF86DRIDestroyDrawable(dpy, modes->screen, pdp->draw);
+	Xfree(pdp);
+	return NULL;
+#else
 	pdp->getInfo = XF86DRIGetDrawableInfo;
+#endif /* DRI_NEW_INTERFACE_ONLY */
     }
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, modes,

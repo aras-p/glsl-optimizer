@@ -257,9 +257,9 @@ struct __DRIswapInfoRec {
 typedef Bool (GetDrawableInfo)( Display *dpy, int scrn, __DRIid draw,
     unsigned int * index, unsigned int * stamp,
     int * x, int * y, int * width, int * height,
-    int * numClipRects, drm_clip_rect_t * pClipRects,
+    int * numClipRects, drm_clip_rect_t ** pClipRects,
     int * backX, int * backY,
-    int * numBackClipRects, drm_clip_rect_t * pBackClipRects );
+    int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
 
 
 /**
