@@ -105,7 +105,7 @@ struct TParseContext {
     const TFunction* findFunction(int line, TFunction* pfnCall, bool *builtIn = 0);
     bool executeInitializer(TSourceLoc line, TString& identifier, TPublicType& pType, 
                             TIntermTyped* initializer, TIntermNode*& intermNode);
-    bool TParseContext::canNodeBeRemoved(TIntermNode*);
+    bool canNodeBeRemoved(TIntermNode*);
     TIntermTyped* addConstructor(TIntermNode*, TType*, TOperator, TFunction*, TSourceLoc);
     TIntermTyped* constructStruct(TIntermNode*, TType*, int, TSourceLoc, bool subset);
     TIntermTyped* constructBuiltIn(TType*, TOperator, TIntermNode*, TSourceLoc, bool subset);
