@@ -200,10 +200,10 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
 #if FEATURE_ARB_fragment_shader
-   ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+   ctx->Extensions.ARB_fragment_shader = GL_FALSE; /*GL_TRUE;*/
 #endif
 #if FEATURE_ARB_vertex_shader
-   ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+   ctx->Extensions.ARB_vertex_shader = GL_FALSE; /*GL_TRUE;*/
 #endif
 #endif
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
@@ -359,10 +359,10 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
 #if FEATURE_ARB_shader_objects
    ctx->Extensions.ARB_shader_objects = GL_TRUE;
 #if FEATURE_ARB_fragment_shader
-   ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+   ctx->Extensions.ARB_fragment_shader = GL_FALSE; /*GL_TRUE;*/
 #endif
 #if FEATURE_ARB_vertex_shader
-   ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+   ctx->Extensions.ARB_vertex_shader = GL_FALSE; /*GL_TRUE;*/
 #endif
 #endif
 }
