@@ -38,6 +38,7 @@
 #include "tdfx_context.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"
+#include "hash.h"
 
 
 #define BAD_ADDRESS ((FxU32) -1)
@@ -76,10 +77,14 @@ VerifyFreeList(tdfxContextPtr fxMesa, FxU32 tmu)
     assert(totalFree == shared->freeTexMem[tmu]);
 
     {
-       struct gl_texture_object *obj;
-       for (obj = mesaShared->TexObjectList; obj; obj = obj->Next) {
-          tdfxTexInfo *ti = TDFX_TEXTURE_DATA(obj);
-          numObj++;
+       struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
+       GLuint id;
+       for (id = _mesa_HashFirstEntry(textures);
+            id;
+            id = _mesa_HashNextEntry(textures, id)) {
+          struct gl_texture_object *tObj;
+          tObj = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
+          tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
           if (ti) {
              if (ti->isInTM) {
                 numRes++;
@@ -106,13 +111,18 @@ static void
 dump_texmem(tdfxContextPtr fxMesa)
 {
     struct gl_shared_state *mesaShared = fxMesa->glCtx->Shared;
+    struct _mesa_HashTable *textures = mesaShared->TexObjects;
     struct tdfxSharedState *shared = (struct tdfxSharedState *) mesaShared->DriverData;
-    struct gl_texture_object *oldestObj, *obj, *lowestPriorityObj;
     tdfxMemRange *r;
     FxU32 prev;
+    GLuint id;
 
     printf("DUMP Objects:\n");
-    for (obj = mesaShared->TexObjectList; obj; obj = obj->Next) {
+    for (id = _mesa_HashFirstEntry(textures);
+         id;
+         id = _mesa_HashNextEntry(textures, id)) {
+        struct gl_texture_object *obj
+            = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
         tdfxTexInfo *info = TDFX_TEXTURE_DATA(obj);
 
         if (info && info->isInTM) {
@@ -378,9 +388,11 @@ static struct gl_texture_object *
 FindOldestObject(tdfxContextPtr fxMesa, FxU32 tmu)
 {
     const GLuint bindnumber = fxMesa->texBindNumber;
-    struct gl_texture_object *oldestObj, *obj, *lowestPriorityObj;
+    struct gl_texture_object *oldestObj, *lowestPriorityObj;
     GLfloat lowestPriority;
     GLuint oldestAge;
+    GLuint id;
+    struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
 
     oldestObj = NULL;
     oldestAge = 0;
@@ -388,7 +400,11 @@ FindOldestObject(tdfxContextPtr fxMesa, FxU32 tmu)
     lowestPriority = 1.0F;
     lowestPriorityObj = NULL;
 
-    for (obj = fxMesa->glCtx->Shared->TexObjectList; obj; obj = obj->Next) {
+    for (id = _mesa_HashFirstEntry(textures);
+         id;
+         id = _mesa_HashNextEntry(textures, id)) {
+        struct gl_texture_object *obj
+            = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
         tdfxTexInfo *info = TDFX_TEXTURE_DATA(obj);
 
         if (info && info->isInTM &&
@@ -437,11 +453,14 @@ FindOldestObject(tdfxContextPtr fxMesa, FxU32 tmu)
 static void
 FlushTexMemory(tdfxContextPtr fxMesa)
 {
-    struct gl_shared_state *mesaShared = fxMesa->glCtx->Shared;
-    struct tdfxSharedState *shared = (struct tdfxSharedState *) mesaShared->DriverData;
-    struct gl_texture_object *obj;
+    struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
+    GLuint id;
 
-    for (obj = mesaShared->TexObjectList; obj; obj = obj->Next) {
+    for (id = _mesa_HashFirstEntry(textures);
+         id;
+         id = _mesa_HashNextEntry(textures, id)) {
+       struct gl_texture_object *obj
+          = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
        if (obj->RefCount < 2) {
           /* don't flush currently bound textures */
           tdfxTMMoveOutTM_NoLock(fxMesa, obj);
@@ -946,12 +965,17 @@ tdfxTMFreeTexture(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
 void tdfxTMRestoreTextures_NoLock( tdfxContextPtr fxMesa )
 {
    GLcontext *ctx = fxMesa->glCtx;
-   struct gl_texture_object *tObj;
-   int i;
+   struct _mesa_HashTable *textures = fxMesa->glCtx->Shared->TexObjects;
+   GLuint id;
 
-   for ( tObj = ctx->Shared->TexObjectList ; tObj ; tObj = tObj->Next ) {
+   for (id = _mesa_HashFirstEntry(textures);
+        id;
+        id = _mesa_HashNextEntry(textures, id)) {
+      struct gl_texture_object *tObj
+         = (struct gl_texture_object *) _mesa_HashLookup(textures, id);
       tdfxTexInfo *ti = TDFX_TEXTURE_DATA( tObj );
       if ( ti && ti->isInTM ) {
+         int i;
 	 for ( i = 0 ; i < MAX_TEXTURE_UNITS ; i++ ) {
 	    if ( ctx->Texture.Unit[i]._Current == tObj ) {
 	       tdfxTMDownloadTexture( fxMesa, tObj );
