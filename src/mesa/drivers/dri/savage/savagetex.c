@@ -1470,6 +1470,17 @@ static void savageTexEnv( GLcontext *ctx, GLenum target,
    } 
 }
 
+/* Update a heap's timestamp when a texture image is modified, so the
+ * new image is not uploaded while the old one is still in use.
+ * FIXME: this should be moved to ../common/texmem.c 
+ */
+static void savageTexImageChanged (savageTexObjPtr t) {
+    /* Update the heap's time stamp, so the new image is not uploaded
+     * while the old one is still in use. */
+    if (t->base.heap && t->base.timestamp > t->base.heap->timestamp)
+	t->base.heap->timestamp = t->base.timestamp;
+}
+
 static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			      GLint internalFormat,
 			      GLint width, GLint border,
@@ -1480,7 +1491,7 @@ static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      /* Do nothing. Marking the image as dirty below is sufficient. */
+      savageTexImageChanged (t);
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1509,6 +1520,7 @@ static void savageTexSubImage1D( GLcontext *ctx,
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
+      savageTexImageChanged (t);
       savageMarkDirtyTiles(t, level, texImage->Width2, 1,
 			   xoffset, 0, width, 1);
    } else {
@@ -1536,7 +1548,7 @@ static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      /* Do nothing. Marking the image as dirty below is sufficient. */
+      savageTexImageChanged (t);
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1565,6 +1577,7 @@ static void savageTexSubImage2D( GLcontext *ctx,
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
+      savageTexImageChanged (t);
       savageMarkDirtyTiles(t, level, texImage->Width2, texImage->Height2,
 			   xoffset, yoffset, width, height);
    } else {
