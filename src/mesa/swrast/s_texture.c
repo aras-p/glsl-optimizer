@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.18 2001/03/22 04:54:58 brianp Exp $ */
+/* $Id: s_texture.c,v 1.19 2001/03/23 18:53:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2664,8 +2664,9 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 	    }
 	 }
 
-         if (textureUnit->_Current->MinLod != -1000.0
-             || textureUnit->_Current->MaxLod != 1000.0) {
+         if ((textureUnit->_Current->MinLod != -1000.0
+              || textureUnit->_Current->MaxLod != 1000.0)
+             && lambda) {
             /* apply LOD clamping to lambda */
             const GLfloat min = textureUnit->_Current->MinLod;
             const GLfloat max = textureUnit->_Current->MaxLod;
