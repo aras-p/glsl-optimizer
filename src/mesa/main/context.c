@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.27 1999/12/10 19:09:21 brianp Exp $ */
+/* $Id: context.c,v 1.28 1999/12/17 12:21:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,15 +22,6 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
-/*
- * If multi-threading is enabled (-DTHREADS) then each thread has it's
- * own rendering context.  A thread obtains the pointer to its GLcontext
- * with the gl_get_thread_context() function.  Otherwise, the global
- * pointer, CC, points to the current context used by all threads in
- * the address space.
  */
 
 
@@ -94,10 +85,13 @@
 
 #ifdef THREADS
 
-#include "mthreads.h"
-static MesaTSD mesa_ctx_tsd;
-static void mesa_ctx_thread_init() {
-  MesaInitTSD(&mesa_ctx_tsd);
+#include "glthread.h"
+
+static _glthread_TSD ContextTSD;
+
+static void ctx_thread_init()
+{
+   _glthread_InitTSD(&ContextTSD);
 }
 
 #else
@@ -1275,14 +1269,6 @@ GLcontext *gl_create_context( GLvisual *visual,
    }
 
    
-   /* Fill in some driver defaults now.
-    */
-#if 0
-   ctx->Driver.AllocDepthBuffer = gl_alloc_depth_buffer;
-   ctx->Driver.ReadDepthSpanFloat = gl_read_depth_span_float;
-   ctx->Driver.ReadDepthSpanInt = gl_read_depth_span_int;
-#endif
-
 #ifdef PROFILE
    init_timings( ctx );
 #endif
@@ -1322,6 +1308,11 @@ void gl_destroy_context( GLcontext *ctx )
 
       GLuint i;
       struct gl_shine_tab *s, *tmps;
+
+      /* if we're destroying the current context, unbind it first */
+      if (ctx == gl_get_current_context()) {
+         gl_make_current(NULL, NULL);
+      }
 
 #ifdef PROFILE
       if (getenv("MESA_PROFILE")) {
@@ -1410,14 +1401,6 @@ void gl_destroy_context( GLcontext *ctx )
       gl_extensions_dtr(ctx);
 
       FREE( (void *) ctx );
-
-#ifndef THREADS
-      if (ctx == _mesa_current_context) {
-         _mesa_current_context = NULL;
-	 CURRENT_INPUT = NULL;
-      }
-#endif
-
    }
 }
 
@@ -1524,36 +1507,39 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
                        GLframebuffer *readBuffer )
 {
-   GET_CURRENT_CONTEXT(oldCtx);
+#if 0
+   GLcontext *oldCtx = gl_get_current_context();
 
    /* Flush the old context
     */
    if (oldCtx) {
       ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
-   }
 
-   /* unbind frame buffers from context */
-   if (oldCtx && oldCtx->DrawBuffer) {
-      oldCtx->DrawBuffer = NULL;
+      /* unbind frame buffers from context */
+      if (oldCtx->DrawBuffer) {
+         oldCtx->DrawBuffer = NULL;
+      }
+      if (oldCtx->ReadBuffer) {
+         oldCtx->ReadBuffer = NULL;
+      }
    }
-   if (oldCtx && oldCtx->ReadBuffer) {
-      oldCtx->ReadBuffer = NULL;
-   }
+#endif
+
+   _glapi_check_multithread();
 
 #ifdef THREADS
-   /* TODO: unbind old buffer from context? */
-   MesaSetTSD(&mesa_ctx_tsd, (void *) newCtx, mesa_ctx_thread_init);
+   _glthread_SetTSD(&ContextTSD, (void *) newCtx, ctx_thread_init);
+   ASSERT(gl_get_current_context() == newCtx);
 #else
    _mesa_current_context = newCtx;
 #endif
    if (newCtx) {
       SET_IMMEDIATE(newCtx, newCtx->input);
-   }
-
-   if (newCtx)
       _glapi_set_dispatch(newCtx->CurrentDispatch);
-   else
+   }
+   else {
       _glapi_set_dispatch(NULL);  /* none current */
+   }
 
    if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
 
@@ -1589,7 +1575,8 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 GLcontext *gl_get_current_context( void )
 {
 #ifdef THREADS
-   return (GLcontext *) MesaGetTSD(&mesa_ctx_tsd);
+   GLcontext *c = (GLcontext *) _glthread_GetTSD(&ContextTSD);
+   return c;
 #else
    return _mesa_current_context;
 #endif

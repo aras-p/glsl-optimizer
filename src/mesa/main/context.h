@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.5 1999/12/10 19:09:22 brianp Exp $ */
+/* $Id: context.h,v 1.6 1999/12/17 12:21:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,34 +116,31 @@ extern GLcontext *gl_get_current_context(void);
 
 
 #ifdef THREADS
-   /*
-    * A seperate GLcontext for each thread
-    */
 
-   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = gl_get_current_context()
-
+/*
+ * A seperate GLcontext for each thread
+ */
+#define GET_CURRENT_CONTEXT(C)  GLcontext *C = gl_get_current_context()
 #define GET_IMMEDIATE struct immediate *IM = (gl_get_current_context())->input;
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
    ctx->input = im;			\
 } while (0)
 
-
 #else
-   /*
-    * All threads use same pointer to current context.
-    */
-   extern GLcontext *_mesa_current_context;
-   extern struct immediate *CURRENT_INPUT;
-   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
 
+/*
+ * All threads use same pointer to current context.
+ */
+extern GLcontext *_mesa_current_context;
+extern struct immediate *CURRENT_INPUT;
+#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
 #define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
    ctx->input = im;			\
    CURRENT_INPUT = im;			\
 } while (0)
-
 
 #endif
 
