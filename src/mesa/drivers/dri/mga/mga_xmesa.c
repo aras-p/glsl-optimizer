@@ -404,6 +404,8 @@ mgaDestroyScreen(__DRIscreenPrivate *sPriv)
    if (MGA_DEBUG&DEBUG_VERBOSE_DRI)
       fprintf(stderr, "mgaDestroyScreen\n");
 
+   drmUnmapBufs(mgaScreen->bufs);
+
    /*drmUnmap(mgaScreen->agp_tex.map, mgaScreen->agp_tex.size);*/
 
    /* free all option information */
