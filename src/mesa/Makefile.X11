@@ -1,8 +1,4 @@
-# Mesa 3-D graphics library
-# Version:  5.1
-# Copyright (C) 1995-2003  Brian Paul
-
-# Makefile for core library
+# Makefile for core Mesa library
 
 
 ##### MACROS #####
@@ -78,10 +74,6 @@ CORE_SOURCES = \
 	main/texutil.c \
 	main/varray.c \
 	main/vtxfmt.c \
-	x86/x86.c \
-	x86/common_x86.c \
-	x86/3dnow.c \
-	x86/sse.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
 	math/m_debug_xform.c \
@@ -144,8 +136,12 @@ CORE_SOURCES = \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c
-
+	tnl/t_vb_vertex.c \
+	x86/common_x86.c	\
+	x86/x86.c		\
+	x86/3dnow.c		\
+	x86/sse.c		\
+	sparc/sparc.c
 
 DRIVER_SOURCES = \
 	drivers/glide/fxapi.c \
@@ -172,20 +168,48 @@ DRIVER_SOURCES = \
 	drivers/svga/svgamesa24.c \
 	drivers/svga/svgamesa32.c
 
+X86_SOURCES = \
+	x86/common_x86_asm.S	\
+	x86/glapi_x86.S		\
+	x86/x86_xform2.S	\
+	x86/x86_xform3.S	\
+	x86/x86_xform4.S	\
+	x86/x86_cliptest.S	\
+	x86/mmx_blend.S		\
+	x86/3dnow_xform1.S	\
+	x86/3dnow_xform2.S	\
+	x86/3dnow_xform3.S	\
+	x86/3dnow_xform4.S	\
+	x86/3dnow_normal.S	\
+	x86/sse_xform1.S	\
+	x86/sse_xform2.S	\
+	x86/sse_xform3.S	\
+	x86/sse_xform4.S	\
+	x86/sse_normal.S
 
+SPARC_SOURCES = \
+	sparc/clip.S		\
+	sparc/glapi_sparc.S	\
+	sparc/norm.S		\
+	sparc/xform.S
+
+OSMESA_SOURCES = \
+	drivers/osmesa/osmesa.c
+
+
+
+# This will probably get set to $(X86_SOURCES) in Make-config:
 ASM_SOURCES =
 
-ADDITIONAL_OBJ =
-
-OBJECTS = $(ASM_SOURCES:.S=.o) \
-	$(CORE_SOURCES:.c=.o) \
-	$(DRIVER_SOURCES:.c=.o) \
-	$(ADDITIONAL_OBJ)
+OBJECTS = \
+	$(CORE_SOURCES:.c=.o)	\
+	$(ASM_SOURCES:.S=.o)	\
+	$(DRIVER_SOURCES:.c=.o)
 
 CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
-OSMESA_SOURCES = drivers/osmesa/osmesa.c
-OSMESA_OBJECTS = drivers/osmesa/osmesa.o
+OSMESA_OBJECTS = $(OSMESA_SOURCES:.c=.o)
+
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
@@ -198,7 +222,6 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/swrast_setup
 
 
-
 ##### RULES #####
 
 .c.o:
@@ -208,35 +231,23 @@ INCLUDE_DIRS = \
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-x86/x86.o: x86/x86.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
-x86/common_x86.o: x86/common_x86.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
-x86/common_x86_asm.o: x86/common_x86_asm.S x86/matypes.h
-x86/3dnow.o: x86/3dnow.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
-x86/sse.o: x86/sse.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 x86/matypes.h: main/mtypes.h tnl/t_context.h x86/gen_matypes.c
 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) x86/gen_matypes.c -o x86/gen_matypes
 	./x86/gen_matypes > x86/matypes.h
 	rm -f x86/gen_matypes x86/*.o
 
-# We have x86/matypes.h depend on x86/matypes.h so that if ASM_SOURCES
-# is empty we don't get an invalid Makefile.
-$(ASM_SOURCES) x86/matypes.h: x86/matypes.h
+x86/common_x86_asm.o: x86/matypes.h
+
 
 
 ##### TARGETS #####
 
-#default:
-#	@echo "Specify a target configuration"
+default:
+	@echo "Specify a target configuration"
 
-clean:
-	-rm -f *.o *~ */*.o */*~ *.lo *.la
-	-rm -rf .libs
 
 targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
+
 
 # Make the GL library
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
@@ -253,26 +264,32 @@ $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
 		$(OSMESA_OBJECTS) ; fi
 
 # Make an optional library with _just_ core objects
-libmesa:	$(LIBDIR)/$(MESA_LIB)
+libmesa: $(LIBDIR)/$(MESA_LIB)
 	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
 	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
 	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
 
-
 $(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
+
+
+# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# what's included by any source file.
+dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES) $(ASM_SOURCES)
+	makedepend -fdepend -Y -I../include -DGGI -DSVGA -DFX $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES) $(ASM_SOURCES)
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Clean up .o and backup files
+clean:
+	-rm -f */*.o */*~ */*.o */*~
+	-rm -f drivers/*/*.o
+	-rm -f drivers/dri/*/*.o
+
 
 include $(TOP)/Make-config
 
 include depend
-
-
-
-#
-# Run 'make dep' to update the dependencies if you change what's included
-# by any source file.
-#
-dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
-	makedepend -fdepend -Y -I../include -DGGI -DSVGA -DFX $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
-
-tags:
-	etags `find . -name \*.[ch]` `find ../include`

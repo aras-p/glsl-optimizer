@@ -1,5 +1,3 @@
-/* $Id: sparc.c,v 1.9 2003/02/08 15:43:39 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -28,6 +26,8 @@
  * Sparc assembly code by David S. Miller
  */
 
+
+#ifdef USE_SPARC_ASM
 
 #include "context.h"
 #include "math/m_xform.h"
@@ -151,8 +151,12 @@ extern unsigned int _mesa_sparc_glapi_begin;
 extern unsigned int _mesa_sparc_glapi_end;
 extern void __glapi_sparc_icache_flush(unsigned int *);
 
+#endif /* USE_SPARC_ASM */
+
+
 void _mesa_init_sparc_glapi_relocs(void)
 {
+#ifdef USE_SPARC_ASM
 	unsigned int *insn_ptr, *end_ptr;
 	unsigned long disp_addr;
 
@@ -176,4 +180,8 @@ void _mesa_init_sparc_glapi_relocs(void)
 		insn_ptr += 5;
 #endif
 	}
+#endif /* USE_SPARC_ASM */
 }
+
+
+

@@ -150,9 +150,7 @@ freebsd-386:
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
 	"CXXFLAGS = $(CFLAGS)" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 #special hidden target, to make a shared lib for ONLY Mesa "core"
 gcc-mesa-sl:
@@ -414,16 +412,7 @@ linux-x86:
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S \
-		x86/mmx_blend.S \
-		x86/3dnow_xform1.S x86/3dnow_xform2.S \
-		x86/3dnow_xform3.S x86/3dnow_xform4.S \
-		x86/3dnow_normal.S \
-		x86/sse_xform1.S x86/sse_xform2.S \
-		x86/sse_xform3.S x86/sse_xform4.S \
-		x86/sse_normal.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-x86-sse:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -439,16 +428,7 @@ linux-x86-sse:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S \
-		x86/mmx_blend.S \
-		x86/3dnow_xform1.S x86/3dnow_xform2.S \
-		x86/3dnow_xform3.S x86/3dnow_xform4.S \
-		x86/3dnow_normal.S \
-		x86/sse_xform1.S x86/sse_xform2.S \
-		x86/sse_xform3.S x86/sse_xform4.S \
-		x86/sse_normal.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-icc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -464,16 +444,7 @@ linux-icc:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S \
-		x86/mmx_blend.S \
-		x86/3dnow_xform1.S x86/3dnow_xform2.S \
-		x86/3dnow_xform3.S x86/3dnow_xform4.S \
-		x86/3dnow_normal.S \
-		x86/sse_xform1.S x86/sse_xform2.S \
-		x86/sse_xform3.S x86/sse_xform4.S \
-		x86/sse_normal.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
@@ -508,9 +479,7 @@ linux-x86-ggi:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -543,17 +512,7 @@ linux-x86-glide:
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S  \
-		x86/mmx_blend.S \
-		x86/3dnow_xform1.S x86/3dnow_xform2.S \
-		x86/3dnow_xform3.S x86/3dnow_xform4.S \
-		x86/3dnow_normal.S  \
-		FX/x86/fx_3dnow_fastpath.S \
-		x86/sse_xform1.S x86/sse_xform2.S \
-		x86/sse_xform3.S x86/sse_xform4.S \
-		x86/sse_normal.S "
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-alpha:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1011,16 +970,7 @@ linux-x86-debug:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = x86/common_x86_asm.S x86/glapi_x86.S \
-		x86/x86_xform2.S x86/x86_xform3.S x86/x86_xform4.S \
-		x86/x86_cliptest.S \
-		x86/mmx_blend.S \
-		x86/3dnow_xform1.S x86/3dnow_xform2.S \
-		x86/3dnow_xform3.S x86/3dnow_xform4.S \
-		x86/3dnow_normal.S \
-		x86/sse_xform1.S x86/sse_xform2.S \
-		x86/sse_xform3.S x86/sse_xform4.S \
-		x86/sse_normal.S"
+	"ASM_SOURCES = $(X86_SOURCES)"
 
 linux-glide-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
