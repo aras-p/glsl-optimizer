@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.25 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: feedback.c,v 1.26 2002/06/15 02:54:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -340,7 +340,7 @@ _mesa_RenderMode( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
+      _mesa_debug(ctx, "glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
 
    FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
 

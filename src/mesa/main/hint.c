@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.12 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: hint.c,v 1.13 2002/06/15 02:54:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,8 @@ _mesa_Hint( GLenum target, GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug("glHint %s %d\n", _mesa_lookup_enum_by_nr(target), mode);
+      _mesa_debug(ctx, "glHint %s %d\n",
+                  _mesa_lookup_enum_by_nr(target), mode);
 
    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
