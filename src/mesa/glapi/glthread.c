@@ -1,4 +1,4 @@
-/* $Id: glthread.c,v 1.1 1999/12/16 17:31:06 brianp Exp $ */
+/* $Id: glthread.c,v 1.2 1999/12/17 11:13:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,7 +88,7 @@ _glthread_GetID(void)
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   if (pthread_key_create(&tsd->key, free) != 0) {
+   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
       perror(INIT_TSD_ERROR);
       exit(-1);
    }
@@ -109,7 +109,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
    if (pthread_setspecific(tsd->key, ptr) != 0) {
       perror(SET_TSD_ERROR);
       exit(-1);
-   };
+   }
 }
 
 #endif /* PTHREADS */
@@ -157,7 +157,7 @@ _glthread_GetTSD(_glthread_TSD *tsd)
    if ((errno = thr_getspecific(tsd->key, &ret)) != 0) {
       perror(GET_TSD_ERROR);
       exit(-1);
-   };
+   }
 #endif
    return ret;
 }
@@ -176,7 +176,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
    if ((errno = thr_setspecific(tsd->key, ptr)) != 0) {
       perror(SET_TSD_ERROR);
       exit(-1);
-   };
+   }
 }
 
 #undef USE_LOCK_FOR_KEY
@@ -233,7 +233,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
          applications? Does Windows have perror? */
       /* perror(SET_TSD_ERROR);*/
       exit(-1);
-   };
+   }
 }
 
 #endif /* WIN32 */
