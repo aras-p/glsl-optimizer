@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.17 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: drawpix.c,v 1.18 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,15 +116,10 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
       return GL_TRUE;
    }
 
-   if (ctx->NewState) {
-      gl_update_state(ctx);
-   }
-
    if ((ctx->RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
-       && ctx->Pixel.RedBias==0.0 && ctx->Pixel.RedScale==1.0
-       && ctx->Pixel.GreenBias==0.0 && ctx->Pixel.GreenScale==1.0
-       && ctx->Pixel.BlueBias==0.0 && ctx->Pixel.BlueScale==1.0
-       && ctx->Pixel.AlphaBias==0.0 && ctx->Pixel.AlphaScale==1.0
+       && !ctx->Pixel.ScaleOrBiasRGBA
+       && !ctx->Pixel.ScaleOrBiasRGBApcm
+       && ctx->ColorMatrix.type == MATRIX_IDENTITY
        && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
        && ctx->Pixel.MapColorFlag==0
        && ctx->Texture.ReallyEnabled == 0
@@ -690,6 +685,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       GLint x, y;
       if (!pixels || !ctx->Current.RasterPosValid) {
 	 return;
+      }
+
+      if (ctx->NewState) {
+         gl_update_state(ctx);
       }
 
       x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);

@@ -1,4 +1,4 @@
-/* $Id: pixel.h,v 1.3 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: pixel.h,v 1.4 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,15 +85,20 @@ extern void gl_scale_and_bias_rgba( const GLcontext *ctx, GLuint n,
                                     GLubyte rgba[][4] );
 
 
-extern void gl_scale_and_bias_rgba_float( const GLcontext *ctx, GLuint n,
-                                          GLfloat rgba[][4] );
+extern void
+_mesa_scale_and_bias_rgba_float( const GLcontext *ctx, GLuint n,
+                                 GLfloat rgba[][4] );
 
 
 extern void gl_map_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] );
 
 
-extern void gl_map_rgba_float( const GLcontext *ctx, GLuint n,
-                               GLfloat rgba[][4] );
+extern void
+_mesa_map_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] );
+
+
+extern void
+_mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
 
 
 extern void gl_map_color( const GLcontext *ctx, GLuint n,

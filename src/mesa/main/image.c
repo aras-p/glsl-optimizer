@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.24 2000/03/29 15:56:53 brianp Exp $ */
+/* $Id: image.c,v 1.25 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2154,12 +2154,13 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
-   /* this is intended for RGBA mode */
+   /* this is intended for RGBA mode only */
    assert(ctx->Visual->RGBAflag);
 
    applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
                         ctx->Pixel.MapColorFlag ||
-                        ctx->Pixel.MapColorFlag);
+                        ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+                        ctx->Pixel.ScaleOrBiasRGBApcm);
 
    /* Try simple cases first */
    if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE) {
@@ -2265,11 +2266,16 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
 
          if (applyTransferOps) {
             /* scale and bias colors */
-            gl_scale_and_bias_rgba_float(ctx, n, rgba);
+            _mesa_scale_and_bias_rgba_float(ctx, n, rgba);
 
             /* color table lookup */
             if (ctx->Pixel.MapColorFlag) {
-               gl_map_rgba_float(ctx, n, rgba);
+               _mesa_map_rgba_float(ctx, n, rgba);
+            }
+
+            if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
+                ctx->Pixel.ScaleOrBiasRGBApcm) {
+               _mesa_transform_rgba(ctx, n, rgba);
             }
          }
       }

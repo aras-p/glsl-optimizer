@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.7 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: state.c,v 1.8 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1146,6 +1146,11 @@ void gl_update_state( GLcontext *ctx )
 
       gl_calculate_model_project_matrix( ctx );
       ctx->ModelProjectWinMatrixUptodate = 0;
+   }
+
+   if (ctx->NewState & NEW_COLOR_MATRIX) {
+      gl_matrix_analyze( &ctx->ColorMatrix );
+      printf("analyze color matrix %x %x\n", ctx->ColorMatrix.flags, ctx->ColorMatrix.type);
    }
 
    /* Figure out whether we can light in object space or not.  If we

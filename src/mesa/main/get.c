@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.18 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: get.c,v 1.19 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1077,6 +1077,43 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = (GLboolean) pixel_texgen_mode(ctx);
          break;
 
+      /* GL_SGI_color_matrix (also in 1.2 imaging) */
+      case GL_COLOR_MATRIX_SGI:
+         for (i=0;i<16;i++) {
+	    params[i] = FLOAT_TO_BOOL(ctx->ColorMatrix.m[i]);
+	 }
+	 break;
+      case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = INT_TO_BOOL(ctx->ColorStackDepth + 1);
+         break;
+      case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = FLOAT_TO_BOOL(MAX_COLOR_STACK_DEPTH);
+         break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixRedScale);
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixGreenScale);
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBlueScale);
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixAlphaScale);
+         break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixRedBias);
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixGreenBias);
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixBlueBias);
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
+         *params = FLOAT_TO_BOOL(ctx->Pixel.PostColorMatrixAlphaBias);
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
@@ -2082,6 +2119,43 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) pixel_texgen_mode(ctx);
          break;
 
+      /* GL_SGI_color_matrix (also in 1.2 imaging) */
+      case GL_COLOR_MATRIX_SGI:
+         for (i=0;i<16;i++) {
+	    params[i] = (GLdouble) ctx->ColorMatrix.m[i];
+	 }
+	 break;
+      case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = (GLdouble) (ctx->ColorStackDepth + 1);
+         break;
+      case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = (GLdouble) MAX_COLOR_STACK_DEPTH;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixRedScale;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixGreenScale;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBlueScale;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixAlphaScale;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixRedBias;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixGreenBias;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixBlueBias;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
+         *params = (GLdouble) ctx->Pixel.PostColorMatrixAlphaBias;
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3062,6 +3136,43 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_PIXEL_TEX_GEN_MODE_SGIX:
          *params = (GLfloat) pixel_texgen_mode(ctx);
+         break;
+
+      /* GL_SGI_color_matrix (also in 1.2 imaging) */
+      case GL_COLOR_MATRIX_SGI:
+         for (i=0;i<16;i++) {
+	    params[i] = ctx->ColorMatrix.m[i];
+	 }
+	 break;
+      case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = (GLfloat) (ctx->ColorStackDepth + 1);
+         break;
+      case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = (GLfloat) MAX_COLOR_STACK_DEPTH;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
+         *params = ctx->Pixel.PostColorMatrixRedScale;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
+         *params = ctx->Pixel.PostColorMatrixGreenScale;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
+         *params = ctx->Pixel.PostColorMatrixBlueScale;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
+         *params = ctx->Pixel.PostColorMatrixAlphaScale;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
+         *params = ctx->Pixel.PostColorMatrixRedBias;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
+         *params = ctx->Pixel.PostColorMatrixGreenBias;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
+         *params = ctx->Pixel.PostColorMatrixBlueBias;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
+         *params = ctx->Pixel.PostColorMatrixAlphaBias;
          break;
 
       default:
@@ -4067,6 +4178,43 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_PIXEL_TEX_GEN_MODE_SGIX:
          *params = (GLint) pixel_texgen_mode(ctx);
+         break;
+
+      /* GL_SGI_color_matrix (also in 1.2 imaging) */
+      case GL_COLOR_MATRIX_SGI:
+         for (i=0;i<16;i++) {
+	    params[i] = (GLint) ctx->ColorMatrix.m[i];
+	 }
+	 break;
+      case GL_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = ctx->ColorStackDepth + 1;
+         break;
+      case GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI:
+         *params = MAX_COLOR_STACK_DEPTH;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixRedScale;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixGreenScale;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixBlueScale;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixAlphaScale;
+         break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixRedBias;
+         break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixGreenBias;
+         break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixBlueBias;
+         break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS_SGI:
+         *params = (GLint) ctx->Pixel.PostColorMatrixAlphaBias;
          break;
 
       default:

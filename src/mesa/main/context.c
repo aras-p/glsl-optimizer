@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.55 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: context.c,v 1.56 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -853,6 +853,13 @@ static void init_attrib_groups( GLcontext *ctx )
       }
    }
 
+   /* Color matrix */
+   gl_matrix_ctr(&ctx->ColorMatrix);
+   ctx->ColorStackDepth = 0;
+   for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
+      gl_matrix_ctr(&ctx->ColorStack[j]);
+   }
+
    /* Accumulate buffer group */
    ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
 
@@ -1120,6 +1127,14 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.PixelTextureEnabled = GL_FALSE;
    ctx->Pixel.FragmentRgbSource = GL_PIXEL_GROUP_COLOR_SGIS;
    ctx->Pixel.FragmentAlphaSource = GL_PIXEL_GROUP_COLOR_SGIS;
+   ctx->Pixel.PostColorMatrixRedBias = 0.0;
+   ctx->Pixel.PostColorMatrixRedScale = 1.0;
+   ctx->Pixel.PostColorMatrixGreenBias = 0.0;
+   ctx->Pixel.PostColorMatrixGreenScale = 1.0;
+   ctx->Pixel.PostColorMatrixBlueBias = 0.0;
+   ctx->Pixel.PostColorMatrixBlueScale = 1.0;
+   ctx->Pixel.PostColorMatrixAlphaBias = 0.0;
+   ctx->Pixel.PostColorMatrixAlphaScale = 1.0;
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.5 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: pixel.c,v 1.6 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -562,6 +562,30 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
       case GL_DEPTH_BIAS:
          ctx->Pixel.DepthBias = param;
 	 break;
+      case GL_POST_COLOR_MATRIX_RED_SCALE:
+         ctx->Pixel.PostColorMatrixRedScale = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_RED_BIAS:
+         ctx->Pixel.PostColorMatrixRedBias = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_GREEN_SCALE:
+         ctx->Pixel.PostColorMatrixGreenScale = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_GREEN_BIAS:
+         ctx->Pixel.PostColorMatrixGreenBias = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_BLUE_SCALE:
+         ctx->Pixel.PostColorMatrixBlueScale = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_BLUE_BIAS:
+         ctx->Pixel.PostColorMatrixBlueBias = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_ALPHA_SCALE:
+         ctx->Pixel.PostColorMatrixAlphaScale = param;
+	 break;
+      case GL_POST_COLOR_MATRIX_ALPHA_BIAS:
+         ctx->Pixel.PostColorMatrixAlphaBias = param;
+	 break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
          return;
@@ -575,6 +599,20 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
    }
    else {
       ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
+   }
+
+   if (ctx->Pixel.PostColorMatrixRedScale!=1.0F   ||
+       ctx->Pixel.PostColorMatrixRedBias!=0.0F    ||
+       ctx->Pixel.PostColorMatrixGreenScale!=1.0F ||
+       ctx->Pixel.PostColorMatrixGreenBias!=0.0F  ||
+       ctx->Pixel.PostColorMatrixBlueScale!=1.0F  ||
+       ctx->Pixel.PostColorMatrixBlueBias!=0.0F   ||
+       ctx->Pixel.PostColorMatrixAlphaScale!=1.0F ||
+       ctx->Pixel.PostColorMatrixAlphaBias!=0.0F) {
+      ctx->Pixel.ScaleOrBiasRGBApcm = GL_TRUE;
+   }
+   else {
+      ctx->Pixel.ScaleOrBiasRGBApcm = GL_FALSE;
    }
 }
 
@@ -640,7 +678,9 @@ void gl_scale_and_bias_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] )
 /*
  * Apply scale and bias factors to an array of RGBA pixels.
  */
-void gl_scale_and_bias_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+void
+_mesa_scale_and_bias_rgba_float(const GLcontext *ctx, GLuint n,
+                                GLfloat rgba[][4])
 {
    if (ctx->Pixel.RedScale != 1.0 || ctx->Pixel.RedBias != 0.0) {
       const GLfloat scale = ctx->Pixel.RedScale;
@@ -703,7 +743,8 @@ void gl_map_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] )
 /*
  * Apply pixel mapping to an array of floating point RGBA pixels.
  */
-void gl_map_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+void
+_mesa_map_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
 {
    const GLfloat rscale = ctx->Pixel.MapRtoRsize - 1;
    const GLfloat gscale = ctx->Pixel.MapGtoGsize - 1;
@@ -721,6 +762,36 @@ void gl_map_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
       rgba[i][ACOMP] = aMap[(GLint) (rgba[i][ACOMP] * ascale + 0.5F)];
    }
 }
+
+
+/*
+ * Apply the color matrix and post color matrix scaling and biasing.
+ */
+void
+_mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
+{
+   const GLfloat rs = ctx->Pixel.PostColorMatrixRedScale;
+   const GLfloat rb = ctx->Pixel.PostColorMatrixRedBias;
+   const GLfloat gs = ctx->Pixel.PostColorMatrixGreenScale;
+   const GLfloat gb = ctx->Pixel.PostColorMatrixGreenBias;
+   const GLfloat bs = ctx->Pixel.PostColorMatrixBlueScale;
+   const GLfloat bb = ctx->Pixel.PostColorMatrixBlueBias;
+   const GLfloat as = ctx->Pixel.PostColorMatrixAlphaScale;
+   const GLfloat ab = ctx->Pixel.PostColorMatrixAlphaBias;
+   const GLfloat *m = ctx->ColorMatrix.m;
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      const GLfloat r = rgba[i][RCOMP];
+      const GLfloat g = rgba[i][GCOMP];
+      const GLfloat b = rgba[i][BCOMP];
+      const GLfloat a = rgba[i][ACOMP];
+      rgba[i][RCOMP] = (m[0] * r + m[4] * g + m[ 8] * b + m[12] * a) * rs + rb;
+      rgba[i][GCOMP] = (m[1] * r + m[5] * g + m[ 9] * b + m[13] * a) * gs + gb;
+      rgba[i][BCOMP] = (m[2] * r + m[6] * g + m[10] * b + m[14] * a) * bs + bb;
+      rgba[i][ACOMP] = (m[3] * r + m[7] * g + m[11] * b + m[15] * a) * as + ab;
+   }
+}
+
 
 
 /*

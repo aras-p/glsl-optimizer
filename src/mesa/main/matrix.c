@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.16 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: matrix.c,v 1.17 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -931,6 +931,10 @@ do {									\
 	 mat = &ctx->TextureMatrix[ctx->Texture.CurrentTransformUnit];	\
 	 flags |= NEW_TEXTURE_MATRIX;					\
 	 break;								\
+      case GL_COLOR:							\
+	 mat = &ctx->ColorMatrix;					\
+	 flags |= NEW_COLOR_MATRIX;					\
+	 break;								\
       default:								\
          gl_problem(ctx, where);					\
    }									\
@@ -1037,6 +1041,7 @@ _mesa_MatrixMode( GLenum mode )
       case GL_MODELVIEW:
       case GL_PROJECTION:
       case GL_TEXTURE:
+      case GL_COLOR:
          ctx->Transform.MatrixMode = mode;
          break;
       default:
@@ -1089,6 +1094,14 @@ _mesa_PushMatrix( void )
 	    gl_matrix_copy( &ctx->TextureStack[t][ctx->TextureStackDepth[t]++],
 			    &ctx->TextureMatrix[t] );
          }
+         break;
+      case GL_COLOR:
+         if (ctx->ColorStackDepth >= MAX_COLOR_STACK_DEPTH - 1) {
+            gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
+            return;
+         }
+         gl_matrix_copy( &ctx->ColorStack[ctx->ColorStackDepth++],
+                         &ctx->ColorMatrix );
          break;
       default:
          gl_problem(ctx, "Bad matrix mode in gl_PushMatrix");
@@ -1146,6 +1159,14 @@ _mesa_PopMatrix( void )
 	    gl_matrix_copy(&ctx->TextureMatrix[t],
 			   &ctx->TextureStack[t][--ctx->TextureStackDepth[t]]);
          }
+         break;
+      case GL_COLOR:
+         if (ctx->ColorStackDepth==0) {
+            gl_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
+            return;
+         }
+         gl_matrix_copy(&ctx->ColorMatrix,
+                        &ctx->ColorStack[--ctx->ColorStackDepth]);
          break;
       default:
          gl_problem(ctx, "Bad matrix mode in gl_PopMatrix");

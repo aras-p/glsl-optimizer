@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.22 2000/04/07 16:27:26 brianp Exp $ */
+/* $Id: extensions.c,v 1.23 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,37 +49,38 @@ struct extension {
 
 
 static struct { int enabled; const char *name; } default_extensions[] = {
+   { DEFAULT_OFF,    "GL_ARB_imaging" },
+   { DEFAULT_ON,     "GL_ARB_multitexture" },
+   { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
+   { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
-   { DEFAULT_OFF,    "ARB_imaging" },
-   { DEFAULT_ON,     "GL_EXT_blend_minmax" },
    { DEFAULT_ON,     "GL_EXT_blend_logic_op" },
+   { DEFAULT_ON,     "GL_EXT_blend_minmax" },
    { DEFAULT_ON,     "GL_EXT_blend_subtract" },
+   { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
+   { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
    { DEFAULT_ON,     "GL_EXT_paletted_texture" },
    { DEFAULT_ON,     "GL_EXT_point_parameters" },
    { ALWAYS_ENABLED, "GL_EXT_polygon_offset" },
-   { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
-   { ALWAYS_ENABLED, "GL_EXT_texture_object" },
+   { ALWAYS_ENABLED, "GL_EXT_rescale_normal" },
+   { DEFAULT_ON,     "GL_EXT_shared_texture_palette" },
+   { ALWAYS_ENABLED, "GL_EXT_stencil_wrap" },
    { DEFAULT_ON,     "GL_EXT_texture3D" },
+   { DEFAULT_OFF,    "GL_EXT_texture_env" },
+   { DEFAULT_ON,     "GL_EXT_texture_env_add" },
+   { ALWAYS_ENABLED, "GL_EXT_texture_object" },
+   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
+   { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
+   { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
+   { DEFAULT_OFF,    "GL_HP_occlusion_test" },
+   { DEFAULT_ON,     "GL_INGR_blend_func_separate" },
    { ALWAYS_ENABLED, "GL_MESA_window_pos" },
    { ALWAYS_ENABLED, "GL_MESA_resize_buffers" },
-   { DEFAULT_ON,     "GL_EXT_shared_texture_palette" },
-   { ALWAYS_ENABLED, "GL_EXT_rescale_normal" },
-   { ALWAYS_ENABLED, "GL_EXT_abgr" },
-   { ALWAYS_ENABLED, "GL_SGIS_texture_edge_clamp" },
-   { ALWAYS_ENABLED, "GL_EXT_stencil_wrap" },
-   { DEFAULT_ON,     "GL_INGR_blend_func_separate" },
-   { DEFAULT_ON,     "GL_ARB_multitexture" },
    { ALWAYS_ENABLED, "GL_NV_texgen_reflection" },
    { DEFAULT_ON,     "GL_PGI_misc_hints" },
-   { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
-   { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
-   { DEFAULT_ON,     "GL_EXT_texture_env_add" },
-   { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
-   { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
-   { DEFAULT_OFF,    "GL_EXT_texture_env" },
-   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
-   { DEFAULT_OFF,    "GL_HP_occlusion_test" },
+   { DEFAULT_ON,     "GL_SGI_color_matrix" },
    { DEFAULT_ON,     "GL_SGIS_pixel_texture" },
+   { DEFAULT_ON,     "GL_SGIS_texture_edge_clamp" },
    { DEFAULT_ON,     "GL_SGIX_pixel_texture" }
 };
 

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.9 2000/04/07 00:19:41 brianp Exp $ */
+/* $Id: config.h,v 1.10 2000/04/08 18:57:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,6 +51,9 @@
 
 /* Maximum texture matrix stack depth: */
 #define MAX_TEXTURE_STACK_DEPTH 10
+
+/* Maximum color matrix stack depth: */
+#define MAX_COLOR_STACK_DEPTH 4
 
 /* Maximum attribute stack depth: */
 #define MAX_ATTRIB_STACK_DEPTH 16
