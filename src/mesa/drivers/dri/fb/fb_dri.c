@@ -209,7 +209,7 @@ init_core_functions( GLcontext *ctx )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; 
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 3
+   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 3
 #define INC_PIXEL_PTR(P) P += 3
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R
@@ -227,7 +227,7 @@ init_core_functions( GLcontext *ctx )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; 
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 4;
+   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R;  P[3] = 255
@@ -287,7 +287,7 @@ init_core_functions( GLcontext *ctx )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X)
+   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X)
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_CI_PIXEL(P, CI) \
    P[0] = CI
