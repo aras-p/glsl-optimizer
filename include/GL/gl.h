@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.29 2000/02/05 01:51:54 brianp Exp $ */
+/* $Id: gl.h,v 1.30 2000/02/10 17:27:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,6 +78,11 @@
 #	define GLAPIENTRYP __stdcall *
 #	define GLCALLBACK __stdcall
 #       define GLCALLBACKP __stdcall *
+#if defined(__CYGWIN32__)
+#       define GLCALLBACKPCAST *
+#else
+#       define GLCALLBACKPCAST __stdcall *
+#endif
 #	define GLWINAPI __stdcall
 #	define GLWINAPIV __cdecl
 #else
@@ -87,6 +92,7 @@
 #	define GLAPIENTRYP *
 #	define GLCALLBACK
 #	define GLCALLBACKP *
+#	define GLCALLBACKPCAST *
 #	define GLWINAPI
 #	define GLWINAPIV
 #endif /* WIN32 / CYGWIN32 bracket */
