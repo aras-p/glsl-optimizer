@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.3 2001/02/07 03:53:07 brianp Exp $ */
+/* $Id: texstore.c,v 1.4 2001/02/07 19:02:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -517,7 +517,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
    /* try common 2D texture cases first */
    if (!ctx->_ImageTransferState && dimensions == 2
-       && srcType == GL_UNSIGNED_BYTE) {
+       && srcType == CHAN_TYPE) {
 
       if (srcFormat == texFormat) {
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
@@ -575,7 +575,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
     */
    if (texFormat == GL_COLOR_INDEX) {
       /* color index texture */
-      const GLenum texType = GL_UNSIGNED_BYTE;
+      const GLenum texType = CHAN_TYPE;
       GLint img, row;
       GLchan *dest = texAddr + dstZoffset * dstImageStride
                     + dstYoffset * dstRowStride
@@ -657,7 +657,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_float_rgba_span(ctx, convWidth,
                                           (const GLfloat (*)[4]) srcf,
-                                          texFormat, GL_UNSIGNED_BYTE,
+                                          texFormat, CHAN_TYPE,
                                           dest, &_mesa_native_packing,
                                           ctx->_ImageTransferState
                                           & IMAGE_POST_CONVOLUTION_BITS);
