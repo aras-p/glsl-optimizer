@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.94 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: teximage.c,v 1.95 2001/05/24 14:47:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -328,7 +328,9 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
    ASSERT(tObj);
    ASSERT(texImage);
    switch (target) {
+      case GL_TEXTURE_1D:
       case GL_TEXTURE_2D:
+      case GL_TEXTURE_3D:
          tObj->Image[level] = texImage;
          return;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:

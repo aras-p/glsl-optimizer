@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.26 2001/05/22 21:49:03 brianp Exp $ */
+/* $Id: texstore.c,v 1.27 2001/05/24 14:47:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -625,6 +625,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -731,6 +732,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -923,7 +925,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
    /* We always pass.
     * The core Mesa code will have already tested the image size, etc.
-    * Drivers may have more stringent texture limits to enforce and will
+    * If a driver has more stringent texture limits to enforce it will
     * have to override this function.
     */
    /* choose the texture format */
@@ -940,45 +942,53 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 /*
  * Average together two rows of a source image to produce a single new
  * row in the dest image.  It's legal for the two source rows to point
- * to the same data.  The source rows are to be twice as long as the
- * dest row.
+ * to the same data.  The source width must be equal to either the
+ * dest width or two times the dest width.
  */
 static void
-do_row(const struct gl_texture_format *format, GLint dstWidth,
-       const GLvoid *srcRowA, const GLvoid *srcRowB, GLvoid *dstRow)
+do_row(const struct gl_texture_format *format, GLint srcWidth,
+       const GLvoid *srcRowA, const GLvoid *srcRowB,
+       GLint dstWidth, GLvoid *dstRow)
 {
+   const GLuint k0 = (srcWidth == dstWidth) ? 0 : 1;
+   const GLuint colStride = (srcWidth == dstWidth) ? 1 : 2;
+
+   assert(srcWidth == dstWidth || srcWidth == 2 * dstWidth);
+
    switch (format->MesaFormat) {
    case MESA_FORMAT_RGBA:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLchan (*rowA)[4] = (const GLchan (*)[4]) srcRowA;
          const GLchan (*rowB)[4] = (const GLchan (*)[4]) srcRowB;
          GLchan (*dst)[4] = (GLchan (*)[4]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
-            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
-                         rowB[j][2] + rowB[j+1][2]) >> 2;
-            dst[i][3] = (rowA[j][3] + rowA[j+1][3] +
-                         rowB[j][3] + rowB[j+1][3]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                         rowB[j][2] + rowB[k][2]) >> 2;
+            dst[i][3] = (rowA[j][3] + rowA[k][3] +
+                         rowB[j][3] + rowB[k][3]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_RGB:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLchan (*rowA)[3] = (const GLchan (*)[3]) srcRowA;
          const GLchan (*rowB)[3] = (const GLchan (*)[3]) srcRowB;
          GLchan (*dst)[3] = (GLchan (*)[3]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
-            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
-                         rowB[j][2] + rowB[j+1][2]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                         rowB[j][2] + rowB[k][2]) >> 2;
          }
       }
       return;
@@ -987,37 +997,40 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
    case MESA_FORMAT_INTENSITY:
    case MESA_FORMAT_COLOR_INDEX:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLchan *rowA = (const GLchan *) srcRowA;
          const GLchan *rowB = (const GLchan *) srcRowB;
          GLchan *dst = (GLchan *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_LUMINANCE_ALPHA:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLchan (*rowA)[2] = (const GLchan (*)[2]) srcRowA;
          const GLchan (*rowB)[2] = (const GLchan (*)[2]) srcRowB;
          GLchan (*dst)[2] = (GLchan (*)[2]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_DEPTH_COMPONENT:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLfloat *rowA = (const GLfloat *) srcRowA;
          const GLfloat *rowB = (const GLfloat *) srcRowB;
          GLfloat *dst = (GLfloat *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) * 0.25F;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
          }
       }
       return;
@@ -1025,57 +1038,60 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
    case MESA_FORMAT_RGBA8888:
    case MESA_FORMAT_ARGB8888:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLubyte (*rowA)[4] = (const GLubyte (*)[4]) srcRowA;
          const GLubyte (*rowB)[4] = (const GLubyte (*)[4]) srcRowB;
          GLubyte (*dst)[4] = (GLubyte (*)[4]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
-            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
-                         rowB[j][2] + rowB[j+1][2]) >> 2;
-            dst[i][3] = (rowA[j][3] + rowA[j+1][3] +
-                         rowB[j][3] + rowB[j+1][3]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                         rowB[j][2] + rowB[k][2]) >> 2;
+            dst[i][3] = (rowA[j][3] + rowA[k][3] +
+                         rowB[j][3] + rowB[k][3]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_RGB888:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLubyte (*rowA)[3] = (const GLubyte (*)[3]) srcRowA;
          const GLubyte (*rowB)[3] = (const GLubyte (*)[3]) srcRowB;
          GLubyte (*dst)[3] = (GLubyte (*)[3]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
-            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
-                         rowB[j][2] + rowB[j+1][2]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                         rowB[j][2] + rowB[k][2]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_RGB565:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            const GLint rowAr0 = rowA[j]   & 0x1f;
-            const GLint rowAr1 = rowA[j+1] & 0x1f;
-            const GLint rowBr0 = rowB[j]   & 0x1f;
-            const GLint rowBr1 = rowB[j+1] & 0x1f;
-            const GLint rowAg0 = (rowA[j]   >> 5) & 0x3f;
-            const GLint rowAg1 = (rowA[j+1] >> 5) & 0x3f;
-            const GLint rowBg0 = (rowB[j]   >> 5) & 0x3f;
-            const GLint rowBg1 = (rowB[j+1] >> 5) & 0x3f;
-            const GLint rowAb0 = (rowA[j]   >> 11) & 0x1f;
-            const GLint rowAb1 = (rowA[j+1] >> 11) & 0x1f;
-            const GLint rowBb0 = (rowB[j]   >> 11) & 0x1f;
-            const GLint rowBb1 = (rowB[j+1] >> 11) & 0x1f;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            const GLint rowAr0 = rowA[j] & 0x1f;
+            const GLint rowAr1 = rowA[k] & 0x1f;
+            const GLint rowBr0 = rowB[j] & 0x1f;
+            const GLint rowBr1 = rowB[k] & 0x1f;
+            const GLint rowAg0 = (rowA[j] >> 5) & 0x3f;
+            const GLint rowAg1 = (rowA[k] >> 5) & 0x3f;
+            const GLint rowBg0 = (rowB[j] >> 5) & 0x3f;
+            const GLint rowBg1 = (rowB[k] >> 5) & 0x3f;
+            const GLint rowAb0 = (rowA[j] >> 11) & 0x1f;
+            const GLint rowAb1 = (rowA[k] >> 11) & 0x1f;
+            const GLint rowBb0 = (rowB[j] >> 11) & 0x1f;
+            const GLint rowBb1 = (rowB[k] >> 11) & 0x1f;
             const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
             const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
             const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
@@ -1085,27 +1101,28 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
       return;
    case MESA_FORMAT_ARGB4444:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            const GLint rowAr0 = rowA[j]   & 0xf;
-            const GLint rowAr1 = rowA[j+1] & 0xf;
-            const GLint rowBr0 = rowB[j]   & 0xf;
-            const GLint rowBr1 = rowB[j+1] & 0xf;
-            const GLint rowAg0 = (rowA[j]   >> 4) & 0xf;
-            const GLint rowAg1 = (rowA[j+1] >> 4) & 0xf;
-            const GLint rowBg0 = (rowB[j]   >> 4) & 0xf;
-            const GLint rowBg1 = (rowB[j+1] >> 4) & 0xf;
-            const GLint rowAb0 = (rowA[j]   >> 8) & 0xf;
-            const GLint rowAb1 = (rowA[j+1] >> 8) & 0xf;
-            const GLint rowBb0 = (rowB[j]   >> 8) & 0xf;
-            const GLint rowBb1 = (rowB[j+1] >> 8) & 0xf;
-            const GLint rowAa0 = (rowA[j]   >> 12) & 0xf;
-            const GLint rowAa1 = (rowA[j+1] >> 12) & 0xf;
-            const GLint rowBa0 = (rowB[j]   >> 12) & 0xf;
-            const GLint rowBa1 = (rowB[j+1] >> 12) & 0xf;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            const GLint rowAr0 = rowA[j] & 0xf;
+            const GLint rowAr1 = rowA[k] & 0xf;
+            const GLint rowBr0 = rowB[j] & 0xf;
+            const GLint rowBr1 = rowB[k] & 0xf;
+            const GLint rowAg0 = (rowA[j] >> 4) & 0xf;
+            const GLint rowAg1 = (rowA[k] >> 4) & 0xf;
+            const GLint rowBg0 = (rowB[j] >> 4) & 0xf;
+            const GLint rowBg1 = (rowB[k] >> 4) & 0xf;
+            const GLint rowAb0 = (rowA[j] >> 8) & 0xf;
+            const GLint rowAb1 = (rowA[k] >> 8) & 0xf;
+            const GLint rowBb0 = (rowB[j] >> 8) & 0xf;
+            const GLint rowBb1 = (rowB[k] >> 8) & 0xf;
+            const GLint rowAa0 = (rowA[j] >> 12) & 0xf;
+            const GLint rowAa1 = (rowA[k] >> 12) & 0xf;
+            const GLint rowBa0 = (rowB[j] >> 12) & 0xf;
+            const GLint rowBa1 = (rowB[k] >> 12) & 0xf;
             const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
             const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
             const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
@@ -1116,27 +1133,28 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
       return;
    case MESA_FORMAT_ARGB1555:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLushort *rowA = (const GLushort *) srcRowA;
          const GLushort *rowB = (const GLushort *) srcRowB;
          GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            const GLint rowAr0 = rowA[j]   & 0x1f;
-            const GLint rowAr1 = rowA[j+1] & 0x1f;
-            const GLint rowBr0 = rowB[j]   & 0x1f;
-            const GLint rowBr1 = rowB[j+1] & 0xf;
-            const GLint rowAg0 = (rowA[j]   >> 5) & 0x1f;
-            const GLint rowAg1 = (rowA[j+1] >> 5) & 0x1f;
-            const GLint rowBg0 = (rowB[j]   >> 5) & 0x1f;
-            const GLint rowBg1 = (rowB[j+1] >> 5) & 0x1f;
-            const GLint rowAb0 = (rowA[j]   >> 10) & 0x1f;
-            const GLint rowAb1 = (rowA[j+1] >> 10) & 0x1f;
-            const GLint rowBb0 = (rowB[j]   >> 10) & 0x1f;
-            const GLint rowBb1 = (rowB[j+1] >> 10) & 0x1f;
-            const GLint rowAa0 = (rowA[j]   >> 15) & 0x1;
-            const GLint rowAa1 = (rowA[j+1] >> 15) & 0x1;
-            const GLint rowBa0 = (rowB[j]   >> 15) & 0x1;
-            const GLint rowBa1 = (rowB[j+1] >> 15) & 0x1;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            const GLint rowAr0 = rowA[j] & 0x1f;
+            const GLint rowAr1 = rowA[k] & 0x1f;
+            const GLint rowBr0 = rowB[j] & 0x1f;
+            const GLint rowBr1 = rowB[k] & 0xf;
+            const GLint rowAg0 = (rowA[j] >> 5) & 0x1f;
+            const GLint rowAg1 = (rowA[k] >> 5) & 0x1f;
+            const GLint rowBg0 = (rowB[j] >> 5) & 0x1f;
+            const GLint rowBg1 = (rowB[k] >> 5) & 0x1f;
+            const GLint rowAb0 = (rowA[j] >> 10) & 0x1f;
+            const GLint rowAb1 = (rowA[k] >> 10) & 0x1f;
+            const GLint rowBb0 = (rowB[j] >> 10) & 0x1f;
+            const GLint rowBb1 = (rowB[k] >> 10) & 0x1f;
+            const GLint rowAa0 = (rowA[j] >> 15) & 0x1;
+            const GLint rowAa1 = (rowA[k] >> 15) & 0x1;
+            const GLint rowBa0 = (rowB[j] >> 15) & 0x1;
+            const GLint rowBa1 = (rowB[k] >> 15) & 0x1;
             const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
             const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
             const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
@@ -1147,37 +1165,39 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
       return;
    case MESA_FORMAT_AL88:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLubyte (*rowA)[2] = (const GLubyte (*)[2]) srcRowA;
          const GLubyte (*rowB)[2] = (const GLubyte (*)[2]) srcRowB;
          GLubyte (*dst)[2] = (GLubyte (*)[2]) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
-                         rowB[j][0] + rowB[j+1][0]) >> 2;
-            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
-                         rowB[j][1] + rowB[j+1][1]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                         rowB[j][0] + rowB[k][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                         rowB[j][1] + rowB[k][1]) >> 2;
          }
       }
       return;
    case MESA_FORMAT_RGB332:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLubyte *rowA = (const GLubyte *) srcRowA;
          const GLubyte *rowB = (const GLubyte *) srcRowB;
          GLubyte *dst = (GLubyte *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            const GLint rowAr0 = rowA[j]   & 0x3;
-            const GLint rowAr1 = rowA[j+1] & 0x3;
-            const GLint rowBr0 = rowB[j]   & 0x3;
-            const GLint rowBr1 = rowB[j+1] & 0x3;
-            const GLint rowAg0 = (rowA[j]   >> 2) & 0x7;
-            const GLint rowAg1 = (rowA[j+1] >> 2) & 0x7;
-            const GLint rowBg0 = (rowB[j]   >> 2) & 0x7;
-            const GLint rowBg1 = (rowB[j+1] >> 2) & 0x7;
-            const GLint rowAb0 = (rowA[j]   >> 5) & 0x7;
-            const GLint rowAb1 = (rowA[j+1] >> 5) & 0x7;
-            const GLint rowBb0 = (rowB[j]   >> 5) & 0x7;
-            const GLint rowBb1 = (rowB[j+1] >> 5) & 0x7;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            const GLint rowAr0 = rowA[j] & 0x3;
+            const GLint rowAr1 = rowA[k] & 0x3;
+            const GLint rowBr0 = rowB[j] & 0x3;
+            const GLint rowBr1 = rowB[k] & 0x3;
+            const GLint rowAg0 = (rowA[j] >> 2) & 0x7;
+            const GLint rowAg1 = (rowA[k] >> 2) & 0x7;
+            const GLint rowBg0 = (rowB[j] >> 2) & 0x7;
+            const GLint rowBg1 = (rowB[k] >> 2) & 0x7;
+            const GLint rowAb0 = (rowA[j] >> 5) & 0x7;
+            const GLint rowAb1 = (rowA[k] >> 5) & 0x7;
+            const GLint rowBb0 = (rowB[j] >> 5) & 0x7;
+            const GLint rowBb1 = (rowB[k] >> 5) & 0x7;
             const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
             const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
             const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
@@ -1190,12 +1210,13 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
    case MESA_FORMAT_I8:
    case MESA_FORMAT_CI8:
       {
-         GLuint i, j;
+         GLuint i, j, k;
          const GLubyte *rowA = (const GLubyte *) srcRowA;
          const GLubyte *rowB = (const GLubyte *) srcRowB;
          GLubyte *dst = (GLubyte *) dstRow;
-         for (i = j = 0; i < dstWidth; i++, j+=2) {
-            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) >> 2;
+         for (i = j = 0, k = k0; i < dstWidth;
+              i++, j += colStride, k += colStride) {
+            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
          }
       }
       return;
@@ -1205,7 +1226,11 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
 }
 
 
-
+/*
+ * These functions generate a 1/2-size mipmap image from a source image.
+ * Texture borders are handled by copying or averaging the source image's
+ * border texels, depending on the scale-down factor.
+ */
 
 static void
 make_1d_mipmap(const struct gl_texture_format *format, GLint border,
@@ -1221,7 +1246,8 @@ make_1d_mipmap(const struct gl_texture_format *format, GLint border,
    dst = dstPtr + border * bpt;
 
    /* we just duplicate the input row, kind of hack, saves code */
-   do_row(format, dstWidth - 2 * border, src, src, dst);
+   do_row(format, srcWidth - 2 * border, src, src,
+          dstWidth - 2 * border, dst);
 
    if (border) {
       /* copy left-most pixel from source */
@@ -1240,11 +1266,16 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
                GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
 {
    const GLint bpt = format->TexelBytes;
+   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
+   const GLint dstWidthNB = dstWidth - 2 * border;
+   const GLint dstHeightNB = dstHeight - 2 * border;
    const GLint srcRowStride = bpt * srcWidth;
    const GLint dstRowStride = bpt * dstWidth;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
-   GLint row;
+   GLint row, colStride;
+
+   colStride = (srcWidth == dstWidth) ? 1 : 2;
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
@@ -1254,8 +1285,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
       srcB = srcA;
    dst = dstPtr + border * ((dstWidth + 1) * bpt);
 
-   for (row = 0; row < dstHeight - 2 * border; row++) {
-      do_row(format, dstWidth - 2 * border, srcA, srcB, dst);
+   for (row = 0; row < dstHeightNB; row++) {
+      do_row(format, srcWidthNB, srcA, srcB,
+             dstWidthNB, dst);
       srcA += 2 * srcRowStride;
       srcB += 2 * srcRowStride;
       dst += dstRowStride;
@@ -1276,29 +1308,38 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
       MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
              srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
       /* lower border */
-      do_row(format, dstWidth - 2 * border,
-             srcPtr + bpt, srcPtr + bpt, dstPtr + bpt);
+      do_row(format, srcWidthNB,
+             srcPtr + bpt,
+             srcPtr + bpt,
+             dstWidthNB, dstPtr + bpt);
       /* upper border */
-      do_row(format, dstWidth - 2 * border,
+      do_row(format, srcWidthNB,
              srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
              srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
+             dstWidthNB,
              dstPtr + (dstWidth * (dstHeight - 1) + 1) * bpt);
       /* left and right borders */
-      for (row = 0; row < dstHeight - 2 * border; row += 2) {
-         GLubyte tempPixel[32];
-         GLint srcOffset;
-         srcOffset = (srcWidth * (row * 2 + 1)) * bpt;
-         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
-         srcOffset = (srcWidth * (row * 2 + 2)) * bpt;
-         MEMCPY(tempPixel + bpt, srcPtr + srcOffset, bpt);
-         do_row(format, 1, tempPixel, tempPixel,
-                dstPtr + (dstWidth * row + 1) * bpt);
-         srcOffset = (srcWidth * (row * 2 + 1) + srcWidth - 1) * bpt;
-         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
-         srcOffset = (srcWidth * (row * 2 + 2) + srcWidth - 1) * bpt;
-         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
-         do_row(format, 1, tempPixel, tempPixel,
-               dstPtr + (dstWidth * row + 1 + dstWidth - 1) * bpt);
+      if (srcHeight == dstHeight) {
+         /* copy border pixel from src to dst */
+         for (row = 1; row < srcHeight; row++) {
+            MEMCPY(dstPtr + dstWidth * row * bpt,
+                   srcPtr + srcWidth * row * bpt, bpt);
+            MEMCPY(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
+                   srcPtr + (srcWidth * row + srcWidth - 1) * bpt, bpt);
+         }
+      }
+      else {
+         /* average two src pixels each dest pixel */
+         for (row = 0; row < dstHeightNB; row += 2) {
+            do_row(format, 1,
+                   srcPtr + (srcWidth * (row * 2 + 1)) * bpt,
+                   srcPtr + (srcWidth * (row * 2 + 2)) * bpt,
+                   1, dstPtr + (dstWidth * row + 1) * bpt);
+            do_row(format, 1,
+                   srcPtr + (srcWidth * (row * 2 + 1) + srcWidth - 1) * bpt,
+                   srcPtr + (srcWidth * (row * 2 + 2) + srcWidth - 1) * bpt,
+                   1, dstPtr + (dstWidth * row + 1 + dstWidth - 1) * bpt);
+         }
       }
    }
 }
@@ -1311,33 +1352,173 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
                GLint dstWidth, GLint dstHeight, GLint dstDepth,
                GLubyte *dstPtr)
 {
-   GLvoid *tmpRowA = MALLOC(dstWidth * format->TexelBytes);
-   GLvoid *tmpRowB = MALLOC(dstWidth * format->TexelBytes);
-   const GLubyte *srcA, *srcB, *srcC, *srcD;
+   const GLint bpt = format->TexelBytes;
+   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
+   const GLint srcDepthNB = srcDepth - 2 * border;
+   const GLint dstWidthNB = dstWidth - 2 * border;
+   const GLint dstHeightNB = dstHeight - 2 * border;
+   const GLint dstDepthNB = dstDepth - 2 * border;
+   GLvoid *tmpRowA, *tmpRowB;
    GLint img, row;
+   GLint bytesPerSrcImage, bytesPerDstImage;
+   GLint bytesPerSrcRow, bytesPerDstRow;
+   GLint srcImageOffset, srcRowOffset;
 
-   if (!tmpRowA || !tmpRowB) {
-      if (tmpRowA)
-         FREE(tmpRowA);
+   /* Need two temporary row buffers */
+   tmpRowA = MALLOC(srcWidth * bpt);
+   if (!tmpRowA)
+      return;
+   tmpRowB = MALLOC(srcWidth * bpt);
+   if (!tmpRowB) {
+      FREE(tmpRowA);
       return;
    }
 
+   bytesPerSrcImage = srcWidth * srcHeight * bpt;
+   bytesPerDstImage = dstWidth * dstHeight * bpt;
+
+   bytesPerSrcRow = srcWidth * bpt;
+   bytesPerDstRow = dstWidth * bpt;
+
+   /* Offset between adjacent src images to be averaged together */
+   srcImageOffset = (srcDepth == dstDepth) ? 0 : bytesPerSrcImage;
+
+   /* Offset between adjacent src rows to be averaged together */
+   srcRowOffset = (srcHeight == dstHeight) ? 0 : srcWidth * bpt;
+
    /*
-    * XXX lots of work to do here yet
+    * Need to average together up to 8 src pixels for each dest pixel.
+    * Break that down into 3 operations:
+    *   1. take two rows from source image and average them together.
+    *   2. take two rows from next source image and average them together.
+    *   3. take the two averaged rows and average them for the final dst row.
     */
 
-   for (img = 0; img < dstDepth - 2 * border; img++) {
+   /*
+   printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
+          srcWidth, srcHeight, srcDepth, dstWidth, dstHeight, dstDepth);
+   */
 
-      for (row = 0; row < dstHeight - 2 * border; row++) {
-         do_row(format, dstWidth - 2 * border, srcA, srcB, tmpRowA);
-         do_row(format, dstWidth - 2 * border, srcC, srcD, tmpRowB);
+   for (img = 0; img < dstDepthNB; img++) {
+      /* first source image pointer, skipping border */
+      const GLubyte *imgSrcA = srcPtr
+         + (bytesPerSrcImage + bytesPerSrcRow + border) * bpt * border
+         + img * (bytesPerSrcImage + srcImageOffset);
+      /* second source image pointer, skipping border */
+      const GLubyte *imgSrcB = imgSrcA + srcImageOffset;
+      /* address of the dest image, skipping border */
+      GLubyte *imgDst = dstPtr
+         + (bytesPerDstImage + bytesPerDstRow + border) * bpt * border
+         + img * bytesPerDstImage;
 
+      /* setup the four source row pointers and the dest row pointer */
+      const GLubyte *srcImgARowA = imgSrcA;
+      const GLubyte *srcImgARowB = imgSrcA + srcRowOffset;
+      const GLubyte *srcImgBRowA = imgSrcB;
+      const GLubyte *srcImgBRowB = imgSrcB + srcRowOffset;
+      GLubyte *dstImgRow = imgDst;
 
+      for (row = 0; row < dstHeightNB; row++) {
+         /* Average together two rows from first src image */
+         do_row(format, srcWidthNB, srcImgARowA, srcImgARowB,
+                srcWidthNB, tmpRowA);
+         /* Average together two rows from second src image */
+         do_row(format, srcWidthNB, srcImgBRowA, srcImgBRowB,
+                srcWidthNB, tmpRowB);
+         /* Average together the temp rows to make the final row */
+         do_row(format, srcWidthNB, tmpRowA, tmpRowB,
+                dstWidthNB, dstImgRow);
+         /* advance to next rows */
+         srcImgARowA += bytesPerSrcRow + srcRowOffset;
+         srcImgARowB += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowA += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowB += bytesPerSrcRow + srcRowOffset;
+         dstImgRow += bytesPerDstRow;
       }
    }
 
    FREE(tmpRowA);
    FREE(tmpRowB);
+
+   /* Luckily we can leverage the make_2d_mipmap() function here! */
+   if (border > 0) {
+      /* do front border image */
+      make_2d_mipmap(format, 1, srcWidth, srcHeight, srcPtr,
+                     dstWidth, dstHeight, dstPtr);
+      /* do back border image */
+      make_2d_mipmap(format, 1, srcWidth, srcHeight,
+                     srcPtr + bytesPerSrcImage * (srcDepth - 1),
+                     dstWidth, dstHeight,
+                     dstPtr + bytesPerDstImage * (dstDepth - 1));
+      /* do four remaining border edges that span the image slices */
+      if (srcDepth == dstDepth) {
+         /* just copy border pixels from src to dst */
+         for (img = 0; img < dstDepthNB; img++) {
+            const GLubyte *src;
+            GLubyte *dst;
+
+            /* do border along [img][row=0][col=0] */
+            src = srcPtr + (img + 1) * bytesPerSrcImage;
+            dst = dstPtr + (img + 1) * bytesPerDstImage;
+            MEMCPY(dst, src, bpt);
+
+            /* do border along [img][row=dstHeight-1][col=0] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (srcHeight - 1) * bytesPerSrcRow;
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (dstHeight - 1) * bytesPerDstRow;
+            MEMCPY(dst, src, bpt);
+
+            /* do border along [img][row=0][col=dstWidth-1] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (srcWidth - 1) * bpt;
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (dstWidth - 1) * bpt;
+            MEMCPY(dst, src, bpt);
+
+            /* do border along [img][row=dstHeight-1][col=dstWidth-1] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (bytesPerSrcImage - bpt);
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (bytesPerDstImage - bpt);
+            MEMCPY(dst, src, bpt);
+         }
+      }
+      else {
+         /* average border pixels from adjacent src image pairs */
+         ASSERT(srcDepthNB == 2 * dstDepthNB);
+         for (img = 0; img < dstDepthNB; img++) {
+            const GLubyte *src;
+            GLubyte *dst;
+
+            /* do border along [img][row=0][col=0] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage;
+            dst = dstPtr + (img + 1) * bytesPerDstImage;
+            do_row(format, 1, src, src + srcImageOffset, 1, dst);
+
+            /* do border along [img][row=dstHeight-1][col=0] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (srcHeight - 1) * bytesPerSrcRow;
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (dstHeight - 1) * bytesPerDstRow;
+            do_row(format, 1, src, src + srcImageOffset, 1, dst);
+
+            /* do border along [img][row=0][col=dstWidth-1] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (srcWidth - 1) * bpt;
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (dstWidth - 1) * bpt;
+            do_row(format, 1, src, src + srcImageOffset, 1, dst);
+
+            /* do border along [img][row=dstHeight-1][col=dstWidth-1] */
+            src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
+                         + (bytesPerSrcImage - bpt);
+            dst = dstPtr + (img + 1) * bytesPerDstImage
+                         + (bytesPerDstImage - bpt);
+            do_row(format, 1, src, src + srcImageOffset, 1, dst);
+         }
+      }
+   }
 }
 
 
@@ -1387,8 +1568,8 @@ _mesa_generate_mipmap(GLcontext *ctx,
    }
 
    for (level = texObj->BaseLevel; level < texObj->MaxLevel
-           && level < ctx->Const.MaxTextureLevels; level++) {
-      /* generate level+1 from level */
+           && level < ctx->Const.MaxTextureLevels - 1; level++) {
+      /* generate image[level+1] from image[level] */
       const struct gl_texture_image *srcImage;
       struct gl_texture_image *dstImage;
       GLint srcWidth, srcHeight, srcDepth;
@@ -1455,6 +1636,8 @@ _mesa_generate_mipmap(GLcontext *ctx,
          dstImage->DriverData = NULL;
          dstImage->TexFormat = srcImage->TexFormat;
          dstImage->FetchTexel = srcImage->FetchTexel;
+         ASSERT(dstImage->TexFormat);
+         ASSERT(dstImage->FetchTexel);
 
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
 
