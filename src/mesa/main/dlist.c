@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.38 2000/05/18 18:11:35 brianp Exp $ */
+/* $Id: dlist.c,v 1.39 2000/05/19 13:12:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,7 +142,17 @@ typedef enum {
 	OPCODE_COLOR_MASK,
 	OPCODE_COLOR_MATERIAL,
 	OPCODE_COLOR_TABLE,
+	OPCODE_COLOR_TABLE_PARAMETER_FV,
+	OPCODE_COLOR_TABLE_PARAMETER_IV,
 	OPCODE_COLOR_SUB_TABLE,
+        OPCODE_CONVOLUTION_FILTER_1D,
+        OPCODE_CONVOLUTION_FILTER_2D,
+        OPCODE_CONVOLUTION_PARAMETER_I,
+        OPCODE_CONVOLUTION_PARAMETER_IV,
+        OPCODE_CONVOLUTION_PARAMETER_F,
+        OPCODE_CONVOLUTION_PARAMETER_FV,
+        OPCODE_COPY_COLOR_SUB_TABLE,
+        OPCODE_COPY_COLOR_TABLE,
 	OPCODE_COPY_PIXELS,
         OPCODE_COPY_TEX_IMAGE1D,
         OPCODE_COPY_TEX_IMAGE2D,
@@ -168,6 +178,7 @@ typedef enum {
 	OPCODE_FRUSTUM,
 	OPCODE_HINT,
 	OPCODE_HINT_PGI,
+	OPCODE_HISTOGRAM,
 	OPCODE_INDEX_MASK,
 	OPCODE_INIT_NAMES,
 	OPCODE_LIGHT,
@@ -184,6 +195,7 @@ typedef enum {
 	OPCODE_MAPGRID1,
 	OPCODE_MAPGRID2,
 	OPCODE_MATRIX_MODE,
+        OPCODE_MIN_MAX,
 	OPCODE_MULT_MATRIX,
 	OPCODE_ORTHO,
 	OPCODE_PASSTHROUGH,
@@ -205,6 +217,8 @@ typedef enum {
 	OPCODE_RASTER_POS,
 	OPCODE_RECTF,
 	OPCODE_READ_BUFFER,
+        OPCODE_RESET_HISTOGRAM,
+        OPCODE_RESET_MIN_MAX,
         OPCODE_SCALE,
 	OPCODE_SCISSOR,
 	OPCODE_SELECT_TEXTURE_SGIS,
@@ -370,6 +384,14 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
             FREE( n[6].data );
             n += InstSize[n[0].opcode];
             break;
+         case OPCODE_CONVOLUTION_FILTER_1D:
+            FREE( n[6].data );
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_CONVOLUTION_FILTER_2D:
+            FREE( n[7].data );
+            n += InstSize[n[0].opcode];
+            break;
          case OPCODE_POLYGON_STIPPLE:
             FREE( n[1].data );
 	    n += InstSize[n[0].opcode];
@@ -505,8 +527,18 @@ void gl_init_lists( void )
       InstSize[OPCODE_COLOR_MASK] = 5;
       InstSize[OPCODE_COLOR_MATERIAL] = 3;
       InstSize[OPCODE_COLOR_TABLE] = 7;
+      InstSize[OPCODE_COLOR_TABLE_PARAMETER_FV] = 7;
+      InstSize[OPCODE_COLOR_TABLE_PARAMETER_IV] = 7;
       InstSize[OPCODE_COLOR_SUB_TABLE] = 7;
+      InstSize[OPCODE_CONVOLUTION_FILTER_1D] = 7;
+      InstSize[OPCODE_CONVOLUTION_FILTER_2D] = 8;
+      InstSize[OPCODE_CONVOLUTION_PARAMETER_I] = 4;
+      InstSize[OPCODE_CONVOLUTION_PARAMETER_IV] = 7;
+      InstSize[OPCODE_CONVOLUTION_PARAMETER_F] = 4;
+      InstSize[OPCODE_CONVOLUTION_PARAMETER_FV] = 7;
       InstSize[OPCODE_COPY_PIXELS] = 6;
+      InstSize[OPCODE_COPY_COLOR_SUB_TABLE] = 6;
+      InstSize[OPCODE_COPY_COLOR_TABLE] = 6;
       InstSize[OPCODE_COPY_TEX_IMAGE1D] = 8;
       InstSize[OPCODE_COPY_TEX_IMAGE2D] = 9;
       InstSize[OPCODE_COPY_TEX_SUB_IMAGE1D] = 7;
@@ -531,6 +563,7 @@ void gl_init_lists( void )
       InstSize[OPCODE_FRUSTUM] = 7;
       InstSize[OPCODE_HINT] = 3;
       InstSize[OPCODE_HINT_PGI] = 3;
+      InstSize[OPCODE_HISTOGRAM] = 5;
       InstSize[OPCODE_INDEX_MASK] = 2;
       InstSize[OPCODE_INIT_NAMES] = 1;
       InstSize[OPCODE_LIGHT] = 7;
@@ -547,6 +580,7 @@ void gl_init_lists( void )
       InstSize[OPCODE_MAPGRID1] = 4;
       InstSize[OPCODE_MAPGRID2] = 7;
       InstSize[OPCODE_MATRIX_MODE] = 2;
+      InstSize[OPCODE_MIN_MAX] = 4;
       InstSize[OPCODE_MULT_MATRIX] = 17;
       InstSize[OPCODE_ORTHO] = 7;
       InstSize[OPCODE_PASSTHROUGH] = 2;
@@ -568,6 +602,8 @@ void gl_init_lists( void )
       InstSize[OPCODE_RASTER_POS] = 5;
       InstSize[OPCODE_RECTF] = 5;
       InstSize[OPCODE_READ_BUFFER] = 2;
+      InstSize[OPCODE_RESET_HISTOGRAM] = 2;
+      InstSize[OPCODE_RESET_MIN_MAX] = 2;
       InstSize[OPCODE_SCALE] = 4;
       InstSize[OPCODE_SCISSOR] = 5;
       InstSize[OPCODE_STENCIL_FUNC] = 4;
@@ -984,6 +1020,66 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
 }
 
 
+
+static void
+save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
+   FLUSH_VB(ctx, "dlist");
+
+   n = alloc_instruction( ctx, OPCODE_COLOR_TABLE_PARAMETER_FV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].f = params[0];
+      if (pname == GL_COLOR_TABLE_SGI ||
+          pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
+          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI) {
+         n[4].f = params[1];
+         n[5].f = params[2];
+         n[6].f = params[3];
+      }
+   }
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ColorTableParameterfv)( target, pname, params );
+   }
+}
+
+
+static void
+save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
+   FLUSH_VB(ctx, "dlist");
+
+   n = alloc_instruction( ctx, OPCODE_COLOR_TABLE_PARAMETER_IV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].i = params[0];
+      if (pname == GL_COLOR_TABLE_SGI ||
+          pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
+          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI) {
+         n[4].i = params[1];
+         n[5].i = params[2];
+         n[6].i = params[3];
+      }
+   }
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ColorTableParameteriv)( target, pname, params );
+   }
+}
+
+
+
 static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
                                 GLenum format, GLenum type,
                                 const GLvoid *table)
@@ -1010,6 +1106,199 @@ static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
    }
 }
 
+
+static void
+save_CopyColorSubTable(GLenum target, GLsizei start,
+                       GLint x, GLint y, GLsizei width)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = start;
+      n[3].i = x;
+      n[4].i = y;
+      n[5].i = width;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->CopyColorSubTable)(target, start, x, y, width);
+   }
+}
+
+
+static void
+save_CopyColorTable(GLenum target, GLenum internalformat,
+                    GLint x, GLint y, GLsizei width)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = internalformat;
+      n[3].i = x;
+      n[4].i = y;
+      n[5].i = width;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->CopyColorTable)(target, internalformat, x, y, width);
+   }
+}
+
+
+static void
+save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
+                         GLenum format, GLenum type, const GLvoid *filter)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, filter,
+                                      &ctx->Unpack);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_FILTER_1D, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = internalFormat;
+      n[3].i = width;
+      n[4].e = format;
+      n[5].e = type;
+      n[6].data = image;
+   }
+   else if (image) {
+      FREE(image);
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionFilter1D)( target, internalFormat, width,
+                                         format, type, filter );
+   }
+}
+
+
+static void
+save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
+                         GLsizei width, GLsizei height, GLenum format,
+                         GLenum type, const GLvoid *filter)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLvoid *image = _mesa_unpack_image(width, height, 1, format, type, filter,
+                                      &ctx->Unpack);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_FILTER_2D, 7 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = internalFormat;
+      n[3].i = width;
+      n[4].i = height;
+      n[5].e = format;
+      n[6].e = type;
+      n[7].data = image;
+   }
+   else if (image) {
+      FREE(image);
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionFilter2D)( target, internalFormat, width, height,
+                                         format, type, filter );
+   }
+}
+
+
+static void
+save_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_I, 3 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].i = param;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionParameteri)( target, pname, param );
+   }
+}
+
+
+static void
+save_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].i = params[0];
+      if (pname == GL_CONVOLUTION_BORDER_COLOR ||
+          pname == GL_CONVOLUTION_FILTER_SCALE ||
+          pname == GL_CONVOLUTION_FILTER_BIAS) {
+         n[4].i = params[1];
+         n[5].i = params[2];
+         n[6].i = params[3];
+      }
+      else {
+         n[4].i = n[5].i = n[6].i = 0;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionParameteriv)( target, pname, params );
+   }
+}
+
+
+static void
+save_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_F, 3 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].f = param;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionParameterf)( target, pname, param );
+   }
+}
+
+
+static void
+save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = pname;
+      n[3].f = params[0];
+      if (pname == GL_CONVOLUTION_BORDER_COLOR ||
+          pname == GL_CONVOLUTION_FILTER_SCALE ||
+          pname == GL_CONVOLUTION_FILTER_BIAS) {
+         n[4].f = params[1];
+         n[5].f = params[2];
+         n[6].f = params[3];
+      }
+      else {
+         n[4].f = n[5].f = n[6].f = 0.0F;
+      }
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ConvolutionParameterfv)( target, pname, params );
+   }
+}
 
 
 static void save_CopyPixels( GLint x, GLint y,
@@ -1459,6 +1748,26 @@ static void save_HintPGI( GLenum target, GLint mode )
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->HintPGI)( target, mode );
+   }
+}
+
+
+static void
+save_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean sink)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_HISTOGRAM, 4 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = width;
+      n[3].e = internalFormat;
+      n[4].b = sink;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->Histogram)( target, width, internalFormat, sink );
    }
 }
 
@@ -1932,6 +2241,25 @@ static void save_MatrixMode( GLenum mode )
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->MatrixMode)( mode );
+   }
+}
+
+
+static void
+save_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_MIN_MAX, 3 );
+   if (n) {
+      n[1].e = target;
+      n[2].e = internalFormat;
+      n[3].b = sink;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->Minmax)( target, internalFormat, sink );
    }
 }
 
@@ -2497,6 +2825,38 @@ static void save_Rects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
 static void save_Rectsv(const GLshort *v1, const GLshort *v2)
 {
    save_Rectf(v1[0], v1[1], v2[0], v2[1]);
+}
+
+
+static void
+save_ResetHistogram(GLenum target)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_RESET_HISTOGRAM, 1 );
+   if (n) {
+      n[1].e = target;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ResetHistogram)( target );
+   }
+}
+
+
+static void
+save_ResetMinmax(GLenum target)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_RESET_MIN_MAX, 1 );
+   if (n) {
+      n[1].e = target;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ResetMinmax)( target );
+   }
 }
 
 
@@ -3516,6 +3876,26 @@ static void execute_list( GLcontext *ctx, GLuint list )
                ctx->Unpack = save;  /* restore */
             }
             break;
+         case OPCODE_COLOR_TABLE_PARAMETER_FV:
+            {
+               GLfloat params[4];
+               params[0] = n[3].f;
+               params[1] = n[4].f;
+               params[2] = n[5].f;
+               params[3] = n[6].f;
+               (*ctx->Exec->ColorTableParameterfv)( n[1].e, n[2].e, params );
+            }
+            break;
+         case OPCODE_COLOR_TABLE_PARAMETER_IV:
+            {
+               GLint params[4];
+               params[0] = n[3].i;
+               params[1] = n[4].i;
+               params[2] = n[5].i;
+               params[3] = n[6].i;
+               (*ctx->Exec->ColorTableParameteriv)( n[1].e, n[2].e, params );
+            }
+            break;
          case OPCODE_COLOR_SUB_TABLE:
             {
                struct gl_pixelstore_attrib save = ctx->Unpack;
@@ -3524,6 +3904,58 @@ static void execute_list( GLcontext *ctx, GLuint list )
                                             n[4].e, n[5].e, n[6].data );
                ctx->Unpack = save;  /* restore */
             }
+            break;
+         case OPCODE_CONVOLUTION_FILTER_1D:
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = _mesa_native_packing;
+               (*ctx->Exec->ConvolutionFilter1D)( n[1].e, n[2].i, n[3].i,
+                                                  n[4].e, n[5].e, n[6].data );
+               ctx->Unpack = save;  /* restore */
+            }
+            break;
+         case OPCODE_CONVOLUTION_FILTER_2D:
+            {
+               struct gl_pixelstore_attrib save = ctx->Unpack;
+               ctx->Unpack = _mesa_native_packing;
+               (*ctx->Exec->ConvolutionFilter2D)( n[1].e, n[2].i, n[3].i,
+                                       n[4].i, n[5].e, n[6].e, n[7].data );
+               ctx->Unpack = save;  /* restore */
+            }
+            break;
+         case OPCODE_CONVOLUTION_PARAMETER_I:
+            (*ctx->Exec->ConvolutionParameteri)( n[1].e, n[2].e, n[3].i );
+            break;
+         case OPCODE_CONVOLUTION_PARAMETER_IV:
+            {
+               GLint params[4];
+               params[0] = n[3].i;
+               params[1] = n[4].i;
+               params[2] = n[5].i;
+               params[3] = n[6].i;
+               (*ctx->Exec->ConvolutionParameteriv)( n[1].e, n[2].e, params );
+            }
+            break;
+         case OPCODE_CONVOLUTION_PARAMETER_F:
+            (*ctx->Exec->ConvolutionParameterf)( n[1].e, n[2].e, n[3].f );
+            break;
+         case OPCODE_CONVOLUTION_PARAMETER_FV:
+            {
+               GLfloat params[4];
+               params[0] = n[3].f;
+               params[1] = n[4].f;
+               params[2] = n[5].f;
+               params[3] = n[6].f;
+               (*ctx->Exec->ConvolutionParameterfv)( n[1].e, n[2].e, params );
+            }
+            break;
+         case OPCODE_COPY_COLOR_SUB_TABLE:
+            (*ctx->Exec->CopyColorSubTable)( n[1].e, n[2].i,
+                                             n[3].i, n[4].i, n[5].i );
+            break;
+         case OPCODE_COPY_COLOR_TABLE:
+            (*ctx->Exec->CopyColorSubTable)( n[1].e, n[2].i,
+                                             n[3].i, n[4].i, n[5].i );
             break;
 	 case OPCODE_COPY_PIXELS:
 	    (*ctx->Exec->CopyPixels)( n[1].i, n[2].i,
@@ -3606,6 +4038,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	    break;
 	 case OPCODE_HINT_PGI:
 	    (*ctx->Exec->HintPGI)( n[1].e, n[2].i );
+	    break;
+	 case OPCODE_HISTOGRAM:
+	    (*ctx->Exec->Histogram)( n[1].e, n[2].i, n[3].e, n[4].b );
 	    break;
 	 case OPCODE_INDEX_MASK:
 	    (*ctx->Exec->IndexMask)( n[1].ui );
@@ -3700,6 +4135,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_MATRIX_MODE:
             (*ctx->Exec->MatrixMode)( n[1].e );
             break;
+         case OPCODE_MIN_MAX:
+            (*ctx->Exec->Minmax)(n[1].e, n[2].e, n[3].b);
+            break;
 	 case OPCODE_MULT_MATRIX:
 	    if (sizeof(Node)==sizeof(GLfloat)) {
 	       (*ctx->Exec->MultMatrixf)( &n[1].f );
@@ -3778,6 +4216,12 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	    break;
          case OPCODE_RECTF:
             (*ctx->Exec->Rectf)( n[1].f, n[2].f, n[3].f, n[4].f );
+            break;
+         case OPCODE_RESET_HISTOGRAM:
+            (*ctx->Exec->ResetHistogram)( n[1].e );
+            break;
+         case OPCODE_RESET_MIN_MAX:
+            (*ctx->Exec->ResetMinmax)( n[1].e );
             break;
          case OPCODE_SCALE:
             (*ctx->Exec->Scalef)( n[1].f, n[2].f, n[3].f );
@@ -4581,16 +5025,16 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->BlendEquation = save_BlendEquation;
    table->ColorSubTable = save_ColorSubTable;
    table->ColorTable = save_ColorTable;
-   table->ColorTableParameterfv = _mesa_ColorTableParameterfv;
-   table->ColorTableParameteriv = _mesa_ColorTableParameteriv;
-   table->ConvolutionFilter1D = _mesa_ConvolutionFilter1D;
-   table->ConvolutionFilter2D = _mesa_ConvolutionFilter2D;
-   table->ConvolutionParameterf = _mesa_ConvolutionParameterf;
-   table->ConvolutionParameterfv = _mesa_ConvolutionParameterfv;
-   table->ConvolutionParameteri = _mesa_ConvolutionParameteri;
-   table->ConvolutionParameteriv = _mesa_ConvolutionParameteriv;
-   table->CopyColorSubTable = _mesa_CopyColorSubTable;
-   table->CopyColorTable = _mesa_CopyColorTable;
+   table->ColorTableParameterfv = save_ColorTableParameterfv;
+   table->ColorTableParameteriv = save_ColorTableParameteriv;
+   table->ConvolutionFilter1D = save_ConvolutionFilter1D;
+   table->ConvolutionFilter2D = save_ConvolutionFilter2D;
+   table->ConvolutionParameterf = save_ConvolutionParameterf;
+   table->ConvolutionParameterfv = save_ConvolutionParameterfv;
+   table->ConvolutionParameteri = save_ConvolutionParameteri;
+   table->ConvolutionParameteriv = save_ConvolutionParameteriv;
+   table->CopyColorSubTable = save_CopyColorSubTable;
+   table->CopyColorTable = save_CopyColorTable;
    table->CopyConvolutionFilter1D = _mesa_CopyConvolutionFilter1D;
    table->CopyConvolutionFilter2D = _mesa_CopyConvolutionFilter2D;
    table->GetColorTable = _mesa_GetColorTable;
@@ -4606,10 +5050,10 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->GetMinmaxParameterfv = _mesa_GetMinmaxParameterfv;
    table->GetMinmaxParameteriv = _mesa_GetMinmaxParameteriv;
    table->GetSeparableFilter = _mesa_GetSeparableFilter;
-   table->Histogram = _mesa_Histogram;
-   table->Minmax = _mesa_Minmax;
-   table->ResetHistogram = _mesa_ResetHistogram;
-   table->ResetMinmax = _mesa_ResetMinmax;
+   table->Histogram = save_Histogram;
+   table->Minmax = save_Minmax;
+   table->ResetHistogram = save_ResetHistogram;
+   table->ResetMinmax = save_ResetMinmax;
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
 
    /* GL_EXT_texture3d */
@@ -4787,6 +5231,16 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
          case OPCODE_CALL_LIST_OFFSET:
             fprintf(f,"CallList %d + offset %u = %u\n", (int) n[1].ui,
                     ctx->List.ListBase, ctx->List.ListBase + n[1].ui );
+            break;
+         case OPCODE_COLOR_TABLE_PARAMETER_FV:
+            fprintf(f,"ColorTableParameterfv %s %s %f %f %f %f\n",
+                    enum_string(n[1].e), enum_string(n[2].e),
+                    n[3].f, n[4].f, n[5].f, n[6].f);
+            break;
+         case OPCODE_COLOR_TABLE_PARAMETER_IV:
+            fprintf(f,"ColorTableParameteriv %s %s %d %d %d %d\n",
+                    enum_string(n[1].e), enum_string(n[2].e),
+                    n[3].i, n[4].i, n[5].i, n[6].i);
             break;
 	 case OPCODE_DISABLE:
             fprintf(f,"Disable %s\n", enum_string(n[1].e));
