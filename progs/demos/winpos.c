@@ -1,4 +1,4 @@
-/* $Id: winpos.c,v 1.6 2002/12/03 03:13:17 brianp Exp $ */
+/* $Id: winpos.c,v 1.7 2003/02/27 19:43:02 kschultz Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.
@@ -30,8 +30,8 @@ static GLubyte *Image;
 static int ImgWidth, ImgHeight;
 static GLenum ImgFormat;
 
-static void (*WindowPosFunc)(GLfloat x, GLfloat y);
-
+typedef void (APIENTRY * PFNWINDOWPOSFUNC)(GLfloat x, GLfloat y);
+static PFNWINDOWPOSFUNC WindowPosFunc;
 
 static void draw( void )
 {
