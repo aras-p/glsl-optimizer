@@ -155,8 +155,8 @@
 /** For GL_EXT_texture_filter_anisotropic */
 #define MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
-/** For GL_EXT_texture_lod_bias */
-#define MAX_TEXTURE_LOD_BIAS 4.0
+/** For GL_EXT_texture_lod_bias (typically MAX_TEXTURE_LEVELS - 1) */
+#define MAX_TEXTURE_LOD_BIAS 11.0
 
 /** For GL_NV_vertex_program */
 /*@{*/
