@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.5 2000/12/15 16:42:30 brianp Exp $ */
+/* $Id: s_fog.c,v 1.6 2001/01/02 21:09:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 
 #include "s_context.h"
 #include "s_fog.h"
+#include "s_pb.h"
 
 
 /*
@@ -48,20 +49,30 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
 		       const GLfixed fog[], 
 		       GLchan rgba[][4] )
 {
-   GLchan rFog = FLOAT_TO_CHAN(ctx->Fog.Color[0]);
-   GLchan gFog = FLOAT_TO_CHAN(ctx->Fog.Color[1]);
-   GLchan bFog = FLOAT_TO_CHAN(ctx->Fog.Color[2]);
+   const GLchan rFog = FLOAT_TO_CHAN(ctx->Fog.Color[RCOMP]);
+   const GLchan gFog = FLOAT_TO_CHAN(ctx->Fog.Color[GCOMP]);
+   const GLchan bFog = FLOAT_TO_CHAN(ctx->Fog.Color[BCOMP]);
    GLuint i;
 
+#if CHAN_TYPE == GL_FLOAT
    for (i = 0; i < n; i++) {
-      GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
-      GLfixed g = FIXED_ONE - f;
+      const GLfixed cf = CLAMP(fog[i], 0, FIXED_ONE);
+      const GLfloat f = FixedToFloat(cf);
+      const GLfloat g = 1.0F - f;
+      rgba[i][RCOMP] = f * rgba[i][RCOMP] + g * rFog;
+      rgba[i][GCOMP] = f * rgba[i][GCOMP] + g * gFog;
+      rgba[i][BCOMP] = f * rgba[i][BCOMP] + g * bFog;
+   }
+#else
+   for (i = 0; i < n; i++) {
+      const GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
+      const GLfixed g = FIXED_ONE - f;
       rgba[i][0] = (f * rgba[i][0] + g * rFog) >> FIXED_SHIFT;
       rgba[i][1] = (f * rgba[i][1] + g * gFog) >> FIXED_SHIFT;
       rgba[i][2] = (f * rgba[i][2] + g * bFog) >> FIXED_SHIFT;
    }
+#endif
 }
-
 
 
 
@@ -229,7 +240,8 @@ void
 _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
 			     GLuint n, const GLdepth z[], GLchan rgba[][4] )
 {
-   GLfixed fog[MAX_WIDTH];
+   GLfixed fog[PB_SIZE];
+   ASSERT(n <= PB_SIZE);
    _mesa_win_fog_coords_from_z( ctx, n, z, fog );
    _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
 }
@@ -246,7 +258,8 @@ void
 _mesa_depth_fog_ci_pixels( const GLcontext *ctx,
                      GLuint n, const GLdepth z[], GLuint index[] )
 {
-   GLfixed fog[MAX_WIDTH];
+   GLfixed fog[PB_SIZE];
+   ASSERT(n <= PB_SIZE);
    _mesa_win_fog_coords_from_z( ctx, n, z, fog );
    _mesa_fog_ci_pixels( ctx, n, fog, index );
 }
