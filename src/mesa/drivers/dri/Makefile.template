@@ -64,7 +64,7 @@ DEFINES += -DGLX_DIRECT_RENDERING
 
 ##### TARGETS #####
 
-default: depend symlinks $(LIB_DIR)/$(LIBNAME)
+default: depend symlinks $(LIBNAME) $(LIB_DIR)/$(LIBNAME)
 
 
 #$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
@@ -72,15 +72,19 @@ default: depend symlinks $(LIB_DIR)/$(LIBNAME)
 #	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
 #		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
+$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+	rm -f $@ 
+	gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
-$(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
+$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
+	install -C $(LIBNAME) $(LIB_DIR) 
 
 
 
 # Run 'make depend' to update the dependencies if you change
 # what's included by any source file.
+.PHONY: depend
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
@@ -96,5 +100,8 @@ tags:
 clean:
 	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
 	-rm -f depend depend.bak
+
+install: $(LIBNAME)
+	install -C $(LIBNAME) /usr/X11R6/lib/modules/dri/$(LIBNAME)
 
 include depend
