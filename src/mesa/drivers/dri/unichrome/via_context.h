@@ -66,6 +66,7 @@ enum VIACHIPTAGS {
 #define VIA_FALLBACK_USER_DISABLE      	0x800
 #define VIA_FALLBACK_PROJ_TEXTURE      	0x1000
 #define VIA_FALLBACK_STIPPLE		0x2000
+#define VIA_FALLBACK_ALPHATEST		0x4000
 
 #define VIA_DMA_BUFSIZ                  4096
 #define VIA_DMA_HIGHWATER               (VIA_DMA_BUFSIZ - 128)
@@ -283,6 +284,8 @@ struct via_context_t {
 
    GLuint nDoneFirstFlip;
    GLuint agpFullCount;
+
+   GLboolean strictConformance;
 
    /* Configuration cache
     */

@@ -784,7 +784,11 @@ static void viaPolygonStipple( GLcontext *ctx, const GLubyte *mask )
     GLubyte *s = (GLubyte *)vmesa->stipple;
     int i;
 
-    /* Fallback for the CLE266 case as it doesn't seem to work */
+    /* Fallback for the CLE266 case.  Stipple works on the CLE266, but
+     * the stipple x/y offset registers don't seem to be respected,
+     * meaning that when drawXoff != 0, the stipple is rotated left or
+     * right by a few pixels, giving incorrect results.
+     */
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
    	FALLBACK( vmesa, VIA_FALLBACK_STIPPLE, ctx->Polygon.StippleFlag);
     } else {
@@ -1598,6 +1602,17 @@ void viaValidateState( GLcontext *ctx )
         vmesa->regEnable |= HC_HenCS_MASK;
     else
         vmesa->regEnable &= ~HC_HenCS_MASK;
+
+    /* CLE266 gets this wrong at least: Pixels which fail alpha test
+     * are incorrectly writen to the z buffer.  This is a pretty big
+     * slowdown, it would be good to find out this wasn't necessary:
+     */
+    if (vmesa->viaScreen->deviceID == VIA_CLE266) {
+       GLboolean fallback = (ctx->Color.AlphaEnabled && 
+			     ctx->Color.AlphaFunc != GL_ALWAYS &&
+			     ctx->Depth.Mask);
+       FALLBACK( vmesa, VIA_FALLBACK_ALPHATEST, fallback );
+    }
 
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;

@@ -504,7 +504,8 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     if (getenv("VIA_NO_RAST"))
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
 
-	
+    if (getenv("VIA_CONFORM"))
+       vmesa->strictConformance = 1;
 
     /* I don't understand why this isn't working:
      */

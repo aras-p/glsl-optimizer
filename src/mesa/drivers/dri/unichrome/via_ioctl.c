@@ -531,8 +531,11 @@ static void via_emit_cliprect(viaContextPtr vmesa,
 	    
    vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
    vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
-   vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
-   vb[7] = 0xcccccccc;
+   vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);     
+
+   /* Seems to be ignored on CLE266:
+    */
+   vb[7] = ((HC_SubA_HSPXYOS << 24) | ((32 - vmesa->drawXoff) << HC_HSPXOS_SHIFT));
 }
 
 
