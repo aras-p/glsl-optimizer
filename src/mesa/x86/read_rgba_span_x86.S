@@ -31,6 +31,7 @@
  */
 
 	.file	"read_rgba_span_x86.S"
+#if !defined(__DJGPP__) && !defined(__MINGW32__) /* this one cries for assyntax.h */
 	.section	.rodata
 	.align 16
 	.type	mask, @object
@@ -674,3 +675,4 @@ _generic_read_RGBA_span_RGB565_MMX:
 	emms
 #endif
 	ret
+#endif /* !defined(__DJGPP__) && !defined(__MINGW32__) */
