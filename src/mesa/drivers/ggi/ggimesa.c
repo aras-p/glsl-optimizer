@@ -30,6 +30,7 @@
 
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/debug.h>
+#include "extensions.h"
 
 #undef VIS
 #undef FLIP
@@ -319,6 +320,8 @@ GGIMesaContext GGIMesaCreateContext(void)
 	if (!ctx->gl_ctx) 
 	  return NULL;
 	
+        _mesa_enable_sw_extensions(ctx->gl_ctx);
+
 	return ctx;
 }
 

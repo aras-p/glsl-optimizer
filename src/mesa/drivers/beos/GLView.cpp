@@ -1,4 +1,4 @@
-/* $Id: GLView.cpp,v 1.4 2000/11/14 17:51:15 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.5 2000/11/17 21:01:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,11 @@
 
 /*
  * $Log: GLView.cpp,v $
+ * Revision 1.5  2000/11/17 21:01:26  brianp
+ * Minor header file changes to silence warnings.
+ * Added _mesa_enable_sw_extensions(), called by software-only drivers
+ * to enable all s/w-supported GL extensions.
+ *
  * Revision 1.4  2000/11/14 17:51:15  brianp
  * more Driver.Color, Driver.Index updates
  *
@@ -71,6 +76,7 @@
 #include <stdio.h>
 #include <GLView.h>
 #include "../src/context.h"
+#include "extensions.h"
 
 
 // BeOS component ordering for B_RGBA32 bitmap format
@@ -1036,6 +1042,8 @@ BGLView::BGLView(BRect rect, char *name,
    // create core context
    const GLboolean direct = GL_TRUE;
    GLcontext *ctx = _mesa_create_context( visual, NULL, aux, direct );
+
+   _mesa_enable_sw_extensions(ctx);
 
    aux->Init(this, ctx, visual, buffer );
 

@@ -1,4 +1,4 @@
-/* $Id: m_translate.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_translate.h,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,8 @@
 
 #ifndef _M_TRANSLATE_H_
 #define _M_TRANSLATE_H_
+
+#include "config.h"
 
 
 typedef void (*trans_1f_func)(GLfloat *to,
@@ -86,7 +88,9 @@ extern trans_4ub_func gl_trans_4ub_tab[5][MAX_TYPES];
 extern trans_4f_func  gl_trans_4f_tab[5][MAX_TYPES];
 
 
-extern void gl_init_translate( void );
+
+extern void 
+_math_init_translate( void );
 
 
 #endif

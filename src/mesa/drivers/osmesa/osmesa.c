@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.31 2000/11/16 21:05:38 keithw Exp $ */
+/* $Id: osmesa.c,v 1.32 2000/11/17 21:01:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
+#include "tnl/tnl.h"
 #endif
 
 
@@ -273,9 +274,8 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          FREE(osmesa);
          return NULL;
       }
-      gl_extensions_enable(&(osmesa->gl_ctx),"GL_HP_occlusion_test");
-      gl_extensions_enable(&(osmesa->gl_ctx), "GL_ARB_texture_cube_map");
-      gl_extensions_enable(&(osmesa->gl_ctx), "GL_EXT_texture_env_combine");
+
+      _mesa_enable_sw_extensions(&(osmesa->gl_ctx));
 
       osmesa->gl_buffer = _mesa_create_framebuffer( osmesa->gl_visual,
                                           osmesa->gl_visual->DepthBits > 0,

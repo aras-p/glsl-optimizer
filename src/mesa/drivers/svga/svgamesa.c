@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.8 2000/11/16 21:05:39 keithw Exp $ */
+/* $Id: svgamesa.c,v 1.9 2000/11/17 21:01:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,12 +39,13 @@
 #else
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <vga.h>
 #include "GL/svgamesa.h"
 #include "context.h"
+#include "extensions.h"
 #include "matrix.h"
 #include "types.h"
-#include <string.h>
 #endif
 
 #include "svgapix.h"
@@ -417,6 +418,8 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
    ctx->gl_ctx = _mesa_create_context( ctx->gl_vis,
                                        NULL,  /* share list context */
                                        (void *) ctx, GL_TRUE );
+
+   _mesa_enable_sw_extensions(ctx->gl_ctx);
 
    ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis,
                                               ctx->gl_vis->DepthBits > 0,

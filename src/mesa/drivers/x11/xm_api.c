@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.8 2000/11/16 21:05:40 keithw Exp $ */
+/* $Id: xm_api.c,v 1.9 2000/11/17 21:01:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1638,9 +1638,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   gl_extensions_enable(ctx, "GL_HP_occlusion_test");
-   gl_extensions_enable(ctx, "GL_ARB_texture_cube_map");
-   gl_extensions_enable(ctx, "GL_EXT_texture_env_combine");
+   _mesa_enable_sw_extensions(ctx);
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;

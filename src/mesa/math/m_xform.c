@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_xform.c,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "mmath.h"
 
 #include "m_matrix.h"
+#include "m_translate.h"
 #include "m_xform.h"
 
 

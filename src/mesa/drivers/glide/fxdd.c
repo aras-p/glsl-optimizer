@@ -121,22 +121,6 @@ static void fxDDBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 }
 
 
-/* Set current drawing color */
-static void fxDDSetColor(GLcontext *ctx, GLubyte red, GLubyte green,
-                         GLubyte blue, GLubyte alpha )
-{
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLubyte col[4];
-  ASSIGN_4V( col, red, green, blue, alpha );
-  
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDSetColor(%d,%d,%d,%d)\n",red,green,blue,alpha);
-  }
-
-  fxMesa->color=FXCOLOR4(col);
-}
-
-
 /* Implements glClearColor() */
 static void fxDDClearColor(GLcontext *ctx, GLubyte red, GLubyte green,
                            GLubyte blue, GLubyte alpha )
@@ -975,11 +959,6 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.ClearIndex=NULL;
   ctx->Driver.ClearColor=fxDDClearColor;
   ctx->Driver.Clear=fxDDClear;
-
-#if 0
-  ctx->Driver.Index=NULL;
-  ctx->Driver.Color=fxDDSetColor;
-#endif
 
   ctx->Driver.SetDrawBuffer=fxDDSetDrawBuffer;
   ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;

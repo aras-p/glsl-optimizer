@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.40 2000/10/30 16:27:21 brianp Exp $ */
+/* $Id: extensions.c,v 1.41 2000/11/17 21:01:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,6 +107,21 @@ static struct {
 };
 
 
+
+
+/*
+ * Enable all extensions suitable for a software-only renderer.
+ * This is a convenience function used by the XMesa, OSMesa, GGI drivers, etc.
+ */
+void
+_mesa_enable_sw_extensions(GLcontext *ctx)
+{
+   gl_extensions_enable(ctx, "GL_ARB_texture_cube_map");
+   gl_extensions_enable(ctx, "GL_EXT_bgra");
+   gl_extensions_enable(ctx, "GL_EXT_texture_env_combine");
+   gl_extensions_enable(ctx, "GL_HP_occlusion_test");
+   gl_extensions_enable(ctx, "GL_NV_blend_square");
+}
 
 
 

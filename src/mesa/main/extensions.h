@@ -1,4 +1,4 @@
-/* $Id: extensions.h,v 1.9 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: extensions.h,v 1.10 2000/11/17 21:01:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,9 @@
 
 #include "types.h"
 
+
+extern void
+_mesa_enable_sw_extensions(GLcontext *ctx);
 
 
 /* Return 0 on success.

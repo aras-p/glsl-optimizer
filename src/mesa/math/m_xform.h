@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_xform.h,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 
 #include "glheader.h"
 #include "config.h"
+#include "math/math.h"
 #include "math/m_vector.h"
 #include "math/m_matrix.h"
 
@@ -78,7 +79,8 @@ extern void gl_transform_vector( GLfloat u[4],
                                  const GLfloat m[16] );
 
 
-extern void gl_init_transformation( void );
+extern void 
+_math_init_transformation( void );
 
 
 /* KW: Clip functions now do projective divide as well.  The projected
