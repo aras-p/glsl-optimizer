@@ -75,7 +75,7 @@ extern "C" {
    To avoid the atexit workaround, #define GLUT_DISABLE_ATEXIT_HACK. */
 
 /* XXX This is from Win32's <process.h> */
-# if !defined(_MSC_VER) && !defined(__cdecl)
+# if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(__cdecl)
    /* Define __cdecl for non-Microsoft compilers. */
 #  define __cdecl
 #  define GLUT_DEFINED___CDECL
@@ -108,7 +108,7 @@ extern _CRTIMP void __cdecl exit(int);
    and redifinition of Windows system defs, also removes requirement of
    pretty much any standard windows header from this file */
 
-#if (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
+#if (_MSC_VER >= 800) || defined(__MINGW32__) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
 #	define GLUTAPIENTRY __stdcall
 #else
 #	define GLUTAPIENTRY
