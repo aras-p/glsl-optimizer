@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.11 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: attrib.c,v 1.12 1999/11/22 18:28:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -613,7 +613,13 @@ void gl_PopAttrib( GLcontext* ctx )
                }
                (*ctx->Driver.Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
             }
-	    ctx->Enabled &= ENABLE_LIGHT;
+            if (ctx->Light.ShadeModel == GL_FLAT)
+               ctx->TriangleCaps |= DD_FLATSHADE;
+            else
+               ctx->TriangleCaps &= ~DD_FLATSHADE;
+            if (ctx->Driver.ShadeModel)
+               (*ctx->Driver.ShadeModel)(ctx, ctx->Light.ShadeModel);
+	    ctx->Enabled &= ~ENABLE_LIGHT;
 	    if (ctx->Light.Enabled && !is_empty_list(&ctx->Light.EnabledList))
 	       ctx->Enabled |= ENABLE_LIGHT;
             break;
