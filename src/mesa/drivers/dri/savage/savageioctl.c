@@ -38,6 +38,7 @@
 #include "savageioctl.h"
 #include "savage_bci.h"
 #include "savagestate.h"
+#include "savagespan.h"
 
 #include "drm.h"
 #include <sys/ioctl.h>
@@ -333,10 +334,17 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
        fprintf (stderr, "%s\n", __FUNCTION__);
 
    clearColor = imesa->ClearColor;
-   if(imesa->savageScreen->zpp == 2)
-       clearDepth = (GLuint) (ctx->Depth.Clear * DEPTH_SCALE_16);
-   else
-       clearDepth = (GLuint) (ctx->Depth.Clear * DEPTH_SCALE_24);
+   if (imesa->float_depth) {
+       if (imesa->savageScreen->zpp == 2)
+	   clearDepth = savageEncodeFloat16(1.0 - ctx->Depth.Clear);
+       else
+	   clearDepth = savageEncodeFloat24(1.0 - ctx->Depth.Clear);
+   } else {
+       if (imesa->savageScreen->zpp == 2)
+	   clearDepth = (GLuint) ((1.0 - ctx->Depth.Clear) * DEPTH_SCALE_16);
+       else
+	   clearDepth = (GLuint) ((1.0 - ctx->Depth.Clear) * DEPTH_SCALE_24);
+   }
 
    colorMask = *((GLuint *) &ctx->Color.ColorMask);
    depthMask = 0;

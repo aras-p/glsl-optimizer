@@ -470,14 +470,14 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
      * set up z read/write watermarks register (global)
      */
 
-    switch(func)  { 
+    switch(func)  { /* reversed (see savageCalcViewport) */
     case GL_NEVER: zmode = CF_Never; break;
     case GL_ALWAYS: zmode = CF_Always; break;
-    case GL_LESS: zmode = CF_Less; break; 
-    case GL_LEQUAL: zmode = CF_LessEqual; break;
+    case GL_LESS: zmode = CF_Greater; break; 
+    case GL_LEQUAL: zmode = CF_GreaterEqual; break;
     case GL_EQUAL: zmode = CF_Equal; break;
-    case GL_GREATER: zmode = CF_Greater; break;
-    case GL_GEQUAL: zmode = CF_GreaterEqual; break;
+    case GL_GREATER: zmode = CF_Less; break;
+    case GL_GEQUAL: zmode = CF_LessEqual; break;
     case GL_NOTEQUAL: zmode = CF_NotEqual; break;
     default:return;
     } 
@@ -539,14 +539,14 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
      * set up z-buffer offset register (global)
      * set up z read/write watermarks register (global)
      */
-    switch(func)  { 
+    switch(func)  { /* reversed (see savageCalcViewport) */
     case GL_NEVER: zmode = CF_Never; break;
     case GL_ALWAYS: zmode = CF_Always; break;
-    case GL_LESS: zmode = CF_Less; break; 
-    case GL_LEQUAL: zmode = CF_LessEqual; break;
+    case GL_LESS: zmode = CF_Greater; break; 
+    case GL_LEQUAL: zmode = CF_GreaterEqual; break;
     case GL_EQUAL: zmode = CF_Equal; break;
-    case GL_GREATER: zmode = CF_Greater; break;
-    case GL_GEQUAL: zmode = CF_GreaterEqual; break;
+    case GL_GREATER: zmode = CF_Less; break;
+    case GL_GEQUAL: zmode = CF_LessEqual; break;
     case GL_NOTEQUAL: zmode = CF_NotEqual; break;
     default:return;
     } 
@@ -716,14 +716,22 @@ static void savageCalcViewport( GLcontext *ctx )
    const GLfloat *v = ctx->Viewport._WindowMap.m;
    GLfloat *m = imesa->hw_viewport;
 
-   /* See also mga_translate_vertex.
-    */
    m[MAT_SX] =   v[MAT_SX];
    m[MAT_TX] =   v[MAT_TX] + imesa->drawX + SUBPIXEL_X;
    m[MAT_SY] = - v[MAT_SY];
    m[MAT_TY] = - v[MAT_TY] + imesa->driDrawable->h + imesa->drawY + SUBPIXEL_Y;
-   m[MAT_SZ] =   v[MAT_SZ] * imesa->depth_scale;
-   m[MAT_TZ] =   v[MAT_TZ] * imesa->depth_scale;
+   /* Depth range is reversed (far: 0, near: 1) so that float depth
+    * compensates for loss of accuracy of far coordinates. */
+   if (imesa->float_depth && imesa->savageScreen->zpp == 2) {
+       /* The Savage 16-bit floating point depth format can't encode
+	* numbers < 2^-16. Make sure all depth values stay greater
+	* than that. */
+       m[MAT_SZ] = - v[MAT_SZ] * imesa->depth_scale * (65535.0/65536.0);
+       m[MAT_TZ] = 1.0 - v[MAT_TZ] * imesa->depth_scale * (65535.0/65536.0);
+   } else {
+       m[MAT_SZ] = - v[MAT_SZ] * imesa->depth_scale;
+       m[MAT_TZ] = 1.0 - v[MAT_TZ] * imesa->depth_scale;
+   }
 
    imesa->SetupNewInputs = ~0;
 }
@@ -1612,7 +1620,14 @@ static void savageDDInitState_s4( savageContextPtr imesa )
 
     imesa->regs.s4.zBufCtrl.ni.zCmpFunc = CF_Less;
     imesa->regs.s4.zBufCtrl.ni.wToZEn               = GL_TRUE;
-    /*imesa->regs.s4.ZBufCtrl.ni.floatZEn          = GL_TRUE;*/
+    if (imesa->float_depth) {
+	imesa->regs.s4.zBufCtrl.ni.zExpOffset =
+	    imesa->savageScreen->zpp == 2 ? 16 : 32;
+	imesa->regs.s4.zBufCtrl.ni.floatZEn = GL_TRUE;
+    } else {
+	imesa->regs.s4.zBufCtrl.ni.zExpOffset = 0;
+	imesa->regs.s4.zBufCtrl.ni.floatZEn = GL_FALSE;
+    }
     imesa->regs.s4.texBlendCtrl[0].ui            = TBC_NoTexMap;
     imesa->regs.s4.texBlendCtrl[1].ui            = TBC_NoTexMap1;
     imesa->regs.s4.drawCtrl0.ui         = 0;

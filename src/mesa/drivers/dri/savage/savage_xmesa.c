@@ -64,6 +64,7 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_QUALITY
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
         DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+        DRI_CONF_FLOAT_DEPTH(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
@@ -72,7 +73,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 4;
+static const GLuint __driNConfigOptions = 5;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -308,6 +309,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    driParseConfigFiles (&imesa->optionCache, &savageScreen->optionCache,
                         sPriv->myNum, "savage");
 
+   imesa->float_depth = driQueryOptionb(&imesa->optionCache, "float_depth") &&
+       savageScreen->chipset >= S3_SAVAGE4;
+   imesa->no_rast = driQueryOptionb(&imesa->optionCache, "no_rast");
    imesa->texture_depth = driQueryOptioni (&imesa->optionCache,
 					   "texture_depth");
    if (imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
@@ -407,7 +411,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    imesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    imesa->depth_scale = (imesa->savageScreen->zpp == 2) ?
-       (1.0F/0x10000):(1.0F/0x1000000);
+       (1.0F/0xffff):(1.0F/0xffffff);
 
    imesa->bufferSize = savageScreen->bufferSize;
    imesa->dmaVtxBuf.total = 0;
@@ -478,8 +482,6 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    savageInitTriFuncs( ctx );
 
    savageDDInitState( imesa );
-
-   imesa->no_rast = driQueryOptionb(&imesa->optionCache, "no_rast");
 
    driContextPriv->driverPrivate = (void *) imesa;
 

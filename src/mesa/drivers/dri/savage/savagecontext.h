@@ -294,6 +294,7 @@ struct savage_context_t {
     driOptionCache optionCache;
     GLint texture_depth;
     GLboolean no_rast;
+    GLboolean float_depth;
 };
 
 #define SAVAGE_CONTEXT(ctx) ((savageContextPtr)(ctx->DriverCtx))

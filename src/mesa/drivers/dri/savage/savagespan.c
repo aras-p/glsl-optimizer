@@ -158,13 +158,14 @@ do {								\
 
 
 
-/* 16 bit depthbuffer functions.
+/* 16 bit integer depthbuffer functions
+ * Depth range is reversed. See also savageCalcViewport.
  */
 #define WRITE_DEPTH( _x, _y, d ) \
-    *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) = d
+    *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) = 0xFFFF - d
 
 #define READ_DEPTH( d, _x, _y ) \
-    d = *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch)
+    d = 0xFFFF - *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch)
 
 #define TAG(x) savage##x##_16
 #include "depthtmp.h"
@@ -173,19 +174,59 @@ do {								\
 
 
 
-/* 8-bit stencil /24-bit depth depthbuffer functions.
+/* 16 bit float depthbuffer functions
+ */
+#define WRITE_DEPTH( _x, _y, d ) \
+    *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) = \
+        savageEncodeFloat16( 1.0 - (GLfloat)d/65535.0 )
+
+#define READ_DEPTH( d, _x, _y ) \
+    d = 65535 - \
+        savageDecodeFloat16( *(GLushort *)(buf + ((_x)<<1) + (_y)*pitch) ) * \
+	65535.0
+
+#define TAG(x) savage##x##_16f
+#include "depthtmp.h"
+
+
+
+
+
+/* 8-bit stencil /24-bit integer depth depthbuffer functions.
+ * Depth range is reversed. See also savageCalcViewport.
  */
 #define WRITE_DEPTH( _x, _y, d ) do {				\
    GLuint tmp = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch);	\
    tmp &= 0xFF000000;						\
-   tmp |= d;							\
+   tmp |= 0x00FFFFFF - d;					\
    *(GLuint *)(buf + (_x<<2) + _y*pitch)  = tmp;		\
 } while(0)
 
 #define READ_DEPTH( d, _x, _y )	\
-   d = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch)
+   d = 0x00FFFFFF - (*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0x00FFFFFF)
 
 #define TAG(x) savage##x##_8_24
+#include "depthtmp.h"
+
+
+
+
+
+/* 24 bit float depthbuffer functions
+ */
+#define WRITE_DEPTH( _x, _y, d ) do {				\
+    GLuint tmp = *(GLuint *)(buf + ((_x)<<2) + (_y)*pitch);	\
+    tmp &= 0xFF000000;						\
+    tmp |= savageEncodeFloat24( 1.0 - (GLfloat)d/16777215.0 );	\
+   *(GLuint *)(buf + (_x<<2) + _y*pitch)  = tmp;		\
+} while(0)
+
+#define READ_DEPTH( d, _x, _y )					\
+    d = 16777215 - savageDecodeFloat24(				\
+	*(GLuint *)(buf + ((_x)<<2) + (_y)*pitch) & 0x00FFFFFF)	\
+	* 16777215.0
+
+#define TAG(x) savage##x##_8_24f
 #include "depthtmp.h"
 
 
@@ -315,20 +356,36 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
 
    switch (imesa->savageScreen->zpp)
    {
-   case 2: 
-       swdd->ReadDepthSpan = savageReadDepthSpan_16;
-       swdd->WriteDepthSpan = savageWriteDepthSpan_16;
-       swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16;
-       swdd->ReadDepthPixels = savageReadDepthPixels_16;
-       swdd->WriteDepthPixels = savageWriteDepthPixels_16;
+   case 2:
+       if (imesa->float_depth) {
+	   swdd->ReadDepthSpan = savageReadDepthSpan_16f;
+	   swdd->WriteDepthSpan = savageWriteDepthSpan_16f;
+	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16f;
+	   swdd->ReadDepthPixels = savageReadDepthPixels_16f;
+	   swdd->WriteDepthPixels = savageWriteDepthPixels_16f;
+       } else {
+	   swdd->ReadDepthSpan = savageReadDepthSpan_16;
+	   swdd->WriteDepthSpan = savageWriteDepthSpan_16;
+	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16;
+	   swdd->ReadDepthPixels = savageReadDepthPixels_16;
+	   swdd->WriteDepthPixels = savageWriteDepthPixels_16;
+       }
        
        break;
    case 4: 
-       swdd->ReadDepthSpan = savageReadDepthSpan_8_24;
-       swdd->WriteDepthSpan = savageWriteDepthSpan_8_24;
-       swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24;
-       swdd->ReadDepthPixels = savageReadDepthPixels_8_24;
-       swdd->WriteDepthPixels = savageWriteDepthPixels_8_24;    
+       if (imesa->float_depth) {
+	   swdd->ReadDepthSpan = savageReadDepthSpan_8_24f;
+	   swdd->WriteDepthSpan = savageWriteDepthSpan_8_24f;
+	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24f;
+	   swdd->ReadDepthPixels = savageReadDepthPixels_8_24f;
+	   swdd->WriteDepthPixels = savageWriteDepthPixels_8_24f;    
+       } else {
+	   swdd->ReadDepthSpan = savageReadDepthSpan_8_24;
+	   swdd->WriteDepthSpan = savageWriteDepthSpan_8_24;
+	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24;
+	   swdd->ReadDepthPixels = savageReadDepthPixels_8_24;
+	   swdd->WriteDepthPixels = savageWriteDepthPixels_8_24;    
+       }
        swdd->ReadStencilSpan = savageReadStencilSpan_8_24;
        swdd->WriteStencilSpan = savageWriteStencilSpan_8_24;
        swdd->ReadStencilPixels = savageReadStencilPixels_8_24;
