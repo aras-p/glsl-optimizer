@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.5 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: texformat_tmp.h,v 1.6 2002/06/15 02:55:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -286,6 +286,7 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
 
 /* big-endian */
 
+#if 0
 static void FETCH(abgr8888)( const struct gl_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLvoid *texel )
 {
@@ -373,7 +374,7 @@ static void FETCH(bgr233)( const struct gl_texture_image *texImage,
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s << 5) & 0xc0) * 255 / 0xc0 );
    rgba[ACOMP] = CHAN_MAX;
 }
-
+#endif
 
 
 #undef CHAN_SRC
