@@ -1038,10 +1038,10 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	 case GL_DOT3_RGBA:
 	    /* DOT3 works differently on R200 than on R100.  On R100, just
 	     * setting the DOT3 mode did everything for you.  On R200, the
-	     * driver has to enable the biasing (the -0.5 in the combine
-	     * equation), and it has add the 4x scale factor.  The hardware
-	     * only supports up to 8x in the post filter, so 2x part of it
-	     * happens on the inputs going into the combiner.
+	     * driver has to enable the biasing and scale in the inputs to
+	     * put them in the proper [-1,1] range.  This is what the 4x and
+	     * the -0.5 in the DOT3 spec do.  The post-scale is then set
+	     * normally.
 	     */
 
 	    RGBshift++;
