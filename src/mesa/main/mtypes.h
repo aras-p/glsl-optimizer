@@ -1395,11 +1395,11 @@ struct gl_pixelstore_attrib {
  * Client vertex array attributes
  */
 struct gl_client_array {
-   GLint Size;
-   GLenum Type;
+   GLint Size;                  /**< components per element (1,2,3,4) */
+   GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
-   const GLubyte *Ptr;
+   const GLubyte *Ptr;          /**< Points to array data */
    GLuint Enabled;		/**< one of the _NEW_ARRAY_ bits */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
 
