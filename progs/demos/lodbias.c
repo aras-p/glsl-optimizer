@@ -39,8 +39,8 @@
 
 static GLfloat Xrot = 0, Yrot = -30, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
-static GLint Bias = 0, DeltaBias = 10;  /* ints avoid fp precision problem */
-static GLint BiasMin = -200, BiasMax = 300;
+static GLint Bias = 0, BiasStepSign = +1; /* ints avoid fp precision problem */
+static GLint BiasMin = -200, BiasMax = 500;
 
 
 
@@ -55,14 +55,26 @@ PrintString(const char *s)
 
 static void Idle( void )
 {
-   Bias += DeltaBias;
+   static int lastTime = 0;
+   int time = glutGet(GLUT_ELAPSED_TIME);
+   int step;
+
+   if (lastTime == 0)
+      lastTime = time;
+   else if (time - lastTime < 10)
+      return;
+
+   step = (time - lastTime) / 10 * BiasStepSign;
+   lastTime = time;
+
+   Bias += step;
    if (Bias < BiasMin) {
       Bias = BiasMin;
-      DeltaBias = 10;
+      BiasStepSign = +1;
    }
    else if (Bias > BiasMax) {
       Bias = BiasMax;
-      DeltaBias = -10;
+      BiasStepSign = -1;
    }
 
    glutPostRedisplay();
