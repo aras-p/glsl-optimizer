@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.34 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: dd.h,v 1.35 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,19 +29,15 @@
 #ifndef DD_INCLUDED
 #define DD_INCLUDED
 
-
-#include "macros.h"
+/* THIS FILE ONLY INCLUDED BY types.h !!!!! */
 
 
 struct gl_pixelstore_attrib;
-
-
 struct vertex_buffer;
 struct immediate;
+struct gl_pipeline;
 struct gl_pipeline_stage;
 
-
-/* THIS FILE ONLY INCLUDED BY types.h !!!!! */
 
 
 /*

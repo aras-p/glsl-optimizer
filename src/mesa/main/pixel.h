@@ -1,8 +1,8 @@
-/* $Id: pixel.h,v 1.5 2000/04/12 18:54:48 brianp Exp $ */
+/* $Id: pixel.h,v 1.6 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -103,9 +103,9 @@ _mesa_map_ci(const GLcontext *ctx, GLuint n, GLuint index[]);
 
 
 extern void
-_mesa_map_ci_to_rgba_ubyte(const GLcontext *ctx,
-                           GLuint n, const GLuint index[],
-                           GLubyte rgba[][4]);
+_mesa_map_ci_to_rgba_chan(const GLcontext *ctx,
+                          GLuint n, const GLuint index[],
+                          GLchan rgba[][4]);
 
 
 extern void
@@ -116,7 +116,7 @@ _mesa_map_ci_to_rgba(const GLcontext *ctx,
 extern void
 _mesa_map_ci8_to_rgba(const GLcontext *ctx,
                       GLuint n, const GLubyte index[],
-                      GLubyte rgba[][4]);
+                      GLchan rgba[][4]);
 
 
 extern void

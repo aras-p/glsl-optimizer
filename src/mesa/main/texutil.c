@@ -1,8 +1,8 @@
-/* $Id: texutil.c,v 1.7 2000/09/13 22:07:20 brianp Exp $ */
+/* $Id: texutil.c,v 1.8 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -681,7 +681,7 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
                      GLubyte r = src[col3 + 0];
                      GLubyte g = src[col3 + 1];
                      GLubyte b = src[col3 + 2];
-                     GLubyte a = 255;
+                     GLubyte a = CHAN_MAX;
                      dst[col] = (a << 24) | (r << 16) | (g << 8) | b;
                   }
                   src += srcStride;
@@ -702,7 +702,7 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
                      GLubyte r = src[col3 + 0];
                      GLubyte g = src[col3 + 1];
                      GLubyte b = src[col3 + 2];
-                     GLubyte a = 255;
+                     GLubyte a = CHAN_MAX;
                      dst[col] = (a << 24) | (r << 16) | (g << 8) | b;
                   }
                   dst = (GLuint *) ((GLubyte *) dst + dstRowStride);
@@ -1305,21 +1305,21 @@ _mesa_convert_texsubimage(MesaIntTexFormat dstFormat,
 
 
 /*
- * Used to convert 16-bit texels into GLubyte color components.
+ * Used to convert 16-bit texels into GLchan color components.
  */
-static GLubyte R5G6B5toRed[0xffff];
-static GLubyte R5G6B5toGreen[0xffff];
-static GLubyte R5G6B5toBlue[0xffff];
+static GLchan R5G6B5toRed[0xffff];
+static GLchan R5G6B5toGreen[0xffff];
+static GLchan R5G6B5toBlue[0xffff];
 
-static GLubyte A4R4G4B4toRed[0xffff];
-static GLubyte A4R4G4B4toGreen[0xffff];
-static GLubyte A4R4G4B4toBlue[0xffff];
-static GLubyte A4R4G4B4toAlpha[0xffff];
+static GLchan A4R4G4B4toRed[0xffff];
+static GLchan A4R4G4B4toGreen[0xffff];
+static GLchan A4R4G4B4toBlue[0xffff];
+static GLchan A4R4G4B4toAlpha[0xffff];
 
-static GLubyte A1R5G5B5toRed[0xffff];
-static GLubyte A1R5G5B5toGreen[0xffff];
-static GLubyte A1R5G5B5toBlue[0xffff];
-static GLubyte A1R5G5B5toAlpha[0xffff];
+static GLchan A1R5G5B5toRed[0xffff];
+static GLchan A1R5G5B5toGreen[0xffff];
+static GLchan A1R5G5B5toBlue[0xffff];
+static GLchan A1R5G5B5toAlpha[0xffff];
 
 static void
 generate_lookup_tables(void)
@@ -1329,9 +1329,9 @@ generate_lookup_tables(void)
       GLint r = (i >> 8) & 0xf8;
       GLint g = (i >> 3) & 0xfc;
       GLint b = (i << 3) & 0xf8;
-      r = r * 255 / 0xf8;
-      g = g * 255 / 0xfc;
-      b = b * 255 / 0xf8;
+      r = r * CHAN_MAX / 0xf8;
+      g = g * CHAN_MAX / 0xfc;
+      b = b * CHAN_MAX / 0xf8;
       R5G6B5toRed[i]   = r;
       R5G6B5toGreen[i] = g;
       R5G6B5toBlue[i]  = b;
@@ -1342,10 +1342,10 @@ generate_lookup_tables(void)
       GLint g = (i >>  4) & 0xf;
       GLint b = (i      ) & 0xf;
       GLint a = (i >> 12) & 0xf;
-      r = r * 255 / 0xf;
-      g = g * 255 / 0xf;
-      b = b * 255 / 0xf;
-      a = a * 255 / 0xf;
+      r = r * CHAN_MAX / 0xf;
+      g = g * CHAN_MAX / 0xf;
+      b = b * CHAN_MAX / 0xf;
+      a = a * CHAN_MAX / 0xf;
       A4R4G4B4toRed[i]   = r;
       A4R4G4B4toGreen[i] = g;
       A4R4G4B4toBlue[i]  = b;
@@ -1357,10 +1357,10 @@ generate_lookup_tables(void)
       GLint g = (i >>  5) & 0xf8;
       GLint b = (i      ) & 0xf8;
       GLint a = (i >> 15) & 0x1;
-      r = r * 255 / 0xf8;
-      g = g * 255 / 0xf8;
-      b = b * 255 / 0xf8;
-      a = a * 255;
+      r = r * CHAN_MAX / 0xf8;
+      g = g * CHAN_MAX / 0xf8;
+      b = b * CHAN_MAX / 0xf8;
+      a = a * CHAN_MAX;
       A1R5G5B5toRed[i]   = r;
       A1R5G5B5toGreen[i] = g;
       A1R5G5B5toBlue[i]  = b;
@@ -1393,7 +1393,7 @@ _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
                          GLint srcWidth, GLint srcHeight,
                          const GLvoid *srcImage, GLint srcRowStride,
                          GLint dstWidth, GLint dstHeight,
-                         GLenum dstFormat, GLubyte *dstImage)
+                         GLenum dstFormat, GLchan *dstImage)
 {
    static GLboolean firstCall = GL_TRUE;
    const GLint wScale = srcWidth / dstWidth;   /* must be power of two */
@@ -1429,11 +1429,11 @@ _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
 #endif
          if (wScale == 1 && hScale == 1) {
             /* easy! */
-            MEMCPY(dstImage, srcImage, dstWidth * dstHeight * sizeof(GLubyte));
+            MEMCPY(dstImage, srcImage, dstWidth * dstHeight * sizeof(GLchan));
          }
          else {
             /* rescale */
-            const GLubyte *src8 = (const GLubyte *) srcImage;
+            const GLchan *src8 = (const GLchan *) srcImage;
             GLint row, col;
             for (row = 0; row < dstHeight; row++) {
                GLint srcRow = row * hScale;

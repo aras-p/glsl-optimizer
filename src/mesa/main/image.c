@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.44 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: image.c,v 1.45 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -596,71 +596,199 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
 }
 
 
+/*
+ * Unpack bitmap data.  Resulting data will be in most-significant-bit-first
+ * order with row alignment = 1 byte.
+ */
+GLvoid *
+_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
+                     const struct gl_pixelstore_attrib *packing )
+{
+   GLint bytes, row, width_in_bytes;
+   GLubyte *buffer, *dst;
+
+   if (!pixels)
+      return NULL;
+
+   /* Alloc dest storage */
+   bytes = ((width + 7) / 8 * height);
+   buffer = (GLubyte *) MALLOC( bytes );
+   if (!buffer)
+      return NULL;
+
+
+   width_in_bytes = CEILING( width, 8 );
+   dst = buffer;
+   for (row = 0; row < height; row++) {
+      GLubyte *src = _mesa_image_address( packing, pixels, width, height,
+                                          GL_COLOR_INDEX, GL_BITMAP,
+                                          0, row, 0 );
+      if (!src) {
+         FREE(buffer);
+         return NULL;
+      }
+
+      if (packing->SkipPixels == 0) {
+         MEMCPY( dst, src, width_in_bytes );
+         if (packing->LsbFirst) {
+            flip_bytes( dst, width_in_bytes );
+         }
+      }
+      else {
+         /* handling SkipPixels is a bit tricky (no pun intended!) */
+         GLint i;
+         if (packing->LsbFirst) {
+            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 128) {
+                  srcMask = 1;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask << 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
+         else {
+            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 1) {
+                  srcMask = 128;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask >> 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
+      }
+      dst += width_in_bytes;
+   }
+
+   return buffer;
+}
+
 
 /*
- * Pack the given RGBA span into client memory at 'dest' address
- * in the given pixel format and type.
- * Optionally apply the enabled pixel transfer ops.
- * Pack into memory using the given packing params struct.
- * This is used by glReadPixels and glGetTexImage?D()
- * Input:  ctx - the context
- *         n - number of pixels in the span
- *         rgba - the pixels
- *         format - dest packing format
- *         type - dest packing datatype
- *         destination - destination packing address
- *         packing - pixel packing parameters
- *         transferOps - bitmask of IMAGE_*_BIT operations to apply
+ * Pack bitmap data.
  */
 void
-_mesa_pack_rgba_span( GLcontext *ctx,
-                      GLuint n, CONST GLubyte srcRgba[][4],
-                      GLenum dstFormat, GLenum dstType,
-                      GLvoid *dstAddr,
-                      const struct gl_pixelstore_attrib *dstPacking,
-                      GLuint transferOps)
+_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
+                   GLubyte *dest, const struct gl_pixelstore_attrib *packing )
 {
-   ASSERT(ctx->ImageTransferState != UPDATE_IMAGE_TRANSFER_STATE);
+   GLint row, width_in_bytes;
+   const GLubyte *src;
 
-   /* Test for optimized case first */
-   if (transferOps == 0 && dstFormat == GL_RGBA
-       && dstType == GL_UNSIGNED_BYTE) {
-      /* common simple case */
-      MEMCPY(dstAddr, srcRgba, n * 4 * sizeof(GLubyte));
-   }
-   else if (transferOps == 0 && dstFormat == GL_RGB
-            && dstType == GL_UNSIGNED_BYTE) {
-      /* common simple case */
-      GLint i;
-      GLubyte *dest = (GLubyte *) dstAddr;
-      for (i = 0; i < n; i++) {
-         dest[0] = srcRgba[i][RCOMP];
-         dest[1] = srcRgba[i][GCOMP];
-         dest[2] = srcRgba[i][BCOMP];
-         dest += 3;
+   if (!source)
+      return;
+
+   width_in_bytes = CEILING( width, 8 );
+   src = source;
+   for (row = 0; row < height; row++) {
+      GLubyte *dst = _mesa_image_address( packing, dest, width, height,
+                                          GL_COLOR_INDEX, GL_BITMAP,
+                                          0, row, 0 );
+      if (!dst)
+         return;
+
+      if (packing->SkipPixels == 0) {
+         MEMCPY( dst, src, width_in_bytes );
+         if (packing->LsbFirst) {
+            flip_bytes( dst, width_in_bytes );
+         }
       }
-   }
-   else {
-      /* general solution */
-      GLfloat rgba[MAX_WIDTH][4];
-      const GLfloat rscale = 1.0F / 255.0F;
-      const GLfloat gscale = 1.0F / 255.0F;
-      const GLfloat bscale = 1.0F / 255.0F;
-      const GLfloat ascale = 1.0F / 255.0F;
-      GLuint i;
-      assert(n <= MAX_WIDTH);
-      /* convert color components to floating point */
-      for (i=0;i<n;i++) {
-         rgba[i][RCOMP] = srcRgba[i][RCOMP] * rscale;
-         rgba[i][GCOMP] = srcRgba[i][GCOMP] * gscale;
-         rgba[i][BCOMP] = srcRgba[i][BCOMP] * bscale;
-         rgba[i][ACOMP] = srcRgba[i][ACOMP] * ascale;
+      else {
+         /* handling SkipPixels is a bit tricky (no pun intended!) */
+         GLint i;
+         if (packing->LsbFirst) {
+            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            const GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 128) {
+                  srcMask = 1;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask << 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
+         else {
+            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            const GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 1) {
+                  srcMask = 128;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask >> 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
       }
-      _mesa_pack_float_rgba_span(ctx, n, (const GLfloat (*)[4]) rgba,
-                                 dstFormat, dstType, dstAddr,
-                                 dstPacking, transferOps);
+      src += width_in_bytes;
    }
 }
+
 
 
 void
@@ -1549,6 +1677,66 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 
 
 
+/*
+ * Pack the given RGBA span into client memory at 'dest' address
+ * in the given pixel format and type.
+ * Optionally apply the enabled pixel transfer ops.
+ * Pack into memory using the given packing params struct.
+ * This is used by glReadPixels and glGetTexImage?D()
+ * Input:  ctx - the context
+ *         n - number of pixels in the span
+ *         rgba - the pixels
+ *         format - dest packing format
+ *         type - dest packing datatype
+ *         destination - destination packing address
+ *         packing - pixel packing parameters
+ *         transferOps - bitmask of IMAGE_*_BIT operations to apply
+ */
+void
+_mesa_pack_rgba_span( GLcontext *ctx,
+                      GLuint n, CONST GLchan srcRgba[][4],
+                      GLenum dstFormat, GLenum dstType,
+                      GLvoid *dstAddr,
+                      const struct gl_pixelstore_attrib *dstPacking,
+                      GLuint transferOps)
+{
+   ASSERT(ctx->ImageTransferState != UPDATE_IMAGE_TRANSFER_STATE);
+
+   /* Test for optimized case first */
+   if (transferOps == 0 && dstFormat == GL_RGBA && dstType == CHAN_TYPE) {
+      /* common simple case */
+      MEMCPY(dstAddr, srcRgba, n * 4 * sizeof(GLchan));
+   }
+   else if (transferOps == 0 && dstFormat == GL_RGB && dstType == CHAN_TYPE) {
+      /* common simple case */
+      GLint i;
+      GLchan *dest = (GLchan *) dstAddr;
+      for (i = 0; i < n; i++) {
+         dest[0] = srcRgba[i][RCOMP];
+         dest[1] = srcRgba[i][GCOMP];
+         dest[2] = srcRgba[i][BCOMP];
+         dest += 3;
+      }
+   }
+   else {
+      /* general solution */
+      GLfloat rgba[MAX_WIDTH][4];
+      GLuint i;
+      assert(n <= MAX_WIDTH);
+      /* convert color components to floating point */
+      for (i=0;i<n;i++) {
+         rgba[i][RCOMP] = CHAN_TO_FLOAT(srcRgba[i][RCOMP]);
+         rgba[i][GCOMP] = CHAN_TO_FLOAT(srcRgba[i][GCOMP]);
+         rgba[i][BCOMP] = CHAN_TO_FLOAT(srcRgba[i][BCOMP]);
+         rgba[i][ACOMP] = CHAN_TO_FLOAT(srcRgba[i][ACOMP]);
+      }
+      _mesa_pack_float_rgba_span(ctx, n, (const GLfloat (*)[4]) rgba,
+                                 dstFormat, dstType, dstAddr,
+                                 dstPacking, transferOps);
+   }
+}
+
+
 #define SWAP2BYTE(VALUE)			\
    {						\
       GLubyte *bytes = (GLubyte *) &(VALUE);	\
@@ -2251,12 +2439,12 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
  * XXX perhaps expand this to process whole images someday.
  */
 void
-_mesa_unpack_ubyte_color_span( GLcontext *ctx,
-                               GLuint n, GLenum dstFormat, GLubyte dest[],
-                               GLenum srcFormat, GLenum srcType,
-                               const GLvoid *source,
-                               const struct gl_pixelstore_attrib *srcPacking,
-                               GLuint transferOps )
+_mesa_unpack_chan_color_span( GLcontext *ctx,
+                              GLuint n, GLenum dstFormat, GLchan dest[],
+                              GLenum srcFormat, GLenum srcType,
+                              const GLvoid *source,
+                              const struct gl_pixelstore_attrib *srcPacking,
+                              GLuint transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE || 
@@ -2305,21 +2493,21 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
    assert(ctx->Visual.RGBAflag);
 
    /* Try simple cases first */
-   if (transferOps == 0 && srcType == GL_UNSIGNED_BYTE) {
+   if (transferOps == 0 && srcType == CHAN_TYPE) {
       if (dstFormat == GL_RGBA) {
          if (srcFormat == GL_RGBA) {
-            MEMCPY( dest, source, n * 4 * sizeof(GLubyte) );
+            MEMCPY( dest, source, n * 4 * sizeof(GLchan) );
             return;
          }
          else if (srcFormat == GL_RGB) {
             GLuint i;
-            const GLubyte *src = (const GLubyte *) source;
-            GLubyte *dst = dest;
+            const GLchan *src = (const GLchan *) source;
+            GLchan *dst = dest;
             for (i = 0; i < n; i++) {
                dst[0] = src[0];
                dst[1] = src[1];
                dst[2] = src[2];
-               dst[3] = 255;
+               dst[3] = CHAN_MAX;
                src += 3;
                dst += 4;
             }
@@ -2328,13 +2516,13 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
       }
       else if (dstFormat == GL_RGB) {
          if (srcFormat == GL_RGB) {
-            MEMCPY( dest, source, n * 3 * sizeof(GLubyte) );
+            MEMCPY( dest, source, n * 3 * sizeof(GLchan) );
             return;
          }
          else if (srcFormat == GL_RGBA) {
             GLuint i;
-            const GLubyte *src = (const GLubyte *) source;
-            GLubyte *dst = dest;
+            const GLchan *src = (const GLchan *) source;
+            GLchan *dst = dest;
             for (i = 0; i < n; i++) {
                dst[0] = src[0];
                dst[1] = src[1];
@@ -2348,7 +2536,7 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
       else if (dstFormat == srcFormat) {
          GLint comps = _mesa_components_in_format(srcFormat);
          assert(comps > 0);
-         MEMCPY( dest, source, n * comps * sizeof(GLubyte) );
+         MEMCPY( dest, source, n * comps * sizeof(GLchan) );
          return;
       }
    }
@@ -2383,10 +2571,10 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          }
 
          if (dstFormat == GL_COLOR_INDEX) {
-            /* convert to GLubyte and return */
+            /* convert to GLchan and return */
             GLuint i;
             for (i = 0; i < n; i++) {
-               dest[i] = (GLubyte) (indexes[i] & 0xff);
+               dest[i] = (GLchan) (indexes[i] & 0xff);
             }
             return;
          }
@@ -2490,67 +2678,67 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
          default:
-            gl_problem(ctx, "bad dstFormat in _mesa_unpack_ubyte_span()");
+            gl_problem(ctx, "bad dstFormat in _mesa_unpack_chan_span()");
             return;
       }
 
 
-      /* Now return the GLubyte data in the requested dstFormat */
+      /* Now return the GLchan data in the requested dstFormat */
 
       if (dstRedIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstRedIndex] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
+            dst[dstRedIndex] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
 
       if (dstGreenIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstGreenIndex] = FLOAT_TO_UBYTE(rgba[i][GCOMP]);
+            dst[dstGreenIndex] = FLOAT_TO_CHAN(rgba[i][GCOMP]);
             dst += dstComponents;
          }
       }
 
       if (dstBlueIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstBlueIndex] = FLOAT_TO_UBYTE(rgba[i][BCOMP]);
+            dst[dstBlueIndex] = FLOAT_TO_CHAN(rgba[i][BCOMP]);
             dst += dstComponents;
          }
       }
 
       if (dstAlphaIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstAlphaIndex] = FLOAT_TO_UBYTE(rgba[i][ACOMP]);
+            dst[dstAlphaIndex] = FLOAT_TO_CHAN(rgba[i][ACOMP]);
             dst += dstComponents;
          }
       }
 
       if (dstIntensityIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          assert(dstIntensityIndex == 0);
          assert(dstComponents == 1);
          for (i = 0; i < n; i++) {
             /* Intensity comes from red channel */
-            dst[i] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
+            dst[i] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
          }
       }
 
       if (dstLuminanceIndex >= 0) {
-         GLubyte *dst = dest;
+         GLchan *dst = dest;
          GLuint i;
          assert(dstLuminanceIndex == 0);
          for (i = 0; i < n; i++) {
             /* Luminance comes from red channel */
-            dst[0] = FLOAT_TO_UBYTE(rgba[i][RCOMP]);
+            dst[0] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
@@ -2641,10 +2829,10 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          }
 
          if (dstFormat == GL_COLOR_INDEX) {
-            /* convert to GLubyte and return */
+            /* convert to GLchan and return */
             GLuint i;
             for (i = 0; i < n; i++) {
-               dest[i] = (GLubyte) (indexes[i] & 0xff);
+               dest[i] = (GLchan) (indexes[i] & 0xff);
             }
             return;
          }
@@ -3184,199 +3372,5 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
          }
       }
       return destBuffer;
-   }
-}
-
-
-/*
- * Unpack bitmap data.  Resulting data will be in most-significant-bit-first
- * order with row alignment = 1 byte.
- */
-GLvoid *
-_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
-                     const struct gl_pixelstore_attrib *packing )
-{
-   GLint bytes, row, width_in_bytes;
-   GLubyte *buffer, *dst;
-
-   if (!pixels)
-      return NULL;
-
-   /* Alloc dest storage */
-   bytes = ((width + 7) / 8 * height);
-   buffer = (GLubyte *) MALLOC( bytes );
-   if (!buffer)
-      return NULL;
-
-
-   width_in_bytes = CEILING( width, 8 );
-   dst = buffer;
-   for (row = 0; row < height; row++) {
-      GLubyte *src = _mesa_image_address( packing, pixels, width, height,
-                                          GL_COLOR_INDEX, GL_BITMAP,
-                                          0, row, 0 );
-      if (!src) {
-         FREE(buffer);
-         return NULL;
-      }
-
-      if (packing->SkipPixels == 0) {
-         MEMCPY( dst, src, width_in_bytes );
-         if (packing->LsbFirst) {
-            flip_bytes( dst, width_in_bytes );
-         }
-      }
-      else {
-         /* handling SkipPixels is a bit tricky (no pun intended!) */
-         GLint i;
-         if (packing->LsbFirst) {
-            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
-            GLubyte *s = src;
-            GLubyte *d = dst;
-            *d = 0;
-            for (i = 0; i < width; i++) {
-               if (*s & srcMask) {
-                  *d |= dstMask;
-               }
-               if (srcMask == 128) {
-                  srcMask = 1;
-                  s++;
-               }
-               else {
-                  srcMask = srcMask << 1;
-               }
-               if (dstMask == 1) {
-                  dstMask = 128;
-                  d++;
-                  *d = 0;
-               }
-               else {
-                  dstMask = dstMask >> 1;
-               }
-            }
-         }
-         else {
-            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
-            GLubyte *s = src;
-            GLubyte *d = dst;
-            *d = 0;
-            for (i = 0; i < width; i++) {
-               if (*s & srcMask) {
-                  *d |= dstMask;
-               }
-               if (srcMask == 1) {
-                  srcMask = 128;
-                  s++;
-               }
-               else {
-                  srcMask = srcMask >> 1;
-               }
-               if (dstMask == 1) {
-                  dstMask = 128;
-                  d++;
-                  *d = 0;
-               }
-               else {
-                  dstMask = dstMask >> 1;
-               }
-            }
-         }
-      }
-      dst += width_in_bytes;
-   }
-
-   return buffer;
-}
-
-
-/*
- * Pack bitmap data.
- */
-void
-_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
-                   GLubyte *dest, const struct gl_pixelstore_attrib *packing )
-{
-   GLint row, width_in_bytes;
-   const GLubyte *src;
-
-   if (!source)
-      return;
-
-   width_in_bytes = CEILING( width, 8 );
-   src = source;
-   for (row = 0; row < height; row++) {
-      GLubyte *dst = _mesa_image_address( packing, dest, width, height,
-                                          GL_COLOR_INDEX, GL_BITMAP,
-                                          0, row, 0 );
-      if (!dst)
-         return;
-
-      if (packing->SkipPixels == 0) {
-         MEMCPY( dst, src, width_in_bytes );
-         if (packing->LsbFirst) {
-            flip_bytes( dst, width_in_bytes );
-         }
-      }
-      else {
-         /* handling SkipPixels is a bit tricky (no pun intended!) */
-         GLint i;
-         if (packing->LsbFirst) {
-            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
-            const GLubyte *s = src;
-            GLubyte *d = dst;
-            *d = 0;
-            for (i = 0; i < width; i++) {
-               if (*s & srcMask) {
-                  *d |= dstMask;
-               }
-               if (srcMask == 128) {
-                  srcMask = 1;
-                  s++;
-               }
-               else {
-                  srcMask = srcMask << 1;
-               }
-               if (dstMask == 1) {
-                  dstMask = 128;
-                  d++;
-                  *d = 0;
-               }
-               else {
-                  dstMask = dstMask >> 1;
-               }
-            }
-         }
-         else {
-            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
-            const GLubyte *s = src;
-            GLubyte *d = dst;
-            *d = 0;
-            for (i = 0; i < width; i++) {
-               if (*s & srcMask) {
-                  *d |= dstMask;
-               }
-               if (srcMask == 1) {
-                  srcMask = 128;
-                  s++;
-               }
-               else {
-                  srcMask = srcMask >> 1;
-               }
-               if (dstMask == 1) {
-                  dstMask = 128;
-                  d++;
-                  *d = 0;
-               }
-               else {
-                  dstMask = dstMask >> 1;
-               }
-            }
-         }
-      }
-      src += width_in_bytes;
    }
 }

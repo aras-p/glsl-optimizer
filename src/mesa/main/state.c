@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.35 2000/10/27 18:31:23 brianp Exp $ */
+/* $Id: state.c,v 1.36 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1107,17 +1107,14 @@ void gl_update_state( GLcontext *ctx )
 	 }
 
 	 ctx->rescale_factor = 1.0F;
-
 	 if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
 				     MAT_FLAG_GENERAL_SCALE |
 				     MAT_FLAG_GENERAL_3D |
-				     MAT_FLAG_GENERAL) )
-
-	 {
-	    GLfloat *m = ctx->ModelView.inv;
-	    GLfloat f = m[2]*m[2] + m[6]*m[6] + m[10]*m[10];
-	    if (f > 1e-12 && (f-1)*(f-1) > 1e-12)
-	       ctx->rescale_factor = 1.0/GL_SQRT(f);
+				     MAT_FLAG_GENERAL) ) {
+	    const GLfloat *m = ctx->ModelView.inv;
+	    const GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
+	    if (f > 1e-12 && (f - 1.0) * (f - 1.0) > 1e-12)
+	       ctx->rescale_factor = 1.0 / GL_SQRT(f);
 	 }
       }
 

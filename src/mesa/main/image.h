@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.12 2000/08/31 15:24:07 brianp Exp $ */
+/* $Id: image.h,v 1.13 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,6 +79,15 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
                             const struct gl_pixelstore_attrib *packing );
 
 
+extern GLvoid *
+_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
+                     const struct gl_pixelstore_attrib *packing );
+
+extern void
+_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
+                   GLubyte *dest, const struct gl_pixelstore_attrib *packing );
+
+
 extern void
 _mesa_pack_float_rgba_span( GLcontext *ctx,
                             GLuint n, CONST GLfloat rgba[][4],
@@ -89,19 +98,19 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 
 extern void
 _mesa_pack_rgba_span( GLcontext *ctx,
-                      GLuint n, CONST GLubyte rgba[][4],
+                      GLuint n, CONST GLchan rgba[][4],
                       GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
                       const struct gl_pixelstore_attrib *dstPacking,
                       GLuint transferOps );
 
 
 extern void
-_mesa_unpack_ubyte_color_span( GLcontext *ctx,
-                               GLuint n, GLenum dstFormat, GLubyte dest[],
-                               GLenum srcFormat, GLenum srcType,
-                               const GLvoid *source,
-                               const struct gl_pixelstore_attrib *srcPacking,
-                               GLuint transferOps );
+_mesa_unpack_chan_color_span( GLcontext *ctx,
+                              GLuint n, GLenum dstFormat, GLchan dest[],
+                              GLenum srcFormat, GLenum srcType,
+                              const GLvoid *source,
+                              const struct gl_pixelstore_attrib *srcPacking,
+                              GLuint transferOps );
 
 
 extern void
@@ -140,15 +149,6 @@ extern void *
 _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpack );
-
-
-extern GLvoid *
-_mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
-                     const struct gl_pixelstore_attrib *packing );
-
-extern void
-_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
-                   GLubyte *dest, const struct gl_pixelstore_attrib *packing );
 
 
 #endif

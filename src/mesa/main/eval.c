@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.12 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: eval.c,v 1.13 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "types.h"
+#include "vb.h"
 #include "vbcull.h"
 #include "vbfill.h"
 #include "vbxform.h"

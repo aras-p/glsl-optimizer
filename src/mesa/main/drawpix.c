@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.40 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: drawpix.c,v 1.41 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,8 +106,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                  GLenum format, GLenum type, const GLvoid *pixels)
 {
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
-   GLubyte rgb[MAX_WIDTH][3];
-   GLubyte rgba[MAX_WIDTH][4];
+   GLchan rgb[MAX_WIDTH][3];
+   GLchan rgba[MAX_WIDTH][4];
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glDrawPixels", 
 						  GL_FALSE);
@@ -210,10 +210,10 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        * skip "skipRows" rows and skip "skipPixels" pixels/row.
        */
 
-      if (format==GL_RGBA && type==GL_UNSIGNED_BYTE
+      if (format == GL_RGBA && type == CHAN_TYPE
           && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
-            GLubyte *src = (GLubyte *) pixels
+            GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 4;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -248,10 +248,10 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_RGB && type==GL_UNSIGNED_BYTE
-               && ctx->ImageTransferState==0) {
+      else if (format == GL_RGB && type == CHAN_TYPE
+               && ctx->ImageTransferState == 0) {
          if (ctx->Visual.RGBAflag) {
-            GLubyte *src = (GLubyte *) pixels
+            GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels) * 3;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                GLint row;
@@ -285,10 +285,10 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_LUMINANCE && type==GL_UNSIGNED_BYTE
+      else if (format == GL_LUMINANCE && type == CHAN_TYPE
                && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
-            GLubyte *src = (GLubyte *) pixels
+            GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels);
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -344,10 +344,10 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_LUMINANCE_ALPHA && type==GL_UNSIGNED_BYTE
-               && ctx->ImageTransferState==0) {
+      else if (format == GL_LUMINANCE_ALPHA && type == CHAN_TYPE
+               && ctx->ImageTransferState == 0) {
          if (ctx->Visual.RGBAflag) {
-            GLubyte *src = (GLubyte *) pixels
+            GLchan *src = (GLchan *) pixels
                + (skipRows * rowLength + skipPixels)*2;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -355,7 +355,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                ASSERT(drawWidth < MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
                   GLint i;
-                  GLubyte *ptr = src;
+                  GLchan *ptr = src;
 		  for (i=0;i<drawWidth;i++) {
                      rgba[i][0] = *ptr;
                      rgba[i][1] = *ptr;
@@ -374,7 +374,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                ASSERT(drawWidth < MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
                   GLint i;
-                  GLubyte *ptr = src;
+                  GLchan *ptr = src;
                   for (i=0;i<drawWidth;i++) {
                      rgba[i][0] = *ptr;
                      rgba[i][1] = *ptr;
@@ -392,7 +392,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                ASSERT(drawWidth < MAX_WIDTH);
                for (row=0; row<drawHeight; row++) {
-                  GLubyte *ptr = src;
+                  GLchan *ptr = src;
                   GLint i;
 		  for (i=0;i<drawWidth;i++) {
                      rgba[i][0] = *ptr;
@@ -420,7 +420,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   ASSERT(drawWidth < MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
                   (*ctx->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                               (const GLubyte (*)[4])rgba, 
+                                               (const GLchan (*)[4]) rgba, 
 					       NULL);
                   src += rowLength;
                   destY++;
@@ -435,7 +435,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
                   destY--;
                   (*ctx->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                               (const GLubyte (*)[4])rgba, 
+                                               (const GLchan (*)[4]) rgba, 
                                                NULL);
                   src += rowLength;
                }
@@ -597,7 +597,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
-   GLubyte rgba[MAX_WIDTH][4];
+   GLchan rgba[MAX_WIDTH][4];
    GLuint ispan[MAX_WIDTH];
    GLint drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
@@ -614,10 +614,10 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Colors or indexes */
    if (ctx->Visual.RGBAflag) {
-      GLint r = (GLint) (ctx->Current.RasterColor[0] * 255.0F);
-      GLint g = (GLint) (ctx->Current.RasterColor[1] * 255.0F);
-      GLint b = (GLint) (ctx->Current.RasterColor[2] * 255.0F);
-      GLint a = (GLint) (ctx->Current.RasterColor[3] * 255.0F);
+      GLint r = FLOAT_TO_CHAN(ctx->Current.RasterColor[0]);
+      GLint g = FLOAT_TO_CHAN(ctx->Current.RasterColor[1]);
+      GLint b = FLOAT_TO_CHAN(ctx->Current.RasterColor[2]);
+      GLint a = FLOAT_TO_CHAN(ctx->Current.RasterColor[3]);
       GLint i;
       for (i = 0; i < drawWidth; i++) {
          rgba[i][RCOMP] = r;
@@ -669,7 +669,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          if (ctx->Visual.RGBAflag) {
             if (zoom) {
                gl_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
-                                         (const GLubyte (*)[4])rgba, desty);
+                                         (const GLchan (*)[4]) rgba, desty);
             }
             else {
                gl_write_rgba_span(ctx, width, x, y, zspan, 0, rgba, GL_BITMAP);
@@ -792,31 +792,31 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
     * General solution
     */
    {
-      GLubyte rgba[MAX_WIDTH][4];
+      GLchan rgba[MAX_WIDTH][4];
       GLint row;
       if (width > MAX_WIDTH)
          width = MAX_WIDTH;
       for (row = 0; row < height; row++, y++) {
          const GLvoid *source = _mesa_image_address(unpack,
                   pixels, width, height, format, type, 0, row, 0);
-         _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
-                                       format, type, source, unpack,
-                                       transferOps);
+         _mesa_unpack_chan_color_span(ctx, width, GL_RGBA, (void*) rgba,
+                                      format, type, source, unpack,
+                                      transferOps);
          if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
              (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
             continue;
 
          if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
             GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
-            GLubyte primary_rgba[MAX_WIDTH][4];
+            GLchan primary_rgba[MAX_WIDTH][4];
             GLuint unit;
             /* XXX not sure how multitexture is supposed to work here */
 
-            MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLubyte));
+            MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                if (ctx->Texture.Unit[unit].ReallyEnabled) {
-                  _mesa_pixeltexgen(ctx, width, (const GLubyte (*)[4]) rgba,
+                  _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                                     s, t, r, q);
                   gl_texture_pixels(ctx, unit, width, s, t, r, NULL,
                                     primary_rgba, rgba);
@@ -826,11 +826,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
          if (quickDraw) {
             (*ctx->Driver.WriteRGBASpan)( ctx, width, x, y,
-                                          (CONST GLubyte (*)[]) rgba, NULL);
+                                          (CONST GLchan (*)[]) rgba, NULL);
          }
          else if (zoom) {
             gl_write_zoomed_rgba_span( ctx, width, x, y, zspan, 0,
-				       (CONST GLubyte (*)[]) rgba, desty );
+				       (CONST GLchan (*)[]) rgba, desty );
          }
          else {
             gl_write_rgba_span( ctx, (GLuint) width, x, y, zspan, 0,

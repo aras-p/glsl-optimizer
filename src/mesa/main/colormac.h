@@ -1,4 +1,4 @@
-/* $Id: colormac.h,v 1.1 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: colormac.h,v 1.2 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,11 +175,19 @@ do {						\
 
 #define FLOAT_TO_CHAN(f)   (f)
 #define DOUBLE_TO_CHAN(f)  ((GLfloat) (f))
+#define UNCLAMPED_FLOAT_TO_CHAN(f)   (f)
+#define UNCLAMPED_DOUBLE_TO_CHAN(f)  ((GLfloat) (f))
 
 #else
 
 #define FLOAT_TO_CHAN(f)   ( (GLchan) FloatToInt((f) * CHAN_MAXF + 0.5F) )
 #define DOUBLE_TO_CHAN(f)  ( (GLchan) FloatToInt((f) * CHAN_MAXF + 0.5F) )
+
+#define UNCLAMPED_FLOAT_TO_CHAN(f)   \
+   ( (GLchan) FloatToInt( CLAMP(f, 0.0, 1.0) * CHAN_MAXF + 0.5F) )
+
+#define UNCLAMPED_DOUBLE_TO_CHAN(f)  \
+   ( (GLchan) FloatToInt( CLAMP(f, 0.0, 1.0) * CHAN_MAXF + 0.5F) )
 
 #endif
 

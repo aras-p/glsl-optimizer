@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.21 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: config.h,v 1.22 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,24 +162,6 @@
  * Bits per color channel (must be 8 at this time!)
  */
 #define CHAN_BITS 8
-#if CHAN_BITS == 8
-   typedef GLubyte GLchan;
-#define CHAN_MAX 255
-#define CHAN_MAXF 255.0F
-#elif CHAN_BITS == 16
-   typedef GLushort GLchan;
-#define CHAN_MAX 65535
-#define CHAN_MAXF 65535.0F
-#elif CHAN_BITS == 32
-   typedef GLfloat GLchan;
-#define CHAN_MAX 1.0
-#define CHAN_MAXF 1.0F
-#else
-#error  illegal number of color channel bits
-#endif
-
-
-
 
 
 /*
@@ -215,13 +197,12 @@
 #define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
 
 
-typedef struct __GLcontextRec GLcontext;
-
-extern void
-gl_read_config_file(GLcontext *ctx);
-
-extern void
-gl_register_config_var(const char *name, void (*notify)( const char *, int ));
+/* Some compilers don't like some of Mesa's const usage */
+#ifdef NO_CONST
+#  define CONST
+#else
+#  define CONST const
+#endif
 
 
 #endif

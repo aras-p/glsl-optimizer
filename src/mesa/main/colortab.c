@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.22 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: colortab.c,v 1.23 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -422,10 +422,10 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
             gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
             return;
          }
-         _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
-                                       table->Table,  /* dest */
-                                       format, type, data,
-                                       &ctx->Unpack, 0);
+         _mesa_unpack_chan_color_span(ctx, width, table->Format,
+                                      table->Table,  /* dest */
+                                      format, type, data,
+                                      &ctx->Unpack, 0);
       } /* floatTable */
    } /* proxy */
 
@@ -536,8 +536,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    if (!table->FloatTable) {
       GLchan *dest = (GLchan *) table->Table + start * comps * sizeof(GLchan);
-      _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
-                                    format, type, data, &ctx->Unpack, 0);
+      _mesa_unpack_chan_color_span(ctx, count, table->Format, dest,
+                                   format, type, data, &ctx->Unpack, 0);
    }
    else {
       GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];

@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.19 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: context.h,v 1.20 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -233,6 +233,13 @@ _mesa_Finish( void );
 extern void
 _mesa_Flush( void );
 
+
+
+extern void
+gl_read_config_file(GLcontext *ctx);
+
+extern void
+gl_register_config_var(const char *name, void (*notify)( const char *, int ));
 
 
 #endif

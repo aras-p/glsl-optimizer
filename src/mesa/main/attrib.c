@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.29 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: attrib.c,v 1.30 2000/10/29 18:12:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
+#include "matrix.h"
 #include "mem.h"
 #include "simple_list.h"
 #include "texstate.h"

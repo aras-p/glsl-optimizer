@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.53 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: teximage.c,v 1.54 2000/10/29 18:12:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,7 +45,7 @@
 /*
  * NOTES:
  *
- * Mesa's native texture datatype is GLubyte.  Native formats are
+ * Mesa's native texture datatype is GLchan.  Native formats are
  * GL_ALPHA, GL_LUMINANCE, GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, GL_RGBA,
  * and GL_COLOR_INDEX.
  * Device drivers are free to implement any internal format they want.
@@ -56,7 +56,7 @@
 static void PrintTexture(const struct gl_texture_image *img)
 {
   int i, j, c;
-  GLubyte *data = img->Data;
+  GLchan *data = img->Data;
 
   if (!data) {
      printf("No texture data\n");
@@ -676,11 +676,11 @@ adjust_texture_size_for_convolution(const GLcontext *ctx, GLuint dimensions,
  * care of all image transfer operations here, including convolution.
  * Input:
  *         dstXoffset, dstYoffset, dstZoffset - offsets in pixels
- *         dstRowStride, dstImageStride - strides in bytes
+ *         dstRowStride, dstImageStride - strides in GLchan's
  */
 static void
 fill_texture_image( GLcontext *ctx, GLuint dimensions,
-                    GLenum texFormat, GLubyte *texAddr,
+                    GLenum texFormat, GLchan *texAddr,
                     GLint srcWidth, GLint srcHeight, GLint srcDepth,
                     GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
                     GLint dstRowStride, GLint dstImageStride,
@@ -713,14 +713,14 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
           * GL_LUMINANCE_ALPHA, etc. texture formats.  Use memcpy().
           */
-         const GLubyte *src = (const GLubyte *) _mesa_image_address(
+         const GLchan *src = (const GLchan *) _mesa_image_address(
                                    srcPacking, srcAddr, srcWidth, srcHeight,
                                    srcFormat, srcType, 0, 0, 0);
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
-         const GLint widthInBytes = srcWidth * texComponents;
-         GLubyte *dst = texAddr + dstYoffset * dstRowStride
-                      + dstXoffset * texComponents * sizeof(GLubyte);
+         const GLint widthInBytes = srcWidth * texComponents * sizeof(GLchan);
+         GLchan *dst = texAddr + dstYoffset * dstRowStride
+                      + dstXoffset * texComponents;
          if (srcRowStride == widthInBytes && dstRowStride == widthInBytes) {
             MEMCPY(dst, src, srcHeight * widthInBytes);
          }
@@ -736,17 +736,17 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
       }
       else if (srcFormat == GL_RGBA && texFormat == GL_RGB) {
          /* commonly used by Quake */
-         const GLubyte *src = (const GLubyte *) _mesa_image_address(
+         const GLchan *src = (const GLchan *) _mesa_image_address(
                                    srcPacking, srcAddr, srcWidth, srcHeight,
                                    srcFormat, srcType, 0, 0, 0);
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
-         GLubyte *dst = texAddr + dstYoffset * dstRowStride
-                      + dstXoffset * texComponents * sizeof(GLubyte);
+         GLchan *dst = texAddr + dstYoffset * dstRowStride
+                      + dstXoffset * texComponents;
          GLint i, j;
          for (i = 0; i < srcHeight; i++) {
-            const GLubyte *s = src;
-            GLubyte *d = dst;
+            const GLchan *s = src;
+            GLchan *d = dst;
             for (j = 0; j < srcWidth; j++) {
                *d++ = *s++;  /*red*/
                *d++ = *s++;  /*green*/
@@ -767,11 +767,11 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
       /* color index texture */
       const GLenum texType = GL_UNSIGNED_BYTE;
       GLint img, row;
-      GLubyte *dest = texAddr + dstZoffset * dstImageStride
+      GLchan *dest = texAddr + dstZoffset * dstImageStride
                     + dstYoffset * dstRowStride
-                    + dstXoffset * texComponents * sizeof(GLubyte);
+                    + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *destRow = dest;
+         GLchan *destRow = dest;
          for (row = 0; row < srcHeight; row++) {
             const GLvoid *src = _mesa_image_address(srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
@@ -809,7 +809,7 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
          for (img = 0; img < srcDepth; img++) {
             const GLfloat *srcf;
             GLfloat *dstf = tmpImage;
-            GLubyte *dest;
+            GLchan *dest;
 
             /* unpack and do transfer ops up to convolution */
             for (row = 0; row < srcHeight; row++) {
@@ -864,16 +864,16 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
           * no convolution
           */
          GLint img, row;
-         GLubyte *dest = texAddr + dstZoffset * dstImageStride
+         GLchan *dest = texAddr + dstZoffset * dstImageStride
                        + dstYoffset * dstRowStride
-                       + dstXoffset * texComponents * sizeof(GLubyte);
+                       + dstXoffset * texComponents;
          for (img = 0; img < srcDepth; img++) {
-            GLubyte *destRow = dest;
+            GLchan *destRow = dest;
             for (row = 0; row < srcHeight; row++) {
                const GLvoid *srcRow = _mesa_image_address(srcPacking,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
-               _mesa_unpack_ubyte_color_span(ctx, srcWidth, texFormat, destRow,
+               _mesa_unpack_chan_color_span(ctx, srcWidth, texFormat, destRow,
                                        srcFormat, srcType, srcRow, srcPacking,
                                        ctx->ImageTransferState);
                destRow += dstRowStride;
@@ -890,7 +890,7 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
  * X86 optimized code.
  */
 #ifdef USE_X86_ASM
-#  define EXTRA_BYTE 1
+#  define EXTRA_BYTE sizeof(GLchan)
 #else
 #  define EXTRA_BYTE 0
 #endif
@@ -932,15 +932,15 @@ make_texture_image( GLcontext *ctx, GLuint dimensions,
                                           &convWidth, &convHeight);
    }
 
-   texImage->Data = (GLubyte *) MALLOC(convWidth * convHeight * depth
-                                       * components + EXTRA_BYTE);
+   texImage->Data = (GLchan *) MALLOC(convWidth * convHeight * depth
+                                 * components * sizeof(GLchan) + EXTRA_BYTE);
    if (!texImage->Data)
       return;      /* out of memory */
 
    fill_texture_image(ctx, dimensions, texImage->Format, texImage->Data,
                       width, height, depth, 0, 0, 0,
-                      convWidth * components * sizeof(GLubyte),
-                      convWidth * convHeight * components * sizeof(GLubyte),
+                      convWidth * components * sizeof(GLchan),
+                      convWidth * convHeight * components * sizeof(GLchan),
                       srcFormat, srcType, pixels, srcPacking);
 }
 
@@ -963,7 +963,8 @@ make_null_texture( struct gl_texture_image *texImage )
    components = components_in_intformat(texImage->IntFormat);
    numPixels = texImage->Width * texImage->Height * texImage->Depth;
 
-   texImage->Data = (GLubyte *) MALLOC( numPixels * components + EXTRA_BYTE );
+   texImage->Data = (GLchan *) MALLOC( numPixels * components * sizeof(GLchan)
+                                       + EXTRA_BYTE );
 
    /*
     * Let's see if anyone finds this.  If glTexImage2D() is called with
@@ -982,7 +983,7 @@ make_null_texture( struct gl_texture_image *texImage )
          "                               "
       };
 
-      GLubyte *imgPtr = texImage->Data;
+      GLchan *imgPtr = texImage->Data;
       GLint i, j, k;
       for (i = 0; i < texImage->Height; i++) {
          GLint srcRow = 7 - i % 8;
@@ -990,7 +991,7 @@ make_null_texture( struct gl_texture_image *texImage )
             GLint srcCol = j % 32;
             GLint texel = (message[srcRow][srcCol]=='X') ? CHAN_MAX : 70;
             for (k=0;k<components;k++) {
-               *imgPtr++ = (GLubyte) texel;
+               *imgPtr++ = (GLchan) texel;
             }
          }
       }
@@ -2059,7 +2060,8 @@ _mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
 
    if (!texImage->Data) {
       /* Allocate memory for the texture image data */
-      texImage->Data = (GLubyte *) MALLOC(numPixels * destComponents + EXTRA_BYTE);
+      texImage->Data = (GLchan *) MALLOC(numPixels * destComponents
+                                         * sizeof(GLchan) + EXTRA_BYTE);
    }
 
    if (imgFormat == texImage->Format && imgType == GL_UNSIGNED_BYTE) {
@@ -2079,8 +2081,8 @@ _mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
       const GLint srcBytesPerRow = width * srcBytesPerTexel;
       const GLenum dstType = GL_UNSIGNED_BYTE;
       const GLenum dstFormat = texImage->Format;
-      const GLubyte *srcPtr = (const GLubyte *) image;
-      GLubyte *destPtr = texImage->Data;
+      const GLchan *srcPtr = (const GLchan *) image;
+      GLchan *destPtr = texImage->Data;
 
       if (texImage->Format == GL_COLOR_INDEX) {
          /* color index texture */
@@ -2100,7 +2102,7 @@ _mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
          GLint img, row;
          for (img = 0; img < depth; img++) {
             for (row = 0; row < height; row++) {
-               _mesa_unpack_ubyte_color_span(ctx, width, dstFormat, destPtr,
+               _mesa_unpack_chan_color_span(ctx, width, dstFormat, destPtr,
                   imgFormat, imgType, srcPtr, &_mesa_native_packing, GL_FALSE);
                destPtr += destBytesPerRow;
                srcPtr += srcBytesPerRow;
@@ -2250,7 +2252,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
             /* convert to GL_RGBA */
             for (row = 0; row < height; row++) {
-               const GLubyte *src = texImage->Data
+               const GLchan *src = texImage->Data
                                   + (img * height + row ) * width * comps;
                GLfloat *dst = tmpImage + row * width * 4;
                _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dst,
@@ -2306,20 +2308,20 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                assert(dest);
                if (texImage->Format == GL_RGBA) {
                   /* simple case */
-                  const GLubyte *src = texImage->Data
+                  const GLchan *src = texImage->Data
                                      + (img * height + row ) * width * 4;
-                  _mesa_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
+                  _mesa_pack_rgba_span( ctx, width, (CONST GLchan (*)[4]) src,
                                         format, type, dest, &ctx->Pack,
                                         ctx->ImageTransferState );
                }
                else {
                   /* general case:  convert row to RGBA format */
-                  GLubyte rgba[MAX_WIDTH][4];
+                  GLchan rgba[MAX_WIDTH][4];
                   GLint i;
-                  const GLubyte *src;
+                  const GLchan *src;
                   switch (texImage->Format) {
                      case GL_ALPHA:
-                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        src = texImage->Data + row * width;
                         for (i = 0; i < width; i++) {
                            rgba[i][RCOMP] = CHAN_MAX;
                            rgba[i][GCOMP] = CHAN_MAX;
@@ -2328,7 +2330,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                         }
                         break;
                      case GL_LUMINANCE:
-                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        src = texImage->Data + row * width;
                         for (i = 0; i < width; i++) {
                            rgba[i][RCOMP] = src[i];
                            rgba[i][GCOMP] = src[i];
@@ -2337,7 +2339,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                          }
                         break;
                      case GL_LUMINANCE_ALPHA:
-                        src = texImage->Data + row * 2 * width * sizeof(GLubyte);
+                        src = texImage->Data + row * 2 * width;
                         for (i = 0; i < width; i++) {
                            rgba[i][RCOMP] = src[i*2+0];
                            rgba[i][GCOMP] = src[i*2+0];
@@ -2346,7 +2348,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                         }
                         break;
                      case GL_INTENSITY:
-                        src = texImage->Data + row * width * sizeof(GLubyte);
+                        src = texImage->Data + row * width;
                         for (i = 0; i < width; i++) {
                            rgba[i][RCOMP] = src[i];
                            rgba[i][GCOMP] = src[i];
@@ -2355,7 +2357,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                         }
                         break;
                      case GL_RGB:
-                        src = texImage->Data + row * 3 * width * sizeof(GLubyte);
+                        src = texImage->Data + row * 3 * width;
                         for (i = 0; i < width; i++) {
                            rgba[i][RCOMP] = src[i*3+0];
                            rgba[i][GCOMP] = src[i*3+1];
@@ -2370,7 +2372,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                      default:
                         gl_problem( ctx, "bad format in gl_GetTexImage" );
                   }
-                  _mesa_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
+                  _mesa_pack_rgba_span( ctx, width, (const GLchan (*)[4])rgba,
                                         format, type, dest, &ctx->Pack,
                                         ctx->ImageTransferState );
                } /* format */
@@ -2499,7 +2501,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    if (!success) {
       /* XXX if Driver.TexSubImage2D, unpack image and try again? */
       const GLint texComps = components_in_intformat(texImage->Format);
-      const GLint texRowStride = texImage->Width * texComps * sizeof(GLubyte);
+      const GLint texRowStride = texImage->Width * texComps;
       GLboolean retain = GL_TRUE;
 
       if (!texImage->Data) {
@@ -2582,7 +2584,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    if (!success) {
       /* XXX if Driver.TexSubImage3D, unpack image and try again? */
       const GLint texComps = components_in_intformat(texImage->Format);
-      const GLint texRowStride = texImage->Width * texComps * sizeof(GLubyte);
+      const GLint texRowStride = texImage->Width * texComps;
       const GLint texImgStride = texRowStride * texImage->Height;
       GLboolean retain = GL_TRUE;
 
@@ -2622,16 +2624,16 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
  * Input:  ctx - the context
  *         x, y - lower left corner
  *         width, height - size of region to read
- * Return: pointer to block of GL_RGBA, GLubyte data.
+ * Return: pointer to block of GL_RGBA, GLchan data.
  */
-static GLubyte *
+static GLchan *
 read_color_image( GLcontext *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height )
 {
    GLint stride, i;
-   GLubyte *image, *dst;
+   GLchan *image, *dst;
 
-   image = (GLubyte *) MALLOC(width * height * 4 * sizeof(GLubyte));
+   image = (GLchan *) MALLOC(width * height * 4 * sizeof(GLchan));
    if (!image)
       return NULL;
 
@@ -2640,10 +2642,10 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
                                  ctx->Pixel.DriverReadBuffer );
 
    dst = image;
-   stride = width * 4 * sizeof(GLubyte);
+   stride = width * 4;
    for (i = 0; i < height; i++) {
       gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
-                         (GLubyte (*)[4]) dst );
+                         (GLchan (*)[4]) dst );
       dst += stride;
    }
 
@@ -2678,7 +2680,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       struct gl_pixelstore_attrib unpackSave;
 
       /* get image from framebuffer */
-      GLubyte *image = read_color_image( ctx, x, y, width, 1 );
+      GLchan *image = read_color_image( ctx, x, y, width, 1 );
       if (!image) {
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D" );
          return;
@@ -2718,7 +2720,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
       struct gl_pixelstore_attrib unpackSave;
 
       /* get image from framebuffer */
-      GLubyte *image = read_color_image( ctx, x, y, width, height );
+      GLchan *image = read_color_image( ctx, x, y, width, height );
       if (!image) {
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D" );
          return;
@@ -2757,7 +2759,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       struct gl_pixelstore_attrib unpackSave;
-      GLubyte *image;
+      GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[1]->Image[level];
@@ -2804,7 +2806,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       struct gl_pixelstore_attrib unpackSave;
-      GLubyte *image;
+      GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[2]->Image[level];
@@ -2851,7 +2853,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       struct gl_pixelstore_attrib unpackSave;
-      GLubyte *image;
+      GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       teximage = texUnit->CurrentD[3]->Image[level];
