@@ -211,6 +211,7 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
        * This is a work-around/
        */
       /* clear depth */
+      FX_grDepthMask(FXTRUE);
       FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grColorMask(FXFALSE,FXFALSE);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
@@ -224,8 +225,8 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       FX_grDepthMask(FXFALSE);
       FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (!ctx->Depth.Mask) {
-        FX_grDepthMask(FXFALSE);
+      if (ctx->Depth.Mask) {
+        FX_grDepthMask(FXTRUE);
       }
       break;
     case DD_FRONT_LEFT_BIT:
@@ -233,8 +234,8 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       FX_grDepthMask(FXFALSE);
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (!ctx->Depth.Mask) {
-        FX_grDepthMask(FXFALSE);
+      if (ctx->Depth.Mask) {
+        FX_grDepthMask(FXTRUE);
       }
       break;
     case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
@@ -244,8 +245,8 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (!ctx->Depth.Mask) {
-        FX_grDepthMask(FXFALSE);
+      if (ctx->Depth.Mask) {
+        FX_grDepthMask(FXTRUE);
       }
       break;
     case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
@@ -263,10 +264,13 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       break;
     case DD_DEPTH_BIT:
       /* just the depth buffer */
+      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grColorMask(FXFALSE,FXFALSE);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
-                       (FxU16)(ctx->Depth.Clear*0xffff));
+      FX_grDepthMask(FXTRUE);
+      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       FX_grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+      if (ctx->Color.DrawDestMask & FRONT_LEFT_BIT)
+        FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       break;
     default:
       /* error */
