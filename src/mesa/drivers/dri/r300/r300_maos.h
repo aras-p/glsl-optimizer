@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-extern void r300EmitArrays(GLcontext * ctx, GLuint inputs);
+extern void r300EmitArrays(GLcontext * ctx, GLboolean immd);
 extern void r300ReleaseArrays(GLcontext * ctx);
 
 #endif

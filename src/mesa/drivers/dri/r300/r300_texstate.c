@@ -119,7 +119,7 @@ static const struct {
 	    {0xffffff16,  0},
 	    {0xffffff17, 0},
 	    };
-#elif
+#else
 	    {R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8), 0},
 	    {0xffffff01, 0},
 	    {0xffffff02, 0},

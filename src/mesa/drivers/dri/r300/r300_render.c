@@ -485,9 +485,12 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    efloat(1.0);
    #endif
    
+/* Setup INPUT_ROUTE and INPUT_CNTL */
+	r300EmitArrays(ctx, GL_TRUE);
+
 /* Why do we need this for immediate mode?? Vertex processor needs it to know proper regs */
-//   r300EmitLOAD_VBPNTR(rmesa, 0);
-   
+//	r300EmitLOAD_VBPNTR(rmesa, 0);
+
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
        GLuint start = VB->Primitive[i].start;
@@ -542,7 +545,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 
    
 	r300ReleaseArrays(ctx);
-	r300EmitArrays(ctx, rmesa->state.render_inputs);
+	r300EmitArrays(ctx, GL_FALSE);
 	
 //	LOCK_HARDWARE(&(rmesa->radeon));
 

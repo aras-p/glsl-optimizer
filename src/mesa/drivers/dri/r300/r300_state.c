@@ -1017,18 +1017,11 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	#define CONFIGURE_AOS(v, o, r, f) \
 		{\
 		if (RADEON_DEBUG & DEBUG_STATE)fprintf(stderr, "Enabling "#r "\n"); \
-		if(immediate){ \
-			r300->state.aos[count].element_size=4; \
-			r300->state.aos[count].stride=4; \
-			r300->state.aos[count].ncomponents=4; \
-			} else { \
-			r300->state.aos[count].element_size=v->size; \
-			r300->state.aos[count].stride=v->size; \
-			r300->state.aos[count].ncomponents=v->size; \
-			} \
-		r300->state.aos[count].offset=o; \
-		r300->state.aos[count].reg=reg; \
-		r300->state.aos[count].format=(f); \
+		r300->state.aos[count].aos_size=4; \
+		r300->state.aos[count].aos_stride=4; \
+		r300->state.aos[count].aos_offset=o; \
+		r300->state.aos[count].aos_reg=reg; \
+		r300->state.aos[count].aos_format=(f); \
 		r300->state.vap_reg.r=reg; \
 		count++; \
 		reg++; \
@@ -1123,12 +1116,12 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	/* setup INPUT_ROUTE */
 	R300_STATECHANGE(r300, vir[0]);
 	for(i=0;i+1<count;i+=2){
-		dw=(r300->state.aos[i].ncomponents-1)
-		| ((r300->state.aos[i].reg)<<8)
-		| (r300->state.aos[i].format<<14)
-		| (((r300->state.aos[i+1].ncomponents-1)
-		| ((r300->state.aos[i+1].reg)<<8)
-		| (r300->state.aos[i+1].format<<14))<<16);
+		dw=(r300->state.aos[i].aos_size-1)
+		| ((r300->state.aos[i].aos_reg)<<8)
+		| (r300->state.aos[i].aos_format<<14)
+		| (((r300->state.aos[i+1].aos_size-1)
+		| ((r300->state.aos[i+1].aos_reg)<<8)
+		| (r300->state.aos[i+1].aos_format<<14))<<16);
 
 		if(i+2==count){
 			dw|=(1<<(13+16));
@@ -1136,9 +1129,9 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
 		}
 	if(count & 1){
-		dw=(r300->state.aos[count-1].ncomponents-1)
-		| (r300->state.aos[count-1].format<<14)
-		| ((r300->state.aos[count-1].reg)<<8)
+		dw=(r300->state.aos[count-1].aos_size-1)
+		| (r300->state.aos[count-1].aos_format<<14)
+		| ((r300->state.aos[count-1].aos_reg)<<8)
 		| (1<<13);
 		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
 		//fprintf(stderr, "vir0 dw=%08x\n", dw);
@@ -1163,13 +1156,13 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 
 	for(i=0;i+1<count;i+=2){
 		/* do i first.. */
-		mask=(1<<(r300->state.aos[i].ncomponents*3))-1;
+		mask=(1<<(r300->state.aos[i].aos_size*3))-1;
 		dw=(ALL_COMPONENTS & mask)
 		| (ALL_DEFAULT & ~mask)
 		| R300_INPUT_ROUTE_ENABLE;
 
 		/* i+1 */
-		mask=(1<<(r300->state.aos[i+1].ncomponents*3))-1;
+		mask=(1<<(r300->state.aos[i+1].aos_size*3))-1;
 		dw|=(
 		(ALL_COMPONENTS & mask)
 		| (ALL_DEFAULT & ~mask)
@@ -1179,7 +1172,7 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
 		}
 	if(count & 1){
-		mask=(1<<(r300->state.aos[count-1].ncomponents*3))-1;
+		mask=(1<<(r300->state.aos[count-1].aos_size*3))-1;
 		dw=(ALL_COMPONENTS & mask)
 		| (ALL_DEFAULT & ~mask)
 		| R300_INPUT_ROUTE_ENABLE;
@@ -1833,7 +1826,8 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300UpdateTextureState(ctx);
 	
-	r300_setup_routing(ctx, GL_TRUE);
+//	r300_setup_routing(ctx, GL_TRUE);
+	r300EmitArrays(ctx, GL_TRUE); /* Just do the routing */
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);
 

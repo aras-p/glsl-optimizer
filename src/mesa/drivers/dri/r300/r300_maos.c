@@ -208,11 +208,11 @@ static void emit_vector(GLcontext * ctx,
 	}
 
 }
-
-/* Emit any changed arrays to new GART memory, re-emit a packet to
- * update the arrays.
+				
+/* Emit vertex data to GART memory (unless immediate mode)
+ * Route inputs to the vertex processor
  */
-void r300EmitArrays(GLcontext * ctx, GLuint inputs)
+void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	r300ContextPtr r300 = rmesa;
@@ -223,88 +223,126 @@ void r300EmitArrays(GLcontext * ctx, GLuint inputs)
 	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
+	GLuint inputs = 0;
 
-/*FIXME: handle vertex program input */
+#define CONFIGURE_AOS(f, v, sz, cn) { \
+		if (RADEON_DEBUG & DEBUG_STATE) \
+			fprintf(stderr, "Enabling "#v "\n"); \
+		if (++nr >= R300_MAX_AOS_ARRAYS) { \
+			fprintf(stderr, "Aieee! AOS array count exceeded!\n"); \
+			exit(-1); \
+		} \
+		\
+		if (rmesa->current_vp == NULL) \
+			rmesa->state.aos[nr-1].aos_reg = aa_vap_reg++; \
+		rmesa->state.aos[nr-1].aos_format = f; \
+		if (immd) { \
+			rmesa->state.aos[nr-1].aos_size = 4; \
+			rmesa->state.aos[nr-1].aos_stride = 4; \
+			rmesa->state.aos[nr-1].aos_offset = 0; \
+		} else { \
+			emit_vector(ctx, \
+						&rmesa->state.aos[nr-1], \
+						v->data, \
+						sz, \
+						v->stride, \
+						cn); \
+		} \
+}
+
+	if (rmesa->current_vp != NULL) {
+		if (rmesa->current_vp->inputs[VERT_ATTRIB_POS] != -1) {
+			inputs |= _TNL_BIT_POS;
+			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_POS];
+		}
+		if (rmesa->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1) {
+			inputs |= _TNL_BIT_NORMAL;
+			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_NORMAL];
+		}
+		if (rmesa->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1) {
+			inputs |= _TNL_BIT_COLOR0;
+			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_COLOR0];
+		}
+		if (rmesa->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1) {
+			inputs |= _TNL_BIT_COLOR1;
+			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_COLOR1];
+		}
+		if (rmesa->current_vp->inputs[VERT_ATTRIB_FOG] != -1) {
+			inputs |= _TNL_BIT_FOG;
+			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_FOG];
+		}
+		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
+			if (rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1)
+				inputs |= _TNL_BIT_TEX0<<i;
+				rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i];
+		}
+		nr = 0;
+	} else {
+		inputs = TNL_CONTEXT(ctx)->render_inputs;
+	}
+	rmesa->state.render_inputs = inputs;
+
 	if (inputs & _TNL_BIT_POS) {
-		if (RADEON_DEBUG & DEBUG_ALL)
-			fprintf(stderr, "[%d] _TNL_BIT_POS: sz=%d, st=%d, c=%d\n",
-				nr, VB->ObjPtr->size, VB->ObjPtr->stride, count);
-		emit_vector(ctx, &rmesa->state.aos[nr++],
-					(char *)VB->ObjPtr->data,
-					VB->ObjPtr->size,
-					VB->ObjPtr->stride, count);
+		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+						VB->ObjPtr,
+						immd ? 4 : VB->ObjPtr->size,
+						count);
 
 		vic_1 |= R300_INPUT_CNTL_POS;
-		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
-		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
 	}
 
 	if (inputs & _TNL_BIT_NORMAL) {
-		if (RADEON_DEBUG & DEBUG_ALL)
-			fprintf(stderr, "[%d] _TNL_BIT_NORMAL: sz=%d, st=%d, c=%d\n",
-				nr, VB->NormalPtr->size, VB->NormalPtr->stride, count);
-		emit_vector(ctx, &rmesa->state.aos[nr++],
-				(char *)VB->NormalPtr->data,
-				VB->NormalPtr->size,
-				VB->NormalPtr->stride, count);
+		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+						VB->NormalPtr,
+						immd ? 4 : VB->NormalPtr->size,
+						count);
 
 		vic_1 |= R300_INPUT_CNTL_NORMAL;
-		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
-		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
 	}
 
-	if (inputs & VERT_BIT_COLOR0) {
+	if (inputs & _TNL_BIT_COLOR0) {
 		int emitsize;
-		if (RADEON_DEBUG & DEBUG_ALL)
-			fprintf(stderr, "[%d] _TNL_BIT_COLOR0: sz=%d, st=%d, c=%d\n",
-				nr, VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride, count);
 
-		if (VB->ColorPtr[0]->size == 4 &&
-		    (VB->ColorPtr[0]->stride != 0 ||
-		     VB->ColorPtr[0]->data[0][3] != 1.0)) {
-			emitsize = 4;
-		} else {
-			emitsize = 3;
+		if (!immd) {
+			if (VB->ColorPtr[0]->size == 4 &&
+			    (VB->ColorPtr[0]->stride != 0 ||
+			     VB->ColorPtr[0]->data[0][3] != 1.0)) {
+				emitsize = 4;
+			} else {
+				emitsize = 3;
+			}
 		}
 
-		emit_vector(ctx,
-			    &(rmesa->state.aos[nr++]),
-			    (char *)VB->ColorPtr[0]->data,
-			    emitsize, VB->ColorPtr[0]->stride, count);
-//			    emitsize, VB->ColorPtr[0]->stride, count);
+		CONFIGURE_AOS(	AOS_FORMAT_FLOAT_COLOR,
+						VB->ColorPtr[0],
+						immd ? 4 : emitsize,
+						count);
 
 		vic_1 |= R300_INPUT_CNTL_COLOR;
-		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
-		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT_COLOR;
 	}
 
-	if (inputs & VERT_BIT_COLOR1) {
-		if (RADEON_DEBUG & DEBUG_ALL)
-			fprintf(stderr, "[%d] _TNL_BIT_COLOR1: sz=%d, st=%d, c=%d\n",
-				nr, VB->SecondaryColorPtr[0]->size, VB->SecondaryColorPtr[0]->stride, count);
+	if (inputs & _TNL_BIT_COLOR1) {
+		CONFIGURE_AOS(	AOS_FORMAT_FLOAT_COLOR,
+						VB->SecondaryColorPtr[0],
+						immd ? 4 : VB->SecondaryColorPtr[0]->size,
+						count);
+	}
 
-		emit_vector(ctx,
-			    &rmesa->state.aos[nr++],
-			    (char *)VB->SecondaryColorPtr[0]->data,
-			    VB->SecondaryColorPtr[0]->size, VB->SecondaryColorPtr[0]->stride, count);
-		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
-		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT_COLOR;
+	if (inputs & _TNL_BIT_FOG) {
+		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+						VB->FogCoordPtr,
+						immd ? 4 : VB->FogCoordPtr->size,
+						count);
 	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (inputs & (_TNL_BIT_TEX0 << i)) {
-			if (RADEON_DEBUG & DEBUG_ALL)
-				fprintf(stderr, "[%d] _TNL_BIT_TEX%02d: sz=%d, st=%d, c=%d\n",
-					nr, i, VB->TexCoordPtr[i]->size, VB->TexCoordPtr[i]->stride, count);
-			emit_vector(ctx,
-				    &(rmesa->state.aos[nr++]),
-				    (char *)VB->TexCoordPtr[i]->data,
-				    VB->TexCoordPtr[i]->size,
-				    VB->TexCoordPtr[i]->stride, count);
+			CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+							VB->TexCoordPtr[i],
+							immd ? 4 : VB->TexCoordPtr[i]->size,
+							count);
 
 			vic_1 |= R300_INPUT_CNTL_TC0 << i;
-			rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
-			rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
 		}
 	}
 
@@ -398,7 +436,7 @@ drm_radeon_cmd_header_t *cmd = NULL;
 	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = (nr+1)>>1;
 
 	/* Set up input_cntl */
-
+	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
 	R300_STATECHANGE(r300, vic);
 	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
 	r300->hw.vic.cmd[R300_VIC_CNTL_1]=vic_1;

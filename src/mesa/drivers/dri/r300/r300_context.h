@@ -116,14 +116,6 @@ struct r300_dma_region {
     int aos_size;       /* number of components (1-4) */
     int aos_format;     /* format of components */
     int aos_reg;        /* VAP register assignment */
-
-/* Left here so immediate mode still works unmodified */
-	int element_size;
-	int stride;
-	int offset;
-	int ncomponents;
-	int reg;
-	int format;
 };
 
 struct r300_dma {
