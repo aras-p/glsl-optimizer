@@ -615,7 +615,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    }
    
    if (bufObj->Pointer) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferSubDataARB(buffer is mapped)" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferDataARB(buffer is mapped)" );
       return;
    }  
 
