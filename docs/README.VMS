@@ -1,15 +1,26 @@
 
-VMS support contributed by Jouk Jansen (joukj@crys.chem.uva.nl)
+VMS support contributed by Jouk Jansen (joukj@hrem.stm.tudelft.nl)
 
 
-I compiled the libs on a VMSAlpha7.0 system using DECC5.3.
-But earlier versions may work as well.  The make files were tested
-use the DIGITAL make utility called MMS.  There is also a public domain
+The latest version was tested on a VMSAlpha7.2 system using DECC6.0, but
+probably also works for other versions.
+
+At the moment only the libraries LIBMESGL.EXE/LIBMESGL.OLB, LIBMESAGLU.OLB and
+LIBGLUT.OLB and the demos of the directory [.DEMOS] can be build.
+However, feel free to create the missing "decrip.mms-files" in the other
+directories.
+
+ The make files were tested
+using the DIGITAL make utility called MMS.  There is also a public domain
 clone available (MMK) and I  think, but it is not tested, that this
-utility will give no problem.
+utility will give (hardly) any problem.
 
 To make everything just type MMS (or MMK) in the main directory of
 mesagl.  For MMS the deafult makefile is called descrip.mms, and
 that is what I have called it.  I included alse some config files,
 all having mms somewhere in the name which all the makefiles need
 (just as your unix makefiles).
+On Alpha platforms at default a sharable image is created for LIBMESAGL.EXE.
+To get a static library make it by typing MMS/MACRO=(NOSHARE=1).
+On VAX platforms only static libraries can be build.
+
