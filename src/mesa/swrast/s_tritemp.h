@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.25 2001/09/13 21:54:29 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.26 2001/09/13 22:12:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -400,6 +400,7 @@
       }
       else {
          ASSERT (ctx->Light.ShadeModel == GL_FLAT);
+         span.activeMask |= SPAN_FLAT;
          drdx = drdy = 0.0F;
          dgdx = dgdy = 0.0F;
          dbdx = dbdy = 0.0F;
@@ -506,7 +507,6 @@
          dsbdx = dsbdy = span.specBlueStep = 0;
       }
 #endif
-
 #ifdef INTERP_INDEX
       span.activeMask |= SPAN_INDEX;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
@@ -518,6 +518,7 @@
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
       }
       else {
+         span.activeMask |= SPAN_FLAT;
          didx = didy = 0.0F;
          span.indexStep = 0;
       }
@@ -542,7 +543,6 @@
       }
 
 #endif
-
 #ifdef INTERP_TEX
       span.activeMask |= SPAN_TEXTURE;
       {
@@ -591,7 +591,6 @@
       }
 #  endif
 #endif
-
 #ifdef INTERP_MULTITEX
       span.activeMask |= SPAN_TEXTURE;
 #  ifdef INTERP_LAMBDA

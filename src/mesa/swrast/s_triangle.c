@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.36 2001/07/26 15:57:49 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.37 2001/09/13 22:12:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1011,57 +1011,98 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
    CHECKARRAY(mLambda, return);
 
    if (span->activeMask & SPAN_RGBA) {
+      if (span->activeMask & SPAN_FLAT) {
+         GLuint i;
+         GLchan color[4];
+         color[RCOMP] = FixedToChan(span->red);
+         color[GCOMP] = FixedToChan(span->green);
+         color[BCOMP] = FixedToChan(span->blue);
+         color[ACOMP] = FixedToChan(span->alpha);
+         for (i = 0; i < span->count; i++) {
+            COPY_CHAN4(rgba[i], color);
+         }
+      }
+      else {
+         /* smooth interpolation */
 #if CHAN_TYPE == GL_FLOAT
-      GLfloat r = span->red;
-      GLfloat g = span->green;
-      GLfloat b = span->blue;
-      GLfloat a = span->alpha;
+         GLfloat r = span->red;
+         GLfloat g = span->green;
+         GLfloat b = span->blue;
+         GLfloat a = span->alpha;
 #else
-      GLfixed r = span->red;
-      GLfixed g = span->green;
-      GLfixed b = span->blue;
-      GLfixed a = span->alpha;
+         GLfixed r = span->red;
+         GLfixed g = span->green;
+         GLfixed b = span->blue;
+         GLfixed a = span->alpha;
 #endif
-      GLuint i;
-      for (i = 0; i < span->count; i++) {
-         rgba[i][RCOMP] = FixedToChan(r);
-         rgba[i][GCOMP] = FixedToChan(g);
-         rgba[i][BCOMP] = FixedToChan(b);
-         rgba[i][ACOMP] = FixedToChan(a);
-         r += span->redStep;
-         g += span->greenStep;
-         b += span->blueStep;
-         a += span->alphaStep;
+         GLuint i;
+         for (i = 0; i < span->count; i++) {
+            rgba[i][RCOMP] = FixedToChan(r);
+            rgba[i][GCOMP] = FixedToChan(g);
+            rgba[i][BCOMP] = FixedToChan(b);
+            rgba[i][ACOMP] = FixedToChan(a);
+            r += span->redStep;
+            g += span->greenStep;
+            b += span->blueStep;
+            a += span->alphaStep;
+         }
       }
    }
+
    if (span->activeMask & SPAN_SPEC) {
+      if (span->activeMask & SPAN_FLAT) {
+         const GLchan r = FixedToChan(span->specRed);
+         const GLchan g = FixedToChan(span->specGreen);
+         const GLchan b = FixedToChan(span->specBlue);
+         GLuint i;
+         for (i = 0; i < span->count; i++) {
+            spec[i][RCOMP] = r;
+            spec[i][GCOMP] = g;
+            spec[i][BCOMP] = b;
+         }
+      }
+      else {
+         /* smooth interpolation */
 #if CHAN_TYPE == GL_FLOAT
-      GLfloat r = span->specRed;
-      GLfloat g = span->specGreen;
-      GLfloat b = span->specBlue;
+         GLfloat r = span->specRed;
+         GLfloat g = span->specGreen;
+         GLfloat b = span->specBlue;
 #else
-      GLfixed r = span->specRed;
-      GLfixed g = span->specGreen;
-      GLfixed b = span->specBlue;
+         GLfixed r = span->specRed;
+         GLfixed g = span->specGreen;
+         GLfixed b = span->specBlue;
 #endif
-      GLuint i;
-      for (i = 0; i < span->count; i++) {
-         spec[i][RCOMP] = FixedToChan(r);
-         spec[i][GCOMP] = FixedToChan(g);
-         spec[i][BCOMP] = FixedToChan(b);
-         r += span->specRedStep;
-         g += span->specGreenStep;
-         b += span->specBlueStep;
+         GLuint i;
+         for (i = 0; i < span->count; i++) {
+            spec[i][RCOMP] = FixedToChan(r);
+            spec[i][GCOMP] = FixedToChan(g);
+            spec[i][BCOMP] = FixedToChan(b);
+            r += span->specRedStep;
+            g += span->specGreenStep;
+            b += span->specBlueStep;
+         }
       }
    }
+
    if (span->activeMask & SPAN_INDEX) {
-      GLuint i;
-      GLfixed ind = span->index;
-      for (i = 0; i < span->count; i++) {
-         index[i] = FixedToInt(ind);
-         ind += span->indexStep;
+      if (span->activeMask & SPAN_FLAT) {
+         GLuint i;
+         const GLint indx = FixedToInt(span->index);
+         for (i = 0; i < span->count; i++) {
+            index[i] = indx;
+         }
+      }
+      else {
+         /* smooth interpolation */
+         GLuint i;
+         GLfixed ind = span->index;
+         for (i = 0; i < span->count; i++) {
+            index[i] = FixedToInt(ind);
+            ind += span->indexStep;
+         }
       }
    }
+
    if (span->activeMask & SPAN_Z) {
       if (ctx->Visual.depthBits <= 16) {
          GLuint i;

@@ -1,4 +1,4 @@
-/* $Id: s_trispan.h,v 1.2 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: s_trispan.h,v 1.3 2001/09/13 22:12:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,14 +44,18 @@
  */
 
 
-#define SPAN_RGBA         0x01
-#define SPAN_SPEC         0x02
-#define SPAN_INDEX        0x04
-#define SPAN_Z            0x08
-#define SPAN_FOG          0x10
-#define SPAN_TEXTURE      0x20
-#define SPAN_INT_TEXTURE  0x40
-#define SPAN_LAMBDA       0x80
+/* When the triangle_span struct is initialized, these flags indicates
+ * which values are needed for rendering the triangle.
+ */
+#define SPAN_RGBA         0x001
+#define SPAN_SPEC         0x002
+#define SPAN_INDEX        0x004
+#define SPAN_Z            0x008
+#define SPAN_FOG          0x010
+#define SPAN_TEXTURE      0x020
+#define SPAN_INT_TEXTURE  0x040
+#define SPAN_LAMBDA       0x080
+#define SPAN_FLAT         0x100  /* flat shading? */
 
 
 struct triangle_span {
