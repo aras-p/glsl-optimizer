@@ -135,10 +135,10 @@ static void radeonUploadRectSubImage( radeonContextPtr rmesa,
 		    __FUNCTION__, src_pitch, dstPitch);
 
 	 if (src_pitch == dstPitch) {
-	    memcpy( region.address, tex, lines * src_pitch );
+	    memcpy( region.address + region.start, tex, lines * src_pitch );
 	 } 
 	 else {
-	    char *buf = region.address;
+	    char *buf = region.address + region.start;
 	    int i;
 	    for (i = 0 ; i < lines ; i++) {
 	       memcpy( buf, tex, src_pitch );
