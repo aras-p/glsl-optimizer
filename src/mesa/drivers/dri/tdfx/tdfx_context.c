@@ -97,7 +97,9 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
       _mesa_enable_extension( ctx, "GL_EXT_blend_subtract" );
       _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
    } else {
+#if 0 /*[dBorca] cannot handle 565. badbad! revise*/
       _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
+#endif
    }
 
    if (fxMesa->haveHwStencil) {
