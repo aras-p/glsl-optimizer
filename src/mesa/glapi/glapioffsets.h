@@ -825,5 +825,8 @@
 #define _gloffset_AlphaFragmentOp2ATI 793
 #define _gloffset_AlphaFragmentOp3ATI 794
 #define _gloffset_SetFragmentShaderConstantATI 795
+#define _gloffset_StencilFuncSeparate 796
+#define _gloffset_StencilOpSeparate 797
+#define _gloffset_StencilMaskSeparate 798
 
 #endif

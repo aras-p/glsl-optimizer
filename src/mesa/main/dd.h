@@ -7,7 +7,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -676,7 +676,16 @@ struct dd_function_table {
    void (*StencilMask)(GLcontext *ctx, GLuint mask);
    /** Set stencil test actions */
    void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
+   /** Set active stencil face (GL_EXT_stencil_two_side) */
    void (*ActiveStencilFace)(GLcontext *ctx, GLuint face);
+   /** OpenGL 2.0 two-sided StencilFunc */
+   void (*StencilFuncSeparate)(GLcontext *ctx, GLenum face, GLenum func,
+                               GLint ref, GLuint mask);
+   /** OpenGL 2.0 two-sided StencilMask */
+   void (*StencilMaskSeparate)(GLcontext *ctx, GLenum face, GLuint mask);
+   /** OpenGL 2.0 two-sided StencilOp */
+   void (*StencilOpSeparate)(GLcontext *ctx, GLenum face, GLenum fail,
+                             GLenum zfail, GLenum zpass);
    /** Control the generation of texture coordinates */
    void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname,
 		  const GLfloat *params);

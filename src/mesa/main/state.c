@@ -382,6 +382,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
 #endif
 
+   /* OpenGL 2.0 */
+   exec->StencilFuncSeparate = _mesa_StencilFuncSeparate;
+   exec->StencilMaskSeparate = _mesa_StencilMaskSeparate;
+   exec->StencilOpSeparate = _mesa_StencilOpSeparate;
+
    /* 2. GL_EXT_blend_color */
 #if 0
 /*    exec->BlendColorEXT = _mesa_BlendColorEXT; */

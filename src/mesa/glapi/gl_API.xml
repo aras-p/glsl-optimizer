@@ -4252,6 +4252,30 @@ glx:
 </category>
 
 
+<category name="2.0">
+    <!-- XXX this section is very much incomplete!!! -->
+    <!-- These function offsets may change too!!! -->
+
+    <function name="StencilFuncSeparate" offset="796">
+        <param name="face" type="GLenum"/>
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLint"/>
+        <param name="mask" type="GLuint"/>
+    </function>
+
+    <function name="StencilOpSeparate" offset="797">
+        <param name="face" type="GLenum"/>
+        <param name="fail" type="GLenum"/>
+        <param name="zfail" type="GLenum"/>
+        <param name="zpass" type="GLenum"/>
+    </function>
+
+    <function name="StencilMaskSeparate" offset="798">
+        <param name="face" type="GLenum"/>
+        <param name="mask" type="GLuint"/>
+    </function>
+</category>
+
 
 <!-- ARB extensions sorted by extension number. -->
 

@@ -4050,6 +4050,21 @@ KEYWORD1 void KEYWORD2 NAME(SetFragmentShaderConstantATI)(GLuint dst, const GLfl
    DISPATCH(SetFragmentShaderConstantATI, (dst, value), (F, "glSetFragmentShaderConstantATI(%d, %p);\n", dst, (const void *) value));
 }
 
+KEYWORD1 void KEYWORD2 NAME(StencilFuncSeparate)(GLenum face, GLenum func, GLint ref, GLuint mask)
+{
+   DISPATCH(StencilFuncSeparate, (face, func, ref, mask), (F, "glStencilFuncSeparate(0x%x, 0x%x, %d, %d);\n", face, func, ref, mask));
+}
+
+KEYWORD1 void KEYWORD2 NAME(StencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+{
+   DISPATCH(StencilOpSeparate, (face, fail, zfail, zpass), (F, "glStencilOpSeparate(0x%x, 0x%x, 0x%x, 0x%x);\n", face, fail, zfail, zpass));
+}
+
+KEYWORD1 void KEYWORD2 NAME(StencilMaskSeparate)(GLenum face, GLuint mask)
+{
+   DISPATCH(StencilMaskSeparate, (face, mask), (F, "glStencilMaskSeparate(0x%x, %d);\n", face, mask));
+}
+
 KEYWORD1 void KEYWORD2 NAME(ActiveTexture)(GLenum texture)
 {
    DISPATCH(ActiveTextureARB, (texture), (F, "glActiveTexture(0x%x);\n", texture));
@@ -5750,6 +5765,9 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(AlphaFragmentOp2ATI),
    TABLE_ENTRY(AlphaFragmentOp3ATI),
    TABLE_ENTRY(SetFragmentShaderConstantATI),
+   TABLE_ENTRY(StencilFuncSeparate),
+   TABLE_ENTRY(StencilOpSeparate),
+   TABLE_ENTRY(StencilMaskSeparate),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

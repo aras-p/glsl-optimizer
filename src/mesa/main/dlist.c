@@ -322,6 +322,10 @@ typedef enum {
 	/* GL_ATI_fragment_shader */
 	OPCODE_BIND_FRAGMENT_SHADER_ATI,
 	OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI,
+        /* OpenGL 2.0 */
+        OPCODE_STENCIL_FUNC_SEPARATE,
+        OPCODE_STENCIL_OP_SEPARATE,
+        OPCODE_STENCIL_MASK_SEPARATE,
 	
 	/* Vertex attributes -- fallback for when optimized display
 	 * list build isn't active.
@@ -799,6 +803,11 @@ _mesa_init_lists( void )
       InstSize[OPCODE_BIND_FRAGMENT_SHADER_ATI] = 2;
       InstSize[OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI] = 6;
 #endif
+      /* OpenGL 2.0 */
+      InstSize[OPCODE_STENCIL_FUNC_SEPARATE] = 5;
+      InstSize[OPCODE_STENCIL_MASK_SEPARATE] = 3;
+      InstSize[OPCODE_STENCIL_OP_SEPARATE] = 5;
+
       InstSize[OPCODE_ATTR_1F_NV] = 3;
       InstSize[OPCODE_ATTR_2F_NV] = 4;
       InstSize[OPCODE_ATTR_3F_NV] = 5;
@@ -3259,6 +3268,61 @@ static void GLAPIENTRY save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 }
 
 
+static void GLAPIENTRY
+save_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_STENCIL_FUNC_SEPARATE, 4);
+   if (n) {
+      n[1].e = face;
+      n[2].e = func;
+      n[3].i = ref;
+      n[4].ui = mask;
+   }
+   if (ctx->ExecuteFlag) {
+      ctx->Exec->StencilFuncSeparate(face, func, ref, mask);
+   }
+}
+
+
+static void GLAPIENTRY
+save_StencilMaskSeparate(GLenum face, GLuint mask)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_STENCIL_MASK_SEPARATE, 2);
+   if (n) {
+      n[1].e = face;
+      n[2].ui = mask;
+   }
+   if (ctx->ExecuteFlag) {
+      ctx->Exec->StencilMaskSeparate(face, mask);
+   }
+}
+
+
+static void GLAPIENTRY
+save_StencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_OP_SEPARATE, 4 );
+   if (n) {
+      n[1].e = face;
+      n[2].e = fail;
+      n[3].e = zfail;
+      n[4].e = zpass;
+   }
+   if (ctx->ExecuteFlag) {
+      ctx->Exec->StencilOpSeparate(face, fail, zfail, zpass);
+   }
+}
+
+
 static void GLAPIENTRY save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4567,7 +4631,7 @@ static void GLAPIENTRY save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_STENCIL_FACE_EXT, 2 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_BOUNDS_EXT, 2 );
    if (n) {
       n[1].f = (GLfloat) zmin;
       n[2].f = (GLfloat) zmax;
@@ -6051,6 +6115,15 @@ execute_list( GLcontext *ctx, GLuint list )
 	    break;
 	 case OPCODE_STENCIL_OP:
 	    (*ctx->Exec->StencilOp)( n[1].e, n[2].e, n[3].e );
+	    break;
+	 case OPCODE_STENCIL_FUNC_SEPARATE:
+	    ctx->Exec->StencilFuncSeparate( n[1].e, n[2].e, n[3].i, n[4].ui );
+	    break;
+	 case OPCODE_STENCIL_MASK_SEPARATE:
+	    ctx->Exec->StencilMaskSeparate( n[1].e, n[2].ui );
+	    break;
+	 case OPCODE_STENCIL_OP_SEPARATE:
+	    ctx->Exec->StencilOpSeparate( n[1].e, n[2].e, n[3].e, n[4].e );
 	    break;
          case OPCODE_TEXENV:
             {
@@ -7627,6 +7700,11 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->CopyTexSubImage3D = save_CopyTexSubImage3D;
    table->TexImage3D = save_TexImage3D;
    table->TexSubImage3D = save_TexSubImage3D;
+
+   /* GL 2.0 */
+   table->StencilFuncSeparate = save_StencilFuncSeparate;
+   table->StencilMaskSeparate = save_StencilMaskSeparate;
+   table->StencilOpSeparate = save_StencilOpSeparate;
 
    /* GL_ARB_imaging */
    /* Not all are supported */
