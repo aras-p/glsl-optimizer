@@ -224,7 +224,7 @@ static struct {
 #define VERTEX r128Vertex
 #define TAB rast_tab
 
-#define DEPTH_SCALE 1.0
+#define DEPTH_SCALE rmesa->depth_scale
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x
