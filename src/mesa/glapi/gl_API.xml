@@ -8086,7 +8086,7 @@ glx:
 
     <function name="SecondaryColor3svEXT" offset="570">
         <param name="v" type="const GLshort *" count="3"/>
-        <glx rop="4128"/>
+        <glx rop="4127"/>
     </function>
 
     <function name="SecondaryColor3ubEXT" offset="571" vectorequiv="SecondaryColor3ubvEXT">

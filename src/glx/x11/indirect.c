@@ -5712,7 +5712,7 @@ __indirect_glSecondaryColor3ivEXT(const GLint * v)
     generic_12_byte( X_GLrop_SecondaryColor3ivEXT, v );
 }
 
-#define X_GLrop_SecondaryColor3svEXT 4128
+#define X_GLrop_SecondaryColor3svEXT 4127
 void
 __indirect_glSecondaryColor3sEXT(GLshort red, GLshort green, GLshort blue)
 {
@@ -5726,7 +5726,7 @@ __indirect_glSecondaryColor3sEXT(GLshort red, GLshort green, GLshort blue)
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
-#define X_GLrop_SecondaryColor3svEXT 4128
+#define X_GLrop_SecondaryColor3svEXT 4127
 void
 __indirect_glSecondaryColor3svEXT(const GLshort * v)
 {
