@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.6 2001/01/02 21:09:50 brianp Exp $ */
+/* $Id: s_fog.c,v 1.7 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,10 +49,12 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
 		       const GLfixed fog[], 
 		       GLchan rgba[][4] )
 {
-   const GLchan rFog = FLOAT_TO_CHAN(ctx->Fog.Color[RCOMP]);
-   const GLchan gFog = FLOAT_TO_CHAN(ctx->Fog.Color[GCOMP]);
-   const GLchan bFog = FLOAT_TO_CHAN(ctx->Fog.Color[BCOMP]);
    GLuint i;
+   GLchan rFog, gFog, bFog;
+
+   UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
+   UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);
+   UNCLAMPED_FLOAT_TO_CHAN(bFog, ctx->Fog.Color[BCOMP]);
 
 #if CHAN_TYPE == GL_FLOAT
    for (i = 0; i < n; i++) {

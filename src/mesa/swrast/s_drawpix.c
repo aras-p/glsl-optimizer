@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.5 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: s_drawpix.c,v 1.6 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -605,11 +605,12 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Colors or indexes */
    if (ctx->Visual.RGBAflag) {
-      GLint r = FLOAT_TO_CHAN(ctx->Current.RasterColor[0]);
-      GLint g = FLOAT_TO_CHAN(ctx->Current.RasterColor[1]);
-      GLint b = FLOAT_TO_CHAN(ctx->Current.RasterColor[2]);
-      GLint a = FLOAT_TO_CHAN(ctx->Current.RasterColor[3]);
       GLint i;
+      GLint r, g, b, a;
+      UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterColor[0]);
+      UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterColor[1]);
+      UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterColor[2]);
+      UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterColor[3]);
       for (i = 0; i < drawWidth; i++) {
          rgba[i][RCOMP] = r;
          rgba[i][GCOMP] = g;

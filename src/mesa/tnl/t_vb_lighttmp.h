@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.2 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -269,13 +269,13 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 	 }
       } /*loop over lights*/
 
-      FLOAT_RGB_TO_CHAN_RGB( Fcolor[j], sum[0] );
-      FLOAT_RGB_TO_CHAN_RGB( Fspec[j], spec[0] );
+      UNCLAMPED_FLOAT_TO_RGB_CHAN( Fcolor[j], sum[0] );
+      UNCLAMPED_FLOAT_TO_RGB_CHAN( Fspec[j], spec[0] );
       Fcolor[j][3] = sumA[0];
       
       if (IDX & LIGHT_TWOSIDE) {
-	 FLOAT_RGB_TO_CHAN_RGB( Bcolor[j], sum[1] );
-	 FLOAT_RGB_TO_CHAN_RGB( Bspec[j], spec[1] );
+	 UNCLAMPED_FLOAT_TO_RGB_CHAN( Bcolor[j], sum[1] );
+	 UNCLAMPED_FLOAT_TO_RGB_CHAN( Bspec[j], spec[1] );
 	 Bcolor[j][3] = sumA[1];
       }
    } 
@@ -475,11 +475,11 @@ static void TAG(light_rgba)( GLcontext *ctx,
 	 ACC_SCALE_SCALAR_3V( sum[side], attenuation, contrib );
       } 
 
-      FLOAT_RGB_TO_CHAN_RGB( Fcolor[j], sum[0] );
+      UNCLAMPED_FLOAT_TO_RGB_CHAN( Fcolor[j], sum[0] );
       Fcolor[j][3] = sumA[0];
 
       if (IDX & LIGHT_TWOSIDE) {
-	 FLOAT_RGB_TO_CHAN_RGB( Bcolor[j], sum[1] );
+	 UNCLAMPED_FLOAT_TO_RGB_CHAN( Bcolor[j], sum[1] );
 	 Bcolor[j][3] = sumA[1];
       }
    } 
@@ -556,12 +556,12 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       {
 	 COPY_3V(base[0], light->_MatAmbient[0]);
 	 ACC_3V(base[0], ctx->Light._BaseColor[0] );
-	 FLOAT_RGB_TO_CHAN_RGB( baseubyte[0], base[0] );
+	 UNCLAMPED_FLOAT_TO_RGB_CHAN( baseubyte[0], base[0] );
 	 
 	 if (IDX & LIGHT_TWOSIDE) {
 	    COPY_3V(base[1], light->_MatAmbient[1]);
 	    ACC_3V(base[1], ctx->Light._BaseColor[1]);
-	    FLOAT_RGB_TO_CHAN_RGB( baseubyte[1], base[1]);
+	    UNCLAMPED_FLOAT_TO_RGB_CHAN( baseubyte[1], base[1]);
 	 }
       }
 
@@ -582,7 +582,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 		  GET_SHINE_TAB_ENTRY( ctx->_ShineTable[1], n_dot_h, spec );
 		  ACC_SCALE_SCALAR_3V(sum, spec, light->_MatSpecular[1]);
 	       } 
-	       FLOAT_RGB_TO_CHAN_RGB(Bcolor[j], sum );
+	       UNCLAMPED_FLOAT_TO_RGB_CHAN(Bcolor[j], sum );
 	    }
 	 } else {
 	    GLfloat n_dot_h = DOT3(normal, light->_h_inf_norm);
@@ -595,7 +595,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 	       ACC_SCALE_SCALAR_3V(sum, spec, light->_MatSpecular[0]);
 
 	    }
-	    FLOAT_RGB_TO_CHAN_RGB(Fcolor[j], sum );
+	    UNCLAMPED_FLOAT_TO_RGB_CHAN(Fcolor[j], sum );
 	 }
 
 	 j++;
@@ -709,11 +709,11 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	    }
 	 }
 
-	 FLOAT_RGB_TO_CHAN_RGB( Fcolor[j], sum[0] );
+	 UNCLAMPED_FLOAT_TO_RGB_CHAN( Fcolor[j], sum[0] );
 	 Fcolor[j][3] = sumA[0];
 	 
 	 if (IDX & LIGHT_TWOSIDE) {
-	    FLOAT_RGB_TO_CHAN_RGB( Bcolor[j], sum[1] );
+	    UNCLAMPED_FLOAT_TO_RGB_CHAN( Bcolor[j], sum[1] );
 	    Bcolor[j][3] = sumA[1];
 	 }
 

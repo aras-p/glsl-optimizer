@@ -1,4 +1,4 @@
-/* $Id: colormac.h,v 1.5 2001/01/02 22:02:51 brianp Exp $ */
+/* $Id: colormac.h,v 1.6 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,6 @@
 #define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 24))
 
 #define CHAN_TO_FLOAT(c)  UBYTE_TO_FLOAT(c)
-#define FLOAT_TO_CHAN(f)  ( (GLchan) IROUND((f) * CHAN_MAXF) )
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f)    CLAMPED_FLOAT_TO_UBYTE(c, f)
 #define UNCLAMPED_FLOAT_TO_CHAN(c, f)  UNCLAMPED_FLOAT_TO_UBYTE(c, f)
@@ -72,7 +71,6 @@
 #define UINT_TO_CHAN(i)   ((GLchan) ((i) >> 16))
 
 #define CHAN_TO_FLOAT(c)  ((GLfloat) ((c) * (1.0 / CHAN_MAXF) + 0.5F))
-#define FLOAT_TO_CHAN(f)  ((GLchan) IROUND((f) * CHAN_MAXF))
 
 #define CLAMPED_FLOAT_TO_CHAN(c, f) \
    c = ((GLchan) IROUND((f) * CHAN_MAXF))
@@ -95,9 +93,8 @@
 #define UINT_TO_CHAN(i)   ((GLfloat) ((i) * (1.0F / 4294967295.0F)))
 
 #define CHAN_TO_FLOAT(c)  (c)
-#define FLOAT_TO_CHAN(f)  (f)
 
-#define CLAMPED_FLOAT_COLOR_TO_CHAN(c, f)  c = (f)
+#define CLAMPED_FLOAT_TO_CHAN(c, f)  c = (f)
 #define UNCLAMPED_FLOAT_TO_CHAN(c, f)      c = (f)
 
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
@@ -115,12 +112,24 @@
 /*
  * Convert 3 channels at once.
  */
-#define FLOAT_RGB_TO_CHAN_RGB(dst, f)		\
+#define UNCLAMPED_FLOAT_TO_RGB_CHAN(dst, f)	\
 do {						\
    UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
    UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
    UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
-} while(0)
+} while (0)
+
+
+/*
+ * Convert 4 channels at once.
+ */
+#define UNCLAMPED_FLOAT_TO_RGBA_CHAN(dst, f)	\
+do {						\
+   UNCLAMPED_FLOAT_TO_CHAN(dst[0], f[0]);	\
+   UNCLAMPED_FLOAT_TO_CHAN(dst[1], f[1]);	\
+   UNCLAMPED_FLOAT_TO_CHAN(dst[2], f[2]);	\
+   UNCLAMPED_FLOAT_TO_CHAN(dst[3], f[3]);	\
+} while (0)
 
 
 #endif /* COLORMAC_H */

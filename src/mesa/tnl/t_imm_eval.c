@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.2 2000/12/27 22:30:29 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.3 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -154,13 +154,14 @@ static void eval1_color( GLvector4ub *dest,
    GLubyte (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
+   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
       if (flags[i] & (VERT_EVAL_C1|VERT_EVAL_P1)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat fcolor[4];
 	 _math_horner_bezier_curve(map->Points, fcolor, u, 4, map->Order);
-	 FLOAT_RGBA_TO_CHAN_RGBA(to[i], fcolor);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(to[i], fcolor);
       }
+   }
 }
 
 
@@ -287,16 +288,16 @@ static void eval2_color( GLvector4ub *dest,
    GLubyte (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
+   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 GLfloat fcolor[4];
 	 _math_horner_bezier_surf(map->Points, fcolor, u, v, 4,
 				  map->Uorder, map->Vorder);
-	 FLOAT_RGBA_TO_CHAN_RGBA(to[i], fcolor);
+         UNCLAMPED_FLOAT_TO_RGBA_CHAN(to[i], fcolor);
       }
-
+   }
 }
 
 

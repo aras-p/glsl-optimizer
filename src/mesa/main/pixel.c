@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.22 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: pixel.c,v 1.23 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1126,10 +1126,10 @@ _mesa_map_ci_to_rgba_chan( const GLcontext *ctx, GLuint n,
    const GLfloat *aMap = ctx->Pixel.MapItoA;
    GLuint i;
    for (i=0;i<n;i++) {
-      rgba[i][RCOMP] = FLOAT_TO_CHAN(rMap[index[i] & rmask]);
-      rgba[i][GCOMP] = FLOAT_TO_CHAN(gMap[index[i] & gmask]);
-      rgba[i][BCOMP] = FLOAT_TO_CHAN(bMap[index[i] & bmask]);
-      rgba[i][ACOMP] = FLOAT_TO_CHAN(aMap[index[i] & amask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], rMap[index[i] & rmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], gMap[index[i] & gmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], bMap[index[i] & bmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], aMap[index[i] & amask]);
    }
 #endif
 }
@@ -1194,10 +1194,10 @@ _mesa_map_ci8_to_rgba( const GLcontext *ctx, GLuint n, const GLubyte index[],
    const GLfloat *aMap = ctx->Pixel.MapItoA;
    GLuint i;
    for (i=0;i<n;i++) {
-      rgba[i][RCOMP] = FLOAT_TO_CHAN(rMap[index[i] & rmask]);
-      rgba[i][GCOMP] = FLOAT_TO_CHAN(gMap[index[i] & gmask]);
-      rgba[i][BCOMP] = FLOAT_TO_CHAN(bMap[index[i] & bmask]);
-      rgba[i][ACOMP] = FLOAT_TO_CHAN(aMap[index[i] & amask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], rMap[index[i] & rmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], gMap[index[i] & gmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], bMap[index[i] & bmask]);
+      CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], aMap[index[i] & amask]);
    }
 #endif
 }

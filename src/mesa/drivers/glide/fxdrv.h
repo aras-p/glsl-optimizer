@@ -93,8 +93,6 @@ extern float gl_ubyte_to_float_255_color_tab[256];
     (*(int *)&(f)) = ((int *)gl_ubyte_to_float_255_color_tab)[c]
 
 
-#define LINTERP(T, A, B)	((A) + (T) * ((B) - (A)))
-
 
 
 /* Should have size == 16 * sizeof(float).

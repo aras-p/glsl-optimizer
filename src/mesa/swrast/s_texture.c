@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.5 2001/01/02 22:02:52 brianp Exp $ */
+/* $Id: s_texture.c,v 1.6 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1841,8 +1841,8 @@ _mesa_texture_combine(const GLcontext *ctx,
             break;
          case GL_CONSTANT_EXT:
             {
-               GLchan (*c)[4] = ccolor[j];
-               GLchan alpha = FLOAT_TO_CHAN(textureUnit->EnvColor[3]);
+               GLchan alpha, (*c)[4] = ccolor[j];
+               UNCLAMPED_FLOAT_TO_CHAN(alpha, textureUnit->EnvColor[3]);
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = alpha;
                argA[j] = ccolor[j];
@@ -1865,9 +1865,10 @@ _mesa_texture_combine(const GLcontext *ctx,
          case GL_CONSTANT_EXT:
             {
                GLchan (*c)[4] = ccolor[j];
-               const GLchan red   = FLOAT_TO_CHAN(textureUnit->EnvColor[0]);
-               const GLchan green = FLOAT_TO_CHAN(textureUnit->EnvColor[1]);
-               const GLchan blue  = FLOAT_TO_CHAN(textureUnit->EnvColor[2]);
+               GLchan red, green, blue;
+               UNCLAMPED_FLOAT_TO_CHAN(red,   textureUnit->EnvColor[0]);
+               UNCLAMPED_FLOAT_TO_CHAN(green, textureUnit->EnvColor[1]);
+               UNCLAMPED_FLOAT_TO_CHAN(blue,  textureUnit->EnvColor[2]);
                for (i = 0; i < n; i++) {
                   c[i][RCOMP] = red;
                   c[i][GCOMP] = green;

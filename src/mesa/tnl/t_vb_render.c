@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.4 2000/12/28 22:11:06 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.5 2001/01/03 15:59:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,19 +119,19 @@ do {								\
 
 #if 1
 
-#define LINTERP_RGBA(nr, t, out, a, b) {		\
+#define LINTERP_RGBA(nr, t, out, a, b) {	\
    int i;					\
    for (i = 0; i < nr; i++) {			\
       GLfloat fa = CHAN_TO_FLOAT(a[i]);		\
       GLfloat fb = CHAN_TO_FLOAT(b[i]);		\
       GLfloat fo = LINTERP(t, fa, fb);		\
-      FLOAT_COLOR_TO_CHAN(out[i], fo);		\
+      CLAMPED_FLOAT_TO_CHAN(out[i], fo);	\
    }						\
 }
 
 #else
 
-#define LINTERP_RGBA(nr, t, out, a, b) {				\
+#define LINTERP_RGBA(nr, t, out, a, b) {			\
    int n;							\
    const GLuint ti = FloatToInt(t*256.0F);			\
    const GLubyte *Ib = (const GLubyte *)&a[0];			\

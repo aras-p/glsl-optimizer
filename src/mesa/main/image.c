@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.51 2001/01/02 22:02:51 brianp Exp $ */
+/* $Id: image.c,v 1.52 2001/01/03 15:59:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2721,7 +2721,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstRedIndex] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[dstRedIndex], rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
@@ -2730,7 +2730,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstGreenIndex] = FLOAT_TO_CHAN(rgba[i][GCOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[dstGreenIndex], rgba[i][GCOMP]);
             dst += dstComponents;
          }
       }
@@ -2739,7 +2739,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstBlueIndex] = FLOAT_TO_CHAN(rgba[i][BCOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[dstBlueIndex], rgba[i][BCOMP]);
             dst += dstComponents;
          }
       }
@@ -2748,7 +2748,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          GLchan *dst = dest;
          GLuint i;
          for (i = 0; i < n; i++) {
-            dst[dstAlphaIndex] = FLOAT_TO_CHAN(rgba[i][ACOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[dstAlphaIndex], rgba[i][ACOMP]);
             dst += dstComponents;
          }
       }
@@ -2760,7 +2760,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          assert(dstComponents == 1);
          for (i = 0; i < n; i++) {
             /* Intensity comes from red channel */
-            dst[i] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[i], rgba[i][RCOMP]);
          }
       }
 
@@ -2770,7 +2770,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          assert(dstLuminanceIndex == 0);
          for (i = 0; i < n; i++) {
             /* Luminance comes from red channel */
-            dst[0] = FLOAT_TO_CHAN(rgba[i][RCOMP]);
+            CLAMPED_FLOAT_TO_CHAN(dst[0], rgba[i][RCOMP]);
             dst += dstComponents;
          }
       }
