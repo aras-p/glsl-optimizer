@@ -1251,9 +1251,9 @@ Mesa Version History
     Changes:
 	- fragment fog interpolation is perspective corrected now
     Bug fixes:
-	- everything in 6.0.1 plus TBD
 	- glArrayElement in display lists didn't handle generic vertex attribs
 	- glFogCoord didn't always work properly
 	- ARB_fragment_program fog options didn't work
 	- fp TEX instruction no longer incorrectly divides s,t,r by q
 	- ARB fp TEX and TEXP instructions now use LOD=0
+	- glTexEnviv in display lists didn't work
