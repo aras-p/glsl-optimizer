@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.36 2000/06/28 04:43:50 brianp Exp $
+$Id: VERSIONS,v 1.37 2000/06/28 14:34:30 brianp Exp $
 
 
 Mesa Version History
@@ -720,6 +720,7 @@ Mesa Version History
 	- GL_ARB_texture_cube_map extension
 	- added xdemos/glxheads and xdemos/manywin
 	- demos/texenv.c demo
+	- GL_EXT_texture_env_combine extension (by Holger Waechtler)
     Bug Fixes:
 	- none since 3.2.1
     Changes:
