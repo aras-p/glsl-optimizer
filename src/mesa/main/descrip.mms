@@ -150,6 +150,8 @@ TNL_SOURCES=[.tnl]t_array_api.c \
 [.tnl]t_vb_vertex.c
 
 MATH_SOURCES=[.math]m_debug_xform.c \
+[.math]m_debug_norm.c \
+[.math]m_debug_vertex.c \
 [.math]m_eval.c \
 [.math]m_matrix.c \
 [.math]m_translate.c \
@@ -301,6 +303,8 @@ OBJECTS12=[.tnl]t_imm_fixup.obj,\
 [.tnl]t_vb_vertex.obj
 
 OBJECTS13=[.math]m_debug_xform.obj,\
+[.math]m_debug_norm.obj,\
+[.math]m_debug_vertex.obj,\
 [.math]m_eval.obj,\
 [.math]m_matrix.obj,\
 [.math]m_translate.obj,\
@@ -530,6 +534,10 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_vertex.obj [.tnl]t_vb_vertex.c
 [.math]m_debug_xform.obj : [.math]m_debug_xform.c
 	$(CC) $(CFLAGS) /obj=[.math]m_debug_xform.obj [.math]m_debug_xform.c
+[.math]m_debug_norm.obj : [.math]m_debug_norm.c
+	$(CC) $(CFLAGS) /obj=[.math]m_debug_norm.obj [.math]m_debug_norm.c
+[.math]m_debug_vertex.obj : [.math]m_debug_vertex.c
+	$(CC) $(CFLAGS) /obj=[.math]m_debug_vertex.obj [.math]m_debug_vertex.c
 [.math]m_eval.obj : [.math]m_eval.c
 	$(CC) $(CFLAGS) /obj=[.math]m_eval.obj [.math]m_eval.c
 [.math]m_matrix.obj : [.math]m_matrix.c
