@@ -1,10 +1,10 @@
-/* $Id: s_aatritemp.h,v 1.31 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.32 2003/01/20 00:25:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,10 +149,10 @@
 #endif
 #ifdef DO_RGBA
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(p0, p1, p2, v0->color[0], v1->color[0], v2->color[0], rPlane);
-      compute_plane(p0, p1, p2, v0->color[1], v1->color[1], v2->color[1], gPlane);
-      compute_plane(p0, p1, p2, v0->color[2], v1->color[2], v2->color[2], bPlane);
-      compute_plane(p0, p1, p2, v0->color[3], v1->color[3], v2->color[3], aPlane);
+      compute_plane(p0, p1, p2, v0->color[RCOMP], v1->color[RCOMP], v2->color[RCOMP], rPlane);
+      compute_plane(p0, p1, p2, v0->color[GCOMP], v1->color[GCOMP], v2->color[GCOMP], gPlane);
+      compute_plane(p0, p1, p2, v0->color[BCOMP], v1->color[BCOMP], v2->color[BCOMP], bPlane);
+      compute_plane(p0, p1, p2, v0->color[ACOMP], v1->color[ACOMP], v2->color[ACOMP], aPlane);
    }
    else {
       constant_plane(v2->color[RCOMP], rPlane);
@@ -174,9 +174,9 @@
 #endif
 #ifdef DO_SPEC
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(p0, p1, p2, v0->specular[0], v1->specular[0], v2->specular[0],srPlane);
-      compute_plane(p0, p1, p2, v0->specular[1], v1->specular[1], v2->specular[1],sgPlane);
-      compute_plane(p0, p1, p2, v0->specular[2], v1->specular[2], v2->specular[2],sbPlane);
+      compute_plane(p0, p1, p2, v0->specular[RCOMP], v1->specular[RCOMP], v2->specular[RCOMP], srPlane);
+      compute_plane(p0, p1, p2, v0->specular[GCOMP], v1->specular[GCOMP], v2->specular[GCOMP], sgPlane);
+      compute_plane(p0, p1, p2, v0->specular[BCOMP], v1->specular[BCOMP], v2->specular[BCOMP], sbPlane);
    }
    else {
       constant_plane(v2->specular[RCOMP], srPlane);
