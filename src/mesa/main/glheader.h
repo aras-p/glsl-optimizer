@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.23 2001/10/17 13:31:07 brianp Exp $ */
+/* $Id: glheader.h,v 1.24 2001/12/20 18:59:39 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,6 +76,7 @@
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #	define __WIN32__
+#	define finite _finite
 #endif
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
