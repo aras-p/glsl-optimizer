@@ -1,4 +1,4 @@
-/* $Id: nvvertparse.c,v 1.4 2003/03/14 15:40:59 brianp Exp $ */
+/* $Id: nvvertparse.c,v 1.5 2003/03/29 16:38:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1291,7 +1291,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->OutputsWritten = parseState.outputsWritten;
       program->IsPositionInvariant = parseState.isPositionInvariant;
 
-#ifdef DEBUG_foo
+#ifdef DEBUG
       _mesa_printf("--- glLoadProgramNV result ---\n");
       _mesa_print_nv_vertex_program(program);
       _mesa_printf("------------------------------\n");
@@ -1394,15 +1394,12 @@ PrintDstReg(const struct vp_dst_register *dst)
 
 
 /**
- * Print (unparse) the given vertex program.  Just for debugging.
+ * Print a single NVIDIA vertex program instruction.
  */
 void
-_mesa_print_nv_vertex_program(const struct vertex_program *program)
+_mesa_print_nv_vertex_instruction(const struct vp_instruction *inst)
 {
-   const struct vp_instruction *inst;
-
-   for (inst = program->Instructions; ; inst++) {
-      switch (inst->Opcode) {
+   switch (inst->Opcode) {
       case VP_OPCODE_MOV:
       case VP_OPCODE_LIT:
       case VP_OPCODE_RCP:
@@ -1454,10 +1451,25 @@ _mesa_print_nv_vertex_program(const struct vertex_program *program)
          break;
       case VP_OPCODE_END:
          _mesa_printf("END\n");
-         return;
+         break;
       default:
          _mesa_printf("BAD INSTRUCTION\n");
-      }
+   }
+}
+
+
+/**
+ * Print (unparse) the given vertex program.  Just for debugging.
+ */
+void
+_mesa_print_nv_vertex_program(const struct vertex_program *program)
+{
+   const struct vp_instruction *inst;
+
+   for (inst = program->Instructions; ; inst++) {
+      _mesa_print_nv_vertex_instruction(inst);
+      if (inst->Opcode == VP_OPCODE_END)
+         return;
    }
 }
 
