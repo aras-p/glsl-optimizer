@@ -1004,6 +1004,70 @@ static int inline translate_src(int src)
 	}
 }
 
+/* r300 doesnt handle GL_CLAMP and GL_MIRROR_CLAMP_EXT correctly when filter is NEAREST.
+ * Since texwrap produces same results for GL_CLAMP and GL_CLAMP_TO_EDGE we use them instead.
+ * We need to recalculate wrap modes whenever filter mode is changed because someone might do:
+ * glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+ * glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+ * glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+ * Since r300 completely ignores R300_TX_CLAMP when either min or mag is nearest it cant handle
+ * combinations where only one of them is nearest.
+ */
+static unsigned long gen_fixed_filter(unsigned long f)
+{
+	unsigned long mag, min, needs_fixing=0;
+	//return f;
+	
+	/* We ignore MIRROR bit so we dont have to do everything twice */
+	if((f & ((7-1) << R300_TX_WRAP_S_SHIFT)) == (R300_TX_CLAMP << R300_TX_WRAP_S_SHIFT)){
+		needs_fixing |= 1;
+	}
+	if((f & ((7-1) << R300_TX_WRAP_T_SHIFT)) == (R300_TX_CLAMP << R300_TX_WRAP_T_SHIFT)){
+		needs_fixing |= 2;
+	}
+	if((f & ((7-1) << R300_TX_WRAP_Q_SHIFT)) == (R300_TX_CLAMP << R300_TX_WRAP_Q_SHIFT)){
+		needs_fixing |= 4;
+	}
+	
+	if(!needs_fixing)
+		return f;
+	
+	mag=f & R300_TX_MAG_FILTER_MASK;
+	min=f & R300_TX_MIN_FILTER_MASK;
+	
+	/* TODO: Check for anisto filters too */
+	if((mag != R300_TX_MAG_FILTER_NEAREST) && (min != R300_TX_MIN_FILTER_NEAREST))
+		return f;
+	
+	/* r300 cant handle these modes hence we force nearest to linear */
+	if((mag == R300_TX_MAG_FILTER_NEAREST) && (min != R300_TX_MIN_FILTER_NEAREST)){
+		f &= ~R300_TX_MAG_FILTER_NEAREST;
+		f |= R300_TX_MAG_FILTER_LINEAR;
+		return f;
+	}
+	
+	if((min == R300_TX_MIN_FILTER_NEAREST) && (mag != R300_TX_MAG_FILTER_NEAREST)){
+		f &= ~R300_TX_MIN_FILTER_NEAREST;
+		f |= R300_TX_MIN_FILTER_LINEAR;
+		return f;
+	}
+	
+	/* Both are nearest */
+	if(needs_fixing & 1){
+		f &= ~((7-1) << R300_TX_WRAP_S_SHIFT);
+		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_S_SHIFT;
+	}
+	if(needs_fixing & 2){
+		f &= ~((7-1) << R300_TX_WRAP_T_SHIFT);
+		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_T_SHIFT;
+	}
+	if(needs_fixing & 4){
+		f &= ~((7-1) << R300_TX_WRAP_Q_SHIFT);
+		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_Q_SHIFT;
+	}
+	return f;
+}
+
 void r300_setup_textures(GLcontext *ctx)
 {
 	int i, mtu;
@@ -1050,8 +1114,7 @@ void r300_setup_textures(GLcontext *ctx)
 			max_texture_unit=i;
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
-
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter);
 			/* No idea why linear filtered textures shake when puting random data */
 			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;

@@ -178,7 +178,7 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 	
 	t->filter &= ~R300_TX_MAX_ANISO_MASK;
 
-	if (max == 1.0) {
+	if (max <= 1.0) {
 		t->filter |= R300_TX_MAX_ANISO_1_TO_1;
 	} else if (max <= 2.0) {
 		t->filter |= R300_TX_MAX_ANISO_2_TO_1;
