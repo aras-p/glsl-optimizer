@@ -911,13 +911,14 @@ static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
 /**********************************************************************/
 
 
-static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
+static XMesaVisual choose_visual( Display *dpy, int screen, const int *list,
+                                  GLboolean rgbModeDefault )
 {
    const int *parselist;
    XVisualInfo *vis;
    int min_ci = 0;
    int min_red=0, min_green=0, min_blue=0;
-   GLboolean rgb_flag = GL_FALSE;
+   GLboolean rgb_flag = rgbModeDefault;
    GLboolean alpha_flag = GL_FALSE;
    GLboolean double_flag = GL_FALSE;
    GLboolean stereo_flag = GL_FALSE;
@@ -1205,7 +1206,7 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
 static XVisualInfo *
 Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 {
-   XMesaVisual xmvis = choose_visual(dpy, screen, list);
+   XMesaVisual xmvis = choose_visual(dpy, screen, list, GL_FALSE);
    if (xmvis) {
 #if 0
       return xmvis->vishandle;
@@ -1873,7 +1874,7 @@ static GLXFBConfig *
 Fake_glXChooseFBConfig( Display *dpy, int screen,
                         const int *attribList, int *nitems )
 {
-   XMesaVisual xmvis = choose_visual(dpy, screen, attribList);
+   XMesaVisual xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
    if (xmvis) {
       GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
       if (!config) {
