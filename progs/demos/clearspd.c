@@ -1,4 +1,4 @@
-/* $Id: clearspd.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: clearspd.c,v 1.2 2000/04/10 16:25:15 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure glClear() and glutSwapBuffers() speed.
@@ -7,8 +7,11 @@
 
 /*
  * $Log: clearspd.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/04/10 16:25:15  brianp
+ * fixed visual selection and reporting results
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.3  1999/03/28 18:18:33  brianp
  * minor clean-up
@@ -74,6 +77,7 @@ static void Display( void )
       t0 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
       for (i=0;i<Loops;i++) {
          glClear( BufferMask );
+         glFlush();
       }
       t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
       glutSwapBuffers();
@@ -88,12 +92,12 @@ static void Display( void )
    clearRate = Loops / (t1-t0);
    pixelRate = clearRate * Width * Height;
    if (SwapFlag) {
-      printf("Rate: %d clears+swaps in %gs = %g clears+swaps/s   %d pixels/s\n",
-             Loops, t1-t0, clearRate, (int)pixelRate );
+      printf("Rate: %d clears+swaps in %gs = %g clears+swaps/s   %g pixels/s\n",
+             Loops, t1-t0, clearRate, pixelRate );
    }
    else {
-      printf("Rate: %d clears in %gs = %g clears/s   %d pixels/s\n",
-             Loops, t1-t0, clearRate, (int)pixelRate);
+      printf("Rate: %d clears in %gs = %g clears/s   %g pixels/s\n",
+             Loops, t1-t0, clearRate, pixelRate);
    }
 }
 
@@ -194,6 +198,8 @@ static void Help( const char *program )
 
 int main( int argc, char *argv[] )
 {
+   GLint mode;
+
    printf("For options:  %s -help\n", argv[0]);
 
    Init( argc, argv );
@@ -202,7 +208,15 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( (int) Width, (int) Height );
    glutInitWindowPosition( 0, 0 );
 
-   glutInitDisplayMode( ColorMode | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL | GLUT_ACCUM );
+   mode = ColorMode | GLUT_DOUBLE;
+   if (BufferMask & GL_STENCIL_BUFFER_BIT)
+      mode |= GLUT_STENCIL;
+   if (BufferMask & GL_ACCUM_BUFFER_BIT)
+      mode |= GLUT_ACCUM;
+   if (BufferMask & GL_DEPTH_BUFFER_BIT)
+      mode |= GLUT_DEPTH;
+         
+   glutInitDisplayMode(mode);
 
    glutCreateWindow( argv[0] );
 
