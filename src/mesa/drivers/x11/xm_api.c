@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.27 2001/08/31 04:30:14 brianp Exp $ */
+/* $Id: xm_api.c,v 1.28 2001/09/01 20:27:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1030,11 +1030,10 @@ static void setup_8bit_hpcr( XMesaVisual v )
  * Setup RGB rendering for a window with a True/DirectColor visual.
  */
 static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
-                             XMesaWindow window, XMesaColormap cmap )
+                             XMesaColormap cmap )
 {
    unsigned long rmask, gmask, bmask;
    (void) buffer;
-   (void) window;
    (void) cmap;
 
    /* Compute red multiplier (mask) and bit shift */
@@ -1227,7 +1226,7 @@ static GLboolean initialize_visual_and_buffer( int client,
       int xclass;
       xclass = GET_VISUAL_CLASS(v);
       if (xclass==TrueColor || xclass==DirectColor) {
-	 setup_truecolor( v, b, (XMesaWindow)window, cmap );
+	 setup_truecolor( v, b, cmap );
       }
       else if (xclass==StaticGray && GET_VISUAL_DEPTH(v)==1) {
 	 setup_monochrome( v, b );
@@ -1958,6 +1957,57 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 
    return b;
 }
+
+
+
+#if 0 /* not done */
+XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
+                                unsigned int width, unsigned int height )
+{
+   int client = 0;
+   XMesaBuffer b = alloc_xmesa_buffer();
+   if (!b) {
+      return NULL;
+   }
+
+   b->xm_context = NULL; /* Associate no context with this buffer */
+
+   b->xm_visual = v;
+   b->pbuffer_flag = GL_TRUE;
+   b->display = v->display;
+   b->cmap = cmap;
+
+   /* determine back buffer implementation */
+   if (v->mesa_visual.doubleBufferMode) {
+      if (v->ximage_flag) {
+	 b->db_state = BACK_XIMAGE;
+      }
+      else {
+	 b->db_state = BACK_PIXMAP;
+      }
+   }
+   else {
+      b->db_state = 0;
+   }
+
+   _mesa_initialize_framebuffer(&b->mesa_buffer,
+                                &v->mesa_visual,
+                                v->mesa_visual.depthBits > 0,
+                                v->mesa_visual.stencilBits > 0,
+                                v->mesa_visual.accumRedBits +
+                                v->mesa_visual.accumGreenBits +
+                                v->mesa_visual.accumBlueBits > 0,
+                                v->mesa_visual.alphaBits > 0 );
+
+   if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
+				     0, cmap)) {
+      free_xmesa_buffer(client, b);
+      return NULL;
+   }
+
+   return b;
+}
+#endif
 
 
 
