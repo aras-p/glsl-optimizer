@@ -507,17 +507,21 @@ typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v,
 			     const GLfloat *in );
 
 
+/**
+ * Describes how to convert/move a vertex attribute from a vertex array
+ * to a vertex structure.
+ */
 struct tnl_clipspace_attr
 {
-   int attrib;
-   int vertoffset;
-   int vertattrsize;
+   GLuint attrib;          /* which vertex attrib (0=position, etc) */
+   GLuint vertoffset;      /* position of the attrib in the vertex struct */
+   GLuint vertattrsize;    /* size of the attribute in bytes */
    GLubyte *inputptr;
-   int inputstride;
+   GLuint inputstride;
    insert_func *insert;
    insert_func emit;
    extract_func extract;
-   const GLfloat *vp;
+   const GLfloat *vp;   /* NDC->Viewport mapping matrix */
 };
 
 
@@ -539,8 +543,10 @@ typedef void (*setup_func)( GLcontext *ctx,
 			    GLuint new_inputs);
 
 
-
-
+/**
+ * Used to describe conversion of vertex arrays to vertex structures.
+ * I.e. Structure of arrays to arrays of structs.
+ */
 struct tnl_clipspace
 {
    GLboolean need_extras;

@@ -45,8 +45,15 @@
 
 #define GET_VERTEX_STATE(ctx)  &(TNL_CONTEXT(ctx)->clipspace)
 
-static void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
-				const GLfloat *in )
+
+/*
+ * These functions take the NDC coordinates pointed to by 'in', apply the
+ * NDC->Viewport mapping and store the results at 'v'.
+ */
+
+static void
+insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
+                      const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
    const GLfloat * const vp = a->vp;
@@ -146,6 +153,10 @@ static void insert_2f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v
    out[1] = vp[13];
 }
 
+
+/*
+ * These functions do the same as above, except for the viewport mapping.
+ */
 
 static void insert_4f_4( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
 {
@@ -580,7 +591,7 @@ struct {
    const char *name;
    extract_func extract;
    insert_func insert[4];
-   GLuint attrsize;
+   const GLuint attrsize;
 } format_info[EMIT_MAX] = {
 
    { "1f",
@@ -684,7 +695,7 @@ static void generic_emit( GLcontext *ctx,
    struct tnl_clipspace_attr *a = vtx->attr;
    GLubyte *v = (GLubyte *)dest;
    GLuint i, j;
-   GLuint count = vtx->attr_count;
+   const GLuint count = vtx->attr_count;
    GLuint stride;
 
    for (j = 0; j < count; j++) {
@@ -715,12 +726,12 @@ static void generic_interp( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   GLubyte *vin  = vtx->vertex_buf + ein  * vtx->vertex_size;
-   GLubyte *vout = vtx->vertex_buf + eout * vtx->vertex_size;
+   const GLubyte *vin  = vtx->vertex_buf + ein  * vtx->vertex_size;
+   const GLubyte *vout = vtx->vertex_buf + eout * vtx->vertex_size;
    GLubyte *vdst = vtx->vertex_buf + edst * vtx->vertex_size;
    const struct tnl_clipspace_attr *a = vtx->attr;
-   int attr_count = vtx->attr_count;
-   int j;
+   const GLuint attr_count = vtx->attr_count;
+   GLuint j;
 
    if (tnl->NeedNdcCoords) {
       const GLfloat *dstclip = VB->ClipPtr->data[edst];
@@ -766,8 +777,8 @@ static void generic_copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
    GLubyte *vsrc = vtx->vertex_buf + esrc * vtx->vertex_size;
    GLubyte *vdst = vtx->vertex_buf + edst * vtx->vertex_size;
    const struct tnl_clipspace_attr *a = vtx->attr;
-   int attr_count = vtx->attr_count;
-   int j;
+   const GLuint attr_count = vtx->attr_count;
+   GLuint j;
 
    for (j = 0; j < attr_count; j++) {
       if (a[j].attrib == VERT_ATTRIB_COLOR0 ||
@@ -839,8 +850,6 @@ static void generic_copy_pv_extras( GLcontext *ctx,
 
    generic_copy_pv(ctx, dst, src);
 }
-
-
 
 
 
@@ -927,8 +936,8 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    const struct tnl_clipspace_attr *a = vtx->attr;
-   int attr_count = vtx->attr_count;
-   int j;
+   const GLuint attr_count = vtx->attr_count;
+   GLuint j;
 
    for (j = 0; j < attr_count; j++) {
       if (a[j].attrib == (int)attr) {
@@ -950,8 +959,8 @@ void _tnl_set_attr( GLcontext *ctx, void *vout,
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    const struct tnl_clipspace_attr *a = vtx->attr;
-   int attr_count = vtx->attr_count;
-   int j;
+   const GLuint attr_count = vtx->attr_count;
+   GLuint j;
 
    for (j = 0; j < attr_count; j++) {
       if (a[j].attrib == (int)attr) {
@@ -985,7 +994,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 			   GLuint unpacked_size )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   int offset = 0;
+   GLuint offset = 0;
    GLuint i, j;
 
    assert(nr < _TNL_ATTRIB_MAX);
@@ -997,7 +1006,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
    vtx->new_inputs = ~0;
 
    for (j = 0, i = 0; i < nr; i++) {
-      GLuint format = map[i].format;
+      const GLuint format = map[i].format;
       if (format == EMIT_PAD) {
 	 offset += map[i].offset;
 
@@ -1053,14 +1062,14 @@ void _tnl_build_vertices( GLcontext *ctx,
 			  GLuint newinputs )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   GLuint stride = vtx->vertex_size;
-   GLubyte *v = ((GLubyte *)vtx->vertex_buf + (start*stride));
+   const GLuint stride = vtx->vertex_size;
+   GLubyte *vDest = ((GLubyte *)vtx->vertex_buf + (start*stride));
 
    newinputs |= vtx->new_inputs;
    vtx->new_inputs = 0;
 
    if (newinputs)
-      vtx->emit( ctx, start, end, v );
+      vtx->emit( ctx, start, end, vDest );
 }
 
 
