@@ -35,8 +35,8 @@
 /*
  * glcurveval.h
  *
- * $Date: 2001/08/07 17:34:11 $ $Revision: 1.4 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.4 2001/08/07 17:34:11 brianp Exp $
+ * $Date: 2003/04/30 15:20:37 $ $Revision: 1.5 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.5 2003/04/30 15:20:37 brianp Exp $
  */
 
 #ifndef __gluglcurveval_h_
@@ -114,8 +114,8 @@ int normal_flag; //whether there is a normal map or not
 int color_flag; //whether there is a color map or not
 int texcoord_flag; //whether there is a texture map or not
 
-int global_grid_u0;
-int global_grid_u1;
+REAL global_grid_u0;
+REAL global_grid_u1;
 int global_grid_nu;
 
 void inMap1f(int which, //0: vert, 1: norm, 2: color, 3: tex

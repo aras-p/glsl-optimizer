@@ -35,8 +35,8 @@
 /*
  * glcurveval.c++
  *
- * $Date: 2002/11/01 23:45:30 $ $Revision: 1.4 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.4 2002/11/01 23:45:30 brianp Exp $
+ * $Date: 2003/04/30 15:20:37 $ $Revision: 1.5 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.5 2003/04/30 15:20:37 brianp Exp $
  */
 
 /* Polynomial Evaluator Interface */
@@ -149,8 +149,8 @@ OpenGLCurveEvaluator::mapgrid1f(long nu, REAL u0, REAL u1)
 {
   if(output_triangles)
     {
-      global_grid_u0 = (int) u0;
-      global_grid_u1 = (int) u1;
+      global_grid_u0 = u0;
+      global_grid_u1 = u1;
       global_grid_nu = (int) nu;
     }
   else
