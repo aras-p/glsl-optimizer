@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.8 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.9 2001/05/09 17:21:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,10 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    fragZ = (GLdepth) ( ctx->Current.RasterPos[2] * ctx->DepthMaxF);
 
-   _mesa_win_fog_coords_from_z( ctx, 1, &fragZ, &fogCoord );
+   if (ctx->Fog.Enabled)
+      _mesa_win_fog_coords_from_z( ctx, 1, &fragZ, &fogCoord );
+   else
+      fogCoord = 0.0;
 
    for (row=0; row<height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
