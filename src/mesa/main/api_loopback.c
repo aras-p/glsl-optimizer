@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.17 2002/10/29 20:28:43 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.18 2003/04/05 07:29:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1505,7 +1505,8 @@ loopback_VertexAttrib3dvNV(GLuint index, const GLdouble *v)
 static void
 loopback_VertexAttrib4svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
+   ATTRIB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
+	  (GLfloat)v[3]);
 }
 
 static void
