@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -335,6 +334,11 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #endif
 
    INIT_SPAN(span, GL_LINE, numPixels, interpFlags, SPAN_XY);
+
+   /* Need these for fragment prog texcoord interpolation */
+   span.w = 1.0F;
+   span.dwdx = 0.0F;
+   span.dwdy = 0.0F;
 
    /*
     * Draw
