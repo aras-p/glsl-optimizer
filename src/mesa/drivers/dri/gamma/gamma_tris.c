@@ -309,7 +309,13 @@ static struct {
 #define AREA_IS_CCW( a ) (a > 0)
 #define GET_VERTEX(e) (gmesa->verts + (e<<gmesa->vertex_stride_shift))
 
-#define VERT_SET_RGBA( v, c )    COPY_4V( v->ub4[4], c)
+#define VERT_SET_RGBA( v, c )  					\
+do {								\
+   UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][0], (c)[0]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][1], (c)[1]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][2], (c)[2]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(v->uv4[4][3], (c)[3]);		\
+} while (0)
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[4] = v1->ui[4]
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[4]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[4] = color[idx]   

@@ -352,20 +352,6 @@ static struct {
 #define VERTEX mgaVertex
 #define TAB rast_tab
 
-#define MGA_COLOR( dst, src )			\
-do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-   dst[3] = src[3];				\
-} while (0)
-
-#define MGA_SPEC( dst, src )			\
-do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-} while (0)
 
 #define DEPTH_SCALE mmesa->depth_scale
 #define UNFILLED_TRI unfilled_tri
@@ -376,15 +362,38 @@ do {						\
 #define AREA_IS_CCW( a ) (a > 0)
 #define GET_VERTEX(e) (mmesa->verts + (e<<mmesa->vertex_stride_shift))
 
-#define VERT_SET_RGBA( v, c )  MGA_COLOR( v->ub4[4], c )
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[4] = v1->ui[4]
-#define VERT_SAVE_RGBA( idx )  color[idx] = v[idx]->ui[4]
-#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[4] = color[idx]   
+#define VERT_SET_RGBA( v, c )  					\
+do {								\
+   mga_color_t *color = (mga_color_t *)&((v)->ui[coloroffset]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
+} while (0)
 
-#define VERT_SET_SPEC( v, c )  MGA_SPEC( v->ub4[5], c )
-#define VERT_COPY_SPEC( v0, v1 ) COPY_3V(v0->ub4[5], v1->ub4[5])
-#define VERT_SAVE_SPEC( idx )  spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC( idx ) v[idx]->ui[5] = spec[idx]   
+#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
+
+#define VERT_SET_SPEC( v0, c )					\
+do {								\
+   if (havespec) {						\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+   }								\
+} while (0)
+#define VERT_COPY_SPEC( v0, v1 )			\
+do {							\
+   if (havespec) {					\
+      v0->v.specular.red   = v1->v.specular.red;	\
+      v0->v.specular.green = v1->v.specular.green;	\
+      v0->v.specular.blue  = v1->v.specular.blue; 	\
+   }							\
+} while (0)
+
+#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
+#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
+#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
 
 #define LOCAL_VARS(n)					\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\

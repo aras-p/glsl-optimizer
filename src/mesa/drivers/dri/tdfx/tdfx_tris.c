@@ -327,12 +327,12 @@ static struct {
 #define VERTEX tdfxVertex
 #define TAB rast_tab
 
-#define TDFX_COLOR( dst, src )			\
-do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-   dst[3] = src[3];				\
+#define TDFX_COLOR( dst, src )				\
+do {							\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[3], (src)[3]);	\
 } while (0)
 
 #define DEPTH_SCALE 1.0
