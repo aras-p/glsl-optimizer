@@ -379,8 +379,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
       }
 
       /* ndc = clip / W */
-      ASSERT( clip[3]!=0.0 );
-      d = 1.0F / clip[3];
+      d = (clip[3] == 0.0) ? 1.0 : 1.0F / clip[3];
       ndc[0] = clip[0] * d;
       ndc[1] = clip[1] * d;
       ndc[2] = clip[2] * d;
