@@ -1,4 +1,4 @@
-/* $Id: GLView.cpp,v 1.3 2000/09/26 20:54:09 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.4 2000/11/14 17:51:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,9 @@
 
 /*
  * $Log: GLView.cpp,v $
+ * Revision 1.4  2000/11/14 17:51:15  brianp
+ * more Driver.Color, Driver.Index updates
+ *
  * Revision 1.3  2000/09/26 20:54:09  brianp
  * First batch of OpenGL SI related changes:
  * Renamed struct gl_context to struct __GLcontextRec.
@@ -105,8 +108,6 @@ private:
    BGLView *mBGLView;
    BBitmap *mBitmap;
 
-   GLubyte mColor[4];       // current color
-   GLuint mIndex;           // current color index
    GLubyte mClearColor[4];  // buffer clear color
    GLuint mClearIndex;      // buffer clear color index
    GLint mBottom;           // used for flipping Y coords
@@ -144,13 +145,16 @@ private:
                                  CONST GLubyte rgba[][3],
                                  const GLubyte mask[]);
    static void WriteMonoRGBASpanFront(const GLcontext *ctx, GLuint n,
-                                      GLint x, GLint y, const GLubyte mask[]);
+                                      GLint x, GLint y,
+                                      const GLchan color[4],
+                                      const GLubyte mask[]);
    static void WriteRGBAPixelsFront(const GLcontext *ctx, GLuint n,
                                     const GLint x[], const GLint y[],
                                     CONST GLubyte rgba[][4],
                                     const GLubyte mask[]);
    static void WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
                                         const GLint x[], const GLint y[],
+                                        const GLchan color[4],
                                         const GLubyte mask[]);
    static void WriteCI32SpanFront(const GLcontext *ctx, GLuint n,
                                   GLint x, GLint y,
@@ -159,13 +163,14 @@ private:
                                  GLint x, GLint y,
                                  const GLubyte index[], const GLubyte mask[]);
    static void WriteMonoCISpanFront(const GLcontext *ctx, GLuint n,
-                                    GLint x, GLint y, const GLubyte mask[]);
+                                    GLint x, GLint y,
+                                    GLuint colorIndex, const GLubyte mask[]);
    static void WriteCI32PixelsFront(const GLcontext *ctx,
                                     GLuint n, const GLint x[], const GLint y[],
                                     const GLuint index[], const GLubyte mask[]);
    static void WriteMonoCIPixelsFront(const GLcontext *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
-                                      const GLubyte mask[]);
+                                      GLuint colorIndex, const GLubyte mask[]);
    static void ReadCI32SpanFront(const GLcontext *ctx,
                                  GLuint n, GLint x, GLint y, GLuint index[]);
    static void ReadRGBASpanFront(const GLcontext *ctx, GLuint n,
@@ -188,28 +193,31 @@ private:
                                  CONST GLubyte rgba[][3],
                                  const GLubyte mask[]);
    static void WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
-                                      GLint x, GLint y, const GLubyte mask[]);
+                                     GLint x, GLint y,
+                                     const GLchan color[4],
+                                     const GLubyte mask[]);
    static void WriteRGBAPixelsBack(const GLcontext *ctx, GLuint n,
-                                    const GLint x[], const GLint y[],
-                                    CONST GLubyte rgba[][4],
-                                    const GLubyte mask[]);
+                                   const GLint x[], const GLint y[],
+                                   CONST GLubyte rgba[][4],
+                                   const GLubyte mask[]);
    static void WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
-                                        const GLint x[], const GLint y[],
-                                        const GLubyte mask[]);
+                                       const GLint x[], const GLint y[],
+                                       const GLchan color[4],
+                                       const GLubyte mask[]);
    static void WriteCI32SpanBack(const GLcontext *ctx, GLuint n,
                                  GLint x, GLint y,
                                  const GLuint index[], const GLubyte mask[]);
    static void WriteCI8SpanBack(const GLcontext *ctx, GLuint n, GLint x, GLint y,
                                 const GLubyte index[], const GLubyte mask[]);
    static void WriteMonoCISpanBack(const GLcontext *ctx, GLuint n,
-                                   GLint x, GLint y,
+                                   GLint x, GLint y, GLuint colorIndex,
                                    const GLubyte mask[]);
    static void WriteCI32PixelsBack(const GLcontext *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    const GLuint index[], const GLubyte mask[]);
    static void WriteMonoCIPixelsBack(const GLcontext *ctx,
                                      GLuint n, const GLint x[], const GLint y[],
-                                     const GLubyte mask[]);
+                                     GLuint colorIndex, const GLubyte mask[]);
    static void ReadCI32SpanBack(const GLcontext *ctx,
                                 GLuint n, GLint x, GLint y, GLuint index[]);
    static void ReadRGBASpanBack(const GLcontext *ctx, GLuint n,
@@ -238,11 +246,6 @@ AuxInfo::AuxInfo()
    mClearColor[BE_BCOMP] = 0;
    mClearColor[BE_ACOMP] = 0;
    mClearIndex = 0;
-   mColor[BE_RCOMP] = 255;
-   mColor[BE_GCOMP] = 255;
-   mColor[BE_BCOMP] = 255;
-   mColor[BE_ACOMP] = 255;
-   mIndex = 1;
 }
 
 
@@ -304,8 +307,6 @@ void AuxInfo::UpdateState( GLcontext *ctx )
    ctx->Driver.UpdateState = AuxInfo::UpdateState;
    ctx->Driver.SetDrawBuffer = AuxInfo::SetDrawBuffer;
    ctx->Driver.SetReadBuffer = AuxInfo::SetReadBuffer;
-   ctx->Driver.Color = AuxInfo::Color;
-   ctx->Driver.Index = AuxInfo::Index;
    ctx->Driver.ClearIndex = AuxInfo::ClearIndex;
    ctx->Driver.ClearColor = AuxInfo::ClearColor;
    ctx->Driver.GetBufferSize = AuxInfo::GetBufferSize;
@@ -411,6 +412,7 @@ void AuxInfo::ClearFront(GLcontext *ctx,
    }
 
    // restore drawing color
+#if 0
    bglview->SetHighColor(aux->mColor[BE_RCOMP],
                          aux->mColor[BE_GCOMP],
                          aux->mColor[BE_BCOMP],
@@ -419,6 +421,7 @@ void AuxInfo::ClearFront(GLcontext *ctx,
                         aux->mColor[BE_GCOMP],
                         aux->mColor[BE_BCOMP],
                         aux->mColor[BE_ACOMP]);
+#endif
 }
 
 
@@ -458,29 +461,6 @@ void AuxInfo::ClearBack(GLcontext *ctx,
    }
 }
 
-
-void AuxInfo::Index(GLcontext *ctx, GLuint index)
-{
-   AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
-   BGLView *bglview = aux->mBGLView;
-   assert(bglview);
-   aux->mIndex = index;
-}
-
-
-void AuxInfo::Color(GLcontext *ctx, GLubyte r, GLubyte g,
-						GLubyte b, GLubyte a)
-{
-   AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
-   BGLView *bglview = aux->mBGLView;
-   assert(bglview);
-   aux->mColor[BE_RCOMP] = r;
-   aux->mColor[BE_GCOMP] = g;
-   aux->mColor[BE_BCOMP] = b;
-   aux->mColor[BE_ACOMP] = a;
-   bglview->SetHighColor(r, g, b, a);
-   bglview->SetLowColor(r, g, b, a);
-}
 
 GLboolean AuxInfo::SetDrawBuffer(GLcontext *ctx, GLenum buffer)
 {
@@ -601,12 +581,15 @@ void AuxInfo::WriteRGBSpanFront(const GLcontext *ctx, GLuint n,
 }
 
 void AuxInfo::WriteMonoRGBASpanFront(const GLcontext *ctx, GLuint n,
-                                     GLint x, GLint y, const GLubyte mask[])
+                                     GLint x, GLint y,
+                                     const GLchan color[4],
+                                     const GLubyte mask[])
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BGLView *bglview = aux->mBGLView;
    assert(bglview);
    int flippedY = aux->mBottom - y;
+   bglview->SetHighColor(color[RCOMP], color[GCOMP], color[BCOMP]);
    if (mask) {
       for (GLuint i = 0; i < n; i++) {
          if (mask[i]) {
@@ -648,12 +631,14 @@ void AuxInfo::WriteRGBAPixelsFront(const GLcontext *ctx,
 
 void AuxInfo::WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
                                        const GLint x[], const GLint y[],
+                                       const GLchan color[4],
                                        const GLubyte mask[])
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BGLView *bglview = aux->mBGLView;
    assert(bglview);
    // plot points using current color
+   bglview->SetHighColor(color[RCOMP], color[GCOMP], color[BCOMP]);
    if (mask) {
       for (GLuint i = 0; i < n; i++) {
          if (mask[i]) {
@@ -682,7 +667,8 @@ void AuxInfo::WriteCI8SpanFront( const GLcontext *ctx, GLuint n, GLint x, GLint 
 }
 
 void AuxInfo::WriteMonoCISpanFront( const GLcontext *ctx, GLuint n,
-                               GLint x, GLint y, const GLubyte mask[] )
+                                    GLint x, GLint y,
+                                    GLuint colorIndex, const GLubyte mask[] )
 {
    // XXX to do
 }
@@ -697,7 +683,7 @@ void AuxInfo::WriteCI32PixelsFront( const GLcontext *ctx, GLuint n,
 
 void AuxInfo::WriteMonoCIPixelsFront( const GLcontext *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
-                                      const GLubyte mask[] )
+                                      GLuint colorIndex, const GLubyte mask[] )
 {
    // XXX to do
 }
@@ -802,14 +788,20 @@ void AuxInfo::WriteRGBSpanBack(const GLcontext *ctx, GLuint n,
 
 
 void AuxInfo::WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
-                                     GLint x, GLint y, const GLubyte mask[])
+                                    GLint x, GLint y,
+                                    const GLchan color[4], const GLubyte mask[])
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BBitmap *bitmap = aux->mBitmap;
    assert(bitmap);
    int row = aux->mBottom - y;
    GLuint *pixelPtr = (GLuint *) bitmap->Bits() + row * aux->mWidth + x;
-   const GLuint pixel = *((GLuint *) aux->mColor);
+   GLuint pixel;
+   GLubyte *mColor= (GLubyte *) &pixel;
+   mColor[BE_RCOMP] = color[RCOMP];
+   mColor[BE_GCOMP] = color[GCOMP];
+   mColor[BE_BCOMP] = color[BCOMP];
+   mColor[BE_ACOMP] = color[ACOMP];
    if (mask) {
       for (GLuint i = 0; i < n; i++) {
          if (mask[i])
@@ -859,13 +851,19 @@ void AuxInfo::WriteRGBAPixelsBack(const GLcontext *ctx,
 
 
 void AuxInfo::WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
-                                       const GLint x[], const GLint y[],
-                                       const GLubyte mask[])
+                                      const GLint x[], const GLint y[],
+                                      const GLchan color[4],
+                                      const GLubyte mask[])
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BBitmap *bitmap = aux->mBitmap;
+   GLuint pixel;
+   GLubyte *mColor= (GLubyte *) &pixel;
+   mColor[BE_RCOMP] = color[RCOMP];
+   mColor[BE_GCOMP] = color[GCOMP];
+   mColor[BE_BCOMP] = color[BCOMP];
+   mColor[BE_ACOMP] = color[ACOMP];
    assert(bitmap);
-   const GLuint pixel = *((GLuint *) aux->mColor);
    if (mask) {
       for (GLuint i = 0; i < n; i++) {
          if (mask[i]) {
@@ -900,7 +898,8 @@ void AuxInfo::WriteCI8SpanBack( const GLcontext *ctx, GLuint n,
 }
 
 void AuxInfo::WriteMonoCISpanBack( const GLcontext *ctx, GLuint n,
-                                   GLint x, GLint y, const GLubyte mask[] )
+                                   GLint x, GLint y,
+                                   GLuint colorIndex, const GLubyte mask[] )
 {
    // XXX to do
 }
@@ -915,7 +914,7 @@ void AuxInfo::WriteCI32PixelsBack( const GLcontext *ctx, GLuint n,
 
 void AuxInfo::WriteMonoCIPixelsBack( const GLcontext *ctx, GLuint n,
                                      const GLint x[], const GLint y[],
-                                     const GLubyte mask[] )
+                                     GLuint colorIndex, const GLubyte mask[] )
 {
    // XXX to do
 }

@@ -1,4 +1,4 @@
-/* $Id: svgapix.h,v 1.3 2000/01/25 00:03:02 brianp Exp $ */
+/* $Id: svgapix.h,v 1.4 2000/11/14 17:51:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,10 +40,7 @@ struct svgamesa_context {
    GLcontext *gl_ctx;		/* the core Mesa context */
    GLvisual *gl_vis;		/* describes the color buffer */
    GLframebuffer *gl_buffer;	/* the ancillary buffers */
-   GLuint index;		/* current color index */
    GLuint clear_index;		/* current clear index */
-   GLint red, green, blue;	/* current rgb color */
-   GLuint truecolor;		/* current rgb color */
    GLint clear_red, 
          clear_green, 
 	 clear_blue;		/* current clear rgb color */
