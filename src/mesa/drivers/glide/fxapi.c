@@ -561,8 +561,8 @@ fxMesaCreateContext(GLuint win,
 
  if ((str = Glide->grGetRegistryOrEnvironmentStringExt("FX_GLIDE_SWAPPENDINGCOUNT"))) {
     fxMesa->maxPendingSwapBuffers = atoi(str);
-    if (fxMesa->maxPendingSwapBuffers > 3) {
-       fxMesa->maxPendingSwapBuffers = 3;
+    if (fxMesa->maxPendingSwapBuffers > 6) {
+       fxMesa->maxPendingSwapBuffers = 6;
     } else if (fxMesa->maxPendingSwapBuffers < 0) {
        fxMesa->maxPendingSwapBuffers = 0;
     }
@@ -638,7 +638,7 @@ fxMesaCreateContext(GLuint win,
                       fxMesa->snapVertices ? "" : "no ");
    }
 
-  sprintf(fxMesa->rendererString, "Mesa %s v0.62 %s%s",
+  sprintf(fxMesa->rendererString, "Mesa %s v0.63 %s%s",
           grGetString(GR_RENDERER),
           grGetString(GR_HARDWARE),
           ((fxMesa->type < GR_SSTTYPE_Voodoo4) && (voodoo->numChips > 1)) ? " SLI" : "");
