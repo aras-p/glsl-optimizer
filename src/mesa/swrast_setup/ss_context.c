@@ -217,7 +217,7 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
 {
    const GLfloat *m = ctx->Viewport._WindowMap.m;
    GLfloat tmp[4];
-   GLint i;
+   GLuint i;
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POS, tmp );
 
