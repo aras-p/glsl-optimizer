@@ -117,7 +117,7 @@ static void radeon_Vertex2fv( const GLfloat *v )
 }
 
 
-
+#if 0
 /* Color for ubyte (packed) color formats:
  */
 static void radeon_Color3ub_ub( GLubyte r, GLubyte g, GLubyte b )
@@ -159,7 +159,7 @@ static void radeon_Color4ubv_ub( const GLubyte *v )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    *(GLuint *)rmesa->vb.colorptr = LE32_TO_CPU(*(GLuint *)v);
 }
-
+#endif /* 0 */
 
 static void radeon_Color3f_ub( GLfloat r, GLfloat g, GLfloat b )
 {
@@ -208,6 +208,7 @@ static void radeon_Color4fv_ub( const GLfloat *v )
 
 /* Color for float color+alpha formats:
  */
+#if 0
 static void radeon_Color3ub_4f( GLubyte r, GLubyte g, GLubyte b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -251,6 +252,7 @@ static void radeon_Color4ubv_4f( const GLubyte *v )
    dest[2] = UBYTE_TO_FLOAT(v[2]);
    dest[3] = UBYTE_TO_FLOAT(v[3]);
 }
+#endif /* 0 */
 
 
 static void radeon_Color3f_4f( GLfloat r, GLfloat g, GLfloat b )
@@ -300,6 +302,7 @@ static void radeon_Color4fv_4f( const GLfloat *v )
 
 /* Color for float color formats:
  */
+#if 0
 static void radeon_Color3ub_3f( GLubyte r, GLubyte g, GLubyte b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -341,6 +344,7 @@ static void radeon_Color4ubv_3f( const GLubyte *v )
    dest[2] = UBYTE_TO_FLOAT(v[2]);
    ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3] = UBYTE_TO_FLOAT(v[3]);
 }
+#endif /* 0 */
 
 
 static void radeon_Color3f_3f( GLfloat r, GLfloat g, GLfloat b )
@@ -388,6 +392,7 @@ static void radeon_Color4fv_3f( const GLfloat *v )
 
 /* Secondary Color:
  */
+#if 0
 static void radeon_SecondaryColor3ubEXT_ub( GLubyte r, GLubyte g, GLubyte b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -409,6 +414,7 @@ static void radeon_SecondaryColor3ubvEXT_ub( const GLubyte *v )
    dest->blue	= v[2];
    dest->alpha	= 0xff;
 }
+#endif /* 0 */
 
 static void radeon_SecondaryColor3fEXT_ub( GLfloat r, GLfloat g, GLfloat b )
 {
@@ -432,6 +438,7 @@ static void radeon_SecondaryColor3fvEXT_ub( const GLfloat *v )
    dest->alpha = 255;
 }
 
+#if 0
 static void radeon_SecondaryColor3ubEXT_3f( GLubyte r, GLubyte g, GLubyte b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -453,6 +460,7 @@ static void radeon_SecondaryColor3ubvEXT_3f( const GLubyte *v )
    dest[2] = UBYTE_TO_FLOAT(v[2]);
    dest[3] = 1.0;
 }
+#endif /* 0 */
 
 static void radeon_SecondaryColor3fEXT_3f( GLfloat r, GLfloat g, GLfloat b )
 {
@@ -768,6 +776,7 @@ CHOOSE(Normal3f, p3f, MASK_NORM, ACTIVE_NORM,
 CHOOSE(Normal3fv, pfv, MASK_NORM, ACTIVE_NORM, 
        (const GLfloat *v), (v))
 
+#if 0
 CHOOSE_COLOR(Color4ub, p4ub, 4, MASK_COLOR, ACTIVE_COLOR,
 	(GLubyte a,GLubyte b, GLubyte c, GLubyte d), (a,b,c,d))
 CHOOSE_COLOR(Color4ubv, pubv, 4, MASK_COLOR, ACTIVE_COLOR, 
@@ -776,6 +785,7 @@ CHOOSE_COLOR(Color3ub, p3ub, 3, MASK_COLOR, ACTIVE_COLOR,
 	(GLubyte a,GLubyte b, GLubyte c), (a,b,c))
 CHOOSE_COLOR(Color3ubv, pubv, 3, MASK_COLOR, ACTIVE_COLOR, 
 	(const GLubyte *v), (v))
+#endif
 
 CHOOSE_COLOR(Color4f, p4f, 4, MASK_COLOR, ACTIVE_COLOR, 
 	(GLfloat a,GLfloat b, GLfloat c, GLfloat d), (a,b,c,d))
@@ -787,10 +797,12 @@ CHOOSE_COLOR(Color3fv, pfv, 3, MASK_COLOR, ACTIVE_COLOR,
 	(const GLfloat *v), (v))
 
 
+#if 0
 CHOOSE_SECONDARY_COLOR(SecondaryColor3ubEXT, p3ub, MASK_SPEC, ACTIVE_SPEC,
 	(GLubyte a,GLubyte b, GLubyte c), (a,b,c))
 CHOOSE_SECONDARY_COLOR(SecondaryColor3ubvEXT, pubv, MASK_SPEC, ACTIVE_SPEC,
 	(const GLubyte *v), (v))
+#endif
 CHOOSE_SECONDARY_COLOR(SecondaryColor3fEXT, p3f, MASK_SPEC, ACTIVE_SPEC,
 	(GLfloat a,GLfloat b, GLfloat c), (a,b,c))
 CHOOSE_SECONDARY_COLOR(SecondaryColor3fvEXT, pfv, MASK_SPEC, ACTIVE_SPEC,

@@ -508,7 +508,7 @@ static __inline void radeonEltPrimitive( radeonContextPtr rmesa, GLenum prim )
 
 
 
-#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
+#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx); (void)rmesa
 #define ELTS_VARS( buf )  GLushort *dest = buf
 #define INIT( prim ) radeonDmaPrimitive( rmesa, prim )
 #define ELT_INIT(prim) radeonEltPrimitive( rmesa, prim )
