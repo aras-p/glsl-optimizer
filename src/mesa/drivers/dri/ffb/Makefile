@@ -1,0 +1,126 @@
+# src/mesa/drivers/dri/ffb/Makefile
+
+TOP = ../../../../..
+include $(TOP)/configs/default
+
+SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
+MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
+
+DEFINES += \
+	-D_HAVE_SWRAST=1 \
+	-D_HAVE_SWTNL=1 \
+	-D_HAVE_SANITY=1 \
+	-D_HAVE_CODEGEN=1 \
+	-D_HAVE_LIGHTING=1 \
+	-D_HAVE_TEXGEN=1 \
+	-D_HAVE_USERCLIP=1 \
+	-DGLX_DIRECT_RENDERING 
+
+# not yet
+# MINIGLX_SOURCES = server/ffb_dri.c 
+
+DRIVER_SOURCES = ffb_bitmap.c \
+		 ../../common/driverfuncs.c \
+		 ../common/mm.c \
+		 ../common/utils.c \
+		 ../common/texmem.c \
+		 ../common/vblank.c \
+		 ../common/xmlconfig.c \
+		 ffb_clear.c \
+		 ffb_dd.c \
+		 ffb_depth.c \
+		 ffb_fog.c \
+		 ffb_lines.c \
+		 ffb_points.c \
+		 ffb_span.c \
+		 ffb_state.c \
+		 ffb_stencil.c \
+		 ffb_tex.c \
+		 ffb_tris.c \
+		 ffb_vb.c \
+		 ffb_vtxfmt.c \
+		 ffb_xmesa.c
+
+INCLUDES = $(MINIGLX_INCLUDES) \
+	   $(SHARED_INCLUDES)
+
+
+C_SOURCES = $(DRIVER_SOURCES) \
+	    $(MINIGLX_SOURCES) 
+
+MESA_MODULES = $(TOP)/src/mesa/mesa.a
+
+
+ifeq ($(WINDOW_SYSTEM),dri)
+WINOBJ=$(MESABUILDDIR)/dri/dri.a
+WINLIB=
+else
+WINOBJ=
+WINLIB=-L$(MESA)/src/glx/mini
+endif
+
+ASM_SOURCES = 
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+
+$(SYMLINKS):
+	mkdir -p server
+	cd server
+	rm -f $@ && ln -s ../../radeon/$@ $@
+
+
+### Include directories
+
+INCLUDE_DIRS = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup
+
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+default: depend ffb_dri.so
+
+ffb_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
+	rm -f $(LIB_DIR)/ffb_dri.so && \
+	install ffb_dri.so $(LIB_DIR)/ffb_dri.so
+
+$(LIB_DIR)/ffb_dri.so:	ffb_dri.so
+	rm -f $(LIB_DIR)/ffb_dri.so && \
+	install ffb_dri.so $(LIB_DIR)/ffb_dri.so
+
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
+# what's included by any source file.
+depend: $(C_SOURCES) $(ASM_SOURCES)
+	touch depend
+	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
+		$(C_SOURCES) $(ASM_SOURCES) >& /dev/null
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+	-rm -f $(SYMLINKS)
+
+
+include depend
