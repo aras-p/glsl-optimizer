@@ -84,7 +84,6 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_prim prim;
-   int i;
    FLUSH_CURRENT( ctx, 0 );
    
    if (tnl->pipeline.build_state_changes)
