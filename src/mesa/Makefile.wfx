@@ -49,7 +49,7 @@ GLIDE3SDK = $(BUILDROOT)\glide3
 GLIDE3LIB = $(GLIDE3SDK)\lib\glide3x.lib
 TEXUS2LIB = #$(GLIDE3SDK)\lib\texus2.lib
 LIBDIR    = $(BUILDROOT)\lib
-GL_DLL    = Mesa.dll
+GL_DLL    = OpenGL32.dll
 
 HAVE_X86   = 1
 HAVE_MMX   = 1
@@ -403,10 +403,12 @@ $(LIBDIR)\x86.lib: x86\matypes.h $(X86_OBJS)
 	$(RC) -Fo$@ $(INCS) $(FLAGS) -D__WIN32__ $<
 
 # [dBorca] Hack alert:
-# use standard API, to work around Win32 @x names
-# also glapi_x86.S is protected against __WIN32__
-main\dispatch.obj: main\dispatch.c
-	$(CC) $(CFLAGS) $(FLAGS) $(INCS) -UUSE_X86_ASM main\dispatch.c /Fo$*.obj
+# glapi_x86.S needs some adjustments
+# in order to generate correct entrypoints
+x86/glapi_x86.o: x86/glapi_x86.S
+	$(CC) $(CFLAGS) $(FLAGS) $(INCS) $< -DSTDCALL_API -DNASM_ASSEMBLER -EP > $*.i
+	$(AS) $(ASFLAGS) $(INCS) $*.i -o $*.obj
+	$(RM) $*.i
 
 #################################
 # cleanup rules
