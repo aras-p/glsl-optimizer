@@ -1,10 +1,10 @@
-/* $Id: s_tritemp.h,v 1.42 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.43 2003/01/20 00:24:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -836,11 +836,14 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
                adjx = (float)(fx - eLeft->fx0);  /* SCALED! */
                adjy = eLeft->adjy;		 /* SCALED! */
+#ifndef __IBMCPP__
                (void) adjx;  /* silence compiler warnings */
                (void) adjy;  /* silence compiler warnings */
-
+#endif
                vLower = eLeft->v0;
+#ifndef __IBMCPP__
                (void) vLower;  /* silence compiler warnings */
+#endif
 
 #ifdef PIXEL_ADDRESS
                {
