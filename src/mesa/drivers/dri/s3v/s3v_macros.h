@@ -18,25 +18,25 @@
 /* Note: The argument to DEBUG*() _must_ be enclosed in parenthesis */
 
 #if (GENERIC_DEBUG || FLOW_DEBUG || DMABUFS_DEBUG)
-	#include <stdio.h>
+#include <stdio.h>
 #endif
 
 #if GENERIC_DEBUG
-	#define DEBUG(str) printf str
+#define DEBUG(str) printf str
 #else
-	#define DEBUG(str)
+#define DEBUG(str)
 #endif
 
 #if FLOW_DEBUG
-	#define DEBUG_WHERE(str) printf str
+#define DEBUG_WHERE(str) printf str
 #else
-	#define DEBUG_WHERE(str)
+#define DEBUG_WHERE(str)
 #endif
 
 #if DMABUFS_DEBUG
-	#define DEBUG_BUFS(str) printf str
+#define DEBUG_BUFS(str) printf str
 #else
-	#define DEBUG_BUFS(str)
+#define DEBUG_BUFS(str)
 #endif
 
 

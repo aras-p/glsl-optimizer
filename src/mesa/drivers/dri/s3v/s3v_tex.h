@@ -10,9 +10,9 @@
 extern void s3vUpdateTexLRU( s3vContextPtr vmesa, s3vTextureObjectPtr t );
 
 #if TEX_DEBUG_ON
-        #define DEBUG_TEX(str) printf str
+#define DEBUG_TEX(str) printf str
 #else
-        #define DEBUG_TEX(str) /* str */
+#define DEBUG_TEX(str) /* str */
 #endif
 
 #define _TEXFLUSH 1 /* flush before uploading */

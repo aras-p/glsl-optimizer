@@ -16,11 +16,11 @@
 /* #define S3V_BUF_4K 1 */
 
 #ifdef S3V_BUF_4K
-    #define S3V_DMA_BUF_ORDER 12
-    #define S3V_DMA_BUF_NR    256
+#define S3V_DMA_BUF_ORDER 12
+#define S3V_DMA_BUF_NR    256
 #else
-    #define S3V_DMA_BUF_ORDER 16 /* -much- better */
-    #define S3V_DMA_BUF_NR    16
+#define S3V_DMA_BUF_ORDER 16 /* -much- better */
+#define S3V_DMA_BUF_NR    16
 #endif
 /* on s3virge you can only choose between *
  * 4k (2^12) and 64k (2^16) dma bufs      */
