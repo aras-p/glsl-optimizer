@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.9 2000/05/22 19:41:34 brianp Exp $ */
+/* $Id: glheader.h,v 1.10 2000/05/26 15:52:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,9 +63,6 @@
 #include "conf.h"
 #endif
 
-/* Make sure we include glext.h */
-#include "GL/gl.h"
-#include "GL/glext.h"
 
 
 
@@ -133,7 +130,9 @@
 /* compatability guard so we don't need to change client code */
 
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
+#if 0
 #	define CALLBACK GLCALLBACK
+#endif
 typedef int (GLAPIENTRY *PROC)();
 typedef void *HGLRC;
 typedef void *HDC;
@@ -158,6 +157,12 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #include <gl/mesa_wgl.h>
 #endif
 
+
+
+
+/* Make sure we include glext.h */
+#include "GL/gl.h"
+#include "GL/glext.h"
 
 
 
