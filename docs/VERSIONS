@@ -1118,6 +1118,34 @@ Mesa Version History
 	- GLU fixes for OS/2 (Evgeny Kotsuba)
 
 
+5.0.2  September 5, 2003
+    Bug fixes:
+	- fixed texgen problem causing texcoord's Q to be zero (stex3d)
+	- default GL_TEXTURE_COMPARE_MODE_ARB was wrong
+	- GL_CURRENT_MATRIX_NV query was wrong
+	- GL_CURRENT_MATRIX_STACK_DEPTH_NV query was off by one
+	- GL_LIST_MODE query wasn't correct
+	- GL_FOG_COORDINATE_SOURCE_EXT query wasn't supported
+	- GL_SECONDARY_COLOR_ARRAY_SIZE_EXT query returned wrong value
+	- blended, wide lines didn't always work correctly (bug 711595)
+	- glVertexAttrib4svNV w component was always 1
+	- fixed bug in GL_IBM_rasterpos_clip (missing return)
+	- GL_DEPTH_TEXTURE_MODE = GL_ALPHA didn't work correctly
+	- a few Solaris compilation fixes
+	- fixed glClear() problem for DRI drivers (non-existant stencil, etc)
+	- fixed int/REAL mixup in GLU NURBS curve evaluator (Eric Cazeaux)
+	- fixed delete [] bug in SI GLU (bug 721765) (Diego Santa Cruz)
+	- glFog() didn't clamp fog colors
+	- fixed bad float/int conversion for GL_TEXTURE_PRIORITY in the
+	  gl[Get]TexParameteri[v] functions
+	- fixed invalid memory references in glTexGen functions (bug 781602)
+	- integer-valued color arrays weren't handled correctly
+	- glDrawPixels(GL_DEPTH_COMPONENT) with glPixelZoom didn't work
+	- GL_EXT_texture_lod_bias is part of 1.4, overlooked in 5.0.1
+    Changes:
+	- build GLUT with -fexceptions so C++ apps propogate exceptions
+
+
 5.1  Month day, 2003  (NOT RELEASED YET)
     New:
 	- reorganized directory tree
