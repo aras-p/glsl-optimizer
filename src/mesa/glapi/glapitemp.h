@@ -3610,6 +3610,87 @@ KEYWORD1 void KEYWORD2 NAME(SamplePatternEXT)(GLenum pattern)
 /* No dispatch for VertexAttribs4svNV() */
 /* No dispatch for VertexAttribs4fvNV() */
 /* No dispatch for VertexAttribs4dvNV() */
+/* No dispatch for VertexAttribs4ubvNV() */
+KEYWORD1 void KEYWORD2 NAME(WindowPos2dARB)(GLdouble x, GLdouble y)
+{
+   DISPATCH(WindowPos2dARB, (x, y), (F, "glWindowPos2dARB(%f, %f);", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2fARB)(GLfloat x, GLfloat y)
+{
+   DISPATCH(WindowPos2fARB, (x, y), (F, "glWindowPos2fARB(%f, %f);", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2iARB)(GLint x, GLint y)
+{
+   DISPATCH(WindowPos2iARB, (x, y), (F, "glWindowPos2iARB(%d, %d);", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2sARB)(GLshort x, GLshort y)
+{
+   DISPATCH(WindowPos2sARB, (x, y), (F, "glWindowPos2sARB(%d, %d);", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2dvARB)(const GLdouble * p)
+{
+   DISPATCH(WindowPos2dvARB, (p), (F, "glWindowPos2dvARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2fvARB)(const GLfloat * p)
+{
+   DISPATCH(WindowPos2fvARB, (p), (F, "glWindowPos2fvARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2ivARB)(const GLint * p)
+{
+   DISPATCH(WindowPos2ivARB, (p), (F, "glWindowPos2ivARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2svARB)(const GLshort * p)
+{
+   DISPATCH(WindowPos2svARB, (p), (F, "glWindowPos2svARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3dARB)(GLdouble x, GLdouble y, GLdouble z)
+{
+   DISPATCH(WindowPos3dARB, (x, y, z), (F, "glWindowPos3dARB(%f, %f, %f);", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3fARB)(GLfloat x, GLfloat y, GLfloat z)
+{
+   DISPATCH(WindowPos3fARB, (x, y, z), (F, "glWindowPos3fARB(%f, %f, %f);", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3iARB)(GLint x, GLint y, GLint z)
+{
+   DISPATCH(WindowPos3iARB, (x, y, z), (F, "glWindowPos3iARB(%d, %d, %d);", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3sARB)(GLshort x, GLshort y, GLshort z)
+{
+   DISPATCH(WindowPos3sARB, (x, y, z), (F, "glWindowPos3sARB(%d, %d, %d);", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3dvARB)(const GLdouble * p)
+{
+   DISPATCH(WindowPos3dvARB, (p), (F, "glWindowPos3dvARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3fvARB)(const GLfloat * p)
+{
+   DISPATCH(WindowPos3fvARB, (p), (F, "glWindowPos3fvARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3ivARB)(const GLint * p)
+{
+   DISPATCH(WindowPos3ivARB, (p), (F, "glWindowPos3ivARB(%p);", (void *) p));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3svARB)(const GLshort * p)
+{
+   DISPATCH(WindowPos3svARB, (p), (F, "glWindowPos3svARB(%p);", (void *) p));
+}
+
 
 
 /*
@@ -4201,6 +4282,22 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(SecondaryColor3usEXT),
    TABLE_ENTRY(SecondaryColor3usvEXT),
    TABLE_ENTRY(SecondaryColorPointerEXT),
+   TABLE_ENTRY(WindowPos2dARB),
+   TABLE_ENTRY(WindowPos2fARB),
+   TABLE_ENTRY(WindowPos2iARB),
+   TABLE_ENTRY(WindowPos2sARB),
+   TABLE_ENTRY(WindowPos2dvARB),
+   TABLE_ENTRY(WindowPos2fvARB),
+   TABLE_ENTRY(WindowPos2ivARB),
+   TABLE_ENTRY(WindowPos2svARB),
+   TABLE_ENTRY(WindowPos3dARB),
+   TABLE_ENTRY(WindowPos3fARB),
+   TABLE_ENTRY(WindowPos3iARB),
+   TABLE_ENTRY(WindowPos3sARB),
+   TABLE_ENTRY(WindowPos3dvARB),
+   TABLE_ENTRY(WindowPos3fvARB),
+   TABLE_ENTRY(WindowPos3ivARB),
+   TABLE_ENTRY(WindowPos3svARB),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

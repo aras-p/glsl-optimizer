@@ -14072,6 +14072,342 @@ GL_PREFIX(SamplePatternEXT):
 #endif
 	jmpl	%g3, %g0
 	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2dARB))
+.type WindowPos2dARB,#function
+GL_PREFIX(WindowPos2dARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2dARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2dARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2dARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2fARB))
+.type WindowPos2fARB,#function
+GL_PREFIX(WindowPos2fARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2fARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2fARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2fARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2iARB))
+.type WindowPos2iARB,#function
+GL_PREFIX(WindowPos2iARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2iARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2iARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2iARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2sARB))
+.type WindowPos2sARB,#function
+GL_PREFIX(WindowPos2sARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2sARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2sARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2sARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2dvARB))
+.type WindowPos2dvARB,#function
+GL_PREFIX(WindowPos2dvARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2dvARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2dvARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2dvARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2fvARB))
+.type WindowPos2fvARB,#function
+GL_PREFIX(WindowPos2fvARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2fvARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2fvARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2fvARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2ivARB))
+.type WindowPos2ivARB,#function
+GL_PREFIX(WindowPos2ivARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2ivARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2ivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2ivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos2svARB))
+.type WindowPos2svARB,#function
+GL_PREFIX(WindowPos2svARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos2svARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos2svARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos2svARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3dARB))
+.type WindowPos3dARB,#function
+GL_PREFIX(WindowPos3dARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3dARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3dARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3dARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3fARB))
+.type WindowPos3fARB,#function
+GL_PREFIX(WindowPos3fARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3fARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3fARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3fARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3iARB))
+.type WindowPos3iARB,#function
+GL_PREFIX(WindowPos3iARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3iARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3iARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3iARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3sARB))
+.type WindowPos3sARB,#function
+GL_PREFIX(WindowPos3sARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3sARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3sARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3sARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3dvARB))
+.type WindowPos3dvARB,#function
+GL_PREFIX(WindowPos3dvARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3dvARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3dvARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3dvARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3fvARB))
+.type WindowPos3fvARB,#function
+GL_PREFIX(WindowPos3fvARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3fvARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3fvARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3fvARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3ivARB))
+.type WindowPos3ivARB,#function
+GL_PREFIX(WindowPos3ivARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3ivARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3ivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3ivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(WindowPos3svARB))
+.type WindowPos3svARB,#function
+GL_PREFIX(WindowPos3svARB):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_WindowPos3svARB), %g2
+	or	%g2, %lo(8 * _gloffset_WindowPos3svARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_WindowPos3svARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
 	 nop
 
 .globl _mesa_sparc_glapi_end

@@ -1,4 +1,4 @@
-/* $Id: rastpos.h,v 1.4 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: rastpos.h,v 1.5 2001/11/18 23:52:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -180,6 +180,43 @@ _mesa_WindowPos4ivMESA(const GLint *v);
 
 extern void
 _mesa_WindowPos4svMESA(const GLshort *v);
+
+
+/**********************************************************************/
+/***                     GL_ARB_window_pos                          ***/
+/**********************************************************************/
+
+extern void _mesa_WindowPos2dARB(GLdouble x, GLdouble y);
+
+extern void _mesa_WindowPos2fARB(GLfloat x, GLfloat y);
+
+extern void _mesa_WindowPos2iARB(GLint x, GLint y);
+
+extern void _mesa_WindowPos2sARB(GLshort x, GLshort y);
+
+extern void _mesa_WindowPos2dvARB(const GLdouble *p);
+
+extern void _mesa_WindowPos2fvARB(const GLfloat *p);
+
+extern void _mesa_WindowPos2ivARB(const GLint *p);
+
+extern void _mesa_WindowPos2svARB(const GLshort *p);
+
+extern void _mesa_WindowPos3dARB(GLdouble x, GLdouble y, GLdouble z);
+
+extern void _mesa_WindowPos3fARB(GLfloat x, GLfloat y, GLfloat z);
+
+extern void _mesa_WindowPos3iARB(GLint x, GLint y, GLint z);
+
+extern void _mesa_WindowPos3sARB(GLshort x, GLshort y, GLshort z);
+
+extern void _mesa_WindowPos3dvARB(const GLdouble *p);
+
+extern void _mesa_WindowPos3fvARB(const GLfloat *p);
+
+extern void _mesa_WindowPos3ivARB(const GLint *p);
+
+extern void _mesa_WindowPos3svARB(const GLshort *p);
 
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.1 2001/11/18 22:43:16 brianp Exp $
+# $Id: APIspec,v 1.2 2001/11/18 23:52:38 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -7226,4 +7226,115 @@ param		n	GLsizei
 param		v	const GLubyte *
 category	GL_NV_vertex_program
 offset		?
+
+
+# GL_ARB_window_pos
+
+name		WindowPos2dARB
+return		void
+param		x	GLdouble
+param		y	GLdouble
+category	GL_ARB_window_pos
+offset		578	# unofficial
+
+name		WindowPos2fARB
+return		void
+param		x	GLfloat
+param		y	GLfloat
+category	GL_ARB_window_pos
+offset		579	# unofficial
+
+name		WindowPos2iARB
+return		void
+param		x	GLint
+param		y	GLint
+category	GL_ARB_window_pos
+offset		580	# unofficial
+
+name		WindowPos2sARB
+return		void
+param		x	GLshort
+param		y	GLshort
+category	GL_ARB_window_pos
+offset		581	# unofficial
+
+name		WindowPos2dvARB
+return		void
+param		p	const GLdouble *
+category	GL_ARB_window_pos
+offset		582	# unofficial
+
+name		WindowPos2fvARB
+return		void
+param		p	const GLfloat *
+category	GL_ARB_window_pos
+offset		583	# unofficial
+
+name		WindowPos2ivARB
+return		void
+param		p	const GLint *
+category	GL_ARB_window_pos
+offset		584	# unofficial
+
+name		WindowPos2svARB
+return		void
+param		p	const GLshort *
+category	GL_ARB_window_pos
+offset		585	# unofficial
+
+name		WindowPos3dARB
+return		void
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+category	GL_ARB_window_pos
+offset		586	# unofficial
+
+name		WindowPos3fARB
+return		void
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+category	GL_ARB_window_pos
+offset		587	# unofficial
+
+name		WindowPos3iARB
+return		void
+param		x	GLint
+param		y	GLint
+param		z	GLint
+category	GL_ARB_window_pos
+offset		588	# unofficial
+
+name		WindowPos3sARB
+return		void
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+category	GL_ARB_window_pos
+offset		589	# unofficial
+
+name		WindowPos3dvARB
+return		void
+param		p	const GLdouble *
+category	GL_ARB_window_pos
+offset		590	# unofficial
+
+name		WindowPos3fvARB
+return		void
+param		p	const GLfloat *
+category	GL_ARB_window_pos
+offset		591	# unofficial
+
+name		WindowPos3ivARB
+return		void
+param		p	const GLint *
+category	GL_ARB_window_pos
+offset		592	# unofficial
+
+name		WindowPos3svARB
+return		void
+param		p	const GLshort *
+category	GL_ARB_window_pos
+offset		593	# unofficial
 

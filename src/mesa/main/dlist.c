@@ -1,8 +1,8 @@
-/* $Id: dlist.c,v 1.77 2001/11/18 22:48:11 brianp Exp $ */
+/* $Id: dlist.c,v 1.78 2001/11/18 23:52:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -242,6 +242,8 @@ typedef enum {
         OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D,
         /* GL_ARB_multisample */
         OPCODE_SAMPLE_COVERAGE,
+        /* GL_ARB_window_pos */
+	OPCODE_WINDOW_POS_ARB,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
@@ -627,6 +629,8 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_SAMPLE_COVERAGE] = 3;
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
+      /* GL_ARB_window_pos */
+      InstSize[OPCODE_WINDOW_POS_ARB] = 4;
    }
    init_flag = 1;
 }
@@ -3546,6 +3550,103 @@ static void save_WindowPos4svMESA(const GLshort *v)
 
 
 
+/*
+ * GL_ARB_window_pos
+ */
+
+static void save_WindowPos3fARB( GLfloat x, GLfloat y, GLfloat z )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
+   n = ALLOC_INSTRUCTION( ctx,  OPCODE_WINDOW_POS_ARB, 3 );
+   if (n) {
+      n[1].f = x;
+      n[2].f = y;
+      n[3].f = z;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->WindowPos3fMESA)( x, y, z );
+   }
+}
+
+static void save_WindowPos2dARB(GLdouble x, GLdouble y)
+{
+   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, 0.0F);
+}
+
+static void save_WindowPos2fARB(GLfloat x, GLfloat y)
+{
+   save_WindowPos3fARB(x, y, 0.0F);
+}
+
+static void save_WindowPos2iARB(GLint x, GLint y)
+{
+   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, 0.0F);
+}
+
+static void save_WindowPos2sARB(GLshort x, GLshort y)
+{
+   save_WindowPos3fARB(x, y, 0.0F);
+}
+
+static void save_WindowPos3dARB(GLdouble x, GLdouble y, GLdouble z)
+{
+   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
+
+static void save_WindowPos3iARB(GLint x, GLint y, GLint z)
+{
+   save_WindowPos3fARB((GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
+
+static void save_WindowPos3sARB(GLshort x, GLshort y, GLshort z)
+{
+   save_WindowPos3fARB(x, y, z);
+}
+
+static void save_WindowPos2dvARB(const GLdouble *v)
+{
+   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], 0.0F);
+}
+
+static void save_WindowPos2fvARB(const GLfloat *v)
+{
+   save_WindowPos3fARB(v[0], v[1], 0.0F);
+}
+
+static void save_WindowPos2ivARB(const GLint *v)
+{
+   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], 0.0F);
+}
+
+static void save_WindowPos2svARB(const GLshort *v)
+{
+   save_WindowPos3fARB(v[0], v[1], 0.0F);
+}
+
+static void save_WindowPos3dvARB(const GLdouble *v)
+{
+   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
+}
+
+static void save_WindowPos3fvARB(const GLfloat *v)
+{
+   save_WindowPos3fARB(v[0], v[1], v[2]);
+}
+
+static void save_WindowPos3ivARB(const GLint *v)
+{
+   save_WindowPos3fARB((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
+}
+
+static void save_WindowPos3svARB(const GLshort *v)
+{
+   save_WindowPos3fARB(v[0], v[1], v[2]);
+}
+
+
 /* GL_ARB_multitexture */
 static void save_ActiveTextureARB( GLenum target )
 {
@@ -4611,6 +4712,9 @@ execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_SAMPLE_COVERAGE: /* GL_ARB_multisample */
             (*ctx->Exec->SampleCoverage)(n[1].f, n[2].b);
             break;
+	 case OPCODE_WINDOW_POS_ARB: /* GL_ARB_window_pos */
+            (*ctx->Exec->WindowPos3fARB)( n[1].f, n[2].f, n[3].f );
+	    break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
 	    break;
@@ -5898,6 +6002,24 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* GL_EXT_fog_coord */
    table->FogCoordPointerEXT = exec_FogCoordPointerEXT;
+
+   /* GL_ARB_window_pos */
+   table->WindowPos2dARB = save_WindowPos2dARB;
+   table->WindowPos2dvARB = save_WindowPos2dvARB;
+   table->WindowPos2fARB = save_WindowPos2fARB;
+   table->WindowPos2fvARB = save_WindowPos2fvARB;
+   table->WindowPos2iARB = save_WindowPos2iARB;
+   table->WindowPos2ivARB = save_WindowPos2ivARB;
+   table->WindowPos2sARB = save_WindowPos2sARB;
+   table->WindowPos2svARB = save_WindowPos2svARB;
+   table->WindowPos3dARB = save_WindowPos3dARB;
+   table->WindowPos3dvARB = save_WindowPos3dvARB;
+   table->WindowPos3fARB = save_WindowPos3fARB;
+   table->WindowPos3fvARB = save_WindowPos3fvARB;
+   table->WindowPos3iARB = save_WindowPos3iARB;
+   table->WindowPos3ivARB = save_WindowPos3ivARB;
+   table->WindowPos3sARB = save_WindowPos3sARB;
+   table->WindowPos3svARB = save_WindowPos3svARB;
 }
 
 

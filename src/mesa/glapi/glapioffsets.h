@@ -580,5 +580,21 @@
 #define _gloffset_SecondaryColor3usEXT 575
 #define _gloffset_SecondaryColor3usvEXT 576
 #define _gloffset_SecondaryColorPointerEXT 577
+#define _gloffset_WindowPos2dARB 578
+#define _gloffset_WindowPos2fARB 579
+#define _gloffset_WindowPos2iARB 580
+#define _gloffset_WindowPos2sARB 581
+#define _gloffset_WindowPos2dvARB 582
+#define _gloffset_WindowPos2fvARB 583
+#define _gloffset_WindowPos2ivARB 584
+#define _gloffset_WindowPos2svARB 585
+#define _gloffset_WindowPos3dARB 586
+#define _gloffset_WindowPos3fARB 587
+#define _gloffset_WindowPos3iARB 588
+#define _gloffset_WindowPos3sARB 589
+#define _gloffset_WindowPos3dvARB 590
+#define _gloffset_WindowPos3fvARB 591
+#define _gloffset_WindowPos3ivARB 592
+#define _gloffset_WindowPos3svARB 593
 
 #endif

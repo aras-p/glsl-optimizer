@@ -1,8 +1,8 @@
-/* $Id: state.c,v 1.70 2001/11/18 22:48:13 brianp Exp $ */
+/* $Id: state.c,v 1.71 2001/11/18 23:52:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -478,6 +478,23 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->CompressedTexSubImage1D = _mesa_CompressedTexSubImage1DARB;
    exec->GetCompressedTexImage = _mesa_GetCompressedTexImageARB;
 
+   /* GL_ARB_window_pos */
+   exec->WindowPos2dARB = _mesa_WindowPos2dARB;
+   exec->WindowPos2dvARB = _mesa_WindowPos2dvARB;
+   exec->WindowPos2fARB = _mesa_WindowPos2fARB;
+   exec->WindowPos2fvARB = _mesa_WindowPos2fvARB;
+   exec->WindowPos2iARB = _mesa_WindowPos2iARB;
+   exec->WindowPos2ivARB = _mesa_WindowPos2ivARB;
+   exec->WindowPos2sARB = _mesa_WindowPos2sARB;
+   exec->WindowPos2svARB = _mesa_WindowPos2svARB;
+   exec->WindowPos3dARB = _mesa_WindowPos3dARB;
+   exec->WindowPos3dvARB = _mesa_WindowPos3dvARB;
+   exec->WindowPos3fARB = _mesa_WindowPos3fARB;
+   exec->WindowPos3fvARB = _mesa_WindowPos3fvARB;
+   exec->WindowPos3iARB = _mesa_WindowPos3iARB;
+   exec->WindowPos3ivARB = _mesa_WindowPos3ivARB;
+   exec->WindowPos3sARB = _mesa_WindowPos3sARB;
+   exec->WindowPos3svARB = _mesa_WindowPos3svARB;
 }
 
 

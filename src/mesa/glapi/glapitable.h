@@ -584,6 +584,22 @@ struct _glapi_table
    void (*SecondaryColor3usEXT)(GLushort red, GLushort green, GLushort blue); /* 575 */
    void (*SecondaryColor3usvEXT)(const GLushort * v); /* 576 */
    void (*SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 577 */
+   void (*WindowPos2dARB)(GLdouble x, GLdouble y); /* 578 */
+   void (*WindowPos2fARB)(GLfloat x, GLfloat y); /* 579 */
+   void (*WindowPos2iARB)(GLint x, GLint y); /* 580 */
+   void (*WindowPos2sARB)(GLshort x, GLshort y); /* 581 */
+   void (*WindowPos2dvARB)(const GLdouble * p); /* 582 */
+   void (*WindowPos2fvARB)(const GLfloat * p); /* 583 */
+   void (*WindowPos2ivARB)(const GLint * p); /* 584 */
+   void (*WindowPos2svARB)(const GLshort * p); /* 585 */
+   void (*WindowPos3dARB)(GLdouble x, GLdouble y, GLdouble z); /* 586 */
+   void (*WindowPos3fARB)(GLfloat x, GLfloat y, GLfloat z); /* 587 */
+   void (*WindowPos3iARB)(GLint x, GLint y, GLint z); /* 588 */
+   void (*WindowPos3sARB)(GLshort x, GLshort y, GLshort z); /* 589 */
+   void (*WindowPos3dvARB)(const GLdouble * p); /* 590 */
+   void (*WindowPos3fvARB)(const GLfloat * p); /* 591 */
+   void (*WindowPos3ivARB)(const GLint * p); /* 592 */
+   void (*WindowPos3svARB)(const GLshort * p); /* 593 */
 };
 
 #endif
