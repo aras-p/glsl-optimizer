@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.10 2000/05/08 14:53:57 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.11 2001/03/19 13:58:45 alanh Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -492,7 +492,7 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 int
 main(int argc, char *argv[])
 {
-   char *displayName = ":0";
+   char *displayName = NULL;
    Display *dpy;
    int numScreens, scrnum;
    InfoMode mode = Normal;
