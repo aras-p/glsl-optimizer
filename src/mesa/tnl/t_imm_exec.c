@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.29 2001/08/02 22:39:51 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.30 2001/11/30 15:43:53 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -555,6 +555,13 @@ void _tnl_imm_destroy( GLcontext *ctx )
       TNL_CURRENT_IM(ctx)->ref_count--;
       if (TNL_CURRENT_IM(ctx)->ref_count == 0)
 	 _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
-      SET_IMMEDIATE(ctx, 0);
+      /* 
+       * Don't use SET_IMMEDIATE here, or else we'll whack the
+       * _tnl_CurrentInput pointer - not good when another 
+       * context has already been made current.
+       * So we just set the context's own tnl immediate pointer
+       * to 0.
+       */
+      ctx->swtnl_im = 0;
    }
 }
