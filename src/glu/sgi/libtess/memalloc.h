@@ -35,18 +35,14 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2001/11/30 19:35:22 $ $Revision: 1.3 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/memalloc.h,v 1.3 2001/11/30 19:35:22 kschultz Exp $
+** $Date: 2003/07/24 22:41:17 $ $Revision: 1.4 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/memalloc.h,v 1.4 2003/07/24 22:41:17 brianp Exp $
 */
 
 #ifndef __memalloc_simple_h_
 #define __memalloc_simple_h_
 
-#if defined(__VMS) || defined(darwin)
-# include <stdlib.h>
-#else
-# include <malloc.h>
-#endif
+#include <stdlib.h>
 
 #define memRealloc	realloc
 #define memFree		free
