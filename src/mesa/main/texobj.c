@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.59 2002/10/22 15:08:59 brianp Exp $ */
+/* $Id: texobj.c,v 1.60 2002/10/22 15:14:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -567,35 +567,41 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
              * If so, unbind it and decrement the reference count.
              */
             GLuint u;
+            printf("RefCount in delete = %d\n", delObj->RefCount);
             for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
                struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
                if (delObj == unit->Current1D) {
                   unit->Current1D = ctx->Shared->Default1D;
                   ctx->Shared->Default1D->RefCount++;
+                  delObj->RefCount--;
                   if (delObj == unit->_Current)
                      unit->_Current = unit->Current1D;
                }
                else if (delObj == unit->Current2D) {
                   unit->Current2D = ctx->Shared->Default2D;
                   ctx->Shared->Default2D->RefCount++;
+                  delObj->RefCount--;
                   if (delObj == unit->_Current)
                      unit->_Current = unit->Current2D;
                }
                else if (delObj == unit->Current3D) {
                   unit->Current3D = ctx->Shared->Default3D;
                   ctx->Shared->Default3D->RefCount++;
+                  delObj->RefCount--;
                   if (delObj == unit->_Current)
                      unit->_Current = unit->Current3D;
                }
                else if (delObj == unit->CurrentCubeMap) {
                   unit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
                   ctx->Shared->DefaultCubeMap->RefCount++;
+                  delObj->RefCount--;
                   if (delObj == unit->_Current)
                      unit->_Current = unit->CurrentCubeMap;
                }
                else if (delObj == unit->CurrentRect) {
                   unit->CurrentRect = ctx->Shared->DefaultRect;
                   ctx->Shared->DefaultRect->RefCount++;
+                  delObj->RefCount--;
                   if (delObj == unit->_Current)
                      unit->_Current = unit->CurrentRect;
                }
@@ -604,6 +610,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 
             /* Decrement reference count and delete if zero */
             delObj->RefCount--;
+            printf("RefCount' in delete = %d\n", delObj->RefCount);
             ASSERT(delObj->RefCount >= 0);
 
             if (delObj->RefCount == 0) {
