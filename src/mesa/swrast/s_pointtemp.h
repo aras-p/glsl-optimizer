@@ -216,12 +216,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       /* check if we need to flush */
       if (span->end + (xmax-xmin+1) * (ymax-ymin+1) >= MAX_WIDTH ||
           (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
-#if FLAGS & (TEXTURE | SPRITE)
-         if (ctx->Texture._EnabledUnits)
-            _swrast_write_texture_span(ctx, span);
-         else
-            _swrast_write_rgba_span(ctx, span);
-#elif FLAGS & RGBA
+#if FLAGS & RGBA
          _swrast_write_rgba_span(ctx, span);
 #else
          _swrast_write_index_span(ctx, span);
@@ -238,12 +233,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
          /* check if we need to flush */
          if (count + (xmax-xmin+1) >= MAX_WIDTH) {
 	     span->end = count;
-#if FLAGS & (TEXTURE | SPRITE)
-            if (ctx->Texture._EnabledUnits)
-               _swrast_write_texture_span(ctx, span);
-            else
-               _swrast_write_rgba_span(ctx, span);
-#elif FLAGS & RGBA
+#if FLAGS & RGBA
             _swrast_write_rgba_span(ctx, span);
 #else
             _swrast_write_index_span(ctx, span);
@@ -364,12 +354,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       /* check if we need to flush */
       if (span->end >= MAX_WIDTH ||
           (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
-#if FLAGS & (TEXTURE | SPRITE)
-         if (ctx->Texture._EnabledUnits)
-            _swrast_write_texture_span(ctx, span);
-         else
-            _swrast_write_rgba_span(ctx, span);
-#elif FLAGS & RGBA
+#if FLAGS & RGBA
          _swrast_write_rgba_span(ctx, span);
 #else
          _swrast_write_index_span(ctx, span);

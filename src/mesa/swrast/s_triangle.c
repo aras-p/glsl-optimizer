@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -676,6 +676,9 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    GLfloat tex_coord[3], tex_step[3];
    GLchan *dest = span->array->rgba[0];
 
+   const GLuint savedTexEnable = ctx->Texture._EnabledUnits;
+   ctx->Texture._EnabledUnits = 0;
+
    tex_coord[0] = span->tex[0][0]  * (info->smask + 1);
    tex_step[0] = span->texStepX[0][0] * (info->smask + 1);
    tex_coord[1] = span->tex[0][1] * (info->tmask + 1);
@@ -785,6 +788,9 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
+
+   /* restore state */
+   ctx->Texture._EnabledUnits = savedTexEnable;
 }
 
 
@@ -873,7 +879,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
-#define RENDER_SPAN( span )   _swrast_write_texture_span(ctx, &span);
+#define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
 
@@ -891,7 +897,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 #define INTERP_ALPHA 1
 #define INTERP_SPEC 1
 #define INTERP_MULTITEX 1
-#define RENDER_SPAN( span )   _swrast_write_texture_span(ctx, &span);
+#define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
 

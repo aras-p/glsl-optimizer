@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,9 +88,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
             for (i = 0; i < span->end; i++)
                y[i]++;
          }
-         if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _swrast_write_texture_span(ctx, span);
-         else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
+         if (ctx->Visual.rgbMode)
             _swrast_write_rgba_span(ctx, span);
          else
             _swrast_write_index_span(ctx, span);
@@ -109,9 +107,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
             for (i = 0; i < span->end; i++)
                x[i]++;
          }
-         if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _swrast_write_texture_span(ctx, span);
-         else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
+         if (ctx->Visual.rgbMode)
             _swrast_write_rgba_span(ctx, span);
          else
             _swrast_write_index_span(ctx, span);
@@ -191,7 +187,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
-      _swrast_write_texture_span(ctx, &span);			\
+      _swrast_write_rgba_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
@@ -212,7 +208,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
-      _swrast_write_texture_span(ctx, &span);			\
+      _swrast_write_rgba_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
