@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.7 2001/03/29 21:16:26 keithw Exp $ */
+/* $Id: t_vb_texgen.c,v 1.8 2001/03/30 14:44:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,16 +96,15 @@ static GLuint all_bits[5] = {
 
 /*
  */
-static void build_m3(GLfloat f[][3], GLfloat m[],
-		     const GLvector3f *normal,
-		     const GLvector4f *eye )
+static void build_m3( GLfloat f[][3], GLfloat m[],
+		      const GLvector3f *normal,
+		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
    GLfloat *coord = (GLfloat *)eye->start;
    GLuint count = eye->count;
    const GLfloat *norm = normal->start;
    GLuint i;
-
 
    /* KW: Had to rearrange this loop to avoid a compiler bug with gcc
     *     2.7.3.1 at -O3 optimization.  Using -fno-strength-reduce
@@ -130,9 +129,9 @@ static void build_m3(GLfloat f[][3], GLfloat m[],
 
 
 
-static void build_m2(GLfloat f[][3], GLfloat m[],
-		     const GLvector3f *normal,
-		     const GLvector4f *eye )
+static void build_m2( GLfloat f[][3], GLfloat m[],
+		      const GLvector3f *normal,
+		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
    GLfloat *coord = eye->start;
@@ -162,11 +161,10 @@ static void build_m2(GLfloat f[][3], GLfloat m[],
 
 
 
-typedef void (*build_m_func)(GLfloat f[][3],
-			     GLfloat m[],
-			     const GLvector3f *normal,
-			     const GLvector4f *eye );
-
+typedef void (*build_m_func)( GLfloat f[][3],
+			      GLfloat m[],
+			      const GLvector3f *normal,
+			      const GLvector4f *eye );
 
 
 static build_m_func build_m_tab[5] = {
@@ -275,7 +273,7 @@ static void texgen_reflection_map_nv( GLcontext *ctx,
       out->count = in->count;
       out->size = MAX2(in->size, 3);
       if (in->size == 4)
-	 _mesa_copy_tab[0][0x8](out, in, 0);
+	 _mesa_copy_tab[0x8]( out, in );
    }
    else {
       out->flags |= VEC_SIZE_3;
@@ -312,7 +310,7 @@ static void texgen_normal_map_nv( GLcontext *ctx,
       out->count = in->count;
       out->size = MAX2(in->size, 3);
       if (in->size == 4)
-	 _mesa_copy_tab[0][0x8](out, in, 0);
+	 _mesa_copy_tab[0x8]( out, in );
    }
    else {
       out->flags |= VEC_SIZE_3;
@@ -350,7 +348,7 @@ static void texgen_sphere_map( GLcontext *ctx,
       out->count = in->count;
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | VEC_SIZE_2;
       if (in->size > 2)
-	 _mesa_copy_tab[0][all_bits[in->size] & ~0x3](out, in, 0);
+	 _mesa_copy_tab[all_bits[in->size] & ~0x3]( out, in );
    } else {
       out->size = 2;
       out->flags |= VEC_SIZE_2;
@@ -399,7 +397,7 @@ static void texgen( GLcontext *ctx,
    else {
       GLuint copy = (all_bits[in->size] & ~texUnit->TexGenEnabled);
       if (copy)
-	 _mesa_copy_tab[0][copy](out, in, 0);
+	 _mesa_copy_tab[copy]( out, in );
 
       out->size = MAX2(in->size, store->TexgenSize[unit]);
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | texUnit->TexGenEnabled;
@@ -418,14 +416,14 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeS) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])((GLfloat *)out->data,
-					sizeof(out->data[0]), obj,
-					texUnit->ObjectPlaneS, 0);
+	 _mesa_dotprod_tab[obj->size]( (GLfloat *)out->data,
+				       sizeof(out->data[0]), obj,
+				       texUnit->ObjectPlaneS );
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])((GLfloat *)out->data,
-					sizeof(out->data[0]), eye,
-					texUnit->EyePlaneS, 0);
+	 _mesa_dotprod_tab[eye->size]( (GLfloat *)out->data,
+				       sizeof(out->data[0]), eye,
+				       texUnit->EyePlaneS );
 	 break;
       case GL_SPHERE_MAP:
 	 for (indata=in->start,i=0 ; i<count ;i++, STRIDE_F(indata,in->stride))
@@ -451,14 +449,14 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeT) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][1]),
-					sizeof(out->data[0]), obj,
-					texUnit->ObjectPlaneT, 0);
+	 _mesa_dotprod_tab[obj->size]( &(out->data[0][1]),
+				       sizeof(out->data[0]), obj,
+				       texUnit->ObjectPlaneT );
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][1]),
-					sizeof(out->data[0]), eye,
-					texUnit->EyePlaneT, 0);
+	 _mesa_dotprod_tab[eye->size]( &(out->data[0][1]),
+				       sizeof(out->data[0]), eye,
+				       texUnit->EyePlaneT );
 	 break;
       case GL_SPHERE_MAP:
 	 for (indata=in->start,i=0; i<count ;i++,STRIDE_F(indata,in->stride))
@@ -484,14 +482,14 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeR) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][2]),
-					sizeof(out->data[0]), obj,
-					texUnit->ObjectPlaneR, 0);
+	 _mesa_dotprod_tab[obj->size]( &(out->data[0][2]),
+				       sizeof(out->data[0]), obj,
+				       texUnit->ObjectPlaneR );
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][2]),
-					sizeof(out->data[0]), eye,
-					texUnit->EyePlaneR, 0);
+	 _mesa_dotprod_tab[eye->size]( &(out->data[0][2]),
+				       sizeof(out->data[0]), eye,
+				       texUnit->EyePlaneR );
 	 break;
       case GL_REFLECTION_MAP_NV:
 	 for (i=0;i<count;i++)
@@ -512,14 +510,14 @@ static void texgen( GLcontext *ctx,
    if (texUnit->TexGenEnabled & Q_BIT) {
       switch (texUnit->GenModeQ) {
       case GL_OBJECT_LINEAR:
-	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][3]),
-					sizeof(out->data[0]), obj,
-					texUnit->ObjectPlaneQ, 0);
+	 _mesa_dotprod_tab[obj->size]( &(out->data[0][3]),
+				       sizeof(out->data[0]), obj,
+				       texUnit->ObjectPlaneQ );
 	 break;
       case GL_EYE_LINEAR:
-	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][3]),
-					sizeof(out->data[0]), eye,
-					texUnit->EyePlaneQ, 0);
+	 _mesa_dotprod_tab[eye->size]( &(out->data[0][3]),
+				       sizeof(out->data[0]), eye,
+				       texUnit->EyePlaneQ );
 	 break;
       default:
 	 _mesa_problem(ctx, "Bad Q texgen");

@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.7 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_normals.c,v 1.8 2001/03/30 14:44:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@
 
 
 struct normal_stage_data {
-   normal_func *NormalTransform;
+   normal_func NormalTransform;
    GLvector3f normal;
 };
 
@@ -62,12 +62,11 @@ static GLboolean run_normal_stage( GLcontext *ctx,
    ASSERT(store->NormalTransform);
 
    if (stage->changed_inputs)
-      (store->NormalTransform[0])(&ctx->ModelView,
-				  ctx->_ModelViewInvScale,
-				  VB->NormalPtr,
-				  0,
-				  0,
-				  &store->normal);
+      store->NormalTransform( &ctx->ModelView,
+			      ctx->_ModelViewInvScale,
+			      VB->NormalPtr,
+			      0,
+			      &store->normal );
 
    VB->NormalPtr = &store->normal;
    return GL_TRUE;
@@ -75,7 +74,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 
 
 static GLboolean run_validate_normal_stage( GLcontext *ctx,
-						struct gl_pipeline_stage *stage)
+					    struct gl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
 

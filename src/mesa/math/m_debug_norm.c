@@ -1,4 +1,4 @@
-/* $Id: m_debug_norm.c,v 1.6 2001/03/29 06:46:27 gareth Exp $ */
+/* $Id: m_debug_norm.c,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,7 +113,7 @@ static char *norm_strings[8] = {
 };
 
 
-/* ================================================================
+/* =============================================================
  * Reference transformations
  */
 
@@ -121,7 +121,6 @@ static void ref_norm_transform_rescale( const GLmatrix *mat,
 					GLfloat scale,
 					const GLvector3f *in,
 					const GLfloat *lengths,
-					const GLubyte mask[],
 					GLvector3f *dest )
 {
    GLuint i;
@@ -129,7 +128,6 @@ static void ref_norm_transform_rescale( const GLmatrix *mat,
    const GLfloat *m = mat->inv;
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
 
-   (void) mask;
    (void) lengths;
 
    for ( i = 0 ; i < in->count ; i++ ) {
@@ -146,15 +144,12 @@ static void ref_norm_transform_normalize( const GLmatrix *mat,
 					  GLfloat scale,
 					  const GLvector3f *in,
 					  const GLfloat *lengths,
-					  const GLubyte mask[],
 					  GLvector3f *dest )
 {
    GLuint i;
    const GLfloat *s = in->start;
    const GLfloat *m = mat->inv;
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
-
-   (void) mask;
 
    for ( i = 0 ; i < in->count ; i++ ) {
       GLfloat t[3];
@@ -182,7 +177,7 @@ static void ref_norm_transform_normalize( const GLmatrix *mat,
 }
 
 
-/* ================================================================
+/* =============================================================
  * Normal transformation tests
  */
 
@@ -268,20 +263,20 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
    ref2->flags = 0;
 
    if ( norm_normalize_types[mtype] == 0 ) {
-      ref_norm_transform_rescale( mat, scale, source, NULL, NULL, ref );
+      ref_norm_transform_rescale( mat, scale, source, NULL, ref );
    } else {
-      ref_norm_transform_normalize( mat, scale, source, NULL, NULL, ref );
-      ref_norm_transform_normalize( mat, scale, source, length, NULL, ref2 );
+      ref_norm_transform_normalize( mat, scale, source, NULL, ref );
+      ref_norm_transform_normalize( mat, scale, source, length, ref2 );
    }
 
    if ( mesa_profile ) {
       BEGIN_RACE( *cycles );
-      func( mat, scale, source, NULL, NULL, dest );
+      func( mat, scale, source, NULL, dest );
       END_RACE( *cycles );
-      func( mat, scale, source, length, NULL, dest2 );
+      func( mat, scale, source, length, dest2 );
    } else {
-      func( mat, scale, source, NULL, NULL, dest );
-      func( mat, scale, source, length, NULL, dest2 );
+      func( mat, scale, source, NULL, dest );
+      func( mat, scale, source, length, dest2 );
    }
 
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
@@ -327,7 +322,7 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
 void _math_test_all_normal_transform_functions( char *description )
 {
    int mtype;
-   long benchmark_tab[0xf][0x4];
+   long benchmark_tab[0xf];
    static int first_time = 1;
 
    if ( first_time ) {
@@ -348,8 +343,8 @@ void _math_test_all_normal_transform_functions( char *description )
 #endif
 
    for ( mtype = 0 ; mtype < 8 ; mtype++ ) {
-      normal_func func = _mesa_normal_tab[norm_types[mtype]][0];
-      long *cycles = &(benchmark_tab[mtype][0]);
+      normal_func func = _mesa_normal_tab[norm_types[mtype]];
+      long *cycles = &benchmark_tab[mtype];
 
       if ( test_norm_function( func, mtype, cycles ) == 0 ) {
 	 char buf[100];
@@ -360,7 +355,7 @@ void _math_test_all_normal_transform_functions( char *description )
 
 #ifdef RUN_DEBUG_BENCHMARK
       if ( mesa_profile ) {
-	 printf( " %li\t", benchmark_tab[mtype][0] );
+	 printf( " %li\t", benchmark_tab[mtype] );
 	 printf( " | [%s]\n", norm_strings[mtype] );
       }
 #endif

@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.9 2001/03/12 02:02:36 gareth Exp $ */
+/* $Id: m_xform.h,v 1.10 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -143,12 +143,10 @@ typedef GLvector4f * (_XFORMAPIP clip_func)( GLvector4f *vClip,
 typedef void (*dotprod_func)( GLfloat *out,
 			      GLuint out_stride,
 			      CONST GLvector4f *coord_vec,
-			      CONST GLfloat plane[4],
-			      CONST GLubyte mask[]);
+			      CONST GLfloat plane[4] );
 
 typedef void (*vec_copy_func)( GLvector4f *to,
-			       CONST GLvector4f *from,
-			       CONST GLubyte mask[]);
+			       CONST GLvector4f *from );
 
 
 
@@ -159,15 +157,14 @@ typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
 				      GLfloat scale,
 				      CONST GLvector3f *in,
 				      CONST GLfloat lengths[],
-				      CONST GLubyte mask[],
 				      GLvector3f *dest );
 
 
 /* Flags for selecting a normal transformation function.
  */
-#define NORM_RESCALE   0x1	/* apply the scale factor */
-#define NORM_NORMALIZE 0x2	/* normalize */
-#define NORM_TRANSFORM 0x4	/* apply the transformation matrix */
+#define NORM_RESCALE   0x1		/* apply the scale factor */
+#define NORM_NORMALIZE 0x2		/* normalize */
+#define NORM_TRANSFORM 0x4		/* apply the transformation matrix */
 #define NORM_TRANSFORM_NO_ROT 0x8	/* apply the transformation matrix */
 
 
@@ -180,9 +177,7 @@ typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
  */
 typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
 					  CONST GLfloat m[16],
-					  CONST GLvector4f *from_vec,
-					  CONST GLubyte *clipmask,
-					  CONST GLubyte flag );
+					  CONST GLvector4f *from_vec );
 
 
 extern GLvector4f *_mesa_project_points( GLvector4f *to,
@@ -197,17 +192,17 @@ extern void _mesa_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
 				     CONST GLfloat src[][3] );
 
 
-extern dotprod_func  _mesa_dotprod_tab[2][5];
-extern vec_copy_func _mesa_copy_tab[2][0x10];
-extern vec_copy_func _mesa_copy_clean_tab[2][5];
+extern dotprod_func  _mesa_dotprod_tab[5];
+extern vec_copy_func _mesa_copy_tab[0x10];
+extern vec_copy_func _mesa_copy_clean_tab[5];
 extern clip_func     _mesa_clip_tab[5];
 extern clip_func     _mesa_clip_np_tab[5];
-extern normal_func   _mesa_normal_tab[0xf][0x4];
+extern normal_func   _mesa_normal_tab[0xf];
 
-/* Use of 3 layers of linked 1-dimensional arrays to reduce
+/* Use of 2 layers of linked 1-dimensional arrays to reduce
  * cost of lookup.
  */
-extern transform_func **(_mesa_transform_tab[2]);
+extern transform_func *_mesa_transform_tab[5];
 
 
 extern void _mesa_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
@@ -215,8 +210,8 @@ extern void _mesa_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
 
 
 #define TransformRaw( to, mat, from ) \
-      ( (*_mesa_transform_tab[0][(from)->size][(mat)->type])( to, (mat)->m, from, 0, 0 ), \
-        (to) )
+   ( _mesa_transform_tab[(from)->size][(mat)->type]( to, (mat)->m, from ), \
+     (to) )
 
 
 #endif

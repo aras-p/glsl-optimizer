@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.6 2001/03/12 02:02:36 gareth Exp $ */
+/* $Id: m_norm_tmp.h,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,6 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
                                   GLfloat scale,
                                   const GLvector3f *in,
                                   const GLfloat *lengths,
-                                  const GLubyte mask[],
                                   GLvector3f *dest )
 {
    GLuint i;
@@ -49,29 +48,26 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
    GLfloat m1 = m[1],  m5 = m[5],  m9 = m[9];
    GLfloat m2 = m[2],  m6 = m[6],  m10 = m[10];
 
-   (void) mask;
    if (!lengths) {
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    GLfloat tx, ty, tz;
-	    {
-	       const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	       tx = ux * m0 + uy * m1 + uz * m2;
-	       ty = ux * m4 + uy * m5 + uz * m6;
-	       tz = ux * m8 + uy * m9 + uz * m10;
+	 GLfloat tx, ty, tz;
+	 {
+	    const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+	    tx = ux * m0 + uy * m1 + uz * m2;
+	    ty = ux * m4 + uy * m5 + uz * m6;
+	    tz = ux * m8 + uy * m9 + uz * m10;
+	 }
+	 {
+	    GLdouble len = tx*tx + ty*ty + tz*tz;
+	    if (len > 1e-20) {
+	       GLdouble scale = 1.0 / GL_SQRT(len);
+	       out[i][0] = (GLfloat) (tx * scale);
+	       out[i][1] = (GLfloat) (ty * scale);
+	       out[i][2] = (GLfloat) (tz * scale);
 	    }
+	    else
 	    {
-	       GLdouble len = tx*tx + ty*ty + tz*tz;
-	       if (len > 1e-20) {
-		  GLdouble scale = 1.0 / GL_SQRT(len);
-		  out[i][0] = (GLfloat) (tx * scale);
-		  out[i][1] = (GLfloat) (ty * scale);
-		  out[i][2] = (GLfloat) (tz * scale);
-	       }
-	       else
-	       {
-		  out[i][0] = out[i][1] = out[i][2] = 0;
-	       }
+	       out[i][0] = out[i][1] = out[i][2] = 0;
 	    }
 	 }
       }
@@ -84,20 +80,18 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
       }
 
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    GLfloat tx, ty, tz;
-	    {
-	       const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	       tx = ux * m0 + uy * m1 + uz * m2;
-	       ty = ux * m4 + uy * m5 + uz * m6;
-	       tz = ux * m8 + uy * m9 + uz * m10;
-	    }
-	    {
-	       GLfloat len = lengths[i];
-	       out[i][0] = tx * len;
-	       out[i][1] = ty * len;
-	       out[i][2] = tz * len;
-	    }
+	 GLfloat tx, ty, tz;
+	 {
+	    const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+	    tx = ux * m0 + uy * m1 + uz * m2;
+	    ty = ux * m4 + uy * m5 + uz * m6;
+	    tz = ux * m8 + uy * m9 + uz * m10;
+	 }
+	 {
+	    GLfloat len = lengths[i];
+	    out[i][0] = tx * len;
+	    out[i][1] = ty * len;
+	    out[i][2] = tz * len;
 	 }
       }
    }
@@ -110,7 +104,6 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
                                          GLfloat scale,
                                          const GLvector3f *in,
                                          const GLfloat *lengths,
-                                         const GLubyte mask[],
                                          GLvector3f *dest )
 {
    GLuint i;
@@ -122,29 +115,26 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
    GLfloat m0 = m[0];
    GLfloat m5 = m[5];
    GLfloat m10 = m[10];
-   (void) mask;
    if (!lengths) {
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    GLfloat tx, ty, tz;
-	    {
-	       const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	       tx = ux * m0                    ;
-	       ty =           uy * m5          ;
-	       tz =                     uz * m10;
+	 GLfloat tx, ty, tz;
+	 {
+	    const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+	    tx = ux * m0                    ;
+	    ty =           uy * m5          ;
+	    tz =                     uz * m10;
+	 }
+	 {
+	    GLdouble len = tx*tx + ty*ty + tz*tz;
+	    if (len > 1e-20) {
+	       GLdouble scale = 1.0 / GL_SQRT(len);
+	       out[i][0] = (GLfloat) (tx * scale);
+	       out[i][1] = (GLfloat) (ty * scale);
+	       out[i][2] = (GLfloat) (tz * scale);
 	    }
+	    else
 	    {
-	       GLdouble len = tx*tx + ty*ty + tz*tz;
-	       if (len > 1e-20) {
-		  GLdouble scale = 1.0 / GL_SQRT(len);
-		  out[i][0] = (GLfloat) (tx * scale);
-		  out[i][1] = (GLfloat) (ty * scale);
-		  out[i][2] = (GLfloat) (tz * scale);
-	       }
-	       else
-	       {
-		  out[i][0] = out[i][1] = out[i][2] = 0;
-	       }
+	       out[i][0] = out[i][1] = out[i][2] = 0;
 	    }
 	 }
       }
@@ -159,20 +149,18 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
       }
 
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    GLfloat tx, ty, tz;
-	    {
-	       const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	       tx = ux * m0                    ;
-	       ty =           uy * m5          ;
-	       tz =                     uz * m10;
-	    }
-	    {
-	       GLfloat len = lengths[i];
-	       out[i][0] = tx * len;
-	       out[i][1] = ty * len;
-	       out[i][2] = tz * len;
-	    }
+	 GLfloat tx, ty, tz;
+	 {
+	    const GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+	    tx = ux * m0                    ;
+	    ty =           uy * m5          ;
+	    tz =                     uz * m10;
+	 }
+	 {
+	    GLfloat len = lengths[i];
+	    out[i][0] = tx * len;
+	    out[i][1] = ty * len;
+	    out[i][2] = tz * len;
 	 }
       }
    }
@@ -185,7 +173,6 @@ TAG(transform_rescale_normals_no_rot)( const GLmatrix *mat,
                                        GLfloat scale,
                                        const GLvector3f *in,
                                        const GLfloat *lengths,
-                                       const GLubyte mask[],
                                        GLvector3f *dest )
 {
    GLuint i;
@@ -198,14 +185,11 @@ TAG(transform_rescale_normals_no_rot)( const GLmatrix *mat,
    GLfloat m5 = scale*m[5];
    GLfloat m10 = scale*m[10];
    (void) lengths;
-   (void) mask;
    STRIDE_LOOP {
-      CULL_CHECK {
-	 GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	 out[i][0] = ux * m0;
-	 out[i][1] =           uy * m5;
-	 out[i][2] =                     uz * m10;
-      }
+      GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+      out[i][0] = ux * m0;
+      out[i][1] =           uy * m5;
+      out[i][2] =                     uz * m10;
    }
    dest->count = in->count;
 }
@@ -215,7 +199,6 @@ TAG(transform_rescale_normals)( const GLmatrix *mat,
                                 GLfloat scale,
                                 const GLvector3f *in,
                                 const GLfloat *lengths,
-                                const GLubyte mask[],
                                 GLvector3f *dest )
 {
    GLuint i;
@@ -231,14 +214,11 @@ TAG(transform_rescale_normals)( const GLmatrix *mat,
    GLfloat m1 = scale*m[1],  m5 = scale*m[5],  m9 = scale*m[9];
    GLfloat m2 = scale*m[2],  m6 = scale*m[6],  m10 = scale*m[10];
    (void) lengths;
-   (void) mask;
    STRIDE_LOOP {
-      CULL_CHECK {
-	 GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	 out[i][0] = ux * m0 + uy * m1 + uz * m2;
-	 out[i][1] = ux * m4 + uy * m5 + uz * m6;
-	 out[i][2] = ux * m8 + uy * m9 + uz * m10;
-      }
+      GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+      out[i][0] = ux * m0 + uy * m1 + uz * m2;
+      out[i][1] = ux * m4 + uy * m5 + uz * m6;
+      out[i][2] = ux * m8 + uy * m9 + uz * m10;
    }
    dest->count = in->count;
 }
@@ -249,7 +229,6 @@ TAG(transform_normals_no_rot)( const GLmatrix *mat,
 			       GLfloat scale,
 			       const GLvector3f *in,
 			       const GLfloat *lengths,
-			       const GLubyte mask[],
 			       GLvector3f *dest )
 {
    GLuint i;
@@ -263,14 +242,11 @@ TAG(transform_normals_no_rot)( const GLmatrix *mat,
    GLfloat m10 = m[10];
    (void) scale;
    (void) lengths;
-   (void) mask;
    STRIDE_LOOP {
-      CULL_CHECK {
-	 GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	 out[i][0] = ux * m0;
-	 out[i][1] =           uy * m5;
-	 out[i][2] =                     uz * m10;
-      }
+      GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+      out[i][0] = ux * m0;
+      out[i][1] =           uy * m5;
+      out[i][2] =                     uz * m10;
    }
    dest->count = in->count;
 }
@@ -281,7 +257,6 @@ TAG(transform_normals)( const GLmatrix *mat,
                         GLfloat scale,
                         const GLvector3f *in,
                         const GLfloat *lengths,
-                        const GLubyte mask[],
                         GLvector3f *dest )
 {
    GLuint i;
@@ -295,14 +270,11 @@ TAG(transform_normals)( const GLmatrix *mat,
    GLfloat m2 = m[2],  m6 = m[6],  m10 = m[10];
    (void) scale;
    (void) lengths;
-   (void) mask;
    STRIDE_LOOP {
-      CULL_CHECK {
-	 GLfloat ux = from[0],  uy = from[1],  uz = from[2];
-	 out[i][0] = ux * m0 + uy * m1 + uz * m2;
-	 out[i][1] = ux * m4 + uy * m5 + uz * m6;
-	 out[i][2] = ux * m8 + uy * m9 + uz * m10;
-      }
+      GLfloat ux = from[0],  uy = from[1],  uz = from[2];
+      out[i][0] = ux * m0 + uy * m1 + uz * m2;
+      out[i][1] = ux * m4 + uy * m5 + uz * m6;
+      out[i][2] = ux * m8 + uy * m9 + uz * m10;
    }
    dest->count = in->count;
 }
@@ -313,7 +285,6 @@ TAG(normalize_normals)( const GLmatrix *mat,
                         GLfloat scale,
                         const GLvector3f *in,
                         const GLfloat *lengths,
-                        const GLubyte mask[],
                         GLvector3f *dest )
 {
    GLuint i;
@@ -322,35 +293,30 @@ TAG(normalize_normals)( const GLmatrix *mat,
    GLuint count = in->count;
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
    (void) mat;
-   (void) mask;
    (void) scale;
    if (lengths) {
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    const GLfloat x = from[0], y = from[1], z = from[2];
-	    GLfloat invlen = lengths[i];
-	    out[i][0] = x * invlen;
-	    out[i][1] = y * invlen;
-	    out[i][2] = z * invlen;
-	 }
+	 const GLfloat x = from[0], y = from[1], z = from[2];
+	 GLfloat invlen = lengths[i];
+	 out[i][0] = x * invlen;
+	 out[i][1] = y * invlen;
+	 out[i][2] = z * invlen;
       }
    }
    else {
       STRIDE_LOOP {
-	 CULL_CHECK {
-	    const GLfloat x = from[0], y = from[1], z = from[2];
-	    GLdouble len = x * x + y * y + z * z;
-	    if (len > 1e-50) {
-	       len = 1.0 / GL_SQRT(len);
-	       out[i][0] = (GLfloat) (x * len);
-	       out[i][1] = (GLfloat) (y * len);
-	       out[i][2] = (GLfloat) (z * len);
-	    }
-	    else {
-	       out[i][0] = x;
-	       out[i][1] = y;
-	       out[i][2] = z;
-	    }
+	 const GLfloat x = from[0], y = from[1], z = from[2];
+	 GLdouble len = x * x + y * y + z * z;
+	 if (len > 1e-50) {
+	    len = 1.0 / GL_SQRT(len);
+	    out[i][0] = (GLfloat) (x * len);
+	    out[i][1] = (GLfloat) (y * len);
+	    out[i][2] = (GLfloat) (z * len);
+	 }
+	 else {
+	    out[i][0] = x;
+	    out[i][1] = y;
+	    out[i][2] = z;
 	 }
       }
    }
@@ -363,7 +329,6 @@ TAG(rescale_normals)( const GLmatrix *mat,
                       GLfloat scale,
                       const GLvector3f *in,
                       const GLfloat *lengths,
-                      const GLubyte mask[],
                       GLvector3f *dest )
 {
    GLuint i;
@@ -373,12 +338,8 @@ TAG(rescale_normals)( const GLmatrix *mat,
    GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
    (void) mat;
    (void) lengths;
-   (void) mask;
-
    STRIDE_LOOP {
-      CULL_CHECK {
-	 SCALE_SCALAR_3V( out[i], scale, from );
-      }
+      SCALE_SCALAR_3V( out[i], scale, from );
    }
    dest->count = in->count;
 }
@@ -387,27 +348,27 @@ TAG(rescale_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(init_c_norm_transform)( void )
 {
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT] =
       TAG(transform_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE] =
       TAG(transform_rescale_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE] =
       TAG(transform_normalize_normals_no_rot);
 
-   _mesa_normal_tab[NORM_TRANSFORM][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM] =
       TAG(transform_normals);
 
-   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE] =
       TAG(transform_rescale_normals);
 
-   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][IDX] =
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE] =
       TAG(transform_normalize_normals);
 
-   _mesa_normal_tab[NORM_RESCALE][IDX] =
+   _mesa_normal_tab[NORM_RESCALE] =
       TAG(rescale_normals);
 
-   _mesa_normal_tab[NORM_NORMALIZE][IDX] =
+   _mesa_normal_tab[NORM_NORMALIZE] =
       TAG(normalize_normals);
 }

@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.6 2001/03/27 20:32:24 brianp Exp $ */
+/* $Id: texutil_tmp.h,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,7 +42,7 @@
 				 convert->dstImageHeight * DST_TEXEL_BYTES)
 
 
-/* ================================================================
+/* =============================================================
  * PRE: No pixelstore attribs, width == dstImageWidth.
  */
 static GLboolean
@@ -106,7 +106,7 @@ TAG(texsubimage3d)( struct gl_texture_convert *convert )
 
 
 
-/* ================================================================
+/* =============================================================
  * PRE: No pixelstore attribs, width != dstImageWidth.
  */
 static GLboolean
@@ -179,7 +179,7 @@ TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
 
 
 
-/* ================================================================
+/* =============================================================
  * PRE: Require pixelstore attribs, width == dstImageWidth.
  */
 static GLboolean
@@ -271,7 +271,7 @@ TAG(texsubimage3d_pack)( struct gl_texture_convert *convert )
 
 
 
-/* ================================================================
+/* =============================================================
  * PRE: Require pixelstore attribs, width != dstImageWidth.
  */
 static GLboolean

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.9 2001/03/19 02:25:37 keithw Exp $ */
+/* $Id: t_vb_fog.c,v 1.10 2001/03/30 14:44:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -160,8 +160,9 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.
 	  */
-	 _mesa_dotprod_tab[0][VB->ObjPtr->size](input->data, sizeof(GLfloat),
-                                                VB->ObjPtr, plane, 0 );
+	 _mesa_dotprod_tab[VB->ObjPtr->size]( input->data,
+					      sizeof(GLfloat),
+					      VB->ObjPtr, plane );
 
 	 input->count = VB->ObjPtr->count;
       }

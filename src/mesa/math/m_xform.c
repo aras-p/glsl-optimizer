@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.11 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_xform.c,v 1.12 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,12 +58,10 @@
 
 clip_func _mesa_clip_tab[5];
 clip_func _mesa_clip_np_tab[5];
-dotprod_func _mesa_dotprod_tab[2][5];
-vec_copy_func _mesa_copy_tab[2][0x10];
-normal_func _mesa_normal_tab[0xf][0x4];
-transform_func **(_mesa_transform_tab[2]);
-static transform_func *cull_transform_tab[5];
-static transform_func *raw_transform_tab[5];
+dotprod_func _mesa_dotprod_tab[5];
+vec_copy_func _mesa_copy_tab[0x10];
+normal_func _mesa_normal_tab[0xf];
+transform_func *_mesa_transform_tab[5];
 
 
 /* Raw data format used for:
@@ -72,14 +70,14 @@ static transform_func *raw_transform_tab[5];
  *    - Eye-to-clip transform (via the function above).
  *    - Cliptesting
  *    - And everything else too, if culling happens to be disabled.
+ *
+ * GH: It's used for everything now, as clipping/culling is done
+ *     elsewhere (most often by the driver itself).
  */
-#define TAG(x) x##_raw
-#define TAG2(x,y) x##y##_raw
-#define IDX 0
-#define STRIDE_LOOP for (i=0;i<count;i++, STRIDE_F(from, stride))
-#define LOOP for (i=0;i<n;i++)
-#define CULL_CHECK
-#define CLIP_CHECK
+#define TAG(x) x
+#define TAG2(x,y) x##y
+#define STRIDE_LOOP for ( i = 0 ; i < count ; i++, STRIDE_F(from, stride) )
+#define LOOP for ( i = 0 ; i < n ; i++ )
 #define ARGS
 #include "m_xform_tmp.h"
 #include "m_clip_tmp.h"
@@ -89,44 +87,13 @@ static transform_func *raw_transform_tab[5];
 #undef TAG
 #undef TAG2
 #undef LOOP
-#undef CULL_CHECK
-#undef CLIP_CHECK
 #undef ARGS
-#undef IDX
-
-/* Culled data used for:
- *    - texture transformations
- *    - viewport map transformation
- *    - normal transformations prior to lighting
- *    - user cliptests
- */
-#define TAG(x) x##_masked
-#define TAG2(x,y) x##y##_masked
-#define IDX 1
-#define STRIDE_LOOP for (i=0;i<count;i++, STRIDE_F(from, stride))
-#define LOOP for (i=0;i<n;i++)
-#define CULL_CHECK if (mask[i])
-#define CLIP_CHECK if ((mask[i] & flag) == 0)
-#define ARGS , const GLubyte mask[]
-#include "m_xform_tmp.h"
-#include "m_norm_tmp.h"
-#include "m_dotprod_tmp.h"
-#include "m_copy_tmp.h"
-#undef TAG
-#undef TAG2
-#undef LOOP
-#undef CULL_CHECK
-#undef CLIP_CHECK
-#undef ARGS
-#undef IDX
-
-
 
 
 
 
 GLvector4f *_mesa_project_points( GLvector4f *proj_vec,
-			       const GLvector4f *clip_vec )
+				  const GLvector4f *clip_vec )
 {
    const GLuint stride = clip_vec->stride;
    const GLfloat *from = (GLfloat *)clip_vec->start;
@@ -224,18 +191,11 @@ void _mesa_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
 void
 _math_init_transformation( void )
 {
-   _mesa_transform_tab[0] = raw_transform_tab;
-   _mesa_transform_tab[1] = cull_transform_tab;
-
-   init_c_transformations_raw();
-   init_c_transformations_masked();
-   init_c_norm_transform_raw();
-   init_c_norm_transform_masked();
-   init_c_cliptest_raw();
-   init_copy0_raw();
-   init_copy0_masked();
-   init_dotprod_raw();
-   init_dotprod_masked();
+   init_c_transformations();
+   init_c_norm_transform();
+   init_c_cliptest();
+   init_copy0();
+   init_dotprod();
 
 #ifdef DEBUG
    _math_test_all_transform_functions( "default" );

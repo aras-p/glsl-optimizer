@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.6 2001/03/28 20:40:51 gareth Exp $ */
+/* $Id: texformat.c,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,7 @@ static void fetch_null_texel( const struct gl_texture_image *texImage,
 }
 
 
-/* ================================================================
+/* =============================================================
  * Default GLchan-based formats:
  */
 
@@ -217,7 +217,7 @@ const struct gl_texture_format _mesa_texformat_depth_component = {
 };
 
 
-/* ================================================================
+/* =============================================================
  * Hardware formats:
  */
 
@@ -438,7 +438,7 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
 };
 
 
-/* ================================================================
+/* =============================================================
  * Null format:
  */
 

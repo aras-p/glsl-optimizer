@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.20 2001/03/29 06:46:27 gareth Exp $ */
+/* $Id: x86.c,v 1.21 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,51 +30,16 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "mtypes.h"
-#include "x86.h"
-
 #include "math/m_vertices.h"
 #include "math/m_xform.h"
-
 #include "tnl/t_context.h"
+
+#include "x86.h"
+#include "common_x86_macros.h"
 
 #ifdef DEBUG
 #include "math/m_debug.h"
 #endif
-
-
-#define XFORM_ARGS 	GLvector4f *to_vec, 				\
-			const GLfloat m[16], 				\
-			const GLvector4f *from_vec, 			\
-			const GLubyte *mask, 				\
-			const GLubyte flag
-
-
-#define DECLARE_XFORM_GROUP( pfx, sz ) \
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general( XFORM_ARGS );		\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d( XFORM_ARGS );		\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot( XFORM_ARGS );	\
-extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d( XFORM_ARGS );
-
-
-#define ASSIGN_XFORM_GROUP( pfx, sz )					\
-   _mesa_transform_tab[0][sz][MATRIX_GENERAL] =				\
-      _mesa_##pfx##_transform_points##sz##_general;			\
-   _mesa_transform_tab[0][sz][MATRIX_IDENTITY] =			\
-      _mesa_##pfx##_transform_points##sz##_identity;			\
-   _mesa_transform_tab[0][sz][MATRIX_3D_NO_ROT] =			\
-      _mesa_##pfx##_transform_points##sz##_3d_no_rot;			\
-   _mesa_transform_tab[0][sz][MATRIX_PERSPECTIVE] =			\
-      _mesa_##pfx##_transform_points##sz##_perspective;			\
-   _mesa_transform_tab[0][sz][MATRIX_2D] =				\
-      _mesa_##pfx##_transform_points##sz##_2d;				\
-   _mesa_transform_tab[0][sz][MATRIX_2D_NO_ROT] =			\
-      _mesa_##pfx##_transform_points##sz##_2d_no_rot;			\
-   _mesa_transform_tab[0][sz][MATRIX_3D] =				\
-      _mesa_##pfx##_transform_points##sz##_3d;
 
 
 #ifdef USE_X86_ASM

@@ -1,4 +1,4 @@
-/* $Id: norm_args.h,v 1.1 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: norm_args.h,v 1.2 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,21 +41,18 @@
  *                              GLfloat scale,
  *                              CONST GLvector3f *in,
  *                              CONST GLfloat lengths[],
- *                              CONST GLubyte mask[],
  *                              GLvector3f *dest );
  */
 #define OFFSET_MAT	4
 #define OFFSET_SCALE	8
 #define OFFSET_IN	12
 #define OFFSET_LENGTHS	16
-#define OFFSET_MASK	20
-#define OFFSET_DEST	24
+#define OFFSET_DEST	20
 
 #define ARG_MAT         REGOFF(FRAME_OFFSET+OFFSET_MAT, ESP)
 #define ARG_SCALE       REGOFF(FRAME_OFFSET+OFFSET_SCALE, ESP)
 #define ARG_IN          REGOFF(FRAME_OFFSET+OFFSET_IN, ESP)
 #define ARG_LENGTHS     REGOFF(FRAME_OFFSET+OFFSET_LENGTHS, ESP)
-#define ARG_MASK        REGOFF(FRAME_OFFSET+OFFSET_MASK, ESP)
 #define ARG_DEST        REGOFF(FRAME_OFFSET+OFFSET_DEST, ESP)
 
 #endif

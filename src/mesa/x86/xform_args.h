@@ -1,4 +1,4 @@
-/* $Id: xform_args.h,v 1.3 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: xform_args.h,v 1.4 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,20 +39,14 @@
  *
  * typedef void (*transform_func)( GLvector4f *to_vec,
  *				   const GLfloat m[16],
- *				   const GLvector4f *from_vec,
- *				   const GLubyte *clipmask,
- *				   const GLubyte flag );
+ *				   const GLvector4f *from_vec );
  */
 #define OFFSET_DEST	4
 #define OFFSET_MATRIX	8
 #define OFFSET_SOURCE	12
-#define OFFSET_CLIP	16
-#define OFFSET_FLAG	20
 
 #define ARG_DEST	REGOFF(FRAME_OFFSET+OFFSET_DEST, ESP)
 #define ARG_MATRIX 	REGOFF(FRAME_OFFSET+OFFSET_MATRIX, ESP)
 #define ARG_SOURCE 	REGOFF(FRAME_OFFSET+OFFSET_SOURCE, ESP)
-#define ARG_CLIP 	REGOFF(FRAME_OFFSET+OFFSET_CLIP, ESP)
-#define ARG_FLAG 	REGOFF(FRAME_OFFSET+OFFSET_FLAG, ESP)
 
 #endif

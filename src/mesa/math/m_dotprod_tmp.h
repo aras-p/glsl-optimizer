@@ -1,4 +1,4 @@
-/* $Id: m_dotprod_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
+/* $Id: m_dotprod_tmp.h,v 1.6 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,8 +34,7 @@
 static void TAG(dotprod_vec2)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
-			       const GLfloat plane[4],
-			       const GLubyte mask[] )
+			       const GLfloat plane[4] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
@@ -45,22 +44,17 @@ static void TAG(dotprod_vec2)( GLfloat *out,
 
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane3 = plane[3];
 
-   (void) mask;
-
    for (i=0;i<count;i++,STRIDE_F(coord,stride),STRIDE_F(out,outstride)) {
-      CULL_CHECK {
-	 *out = (coord[0] * plane0 +
-		 coord[1] * plane1 +
-		            plane3);
-      }
+      *out = (coord[0] * plane0 +
+	      coord[1] * plane1 +
+	      plane3);
    }
 }
 
 static void TAG(dotprod_vec3)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
-			       const GLfloat plane[4],
-			       const GLubyte mask[] )
+			       const GLfloat plane[4] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
@@ -71,23 +65,18 @@ static void TAG(dotprod_vec3)( GLfloat *out,
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane2 = plane[2];
    const GLfloat plane3 = plane[3];
 
-   (void) mask;
-
    for (i=0;i<count;i++,STRIDE_F(coord,stride),STRIDE_F(out,outstride)) {
-      CULL_CHECK {
-	 *out = (coord[0] * plane0 +
-		 coord[1] * plane1 +
-		 coord[2] * plane2 +
-		            plane3);
-      }
+      *out = (coord[0] * plane0 +
+	      coord[1] * plane1 +
+	      coord[2] * plane2 +
+	      plane3);
    }
 }
 
 static void TAG(dotprod_vec4)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
-			       const GLfloat plane[4],
-			       const GLubyte mask[] )
+			       const GLfloat plane[4] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
@@ -97,22 +86,18 @@ static void TAG(dotprod_vec4)( GLfloat *out,
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane2 = plane[2];
    const GLfloat plane3 = plane[3];
 
-   (void) mask;
-
    for (i=0;i<count;i++,STRIDE_F(coord,stride),STRIDE_F(out,outstride)) {
-      CULL_CHECK {
-	 *out = (coord[0] * plane0 +
-		 coord[1] * plane1 +
-		 coord[2] * plane2 +
-		 coord[3] * plane3);
-      }
+      *out = (coord[0] * plane0 +
+	      coord[1] * plane1 +
+	      coord[2] * plane2 +
+	      coord[3] * plane3);
    }
 }
 
 
 static void TAG(init_dotprod)( void )
 {
-   _mesa_dotprod_tab[IDX&1][2] = TAG(dotprod_vec2);
-   _mesa_dotprod_tab[IDX&1][3] = TAG(dotprod_vec3);
-   _mesa_dotprod_tab[IDX&1][4] = TAG(dotprod_vec4);
+   _mesa_dotprod_tab[2] = TAG(dotprod_vec2);
+   _mesa_dotprod_tab[3] = TAG(dotprod_vec3);
+   _mesa_dotprod_tab[4] = TAG(dotprod_vec4);
 }
