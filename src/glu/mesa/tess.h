@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.5 1999/09/14 22:46:02 gareth Exp $ */
+/* $Id: tess.h,v 1.6 1999/09/15 02:12:16 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.6  1999/09/15 02:12:16  gareth
+ * Added debugging pragma message.
+ *
  * Revision 1.5  1999/09/14 22:46:02  gareth
  * Added debugging output.
  *
@@ -95,12 +98,13 @@ extern void tess_error_callback( GLUtesselator *, GLenum, void * );
 extern	int	tess_debug_level;
 int vdebugstr( char *format_str, ... );
 
+#pragma message( "tess: using DEBUGP for debugging output" )
 #define DEBUGP(level, body)						\
     do {								\
 	if ( tess_debug_level >= level ) {				\
 	    vdebugstr( "%11.11s:%-5d ", __FILE__, __LINE__, level );	\
 	    vdebugstr body;						\
-	    fflush ( stderr );						\
+	    fflush( stderr );						\
 	}								\
     } while ( 0 )
 #define DEBUGIF(level)          do { if ( tess_debug_level >= level ) {
