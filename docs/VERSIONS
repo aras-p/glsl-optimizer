@@ -1290,3 +1290,4 @@ Mesa Version History
 	   before parsing (Dave Reveman)
 	- adjust texcoords for sampling texture rectangles (Dave Reveman)
 	- glGet*(GL_MAX_VERTEX_ATTRIBS_ARB) wasn't implemented
+	- repeated calls to glDeleteTexture(t) could lead to a crash
