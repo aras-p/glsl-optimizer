@@ -116,6 +116,14 @@ case $ARCH in
     'Linux' | 'OpenBSD')
 	# GCC-based environment
 
+	# Set default compilers if env vars not set
+	if [ "x$CXX" = "x" ] ; then
+	    CXX=g++
+	fi
+	if [ "x$CC" = "x" ] ; then
+	    CC=gcc
+	fi
+
 	if [ $NOPREFIX = 1 ] ; then
 	    # No "lib" or ".so" part
 	    echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}
