@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.2 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: mtypes.h,v 1.3 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1165,6 +1165,8 @@ struct gl_constants {
    GLuint MaxConvolutionHeight;
    GLuint NumCompressedTextureFormats;	/* GL_ARB_texture_compression */
    GLenum CompressedTextureFormats[MAX_COMPRESSED_TEXTURE_FORMATS];
+   GLuint MaxClipPlanes;
+   GLuint MaxLights;
 };
 
 

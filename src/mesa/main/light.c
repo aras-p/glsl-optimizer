@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.29 2000/11/24 15:21:59 keithw Exp $ */
+/* $Id: light.c,v 1.30 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,7 +96,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLight");
 
-   if (i < 0 || i >= MAX_LIGHTS) {
+   if (i < 0 || i >= ctx->Const.MaxLights) {
       gl_error( ctx, GL_INVALID_ENUM, "glLight" );
       return;
    }
@@ -240,7 +240,7 @@ _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetLight");
 
-   if (l<0 || l>=MAX_LIGHTS) {
+   if (l < 0 || l >= ctx->Const.MaxLights) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetLightfv" );
       return;
    }
@@ -292,7 +292,7 @@ _mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetLight");
 
-   if (l<0 || l>=MAX_LIGHTS) {
+   if (l < 0 || l >= ctx->Const.MaxLights) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetLightiv" );
       return;
    }

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.48 2000/11/24 10:25:06 keithw Exp $ */
+/* $Id: state.c,v 1.49 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -638,7 +638,7 @@ update_projection( GLcontext *ctx )
     */
    if (ctx->Transform._AnyClip) {
       GLuint p;
-      for (p = 0 ; p < MAX_CLIP_PLANES ; p++) {
+      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipEnabled[p]) {
 	    gl_transform_vector( ctx->Transform._ClipUserPlane[p],
 				 ctx->Transform.EyeUserPlane[p],

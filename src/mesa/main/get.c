@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.43 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: get.c,v 1.44 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -551,7 +551,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = INT_TO_BOOL( MAX_CLIENT_ATTRIB_STACK_DEPTH);
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = INT_TO_BOOL(MAX_CLIP_PLANES);
+	 *params = INT_TO_BOOL(ctx->Const.MaxClipPlanes);
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
          *params = INT_TO_BOOL(VB_MAX);
@@ -563,7 +563,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(MAX_EVAL_ORDER);
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = INT_TO_BOOL(MAX_LIGHTS);
+	 *params = INT_TO_BOOL(ctx->Const.MaxLights);
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = INT_TO_BOOL(MAX_LIST_NESTING);
@@ -1749,7 +1749,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = (GLdouble) MAX_CLIP_PLANES;
+	 *params = (GLdouble) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
          *params = (GLdouble) VB_MAX;
@@ -1761,7 +1761,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = (GLdouble) MAX_LIGHTS;
+	 *params = (GLdouble) ctx->Const.MaxLights;
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = (GLdouble) MAX_LIST_NESTING;
@@ -2948,7 +2948,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = (GLfloat) MAX_CLIP_PLANES;
+	 *params = (GLfloat) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
          *params = (GLfloat) VB_MAX;
@@ -2960,7 +2960,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = (GLfloat) MAX_LIGHTS;
+	 *params = (GLfloat) ctx->Const.MaxLights;
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = (GLfloat) MAX_LIST_NESTING;
@@ -4123,7 +4123,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-         *params = (GLint) MAX_CLIP_PLANES;
+         *params = (GLint) ctx->Const.MaxClipPlanes;
          break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
          *params = VB_MAX;
@@ -4135,7 +4135,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-         *params = (GLint) MAX_LIGHTS;
+         *params = (GLint) ctx->Const.MaxLights;
          break;
       case GL_MAX_LIST_NESTING:
          *params = (GLint) MAX_LIST_NESTING;

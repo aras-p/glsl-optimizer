@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.109 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: context.c,v 1.110 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -759,6 +759,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.NumCompressedTextureFormats = 0;
+   ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
+   ctx->Const.MaxLights = MAX_LIGHTS;
 
    /* Modelview matrix */
    _math_matrix_ctr( &ctx->ModelView );

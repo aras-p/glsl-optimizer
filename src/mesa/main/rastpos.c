@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.16 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: rastpos.c,v 1.17 2000/11/27 18:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,7 @@ static GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 {
    GLuint p;
 
-   for (p=0;p<MAX_CLIP_PLANES;p++) {
+   for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
       if (ctx->Transform.ClipEnabled[p]) {
 	 GLfloat dot = v[0] * ctx->Transform._ClipUserPlane[p][0]
 		     + v[1] * ctx->Transform._ClipUserPlane[p][1]
