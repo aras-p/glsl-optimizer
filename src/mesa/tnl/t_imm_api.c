@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.31 2002/09/03 18:05:52 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.32 2002/10/03 23:27:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,6 +375,7 @@ void
 _tnl_End(void)
 {
    GET_CURRENT_CONTEXT(ctx);
+
    _tnl_end( ctx );
 
    /* Need to keep save primitive uptodate in COMPILE and
@@ -1150,6 +1151,10 @@ _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w 
             _tnl_flush_immediate( NULL, IM );
       }
    }
+   else {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribNV(index > 15)");
+   }
 }   
 
 static void
@@ -1166,6 +1171,10 @@ _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
          if (count == IMM_MAXDATA - 1)
             _tnl_flush_immediate( NULL, IM );
       }
+   }
+   else {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribNV(index > 15)");
    }
 }   
 
