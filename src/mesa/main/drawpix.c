@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +43,13 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->FragmentProgram.Enabled
+       && !ctx->FragmentProgram.Current->Instructions) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glDrawPixels (invalid fragment program)");
+      return;
+   }
 
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glDrawPixels(width or height < 0" );
@@ -94,6 +100,13 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    GLint destx, desty;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->FragmentProgram.Enabled
+       && !ctx->FragmentProgram.Current->Instructions) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyPixels (invalid fragment program)");
+      return;
+   }
 
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)" );
@@ -175,6 +188,13 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (ctx->FragmentProgram.Enabled
+       && !ctx->FragmentProgram.Current->Instructions) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBitmap (invalid fragment program)");
+      return;
+   }
 
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glBitmap(width or height < 0)" );
