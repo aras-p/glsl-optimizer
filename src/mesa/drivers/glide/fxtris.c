@@ -45,7 +45,7 @@
 #include "fxdrv.h"
 
 
-GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass);
+static GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass);
 
 
 /*
@@ -140,13 +140,13 @@ do {						\
  *              Fallback to swrast for basic primitives                *
  ***********************************************************************/
 
-/* Build an SWvertex from a hardware vertex. 
+/* Build an SWvertex from a hardware vertex.
  *
  * This code is hit only when a mix of accelerated and unaccelerated
  * primitives are being drawn, and only for the unaccelerated
- * primitives.  
+ * primitives.
  */
-static void 
+static void
 fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -201,10 +201,10 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
 }
 
 
-static void 
-fx_fallback_tri( fxMesaContext fxMesa, 
-		   GrVertex *v0, 
-		   GrVertex *v1, 
+static void
+fx_fallback_tri( fxMesaContext fxMesa,
+		   GrVertex *v0,
+		   GrVertex *v1,
 		   GrVertex *v2 )
 {
    GLcontext *ctx = fxMesa->glCtx;
@@ -217,7 +217,7 @@ fx_fallback_tri( fxMesaContext fxMesa,
 }
 
 
-static void 
+static void
 fx_fallback_line( fxMesaContext fxMesa,
 		    GrVertex *v0,
 		    GrVertex *v1 )
@@ -230,8 +230,8 @@ fx_fallback_line( fxMesaContext fxMesa,
 }
 
 
-static void 
-fx_fallback_point( fxMesaContext fxMesa, 
+static void
+fx_fallback_point( fxMesaContext fxMesa,
 		     GrVertex *v0 )
 {
    GLcontext *ctx = fxMesa->glCtx;
@@ -256,7 +256,7 @@ static void fx_print_vertex( GLcontext *ctx, const GrVertex *v )
 #else  /* !FX_PACKEDCOLOR */
  fprintf(stderr, "\tr %f g %f b %f a %f\n", v->r, v->g, v->b, v->a);
 #endif /* !FX_PACKEDCOLOR */
-   
+
  fprintf(stderr, "\n");
 }
 
@@ -1119,7 +1119,7 @@ static void fx_render_vb_line_loop( GLcontext *ctx,
    grDrawVertexArrayContiguous( GR_LINE_STRIP, count-j,
                                 fxVB + j, sizeof(GrVertex));
 
-   if (flags & PRIM_END) 
+   if (flags & PRIM_END)
       grDrawLine( fxVB + (count - 1),
                   fxVB + start );
 
@@ -1306,7 +1306,7 @@ static void fx_render_vb_noop( GLcontext *ctx,
 static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 						   GLuint,
 						   GLuint,
-						   GLuint) = 
+						   GLuint) =
 {
    fx_render_vb_points,
    fx_render_vb_lines,
@@ -1361,8 +1361,8 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 
-#define RESET_STIPPLE 
-#define RESET_OCCLUSION 
+#define RESET_STIPPLE
+#define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 
 /* Elts, no clipping.
@@ -1389,7 +1389,7 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 
 
 
-static void fxRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
+static void fxRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 				   GLuint n )
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -1397,12 +1397,12 @@ static void fxRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    struct vertex_buffer *VB = &tnl->vb;
    GLuint prim = fxMesa->render_primitive;
 
-   /* Render the new vertices as an unclipped polygon. 
+   /* Render the new vertices as an unclipped polygon.
     */
    {
       GLuint *tmp = VB->Elts;
       VB->Elts = (GLuint *)elts;
-      tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n, 
+      tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n,
 						  PRIM_BEGIN|PRIM_END );
       VB->Elts = tmp;
    }
@@ -1414,7 +1414,7 @@ static void fxRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 }
 
 
-static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
+static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 				       GLuint n )
 {
    int i;
@@ -1612,7 +1612,7 @@ static void fxRasterPrimitive( GLcontext *ctx, GLenum prim )
 
 
 
-/* Determine the rasterized primitive when not drawing unfilled 
+/* Determine the rasterized primitive when not drawing unfilled
  * polygons.
  */
 static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
@@ -1624,7 +1624,7 @@ static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 
    if (rprim == GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
       return;
-       
+
    if (fxMesa->raster_primitive != rprim) {
       fxRasterPrimitive( ctx, rprim );
    }
@@ -1691,7 +1691,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 tnl->Driver.Render.Start = fxCheckTexSizes;
 	 tnl->Driver.Render.Finish = fxRenderFinish;
 	 tnl->Driver.Render.PrimitiveNotify = fxRenderPrimitive;
-	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon; 
+	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
 	 tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;
 	 tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
@@ -1729,14 +1729,14 @@ void fxDDInitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.Start = fxCheckTexSizes;
    tnl->Driver.Render.Finish = fxRenderFinish;
    tnl->Driver.Render.PrimitiveNotify = fxRenderPrimitive;
-   tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon; 
+   tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
    tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;
    tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
    tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
    tnl->Driver.Render.BuildVertices = fxBuildVertices;
    tnl->Driver.Render.Multipass = NULL;
-   
+
    (void) fx_print_vertex;
 }
 
@@ -1744,7 +1744,8 @@ void fxDDInitTriFuncs( GLcontext *ctx )
 /* [dBorca] Hack alert:
  * doesn't work with blending.
  */
-GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
+static GLboolean
+fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
  tfxUnitsState *us = &fxMesa->unitsState;

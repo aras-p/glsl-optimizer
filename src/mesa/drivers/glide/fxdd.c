@@ -1096,9 +1096,9 @@ fxDDDrawPixels555 (GLcontext * ctx, GLint x, GLint y,
 			      FRAGPROG_BIT)) ||
        fxMesa->fallback)
    {
-      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
-      return; 
+      return;
    }
 
    /* make sure the pixelpipe is configured correctly */
@@ -1231,9 +1231,9 @@ fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
 			      FRAGPROG_BIT)) ||
        fxMesa->fallback)
    {
-      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
-      return; 
+      return;
    }
 
    /* make sure the pixelpipe is configured correctly */
@@ -1366,9 +1366,9 @@ fxDDDrawPixels565_rev (GLcontext * ctx, GLint x, GLint y,
 			      FRAGPROG_BIT)) ||
        fxMesa->fallback)
    {
-      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
-      return; 
+      return;
    }
 
    /* make sure the pixelpipe is configured correctly */
@@ -1501,9 +1501,9 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
 			      FRAGPROG_BIT)) ||
        fxMesa->fallback)
    {
-      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
-      return; 
+      return;
    }
 
    /* make sure the pixelpipe is configured correctly */
@@ -1676,7 +1676,6 @@ static const struct tnl_pipeline_stage *fx_pipeline[] = {
 int
 fxDDInitFxMesaContext(fxMesaContext fxMesa)
 {
-   int i;
    GLcontext *ctx = fxMesa->glCtx;
 
    FX_setupGrVertexLayout();
@@ -1774,7 +1773,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    ctx->Const.MaxTextureCoordUnits =
    ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    ctx->Const.MaxTextureUnits = MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
-   
+
    fxMesa->new_state = _NEW_ALL;
    if (!fxMesa->haveHwStencil) {
       /* don't touch stencil if there is none */
@@ -2094,7 +2093,7 @@ fx_check_IsInHardware(GLcontext * ctx)
 static void
 fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 {
-   /*   TNLcontext *tnl = TNL_CONTEXT(ctx);*/
+   /* TNLcontext *tnl = TNL_CONTEXT(ctx); */
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
@@ -2116,7 +2115,7 @@ void
 fxSetupDDPointers(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   /* TNLcontext *tnl = TNL_CONTEXT(ctx); */
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       fprintf(stderr, "fxSetupDDPointers()\n");

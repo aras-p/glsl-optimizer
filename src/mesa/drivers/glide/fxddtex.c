@@ -580,7 +580,7 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
       }
       /* This might be a proxy texture. */
       if (!tObj->Palette.Table)
-         return; 
+         return;
       if (!tObj->DriverData)
          tObj->DriverData = fxAllocTexObjData(fxMesa);
       ti = fxTMGetTexInfo(tObj);
@@ -994,6 +994,7 @@ fetch_rgba_dxt5(const struct gl_texture_image *texImage,
 }
 
 
+#if 0 /* break glass in case of emergency */
 static void
 PrintTexture(int w, int h, int c, const GLubyte * data)
 {
@@ -1009,6 +1010,7 @@ PrintTexture(int w, int h, int c, const GLubyte * data)
       fprintf(stderr, "\n");
    }
 }
+#endif
 
 
 const struct gl_texture_format *
@@ -1435,7 +1437,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                                          width, height, 1,
                                          format, type, pixels, packing);
       }
-   
+
       /* GL_SGIS_generate_mipmap */
       if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
          GLint mipWidth, mipHeight;
@@ -1443,9 +1445,9 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          struct gl_texture_image *mipImage;
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
          const GLint maxLevels = _mesa_max_texture_levels(ctx, texObj->Target);
-   
+
          assert(!texImage->IsCompressed);
-   
+
          while (level < texObj->MaxLevel && level < maxLevels - 1) {
             mipWidth = width / 2;
             if (!mipWidth) {
