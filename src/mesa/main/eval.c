@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.22 2002/01/05 21:53:20 brianp Exp $ */
+/* $Id: eval.c,v 1.23 2002/01/05 21:58:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -266,9 +266,9 @@ GLfloat *_mesa_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
  *          of memory.
  */
 GLfloat *_mesa_copy_map_points2f( GLenum target,
-                               GLint ustride, GLint uorder,
-                               GLint vstride, GLint vorder,
-                               const GLfloat *points )
+                                  GLint ustride, GLint uorder,
+                                  GLint vstride, GLint vorder,
+                                  const GLfloat *points )
 {
    GLfloat *buffer, *p;
    GLint i, j, k, size, dsize, hsize;
@@ -309,9 +309,9 @@ GLfloat *_mesa_copy_map_points2f( GLenum target,
  * Same as above but convert doubles to floats.
  */
 GLfloat *_mesa_copy_map_points2d(GLenum target,
-                              GLint ustride, GLint uorder,
-                              GLint vstride, GLint vorder,
-                              const GLdouble *points )
+                                 GLint ustride, GLint uorder,
+                                 GLint vstride, GLint vorder,
+                                 const GLdouble *points )
 {
    GLfloat *buffer, *p;
    GLint i, j, k, size, hsize, dsize;
@@ -364,10 +364,10 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    GET_CURRENT_CONTEXT(ctx);
    GLint k;
    GLfloat *pnts;
-   struct gl_1d_map *map = 0;
+   struct gl_1d_map *map = NULL;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   assert(type == GL_FLOAT || type == GL_DOUBLE);
+   ASSERT(type == GL_FLOAT || type == GL_DOUBLE);
 
    if (u1 == u2) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glMap1(u1,u2)" );
@@ -447,8 +447,10 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    GET_CURRENT_CONTEXT(ctx);
    GLint k;
    GLfloat *pnts;
-   struct gl_2d_map *map = 0;
+   struct gl_2d_map *map = NULL;
+
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT(type == GL_FLOAT || type == GL_DOUBLE);
 
    if (u1==u2) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(u1,u2)" );
@@ -622,7 +624,7 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 
    comps = _mesa_evaluator_components(target);
    if (!comps) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
       return;
    }
 
@@ -687,7 +689,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 
    comps = _mesa_evaluator_components(target);
    if (!comps) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
       return;
    }
 
