@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.20 2001/08/21 05:42:11 gareth Exp $
+# $Id: Makefile.X11,v 1.21 2003/04/07 23:05:51 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -23,6 +23,7 @@ PROGS = bounce \
 	cubemap \
 	drawpix \
 	fire \
+	fplight \
 	gamma \
 	gears \
 	geartrain \
