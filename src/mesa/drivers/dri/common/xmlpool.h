@@ -293,6 +293,11 @@ DRI_CONF_OPT_BEGIN_V(texture_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Anzahl der Textureinheiten") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_TEXTURE_LEVEL_HACK(def) \
+DRI_CONF_OPT_BEGIN(texture_level_hack,bool,def) \
+  DRI_CONF_DESC(en,"Enable texture level hack for radeon/r200 for playing games with compressed textures") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_TEXTURE_HEAPS_ALL 0
 #define DRI_CONF_TEXTURE_HEAPS_CARD 1
 #define DRI_CONF_TEXTURE_HEAPS_GART 2
@@ -330,5 +335,6 @@ DRI_CONF_OPT_BEGIN(nv_vertex_program,bool,def) \
         DRI_CONF_DESC(en,"Enable GL_NV_vertex_program") \
         DRI_CONF_DESC(fr,"Activer GL_NV_vertex_program") \
 DRI_CONF_OPT_END
+
 
 #endif

@@ -342,6 +342,13 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 				 12,
 				 GL_FALSE );
 
+   /* adjust max texture size a bit. Hack, but I really want to use larger textures
+      which will work just fine in 99.999999% of all cases, especially with texture compression... */
+   if (driQueryOptionb( &rmesa->optionCache, "texture_level_hack" ))
+   {
+     if (ctx->Const.MaxTextureLevels < 12) ctx->Const.MaxTextureLevels += 1;
+   }
+
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
    /* No wide points.
