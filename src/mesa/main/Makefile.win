@@ -29,7 +29,6 @@ CORE_SRCS = \
 	swrast_setup\ss_context.c \
 	swrast_setup\ss_triangle.c \
 	swrast_setup\ss_vb.c \
-	swrast_setup\ss_interp.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
