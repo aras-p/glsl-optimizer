@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.34 2000/06/13 19:46:52 brianp Exp $
+$Id: VERSIONS,v 1.35 2000/06/27 17:53:21 brianp Exp $
 
 
 Mesa Version History
@@ -719,10 +719,10 @@ Mesa Version History
 	- GL_EXT_histogram extension
 	- GL_ARB_texture_cube_map extension
 	- added xdemos/glxheads and xdemos/manywin
+	- demos/texenv.c demo
     Bug Fixes:
 	- none since 3.2
     Changes:
 	- gl.h now uses #defines instead of C enums for all tokens
 	- glu.h now uses #defines instead of C enums for all tokens
-    To Do:
-	- move 3dfx demos into regular demos/ directory
+	- moved programs from 3Dfx/demos/ into demos/ directory
