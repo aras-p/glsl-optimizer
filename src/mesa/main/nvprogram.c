@@ -1183,7 +1183,7 @@ _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-/* XXX move into arbprogram.c */
+#if 000
 void
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -1284,3 +1284,4 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
    _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
    COPY_4V(params, floatParams);
 }
+#endif

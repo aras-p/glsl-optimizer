@@ -1,5 +1,3 @@
-/* $Id: nvprogram.h,v 1.7 2003/04/17 01:48:20 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -147,6 +145,7 @@ extern void
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                    GLdouble *params);
 
+#if 0
 extern void
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w);
@@ -171,6 +170,7 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 extern void
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params);
+#endif
 
 
 #endif

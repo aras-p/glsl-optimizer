@@ -40,13 +40,21 @@
 
 
 /* XXX temporary */
-extern void _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
-                                           const GLubyte *string, GLsizei len,
-                                           struct vertex_program *prog);
+static void
+_mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
+                               const GLubyte *string, GLsizei len,
+                               struct vertex_program *prog)
+{
+}
 
-extern void _mesa_parse_arb_fragment_program(GLcontext *ctx, GLenum target,
-                                           const GLubyte *string, GLsizei len,
-                                           struct fragment_program *prog);
+
+static void
+_mesa_parse_arb_fragment_program(GLcontext *ctx, GLenum target,
+                                 const GLubyte *string, GLsizei len,
+                                 struct fragment_program *prog)
+{
+}
+
 
 
 void
@@ -448,7 +456,7 @@ _mesa_BindProgramARB(GLenum target, GLuint program)
     */
    if (program == 0) {
       /* default program */
-      if (target == GL_VERTEX_PROGRAM_NV)
+      if (target == GL_VERTEX_PROGRAM_ARB)
          prog = ctx->Shared->DefaultVertexProgram;
       else
          prog = ctx->Shared->DefaultFragmentProgram;
@@ -471,10 +479,11 @@ _mesa_BindProgramARB(GLenum target, GLuint program)
    }
 
    /* bind now */
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_ARB) {
       ctx->VertexProgram.Current = (struct vertex_program *) prog;
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV) {
+   else {
+      ASSERT(target == GL_FRAGMENT_PROGRAM_ARB);
       ctx->FragmentProgram.Current = (struct fragment_program *) prog;
    }
 
@@ -528,7 +537,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_FRAGMENT_PROGRAM_NV
+   if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
       if (index >= ctx->Const.MaxFragmentProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
@@ -537,7 +546,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
       index += MAX_NV_FRAGMENT_PROGRAM_TEMPS;  /* XXX fix */
       ASSIGN_4V(ctx->FragmentProgram.Machine.Registers[index], x, y, z, w);
    }
-   if (target == GL_VERTEX_PROGRAM_NV
+   if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
@@ -586,7 +595,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_FRAGMENT_PROGRAM_NV
+   if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
       if (index >= ctx->Const.MaxFragmentProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
@@ -595,7 +604,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
       index += MAX_NV_FRAGMENT_PROGRAM_TEMPS;  /* XXX fix */
       COPY_4V(params, ctx->FragmentProgram.Machine.Registers[index]);
    }
-   if (target == GL_VERTEX_PROGRAM_NV
+   if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       if (index >= ctx->Const.MaxVertexProgramEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
@@ -611,8 +620,9 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 }
 
 
-#if 111 /* from nvprogram.c */
-
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -661,6 +671,9 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
                                   const GLfloat *params)
@@ -670,6 +683,9 @@ _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
                                  GLdouble x, GLdouble y,
@@ -680,6 +696,9 @@ _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
                                   const GLdouble *params)
@@ -690,6 +709,9 @@ _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
                                     GLfloat *params)
@@ -704,12 +726,15 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
       prog = &(ctx->VertexProgram.Current->Base);
       maxParams = ctx->Const.MaxVertexProgramLocalParams;
    }
-   else if ((target == GL_FRAGMENT_PROGRAM_ARB
-             && ctx->Extensions.ARB_fragment_program) ||
-            (target == GL_FRAGMENT_PROGRAM_NV
-             && ctx->Extensions.NV_fragment_program)) {
+   else if (target == GL_FRAGMENT_PROGRAM_ARB
+            && ctx->Extensions.ARB_fragment_program) {
       prog = &(ctx->FragmentProgram.Current->Base);
       maxParams = ctx->Const.MaxFragmentProgramLocalParams;
+   }
+   else if (target == GL_FRAGMENT_PROGRAM_NV
+            && ctx->Extensions.NV_fragment_program) {
+      prog = &(ctx->FragmentProgram.Current->Base);
+      maxParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -728,59 +753,20 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Note, this function is also used by the GL_NV_fragment_program extension.
+ */
 void
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
                                     GLdouble *params)
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLfloat floatParams[4];
    _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
-   COPY_4V(params, floatParams);
+   if (ctx->ErrorValue == GL_NO_ERROR) {
+      COPY_4V(params, floatParams);
+   }
 }
-
-#else /* stubs */
-
-void
-_mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
-                                 GLdouble x, GLdouble y,
-                                 GLdouble z, GLdouble w)
-{
-}
-
-
-void
-_mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                                  const GLdouble *params)
-{
-}
-
-
-void
-_mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
-                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-}
-
-
-void
-_mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                                  const GLfloat *params)
-{
-}
-
-void
-_mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
-                                    GLdouble *params)
-{
-}
-
-
-void
-_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index, 
-                                    GLfloat *params)
-{
-}
-
-#endif /* stubs */
 
 
 void

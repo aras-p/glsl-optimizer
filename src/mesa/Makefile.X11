@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.78 2003/04/07 14:45:55 brianp Exp $
+# $Id: Makefile.X11,v 1.79 2003/04/17 02:33:11 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  5.0
-# Copyright (C) 1995-2002  Brian Paul
+# Version:  5.1
+# Copyright (C) 1995-2003  Brian Paul
 
 # Makefile for core library
 
@@ -26,6 +26,7 @@ CORE_SOURCES = \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
+	arbprogram.c \
 	attrib.c \
 	blend.c \
 	bufferobj.c \

@@ -19,6 +19,7 @@ CORE_SOURCES =accum.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
+	arbprogram.c \
  	attrib.c \
 	blend.c \
 	bufferobj.c \

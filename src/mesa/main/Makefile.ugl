@@ -56,6 +56,7 @@ GL_SOURCES = \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
+	arbprogram.c \
 	attrib.c \
 	blend.c \
 	bufferobj.c \

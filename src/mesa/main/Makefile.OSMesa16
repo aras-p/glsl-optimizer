@@ -1,4 +1,4 @@
-# $Id: Makefile.OSMesa16,v 1.14 2003/03/29 17:01:02 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.15 2003/04/17 02:33:11 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -27,6 +27,7 @@ CORE_SOURCES = \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
+	arbprogram.c \
 	attrib.c \
 	blend.c \
 	bufferobj.c \

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.103 2003/04/08 02:27:16 brianp Exp $ */
+/* $Id: state.c,v 1.104 2003/04/17 02:33:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,9 @@
 #include "glheader.h"
 #include "accum.h"
 #include "api_loopback.h"
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+#include "arbprogram.h"
+#endif
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -510,6 +513,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 #endif
 
+   /* 282. GL_NV_fragment_program */
 #if FEATURE_NV_fragment_program
    exec->ProgramNamedParameter4fNV = _mesa_ProgramNamedParameter4fNV;
    exec->ProgramNamedParameter4dNV = _mesa_ProgramNamedParameter4dNV;
@@ -556,6 +560,73 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
    /* ARB 14. GL_ARB_point_parameters */
    /* reuse EXT_point_parameters functions */
+
+   /* ARB 26. GL_ARB_vertex_program */
+   /* ARB 27. GL_ARB_fragment_program */
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+   exec->VertexAttrib1sARB = _mesa_VertexAttrib1sARB;
+   exec->VertexAttrib1fARB = _mesa_VertexAttrib1fARB;
+   exec->VertexAttrib1dARB = _mesa_VertexAttrib1dARB;
+   exec->VertexAttrib2sARB = _mesa_VertexAttrib2sARB;
+   exec->VertexAttrib2fARB = _mesa_VertexAttrib2fARB;
+   exec->VertexAttrib2dARB = _mesa_VertexAttrib2dARB;
+   exec->VertexAttrib3sARB = _mesa_VertexAttrib3sARB;
+   exec->VertexAttrib3fARB = _mesa_VertexAttrib3fARB;
+   exec->VertexAttrib3dARB = _mesa_VertexAttrib3dARB;
+   exec->VertexAttrib4sARB = _mesa_VertexAttrib4sARB;
+   exec->VertexAttrib4fARB = _mesa_VertexAttrib4fARB;
+   exec->VertexAttrib4dARB = _mesa_VertexAttrib4dARB;
+   exec->VertexAttrib4NubARB = _mesa_VertexAttrib4NubARB;
+   exec->VertexAttrib1svARB = _mesa_VertexAttrib1svARB;
+   exec->VertexAttrib1fvARB = _mesa_VertexAttrib1fvARB;
+   exec->VertexAttrib1dvARB = _mesa_VertexAttrib1dvARB;
+   exec->VertexAttrib2svARB = _mesa_VertexAttrib2svARB;
+   exec->VertexAttrib2fvARB = _mesa_VertexAttrib2fvARB;
+   exec->VertexAttrib2dvARB = _mesa_VertexAttrib2dvARB;
+   exec->VertexAttrib3svARB = _mesa_VertexAttrib3svARB;
+   exec->VertexAttrib3fvARB = _mesa_VertexAttrib3fvARB;
+   exec->VertexAttrib3dvARB = _mesa_VertexAttrib3dvARB;
+   exec->VertexAttrib4bvARB = _mesa_VertexAttrib4bvARB;
+   exec->VertexAttrib4svARB = _mesa_VertexAttrib4svARB;
+   exec->VertexAttrib4ivARB = _mesa_VertexAttrib4ivARB;
+   exec->VertexAttrib4ubvARB = _mesa_VertexAttrib4ubvARB;
+   exec->VertexAttrib4usvARB = _mesa_VertexAttrib4usvARB;
+   exec->VertexAttrib4uivARB = _mesa_VertexAttrib4uivARB;
+   exec->VertexAttrib4fvARB = _mesa_VertexAttrib4fvARB;
+   exec->VertexAttrib4dvARB = _mesa_VertexAttrib4dvARB;
+   exec->VertexAttrib4NbvARB = _mesa_VertexAttrib4NbvARB;
+   exec->VertexAttrib4NsvARB = _mesa_VertexAttrib4NsvARB;
+   exec->VertexAttrib4NivARB = _mesa_VertexAttrib4NivARB;
+   exec->VertexAttrib4NubvARB = _mesa_VertexAttrib4NubvARB;
+   exec->VertexAttrib4NusvARB = _mesa_VertexAttrib4NusvARB;
+   exec->VertexAttrib4NuivARB = _mesa_VertexAttrib4NuivARB;
+   exec->VertexAttribPointerARB = _mesa_VertexAttribPointerARB;
+   exec->EnableVertexAttribArrayARB = _mesa_EnableVertexAttribArrayARB;
+   exec->DisableVertexAttribArrayARB = _mesa_DisableVertexAttribArrayARB;
+   exec->ProgramStringARB = _mesa_ProgramStringARB;
+   exec->BindProgramARB = _mesa_BindProgramARB;
+   exec->DeleteProgramsARB = _mesa_DeleteProgramsARB;
+   exec->GenProgramsARB = _mesa_GenProgramsARB;
+   exec->ProgramEnvParameter4dARB = _mesa_ProgramEnvParameter4dARB;
+   exec->ProgramEnvParameter4dvARB = _mesa_ProgramEnvParameter4dvARB;
+   exec->ProgramEnvParameter4fARB = _mesa_ProgramEnvParameter4fARB;
+   exec->ProgramEnvParameter4fvARB = _mesa_ProgramEnvParameter4fvARB;
+   exec->ProgramLocalParameter4dARB = _mesa_ProgramLocalParameter4dARB;
+   exec->ProgramLocalParameter4dvARB = _mesa_ProgramLocalParameter4dvARB;
+   exec->ProgramLocalParameter4fARB = _mesa_ProgramLocalParameter4fARB;
+   exec->ProgramLocalParameter4fvARB = _mesa_ProgramLocalParameter4fvARB;
+   exec->GetProgramEnvParameterdvARB = _mesa_GetProgramEnvParameterdvARB;
+   exec->GetProgramEnvParameterfvARB = _mesa_GetProgramEnvParameterfvARB;
+   exec->GetProgramLocalParameterdvARB = _mesa_GetProgramLocalParameterdvARB;
+   exec->GetProgramLocalParameterfvARB = _mesa_GetProgramLocalParameterfvARB;
+   exec->GetProgramivARB = _mesa_GetProgramivARB;
+   exec->GetProgramStringARB = _mesa_GetProgramStringARB;
+   exec->GetVertexAttribdvARB = _mesa_GetVertexAttribdvARB;
+   exec->GetVertexAttribfvARB = _mesa_GetVertexAttribfvARB;
+   exec->GetVertexAttribivARB = _mesa_GetVertexAttribivARB;
+   exec->GetVertexAttribPointervARB = _mesa_GetVertexAttribPointervARB;
+   exec->IsProgramARB = _mesa_IsProgramARB;
+#endif
 
    /* ARB 28. GL_ARB_vertex_buffer_object */
 #if FEATURE_ARB_vertex_buffer_object
