@@ -109,6 +109,22 @@ static const char *const card_extensions[] =
     NULL
 };
 
+extern const struct tnl_pipeline_stage _savage_texnorm_stage;
+
+static const struct tnl_pipeline_stage *savage_pipeline[] = {
+
+   &_tnl_vertex_transform_stage,
+   &_tnl_normal_transform_stage,
+   &_tnl_lighting_stage,
+   &_tnl_fog_coordinate_stage,
+   &_tnl_texgen_stage,
+   &_tnl_texture_transform_stage,
+   &_savage_texnorm_stage,
+   &_tnl_render_stage,
+   0,
+};
+
+
 /* this is first function called in dirver*/
 
 static GLboolean
@@ -455,7 +471,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    /* Install the customized pipeline:
     */
-#if 0
+#if 1
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, savage_pipeline );
 #endif
