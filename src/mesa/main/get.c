@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.107 2003/04/01 18:16:33 brianp Exp $ */
+/* $Id: get.c,v 1.108 2003/04/01 18:22:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1285,6 +1285,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
          CHECK_EXTENSION_B(EXT_fog_coord, pname);
 	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
+	 break;
+      case GL_FOG_COORDINATE_SOURCE_EXT:
+         CHECK_EXTENSION_B(EXT_fog_coord, pname);
+	 *params = ENUM_TO_BOOL(ctx->Fog.FogCoordinateSource);
 	 break;
 
       /* GL_EXT_texture_lod_bias */
@@ -2690,6 +2694,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          CHECK_EXTENSION_D(EXT_fog_coord, pname);
 	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
 	 break;
+      case GL_FOG_COORDINATE_SOURCE_EXT:
+         CHECK_EXTENSION_D(EXT_fog_coord, pname);
+	 *params = (GLdouble) ctx->Fog.FogCoordinateSource;
+	 break;
 
       /* GL_EXT_texture_lod_bias */
       case GL_MAX_TEXTURE_LOD_BIAS_EXT:
@@ -4067,6 +4075,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
          CHECK_EXTENSION_F(EXT_fog_coord, pname);
 	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
+	 break;
+      case GL_FOG_COORDINATE_SOURCE_EXT:
+         CHECK_EXTENSION_F(EXT_fog_coord, pname);
+	 *params = (GLfloat) ctx->Fog.FogCoordinateSource;
 	 break;
 
       /* GL_EXT_texture_lod_bias */
@@ -5483,6 +5495,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
          CHECK_EXTENSION_I(EXT_fog_coord, pname);
          *params = (GLint) ctx->Array.FogCoord.Stride;
+	 break;
+      case GL_FOG_COORDINATE_SOURCE_EXT:
+         CHECK_EXTENSION_I(EXT_fog_coord, pname);
+	 *params = (GLint) ctx->Fog.FogCoordinateSource;
 	 break;
 
       /* GL_EXT_texture_lod_bias */
