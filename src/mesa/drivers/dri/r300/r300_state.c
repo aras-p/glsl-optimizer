@@ -1161,11 +1161,6 @@ void r300_setup_textures(GLcontext *ctx)
 			max_texture_unit=i;
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
-			/* Turn off rest of the bits that are wrong. Im going to get rid of this soon, dont worry :) */
-			t->filter &= R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK
-					|R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK |
-					R300_TX_WRAP_Q_MASK | R300_TX_MAX_ANISO_MASK;
-			
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
 			
 			/* No idea why linear filtered textures shake when puting random data */
