@@ -1,4 +1,4 @@
-<HTML>
+<html>
 
 <TITLE>Mesa fbdev/DRI Environment</TITLE>
 
@@ -36,16 +36,95 @@ Keith Whitwell.
 To use fbdev/DRI, you'll need a Linux 2.4 or 2.6 kernel.
 </p>
 
+<h3>Background Info</h3>
+
 <p>
-The fbdev/DRI Mesa code is in the Mesa CVS trunk (to be released as Mesa
-5.1 in the future).
+The Mesa-based DRI drivers used to be hosted in the DRI tree (which is
+basically a copy of the XFree86 tree).
+Since the Mesa-based DRI drivers are moreso "Mesa drivers" than "XFree86
+drivers" and the fact that with some work, the drivers could be used
+without X, the driver code was moved into the Mesa tree.
 </p>
+
+<p>
+So now the DRI drivers can be compiled for two different environments:
+fbdev and XFree86.
+To build the drivers for XFree86, one has to download/build the DRI
+source tree.
+Eventually, we'd like to be able to build the drivers for XFree86 outside
+of the XFree86/DRI trees.
+</p>
+
+
 
 
 <h1>2. Compilation</h1>
 
+<h2>2.1 Compiling the DRM modules</h2>
+
 <p>
-Assuming you're starting with a fresh Mesa CVS checkout, do the following:
+First, you'll need the DRM (Direct Rendering Manager) kernel module sources.
+They're found in a module of the DRI CVS tree.
+To obtain the code do the following:
+</p>
+<pre>
+   cvs -d:pserver:anonymous@pdx.freedesktop.org:/cvs/dri login
+</pre>
+<p>
+Press Enter/Return when prompted for a password.  Then,
+</p>
+<pre>
+   cvs -d:pserver:anonymous@pdx.freedesktop.org:/cvs/dri co drm
+</pre>
+
+<p>
+Compile the DRM kernel modules:
+</p>
+<pre>
+  cd drm/linux
+  make
+</pre>
+
+<p>
+Note: you may need to be root in order to make a few symlinks.
+</p>
+<p>
+When compilation is done, you should have at least the following
+kernel modules:
+</p>
+<pre>
+  gamma.o
+  i810.o
+  i830.o
+  mach64.o
+  mga.o
+  r128.o
+  radeon.o
+  savage.o
+  sis.o
+  tdfx.o
+  via.o
+</pre>
+<p>
+You'll probably want to copy/move them into your kernel module directory
+(for example: <code>/lib/modules/2.4.18-14/kernel/drivers/char/drm/</code>).
+</p>
+
+
+
+<h2>2.2 Compiling the Mesa drivers</h2>
+
+<p>
+Begin by editing the <code>Mesa/configs/default</code> file to set
+the <code>DRM_SOURCE_PATH</code> variable.
+Set it to the location where the DRM module sources are located.
+For example, if your current directory in step 2.1 was <code>/home/fred/</code>
+set DRM_SOURCE_PATH to <code>/home/fred/drm</code>
+</p>
+
+<p>
+Next, assuming you're starting with a fresh Mesa CVS checkout,
+do the following:
 </p>
 <pre>
    make linux-solo
@@ -57,7 +136,7 @@ first to remove the old object files.
 </p>
 
 <p>
-When this is finished, check the <code>Mesa/lib</code> directory
+When this is finished, check the <code>Mesa/lib/</code> directory
 to verify that the following files were made:
 </p>
 
@@ -89,11 +168,12 @@ working from the console.
 </p>
 
 
-<h2>3.1 Kernel Modules</h2>
+<h2>3.1 Load Kernel Modules</h2>
 
 <p>
-You'll need to load kernel modules specific to your graphics hardware.
-The following kernel modules should be included with your kernel.
+You'll need to load the kernel modules specific to your graphics hardware.
+Typically, this consists of the agpgart module, an fbdev driver module
+and the DRM kernel module (from step 2.1).
 </p>
 
 
@@ -135,10 +215,6 @@ radeonfb               21900   0  (unused)
 agpgart                43072   1 
 </pre>
 
-<p>
-If the driver complains that the radeon/mga/etc/ kernel module is too
-old, you'll have to compile/install a newer one from the DRI project.
-</p>
 
 
 <h2>3.2 Configuration File</h2>
