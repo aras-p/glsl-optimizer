@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.24 2001/08/14 14:08:44 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.25 2001/09/13 21:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,14 +97,14 @@
 {
    typedef struct {
         const SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
-	GLfloat dx;	/* X(v1) - X(v0) */
-	GLfloat dy;	/* Y(v1) - Y(v0) */
-	GLfixed fdxdy;	/* dx/dy in fixed-point */
-	GLfixed fsx;	/* first sample point x coord */
-	GLfixed fsy;
-	GLfloat adjy;	/* adjust from v[0]->fy to fsy, scaled */
-	GLint lines;	/* number of lines to be sampled on this edge */
-	GLfixed fx0;	/* fixed pt X of lower endpoint */
+        GLfloat dx;	/* X(v1) - X(v0) */
+        GLfloat dy;	/* Y(v1) - Y(v0) */
+        GLfixed fdxdy;	/* dx/dy in fixed-point */
+        GLfixed fsx;	/* first sample point x coord */
+        GLfixed fsy;
+        GLfloat adjy;	/* adjust from v[0]->fy to fsy, scaled */
+        GLint lines;	/* number of lines to be sampled on this edge */
+        GLfixed fx0;	/* fixed pt X of lower endpoint */
    } EdgeT;
 
 #ifdef INTERP_Z
@@ -135,41 +135,41 @@
       const GLfixed fy2 = FloatToFixed(v2->win[1] - 0.5F) & snapMask;
 
       if (fy0 <= fy1) {
-	 if (fy1 <= fy2) {
+         if (fy1 <= fy2) {
             /* y0 <= y1 <= y2 */
-	    vMin = v0;   vMid = v1;   vMax = v2;
+            vMin = v0;   vMid = v1;   vMax = v2;
             vMin_fy = fy0;  vMid_fy = fy1;  vMax_fy = fy2;
-	 }
-	 else if (fy2 <= fy0) {
+         }
+         else if (fy2 <= fy0) {
             /* y2 <= y0 <= y1 */
-	    vMin = v2;   vMid = v0;   vMax = v1;
+            vMin = v2;   vMid = v0;   vMax = v1;
             vMin_fy = fy2;  vMid_fy = fy0;  vMax_fy = fy1;
-	 }
-	 else {
+         }
+         else {
             /* y0 <= y2 <= y1 */
-	    vMin = v0;   vMid = v2;   vMax = v1;
+            vMin = v0;   vMid = v2;   vMax = v1;
             vMin_fy = fy0;  vMid_fy = fy2;  vMax_fy = fy1;
             bf = -bf;
-	 }
+         }
       }
       else {
-	 if (fy0 <= fy2) {
+         if (fy0 <= fy2) {
             /* y1 <= y0 <= y2 */
-	    vMin = v1;   vMid = v0;   vMax = v2;
+            vMin = v1;   vMid = v0;   vMax = v2;
             vMin_fy = fy1;  vMid_fy = fy0;  vMax_fy = fy2;
             bf = -bf;
-	 }
-	 else if (fy2 <= fy1) {
+         }
+         else if (fy2 <= fy1) {
             /* y2 <= y1 <= y0 */
-	    vMin = v2;   vMid = v1;   vMax = v0;
+            vMin = v2;   vMid = v1;   vMax = v0;
             vMin_fy = fy2;  vMid_fy = fy1;  vMax_fy = fy0;
             bf = -bf;
-	 }
-	 else {
+         }
+         else {
             /* y1 <= y2 <= y0 */
-	    vMin = v1;   vMid = v2;   vMax = v0;
+            vMin = v1;   vMid = v2;   vMax = v0;
             vMin_fy = fy1;  vMid_fy = fy2;  vMax_fy = fy0;
-	 }
+         }
       }
 
       /* fixed point X coords */
@@ -197,7 +197,7 @@
 
       /* Do backface culling */
       if (area * bf < 0.0)
-	 return;
+         return;
 
       if (area == 0.0F)
          return;
@@ -381,7 +381,7 @@
          span.redStep = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
          eMaj_dg = (GLint) vMax->color[GCOMP] - (GLint) vMin->color[GCOMP];
-	 eBot_dg = (GLint) vMid->color[GCOMP] - (GLint) vMin->color[GCOMP];
+         eBot_dg = (GLint) vMid->color[GCOMP] - (GLint) vMin->color[GCOMP];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          span.greenStep = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
@@ -389,7 +389,7 @@
          eBot_db = (GLint) vMid->color[BCOMP] - (GLint) vMin->color[BCOMP];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          span.blueStep = SignedFloatToFixed(dbdx);
-	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
+         dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
 #  ifdef INTERP_ALPHA
          eMaj_da = (GLint) vMax->color[ACOMP] - (GLint) vMin->color[ACOMP];
          eBot_da = (GLint) vMid->color[ACOMP] - (GLint) vMin->color[ACOMP];
@@ -425,7 +425,7 @@
          span.redStep = drdx;
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
          eMaj_dg = vMax->color[GCOMP] - vMin->color[GCOMP];
-	 eBot_dg = vMid->color[GCOMP] - vMin->color[GCOMP];
+         eBot_dg = vMid->color[GCOMP] - vMin->color[GCOMP];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          span.greenStep = dgdx;
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
@@ -433,7 +433,7 @@
          eBot_db = vMid->color[BCOMP] - vMin->color[BCOMP];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          span.blueStep = dbdx;
-	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
+         dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
          eMaj_da = vMax->color[ACOMP] - vMin->color[ACOMP];
          eBot_da = vMid->color[ACOMP] - vMin->color[ACOMP];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
@@ -459,7 +459,7 @@
          span.specRedStep = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
          eMaj_dsg = (GLint) vMax->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
-	 eBot_dsg = (GLint) vMid->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
+         eBot_dsg = (GLint) vMid->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
@@ -467,7 +467,7 @@
          eBot_dsb = (GLint) vMid->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.specBlueStep = SignedFloatToFixed(dsbdx);
-	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
+         dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
       }
       else {
          dsrdx = dsrdy = 0.0F;
@@ -490,7 +490,7 @@
          span.specRedStep = dsrdx;
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
          eMaj_dsg = vMax->specular[GCOMP] - vMin->specular[GCOMP];
-	 eBot_dsg = vMid->specular[GCOMP] - vMin->specular[GCOMP];
+         eBot_dsg = vMid->specular[GCOMP] - vMin->specular[GCOMP];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = dsgdx;
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
@@ -498,7 +498,7 @@
          eBot_dsb = vMid->specular[BCOMP] - vMin->specular[BCOMP];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.specBlueStep = dsbdx;
-	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
+         dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
       }
       else {
          dsrdx = dsrdy = span.specRedStep = 0;
@@ -560,23 +560,23 @@
                                              - eMaj.dy * eBot_ds);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
-	 eMaj_dt = vMax->texcoord[0][1] * wMax - vMin->texcoord[0][1] * wMin;
-	 eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
-	 span.texStep[0][1] = oneOverArea * (eMaj_dt * eBot.dy
+         eMaj_dt = vMax->texcoord[0][1] * wMax - vMin->texcoord[0][1] * wMin;
+         eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
+         span.texStep[0][1] = oneOverArea * (eMaj_dt * eBot.dy
                                              - eMaj.dy * eBot_dt);
-	 dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
+         dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 
-	 eMaj_du = vMax->texcoord[0][2] * wMax - vMin->texcoord[0][2] * wMin;
-	 eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
-	 span.texStep[0][2] = oneOverArea * (eMaj_du * eBot.dy
+         eMaj_du = vMax->texcoord[0][2] * wMax - vMin->texcoord[0][2] * wMin;
+         eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
+         span.texStep[0][2] = oneOverArea * (eMaj_du * eBot.dy
                                              - eMaj.dy * eBot_du);
-	 dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
+         dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 
-	 eMaj_dv = vMax->texcoord[0][3] * wMax - vMin->texcoord[0][3] * wMin;
-	 eBot_dv = vMid->texcoord[0][3] * wMid - vMin->texcoord[0][3] * wMin;
-	 span.texStep[0][3] = oneOverArea * (eMaj_dv * eBot.dy
+         eMaj_dv = vMax->texcoord[0][3] * wMax - vMin->texcoord[0][3] * wMin;
+         eBot_dv = vMid->texcoord[0][3] * wMid - vMin->texcoord[0][3] * wMin;
+         span.texStep[0][3] = oneOverArea * (eMaj_dv * eBot.dy
                                              - eMaj.dy * eBot_dv);
-	 dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
+         dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
       }
 #  ifdef INTERP_LAMBDA
       {
@@ -616,29 +616,29 @@
                                                    - eMaj.dy * eBot_ds);
                dsdy[u] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
-	       eMaj_dt = vMax->texcoord[u][1] * wMax
-		       - vMin->texcoord[u][1] * wMin;
-	       eBot_dt = vMid->texcoord[u][1] * wMid
-		       - vMin->texcoord[u][1] * wMin;
-	       span.texStep[u][1] = oneOverArea * (eMaj_dt * eBot.dy
+               eMaj_dt = vMax->texcoord[u][1] * wMax
+                       - vMin->texcoord[u][1] * wMin;
+               eBot_dt = vMid->texcoord[u][1] * wMid
+                       - vMin->texcoord[u][1] * wMin;
+               span.texStep[u][1] = oneOverArea * (eMaj_dt * eBot.dy
                                                    - eMaj.dy * eBot_dt);
-	       dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
+               dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 
-	       eMaj_du = vMax->texcoord[u][2] * wMax
+               eMaj_du = vMax->texcoord[u][2] * wMax
                        - vMin->texcoord[u][2] * wMin;
-	       eBot_du = vMid->texcoord[u][2] * wMid
+               eBot_du = vMid->texcoord[u][2] * wMid
                        - vMin->texcoord[u][2] * wMin;
-	       span.texStep[u][2] = oneOverArea * (eMaj_du * eBot.dy
+               span.texStep[u][2] = oneOverArea * (eMaj_du * eBot.dy
                                                    - eMaj.dy * eBot_du);
-	       dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
+               dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 
-	       eMaj_dv = vMax->texcoord[u][3] * wMax
+               eMaj_dv = vMax->texcoord[u][3] * wMax
                        - vMin->texcoord[u][3] * wMin;
-	       eBot_dv = vMid->texcoord[u][3] * wMid
+               eBot_dv = vMid->texcoord[u][3] * wMid
                        - vMin->texcoord[u][3] * wMin;
-	       span.texStep[u][3] = oneOverArea * (eMaj_dv * eBot.dy
+               span.texStep[u][3] = oneOverArea * (eMaj_dv * eBot.dy
                                                    - eMaj.dy * eBot_dv);
-	       dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
+               dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
 #  ifdef INTERP_LAMBDA
                {
                   GLfloat dudx = span.texStep[u][0] * span.texWidth[u];
@@ -997,11 +997,11 @@
                                  + dsdy * adjy) + FIXED_HALF;
                   fdsOuter = SignedFloatToFixed(dsdy + dxOuter * dsdx);
 
-		  t0 = vLower->texcoord[0][1] * T_SCALE;
-		  ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx
+                  t0 = vLower->texcoord[0][1] * T_SCALE;
+                  ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx
                                  + dtdy * adjy) + FIXED_HALF;
-		  fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
-	       }
+                  fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
+               }
 #endif
 #ifdef INTERP_TEX
                {
@@ -1011,18 +1011,18 @@
                   sLeft = s0 + (span.texStep[0][0] * adjx + dsdy * adjy)
                      * (1.0F/FIXED_SCALE);
                   dsOuter = dsdy + dxOuter * span.texStep[0][0];
-		  t0 = vLower->texcoord[0][1] * invW;
-		  tLeft = t0 + (span.texStep[0][1] * adjx + dtdy * adjy)
+                  t0 = vLower->texcoord[0][1] * invW;
+                  tLeft = t0 + (span.texStep[0][1] * adjx + dtdy * adjy)
                      * (1.0F/FIXED_SCALE);
-		  dtOuter = dtdy + dxOuter * span.texStep[0][1];
-		  u0 = vLower->texcoord[0][2] * invW;
-		  uLeft = u0 + (span.texStep[0][2] * adjx + dudy * adjy)
+                  dtOuter = dtdy + dxOuter * span.texStep[0][1];
+                  u0 = vLower->texcoord[0][2] * invW;
+                  uLeft = u0 + (span.texStep[0][2] * adjx + dudy * adjy)
                      * (1.0F/FIXED_SCALE);
-		  duOuter = dudy + dxOuter * span.texStep[0][2];
-		  v0 = vLower->texcoord[0][3] * invW;
-		  vLeft = v0 + (span.texStep[0][3] * adjx + dvdy * adjy)
+                  duOuter = dudy + dxOuter * span.texStep[0][2];
+                  v0 = vLower->texcoord[0][3] * invW;
+                  vLeft = v0 + (span.texStep[0][3] * adjx + dvdy * adjy)
                      * (1.0F/FIXED_SCALE);
-		  dvOuter = dvdy + dxOuter * span.texStep[0][3];
+                  dvOuter = dvdy + dxOuter * span.texStep[0][3];
                }
 #endif
 #ifdef INTERP_MULTITEX
@@ -1036,15 +1036,15 @@
                         sLeft[u] = s0 + (span.texStep[u][0] * adjx + dsdy[u]
                                          * adjy) * (1.0F/FIXED_SCALE);
                         dsOuter[u] = dsdy[u] + dxOuter * span.texStep[u][0];
-			t0 = vLower->texcoord[u][1] * invW;
-			tLeft[u] = t0 + (span.texStep[u][1] * adjx + dtdy[u]
+                        t0 = vLower->texcoord[u][1] * invW;
+                        tLeft[u] = t0 + (span.texStep[u][1] * adjx + dtdy[u]
                                          * adjy) * (1.0F/FIXED_SCALE);
-			dtOuter[u] = dtdy[u] + dxOuter * span.texStep[u][1];
-			u0 = vLower->texcoord[u][2] * invW;
-			uLeft[u] = u0 + (span.texStep[u][2] * adjx + dudy[u]
+                        dtOuter[u] = dtdy[u] + dxOuter * span.texStep[u][1];
+                        u0 = vLower->texcoord[u][2] * invW;
+                        uLeft[u] = u0 + (span.texStep[u][2] * adjx + dudy[u]
                                          * adjy) * (1.0F/FIXED_SCALE);
-			duOuter[u] = dudy[u] + dxOuter * span.texStep[u][2];
-			v0 = vLower->texcoord[u][3] * invW;
+                        duOuter[u] = dudy[u] + dxOuter * span.texStep[u][2];
+                        v0 = vLower->texcoord[u][3] * invW;
                         vLeft[u] = v0 + (span.texStep[u][3] * adjx + dvdy[u]
                                          * adjy) * (1.0F/FIXED_SCALE);
                         dvOuter[u] = dvdy[u] + dxOuter * span.texStep[u][3];
@@ -1100,10 +1100,10 @@
             fdtInner = fdtOuter + span.intTexStep[1];
 #endif
 #ifdef INTERP_TEX
-	    dsInner = dsOuter + span.texStep[0][0];
-	    dtInner = dtOuter + span.texStep[0][1];
-	    duInner = duOuter + span.texStep[0][2];
-	    dvInner = dvOuter + span.texStep[0][3];
+            dsInner = dsOuter + span.texStep[0][0];
+            dtInner = dtOuter + span.texStep[0][1];
+            duInner = duOuter + span.texStep[0][2];
+            dvInner = dvOuter + span.texStep[0][3];
 #endif
 #ifdef INTERP_MULTITEX
             {
@@ -1294,10 +1294,10 @@
                   ft += fdtOuter;
 #endif
 #ifdef INTERP_TEX
-		  sLeft += dsOuter;
-		  tLeft += dtOuter;
-		  uLeft += duOuter;
-		  vLeft += dvOuter;
+                  sLeft += dsOuter;
+                  tLeft += dtOuter;
+                  uLeft += duOuter;
+                  vLeft += dvOuter;
 #endif
 #ifdef INTERP_MULTITEX
                   {
@@ -1347,10 +1347,10 @@
                   ft += fdtInner;
 #endif
 #ifdef INTERP_TEX
-		  sLeft += dsInner;
-		  tLeft += dtInner;
-		  uLeft += duInner;
-		  vLeft += dvInner;
+                  sLeft += dsInner;
+                  tLeft += dtInner;
+                  uLeft += duInner;
+                  vLeft += dvInner;
 #endif
 #ifdef INTERP_MULTITEX
                   {
