@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.69 2001/09/21 21:32:14 kschultz Exp $ */
+/* $Id: osmesa.c,v 1.70 2001/09/23 21:17:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,15 +175,15 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       greenBits = CHAN_BITS;
       blueBits = CHAN_BITS;
       alphaBits = CHAN_BITS;
-      rind = 2;
-      gind = 1;
       bind = 0;
+      gind = 1;
+      rind = 2;
       aind = 3;
       if (little_endian) {
-         ashift = 0;
-         rshift = 8;
-         gshift = 16;
-         bshift = 24;
+         bshift = 0;
+         gshift = 8;
+         rshift = 16;
+         ashift = 24;
       }
       else {
          bshift = 24;
@@ -199,15 +199,15 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       greenBits = CHAN_BITS;
       blueBits = CHAN_BITS;
       alphaBits = CHAN_BITS;
+      aind = 0;
       rind = 1;
       gind = 2;
       bind = 3;
-      aind = 0;
       if (little_endian) {
-         bshift = 0;
-         gshift = 8;
-         rshift = 16;
-         ashift = 24;
+         ashift = 0;
+         rshift = 8;
+         gshift = 16;
+         bshift = 24;
       }
       else {
          ashift = 24;
@@ -1627,6 +1627,17 @@ flat_blend_rgba_line( GLcontext *ctx,
      *ptr4 = pixel;					\
    }
 
+#if 0  /* XXX use this in the future */
+#define PLOT(X,Y)							\
+   {									\
+      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
+      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
+      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
+      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
+      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
+   }
+#endif
+
 #ifdef WIN32
 #include "..\swrast\s_linetemp.h"
 #else
@@ -1637,6 +1648,7 @@ flat_blend_rgba_line( GLcontext *ctx,
 
 /*
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
+ * But don't write to Z buffer.
  * XXX update for GLchan
  */
 static void
@@ -1666,6 +1678,17 @@ flat_blend_rgba_z_line( GLcontext *ctx,
 	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
 	   *ptr4 = pixel; 						\
 	}
+
+#if 0  /* XXX use this in the future */
+#define PLOT(X,Y)							\
+   if (Z < *zPtr) {							\
+      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
+      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
+      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
+      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
+      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
+   }
+#endif
 
 #ifdef WIN32
 #include "..\swrast\s_linetemp.h"
@@ -1707,6 +1730,18 @@ flat_blend_rgba_z_line_write( GLcontext *ctx,
 	   *ptr4 = pixel;						\
 	   *zPtr = Z;							\
 	}
+
+#if 0  /* XXX use this in the future */
+#define PLOT(X,Y)							\
+   if (Z < *zPtr) {							\
+      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
+      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
+      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
+      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
+      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
+      *zPtr = Z;							\
+   }
+#endif
 
 #ifdef WIN32
 #include "..\swrast\s_linetemp.h"
