@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.11 2001/05/03 14:11:18 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.12 2001/05/09 11:06:30 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -752,7 +752,9 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    /* Produce new flags array:
     */
    {
-      GLuint i, count = tnl->vb.Count;
+      GLuint i;
+      GLuint count = tnl->vb.Count + 1;
+
       copy_1ui( store->Flag, flags, count );
       tnl->vb.Flag = store->Flag;
       for (i = 0 ; i < count ; i++)
