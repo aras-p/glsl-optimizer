@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.20 2001/04/03 16:19:54 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.21 2001/04/03 17:35:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -702,7 +702,6 @@ clear_32bit_ximage( GLcontext *ctx, GLboolean all,
    }
    else {
       register int i, j;
-      register GLuint pixel = (GLuint) xmesa->clearpixel;
       for (j=0;j<height;j++) {
          register GLuint *ptr4 = PIXELADDR4( xmesa->xm_buffer, x, y+j );
          for (i=0;i<width;i++) {
