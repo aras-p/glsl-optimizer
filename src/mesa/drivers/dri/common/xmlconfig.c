@@ -77,7 +77,7 @@ static const char *__getProgramName () {
 #        define GET_PROGRAM_NAME() __getProgramName()
 #    else
 #        define GET_PROGRAM_NAME() ""
-#        warning "Per application configuration won't with your OS version work."
+#        warning "Per application configuration won't work with your OS version."
 #    endif
 #endif
 
@@ -647,13 +647,17 @@ void driParseOptionInfo (driOptionCache *info,
     struct OptInfoData *data = &userData;
     GLuint realNoptions;
 
-  /* determine hash table size and allocate memory */
+  /* determine hash table size and allocate memory:
+   * 3/2 of the number of options, rounded up, so there remains always
+   * at least one free entry. This is needed for detecting undefined
+   * options in configuration files without getting a hash table overflow.
+   * Round this up to a power of two. */
+    GLuint minSize = (nConfigOptions*3 + 1) / 2;
     GLuint size, log2size;
-    for (size = 1, log2size = 0; size < nConfigOptions*3/2;
-	 size <<= 1, ++log2size);
+    for (size = 1, log2size = 0; size < minSize; size <<= 1, ++log2size);
     info->tableSize = log2size;
     info->info = CALLOC (size * sizeof (driOptionInfo));
-    info->values = CALLOC (size * sizeof (driOptionInfo));
+    info->values = CALLOC (size * sizeof (driOptionValue));
     if (info->info == NULL || info->values == NULL) {
 	fprintf (stderr, "%s: %d: out of memory.\n", __FILE__, __LINE__);
 	abort();
