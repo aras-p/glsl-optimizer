@@ -94,7 +94,8 @@
 
 
 /**
- * Depth buffer data type.
+ * Used for storing intermediate depth buffer values.
+ * The actual depth/Z buffer might use 16 or 32-bit values.
  *
  * \note Must be 32-bits!
  */
@@ -2631,8 +2632,8 @@ struct __GLcontextRec
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
-   struct gl_frame_buffer_object *CurrentFramebuffer;
-   struct gl_render_buffer_object *CurrentRenderbuffer;
+   struct gl_framebuffer *CurrentFramebuffer;
+   struct gl_renderbuffer *CurrentRenderbuffer;
 #endif
 
    GLenum ErrorValue;        /**< Last error code */

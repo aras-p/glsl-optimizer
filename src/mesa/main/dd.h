@@ -751,7 +751,7 @@ struct dd_function_table {
    
 
    /**
-    * \name Vertex buffer object functions
+    * \name Vertex/pixel buffer object functions
     */
 #if FEATURE_ARB_vertex_buffer_object
    /*@{*/
@@ -782,6 +782,17 @@ struct dd_function_table {
 			     struct gl_buffer_object *obj );
    /*@}*/
 #endif
+
+   /**
+    * \name Functions for GL_EXT_framebuffer_object
+    */
+#if FEATURE_EXT_framebuffer_object
+   /*@{*/
+   struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
+   struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
+   /*@}*/
+#endif
+
 
    /**
     * \name Support for multiple T&L engines

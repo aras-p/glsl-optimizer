@@ -27,49 +27,136 @@
 #define FBOBJECT_H
 
 
-struct gl_render_buffer_object
+/**
+ * A renderbuffer stores colors or depth values or stencil values.
+ * A framebuffer object will have a collection of these.
+ * Data are read/written to the buffer with a handful of Get/Put functions.
+ *
+ * Instances of this object are allocated with the Driver's NewRenderbuffer
+ * hook.  Drivers will likely wrap this class inside a driver-specific
+ * class to simulate inheritance.
+ */
+struct gl_renderbuffer
 {
-   GLint RefCount;
    GLuint Name;
+   GLint RefCount;
    GLuint Width, Height;
    GLenum InternalFormat;
    GLenum _BaseFormat;  /* Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or */
                         /* GL_STENCIL_INDEX. */
+
+   GLenum DataType; /* GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, etc */
    GLvoid *Data;
+
+   /* Delete this renderbuffer */
+   void (*Delete)(GLcontext *ctx, struct gl_renderbuffer *rb);
+
+   /* Allocate new storage for this renderbuffer */
+   GLboolean (*AllocStorage)(GLcontext *ctx, struct gl_renderbuffer *rb,
+                             GLenum internalFormat,
+                             GLuint width, GLuint height);
+
+   /* Return a pointer to the element/pixel at (x,y).
+    * Should return NULL if the buffer memory can't be directly addressed.
+    */
+   void *(*GetPointer)(struct gl_renderbuffer *rb, GLint x, GLint y);
+
+   /* Get/Read a row of values.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*GetRow)(struct gl_renderbuffer *rb,
+                  GLint x, GLint y, GLuint count, void *values);
+
+   /* Get/Read values at arbitrary locations
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*GetValues)(struct gl_renderbuffer *rb,
+                     const GLint x[], const GLint y[],
+                     GLuint count, void *values);
+
+   /* Put/Write a row of values
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutRow)(struct gl_renderbuffer *rb,
+                  GLint x, GLint y, GLuint count,
+                  const void *values, const GLubyte *maek);
+
+   /* Put/Write values at arbitrary locations
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutValues)(struct gl_renderbuffer *rb,
+                     const GLint x[], const GLint y[], GLuint count,
+                     const void *values, const GLubyte *mask);
 };
 
 
-struct gl_render_buffer_attachment
+/**
+ * A renderbuffer attachment point points to either a texture object
+ * (and specifies a mipmap level, cube face or 3D texture slice) or
+ * points to a renderbuffer.
+ */
+struct gl_renderbuffer_attachment
 {
    GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
+   GLboolean Complete;
+
    /* IF Type == GL_RENDERBUFFER_EXT: */
-   struct gl_render_buffer_object *Renderbuffer;
+   struct gl_renderbuffer *Renderbuffer;
+
    /* IF Type == GL_TEXTURE: */
    struct gl_texture_object *Texture;
    GLuint TextureLevel;
    GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
    GLuint Zoffset;      /* for 3D textures */
-   GLboolean Complete;
 };
 
 
-struct gl_frame_buffer_object
+/**
+ * A framebuffer object is basically a collection of rendering buffers.
+ * (Though, a rendering buffer might actually be a texture image.)
+ * All the renderbuffers/textures which we reference must have the same
+ * width and height (and meet a few other requirements) in order for the
+ * framebufffer object to be "complete".
+ *
+ * Instances of this object are allocated with the Driver's Newframebuffer
+ * hook.  Drivers will likely wrap this class inside a driver-specific
+ * class to simulate inheritance.
+ */
+struct gl_framebuffer
 {
-   GLint RefCount;
    GLuint Name;
+   GLint RefCount;
 
-   GLenum Status;
+   GLenum Status; /* One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
 
-   struct gl_render_buffer_attachment ColorAttachment[MAX_COLOR_ATTACHMENTS];
-   struct gl_render_buffer_attachment DepthAttachment;
-   struct gl_render_buffer_attachment StencilAttachment;
+   struct gl_renderbuffer_attachment ColorAttachment[MAX_COLOR_ATTACHMENTS];
+   struct gl_renderbuffer_attachment DepthAttachment;
+   struct gl_renderbuffer_attachment StencilAttachment;
 
    /* In unextended OpenGL, these vars are part of the GL_COLOR_BUFFER
     * attribute group and GL_PIXEL attribute group, respectively.
     */
    GLenum DrawBuffer[MAX_DRAW_BUFFERS];
    GLenum ReadBuffer;
+
+   GLuint _Width, _Height;
+
+   /** Delete this framebuffer */
+   void (*Delete)(GLcontext *ctx, struct gl_framebuffer *fb);
 };
+
+
+extern struct gl_framebuffer *
+_mesa_new_framebuffer(GLcontext *ctx, GLuint name);
+
+extern void
+_mesa_delete_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb);
+
+extern struct gl_renderbuffer *
+_mesa_new_renderbuffer(GLcontext *ctx, GLuint name);
+
+extern void
+_mesa_delete_renderbuffer(GLcontext *ctx, struct gl_renderbuffer *rb);
 
 
 extern GLboolean GLAPIENTRY
@@ -89,7 +176,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalformat,
                              GLsizei width, GLsizei height);
 
 extern void GLAPIENTRY
-_mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params);
+_mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname,
+                                    GLint *params);
 
 extern GLboolean GLAPIENTRY
 _mesa_IsFramebufferEXT(GLuint framebuffer);

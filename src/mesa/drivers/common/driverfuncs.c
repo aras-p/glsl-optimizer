@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,12 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texstore.h"
+#if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
+#endif
+#if FEATURE_EXT_framebuffer_object
+#include "fbobject.h"
+#endif
 
 #include "driverfuncs.h"
 #include "swrast/swrast.h"
@@ -190,6 +195,11 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->GetBufferSubData = _mesa_buffer_get_subdata;
    driver->MapBuffer = _mesa_buffer_map;
    driver->UnmapBuffer = _mesa_buffer_unmap;
+#endif
+
+#if FEATURE_EXT_framebuffer_object
+   driver->NewFramebuffer = _mesa_new_framebuffer;
+   driver->NewRenderbuffer = _mesa_new_renderbuffer;
 #endif
 
    /* T&L stuff */
