@@ -1555,10 +1555,8 @@ void viaValidateState( GLcontext *ctx )
     if (vmesa->newState & _NEW_STENCIL)
         viaChooseStencilState(ctx);
     
-    if (!vmesa->Fallback) {
-       vmesa->newEmitState |= vmesa->newState;
-       vmesa->newState = 0;
-    }
+    vmesa->newEmitState |= vmesa->newState;
+    vmesa->newState = 0;
             
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
 }

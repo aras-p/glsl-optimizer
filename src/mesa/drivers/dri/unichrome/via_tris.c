@@ -633,9 +633,11 @@ static void viaRunPipeline(GLcontext *ctx)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     
     if (vmesa->newState) {
-       viaChooseVertexState(ctx);
-       viaChooseRenderState(ctx);
        viaValidateState( ctx );
+       if (!vmesa->Fallback) {
+	  viaChooseVertexState(ctx);
+	  viaChooseRenderState(ctx);
+       }
     }
 
     _tnl_run_pipeline(ctx);
