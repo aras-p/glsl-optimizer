@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.24 2000/09/07 15:45:27 brianp Exp $ */
+/* $Id: state.c,v 1.25 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -892,8 +892,8 @@ void gl_update_state( GLcontext *ctx )
 	 /* update scissor region */
 	 ctx->DrawBuffer->Xmin = 0;
 	 ctx->DrawBuffer->Ymin = 0;
-	 ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width-1;
-	 ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height-1;
+	 ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width;
+	 ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height;
 	 if (ctx->Scissor.Enabled) {
 	    if (ctx->Scissor.X > ctx->DrawBuffer->Xmin) {
 	       ctx->DrawBuffer->Xmin = ctx->Scissor.X;
@@ -901,11 +901,11 @@ void gl_update_state( GLcontext *ctx )
 	    if (ctx->Scissor.Y > ctx->DrawBuffer->Ymin) {
 	       ctx->DrawBuffer->Ymin = ctx->Scissor.Y;
 	    }
-	    if (ctx->Scissor.X + ctx->Scissor.Width - 1 < ctx->DrawBuffer->Xmax) {
-	       ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width - 1;
+	    if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->Xmax) {
+	       ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width;
 	    }
-	    if (ctx->Scissor.Y + ctx->Scissor.Height - 1 < ctx->DrawBuffer->Ymax) {
-	       ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height - 1;
+	    if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->Ymax) {
+	       ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
 	    }
 	 }
       }

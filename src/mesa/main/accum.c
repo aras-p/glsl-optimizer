@@ -1,8 +1,8 @@
-/* $Id: accum.c,v 1.24 2000/09/07 15:45:26 brianp Exp $ */
+/* $Id: accum.c,v 1.25 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -467,8 +467,8 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
 	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
          /* size of region to clear */
-         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1);
-         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
+         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin);
+         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
          /* ptr to first element to clear */
          row = ctx->DrawBuffer->Accum
                + 4 * (ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width

@@ -1,7 +1,8 @@
+/* $Id: buffers.c,v 1.11 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -90,8 +91,8 @@ clear_color_buffer_with_masking( GLcontext *ctx )
 {
    const GLint x = ctx->DrawBuffer->Xmin;
    const GLint y = ctx->DrawBuffer->Ymin;
-   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
-   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
+   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
 
    if (ctx->Visual->RGBAflag) {
       /* RGBA mode */
@@ -140,8 +141,8 @@ clear_color_buffer(GLcontext *ctx)
 {
    const GLint x = ctx->DrawBuffer->Xmin;
    const GLint y = ctx->DrawBuffer->Ymin;
-   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
-   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
+   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
 
    if (ctx->Visual->RGBAflag) {
@@ -255,8 +256,8 @@ _mesa_Clear( GLbitfield mask )
    if (ctx->RenderMode==GL_RENDER) {
       const GLint x = ctx->DrawBuffer->Xmin;
       const GLint y = ctx->DrawBuffer->Ymin;
-      const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
-      const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+      const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
+      const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
       GLbitfield ddMask;
       GLbitfield newMask;
 

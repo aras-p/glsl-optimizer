@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.17 2000/04/11 20:42:22 brianp Exp $ */
+/* $Id: depth.c,v 1.18 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1629,7 +1629,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
       /* only clear scissor region */
       if (ctx->Visual->DepthBits <= 16) {
          const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->Visual->DepthMax);
-         const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
+         const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
          const GLint width = ctx->DrawBuffer->Width;
          GLushort *dRow = (GLushort *) ctx->DrawBuffer->DepthBuffer
             + ctx->DrawBuffer->Ymin * width + ctx->DrawBuffer->Xmin;
@@ -1643,7 +1643,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
       }
       else {
          const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->Visual->DepthMax);
-         const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
+         const GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
          const GLint width = ctx->DrawBuffer->Width;
          GLuint *dRow = (GLuint *) ctx->DrawBuffer->DepthBuffer
             + ctx->DrawBuffer->Ymin * width + ctx->DrawBuffer->Xmin;

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.83 2000/09/07 15:45:27 brianp Exp $ */
+/* $Id: context.c,v 1.84 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2050,3 +2050,20 @@ _mesa_Flush( void )
       (*ctx->Driver.Flush)( ctx );
    }
 }
+
+
+
+const char *_mesa_prim_name[GL_POLYGON+2] = {
+   "GL_POINTS",
+   "GL_LINES",
+   "GL_LINE_LOOP",
+   "GL_LINE_STRIP",
+   "GL_TRIANGLES",
+   "GL_TRIANGLE_STRIP",
+   "GL_TRIANGLE_FAN",
+   "GL_QUADS",
+   "GL_QUAD_STRIP",
+   "GL_POLYGON",
+   "culled primitive"
+};
+

@@ -1,8 +1,8 @@
-/* $Id: stencil.c,v 1.17 2000/08/30 18:23:08 brianp Exp $ */
+/* $Id: stencil.c,v 1.18 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -1275,11 +1275,11 @@ clear_software_stencil_buffer( GLcontext *ctx )
 
    if (ctx->Scissor.Enabled) {
       /* clear scissor region only */
-      const GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+      const GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
       if (ctx->Stencil.WriteMask != STENCIL_MAX) {
          /* must apply mask to the clear */
          GLint y;
-         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+         for (y = ctx->DrawBuffer->Ymin; y < ctx->DrawBuffer->Ymax; y++) {
             const GLstencil mask = ctx->Stencil.WriteMask;
             const GLstencil invMask = ~mask;
             const GLstencil clearVal = (ctx->Stencil.Clear & mask);
@@ -1293,7 +1293,7 @@ clear_software_stencil_buffer( GLcontext *ctx )
       else {
          /* no masking */
          GLint y;
-         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+         for (y = ctx->DrawBuffer->Ymin; y < ctx->DrawBuffer->Ymax; y++) {
             GLstencil *stencil = STENCIL_ADDRESS( ctx->DrawBuffer->Xmin, y );
 #if STENCIL_BITS==8
             MEMSET( stencil, ctx->Stencil.Clear, width * sizeof(GLstencil) );
@@ -1356,11 +1356,11 @@ clear_hardware_stencil_buffer( GLcontext *ctx )
    if (ctx->Scissor.Enabled) {
       /* clear scissor region only */
       const GLint x = ctx->DrawBuffer->Xmin;
-      const GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+      const GLint width = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
       if (ctx->Stencil.WriteMask != STENCIL_MAX) {
          /* must apply mask to the clear */
          GLint y;
-         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+         for (y = ctx->DrawBuffer->Ymin; y < ctx->DrawBuffer->Ymax; y++) {
             const GLstencil mask = ctx->Stencil.WriteMask;
             const GLstencil invMask = ~mask;
             const GLstencil clearVal = (ctx->Stencil.Clear & mask);
@@ -1380,7 +1380,7 @@ clear_hardware_stencil_buffer( GLcontext *ctx )
          for (i = 0; i < width; i++) {
             stencil[i] = ctx->Stencil.Clear;
          }
-         for (y = ctx->DrawBuffer->Ymin; y <= ctx->DrawBuffer->Ymax; y++) {
+         for (y = ctx->DrawBuffer->Ymin; y < ctx->DrawBuffer->Ymax; y++) {
             (*ctx->Driver.WriteStencilSpan)(ctx, x, y, width, stencil, NULL);
          }
       }

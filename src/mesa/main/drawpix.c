@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.32 2000/09/06 17:44:52 brianp Exp $ */
+/* $Id: drawpix.c,v 1.33 2000/09/08 21:28:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,7 +72,7 @@ _mesa_clip_pixelrect(const GLcontext *ctx,
    }
    /* right clipping */
    if (*destX + *width > buffer->Xmax)
-      *width -= (*destX + *width - buffer->Xmax - 1);
+      *width -= (*destX + *width - buffer->Xmax);
 
    if (*width <= 0)
       return GL_FALSE;
@@ -85,7 +85,7 @@ _mesa_clip_pixelrect(const GLcontext *ctx,
    }
    /* top clipping */
    if (*destY + *height > buffer->Ymax)
-      *height -= (*destY + *height - buffer->Ymax - 1);
+      *height -= (*destY + *height - buffer->Ymax);
 
    if (*height <= 0)
       return GL_TRUE;
@@ -161,7 +161,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             destX = ctx->DrawBuffer->Xmin;
          }
          if (destX + drawWidth > ctx->DrawBuffer->Xmax)
-            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax - 1);
+            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax);
          if (drawWidth <= 0)
             return GL_TRUE;
 
@@ -172,7 +172,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             destY = ctx->DrawBuffer->Ymin;
          }
          if (destY + drawHeight > ctx->DrawBuffer->Ymax)
-            drawHeight -= (destY + drawHeight - ctx->DrawBuffer->Ymax - 1);
+            drawHeight -= (destY + drawHeight - ctx->DrawBuffer->Ymax);
          if (drawHeight <= 0)
             return GL_TRUE;
       }
@@ -185,15 +185,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             destX = ctx->DrawBuffer->Xmin;
          }
          if (destX + drawWidth > ctx->DrawBuffer->Xmax)
-            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax - 1);
+            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax);
          if (drawWidth <= 0)
             return GL_TRUE;
 
          /* vertical clipping */
          if (destY > ctx->DrawBuffer->Ymax) {
-            skipRows   += (destY - ctx->DrawBuffer->Ymax - 1);
-            drawHeight -= (destY - ctx->DrawBuffer->Ymax - 1);
-            destY = ctx->DrawBuffer->Ymax + 1;
+            skipRows   += (destY - ctx->DrawBuffer->Ymax);
+            drawHeight -= (destY - ctx->DrawBuffer->Ymax);
+            destY = ctx->DrawBuffer->Ymax;
          }
          if (destY - drawHeight < ctx->DrawBuffer->Ymin)
             drawHeight -= (ctx->DrawBuffer->Ymin - (destY - drawHeight));
