@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.40 2000/03/29 18:46:11 brianp Exp $ */
+/* $Id: glapi.c,v 1.41 2000/05/18 18:14:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -594,7 +594,7 @@ static struct name_address_offset static_functions[] = {
         { "glPushClientAttrib", (GLvoid *) glPushClientAttrib, _gloffset_PushClientAttrib },
 	/* 1.2 */
 #ifdef GL_VERSION_1_2
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) NotImplemented
 #endif
@@ -638,9 +638,9 @@ static struct name_address_offset static_functions[] = {
 	{ "glCopyTexSubImage3D", (GLvoid *) NAME(glCopyTexSubImage3D), _gloffset_CopyTexSubImage3D },
 #undef NAME
 
-	/* GL_ARB_multitexture */
+	/* ARB 1. GL_ARB_multitexture */
 #ifdef GL_ARB_multitexture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) NotImplemented
 #endif
@@ -680,9 +680,9 @@ static struct name_address_offset static_functions[] = {
 	{ "glMultiTexCoord4svARB", (GLvoid *) NAME(glMultiTexCoord4svARB), _gloffset_MultiTexCoord4svARB },
 #undef NAME
 
-	/* GL_ARB_transpose_matrix */
+	/* ARB 3. GL_ARB_transpose_matrix */
 #ifdef GL_ARB_transpose_matrix
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
 #define NAME(X) NotImplemented
 #endif
@@ -692,503 +692,763 @@ static struct name_address_offset static_functions[] = {
 	{ "glMultTransposeMatrixfARB", (GLvoid *) NAME(glMultTransposeMatrixfARB), _gloffset_MultTransposeMatrixfARB },
 #undef NAME
 
-        /* GL_ARB_multisample */
+        /* ARB 5. GL_ARB_multisample */
 #ifdef GL_ARB_multisample
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSampleCoverageARB", (GLvoid *) NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
-        { "glSamplePassARB", (GLvoid *) NAME(glSamplePassARB), _gloffset_SamplePassARB },
+        { "glSamplePassARB", NAME(glSamplePassARB), _gloffset_SamplePassARB },
+        { "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
 #undef NAME
+
+        /* ARB 12. GL_ARB_texture_compression */
+#if 000
+#if defined(GL_ARB_texture_compression) && defined(_gloffset_CompressedTexImage3DARB)
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glCompressedTexImage3DARB", NAME(glCompressedTexImage3DARB), _gloffset_CompressedTexImage3DARB },
+        { "glCompressedTexImage2DARB", NAME(glCompressedTexImage2DARB), _gloffset_CompressedTexImage2DARB },
+        { "glCompressedTexImage1DARB", NAME(glCompressedTexImage1DARB), _gloffset_CompressedTexImage1DARB },
+        { "glCompressedTexSubImage3DARB", NAME(glCompressedTexSubImage3DARB), _gloffset_CompressedTexSubImage3DARB },
+        { "glCompressedTexSubImage2DARB", NAME(glCompressedTexSubImage2DARB), _gloffset_CompressedTexSubImage2DARB },
+        { "glCompressedTexSubImage1DARB", NAME(glCompressedTexSubImage1DARB), _gloffset_CompressedTexSubImage1DARB },
+        { "glGetCompressedTexImageARB", NAME(glGetCompressedTexImageARB), _gloffset_GetCompressedTexImageARB },
+#undef NAME
+#endif
 
 	/* 2. GL_EXT_blend_color */
 #ifdef GL_EXT_blend_color
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glBlendColorEXT", (GLvoid *) NAME(glBlendColorEXT), _gloffset_BlendColor },
+	{ "glBlendColorEXT", NAME(glBlendColorEXT), _gloffset_BlendColor },
 #undef NAME
 
 	/* 3. GL_EXT_polygon_offset */
 #ifdef GL_EXT_polygon_offset
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glPolygonOffsetEXT", (GLvoid *) NAME(glPolygonOffsetEXT), _gloffset_PolygonOffsetEXT },
+	{ "glPolygonOffsetEXT", NAME(glPolygonOffsetEXT), _gloffset_PolygonOffsetEXT },
 #undef NAME
 
 	/* 6. GL_EXT_texture3D */
 #ifdef GL_EXT_texture3D
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glCopyTexSubImage3DEXT", (GLvoid *) NAME(glCopyTexSubImage3DEXT), _gloffset_CopyTexSubImage3D },
-	{ "glTexImage3DEXT", (GLvoid *) NAME(glTexImage3DEXT), _gloffset_TexImage3D },
-	{ "glTexSubImage3DEXT", (GLvoid *) NAME(glTexSubImage3DEXT), _gloffset_TexSubImage3D },
+	{ "glCopyTexSubImage3DEXT", NAME(glCopyTexSubImage3DEXT), _gloffset_CopyTexSubImage3D },
+	{ "glTexImage3DEXT", NAME(glTexImage3DEXT), _gloffset_TexImage3D },
+	{ "glTexSubImage3DEXT", NAME(glTexSubImage3DEXT), _gloffset_TexSubImage3D },
 #undef NAME
 
 	/* 7. GL_SGI_texture_filter4 */
 #ifdef GL_SGI_texture_filter4
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glGetTexFilterFuncSGIS", (GLvoid *) NAME(glGetTexFilterFuncSGIS), _gloffset_GetTexFilterFuncSGIS },
-	{ "glTexFilterFuncSGIS", (GLvoid *) NAME(glTexFilterFuncSGIS), _gloffset_TexFilterFuncSGIS },
+	{ "glGetTexFilterFuncSGIS", NAME(glGetTexFilterFuncSGIS), _gloffset_GetTexFilterFuncSGIS },
+	{ "glTexFilterFuncSGIS", NAME(glTexFilterFuncSGIS), _gloffset_TexFilterFuncSGIS },
 #undef NAME
 
 	/* 9. GL_EXT_subtexture */
 #ifdef GL_EXT_subtexture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glTexSubImage1DEXT", (GLvoid *) NAME(glTexSubImage1DEXT), _gloffset_TexSubImage1D },
-	{ "glTexSubImage2DEXT", (GLvoid *) NAME(glTexSubImage2DEXT), _gloffset_TexSubImage2D },
+	{ "glTexSubImage1DEXT", NAME(glTexSubImage1DEXT), _gloffset_TexSubImage1D },
+	{ "glTexSubImage2DEXT", NAME(glTexSubImage2DEXT), _gloffset_TexSubImage2D },
 #undef NAME
 
 	/* 10. GL_EXT_copy_texture */
 #ifdef GL_EXT_copy_texture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glCopyTexImage1DEXT", (GLvoid *) NAME(glCopyTexImage1DEXT), _gloffset_CopyTexImage1D },
-	{ "glCopyTexImage2DEXT", (GLvoid *) NAME(glCopyTexImage2DEXT), _gloffset_CopyTexImage2D },
-	{ "glCopyTexSubImage1DEXT", (GLvoid *) NAME(glCopyTexSubImage1DEXT), _gloffset_CopyTexSubImage1D },
-	{ "glCopyTexSubImage2DEXT", (GLvoid *) NAME(glCopyTexSubImage2DEXT), _gloffset_CopyTexSubImage2D },
+	{ "glCopyTexImage1DEXT", NAME(glCopyTexImage1DEXT), _gloffset_CopyTexImage1D },
+	{ "glCopyTexImage2DEXT", NAME(glCopyTexImage2DEXT), _gloffset_CopyTexImage2D },
+	{ "glCopyTexSubImage1DEXT", NAME(glCopyTexSubImage1DEXT), _gloffset_CopyTexSubImage1D },
+	{ "glCopyTexSubImage2DEXT", NAME(glCopyTexSubImage2DEXT), _gloffset_CopyTexSubImage2D },
 #undef NAME
                               
 	/* 11. GL_EXT_histogram */
 #ifdef GL_EXT_histogram
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glGetHistogramEXT", (GLvoid *) NAME(glGetHistogramEXT), _gloffset_GetHistogramEXT },
-	{ "glGetHistogramParameterfvEXT", (GLvoid *) NAME(glGetHistogramParameterfvEXT), _gloffset_GetHistogramParameterfvEXT },
-	{ "glGetHistogramParameterivEXT", (GLvoid *) NAME(glGetHistogramParameterivEXT), _gloffset_GetHistogramParameterivEXT },
-	{ "glGetMinmaxEXT", (GLvoid *) NAME(glGetMinmaxEXT), _gloffset_GetMinmaxEXT },
-	{ "glGetMinmaxParameterfvEXT", (GLvoid *) NAME(glGetMinmaxParameterfvEXT), _gloffset_GetMinmaxParameterfvEXT },
-	{ "glGetMinmaxParameterivEXT", (GLvoid *) NAME(glGetMinmaxParameterivEXT), _gloffset_GetMinmaxParameterivEXT },
-	{ "glHistogramEXT", (GLvoid *) NAME(glHistogramEXT), _gloffset_Histogram },
-	{ "glMinmaxEXT", (GLvoid *) NAME(glMinmaxEXT), _gloffset_Minmax },
-	{ "glResetHistogramEXT", (GLvoid *) NAME(glResetHistogramEXT), _gloffset_ResetHistogram },
-	{ "glResetMinmaxEXT", (GLvoid *) NAME(glResetMinmaxEXT), _gloffset_ResetMinmax },
+	{ "glGetHistogramEXT", NAME(glGetHistogramEXT), _gloffset_GetHistogramEXT },
+	{ "glGetHistogramParameterfvEXT", NAME(glGetHistogramParameterfvEXT), _gloffset_GetHistogramParameterfvEXT },
+	{ "glGetHistogramParameterivEXT", NAME(glGetHistogramParameterivEXT), _gloffset_GetHistogramParameterivEXT },
+	{ "glGetMinmaxEXT", NAME(glGetMinmaxEXT), _gloffset_GetMinmaxEXT },
+	{ "glGetMinmaxParameterfvEXT", NAME(glGetMinmaxParameterfvEXT), _gloffset_GetMinmaxParameterfvEXT },
+	{ "glGetMinmaxParameterivEXT", NAME(glGetMinmaxParameterivEXT), _gloffset_GetMinmaxParameterivEXT },
+	{ "glHistogramEXT", NAME(glHistogramEXT), _gloffset_Histogram },
+	{ "glMinmaxEXT", NAME(glMinmaxEXT), _gloffset_Minmax },
+	{ "glResetHistogramEXT", NAME(glResetHistogramEXT), _gloffset_ResetHistogram },
+	{ "glResetMinmaxEXT", NAME(glResetMinmaxEXT), _gloffset_ResetMinmax },
 #undef NAME
 
 	/* 12. GL_EXT_convolution */
 #ifdef GL_EXT_convolution
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glConvolutionFilter1DEXT", (GLvoid *) NAME(glConvolutionFilter1DEXT), _gloffset_ConvolutionFilter1D },
-	{ "glConvolutionFilter2DEXT", (GLvoid *) NAME(glConvolutionFilter2DEXT), _gloffset_ConvolutionFilter2D },
-	{ "glConvolutionParameterfEXT", (GLvoid *) NAME(glConvolutionParameterfEXT), _gloffset_ConvolutionParameterf },
-	{ "glConvolutionParameterfvEXT", (GLvoid *) NAME(glConvolutionParameterfvEXT), _gloffset_ConvolutionParameterfv },
-	{ "glConvolutionParameteriEXT", (GLvoid *) NAME(glConvolutionParameteriEXT), _gloffset_ConvolutionParameteri },
-	{ "glConvolutionParameterivEXT", (GLvoid *) NAME(glConvolutionParameterivEXT), _gloffset_ConvolutionParameteriv },
-	{ "glCopyConvolutionFilter1DEXT", (GLvoid *) NAME(glCopyConvolutionFilter1DEXT), _gloffset_CopyConvolutionFilter1D },
-	{ "glCopyConvolutionFilter2DEXT", (GLvoid *) NAME(glCopyConvolutionFilter2DEXT), _gloffset_CopyConvolutionFilter2D },
-	{ "glGetConvolutionFilterEXT", (GLvoid *) NAME(glGetConvolutionFilterEXT), _gloffset_GetConvolutionFilterEXT },
-	{ "glGetConvolutionParameterivEXT", (GLvoid *) NAME(glGetConvolutionParameterivEXT), _gloffset_GetConvolutionParameterivEXT },
-	{ "glGetConvolutionParameterfvEXT", (GLvoid *) NAME(glGetConvolutionParameterfvEXT), _gloffset_GetConvolutionParameterfvEXT },
-	{ "glGetSeparableFilterEXT", (GLvoid *) NAME(glGetSeparableFilterEXT), _gloffset_GetSeparableFilterEXT },
-	{ "glSeparableFilter2DEXT", (GLvoid *) NAME(glSeparableFilter2DEXT), _gloffset_SeparableFilter2D },
+	{ "glConvolutionFilter1DEXT", NAME(glConvolutionFilter1DEXT), _gloffset_ConvolutionFilter1D },
+	{ "glConvolutionFilter2DEXT", NAME(glConvolutionFilter2DEXT), _gloffset_ConvolutionFilter2D },
+	{ "glConvolutionParameterfEXT", NAME(glConvolutionParameterfEXT), _gloffset_ConvolutionParameterf },
+	{ "glConvolutionParameterfvEXT", NAME(glConvolutionParameterfvEXT), _gloffset_ConvolutionParameterfv },
+	{ "glConvolutionParameteriEXT", NAME(glConvolutionParameteriEXT), _gloffset_ConvolutionParameteri },
+	{ "glConvolutionParameterivEXT", NAME(glConvolutionParameterivEXT), _gloffset_ConvolutionParameteriv },
+	{ "glCopyConvolutionFilter1DEXT", NAME(glCopyConvolutionFilter1DEXT), _gloffset_CopyConvolutionFilter1D },
+	{ "glCopyConvolutionFilter2DEXT", NAME(glCopyConvolutionFilter2DEXT), _gloffset_CopyConvolutionFilter2D },
+	{ "glGetConvolutionFilterEXT", NAME(glGetConvolutionFilterEXT), _gloffset_GetConvolutionFilterEXT },
+	{ "glGetConvolutionParameterivEXT", NAME(glGetConvolutionParameterivEXT), _gloffset_GetConvolutionParameterivEXT },
+	{ "glGetConvolutionParameterfvEXT", NAME(glGetConvolutionParameterfvEXT), _gloffset_GetConvolutionParameterfvEXT },
+	{ "glGetSeparableFilterEXT", NAME(glGetSeparableFilterEXT), _gloffset_GetSeparableFilterEXT },
+	{ "glSeparableFilter2DEXT", NAME(glSeparableFilter2DEXT), _gloffset_SeparableFilter2D },
 #undef NAME
                     
 	/* 14. GL_SGI_color_table */
 #ifdef GL_SGI_color_table
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glColorTableSGI", (GLvoid *) NAME(glColorTableSGI), _gloffset_ColorTable },
-	{ "glColorTableParameterfvSGI", (GLvoid *) NAME(glColorTableParameterfvSGI), _gloffset_ColorTableParameterfv },
-	{ "glColorTableParameterivSGI", (GLvoid *) NAME(glColorTableParameterivSGI), _gloffset_ColorTableParameteriv },
-	{ "glCopyColorTableSGI", (GLvoid *) NAME(glCopyColorTableSGI), _gloffset_CopyColorTable },
-	{ "glGetColorTableSGI", (GLvoid *) NAME(glGetColorTableSGI), _gloffset_GetColorTableSGI },
-	{ "glGetColorTableParameterfvSGI", (GLvoid *) NAME(glGetColorTableParameterfvSGI), _gloffset_GetColorTableParameterfvSGI },
-	{ "glGetColorTableParameterivSGI", (GLvoid *) NAME(glGetColorTableParameterivSGI), _gloffset_GetColorTableParameterivSGI },
+	{ "glColorTableSGI", NAME(glColorTableSGI), _gloffset_ColorTable },
+	{ "glColorTableParameterfvSGI", NAME(glColorTableParameterfvSGI), _gloffset_ColorTableParameterfv },
+	{ "glColorTableParameterivSGI", NAME(glColorTableParameterivSGI), _gloffset_ColorTableParameteriv },
+	{ "glCopyColorTableSGI", NAME(glCopyColorTableSGI), _gloffset_CopyColorTable },
+	{ "glGetColorTableSGI", NAME(glGetColorTableSGI), _gloffset_GetColorTableSGI },
+	{ "glGetColorTableParameterfvSGI", NAME(glGetColorTableParameterfvSGI), _gloffset_GetColorTableParameterfvSGI },
+	{ "glGetColorTableParameterivSGI", NAME(glGetColorTableParameterivSGI), _gloffset_GetColorTableParameterivSGI },
 #undef NAME
 
 	/* 15. GL_SGIS_pixel_texture */
 #ifdef GL_SGIS_pixel_texture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glPixelTexGenParameterfSGIS", (GLvoid *) NAME(glPixelTexGenParameterfSGIS), _gloffset_PixelTexGenParameterfSGIS },
-	{ "glPixelTexGenParameteriSGIS", (GLvoid *) NAME(glPixelTexGenParameteriSGIS), _gloffset_PixelTexGenParameteriSGIS },
-	{ "glGetPixelTexGenParameterfvSGIS", (GLvoid *) NAME(glGetPixelTexGenParameterfvSGIS), _gloffset_GetPixelTexGenParameterfvSGIS },
-	{ "glGetPixelTexGenParameterivSGIS", (GLvoid *) NAME(glGetPixelTexGenParameterivSGIS), _gloffset_GetPixelTexGenParameterivSGIS },
+	{ "glPixelTexGenParameterfSGIS", NAME(glPixelTexGenParameterfSGIS), _gloffset_PixelTexGenParameterfSGIS },
+	{ "glPixelTexGenParameteriSGIS", NAME(glPixelTexGenParameteriSGIS), _gloffset_PixelTexGenParameteriSGIS },
+	{ "glGetPixelTexGenParameterfvSGIS", NAME(glGetPixelTexGenParameterfvSGIS), _gloffset_GetPixelTexGenParameterfvSGIS },
+	{ "glGetPixelTexGenParameterivSGIS", NAME(glGetPixelTexGenParameterivSGIS), _gloffset_GetPixelTexGenParameterivSGIS },
 #undef NAME
 
 	/* 16. GL_SGIS_texture4D */
 #ifdef  GL_SGIS_texture4D
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glTexImage4DSGIS", (GLvoid *) NAME(glTexImage4DSGIS), _gloffset_TexImage4DSGIS },
-	{ "glTexSubImage4DSGIS", (GLvoid *) NAME(glTexSubImage4DSGIS), _gloffset_TexSubImage4DSGIS },
+	{ "glTexImage4DSGIS", NAME(glTexImage4DSGIS), _gloffset_TexImage4DSGIS },
+	{ "glTexSubImage4DSGIS", NAME(glTexSubImage4DSGIS), _gloffset_TexSubImage4DSGIS },
 #undef NAME
 
 	/* 20. GL_EXT_texture_object */
 #ifdef GL_EXT_texture_object
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glAreTexturesResidentEXT", (GLvoid *) NAME(glAreTexturesResidentEXT), _gloffset_AreTexturesResidentEXT },
-	{ "glBindTextureEXT", (GLvoid *) NAME(glBindTextureEXT), _gloffset_BindTexture },
-	{ "glDeleteTexturesEXT", (GLvoid *) NAME(glDeleteTexturesEXT), _gloffset_DeleteTextures },
-	{ "glGenTexturesEXT", (GLvoid *) NAME(glGenTexturesEXT), _gloffset_GenTexturesEXT },
-	{ "glIsTextureEXT", (GLvoid *) NAME(glIsTextureEXT), _gloffset_IsTextureEXT },
-	{ "glPrioritizeTexturesEXT", (GLvoid *) NAME(glPrioritizeTexturesEXT), _gloffset_PrioritizeTextures },
+	{ "glAreTexturesResidentEXT", NAME(glAreTexturesResidentEXT), _gloffset_AreTexturesResidentEXT },
+	{ "glBindTextureEXT", NAME(glBindTextureEXT), _gloffset_BindTexture },
+	{ "glDeleteTexturesEXT", NAME(glDeleteTexturesEXT), _gloffset_DeleteTextures },
+	{ "glGenTexturesEXT", NAME(glGenTexturesEXT), _gloffset_GenTexturesEXT },
+	{ "glIsTextureEXT", NAME(glIsTextureEXT), _gloffset_IsTextureEXT },
+	{ "glPrioritizeTexturesEXT", NAME(glPrioritizeTexturesEXT), _gloffset_PrioritizeTextures },
 #undef NAME
 
 	/* 21. GL_SGIS_detail_texture */
 #ifdef GL_SGIS_detail_texture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glDetailTexFuncSGIS", (GLvoid *) NAME(glDetailTexFuncSGIS), _gloffset_DetailTexFuncSGIS },
-	{ "glGetDetailTexFuncSGIS", (GLvoid *) NAME(glGetDetailTexFuncSGIS), _gloffset_GetDetailTexFuncSGIS },
+	{ "glDetailTexFuncSGIS", NAME(glDetailTexFuncSGIS), _gloffset_DetailTexFuncSGIS },
+	{ "glGetDetailTexFuncSGIS", NAME(glGetDetailTexFuncSGIS), _gloffset_GetDetailTexFuncSGIS },
 #undef NAME
 
 	/* 22. GL_SGIS_sharpen_texture */
 #ifdef GL_SGIS_sharpen_texture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glGetSharpenTexFuncSGIS", (GLvoid *) NAME(glGetSharpenTexFuncSGIS), _gloffset_GetSharpenTexFuncSGIS },
-	{ "glSharpenTexFuncSGIS", (GLvoid *) NAME(glSharpenTexFuncSGIS), _gloffset_SharpenTexFuncSGIS },
+	{ "glGetSharpenTexFuncSGIS", NAME(glGetSharpenTexFuncSGIS), _gloffset_GetSharpenTexFuncSGIS },
+	{ "glSharpenTexFuncSGIS", NAME(glSharpenTexFuncSGIS), _gloffset_SharpenTexFuncSGIS },
 #undef NAME
 
 	/* 25. GL_SGIS_multisample */
 #ifdef GL_SGIS_multisample
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glSampleMaskSGIS", (GLvoid *) NAME(glSampleMaskSGIS), _gloffset_SampleMaskSGIS },
-	{ "glSamplePatternSGIS", (GLvoid *) NAME(glSamplePatternSGIS), _gloffset_SamplePatternSGIS },
+	{ "glSampleMaskSGIS", NAME(glSampleMaskSGIS), _gloffset_SampleMaskSGIS },
+	{ "glSamplePatternSGIS", NAME(glSamplePatternSGIS), _gloffset_SamplePatternSGIS },
 #undef NAME
 
 	/* 30. GL_EXT_vertex_array */
 #ifdef GL_EXT_vertex_array
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glArrayElementEXT", (GLvoid *) NAME(glArrayElementEXT), _gloffset_ArrayElement },
-	{ "glColorPointerEXT", (GLvoid *) NAME(glColorPointerEXT), _gloffset_ColorPointerEXT },
-	{ "glDrawArraysEXT", (GLvoid *) NAME(glDrawArraysEXT), _gloffset_DrawArrays },
-	{ "glEdgeFlagPointerEXT", (GLvoid *) NAME(glEdgeFlagPointerEXT), _gloffset_EdgeFlagPointerEXT },
-	{ "glGetPointervEXT", (GLvoid *) NAME(glGetPointervEXT), _gloffset_GetPointerv },
-	{ "glIndexPointerEXT", (GLvoid *) NAME(glIndexPointerEXT), _gloffset_IndexPointerEXT },
-	{ "glNormalPointerEXT", (GLvoid *) NAME(glNormalPointerEXT), _gloffset_NormalPointerEXT },
-	{ "glTexCoordPointerEXT", (GLvoid *) NAME(glTexCoordPointerEXT), _gloffset_TexCoordPointerEXT },
-	{ "glVertexPointerEXT", (GLvoid *) NAME(glVertexPointerEXT), _gloffset_VertexPointerEXT },
+	{ "glArrayElementEXT", NAME(glArrayElementEXT), _gloffset_ArrayElement },
+	{ "glColorPointerEXT", NAME(glColorPointerEXT), _gloffset_ColorPointerEXT },
+	{ "glDrawArraysEXT", NAME(glDrawArraysEXT), _gloffset_DrawArrays },
+	{ "glEdgeFlagPointerEXT", NAME(glEdgeFlagPointerEXT), _gloffset_EdgeFlagPointerEXT },
+	{ "glGetPointervEXT", NAME(glGetPointervEXT), _gloffset_GetPointerv },
+	{ "glIndexPointerEXT", NAME(glIndexPointerEXT), _gloffset_IndexPointerEXT },
+	{ "glNormalPointerEXT", NAME(glNormalPointerEXT), _gloffset_NormalPointerEXT },
+	{ "glTexCoordPointerEXT", NAME(glTexCoordPointerEXT), _gloffset_TexCoordPointerEXT },
+	{ "glVertexPointerEXT", NAME(glVertexPointerEXT), _gloffset_VertexPointerEXT },
 #undef NAME
 
 	/* 37. GL_EXT_blend_minmax */
 #ifdef GL_EXT_blend_minmax
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glBlendEquationEXT", (GLvoid *) NAME(glBlendEquationEXT), _gloffset_BlendEquation },
+	{ "glBlendEquationEXT", NAME(glBlendEquationEXT), _gloffset_BlendEquation },
 #undef NAME
 
 	/* 52. GL_SGIX_sprite */
 #ifdef GL_SGIX_sprite
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glSpriteParameterfSGIX", (GLvoid *) NAME(glSpriteParameterfSGIX), _gloffset_SpriteParameterfSGIX },
-	{ "glSpriteParameterfvSGIX", (GLvoid *) NAME(glSpriteParameterfvSGIX), _gloffset_SpriteParameterfvSGIX },
-	{ "glSpriteParameteriSGIX", (GLvoid *) NAME(glSpriteParameteriSGIX), _gloffset_SpriteParameteriSGIX },
-	{ "glSpriteParameterivSGIX", (GLvoid *) NAME(glSpriteParameterivSGIX), _gloffset_SpriteParameterivSGIX },
+	{ "glSpriteParameterfSGIX", NAME(glSpriteParameterfSGIX), _gloffset_SpriteParameterfSGIX },
+	{ "glSpriteParameterfvSGIX", NAME(glSpriteParameterfvSGIX), _gloffset_SpriteParameterfvSGIX },
+	{ "glSpriteParameteriSGIX", NAME(glSpriteParameteriSGIX), _gloffset_SpriteParameteriSGIX },
+	{ "glSpriteParameterivSGIX", NAME(glSpriteParameterivSGIX), _gloffset_SpriteParameterivSGIX },
 #undef NAME
 
 	/* 54. GL_EXT_point_parameters */
 #ifdef GL_EXT_point_parameters
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glPointParameterfEXT", (GLvoid *) NAME(glPointParameterfEXT), _gloffset_PointParameterfEXT },
-	{ "glPointParameterfvEXT", (GLvoid *) NAME(glPointParameterfvEXT), _gloffset_PointParameterfvEXT },
+	{ "glPointParameterfEXT", NAME(glPointParameterfEXT), _gloffset_PointParameterfEXT },
+	{ "glPointParameterfvEXT", NAME(glPointParameterfvEXT), _gloffset_PointParameterfvEXT },
+	{ "glPointParameterfSGIS", NAME(glPointParameterfSGIS), _gloffset_PointParameterfEXT },
+	{ "glPointParameterfvSGIS", NAME(glPointParameterfvSGIS), _gloffset_PointParameterfvEXT },
 #undef NAME
 
 	/* 55. GL_SGIX_instruments */
 #ifdef GL_SGIX_instruments
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glInstrumentsBufferSGIX", (GLvoid *) NAME(glInstrumentsBufferSGIX), _gloffset_InstrumentsBufferSGIX },
-	{ "glStartInstrumentsSGIX", (GLvoid *) NAME(glStartInstrumentsSGIX), _gloffset_StartInstrumentsSGIX },
-	{ "glStopInstrumentsSGIX", (GLvoid *) NAME(glStopInstrumentsSGIX), _gloffset_StopInstrumentsSGIX },
-	{ "glReadInstrumentsSGIX", (GLvoid *) NAME(glReadInstrumentsSGIX), _gloffset_ReadInstrumentsSGIX },
-	{ "glPollInstrumentsSGIX", (GLvoid *) NAME(glPollInstrumentsSGIX), _gloffset_PollInstrumentsSGIX },
-	{ "glGetInstrumentsSGIX", (GLvoid *) NAME(glGetInstrumentsSGIX), _gloffset_GetInstrumentsSGIX },
+	{ "glInstrumentsBufferSGIX", NAME(glInstrumentsBufferSGIX), _gloffset_InstrumentsBufferSGIX },
+	{ "glStartInstrumentsSGIX", NAME(glStartInstrumentsSGIX), _gloffset_StartInstrumentsSGIX },
+	{ "glStopInstrumentsSGIX", NAME(glStopInstrumentsSGIX), _gloffset_StopInstrumentsSGIX },
+	{ "glReadInstrumentsSGIX", NAME(glReadInstrumentsSGIX), _gloffset_ReadInstrumentsSGIX },
+	{ "glPollInstrumentsSGIX", NAME(glPollInstrumentsSGIX), _gloffset_PollInstrumentsSGIX },
+	{ "glGetInstrumentsSGIX", NAME(glGetInstrumentsSGIX), _gloffset_GetInstrumentsSGIX },
 #undef NAME
 
 	/* 57. GL_SGIX_framezoom */
 #ifdef GL_SGIX_framezoom
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glFrameZoomSGIX", (GLvoid *) NAME(glFrameZoomSGIX), _gloffset_FrameZoomSGIX },
+	{ "glFrameZoomSGIX", NAME(glFrameZoomSGIX), _gloffset_FrameZoomSGIX },
 #undef NAME
 
         /* 58. GL_SGIX_tag_sample_buffer */
 #ifdef GL_SGIX_tag_sample_buffer
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glTagSampleBufferSGIX", (GLvoid *) NAME(glTagSampleBufferSGIX), _gloffset_TagSampleBufferSGIX },
+	{ "glTagSampleBufferSGIX", NAME(glTagSampleBufferSGIX), _gloffset_TagSampleBufferSGIX },
 #undef NAME
 
 	/* 60. GL_SGIX_reference_plane */
 #ifdef GL_SGIX_reference_plane
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glReferencePlaneSGIX", (GLvoid *) NAME(glReferencePlaneSGIX), _gloffset_ReferencePlaneSGIX },
+	{ "glReferencePlaneSGIX", NAME(glReferencePlaneSGIX), _gloffset_ReferencePlaneSGIX },
 #undef NAME
 
 	/* 61. GL_SGIX_flush_raster */
 #ifdef GL_SGIX_flush_raster
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glFlushRasterSGIX", (GLvoid *) NAME(glFlushRasterSGIX), _gloffset_FlushRasterSGIX },
+	{ "glFlushRasterSGIX", NAME(glFlushRasterSGIX), _gloffset_FlushRasterSGIX },
 #undef NAME
 
 	/* 66. GL_HP_image_transform */
 #if 0
 #ifdef GL_HP_image_transform
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glGetImageTransformParameterfvHP", (GLvoid *) NAME(glGetImageTransformParameterfvHP), _gloffset_GetImageTransformParameterfvHP },
-	{ "glGetImageTransformParameterivHP", (GLvoid *) NAME(glGetImageTransformParameterivHP), _gloffset_GetImageTransformParameterivHP },
-	{ "glImageTransformParameterfHP", (GLvoid *) NAME(glImageTransformParameterfHP), _gloffset_ImageTransformParameterfHP },
-	{ "glImageTransformParameterfvHP", (GLvoid *) NAME(glImageTransformParameterfvHP), _gloffset_ImageTransformParameterfvHP },
-	{ "glImageTransformParameteriHP", (GLvoid *) NAME(glImageTransformParameteriHP), _gloffset_ImageTransformParameteriHP },
-	{ "glImageTransformParameterivHP", (GLvoid *) NAME(glImageTransformParameterivHP), _gloffset_ImageTransformParameterivHP },
+	{ "glGetImageTransformParameterfvHP", NAME(glGetImageTransformParameterfvHP), _gloffset_GetImageTransformParameterfvHP },
+	{ "glGetImageTransformParameterivHP", NAME(glGetImageTransformParameterivHP), _gloffset_GetImageTransformParameterivHP },
+	{ "glImageTransformParameterfHP", NAME(glImageTransformParameterfHP), _gloffset_ImageTransformParameterfHP },
+	{ "glImageTransformParameterfvHP", NAME(glImageTransformParameterfvHP), _gloffset_ImageTransformParameterfvHP },
+	{ "glImageTransformParameteriHP", NAME(glImageTransformParameteriHP), _gloffset_ImageTransformParameteriHP },
+	{ "glImageTransformParameterivHP", NAME(glImageTransformParameterivHP), _gloffset_ImageTransformParameterivHP },
 #undef NAME
 #endif
 
 	/* 74. GL_EXT_color_subtable */
 #ifdef GL_EXT_color_subtable
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glColorSubTableEXT", (GLvoid *) NAME(glColorSubTableEXT), _gloffset_ColorSubTable },
-	{ "glCopyColorSubTableEXT", (GLvoid *) NAME(glCopyColorSubTableEXT), _gloffset_CopyColorSubTable },
+	{ "glColorSubTableEXT", NAME(glColorSubTableEXT), _gloffset_ColorSubTable },
+	{ "glCopyColorSubTableEXT", NAME(glCopyColorSubTableEXT), _gloffset_CopyColorSubTable },
 #undef NAME
 
 	/* 77. GL_PGI_misc_hints */
 #ifdef GL_PGI_misc_hints
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glHintPGI", (GLvoid *) NAME(glHintPGI), _gloffset_HintPGI },
+	{ "glHintPGI", NAME(glHintPGI), _gloffset_HintPGI },
 #undef NAME
 
 	/* 78. GL_EXT_paletted_texture */
 #ifdef GL_EXT_paletted_texture
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glColorTableEXT", (GLvoid *) NAME(glColorTableEXT), _gloffset_ColorTable },
-	{ "glGetColorTableEXT", (GLvoid *) NAME(glGetColorTableEXT), _gloffset_GetColorTable },
-	{ "glGetColorTableParameterfvEXT", (GLvoid *) NAME(glGetColorTableParameterfvEXT), _gloffset_GetColorTableParameterfv },
-	{ "glGetColorTableParameterivEXT", (GLvoid *) NAME(glGetColorTableParameterivEXT), _gloffset_GetColorTableParameteriv },
+	{ "glColorTableEXT", NAME(glColorTableEXT), _gloffset_ColorTable },
+	{ "glGetColorTableEXT", NAME(glGetColorTableEXT), _gloffset_GetColorTable },
+	{ "glGetColorTableParameterfvEXT", NAME(glGetColorTableParameterfvEXT), _gloffset_GetColorTableParameterfv },
+	{ "glGetColorTableParameterivEXT", NAME(glGetColorTableParameterivEXT), _gloffset_GetColorTableParameteriv },
 #undef NAME
 
 	/* 80. GL_SGIX_list_priority */
 #ifdef GL_SGIX_list_priority
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glGetListParameterfvSGIX", (GLvoid *) NAME(glGetListParameterfvSGIX), _gloffset_GetListParameterfvSGIX },
-	{ "glGetListParameterivSGIX", (GLvoid *) NAME(glGetListParameterivSGIX), _gloffset_GetListParameterivSGIX },
-	{ "glListParameterfSGIX", (GLvoid *) NAME(glListParameterfSGIX), _gloffset_ListParameterfSGIX },
-	{ "glListParameterfvSGIX", (GLvoid *) NAME(glListParameterfvSGIX), _gloffset_ListParameterfvSGIX },
-	{ "glListParameteriSGIX", (GLvoid *) NAME(glListParameteriSGIX), _gloffset_ListParameteriSGIX },
-	{ "glListParameterivSGIX", (GLvoid *) NAME(glListParameterivSGIX), _gloffset_ListParameterivSGIX },
+	{ "glGetListParameterfvSGIX", NAME(glGetListParameterfvSGIX), _gloffset_GetListParameterfvSGIX },
+	{ "glGetListParameterivSGIX", NAME(glGetListParameterivSGIX), _gloffset_GetListParameterivSGIX },
+	{ "glListParameterfSGIX", NAME(glListParameterfSGIX), _gloffset_ListParameterfSGIX },
+	{ "glListParameterfvSGIX", NAME(glListParameterfvSGIX), _gloffset_ListParameterfvSGIX },
+	{ "glListParameteriSGIX", NAME(glListParameteriSGIX), _gloffset_ListParameteriSGIX },
+	{ "glListParameterivSGIX", NAME(glListParameterivSGIX), _gloffset_ListParameterivSGIX },
 #undef NAME
 
 	/* 94. GL_EXT_index_material */
 #ifdef GL_EXT_index_material
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glIndexMaterialEXT", (GLvoid *) NAME(glIndexMaterialEXT), _gloffset_IndexMaterialEXT },
+	{ "glIndexMaterialEXT", NAME(glIndexMaterialEXT), _gloffset_IndexMaterialEXT },
 #undef NAME
 
 	/* 95. GL_EXT_index_func */
 #ifdef GL_EXT_index_func
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glIndexFuncEXT", (GLvoid *) NAME(glIndexFuncEXT), _gloffset_IndexFuncEXT },
+	{ "glIndexFuncEXT", NAME(glIndexFuncEXT), _gloffset_IndexFuncEXT },
 #undef NAME
 
 	/* 97. GL_EXT_compiled_vertex_array */
 #ifdef GL_EXT_compiled_vertex_array
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glLockArraysEXT", (GLvoid *) NAME(glLockArraysEXT), _gloffset_LockArraysEXT },
-	{ "glUnlockArraysEXT", (GLvoid *) NAME(glUnlockArraysEXT), _gloffset_UnlockArraysEXT },
+	{ "glLockArraysEXT", NAME(glLockArraysEXT), _gloffset_LockArraysEXT },
+	{ "glUnlockArraysEXT", NAME(glUnlockArraysEXT), _gloffset_UnlockArraysEXT },
 #undef NAME
 
 	/* 98. GL_EXT_cull_vertex */
 #ifdef GL_EXT_cull_vertex
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glCullParameterfvEXT", (GLvoid *) NAME(glCullParameterfvEXT), _gloffset_CullParameterfvEXT },
-	{ "glCullParameterdvEXT", (GLvoid *) NAME(glCullParameterdvEXT), _gloffset_CullParameterdvEXT },
+	{ "glCullParameterfvEXT", NAME(glCullParameterfvEXT), _gloffset_CullParameterfvEXT },
+	{ "glCullParameterdvEXT", NAME(glCullParameterdvEXT), _gloffset_CullParameterdvEXT },
 #undef NAME
 
         /* 102. GL_SGIX_fragment_lighting */
 #ifdef GL_SGIX_fragment_lighting
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glFragmentColorMaterialSGIX", (GLvoid *) NAME(glFragmentColorMaterialSGIX), _gloffset_FragmentColorMaterialSGIX },
-	{ "glFragmentLightfSGIX", (GLvoid *) NAME(glFragmentLightfSGIX), _gloffset_FragmentLightfSGIX },
-	{ "glFragmentLightfvSGIX", (GLvoid *) NAME(glFragmentLightfvSGIX), _gloffset_FragmentLightfvSGIX },
-	{ "glFragmentLightiSGIX", (GLvoid *) NAME(glFragmentLightiSGIX), _gloffset_FragmentLightiSGIX },
-	{ "glFragmentLightivSGIX", (GLvoid *) NAME(glFragmentLightivSGIX), _gloffset_FragmentLightivSGIX },
-	{ "glFragmentLightModelfSGIX", (GLvoid *) NAME(glFragmentLightModelfSGIX), _gloffset_FragmentLightModelfSGIX },
-	{ "glFragmentLightModelfvSGIX", (GLvoid *) NAME(glFragmentLightModelfvSGIX), _gloffset_FragmentLightModelfvSGIX },
-	{ "glFragmentLightModeliSGIX", (GLvoid *) NAME(glFragmentLightModeliSGIX), _gloffset_FragmentLightModeliSGIX },
-	{ "glFragmentLightModelivSGIX", (GLvoid *) NAME(glFragmentLightModelivSGIX), _gloffset_FragmentLightModelivSGIX },
-	{ "glFragmentMaterialfSGIX", (GLvoid *) NAME(glFragmentMaterialfSGIX), _gloffset_FragmentMaterialfSGIX },
-	{ "glFragmentMaterialfvSGIX", (GLvoid *) NAME(glFragmentMaterialfvSGIX), _gloffset_FragmentMaterialfvSGIX },
-	{ "glFragmentMaterialiSGIX", (GLvoid *) NAME(glFragmentMaterialiSGIX), _gloffset_FragmentMaterialiSGIX },
-	{ "glFragmentMaterialivSGIX", (GLvoid *) NAME(glFragmentMaterialivSGIX), _gloffset_FragmentMaterialivSGIX },
-	{ "glGetFragmentLightfvSGIX", (GLvoid *) NAME(glGetFragmentLightfvSGIX), _gloffset_GetFragmentLightfvSGIX },
-	{ "glGetFragmentLightivSGIX", (GLvoid *) NAME(glGetFragmentLightivSGIX), _gloffset_GetFragmentLightivSGIX },
-	{ "glGetFragmentMaterialfvSGIX", (GLvoid *) NAME(glGetFragmentMaterialfvSGIX), _gloffset_GetFragmentMaterialfvSGIX },
-	{ "glGetFragmentMaterialivSGIX", (GLvoid *) NAME(glGetFragmentMaterialivSGIX), _gloffset_GetFragmentMaterialivSGIX },
-	{ "glLightEnviSGIX", (GLvoid *) NAME(glLightEnviSGIX), _gloffset_LightEnviSGIX },
+	{ "glFragmentColorMaterialSGIX", NAME(glFragmentColorMaterialSGIX), _gloffset_FragmentColorMaterialSGIX },
+	{ "glFragmentLightfSGIX", NAME(glFragmentLightfSGIX), _gloffset_FragmentLightfSGIX },
+	{ "glFragmentLightfvSGIX", NAME(glFragmentLightfvSGIX), _gloffset_FragmentLightfvSGIX },
+	{ "glFragmentLightiSGIX", NAME(glFragmentLightiSGIX), _gloffset_FragmentLightiSGIX },
+	{ "glFragmentLightivSGIX", NAME(glFragmentLightivSGIX), _gloffset_FragmentLightivSGIX },
+	{ "glFragmentLightModelfSGIX", NAME(glFragmentLightModelfSGIX), _gloffset_FragmentLightModelfSGIX },
+	{ "glFragmentLightModelfvSGIX", NAME(glFragmentLightModelfvSGIX), _gloffset_FragmentLightModelfvSGIX },
+	{ "glFragmentLightModeliSGIX", NAME(glFragmentLightModeliSGIX), _gloffset_FragmentLightModeliSGIX },
+	{ "glFragmentLightModelivSGIX", NAME(glFragmentLightModelivSGIX), _gloffset_FragmentLightModelivSGIX },
+	{ "glFragmentMaterialfSGIX", NAME(glFragmentMaterialfSGIX), _gloffset_FragmentMaterialfSGIX },
+	{ "glFragmentMaterialfvSGIX", NAME(glFragmentMaterialfvSGIX), _gloffset_FragmentMaterialfvSGIX },
+	{ "glFragmentMaterialiSGIX", NAME(glFragmentMaterialiSGIX), _gloffset_FragmentMaterialiSGIX },
+	{ "glFragmentMaterialivSGIX", NAME(glFragmentMaterialivSGIX), _gloffset_FragmentMaterialivSGIX },
+	{ "glGetFragmentLightfvSGIX", NAME(glGetFragmentLightfvSGIX), _gloffset_GetFragmentLightfvSGIX },
+	{ "glGetFragmentLightivSGIX", NAME(glGetFragmentLightivSGIX), _gloffset_GetFragmentLightivSGIX },
+	{ "glGetFragmentMaterialfvSGIX", NAME(glGetFragmentMaterialfvSGIX), _gloffset_GetFragmentMaterialfvSGIX },
+	{ "glGetFragmentMaterialivSGIX", NAME(glGetFragmentMaterialivSGIX), _gloffset_GetFragmentMaterialivSGIX },
+	{ "glLightEnviSGIX", NAME(glLightEnviSGIX), _gloffset_LightEnviSGIX },
 #undef NAME
+
+        /* 112. GL_EXT_draw_range_elements */
+#if 000
+#ifdef GL_EXT_draw_range_elements
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glDrawRangeElementsEXT", NAME(glDrawRangeElementsEXT), _gloffset_DrawRangeElementsEXT },
+#undef NAME
+#endif
+
+        /* 117. GL_EXT_light_texture */
+#if 000
+#ifdef GL_EXT_light_texture
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glApplyTextureEXT", NAME(glApplyTextureEXT), _gloffset_ApplyTextureEXT },
+        { "glTextureLightEXT", NAME(glTextureLightEXT), _gloffset_TextureLightEXT },
+        { "glTextureMaterialEXT", NAME(glTextureMaterialEXT), _gloffset_TextureMaterialEXT },
+#undef NAME
+
+        /* 135. GL_INTEL_texture_scissor */
+#ifdef GL_INTEL_texture_scissor
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glTexScissorINTEL", NAME(glTexScissorINTEL), _gloffset_TexScissorINTEL },
+        { "glTexScissorFuncINTEL", NAME(glTexScissorFuncINTEL), _gloffset_glTexScissorFuncINTEL },
+#undef NAME
+
+        /* 136. GL_INTEL_parallel_arrays */
+#ifdef GL_INTEL_parallel_arrays
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glVertexPointervINTEL", NAME(glVertexPointervINTEL), _gloffset_VertexPointervINTEL },
+        { "glNormalPointervINTEL", NAME(glNormalPointervINTEL), _gloffset_NormalPointervINTEL },
+        { "glColorPointervINTEL", NAME(glColorPointervINTEL), _gloffset_ColorPointervINTEL },
+        { "glTexCoordPointervINTEL", NAME(glTexCoordPointervINTEL), _gloffset_glxCoordPointervINTEL },
+#undef NAME
+#endif
+
+        /* 138. GL_EXT_pixel_transform */
+#if 000
+#ifdef GL_EXT_pixel_transform
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glPixelTransformParameteriEXT", NAME(glPixelTransformParameteriEXT), _gloffset_PixelTransformParameteriEXT },
+        { "glPixelTransformParameterfEXT", NAME(glPixelTransformParameterfEXT), _gloffset_PixelTransformParameterfEXT },
+        { "glPixelTransformParameterivEXT", NAME(glPixelTransformParameterivEXT), _gloffset_PixelTransformParameterivEXT },
+        { "glPixelTransformParameterfvEXT", NAME(glPixelTransformParameterfvEXT), _gloffset_PixelTransformParameterfvEXT },
+        { "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
+        { "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
+#undef NAME
+
+        /* 145. GL_EXT_secondary_color */
+#ifdef GL_EXT_secondary_color
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glSecondaryColor3bEXT", NAME(glSecondaryColor3bEXT), _gloffset_SecondaryColor3bEXT },
+        { "glSecondaryColor3dEXT", NAME(glSecondaryColor3dEXT), _gloffset_SecondaryColor3dEXT },
+        { "glSecondaryColor3fEXT", NAME(glSecondaryColor3fEXT), _gloffset_SecondaryColor3fEXT },
+        { "glSecondaryColor3iEXT", NAME(glSecondaryColor3iEXT), _gloffset_SecondaryColor3iEXT },
+        { "glSecondaryColor3sEXT", NAME(glSecondaryColor3sEXT), _gloffset_SecondaryColor3sEXT },
+        { "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
+        { "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
+        { "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
+        { "glSecondaryColor4bEXT", NAME(glSecondaryColor4bEXT), _gloffset_SecondaryColor4bEXT },
+        { "glSecondaryColor4dEXT", NAME(glSecondaryColor4dEXT), _gloffset_SecondaryColor4dEXT },
+        { "glSecondaryColor4fEXT", NAME(glSecondaryColor4fEXT), _gloffset_SecondaryColor4fEXT },
+        { "glSecondaryColor4iEXT", NAME(glSecondaryColor4iEXT), _gloffset_SecondaryColor4iEXT },
+        { "glSecondaryColor4sEXT", NAME(glSecondaryColor4sEXT), _gloffset_SecondaryColor4sEXT },
+        { "glSecondaryColor4ubEXT", NAME(glSecondaryColor4ubEXT), _gloffset_SecondaryColor4ubEXT },
+        { "glSecondaryColor4uiEXT", NAME(glSecondaryColor4uiEXT), _gloffset_SecondaryColor4uiEXT },
+        { "glSecondaryColor4usEXT", NAME(glSecondaryColor4usEXT), _gloffset_SecondaryColor4usEXT },
+        { "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
+	{ "glSecondaryColor3dvEXT", NAME(glSecondaryColor3dvEXT), _gloffset_SecondaryColor3dvEXT },
+	{ "glSecondaryColor3fvEXT", NAME(glSecondaryColor3fvEXT), _gloffset_SecondaryColor3fvEXT },
+	{ "glSecondaryColor3ivEXT", NAME(glSecondaryColor3ivEXT), _gloffset_SecondaryColor3ivEXT },
+	{ "glSecondaryColor3svEXT", NAME(glSecondaryColor3svEXT), _gloffset_SecondaryColor3svEXT },
+	{ "glSecondaryColor3ubvEXT", NAME(glSecondaryColor3ubvEXT), _gloffset_SecondaryColor3ubvEXT },
+	{ "glSecondaryColor3uivEXT", NAME(glSecondaryColor3uivEXT), _gloffset_SecondaryColor3uivEXT },
+	{ "glSecondaryColor3usvEXT", NAME(glSecondaryColor3usvEXT), _gloffset_SecondaryColor3usvEXT },
+	{ "glSecondaryColor4bvEXT", NAME(glSecondaryColor4bvEXT), _gloffset_SecondaryColor4bvEXT },
+	{ "glSecondaryColor4dvEXT", NAME(glSecondaryColor4dvEXT), _gloffset_SecondaryColor4dvEXT },
+	{ "glSecondaryColor4fvEXT", NAME(glSecondaryColor4fvEXT), _gloffset_SecondaryColor4fvEXT },
+	{ "glSecondaryColor4ivEXT", NAME(glSecondaryColor4ivEXT), _gloffset_SecondaryColor4ivEXT },
+	{ "glSecondaryColor4svEXT", NAME(glSecondaryColor4svEXT), _gloffset_SecondaryColor4svEXT },
+	{ "glSecondaryColor4ubvEXT", NAME(glSecondaryColor4ubvEXT), _gloffset_SecondaryColor4ubvEXT },
+	{ "glSecondaryColor4uivEXT", NAME(glSecondaryColor4uivEXT), _gloffset_SecondaryColor4uivEXT },
+	{ "glSecondaryColor4usvEXT", NAME(glSecondaryColor4usvEXT), _gloffset_SecondaryColor4usvEXT },
+	{ "glSecondaryColorPointerEXT", NAME(glSecondaryColorPointerEXT), _gloffset_SecondaryColorPointerEXT },
+#undef NAME
+
+	/* 147. GL_EXT_texture_perturb_normal */
+#ifdef GL_EXT_texture_perturb_normal
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glTextureNormalEXT", NAME(glTextureNormalEXT), _gloffset_TextureNormalEXT },
+#undef NAME
+
+	/* 148. GL_EXT_multi_draw_arrays */
+#ifdef GL_EXT_multi_draw_arrays
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glMultiDrawArraysEXT", NAME(glMultiDrawArraysEXT), _gloffset_MultiDrawArraysEXT },
+#undef NAME
+#endif
 
 	/* 149. GL_EXT_fog_coord */
 #ifdef GL_EXT_fog_coord
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glFogCoordfEXT", (GLvoid *) NAME(glFogCoordfEXT), _gloffset_FogCoordfEXT },
-	{ "glFogCoordfvEXT", (GLvoid *) NAME(glFogCoordfvEXT), _gloffset_FogCoordfvEXT },
-	{ "glFogCoorddEXT", (GLvoid *) NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
-	{ "glFogCoorddEXT", (GLvoid *) NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
-	{ "glFogCoordPointerEXT", (GLvoid *) NAME(glFogCoordPointerEXT), _gloffset_FogCoordPointerEXT },
+	{ "glFogCoordfEXT", NAME(glFogCoordfEXT), _gloffset_FogCoordfEXT },
+	{ "glFogCoordfvEXT", NAME(glFogCoordfvEXT), _gloffset_FogCoordfvEXT },
+	{ "glFogCoorddEXT", NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
+	{ "glFogCoorddEXT", NAME(glFogCoorddEXT), _gloffset_FogCoorddEXT },
+	{ "glFogCoordPointerEXT", NAME(glFogCoordPointerEXT), _gloffset_FogCoordPointerEXT },
 #undef NAME
+
+#if 000
+	/* 156. GL_EXT_coordinate_frame */
+#ifdef GL_EXT_coordinate_frame
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glTangent3bEXT", NAME(glTangent3bEXT), _gloffset_Tangent3bEXT },
+	{ "glTangent3dEXT", NAME(glTangent3dEXT), _gloffset_Tangent3dEXT },
+	{ "glTangent3fEXT", NAME(glTangent3fEXT), _gloffset_Tangent3fEXT },
+	{ "glTangent3iEXT", NAME(glTangent3iEXT), _gloffset_Tangent3iEXT },
+	{ "glTangent3sEXT", NAME(glTangent3sEXT), _gloffset_Tangent3sEXT },
+	{ "glTangent3bvEXT", NAME(glTangent3bvEXT), _gloffset_Tangent3bvEXT },
+	{ "glTangent3dvEXT", NAME(glTangent3dvEXT), _gloffset_Tangent3dvEXT },
+	{ "glTangent3fvEXT", NAME(glTangent3fvEXT), _gloffset_Tangent3fvEXT },
+	{ "glTangent3ivEXT", NAME(glTangent3ivEXT), _gloffset_Tangent3ivEXT },
+	{ "glTangent3svEXT", NAME(glTangent3svEXT), _gloffset_Tangent3svEXT },
+	{ "glBinormal3bEXT", NAME(glBinormal3bEXT), _gloffset_Binormal3bEXT },
+	{ "glBinormal3dEXT", NAME(glBinormal3dEXT), _gloffset_Binormal3dEXT },
+	{ "glBinormal3fEXT", NAME(glBinormal3fEXT), _gloffset_Binormal3fEXT },
+	{ "glBinormal3iEXT", NAME(glBinormal3iEXT), _gloffset_Binormal3iEXT },
+	{ "glBinormal3sEXT", NAME(glBinormal3sEXT), _gloffset_Binormal3sEXT },
+	{ "glBinormal3bvEXT", NAME(glBinormal3bvEXT), _gloffset_Binormal3bvEXT },
+	{ "glBinormal3dvEXT", NAME(glBinormal3dvEXT), _gloffset_Binormal3dvEXT },
+	{ "glBinormal3fvEXT", NAME(glBinormal3fvEXT), _gloffset_Binormal3fvEXT },
+	{ "glBinormal3ivEXT", NAME(glBinormal3ivEXT), _gloffset_Binormal3ivEXT },
+	{ "glBinormal3svEXT", NAME(glBinormal3svEXT), _gloffset_Binormal3svEXT },
+	{ "glTangentPointerEXT", NAME(glTangentPointerEXT), _gloffset_TangentPointerEXT },
+	{ "glBinormalPointerEXT", NAME(glBinormalPointerEXT), _gloffset_BinormalPointerEXT },
+#undef NAME
+
+	/* 164. GL_SUN_global_alpha */
+#ifdef GL_SUN_global_alpha
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glGlobalAlphaFactorbSUN", NAME(glGlobalAlphaFactorbSUN), _gloffset_GlobalAlphaFactorbSUN },
+	{ "glGlobalAlphaFactorsSUN", NAME(glGlobalAlphaFactorsSUN), _gloffset_GlobalAlphaFactorsSUN },
+	{ "glGlobalAlphaFactoriSUN", NAME(glGlobalAlphaFactoriSUN), _gloffset_GlobalAlphaFactoriSUN },
+	{ "glGlobalAlphaFactorfSUN", NAME(glGlobalAlphaFactorfSUN), _gloffset_GlobalAlphaFactorfSUN },
+	{ "glGlobalAlphaFactordSUN", NAME(glGlobalAlphaFactordSUN), _gloffset_GlobalAlphaFactordSUN },
+	{ "glGlobalAlphaFactorubSUN", NAME(glGlobalAlphaFactorubSUN), _gloffset_GlobalAlphaFactorubSUN },
+	{ "glGlobalAlphaFactorusSUN", NAME(glGlobalAlphaFactorusSUN), _gloffset_GlobalAlphaFactorusSUN },
+	{ "glGlobalAlphaFactoruiSUN", NAME(glGlobalAlphaFactoruiSUN), _gloffset_GlobalAlphaFactoruiSUN },
+#undef NAME
+
+	/* 165. GL_SUN_triangle_list */
+#ifdef GL_SUN_triangle_list
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glReplacementCodeuiSUN", NAME(glReplacementCodeuiSUN), _gloffset_ReplacementCodeuiSUN },
+	{ "glReplacementCodeusSUN", NAME(glReplacementCodeusSUN), _gloffset_ReplacementCodeusSUN },
+	{ "glReplacementCodeubSUN", NAME(glReplacementCodeubSUN), _gloffset_ReplacementCodeubSUN },
+	{ "glReplacementCodeuivSUN", NAME(glReplacementCodeuivSUN), _gloffset_ReplacementCodeuivSUN },
+	{ "glReplacementCodeusvSUN", NAME(glReplacementCodeusvSUN), _gloffset_ReplacementCodeusvSUN },
+	{ "glReplacementCodeubvSUN", NAME(glReplacementCodeubvSUN), _gloffset_ReplacementCodeubvSUN },
+	{ "glReplacementCodePointerSUN", NAME(glReplacementCodePointerSUN), _gloffset_ReplacementCodePointerSUN },
+#undef NAME
+
+	/* 166. GL_SUN_vertex */
+#ifdef GL_SUN_vertex
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+	{ "glColor4ubVertex2fSUN", NAME(glColor4ubVertex2fSUN), _gloffset_Color4ubVertex2fSUN },
+	{ "glColor4ubVertex2fvSUN", NAME(glColor4ubVertex2fvSUN), _gloffset_Color4ubVertex2fvSUN },
+	{ "glColor4ubVertex3fSUN", NAME(glColor4ubVertex3fSUN), _gloffset_Color4ubVertex3fSUN },
+	{ "glColor4ubVertex3fvSUN", NAME(glColor4ubVertex3fvSUN), _gloffset_Color4ubVertex3fvSUN },
+	{ "glColor3fVertex3fSUN", NAME(glColor3fVertex3fSUN), _gloffset_Color3fVertex3fSUN },
+	{ "glColor3fVertex3fvSUN", NAME(glColor3fVertex3fvSUN), _gloffset_Color3fVertex3fvSUN },
+	{ "glNormal3fVertex3fSUN", NAME(glNormal3fVertex3fSUN), _gloffset_Normal3fVertex3fSUN },
+	{ "glNormal3fVertex3fvSUN", NAME(glNormal3fVertex3fvSUN), _gloffset_Normal3fVertex3fvSUN },
+	{ "glColor4fNormal3fVertex3fSUN", NAME(glColor4fNormal3fVertex3fSUN), _gloffset_Color4fNormal3fVertex3fSUN },
+	{ "glColor4fNormal3fVertex3fvSUN", NAME(glColor4fNormal3fVertex3fvSUN), _gloffset_Color4fNormal3fVertex3fvSUN },
+	{ "glTexCoord2fVertex3fSUN", NAME(glTexCoord2fVertex3fSUN), _gloffset_TexCoord2fVertex3fSUN },
+	{ "glTexCoord2fVertex3fvSUN", NAME(glTexCoord2fVertex3fvSUN), _gloffset_TexCoord2fVertex3fvSUN },
+	{ "glTexCoord4fVertex4fSUN", NAME(glTexCoord4fVertex4fSUN), _gloffset_TexCoord4fVertex4fSUN },
+	{ "glTexCoord4fVertex4fvSUN", NAME(glTexCoord4fVertex4fvSUN), _gloffset_TexCoord4fVertex4fvSUN },
+	{ "glTexCoord2fColor4ubVertex3fSUN", NAME(glTexCoord2fColor4ubVertex3fSUN), _gloffset_TexCoord2fColor4ubVertex3fSUN },
+	{ "glTexCoord2fColor4ubVertex3fvSUN", NAME(glTexCoord2fColor4ubVertex3fvSUN), _gloffset_TexCoord2fColor4ubVertex3fvSUN },
+	{ "glTexCoord2fColor3fVertex3fSUN", NAME(glTexCoord2fColor3fVertex3fSUN), _gloffset_TexCoord2fColor3fVertex3fSUN },
+	{ "glTexCoord2fColor3fVertex3fvSUN", NAME(glTexCoord2fColor3fVertex3fvSUN), _gloffset_TexCoord2fColor3fVertex3fvSUN },
+	{ "glTexCoord2fNormal3fVertex3fSUN", NAME(glTexCoord2fNormal3fVertex3fSUN), _gloffset_TexCoord2fNormal3fVertex3fSUN },
+	{ "glTexCoord2fNormal3fVertex3fvSUN", NAME(glTexCoord2fNormal3fVertex3fvSUN), _gloffset_TexCoord2fNormal3fVertex3fvSUN },
+	{ "glTexCoord2fColor4fNormal3fVertex3fSUN", NAME(glTexCoord2fColor4fNormal3fVertex3fSUN), _gloffset_TexCoord2fColor4fNormal3fVertex3fSUN },
+	{ "glTexCoord2fColor4fNormal3fVertex3fvSUN", NAME(glTexCoord2fColor4fNormal3fVertex3fvSUN), _gloffset_TexCoord2fColor4fNormal3fVertex3fvSUN },
+	{ "glTexCoord4fColor4fNormal3fVertex4fSUN", NAME(glTexCoord4fColor4fNormal3fVertex4fSUN), _gloffset_TexCoord4fColor4fNormal3fVertex4fSUN },
+	{ "glTexCoord4fColor4fNormal3fVertex4fvSUN", NAME(glTexCoord4fColor4fNormal3fVertex4fvSUN), _gloffset_TexCoord4fColor4fNormal3fVertex4fvSUN },
+	{ "glReplacementCodeuiVertex3fSUN", NAME(glReplacementCodeuiVertex3fSUN), _gloffset_ReplacementCodeuiVertex3fSUN },
+	{ "glReplacementCodeuiVertex3fvSUN", NAME(glReplacementCodeuiVertex3fvSUN), _gloffset_ReplacementCodeuiVertex3fvSUN },
+	{ "glReplacementCodeuiColor4ubVertex3fSUN", NAME(glReplacementCodeuiColor4ubVertex3fSUN), _gloffset_ReplacementCodeuiColor4ubVertex3fSUN },
+	{ "glReplacementCodeuiColor4ubVertex3fvSUN", NAME(glReplacementCodeuiColor4ubVertex3fvSUN), _gloffset_ReplacementCodeuiColor4ubVertex3fvSUN },
+	{ "glReplacementCodeuiColor3fVertex3fSUN", NAME(glReplacementCodeuiColor3fVertex3fSUN), _gloffset_ReplacementCodeuiColor3fVertex3fSUN },
+	{ "glReplacementCodeuiColor3fVertex3fvSUN", NAME(glReplacementCodeuiColor3fVertex3fvSUN), _gloffset_ReplacementCodeuiColor3fVertex3fvSUN },
+	{ "glReplacementCodeuiNormal3fVertex3fSUN", NAME(glReplacementCodeuiNormal3fVertex3fSUN), _gloffset_ReplacementCodeuiNormal3fVertex3fSUN },
+	{ "glReplacementCodeuiNormal3fVertex3fvSUN", NAME(glReplacementCodeuiNormal3fVertex3fvSUN), _gloffset_ReplacementCodeuiNormal3fVertex3fvSUN },
+	{ "glReplacementCodeuiColor4fNormal3fVertex3fSUN", NAME(glReplacementCodeuiColor4fNormal3fVertex3fSUN), _gloffset_ReplacementCodeuiColor4fNormal3fVertex3fSUN },
+	{ "glReplacementCodeuiColor4fNormal3fVertex3fvSUN", NAME(glReplacementCodeuiColor4fNormal3fVertex3fvSUN), _gloffset_ReplacementCodeuiColor4fNormal3fVertex3fvSUN },
+	{ "glReplacementCodeuiTexCoord2fVertex3fSUN", NAME(glReplacementCodeuiTexCoord2fVertex3fSUN), _gloffset_ReplacementCodeuiTexCoord2fVertex3fSUN },
+	{ "glReplacementCodeuiTexCoord2fVertex3fvSUN", NAME(glReplacementCodeuiTexCoord2fVertex3fvSUN), _gloffset_ReplacementCodeuiTexCoord2fVertex3fvSUN },
+	{ "glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN", NAME(glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN), _gloffset_ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN },
+	{ "glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN", NAME(glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN), _gloffset_ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN },
+	{ "glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN", NAME(glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN), _gloffset_ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN },
+	{ "glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN", NAME(glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN), _gloffset_ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN },
+#undef NAME
+#endif
 
 	/* 173. GL_EXT/INGR_blend_func_separate */
 #ifdef GL_EXT_blend_func_separate
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glBlendFuncSeparateEXT", (GLvoid *) NAME(glBlendFuncSeparateEXT), _gloffset_BlendFuncSeparateEXT },
-	{ "glBlendFuncSeparateINGR", (GLvoid *) NAME(glBlendFuncSeparateEXT), _gloffset_BlendFuncSeparateEXT },
+	{ "glBlendFuncSeparateEXT", NAME(glBlendFuncSeparateEXT), _gloffset_BlendFuncSeparateEXT },
+	{ "glBlendFuncSeparateINGR", NAME(glBlendFuncSeparateEXT), _gloffset_BlendFuncSeparateEXT },
 #undef NAME
 
 	/* 188. GL_EXT_vertex_weighting */
 #ifdef GL_EXT_vertex_weighting
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glVertexWeightfEXT", (GLvoid *) NAME(glVertexWeightfEXT), _gloffset_VertexWeightfEXT },
-	{ "glVertexWeightfvEXT", (GLvoid *) NAME(glVertexWeightfvEXT), _gloffset_VertexWeightfvEXT },
-	{ "glVertexWeightPointerEXT", (GLvoid *) NAME(glVertexWeightPointerEXT), _gloffset_VertexWeightPointerEXT },
+	{ "glVertexWeightfEXT", NAME(glVertexWeightfEXT), _gloffset_VertexWeightfEXT },
+	{ "glVertexWeightfvEXT", NAME(glVertexWeightfvEXT), _gloffset_VertexWeightfvEXT },
+	{ "glVertexWeightPointerEXT", NAME(glVertexWeightPointerEXT), _gloffset_VertexWeightPointerEXT },
 #undef NAME
 
         /* 190. GL_NV_vertex_array_range */
 #ifdef GL_NV_vertex_array_range
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glFlushVertexArrayRangeNV", (GLvoid *) NAME(glFlushVertexArrayRangeNV), _gloffset_FlushVertexArrayRangeNV },
-	{ "glVertexArrayRangeNV", (GLvoid *) NAME(glVertexArrayRangeNV), _gloffset_VertexArrayRangeNV },
+	{ "glFlushVertexArrayRangeNV", NAME(glFlushVertexArrayRangeNV), _gloffset_FlushVertexArrayRangeNV },
+	{ "glVertexArrayRangeNV", NAME(glVertexArrayRangeNV), _gloffset_VertexArrayRangeNV },
 #undef NAME
 
 	/* 191. GL_NV_register_combiners */
 #ifdef GL_NV_register_combiners
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glCombinerParameterfvNV", (GLvoid *) NAME(glCombinerParameterfvNV), _gloffset_CombinerParameterfvNV },
-	{ "glCombinerParameterfNV", (GLvoid *) NAME(glCombinerParameterfNV), _gloffset_CombinerParameterfNV },
-	{ "glCombinerParameterivNV", (GLvoid *) NAME(glCombinerParameterivNV), _gloffset_CombinerParameterivNV },
-	{ "glCombinerParameteriNV", (GLvoid *) NAME(glCombinerParameteriNV), _gloffset_CombinerParameteriNV },
-	{ "glCombinerInputNV", (GLvoid *) NAME(glCombinerInputNV), _gloffset_CombinerInputNV },
-	{ "glCombinerOutputNV", (GLvoid *) NAME(glCombinerOutputNV), _gloffset_CombinerOutputNV },
-	{ "glFinalCombinerInputNV", (GLvoid *) NAME(glFinalCombinerInputNV), _gloffset_FinalCombinerInputNV },
-	{ "glGetCombinerInputParameterfvNV", (GLvoid *) NAME(glGetCombinerInputParameterfvNV), _gloffset_GetCombinerInputParameterfvNV },
-	{ "glGetCombinerInputParameterivNV", (GLvoid *) NAME(glGetCombinerInputParameterivNV), _gloffset_GetCombinerInputParameterivNV },
-	{ "glGetCombinerOutputParameterfvNV", (GLvoid *) NAME(glGetCombinerOutputParameterfvNV), _gloffset_GetCombinerOutputParameterfvNV },
-	{ "glGetCombinerOutputParameterivNV", (GLvoid *) NAME(glGetCombinerOutputParameterivNV), _gloffset_GetCombinerOutputParameterivNV },
-	{ "glGetFinalCombinerInputParameterfvNV", (GLvoid *) NAME(glGetFinalCombinerInputParameterfvNV), _gloffset_GetFinalCombinerInputParameterfvNV },
-	{ "glGetFinalCombinerInputParameterivNV", (GLvoid *) NAME(glGetFinalCombinerInputParameterivNV), _gloffset_GetFinalCombinerInputParameterivNV },
+	{ "glCombinerParameterfvNV", NAME(glCombinerParameterfvNV), _gloffset_CombinerParameterfvNV },
+	{ "glCombinerParameterfNV", NAME(glCombinerParameterfNV), _gloffset_CombinerParameterfNV },
+	{ "glCombinerParameterivNV", NAME(glCombinerParameterivNV), _gloffset_CombinerParameterivNV },
+	{ "glCombinerParameteriNV", NAME(glCombinerParameteriNV), _gloffset_CombinerParameteriNV },
+	{ "glCombinerInputNV", NAME(glCombinerInputNV), _gloffset_CombinerInputNV },
+	{ "glCombinerOutputNV", NAME(glCombinerOutputNV), _gloffset_CombinerOutputNV },
+	{ "glFinalCombinerInputNV", NAME(glFinalCombinerInputNV), _gloffset_FinalCombinerInputNV },
+	{ "glGetCombinerInputParameterfvNV", NAME(glGetCombinerInputParameterfvNV), _gloffset_GetCombinerInputParameterfvNV },
+	{ "glGetCombinerInputParameterivNV", NAME(glGetCombinerInputParameterivNV), _gloffset_GetCombinerInputParameterivNV },
+	{ "glGetCombinerOutputParameterfvNV", NAME(glGetCombinerOutputParameterfvNV), _gloffset_GetCombinerOutputParameterfvNV },
+	{ "glGetCombinerOutputParameterivNV", NAME(glGetCombinerOutputParameterivNV), _gloffset_GetCombinerOutputParameterivNV },
+	{ "glGetFinalCombinerInputParameterfvNV", NAME(glGetFinalCombinerInputParameterfvNV), _gloffset_GetFinalCombinerInputParameterfvNV },
+	{ "glGetFinalCombinerInputParameterivNV", NAME(glGetFinalCombinerInputParameterivNV), _gloffset_GetFinalCombinerInputParameterivNV },
 #undef NAME
 
 	/* 196. GL_MESA_resize_buffers */
 #ifdef MESA_resize_buffers
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glResizeBuffersMESA", (GLvoid *) NAME(glResizeBuffersMESA), _gloffset_ResizeBuffersMESA },
+	{ "glResizeBuffersMESA", NAME(glResizeBuffersMESA), _gloffset_ResizeBuffersMESA },
 #undef NAME
 
 	/* 197. GL_MESA_window_pos */
 #ifdef MESA_window_pos
-#define NAME(X) X
+#define NAME(X) (GLvoid *) X
 #else
-#define NAME(X) NotImplemented
+#define NAME(X) (GLvoid *) NotImplemented
 #endif
-	{ "glWindowPos4fMESA", (GLvoid *) NAME(glWindowPos4fMESA), _gloffset_WindowPos4fMESA },
+	{ "glWindowPos4fMESA", NAME(glWindowPos4fMESA), _gloffset_WindowPos4fMESA },
 #undef NAME
 
+        /* 209. WGL_EXT_multisample */
+#ifdef WGL_EXT_multisample
+#define NAME(X) (GLvoid *) X
+#else
+#define NAME(X) (GLvoid *) NotImplemented
+#endif
+        { "glSampleMaskEXT", NAME(glSampleMaskEXT), _gloffset_SampleMaskSGIS },
+        { "glSamplePatternEXT", NAME(glSamplePatternEXT), _gloffset_SamplePatternSGIS },
+#undef NAME
 
 	{ NULL, NULL }  /* end of list marker */
 };
