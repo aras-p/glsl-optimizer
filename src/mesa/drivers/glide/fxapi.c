@@ -855,6 +855,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    GLcontext *ctx = 0;
    /*FX_GrContext_t glideContext = 0;*/
    char *errorstr;
+   GLboolean useBGR;
 
    if (MESA_VERBOSE&VERBOSE_DRIVER) {
       fprintf(stderr,"fxmesa: fxMesaCreateContext() Start\n");
@@ -962,9 +963,12 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       goto errorhandler;
    }
 
-   /* Pixel tables are use during pixel read-back */
+   /*
+    * Pixel tables are use during pixel read-back
+    * Either initialize them for RGB or BGR order.
+    */
 #if FXMESA_USE_ARGB 
-   fxInitPixelTables(fxMesa, GL_FALSE); /* Force RGB pixel order */	
+   useBGR = GL_FALSE; /* Force RGB pixel order */	
 #else
    if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
       /* jk991130 - GROSS HACK!!! - Voodoo 3s don't use BGR!!
@@ -976,23 +980,29 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       GrVoodooConfig_t *voodoo;
       voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
 
-      printf("nTexelfx  %d\n", voodoo->nTexelfx);
-      printf("fbRam %d\n", voodoo->fbRam);
-      printf("fbiRev %d\n", voodoo->fbiRev);
+      if (getenv("MESA_INFO")) {
+         printf("Voodoo num_sst %d\n", glbHWConfig.num_sst);
+         printf("Voodoo nTexelfx %d\n", voodoo->nTexelfx);
+         printf("Voodoo fbRam %d\n", voodoo->fbRam);
+         printf("Voodoo fbiRev %d\n", voodoo->fbiRev);
+      }
 
       if (voodoo->nTexelfx == 2 && voodoo->fbiRev != 260) {
          /* RGB pixel order (Voodoo3, but some Quantum3D models) */
-         fxInitPixelTables(fxMesa, GL_FALSE);
+         useBGR = GL_FALSE;
       }
       else {
          /* BGR pixel order on Voodoo1/2, or certain Quantum3D models  */
-         fxInitPixelTables(fxMesa, GL_TRUE);
+         useBGR = GL_TRUE;
       }
    }
    else {
-      fxInitPixelTables(fxMesa, GL_FALSE); /* use RGB pixel order otherwise */
+      useBGR = GL_FALSE; /* use RGB pixel order otherwise */
    }
 #endif
+   if (getenv("MESA_INFO"))
+      printf("Voodoo %s order\n", useBGR ? "BGR" : "RGB");
+   fxInitPixelTables(fxMesa, useBGR);
 
    fxMesa->width=FX_grSstScreenWidth();
    fxMesa->height=FX_grSstScreenHeight();
