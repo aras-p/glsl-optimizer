@@ -205,6 +205,9 @@ Doing more with Mesa & Linux Glide:
 	visual depth doesn't match the Voodoo framebufffer bit per pixel, it
 	is required also a pixel format translation).
 
+	NOTE: the in-window rendering feature only works with double-buffering.
+
+
         On the fly switching between in window rendering and full screen rendering
 	--------------------------------------------------------------------------
 
