@@ -109,8 +109,7 @@
  *    - XXX: need to recognize "1" as a valid float ?
  */
 
-typedef unsigned char byte;
-typedef byte *production;
+typedef GLubyte *production;
 
 /*-----------------------------------------------------------------------
  * From here on down is the syntax checking portion 
@@ -693,25 +692,25 @@ $3: Added enumerants.
 static GLvoid *mem_alloc (GLsizei);
 static GLvoid mem_free (GLvoid **);
 static GLvoid *mem_realloc (GLvoid *, GLsizei, GLsizei);
-static byte *str_duplicate (const byte *);
+static GLubyte *str_duplicate (const GLubyte *);
 
 /*
 	internal error messages
 */
-static const byte *OUT_OF_MEMORY =
-   (byte *) "internal error 1001: out of physical memory";
-static const byte *UNRESOLVED_REFERENCE =
-   (byte *) "internal error 1002: unresolved reference '$'";
+static const GLubyte *OUT_OF_MEMORY =
+   (GLubyte *) "internal error 1001: out of physical memory";
+static const GLubyte *UNRESOLVED_REFERENCE =
+   (GLubyte *) "internal error 1002: unresolved reference '$'";
 /*
-static const byte *INVALID_PARAMETER =
-   (byte *) "internal error 1003: invalid parameter";
+static const GLubyte *INVALID_PARAMETER =
+   (GLubyte *) "internal error 1003: invalid parameter";
 */
 
-static const byte *error_message = NULL;
-static byte *error_param = NULL;        /* this is inserted into error_message in place of $ */
+static const GLubyte *error_message = NULL;
+static GLubyte *error_param = NULL;        /* this is inserted into error_message in place of $ */
 static GLint error_position = -1;
 
-static byte *unknown = (byte *) "???";
+static GLubyte *unknown = (GLubyte *) "???";
 
 static GLvoid
 clear_last_error ()
@@ -730,7 +729,7 @@ clear_last_error ()
 }
 
 static GLvoid
-set_last_error (const byte * msg, byte * param, GLint pos)
+set_last_error (const GLubyte * msg, GLubyte * param, GLint pos)
 {
    if (error_message != NULL)
       return;
@@ -772,10 +771,10 @@ mem_realloc (GLvoid * ptr, GLsizei old_size, GLsizei new_size)
    return ptr2;
 }
 
-static byte *
-str_duplicate (const byte * str)
+static GLubyte *
+str_duplicate (const GLubyte * str)
 {
-   return (byte *) _mesa_strdup ((const char *) str);
+   return (GLubyte *) _mesa_strdup ((const char *) str);
 }
 
 /*
@@ -795,7 +794,7 @@ emit_type;
 typedef struct emit_
 {
    emit_type m_emit_type;
-   byte m_byte;                 /* et_byte */
+   GLubyte m_byte;                 /* et_byte */
    struct emit_ *m_next;
 }
 emit;
@@ -834,8 +833,8 @@ emit_append (emit ** em, emit ** ne)
  */
 typedef struct error_
 {
-   byte *m_text;
-   byte *m_token_name;
+   GLubyte *m_text;
+   GLubyte *m_token_name;
    struct defntn_ *m_token;
 }
 error;
@@ -862,7 +861,7 @@ error_destroy (error ** er)
 }
 
 struct dict_;
-static byte *error_get_token (error *, struct dict_ *, const byte *, GLuint);
+static GLubyte *error_get_token (error *, struct dict_ *, const GLubyte *, GLuint);
 
 /*
  * specifier type typedef
@@ -886,8 +885,8 @@ typedef enum spec_type_
 typedef struct spec_
 {
    spec_type m_spec_type;
-   byte m_byte[2];              /* st_byte, st_byte_range */
-   byte *m_string;              /* st_string */
+   GLubyte m_byte[2];              /* st_byte, st_byte_range */
+   GLubyte *m_string;              /* st_string */
    struct defntn_ *m_defntn;    /* st_identifier, st_identifier_loop */
    emit *m_emits;
    error *m_errtext;
@@ -1025,11 +1024,11 @@ dict_destroy (dict ** di)
 }
 
 /*
- * byte array typedef
+ * GLubyte array typedef
  */
 typedef struct barray_
 {
-   byte *data;
+   GLubyte *data;
    GLuint len;
 } barray;
 
@@ -1054,14 +1053,14 @@ barray_destroy (barray ** ba)
 }
 
 /*
- * reallocates byte array to requested size,
+ * reallocates GLubyte array to requested size,
  * returns 0 on success,
  * returns 1 otherwise
  */
 static GLint
 barray_resize (barray ** ba, GLuint nlen)
 {
-   byte *new_pointer;
+   GLubyte *new_pointer;
 
    if (nlen == 0) {
       mem_free ((void **) &(**ba).data);
@@ -1072,8 +1071,8 @@ barray_resize (barray ** ba, GLuint nlen)
    }
    else {
       new_pointer =
-         mem_realloc ((**ba).data, (**ba).len * sizeof (byte),
-                      nlen * sizeof (byte));
+         mem_realloc ((**ba).data, (**ba).len * sizeof (GLubyte),
+                      nlen * sizeof (GLubyte));
       if (new_pointer) {
          (**ba).data = new_pointer;
          (**ba).len = nlen;
@@ -1086,7 +1085,7 @@ barray_resize (barray ** ba, GLuint nlen)
 }
 
 /*
- * adds byte array pointed by *nb to the end of array pointed by *ba,
+ * adds GLubyte array pointed by *nb to the end of array pointed by *ba,
  * returns 0 on success,
  * returns 1 otherwise
  */
@@ -1111,7 +1110,7 @@ barray_append (barray ** ba, barray ** nb)
  * \return 0 on success, 1 otherwise.
  */
 static GLint
-barray_push (barray ** ba, emit * em, byte c, GLuint pos)
+barray_push (barray ** ba, emit * em, GLubyte c, GLuint pos)
 {
    emit *temp = em;
    GLuint count = 0;
@@ -1137,15 +1136,15 @@ barray_push (barray ** ba, emit * em, byte c, GLuint pos)
       /* This is where the position is emitted into the stream */
       else {                    /* em->type == et_position */
 #if 0
-         (**ba).data[(**ba).len - count--] = (byte) pos,
-            (**ba).data[(**ba).len - count--] = (byte) (pos >> 8),
-            (**ba).data[(**ba).len - count--] = (byte) (pos >> 16),
-            (**ba).data[(**ba).len - count--] = (byte) (pos >> 24);
+         (**ba).data[(**ba).len - count--] = (GLubyte) pos,
+            (**ba).data[(**ba).len - count--] = (GLubyte) (pos >> 8),
+            (**ba).data[(**ba).len - count--] = (GLubyte) (pos >> 16),
+            (**ba).data[(**ba).len - count--] = (GLubyte) (pos >> 24);
 #else
-         (**ba).data[(**ba).len - count--] = (byte) pos;
-         (**ba).data[(**ba).len - count--] = (byte) (pos / 0x100);
-         (**ba).data[(**ba).len - count--] = (byte) (pos / 0x10000);
-         (**ba).data[(**ba).len - count--] = (byte) (pos / 0x1000000);
+         (**ba).data[(**ba).len - count--] = (GLubyte) pos;
+         (**ba).data[(**ba).len - count--] = (GLubyte) (pos / 0x100);
+         (**ba).data[(**ba).len - count--] = (GLubyte) (pos / 0x10000);
+         (**ba).data[(**ba).len - count--] = (GLubyte) (pos / 0x1000000);
 #endif
       }
 
@@ -1160,8 +1159,8 @@ barray_push (barray ** ba, emit * em, byte c, GLuint pos)
  */
 typedef struct map_str_
 {
-   byte *key;
-   byte *data;
+   GLubyte *key;
+   GLubyte *data;
    struct map_str_ *next;
 } map_str;
 
@@ -1203,7 +1202,7 @@ map_str_append (map_str ** ma, map_str ** nm)
  * \return 0 if the key is matched, 1 otherwise
  */
 static GLint
-map_str_find (map_str ** ma, const byte * key, byte ** data)
+map_str_find (map_str ** ma, const GLubyte * key, GLubyte ** data)
 {
    while (*ma) {
       if (strcmp ((const char *) (**ma).key, (const char *) key) == 0) {
@@ -1222,12 +1221,12 @@ map_str_find (map_str ** ma, const byte * key, byte ** data)
 }
 
 /**
- * string to byte map typedef
+ * string to GLubyte map typedef
  */
 typedef struct map_byte_
 {
-   byte *key;
-   byte data;
+   GLubyte *key;
+   GLubyte data;
    struct map_byte_ *next;
 } map_byte;
 
@@ -1267,7 +1266,7 @@ map_byte_append (map_byte ** ma, map_byte ** nm)
  * \return 0 if the is matched, 1 otherwise
  */
 static GLint
-map_byte_find (map_byte ** ma, const byte * key, byte * data)
+map_byte_find (map_byte ** ma, const GLubyte * key, GLubyte * data)
 {
    while (*ma) {
       if (strcmp ((const char *) (**ma).key, (const char *) key) == 0) {
@@ -1287,7 +1286,7 @@ map_byte_find (map_byte ** ma, const byte * key, byte * data)
  */
 typedef struct map_def_
 {
-   byte *key;
+   GLubyte *key;
    defntn *data;
    struct map_def_ *next;
 } map_def;
@@ -1328,7 +1327,7 @@ map_def_append (map_def ** ma, map_def ** nm)
  * \return 0 if the is matched, 1 otherwise
  */
 static GLint
-map_def_find (map_def ** ma, const byte * key, defntn ** data)
+map_def_find (map_def ** ma, const GLubyte * key, defntn ** data)
 {
    while (*ma) {
       if (_mesa_strcmp ((const char *) (**ma).key, (const char *) key) == 0) {
@@ -1349,7 +1348,7 @@ map_def_find (map_def ** ma, const byte * key, defntn ** data)
  * returns 0 otherwise
  */
 static GLint
-is_space (byte c)
+is_space (GLubyte c)
 {
    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
@@ -1360,7 +1359,7 @@ is_space (byte c)
  * returns 0 otherwise
  */
 static GLint
-eat_space (const byte ** text)
+eat_space (const GLubyte ** text)
 {
    if (is_space (**text)) {
       (*text)++;
@@ -1376,7 +1375,7 @@ eat_space (const byte ** text)
  * returns 0 otherwise
  */
 static GLint
-is_comment_start (const byte * text)
+is_comment_start (const GLubyte * text)
 {
    return text[0] == '/' && text[1] == '*';
 }
@@ -1387,7 +1386,7 @@ is_comment_start (const byte * text)
  * returns 0 otherwise
  */
 static GLint
-eat_comment (const byte ** text)
+eat_comment (const GLubyte ** text)
 {
    if (is_comment_start (*text)) {
       /* *text points to comment block - skip two characters to enter comment body */
@@ -1408,7 +1407,7 @@ eat_comment (const byte ** text)
  * advances text pointer to first character that is neither space nor C-style comment block
  */
 static GLvoid
-eat_spaces (const byte ** text)
+eat_spaces (const GLubyte ** text)
 {
    while (eat_space (text) || eat_comment (text));
 }
@@ -1419,13 +1418,13 @@ eat_spaces (const byte ** text)
  * returns 1 otherwise
  */
 static GLint
-string_grow (byte ** ptr, GLuint * len, byte c)
+string_grow (GLubyte ** ptr, GLuint * len, GLubyte c)
 {
    /* reallocate the string in 16-length increments */
    if ((*len & 0x0F) == 0x0F || *ptr == NULL) {
-      byte *tmp = mem_realloc (*ptr, (*len) * sizeof (byte),
+      GLubyte *tmp = mem_realloc (*ptr, (*len) * sizeof (GLubyte),
                                ((*len + 1 + 1 +
-                                 0x0F) & ~0x0F) * sizeof (byte));
+                                 0x0F) & ~0x0F) * sizeof (GLubyte));
       if (tmp == NULL)
          return 1;
 
@@ -1447,7 +1446,7 @@ string_grow (byte ** ptr, GLuint * len, byte c)
  * returns 0 otherwise
  */
 static GLint
-is_identifier (byte c)
+is_identifier (GLubyte c)
 {
    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
       (c >= '0' && c <= '9') || c == '_';
@@ -1461,10 +1460,10 @@ is_identifier (byte c)
  * returns 1 otherwise
  */
 static GLint
-get_identifier (const byte ** text, byte ** id)
+get_identifier (const GLubyte ** text, GLubyte ** id)
 {
-   const byte *t = *text;
-   byte *p = NULL;
+   const GLubyte *t = *text;
+   GLubyte *p = NULL;
    GLuint len = 0;
 
    if (string_grow (&p, &len, '\0'))
@@ -1489,7 +1488,7 @@ get_identifier (const byte ** text, byte ** id)
  * returns 0 otherwise
  */
 static GLint
-is_hex (byte c)
+is_hex (GLubyte c)
 {
    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a'
                                                                && c <= 'f');
@@ -1499,7 +1498,7 @@ is_hex (byte c)
  * returns value of passed character as if it was HEX digit
  */
 static GLuint
-hex2dec (byte c)
+hex2dec (GLubyte c)
 {
    if (c >= '0' && c <= '9')
       return c - '0';
@@ -1514,7 +1513,7 @@ hex2dec (byte c)
  * returns the converted value
  */
 static GLuint
-hex_convert (const byte ** text)
+hex_convert (const GLubyte ** text)
 {
    GLuint value = 0;
 
@@ -1531,7 +1530,7 @@ hex_convert (const byte ** text)
  * returns 0 otherwise
  */
 static GLint
-is_oct (byte c)
+is_oct (GLubyte c)
 {
    return c >= '0' && c <= '7';
 }
@@ -1540,13 +1539,13 @@ is_oct (byte c)
  * returns value of passed character as if it was OCT digit
  */
 static GLint
-oct2dec (byte c)
+oct2dec (GLubyte c)
 {
    return c - '0';
 }
 
-static byte
-get_escape_sequence (const byte ** text)
+static GLubyte
+get_escape_sequence (const GLubyte ** text)
 {
    GLint value = 0;
 
@@ -1577,7 +1576,7 @@ get_escape_sequence (const byte ** text)
       case 'v':
          return '\v';
       case 'x':
-         return (byte) hex_convert (text);
+         return (GLubyte) hex_convert (text);
    }
 
    (*text)--;
@@ -1590,7 +1589,7 @@ get_escape_sequence (const byte ** text)
       }
    }
 
-   return (byte) value;
+   return (GLubyte) value;
 }
 
 /*
@@ -1602,12 +1601,12 @@ get_escape_sequence (const byte ** text)
  * returns 1 otherwise
  */
 static GLint
-get_string (const byte ** text, byte ** str)
+get_string (const GLubyte ** text, GLubyte ** str)
 {
-   const byte *t = *text;
-   byte *p = NULL;
+   const GLubyte *t = *text;
+   GLubyte *p = NULL;
    GLuint len = 0;
-   byte term_char;
+   GLubyte term_char;
 
    if (string_grow (&p, &len, '\0'))
       return 1;
@@ -1616,7 +1615,7 @@ get_string (const byte ** text, byte ** str)
    term_char = *t++;
    /* while next character is not the terminating character */
    while (*t && *t != term_char) {
-      byte c;
+      GLubyte c;
 
       if (*t == '\\')
          c = get_escape_sequence (&t);
@@ -1644,9 +1643,9 @@ get_string (const byte ** text, byte ** str)
  * returns 1 otherwise
  */
 static GLint
-get_emtcode (const byte ** text, map_byte ** ma)
+get_emtcode (const GLubyte ** text, map_byte ** ma)
 {
-   const byte *t = *text;
+   const GLubyte *t = *text;
    map_byte *m = NULL;
 
    map_byte_create (&m);
@@ -1660,20 +1659,20 @@ get_emtcode (const byte ** text, map_byte ** ma)
    eat_spaces (&t);
 
    if (*t == '\'') {
-      byte *c;
+      GLubyte *c;
 
       if (get_string (&t, &c)) {
          map_byte_destroy (&m);
          return 1;
       }
 
-      m->data = (byte) c[0];
+      m->data = (GLubyte) c[0];
       mem_free ((GLvoid **) & c);
    }
    else {
       /* skip HEX "0x" or "0X" prefix */
       t += 2;
-      m->data = (byte) hex_convert (&t);
+      m->data = (GLubyte) hex_convert (&t);
    }
 
    eat_spaces (&t);
@@ -1688,9 +1687,9 @@ get_emtcode (const byte ** text, map_byte ** ma)
  * returns 1 otherwise
  */
 static GLint
-get_errtext (const byte ** text, map_str ** ma)
+get_errtext (const GLubyte ** text, map_str ** ma)
 {
-   const byte *t = *text;
+   const GLubyte *t = *text;
    map_str *m = NULL;
 
    map_str_create (&m);
@@ -1719,10 +1718,10 @@ get_errtext (const byte ** text, map_str ** ma)
  * returns 1 otherwise,
  */
 static GLint
-get_error (const byte ** text, error ** er, map_str * maps)
+get_error (const GLubyte ** text, error ** er, map_str * maps)
 {
-   const byte *t = *text;
-   byte *temp = NULL;
+   const GLubyte *t = *text;
+   GLubyte *temp = NULL;
 
    if (*t != '.')
       return 0;
@@ -1771,7 +1770,7 @@ get_error (const byte ** text, error ** er, map_str * maps)
       char *processed = NULL;
       GLuint len = 0, i = 0;
 
-      if (string_grow ((byte **) (&processed), &len, '\0')) {
+      if (string_grow ((GLubyte **) (&processed), &len, '\0')) {
          error_destroy (er);
          return 1;
       }
@@ -1779,7 +1778,7 @@ get_error (const byte ** text, error ** er, map_str * maps)
       while (i < _mesa_strlen ((char *) ((**er).m_text))) {
          /* check if the dollar sign is repeated - if so skip it */
          if ((**er).m_text[i] == '$' && (**er).m_text[i + 1] == '$') {
-            if (string_grow ((byte **) (&processed), &len, '$')) {
+            if (string_grow ((GLubyte **) (&processed), &len, '$')) {
                mem_free ((GLvoid **) & processed);
                error_destroy (er);
                return 1;
@@ -1788,7 +1787,7 @@ get_error (const byte ** text, error ** er, map_str * maps)
             i += 2;
          }
          else if ((**er).m_text[i] != '$') {
-            if (string_grow ((byte **) (&processed), &len, (**er).m_text[i])) {
+            if (string_grow ((GLubyte **) (&processed), &len, (**er).m_text[i])) {
                mem_free ((GLvoid **) & processed);
                error_destroy (er);
                return 1;
@@ -1797,7 +1796,7 @@ get_error (const byte ** text, error ** er, map_str * maps)
             i++;
          }
          else {
-            if (string_grow ((byte **) (&processed), &len, '$')) {
+            if (string_grow ((GLubyte **) (&processed), &len, '$')) {
                mem_free ((GLvoid **) & processed);
                error_destroy (er);
                return 1;
@@ -1834,7 +1833,7 @@ get_error (const byte ** text, error ** er, map_str * maps)
       }
 
       mem_free ((GLvoid **) & (**er).m_text);
-      (**er).m_text = (byte *) processed;
+      (**er).m_text = (GLubyte *) processed;
    }
 
    *text = t;
@@ -1846,10 +1845,10 @@ get_error (const byte ** text, error ** er, map_str * maps)
  * returns 1 otherwise,
  */
 static GLint
-get_emits (const byte ** text, emit ** em, map_byte * mapb)
+get_emits (const GLubyte ** text, emit ** em, map_byte * mapb)
 {
-   const byte *t = *text;
-   byte *temp = NULL;
+   const GLubyte *t = *text;
+   GLubyte *temp = NULL;
    emit *e = NULL;
 
    if (*t != '.')
@@ -1875,7 +1874,7 @@ get_emits (const byte ** text, emit ** em, map_byte * mapb)
    /* 0xNN */
    if (*t == '0') {
       t += 2;
-      e->m_byte = (byte) hex_convert (&t);
+      e->m_byte = (GLubyte) hex_convert (&t);
 
       e->m_emit_type = et_byte;
    }
@@ -1897,7 +1896,7 @@ get_emits (const byte ** text, emit ** em, map_byte * mapb)
          emit_destroy (&e);
          return 1;
       }
-      e->m_byte = (byte) temp[0];
+      e->m_byte = (GLubyte) temp[0];
 
       mem_free ((GLvoid **) & temp);
 
@@ -1937,9 +1936,9 @@ get_emits (const byte ** text, emit ** em, map_byte * mapb)
  * returns 1 otherwise,
  */
 static GLint
-get_spec (const byte ** text, spec ** sp, map_str * maps, map_byte * mapb)
+get_spec (const GLubyte ** text, spec ** sp, map_str * maps, map_byte * mapb)
 {
-   const byte *t = *text;
+   const GLubyte *t = *text;
    spec *s = NULL;
 
    spec_create (&s);
@@ -1947,7 +1946,7 @@ get_spec (const byte ** text, spec ** sp, map_str * maps, map_byte * mapb)
       return 1;
 
    if (*t == '\'') {
-      byte *temp = NULL;
+      GLubyte *temp = NULL;
 
       if (get_string (&t, &temp)) {
          spec_destroy (&s);
@@ -1956,7 +1955,7 @@ get_spec (const byte ** text, spec ** sp, map_str * maps, map_byte * mapb)
       eat_spaces (&t);
 
       if (*t == '-') {
-         byte *temp2 = NULL;
+         GLubyte *temp2 = NULL;
 
          /* skip the '-' character */
          t++;
@@ -1992,7 +1991,7 @@ get_spec (const byte ** text, spec ** sp, map_str * maps, map_byte * mapb)
       s->m_spec_type = st_string;
    }
    else if (*t == '.') {
-      byte *keyword = NULL;
+      GLubyte *keyword = NULL;
 
       /* skip the dot */
       t++;
@@ -2059,10 +2058,10 @@ get_spec (const byte ** text, spec ** sp, map_str * maps, map_byte * mapb)
  * returns 1 otherwise,
  */
 static GLint
-get_definition (const byte ** text, defntn ** de, map_str * maps,
+get_definition (const GLubyte ** text, defntn ** de, map_str * maps,
                 map_byte * mapb)
 {
-   const byte *t = *text;
+   const GLubyte *t = *text;
    defntn *d = NULL;
 
    defntn_create (&d);
@@ -2075,7 +2074,7 @@ get_definition (const byte ** text, defntn ** de, map_str * maps,
    }
 
    while (*t != ';') {
-      byte *op = NULL;
+      GLubyte *op = NULL;
       spec *sp = NULL;
 
       /* skip the dot that precedes "and" or "or" */
@@ -2121,7 +2120,7 @@ get_definition (const byte ** text, defntn ** de, map_str * maps,
  * returns 1 otherwise,
  */
 static GLint
-update_dependency (map_def * mapd, byte * symbol, defntn ** def)
+update_dependency (map_def * mapd, GLubyte * symbol, defntn ** def)
 {
    if (map_def_find (&mapd, symbol, def))
       return 1;
@@ -2138,8 +2137,8 @@ update_dependency (map_def * mapd, byte * symbol, defntn ** def)
  * returns 1 otherwise,
  */
 static GLint
-update_dependencies (dict * di, map_def * mapd, byte ** syntax_symbol,
-                     byte ** string_symbol)
+update_dependencies (dict * di, map_def * mapd, GLubyte ** syntax_symbol,
+                     GLubyte ** string_symbol)
 {
    defntn *de = di->m_defntns;
 
@@ -2190,7 +2189,7 @@ typedef enum match_result_
 } match_result;
 
 static match_result
-match (dict * di, const byte * text, GLuint * index, defntn * de,
+match (dict * di, const GLubyte * text, GLuint * index, defntn * de,
        barray ** ba, GLint filtering_string)
 {
    GLuint ind = *index;
@@ -2377,14 +2376,14 @@ match (dict * di, const byte * text, GLuint * index, defntn * de,
    return mr_not_matched;
 }
 
-static byte *
-error_get_token (error * er, dict * di, const byte * text, unsigned int ind)
+static GLubyte *
+error_get_token (error * er, dict * di, const GLubyte * text, unsigned int ind)
 {
-   byte *str = NULL;
+   GLubyte *str = NULL;
 
    if (er->m_token) {
       barray *ba;
-      unsigned int filter_index = 0;
+      GLuint filter_index = 0;
 
       barray_create (&ba);
       if (ba != NULL) {
@@ -2407,8 +2406,8 @@ error_get_token (error * er, dict * di, const byte * text, unsigned int ind)
 typedef struct grammar_load_state_
 {
    dict *di;
-   byte *syntax_symbol;
-   byte *string_symbol;
+   GLubyte *syntax_symbol;
+   GLubyte *string_symbol;
    map_str *maps;
    map_byte *mapb;
    map_def *mapd;
@@ -2454,7 +2453,7 @@ grammar_load_state_destroy (grammar_load_state ** gr)
  */
 
 static dict *
-grammar_load_from_text (const byte * text)
+grammar_load_from_text (const GLubyte * text)
 {
    dict *d = NULL;
    grammar_load_state *g = NULL;
@@ -2489,7 +2488,7 @@ grammar_load_from_text (const byte * text)
    eat_spaces (&text);
 
    while (*text) {
-      byte *symbol = NULL;
+      GLubyte *symbol = NULL;
       GLint is_dot = *text == '.';
 
       if (is_dot)
@@ -2601,7 +2600,7 @@ grammar_load_from_text (const byte * text)
  * \return 1 on sucess, 0 on parser error
  */
 static GLint
-grammar_check (dict * di, const byte * text, byte ** production,
+grammar_check (dict * di, const GLubyte * text, GLubyte ** production,
                GLuint *size)
 {
    barray *ba = NULL;
@@ -2621,13 +2620,13 @@ grammar_check (dict * di, const byte * text, byte ** production,
       return 0;
    }
 
-   *production = mem_alloc (ba->len * sizeof (byte));
+   *production = mem_alloc (ba->len * sizeof (GLubyte));
    if (*production == NULL) {
       barray_destroy (&ba);
       return 0;
    }
 
-   memcpy (*production, ba->data, ba->len * sizeof (byte));
+   memcpy (*production, ba->data, ba->len * sizeof (GLubyte));
    *size = ba->len;
    barray_destroy (&ba);
 
@@ -2635,17 +2634,17 @@ grammar_check (dict * di, const byte * text, byte ** production,
 }
 
 static GLvoid
-grammar_get_last_error (byte * text, int size, int *pos)
+grammar_get_last_error (GLubyte * text, GLint size, GLint *pos)
 {
    GLint len = 0, dots_made = 0;
-   const byte *p = error_message;
+   const GLubyte *p = error_message;
 
    *text = '\0';
 #define APPEND_CHARACTER(x) if (dots_made == 0) {\
    if (len < size - 1) {\
       text[len++] = (x); text[len] = '\0';\
    } else {\
-      int i;\
+      GLint i;\
       for (i = 0; i < 3; i++)\
          if (--len >= 0)\
       text[len] = '.';\
@@ -2656,7 +2655,7 @@ grammar_get_last_error (byte * text, int size, int *pos)
    if (p) {
       while (*p) {
          if (*p == '$') {
-            const byte *r = error_param;
+            const GLubyte *r = error_param;
 
             while (*r) {
                APPEND_CHARACTER (*r)
@@ -2700,7 +2699,7 @@ typedef enum
  */
 struct var_cache
 {
-   byte *name;
+   GLubyte *name;
    var_type type;
    GLuint address_binding;      /* The index of the address register we should 
                                  * be using                                        */
@@ -2764,7 +2763,7 @@ var_cache_append (struct var_cache **va, struct var_cache *nv)
 }
 
 static struct var_cache *
-var_cache_find (struct var_cache *va, byte * name)
+var_cache_find (struct var_cache *va, GLubyte * name)
 {
    struct var_cache *first = va;
 
@@ -2782,10 +2781,10 @@ var_cache_find (struct var_cache *va, byte * name)
 }
 
 /**
- * constructs an integer from 4 bytes in LE format
+ * constructs an integer from 4 GLubytes in LE format
  */
 static GLuint
-parse_position (byte ** inst)
+parse_position (GLubyte ** inst)
 {
    GLuint value;
 
@@ -2807,10 +2806,10 @@ parse_position (byte ** inst)
  * \return       The location on the var_cache corresponding the the string starting at I
  */
 static struct var_cache *
-parse_string (byte ** inst, struct var_cache **vc_head,
+parse_string (GLubyte ** inst, struct var_cache **vc_head,
               struct arb_program *Program, GLuint * found)
 {
-   byte *i = *inst;
+   GLubyte *i = *inst;
    struct var_cache *va = NULL;
 
    *inst += _mesa_strlen ((char *) i) + 1;
@@ -2832,9 +2831,9 @@ parse_string (byte ** inst, struct var_cache **vc_head,
 }
 
 static char *
-parse_string_without_adding (byte ** inst, struct arb_program *Program)
+parse_string_without_adding (GLubyte ** inst, struct arb_program *Program)
 {
-   byte *i = *inst;
+   GLubyte *i = *inst;
 
    *inst += _mesa_strlen ((char *) i) + 1;
 
@@ -2845,7 +2844,7 @@ parse_string_without_adding (byte ** inst, struct arb_program *Program)
  * \return 0 if sign is plus, 1 if sign is minus
  */
 static GLuint
-parse_sign (byte ** inst)
+parse_sign (GLubyte ** inst)
 {
    /*return *(*inst)++ != '+'; */
 
@@ -2865,7 +2864,7 @@ parse_sign (byte ** inst)
  * parses and returns signed integer
  */
 static GLint
-parse_integer (byte ** inst, struct arb_program *Program)
+parse_integer (GLubyte ** inst, struct arb_program *Program)
 {
    GLint sign;
    GLint value;
@@ -2900,7 +2899,7 @@ parse_integer (byte ** inst, struct arb_program *Program)
 /**
  */
 static GLfloat
-parse_float (byte ** inst, struct arb_program *Program)
+parse_float (GLubyte ** inst, struct arb_program *Program)
 {
    GLint tmp[5], denom;
    GLfloat value = 0;
@@ -2930,7 +2929,7 @@ parse_float (byte ** inst, struct arb_program *Program)
 /**
  */
 static GLfloat
-parse_signed_float (byte ** inst, struct arb_program *Program)
+parse_signed_float (GLubyte ** inst, struct arb_program *Program)
 {
    GLint negate;
    GLfloat value;
@@ -2952,7 +2951,7 @@ parse_signed_float (byte ** inst, struct arb_program *Program)
  * \param values - The 4 component vector with the constant value in it 
  */
 static GLvoid
-parse_constant (byte ** inst, GLfloat *values, struct arb_program *Program,
+parse_constant (GLubyte ** inst, GLfloat *values, struct arb_program *Program,
                 GLboolean use)
 {
    GLuint components, i;
@@ -2989,7 +2988,7 @@ parse_constant (byte ** inst, GLfloat *values, struct arb_program *Program,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_color_type (GLcontext * ctx, byte ** inst, struct arb_program *Program,
+parse_color_type (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
                   GLint * color)
 {
    *color = *(*inst)++ != COLOR_PRIMARY;
@@ -3001,7 +3000,7 @@ parse_color_type (GLcontext * ctx, byte ** inst, struct arb_program *Program,
  * \return 0 on sucess, 1 on error 
  */
 static GLuint
-parse_texcoord_num (GLcontext * ctx, byte ** inst,
+parse_texcoord_num (GLcontext * ctx, GLubyte ** inst,
                     struct arb_program *Program, GLuint * coord)
 {
    *coord = parse_integer (inst, Program);
@@ -3022,7 +3021,7 @@ parse_texcoord_num (GLcontext * ctx, byte ** inst,
  * \return 0 on sucess, 1 on error 
  */
 static GLuint
-parse_weight_num (GLcontext * ctx, byte ** inst, struct arb_program *Program,
+parse_weight_num (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
                   GLint * coord)
 {
    *coord = parse_integer (inst, Program);
@@ -3042,7 +3041,7 @@ parse_weight_num (GLcontext * ctx, byte ** inst, struct arb_program *Program,
  * \return 0 on sucess, 1 on error 
  */
 static GLuint
-parse_clipplane_num (GLcontext * ctx, byte ** inst,
+parse_clipplane_num (GLcontext * ctx, GLubyte ** inst,
                      struct arb_program *Program, GLint * coord)
 {
    *coord = parse_integer (inst, Program);
@@ -3064,7 +3063,7 @@ parse_clipplane_num (GLcontext * ctx, byte ** inst,
  * \return 0 on front face, 1 on back face
  */
 static GLuint
-parse_face_type (byte ** inst)
+parse_face_type (GLubyte ** inst)
 {
    switch (*(*inst)++) {
       case FACE_FRONT:
@@ -3086,10 +3085,10 @@ parse_face_type (byte ** inst)
  * \return 0 on sucess, 1 on failure
  */
 static GLuint
-parse_matrix (GLcontext * ctx, byte ** inst, struct arb_program *Program,
+parse_matrix (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
               GLint * matrix, GLint * matrix_idx, GLint * matrix_modifier)
 {
-   byte mat = *(*inst)++;
+   GLubyte mat = *(*inst)++;
 
    *matrix_idx = 0;
 
@@ -3166,7 +3165,7 @@ parse_matrix (GLcontext * ctx, byte ** inst, struct arb_program *Program,
  * \return             - 0 on sucess, 1 on error
  */
 static GLuint
-parse_state_single_item (GLcontext * ctx, byte ** inst,
+parse_state_single_item (GLcontext * ctx, GLubyte ** inst,
                          struct arb_program *Program, GLint * state_tokens)
 {
    switch (*(*inst)++) {
@@ -3425,7 +3424,7 @@ parse_state_single_item (GLcontext * ctx, byte ** inst,
  * \return             - 0 on sucess, 1 on failure
  */
 static GLuint
-parse_program_single_item (GLcontext * ctx, byte ** inst,
+parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
                            struct arb_program *Program, GLint * state_tokens)
 {
    if (Program->type == GL_FRAGMENT_PROGRAM_ARB)
@@ -3487,7 +3486,7 @@ parse_program_single_item (GLcontext * ctx, byte ** inst,
  * See nvfragparse.c for attrib register file layout
  */
 static GLuint
-parse_attrib_binding (GLcontext * ctx, byte ** inst,
+parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
                       struct arb_program *Program, GLuint * binding,
                       GLuint * binding_idx)
 {
@@ -3622,7 +3621,7 @@ parse_attrib_binding (GLcontext * ctx, byte ** inst,
  * See nvvertparse.c for the register file layout for vertex programs
  */
 static GLuint
-parse_result_binding (GLcontext * ctx, byte ** inst, GLuint * binding,
+parse_result_binding (GLcontext * ctx, GLubyte ** inst, GLuint * binding,
                       GLuint * binding_idx, struct arb_program *Program)
 {
    GLuint b;
@@ -3708,7 +3707,7 @@ parse_result_binding (GLcontext * ctx, byte ** inst, GLuint * binding,
  * \return 0 on sucess, 1 on error
  */
 static GLint
-parse_attrib (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_attrib (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
               struct arb_program *Program)
 {
    GLuint found;
@@ -3752,7 +3751,7 @@ parse_attrib (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  *               if we get a signed or unsigned float for scalar constants
  */
 static GLuint
-parse_param_elements (GLcontext * ctx, byte ** inst,
+parse_param_elements (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache *param_var,
                       struct arb_program *Program, GLboolean use)
 {
@@ -3893,7 +3892,7 @@ parse_param_elements (GLcontext * ctx, byte ** inst,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_param (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_param (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
              struct arb_program *Program)
 {
    GLuint found, specified_length, err;
@@ -3966,14 +3965,14 @@ parse_param (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  *
  */
 static GLuint
-parse_param_use (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_param_use (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                  struct arb_program *Program, struct var_cache **new_var)
 {
    struct var_cache *param_var;
 
    /* First, insert a dummy entry into the var_cache */
    var_cache_create (&param_var);
-   param_var->name = (byte *) _mesa_strdup (" ");
+   param_var->name = (GLubyte *) _mesa_strdup (" ");
    param_var->type = vt_param;
 
    param_var->param_binding_length = 0;
@@ -4003,7 +4002,7 @@ parse_param_use (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_temp (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_temp (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
             struct arb_program *Program)
 {
    GLuint found;
@@ -4055,7 +4054,7 @@ parse_temp (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_output (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_output (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
               struct arb_program *Program)
 {
    GLuint found;
@@ -4088,7 +4087,7 @@ parse_output (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_alias (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_alias (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
              struct arb_program *Program)
 {
    GLuint found;
@@ -4140,7 +4139,7 @@ parse_alias (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_address (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_address (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                struct arb_program *Program)
 {
    GLuint found;
@@ -4188,7 +4187,7 @@ parse_address (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLint
-parse_declaration (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_declaration (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                    struct arb_program *Program)
 {
    GLint err = 0;
@@ -4232,12 +4231,12 @@ parse_declaration (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_masked_dst_reg (GLcontext * ctx, byte ** inst,
+parse_masked_dst_reg (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       GLint * File, GLint * Index, GLboolean * WriteMask)
 {
    GLuint result;
-   byte mask;
+   GLubyte mask;
    struct var_cache *dst;
 
    /* We either have a result register specified, or a
@@ -4319,7 +4318,7 @@ parse_masked_dst_reg (GLcontext * ctx, byte ** inst,
  * \return 0 on sucess, 1 on error
  */
 static GLuint
-parse_masked_address_reg (GLcontext * ctx, byte ** inst,
+parse_masked_address_reg (GLcontext * ctx, GLubyte ** inst,
                           struct var_cache **vc_head,
                           struct arb_program *Program, GLint * Index,
                           GLboolean * WriteMask)
@@ -4372,7 +4371,7 @@ parse_masked_address_reg (GLcontext * ctx, byte ** inst,
  * swizzle, or just 1 component for a scalar src register selection
  */
 static GLuint
-parse_swizzle_mask (byte ** inst, GLubyte * mask, GLint len)
+parse_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLint len)
 {
    GLint a;
 
@@ -4405,10 +4404,10 @@ parse_swizzle_mask (byte ** inst, GLubyte * mask, GLint len)
 /** 
  */
 static GLuint
-parse_extended_swizzle_mask (byte ** inst, GLubyte * mask, GLboolean * Negate)
+parse_extended_swizzle_mask (GLubyte ** inst, GLubyte * mask, GLboolean * Negate)
 {
    GLint a;
-   byte swz;
+   GLubyte swz;
 
    *Negate = GL_FALSE;
    for (a = 0; a < 4; a++) {
@@ -4454,7 +4453,7 @@ parse_extended_swizzle_mask (byte ** inst, GLubyte * mask, GLboolean * Negate)
 
 
 static GLuint
-parse_src_reg (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
+parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                struct arb_program *Program, GLint * File, GLint * Index)
 {
    struct var_cache *src;
@@ -4576,7 +4575,7 @@ parse_src_reg (GLcontext * ctx, byte ** inst, struct var_cache **vc_head,
 /**
  */
 static GLuint
-parse_vector_src_reg (GLcontext * ctx, byte ** inst,
+parse_vector_src_reg (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       GLint * File, GLint * Index, GLboolean * Negate,
                       GLubyte * Swizzle)
@@ -4597,7 +4596,7 @@ parse_vector_src_reg (GLcontext * ctx, byte ** inst,
 /**
  */
 static GLuint
-parse_scalar_src_reg (GLcontext * ctx, byte ** inst,
+parse_scalar_src_reg (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       GLint * File, GLint * Index, GLboolean * Negate,
                       GLubyte * Swizzle)
@@ -4620,14 +4619,14 @@ parse_scalar_src_reg (GLcontext * ctx, byte ** inst,
  * and handling the src & dst registers for fragment program instructions
  */
 static GLuint
-parse_fp_instruction (GLcontext * ctx, byte ** inst,
+parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       struct fp_instruction *fp)
 {
    GLint a, b;
    GLubyte swz[4]; /* FP's swizzle mask is a GLubyte, while VP's is GLuint */
    GLuint texcoord;
-   byte class, type, code;
+   GLubyte class, type, code;
 
    /* No condition codes in ARB_fp */
    fp->UpdateCondRegister = 0;
@@ -5034,12 +5033,12 @@ parse_fp_instruction (GLcontext * ctx, byte ** inst,
  * and handling the src & dst registers for vertex program instructions
  */
 static GLuint
-parse_vp_instruction (GLcontext * ctx, byte ** inst,
+parse_vp_instruction (GLcontext * ctx, GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
                       struct vp_instruction *vp)
 {
    GLint a;
-   byte type, code;
+   GLubyte type, code;
 
    /* V_GEN_{ARL, VECTOR, SCALAR, BINSC, BIN, TRI, SWZ} */
    type = *(*inst)++;
@@ -5436,8 +5435,6 @@ print_state_token (GLint token)
 }
 
 
-
-
 static GLvoid
 debug_variables (GLcontext * ctx, struct var_cache *vc_head,
                  struct arb_program *Program)
@@ -5508,14 +5505,14 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
 
 #endif
 
+
 /** 
  * The main loop for parsing a fragment or vertex program
  * 
  * \return 0 on sucess, 1 on error
  */
-
 static GLint
-parse_arb_program (GLcontext * ctx, byte * inst, struct var_cache **vc_head,
+parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                    struct arb_program *Program)
 {
    GLint err = 0;
@@ -5627,6 +5624,7 @@ parse_arb_program (GLcontext * ctx, byte * inst, struct var_cache **vc_head,
    return err;
 }
 
+
 /** 
  * This kicks everything off.
  *
@@ -5638,21 +5636,21 @@ parse_arb_program (GLcontext * ctx, byte * inst, struct var_cache **vc_head,
  */
 GLuint
 _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
-                         struct arb_program * Program)
+                         struct arb_program * program)
 {
    GLint a, err, error_pos;
    char error_msg[300];
    GLuint parsed_len;
    struct var_cache *vc_head;
    dict *dt;
-   byte *parsed, *inst;
+   GLubyte *parsed, *inst;
 
 #if DEBUG_PARSING
    fprintf (stderr, "Loading grammar text!\n");
 #endif
-   dt = grammar_load_from_text ((byte *) arb_grammar_text);
+   dt = grammar_load_from_text ((GLubyte *) arb_grammar_text);
    if (!dt) {
-      grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
+      grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION,
                    "Error loading grammer rule set");
@@ -5667,7 +5665,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 
    /* Syntax parse error */
    if (err == 0) {
-      grammar_get_last_error ((byte *) error_msg, 300, &error_pos);
+      grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
       _mesa_error (ctx, GL_INVALID_OPERATION, "Parse Error");
 
@@ -5681,28 +5679,28 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    dict_destroy (&dt);
 
    /* Initialize the arb_program struct */
-   Program->Base.NumInstructions =
-   Program->Base.NumTemporaries =
-   Program->Base.NumParameters =
-   Program->Base.NumAttributes = Program->Base.NumAddressRegs = 0;
-   Program->Parameters = _mesa_new_parameter_list ();
-   Program->InputsRead = 0;
-   Program->OutputsWritten = 0;
-   Program->Position = 0;
-   Program->MajorVersion = Program->MinorVersion = 0;
-   Program->HintPrecisionFastest =
-   Program->HintPrecisionNicest =
-   Program->HintFogExp2 =
-   Program->HintFogExp =
-   Program->HintFogLinear = Program->HintPositionInvariant = 0;
+   program->Base.NumInstructions =
+   program->Base.NumTemporaries =
+   program->Base.NumParameters =
+   program->Base.NumAttributes = program->Base.NumAddressRegs = 0;
+   program->Parameters = _mesa_new_parameter_list ();
+   program->InputsRead = 0;
+   program->OutputsWritten = 0;
+   program->Position = 0;
+   program->MajorVersion = program->MinorVersion = 0;
+   program->HintPrecisionFastest =
+   program->HintPrecisionNicest =
+   program->HintFogExp2 =
+   program->HintFogExp =
+   program->HintFogLinear = program->HintPositionInvariant = 0;
    for (a = 0; a < MAX_TEXTURE_IMAGE_UNITS; a++)
-      Program->TexturesUsed[a] = 0;
-   Program->NumAluInstructions =
-   Program->NumTexInstructions = 
-   Program->NumTexIndirections = 0;
+      program->TexturesUsed[a] = 0;
+   program->NumAluInstructions =
+   program->NumTexInstructions = 
+   program->NumTexIndirections = 0;
 
-   Program->FPInstructions = NULL;
-   Program->VPInstructions = NULL;
+   program->FPInstructions = NULL;
+   program->VPInstructions = NULL;
 
    vc_head = NULL;
    err = 0;
@@ -5719,21 +5717,21 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    else {
       switch (*inst++) {
          case FRAGMENT_PROGRAM:
-            Program->type = GL_FRAGMENT_PROGRAM_ARB;
+            program->type = GL_FRAGMENT_PROGRAM_ARB;
             break;
 
          case VERTEX_PROGRAM:
-            Program->type = GL_VERTEX_PROGRAM_ARB;
+            program->type = GL_VERTEX_PROGRAM_ARB;
             break;
       }
 
-      err = parse_arb_program (ctx, inst, &vc_head, Program);
+      err = parse_arb_program (ctx, inst, &vc_head, program);
 #if DEBUG_PARSING
       fprintf (stderr, "Symantic analysis returns %d [1 is bad!]\n", err);
 #endif
    }
 
-   /*debug_variables(ctx, vc_head, Program); */
+   /*debug_variables(ctx, vc_head, program); */
 
    /* We're done with the parsed binary array */
    var_cache_destroy (&vc_head);
