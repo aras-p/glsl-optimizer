@@ -1164,10 +1164,12 @@ Mesa Version History
 	- less memory used for display lists and vertex buffers
 	- demo of per-pixel lighting with a fragment program (demos/fplight.c)
 	- new version (18) of glext.h header
+	- new spriteblast.c demo of GL_ARB_point_sprite
     Bug fixes:
 	- really enable OpenGL 1.4 features in DOS driver.
 	- fixed issues in glDrawPixels and glCopyPixels for very wide images
 	- glPixelMapf/ui/usv()'s size parameter is GLsizei, not GLint
+	- fixed some texgen bugs reported by Daniel Borca
     Changes:
 	- dropped API trace feature (src/Trace/)
 	- documentation overhaul.  merged with website content.  more html.
