@@ -281,7 +281,7 @@ static void i830TexParameter( GLcontext *ctx, GLenum target,
    if (!t)
       return;
 
-   if ( target != GL_TEXTURE_2D )
+   if ( target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_NV )
       return;
 
    /* Can't do the update now as we don't know whether to flush
