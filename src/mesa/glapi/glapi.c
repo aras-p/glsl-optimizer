@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.5 1999/11/12 16:46:56 kendallb Exp $ */
+/* $Id: glapi.c,v 1.6 1999/11/12 18:27:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -319,16 +319,6 @@ void GLAPIENTRY glDisable(GLenum cap)
    DISPATCH(Disable)(cap);
 }
 
-void GLAPIENTRY glDisableClientState(GLenum cap)
-{
-   DISPATCH(DisableClientState)(cap);
-}
-
-void GLAPIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-   DISPATCH(DrawArrays)(mode, first, count);
-}
-
 void GLAPIENTRY glDrawBuffer(GLenum mode)
 {
    DISPATCH(DrawBuffer)(mode);
@@ -347,11 +337,6 @@ void GLAPIENTRY glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenu
 void GLAPIENTRY glEnable(GLenum mode)
 {
    DISPATCH(Enable)(mode);
-}
-
-void GLAPIENTRY glEnableClientState(GLenum cap)
-{
-   DISPATCH(EnableClientState)(cap);
 }
 
 void GLAPIENTRY glEnd(void)
@@ -484,11 +469,6 @@ GLuint GLAPIENTRY glGenLists(GLsizei range)
    return DISPATCH(GenLists)(range);
 }
 
-void GLAPIENTRY glGenTextures(GLsizei n, GLuint *textures)
-{
-   DISPATCH(GenTextures)(n, textures);
-}
-
 void GLAPIENTRY glGetBooleanv(GLenum pname, GLboolean *params)
 {
    DISPATCH(GetBooleanv)(pname, params);
@@ -567,11 +547,6 @@ void GLAPIENTRY glGetPixelMapuiv(GLenum map, GLuint *values)
 void GLAPIENTRY glGetPixelMapusv(GLenum map, GLushort *values)
 {
    DISPATCH(GetPixelMapusv)(map, values);
-}
-
-void GLAPIENTRY glGetPointerv(GLenum pname, GLvoid **params)
-{
-   DISPATCH(GetPointerv)(pname, params);
 }
 
 void GLAPIENTRY glGetPolygonStipple(GLubyte *mask)
@@ -702,6 +677,11 @@ void GLAPIENTRY glInitNames(void)
 void GLAPIENTRY glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 {
    DISPATCH(InterleavedArrays)(format, stride, pointer);
+}
+
+GLboolean GLAPIENTRY glIsEnabled(GLenum cap)
+{
+   return DISPATCH(IsEnabled)(cap);
 }
 
 GLboolean GLAPIENTRY glIsList(GLuint list)
@@ -984,11 +964,6 @@ void GLAPIENTRY glPolygonMode(GLenum face, GLenum mode)
    DISPATCH(PolygonMode)(face, mode);
 }
 
-void GLAPIENTRY glPolygonOffset(GLfloat factor, GLfloat units)
-{
-   DISPATCH(PolygonOffset)(factor, units);
-}
-
 void GLAPIENTRY glPolygonStipple(const GLubyte *pattern)
 {
    DISPATCH(PolygonStipple)(pattern);
@@ -997,11 +972,6 @@ void GLAPIENTRY glPolygonStipple(const GLubyte *pattern)
 void GLAPIENTRY glPopAttrib(void)
 {
    DISPATCH(PopAttrib)();
-}
-
-void GLAPIENTRY glPopClientAttrib(void)
-{
-   DISPATCH(PopClientAttrib)();
 }
 
 void GLAPIENTRY glPopMatrix(void)
@@ -1014,14 +984,19 @@ void GLAPIENTRY glPopName(void)
    DISPATCH(PopName)();
 }
 
-void GLAPIENTRY glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities)
+void GLAPIENTRY glPushAttrib(GLbitfield mask)
 {
-   DISPATCH(PrioritizeTextures)(n, textures, priorities);
+   DISPATCH(PushAttrib)(mask);
 }
 
 void GLAPIENTRY glPushMatrix(void)
 {
    DISPATCH(PushMatrix)();
+}
+
+void GLAPIENTRY glPushName(GLuint name)
+{
+   DISPATCH(PushName)(name);
 }
 
 void GLAPIENTRY glRasterPos2d(GLdouble x, GLdouble y)
@@ -1194,31 +1169,6 @@ void GLAPIENTRY glRectsv(const GLshort *v1, const GLshort *v2)
    DISPATCH(Rectsv)(v1, v2);
 }
 
-void GLAPIENTRY glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   DISPATCH(Scissor)(x, y, width, height);
-}
-
-GLboolean GLAPIENTRY glIsEnabled(GLenum cap)
-{
-   return DISPATCH(IsEnabled)(cap);
-}
-
-void GLAPIENTRY glPushAttrib(GLbitfield mask)
-{
-   DISPATCH(PushAttrib)(mask);
-}
-
-void GLAPIENTRY glPushClientAttrib(GLbitfield mask)
-{
-   DISPATCH(PushClientAttrib)(mask);
-}
-
-void GLAPIENTRY glPushName(GLuint name)
-{
-   DISPATCH(PushName)(name);
-}
-
 GLint GLAPIENTRY glRenderMode(GLenum mode)
 {
    return DISPATCH(RenderMode)(mode);
@@ -1247,6 +1197,11 @@ void GLAPIENTRY glScaled(GLdouble x, GLdouble y, GLdouble z)
 void GLAPIENTRY glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
    DISPATCH(Scalef)(x, y, z);
+}
+
+void GLAPIENTRY glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   DISPATCH(Scissor)(x, y, width, height);
 }
 
 void GLAPIENTRY glShadeModel(GLenum mode)
@@ -1694,9 +1649,34 @@ void GLAPIENTRY glDeleteTextures(GLsizei n, const GLuint *textures)
    DISPATCH(DeleteTextures)(n, textures);
 }
 
+void GLAPIENTRY glDisableClientState(GLenum cap)
+{
+   DISPATCH(DisableClientState)(cap);
+}
+
+void GLAPIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+   DISPATCH(DrawArrays)(mode, first, count);
+}
+
 void GLAPIENTRY glEdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
    DISPATCH(EdgeFlagPointer)(stride, ptr);
+}
+
+void GLAPIENTRY glEnableClientState(GLenum cap)
+{
+   DISPATCH(EnableClientState)(cap);
+}
+
+void GLAPIENTRY glGenTextures(GLsizei n, GLuint *textures)
+{
+   DISPATCH(GenTextures)(n, textures);
+}
+
+void GLAPIENTRY glGetPointerv(GLenum pname, GLvoid **params)
+{
+   DISPATCH(GetPointerv)(pname, params);
 }
 
 void GLAPIENTRY glIndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
@@ -1707,6 +1687,26 @@ void GLAPIENTRY glIndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 void GLAPIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    DISPATCH(NormalPointer)(type, stride, ptr);
+}
+
+void GLAPIENTRY glPolygonOffset(GLfloat factor, GLfloat units)
+{
+   DISPATCH(PolygonOffset)(factor, units);
+}
+
+void GLAPIENTRY glPopClientAttrib(void)
+{
+   DISPATCH(PopClientAttrib)();
+}
+
+void GLAPIENTRY glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities)
+{
+   DISPATCH(PrioritizeTextures)(n, textures, priorities);
+}
+
+void GLAPIENTRY glPushClientAttrib(GLbitfield mask)
+{
+   DISPATCH(PushClientAttrib)(mask);
 }
 
 void GLAPIENTRY glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
