@@ -416,8 +416,13 @@ case $ARCH in
 	    VERSION="${MAJOR}.${MINOR}"
 	    LIBNAME="lib${LIBNAME}.so"
 	    echo "mklib: Making OSF/1 shared library: " ${LIBNAME}
+	    if [ $CPLUSPLUS = 1 ] ; then
+		LINK=$CXX
+	    else
+		LINK=$CC
+	    fi
 	    rm -f ${LIBNAME}.${VERSION}
-	    ld -o ${LIBNAME}.${VERSION} -shared -no_archive -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
+	    ${LINK} -o ${LIBNAME}.${VERSION} -shared -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
 	    ln -sf ${LIBNAME}.${VERSION} ${LIBNAME}
 	    FINAL_LIBS="${LIBNAME} ${LIBNAME}.${VERSION}"
 	fi
