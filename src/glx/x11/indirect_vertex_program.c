@@ -56,7 +56,7 @@ void __indirect_glDisableVertexAttribArrayARB( GLuint index )
 
 static void
 get_parameter( unsigned opcode, unsigned size, GLenum target, GLuint index,
-		  GLfloat * params )
+	       void * params )
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;

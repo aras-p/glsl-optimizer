@@ -25,14 +25,15 @@
 
 #include <inttypes.h>
 #include <assert.h>
-#include "glxclient.h"
-#include "packrender.h"
-#include "indirect.h"
 #include <string.h>
 
+#include "glxclient.h"
+#include "indirect.h"
 #include <GL/glxproto.h>
 #include "glxextensions.h"
 #include "indirect_vertex_array.h"
+
+#define __GLX_PAD(n) (((n)+3) & ~3)
 
 /**
  * \file indirect_vertex_array.c
@@ -353,6 +354,7 @@ static struct array_state * get_array_entry(
 static void fill_array_info_cache( struct array_state_vector * arrays );
 static GLboolean validate_mode(__GLXcontext *gc, GLenum mode);
 static GLboolean validate_count(__GLXcontext *gc, GLsizei count);
+static GLboolean validate_type(__GLXcontext *gc, GLenum type);
 
 
 /**
@@ -395,7 +397,7 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     unsigned texture_units = 1;
     unsigned i;
     unsigned j;
-    unsigned vertex_program_attribs;
+    unsigned vertex_program_attribs = 0;
 
     GLboolean got_fog = GL_FALSE;
     GLboolean got_secondary_color = GL_FALSE;
@@ -442,15 +444,13 @@ __glXInitVertexArrayState( __GLXcontext * gc )
 
     if ( __glExtensionBitIsEnabled( gc, GL_ARB_multitexture_bit )
 	 || (gc->server_major > 1) || (gc->server_minor >= 3) ) {
-	glGetIntegerv( GL_MAX_TEXTURE_UNITS, & texture_units );
-    }
-    else {
-	texture_units = 1;
+	__indirect_glGetIntegerv( GL_MAX_TEXTURE_UNITS, & texture_units );
     }
 
     if ( __glExtensionBitIsEnabled( gc, GL_ARB_vertex_program_bit ) ) {
-	glGetProgramivARB( GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ATTRIBS_ARB,
-			   & vertex_program_attribs );
+	__indirect_glGetProgramivARB( GL_VERTEX_PROGRAM_ARB,
+				      GL_MAX_PROGRAM_ATTRIBS_ARB,
+				      & vertex_program_attribs );
     }
 
     arrays->num_texture_units = texture_units;
@@ -1002,7 +1002,7 @@ emit_DrawElements_none( GLenum mode, GLsizei count, GLenum type,
     pc += 8;
 
     for ( i = 0 ; i < count ; i++ ) {
-	unsigned  index;
+	unsigned  index = 0;
 
 	if ( (pc + single_vertex_size) >= gc->bufEnd ) {
 	    pc = __glXFlushRenderBuffer(gc, gc->pc);
@@ -1166,6 +1166,28 @@ validate_count(__GLXcontext *gc, GLsizei count)
 }
 
 
+/**
+ * Validate that the \c type parameter to \c glDrawElements, et. al. is
+ * valid.  Only \c GL_UNSIGNED_BYTE, \c GL_UNSIGNED_SHORT, and
+ * \c GL_UNSIGNED_INT are valid.
+ *
+ * \returns
+ * \c GL_TRUE if the argument is valid, \c GL_FALSE if it is not.
+ */
+static GLboolean validate_type(__GLXcontext *gc, GLenum type)
+{
+    switch( type ) {
+    case GL_UNSIGNED_INT:
+    case GL_UNSIGNED_SHORT:
+    case GL_UNSIGNED_BYTE:
+	return GL_TRUE;
+     default:
+	__glXSetError(gc, GL_INVALID_ENUM);
+	return GL_FALSE;
+    }
+}
+
+
 void __indirect_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
@@ -1217,7 +1239,8 @@ void __indirect_glDrawElements(GLenum mode, GLsizei count, GLenum type,
     struct array_state_vector * arrays = state->array_state;
 
 
-    if ( validate_mode(gc, mode) && validate_count(gc, count)  ) {
+    if ( validate_mode(gc, mode) && validate_count(gc, count)
+	 && validate_type(gc, type) ) {
 	if ( ! arrays->array_info_cache_valid ) {
 	    fill_array_info_cache( arrays );
 	}
@@ -1237,7 +1260,8 @@ void __indirect_glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
     struct array_state_vector * arrays = state->array_state;
 
 
-    if ( validate_mode(gc, mode) && validate_count(gc, count) ) {
+    if ( validate_mode(gc, mode) && validate_count(gc, count)
+	 && validate_type(gc, type) ) {
 	if (end < start) {
 	    __glXSetError(gc, GL_INVALID_VALUE);
 	    return;
@@ -1287,7 +1311,7 @@ void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei *count,
     GLsizei  i;
 
 
-    if ( validate_mode(gc, mode) ) {
+    if ( validate_mode(gc, mode) && validate_type(gc, type) ) {
 	if ( ! arrays->array_info_cache_valid ) {
 	    fill_array_info_cache( arrays );
 	}
@@ -1725,6 +1749,8 @@ void __indirect_glVertexAttribPointerARB(GLuint index, GLint size,
 	true_immediate_count = 4;
     }
     else {
+	true_immediate_count = size;
+
 	switch( type ) {
 	case GL_BYTE:
 	    opcode = X_GLrop_VertexAttrib4bvARB;
