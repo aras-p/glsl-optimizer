@@ -641,25 +641,18 @@ _mesa_UniformMatrix4fvARB (GLint location, GLsizei count, GLboolean transpose, c
 	}
 }
 
-void GLAPIENTRY
-_mesa_GetObjectParameterfvARB (GLhandleARB obj, GLenum pname, GLfloat *params)
-{
-	GLint iparams;
-
-	/* NOTE we are assuming here that all parameters are one-element wide */
-
-	_mesa_GetObjectParameterivARB (obj, pname, &iparams);
-	*params = (GLfloat) iparams;
-}
-
-void GLAPIENTRY
-_mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
+static GLboolean
+_mesa_get_object_parameter (GLhandleARB obj, GLenum pname, GLvoid *params, GLboolean *integral,
+	GLint *size)
 {
 	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_unknown_intf **unk;
 	struct gl2_generic_intf **gen;
 	struct gl2_shader_intf **sha;
 	struct gl2_program_intf **pro;
+	GLint *ipar = (GLint *) params;
+	/*GLfloat *fpar = (GLfloat *) params;*/
+	GLboolean success = GL_TRUE;
 
 	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
 	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
@@ -668,85 +661,111 @@ _mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
 	if (unk == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_VALUE, "glGetObjectParameterivARB");
-		return;
+		return GL_FALSE;
 	}
 
 	gen = (struct gl2_generic_intf **) (**unk).QueryInterface (unk, UIID_GENERIC);
 	if (gen == NULL)
 	{
 		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-		return;
+		return GL_FALSE;
 	}
 
 	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
 	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 
-	/* NOTE this function is called by GetObjectParameterfv so watch out with types and sizes */
+	/* set default values */
+	*integral = GL_TRUE;	/* indicates param type, TRUE: GLint, FALSE: GLfloat */
+	*size = 1;				/* param array size */ 
 
 	switch (pname)
 	{
 	case GL_OBJECT_TYPE_ARB:
-		*params = (**gen).GetType (gen);
+		*ipar = (**gen).GetType (gen);
 		break;
 	case GL_OBJECT_SUBTYPE_ARB:
 		if (sha != NULL)
-			*params = (**sha).GetSubType (sha);
-		else
+			*ipar = (**sha).GetSubType (sha);
+		else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_DELETE_STATUS_ARB:
-		*params = (**gen).GetDeleteStatus (gen);
+		*ipar = (**gen).GetDeleteStatus (gen);
 		break;
 	case GL_OBJECT_COMPILE_STATUS_ARB:
 		if (sha != NULL)
-			*params = (**sha).GetCompileStatus (sha);
-		else
+			*ipar = (**sha).GetCompileStatus (sha);
+		else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_LINK_STATUS_ARB:
 		if (pro != NULL)
-			*params = (**pro).GetLinkStatus (pro);
-		else
+			*ipar = (**pro).GetLinkStatus (pro);
+		else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_VALIDATE_STATUS_ARB:
 		if (pro != NULL)
-			*params = (**pro).GetValidateStatus (pro);
-		else
+			*ipar = (**pro).GetValidateStatus (pro);
+		else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_INFO_LOG_LENGTH_ARB:
 		{
 			const GLcharARB *info = (**gen).GetInfoLog (gen);
 			if (info == NULL)
-				*params = 0;
+				*ipar = 0;
 			else
-				*params = _mesa_strlen (info) + 1;
+				*ipar = _mesa_strlen (info) + 1;
 		}
 		break;
 	case GL_OBJECT_ATTACHED_OBJECTS_ARB:
 		if (pro != NULL)
-			*params = (**pro)._container.GetAttachedCount ((struct gl2_container_intf **) pro);
-		else
+			*ipar = (**pro)._container.GetAttachedCount ((struct gl2_container_intf **) pro);
+		else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_ACTIVE_UNIFORMS_ARB:
-		*params = 0;	/* TODO */
+		if (pro != NULL)
+			*ipar = 0;	/* TODO */
+		else {
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB:
-		*params = 0;	/* TODO */
+		if (pro != NULL)
+			*ipar = 0;	/* TODO */
+		else {
+			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
 		break;
 	case GL_OBJECT_SHADER_SOURCE_LENGTH_ARB:
-		if (sha != NULL)
-		{
+		if (sha != NULL) {
 			const GLcharARB *src = (**sha).GetSource (sha);
 			if (src == NULL)
-				*params = 0;
+				*ipar = 0;
 			else
-				*params = _mesa_strlen (src) + 1;
-		}
-		else
+				*ipar = _mesa_strlen (src) + 1;
+		} else {
 			_mesa_error (ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+			success = GL_FALSE;
+		}
+		break;
+	default:
+		_mesa_error (ctx, GL_INVALID_ENUM, "glGetObjectParameterivARB");
+		success = GL_FALSE;
 		break;
 	}
 
@@ -755,6 +774,61 @@ _mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
 		(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
 	if (pro != NULL)
 		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
+
+	return success;
+}
+
+void GLAPIENTRY
+_mesa_GetObjectParameterfvARB (GLhandleARB obj, GLenum pname, GLfloat *params)
+{
+	GLboolean integral;
+	GLint size, i;
+
+	assert (sizeof (GLfloat) == sizeof (GLint));
+
+	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size) != GL_FALSE)
+		if (integral != GL_FALSE)
+			for (i = 0; i < size; i++)
+				params[i] = (GLfloat) ((GLint *) params)[i];
+}
+
+void GLAPIENTRY
+_mesa_GetObjectParameterivARB (GLhandleARB obj, GLenum pname, GLint *params)
+{
+	GLboolean integral;
+	GLint size, i;
+
+	assert (sizeof (GLfloat) == sizeof (GLint));
+
+	if (_mesa_get_object_parameter (obj, pname, (GLvoid *) params, &integral, &size) != GL_FALSE)
+		if (integral == GL_FALSE)
+			for (i = 0; i < size; i++)
+				params[i] = (GLint) ((GLfloat *) params)[i];
+}
+
+static void
+_mesa_get_string (const GLcharARB *src, GLsizei maxLength, GLsizei *length, GLcharARB *str)
+{
+	GLsizei len;
+
+	if (src == NULL)
+		src = "";
+
+	len = _mesa_strlen (src);
+	if (len > maxLength)
+	{
+		len = maxLength;
+		/* allocate space for null termination */
+		if (len > 0)
+			len--;
+	}
+
+	_mesa_memcpy (str, src, len * sizeof (GLcharARB));
+	if (maxLength > 0)
+		str[len] = '\0';
+
+	if (length != NULL)
+		*length = len;
 }
 
 void GLAPIENTRY
@@ -763,8 +837,6 @@ _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLchar
 	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_unknown_intf **unk;
 	struct gl2_generic_intf **gen;
-	const GLcharARB *info;
-	GLsizei len;
 
 	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
 	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
@@ -779,30 +851,13 @@ _mesa_GetInfoLogARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLchar
 	gen = (struct gl2_generic_intf **) (**unk).QueryInterface (unk, UIID_GENERIC);
 	if (gen == NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetInfoLogARB");
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetInfoLogARB");
 		return;
 	}
 
-	info = (**gen).GetInfoLog (gen);
-	if (info == NULL)
-		info = "";
+	_mesa_get_string ((**gen).GetInfoLog (gen), maxLength, length, infoLog);
+
 	(**gen)._unknown.Release ((struct gl2_unknown_intf **) gen);
-
-	len = _mesa_strlen (info);
-	if (len > maxLength)
-	{
-		len = maxLength;
-		/* allocate space for null termination */
-		if (len > 0)
-			len--;
-	}
-
-	_mesa_memcpy (infoLog, info, len * sizeof (GLcharARB));
-	if (maxLength > 0)
-		infoLog[len] = '\0';
-
-	if (length != NULL)
-		*length = len;
 }
 
 void GLAPIENTRY
@@ -941,9 +996,18 @@ _mesa_GetUniformfvARB (GLhandleARB programObj, GLint location, GLfloat *params)
 	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 	if (pro == NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformfvARB");
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
 		return;
 	}
+
+	if ((**pro).GetLinkStatus (pro) == GL_FALSE)
+	{
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformfvARB");
+		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
+		return;
+	}
+
+	/* TODO validate location (OPERATION) */
 
 	/* TODO */
 
@@ -970,9 +1034,18 @@ _mesa_GetUniformivARB (GLhandleARB programObj, GLint location, GLint *params)
 	pro = (struct gl2_program_intf **) (**unk).QueryInterface (unk, UIID_PROGRAM);
 	if (pro == NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetUniformivARB");
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
 		return;
 	}
+
+	if ((**pro).GetLinkStatus (pro) == GL_FALSE)
+	{
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetUniformivARB");
+		(**pro)._container._generic._unknown.Release ((struct gl2_unknown_intf **) pro);
+		return;
+	}
+
+	/* TODO validate location (GL_INVALID_OPERATION) */
 
 	/* TODO */
 
@@ -985,8 +1058,6 @@ _mesa_GetShaderSourceARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, G
 	GET_CURRENT_CONTEXT(ctx);
 	struct gl2_unknown_intf **unk;
 	struct gl2_shader_intf **sha;
-	const GLcharARB *src;
-	GLsizei len;
 
 	_glthread_LOCK_MUTEX (ctx->Shared->Mutex);
 	unk = (struct gl2_unknown_intf **) _mesa_HashLookup (ctx->Shared->GL2Objects, obj);
@@ -1001,30 +1072,13 @@ _mesa_GetShaderSourceARB (GLhandleARB obj, GLsizei maxLength, GLsizei *length, G
 	sha = (struct gl2_shader_intf **) (**unk).QueryInterface (unk, UIID_SHADER);
 	if (sha == NULL)
 	{
-		_mesa_error (ctx, GL_INVALID_VALUE, "glGetShaderSourceARB");
+		_mesa_error (ctx, GL_INVALID_OPERATION, "glGetShaderSourceARB");
 		return;
 	}
 
-	src = (**sha).GetSource (sha);
-	if (src == NULL)
-		src = "";
+	_mesa_get_string ((**sha).GetSource (sha), maxLength, length, source);
+
 	(**sha)._generic._unknown.Release ((struct gl2_unknown_intf **) sha);
-
-	len = _mesa_strlen (src);
-	if (len > maxLength)
-	{
-		len = maxLength;
-		/* allocate space for null termination */
-		if (len > 0)
-			len--;
-	}
-
-	_mesa_memcpy (source, src, len * sizeof (GLcharARB));
-	if (maxLength > 0)
-		source[len] = '\0';
-
-	if (length != NULL)
-		*length = len;
 }
 
 /* GL_ARB_vertex_shader */
@@ -1122,5 +1176,7 @@ void
 _mesa_init_shaderobjects (GLcontext *ctx)
 {
 	ctx->ShaderObjects.current_program = NULL;
+
+	_mesa_init_shaderobjects_3dlabs (ctx);
 }
 
