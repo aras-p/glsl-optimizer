@@ -205,47 +205,20 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
  */
 void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 {
-   viaContextPtr vmesa;
-   drm_clip_rect_t *pbox;
-   int nbox, i;
+   viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
    GLboolean missed_target;
    int64_t ust;
 
-   if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);        
-   assert(dPriv);
-   assert(dPriv->driContextPriv);
-   assert(dPriv->driContextPriv->driverPrivate);
-
-   vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
-    
    VIA_FLUSH_DMA(vmesa);
 
    driWaitForVBlank( dPriv, & vmesa->vbl_seq, vmesa->vblank_flags, & missed_target );
-   LOCK_HARDWARE(vmesa);
-    
-   pbox = vmesa->pClipRects;
-   nbox = vmesa->numClipRects;
 
-   if (VIA_DEBUG) fprintf(stderr, "%s %d cliprects (%d)\n", 
-			  __FUNCTION__, nbox, vmesa->drawType);
-    
-	
+   LOCK_HARDWARE(vmesa);
    if (vmesa->drawType == GLX_PBUFFER_BIT) {
       viaDoSwapPBuffers(vmesa);
-      if (VIA_DEBUG) fprintf(stderr, "%s SwapPBuffers\n", __FUNCTION__);    
    }
    else {
-      for (i = 0; i < nbox; ) {
-	 int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-	 drm_clip_rect_t *b = (drm_clip_rect_t *)vmesa->sarea->boxes;
-
-	 vmesa->sarea->nbox = nr - i;
-
-	 for (; i < nr; i++)
-	    *b++ = pbox[i];
-	 viaDoSwapBuffers(vmesa);
-	 if (VIA_DEBUG) fprintf(stderr, "%s SwapBuffers\n", __FUNCTION__);    
-      }
+      viaDoSwapBuffers(vmesa);
    }
    UNLOCK_HARDWARE(vmesa);
 
@@ -257,8 +230,6 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
    }
     
    vmesa->swap_ust = ust;
-
-   if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);        
 }
 
 /*
@@ -886,14 +857,14 @@ void viaDoSwapBuffers(viaContextPtr vmesa)
     GLuint nBackPitch;
     GLuint nFrontWidth, nFrontHeight;
     GLuint nFrontBase, nBackBase;
-    drm_clip_rect_t *b = vmesa->sarea->boxes;
+    drm_clip_rect_t *b = vmesa->pClipRects;
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
     GLuint i;
     
     nFrontPitch = vmesa->front.pitch;
     nBackPitch = vmesa->back.pitch;
     
-    for (i = 0; i < vmesa->sarea->nbox; i++) {        
+    for (i = 0; i < vmesa->numClipRects; i++) {        
 
 	/* Width, Height */
         nFrontWidth = b->x2 - b->x1;
