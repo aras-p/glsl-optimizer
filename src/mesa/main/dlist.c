@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.70 2001/05/10 15:42:42 keithw Exp $ */
+/* $Id: dlist.c,v 1.71 2001/05/14 08:57:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,7 +110,7 @@ Functions which cause errors if called while compiling a display list:
 /* How many nodes to allocate at a time:
  * - reduced now that we hold vertices etc. elsewhere.
  */
-#define BLOCK_SIZE 64
+#define BLOCK_SIZE 256
 
 
 /*
@@ -166,12 +166,8 @@ typedef enum {
 	OPCODE_DRAW_BUFFER,
 	OPCODE_DRAW_PIXELS,
 	OPCODE_ENABLE,
-	OPCODE_EVALCOORD1,
-	OPCODE_EVALCOORD2,
 	OPCODE_EVALMESH1,
 	OPCODE_EVALMESH2,
-	OPCODE_EVALPOINT1,
-	OPCODE_EVALPOINT2,
 	OPCODE_FOG,
 	OPCODE_FRONT_FACE,
 	OPCODE_FRUSTUM,
@@ -553,12 +549,8 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_DRAW_BUFFER] = 2;
       InstSize[OPCODE_DRAW_PIXELS] = 6;
       InstSize[OPCODE_ENABLE] = 2;
-      InstSize[OPCODE_EVALCOORD1] = 2;
-      InstSize[OPCODE_EVALCOORD2] = 3;
       InstSize[OPCODE_EVALMESH1] = 4;
       InstSize[OPCODE_EVALMESH2] = 6;
-      InstSize[OPCODE_EVALPOINT1] = 2;
-      InstSize[OPCODE_EVALPOINT2] = 3;
       InstSize[OPCODE_FOG] = 6;
       InstSize[OPCODE_FRONT_FACE] = 2;
       InstSize[OPCODE_FRUSTUM] = 7;
@@ -6028,6 +6020,32 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 	    break;
          case OPCODE_SHADE_MODEL:
 	    fprintf(f,"ShadeModel %s\n", _mesa_lookup_enum_by_nr(n[1].ui));
+	    break;
+	 case OPCODE_MAP1:
+	    fprintf(f,"Map1 %s %.3f %.3f %d %d\n", 
+		    _mesa_lookup_enum_by_nr(n[1].ui),
+		    n[2].f, n[3].f, n[4].i, n[5].i);
+	    break;
+	 case OPCODE_MAP2:
+	    fprintf(f,"Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n", 
+		    _mesa_lookup_enum_by_nr(n[1].ui),
+		    n[2].f, n[3].f, n[4].f, n[5].f,
+		    n[6].i, n[7].i, n[8].i, n[9].i);
+	    break;
+	 case OPCODE_MAPGRID1:
+	    fprintf(f,"MapGrid1 %d %.3f %.3f\n", n[1].i, n[2].f, n[3].f);
+	    break;
+	 case OPCODE_MAPGRID2:
+	    fprintf(f,"MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n", 
+		    n[1].i, n[2].f, n[3].f,
+		    n[4].i, n[5].f, n[6].f);
+	    break;
+	 case OPCODE_EVALMESH1:
+	    fprintf(f,"EvalMesh1 %d %d\n", n[1].i, n[2].i);
+	    break;
+	 case OPCODE_EVALMESH2:
+	    fprintf(f,"EvalMesh2 %d %d %d %d\n",
+		    n[1].i, n[2].i, n[3].i, n[4].i);
 	    break;
 
 	 /*
