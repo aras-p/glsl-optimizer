@@ -32,6 +32,10 @@
 #include "extensions.h"
 #include "utils.h"
 
+#if !defined( DRI_NEW_INTERFACE_ONLY ) && !defined( _SOLO )
+#include "xf86dri.h"        /* For XF86DRIQueryVersion prototype. */
+#endif
+
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
 #endif
@@ -145,6 +149,17 @@ void driInitExtensions( GLcontext * ctx,
 
 
 
+#ifndef DRI_NEW_INTERFACE_ONLY
+/**
+ * Utility function used by drivers to test the verions of other components.
+ * 
+ * \deprecated
+ * All drivers using the new interface should use \c driCheckDriDdxVersions2
+ * instead.  This function is implemented using a call that is not available
+ * to drivers using the new interface.  Furthermore, the information gained
+ * by this call (the DRI and DDX version information) is already provided to
+ * the driver via the new interface.
+ */
 GLboolean
 driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
 			  const char * driver_name,
@@ -160,7 +175,7 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
    /* Check the DRI version */
    if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
       if (major != dri_major || minor < dri_minor) {
-	 __driUtilMessage(format, "DRI", driver_name, dri_major, dri_minor,
+	 __driUtilMessage(format, driver_name, "DRI", dri_major, dri_minor,
 			  major, minor, patch);
 	 return GL_FALSE;
       }
@@ -168,7 +183,7 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
 
    /* Check that the DDX driver version is compatible */
    if (sPriv->ddxMajor != ddx_major || sPriv->ddxMinor < ddx_minor) {
-      __driUtilMessage(format, "DDX", driver_name, ddx_major, ddx_minor,
+      __driUtilMessage(format, driver_name, "DDX", ddx_major, ddx_minor,
 		       sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
       return GL_FALSE;
    }
@@ -178,13 +193,77 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
    
    /* Check that the DRM driver version is compatible */
    if (sPriv->drmMajor != drm_major || sPriv->drmMinor < drm_minor) {
-      __driUtilMessage(format, "DRM", driver_name, drm_major, drm_minor,
+      __driUtilMessage(format, driver_name, "DRM", drm_major, drm_minor,
 		       sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
       return GL_FALSE;
    }
 
    return GL_TRUE;
 }
+#endif /* DRI_NEW_INTERFACE_ONLY */
+
+/**
+ * Utility function used by drivers to test the verions of other components.
+ *
+ * If one of the version requirements is not met, a message is logged using
+ * \c __driUtilMessage.
+ *
+ * \param driver_name  Name of the driver.  Used in error messages.
+ * \param driActual    Actual DRI version supplied __driCreateNewScreen.
+ * \param driExpected  Minimum DRI version required by the driver.
+ * \param ddxActual    Actual DDX version supplied __driCreateNewScreen.
+ * \param ddxExpected  Minimum DDX version required by the driver.
+ * \param drmActual    Actual DRM version supplied __driCreateNewScreen.
+ * \param drmExpected  Minimum DRM version required by the driver.
+ * 
+ * \returns \c GL_TRUE if all version requirements are met.  Otherwise,
+ *          \c GL_FALSE is returned.
+ * 
+ * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions, __driUtilMessage
+ */
+GLboolean
+driCheckDriDdxDrmVersions2(const char * driver_name,
+			   const __DRIversion * driActual,
+			   const __DRIversion * driExpected,
+			   const __DRIversion * ddxActual,
+			   const __DRIversion * ddxExpected,
+			   const __DRIversion * drmActual,
+			   const __DRIversion * drmExpected)
+{
+   static const char format[] = "%s DRI driver expected %s version %d.%d.x "
+       "but got version %d.%d.%d";
+
+
+   /* Check the DRI version */
+   if ( (driActual->major != driExpected->major)
+	|| (driActual->minor < driExpected->minor) ) {
+      __driUtilMessage(format, driver_name, "DRI",
+		       driExpected->major, driExpected->minor,
+		       driActual->major, driActual->minor, driActual->patch);
+      return GL_FALSE;
+   }
+
+   /* Check that the DDX driver version is compatible */
+   if ( (ddxActual->major != ddxExpected->major)
+	|| (ddxActual->minor < ddxExpected->minor) ) {
+      __driUtilMessage(format, driver_name, "DDX",
+		       ddxExpected->major, ddxExpected->minor,
+		       ddxActual->major, ddxActual->minor, ddxActual->patch);
+      return GL_FALSE;
+   }
+   
+   /* Check that the DRM driver version is compatible */
+   if ( (drmActual->major != drmExpected->major)
+	|| (drmActual->minor < drmExpected->minor) ) {
+      __driUtilMessage(format, driver_name, "DRM",
+		       drmExpected->major, drmExpected->minor,
+		       drmActual->major, drmActual->minor, drmActual->patch);
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
 
 GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 				    GLint *x, GLint *y,

@@ -216,9 +216,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
    if ( MACH64_DEBUG & DEBUG_VERBOSE_DRI ) 
       fprintf( stderr, "%s\n", __FUNCTION__ );
 
-   if ( ! driCheckDriDdxDrmVersions( sPriv, "Mach64", 4, 0, 6, 4, 1, 0 ) )
-      return NULL;
-
    /* Allocate the private area */
    mach64Screen = (mach64ScreenPtr) CALLOC( sizeof(*mach64Screen) );
    if ( !mach64Screen ) return NULL;
@@ -540,6 +537,16 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 6, 4, 0 };
+   static const __DRIversion drm_expected = { 1, 0, 0 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "Mach64",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,

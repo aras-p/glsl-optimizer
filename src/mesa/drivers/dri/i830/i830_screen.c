@@ -140,25 +140,6 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    i830ScreenPrivate *i830Screen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
 
-   /* Check the DRI externsion version */
-   if ( sPriv->driMajor != 4 || sPriv->driMinor < 0 ) {
-      __driUtilMessage( "i830 DRI driver expected DRI version 4.0.x "
-                        "but got version %d.%d.%d",
-                        sPriv->driMajor, sPriv->driMinor, sPriv->driPatch );
-      return GL_FALSE;
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if (sPriv->ddxMajor != 1 || sPriv->ddxMinor < 0) {
-      __driUtilMessage("i830 DRI driver expected DDX driver version 1.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
-      return GL_FALSE;
-   }
-		
-   /* Check that the DRM driver version is compatible */
-   if (sPriv->drmMajor != 1 || sPriv->drmMinor < 3) {
-      __driUtilMessage("i830 DRI driver expected DRM driver version 1.3.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
-      return GL_FALSE;
-   }
 
    /* Allocate the private area */
    i830Screen = (i830ScreenPrivate *)CALLOC(sizeof(i830ScreenPrivate));
@@ -565,6 +546,16 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 1, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 3, 0 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "i830",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,

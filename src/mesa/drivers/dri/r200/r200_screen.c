@@ -272,8 +272,6 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
    unsigned char *RADEONMMIO;
 
-   if ( ! driCheckDriDdxDrmVersions( sPriv, "R200", 4, 0, 4, 0, 1, 5 ) )
-      return NULL;
 
    /* Allocate the private area */
    screen = (r200ScreenPtr) CALLOC( sizeof(*screen) );
@@ -672,7 +670,17 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 5, 0 };
 
+   if ( ! driCheckDriDdxDrmVersions2( "R200",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
+      
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,

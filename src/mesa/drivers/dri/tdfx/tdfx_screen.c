@@ -121,34 +121,6 @@ tdfxInitDriver( __DRIscreenPrivate *sPriv )
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)sPriv );
    }
 
-   /* Check the DRI externsion version */
-   if ( sPriv->driMajor != 4 || sPriv->driMinor < 0 ) {
-       __driUtilMessage( "tdfx DRI driver expected DRI version 4.0.x "
-                         "but got version %d.%d.%d",
-                         sPriv->driMajor, sPriv->driMinor, sPriv->driPatch );
-       return GL_FALSE;
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if ( sPriv->ddxMajor != 1 ||
-	sPriv->ddxMinor < 0 ) {
-      __driUtilMessage(
-	       "3dfx DRI driver expected DDX driver version 1.0.x "
-	       "but got version %d.%d.%d",
-	       sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch );
-      return GL_FALSE;
-   }
-
-   /* Check that the DRM driver version is compatible */
-   if ( sPriv->drmMajor != 1 ||
-	sPriv->drmMinor < 0 ) {
-      __driUtilMessage(
-	       "3dfx DRI driver expected DRM driver version 1.0.x "
-	       "but got version %d.%d.%d",
-	       sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch );
-      return GL_FALSE;
-   }
-
    if ( !tdfxCreateScreen( sPriv ) ) {
       tdfxDestroyScreen( sPriv );
       return GL_FALSE;
@@ -413,6 +385,16 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     __GLcontextModes ** driver_modes )
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 1, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 0, 0 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "tdfx",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
    				  ddx_version, dri_version, drm_version,

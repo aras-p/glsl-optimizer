@@ -229,8 +229,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreenPrivate *mgaScreen;
    MGADRIPtr         serverInfo = (MGADRIPtr)sPriv->pDevPriv;
 
-   if ( ! driCheckDriDdxDrmVersions( sPriv, "MGA", 4, 0, 1, 0, 3, 0 ) )
-      return GL_FALSE;
 
    /* Allocate the private area */
    mgaScreen = (mgaScreenPrivate *)MALLOC(sizeof(mgaScreenPrivate));
@@ -967,6 +965,16 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 1, 0, 0 };
+   static const __DRIversion drm_expected = { 3, 0, 0 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "MGA",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,

@@ -230,8 +230,6 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
    i810ScreenPrivate *i810Screen;
    I810DRIPtr         gDRIPriv = (I810DRIPtr)sPriv->pDevPriv;
 
-   if ( ! driCheckDriDdxDrmVersions( sPriv, "i810", 4, 0, 1, 0, 1, 2 ) )
-     return GL_FALSE;
 
    /* Allocate the private area */
    i810Screen = (i810ScreenPrivate *)CALLOC(sizeof(i810ScreenPrivate));
@@ -436,6 +434,16 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
 {
    __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 1, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 2, 0 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "i810",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
