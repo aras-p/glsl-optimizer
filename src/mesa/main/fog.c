@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.15 2000/07/07 14:56:22 keithw Exp $ */
+/* $Id: fog.c,v 1.16 2000/07/07 14:57:47 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -427,3 +427,4 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
          return;
    }
 }
+/* hello */
