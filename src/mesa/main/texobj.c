@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.48 2001/04/25 18:21:05 brianp Exp $ */
+/* $Id: texobj.c,v 1.49 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -181,7 +181,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *t )
 {
    const GLint baseLevel = t->BaseLevel;
-   GLint maxLog2 = 0;
+   GLint maxLog2 = 0, maxLevels = 0;
 
    t->Complete = GL_TRUE;  /* be optimistic */
 
@@ -195,20 +195,30 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Compute _MaxLevel */
    if (t->Dimensions == 1) {
       maxLog2 = t->Image[baseLevel]->WidthLog2;
+      maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if (t->Dimensions == 2 || t->Dimensions == 6) {
       maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
                      t->Image[baseLevel]->HeightLog2);
+      maxLevels = (t->Dimensions == 2) ?
+         ctx->Const.MaxTextureLevels : ctx->Const.MaxCubeTextureLevels;
    }
    else if (t->Dimensions == 3) {
       GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
                        t->Image[baseLevel]->HeightLog2);
       maxLog2 = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
+      maxLevels = ctx->Const.Max3DTextureLevels;
    }
+   else {
+      _mesa_problem(ctx, "Bad t->Dimension in _mesa_test_texobj_completeness");
+      return;
+   }
+
+   ASSERT(maxLevels > 0);
 
    t->_MaxLevel = baseLevel + maxLog2;
    t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
-   t->_MaxLevel = MIN2(t->_MaxLevel, ctx->Const.MaxTextureLevels - 1);
+   t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1);
 
    /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - t->BaseLevel);
@@ -272,7 +282,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       if (t->Dimensions == 1) {
          /* Test 1-D mipmaps */
          GLuint width = t->Image[baseLevel]->Width2;
-         for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
+         for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -297,7 +307,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
          /* Test 2-D mipmaps */
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
-         for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
+         for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -331,7 +341,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
          GLuint depth = t->Image[baseLevel]->Depth2;
-	 for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
+	 for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -372,7 +382,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
          /* make sure 6 cube faces are consistant */
          GLuint width = t->Image[baseLevel]->Width2;
          GLuint height = t->Image[baseLevel]->Height2;
-	 for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
+	 for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }

@@ -754,7 +754,6 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->textureAlign = FX_grGetInteger(FX_TEXTURE_ALIGN);
    fxMesa->glCtx->Const.MaxTextureLevels = 9;
-   fxMesa->glCtx->Const.MaxTextureSize = 256;
    fxMesa->glCtx->Const.MaxTextureUnits = fxMesa->emulateTwoTMUs ? 2 : 1;
    fxMesa->new_state = _NEW_ALL;
 

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.31 2001/05/14 23:11:12 brianp Exp $ */
+/* $Id: config.h,v 1.32 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,8 +99,14 @@
 /* Max texture palette / color table size */
 #define MAX_COLOR_TABLE_SIZE 256
 
-/* Number of texture levels */
+/* Number of 1D/2D texture mipmap levels */
 #define MAX_TEXTURE_LEVELS 12
+
+/* Number of 3D texture mipmap levels */
+#define MAX_3D_TEXTURE_LEVELS 8
+
+/* Number of cube texture mipmap levels */
+#define MAX_CUBE_TEXTURE_LEVELS 12
 
 /* Number of texture units - GL_ARB_multitexture */
 #define MAX_TEXTURE_UNITS 8

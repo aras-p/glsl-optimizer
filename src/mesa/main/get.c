@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.62 2001/06/12 22:08:41 brianp Exp $ */
+/* $Id: get.c,v 1.63 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -583,8 +583,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(MAX_PROJECTION_STACK_DEPTH);
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = INT_TO_BOOL(1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = INT_TO_BOOL(ctx->Const.MaxTextureSize);
+         *params = INT_TO_BOOL(1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = INT_TO_BOOL(MAX_TEXTURE_STACK_DEPTH);
@@ -994,7 +996,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
-            *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
+            *params = INT_TO_BOOL(1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
@@ -1861,8 +1863,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) MAX_PROJECTION_STACK_DEPTH;
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (GLdouble) (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = (GLdouble) ctx->Const.MaxTextureSize;
+         *params = (GLdouble) (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLdouble) MAX_TEXTURE_STACK_DEPTH;
@@ -2272,7 +2276,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
-            *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
+            *params = (GLdouble) (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
@@ -3139,8 +3143,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) MAX_PROJECTION_STACK_DEPTH;
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (GLfloat) (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = (GLfloat) ctx->Const.MaxTextureSize;
+         *params = (GLfloat) (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLfloat) MAX_TEXTURE_STACK_DEPTH;
@@ -3552,7 +3558,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
-            *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
+            *params = (GLfloat) (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
@@ -4393,8 +4399,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) MAX_PROJECTION_STACK_DEPTH;
          break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = ctx->Const.MaxTextureSize;
+         *params = (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLint) MAX_TEXTURE_STACK_DEPTH;
@@ -4804,7 +4812,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
-            *params = ctx->Const.MaxCubeTextureSize;
+            *params = (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;

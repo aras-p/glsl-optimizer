@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.45 2001/06/12 22:08:41 brianp Exp $ */
+/* $Id: mtypes.h,v 1.46 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1156,9 +1156,9 @@ struct gl_frame_buffer {
  * but are never changed after that.
  */
 struct gl_constants {
-   GLint MaxTextureSize;
-   GLint MaxCubeTextureSize;
    GLint MaxTextureLevels;
+   GLint Max3DTextureLevels;
+   GLint MaxCubeTextureLevels;
    GLuint MaxTextureUnits;
    GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLuint MaxArrayLockSize;

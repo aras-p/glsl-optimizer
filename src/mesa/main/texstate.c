@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.52 2001/06/12 22:08:41 brianp Exp $ */
+/* $Id: texstate.c,v 1.53 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1133,16 +1133,33 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
    GLboolean isProxy;
+   GLint maxLevels;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexLevelParameter[if]v" );
-      return;
-   }
 
    dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
    if (dimensions == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
+      return;
+   }
+
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+      maxLevels = ctx->Const.MaxTextureLevels;
+      break;
+   case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
+      maxLevels = ctx->Const.Max3DTextureLevels;
+      break;
+   default:
+      maxLevels = ctx->Const.MaxCubeTextureLevels;
+      break;
+   }
+
+   if (level < 0 || level >= maxLevels) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glGetTexLevelParameter[if]v" );
       return;
    }
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.142 2001/06/12 22:08:41 brianp Exp $ */
+/* $Id: context.c,v 1.143 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -728,10 +728,13 @@ init_attrib_groups( GLcontext *ctx )
 
    assert(ctx);
 
+   assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
+   assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
+
    /* Constants, may be overriden by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
-   ctx->Const.MaxTextureSize = 1 << (MAX_TEXTURE_LEVELS - 1);
-   ctx->Const.MaxCubeTextureSize = ctx->Const.MaxTextureSize;
+   ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
+   ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
    ctx->Const.MaxTextureMaxAnisotropy = MAX_TEXTURE_MAX_ANISOTROPY;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;

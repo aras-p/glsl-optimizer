@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.27 2001/05/24 14:47:56 brianp Exp $ */
+/* $Id: texstore.c,v 1.28 2001/06/13 14:56:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1544,6 +1544,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
                                   0 };
    const GLenum *targets;
    GLuint level;
+   GLint maxLevels = 0;
 
    ASSERT(texObj);
    ASSERT(texObj->Image[texObj->BaseLevel]);
@@ -1551,15 +1552,19 @@ _mesa_generate_mipmap(GLcontext *ctx,
    switch (texObj->Dimensions) {
    case 1:
       targets = targets1D;
+      maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case 2:
       targets = targets2D;
+      maxLevels = ctx->Const.MaxTextureLevels;
       break;
    case 3:
       targets = targets3D;
+      maxLevels = ctx->Const.Max3DTextureLevels;
       break;
    case 6:
       targets = targetsCube;
+      maxLevels = ctx->Const.MaxCubeTextureLevels;
       break;
    default:
       _mesa_problem(ctx,
@@ -1568,7 +1573,7 @@ _mesa_generate_mipmap(GLcontext *ctx,
    }
 
    for (level = texObj->BaseLevel; level < texObj->MaxLevel
-           && level < ctx->Const.MaxTextureLevels - 1; level++) {
+           && level < maxLevels - 1; level++) {
       /* generate image[level+1] from image[level] */
       const struct gl_texture_image *srcImage;
       struct gl_texture_image *dstImage;
