@@ -314,7 +314,7 @@ do {								\
    UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][0], (c)[0]);		\
    UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][1], (c)[1]);		\
    UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][2], (c)[2]);		\
-   UNCLAMPED_FLOAT_TO_UBYTE(v->uv4[4][3], (c)[3]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(v->ub4[4][3], (c)[3]);		\
 } while (0)
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[4] = v1->ui[4]
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[4]
