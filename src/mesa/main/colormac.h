@@ -1,10 +1,10 @@
-/* $Id: colormac.h,v 1.10 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: colormac.h,v 1.11 2002/04/04 16:51:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,10 +74,8 @@
 #define CHAN_TO_UBYTE(c)  ((c) >> 8)
 #define CHAN_TO_FLOAT(c)  ((GLfloat) ((c) * (1.0 / CHAN_MAXF)))
 
-#define CLAMPED_FLOAT_TO_CHAN(c, f) \
-   c = ((GLchan) IROUND((f) * CHAN_MAXF))
-#define UNCLAMPED_FLOAT_TO_CHAN(c, f)   \
-   c = ( (GLchan) IROUND( CLAMP(f, 0.0, 1.0) * CHAN_MAXF) )
+#define CLAMPED_FLOAT_TO_CHAN(c, f)    CLAMPED_FLOAT_TO_USHORT(c, f)
+#define UNCLAMPED_FLOAT_TO_CHAN(c, f)  UNCLAMPED_FLOAT_TO_USHORT(c, f)
 
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
 
