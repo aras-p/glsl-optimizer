@@ -1,10 +1,10 @@
-/* $Id: texstate.c,v 1.62 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: texstate.c,v 1.63 2002/01/09 02:14:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -469,10 +469,16 @@ void
 _mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param )
 {
    GLfloat p[4];
-   p[0] = INT_TO_FLOAT( param[0] );
-   p[1] = INT_TO_FLOAT( param[1] );
-   p[2] = INT_TO_FLOAT( param[2] );
-   p[3] = INT_TO_FLOAT( param[3] );
+   if (pname == GL_TEXTURE_ENV_COLOR) {
+      p[0] = INT_TO_FLOAT( param[0] );
+      p[1] = INT_TO_FLOAT( param[1] );
+      p[2] = INT_TO_FLOAT( param[2] );
+      p[3] = INT_TO_FLOAT( param[3] );
+   }
+   else {
+      p[0] = (GLint) param[0];
+      p[1] = p[2] = p[3] = 0;  /* init to zero, just to be safe */
+   }
    _mesa_TexEnvfv( target, pname, p );
 }
 
