@@ -46,7 +46,7 @@ extern "C" {
  *   6. Brian Paul, 5 Apr 2000
  *      Added GL_ARB_multisample tokens, added GL_ARB_texture_env_add
  *   7. Brian Paul, 7 Apr 2000
- *      Minor clean-ups, temporaty token values for GL_SGIS_pixel_texture
+ *      Minor clean-ups, temporary token values for GL_SGIS_pixel_texture
  */
 #define GL_GLEXT_VERSION_EXT 7
 
