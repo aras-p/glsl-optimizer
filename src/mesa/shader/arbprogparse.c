@@ -384,8 +384,8 @@ static char arb_grammar_text[] =
 #define  PARAM_CONSTANT                             0x05
 
 /* param state property */
-#define  STATE_MATERIAL                             0x01
-#define  STATE_LIGHT                                0x02
+#define  STATE_MATERIAL_PARSER                      0x01
+#define  STATE_LIGHT_PARSER                         0x02
 #define  STATE_LIGHT_MODEL                          0x03
 #define  STATE_LIGHT_PROD                           0x04
 #define  STATE_FOG                                  0x05
@@ -3704,7 +3704,7 @@ static char core_grammar_text[] =
 
 static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
 {
-   char error_msg;
+   char error_msg[300];
    GLint error_pos;
 
    if (grammar_set_reg8 (id, name, value))
@@ -3716,29 +3716,29 @@ static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
    return 1;
 }
 
-/*
-	Taken from SGI sample code
-*/
-static int extension_is_supported (const byte *ext)
+static int extension_is_supported (const GLubyte *ext)
 {
-   const byte *extensions = glGetString (GL_EXTENSIONS);
-   const byte *end = extensions + _mesa_strlen ((const char *) extensions);
-   const int ext_len = _mesa_strlen ((const char *) ext);
+   const GLubyte *extensions = glGetString (GL_EXTENSIONS);
+   const GLubyte *end = extensions + _mesa_strlen ((const char *) extensions);
+   const GLint ext_len = _mesa_strlen ((const char *) ext);
 
-   while (extensions < end) {
-      const int n = _mesa_strcspn ((const char *) extensions, " ");
-      if ((ext_len == n) && (_mesa_strncmp ((const char *) ext,
-                             (const char *) extensions, n) == 0))
+   while (extensions < end)
+   {
+      const GLubyte *name_end = (const GLubyte *) strchr ((const char *) extensions, ' ');
+      if (name_end == NULL)
+         name_end = end;
+      if (name_end - extensions == ext_len && _mesa_strncmp ((const char *) ext,
+         (const char *) extensions, ext_len) == 0)
          return 1;
-      extensions += (n + 1);
-    }
+      extensions = name_end + 1;
+   }
 
    return 0;
 }
 
 static int enable_ext (GLcontext *ctx, grammar id, const byte *name, const byte *extname)
 {
-   if (extension_is_supported (extname)) {
+   if (extension_is_supported (extname))
       if (set_reg8 (ctx, id, name, 0x01))
          return 1;
    return 0;
