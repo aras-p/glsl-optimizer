@@ -764,6 +764,9 @@ xmesa_resize_buffers( GLframebuffer *buffer )
 }
 
 
+#ifndef XFree86Server
+/* XXX this was never tested in the Xserver environment */
+
 /**
  * This function implements glDrawPixels() with an XPutImage call when
  * drawing to the front buffer (X Window drawable).
@@ -820,9 +823,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
          ximage.depth = 24;
          ximage.bytes_per_line = -rowLength * 4; /* negative to flip image */
          ximage.bits_per_pixel = 32;
-         ximage.red_mask   = 0xff0000;
-         ximage.green_mask = 0x00ff00;
-         ximage.blue_mask  = 0x0000ff;
+         /* it seems we don't need to set the ximage.red/green/blue_mask fields */
          /* flip Y axis for dest position */
          dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
          XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
@@ -888,15 +889,13 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
          ximage.data = (char *) pixels
             + ((srcY + h - 1) * rowLength + srcX) * 2;
          ximage.byte_order = LSBFirst;
-         ximage.bitmap_unit = 32;
+         ximage.bitmap_unit = 16;
          ximage.bitmap_bit_order = LSBFirst;
-         ximage.bitmap_pad = 32;
+         ximage.bitmap_pad = 16;
          ximage.depth = 16;
          ximage.bytes_per_line = -rowLength * 2; /* negative to flip image */
          ximage.bits_per_pixel = 16;
-         ximage.red_mask   = 0xff0000;
-         ximage.green_mask = 0x00ff00;
-         ximage.blue_mask  = 0x0000ff;
+         /* it seems we don't need to set the ximage.red/green/blue_mask fields */
          /* flip Y axis for dest position */
          dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
          XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
@@ -908,6 +907,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          format, type, unpack, pixels);
    }
 }
+#endif /* XFree86Server */
 
 
 
@@ -1117,6 +1117,9 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Clear = clear_buffers;
    ctx->Driver.ResizeBuffers = xmesa_resize_buffers;
    ctx->Driver.CopyPixels = xmesa_CopyPixels;
+#ifdef XFree86Server
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+#else
    if (xmesa->xm_visual->undithered_pf == PF_8R8G8B &&
        xmesa->xm_visual->dithered_pf == PF_8R8G8B) {
       ctx->Driver.DrawPixels = xmesa_DrawPixels_8R8G8B;
@@ -1127,6 +1130,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    else {
       ctx->Driver.DrawPixels = _swrast_DrawPixels;
    }
+#endif
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
    ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
