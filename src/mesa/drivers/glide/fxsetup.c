@@ -1686,6 +1686,10 @@ fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
+   if (ctx->Stencil.ActiveFace) {
+      return;
+   }
+
    if (
        (us->stencilFunction != func)
        ||
@@ -1706,6 +1710,10 @@ fxDDStencilMask (GLcontext *ctx, GLuint mask)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
+   if (ctx->Stencil.ActiveFace) {
+      return;
+   }
+
    if (us->stencilWriteMask != mask) {
       us->stencilWriteMask = mask;
       fxMesa->new_state |= FX_NEW_STENCIL;
@@ -1717,6 +1725,10 @@ fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (ctx->Stencil.ActiveFace) {
+      return;
+   }
 
    if (
        (us->stencilFailFunc != sfail)
@@ -1739,14 +1751,50 @@ fxSetupStencil (GLcontext * ctx)
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (us->stencilEnabled) {
+      GrCmpFnc_t stencilFailFunc = GR_STENCILOP_KEEP;
+      GrCmpFnc_t stencilZFailFunc = GR_STENCILOP_KEEP;
+      GrCmpFnc_t stencilZPassFunc = GR_STENCILOP_KEEP;
+      if (!fxMesa->multipass) {
+         stencilFailFunc = convertGLStencilOp(us->stencilFailFunc);
+         stencilZFailFunc = convertGLStencilOp(us->stencilZFailFunc);
+         stencilZPassFunc = convertGLStencilOp(us->stencilZPassFunc);
+      }
       grEnable(GR_STENCIL_MODE_EXT);
-      fxMesa->Glide.grStencilOpExt(convertGLStencilOp(us->stencilFailFunc),
-                                   convertGLStencilOp(us->stencilZFailFunc),
-                                   convertGLStencilOp(us->stencilZPassFunc));
+      fxMesa->Glide.grStencilOpExt(stencilFailFunc,
+                                   stencilZFailFunc,
+                                   stencilZPassFunc);
       fxMesa->Glide.grStencilFuncExt(us->stencilFunction - GL_NEVER + GR_CMP_NEVER,
                                      us->stencilRefValue,
                                      us->stencilValueMask);
       fxMesa->Glide.grStencilMaskExt(us->stencilWriteMask);
+   } else {
+      grDisable(GR_STENCIL_MODE_EXT);
+   }
+}
+
+void
+fxSetupStencilFace (GLcontext * ctx, GLint face)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (us->stencilEnabled) {
+      GrCmpFnc_t stencilFailFunc = GR_STENCILOP_KEEP;
+      GrCmpFnc_t stencilZFailFunc = GR_STENCILOP_KEEP;
+      GrCmpFnc_t stencilZPassFunc = GR_STENCILOP_KEEP;
+      if (!fxMesa->multipass) {
+         stencilFailFunc = convertGLStencilOp(ctx->Stencil.FailFunc[face]);
+         stencilZFailFunc = convertGLStencilOp(ctx->Stencil.ZFailFunc[face]);
+         stencilZPassFunc = convertGLStencilOp(ctx->Stencil.ZPassFunc[face]);
+      }
+      grEnable(GR_STENCIL_MODE_EXT);
+      fxMesa->Glide.grStencilOpExt(stencilFailFunc,
+                                   stencilZFailFunc,
+                                   stencilZPassFunc);
+      fxMesa->Glide.grStencilFuncExt(ctx->Stencil.Function[face] - GL_NEVER + GR_CMP_NEVER,
+                                     ctx->Stencil.Ref[face],
+                                     ctx->Stencil.ValueMask[face]);
+      fxMesa->Glide.grStencilMaskExt(ctx->Stencil.WriteMask[face]);
    } else {
       grDisable(GR_STENCIL_MODE_EXT);
    }

@@ -447,7 +447,7 @@ struct tfxMesaContext
 
    tfxUnitsState unitsState;
    tfxUnitsState restoreUnitsState;	/* saved during multipass */
-
+   GLboolean multipass;			/* true when drawing intermediate pass */
 
    GLuint new_state;
    GLuint new_gl_state;
@@ -715,6 +715,7 @@ void fxSetupBlend (GLcontext *ctx);
 void fxSetupDepthTest (GLcontext *ctx);
 void fxSetupTexture (GLcontext *ctx);
 void fxSetupStencil (GLcontext *ctx);
+void fxSetupStencilFace (GLcontext *ctx, GLint face);
 
 /* Flags for software fallback cases */
 #define FX_FALLBACK_TEXTURE_MAP		0x0001
