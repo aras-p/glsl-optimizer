@@ -495,7 +495,7 @@ do { 						\
 static void enum_error( void )
 {
    GET_CURRENT_CONTEXT( ctx );
-   _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+   _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
 }
 
 static void _tnl_Vertex2f( GLfloat x, GLfloat y )
@@ -790,7 +790,7 @@ static void _tnl_Materialfv( GLenum face, GLenum pname,
       break;
       
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__);
+      _mesa_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
       return;
    }
 
@@ -818,7 +818,7 @@ static void _tnl_Materialfv( GLenum face, GLenum pname,
       MAT( _TNL_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
       break;
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
       return;
    }
 }
@@ -990,7 +990,7 @@ static void _tnl_Begin( GLenum mode )
       ctx->Driver.CurrentExecPrimitive = mode;
    }
    else 
-      _mesa_error( ctx, GL_INVALID_OPERATION, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin" );
       
 }
 
@@ -1023,7 +1023,7 @@ static void _tnl_End( void )
 
    }
    else 
-      _mesa_error( ctx, GL_INVALID_OPERATION, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
 }
 
 

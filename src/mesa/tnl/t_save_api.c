@@ -474,8 +474,8 @@ static void _save_upgrade_vertex( GLcontext *ctx,
       if (tnl->save.currentsz[attr] == 0) {
 	 assert(oldsz == 0);
 	 tnl->save.dangling_attr_ref = attr;
-	 _mesa_debug(0, "%s: dangling reference attr %d\n", 
-		     __FUNCTION__, attr); 
+	 _mesa_debug(0, "_save_upgrade_vertex: dangling reference attr %d\n", 
+                     attr); 
 
 #if 0
 	 /* The current strategy is to punt these degenerate cases
@@ -730,7 +730,7 @@ do { 						\
 static void enum_error( void )
 {
    GET_CURRENT_CONTEXT( ctx );
-   _mesa_compile_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+   _mesa_compile_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
 }
 
 static void _save_Vertex2f( GLfloat x, GLfloat y )
@@ -1041,7 +1041,7 @@ static void _save_Materialfv( GLenum face, GLenum pname,
       MAT( _TNL_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params );
       break;
    default:
-      _mesa_compile_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glMaterialfv" );
       return;
    }
 }
@@ -1094,7 +1094,7 @@ static void _save_Indexfv( const GLfloat *f )
 do {									\
    TNLcontext *tnl = TNL_CONTEXT(ctx);					\
 									\
-   fprintf(stderr, "fallback %s inside begin/end\n", __FUNCTION__);	\
+   /*fprintf(stderr, "fallback %s inside begin/end\n", __FUNCTION__);*/	\
 									\
    if (tnl->save.initial_counter != tnl->save.counter ||		\
        tnl->save.prim_count) 						\
@@ -1151,7 +1151,6 @@ static void _save_EvalPoint2( GLint i, GLint j )
 static void _save_CallList( GLuint l )
 {
    GET_CURRENT_CONTEXT(ctx);
-   fprintf(stderr, "%s\n", __FUNCTION__);
    FALLBACK(ctx);
    ctx->Save->CallList( l );
 }
@@ -1159,7 +1158,6 @@ static void _save_CallList( GLuint l )
 static void _save_CallLists( GLsizei n, GLenum type, const GLvoid *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   fprintf(stderr, "%s\n", __FUNCTION__);
    FALLBACK(ctx);
    ctx->Save->CallLists( n, type, v );
 }
@@ -1223,7 +1221,7 @@ static void _save_DrawElements(GLenum mode, GLsizei count, GLenum type,
 			       const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawElements" );
 }
 
 
@@ -1233,38 +1231,38 @@ static void _save_DrawRangeElements(GLenum mode,
 				    const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawRangeElements" );
 }
 
 static void _save_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawArrays" );
 }
 
 static void _save_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glRectf" );
 }
 
 static void _save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glEvalMesh1" );
 }
 
 static void _save_EvalMesh2( GLenum mode, GLint i1, GLint i2,
 				  GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glEvalMesh2" );
 }
 
 static void _save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx );
-   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "Recursive begin" );
+   _mesa_compile_error( ctx, GL_INVALID_OPERATION, "Recursive glBegin" );
 }
 
 

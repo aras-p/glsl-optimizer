@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -188,7 +187,8 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	 /* Degenerate case: list references current data and would
 	  * require fixup.  Take the easier option & loop it back.
 	  */
-	 _mesa_debug( 0, "%s: loopback dangling attr ref\n", __FUNCTION__);
+	 _mesa_debug(ctx,
+                     "tnl_playback_vertex_list: loopback dangling attr ref\n");
 	 _tnl_loopback_vertex_list( ctx, data );
 	 return;
       }

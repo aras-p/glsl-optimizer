@@ -389,83 +389,83 @@ void _mesa_noop_TexCoord4fv( const GLfloat *v )
 void _mesa_noop_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, 0, 0, 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib1f" );
 }
 
 void _mesa_noop_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], 0, 0, 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib1fv" );
 }
 
 void _mesa_noop_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, 0, 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib2f" );
 }
 
 void _mesa_noop_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], 0, 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib2fv" );
 }
 
 void _mesa_noop_VertexAttrib3fNV( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib3f" );
 }
 
 void _mesa_noop_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], 1);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib3fv" );
 }
 
 void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], x, y, z, w);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib4f" );
 }
 
 void _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < 16) {
+   if (index < VERT_ATTRIB_MAX) {
       ASSIGN_4V(ctx->Current.Attrib[index], v[0], v[1], v[2], v[3]);
    }
    else
-      _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib4fv" );
 }
 
 /* Material
@@ -575,7 +575,7 @@ void _mesa_noop_Begin( GLenum mode )
 void _mesa_noop_End( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error( ctx, GL_INVALID_OPERATION, __FUNCTION__ );
+   _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
 }
 
 

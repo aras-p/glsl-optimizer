@@ -278,7 +278,7 @@ _mesa_Flush( void );
 #define FLUSH_VERTICES(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", __FUNCTION__);	\
+      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", MESA_FUNCTION);\
    if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
       ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
    ctx->NewState |= newstate;					\
@@ -297,7 +297,7 @@ do {								\
 #define FLUSH_CURRENT(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", __FUNCTION__);	\
+      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", MESA_FUNCTION);	\
    if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
       ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
    ctx->NewState |= newstate;					\

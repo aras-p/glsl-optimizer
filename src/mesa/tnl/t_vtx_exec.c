@@ -28,11 +28,13 @@
 #include "glheader.h"
 #include "api_eval.h"
 #include "context.h"
+#include "enums.h"
 #include "state.h"
 #include "macros.h"
 #include "math/m_eval.h"
 #include "t_vtx_api.h"
 #include "t_pipeline.h"
+
 
 static void _tnl_print_vtx( GLcontext *ctx )
 {
@@ -40,8 +42,7 @@ static void _tnl_print_vtx( GLcontext *ctx )
    GLuint count = tnl->vtx.initial_counter - tnl->vtx.counter;
    GLuint i;
 
-   _mesa_debug(0, "%s: %u vertices %d primitives, %d vertsize\n",
-	       __FUNCTION__,
+   _mesa_debug(ctx, "_tnl_print_vtx: %u vertices %d primitives, %d vertsize\n",
                count,
 	       tnl->vtx.prim_count,
 	       tnl->vtx.vertex_size);
@@ -112,8 +113,8 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    GLuint count = tnl->vtx.initial_counter - tnl->vtx.counter;
    GLuint attr, i;
 
-   if (0) fprintf(stderr, "%s: %d verts %d vertsize\n",
-		  __FUNCTION__, count, tnl->vtx.vertex_size);
+   if (0) fprintf(stderr, "_tnl_vb_bind_vtx(): %d verts %d vertsize\n",
+		  count, tnl->vtx.vertex_size);
 
 
    /* Setup constant data in the VB.
@@ -176,9 +177,6 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
       VB->TexCoordPtr[i] = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i];
    }
 }
-
-
-
 
 
 /*
@@ -255,10 +253,6 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
 }
 
 
-
-
-
-
 /**
  * Execute the buffer and save copied verts.
  */
@@ -293,8 +287,3 @@ void _tnl_flush_vtx( GLcontext *ctx )
    tnl->vtx.counter = tnl->vtx.initial_counter;
    tnl->vtx.vbptr = tnl->vtx.buffer;
 }
-
-
-
-
-
