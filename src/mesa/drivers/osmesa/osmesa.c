@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.29 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: osmesa.c,v 1.30 2000/11/14 17:50:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,7 +72,6 @@ struct osmesa_context {
    GLenum format;		/* either GL_RGBA or GL_COLOR_INDEX */
    void *buffer;		/* the image buffer */
    GLint width, height;		/* size of image buffer */
-   GLuint pixel;		/* current color index or RGBA pixel value */
    GLuint clearpixel;		/* pixel for clearing the color buffer */
    GLint rowlength;		/* number of pixels per row */
    GLint userRowLength;		/* user-specified number of pixels per row */
@@ -294,7 +293,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       osmesa->buffer = NULL;
       osmesa->width = 0;
       osmesa->height = 0;
-      osmesa->pixel = 0;
       osmesa->clearpixel = 0;
       osmesa->userRowLength = 0;
       osmesa->rowlength = 0;
@@ -749,23 +747,6 @@ static GLbitfield clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    }
    /* have Mesa clear all other buffers */
    return mask & (~DD_FRONT_LEFT_BIT);
-}
-
-
-
-static void set_index( GLcontext *ctx, GLuint index )
-{
-   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   osmesa->pixel = index;
-}
-
-
-
-static void set_color( GLcontext *ctx,
-                       GLchan r, GLchan g, GLchan b, GLchan a )
-{
-   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   osmesa->pixel = PACK_RGBA( r, g, b, a );
 }
 
 
@@ -1576,10 +1557,10 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE			\
-   GLubyte r = v0->color[0];	\
-   GLubyte g = v0->color[1];	\
-   GLubyte b = v0->color[2];	\
-   GLubyte a = v0->color[3];	\
+   GLubyte r = v0->color[0];		\
+   GLubyte g = v0->color[1];		\
+   GLubyte b = v0->color[2];		\
+   GLubyte a = v0->color[3];		\
    GLuint pixel = PACK_RGBA(r,g,b,a);
 
 #define INNER_LOOP( LEFT, RIGHT, Y )	\
@@ -1714,10 +1695,7 @@ static void osmesa_update_state( GLcontext *ctx )
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;
-#if 000
-   ctx->Driver.Color = set_color;
-   ctx->Driver.Index = set_index;
-#endif
+
    ctx->Driver.ClearIndex = clear_index;
    ctx->Driver.ClearColor = clear_color;
    ctx->Driver.Clear = clear;
