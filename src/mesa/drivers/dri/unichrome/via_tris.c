@@ -324,7 +324,7 @@ do {							\
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-static const GLenum hwPrim[GL_POLYGON + 1] = {
+static const GLenum hwPrim[GL_POLYGON + 2] = {
     GL_POINTS,
     GL_LINES,
     GL_LINES,
@@ -334,7 +334,8 @@ static const GLenum hwPrim[GL_POLYGON + 1] = {
     GL_TRIANGLES,
     GL_TRIANGLES,
     GL_TRIANGLES,
-    GL_TRIANGLES
+    GL_TRIANGLES,
+    GL_POLYGON+1
 };
 
 
@@ -560,7 +561,8 @@ static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 
     /* Restore the render primitive
      */
-    if (prim != GL_POLYGON)
+    if (prim != GL_POLYGON &&
+	prim != GL_POLYGON + 1)
        tnl->Driver.Render.PrimitiveNotify( ctx, prim );
 }
 
