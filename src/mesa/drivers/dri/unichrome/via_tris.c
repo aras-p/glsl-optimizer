@@ -844,7 +844,6 @@ static void viaRenderFinish(GLcontext *ctx)
 }
 
 
-
 /* System to flush dma and emit state changes based on the rasterized
  * primitive.
  */
@@ -944,6 +943,7 @@ void viaRasterPrimitive(GLcontext *ctx,
        ADVANCE_RING();
     }
 
+    assert(vmesa->dmaLastPrim == 0);
 
     BEGIN_RING(8);
     OUT_RING( HC_HEADER2 );    

@@ -73,7 +73,22 @@
 #define VIA_BLIT_FILL 0xF0
 #define VIA_BLIT_SET 0xFF
 
- 
+static void dump_dma( viaContextPtr vmesa )
+{
+   GLuint i;
+   GLuint *data = (GLuint *)vmesa->dma;
+   for (i = 0; i < vmesa->dmaLow; i += 16) {
+      fprintf(stderr, "%04x:   ", i);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x\n", *data++);
+   }
+   fprintf(stderr, "******************************************\n");
+}
+
+
+
 void viaCheckDma(viaContextPtr vmesa, GLuint bytes)
 {
     VIA_FINISH_PRIM( vmesa );
@@ -470,7 +485,8 @@ static int fire_buffer(viaContextPtr vmesa)
 	    
    ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
    if (ret) {
-      fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);
+      dump_dma(vmesa);
+      fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);      
       abort();
    }
 
@@ -539,21 +555,6 @@ static int intersect_rect(drm_clip_rect_t *out,
 
     return 1;
 }
-
-static void dump_dma( viaContextPtr vmesa )
-{
-   GLuint i;
-   GLuint *data = (GLuint *)vmesa->dma;
-   for (i = 0; i < vmesa->dmaLow; i += 16) {
-      fprintf(stderr, "%04x:   ", i);
-      fprintf(stderr, "%08x  ", *data++);
-      fprintf(stderr, "%08x  ", *data++);
-      fprintf(stderr, "%08x  ", *data++);
-      fprintf(stderr, "%08x\n", *data++);
-   }
-   fprintf(stderr, "******************************************\n");
-}
-
 
 void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
 {
@@ -653,14 +654,16 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
 	 if (vmesa->glCtx->Scissor.Enabled &&
 	     !intersect_rect(&b, &b, &vmesa->scissorRect)) 
 	    continue;
-
+	 
 	 b.x1 += vmesa->drawXoff;
 	 b.x2 += vmesa->drawXoff;
 
 	 via_emit_cliprect(vmesa, &b);
 
-	 if (fire_buffer(vmesa) != 0)
+	 if (fire_buffer(vmesa) != 0) {
+	    dump_dma( vmesa );
 	    goto done;
+	 }
       }
    } else {
       if (0) fprintf(stderr, "%s: no cliprects\n", __FUNCTION__);
@@ -677,7 +680,7 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
    vmesa->newEmitState = ~0;
 }
 
-static void viaWrapPrimitive( viaContextPtr vmesa )
+void viaWrapPrimitive( viaContextPtr vmesa )
 {
    GLenum renderPrimitive = vmesa->renderPrimitive;
    GLenum hwPrimitive = vmesa->hwPrimitive;
@@ -733,45 +736,5 @@ void viaInitIoctlFuncs(GLcontext *ctx)
     ctx->Driver.ClearStencil = viaClearStencil;
 }
 
-
-
-
-GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line)
-{
-   assert(!vmesa->dmaLastPrim);
-   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
-      if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
-			     vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
-      viaFlushDma(vmesa);
-   }
-
-   {
-      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
-      if (0)
-	 fprintf(stderr, "%s %04x 0x%x bytes\n", func, vmesa->dmaLow, bytes);
-      vmesa->dmaLow += bytes;
-      return start;
-   }
-}
-
-
-GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
-{
-   if (0)
-      fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
-
-   assert(vmesa->dmaLastPrim);
-   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
-      viaWrapPrimitive(vmesa);
-   }
-
-   {
-      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
-      if (0)
-	 fprintf(stderr, "%s %04x 0x%x bytes\n", __FUNCTION__, vmesa->dmaLow, bytes);
-      vmesa->dmaLow += bytes;
-      return start;
-   }
-}
 
 

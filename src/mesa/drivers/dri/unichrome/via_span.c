@@ -246,7 +246,6 @@ void viaInitSpanFuncs(GLcontext *ctx)
     struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
     swdd->SetBuffer = viaSetBuffer;
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (vmesa->viaScreen->bitsPerPixel == 16) {
 	swdd->WriteRGBASpan = viaWriteRGBASpan_565;
 	swdd->WriteRGBSpan = viaWriteRGBSpan_565;
@@ -260,7 +259,6 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	viaInitPointers_8888( swdd );
     }
     else {
-       fprintf(stderr, "%s: failed\n", __FUNCTION__);
 	assert(0);
     }
 	
@@ -272,7 +270,6 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	swdd->WriteDepthPixels = viaWriteDepthPixels_16;
     }	
     else if (vmesa->glCtx->Visual.depthBits == 24) {
-       fprintf(stderr, "%s: 24/8 span functions\n", __FUNCTION__);
         swdd->ReadDepthSpan = viaReadDepthSpan_24_8;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_24_8;
 	swdd->ReadDepthPixels = viaReadDepthPixels_24_8;
@@ -302,5 +299,4 @@ void viaInitSpanFuncs(GLcontext *ctx)
     swdd->WriteMonoCIPixels = NULL;
     swdd->ReadCI32Span = NULL;
     swdd->ReadCI32Pixels = NULL;	
-    if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
 }

@@ -49,9 +49,36 @@ void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
 } while (0)
     
 
-GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes);
-GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line);
-#define viaAllocDma( v, b ) viaAllocDmaFunc(v, b, __FUNCTION__, __LINE__)
+void viaWrapPrimitive( viaContextPtr vmesa );
+
+static __inline__ GLuint *viaAllocDma(viaContextPtr vmesa, int bytes)
+{
+   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+      viaFlushDma(vmesa);
+   }
+
+   {
+      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      vmesa->dmaLow += bytes;
+      return start;
+   }
+}
+
+
+static GLuint __inline__ *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
+{
+   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+      viaWrapPrimitive(vmesa);
+   }
+
+   {
+      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      vmesa->dmaLow += bytes;
+      return start;
+   }
+}
+
+
 
 
 #define RING_VARS GLuint *_vb = 0, _nr, _x;
