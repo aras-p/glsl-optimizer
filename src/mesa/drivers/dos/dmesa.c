@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.1 for Mesa 4.0
+ * DOS/DJGPP device driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -37,10 +37,18 @@
 #include "glheader.h"
 #include "context.h"
 #include "GL/dmesa.h"
+#include "extensions.h"
+#include "macros.h"
 #include "matrix.h"
+#include "mmath.h"
 #include "texformat.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
+#include "swrast/s_context.h"
+#include "swrast/s_depth.h"
+#include "swrast/s_lines.h"
+#include "swrast/s_triangle.h"
+#include "swrast/s_trispan.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -48,8 +56,7 @@
 #include "tnl/t_pipeline.h"
 #endif
 
-#include "dvesa.h"
-#include "dmesaint.h"
+#include "video.h"
 
 
 
@@ -59,9 +66,10 @@
  */
 struct dmesa_visual {
    GLvisual *gl_visual;
-   GLboolean db_flag;           /* double buffered? */
    GLboolean rgb_flag;          /* RGB mode? */
    GLuint depth;                /* bits per pixel (1, 8, 24, etc) */
+
+   GLint caps;                  /* video mode capabilities */
 };
 
 /*
@@ -72,12 +80,14 @@ struct dmesa_buffer {
    GLframebuffer *gl_buffer;    /* The depth, stencil, accum, etc buffers */
    void *the_window;            /* your window handle, etc */
 
+   int xpos, ypos;              /* position */
    int width, height;           /* size in pixels */
-   int xpos, ypos;              /* buffer position */
-   int xsize, len;              /* number of bytes in a line, then total */
-   int delta;                   /* used to wrap around */
-   int offset;                  /* offset in video */
-   struct dvmode *video;
+   int pitch, len;              /* number of bytes in a line, then total */
+   int cwidth;                  /* scan width */
+
+   int caps;                    /* video mode capabilities */
+
+   void (*tri_rgb_flat) ();
 };
 
 /*
@@ -104,40 +114,361 @@ static void dmesa_update_state (GLcontext *ctx, GLuint new_state);
 
 
 
-WRITE_RGBA_SPAN(15)
-WRITE_RGBA_SPAN(16)
-WRITE_RGBA_SPAN(24)
-WRITE_RGBA_SPAN(32)
+#define FLIP(y)  (c->Buffer->height - (y) - 1)
+#define FLIP2(y) (h - (y) - 1)
 
-WRITE_RGB_SPAN(15)
-WRITE_RGB_SPAN(16)
-WRITE_RGB_SPAN(24)
-WRITE_RGB_SPAN(32)
 
-WRITE_MONO_RGBA_SPAN(15)
-WRITE_MONO_RGBA_SPAN(16)
-WRITE_MONO_RGBA_SPAN(24)
-WRITE_MONO_RGBA_SPAN(32)
 
-READ_RGBA_SPAN(15)
-READ_RGBA_SPAN(16)
-READ_RGBA_SPAN(24)
-READ_RGBA_SPAN(32)
+static void write_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
+                             const GLubyte rgba[][4], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, offset;
 
-WRITE_RGBA_PIXELS(15)
-WRITE_RGBA_PIXELS(16)
-WRITE_RGBA_PIXELS(24)
-WRITE_RGBA_PIXELS(32)
+ offset = c->Buffer->cwidth * FLIP(y) + x;
+ if (mask) {
+    /* draw some pixels */
+    for (i=0; i<n; i++, offset++) {
+        if (mask[i]) {
+           vl_putpixel(b, offset, vl_mixrgba(rgba[i]));
+        }
+    }
+ } else {
+    /* draw all pixels */
+    for (i=0; i<n; i++, offset++) {
+        vl_putpixel(b, offset, vl_mixrgba(rgba[i]));
+    }
+ }
+}
 
-WRITE_MONO_RGBA_PIXELS(15)
-WRITE_MONO_RGBA_PIXELS(16)
-WRITE_MONO_RGBA_PIXELS(24)
-WRITE_MONO_RGBA_PIXELS(32)
+static void write_rgb_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            const GLubyte rgb[][3], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, offset;
 
-READ_RGBA_PIXELS(15)
-READ_RGBA_PIXELS(16)
-READ_RGBA_PIXELS(24)
-READ_RGBA_PIXELS(32)
+ offset = c->Buffer->cwidth * FLIP(y) + x;
+ if (mask) {
+    /* draw some pixels */
+    for (i=0; i<n; i++, offset++) {
+        if (mask[i]) {
+           vl_putpixel(b, offset, vl_mixrgb(rgb[i]));
+        }
+    }
+ } else {
+    /* draw all pixels */
+    for (i=0; i<n; i++, offset++) {
+        vl_putpixel(b, offset, vl_mixrgb(rgb[i]));
+    }
+ }
+}
+
+static void write_mono_rgba_span (const GLcontext *ctx,
+                                  GLuint n, GLint x, GLint y,
+                                  const GLchan color[4], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, offset, rgba = vl_mixrgba(color);
+
+ offset = c->Buffer->cwidth * FLIP(y) + x;
+ if (mask) {
+    /* draw some pixels */
+    for (i=0; i<n; i++, offset++) {
+        if (mask[i]) {
+           vl_putpixel(b, offset, rgba);
+        }
+    }
+ } else {
+    /* draw all pixels */
+    for (i=0; i<n; i++, offset++) {
+        vl_putpixel(b, offset, rgba);
+    }
+ }
+}
+
+static void read_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
+                            GLubyte rgba[][4])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, offset;
+
+ offset = c->Buffer->cwidth * FLIP(y) + x;
+ /* read all pixels */
+ for (i=0; i<n; i++, offset++) {
+     vl_getrgba(b, offset, rgba[i]);
+ }
+}
+
+static void write_rgba_pixels (const GLcontext *ctx,
+                               GLuint n, const GLint x[], const GLint y[],
+                               const GLubyte rgba[][4], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, w = c->Buffer->cwidth, h = c->Buffer->height;
+
+ if (mask) {
+    /* draw some pixels */
+    for (i=0; i<n; i++) {
+        if (mask[i]) {
+           vl_putpixel(b, FLIP2(y[i])*w + x[i], vl_mixrgba(rgba[i]));
+        }
+    }
+ } else {
+    /* draw all pixels */
+    for (i=0; i<n; i++) {
+        vl_putpixel(b, FLIP2(y[i])*w + x[i], vl_mixrgba(rgba[i]));
+    }
+ }
+}
+
+static void write_mono_rgba_pixels (const GLcontext *ctx,
+                                    GLuint n, const GLint x[], const GLint y[],
+                                    const GLchan color[4], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, w = c->Buffer->cwidth, h = c->Buffer->height, rgba = vl_mixrgba(color);
+
+ if (mask) {
+    /* draw some pixels */
+    for (i=0; i<n; i++) {
+        if (mask[i]) {
+           vl_putpixel(b, FLIP2(y[i])*w + x[i], rgba);
+        }
+    }
+ } else {
+    /* draw all pixels */
+    for (i=0; i<n; i++) {
+        vl_putpixel(b, FLIP2(y[i])*w + x[i], rgba);
+    }
+ }
+}
+
+static void read_rgba_pixels (const GLcontext *ctx,
+                              GLuint n, const GLint x[], const GLint y[],
+                              GLubyte rgba[][4], const GLubyte mask[])
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint i, w = c->Buffer->cwidth, h = c->Buffer->height;
+
+ if (mask) {
+    /* read some pixels */
+    for (i=0; i<n; i++) {
+        if (mask[i]) {
+           vl_getrgba(b, FLIP2(y[i])*w + x[i], rgba[i]);
+        }
+    }
+ } else {
+    /* read all pixels */
+    for (i=0; i<n; i++) {
+        vl_getrgba(b, FLIP2(y[i])*w + x[i], rgba[i]);
+    }
+ }
+}
+
+
+
+/**********************************************************************/
+/*****                   Optimized triangle rendering             *****/
+/**********************************************************************/
+
+
+
+/*
+ * flat, NON-depth-buffered, triangle.
+ */
+static void tri_rgb_flat (GLcontext *ctx,
+                          const SWvertex *v0,
+                          const SWvertex *v1,
+                          const SWvertex *v2)
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint w = c->Buffer->cwidth, h = c->Buffer->height;
+
+ if (c->Buffer->tri_rgb_flat) {
+    c->Buffer->tri_rgb_flat(IROUND(v0->win[0]), IROUND(FLIP2(v0->win[1])),
+                            IROUND(v1->win[0]), IROUND(FLIP2(v1->win[1])),
+                            IROUND(v2->win[0]), IROUND(FLIP2(v2->win[1])),
+                            vl_mixrgb(v2->color));
+ } else {
+#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
+
+#define RENDER_SPAN(span)					\
+   GLuint i, offset = FLIP2(span.y)*w + span.x;			\
+   for (i = 0; i < span.count; i++, offset++) {			\
+       vl_putpixel(b, offset, rgb);				\
+   }
+
+#include "swrast/s_tritemp.h"
+ }
+}
+
+
+
+/*
+ * flat, depth-buffered, triangle.
+ */
+static void tri_rgb_flat_z (GLcontext *ctx,
+                            const SWvertex *v0,
+                            const SWvertex *v1,
+                            const SWvertex *v2)
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint w = c->Buffer->cwidth, h = c->Buffer->height;
+
+#define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
+#define SETUP_CODE GLuint rgb = vl_mixrgb(v2->color);
+
+#define RENDER_SPAN(span)					\
+   GLuint i, offset = FLIP2(span.y)*w + span.x;			\
+   for (i = 0; i < span.count; i++, offset++) {			\
+       const DEPTH_TYPE z = FixedToDepth(span.z);		\
+       if (z < zRow[i]) {					\
+          vl_putpixel(b, offset, rgb);				\
+          zRow[i] = z;						\
+       }							\
+       span.z += span.zStep;					\
+   }
+
+#include "swrast/s_tritemp.h"
+}
+
+
+
+/*
+ * smooth, NON-depth-buffered, triangle.
+ */
+static void tri_rgb_smooth (GLcontext *ctx,
+                            const SWvertex *v0,
+                            const SWvertex *v1,
+                            const SWvertex *v2)
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint w = c->Buffer->cwidth, h = c->Buffer->height;
+
+#define INTERP_RGB 1
+#define RENDER_SPAN(span)					\
+   GLuint i, offset = FLIP2(span.y)*w + span.x;			\
+   for (i = 0; i < span.count; i++, offset++) {			\
+       unsigned char rgb[3];					\
+       rgb[0] = FixedToInt(span.red);				\
+       rgb[1] = FixedToInt(span.green);				\
+       rgb[2] = FixedToInt(span.blue);				\
+       vl_putpixel(b, offset, vl_mixrgb(rgb));			\
+       span.red += span.redStep;				\
+       span.green += span.greenStep;				\
+       span.blue += span.blueStep;				\
+   }
+
+#include "swrast/s_tritemp.h"
+}
+
+
+
+/*
+ * smooth, depth-buffered, triangle.
+ */
+static void tri_rgb_smooth_z (GLcontext *ctx,
+                              const SWvertex *v0,
+                              const SWvertex *v1,
+                              const SWvertex *v2)
+{
+ DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ void *b = c->Buffer->the_window;
+ GLuint w = c->Buffer->cwidth, h = c->Buffer->height;
+
+#define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
+#define INTERP_RGB 1
+
+#define RENDER_SPAN(span)					\
+   GLuint i, offset = FLIP2(span.y)*w + span.x;			\
+   for (i = 0; i < span.count; i++, offset++) {			\
+       const DEPTH_TYPE z = FixedToDepth(span.z);		\
+       if (z < zRow[i]) {					\
+          unsigned char rgb[3];					\
+          rgb[0] = FixedToInt(span.red);			\
+          rgb[1] = FixedToInt(span.green);			\
+          rgb[2] = FixedToInt(span.blue);			\
+          vl_putpixel(b, offset, vl_mixrgb(rgb));		\
+          zRow[i] = z;						\
+       }							\
+       span.red += span.redStep;				\
+       span.green += span.greenStep;				\
+       span.blue += span.blueStep;				\
+       span.z += span.zStep;					\
+   }
+
+#include "swrast/s_tritemp.h"
+}
+
+
+
+/*
+ * Analyze context state to see if we can provide a fast triangle function
+ * Otherwise, return NULL.
+ */
+static swrast_tri_func dmesa_choose_tri_function (GLcontext *ctx)
+{
+ const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+ if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
+ if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
+ if (ctx->Texture._ReallyEnabled)   return (swrast_tri_func) NULL;
+
+ if (ctx->Light.ShadeModel==GL_SMOOTH
+     && swrast->_RasterMask==DEPTH_BIT
+     && ctx->Depth.Func==GL_LESS
+     && ctx->Depth.Mask==GL_TRUE
+     && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+     && ctx->Polygon.StippleFlag==GL_FALSE) {
+    return tri_rgb_smooth_z;
+ }
+ if (ctx->Light.ShadeModel==GL_FLAT
+     && swrast->_RasterMask==DEPTH_BIT
+     && ctx->Depth.Func==GL_LESS
+     && ctx->Depth.Mask==GL_TRUE
+     && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+     && ctx->Polygon.StippleFlag==GL_FALSE) {
+    return tri_rgb_flat_z;
+ }
+ if (swrast->_RasterMask==0   /* no depth test */
+     && ctx->Light.ShadeModel==GL_SMOOTH
+     && ctx->Polygon.StippleFlag==GL_FALSE) {
+    return tri_rgb_smooth;
+ }
+ if (swrast->_RasterMask==0   /* no depth test */
+     && ctx->Light.ShadeModel==GL_FLAT
+     && ctx->Polygon.StippleFlag==GL_FALSE) {
+    return tri_rgb_flat;
+ }
+
+ return (swrast_tri_func)NULL;
+}
+
+
+
+/* Override for the swrast triangle-selection function.  Try to use one
+ * of our internal line functions, otherwise fall back to the
+ * standard swrast functions.
+ */
+static void dmesa_choose_tri (GLcontext *ctx)
+{
+ SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+ if (!(swrast->Triangle=dmesa_choose_tri_function(ctx)))
+    _swrast_choose_triangle(ctx);
+}
 
 
 
@@ -150,7 +481,7 @@ READ_RGBA_PIXELS(32)
 static void clear_color (GLcontext *ctx, const GLchan color[4])
 {
  DMesaContext c = (DMesaContext)ctx->DriverCtx;
- c->ClearColor = dv_color(color);
+ c->ClearColor = vl_mixrgba(color);
 }
 
 
@@ -171,14 +502,28 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
  */
 
  /* we can't handle color or index masking */
- if (*colorMask==0xffffffff && ctx->Color.IndexMask==0xffffffff) {
-    if (mask&DD_BACK_LEFT_BIT) {
+ if (*colorMask==0xffffffff) {
+    if (mask & DD_BACK_LEFT_BIT) {
        if (all) {
-          dv_clear_virtual(b->the_window, b->len, c->ClearColor);
+          if CHECK_SOFTDB(b->caps) {
+             vl_clear_virtual(b->the_window, b->len, c->ClearColor);
+          } else {
+             vl_clear(b->the_window, 0, 0, b->width, b->height, c->ClearColor);
+          }
        } else {
-          dv_fillrect(b->the_window, b->width, x, y, width, height, c->ClearColor);
+          vl_clear(b->the_window, x, y, width, height, c->ClearColor);
        }
        mask &= ~DD_BACK_LEFT_BIT;
+    }
+    if (mask & DD_FRONT_LEFT_BIT) {
+       if (all) {
+          x = 0;
+          y = 0;
+          width = b->width;
+          height = b->height;
+       }
+       vl_clear(b->the_window, x, y, width, height, c->ClearColor);
+       mask &= ~DD_FRONT_LEFT_BIT;
     }
  }
 
@@ -208,7 +553,7 @@ static void set_read_buffer (GLcontext *ctx, GLframebuffer *buffer,
  */
 static GLboolean set_draw_buffer (GLcontext *ctx, GLenum mode)
 {
- if (mode==GL_BACK_LEFT) {
+ if (mode==GL_BACK_LEFT || mode==GL_FRONT_LEFT) {
     return GL_TRUE;
  } else {
     return GL_FALSE;
@@ -273,6 +618,29 @@ static void flush (GLcontext *ctx)
 
 /**********************************************************************/
 /**********************************************************************/
+
+
+
+#define DMESA_NEW_TRIANGLE (_NEW_POLYGON | \
+                            _NEW_TEXTURE | \
+                            _NEW_LIGHT | \
+                            _NEW_DEPTH | \
+                            _NEW_RENDERMODE | \
+                            _SWRAST_NEW_RASTERMASK)
+
+
+
+/* Extend the software rasterizer with our line and triangle
+ * functions.
+ */
+static void dmesa_register_swrast_functions (GLcontext *ctx)
+{
+ SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+ swrast->choose_triangle = dmesa_choose_tri;
+
+ swrast->invalidate_triangle |= DMESA_NEW_TRIANGLE;
+}
 
 
 
@@ -361,44 +729,13 @@ static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
  swdd->SetReadBuffer = set_read_buffer;
 
  /* RGB(A) span/pixel functions */
- switch (c->visual->depth) {
-        case 15:
-             swdd->WriteRGBASpan = write_rgba_span_15;
-             swdd->WriteRGBSpan = write_rgb_span_15;
-             swdd->WriteMonoRGBASpan = write_mono_rgba_span_15;
-             swdd->WriteRGBAPixels = write_rgba_pixels_15;
-             swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels_15;
-             swdd->ReadRGBASpan = read_rgba_span_15;
-             swdd->ReadRGBAPixels = read_rgba_pixels_15;
-             break;
-        case 16:
-             swdd->WriteRGBASpan = write_rgba_span_16;
-             swdd->WriteRGBSpan = write_rgb_span_16;
-             swdd->WriteMonoRGBASpan = write_mono_rgba_span_16;
-             swdd->WriteRGBAPixels = write_rgba_pixels_16;
-             swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels_16;
-             swdd->ReadRGBASpan = read_rgba_span_16;
-             swdd->ReadRGBAPixels = read_rgba_pixels_16;
-             break;
-        case 24:
-             swdd->WriteRGBASpan = write_rgba_span_24;
-             swdd->WriteRGBSpan = write_rgb_span_24;
-             swdd->WriteMonoRGBASpan = write_mono_rgba_span_24;
-             swdd->WriteRGBAPixels = write_rgba_pixels_24;
-             swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels_24;
-             swdd->ReadRGBASpan = read_rgba_span_24;
-             swdd->ReadRGBAPixels = read_rgba_pixels_24;
-             break;
-        case 32:
-             swdd->WriteRGBASpan = write_rgba_span_32;
-             swdd->WriteRGBSpan = write_rgb_span_32;
-             swdd->WriteMonoRGBASpan = write_mono_rgba_span_32;
-             swdd->WriteRGBAPixels = write_rgba_pixels_32;
-             swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels_32;
-             swdd->ReadRGBASpan = read_rgba_span_32;
-             swdd->ReadRGBAPixels = read_rgba_pixels_32;
-             break;
- }
+ swdd->WriteRGBASpan = write_rgba_span;
+ swdd->WriteRGBSpan = write_rgb_span;
+ swdd->WriteMonoRGBASpan = write_mono_rgba_span;
+ swdd->WriteRGBAPixels = write_rgba_pixels;
+ swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels;
+ swdd->ReadRGBASpan = read_rgba_span;
+ swdd->ReadRGBAPixels = read_rgba_pixels;
 }
 
 
@@ -412,16 +749,16 @@ static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
 /*
  * The exact arguments to this function will depend on your window system
  */
-DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
-                               GLint depthSize, GLint stencilSize,
+DMesaVisual DMesaCreateVisual (GLint width, GLint height, GLint colDepth,
+                               GLboolean dbFlag, GLint depthSize,
+                               GLint stencilSize,
                                GLint accumSize)
 {
  DMesaVisual v;
  GLint redBits, greenBits, blueBits, alphaBits;
+ GLint caps;
 
- if (!dbFlag) {
-    return NULL;
- }
+ alphaBits = 0;
  switch (colDepth) {
         case 15:
              redBits = 5;
@@ -433,8 +770,9 @@ DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
              greenBits = 6;
              blueBits = 5;
              break;
-        case 24:
         case 32:
+             alphaBits = 8;
+        case 24:
              redBits = 8;
              greenBits = 8;
              blueBits = 8;
@@ -442,7 +780,14 @@ DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
         default:
              return NULL;
  }
- alphaBits = 8;
+
+ caps = 0;
+ if (!dbFlag) {
+    caps |= VL_SINGLE;
+ }
+ if (vl_video_init(width, height, colDepth, &caps)!=0) {
+    return NULL;
+ }
 
  if ((v=(DMesaVisual)calloc(1, sizeof(struct dmesa_visual)))!=NULL) {
     /* Create core visual */
@@ -463,7 +808,7 @@ DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
                                        1);			/* numSamples */
 
     v->depth = colDepth;
-    v->db_flag = dbFlag;
+    v->caps = caps;
  }
 
  return v;
@@ -473,6 +818,7 @@ DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
 
 void DMesaDestroyVisual (DMesaVisual v)
 {
+ vl_video_exit();
  _mesa_destroy_visual(v->gl_visual);
  free(v);
 }
@@ -480,27 +826,27 @@ void DMesaDestroyVisual (DMesaVisual v)
 
 
 DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
-                               GLint width, GLint height,
-                               GLint xpos, GLint ypos)
+                               GLint xpos, GLint ypos,
+                               GLint width, GLint height)
 {
  DMesaBuffer b;
 
  if ((b=(DMesaBuffer)calloc(1, sizeof(struct dmesa_buffer)))!=NULL) {
-    if (visual->db_flag) {
-       if ((b->the_window=calloc(1, width*height*((visual->depth+7)/8)))==NULL) {
-          return NULL;
-       }
-    }
 
     b->gl_buffer = _mesa_create_framebuffer(visual->gl_visual,
                                             visual->gl_visual->depthBits > 0,
                                             visual->gl_visual->stencilBits > 0,
                                             visual->gl_visual->accumRedBits > 0,
                                             visual->gl_visual->alphaBits > 0);
-    b->width = width;
-    b->height = height;
     b->xpos = xpos;
     b->ypos = ypos;
+    b->width = width;
+    b->height = height;
+    b->caps = visual->caps;
+    b->pitch = b->width*((visual->depth+7)/8);
+    b->len = b->pitch*b->height;
+
+    b->tri_rgb_flat = vl_getprim(TRI_RGB_FLAT);
  }
 
  return b;
@@ -510,7 +856,9 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
 
 void DMesaDestroyBuffer (DMesaBuffer b)
 {
- free(b->the_window);
+ if CHECK_SOFTDB(b->caps) {
+    free(b->the_window);
+ }
  _mesa_destroy_framebuffer(b->gl_buffer);
  free(b);
 }
@@ -528,6 +876,9 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
                                      share ? share->gl_ctx : NULL,
                                      (void *)c, direct);
 
+    _mesa_enable_sw_extensions(c->gl_ctx);
+    _mesa_enable_1_3_extensions(c->gl_ctx);
+
    /* you probably have to do a bunch of other initializations here. */
     c->visual = visual;
 
@@ -538,6 +889,7 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _tnl_CreateContext(c->gl_ctx);
     _swsetup_CreateContext(c->gl_ctx);
     dmesa_init_pointers(c->gl_ctx);
+    dmesa_register_swrast_functions(c->gl_ctx);
  }
 
  return c;
@@ -559,13 +911,14 @@ void DMesaDestroyContext (DMesaContext c)
 GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 {
  if (c&&b) {
-    c->Buffer = b;
-    if ((b->video=dv_select_mode(b->xpos, b->ypos, b->width, b->height, c->visual->depth, &b->delta, &b->offset))==NULL) {
+    void *ptr = vl_sync_buffer(b->the_window, b->xpos, b->ypos, b->width, b->height, &b->cwidth);
+
+    if (b->cwidth==-1) {
        return GL_FALSE;
     }
 
-    b->xsize = b->width*((c->visual->depth+7)/8);
-    b->len = b->xsize*b->height;
+    b->the_window = ptr;
+    c->Buffer = b;
 
     dmesa_update_state(c->gl_ctx, 0);
     _mesa_make_current(c->gl_ctx, b->gl_buffer);
@@ -586,7 +939,5 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 void DMesaSwapBuffers (DMesaBuffer b)
 {
  /* copy/swap back buffer to front if applicable */
- if (b->the_window) {
-    dv_dump_virtual(b->the_window, b->xsize, b->height, b->offset, b->delta);
- }
+ b->the_window = vl_flip(b->the_window, b->width, b->height, b->pitch);
 }

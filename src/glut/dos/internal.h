@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -35,9 +35,11 @@
 #include "pc_hw/pc_hw.h"
 
 
+#define MAX_WINDOWS    4
+
 #define DEFAULT_WIDTH  640
 #define DEFAULT_HEIGHT 480
-#define COLOR_DEPTH    16
+#define DEFAULT_BPP    16
 
 #define DEPTH_SIZE   16
 #define STENCIL_SIZE 8

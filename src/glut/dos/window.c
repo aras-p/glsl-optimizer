@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -32,50 +32,89 @@
 #include "internal.h"
 
 
+
+static int window;
+
 static DMesaVisual  visual  = NULL;
 static DMesaContext context = NULL;
-static DMesaBuffer  buffer  = NULL;
+static DMesaBuffer  buffer[MAX_WINDOWS];
+
 
 
 static void clean (void)
 {
- __asm__("movw $3, %%ax; int $0x10":::"%eax");
+ int i;
+
+ for (i=0; i<MAX_WINDOWS; i++) {
+     glutDestroyWindow(i+1);
+ }
+ if (context) DMesaDestroyContext(context);
+ if (visual)  DMesaDestroyVisual(visual);
+
  pc_close_stdout();
  pc_close_stderr();
 }
 
+
+
 int APIENTRY glutCreateWindow (const char *title)
 {
- if ((visual=DMesaCreateVisual(COLOR_DEPTH,
-                               g_display_mode & GLUT_DOUBLE,
-                               g_display_mode & GLUT_DEPTH  ?DEPTH_SIZE  :0,
-                               g_display_mode & GLUT_STENCIL?STENCIL_SIZE:0,
-                               g_display_mode & GLUT_ACCUM  ?ACCUM_SIZE  :0))==NULL) {
-    return GL_FALSE;
+ int i;
+
+ if (!visual) {
+    int screen_w = DEFAULT_WIDTH;
+    int screen_h = DEFAULT_HEIGHT;
+
+    if ((g_width<=640) && (g_height<=480)) {
+       screen_w = 640;
+       screen_h = 480;
+    } else if ((g_width<=800) && (g_height<=600)) {
+       screen_w = 800;
+       screen_h = 600;
+    } else if ((g_width<=1024) && (g_height<=768)) {
+       screen_w = 1024;
+       screen_h = 768;
+    }
+
+    if ((visual=DMesaCreateVisual(screen_w, screen_h, DEFAULT_BPP,
+                                  g_display_mode & GLUT_DOUBLE,
+                                  g_display_mode & GLUT_DEPTH  ?DEPTH_SIZE  :0,
+                                  g_display_mode & GLUT_STENCIL?STENCIL_SIZE:0,
+                                  g_display_mode & GLUT_ACCUM  ?ACCUM_SIZE  :0))==NULL) {
+       return 0;
+    }
+   
+    if ((context=DMesaCreateContext(visual, NULL))==NULL) {
+       DMesaDestroyVisual(visual);
+       return 0;
+    }
+    
+    pc_open_stdout();
+    pc_open_stderr();
+    pc_atexit(clean);
  }
 
- if ((context=DMesaCreateContext(visual, NULL))==NULL) {
-    DMesaDestroyVisual(visual);
-    return GL_FALSE;
+ for (i=0; i<MAX_WINDOWS; i++) {
+     if (!buffer[i]) {
+        DMesaBuffer b;
+     
+        if ((b=DMesaCreateBuffer(visual, g_xpos, g_ypos, g_width, g_height))==NULL) {
+           return 0;
+        }
+        if (!DMesaMakeCurrent(context, b)) {
+           DMesaDestroyBuffer(b);
+           return 0;
+        }
+        if (g_mouse) {
+           pc_mouse_area(g_xpos, g_ypos, g_xpos + g_width - 1, g_ypos + g_height - 1);
+        }
+
+        buffer[window = i] = b;
+        return i+1;
+     }
  }
 
- if ((buffer=DMesaCreateBuffer(visual, g_width, g_height, g_xpos, g_ypos))==NULL) {
-    DMesaDestroyContext(context);
-    DMesaDestroyVisual(visual);
-    return GL_FALSE;
- }
-
- if (!DMesaMakeCurrent(context, buffer)) {
-    DMesaDestroyContext(context);
-    DMesaDestroyVisual(visual);
-    return GL_FALSE;
- }
-
- pc_open_stdout();
- pc_open_stderr();
- pc_atexit(clean);
-
- return GL_TRUE;
+ return 0;
 }
 
 
@@ -87,6 +126,10 @@ int APIENTRY glutCreateSubWindow (int win, int x, int y, int width, int height)
 
 void APIENTRY glutDestroyWindow (int win)
 {
+ if (buffer[win-1]) {
+    DMesaDestroyBuffer(buffer[win-1]);
+    buffer[win-1] = NULL;
+ }
 }
 
 
@@ -99,19 +142,20 @@ void APIENTRY glutPostRedisplay (void)
 void APIENTRY glutSwapBuffers (void)
 {
  if (g_mouse) pc_scare_mouse();
- DMesaSwapBuffers(buffer);
+ DMesaSwapBuffers(buffer[window]);
  if (g_mouse) pc_unscare_mouse();
 }
 
 
 int APIENTRY glutGetWindow (void)
 {
- return 0;
+ return window + 1;
 }
 
 
 void APIENTRY glutSetWindow (int win)
 {
+ window = win - 1;
 }
 
 

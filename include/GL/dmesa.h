@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v0.1 for Mesa 4.0
+ * DOS/DJGPP device driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -45,20 +45,20 @@ typedef struct dmesa_buffer *DMesaBuffer;
 extern "C" {
 #endif
 
-DMesaVisual DMesaCreateVisual (GLint colDepth, GLboolean dbFlag,
-                               GLint depthSize, GLint stencilSize,
+DMesaVisual DMesaCreateVisual (GLint width, GLint height, GLint colDepth,
+                               GLboolean dbFlag, GLint depthSize,
+                               GLint stencilSize,
                                GLint accumSize);
 
 void DMesaDestroyVisual (DMesaVisual v);
 
 DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
-                               GLint width, GLint height,
-                               GLint xpos, GLint ypos);
+                               GLint xpos, GLint ypos,
+                               GLint width, GLint height);
 
 void DMesaDestroyBuffer (DMesaBuffer b);
 
-DMesaContext DMesaCreateContext (DMesaVisual visual,
-                                 DMesaContext share);
+DMesaContext DMesaCreateContext (DMesaVisual visual, DMesaContext share);
 
 void DMesaDestroyContext (DMesaContext c);
 

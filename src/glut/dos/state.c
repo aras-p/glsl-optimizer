@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -28,6 +28,21 @@
 
 
 #include "GL/glut.h"
+#include "internal.h"
+
+
+#define FREQUENCY 100
+
+
+static int timer_installed;
+static volatile int ticks;
+
+static void ticks_timer (void *p)
+{
+ (void)p;
+ ticks++;
+} ENDOFUNC(ticks_timer)
+
 
 
 int APIENTRY glutGet (GLenum type)
@@ -35,6 +50,14 @@ int APIENTRY glutGet (GLenum type)
  switch (type) {
         case GLUT_WINDOW_RGBA:
              return 1;
+        case GLUT_ELAPSED_TIME:
+             if (!timer_installed) {
+                timer_installed = !timer_installed;
+                LOCKDATA(ticks);
+                LOCKFUNC(ticks_timer);
+                pc_install_int(ticks_timer, NULL, FREQUENCY);
+             }
+             return ticks*1000/FREQUENCY;
         default:
              return 0;
  }

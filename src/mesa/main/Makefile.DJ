@@ -1,4 +1,26 @@
-# DOS/DJGPP core makefile v0.1 for Mesa 4.0.x
+# Mesa 3-D graphics library
+# Version:  4.0
+# 
+# Copyright (C) 1999  Brian Paul   All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# DOS/DJGPP core makefile v0.2 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -17,13 +39,14 @@ LIBDIR = $(TOP)/lib
 GL_LIB = libgl.a
 
 CORE_SOURCES = \
-	accum.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
 	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
-	array_cache/ac_context.c \
-	array_cache/ac_import.c \
+	accum.c \
 	attrib.c \
 	blend.c \
 	buffers.c \
@@ -53,6 +76,23 @@ CORE_SOURCES = \
 	imports.c \
 	light.c \
 	lines.c \
+	matrix.c \
+	mem.c \
+	mmath.c \
+	pixel.c \
+	points.c \
+	polygon.c \
+	rastpos.c \
+	state.c \
+	stencil.c \
+	texformat.c \
+	teximage.c \
+	texobj.c \
+	texstate.c \
+	texstore.c \
+	texutil.c \
+	varray.c \
+	vtxfmt.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
 	math/m_debug_vertex.c \
@@ -63,15 +103,8 @@ CORE_SOURCES = \
 	math/m_vector.c \
 	math/m_vertices.c \
 	math/m_xform.c \
-	matrix.c \
-	mem.c \
-	mmath.c \
-	pixel.c \
-	points.c \
-	polygon.c \
-	rastpos.c \
-	state.c \
-	stencil.c \
+	array_cache/ac_context.c \
+	array_cache/ac_import.c \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -80,8 +113,8 @@ CORE_SOURCES = \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
 	swrast/s_buffers.c \
-	swrast/s_context.c \
 	swrast/s_copypix.c \
+	swrast/s_context.c \
 	swrast/s_depth.c \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
@@ -98,19 +131,10 @@ CORE_SOURCES = \
 	swrast/s_scissor.c \
 	swrast/s_span.c \
 	swrast/s_stencil.c \
-	swrast/s_texstore.c \
 	swrast/s_texture.c \
+	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
-	texformat.c \
-	teximage.c \
-	texobj.c \
-	texstate.c \
-	texstore.c \
-	texutil.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \
@@ -131,11 +155,9 @@ CORE_SOURCES = \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c \
-	varray.c \
-	vtxfmt.c
+	tnl/t_vb_vertex.c
 
-DRIVER_SOURCES = DOS/dmesa.c DOS/dvesa.c
+DRIVER_SOURCES = DOS/dmesa.c DOS/video.c DOS/vbeaf.c DOS/dpmi.c
 
 SOURCES = $(CORE_SOURCES) $(DRIVER_SOURCES)
 
@@ -157,7 +179,11 @@ include depend
 
 DOS/dmesa.o: DOS/dmesa.c glheader.h ../include/GL/gl.h context.h glapi.h \
   mtypes.h config.h glapitable.h glthread.h math/m_matrix.h dd.h \
-  ../include/GL/dmesa.h matrix.h texformat.h texstore.h array_cache/acache.h \
-  swrast/swrast.h swrast_setup/swrast_setup.h tnl/tnl.h tnl/t_context.h \
-  math/m_vector.h math/m_xform.h tnl/t_pipeline.h DOS/dvesa.h DOS/dmesaint.h
-DOS/dvesa.o: DOS/dvesa.c DOS/dvesa.h
+  ../include/GL/dmesa.h extensions.h macros.h matrix.h mmath.h texformat.h \
+  texstore.h array_cache/acache.h swrast/s_context.h swrast/swrast.h \
+  swrast/s_depth.h swrast/s_lines.h swrast/s_triangle.h swrast/s_trispan.h \
+  swrast_setup/swrast_setup.h tnl/tnl.h tnl/t_context.h math/m_vector.h \
+  math/m_xform.h tnl/t_pipeline.h DOS/video.h swrast/s_tritemp.h
+DOS/dpmi.o: DOS/dpmi.c DOS/vbeaf.h DOS/dpmiint.h
+DOS/vbeaf.o: DOS/vbeaf.c DOS/dpmiint.h DOS/vbeaf.h DOS/video.h
+DOS/video.o: DOS/video.c DOS/video.h DOS/dpmiint.h DOS/vbeafint.h DOS/vbeaf.h

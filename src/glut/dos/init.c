@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v0.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v0.2 for Mesa 4.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -45,6 +45,7 @@ static void signal_handler (int num)
 
 void APIENTRY glutInit (int *argcp, char **argv)
 {
+ glutGet(GLUT_ELAPSED_TIME);
  /* Hack alert:
     only SIGINT (but not Ctrl-Break)
     calls the destructors and will safely clean up

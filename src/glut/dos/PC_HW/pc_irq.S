@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.1 for DOS/DJGPP
+ * PC/HW routine collection v0.2 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -129,7 +129,7 @@ __irq_wrapper_##x:							   ; \
 		pushl	%es						   ; \
 		pushl	%fs						   ; \
 		pushl	%gs						   ; \
-		movw	%ss, %bx					   ; \
+		movl	%ss, %ebx					   ; \
 		movl	%esp, %esi					   ; \
 		movl	%cs:___djgpp_ds_alias, %ss			   ; \
 		movl	%cs:__irq_stack_##x, %esp			   ; \
@@ -141,7 +141,7 @@ __irq_wrapper_##x:							   ; \
 		pushl	%fs						   ; \
 		popl	%gs						   ; \
 		call	*__irq_hook_##x					   ; \
-		movw	%bx, %ss					   ; \
+		movl	%ebx, %ss					   ; \
 		movl	%esi, %esp					   ; \
 		testl	%eax, %eax					   ; \
 		popl	%gs						   ; \

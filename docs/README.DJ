@@ -1,73 +1,77 @@
-		    Mesa 4.0.1 DOS/DJGPP Port version 0.1
+		    Mesa 4.0.1 DOS/DJGPP Port version 0.2
 		    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
-First of all...
-~~~~~~~~~~~~~~~
+Description:
+~~~~~~~~~~~~
 
-This is a DOS port for MESA 4.0.1. I didn't bother to consider any DOS C
-compiler other than gcc, so this port was written using DJGPP v2. To be more
-precise:
-	djdev 2.03
-	gcc v3.0.3
-	make v3.79
-
-Almost all demos were compiled and ran succesfully on my system:
-	CPU:		Intel Pentium w/ MMX @166 MHz
-	Mainboard:	ViA Apollo VP2 w/ 128 MB SDRAM
-	Video card:	Matrox Millenium I w/ 4096 kB WRAM, Matrox BIOS v3.0
-
-Since I don't have access to any accelerated video hardware, this port is
-entirely based on VESA/SuperVGA. My little attempt to use FreeBE/AF ended in
-a failure, but that's another story: it seemed to work fine with my older
-Matrox Millenium w/ 2MB, and then I got another Matrox Millenium w/ 4MB. The
-problem with latter was it had a dead BIOS; I hot-flashed it and made it work
-in all environments (Windows 95, VESA, etc) but FreeBE/AF.
+This is the DOS port of MESA 4.0, for DJGPP programmers... It features some
+sort of hardware acceleration, but it's pretty thin: it is entirely based on
+VBEAF.DRV from the FreeBE/AF project (http://www.talula.demon.co.uk/freebe/).
+Note that SciTech's driver isn't supported because I hate the `nearptr' hack.
+Anyway, these drivers don't provide ANY 3D function :-( Moreover, it seems to
+me the FreeBE/AF project is not really up to date... Well, it's not much, my
+intention was to open the door ;-)
 
 
 
 Legal:
 ~~~~~~
 
-This software is distributed under the terms of the GNU Lesser General Public
-License.
+MESA copyright applies.
 
-Source code written by others is subject to its respective copyright.
+
+
+Installation:
+~~~~~~~~~~~~~
+
+Type "make -f Makefile.DJ" to compile the libraries. Long filename support is
+required during compilation. The examples are not built automagically (see
+Pitfalls below).
+
+Tested on:
+	CPU:		Intel Pentium w/ MMX @166 MHz
+	Mainboard:	ViA Apollo VP2 w/ 128 MB SDRAM
+	Video card:	Matrox Millenium 2064W w/ 2048 kB WRAM, BIOS v3.0
+	DJGPP:		djdev 2.03
+			gcc v3.0.3
+			make v3.79
 
 
 
 libGL (the core):
 ~~~~~~~~~~~~~~~~~
 
-Of course, MESA 4.0.1 core sources are required. It will probably work with
+Of course, MESA 4.0 core sources are required. It will probably work with
 MESA 3.5, but not a chance with earlier versions due to major changes to the
 MESA driver interface and the directory tree. All should compile succesfully.
 
 The driver has its origins in ddsample.c, written by Brian Paul and found by
 me in MESA 3.4.2. I touched almost all the functions, changing the coding
-style ;-( Sorry!
+style :-( Sorry!
 
 Pitfalls:
 1. The current version supports only RGB[A] modes, for it made no sense to me
    to endorse color-index (aka palette) modes.
-2. Only double-buffered is allowed because it was simpler to implement at
-   that moment. Single-buffered will appear soon, especially if I can find a
-   way to use hardware acceleration.
-3. Another weird "feature" is that buffer width & height must be multiple of
-   4 (I'm a lazy programmer and I found that the easiest way to keep buffer
-   handling at peak performance ;-).
-4. The video mode selector is tricky: it searches for the smallest mode which
-   will entirely contain the buffer at its current position. If you want a
-   small buffer in a high-res mode, try to position it very far to the right
-   (or down). I'd really use some ideas here!!!
+2. Double-buffered uses page flipping if acceleration is available, else falls
+   back to virtual buffer.
+3. Single-buffered is not allowed with 24-bit modes, because direct access was
+   wrong and fixing it would mean to slow down the other routines; until this
+   is really, really necessary, it won't get reimplemented.
+4. Another weird "feature" is that buffer width must be multiple of 4 (I'm a
+   lazy programmer and I found that the easiest way to keep buffer handling at
+   peak performance ;-).
+5. The FreeBE/AF driver is searched in the current directory only; therefore,
+   to disable hardware acceleration, make sure you don't have VBEAF.DRV where
+   your application resides.
 
 
 
 libGLU:
 ~~~~~~~
 
-Mesa GLU sources are required. Everything should run smooth.
+Mesa GLU sources are required. No comment!
 
 
 
@@ -78,8 +82,7 @@ Well, this "skeletal" GLUT implementation is not mine. Thanks should go to
 Bernhard Tschirren, Mark Kilgard, Brian Paul and probably others (or probably
 not ;-). I only changed it to be self-standing (Allegro-free). The keyboard,
 mouse and timer drivers were inspired from an old project of mine (D3Xl) and
-fixed with some Allegro "infusions"; my deeply thanks to Shawn Hargreaves and
-co.
+fixed with some Allegro "infusions"; I deeply thank to Shawn Hargreaves et co.
 
 My keyboard driver used only scancodes, but since GLUT requires ASCII values
 for keys, I borrowed the translation tables (and maybe more) from Allegro.
@@ -102,15 +105,7 @@ in bulk! A bit of a hack, I know, but I think it's better than to miss them
 at all.
 
 Window creating defaults: 640x480x16 at (0,0), 8-bit stencil, 16-bit accum.
-
-
-
-Installation:
-~~~~~~~~~~~~~
-
-Unzip into the MESA directory, and type "make -f Makefile.DJ" to compile all
-libraries. Long filename support is required during compilation. The examples
-are not built automagically (see Pitfalls above).
+However, the video mode is chosen in such a way that first window will fit.
 
 
 
@@ -118,7 +113,16 @@ History:
 ~~~~~~~~
 
 v0.1	feb-2002	initial release
-v0.2	..soon..
+v0.2	feb-2002	+ fast triangle rasterizers
+			+ enabled sw and 1.3 extensions
+			+ hardware acceleration: FreeBE/AF
+			+ single-buffer modes (15-, 16-, and 32-bit)
+			* video mode is set by CreateVisual, not MakeCurrent
+			* internal changes to support multi-buf (unfinished)
+			! fixed some alpha issues... (thanks, Brian)
+			+ glut has now an internal timer
+			* glut changed to support multi-window (unfinished)
+			! minor PC_HW corrections
 
 
 

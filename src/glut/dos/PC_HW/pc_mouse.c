@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v0.1 for DOS/DJGPP
+ * PC/HW routine collection v0.2 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -14,6 +14,12 @@
 
 
 #define MOUSE_STACK_SIZE 16384
+
+#define CLEAR_MICKEYS() \
+        do { \
+            __asm__ __volatile__ ("movw $0xb, %%ax; int $0x33":::"%eax", "%ecx", "%edx"); \
+            ox = oy = 0; \
+        } while (0)
 
 extern void mouse_wrapper (void);
 extern void mouse_wrapper_end (void);
@@ -160,6 +166,8 @@ int pc_install_mouse (void)
  mouse_regs.x.dx = mouse_callback&0xffff;
  mouse_regs.x.es = mouse_callback>>16;
  __dpmi_int(0x33, &mouse_regs);
+
+ CLEAR_MICKEYS();
 
  emulat3 = buttons<3;
  pc_atexit(pc_remove_mouse);

@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v0.1 for Mesa 4.0
+# DOS/DJGPP glut makefile v0.2 for Mesa 4.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -78,4 +78,21 @@ clean:
 	-$(RM) *.o
 	-$(RM) PC_HW\*.o
 
-include depend
+callback.o: callback.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
+color.o: color.c ../include/GL/glut.h
+font.o: font.c ../include/GL/glut.h
+globals.o: globals.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
+init.o: init.c ../include/GL/glut.h internal.h PC_HW/pc_hw.h
+menu.o: menu.c ../include/GL/glut.h
+models.o: models.c ../include/GL/glut.h
+overlay.o: overlay.c ../include/GL/glut.h
+state.o: state.c ../include/GL/glut.h internal.h pc_hw/pc_hw.h
+teapot.o: teapot.c ../include/GL/glut.h
+window.o: window.c ../include/GL/glut.h ../include/GL/dmesa.h internal.h \
+  PC_HW/pc_hw.h
+
+PC_HW/pc_hw.o: PC_HW/pc_hw.c PC_HW/pc_hw.h
+PC_HW/pc_keyb.o: PC_HW/pc_keyb.c PC_HW/pc_hw.h
+PC_HW/pc_mouse.o: PC_HW/pc_mouse.c PC_HW/pc_hw.h
+PC_HW/pc_timer.o: PC_HW/pc_timer.c PC_HW/pc_hw.h
+PC_HW/pc_irq.o: PC_HW/pc_irq.S
