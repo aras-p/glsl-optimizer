@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/mipmap.c,v 1.2 2001/08/07 17:34:11 brianp Exp $
+** $Date: 2002/11/01 23:45:31 $ $Revision: 1.3 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/mipmap.c,v 1.3 2002/11/01 23:45:31 brianp Exp $
 */
 
 #include "gluos.h"
@@ -573,7 +573,7 @@ static void halveImage_ushort(GLint components, GLuint width, GLuint height,
 			GLint element_size, GLint ysize, GLint group_size,
 			GLint myswap_bytes)
 {
-    int i, j, k, l;
+    int i, j, k;
     int newwidth, newheight;
     GLushort *s;
     const char *t;
@@ -708,7 +708,7 @@ static void halveImage_short(GLint components, GLuint width, GLuint height,
 			GLint element_size, GLint ysize, GLint group_size,
 			GLint myswap_bytes)
 {
-    int i, j, k, l;
+    int i, j, k;
     int newwidth, newheight;
     GLshort *s;
     const char *t;
@@ -850,7 +850,7 @@ static void halveImage_uint(GLint components, GLuint width, GLuint height,
 			GLint element_size, GLint ysize, GLint group_size,
 			GLint myswap_bytes)
 {
-    int i, j, k, l;
+    int i, j, k;
     int newwidth, newheight;
     GLuint *s;
     const char *t;
@@ -990,7 +990,7 @@ static void halveImage_int(GLint components, GLuint width, GLuint height,
 		        const GLint *datain, GLint *dataout, GLint element_size,
 			GLint ysize, GLint group_size, GLint myswap_bytes)
 {
-    int i, j, k, l;
+    int i, j, k;
     int newwidth, newheight;
     GLint *s;
     const char *t;
@@ -1134,7 +1134,7 @@ static void halveImage_float(GLint components, GLuint width, GLuint height,
 			GLint element_size, GLint ysize, GLint group_size,
 			GLint myswap_bytes)
 {
-    int i, j, k, l;
+    int i, j, k;
     int newwidth, newheight;
     GLfloat *s;
     const char *t;
@@ -1370,8 +1370,8 @@ static void scale_internal_ubyte(GLint components, GLint widthin,
 			   GLubyte *dataout, GLint element_size,
 			   GLint ysize, GLint group_size)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -1584,8 +1584,8 @@ static void scale_internal_byte(GLint components, GLint widthin,
 			   GLbyte *dataout, GLint element_size,
 			   GLint ysize, GLint group_size)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -1799,8 +1799,8 @@ static void scale_internal_ushort(GLint components, GLint widthin,
 			   GLint ysize, GLint group_size,
 			   GLint myswap_bytes)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -2076,8 +2076,8 @@ static void scale_internal_short(GLint components, GLint widthin,
                            GLint ysize, GLint group_size,
                            GLint myswap_bytes)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -2367,8 +2367,8 @@ static void scale_internal_uint(GLint components, GLint widthin,
                            GLint ysize, GLint group_size,
                            GLint myswap_bytes)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -2651,8 +2651,8 @@ static void scale_internal_int(GLint components, GLint widthin,
                            GLint ysize, GLint group_size,
                            GLint myswap_bytes)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -2944,8 +2944,8 @@ static void scale_internal_float(GLint components, GLint widthin,
                            GLint ysize, GLint group_size,
                            GLint myswap_bytes)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
     /* Max components in a format is 4, so... */
     float totals[4];
@@ -3517,7 +3517,6 @@ int gluBuild1DMipmapLevelsCore(GLenum target, GLint internalFormat,
     GLushort *otherImage;
     GLushort *imageTemp;
     GLint memreq;
-    GLint maxsize;
     GLint cmpts;
     PixelStorageModes psm;
 
@@ -3664,7 +3663,6 @@ static int bitmapBuild2DMipmaps(GLenum target, GLint internalFormat,
     GLushort *otherImage;
     GLushort *imageTemp;
     GLint memreq;
-    GLint maxsize;
     GLint cmpts;
     PixelStorageModes psm;
 
@@ -3771,11 +3769,8 @@ static int gluBuild2DMipmapLevelsCore(GLenum target, GLint internalFormat,
     GLint level, levels;
     const void *usersImage; /* passed from user. Don't touch! */
     void *srcImage, *dstImage; /* scratch area to build mipmapped images */
-    GLint newImage_width;
-    GLint newImage_height;
     __GLU_INIT_SWAP_IMAGE;
     GLint memreq;
-    GLint maxsize;
     GLint cmpts;
 
     GLint myswap_bytes, groups_per_line, element_size, group_size;
@@ -4588,7 +4583,6 @@ static int fastBuild2DMipmaps(const PixelStorageModes *psm,
     GLubyte *otherImage;
     GLubyte *imageTemp;
     GLint memreq;
-    GLint maxsize;
     GLint cmpts;
 
 
@@ -5979,8 +5973,8 @@ static void scaleInternalPackedPixel(int components,
 				     GLint pixelSizeInBytes,
 				     GLint rowSizeInBytes,GLint isSwap)
 {
-    float x, convx;
-    float y, convy;
+    float convx;
+    float convy;
     float percent;
 
     /* Max components in a format is 4, so... */
@@ -5991,7 +5985,6 @@ static void scaleInternalPackedPixel(int components,
     int i,j,k,xindex;
 
     const char *temp, *temp0;
-    const char *temp_index;
     int outindex;
 
     int lowx_int, highx_int, lowy_int, highy_int;
@@ -7308,6 +7301,7 @@ static void emptyImage3D(const PixelStorageModes *psm,
 					psm->unpack_skip_images * imageSize] );
 } /* emptyImage3D() */
 
+static 
 int gluScaleImage3D(GLenum format, 
 		    GLint widthIn, GLint heightIn, GLint depthIn,
 		    GLenum typeIn, const void *dataIn, 
@@ -7360,6 +7354,7 @@ int gluScaleImage3D(GLenum format,
 
    return 0;
 } /* gluScaleImage3D() */
+
 
 static void closestFit3D(GLenum target, GLint width, GLint height, GLint depth,
 			 GLint internalFormat, GLenum format, GLenum type, 
@@ -7434,7 +7429,6 @@ static void halveImagePackedPixelSlice(int components,
    int halfHeight= height / 2;
    int halfDepth= depth / 2;
    const char *src= (const char *)dataIn;
-   int padBytes= rowSizeInBytes - (width * pixelSizeInBytes);
    int outIndex= 0;
 
    assert((width == 1 || height == 1) && depth >= 2);
@@ -7690,10 +7684,8 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
    GLint level, levels;
    const void *usersImage;
    void *srcImage, *dstImage;
-   GLint newImageWidth, newImageHeight, newImageDepth;
    __GLU_INIT_SWAP_IMAGE;
    GLint memReq;
-   GLint maxSize;
    GLint cmpts;
 
    GLint myswapBytes, groupsPerLine, elementSize, groupSize;

@@ -35,8 +35,8 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/normal.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2002/11/01 23:45:31 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/normal.c,v 1.2 2002/11/01 23:45:31 brianp Exp $
 */
 
 #include "gluos.h"
@@ -51,6 +51,7 @@
 
 #define Dot(u,v)	(u[0]*v[0] + u[1]*v[1] + u[2]*v[2])
 
+#if 0
 static void Normalize( GLdouble v[3] )
 {
   GLdouble len = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
@@ -61,6 +62,7 @@ static void Normalize( GLdouble v[3] )
   v[1] /= len;
   v[2] /= len;
 }
+#endif
 
 #define ABS(x)	((x) < 0 ? -(x) : (x))
 
@@ -198,7 +200,7 @@ extern int RandomSweep;
 void __gl_projectPolygon( GLUtesselator *tess )
 {
   GLUvertex *v, *vHead = &tess->mesh->vHead;
-  GLdouble w, norm[3];
+  GLdouble norm[3];
   GLdouble *sUnit, *tUnit;
   int i, computedNormal = FALSE;
 

@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/09/20 21:47:52 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.2 2001/09/20 21:47:52 kschultz Exp $
+** $Date: 2002/11/01 23:45:31 $ $Revision: 1.3 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.3 2002/11/01 23:45:31 brianp Exp $
 */
 
 #include "gluos.h"
@@ -156,7 +156,7 @@ void GLAPIENTRY
 gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius, 
 		GLdouble height, GLint slices, GLint stacks)
 {
-    GLint i,j,max;
+    GLint i,j;
     GLfloat sinCache[CACHE_SIZE];
     GLfloat cosCache[CACHE_SIZE];
     GLfloat sinCache2[CACHE_SIZE];
@@ -164,7 +164,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
     GLfloat sinCache3[CACHE_SIZE];
     GLfloat cosCache3[CACHE_SIZE];
     GLfloat angle;
-    GLfloat x, y, zLow, zHigh;
+    GLfloat zLow, zHigh;
     GLfloat sintemp, costemp;
     GLfloat length;
     GLfloat deltaRadius;
@@ -438,11 +438,10 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 		   GLdouble outerRadius, GLint slices, GLint loops,
 		   GLdouble startAngle, GLdouble sweepAngle)
 {
-    GLint i,j,max;
+    GLint i,j;
     GLfloat sinCache[CACHE_SIZE];
     GLfloat cosCache[CACHE_SIZE];
     GLfloat angle;
-    GLfloat x, y;
     GLfloat sintemp, costemp;
     GLfloat deltaRadius;
     GLfloat radiusLow, radiusHigh;
@@ -700,7 +699,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 void GLAPIENTRY
 gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 {
-    GLint i,j,max;
+    GLint i,j;
     GLfloat sinCache1a[CACHE_SIZE];
     GLfloat cosCache1a[CACHE_SIZE];
     GLfloat sinCache2a[CACHE_SIZE];
@@ -714,11 +713,9 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
     GLfloat sinCache3b[CACHE_SIZE];
     GLfloat cosCache3b[CACHE_SIZE];
     GLfloat angle;
-    GLfloat x, y, zLow, zHigh;
+    GLfloat zLow, zHigh;
     GLfloat sintemp1, sintemp2, sintemp3, sintemp4;
     GLfloat costemp1, costemp2, costemp3, costemp4;
-    GLfloat zNormal;
-    GLfloat xyNormalRatio;
     GLboolean needCache2, needCache3;
     GLint start, finish;
 

@@ -35,8 +35,8 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2001/09/20 21:47:52 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/tess.c,v 1.2 2001/09/20 21:47:52 kschultz Exp $
+** $Date: 2002/11/01 23:45:31 $ $Revision: 1.3 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/tess.c,v 1.3 2002/11/01 23:45:31 brianp Exp $
 */
 
 #include "gluos.h"
@@ -169,6 +169,8 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_BEGIN_CONTOUR );
 	gluTessBeginContour( tess );
 	break;
+      default:
+         ;
       }
     } else {
       switch( tess->state ) {
@@ -181,6 +183,8 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 	/* gluTessEndPolygon( tess ) is too much work! */
 	MakeDormant( tess );
 	break;
+      default:
+         ;
       }
     }
   }

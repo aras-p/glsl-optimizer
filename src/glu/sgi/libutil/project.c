@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/09/18 16:39:38 $ $Revision: 1.4 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/project.c,v 1.4 2001/09/18 16:39:38 kschultz Exp $
+** $Date: 2002/11/01 23:45:31 $ $Revision: 1.5 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/project.c,v 1.5 2002/11/01 23:45:31 brianp Exp $
 */
 
 #include "gluos.h"
@@ -116,7 +116,6 @@ gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
 	  GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy,
 	  GLdouble upz)
 {
-    int i;
     float forward[3], side[3], up[3];
     GLfloat m[4][4];
 
