@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.125 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: context.c,v 1.126 2001/03/11 18:49:11 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1434,6 +1434,10 @@ _mesa_initialize_context( GLcontext *ctx,
 
    ctx->ExecPrefersFloat = GL_FALSE;
    ctx->SavePrefersFloat = GL_FALSE;
+
+   /* Neutral tnl module stuff */
+   ctx->TnlModule.Current = NULL;
+   ctx->TnlModule.SwapCount = 0;
 
    /* Z buffer stuff */
    if (ctx->Visual.depthBits == 0) {

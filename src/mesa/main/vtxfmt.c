@@ -1,7 +1,84 @@
+/* $Id: vtxfmt.c,v 1.2 2001/03/11 18:49:11 gareth Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Author:
+ *    Keith Whitwell <keithw@valinux.com>
+ *    Gareth Hughes <gareth@valinux.com>
+ */
+
 #include "glheader.h"
 #include "api_loopback.h"
+#include "context.h"
 #include "mtypes.h"
 #include "vtxfmt.h"
+
+
+/* The neutral vertex format.  This wraps all tnl module functions,
+ * verifying that the currently-installed module is valid and then
+ * installing the function pointers in a lazy fashion.  It records the
+ * function pointers that have been swapped out, which allows a fast
+ * restoration of the neutral module in almost all cases -- a typical
+ * app might only require 4-6 functions to be modified from the neutral
+ * baseline, and only restoring these is certainly preferable to doing
+ * the entire module's 60 or so function pointers.
+ */
+
+#define PRE_LOOPBACK( FUNC )						\
+{									\
+   GET_CURRENT_CONTEXT(ctx);						\
+   struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
+   const GLuint new_state = ctx->NewState;				\
+									\
+   if ( new_state )							\
+      _mesa_update_state( ctx );					\
+									\
+   /* Validate the current tnl module.					\
+    */									\
+   if ( new_state & ctx->Driver.NeedValidate )				\
+      ctx->Driver.ValidateTnlModule( ctx, new_state );			\
+									\
+   ASSERT( tnl->Current );						\
+   ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
+									\
+   /* Save the swapped function's dispatch entry so it can be		\
+    * restored later.							\
+    */									\
+   tnl->Swapped[tnl->SwapCount][0] = (void *)&(ctx->Exec->FUNC);	\
+   tnl->Swapped[tnl->SwapCount][1] = (void *)TAG(FUNC);			\
+   tnl->SwapCount++;							\
+									\
+   if ( 0 )								\
+      fprintf( stderr, "   swapping gl" #FUNC"...\n" );			\
+									\
+   /* Install the tnl function pointer.					\
+    */									\
+   ctx->Exec->FUNC = tnl->Current->FUNC;				\
+}
+
+#define TAG(x) neutral_##x
+#include "vtxfmt_tmp.h"
 
 
 
@@ -59,7 +136,7 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Vertex4fv = vfmt->Vertex4fv;
    tab->Begin = vfmt->Begin;
    tab->End = vfmt->End;
-   
+
 /*     tab->NewList = vfmt->NewList; */
    tab->CallList = vfmt->CallList;
 
@@ -74,11 +151,11 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
 
 void _mesa_install_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
-   install_vtxfmt( ctx->Exec, vfmt );
+   ctx->TnlModule.Current = vfmt;
+   install_vtxfmt( ctx->Exec, &neutral_vtxfmt );
    if (ctx->ExecPrefersFloat != vfmt->prefer_float_colors)
       _mesa_loopback_prefer_float( ctx->Exec, vfmt->prefer_float_colors );
 }
-
 
 void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
 {
@@ -87,3 +164,18 @@ void _mesa_install_save_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
       _mesa_loopback_prefer_float( ctx->Save, vfmt->prefer_float_colors );
 }
 
+void _mesa_restore_exec_vtxfmt( GLcontext *ctx, GLvertexformat *vfmt )
+{
+   struct gl_tnl_module *tnl = &(ctx->TnlModule);
+   GLuint i;
+
+   tnl->Current = vfmt;
+
+   /* Restore the neutral tnl module wrapper.
+    */
+   for ( i = 0 ; i < tnl->SwapCount ; i++ ) {
+      *(void **)tnl->Swapped[i][0] = tnl->Swapped[i][1];
+   }
+
+   tnl->SwapCount = 0;
+}

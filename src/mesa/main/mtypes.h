@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.23 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: mtypes.h,v 1.24 2001/03/11 18:49:11 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1399,9 +1399,28 @@ typedef union node Node;
 
 
 
-
 /* This has to be included here. */
 #include "dd.h"
+
+
+
+
+/*
+ * Core Mesa's support for tnl modules:
+ */
+#define NUM_VERTEX_FORMAT_ENTRIES (sizeof(GLvertexformat) / sizeof(void *))
+
+struct gl_tnl_module {
+   /* Vertex format to be lazily swapped into current dispatch.
+    */
+   GLvertexformat *Current;
+
+   /* Record of functions swapped out.  On restore, only need to swap
+    * these functions back in.
+    */
+   void *Swapped[NUM_VERTEX_FORMAT_ENTRIES][2];
+   GLuint SwapCount;
+};
 
 
 /*
@@ -1573,6 +1592,9 @@ struct __GLcontextRec {
    void *TraceDispatch;
    void *TraceCtx;
 #endif
+
+   /* Core tnl module support */
+   struct gl_tnl_module TnlModule;
 
    /* Hooks for module contexts.  These will eventually live
     * in the driver or elsewhere.

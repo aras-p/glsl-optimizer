@@ -1,4 +1,4 @@
-/* $Id: vtxfmt_tmp.h,v 1.2 2001/03/10 02:50:42 gareth Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.3 2001/03/11 18:49:11 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,7 +136,7 @@ static void TAG(EvalPoint2)( GLint a, GLint b )
 static void TAG(FogCoordfEXT)( GLfloat a )
 {
    PRE_LOOPBACK( FogCoordfEXT );
-   glFogCordfEXT( a );
+   glFogCoordfEXT( a );
 }
 
 static void TAG(FogCoordfvEXT)( const GLfloat *v )

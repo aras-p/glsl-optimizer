@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.12 2001/03/07 05:06:13 brianp Exp $ */
+/* $Id: t_context.c,v 1.13 2001/03/11 18:49:11 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,8 +51,8 @@ struct immediate *_tnl_CurrentInput = NULL;
 
 
 void
-_tnl_MakeCurrent( GLcontext *ctx, 
-		  GLframebuffer *drawBuffer, 
+_tnl_MakeCurrent( GLcontext *ctx,
+		  GLframebuffer *drawBuffer,
 		  GLframebuffer *readBuffer )
 {
 #ifndef THREADS
@@ -92,7 +92,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* Initialize the VB.
     */
-   tnl->vb.Size = MAX2( IMM_SIZE, 
+   tnl->vb.Size = MAX2( IMM_SIZE,
 			ctx->Const.MaxArrayLockSize + MAX_CLIPPED_VERTICES);
 
 
@@ -106,7 +106,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
 
    tnl->NeedProjCoords = GL_TRUE;
-    
+
    /* Hook our functions into exec and compile dispatch tables.
     */
    _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
@@ -157,7 +157,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    }
 
    tnl->pipeline.run_state_changes |= new_state;
-   tnl->pipeline.build_state_changes |= (new_state & 
+   tnl->pipeline.build_state_changes |= (new_state &
 					 tnl->pipeline.build_state_trigger);
 
    tnl->eval.EvalNewState |= new_state;
@@ -168,13 +168,13 @@ void
 _tnl_wakeup_exec( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   
+
    install_driver_callbacks(ctx);
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 
    /* Hook our functions into exec and compile dispatch tables.
     */
-   _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
+   _mesa_restore_exec_vtxfmt( ctx, &tnl->vtxfmt );
 
    /* Call all appropriate driver callbacks to revive state.
     */
@@ -182,7 +182,7 @@ _tnl_wakeup_exec( GLcontext *ctx )
 
    /* Assume we haven't been getting state updates either:
     */
-   _tnl_InvalidateState( ctx, ~0 ); 
+   _tnl_InvalidateState( ctx, ~0 );
    tnl->pipeline.run_input_changes = ~0;
 }
 
