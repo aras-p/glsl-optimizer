@@ -105,17 +105,23 @@ static void i830UploadTexLevel( i830ContextPtr imesa,
    if (!image || !image->Data)
       return;
 
-   if (image->Width * image->TexFormat->TexelBytes == t->Pitch) {
+   if (image->IsCompressed) {
+	 GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[0][hwlevel].offset);
+	 GLubyte *src = (GLubyte *)image->Data;
+
+	 if ((t->Setup[I830_TEXREG_TM0S1] & TM0S1_MT_FORMAT_MASK)==MT_COMPRESS_FXT1)
+	   {
+	     for (j = 0 ; j < image->Height/4 ; j++, dst += (t->Pitch)) {
+	       __memcpy(dst, src, (image->Width*2) );
+	       src += image->Width*2;
+	     }
+	   }
+   }
+   else if (image->Width * image->TexFormat->TexelBytes == t->Pitch) {
 	 GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[0][hwlevel].offset);
 	 GLubyte *src = (GLubyte *)image->Data;
 	 
 	 memcpy( dst, src, t->Pitch * image->Height );
-   }
-   else if (image->IsCompressed) {
-         GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[0][hwlevel].offset);
-	 GLubyte *src = (GLubyte *)image->Data;
-	 
-	 memcpy( dst, src, image->CompressedSize );
    }
    else switch (image->TexFormat->TexelBytes) {
    case 1:

@@ -159,8 +159,16 @@ static void i830SetTexImages( i830ContextPtr imesa,
 	 break;
       
       t->image[0][i].offset = total_height * pitch;
+      if (t->image[0][i].image->IsCompressed)
+	{
+	  if (t->image[0][i].image->Height > 4)
+	    total_height += t->image[0][i].image->Height/4;
+	  else
+	    total_height += 1;
+	}
+      else
+	total_height += t->image[0][i].image->Height;
       t->image[0][i].internalFormat = baseImage->Format;
-      total_height += t->image[0][i].image->Height;
    }
 
    t->Pitch = pitch;
