@@ -32,7 +32,8 @@
 #define __MGA_DRI_H__
 
 #include "xf86drm.h"
-#include "mga_common.h"
+#include "drm.h"
+#include "mga_drm.h"
 
 #define MGA_DEFAULT_AGP_SIZE     64
 #define MGA_DEFAULT_AGP_MODE     4

@@ -37,8 +37,6 @@
 #include "mgapixel.h"
 #include "mgastate.h"
 
-#include "mga_common.h"
-
 #include "swrast/swrast.h"
 #include "imports.h"
 

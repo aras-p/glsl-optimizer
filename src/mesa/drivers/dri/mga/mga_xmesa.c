@@ -26,7 +26,6 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "mga_common.h"
 #include "mga_xmesa.h"
 #include "context.h"
 #include "matrix.h"
@@ -242,7 +241,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
    if (sPriv->drmMinor >= 1) {
       int ret;
-      drmMGAGetParam gp;
+      drm_mga_getparam_t gp;
 
       gp.param = MGA_PARAM_IRQ_NR;
       gp.value = &mgaScreen->irq;
@@ -495,7 +494,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mgaContextPtr mmesa;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
-   MGASAREAPrivPtr saPriv=(MGASAREAPrivPtr)(((char*)sPriv->pSAREA)+
+   drm_mga_sarea_t *saPriv = (drm_mga_sarea_t *)(((char*)sPriv->pSAREA)+
 					      mgaScreen->sarea_priv_offset);
    struct dd_function_table functions;
 
@@ -551,9 +550,9 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 	    mgaScreen->textureSize[i],
 	    6,
 	    MGA_NR_TEX_REGIONS,
-	    mmesa->sarea->texList[i],
-	    & mmesa->sarea->texAge[i],
-	    & mmesa->swapped,
+	    (drmTextureRegionPtr)mmesa->sarea->texList[i],
+	    &mmesa->sarea->texAge[i],
+	    &mmesa->swapped,
 	    sizeof( mgaTextureObject_t ),
 	    (destroy_texture_object_t *) mgaDestroyTexObj );
    }
@@ -862,7 +861,7 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
-   MGASAREAPrivPtr sarea = mmesa->sarea;
+   drm_mga_sarea_t *sarea = mmesa->sarea;
    int me = mmesa->hHWContext;
    int i;
 

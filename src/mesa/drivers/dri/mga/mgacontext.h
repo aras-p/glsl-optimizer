@@ -33,8 +33,8 @@
 #include "dri_util.h"
 #include "mtypes.h"
 #include "xf86drm.h"
+#include "mga_drm.h"
 #include "mm.h"
-#include "mga_sarea.h"
 #include "colormac.h"
 #include "texmem.h"
 #include "macros.h"
@@ -147,7 +147,7 @@ typedef struct mga_texture_object_s
    int                texelBytes;
    GLuint             age;
 
-   mga_texture_regs_t setup;
+   drm_mga_texture_regs_t setup;
 
    /* If one texture dimension wraps with GL_CLAMP and the other with
     * GL_CLAMP_TO_EDGE, we have to fallback to software.  We would also have
@@ -238,7 +238,7 @@ struct mga_context_t {
    GLuint        NewGLState; 
    GLuint        dirty;
 
-   mga_context_regs_t setup;
+   drm_mga_context_regs_t setup;
 
    GLuint        ClearColor;
    GLuint        ClearDepth;
@@ -310,7 +310,7 @@ struct mga_context_t {
 
    __DRIscreenPrivate *driScreen;
    struct mga_screen_private_s *mgaScreen;
-   MGASAREAPrivPtr sarea;
+   drm_mga_sarea_t *sarea;
 
    /* Configuration cache
     */

@@ -41,7 +41,6 @@
 #include "mgavb.h"
 #include "mgaioctl.h"
 #include "mgatris.h"
-#include "mga_common.h"
 
 #include "vblank.h"
 
@@ -51,7 +50,7 @@ static void mga_iload_dma_ioctl(mgaContextPtr mmesa,
 				int length)
 {
    drmBufPtr buf = mmesa->iload_buffer;
-   drmMGAIload iload;
+   drm_mga_iload_t iload;
    int ret, i;
 
    if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)
@@ -72,7 +71,7 @@ static void mga_iload_dma_ioctl(mgaContextPtr mmesa,
    i = 0;
    do {
       ret = drmCommandWrite( mmesa->driFd, DRM_MGA_ILOAD, 
-                             &iload, sizeof(drmMGAIload) );
+                             &iload, sizeof(iload) );
    } while ( ret == -EBUSY && i++ < DRM_MGA_IDLE_RETRY );
 
    if ( ret < 0 ) {
@@ -170,7 +169,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    int ret;
    int i;
    static int nrclears;
-   drmMGAClearRec clear;
+   drm_mga_clear_t clear;
 
    FLUSH_BATCH( mmesa );
 
@@ -264,7 +263,7 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
          clear.color_mask = color_mask;
          clear.depth_mask = depth_mask;
          ret = drmCommandWrite( mmesa->driFd, DRM_MGA_CLEAR,
-                                 &clear, sizeof(drmMGAClearRec));
+                                 &clear, sizeof(clear));
 	 if ( ret ) {
 	    fprintf( stderr, "send clear retcode = %d\n", ret );
 	    exit( 1 );
@@ -459,7 +458,7 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
    drm_clip_rect_t *pbox = mmesa->pClipRects;
    int nbox = mmesa->numClipRects;
    drmBufPtr buffer = mmesa->vertex_dma_buffer;
-   drmMGAVertex vertex;
+   drm_mga_vertex_t vertex;
    int i;
 
    mmesa->vertex_dma_buffer = 0;
@@ -545,7 +544,7 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
          vertex.used = buffer->used;
          vertex.discard = discard;
          drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX,
-                          &vertex, sizeof(drmMGAVertex) );
+                          &vertex, sizeof(vertex) );
 
 	 age_mmesa(mmesa, mmesa->sarea->last_enqueue);
       }
@@ -622,7 +621,7 @@ static void mgaFlush( GLcontext *ctx )
 
 void mgaReleaseBufLocked( mgaContextPtr mmesa, drmBufPtr buffer )
 {
-   drmMGAVertex vertex;
+   drm_mga_vertex_t vertex;
 
    if (!buffer) return;
 
@@ -630,22 +629,22 @@ void mgaReleaseBufLocked( mgaContextPtr mmesa, drmBufPtr buffer )
    vertex.used = 0;
    vertex.discard = 1;
    drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX, 
-                    &vertex, sizeof(drmMGAVertex) );
+                    &vertex, sizeof(vertex) );
 }
 
 int mgaFlushDMA( int fd, drmLockFlags flags )
 {
-   drmMGALock lock;
+   drm_lock_t lock;
    int ret, i = 0;
 
-   memset( &lock, 0, sizeof(drmMGALock) );
+   memset( &lock, 0, sizeof(lock) );
 
    if ( flags & DRM_LOCK_QUIESCENT )    lock.flags |= DRM_LOCK_QUIESCENT;
    if ( flags & DRM_LOCK_FLUSH )        lock.flags |= DRM_LOCK_FLUSH;
    if ( flags & DRM_LOCK_FLUSH_ALL )    lock.flags |= DRM_LOCK_FLUSH_ALL;
 
    do {
-      ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(drmMGALock) );
+      ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(lock) );
    } while ( ret && errno == EBUSY && i++ < DRM_MGA_IDLE_RETRY );
 
    if ( ret == 0 )
@@ -659,7 +658,7 @@ int mgaFlushDMA( int fd, drmLockFlags flags )
       lock.flags &= ~(DRM_LOCK_FLUSH | DRM_LOCK_FLUSH_ALL);
 
       do {
-         ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(drmMGALock) );
+         ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(lock) );
       } while ( ret && errno == EBUSY && i++ < DRM_MGA_IDLE_RETRY );
    }
 

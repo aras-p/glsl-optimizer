@@ -33,9 +33,9 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
+#include "mga_drm.h"
 #include "mtypes.h"
 #include "mgaregs.h"
-#include "mga_common.h"
 #include "xmlconfig.h"
 
 typedef struct mga_screen_private_s {
@@ -65,10 +65,10 @@ typedef struct mga_screen_private_s {
 
    unsigned int dmaOffset;
 
-   unsigned int textureOffset[DRM_MGA_NR_TEX_HEAPS];
-   unsigned int textureSize[DRM_MGA_NR_TEX_HEAPS];
-   int logTextureGranularity[DRM_MGA_NR_TEX_HEAPS];
-   char *texVirtual[DRM_MGA_NR_TEX_HEAPS];
+   unsigned int textureOffset[MGA_NR_TEX_HEAPS];
+   unsigned int textureSize[MGA_NR_TEX_HEAPS];
+   int logTextureGranularity[MGA_NR_TEX_HEAPS];
+   char *texVirtual[MGA_NR_TEX_HEAPS];
 
 
    __DRIscreenPrivate *sPriv;
