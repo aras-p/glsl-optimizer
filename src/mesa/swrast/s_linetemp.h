@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.12 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.13 2002/03/19 15:22:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -271,7 +271,7 @@
       ystep = -1;
 #endif
 #if defined(INTERP_Z) && defined(DEPTH_TYPE)
-      zPtrYstep = -ctx->DrawBuffer->Width * ((GLint)sizeof(DEPTH_TYPE));
+      zPtrYstep = -((GLint) (ctx->DrawBuffer->Width * sizeof(DEPTH_TYPE)));
 #endif
 #ifdef PIXEL_ADDRESS
       pixelYstep = BYTES_PER_ROW;
@@ -282,7 +282,7 @@
       ystep = 1;
 #endif
 #if defined(INTERP_Z) && defined(DEPTH_TYPE)
-      zPtrYstep = ctx->DrawBuffer->Width * ((GLint)sizeof(DEPTH_TYPE));
+      zPtrYstep = (GLint) (ctx->DrawBuffer->Width * sizeof(DEPTH_TYPE));
 #endif
 #ifdef PIXEL_ADDRESS
       pixelYstep = -(BYTES_PER_ROW);
