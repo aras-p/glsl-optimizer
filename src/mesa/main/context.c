@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.77 2000/06/30 22:11:04 brianp Exp $ */
+/* $Id: context.c,v 1.78 2000/07/14 04:13:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1925,60 +1925,63 @@ void gl_compile_error( GLcontext *ctx, GLenum error, const char *s )
  * of the current error value.  If Mesa is compiled with -DDEBUG or if the
  * environment variable "MESA_DEBUG" is defined then a real error message
  * is printed to stderr.
- * Input:  error - the error value
- *         s - a diagnostic string
+ * Input:  ctx - the GL context
+ *         error - the error value
+ *         where - usually the name of function where error was detected
  */
-void gl_error( GLcontext *ctx, GLenum error, const char *s )
+void
+gl_error( GLcontext *ctx, GLenum error, const char *where )
 {
+   const char *debugEnv = getenv("MESA_DEBUG");
    GLboolean debug;
 
 #ifdef DEBUG
-   debug = GL_TRUE;
-#else
-   if (getenv("MESA_DEBUG")) {
-      debug = GL_TRUE;
-   }
-   else {
+   if (debugEnv && strstr(debugEnv, "silent"))
       debug = GL_FALSE;
-   }
+   else
+      debug = GL_TRUE;
+#else
+   if (debugEnv)
+      debug = GL_TRUE;
+   else
+      debug = GL_FALSE;
 #endif
 
    if (debug) {
-      char errstr[1000];
-
+      const char *errstr;
       switch (error) {
 	 case GL_NO_ERROR:
-	    strcpy( errstr, "GL_NO_ERROR" );
+	    errstr = "GL_NO_ERROR";
 	    break;
 	 case GL_INVALID_VALUE:
-	    strcpy( errstr, "GL_INVALID_VALUE" );
+	    errstr = "GL_INVALID_VALUE";
 	    break;
 	 case GL_INVALID_ENUM:
-	    strcpy( errstr, "GL_INVALID_ENUM" );
+	    errstr = "GL_INVALID_ENUM";
 	    break;
 	 case GL_INVALID_OPERATION:
-	    strcpy( errstr, "GL_INVALID_OPERATION" );
+	    errstr = "GL_INVALID_OPERATION";
 	    break;
 	 case GL_STACK_OVERFLOW:
-	    strcpy( errstr, "GL_STACK_OVERFLOW" );
+	    errstr = "GL_STACK_OVERFLOW";
 	    break;
 	 case GL_STACK_UNDERFLOW:
-	    strcpy( errstr, "GL_STACK_UNDERFLOW" );
+	    errstr = "GL_STACK_UNDERFLOW";
 	    break;
 	 case GL_OUT_OF_MEMORY:
-	    strcpy( errstr, "GL_OUT_OF_MEMORY" );
+	    errstr = "GL_OUT_OF_MEMORY";
 	    break;
          case GL_TABLE_TOO_LARGE:
-            strcpy( errstr, "GL_TABLE_TOO_LARGE" );
+            errstr = "GL_TABLE_TOO_LARGE";
             break;
 	 default:
-	    strcpy( errstr, "unknown" );
+	    errstr = "unknown";
 	    break;
       }
-      fprintf( stderr, "Mesa user error: %s in %s\n", errstr, s );
+      fprintf(stderr, "Mesa user error: %s in %s\n", errstr, where);
    }
 
-   if (ctx->ErrorValue==GL_NO_ERROR) {
+   if (ctx->ErrorValue == GL_NO_ERROR) {
       ctx->ErrorValue = error;
    }
 
