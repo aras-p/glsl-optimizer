@@ -262,6 +262,8 @@ static void savageBlendFunc_s4(GLcontext *ctx)
 	imesa->regs.s4.drawCtrl1.ni.alphaTestEn;
     /*imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn =
         ~drawLocalCtrl.ni.wrZafterAlphaTst;*/
+
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 static void savageBlendFunc_s3d(GLcontext *ctx)
 {
@@ -426,6 +428,8 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
 
     imesa->regs.s3d.zBufCtrl.ni.wrZafterAlphaTst =
 	imesa->regs.s3d.drawCtrl.ni.alphaTestEn;
+
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 
 static void savageDDBlendFuncSeparate_s4( GLcontext *ctx, GLenum sfactorRGB, 
@@ -1217,14 +1221,13 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             break;
         case GL_CULL_FACE:
 #if HW_CULL
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
             if (state)
             {
                 savageDDCullFaceFrontFace(ctx,0);
             }
             else
             {
-                imesa->regs.s4.drawCtrl1.ni.cullMode=BCM_None;
+		imesa->LcsCullMode = BCM_None;
             }
 #endif
             break;
@@ -1295,14 +1298,13 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             break;
         case GL_CULL_FACE:
 #if HW_CULL
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
             if (state)
             {
                 savageDDCullFaceFrontFace(ctx,0);
             }
             else
             {
-                imesa->regs.s3d.drawCtrl.ni.cullMode=BCM_None;
+                imesa->LcsCullMode = BCM_None;
             }
 #endif
             break;
