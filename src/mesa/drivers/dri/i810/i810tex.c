@@ -34,7 +34,7 @@
 #include "texmem.h"
 #include "swrast/swrast.h"
 #include "colormac.h"
-
+#include "texobj.h"
 #include "mm.h"
 
 #include "i810screen.h"

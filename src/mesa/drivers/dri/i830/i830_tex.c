@@ -45,7 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "texformat.h"
 #include "texmem.h"
 #include "swrast/swrast.h"
-
+#include "texobj.h"
 #include "mm.h"
 
 #include "i830_screen.h"

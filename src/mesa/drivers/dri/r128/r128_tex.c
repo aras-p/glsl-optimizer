@@ -50,6 +50,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "teximage.h"
 #include "imports.h"
 #include "colormac.h"
+#include "texobj.h"
 
 #include "xmlpool.h"
 

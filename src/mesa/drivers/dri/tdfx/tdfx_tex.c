@@ -40,6 +40,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
+#include "texobj.h"
 #include "tdfx_context.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"

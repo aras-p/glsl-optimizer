@@ -11,6 +11,7 @@
 #include "texstore.h"
 #include "teximage.h"
 #include "texformat.h"
+#include "texobj.h"
 #include "swrast/swrast.h"
 
 #include "mm.h"

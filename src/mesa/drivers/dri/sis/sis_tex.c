@@ -38,6 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "texformat.h"
 #include "texstore.h"
 #include "teximage.h"
+#include "texobj.h"
 
 #define ALIGN(value, align) (char *)((long)(value + align - 1) & ~(align - 1))
 
