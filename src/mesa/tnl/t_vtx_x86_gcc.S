@@ -30,6 +30,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#if defined(USE_X86_ASM) && !defined(HAVE_NONSTANDARD_GLAPIENTRY)
 			
 #define GLOBL( x )	\
 .globl x;		\
@@ -315,3 +316,4 @@ GLOBL( _x86_dispatch_vertexattribfv )
 	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
 GLOBL( _x86_dispatch_vertexattribfv_end )
 
+#endif
