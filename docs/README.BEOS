@@ -22,8 +22,7 @@ Source Code
 
 The source code for the driver is in Mesa-3.1/src/BeOS/GLView.cpp
 It's not 100% finished at this time but many GLUT-based demos are
-working.  Specifically, color index mode isn't implemented at all.
-No optimizations have been made at this time.  Any volunteers?
+working.  No optimizations have been made at this time.
 
 
 
@@ -45,19 +44,16 @@ library.
 
 GLUT
 
-It seems that you have to recompile GLUT with libMesaGL.so instead
-of libGL.so in order for everything to work.  I'm not sure why.
-
-In any case, you'll have to download and compile GLUT for BeOS and
-put libglut.so in the Mesa-3.x/lib/ directory before you can compile
-the demos/, samples/ and book/ programs.
-
-GLUT for BeOS can be found at
+A version of GLUT 2.5 for BeOS can be found in src-glut.beos/.
+The original distribution can be obtained from
 http://home.beoscentral.com/jehamby/Glut-3.5-x86.zip
 
 This is a special version of GLUT adapted for the BeOS.  I don't
 believe Mark Kilgard's normal GLUT distribution includes BeOS
 support.
+
+It seems that you have to recompile GLUT with libMesaGL.so instead
+of libGL.so in order for everything to work.  I'm not sure why.
 
 
 
@@ -70,6 +66,17 @@ buffer.  This is a useful optimization for some applications.
 If you use this method in your code be sure that you check at runtime
 that you're actually using Mesa (with glGetString) so you don't
 cause a fatal error when running with Be's OpenGL.
+
+
+
+Work Left To Do
+
+Color index mode is not implemented yet.
+
+Reading pixels from the front buffer not implemented yet.
+
+There is also a BGLScreen class in BeOS for full-screen OpenGL
+rendering.  This should also be implemented for Mesa.
 
 
 
@@ -87,6 +94,9 @@ Mesa 3.0 supported the 3Dfx/Glide library on Beos.  Download Mesa 3.0
 if interested.  Ideally, the 3Dfx/Glide support should be updated to
 work with the new Mesa 3.1 BGLView implementation.
 
+The Glide library hasn't been updated for BeOS R4, to my knowledge, as
+of February, 1999.
+
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.4 1999/02/11 03:52:24 brianp Exp $
+$Id: README.BEOS,v 1.5 1999/03/03 02:34:04 brianp Exp $
