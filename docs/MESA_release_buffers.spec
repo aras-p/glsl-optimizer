@@ -20,7 +20,7 @@ Version
 
 Number
 
-    ???
+    217
 
 Dependencies
 
@@ -58,7 +58,7 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
 
     The function
 
-        Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
+	Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
 
     causes all software ancilliary buffers (back buffer, depth, stencil,
     accum, etc) associated with the named drawable to be immediately

@@ -1,10 +1,10 @@
 Name
 
-    MESA_copy_sub_buffer
+    MESA_pixmap_colormap
 
 Name Strings
 
-    GLX_MESA_copy_sub_buffer
+    GLX_MESA_pixmap_colormap
 
 Contact
 
@@ -20,7 +20,7 @@ Version
 
 Number
 
-    ???
+    216
 
 Dependencies
 
@@ -50,7 +50,7 @@ Issues
 New Procedures and Functions
 
     GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
-                                      Pixmap pixmap, Colormap cmap );
+				      Pixmap pixmap, Colormap cmap );
 
 New Tokens
 
@@ -66,8 +66,8 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
 
     The function
 
-        GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
-                                          Pixmap pixmap, Colormap cmap );
+	GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
+					  Pixmap pixmap, Colormap cmap );
 
     allows one to create a GLXPixmap with a specific colormap.  The image
     rendered into the pixmap may then be copied to a window (which uses the

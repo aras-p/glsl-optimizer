@@ -20,7 +20,7 @@ Version
 
 Number
 
-    ???
+    218
 
 Dependencies
 
@@ -47,7 +47,7 @@ New Procedures and Functions
 
 New Tokens
 
-    GLX_3DFX_WINDOW_MODE_MESA       0x1
+    GLX_3DFX_WINDOW_MODE_MESA	    0x1
     GLX_3DFX_FULLSCREEN_MODE_MESA   0x2
 
 Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
@@ -56,7 +56,7 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
     mode or rendering into an X window.  An application can switch between
     full-screen and window rendering with the command:
 
-        GLboolean glXSet3DfxModeMESA( GLint mode );
+	GLboolean glXSet3DfxModeMESA( GLint mode );
 
     <mode> may either be GLX_3DFX_WINDOW_MODE_MESA to indicate window
     rendering or GLX_3DFX_FULLSCREEN_MODE_MESA to indicate full-screen mode.

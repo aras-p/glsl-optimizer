@@ -20,7 +20,7 @@ Version
 
 Number
 
-    ???
+    215
 
 Dependencies
 
@@ -45,7 +45,7 @@ Issues
 New Procedures and Functions
 
     void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
-                               int x, int y, int width, int height );
+			       int x, int y, int width, int height );
 
 New Tokens
 
@@ -57,8 +57,8 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
 
     The function
 
-         void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
-                                    int x, int y, int width, int height );
+	 void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
+				    int x, int y, int width, int height );
 
     may be used to copy a rectangular region of the back color buffer to
     the front color buffer.  This can be used to quickly repaint 3D windows
@@ -68,7 +68,7 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
     <x> and <y> indicates the lower-left corner of the region to copy and
     <width> and <height> indicate the size in pixels.  Coordinate (0,0)
     corresponds to the lower-left pixel of the window, like glReadPixels.
-    
+
 GLX Protocol
 
     None at this time.  The extension is implemented in terms of ordinary
