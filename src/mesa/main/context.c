@@ -1542,19 +1542,24 @@ init_attrib_groups( GLcontext *ctx )
    /* Vertex/fragment programs */
    ctx->Program.ErrorPos = -1;
    ctx->Program.ErrorString = _mesa_strdup("");
-#if FEATURE_NV_vertex_program
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
    ctx->VertexProgram.Current = NULL;
+   ctx->VertexProgram.Current = (struct vertex_program *) ctx->Shared->DefaultVertexProgram;
+   assert(ctx->VertexProgram.Current);
+   ctx->VertexProgram.Current->Base.RefCount++;
    for (i = 0; i < VP_NUM_PROG_REGS / 4; i++) {
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
    }
 #endif
-#if FEATURE_NV_fragment_program
+#if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    ctx->FragmentProgram.Enabled = GL_FALSE;
-   ctx->FragmentProgram.Current = NULL;
+   ctx->FragmentProgram.Current = (struct fragment_program *) ctx->Shared->DefaultFragmentProgram;
+   assert(ctx->FragmentProgram.Current);
+   ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
    /* Miscellaneous */
