@@ -1,10 +1,10 @@
-/* $Id: extensions.c,v 1.16 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: extensions.c,v 1.17 2000/02/23 22:31:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ struct extension {
 
 
 static struct { int enabled; const char *name; } default_extensions[] = {
-   { ALWAYS_ENABLED, "GL_EXT_blend_color" },
+   { DEFAULT_ON,     "GL_EXT_blend_color" },
    { DEFAULT_OFF,    "ARB_imaging" },
    { DEFAULT_ON,     "GL_EXT_blend_minmax" },
    { DEFAULT_ON,     "GL_EXT_blend_logic_op" },
