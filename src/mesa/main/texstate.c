@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.85 2002/10/29 20:28:51 brianp Exp $ */
+/* $Id: texstate.c,v 1.86 2002/11/01 17:42:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1216,7 +1216,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexParameter(pname=GL_MAX_TEXTURE_ANISOTROPY_EXT)");
+                        "glTexParameter(pname=GL_TEXTURE_MAX_ANISOTROPY_EXT)");
             return;
          }
          break;
