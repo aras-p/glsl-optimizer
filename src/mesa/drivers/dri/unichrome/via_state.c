@@ -435,7 +435,7 @@ void viaEmitState(viaContextPtr vmesa)
 	    ADVANCE_RING();
 	 }
 
-	 BEGIN_RING(9);
+	 BEGIN_RING(12);
 	 OUT_RING( (HC_SubA_HTXnTB << 24) | vmesa->regHTXnTB_1 );
 	 OUT_RING( (HC_SubA_HTXnMPMD << 24) | vmesa->regHTXnMPMD_1 );
 	 OUT_RING( (HC_SubA_HTXnTBLCsat << 24) | vmesa->regHTXnTBLCsat_1 );
@@ -445,6 +445,9 @@ void viaEmitState(viaContextPtr vmesa)
 	 OUT_RING( (HC_SubA_HTXnTBLRCb << 24) | vmesa->regHTXnTBLRCb_1 );
 	 OUT_RING( (HC_SubA_HTXnTBLRAa << 24) | vmesa->regHTXnTBLRAa_1 );
 	 OUT_RING( (HC_SubA_HTXnTBLRFog << 24) | vmesa->regHTXnTBLRFog_1 );
+	 OUT_RING( (HC_SubA_HTXnTBLRCa << 24) | vmesa->regHTXnTBLRCa_1 );
+	 OUT_RING( (HC_SubA_HTXnTBLRCc << 24) | vmesa->regHTXnTBLRCc_1 );
+	 OUT_RING( (HC_SubA_HTXnTBLRCbias << 24) | vmesa->regHTXnTBLRCbias_1 );
 	 ADVANCE_RING();
 
 	 if (t->regTexFM == HC_HTXnFM_Index8) {

@@ -57,8 +57,8 @@
 #define INPUT_A_SHIFT     14
 #define INPUT_B_SHIFT     7
 #define INPUT_C_SHIFT     0
-#define INPUT_BiasC_SHIFT 14
-#define INPUT_BiasA_SHIFT 3
+#define INPUT_CBias_SHIFT 14
+#define INPUT_ABias_SHIFT 3
 
 #define CONST_ONE         (HC_XTC_0 | HC_XTC_InvTOPC)
 
@@ -97,6 +97,10 @@ static const unsigned  a_shift_table[3] = {
  * textures.  This was also the case with the code that Via supplied.  It
  * also fails for \c GL_REPLACE with \c GL_RGBA textures.  Everything else
  * that texenv tests looks good.
+ *
+ * \bug 
+ * KW: needs attention to the case where texunit 1 is enabled but
+ * texunit 0 is not.
  */
 void
 viaTexCombineState( viaContextPtr vmesa,
@@ -140,25 +144,25 @@ viaTexCombineState( viaContextPtr vmesa,
 	 color_arg[i] = HC_XTC_HTXnTBLRC;
 
 	 switch( op ) {
-	 case 0:
-	    constant_color[i] = ((env_color[0] << 16) 
-				 | (env_color[1] << 8) 
-				 | env_color[2]);
+	 case 0:		/* GL_SRC_COLOR */
+	    constant_color[i] = ((env_color[0] << 16) | 
+				 (env_color[1] << 8) | 
+				 env_color[2]);
 	    break;
-	 case 1:
-	    constant_color[i] = ~((env_color[0] << 16) 
-				  | (env_color[1] << 8) 
-				  | env_color[2]) & 0x00ffffff;
+	 case 1:		/* GL_ONE_MINUS_SRC_COLOR */
+	    constant_color[i] = ~((env_color[0] << 16) | 
+				  (env_color[1] << 8) | 
+				  env_color[2]) & 0x00ffffff;
 	    break;
-	 case 2:
-	    constant_color[i] = ((env_color[3] << 16)
-				 | (env_color[3] << 8)
-				 | env_color[3]);
+	 case 2:		/* GL_SRC_ALPHA */
+	    constant_color[i] = ((env_color[3] << 16) | 
+				 (env_color[3] << 8) | 
+				 env_color[3]);
 	    break;
-	 case 3:
-	    constant_color[i] = ~((env_color[3] << 16) 
-				  | (env_color[3] << 8) 
-				  | env_color[3]) & 0x00ffffff;
+	 case 3:		/* GL_ONE_MINUS_SRC_ALPHA */
+	    constant_color[i] = ~((env_color[3] << 16) | 
+				  (env_color[3] << 8) | 
+				  env_color[3]) & 0x00ffffff;
 	    break;
 	 }
 	 break;
@@ -200,7 +204,7 @@ viaTexCombineState( viaContextPtr vmesa,
    
    /* On the Unichrome, all combine operations take on some form of:
     *
-    *     A * (B op Bias) + C
+    *     (xA * (xB op xC) + xBias) << xShift
     * 
     * 'op' can be selected as add, subtract, min, max, or mask.  The min, max
     * and mask modes are currently unused.  With the exception of DOT3, all
@@ -212,14 +216,14 @@ viaTexCombineState( viaContextPtr vmesa,
    alpha = HC_HTXnTBLAsat_MASK;
 
    switch( combine->ModeRGB ) {
-   /* A = 0, B = 0, C = arg0, Bias = 0
+   /* Ca = 0, Cb = 0, Cc = 0, Cbias = arg0
     */
    case GL_REPLACE:
-      bias |= (color_arg[0] << INPUT_BiasC_SHIFT);
+      bias |= (color_arg[0] << INPUT_CBias_SHIFT); 
       ordered_constant_color[3] = constant_color[0];
       break;
       
-   /* A = arg[0], B = arg[1], C = 0, Bias = 0
+   /* Ca = arg[0], Cb = arg[1], Cc = 0, Cbias = 0
     */
    case GL_MODULATE:
       color |= (color_arg[0] << INPUT_A_SHIFT)
@@ -229,23 +233,23 @@ viaTexCombineState( viaContextPtr vmesa,
       ordered_constant_color[1] = constant_color[1];
       break;
 
-   /* A = 1.0, B = arg[0], C = 0, Bias = arg[1]
+   /* Ca = 1.0, Cb = arg[0], Cc = 0, Cbias = arg[1]
     */
    case GL_ADD:
    case GL_SUBTRACT:
-      if ( combine->ModeRGB == GL_SUBTRACT ) {
+      if ( combine->ModeRGCb == GL_SUBTRACT ) {
 	 op |= HC_HTXnTBLCop_Sub;
       }
 
       color |= (color_arg[0] << INPUT_B_SHIFT)
 	| (CONST_ONE << INPUT_A_SHIFT);
 
-      bias |= (color_arg[1] << INPUT_BiasC_SHIFT);
+      bias |= (color_arg[1] << INPUT_CBias_SHIFT);
       ordered_constant_color[1] = constant_color[0];
       ordered_constant_color[3] = constant_color[1];
       break;
 
-   /* A = 0, B = arg[0], C = arg[1], Bias = 0.5
+   /* Ca = 0, Cb = arg[0], Cc = arg[1], Cbias = 0.5
     */
    case GL_ADD_SIGNED:
       color |= (color_arg[0] << INPUT_B_SHIFT)
@@ -258,7 +262,7 @@ viaTexCombineState( viaContextPtr vmesa,
       ordered_constant_color[3] = 0x00808080;
       break;
 
-   /* A = arg[2], B = arg[0], C = arg[1], Bias = arg[1]
+   /* Ca = arg[2], Cb = arg[0], Cc = arg[1], Cbias = arg[1]
     */
    case GL_INTERPOLATE:
       op |= HC_HTXnTBLCop_Sub;
@@ -266,7 +270,7 @@ viaTexCombineState( viaContextPtr vmesa,
       color |= (color_arg[2] << INPUT_A_SHIFT) |
 	(color_arg[0] << INPUT_B_SHIFT) |
 	(color_arg[1] << INPUT_C_SHIFT);
-      bias |= (color_arg[1] << INPUT_BiasC_SHIFT);
+      bias |= (color_arg[1] << INPUT_CBias_SHIFT);
 
       ordered_constant_color[0] = constant_color[2];
       ordered_constant_color[1] = constant_color[0];
@@ -298,27 +302,27 @@ viaTexCombineState( viaContextPtr vmesa,
     */
 
    switch( combine->ModeA ) {
-   /* A = 0, B = 0, C = 0, Bias = arg0
+   /* Aa = 0, Ab = 0, Ac = 0, Abias = arg0
     */
    case GL_REPLACE:
-      bias |= (alpha_arg[0] << INPUT_BiasA_SHIFT);
+      bias |= (alpha_arg[0] << INPUT_ABias_SHIFT);
 
       alpha |= (HC_XTA_HTXnTBLRA << INPUT_A_SHIFT) |
 	(HC_XTA_HTXnTBLRA << INPUT_B_SHIFT) |
 	(HC_XTA_HTXnTBLRA << INPUT_C_SHIFT);
       break;
       
-   /* A = arg[0], B = arg[1], C = 0, Bias = 0
+   /* Aa = arg[0], Ab = arg[1], Ac = 0, Abias = 0
     */
    case GL_MODULATE:
       alpha |= (alpha_arg[1] << INPUT_A_SHIFT)
-	| (alpha_arg[0] << INPUT_B_SHIFT)
-        | (HC_XTA_HTXnTBLRA << INPUT_C_SHIFT);
+	 | (alpha_arg[0] << INPUT_B_SHIFT)
+	 | (HC_XTA_HTXnTBLRA << INPUT_C_SHIFT);
 
-      bias |= (HC_XTA_HTXnTBLRA << INPUT_BiasA_SHIFT);
+      bias |= (HC_XTA_HTXnTBLRA << INPUT_ABias_SHIFT);
       break;
 
-   /* A = 0, B = arg[0], C = 0, Bias = arg[1]
+   /* Aa = 0, Ab = arg[0], Ac = 0, Abias = arg[1]
     */
    case GL_ADD:
    case GL_SUBTRACT:
@@ -329,22 +333,22 @@ viaTexCombineState( viaContextPtr vmesa,
       alpha |= (HC_XTA_HTXnTBLRA << INPUT_A_SHIFT) |
 	(alpha_arg[0] << INPUT_B_SHIFT) |
 	(HC_XTA_HTXnTBLRA << INPUT_C_SHIFT);
-      bias |= (alpha_arg[1] << INPUT_BiasA_SHIFT);
+      bias |= (alpha_arg[1] << INPUT_ABias_SHIFT);
       break;
 
-   /* A = 0, B = arg[0], C = arg[1], Bias = 0.5
+   /* Aa = 0, Ab = arg[0], Ac = arg[1], Abias = 0.5
     */
    case GL_ADD_SIGNED:
       op |= HC_HTXnTBLAop_Sub;
 
       alpha |= (alpha_arg[0] << INPUT_B_SHIFT)
 	| (alpha_arg[1] << INPUT_C_SHIFT);
-      bias |= (HC_XTA_HTXnTBLRA << INPUT_BiasA_SHIFT);
+      bias |= (HC_XTA_HTXnTBLRA << INPUT_ABias_SHIFT);
 
       bias_alpha = 0x00000080;
       break;
 
-   /* A = arg[2], B = arg[0], C = arg[1], Bias = arg[1]
+   /* Aa = arg[2], Ab = arg[0], Ac = arg[1], Abias = arg[1]
     */
    case GL_INTERPOLATE:
       op |= HC_HTXnTBLAop_Sub;
@@ -352,7 +356,7 @@ viaTexCombineState( viaContextPtr vmesa,
       alpha |= (alpha_arg[2] << INPUT_A_SHIFT) |
 	(alpha_arg[0] << INPUT_B_SHIFT) |
 	(alpha_arg[1] << INPUT_C_SHIFT);
-      bias |= (alpha_arg[1] << INPUT_BiasA_SHIFT);
+      bias |= (alpha_arg[1] << INPUT_ABias_SHIFT);
       break;
    }
    
@@ -380,6 +384,11 @@ viaTexCombineState( viaContextPtr vmesa,
       vmesa->regHTXnTBLAsat_1 = alpha;
       vmesa->regHTXnTBLCop_1 = op | bias;
       vmesa->regHTXnTBLRAa_1 = bias_alpha | (constant_alpha << 16);
+
+      vmesa->regHTXnTBLRCa_1 = ordered_constant_color[0];
+      vmesa->regHTXnTBLRCb_1 = ordered_constant_color[1];
+      vmesa->regHTXnTBLRCc_1 = ordered_constant_color[2];
+      vmesa->regHTXnTBLRCbias_1 = ordered_constant_color[3];
    }
 }
 

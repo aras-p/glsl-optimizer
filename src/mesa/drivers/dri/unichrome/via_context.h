@@ -222,6 +222,9 @@ struct via_context_t {
     GLuint regHTXnTBLRCb_1;
     GLuint regHTXnTBLRAa_1;
     GLuint regHTXnTBLRFog_1;
+    GLuint regHTXnTBLRCa_1;
+    GLuint regHTXnTBLRCc_1;
+    GLuint regHTXnTBLRCbias_1;
 
     int vertexSize;
     int hwVertexSize;
