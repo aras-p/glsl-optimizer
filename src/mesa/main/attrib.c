@@ -1,10 +1,10 @@
-/* $Id: attrib.c,v 1.60 2002/02/13 00:53:19 keithw Exp $ */
+/* $Id: attrib.c,v 1.61 2002/03/28 22:42:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,6 @@
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
-#include "clip.h"
 #include "colormac.h"
 #include "context.h"
 #include "depth.h"
@@ -1050,17 +1049,27 @@ _mesa_PopAttrib(void)
                const struct gl_transform_attrib *xform;
                xform = (const struct gl_transform_attrib *) attr->data;
                _mesa_MatrixMode(xform->MatrixMode);
+
+               if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY)
+                  _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
+
+               /* restore clip planes */
                for (i = 0; i < MAX_CLIP_PLANES; i++) {
-		  GLdouble equation[4];
-		  const GLfloat *eq = xform->EyeUserPlane[i];
-                  _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i,
-                                   xform->ClipEnabled[i]);
-		  equation[0] = (GLdouble) eq[0];
-		  equation[1] = (GLdouble) eq[1];
-		  equation[2] = (GLdouble) eq[2];
-		  equation[3] = (GLdouble) eq[3];
-		  _mesa_ClipPlane( GL_CLIP_PLANE0 + i, equation );
+                  const GLfloat *eyePlane = xform->EyeUserPlane[i];
+                  COPY_4V(ctx->Transform.EyeUserPlane[i], eyePlane);
+                  if (xform->ClipEnabled[i]) {
+                     _mesa_transform_vector( ctx->Transform._ClipUserPlane[i],
+                                             eyePlane,
+                                             ctx->ProjectionMatrixStack.Top->inv );
+                     _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_TRUE);
+                  }
+                  else {
+                     _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i, GL_FALSE);
+                  }
+                  if (ctx->Driver.ClipPlane)
+                     ctx->Driver.ClipPlane( ctx, i, eyePlane );
                }
+
                /* normalize/rescale */
                _mesa_set_enable(ctx, GL_NORMALIZE, ctx->Transform.Normalize);
                _mesa_set_enable(ctx, GL_RESCALE_NORMAL_EXT,
