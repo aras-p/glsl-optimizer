@@ -166,26 +166,12 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       _swrast_use_draw_buffer(ctx);
    }
 
-   /* do image transfer ops up until convolution */
+   /* do the image transfer ops which preceed convolution */
    for (row = 0; row < height; row++) {
       GLfloat (*rgba)[4] = (GLfloat (*)[4]) (tmpImage + row * width * 4);
-
-      /* scale & bias */
-      if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-         _mesa_scale_and_bias_rgba(ctx, width, rgba,
-                                   ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
-                                   ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
-                                   ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
-                                   ctx->Pixel.BlueBias, ctx->Pixel.AlphaBias);
-      }
-      /* color map lookup */
-      if (transferOps & IMAGE_MAP_COLOR_BIT) {
-         _mesa_map_rgba(ctx, width, rgba);
-      }
-      /* GL_COLOR_TABLE lookup */
-      if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba_float(&ctx->ColorTable, width, rgba);
-      }
+      _mesa_apply_rgba_transfer_ops(ctx,
+                                    transferOps & IMAGE_PRE_CONVOLUTION_BITS,
+                                    width, rgba);
    }
 
    /* do convolution */
@@ -198,32 +184,15 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
    FREE(tmpImage);
 
-   /* do remaining image transfer ops */
+   /* do remaining post-convolution image transfer ops */
    for (row = 0; row < height; row++) {
       GLfloat (*rgba)[4] = (GLfloat (*)[4]) (convImage + row * width * 4);
-
-      /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-      if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba_float(&ctx->PostConvolutionColorTable, width, rgba);
-      }
-      /* color matrix */
-      if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
-         _mesa_transform_rgba(ctx, width, rgba);
-      }
-      /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-      if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-         _mesa_lookup_rgba_float(&ctx->PostColorMatrixColorTable, width, rgba);
-      }
-      /* update histogram count */
-      if (transferOps & IMAGE_HISTOGRAM_BIT) {
-         _mesa_update_histogram(ctx, width, (CONST GLfloat (*)[4]) rgba);
-      }
-      /* update min/max */
-      if (transferOps & IMAGE_MIN_MAX_BIT) {
-         _mesa_update_minmax(ctx, width, (CONST GLfloat (*)[4]) rgba);
-      }
+      _mesa_apply_rgba_transfer_ops(ctx,
+                                    transferOps & IMAGE_POST_CONVOLUTION_BITS,
+                                    width, rgba);
    }
 
+   /* write the new image */
    for (row = 0; row < height; row++) {
       const GLfloat *src = convImage + row * width * 4;
       GLint i, dy;
@@ -398,59 +367,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             rgbaFloat[k][BCOMP] = (GLfloat) span.array->rgba[k][BCOMP] * scale;
             rgbaFloat[k][ACOMP] = (GLfloat) span.array->rgba[k][ACOMP] * scale;
          }
-         /* scale & bias */
-         if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-            _mesa_scale_and_bias_rgba(ctx, width, rgbaFloat,
-                                   ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
-                                   ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
-                                   ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
-                                   ctx->Pixel.BlueBias, ctx->Pixel.AlphaBias);
-         }
-         /* color map lookup */
-         if (transferOps & IMAGE_MAP_COLOR_BIT) {
-            _mesa_map_rgba(ctx, width, rgbaFloat);
-         }
-         /* GL_COLOR_TABLE lookup */
-         if (transferOps & IMAGE_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba_float(&ctx->ColorTable, width, rgbaFloat);
-         }
-         /* convolution */
-         if (transferOps & IMAGE_CONVOLUTION_BIT) {
-            _mesa_problem(ctx, "Convolution should not be enabled in copy_rgba_pixels()");
-            return;
-         }
-         /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
-         if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
-            _mesa_scale_and_bias_rgba(ctx, width, rgbaFloat,
-                                      ctx->Pixel.PostConvolutionScale[RCOMP],
-                                      ctx->Pixel.PostConvolutionScale[GCOMP],
-                                      ctx->Pixel.PostConvolutionScale[BCOMP],
-                                      ctx->Pixel.PostConvolutionScale[ACOMP],
-                                      ctx->Pixel.PostConvolutionBias[RCOMP],
-                                      ctx->Pixel.PostConvolutionBias[GCOMP],
-                                      ctx->Pixel.PostConvolutionBias[BCOMP],
-                                      ctx->Pixel.PostConvolutionBias[ACOMP]);
-         }
-         /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
-         if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba_float(&ctx->PostConvolutionColorTable, width, rgbaFloat);
-         }
-         /* color matrix */
-         if (transferOps & IMAGE_COLOR_MATRIX_BIT) {
-            _mesa_transform_rgba(ctx, width, rgbaFloat);
-         }
-         /* GL_POST_COLOR_MATRIX_COLOR_TABLE lookup */
-         if (transferOps & IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT) {
-            _mesa_lookup_rgba_float(&ctx->PostColorMatrixColorTable, width, rgbaFloat);
-         }
-         /* update histogram count */
-         if (transferOps & IMAGE_HISTOGRAM_BIT) {
-            _mesa_update_histogram(ctx, width, (CONST GLfloat (*)[4]) rgbaFloat);
-         }
-         /* update min/max */
-         if (transferOps & IMAGE_MIN_MAX_BIT) {
-            _mesa_update_minmax(ctx, width, (CONST GLfloat (*)[4]) rgbaFloat);
-         }
+
+         _mesa_apply_rgba_transfer_ops(ctx, transferOps, width, rgbaFloat);
+
          /* clamp to [0,1] and convert float back to chan */
          for (k = 0; k < width; k++) {
             GLint r = (GLint) (rgbaFloat[k][RCOMP] * CHAN_MAXF);

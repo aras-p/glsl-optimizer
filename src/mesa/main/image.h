@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -95,6 +95,10 @@ extern void
 _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
                    GLubyte *dest, const struct gl_pixelstore_attrib *packing );
 
+
+extern void
+_mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
+                              GLuint n, GLfloat rgba[][4]);
 
 extern void
 _mesa_pack_rgba_span_float( GLcontext *ctx,

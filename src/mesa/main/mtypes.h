@@ -1943,6 +1943,8 @@ struct matrix_stack
 #define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
 #define IMAGE_HISTOGRAM_BIT                       0x200
 #define IMAGE_MIN_MAX_BIT                         0x400
+#define IMAGE_CLAMP_BIT                           0x800 /* extra */
+
 
 /** Transfer ops up to convolution */
 #define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
