@@ -22,7 +22,8 @@ static void Display( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    for (t = 0.0; t <= 1.0; t += 0.25) {
-      GLfloat f = -(Near + t * (Far - Near));
+      GLfloat f = Near + t * (Far - Near);
+      printf("glFogCoord(%4.1f)\n", f);
       glFogCoordfEXT(f);
 
       glPushMatrix();
@@ -69,6 +70,8 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
+   printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+   printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    /* setup lighting, etc */
    if (!glutExtensionSupported("GL_EXT_fog_coord")) {
       printf("Sorry, this program requires GL_EXT_fog_coord\n");
