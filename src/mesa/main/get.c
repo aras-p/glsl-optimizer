@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.51 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: get.c,v 1.52 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1020,56 +1020,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_BOOL(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLboolean) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
@@ -2258,56 +2208,6 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLdouble) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
@@ -3499,56 +3399,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
 
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLfloat) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
-
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
 	 *params = (GLfloat) ctx->Array.LockFirst;
@@ -4710,56 +4560,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = (GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = (ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = GL_FALSE;
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		    ctx->Hint.AllowDrawFrg == GL_FALSE &&
-		    ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params =  (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		     ctx->Hint.AllowDrawFrg == GL_TRUE &&
-		     ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = GL_DONT_CARE;
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:

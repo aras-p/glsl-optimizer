@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.15 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: mtypes.h,v 1.16 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -435,12 +435,6 @@ struct gl_hint_attrib {
    GLenum LineSmooth;
    GLenum PolygonSmooth;
    GLenum Fog;
-
-   /* GL_PGI_misc_hints */
-   GLenum AllowDrawWin;
-   GLenum AllowDrawFrg;
-   GLenum AllowDrawMem;
-   GLenum StrictLighting;
 
    /* GL_EXT_clip_volume_hint */
    GLenum ClipVolumeClipping;
@@ -1211,7 +1205,6 @@ struct gl_extensions {
    GLboolean MESA_sprite_point;
    GLboolean NV_blend_square;
    GLboolean NV_texgen_reflection;
-   GLboolean PGI_misc_hints;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
    GLboolean SGIS_pixel_texture;

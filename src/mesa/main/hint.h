@@ -1,10 +1,10 @@
-/* $Id: hint.h,v 1.2 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: hint.h,v 1.3 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,9 +37,6 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode );
 
 extern void
 _mesa_Hint( GLenum target, GLenum mode );
-
-extern void
-_mesa_HintPGI( GLenum target, GLint mode );
 
 
 #endif

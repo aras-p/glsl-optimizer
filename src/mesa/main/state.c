@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.54 2001/01/08 17:42:13 keithw Exp $ */
+/* $Id: state.c,v 1.55 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -419,9 +419,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* 54. GL_EXT_point_parameters */
    exec->PointParameterfEXT = _mesa_PointParameterfEXT;
    exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
-
-   /* 77. GL_PGI_misc_hints */
-   exec->HintPGI = _mesa_HintPGI;
 
    /* 78. GL_EXT_paletted_texture */
 #if 0

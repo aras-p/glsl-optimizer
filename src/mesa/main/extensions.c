@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.44 2001/01/06 22:46:13 gareth Exp $ */
+/* $Id: extensions.c,v 1.45 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,7 +99,6 @@ static struct {
    { OFF, "GL_MESA_sprite_point",             F(MESA_sprite_point) },
    { OFF, "GL_NV_blend_square",               F(NV_blend_square) },
    { ON,  "GL_NV_texgen_reflection",          F(NV_texgen_reflection) },
-   { ON,  "GL_PGI_misc_hints",                F(PGI_misc_hints) },
    { ON,  "GL_SGI_color_matrix",              F(SGI_color_matrix) },
    { ON,  "GL_SGI_color_table",               F(SGI_color_table) },
    { ON,  "GL_SGIS_pixel_texture",            F(SGIS_pixel_texture) },

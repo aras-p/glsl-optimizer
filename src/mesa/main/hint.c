@@ -1,10 +1,10 @@
-/* $Id: hint.c,v 1.6 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: hint.c,v 1.7 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,66 +88,6 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PolygonSmooth = mode;
          break;
-      case GL_PREFER_DOUBLEBUFFER_HINT_PGI:
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-         if (ctx->Hint.StrictLighting == mode)
-	    return GL_TRUE;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.StrictLighting = mode;
-         break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_BEGIN_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_END_HINT_PGI:
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-      case GL_RECLAIM_MEMORY_HINT_PGI:
-         break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         if (mode) {
-            ctx->Hint.AllowDrawWin = GL_TRUE;
-            ctx->Hint.AllowDrawFrg = GL_FALSE;
-            ctx->Hint.AllowDrawMem = GL_FALSE;
-         } else {
-            ctx->Hint.AllowDrawWin = GL_TRUE;
-            ctx->Hint.AllowDrawFrg = GL_TRUE;
-            ctx->Hint.AllowDrawMem = GL_TRUE;
-         } 
-         break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.AllowDrawWin = GL_TRUE;
-         ctx->Hint.AllowDrawFrg = GL_TRUE;
-         ctx->Hint.AllowDrawMem = GL_TRUE;
-         break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-         break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-         if (ctx->Hint.AllowDrawWin == mode)
-	    return GL_TRUE;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.AllowDrawWin = mode;
-         break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-         if (ctx->Hint.AllowDrawFrg == mode)
-	    return GL_TRUE;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.AllowDrawFrg = mode;
-         break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-         if (ctx->Hint.AllowDrawMem == mode)
-	    return GL_TRUE;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.AllowDrawMem = mode;
-         break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-      case GL_WIDE_LINE_HINT_PGI:
-      case GL_BACK_NORMALS_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-         break;
 
       /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
@@ -180,49 +120,3 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
    
    return GL_TRUE;
 }
-
-
-void
-_mesa_HintPGI( GLenum target, GLint mode )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glHintPGI %s %d\n", gl_lookup_enum_by_nr(target), mode);
-
-   if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
-      gl_error(ctx, GL_INVALID_ENUM, "glHintPGI(mode)");
-      return;
-   }
-
-   switch (target) {
-      case GL_PREFER_DOUBLEBUFFER_HINT_PGI:
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-      case GL_STRICT_LIGHTING_HINT_PGI:
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_BEGIN_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_END_HINT_PGI:
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-      case GL_RECLAIM_MEMORY_HINT_PGI:
-      case GL_ALWAYS_FAST_HINT_PGI:
-      case GL_ALWAYS_SOFT_HINT_PGI:
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-      case GL_WIDE_LINE_HINT_PGI:
-      case GL_BACK_NORMALS_HINT_PGI:
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-         (void) _mesa_try_Hint(ctx, target, (GLenum) mode);
-         break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glHintPGI(target)" );
-         return;
-   }
-}
-
-   

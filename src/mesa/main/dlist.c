@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.62 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: dlist.c,v 1.63 2001/01/24 04:56:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -176,7 +176,6 @@ typedef enum {
 	OPCODE_FRONT_FACE,
 	OPCODE_FRUSTUM,
 	OPCODE_HINT,
-	OPCODE_HINT_PGI,
 	OPCODE_HISTOGRAM,
 	OPCODE_INDEX_MASK,
 	OPCODE_INIT_NAMES,
@@ -564,7 +563,6 @@ void gl_init_lists( void )
       InstSize[OPCODE_FRONT_FACE] = 2;
       InstSize[OPCODE_FRUSTUM] = 7;
       InstSize[OPCODE_HINT] = 3;
-      InstSize[OPCODE_HINT_PGI] = 3;
       InstSize[OPCODE_HISTOGRAM] = 5;
       InstSize[OPCODE_INDEX_MASK] = 2;
       InstSize[OPCODE_INIT_NAMES] = 1;
@@ -1802,23 +1800,6 @@ static void save_Hint( GLenum target, GLenum mode )
    }
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->Hint)( target, mode );
-   }
-}
-
-
-/* GL_PGI_misc_hints*/
-static void save_HintPGI( GLenum target, GLint mode )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_HINT_PGI, 2 );
-   if (n) {
-      n[1].e = target;
-      n[2].i = mode;
-   }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec->HintPGI)( target, mode );
    }
 }
 
@@ -4248,9 +4229,6 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_HINT:
 	    (*ctx->Exec->Hint)( n[1].e, n[2].e );
 	    break;
-	 case OPCODE_HINT_PGI:
-	    (*ctx->Exec->HintPGI)( n[1].e, n[2].i );
-	    break;
 	 case OPCODE_HISTOGRAM:
 	    (*ctx->Exec->Histogram)( n[1].e, n[2].i, n[3].e, n[4].b );
 	    break;
@@ -5818,9 +5796,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* 54. GL_EXT_point_parameters */
    table->PointParameterfEXT = save_PointParameterfEXT;
    table->PointParameterfvEXT = save_PointParameterfvEXT;
-
-   /* 77. GL_PGI_misc_hints */
-   table->HintPGI = save_HintPGI;
 
    /* 78. GL_EXT_paletted_texture */
 #if 0

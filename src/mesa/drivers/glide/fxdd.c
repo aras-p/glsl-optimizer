@@ -860,9 +860,6 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
    if (ctx->RenderMode != GL_RENDER)
      return GL_FALSE;
 
-  if (!ctx->Hint.AllowDrawMem)
-     return GL_TRUE;		/* you'll take it and like it */
-
   if (ctx->Stencil.Enabled ||
       ctx->Color.MultiDrawBuffer ||
       ((ctx->Color.BlendEnabled) && (ctx->Color.BlendEquation!=GL_FUNC_ADD_EXT)) ||

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.118 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: context.c,v 1.119 2001/01/24 04:56:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -910,10 +910,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Hint.LineSmooth = GL_DONT_CARE;
    ctx->Hint.PolygonSmooth = GL_DONT_CARE;
    ctx->Hint.Fog = GL_DONT_CARE;
-   ctx->Hint.AllowDrawWin = GL_TRUE;
-   ctx->Hint.AllowDrawFrg = GL_TRUE;
-   ctx->Hint.AllowDrawMem = GL_TRUE;
-   ctx->Hint.StrictLighting = GL_TRUE;
    ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
    ctx->Hint.TextureCompression = GL_DONT_CARE;
 
