@@ -868,28 +868,28 @@ static void radeonColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 
       /* Default to PREMULT:
        */
-      light_model_ctl1 &= ~((0xf << RADEON_EMISSIVE_SOURCE_SHIFT) |
-			   (0xf << RADEON_AMBIENT_SOURCE_SHIFT) |
-			   (0xf << RADEON_DIFFUSE_SOURCE_SHIFT) |
-			   (0xf << RADEON_SPECULAR_SOURCE_SHIFT)); 
+      light_model_ctl1 &= ~((3 << RADEON_EMISSIVE_SOURCE_SHIFT) |
+			   (3 << RADEON_AMBIENT_SOURCE_SHIFT) |
+			   (3 << RADEON_DIFFUSE_SOURCE_SHIFT) |
+			   (3 << RADEON_SPECULAR_SOURCE_SHIFT)); 
    
       if (mask & MAT_BIT_FRONT_EMISSION) {
-	 light_model_ctl1 |= (3 <<
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_EMISSIVE_SOURCE_SHIFT);
       }
 
       if (mask & MAT_BIT_FRONT_AMBIENT) {
-	 light_model_ctl1 |= (3 <<
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_AMBIENT_SOURCE_SHIFT);
       }
 	 
       if (mask & MAT_BIT_FRONT_DIFFUSE) {
-	 light_model_ctl1 |= (3 <<
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_DIFFUSE_SOURCE_SHIFT);
       }
    
       if (mask & MAT_BIT_FRONT_SPECULAR) {
-	 light_model_ctl1 |= (3 <<
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_SPECULAR_SOURCE_SHIFT);
       }
    
