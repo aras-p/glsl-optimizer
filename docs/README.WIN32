@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Oct 15, 2001 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Nov 1, 2001 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 
@@ -68,11 +68,11 @@ Details and Notes
   paths for the rasterizers.  See src/osmesa/osmesa.c for some good
   examples.
 
-- There is DirectDraw support in the Windows driver, but I do not
-  know if it compiles or works.  If you have an application that
-  does not draw much in a frame, but needs a higher framerate, then
-  it may pay to turn on the DirectDraw code, since DD often performs
-  the off-screen to on-screen blit faster than GDI.
+- There is DirectDraw support in the Windows driver, updated by
+  Daniel Slater.  You'll need to uncomment the #define DDRAW line
+  in src/Windows/wmesadef.h and add ddraw.lib to the list of libraries
+  in src/Makefile.win.  On some systems, you will acheive significantly
+  higher framerates with DirectDraw.
 
 - Some of the more specialized code like FX drivers, stereo, and
   parallel support isn't compiled or tested.  I left much of this

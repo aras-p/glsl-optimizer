@@ -57,10 +57,23 @@
 #ifndef DDMESADEF_H
 #define DDMESADEF_H
 
+// uncomment this to use DirectDraw driver
+//#define DDRAW 1
+// uncomment this to use a pointer to a function for setting the pixels
+// in the buffer
+#define COMPILE_SETPIXEL 1
+// uncomment this to enable the fast win32 rasterizers ( commented out for MesaGL 4.0 )
+// #define FAST_RASTERIZERS 1
+// uncomment this to enable setting function pointers once inside of
+// WMesaCreateContext instead of on every call to wmesa_update_state()
+#define SET_FPOINTERS_ONCE 1
+
+
 #include <windows.h>
 #include <GL\gl.h>
 #include "context.h"
 #ifdef DDRAW
+#define DIRECTDRAW_VERSION 0x0100
 	#include <ddraw.h>
 #endif
 //#include "profile.h"
@@ -79,6 +92,9 @@ typedef struct _dibSection{
 	LPVOID	base;
 }WMDIBSECTION, *PWMDIBSECTION;
 
+#ifdef COMPILE_SETPIXEL
+typedef void (*SETPIXELTYPE)(struct wmesa_context *pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b);
+#endif
 
 typedef struct wmesa_context{
     GLcontext *gl_ctx;		/* The core GL/Mesa context */
@@ -132,15 +148,19 @@ typedef struct wmesa_context{
 	LPDIRECTDRAWSURFACE     lpDDSOffScreen;	// DirectDraw off screen surface
 	LPDIRECTDRAWPALETTE     lpDDPal;        // DirectDraw palette
 	BOOL                    bActive;        // is application active?
-	DDSURFACEDESC	        ddsd;
-	int 					fullScreen;
-	int			            gMode ;
+	DDSURFACEDESC	        ddsd;			// surface description
+	int 					fullScreen;		// fullscreen ?
+	int			            gMode ;			// fullscreen mode
+	LONG					oldWndProc;		// old Window proc. we need to hook WM_MOVE message to update the drawing rectangle
 #endif
 	RECT					rectOffScreen;
 	RECT					rectSurface;
 	HWND					hwnd;
 	DWORD					pitch;
 	PBYTE					addrOffScreen;
+#ifdef COMPILE_SETPIXEL
+      SETPIXELTYPE                    wmSetPixel;
+#endif // COMPILE_SETPIXEL
 //#ifdef PROFILE
 //	MESAPROF	profile;
 //#endif

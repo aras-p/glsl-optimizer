@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.22 2001/10/05 15:47:28 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.23 2001/11/01 22:44:47 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -19,7 +19,11 @@
  * Updated for Mesa 4.0 by Karl Schultz (kschultz@sourceforge.net)
  */
 
-
+#ifdef NDEBUG
+#pragma auto_inline(on)
+#pragma inline_depth(255)
+#pragma inline_recursion(on)
+#endif
 
 #include "wmesadef.h"
 #include <GL/wmesa.h>
@@ -53,7 +57,9 @@
 
 /* Dither not tested for Mesa 4.0 */ 
 #ifdef DITHER
+#ifdef USE_WING
 #include <wing.h>
+#endif // USE_WING
 #endif
 
 #ifdef __CYGWIN32__
@@ -72,8 +78,15 @@
 #include "parallel.h"
 #endif
 
+
 /* File global varaibles */
-struct DISPLAY_OPTIONS displayOptions;
+struct DISPLAY_OPTIONS displayOptions = 
+{
+	0,		// stereo
+	0,		// fullScreen
+	0,		// full screen mode (1,2,3,4)
+	0		// bpp (8,16,24,32)
+};
 GLenum stereoCompile = GL_FALSE ;
 GLenum stereoShowing  = GL_FALSE ;
 GLenum stereoBuffer = GL_FALSE;
@@ -84,6 +97,17 @@ GLint stereo_flag = 0 ;
 
 static PWMC Current = NULL;
 WMesaContext WC = NULL;
+
+#ifdef COMPILE_SETPIXEL
+
+__forceinline void wmSetPixel(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	pwc->wmSetPixel(pwc,iScanLine,iPixel,r,g,b);
+}
+
+void ChooseSetPixel(PWMC pwc);
+
+#endif // COMPILE_SETPIXEL
 
 /* If we are double-buffering, we want to get the DC for the
  * off-screen DIB, otherwise the DC for the window.
@@ -112,13 +136,18 @@ GLubyte pixelDithered;
     pixelDithered = aWinGHalftoneTranslation[paletteindex];          \
 }
 
-
 #ifdef DDRAW
 static BOOL DDInit( WMesaContext wc, HWND hwnd);
 static void DDFree( WMesaContext wc);
 static HRESULT DDRestoreAll( WMesaContext wc );
 static void DDDeleteOffScreen(WMesaContext wc);
 static BOOL DDCreateOffScreen(WMesaContext wc);
+
+// define this to use the GDI Rectangle call to
+// clear the back buffer. Otherwise will manually
+// set the pixels. On an NVidia GEForce 2MX under Windows XP
+// and DirectX 8 , defining this makes apps run much much faster
+#define USE_GDI_TO_CLEAR 1
 #endif
 
 static void FlushToFile(PWMC pwc, PSTR  szFile);
@@ -208,8 +237,10 @@ BOOL wmDeleteBackingStore(PWMC pwc)
   SelectObject(pwc->dib.hDC, pwc->hOldBitmap);
   DeleteDC(pwc->dib.hDC);
   DeleteObject(pwc->hbmDIB);
+#ifdef USE_MAPPED_FILE
   UnmapViewOfFile(pwc->dib.base);
   CloseHandle(pwc->dib.hFileMap);
+#endif
   return TRUE;
 }
 
@@ -254,7 +285,8 @@ BOOL wmCreateBackingStore(PWMC pwc, long lxSize, long lySize)
   return TRUE;
 }
 
-
+#if 0
+// D.R.S. 10/30/01 - this function is never referenced
 /*
  * This function copies one scan line in a DIB section to another
  */
@@ -282,8 +314,9 @@ BOOL wmSetDIBits(PWMC pwc, UINT uiScanWidth, UINT uiNumScans,
   }
   return TRUE;
 }
+#endif // 0
 
-
+#if defined(FAST_RASTERIZERS)
 
 #define PIXELADDR(X,Y)  \
   ((GLubyte *)Current->pbPixels + (Current->height-Y-1)* \
@@ -295,6 +328,7 @@ BOOL wmSetDIBits(PWMC pwc, UINT uiScanWidth, UINT uiNumScans,
 #define PIXELADDR4( X, Y )  \
 ((GLubyte *)wmesa->pbPixels + (wmesa->height-Y-1)* wmesa->ScanWidth + (X)*4)
 
+#endif // 0
 
 BYTE DITHER_RGB_2_8BIT( int r, int g, int b, int x, int y);
 
@@ -351,13 +385,6 @@ static void clear_color( GLcontext* ctx, const GLchan color[4] )
 static clear(GLcontext* ctx, GLbitfield mask,
 	     GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
-  DWORD   dwColor;
-  WORD    wColor;
-  BYTE    bColor;
-  LPDWORD lpdw = (LPDWORD)Current->pbPixels;
-  LPWORD  lpw = (LPWORD)Current->pbPixels;
-  LPBYTE  lpb = Current->pbPixels;
-  int     lines;
   const   GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
   
   if (all){
@@ -372,6 +399,50 @@ static clear(GLcontext* ctx, GLbitfield mask,
   
   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
       if (mask & DD_BACK_LEFT_BIT) {
+#if defined(USE_GDI_TO_CLEAR)
+#if defined(DDRAW)
+	// D.R.S. 10/29/01 on my system (Pentium 4 with nvidia GeForce2 MX card, 
+	// this is almose 100 times faster that the code below
+	HDC DC=NULL;
+	HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel);
+	HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
+	HPEN Old_Pen=NULL;
+	HBRUSH Old_Brush=NULL;
+	Current->lpDDSOffScreen->lpVtbl->Unlock(Current->lpDDSOffScreen,NULL);
+	Current->lpDDSOffScreen->lpVtbl->GetDC(Current->lpDDSOffScreen,&DC);
+	Old_Pen=SelectObject(DC,Pen);
+	Old_Brush=SelectObject(DC,Brush);
+	Rectangle(DC,x,y,x+width,y+height);
+	SelectObject(DC,Old_Pen);
+	SelectObject(DC,Old_Brush);
+	DeleteObject(Pen);
+	DeleteObject(Brush);
+	Current->lpDDSOffScreen->lpVtbl->ReleaseDC(Current->lpDDSOffScreen,DC);
+	while (Current->lpDDSOffScreen->lpVtbl->Lock(Current->lpDDSOffScreen,NULL, &(Current->ddsd), 0, NULL) == DDERR_WASSTILLDRAWING);
+	  mask &= ~DD_BACK_LEFT_BIT;
+#else
+	  /* single-buffer */
+	  HDC DC=DD_GETDC;
+	  HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel);
+	  HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
+	  HPEN Old_Pen=SelectObject(DC,Pen);
+	  HBRUSH Old_Brush=SelectObject(DC,Brush);
+	  Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
+	  SelectObject(DC,Old_Pen);
+	  SelectObject(DC,Old_Brush);
+	  DeleteObject(Pen);
+	  DeleteObject(Brush);
+	  DD_RELEASEDC;
+	  mask &= ~DD_BACK_LEFT_BIT;
+#endif // DDRAW
+#else
+	  DWORD   dwColor;
+	  WORD    wColor;
+	  BYTE    bColor;
+	  LPDWORD lpdw = (LPDWORD)Current->pbPixels;
+	  LPWORD  lpw = (LPWORD)Current->pbPixels;
+	  LPBYTE  lpb = Current->pbPixels;
+	  int     lines;
 	  /* Double-buffering - clear back buffer */
 	  UINT    nBypp = Current->cColorBits / 8;
 	  int     i = 0;
@@ -434,6 +505,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
 	  }
 	  while (i<lines-1);
 	  mask &= ~DD_BACK_LEFT_BIT;
+#endif // defined(USE_GDI_TO_CLEAR)
       } /* double-buffer */
       
       if (mask & DD_FRONT_LEFT_BIT) {
@@ -443,7 +515,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
 	  HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
 	  HPEN Old_Pen=SelectObject(DC,Pen);
 	  HBRUSH Old_Brush=SelectObject(DC,Brush);
-	  Rectangle(DC,x,y,x+width,y+height);
+	  Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
 	  SelectObject(DC,Old_Pen);
 	  SelectObject(DC,Old_Brush);
 	  DeleteObject(Pen);
@@ -733,23 +805,25 @@ static void write_mono_rgba_span( const GLcontext* ctx,
                                   GLuint n, GLint x, GLint y,
                                   const GLchan color[4], const GLubyte mask[])
 {
-  ULONG pixel =  RGB( color[RCOMP], color[GCOMP], color[BCOMP] );
   GLuint i;
-  HDC DC=DD_GETDC;
   PWMC pwc = Current;
   assert(Current->rgb_flag==GL_TRUE);
   y=FLIP(y);
-  if(Current->rgb_flag==GL_TRUE){
+  if(Current->rgb_flag==GL_TRUE)
+  {
+	for (i=0; i<n; i++)
+		if (mask[i])
+			wmSetPixel(pwc,y,x+i,color[RCOMP], color[GCOMP], color[BCOMP]);
+  }
+  else
+  {
+	HDC DC=DD_GETDC;
+    ULONG pixel =  RGB( color[RCOMP], color[GCOMP], color[BCOMP] );
     for (i=0; i<n; i++)
       if (mask[i])
-	wmSetPixel(pwc,y,x+i,color[RCOMP], color[GCOMP], color[BCOMP]);
+		SetPixel(DC, y, x+i, pixel);
+	  DD_RELEASEDC;
   }
-  else {
-    for (i=0; i<n; i++)
-      if (mask[i])
-	SetPixel(DC, y, x+i, pixel);
-  }
-  DD_RELEASEDC;
 }
 
 
@@ -932,18 +1006,11 @@ static const GLubyte *get_string(GLcontext *ctx, GLenum name)
   }
 }
 
-static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
+static void wmesa_update_state( GLcontext *ctx, GLuint new_state );
+
+static void SetFunctionPointers(GLcontext *ctx)
 {
   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
-  TNLcontext *tnl = TNL_CONTEXT(ctx);
-  
-  /*
-   * XXX these function pointers could be initialized just once during
-   * context creation since they don't depend on any state changes.
-   * kws - This is true - this function gets called a lot and it
-   * would be good to minimize setting all this when not needed.
-   */
-  
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
   ctx->Driver.SetDrawBuffer = set_draw_buffer;
@@ -1006,8 +1073,87 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
   swdd->ReadRGBASpan        = read_rgba_span;
   swdd->ReadCI32Pixels      = read_ci32_pixels;
   swdd->ReadRGBAPixels      = read_rgba_pixels;
+ 
+}
+
+static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
+{
+  struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
+  TNLcontext *tnl = TNL_CONTEXT(ctx);
+  
+  /*
+   * XXX these function pointers could be initialized just once during
+   * context creation since they don't depend on any state changes.
+   * kws - This is true - this function gets called a lot and it
+   * would be good to minimize setting all this when not needed.
+   */
+#ifndef SET_FPOINTERS_ONCE  
+  SetFunctionPointers(ctx);
+#if 0
+  ctx->Driver.GetString = get_string;
+  ctx->Driver.UpdateState = wmesa_update_state;
+  ctx->Driver.SetDrawBuffer = set_draw_buffer;
+  ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+  ctx->Driver.GetBufferSize = buffer_size;
+  
+  ctx->Driver.Accum = _swrast_Accum;
+  ctx->Driver.Bitmap = _swrast_Bitmap;
+  ctx->Driver.Clear = clear;
+  
+  ctx->Driver.Flush = flush;
+  ctx->Driver.ClearIndex = clear_index;
+  ctx->Driver.ClearColor = clear_color;
+  ctx->Driver.Enable = enable;
+  
+  ctx->Driver.CopyPixels = _swrast_CopyPixels;
+  ctx->Driver.DrawPixels = _swrast_DrawPixels;
+  ctx->Driver.ReadPixels = _swrast_ReadPixels;
+  
+  ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
+  ctx->Driver.TexImage1D = _mesa_store_teximage1d;
+  ctx->Driver.TexImage2D = _mesa_store_teximage2d;
+  ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+  ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
+  ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
+  ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+  ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+  
+  ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+  ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+  ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+  ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+  ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+  ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+  ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+  ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+  ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+  
+  ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
+  ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
+  ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
   
   
+  swdd->SetReadBuffer = set_read_buffer;
+  
+  
+  /* Pixel/span writing functions: */
+  swdd->WriteRGBASpan        = write_rgba_span;
+  swdd->WriteRGBSpan         = write_rgb_span;
+  swdd->WriteMonoRGBASpan    = write_mono_rgba_span;
+  swdd->WriteRGBAPixels      = write_rgba_pixels;
+  swdd->WriteMonoRGBAPixels  = write_mono_rgba_pixels;
+  swdd->WriteCI32Span        = write_ci32_span;
+  swdd->WriteCI8Span         = write_ci8_span;
+  swdd->WriteMonoCISpan      = write_mono_ci_span;
+  swdd->WriteCI32Pixels      = write_ci32_pixels;
+  swdd->WriteMonoCIPixels    = write_mono_ci_pixels;
+  
+  swdd->ReadCI32Span        = read_ci32_span;
+  swdd->ReadRGBASpan        = read_rgba_span;
+  swdd->ReadCI32Pixels      = read_ci32_pixels;
+  swdd->ReadRGBAPixels      = read_rgba_pixels;
+#endif // 0  
+#endif //  !SET_FPOINTERS_ONCE  
   tnl->Driver.RunPipeline = _tnl_run_pipeline;
   
   _swrast_InvalidateState( ctx, new_state );
@@ -1106,7 +1252,11 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
 #ifdef DITHER
   if ((true_color_flag==GL_FALSE) && (rgb_flag == GL_TRUE)){
     c->dither_flag = GL_TRUE;
+#ifdef USE_WING
     c->hPalHalfTone = WinGCreateHalftonePalette();
+#else
+	c->hPalHalfTone = CreateHalftonePalette(c->hDC);
+#endif
   }
   else
     c->dither_flag = GL_FALSE;
@@ -1209,14 +1359,19 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
    */
   {
     GLcontext *ctx = c->gl_ctx;
-    
     _swrast_CreateContext( ctx );
     _ac_CreateContext( ctx );
     _tnl_CreateContext( ctx );
     _swsetup_CreateContext( ctx );
     
+#ifdef SET_FPOINTERS_ONCE
+    SetFunctionPointers(ctx);
+#endif // SET_FPOINTERS_ONCE
     _swsetup_Wakeup( ctx );
   }
+#ifdef COMPILE_SETPIXEL
+  ChooseSetPixel(c);
+#endif
   return c;
 }
 
@@ -1296,7 +1451,9 @@ void WMesaSwapBuffers( void )
 
 void WMesaPaletteChange(HPALETTE Pal)
 {
+#ifndef DDRAW
   int vRet;
+#endif
   LPPALETTEENTRY pPal;
   if (Current && (Current->rgb_flag==GL_FALSE || 
 		  Current->dither_flag == GL_TRUE))
@@ -1407,33 +1564,121 @@ void wmCreatePalette( PWMC pwdc )
   
 }
 
-void wmSetPixel(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+
+void 
+#ifdef COMPILE_SETPIXEL
+
+wmSetPixelDefault(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
 {
-  if (Current->db_flag) {
-    LPBYTE  lpb = pwc->pbPixels;
-    UINT    nBypp = pwc->cColorBits >> 3;
-    UINT    nOffset = iPixel % nBypp;
-    
-    lpb += pwc->ScanWidth * iScanLine;
-    lpb += iPixel * nBypp;
-    
-    if(nBypp == 1){
-      if(pwc->dither_flag)
-	*lpb = DITHER_RGB_2_8BIT(r,g,b,iScanLine,iPixel);
-      else
-	*lpb = BGR8(r,g,b);
-    }
-    else if(nBypp == 2)
-      *((LPWORD)lpb) = BGR16(r,g,b);
-    else if (nBypp == 3)
-      *((LPDWORD)lpb) = BGR24(r,g,b);
-    else if (nBypp == 4)
-      *((LPDWORD)lpb) = BGR32(r,g,b);
-  }
-  else{
-    SetPixel(Current->hDC, iPixel, iScanLine, RGB(r,g,b));
-  }
+	if (Current->db_flag)
+	{
+#ifdef DDRAW
+		HDC hdc = NULL;
+		Current->lpDDSOffScreen->lpVtbl->Unlock(Current->lpDDSOffScreen,NULL);
+		Current->lpDDSOffScreen->lpVtbl->GetDC(Current->lpDDSOffScreen,&hdc);
+		SetPixelV(hdc,iPixel, iScanLine, RGB(r,g,b));
+		Current->lpDDSOffScreen->lpVtbl->ReleaseDC(Current->lpDDSOffScreen,hdc);
+		while (Current->lpDDSOffScreen->lpVtbl->Lock(Current->lpDDSOffScreen,NULL, &(Current->ddsd), 0, NULL) == DDERR_WASSTILLDRAWING);
+#else
+		SetPixelV(Current->hDC, iPixel, iScanLine, RGB(r,g,b));
+#endif
+	}
+	else
+	{
+		SetPixelV(Current->hDC, iPixel+pwc->rectSurface.left, pwc->rectSurface.top+iScanLine, RGB(r,g,b));
+	}
 }
+#else
+wmSetPixel(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	if (Current->db_flag)
+	{
+		LPBYTE  lpb = pwc->pbPixels;
+		UINT    nBypp = pwc->cColorBits >> 3;
+    
+		lpb += pwc->ScanWidth * iScanLine;
+		lpb += iPixel * nBypp;
+    
+		if(nBypp == 1)
+		{
+			if(pwc->dither_flag)
+				*lpb = DITHER_RGB_2_8BIT(r,g,b,iScanLine,iPixel);
+			else
+				*lpb = BGR8(r,g,b);
+		}
+		else if(nBypp == 2)
+			*((LPWORD)lpb) = BGR16(r,g,b);
+		else if (nBypp == 3)
+			*((LPDWORD)lpb) = BGR24(r,g,b);
+		else if (nBypp == 4)
+			*((LPDWORD)lpb) = BGR32(r,g,b);
+	}
+	else
+	{
+		SetPixel(Current->hDC, iPixel, iScanLine, RGB(r,g,b));
+	}
+}
+#endif
+#ifdef COMPILE_SETPIXEL
+void wmSetPixel4(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	LPDWORD lpdw = ((LPDWORD)(pwc->pbPixels + pwc->ScanWidth * iScanLine)) + iPixel;
+	*lpdw = BGR32(r,g,b);
+//	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel + iPixel + iPixel + iPixel;
+//	*((LPDWORD)lpb) = BGR32(r,g,b);
+}
+
+void wmSetPixel3(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel + iPixel + iPixel;
+	*((LPDWORD)lpb) = BGR24(r,g,b);
+}
+
+void wmSetPixel2(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	LPWORD lpw = ((LPWORD)(pwc->pbPixels + pwc->ScanWidth * iScanLine)) + iPixel;
+	*lpw = BGR16(r,g,b);
+//	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel + iPixel;
+//	*((LPWORD)lpb) = BGR16(r,g,b);
+}
+
+void wmSetPixel1(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel;
+	*lpb = BGR8(r,g,b);
+}
+
+void wmSetPixel1Dither(PWMC pwc, int iScanLine, int iPixel, BYTE r, BYTE g, BYTE b)
+{
+	LPBYTE  lpb = pwc->pbPixels + pwc->ScanWidth * iScanLine + iPixel;
+	*lpb = DITHER_RGB_2_8BIT(r,g,b,iScanLine,iPixel);
+}
+
+
+void ChooseSetPixel(PWMC pwc)
+{
+	UINT nBypp = (pwc ) ? pwc->cColorBits >> 3 : 0;
+	switch(nBypp)
+	{
+		case 1:
+			pwc->wmSetPixel = pwc->dither_flag ? &wmSetPixel1Dither : &wmSetPixel1;
+			break;
+		case 2:
+			pwc->wmSetPixel = &wmSetPixel2;
+			break;
+		case 3:
+			pwc->wmSetPixel = &wmSetPixel3;
+			break;
+		case 4:
+			pwc->wmSetPixel = &wmSetPixel4;
+			break;
+		default:
+			pwc->wmSetPixel = &wmSetPixelDefault;
+			break;
+	}
+}
+
+#endif
 
 void  wmCreateDIBSection(
   HDC   hDC,
@@ -1455,7 +1700,7 @@ void  wmCreateDIBSection(
     pwc->ScanWidth = 2* pwc->pitch;
   
   dwSize = sizeof(BITMAPINFO) + (dwScanWidth * pwc->height);
-  
+#ifdef USE_MAPPED_FILE  
   pwc->dib.hFileMap = CreateFileMapping((HANDLE)PAGE_FILE,
 					NULL,
 					PAGE_READWRITE | SEC_COMMIT,
@@ -1476,13 +1721,15 @@ void  wmCreateDIBSection(
     CloseHandle(pwc->dib.hFileMap);
     return;
   }
-  
+
 
   CopyMemory(pwc->dib.base, pbmi, sizeof(BITMAPINFO));
+#endif // USE_MAPPED_FILE
   
   hic = CreateIC("display", NULL, NULL, NULL);
   pwc->dib.hDC = CreateCompatibleDC(hic);
   
+#ifdef USE_MAPPED_FILE  
 
   pwc->hbmDIB = CreateDIBSection(hic,
 				 &(pwc->bmi),
@@ -1490,6 +1737,14 @@ void  wmCreateDIBSection(
 				 &(pwc->pbPixels),
 				 pwc->dib.hFileMap,
 				 0);
+#else
+  pwc->hbmDIB = CreateDIBSection(hic,
+				 &(pwc->bmi),
+				 (iUsage ? DIB_PAL_COLORS : DIB_RGB_COLORS),
+				 &(pwc->pbPixels),
+				 0,
+				 0);
+#endif // USE_MAPPED_FILE
   pwc->ScreenMem = pwc->addrOffScreen = pwc->pbPixels;
   pwc->hOldBitmap = SelectObject(pwc->dib.hDC, pwc->hbmDIB);
   
@@ -1514,7 +1769,7 @@ BOOL wmFlush(PWMC pwc)
 #ifdef DDRAW
     if (pwc->lpDDSOffScreen == NULL)
       if(DDCreateOffScreen(pwc) == GL_FALSE)
-	return;
+	return FALSE;
     
     pwc->lpDDSOffScreen->lpVtbl->Unlock(pwc->lpDDSOffScreen, NULL);
     
@@ -1565,6 +1820,79 @@ BOOL wmFlush(PWMC pwc)
 
 #if !defined(NO_STEREO)
 
+static void __gluMakeIdentityf(GLfloat m[16])
+{
+    m[0+4*0] = 1; m[0+4*1] = 0; m[0+4*2] = 0; m[0+4*3] = 0;
+    m[1+4*0] = 0; m[1+4*1] = 1; m[1+4*2] = 0; m[1+4*3] = 0;
+    m[2+4*0] = 0; m[2+4*1] = 0; m[2+4*2] = 1; m[2+4*3] = 0;
+    m[3+4*0] = 0; m[3+4*1] = 0; m[3+4*2] = 0; m[3+4*3] = 1;
+}
+
+static void normalize(float v[3])
+{
+    float r;
+
+    r = sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
+    if (r == 0.0) return;
+
+    v[0] /= r;
+    v[1] /= r;
+    v[2] /= r;
+}
+
+static void cross(float v1[3], float v2[3], float result[3])
+{
+    result[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    result[1] = v1[2]*v2[0] - v1[0]*v2[2];
+    result[2] = v1[0]*v2[1] - v1[1]*v2[0];
+}
+
+
+static void 
+__gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
+	  GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy,
+	  GLdouble upz)
+{
+    int i;
+    float forward[3], side[3], up[3];
+    GLfloat m[4][4];
+
+    forward[0] = centerx - eyex;
+    forward[1] = centery - eyey;
+    forward[2] = centerz - eyez;
+
+    up[0] = upx;
+    up[1] = upy;
+    up[2] = upz;
+
+    normalize(forward);
+
+    /* Side = forward x up */
+    cross(forward, up, side);
+    normalize(side);
+
+    /* Recompute up as: up = side x forward */
+    cross(side, forward, up);
+
+    __gluMakeIdentityf(&m[0][0]);
+    m[0][0] = side[0];
+    m[1][0] = side[1];
+    m[2][0] = side[2];
+
+    m[0][1] = up[0];
+    m[1][1] = up[1];
+    m[2][1] = up[2];
+
+    m[0][2] = -forward[0];
+    m[1][2] = -forward[1];
+    m[2][2] = -forward[2];
+
+    glMultMatrixf(&m[0][0]);
+    glTranslated(-eyex, -eyey, -eyez);
+}
+
+GLfloat viewDistance = 1.0;
+
 void WMesaShowStereo(GLuint list)
 {
   
@@ -1585,7 +1913,7 @@ void WMesaShowStereo(GLuint list)
   
   glGetFloatv(GL_MODELVIEW_MATRIX,cm);
   glLoadIdentity();
-  gluLookAt(viewDistance/2,0.0,0.0 ,
+  __gluLookAt(viewDistance/2,0.0,0.0 ,
 	    viewDistance/2,0.0,-1.0,
 	    0.0,1.0,0.0 );
   glMultMatrixf( cm );
@@ -1595,7 +1923,7 @@ void WMesaShowStereo(GLuint list)
   
   glGetFloatv(GL_MODELVIEW_MATRIX,cm);
   glLoadIdentity();
-  gluLookAt(-viewDistance/2,0.0,0.0 ,
+  __gluLookAt(-viewDistance/2,0.0,0.0 ,
 	    -viewDistance/2,0.0,-1.0,
 	    0.0,1.0,0.0 );
   glMultMatrixf(cm);
@@ -1774,7 +2102,7 @@ static void DDFreePrimarySurface(WMesaContext wc)
 static BOOL DDCreatePrimarySurface(WMesaContext wc)
 {
   HRESULT ddrval;
-  DDSCAPS             ddscaps;
+//  DDSCAPS             ddscaps;
   wc->ddsd.dwSize = sizeof( wc->ddsd );
   wc->ddsd.dwFlags = DDSD_CAPS;
   wc->ddsd.ddsCaps.dwCaps =   DDSCAPS_PRIMARYSURFACE;
@@ -1786,7 +2114,7 @@ static BOOL DDCreatePrimarySurface(WMesaContext wc)
       return initFail(wc->hwnd , wc);
     }
   if(wc->db_flag == GL_FALSE)
-    wc->lpDDSPrimary->lpVtbl->GetDC(wc->lpDDSPrimary, wc->hDC);
+    wc->lpDDSPrimary->lpVtbl->GetDC(wc->lpDDSPrimary, &(wc->hDC));
   return TRUE;
 }
 
@@ -1831,6 +2159,80 @@ static BOOL DDCreateOffScreen(WMesaContext wc)
   return TRUE;
 }
 
+typedef
+struct tagWMesaContextList
+{
+	WMesaContext wc;
+	struct tagWMesaContextList *next;
+}WMesaContextList;
+
+WMesaContextList *head = 0;
+
+void AddContext(WMesaContext wc)
+{
+	WMesaContextList *lst = (WMesaContextList *)malloc(sizeof(WMesaContextList));
+	lst->wc = wc;
+	if( head )
+		lst->next = head;
+	head = lst;
+}
+
+WMesaContext FindContext(HWND hWnd)
+{
+	WMesaContextList *tmp = head;
+	while(tmp)
+	{
+		if( tmp->wc->hwnd == hWnd )
+			return tmp->wc;
+		tmp = tmp->next;
+	}
+	return NULL;
+}
+
+void RemoveContext(HWND hWnd)
+{
+	WMesaContextList *tmp = head;
+	if(tmp )
+	{
+		if( tmp->wc->hwnd == hWnd )
+		{
+			WMesaContextList *lst = tmp;
+
+			head = tmp->next;
+			free((void *)lst);
+		}
+		else
+			while(tmp->next)
+			{
+				if( tmp->next->wc->hwnd == hWnd )
+				{
+					WMesaContextList *lst = tmp->next;
+					tmp->next = tmp->next->next;
+					free((void *)lst);
+				}
+				tmp = tmp->next;
+			}
+	}
+}
+
+static LRESULT CALLBACK MyWndProc(HWND hwnd,UINT message,WPARAM wParam, LPARAM lParam)
+{
+	WMesaContext wc = Current->hwnd == hwnd ? Current : FindContext(hwnd);
+	 if( wc )
+	 {
+		LRESULT lret = CallWindowProc((WNDPROC)(wc->oldWndProc),hwnd,message,wParam,lParam);
+		if( message = WM_MOVE )
+		{
+			 POINT pt = {0};
+			GetClientRect( wc->hwnd, &(wc->rectSurface) );
+			ClientToScreen( hwnd, &pt );
+			OffsetRect(&(wc->rectSurface), pt.x, pt.y);
+		 }
+		return lret;
+	}
+	 return 0L;
+}
+
 /*
  * doInit - do work required for every instance of the application:
  *                create the window, initialize data
@@ -1838,11 +2240,11 @@ static BOOL DDCreateOffScreen(WMesaContext wc)
 static BOOL DDInit( WMesaContext wc, HWND hwnd)
 {
   HRESULT             ddrval;
-  DWORD dwFrequency;
+//  DWORD dwFrequency;
   
-  LPDIRECTDRAW            lpDD;           // DirectDraw object
-  LPDIRECTDRAW2            lpDD2;
-  
+//  LPDIRECTDRAW            lpDD;           // DirectDraw object
+//  LPDIRECTDRAW2            lpDD2;
+  LPDIRECTDRAWCLIPPER pcClipper = NULL;
   
   wc->fullScreen = displayOptions.fullScreen;
   wc->gMode = displayOptions.mode;
@@ -1922,11 +2324,38 @@ static BOOL DDInit( WMesaContext wc, HWND hwnd)
     return initFail(hwnd, wc);
   
   if(wc->db_flag)
-    return DDCreateOffScreen(wc);
+    DDCreateOffScreen(wc);
+
+    if( FAILED( ddrval = wc->lpDD->lpVtbl->CreateClipper(wc->lpDD, 0, &pcClipper, NULL ) ) )
+        return E_FAIL;
+
+    if( FAILED( ddrval = pcClipper->lpVtbl->SetHWnd(pcClipper,  0, wc->hwnd ) ) )
+    {
+        pcClipper->lpVtbl->Release(pcClipper);
+        return E_FAIL;
+    }
+
+    if( FAILED( ddrval = wc->lpDDSPrimary->lpVtbl->SetClipper(wc->lpDDSPrimary,  pcClipper ) ) )
+    {
+        pcClipper->lpVtbl->Release(pcClipper);
+        return E_FAIL;
+    }
+
+    // Done with clipper
+    pcClipper->lpVtbl->Release(pcClipper);
+	AddContext(wc);
+	// Hook the window so we can update the drawing rectangle when the window moves
+	wc->oldWndProc = SetWindowLong(wc->hwnd,GWL_WNDPROC,(LONG)MyWndProc);
+
+	return TRUE;
+
 } /* DDInit */
 
 static void DDFree( WMesaContext wc)
 {
+  RemoveContext(wc->hwnd);
+  SetWindowLong(wc->hwnd,GWL_WNDPROC,(LONG)(wc->oldWndProc));
+  wc->oldWndProc = 0;
   if( wc->lpDD != NULL )
     {
       DDFreePrimarySurface(wc);
@@ -1967,7 +2396,7 @@ void WMesaMove(void)
  ************************************************/
 
 
-#if 0
+#if defined(FAST_RASTERIZERS)
 
 
 /*
