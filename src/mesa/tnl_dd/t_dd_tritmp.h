@@ -584,7 +584,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z_ADD(v[2], offset);
 	 VERT_Z_ADD(v[3], offset);
       }
-      RASTERIZE( GL_TRIANGLES );
+      RASTERIZE( GL_QUADS );
       if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
          SETUP_STENCIL(facing);
          QUAD( (v[0]), (v[1]), (v[2]), (v[3]) );
