@@ -21,7 +21,7 @@ dispatch.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
 get.c hash.c hint.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
 mem.c glapi.c glapinoop.c \
-mmath.c mthreads.c pb.c pixel.c points.c polygon.c \
+mmath.c pb.c pixel.c points.c polygon.c \
 quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
 varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
@@ -46,7 +46,7 @@ dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
 matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
-mmath.obj,mthreads.obj,pb.obj,pixel.obj,points.obj
+mmath.obj,pb.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj
