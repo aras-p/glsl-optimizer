@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.34 2000/06/27 15:47:59 brianp Exp $ */
+/* $Id: image.c,v 1.35 2000/06/30 22:12:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -619,6 +619,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.PostConvolutionColorTableEnabled ||
                         ctx->Pixel.MinMaxEnabled ||
                         ctx->Pixel.HistogramEnabled);
 
@@ -675,8 +676,11 @@ _mesa_pack_rgba_span( GLcontext *ctx,
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
          /* XXX convolution here */
-         /* XXX post-convolution color table look-up here */
-         /* color matrix */
+         /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
+         }
+         /* color matrix transform */
          if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
              ctx->Pixel.ScaleOrBiasRGBApcm) {
             _mesa_transform_rgba(ctx, n, rgba);
@@ -2202,6 +2206,7 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.PostConvolutionColorTableEnabled ||
                         ctx->Pixel.MinMaxEnabled ||
                         ctx->Pixel.HistogramEnabled);
 
@@ -2319,7 +2324,10 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
          /* XXX convolution here */
-         /* XXX post-convolution color table look-up here */
+         /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
+         }
          /* color matrix transform */
          if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
              ctx->Pixel.ScaleOrBiasRGBApcm) {
@@ -2517,6 +2525,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
+                        ctx->Pixel.PostConvolutionColorTableEnabled ||
                         ctx->Pixel.MinMaxEnabled ||
                         ctx->Pixel.HistogramEnabled);
 
@@ -2584,7 +2593,10 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             _mesa_lookup_rgba(&ctx->ColorTable, n, rgba);
          }
          /* XXX convolution here */
-         /* XXX post-convolution color table look-up here */
+         /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
+         if (ctx->Pixel.PostConvolutionColorTableEnabled) {
+            _mesa_lookup_rgba(&ctx->PostConvolutionColorTable, n, rgba);
+         }
          /* color matrix transform */
          if (ctx->ColorMatrix.type != MATRIX_IDENTITY ||
              ctx->Pixel.ScaleOrBiasRGBApcm) {
