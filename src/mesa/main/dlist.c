@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.9 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: dlist.c,v 1.10 1999/10/16 11:31:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3344,9 +3344,6 @@ void gl_init_dlist_pointers( struct gl_api_table *table )
    /* GL_ARB_multitexture */
    table->ActiveTexture = save_ActiveTexture;
    table->ClientActiveTexture = save_ClientActiveTexture;
-
-   /* GL_EXT_get_proc_address */
-   table->GetProcAddress = gl_GetProcAddress;  /* NOT SAVED */
 }
 
 
