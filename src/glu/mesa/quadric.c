@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.5 2000/01/11 17:21:14 brianp Exp $ */
+/* $Id: quadric.c,v 1.6 2000/01/11 22:01:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -706,7 +706,7 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       }
       /* draw spokes */
       angle = DEG_TO_RAD(startAngle);
-      for (slice=0; slice<slices; slice++) {
+      for (slice=0; slice<=slices; slice++) {
 	 radius = innerRadius;
 	 glBegin( GL_LINE_STRIP );
 	 for (loop=0; loop<loops; loop++) {
