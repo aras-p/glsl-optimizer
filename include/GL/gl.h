@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.22 1999/11/15 14:26:07 brianp Exp $ */
+/* $Id: gl.h,v 1.23 1999/11/18 20:23:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1781,67 +1781,19 @@ GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 
 
 /*
- * GL_EXT_point_parameters
+ * GL_EXT_abgr (number 1)
  */
-#ifndef GL_EXT_point_parameters
-#define GL_EXT_point_parameters 1
+#ifndef GL_EXT_abgr
+#define GL_EXT_abgr 1
 
-#define GL_POINT_SIZE_MIN_EXT			0x8126
-#define GL_POINT_SIZE_MAX_EXT			0x8127
-#define GL_POINT_FADE_THRESHOLD_SIZE_EXT	0x8128
-#define GL_DISTANCE_ATTENUATION_EXT		0x8129
+#define GL_ABGR_EXT				0x8000
 
-GLAPI void GLAPIENTRY glPointParameterfEXT( GLenum pname, GLfloat param );
-GLAPI void GLAPIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *params );
-
-#endif /* GL_EXT_point_parameters */
+#endif /* GL_EXT_abgr */
 
 
 
 /*
- * GL_EXT_blend_minmax
- */
-#ifndef GL_EXT_blend_minmax
-#define GL_EXT_blend_minmax 1
-
-#define GL_FUNC_ADD_EXT				0x8006
-#define GL_MIN_EXT				0x8007
-#define GL_MAX_EXT				0x8008
-#define GL_BLEND_EQUATION_EXT			0x8009
-
-GLAPI void GLAPIENTRY glBlendEquationEXT( GLenum mode );
-
-#endif /* GL_EXT_blend_minmax */
-
-
-
-/*
- * GL_EXT_blend_subtract  (requires GL_EXT_blend_max )
- */
-#ifndef GL_EXT_blend_subtract
-#define GL_EXT_blend_subtract 1
-
-#define GL_FUNC_SUBTRACT_EXT			0x800A
-#define GL_FUNC_REVERSE_SUBTRACT_EXT		0x800B
-
-#endif /* GL_EXT_blend_subtract */
-
-
-
-/*
- * GL_EXT_blend_logic_op
- */
-#ifndef GL_EXT_blend_logic_op
-#define GL_EXT_blend_logic_op 1
-
-/* No new tokens or functions */
-
-#endif /* GL_EXT_blend_logic_op */
-
-
-
-/*
- * GL_EXT_blend_color
+ * GL_EXT_blend_color (number 2)
  */
 #ifndef GL_EXT_blend_color
 #define GL_EXT_blend_color 1
@@ -1859,105 +1811,23 @@ GLAPI void GLAPIENTRY glBlendColorEXT( GLclampf red, GLclampf green, GLclampf bl
 
 
 /*
- * GL_EXT_stencil_wrap
+ * GL_EXT_polygon_offset (number 3)
  */
-#ifndef GL_EXT_stencil_wrap
-#define GL_EXT_stencil_wrap 1
+#ifndef GL_EXT_polygon_offset
+#define GL_EXT_polygon_offset 1
 
-#define GL_INCR_WRAP_EXT			0x8507
-#define GL_DECR_WRAP_EXT			0x8508
+#define GL_POLYGON_OFFSET_EXT			0x8037
+#define GL_POLYGON_OFFSET_FACTOR_EXT		0x8038
+#define GL_POLYGON_OFFSET_BIAS_EXT		0x8039
 
-#endif /* GL_EXT_stencil_wrap */
+GLAPI void GLAPIENTRY glPolygonOffsetEXT( GLfloat factor, GLfloat bias );
+
+#endif /* GL_EXT_polygon_offset */
 
 
 
 /*
- * GL_EXT_clip_volume_hint
- */
-#ifndef GL_EXT_clip_volume_hint
-#define GL_EXT_clip_volume_hint 1
-
-#define GL_CLIP_VOLUME_CLIPPING_HINT_EXT	0x80F
-
-#endif /* GL_EXT_clip_volume_hint */
-
-
-
-/*
- * GL_EXT_abgr
- */
-#ifndef GL_EXT_abgr
-#define GL_EXT_abgr 1
-
-#define GL_ABGR_EXT				0x8000
-
-#endif /* GL_EXT_abgr */
-
-
-
-/*
- * GL_EXT_rescale_normal
- */
-#ifndef GL_EXT_rescale_normal
-#define GL_EXT_rescale_normal 1
-
-#define GL_RESCALE_NORMAL_EXT			0x803A
-
-#endif /* GL_EXT_rescale_normal */
-
-
-
-/*
- * GL_EXT_paletted_texture
- */
-#ifndef GL_EXT_paletted_texture
-#define GL_EXT_paletted_texture 1
-
-#define GL_TABLE_TOO_LARGE_EXT			0x8031
-#define GL_COLOR_TABLE_FORMAT_EXT		0x80D8
-#define GL_COLOR_TABLE_WIDTH_EXT		0x80D9
-#define GL_COLOR_TABLE_RED_SIZE_EXT		0x80DA
-#define GL_COLOR_TABLE_GREEN_SIZE_EXT		0x80DB
-#define GL_COLOR_TABLE_BLUE_SIZE_EXT		0x80DC
-#define GL_COLOR_TABLE_ALPHA_SIZE_EXT	 	0x80DD
-#define GL_COLOR_TABLE_LUMINANCE_SIZE_EXT	0x80DE
-#define GL_COLOR_TABLE_INTENSITY_SIZE_EXT	0x80DF
-#define GL_TEXTURE_INDEX_SIZE_EXT		0x80ED
-#define GL_COLOR_INDEX1_EXT			0x80E2
-#define GL_COLOR_INDEX2_EXT			0x80E3
-#define GL_COLOR_INDEX4_EXT			0x80E4
-#define GL_COLOR_INDEX8_EXT			0x80E5
-#define GL_COLOR_INDEX12_EXT			0x80E6
-#define GL_COLOR_INDEX16_EXT			0x80E7
-
-GLAPI void GLAPIENTRY glColorTableEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table );
-
-GLAPI void GLAPIENTRY glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data );
-
-GLAPI void GLAPIENTRY glGetColorTableEXT( GLenum target, GLenum format, GLenum type, GLvoid *table );
-
-GLAPI void GLAPIENTRY glGetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params );
-
-GLAPI void GLAPIENTRY glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params );
-
-#endif /* GL_EXT_paletted_texture */
-
-
-
-/*
- * GL_EXT_shared_texture_palette  (requires GL_EXT_paletted_texture)
- */
-#ifndef GL_EXT_shared_texture_palette
-#define GL_EXT_shared_texture_palette 1
-
-#define GL_SHARED_TEXTURE_PALETTE_EXT		0x81FB
-
-#endif /* GL_EXT_shared_texture_palette */
-
-
-
-/*
- * GL_EXT_texture3D
+ * GL_EXT_texture3D (number 6)
  */
 #ifndef GL_EXT_texture3D
 #define GL_EXT_texture3D 1
@@ -1983,9 +1853,8 @@ GLAPI void GLAPIENTRY glCopyTexSubImage3DEXT( GLenum target, GLint level, GLint 
 
 
 
-
 /*
- * GL_EXT_texture_object
+ * GL_EXT_texture_object (number 20)
  */
 #ifndef GL_EXT_texture_object
 #define GL_EXT_texture_object 1
@@ -2012,23 +1881,19 @@ GLAPI GLboolean GLAPIENTRY glIsTextureEXT( GLuint texture );
 
 
 /*
- * GL_EXT_polygon_offset
+ * GL_EXT_rescale_normal (number 27)
  */
-#ifndef GL_EXT_polygon_offset
-#define GL_EXT_polygon_offset 1
+#ifndef GL_EXT_rescale_normal
+#define GL_EXT_rescale_normal 1
 
-#define GL_POLYGON_OFFSET_EXT			0x8037
-#define GL_POLYGON_OFFSET_FACTOR_EXT		0x8038
-#define GL_POLYGON_OFFSET_BIAS_EXT		0x8039
+#define GL_RESCALE_NORMAL_EXT			0x803A
 
-GLAPI void GLAPIENTRY glPolygonOffsetEXT( GLfloat factor, GLfloat bias );
-
-#endif /* GL_EXT_polygon_offset */
+#endif /* GL_EXT_rescale_normal */
 
 
 
 /*
- * GL_EXT_vertex_array
+ * GL_EXT_vertex_array (number 30)
  */
 #ifndef GL_EXT_vertex_array
 #define GL_EXT_vertex_array 1
@@ -2089,7 +1954,160 @@ GLAPI void GLAPIENTRY glDrawArraysEXT( GLenum mode, GLint first, GLsizei count )
 
 
 /*
- * GL_EXT_compiled_vertex_array
+ * GL_SGIS_texture_edge_clamp (number 35)
+ */
+#ifndef GL_SGIS_texture_edge_clamp
+#define GL_SGIS_texture_edge_clamp 1
+
+#define GL_CLAMP_TO_EDGE_SGIS			0x812F
+
+#endif /* GL_SGIS_texture_edge_clamp */
+
+
+
+/*
+ * GL_EXT_blend_minmax (number 37)
+ */
+#ifndef GL_EXT_blend_minmax
+#define GL_EXT_blend_minmax 1
+
+#define GL_FUNC_ADD_EXT				0x8006
+#define GL_MIN_EXT				0x8007
+#define GL_MAX_EXT				0x8008
+#define GL_BLEND_EQUATION_EXT			0x8009
+
+GLAPI void GLAPIENTRY glBlendEquationEXT( GLenum mode );
+
+#endif /* GL_EXT_blend_minmax */
+
+
+
+/*
+ * GL_EXT_blend_subtract (number 38) (requires GL_EXT_blend_max )
+ */
+#ifndef GL_EXT_blend_subtract
+#define GL_EXT_blend_subtract 1
+
+#define GL_FUNC_SUBTRACT_EXT			0x800A
+#define GL_FUNC_REVERSE_SUBTRACT_EXT		0x800B
+
+#endif /* GL_EXT_blend_subtract */
+
+
+
+/*
+ * GL_EXT_blend_logic_op (number 39)
+ */
+#ifndef GL_EXT_blend_logic_op
+#define GL_EXT_blend_logic_op 1
+
+/* No new tokens or functions */
+
+#endif /* GL_EXT_blend_logic_op */
+
+
+
+/*
+ * GL_EXT_point_parameters (number 54)
+ */
+#ifndef GL_EXT_point_parameters
+#define GL_EXT_point_parameters 1
+
+#define GL_POINT_SIZE_MIN_EXT			0x8126
+#define GL_POINT_SIZE_MAX_EXT			0x8127
+#define GL_POINT_FADE_THRESHOLD_SIZE_EXT	0x8128
+#define GL_DISTANCE_ATTENUATION_EXT		0x8129
+
+GLAPI void GLAPIENTRY glPointParameterfEXT( GLenum pname, GLfloat param );
+GLAPI void GLAPIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *params );
+
+#endif /* GL_EXT_point_parameters */
+
+
+
+/*
+ * GL_PGI_misc_hints (number 77)
+ */
+#ifndef GL_PGI_misc_hints
+#define GL_PGI_misc_hints 1
+
+#define GL_PREFER_DOUBLEBUFFER_HINT_PGI		107000
+#define GL_STRICT_DEPTHFUNC_HINT_PGI		107030
+#define GL_STRICT_LIGHTING_HINT_PGI		107031
+#define GL_STRICT_SCISSOR_HINT_PGI		107032
+#define GL_FULL_STIPPLE_HINT_PGI		107033
+#define GL_NATIVE_GRAPHICS_BEGIN_HINT_PGI	107011
+#define GL_NATIVE_GRAPHICS_END_HINT_PGI		107012
+#define GL_CONSERVE_MEMORY_HINT_PGI		107005
+#define GL_RECLAIM_MEMORY_HINT_PGI		107006
+#define GL_ALWAYS_FAST_HINT_PGI			107020
+#define GL_ALWAYS_SOFT_HINT_PGI			107021
+#define GL_ALLOW_DRAW_OBJ_HINT_PGI		107022
+#define GL_ALLOW_DRAW_WIN_HINT_PGI		107023
+#define GL_ALLOW_DRAW_FRG_HINT_PGI		107024
+#define GL_ALLOW_DRAW_SPN_HINT_PGI		107024
+#define GL_ALLOW_DRAW_MEM_HINT_PGI		107025
+#define GL_CLIP_NEAR_HINT_PGI			107040
+#define GL_CLIP_FAR_HINT_PGI			107041
+#define GL_WIDE_LINE_HINT_PGI		  	107042
+#define GL_BACK_NORMALS_HINT_PGI		107043
+#define GL_NATIVE_GRAPHICS_HANDLE_PGI		107010
+
+#endif /* GL_PGI_misc_hints */
+
+
+
+/*
+ * GL_EXT_paletted_texture (number 78)
+ */
+#ifndef GL_EXT_paletted_texture
+#define GL_EXT_paletted_texture 1
+
+#define GL_TABLE_TOO_LARGE_EXT			0x8031
+#define GL_COLOR_TABLE_FORMAT_EXT		0x80D8
+#define GL_COLOR_TABLE_WIDTH_EXT		0x80D9
+#define GL_COLOR_TABLE_RED_SIZE_EXT		0x80DA
+#define GL_COLOR_TABLE_GREEN_SIZE_EXT		0x80DB
+#define GL_COLOR_TABLE_BLUE_SIZE_EXT		0x80DC
+#define GL_COLOR_TABLE_ALPHA_SIZE_EXT	 	0x80DD
+#define GL_COLOR_TABLE_LUMINANCE_SIZE_EXT	0x80DE
+#define GL_COLOR_TABLE_INTENSITY_SIZE_EXT	0x80DF
+#define GL_TEXTURE_INDEX_SIZE_EXT		0x80ED
+#define GL_COLOR_INDEX1_EXT			0x80E2
+#define GL_COLOR_INDEX2_EXT			0x80E3
+#define GL_COLOR_INDEX4_EXT			0x80E4
+#define GL_COLOR_INDEX8_EXT			0x80E5
+#define GL_COLOR_INDEX12_EXT			0x80E6
+#define GL_COLOR_INDEX16_EXT			0x80E7
+
+GLAPI void GLAPIENTRY glColorTableEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table );
+
+GLAPI void GLAPIENTRY glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data );
+
+GLAPI void GLAPIENTRY glGetColorTableEXT( GLenum target, GLenum format, GLenum type, GLvoid *table );
+
+GLAPI void GLAPIENTRY glGetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params );
+
+GLAPI void GLAPIENTRY glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params );
+
+#endif /* GL_EXT_paletted_texture */
+
+
+
+/*
+ * GL_EXT_clip_volume_hint (number 79)
+ */
+#ifndef GL_EXT_clip_volume_hint
+#define GL_EXT_clip_volume_hint 1
+
+#define GL_CLIP_VOLUME_CLIPPING_HINT_EXT	0x80F
+
+#endif /* GL_EXT_clip_volume_hint */
+
+
+
+/*
+ * GL_EXT_compiled_vertex_array (number 97)
  */
 #ifndef GL_EXT_compiled_vertex_array
 #define GL_EXT_compiled_vertex_array 1
@@ -2105,20 +2123,32 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 
 
 /*
- * GL_NV_texgen_reflection
+ * GL_EXT_shared_texture_palette (number 141) (req's GL_EXT_paletted_texture)
  */
-#ifndef GL_NV_texgen_reflection
-#define GL_NV_texgen_reflection 1
+#ifndef GL_EXT_shared_texture_palette
+#define GL_EXT_shared_texture_palette 1
 
-#define GL_NORMAL_MAP_NV			0x8511
-#define GL_REFLECTION_MAP_NV			0x8512
+#define GL_SHARED_TEXTURE_PALETTE_EXT		0x81FB
 
-#endif /* GL_NV_texgen_reflection */
+#endif /* GL_EXT_shared_texture_palette */
 
 
 
 /*
- * GL_INGR_blend_func_separate
+ * GL_EXT_stencil_wrap (number 176)
+ */
+#ifndef GL_EXT_stencil_wrap
+#define GL_EXT_stencil_wrap 1
+
+#define GL_INCR_WRAP_EXT			0x8507
+#define GL_DECR_WRAP_EXT			0x8508
+
+#endif /* GL_EXT_stencil_wrap */
+
+
+
+/*
+ * GL_INGR_blend_func_separate (EXT number 173)
  */
 #ifndef GL_INGR_blend_func_separate
 #define GL_INGR_blend_func_separate 1
@@ -2135,7 +2165,32 @@ GLAPI void GLAPIENTRY glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactor
 
 
 /*
- * GL_ARB_multitexture
+ * GL_NV_texgen_reflection (number 179)
+ */
+#ifndef GL_NV_texgen_reflection
+#define GL_NV_texgen_reflection 1
+
+#define GL_NORMAL_MAP_NV			0x8511
+#define GL_REFLECTION_MAP_NV			0x8512
+
+#endif /* GL_NV_texgen_reflection */
+
+
+
+/*
+ * GL_EXT_texture_env_add (number 185)
+ */
+#ifndef GL_EXT_texture_env_add
+#define GL_EXT_texture_env_add 1
+
+/* No new tokens or functions */
+
+#endif /* GL_EXT_texture_env_add */
+
+
+
+/*
+ * GL_ARB_multitexture (no number)
  */
 #ifndef GL_ARB_multitexture
 #define GL_ARB_multitexture 1
@@ -2216,51 +2271,7 @@ GLAPI void GLAPIENTRY glMultiTexCoord4svARB(GLenum target, const GLshort *v);
 
 
 /*
- * GL_SGIS_texture_edge_clamp
- */
-#ifndef GL_SGIS_texture_edge_clamp
-#define GL_SGIS_texture_edge_clamp 1
-
-#define GL_CLAMP_TO_EDGE_SGIS			0x812F
-
-#endif /* GL_SGIS_texture_edge_clamp */
-
-
-
-/*
- * GL_PGI_misc_hints
- */
-#ifndef GL_PGI_misc_hints
-#define GL_PGI_misc_hints 1
-
-#define GL_PREFER_DOUBLEBUFFER_HINT_PGI		107000
-#define GL_STRICT_DEPTHFUNC_HINT_PGI		107030
-#define GL_STRICT_LIGHTING_HINT_PGI		107031
-#define GL_STRICT_SCISSOR_HINT_PGI		107032
-#define GL_FULL_STIPPLE_HINT_PGI		107033
-#define GL_NATIVE_GRAPHICS_BEGIN_HINT_PGI	107011
-#define GL_NATIVE_GRAPHICS_END_HINT_PGI		107012
-#define GL_CONSERVE_MEMORY_HINT_PGI		107005
-#define GL_RECLAIM_MEMORY_HINT_PGI		107006
-#define GL_ALWAYS_FAST_HINT_PGI			107020
-#define GL_ALWAYS_SOFT_HINT_PGI			107021
-#define GL_ALLOW_DRAW_OBJ_HINT_PGI		107022
-#define GL_ALLOW_DRAW_WIN_HINT_PGI		107023
-#define GL_ALLOW_DRAW_FRG_HINT_PGI		107024
-#define GL_ALLOW_DRAW_SPN_HINT_PGI		107024
-#define GL_ALLOW_DRAW_MEM_HINT_PGI		107025
-#define GL_CLIP_NEAR_HINT_PGI			107040
-#define GL_CLIP_FAR_HINT_PGI			107041
-#define GL_WIDE_LINE_HINT_PGI		  	107042
-#define GL_BACK_NORMALS_HINT_PGI		107043
-#define GL_NATIVE_GRAPHICS_HANDLE_PGI		107010
-
-#endif /* GL_PGI_misc_hints */
-
-
-
-/*
- * GL_MESA_window_pos
+ * GL_MESA_window_pos (no number)
  */
 #ifndef GL_MESA_window_pos
 #define GL_MESA_window_pos 1
@@ -2295,7 +2306,7 @@ GLAPI void GLAPIENTRY glWindowPos4dvMESA( const GLdouble *p );
 
 
 /*
- * GL_MESA_resize_bufffers
+ * GL_MESA_resize_bufffers (no number)
  */
 #ifndef GL_MESA_resize_bufffers
 #define GL_MESA_resize_buffers 1
@@ -2303,18 +2314,6 @@ GLAPI void GLAPIENTRY glWindowPos4dvMESA( const GLdouble *p );
 GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #endif /* GL_MESA_resize_bufffers */
-
-
-
-/*
- * GL_EXT_texture_env_add
- */
-#ifndef GL_EXT_texture_env_add
-#define GL_EXT_texture_env_add 1
-
-/* No new tokens or functions */
-
-#endif /* GL_EXT_texture_env_add */
 
 
 
