@@ -105,7 +105,7 @@ INCLUDE_DIRS = \
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
 
 # Libraries that the driver shared lib depends on
-LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lexpat -ldl -lc
+LIB_DEPS = $(GL_LIB_DEPS)
 
 
 ifeq ($(WINDOW_SYSTEM),dri)
@@ -138,7 +138,7 @@ default: depend $(LIB_DIR)/$(LIBNAME)
 
 $(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
 	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
-		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
+		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(OBJECTS) $(MESA_MODULES)
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES)
