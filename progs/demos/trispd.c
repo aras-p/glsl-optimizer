@@ -1,4 +1,4 @@
-/* $Id: trispd.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: trispd.c,v 1.2 2000/10/26 15:26:14 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure triangle strip rendering speed.
@@ -7,8 +7,11 @@
 
 /*
  * $Log: trispd.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/10/26 15:26:14  brianp
+ * added a glFinish() call
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.4  1999/03/28 18:24:37  brianp
  * minor clean-up
@@ -107,6 +110,7 @@ static void Display( void )
 	 }
       }
    }
+   glFinish();
    t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
    
    if (t1-t0 < MinPeriod) {
