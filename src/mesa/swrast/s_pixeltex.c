@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.6 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.7 2002/04/04 16:53:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,10 +105,10 @@ _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
                         (const GLchan (*)[4]) span->color.rgba,
                         span->texcoords[unit]);
             _swrast_texture_fragments(ctx, unit, span->end,
-                                          span->texcoords[unit],
-                                          span->lambda[unit],
-                                          (CONST GLchan (*)[4]) primary_rgba,
-                                          span->color.rgba);
+                                      span->texcoords[unit],
+                                      NULL, /* lambda */
+                                      (CONST GLchan (*)[4]) primary_rgba,
+                                      span->color.rgba);
          }
       }
    }
@@ -119,8 +119,9 @@ _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
                   (const GLchan (*)[4]) span->color.rgba,
                   span->texcoords[0]);
       _swrast_texture_fragments(ctx, 0, span->end,
-                                    span->texcoords[0], span->lambda[0],
-                                    (CONST GLchan (*)[4]) span->color.rgba,
-                                    (GLchan (*)[4]) span->color.rgba);
+                                span->texcoords[0],
+                                NULL, /* lambda */
+                                (CONST GLchan (*)[4]) span->color.rgba,
+                                (GLchan (*)[4]) span->color.rgba);
    }
 }
