@@ -1967,6 +1967,11 @@ struct gl_shared_state
 
    struct _mesa_HashTable *GL2Objects;
 
+#if FEATURE_EXT_framebuffer_object
+   struct _mesa_HashTable *RenderBuffers;
+   struct _mesa_HashTable *FrameBuffers;
+#endif
+
    void *DriverData;  /**< Device driver shared state */
 };
 

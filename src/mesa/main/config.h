@@ -290,7 +290,7 @@
 #define FEATURE_ARB_fragment_shader _HAVE_FULL_GL
 #define FEATURE_ARB_shader_objects (FEATURE_ARB_vertex_shader || FEATURE_ARB_fragment_shader)
 #define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
-
+#define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
 /*@}*/
 
 

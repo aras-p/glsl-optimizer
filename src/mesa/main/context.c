@@ -897,6 +897,16 @@ alloc_shared_state( GLcontext *ctx )
    ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
+#if FEATURE_EXT_framebuffer_object
+   ss->FrameBuffers = _mesa_NewHashTable();
+   if (!ss->FrameBuffers)
+      goto cleanup;
+   ss->RenderBuffers = _mesa_NewHashTable();
+   if (!ss->RenderBuffers)
+      goto cleanup;
+#endif
+
+
    return GL_TRUE;
 
  cleanup:
@@ -928,6 +938,13 @@ alloc_shared_state( GLcontext *ctx )
 
    if (ss->GL2Objects)
       _mesa_DeleteHashTable (ss->GL2Objects);
+
+#if FEATURE_EXT_framebuffer_object
+   if (ss->FrameBuffers)
+      _mesa_DeleteHashTable(ss->FrameBuffers);
+   if (ss->RenderBuffers)
+      _mesa_DeleteHashTable(ss->RenderBuffers);
+#endif
 
    if (ss->Default1D)
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default1D);
@@ -1027,6 +1044,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #endif
 
    _mesa_DeleteHashTable (ss->GL2Objects);
+
+#if FEATURE_EXT_framebuffer_object
+   _mesa_DeleteHashTable(ss->FrameBuffers);
+   _mesa_DeleteHashTable(ss->RenderBuffers);
+#endif
 
    _glthread_DESTROY_MUTEX(ss->Mutex);
 
