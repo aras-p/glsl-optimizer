@@ -33,16 +33,34 @@
 */
 
 /*
- * glimports.h
+ * mystdio.h
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glimports.h,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2001/03/18 15:40:45 $ $Revision: 1.1 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/Attic/mystdio.h,v 1.1 2001/03/18 15:40:45 pesco Exp $
  */
 
-#ifndef __gluimports_h_
-#define __gluimports_h_
+#ifndef __glumystdio_h_
+#define __glumystdio_h_
 
-#include "mystdlib.h"
-#include "mystdio.h"
+#ifdef STANDALONE
+inline void dprintf( char *, ... ) { }
+#endif
 
-#endif /* __gluimports_h_ */
+#ifdef LIBRARYBUILD
+#ifndef NDEBUG
+#include <stdio.h>
+#define dprintf printf
+#else
+inline void dprintf( char *, ... ) { }
+#endif
+#endif
+
+#ifdef GLBUILD
+inline void dprintf( char *, ... ) { }
+#endif
+
+#ifndef NULL
+#define NULL		0
+#endif
+
+#endif /* __glumystdio_h_ */

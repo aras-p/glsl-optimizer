@@ -33,34 +33,31 @@
 */
 
 /*
- * mystdio.h
+ * mystdlib.h
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/mystdio.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/03/18 15:40:45 $ $Revision: 1.1 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/Attic/mystdlib.h,v 1.1 2001/03/18 15:40:45 pesco Exp $
  */
 
-#ifndef __glumystdio_h_
-#define __glumystdio_h_
+#ifndef __glumystdlib_h_
+#define __glumystdlib_h_
 
 #ifdef STANDALONE
-inline void dprintf( char *, ... ) { }
+typedef unsigned int size_t;
+extern "C" void 	abort( void );
+extern "C" void *	malloc( size_t );
+extern "C" void 	free( void * );
 #endif
 
 #ifdef LIBRARYBUILD
-#ifndef NDEBUG
-#include <stdio.h>
-#define dprintf printf
-#else
-inline void dprintf( char *, ... ) { }
-#endif
+#include <stdlib.h>
 #endif
 
 #ifdef GLBUILD
-inline void dprintf( char *, ... ) { }
+typedef unsigned int size_t;
+extern "C" void 	abort( void );
+extern "C" void *	malloc( size_t );
+extern "C" void 	free( void * );
 #endif
 
-#ifndef NULL
-#define NULL		0
-#endif
-
-#endif /* __glumystdio_h_ */
+#endif /* __glumystdlib_h_ */
