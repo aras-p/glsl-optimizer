@@ -110,7 +110,7 @@ buffer_object_subdata_range_good( GLcontext * ctx, GLenum target,
       return NULL;
    }
 
-   if ( (offset + size) > bufObj->Size ) {
+   if ( (GLuint)(offset + size) > bufObj->Size ) {
       _mesa_error(ctx, GL_INVALID_VALUE,
 		  "%s(size + offset > buffer size)", str);
       return NULL;
@@ -261,7 +261,7 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 		      struct gl_buffer_object * bufObj )
 {
    if ( (bufObj->Data != NULL)
-	&& ((size + offset) <= bufObj->Size) ) {
+	&& ((GLuint)(size + offset) <= bufObj->Size) ) {
       _mesa_memcpy( (GLubyte *) bufObj->Data + offset, data, size );
    }
 }
@@ -291,7 +291,7 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 			  struct gl_buffer_object * bufObj )
 {
    if ( (bufObj->Data != NULL)
-	&& ((size + offset) <= bufObj->Size) ) {
+	&& ((GLuint)(size + offset) <= bufObj->Size) ) {
       _mesa_memcpy( data, (GLubyte *) bufObj->Data + offset, size );
    }
 }
@@ -428,7 +428,7 @@ void
 _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
 {
    GET_CURRENT_CONTEXT(ctx);
-   unsigned i;
+   GLsizei i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {

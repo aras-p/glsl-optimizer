@@ -363,7 +363,7 @@ _mesa_lookup_parameter_value(struct program_parameter_list *paramList,
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < paramList->NumParameters; i++) {
          if (_mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && _mesa_strlen(paramList->Parameters[i].Name) == nameLen)
+             && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return paramList->Parameters[i].Values;
       }
    }
@@ -392,7 +392,7 @@ _mesa_lookup_parameter_index(struct program_parameter_list *paramList,
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (_mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && _mesa_strlen(paramList->Parameters[i].Name) == nameLen)
+             && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return i;
       }
    }
