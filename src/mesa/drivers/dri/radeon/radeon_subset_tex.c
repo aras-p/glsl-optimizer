@@ -75,8 +75,7 @@ void radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
    if ( rmesa ) {
       if ( t == rmesa->state.texture.unit[0].texobj ) {
          rmesa->state.texture.unit[0].texobj = NULL;
-	 remove_from_list( &rmesa->hw.tex[0] );
-	 make_empty_list( &rmesa->hw.tex[0] );
+	 rmesa->hw.tex[0].dirty = GL_FALSE;
       }
    }
 

@@ -41,7 +41,6 @@ SOFTWARE.
 #include "imports.h"
 #include "context.h"
 #include "macros.h"
-#include "simple_list.h"
 
 #include "radeon_context.h"
 #include "radeon_ioctl.h"
@@ -66,8 +65,7 @@ radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
       for ( i = 0 ; i < rmesa->glCtx->Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
-	    remove_from_list( &rmesa->hw.tex[i] );
-	    make_empty_list( &rmesa->hw.tex[i] );
+	    rmesa->hw.tex[i].dirty = GL_FALSE;
 	 }
       }
    }

@@ -59,8 +59,9 @@ void radeonPrintDirty( radeonContextPtr rmesa, const char *msg )
    fprintf(stderr, msg);
    fprintf(stderr, ": ");
 
-   foreach(l, &(rmesa->hw.dirty)) {
-      fprintf(stderr, "%s, ", l->name);
+   foreach(l, &rmesa->hw.atomlist) {
+      if (l->dirty || rmesa->hw.all_dirty)
+	 fprintf(stderr, "%s, ", l->name);
    }
 
    fprintf(stderr, "\n");
@@ -197,11 +198,6 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
    rmesa->state.pixel.readPitch  = rmesa->state.color.drawPitch;
 
-   /* Initialize lists:
-    */
-   make_empty_list(&(rmesa->hw.dirty));
-   make_empty_list(&(rmesa->hw.clean));
-
    rmesa->hw.max_state_size = 0;
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, FLAG )				\
@@ -209,10 +205,11 @@ void radeonInitState( radeonContextPtr rmesa )
       rmesa->hw.ATOM.cmd_size = SZ;				\
       rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.savedcmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.is_tcl = FLAG;					\
       rmesa->hw.ATOM.check = check_##CHK;				\
-      insert_at_head(&(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
+      rmesa->hw.ATOM.dirty = GL_TRUE;				\
       rmesa->hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
       
@@ -256,6 +253,7 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( txr[0], txr0, TXR_STATE_SIZE, "TXR/txr-0", 0 );
    ALLOC_STATE( txr[1], txr1, TXR_STATE_SIZE, "TXR/txr-1", 0 );
 
+   radeonSetUpAtomList( rmesa );
 
    /* Fill in the packet headers:
     */
@@ -552,4 +550,7 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Y] = 0;
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
+   
+   radeonSaveHwState( rmesa );
+   rmesa->hw.all_dirty = GL_TRUE;
 }

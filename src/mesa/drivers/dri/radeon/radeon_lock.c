@@ -124,4 +124,6 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
 	 DRI_AGE_TEXTURES( rmesa->texture_heaps[ i ] );
       }
    }
+
+   rmesa->lost_context = GL_TRUE;
 }

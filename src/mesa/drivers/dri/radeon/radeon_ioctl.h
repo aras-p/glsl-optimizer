@@ -104,13 +104,15 @@ extern void radeonWaitForVBlank( radeonContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
 extern void radeonGetAllParams( radeonContextPtr rmesa );
 
+extern void radeonSaveHwState( radeonContextPtr rmesa );
+extern void radeonSetUpAtomList( radeonContextPtr rmesa );
+
 /* radeon_compat.c:
  */
 extern void radeonCompatEmitPrimitive( radeonContextPtr rmesa,
 				       GLuint vertex_format,
 				       GLuint hw_primitive,
 				       GLuint nrverts );
-
 
 /* ================================================================
  * Helper macros:
@@ -130,7 +132,8 @@ do {						\
 #define RADEON_STATECHANGE( rmesa, ATOM )			\
 do {								\
    RADEON_NEWPRIM( rmesa );					\
-   move_to_head( &(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
+   rmesa->hw.ATOM.dirty = GL_TRUE;				\
+   rmesa->hw.is_dirty = GL_TRUE;				\
 } while (0)
 
 #define RADEON_DB_STATE( ATOM )			        \
@@ -144,7 +147,8 @@ static __inline int RADEON_DB_STATECHANGE(
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
       int *tmp;
       RADEON_NEWPRIM( rmesa );
-      move_to_head( &(rmesa->hw.dirty), atom );
+      atom->dirty = GL_TRUE;
+      rmesa->hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;

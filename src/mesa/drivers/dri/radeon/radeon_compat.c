@@ -202,28 +202,26 @@ static void radeonCompatEmitPacket( radeonContextPtr rmesa,
 
 static void radeonCompatEmitStateLocked( radeonContextPtr rmesa )
 {
-   struct radeon_state_atom *state, *tmp;
+   struct radeon_state_atom *atom;
 
    if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (rmesa->lost_context) {
-      if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS|DEBUG_IOCTL))
-	 fprintf(stderr, "%s - lost context\n", __FUNCTION__); 
+   if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
+      return;
 
-      foreach_s( state, tmp, &(rmesa->hw.clean) ) 
-	 move_to_tail(&(rmesa->hw.dirty), state );
-
-      rmesa->lost_context = 0;
+   foreach(atom, &rmesa->hw.atomlist) {
+      if (rmesa->hw.all_dirty)
+	 atom->dirty = GL_TRUE;
+      if (atom->is_tcl)
+	 atom->dirty = GL_FALSE;
+      if (atom->dirty)
+	 radeonCompatEmitPacket(rmesa, atom);
    }
-
-   foreach_s( state, tmp, &(rmesa->hw.dirty) ) {
-      if (!state->is_tcl)
-	 radeonCompatEmitPacket( rmesa, state );
-      move_to_head( &(rmesa->hw.clean), state );
-   }
+ 
+   rmesa->hw.is_dirty = GL_FALSE;
+   rmesa->hw.all_dirty = GL_FALSE;
 }
-
 
 
 static void radeonCompatEmitPrimitiveLocked( radeonContextPtr rmesa,
