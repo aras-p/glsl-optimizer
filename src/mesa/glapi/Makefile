@@ -5,6 +5,7 @@
 
 
 OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h \
+	../main/enums.c \
 	../x86/glapi_x86.S \
 	../../glx/x11/indirect.c \
 	../../glx/x11/indirect.h \
@@ -43,6 +44,9 @@ glapioffsets.h: $(COMMON) gl_offsets.py
 
 glapitable.h: $(COMMON) gl_table.py
 	$(PYTHON2) $(PYTHON_FLAGS) gl_table.py > glapitable.h
+
+../main/enums.c: $(COMMON) gl_enums.py
+	$(PYTHON2) $(PYTHON_FLAGS) gl_enums.py > ../main/enums.c
 
 ../x86/glapi_x86.S: $(COMMON) gl_x86_asm.py
 	$(PYTHON2) $(PYTHON_FLAGS) gl_x86_asm.py > ../x86/glapi_x86.S
