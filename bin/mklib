@@ -238,7 +238,12 @@ case $ARCH in
 	    OPTS="-n32 -shared -all"
 	    echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
 	fi
-	ld ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	if [ $CPLUSPLUS = 1 ] ; then
+	    LINK="CC"
+	else
+	    LINK="ld"
+	fi
+	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	FINAL_LIBS="${LIBNAME}"
 	;;
 
@@ -247,7 +252,12 @@ case $ARCH in
 	echo "mklib: Making IRIX64 library: " ${LIBNAME}
 	# 64-bit ABI
 	OPTS="-64 -shared -all"
-	ld ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	if [ $CPLUSPLUS = 1 ] ; then
+	    LINK="CC"
+	else
+	    LINK="ld"
+	fi
+	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	FINAL_LIBS="${LIBNAME}"
 	;;
 
