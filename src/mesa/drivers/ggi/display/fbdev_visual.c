@@ -1,4 +1,4 @@
-/* $Id: fbdev_visual.c,v 1.2 1999/08/21 22:46:13 jtaylor Exp $
+/* $Id: fbdev_visual.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa: visual handling
@@ -107,16 +107,16 @@ static int changed(ggi_visual_t vis, int whatchanged)
 
 int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 {
-	fbdev_hook_mesa *priv;
+	struct fbdev_priv_mesa *priv;
 	char libname[256], libargs[256];
 	int id, err;
 	ggifunc_getapi *oldgetapi;
 
 	gl_ggiDEBUG("display-fbdev-mesa: GGIdlinit start\n");
 	
-	GGIMESA_PRIVATE(vis) = priv = malloc(sizeof(fbdev_hook_mesa));
+	GGIMESA_PRIVATE(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
 	if (priv == NULL) {
-		fprintf(stderr, "Failed to allocate fbdev_hook!\n");
+		fprintf(stderr, "Failed to allocate fbdev private data\n");
 		return GGI_DL_ERROR;
 	}
 	

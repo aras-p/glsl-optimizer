@@ -51,10 +51,14 @@ static ggi_visual_t __glut_vis;
 
 static GGIMesaContext __glut_ctx;
 
-static int __glut_width = WIDTH;
-static int __glut_height = HEIGHT;
-static ggi_graphtype __glut_gt_rgb = GRAPHTYPE_RGB;
-static ggi_graphtype __glut_gt_index = GRAPHTYPE_INDEX;
+//static int __glut_width = WIDTH;
+//static int __glut_height = HEIGHT;
+//static ggi_graphtype __glut_gt_rgb = GRAPHTYPE_RGB;
+//static ggi_graphtype __glut_gt_index = GRAPHTYPE_INDEX;
+static int __glut_width = GGI_AUTO;
+static int __glut_height = GGI_AUTO;
+static ggi_graphtype __glut_gt_rgb = GT_AUTO;
+static ggi_graphtype __glut_gt_index = GT_8BIT;
 static int __glut_init = GL_FALSE;
 
 static int mousex = WIDTH / 2;
@@ -120,7 +124,6 @@ void glut_ggiDEBUG(char *format, ...)
 		vfprintf(stderr, format, args);
 		va_end(args);
 	}
-	
 }
 
 void glutInit(int *argc, char **argv)
@@ -159,10 +162,7 @@ void glutInit(int *argc, char **argv)
 					case 24: gt = GT_24BIT; break;
 					case 32: gt = GT_32BIT; break;
 					default:
-					glut_ggiDEBUG("\"%s\" bits per pixel?\n",
-						      argv[i+1]);
-
-					exit(1);
+					ggiPanic("\"%s\" bits per pixel?\n", argv[i+1]);
 				}
 				__glut_gt_rgb = __glut_gt_index = gt;
 				REMOVE;
@@ -171,8 +171,8 @@ void glutInit(int *argc, char **argv)
 			else
 			if (strcmp(argv[i], "-size") == 0 && (i + 2) < (*argc))
 			{
-				__glut_width=atoi(argv[i+1]);
-				__glut_height=atoi(argv[i+2]);
+				__glut_width = atoi(argv[i + 1]);
+				__glut_height = atoi(argv[i + 2]);
 				REMOVE;
 				REMOVE;
 				REMOVE;
@@ -180,13 +180,13 @@ void glutInit(int *argc, char **argv)
 		}
 	}
 	
-	if (ggiInit()<0)
+	if (ggiInit() < 0)
 	{
 		ggiPanic("ggiInit() failed!\n");
 	}
-	__glut_init=GL_TRUE;
+	__glut_init = GL_TRUE;
 
-	#undef REMOVE
+#undef REMOVE
 }
 
 void glutInitWindowPosition(int x, int y)
@@ -266,11 +266,17 @@ int glutCreateWindow(const char *title)
 		ggiPanic("GGIMesaSetVisual failed!\n");
 	}
 	
+	__glut_width = mode.visible.x;
+	__glut_height = mode.visible.y;
+	
+	mousex = mode.visible.x / 2;
+	mousey = mode.visible.y / 2;
+	
 	GGIMesaMakeCurrent(__glut_ctx);
 	
 	if (__glut_reshape) 
 	  __glut_reshape(__glut_width, __glut_height);
-
+	
 	return GL_TRUE;
 }
 
@@ -491,8 +497,9 @@ void glutMainLoop(void)
 	ggi_event ev;
 	ggi_event_mask evmask = (emKeyPress | emKeyRepeat | emPtrMove | emPtrButton);
   
+
 	ggiSetEventMask(__glut_vis, evmask);
-	
+
 	glutPostRedisplay();
 	
 	if (__glut_visibility) 

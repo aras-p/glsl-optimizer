@@ -1,4 +1,4 @@
-/* $Id: genkgi.h,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
+/* $Id: genkgi.h,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
 ******************************************************************************
 
    GGIMesa - KGIcon specific overrides for fbcon-mesa
@@ -26,18 +26,51 @@
 ******************************************************************************
 */
 
+#ifndef _GENKGI_MESA_H
+#define _GENKGI_MESA_H
+
+#undef KGI_USE_PPBUFS
+
+#include <unistd.h>
+#include <sys/mman.h>
 
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/display_fbdev.h>
+#include <kgi/kgi.h>
 
-//ggifunc_setmode GGIMesa_genkgi_setmode;
-ggifunc_getapi GGIMesa_genkgi_getapi;
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
+#endif
 
-typedef struct genkgi_hook_mesa
+/* FIXME: LibGGI needs to export its genkgi.h */
+struct genkgi_priv
+{
+	ggi_gc *mapped_gc;
+	unsigned int gc_size;
+	ggifunc_drawline *drawline;
+	ggifunc_drawbox *drawbox;
+	ggifunc_fillscreen *fillscreen;
+	int fd_gc;
+	int close_gc;
+	int fd_kgicommand;
+	uint8 *mapped_kgicommand;
+	uint8 *kgicommand_ptr;
+	unsigned int kgicommand_buffersize;
+};
+
+#define GENKGI_PRIV(vis) ((struct genkgi_priv *)FBDEV_PRIV(vis)->accelpriv)
+
+extern ggifunc_getapi GGIMesa_genkgi_getapi;
+extern ggifunc_flush  GGIMesa_genkgi_flush;
+
+struct genkgi_priv_mesa
 {
 	char accel[100];
 	int have_accel;
-	void *accelpriv;
-} genkgi_hook_mesa;
+	void *accelpriv; /* Private data of subdrivers */
+	struct genkgi_priv *oldpriv; /* LibGGI's private data */
+};
 
-#define GENKGI_PRIVATE(vis) ((genkgi_hook_mesa *)FBDEV_PRIV_MESA(vis)->accelpriv)
+#define GENKGI_PRIV_MESA(vis) ((struct genkgi_priv_mesa *)FBDEV_PRIV_MESA(vis)->accelpriv)
+
+#endif /* _GENKHI_MESA_H */

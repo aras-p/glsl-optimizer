@@ -1,4 +1,4 @@
 # GGIMesa genkgi helper configuration
-.root: @ggi_libdir@/ggi/mesa/default/
+.root: @ggi_libdir@/ggi/mesa/default
 
-tgt-fbdev-kgicon-savage4-mesa	kgi/savage4.so
+tgt-fbdev-kgicon-d3dim-mesa	d3dim.so

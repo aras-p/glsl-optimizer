@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.3 1999/08/21 22:46:13 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.4 1999/08/22 08:56:50 jtaylor Exp $
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
@@ -70,7 +70,7 @@ typedef struct {
 
 static accel_info accel_strings[] = 
 {
-	{ 0, "savage4" },		/* S3 Savage4			*/
+	{ 0, "d3dim" },		/* Direct3D Immedaite Mode     		*/
 };
 
 #define NUM_ACCELS	(sizeof(accel_strings)/sizeof(accel_info))
@@ -115,7 +115,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 
 int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 {
-	genkgi_hook_mesa *priv;
+	struct genkgi_priv_mesa *priv;
 	char libname[256], libargs[256];
 	int id, err;
 	struct stat junk;
@@ -123,13 +123,15 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 
 	gl_ggiDEBUG("display-fbdev-kgicon-mesa: GGIdlinit start\n");
 	
-	GENKGI_PRIVATE(vis) = priv = malloc(sizeof(genkgi_hook_mesa));
+	GENKGI_PRIV_MESA(vis) = priv = malloc(sizeof(struct genkgi_priv_mesa));
 	if (priv == NULL) 
 	{
-		fprintf(stderr, "Failed to allocate genkgi_hook!\n");
+		fprintf(stderr, "Failed to allocate genkgi private data\n");
 		return GGI_DL_ERROR;
 	}
 	
+	priv->oldpriv = GENKGI_PRIV(vis);
+#if 0
 	err = ggLoadConfig(conffile, &_configHandle);
 	if (err != GGI_OK)
 	{
@@ -137,24 +139,22 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		return err;
 	}
 
-	/* Hack city here.  We need to probe the KGI driver properly to discover
-	 * the acceleration type.
+	/* Hack city here.  We need to probe the KGI driver properly for
+	 * suggest-strings to discover the acceleration type(s).
 	 */
 	priv->have_accel = 0;
-#if 0
-	if (stat("/proc/savage4", &junk) == 0)
+#if 1
+	if (stat("/proc/gfx0", &junk) == 0)
 	{
-		sprintf(priv->accel, "%s%s", accel_prefix, "savage4");
+		sprintf(priv->accel, "%s%s", accel_prefix, "d3dim");
 		priv->have_accel = 1;
 		gl_ggiDEBUG("display-fbdev-kgicon-mesa: Using accel: \"%s\"\n", priv->accel);
 	}
 
-#endif	
 	/* Mode management */
-	vis->opdisplay->getapi = GGIMesa_genkgi_getapi;
-	
+	vis->opdisplay->getapi = GGIMesa_genkgi_getapi;	
 	ggiIndicateChange(vis, GGI_CHG_APILIST);
-
+#endif
 	
 	/* Give the accel sublibs a chance to set up a driver */
 	if (priv->have_accel == 1)
@@ -168,7 +168,11 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		    (LIBGGI_MESAEXT(vis)->setup_driver == NULL))
 		  vis->opdisplay->getapi = oldgetapi;
 	}
-
+#endif
+	
+	LIBGGI_MESAEXT(vis)->update_state = genkgi_update_state;
+	LIBGGI_MESAEXT(vis)->setup_driver = genkgi_setup_driver;
+	
 	gl_ggiDEBUG("display-fbdev-kgicon-mesa: GGIdlinit finished\n");
 
 	return 0;

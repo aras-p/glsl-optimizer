@@ -1,4 +1,4 @@
-/* $Id: gears.c,v 1.2 1999/08/21 08:53:27 jtaylor Exp $ */
+/* $Id: gears.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
@@ -222,7 +222,7 @@ key(unsigned char k, int x, int y)
     view_rotz -= 5.0;
     break;
   case 27:  /* Escape */
-    exit(0);
+    exit(0); /* FIXME: Shutdown and free resources cleanly in ggiglut */
     break;
   default:
     return;
@@ -320,20 +320,21 @@ visible(int vis)
 
 int main(int argc, char *argv[])
 {
-  glutInit(&argc, argv);
-  glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 
-  glutInitWindowPosition(0, 0);
-  glutInitWindowSize(300, 300);
-  glutCreateWindow("Gears");
-  init();
+//	glutInitWindowPosition(0, 0);
+//	glutInitWindowSize(300, 300);
+	glutCreateWindow("Gears");
+	init();
 
-  glutDisplayFunc(draw);
-  glutReshapeFunc(reshape);
-  glutKeyboardFunc(key);
-  glutSpecialFunc(special);
-  glutVisibilityFunc(visible);
+	glutDisplayFunc(draw);
+	glutReshapeFunc(reshape);
+	glutKeyboardFunc(key);
+	glutSpecialFunc(special);
+	glutVisibilityFunc(visible);
 
-  glutMainLoop();
-  return 0;             /* ANSI C requires main to return int. */
+	glutMainLoop();
+	
+	return 0;
 }

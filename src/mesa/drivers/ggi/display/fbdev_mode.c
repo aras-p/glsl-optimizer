@@ -1,4 +1,4 @@
-/* $Id: fbdev_mode.c,v 1.2 1999/08/21 22:46:13 jtaylor Exp $
+/* $Id: fbdev_mode.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa
@@ -50,7 +50,7 @@
 
 int GGIMesa_fbdev_getapi(ggi_visual *vis, int num, char *apiname, char *arguments)
 {
-	fbdev_hook_mesa *priv = GGIMESA_PRIVATE(vis);
+	struct fbdev_priv_mesa *priv = GGIMESA_PRIVATE(vis);
 	
 	strcpy(arguments, "");
 
@@ -70,7 +70,7 @@ int GGIMesa_fbdev_getapi(ggi_visual *vis, int num, char *apiname, char *argument
 
 static int do_setmode(ggi_visual *vis)
 {
-	fbdev_hook_mesa *priv = GGIMESA_PRIVATE(vis);
+	struct fbdev_priv_mesa *priv = GGIMESA_PRIVATE(vis);
 	int err, id;
 	char libname[256], libargs[256];
 	ggi_graphtype gt;

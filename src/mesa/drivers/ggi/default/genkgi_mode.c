@@ -1,4 +1,4 @@
-/* $Id: genkgi_mode.c,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
+/* $Id: genkgi_mode.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-kgicon-generic-mesa
@@ -41,7 +41,7 @@
 
 int GGIMesa_genkgi_getapi(ggi_visual *vis, int num, char *apiname, char *arguments)
 {
-	genkgi_hook_mesa *priv = GENKGI_PRIVATE(vis);
+	struct genkgi_priv_mesa *priv = GENKGI_PRIV_MESA(vis);
 	
 	gl_ggiDEBUG("Entered mesa_genkgi_getapi, num=%d\n", num);
 	
@@ -58,4 +58,45 @@ int GGIMesa_genkgi_getapi(ggi_visual *vis, int num, char *apiname, char *argumen
 		break;
 	}
 	return -1;
+}
+
+int GGIMesa_genkgi_flush(ggi_visual *vis, int x, int y, int w, int h, int tryflag)
+{
+	struct genkgi_priv_mesa *priv = GENKGI_PRIV_MESA(vis);
+	int junkval; // There must be a better way to do this
+
+	priv->oldpriv->kgicommand_ptr += getpagesize(); 
+	(kgiu32)(priv->oldpriv->kgicommand_ptr) &= 0xfffff000;
+	junkval = *((int *)(priv->oldpriv->kgicommand_ptr));
+	
+	/* Check if we are now in the last page, and reset the
+	 * FIFO if so.  We can't use the last page to send
+	 * more commands, since there's no page after it that
+	 * we can touch to fault in the last page's commands.
+	 * 
+	 * FIXME: This will be replaced with a flush-and-reset handler
+	 * on the end-of-buffer pagefault at some point....
+	 * 
+	 */
+	if ((priv->oldpriv->kgicommand_ptr - priv->oldpriv->mapped_kgicommand)
+	    >= (priv->oldpriv->kgicommand_buffersize - getpagesize()))
+	{
+		gl_ggiDEBUG("Hit end of FIFO, attempting remap");
+		munmap(priv->oldpriv->mapped_kgicommand, priv->oldpriv->kgicommand_buffersize);
+		gl_ggiDEBUG("Passed munmap");
+		if ((priv->oldpriv->mapped_kgicommand = 
+		     mmap(NULL, 
+			  priv->oldpriv->kgicommand_buffersize, 
+			  PROT_READ | PROT_WRITE,
+			  MAP_SHARED,
+			  priv->oldpriv->fd_kgicommand, 
+			  0)) == MAP_FAILED)
+		{
+			ggiPanic("Failed to remap kgicommand!");
+		}
+		gl_ggiDEBUG("Passed mmap");
+		priv->oldpriv->kgicommand_ptr = priv->oldpriv->mapped_kgicommand;
+		gl_ggiDEBUG("Passed kgicommand_ptr reset");
+	}
+	return 0;
 }
