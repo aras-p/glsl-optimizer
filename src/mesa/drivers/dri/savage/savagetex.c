@@ -837,7 +837,6 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
       imesa->regs.s4.texDescr.ni.tex0En = GL_FALSE;
       imesa->regs.s4.texBlendCtrl[0].ui = TBC_NoTexMap;
       imesa->regs.s4.texCtrl[0].ui = 0x20f040;
-      imesa->regs.s4.texAddr[0].ui = 0;
       return;
    }
 
@@ -1007,7 +1006,6 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
          GL_ADD
         */
     case GL_ADD:
-        printf("Add\n");
         imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
         imesa->regs.s4.texBlendCtrl[0].ui = TBC_AddAlpha;
         __HWEnvCombineSingleUnitScale(imesa, 0, 0,
@@ -1105,7 +1103,6 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
       imesa->regs.s4.texDescr.ni.tex1En = GL_FALSE;
       imesa->regs.s4.texBlendCtrl[1].ui = TBC_NoTexMap1;
       imesa->regs.s4.texCtrl[1].ui = 0x20f040;
-      imesa->regs.s4.texAddr[1].ui = 0;
       imesa->regs.s4.texDescr.ni.texBLoopEn = GL_FALSE;
       return;
    }
@@ -1300,7 +1297,6 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	imesa->regs.s3d.texCtrl.ni.texEn = GL_FALSE;
 	imesa->regs.s3d.texCtrl.ni.dBias = 0x08;
 	imesa->regs.s3d.texCtrl.ni.texXprEn = GL_TRUE;
-	imesa->regs.s3d.texAddr.ui = 0;
 	return;
     }
 

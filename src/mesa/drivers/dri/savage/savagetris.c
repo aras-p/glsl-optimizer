@@ -1069,16 +1069,10 @@ static void savageRenderStart( GLcontext *ctx )
 	 imesa->HwVertexSize = hwVertexSize;
       }
    }
-
-   /* Update hardware state and get the lock */
-   savageDDRenderStart( ctx );
 }
 
 static void savageRenderFinish( GLcontext *ctx )
 {
-   /* Release the lock */
-   savageDDRenderEnd( ctx );
-
    /* Flush the last primitive now, before any state is changed.
     * Alternatively state could be emitted in all state-changing
     * functions in savagestate.c and when changing the vertex format

@@ -1202,6 +1202,8 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
         case GL_SCISSOR_TEST:
             imesa->scissor = state;
             imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
+	    savageDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			    ctx->Scissor.Width, ctx->Scissor.Height);
             break;
         case GL_STENCIL_TEST:
 	    if (!imesa->hw_stencil)
@@ -1292,6 +1294,8 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
         case GL_SCISSOR_TEST:
             imesa->scissor = state;
             imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
+	    savageDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			    ctx->Scissor.Width, ctx->Scissor.Height);
             break;
         case GL_STENCIL_TEST:
 	    FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, state);
@@ -1505,7 +1509,7 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
     /*
      * Scissors updates drawctrl0 and drawctrl 1
      */
-    if (imesa->scissorChanged)
+    if (imesa->scissorChanged && imesa->savageScreen->driScrnPriv->drmMinor < 1)
     {
         if(imesa->scissor)
         {
@@ -1521,6 +1525,7 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
             imesa->regs.s4.drawCtrl1.ni.scissorXEnd = imesa->draw_rect.x2-1;
             imesa->regs.s4.drawCtrl1.ni.scissorYEnd = imesa->draw_rect.y2-1;
         }
+	imesa->scissorChanged = GL_FALSE;
     }
 
     /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39
@@ -1531,7 +1536,7 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 }
 static void savageUpdateRegister_s3d(savageContextPtr imesa)
 {
-    if (imesa->scissorChanged)
+    if (imesa->scissorChanged && imesa->savageScreen->driScrnPriv->drmMinor < 1)
     {
         if(imesa->scissor)
         {
@@ -1555,6 +1560,7 @@ static void savageUpdateRegister_s3d(savageContextPtr imesa)
             imesa->regs.s3d.scissorsEnd.ni.scissorYEnd =
 		imesa->draw_rect.y2-1;
         }
+	imesa->scissorChanged = GL_FALSE;
     }
 
     /* Some temporary hacks to workaround lockups. Not sure if they are
@@ -1844,37 +1850,6 @@ void savageDDInitState( savageContextPtr imesa ) {
 #define INTERESTED (~(NEW_MODELVIEW|NEW_PROJECTION|\
                       NEW_TEXTURE_MATRIX|\
                       NEW_USER_CLIP|NEW_CLIENT_STATE))
-
-void savageDDRenderStart(GLcontext *ctx)
-{
-    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-    drm_clip_rect_t *pbox;
-    GLint nbox;
-
-    /* if the screen is overrided by other application. set the scissor.
-     * In MulitPass, re-render the screen.
-     */
-    pbox = dPriv->pClipRects;
-    nbox = dPriv->numClipRects;
-    if (nbox)
-    {
-        imesa->currentClip = nbox;
-        /* set scissor to the first clip box*/
-        savageDDScissor(ctx,pbox->x1,pbox->y1,pbox->x2,pbox->y2);
-
-        /*savageDDUpdateHwState(ctx);*/ /* update to hardware register*/
-    }
-    else /* need not render at all*/
-    {
-        /*ctx->VB->CopyStart = ctx->VB->Count;*/
-    }
-}
-
-
-void savageDDRenderEnd(GLcontext *ctx)
-{
-}
 
 static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
