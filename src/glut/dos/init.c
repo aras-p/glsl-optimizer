@@ -130,9 +130,41 @@ void APIENTRY glutInitWindowSize (int width, int height)
 
 
 
+#define DO_REDISPLAY(w, ccin, ccout) \
+        do {                                                             \
+            if (w->redisplay && w->display) {                            \
+               int rv = GL_TRUE;                                         \
+                                                                         \
+               idle         = GL_FALSE;                                  \
+               w->redisplay = GL_FALSE;                                  \
+                                                                         \
+               /* test IN condition (whether we need to `MakeCurrent') */\
+               if (ccin) {                                               \
+                  rv = DMesaMakeCurrent(w->context, w->buffer);          \
+               }                                                         \
+                                                                         \
+               /* do the display only if `MakeCurrent' didn't failed */  \
+               if (rv) {                                                 \
+                  if (w->show_mouse && !(g_display_mode & GLUT_DOUBLE)) {\
+                     /* XXX scare mouse */                               \
+                     w->display();                                       \
+                     /* XXX unscare mouse */                             \
+                  } else {                                               \
+                     w->display();                                       \
+                  }                                                      \
+                                                                         \
+                  /* update OUT condition */                             \
+                  ccout;                                                 \
+               }                                                         \
+            }                                                            \
+        } while (0)
+
+
+
 void APIENTRY glutMainLoop (void)
 {
- int i;
+ int i, n;
+ GLUTwindow *w;
  GLboolean idle;
  static int old_mouse_x = 0;
  static int old_mouse_y = 0;
@@ -150,8 +182,8 @@ void APIENTRY glutMainLoop (void)
  __glutInitMouse();
 
  for (i = 0; i < MAX_WINDOWS; i++) {
-     if (g_windows[i] != NULL) {
-        GLUTwindow *w = g_windows[i];
+     w = g_windows[i];
+     if (w != NULL) {
         glutSetWindow(w->num);
         glutPostRedisplay();
         if (w->reshape) {
@@ -166,26 +198,22 @@ void APIENTRY glutMainLoop (void)
  while (GL_TRUE) {
        idle = GL_TRUE;
 
+       n = 0;
        for (i = 0; i < MAX_WINDOWS; i++) {
-           if (g_windows[i] != NULL) {
-              GLUTwindow *w = g_windows[i];
-              if (w->redisplay && w->display) {
-                 idle         = GL_FALSE;
-                 w->redisplay = GL_FALSE;
-
-                 if (DMesaMakeCurrent(w->context, w->buffer)) {
-                    if (w->show_mouse && !(g_display_mode & GLUT_DOUBLE)) {
-                       /* XXX scare mouse */
-                       w->display();
-                       /* XXX unscare mouse */
-                    } else {
-                       w->display();
-                    }
-                 }
-              }
+           w = g_windows[i];
+           if ((w != NULL) && (w != g_curwin)) {
+              /* 1) redisplay `w'
+               * 2) `MakeCurrent' always
+               * 3) update number of non-default windows
+               */
+              DO_REDISPLAY(w, GL_TRUE, n++);
            }
        }
-       DMesaMakeCurrent(g_curwin->context, g_curwin->buffer);
+       /* 1) redisplay `g_curwin'
+        * 2) `MakeCurrent' only if we previously did non-default windows
+        * 3) don't update anything
+        */
+       DO_REDISPLAY(g_curwin, n, n);
 
        if (g_mouse) {
           int mouse_x;
