@@ -1,5 +1,3 @@
-XXX - Not complete yet!!!
-
 Name
 
     MESA_sprite_point
@@ -14,11 +12,11 @@ Contact
 
 Status
 
-    Not yet shipping.
+    Obsolete - see GL_ARB_point_sprite.
 
 Version
 
-    $Id: MESA_sprite_point.spec,v 1.1 2000/12/08 00:21:02 brianp Exp $
+    $Id: MESA_sprite_point.spec,v 1.2 2003/09/19 14:58:21 brianp Exp $
 
 Number
 

@@ -13,11 +13,11 @@ Contact
 
 Status
 
-    XXX - Not complete yet!!!
+    Obsolete.
 
 Version
 
-    $Id: MESA_trace.spec,v 1.2 2001/01/29 16:10:18 brianp Exp $
+    $Id: MESA_trace.spec,v 1.3 2003/09/19 14:58:21 brianp Exp $
 
 Number
 

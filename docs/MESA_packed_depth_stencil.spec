@@ -1,5 +1,3 @@
-XXX - Not complete yet!!!
-
 Name
 
     MESA_packed_depth_stencil
@@ -15,11 +13,11 @@ Contact
 
 Status
 
-    Not yet shipping.
+    Obsolete.
 
 Version
 
-    $Id: MESA_packed_depth_stencil.spec,v 1.1 2000/11/03 14:58:45 brianp Exp $
+    $Id: MESA_packed_depth_stencil.spec,v 1.2 2003/09/19 14:58:21 brianp Exp $
 
 Number
 

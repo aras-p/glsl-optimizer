@@ -125,7 +125,8 @@ Additions to Chapter 3 of the OpenGL 1.4 Specification (Rasterization)
       TEXTURE_RECTANGLE_NV or PROXY_TEXTURE_RECTANGLE_NV.
       All pixel transfer operations are bypassed.  The texture is stored as
       YCbCr, not RGB.  Queries of the texture's red, green and blue component
-      sizes will return zero.
+      sizes will return zero.  The YCbCr colors are converted to RGB during
+      texture sampling using an implementation dependent conversion.
 
 
     In section 3.8.1, Texture Image Specification, on page 126, add
@@ -198,3 +199,5 @@ Revision History
     20 September 2002 - Initial draft
     29 April 2003 - minor updates
      3 September 2003 - further clarify when YCbCr->RGB conversion takes place
+    19 September 2003 - a few more updates prior to submitting to extension
+                        registry.
