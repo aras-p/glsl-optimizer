@@ -83,7 +83,7 @@ static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
 	       CLIPSPAN( x, y, n, x1, n1, i );
 
 	       if ( DBG ) fprintf( stderr, "%s %d..%d (x1 %d) = %u\n",
-				   __FUNCTION__, (int)i, (int)n1, (int)x1, (uint)depth );
+				   __FUNCTION__, (int)i, (int)n1, (int)x1, (GLuint)depth );
 
 	       if ( mask ) {
 		  for ( ; i < n1 ; i++, x1++ ) {
