@@ -1,7 +1,7 @@
-# $Id: Make-config,v 1.25 2000/06/08 15:19:12 brianp Exp $
+# $Id: Make-config,v 1.26 2000/08/08 16:16:22 brianp Exp $
 
 MESA_MAJOR=3
-MESA_MINOR=3
+MESA_MINOR=5
 MESA_TINY=0
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
