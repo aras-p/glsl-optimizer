@@ -657,7 +657,12 @@ struct {
      extract_4chan_4f_rgba,
      { insert_4chan_4f_rgba_1, insert_4chan_4f_rgba_2, insert_4chan_4f_rgba_3,
        insert_4chan_4f_rgba_4 },
-     4 * sizeof(GLchan) }
+     4 * sizeof(GLchan) },
+
+   { "pad",
+     0,
+     { 0, 0, 0, 0 },
+     0 }
 
 };
      
@@ -958,35 +963,46 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    int offset = 0;
-   GLuint i;
+   GLuint i, j;
 
    assert(nr < _TNL_ATTRIB_MAX);
    assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);
 
-   vtx->attr_count = nr;
    vtx->emit = choose_emit_func;
    vtx->interp = choose_interp_func;
    vtx->copy_pv = choose_copy_pv_func;
    vtx->new_inputs = ~0;
 
-   for (i = 0; i < nr; i++) {
+   for (j = 0, i = 0; i < nr; i++) {
       GLuint format = map[i].format;
-      vtx->attr[i].attrib = map[i].attrib;
-      vtx->attr[i].vp = vp;
-      vtx->attr[i].insert = format_info[format].insert;
-      vtx->attr[i].extract = format_info[format].extract;
-      vtx->attr[i].vertattrsize = format_info[format].attrsize;
+      if (format == EMIT_PAD) {
+	 offset += map[i].offset;
 
-      if (unpacked_size) 
-	 vtx->attr[i].vertoffset = map[i].offset;
-      else
-	 vtx->attr[i].vertoffset = offset;
+/* 	    fprintf(stderr, "%d: pad %d, offset now %d\n", i,  */
+/* 		    map[i].offset, offset);  */
 
-/*       fprintf(stderr, "%d: %s offset %d\n", i, */
-/* 	      format_info[format].name, vtx->attr[i].vertoffset); */
+      }
+      else {
+	 vtx->attr[j].attrib = map[i].attrib;
+	 vtx->attr[j].vp = vp;
+	 vtx->attr[j].insert = format_info[format].insert;
+	 vtx->attr[j].extract = format_info[format].extract;
+	 vtx->attr[j].vertattrsize = format_info[format].attrsize;
 
-      offset += format_info[format].attrsize;
+	 if (unpacked_size) 
+	    vtx->attr[j].vertoffset = map[i].offset;
+	 else
+	    vtx->attr[j].vertoffset = offset;
+	 
+/* 	    fprintf(stderr, "%d: %s offset %d\n", i,  */
+/* 		    format_info[format].name, vtx->attr[j].vertoffset);  */
+	 
+	 offset += format_info[format].attrsize;
+	 j++;
+      }
    }
+
+   vtx->attr_count = j;
 
    if (unpacked_size)
       vtx->vertex_size = unpacked_size;
