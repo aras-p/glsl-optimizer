@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.10 2003/03/19 05:34:25 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.11 2003/03/19 07:15:35 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -394,12 +394,12 @@ init_machine_deriv( GLcontext *ctx,
    _mesa_memcpy(dMachine, machine, sizeof(struct fp_machine));
 
    /* Clear temporary registers */
-   _mesa_bzero(machine->Registers + FP_TEMP_REG_START,
+   _mesa_bzero((GLfloat*) (machine->Registers + FP_TEMP_REG_START) ,
                MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
 
    /* Add derivatives */
    if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
-      GLfloat *wpos = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_WPOS];
+      GLfloat *wpos = (GLfloat*) machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_WPOS];
       if (xOrY == 'X') {
          wpos[0] += 1.0F;
          wpos[1] += 0.0F;
@@ -414,7 +414,7 @@ init_machine_deriv( GLcontext *ctx,
       }
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_COL0)) {
-      GLfloat *col0 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL0];
+      GLfloat *col0 = (GLfloat*) machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL0];
       if (xOrY == 'X') {
          col0[0] += span->drdx * (1.0F / CHAN_MAXF);
          col0[1] += span->dgdx * (1.0F / CHAN_MAXF);
@@ -429,7 +429,7 @@ init_machine_deriv( GLcontext *ctx,
       }
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_COL1)) {
-      GLfloat *col1 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL1];
+      GLfloat *col1 = (GLfloat*) machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL1];
       if (xOrY == 'X') {
          col1[0] += span->dsrdx * (1.0F / CHAN_MAXF);
          col1[1] += span->dsgdx * (1.0F / CHAN_MAXF);
@@ -444,7 +444,7 @@ init_machine_deriv( GLcontext *ctx,
       }
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
-      GLfloat *fogc = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_FOGC];
+      GLfloat *fogc = (GLfloat*) machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_FOGC];
       if (xOrY == 'X') {
          fogc[0] += span->dfogdx;
       }
@@ -454,7 +454,7 @@ init_machine_deriv( GLcontext *ctx,
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
       if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
-         GLfloat *tex = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_TEX0+u];
+         GLfloat *tex = (GLfloat*) machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_TEX0+u];
          if (xOrY == 'X') {
             tex[0] += span->texStepX[u][0];
             tex[1] += span->texStepX[u][1];
