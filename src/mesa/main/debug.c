@@ -1,7 +1,7 @@
 #include "mtypes.h"
 #include "debug.h"
 
-void gl_print_state( const char *msg, GLuint state )
+void _mesa_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
@@ -35,7 +35,7 @@ void gl_print_state( const char *msg, GLuint state )
 }
 
 
-void gl_print_enable_flags( const char *msg, GLuint flags )
+void _mesa_print_enable_flags( const char *msg, GLuint flags )
 {
    fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
@@ -64,7 +64,7 @@ void gl_print_enable_flags( const char *msg, GLuint flags )
 	   (flags & ENABLE_RESCALE)    ? "rescale, " : "");
 }
 
-void gl_print_tri_caps( const char *name, GLuint flags )
+void _mesa_print_tri_caps( const char *name, GLuint flags )
 {
    fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",

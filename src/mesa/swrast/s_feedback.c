@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.5 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_feedback.c,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,19 +79,19 @@ static void feedback_vertex( GLcontext *ctx,
 
    index = v->index;
 
-   gl_feedback_vertex( ctx, win, color, index, tc );
+   _mesa_feedback_vertex( ctx, win, color, index, tc );
 }
 
 
 /*
  * Put triangle in feedback buffer.
  */
-void gl_feedback_triangle( GLcontext *ctx,
+void _mesa_feedback_triangle( GLcontext *ctx,
                            const SWvertex *v0,
                            const SWvertex *v1,
 			   const SWvertex *v2)
 {
-   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+   if (_mesa_cull_triangle( ctx, v0, v1, v2 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
       
@@ -108,7 +108,7 @@ void gl_feedback_triangle( GLcontext *ctx,
 }
 
 
-void gl_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+void _mesa_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    GLenum token = GL_LINE_TOKEN;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -130,40 +130,40 @@ void gl_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 }
 
 
-void gl_feedback_point( GLcontext *ctx, const SWvertex *v )
+void _mesa_feedback_point( GLcontext *ctx, const SWvertex *v )
 {
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
    feedback_vertex( ctx, v, v );
 }
 
 
-void gl_select_triangle( GLcontext *ctx,
+void _mesa_select_triangle( GLcontext *ctx,
                          const SWvertex *v0,
                          const SWvertex *v1,
 			 const SWvertex *v2)
 {
-   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+   if (_mesa_cull_triangle( ctx, v0, v1, v2 )) {
       const GLfloat zs = 1.0F / ctx->DepthMaxF;
 
-      gl_update_hitflag( ctx, v0->win[2] * zs );
-      gl_update_hitflag( ctx, v1->win[2] * zs );
-      gl_update_hitflag( ctx, v2->win[2] * zs );
+      _mesa_update_hitflag( ctx, v0->win[2] * zs );
+      _mesa_update_hitflag( ctx, v1->win[2] * zs );
+      _mesa_update_hitflag( ctx, v2->win[2] * zs );
    }
 }
 
 
-void gl_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+void _mesa_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    const GLfloat zs = 1.0F / ctx->DepthMaxF;
-   gl_update_hitflag( ctx, v0->win[2] * zs );
-   gl_update_hitflag( ctx, v1->win[2] * zs );
+   _mesa_update_hitflag( ctx, v0->win[2] * zs );
+   _mesa_update_hitflag( ctx, v1->win[2] * zs );
 }
 
 
-void gl_select_point( GLcontext *ctx, const SWvertex *v )
+void _mesa_select_point( GLcontext *ctx, const SWvertex *v )
 {
    const GLfloat zs = 1.0F / ctx->DepthMaxF;
-   gl_update_hitflag( ctx, v->win[2] * zs );
+   _mesa_update_hitflag( ctx, v->win[2] * zs );
 }
 
 

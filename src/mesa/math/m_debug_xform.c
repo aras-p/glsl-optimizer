@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.2 2001/02/03 08:41:04 gareth Exp $ */
+/* $Id: m_debug_xform.c,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -174,7 +174,7 @@ static int test_transform_function( transform_func func, int psize, int mtype,
    (void) cycles;
 
    if ( psize > 4 ) {
-      gl_problem( NULL, "test_transform_function called with psize > 4\n" );
+      _mesa_problem( NULL, "test_transform_function called with psize > 4\n" );
       return 0;
    }
 
@@ -321,15 +321,15 @@ void _math_test_all_transform_functions( char *description )
 
       for ( mtype = 0 ; mtype < 7 ; mtype++ ) {
          for ( psize = 1 ; psize <= 4 ; psize++ ) {
-            transform_func func = gl_transform_tab[cma][psize][mtypes[mtype]];
+            transform_func func = _mesa_transform_tab[cma][psize][mtypes[mtype]];
             long *cycles = &(benchmark_tab[cma][psize-1][mtype]);
 
             if ( test_transform_function( func, psize, mtype,
 					  masked, cycles ) == 0 ) {
                char buf[100];
-               sprintf( buf, "gl_transform_tab[%s][%d][%s] failed test (%s)",
+               sprintf( buf, "_mesa_transform_tab[%s][%d][%s] failed test (%s)",
                         cmastring, psize, mstrings[mtype], description );
-               gl_problem( NULL, buf );
+               _mesa_problem( NULL, buf );
             }
 #ifdef RUN_DEBUG_BENCHMARK
             if ( mesa_profile )

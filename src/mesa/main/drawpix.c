@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.48 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: drawpix.c,v 1.49 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,7 +61,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       }
 
       if (ctx->NewState) {
-         gl_update_state(ctx);
+         _mesa_update_state(ctx);
       }
 
       x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);
@@ -91,14 +91,14 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          texcoord[2] = ctx->Current.Texcoord[0][2] * invq;
          texcoord[3] = ctx->Current.Texcoord[0][3];
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
-         gl_feedback_vertex( ctx,
+         _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              color, ctx->Current.Index, texcoord );
       }
    }
    else if (ctx->RenderMode==GL_SELECT) {
       if (ctx->Current.RasterPosValid) {
-         gl_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+         _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
       }
    }
 }

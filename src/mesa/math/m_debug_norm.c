@@ -1,4 +1,4 @@
-/* $Id: m_debug_norm.c,v 1.1 2001/02/03 08:41:04 gareth Exp $ */
+/* $Id: m_debug_norm.c,v 1.2 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -384,7 +384,7 @@ void _math_test_all_normal_transform_functions( char *description )
             char buf[100];
             sprintf( buf, "gl_normal_tab[%s][%s] failed test (%s)",
                      cmastring, norm_strings[mtype], description );
-            gl_problem( NULL, buf );
+            _mesa_problem( NULL, buf );
 	 }
 
 #ifdef RUN_DEBUG_BENCHMARK

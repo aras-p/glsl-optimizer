@@ -1,4 +1,4 @@
-/* $Id: dlist.h,v 1.12 2001/01/13 18:28:20 keithw Exp $ */
+/* $Id: dlist.h,v 1.13 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,9 +57,9 @@ do {									\
 } while (0)
 
 
-extern void gl_init_lists( void );
+extern void _mesa_init_lists( void );
 
-extern void gl_destroy_list( GLcontext *ctx, GLuint list );
+extern void _mesa_destroy_list( GLcontext *ctx, GLuint list );
 
 extern void _mesa_CallList( GLuint list );
 
@@ -79,7 +79,7 @@ extern void _mesa_NewList( GLuint list, GLenum mode );
 
 extern void _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize );
 
-extern void gl_save_error( GLcontext *ctx, GLenum error, const char *s );
+extern void _mesa_save_error( GLcontext *ctx, GLenum error, const char *s );
 
 
 void *

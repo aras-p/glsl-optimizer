@@ -75,10 +75,10 @@ _tnl_begin( GLcontext *ctx, GLenum p )
    GLuint inflags, state;
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glBegin(IM %d) %s\n", IM->id, gl_lookup_enum_by_nr(p));
+      fprintf(stderr, "glBegin(IM %d) %s\n", IM->id, _mesa_lookup_enum_by_nr(p));
    
    if (ctx->NewState)
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
        
    /* if only a very few slots left, might as well flush now
     */
@@ -166,7 +166,7 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
    GLuint count, last;
    
    if (ctx->NewState)
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
        
    /* If not compiling, treat as a normal begin().
     */
@@ -261,7 +261,7 @@ _tnl_save_Begin( GLenum mode )
       /* Preserve vtxfmt invarient:
        */
       if (ctx->NewState)
-	 gl_update_state( ctx );
+	 _mesa_update_state( ctx );
 
       /* Slot in geomexec: No need to call setdispatch as we know
        * CurrentDispatch is Save.
@@ -1224,7 +1224,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint count = IM->Count;
    struct gl_material *mat;
-   GLuint bitmask = gl_material_bitmask( ctx, face, pname, ~0, "Materialfv" );
+   GLuint bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, "Materialfv");
 
    if (bitmask == 0)
       return;
@@ -1236,7 +1236,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE ); 
       }
       else if (IM->MaterialOrMask & ~bitmask) {
-	 gl_copy_material_pairs( IM->Material[count], 
+	 _mesa_copy_material_pairs( IM->Material[count], 
 				 IM->Material[IM->LastMaterial],
 				 IM->MaterialOrMask & ~bitmask );
       }

@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.8 2001/02/03 08:41:04 gareth Exp $ */
+/* $Id: m_xform.c,v 1.9 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,9 +59,9 @@
 clip_func gl_clip_tab[5];
 clip_func gl_clip_np_tab[5];
 dotprod_func gl_dotprod_tab[2][5];
-vec_copy_func gl_copy_tab[2][0x10];
+vec_copy_func _mesa_copy_tab[2][0x10];
 normal_func gl_normal_tab[0xf][0x4];
-transform_func **(gl_transform_tab[2]);
+transform_func **(_mesa_transform_tab[2]);
 static transform_func *cull_transform_tab[5];
 static transform_func *raw_transform_tab[5];
 
@@ -125,7 +125,7 @@ static transform_func *raw_transform_tab[5];
 
 
 
-GLvector4f *gl_project_points( GLvector4f *proj_vec,
+GLvector4f *_mesa_project_points( GLvector4f *proj_vec,
 			       const GLvector4f *clip_vec )
 {
    const GLuint stride = clip_vec->stride;
@@ -163,7 +163,7 @@ GLvector4f *gl_project_points( GLvector4f *proj_vec,
  *         m - transformation matrix
  * Output:  u - transformed vector
  */
-void gl_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] )
+void _mesa_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] )
 {
    GLfloat v0=v[0], v1=v[1], v2=v[2], v3=v[3];
 #define M(row,col)  m[row + col*4]
@@ -179,7 +179,7 @@ void gl_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] 
  * Note that because the matrix isn't analysed we do too many
  * multiplies, and that the result is always 4-clean.
  */
-void gl_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
+void _mesa_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
 			    const GLfloat P[4], GLuint sz )
 {
    if (Q == P)
@@ -224,8 +224,8 @@ void gl_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
 void
 _math_init_transformation( void )
 {
-   gl_transform_tab[0] = raw_transform_tab;
-   gl_transform_tab[1] = cull_transform_tab;
+   _mesa_transform_tab[0] = raw_transform_tab;
+   _mesa_transform_tab[1] = cull_transform_tab;
 
    init_c_transformations_raw();
    init_c_transformations_masked();
@@ -243,7 +243,7 @@ _math_init_transformation( void )
 #endif
 
 #ifdef USE_X86_ASM
-   gl_init_all_x86_transform_asm();
+   _mesa_init_all_x86_transform_asm();
 #endif
 }
 

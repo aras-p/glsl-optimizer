@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_blend.c,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -325,7 +325,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                break;
             default:
                /* this should never happen */
-               gl_problem(ctx, "Bad blend source RGB factor in do_blend");
+               _mesa_problem(ctx, "Bad blend source RGB factor in do_blend");
 	       return;
          }
 
@@ -379,7 +379,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
             default:
                /* this should never happen */
                sA = 0.0F;
-               gl_problem(ctx, "Bad blend source A factor in do_blend");
+               _mesa_problem(ctx, "Bad blend source A factor in do_blend");
          }
 
          /* Dest RGB factor */
@@ -441,7 +441,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
             default:
                /* this should never happen */
                dR = dG = dB = 0.0F;
-               gl_problem(ctx, "Bad blend dest RGB factor in do_blend");
+               _mesa_problem(ctx, "Bad blend dest RGB factor in do_blend");
          }
 
          /* Dest Alpha factor */
@@ -491,7 +491,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
             default:
                /* this should never happen */
                dA = 0.0F;
-               gl_problem(ctx, "Bad blend dest A factor in do_blend");
+               _mesa_problem(ctx, "Bad blend dest A factor in do_blend");
 	       return;
          }
 
@@ -537,7 +537,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
          else {
             /* should never get here */
             r = g = b = a = 0.0F;  /* silence uninitialized var warning */
-            gl_problem(ctx, "unexpected BlendEquation in blend_general()");
+            _mesa_problem(ctx, "unexpected BlendEquation in blend_general()");
          }
 
          /* final clamping */
@@ -622,7 +622,7 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    }
 
    /* Read span of current frame buffer pixels */
-   gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
 
    SWRAST_CONTEXT(ctx)->BlendFunc( ctx, n, mask, rgba, 
 				   (const GLchan (*)[4])dest );

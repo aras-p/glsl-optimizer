@@ -1,4 +1,4 @@
-/* $Id: m_copy_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_copy_tmp.h,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,20 +72,20 @@ COPY_FUNC( 0xf )
 
 static void TAG2(init_copy, 0 ) ( void )
 {
-   gl_copy_tab[IDX][0x0] = TAG2(copy, 0x0);
-   gl_copy_tab[IDX][0x1] = TAG2(copy, 0x1);
-   gl_copy_tab[IDX][0x2] = TAG2(copy, 0x2);
-   gl_copy_tab[IDX][0x3] = TAG2(copy, 0x3);
-   gl_copy_tab[IDX][0x4] = TAG2(copy, 0x4);
-   gl_copy_tab[IDX][0x5] = TAG2(copy, 0x5);
-   gl_copy_tab[IDX][0x6] = TAG2(copy, 0x6);
-   gl_copy_tab[IDX][0x7] = TAG2(copy, 0x7);
-   gl_copy_tab[IDX][0x8] = TAG2(copy, 0x8);
-   gl_copy_tab[IDX][0x9] = TAG2(copy, 0x9);
-   gl_copy_tab[IDX][0xa] = TAG2(copy, 0xa);
-   gl_copy_tab[IDX][0xb] = TAG2(copy, 0xb);
-   gl_copy_tab[IDX][0xc] = TAG2(copy, 0xc);
-   gl_copy_tab[IDX][0xd] = TAG2(copy, 0xd);
-   gl_copy_tab[IDX][0xe] = TAG2(copy, 0xe);
-   gl_copy_tab[IDX][0xf] = TAG2(copy, 0xf);
+   _mesa_copy_tab[IDX][0x0] = TAG2(copy, 0x0);
+   _mesa_copy_tab[IDX][0x1] = TAG2(copy, 0x1);
+   _mesa_copy_tab[IDX][0x2] = TAG2(copy, 0x2);
+   _mesa_copy_tab[IDX][0x3] = TAG2(copy, 0x3);
+   _mesa_copy_tab[IDX][0x4] = TAG2(copy, 0x4);
+   _mesa_copy_tab[IDX][0x5] = TAG2(copy, 0x5);
+   _mesa_copy_tab[IDX][0x6] = TAG2(copy, 0x6);
+   _mesa_copy_tab[IDX][0x7] = TAG2(copy, 0x7);
+   _mesa_copy_tab[IDX][0x8] = TAG2(copy, 0x8);
+   _mesa_copy_tab[IDX][0x9] = TAG2(copy, 0x9);
+   _mesa_copy_tab[IDX][0xa] = TAG2(copy, 0xa);
+   _mesa_copy_tab[IDX][0xb] = TAG2(copy, 0xb);
+   _mesa_copy_tab[IDX][0xc] = TAG2(copy, 0xc);
+   _mesa_copy_tab[IDX][0xd] = TAG2(copy, 0xd);
+   _mesa_copy_tab[IDX][0xe] = TAG2(copy, 0xe);
+   _mesa_copy_tab[IDX][0xf] = TAG2(copy, 0xf);
 }

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.4 2001/02/27 21:58:59 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.5 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,7 +122,7 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
       }
       break;
    default:
-      gl_problem(ctx, "Bad fog mode in make_fog_coord");
+      _mesa_problem(ctx, "Bad fog mode in make_fog_coord");
       return;
    }
 }
@@ -167,7 +167,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 input = &store->input;
 
 	 if (VB->EyePtr->size < 2)
-	    gl_vector4f_clean_elem( VB->EyePtr, VB->Count, 2 );
+	    _mesa_vector4f_clean_elem( VB->EyePtr, VB->Count, 2 );
 
 	 input->data = &(VB->EyePtr->data[0][2]);
 	 input->start = VB->EyePtr->start+2;
@@ -204,8 +204,8 @@ static GLboolean alloc_fog_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   gl_vector1f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
-   gl_vector1f_init( &store->input, 0, 0 );
+   _mesa_vector1f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
+   _mesa_vector1f_init( &store->input, 0, 0 );
 
    if (!inited)
       init_static_data();
@@ -221,7 +221,7 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
 {
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
    if (store) {
-      gl_vector1f_free( &store->fogcoord );
+      _mesa_vector1f_free( &store->fogcoord );
       FREE( store );
       stage->private = 0;
    }

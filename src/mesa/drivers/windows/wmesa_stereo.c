@@ -1273,7 +1273,7 @@ void /*APIENTRY*/ WMesaMakeCurrent( WMesaContext c )
 	setup_DD_pointers(c->gl_ctx);
 	if (Current->gl_ctx->Viewport.Width==0) {
 	  /* initialize viewport to window size */
-	  gl_Viewport( Current->gl_ctx,
+	  _mesa_set_viewport( Current->gl_ctx,
 		           0, 0, Current->width, Current->height );
 	}
 }

@@ -1,10 +1,10 @@
-/* $Id: m_clip_tmp.h,v 1.3 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: m_clip_tmp.h,v 1.4 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,10 +36,10 @@
  * and an asm implementation needn't replicate that behaviour.
  */
 static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec, 
-					   GLvector4f *proj_vec, 
-					   GLubyte clipMask[],
-					   GLubyte *orMask, 
-					   GLubyte *andMask )
+                                                     GLvector4f *proj_vec, 
+                                                     GLubyte clipMask[],
+                                                     GLubyte *orMask, 
+                                                     GLubyte *andMask )
 {
    const GLuint stride = clip_vec->stride;
    const GLfloat *from = (GLfloat *)clip_vec->start;
@@ -154,10 +154,10 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 
 
 static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec, 
-					   GLvector4f *proj_vec, 
-					   GLubyte clipMask[],
-					   GLubyte *orMask, 
-					   GLubyte *andMask )
+                                                     GLvector4f *proj_vec, 
+                                                     GLubyte clipMask[],
+                                                     GLubyte *orMask, 
+                                                     GLubyte *andMask )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;
@@ -187,10 +187,10 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec,
 
 
 static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec, 
-					   GLvector4f *proj_vec, 
-					   GLubyte clipMask[],
-					   GLubyte *orMask, 
-					   GLubyte *andMask )
+                                                     GLvector4f *proj_vec, 
+                                                     GLubyte clipMask[],
+                                                     GLubyte *orMask, 
+                                                     GLubyte *andMask )
 {
    const GLuint stride = clip_vec->stride;
    const GLuint count = clip_vec->count;

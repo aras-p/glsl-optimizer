@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.13 2001/02/06 00:03:47 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.14 2001/03/03 20:33:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -473,7 +473,7 @@ void SVGAMesaMakeCurrent( SVGAMesaContext ctx )
       /* setup initial viewport */
       ctx->width = vga_getxdim();
       ctx->height = vga_getydim();
-      gl_Viewport( ctx->gl_ctx, 0, 0, ctx->width, ctx->height );
+      _mesa_set_viewport( ctx->gl_ctx, 0, 0, ctx->width, ctx->height );
    }
 #endif
 }

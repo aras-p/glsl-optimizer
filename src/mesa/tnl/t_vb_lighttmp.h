@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.8 2001/02/16 18:14:42 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.9 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,13 +142,13 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
       struct gl_light *light;
 	 
       if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, CMcolor[j] );
+	 _mesa_update_color_material( ctx, CMcolor[j] );
 
       if ( CHECK_MATERIAL(j) )
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
+	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
+	 _mesa_validate_all_lighting_tables( ctx );
 
       COPY_3V(sum[0], base[0]);
       ZERO_3V(spec[0]);
@@ -336,13 +336,13 @@ static void TAG(light_rgba)( GLcontext *ctx,
       struct gl_light *light;
 
       if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
 	 
       if ( CHECK_MATERIAL(j) )
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
+	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
+	 _mesa_validate_all_lighting_tables( ctx );
 
       COPY_3V(sum[0], base[0]);
       
@@ -527,13 +527,13 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    do {
 
       if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
       
       if ( CHECK_MATERIAL(j) ) 
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
+	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
+	 _mesa_validate_all_lighting_tables( ctx );
 
       baseubyte[0][3] = ctx->Light._BaseAlpha[0];
       baseubyte[1][3] = ctx->Light._BaseAlpha[1];
@@ -646,13 +646,13 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	 GLfloat sum[2][3];
 
 	 if ( CHECK_COLOR_MATERIAL(j) ) 
-	    gl_update_color_material( ctx, CMcolor[j] );
+	    _mesa_update_color_material( ctx, CMcolor[j] );
 
 	 if ( CHECK_MATERIAL(j) ) 
-	    gl_update_material( ctx, new_material[j], new_material_mask[j] );
+	    _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
 	 if ( CHECK_VALIDATE(j) )
-	    gl_validate_all_lighting_tables( ctx );
+	    _mesa_validate_all_lighting_tables( ctx );
 
 
 	 COPY_3V(sum[0], ctx->Light._BaseColor[0]);
@@ -778,13 +778,13 @@ static void TAG(light_ci)( GLcontext *ctx,
       struct gl_light *light;
 	 
       if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
+	 _mesa_update_color_material( ctx, (GLchan *)CMcolor[j] );
 	 
       if ( CHECK_MATERIAL(j) )
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
+	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
+	 _mesa_validate_all_lighting_tables( ctx );
 
       diffuse[0] = specular[0] = 0.0F;
 

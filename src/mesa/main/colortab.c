@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.34 2001/02/27 16:42:01 brianp Exp $ */
+/* $Id: colortab.c,v 1.35 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -178,7 +178,7 @@ set_component_sizes( struct gl_color_table *table )
          table->LuminanceSize = 0;
          break;
       default:
-         gl_problem(NULL, "unexpected format in set_component_sizes");
+         _mesa_problem(NULL, "unexpected format in set_component_sizes");
    }
 }
 
@@ -281,7 +281,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          proxy = GL_TRUE;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
          return;
    }
 
@@ -289,13 +289,13 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    if (!_mesa_is_legal_format_and_type(format, type) ||
        format == GL_INTENSITY) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glColorTable(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glColorTable(format or type)");
       return;
    }
 
    baseFormat = base_colortab_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
       return;
    }
 
@@ -309,7 +309,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       else {
          char msg[100];
          sprintf(msg, "glColorTable(width=%d)", width);
-         gl_error(ctx, GL_INVALID_VALUE, msg);
+         _mesa_error(ctx, GL_INVALID_VALUE, msg);
       }
       return;
    }
@@ -321,7 +321,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          table->Format = (GLenum) 0;
       }
       else {
-         gl_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
+         _mesa_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
       }
       return;
    }
@@ -354,7 +354,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
             table->FloatTable = GL_TRUE;
             table->Table = MALLOC(comps * width * sizeof(GLfloat));
             if (!table->Table) {
-               gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
                return;
             }
 
@@ -398,7 +398,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   }
                   break;
                default:
-                  gl_problem(ctx, "Bad format in _mesa_ColorTable");
+                  _mesa_problem(ctx, "Bad format in _mesa_ColorTable");
                   return;
             }
          }
@@ -407,7 +407,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
             table->FloatTable = GL_FALSE;
             table->Table = MALLOC(comps * width * sizeof(GLchan));
             if (!table->Table) {
-               gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
                return;
             }
             _mesa_unpack_chan_color_span(ctx, width, table->Format,
@@ -494,7 +494,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
          aBias = ctx->Pixel.PCMCTbias[3];
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
          return;
    }
 
@@ -502,12 +502,12 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    if (!_mesa_is_legal_format_and_type(format, type) ||
        format == GL_INTENSITY) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glColorSubTable(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glColorSubTable(format or type)");
       return;
    }
 
    if (count < 1) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
       return;
    }
 
@@ -515,12 +515,12 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    assert(comps > 0);  /* error should have been caught sooner */
 
    if (start + count > table->Size) {
-      gl_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
       return;
    }
 
    if (!table->Table) {
-      gl_error(ctx, GL_OUT_OF_MEMORY, "glColorSubTable");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glColorSubTable");
       return;
    }
 
@@ -587,7 +587,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
             }
             break;
          default:
-            gl_problem(ctx, "Bad format in _mesa_ColorSubTable");
+            _mesa_problem(ctx, "Bad format in _mesa_ColorSubTable");
             return;
          }
    }
@@ -622,7 +622,7 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
 
    /* read the data from framebuffer */
    RENDER_START(ctx);
-   gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
    RENDER_FINISH(ctx);
 
    /* Restore reading from draw buffer (the default) */
@@ -653,7 +653,7 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
 
    /* read the data from framebuffer */
    RENDER_START(ctx);
-   gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
    RENDER_FINISH(ctx);
 
    /* Restore reading from draw buffer (the default) */
@@ -677,7 +677,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState) {
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
    }
 
    switch (target) {
@@ -703,7 +703,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          table = &ctx->PostColorMatrixColorTable;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
          return;
    }
 
@@ -831,7 +831,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          break;
       default:
-         gl_problem(ctx, "bad table format in glGetColorTable");
+         _mesa_problem(ctx, "bad table format in glGetColorTable");
          return;
    }
 
@@ -862,7 +862,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
             ctx->Pixel.ColorTableBias[3] = params[3];
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
             return;
          }
          break;
@@ -880,7 +880,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
             ctx->Pixel.PCCTbias[3] = params[3];
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
             return;
          }
          break;
@@ -898,12 +898,12 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
             ctx->Pixel.PCMCTbias[3] = params[3];
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
             return;
          }
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
          return;
    }
 
@@ -1025,7 +1025,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
          table = &ctx->ProxyPostColorMatrixColorTable;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(target)");
          return;
    }
 
@@ -1057,7 +1057,7 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = table->IntensitySize;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(pname)" );
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(pname)" );
          return;
    }
 }
@@ -1155,7 +1155,7 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          table = &ctx->ProxyPostColorMatrixColorTable;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(target)");
          return;
    }
 
@@ -1187,7 +1187,7 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          *params = table->IntensitySize;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(pname)" );
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(pname)" );
          return;
    }
 }

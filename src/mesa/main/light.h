@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.10 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: light.h,v 1.11 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,33 +92,31 @@ do {									\
 
 
 
-extern GLuint gl_material_bitmask( GLcontext *ctx,
-				   GLenum face, GLenum pname,
-				   GLuint legal,
-				   const char * );
+extern GLuint _mesa_material_bitmask( GLcontext *ctx,
+                                      GLenum face, GLenum pname,
+                                      GLuint legal,
+                                      const char * );
 
-extern void gl_set_material( GLcontext *ctx, GLuint bitmask,
-                             const GLfloat *params);
+extern void _mesa_invalidate_spot_exp_table( struct gl_light *l );
 
+extern void _mesa_invalidate_shine_table( GLcontext *ctx, GLuint i );
 
-extern void gl_invalidate_spot_exp_table( struct gl_light *l );
-extern void gl_invalidate_shine_table( GLcontext *ctx, GLuint i );
-extern void gl_validate_all_lighting_tables( GLcontext *ctx );
+extern void _mesa_validate_all_lighting_tables( GLcontext *ctx );
 
+extern void _mesa_update_lighting( GLcontext *ctx );
 
-extern void gl_update_lighting( GLcontext *ctx );
+extern void _mesa_compute_light_positions( GLcontext *ctx );
 
-extern void gl_compute_light_positions( GLcontext *ctx );
+extern void _mesa_update_material( GLcontext *ctx,
+                                   const struct gl_material src[2],
+                                   GLuint bitmask );
 
-extern void gl_update_material( GLcontext *ctx,
-				const struct gl_material src[2],
-				GLuint bitmask );
+extern void _mesa_copy_material_pairs( struct gl_material dst[2],
+                                       const struct gl_material src[2],
+                                       GLuint bitmask );
 
-extern void gl_copy_material_pairs( struct gl_material dst[2],
-				    const struct gl_material src[2],
-				    GLuint bitmask );
-
-extern void gl_update_color_material( GLcontext *ctx, const GLchan rgba[4] );
+extern void _mesa_update_color_material( GLcontext *ctx,
+                                         const GLchan rgba[4] );
 
 
 #endif

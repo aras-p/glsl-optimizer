@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.32 2001/02/13 23:51:34 brianp Exp $ */
+/* $Id: matrix.c,v 1.33 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ do {									\
 	 flags |= _NEW_COLOR_MATRIX;					\
 	 break;								\
       default:								\
-         gl_problem(ctx, where);					\
+         _mesa_problem(ctx, where);					\
    }									\
 } while (0)
 
@@ -100,7 +100,7 @@ _mesa_Frustum( GLdouble left, GLdouble right,
        left == right ||
        top == bottom)
    {
-      gl_error( ctx,  GL_INVALID_VALUE, "glFrustum" );
+      _mesa_error( ctx,  GL_INVALID_VALUE, "glFrustum" );
       return;
    }
 
@@ -123,7 +123,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
        bottom == top ||
        nearval == farval)
    {
-      gl_error( ctx,  GL_INVALID_VALUE, "glOrtho" );
+      _mesa_error( ctx,  GL_INVALID_VALUE, "glOrtho" );
       return;
    }
 
@@ -148,7 +148,7 @@ _mesa_MatrixMode( GLenum mode )
 	 FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
          break;
       default:
-         gl_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
+         _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
    }
 }
 
@@ -162,12 +162,12 @@ _mesa_PushMatrix( void )
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPushMatrix %s\n",
-	      gl_lookup_enum_by_nr(ctx->Transform.MatrixMode));
+	      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    switch (ctx->Transform.MatrixMode) {
       case GL_MODELVIEW:
          if (ctx->ModelViewStackDepth >= MAX_MODELVIEW_STACK_DEPTH - 1) {
-            gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
+            _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
             return;
          }
          _math_matrix_copy( &ctx->ModelViewStack[ctx->ModelViewStackDepth++],
@@ -175,7 +175,7 @@ _mesa_PushMatrix( void )
          break;
       case GL_PROJECTION:
          if (ctx->ProjectionStackDepth >= MAX_PROJECTION_STACK_DEPTH - 1) {
-            gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
+            _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
             return;
          }
          _math_matrix_copy( &ctx->ProjectionStack[ctx->ProjectionStackDepth++],
@@ -185,7 +185,7 @@ _mesa_PushMatrix( void )
          {
             GLuint t = ctx->Texture.CurrentTransformUnit;
             if (ctx->TextureStackDepth[t] >= MAX_TEXTURE_STACK_DEPTH - 1) {
-               gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
+               _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
                return;
             }
 	    _math_matrix_copy( &ctx->TextureStack[t][ctx->TextureStackDepth[t]++],
@@ -194,14 +194,14 @@ _mesa_PushMatrix( void )
          break;
       case GL_COLOR:
          if (ctx->ColorStackDepth >= MAX_COLOR_STACK_DEPTH - 1) {
-            gl_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
+            _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
             return;
          }
          _math_matrix_copy( &ctx->ColorStack[ctx->ColorStackDepth++],
                       &ctx->ColorMatrix );
          break;
       default:
-         gl_problem(ctx, "Bad matrix mode in gl_PushMatrix");
+         _mesa_problem(ctx, "Bad matrix mode in _mesa_PushMatrix");
    }
 }
 
@@ -215,12 +215,12 @@ _mesa_PopMatrix( void )
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPopMatrix %s\n",
-	      gl_lookup_enum_by_nr(ctx->Transform.MatrixMode));
+	      _mesa_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    switch (ctx->Transform.MatrixMode) {
       case GL_MODELVIEW:
          if (ctx->ModelViewStackDepth==0) {
-            gl_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
+            _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
             return;
          }
          _math_matrix_copy( &ctx->ModelView,
@@ -229,7 +229,7 @@ _mesa_PopMatrix( void )
          break;
       case GL_PROJECTION:
          if (ctx->ProjectionStackDepth==0) {
-            gl_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
+            _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
             return;
          }
 
@@ -241,7 +241,7 @@ _mesa_PopMatrix( void )
          {
             GLuint t = ctx->Texture.CurrentTransformUnit;
             if (ctx->TextureStackDepth[t]==0) {
-               gl_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
+               _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
                return;
             }
 	    _math_matrix_copy(&ctx->TextureMatrix[t],
@@ -251,7 +251,7 @@ _mesa_PopMatrix( void )
          break;
       case GL_COLOR:
          if (ctx->ColorStackDepth==0) {
-            gl_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
+            _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
             return;
          }
          _math_matrix_copy(&ctx->ColorMatrix,
@@ -259,7 +259,7 @@ _mesa_PopMatrix( void )
 	 ctx->NewState |= _NEW_COLOR_MATRIX;
          break;
       default:
-         gl_problem(ctx, "Bad matrix mode in gl_PopMatrix");
+         _mesa_problem(ctx, "Bad matrix mode in _mesa_PopMatrix");
    }
 }
 
@@ -437,24 +437,20 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   gl_Viewport(ctx, x, y, width, height);
+   _mesa_set_viewport(ctx, x, y, width, height);
 }
-
 
 
 /*
  * Define a new viewport and reallocate auxillary buffers if the size of
  * the window (color buffer) has changed.
- *
- * XXX This is directly called by device drivers, BUT this function
- * may be renamed _mesa_Viewport (without ctx arg) in the future so
- * use of _mesa_Viewport is encouraged.
  */
 void
-gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
+_mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
+                    GLsizei width, GLsizei height )
 {
-   if (width<0 || height<0) {
-      gl_error( ctx,  GL_INVALID_VALUE, "glViewport" );
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx,  GL_INVALID_VALUE, "glViewport" );
       return;
    }
 

@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.23 2001/02/28 00:27:48 brianp Exp $ */
+/* $Id: context.h,v 1.24 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -197,13 +197,13 @@ _mesa_get_dispatch(GLcontext *ctx);
  */
 
 extern void
-gl_problem( const GLcontext *ctx, const char *s );
+_mesa_problem( const GLcontext *ctx, const char *s );
 
 extern void
 _mesa_warning( const GLcontext *ctx, const char *s );
 
 extern void
-gl_error( GLcontext *ctx, GLenum error, const char *s );
+_mesa_error( GLcontext *ctx, GLenum error, const char *s );
 
 extern void
 _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
@@ -219,10 +219,11 @@ _mesa_Flush( void );
 
 
 extern void
-gl_read_config_file(GLcontext *ctx);
+_mesa_read_config_file(GLcontext *ctx);
 
 extern void
-gl_register_config_var(const char *name, void (*notify)( const char *, int ));
+_mesa_register_config_var(const char *name,
+                          void (*notify)( const char *, int ));
 
 
 #endif

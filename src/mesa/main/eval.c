@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.17 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: eval.c,v 1.18 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ GLuint _mesa_evaluator_components( GLenum target )
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *gl_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
+GLfloat *_mesa_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
                                const GLfloat *points )
 {
    GLfloat *buffer, *p;
@@ -120,7 +120,7 @@ GLfloat *gl_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *gl_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
+GLfloat *_mesa_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
                                const GLdouble *points )
 {
    GLfloat *buffer, *p;
@@ -152,7 +152,7 @@ GLfloat *gl_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *gl_copy_map_points2f( GLenum target,
+GLfloat *_mesa_copy_map_points2f( GLenum target,
                                GLint ustride, GLint uorder,
                                GLint vstride, GLint vorder,
                                const GLfloat *points )
@@ -195,7 +195,7 @@ GLfloat *gl_copy_map_points2f( GLenum target,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *gl_copy_map_points2d(GLenum target,
+GLfloat *_mesa_copy_map_points2d(GLenum target,
                               GLint ustride, GLint uorder,
                               GLint vstride, GLint vorder,
                               const GLdouble *points )
@@ -257,25 +257,25 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    assert(type == GL_FLOAT || type == GL_DOUBLE);
 
    if (u1 == u2) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap1(u1,u2)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap1(u1,u2)" );
       return;
    }
    if (uorder < 1 || uorder > MAX_EVAL_ORDER) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap1(order)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap1(order)" );
       return;
    }
    if (!points) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap1(points)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap1(points)" );
       return;
    }
 
    k = _mesa_evaluator_components( target );
    if (k == 0) {
-      gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
    }
 
    if (ustride < k) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap1(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap1(stride)" );
       return;
    }
 
@@ -308,15 +308,15 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
          map = &ctx->EvalMap.Map1Texture4;
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
 	 return;
    }
 
    /* make copy of the control points */
    if (type == GL_FLOAT)
-      pnts = gl_copy_map_points1f(target, ustride, uorder, (GLfloat*) points);
+      pnts = _mesa_copy_map_points1f(target, ustride, uorder, (GLfloat*) points);
    else
-      pnts = gl_copy_map_points1d(target, ustride, uorder, (GLdouble*) points);
+      pnts = _mesa_copy_map_points1d(target, ustride, uorder, (GLdouble*) points);
 
 
    FLUSH_VERTICES(ctx, _NEW_EVAL);
@@ -359,36 +359,36 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (u1==u2) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(u1,u2)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(u1,u2)" );
       return;
    }
 
    if (v1==v2) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(v1,v2)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(v1,v2)" );
       return;
    }
 
    if (uorder<1 || uorder>MAX_EVAL_ORDER) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(uorder)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(uorder)" );
       return;
    }
 
    if (vorder<1 || vorder>MAX_EVAL_ORDER) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(vorder)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(vorder)" );
       return;
    }
 
    k = _mesa_evaluator_components( target );
    if (k==0) {
-      gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
    }
 
    if (ustride < k) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(ustride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(ustride)" );
       return;
    }
    if (vstride < k) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMap2(vstride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMap2(vstride)" );
       return;
    }
 
@@ -421,16 +421,16 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
          map = &ctx->EvalMap.Map2Texture4;
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
 	 return;
    }
 
    /* make copy of the control points */
    if (type == GL_FLOAT)
-      pnts = gl_copy_map_points2f(target, ustride, uorder,
+      pnts = _mesa_copy_map_points2f(target, ustride, uorder,
                                   vstride, vorder, (GLfloat*) points);
    else
-      pnts = gl_copy_map_points2d(target, ustride, uorder,
+      pnts = _mesa_copy_map_points2d(target, ustride, uorder,
                                   vstride, vorder, (GLdouble*) points);
    
    
@@ -565,7 +565,7 @@ _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
                  * ctx->EvalMap.Map2Vertex4.Vorder * 4;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
 	       return;
 	 }
 	 if (data) {
@@ -640,7 +640,7 @@ _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 	       v[1] = ctx->EvalMap.Map2Vertex4.Vorder;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
 	       return;
 	 }
          break;
@@ -737,11 +737,11 @@ _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 	       v[3] = ctx->EvalMap.Map2Vertex4.v2;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(target)" );
 	 }
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetMapdv(query)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapdv(query)" );
    }
 }
 
@@ -839,7 +839,7 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
                  * ctx->EvalMap.Map2Vertex4.Vorder * 4;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
 	       return;
 	 }
 	 if (data) {
@@ -914,7 +914,7 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 	       v[1] = ctx->EvalMap.Map2Vertex4.Vorder;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
 	       return;
 	 }
          break;
@@ -1011,11 +1011,11 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
 	       v[3] = ctx->EvalMap.Map2Vertex4.v2;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(target)" );
 	 }
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetMapfv(query)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapfv(query)" );
    }
 }
 
@@ -1113,7 +1113,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
                  * ctx->EvalMap.Map2Vertex4.Vorder * 4;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
 	       return;
 	 }
 	 if (data) {
@@ -1188,7 +1188,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 	       v[1] = ctx->EvalMap.Map2Vertex4.Vorder;
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
 	       return;
 	 }
          break;
@@ -1285,11 +1285,11 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
 	       v[3] = ROUNDF(ctx->EvalMap.Map2Vertex4.v2);
 	       break;
 	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
+	       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(target)" );
 	 }
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetMapiv(query)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetMapiv(query)" );
    }
 }
 
@@ -1302,7 +1302,7 @@ _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (un<1) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMapGrid1f" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMapGrid1f" );
       return;
    }
    FLUSH_VERTICES(ctx, _NEW_EVAL);
@@ -1328,11 +1328,11 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (un<1) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(un)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(un)" );
       return;
    }
    if (vn<1) {
-      gl_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(vn)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(vn)" );
       return;
    }
 

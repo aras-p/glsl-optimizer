@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.14 2001/02/03 08:41:03 gareth Exp $ */
+/* $Id: 3dnow.c,v 1.15 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,19 +62,19 @@
 
 
 #define ASSIGN_XFORM_GROUP( pfx, cma, sz, masked )			\
-   gl_transform_tab[cma][sz][MATRIX_GENERAL] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_GENERAL] =				\
       gl_##pfx##_transform_points##sz##_general_##masked;		\
-   gl_transform_tab[cma][sz][MATRIX_IDENTITY] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_IDENTITY] =				\
       gl_##pfx##_transform_points##sz##_identity_##masked;		\
-   gl_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
+   _mesa_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
       gl_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
-   gl_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
+   _mesa_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
       gl_##pfx##_transform_points##sz##_perspective_##masked;		\
-   gl_transform_tab[cma][sz][MATRIX_2D] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_2D] =				\
       gl_##pfx##_transform_points##sz##_2d_##masked;			\
-   gl_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
+   _mesa_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
       gl_##pfx##_transform_points##sz##_2d_no_rot_##masked;		\
-   gl_transform_tab[cma][sz][MATRIX_3D] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_3D] =				\
       gl_##pfx##_transform_points##sz##_3d_##masked;
 
 
@@ -151,7 +151,7 @@ extern void _ASMAPI gl_3dnow_project_clipped_vertices( GLfloat *first,
 #endif
 
 
-void gl_init_3dnow_transform_asm( void )
+void _mesa_init_3dnow_transform_asm( void )
 {
 #ifdef USE_3DNOW_ASM
    ASSIGN_XFORM_GROUP( 3dnow, 0, 1, raw );
@@ -174,7 +174,7 @@ void gl_init_3dnow_transform_asm( void )
 #endif
 }
 
-void gl_init_3dnow_vertex_asm( void )
+void _mesa_init_3dnow_vertex_asm( void )
 {
 #ifdef USE_3DNOW_ASM
    gl_xform_points3_v16_general	= gl_v16_3dnow_general_xform;

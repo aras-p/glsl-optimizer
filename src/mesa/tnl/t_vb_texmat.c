@@ -1,4 +1,4 @@
-/* $Id: t_vb_texmat.c,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_texmat.c,v 1.2 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,7 +110,7 @@ static GLboolean alloc_texmat_data( GLcontext *ctx,
       return GL_FALSE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      gl_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
+      _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
 
    /* Now run the stage.
     */
@@ -127,7 +127,7 @@ static void free_texmat_data( struct gl_pipeline_stage *stage )
    if (store) {
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
 	 if (store->texcoord[i].data)
-	    gl_vector4f_free( &store->texcoord[i] );
+	    _mesa_vector4f_free( &store->texcoord[i] );
       FREE( store );
       stage->private = 0;
    }

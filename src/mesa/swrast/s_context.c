@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.15 2001/02/24 18:25:52 keithw Exp $ */
+/* $Id: s_context.c,v 1.16 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -422,7 +422,7 @@ _swrast_CreateContext( GLcontext *ctx )
    if (!swrast)
       return GL_FALSE;
 
-   swrast->PB = gl_alloc_pb();
+   swrast->PB = _mesa_alloc_pb();
    if (!swrast->PB) {
       FREE(swrast);
       return GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.7 2001/02/23 23:14:11 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.8 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -219,7 +219,7 @@ static void apply_stencil_op( const GLcontext *ctx, GLenum oper,
 	 }
 	 break;
       default:
-         gl_problem(ctx, "Bad stencil op in apply_stencil_op");
+         _mesa_problem(ctx, "Bad stencil op in apply_stencil_op");
    }
 }
 
@@ -391,7 +391,7 @@ do_stencil_test( GLcontext *ctx, GLuint n, GLstencil stencil[],
 	 }
 	 break;
       default:
-         gl_problem(ctx, "Bad stencil func in gl_stencil_span");
+         _mesa_problem(ctx, "Bad stencil func in gl_stencil_span");
          return 0;
    }
 
@@ -697,7 +697,7 @@ apply_stencil_op_to_pixels( const GLcontext *ctx,
 	 }
 	 break;
       default:
-         gl_problem(ctx, "Bad stencilop in apply_stencil_op_to_pixels");
+         _mesa_problem(ctx, "Bad stencilop in apply_stencil_op_to_pixels");
    }
 }
 
@@ -875,7 +875,7 @@ stencil_test_pixels( GLcontext *ctx, GLuint n,
 	 }
 	 break;
       default:
-         gl_problem(ctx, "Bad stencil func in gl_stencil_pixels");
+         _mesa_problem(ctx, "Bad stencil func in gl_stencil_pixels");
          return 0;
    }
 
@@ -1118,7 +1118,7 @@ _mesa_alloc_stencil_buffer( GLcontext *ctx )
    if (!ctx->DrawBuffer->Stencil) {
       /* out of memory */
 /*        _mesa_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE ); */
-      gl_error( ctx, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
+      _mesa_error( ctx, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
    }
 }
 

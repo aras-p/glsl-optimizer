@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.25 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: depth.c,v 1.26 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,7 @@ _mesa_DepthFunc( GLenum func )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      fprintf(stderr, "glDepthFunc %s\n", gl_lookup_enum_by_nr(func));
+      fprintf(stderr, "glDepthFunc %s\n", _mesa_lookup_enum_by_nr(func));
 
    switch (func) {
    case GL_LESS:    /* (default) pass if incoming z < stored z */
@@ -83,7 +83,7 @@ _mesa_DepthFunc( GLenum func )
    case GL_NEVER:
       break;
    default:
-      gl_error( ctx, GL_INVALID_ENUM, "glDepth.Func" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glDepth.Func" );
       return;
    }
 

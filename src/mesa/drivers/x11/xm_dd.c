@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.17 2001/03/01 18:30:47 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.18 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -215,7 +215,7 @@ set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
       xmesa_update_span_funcs(ctx);
    }
    else {
-      gl_problem(ctx, "invalid buffer in set_read_buffer() in xmesa2.c");
+      _mesa_problem(ctx, "invalid buffer in set_read_buffer() in xmesa2.c");
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.7 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.8 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -555,7 +555,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       GLuint i;
 
       if (IM->BeginState & VERT_ERROR_1) 
-	 gl_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
+	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
 
       for (i = IM->Start ; i <= IM->Count ; i += IM->PrimitiveLength[i])
 	 if (IM->Flag[i] & (VERT_BEGIN|VERT_END_VB)) 
@@ -579,7 +579,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       GLuint i;
 
       if (IM->BeginState & VERT_ERROR_0) 
-	 gl_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
+	 _mesa_error( ctx, GL_INVALID_OPERATION, "glBegin/glEnd");
       
       if (IM->CopyStart == IM->Start &&
 	  IM->Flag[IM->Start] & (VERT_END|VERT_END_VB))

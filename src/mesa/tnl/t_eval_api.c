@@ -1,4 +1,4 @@
-/* $Id: t_eval_api.c,v 1.2 2001/01/08 21:56:00 keithw Exp $ */
+/* $Id: t_eval_api.c,v 1.3 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,7 +69,7 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
          prim = GL_LINE_STRIP;
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glEvalMesh1(mode)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh1(mode)" );
          return;
    }
 
@@ -186,7 +186,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	 }
 	 break;
       default:
-	 gl_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glEvalMesh2(mode)" );
 	 return;
       }
 

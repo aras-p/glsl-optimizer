@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.7 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.8 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,7 +277,7 @@ _tnl_DrawRangeElements(GLenum mode,
 	  *
 	  * Or scan the list and replace bad indices?
 	  */
-	 gl_problem( ctx, 
+	 _mesa_problem( ctx, 
 		     "DrawRangeElements references "
 		     "elements outside locked range.");
       }
@@ -352,16 +352,16 @@ void _tnl_array_init( GLcontext *ctx )
 
    /* Setup vector pointers that will be used to bind arrays to VB's.
     */
-   gl_vector4f_init( &tmp->Obj, 0, 0 );
-   gl_vector3f_init( &tmp->Normal, 0, 0 );
-   gl_vector4chan_init( &tmp->Color, 0, 0 );
-   gl_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
-   gl_vector1f_init( &tmp->FogCoord, 0, 0 );
-   gl_vector1ui_init( &tmp->Index, 0, 0 );
-   gl_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
+   _mesa_vector4f_init( &tmp->Obj, 0, 0 );
+   _mesa_vector3f_init( &tmp->Normal, 0, 0 );
+   _mesa_vector4chan_init( &tmp->Color, 0, 0 );
+   _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
+   _mesa_vector1f_init( &tmp->FogCoord, 0, 0 );
+   _mesa_vector1ui_init( &tmp->Index, 0, 0 );
+   _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) 
-      gl_vector4f_init( &tmp->TexCoord[i], 0, 0);
+      _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
 
    tnl->tmp_primitive = (GLuint *)MALLOC(sizeof(GLuint)*tnl->vb.Size);
    tnl->tmp_primitive_length = (GLuint *)MALLOC(sizeof(GLuint)*tnl->vb.Size);

@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.5 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: m_xform.h,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,7 +73,7 @@ do {								\
 } while (0)
 
 
-extern void gl_transform_vector( GLfloat u[4],
+extern void _mesa_transform_vector( GLfloat u[4],
 				 CONST GLfloat v[4],
                                  CONST GLfloat m[16] );
 
@@ -185,21 +185,21 @@ typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
 					  CONST GLubyte flag );
 
 
-extern GLvector4f *gl_project_points( GLvector4f *to,
+extern GLvector4f *_mesa_project_points( GLvector4f *to,
 				      CONST GLvector4f *from );
 
-extern void gl_transform_bounds3( GLubyte *orMask, GLubyte *andMask,
+extern void _mesa_transform_bounds3( GLubyte *orMask, GLubyte *andMask,
 				  CONST GLfloat m[16],
 				  CONST GLfloat src[][3] );
 
-extern void gl_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
+extern void _mesa_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
 				  CONST GLfloat m[16],
 				  CONST GLfloat src[][3] );
 
 
 extern dotprod_func  gl_dotprod_tab[2][5];
-extern vec_copy_func gl_copy_tab[2][0x10];
-extern vec_copy_func gl_copy_clean_tab[2][5];
+extern vec_copy_func _mesa_copy_tab[2][0x10];
+extern vec_copy_func _mesa_copy_clean_tab[2][5];
 extern clip_func     gl_clip_tab[5];
 extern clip_func     gl_clip_np_tab[5];
 extern normal_func   gl_normal_tab[0xf][0x4];
@@ -207,15 +207,15 @@ extern normal_func   gl_normal_tab[0xf][0x4];
 /* Use of 3 layers of linked 1-dimensional arrays to reduce
  * cost of lookup.
  */
-extern transform_func **(gl_transform_tab[2]);
+extern transform_func **(_mesa_transform_tab[2]);
 
 
-extern void gl_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
+extern void _mesa_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
 				   CONST GLfloat P[4], GLuint sz );
 
 
 #define TransformRaw( to, mat, from ) \
-      ( (*gl_transform_tab[0][(from)->size][(mat)->type])( to, (mat)->m, from, 0, 0 ), \
+      ( (*_mesa_transform_tab[0][(from)->size][(mat)->type])( to, (mat)->m, from, 0, 0 ), \
         (to) )
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,7 +66,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
    buf->FrontLeftAlpha = (GLchan *) MALLOC( bytes );
    if (!buf->FrontLeftAlpha) {
       /* out of memory */
-      gl_error( ctx, GL_OUT_OF_MEMORY,
+      _mesa_error( ctx, GL_OUT_OF_MEMORY,
                 "Couldn't allocate front-left alpha buffer" );
    }
 
@@ -77,7 +77,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
       buf->BackLeftAlpha = (GLchan *) MALLOC( bytes );
       if (!buf->BackLeftAlpha) {
          /* out of memory */
-         gl_error( ctx, GL_OUT_OF_MEMORY,
+         _mesa_error( ctx, GL_OUT_OF_MEMORY,
                       "Couldn't allocate back-left alpha buffer" );
       }
    }
@@ -89,7 +89,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
       buf->FrontRightAlpha = (GLchan *) MALLOC( bytes );
       if (!buf->FrontRightAlpha) {
          /* out of memory */
-         gl_error( ctx, GL_OUT_OF_MEMORY,
+         _mesa_error( ctx, GL_OUT_OF_MEMORY,
                    "Couldn't allocate front-right alpha buffer" );
       }
 
@@ -100,7 +100,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
          buf->BackRightAlpha = (GLchan *) MALLOC( bytes );
          if (!buf->BackRightAlpha) {
             /* out of memory */
-            gl_error( ctx, GL_OUT_OF_MEMORY,
+            _mesa_error( ctx, GL_OUT_OF_MEMORY,
                       "Couldn't allocate back-right alpha buffer" );
          }
       }

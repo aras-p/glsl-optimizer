@@ -1,4 +1,4 @@
-/* $Id: dosmesa.c,v 1.3 2000/11/22 08:55:52 joukj Exp $ */
+/* $Id: dosmesa.c,v 1.4 2001/03/03 20:33:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: dosmesa.c,v $
+ * Revision 1.4  2001/03/03 20:33:29  brianp
+ * lots of gl_*() to _mesa_*() namespace clean-up
+ *
  * Revision 1.3  2000/11/22 08:55:52  joukj
  *
  *
@@ -1492,7 +1495,7 @@ void DOSMesaMakeCurrent( DOSMesaContext ctx )
       /* setup initial viewport */
       ctx->width = vga_getxdim();
       ctx->height = vga_getydim();
-      gl_Viewport( ctx->gl_ctx, 0, 0, ctx->width, ctx->height );
+      _mesa_set_viewport( ctx->gl_ctx, 0, 0, ctx->width, ctx->height );
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.11 2001/01/17 02:49:38 keithw Exp $ */
+/* $Id: enums.c,v 1.12 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -877,7 +877,7 @@ static void sort_enums( void )
 
 
 
-int gl_lookup_enum_by_name( const char *symbol )
+int _mesa_lookup_enum_by_name( const char *symbol )
 {
    enum_elt tmp;
    enum_elt *e;
@@ -896,7 +896,7 @@ int gl_lookup_enum_by_name( const char *symbol )
 }
 
 
-const char *gl_lookup_enum_by_nr( int nr )
+const char *_mesa_lookup_enum_by_nr( int nr )
 {
    enum_elt tmp, *e, **f;
 

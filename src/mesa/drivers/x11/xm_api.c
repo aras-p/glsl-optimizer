@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.16 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: xm_api.c,v 1.17 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -431,7 +431,7 @@ static void free_xmesa_buffer(int client, XMesaBuffer buffer)
       prev = b;
    }
    /* buffer not found in XMesaBufferList */
-   gl_problem(NULL,"free_xmesa_buffer() - buffer not found\n");
+   _mesa_problem(NULL,"free_xmesa_buffer() - buffer not found\n");
 }
 
 
@@ -1410,7 +1410,7 @@ xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLuby
             return p;
          }
       default:
-         gl_problem(NULL, "Bad pixel format in xmesa_color_to_pixel");
+         _mesa_problem(NULL, "Bad pixel format in xmesa_color_to_pixel");
    }
    return 0;
 }
@@ -2630,7 +2630,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
             return p;
          }
       default:
-         gl_problem(NULL, "Bad pixel format in XMesaDitherColor");
+         _mesa_problem(NULL, "Bad pixel format in XMesaDitherColor");
    }
    return 0;
 }

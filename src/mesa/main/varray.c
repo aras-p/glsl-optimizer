@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.36 2001/01/05 05:31:42 keithw Exp $ */
+/* $Id: varray.c,v 1.37 2001/03/03 20:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,17 +51,17 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<2 || size>4) {
-      gl_error( ctx, GL_INVALID_VALUE, "glVertexPointer(size)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glVertexPointer(size)" );
       return;
    }
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glVertexPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glVertexPointer(stride)" );
       return;
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
       fprintf(stderr, "glVertexPointer( sz %d type %s stride %d )\n", size,
-	      gl_lookup_enum_by_nr( type ),
+	      _mesa_lookup_enum_by_nr( type ),
 	      stride);
 
    ctx->Array.Vertex.StrideB = stride;
@@ -80,7 +80,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          ctx->Array.Vertex.StrideB =  size*sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type)" );
          return;
       }
    }
@@ -105,13 +105,13 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glNormalPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glNormalPointer(stride)" );
       return;
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
       fprintf(stderr, "glNormalPointer( type %s stride %d )\n",
-	      gl_lookup_enum_by_nr( type ),
+	      _mesa_lookup_enum_by_nr( type ),
 	      stride);
 
    ctx->Array.Normal.StrideB = stride;
@@ -133,7 +133,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          ctx->Array.Normal.StrideB =  3*sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type)" );
          return;
       }
    }
@@ -156,17 +156,17 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<3 || size>4) {
-      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
       return;
    }
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
       return;
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
       fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size,
-	  gl_lookup_enum_by_nr( type ),
+	  _mesa_lookup_enum_by_nr( type ),
 	  stride);
 
    ctx->Array.Color.StrideB = stride;
@@ -197,7 +197,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          ctx->Array.Color.StrideB =  size*sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glColorPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glColorPointer(type)" );
          return;
       }
    }
@@ -221,7 +221,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
       return;
    }
 
@@ -235,7 +235,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
          ctx->Array.FogCoord.StrideB =  sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glFogCoordPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glFogCoordPointer(type)" );
          return;
       }
    }
@@ -257,7 +257,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glIndexPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glIndexPointer(stride)" );
       return;
    }
 
@@ -280,7 +280,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
          ctx->Array.Index.StrideB =  sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glIndexPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glIndexPointer(type)" );
          return;
       }
    }
@@ -303,17 +303,17 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size != 3 && size != 4) {
-      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
       return;
    }
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
       return;
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
       fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size,
-	  gl_lookup_enum_by_nr( type ),
+	  _mesa_lookup_enum_by_nr( type ),
 	  stride);
 
    ctx->Array.SecondaryColor.StrideB = stride;
@@ -344,7 +344,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
          ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type)" );
          return;
       }
    }
@@ -369,11 +369,11 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<1 || size>4) {
-      gl_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(size)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(size)" );
       return;
    }
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(stride)" );
       return;
    }
 
@@ -381,7 +381,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
       fprintf(stderr, "glTexCoordPointer( unit %u sz %d type %s stride %d )\n",
 	  texUnit,
 	  size,
-	  gl_lookup_enum_by_nr( type ),
+	  _mesa_lookup_enum_by_nr( type ),
 	  stride);
 
    ctx->Array.TexCoord[texUnit].StrideB = stride;
@@ -400,7 +400,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
          ctx->Array.TexCoord[texUnit].StrideB =  size*sizeof(GLdouble);
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type)" );
          return;
       }
    }
@@ -428,7 +428,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glEdgeFlagPointer(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glEdgeFlagPointer(stride)" );
       return;
    }
    ctx->Array.EdgeFlag.Stride = stride;
@@ -521,7 +521,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    c = f * ((4*sizeof(GLubyte) + (f-1)) / f);
 
    if (stride<0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glInterleavedArrays(stride)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glInterleavedArrays(stride)" );
       return;
    }
 
@@ -632,7 +632,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
          defstride = 15*f;
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glInterleavedArrays(format)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glInterleavedArrays(format)" );
          return;
    }
 

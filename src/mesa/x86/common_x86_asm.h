@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.h,v 1.4 2000/11/24 10:25:10 keithw Exp $ */
+/* $Id: common_x86_asm.h,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@
 
 extern int gl_x86_cpu_features;
 
-extern void gl_init_all_x86_transform_asm( void );
-extern void gl_init_all_x86_vertex_asm( void );
+extern void _mesa_init_all_x86_transform_asm( void );
+extern void _mesa_init_all_x86_vertex_asm( void );
 
 #endif

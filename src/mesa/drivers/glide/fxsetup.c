@@ -501,7 +501,7 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
 
   if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE))
      fprintf(stderr, "fxMesa: fxSetupTextureSingleTMU, envmode is %s\n",
-	     gl_lookup_enum_by_nr(ctx->Texture.Unit[textureset].EnvMode));
+	     _mesa_lookup_enum_by_nr(ctx->Texture.Unit[textureset].EnvMode));
 
   switch(ctx->Texture.Unit[textureset].EnvMode) {
   case GL_DECAL:
@@ -790,8 +790,8 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
 
   if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE))
      fprintf(stderr, "fxMesa: fxSetupTextureDoubleTMU, envmode is %s/%s\n",
-	     gl_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
-	     gl_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
+	     _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
+	     _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
 
   if ((ti0->whichTMU==FX_TMU1) || (ti1->whichTMU==FX_TMU0)) {
@@ -1253,7 +1253,7 @@ static void fxSetupBlend(GLcontext *ctx)
 /************************** Alpha Test SetUp ****************************/
 /************************************************************************/
 
-void fxDDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
+void fxDDAlphaFunc(GLcontext *ctx, GLenum func, GLchan ref)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   tfxUnitsState *us=&fxMesa->unitsState;
@@ -1296,8 +1296,8 @@ void fxDDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
     fxMesa->new_state |= FX_NEW_ALPHA;
   }
 
-  if(ctx->Color.AlphaRef!=us->alphaTestRefValue) {
-    us->alphaTestRefValue=ctx->Color.AlphaRef;
+  if (ref != us->alphaTestRefValue) {
+    us->alphaTestRefValue = ref;
     fxMesa->new_state |= FX_NEW_ALPHA;
   }
 }

@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.41 2001/02/26 18:25:25 brianp Exp $ */
+/* $Id: texobj.c,v 1.42 2001/03/03 20:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -405,7 +405,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else {
          /* Dimensions = ??? */
-         gl_problem(ctx, "Bug in gl_test_texture_object_completeness\n");
+         _mesa_problem(ctx, "Bug in gl_test_texture_object_completeness\n");
       }
    }
 }
@@ -426,7 +426,7 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (n < 0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glGenTextures" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glGenTextures" );
       return;
    }
 
@@ -531,7 +531,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBindTexture %s %d\n",
-	      gl_lookup_enum_by_nr(target), (GLint) texName);
+	      _mesa_lookup_enum_by_nr(target), (GLint) texName);
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -554,7 +554,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          }
          /* fallthrough */
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
          return;
    }
 
@@ -591,7 +591,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          /* error checking */
          if (newTexObj->Dimensions > 0 && newTexObj->Dimensions != targetDim) {
             /* the named texture object's dimensions don't match the target */
-            gl_error( ctx, GL_INVALID_OPERATION, "glBindTexture" );
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glBindTexture" );
             return;
          }
       }
@@ -600,7 +600,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 	 newTexObj = _mesa_alloc_texture_object( ctx->Shared, texName,
 						 targetDim);
          if (!newTexObj) {
-            gl_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;
          }
       }
@@ -628,7 +628,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          texUnit->CurrentCubeMap = newTexObj;
          break;
       default:
-         gl_problem(ctx, "bad target in BindTexture");
+         _mesa_problem(ctx, "bad target in BindTexture");
    }
 
    /* Pass BindTexture call to device driver */
@@ -661,7 +661,7 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (n < 0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glPrioritizeTextures" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glPrioritizeTextures" );
       return;
    }
 
@@ -698,7 +698,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (n < 0) {
-      gl_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(n)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(n)");
       return GL_FALSE;
    }
 
@@ -708,7 +708,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    for (i = 0; i < n; i++) {
       struct gl_texture_object *t;
       if (texName[i] == 0) {
-         gl_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
          return GL_FALSE;
       }
       t = (struct gl_texture_object *)
@@ -724,7 +724,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
          }
       }
       else {
-         gl_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
          return GL_FALSE;
       }
    }

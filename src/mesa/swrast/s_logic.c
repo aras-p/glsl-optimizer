@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.3 2001/02/13 23:50:25 brianp Exp $ */
+/* $Id: s_logic.c,v 1.4 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -155,7 +155,7 @@ static void index_logicop( GLcontext *ctx, GLuint n,
 	 }
 	 break;
       default:
-	 gl_problem(ctx, "bad mode in index_logic()");
+	 _mesa_problem(ctx, "bad mode in index_logic()");
    }
 }
 
@@ -321,7 +321,7 @@ static void rgba_logicop( const GLcontext *ctx, GLuint n,
          break;
       default:
          /* should never happen */
-         gl_problem(ctx, "Bad function in rgba_logicop");
+         _mesa_problem(ctx, "Bad function in rgba_logicop");
    }
 }
 
@@ -337,7 +337,7 @@ _mesa_logicop_rgba_span( GLcontext *ctx,
                          GLchan rgba[][4], const GLubyte mask[] )
 {
    GLchan dest[MAX_WIDTH][4];
-   gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
    rgba_logicop( ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest );
 }
 

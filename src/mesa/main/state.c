@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.59 2001/02/20 16:42:25 brianp Exp $ */
+/* $Id: state.c,v 1.60 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,7 +88,7 @@ static int
 generic_noop(void)
 {
 #ifdef DEBUG
-   gl_problem(NULL, "undefined function dispatch");
+   _mesa_problem(NULL, "undefined function dispatch");
 #endif
    return 0;
 }
@@ -557,7 +557,7 @@ update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
        */
       update_modelview_scale(ctx);
       calculate_model_project_matrix(ctx);
-      gl_compute_light_positions( ctx );
+      _mesa_compute_light_positions( ctx );
 
       if (ctx->Driver.LightingSpaceChange)
 	 ctx->Driver.LightingSpaceChange( ctx );
@@ -575,7 +575,7 @@ update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
 	 calculate_model_project_matrix(ctx);
 	
       if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
-	 gl_compute_light_positions( ctx );
+	 _mesa_compute_light_positions( ctx );
    }
 }
 
@@ -621,7 +621,7 @@ update_projection( GLcontext *ctx )
       GLuint p;
       for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 	 if (ctx->Transform.ClipEnabled[p]) {
-	    gl_transform_vector( ctx->Transform._ClipUserPlane[p],
+	    _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 				 ctx->Transform.EyeUserPlane[p],
 				 ctx->ProjectionMatrix.inv );
 	 }
@@ -867,13 +867,13 @@ update_texture_state( GLcontext *ctx )
  * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
  * and from nowhere else.  
  */
-void gl_update_state( GLcontext *ctx )
+void _mesa_update_state( GLcontext *ctx )
 {
    const GLuint new_state = ctx->NewState;
    const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
-      gl_print_state("", new_state);
+      _mesa_print_state("", new_state);
 
    if (new_state & _NEW_MODELVIEW)
       _math_matrix_analyse( &ctx->ModelView );
@@ -906,7 +906,7 @@ void gl_update_state( GLcontext *ctx )
    /* Contributes to NeedEyeCoords, NeedNormals.
     */
    if (new_state & _NEW_LIGHT)
-      gl_update_lighting( ctx );
+      _mesa_update_lighting( ctx );
 
    /* We can light in object space if the modelview matrix preserves
     * lengths and relative angles.

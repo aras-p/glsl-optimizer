@@ -1,4 +1,4 @@
-/* $Id: m_vector.c,v 1.4 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: m_vector.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@
  * Given a vector [count][4] of floats, set all the [][elt] values
  * to 0 (if elt = 0, 1, 2) or 1.0 (if elt = 3).
  */
-void gl_vector4f_clean_elem( GLvector4f *vec, GLuint count, GLuint elt )
+void _mesa_vector4f_clean_elem( GLvector4f *vec, GLuint count, GLuint elt )
 {
    static const GLubyte elem_bits[4] = {
       VEC_DIRTY_0,
@@ -78,7 +78,7 @@ static const GLubyte size_bits[5] = {
  */
 
 
-void gl_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
+void _mesa_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLfloat);
    v->size = 2;   /* may change: 2-4 for vertices and 1-4 for texcoords */
@@ -88,7 +88,7 @@ void gl_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
    v->flags = size_bits[4] | flags ;
 }
 
-void gl_vector3f_init( GLvector3f *v, GLuint flags, GLfloat (*storage)[3] )
+void _mesa_vector3f_init( GLvector3f *v, GLuint flags, GLfloat (*storage)[3] )
 {
    v->stride = 3 * sizeof(GLfloat);
    v->data = storage;
@@ -97,7 +97,7 @@ void gl_vector3f_init( GLvector3f *v, GLuint flags, GLfloat (*storage)[3] )
    v->flags = flags ;
 }
 
-void gl_vector1f_init( GLvector1f *v, GLuint flags, GLfloat *storage )
+void _mesa_vector1f_init( GLvector1f *v, GLuint flags, GLfloat *storage )
 {
    v->stride = 1*sizeof(GLfloat);
    v->data = storage;
@@ -106,7 +106,7 @@ void gl_vector1f_init( GLvector1f *v, GLuint flags, GLfloat *storage )
    v->flags = flags ;
 }
 
-void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
+void _mesa_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLubyte);
    v->data = storage;
@@ -115,7 +115,7 @@ void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
    v->flags = flags ;
 }
 
-void gl_vector4chan_init( GLvector4chan *v, GLuint flags, GLchan (*storage)[4] )
+void _mesa_vector4chan_init( GLvector4chan *v, GLuint flags, GLchan (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLchan);
    v->data = storage;
@@ -124,7 +124,7 @@ void gl_vector4chan_init( GLvector4chan *v, GLuint flags, GLchan (*storage)[4] )
    v->flags = flags ;
 }
 
-void gl_vector4us_init( GLvector4us *v, GLuint flags, GLushort (*storage)[4] )
+void _mesa_vector4us_init( GLvector4us *v, GLuint flags, GLushort (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLushort);
    v->data = storage;
@@ -133,7 +133,7 @@ void gl_vector4us_init( GLvector4us *v, GLuint flags, GLushort (*storage)[4] )
    v->flags = flags ;
 }
 
-void gl_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
+void _mesa_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
 {
    v->stride = 1 * sizeof(GLubyte);
    v->data = storage;
@@ -142,7 +142,7 @@ void gl_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
    v->flags = flags ;
 }
 
-void gl_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage )
+void _mesa_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage )
 {
    v->stride = 1 * sizeof(GLuint);
    v->data = storage;
@@ -162,7 +162,7 @@ void gl_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage )
  */
 
 
-void gl_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
+void _mesa_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
 			GLuint alignment )
 {
    v->stride = 4 * sizeof(GLfloat);
@@ -174,7 +174,7 @@ void gl_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
    v->flags = size_bits[4] | flags | VEC_MALLOC ;
 }
 
-void gl_vector3f_alloc( GLvector3f *v, GLuint flags, GLuint count,
+void _mesa_vector3f_alloc( GLvector3f *v, GLuint flags, GLuint count,
 			GLuint alignment )
 {
    v->stride = 3 * sizeof(GLfloat);
@@ -185,7 +185,7 @@ void gl_vector3f_alloc( GLvector3f *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector1f_alloc( GLvector1f *v, GLuint flags, GLuint count,
+void _mesa_vector1f_alloc( GLvector1f *v, GLuint flags, GLuint count,
 			GLuint alignment )
 {
    v->stride = sizeof(GLfloat);
@@ -196,7 +196,7 @@ void gl_vector1f_alloc( GLvector1f *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
+void _mesa_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
 			 GLuint alignment )
 {
    v->stride = 4 * sizeof(GLubyte);
@@ -207,7 +207,7 @@ void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
+void _mesa_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
 			   GLuint alignment )
 {
    v->stride = 4 * sizeof(GLchan);
@@ -218,7 +218,7 @@ void gl_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
+void _mesa_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
                          GLuint alignment )
 {
    v->stride = 4 * sizeof(GLushort);
@@ -229,7 +229,7 @@ void gl_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
+void _mesa_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
 			 GLuint alignment )
 {
    v->stride = 1 * sizeof(GLubyte);
@@ -240,7 +240,7 @@ void gl_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
-void gl_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
+void _mesa_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
 			 GLuint alignment )
 {
    v->stride = 1 * sizeof(GLuint);
@@ -260,7 +260,7 @@ void gl_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
  */
 
 
-void gl_vector4f_free( GLvector4f *v )
+void _mesa_vector4f_free( GLvector4f *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -271,7 +271,7 @@ void gl_vector4f_free( GLvector4f *v )
    }
 }
 
-void gl_vector3f_free( GLvector3f *v )
+void _mesa_vector3f_free( GLvector3f *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -282,7 +282,7 @@ void gl_vector3f_free( GLvector3f *v )
    }
 }
 
-void gl_vector1f_free( GLvector1f *v )
+void _mesa_vector1f_free( GLvector1f *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -293,7 +293,7 @@ void gl_vector1f_free( GLvector1f *v )
    }
 }
 
-void gl_vector4ub_free( GLvector4ub *v )
+void _mesa_vector4ub_free( GLvector4ub *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -304,7 +304,7 @@ void gl_vector4ub_free( GLvector4ub *v )
    }
 }
 
-void gl_vector4chan_free( GLvector4chan *v )
+void _mesa_vector4chan_free( GLvector4chan *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -315,7 +315,7 @@ void gl_vector4chan_free( GLvector4chan *v )
    }
 }
 
-void gl_vector4us_free( GLvector4us *v )
+void _mesa_vector4us_free( GLvector4us *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -326,7 +326,7 @@ void gl_vector4us_free( GLvector4us *v )
    }
 }
 
-void gl_vector1ub_free( GLvector1ub *v )
+void _mesa_vector1ub_free( GLvector1ub *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -337,7 +337,7 @@ void gl_vector1ub_free( GLvector1ub *v )
    }
 }
 
-void gl_vector1ui_free( GLvector1ui *v )
+void _mesa_vector1ui_free( GLvector1ui *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );
@@ -352,7 +352,7 @@ void gl_vector1ui_free( GLvector1ui *v )
 /*
  * For debugging
  */
-void gl_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
+void _mesa_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
 {
    GLfloat c[4] = { 0, 0, 0, 1 };
    const char *templates[5] = {
@@ -405,7 +405,7 @@ void gl_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
 /*
  * For debugging
  */
-void gl_vector3f_print( GLvector3f *v, GLubyte *cullmask, GLboolean culling )
+void _mesa_vector3f_print( GLvector3f *v, GLubyte *cullmask, GLboolean culling )
 {
    GLfloat *d = (GLfloat *)v->data;
    GLuint i = 0, count;

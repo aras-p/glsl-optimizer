@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.10 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: matrix.h,v 1.11 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,15 +30,6 @@
 
 
 #include "mtypes.h"
-
-
-#ifdef VMS
-#define gl_calculate_model_project_matrix gl_calculate_model_project_matr
-#endif
-
-
-extern void
-gl_calculate_model_project_matrix( GLcontext *ctx );
 
 
 extern void
@@ -109,7 +100,7 @@ extern void
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height );
 
 extern void
-gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height );
+_mesa_set_viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height );
 
 extern void
 _mesa_DepthRange( GLclampd nearval, GLclampd farval );

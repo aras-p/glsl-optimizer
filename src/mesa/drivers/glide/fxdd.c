@@ -903,8 +903,8 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
 
     if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE))
        fprintf(stderr, "fxMesa: fxIsInHardware, envmode is %s/%s\n",
-	       gl_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
-	       gl_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
+	       _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
+	       _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
     /* KW: This was wrong (I think) and I changed it... which doesn't mean
      * it is now correct...

@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.19 2001/02/06 17:22:16 brianp Exp $ */
+/* $Id: convolve.c,v 1.20 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,23 +115,23 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_CONVOLUTION_1D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(target)");
       return;
    }
 
    baseFormat = base_filter_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(internalFormat)");
       return;
    }
 
    if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
-      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter1D(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter1D(width)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter1D(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter1D(format or type)");
       return;
    }
 
@@ -140,7 +140,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
        type == GL_BITMAP) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(format or type)");
       return;
    }
 
@@ -189,27 +189,27 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_CONVOLUTION_2D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(target)");
       return;
    }
 
    baseFormat = base_filter_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(internalFormat)");
       return;
    }
 
    if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
-      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(width)");
       return;
    }
    if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
-      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(height)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(height)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter2D(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter2D(format or type)");
       return;
    }
    if (format == GL_COLOR_INDEX ||
@@ -217,7 +217,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
        type == GL_BITMAP) {
-      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(format or type)");
       return;
    }
 
@@ -281,7 +281,7 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
          c = 2;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(target)");
          return;
    }
 
@@ -293,12 +293,12 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
             ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) param;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(params)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(params)");
             return;
          }
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(pname)");
          return;
    }
 
@@ -328,7 +328,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          conv = &ctx->Separable2D;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(target)");
          return;
    }
 
@@ -343,7 +343,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
             ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) params[0];
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(params)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(params)");
             return;
          }
          break;
@@ -354,7 +354,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params);
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(pname)");
          return;
    }
 
@@ -380,7 +380,7 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
          c = 2;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(target)");
          return;
    }
 
@@ -392,12 +392,12 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
             ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) param;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(params)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(params)");
             return;
          }
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(pname)");
          return;
    }
 
@@ -427,7 +427,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
          conv = &ctx->Separable2D;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(target)");
          return;
    }
 
@@ -445,7 +445,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
             ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) params[0];
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(params)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(params)");
             return;
          }
          break;
@@ -456,7 +456,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
          COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params);
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(pname)");
          return;
    }
 
@@ -473,24 +473,24 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_CONVOLUTION_1D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(target)");
       return;
    }
 
    baseFormat = base_filter_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(internalFormat)");
       return;
    }
 
    if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
-      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter1D(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter1D(width)");
       return;
    }
 
    /* read pixels from framebuffer */
    RENDER_START(ctx);
-   gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLchan (*)[4]) rgba);
+   _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLchan (*)[4]) rgba);
    RENDER_FINISH(ctx);
 
    /* store as convolution filter */
@@ -510,29 +510,29 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_CONVOLUTION_2D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(target)");
       return;
    }
 
    baseFormat = base_filter_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(internalFormat)");
       return;
    }
 
    if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
-      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(width)");
       return;
    }
    if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
-      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(height)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(height)");
       return;
    }
 
    /* read pixels from framebuffer */
    RENDER_START(ctx);
    for (i = 0; i < height; i++) {
-      gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
+      _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
                         (GLchan (*)[4]) rgba[i]);
    }
    RENDER_FINISH(ctx);
@@ -569,11 +569,11 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->NewState) {
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
       return;
    }
 
@@ -582,7 +582,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
        type == GL_BITMAP) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
       return;
    }
 
@@ -594,7 +594,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
          filter = &(ctx->Convolution2D);
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(target)");
          return;
    }
 
@@ -632,7 +632,7 @@ _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
          conv = &ctx->Separable2D;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(target)");
          return;
    }
 
@@ -665,7 +665,7 @@ _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
          *params = (GLfloat) ctx->Const.MaxConvolutionHeight;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(pname)");
          return;
    }
 }
@@ -693,7 +693,7 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
          conv = &ctx->Separable2D;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(target)");
          return;
    }
 
@@ -735,7 +735,7 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
          *params = (GLint) ctx->Const.MaxConvolutionHeight;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(pname)");
          return;
    }
 }
@@ -750,16 +750,16 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->NewState) {
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
    }
 
    if (target != GL_SEPARABLE_2D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetSeparableFilter(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetSeparableFilter(target)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionFilter(format or type)");
       return;
    }
 
@@ -768,7 +768,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
        type == GL_BITMAP) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
       return;
    }
 
@@ -808,27 +808,27 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target != GL_SEPARABLE_2D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(target)");
       return;
    }
 
    baseFormat = base_filter_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(internalFormat)");
       return;
    }
 
    if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
-      gl_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(width)");
       return;
    }
    if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
-      gl_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(height)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(height)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glSeparableFilter2D(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glSeparableFilter2D(format or type)");
       return;
    }
 
@@ -837,7 +837,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
        format == GL_DEPTH_COMPONENT ||
        format == GL_INTENSITY ||
        type == GL_BITMAP) {
-      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(format or type)");
       return;
    }
 

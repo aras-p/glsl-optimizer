@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.27 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: lines.c,v 1.28 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@ _mesa_LineWidth( GLfloat width )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (width<=0.0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
       return;
    }
 

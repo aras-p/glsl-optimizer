@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.22 2001/02/28 00:27:48 brianp Exp $ */
+/* $Id: mtypes.h,v 1.23 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1645,7 +1645,7 @@ do {							\
 #define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)	\
 do {								\
    if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {	\
-      gl_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
       return retval;						\
    }								\
 } while (0)

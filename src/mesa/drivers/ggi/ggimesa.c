@@ -534,7 +534,7 @@ void GGIMesaMakeCurrent(GGIMesaContext ctx)
 	
 	if (!ctx->viewport_init)
 	{
-		gl_Viewport(ctx->gl_ctx, 0, 0, ctx->width, ctx->height);
+		_mesa_set_viewport(ctx->gl_ctx, 0, 0, ctx->width, ctx->height);
 		ctx->viewport_init = GL_TRUE;
 	}
 }

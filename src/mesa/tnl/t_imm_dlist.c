@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.9 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.10 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -165,7 +165,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    struct immediate *IM = node->IM;
 
    if (ctx->NewState)
-      gl_update_state(ctx);
+      _mesa_update_state(ctx);
 
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
@@ -208,7 +208,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 	  * inside a begin/end object -- illegally.  Reject it and
 	  * raise an error.
 	  */
-	 gl_error(ctx, GL_INVALID_OPERATION, "hard replay");
+	 _mesa_error(ctx, GL_INVALID_OPERATION, "hard replay");
 	 return;
       }
    }

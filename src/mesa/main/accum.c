@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.35 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: accum.c,v 1.36 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,12 +69,12 @@ _mesa_Accum( GLenum op, GLfloat value )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->Visual.accumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glAccum");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum");
       return;
    }
 
    if (ctx->NewState)
-      gl_update_state( ctx );
+      _mesa_update_state( ctx );
 
    /* Determine region to operate upon. */
    if (ctx->Scissor.Enabled) {

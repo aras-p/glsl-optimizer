@@ -394,7 +394,7 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
 
     default:
 	 /* should never get here */
-	 gl_problem( ctx, "invalid mode in gl_render_vb" );
+	 _mesa_problem( ctx, "invalid mode in gl_render_vb" );
    }
 
   DPF(( DBG_PRIM_INFO, "ResetVB" ));

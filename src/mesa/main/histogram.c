@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.8 2001/02/27 22:33:59 brianp Exp $ */
+/* $Id: histogram.c,v 1.9 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,7 +125,7 @@ pack_histogram( GLcontext *ctx,
             }							\
             break;						\
          default:						\
-            gl_problem(ctx, "bad format in pack_histogram");	\
+            _mesa_problem(ctx, "bad format in pack_histogram");	\
       }								\
    }
 
@@ -536,7 +536,7 @@ pack_histogram( GLcontext *ctx,
          }
          break;
       default:
-         gl_problem(ctx, "Bad type in pack_histogram");
+         _mesa_problem(ctx, "Bad type in pack_histogram");
    }
 
 #undef PACK_MACRO
@@ -603,17 +603,17 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmax");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetMinmax");
       return;
    }
 
    if (target != GL_MINMAX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinmax(target)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmax(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetMinmax(format or type)");
       return;
    }
 
@@ -636,7 +636,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
        type != GL_UNSIGNED_INT_8_8_8_8_REV &&
        type != GL_UNSIGNED_INT_10_10_10_2 &&
        type != GL_UNSIGNED_INT_2_10_10_10_REV) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinmax(type)");
       return;
    }
 
@@ -670,17 +670,17 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogram");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetHistogram");
       return;
    }
 
    if (target != GL_HISTOGRAM) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogram(target)");
       return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogram(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetHistogram(format or type)");
       return;
    }
 
@@ -703,7 +703,7 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
        type != GL_UNSIGNED_INT_8_8_8_8_REV &&
        type != GL_UNSIGNED_INT_10_10_10_2 &&
        type != GL_UNSIGNED_INT_2_10_10_10_REV) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogram(type)");
       return;
    }
 
@@ -733,12 +733,12 @@ _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameterfv");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameterfv");
       return;
    }
 
    if (target != GL_HISTOGRAM && target != GL_PROXY_HISTOGRAM) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameterfv(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameterfv(target)");
       return;
    }
 
@@ -768,7 +768,7 @@ _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
          *params = (GLfloat) ctx->Histogram.Sink;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameterfv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameterfv(pname)");
    }
 }
 
@@ -780,12 +780,12 @@ _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameteriv");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameteriv");
       return;
    }
 
    if (target != GL_HISTOGRAM && target != GL_PROXY_HISTOGRAM) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameteriv(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameteriv(target)");
       return;
    }
 
@@ -815,7 +815,7 @@ _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
          *params = (GLint) ctx->Histogram.Sink;
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameteriv(pname)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetHistogramParameteriv(pname)");
    }
 }
 
@@ -827,11 +827,11 @@ _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameterfv");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameterfv");
       return;
    }
    if (target != GL_MINMAX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmaxParameterfv(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinmaxParameterfv(target)");
       return;
    }
    if (pname == GL_MINMAX_FORMAT) {
@@ -841,7 +841,7 @@ _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
       *params = (GLfloat) ctx->MinMax.Sink;
    }
    else {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinMaxParameterfv(pname)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinMaxParameterfv(pname)");
    }
 }
 
@@ -853,11 +853,11 @@ _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameteriv");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameteriv");
       return;
    }
    if (target != GL_MINMAX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmaxParameteriv(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinmaxParameteriv(target)");
       return;
    }
    if (pname == GL_MINMAX_FORMAT) {
@@ -867,7 +867,7 @@ _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
       *params = (GLint) ctx->MinMax.Sink;
    }
    else {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetMinMaxParameteriv(pname)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetMinMaxParameteriv(pname)");
    }
 }
 
@@ -881,12 +881,12 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* sideeffects */
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glHistogram");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glHistogram");
       return;
    }
 
    if (target != GL_HISTOGRAM && target != GL_PROXY_HISTOGRAM) {
-      gl_error(ctx, GL_INVALID_ENUM, "glHistogram(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glHistogram(target)");
       return;
    }
 
@@ -896,9 +896,9 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       }
       else {
          if (width < 0)
-            gl_error(ctx, GL_INVALID_VALUE, "glHistogram(width)");
+            _mesa_error(ctx, GL_INVALID_VALUE, "glHistogram(width)");
          else
-            gl_error(ctx, GL_TABLE_TOO_LARGE, "glHistogram(width)");
+            _mesa_error(ctx, GL_TABLE_TOO_LARGE, "glHistogram(width)");
          return;
       }
    }
@@ -908,7 +908,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
          error = GL_TRUE;
       }
       else {
-         gl_error(ctx, GL_INVALID_VALUE, "glHistogram(width)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glHistogram(width)");
          return;
       }
    }
@@ -918,7 +918,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
          error = GL_TRUE;
       }
       else {
-         gl_error(ctx, GL_INVALID_ENUM, "glHistogram(internalFormat)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glHistogram(internalFormat)");
          return;
       }
    }
@@ -962,17 +962,17 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glMinmax");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glMinmax");
       return;
    }
 
    if (target != GL_MINMAX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glMinMax(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMinMax(target)");
       return;
    }
 
    if (base_histogram_format(internalFormat) < 0) {
-      gl_error(ctx, GL_INVALID_ENUM, "glMinMax(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMinMax(internalFormat)");
       return;
    }
    
@@ -991,12 +991,12 @@ _mesa_ResetHistogram(GLenum target)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* sideeffects */
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glResetHistogram");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glResetHistogram");
       return;
    }
 
    if (target != GL_HISTOGRAM) {
-      gl_error(ctx, GL_INVALID_ENUM, "glResetHistogram(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glResetHistogram(target)");
       return;
    }
 
@@ -1018,12 +1018,12 @@ _mesa_ResetMinmax(GLenum target)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glResetMinmax");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glResetMinmax");
       return;
    }
 
    if (target != GL_MINMAX) {
-      gl_error(ctx, GL_INVALID_ENUM, "glResetMinMax(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glResetMinMax(target)");
       return;
    }
 

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.10 2001/02/20 16:42:26 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.11 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,7 +130,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          rowLength = width;
 
       /* If we're not using pixel zoom then do all clipping calculations
-       * now.  Otherwise, we'll let the gl_write_zoomed_*_span() functions
+       * now.  Otherwise, we'll let the _mesa_write_zoomed_*_span() functions
        * handle the clipping.
        */
       if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -230,7 +230,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                /* with zooming */
                GLint row;
                for (row=0; row<drawHeight; row++) {
-                  gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
+                  _mesa_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
                                             zSpan, 0, (void *) src, zoomY0);
                   src += rowLength * 4;
                   destY++;
@@ -267,7 +267,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                /* with zooming */
                GLint row;
                for (row=0; row<drawHeight; row++) {
-                  gl_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
+                  _mesa_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
                                            zSpan, 0, (void *) src, zoomY0);
                   src += rowLength * 3;
                   destY++;
@@ -326,7 +326,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      rgb[i][1] = src[i];
                      rgb[i][2] = src[i];
 		  }
-                  gl_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
+                  _mesa_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
                                            zSpan, 0, (void *) rgb, zoomY0);
                   src += rowLength;
                   destY++;
@@ -391,7 +391,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      rgba[i][2] = *ptr++;
                      rgba[i][3] = *ptr++;
 		  }
-                  gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
+                  _mesa_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
                                             zSpan, 0, (void *) rgba, zoomY0);
                   src += rowLength*2;
                   destY++;
@@ -438,7 +438,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                for (row=0; row<drawHeight; row++) {
                   ASSERT(drawWidth < MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
-                  gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
+                  _mesa_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
                                             zSpan, 0, (void *) rgba, zoomY0);
                   src += rowLength;
                   destY++;
@@ -512,10 +512,10 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                               type, source, &ctx->Unpack,
                               ctx->_ImageTransferState);
       if (zoom) {
-         gl_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, desty);
+         _mesa_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, desty);
       }
       else {
-         gl_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, GL_BITMAP);
+         _mesa_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, GL_BITMAP);
       }
    }
 }
@@ -543,7 +543,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
        type != GL_UNSIGNED_INT &&
        type != GL_FLOAT &&
        type != GL_BITMAP) {
-      gl_error( ctx, GL_INVALID_ENUM, "glDrawPixels(stencil type)");
+      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(stencil type)");
       return;
    }
 
@@ -566,7 +566,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       }
 
       if (zoom) {
-         gl_write_zoomed_stencil_span( ctx, (GLuint) drawWidth, x, y,
+         _mesa_write_zoomed_stencil_span( ctx, (GLuint) drawWidth, x, y,
                                        values, desty );
       }
       else {
@@ -599,7 +599,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
        && type != GL_INT
        && type != GL_UNSIGNED_INT
        && type != GL_FLOAT) {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawPixels(type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(type)");
       return;
    }
 
@@ -636,7 +636,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < width; i++)
             zspan[i] = zptr[i];
-         gl_write_rgba_span( ctx, width, x, y, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, x, y, zspan, 0, rgba, GL_BITMAP );
       }
    }
    else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
@@ -646,7 +646,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       for (row = 0; row < height; row++, y++) {
          const GLuint *zptr = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         gl_write_rgba_span( ctx, width, x, y, zptr, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, x, y, zptr, 0, rgba, GL_BITMAP );
       }
    }
    else {
@@ -670,20 +670,20 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
          if (ctx->Visual.rgbMode) {
             if (zoom) {
-               gl_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
+               _mesa_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
                                          (const GLchan (*)[4]) rgba, desty);
             }
             else {
-               gl_write_rgba_span(ctx, width, x, y, zspan, 0, rgba, GL_BITMAP);
+               _mesa_write_rgba_span(ctx, width, x, y, zspan, 0, rgba, GL_BITMAP);
             }
          }
          else {
             if (zoom) {
-               gl_write_zoomed_index_span(ctx, width, x, y, zspan, 0,
+               _mesa_write_zoomed_index_span(ctx, width, x, y, zspan, 0,
                                           ispan, GL_BITMAP);
             }
             else {
-               gl_write_index_span(ctx, width, x, y, zspan, 0,
+               _mesa_write_index_span(ctx, width, x, y, zspan, 0,
 				   ispan, GL_BITMAP);
             }
          }
@@ -710,7 +710,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    GLuint transferOps = ctx->_ImageTransferState;
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
       return;
    }
 
@@ -750,13 +750,13 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
       tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
          return;
       }
       convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
          FREE(tmpImage);
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
          return;
       }
 
@@ -832,11 +832,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                           (CONST GLchan (*)[]) rgba, NULL);
          }
          else if (zoom) {
-            gl_write_zoomed_rgba_span( ctx, width, x, y, zspan, 0,
+            _mesa_write_zoomed_rgba_span( ctx, width, x, y, zspan, 0,
 				       (CONST GLchan (*)[]) rgba, desty );
          }
          else {
-            gl_write_rgba_span( ctx, (GLuint) width, x, y, zspan, 0,
+            _mesa_write_rgba_span( ctx, (GLuint) width, x, y, zspan, 0,
 				rgba, GL_BITMAP);
          }
       }
@@ -892,7 +892,7 @@ _swrast_DrawPixels( GLcontext *ctx,
       draw_rgba_pixels(ctx, x, y, width, height, format, type, pixels);
       break;
    default:
-      gl_error( ctx, GL_INVALID_ENUM, "glDrawPixels(format)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(format)" );
    }
 }
 

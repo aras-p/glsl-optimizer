@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.3 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: t_vb_vertex.c,v 1.4 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -176,8 +176,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	    VB->ClipPtr = VB->ObjPtr;
 	 }
 	 if (VB->ClipPtr->size == 2) 
-	    gl_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
-	 gl_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
+	    _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
       }
 
       /* Cliptest and perspective divide.  Clip functions must clear
@@ -267,9 +267,9 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
    
-   gl_vector4f_alloc( &store->eye, 0, size, 32 );
-   gl_vector4f_alloc( &store->clip, 0, size, 32 );
-   gl_vector4f_alloc( &store->proj, 0, size, 32 );  
+   _mesa_vector4f_alloc( &store->eye, 0, size, 32 );
+   _mesa_vector4f_alloc( &store->clip, 0, size, 32 );
+   _mesa_vector4f_alloc( &store->proj, 0, size, 32 );  
 
    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
@@ -290,9 +290,9 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct vertex_stage_data *store = VERTEX_STAGE_DATA(stage);
 
    if (store) {
-      gl_vector4f_free( &store->eye );
-      gl_vector4f_free( &store->clip );
-      gl_vector4f_free( &store->proj );
+      _mesa_vector4f_free( &store->eye );
+      _mesa_vector4f_free( &store->clip );
+      _mesa_vector4f_free( &store->proj );
       ALIGN_FREE( store->clipmask );
       FREE(store);
       stage->private = 0;

@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.11 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: texutil.c,v 1.12 2001/03/03 20:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1642,7 +1642,7 @@ _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
          }
          break;
       default:
-         gl_problem(NULL, "bad srcFormat in _mesa_uncovert_teximage()");
+         _mesa_problem(NULL, "bad srcFormat in _mesa_uncovert_teximage()");
    }
 }
 
@@ -1683,5 +1683,5 @@ _mesa_set_teximage_component_sizes(MesaIntTexFormat mesaFormat,
          return;
       }
    }
-   gl_problem(NULL, "bad format in _mesa_set_teximage_component_sizes");
+   _mesa_problem(NULL, "bad format in _mesa_set_teximage_component_sizes");
 }

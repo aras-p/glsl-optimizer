@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.8 2001/01/03 22:55:26 brianp Exp $ */
+/* $Id: s_fog.c,v 1.9 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -234,7 +234,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
          }
 	 break;
       default:
-         gl_problem(ctx, "Bad fog mode in _mesa_win_fog_coords_from_z");
+         _mesa_problem(ctx, "Bad fog mode in _mesa_win_fog_coords_from_z");
          return;
    }
 }

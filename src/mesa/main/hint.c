@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.7 2001/01/24 04:56:20 brianp Exp $ */
+/* $Id: hint.c,v 1.8 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,10 +50,10 @@ GLboolean
 _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 {
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glHint %s %d\n", gl_lookup_enum_by_nr(target), mode);
+      fprintf(stderr, "glHint %s %d\n", _mesa_lookup_enum_by_nr(target), mode);
 
    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
-      gl_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
       return GL_FALSE;
    }
 
@@ -100,7 +100,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
-            gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
 	    return GL_TRUE;
          }
 	 if (ctx->Hint.TextureCompression == mode)
@@ -110,7 +110,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
          break;
 
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
          return GL_FALSE;
    }
 

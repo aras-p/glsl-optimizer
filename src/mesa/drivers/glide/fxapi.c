@@ -674,7 +674,7 @@ void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext fxMesa)
 
   /* The first time we call MakeCurrent we set the initial viewport size */
   if(fxMesa->glCtx->Viewport.Width==0)
-    gl_Viewport(fxMesa->glCtx,0,0,fxMesa->width,fxMesa->height);
+    _mesa_set_viewport(fxMesa->glCtx,0,0,fxMesa->width,fxMesa->height);
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxMesaMakeCurrent(...) End\n");

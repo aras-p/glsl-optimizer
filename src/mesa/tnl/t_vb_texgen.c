@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.2 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: t_vb_texgen.c,v 1.3 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -270,7 +270,7 @@ static void texgen_reflection_map_nv( GLcontext *ctx,
       out->count = in->count;
       out->size = MAX2(in->size, 3);
       if (in->size == 4) 
-	 gl_copy_tab[0][0x8](out, in, 0);
+	 _mesa_copy_tab[0][0x8](out, in, 0);
    } 
    else {
       out->flags |= VEC_SIZE_3;
@@ -307,7 +307,7 @@ static void texgen_normal_map_nv( GLcontext *ctx,
       out->count = in->count;
       out->size = MAX2(in->size, 3);
       if (in->size == 4) 
-	 gl_copy_tab[0][0x8](out, in, 0);
+	 _mesa_copy_tab[0][0x8](out, in, 0);
    } 
    else {
       out->flags |= VEC_SIZE_3;
@@ -345,7 +345,7 @@ static void texgen_sphere_map( GLcontext *ctx,
       out->count = in->count;
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | VEC_SIZE_2;
       if (in->size > 2) 
-	 gl_copy_tab[0][all_bits[in->size] & ~0x3](out, in, 0);
+	 _mesa_copy_tab[0][all_bits[in->size] & ~0x3](out, in, 0);
    } else {
       out->size = 2;
       out->flags |= VEC_SIZE_2;
@@ -394,7 +394,7 @@ static void texgen( GLcontext *ctx,
    else {
       GLuint copy = (all_bits[in->size] & ~texUnit->TexGenEnabled);
       if (copy)
-	 gl_copy_tab[0][copy](out, in, 0);
+	 _mesa_copy_tab[0][copy](out, in, 0);
 
       out->size = MAX2(in->size, store->TexgenSize[unit]);
       out->flags |= (in->flags & VEC_SIZE_FLAGS) | texUnit->TexGenEnabled;
@@ -404,9 +404,9 @@ static void texgen( GLcontext *ctx,
    }
 
    if (holes) {
-      if (holes & VEC_DIRTY_2) gl_vector4f_clean_elem(out, count, 2);
-      if (holes & VEC_DIRTY_1) gl_vector4f_clean_elem(out, count, 1);
-      if (holes & VEC_DIRTY_0) gl_vector4f_clean_elem(out, count, 0);
+      if (holes & VEC_DIRTY_2) _mesa_vector4f_clean_elem(out, count, 2);
+      if (holes & VEC_DIRTY_1) _mesa_vector4f_clean_elem(out, count, 1);
+      if (holes & VEC_DIRTY_0) _mesa_vector4f_clean_elem(out, count, 0);
    }
 
    if (texUnit->TexGenEnabled & S_BIT) {
@@ -438,7 +438,7 @@ static void texgen( GLcontext *ctx,
 	 break;
       }
       default:
-	 gl_problem(ctx, "Bad S texgen");
+	 _mesa_problem(ctx, "Bad S texgen");
       }
    } 
 
@@ -471,7 +471,7 @@ static void texgen( GLcontext *ctx,
 	 break;
       }
       default:
-	 gl_problem(ctx, "Bad T texgen");
+	 _mesa_problem(ctx, "Bad T texgen");
       }
    }
 
@@ -500,7 +500,7 @@ static void texgen( GLcontext *ctx,
 	 break;
       }
       default:
-	 gl_problem(ctx, "Bad R texgen");
+	 _mesa_problem(ctx, "Bad R texgen");
       }
    }
 
@@ -517,7 +517,7 @@ static void texgen( GLcontext *ctx,
 					texUnit->EyePlaneQ, 0);
 	 break;
       default:
-	 gl_problem(ctx, "Bad Q texgen");
+	 _mesa_problem(ctx, "Bad Q texgen");
       }
    }
 }
@@ -646,7 +646,7 @@ static GLboolean alloc_texgen_data( GLcontext *ctx,
       return GL_FALSE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      gl_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
+      _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
 
    store->tmp_f = (GLfloat (*)[3]) MALLOC(VB->Size * sizeof(GLfloat) * 3);
    store->tmp_m = (GLfloat *) MALLOC(VB->Size * sizeof(GLfloat));
@@ -667,7 +667,7 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
    if (store) {
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
 	 if (store->texcoord[i].data) 
-	    gl_vector4f_free( &store->texcoord[i] );
+	    _mesa_vector4f_free( &store->texcoord[i] );
 
       
       if (store->tmp_f) FREE( store->tmp_f );

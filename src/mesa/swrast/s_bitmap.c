@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       }
    }
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 

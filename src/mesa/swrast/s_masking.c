@@ -1,4 +1,4 @@
-/* $Id: s_masking.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_masking.c,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@ _mesa_mask_rgba_span( GLcontext *ctx,
    GLuint *rgba32 = (GLuint *) rgba;
    GLuint *dest32 = (GLuint *) dest;
 
-   gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
    for (i = 0; i < n; i++) {
       rgba32[i] = (rgba32[i] & srcMask) | (dest32[i] & dstMask);
    }
@@ -70,7 +70,7 @@ _mesa_mask_rgba_span( GLcontext *ctx,
    const GLint bMask = ctx->Color.ColorMask[BCOMP];
    const GLint aMask = ctx->Color.ColorMask[ACOMP];
 
-   gl_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
    for (i = 0; i < n; i++) {
       if (!rMask)  rgba[i][RCOMP] = dest[i][RCOMP];
       if (!gMask)  rgba[i][GCOMP] = dest[i][GCOMP];
@@ -145,7 +145,7 @@ _mesa_mask_index_span( GLcontext *ctx,
    GLuint fbindexes[MAX_WIDTH];
    GLuint msrc, mdest;
 
-   gl_read_index_span( ctx, ctx->DrawBuffer, n, x, y, fbindexes );
+   _mesa_read_index_span( ctx, ctx->DrawBuffer, n, x, y, fbindexes );
 
    msrc = ctx->Color.IndexMask;
    mdest = ~msrc;

@@ -1000,7 +1000,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
    GLboolean success;
 
    if (!fxIsTexSupported(target, internalFormat, texImage)) {
-      gl_problem(NULL, "fx Driver: unsupported texture in fxDDTexImg()\n");
+      _mesa_problem(NULL, "fx Driver: unsupported texture in fxDDTexImg()\n");
       return;
    }
 
@@ -1112,7 +1112,7 @@ fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
       mesaFormat = MESA_A1_R5_G5_B5;
       break;
    default:
-      gl_problem(NULL, "tdfx driver: texbuildimagemap() bad format");
+      _mesa_problem(NULL, "tdfx driver: texbuildimagemap() bad format");
       return;
    }
 
@@ -1199,7 +1199,7 @@ fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
    MesaIntTexFormat mesaFormat;
 
    if (!texObj->DriverData) {
-      gl_problem(ctx, "problem in fxDDTexSubImage2D");
+      _mesa_problem(ctx, "problem in fxDDTexSubImage2D");
       return;
    }
 
@@ -1240,7 +1240,7 @@ fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
       mesaFormat = MESA_A1_R5_G5_B5;
       break;
    default:
-      gl_problem(NULL, "tdfx driver: fxTexBuildSubImageMap() bad format");
+      _mesa_problem(NULL, "tdfx driver: fxTexBuildSubImageMap() bad format");
       return;
    }
 

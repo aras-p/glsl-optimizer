@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.13 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.14 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,8 +106,8 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    if (flag & VERT_RGBA) {
       COPY_4UBV(ctx->Current.Color, IM->Color[count]);
       if (ctx->Light.ColorMaterialEnabled) {
-	 gl_update_color_material( ctx, ctx->Current.Color );
-	 gl_validate_all_lighting_tables( ctx );
+	 _mesa_update_color_material( ctx, ctx->Current.Color );
+	 _mesa_validate_all_lighting_tables( ctx );
       }
    }
 
@@ -127,11 +127,11 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    }
 
    if (flag & VERT_MATERIAL) {
-      gl_update_material( ctx, 
+      _mesa_update_material( ctx, 
 			  IM->Material[IM->LastMaterial], 
 			  IM->MaterialOrMask );
       
-      gl_validate_all_lighting_tables( ctx );
+      _mesa_validate_all_lighting_tables( ctx );
    }
 }
 
@@ -470,16 +470,16 @@ void _tnl_imm_init( GLcontext *ctx )
 
    TNL_CURRENT_IM(ctx)->CopyStart = IMM_MAX_COPIED_VERTS;
 
-   gl_vector4f_init( &tmp->Obj, 0, 0 );
-   gl_vector3f_init( &tmp->Normal, 0, 0 );
-   gl_vector4chan_init( &tmp->Color, 0, 0 );
-   gl_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
-   gl_vector1f_init( &tmp->FogCoord, 0, 0 );
-   gl_vector1ui_init( &tmp->Index, 0, 0 );
-   gl_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
+   _mesa_vector4f_init( &tmp->Obj, 0, 0 );
+   _mesa_vector3f_init( &tmp->Normal, 0, 0 );
+   _mesa_vector4chan_init( &tmp->Color, 0, 0 );
+   _mesa_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
+   _mesa_vector1f_init( &tmp->FogCoord, 0, 0 );
+   _mesa_vector1ui_init( &tmp->Index, 0, 0 );
+   _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
 
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) 
-      gl_vector4f_init( &tmp->TexCoord[i], 0, 0);
+      _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
 
    /* Install the first immediate.  Intially outside begin/end.
     */

@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.2 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: s_span.h,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,26 +36,26 @@
 #include "swrast.h"
 
 
-extern void gl_write_index_span( GLcontext *ctx,
+extern void _mesa_write_index_span( GLcontext *ctx,
                                  GLuint n, GLint x, GLint y, const GLdepth z[],
 				 const GLfixed fog[],
 				 GLuint index[], GLenum primitive );
 
 
-extern void gl_write_monoindex_span( GLcontext *ctx,
+extern void _mesa_write_monoindex_span( GLcontext *ctx,
                                      GLuint n, GLint x, GLint y,
                                      const GLdepth z[],
 				     const GLfixed fog[],
 				     GLuint index, GLenum primitive );
 
 
-extern void gl_write_rgba_span( GLcontext *ctx,
+extern void _mesa_write_rgba_span( GLcontext *ctx,
                                 GLuint n, GLint x, GLint y, const GLdepth z[],
 				const GLfixed fog[],
                                 GLchan rgba[][4], GLenum primitive );
 
 
-extern void gl_write_monocolor_span( GLcontext *ctx,
+extern void _mesa_write_monocolor_span( GLcontext *ctx,
                                      GLuint n, GLint x, GLint y,
                                      const GLdepth z[],
 				     const GLfixed fog[],
@@ -63,7 +63,7 @@ extern void gl_write_monocolor_span( GLcontext *ctx,
                                      GLenum primitive );
 
 
-extern void gl_write_texture_span( GLcontext *ctx,
+extern void _mesa_write_texture_span( GLcontext *ctx,
                                    GLuint n, GLint x, GLint y,
                                    const GLdepth z[],
 				   const GLfixed fog[],
@@ -74,7 +74,7 @@ extern void gl_write_texture_span( GLcontext *ctx,
 
 
 extern void
-gl_write_multitexture_span( GLcontext *ctx,
+_mesa_write_multitexture_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y,
                             const GLdepth z[],
 			    const GLfixed fog[],
@@ -87,12 +87,12 @@ gl_write_multitexture_span( GLcontext *ctx,
                             GLenum primitive );
 
 
-extern void gl_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
+extern void _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
                                GLuint n, GLint x, GLint y,
                                GLchan rgba[][4] );
 
 
-extern void gl_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
+extern void _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
                                 GLuint n, GLint x, GLint y, GLuint indx[] );
 
 

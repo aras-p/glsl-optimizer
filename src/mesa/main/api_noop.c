@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.4 2001/01/24 00:04:58 brianp Exp $ */
+/* $Id: api_noop.c,v 1.5 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,12 +102,12 @@ void _mesa_noop_Normal3fv( const GLfloat *v )
    COPY_FLOAT(dest[2], v[2]);
 }
 
-void _mesa_noop_Materialfv(  GLenum face, GLenum pname, const GLfloat *params )
+void _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_material mat[2];
-   GLuint bitmask = gl_material_bitmask( ctx, face, pname, ~0, 
-					 "_mesa_noop_Materialfv" );
+   GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0, 
+                                            "_mesa_noop_Materialfv" );
    if (bitmask == 0)
       return;
 
@@ -154,7 +154,7 @@ void _mesa_noop_Materialfv(  GLenum face, GLenum pname, const GLfloat *params )
       mat[1].SpecularIndex = params[2];
    }
 
-   gl_update_material( ctx, mat, bitmask );
+   _mesa_update_material( ctx, mat, bitmask );
 }
 
 void _mesa_noop_Color4ub( GLubyte a, GLubyte b, GLubyte c, GLubyte d )
@@ -565,7 +565,7 @@ void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
 	 glArrayElement( ((GLuint *)indices)[i] );
       break;
    default:
-      gl_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
 

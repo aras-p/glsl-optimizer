@@ -1,5 +1,5 @@
 
-/* $Id: api_validate.c,v 1.3 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: api_validate.c,v 1.4 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,13 +41,13 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 
    if (count <= 0) {
       if (count < 0)
-	 gl_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
       return GL_FALSE;
    }
 
    if (mode < 0 || 
        mode > GL_POLYGON) {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
 
@@ -55,12 +55,12 @@ _mesa_validate_DrawElements(GLcontext *ctx,
        type != GL_UNSIGNED_BYTE && 
        type != GL_UNSIGNED_SHORT)
    {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       return GL_FALSE;
    }
 
    if (ctx->NewState)
-      gl_update_state( ctx );
+      _mesa_update_state( ctx );
 
    if (!ctx->Array.Vertex.Enabled)
       return GL_FALSE;
@@ -79,17 +79,17 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 
    if (count <= 0) {
       if (count < 0)
-	 gl_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
+	 _mesa_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
       return GL_FALSE;
    }
 
    if (mode < 0 || mode > GL_POLYGON) {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
 
    if (end < start) {
-      gl_error(ctx, GL_INVALID_VALUE, "glDrawRangeElements(end<start)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawRangeElements(end<start)");
       return GL_FALSE;
    }
 
@@ -97,12 +97,12 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
        type != GL_UNSIGNED_BYTE && 
        type != GL_UNSIGNED_SHORT)
    {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       return GL_FALSE;
    }
 
    if (ctx->NewState)
-      gl_update_state( ctx );
+      _mesa_update_state( ctx );
 
    if (!ctx->Array.Vertex.Enabled)
       return GL_FALSE;
@@ -119,17 +119,17 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE); 
 
    if (count<0) {
-      gl_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count)" );
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count)" );
       return GL_FALSE;
    }
 
    if (mode < 0 || mode > GL_POLYGON) {
-      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
 
    if (ctx->NewState)
-      gl_update_state( ctx );
+      _mesa_update_state( ctx );
 
    if (!ctx->Array.Vertex.Enabled) 
       return GL_FALSE;

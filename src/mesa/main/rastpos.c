@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.20 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: rastpos.c,v 1.21 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -247,7 +247,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    FLUSH_CURRENT(ctx, 0);
 
    if (ctx->NewState)
-      gl_update_state( ctx );
+      _mesa_update_state( ctx );
 
    ASSIGN_4V( v, x, y, z, w );
    TRANSFORM_POINT( eye, ctx->ModelView.m, v );
@@ -331,7 +331,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    }
 
    if (ctx->RenderMode==GL_SELECT) {
-      gl_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+      _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
    }
 
 }

@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.7 2001/02/16 23:29:14 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.8 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,7 @@ read_index_pixels( GLcontext *ctx,
 
    /* error checking */
    if (ctx->Visual.rgbMode) {
-      gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
    }
 
@@ -100,7 +100,7 @@ read_depth_pixels( GLcontext *ctx,
    /* Error checking */
    if (ctx->Visual.depthBits <= 0) {
       /* No depth buffer */
-      gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
    }
 
@@ -113,7 +113,7 @@ read_depth_pixels( GLcontext *ctx,
        type != GL_INT &&
        type != GL_UNSIGNED_INT &&
        type != GL_FLOAT) {
-      gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels(depth type)");
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(depth type)");
       return;
    }
 
@@ -179,7 +179,7 @@ read_stencil_pixels( GLcontext *ctx,
        type != GL_UNSIGNED_INT &&
        type != GL_FLOAT &&
        type != GL_BITMAP) {
-      gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels(stencil type)");
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(stencil type)");
       return;
    }
 
@@ -187,7 +187,7 @@ read_stencil_pixels( GLcontext *ctx,
 
    if (ctx->Visual.stencilBits <= 0) {
       /* No stencil buffer */
-      gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
    }
 
@@ -350,13 +350,13 @@ read_rgba_pixels( GLcontext *ctx,
          /* valid pixel type */
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
          return;
    }
 
    if (!_mesa_is_legal_format_and_type(format, type) ||
        format == GL_INTENSITY) {
-      gl_error(ctx, GL_INVALID_OPERATION, "glReadPixels(format or type)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(format or type)");
       return;
    }
 
@@ -367,13 +367,13 @@ read_rgba_pixels( GLcontext *ctx,
 
       tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
       convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
          FREE(tmpImage);
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
 
@@ -382,7 +382,7 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
          if (ctx->Visual.rgbMode) {
-            gl_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
+            _mesa_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];
@@ -428,7 +428,7 @@ read_rgba_pixels( GLcontext *ctx,
          GLchan rgba[MAX_WIDTH][4];
          GLvoid *dst;
          if (ctx->Visual.rgbMode) {
-            gl_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
+            _mesa_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];
@@ -506,6 +506,6 @@ _swrast_ReadPixels( GLcontext *ctx,
                           format, type, pixels, &ctx->Pack);
 	 break;
       default:
-	 gl_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(format)" );
    }
 }

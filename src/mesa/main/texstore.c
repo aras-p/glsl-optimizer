@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.8 2001/02/21 16:02:27 brianp Exp $ */
+/* $Id: texstore.c,v 1.9 2001/03/03 20:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,7 +132,7 @@ fetch_1d_texel(const struct gl_texture_image *img,
          return;
       }
    default:
-      gl_problem(NULL, "Bad format in fetch_1d_texel");
+      _mesa_problem(NULL, "Bad format in fetch_1d_texel");
    }
 }
 
@@ -217,7 +217,7 @@ fetch_2d_texel(const struct gl_texture_image *img,
          return;
       }
    default:
-      gl_problem(NULL, "Bad format in fetch_2d_texel");
+      _mesa_problem(NULL, "Bad format in fetch_2d_texel");
    }
 }
 
@@ -313,7 +313,7 @@ fetch_3d_texel(const struct gl_texture_image *img,
          return;
       }
    default:
-      gl_problem(NULL, "Bad format in fetch_3d_texel");
+      _mesa_problem(NULL, "Bad format in fetch_3d_texel");
    }
 }
 
@@ -443,7 +443,7 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
          texImage->DepthBits = 8 * sizeof(GLfloat);
          break;
       default:
-         gl_problem(NULL, "unexpected format in set_teximage_component_sizes");
+         _mesa_problem(NULL, "unexpected format in set_teximage_component_sizes");
    }
 }
 
@@ -687,12 +687,12 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
          GLfloat *tmpImage, *convImage;
          tmpImage = (GLfloat *) MALLOC(srcWidth * srcHeight * 4 * sizeof(GLfloat));
          if (!tmpImage) {
-            gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
             return;
          }
          convImage = (GLfloat *) MALLOC(srcWidth * srcHeight * 4 * sizeof(GLfloat));
          if (!convImage) {
-            gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
             FREE(tmpImage);
             return;
          }
@@ -1029,7 +1029,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    dst = image;
    stride = width * 4;
    for (i = 0; i < height; i++) {
-      gl_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
+      _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
                          (GLchan (*)[4]) dst );
       dst += stride;
    }
@@ -1112,7 +1112,7 @@ _mesa_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
          return;
       }
 
@@ -1127,7 +1127,7 @@ _mesa_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
       /* read RGBA image from framebuffer */
       GLchan *image = read_color_image(ctx, x, y, width, 1);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
          return;
       }
 
@@ -1166,7 +1166,7 @@ _mesa_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
          return;
       }
 
@@ -1181,7 +1181,7 @@ _mesa_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
       /* read RGBA image from framebuffer */
       GLchan *image = read_color_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
          return;
       }
 
@@ -1218,7 +1218,7 @@ _mesa_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
          return;
       }
 
@@ -1231,7 +1231,7 @@ _mesa_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
    else {
       GLchan *image = read_color_image(ctx, x, y, width, 1);
       if (!image) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
          return;
       }
 
@@ -1269,7 +1269,7 @@ _mesa_copy_texsubimage2d( GLcontext *ctx,
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
          return;
       }
 
@@ -1284,7 +1284,7 @@ _mesa_copy_texsubimage2d( GLcontext *ctx,
       /* read RGBA image from framebuffer */
       GLchan *image = read_color_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
          return;
       }
 
@@ -1323,7 +1323,7 @@ _mesa_copy_texsubimage3d( GLcontext *ctx,
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
          return;
       }
 
@@ -1338,7 +1338,7 @@ _mesa_copy_texsubimage3d( GLcontext *ctx,
       /* read RGBA image from framebuffer */
       GLchan *image = read_color_image(ctx, x, y, width, height);
       if (!image) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
          return;
       }
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.9 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.10 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,7 +138,7 @@ static GLboolean run_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	    ASSERT((input->flags & VEC_NOT_WRITEABLE) == 0);
 	 }
 
-	 gl_vector4f_clean_elem(input, VB->Count, 2);
+	 _mesa_vector4f_clean_elem(input, VB->Count, 2);
       }
    }
       
@@ -191,7 +191,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 
    /* This and the above should only be done on _NEW_LIGHT:
     */
-   gl_validate_all_lighting_tables( ctx );
+   _mesa_validate_all_lighting_tables( ctx );
 
    /* Now run the stage...
     */
@@ -218,12 +218,12 @@ static GLboolean run_init_lighting( GLcontext *ctx,
     */
    init_lighting();
 
-   gl_vector4chan_alloc( &store->LitColor[0], 0, size, 32 );
-   gl_vector4chan_alloc( &store->LitColor[1], 0, size, 32 );
-   gl_vector4chan_alloc( &store->LitSecondary[0], 0, size, 32 );
-   gl_vector4chan_alloc( &store->LitSecondary[1], 0, size, 32 );
-   gl_vector1ui_alloc( &store->LitIndex[0], 0, size, 32 );
-   gl_vector1ui_alloc( &store->LitIndex[1], 0, size, 32 );
+   _mesa_vector4chan_alloc( &store->LitColor[0], 0, size, 32 );
+   _mesa_vector4chan_alloc( &store->LitColor[1], 0, size, 32 );
+   _mesa_vector4chan_alloc( &store->LitSecondary[0], 0, size, 32 );
+   _mesa_vector4chan_alloc( &store->LitSecondary[1], 0, size, 32 );
+   _mesa_vector1ui_alloc( &store->LitIndex[0], 0, size, 32 );
+   _mesa_vector1ui_alloc( &store->LitIndex[1], 0, size, 32 );
 
    /* Now validate the stage derived data...
     */
@@ -261,12 +261,12 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-      gl_vector4chan_free( &store->LitColor[0] );      
-      gl_vector4chan_free( &store->LitColor[1] );      
-      gl_vector4chan_free( &store->LitSecondary[0] );  
-      gl_vector4chan_free( &store->LitSecondary[1] );  
-      gl_vector1ui_free( &store->LitIndex[0] );      
-      gl_vector1ui_free( &store->LitIndex[1] );      
+      _mesa_vector4chan_free( &store->LitColor[0] );      
+      _mesa_vector4chan_free( &store->LitColor[1] );      
+      _mesa_vector4chan_free( &store->LitSecondary[0] );  
+      _mesa_vector4chan_free( &store->LitSecondary[1] );  
+      _mesa_vector1ui_free( &store->LitIndex[0] );      
+      _mesa_vector1ui_free( &store->LitIndex[1] );      
       FREE( store );
       stage->private = 0;
    }

@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.32 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: fog.c,v 1.33 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 case GL_EXP2:
 	    break;
 	 default:
-	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
+	    _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
             return;
 	 }
 	 if (ctx->Fog.Mode == m)
@@ -105,7 +105,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 break;
       case GL_FOG_DENSITY:
 	 if (*params<0.0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glFog" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glFog" );
             return;
 	 }
 	 if (ctx->Fog.Density == *params)
@@ -143,7 +143,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum)(GLint) *params;
 	 if (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT) {
-	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
+	    _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
 	    return;
 	 }
 	 if (ctx->Fog.FogCoordinateSource == p)
@@ -153,7 +153,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 break;
       }
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glFog" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glFog" );
          return;
    }
 

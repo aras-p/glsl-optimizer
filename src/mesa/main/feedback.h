@@ -1,4 +1,4 @@
-/* $Id: feedback.h,v 1.5 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: feedback.h,v 1.6 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,14 +39,14 @@
 	CTX->Feedback.Count++;
 
 
-extern void gl_feedback_vertex( GLcontext *ctx,
+extern void _mesa_feedback_vertex( GLcontext *ctx,
                                 const GLfloat win[4],
                                 const GLfloat color[4],
 				GLuint index,
                                 const GLfloat texcoord[4] );
 
 
-extern void gl_update_hitflag( GLcontext *ctx, GLfloat z );
+extern void _mesa_update_hitflag( GLcontext *ctx, GLfloat z );
 
 
 extern void

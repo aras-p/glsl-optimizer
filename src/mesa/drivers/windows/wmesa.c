@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.13 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: wmesa.c,v 1.14 2001/03/03 20:33:29 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -1355,7 +1355,7 @@ void /*APIENTRY*/ WMesaMakeCurrent( WMesaContext c )
     Current = c;
     if (Current->gl_ctx->Viewport.Width==0) {
         /* initialize viewport to window size */
-        gl_Viewport( Current->gl_ctx,
+        _mesa_set_viewport( Current->gl_ctx,
             0, 0, Current->width, Current->height );
     }
     if ((c->cColorBits <= 8 ) && (c->rgb_flag == GL_TRUE)){

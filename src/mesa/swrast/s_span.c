@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.9 2001/02/20 16:42:26 brianp Exp $ */
+/* $Id: s_span.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,7 +177,7 @@ static void multi_write_index_span( GLcontext *ctx, GLuint n,
  *         index - array of [n] color indexes
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON, or GL_BITMAP
  */
-void gl_write_index_span( GLcontext *ctx,
+void _mesa_write_index_span( GLcontext *ctx,
                           GLuint n, GLint x, GLint y, const GLdepth z[],
 			  const GLfixed fog[],
 			  GLuint indexIn[], GLenum primitive )
@@ -268,7 +268,7 @@ void gl_write_index_span( GLcontext *ctx,
 
 
 
-void gl_write_monoindex_span( GLcontext *ctx,
+void _mesa_write_monoindex_span( GLcontext *ctx,
                               GLuint n, GLint x, GLint y, 
 			      const GLdepth z[],
 			      const GLfixed fog[],
@@ -441,7 +441,7 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
 
 
 
-void gl_write_rgba_span( GLcontext *ctx,
+void _mesa_write_rgba_span( GLcontext *ctx,
                          GLuint n, GLint x, GLint y, const GLdepth z[],
 			 const GLfixed *fog,
                          GLchan rgbaIn[][4],
@@ -577,7 +577,7 @@ void gl_write_rgba_span( GLcontext *ctx,
  *         r, g, b, a - the color of the pixels
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
  */
-void gl_write_monocolor_span( GLcontext *ctx,
+void _mesa_write_monocolor_span( GLcontext *ctx,
                               GLuint n, GLint x, GLint y, const GLdepth z[],
 			      const GLfixed fog[],
 			      const GLchan color[4],
@@ -760,7 +760,7 @@ static void add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
  *         rgba - array of [n] color components
  *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
  */
-void gl_write_texture_span( GLcontext *ctx,
+void _mesa_write_texture_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y, const GLdepth z[],
 			    const GLfixed fog[],
 			    const GLfloat s[], const GLfloat t[],
@@ -902,7 +902,7 @@ void gl_write_texture_span( GLcontext *ctx,
  * As above but perform multiple stages of texture application.
  */
 void
-gl_write_multitexture_span( GLcontext *ctx,
+_mesa_write_multitexture_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y,
                             const GLdepth z[],
 			    const GLfixed fog[],
@@ -1057,7 +1057,7 @@ gl_write_multitexture_span( GLcontext *ctx,
  * Read RGBA pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
-void gl_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
+void _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
                         GLuint n, GLint x, GLint y,
                         GLchan rgba[][4] )
 {
@@ -1110,7 +1110,7 @@ void gl_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
  * Read CI pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
-void gl_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
+void _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
                          GLuint n, GLint x, GLint y, GLuint indx[] )
 {
    if (y < 0 || y >= buffer->Height

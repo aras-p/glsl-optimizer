@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.25 2001/02/27 16:42:01 brianp Exp $ */
+/* $Id: pixel.c,v 1.26 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,7 +88,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_PACK_ROW_LENGTH:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.RowLength == param)
@@ -98,7 +98,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_PACK_IMAGE_HEIGHT:
          if (param<0) {
-            gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.ImageHeight == param)
@@ -108,7 +108,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
          break;
       case GL_PACK_SKIP_PIXELS:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.SkipPixels == param)
@@ -118,7 +118,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_PACK_SKIP_ROWS:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.SkipRows == param)
@@ -128,7 +128,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_PACK_SKIP_IMAGES:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.SkipImages == param)
@@ -138,7 +138,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_PACK_ALIGNMENT:
          if (param!=1 && param!=2 && param!=4 && param!=8) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Pack.Alignment == param)
@@ -164,7 +164,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_UNPACK_ROW_LENGTH:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Unpack.RowLength == param)
@@ -174,7 +174,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_UNPACK_IMAGE_HEIGHT:
          if (param<0) {
-            gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Unpack.ImageHeight == param)
@@ -185,7 +185,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
          break;
       case GL_UNPACK_SKIP_PIXELS:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Unpack.SkipPixels == param)
@@ -195,7 +195,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_UNPACK_SKIP_ROWS:
 	 if (param<0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Unpack.SkipRows == param)
@@ -205,7 +205,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_UNPACK_SKIP_IMAGES:
 	 if (param < 0) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
 	    return;
 	 }
 	 if (ctx->Unpack.SkipImages == param)
@@ -215,7 +215,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 break;
       case GL_UNPACK_ALIGNMENT:
          if (param!=1 && param!=2 && param!=4 && param!=8) {
-	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore" );
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glPixelStore" );
 	    return;
 	 }
 	 if (ctx->Unpack.Alignment == param)
@@ -224,7 +224,7 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 	 ctx->Unpack.Alignment = param;
 	 break;
       default:
-	 gl_error( ctx, GL_INVALID_ENUM, "glPixelStore" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glPixelStore" );
 	 return;
    }
 }
@@ -252,7 +252,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (mapsize<0 || mapsize>MAX_PIXEL_MAP_TABLE) {
-      gl_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
       return;
    }
 
@@ -267,7 +267,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 	 }
       }
       if (!ok) {
-	 gl_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
+	 _mesa_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
          return;
       }
    }
@@ -344,7 +344,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 	 }
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glPixelMapfv(map)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPixelMapfv(map)" );
    }
 }
 
@@ -433,7 +433,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
          MEMCPY(values,ctx->Pixel.MapAtoA,ctx->Pixel.MapAtoAsize*sizeof(GLfloat));
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
    }
 }
 
@@ -493,7 +493,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 	 }
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
    }
 }
 
@@ -557,7 +557,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
 	 }
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetPixelMapfv" );
    }
 }
 
@@ -760,7 +760,7 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
          ctx->Pixel.PostConvolutionBias[2] = param;
 	 break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
          return;
    }
 }
@@ -1043,7 +1043,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          }
          break;
       default:
-         gl_problem(NULL, "Bad format in _mesa_lookup_rgba");
+         _mesa_problem(NULL, "Bad format in _mesa_lookup_rgba");
          return;
    }
 }

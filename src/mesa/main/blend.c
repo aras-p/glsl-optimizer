@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.28 2001/02/26 22:07:03 brianp Exp $ */
+/* $Id: blend.c,v 1.29 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,14 +46,14 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendFunc %s %s\n",
-	      gl_lookup_enum_by_nr(sfactor),
-	      gl_lookup_enum_by_nr(dfactor));
+	      _mesa_lookup_enum_by_nr(sfactor),
+	      _mesa_lookup_enum_by_nr(dfactor));
 
    switch (sfactor) {
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
             return;
          }
          /* fall-through */
@@ -72,7 +72,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
          return;
    }
 
@@ -80,7 +80,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
             return;
          }
          /* fall-through */
@@ -98,7 +98,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
          return;
    }
 
@@ -127,16 +127,16 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendFuncSeperate %s %s %s %s\n",
-	      gl_lookup_enum_by_nr(sfactorRGB),
-	      gl_lookup_enum_by_nr(dfactorRGB),
-	      gl_lookup_enum_by_nr(sfactorA),
-	      gl_lookup_enum_by_nr(dfactorA));
+	      _mesa_lookup_enum_by_nr(sfactorRGB),
+	      _mesa_lookup_enum_by_nr(dfactorRGB),
+	      _mesa_lookup_enum_by_nr(sfactorA),
+	      _mesa_lookup_enum_by_nr(dfactorA));
 
    switch (sfactorRGB) {
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
             return;
          }
          /* fall-through */
@@ -155,7 +155,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
          return;
    }
 
@@ -163,7 +163,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
             return;
          }
          /* fall-through */
@@ -181,7 +181,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
          return;
    }
 
@@ -189,7 +189,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
             return;
          }
          /* fall-through */
@@ -208,7 +208,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
          return;
    }
 
@@ -216,7 +216,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
          if (!ctx->Extensions.NV_blend_square) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)");
             return;
          }
          /* fall-through */
@@ -234,7 +234,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_ALPHA:
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)" );
          return;
    }
 
@@ -268,7 +268,7 @@ _mesa_BlendEquation( GLenum mode )
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendEquation %s\n",
-	      gl_lookup_enum_by_nr(mode));
+	      _mesa_lookup_enum_by_nr(mode));
 
    switch (mode) {
       case GL_FUNC_ADD_EXT:
@@ -277,13 +277,13 @@ _mesa_BlendEquation( GLenum mode )
       case GL_MAX_EXT:
          if (!ctx->Extensions.EXT_blend_minmax &&
              !ctx->Extensions.ARB_imaging) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
          break;
       case GL_LOGIC_OP:
          if (!ctx->Extensions.EXT_blend_logic_op) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
          break;
@@ -291,12 +291,12 @@ _mesa_BlendEquation( GLenum mode )
       case GL_FUNC_REVERSE_SUBTRACT_EXT:
          if (!ctx->Extensions.EXT_blend_subtract &&
              !ctx->Extensions.ARB_imaging) {
-            gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glBlendEquation" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendEquation" );
          return;
    }
 

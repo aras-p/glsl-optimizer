@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.14 2001/03/03 00:37:27 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.15 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,7 @@
 #include "s_span.h"
 #include "s_triangle.h"
  
-GLboolean gl_cull_triangle( GLcontext *ctx,
+GLboolean _mesa_cull_triangle( GLcontext *ctx,
 			    const SWvertex *v0, 
 			    const SWvertex *v1, 
 			    const SWvertex *v2 )
@@ -89,7 +89,7 @@ static void flat_ci_triangle( GLcontext *ctx,
 		 fogspan[i] = fffog / 256;			\
 		 fffog += fdfogdx;				\
 	      }							\
-	      gl_write_monoindex_span( ctx, n, LEFT, Y, zspan,	\
+	      _mesa_write_monoindex_span( ctx, n, LEFT, Y, zspan,	\
                          fogspan, v0->index, GL_POLYGON );	\
 	   }							\
 	}
@@ -126,7 +126,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 		 fogspan[i] = fffog / 256;			\
 		 fffog += fdfogdx;				\
 	      }							\
-	      gl_write_index_span( ctx, n, LEFT, Y, zspan, fogspan,	\
+	      _mesa_write_index_span( ctx, n, LEFT, Y, zspan, fogspan,	\
 	                           index, GL_POLYGON );		\
 	   }							\
 	}
@@ -160,7 +160,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
 		 fogspan[i] = fffog / 256;			\
 		 fffog += fdfogdx;				\
 	      }							\
-              gl_write_monocolor_span( ctx, n, LEFT, Y, zspan,	\
+              _mesa_write_monocolor_span( ctx, n, LEFT, Y, zspan,	\
                                        fogspan, v2->color,	\
 			               GL_POLYGON );		\
 	   }							\
@@ -210,7 +210,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 		 ffb += fdbdx;					\
 		 ffa += fdadx;					\
 	      }							\
-	      gl_write_rgba_span( ctx, n, LEFT, Y,		\
+	      _mesa_write_rgba_span( ctx, n, LEFT, Y,		\
                                   (CONST GLdepth *) zspan,	\
                                   fogspan,                      \
 	                          rgba, GL_POLYGON );		\
@@ -409,7 +409,7 @@ static void affine_textured_triangle( GLcontext *ctx,
       comp = 4;                                                         \
       break;                                                            \
    default:                                                             \
-      gl_problem(NULL, "Bad texture format in affine_texture_triangle");\
+      _mesa_problem(NULL, "Bad texture format in affine_texture_triangle");\
       return;                                                           \
    }                                                                    \
    tbytesline = obj->Image[b]->Width * comp;                            \
@@ -648,7 +648,7 @@ static void affine_textured_triangle( GLcontext *ctx,
 	         }                                         \
                  break;                                    \
 	      }                                            \
-              gl_write_rgba_span(ctx, n, LEFT, Y, zspan,   \
+              _mesa_write_rgba_span(ctx, n, LEFT, Y, zspan,   \
                                  fogspan,                  \
                                  rgba, GL_POLYGON);        \
               /* explicit kill of variables: */            \
@@ -1385,7 +1385,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
                break;							\
             }								\
          }								\
-         gl_write_rgba_span( ctx, n, LEFT, Y, zspan,			\
+         _mesa_write_rgba_span( ctx, n, LEFT, Y, zspan,			\
                              fogspan, rgba, GL_POLYGON);		\
          ffr = ffg = ffb = ffa = 0;					\
       }									\
@@ -1465,7 +1465,7 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
       comp = 4;                                                         \
       break;                                                            \
    default:								\
-      gl_problem(NULL, "Bad texture format in lin_persp_texture_triangle"); \
+      _mesa_problem(NULL, "Bad texture format in lin_persp_texture_triangle"); \
       return;                                                           \
    }                                                                    \
    sscale = FIXED_SCALE * twidth;                                       \
@@ -1570,7 +1570,7 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
                abort();					\
             }						\
          }						\
-         gl_write_rgba_span( ctx, n, LEFT, Y, zspan,	\
+         _mesa_write_rgba_span( ctx, n, LEFT, Y, zspan,	\
                              fogspan,                   \
                              rgba, GL_POLYGON );	\
          ffr = ffg = ffb = ffa = 0;			\
@@ -1661,7 +1661,7 @@ static void general_textured_triangle( GLcontext *ctx,
 		    vv += dvdx;					\
 		 }						\
               }							\
-	      gl_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
                                      s, t, u, NULL, 		\
 	                             rgba, \
                                      NULL, GL_POLYGON );	\
@@ -1765,7 +1765,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 		    vv += dvdx;					\
 		 }						\
               }							\
-	      gl_write_texture_span( ctx, n, LEFT, Y, zspan,	\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan,	\
                                    fogspan,                     \
                                    s, t, u, NULL, rgba,		\
                                    (CONST GLchan (*)[4]) spec,	\
@@ -1869,7 +1869,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    vv += dvdx;						\
 		 }							\
               }								\
-	      gl_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
                                      s, t, u, lambda,	 		\
 	                             rgba, NULL, GL_POLYGON );		\
 	   }								\
@@ -1986,7 +1986,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    vv += dvdx;						\
 		 }							\
               }								\
-	      gl_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
                                      s, t, u, lambda,	 		\
 	                             rgba, (CONST GLchan (*)[4]) spec,	\
                                      GL_POLYGON );			\
@@ -2042,8 +2042,6 @@ lambda_multitextured_triangle1( GLcontext *ctx,
       }									\
    }
 
-
-
 #define INNER_LOOP( LEFT, RIGHT, Y )					\
    {									\
       GLint i;								\
@@ -2054,6 +2052,7 @@ lambda_multitextured_triangle1( GLcontext *ctx,
       if (n > 0) {							\
          if (flat_shade) {						\
 	    for (i=0;i<n;i++) {						\
+               GLuint unit;						\
 	       zspan[i] = FixedToDepth(ffz);				\
 	       fogspan[i] = fffog / 256;				\
                fffog += fdfogdx;					\
@@ -2062,26 +2061,24 @@ lambda_multitextured_triangle1( GLcontext *ctx,
 	       rgba[i][GCOMP] = g;					\
 	       rgba[i][BCOMP] = b;					\
 	       rgba[i][ACOMP] = a;					\
-	       {							\
-		  GLuint unit;						\
-		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {\
-		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {	\
-			GLdouble invQ = 1.0 / vv[unit];			\
-			s[unit][i] = ss[unit] * invQ;			\
-			t[unit][i] = tt[unit] * invQ;			\
-			u[unit][i] = uu[unit] * invQ;			\
-                        COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);\
-			ss[unit] += dsdx[unit];				\
-			tt[unit] += dtdx[unit];				\
-			uu[unit] += dudx[unit];				\
-			vv[unit] += dvdx[unit];				\
-		     }							\
+	       for (unit=0; unit < ctx->Const.MaxTextureUnits; unit++) {\
+                  if (ctx->Texture.Unit[unit]._ReallyEnabled) {		\
+		     GLdouble invQ = 1.0 / vv[unit];			\
+		     s[unit][i] = ss[unit] * invQ;			\
+		     t[unit][i] = tt[unit] * invQ;			\
+		     u[unit][i] = uu[unit] * invQ;			\
+                     COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);	\
+	             ss[unit] += dsdx[unit];				\
+		     tt[unit] += dtdx[unit];				\
+		     uu[unit] += dudx[unit];				\
+		     vv[unit] += dvdx[unit];				\
 		  }							\
 	       }							\
 	    }								\
 	 }								\
 	 else { /* smooth shade */					\
 	    for (i=0;i<n;i++) {						\
+               GLuint unit;						\
 	       zspan[i] = FixedToDepth(ffz);				\
 	       fogspan[i] = fffog / 256;				\
 	       ffz += fdzdx;						\
@@ -2094,32 +2091,30 @@ lambda_multitextured_triangle1( GLcontext *ctx,
 	       ffg += fdgdx;						\
 	       ffb += fdbdx;						\
 	       ffa += fdadx;						\
-	       {							\
-		  GLuint unit;						\
-		  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {\
-		     if (ctx->Texture.Unit[unit]._ReallyEnabled) {	\
-			GLdouble invQ = 1.0 / vv[unit];			\
-			s[unit][i] = ss[unit] * invQ;			\
-			t[unit][i] = tt[unit] * invQ;			\
-			u[unit][i] = uu[unit] * invQ;			\
-                        COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);  \
-			ss[unit] += dsdx[unit];				\
-			tt[unit] += dtdx[unit];				\
-			uu[unit] += dudx[unit];				\
-			vv[unit] += dvdx[unit];				\
-		     }							\
+               for (unit=0; unit < ctx->Const.MaxTextureUnits; unit++) {\
+		  if (ctx->Texture.Unit[unit]._ReallyEnabled) {		\
+		     GLdouble invQ = 1.0 / vv[unit];			\
+		     s[unit][i] = ss[unit] * invQ;			\
+		     t[unit][i] = tt[unit] * invQ;			\
+		     u[unit][i] = uu[unit] * invQ;			\
+                     COMPUTE_MULTILAMBDA(lambda[unit][i], invQ, unit);  \
+		     ss[unit] += dsdx[unit];				\
+		     tt[unit] += dtdx[unit];				\
+		     uu[unit] += dudx[unit];				\
+		     vv[unit] += dvdx[unit];				\
 		  }							\
 	       }							\
 	    }								\
 	 }								\
-	 gl_write_multitexture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
-				     (const GLfloat (*)[MAX_WIDTH]) s,	\
-				     (const GLfloat (*)[MAX_WIDTH]) t,	\
-				     (const GLfloat (*)[MAX_WIDTH]) u,	\
-				     (GLfloat (*)[MAX_WIDTH]) lambda,	\
-				     rgba, NULL, GL_POLYGON );		\
+	 _mesa_write_multitexture_span(ctx, n, LEFT, Y, zspan, fogspan,	\
+				       (const GLfloat (*)[MAX_WIDTH]) s,\
+                                       (const GLfloat (*)[MAX_WIDTH]) t,\
+                                       (const GLfloat (*)[MAX_WIDTH]) u,\
+                                       (GLfloat (*)[MAX_WIDTH]) lambda,	\
+                                       rgba, NULL, GL_POLYGON );	\
       }									\
    }
+
 #include "s_tritemp.h"
 }
 
@@ -2406,10 +2401,10 @@ _swrast_choose_triangle( GLcontext *ctx )
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      swrast->Triangle = gl_feedback_triangle;
+      swrast->Triangle = _mesa_feedback_triangle;
    }
    else {
       /* GL_SELECT mode */
-      swrast->Triangle = gl_select_triangle;
+      swrast->Triangle = _mesa_select_triangle;
    }
 }

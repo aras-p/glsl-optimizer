@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.9 2001/02/22 17:50:13 brianp Exp $ */
+/* $Id: xm_span.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3685,7 +3685,7 @@ static void read_color_span( const GLcontext *ctx,
                }
 	       break;
 	    default:
-	       gl_problem(NULL,"Problem in DD.read_color_span (1)");
+	       _mesa_problem(NULL,"Problem in DD.read_color_span (1)");
                return;
 	 }
       }
@@ -3876,7 +3876,7 @@ static void read_color_span( const GLcontext *ctx,
 	    }
 	    break;
 	 default:
-	    gl_problem(NULL,"Problem in DD.read_color_span (2)");
+	    _mesa_problem(NULL,"Problem in DD.read_color_span (2)");
             return;
       }
    }
@@ -4051,7 +4051,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    }
 	    break;
 	 default:
-	    gl_problem(NULL,"Problem in DD.read_color_pixels (1)");
+	    _mesa_problem(NULL,"Problem in DD.read_color_pixels (1)");
             return;
       }
    }
@@ -4168,7 +4168,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    }
 	    break;
 	 default:
-	    gl_problem(NULL,"Problem in DD.read_color_pixels (1)");
+	    _mesa_problem(NULL,"Problem in DD.read_color_pixels (1)");
             return;
       }
    }
@@ -4338,7 +4338,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
             ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
             break;
 	 default:
-	    gl_problem(NULL,"Bad pixel format in xmesa_update_state (1)");
+	    _mesa_problem(NULL,"Bad pixel format in xmesa_update_state (1)");
             return;
       }
    }
@@ -4471,7 +4471,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    }
 	    break;
 	 default:
-	    gl_problem(NULL,"Bad pixel format in xmesa_update_state (2)");
+	    _mesa_problem(NULL,"Bad pixel format in xmesa_update_state (2)");
             return;
       }
    }

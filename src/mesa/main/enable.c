@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.43 2001/02/27 22:33:59 brianp Exp $ */
+/* $Id: enable.c,v 1.44 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,7 +84,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
       flag = _NEW_ARRAY_SECONDARYCOLOR;
       break;
    default:
-      gl_error( ctx, GL_INVALID_ENUM, "glEnable/DisableClientState" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glEnable/DisableClientState" );
       return;
    }
 
@@ -134,7 +134,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "%s %s (newstate is %x)\n",
 	      state ? "glEnable" : "glDisable",
-	      gl_lookup_enum_by_nr(cap),
+	      _mesa_lookup_enum_by_nr(cap),
 	      ctx->NewState);
 
    switch (cap) {
@@ -183,10 +183,10 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 }
 	
 	 /* This derived state also calculated in clip.c and
-	  * from gl_update_state() on changes to EyeUserPlane
+	  * from _mesa_update_state() on changes to EyeUserPlane
 	  * and ctx->ProjectionMatrix respectively.
 	  */
-	 gl_transform_vector( ctx->Transform._ClipUserPlane[p],
+	 _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 			      ctx->Transform.EyeUserPlane[p],
 			      ctx->ProjectionMatrix.inv );
       } else {
@@ -202,7 +202,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Light.ColorMaterialEnabled = state;
       if (state) {
 	 FLUSH_CURRENT(ctx, 0);
-	 gl_update_color_material( ctx, ctx->Current.Color );
+	 _mesa_update_color_material( ctx, ctx->Current.Color );
       }
       break;
    case GL_CULL_FACE:
@@ -239,7 +239,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_HISTOGRAM:
       if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
-	 gl_error(ctx, GL_INVALID_ENUM, "glEnable(GL_HISTOGRAM)");
+	 _mesa_error(ctx, GL_INVALID_ENUM, "glEnable(GL_HISTOGRAM)");
 	 return;
       }
       if (ctx->Pixel.HistogramEnabled == state)
@@ -604,7 +604,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_HP_occlusion_test */
    case GL_OCCLUSION_TEST_HP:
       if (!ctx->Extensions.HP_occlusion_test) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Depth.OcclusionTest == state)
@@ -620,7 +620,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_SGIS_pixel_texture */
    case GL_PIXEL_TEXTURE_SGIS:
       if (!ctx->Extensions.SGIS_pixel_texture) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Pixel.PixelTextureEnabled == state)
@@ -632,7 +632,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_SGIX_pixel_texture */
    case GL_PIXEL_TEX_GEN_SGIX:
       if (!ctx->Extensions.SGIX_pixel_texture) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Pixel.PixelTextureEnabled == state)
@@ -644,7 +644,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_SGI_color_table */
    case GL_COLOR_TABLE_SGI:
       if (!ctx->Extensions.SGI_color_table && !ctx->Extensions.ARB_imaging) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Pixel.ColorTableEnabled == state)
@@ -654,7 +654,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
       if (!ctx->Extensions.SGI_color_table && !ctx->Extensions.ARB_imaging) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Pixel.PostConvolutionColorTableEnabled == state)
@@ -664,7 +664,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
       if (!ctx->Extensions.SGI_color_table && !ctx->Extensions.ARB_imaging) {
-	 gl_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, state ? "glEnable": "glDisable" );
 	 return;
       }
       if (ctx->Pixel.PostColorMatrixColorTableEnabled == state)
@@ -676,7 +676,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_EXT_convolution */
    case GL_CONVOLUTION_1D:
       if (!ctx->Extensions.EXT_convolution && !ctx->Extensions.ARB_imaging) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (ctx->Pixel.Convolution1DEnabled == state)
@@ -686,7 +686,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_CONVOLUTION_2D:
       if (!ctx->Extensions.EXT_convolution && !ctx->Extensions.ARB_imaging) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (ctx->Pixel.Convolution2DEnabled == state)
@@ -696,7 +696,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
    case GL_SEPARABLE_2D:
       if (!ctx->Extensions.EXT_convolution && !ctx->Extensions.ARB_imaging) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (ctx->Pixel.Separable2DEnabled == state)
@@ -713,7 +713,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       if (state) 
 	 newenabled |= TEXTURE0_CUBE;
       if (!ctx->Extensions.ARB_texture_cube_map) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
@@ -725,7 +725,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_EXT_secondary_color */
    case GL_COLOR_SUM_EXT:
       if (!ctx->Extensions.EXT_secondary_color) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (ctx->Fog.ColorSumEnabled == state)
@@ -745,7 +745,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_MESA_sprite_point */
    case GL_SPRITE_POINT_MESA:
       if (!ctx->Extensions.MESA_sprite_point) {
-	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+	 _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
       if (ctx->Point.SpriteMode == state)
@@ -755,7 +755,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    default:
-      gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+      _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
       return;
    }
 
@@ -822,7 +822,7 @@ _mesa_IsEnabled( GLenum cap )
             return ctx->Pixel.HistogramEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
             return GL_FALSE;
          }
       case GL_LIGHTING:
@@ -963,7 +963,7 @@ _mesa_IsEnabled( GLenum cap )
             return ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
             return GL_FALSE;
          }
 
@@ -998,7 +998,7 @@ _mesa_IsEnabled( GLenum cap )
             return (texUnit->Enabled & TEXTURE0_CUBE) ? GL_TRUE : GL_FALSE;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
             return GL_FALSE;
          }
 
@@ -1007,7 +1007,7 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Point.SpriteMode;
 
       default:
-	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
+	 _mesa_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
 	 return GL_FALSE;
    }
 }

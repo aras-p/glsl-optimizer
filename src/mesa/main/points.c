@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.28 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: points.c,v 1.29 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,7 @@ _mesa_PointSize( GLfloat size )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (size <= 0.0) {
-      gl_error( ctx, GL_INVALID_VALUE, "glPointSize" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glPointSize" );
       return;
    }
 
@@ -110,7 +110,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          break;
       case GL_POINT_SIZE_MIN_EXT:
          if (*params < 0.0F) {
-            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
          if (ctx->Point.MinSize == *params)
@@ -120,7 +120,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          break;
       case GL_POINT_SIZE_MAX_EXT:
          if (*params < 0.0F) {
-            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
          if (ctx->Point.MaxSize == *params)
@@ -130,7 +130,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          break;
       case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
          if (*params < 0.0F) {
-            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
+            _mesa_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
          if (ctx->Point.Threshold == *params)
@@ -139,7 +139,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          ctx->Point.Threshold = *params;
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
          return;
    }
 

@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.12 2001/02/22 17:59:24 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.13 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,13 +134,13 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
    if (!tmpImage) {
-      gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
       return;
    }
    convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
    if (!convImage) {
       FREE(tmpImage);
-      gl_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels");
       return;
    }
 
@@ -164,7 +164,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    for (row = 0; row < height; row++) {
       GLchan rgba[MAX_WIDTH][4];
       GLint i;
-      gl_read_rgba_span(ctx, ctx->ReadBuffer, width, srcx, srcy + row, rgba);
+      _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, srcx, srcy + row, rgba);
       /* convert GLchan to GLfloat */
       for (i = 0; i < width; i++) {
          *dest++ = (GLfloat) rgba[i][RCOMP] * (1.0F / CHAN_MAXF);
@@ -281,11 +281,11 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
-         gl_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0, 
+         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0, 
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         gl_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
       }
    }
 
@@ -364,7 +364,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       GLint ssy = sy;
       tmpImage = (GLchan *) MALLOC(width * height * sizeof(GLchan) * 4);
       if (!tmpImage) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
       p = tmpImage;
@@ -381,7 +381,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             ctx->ReadBuffer->Alpha = ctx->ReadBuffer->BackRightAlpha;
       }
       for (j = 0; j < height; j++, ssy += stepy) {
-         gl_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
+         _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
                             (GLchan (*)[4]) p );
          p += (width * sizeof(GLchan) * 4);
       }
@@ -417,7 +417,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                ctx->ReadBuffer->Alpha = ctx->ReadBuffer->BackRightAlpha;
             }
          }
-         gl_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy, rgba );
+         _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy, rgba );
       }
 
       if (changeBuffer) {
@@ -525,11 +525,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 				       (const GLchan (*)[4])rgba, NULL );
       }
       else if (zoom) {
-         gl_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
+         _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
 				    (const GLchan (*)[4])rgba, desty);
       }
       else {
-         gl_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
+         _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, rgba, GL_BITMAP );
       }
    }
 
@@ -591,7 +591,7 @@ static void copy_ci_pixels( GLcontext *ctx,
       GLint ssy = sy;
       tmpImage = (GLuint *) MALLOC(width * height * sizeof(GLuint));
       if (!tmpImage) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
       p = tmpImage;
@@ -600,7 +600,7 @@ static void copy_ci_pixels( GLcontext *ctx,
                                        ctx->Pixel.DriverReadBuffer );
       }
       for (j = 0; j < height; j++, ssy += stepy) {
-         gl_read_index_span( ctx, ctx->ReadBuffer, width, srcx, ssy, p );
+         _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, ssy, p );
          p += width;
       }
       p = tmpImage;
@@ -621,7 +621,7 @@ static void copy_ci_pixels( GLcontext *ctx,
             (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                           ctx->Pixel.DriverReadBuffer );
          }
-         gl_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy, indexes );
+         _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy, indexes );
       }
 
       if (changeBuffer) {
@@ -638,10 +638,10 @@ static void copy_ci_pixels( GLcontext *ctx,
       }
 
       if (zoom) {
-         gl_write_zoomed_index_span( ctx, width, destx, dy, zspan, 0, indexes, desty );
+         _mesa_write_zoomed_index_span( ctx, width, destx, dy, zspan, 0, indexes, desty );
       }
       else {
-         gl_write_index_span(ctx, width, destx, dy, zspan, 0, indexes, GL_BITMAP);
+         _mesa_write_index_span(ctx, width, destx, dy, zspan, 0, indexes, GL_BITMAP);
       }
    }
 
@@ -673,7 +673,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint overlapping;
 
    if (!ctx->Visual.depthBits) {
-      gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
 
@@ -712,7 +712,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       GLint ssy = sy;
       tmpImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
       if (!tmpImage) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
       p = tmpImage;
@@ -743,21 +743,21 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (ctx->Visual.rgbMode) {
          if (zoom) {
-            gl_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
+            _mesa_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
 				       (const GLchan (*)[4])rgba, desty );
          }
          else {
-            gl_write_rgba_span( ctx, width, destx, dy, zspan, 0, 
+            _mesa_write_rgba_span( ctx, width, destx, dy, zspan, 0, 
 				rgba, GL_BITMAP);
          }
       }
       else {
          if (zoom) {
-            gl_write_zoomed_index_span( ctx, width, destx, dy,
+            _mesa_write_zoomed_index_span( ctx, width, destx, dy,
                                         zspan, 0, indexes, desty );
          }
          else {
-            gl_write_index_span( ctx, width, destx, dy,
+            _mesa_write_index_span( ctx, width, destx, dy,
                                  zspan, 0, indexes, GL_BITMAP );
          }
       }
@@ -781,7 +781,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint overlapping;
 
    if (!ctx->Visual.stencilBits) {
-      gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
 
@@ -806,7 +806,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       GLint ssy = sy;
       tmpImage = (GLstencil *) MALLOC(width * height * sizeof(GLstencil));
       if (!tmpImage) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
          return;
       }
       p = tmpImage;
@@ -840,7 +840,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       if (zoom) {
-         gl_write_zoomed_stencil_span( ctx, width, destx, dy, stencil, desty );
+         _mesa_write_zoomed_stencil_span( ctx, width, destx, dy, stencil, desty );
       }
       else {
          _mesa_write_stencil_span( ctx, width, destx, dy, stencil );
@@ -876,6 +876,6 @@ _swrast_CopyPixels( GLcontext *ctx,
       copy_stencil_pixels( ctx, srcx, srcy, width, height, destx, desty );
    }
    else {
-      gl_error( ctx, GL_INVALID_ENUM, "glCopyPixels" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glCopyPixels" );
    }
 }

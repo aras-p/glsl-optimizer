@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.3 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_vb_normals.c,v 1.4 2001/03/03 20:33:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -146,7 +146,7 @@ static GLboolean alloc_normal_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   gl_vector3f_alloc( &store->normal, 0, tnl->vb.Size, 32 );
+   _mesa_vector3f_alloc( &store->normal, 0, tnl->vb.Size, 32 );
 
    /* Now run the stage.
     */
@@ -160,7 +160,7 @@ static void free_normal_data( struct gl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    if (store) {
-      gl_vector3f_free( &store->normal );
+      _mesa_vector3f_free( &store->normal );
       FREE( store );
       stage->private = 0;
    }

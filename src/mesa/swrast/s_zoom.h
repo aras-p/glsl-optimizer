@@ -1,4 +1,4 @@
-/* $Id: s_zoom.h,v 1.2 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: s_zoom.h,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,30 +33,30 @@
 
 
 extern void
-gl_write_zoomed_rgba_span( GLcontext *ctx,
-                           GLuint n, GLint x, GLint y, const GLdepth z[],
-			   const GLfixed *fog,
-                           CONST GLchan rgba[][4], GLint y0 );
+_mesa_write_zoomed_rgba_span( GLcontext *ctx,
+                              GLuint n, GLint x, GLint y, const GLdepth z[],
+                              const GLfixed *fog,
+                              CONST GLchan rgba[][4], GLint y0 );
 
 
 extern void
-gl_write_zoomed_rgb_span( GLcontext *ctx,
-                          GLuint n, GLint x, GLint y, const GLdepth z[],
-                          const GLfixed *fog,
-                          CONST GLchan rgb[][3], GLint y0 );
+_mesa_write_zoomed_rgb_span( GLcontext *ctx,
+                             GLuint n, GLint x, GLint y, const GLdepth z[],
+                             const GLfixed *fog,
+                             CONST GLchan rgb[][3], GLint y0 );
 
 
 extern void
-gl_write_zoomed_index_span( GLcontext *ctx,
-                            GLuint n, GLint x, GLint y, const GLdepth z[],
-			   const GLfixed *fog,
-                            const GLuint indexes[], GLint y0 );
+_mesa_write_zoomed_index_span( GLcontext *ctx,
+                               GLuint n, GLint x, GLint y, const GLdepth z[],
+                               const GLfixed *fog,
+                               const GLuint indexes[], GLint y0 );
 
 
 extern void
-gl_write_zoomed_stencil_span( GLcontext *ctx,
-                              GLuint n, GLint x, GLint y,
-                              const GLstencil stencil[], GLint y0 );
+_mesa_write_zoomed_stencil_span( GLcontext *ctx,
+                                 GLuint n, GLint x, GLint y,
+                                 const GLstencil stencil[], GLint y0 );
 
 
 #endif

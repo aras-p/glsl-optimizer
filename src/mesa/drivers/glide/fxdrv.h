@@ -570,7 +570,7 @@ extern void fxDDTexPalette(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 
 extern void fxDDEnable(GLcontext *, GLenum, GLboolean);
-extern void fxDDAlphaFunc(GLcontext *, GLenum, GLclampf);
+extern void fxDDAlphaFunc(GLcontext *, GLenum, GLchan);
 extern void fxDDBlendFunc(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);

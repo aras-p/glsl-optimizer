@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.11 2001/02/16 18:14:41 keithw Exp $ */
+/* $Id: s_lines.c,v 1.12 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,7 +67,7 @@ static void flat_ci_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -86,7 +86,7 @@ static void flat_ci_z_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -105,7 +105,7 @@ static void flat_rgba_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -125,7 +125,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -155,7 +155,7 @@ static void smooth_ci_line( GLcontext *ctx,
 #include "s_linetemp.h"
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -188,7 +188,7 @@ static void smooth_ci_z_line( GLcontext *ctx,
 #include "s_linetemp.h"
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -222,7 +222,7 @@ static void smooth_rgba_line( GLcontext *ctx,
 #include "s_linetemp.h"
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -262,14 +262,14 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 #include "s_linetemp.h"
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
 #define CHECK_FULL(count)		\
    if (count >= PB_SIZE-MAX_WIDTH) {	\
       PB->count = count;		\
-      gl_flush_pb(ctx);			\
+      _mesa_flush_pb(ctx);			\
       count = PB->count;		\
    }
 
@@ -351,7 +351,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -423,7 +423,7 @@ static void general_flat_ci_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -526,7 +526,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -569,7 +569,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
       }
    }
 
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -634,7 +634,7 @@ static void flat_textured_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -712,7 +712,7 @@ static void smooth_textured_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -809,7 +809,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -906,7 +906,7 @@ static void flat_multitextured_line( GLcontext *ctx,
    }
 
    PB->count = count;
-   gl_flush_pb(ctx);
+   _mesa_flush_pb(ctx);
 }
 
 
@@ -1060,11 +1060,11 @@ _swrast_choose_line( GLcontext *ctx )
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      swrast->Line = gl_feedback_line;
+      swrast->Line = _mesa_feedback_line;
    }
    else {
       /* GL_SELECT mode */
-      swrast->Line = gl_select_line;
+      swrast->Line = _mesa_select_line;
    }
 
    /*_mesa_print_line_function(ctx);*/

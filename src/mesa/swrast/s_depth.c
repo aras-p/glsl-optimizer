@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.5 2001/02/08 15:57:01 brianp Exp $ */
+/* $Id: s_depth.c,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -294,7 +294,7 @@ depth_test_span16( GLcontext *ctx, GLuint n, GLint x, GLint y,
          BZERO(mask, n * sizeof(GLubyte));
 	 break;
       default:
-         gl_problem(ctx, "Bad depth func in depth_test_span16");
+         _mesa_problem(ctx, "Bad depth func in depth_test_span16");
    }
 
    return passed;
@@ -523,7 +523,7 @@ depth_test_span32( GLcontext *ctx, GLuint n, GLint x, GLint y,
          BZERO(mask, n * sizeof(GLubyte));
 	 break;
       default:
-         gl_problem(ctx, "Bad depth func in depth_test_span32");
+         _mesa_problem(ctx, "Bad depth func in depth_test_span32");
    }
 
    return passed;
@@ -806,7 +806,7 @@ software_depth_test_pixels16( GLcontext *ctx, GLuint n,
          BZERO(mask, n * sizeof(GLubyte));
 	 break;
       default:
-         gl_problem(ctx, "Bad depth func in software_depth_test_pixels");
+         _mesa_problem(ctx, "Bad depth func in software_depth_test_pixels");
    }
 }
 
@@ -1052,7 +1052,7 @@ software_depth_test_pixels32( GLcontext *ctx, GLuint n,
          BZERO(mask, n * sizeof(GLubyte));
 	 break;
       default:
-         gl_problem(ctx, "Bad depth func in software_depth_test_pixels");
+         _mesa_problem(ctx, "Bad depth func in software_depth_test_pixels");
    }
 }
 
@@ -1286,7 +1286,7 @@ hardware_depth_test_pixels( GLcontext *ctx, GLuint n, GLdepth zbuffer[],
          BZERO(mask, n * sizeof(GLubyte));
 	 break;
       default:
-         gl_problem(ctx, "Bad depth func in hardware_depth_test_pixels");
+         _mesa_problem(ctx, "Bad depth func in hardware_depth_test_pixels");
    }
 }
 
@@ -1507,7 +1507,7 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
          /* out of memory */
          ctx->Depth.Test = GL_FALSE;
          ctx->NewState |= _NEW_DEPTH;
-         gl_error( ctx, GL_OUT_OF_MEMORY, "Couldn't allocate depth buffer" );
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "Couldn't allocate depth buffer" );
       }
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_alpha.c,v 1.3 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,7 +90,7 @@ _mesa_alpha_test( const GLcontext *ctx,
          /* caller should check for zero! */
 	 return 0;
       default:
-	 gl_problem( ctx, "Invalid alpha test in gl_alpha_test" );
+	 _mesa_problem( ctx, "Invalid alpha test in gl_alpha_test" );
          return 0;
    }
    /* Never get here */

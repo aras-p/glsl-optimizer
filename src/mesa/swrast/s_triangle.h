@@ -1,4 +1,4 @@
-/* $Id: s_triangle.h,v 1.5 2001/02/16 18:14:41 keithw Exp $ */
+/* $Id: s_triangle.h,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 #include "swrast.h"
 
 
-GLboolean gl_cull_triangle( GLcontext *ctx,
+GLboolean _mesa_cull_triangle( GLcontext *ctx,
 			    const SWvertex *v0,
 			    const SWvertex *v1,
 			    const SWvertex *v2);

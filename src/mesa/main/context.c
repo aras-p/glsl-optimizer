@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.124 2001/02/28 00:27:48 brianp Exp $ */
+/* $Id: context.c,v 1.125 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -428,7 +428,7 @@ one_time_init( void )
       assert( sizeof(GLushort) >= 2 );
       assert( sizeof(GLuint) >= 4 );
 
-      gl_init_lists();
+      _mesa_init_lists();
 
       _math_init();
       _mesa_init_math();
@@ -537,7 +537,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    while (1) {
       GLuint list = _mesa_HashFirstEntry(ss->DisplayList);
       if (list) {
-         gl_destroy_list(ctx, list);
+         _mesa_destroy_list(ctx, list);
       }
       else {
          break;
@@ -581,7 +581,7 @@ init_light( struct gl_light *l, GLuint n )
    ASSIGN_4V( l->EyePosition, 0.0, 0.0, 1.0, 0.0 );
    ASSIGN_3V( l->EyeDirection, 0.0, 0.0, -1.0 );
    l->SpotExponent = 0.0;
-   gl_invalidate_spot_exp_table( l );
+   _mesa_invalidate_spot_exp_table( l );
    l->SpotCutoff = 180.0;
    l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
    l->ConstantAttenuation = 1.0;
@@ -951,10 +951,9 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Light.Enabled = GL_FALSE;
    ctx->Light.ColorMaterialFace = GL_FRONT_AND_BACK;
    ctx->Light.ColorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
-   ctx->Light.ColorMaterialBitmask
-      = gl_material_bitmask( ctx,
-                             GL_FRONT_AND_BACK,
-                             GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
+   ctx->Light.ColorMaterialBitmask = _mesa_material_bitmask( ctx,
+                                               GL_FRONT_AND_BACK,
+                                               GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
 
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
 
@@ -1643,7 +1642,7 @@ _mesa_destroy_context( GLcontext *ctx )
 void
 _mesa_context_initialize( GLcontext *ctx )
 {
-   gl_read_config_file( ctx );
+   _mesa_read_config_file( ctx );
 }
 
 
@@ -1808,7 +1807,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 newCtx->DrawBuffer = drawBuffer;
 	 newCtx->ReadBuffer = readBuffer;
 	 newCtx->NewState |= _NEW_BUFFERS;
-	 /* gl_update_state( newCtx ); */
+	 /* _mesa_update_state( newCtx ); */
       }
 
       if (newCtx->Driver.MakeCurrent)
@@ -1877,7 +1876,7 @@ _mesa_get_dispatch(GLcontext *ctx)
  * This function is called when the Mesa user has stumbled into a code
  * path which may not be implemented fully or correctly.
  */
-void gl_problem( const GLcontext *ctx, const char *s )
+void _mesa_problem( const GLcontext *ctx, const char *s )
 {
    fprintf( stderr, "Mesa implementation error: %s\n", s );
    fprintf( stderr, "Report to Mesa bug database at www.mesa3d.org\n" );
@@ -1906,10 +1905,10 @@ void
 _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
 {
    if (ctx->CompileFlag)
-      gl_save_error( ctx, error, s );
+      _mesa_save_error( ctx, error, s );
 
    if (ctx->ExecuteFlag)
-      gl_error( ctx, error, s );
+      _mesa_error( ctx, error, s );
 }
 
 
@@ -1924,7 +1923,7 @@ _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
  *         where - usually the name of function where error was detected
  */
 void
-gl_error( GLcontext *ctx, GLenum error, const char *where )
+_mesa_error( GLcontext *ctx, GLenum error, const char *where )
 {
    const char *debugEnv = getenv("MESA_DEBUG");
    GLboolean debug;

@@ -371,7 +371,7 @@ GLboolean AMesaMakeCurrent(AMesaContext context, AMesaBuffer buffer)
         
       setup_dd_pointers(context->GLContext);
       _mesa_make_current(context->GLContext, buffer->GLBuffer);
-      gl_Viewport(context->GLContext, 0, 0, buffer->Width, buffer->Height);
+      _mesa_set_viewport(context->GLContext, 0, 0, buffer->Width, buffer->Height);
    }
    else {
       destroy_bitmap(context->Buffer->Screen);

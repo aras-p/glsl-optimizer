@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.11 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: xfonts.c,v 1.12 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -244,7 +244,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 
   fs = XQueryFont (dpy, font);
   if (!fs) {
-      gl_error(NULL, GL_INVALID_VALUE,
+      _mesa_error(NULL, GL_INVALID_VALUE,
                "Couldn't get font structure information");
       return;
   }
@@ -259,7 +259,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 (GLubyte));
   if (!bm) {
       XFreeFontInfo( NULL, fs, 0 );
-      gl_error(NULL, GL_OUT_OF_MEMORY,
+      _mesa_error(NULL, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
   }

@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.56 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: image.c,v 1.57 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -959,7 +959,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
          }
          break;
@@ -1031,7 +1031,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
          }
          break;
@@ -1104,7 +1104,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
             if (dstPacking->SwapBytes) {
                _mesa_swap2( (GLushort *) dst, n * comps);
@@ -1179,7 +1179,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
             if (dstPacking->SwapBytes) {
                _mesa_swap2( (GLushort *) dst, n * comps );
@@ -1255,7 +1255,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
             if (dstPacking->SwapBytes) {
                _mesa_swap4( (GLuint *) dst, n * comps );
@@ -1331,7 +1331,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
             if (dstPacking->SwapBytes) {
                _mesa_swap4( (GLuint *) dst, n * comps );
@@ -1407,7 +1407,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                   }
                   break;
                default:
-                  gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
+                  _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
             if (dstPacking->SwapBytes) {
                _mesa_swap4( (GLuint *) dst, n * comps );
@@ -1687,7 +1687,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
          }
          break;
       default:
-         gl_problem(ctx, "bad type in _mesa_pack_float_rgba_span");
+         _mesa_problem(ctx, "bad type in _mesa_pack_float_rgba_span");
    }
 }
 
@@ -1925,7 +1925,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
          }
          break;
       default:
-         gl_problem(NULL, "bad srcType in extract_uint_indexes");
+         _mesa_problem(NULL, "bad srcType in extract_uint_indexes");
          return;
    }
 }
@@ -2076,7 +2076,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          stride = 4;
          break;
       default:
-         gl_problem(NULL, "bad srcFormat in extract float data");
+         _mesa_problem(NULL, "bad srcFormat in extract float data");
          return;
    }
 
@@ -2430,7 +2430,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          }
          break;
       default:
-         gl_problem(NULL, "bad srcType in extract float data");
+         _mesa_problem(NULL, "bad srcType in extract float data");
          break;
    }
 }
@@ -2707,7 +2707,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
          default:
-            gl_problem(ctx, "bad dstFormat in _mesa_unpack_chan_span()");
+            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_chan_span()");
             return;
       }
 
@@ -2978,7 +2978,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
          default:
-            gl_problem(ctx, "bad dstFormat in _mesa_unpack_float_color_span()");
+            _mesa_problem(ctx, "bad dstFormat in _mesa_unpack_float_color_span()");
             return;
       }
 
@@ -3137,7 +3137,7 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
             MEMCPY(dest, indexes, n * sizeof(GLuint));
             break;
          default:
-            gl_problem(ctx, "bad dstType in _mesa_unpack_index_span");
+            _mesa_problem(ctx, "bad dstType in _mesa_unpack_index_span");
       }
    }
 }
@@ -3247,7 +3247,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
       }
       break;
    default:
-      gl_problem(ctx, "bad type in _mesa_pack_index_span");
+      _mesa_problem(ctx, "bad type in _mesa_pack_index_span");
    }
 }
 
@@ -3354,7 +3354,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
             MEMCPY(dest, indexes, n * sizeof(GLuint));
             break;
          default:
-            gl_problem(ctx, "bad dstType in _mesa_unpack_stencil_span");
+            _mesa_problem(ctx, "bad dstType in _mesa_unpack_stencil_span");
       }
    }
 }
@@ -3500,7 +3500,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
       }
       break;
    default:
-      gl_problem(ctx, "bad type in _mesa_pack_index_span");
+      _mesa_problem(ctx, "bad type in _mesa_pack_index_span");
    }
 }
 
@@ -3570,7 +3570,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
          MEMCPY(dest, source, n * sizeof(GLfloat));
          break;
       default:
-         gl_problem(NULL, "bad type in _mesa_unpack_depth_span()");
+         _mesa_problem(NULL, "bad type in _mesa_unpack_depth_span()");
          return;
    }
 
@@ -3691,7 +3691,7 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
       }
       break;
    default:
-      gl_problem(ctx, "bad type in _mesa_pack_depth_span");
+      _mesa_problem(ctx, "bad type in _mesa_pack_depth_span");
    }
 }
 

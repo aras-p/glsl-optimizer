@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_accum.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,7 +82,7 @@ _mesa_alloc_accum_buffer( GLcontext *ctx )
    ctx->DrawBuffer->Accum = (GLaccum *) MALLOC( n );
    if (!ctx->DrawBuffer->Accum) {
       /* unable to setup accumulation buffer */
-      gl_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
+      _mesa_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
    }
 #ifdef USE_OPTIMIZED_ACCUM
    swrast->_IntegerAccumMode = GL_TRUE;
@@ -332,7 +332,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             for (j = 0; j < height; j++) {
                
                GLuint i, i4;
-               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
+               _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4+=4) {
                   acc[i4+0] += rgba[i][RCOMP];
                   acc[i4+1] += rgba[i][GCOMP];
@@ -353,7 +353,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             for (j=0;j<height;j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
                GLuint i;
-               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
+               _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
                   *acc += (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );  acc++;
                   *acc += (GLaccum) ( (GLfloat) rgba[i][GCOMP] * gscale );  acc++;
@@ -396,7 +396,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                GLuint i, i4;
-               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
+               _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4 += 4) {
                   acc[i4+0] = rgba[i][RCOMP];
                   acc[i4+1] = rgba[i][GCOMP];
@@ -417,7 +417,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             GLuint i, j;
             for (j = 0; j < height; j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
-               gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
+               _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][RCOMP] * rscale + d);
                   *acc++ = (GLaccum) ((GLfloat) rgba[i][GCOMP] * gscale + d);
@@ -517,6 +517,6 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 	 break;
 
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glAccum" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glAccum" );
    }
 }

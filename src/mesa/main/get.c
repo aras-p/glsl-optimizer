@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.54 2001/02/27 22:33:59 brianp Exp $ */
+/* $Id: get.c,v 1.55 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetBooleanv %s\n", gl_lookup_enum_by_nr(pname));
+      fprintf(stderr, "glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetBooleanv
        && (*ctx->Driver.GetBooleanv)(ctx, pname, params))
@@ -365,7 +365,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Pixel.HistogramEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
 	 break;
@@ -981,19 +981,19 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = INT_TO_BOOL(textureUnit->CurrentCubeMap->Name);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
 
       /* GL_ARB_texture_compression */
@@ -1002,14 +1002,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = INT_TO_BOOL(ctx->Hint.TextureCompression);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
             *params = INT_TO_BOOL(ctx->Const.NumCompressedTextureFormats);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
@@ -1018,7 +1018,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
                params[i] = INT_TO_BOOL(ctx->Const.CompressedTextureFormats[i]);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
 
       /* GL_EXT_compiled_vertex_array */
@@ -1077,7 +1077,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
@@ -1091,7 +1091,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
          }
          return;
 
@@ -1151,7 +1151,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Pixel.Convolution1DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
          break;
@@ -1160,7 +1160,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Pixel.Convolution2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
          break;
@@ -1169,7 +1169,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Pixel.Separable2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
             return;
          }
          break;
@@ -1259,13 +1259,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Point.SpriteMode;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
             return;
          }
          break;
 
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
 }
 
@@ -1286,7 +1286,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetDoublev %s\n", gl_lookup_enum_by_nr(pname));
+      fprintf(stderr, "glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
       return;
@@ -1553,7 +1553,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Pixel.HistogramEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
 	 break;
@@ -2169,19 +2169,19 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
 
       /* GL_ARB_texture_compression */
@@ -2190,14 +2190,14 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLdouble) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
@@ -2206,7 +2206,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
                params[i] = (GLdouble) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
 
       /* GL_EXT_compiled_vertex_array */
@@ -2265,7 +2265,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
@@ -2279,7 +2279,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
          }
          return;
 
@@ -2339,7 +2339,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Pixel.Convolution1DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
          break;
@@ -2348,7 +2348,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Pixel.Convolution2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
          break;
@@ -2357,7 +2357,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Pixel.Separable2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
             return;
          }
          break;
@@ -2447,13 +2447,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Point.SpriteMode;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
             return;
          }
          break;
 
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
 }
 
@@ -2474,7 +2474,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetFloatv %s\n", gl_lookup_enum_by_nr(pname));
+      fprintf(stderr, "glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
       return;
@@ -2741,7 +2741,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.HistogramEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
             return;
          }
 	 break;
@@ -3359,19 +3359,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
 
       /* GL_ARB_texture_compression */
@@ -3380,14 +3380,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
@@ -3396,7 +3396,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
                params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
 
       /* GL_EXT_compiled_vertex_array */
@@ -3427,7 +3427,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
@@ -3441,7 +3441,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
          }
          return;
 
@@ -3501,7 +3501,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Convolution1DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
             return;
          }
          break;
@@ -3510,7 +3510,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Convolution2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
             return;
          }
          break;
@@ -3519,7 +3519,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
             return;
          }
          break;
@@ -3609,13 +3609,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Point.SpriteMode;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
             return;
          }
          break;
 
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
    }
 }
 
@@ -3636,7 +3636,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetIntegerv %s\n", gl_lookup_enum_by_nr(pname));
+      fprintf(stderr, "glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetIntegerv
        && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
@@ -3905,7 +3905,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Pixel.HistogramEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
             return;
          }
 	 break;
@@ -4521,19 +4521,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.ARB_texture_cube_map)
             *params = ctx->Const.MaxCubeTextureSize;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
 
       /* GL_ARB_texture_compression */
@@ -4542,14 +4542,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLint) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
@@ -4558,7 +4558,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
                params[i] = (GLint) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
 
       /* GL_EXT_compiled_vertex_array */
@@ -4617,7 +4617,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
@@ -4631,7 +4631,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          return;
 
@@ -4691,7 +4691,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Pixel.Convolution1DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
          break;
@@ -4700,7 +4700,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Pixel.Convolution2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
          break;
@@ -4709,7 +4709,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Pixel.Separable2DEnabled;
          }
          else {
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
             return;
          }
          break;
@@ -4786,7 +4786,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Current.FogCoord;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
@@ -4794,7 +4794,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Array.FogCoord.Enabled;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
@@ -4802,7 +4802,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Array.FogCoord.Type;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
 	 break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
@@ -4810,7 +4810,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Array.FogCoord.Stride;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
 	 break;
 
@@ -4820,13 +4820,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Point.SpriteMode;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
             return;
          }
          break;
 
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
    }
 }
 
@@ -4843,7 +4843,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       return;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetPointerv %s\n", gl_lookup_enum_by_nr(pname));
+      fprintf(stderr, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetPointerv
        && (*ctx->Driver.GetPointerv)(ctx, pname, params))
@@ -4881,7 +4881,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          *params = ctx->Select.Buffer;
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;
    }
 }
@@ -4914,7 +4914,7 @@ _mesa_GetString( GLenum name )
           case GL_EXTENSIONS:
              return (const GLubyte *) _mesa_extensions_get_string(ctx);
           default:
-             gl_error( ctx, GL_INVALID_ENUM, "glGetString" );
+             _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
              return (const GLubyte *) 0;
        }
    }
@@ -4932,7 +4932,7 @@ _mesa_GetError( void )
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetError <-- %s\n", gl_lookup_enum_by_nr(e));
+      fprintf(stderr, "glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    return e;

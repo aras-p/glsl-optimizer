@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.13 2001/02/26 18:24:37 brianp Exp $ */
+/* $Id: s_texture.c,v 1.14 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -208,7 +208,7 @@ palette_sample(const GLcontext *ctx,
          rgba[ACOMP] = palette[(index << 2) + 3];
          return;
       default:
-         gl_problem(ctx, "Bad palette format in palette_sample");
+         _mesa_problem(ctx, "Bad palette format in palette_sample");
    }
 }
 
@@ -467,7 +467,7 @@ sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
                                               rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad min filter in sample_1d_texture");
+               _mesa_problem(NULL, "Bad min filter in sample_1d_texture");
                return;
          }
       }
@@ -483,7 +483,7 @@ sample_lambda_1d( GLcontext *ctx, GLuint texUnit,
                                 s[i], rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad mag filter in sample_1d_texture");
+               _mesa_problem(NULL, "Bad mag filter in sample_1d_texture");
                return;
          }
       }
@@ -767,7 +767,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                              s[i], t[i], rgba[i] );
          break;
       default:
-         gl_problem(NULL, "Bad mag filter in sample_2d_texture");
+         _mesa_problem(NULL, "Bad mag filter in sample_2d_texture");
       }
    }
    else {
@@ -800,7 +800,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                                                  lambda[i], rgba[i] );
                   break;
                default:
-                  gl_problem(NULL, "Bad min filter in sample_2d_texture");
+                  _mesa_problem(NULL, "Bad min filter in sample_2d_texture");
                   return;
             }
          }
@@ -816,7 +816,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                                    s[i], t[i], rgba[i] );
                   break;
                default:
-                  gl_problem(NULL, "Bad mag filter in sample_2d_texture");
+                  _mesa_problem(NULL, "Bad mag filter in sample_2d_texture");
             }
          }
       }
@@ -1249,7 +1249,7 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
                                               lambda[i], rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad min filterin sample_3d_texture");
+               _mesa_problem(NULL, "Bad min filterin sample_3d_texture");
          }
       }
       else {
@@ -1264,7 +1264,7 @@ sample_lambda_3d( GLcontext *ctx, GLuint texUnit,
                                 s[i], t[i], u[i], rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad mag filter in sample_3d_texture");
+               _mesa_problem(NULL, "Bad mag filter in sample_3d_texture");
          }
       }
    }
@@ -1532,7 +1532,7 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
                                                 lambda[i], rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad min filter in sample_lambda_cube");
+               _mesa_problem(NULL, "Bad min filter in sample_lambda_cube");
          }
       }
       else {
@@ -1551,7 +1551,7 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
                                 newS, newT, rgba[i]);
                break;
             default:
-               gl_problem(NULL, "Bad mag filter in sample_lambda_cube");
+               _mesa_problem(NULL, "Bad mag filter in sample_lambda_cube");
          }
       }
    }
@@ -1664,7 +1664,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
             }
             break;
          default:
-            gl_problem(NULL, "invalid dimensions in _mesa_set_texture_sampler");
+            _mesa_problem(NULL, "invalid dimensions in _mesa_set_texture_sampler");
       }
    }
 }
@@ -1711,7 +1711,7 @@ texture_combine(const GLcontext *ctx,
             }
             break;
          default:
-            gl_problem(NULL, "invalid combine source");
+            _mesa_problem(NULL, "invalid combine source");
       }
 
       switch (textureUnit->CombineSourceRGB[j]) {
@@ -1740,7 +1740,7 @@ texture_combine(const GLcontext *ctx,
             }
             break;
          default:
-            gl_problem(NULL, "invalid combine source");
+            _mesa_problem(NULL, "invalid combine source");
       }
 
       if (textureUnit->CombineOperandRGB[j] != GL_SRC_COLOR) {
@@ -1909,7 +1909,7 @@ texture_combine(const GLcontext *ctx,
          }
          break;
       default:
-         gl_problem(NULL, "invalid combine mode");
+         _mesa_problem(NULL, "invalid combine mode");
    }
 
    switch (textureUnit->CombineModeA) {
@@ -1976,7 +1976,7 @@ texture_combine(const GLcontext *ctx,
          }
          break;
       default:
-         gl_problem(NULL, "invalid combine mode");
+         _mesa_problem(NULL, "invalid combine mode");
    }
 
    /* Fix the alpha component for GL_DOT3_RGBA_EXT combining.
@@ -2086,7 +2086,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               gl_problem(ctx, "Bad format (GL_REPLACE) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_REPLACE) in apply_texture");
                return;
 	 }
 	 break;
@@ -2152,7 +2152,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               gl_problem(ctx, "Bad format (GL_MODULATE) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_MODULATE) in apply_texture");
                return;
 	 }
 	 break;
@@ -2185,7 +2185,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               gl_problem(ctx, "Bad format (GL_DECAL) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_DECAL) in apply_texture");
                return;
 	 }
 	 break;
@@ -2255,7 +2255,7 @@ apply_texture( const GLcontext *ctx,
 	       }
 	       break;
             default:
-               gl_problem(ctx, "Bad format (GL_BLEND) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_BLEND) in apply_texture");
                return;
 	 }
 	 break;
@@ -2330,7 +2330,7 @@ apply_texture( const GLcontext *ctx,
                }
                break;
             default:
-               gl_problem(ctx, "Bad format (GL_ADD) in apply_texture");
+               _mesa_problem(ctx, "Bad format (GL_ADD) in apply_texture");
                return;
 	 }
 	 break;
@@ -2340,7 +2340,7 @@ apply_texture( const GLcontext *ctx,
          break;
 
       default:
-         gl_problem(ctx, "Bad env mode in apply_texture");
+         _mesa_problem(ctx, "Bad env mode in apply_texture");
          return;
    }
 }
@@ -2371,12 +2371,12 @@ sample_depth_texture(const GLcontext *ctx,
    GLboolean lequal, gequal;
 
    if (texObj->Dimensions != 2) {
-      gl_problem(ctx, "only 2-D depth textures supported at this time");
+      _mesa_problem(ctx, "only 2-D depth textures supported at this time");
       return;
    }
 
    if (texObj->MinFilter != texObj->MagFilter) {
-      gl_problem(ctx, "mipmapped depth textures not supported at this time");
+      _mesa_problem(ctx, "mipmapped depth textures not supported at this time");
       return;
    }
 
@@ -2385,7 +2385,7 @@ sample_depth_texture(const GLcontext *ctx,
     * isn't a depth texture.
     */
    if (texImage->Format != GL_DEPTH_COMPONENT) {
-      gl_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
+      _mesa_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
       return;
    }
 
@@ -2548,12 +2548,12 @@ sample_depth_texture2(const GLcontext *ctx,
    GLboolean lequal, gequal;
 
    if (texObj->Dimensions != 2) {
-      gl_problem(ctx, "only 2-D depth textures supported at this time");
+      _mesa_problem(ctx, "only 2-D depth textures supported at this time");
       return;
    }
 
    if (texObj->MinFilter != texObj->MagFilter) {
-      gl_problem(ctx, "mipmapped depth textures not supported at this time");
+      _mesa_problem(ctx, "mipmapped depth textures not supported at this time");
       return;
    }
 
@@ -2562,7 +2562,7 @@ sample_depth_texture2(const GLcontext *ctx,
     * isn't a depth texture.
     */
    if (texImage->Format != GL_DEPTH_COMPONENT) {
-      gl_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
+      _mesa_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
       return;
    }
 

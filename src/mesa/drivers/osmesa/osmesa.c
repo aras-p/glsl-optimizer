@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.47 2001/02/19 20:01:42 brianp Exp $ */
+/* $Id: osmesa.c,v 1.48 2001/03/03 20:33:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -472,7 +472,7 @@ void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
    switch (pname) {
       case OSMESA_ROW_LENGTH:
          if (value<0) {
-            gl_error( &ctx->gl_ctx, GL_INVALID_VALUE,
+            _mesa_error( &ctx->gl_ctx, GL_INVALID_VALUE,
                       "OSMesaPixelStore(value)" );
             return;
          }
@@ -483,7 +483,7 @@ void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
          ctx->yup = value ? GL_TRUE : GL_FALSE;
          break;
       default:
-         gl_error( &ctx->gl_ctx, GL_INVALID_ENUM, "OSMesaPixelStore(pname)" );
+         _mesa_error( &ctx->gl_ctx, GL_INVALID_ENUM, "OSMesaPixelStore(pname)" );
          return;
    }
 
@@ -515,7 +515,7 @@ void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
          *value = ctx->yup;
          return;
       default:
-         gl_error(&ctx->gl_ctx, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
+         _mesa_error(&ctx->gl_ctx, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
          return;
    }
 }

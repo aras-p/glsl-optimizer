@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.24 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: stencil.c,v 1.25 2001/03/03 20:33:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
       case GL_ALWAYS:
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glStencilFunc" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glStencilFunc" );
          return;
    }
 
@@ -143,7 +143,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          }
          /* FALL-THROUGH */
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
    switch (zfail) {
@@ -161,7 +161,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          }
          /* FALL-THROUGH */
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
    switch (zpass) {
@@ -179,7 +179,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          }
          /* FALL-THROUGH */
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
 

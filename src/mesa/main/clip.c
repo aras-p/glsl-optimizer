@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.19 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: clip.c,v 1.20 2001/03/03 20:33:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 
    p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
    if (p < 0 || p >= ctx->Const.MaxClipPlanes) {
-      gl_error( ctx, GL_INVALID_ENUM, "glClipPlane" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glClipPlane" );
       return;
    }
 
@@ -80,7 +80,7 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
    if (ctx->ModelView.flags & MAT_DIRTY)
       _math_matrix_analyse( &ctx->ModelView );
 
-   gl_transform_vector( equation, equation, ctx->ModelView.inv );
+   _mesa_transform_vector( equation, equation, ctx->ModelView.inv );
 
    if (TEST_EQ_4V(ctx->Transform.EyeUserPlane[p], equation))
       return;
@@ -90,13 +90,13 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 
    /* Update derived state.  This state also depends on the projection
     * matrix, and is recalculated on changes to the projection matrix by
-    * code in gl_update_state().
+    * code in _mesa_update_state().
     */
    if (ctx->Transform.ClipEnabled[p]) {
       if (ctx->ProjectionMatrix.flags & MAT_DIRTY)
 	 _math_matrix_analyse( &ctx->ProjectionMatrix );
 
-      gl_transform_vector( ctx->Transform._ClipUserPlane[p],
+      _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 			   ctx->Transform.EyeUserPlane[p],
 			   ctx->ProjectionMatrix.inv );
    }
@@ -115,7 +115,7 @@ _mesa_GetClipPlane( GLenum plane, GLdouble *equation )
 
    p = (GLint) (plane - GL_CLIP_PLANE0);
    if (p < 0 || p >= ctx->Const.MaxClipPlanes) {
-      gl_error( ctx, GL_INVALID_ENUM, "glGetClipPlane" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetClipPlane" );
       return;
    }
 

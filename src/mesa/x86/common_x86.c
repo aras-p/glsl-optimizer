@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.9 2000/12/07 02:36:38 gareth Exp $ */
+/* $Id: common_x86.c,v 1.10 2001/03/03 20:33:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
       /* If we ever get here, we're completely hosed.
        */
       message( "\n\n" );
-      gl_problem( NULL, "SSE enabling test failed badly!" );
+      _mesa_problem( NULL, "SSE enabling test failed badly!" );
    }
 }
 #endif /* __linux__ && _POSIX_SOURCE */
@@ -224,7 +224,7 @@ static void check_os_katmai_support( void )
 #endif /* USE_KATMAI_ASM */
 
 
-void gl_init_all_x86_transform_asm( void )
+void _mesa_init_all_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
    gl_x86_cpu_features = gl_identify_x86_cpu_features();
@@ -234,7 +234,7 @@ void gl_init_all_x86_transform_asm( void )
    }
 
    if ( gl_x86_cpu_features ) {
-      gl_init_x86_transform_asm();
+      _mesa_init_x86_transform_asm();
    }
 
 #ifdef USE_MMX_ASM
@@ -251,7 +251,7 @@ void gl_init_all_x86_transform_asm( void )
    if ( cpu_has_3dnow ) {
       if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
          message( "3DNow! cpu detected.\n" );
-         gl_init_3dnow_transform_asm();
+         _mesa_init_3dnow_transform_asm();
       } else {
          gl_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
       }
@@ -265,7 +265,7 @@ void gl_init_all_x86_transform_asm( void )
    if ( cpu_has_xmm ) {
       if ( getenv( "MESA_NO_KATMAI" ) == 0 ) {
          message( "Katmai cpu detected.\n" );
-         gl_init_katmai_transform_asm();
+         _mesa_init_katmai_transform_asm();
       } else {
          gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
@@ -277,22 +277,22 @@ void gl_init_all_x86_transform_asm( void )
 /* Note: the above function must be called before this one, so that
  * gl_x86_cpu_features gets correctly initialized.
  */
-void gl_init_all_x86_vertex_asm( void )
+void _mesa_init_all_x86_vertex_asm( void )
 {
 #ifdef USE_X86_ASM
    if ( gl_x86_cpu_features ) {
-      gl_init_x86_vertex_asm();
+      _mesa_init_x86_vertex_asm();
    }
 
 #ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow && getenv( "MESA_NO_3DNOW" ) == 0 ) {
-      gl_init_3dnow_vertex_asm();
+      _mesa_init_3dnow_vertex_asm();
    }
 #endif
 
 #ifdef USE_KATMAI_ASM
    if ( cpu_has_xmm && getenv( "MESA_NO_KATMAI" ) == 0 ) {
-      gl_init_katmai_vertex_asm();
+      _mesa_init_katmai_vertex_asm();
    }
 #endif
 #endif
