@@ -5,7 +5,6 @@ case_sensitive=YES
 symbol_vector = (gluErrorString	= PROCEDURE)                                    
 symbol_vector = (__gluNURBSErrorString	= PROCEDURE)                             
 symbol_vector = (__gluTessErrorString	= PROCEDURE)                              
-symbol_vector = (gluScaleImage3D	= PROCEDURE)                                   
 symbol_vector = (gluBuild3DMipmaps	= PROCEDURE)                                 
 symbol_vector = (gluBuild3DMipmapLevels	= PROCEDURE)                            
 symbol_vector = (gluBuild2DMipmaps	= PROCEDURE)                                 
