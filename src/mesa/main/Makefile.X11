@@ -8,6 +8,7 @@ GL_MINOR = 4
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 GL_LIB_NAME = "GL"  # may be overridden in Make-config
+OSMESA_LIB_NAME = "OSMesa"  # may be overridden in Make-config
 
 VPATH = RCS
 
@@ -231,10 +232,12 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 
 
 # Make the OSMesa library
-$(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
-	if [ ${OSMESA_LIB} ] ; then $(TOP)/bin/mklib -o OSMesa \
+$(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS) $(LIBDIR)/$(GL_LIB)
+	if [ ${OSMESA_LIB} ] ; then $(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(GL_TINY) \
-		-L$(LIBDIR) -lGL -install $(LIBDIR) $(OSMESA_OBJECTS) ; fi
+		-L$(LIBDIR) -l$(GL_LIB_NAME) -install $(LIBDIR) \
+		$(OSMESA_OBJECTS) ; fi
+
 
 # Make an optional library with _just_ core objects
 libmesa:	$(LIBDIR)/$(MESA_LIB)
