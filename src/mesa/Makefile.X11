@@ -219,6 +219,8 @@ SVGA_DRIVER_SOURCES =			\
 	drivers/svga/svgamesa24.c	\
 	drivers/svga/svgamesa32.c
 
+FBDEV_DRIVER_SOURCES =			\
+	drivers/fbdev/glfbdev.c
 
 
 ### Groups of files
@@ -241,7 +243,8 @@ ifndef SOLO
 DRIVER_SOURCES = \
 	$(X11_DRIVER_SOURCES) \
 	$(GLIDE_DRIVER_SOURCES) \
-	$(SVGA_DRIVER_SOURCES)
+	$(SVGA_DRIVER_SOURCES) \
+	$(FBDEV_DRIVER_SOURCES)
 endif
 
 
