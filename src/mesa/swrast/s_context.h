@@ -202,14 +202,9 @@ typedef void (*texture_sample_func)(GLcontext *ctx, GLuint texUnit,
                                     GLuint n, const GLfloat texcoords[][4],
                                     const GLfloat lambda[], GLchan rgba[][4]);
 
-#ifdef USE_MMX_ASM
 typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
                                     const GLubyte mask[],
                                     GLchan src[][4], CONST GLchan dst[][4] );
-#else
-typedef void (*blend_func)( GLcontext *ctx, GLuint n, const GLubyte mask[],
-                            GLchan src[][4], CONST GLchan dst[][4] );
-#endif
 
 typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
 

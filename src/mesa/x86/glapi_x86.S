@@ -4,10 +4,12 @@
 
 #ifndef __WIN32__
 
-#if defined(USE_MGL_NAMESPACE)
-#define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))
+#if defined(STDCALL_API)
+#define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n2))
+#elif defined(USE_MGL_NAMESPACE)
+#define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n))
 #else
-#define GL_PREFIX(n) GLNAME(CONCAT(gl,n))
+#define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n))
 #endif
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))
@@ -18,5382 +20,5383 @@
 #define GLOBL_FN(x) GLOBL x
 #endif
 
+SEG_TEXT
 
 EXTERN GLNAME(_glapi_Dispatch)
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(NewList))
-GL_PREFIX(NewList):
+GLOBL_FN(GL_PREFIX(NewList,NewList@8))
+GL_PREFIX(NewList,NewList@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_NewList))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EndList))
-GL_PREFIX(EndList):
+GLOBL_FN(GL_PREFIX(EndList,EndList@0))
+GL_PREFIX(EndList,EndList@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EndList))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CallList))
-GL_PREFIX(CallList):
+GLOBL_FN(GL_PREFIX(CallList,CallList@4))
+GL_PREFIX(CallList,CallList@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CallList))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CallLists))
-GL_PREFIX(CallLists):
+GLOBL_FN(GL_PREFIX(CallLists,CallLists@12))
+GL_PREFIX(CallLists,CallLists@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CallLists))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteLists))
-GL_PREFIX(DeleteLists):
+GLOBL_FN(GL_PREFIX(DeleteLists,DeleteLists@8))
+GL_PREFIX(DeleteLists,DeleteLists@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteLists))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenLists))
-GL_PREFIX(GenLists):
+GLOBL_FN(GL_PREFIX(GenLists,GenLists@4))
+GL_PREFIX(GenLists,GenLists@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenLists))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ListBase))
-GL_PREFIX(ListBase):
+GLOBL_FN(GL_PREFIX(ListBase,ListBase@4))
+GL_PREFIX(ListBase,ListBase@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ListBase))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Begin))
-GL_PREFIX(Begin):
+GLOBL_FN(GL_PREFIX(Begin,Begin@4))
+GL_PREFIX(Begin,Begin@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Begin))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Bitmap))
-GL_PREFIX(Bitmap):
+GLOBL_FN(GL_PREFIX(Bitmap,Bitmap@28))
+GL_PREFIX(Bitmap,Bitmap@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Bitmap))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3b))
-GL_PREFIX(Color3b):
+GLOBL_FN(GL_PREFIX(Color3b,Color3b@12))
+GL_PREFIX(Color3b,Color3b@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3b))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3bv))
-GL_PREFIX(Color3bv):
+GLOBL_FN(GL_PREFIX(Color3bv,Color3bv@4))
+GL_PREFIX(Color3bv,Color3bv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3bv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3d))
-GL_PREFIX(Color3d):
+GLOBL_FN(GL_PREFIX(Color3d,Color3d@24))
+GL_PREFIX(Color3d,Color3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3dv))
-GL_PREFIX(Color3dv):
+GLOBL_FN(GL_PREFIX(Color3dv,Color3dv@4))
+GL_PREFIX(Color3dv,Color3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3f))
-GL_PREFIX(Color3f):
+GLOBL_FN(GL_PREFIX(Color3f,Color3f@12))
+GL_PREFIX(Color3f,Color3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3fv))
-GL_PREFIX(Color3fv):
+GLOBL_FN(GL_PREFIX(Color3fv,Color3fv@4))
+GL_PREFIX(Color3fv,Color3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3i))
-GL_PREFIX(Color3i):
+GLOBL_FN(GL_PREFIX(Color3i,Color3i@12))
+GL_PREFIX(Color3i,Color3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3iv))
-GL_PREFIX(Color3iv):
+GLOBL_FN(GL_PREFIX(Color3iv,Color3iv@4))
+GL_PREFIX(Color3iv,Color3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3s))
-GL_PREFIX(Color3s):
+GLOBL_FN(GL_PREFIX(Color3s,Color3s@12))
+GL_PREFIX(Color3s,Color3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3sv))
-GL_PREFIX(Color3sv):
+GLOBL_FN(GL_PREFIX(Color3sv,Color3sv@4))
+GL_PREFIX(Color3sv,Color3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3ub))
-GL_PREFIX(Color3ub):
+GLOBL_FN(GL_PREFIX(Color3ub,Color3ub@12))
+GL_PREFIX(Color3ub,Color3ub@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3ub))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3ubv))
-GL_PREFIX(Color3ubv):
+GLOBL_FN(GL_PREFIX(Color3ubv,Color3ubv@4))
+GL_PREFIX(Color3ubv,Color3ubv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3ubv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3ui))
-GL_PREFIX(Color3ui):
+GLOBL_FN(GL_PREFIX(Color3ui,Color3ui@12))
+GL_PREFIX(Color3ui,Color3ui@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3ui))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3uiv))
-GL_PREFIX(Color3uiv):
+GLOBL_FN(GL_PREFIX(Color3uiv,Color3uiv@4))
+GL_PREFIX(Color3uiv,Color3uiv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3uiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3us))
-GL_PREFIX(Color3us):
+GLOBL_FN(GL_PREFIX(Color3us,Color3us@12))
+GL_PREFIX(Color3us,Color3us@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3us))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color3usv))
-GL_PREFIX(Color3usv):
+GLOBL_FN(GL_PREFIX(Color3usv,Color3usv@4))
+GL_PREFIX(Color3usv,Color3usv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color3usv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4b))
-GL_PREFIX(Color4b):
+GLOBL_FN(GL_PREFIX(Color4b,Color4b@16))
+GL_PREFIX(Color4b,Color4b@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4b))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4bv))
-GL_PREFIX(Color4bv):
+GLOBL_FN(GL_PREFIX(Color4bv,Color4bv@4))
+GL_PREFIX(Color4bv,Color4bv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4bv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4d))
-GL_PREFIX(Color4d):
+GLOBL_FN(GL_PREFIX(Color4d,Color4d@32))
+GL_PREFIX(Color4d,Color4d@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4dv))
-GL_PREFIX(Color4dv):
+GLOBL_FN(GL_PREFIX(Color4dv,Color4dv@4))
+GL_PREFIX(Color4dv,Color4dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4f))
-GL_PREFIX(Color4f):
+GLOBL_FN(GL_PREFIX(Color4f,Color4f@16))
+GL_PREFIX(Color4f,Color4f@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4fv))
-GL_PREFIX(Color4fv):
+GLOBL_FN(GL_PREFIX(Color4fv,Color4fv@4))
+GL_PREFIX(Color4fv,Color4fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4i))
-GL_PREFIX(Color4i):
+GLOBL_FN(GL_PREFIX(Color4i,Color4i@16))
+GL_PREFIX(Color4i,Color4i@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4iv))
-GL_PREFIX(Color4iv):
+GLOBL_FN(GL_PREFIX(Color4iv,Color4iv@4))
+GL_PREFIX(Color4iv,Color4iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4s))
-GL_PREFIX(Color4s):
+GLOBL_FN(GL_PREFIX(Color4s,Color4s@16))
+GL_PREFIX(Color4s,Color4s@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4sv))
-GL_PREFIX(Color4sv):
+GLOBL_FN(GL_PREFIX(Color4sv,Color4sv@4))
+GL_PREFIX(Color4sv,Color4sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4ub))
-GL_PREFIX(Color4ub):
+GLOBL_FN(GL_PREFIX(Color4ub,Color4ub@16))
+GL_PREFIX(Color4ub,Color4ub@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4ub))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4ubv))
-GL_PREFIX(Color4ubv):
+GLOBL_FN(GL_PREFIX(Color4ubv,Color4ubv@4))
+GL_PREFIX(Color4ubv,Color4ubv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4ubv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4ui))
-GL_PREFIX(Color4ui):
+GLOBL_FN(GL_PREFIX(Color4ui,Color4ui@16))
+GL_PREFIX(Color4ui,Color4ui@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4ui))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4uiv))
-GL_PREFIX(Color4uiv):
+GLOBL_FN(GL_PREFIX(Color4uiv,Color4uiv@4))
+GL_PREFIX(Color4uiv,Color4uiv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4uiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4us))
-GL_PREFIX(Color4us):
+GLOBL_FN(GL_PREFIX(Color4us,Color4us@16))
+GL_PREFIX(Color4us,Color4us@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4us))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Color4usv))
-GL_PREFIX(Color4usv):
+GLOBL_FN(GL_PREFIX(Color4usv,Color4usv@4))
+GL_PREFIX(Color4usv,Color4usv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Color4usv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EdgeFlag))
-GL_PREFIX(EdgeFlag):
+GLOBL_FN(GL_PREFIX(EdgeFlag,EdgeFlag@4))
+GL_PREFIX(EdgeFlag,EdgeFlag@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EdgeFlag))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EdgeFlagv))
-GL_PREFIX(EdgeFlagv):
+GLOBL_FN(GL_PREFIX(EdgeFlagv,EdgeFlagv@4))
+GL_PREFIX(EdgeFlagv,EdgeFlagv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EdgeFlagv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(End))
-GL_PREFIX(End):
+GLOBL_FN(GL_PREFIX(End,End@0))
+GL_PREFIX(End,End@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_End))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexd))
-GL_PREFIX(Indexd):
+GLOBL_FN(GL_PREFIX(Indexd,Indexd@8))
+GL_PREFIX(Indexd,Indexd@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexd))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexdv))
-GL_PREFIX(Indexdv):
+GLOBL_FN(GL_PREFIX(Indexdv,Indexdv@4))
+GL_PREFIX(Indexdv,Indexdv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexdv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexf))
-GL_PREFIX(Indexf):
+GLOBL_FN(GL_PREFIX(Indexf,Indexf@4))
+GL_PREFIX(Indexf,Indexf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexfv))
-GL_PREFIX(Indexfv):
+GLOBL_FN(GL_PREFIX(Indexfv,Indexfv@4))
+GL_PREFIX(Indexfv,Indexfv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexi))
-GL_PREFIX(Indexi):
+GLOBL_FN(GL_PREFIX(Indexi,Indexi@4))
+GL_PREFIX(Indexi,Indexi@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexi))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexiv))
-GL_PREFIX(Indexiv):
+GLOBL_FN(GL_PREFIX(Indexiv,Indexiv@4))
+GL_PREFIX(Indexiv,Indexiv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexs))
-GL_PREFIX(Indexs):
+GLOBL_FN(GL_PREFIX(Indexs,Indexs@4))
+GL_PREFIX(Indexs,Indexs@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexs))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexsv))
-GL_PREFIX(Indexsv):
+GLOBL_FN(GL_PREFIX(Indexsv,Indexsv@4))
+GL_PREFIX(Indexsv,Indexsv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexsv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3b))
-GL_PREFIX(Normal3b):
+GLOBL_FN(GL_PREFIX(Normal3b,Normal3b@12))
+GL_PREFIX(Normal3b,Normal3b@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3b))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3bv))
-GL_PREFIX(Normal3bv):
+GLOBL_FN(GL_PREFIX(Normal3bv,Normal3bv@4))
+GL_PREFIX(Normal3bv,Normal3bv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3bv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3d))
-GL_PREFIX(Normal3d):
+GLOBL_FN(GL_PREFIX(Normal3d,Normal3d@24))
+GL_PREFIX(Normal3d,Normal3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3dv))
-GL_PREFIX(Normal3dv):
+GLOBL_FN(GL_PREFIX(Normal3dv,Normal3dv@4))
+GL_PREFIX(Normal3dv,Normal3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3f))
-GL_PREFIX(Normal3f):
+GLOBL_FN(GL_PREFIX(Normal3f,Normal3f@12))
+GL_PREFIX(Normal3f,Normal3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3fv))
-GL_PREFIX(Normal3fv):
+GLOBL_FN(GL_PREFIX(Normal3fv,Normal3fv@4))
+GL_PREFIX(Normal3fv,Normal3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3i))
-GL_PREFIX(Normal3i):
+GLOBL_FN(GL_PREFIX(Normal3i,Normal3i@12))
+GL_PREFIX(Normal3i,Normal3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3iv))
-GL_PREFIX(Normal3iv):
+GLOBL_FN(GL_PREFIX(Normal3iv,Normal3iv@4))
+GL_PREFIX(Normal3iv,Normal3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3s))
-GL_PREFIX(Normal3s):
+GLOBL_FN(GL_PREFIX(Normal3s,Normal3s@12))
+GL_PREFIX(Normal3s,Normal3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Normal3sv))
-GL_PREFIX(Normal3sv):
+GLOBL_FN(GL_PREFIX(Normal3sv,Normal3sv@4))
+GL_PREFIX(Normal3sv,Normal3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Normal3sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2d))
-GL_PREFIX(RasterPos2d):
+GLOBL_FN(GL_PREFIX(RasterPos2d,RasterPos2d@16))
+GL_PREFIX(RasterPos2d,RasterPos2d@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2dv))
-GL_PREFIX(RasterPos2dv):
+GLOBL_FN(GL_PREFIX(RasterPos2dv,RasterPos2dv@4))
+GL_PREFIX(RasterPos2dv,RasterPos2dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2f))
-GL_PREFIX(RasterPos2f):
+GLOBL_FN(GL_PREFIX(RasterPos2f,RasterPos2f@8))
+GL_PREFIX(RasterPos2f,RasterPos2f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2fv))
-GL_PREFIX(RasterPos2fv):
+GLOBL_FN(GL_PREFIX(RasterPos2fv,RasterPos2fv@4))
+GL_PREFIX(RasterPos2fv,RasterPos2fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2i))
-GL_PREFIX(RasterPos2i):
+GLOBL_FN(GL_PREFIX(RasterPos2i,RasterPos2i@8))
+GL_PREFIX(RasterPos2i,RasterPos2i@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2iv))
-GL_PREFIX(RasterPos2iv):
+GLOBL_FN(GL_PREFIX(RasterPos2iv,RasterPos2iv@4))
+GL_PREFIX(RasterPos2iv,RasterPos2iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2s))
-GL_PREFIX(RasterPos2s):
+GLOBL_FN(GL_PREFIX(RasterPos2s,RasterPos2s@8))
+GL_PREFIX(RasterPos2s,RasterPos2s@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos2sv))
-GL_PREFIX(RasterPos2sv):
+GLOBL_FN(GL_PREFIX(RasterPos2sv,RasterPos2sv@4))
+GL_PREFIX(RasterPos2sv,RasterPos2sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos2sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3d))
-GL_PREFIX(RasterPos3d):
+GLOBL_FN(GL_PREFIX(RasterPos3d,RasterPos3d@24))
+GL_PREFIX(RasterPos3d,RasterPos3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3dv))
-GL_PREFIX(RasterPos3dv):
+GLOBL_FN(GL_PREFIX(RasterPos3dv,RasterPos3dv@4))
+GL_PREFIX(RasterPos3dv,RasterPos3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3f))
-GL_PREFIX(RasterPos3f):
+GLOBL_FN(GL_PREFIX(RasterPos3f,RasterPos3f@12))
+GL_PREFIX(RasterPos3f,RasterPos3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3fv))
-GL_PREFIX(RasterPos3fv):
+GLOBL_FN(GL_PREFIX(RasterPos3fv,RasterPos3fv@4))
+GL_PREFIX(RasterPos3fv,RasterPos3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3i))
-GL_PREFIX(RasterPos3i):
+GLOBL_FN(GL_PREFIX(RasterPos3i,RasterPos3i@12))
+GL_PREFIX(RasterPos3i,RasterPos3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3iv))
-GL_PREFIX(RasterPos3iv):
+GLOBL_FN(GL_PREFIX(RasterPos3iv,RasterPos3iv@4))
+GL_PREFIX(RasterPos3iv,RasterPos3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3s))
-GL_PREFIX(RasterPos3s):
+GLOBL_FN(GL_PREFIX(RasterPos3s,RasterPos3s@12))
+GL_PREFIX(RasterPos3s,RasterPos3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos3sv))
-GL_PREFIX(RasterPos3sv):
+GLOBL_FN(GL_PREFIX(RasterPos3sv,RasterPos3sv@4))
+GL_PREFIX(RasterPos3sv,RasterPos3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos3sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4d))
-GL_PREFIX(RasterPos4d):
+GLOBL_FN(GL_PREFIX(RasterPos4d,RasterPos4d@32))
+GL_PREFIX(RasterPos4d,RasterPos4d@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4dv))
-GL_PREFIX(RasterPos4dv):
+GLOBL_FN(GL_PREFIX(RasterPos4dv,RasterPos4dv@4))
+GL_PREFIX(RasterPos4dv,RasterPos4dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4f))
-GL_PREFIX(RasterPos4f):
+GLOBL_FN(GL_PREFIX(RasterPos4f,RasterPos4f@16))
+GL_PREFIX(RasterPos4f,RasterPos4f@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4fv))
-GL_PREFIX(RasterPos4fv):
+GLOBL_FN(GL_PREFIX(RasterPos4fv,RasterPos4fv@4))
+GL_PREFIX(RasterPos4fv,RasterPos4fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4i))
-GL_PREFIX(RasterPos4i):
+GLOBL_FN(GL_PREFIX(RasterPos4i,RasterPos4i@16))
+GL_PREFIX(RasterPos4i,RasterPos4i@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4iv))
-GL_PREFIX(RasterPos4iv):
+GLOBL_FN(GL_PREFIX(RasterPos4iv,RasterPos4iv@4))
+GL_PREFIX(RasterPos4iv,RasterPos4iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4s))
-GL_PREFIX(RasterPos4s):
+GLOBL_FN(GL_PREFIX(RasterPos4s,RasterPos4s@16))
+GL_PREFIX(RasterPos4s,RasterPos4s@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RasterPos4sv))
-GL_PREFIX(RasterPos4sv):
+GLOBL_FN(GL_PREFIX(RasterPos4sv,RasterPos4sv@4))
+GL_PREFIX(RasterPos4sv,RasterPos4sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RasterPos4sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectd))
-GL_PREFIX(Rectd):
+GLOBL_FN(GL_PREFIX(Rectd,Rectd@32))
+GL_PREFIX(Rectd,Rectd@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectd))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectdv))
-GL_PREFIX(Rectdv):
+GLOBL_FN(GL_PREFIX(Rectdv,Rectdv@8))
+GL_PREFIX(Rectdv,Rectdv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectdv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectf))
-GL_PREFIX(Rectf):
+GLOBL_FN(GL_PREFIX(Rectf,Rectf@16))
+GL_PREFIX(Rectf,Rectf@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectfv))
-GL_PREFIX(Rectfv):
+GLOBL_FN(GL_PREFIX(Rectfv,Rectfv@8))
+GL_PREFIX(Rectfv,Rectfv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Recti))
-GL_PREFIX(Recti):
+GLOBL_FN(GL_PREFIX(Recti,Recti@16))
+GL_PREFIX(Recti,Recti@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Recti))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectiv))
-GL_PREFIX(Rectiv):
+GLOBL_FN(GL_PREFIX(Rectiv,Rectiv@8))
+GL_PREFIX(Rectiv,Rectiv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rects))
-GL_PREFIX(Rects):
+GLOBL_FN(GL_PREFIX(Rects,Rects@16))
+GL_PREFIX(Rects,Rects@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rects))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rectsv))
-GL_PREFIX(Rectsv):
+GLOBL_FN(GL_PREFIX(Rectsv,Rectsv@8))
+GL_PREFIX(Rectsv,Rectsv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rectsv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1d))
-GL_PREFIX(TexCoord1d):
+GLOBL_FN(GL_PREFIX(TexCoord1d,TexCoord1d@8))
+GL_PREFIX(TexCoord1d,TexCoord1d@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1dv))
-GL_PREFIX(TexCoord1dv):
+GLOBL_FN(GL_PREFIX(TexCoord1dv,TexCoord1dv@4))
+GL_PREFIX(TexCoord1dv,TexCoord1dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1f))
-GL_PREFIX(TexCoord1f):
+GLOBL_FN(GL_PREFIX(TexCoord1f,TexCoord1f@4))
+GL_PREFIX(TexCoord1f,TexCoord1f@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1fv))
-GL_PREFIX(TexCoord1fv):
+GLOBL_FN(GL_PREFIX(TexCoord1fv,TexCoord1fv@4))
+GL_PREFIX(TexCoord1fv,TexCoord1fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1i))
-GL_PREFIX(TexCoord1i):
+GLOBL_FN(GL_PREFIX(TexCoord1i,TexCoord1i@4))
+GL_PREFIX(TexCoord1i,TexCoord1i@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1iv))
-GL_PREFIX(TexCoord1iv):
+GLOBL_FN(GL_PREFIX(TexCoord1iv,TexCoord1iv@4))
+GL_PREFIX(TexCoord1iv,TexCoord1iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1s))
-GL_PREFIX(TexCoord1s):
+GLOBL_FN(GL_PREFIX(TexCoord1s,TexCoord1s@4))
+GL_PREFIX(TexCoord1s,TexCoord1s@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord1sv))
-GL_PREFIX(TexCoord1sv):
+GLOBL_FN(GL_PREFIX(TexCoord1sv,TexCoord1sv@4))
+GL_PREFIX(TexCoord1sv,TexCoord1sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord1sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2d))
-GL_PREFIX(TexCoord2d):
+GLOBL_FN(GL_PREFIX(TexCoord2d,TexCoord2d@16))
+GL_PREFIX(TexCoord2d,TexCoord2d@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2dv))
-GL_PREFIX(TexCoord2dv):
+GLOBL_FN(GL_PREFIX(TexCoord2dv,TexCoord2dv@4))
+GL_PREFIX(TexCoord2dv,TexCoord2dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2f))
-GL_PREFIX(TexCoord2f):
+GLOBL_FN(GL_PREFIX(TexCoord2f,TexCoord2f@8))
+GL_PREFIX(TexCoord2f,TexCoord2f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2fv))
-GL_PREFIX(TexCoord2fv):
+GLOBL_FN(GL_PREFIX(TexCoord2fv,TexCoord2fv@4))
+GL_PREFIX(TexCoord2fv,TexCoord2fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2i))
-GL_PREFIX(TexCoord2i):
+GLOBL_FN(GL_PREFIX(TexCoord2i,TexCoord2i@8))
+GL_PREFIX(TexCoord2i,TexCoord2i@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2iv))
-GL_PREFIX(TexCoord2iv):
+GLOBL_FN(GL_PREFIX(TexCoord2iv,TexCoord2iv@4))
+GL_PREFIX(TexCoord2iv,TexCoord2iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2s))
-GL_PREFIX(TexCoord2s):
+GLOBL_FN(GL_PREFIX(TexCoord2s,TexCoord2s@8))
+GL_PREFIX(TexCoord2s,TexCoord2s@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord2sv))
-GL_PREFIX(TexCoord2sv):
+GLOBL_FN(GL_PREFIX(TexCoord2sv,TexCoord2sv@4))
+GL_PREFIX(TexCoord2sv,TexCoord2sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord2sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3d))
-GL_PREFIX(TexCoord3d):
+GLOBL_FN(GL_PREFIX(TexCoord3d,TexCoord3d@24))
+GL_PREFIX(TexCoord3d,TexCoord3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3dv))
-GL_PREFIX(TexCoord3dv):
+GLOBL_FN(GL_PREFIX(TexCoord3dv,TexCoord3dv@4))
+GL_PREFIX(TexCoord3dv,TexCoord3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3f))
-GL_PREFIX(TexCoord3f):
+GLOBL_FN(GL_PREFIX(TexCoord3f,TexCoord3f@12))
+GL_PREFIX(TexCoord3f,TexCoord3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3fv))
-GL_PREFIX(TexCoord3fv):
+GLOBL_FN(GL_PREFIX(TexCoord3fv,TexCoord3fv@4))
+GL_PREFIX(TexCoord3fv,TexCoord3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3i))
-GL_PREFIX(TexCoord3i):
+GLOBL_FN(GL_PREFIX(TexCoord3i,TexCoord3i@12))
+GL_PREFIX(TexCoord3i,TexCoord3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3iv))
-GL_PREFIX(TexCoord3iv):
+GLOBL_FN(GL_PREFIX(TexCoord3iv,TexCoord3iv@4))
+GL_PREFIX(TexCoord3iv,TexCoord3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3s))
-GL_PREFIX(TexCoord3s):
+GLOBL_FN(GL_PREFIX(TexCoord3s,TexCoord3s@12))
+GL_PREFIX(TexCoord3s,TexCoord3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord3sv))
-GL_PREFIX(TexCoord3sv):
+GLOBL_FN(GL_PREFIX(TexCoord3sv,TexCoord3sv@4))
+GL_PREFIX(TexCoord3sv,TexCoord3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord3sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4d))
-GL_PREFIX(TexCoord4d):
+GLOBL_FN(GL_PREFIX(TexCoord4d,TexCoord4d@32))
+GL_PREFIX(TexCoord4d,TexCoord4d@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4dv))
-GL_PREFIX(TexCoord4dv):
+GLOBL_FN(GL_PREFIX(TexCoord4dv,TexCoord4dv@4))
+GL_PREFIX(TexCoord4dv,TexCoord4dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4f))
-GL_PREFIX(TexCoord4f):
+GLOBL_FN(GL_PREFIX(TexCoord4f,TexCoord4f@16))
+GL_PREFIX(TexCoord4f,TexCoord4f@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4fv))
-GL_PREFIX(TexCoord4fv):
+GLOBL_FN(GL_PREFIX(TexCoord4fv,TexCoord4fv@4))
+GL_PREFIX(TexCoord4fv,TexCoord4fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4i))
-GL_PREFIX(TexCoord4i):
+GLOBL_FN(GL_PREFIX(TexCoord4i,TexCoord4i@16))
+GL_PREFIX(TexCoord4i,TexCoord4i@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4iv))
-GL_PREFIX(TexCoord4iv):
+GLOBL_FN(GL_PREFIX(TexCoord4iv,TexCoord4iv@4))
+GL_PREFIX(TexCoord4iv,TexCoord4iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4s))
-GL_PREFIX(TexCoord4s):
+GLOBL_FN(GL_PREFIX(TexCoord4s,TexCoord4s@16))
+GL_PREFIX(TexCoord4s,TexCoord4s@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoord4sv))
-GL_PREFIX(TexCoord4sv):
+GLOBL_FN(GL_PREFIX(TexCoord4sv,TexCoord4sv@4))
+GL_PREFIX(TexCoord4sv,TexCoord4sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoord4sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2d))
-GL_PREFIX(Vertex2d):
+GLOBL_FN(GL_PREFIX(Vertex2d,Vertex2d@16))
+GL_PREFIX(Vertex2d,Vertex2d@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2dv))
-GL_PREFIX(Vertex2dv):
+GLOBL_FN(GL_PREFIX(Vertex2dv,Vertex2dv@4))
+GL_PREFIX(Vertex2dv,Vertex2dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2f))
-GL_PREFIX(Vertex2f):
+GLOBL_FN(GL_PREFIX(Vertex2f,Vertex2f@8))
+GL_PREFIX(Vertex2f,Vertex2f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2fv))
-GL_PREFIX(Vertex2fv):
+GLOBL_FN(GL_PREFIX(Vertex2fv,Vertex2fv@4))
+GL_PREFIX(Vertex2fv,Vertex2fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2i))
-GL_PREFIX(Vertex2i):
+GLOBL_FN(GL_PREFIX(Vertex2i,Vertex2i@8))
+GL_PREFIX(Vertex2i,Vertex2i@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2iv))
-GL_PREFIX(Vertex2iv):
+GLOBL_FN(GL_PREFIX(Vertex2iv,Vertex2iv@4))
+GL_PREFIX(Vertex2iv,Vertex2iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2s))
-GL_PREFIX(Vertex2s):
+GLOBL_FN(GL_PREFIX(Vertex2s,Vertex2s@8))
+GL_PREFIX(Vertex2s,Vertex2s@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex2sv))
-GL_PREFIX(Vertex2sv):
+GLOBL_FN(GL_PREFIX(Vertex2sv,Vertex2sv@4))
+GL_PREFIX(Vertex2sv,Vertex2sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex2sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3d))
-GL_PREFIX(Vertex3d):
+GLOBL_FN(GL_PREFIX(Vertex3d,Vertex3d@24))
+GL_PREFIX(Vertex3d,Vertex3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3dv))
-GL_PREFIX(Vertex3dv):
+GLOBL_FN(GL_PREFIX(Vertex3dv,Vertex3dv@4))
+GL_PREFIX(Vertex3dv,Vertex3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3f))
-GL_PREFIX(Vertex3f):
+GLOBL_FN(GL_PREFIX(Vertex3f,Vertex3f@12))
+GL_PREFIX(Vertex3f,Vertex3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3fv))
-GL_PREFIX(Vertex3fv):
+GLOBL_FN(GL_PREFIX(Vertex3fv,Vertex3fv@4))
+GL_PREFIX(Vertex3fv,Vertex3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3i))
-GL_PREFIX(Vertex3i):
+GLOBL_FN(GL_PREFIX(Vertex3i,Vertex3i@12))
+GL_PREFIX(Vertex3i,Vertex3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3iv))
-GL_PREFIX(Vertex3iv):
+GLOBL_FN(GL_PREFIX(Vertex3iv,Vertex3iv@4))
+GL_PREFIX(Vertex3iv,Vertex3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3s))
-GL_PREFIX(Vertex3s):
+GLOBL_FN(GL_PREFIX(Vertex3s,Vertex3s@12))
+GL_PREFIX(Vertex3s,Vertex3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex3sv))
-GL_PREFIX(Vertex3sv):
+GLOBL_FN(GL_PREFIX(Vertex3sv,Vertex3sv@4))
+GL_PREFIX(Vertex3sv,Vertex3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex3sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4d))
-GL_PREFIX(Vertex4d):
+GLOBL_FN(GL_PREFIX(Vertex4d,Vertex4d@32))
+GL_PREFIX(Vertex4d,Vertex4d@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4dv))
-GL_PREFIX(Vertex4dv):
+GLOBL_FN(GL_PREFIX(Vertex4dv,Vertex4dv@4))
+GL_PREFIX(Vertex4dv,Vertex4dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4f))
-GL_PREFIX(Vertex4f):
+GLOBL_FN(GL_PREFIX(Vertex4f,Vertex4f@16))
+GL_PREFIX(Vertex4f,Vertex4f@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4fv))
-GL_PREFIX(Vertex4fv):
+GLOBL_FN(GL_PREFIX(Vertex4fv,Vertex4fv@4))
+GL_PREFIX(Vertex4fv,Vertex4fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4i))
-GL_PREFIX(Vertex4i):
+GLOBL_FN(GL_PREFIX(Vertex4i,Vertex4i@16))
+GL_PREFIX(Vertex4i,Vertex4i@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4i))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4iv))
-GL_PREFIX(Vertex4iv):
+GLOBL_FN(GL_PREFIX(Vertex4iv,Vertex4iv@4))
+GL_PREFIX(Vertex4iv,Vertex4iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4iv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4s))
-GL_PREFIX(Vertex4s):
+GLOBL_FN(GL_PREFIX(Vertex4s,Vertex4s@16))
+GL_PREFIX(Vertex4s,Vertex4s@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4s))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Vertex4sv))
-GL_PREFIX(Vertex4sv):
+GLOBL_FN(GL_PREFIX(Vertex4sv,Vertex4sv@4))
+GL_PREFIX(Vertex4sv,Vertex4sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Vertex4sv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClipPlane))
-GL_PREFIX(ClipPlane):
+GLOBL_FN(GL_PREFIX(ClipPlane,ClipPlane@8))
+GL_PREFIX(ClipPlane,ClipPlane@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClipPlane))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorMaterial))
-GL_PREFIX(ColorMaterial):
+GLOBL_FN(GL_PREFIX(ColorMaterial,ColorMaterial@8))
+GL_PREFIX(ColorMaterial,ColorMaterial@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorMaterial))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CullFace))
-GL_PREFIX(CullFace):
+GLOBL_FN(GL_PREFIX(CullFace,CullFace@4))
+GL_PREFIX(CullFace,CullFace@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CullFace))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Fogf))
-GL_PREFIX(Fogf):
+GLOBL_FN(GL_PREFIX(Fogf,Fogf@8))
+GL_PREFIX(Fogf,Fogf@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Fogf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Fogfv))
-GL_PREFIX(Fogfv):
+GLOBL_FN(GL_PREFIX(Fogfv,Fogfv@8))
+GL_PREFIX(Fogfv,Fogfv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Fogfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Fogi))
-GL_PREFIX(Fogi):
+GLOBL_FN(GL_PREFIX(Fogi,Fogi@8))
+GL_PREFIX(Fogi,Fogi@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Fogi))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Fogiv))
-GL_PREFIX(Fogiv):
+GLOBL_FN(GL_PREFIX(Fogiv,Fogiv@8))
+GL_PREFIX(Fogiv,Fogiv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Fogiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FrontFace))
-GL_PREFIX(FrontFace):
+GLOBL_FN(GL_PREFIX(FrontFace,FrontFace@4))
+GL_PREFIX(FrontFace,FrontFace@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FrontFace))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Hint))
-GL_PREFIX(Hint):
+GLOBL_FN(GL_PREFIX(Hint,Hint@8))
+GL_PREFIX(Hint,Hint@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Hint))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Lightf))
-GL_PREFIX(Lightf):
+GLOBL_FN(GL_PREFIX(Lightf,Lightf@12))
+GL_PREFIX(Lightf,Lightf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Lightf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Lightfv))
-GL_PREFIX(Lightfv):
+GLOBL_FN(GL_PREFIX(Lightfv,Lightfv@12))
+GL_PREFIX(Lightfv,Lightfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Lightfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Lighti))
-GL_PREFIX(Lighti):
+GLOBL_FN(GL_PREFIX(Lighti,Lighti@12))
+GL_PREFIX(Lighti,Lighti@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Lighti))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Lightiv))
-GL_PREFIX(Lightiv):
+GLOBL_FN(GL_PREFIX(Lightiv,Lightiv@12))
+GL_PREFIX(Lightiv,Lightiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Lightiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LightModelf))
-GL_PREFIX(LightModelf):
+GLOBL_FN(GL_PREFIX(LightModelf,LightModelf@8))
+GL_PREFIX(LightModelf,LightModelf@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LightModelf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LightModelfv))
-GL_PREFIX(LightModelfv):
+GLOBL_FN(GL_PREFIX(LightModelfv,LightModelfv@8))
+GL_PREFIX(LightModelfv,LightModelfv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LightModelfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LightModeli))
-GL_PREFIX(LightModeli):
+GLOBL_FN(GL_PREFIX(LightModeli,LightModeli@8))
+GL_PREFIX(LightModeli,LightModeli@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LightModeli))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LightModeliv))
-GL_PREFIX(LightModeliv):
+GLOBL_FN(GL_PREFIX(LightModeliv,LightModeliv@8))
+GL_PREFIX(LightModeliv,LightModeliv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LightModeliv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LineStipple))
-GL_PREFIX(LineStipple):
+GLOBL_FN(GL_PREFIX(LineStipple,LineStipple@8))
+GL_PREFIX(LineStipple,LineStipple@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LineStipple))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LineWidth))
-GL_PREFIX(LineWidth):
+GLOBL_FN(GL_PREFIX(LineWidth,LineWidth@4))
+GL_PREFIX(LineWidth,LineWidth@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LineWidth))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Materialf))
-GL_PREFIX(Materialf):
+GLOBL_FN(GL_PREFIX(Materialf,Materialf@12))
+GL_PREFIX(Materialf,Materialf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Materialf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Materialfv))
-GL_PREFIX(Materialfv):
+GLOBL_FN(GL_PREFIX(Materialfv,Materialfv@12))
+GL_PREFIX(Materialfv,Materialfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Materialfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Materiali))
-GL_PREFIX(Materiali):
+GLOBL_FN(GL_PREFIX(Materiali,Materiali@12))
+GL_PREFIX(Materiali,Materiali@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Materiali))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Materialiv))
-GL_PREFIX(Materialiv):
+GLOBL_FN(GL_PREFIX(Materialiv,Materialiv@12))
+GL_PREFIX(Materialiv,Materialiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Materialiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointSize))
-GL_PREFIX(PointSize):
+GLOBL_FN(GL_PREFIX(PointSize,PointSize@4))
+GL_PREFIX(PointSize,PointSize@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointSize))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PolygonMode))
-GL_PREFIX(PolygonMode):
+GLOBL_FN(GL_PREFIX(PolygonMode,PolygonMode@8))
+GL_PREFIX(PolygonMode,PolygonMode@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PolygonMode))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PolygonStipple))
-GL_PREFIX(PolygonStipple):
+GLOBL_FN(GL_PREFIX(PolygonStipple,PolygonStipple@4))
+GL_PREFIX(PolygonStipple,PolygonStipple@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PolygonStipple))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Scissor))
-GL_PREFIX(Scissor):
+GLOBL_FN(GL_PREFIX(Scissor,Scissor@16))
+GL_PREFIX(Scissor,Scissor@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Scissor))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ShadeModel))
-GL_PREFIX(ShadeModel):
+GLOBL_FN(GL_PREFIX(ShadeModel,ShadeModel@4))
+GL_PREFIX(ShadeModel,ShadeModel@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ShadeModel))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexParameterf))
-GL_PREFIX(TexParameterf):
+GLOBL_FN(GL_PREFIX(TexParameterf,TexParameterf@12))
+GL_PREFIX(TexParameterf,TexParameterf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexParameterf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexParameterfv))
-GL_PREFIX(TexParameterfv):
+GLOBL_FN(GL_PREFIX(TexParameterfv,TexParameterfv@12))
+GL_PREFIX(TexParameterfv,TexParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexParameteri))
-GL_PREFIX(TexParameteri):
+GLOBL_FN(GL_PREFIX(TexParameteri,TexParameteri@12))
+GL_PREFIX(TexParameteri,TexParameteri@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexParameteri))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexParameteriv))
-GL_PREFIX(TexParameteriv):
+GLOBL_FN(GL_PREFIX(TexParameteriv,TexParameteriv@12))
+GL_PREFIX(TexParameteriv,TexParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexImage1D))
-GL_PREFIX(TexImage1D):
+GLOBL_FN(GL_PREFIX(TexImage1D,TexImage1D@32))
+GL_PREFIX(TexImage1D,TexImage1D@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexImage2D))
-GL_PREFIX(TexImage2D):
+GLOBL_FN(GL_PREFIX(TexImage2D,TexImage2D@36))
+GL_PREFIX(TexImage2D,TexImage2D@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexEnvf))
-GL_PREFIX(TexEnvf):
+GLOBL_FN(GL_PREFIX(TexEnvf,TexEnvf@12))
+GL_PREFIX(TexEnvf,TexEnvf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexEnvf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexEnvfv))
-GL_PREFIX(TexEnvfv):
+GLOBL_FN(GL_PREFIX(TexEnvfv,TexEnvfv@12))
+GL_PREFIX(TexEnvfv,TexEnvfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexEnvfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexEnvi))
-GL_PREFIX(TexEnvi):
+GLOBL_FN(GL_PREFIX(TexEnvi,TexEnvi@12))
+GL_PREFIX(TexEnvi,TexEnvi@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexEnvi))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexEnviv))
-GL_PREFIX(TexEnviv):
+GLOBL_FN(GL_PREFIX(TexEnviv,TexEnviv@12))
+GL_PREFIX(TexEnviv,TexEnviv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexEnviv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGend))
-GL_PREFIX(TexGend):
+GLOBL_FN(GL_PREFIX(TexGend,TexGend@16))
+GL_PREFIX(TexGend,TexGend@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGend))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGendv))
-GL_PREFIX(TexGendv):
+GLOBL_FN(GL_PREFIX(TexGendv,TexGendv@12))
+GL_PREFIX(TexGendv,TexGendv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGendv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGenf))
-GL_PREFIX(TexGenf):
+GLOBL_FN(GL_PREFIX(TexGenf,TexGenf@12))
+GL_PREFIX(TexGenf,TexGenf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGenf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGenfv))
-GL_PREFIX(TexGenfv):
+GLOBL_FN(GL_PREFIX(TexGenfv,TexGenfv@12))
+GL_PREFIX(TexGenfv,TexGenfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGenfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGeni))
-GL_PREFIX(TexGeni):
+GLOBL_FN(GL_PREFIX(TexGeni,TexGeni@12))
+GL_PREFIX(TexGeni,TexGeni@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGeni))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexGeniv))
-GL_PREFIX(TexGeniv):
+GLOBL_FN(GL_PREFIX(TexGeniv,TexGeniv@12))
+GL_PREFIX(TexGeniv,TexGeniv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexGeniv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FeedbackBuffer))
-GL_PREFIX(FeedbackBuffer):
+GLOBL_FN(GL_PREFIX(FeedbackBuffer,FeedbackBuffer@12))
+GL_PREFIX(FeedbackBuffer,FeedbackBuffer@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FeedbackBuffer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SelectBuffer))
-GL_PREFIX(SelectBuffer):
+GLOBL_FN(GL_PREFIX(SelectBuffer,SelectBuffer@8))
+GL_PREFIX(SelectBuffer,SelectBuffer@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SelectBuffer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RenderMode))
-GL_PREFIX(RenderMode):
+GLOBL_FN(GL_PREFIX(RenderMode,RenderMode@4))
+GL_PREFIX(RenderMode,RenderMode@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RenderMode))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(InitNames))
-GL_PREFIX(InitNames):
+GLOBL_FN(GL_PREFIX(InitNames,InitNames@0))
+GL_PREFIX(InitNames,InitNames@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_InitNames))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadName))
-GL_PREFIX(LoadName):
+GLOBL_FN(GL_PREFIX(LoadName,LoadName@4))
+GL_PREFIX(LoadName,LoadName@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadName))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PassThrough))
-GL_PREFIX(PassThrough):
+GLOBL_FN(GL_PREFIX(PassThrough,PassThrough@4))
+GL_PREFIX(PassThrough,PassThrough@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PassThrough))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PopName))
-GL_PREFIX(PopName):
+GLOBL_FN(GL_PREFIX(PopName,PopName@0))
+GL_PREFIX(PopName,PopName@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PopName))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PushName))
-GL_PREFIX(PushName):
+GLOBL_FN(GL_PREFIX(PushName,PushName@4))
+GL_PREFIX(PushName,PushName@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PushName))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawBuffer))
-GL_PREFIX(DrawBuffer):
+GLOBL_FN(GL_PREFIX(DrawBuffer,DrawBuffer@4))
+GL_PREFIX(DrawBuffer,DrawBuffer@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawBuffer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Clear))
-GL_PREFIX(Clear):
+GLOBL_FN(GL_PREFIX(Clear,Clear@4))
+GL_PREFIX(Clear,Clear@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Clear))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClearAccum))
-GL_PREFIX(ClearAccum):
+GLOBL_FN(GL_PREFIX(ClearAccum,ClearAccum@16))
+GL_PREFIX(ClearAccum,ClearAccum@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClearAccum))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClearIndex))
-GL_PREFIX(ClearIndex):
+GLOBL_FN(GL_PREFIX(ClearIndex,ClearIndex@4))
+GL_PREFIX(ClearIndex,ClearIndex@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClearIndex))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClearColor))
-GL_PREFIX(ClearColor):
+GLOBL_FN(GL_PREFIX(ClearColor,ClearColor@16))
+GL_PREFIX(ClearColor,ClearColor@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClearColor))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClearStencil))
-GL_PREFIX(ClearStencil):
+GLOBL_FN(GL_PREFIX(ClearStencil,ClearStencil@4))
+GL_PREFIX(ClearStencil,ClearStencil@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClearStencil))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClearDepth))
-GL_PREFIX(ClearDepth):
+GLOBL_FN(GL_PREFIX(ClearDepth,ClearDepth@8))
+GL_PREFIX(ClearDepth,ClearDepth@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClearDepth))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(StencilMask))
-GL_PREFIX(StencilMask):
+GLOBL_FN(GL_PREFIX(StencilMask,StencilMask@4))
+GL_PREFIX(StencilMask,StencilMask@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_StencilMask))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorMask))
-GL_PREFIX(ColorMask):
+GLOBL_FN(GL_PREFIX(ColorMask,ColorMask@16))
+GL_PREFIX(ColorMask,ColorMask@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorMask))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DepthMask))
-GL_PREFIX(DepthMask):
+GLOBL_FN(GL_PREFIX(DepthMask,DepthMask@4))
+GL_PREFIX(DepthMask,DepthMask@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DepthMask))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IndexMask))
-GL_PREFIX(IndexMask):
+GLOBL_FN(GL_PREFIX(IndexMask,IndexMask@4))
+GL_PREFIX(IndexMask,IndexMask@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IndexMask))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Accum))
-GL_PREFIX(Accum):
+GLOBL_FN(GL_PREFIX(Accum,Accum@8))
+GL_PREFIX(Accum,Accum@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Accum))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Disable))
-GL_PREFIX(Disable):
+GLOBL_FN(GL_PREFIX(Disable,Disable@4))
+GL_PREFIX(Disable,Disable@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Disable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Enable))
-GL_PREFIX(Enable):
+GLOBL_FN(GL_PREFIX(Enable,Enable@4))
+GL_PREFIX(Enable,Enable@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Enable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Finish))
-GL_PREFIX(Finish):
+GLOBL_FN(GL_PREFIX(Finish,Finish@0))
+GL_PREFIX(Finish,Finish@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Finish))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Flush))
-GL_PREFIX(Flush):
+GLOBL_FN(GL_PREFIX(Flush,Flush@0))
+GL_PREFIX(Flush,Flush@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Flush))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PopAttrib))
-GL_PREFIX(PopAttrib):
+GLOBL_FN(GL_PREFIX(PopAttrib,PopAttrib@0))
+GL_PREFIX(PopAttrib,PopAttrib@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PopAttrib))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PushAttrib))
-GL_PREFIX(PushAttrib):
+GLOBL_FN(GL_PREFIX(PushAttrib,PushAttrib@4))
+GL_PREFIX(PushAttrib,PushAttrib@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PushAttrib))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Map1d))
-GL_PREFIX(Map1d):
+GLOBL_FN(GL_PREFIX(Map1d,Map1d@32))
+GL_PREFIX(Map1d,Map1d@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Map1d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Map1f))
-GL_PREFIX(Map1f):
+GLOBL_FN(GL_PREFIX(Map1f,Map1f@24))
+GL_PREFIX(Map1f,Map1f@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Map1f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Map2d))
-GL_PREFIX(Map2d):
+GLOBL_FN(GL_PREFIX(Map2d,Map2d@56))
+GL_PREFIX(Map2d,Map2d@56):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Map2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Map2f))
-GL_PREFIX(Map2f):
+GLOBL_FN(GL_PREFIX(Map2f,Map2f@40))
+GL_PREFIX(Map2f,Map2f@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Map2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MapGrid1d))
-GL_PREFIX(MapGrid1d):
+GLOBL_FN(GL_PREFIX(MapGrid1d,MapGrid1d@20))
+GL_PREFIX(MapGrid1d,MapGrid1d@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MapGrid1d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MapGrid1f))
-GL_PREFIX(MapGrid1f):
+GLOBL_FN(GL_PREFIX(MapGrid1f,MapGrid1f@12))
+GL_PREFIX(MapGrid1f,MapGrid1f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MapGrid1f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MapGrid2d))
-GL_PREFIX(MapGrid2d):
+GLOBL_FN(GL_PREFIX(MapGrid2d,MapGrid2d@40))
+GL_PREFIX(MapGrid2d,MapGrid2d@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MapGrid2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MapGrid2f))
-GL_PREFIX(MapGrid2f):
+GLOBL_FN(GL_PREFIX(MapGrid2f,MapGrid2f@24))
+GL_PREFIX(MapGrid2f,MapGrid2f@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MapGrid2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord1d))
-GL_PREFIX(EvalCoord1d):
+GLOBL_FN(GL_PREFIX(EvalCoord1d,EvalCoord1d@8))
+GL_PREFIX(EvalCoord1d,EvalCoord1d@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord1d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord1dv))
-GL_PREFIX(EvalCoord1dv):
+GLOBL_FN(GL_PREFIX(EvalCoord1dv,EvalCoord1dv@4))
+GL_PREFIX(EvalCoord1dv,EvalCoord1dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord1dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord1f))
-GL_PREFIX(EvalCoord1f):
+GLOBL_FN(GL_PREFIX(EvalCoord1f,EvalCoord1f@4))
+GL_PREFIX(EvalCoord1f,EvalCoord1f@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord1f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord1fv))
-GL_PREFIX(EvalCoord1fv):
+GLOBL_FN(GL_PREFIX(EvalCoord1fv,EvalCoord1fv@4))
+GL_PREFIX(EvalCoord1fv,EvalCoord1fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord1fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord2d))
-GL_PREFIX(EvalCoord2d):
+GLOBL_FN(GL_PREFIX(EvalCoord2d,EvalCoord2d@16))
+GL_PREFIX(EvalCoord2d,EvalCoord2d@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord2d))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord2dv))
-GL_PREFIX(EvalCoord2dv):
+GLOBL_FN(GL_PREFIX(EvalCoord2dv,EvalCoord2dv@4))
+GL_PREFIX(EvalCoord2dv,EvalCoord2dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord2dv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord2f))
-GL_PREFIX(EvalCoord2f):
+GLOBL_FN(GL_PREFIX(EvalCoord2f,EvalCoord2f@8))
+GL_PREFIX(EvalCoord2f,EvalCoord2f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord2f))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalCoord2fv))
-GL_PREFIX(EvalCoord2fv):
+GLOBL_FN(GL_PREFIX(EvalCoord2fv,EvalCoord2fv@4))
+GL_PREFIX(EvalCoord2fv,EvalCoord2fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalCoord2fv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalMesh1))
-GL_PREFIX(EvalMesh1):
+GLOBL_FN(GL_PREFIX(EvalMesh1,EvalMesh1@12))
+GL_PREFIX(EvalMesh1,EvalMesh1@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalMesh1))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalPoint1))
-GL_PREFIX(EvalPoint1):
+GLOBL_FN(GL_PREFIX(EvalPoint1,EvalPoint1@4))
+GL_PREFIX(EvalPoint1,EvalPoint1@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalPoint1))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalMesh2))
-GL_PREFIX(EvalMesh2):
+GLOBL_FN(GL_PREFIX(EvalMesh2,EvalMesh2@20))
+GL_PREFIX(EvalMesh2,EvalMesh2@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalMesh2))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EvalPoint2))
-GL_PREFIX(EvalPoint2):
+GLOBL_FN(GL_PREFIX(EvalPoint2,EvalPoint2@8))
+GL_PREFIX(EvalPoint2,EvalPoint2@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EvalPoint2))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(AlphaFunc))
-GL_PREFIX(AlphaFunc):
+GLOBL_FN(GL_PREFIX(AlphaFunc,AlphaFunc@8))
+GL_PREFIX(AlphaFunc,AlphaFunc@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_AlphaFunc))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendFunc))
-GL_PREFIX(BlendFunc):
+GLOBL_FN(GL_PREFIX(BlendFunc,BlendFunc@8))
+GL_PREFIX(BlendFunc,BlendFunc@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendFunc))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LogicOp))
-GL_PREFIX(LogicOp):
+GLOBL_FN(GL_PREFIX(LogicOp,LogicOp@4))
+GL_PREFIX(LogicOp,LogicOp@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LogicOp))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(StencilFunc))
-GL_PREFIX(StencilFunc):
+GLOBL_FN(GL_PREFIX(StencilFunc,StencilFunc@12))
+GL_PREFIX(StencilFunc,StencilFunc@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_StencilFunc))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(StencilOp))
-GL_PREFIX(StencilOp):
+GLOBL_FN(GL_PREFIX(StencilOp,StencilOp@12))
+GL_PREFIX(StencilOp,StencilOp@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_StencilOp))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DepthFunc))
-GL_PREFIX(DepthFunc):
+GLOBL_FN(GL_PREFIX(DepthFunc,DepthFunc@4))
+GL_PREFIX(DepthFunc,DepthFunc@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DepthFunc))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelZoom))
-GL_PREFIX(PixelZoom):
+GLOBL_FN(GL_PREFIX(PixelZoom,PixelZoom@8))
+GL_PREFIX(PixelZoom,PixelZoom@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelZoom))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTransferf))
-GL_PREFIX(PixelTransferf):
+GLOBL_FN(GL_PREFIX(PixelTransferf,PixelTransferf@8))
+GL_PREFIX(PixelTransferf,PixelTransferf@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTransferf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTransferi))
-GL_PREFIX(PixelTransferi):
+GLOBL_FN(GL_PREFIX(PixelTransferi,PixelTransferi@8))
+GL_PREFIX(PixelTransferi,PixelTransferi@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTransferi))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelStoref))
-GL_PREFIX(PixelStoref):
+GLOBL_FN(GL_PREFIX(PixelStoref,PixelStoref@8))
+GL_PREFIX(PixelStoref,PixelStoref@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelStoref))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelStorei))
-GL_PREFIX(PixelStorei):
+GLOBL_FN(GL_PREFIX(PixelStorei,PixelStorei@8))
+GL_PREFIX(PixelStorei,PixelStorei@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelStorei))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelMapfv))
-GL_PREFIX(PixelMapfv):
+GLOBL_FN(GL_PREFIX(PixelMapfv,PixelMapfv@12))
+GL_PREFIX(PixelMapfv,PixelMapfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelMapfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelMapuiv))
-GL_PREFIX(PixelMapuiv):
+GLOBL_FN(GL_PREFIX(PixelMapuiv,PixelMapuiv@12))
+GL_PREFIX(PixelMapuiv,PixelMapuiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelMapuiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelMapusv))
-GL_PREFIX(PixelMapusv):
+GLOBL_FN(GL_PREFIX(PixelMapusv,PixelMapusv@12))
+GL_PREFIX(PixelMapusv,PixelMapusv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelMapusv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ReadBuffer))
-GL_PREFIX(ReadBuffer):
+GLOBL_FN(GL_PREFIX(ReadBuffer,ReadBuffer@4))
+GL_PREFIX(ReadBuffer,ReadBuffer@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ReadBuffer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyPixels))
-GL_PREFIX(CopyPixels):
+GLOBL_FN(GL_PREFIX(CopyPixels,CopyPixels@20))
+GL_PREFIX(CopyPixels,CopyPixels@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyPixels))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ReadPixels))
-GL_PREFIX(ReadPixels):
+GLOBL_FN(GL_PREFIX(ReadPixels,ReadPixels@28))
+GL_PREFIX(ReadPixels,ReadPixels@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ReadPixels))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawPixels))
-GL_PREFIX(DrawPixels):
+GLOBL_FN(GL_PREFIX(DrawPixels,DrawPixels@20))
+GL_PREFIX(DrawPixels,DrawPixels@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawPixels))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBooleanv))
-GL_PREFIX(GetBooleanv):
+GLOBL_FN(GL_PREFIX(GetBooleanv,GetBooleanv@8))
+GL_PREFIX(GetBooleanv,GetBooleanv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBooleanv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetClipPlane))
-GL_PREFIX(GetClipPlane):
+GLOBL_FN(GL_PREFIX(GetClipPlane,GetClipPlane@8))
+GL_PREFIX(GetClipPlane,GetClipPlane@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetClipPlane))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetDoublev))
-GL_PREFIX(GetDoublev):
+GLOBL_FN(GL_PREFIX(GetDoublev,GetDoublev@8))
+GL_PREFIX(GetDoublev,GetDoublev@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetDoublev))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetError))
-GL_PREFIX(GetError):
+GLOBL_FN(GL_PREFIX(GetError,GetError@0))
+GL_PREFIX(GetError,GetError@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetError))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFloatv))
-GL_PREFIX(GetFloatv):
+GLOBL_FN(GL_PREFIX(GetFloatv,GetFloatv@8))
+GL_PREFIX(GetFloatv,GetFloatv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFloatv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetIntegerv))
-GL_PREFIX(GetIntegerv):
+GLOBL_FN(GL_PREFIX(GetIntegerv,GetIntegerv@8))
+GL_PREFIX(GetIntegerv,GetIntegerv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetIntegerv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetLightfv))
-GL_PREFIX(GetLightfv):
+GLOBL_FN(GL_PREFIX(GetLightfv,GetLightfv@12))
+GL_PREFIX(GetLightfv,GetLightfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetLightfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetLightiv))
-GL_PREFIX(GetLightiv):
+GLOBL_FN(GL_PREFIX(GetLightiv,GetLightiv@12))
+GL_PREFIX(GetLightiv,GetLightiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetLightiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMapdv))
-GL_PREFIX(GetMapdv):
+GLOBL_FN(GL_PREFIX(GetMapdv,GetMapdv@12))
+GL_PREFIX(GetMapdv,GetMapdv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMapdv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMapfv))
-GL_PREFIX(GetMapfv):
+GLOBL_FN(GL_PREFIX(GetMapfv,GetMapfv@12))
+GL_PREFIX(GetMapfv,GetMapfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMapfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMapiv))
-GL_PREFIX(GetMapiv):
+GLOBL_FN(GL_PREFIX(GetMapiv,GetMapiv@12))
+GL_PREFIX(GetMapiv,GetMapiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMapiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMaterialfv))
-GL_PREFIX(GetMaterialfv):
+GLOBL_FN(GL_PREFIX(GetMaterialfv,GetMaterialfv@12))
+GL_PREFIX(GetMaterialfv,GetMaterialfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMaterialfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMaterialiv))
-GL_PREFIX(GetMaterialiv):
+GLOBL_FN(GL_PREFIX(GetMaterialiv,GetMaterialiv@12))
+GL_PREFIX(GetMaterialiv,GetMaterialiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMaterialiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPixelMapfv))
-GL_PREFIX(GetPixelMapfv):
+GLOBL_FN(GL_PREFIX(GetPixelMapfv,GetPixelMapfv@8))
+GL_PREFIX(GetPixelMapfv,GetPixelMapfv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPixelMapfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPixelMapuiv))
-GL_PREFIX(GetPixelMapuiv):
+GLOBL_FN(GL_PREFIX(GetPixelMapuiv,GetPixelMapuiv@8))
+GL_PREFIX(GetPixelMapuiv,GetPixelMapuiv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPixelMapuiv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPixelMapusv))
-GL_PREFIX(GetPixelMapusv):
+GLOBL_FN(GL_PREFIX(GetPixelMapusv,GetPixelMapusv@8))
+GL_PREFIX(GetPixelMapusv,GetPixelMapusv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPixelMapusv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPolygonStipple))
-GL_PREFIX(GetPolygonStipple):
+GLOBL_FN(GL_PREFIX(GetPolygonStipple,GetPolygonStipple@4))
+GL_PREFIX(GetPolygonStipple,GetPolygonStipple@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPolygonStipple))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetString))
-GL_PREFIX(GetString):
+GLOBL_FN(GL_PREFIX(GetString,GetString@4))
+GL_PREFIX(GetString,GetString@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetString))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexEnvfv))
-GL_PREFIX(GetTexEnvfv):
+GLOBL_FN(GL_PREFIX(GetTexEnvfv,GetTexEnvfv@12))
+GL_PREFIX(GetTexEnvfv,GetTexEnvfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexEnvfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexEnviv))
-GL_PREFIX(GetTexEnviv):
+GLOBL_FN(GL_PREFIX(GetTexEnviv,GetTexEnviv@12))
+GL_PREFIX(GetTexEnviv,GetTexEnviv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexEnviv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexGendv))
-GL_PREFIX(GetTexGendv):
+GLOBL_FN(GL_PREFIX(GetTexGendv,GetTexGendv@12))
+GL_PREFIX(GetTexGendv,GetTexGendv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexGendv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexGenfv))
-GL_PREFIX(GetTexGenfv):
+GLOBL_FN(GL_PREFIX(GetTexGenfv,GetTexGenfv@12))
+GL_PREFIX(GetTexGenfv,GetTexGenfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexGenfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexGeniv))
-GL_PREFIX(GetTexGeniv):
+GLOBL_FN(GL_PREFIX(GetTexGeniv,GetTexGeniv@12))
+GL_PREFIX(GetTexGeniv,GetTexGeniv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexGeniv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexImage))
-GL_PREFIX(GetTexImage):
+GLOBL_FN(GL_PREFIX(GetTexImage,GetTexImage@20))
+GL_PREFIX(GetTexImage,GetTexImage@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexImage))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexParameterfv))
-GL_PREFIX(GetTexParameterfv):
+GLOBL_FN(GL_PREFIX(GetTexParameterfv,GetTexParameterfv@12))
+GL_PREFIX(GetTexParameterfv,GetTexParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexParameteriv))
-GL_PREFIX(GetTexParameteriv):
+GLOBL_FN(GL_PREFIX(GetTexParameteriv,GetTexParameteriv@12))
+GL_PREFIX(GetTexParameteriv,GetTexParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexLevelParameterfv))
-GL_PREFIX(GetTexLevelParameterfv):
+GLOBL_FN(GL_PREFIX(GetTexLevelParameterfv,GetTexLevelParameterfv@16))
+GL_PREFIX(GetTexLevelParameterfv,GetTexLevelParameterfv@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexLevelParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexLevelParameteriv))
-GL_PREFIX(GetTexLevelParameteriv):
+GLOBL_FN(GL_PREFIX(GetTexLevelParameteriv,GetTexLevelParameteriv@16))
+GL_PREFIX(GetTexLevelParameteriv,GetTexLevelParameteriv@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexLevelParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsEnabled))
-GL_PREFIX(IsEnabled):
+GLOBL_FN(GL_PREFIX(IsEnabled,IsEnabled@4))
+GL_PREFIX(IsEnabled,IsEnabled@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsEnabled))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsList))
-GL_PREFIX(IsList):
+GLOBL_FN(GL_PREFIX(IsList,IsList@4))
+GL_PREFIX(IsList,IsList@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsList))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DepthRange))
-GL_PREFIX(DepthRange):
+GLOBL_FN(GL_PREFIX(DepthRange,DepthRange@16))
+GL_PREFIX(DepthRange,DepthRange@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DepthRange))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Frustum))
-GL_PREFIX(Frustum):
+GLOBL_FN(GL_PREFIX(Frustum,Frustum@48))
+GL_PREFIX(Frustum,Frustum@48):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Frustum))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadIdentity))
-GL_PREFIX(LoadIdentity):
+GLOBL_FN(GL_PREFIX(LoadIdentity,LoadIdentity@0))
+GL_PREFIX(LoadIdentity,LoadIdentity@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadIdentity))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadMatrixf))
-GL_PREFIX(LoadMatrixf):
+GLOBL_FN(GL_PREFIX(LoadMatrixf,LoadMatrixf@4))
+GL_PREFIX(LoadMatrixf,LoadMatrixf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadMatrixf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadMatrixd))
-GL_PREFIX(LoadMatrixd):
+GLOBL_FN(GL_PREFIX(LoadMatrixd,LoadMatrixd@4))
+GL_PREFIX(LoadMatrixd,LoadMatrixd@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadMatrixd))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MatrixMode))
-GL_PREFIX(MatrixMode):
+GLOBL_FN(GL_PREFIX(MatrixMode,MatrixMode@4))
+GL_PREFIX(MatrixMode,MatrixMode@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MatrixMode))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultMatrixf))
-GL_PREFIX(MultMatrixf):
+GLOBL_FN(GL_PREFIX(MultMatrixf,MultMatrixf@4))
+GL_PREFIX(MultMatrixf,MultMatrixf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultMatrixf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultMatrixd))
-GL_PREFIX(MultMatrixd):
+GLOBL_FN(GL_PREFIX(MultMatrixd,MultMatrixd@4))
+GL_PREFIX(MultMatrixd,MultMatrixd@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultMatrixd))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Ortho))
-GL_PREFIX(Ortho):
+GLOBL_FN(GL_PREFIX(Ortho,Ortho@48))
+GL_PREFIX(Ortho,Ortho@48):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Ortho))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PopMatrix))
-GL_PREFIX(PopMatrix):
+GLOBL_FN(GL_PREFIX(PopMatrix,PopMatrix@0))
+GL_PREFIX(PopMatrix,PopMatrix@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PopMatrix))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PushMatrix))
-GL_PREFIX(PushMatrix):
+GLOBL_FN(GL_PREFIX(PushMatrix,PushMatrix@0))
+GL_PREFIX(PushMatrix,PushMatrix@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PushMatrix))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rotated))
-GL_PREFIX(Rotated):
+GLOBL_FN(GL_PREFIX(Rotated,Rotated@32))
+GL_PREFIX(Rotated,Rotated@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rotated))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Rotatef))
-GL_PREFIX(Rotatef):
+GLOBL_FN(GL_PREFIX(Rotatef,Rotatef@16))
+GL_PREFIX(Rotatef,Rotatef@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Rotatef))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Scaled))
-GL_PREFIX(Scaled):
+GLOBL_FN(GL_PREFIX(Scaled,Scaled@24))
+GL_PREFIX(Scaled,Scaled@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Scaled))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Scalef))
-GL_PREFIX(Scalef):
+GLOBL_FN(GL_PREFIX(Scalef,Scalef@12))
+GL_PREFIX(Scalef,Scalef@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Scalef))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Translated))
-GL_PREFIX(Translated):
+GLOBL_FN(GL_PREFIX(Translated,Translated@24))
+GL_PREFIX(Translated,Translated@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Translated))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Translatef))
-GL_PREFIX(Translatef):
+GLOBL_FN(GL_PREFIX(Translatef,Translatef@12))
+GL_PREFIX(Translatef,Translatef@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Translatef))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Viewport))
-GL_PREFIX(Viewport):
+GLOBL_FN(GL_PREFIX(Viewport,Viewport@16))
+GL_PREFIX(Viewport,Viewport@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Viewport))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ArrayElement))
-GL_PREFIX(ArrayElement):
+GLOBL_FN(GL_PREFIX(ArrayElement,ArrayElement@4))
+GL_PREFIX(ArrayElement,ArrayElement@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ArrayElement))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorPointer))
-GL_PREFIX(ColorPointer):
+GLOBL_FN(GL_PREFIX(ColorPointer,ColorPointer@16))
+GL_PREFIX(ColorPointer,ColorPointer@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DisableClientState))
-GL_PREFIX(DisableClientState):
+GLOBL_FN(GL_PREFIX(DisableClientState,DisableClientState@4))
+GL_PREFIX(DisableClientState,DisableClientState@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DisableClientState))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawArrays))
-GL_PREFIX(DrawArrays):
+GLOBL_FN(GL_PREFIX(DrawArrays,DrawArrays@12))
+GL_PREFIX(DrawArrays,DrawArrays@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawArrays))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawElements))
-GL_PREFIX(DrawElements):
+GLOBL_FN(GL_PREFIX(DrawElements,DrawElements@16))
+GL_PREFIX(DrawElements,DrawElements@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawElements))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EdgeFlagPointer))
-GL_PREFIX(EdgeFlagPointer):
+GLOBL_FN(GL_PREFIX(EdgeFlagPointer,EdgeFlagPointer@8))
+GL_PREFIX(EdgeFlagPointer,EdgeFlagPointer@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EdgeFlagPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EnableClientState))
-GL_PREFIX(EnableClientState):
+GLOBL_FN(GL_PREFIX(EnableClientState,EnableClientState@4))
+GL_PREFIX(EnableClientState,EnableClientState@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EnableClientState))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPointerv))
-GL_PREFIX(GetPointerv):
+GLOBL_FN(GL_PREFIX(GetPointerv,GetPointerv@8))
+GL_PREFIX(GetPointerv,GetPointerv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPointerv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IndexPointer))
-GL_PREFIX(IndexPointer):
+GLOBL_FN(GL_PREFIX(IndexPointer,IndexPointer@12))
+GL_PREFIX(IndexPointer,IndexPointer@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IndexPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(InterleavedArrays))
-GL_PREFIX(InterleavedArrays):
+GLOBL_FN(GL_PREFIX(InterleavedArrays,InterleavedArrays@12))
+GL_PREFIX(InterleavedArrays,InterleavedArrays@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_InterleavedArrays))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(NormalPointer))
-GL_PREFIX(NormalPointer):
+GLOBL_FN(GL_PREFIX(NormalPointer,NormalPointer@12))
+GL_PREFIX(NormalPointer,NormalPointer@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_NormalPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoordPointer))
-GL_PREFIX(TexCoordPointer):
+GLOBL_FN(GL_PREFIX(TexCoordPointer,TexCoordPointer@16))
+GL_PREFIX(TexCoordPointer,TexCoordPointer@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoordPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexPointer))
-GL_PREFIX(VertexPointer):
+GLOBL_FN(GL_PREFIX(VertexPointer,VertexPointer@16))
+GL_PREFIX(VertexPointer,VertexPointer@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexPointer))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PolygonOffset))
-GL_PREFIX(PolygonOffset):
+GLOBL_FN(GL_PREFIX(PolygonOffset,PolygonOffset@8))
+GL_PREFIX(PolygonOffset,PolygonOffset@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PolygonOffset))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexImage1D))
-GL_PREFIX(CopyTexImage1D):
+GLOBL_FN(GL_PREFIX(CopyTexImage1D,CopyTexImage1D@28))
+GL_PREFIX(CopyTexImage1D,CopyTexImage1D@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexImage2D))
-GL_PREFIX(CopyTexImage2D):
+GLOBL_FN(GL_PREFIX(CopyTexImage2D,CopyTexImage2D@32))
+GL_PREFIX(CopyTexImage2D,CopyTexImage2D@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage1D))
-GL_PREFIX(CopyTexSubImage1D):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage1D,CopyTexSubImage1D@24))
+GL_PREFIX(CopyTexSubImage1D,CopyTexSubImage1D@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage2D))
-GL_PREFIX(CopyTexSubImage2D):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage2D,CopyTexSubImage2D@32))
+GL_PREFIX(CopyTexSubImage2D,CopyTexSubImage2D@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage1D))
-GL_PREFIX(TexSubImage1D):
+GLOBL_FN(GL_PREFIX(TexSubImage1D,TexSubImage1D@28))
+GL_PREFIX(TexSubImage1D,TexSubImage1D@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage2D))
-GL_PREFIX(TexSubImage2D):
+GLOBL_FN(GL_PREFIX(TexSubImage2D,TexSubImage2D@36))
+GL_PREFIX(TexSubImage2D,TexSubImage2D@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(AreTexturesResident))
-GL_PREFIX(AreTexturesResident):
+GLOBL_FN(GL_PREFIX(AreTexturesResident,AreTexturesResident@12))
+GL_PREFIX(AreTexturesResident,AreTexturesResident@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_AreTexturesResident))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BindTexture))
-GL_PREFIX(BindTexture):
+GLOBL_FN(GL_PREFIX(BindTexture,BindTexture@8))
+GL_PREFIX(BindTexture,BindTexture@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BindTexture))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteTextures))
-GL_PREFIX(DeleteTextures):
+GLOBL_FN(GL_PREFIX(DeleteTextures,DeleteTextures@8))
+GL_PREFIX(DeleteTextures,DeleteTextures@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteTextures))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenTextures))
-GL_PREFIX(GenTextures):
+GLOBL_FN(GL_PREFIX(GenTextures,GenTextures@8))
+GL_PREFIX(GenTextures,GenTextures@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenTextures))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsTexture))
-GL_PREFIX(IsTexture):
+GLOBL_FN(GL_PREFIX(IsTexture,IsTexture@4))
+GL_PREFIX(IsTexture,IsTexture@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsTexture))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PrioritizeTextures))
-GL_PREFIX(PrioritizeTextures):
+GLOBL_FN(GL_PREFIX(PrioritizeTextures,PrioritizeTextures@12))
+GL_PREFIX(PrioritizeTextures,PrioritizeTextures@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PrioritizeTextures))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexub))
-GL_PREFIX(Indexub):
+GLOBL_FN(GL_PREFIX(Indexub,Indexub@4))
+GL_PREFIX(Indexub,Indexub@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexub))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Indexubv))
-GL_PREFIX(Indexubv):
+GLOBL_FN(GL_PREFIX(Indexubv,Indexubv@4))
+GL_PREFIX(Indexubv,Indexubv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Indexubv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PopClientAttrib))
-GL_PREFIX(PopClientAttrib):
+GLOBL_FN(GL_PREFIX(PopClientAttrib,PopClientAttrib@0))
+GL_PREFIX(PopClientAttrib,PopClientAttrib@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PopClientAttrib))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PushClientAttrib))
-GL_PREFIX(PushClientAttrib):
+GLOBL_FN(GL_PREFIX(PushClientAttrib,PushClientAttrib@4))
+GL_PREFIX(PushClientAttrib,PushClientAttrib@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PushClientAttrib))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendColor))
-GL_PREFIX(BlendColor):
+GLOBL_FN(GL_PREFIX(BlendColor,BlendColor@16))
+GL_PREFIX(BlendColor,BlendColor@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendColor))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendEquation))
-GL_PREFIX(BlendEquation):
+GLOBL_FN(GL_PREFIX(BlendEquation,BlendEquation@4))
+GL_PREFIX(BlendEquation,BlendEquation@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendEquation))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawRangeElements))
-GL_PREFIX(DrawRangeElements):
+GLOBL_FN(GL_PREFIX(DrawRangeElements,DrawRangeElements@24))
+GL_PREFIX(DrawRangeElements,DrawRangeElements@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawRangeElements))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTable))
-GL_PREFIX(ColorTable):
+GLOBL_FN(GL_PREFIX(ColorTable,ColorTable@24))
+GL_PREFIX(ColorTable,ColorTable@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableParameterfv))
-GL_PREFIX(ColorTableParameterfv):
+GLOBL_FN(GL_PREFIX(ColorTableParameterfv,ColorTableParameterfv@12))
+GL_PREFIX(ColorTableParameterfv,ColorTableParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTableParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableParameteriv))
-GL_PREFIX(ColorTableParameteriv):
+GLOBL_FN(GL_PREFIX(ColorTableParameteriv,ColorTableParameteriv@12))
+GL_PREFIX(ColorTableParameteriv,ColorTableParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTableParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyColorTable))
-GL_PREFIX(CopyColorTable):
+GLOBL_FN(GL_PREFIX(CopyColorTable,CopyColorTable@20))
+GL_PREFIX(CopyColorTable,CopyColorTable@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTable))
-GL_PREFIX(GetColorTable):
+GLOBL_FN(GL_PREFIX(GetColorTable,GetColorTable@16))
+GL_PREFIX(GetColorTable,GetColorTable@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameterfv))
-GL_PREFIX(GetColorTableParameterfv):
+GLOBL_FN(GL_PREFIX(GetColorTableParameterfv,GetColorTableParameterfv@12))
+GL_PREFIX(GetColorTableParameterfv,GetColorTableParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameteriv))
-GL_PREFIX(GetColorTableParameteriv):
+GLOBL_FN(GL_PREFIX(GetColorTableParameteriv,GetColorTableParameteriv@12))
+GL_PREFIX(GetColorTableParameteriv,GetColorTableParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorSubTable))
-GL_PREFIX(ColorSubTable):
+GLOBL_FN(GL_PREFIX(ColorSubTable,ColorSubTable@24))
+GL_PREFIX(ColorSubTable,ColorSubTable@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorSubTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyColorSubTable))
-GL_PREFIX(CopyColorSubTable):
+GLOBL_FN(GL_PREFIX(CopyColorSubTable,CopyColorSubTable@20))
+GL_PREFIX(CopyColorSubTable,CopyColorSubTable@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyColorSubTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionFilter1D))
-GL_PREFIX(ConvolutionFilter1D):
+GLOBL_FN(GL_PREFIX(ConvolutionFilter1D,ConvolutionFilter1D@24))
+GL_PREFIX(ConvolutionFilter1D,ConvolutionFilter1D@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionFilter1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionFilter2D))
-GL_PREFIX(ConvolutionFilter2D):
+GLOBL_FN(GL_PREFIX(ConvolutionFilter2D,ConvolutionFilter2D@28))
+GL_PREFIX(ConvolutionFilter2D,ConvolutionFilter2D@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameterf))
-GL_PREFIX(ConvolutionParameterf):
+GLOBL_FN(GL_PREFIX(ConvolutionParameterf,ConvolutionParameterf@12))
+GL_PREFIX(ConvolutionParameterf,ConvolutionParameterf@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameterf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameterfv))
-GL_PREFIX(ConvolutionParameterfv):
+GLOBL_FN(GL_PREFIX(ConvolutionParameterfv,ConvolutionParameterfv@12))
+GL_PREFIX(ConvolutionParameterfv,ConvolutionParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameteri))
-GL_PREFIX(ConvolutionParameteri):
+GLOBL_FN(GL_PREFIX(ConvolutionParameteri,ConvolutionParameteri@12))
+GL_PREFIX(ConvolutionParameteri,ConvolutionParameteri@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameteri))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameteriv))
-GL_PREFIX(ConvolutionParameteriv):
+GLOBL_FN(GL_PREFIX(ConvolutionParameteriv,ConvolutionParameteriv@12))
+GL_PREFIX(ConvolutionParameteriv,ConvolutionParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyConvolutionFilter1D))
-GL_PREFIX(CopyConvolutionFilter1D):
+GLOBL_FN(GL_PREFIX(CopyConvolutionFilter1D,CopyConvolutionFilter1D@20))
+GL_PREFIX(CopyConvolutionFilter1D,CopyConvolutionFilter1D@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyConvolutionFilter1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyConvolutionFilter2D))
-GL_PREFIX(CopyConvolutionFilter2D):
+GLOBL_FN(GL_PREFIX(CopyConvolutionFilter2D,CopyConvolutionFilter2D@24))
+GL_PREFIX(CopyConvolutionFilter2D,CopyConvolutionFilter2D@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyConvolutionFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionFilter))
-GL_PREFIX(GetConvolutionFilter):
+GLOBL_FN(GL_PREFIX(GetConvolutionFilter,GetConvolutionFilter@16))
+GL_PREFIX(GetConvolutionFilter,GetConvolutionFilter@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionFilter))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionParameterfv))
-GL_PREFIX(GetConvolutionParameterfv):
+GLOBL_FN(GL_PREFIX(GetConvolutionParameterfv,GetConvolutionParameterfv@12))
+GL_PREFIX(GetConvolutionParameterfv,GetConvolutionParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionParameteriv))
-GL_PREFIX(GetConvolutionParameteriv):
+GLOBL_FN(GL_PREFIX(GetConvolutionParameteriv,GetConvolutionParameteriv@12))
+GL_PREFIX(GetConvolutionParameteriv,GetConvolutionParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetSeparableFilter))
-GL_PREFIX(GetSeparableFilter):
+GLOBL_FN(GL_PREFIX(GetSeparableFilter,GetSeparableFilter@24))
+GL_PREFIX(GetSeparableFilter,GetSeparableFilter@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetSeparableFilter))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SeparableFilter2D))
-GL_PREFIX(SeparableFilter2D):
+GLOBL_FN(GL_PREFIX(SeparableFilter2D,SeparableFilter2D@32))
+GL_PREFIX(SeparableFilter2D,SeparableFilter2D@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SeparableFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogram))
-GL_PREFIX(GetHistogram):
+GLOBL_FN(GL_PREFIX(GetHistogram,GetHistogram@20))
+GL_PREFIX(GetHistogram,GetHistogram@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogram))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogramParameterfv))
-GL_PREFIX(GetHistogramParameterfv):
+GLOBL_FN(GL_PREFIX(GetHistogramParameterfv,GetHistogramParameterfv@12))
+GL_PREFIX(GetHistogramParameterfv,GetHistogramParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogramParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogramParameteriv))
-GL_PREFIX(GetHistogramParameteriv):
+GLOBL_FN(GL_PREFIX(GetHistogramParameteriv,GetHistogramParameteriv@12))
+GL_PREFIX(GetHistogramParameteriv,GetHistogramParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogramParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmax))
-GL_PREFIX(GetMinmax):
+GLOBL_FN(GL_PREFIX(GetMinmax,GetMinmax@20))
+GL_PREFIX(GetMinmax,GetMinmax@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmax))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmaxParameterfv))
-GL_PREFIX(GetMinmaxParameterfv):
+GLOBL_FN(GL_PREFIX(GetMinmaxParameterfv,GetMinmaxParameterfv@12))
+GL_PREFIX(GetMinmaxParameterfv,GetMinmaxParameterfv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmaxParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmaxParameteriv))
-GL_PREFIX(GetMinmaxParameteriv):
+GLOBL_FN(GL_PREFIX(GetMinmaxParameteriv,GetMinmaxParameteriv@12))
+GL_PREFIX(GetMinmaxParameteriv,GetMinmaxParameteriv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmaxParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Histogram))
-GL_PREFIX(Histogram):
+GLOBL_FN(GL_PREFIX(Histogram,Histogram@16))
+GL_PREFIX(Histogram,Histogram@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Histogram))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(Minmax))
-GL_PREFIX(Minmax):
+GLOBL_FN(GL_PREFIX(Minmax,Minmax@12))
+GL_PREFIX(Minmax,Minmax@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Minmax))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ResetHistogram))
-GL_PREFIX(ResetHistogram):
+GLOBL_FN(GL_PREFIX(ResetHistogram,ResetHistogram@4))
+GL_PREFIX(ResetHistogram,ResetHistogram@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ResetHistogram))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ResetMinmax))
-GL_PREFIX(ResetMinmax):
+GLOBL_FN(GL_PREFIX(ResetMinmax,ResetMinmax@4))
+GL_PREFIX(ResetMinmax,ResetMinmax@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ResetMinmax))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexImage3D))
-GL_PREFIX(TexImage3D):
+GLOBL_FN(GL_PREFIX(TexImage3D,TexImage3D@40))
+GL_PREFIX(TexImage3D,TexImage3D@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage3D))
-GL_PREFIX(TexSubImage3D):
+GLOBL_FN(GL_PREFIX(TexSubImage3D,TexSubImage3D@44))
+GL_PREFIX(TexSubImage3D,TexSubImage3D@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage3D))
-GL_PREFIX(CopyTexSubImage3D):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage3D,CopyTexSubImage3D@36))
+GL_PREFIX(CopyTexSubImage3D,CopyTexSubImage3D@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ActiveTextureARB))
-GL_PREFIX(ActiveTextureARB):
+GLOBL_FN(GL_PREFIX(ActiveTextureARB,ActiveTextureARB@4))
+GL_PREFIX(ActiveTextureARB,ActiveTextureARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ActiveTextureARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClientActiveTextureARB))
-GL_PREFIX(ClientActiveTextureARB):
+GLOBL_FN(GL_PREFIX(ClientActiveTextureARB,ClientActiveTextureARB@4))
+GL_PREFIX(ClientActiveTextureARB,ClientActiveTextureARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClientActiveTextureARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1dARB))
-GL_PREFIX(MultiTexCoord1dARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1dARB,MultiTexCoord1dARB@12))
+GL_PREFIX(MultiTexCoord1dARB,MultiTexCoord1dARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1dvARB))
-GL_PREFIX(MultiTexCoord1dvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1dvARB,MultiTexCoord1dvARB@8))
+GL_PREFIX(MultiTexCoord1dvARB,MultiTexCoord1dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1fARB))
-GL_PREFIX(MultiTexCoord1fARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1fARB,MultiTexCoord1fARB@8))
+GL_PREFIX(MultiTexCoord1fARB,MultiTexCoord1fARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1fvARB))
-GL_PREFIX(MultiTexCoord1fvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1fvARB,MultiTexCoord1fvARB@8))
+GL_PREFIX(MultiTexCoord1fvARB,MultiTexCoord1fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1iARB))
-GL_PREFIX(MultiTexCoord1iARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1iARB,MultiTexCoord1iARB@8))
+GL_PREFIX(MultiTexCoord1iARB,MultiTexCoord1iARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1ivARB))
-GL_PREFIX(MultiTexCoord1ivARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1ivARB,MultiTexCoord1ivARB@8))
+GL_PREFIX(MultiTexCoord1ivARB,MultiTexCoord1ivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1sARB))
-GL_PREFIX(MultiTexCoord1sARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1sARB,MultiTexCoord1sARB@8))
+GL_PREFIX(MultiTexCoord1sARB,MultiTexCoord1sARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1svARB))
-GL_PREFIX(MultiTexCoord1svARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1svARB,MultiTexCoord1svARB@8))
+GL_PREFIX(MultiTexCoord1svARB,MultiTexCoord1svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2dARB))
-GL_PREFIX(MultiTexCoord2dARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2dARB,MultiTexCoord2dARB@20))
+GL_PREFIX(MultiTexCoord2dARB,MultiTexCoord2dARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2dvARB))
-GL_PREFIX(MultiTexCoord2dvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2dvARB,MultiTexCoord2dvARB@8))
+GL_PREFIX(MultiTexCoord2dvARB,MultiTexCoord2dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2fARB))
-GL_PREFIX(MultiTexCoord2fARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2fARB,MultiTexCoord2fARB@12))
+GL_PREFIX(MultiTexCoord2fARB,MultiTexCoord2fARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2fvARB))
-GL_PREFIX(MultiTexCoord2fvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2fvARB,MultiTexCoord2fvARB@8))
+GL_PREFIX(MultiTexCoord2fvARB,MultiTexCoord2fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2iARB))
-GL_PREFIX(MultiTexCoord2iARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2iARB,MultiTexCoord2iARB@12))
+GL_PREFIX(MultiTexCoord2iARB,MultiTexCoord2iARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2ivARB))
-GL_PREFIX(MultiTexCoord2ivARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2ivARB,MultiTexCoord2ivARB@8))
+GL_PREFIX(MultiTexCoord2ivARB,MultiTexCoord2ivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2sARB))
-GL_PREFIX(MultiTexCoord2sARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2sARB,MultiTexCoord2sARB@12))
+GL_PREFIX(MultiTexCoord2sARB,MultiTexCoord2sARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2svARB))
-GL_PREFIX(MultiTexCoord2svARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2svARB,MultiTexCoord2svARB@8))
+GL_PREFIX(MultiTexCoord2svARB,MultiTexCoord2svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3dARB))
-GL_PREFIX(MultiTexCoord3dARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3dARB,MultiTexCoord3dARB@28))
+GL_PREFIX(MultiTexCoord3dARB,MultiTexCoord3dARB@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3dvARB))
-GL_PREFIX(MultiTexCoord3dvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3dvARB,MultiTexCoord3dvARB@8))
+GL_PREFIX(MultiTexCoord3dvARB,MultiTexCoord3dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3fARB))
-GL_PREFIX(MultiTexCoord3fARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3fARB,MultiTexCoord3fARB@16))
+GL_PREFIX(MultiTexCoord3fARB,MultiTexCoord3fARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3fvARB))
-GL_PREFIX(MultiTexCoord3fvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3fvARB,MultiTexCoord3fvARB@8))
+GL_PREFIX(MultiTexCoord3fvARB,MultiTexCoord3fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3iARB))
-GL_PREFIX(MultiTexCoord3iARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3iARB,MultiTexCoord3iARB@16))
+GL_PREFIX(MultiTexCoord3iARB,MultiTexCoord3iARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3ivARB))
-GL_PREFIX(MultiTexCoord3ivARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3ivARB,MultiTexCoord3ivARB@8))
+GL_PREFIX(MultiTexCoord3ivARB,MultiTexCoord3ivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3sARB))
-GL_PREFIX(MultiTexCoord3sARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3sARB,MultiTexCoord3sARB@16))
+GL_PREFIX(MultiTexCoord3sARB,MultiTexCoord3sARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3svARB))
-GL_PREFIX(MultiTexCoord3svARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3svARB,MultiTexCoord3svARB@8))
+GL_PREFIX(MultiTexCoord3svARB,MultiTexCoord3svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4dARB))
-GL_PREFIX(MultiTexCoord4dARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4dARB,MultiTexCoord4dARB@36))
+GL_PREFIX(MultiTexCoord4dARB,MultiTexCoord4dARB@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4dvARB))
-GL_PREFIX(MultiTexCoord4dvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4dvARB,MultiTexCoord4dvARB@8))
+GL_PREFIX(MultiTexCoord4dvARB,MultiTexCoord4dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4fARB))
-GL_PREFIX(MultiTexCoord4fARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4fARB,MultiTexCoord4fARB@20))
+GL_PREFIX(MultiTexCoord4fARB,MultiTexCoord4fARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4fvARB))
-GL_PREFIX(MultiTexCoord4fvARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4fvARB,MultiTexCoord4fvARB@8))
+GL_PREFIX(MultiTexCoord4fvARB,MultiTexCoord4fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4iARB))
-GL_PREFIX(MultiTexCoord4iARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4iARB,MultiTexCoord4iARB@20))
+GL_PREFIX(MultiTexCoord4iARB,MultiTexCoord4iARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4ivARB))
-GL_PREFIX(MultiTexCoord4ivARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4ivARB,MultiTexCoord4ivARB@8))
+GL_PREFIX(MultiTexCoord4ivARB,MultiTexCoord4ivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4sARB))
-GL_PREFIX(MultiTexCoord4sARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4sARB,MultiTexCoord4sARB@20))
+GL_PREFIX(MultiTexCoord4sARB,MultiTexCoord4sARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4svARB))
-GL_PREFIX(MultiTexCoord4svARB):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4svARB,MultiTexCoord4svARB@8))
+GL_PREFIX(MultiTexCoord4svARB,MultiTexCoord4svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixfARB))
-GL_PREFIX(LoadTransposeMatrixfARB):
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixfARB,LoadTransposeMatrixfARB@4))
+GL_PREFIX(LoadTransposeMatrixfARB,LoadTransposeMatrixfARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixfARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixdARB))
-GL_PREFIX(LoadTransposeMatrixdARB):
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixdARB,LoadTransposeMatrixdARB@4))
+GL_PREFIX(LoadTransposeMatrixdARB,LoadTransposeMatrixdARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixdARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixfARB))
-GL_PREFIX(MultTransposeMatrixfARB):
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixfARB,MultTransposeMatrixfARB@4))
+GL_PREFIX(MultTransposeMatrixfARB,MultTransposeMatrixfARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixfARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixdARB))
-GL_PREFIX(MultTransposeMatrixdARB):
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixdARB,MultTransposeMatrixdARB@4))
+GL_PREFIX(MultTransposeMatrixdARB,MultTransposeMatrixdARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixdARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SampleCoverageARB))
-GL_PREFIX(SampleCoverageARB):
+GLOBL_FN(GL_PREFIX(SampleCoverageARB,SampleCoverageARB@8))
+GL_PREFIX(SampleCoverageARB,SampleCoverageARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SampleCoverageARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(__unused413))
-GL_PREFIX(__unused413):
+GLOBL_FN(GL_PREFIX(__unused413,__unused413@0))
+GL_PREFIX(__unused413,__unused413@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset___unused413))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage3DARB))
-GL_PREFIX(CompressedTexImage3DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexImage3DARB,CompressedTexImage3DARB@36))
+GL_PREFIX(CompressedTexImage3DARB,CompressedTexImage3DARB@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage3DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage2DARB))
-GL_PREFIX(CompressedTexImage2DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexImage2DARB,CompressedTexImage2DARB@32))
+GL_PREFIX(CompressedTexImage2DARB,CompressedTexImage2DARB@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage2DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage1DARB))
-GL_PREFIX(CompressedTexImage1DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexImage1DARB,CompressedTexImage1DARB@28))
+GL_PREFIX(CompressedTexImage1DARB,CompressedTexImage1DARB@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage1DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage3DARB))
-GL_PREFIX(CompressedTexSubImage3DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage3DARB,CompressedTexSubImage3DARB@44))
+GL_PREFIX(CompressedTexSubImage3DARB,CompressedTexSubImage3DARB@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage2DARB))
-GL_PREFIX(CompressedTexSubImage2DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage2DARB,CompressedTexSubImage2DARB@36))
+GL_PREFIX(CompressedTexSubImage2DARB,CompressedTexSubImage2DARB@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage1DARB))
-GL_PREFIX(CompressedTexSubImage1DARB):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage1DARB,CompressedTexSubImage1DARB@28))
+GL_PREFIX(CompressedTexSubImage1DARB,CompressedTexSubImage1DARB@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCompressedTexImageARB))
-GL_PREFIX(GetCompressedTexImageARB):
+GLOBL_FN(GL_PREFIX(GetCompressedTexImageARB,GetCompressedTexImageARB@12))
+GL_PREFIX(GetCompressedTexImageARB,GetCompressedTexImageARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCompressedTexImageARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ActiveTexture))
-GL_PREFIX(ActiveTexture):
+GLOBL_FN(GL_PREFIX(ActiveTexture,ActiveTexture@4))
+GL_PREFIX(ActiveTexture,ActiveTexture@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ActiveTextureARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClientActiveTexture))
-GL_PREFIX(ClientActiveTexture):
+GLOBL_FN(GL_PREFIX(ClientActiveTexture,ClientActiveTexture@4))
+GL_PREFIX(ClientActiveTexture,ClientActiveTexture@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ClientActiveTextureARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1d))
-GL_PREFIX(MultiTexCoord1d):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1d,MultiTexCoord1d@12))
+GL_PREFIX(MultiTexCoord1d,MultiTexCoord1d@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1dv))
-GL_PREFIX(MultiTexCoord1dv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1dv,MultiTexCoord1dv@8))
+GL_PREFIX(MultiTexCoord1dv,MultiTexCoord1dv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1f))
-GL_PREFIX(MultiTexCoord1f):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1f,MultiTexCoord1f@8))
+GL_PREFIX(MultiTexCoord1f,MultiTexCoord1f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1fv))
-GL_PREFIX(MultiTexCoord1fv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1fv,MultiTexCoord1fv@8))
+GL_PREFIX(MultiTexCoord1fv,MultiTexCoord1fv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1i))
-GL_PREFIX(MultiTexCoord1i):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1i,MultiTexCoord1i@8))
+GL_PREFIX(MultiTexCoord1i,MultiTexCoord1i@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1iv))
-GL_PREFIX(MultiTexCoord1iv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1iv,MultiTexCoord1iv@8))
+GL_PREFIX(MultiTexCoord1iv,MultiTexCoord1iv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1s))
-GL_PREFIX(MultiTexCoord1s):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1s,MultiTexCoord1s@8))
+GL_PREFIX(MultiTexCoord1s,MultiTexCoord1s@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1sv))
-GL_PREFIX(MultiTexCoord1sv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord1sv,MultiTexCoord1sv@8))
+GL_PREFIX(MultiTexCoord1sv,MultiTexCoord1sv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord1svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2d))
-GL_PREFIX(MultiTexCoord2d):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2d,MultiTexCoord2d@20))
+GL_PREFIX(MultiTexCoord2d,MultiTexCoord2d@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2dv))
-GL_PREFIX(MultiTexCoord2dv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2dv,MultiTexCoord2dv@8))
+GL_PREFIX(MultiTexCoord2dv,MultiTexCoord2dv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2f))
-GL_PREFIX(MultiTexCoord2f):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2f,MultiTexCoord2f@12))
+GL_PREFIX(MultiTexCoord2f,MultiTexCoord2f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2fv))
-GL_PREFIX(MultiTexCoord2fv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2fv,MultiTexCoord2fv@8))
+GL_PREFIX(MultiTexCoord2fv,MultiTexCoord2fv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2i))
-GL_PREFIX(MultiTexCoord2i):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2i,MultiTexCoord2i@12))
+GL_PREFIX(MultiTexCoord2i,MultiTexCoord2i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2iv))
-GL_PREFIX(MultiTexCoord2iv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2iv,MultiTexCoord2iv@8))
+GL_PREFIX(MultiTexCoord2iv,MultiTexCoord2iv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2s))
-GL_PREFIX(MultiTexCoord2s):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2s,MultiTexCoord2s@12))
+GL_PREFIX(MultiTexCoord2s,MultiTexCoord2s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2sv))
-GL_PREFIX(MultiTexCoord2sv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord2sv,MultiTexCoord2sv@8))
+GL_PREFIX(MultiTexCoord2sv,MultiTexCoord2sv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord2svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3d))
-GL_PREFIX(MultiTexCoord3d):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3d,MultiTexCoord3d@28))
+GL_PREFIX(MultiTexCoord3d,MultiTexCoord3d@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3dv))
-GL_PREFIX(MultiTexCoord3dv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3dv,MultiTexCoord3dv@8))
+GL_PREFIX(MultiTexCoord3dv,MultiTexCoord3dv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3f))
-GL_PREFIX(MultiTexCoord3f):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3f,MultiTexCoord3f@16))
+GL_PREFIX(MultiTexCoord3f,MultiTexCoord3f@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3fv))
-GL_PREFIX(MultiTexCoord3fv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3fv,MultiTexCoord3fv@8))
+GL_PREFIX(MultiTexCoord3fv,MultiTexCoord3fv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3i))
-GL_PREFIX(MultiTexCoord3i):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3i,MultiTexCoord3i@16))
+GL_PREFIX(MultiTexCoord3i,MultiTexCoord3i@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3iv))
-GL_PREFIX(MultiTexCoord3iv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3iv,MultiTexCoord3iv@8))
+GL_PREFIX(MultiTexCoord3iv,MultiTexCoord3iv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3s))
-GL_PREFIX(MultiTexCoord3s):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3s,MultiTexCoord3s@16))
+GL_PREFIX(MultiTexCoord3s,MultiTexCoord3s@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3sv))
-GL_PREFIX(MultiTexCoord3sv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord3sv,MultiTexCoord3sv@8))
+GL_PREFIX(MultiTexCoord3sv,MultiTexCoord3sv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord3svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4d))
-GL_PREFIX(MultiTexCoord4d):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4d,MultiTexCoord4d@36))
+GL_PREFIX(MultiTexCoord4d,MultiTexCoord4d@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4dv))
-GL_PREFIX(MultiTexCoord4dv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4dv,MultiTexCoord4dv@8))
+GL_PREFIX(MultiTexCoord4dv,MultiTexCoord4dv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4f))
-GL_PREFIX(MultiTexCoord4f):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4f,MultiTexCoord4f@20))
+GL_PREFIX(MultiTexCoord4f,MultiTexCoord4f@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4fv))
-GL_PREFIX(MultiTexCoord4fv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4fv,MultiTexCoord4fv@8))
+GL_PREFIX(MultiTexCoord4fv,MultiTexCoord4fv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4i))
-GL_PREFIX(MultiTexCoord4i):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4i,MultiTexCoord4i@20))
+GL_PREFIX(MultiTexCoord4i,MultiTexCoord4i@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4iv))
-GL_PREFIX(MultiTexCoord4iv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4iv,MultiTexCoord4iv@8))
+GL_PREFIX(MultiTexCoord4iv,MultiTexCoord4iv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4s))
-GL_PREFIX(MultiTexCoord4s):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4s,MultiTexCoord4s@20))
+GL_PREFIX(MultiTexCoord4s,MultiTexCoord4s@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4sv))
-GL_PREFIX(MultiTexCoord4sv):
+GLOBL_FN(GL_PREFIX(MultiTexCoord4sv,MultiTexCoord4sv@8))
+GL_PREFIX(MultiTexCoord4sv,MultiTexCoord4sv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiTexCoord4svARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixf))
-GL_PREFIX(LoadTransposeMatrixf):
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixf,LoadTransposeMatrixf@4))
+GL_PREFIX(LoadTransposeMatrixf,LoadTransposeMatrixf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixfARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixd))
-GL_PREFIX(LoadTransposeMatrixd):
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixd,LoadTransposeMatrixd@4))
+GL_PREFIX(LoadTransposeMatrixd,LoadTransposeMatrixd@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixdARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixf))
-GL_PREFIX(MultTransposeMatrixf):
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixf,MultTransposeMatrixf@4))
+GL_PREFIX(MultTransposeMatrixf,MultTransposeMatrixf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixfARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixd))
-GL_PREFIX(MultTransposeMatrixd):
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixd,MultTransposeMatrixd@4))
+GL_PREFIX(MultTransposeMatrixd,MultTransposeMatrixd@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixdARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SampleCoverage))
-GL_PREFIX(SampleCoverage):
+GLOBL_FN(GL_PREFIX(SampleCoverage,SampleCoverage@8))
+GL_PREFIX(SampleCoverage,SampleCoverage@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SampleCoverageARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage3D))
-GL_PREFIX(CompressedTexImage3D):
+GLOBL_FN(GL_PREFIX(CompressedTexImage3D,CompressedTexImage3D@36))
+GL_PREFIX(CompressedTexImage3D,CompressedTexImage3D@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage3DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage2D))
-GL_PREFIX(CompressedTexImage2D):
+GLOBL_FN(GL_PREFIX(CompressedTexImage2D,CompressedTexImage2D@32))
+GL_PREFIX(CompressedTexImage2D,CompressedTexImage2D@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage2DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage1D))
-GL_PREFIX(CompressedTexImage1D):
+GLOBL_FN(GL_PREFIX(CompressedTexImage1D,CompressedTexImage1D@28))
+GL_PREFIX(CompressedTexImage1D,CompressedTexImage1D@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexImage1DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage3D))
-GL_PREFIX(CompressedTexSubImage3D):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage3D,CompressedTexSubImage3D@44))
+GL_PREFIX(CompressedTexSubImage3D,CompressedTexSubImage3D@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage2D))
-GL_PREFIX(CompressedTexSubImage2D):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage2D,CompressedTexSubImage2D@36))
+GL_PREFIX(CompressedTexSubImage2D,CompressedTexSubImage2D@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage1D))
-GL_PREFIX(CompressedTexSubImage1D):
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage1D,CompressedTexSubImage1D@28))
+GL_PREFIX(CompressedTexSubImage1D,CompressedTexSubImage1D@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1DARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCompressedTexImage))
-GL_PREFIX(GetCompressedTexImage):
+GLOBL_FN(GL_PREFIX(GetCompressedTexImage,GetCompressedTexImage@12))
+GL_PREFIX(GetCompressedTexImage,GetCompressedTexImage@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCompressedTexImageARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendColorEXT))
-GL_PREFIX(BlendColorEXT):
+GLOBL_FN(GL_PREFIX(BlendColorEXT,BlendColorEXT@16))
+GL_PREFIX(BlendColorEXT,BlendColorEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendColor))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PolygonOffsetEXT))
-GL_PREFIX(PolygonOffsetEXT):
+GLOBL_FN(GL_PREFIX(PolygonOffsetEXT,PolygonOffsetEXT@8))
+GL_PREFIX(PolygonOffsetEXT,PolygonOffsetEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PolygonOffsetEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexImage3DEXT))
-GL_PREFIX(TexImage3DEXT):
+GLOBL_FN(GL_PREFIX(TexImage3DEXT,TexImage3DEXT@40))
+GL_PREFIX(TexImage3DEXT,TexImage3DEXT@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage3DEXT))
-GL_PREFIX(TexSubImage3DEXT):
+GLOBL_FN(GL_PREFIX(TexSubImage3DEXT,TexSubImage3DEXT@44))
+GL_PREFIX(TexSubImage3DEXT,TexSubImage3DEXT@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTexFilterFuncSGIS))
-GL_PREFIX(GetTexFilterFuncSGIS):
+GLOBL_FN(GL_PREFIX(GetTexFilterFuncSGIS,GetTexFilterFuncSGIS@12))
+GL_PREFIX(GetTexFilterFuncSGIS,GetTexFilterFuncSGIS@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTexFilterFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexFilterFuncSGIS))
-GL_PREFIX(TexFilterFuncSGIS):
+GLOBL_FN(GL_PREFIX(TexFilterFuncSGIS,TexFilterFuncSGIS@16))
+GL_PREFIX(TexFilterFuncSGIS,TexFilterFuncSGIS@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexFilterFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage1DEXT))
-GL_PREFIX(TexSubImage1DEXT):
+GLOBL_FN(GL_PREFIX(TexSubImage1DEXT,TexSubImage1DEXT@28))
+GL_PREFIX(TexSubImage1DEXT,TexSubImage1DEXT@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage2DEXT))
-GL_PREFIX(TexSubImage2DEXT):
+GLOBL_FN(GL_PREFIX(TexSubImage2DEXT,TexSubImage2DEXT@36))
+GL_PREFIX(TexSubImage2DEXT,TexSubImage2DEXT@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexImage1DEXT))
-GL_PREFIX(CopyTexImage1DEXT):
+GLOBL_FN(GL_PREFIX(CopyTexImage1DEXT,CopyTexImage1DEXT@28))
+GL_PREFIX(CopyTexImage1DEXT,CopyTexImage1DEXT@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexImage2DEXT))
-GL_PREFIX(CopyTexImage2DEXT):
+GLOBL_FN(GL_PREFIX(CopyTexImage2DEXT,CopyTexImage2DEXT@32))
+GL_PREFIX(CopyTexImage2DEXT,CopyTexImage2DEXT@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage1DEXT))
-GL_PREFIX(CopyTexSubImage1DEXT):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage1DEXT,CopyTexSubImage1DEXT@24))
+GL_PREFIX(CopyTexSubImage1DEXT,CopyTexSubImage1DEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage2DEXT))
-GL_PREFIX(CopyTexSubImage2DEXT):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage2DEXT,CopyTexSubImage2DEXT@32))
+GL_PREFIX(CopyTexSubImage2DEXT,CopyTexSubImage2DEXT@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyTexSubImage3DEXT))
-GL_PREFIX(CopyTexSubImage3DEXT):
+GLOBL_FN(GL_PREFIX(CopyTexSubImage3DEXT,CopyTexSubImage3DEXT@36))
+GL_PREFIX(CopyTexSubImage3DEXT,CopyTexSubImage3DEXT@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage3D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogramEXT))
-GL_PREFIX(GetHistogramEXT):
+GLOBL_FN(GL_PREFIX(GetHistogramEXT,GetHistogramEXT@20))
+GL_PREFIX(GetHistogramEXT,GetHistogramEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogramEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogramParameterfvEXT))
-GL_PREFIX(GetHistogramParameterfvEXT):
+GLOBL_FN(GL_PREFIX(GetHistogramParameterfvEXT,GetHistogramParameterfvEXT@12))
+GL_PREFIX(GetHistogramParameterfvEXT,GetHistogramParameterfvEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogramParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetHistogramParameterivEXT))
-GL_PREFIX(GetHistogramParameterivEXT):
+GLOBL_FN(GL_PREFIX(GetHistogramParameterivEXT,GetHistogramParameterivEXT@12))
+GL_PREFIX(GetHistogramParameterivEXT,GetHistogramParameterivEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetHistogramParameterivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmaxEXT))
-GL_PREFIX(GetMinmaxEXT):
+GLOBL_FN(GL_PREFIX(GetMinmaxEXT,GetMinmaxEXT@20))
+GL_PREFIX(GetMinmaxEXT,GetMinmaxEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmaxEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmaxParameterfvEXT))
-GL_PREFIX(GetMinmaxParameterfvEXT):
+GLOBL_FN(GL_PREFIX(GetMinmaxParameterfvEXT,GetMinmaxParameterfvEXT@12))
+GL_PREFIX(GetMinmaxParameterfvEXT,GetMinmaxParameterfvEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmaxParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetMinmaxParameterivEXT))
-GL_PREFIX(GetMinmaxParameterivEXT):
+GLOBL_FN(GL_PREFIX(GetMinmaxParameterivEXT,GetMinmaxParameterivEXT@12))
+GL_PREFIX(GetMinmaxParameterivEXT,GetMinmaxParameterivEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetMinmaxParameterivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(HistogramEXT))
-GL_PREFIX(HistogramEXT):
+GLOBL_FN(GL_PREFIX(HistogramEXT,HistogramEXT@16))
+GL_PREFIX(HistogramEXT,HistogramEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Histogram))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MinmaxEXT))
-GL_PREFIX(MinmaxEXT):
+GLOBL_FN(GL_PREFIX(MinmaxEXT,MinmaxEXT@12))
+GL_PREFIX(MinmaxEXT,MinmaxEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_Minmax))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ResetHistogramEXT))
-GL_PREFIX(ResetHistogramEXT):
+GLOBL_FN(GL_PREFIX(ResetHistogramEXT,ResetHistogramEXT@4))
+GL_PREFIX(ResetHistogramEXT,ResetHistogramEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ResetHistogram))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ResetMinmaxEXT))
-GL_PREFIX(ResetMinmaxEXT):
+GLOBL_FN(GL_PREFIX(ResetMinmaxEXT,ResetMinmaxEXT@4))
+GL_PREFIX(ResetMinmaxEXT,ResetMinmaxEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ResetMinmax))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionFilter1DEXT))
-GL_PREFIX(ConvolutionFilter1DEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionFilter1DEXT,ConvolutionFilter1DEXT@24))
+GL_PREFIX(ConvolutionFilter1DEXT,ConvolutionFilter1DEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionFilter1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionFilter2DEXT))
-GL_PREFIX(ConvolutionFilter2DEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionFilter2DEXT,ConvolutionFilter2DEXT@28))
+GL_PREFIX(ConvolutionFilter2DEXT,ConvolutionFilter2DEXT@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameterfEXT))
-GL_PREFIX(ConvolutionParameterfEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionParameterfEXT,ConvolutionParameterfEXT@12))
+GL_PREFIX(ConvolutionParameterfEXT,ConvolutionParameterfEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameterf))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameterfvEXT))
-GL_PREFIX(ConvolutionParameterfvEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionParameterfvEXT,ConvolutionParameterfvEXT@12))
+GL_PREFIX(ConvolutionParameterfvEXT,ConvolutionParameterfvEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameteriEXT))
-GL_PREFIX(ConvolutionParameteriEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionParameteriEXT,ConvolutionParameteriEXT@12))
+GL_PREFIX(ConvolutionParameteriEXT,ConvolutionParameteriEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameteri))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ConvolutionParameterivEXT))
-GL_PREFIX(ConvolutionParameterivEXT):
+GLOBL_FN(GL_PREFIX(ConvolutionParameterivEXT,ConvolutionParameterivEXT@12))
+GL_PREFIX(ConvolutionParameterivEXT,ConvolutionParameterivEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ConvolutionParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyConvolutionFilter1DEXT))
-GL_PREFIX(CopyConvolutionFilter1DEXT):
+GLOBL_FN(GL_PREFIX(CopyConvolutionFilter1DEXT,CopyConvolutionFilter1DEXT@20))
+GL_PREFIX(CopyConvolutionFilter1DEXT,CopyConvolutionFilter1DEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyConvolutionFilter1D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyConvolutionFilter2DEXT))
-GL_PREFIX(CopyConvolutionFilter2DEXT):
+GLOBL_FN(GL_PREFIX(CopyConvolutionFilter2DEXT,CopyConvolutionFilter2DEXT@24))
+GL_PREFIX(CopyConvolutionFilter2DEXT,CopyConvolutionFilter2DEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyConvolutionFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionFilterEXT))
-GL_PREFIX(GetConvolutionFilterEXT):
+GLOBL_FN(GL_PREFIX(GetConvolutionFilterEXT,GetConvolutionFilterEXT@16))
+GL_PREFIX(GetConvolutionFilterEXT,GetConvolutionFilterEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionFilterEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionParameterfvEXT))
-GL_PREFIX(GetConvolutionParameterfvEXT):
+GLOBL_FN(GL_PREFIX(GetConvolutionParameterfvEXT,GetConvolutionParameterfvEXT@12))
+GL_PREFIX(GetConvolutionParameterfvEXT,GetConvolutionParameterfvEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetConvolutionParameterivEXT))
-GL_PREFIX(GetConvolutionParameterivEXT):
+GLOBL_FN(GL_PREFIX(GetConvolutionParameterivEXT,GetConvolutionParameterivEXT@12))
+GL_PREFIX(GetConvolutionParameterivEXT,GetConvolutionParameterivEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetConvolutionParameterivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetSeparableFilterEXT))
-GL_PREFIX(GetSeparableFilterEXT):
+GLOBL_FN(GL_PREFIX(GetSeparableFilterEXT,GetSeparableFilterEXT@24))
+GL_PREFIX(GetSeparableFilterEXT,GetSeparableFilterEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetSeparableFilterEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SeparableFilter2DEXT))
-GL_PREFIX(SeparableFilter2DEXT):
+GLOBL_FN(GL_PREFIX(SeparableFilter2DEXT,SeparableFilter2DEXT@32))
+GL_PREFIX(SeparableFilter2DEXT,SeparableFilter2DEXT@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SeparableFilter2D))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableSGI))
-GL_PREFIX(ColorTableSGI):
+GLOBL_FN(GL_PREFIX(ColorTableSGI,ColorTableSGI@24))
+GL_PREFIX(ColorTableSGI,ColorTableSGI@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableParameterfvSGI))
-GL_PREFIX(ColorTableParameterfvSGI):
+GLOBL_FN(GL_PREFIX(ColorTableParameterfvSGI,ColorTableParameterfvSGI@12))
+GL_PREFIX(ColorTableParameterfvSGI,ColorTableParameterfvSGI@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTableParameterfv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableParameterivSGI))
-GL_PREFIX(ColorTableParameterivSGI):
+GLOBL_FN(GL_PREFIX(ColorTableParameterivSGI,ColorTableParameterivSGI@12))
+GL_PREFIX(ColorTableParameterivSGI,ColorTableParameterivSGI@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTableParameteriv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyColorTableSGI))
-GL_PREFIX(CopyColorTableSGI):
+GLOBL_FN(GL_PREFIX(CopyColorTableSGI,CopyColorTableSGI@20))
+GL_PREFIX(CopyColorTableSGI,CopyColorTableSGI@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableSGI))
-GL_PREFIX(GetColorTableSGI):
+GLOBL_FN(GL_PREFIX(GetColorTableSGI,GetColorTableSGI@16))
+GL_PREFIX(GetColorTableSGI,GetColorTableSGI@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableSGI))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameterfvSGI))
-GL_PREFIX(GetColorTableParameterfvSGI):
+GLOBL_FN(GL_PREFIX(GetColorTableParameterfvSGI,GetColorTableParameterfvSGI@12))
+GL_PREFIX(GetColorTableParameterfvSGI,GetColorTableParameterfvSGI@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameterfvSGI))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameterivSGI))
-GL_PREFIX(GetColorTableParameterivSGI):
+GLOBL_FN(GL_PREFIX(GetColorTableParameterivSGI,GetColorTableParameterivSGI@12))
+GL_PREFIX(GetColorTableParameterivSGI,GetColorTableParameterivSGI@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameterivSGI))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTexGenSGIX))
-GL_PREFIX(PixelTexGenSGIX):
+GLOBL_FN(GL_PREFIX(PixelTexGenSGIX,PixelTexGenSGIX@4))
+GL_PREFIX(PixelTexGenSGIX,PixelTexGenSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTexGenSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTexGenParameteriSGIS))
-GL_PREFIX(PixelTexGenParameteriSGIS):
+GLOBL_FN(GL_PREFIX(PixelTexGenParameteriSGIS,PixelTexGenParameteriSGIS@8))
+GL_PREFIX(PixelTexGenParameteriSGIS,PixelTexGenParameteriSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTexGenParameteriSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTexGenParameterivSGIS))
-GL_PREFIX(PixelTexGenParameterivSGIS):
+GLOBL_FN(GL_PREFIX(PixelTexGenParameterivSGIS,PixelTexGenParameterivSGIS@8))
+GL_PREFIX(PixelTexGenParameterivSGIS,PixelTexGenParameterivSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTexGenParameterivSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTexGenParameterfSGIS))
-GL_PREFIX(PixelTexGenParameterfSGIS):
+GLOBL_FN(GL_PREFIX(PixelTexGenParameterfSGIS,PixelTexGenParameterfSGIS@8))
+GL_PREFIX(PixelTexGenParameterfSGIS,PixelTexGenParameterfSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTexGenParameterfSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PixelTexGenParameterfvSGIS))
-GL_PREFIX(PixelTexGenParameterfvSGIS):
+GLOBL_FN(GL_PREFIX(PixelTexGenParameterfvSGIS,PixelTexGenParameterfvSGIS@8))
+GL_PREFIX(PixelTexGenParameterfvSGIS,PixelTexGenParameterfvSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PixelTexGenParameterfvSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterivSGIS))
-GL_PREFIX(GetPixelTexGenParameterivSGIS):
+GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterivSGIS,GetPixelTexGenParameterivSGIS@8))
+GL_PREFIX(GetPixelTexGenParameterivSGIS,GetPixelTexGenParameterivSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPixelTexGenParameterivSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterfvSGIS))
-GL_PREFIX(GetPixelTexGenParameterfvSGIS):
+GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterfvSGIS,GetPixelTexGenParameterfvSGIS@8))
+GL_PREFIX(GetPixelTexGenParameterfvSGIS,GetPixelTexGenParameterfvSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPixelTexGenParameterfvSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexImage4DSGIS))
-GL_PREFIX(TexImage4DSGIS):
+GLOBL_FN(GL_PREFIX(TexImage4DSGIS,TexImage4DSGIS@44))
+GL_PREFIX(TexImage4DSGIS,TexImage4DSGIS@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexImage4DSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexSubImage4DSGIS))
-GL_PREFIX(TexSubImage4DSGIS):
+GLOBL_FN(GL_PREFIX(TexSubImage4DSGIS,TexSubImage4DSGIS@52))
+GL_PREFIX(TexSubImage4DSGIS,TexSubImage4DSGIS@52):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexSubImage4DSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(AreTexturesResidentEXT))
-GL_PREFIX(AreTexturesResidentEXT):
+GLOBL_FN(GL_PREFIX(AreTexturesResidentEXT,AreTexturesResidentEXT@12))
+GL_PREFIX(AreTexturesResidentEXT,AreTexturesResidentEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_AreTexturesResidentEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BindTextureEXT))
-GL_PREFIX(BindTextureEXT):
+GLOBL_FN(GL_PREFIX(BindTextureEXT,BindTextureEXT@8))
+GL_PREFIX(BindTextureEXT,BindTextureEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BindTexture))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteTexturesEXT))
-GL_PREFIX(DeleteTexturesEXT):
+GLOBL_FN(GL_PREFIX(DeleteTexturesEXT,DeleteTexturesEXT@8))
+GL_PREFIX(DeleteTexturesEXT,DeleteTexturesEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteTextures))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenTexturesEXT))
-GL_PREFIX(GenTexturesEXT):
+GLOBL_FN(GL_PREFIX(GenTexturesEXT,GenTexturesEXT@8))
+GL_PREFIX(GenTexturesEXT,GenTexturesEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenTexturesEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsTextureEXT))
-GL_PREFIX(IsTextureEXT):
+GLOBL_FN(GL_PREFIX(IsTextureEXT,IsTextureEXT@4))
+GL_PREFIX(IsTextureEXT,IsTextureEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsTextureEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PrioritizeTexturesEXT))
-GL_PREFIX(PrioritizeTexturesEXT):
+GLOBL_FN(GL_PREFIX(PrioritizeTexturesEXT,PrioritizeTexturesEXT@12))
+GL_PREFIX(PrioritizeTexturesEXT,PrioritizeTexturesEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PrioritizeTextures))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DetailTexFuncSGIS))
-GL_PREFIX(DetailTexFuncSGIS):
+GLOBL_FN(GL_PREFIX(DetailTexFuncSGIS,DetailTexFuncSGIS@12))
+GL_PREFIX(DetailTexFuncSGIS,DetailTexFuncSGIS@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DetailTexFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetDetailTexFuncSGIS))
-GL_PREFIX(GetDetailTexFuncSGIS):
+GLOBL_FN(GL_PREFIX(GetDetailTexFuncSGIS,GetDetailTexFuncSGIS@8))
+GL_PREFIX(GetDetailTexFuncSGIS,GetDetailTexFuncSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetDetailTexFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SharpenTexFuncSGIS))
-GL_PREFIX(SharpenTexFuncSGIS):
+GLOBL_FN(GL_PREFIX(SharpenTexFuncSGIS,SharpenTexFuncSGIS@12))
+GL_PREFIX(SharpenTexFuncSGIS,SharpenTexFuncSGIS@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SharpenTexFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetSharpenTexFuncSGIS))
-GL_PREFIX(GetSharpenTexFuncSGIS):
+GLOBL_FN(GL_PREFIX(GetSharpenTexFuncSGIS,GetSharpenTexFuncSGIS@8))
+GL_PREFIX(GetSharpenTexFuncSGIS,GetSharpenTexFuncSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetSharpenTexFuncSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SampleMaskSGIS))
-GL_PREFIX(SampleMaskSGIS):
+GLOBL_FN(GL_PREFIX(SampleMaskSGIS,SampleMaskSGIS@8))
+GL_PREFIX(SampleMaskSGIS,SampleMaskSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SampleMaskSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SamplePatternSGIS))
-GL_PREFIX(SamplePatternSGIS):
+GLOBL_FN(GL_PREFIX(SamplePatternSGIS,SamplePatternSGIS@4))
+GL_PREFIX(SamplePatternSGIS,SamplePatternSGIS@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ArrayElementEXT))
-GL_PREFIX(ArrayElementEXT):
+GLOBL_FN(GL_PREFIX(ArrayElementEXT,ArrayElementEXT@4))
+GL_PREFIX(ArrayElementEXT,ArrayElementEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ArrayElement))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorPointerEXT))
-GL_PREFIX(ColorPointerEXT):
+GLOBL_FN(GL_PREFIX(ColorPointerEXT,ColorPointerEXT@20))
+GL_PREFIX(ColorPointerEXT,ColorPointerEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawArraysEXT))
-GL_PREFIX(DrawArraysEXT):
+GLOBL_FN(GL_PREFIX(DrawArraysEXT,DrawArraysEXT@12))
+GL_PREFIX(DrawArraysEXT,DrawArraysEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawArrays))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EdgeFlagPointerEXT))
-GL_PREFIX(EdgeFlagPointerEXT):
+GLOBL_FN(GL_PREFIX(EdgeFlagPointerEXT,EdgeFlagPointerEXT@12))
+GL_PREFIX(EdgeFlagPointerEXT,EdgeFlagPointerEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EdgeFlagPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetPointervEXT))
-GL_PREFIX(GetPointervEXT):
+GLOBL_FN(GL_PREFIX(GetPointervEXT,GetPointervEXT@8))
+GL_PREFIX(GetPointervEXT,GetPointervEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetPointerv))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IndexPointerEXT))
-GL_PREFIX(IndexPointerEXT):
+GLOBL_FN(GL_PREFIX(IndexPointerEXT,IndexPointerEXT@16))
+GL_PREFIX(IndexPointerEXT,IndexPointerEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IndexPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(NormalPointerEXT))
-GL_PREFIX(NormalPointerEXT):
+GLOBL_FN(GL_PREFIX(NormalPointerEXT,NormalPointerEXT@16))
+GL_PREFIX(NormalPointerEXT,NormalPointerEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_NormalPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TexCoordPointerEXT))
-GL_PREFIX(TexCoordPointerEXT):
+GLOBL_FN(GL_PREFIX(TexCoordPointerEXT,TexCoordPointerEXT@20))
+GL_PREFIX(TexCoordPointerEXT,TexCoordPointerEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TexCoordPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexPointerEXT))
-GL_PREFIX(VertexPointerEXT):
+GLOBL_FN(GL_PREFIX(VertexPointerEXT,VertexPointerEXT@20))
+GL_PREFIX(VertexPointerEXT,VertexPointerEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendEquationEXT))
-GL_PREFIX(BlendEquationEXT):
+GLOBL_FN(GL_PREFIX(BlendEquationEXT,BlendEquationEXT@4))
+GL_PREFIX(BlendEquationEXT,BlendEquationEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendEquation))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SpriteParameterfSGIX))
-GL_PREFIX(SpriteParameterfSGIX):
+GLOBL_FN(GL_PREFIX(SpriteParameterfSGIX,SpriteParameterfSGIX@8))
+GL_PREFIX(SpriteParameterfSGIX,SpriteParameterfSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SpriteParameterfSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SpriteParameterfvSGIX))
-GL_PREFIX(SpriteParameterfvSGIX):
+GLOBL_FN(GL_PREFIX(SpriteParameterfvSGIX,SpriteParameterfvSGIX@8))
+GL_PREFIX(SpriteParameterfvSGIX,SpriteParameterfvSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SpriteParameterfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SpriteParameteriSGIX))
-GL_PREFIX(SpriteParameteriSGIX):
+GLOBL_FN(GL_PREFIX(SpriteParameteriSGIX,SpriteParameteriSGIX@8))
+GL_PREFIX(SpriteParameteriSGIX,SpriteParameteriSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SpriteParameteriSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SpriteParameterivSGIX))
-GL_PREFIX(SpriteParameterivSGIX):
+GLOBL_FN(GL_PREFIX(SpriteParameterivSGIX,SpriteParameterivSGIX@8))
+GL_PREFIX(SpriteParameterivSGIX,SpriteParameterivSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SpriteParameterivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfEXT))
-GL_PREFIX(PointParameterfEXT):
+GLOBL_FN(GL_PREFIX(PointParameterfEXT,PointParameterfEXT@8))
+GL_PREFIX(PointParameterfEXT,PointParameterfEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfvEXT))
-GL_PREFIX(PointParameterfvEXT):
+GLOBL_FN(GL_PREFIX(PointParameterfvEXT,PointParameterfvEXT@8))
+GL_PREFIX(PointParameterfvEXT,PointParameterfvEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfARB))
-GL_PREFIX(PointParameterfARB):
+GLOBL_FN(GL_PREFIX(PointParameterfARB,PointParameterfARB@8))
+GL_PREFIX(PointParameterfARB,PointParameterfARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfvARB))
-GL_PREFIX(PointParameterfvARB):
+GLOBL_FN(GL_PREFIX(PointParameterfvARB,PointParameterfvARB@8))
+GL_PREFIX(PointParameterfvARB,PointParameterfvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfSGIS))
-GL_PREFIX(PointParameterfSGIS):
+GLOBL_FN(GL_PREFIX(PointParameterfSGIS,PointParameterfSGIS@8))
+GL_PREFIX(PointParameterfSGIS,PointParameterfSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfvSGIS))
-GL_PREFIX(PointParameterfvSGIS):
+GLOBL_FN(GL_PREFIX(PointParameterfvSGIS,PointParameterfvSGIS@8))
+GL_PREFIX(PointParameterfvSGIS,PointParameterfvSGIS@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetInstrumentsSGIX))
-GL_PREFIX(GetInstrumentsSGIX):
+GLOBL_FN(GL_PREFIX(GetInstrumentsSGIX,GetInstrumentsSGIX@0))
+GL_PREFIX(GetInstrumentsSGIX,GetInstrumentsSGIX@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetInstrumentsSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(InstrumentsBufferSGIX))
-GL_PREFIX(InstrumentsBufferSGIX):
+GLOBL_FN(GL_PREFIX(InstrumentsBufferSGIX,InstrumentsBufferSGIX@8))
+GL_PREFIX(InstrumentsBufferSGIX,InstrumentsBufferSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_InstrumentsBufferSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PollInstrumentsSGIX))
-GL_PREFIX(PollInstrumentsSGIX):
+GLOBL_FN(GL_PREFIX(PollInstrumentsSGIX,PollInstrumentsSGIX@4))
+GL_PREFIX(PollInstrumentsSGIX,PollInstrumentsSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PollInstrumentsSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ReadInstrumentsSGIX))
-GL_PREFIX(ReadInstrumentsSGIX):
+GLOBL_FN(GL_PREFIX(ReadInstrumentsSGIX,ReadInstrumentsSGIX@4))
+GL_PREFIX(ReadInstrumentsSGIX,ReadInstrumentsSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ReadInstrumentsSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(StartInstrumentsSGIX))
-GL_PREFIX(StartInstrumentsSGIX):
+GLOBL_FN(GL_PREFIX(StartInstrumentsSGIX,StartInstrumentsSGIX@0))
+GL_PREFIX(StartInstrumentsSGIX,StartInstrumentsSGIX@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_StartInstrumentsSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(StopInstrumentsSGIX))
-GL_PREFIX(StopInstrumentsSGIX):
+GLOBL_FN(GL_PREFIX(StopInstrumentsSGIX,StopInstrumentsSGIX@4))
+GL_PREFIX(StopInstrumentsSGIX,StopInstrumentsSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_StopInstrumentsSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FrameZoomSGIX))
-GL_PREFIX(FrameZoomSGIX):
+GLOBL_FN(GL_PREFIX(FrameZoomSGIX,FrameZoomSGIX@4))
+GL_PREFIX(FrameZoomSGIX,FrameZoomSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FrameZoomSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TagSampleBufferSGIX))
-GL_PREFIX(TagSampleBufferSGIX):
+GLOBL_FN(GL_PREFIX(TagSampleBufferSGIX,TagSampleBufferSGIX@0))
+GL_PREFIX(TagSampleBufferSGIX,TagSampleBufferSGIX@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TagSampleBufferSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ReferencePlaneSGIX))
-GL_PREFIX(ReferencePlaneSGIX):
+GLOBL_FN(GL_PREFIX(ReferencePlaneSGIX,ReferencePlaneSGIX@4))
+GL_PREFIX(ReferencePlaneSGIX,ReferencePlaneSGIX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ReferencePlaneSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FlushRasterSGIX))
-GL_PREFIX(FlushRasterSGIX):
+GLOBL_FN(GL_PREFIX(FlushRasterSGIX,FlushRasterSGIX@0))
+GL_PREFIX(FlushRasterSGIX,FlushRasterSGIX@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FlushRasterSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorSubTableEXT))
-GL_PREFIX(ColorSubTableEXT):
+GLOBL_FN(GL_PREFIX(ColorSubTableEXT,ColorSubTableEXT@24))
+GL_PREFIX(ColorSubTableEXT,ColorSubTableEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorSubTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CopyColorSubTableEXT))
-GL_PREFIX(CopyColorSubTableEXT):
+GLOBL_FN(GL_PREFIX(CopyColorSubTableEXT,CopyColorSubTableEXT@20))
+GL_PREFIX(CopyColorSubTableEXT,CopyColorSubTableEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CopyColorSubTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(HintPGI))
-GL_PREFIX(HintPGI):
+GLOBL_FN(GL_PREFIX(HintPGI,HintPGI@8))
+GL_PREFIX(HintPGI,HintPGI@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_HintPGI))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ColorTableEXT))
-GL_PREFIX(ColorTableEXT):
+GLOBL_FN(GL_PREFIX(ColorTableEXT,ColorTableEXT@24))
+GL_PREFIX(ColorTableEXT,ColorTableEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ColorTable))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableEXT))
-GL_PREFIX(GetColorTableEXT):
+GLOBL_FN(GL_PREFIX(GetColorTableEXT,GetColorTableEXT@16))
+GL_PREFIX(GetColorTableEXT,GetColorTableEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameterivEXT))
-GL_PREFIX(GetColorTableParameterivEXT):
+GLOBL_FN(GL_PREFIX(GetColorTableParameterivEXT,GetColorTableParameterivEXT@12))
+GL_PREFIX(GetColorTableParameterivEXT,GetColorTableParameterivEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameterivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetColorTableParameterfvEXT))
-GL_PREFIX(GetColorTableParameterfvEXT):
+GLOBL_FN(GL_PREFIX(GetColorTableParameterfvEXT,GetColorTableParameterfvEXT@12))
+GL_PREFIX(GetColorTableParameterfvEXT,GetColorTableParameterfvEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetColorTableParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetListParameterfvSGIX))
-GL_PREFIX(GetListParameterfvSGIX):
+GLOBL_FN(GL_PREFIX(GetListParameterfvSGIX,GetListParameterfvSGIX@12))
+GL_PREFIX(GetListParameterfvSGIX,GetListParameterfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetListParameterfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetListParameterivSGIX))
-GL_PREFIX(GetListParameterivSGIX):
+GLOBL_FN(GL_PREFIX(GetListParameterivSGIX,GetListParameterivSGIX@12))
+GL_PREFIX(GetListParameterivSGIX,GetListParameterivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetListParameterivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ListParameterfSGIX))
-GL_PREFIX(ListParameterfSGIX):
+GLOBL_FN(GL_PREFIX(ListParameterfSGIX,ListParameterfSGIX@12))
+GL_PREFIX(ListParameterfSGIX,ListParameterfSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ListParameterfSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ListParameterfvSGIX))
-GL_PREFIX(ListParameterfvSGIX):
+GLOBL_FN(GL_PREFIX(ListParameterfvSGIX,ListParameterfvSGIX@12))
+GL_PREFIX(ListParameterfvSGIX,ListParameterfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ListParameterfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ListParameteriSGIX))
-GL_PREFIX(ListParameteriSGIX):
+GLOBL_FN(GL_PREFIX(ListParameteriSGIX,ListParameteriSGIX@12))
+GL_PREFIX(ListParameteriSGIX,ListParameteriSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ListParameteriSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ListParameterivSGIX))
-GL_PREFIX(ListParameterivSGIX):
+GLOBL_FN(GL_PREFIX(ListParameterivSGIX,ListParameterivSGIX@12))
+GL_PREFIX(ListParameterivSGIX,ListParameterivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ListParameterivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IndexMaterialEXT))
-GL_PREFIX(IndexMaterialEXT):
+GLOBL_FN(GL_PREFIX(IndexMaterialEXT,IndexMaterialEXT@8))
+GL_PREFIX(IndexMaterialEXT,IndexMaterialEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IndexMaterialEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IndexFuncEXT))
-GL_PREFIX(IndexFuncEXT):
+GLOBL_FN(GL_PREFIX(IndexFuncEXT,IndexFuncEXT@8))
+GL_PREFIX(IndexFuncEXT,IndexFuncEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IndexFuncEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LockArraysEXT))
-GL_PREFIX(LockArraysEXT):
+GLOBL_FN(GL_PREFIX(LockArraysEXT,LockArraysEXT@8))
+GL_PREFIX(LockArraysEXT,LockArraysEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LockArraysEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(UnlockArraysEXT))
-GL_PREFIX(UnlockArraysEXT):
+GLOBL_FN(GL_PREFIX(UnlockArraysEXT,UnlockArraysEXT@0))
+GL_PREFIX(UnlockArraysEXT,UnlockArraysEXT@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_UnlockArraysEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CullParameterdvEXT))
-GL_PREFIX(CullParameterdvEXT):
+GLOBL_FN(GL_PREFIX(CullParameterdvEXT,CullParameterdvEXT@8))
+GL_PREFIX(CullParameterdvEXT,CullParameterdvEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CullParameterdvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CullParameterfvEXT))
-GL_PREFIX(CullParameterfvEXT):
+GLOBL_FN(GL_PREFIX(CullParameterfvEXT,CullParameterfvEXT@8))
+GL_PREFIX(CullParameterfvEXT,CullParameterfvEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CullParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentColorMaterialSGIX))
-GL_PREFIX(FragmentColorMaterialSGIX):
+GLOBL_FN(GL_PREFIX(FragmentColorMaterialSGIX,FragmentColorMaterialSGIX@8))
+GL_PREFIX(FragmentColorMaterialSGIX,FragmentColorMaterialSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentColorMaterialSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightfSGIX))
-GL_PREFIX(FragmentLightfSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightfSGIX,FragmentLightfSGIX@12))
+GL_PREFIX(FragmentLightfSGIX,FragmentLightfSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightfSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightfvSGIX))
-GL_PREFIX(FragmentLightfvSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightfvSGIX,FragmentLightfvSGIX@12))
+GL_PREFIX(FragmentLightfvSGIX,FragmentLightfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightiSGIX))
-GL_PREFIX(FragmentLightiSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightiSGIX,FragmentLightiSGIX@12))
+GL_PREFIX(FragmentLightiSGIX,FragmentLightiSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightiSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightivSGIX))
-GL_PREFIX(FragmentLightivSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightivSGIX,FragmentLightivSGIX@12))
+GL_PREFIX(FragmentLightivSGIX,FragmentLightivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightModelfSGIX))
-GL_PREFIX(FragmentLightModelfSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightModelfSGIX,FragmentLightModelfSGIX@8))
+GL_PREFIX(FragmentLightModelfSGIX,FragmentLightModelfSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightModelfSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightModelfvSGIX))
-GL_PREFIX(FragmentLightModelfvSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightModelfvSGIX,FragmentLightModelfvSGIX@8))
+GL_PREFIX(FragmentLightModelfvSGIX,FragmentLightModelfvSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightModelfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightModeliSGIX))
-GL_PREFIX(FragmentLightModeliSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightModeliSGIX,FragmentLightModeliSGIX@8))
+GL_PREFIX(FragmentLightModeliSGIX,FragmentLightModeliSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightModeliSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentLightModelivSGIX))
-GL_PREFIX(FragmentLightModelivSGIX):
+GLOBL_FN(GL_PREFIX(FragmentLightModelivSGIX,FragmentLightModelivSGIX@8))
+GL_PREFIX(FragmentLightModelivSGIX,FragmentLightModelivSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentLightModelivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentMaterialfSGIX))
-GL_PREFIX(FragmentMaterialfSGIX):
+GLOBL_FN(GL_PREFIX(FragmentMaterialfSGIX,FragmentMaterialfSGIX@12))
+GL_PREFIX(FragmentMaterialfSGIX,FragmentMaterialfSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentMaterialfSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentMaterialfvSGIX))
-GL_PREFIX(FragmentMaterialfvSGIX):
+GLOBL_FN(GL_PREFIX(FragmentMaterialfvSGIX,FragmentMaterialfvSGIX@12))
+GL_PREFIX(FragmentMaterialfvSGIX,FragmentMaterialfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentMaterialfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentMaterialiSGIX))
-GL_PREFIX(FragmentMaterialiSGIX):
+GLOBL_FN(GL_PREFIX(FragmentMaterialiSGIX,FragmentMaterialiSGIX@12))
+GL_PREFIX(FragmentMaterialiSGIX,FragmentMaterialiSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentMaterialiSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FragmentMaterialivSGIX))
-GL_PREFIX(FragmentMaterialivSGIX):
+GLOBL_FN(GL_PREFIX(FragmentMaterialivSGIX,FragmentMaterialivSGIX@12))
+GL_PREFIX(FragmentMaterialivSGIX,FragmentMaterialivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FragmentMaterialivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFragmentLightfvSGIX))
-GL_PREFIX(GetFragmentLightfvSGIX):
+GLOBL_FN(GL_PREFIX(GetFragmentLightfvSGIX,GetFragmentLightfvSGIX@12))
+GL_PREFIX(GetFragmentLightfvSGIX,GetFragmentLightfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFragmentLightfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFragmentLightivSGIX))
-GL_PREFIX(GetFragmentLightivSGIX):
+GLOBL_FN(GL_PREFIX(GetFragmentLightivSGIX,GetFragmentLightivSGIX@12))
+GL_PREFIX(GetFragmentLightivSGIX,GetFragmentLightivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFragmentLightivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFragmentMaterialfvSGIX))
-GL_PREFIX(GetFragmentMaterialfvSGIX):
+GLOBL_FN(GL_PREFIX(GetFragmentMaterialfvSGIX,GetFragmentMaterialfvSGIX@12))
+GL_PREFIX(GetFragmentMaterialfvSGIX,GetFragmentMaterialfvSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFragmentMaterialfvSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFragmentMaterialivSGIX))
-GL_PREFIX(GetFragmentMaterialivSGIX):
+GLOBL_FN(GL_PREFIX(GetFragmentMaterialivSGIX,GetFragmentMaterialivSGIX@12))
+GL_PREFIX(GetFragmentMaterialivSGIX,GetFragmentMaterialivSGIX@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFragmentMaterialivSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LightEnviSGIX))
-GL_PREFIX(LightEnviSGIX):
+GLOBL_FN(GL_PREFIX(LightEnviSGIX,LightEnviSGIX@8))
+GL_PREFIX(LightEnviSGIX,LightEnviSGIX@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LightEnviSGIX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DrawRangeElementsEXT))
-GL_PREFIX(DrawRangeElementsEXT):
+GLOBL_FN(GL_PREFIX(DrawRangeElementsEXT,DrawRangeElementsEXT@24))
+GL_PREFIX(DrawRangeElementsEXT,DrawRangeElementsEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DrawRangeElements))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3bEXT))
-GL_PREFIX(SecondaryColor3bEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3bEXT,SecondaryColor3bEXT@12))
+GL_PREFIX(SecondaryColor3bEXT,SecondaryColor3bEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3bEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3bvEXT))
-GL_PREFIX(SecondaryColor3bvEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3bvEXT,SecondaryColor3bvEXT@4))
+GL_PREFIX(SecondaryColor3bvEXT,SecondaryColor3bvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3bvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3dEXT))
-GL_PREFIX(SecondaryColor3dEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3dEXT,SecondaryColor3dEXT@24))
+GL_PREFIX(SecondaryColor3dEXT,SecondaryColor3dEXT@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3dEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3dvEXT))
-GL_PREFIX(SecondaryColor3dvEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3dvEXT,SecondaryColor3dvEXT@4))
+GL_PREFIX(SecondaryColor3dvEXT,SecondaryColor3dvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3dvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3fEXT))
-GL_PREFIX(SecondaryColor3fEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3fEXT,SecondaryColor3fEXT@12))
+GL_PREFIX(SecondaryColor3fEXT,SecondaryColor3fEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3fEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3fvEXT))
-GL_PREFIX(SecondaryColor3fvEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3fvEXT,SecondaryColor3fvEXT@4))
+GL_PREFIX(SecondaryColor3fvEXT,SecondaryColor3fvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3fvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3iEXT))
-GL_PREFIX(SecondaryColor3iEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3iEXT,SecondaryColor3iEXT@12))
+GL_PREFIX(SecondaryColor3iEXT,SecondaryColor3iEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3iEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ivEXT))
-GL_PREFIX(SecondaryColor3ivEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ivEXT,SecondaryColor3ivEXT@4))
+GL_PREFIX(SecondaryColor3ivEXT,SecondaryColor3ivEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3sEXT))
-GL_PREFIX(SecondaryColor3sEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3sEXT,SecondaryColor3sEXT@12))
+GL_PREFIX(SecondaryColor3sEXT,SecondaryColor3sEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3sEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3svEXT))
-GL_PREFIX(SecondaryColor3svEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3svEXT,SecondaryColor3svEXT@4))
+GL_PREFIX(SecondaryColor3svEXT,SecondaryColor3svEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3svEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ubEXT))
-GL_PREFIX(SecondaryColor3ubEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ubEXT,SecondaryColor3ubEXT@12))
+GL_PREFIX(SecondaryColor3ubEXT,SecondaryColor3ubEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ubvEXT))
-GL_PREFIX(SecondaryColor3ubvEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ubvEXT,SecondaryColor3ubvEXT@4))
+GL_PREFIX(SecondaryColor3ubvEXT,SecondaryColor3ubvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3uiEXT))
-GL_PREFIX(SecondaryColor3uiEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3uiEXT,SecondaryColor3uiEXT@12))
+GL_PREFIX(SecondaryColor3uiEXT,SecondaryColor3uiEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3uiEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3uivEXT))
-GL_PREFIX(SecondaryColor3uivEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3uivEXT,SecondaryColor3uivEXT@4))
+GL_PREFIX(SecondaryColor3uivEXT,SecondaryColor3uivEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3uivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3usEXT))
-GL_PREFIX(SecondaryColor3usEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3usEXT,SecondaryColor3usEXT@12))
+GL_PREFIX(SecondaryColor3usEXT,SecondaryColor3usEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3usEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3usvEXT))
-GL_PREFIX(SecondaryColor3usvEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColor3usvEXT,SecondaryColor3usvEXT@4))
+GL_PREFIX(SecondaryColor3usvEXT,SecondaryColor3usvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3usvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColorPointerEXT))
-GL_PREFIX(SecondaryColorPointerEXT):
+GLOBL_FN(GL_PREFIX(SecondaryColorPointerEXT,SecondaryColorPointerEXT@16))
+GL_PREFIX(SecondaryColorPointerEXT,SecondaryColorPointerEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColorPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiDrawArraysEXT))
-GL_PREFIX(MultiDrawArraysEXT):
+GLOBL_FN(GL_PREFIX(MultiDrawArraysEXT,MultiDrawArraysEXT@16))
+GL_PREFIX(MultiDrawArraysEXT,MultiDrawArraysEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiDrawArraysEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiDrawElementsEXT))
-GL_PREFIX(MultiDrawElementsEXT):
+GLOBL_FN(GL_PREFIX(MultiDrawElementsEXT,MultiDrawElementsEXT@20))
+GL_PREFIX(MultiDrawElementsEXT,MultiDrawElementsEXT@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiDrawElementsEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordfEXT))
-GL_PREFIX(FogCoordfEXT):
+GLOBL_FN(GL_PREFIX(FogCoordfEXT,FogCoordfEXT@4))
+GL_PREFIX(FogCoordfEXT,FogCoordfEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordfvEXT))
-GL_PREFIX(FogCoordfvEXT):
+GLOBL_FN(GL_PREFIX(FogCoordfvEXT,FogCoordfvEXT@4))
+GL_PREFIX(FogCoordfvEXT,FogCoordfvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoorddEXT))
-GL_PREFIX(FogCoorddEXT):
+GLOBL_FN(GL_PREFIX(FogCoorddEXT,FogCoorddEXT@8))
+GL_PREFIX(FogCoorddEXT,FogCoorddEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoorddEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoorddvEXT))
-GL_PREFIX(FogCoorddvEXT):
+GLOBL_FN(GL_PREFIX(FogCoorddvEXT,FogCoorddvEXT@4))
+GL_PREFIX(FogCoorddvEXT,FogCoorddvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoorddvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordPointerEXT))
-GL_PREFIX(FogCoordPointerEXT):
+GLOBL_FN(GL_PREFIX(FogCoordPointerEXT,FogCoordPointerEXT@12))
+GL_PREFIX(FogCoordPointerEXT,FogCoordPointerEXT@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendFuncSeparateEXT))
-GL_PREFIX(BlendFuncSeparateEXT):
+GLOBL_FN(GL_PREFIX(BlendFuncSeparateEXT,BlendFuncSeparateEXT@16))
+GL_PREFIX(BlendFuncSeparateEXT,BlendFuncSeparateEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendFuncSeparateINGR))
-GL_PREFIX(BlendFuncSeparateINGR):
+GLOBL_FN(GL_PREFIX(BlendFuncSeparateINGR,BlendFuncSeparateINGR@16))
+GL_PREFIX(BlendFuncSeparateINGR,BlendFuncSeparateINGR@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexWeightfEXT))
-GL_PREFIX(VertexWeightfEXT):
+GLOBL_FN(GL_PREFIX(VertexWeightfEXT,VertexWeightfEXT@4))
+GL_PREFIX(VertexWeightfEXT,VertexWeightfEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexWeightfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexWeightfvEXT))
-GL_PREFIX(VertexWeightfvEXT):
+GLOBL_FN(GL_PREFIX(VertexWeightfvEXT,VertexWeightfvEXT@4))
+GL_PREFIX(VertexWeightfvEXT,VertexWeightfvEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexWeightfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexWeightPointerEXT))
-GL_PREFIX(VertexWeightPointerEXT):
+GLOBL_FN(GL_PREFIX(VertexWeightPointerEXT,VertexWeightPointerEXT@16))
+GL_PREFIX(VertexWeightPointerEXT,VertexWeightPointerEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexWeightPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FlushVertexArrayRangeNV))
-GL_PREFIX(FlushVertexArrayRangeNV):
+GLOBL_FN(GL_PREFIX(FlushVertexArrayRangeNV,FlushVertexArrayRangeNV@0))
+GL_PREFIX(FlushVertexArrayRangeNV,FlushVertexArrayRangeNV@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FlushVertexArrayRangeNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexArrayRangeNV))
-GL_PREFIX(VertexArrayRangeNV):
+GLOBL_FN(GL_PREFIX(VertexArrayRangeNV,VertexArrayRangeNV@8))
+GL_PREFIX(VertexArrayRangeNV,VertexArrayRangeNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexArrayRangeNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerParameterfvNV))
-GL_PREFIX(CombinerParameterfvNV):
+GLOBL_FN(GL_PREFIX(CombinerParameterfvNV,CombinerParameterfvNV@8))
+GL_PREFIX(CombinerParameterfvNV,CombinerParameterfvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerParameterfNV))
-GL_PREFIX(CombinerParameterfNV):
+GLOBL_FN(GL_PREFIX(CombinerParameterfNV,CombinerParameterfNV@8))
+GL_PREFIX(CombinerParameterfNV,CombinerParameterfNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerParameterfNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerParameterivNV))
-GL_PREFIX(CombinerParameterivNV):
+GLOBL_FN(GL_PREFIX(CombinerParameterivNV,CombinerParameterivNV@8))
+GL_PREFIX(CombinerParameterivNV,CombinerParameterivNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerParameteriNV))
-GL_PREFIX(CombinerParameteriNV):
+GLOBL_FN(GL_PREFIX(CombinerParameteriNV,CombinerParameteriNV@8))
+GL_PREFIX(CombinerParameteriNV,CombinerParameteriNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerParameteriNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerInputNV))
-GL_PREFIX(CombinerInputNV):
+GLOBL_FN(GL_PREFIX(CombinerInputNV,CombinerInputNV@24))
+GL_PREFIX(CombinerInputNV,CombinerInputNV@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerInputNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CombinerOutputNV))
-GL_PREFIX(CombinerOutputNV):
+GLOBL_FN(GL_PREFIX(CombinerOutputNV,CombinerOutputNV@40))
+GL_PREFIX(CombinerOutputNV,CombinerOutputNV@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_CombinerOutputNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FinalCombinerInputNV))
-GL_PREFIX(FinalCombinerInputNV):
+GLOBL_FN(GL_PREFIX(FinalCombinerInputNV,FinalCombinerInputNV@16))
+GL_PREFIX(FinalCombinerInputNV,FinalCombinerInputNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FinalCombinerInputNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCombinerInputParameterfvNV))
-GL_PREFIX(GetCombinerInputParameterfvNV):
+GLOBL_FN(GL_PREFIX(GetCombinerInputParameterfvNV,GetCombinerInputParameterfvNV@20))
+GL_PREFIX(GetCombinerInputParameterfvNV,GetCombinerInputParameterfvNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCombinerInputParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCombinerInputParameterivNV))
-GL_PREFIX(GetCombinerInputParameterivNV):
+GLOBL_FN(GL_PREFIX(GetCombinerInputParameterivNV,GetCombinerInputParameterivNV@20))
+GL_PREFIX(GetCombinerInputParameterivNV,GetCombinerInputParameterivNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCombinerInputParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCombinerOutputParameterfvNV))
-GL_PREFIX(GetCombinerOutputParameterfvNV):
+GLOBL_FN(GL_PREFIX(GetCombinerOutputParameterfvNV,GetCombinerOutputParameterfvNV@16))
+GL_PREFIX(GetCombinerOutputParameterfvNV,GetCombinerOutputParameterfvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCombinerOutputParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCombinerOutputParameterivNV))
-GL_PREFIX(GetCombinerOutputParameterivNV):
+GLOBL_FN(GL_PREFIX(GetCombinerOutputParameterivNV,GetCombinerOutputParameterivNV@16))
+GL_PREFIX(GetCombinerOutputParameterivNV,GetCombinerOutputParameterivNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetCombinerOutputParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFinalCombinerInputParameterfvNV))
-GL_PREFIX(GetFinalCombinerInputParameterfvNV):
+GLOBL_FN(GL_PREFIX(GetFinalCombinerInputParameterfvNV,GetFinalCombinerInputParameterfvNV@12))
+GL_PREFIX(GetFinalCombinerInputParameterfvNV,GetFinalCombinerInputParameterfvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFinalCombinerInputParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFinalCombinerInputParameterivNV))
-GL_PREFIX(GetFinalCombinerInputParameterivNV):
+GLOBL_FN(GL_PREFIX(GetFinalCombinerInputParameterivNV,GetFinalCombinerInputParameterivNV@12))
+GL_PREFIX(GetFinalCombinerInputParameterivNV,GetFinalCombinerInputParameterivNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFinalCombinerInputParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ResizeBuffersMESA))
-GL_PREFIX(ResizeBuffersMESA):
+GLOBL_FN(GL_PREFIX(ResizeBuffersMESA,ResizeBuffersMESA@0))
+GL_PREFIX(ResizeBuffersMESA,ResizeBuffersMESA@0):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ResizeBuffersMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2dMESA))
-GL_PREFIX(WindowPos2dMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2dMESA,WindowPos2dMESA@16))
+GL_PREFIX(WindowPos2dMESA,WindowPos2dMESA@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2dvMESA))
-GL_PREFIX(WindowPos2dvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2dvMESA,WindowPos2dvMESA@4))
+GL_PREFIX(WindowPos2dvMESA,WindowPos2dvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2fMESA))
-GL_PREFIX(WindowPos2fMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2fMESA,WindowPos2fMESA@8))
+GL_PREFIX(WindowPos2fMESA,WindowPos2fMESA@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2fvMESA))
-GL_PREFIX(WindowPos2fvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2fvMESA,WindowPos2fvMESA@4))
+GL_PREFIX(WindowPos2fvMESA,WindowPos2fvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2iMESA))
-GL_PREFIX(WindowPos2iMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2iMESA,WindowPos2iMESA@8))
+GL_PREFIX(WindowPos2iMESA,WindowPos2iMESA@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2ivMESA))
-GL_PREFIX(WindowPos2ivMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2ivMESA,WindowPos2ivMESA@4))
+GL_PREFIX(WindowPos2ivMESA,WindowPos2ivMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2sMESA))
-GL_PREFIX(WindowPos2sMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2sMESA,WindowPos2sMESA@8))
+GL_PREFIX(WindowPos2sMESA,WindowPos2sMESA@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2svMESA))
-GL_PREFIX(WindowPos2svMESA):
+GLOBL_FN(GL_PREFIX(WindowPos2svMESA,WindowPos2svMESA@4))
+GL_PREFIX(WindowPos2svMESA,WindowPos2svMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3dMESA))
-GL_PREFIX(WindowPos3dMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3dMESA,WindowPos3dMESA@24))
+GL_PREFIX(WindowPos3dMESA,WindowPos3dMESA@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3dvMESA))
-GL_PREFIX(WindowPos3dvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3dvMESA,WindowPos3dvMESA@4))
+GL_PREFIX(WindowPos3dvMESA,WindowPos3dvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3fMESA))
-GL_PREFIX(WindowPos3fMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3fMESA,WindowPos3fMESA@12))
+GL_PREFIX(WindowPos3fMESA,WindowPos3fMESA@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3fvMESA))
-GL_PREFIX(WindowPos3fvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3fvMESA,WindowPos3fvMESA@4))
+GL_PREFIX(WindowPos3fvMESA,WindowPos3fvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3iMESA))
-GL_PREFIX(WindowPos3iMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3iMESA,WindowPos3iMESA@12))
+GL_PREFIX(WindowPos3iMESA,WindowPos3iMESA@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3ivMESA))
-GL_PREFIX(WindowPos3ivMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3ivMESA,WindowPos3ivMESA@4))
+GL_PREFIX(WindowPos3ivMESA,WindowPos3ivMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3sMESA))
-GL_PREFIX(WindowPos3sMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3sMESA,WindowPos3sMESA@12))
+GL_PREFIX(WindowPos3sMESA,WindowPos3sMESA@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3svMESA))
-GL_PREFIX(WindowPos3svMESA):
+GLOBL_FN(GL_PREFIX(WindowPos3svMESA,WindowPos3svMESA@4))
+GL_PREFIX(WindowPos3svMESA,WindowPos3svMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4dMESA))
-GL_PREFIX(WindowPos4dMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4dMESA,WindowPos4dMESA@32))
+GL_PREFIX(WindowPos4dMESA,WindowPos4dMESA@32):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4dvMESA))
-GL_PREFIX(WindowPos4dvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4dvMESA,WindowPos4dvMESA@4))
+GL_PREFIX(WindowPos4dvMESA,WindowPos4dvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4fMESA))
-GL_PREFIX(WindowPos4fMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4fMESA,WindowPos4fMESA@16))
+GL_PREFIX(WindowPos4fMESA,WindowPos4fMESA@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4fvMESA))
-GL_PREFIX(WindowPos4fvMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4fvMESA,WindowPos4fvMESA@4))
+GL_PREFIX(WindowPos4fvMESA,WindowPos4fvMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4iMESA))
-GL_PREFIX(WindowPos4iMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4iMESA,WindowPos4iMESA@16))
+GL_PREFIX(WindowPos4iMESA,WindowPos4iMESA@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4ivMESA))
-GL_PREFIX(WindowPos4ivMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4ivMESA,WindowPos4ivMESA@4))
+GL_PREFIX(WindowPos4ivMESA,WindowPos4ivMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4sMESA))
-GL_PREFIX(WindowPos4sMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4sMESA,WindowPos4sMESA@16))
+GL_PREFIX(WindowPos4sMESA,WindowPos4sMESA@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos4svMESA))
-GL_PREFIX(WindowPos4svMESA):
+GLOBL_FN(GL_PREFIX(WindowPos4svMESA,WindowPos4svMESA@4))
+GL_PREFIX(WindowPos4svMESA,WindowPos4svMESA@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos4svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiModeDrawArraysIBM))
-GL_PREFIX(MultiModeDrawArraysIBM):
+GLOBL_FN(GL_PREFIX(MultiModeDrawArraysIBM,MultiModeDrawArraysIBM@20))
+GL_PREFIX(MultiModeDrawArraysIBM,MultiModeDrawArraysIBM@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiModeDrawArraysIBM))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiModeDrawElementsIBM))
-GL_PREFIX(MultiModeDrawElementsIBM):
+GLOBL_FN(GL_PREFIX(MultiModeDrawElementsIBM,MultiModeDrawElementsIBM@24))
+GL_PREFIX(MultiModeDrawElementsIBM,MultiModeDrawElementsIBM@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiModeDrawElementsIBM))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TbufferMask3DFX))
-GL_PREFIX(TbufferMask3DFX):
+GLOBL_FN(GL_PREFIX(TbufferMask3DFX,TbufferMask3DFX@4))
+GL_PREFIX(TbufferMask3DFX,TbufferMask3DFX@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TbufferMask3DFX))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SampleMaskEXT))
-GL_PREFIX(SampleMaskEXT):
+GLOBL_FN(GL_PREFIX(SampleMaskEXT,SampleMaskEXT@8))
+GL_PREFIX(SampleMaskEXT,SampleMaskEXT@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SampleMaskSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SamplePatternEXT))
-GL_PREFIX(SamplePatternEXT):
+GLOBL_FN(GL_PREFIX(SamplePatternEXT,SamplePatternEXT@4))
+GL_PREFIX(SamplePatternEXT,SamplePatternEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2dARB))
-GL_PREFIX(WindowPos2dARB):
+GLOBL_FN(GL_PREFIX(WindowPos2dARB,WindowPos2dARB@16))
+GL_PREFIX(WindowPos2dARB,WindowPos2dARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2fARB))
-GL_PREFIX(WindowPos2fARB):
+GLOBL_FN(GL_PREFIX(WindowPos2fARB,WindowPos2fARB@8))
+GL_PREFIX(WindowPos2fARB,WindowPos2fARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2iARB))
-GL_PREFIX(WindowPos2iARB):
+GLOBL_FN(GL_PREFIX(WindowPos2iARB,WindowPos2iARB@8))
+GL_PREFIX(WindowPos2iARB,WindowPos2iARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2sARB))
-GL_PREFIX(WindowPos2sARB):
+GLOBL_FN(GL_PREFIX(WindowPos2sARB,WindowPos2sARB@8))
+GL_PREFIX(WindowPos2sARB,WindowPos2sARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2dvARB))
-GL_PREFIX(WindowPos2dvARB):
+GLOBL_FN(GL_PREFIX(WindowPos2dvARB,WindowPos2dvARB@4))
+GL_PREFIX(WindowPos2dvARB,WindowPos2dvARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2fvARB))
-GL_PREFIX(WindowPos2fvARB):
+GLOBL_FN(GL_PREFIX(WindowPos2fvARB,WindowPos2fvARB@4))
+GL_PREFIX(WindowPos2fvARB,WindowPos2fvARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2ivARB))
-GL_PREFIX(WindowPos2ivARB):
+GLOBL_FN(GL_PREFIX(WindowPos2ivARB,WindowPos2ivARB@4))
+GL_PREFIX(WindowPos2ivARB,WindowPos2ivARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2svARB))
-GL_PREFIX(WindowPos2svARB):
+GLOBL_FN(GL_PREFIX(WindowPos2svARB,WindowPos2svARB@4))
+GL_PREFIX(WindowPos2svARB,WindowPos2svARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3dARB))
-GL_PREFIX(WindowPos3dARB):
+GLOBL_FN(GL_PREFIX(WindowPos3dARB,WindowPos3dARB@24))
+GL_PREFIX(WindowPos3dARB,WindowPos3dARB@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3fARB))
-GL_PREFIX(WindowPos3fARB):
+GLOBL_FN(GL_PREFIX(WindowPos3fARB,WindowPos3fARB@12))
+GL_PREFIX(WindowPos3fARB,WindowPos3fARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3iARB))
-GL_PREFIX(WindowPos3iARB):
+GLOBL_FN(GL_PREFIX(WindowPos3iARB,WindowPos3iARB@12))
+GL_PREFIX(WindowPos3iARB,WindowPos3iARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3sARB))
-GL_PREFIX(WindowPos3sARB):
+GLOBL_FN(GL_PREFIX(WindowPos3sARB,WindowPos3sARB@12))
+GL_PREFIX(WindowPos3sARB,WindowPos3sARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3dvARB))
-GL_PREFIX(WindowPos3dvARB):
+GLOBL_FN(GL_PREFIX(WindowPos3dvARB,WindowPos3dvARB@4))
+GL_PREFIX(WindowPos3dvARB,WindowPos3dvARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3fvARB))
-GL_PREFIX(WindowPos3fvARB):
+GLOBL_FN(GL_PREFIX(WindowPos3fvARB,WindowPos3fvARB@4))
+GL_PREFIX(WindowPos3fvARB,WindowPos3fvARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3ivARB))
-GL_PREFIX(WindowPos3ivARB):
+GLOBL_FN(GL_PREFIX(WindowPos3ivARB,WindowPos3ivARB@4))
+GL_PREFIX(WindowPos3ivARB,WindowPos3ivARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3svARB))
-GL_PREFIX(WindowPos3svARB):
+GLOBL_FN(GL_PREFIX(WindowPos3svARB,WindowPos3svARB@4))
+GL_PREFIX(WindowPos3svARB,WindowPos3svARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(AreProgramsResidentNV))
-GL_PREFIX(AreProgramsResidentNV):
+GLOBL_FN(GL_PREFIX(AreProgramsResidentNV,AreProgramsResidentNV@12))
+GL_PREFIX(AreProgramsResidentNV,AreProgramsResidentNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_AreProgramsResidentNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BindProgramNV))
-GL_PREFIX(BindProgramNV):
+GLOBL_FN(GL_PREFIX(BindProgramNV,BindProgramNV@8))
+GL_PREFIX(BindProgramNV,BindProgramNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BindProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteProgramsNV))
-GL_PREFIX(DeleteProgramsNV):
+GLOBL_FN(GL_PREFIX(DeleteProgramsNV,DeleteProgramsNV@8))
+GL_PREFIX(DeleteProgramsNV,DeleteProgramsNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteProgramsNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ExecuteProgramNV))
-GL_PREFIX(ExecuteProgramNV):
+GLOBL_FN(GL_PREFIX(ExecuteProgramNV,ExecuteProgramNV@12))
+GL_PREFIX(ExecuteProgramNV,ExecuteProgramNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ExecuteProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenProgramsNV))
-GL_PREFIX(GenProgramsNV):
+GLOBL_FN(GL_PREFIX(GenProgramsNV,GenProgramsNV@8))
+GL_PREFIX(GenProgramsNV,GenProgramsNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenProgramsNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramParameterdvNV))
-GL_PREFIX(GetProgramParameterdvNV):
+GLOBL_FN(GL_PREFIX(GetProgramParameterdvNV,GetProgramParameterdvNV@16))
+GL_PREFIX(GetProgramParameterdvNV,GetProgramParameterdvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramParameterdvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramParameterfvNV))
-GL_PREFIX(GetProgramParameterfvNV):
+GLOBL_FN(GL_PREFIX(GetProgramParameterfvNV,GetProgramParameterfvNV@16))
+GL_PREFIX(GetProgramParameterfvNV,GetProgramParameterfvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramivNV))
-GL_PREFIX(GetProgramivNV):
+GLOBL_FN(GL_PREFIX(GetProgramivNV,GetProgramivNV@12))
+GL_PREFIX(GetProgramivNV,GetProgramivNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramStringNV))
-GL_PREFIX(GetProgramStringNV):
+GLOBL_FN(GL_PREFIX(GetProgramStringNV,GetProgramStringNV@12))
+GL_PREFIX(GetProgramStringNV,GetProgramStringNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramStringNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetTrackMatrixivNV))
-GL_PREFIX(GetTrackMatrixivNV):
+GLOBL_FN(GL_PREFIX(GetTrackMatrixivNV,GetTrackMatrixivNV@16))
+GL_PREFIX(GetTrackMatrixivNV,GetTrackMatrixivNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetTrackMatrixivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribdvNV))
-GL_PREFIX(GetVertexAttribdvNV):
+GLOBL_FN(GL_PREFIX(GetVertexAttribdvNV,GetVertexAttribdvNV@12))
+GL_PREFIX(GetVertexAttribdvNV,GetVertexAttribdvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribdvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribfvNV))
-GL_PREFIX(GetVertexAttribfvNV):
+GLOBL_FN(GL_PREFIX(GetVertexAttribfvNV,GetVertexAttribfvNV@12))
+GL_PREFIX(GetVertexAttribfvNV,GetVertexAttribfvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribivNV))
-GL_PREFIX(GetVertexAttribivNV):
+GLOBL_FN(GL_PREFIX(GetVertexAttribivNV,GetVertexAttribivNV@12))
+GL_PREFIX(GetVertexAttribivNV,GetVertexAttribivNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribPointervNV))
-GL_PREFIX(GetVertexAttribPointervNV):
+GLOBL_FN(GL_PREFIX(GetVertexAttribPointervNV,GetVertexAttribPointervNV@12))
+GL_PREFIX(GetVertexAttribPointervNV,GetVertexAttribPointervNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribPointervNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsProgramNV))
-GL_PREFIX(IsProgramNV):
+GLOBL_FN(GL_PREFIX(IsProgramNV,IsProgramNV@4))
+GL_PREFIX(IsProgramNV,IsProgramNV@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadProgramNV))
-GL_PREFIX(LoadProgramNV):
+GLOBL_FN(GL_PREFIX(LoadProgramNV,LoadProgramNV@16))
+GL_PREFIX(LoadProgramNV,LoadProgramNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_LoadProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameter4dNV))
-GL_PREFIX(ProgramParameter4dNV):
+GLOBL_FN(GL_PREFIX(ProgramParameter4dNV,ProgramParameter4dNV@40))
+GL_PREFIX(ProgramParameter4dNV,ProgramParameter4dNV@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameter4dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameter4dvNV))
-GL_PREFIX(ProgramParameter4dvNV):
+GLOBL_FN(GL_PREFIX(ProgramParameter4dvNV,ProgramParameter4dvNV@12))
+GL_PREFIX(ProgramParameter4dvNV,ProgramParameter4dvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameter4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameter4fNV))
-GL_PREFIX(ProgramParameter4fNV):
+GLOBL_FN(GL_PREFIX(ProgramParameter4fNV,ProgramParameter4fNV@24))
+GL_PREFIX(ProgramParameter4fNV,ProgramParameter4fNV@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameter4fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameter4fvNV))
-GL_PREFIX(ProgramParameter4fvNV):
+GLOBL_FN(GL_PREFIX(ProgramParameter4fvNV,ProgramParameter4fvNV@12))
+GL_PREFIX(ProgramParameter4fvNV,ProgramParameter4fvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameter4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameters4dvNV))
-GL_PREFIX(ProgramParameters4dvNV):
+GLOBL_FN(GL_PREFIX(ProgramParameters4dvNV,ProgramParameters4dvNV@16))
+GL_PREFIX(ProgramParameters4dvNV,ProgramParameters4dvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameters4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramParameters4fvNV))
-GL_PREFIX(ProgramParameters4fvNV):
+GLOBL_FN(GL_PREFIX(ProgramParameters4fvNV,ProgramParameters4fvNV@16))
+GL_PREFIX(ProgramParameters4fvNV,ProgramParameters4fvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramParameters4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(RequestResidentProgramsNV))
-GL_PREFIX(RequestResidentProgramsNV):
+GLOBL_FN(GL_PREFIX(RequestResidentProgramsNV,RequestResidentProgramsNV@8))
+GL_PREFIX(RequestResidentProgramsNV,RequestResidentProgramsNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_RequestResidentProgramsNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TrackMatrixNV))
-GL_PREFIX(TrackMatrixNV):
+GLOBL_FN(GL_PREFIX(TrackMatrixNV,TrackMatrixNV@16))
+GL_PREFIX(TrackMatrixNV,TrackMatrixNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TrackMatrixNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribPointerNV))
-GL_PREFIX(VertexAttribPointerNV):
+GLOBL_FN(GL_PREFIX(VertexAttribPointerNV,VertexAttribPointerNV@20))
+GL_PREFIX(VertexAttribPointerNV,VertexAttribPointerNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribPointerNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1dNV))
-GL_PREFIX(VertexAttrib1dNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1dNV,VertexAttrib1dNV@12))
+GL_PREFIX(VertexAttrib1dNV,VertexAttrib1dNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1dvNV))
-GL_PREFIX(VertexAttrib1dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1dvNV,VertexAttrib1dvNV@8))
+GL_PREFIX(VertexAttrib1dvNV,VertexAttrib1dvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1fNV))
-GL_PREFIX(VertexAttrib1fNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1fNV,VertexAttrib1fNV@8))
+GL_PREFIX(VertexAttrib1fNV,VertexAttrib1fNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1fvNV))
-GL_PREFIX(VertexAttrib1fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1fvNV,VertexAttrib1fvNV@8))
+GL_PREFIX(VertexAttrib1fvNV,VertexAttrib1fvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1sNV))
-GL_PREFIX(VertexAttrib1sNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1sNV,VertexAttrib1sNV@8))
+GL_PREFIX(VertexAttrib1sNV,VertexAttrib1sNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1svNV))
-GL_PREFIX(VertexAttrib1svNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib1svNV,VertexAttrib1svNV@8))
+GL_PREFIX(VertexAttrib1svNV,VertexAttrib1svNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2dNV))
-GL_PREFIX(VertexAttrib2dNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2dNV,VertexAttrib2dNV@20))
+GL_PREFIX(VertexAttrib2dNV,VertexAttrib2dNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2dvNV))
-GL_PREFIX(VertexAttrib2dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2dvNV,VertexAttrib2dvNV@8))
+GL_PREFIX(VertexAttrib2dvNV,VertexAttrib2dvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2fNV))
-GL_PREFIX(VertexAttrib2fNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2fNV,VertexAttrib2fNV@12))
+GL_PREFIX(VertexAttrib2fNV,VertexAttrib2fNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2fvNV))
-GL_PREFIX(VertexAttrib2fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2fvNV,VertexAttrib2fvNV@8))
+GL_PREFIX(VertexAttrib2fvNV,VertexAttrib2fvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2sNV))
-GL_PREFIX(VertexAttrib2sNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2sNV,VertexAttrib2sNV@12))
+GL_PREFIX(VertexAttrib2sNV,VertexAttrib2sNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2svNV))
-GL_PREFIX(VertexAttrib2svNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib2svNV,VertexAttrib2svNV@8))
+GL_PREFIX(VertexAttrib2svNV,VertexAttrib2svNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3dNV))
-GL_PREFIX(VertexAttrib3dNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3dNV,VertexAttrib3dNV@28))
+GL_PREFIX(VertexAttrib3dNV,VertexAttrib3dNV@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3dvNV))
-GL_PREFIX(VertexAttrib3dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3dvNV,VertexAttrib3dvNV@8))
+GL_PREFIX(VertexAttrib3dvNV,VertexAttrib3dvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3fNV))
-GL_PREFIX(VertexAttrib3fNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3fNV,VertexAttrib3fNV@16))
+GL_PREFIX(VertexAttrib3fNV,VertexAttrib3fNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3fvNV))
-GL_PREFIX(VertexAttrib3fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3fvNV,VertexAttrib3fvNV@8))
+GL_PREFIX(VertexAttrib3fvNV,VertexAttrib3fvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3sNV))
-GL_PREFIX(VertexAttrib3sNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3sNV,VertexAttrib3sNV@16))
+GL_PREFIX(VertexAttrib3sNV,VertexAttrib3sNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3svNV))
-GL_PREFIX(VertexAttrib3svNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib3svNV,VertexAttrib3svNV@8))
+GL_PREFIX(VertexAttrib3svNV,VertexAttrib3svNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4dNV))
-GL_PREFIX(VertexAttrib4dNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4dNV,VertexAttrib4dNV@36))
+GL_PREFIX(VertexAttrib4dNV,VertexAttrib4dNV@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4dvNV))
-GL_PREFIX(VertexAttrib4dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4dvNV,VertexAttrib4dvNV@8))
+GL_PREFIX(VertexAttrib4dvNV,VertexAttrib4dvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4fNV))
-GL_PREFIX(VertexAttrib4fNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4fNV,VertexAttrib4fNV@20))
+GL_PREFIX(VertexAttrib4fNV,VertexAttrib4fNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4fvNV))
-GL_PREFIX(VertexAttrib4fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4fvNV,VertexAttrib4fvNV@8))
+GL_PREFIX(VertexAttrib4fvNV,VertexAttrib4fvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4sNV))
-GL_PREFIX(VertexAttrib4sNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4sNV,VertexAttrib4sNV@20))
+GL_PREFIX(VertexAttrib4sNV,VertexAttrib4sNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4svNV))
-GL_PREFIX(VertexAttrib4svNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4svNV,VertexAttrib4svNV@8))
+GL_PREFIX(VertexAttrib4svNV,VertexAttrib4svNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4ubNV))
-GL_PREFIX(VertexAttrib4ubNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4ubNV,VertexAttrib4ubNV@20))
+GL_PREFIX(VertexAttrib4ubNV,VertexAttrib4ubNV@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4ubvNV))
-GL_PREFIX(VertexAttrib4ubvNV):
+GLOBL_FN(GL_PREFIX(VertexAttrib4ubvNV,VertexAttrib4ubvNV@8))
+GL_PREFIX(VertexAttrib4ubvNV,VertexAttrib4ubvNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs1dvNV))
-GL_PREFIX(VertexAttribs1dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs1dvNV,VertexAttribs1dvNV@12))
+GL_PREFIX(VertexAttribs1dvNV,VertexAttribs1dvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs1dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs1fvNV))
-GL_PREFIX(VertexAttribs1fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs1fvNV,VertexAttribs1fvNV@12))
+GL_PREFIX(VertexAttribs1fvNV,VertexAttribs1fvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs1fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs1svNV))
-GL_PREFIX(VertexAttribs1svNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs1svNV,VertexAttribs1svNV@12))
+GL_PREFIX(VertexAttribs1svNV,VertexAttribs1svNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs1svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs2dvNV))
-GL_PREFIX(VertexAttribs2dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs2dvNV,VertexAttribs2dvNV@12))
+GL_PREFIX(VertexAttribs2dvNV,VertexAttribs2dvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs2dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs2fvNV))
-GL_PREFIX(VertexAttribs2fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs2fvNV,VertexAttribs2fvNV@12))
+GL_PREFIX(VertexAttribs2fvNV,VertexAttribs2fvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs2fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs2svNV))
-GL_PREFIX(VertexAttribs2svNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs2svNV,VertexAttribs2svNV@12))
+GL_PREFIX(VertexAttribs2svNV,VertexAttribs2svNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs2svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs3dvNV))
-GL_PREFIX(VertexAttribs3dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs3dvNV,VertexAttribs3dvNV@12))
+GL_PREFIX(VertexAttribs3dvNV,VertexAttribs3dvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs3dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs3fvNV))
-GL_PREFIX(VertexAttribs3fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs3fvNV,VertexAttribs3fvNV@12))
+GL_PREFIX(VertexAttribs3fvNV,VertexAttribs3fvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs3fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs3svNV))
-GL_PREFIX(VertexAttribs3svNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs3svNV,VertexAttribs3svNV@12))
+GL_PREFIX(VertexAttribs3svNV,VertexAttribs3svNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs3svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs4dvNV))
-GL_PREFIX(VertexAttribs4dvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs4dvNV,VertexAttribs4dvNV@12))
+GL_PREFIX(VertexAttribs4dvNV,VertexAttribs4dvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs4fvNV))
-GL_PREFIX(VertexAttribs4fvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs4fvNV,VertexAttribs4fvNV@12))
+GL_PREFIX(VertexAttribs4fvNV,VertexAttribs4fvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs4svNV))
-GL_PREFIX(VertexAttribs4svNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs4svNV,VertexAttribs4svNV@12))
+GL_PREFIX(VertexAttribs4svNV,VertexAttribs4svNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs4svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribs4ubvNV))
-GL_PREFIX(VertexAttribs4ubvNV):
+GLOBL_FN(GL_PREFIX(VertexAttribs4ubvNV,VertexAttribs4ubvNV@12))
+GL_PREFIX(VertexAttribs4ubvNV,VertexAttribs4ubvNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribs4ubvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameteriNV))
-GL_PREFIX(PointParameteriNV):
+GLOBL_FN(GL_PREFIX(PointParameteriNV,PointParameteriNV@8))
+GL_PREFIX(PointParameteriNV,PointParameteriNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameteriNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterivNV))
-GL_PREFIX(PointParameterivNV):
+GLOBL_FN(GL_PREFIX(PointParameterivNV,PointParameterivNV@8))
+GL_PREFIX(PointParameterivNV,PointParameterivNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BlendFuncSeparate))
-GL_PREFIX(BlendFuncSeparate):
+GLOBL_FN(GL_PREFIX(BlendFuncSeparate,BlendFuncSeparate@16))
+GL_PREFIX(BlendFuncSeparate,BlendFuncSeparate@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordf))
-GL_PREFIX(FogCoordf):
+GLOBL_FN(GL_PREFIX(FogCoordf,FogCoordf@4))
+GL_PREFIX(FogCoordf,FogCoordf@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordfv))
-GL_PREFIX(FogCoordfv):
+GLOBL_FN(GL_PREFIX(FogCoordfv,FogCoordfv@4))
+GL_PREFIX(FogCoordfv,FogCoordfv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordd))
-GL_PREFIX(FogCoordd):
+GLOBL_FN(GL_PREFIX(FogCoordd,FogCoordd@8))
+GL_PREFIX(FogCoordd,FogCoordd@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoorddEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoorddv))
-GL_PREFIX(FogCoorddv):
+GLOBL_FN(GL_PREFIX(FogCoorddv,FogCoorddv@4))
+GL_PREFIX(FogCoorddv,FogCoorddv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoorddvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FogCoordPointer))
-GL_PREFIX(FogCoordPointer):
+GLOBL_FN(GL_PREFIX(FogCoordPointer,FogCoordPointer@12))
+GL_PREFIX(FogCoordPointer,FogCoordPointer@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FogCoordPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiDrawArrays))
-GL_PREFIX(MultiDrawArrays):
+GLOBL_FN(GL_PREFIX(MultiDrawArrays,MultiDrawArrays@16))
+GL_PREFIX(MultiDrawArrays,MultiDrawArrays@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiDrawArraysEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiDrawElements))
-GL_PREFIX(MultiDrawElements):
+GLOBL_FN(GL_PREFIX(MultiDrawElements,MultiDrawElements@20))
+GL_PREFIX(MultiDrawElements,MultiDrawElements@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MultiDrawElementsEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterf))
-GL_PREFIX(PointParameterf):
+GLOBL_FN(GL_PREFIX(PointParameterf,PointParameterf@8))
+GL_PREFIX(PointParameterf,PointParameterf@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameterfv))
-GL_PREFIX(PointParameterfv):
+GLOBL_FN(GL_PREFIX(PointParameterfv,PointParameterfv@8))
+GL_PREFIX(PointParameterfv,PointParameterfv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameteri))
-GL_PREFIX(PointParameteri):
+GLOBL_FN(GL_PREFIX(PointParameteri,PointParameteri@8))
+GL_PREFIX(PointParameteri,PointParameteri@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameteriNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(PointParameteriv))
-GL_PREFIX(PointParameteriv):
+GLOBL_FN(GL_PREFIX(PointParameteriv,PointParameteriv@8))
+GL_PREFIX(PointParameteriv,PointParameteriv@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_PointParameterivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3b))
-GL_PREFIX(SecondaryColor3b):
+GLOBL_FN(GL_PREFIX(SecondaryColor3b,SecondaryColor3b@12))
+GL_PREFIX(SecondaryColor3b,SecondaryColor3b@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3bEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3bv))
-GL_PREFIX(SecondaryColor3bv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3bv,SecondaryColor3bv@4))
+GL_PREFIX(SecondaryColor3bv,SecondaryColor3bv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3bvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3d))
-GL_PREFIX(SecondaryColor3d):
+GLOBL_FN(GL_PREFIX(SecondaryColor3d,SecondaryColor3d@24))
+GL_PREFIX(SecondaryColor3d,SecondaryColor3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3dEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3dv))
-GL_PREFIX(SecondaryColor3dv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3dv,SecondaryColor3dv@4))
+GL_PREFIX(SecondaryColor3dv,SecondaryColor3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3dvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3f))
-GL_PREFIX(SecondaryColor3f):
+GLOBL_FN(GL_PREFIX(SecondaryColor3f,SecondaryColor3f@12))
+GL_PREFIX(SecondaryColor3f,SecondaryColor3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3fEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3fv))
-GL_PREFIX(SecondaryColor3fv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3fv,SecondaryColor3fv@4))
+GL_PREFIX(SecondaryColor3fv,SecondaryColor3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3fvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3i))
-GL_PREFIX(SecondaryColor3i):
+GLOBL_FN(GL_PREFIX(SecondaryColor3i,SecondaryColor3i@12))
+GL_PREFIX(SecondaryColor3i,SecondaryColor3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3iEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3iv))
-GL_PREFIX(SecondaryColor3iv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3iv,SecondaryColor3iv@4))
+GL_PREFIX(SecondaryColor3iv,SecondaryColor3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3s))
-GL_PREFIX(SecondaryColor3s):
+GLOBL_FN(GL_PREFIX(SecondaryColor3s,SecondaryColor3s@12))
+GL_PREFIX(SecondaryColor3s,SecondaryColor3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3sEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3sv))
-GL_PREFIX(SecondaryColor3sv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3sv,SecondaryColor3sv@4))
+GL_PREFIX(SecondaryColor3sv,SecondaryColor3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3svEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ub))
-GL_PREFIX(SecondaryColor3ub):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ub,SecondaryColor3ub@12))
+GL_PREFIX(SecondaryColor3ub,SecondaryColor3ub@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ubv))
-GL_PREFIX(SecondaryColor3ubv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ubv,SecondaryColor3ubv@4))
+GL_PREFIX(SecondaryColor3ubv,SecondaryColor3ubv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3ui))
-GL_PREFIX(SecondaryColor3ui):
+GLOBL_FN(GL_PREFIX(SecondaryColor3ui,SecondaryColor3ui@12))
+GL_PREFIX(SecondaryColor3ui,SecondaryColor3ui@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3uiEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3uiv))
-GL_PREFIX(SecondaryColor3uiv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3uiv,SecondaryColor3uiv@4))
+GL_PREFIX(SecondaryColor3uiv,SecondaryColor3uiv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3uivEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3us))
-GL_PREFIX(SecondaryColor3us):
+GLOBL_FN(GL_PREFIX(SecondaryColor3us,SecondaryColor3us@12))
+GL_PREFIX(SecondaryColor3us,SecondaryColor3us@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3usEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColor3usv))
-GL_PREFIX(SecondaryColor3usv):
+GLOBL_FN(GL_PREFIX(SecondaryColor3usv,SecondaryColor3usv@4))
+GL_PREFIX(SecondaryColor3usv,SecondaryColor3usv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColor3usvEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SecondaryColorPointer))
-GL_PREFIX(SecondaryColorPointer):
+GLOBL_FN(GL_PREFIX(SecondaryColorPointer,SecondaryColorPointer@16))
+GL_PREFIX(SecondaryColorPointer,SecondaryColorPointer@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SecondaryColorPointerEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2d))
-GL_PREFIX(WindowPos2d):
+GLOBL_FN(GL_PREFIX(WindowPos2d,WindowPos2d@16))
+GL_PREFIX(WindowPos2d,WindowPos2d@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2dv))
-GL_PREFIX(WindowPos2dv):
+GLOBL_FN(GL_PREFIX(WindowPos2dv,WindowPos2dv@4))
+GL_PREFIX(WindowPos2dv,WindowPos2dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2f))
-GL_PREFIX(WindowPos2f):
+GLOBL_FN(GL_PREFIX(WindowPos2f,WindowPos2f@8))
+GL_PREFIX(WindowPos2f,WindowPos2f@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2fv))
-GL_PREFIX(WindowPos2fv):
+GLOBL_FN(GL_PREFIX(WindowPos2fv,WindowPos2fv@4))
+GL_PREFIX(WindowPos2fv,WindowPos2fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2i))
-GL_PREFIX(WindowPos2i):
+GLOBL_FN(GL_PREFIX(WindowPos2i,WindowPos2i@8))
+GL_PREFIX(WindowPos2i,WindowPos2i@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2iv))
-GL_PREFIX(WindowPos2iv):
+GLOBL_FN(GL_PREFIX(WindowPos2iv,WindowPos2iv@4))
+GL_PREFIX(WindowPos2iv,WindowPos2iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2s))
-GL_PREFIX(WindowPos2s):
+GLOBL_FN(GL_PREFIX(WindowPos2s,WindowPos2s@8))
+GL_PREFIX(WindowPos2s,WindowPos2s@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos2sv))
-GL_PREFIX(WindowPos2sv):
+GLOBL_FN(GL_PREFIX(WindowPos2sv,WindowPos2sv@4))
+GL_PREFIX(WindowPos2sv,WindowPos2sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos2svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3d))
-GL_PREFIX(WindowPos3d):
+GLOBL_FN(GL_PREFIX(WindowPos3d,WindowPos3d@24))
+GL_PREFIX(WindowPos3d,WindowPos3d@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3dv))
-GL_PREFIX(WindowPos3dv):
+GLOBL_FN(GL_PREFIX(WindowPos3dv,WindowPos3dv@4))
+GL_PREFIX(WindowPos3dv,WindowPos3dv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3dvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3f))
-GL_PREFIX(WindowPos3f):
+GLOBL_FN(GL_PREFIX(WindowPos3f,WindowPos3f@12))
+GL_PREFIX(WindowPos3f,WindowPos3f@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3fv))
-GL_PREFIX(WindowPos3fv):
+GLOBL_FN(GL_PREFIX(WindowPos3fv,WindowPos3fv@4))
+GL_PREFIX(WindowPos3fv,WindowPos3fv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3fvMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3i))
-GL_PREFIX(WindowPos3i):
+GLOBL_FN(GL_PREFIX(WindowPos3i,WindowPos3i@12))
+GL_PREFIX(WindowPos3i,WindowPos3i@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3iMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3iv))
-GL_PREFIX(WindowPos3iv):
+GLOBL_FN(GL_PREFIX(WindowPos3iv,WindowPos3iv@4))
+GL_PREFIX(WindowPos3iv,WindowPos3iv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3ivMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3s))
-GL_PREFIX(WindowPos3s):
+GLOBL_FN(GL_PREFIX(WindowPos3s,WindowPos3s@12))
+GL_PREFIX(WindowPos3s,WindowPos3s@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3sMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(WindowPos3sv))
-GL_PREFIX(WindowPos3sv):
+GLOBL_FN(GL_PREFIX(WindowPos3sv,WindowPos3sv@4))
+GL_PREFIX(WindowPos3sv,WindowPos3sv@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_WindowPos3svMESA))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ActiveStencilFaceEXT))
-GL_PREFIX(ActiveStencilFaceEXT):
+GLOBL_FN(GL_PREFIX(ActiveStencilFaceEXT,ActiveStencilFaceEXT@4))
+GL_PREFIX(ActiveStencilFaceEXT,ActiveStencilFaceEXT@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ActiveStencilFaceEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteFencesNV))
-GL_PREFIX(DeleteFencesNV):
+GLOBL_FN(GL_PREFIX(DeleteFencesNV,DeleteFencesNV@8))
+GL_PREFIX(DeleteFencesNV,DeleteFencesNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteFencesNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenFencesNV))
-GL_PREFIX(GenFencesNV):
+GLOBL_FN(GL_PREFIX(GenFencesNV,GenFencesNV@8))
+GL_PREFIX(GenFencesNV,GenFencesNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenFencesNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsFenceNV))
-GL_PREFIX(IsFenceNV):
+GLOBL_FN(GL_PREFIX(IsFenceNV,IsFenceNV@4))
+GL_PREFIX(IsFenceNV,IsFenceNV@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsFenceNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(TestFenceNV))
-GL_PREFIX(TestFenceNV):
+GLOBL_FN(GL_PREFIX(TestFenceNV,TestFenceNV@4))
+GL_PREFIX(TestFenceNV,TestFenceNV@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_TestFenceNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetFenceivNV))
-GL_PREFIX(GetFenceivNV):
+GLOBL_FN(GL_PREFIX(GetFenceivNV,GetFenceivNV@12))
+GL_PREFIX(GetFenceivNV,GetFenceivNV@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetFenceivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(FinishFenceNV))
-GL_PREFIX(FinishFenceNV):
+GLOBL_FN(GL_PREFIX(FinishFenceNV,FinishFenceNV@4))
+GL_PREFIX(FinishFenceNV,FinishFenceNV@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_FinishFenceNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SetFenceNV))
-GL_PREFIX(SetFenceNV):
+GLOBL_FN(GL_PREFIX(SetFenceNV,SetFenceNV@8))
+GL_PREFIX(SetFenceNV,SetFenceNV@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_SetFenceNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1sARB))
-GL_PREFIX(VertexAttrib1sARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1sARB,VertexAttrib1sARB@8))
+GL_PREFIX(VertexAttrib1sARB,VertexAttrib1sARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1fARB))
-GL_PREFIX(VertexAttrib1fARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1fARB,VertexAttrib1fARB@8))
+GL_PREFIX(VertexAttrib1fARB,VertexAttrib1fARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1dARB))
-GL_PREFIX(VertexAttrib1dARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1dARB,VertexAttrib1dARB@12))
+GL_PREFIX(VertexAttrib1dARB,VertexAttrib1dARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2sARB))
-GL_PREFIX(VertexAttrib2sARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2sARB,VertexAttrib2sARB@12))
+GL_PREFIX(VertexAttrib2sARB,VertexAttrib2sARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2fARB))
-GL_PREFIX(VertexAttrib2fARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2fARB,VertexAttrib2fARB@12))
+GL_PREFIX(VertexAttrib2fARB,VertexAttrib2fARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2dARB))
-GL_PREFIX(VertexAttrib2dARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2dARB,VertexAttrib2dARB@20))
+GL_PREFIX(VertexAttrib2dARB,VertexAttrib2dARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3sARB))
-GL_PREFIX(VertexAttrib3sARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3sARB,VertexAttrib3sARB@16))
+GL_PREFIX(VertexAttrib3sARB,VertexAttrib3sARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3fARB))
-GL_PREFIX(VertexAttrib3fARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3fARB,VertexAttrib3fARB@16))
+GL_PREFIX(VertexAttrib3fARB,VertexAttrib3fARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3dARB))
-GL_PREFIX(VertexAttrib3dARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3dARB,VertexAttrib3dARB@28))
+GL_PREFIX(VertexAttrib3dARB,VertexAttrib3dARB@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4sARB))
-GL_PREFIX(VertexAttrib4sARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4sARB,VertexAttrib4sARB@20))
+GL_PREFIX(VertexAttrib4sARB,VertexAttrib4sARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4sNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4fARB))
-GL_PREFIX(VertexAttrib4fARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4fARB,VertexAttrib4fARB@20))
+GL_PREFIX(VertexAttrib4fARB,VertexAttrib4fARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4dARB))
-GL_PREFIX(VertexAttrib4dARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4dARB,VertexAttrib4dARB@36))
+GL_PREFIX(VertexAttrib4dARB,VertexAttrib4dARB@36):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NubARB))
-GL_PREFIX(VertexAttrib4NubARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NubARB,VertexAttrib4NubARB@20))
+GL_PREFIX(VertexAttrib4NubARB,VertexAttrib4NubARB@20):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1svARB))
-GL_PREFIX(VertexAttrib1svARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1svARB,VertexAttrib1svARB@8))
+GL_PREFIX(VertexAttrib1svARB,VertexAttrib1svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1fvARB))
-GL_PREFIX(VertexAttrib1fvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1fvARB,VertexAttrib1fvARB@8))
+GL_PREFIX(VertexAttrib1fvARB,VertexAttrib1fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib1dvARB))
-GL_PREFIX(VertexAttrib1dvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib1dvARB,VertexAttrib1dvARB@8))
+GL_PREFIX(VertexAttrib1dvARB,VertexAttrib1dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib1dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2svARB))
-GL_PREFIX(VertexAttrib2svARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2svARB,VertexAttrib2svARB@8))
+GL_PREFIX(VertexAttrib2svARB,VertexAttrib2svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2fvARB))
-GL_PREFIX(VertexAttrib2fvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2fvARB,VertexAttrib2fvARB@8))
+GL_PREFIX(VertexAttrib2fvARB,VertexAttrib2fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib2dvARB))
-GL_PREFIX(VertexAttrib2dvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib2dvARB,VertexAttrib2dvARB@8))
+GL_PREFIX(VertexAttrib2dvARB,VertexAttrib2dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib2dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3svARB))
-GL_PREFIX(VertexAttrib3svARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3svARB,VertexAttrib3svARB@8))
+GL_PREFIX(VertexAttrib3svARB,VertexAttrib3svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3fvARB))
-GL_PREFIX(VertexAttrib3fvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3fvARB,VertexAttrib3fvARB@8))
+GL_PREFIX(VertexAttrib3fvARB,VertexAttrib3fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib3dvARB))
-GL_PREFIX(VertexAttrib3dvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib3dvARB,VertexAttrib3dvARB@8))
+GL_PREFIX(VertexAttrib3dvARB,VertexAttrib3dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib3dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4bvARB))
-GL_PREFIX(VertexAttrib4bvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4bvARB,VertexAttrib4bvARB@8))
+GL_PREFIX(VertexAttrib4bvARB,VertexAttrib4bvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4bvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4svARB))
-GL_PREFIX(VertexAttrib4svARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4svARB,VertexAttrib4svARB@8))
+GL_PREFIX(VertexAttrib4svARB,VertexAttrib4svARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4svNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4ivARB))
-GL_PREFIX(VertexAttrib4ivARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4ivARB,VertexAttrib4ivARB@8))
+GL_PREFIX(VertexAttrib4ivARB,VertexAttrib4ivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4ubvARB))
-GL_PREFIX(VertexAttrib4ubvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4ubvARB,VertexAttrib4ubvARB@8))
+GL_PREFIX(VertexAttrib4ubvARB,VertexAttrib4ubvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4usvARB))
-GL_PREFIX(VertexAttrib4usvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4usvARB,VertexAttrib4usvARB@8))
+GL_PREFIX(VertexAttrib4usvARB,VertexAttrib4usvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4usvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4uivARB))
-GL_PREFIX(VertexAttrib4uivARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4uivARB,VertexAttrib4uivARB@8))
+GL_PREFIX(VertexAttrib4uivARB,VertexAttrib4uivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4uivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4fvARB))
-GL_PREFIX(VertexAttrib4fvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4fvARB,VertexAttrib4fvARB@8))
+GL_PREFIX(VertexAttrib4fvARB,VertexAttrib4fvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4dvARB))
-GL_PREFIX(VertexAttrib4dvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4dvARB,VertexAttrib4dvARB@8))
+GL_PREFIX(VertexAttrib4dvARB,VertexAttrib4dvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NbvARB))
-GL_PREFIX(VertexAttrib4NbvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NbvARB,VertexAttrib4NbvARB@8))
+GL_PREFIX(VertexAttrib4NbvARB,VertexAttrib4NbvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4NbvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NsvARB))
-GL_PREFIX(VertexAttrib4NsvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NsvARB,VertexAttrib4NsvARB@8))
+GL_PREFIX(VertexAttrib4NsvARB,VertexAttrib4NsvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4NsvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NivARB))
-GL_PREFIX(VertexAttrib4NivARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NivARB,VertexAttrib4NivARB@8))
+GL_PREFIX(VertexAttrib4NivARB,VertexAttrib4NivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4NivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NubvARB))
-GL_PREFIX(VertexAttrib4NubvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NubvARB,VertexAttrib4NubvARB@8))
+GL_PREFIX(VertexAttrib4NubvARB,VertexAttrib4NubvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4ubvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NusvARB))
-GL_PREFIX(VertexAttrib4NusvARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NusvARB,VertexAttrib4NusvARB@8))
+GL_PREFIX(VertexAttrib4NusvARB,VertexAttrib4NusvARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4NusvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttrib4NuivARB))
-GL_PREFIX(VertexAttrib4NuivARB):
+GLOBL_FN(GL_PREFIX(VertexAttrib4NuivARB,VertexAttrib4NuivARB@8))
+GL_PREFIX(VertexAttrib4NuivARB,VertexAttrib4NuivARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttrib4NuivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(VertexAttribPointerARB))
-GL_PREFIX(VertexAttribPointerARB):
+GLOBL_FN(GL_PREFIX(VertexAttribPointerARB,VertexAttribPointerARB@24))
+GL_PREFIX(VertexAttribPointerARB,VertexAttribPointerARB@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_VertexAttribPointerARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EnableVertexAttribArrayARB))
-GL_PREFIX(EnableVertexAttribArrayARB):
+GLOBL_FN(GL_PREFIX(EnableVertexAttribArrayARB,EnableVertexAttribArrayARB@4))
+GL_PREFIX(EnableVertexAttribArrayARB,EnableVertexAttribArrayARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EnableVertexAttribArrayARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DisableVertexAttribArrayARB))
-GL_PREFIX(DisableVertexAttribArrayARB):
+GLOBL_FN(GL_PREFIX(DisableVertexAttribArrayARB,DisableVertexAttribArrayARB@4))
+GL_PREFIX(DisableVertexAttribArrayARB,DisableVertexAttribArrayARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DisableVertexAttribArrayARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramStringARB))
-GL_PREFIX(ProgramStringARB):
+GLOBL_FN(GL_PREFIX(ProgramStringARB,ProgramStringARB@16))
+GL_PREFIX(ProgramStringARB,ProgramStringARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramStringARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BindProgramARB))
-GL_PREFIX(BindProgramARB):
+GLOBL_FN(GL_PREFIX(BindProgramARB,BindProgramARB@8))
+GL_PREFIX(BindProgramARB,BindProgramARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BindProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteProgramsARB))
-GL_PREFIX(DeleteProgramsARB):
+GLOBL_FN(GL_PREFIX(DeleteProgramsARB,DeleteProgramsARB@8))
+GL_PREFIX(DeleteProgramsARB,DeleteProgramsARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteProgramsNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenProgramsARB))
-GL_PREFIX(GenProgramsARB):
+GLOBL_FN(GL_PREFIX(GenProgramsARB,GenProgramsARB@8))
+GL_PREFIX(GenProgramsARB,GenProgramsARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenProgramsNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsProgramARB))
-GL_PREFIX(IsProgramARB):
+GLOBL_FN(GL_PREFIX(IsProgramARB,IsProgramARB@4))
+GL_PREFIX(IsProgramARB,IsProgramARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsProgramNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramEnvParameter4dARB))
-GL_PREFIX(ProgramEnvParameter4dARB):
+GLOBL_FN(GL_PREFIX(ProgramEnvParameter4dARB,ProgramEnvParameter4dARB@40))
+GL_PREFIX(ProgramEnvParameter4dARB,ProgramEnvParameter4dARB@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramEnvParameter4dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramEnvParameter4dvARB))
-GL_PREFIX(ProgramEnvParameter4dvARB):
+GLOBL_FN(GL_PREFIX(ProgramEnvParameter4dvARB,ProgramEnvParameter4dvARB@12))
+GL_PREFIX(ProgramEnvParameter4dvARB,ProgramEnvParameter4dvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramEnvParameter4dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramEnvParameter4fARB))
-GL_PREFIX(ProgramEnvParameter4fARB):
+GLOBL_FN(GL_PREFIX(ProgramEnvParameter4fARB,ProgramEnvParameter4fARB@24))
+GL_PREFIX(ProgramEnvParameter4fARB,ProgramEnvParameter4fARB@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramEnvParameter4fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramEnvParameter4fvARB))
-GL_PREFIX(ProgramEnvParameter4fvARB):
+GLOBL_FN(GL_PREFIX(ProgramEnvParameter4fvARB,ProgramEnvParameter4fvARB@12))
+GL_PREFIX(ProgramEnvParameter4fvARB,ProgramEnvParameter4fvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramEnvParameter4fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramLocalParameter4dARB))
-GL_PREFIX(ProgramLocalParameter4dARB):
+GLOBL_FN(GL_PREFIX(ProgramLocalParameter4dARB,ProgramLocalParameter4dARB@40))
+GL_PREFIX(ProgramLocalParameter4dARB,ProgramLocalParameter4dARB@40):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramLocalParameter4dARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramLocalParameter4dvARB))
-GL_PREFIX(ProgramLocalParameter4dvARB):
+GLOBL_FN(GL_PREFIX(ProgramLocalParameter4dvARB,ProgramLocalParameter4dvARB@12))
+GL_PREFIX(ProgramLocalParameter4dvARB,ProgramLocalParameter4dvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramLocalParameter4dvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramLocalParameter4fARB))
-GL_PREFIX(ProgramLocalParameter4fARB):
+GLOBL_FN(GL_PREFIX(ProgramLocalParameter4fARB,ProgramLocalParameter4fARB@24))
+GL_PREFIX(ProgramLocalParameter4fARB,ProgramLocalParameter4fARB@24):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramLocalParameter4fARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramLocalParameter4fvARB))
-GL_PREFIX(ProgramLocalParameter4fvARB):
+GLOBL_FN(GL_PREFIX(ProgramLocalParameter4fvARB,ProgramLocalParameter4fvARB@12))
+GL_PREFIX(ProgramLocalParameter4fvARB,ProgramLocalParameter4fvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramLocalParameter4fvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramEnvParameterdvARB))
-GL_PREFIX(GetProgramEnvParameterdvARB):
+GLOBL_FN(GL_PREFIX(GetProgramEnvParameterdvARB,GetProgramEnvParameterdvARB@12))
+GL_PREFIX(GetProgramEnvParameterdvARB,GetProgramEnvParameterdvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramEnvParameterdvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramEnvParameterfvARB))
-GL_PREFIX(GetProgramEnvParameterfvARB):
+GLOBL_FN(GL_PREFIX(GetProgramEnvParameterfvARB,GetProgramEnvParameterfvARB@12))
+GL_PREFIX(GetProgramEnvParameterfvARB,GetProgramEnvParameterfvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramEnvParameterfvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramLocalParameterdvARB))
-GL_PREFIX(GetProgramLocalParameterdvARB):
+GLOBL_FN(GL_PREFIX(GetProgramLocalParameterdvARB,GetProgramLocalParameterdvARB@12))
+GL_PREFIX(GetProgramLocalParameterdvARB,GetProgramLocalParameterdvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramLocalParameterdvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramLocalParameterfvARB))
-GL_PREFIX(GetProgramLocalParameterfvARB):
+GLOBL_FN(GL_PREFIX(GetProgramLocalParameterfvARB,GetProgramLocalParameterfvARB@12))
+GL_PREFIX(GetProgramLocalParameterfvARB,GetProgramLocalParameterfvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramLocalParameterfvARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramivARB))
-GL_PREFIX(GetProgramivARB):
+GLOBL_FN(GL_PREFIX(GetProgramivARB,GetProgramivARB@12))
+GL_PREFIX(GetProgramivARB,GetProgramivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramStringARB))
-GL_PREFIX(GetProgramStringARB):
+GLOBL_FN(GL_PREFIX(GetProgramStringARB,GetProgramStringARB@12))
+GL_PREFIX(GetProgramStringARB,GetProgramStringARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramStringARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribdvARB))
-GL_PREFIX(GetVertexAttribdvARB):
+GLOBL_FN(GL_PREFIX(GetVertexAttribdvARB,GetVertexAttribdvARB@12))
+GL_PREFIX(GetVertexAttribdvARB,GetVertexAttribdvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribdvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribfvARB))
-GL_PREFIX(GetVertexAttribfvARB):
+GLOBL_FN(GL_PREFIX(GetVertexAttribfvARB,GetVertexAttribfvARB@12))
+GL_PREFIX(GetVertexAttribfvARB,GetVertexAttribfvARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribivARB))
-GL_PREFIX(GetVertexAttribivARB):
+GLOBL_FN(GL_PREFIX(GetVertexAttribivARB,GetVertexAttribivARB@12))
+GL_PREFIX(GetVertexAttribivARB,GetVertexAttribivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribivNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetVertexAttribPointervARB))
-GL_PREFIX(GetVertexAttribPointervARB):
+GLOBL_FN(GL_PREFIX(GetVertexAttribPointervARB,GetVertexAttribPointervARB@12))
+GL_PREFIX(GetVertexAttribPointervARB,GetVertexAttribPointervARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetVertexAttribPointervNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramNamedParameter4fNV))
-GL_PREFIX(ProgramNamedParameter4fNV):
+GLOBL_FN(GL_PREFIX(ProgramNamedParameter4fNV,ProgramNamedParameter4fNV@28))
+GL_PREFIX(ProgramNamedParameter4fNV,ProgramNamedParameter4fNV@28):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramNamedParameter4fNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramNamedParameter4dNV))
-GL_PREFIX(ProgramNamedParameter4dNV):
+GLOBL_FN(GL_PREFIX(ProgramNamedParameter4dNV,ProgramNamedParameter4dNV@44))
+GL_PREFIX(ProgramNamedParameter4dNV,ProgramNamedParameter4dNV@44):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramNamedParameter4dNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramNamedParameter4fvNV))
-GL_PREFIX(ProgramNamedParameter4fvNV):
+GLOBL_FN(GL_PREFIX(ProgramNamedParameter4fvNV,ProgramNamedParameter4fvNV@16))
+GL_PREFIX(ProgramNamedParameter4fvNV,ProgramNamedParameter4fvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramNamedParameter4fvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ProgramNamedParameter4dvNV))
-GL_PREFIX(ProgramNamedParameter4dvNV):
+GLOBL_FN(GL_PREFIX(ProgramNamedParameter4dvNV,ProgramNamedParameter4dvNV@16))
+GL_PREFIX(ProgramNamedParameter4dvNV,ProgramNamedParameter4dvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_ProgramNamedParameter4dvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramNamedParameterfvNV))
-GL_PREFIX(GetProgramNamedParameterfvNV):
+GLOBL_FN(GL_PREFIX(GetProgramNamedParameterfvNV,GetProgramNamedParameterfvNV@16))
+GL_PREFIX(GetProgramNamedParameterfvNV,GetProgramNamedParameterfvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramNamedParameterfvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetProgramNamedParameterdvNV))
-GL_PREFIX(GetProgramNamedParameterdvNV):
+GLOBL_FN(GL_PREFIX(GetProgramNamedParameterdvNV,GetProgramNamedParameterdvNV@16))
+GL_PREFIX(GetProgramNamedParameterdvNV,GetProgramNamedParameterdvNV@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetProgramNamedParameterdvNV))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BindBufferARB))
-GL_PREFIX(BindBufferARB):
+GLOBL_FN(GL_PREFIX(BindBufferARB,BindBufferARB@8))
+GL_PREFIX(BindBufferARB,BindBufferARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BindBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BufferDataARB))
-GL_PREFIX(BufferDataARB):
+GLOBL_FN(GL_PREFIX(BufferDataARB,BufferDataARB@16))
+GL_PREFIX(BufferDataARB,BufferDataARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BufferDataARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BufferSubDataARB))
-GL_PREFIX(BufferSubDataARB):
+GLOBL_FN(GL_PREFIX(BufferSubDataARB,BufferSubDataARB@16))
+GL_PREFIX(BufferSubDataARB,BufferSubDataARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BufferSubDataARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteBuffersARB))
-GL_PREFIX(DeleteBuffersARB):
+GLOBL_FN(GL_PREFIX(DeleteBuffersARB,DeleteBuffersARB@8))
+GL_PREFIX(DeleteBuffersARB,DeleteBuffersARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteBuffersARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenBuffersARB))
-GL_PREFIX(GenBuffersARB):
+GLOBL_FN(GL_PREFIX(GenBuffersARB,GenBuffersARB@8))
+GL_PREFIX(GenBuffersARB,GenBuffersARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenBuffersARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferParameterivARB))
-GL_PREFIX(GetBufferParameterivARB):
+GLOBL_FN(GL_PREFIX(GetBufferParameterivARB,GetBufferParameterivARB@12))
+GL_PREFIX(GetBufferParameterivARB,GetBufferParameterivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBufferParameterivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferPointervARB))
-GL_PREFIX(GetBufferPointervARB):
+GLOBL_FN(GL_PREFIX(GetBufferPointervARB,GetBufferPointervARB@12))
+GL_PREFIX(GetBufferPointervARB,GetBufferPointervARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBufferPointervARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferSubDataARB))
-GL_PREFIX(GetBufferSubDataARB):
+GLOBL_FN(GL_PREFIX(GetBufferSubDataARB,GetBufferSubDataARB@16))
+GL_PREFIX(GetBufferSubDataARB,GetBufferSubDataARB@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBufferSubDataARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsBufferARB))
-GL_PREFIX(IsBufferARB):
+GLOBL_FN(GL_PREFIX(IsBufferARB,IsBufferARB@4))
+GL_PREFIX(IsBufferARB,IsBufferARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MapBufferARB))
-GL_PREFIX(MapBufferARB):
+GLOBL_FN(GL_PREFIX(MapBufferARB,MapBufferARB@8))
+GL_PREFIX(MapBufferARB,MapBufferARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_MapBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(UnmapBufferARB))
-GL_PREFIX(UnmapBufferARB):
+GLOBL_FN(GL_PREFIX(UnmapBufferARB,UnmapBufferARB@4))
+GL_PREFIX(UnmapBufferARB,UnmapBufferARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_UnmapBufferARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DepthBoundsEXT))
-GL_PREFIX(DepthBoundsEXT):
+GLOBL_FN(GL_PREFIX(DepthBoundsEXT,DepthBoundsEXT@16))
+GL_PREFIX(DepthBoundsEXT,DepthBoundsEXT@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DepthBoundsEXT))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GenQueriesARB))
-GL_PREFIX(GenQueriesARB):
+GLOBL_FN(GL_PREFIX(GenQueriesARB,GenQueriesARB@8))
+GL_PREFIX(GenQueriesARB,GenQueriesARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GenQueriesARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(DeleteQueriesARB))
-GL_PREFIX(DeleteQueriesARB):
+GLOBL_FN(GL_PREFIX(DeleteQueriesARB,DeleteQueriesARB@8))
+GL_PREFIX(DeleteQueriesARB,DeleteQueriesARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DeleteQueriesARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(IsQueryARB))
-GL_PREFIX(IsQueryARB):
+GLOBL_FN(GL_PREFIX(IsQueryARB,IsQueryARB@4))
+GL_PREFIX(IsQueryARB,IsQueryARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_IsQueryARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BeginQueryARB))
-GL_PREFIX(BeginQueryARB):
+GLOBL_FN(GL_PREFIX(BeginQueryARB,BeginQueryARB@8))
+GL_PREFIX(BeginQueryARB,BeginQueryARB@8):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BeginQueryARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(EndQueryARB))
-GL_PREFIX(EndQueryARB):
+GLOBL_FN(GL_PREFIX(EndQueryARB,EndQueryARB@4))
+GL_PREFIX(EndQueryARB,EndQueryARB@4):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_EndQueryARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetQueryivARB))
-GL_PREFIX(GetQueryivARB):
+GLOBL_FN(GL_PREFIX(GetQueryivARB,GetQueryivARB@12))
+GL_PREFIX(GetQueryivARB,GetQueryivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetQueryObjectivARB))
-GL_PREFIX(GetQueryObjectivARB):
+GLOBL_FN(GL_PREFIX(GetQueryObjectivARB,GetQueryObjectivARB@12))
+GL_PREFIX(GetQueryObjectivARB,GetQueryObjectivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryObjectivARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetQueryObjectuivARB))
-GL_PREFIX(GetQueryObjectuivARB):
+GLOBL_FN(GL_PREFIX(GetQueryObjectuivARB,GetQueryObjectuivARB@12))
+GL_PREFIX(GetQueryObjectuivARB,GetQueryObjectuivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
 
