@@ -57,7 +57,7 @@
 #include "glxclient.h"           /* for GLXDrawable */
 /* temporary */
 /* typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator); */
-#include "xf86dri.h"             /* for XF86DRIClipRectPtr */
+#include "drm.h"             /* for drm_clip_rect_t */
 #include "sarea.h"               /* for XF86DRISAREAPtr */
 #include "GL/internal/glcore.h"  /* for __GLcontextModes */
 
@@ -257,9 +257,9 @@ struct __DRIswapInfoRec {
 typedef Bool (GetDrawableInfo)( Display *dpy, int scrn, Drawable draw,
     unsigned int * index, unsigned int * stamp,
     int * x, int * y, int * width, int * height,
-    int * numClipRects, XF86DRIClipRectPtr * pClipRects,
+    int * numClipRects, drm_clip_rect_t * pClipRects,
     int * backX, int * backY,
-    int * numBackClipRects, XF86DRIClipRectPtr * pBackClipRects );
+    int * numBackClipRects, drm_clip_rect_t * pBackClipRects );
 
 
 /**
@@ -324,7 +324,7 @@ struct __DRIdrawablePrivateRec {
     int w;
     int h;
     int numClipRects;
-    XF86DRIClipRectPtr pClipRects;
+    drm_clip_rect_t *pClipRects;
     /*@}*/
 
     /**
@@ -337,7 +337,7 @@ struct __DRIdrawablePrivateRec {
     int backY;
     int backClipRectType;
     int numBackClipRects;
-    XF86DRIClipRectPtr pBackClipRects;
+    drm_clip_rect_t *pBackClipRects;
     /*@}*/
 
     /**

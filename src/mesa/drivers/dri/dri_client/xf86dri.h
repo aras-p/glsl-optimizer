@@ -39,6 +39,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _XF86DRI_H_
 
 #include <X11/Xfuncproto.h>
+#include "drm.h"
 #include <xf86drm.h>
 
 #define X_XF86DRIQueryVersion			0
@@ -61,15 +62,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define XF86DRIClientNotLocal		0
 #define XF86DRIOperationNotSupported	1
 #define XF86DRINumberErrors		(XF86DRIOperationNotSupported + 1)
-
-/* Warning : Do not change XF86DRIClipRect without changing the kernel 
- * structure! */
-typedef struct _XF86DRIClipRect {
-    unsigned short	x1; /* Upper left: inclusive */
-    unsigned short	y1;
-    unsigned short	x2; /* Lower right: exclusive */
-    unsigned short	y2;
-} XF86DRIClipRectRec, *XF86DRIClipRectPtr;
 
 #ifndef _XF86DRI_SERVER_
 
@@ -192,11 +184,11 @@ Bool XF86DRIGetDrawableInfo(
     int*		/* W */,
     int*		/* H */,
     int*		/* numClipRects */,
-    XF86DRIClipRectPtr*,/* pClipRects */
+    drm_clip_rect_t*,   /* pClipRects */
     int*		/* backX */,
     int*		/* backY */,
     int*		/* numBackClipRects */,
-    XF86DRIClipRectPtr*	/* pBackClipRects */    
+    drm_clip_rect_t*	/* pBackClipRects */    
 #endif
 );
 

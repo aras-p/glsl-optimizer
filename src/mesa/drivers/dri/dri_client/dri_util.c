@@ -36,9 +36,9 @@
 #include <Xext.h>
 #include <extutil.h>
 #include <stdio.h>
+#include "dri_util.h"
 #include "xf86dri.h"
 #include "sarea.h"
-#include "dri_util.h"
 #include "glcontextmodes.h"
 
 /*#define DRI_NEW_INTERFACE_ONLY*/
