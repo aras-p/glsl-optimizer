@@ -1,10 +1,10 @@
-/* $Id: drawpix.c,v 1.58 2001/12/14 02:55:08 brianp Exp $ */
+/* $Id: drawpix.c,v 1.59 2002/01/15 21:49:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +52,11 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glDrawPixels(width or height < 0" );
+      return;
+   }
+
    if (ctx->RenderMode==GL_RENDER) {
       GLint x, y;
       if (!pixels || !ctx->Current.RasterPosValid) {
@@ -98,6 +103,11 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(width or height < 0)" );
+      return;
+   }
+
    if (!pixels) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
       return;
@@ -122,7 +132,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glCopyPixels" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glCopyPixels(width or height < 0)" );
       return;
    }
 
@@ -171,9 +181,8 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   /* Error checking */
    if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glBitmap" );
+      _mesa_error( ctx, GL_INVALID_VALUE, "glBitmap(width or height < 0)" );
       return;
    }
 

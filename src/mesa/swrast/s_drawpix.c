@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.24 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.25 2002/01/15 21:49:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -557,6 +557,11 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
        type != GL_FLOAT &&
        type != GL_BITMAP) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawPixels(stencil type)");
+      return;
+   }
+
+   if (ctx->Visual.stencilBits == 0) {
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawPixels(no stencil buffer)");
       return;
    }
 
