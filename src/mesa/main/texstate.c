@@ -1413,7 +1413,10 @@ void
 _mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
 {
    GLfloat fparam[4];
-   fparam[0] = (GLfloat) param;
+   if (pname == GL_TEXTURE_PRIORITY)
+      fparam[0] = INT_TO_FLOAT(param);
+   else
+      fparam[0] = (GLfloat) param;
    fparam[1] = fparam[2] = fparam[3] = 0.0;
    _mesa_TexParameterfv(target, pname, fparam);
 }
@@ -1430,7 +1433,10 @@ _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
       fparam[3] = INT_TO_FLOAT(params[3]);
    }
    else {
-      fparam[0] = (GLfloat) params[0];
+      if (pname == GL_TEXTURE_PRIORITY)
+         fparam[0] = INT_TO_FLOAT(params[0]);
+      else
+         fparam[0] = (GLfloat) params[0];
       fparam[1] = fparam[2] = fparam[3] = 0.0F;
    }
    _mesa_TexParameterfv(target, pname, fparam);
@@ -1827,7 +1833,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          return;
       case GL_TEXTURE_PRIORITY:
-         *params = (GLint) obj->Priority;
+         *params = FLOAT_TO_INT(obj->Priority);
          return;
       case GL_TEXTURE_MIN_LOD:
          *params = (GLint) obj->MinLod;
