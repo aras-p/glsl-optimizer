@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.6 1999/09/16 16:54:22 brianp Exp $ */
+/* $Id: glu.h,v 1.7 1999/09/17 02:44:19 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,11 @@
 
 /*
  * $Log: glu.h,v $
+ * Revision 1.7  1999/09/17 02:44:19  tjump
+ * I changed the xxxGetProcAddressEXT function declarations to be more
+ * MSVC friendly. Brianp - could you verify that they describe and operate
+ * as intended on Linux/ETC platforms?
+ *
  * Revision 1.6  1999/09/16 16:54:22  brianp
  * GLU_EXT_get_proc_address clean-up
  *
@@ -503,7 +508,8 @@ GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
  * which uses this extension yet!  It may change!
  */
 #define GLU_EXT_get_proc_address 1
-GLUAPI void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))();
+typedef (GLAPIENTRY *gluProcAddress)();
+gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName);
 
 
 
