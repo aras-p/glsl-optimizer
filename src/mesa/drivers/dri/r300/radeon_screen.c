@@ -149,6 +149,7 @@ static const struct dri_debug_control debug_control[] = {
 	{"sync", DEBUG_SYNC},
 	{"pix", DEBUG_PIXEL},
 	{"mem", DEBUG_MEMORY},
+	{"allmsg", ~DEBUG_SYNC}, /* avoid the term "sync" because the parser uses strstr */
 	{NULL, 0}
 };
 

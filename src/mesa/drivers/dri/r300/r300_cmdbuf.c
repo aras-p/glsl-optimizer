@@ -96,7 +96,7 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 			DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
 
 	if (RADEON_DEBUG & DEBUG_SYNC) {
-		fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
+		fprintf(stderr, "Syncing in %s (from %s)\n\n", __FUNCTION__, caller);
 		radeonWaitForIdleLocked(&r300->radeon);
 	}
 
