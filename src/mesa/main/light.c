@@ -1317,15 +1317,24 @@ void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
 {
    const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
-   ctx->_NeedEyeCoords = (ctx->_ForceEyeCoords ||
-			  (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) ||
-			  ctx->Point._Attenuated ||
-			  ctx->Light._NeedEyeCoords);
-      
+   ctx->_NeedEyeCoords = 0;
+
+   if (ctx->_ForceEyeCoords ||
+       (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) ||
+       ctx->Point._Attenuated ||
+       ctx->Light._NeedEyeCoords)
+      ctx->_NeedEyeCoords = 1;
+
+   if (ctx->Light.Enabled &&
+       !TEST_MAT_FLAGS( ctx->ModelviewMatrixStack.Top, 
+			MAT_FLAGS_LENGTH_PRESERVING))
+      ctx->_NeedEyeCoords = 1;
+
+
    /* Check if the truth-value interpretations of the bitfields have
     * changed:
     */
-   if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0)) {
+   if (oldneedeyecoords != ctx->_NeedEyeCoords) {
       /* Recalculate all state that depends on _NeedEyeCoords.
        */
       update_modelview_scale(ctx);
