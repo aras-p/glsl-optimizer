@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.38 2000/10/26 19:36:14 brianp Exp $
+# $Id: Makefile.X11,v 1.39 2000/11/23 16:36:36 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -473,6 +473,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/widgets-mesa/README			\
 	$(DIRECTORY)/widgets-mesa/TODO				\
 	$(DIRECTORY)/widgets-mesa/configure			\
+	$(DIRECTORY)/widgets-mesa/configure.in			\
 	$(DIRECTORY)/widgets-mesa/demos/ChangeLog		\
 	$(DIRECTORY)/widgets-mesa/demos/Cube			\
 	$(DIRECTORY)/widgets-mesa/demos/Ed			\
