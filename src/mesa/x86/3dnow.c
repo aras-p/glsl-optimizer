@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.7 2000/09/17 21:12:40 gareth Exp $ */
+/* $Id: 3dnow.c,v 1.8 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,88 +24,75 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 /*
  * 3DNow! optimizations contributed by
  * Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
  */
-#if defined(USE_3DNOW_ASM) && defined(USE_X86_ASM)
-#include "3dnow.h"
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
+#include "glheader.h"
 #include "context.h"
 #include "types.h"
-#include "xform.h"
 #include "vertices.h"
+#include "xform.h"
+#include "3dnow.h"
 
 #ifdef DEBUG
 #include "debug_xform.h"
 #endif
 
 
-
-
-#define XFORM_ARGS	GLvector4f *to_vec,		\
-			const GLfloat m[16],		\
-			const GLvector4f *from_vec,	\
-			const GLubyte *mask,		\
+#define XFORM_ARGS	GLvector4f *to_vec,				\
+			const GLfloat m[16],				\
+			const GLvector4f *from_vec,			\
+			const GLubyte *mask,				\
 			const GLubyte flag
 
 
-
-#define DECLARE_XFORM_GROUP( pfx, v, masked ) \
- extern void _ASMAPI gl_##pfx##_transform_points##v##_general_##masked(XFORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_identity_##masked(XFORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_3d_no_rot_##masked(XFORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_perspective_##masked(XFORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_2d_##masked(XFORM_ARGS);		\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_2d_no_rot_##masked(XFORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_points##v##_3d_##masked(XFORM_ARGS);
-
+#define DECLARE_XFORM_GROUP( pfx, sz, masked ) \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );    \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );  \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );    \
+ extern void _ASMAPI gl_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
 
 
-#define ASSIGN_XFORM_GROUP( pfx, cma, vsize, masked )			\
-   gl_transform_tab[cma][vsize][MATRIX_GENERAL] =			\
-      gl_##pfx##_transform_points##vsize##_general_##masked;		\
-   gl_transform_tab[cma][vsize][MATRIX_IDENTITY] =			\
-      gl_##pfx##_transform_points##vsize##_identity_##masked;		\
-   gl_transform_tab[cma][vsize][MATRIX_3D_NO_ROT] =			\
-      gl_##pfx##_transform_points##vsize##_3d_no_rot_##masked;		\
-   gl_transform_tab[cma][vsize][MATRIX_PERSPECTIVE] =			\
-      gl_##pfx##_transform_points##vsize##_perspective_##masked;	\
-   gl_transform_tab[cma][vsize][MATRIX_2D] =				\
-      gl_##pfx##_transform_points##vsize##_2d_##masked;			\
-   gl_transform_tab[cma][vsize][MATRIX_2D_NO_ROT] =			\
-      gl_##pfx##_transform_points##vsize##_2d_no_rot_##masked;		\
-   gl_transform_tab[cma][vsize][MATRIX_3D] =				\
-      gl_##pfx##_transform_points##vsize##_3d_##masked;
+#define ASSIGN_XFORM_GROUP( pfx, cma, sz, masked )			\
+   gl_transform_tab[cma][sz][MATRIX_GENERAL] =				\
+      gl_##pfx##_transform_points##sz##_general_##masked;		\
+   gl_transform_tab[cma][sz][MATRIX_IDENTITY] =				\
+      gl_##pfx##_transform_points##sz##_identity_##masked;		\
+   gl_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
+      gl_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
+   gl_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
+      gl_##pfx##_transform_points##sz##_perspective_##masked;		\
+   gl_transform_tab[cma][sz][MATRIX_2D] =				\
+      gl_##pfx##_transform_points##sz##_2d_##masked;			\
+   gl_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
+      gl_##pfx##_transform_points##sz##_2d_no_rot_##masked;		\
+   gl_transform_tab[cma][sz][MATRIX_3D] =				\
+      gl_##pfx##_transform_points##sz##_3d_##masked;
 
 
 
-
-#define NORM_ARGS	const GLmatrix *mat,		\
-			GLfloat scale,			\
-			const GLvector3f *in,		\
-			const GLfloat *lengths,		\
-			const GLubyte mask[],		\
+#define NORM_ARGS	const GLmatrix *mat,				\
+			GLfloat scale,					\
+			const GLvector3f *in,				\
+			const GLfloat *lengths,				\
+			const GLubyte mask[],				\
 			GLvector3f *dest
 
 
-
 #define DECLARE_NORM_GROUP( pfx, masked ) \
- extern void _ASMAPI gl_##pfx##_rescale_normals_##masked(NORM_ARGS);			\
- extern void _ASMAPI gl_##pfx##_normalize_normals_##masked(NORM_ARGS);			\
- extern void _ASMAPI gl_##pfx##_transform_normals_##masked(NORM_ARGS);			\
- extern void _ASMAPI gl_##pfx##_transform_normals_no_rot_##masked(NORM_ARGS);		\
- extern void _ASMAPI gl_##pfx##_transform_rescale_normals_##masked(NORM_ARGS);		\
- extern void _ASMAPI gl_##pfx##_transform_rescale_normals_no_rot_##masked(NORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_normalize_normals_##masked(NORM_ARGS);	\
- extern void _ASMAPI gl_##pfx##_transform_normalize_normals_no_rot_##masked(NORM_ARGS);
-
+ extern void _ASMAPI gl_##pfx##_rescale_normals_##masked( NORM_ARGS );			    \
+ extern void _ASMAPI gl_##pfx##_normalize_normals_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI gl_##pfx##_transform_normals_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI gl_##pfx##_transform_normals_no_rot_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI gl_##pfx##_transform_rescale_normals_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_rescale_normals_no_rot_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_normalize_normals_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI gl_##pfx##_transform_normalize_normals_no_rot_##masked( NORM_ARGS );
 
 
 #define ASSIGN_NORM_GROUP( pfx, cma, masked )				\
@@ -127,24 +114,7 @@
       gl_##pfx##_transform_normalize_normals_no_rot_##masked;
 
 
-extern void _ASMAPI gl_3dnow_project_vertices( GLfloat *first,
-					       GLfloat *last,
-					       const GLfloat *m,
-					       GLuint stride );
-
-extern void _ASMAPI gl_3dnow_project_clipped_vertices( GLfloat *first,
-						       GLfloat *last,
-						       const GLfloat *m,
-						       GLuint stride,
-						       const GLubyte *clipmask );
-
-extern void _ASMAPI gl_v16_3dnow_general_xform( GLfloat *first_vert,
-						const GLfloat *m,
-						const GLfloat *src,
-						GLuint src_stride,
-						GLuint count );
-
-
+#ifdef USE_3DNOW_ASM
 DECLARE_XFORM_GROUP( 3dnow, 1, raw )
 DECLARE_XFORM_GROUP( 3dnow, 2, raw )
 DECLARE_XFORM_GROUP( 3dnow, 3, raw )
@@ -159,8 +129,28 @@ DECLARE_NORM_GROUP( 3dnow, raw )
 /*DECLARE_NORM_GROUP( 3dnow, masked )*/
 
 
-void gl_init_3dnow_asm_transforms( void )
+extern void _ASMAPI gl_v16_3dnow_general_xform( GLfloat *first_vert,
+						const GLfloat *m,
+						const GLfloat *src,
+						GLuint src_stride,
+						GLuint count );
+
+extern void _ASMAPI gl_3dnow_project_vertices( GLfloat *first,
+					       GLfloat *last,
+					       const GLfloat *m,
+					       GLuint stride );
+
+extern void _ASMAPI gl_3dnow_project_clipped_vertices( GLfloat *first,
+						       GLfloat *last,
+						       const GLfloat *m,
+						       GLuint stride,
+						       const GLubyte *clipmask );
+#endif
+
+
+void gl_init_3dnow_transform_asm( void )
 {
+#ifdef USE_3DNOW_ASM
    ASSIGN_XFORM_GROUP( 3dnow, 0, 1, raw );
    ASSIGN_XFORM_GROUP( 3dnow, 0, 2, raw );
    ASSIGN_XFORM_GROUP( 3dnow, 0, 3, raw );
@@ -178,21 +168,18 @@ void gl_init_3dnow_asm_transforms( void )
    gl_test_all_transform_functions( "3DNow!" );
    gl_test_all_normal_transform_functions( "3DNow!" );
 #endif
-
-   /* Hook in some stuff for vertices.c.
-    */
-   gl_xform_points3_v16_general = gl_v16_3dnow_general_xform;
-   gl_project_v16 = gl_3dnow_project_vertices;
-   gl_project_clipped_v16 = gl_3dnow_project_clipped_vertices;
-}
-
-#else
-
-/* silence compiler warning */
-extern void _mesa_3dnow_dummy_function( void );
-
-void _mesa_3dnow_dummy_function( void )
-{
-}
-
 #endif
+}
+
+void gl_init_3dnow_vertex_asm( void )
+{
+#ifdef USE_3DNOW_ASM
+   gl_xform_points3_v16_general	= gl_v16_3dnow_general_xform;
+   gl_project_v16		= gl_3dnow_project_vertices;
+   gl_project_clipped_v16	= gl_3dnow_project_clipped_vertices;
+
+#if 0
+   gl_test_all_vertex_functions( "3DNow!" );
+#endif
+#endif
+}

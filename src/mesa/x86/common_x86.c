@@ -1,21 +1,21 @@
-/* $Id: common_x86.c,v 1.6 2000/01/25 17:04:47 brianp Exp $ */
+/* $Id: common_x86.c,v 1.7 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
+ * Version:  3.5
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -26,81 +26,102 @@
 
 
 /*
- *  Check CPU capabilities & initialize optimized funtions for this particular
- *   processor.
+ * Check CPU capabilities & initialize optimized funtions for this particular
+ * processor.
  *
- *  Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
- *  Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- *  new Katmai functions
+ * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
+ * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
+ * new Katmai functions.
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "common_x86asm.h"
+
+#include "common_x86_asm.h"
+
 
 int gl_x86_cpu_features = 0;
 
-static void message(const char *msg)
+/* No reason for this to be public.
+ */
+extern int gl_identify_x86_cpu_features( void );
+
+
+static void message( const char *msg )
 {
-   if (getenv("MESA_DEBUG"))
-      fprintf(stderr, "%s\n", msg);
+   if ( getenv( "MESA_DEBUG" ) ) {
+      fprintf( stderr, "%s\n", msg );
+   }
 }
 
 
-void gl_init_all_x86_asm (void)
+void gl_init_all_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
-   gl_x86_cpu_features = gl_identify_x86_cpu_features ();
-   gl_x86_cpu_features |= GL_CPU_AnyX86;
+   gl_x86_cpu_features = gl_identify_x86_cpu_features();
 
-   if (getenv("MESA_NO_ASM") != 0)
+   if ( getenv( "MESA_NO_ASM" ) ) {
       gl_x86_cpu_features = 0;
-
-   if (gl_x86_cpu_features & GL_CPU_GenuineIntel) {
-      message("GenuineIntel cpu detected.");
    }
 
-   if (gl_x86_cpu_features) {
-      gl_init_x86_asm_transforms ();
+   if ( gl_x86_cpu_features ) {
+      gl_init_x86_transform_asm();
    }
 
 #ifdef USE_MMX_ASM
-   if (gl_x86_cpu_features & GL_CPU_MMX) {
-      char *s = getenv( "MESA_NO_MMX" );
-      if (s == NULL) { 
-         message("MMX cpu detected.");
+   if ( cpu_has_mmx ) {
+      if ( getenv( "MESA_NO_MMX" ) == 0 ) {
+         message( "MMX cpu detected." );
       } else {
-         gl_x86_cpu_features &= (~GL_CPU_MMX); 
+         gl_x86_cpu_features &= ~(X86_FEATURE_MMX);
       }
    }
 #endif
-
 
 #ifdef USE_3DNOW_ASM
-   if (gl_x86_cpu_features & GL_CPU_3Dnow) {
-      char *s = getenv( "MESA_NO_3DNOW" );
-      if (s == NULL) {
-         message("3Dnow cpu detected.");
-         gl_init_3dnow_asm_transforms ();
+   if ( cpu_has_3dnow ) {
+      if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
+         message( "3Dnow cpu detected." );
+         gl_init_3dnow_transform_asm();
       } else {
-         gl_x86_cpu_features &= (~GL_CPU_3Dnow); 
+         gl_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
       }
    }
 #endif
-
 
 #ifdef USE_KATMAI_ASM
-   if (gl_x86_cpu_features & GL_CPU_Katmai) {
-      char *s = getenv( "MESA_NO_KATMAI" );
-      if (s == NULL) {
-         message("Katmai cpu detected.");
-         gl_init_katmai_asm_transforms ();
+   if ( cpu_has_xmm ) {
+      if ( getenv( "MESA_NO_KATMAI" ) == 0 ) {
+         message( "Katmai cpu detected." );
+         gl_init_katmai_transform_asm();
       } else {
-         gl_x86_cpu_features &= (~GL_CPU_Katmai); 
+         gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
    }
 #endif
-
 #endif
 }
 
+/* Note: the above function must be called before this one, so that
+ * gl_x86_cpu_features gets correctly initialized.
+ */
+void gl_init_all_x86_vertex_asm( void )
+{
+#ifdef USE_X86_ASM
+   if ( gl_x86_cpu_features ) {
+      gl_init_x86_vertex_asm();
+   }
+
+#ifdef USE_3DNOW_ASM
+   if ( cpu_has_3dnow && getenv( "MESA_NO_3DNOW" ) == 0 ) {
+      gl_init_3dnow_vertex_asm();
+   }
+#endif
+
+#ifdef USE_KATMAI_ASM
+   if ( cpu_has_xmm && getenv( "MESA_NO_KATMAI" ) == 0 ) {
+      gl_init_katmai_vertex_asm();
+   }
+#endif
+#endif
+}

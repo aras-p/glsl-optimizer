@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.94 2000/10/21 00:02:47 brianp Exp $ */
+/* $Id: context.c,v 1.95 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -454,6 +454,7 @@ one_time_init( void )
       gl_init_translate();
       gl_init_vbrender();
       gl_init_vbxform();
+      gl_init_vertices();
 
       if (getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
@@ -884,7 +885,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Current.Primitive = (GLenum) (GL_POLYGON + 1);
 
    ctx->Current.Flag = (VERT_NORM |
-                        VERT_INDEX | 
+                        VERT_INDEX |
                         VERT_RGBA |
                         VERT_EDGE |
                         VERT_TEX0_1 |
@@ -2114,4 +2115,4 @@ GLenum gl_reduce_prim[GL_POLYGON+1] = {
    GL_TRIANGLES,
    GL_TRIANGLES,
    GL_TRIANGLES,
-};  
+};

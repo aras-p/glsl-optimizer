@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.15 2000/09/18 22:49:04 gareth Exp $ */
+/* $Id: assyntax.h,v 1.16 2000/10/23 00:16:28 gareth Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__

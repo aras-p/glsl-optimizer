@@ -350,7 +350,3 @@ LLBL(GMBT_1):
     MOV_L     ( EBP, ESP )
     POP_L     ( EBP )
     RET
-
-
-
-

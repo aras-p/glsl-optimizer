@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.19 2000/10/19 18:08:05 brianp Exp $ */
+/* $Id: blend.c,v 1.20 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -826,7 +826,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
 #if defined(USE_MMX_ASM)
 #include "X86/mmx.h"
-#include "X86/common_x86asm.h"
+#include "X86/common_x86_asm.h"
 #endif
 
 
@@ -846,8 +846,8 @@ static void set_blend_function( GLcontext *ctx )
    /* Hmm.  A table here would have 12^4 == way too many entries.
     * Provide a hook for MMX instead.
     */
-   if (gl_x86_cpu_features & GL_CPU_MMX) {
-      gl_mmx_set_blend_function (ctx);
+   if ( cpu_has_mmx ) {
+      gl_mmx_set_blend_function( ctx );
    }
    else
 #endif

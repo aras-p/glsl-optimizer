@@ -1,21 +1,21 @@
-/* $Id: x86.h,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: x86.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * 
+ * Version:  3.5
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,10 +28,10 @@
  * Intel x86 assembly code by Josh Vanderhoof
  */
 
+#ifndef __X86_H__
+#define __X86_H__
 
-#ifndef X86_H
-#define X86_H
-
-extern void gl_init_x86_asm_transforms(void);
+extern void gl_init_x86_transform_asm( void );
+extern void gl_init_x86_vertex_asm( void );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: 3dnow.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: common_x86_asm.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,16 +25,39 @@
  */
 
 /*
- * 3DNow! optimizations contributed by
- * Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
+ * Check CPU capabilities & initialize optimized funtions for this particular
+ * processor.
+ *
+ * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
+ * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
+ * new Katmai functions
+ *
+ * Reimplemented by Gareth Hughes <gareth@valinux.com> in a more
+ * future-proof manner, based on code in the Linux kernel.
  */
 
-#ifndef __3DNOW_H__
-#define __3DNOW_H__
+#ifndef __COMMON_X86_ASM_H__
+#define __COMMON_X86_ASM_H__
 
-#include "xform.h"
+#include "common_x86_features.h"
 
-void gl_init_3dnow_transform_asm( void );
-void gl_init_3dnow_vertex_asm( void );
+#ifdef HAVE_CONFIG_H
+#include "conf.h"
+#endif
+
+#ifdef USE_X86_ASM
+#include "x86.h"
+#ifdef USE_3DNOW_ASM
+#include "3dnow.h"
+#endif
+#ifdef USE_KATMAI_ASM
+#include "katmai.h"
+#endif
+#endif
+
+extern int gl_x86_cpu_features;
+
+extern void gl_init_all_x86_transform_asm( void );
+extern void gl_init_all_x86_vertex_asm( void );
 
 #endif
