@@ -31,12 +31,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
-#include <errno.h> 
 
 #include "r128_context.h"
 #include "r128_state.h"
 #include "r128_ioctl.h"
-#include "r128_macros.h"
 
 #include "imports.h"
 #include "macros.h"
