@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.7 2001/09/24 15:29:27 kschultz Exp $ */
+/* $Id: osdemo.c,v 1.8 2002/04/05 17:40:20 kschultz Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -14,6 +14,11 @@
  *
  * PPM output provided by Joerg Schmalzl.
  * ASCII PPM output added by Brian Paul.
+ *
+ * Usage: osdemo [-perf] [filename]
+ *
+ * -perf: Redraws the image 1000 times, displaying the FPS every 5 secs.
+ * filename: file to store the TGA or PPM output
  */
 
 
@@ -29,7 +34,9 @@
 #define WIDTH 400
 #define HEIGHT 400
 
-
+static GLint T0 = 0;
+static GLint Frames = 0;
+static int perf = 0;
 
 static void render_image( void )
 {
@@ -76,7 +83,7 @@ static void render_image( void )
    glPopMatrix();
 
 #ifdef GL_HP_occlusion_test
-   {
+   if (perf == 0) {
       GLboolean bRet;
       glDepthMask(GL_FALSE);
       glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
@@ -105,7 +112,7 @@ static void render_image( void )
    glPopMatrix();
 
 #ifdef GL_HP_occlusion_test
-   {
+   if (perf == 0){
       GLboolean bRet;
 
       glDepthMask(GL_FALSE);
@@ -130,6 +137,18 @@ static void render_image( void )
 #endif
 
    glPopMatrix();
+
+   Frames++;
+   if (perf) {
+     GLint t = glutGet(GLUT_ELAPSED_TIME);
+     if (t - T0 >= 5000) {
+        GLfloat seconds = (t - T0) / 1000.0;
+        GLfloat fps = Frames / seconds;
+        printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
+        T0 = t;
+        Frames = 0;
+     }
+   }
 }
 
 
@@ -224,6 +243,8 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 int main( int argc, char *argv[] )
 {
    void *buffer;
+   int i;
+   char *filename = NULL;
 
    /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
@@ -235,6 +256,11 @@ int main( int argc, char *argv[] )
    if (!ctx) {
       printf("OSMesaCreateContext failed!\n");
       return 0;
+   }
+
+   for ( i=1; i<argc; i++ ) {
+      if (argv[i][0] != '-') filename = argv[i];
+      if (strcmp(argv[i], "-perf")==0) perf = 1;
    }
 
    /* Allocate the image buffer */
@@ -256,16 +282,19 @@ int main( int argc, char *argv[] )
       glGetIntegerv(GL_DEPTH_BITS, &z);
       glGetIntegerv(GL_STENCIL_BITS, &s);
       glGetIntegerv(GL_ACCUM_RED_BITS, &a);
-      printf("%d %d %d\n", z, s, a);
+      printf("Depth=%d Stencil=%d Accum=%d\n", z, s, a);
    }
 
    render_image();
+   if (perf)
+      for(i=0; i< 1000; i++)
+         render_image();
 
-   if (argc>1) {
+   if (filename != NULL) {
 #ifdef SAVE_TARGA
-      write_targa(argv[1], buffer, WIDTH, HEIGHT);
+      write_targa(filename, buffer, WIDTH, HEIGHT);
 #else
-      write_ppm(argv[1], buffer, WIDTH, HEIGHT);
+      write_ppm(filename, buffer, WIDTH, HEIGHT);
 #endif
    }
    else {
