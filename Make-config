@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.4 1999/09/15 16:32:48 brianp Exp $
+# $Id: Make-config,v 1.5 1999/09/15 17:02:06 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -29,8 +29,8 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
 # The following variables are passed to each Makefile:
 #
-# GL_LIB      the name of the Mesa "GL" library file (usually libMesaGL.a)
-# GLU_LIB     the name of the Mesa "GLU" library file (usually libMesaGLU.a)
+# GL_LIB      the name of the Mesa "GL" library file (usually libGL.a)
+# GLU_LIB     the name of the Mesa "GLU" library file (usually libGLU.a)
 # GLUT_LIB    the name of the GLUT library file (usually libglut.a)
 # CC          the C compiler (usually cc or gcc)
 # CFLAGS      flags to C compiler (usually -O)
@@ -594,8 +594,8 @@ linux-3dnow-glide:
 # Contributed by C. Alex. North-Keys (erlkonig@talisman.org)
 linux-386-pthread-shared-glide:
 	$(MAKE) $(MFLAGS) targets \
-	"GL_LIB = libMesaGL.so" \
-	"GLU_LIB = libMesaGLU.so" \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
