@@ -55,7 +55,7 @@ void gl_init_all_x86_asm (void)
       if (s == NULL) { 
          fprintf (stderr, "MMX cpu detected.\n");
       } else {
-         gl_x86_cpu_features &= (!GL_CPU_MMX); 
+         gl_x86_cpu_features &= (~GL_CPU_MMX); 
       }
    }
 #endif
@@ -68,7 +68,7 @@ void gl_init_all_x86_asm (void)
          fprintf (stderr, "3Dnow cpu detected.\n");
          gl_init_3dnow_asm_transforms ();
       } else {
-         gl_x86_cpu_features &= (!GL_CPU_3Dnow); 
+         gl_x86_cpu_features &= (~GL_CPU_3Dnow); 
       }
    }
 #endif
