@@ -203,6 +203,7 @@ static GLboolean fxDDSetBuffer(GLcontext *ctx, GLenum mode )
 }
 
 
+
 static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
                                 GLsizei width, GLsizei height,
                                 const struct gl_pixelstore_attrib *unpack,
@@ -212,7 +213,7 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
   FxU16 *p;
   GrLfbInfo_t info;
   const GLubyte *pb;
-  int x,y;
+  int x,y,xmin,xmax,ymin,ymax;
   GLint r,g,b,a,scrwidth,scrheight,stride;
   FxU16 color;
 
@@ -227,13 +228,26 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
      (unpack->LsbFirst))
     return GL_FALSE;
 
-#define ISCLIPPED(rx) ( ((rx)<0) || ((rx)>=scrwidth) )
-#define DRAWBIT(i) {	   \
-  if(!ISCLIPPED(x+px))	   \
+  if (ctx->Scissor.Enabled) {
+        xmin=ctx->Scissor.X;
+        xmax=ctx->Scissor.X+ctx->Scissor.Width;
+        ymin=ctx->Scissor.Y;
+        ymax=ctx->Scissor.Y+ctx->Scissor.Height;
+  } else {
+        xmin=0;
+        xmax=fxMesa->width;
+        ymin=0;
+        ymax=fxMesa->height;
+  }
+
+
+#define ISCLIPPED(rx) ( ((rx)<xmin) || ((rx)>=xmax) )
+#define DRAWBIT(i) {       \
+  if(!ISCLIPPED(x+px))     \
     if( (*pb) & (1<<(i)) ) \
-      (*p)=color;	   \
+      (*p)=color;          \
   p++;                     \
-  x++;			   \
+  x++;                     \
   if(x>=width) {           \
     pb++;                  \
     break;                 \
@@ -283,8 +297,15 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
 
   /* This code is a bit slow... */
 
-  for(y=0;y<height;y++) {
-    p=((FxU16 *)info.lfbPtr)+px+((scrheight-(y+py))*stride);
+  for(y=py;y<(py+height);y++) {
+
+    if (y>=ymax)
+        break;
+
+    if (y<=ymin)
+        continue;
+
+    p=((FxU16 *)info.lfbPtr)+px+((scrheight-y)*stride);
 
     for(x=0;;) {
       DRAWBIT(7);       DRAWBIT(6);     DRAWBIT(5);     DRAWBIT(4);
