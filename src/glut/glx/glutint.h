@@ -71,7 +71,7 @@ extern int sys$gettim(struct timeval *);
 #endif
 #else
 #include <sys/types.h>
-#if !defined(_WIN32)
+#if !defined(_WIN32) || defined(__CYGWIN32__)
 #include <sys/time.h>
 #else
 #include <winsock.h>
