@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.13 2002/11/07 16:35:01 brianp Exp $
+# $Id: APIspec,v 1.14 2002/11/08 15:38:48 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -7374,7 +7374,7 @@ param		sfactorRGB	GLenum
 param		dfactorRGB	GLenum
 param		sfactorAlpha	GLenum
 param		dfactorAlpha	GLenum
-category	GL_EXT_blend_func_separate
+category	1.4
 
 name		FogCoordf
 return		void
@@ -7414,7 +7414,7 @@ param		mode		GLenum
 param		first		GLint *
 param		count		GLsizei *
 param		primcount	GLsizei
-category	GL_EXT_multi_draw_arrays
+category	1.4
 alias		MultiDrawArraysEXT
 
 name		MultiDrawElements
@@ -7424,7 +7424,7 @@ param		count		const GLsizei *
 param		type		GLenum
 param		indices		const GLvoid **
 param		primcount	GLsizei
-category	GL_EXT_multi_draw_arrays
+category	1.4
 alias		MultiDrawElementsEXT
 
 name		PointParameterf
