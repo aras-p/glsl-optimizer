@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.28 2000/03/31 01:12:40 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.29 2000/03/31 01:17:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -886,6 +886,7 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
    int visual_type = DONT_CARE;
    int trans_type = DONT_CARE;
    int trans_value = DONT_CARE;
+   GLint caveat = DONT_CARE;
 
    parselist = list;
 
@@ -1000,6 +1001,14 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 	    parselist++;
 	    break;
          
+         /*
+          * GLX_EXT_visual_info extension
+          */
+         case GLX_VISUAL_CAVEAT_EXT:
+            parselist++;
+            caveat = *parselist++; /* ignored for now */
+            break;
+
 	 case None:
 	    break;
 	 default:
@@ -1544,10 +1553,10 @@ static const char *get_extensions( void )
 #ifdef FX
    const char *fx = getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
-      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_MESA_set_3dfx_mode GLX_ARB_get_proc_address";
+      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_EXT_visual_rating GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_MESA_set_3dfx_mode GLX_ARB_get_proc_address";
    }
 #endif
-   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_ARB_get_proc_address";
+   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_EXT_visual_rating GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_ARB_get_proc_address";
 }
 
 
