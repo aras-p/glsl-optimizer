@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.7 2002/05/29 15:14:13 brianp Exp $
+# $Id: APIspec,v 1.8 2002/06/30 15:47:43 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -5315,6 +5315,9 @@ param		mode		GLenum
 category	GL_EXT_texture_perturb_normal
 offset		?
 
+
+# GL_EXT_multi_draw_arrays (XXX unofficial dispatch offsets!!!! */
+
 name		MultiDrawArraysEXT
 return		void
 param		mode		GLenum
@@ -5322,7 +5325,7 @@ param		first		GLint *
 param		count		GLsizei *
 param		primcount	GLsizei
 category	GL_EXT_multi_draw_arrays
-offset		?
+offset		644
 
 name		MultiDrawElementsEXT
 return		void
@@ -5332,7 +5335,7 @@ param		type		GLenum
 param		indices		const GLvoid **
 param		primcount	GLsizei
 category	GL_EXT_multi_draw_arrays
-offset		?
+offset		645
 
 
 # GL_EXT_fog_coord
