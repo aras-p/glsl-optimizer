@@ -1,10 +1,10 @@
-/* $Id: gl.h,v 1.24 1999/12/10 19:54:50 brianp Exp $ */
+/* $Id: gl.h,v 1.25 2000/01/07 05:35:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2323,11 +2323,10 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 #ifndef GL_ARB_transpose_matrix
 #define GL_ARB_transpose_matrix 1
 
-/* XXX these aren't the final enum values!!! */
-#define GL_TRANSPOSE_MODELVIEW_MATRIX_ARB		0xffff0001
-#define GL_TRANSPOSE_PROJECTION_MATRIX_ARB		0xffff0002
-#define GL_TRANSPOSE_TEXTURE_MATRIX_ARB			0xffff0003
-#define GL_TRANSPOSE_COLOR_MATRIX_ARB			0xffff0004
+#define GL_TRANSPOSE_MODELVIEW_MATRIX_ARB		0x84E3
+#define GL_TRANSPOSE_PROJECTION_MATRIX_ARB		0x84E4
+#define GL_TRANSPOSE_TEXTURE_MATRIX_ARB			0x84E5
+#define GL_TRANSPOSE_COLOR_MATRIX_ARB			0x84E6
 
 GLAPI void GLAPIENTRY glLoadTransposeMatrixdARB( const GLdouble m[16] );
 GLAPI void GLAPIENTRY glLoadTransposeMatrixfARB( const GLfloat m[16] );
