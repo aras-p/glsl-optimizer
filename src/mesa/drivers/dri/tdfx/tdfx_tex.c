@@ -963,7 +963,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
         }
         /* unpack image, apply transfer ops and store in tempImage */
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                        &texImage->Format, tempImage,
+                                        texImage->TexFormat, tempImage,
                                         0, 0, 0, /* dstX/Y/Zoffset */
                                         width * texelBytes, /* dstRowStride */
                                         0, /* dstImageStride */
@@ -993,7 +993,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
       }
       /* unpack image, apply transfer ops and store in texImage->Data */
       texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                    &texImage->Format, texImage->Data,
+                                    texImage->TexFormat, texImage->Data,
                                     0, 0, 0, /* dstX/Y/Zoffset */
                                     width * texelBytes, /* dstRowStride */
                                     0, /* dstImageStride */
