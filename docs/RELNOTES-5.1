@@ -161,6 +161,13 @@ New ctx->Texture._EnabledCoordUnits field:
    If a bit is set in the ctx->Texture._EnabledUnits bitmask is set, the
    same bit MUST be set in ctx->Texture._EnabledCoordUnits.
 
+The ctx->_TriangleCaps field is deprecated.
+   Instead of testing the DD_* bits in _TriangleCaps, you should instead
+   directly test the relevant state variables, or use one of the helper
+   functions like NEED_SECONDARY_COLOR() at the bottom of context.h
+   While testing _TriangleCaps bits was fast, it was kludgey, and setting
+   the bits in the first place could be error prone.
+
 
 
 To Do
