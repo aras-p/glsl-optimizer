@@ -165,7 +165,7 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[textureset];
    struct tdfx_combine_alpha_ext alphaComb;
    struct tdfx_combine_color_ext colorComb;
-   GLfloat *envColor = texUnit->EnvColor;
+   const GLfloat *envColor = texUnit->EnvColor;
    GrCombineLocal_t localc, locala; /* fragmentColor/Alpha */
    GLint ifmt;
    tfxTexInfo *ti;
@@ -378,6 +378,9 @@ fxSetupTextureEnvNapalm_NoLock(GLcontext * ctx, GLuint textureset, GLuint tmu, G
       break;
     /* COMBINE_EXT */
     case GL_COMBINE_EXT:
+      /* [dBorca] Hack alert:
+       * INCOMPLETE!!!
+       */
       if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE)) {
          fprintf(stderr, "COMBINE_EXT: %s + %s\n",
 	      _mesa_lookup_enum_by_nr(texUnit->CombineModeRGB),

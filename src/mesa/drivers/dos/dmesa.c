@@ -1276,16 +1276,6 @@ static void dmesa_init_pointers (GLcontext *ctx)
  tnl = TNL_CONTEXT(ctx);
  tnl->Driver.RunPipeline = _tnl_run_pipeline;
 
-#if FEATURE_ARB_vertex_buffer_object
- ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
- ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
- ctx->Driver.BindBuffer = NULL;
- ctx->Driver.BufferData = _mesa_buffer_data;
- ctx->Driver.BufferSubData = _mesa_buffer_subdata;
- ctx->Driver.MapBuffer = _mesa_buffer_map;
- ctx->Driver.UnmapBuffer = NULL;
-#endif
-
  dd->SetBuffer = set_buffer;
    
  /* Install swsetup for tnl->Driver.Render.*:
