@@ -102,6 +102,9 @@
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "program.h"
+#endif
 #include "rastpos.h"
 #include "simple_list.h"
 #include "state.h"
@@ -111,20 +114,12 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "program.h"
-#endif
 #include "vtxfmt.h"
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #include "math/mathmod.h"
-#endif
-
-#if defined(MESA_TRACE)
-#include "Trace/tr_context.h"
-#include "Trace/tr_wrapper.h"
 #endif
 
 #ifdef USE_SPARC_ASM

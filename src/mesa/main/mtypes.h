@@ -39,12 +39,7 @@
 #include "config.h"		/* Hardwired parameters */
 #include "glapitable.h"
 #include "glthread.h"
-
 #include "math/m_matrix.h"	/* GLmatrix */
-
-#if defined(MESA_TRACE)
-#include "Trace/tr_context.h"
-#endif
 
 
 /**
@@ -2219,14 +2214,6 @@ struct __GLcontextRec {
 
    /** Dither disable via MESA_NO_DITHER env var */
    GLboolean NoDither;
-
-#if defined(MESA_TRACE)
-   struct _glapi_table *TraceDispatch;
-   trace_context_t     *TraceCtx;
-#else
-   void *TraceDispatch;
-   void *TraceCtx;
-#endif
 
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;
