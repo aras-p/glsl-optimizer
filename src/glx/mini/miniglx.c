@@ -420,7 +420,13 @@ SetupFBDev( Display *dpy )
    
    /* Bump size up to next supported mode.
     */
-   if (width <= 800 && height <= 600) {
+   if (width <= 720 && height <= 480) { 
+      width = 720; height = 480; 
+   } 
+   else if (width <= 960 && height <= 540) {
+      width = 960; height = 540; 
+   }  
+   else if (width <= 800 && height <= 600) {
       width = 800; height = 600; 
    }  
    else if (width <= 1024 && height <= 768) { 
@@ -480,6 +486,8 @@ SetupFBDev( Display *dpy )
       return 0;
    }
 
+   /* These should be calculated with the gtf.c program, and then we could
+      remove all this... AlanH. */
    if (dpy->VarInfo.xres == 1280 && 
        dpy->VarInfo.yres == 1024) {
       /* timing values taken from /etc/fb.modes (1280x1024 @ 75Hz) */
@@ -512,6 +520,26 @@ SetupFBDev( Display *dpy )
       dpy->VarInfo.lower_margin = 1;
       dpy->VarInfo.hsync_len = 72;
       dpy->VarInfo.vsync_len = 2;
+   }
+   else if (dpy->VarInfo.xres == 720 &&
+	    dpy->VarInfo.yres == 480) {
+      dpy->VarInfo.pixclock = 37202;
+      dpy->VarInfo.left_margin = 88;
+      dpy->VarInfo.right_margin = 16;
+      dpy->VarInfo.upper_margin = 14;
+      dpy->VarInfo.lower_margin = 1;
+      dpy->VarInfo.hsync_len = 72;
+      dpy->VarInfo.vsync_len = 3;
+   }
+   else if (dpy->VarInfo.xres == 960 &&
+	    dpy->VarInfo.yres == 540) {
+      dpy->VarInfo.pixclock = 24273;
+      dpy->VarInfo.left_margin = 128;
+      dpy->VarInfo.right_margin = 32;
+      dpy->VarInfo.upper_margin = 16;
+      dpy->VarInfo.lower_margin = 1;
+      dpy->VarInfo.hsync_len = 96;
+      dpy->VarInfo.vsync_len = 3;
    }
    else if (dpy->VarInfo.xres == 768 &&
 	    dpy->VarInfo.yres == 1024) {
