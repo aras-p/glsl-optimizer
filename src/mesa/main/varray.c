@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.41 2002/01/11 17:25:35 brianp Exp $ */
+/* $Id: varray.c,v 1.42 2002/04/04 23:59:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,7 +144,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ctx->Array.Normal.Stride = stride;
    ctx->Array.Normal.Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_NORMAL;
 
    if (ctx->Driver.NormalPointer)
       ctx->Driver.NormalPointer( ctx, type, stride, ptr );
@@ -210,7 +210,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Color.Stride = stride;
    ctx->Array.Color.Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_COLOR0;
 
    if (ctx->Driver.ColorPointer)
       ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
@@ -249,7 +249,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.FogCoord.Stride = stride;
    ctx->Array.FogCoord.Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_FOGCOORD;
 
    if (ctx->Driver.FogCoordPointer)
       ctx->Driver.FogCoordPointer( ctx, type, stride, ptr );
@@ -296,7 +296,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Index.Stride = stride;
    ctx->Array.Index.Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_INDEX;
 
    if (ctx->Driver.IndexPointer)
       ctx->Driver.IndexPointer( ctx, type, stride, ptr );
@@ -363,7 +363,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Array.SecondaryColor.Stride = stride;
    ctx->Array.SecondaryColor.Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_COLOR1;
 
    if (ctx->Driver.SecondaryColorPointer)
       ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
@@ -422,7 +422,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Array.TexCoord[texUnit].Stride = stride;
    ctx->Array.TexCoord[texUnit].Ptr = (void *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_TEXCOORD(texUnit);
 
    if (ctx->Driver.TexCoordPointer)
       ctx->Driver.TexCoordPointer( ctx, size, type, stride, ptr );
@@ -444,7 +444,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
    ctx->Array.EdgeFlag.StrideB = stride ? stride : sizeof(GLboolean);
    ctx->Array.EdgeFlag.Ptr = (GLboolean *) ptr;
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   ctx->Array.NewState |= _NEW_ARRAY_EDGEFLAG;
 
    if (ctx->Driver.EdgeFlagPointer)
       ctx->Driver.EdgeFlagPointer( ctx, stride, ptr );
@@ -480,16 +480,16 @@ void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    /* check for valid 'type' and compute StrideB right away */
    switch (type) {
       case GL_UNSIGNED_BYTE:
-         ctx->Array.Normal.StrideB = size * sizeof(GLubyte);
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLubyte);
          break;
       case GL_SHORT:
-         ctx->Array.Normal.StrideB = size * sizeof(GLshort);
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLshort);
          break;
       case GL_FLOAT:
-         ctx->Array.Normal.StrideB = size * sizeof(GLfloat);
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLfloat);
          break;
       case GL_DOUBLE:
-         ctx->Array.Normal.StrideB = size * sizeof(GLdouble);
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLdouble);
          break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerNV(type)" );
@@ -505,7 +505,8 @@ void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
    /* XXX need new flags here??? */
    ctx->NewState |= _NEW_ARRAY;
-   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
+   /* XXX probably need new flags!!!! */
+   ctx->Array.NewState |= _NEW_ARRAY_VERT_ATTRIB0;
 
    /* XXX
    if (ctx->Driver.VertexAttribdPointer)
