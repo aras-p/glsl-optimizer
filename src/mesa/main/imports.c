@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.1 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: imports.c,v 1.2 2000/09/27 03:30:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "mem.h"
+#include "types.h"
 
 
 static void *
@@ -75,7 +76,7 @@ _mesa_warning(__GLcontext *gc, char *str)
 #ifdef DEBUG
    debug = GL_TRUE;
 #else
-   if (gc->imports.getenv("MESA_DEBUG")) {
+   if (gc->imports.getenv(gc, "MESA_DEBUG")) {
       debug = GL_TRUE;
    }
    else {
