@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.15 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: imports.c,v 1.16 2002/07/01 08:26:00 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ warning(__GLcontext *gc, char *str)
 #ifdef DEBUG
    debug = GL_TRUE;
 #else
-   if (_mesa_getenv(gc "MESA_DEBUG"))
+   if (_mesa_getenv(gc , "MESA_DEBUG"))
       debug = GL_TRUE;
    else
       debug = GL_FALSE;
