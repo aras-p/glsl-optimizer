@@ -1,10 +1,10 @@
-/* $Id: s_aaline.c,v 1.17 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.18 2003/02/27 23:37:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -185,7 +185,7 @@ solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
       return 0;
    else if (z > CHAN_MAXF)
       return (GLchan) CHAN_MAXF;
-   return (GLchan) (GLint) z;
+   return (GLchan) z;
 }
 
 
