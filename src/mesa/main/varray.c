@@ -924,6 +924,12 @@ _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      /* use indices in the buffer object */
+      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+      indices = (const GLvoid **) ctx->Array.ElementArrayBufferObj->Data;
+   }
+
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
          (ctx->Exec->DrawElements)(mode, count[i], type, indices[i]);
@@ -962,6 +968,8 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   /* XXX not sure about ARB_vertex_buffer_object handling here */
 
    for ( i = 0 ; i < primcount ; i++ ) {
       if ( count[i] > 0 ) {

@@ -62,8 +62,14 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 {
    if (_tnl_hard_begin(ctx, mode)) {
       GLint i;
-      for (i = 0 ; i < count ; i++)
-	 glArrayElement( indices[i] );
+      if (ctx->Array.ElementArrayBufferObj->Name) {
+         /* use indices in the buffer object */
+         ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+         indices = (const GLuint *) ctx->Array.ElementArrayBufferObj->Data;
+      }
+      for (i = 0 ; i < count ; i++) {
+         glArrayElement( indices[i] );
+      }
       glEnd();
    }
 }
@@ -260,6 +266,12 @@ _tnl_DrawRangeElements(GLenum mode,
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(NULL, "_tnl_DrawRangeElements %d %d %d\n", start, end, count); 
 
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      /* use indices in the buffer object */
+      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+      indices = (GLuint *) ctx->Array.ElementArrayBufferObj->Data;
+   }
+
    /* Check arguments, etc.
     */
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
@@ -326,6 +338,12 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(NULL, "_tnl_DrawElements %d\n", count); 
+
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      /* use indices in the buffer object */
+      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
+      indices = (const GLvoid *) ctx->Array.ElementArrayBufferObj->Data;
+   }
 
    /* Check arguments, etc.
     */
