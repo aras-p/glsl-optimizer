@@ -1,3 +1,4 @@
+/* $XFree86: xc/lib/GL/include/GL/internal/glcore.h,v 1.7 2001/03/25 05:32:00 tsi Exp $ */
 #ifndef __gl_core_h_
 #define __gl_core_h_
 
@@ -34,18 +35,11 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/01/13 05:47:06 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/internal/glcore.h,v 1.2 2001/01/13 05:47:06 keithw Exp $
 */
 
 #ifndef XFree86LOADER
 #include <sys/types.h>
 #endif
-
-#ifdef CAPI
-#undef CAPI
-#endif
-#define CAPI
 
 #define GL_CORE_SGI  1
 #define GL_CORE_MESA 2
@@ -225,7 +219,11 @@ struct __GLdrawableBufferRec {
 
     /* exported */
     void (*freePrivate)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv);
+#ifdef __cplusplus
+    void *privatePtr;
+#else
     void *private;
+#endif
 
     /* private */
     void *other;	/* implementation private data */
@@ -280,7 +278,7 @@ struct __GLdrawablePrivateRec {
     __GLdrawableBuffer accumBuffer;
     __GLdrawableBuffer depthBuffer;
     __GLdrawableBuffer stencilBuffer;
-#if __GL_NUMBER_OF_AUX_BUFFERS > 0
+#if defined(__GL_NUMBER_OF_AUX_BUFFERS) && (__GL_NUMBER_OF_AUX_BUFFERS > 0)
     __GLdrawableBuffer *auxBuffer;
 #endif
 
@@ -316,7 +314,12 @@ struct __GLdrawablePrivateRec {
     void (*unlockDP)(__GLdrawablePrivate *glPriv);
 
     /* exported */
+    void *wsPriv;	/* pointer to the window system DrawablePrivate */
+#ifdef __cplusplus
+    void *privatePtr;
+#else
     void *private;
+#endif
     void (*freePrivate)(__GLdrawablePrivate *);
 
     /* client data */
@@ -370,6 +373,9 @@ typedef struct __GLimportsRec {
     /* Drawing surface management */
     __GLdrawablePrivate *(*getDrawablePrivate)(__GLcontext *gc);
 
+    /* Pointer to the window system context */
+    void *wscx;
+
     /* Operating system dependent data goes here */
     void *other;
 } __GLimports;
@@ -384,7 +390,7 @@ typedef struct __GLexportsRec {
     /* Context management (return GL_FALSE on failure) */
     GLboolean (*destroyContext)(__GLcontext *gc);
     GLboolean (*loseCurrent)(__GLcontext *gc);
-    GLboolean (*makeCurrent)(__GLcontext *gc, __GLdrawablePrivate *glPriv);
+    GLboolean (*makeCurrent)(__GLcontext *gc);
     GLboolean (*shareContext)(__GLcontext *gc, __GLcontext *gcShare);
     GLboolean (*copyContext)(__GLcontext *dst, const __GLcontext *src, GLuint mask);
     GLboolean (*forceCurrent)(__GLcontext *gc);
