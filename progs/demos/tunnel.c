@@ -57,7 +57,7 @@ static float v = 0.5;
 static float alpha = 90.0;
 static float beta = 90.0;
 
-static int fog = 0;
+static int fog = 1;
 static int bfcull = 1;
 static int usetex = 1;
 static int cstrip = 0;
@@ -207,7 +207,6 @@ key(unsigned char k, int x, int y)
       XMesaSetFXmode(fullscreen ? XMESA_FX_FULLSCREEN : XMESA_FX_WINDOW);
       break;
 #endif
-
    case 'j':
       joyactive = (!joyactive);
       break;
@@ -243,6 +242,7 @@ key(unsigned char k, int x, int y)
       fprintf(stderr, "Done.\n");
       break;
    }
+   glutPostRedisplay();
 }
 
 static void
@@ -442,6 +442,14 @@ draw(void)
    }
 }
 
+static void
+idle(void)
+{
+   glutPostRedisplay();
+}
+
+
+
 int
 main(int ac, char **av)
 {
@@ -490,7 +498,7 @@ main(int ac, char **av)
    glutDisplayFunc(draw);
    glutKeyboardFunc(key);
    glutSpecialFunc(special);
-   glutIdleFunc(draw);
+   glutIdleFunc(idle);
 
    glEnable(GL_BLEND);
    /*glBlendFunc(GL_SRC_ALPHA_SATURATE,GL_ONE); */
