@@ -903,8 +903,8 @@ fxIsInHardware(GLcontext * ctx)
       /* KW: This was wrong (I think) and I changed it... which doesn't mean
        * it is now correct...
        */
-      if ((ctx->_Enabled & (TEXTURE0_1D | TEXTURE0_2D | TEXTURE0_3D)) &&
-	  (ctx->_Enabled & (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D))) {
+      if ((ctx->Texture._ReallyEnabled & (TEXTURE0_1D | TEXTURE0_2D | TEXTURE0_3D)) &&
+	  (ctx->Texture._ReallyEnabled & (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D))) {
 	 /* Can't use multipass to blend a multitextured triangle - fall
 	  * back to software.
 	  */
@@ -922,9 +922,10 @@ fxIsInHardware(GLcontext * ctx)
       }
    }
    else {
-      if ((ctx->_Enabled & (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D)) ||
+      if ((ctx->Texture._ReallyEnabled & (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D)) ||
 	  /* Not very well written ... */
-	  ((ctx->_Enabled & TEXTURE0_1D) && (!(ctx->_Enabled & TEXTURE0_2D)))
+	  ((ctx->Texture._ReallyEnabled & TEXTURE0_1D) &&
+           (!(ctx->Texture._ReallyEnabled & TEXTURE0_2D)))
 	 ) {
 	 return GL_FALSE;
       }
