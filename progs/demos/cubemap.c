@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GL/glut.h"
-#include "../util/readtex.c" /* a hack */
+#include "readtex.h"
 
 
 static GLfloat Xrot = 0, Yrot = 0;
