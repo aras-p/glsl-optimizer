@@ -773,6 +773,7 @@ static void update_global_ambient( GLcontext *ctx )
    float *fcmd = (float *)RADEON_DB_STATE( glt );
 
    /* Need to do more if both emmissive & ambient are PREMULT:
+    * Hope this is not needed for MULT
     */
    if ((rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] &
        ((3 << RADEON_EMISSIVE_SOURCE_SHIFT) |
@@ -795,9 +796,6 @@ static void update_global_ambient( GLcontext *ctx )
 /* Update on change to 
  *    - light[p].colors
  *    - light[p].enabled
- *    - material,
- *    - colormaterial enabled
- *    - colormaterial bitmask
  */
 static void update_light_colors( GLcontext *ctx, GLuint p )
 {
@@ -808,25 +806,11 @@ static void update_light_colors( GLcontext *ctx, GLuint p )
    if (l->Enabled) {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
       float *fcmd = (float *)RADEON_DB_STATE( lit[p] );
-      GLuint bitmask = ctx->Light.ColorMaterialBitmask;
-      GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
       COPY_4V( &fcmd[LIT_AMBIENT_RED], l->Ambient );	 
       COPY_4V( &fcmd[LIT_DIFFUSE_RED], l->Diffuse );
       COPY_4V( &fcmd[LIT_SPECULAR_RED], l->Specular );
       
-      if (!ctx->Light.ColorMaterialEnabled)
-	 bitmask = 0;
-
-      if ((bitmask & MAT_BIT_FRONT_AMBIENT) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_AMBIENT_RED], mat[MAT_ATTRIB_FRONT_AMBIENT] );
-
-      if ((bitmask & MAT_BIT_FRONT_DIFFUSE) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_DIFFUSE_RED], mat[MAT_ATTRIB_FRONT_DIFFUSE] );
-      
-      if ((bitmask & MAT_BIT_FRONT_SPECULAR) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_SPECULAR_RED], mat[MAT_ATTRIB_FRONT_SPECULAR] );
-
       RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.lit[p] );
    }
 }
@@ -860,20 +844,23 @@ static void check_twoside_fallback( GLcontext *ctx )
 
 static void radeonColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 {
-   if (ctx->Light.ColorMaterialEnabled) {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
       GLuint light_model_ctl1 = rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL];
-      GLuint mask = ctx->Light.ColorMaterialBitmask;
 
-      /* Default to PREMULT:
-       */
       light_model_ctl1 &= ~((3 << RADEON_EMISSIVE_SOURCE_SHIFT) |
 			   (3 << RADEON_AMBIENT_SOURCE_SHIFT) |
 			   (3 << RADEON_DIFFUSE_SOURCE_SHIFT) |
 			   (3 << RADEON_SPECULAR_SOURCE_SHIFT)); 
    
+   if (ctx->Light.ColorMaterialEnabled) {
+      GLuint mask = ctx->Light.ColorMaterialBitmask;
+
       if (mask & MAT_BIT_FRONT_EMISSION) {
 	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
+			     RADEON_EMISSIVE_SOURCE_SHIFT);
+      }
+      else {
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_STATE_MULT <<
 			     RADEON_EMISSIVE_SOURCE_SHIFT);
       }
 
@@ -881,9 +868,17 @@ static void radeonColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_AMBIENT_SOURCE_SHIFT);
       }
+      else {
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_STATE_MULT <<
+			     RADEON_AMBIENT_SOURCE_SHIFT);
+      }
 	 
       if (mask & MAT_BIT_FRONT_DIFFUSE) {
 	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
+			     RADEON_DIFFUSE_SOURCE_SHIFT);
+      }
+      else {
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_STATE_MULT <<
 			     RADEON_DIFFUSE_SOURCE_SHIFT);
       }
    
@@ -891,20 +886,24 @@ static void radeonColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 	 light_model_ctl1 |= (RADEON_LM_SOURCE_VERTEX_DIFFUSE <<
 			     RADEON_SPECULAR_SOURCE_SHIFT);
       }
-   
-      if (light_model_ctl1 != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL]) {
-	 GLuint p;
-
-	 RADEON_STATECHANGE( rmesa, tcl );
-	 rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] = light_model_ctl1;      
-
-	 for (p = 0 ; p < MAX_LIGHTS; p++) 
-	    update_light_colors( ctx, p );
-	 update_global_ambient( ctx );
+      else {
+	 light_model_ctl1 |= (RADEON_LM_SOURCE_STATE_MULT <<
+			     RADEON_SPECULAR_SOURCE_SHIFT);
       }
    }
+   else {
+   /* Default to MULT:
+    */
+      light_model_ctl1 |= (RADEON_LM_SOURCE_STATE_MULT << RADEON_EMISSIVE_SOURCE_SHIFT) |
+		   (RADEON_LM_SOURCE_STATE_MULT << RADEON_AMBIENT_SOURCE_SHIFT) |
+		   (RADEON_LM_SOURCE_STATE_MULT << RADEON_DIFFUSE_SOURCE_SHIFT) |
+		   (RADEON_LM_SOURCE_STATE_MULT << RADEON_SPECULAR_SOURCE_SHIFT);
+   }
    
-   check_twoside_fallback( ctx );
+      if (light_model_ctl1 != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL]) {
+	 RADEON_STATECHANGE( rmesa, tcl );
+	 rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] = light_model_ctl1;      
+   }
 }
 
 void radeonUpdateMaterial( GLcontext *ctx )
@@ -912,7 +911,6 @@ void radeonUpdateMaterial( GLcontext *ctx )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    GLfloat *fcmd = (GLfloat *)RADEON_DB_STATE( mtl );
-   GLuint p;
    GLuint mask = ~0;
    
    if (ctx->Light.ColorMaterialEnabled)
@@ -952,11 +950,8 @@ void radeonUpdateMaterial( GLcontext *ctx )
 
    RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.mtl );
 
-   for (p = 0 ; p < MAX_LIGHTS; p++)
-      update_light_colors( ctx, p );
-
    check_twoside_fallback( ctx );
-   update_global_ambient( ctx );
+/*   update_global_ambient( ctx );*/
 }
 
 /* _NEW_LIGHT
