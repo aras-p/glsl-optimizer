@@ -1,7 +1,7 @@
-/* $Id: glxinfo.c,v 1.16 2002/07/12 15:54:02 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.17 2002/09/06 03:35:43 brianp Exp $ */
 
 /*
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
  *  -v                     print verbose information
  *  -display DisplayName   specify the X display to interogate
  *  -b                     only print ID of "best" visual on screen 0
+ *  -l                     print interesting OpenGL limits (added 5 Sep 2002)
  *
  * Brian Paul  26 January 2000
  */
@@ -148,7 +149,61 @@ print_display_info(Display *dpy)
 
 
 static void
-print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
+print_limits(void)
+{
+   struct token_name {
+      GLuint count;
+      GLenum token;
+      const char *name;
+   };
+   static const struct token_name limits[] = {
+      { 1, GL_MAX_ATTRIB_STACK_DEPTH, "GL_MAX_ATTRIB_STACK_DEPTH" },
+      { 1, GL_MAX_CLIENT_ATTRIB_STACK_DEPTH, "GL_MAX_CLIENT_ATTRIB_STACK_DEPTH" },
+      { 1, GL_MAX_CLIP_PLANES, "GL_MAX_CLIP_PLANES" },
+      { 1, GL_MAX_COLOR_MATRIX_STACK_DEPTH, "GL_MAX_COLOR_MATRIX_STACK_DEPTH" },
+      { 1, GL_MAX_CONVOLUTION_WIDTH_EXT, "GL_MAX_CONVOLUTION_WIDTH_EXT" },
+      { 1, GL_MAX_CONVOLUTION_HEIGHT_EXT, "GL_MAX_CONVOLUTION_HEIGHT_EXT" },
+      { 1, GL_MAX_ELEMENTS_VERTICES, "GL_MAX_ELEMENTS_VERTICES" },
+      { 1, GL_MAX_ELEMENTS_INDICES, "GL_MAX_ELEMENTS_INDICES" },
+      { 1, GL_MAX_EVAL_ORDER, "GL_MAX_EVAL_ORDER" },
+      { 1, GL_MAX_LIGHTS, "GL_MAX_LIGHTS" },
+      { 1, GL_MAX_LIST_NESTING, "GL_MAX_LIST_NESTING" },
+      { 1, GL_MAX_MODELVIEW_STACK_DEPTH, "GL_MAX_MODELVIEW_STACK_DEPTH" },
+      { 1, GL_MAX_NAME_STACK_DEPTH, "GL_MAX_NAME_STACK_DEPTH" },
+      { 1, GL_MAX_PIXEL_MAP_TABLE, "GL_MAX_PIXEL_MAP_TABLE" },
+      { 1, GL_MAX_PROJECTION_STACK_DEPTH, "GL_MAX_PROJECTION_STACK_DEPTH" },
+      { 1, GL_MAX_TEXTURE_STACK_DEPTH, "GL_MAX_TEXTURE_STACK_DEPTH" },
+      { 1, GL_MAX_TEXTURE_SIZE, "GL_MAX_TEXTURE_SIZE" },
+      { 1, GL_MAX_3D_TEXTURE_SIZE, "GL_MAX_3D_TEXTURE_SIZE" },
+      { 1, GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, "GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB" },
+      { 1, GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, "GL_MAX_RECTANGLE_TEXTURE_SIZE_NV" },
+      { 1, GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB" },
+      { 1, GL_MAX_TEXTURE_UNITS_ARB, "GL_MAX_TEXTURE_UNITS_ARB" },
+      { 1, GL_MAX_TEXTURE_LOD_BIAS_EXT, "GL_MAX_TEXTURE_LOD_BIAS_EXT" },
+      { 1, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" },
+      { 2, GL_MAX_VIEWPORT_DIMS, "GL_MAX_VIEWPORT_DIMS" },
+      { 2, GL_ALIASED_LINE_WIDTH_RANGE, "GL_ALIASED_LINE_WIDTH_RANGE" },
+      { 2, GL_SMOOTH_LINE_WIDTH_RANGE, "GL_SMOOTH_LINE_WIDTH_RANGE" },
+      { 2, GL_ALIASED_POINT_SIZE_RANGE, "GL_ALIASED_POINT_SIZE_RANGE" },
+      { 2, GL_SMOOTH_POINT_SIZE_RANGE, "GL_SMOOTH_POINT_SIZE_RANGE" },
+      { 0, (GLenum) 0, NULL }
+   };
+   GLint i, max[2];
+   printf("OpenGL limits:\n");
+   for (i = 0; limits[i].count; i++) {
+      glGetIntegerv(limits[i].token, max);
+      if (glGetError() == GL_NONE) {
+         if (limits[i].count == 1)
+            printf("    %s = %d\n", limits[i].name, max[0]);
+         else /* XXX fix if we ever query something with more than 2 values */
+            printf("    %s = %d, %d\n", limits[i].name, max[0], max[1]);
+      }
+   }
+}
+
+
+static void
+print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
 {
    Window win;
    int attribSingle[] = {
@@ -247,6 +302,8 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
       printf("OpenGL version string: %s\n", glVersion);
       printf("OpenGL extensions:\n");
       print_extension_list(glExtensions);
+      if (limits)
+         print_limits();
 #ifdef DO_GLU
       printf("glu version: %s\n", gluVersion);
       printf("glu extensions:\n");
@@ -627,6 +684,7 @@ usage(void)
    printf("\t-h: This information.\n");
    printf("\t-i: Force an indirect rendering context.\n");
    printf("\t-b: Find the 'best' visual and print it's number.\n");
+   printf("\t-l: Print interesting OpenGLl imits.\n");
 }
 
 
@@ -638,6 +696,7 @@ main(int argc, char *argv[])
    int numScreens, scrnum;
    InfoMode mode = Normal;
    GLboolean findBest = GL_FALSE;
+   GLboolean limits = GL_FALSE;
    Bool allowDirect = True;
    int i;
 
@@ -657,6 +716,9 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-i") == 0) {
          allowDirect = False;
+      }
+      else if (strcmp(argv[i], "-l") == 0) {
+         limits = GL_TRUE;
       }
       else if (strcmp(argv[i], "-h") == 0) {
          usage();
@@ -686,7 +748,7 @@ main(int argc, char *argv[])
       print_display_info(dpy);
       for (scrnum = 0; scrnum < numScreens; scrnum++) {
          mesa_hack(dpy, scrnum);
-         print_screen_info(dpy, scrnum, allowDirect);
+         print_screen_info(dpy, scrnum, allowDirect, limits);
          printf("\n");
          print_visual_info(dpy, scrnum, mode);
          if (scrnum + 1 < numScreens)
