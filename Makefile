@@ -33,7 +33,11 @@ realclean:
 
 install:
 	@echo "Installing"
-	$(TOP)/bin/installmesa 
+	$(TOP)/bin/installmesa
+
+# DirectFBGL module installation
+linux-directfb-install:
+	cd src/mesa/drivers/directfb && $(MAKE) install
 
 # If there's no current configuration file
 $(TOP)/configs/current:
@@ -78,6 +82,7 @@ linux \
 linux-alpha \
 linux-alpha-static \
 linux-debug \
+linux-directfb \
 linux-dri \
 linux-dri-x86 \
 linux-dri-x86-64 \
@@ -201,6 +206,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
+	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]		\
+	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile		\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\

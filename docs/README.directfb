@@ -1,0 +1,28 @@
+                         
+                         Mesa DirectFB Information
+
+
+Requirements
+============
+
+  To build Mesa with DirectFB (DirectFBGL) support you need:
+     - DirectFB at least 0.9.21 (http://directfb.org)
+     - pkg-config at least 0.9 (http://pkgconfig.sf.net)
+
+
+Installation
+============
+  Run
+     
+     make linux-directfb
+
+  to build Mesa and DirectFBGL module,
+
+     make install
+
+  to install OpenGL libraries and
+
+     make linux-directfb-install
+
+  to install DirectFBGL module in the proper location.
+

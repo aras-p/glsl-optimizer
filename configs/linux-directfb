@@ -1,0 +1,29 @@
+# Configuration for DirectFB
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-directfb
+
+# Compiler and flags
+CC  = gcc
+CXX = g++
+
+CFLAGS   = -Wall -O3 -ffast-math -fPIC -std=c99 -D_GNU_SOURCE -D_POSIX_SOURCE -D_SVID_SOURCE \
+         -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -DPTHREADS
+
+CXXFLAGS = -Wall -O3 -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE   
+
+HAVE_X86 = $(shell uname -m | grep 'i[3-6]86' >/dev/null && echo yes)
+ifeq ($(HAVE_X86), yes)
+     CFLAGS   += -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
+     CXXFLAGS += -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
+     ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+endif
+
+# Directories
+SRC_DIRS     = mesa glu
+DRIVER_DIRS  = directfb
+PROGRAM_DIRS = # disabled
+
+# Library/program dependencies
+GL_LIB_DEPS  = -lm -lpthread
