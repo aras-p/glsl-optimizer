@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.30 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_span.c,v 1.31 2002/02/04 15:59:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,11 +25,12 @@
  */
 
 
-/*
- * pixel span rasterization:
- * These functions implement the rasterization pipeline.
+/**
+ * \file vpstate.c
+ * \brief Span processing functions used by all rasterization functions.
+ * This is where all the per-fragment tests are performed
+ * \author Brian Paul
  */
-
 
 #include "glheader.h"
 #include "colormac.h"
@@ -50,7 +51,7 @@
 #include "s_texture.h"
 
 
-/*
+/**
  * Init span's Z interpolation values to the RasterPos Z.
  * Used during setup for glDraw/CopyPixels.
  */
@@ -66,7 +67,7 @@ _mesa_span_default_z( GLcontext *ctx, struct sw_span *span )
 }
 
 
-/*
+/**
  * Init span's fog interpolation values to the RasterPos fog.
  * Used during setup for glDraw/CopyPixels.
  */
@@ -82,7 +83,7 @@ _mesa_span_default_fog( GLcontext *ctx, struct sw_span *span )
 }
 
 
-/*
+/**
  * Init span's color or index interpolation values to the RasterPos color.
  * Used during setup for glDraw/CopyPixels.
  */
@@ -382,7 +383,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
 }
 
 
-/*
+/**
  * Apply the current polygon stipple pattern to a span of pixels.
  */
 static void
@@ -410,7 +411,7 @@ stipple_polygon_span( GLcontext *ctx, struct sw_span *span )
 }
 
 
-/*
+/**
  * Clip a pixel span to the current buffer/window boundaries:
  * DrawBuffer->_Xmin, _Xmax, _Ymin, _Ymax.  This will accomplish
  * window clipping and scissoring.
@@ -479,7 +480,7 @@ clip_span( GLcontext *ctx, struct sw_span *span )
 
 
 
-/*
+/**
  * Draw to more than one color buffer (or none).
  */
 static void
@@ -533,7 +534,7 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
 }
 
 
-/*
+/**
  * Draw to more than one RGBA color buffer (or none).
  * All fragment operations, up to (but not) blending/logicop should
  * have been done first.
@@ -620,7 +621,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 
 
 
-/*
+/**
  * This function may modify any of the array values in the span.
  * span->interpMask and span->arrayMask may be changed but will be restored
  * to their original values before returning.
@@ -679,14 +680,14 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
          interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
-         if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
          }
       }
       else {
          ASSERT(ctx->Depth.Test);
-         if (_mesa_depth_test_span(ctx, span) == 0) {
+         if (!_mesa_depth_test_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
          }
@@ -782,7 +783,7 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
 }
 
 
-/*
+/**
  * This function may modify any of the array values in the span.
  * span->interpMask and span->arrayMask may be changed but will be restored
  * to their original values before returning.
@@ -992,7 +993,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
 }
 
 
-/*
+/**
  * Add specular color to base color.  This is used only when
  * GL_LIGHT_MODEL_COLOR_CONTROL = GL_SEPARATE_SPECULAR_COLOR.
  */
@@ -1018,7 +1019,7 @@ add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 }
 
 
-/*
+/**
  * This function may modify any of the array values in the span.
  * span->interpMask and span->arrayMask may be changed but will be restored
  * to their original values before returning.
@@ -1225,7 +1226,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
 
 
 
-/*
+/**
  * Read RGBA pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */
@@ -1277,9 +1278,7 @@ _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
 }
 
 
-
-
-/*
+/**
  * Read CI pixels from frame buffer.  Clipping will be done to prevent
  * reading ouside the buffer's boundaries.
  */

@@ -1,10 +1,10 @@
-/* $Id: s_depth.h,v 1.4 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_depth.h,v 1.5 2002/02/04 15:59:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,16 +37,10 @@ extern GLvoid *
 _mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
 
 
-extern GLuint
-_old_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-		      const GLdepth z[], GLubyte mask[] );
+
 extern GLuint
 _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span);
 
-extern void
-_mesa_depth_test_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         const GLdepth z[], GLubyte mask[] );
 
 
 extern void
@@ -65,7 +59,6 @@ _mesa_alloc_depth_buffer( GLcontext* ctx );
 
 extern void
 _mesa_clear_depth_buffer( GLcontext* ctx );
-
 
 
 #endif
