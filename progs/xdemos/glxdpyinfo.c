@@ -1030,7 +1030,6 @@ int main (argc, argv)
     char *displayname = NULL;		/* server to contact */
     int i;				/* temp variable:  iterator */
     Bool multibuf = False;
-    int mbuf_event_base, mbuf_error_base;
 
     ProgramName = argv[0];
 
