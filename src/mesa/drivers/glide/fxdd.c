@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.92 2002/10/04 19:10:10 brianp Exp $ */
+/* $Id: fxdd.c,v 1.93 2002/10/29 15:03:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -721,7 +721,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    }
 
    fxMesa->state = malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
-   fxMesa->fogTable = malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES) *
+   fxMesa->fogTable = (GrFog_t *) malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES) *
 			     sizeof(GrFog_t));
 
    if (!fxMesa->state || !fxMesa->fogTable) {

@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.66 2002/10/17 16:29:17 brianp Exp $ */
+/* $Id: glapi.c,v 1.67 2002/10/29 15:03:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -546,7 +546,7 @@ generate_entrypoint(GLuint functionOffset)
       0xe8, 0x00, 0x00, 0x00, 0x00,
       0xff, 0xa0, 0x00, 0x00, 0x00, 0x00
    };
-   unsigned char *code = malloc(sizeof(insn_template));
+   unsigned char *code = (unsigned char *) malloc(sizeof(insn_template));
    unsigned int next_insn;
    if (code) {
       memcpy(code, insn_template, sizeof(insn_template));
@@ -583,7 +583,7 @@ generate_entrypoint(GLuint functionOffset)
 	   0x01000000	/*  nop						  */
    };
 #endif
-   unsigned int *code = malloc(sizeof(insn_template));
+   unsigned int *code = (unsigned int *) malloc(sizeof(insn_template));
    unsigned long glapi_addr = (unsigned long) &_glapi_Dispatch;
    if (code) {
       memcpy(code, insn_template, sizeof(insn_template));
