@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.7 2000/02/25 03:55:40 keithw Exp $ */
+/* $Id: fog.c,v 1.8 2000/03/07 17:40:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -214,7 +214,8 @@ static void check_fog_coords( GLcontext *ctx, struct gl_pipeline_stage *d )
    }
 }
 
-void gl_make_fog_coords( struct vertex_buffer *VB )
+
+static void gl_make_fog_coords( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
 
