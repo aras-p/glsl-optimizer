@@ -411,7 +411,7 @@ static swrast_tri_func dmesa_choose_tri_function (GLcontext *ctx)
 
  if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
  if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
- if (ctx->Texture._ReallyEnabled)   return (swrast_tri_func) NULL;
+ if (ctx->Texture._EnabledUnits)    return (swrast_tri_func) NULL;
 
  if (ctx->Light.ShadeModel==GL_SMOOTH
      && swrast->_RasterMask==DEPTH_BIT

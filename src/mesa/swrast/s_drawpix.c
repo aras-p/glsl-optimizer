@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.36 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.37 2002/10/08 23:59:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -629,7 +629,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
-   if (ctx->Texture._ReallyEnabled)
+   if (ctx->Texture._EnabledUnits)
       _mesa_span_default_texcoords(ctx, &span);
 
    if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
@@ -737,7 +737,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
-   if (ctx->Texture._ReallyEnabled)
+   if (ctx->Texture._EnabledUnits)
       _mesa_span_default_texcoords(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0

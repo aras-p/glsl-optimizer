@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.93 2002/10/02 21:44:08 brianp Exp $ */
+/* $Id: state.c,v 1.94 2002/10/08 23:59:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -772,7 +772,6 @@ update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
 
-   ctx->Texture._ReallyEnabled = 0;  /* XXX obsolete */
    ctx->Texture._EnabledUnits = 0;
    ctx->Texture._GenFlags = 0;
    ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
@@ -854,15 +853,8 @@ update_texture_state( GLcontext *ctx )
 	 continue;
       }
 
-      /* Texture._ReallyEnabled records the enable state for all units in
-       * one word.
-       */
-      {
-         GLuint flag = texUnit->_ReallyEnabled << (unit * NUM_TEXTURE_TARGETS);
-	 ctx->Texture._ReallyEnabled |= flag;  /* XXX obsolete field! */
-         if (texUnit->_ReallyEnabled)
-            ctx->Texture._EnabledUnits |= (1 << unit);
-      }
+      if (texUnit->_ReallyEnabled)
+         ctx->Texture._EnabledUnits |= (1 << unit);
 
       if (texUnit->TexGenEnabled) {
 	 if (texUnit->TexGenEnabled & S_BIT) {

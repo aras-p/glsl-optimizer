@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.93 2002/10/04 19:10:08 brianp Exp $ */
+/* $Id: mtypes.h,v 1.94 2002/10/08 23:59:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -964,12 +964,6 @@ struct gl_texture_attrib {
    GLuint CurrentUnit;	          /* Active texture unit */
 
    GLuint _EnabledUnits;        /* one bit set for each really-enabled unit */
-   /* XXX this field will go away, use _EnabledUnits instead! */
-   GLuint _ReallyEnabled;     /* enables for all texture units: */
-                             /* = (Unit[0]._ReallyEnabled << 0) | */
-                             /*   (Unit[1]._ReallyEnabled << 4) | */
-	                     /*   (Unit[2]._ReallyEnabled << 8) | etc... */
-
    GLuint _GenFlags;  /* for texgen */
    GLuint _TexGenEnabled;	
    GLuint _TexMatEnabled;
