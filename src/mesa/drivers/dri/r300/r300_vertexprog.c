@@ -897,6 +897,8 @@ static void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->translated=GL_FALSE;
+	case GL_FRAGMENT_PROGRAM_ARB:
+		return ;
 		break;
 	}
 	
