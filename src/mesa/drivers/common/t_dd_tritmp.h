@@ -1,4 +1,4 @@
-/* $Id: t_dd_tritmp.h,v 1.6 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_dd_tritmp.h,v 1.7 2001/03/13 17:39:56 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,8 +48,8 @@ Brian Paul   All Rights Reserved.
  * HAVE_SPEC: Vertices have secondary rgba values.
  *
  * VERT_X(v): Alias for vertex x value.
- * VERT_Y(v): Alias for vertex x value.
- * VERT_Z(v): Alias for vertex x value.
+ * VERT_Y(v): Alias for vertex y value.
+ * VERT_Z(v): Alias for vertex z value.
  * DEPTH_SCALE: Scale for offset.
  *
  * VERTEX: Hardware vertex type.
