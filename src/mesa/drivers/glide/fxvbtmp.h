@@ -35,10 +35,10 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint tmu0_source = fxMesa->tmu_source[0];
    GLuint tmu1_source = fxMesa->tmu_source[1];
-   GLfloat(*tmu0_data)[4];
-   GLfloat(*tmu1_data)[4];
-   GLubyte(*color)[4];
-   GLfloat(*proj)[4] = VB->ProjectedClipPtr->data;
+   GLfloat (*tmu0_data)[4];
+   GLfloat (*tmu1_data)[4];
+   GLfloat (*color)[4];
+   GLfloat (*proj)[4] = VB->ProjectedClipPtr->data;
    fxVertex *v = &verts[start];
    GLfloat sscale0 = fxMesa->s0scale;
    GLfloat tscale0 = fxMesa->t0scale;
@@ -54,8 +54,8 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
    if (IND & SETUP_TMU1)
       tmu1_data = VB->TexCoordPtr[tmu1_source]->data;
 
-   if (IND & SETUP_RGBA)
-      color = VB->ColorPtr[0]->data;
+   if (IND & SETUP_RGBA) 
+      color = VB->ColorPtr[0]->Ptr;
 
    if (VB->ClipOrMask) {
       for (i = start; i < end; i++, v++) {
@@ -80,10 +80,10 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
 	       }
 	    }
 	    if (IND & SETUP_RGBA) {
-	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.r, color[i][0]);
-	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.g, color[i][1]);
-	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.b, color[i][2]);
-	       UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.a, color[i][3]);
+	       v->v.r = color[i][0] * 255.0;
+	       v->v.g = color[i][1] * 255.0;
+	       v->v.b = color[i][2] * 255.0;
+	       v->v.a = color[i][3] * 255.0;
 	    }
 	    if (IND & SETUP_TMU0) {
 	       v->v.tmuvtx[0].sow = sscale0 * tmu0_data[i][0] * v->v.oow;
@@ -118,10 +118,10 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
 	    }
 	 }
 	 if (IND & SETUP_RGBA) {
-	    UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.r, color[i][0]);
-	    UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.g, color[i][1]);
-	    UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.b, color[i][2]);
-	    UBYTE_COLOR_TO_FLOAT_255_COLOR2(v->v.a, color[i][3]);
+	    v->v.r = color[i][0] * 255.0;
+	    v->v.g = color[i][1] * 255.0;
+	    v->v.b = color[i][2] * 255.0;
+	    v->v.a = color[i][3] * 255.0;
 	 }
 	 if (IND & SETUP_TMU0) {
 	    v->v.tmuvtx[0].sow = sscale0 * tmu0_data[i][0] * v->v.oow;
