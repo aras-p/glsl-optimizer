@@ -83,7 +83,9 @@ class glXItemFactory(gl_XML.glItemFactory):
 class glXEnumFunction:
 	def __init__(self, name):
 		self.name = name
-		
+		self.mode = 0
+		self.sig = None
+
 		# "enums" is a set of lists.  The element in the set is the
 		# value of the enum.  The list is the list of names for that
 		# value.  For example, [0x8126] = {"POINT_SIZE_MIN",
@@ -115,12 +117,23 @@ class glXEnumFunction:
 
 
 	def signature( self ):
-		sig = ""
-		for i in self.count:
-			for e in self.count[i]:
-				sig += "%04x,%u," % (e, i)
+		if self.sig == None:
+			self.sig = ""
+			for i in self.count:
+				for e in self.count[i]:
+					self.sig += "%04x,%u," % (e, i)
 	
-		return sig;
+		return self.sig
+
+
+	def set_mode( self, mode ):
+		"""Mark an enum-function as a 'set' function."""
+
+		self.mode = mode
+
+
+	def is_set( self ):
+		return self.mode
 
 
 	def PrintUsingTable(self):
@@ -248,6 +261,7 @@ class glXEnum(gl_XML.glEnum):
 
 			if not self.context.glx_enum_functions.has_key( n ):
 				f = glXEnumFunction( n )
+				f.set_mode( mode )
 				self.context.glx_enum_functions[ f.name ] = f
 
 			self.context.glx_enum_functions[ n ].append( c, self.value, self.name )

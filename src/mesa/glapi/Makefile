@@ -57,10 +57,10 @@ glapitable.h: $(COMMON) gl_table.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m init_c > ../../glx/x11/indirect_init.c
 
 ../../glx/x11/indirect_size.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h > ../../glx/x11/indirect_size.h
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-set > ../../glx/x11/indirect_size.h
 
 ../../glx/x11/indirect_size.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c > ../../glx/x11/indirect_size.c
+	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c --only-set > ../../glx/x11/indirect_size.c
 
 clean:
 	rm -f *~ *.pyo
