@@ -57,6 +57,22 @@
 
 #include "savagedma.h"
 
+#include "xmlpool.h"
+
+/* Configuration
+ */
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+        DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 3;
+
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /* USE_NEW_INTERFACE */
@@ -202,6 +218,10 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    } 
       
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&savageScreen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
+
 #if 0
    savageDDFastPathInit();
    savageDDTrifuncInit();
@@ -217,7 +237,9 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
 {
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
 
-   
+   /* free all option information */
+   driDestroyOptionInfo (&savageScreen->optionCache);
+
    Xfree(savageScreen);
    sPriv->private = NULL;
 }
@@ -287,10 +309,24 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    }
    driContextPriv->driverPrivate = imesa;
 
+   /* Parse configuration files */
+   driParseConfigFiles (&imesa->optionCache, &savageScreen->optionCache,
+                        sPriv->myNum, "savage");
+
+   imesa->texture_depth = driQueryOptioni (&imesa->optionCache,
+					   "texture_depth");
+   if (imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+       imesa->texture_depth = ( savageScreen->cpp == 4 ) ?
+	   DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
+
    if (savageScreen->chipset >= S3_SAVAGE4)
        ctx->Const.MaxTextureUnits = 2;
    else
        ctx->Const.MaxTextureUnits = 1;
+   if (driQueryOptioni(&imesa->optionCache, "texture_units") <
+       ctx->Const.MaxTextureUnits)
+       ctx->Const.MaxTextureUnits =
+	   driQueryOptioni(&imesa->optionCache, "texture_units");
    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 

@@ -44,6 +44,8 @@
 
 #include "swrast/swrast.h"
 
+#include "xmlpool.h"
+
 /* Size 1, 2 and 4 images are packed into the last subtile. Each image
  * is repeated to fill a 4x4 pixel area. The figure below shows the
  * layout of those 4x4 pixel areas in the 8x8 subtile.
@@ -325,8 +327,10 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			   GLenum format, GLenum type )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   const GLboolean do32bpt = GL_FALSE;
-   const GLboolean force16bpt = GL_FALSE;
+   const GLboolean do32bpt =
+       ( imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+   const GLboolean force16bpt =
+       ( imesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
    const GLboolean isSavage4 = (imesa->savageScreen->chipset >= S3_SAVAGE4);
    (void) format;
    (void) type;

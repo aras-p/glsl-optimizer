@@ -46,6 +46,8 @@
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "xmlpool.h"
+
 static void savageBlendFunc_s4(GLcontext *);
 static void savageBlendFunc_s3d(GLcontext *);
 
@@ -1619,7 +1621,9 @@ static void savageDDInitState_s4( savageContextPtr imesa )
     imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
 
     imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn= GL_TRUE;
-    imesa->regs.s4.drawCtrl1.ni.ditherEn=GL_TRUE;
+    imesa->regs.s4.drawCtrl1.ni.ditherEn = (
+	driQueryOptioni(&imesa->optionCache, "color_reduction") ==
+	DRI_CONF_COLOR_REDUCTION_DITHER) ? GL_TRUE : GL_FALSE;
     imesa->regs.s4.drawCtrl1.ni.cullMode             = BCM_None;
 
     imesa->regs.s4.zBufCtrl.ni.stencilRefVal      = 0x00;
@@ -1684,7 +1688,9 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
     imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
 
-    imesa->regs.s3d.drawCtrl.ni.ditherEn          = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.ditherEn =  (
+	driQueryOptioni(&imesa->optionCache, "color_reduction") ==
+	DRI_CONF_COLOR_REDUCTION_DITHER) ? GL_TRUE : GL_FALSE;
     imesa->regs.s3d.drawCtrl.ni.cullMode          = BCM_None;
 
     imesa->LcsCullMode = BCM_None;

@@ -32,6 +32,8 @@
 #include "dri_util.h"
 #include "mtypes.h"
 
+#include "xmlconfig.h"
+
 typedef struct {
    drm_handle_t handle;
    drmSize size;
@@ -76,6 +78,9 @@ typedef struct {
   drmBufMapPtr  bufs;
   int use_copy_buf;
   unsigned int sarea_priv_offset;
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 } savageScreenPrivate;
 
 

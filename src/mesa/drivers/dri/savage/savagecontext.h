@@ -44,6 +44,8 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #include "savagetex.h"
 #include "savagedma.h"
 
+#include "xmlconfig.h"
+
 /* Reasons to fallback on all primitives.
  */
 #define SAVAGE_FALLBACK_TEXTURE        0x1
@@ -259,6 +261,11 @@ struct savage_context_t {
     volatile GLuint *eventTag1;
     GLuint shadowCounter;
     GLboolean shadowStatus;
+
+    /* Configuration cache
+     */
+    driOptionCache optionCache;
+    int texture_depth;
 };
 
 #define SAVAGE_CONTEXT(ctx) ((savageContextPtr)(ctx->DriverCtx))
