@@ -839,9 +839,9 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    }
 
    tObj = ctx->Texture.Unit[0]._Current;
-   if (ctx->Texture.Unit[0]._ReallyEnabled != TEXTURE_2D_BIT ||
-       tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-      /* 1D or 3D texturing enabled, or texture border - fallback */
+   if ((ctx->Texture.Unit[0]._ReallyEnabled & ~(TEXTURE_1D_BIT|TEXTURE_2D_BIT))
+       || tObj->Image[0][tObj->BaseLevel]->Border > 0) {
+      /* 3D texturing enabled, or texture border - fallback */
       FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
       return;
    }
@@ -1109,9 +1109,9 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
 
    tObj = ctx->Texture.Unit[1]._Current;
 
-   if (ctx->Texture.Unit[1]._ReallyEnabled != TEXTURE_2D_BIT ||
-       tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-      /* 1D or 3D texturing enabled, or texture border - fallback */
+   if ((ctx->Texture.Unit[1]._ReallyEnabled & ~(TEXTURE_1D_BIT|TEXTURE_2D_BIT))
+       || tObj->Image[0][tObj->BaseLevel]->Border > 0) {
+      /* 3D texturing enabled, or texture border - fallback */
       FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
       return;
    }
@@ -1302,9 +1302,9 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     }
 
     tObj = ctx->Texture.Unit[0]._Current;
-    if (ctx->Texture.Unit[0]._ReallyEnabled != TEXTURE_2D_BIT ||
-	tObj->Image[0][tObj->BaseLevel]->Border > 0) {
-	/* 1D or 3D texturing enabled, or texture border - fallback */
+    if ((ctx->Texture.Unit[0]._ReallyEnabled & ~(TEXTURE_1D_BIT|TEXTURE_2D_BIT))
+	|| tObj->Image[0][tObj->BaseLevel]->Border > 0) {
+	/* 3D texturing enabled, or texture border - fallback */
 	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
 	return;
     }
@@ -1495,6 +1495,60 @@ static void savageTexEnv( GLcontext *ctx, GLenum target,
    } 
 }
 
+static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
+			      GLint internalFormat,
+			      GLint width, GLint border,
+			      GLenum format, GLenum type, const GLvoid *pixels,
+			      const struct gl_pixelstore_attrib *packing,
+			      struct gl_texture_object *texObj,
+			      struct gl_texture_image *texImage )
+{
+   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   if (t) {
+      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+   } else {
+      t = savageAllocTexObj(texObj);
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
+         return;
+      }
+   }
+   _mesa_store_teximage1d( ctx, target, level, internalFormat,
+			   width, border, format, type,
+			   pixels, packing, texObj, texImage );
+   t->dirty_images |= (1 << level);
+   SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
+}
+
+static void savageTexSubImage1D( GLcontext *ctx, 
+				 GLenum target,
+				 GLint level,	
+				 GLint xoffset,
+				 GLsizei width,
+				 GLenum format, GLenum type,
+				 const GLvoid *pixels,
+				 const struct gl_pixelstore_attrib *packing,
+				 struct gl_texture_object *texObj,
+				 struct gl_texture_image *texImage )
+{
+   savageTextureObjectPtr t = (savageTextureObjectPtr) texObj->DriverData;
+   assert( t ); /* this _should_ be true */
+   if (t) {
+      savageSwapOutTexObj( SAVAGE_CONTEXT(ctx), t );
+   } else {
+      t = savageAllocTexObj(texObj);
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
+         return;
+      }
+   }
+   _mesa_store_texsubimage1d(ctx, target, level, xoffset, width, 
+			     format, type, pixels, packing, texObj,
+			     texImage);
+   t->dirty_images |= (1 << level);
+   SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
+}
+
 static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			      GLint internalFormat,
 			      GLint width, GLint height, GLint border,
@@ -1538,7 +1592,7 @@ static void savageTexSubImage2D( GLcontext *ctx,
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
          return;
       }
    }
@@ -1556,7 +1610,7 @@ static void savageTexParameter( GLcontext *ctx, GLenum target,
    savageTextureObjectPtr t = (savageTextureObjectPtr) tObj->DriverData;
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
-   if (!t || target != GL_TEXTURE_2D)
+   if (!t || (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D))
       return;
 
    switch (pname) {
@@ -1586,7 +1640,8 @@ static void savageBindTexture( GLcontext *ctx, GLenum target,
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
    
-   assert( (target != GL_TEXTURE_2D) || (tObj->DriverData != NULL) );
+   assert( (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D) ||
+	   (tObj->DriverData != NULL) );
 
    imesa->new_state |= SAVAGE_NEW_TEXTURE;
 }
@@ -1638,6 +1693,8 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
 {
    functions->TexEnv = savageTexEnv;
    functions->ChooseTextureFormat = savageChooseTextureFormat;
+   functions->TexImage1D = savageTexImage1D;
+   functions->TexSubImage1D = savageTexSubImage1D;
    functions->TexImage2D = savageTexImage2D;
    functions->TexSubImage2D = savageTexSubImage2D;
    functions->BindTexture = savageBindTexture;
