@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.17 2001/02/20 17:04:52 brianp Exp $
+# $Id: Makefile.X11,v 1.18 2001/03/22 15:24:15 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -18,7 +18,8 @@ OSMESA_LIBS = -L$(LIBDIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = bounce \
+PROGS = anisotropic \
+	bounce \
 	clearspd \
 	cubemap \
 	drawpix \
@@ -100,4 +101,3 @@ exec: $(PROGS)
 
 
 include ../Make-config
-
