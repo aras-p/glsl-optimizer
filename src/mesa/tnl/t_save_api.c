@@ -68,6 +68,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
+#include "glheader.h"
 #include "context.h"
 #include "dlist.h"
 #include "enums.h"

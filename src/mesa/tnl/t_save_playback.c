@@ -26,6 +26,7 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "glheader.h"
 #include "context.h"
 #include "imports.h"
 #include "mtypes.h"

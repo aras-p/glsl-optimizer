@@ -31,6 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "glheader.h"
 #include "context.h"
 #include "macros.h"
 #include "vtxfmt.h"

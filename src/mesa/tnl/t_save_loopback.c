@@ -27,6 +27,7 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "glheader.h"
 #include "context.h"
 #include "enums.h"
 #include "glapi.h"
