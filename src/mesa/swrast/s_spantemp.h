@@ -1,4 +1,4 @@
-/* $Id: s_spantemp.h,v 1.1 2002/11/13 16:54:01 brianp Exp $ */
+/* $Id: s_spantemp.h,v 1.2 2002/11/28 15:56:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -135,13 +135,12 @@ NAME(write_rgba_pixels)( const GLcontext *ctx, GLuint n,
    SPAN_VARS
 #endif
    GLuint i;
-   if (mask) {
-      for (i = 0; i < n; i++) {
-         if (mask[i]) {
-            INIT_PIXEL_PTR(pixel, x[i], y[i]);
-            STORE_RGBA_PIXEL(pixel, rgba[i][RCOMP], rgba[i][GCOMP],
-                             rgba[i][BCOMP], rgba[i][ACOMP]);
-         }
+   ASSERT(mask);
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         INIT_PIXEL_PTR(pixel, x[i], y[i]);
+         STORE_RGBA_PIXEL(pixel, rgba[i][RCOMP], rgba[i][GCOMP],
+                          rgba[i][BCOMP], rgba[i][ACOMP]);
       }
    }
 }
@@ -155,13 +154,12 @@ NAME(write_monorgba_pixels)( const GLcontext *ctx,
    SPAN_VARS
 #endif
    GLuint i;
-   if (mask) {
-      for (i = 0; i < n; i++) {
-         if (mask[i]) {
-            INIT_PIXEL_PTR(pixel, x[i], y[i]);
-            STORE_RGBA_PIXEL(pixel, color[RCOMP], color[GCOMP],
-                             color[BCOMP], color[ACOMP]);
-         }
+   ASSERT(mask);
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         INIT_PIXEL_PTR(pixel, x[i], y[i]);
+         STORE_RGBA_PIXEL(pixel, color[RCOMP], color[GCOMP],
+                          color[BCOMP], color[ACOMP]);
       }
    }
 }
