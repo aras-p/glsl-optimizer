@@ -1,4 +1,4 @@
-/* $Id: texcyl.c,v 1.4 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: texcyl.c,v 1.5 2001/03/27 17:35:26 brianp Exp $ */
 
 /*
  * Textured cylinder demo: lighting, texturing, reflection mapping.
@@ -12,6 +12,9 @@
 
 /*
  * $Log: texcyl.c,v $
+ * Revision 1.5  2001/03/27 17:35:26  brianp
+ * set initial window pos
+ *
  * Revision 1.4  2000/12/24 22:53:54  pesco
  * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
  * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
@@ -293,6 +296,7 @@ int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
    glutInitWindowSize( 400, 400 );
+   glutInitWindowPosition( 0, 0 );
 
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
 
