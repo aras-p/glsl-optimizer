@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.16 2001/06/15 15:22:08 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.17 2001/09/14 17:23:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1025,7 +1025,7 @@ static void
 _tnl_EvalPoint1( GLint i )
 {
    GET_IMMEDIATE;
-   EVALPOINT1( IM, i );
+   EVALPOINT1( IM, (GLfloat) i );
 }
 
 
@@ -1033,7 +1033,7 @@ static void
 _tnl_EvalPoint2( GLint i, GLint j )
 {
    GET_IMMEDIATE;
-   EVALPOINT2( IM, i, j );
+   EVALPOINT2( IM, (GLfloat) i, (GLfloat) j );
 }
 
 
