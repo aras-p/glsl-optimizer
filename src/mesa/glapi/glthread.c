@@ -1,4 +1,4 @@
-/* $Id: glthread.c,v 1.5 2000/02/10 21:54:06 brianp Exp $ */
+/* $Id: glthread.c,v 1.6 2000/02/11 21:38:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -189,7 +189,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  * Be sure that you compile using the Multithreaded runtime, otherwise
  * bad things will happen.
  */  
-#ifdef WIN32
+#ifdef WIN32_THREADS
 
 unsigned long
 _glthread_GetID(void)
@@ -239,7 +239,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
    }
 }
 
-#endif /* WIN32 */
+#endif /* WIN32_THREADS */
 
 
 

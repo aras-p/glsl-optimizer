@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.4 2000/02/10 21:54:06 brianp Exp $ */
+/* $Id: glthread.h,v 1.5 2000/02/11 21:38:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -146,7 +146,7 @@ typedef mutex_t _glthread_Mutex;
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
-#ifdef WIN32
+#ifdef WIN32_THREADS
 #include <windows.h>
 
 typedef struct {
@@ -164,7 +164,7 @@ typedef CRITICAL_SECTION _glthread_Mutex;
 #define _glthread_LOCK_MUTEX(name)  (void) name
 #define _glthread_UNLOCK_MUTEX(name)  (void) name
 
-#endif /* WIN32 */
+#endif /* WIN32_THREADS */
 
 
 
