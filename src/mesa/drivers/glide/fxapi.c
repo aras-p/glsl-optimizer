@@ -395,7 +395,7 @@ fxMesaCreateContext(GLuint win,
   */
  /* number of SLI units and AA Samples per chip */
  sliaa = 0;
- switch (voodoo->type) {
+ switch (fxMesa->type) {
         case GR_SSTTYPE_VOODOO:
         case GR_SSTTYPE_SST96:
         case GR_SSTTYPE_Banshee:
@@ -648,9 +648,10 @@ fxMesaCreateContext(GLuint win,
                       fxMesa->snapVertices ? "" : "no ");
    }
 
-  sprintf(fxMesa->rendererString, "Mesa %s v0.60 %s",
-                           grGetString(GR_RENDERER),
-                           grGetString(GR_HARDWARE));
+  sprintf(fxMesa->rendererString, "Mesa %s v0.61 %s%s",
+          grGetString(GR_RENDERER),
+          grGetString(GR_HARDWARE),
+          ((fxMesa->type < GR_SSTTYPE_Voodoo4) && (voodoo->numChips > 1)) ? " SLI" : "");
 
    fxMesa->glVis = _mesa_create_visual(GL_TRUE,		/* RGB mode */
 				       doubleBuffer,

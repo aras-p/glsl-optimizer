@@ -1,12 +1,12 @@
 #include <windows.h>
 
-#define PRODNAME                "Mesa 5.1"
+#define PRODNAME                "Mesa 6.x"
 #define CONTACTSTR              "http://www.mesa3d.org"
-#define HWSTR                   "3dfx Voodoo^2, Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
+#define HWSTR                   "3dfx Voodoo Graphics, Voodoo^2, Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
 #define COPYRIGHTSTR            "Copyright \251 Brian E. Paul"
 
-#define VERSIONSTR              "5.1.0.1"
-#define MANVERSION              5
+#define VERSIONSTR              "6.1.0.1"
+#define MANVERSION              6
 #define MANREVISION             1
 #define BUILD_NUMBER            1
 
