@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.3 1999/11/24 18:49:44 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.4 1999/11/25 17:38:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,8 +123,9 @@ struct xmesa_visual {
 struct xmesa_context {
    GLcontext *gl_ctx;		/* the core library context */
    XMesaVisual xm_visual;	/* Describes the buffers */
-   XMesaBuffer xm_buffer;	/* current framebuffer */
-   XMesaBuffer xm_read_buffer;	/* current framebuffer */
+   XMesaBuffer xm_buffer;	/* current draw framebuffer */
+   XMesaBuffer xm_read_buffer;	/* current read framebuffer */
+   GLboolean use_read_buffer;	/* read from the xm_read_buffer/ */
 
    XMesaDisplay *display;	/* == xm_visual->display */
    GLboolean swapbytes;		/* Host byte order != display byte order? */
@@ -476,24 +477,24 @@ static int const kernel1[16] = {
 /*
  * Converts a GL window Y coord to an X window Y coord:
  */
-#define FLIP(Y)  (xmesa->xm_buffer->bottom-(Y))
+#define FLIP(BUFFER, Y)  ((BUFFER)->bottom-(Y))
 
 
 /*
  * Return the address of a 1, 2 or 4-byte pixel in the back XImage:
  * X==0 is left, Y==0 is bottom.
  */
-#define PIXELADDR1( X, Y )  \
-      ( xmesa->xm_buffer->ximage_origin1 - (Y) * xmesa->xm_buffer->ximage_width1 + (X) )
+#define PIXELADDR1( BUFFER, X, Y )  \
+   ( (BUFFER)->ximage_origin1 - (Y) * (BUFFER)->ximage_width1 + (X) )
 
-#define PIXELADDR2( X, Y )  \
-      ( xmesa->xm_buffer->ximage_origin2 - (Y) * xmesa->xm_buffer->ximage_width2 + (X) )
+#define PIXELADDR2( BUFFER, X, Y )  \
+   ( (BUFFER)->ximage_origin2 - (Y) * (BUFFER)->ximage_width2 + (X) )
 
-#define PIXELADDR3( X, Y )  \
-      ( xmesa->xm_buffer->ximage_origin3 - (Y) * xmesa->xm_buffer->ximage_width3 + (X) )
+#define PIXELADDR3( BUFFER, X, Y )  \
+   ( (BUFFER)->ximage_origin3 - (Y) * (BUFFER)->ximage_width3 + (X) )
 
-#define PIXELADDR4( X, Y )  \
-      ( xmesa->xm_buffer->ximage_origin4 - (Y) * xmesa->xm_buffer->ximage_width4 + (X) )
+#define PIXELADDR4( BUFFER, X, Y )  \
+   ( (BUFFER)->ximage_origin4 - (Y) * (BUFFER)->ximage_width4 + (X) )
 
 
 
