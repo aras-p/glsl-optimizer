@@ -48,6 +48,7 @@
 
 #include <GL/internal/glcore.h>
 #include <xf86drm.h>
+#include <drm.h>
 
 /**
  * \name DRI interface structures
@@ -64,7 +65,6 @@ typedef struct __DRIdriverRec   __DRIdriver;
 typedef struct __DRIframebufferRec __DRIframebuffer;
 typedef struct __DRIversionRec     __DRIversion;
 typedef unsigned long __DRIid;
-struct _XF86DRIClipRect;
 /*@}*/
 
 
@@ -89,7 +89,7 @@ typedef int (* PFNGLXGETINTERNALVERSIONPROC) ( void );
  *
  * \sa __glXWindowExists, glXGetProcAddress
  */
-typedef Bool (* PFNGLXWINDOWEXISTSPROC) (Display *dpy, GLXDrawable draw);
+typedef Bool (* PFNGLXWINDOWEXISTSPROC) (Display *dpy, __DRIid draw);
 
 /**
  * Type of a pointer to \c __glXGetUST, as returned by \c glXGetProcAddress.
@@ -144,11 +144,11 @@ typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
  * \sa __glXGetDrawableInfo, glXGetProcAddress
  */
 typedef Bool (* PFNGLXGETDRAWABLEINFOPROC) ( Display *dpy, int scrn,
-    Drawable draw, unsigned int * index, unsigned int * stamp,
+    __DRIid draw, unsigned int * index, unsigned int * stamp,
     int * x, int * y, int * width, int * height,
-    int * numClipRects, struct _XF86DRIClipRect ** pClipRects,
+    int * numClipRects, drm_clip_rect_t ** pClipRects,
     int * backX, int * backY,
-    int * numBackClipRects, struct _XF86DRIClipRect ** pBackClipRects );
+    int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
 /*@}*/
 
 
@@ -260,13 +260,13 @@ struct __DRIscreenRec {
      * drawable dependent methods.
      */
     void *(*createNewDrawable)(Display *dpy, const __GLcontextModes *modes,
-			       GLXDrawable draw, __DRIdrawable *pdraw,
+			       __DRIid draw, __DRIdrawable *pdraw,
 			       int renderType, const int *attrs);
 
     /**
      * Method to return a pointer to the DRI drawable data.
      */
-    __DRIdrawable *(*getDrawable)(Display *dpy, GLXDrawable draw,
+    __DRIdrawable *(*getDrawable)(Display *dpy, __DRIid draw,
 				  void *drawablePrivate);
 
     /**
