@@ -1,10 +1,10 @@
-/* $Id: teximage.c,v 1.124 2002/10/30 19:58:58 brianp Exp $ */
+/* $Id: teximage.c,v 1.125 2003/01/08 16:24:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1342,10 +1342,15 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if (dimensions == 2) {
-      if (ctx->Extensions.ARB_texture_cube_map) {
-         if ((target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
-              target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) &&
-             target != GL_TEXTURE_2D) {
+      if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+          target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+         if (!ctx->Extensions.ARB_texture_cube_map) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage2D(target)" );
+            return GL_TRUE;
+         }
+      }
+      else if (target == GL_TEXTURE_RECTANGLE_NV) {
+         if (!ctx->Extensions.NV_texture_rectangle) {
             _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage2D(target)" );
             return GL_TRUE;
          }
@@ -1354,8 +1359,10 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage2D(target)" );
          return GL_TRUE;
       }
-      if (target == GL_PROXY_TEXTURE_2D && target == GL_TEXTURE_2D)
+      if (target == GL_TEXTURE_2D)
          maxLevels = ctx->Const.MaxTextureLevels;
+      else if (target == GL_TEXTURE_RECTANGLE_NV)
+         maxLevels = 1;
       else
          maxLevels = ctx->Const.MaxCubeTextureLevels;
    }
