@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.9 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: ac_import.c,v 1.10 2001/03/17 18:04:54 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -366,18 +366,18 @@ static void import_edgeflag( GLcontext *ctx,
 
    /* Limited choices at this stage:
     */
-   ASSERT(type == GL_FLOAT);
-   ASSERT(stride == sizeof(GLfloat) || stride == 0);
+   ASSERT(type == GL_UNSIGNED_BYTE);
+   ASSERT(stride == sizeof(GLubyte) || stride == 0);
 
-   _math_trans_1f( (GLfloat *) to->Ptr,
-		   from->Ptr,
-		   from->StrideB,
-		   from->Type,
-		   0,
-		   ac->count - ac->start);
+   _math_trans_1ub( (GLubyte *) to->Ptr,
+		    from->Ptr,
+		    from->StrideB,
+		    from->Type,
+		    0,
+		    ac->count - ac->start);
 
-   to->StrideB = sizeof(GLfloat);
-   to->Type = GL_FLOAT;
+   to->StrideB = sizeof(GLubyte);
+   to->Type = GL_UNSIGNED_BYTE;
    ac->IsCached.EdgeFlag = GL_TRUE;
 }
 
