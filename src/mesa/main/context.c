@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.111 2000/12/08 00:20:15 brianp Exp $ */
+/* $Id: context.c,v 1.112 2000/12/09 20:35:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1079,6 +1079,11 @@ init_attrib_groups( GLcontext *ctx )
       ctx->Pixel.ConvolutionBorderMode[i] = GL_REDUCE;
       ASSIGN_4V(ctx->Pixel.ConvolutionFilterScale[i], 1.0, 1.0, 1.0, 1.0);
       ASSIGN_4V(ctx->Pixel.ConvolutionFilterBias[i], 0.0, 0.0, 0.0, 0.0);
+   }
+   for (i = 0; i < MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_WIDTH * 4; i++) {
+      ctx->Convolution1D.Filter[i] = 0.0;
+      ctx->Convolution2D.Filter[i] = 0.0;
+      ctx->Separable2D.Filter[i] = 0.0;
    }
    ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
