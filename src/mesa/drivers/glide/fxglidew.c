@@ -1,4 +1,4 @@
-/* $Id: fxglidew.c,v 1.2 1999/09/17 03:07:28 tjump Exp $ */
+/* $Id: fxglidew.c,v 1.3 1999/10/05 19:26:54 miklos Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -161,6 +161,22 @@ void FX_grAADrawPoint(GrVertex *a)
   grDrawPoint(a);
 }
 
+#if FX_USE_PARGB
+void FX_setupGrVertexLayout(void)
+{
+   grReset(GR_VERTEX_PARAMETER);
+   
+   grCoordinateSpace(GR_WINDOW_COORDS);
+   grVertexLayout(GR_PARAM_XY,  	GR_VERTEX_X_OFFSET << 2, 	GR_PARAM_ENABLE);
+   grVertexLayout(GR_PARAM_PARGB, 	GR_VERTEX_PARGB_OFFSET << 2, 	GR_PARAM_ENABLE);
+   grVertexLayout(GR_PARAM_Q,		GR_VERTEX_OOW_OFFSET << 2,	GR_PARAM_ENABLE);
+   grVertexLayout(GR_PARAM_Z,           GR_VERTEX_OOZ_OFFSET << 2, 	GR_PARAM_ENABLE);
+   grVertexLayout(GR_PARAM_ST0, 	GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
+   grVertexLayout(GR_PARAM_Q0,  	GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE); 
+   grVertexLayout(GR_PARAM_ST1, 	GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+   grVertexLayout(GR_PARAM_Q1,  	GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
+}
+#else /* FX_USE_PARGB */
 void FX_setupGrVertexLayout(void)
 {
    grReset(GR_VERTEX_PARAMETER);
@@ -177,6 +193,7 @@ void FX_setupGrVertexLayout(void)
    grVertexLayout(GR_PARAM_ST1, 	GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
    grVertexLayout(GR_PARAM_Q1,  	GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
 }
+#endif
 
 void FX_grHints(GrHint_t hintType, FxU32 hintMask)
 {
@@ -225,7 +242,8 @@ int FX_grSstQueryHardware(GrHwConfiguration *config)
          config->SSTs[i].sstBoard.VoodooConfig.sliDetect = FXFALSE;
       for (j = 0; j < config->SSTs[i].sstBoard.VoodooConfig.nTexelfx; j++)
       {
-      	 grGet(GR_MEMORY_TMU,4,(void*)&(config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[i].tmuRam));
+      	 grGet(GR_MEMORY_TMU,4,(void*)&(config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam));
+      	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRam /= 1024*1024;
       }
    }
    return 1;
