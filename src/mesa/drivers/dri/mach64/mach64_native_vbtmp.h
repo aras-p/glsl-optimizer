@@ -164,7 +164,6 @@ static void TAG(emit)( GLcontext *ctx,
 	 STRIDE_4F(col, start * col_stride);
 #endif
 	 STRIDE_4F(coord, start * coord_stride);
-	 /* coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);*/
    }
 
    for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
@@ -185,25 +184,25 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_PTEX
 	 if (tc1_size == 4) {
 #ifdef MACH64_PREMULT_TEXCOORDS
-	    LE32_OUT_FLOAT( p++, w*tc1[0][0] );			/* VERTEX_?_SECONDARY_S */
-	    LE32_OUT_FLOAT( p++, w*tc1[0][1] );			/* VERTEX_?_SECONDARY_T */
-	    LE32_OUT_FLOAT( p++, w*tc1[0][3] );			/* VERTEX_?_SECONDARY_W */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][0] );		/* VERTEX_?_SECONDARY_S */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][1] );		/* VERTEX_?_SECONDARY_T */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][3] );		/* VERTEX_?_SECONDARY_W */
 #else /* !MACH64_PREMULT_TEXCOORDS */
 	    float rhw = 1.0 / tc1[0][3];
-	    LE32_OUT_FLOAT( p++, rhw*tc1[0][0] );		/* VERTEX_?_SECONDARY_S */
-	    LE32_OUT_FLOAT( p++, rhw*tc1[0][1] );		/* VERTEX_?_SECONDARY_T */
-	    LE32_OUT_FLOAT( p++, w*tc1[0][3] );			/* VERTEX_?_SECONDARY_W */	
+	    LE32_OUT_FLOAT( p++, rhw*tc1[0][0] );	/* VERTEX_?_SECONDARY_S */
+	    LE32_OUT_FLOAT( p++, rhw*tc1[0][1] );	/* VERTEX_?_SECONDARY_T */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][3] );		/* VERTEX_?_SECONDARY_W */	
 #endif /* !MACH64_PREMULT_TEXCOORDS */
 	 } else {
 #endif /* DO_PTEX */
 #ifdef MACH64_PREMULT_TEXCOORDS
-	    LE32_OUT_FLOAT( p++, w*tc1[0][0] );			/* VERTEX_?_SECONDARY_S */
-	    LE32_OUT_FLOAT( p++, w*tc1[0][1] );			/* VERTEX_?_SECONDARY_T */
-	    LE32_OUT_FLOAT( p++, w );				/* VERTEX_?_SECONDARY_W */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][0] );		/* VERTEX_?_SECONDARY_S */
+	    LE32_OUT_FLOAT( p++, w*tc1[0][1] );		/* VERTEX_?_SECONDARY_T */
+	    LE32_OUT_FLOAT( p++, w );			/* VERTEX_?_SECONDARY_W */
 #else /* !MACH64_PREMULT_TEXCOORDS */
-	    LE32_OUT_FLOAT( p++, tc1[0][0] );			/* VERTEX_?_SECONDARY_S */
-	    LE32_OUT_FLOAT( p++, tc1[0][1] );			/* VERTEX_?_SECONDARY_T */
-	    LE32_OUT_FLOAT( p++, w );				/* VERTEX_?_SECONDARY_W */
+	    LE32_OUT_FLOAT( p++, tc1[0][0] );		/* VERTEX_?_SECONDARY_S */
+	    LE32_OUT_FLOAT( p++, tc1[0][1] );		/* VERTEX_?_SECONDARY_T */
+	    LE32_OUT_FLOAT( p++, w );			/* VERTEX_?_SECONDARY_W */
 #endif /* !MACH64_PREMULT_TEXCOORDS */
 #if DO_PTEX
 	 }
@@ -246,22 +245,21 @@ static void TAG(emit)( GLcontext *ctx,
 #endif /* !DO_TEX0 */
 
 #if DO_SPEC
-	 ((GLubyte *)p)[0] = spec[0][2];			/* VERTEX_?_SPEC_B */
-	 ((GLubyte *)p)[1] = spec[0][1];			/* VERTEX_?_SPEC_G */
-	 ((GLubyte *)p)[2] = spec[0][0];			/* VERTEX_?_SPEC_R */
+	 ((GLubyte *)p)[0] = spec[0][2];	/* VERTEX_?_SPEC_B */
+	 ((GLubyte *)p)[1] = spec[0][1];	/* VERTEX_?_SPEC_G */
+	 ((GLubyte *)p)[2] = spec[0][0];	/* VERTEX_?_SPEC_R */
 	 STRIDE_4F(spec, spec_stride);
 #endif
 #if DO_FOG
-	 ((GLubyte *)p)[3] = fog[0][0] * 255.0;			/* VERTEX_?_SPEC_A */
+	 ((GLubyte *)p)[3] = fog[0][0] * 255.0;		/* VERTEX_?_SPEC_A */
 	 fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
-	 /*  STRIDE_F(fog, fog_stride); */
 #endif
 	 p++;
 	    
 #if DO_XYZW
 	 if (mask[i] == 0) {
 	    /* unclipped */
-	    LE32_OUT( p++, VIEWPORT_Z( coord[0][2] ) );		/* VERTEX_?_Z */
+	    LE32_OUT( p++, VIEWPORT_Z( coord[0][2] ) );	/* VERTEX_?_Z */
 	 } else {
 #endif
 	    p++;
@@ -287,11 +285,11 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (mask[i] == 0) {
 	    /* unclipped */
 	    LE32_OUT( p,
-		      (VIEWPORT_X( coord[i][0] ) << 16) |	/* VERTEX_?_X */
-		      (VIEWPORT_Y( coord[i][1] ) & 0xffff) );	/* VERTEX_?_Y */
+		      (VIEWPORT_X( coord[0][0] ) << 16) |	/* VERTEX_?_X */
+		      (VIEWPORT_Y( coord[0][1] ) & 0xffff) );	/* VERTEX_?_Y */
 	    
 	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	       fprintf( stderr, "%s: vert (importable) %d: %.2f %.2f %.2f %x\n",
+	       fprintf( stderr, "%s: vert %d: %.2f %.2f %.2f %x\n",
 			__FUNCTION__,
 			i,
 			(LE32_IN( p ) >> 16)/4.0,
@@ -302,8 +300,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 }
 #endif
 #if DO_TEX1 || DO_TEX0 || DO_XYZW
-	 STRIDE_4F(coord, start * coord_stride);
-	 /*	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);*/
+	 STRIDE_4F(coord, coord_stride);
 #endif
 	 
 	 assert( p + 1 - (CARD32 *)v == 10 );
