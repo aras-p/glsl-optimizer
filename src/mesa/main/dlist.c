@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.27 2000/02/02 19:17:57 brianp Exp $ */
+/* $Id: dlist.c,v 1.28 2000/02/02 19:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,7 +40,6 @@
 #include "copypix.h"
 #include "cva.h"
 #include "depth.h"
-#include "dispatch.h"
 #include "enable.h"
 #include "enums.h"
 #include "eval.h"

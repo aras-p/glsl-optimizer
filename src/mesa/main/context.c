@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.38 2000/02/02 19:16:46 brianp Exp $ */
+/* $Id: context.c,v 1.39 2000/02/02 19:50:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "context.h"
 #include "cva.h"
 #include "depth.h"
-#include "dispatch.h"
 #include "dlist.h"
 #include "eval.h"
 #include "enums.h"
