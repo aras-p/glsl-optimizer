@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.8 2001/04/06 16:26:41 alanh Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.9 2001/04/07 16:16:58 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -417,10 +417,39 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 {
    GLuint j, nr;
 
-   if (HAVE_QUAD_STRIPS && 0) {
-      /* TODO.
-       */
-   } else if (HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
+   if (HAVE_QUAD_STRIPS) {
+      LOCAL_VARS;
+      GLuint j, nr;
+      int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
+      int currentsz;
+
+      INIT(GL_QUAD_STRIP);
+      NEW_PRIMITIVE();
+
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
+
+      if (currentsz < 8) {
+	 FIRE_VERTICES();
+	 currentsz = dmasz;
+      }
+
+      if (flags & PRIM_PARITY) {
+	    EMIT_VERTS( ctx, start, 1 );
+	    currentsz--;
+      }
+
+      dmasz -= (dmasz & 2);
+      currentsz -= (currentsz & 2);
+
+      for (j = start ; j < count - 3; j += nr - 2 ) {
+	 nr = MIN2( currentsz, count - j );
+	 EMIT_VERTS( ctx, j, nr );
+	 currentsz = dmasz;
+      }
+
+      FINISH;
+
+   } else if (HAVE_ELTS && HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
       if (TAG(emit_elt_verts)( ctx, start, count )) {
 	 LOCAL_VARS;
 	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -517,7 +546,28 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 				     GLuint count,
 				     GLuint flags )
 {
-   if (HAVE_QUADS && 0) {
+   if (HAVE_QUADS) {
+      LOCAL_VARS;
+      int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS()/4) * 4;
+      int currentsz = (GET_CURRENT_VB_MAX_VERTS()/4) * 4;
+      GLuint j, nr;
+
+      INIT(GL_QUADS);
+
+      /* Emit whole number of quads in total.  dmasz is already a multiple
+       * of 4.
+       */
+      count -= (count-start)%4;
+
+      if (currentsz < 8)
+         currentsz = dmasz;
+
+      for (j = start; j < count; j += nr) {
+         nr = MIN2( currentsz, count - j );
+         EMIT_VERTS( ctx, j, nr );
+         currentsz = dmasz;
+      }
+      FINISH;
    } else if (TAG(emit_elt_verts)( ctx, start, count )) {
       /* Hardware doesn't have a quad primitive type -- try to
        * simulate it using indexed vertices and the triangle
