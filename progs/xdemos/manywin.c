@@ -1,4 +1,4 @@
-/* $Id: manywin.c,v 1.2 2000/12/02 20:33:05 brianp Exp $ */
+/* $Id: manywin.c,v 1.3 2001/01/23 23:45:05 brianp Exp $ */
 
 /*
  * Create N GLX windows/contexts and render to them in round-robin
@@ -164,6 +164,18 @@ AddHead(const char *displayName, const char *name)
 
 
 static void
+DestroyHeads(void)
+{
+   int i;
+   for (i = 0; i < NumHeads; i++) {
+      XDestroyWindow(Heads[i].Dpy, Heads[i].Win);
+      glXDestroyContext(Heads[i].Dpy, Heads[i].Context);
+      XCloseDisplay(Heads[i].Dpy);
+   }
+}
+
+
+static void
 Redraw(struct head *h)
 {
    if (!glXMakeCurrent(h->Dpy, h->Win, h->Context)) {
@@ -311,7 +323,7 @@ main(int argc, char *argv[])
          char name[100];
          struct head *h;
          sprintf(name, "%d", i);
-         h = AddHead(":0", name);
+         h = AddHead(NULL, name);
          if (h) {
             PrintInfo(h);
          }
@@ -319,5 +331,6 @@ main(int argc, char *argv[])
    }
 
    EventLoop();
+   DestroyHeads();
    return 0;
 }
