@@ -84,27 +84,25 @@ static const char * const card_extensions[] =
 void
 WaitEngIdle (sisContextPtr smesa)
 {
-   GLuint cEngineState;
+   GLuint engineState;
 
    do {
-      cEngineState = MMIO_READ(REG_CommandQueue);
-   } while ((cEngineState & SiS_EngIdle) != SiS_EngIdle);
+      engineState = MMIO_READ(REG_CommandQueue);
+   } while ((engineState & SiS_EngIdle) != SiS_EngIdle);
 }
 
 void
 Wait2DEngIdle (sisContextPtr smesa)
 {
-   GLuint cEngineState;
+   GLuint engineState;
 
    do {
-      cEngineState = MMIO_READ(REG_CommandQueue);
-   } while ((cEngineState & SiS_EngIdle2d) != SiS_EngIdle2d);
+      engineState = MMIO_READ(REG_CommandQueue);
+   } while ((engineState & SiS_EngIdle2d) != SiS_EngIdle2d);
 }
 
 /* To be called from mWait3DCmdQueue.  Separate function for profiling
  * purposes, and speed doesn't matter because we're spinning anyway.
- * This function should use usleeps to release cpu probably, but I have yet
- * to see it get called.
  */
 void
 WaitingFor3dIdle(sisContextPtr smesa, int wLen)

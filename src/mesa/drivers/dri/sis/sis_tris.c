@@ -870,7 +870,6 @@ sisMakeRoomAGP( sisContextPtr smesa, GLint num )
       sisUpdateAGP( smesa );
       while (size > AGP_SpaceLeft) {
          /* Spin until space is available. */
-         usleep(1);
          AGP_ReadPtr = (GLfloat *)((long)MMIO_READ(REG_3D_AGPCmBase) -
             (long)smesa->AGPCmdBufAddr + (long)smesa->AGPCmdBufBase);
          sisUpdateAGP( smesa );

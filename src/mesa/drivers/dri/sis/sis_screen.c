@@ -162,7 +162,7 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
    ENGPACKET stEngPacket;
   
    while ((*smesa->FrameCountPtr) - MMIO_READ(0x8a2c) > SIS_MAX_FRAME_LENGTH)
-      usleep(1);
+      ;
 
    LOCK_HARDWARE();
 
