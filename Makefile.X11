@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.115 2004/03/18 16:02:27 brianp Exp $
+# $Id: Makefile.X11,v 1.116 2004/03/25 01:51:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -79,6 +79,7 @@ default:
 	@echo "  make linux-x86-static-nothreads  for Linux with x86 optimizations, static, no threads"
 	@echo "  make linux-x86-64-static   for Linux with x86_64 optimizations, static libs"
 	@echo "  make linux-x86-64-static-nothreads   for Linux with x86_64 optimizations, static libs, no threads"
+	@echo "  make linux-x86-opteron     for Linux on Opteron"
 	@echo "  make linux-ggi             for Linux with libggi driver"
 	@echo "  make linux-x86-ggi         for Linux with libggi driver and x86 optimizations"
 	@echo "  make linux-glide           for Linux with 3Dfx Glide driver"
@@ -142,7 +143,7 @@ hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 hpux11-32 hpux11-32-nothreads \
 irix6-o32 irix6-o32-nothreads \
 linux linux-debug linux-static \
-linux-x86 linux-x86-sse \
+linux-x86 linux-x86-sse linux-x86-opteron \
 linux-x86-static linux-x86-debug linux-x86-static-nothreads \
 linux-icc linux-icc-static linux-icc-static-nothreads \
 linux-ia64-ecc-static linux-ia64-ecc-static-nothreads \

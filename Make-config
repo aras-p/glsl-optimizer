@@ -786,6 +786,24 @@ linux-x86-sse:
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
 	"ASM_SOURCES = $(X86_SOURCES)"
 
+linux-x86-opteron:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = gcc" \
+	"CXX = g++" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"GLUT_CFLAGS = -fexceptions" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib64 -lX11 -lXext -lm -lpthread" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm" \
+	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib64 -lXt -lX11" \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm"
+
 linux-icc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
