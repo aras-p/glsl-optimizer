@@ -740,8 +740,12 @@ _glapi_get_proc_offset(const char *funcName)
 const GLvoid *
 _glapi_get_proc_address(const char *funcName)
 {
-   /* search extension functions first */
    GLuint i;
+
+   if (funcName[0] != 'g' || funcName[1] != 'l')
+      return NULL;
+
+   /* search extension functions first */
    for (i = 0; i < NumExtEntryPoints; i++) {
       if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
          return ExtEntryTable[i].Address;
