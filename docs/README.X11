@@ -163,7 +163,7 @@ X Display Modes:
 	$ export MESA_RGB_VISUAL="PseudoColor 8"
 
 
-Double buffering (X11 only):
+Double buffering:
    Mesa can use either an X Pixmap or XImage as the backbuffer when in
    double buffer mode.  Using GLX, the default is to use an XImage.  The
    MESA_BACK_BUFFER environment variable can override this.  The valid
@@ -177,7 +177,7 @@ Double buffering (X11 only):
    your application.  
 
 
-Colormaps (X11 only):
+Colormaps:
    When using Mesa directly or with GLX, it's up to the application writer
    to create a window with an appropriate colormap.  The aux, tk, and GLUT
    toolkits try to minimize colormap "flashing" by sharing colormaps when
@@ -192,7 +192,7 @@ Colormaps (X11 only):
    variable MESA_PRIVATE_CMAP.  The value isn't significant.
 
 
-Gamma correction (X11 only):
+Gamma correction:
    To compensate for the nonlinear relationship between pixel values
    and displayed intensities, there is a gamma correction feature in
    Mesa.  Some systems, such as Silicon Graphics, support gamma
@@ -229,6 +229,15 @@ Gamma correction (X11 only):
 
    For more information about gamma correction see:
    http://www.inforamp.net/~poynton/notes/colour_and_gamma/GammaFAQ.html
+
+
+Overlay Planes
+
+   Overlay planes in the frame buffer are supported by Mesa but require
+   hardware and X server support.  To determine if your X server has
+   overlay support you can test for the SERVER_OVERLAY_VISUALS property:
+
+	xprop -root | grep SERVER_OVERLAY_VISUALS
 
 
 HPCR glClear(GL_COLOR_BUFFER_BIT) dithering
@@ -304,4 +313,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.1 1998/07/29 01:19:15 brianp Exp $
+$Id: README.X11,v 3.2 1998/10/03 12:48:50 brianp Exp $
