@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.26 2001/07/27 19:09:58 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.27 2001/07/28 21:04:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,9 +107,11 @@ static void fixup_normal_lengths( struct immediate *IM )
       dest[i] = len;
    } 
 
-   while (!(flags[i] & (VERT_NORM|VERT_END_VB))) {
-      dest[i] = len;
-      i++;
+   if (i < IM->Count) {
+      while (!(flags[i] & (VERT_NORM|VERT_END_VB))) {
+	 dest[i] = len;
+	 i++;
+      }
    }
 }
 
