@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.7 1999/10/20 11:45:39 holger Exp $
+# $Id: Make-config,v 1.8 1999/10/22 10:46:06 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -1267,7 +1267,7 @@ linux-elf-debug:
 	"CC = gcc" \
 	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -L/usr/local/glide/lib -lglide2x -lm" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # for profiling on Linux systems
