@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.20 2003/08/22 23:28:03 idr Exp $
+# $Id: APIspec,v 1.21 2003/11/24 22:30:32 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -8421,6 +8421,149 @@ param		pname		GLenum
 param		params		GLuint *
 category	GL_ARB_occlusion_query
 offset		707
+
+
+
+# OpenGL 1.5 functions
+
+name		BindBuffer
+alias		BindBufferARB
+return		void
+param		target		GLenum
+param		buffer		GLuint
+category	1.5
+
+name		BufferData
+alias		BufferDataARB
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+param		usage		GLenum
+category	1.5
+
+name		BufferSubData
+alias		BufferSubDataARB
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+category	1.5
+
+name		DeleteBuffers
+alias		DeleteBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		const GLuint *
+category	1.5
+
+name		GenBuffers
+alias		GenBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		GLuint *
+category	1.5
+
+name		GetBufferParameteriv
+alias		GetBufferParameterivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.5
+
+name		GetBufferPointerv
+alias		GetBufferPointervARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLvoid **
+category	1.5
+
+name		GetBufferSubData
+alias		GetBufferSubDataARB
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		void *
+category	1.5
+
+name		IsBuffer
+alias		IsBufferARB
+return		GLboolean
+param		buffer		GLuint
+category	1.5
+
+name		MapBuffer
+alias		MapBufferARB
+return		void *
+param		target		GLenum
+param		access		GLenum
+category	1.5
+
+name		UnmapBuffer
+alias		UnmapBufferARB
+return		GLboolean
+param		target		GLenum
+category	1.5
+
+
+name		GenQueries
+alias		GenQueriesARB
+return		void
+param		n		GLsizei
+param		ids		GLuint *
+category	1.5
+
+name		DeleteQueries
+alias		DeleteQueriesARB
+return		void
+param		n		GLsizei
+param		ids		const GLuint *
+category	1.5
+
+name		IsQuery
+alias		IsQueryARB
+return		GLboolean
+param		id		GLuint
+category	1.5
+
+name		BeginQuery
+alias		BeginQueryARB
+return		void
+param		target		GLenum
+param		id		GLuint
+category	1.5
+
+name		EndQuery
+alias		EndQueryARB
+return		void
+param		target		GLenum
+category	1.5
+
+name		GetQueryiv
+alias		GetQueryivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.5
+
+name		GetQueryObjectiv
+alias		GetQueryObjectivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_occlusion_query
+
+name		GetQueryObjectuiv
+alias		GetQueryObjectuivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLuint *
+category	GL_ARB_occlusion_query
 
 
 

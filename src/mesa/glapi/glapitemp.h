@@ -4672,6 +4672,101 @@ KEYWORD1 void KEYWORD2 NAME(GetQueryObjectuivARB)(GLuint id, GLenum pname, GLuin
    DISPATCH(GetQueryObjectuivARB, (id, pname, params), (F, "glGetQueryObjectuivARB(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(BindBuffer)(GLenum target, GLuint buffer)
+{
+   DISPATCH(BindBufferARB, (target, buffer), (F, "glBindBuffer(0x%x, %d);\n", target, buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BufferData)(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage)
+{
+   DISPATCH(BufferDataARB, (target, size, data, usage), (F, "glBufferData(0x%x, %p, %p, 0x%x);\n", target, (const void *) size, (const void *) data, usage));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BufferSubData)(GLenum target, GLsizeiptrARB size, const GLvoid * data)
+{
+   DISPATCH(BufferSubDataARB, (target, size, data), (F, "glBufferSubData(0x%x, %p, %p);\n", target, (const void *) size, (const void *) data));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteBuffers)(GLsizei n, const GLuint * buffer)
+{
+   DISPATCH(DeleteBuffersARB, (n, buffer), (F, "glDeleteBuffers(%d, %p);\n", n, (const void *) buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GenBuffers)(GLsizei n, GLuint * buffer)
+{
+   DISPATCH(GenBuffersARB, (n, buffer), (F, "glGenBuffers(%d, %p);\n", n, (const void *) buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferParameteriv)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetBufferParameterivARB, (target, pname, params), (F, "glGetBufferParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferPointerv)(GLenum target, GLenum pname, GLvoid ** params)
+{
+   DISPATCH(GetBufferPointervARB, (target, pname, params), (F, "glGetBufferPointerv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferSubData)(GLenum target, GLsizeiptrARB size, void * data)
+{
+   DISPATCH(GetBufferSubDataARB, (target, size, data), (F, "glGetBufferSubData(0x%x, %p, %p);\n", target, (const void *) size, (const void *) data));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsBuffer)(GLuint buffer)
+{
+   RETURN_DISPATCH(IsBufferARB, (buffer), (F, "glIsBuffer(%d);\n", buffer));
+}
+
+KEYWORD1 void * KEYWORD2 NAME(MapBuffer)(GLenum target, GLenum access)
+{
+   RETURN_DISPATCH(MapBufferARB, (target, access), (F, "glMapBuffer(0x%x, 0x%x);\n", target, access));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(UnmapBuffer)(GLenum target)
+{
+   RETURN_DISPATCH(UnmapBufferARB, (target), (F, "glUnmapBuffer(0x%x);\n", target));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GenQueries)(GLsizei n, GLuint * ids)
+{
+   DISPATCH(GenQueriesARB, (n, ids), (F, "glGenQueries(%d, %p);\n", n, (const void *) ids));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteQueries)(GLsizei n, const GLuint * ids)
+{
+   DISPATCH(DeleteQueriesARB, (n, ids), (F, "glDeleteQueries(%d, %p);\n", n, (const void *) ids));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsQuery)(GLuint id)
+{
+   RETURN_DISPATCH(IsQueryARB, (id), (F, "glIsQuery(%d);\n", id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BeginQuery)(GLenum target, GLuint id)
+{
+   DISPATCH(BeginQueryARB, (target, id), (F, "glBeginQuery(0x%x, %d);\n", target, id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EndQuery)(GLenum target)
+{
+   DISPATCH(EndQueryARB, (target), (F, "glEndQuery(0x%x);\n", target));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryiv)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetQueryivARB, (target, pname, params), (F, "glGetQueryiv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjectiv)(GLuint id, GLenum pname, GLint * params)
+{
+   DISPATCH(GetQueryObjectivARB, (id, pname, params), (F, "glGetQueryObjectiv(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjectuiv)(GLuint id, GLenum pname, GLuint * params)
+{
+   DISPATCH(GetQueryObjectuivARB, (id, pname, params), (F, "glGetQueryObjectuiv(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
 
 
 /*
@@ -5694,6 +5789,25 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(GetVertexAttribfvARB),
    TABLE_ENTRY(GetVertexAttribivARB),
    TABLE_ENTRY(GetVertexAttribPointervARB),
+   TABLE_ENTRY(BindBuffer),
+   TABLE_ENTRY(BufferData),
+   TABLE_ENTRY(BufferSubData),
+   TABLE_ENTRY(DeleteBuffers),
+   TABLE_ENTRY(GenBuffers),
+   TABLE_ENTRY(GetBufferParameteriv),
+   TABLE_ENTRY(GetBufferPointerv),
+   TABLE_ENTRY(GetBufferSubData),
+   TABLE_ENTRY(IsBuffer),
+   TABLE_ENTRY(MapBuffer),
+   TABLE_ENTRY(UnmapBuffer),
+   TABLE_ENTRY(GenQueries),
+   TABLE_ENTRY(DeleteQueries),
+   TABLE_ENTRY(IsQuery),
+   TABLE_ENTRY(BeginQuery),
+   TABLE_ENTRY(EndQuery),
+   TABLE_ENTRY(GetQueryiv),
+   TABLE_ENTRY(GetQueryObjectiv),
+   TABLE_ENTRY(GetQueryObjectuiv),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

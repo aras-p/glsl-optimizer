@@ -18836,6 +18836,405 @@ glGetQueryObjectuivARB:
 #endif
 	jmpl	%g3, %g0
 	nop
+
+.globl glBindBuffer
+.type glBindBuffer,#function
+glBindBuffer:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BindBufferARB), %g2
+	or	%g2, %lo(8 * _gloffset_BindBufferARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BindBufferARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glBufferData
+.type glBufferData,#function
+glBufferData:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BufferDataARB), %g2
+	or	%g2, %lo(8 * _gloffset_BufferDataARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BufferDataARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glBufferSubData
+.type glBufferSubData,#function
+glBufferSubData:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BufferSubDataARB), %g2
+	or	%g2, %lo(8 * _gloffset_BufferSubDataARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BufferSubDataARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glDeleteBuffers
+.type glDeleteBuffers,#function
+glDeleteBuffers:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteBuffersARB), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteBuffersARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteBuffersARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGenBuffers
+.type glGenBuffers,#function
+glGenBuffers:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GenBuffersARB), %g2
+	or	%g2, %lo(8 * _gloffset_GenBuffersARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GenBuffersARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetBufferParameteriv
+.type glGetBufferParameteriv,#function
+glGetBufferParameteriv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetBufferParameterivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetBufferParameterivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetBufferParameterivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetBufferPointerv
+.type glGetBufferPointerv,#function
+glGetBufferPointerv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetBufferPointervARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetBufferPointervARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetBufferPointervARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetBufferSubData
+.type glGetBufferSubData,#function
+glGetBufferSubData:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetBufferSubDataARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetBufferSubDataARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetBufferSubDataARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glIsBuffer
+.type glIsBuffer,#function
+glIsBuffer:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_IsBufferARB), %g2
+	or	%g2, %lo(8 * _gloffset_IsBufferARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_IsBufferARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glMapBuffer
+.type glMapBuffer,#function
+glMapBuffer:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_MapBufferARB), %g2
+	or	%g2, %lo(8 * _gloffset_MapBufferARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_MapBufferARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glUnmapBuffer
+.type glUnmapBuffer,#function
+glUnmapBuffer:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_UnmapBufferARB), %g2
+	or	%g2, %lo(8 * _gloffset_UnmapBufferARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_UnmapBufferARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGenQueries
+.type glGenQueries,#function
+glGenQueries:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GenQueriesARB), %g2
+	or	%g2, %lo(8 * _gloffset_GenQueriesARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GenQueriesARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glDeleteQueries
+.type glDeleteQueries,#function
+glDeleteQueries:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteQueriesARB), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteQueriesARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteQueriesARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glIsQuery
+.type glIsQuery,#function
+glIsQuery:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_IsQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_IsQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_IsQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glBeginQuery
+.type glBeginQuery,#function
+glBeginQuery:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BeginQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_BeginQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BeginQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glEndQuery
+.type glEndQuery,#function
+glEndQuery:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_EndQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_EndQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_EndQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryiv
+.type glGetQueryiv,#function
+glGetQueryiv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryObjectiv
+.type glGetQueryObjectiv,#function
+glGetQueryObjectiv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryObjectivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryObjectivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryObjectivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryObjectuiv
+.type glGetQueryObjectuiv,#function
+glGetQueryObjectuiv:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryObjectuivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryObjectuivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryObjectuivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
 	 nop
 
 .globl _mesa_sparc_glapi_end

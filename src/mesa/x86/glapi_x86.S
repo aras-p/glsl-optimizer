@@ -5400,5 +5400,119 @@ GL_PREFIX(GetQueryObjectuivARB,GetQueryObjectuivARB@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
 
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BindBuffer,BindBuffer@8))
+GL_PREFIX(BindBuffer,BindBuffer@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BindBufferARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BufferData,BufferData@16))
+GL_PREFIX(BufferData,BufferData@16):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BufferDataARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BufferSubData,BufferSubData@12))
+GL_PREFIX(BufferSubData,BufferSubData@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BufferSubDataARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteBuffers,DeleteBuffers@8))
+GL_PREFIX(DeleteBuffers,DeleteBuffers@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteBuffersARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenBuffers,GenBuffers@8))
+GL_PREFIX(GenBuffers,GenBuffers@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenBuffersARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetBufferParameteriv,GetBufferParameteriv@12))
+GL_PREFIX(GetBufferParameteriv,GetBufferParameteriv@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetBufferParameterivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetBufferPointerv,GetBufferPointerv@12))
+GL_PREFIX(GetBufferPointerv,GetBufferPointerv@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetBufferPointervARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetBufferSubData,GetBufferSubData@12))
+GL_PREFIX(GetBufferSubData,GetBufferSubData@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetBufferSubDataARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsBuffer,IsBuffer@4))
+GL_PREFIX(IsBuffer,IsBuffer@4):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsBufferARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MapBuffer,MapBuffer@8))
+GL_PREFIX(MapBuffer,MapBuffer@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_MapBufferARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(UnmapBuffer,UnmapBuffer@4))
+GL_PREFIX(UnmapBuffer,UnmapBuffer@4):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_UnmapBufferARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenQueries,GenQueries@8))
+GL_PREFIX(GenQueries,GenQueries@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenQueriesARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteQueries,DeleteQueries@8))
+GL_PREFIX(DeleteQueries,DeleteQueries@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteQueriesARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsQuery,IsQuery@4))
+GL_PREFIX(IsQuery,IsQuery@4):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BeginQuery,BeginQuery@8))
+GL_PREFIX(BeginQuery,BeginQuery@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BeginQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(EndQuery,EndQuery@4))
+GL_PREFIX(EndQuery,EndQuery@4):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_EndQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryiv,GetQueryiv@12))
+GL_PREFIX(GetQueryiv,GetQueryiv@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryObjectiv,GetQueryObjectiv@12))
+GL_PREFIX(GetQueryObjectiv,GetQueryObjectiv@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryObjectivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryObjectuiv,GetQueryObjectuiv@12))
+GL_PREFIX(GetQueryObjectuiv,GetQueryObjectuiv@12):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
+
 
 #endif  /* __WIN32__ */
