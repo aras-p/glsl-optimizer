@@ -354,6 +354,8 @@ void _mesa_init_all_x86_transform_asm( void )
       check_os_sse_support();
    }
    if ( cpu_has_xmm ) {
+      /* SSE segfaults when running conform, disabled for now - KW.
+       */
       if ( 0 && getenv( "MESA_NO_SSE" ) == 0 ) {
          message( "SSE cpu detected.\n" );
          _mesa_init_sse_transform_asm();
