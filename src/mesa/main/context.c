@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.154 2002/02/05 23:21:45 brianp Exp $ */
+/* $Id: context.c,v 1.155 2002/03/13 04:33:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1965,6 +1965,7 @@ _mesa_get_current_context( void )
 /*
  * This should be called by device drivers just before they do a
  * swapbuffers.  Any pending rendering commands will be executed.
+ * XXX we should really rename this function to _mesa_flush() or something.
  */
 void
 _mesa_swapbuffers(GLcontext *ctx)
