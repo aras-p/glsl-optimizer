@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.24 2000/11/25 18:52:58 brianp Exp $ */
+/* $Id: glx.h,v 1.25 2000/12/08 18:08:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,11 +44,11 @@
 #pragma message enable nosimpint
 #endif
 #endif
-#include "GL/gl.h"
+#include <GL/gl.h>
 
 
 #if defined(USE_MGL_NAMESPACE)
-#include "glx_mangle.h"
+#include <GL/glx_mangle.h>
 #endif
 
 
@@ -280,11 +280,11 @@ extern void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
 
 
 
-/*#ifndef GLX_GLXEXT_LEGACY*/
+#ifndef GLX_GLXEXT_LEGACY
 
-/*#include <GL/glxext.h>*/
+#include <GL/glxext.h>
 
-/*#else*/
+#else
 
 
 /*
@@ -432,7 +432,7 @@ extern void (*glXGetProcAddressARB(const GLubyte *procName))();
 
 
 
-/*#endif*/ /* GLX_GLXEXT_LEGACY */
+#endif /* GLX_GLXEXT_LEGACY */
 
 
 
