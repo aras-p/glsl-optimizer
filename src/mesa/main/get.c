@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.98 2002/10/29 22:32:50 brianp Exp $ */
+/* $Id: get.c,v 1.99 2002/11/08 15:39:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1470,7 +1470,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_B(EXT_stencil_two_side, pname);
-         *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
+         *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
       default:
@@ -2835,7 +2835,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_D(EXT_stencil_two_side, pname);
-         *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
+         *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
       default:
@@ -4176,7 +4176,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_F(EXT_stencil_two_side, pname);
-         *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
+         *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
       default:
@@ -5556,7 +5556,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_I(EXT_stencil_two_side, pname);
-         *params = (GLint) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
+         *params = (GLint) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
       default:
