@@ -1020,8 +1020,10 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
       break;			
    }
 
-    imesa->regs.s4.texCtrl[0].ni.uMode = !(t->texParams.sWrapMode & 0x01);
-    imesa->regs.s4.texCtrl[0].ni.vMode = !(t->texParams.tWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[0].ni.uMode =
+	t->texParams.sWrapMode == GL_REPEAT ? 0 : 1;
+    imesa->regs.s4.texCtrl[0].ni.vMode = 
+	t->texParams.tWrapMode == GL_REPEAT ? 0 : 1;
 
     switch (t->texParams.minFilter)
     {
@@ -1222,8 +1224,10 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
       break;			
    }
 
-    imesa->regs.s4.texCtrl[1].ni.uMode = !(t->texParams.sWrapMode & 0x01);
-    imesa->regs.s4.texCtrl[1].ni.vMode = !(t->texParams.tWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[1].ni.uMode =
+	t->texParams.sWrapMode == GL_REPEAT ? 0 : 1;
+    imesa->regs.s4.texCtrl[1].ni.vMode =
+	t->texParams.tWrapMode == GL_REPEAT ? 0 : 1;
 
     switch (t->texParams.minFilter)
     {
