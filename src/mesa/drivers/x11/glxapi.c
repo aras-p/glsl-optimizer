@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.26 2001/05/29 19:48:46 brianp Exp $ */
+/* $Id: glxapi.c,v 1.27 2001/05/29 23:15:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,7 +83,7 @@ get_dispatch(Display *dpy)
    {
       struct _glxapi_table *t = NULL;
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
       if (!getenv("LIBGL_FORCE_XMESA")) {
          int ignore;
          if (XQueryExtension( dpy, "GLX", &ignore, &ignore, &ignore )) {
@@ -95,10 +95,12 @@ get_dispatch(Display *dpy)
 
       if (!t) {
          /* Fallback to Mesa with Xlib driver */
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
          if (getenv("LIBGL_DEBUG")) {
             fprintf(stderr,
-             "libGL: server lacks GLX extension. Using Mesa Xlib renderer.\n");
+                    "libGL: server %s lacks the GLX extension.",
+                    dpy->display_name);
+            fprintf(stderr, " Using Mesa Xlib renderer.\n");
          }
 #endif
          t = _mesa_GetGLXDispatchTable();
@@ -145,7 +147,7 @@ get_dispatch(Display *dpy)
 
 
 /* Set by glXMakeCurrent() and glXMakeContextCurrent() only */
-#ifndef GLX_BUILD_IN_XLIB_MESA
+#ifndef GLX_BUILT_IN_XMESA
 static GLXContext CurrentContext = 0;
 #define __glXGetCurrentContext() CurrentContext;
 #endif
@@ -227,7 +229,7 @@ int glXGetConfig(Display *dpy, XVisualInfo *visinfo, int attrib, int *value)
 }
 
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use real libGL's glXGetCurrentContext() function */
 #else
 /* stand-alone Mesa */
@@ -238,7 +240,7 @@ GLXContext glXGetCurrentContext(void)
 #endif
 
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use real libGL's glXGetCurrentContext() function */
 #else
 /* stand-alone Mesa */
@@ -265,10 +267,11 @@ Bool glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx)
    Bool b;
    struct _glxapi_table *t;
    GET_DISPATCH(dpy, t);
-   if (!t)
+   if (!t) {
       return False;
+   }
    b = (*t->MakeCurrent)(dpy, drawable, ctx);
-#ifndef  GLX_BUILD_IN_XLIB_MESA
+#ifndef  GLX_BUILT_IN_XMESA
    if (b) {
       CurrentContext = ctx;
    }
@@ -375,7 +378,7 @@ const char *glXQueryServerString(Display *dpy, int screen, int name)
 
 /*** GLX_VERSION_1_2 ***/
 
-#if !defined(GLX_BUILD_IN_XLIB_MESA)
+#if !defined(GLX_BUILT_IN_XMESA)
 Display *glXGetCurrentDisplay(void)
 {
    /* Same code as in libGL's glxext.c */
@@ -469,7 +472,7 @@ void glXDestroyWindow(Display *dpy, GLXWindow window)
 }
 
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use the glXGetCurrentReadDrawable() function from libGL */
 #else
 GLXDrawable glXGetCurrentReadDrawable(void)
@@ -527,7 +530,7 @@ Bool glXMakeContextCurrent(Display *dpy, GLXDrawable draw, GLXDrawable read, GLX
    if (!t)
       return False;
    b = (t->MakeContextCurrent)(dpy, draw, read, ctx);
-#ifndef GLX_BUILD_IN_XLIB_MESA
+#ifndef GLX_BUILT_IN_XMESA
    if (b) {
       CurrentContext = ctx;
    }
@@ -617,7 +620,7 @@ Bool glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLX
    return (t->MakeCurrentReadSGI)(dpy, draw, read, ctx);
 }
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use glXGetCurrentReadDrawableSGI() from libGL */
 #else
 /* stand-alone Mesa */
@@ -662,7 +665,7 @@ void glXFreeContextEXT(Display *dpy, GLXContext context)
    (t->FreeContextEXT)(dpy, context);
 }
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use real libGL's glXGetContextIDEXT() function */
 #else
 /* stand-alone Mesa */
@@ -672,7 +675,7 @@ GLXContextID glXGetContextIDEXT(const GLXContext context)
 }
 #endif
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* Use real libGL's glXGetCurrentDisplayEXT() function */
 #else
 /* stand-alone Mesa */

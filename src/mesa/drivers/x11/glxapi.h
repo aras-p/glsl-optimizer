@@ -1,4 +1,4 @@
-/* $Id: glxapi.h,v 1.10 2001/05/25 21:51:02 brianp Exp $ */
+/* $Id: glxapi.h,v 1.11 2001/05/29 23:15:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 #include "GL/glx.h"
 
 
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
 /* The GLX API dispatcher is being built into XFree86's libGL */
 #include "glxclient.h"
 #else

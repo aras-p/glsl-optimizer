@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.52 2001/05/25 21:51:02 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.53 2001/05/29 23:15:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1234,7 +1234,8 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
          ((__GLXcontext *) ctx)->currentDpy = dpy;
          ((__GLXcontext *) ctx)->currentDrawable = draw;
          ((__GLXcontext *) ctx)->currentReadable = read;
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
+         printf("Set fake context ctx %p\n", ctx);
          __glXSetCurrentContext(ctx);
 #endif
          return True;
@@ -1251,7 +1252,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       MakeCurrent_PrevReadable = 0;
       MakeCurrent_PrevDrawBuffer = 0;
       MakeCurrent_PrevReadBuffer = 0;
-#ifdef GLX_BUILD_IN_XLIB_MESA
+#ifdef GLX_BUILT_IN_XMESA
       /* XXX bind dummy context with __glXSetCurrentContext(ctx); */
 #endif
       return True;
