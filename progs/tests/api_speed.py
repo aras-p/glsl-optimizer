@@ -109,25 +109,22 @@ if __name__ == '__main__':
 		show_usage()
 
 
-	result_array = []
-	names = []
-
-
 	# If no libraries were specifically named, just run the test against
 	# the default system libGL.
 
 	if len(trail) == 0:
-		s = make_execution_string( None, iterations )
+		trail.append(None)
+
+
+	result_array = []
+	names = []
+
+	for lib in trail:
+		s = make_execution_string( lib, iterations )
 		r = results()
 		r.process_file( os.popen(s) )
+		names.append(lib)
 		result_array.append(r)
-	else:
-		for lib in trail:
-			s = make_execution_string( lib, iterations )
-			r = results()
-			r.process_file( os.popen(s) )
-			names.append(lib)
-			result_array.append(r)
 
 
 	# If the test was only run against one library, just show the results
