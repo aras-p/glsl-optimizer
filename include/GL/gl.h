@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.15 1999/10/21 06:04:20 tjump Exp $ */
+/* $Id: gl.h,v 1.16 1999/10/30 18:39:06 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,12 +51,16 @@
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
 #  pragma warning( disable : 4068 ) /* unknown pragma */
-#	pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
-#	pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
-#	pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
-#	pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
-#	pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
+#  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
+#	if defined(MESA_MINWARN)
+#    pragma warning( disable : 4127 ) /* conditional expression is constant */
+#	  pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
+#	  pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
+#	  pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
+#	  pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
+#	  pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
+#  endif
 #	if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
 #		define GLAPI __declspec(dllexport)
 #     define WGLAPI __declspec(dllexport)
@@ -83,11 +87,6 @@
 /* compatability guard so we don't need to change client code */
 
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(OPENSTEP)
-#	if !defined(MESA_MINWARN)
-#		pragma message( "note: WINDOWS.H not included, providing Mesa definition of CALLBACK macro" )
-#		pragma message( "----: and PROC typedef. If you receive compiler warnings about either ")
-#		pragma message( "----: being multiply defined you should include WINDOWS.H priot to gl/gl.h" )
-#	endif
 #	define CALLBACK GLCALLBACK
 typedef int (GLAPIENTRY *PROC)();
 typedef void *HGLRC;
@@ -96,11 +95,6 @@ typedef unsigned long COLORREF;
 #endif
 
 #if defined(_WIN32) && !defined(_WINGDI_) && !defined(OPENSTEP)
-#	if !defined(MESA_MINWARN)
-#		pragma message( "note: WINDOWS.H not included, providing Mesa definition of wgl functions" )
-#		pragma message( "----: and macros. If you receive compiler warnings about any being multiply ")
-#		pragma message( "----: defined you should include WINDOWS.H priot to gl/gl.h" )
-#	endif
 #	define WGL_FONT_LINES      0
 #	define WGL_FONT_POLYGONS   1
 #	ifdef UNICODE
