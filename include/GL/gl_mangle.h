@@ -1,4 +1,4 @@
-/* $Id: gl_mangle.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: gl_mangle.h,v 1.2 1999/10/16 12:52:56 miklos Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -344,6 +344,7 @@
 #define glGetMapdv mglGetMapdv
 #define glGetMapfv mglGetMapfv
 #define glGetMapiv mglGetMapiv
+#define glGetMinmax mglGetMinmax
 #define glEvalCoord1d mglEvalCoord1d
 #define glEvalCoord1f mglEvalCoord1f
 #define glEvalCoord1dv mglEvalCoord1dv
@@ -399,7 +400,6 @@
 #define glGetColorTableEXT mglGetColorTableEXT
 #define glGetColorTableParameterfvEXT mglGetColorTableParameterfvEXT
 #define glGetColorTableParameterivEXT mglGetColorTableParameterivEXT
-#define glGetMinMax mglGetMinMax
 #define glMultiTexCoord1dSGIS mglMultiTexCoord1dSGIS
 #define glMultiTexCoord1dvSGIS mglMultiTexCoord1dvSGIS
 #define glMultiTexCoord1fSGIS mglMultiTexCoord1fSGIS
@@ -508,6 +508,7 @@
 #define glGetHistogramParameteriv mglGetHistogramParameteriv
 #define glMinmax mglMinmax
 #define glResetMinmax mglResetMinmax
+#define glGetMinmax mglGetMinmax
 #define glGetMinmaxParameterfv mglGetMinmaxParameterfv
 #define glGetMinmaxParameteriv mglGetMinmaxParameteriv
 #define glConvolutionFilter1D mglConvolutionFilter1D
