@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -174,6 +174,20 @@ extern void *
 _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpack );
+
+
+extern GLboolean
+_mesa_clip_drawpixels(const GLcontext *ctx,
+                      GLint *destX, GLint *destY,
+                      GLsizei *width, GLsizei *height,
+                      GLint *skipPixels, GLint *skipRows);
+
+
+extern GLboolean
+_mesa_clip_readpixels(const GLcontext *ctx,
+                      GLint *destX, GLint *destY,
+                      GLsizei *width, GLsizei *height,
+                      GLint *skipPixels, GLint *skipRows);
 
 
 #endif

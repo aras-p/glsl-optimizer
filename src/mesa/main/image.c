@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -4057,3 +4057,99 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
 }
 
 #endif
+
+
+/**
+ * Perform clipping for glDrawPixels.  The image's window position
+ * and size, and the unpack skipPixels and skipRows are adjusted so
+ * that the image region is entirely within the window and scissor bounds.
+ *
+ * \return  GL_TRUE if image is ready for drawing or
+ *          GL_FALSE if image was completely clipped away (draw nothing)
+ */
+GLboolean
+_mesa_clip_drawpixels(const GLcontext *ctx,
+                      GLint *destX, GLint *destY,
+                      GLsizei *width, GLsizei *height,
+                      GLint *skipPixels, GLint *skipRows)
+{
+   const GLframebuffer *buffer = ctx->DrawBuffer;
+
+   /* left clipping */
+   if (*destX < buffer->_Xmin) {
+      *skipPixels += (buffer->_Xmin - *destX);
+      *width -= (buffer->_Xmin - *destX);
+      *destX = buffer->_Xmin;
+   }
+   /* right clipping */
+   if (*destX + *width > buffer->_Xmax)
+      *width -= (*destX + *width - buffer->_Xmax);
+
+   if (*width <= 0)
+      return GL_FALSE;
+
+   /* bottom clipping */
+   if (*destY < buffer->_Ymin) {
+      *skipRows += (buffer->_Ymin - *destY);
+      *height -= (buffer->_Ymin - *destY);
+      *destY = buffer->_Ymin;
+   }
+   /* top clipping */
+   if (*destY + *height > buffer->_Ymax)
+      *height -= (*destY + *height - buffer->_Ymax);
+
+   if (*height <= 0)
+      return GL_TRUE;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Perform clipping for glReadPixels.  The image's window position
+ * and size, and the pack skipPixels and skipRows are adjusted so
+ * that the image region is entirely within the window bounds.
+ * Note: this is different from _mesa_clip_drawpixels() in that the
+ * scissor box is ignored, and we use the bounds of the current "read"
+ * surface;
+ *
+ * \return  GL_TRUE if image is ready for drawing or
+ *          GL_FALSE if image was completely clipped away (draw nothing)
+ */
+GLboolean
+_mesa_clip_readpixels(const GLcontext *ctx,
+                      GLint *srcX, GLint *srcY,
+                      GLsizei *width, GLsizei *height,
+                      GLint *skipPixels, GLint *skipRows)
+{
+   const GLframebuffer *buffer = ctx->ReadBuffer;
+
+   /* left clipping */
+   if (*srcX < 0) {
+      *skipPixels += (0 - *srcX);
+      *width -= (0 - *srcX);
+      *srcX = 0;
+   }
+   /* right clipping */
+   if (*srcX + *width > buffer->Width)
+      *width -= (*srcX + *width - buffer->Width);
+
+   if (*width <= 0)
+      return GL_FALSE;
+
+   /* bottom clipping */
+   if (*srcY < 0) {
+      *skipRows += (0 - *srcY);
+      *height -= (0 - *srcY);
+      *srcY = 0;
+   }
+   /* top clipping */
+   if (*srcY + *height > buffer->Height)
+      *height -= (*srcY + *height - buffer->Height);
+
+   if (*height <= 0)
+      return GL_TRUE;
+
+   return GL_TRUE;
+}
+
