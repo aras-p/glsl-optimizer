@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.33 2003/01/24 15:33:22 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.34 2003/02/17 16:36:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,7 +128,25 @@ struct xmesa_context {
    GLboolean swapbytes;		/* Host byte order != display byte order? */
    GLboolean direct;		/* Direct rendering context? */
 
-   GLuint pixelformat;		/* Current pixel format */
+   /** Current pixel format */
+   enum {
+      PF_Index,  	/**< Color Index mode */
+      PF_Truecolor,	/**< TrueColor or DirectColor, any depth */
+      PF_Dither_True,	/**< TrueColor with dithering */
+      PF_8A8B8G8R,	/**< 32-bit TrueColor:  8-A, 8-B, 8-G, 8-R */
+      PF_8R8G8B, 	/**< 32-bit TrueColor:  8-R, 8-G, 8-B bits */
+      PF_5R6G5B, 	/**< 16-bit TrueColor:  5-R, 6-G, 5-B bits */
+      PF_Dither, 	/**< Color-mapped RGB with dither */
+      PF_Lookup, 	/**< Color-mapped RGB without dither */
+      PF_HPCR,   	/**< HP Color Recovery (ad@lms.be 30/08/95) */
+      PF_1Bit,   	/**< monochrome dithering of RGB */
+      PF_Grayscale,	/**< Grayscale or StaticGray */
+      PF_8R8G8B24,	/**< 24-bit TrueColor: 8-R, 8-G, 8-B bits */
+      PF_Dither_5R6G5B	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
+   } pixelformat;
+
+
+
 
    GLubyte clearcolor[4];		/* current clearing color */
    unsigned long clearpixel;		/* current clearing pixel value */
@@ -241,22 +259,6 @@ struct xmesa_buffer {
 #define FRONT_PIXMAP	1
 #define BACK_PIXMAP	2
 #define BACK_XIMAGE	4
-
-
-/* Values for xmesa->pixelformat: */
-#define PF_INDEX          1	/* Color Index mode */
-#define PF_TRUECOLOR      2	/* TrueColor or DirectColor, any depth */
-#define PF_TRUEDITHER     3	/* TrueColor with dithering */
-#define PF_8A8B8G8R       4	/* 32-bit TrueColor:  8-A, 8-B, 8-G, 8-R */
-#define PF_8R8G8B         5	/* 32-bit TrueColor:  8-R, 8-G, 8-B bits */
-#define PF_5R6G5B         6	/* 16-bit TrueColor:  5-R, 6-G, 5-B bits */
-#define PF_DITHER         7	/* Color-mapped RGB with dither */
-#define PF_LOOKUP         8	/* Color-mapped RGB without dither */
-#define PF_HPCR           9	/* HP Color Recovery (ad@lms.be 30/08/95) */
-#define PF_1BIT          10	/* monochrome dithering of RGB */
-#define PF_GRAYSCALE     11	/* Grayscale or StaticGray */
-#define PF_8R8G8B24      12	/* 24-bit TrueColor: 8-R, 8-G, 8-B bits */
-#define PF_DITHER_5R6G5B 13	/* 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
 
 
 /*

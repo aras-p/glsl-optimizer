@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.21 2002/11/14 03:48:03 brianp Exp $ */
+/* $Id: xm_line.c,v 1.22 2003/02/17 16:35:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -511,7 +511,7 @@ static swrast_line_func get_line_func( GLcontext *ctx )
        && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
        && ctx->Line.Width==1.0F) {
       switch (xmesa->pixelformat) {
-         case PF_TRUECOLOR:
+         case PF_Truecolor:
             return flat_TRUECOLOR_z_line;
          case PF_8A8B8G8R:
             return flat_8A8B8G8R_z_line;
@@ -521,11 +521,11 @@ static swrast_line_func get_line_func( GLcontext *ctx )
             return flat_8R8G8B24_z_line;
          case PF_5R6G5B:
             return flat_5R6G5B_z_line;
-         case PF_DITHER_5R6G5B:
+         case PF_Dither_5R6G5B:
             return flat_DITHER_5R6G5B_z_line;
-         case PF_DITHER:
+         case PF_Dither:
             return (depth==8) ? flat_DITHER8_z_line : (swrast_line_func) NULL;
-         case PF_LOOKUP:
+         case PF_Lookup:
             return (depth==8) ? flat_LOOKUP8_z_line : (swrast_line_func) NULL;
          case PF_HPCR:
             return flat_HPCR_z_line;
@@ -537,7 +537,7 @@ static swrast_line_func get_line_func( GLcontext *ctx )
        && swrast->_RasterMask==0
        && ctx->Line.Width==1.0F) {
       switch (xmesa->pixelformat) {
-         case PF_TRUECOLOR:
+         case PF_Truecolor:
             return flat_TRUECOLOR_line;
          case PF_8A8B8G8R:
             return flat_8A8B8G8R_line;
@@ -547,11 +547,11 @@ static swrast_line_func get_line_func( GLcontext *ctx )
             return flat_8R8G8B24_line;
          case PF_5R6G5B:
             return flat_5R6G5B_line;
-         case PF_DITHER_5R6G5B:
+         case PF_Dither_5R6G5B:
             return flat_DITHER_5R6G5B_line;
-         case PF_DITHER:
+         case PF_Dither:
             return (depth==8) ? flat_DITHER8_line : (swrast_line_func) NULL;
-         case PF_LOOKUP:
+         case PF_Lookup:
             return (depth==8) ? flat_LOOKUP8_line : (swrast_line_func) NULL;
          case PF_HPCR:
             return flat_HPCR_line;

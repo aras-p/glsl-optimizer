@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.30 2002/11/13 16:51:02 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.31 2003/02/17 16:36:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1333,7 +1333,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
           && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
-            case PF_TRUECOLOR:
+            case PF_Truecolor:
 	       USE(smooth_TRUECOLOR_z_triangle);
             case PF_8A8B8G8R:
                USE(smooth_8A8B8G8R_z_triangle);
@@ -1341,21 +1341,21 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
                USE(smooth_8R8G8B_z_triangle);
             case PF_8R8G8B24:
                USE(smooth_8R8G8B24_z_triangle);
-            case PF_TRUEDITHER:
+            case PF_Dither_True:
                USE(smooth_TRUEDITHER_z_triangle);
             case PF_5R6G5B:
                USE(smooth_5R6G5B_z_triangle);
-            case PF_DITHER_5R6G5B:
+            case PF_Dither_5R6G5B:
                USE(smooth_DITHER_5R6G5B_z_triangle);
             case PF_HPCR:
 	       USE(smooth_HPCR_z_triangle);
-            case PF_DITHER:
+            case PF_Dither:
                if (depth == 8)
                   USE(smooth_DITHER8_z_triangle);
                else
                   USE(smooth_DITHER_z_triangle);
                break;
-            case PF_LOOKUP:
+            case PF_Lookup:
                if (depth == 8)
                   USE(smooth_LOOKUP8_z_triangle);
                else
@@ -1371,7 +1371,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
           && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
-            case PF_TRUECOLOR:
+            case PF_Truecolor:
 	       USE(flat_TRUECOLOR_z_triangle);
             case PF_8A8B8G8R:
                USE(flat_8A8B8G8R_z_triangle);
@@ -1379,21 +1379,21 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
                USE(flat_8R8G8B_z_triangle);
             case PF_8R8G8B24:
                USE(flat_8R8G8B24_z_triangle);
-            case PF_TRUEDITHER:
+            case PF_Dither_True:
                USE(flat_TRUEDITHER_z_triangle);
             case PF_5R6G5B:
                USE(flat_5R6G5B_z_triangle);
-            case PF_DITHER_5R6G5B:
+            case PF_Dither_5R6G5B:
                USE(flat_DITHER_5R6G5B_z_triangle);
             case PF_HPCR:
 	       USE(flat_HPCR_z_triangle);
-            case PF_DITHER:
+            case PF_Dither:
                if (depth == 8)
                   USE(flat_DITHER8_z_triangle);
                else
                   USE(flat_DITHER_z_triangle);
                break;
-            case PF_LOOKUP:
+            case PF_Lookup:
                if (depth == 8)
                   USE(flat_LOOKUP8_z_triangle);
                else
@@ -1406,7 +1406,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
           && ctx->Light.ShadeModel==GL_SMOOTH
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
-            case PF_TRUECOLOR:
+            case PF_Truecolor:
 	       USE(smooth_TRUECOLOR_triangle);
             case PF_8A8B8G8R:
                USE(smooth_8A8B8G8R_triangle);
@@ -1414,21 +1414,21 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
                USE(smooth_8R8G8B_triangle);
             case PF_8R8G8B24:
                USE(smooth_8R8G8B24_triangle);
-            case PF_TRUEDITHER:
+            case PF_Dither_True:
                USE(smooth_TRUEDITHER_triangle);
             case PF_5R6G5B:
                USE(smooth_5R6G5B_triangle);
-            case PF_DITHER_5R6G5B:
+            case PF_Dither_5R6G5B:
                USE(smooth_DITHER_5R6G5B_triangle);
             case PF_HPCR:
 	       USE(smooth_HPCR_triangle);
-            case PF_DITHER:
+            case PF_Dither:
                if (depth == 8)
                   USE(smooth_DITHER8_triangle);
                else
                   USE(smooth_DITHER_triangle);
                break;
-            case PF_LOOKUP:
+            case PF_Lookup:
                if (depth == 8)
                   USE(smooth_LOOKUP8_triangle);
                else
@@ -1442,9 +1442,9 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
           && ctx->Light.ShadeModel==GL_FLAT
           && ctx->Polygon.StippleFlag==GL_FALSE) {
          switch (xmesa->pixelformat) {
-            case PF_TRUECOLOR:
+            case PF_Truecolor:
 	       USE(flat_TRUECOLOR_triangle);
-            case PF_TRUEDITHER:
+            case PF_Dither_True:
 	       USE(flat_TRUEDITHER_triangle);
             case PF_8A8B8G8R:
                USE(flat_8A8B8G8R_triangle);
@@ -1454,17 +1454,17 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
                USE(flat_8R8G8B24_triangle);
             case PF_5R6G5B:
                USE(flat_5R6G5B_triangle);
-            case PF_DITHER_5R6G5B:
+            case PF_Dither_5R6G5B:
                USE(flat_DITHER_5R6G5B_triangle);
             case PF_HPCR:
 	       USE(flat_HPCR_triangle);
-            case PF_DITHER:
+            case PF_Dither:
                if (depth == 8)
                   USE(flat_DITHER8_triangle);
                else
                   USE(flat_DITHER_triangle);
                break;
-            case PF_LOOKUP:
+            case PF_Lookup:
                if (depth == 8)
                   USE(flat_LOOKUP8_triangle);
                else

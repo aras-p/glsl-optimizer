@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.29 2002/12/19 18:36:01 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.30 2003/02/17 16:36:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,7 +25,7 @@
  */
 
 /**
- * \file vpexec.c
+ * \file t_array_api.c
  * \brief Vertex array API functions (glDrawArrays, etc)
  * \author Keith Whitwell
  */

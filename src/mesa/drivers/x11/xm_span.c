@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.18 2002/11/13 16:48:47 brianp Exp $ */
+/* $Id: xm_span.c,v 1.19 2003/02/17 16:35:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3545,8 +3545,8 @@ static void read_color_span( const GLcontext *ctx,
 #endif
       if (span && !error) {
 	 switch (xmesa->pixelformat) {
-	    case PF_TRUECOLOR:
-	    case PF_TRUEDITHER:
+	    case PF_Truecolor:
+	    case PF_Dither_True:
                {
                   const GLubyte *pixelToR = xmesa->xm_visual->PixelToR;
                   const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
@@ -3569,7 +3569,7 @@ static void read_color_span( const GLcontext *ctx,
                }
 	       break;
             case PF_5R6G5B:
-            case PF_DITHER_5R6G5B:
+            case PF_Dither_5R6G5B:
                {
                   const GLubyte *pixelToR = xmesa->xm_visual->PixelToR;
                   const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
@@ -3640,9 +3640,9 @@ static void read_color_span( const GLcontext *ctx,
                   }
                }
                break;
-	    case PF_DITHER:
-	    case PF_LOOKUP:
-	    case PF_GRAYSCALE:
+	    case PF_Dither:
+	    case PF_Lookup:
+	    case PF_Grayscale:
                {
                   GLubyte *rTable = source->pixel_to_r;
                   GLubyte *gTable = source->pixel_to_g;
@@ -3670,7 +3670,7 @@ static void read_color_span( const GLcontext *ctx,
                   }
                }
 	       break;
-	    case PF_1BIT:
+	    case PF_1Bit:
                {
                   int bitFlip = xmesa->xm_visual->bitFlip;
                   GLuint i;
@@ -3703,8 +3703,8 @@ static void read_color_span( const GLcontext *ctx,
    else if (source->backimage) {
       /* Read from XImage back buffer */
       switch (xmesa->pixelformat) {
-         case PF_TRUECOLOR:
-         case PF_TRUEDITHER:
+         case PF_Truecolor:
+         case PF_Dither_True:
             {
                const GLubyte *pixelToR = xmesa->xm_visual->PixelToR;
                const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
@@ -3729,7 +3729,7 @@ static void read_color_span( const GLcontext *ctx,
             }
             break;
          case PF_5R6G5B:
-         case PF_DITHER_5R6G5B:
+         case PF_Dither_5R6G5B:
             {
                const GLubyte *pixelToR = xmesa->xm_visual->PixelToR;
                const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
@@ -3827,9 +3827,9 @@ static void read_color_span( const GLcontext *ctx,
                }
             }
             break;
-	 case PF_DITHER:
-	 case PF_LOOKUP:
-	 case PF_GRAYSCALE:
+	 case PF_Dither:
+	 case PF_Lookup:
+	 case PF_Grayscale:
             {
                const GLubyte *rTable = source->pixel_to_r;
                const GLubyte *gTable = source->pixel_to_g;
@@ -3859,7 +3859,7 @@ static void read_color_span( const GLcontext *ctx,
                }
             }
 	    break;
-	 case PF_1BIT:
+	 case PF_1Bit:
             {
                XMesaImage *img = source->backimage;
                int bitFlip = xmesa->xm_visual->bitFlip;
@@ -3928,10 +3928,10 @@ static void read_color_pixels( const GLcontext *ctx,
 
    if (source->buffer) {
       switch (xmesa->pixelformat) {
-	 case PF_TRUECOLOR:
-         case PF_TRUEDITHER:
+	 case PF_Truecolor:
+         case PF_Dither_True:
          case PF_5R6G5B:
-         case PF_DITHER_5R6G5B:
+         case PF_Dither_5R6G5B:
             {
                unsigned long rMask = GET_REDMASK(xmesa->xm_visual);
                unsigned long gMask = GET_GREENMASK(xmesa->xm_visual);
@@ -4004,9 +4004,9 @@ static void read_color_pixels( const GLcontext *ctx,
                }
             }
             break;
-	 case PF_DITHER:
-	 case PF_LOOKUP:
-	 case PF_GRAYSCALE:
+	 case PF_Dither:
+	 case PF_Lookup:
+	 case PF_Grayscale:
             {
                GLubyte *rTable = source->pixel_to_r;
                GLubyte *gTable = source->pixel_to_g;
@@ -4023,7 +4023,7 @@ static void read_color_pixels( const GLcontext *ctx,
                }
 	    }
 	    break;
-	 case PF_1BIT:
+	 case PF_1Bit:
             {
                int bitFlip = xmesa->xm_visual->bitFlip;
                for (i=0;i<n;i++) {
@@ -4045,10 +4045,10 @@ static void read_color_pixels( const GLcontext *ctx,
    }
    else if (source->backimage) {
       switch (xmesa->pixelformat) {
-	 case PF_TRUECOLOR:
-         case PF_TRUEDITHER:
+	 case PF_Truecolor:
+         case PF_Dither_True:
          case PF_5R6G5B:
-         case PF_DITHER_5R6G5B:
+         case PF_Dither_5R6G5B:
             {
                unsigned long rMask = GET_REDMASK(xmesa->xm_visual);
                unsigned long gMask = GET_GREENMASK(xmesa->xm_visual);
@@ -4119,9 +4119,9 @@ static void read_color_pixels( const GLcontext *ctx,
                }
             }
             break;
-	 case PF_DITHER:
-	 case PF_LOOKUP:
-	 case PF_GRAYSCALE:
+	 case PF_Dither:
+	 case PF_Lookup:
+	 case PF_Grayscale:
             {
                GLubyte *rTable = source->pixel_to_r;
                GLubyte *gTable = source->pixel_to_g;
@@ -4139,7 +4139,7 @@ static void read_color_pixels( const GLcontext *ctx,
                }
 	    }
 	    break;
-	 case PF_1BIT:
+	 case PF_1Bit:
             {
                XMesaImage *img = source->backimage;
                int bitFlip = xmesa->xm_visual->bitFlip;
@@ -4250,21 +4250,21 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    if (xmesa->xm_buffer->buffer!=XIMAGE) {
       /* Writing to window or back pixmap */
       switch (xmesa->pixelformat) {
-	 case PF_INDEX:
+	 case PF_Index:
 	    dd->WriteCI32Span     = write_span_index_pixmap;
 	    dd->WriteCI8Span      = write_span_index8_pixmap;
 	    dd->WriteMonoCISpan   = write_span_mono_index_pixmap;
 	    dd->WriteCI32Pixels   = write_pixels_index_pixmap;
 	    dd->WriteMonoCIPixels = write_pixels_mono_index_pixmap;
 	    break;
-	 case PF_TRUECOLOR:
+	 case PF_Truecolor:
 	    dd->WriteRGBASpan       = write_span_TRUECOLOR_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_pixmap;
 	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
 	    dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_pixmap;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
-	 case PF_TRUEDITHER:
+	 case PF_Dither_True:
 	    dd->WriteRGBASpan       = write_span_TRUEDITHER_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_pixmap;
 	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
@@ -4299,21 +4299,21 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteRGBAPixels     = write_pixels_5R6G5B_pixmap;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
-	 case PF_DITHER_5R6G5B:
+	 case PF_Dither_5R6G5B:
 	    dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_pixmap;
 	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
 	    dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_pixmap;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
 	    break;
-	 case PF_DITHER:
+	 case PF_Dither:
 	    dd->WriteRGBASpan       = write_span_DITHER_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_DITHER_pixmap;
 	    dd->WriteMonoRGBASpan   = write_span_mono_DITHER_pixmap;
 	    dd->WriteRGBAPixels     = write_pixels_DITHER_pixmap;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_pixmap;
 	    break;
-	 case PF_1BIT:
+	 case PF_1Bit:
 	    dd->WriteRGBASpan       = write_span_1BIT_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_1BIT_pixmap;
 	    dd->WriteMonoRGBASpan   = write_span_mono_1BIT_pixmap;
@@ -4330,14 +4330,14 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	       ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
 	    }
             break;
-         case PF_LOOKUP:
+         case PF_Lookup:
             dd->WriteRGBASpan       = write_span_LOOKUP_pixmap;
             dd->WriteRGBSpan        = write_span_rgb_LOOKUP_pixmap;
             dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
             dd->WriteRGBAPixels     = write_pixels_LOOKUP_pixmap;
             dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
             break;
-         case PF_GRAYSCALE:
+         case PF_Grayscale:
             dd->WriteRGBASpan       = write_span_GRAYSCALE_pixmap;
             dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE_pixmap;
             dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
@@ -4352,7 +4352,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    else if (xmesa->xm_buffer->buffer==XIMAGE) {
       /* Writing to back XImage */
       switch (xmesa->pixelformat) {
-	 case PF_INDEX:
+	 case PF_Index:
 	    dd->WriteCI32Span     = write_span_index_ximage;
 	    if (depth==8)
                dd->WriteCI8Span   = write_span_index8_ximage8;
@@ -4362,7 +4362,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteCI32Pixels   = write_pixels_index_ximage;
 	    dd->WriteMonoCIPixels = write_pixels_mono_index_ximage;
 	    break;
-	 case PF_TRUECOLOR:
+	 case PF_Truecolor:
 	    /* Generic RGB */
 	    dd->WriteRGBASpan       = write_span_TRUECOLOR_ximage;
 	    dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_ximage;
@@ -4370,7 +4370,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_ximage;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
 	    break;
-	 case PF_TRUEDITHER:
+	 case PF_Dither_True:
 	    dd->WriteRGBASpan       = write_span_TRUEDITHER_ximage;
 	    dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_ximage;
 	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_ximage;
@@ -4405,14 +4405,14 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteRGBAPixels     = write_pixels_5R6G5B_ximage;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
 	    break;
-	 case PF_DITHER_5R6G5B:
+	 case PF_Dither_5R6G5B:
 	    dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_ximage;
 	    dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_ximage;
 	    dd->WriteMonoRGBASpan   = write_span_mono_DITHER_5R6G5B_ximage;
 	    dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_ximage;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_5R6G5B_ximage;
 	    break;
-	 case PF_DITHER:
+	 case PF_Dither:
 	    if (depth==8) {
 	       dd->WriteRGBASpan      = write_span_DITHER8_ximage;
 	       dd->WriteRGBSpan       = write_span_rgb_DITHER8_ximage;
@@ -4428,7 +4428,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	       dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_ximage;
 	    }
 	    break;
-	 case PF_1BIT:
+	 case PF_1Bit:
 	    dd->WriteRGBASpan       = write_span_1BIT_ximage;
 	    dd->WriteRGBSpan        = write_span_rgb_1BIT_ximage;
 	    dd->WriteMonoRGBASpan   = write_span_mono_1BIT_ximage;
@@ -4445,7 +4445,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
                ctx->Driver.ClearColor = clear_color_HPCR_ximage;
 	    }
             break;
-         case PF_LOOKUP:
+         case PF_Lookup:
 	    if (depth==8) {
                dd->WriteRGBASpan       = write_span_LOOKUP8_ximage;
                dd->WriteRGBSpan        = write_rgb_LOOKUP8_ximage;
@@ -4461,7 +4461,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
                dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
             }
             break;
-         case PF_GRAYSCALE:
+         case PF_Grayscale:
 	    if (depth==8) {
 	       dd->WriteRGBASpan       = write_span_GRAYSCALE8_ximage;
 	       dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE8_ximage;

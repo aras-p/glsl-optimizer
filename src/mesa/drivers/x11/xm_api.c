@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.52 2003/01/24 15:33:22 brianp Exp $ */
+/* $Id: xm_api.c,v 1.53 2003/02/17 16:35:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -866,8 +866,8 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
       }
    }
 
-   v->dithered_pf = PF_GRAYSCALE;
-   v->undithered_pf = PF_GRAYSCALE;
+   v->dithered_pf = PF_Grayscale;
+   v->undithered_pf = PF_Grayscale;
    return GL_TRUE;
 }
 
@@ -946,8 +946,8 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
       }
    }
 
-   v->dithered_pf = PF_DITHER;
-   v->undithered_pf = PF_LOOKUP;
+   v->dithered_pf = PF_Dither;
+   v->undithered_pf = PF_Lookup;
    return GL_TRUE;
 }
 
@@ -1090,8 +1090,8 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
          v->Kernel[i] = kernel[i] >> maxBits;
       }
 
-      v->undithered_pf = PF_TRUECOLOR;
-      v->dithered_pf = (GET_VISUAL_DEPTH(v)<24) ? PF_TRUEDITHER : PF_TRUECOLOR;
+      v->undithered_pf = PF_Truecolor;
+      v->dithered_pf = (GET_VISUAL_DEPTH(v)<24) ? PF_Dither_True : PF_Truecolor;
    }
 
    /*
@@ -1136,7 +1136,7 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
        && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
       /* 5-6-5 color weight on common PC VGA boards */
       v->undithered_pf = PF_5R6G5B;
-      v->dithered_pf = PF_DITHER_5R6G5B;
+      v->dithered_pf = PF_Dither_5R6G5B;
    }
    else if (GET_REDMASK(v)  ==0xe0
        &&   GET_GREENMASK(v)==0x1c
@@ -1154,7 +1154,7 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
 static void setup_monochrome( XMesaVisual v, XMesaBuffer b )
 {
    (void) b;
-   v->dithered_pf = v->undithered_pf = PF_1BIT;
+   v->dithered_pf = v->undithered_pf = PF_1Bit;
    /* if black=1 then we must flip pixel values */
    v->bitFlip = (GET_BLACK_PIXEL(v) != 0);
 }
@@ -1196,7 +1196,7 @@ static GLboolean initialize_visual_and_buffer( int client,
        * Even if the visual is TrueColor or DirectColor we treat it as
        * being color indexed.  This is weird but might be useful to someone.
        */
-      v->dithered_pf = v->undithered_pf = PF_INDEX;
+      v->dithered_pf = v->undithered_pf = PF_Index;
       v->index_bits = GET_VISUAL_DEPTH(v);
    }
    else {
@@ -1359,9 +1359,9 @@ xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLuby
                       GLuint pixelFormat)
 {
    switch (pixelFormat) {
-      case PF_INDEX:
+      case PF_Index:
          return 0;
-      case PF_TRUECOLOR:
+      case PF_Truecolor:
          {
             unsigned long p;
             PACK_TRUECOLOR( p, r, g, b );
@@ -1375,26 +1375,26 @@ xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLuby
          return PACK_8R8G8B( r, g, b );
       case PF_5R6G5B:
          return PACK_5R6G5B( r, g, b );
-      case PF_DITHER:
+      case PF_Dither:
          {
             DITHER_SETUP;
             return DITHER( 1, 0, r, g, b );
          }
-      case PF_1BIT:
+      case PF_1Bit:
          /* 382 = (3*255)/2 */
          return ((r+g+b) > 382) ^ xmesa->xm_visual->bitFlip;
       case PF_HPCR:
          return DITHER_HPCR(1, 1, r, g, b);
-      case PF_LOOKUP:
+      case PF_Lookup:
          {
             LOOKUP_SETUP;
             return LOOKUP( r, g, b );
          }
-      case PF_GRAYSCALE:
+      case PF_Grayscale:
          return GRAY_RGB( r, g, b );
-      case PF_TRUEDITHER:
+      case PF_Dither_True:
          /* fall through */
-      case PF_DITHER_5R6G5B:
+      case PF_Dither_5R6G5B:
          {
             unsigned long p;
             PACK_TRUEDITHER(p, 1, 0, r, g, b);
@@ -1795,7 +1795,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 
        if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
          b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
-         if ((v->undithered_pf!=PF_INDEX) && (b->backimage)) {
+         if ((v->undithered_pf!=PF_Index) && (b->backimage)) {
 	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
 	   if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
 	     b->FXwindowHack = b->FXctx ? GL_TRUE : GL_FALSE;
@@ -2239,7 +2239,7 @@ static void FXgetImage( XMesaBuffer b )
                        b->width * sizeof(GLushort), /* stride */
                        b->backimage->data);         /* dest buffer */
    }
-   else if (b->xm_visual->dithered_pf==PF_DITHER
+   else if (b->xm_visual->dithered_pf==PF_Dither
 	    && GET_VISUAL_DEPTH(b->xm_visual)==8) {
       /* Special case: 8bpp RGB */
       for (y=0;y<b->height;y++) {
@@ -2555,9 +2555,9 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
    GLint a = (GLint) (alpha * 255.0F);
 
    switch (xmesa->pixelformat) {
-      case PF_INDEX:
+      case PF_Index:
          return 0;
-      case PF_TRUECOLOR:
+      case PF_Truecolor:
          {
             unsigned long p;
             PACK_TRUECOLOR( p, r, g, b );
@@ -2569,26 +2569,26 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
          return PACK_8R8G8B( r, g, b );
       case PF_5R6G5B:
          return PACK_5R6G5B( r, g, b );
-      case PF_DITHER:
+      case PF_Dither:
          {
             DITHER_SETUP;
             return DITHER( x, y, r, g, b );
          }
-      case PF_1BIT:
+      case PF_1Bit:
          /* 382 = (3*255)/2 */
          return ((r+g+b) > 382) ^ xmesa->xm_visual->bitFlip;
       case PF_HPCR:
          return DITHER_HPCR(x, y, r, g, b);
-      case PF_LOOKUP:
+      case PF_Lookup:
          {
             LOOKUP_SETUP;
             return LOOKUP( r, g, b );
          }
-      case PF_GRAYSCALE:
+      case PF_Grayscale:
          return GRAY_RGB( r, g, b );
-      case PF_DITHER_5R6G5B:
+      case PF_Dither_5R6G5B:
          /* fall through */
-      case PF_TRUEDITHER:
+      case PF_Dither_True:
          {
             unsigned long p;
             PACK_TRUEDITHER(p, x, y, r, g, b);

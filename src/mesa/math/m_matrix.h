@@ -1,4 +1,4 @@
-/* $Id: m_matrix.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_matrix.h,v 1.5 2003/02/17 16:36:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file math/m_matrix.h
+ * \brief Defines basic structures for matrix-handling.
+ */
+
 
 #ifndef _M_MATRIX_H
 #define _M_MATRIX_H
@@ -40,17 +45,14 @@
 #define MAT_TY 13
 #define MAT_TZ 14
 
-/*
- * Different kinds of 4x4 transformation matrices:
- */
-#define MATRIX_GENERAL		0	/* general 4x4 matrix */
-#define MATRIX_IDENTITY		1	/* identity matrix */
-#define MATRIX_3D_NO_ROT	2	/* ortho projection and others... */
-#define MATRIX_PERSPECTIVE	3	/* perspective projection matrix */
-#define MATRIX_2D		4	/* 2-D transformation */
-#define MATRIX_2D_NO_ROT	5	/* 2-D scale & translate only */
-#define MATRIX_3D		6	/* 3-D transformation */
 
+/**
+ * \defgroup MatFlags MAT_FLAG_XXX-flags
+ *
+ * Bitmasks to indicate different kinds of 4x4 matrices in
+ * GLmatrix::flags
+ */
+/*@{*/
 #define MAT_FLAG_IDENTITY       0
 #define MAT_FLAG_GENERAL        0x1
 #define MAT_FLAG_ROTATION       0x2
@@ -63,6 +65,8 @@
 #define MAT_DIRTY_TYPE          0x100
 #define MAT_DIRTY_FLAGS         0x200
 #define MAT_DIRTY_INVERSE       0x400
+/*@}*/
+
 
 #define MAT_FLAGS_ANGLE_PRESERVING (MAT_FLAG_ROTATION | \
 				    MAT_FLAG_TRANSLATION | \
@@ -97,8 +101,17 @@
 typedef struct {
    GLfloat *m;		/* 16-byte aligned */
    GLfloat *inv;	/* optional, 16-byte aligned */
-   GLuint flags;
-   GLuint type;		/* one of the MATRIX_* values */
+   GLuint flags;        /**< possible values determined by (of \link
+			   MatFlags MAT_FLAG_* flags\endlink) */
+   enum {
+     MATRIX_GENERAL,	/**< general 4x4 matrix */
+     MATRIX_IDENTITY,   /**< identity matrix */
+     MATRIX_3D_NO_ROT,	/**< ortho projection and others... */
+     MATRIX_PERSPECTIVE,/**< perspective projection matrix */
+     MATRIX_2D, 	/**< 2-D transformation */
+     MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
+     MATRIX_3D  	/**< 3-D transformation */
+   } type;
 } GLmatrix;
 
 
