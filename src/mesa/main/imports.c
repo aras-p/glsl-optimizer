@@ -1,8 +1,8 @@
-/* $Id: imports.c,v 1.23 2002/10/30 19:40:20 brianp Exp $ */
+/* $Id: imports.c,v 1.24 2002/10/30 19:44:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -67,7 +67,7 @@
 void *
 _mesa_malloc(size_t bytes)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86malloc(bytes);
 #else
    return malloc(bytes);
@@ -78,7 +78,7 @@ _mesa_malloc(size_t bytes)
 void *
 _mesa_calloc(size_t bytes)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86calloc(1, bytes);
 #else
    return calloc(1, bytes);
@@ -89,7 +89,7 @@ _mesa_calloc(size_t bytes)
 void
 _mesa_free(void *ptr)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86free(ptr);
 #else
    free(ptr);
@@ -171,7 +171,7 @@ _mesa_align_free(void *ptr)
 void *
 _mesa_memcpy(void *dest, const void *src, size_t n)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86memcpy(dest, src, n);
 #elif defined(SUNOS4)
    return memcpy((char *) dest, (char *) src, (int) n);
@@ -184,7 +184,7 @@ _mesa_memcpy(void *dest, const void *src, size_t n)
 void
 _mesa_memset( void *dst, int val, size_t n )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86memset( dst, val, n );
 #elif defined(SUNOS4)
    memset( (char *) dst, (int) val, (int) n );
@@ -205,7 +205,7 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
 void
 _mesa_bzero( void *dst, size_t n )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86memset( dst, 0, n );
 #elif defined(__FreeBSD__)
    bzero( dst, n );
@@ -218,7 +218,7 @@ _mesa_bzero( void *dst, size_t n )
 double
 _mesa_sin(double a)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86sin(a);
 #else
    return sin(a);
@@ -229,7 +229,7 @@ _mesa_sin(double a)
 double
 _mesa_cos(double a)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86cos(a);
 #else
    return cos(a);
@@ -240,7 +240,7 @@ _mesa_cos(double a)
 double
 _mesa_sqrt(double x)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86sqrt(x);
 #else
    return sqrt(x);
@@ -251,7 +251,7 @@ _mesa_sqrt(double x)
 double
 _mesa_pow(double x, double y)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86pow(x, y);
 #else
    return pow(x, y);
@@ -262,7 +262,7 @@ _mesa_pow(double x, double y)
 char *
 _mesa_getenv( const char *var )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86getenv(var);
 #else
    return getenv(var);
@@ -273,7 +273,7 @@ _mesa_getenv( const char *var )
 char *
 _mesa_strstr( const char *haystack, const char *needle )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strstr(haystack, needle);
 #else
    return strstr(haystack, needle);
@@ -284,7 +284,7 @@ _mesa_strstr( const char *haystack, const char *needle )
 char *
 _mesa_strncat( char *dest, const char *src, size_t n )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strncat(dest, src, n);
 #else
    return strncat(dest, src, n);
@@ -295,7 +295,7 @@ _mesa_strncat( char *dest, const char *src, size_t n )
 char *
 _mesa_strcpy( char *dest, const char *src )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strcpy(dest, src);
 #else
    return strcpy(dest, src);
@@ -306,7 +306,7 @@ _mesa_strcpy( char *dest, const char *src )
 char *
 _mesa_strncpy( char *dest, const char *src, size_t n )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strncpy(dest, src, n);
 #else
    return strncpy(dest, src, n);
@@ -317,7 +317,7 @@ _mesa_strncpy( char *dest, const char *src, size_t n )
 size_t
 _mesa_strlen( const char *s )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strlen(s);
 #else
    return strlen(s);
@@ -328,7 +328,7 @@ _mesa_strlen( const char *s )
 int
 _mesa_strcmp( const char *s1, const char *s2 )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strcmp(s1, s2);
 #else
    return strcmp(s1, s2);
@@ -339,7 +339,7 @@ _mesa_strcmp( const char *s1, const char *s2 )
 int
 _mesa_strncmp( const char *s1, const char *s2, size_t n )
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86strncmp(s1, s2, n);
 #else
    return strncmp(s1, s2, n);
@@ -350,7 +350,7 @@ _mesa_strncmp( const char *s1, const char *s2, size_t n )
 int
 _mesa_atoi(const char *s)
 {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86atoi(s);
 #else
    return atoi(s);
@@ -365,7 +365,7 @@ _mesa_sprintf( char *str, const char *fmt, ... )
    va_list args;
    va_start( args, fmt );  
    va_end( args );
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    r = xf86vsprintf( str, fmt, args );
 #else
    r = vsprintf( str, fmt, args );
@@ -382,7 +382,7 @@ _mesa_printf( const char *fmtString, ... )
    va_start( args, fmtString );  
    vsnprintf(s, MAXSTRING, fmtString, args);
    va_end( args );
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86printf("%s", s);
 #else
    printf("%s", s);
@@ -406,7 +406,7 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
    debug = _mesa_getenv("MESA_DEBUG") ? GL_TRUE : GL_FALSE;
 #endif
    if (debug) {
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
       xf86fprintf(stderr, "Mesa warning: %s\n", str);
 #else
       fprintf(stderr, "Mesa warning: %s\n", str);
@@ -423,7 +423,7 @@ void
 _mesa_problem( const GLcontext *ctx, const char *s )
 {
    (void) ctx;
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86fprintf(stderr, "Mesa implementation error: %s\n", s);
    xf86fprintf(stderr, "Please report to the DRI project at dri.sourceforge.net\n");
 #else
@@ -516,7 +516,7 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
    va_start(args, fmtString);
    vsnprintf(s, MAXSTRING, fmtString, args);
    va_end(args);
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86fprintf(stderr, "Mesa: %s", s);
 #else
    fprintf(stderr, "Mesa: %s", s);
@@ -547,7 +547,7 @@ static void *
 default_realloc(__GLcontext *gc, void *oldAddr, size_t newSize)
 {
    (void) gc;
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86realloc(oldAddr, newSize);
 #else
    return realloc(oldAddr, newSize);

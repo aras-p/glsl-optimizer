@@ -1,8 +1,8 @@
-/* $Id: glheader.h,v 1.28 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: glheader.h,v 1.29 2002/10/30 19:44:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -46,7 +46,7 @@
 
 
 
-#ifdef XFree86LOADER
+#if defined(XFree86LOADER) && defined(IN_MODULE)
 #include "xf86_ansic.h"
 #else
 #include <assert.h>
