@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.54 2001/02/24 18:25:52 keithw Exp $ */
+/* $Id: dd.h,v 1.55 2001/03/03 00:12:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -717,7 +717,7 @@ struct dd_function_table {
     *** They're ALSO called by the gl_PopAttrib() function!!!
     *** May add more functions like these to the device driver in the future.
     ***/
-   void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLclampf ref);
+   void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLchan ref);
    void (*BlendEquation)(GLcontext *ctx, GLenum mode);
    void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
    void (*BlendFuncSeparate)(GLcontext *ctx,
