@@ -335,7 +335,7 @@ case $ARCH in
 	echo "mklib: WARNING: please update the bin/mklib script!"
 	# XXX this is a total hack for Mesa - remove someday
 	# fall-back to an old mklib.* script
-	${MAKELIB} "lib${LIBNAME}.a" ${MAJOR} ${MINOR} ${PATCH} ${OBJECTS}
+	${TOP}/${MAKELIB} "lib${LIBNAME}.a" ${MAJOR} ${MINOR} ${PATCH} ${OBJECTS}
 	FINAL_LIBS="${LIBNAME}"
 	;;
 esac
