@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.11 2001/03/03 21:11:32 brianp Exp $ */
+/* $Id: common_x86.c,v 1.12 2001/03/05 15:57:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,8 +85,8 @@ static void message( const char *msg )
  * not good.
  */
 
-extern void gl_test_os_katmai_support( void );
-extern void gl_test_os_katmai_exception_support( void );
+extern void _mesa_test_os_katmai_support( void );
+extern void _mesa_test_os_katmai_exception_support( void );
 
 #if defined(__linux__) && defined(_POSIX_SOURCE)
 static void sigill_handler( int signal, struct sigcontext sc )
@@ -160,7 +160,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE... " );
 
-      gl_test_os_katmai_support();
+      _mesa_test_os_katmai_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
@@ -185,7 +185,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE unmasked exceptions... " );
 
-      gl_test_os_katmai_exception_support();
+      _mesa_test_os_katmai_exception_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
