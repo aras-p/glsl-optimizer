@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.50 2001/01/06 22:46:13 gareth Exp $ */
+/* $Id: gl.h,v 1.51 2001/01/29 16:18:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2256,25 +2256,26 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 #ifndef GL_MESA_trace
 #define GL_MESA_trace 1
 
-#define GL_TRACE_ALL_BIT_MESA			0x0001
-#define GL_TRACE_OPERATIONS_BIT_MESA		0x0002
-#define GL_TRACE_PRIMITIVES_BIT_MESA		0x0004
-#define GL_TRACE_ARRAYS_BIT_MESA		0x0008
-#define GL_TRACE_TEXTURES_BIT_MESA		0x0010
-#define GL_TRACE_PIXELS_BIT_MESA		0x0020
+#define GL_TRACE_ALL_BITS_MESA			0xFFFF
+#define GL_TRACE_OPERATIONS_BIT_MESA		0x0001
+#define GL_TRACE_PRIMITIVES_BIT_MESA		0x0002
+#define GL_TRACE_ARRAYS_BIT_MESA		0x0004
+#define GL_TRACE_TEXTURES_BIT_MESA		0x0008
+#define GL_TRACE_PIXELS_BIT_MESA		0x0010
+#define GL_TRACE_ERRORS_BIT_MESA		0x0020
 #define GL_TRACE_MASK_MESA			0x8755
 #define GL_TRACE_NAME_MESA			0x8756
 
-GLAPI void GLAPIENTRY glEnableTrace( GLbitfield mask );
-GLAPI void GLAPIENTRY glDisableTrace( GLbitfield mask );
-GLAPI void GLAPIENTRY glNewTrace( GLbitfield mask, GLubyte * traceName );
-GLAPI void GLAPIENTRY glEndTrace( void );
-GLAPI void GLAPIENTRY glTraceAssertAttrib( GLbitfield attribMask );
-GLAPI void GLAPIENTRY glTraceComment( const GLubyte * comment );
-GLAPI void GLAPIENTRY glTraceTexture( GLuint name, const GLubyte* comment );
-GLAPI void GLAPIENTRY glTraceList( GLuint name, const GLubyte* comment );
-GLAPI void GLAPIENTRY glTracePointer( GLvoid* pointer, const GLubyte* comment );
-GLAPI void GLAPIENTRY glTracePointerRange( const GLvoid* first, const GLvoid* last, const GLubyte* comment );
+GLAPI void GLAPIENTRY glEnableTraceMESA( GLbitfield mask );
+GLAPI void GLAPIENTRY glDisableTraceMESA( GLbitfield mask );
+GLAPI void GLAPIENTRY glNewTraceMESA( GLbitfield mask, const GLubyte * traceName );
+GLAPI void GLAPIENTRY glEndTraceMESA( void );
+GLAPI void GLAPIENTRY glTraceAssertAttribMESA( GLbitfield attribMask );
+GLAPI void GLAPIENTRY glTraceCommentMESA( const GLubyte * comment );
+GLAPI void GLAPIENTRY glTraceTextureMESA( GLuint name, const GLubyte* comment );
+GLAPI void GLAPIENTRY glTraceListMESA( GLuint name, const GLubyte* comment );
+GLAPI void GLAPIENTRY glTracePointerMESA( GLvoid* pointer, const GLubyte* comment );
+GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid* last, const GLubyte* comment );
 
 #endif /* GL_MESA_trace */
 
