@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.101 2002/10/22 15:17:34 brianp Exp $
+$Id: VERSIONS,v 1.102 2002/10/23 14:01:38 brianp Exp $
 
 
 Mesa Version History
@@ -1056,3 +1056,4 @@ Mesa Version History
 	- New spec file and Python code to generate some GL dispatch files
 	- Glide driver defaults to "no" with autoconf/automake
 	- floating point color channels now clamped to [0,inf)
+	- updated demos/stex3d with new options
