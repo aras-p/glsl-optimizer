@@ -271,7 +271,7 @@ static void keyboard( unsigned char c, int x, int y )
 {
    switch ( c ) {
    case 'c':
-      envColor = ++envColor % (int) NUM_ENV_COLORS;
+      envColor = (++envColor) % (int) NUM_ENV_COLORS;
       break;
    case 'g':
       drawBackground = !drawBackground;
