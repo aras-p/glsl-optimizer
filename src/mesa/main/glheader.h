@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.13 2000/09/12 15:41:46 brianp Exp $ */
+/* $Id: glheader.h,v 1.14 2000/09/15 15:42:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,12 @@
 #else
 #include <assert.h>
 #include <ctype.h>
+/* If we can use Compaq's Fast Math Library on Alpha */
+#if defined(__alpha__) && defined(CCPML)
+#include <cpml.h>
+#else
 #include <math.h>
+#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
