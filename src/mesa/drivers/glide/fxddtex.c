@@ -926,31 +926,6 @@ PrintTexture(int w, int h, int c, const GLubyte * data)
 }
 
 
-GLuint fxDDCompressedTextureSize (GLcontext *ctx,
-                                  GLsizei width, GLsizei height, GLsizei depth,
-                                  GLenum format)
-{
- int wScale, hScale;
-
- ASSERT(depth == 1);
-
- /* Determine width and height scale factors for texture.
-  * Remember, Glide is limited to 8:1 aspect ratios.
-  */
- fxTexGetInfo(width, height,
-              NULL,       /* lod level          */
-              NULL,       /* aspect ratio       */
-              NULL, NULL, /* sscale, tscale     */
-              &wScale, &hScale);
-
- return _mesa_compressed_texture_size(ctx,
-                                      width * wScale,
-                                      height * hScale,
-                                      depth,
-                                      format);
-}
-
-
 const struct gl_texture_format *
 fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum srcFormat, GLenum srcType )
@@ -1315,11 +1290,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
        internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
      }
      texImage->IntFormat = internalFormat;
-     texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
-                                                              mml->width,
-                                                              mml->height,
-                                                              1,
-                                                              internalFormat);
    }
 #endif
 #if FX_TC_NAPALM
@@ -1333,11 +1303,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       if (texNapalm) {
          texImage->IntFormat = internalFormat = texNapalm;
          texImage->IsCompressed = GL_TRUE;
-         texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
-                                                                  mml->width,
-                                                                  mml->height,
-                                                                  1,
-                                                                  texNapalm);
       }
    }
 #endif
@@ -1355,7 +1320,12 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    /* allocate mipmap buffer */
    assert(!texImage->Data);
    if (texImage->IsCompressed) {
-      dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat, mml->width);
+      texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
+                                                               mml->width,
+                                                               mml->height,
+                                                               1,
+                                                               internalFormat);
+      dstRowStride = _mesa_compressed_row_stride(internalFormat, mml->width);
       texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
    } else {
       dstRowStride = mml->width * texelBytes;
@@ -1569,7 +1539,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    if (!texImage->DriverData) {
       texImage->DriverData = CALLOC(sizeof(tfxMipMapLevel));
       if (!texImage->DriverData) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
          return;
       }
    }
@@ -1595,22 +1565,46 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 
    /* allocate new storage for texture image, if needed */
    if (!texImage->Data) {
-      texImage->Data = MESA_PBUFFER_ALLOC(imageSize);
+      texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
+                                                               mml->width,
+                                                               mml->height,
+                                                               1,
+                                                               internalFormat);
+      texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
       if (!texImage->Data) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
          return;
       }
    }
 
    /* save the texture data */
-   MEMCPY(texImage->Data, data, imageSize);
-   /* [dBorca] Hack alert:
-    * in order to account for apect ratio and other anomalies,
-    * we would need to decompress the image. Note, however that
-    * certain rescaling factors (x4, x8) can be treated simpler
-    * if they match the compressed texture microtile size.
-    * Cheeky idea: use textureBuffer to decompress in hardware!
-    */
+   if (mml->wScale != 1 || mml->hScale != 1) {
+      /* [dBorca] Hack alert:
+       * now we're screwed. We can't decompress,
+       * unless we do it in HW (via textureBuffer).
+       * We still have some chances:
+       * 1) we got FXT1 textures - we CAN decompress, rescale for
+       *    aspectratio, then compress back.
+       * 2) there is a chance that MIN("s", "t") won't be overflowed.
+       *    Thus, we don't care about textureclamp and we could lower
+       *    MIN("uscale", "vscale") below 32. We still have to have
+       *    our data aligned inside a 8:1 rectangle.
+       * 3) just in case if MIN("s", "t") gets overflowed with GL_REPEAT,
+       *    we replicate the data over the padded area.
+       */
+      GLuint srcRowStride = _mesa_compressed_row_stride(internalFormat, width);
+
+      GLuint destRowStride = _mesa_compressed_row_stride(internalFormat,
+                                                  mml->width);
+
+      _mesa_upscale_teximage2d(srcRowStride, (height+3) / 4,
+                               destRowStride, (mml->height+3) / 4,
+                               1, data, srcRowStride,
+                               texImage->Data);
+
+   } else {
+      MEMCPY(texImage->Data, data, texImage->CompressedSize);
+   }
 
    ti->info.format = mml->glideFormat;
    texImage->FetchTexelc = fxFetchFunction(texImage->TexFormat->MesaFormat);
@@ -1667,10 +1661,10 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
    srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
 
    destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
-                                               texImage->Width);
+                                               mml->width);
    dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
                                          texImage->IntFormat,
-                                         texImage->Width,
+                                         mml->width,
                               (GLubyte*) texImage->Data);
 
    rows = height / 4; /* [dBorca] hardcoded 4, but works for FXT1/DXTC */
@@ -1684,6 +1678,16 @@ fxDDCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
    /* [dBorca] Hack alert:
     * see fxDDCompressedTexImage2D for caveats
     */
+   if (mml->wScale != 1 || mml->hScale != 1) {
+      srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, texImage->Width);
+
+      destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                               mml->width);
+      _mesa_upscale_teximage2d(srcRowStride, texImage->Height / 4,
+                               destRowStride, mml->height / 4,
+                               1, texImage->Data, destRowStride,
+                               texImage->Data);
+   }
 
    /* [dBorca]
     * Hack alert: unsure...

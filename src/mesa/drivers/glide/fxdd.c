@@ -1718,7 +1718,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
    ctx->Driver.CompressedTexImage2D = fxDDCompressedTexImage2D;
    ctx->Driver.CompressedTexSubImage2D = fxDDCompressedTexSubImage2D;
-   ctx->Driver.CompressedTextureSize = fxDDCompressedTextureSize;
    ctx->Driver.TestProxyTexImage = fxDDTestProxyTexImage;
    ctx->Driver.TexEnv = fxDDTexEnv;
    ctx->Driver.TexParameter = fxDDTexParam;

@@ -153,6 +153,19 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    else
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
+   /* this is necessary because of fxDDCompressedTexImage2D */
+   if ((ti->info.format == GR_TEXFMT_ARGB_CMP_FXT1) ||
+       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT1) ||
+       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT3) ||
+       (ti->info.format == GR_TEXFMT_ARGB_CMP_DXT5)) {
+      struct gl_texture_image *texImage = tObj->Image[0][minl];
+      tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+      if (mml->wScale != 1 || mml->hScale != 1) {
+         ti->sScale /= mml->wScale;
+         ti->tScale /= mml->hScale;
+      }
+   }
+
    ti->baseLevelInternalFormat = tObj->Image[0][minl]->Format;
 
    ti->validated = GL_TRUE;
