@@ -1307,7 +1307,7 @@ GLAPI void APIENTRY glGetFinalCombinerInputParameterivNV(GLenum variable, GLenum
 /*
  * 196. GL_MESA_resize_bufffers
  */
-#ifndef GL_MESA_resize_bufffers
+#ifndef GL_MESA_resize_buffers
 #define GL_MESA_resize_buffers 1
 
 GLAPI void APIENTRY glResizeBuffersMESA(void);
