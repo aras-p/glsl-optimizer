@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.81 2000/08/29 18:57:58 brianp Exp $ */
+/* $Id: context.c,v 1.82 2000/09/05 20:28:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,6 +73,11 @@
 #include "xform.h"
 #endif
 
+
+#if defined(TRACE)
+#include "Trace/tr_context.h"
+#include "Trace/tr_wrapper.h"
+#endif
 
 
 /**********************************************************************/
@@ -1485,6 +1490,38 @@ _mesa_initialize_context( GLcontext *ctx,
    _mesa_init_exec_table(ctx->Exec, dispatchSize);
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
    ctx->CurrentDispatch = ctx->Exec;
+
+#if defined(TRACE)
+   ctx->TraceCtx = CALLOC( sizeof(trace_context_t) );
+#if 0
+   /* Brian: do you want to have CreateContext fail here,
+       or should we just trap in NewTrace (currently done)? */
+   if (!(ctx->TraceCtx)) {
+      free_shared_state(ctx, ctx->Shared);
+      ALIGN_FREE( ctx->VB );
+      FREE( ctx->PB );
+      FREE( ctx->Exec );
+      FREE( ctx->Save );
+      return GL_FALSE;
+   }
+#endif
+   trInitContext(ctx->TraceCtx);
+
+   ctx->TraceDispatch = (struct _glapi_table *)
+                        CALLOC(dispatchSize * sizeof(void*));
+#if 0
+   if (!(ctx->TraceCtx)) {
+      free_shared_state(ctx, ctx->Shared);
+      ALIGN_FREE( ctx->VB );
+      FREE( ctx->PB );
+      FREE( ctx->Exec );
+      FREE( ctx->Save );
+      FREE( ctx->TraceCtx );
+      return GL_FALSE;
+   }
+#endif
+   trInitDispatch(ctx->TraceDispatch);
+#endif
 
    return GL_TRUE;
 }
