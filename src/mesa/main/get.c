@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.46 2000/12/09 19:55:18 brianp Exp $ */
+/* $Id: get.c,v 1.47 2000/12/09 20:35:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1197,6 +1197,33 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
       case GL_MAX_CONVOLUTION_WIDTH:
          *params = INT_TO_BOOL(ctx->Const.MaxConvolutionWidth);
          break;
@@ -2409,6 +2436,33 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLdouble) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLdouble) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLdouble) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
       case GL_MAX_CONVOLUTION_WIDTH:
          *params = (GLdouble) ctx->Const.MaxConvolutionWidth;
          break;
@@ -3595,6 +3649,33 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLfloat) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLfloat) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+         break;
       case GL_MAX_CONVOLUTION_WIDTH:
          *params = (GLfloat) ctx->Const.MaxConvolutionWidth;
          break;
@@ -4809,6 +4890,33 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLint) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLint) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution) {
+            *params = (GLint) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
       case GL_MAX_CONVOLUTION_WIDTH:
          *params = ctx->Const.MaxConvolutionWidth;
          break;
