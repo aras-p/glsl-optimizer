@@ -38,7 +38,7 @@
  */
 #if !defined(__SCITECH_SNAP__)
 
-#include <malloc.h>     /* to get ptrdiff_t, used below */
+#include <stddef.h>     /* to get ptrdiff_t, used below */
 
 #if defined(__BEOS__)
 #include <stdlib.h>     /* to get some BeOS-isms */
@@ -2376,17 +2376,17 @@ GLAPI void GLAPIENTRY glEndQuery(GLenum target);
 GLAPI void GLAPIENTRY glGetQueryiv(GLenum target, GLenum pname, GLint *params);
 GLAPI void GLAPIENTRY glGetQueryObjectiv(GLuint id, GLenum pname, GLint *params);
 GLAPI void GLAPIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params);
-GLAPI void APIENTRY glBindBuffer(GLenum, GLuint);
-GLAPI void APIENTRY glDeleteBuffers(GLsizei, const GLuint *);
-GLAPI void APIENTRY glGenBuffers(GLsizei, GLuint *);
-GLAPI GLboolean APIENTRY glIsBuffer(GLuint);
-GLAPI void APIENTRY glBufferData(GLenum, GLsizeiptr, const GLvoid *, GLenum);
-GLAPI void APIENTRY glBufferSubData(GLenum, GLintptr, GLsizeiptr, const GLvoid *);
-GLAPI void APIENTRY glGetBufferSubData(GLenum, GLintptr, GLsizeiptr, GLvoid *);
-GLAPI GLvoid* APIENTRY glMapBuffer(GLenum, GLenum);
-GLAPI GLboolean APIENTRY glUnmapBuffer(GLenum);
-GLAPI void APIENTRY glGetBufferParameteriv(GLenum, GLenum, GLint *);
-GLAPI void APIENTRY glGetBufferPointerv(GLenum, GLenum, GLvoid* *);
+GLAPI void GLAPIENTRY glBindBuffer(GLenum, GLuint);
+GLAPI void GLAPIENTRY glDeleteBuffers(GLsizei, const GLuint *);
+GLAPI void GLAPIENTRY glGenBuffers(GLsizei, GLuint *);
+GLAPI GLboolean GLAPIENTRY glIsBuffer(GLuint);
+GLAPI void GLAPIENTRY glBufferData(GLenum, GLsizeiptr, const GLvoid *, GLenum);
+GLAPI void GLAPIENTRY glBufferSubData(GLenum, GLintptr, GLsizeiptr, const GLvoid *);
+GLAPI void GLAPIENTRY glGetBufferSubData(GLenum, GLintptr, GLsizeiptr, GLvoid *);
+GLAPI GLvoid* GLAPIENTRY glMapBuffer(GLenum, GLenum);
+GLAPI GLboolean GLAPIENTRY glUnmapBuffer(GLenum);
+GLAPI void GLAPIENTRY glGetBufferParameteriv(GLenum, GLenum, GLint *);
+GLAPI void GLAPIENTRY glGetBufferPointerv(GLenum, GLenum, GLvoid* *);
 #endif
 
 typedef void (APIENTRYP PFNGLGENQUERIESPROC)(GLsizei n, GLuint *ids);
