@@ -252,7 +252,8 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    node->vertex_store->refcount++;
    node->prim_store->refcount++;
 
-   assert(node->attrsz[_TNL_ATTRIB_POS] != 0);
+   assert(node->attrsz[_TNL_ATTRIB_POS] != 0 ||
+	  node->count == 0);
 
    /* Maybe calculate normal lengths:
     */
