@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.35 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: xm_api.c,v 1.36 2002/05/27 17:06:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -283,8 +283,6 @@ static GLint gamma_adjust( GLfloat gamma, GLint value, GLint max )
  *         visinfo - desribes the visual to be used for XImages
  * Return:  true number of bits per pixel for XImages
  */
-#define GET_BITS_PER_PIXEL(xmv) bits_per_pixel(xmv)
-
 #ifdef XFree86Server
 
 static int bits_per_pixel( XMesaVisual xmv )
@@ -1209,7 +1207,7 @@ static GLboolean initialize_visual_and_buffer( int client,
    }
 
    /* Save true bits/pixel */
-   v->BitsPerPixel = GET_BITS_PER_PIXEL(v);
+   v->BitsPerPixel = bits_per_pixel(v);
    assert(v->BitsPerPixel > 0);
 
 
@@ -1751,7 +1749,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    }
 
    b->xm_visual = v;
-   b->pixmap_flag = GL_FALSE;
+   b->type = WINDOW;
    b->display = v->display;
 #ifdef XFree86Server
    b->cmap = (ColormapPtr)LookupIDByType(wColormap(w), RT_COLORMAP);
@@ -1897,7 +1895,7 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
    assert(v);
 
    b->xm_visual = v;
-   b->pixmap_flag = GL_TRUE;
+   b->type = PIXMAP;
    b->display = v->display;
    b->cmap = cmap;
 
@@ -2549,7 +2547,7 @@ void XMesaGarbageCollect( void )
    XMesaBuffer b, next;
    for (b=XMesaBufferList; b; b=next) {
       next = b->Next;
-      if (b->display && b->frontbuffer && !b->pixmap_flag) {
+      if (b->display && b->frontbuffer && b->type == WINDOW) {
 #ifdef XFree86Server
 	 /* NOT_NEEDED */
 #else

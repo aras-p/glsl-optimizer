@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.27 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.28 2002/05/27 17:06:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,6 +136,14 @@ struct xmesa_context {
 
 
 
+typedef enum {
+   WINDOW,          /* An X window */
+   GLXWINDOW,       /* GLX window */
+   PIXMAP,          /* GLX pixmap */
+   PBUFFER          /* GLX Pbuffer */
+} BufferType;
+
+
 /*
  * "Derived" from GLframebuffer.  Basically corresponds to a GLXDrawable.
  */
@@ -145,8 +153,7 @@ struct xmesa_buffer {
    XMesaVisual xm_visual;	/* the X/Mesa visual */
 
    XMesaDisplay *display;
-   GLboolean pixmap_flag;	/* is the buffer a Pixmap? */
-   GLboolean pbuffer_flag;	/* is the buffer a Pbuffer? */
+   BufferType type;             /* window, pixmap, pbuffer or glxwindow */
    XMesaDrawable frontbuffer;	/* either a window or pixmap */
    XMesaPixmap backpixmap;	/* back buffer Pixmap */
    XMesaImage *backimage;	/* back buffer simulated XImage */

@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.63 2002/04/19 00:47:07 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.64 2002/05/27 17:06:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1709,6 +1709,7 @@ extern XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
 
 
 
+/* PBUFFER */
 static GLXFBConfig *
 Fake_glXChooseFBConfig( Display *dpy, int screen,
                         const int *attribList, int *nitems )
@@ -1721,6 +1722,7 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 }
 
 
+/* PBUFFER */
 static int
 Fake_glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
                            int attribute, int *value )
@@ -1880,16 +1882,19 @@ Fake_glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
 }
 
 
+/* PBUFFER */
 static GLXFBConfig *
 Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
 {
+   /* Get list of all X visuals, create FBconfigs from them */
    (void) dpy;
    (void) screen;
-   (void) nelements;
+   nelements = 0;
    return 0;
 }
 
 
+/* PBUFFER */
 static XVisualInfo *
 Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
 {
@@ -1903,6 +1908,7 @@ Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
 }
 
 
+/* PBUFFER */
 static GLXWindow
 Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
                       const int *attribList )
@@ -1973,6 +1979,7 @@ Fake_glXDestroyPixmap( Display *dpy, GLXPixmap pixmap )
 }
 
 
+/* PBUFFER */
 static GLXPbuffer
 Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
                        const int *attribList )
@@ -2011,6 +2018,7 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
 }
 
 
+/* PBUFFER */
 static void
 Fake_glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf )
 {
@@ -2019,6 +2027,7 @@ Fake_glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf )
 }
 
 
+/* PBUFFER */
 static void
 Fake_glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
                        unsigned int *value )
@@ -2054,6 +2063,7 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
 }
 
 
+/* PBUFFER */
 static int
 Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
 {
@@ -2072,6 +2082,7 @@ Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
 }
 
 
+/* PBUFFER */
 static void
 Fake_glXSelectEvent( Display *dpy, GLXDrawable drawable, unsigned long mask )
 {
@@ -2081,6 +2092,7 @@ Fake_glXSelectEvent( Display *dpy, GLXDrawable drawable, unsigned long mask )
 }
 
 
+/* PBUFFER */
 static void
 Fake_glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
                           unsigned long *mask )
@@ -2128,11 +2140,7 @@ Fake_glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 static Bool
 Fake_glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx)
 {
-   (void) dpy;
-   (void) draw;
-   (void) read;
-   (void) ctx;
-   return False;
+   return Fake_glXMakeContextCurrent( dpy, draw, read, ctx );
 }
 
 /* not used
