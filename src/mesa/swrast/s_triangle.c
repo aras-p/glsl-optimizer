@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.30 2001/06/26 15:33:28 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.31 2001/07/09 16:16:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -620,8 +620,8 @@ static void affine_textured_triangle( GLcontext *ctx,
 #define S_SCALE twidth
 #define T_SCALE theight
 
-#define SETUP_CODE
-   struct affine_info info;
+#define SETUP_CODE							\
+   struct affine_info info;						\
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
    GLint b = obj->BaseLevel;						\
@@ -914,8 +914,8 @@ static void persp_textured_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
 
-#define SETUP_CODE
-   struct persp_info info;
+#define SETUP_CODE							\
+   struct persp_info info;						\
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
    GLint b = obj->BaseLevel;						\
