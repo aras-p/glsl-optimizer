@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.19 2002/09/06 12:58:56 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.20 2002/10/14 13:57:23 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
@@ -53,6 +53,9 @@
 #define GLX_NONE_EXT  0x8000
 #endif
 
+#ifndef GLX_TRANSPARENT_RGB
+#define GLX_TRANSPARENT_RGB 0x8008
+#endif
 
 typedef enum
 {
@@ -74,7 +77,12 @@ struct visual_attribs
 
    /* GL visual attribs */
    int supportsGL;
-   int transparent;
+   int transparentType;
+   int transparentRedValue;
+   int transparentGreenValue;
+   int transparentBlueValue;
+   int transparentAlphaValue;
+   int transparentIndexValue;
    int bufferSize;
    int level;
    int rgba;
@@ -402,8 +410,17 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &attribs->accumBlueSize);
    glXGetConfig(dpy, vInfo, GLX_ACCUM_ALPHA_SIZE, &attribs->accumAlphaSize);
 
-   /* transparent pixel value not implemented yet */
-   attribs->transparent = 0;
+   /* get transparent pixel stuff */
+   glXGetConfig(dpy, vInfo,GLX_TRANSPARENT_TYPE, &attribs->transparentType);
+   if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_RED_VALUE, &attribs->transparentRedValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_GREEN_VALUE, &attribs->transparentGreenValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_BLUE_VALUE, &attribs->transparentBlueValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_ALPHA_VALUE, &attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_INDEX_VALUE, &attribs->transparentIndexValue);
+   }
 
    /* multisample tests not implemented yet */
    attribs->numSamples = 0;
@@ -448,7 +465,15 @@ print_visual_attribs_verbose(const struct visual_attribs *attribs)
    else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
       printf("    visualCaveat=Nonconformant\n");
 #endif
-   printf("    %s\n", attribs->transparent ? "Transparent." : "Opaque.");
+   if (attribs->transparentType == GLX_NONE) {
+     printf("    Opaque.\n");
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     printf("    Transparent RGB: Red=%d Green=%d Blue=%d Alpha=%d\n",attribs->transparentRedValue,attribs->transparentGreenValue,attribs->transparentBlueValue,attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     printf("    Transparent index=%d\n",attribs->transparentIndexValue);
+   }
 }
 
 
@@ -482,7 +507,7 @@ print_visual_attribs_short(const struct visual_attribs *attribs)
           attribs->id,
           attribs->depth,
           visual_class_abbrev(attribs->klass),
-          attribs->transparent,
+          attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
           attribs->rgba ? "r" : "c",
@@ -520,7 +545,7 @@ print_visual_attribs_long(const struct visual_attribs *attribs)
           attribs->id,
           attribs->depth,
           visual_class_name(attribs->klass),
-          attribs->transparent,
+          attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
           attribs->rgba ? "rgba" : "ci  ",
