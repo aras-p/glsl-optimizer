@@ -212,12 +212,26 @@ struct i830_context_t
    drm_clip_rect_t scissor_rect;
 
    drmContext hHWContext;
-   drm_hw_lock_t *driHwLock;
+   drmLock *driHwLock;
    int driFd;
 
-   __DRIdrawablePrivate *driDrawable;
+   __DRIdrawablePrivate *driDrawable;    /**< DRI drawable bound to this
+					  * context for drawing.
+					  */
+   __DRIdrawablePrivate *driReadable;    /**< DRI drawable bound to this
+					  * context for reading.
+					  */
+
+   /**
+    * Drawable used by Mesa for software fallbacks for reading and
+    * writing.  It is set by Mesa's \c SetBuffer callback, and will always be
+    * either \c i830_context_t::driDrawable or \c i830_context_t::driReadable.
+    */
+   
+   __DRIdrawablePrivate * mesa_drawable;
+
    __DRIscreenPrivate *driScreen;
-   i830ScreenPrivate *i830Screen; 
+   i830ScreenPrivate *i830Screen;
    I830SAREAPtr sarea;
 
    /**

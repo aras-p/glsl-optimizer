@@ -506,10 +506,11 @@ GLboolean i830MakeCurrent(__DRIcontextPrivate *driContextPriv,
       i830ContextPtr imesa = (i830ContextPtr) driContextPriv->driverPrivate;
 
       if ( imesa->driDrawable != driDrawPriv ) {
-	 /* Shouldn't the readbuffer be stored also? */
 	 imesa->driDrawable = driDrawPriv;
 	 i830XMesaWindowMoved( imesa );
       }
+
+       imesa->driReadable = driReadPriv;
 
       _mesa_make_current2(imesa->glCtx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,

@@ -300,6 +300,8 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
       void * const psc = sPriv->psc->screenConfigs;
 
       if ( glx_enable_extension != NULL ) {
+	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+
 	 if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
 	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
 	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
