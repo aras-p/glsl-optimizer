@@ -707,13 +707,35 @@ static void savageRenderPrimitive( GLcontext *ctx, GLenum prim )
 }
 
 
-#define EMIT_ATTR( ATTR, STYLE, SKIP )					\
+#define EMIT_ATTR( ATTR, STYLE, INDEX, SKIP )				\
 do {									\
    imesa->vertex_attrs[imesa->vertex_attr_count].attrib = (ATTR);	\
    imesa->vertex_attrs[imesa->vertex_attr_count].format = (STYLE);	\
    imesa->vertex_attr_count++;						\
-   drawCmd &= ~SKIP;							\
+   setupIndex |= (INDEX);						\
+   drawCmd &= ~(SKIP);							\
 } while (0)
+
+#define EMIT_PAD( N )							\
+do {									\
+   imesa->vertex_attrs[imesa->vertex_attr_count].attrib = 0;		\
+   imesa->vertex_attrs[imesa->vertex_attr_count].format = EMIT_PAD;	\
+   imesa->vertex_attrs[imesa->vertex_attr_count].offset = (N);		\
+   imesa->vertex_attr_count++;						\
+} while (0)
+
+#define SAVAGE_EMIT_XYZ 0x0001
+#define SAVAGE_EMIT_W   0x0002
+#define SAVAGE_EMIT_C0  0x0004
+#define SAVAGE_EMIT_C1  0x0008
+#define SAVAGE_EMIT_FOG 0x0010
+#define SAVAGE_EMIT_S0  0x0020
+#define SAVAGE_EMIT_T0  0x0040
+#define SAVAGE_EMIT_ST0 0x0060
+#define SAVAGE_EMIT_S1  0x0080
+#define SAVAGE_EMIT_T1  0x0100
+#define SAVAGE_EMIT_ST1 0x0180
+
 
 static void savageRenderStart( GLcontext *ctx )
 {
@@ -721,6 +743,7 @@ static void savageRenderStart( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint index = tnl->render_inputs;
+   GLuint setupIndex = SAVAGE_EMIT_XYZ;
    GLuint drawCmd = SAVAGE_HW_SKIPFLAGS;
    if (imesa->savageScreen->chipset < S3_SAVAGE4)
       drawCmd &= ~SAVAGE_HW_NO_UV1;
@@ -735,18 +758,24 @@ static void savageRenderStart( GLcontext *ctx )
     * build up a hardware vertex.
     */
    if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE)) {
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_HW_NO_W );
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_EMIT_W, SAVAGE_HW_NO_W );
    }
    else {
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0 );
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 0 );
    }
 
    /* t_context.c always includes a diffuse color */
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_HW_NO_CD );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_EMIT_C0, SAVAGE_HW_NO_CD );
       
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_HW_NO_CS );
-      EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_HW_NO_CS );
+      if ((index & _TNL_BIT_COLOR1))
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_EMIT_C1, SAVAGE_HW_NO_CS );
+      else
+	 EMIT_PAD( 3 );
+      if ((index & _TNL_BIT_FOG))
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_EMIT_FOG, SAVAGE_HW_NO_CS );
+      else
+	 EMIT_PAD( 1 );
    }
 
    if (index & _TNL_BIT_TEX(0)) {
@@ -755,9 +784,9 @@ static void savageRenderStart( GLcontext *ctx )
 	 FALLBACK(ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
       }
       if (VB->TexCoordPtr[0]->size == 2)
-	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_HW_NO_UV0 );
+	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_HW_NO_UV0 );
       else
-	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_HW_NO_U0 );
+	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_EMIT_S0, SAVAGE_HW_NO_U0 );
    }
    if (index & _TNL_BIT_TEX(1)) {
       if (VB->TexCoordPtr[1]->size > 2) {
@@ -765,24 +794,21 @@ static void savageRenderStart( GLcontext *ctx )
 	 FALLBACK(ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
       }
       if (VB->TexCoordPtr[1]->size == 2)
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, SAVAGE_HW_NO_UV1 );
+	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, SAVAGE_EMIT_ST1, SAVAGE_HW_NO_UV1 );
       else
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_1F, SAVAGE_HW_NO_U1 );
+	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_1F, SAVAGE_EMIT_S1, SAVAGE_HW_NO_U1 );
    }
 
-   /* Only need to change the vertex emit code if there has been a
-    * statechange to a new hardware vertex format and also when the
-    * vertex format is set for the first time. This is indicated by
-    * imesa->vertex_size == 0.
-    */
-   if (drawCmd != (imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS) ||
-       imesa->vertex_size == 0) {
+   /* Need to change the vertex emit code if the SetupIndex changed or
+    * is set for the first time (indicated by vertex_size == 0). */
+   if (setupIndex != imesa->SetupIndex || imesa->vertex_size == 0) {
       imesa->vertex_size = 
 	 _tnl_install_attrs( ctx, 
 			     imesa->vertex_attrs, 
 			     imesa->vertex_attr_count,
 			     imesa->hw_viewport, 0 );
       imesa->vertex_size >>= 2;
+      imesa->SetupIndex = setupIndex;
 
       imesa->DrawPrimitiveCmd = drawCmd;
    }
@@ -802,7 +828,8 @@ static void savageRenderFinish( GLcontext *ctx )
 
    /* Flush the last primitive now, before any state is changed.
     * Alternatively state could be emitted in all state-changing
-    * functions in savagestate.c. */
+    * functions in savagestate.c and when changing the vertex format
+    * above. */
    FLUSH_BATCH(SAVAGE_CONTEXT(ctx));
 
    if (SAVAGE_CONTEXT(ctx)->RenderIndex & SAVAGE_FALLBACK_BIT)
