@@ -177,11 +177,11 @@ while (0)
  * discrete and there are no intervening state changes.  (Somewhat
  * duplicates changes to DrawArrays code)
  */
-static void EMIT_PRIM( GLcontext *ctx, 
-		       GLenum prim, 
-		       GLuint hwprim, 
-		       GLuint start, 
-		       GLuint count)	
+static void r200EmitPrim( GLcontext *ctx, 
+		          GLenum prim, 
+		          GLuint hwprim, 
+		          GLuint start, 
+		          GLuint count)	
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200TclPrimitive( ctx, prim, hwprim );
@@ -201,7 +201,9 @@ static void EMIT_PRIM( GLcontext *ctx,
 		     count - start );
 }
 
-
+#define EMIT_PRIM(ctx, prim, hwprim, start, count) do {         \
+   r200EmitPrim( ctx, prim, hwprim, start, count );             \
+   (void) rmesa; } while (0)
 
 /* Try & join small primitives
  */
@@ -221,9 +223,12 @@ static void EMIT_PRIM( GLcontext *ctx,
 #define EMIT_ELT(dest, offset, x) do {                                \
         int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );     \
         GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );    \
-        (des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x); } while (0)
+        (des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x);	\
+	(void)rmesa; } while (0)
 #else
-#define EMIT_ELT(dest, offset, x) (dest)[offset] = (GLushort) (x)
+#define EMIT_ELT(dest, offset, x) do {				\
+	(dest)[offset] = (GLushort) (x);			\
+	(void)rmesa; } while (0)
 #endif
 
 #define EMIT_TWO_ELTS(dest, offset, x, y)  *(GLuint *)((dest)+offset) = ((y)<<16)|(x);
