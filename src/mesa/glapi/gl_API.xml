@@ -2835,7 +2835,7 @@
         <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true"/>
         <return type="GLboolean"/>
-        <glx sop="143"/>
+        <glx sop="143" always_array="true"/>
     </function>
 
     <function name="BindTexture" offset="307">
@@ -2853,7 +2853,7 @@
     <function name="GenTextures" offset="328">
         <param name="n" type="GLsizei"/>
         <param name="textures" type="GLuint *" output="true"/>
-        <glx sop="145"/>
+        <glx sop="145" always_array="true"/>
     </function>
 
     <function name="IsTexture" offset="330">
@@ -6562,7 +6562,7 @@
         <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="11"/>
+        <glx vendorpriv="11" always_array="true"/>
     </function>
 
     <function name="BindTextureEXT" alias="BindTexture">
@@ -6581,7 +6581,7 @@
     <function name="GenTexturesEXT" offset="440">
         <param name="n" type="GLsizei"/>
         <param name="textures" type="GLuint *" output="true"/>
-        <glx vendorpriv="13"/>
+        <glx vendorpriv="13" always_array="true"/>
     </function>
 
     <function name="IsTextureEXT" offset="441">
@@ -8138,8 +8138,20 @@
 
 <!-- Extension number 177 is a WGL extension. -->
 <!-- Extension number 180 is not listed in the extension registry. -->
+
+<category name="GL_SUN_convolution_border_modes" number="182">
+    <enum name="WRAP_BORDER_SUN"                          value="0x81D4"/>
+</category>
+
 <!-- Extension number 183 is a GLX extension. -->
 <!-- Extension number 184 is not listed in the extension registry. -->
+
+<category name="GL_EXT_texture_lod_bias" number="186">
+    <enum name="TEXTURE_LOD_BIAS_EXT"                     value="0x8501">
+        <size name="TexParameterfv" count="1"/>
+        <size name="TexParameteriv" count="1"/>
+    </enum>
+</category>
 
 <category name="GL_EXT_texture_filter_anisotropic" number="187">
     <enum name="TEXTURE_MAX_ANISOTROPY_EXT"               value="0x84FE">
