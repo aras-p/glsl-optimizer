@@ -34,7 +34,6 @@
 **
 */
 
-#define NEED_GL_FUNCS_WRAPPED
 #include <stdio.h>
 #include "glxclient.h"
 #include "packsingle.h"
@@ -92,7 +91,7 @@ static void TransposeMatrixi(GLint m[16])
     }
 }
 
-GLenum glGetError(void)
+GLenum __indirect_glGetError(void)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     GLuint retval = GL_NO_ERROR;
@@ -114,7 +113,7 @@ GLenum glGetError(void)
     return retval;
 }
 
-void glGetClipPlane(GLenum plane, GLdouble *equation)
+void __indirect_glGetClipPlane(GLenum plane, GLdouble *equation)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
@@ -147,7 +146,7 @@ void glGetClipPlane(GLenum plane, GLdouble *equation)
 	CASE_ARRAY_TYPE(enum_name,array,dest,gl_type); \
 	CASE_ARRAY_SIZE(enum_name,array,dest,gl_type)
 
-void glGetBooleanv(GLenum val, GLboolean *b)
+void __indirect_glGetBooleanv(GLenum val, GLboolean *b)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -299,7 +298,7 @@ void glGetBooleanv(GLenum val, GLboolean *b)
     __GLX_SINGLE_END();
 }
 
-void glGetDoublev(GLenum val, GLdouble *d)
+void __indirect_glGetDoublev(GLenum val, GLdouble *d)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -451,7 +450,7 @@ void glGetDoublev(GLenum val, GLdouble *d)
     __GLX_SINGLE_END();
 }
 
-void glGetFloatv(GLenum val, GLfloat *f)
+void __indirect_glGetFloatv(GLenum val, GLfloat *f)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -603,7 +602,7 @@ void glGetFloatv(GLenum val, GLfloat *f)
     __GLX_SINGLE_END();
 }
 
-void glGetIntegerv(GLenum val, GLint *i)
+void __indirect_glGetIntegerv(GLenum val, GLint *i)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -758,7 +757,7 @@ void glGetIntegerv(GLenum val, GLint *i)
 /*
 ** Send all pending commands to server.
 */
-void glFlush(void)
+void __indirect_glFlush(void)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
 
@@ -772,7 +771,7 @@ void glFlush(void)
     XFlush(dpy);
 }
 
-void glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer)
+void __indirect_glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
 
@@ -787,7 +786,7 @@ void glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer)
     gc->feedbackBuf = buffer;
 }
 
-void glSelectBuffer(GLsizei numnames, GLuint *buffer)
+void __indirect_glSelectBuffer(GLsizei numnames, GLuint *buffer)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
 
@@ -801,7 +800,7 @@ void glSelectBuffer(GLsizei numnames, GLuint *buffer)
     gc->selectBuf = buffer;
 }
 
-GLint glRenderMode(GLenum mode)
+GLint __indirect_glRenderMode(GLenum mode)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     GLint retval = 0;
@@ -838,7 +837,7 @@ GLint glRenderMode(GLenum mode)
     return retval;
 }
 
-void glFinish(void)
+void __indirect_glFinish(void)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
@@ -868,7 +867,7 @@ version_from_string( const char * ver,
 }
 
 
-const GLubyte *glGetString(GLenum name)
+const GLubyte *__indirect_glGetString(GLenum name)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     Display *dpy = gc->currentDpy;
@@ -1013,7 +1012,7 @@ const GLubyte *glGetString(GLenum name)
     return s;
 }
 
-GLboolean glIsEnabled(GLenum cap)
+GLboolean __indirect_glIsEnabled(GLenum cap)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
@@ -1050,7 +1049,7 @@ GLboolean glIsEnabled(GLenum cap)
     return retval;
 }
 
-void glGetPointerv(GLenum pname, void **params)
+void __indirect_glGetPointerv(GLenum pname, void **params)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);

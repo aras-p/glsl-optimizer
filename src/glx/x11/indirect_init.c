@@ -585,30 +585,30 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->VertexPointerEXT   = VertexPointerEXT;
 
     /* 145. GL_EXT_secondary_color / GL 1.4 */
-    glAPI->SecondaryColor3bEXT       = __indirect_glSecondaryColor3b;
-    glAPI->SecondaryColor3bvEXT      = __indirect_glSecondaryColor3bv;
-    glAPI->SecondaryColor3sEXT       = __indirect_glSecondaryColor3s;
-    glAPI->SecondaryColor3svEXT      = __indirect_glSecondaryColor3sv;
-    glAPI->SecondaryColor3iEXT       = __indirect_glSecondaryColor3i;
-    glAPI->SecondaryColor3ivEXT      = __indirect_glSecondaryColor3iv;
-    glAPI->SecondaryColor3ubEXT      = __indirect_glSecondaryColor3ub;
-    glAPI->SecondaryColor3ubvEXT     = __indirect_glSecondaryColor3ubv;
-    glAPI->SecondaryColor3usEXT      = __indirect_glSecondaryColor3us;
-    glAPI->SecondaryColor3usvEXT     = __indirect_glSecondaryColor3usv;
-    glAPI->SecondaryColor3uiEXT      = __indirect_glSecondaryColor3ui;
-    glAPI->SecondaryColor3uivEXT     = __indirect_glSecondaryColor3uiv;
-    glAPI->SecondaryColor3fEXT       = __indirect_glSecondaryColor3f;
-    glAPI->SecondaryColor3fvEXT      = __indirect_glSecondaryColor3fv;
-    glAPI->SecondaryColor3dEXT       = __indirect_glSecondaryColor3d;
-    glAPI->SecondaryColor3dvEXT      = __indirect_glSecondaryColor3dv;
-    glAPI->SecondaryColorPointerEXT  = __indirect_glSecondaryColorPointer;
+    glAPI->SecondaryColor3bEXT       = __indirect_glSecondaryColor3bEXT;
+    glAPI->SecondaryColor3bvEXT      = __indirect_glSecondaryColor3bvEXT;
+    glAPI->SecondaryColor3sEXT       = __indirect_glSecondaryColor3sEXT;
+    glAPI->SecondaryColor3svEXT      = __indirect_glSecondaryColor3svEXT;
+    glAPI->SecondaryColor3iEXT       = __indirect_glSecondaryColor3iEXT;
+    glAPI->SecondaryColor3ivEXT      = __indirect_glSecondaryColor3ivEXT;
+    glAPI->SecondaryColor3ubEXT      = __indirect_glSecondaryColor3ubEXT;
+    glAPI->SecondaryColor3ubvEXT     = __indirect_glSecondaryColor3ubvEXT;
+    glAPI->SecondaryColor3usEXT      = __indirect_glSecondaryColor3usEXT;
+    glAPI->SecondaryColor3usvEXT     = __indirect_glSecondaryColor3usvEXT;
+    glAPI->SecondaryColor3uiEXT      = __indirect_glSecondaryColor3uiEXT;
+    glAPI->SecondaryColor3uivEXT     = __indirect_glSecondaryColor3uivEXT;
+    glAPI->SecondaryColor3fEXT       = __indirect_glSecondaryColor3fEXT;
+    glAPI->SecondaryColor3fvEXT      = __indirect_glSecondaryColor3fvEXT;
+    glAPI->SecondaryColor3dEXT       = __indirect_glSecondaryColor3dEXT;
+    glAPI->SecondaryColor3dvEXT      = __indirect_glSecondaryColor3dvEXT;
+    glAPI->SecondaryColorPointerEXT  = __indirect_glSecondaryColorPointerEXT;
 
     /* 149. GL_EXT_fog_coord / GL 1.4 */
-    glAPI->FogCoordfEXT       = __indirect_glFogCoordf;
-    glAPI->FogCoordfvEXT      = __indirect_glFogCoordfv;
-    glAPI->FogCoorddEXT       = __indirect_glFogCoordd;
-    glAPI->FogCoorddvEXT      = __indirect_glFogCoorddv;
-    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointer;
+    glAPI->FogCoordfEXT       = __indirect_glFogCoordfEXT;
+    glAPI->FogCoordfvEXT      = __indirect_glFogCoordfvEXT;
+    glAPI->FogCoorddEXT       = __indirect_glFogCoorddEXT;
+    glAPI->FogCoorddvEXT      = __indirect_glFogCoorddvEXT;
+    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
 
     /* 173. GL_EXT_blend_func_separate / GL 1.4 */
     glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparate;

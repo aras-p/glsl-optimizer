@@ -35,12 +35,11 @@
 */
 
 #include <assert.h>
-#define NEED_GL_FUNCS_WRAPPED
 #include "glxclient.h"
 
 /*****************************************************************************/
 
-void glEnableClientState(GLenum array)
+void __indirect_glEnableClientState(GLenum array)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
@@ -75,7 +74,7 @@ void glEnableClientState(GLenum array)
     }
 }
 
-void glDisableClientState(GLenum array)
+void __indirect_glDisableClientState(GLenum array)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
@@ -112,7 +111,7 @@ void glDisableClientState(GLenum array)
 
 /************************************************************************/
 
-void glPushClientAttrib(GLuint mask)
+void __indirect_glPushClientAttrib(GLuint mask)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
@@ -138,7 +137,7 @@ void glPushClientAttrib(GLuint mask)
     }
 }
 
-void glPopClientAttrib(void)
+void __indirect_glPopClientAttrib(void)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);

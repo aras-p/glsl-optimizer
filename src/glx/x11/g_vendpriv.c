@@ -30,7 +30,7 @@
 
 #include "packvendpriv.h"
 
-GLboolean glAreTexturesResidentEXT(GLsizei n, const GLuint *textures, GLboolean *residences)
+GLboolean __indirect_glAreTexturesResidentEXT(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
 	__GLX_VENDPRIV_DECLARE_VARIABLES();
 	GLboolean    retval = 0;
@@ -48,7 +48,7 @@ GLboolean glAreTexturesResidentEXT(GLsizei n, const GLuint *textures, GLboolean 
 	return retval;
 }
 
-void glDeleteTexturesEXT(GLsizei n, const GLuint *textures)
+void __indirect_glDeleteTexturesEXT(GLsizei n, const GLuint *textures)
 {
 	__GLX_VENDPRIV_DECLARE_VARIABLES();
 	__GLX_VENDPRIV_LOAD_VARIABLES();
@@ -60,7 +60,7 @@ void glDeleteTexturesEXT(GLsizei n, const GLuint *textures)
 	__GLX_VENDPRIV_END();
 }
 
-void glGenTexturesEXT(GLsizei n, GLuint *textures)
+void __indirect_glGenTexturesEXT(GLsizei n, GLuint *textures)
 {
 	__GLX_VENDPRIV_DECLARE_VARIABLES();
 	xGLXVendorPrivReply reply;
@@ -72,7 +72,7 @@ void glGenTexturesEXT(GLsizei n, GLuint *textures)
 	__GLX_VENDPRIV_END();
 }
 
-GLboolean glIsTextureEXT(GLuint texture)
+GLboolean __indirect_glIsTextureEXT(GLuint texture)
 {
 	__GLX_VENDPRIV_DECLARE_VARIABLES();
 	GLboolean    retval = 0;

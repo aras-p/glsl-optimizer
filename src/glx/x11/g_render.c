@@ -30,6 +30,7 @@
 
 #include "packrender.h"
 #include "size.h"
+#include "indirect.h"
 
 #define GLdouble_SIZE   8
 #define GLclampd_SIZE   8

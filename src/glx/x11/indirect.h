@@ -40,7 +40,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #  endif
 
 #  define _INDIRECT_H_
-#  include "indirect_wrap.h"
 
 #  define glxproto_void(name, rop) \
    extern void __indirect_gl ## name ( void );
@@ -181,17 +180,17 @@ glxproto_4(Color4ui, X_GLrop_Color4uiv, GLuint)
 glxproto_4(Color4f,  X_GLrop_Color4fv,  GLfloat)
 glxproto_4(Color4d,  X_GLrop_Color4dv,  GLdouble)
 
-glxproto_1(FogCoordf, X_GLrop_FogCoordfv, GLfloat)
-glxproto_1(FogCoordd, X_GLrop_FogCoorddv, GLdouble)
+glxvendr_1(FogCoordf, X_GLrop_FogCoordfv, GLfloat,  EXT)
+glxvendr_1(FogCoordd, X_GLrop_FogCoorddv, GLdouble, EXT)
 
-glxproto_3(SecondaryColor3b,  X_GLrop_SecondaryColor3bv,  GLbyte)
-glxproto_3(SecondaryColor3s,  X_GLrop_SecondaryColor3sv,  GLshort)
-glxproto_3(SecondaryColor3i,  X_GLrop_SecondaryColor3iv,  GLint)
-glxproto_3(SecondaryColor3ub, X_GLrop_SecondaryColor3ubv, GLubyte)
-glxproto_3(SecondaryColor3us, X_GLrop_SecondaryColor3usv, GLushort)
-glxproto_3(SecondaryColor3ui, X_GLrop_SecondaryColor3uiv, GLuint)
-glxproto_3(SecondaryColor3f,  X_GLrop_SecondaryColor3fv,  GLfloat)
-glxproto_3(SecondaryColor3d,  X_GLrop_SecondaryColor3dv,  GLdouble)
+glxvendr_3(SecondaryColor3b,  X_GLrop_SecondaryColor3bv,  GLbyte,   EXT)
+glxvendr_3(SecondaryColor3s,  X_GLrop_SecondaryColor3sv,  GLshort,  EXT)
+glxvendr_3(SecondaryColor3i,  X_GLrop_SecondaryColor3iv,  GLint,    EXT)
+glxvendr_3(SecondaryColor3ub, X_GLrop_SecondaryColor3ubv, GLubyte,  EXT)
+glxvendr_3(SecondaryColor3us, X_GLrop_SecondaryColor3usv, GLushort, EXT)
+glxvendr_3(SecondaryColor3ui, X_GLrop_SecondaryColor3uiv, GLuint,   EXT)
+glxvendr_3(SecondaryColor3f,  X_GLrop_SecondaryColor3fv,  GLfloat,  EXT)
+glxvendr_3(SecondaryColor3d,  X_GLrop_SecondaryColor3dv,  GLdouble, EXT)
 
 glxproto_1(EdgeFlag, X_GLrop_EdgeFlagv, GLboolean)
 
@@ -598,11 +597,11 @@ void __indirect_glCompressedTexSubImage3DARB( GLenum target, GLint level,
 
 /* 145. GL_EXT_secondary_color / GL 1.4 */
 
-void __indirect_glSecondaryColorPointer (GLint, GLenum, GLsizei, const GLvoid *);
+void __indirect_glSecondaryColorPointerEXT (GLint, GLenum, GLsizei, const GLvoid *);
 
 /* 149. GL_EXT_fog_coord / GL 1.4 */
 
-void __indirect_glFogCoordPointer (GLenum, GLsizei, const GLvoid *);
+void __indirect_glFogCoordPointerEXT (GLenum, GLsizei, const GLvoid *);
 
 # undef glxproto_void
 # undef glxproto_Cv

@@ -37,7 +37,6 @@
 **
 */
 
-#define NEED_GL_FUNCS_WRAPPED
 #include "glxclient.h"
 
 /*

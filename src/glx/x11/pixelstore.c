@@ -34,14 +34,12 @@
 **
 */
 
-#define NEED_GL_FUNCS_WRAPPED
 #include "glxclient.h"
-#include "indirect_wrap.h"
 
 /*
 ** Specify parameters that control the storage format of pixel arrays.
 */
-void glPixelStoref(GLenum pname, GLfloat param)
+void __indirect_glPixelStoref(GLenum pname, GLfloat param)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = gc->client_state_private;
@@ -177,7 +175,7 @@ void glPixelStoref(GLenum pname, GLfloat param)
     }
 }
 
-void glPixelStorei(GLenum pname, GLint param)
+void __indirect_glPixelStorei(GLenum pname, GLint param)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = gc->client_state_private;

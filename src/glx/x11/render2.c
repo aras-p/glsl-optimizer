@@ -35,6 +35,7 @@
 */
 
 #include "packrender.h"
+#include "indirect.h"
 #include "size.h"
 
 /*
@@ -43,7 +44,7 @@
 ** use the pixel header.  See renderpix.c for those routines.
 */
 
-void glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
+void __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
     __GLX_DECLARE_VARIABLES();
     __GLX_LOAD_VARIABLES();
@@ -68,7 +69,7 @@ void glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
     }
 }
 
-void glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+void __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 	     GLint order, const GLdouble *pnts)
 {
     __GLX_DECLARE_VARIABLES();
@@ -130,7 +131,7 @@ void glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
     }
 }
 
-void glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
+void __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 	     GLint order, const GLfloat *pnts)
 {
     __GLX_DECLARE_VARIABLES();
@@ -188,7 +189,7 @@ void glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
     }
 }
 
-void glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr, GLint uord,
+void __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr, GLint uord,
 	     GLdouble v1, GLdouble v2, GLint vstr, GLint vord,
 	     const GLdouble *pnts)
 {
@@ -261,7 +262,7 @@ void glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr, GLint uord,
     }
 }
 
-void glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr, GLint uord,
+void __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr, GLint uord,
 	     GLfloat v1, GLfloat v2, GLint vstr, GLint vord,
 	     const GLfloat *pnts)
 {
@@ -332,7 +333,7 @@ void glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr, GLint uord,
     }
 }
 
-void glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
+void __indirect_glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -361,7 +362,7 @@ void glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
     }
 }
 
-void glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values)
+void __indirect_glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -390,7 +391,7 @@ void glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values)
     }
 }
 
-void glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
+void __indirect_glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -419,7 +420,7 @@ void glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
     }
 }
 
-void glEnable(GLenum cap)
+void __indirect_glEnable(GLenum cap)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -435,7 +436,7 @@ void glEnable(GLenum cap)
 	case GL_VERTEX_ARRAY:
 	case GL_SECONDARY_COLOR_ARRAY:
 	case GL_FOG_COORD_ARRAY:
-	    glEnableClientState(cap);
+	    __indirect_glEnableClientState(cap);
 	    return;
 	default:
 	    break;
@@ -446,7 +447,7 @@ void glEnable(GLenum cap)
     __GLX_END(8);
 }
 
-void glDisable(GLenum cap)
+void __indirect_glDisable(GLenum cap)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -462,7 +463,7 @@ void glDisable(GLenum cap)
 	case GL_VERTEX_ARRAY:
 	case GL_SECONDARY_COLOR_ARRAY:
 	case GL_FOG_COORD_ARRAY:
-	    glDisableClientState(cap);
+	    __indirect_glDisableClientState(cap);
 	    return;
 	default:
 	    break;
@@ -473,7 +474,7 @@ void glDisable(GLenum cap)
     __GLX_END(8);
 }
 
-void glSampleCoverageARB( GLfloat value, GLboolean invert )
+void __indirect_glSampleCoverageARB( GLfloat value, GLboolean invert )
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -486,7 +487,7 @@ void glSampleCoverageARB( GLfloat value, GLboolean invert )
     __GLX_END(12);
 }
 
-void glSampleMaskSGIS( GLfloat value, GLboolean invert )
+void __indirect_glSampleMaskSGIS( GLfloat value, GLboolean invert )
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -499,7 +500,7 @@ void glSampleMaskSGIS( GLfloat value, GLboolean invert )
     __GLX_END(12);
 }
 
-void glSamplePatternSGIS( GLenum pass )
+void __indirect_glSamplePatternSGIS( GLenum pass )
 {
     __GLX_DECLARE_VARIABLES();
 

@@ -36,7 +36,7 @@
 
 #include "packsingle.h"
 
-void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+void __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		  GLenum format, GLenum type, GLvoid *pixels)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -85,7 +85,7 @@ void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
     __GLX_SINGLE_END();
 }
 
-void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
+void __indirect_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
 		   GLvoid *texels)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -137,7 +137,7 @@ void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
     __GLX_SINGLE_END();
 }
 
-void glGetPolygonStipple(GLubyte *mask)
+void __indirect_glGetPolygonStipple(GLubyte *mask)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
@@ -156,7 +156,7 @@ void glGetPolygonStipple(GLubyte *mask)
     __GLX_SINGLE_END();
 }
 
-void glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table)
+void __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
     const __GLXattribute * state;
@@ -203,7 +203,7 @@ void glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table)
     __GLX_SINGLE_END();
 }
 
-void glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
+void __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
 			    GLvoid *image)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -252,7 +252,7 @@ void glGetConvolutionFilter(GLenum target, GLenum format, GLenum type,
     __GLX_SINGLE_END();
 }
 
-void glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
+void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
 			  GLvoid *row, GLvoid *column, GLvoid *span)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -319,7 +319,7 @@ void glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
     
 }
 
-void glGetHistogram(GLenum target, GLboolean reset, GLenum format,
+void __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format,
 		    GLenum type, GLvoid *values)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -368,7 +368,7 @@ void glGetHistogram(GLenum target, GLboolean reset, GLenum format,
     __GLX_SINGLE_END();
 }
 
-void glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type,
+void __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type,
 		 GLvoid *values)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();

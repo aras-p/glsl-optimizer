@@ -59,9 +59,6 @@
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
-#ifdef NEED_GL_FUNCS_WRAPPED
-#include "indirect.h"
-#endif
 #ifdef XTHREADS
 #include "Xthreads.h"
 #endif

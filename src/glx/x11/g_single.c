@@ -29,8 +29,9 @@
 */
 
 #include "packsingle.h"
+#include "indirect.h"
 
-void glNewList(GLuint list, GLenum mode)
+void __indirect_glNewList(GLuint list, GLenum mode)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	__GLX_SINGLE_LOAD_VARIABLES();
@@ -40,7 +41,7 @@ void glNewList(GLuint list, GLenum mode)
 	__GLX_SINGLE_END();
 }
 
-void glEndList(void)
+void __indirect_glEndList(void)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	__GLX_SINGLE_LOAD_VARIABLES();
@@ -48,7 +49,7 @@ void glEndList(void)
 	__GLX_SINGLE_END();
 }
 
-void glDeleteLists(GLuint list, GLsizei range)
+void __indirect_glDeleteLists(GLuint list, GLsizei range)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	__GLX_SINGLE_LOAD_VARIABLES();
@@ -58,7 +59,7 @@ void glDeleteLists(GLuint list, GLsizei range)
 	__GLX_SINGLE_END();
 }
 
-GLuint glGenLists(GLsizei range)
+GLuint __indirect_glGenLists(GLsizei range)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	GLuint    retval = 0;
@@ -72,7 +73,7 @@ GLuint glGenLists(GLsizei range)
 	return retval;
 }
 
-void glGetLightfv(GLenum light, GLenum pname, GLfloat *params)
+void __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -90,7 +91,7 @@ void glGetLightfv(GLenum light, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetLightiv(GLenum light, GLenum pname, GLint *params)
+void __indirect_glGetLightiv(GLenum light, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -108,7 +109,7 @@ void glGetLightiv(GLenum light, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetMapdv(GLenum target, GLenum query, GLdouble *v)
+void __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble *v)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -126,7 +127,7 @@ void glGetMapdv(GLenum target, GLenum query, GLdouble *v)
 	__GLX_SINGLE_END();
 }
 
-void glGetMapfv(GLenum target, GLenum query, GLfloat *v)
+void __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat *v)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -144,7 +145,7 @@ void glGetMapfv(GLenum target, GLenum query, GLfloat *v)
 	__GLX_SINGLE_END();
 }
 
-void glGetMapiv(GLenum target, GLenum query, GLint *v)
+void __indirect_glGetMapiv(GLenum target, GLenum query, GLint *v)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -162,7 +163,7 @@ void glGetMapiv(GLenum target, GLenum query, GLint *v)
 	__GLX_SINGLE_END();
 }
 
-void glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params)
+void __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -180,7 +181,7 @@ void glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetMaterialiv(GLenum face, GLenum pname, GLint *params)
+void __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -198,7 +199,7 @@ void glGetMaterialiv(GLenum face, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetPixelMapfv(GLenum map, GLfloat *values)
+void __indirect_glGetPixelMapfv(GLenum map, GLfloat *values)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -215,7 +216,7 @@ void glGetPixelMapfv(GLenum map, GLfloat *values)
 	__GLX_SINGLE_END();
 }
 
-void glGetPixelMapuiv(GLenum map, GLuint *values)
+void __indirect_glGetPixelMapuiv(GLenum map, GLuint *values)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -232,7 +233,7 @@ void glGetPixelMapuiv(GLenum map, GLuint *values)
 	__GLX_SINGLE_END();
 }
 
-void glGetPixelMapusv(GLenum map, GLushort *values)
+void __indirect_glGetPixelMapusv(GLenum map, GLushort *values)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -249,7 +250,7 @@ void glGetPixelMapusv(GLenum map, GLushort *values)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -267,7 +268,7 @@ void glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexEnviv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -285,7 +286,7 @@ void glGetTexEnviv(GLenum target, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexGendv(GLenum coord, GLenum pname, GLdouble *params)
+void __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -303,7 +304,7 @@ void glGetTexGendv(GLenum coord, GLenum pname, GLdouble *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
+void __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -321,7 +322,7 @@ void glGetTexGenfv(GLenum coord, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexGeniv(GLenum coord, GLenum pname, GLint *params)
+void __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -339,7 +340,7 @@ void glGetTexGeniv(GLenum coord, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -357,7 +358,7 @@ void glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexParameteriv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -375,7 +376,7 @@ void glGetTexParameteriv(GLenum target, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params)
+void __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -394,7 +395,7 @@ void glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat 
 	__GLX_SINGLE_END();
 }
 
-void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params)
+void __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -413,7 +414,7 @@ void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *p
 	__GLX_SINGLE_END();
 }
 
-GLboolean glIsList(GLuint list)
+GLboolean __indirect_glIsList(GLuint list)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	GLboolean    retval = 0;
@@ -445,7 +446,7 @@ GLboolean glIsList(GLuint list)
  * transition path.
  */
 
-GLboolean glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences)
+GLboolean __indirect_glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
 #if 0 /* see comments above */
 	__GLX_SINGLE_DECLARE_VARIABLES();
@@ -463,11 +464,11 @@ GLboolean glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *re
 	__GLX_SINGLE_END();
 	return retval;
 #else
-        return glAreTexturesResidentEXT(n, textures, residences);
+        return __indirect_glAreTexturesResidentEXT(n, textures, residences);
 #endif
 }
 
-void glDeleteTextures(GLsizei n, const GLuint *textures)
+void __indirect_glDeleteTextures(GLsizei n, const GLuint *textures)
 {
 #if 0 /* see comments above */
 	__GLX_SINGLE_DECLARE_VARIABLES();
@@ -479,11 +480,11 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 	__GLX_PUT_LONG_ARRAY(4,textures,n);
 	__GLX_SINGLE_END();
 #else
-        glDeleteTexturesEXT(n, textures);
+        __indirect_glDeleteTexturesEXT(n, textures);
 #endif
 }
 
-void glGenTextures(GLsizei n, GLuint *textures)
+void __indirect_glGenTextures(GLsizei n, GLuint *textures)
 {
 #if 0 /* see comments above */
 	__GLX_SINGLE_DECLARE_VARIABLES();
@@ -495,11 +496,11 @@ void glGenTextures(GLsizei n, GLuint *textures)
 	__GLX_SINGLE_GET_LONG_ARRAY(textures,n);
 	__GLX_SINGLE_END();
 #else
-        glGenTexturesEXT(n, textures);
+        __indirect_glGenTexturesEXT(n, textures);
 #endif
 }
 
-GLboolean glIsTexture(GLuint texture)
+GLboolean __indirect_glIsTexture(GLuint texture)
 {
 #if 0 /* see comments above */
 	__GLX_SINGLE_DECLARE_VARIABLES();
@@ -513,11 +514,11 @@ GLboolean glIsTexture(GLuint texture)
 	__GLX_SINGLE_END();
 	return retval;
 #else
-        return glIsTextureEXT(texture);
+        return __indirect_glIsTextureEXT(texture);
 #endif
 }
 
-void glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -535,7 +536,7 @@ void glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -553,7 +554,7 @@ void glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -571,7 +572,7 @@ void glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -589,7 +590,7 @@ void glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -607,7 +608,7 @@ void glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -625,7 +626,7 @@ void glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
+void __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;
@@ -643,7 +644,7 @@ void glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 	__GLX_SINGLE_END();
 }
 
-void glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
+void __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 {
 	__GLX_SINGLE_DECLARE_VARIABLES();
 	xGLXSingleReply reply;

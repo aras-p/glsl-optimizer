@@ -109,7 +109,7 @@ static void SendLargeNULLImage(__GLXcontext *gc, GLint compsize,
 
 /************************************************************************/
 
-void glPolygonStipple(const GLubyte *mask)
+void __indirect_glPolygonStipple(const GLubyte *mask)
 {
     __GLX_DECLARE_VARIABLES();
 
@@ -127,7 +127,7 @@ void glPolygonStipple(const GLubyte *mask)
     __GLX_END(__GLX_PAD(compsize));
 }
 
-void glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
+void __indirect_glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
 	      GLfloat xmove, GLfloat ymove, const GLubyte *bitmap)
 {
     __GLX_DECLARE_VARIABLES();
@@ -178,7 +178,7 @@ void glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig,
     }
 }
 
-void glTexImage1D(GLenum target, GLint level, GLint components,
+void __indirect_glTexImage1D(GLenum target, GLint level, GLint components,
 		  GLsizei width, GLint border, GLenum format, GLenum type,
 		  const GLvoid *image)
 {
@@ -254,7 +254,7 @@ void glTexImage1D(GLenum target, GLint level, GLint components,
     }
 }
 
-void glTexImage2D(GLenum target, GLint level, GLint components,
+void __indirect_glTexImage2D(GLenum target, GLint level, GLint components,
 		  GLsizei width, GLsizei height, GLint border, GLenum format,
 		  GLenum type, const GLvoid *image)
 {
@@ -332,7 +332,7 @@ void glTexImage2D(GLenum target, GLint level, GLint components,
     }
 }
 
-void glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type,
+void __indirect_glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type,
 		  const GLvoid *image)
 {
     __GLX_DECLARE_VARIABLES();
@@ -451,7 +451,7 @@ static void __glx_TexSubImage1D2D(GLshort opcode, GLenum target, GLint level,
     }
 }
 	
-void glTexSubImage1D(GLenum target, GLint level, GLint xoffset, 
+void __indirect_glTexSubImage1D(GLenum target, GLint level, GLint xoffset, 
 			GLsizei width, GLenum format, GLenum type,
 		      	const GLvoid *image)
 {
@@ -459,7 +459,7 @@ void glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 			 0, width, 1, format, type, image, 1);
 }
 
-void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, 
+void __indirect_glTexSubImage2D(GLenum target, GLint level, GLint xoffset, 
 			GLint yoffset, GLsizei width, GLsizei height, 
 			GLenum format, GLenum type, const GLvoid *image)
 {
@@ -467,7 +467,7 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset,
 			 yoffset, width, height, format, type, image, 2);
 }
 
-void glColorTable(GLenum target, GLenum internalformat, GLsizei width,
+void __indirect_glColorTable(GLenum target, GLenum internalformat, GLsizei width,
 		  GLenum format, GLenum type, const GLvoid *table)
 {
     __GLX_DECLARE_VARIABLES();
@@ -531,7 +531,7 @@ void glColorTable(GLenum target, GLenum internalformat, GLsizei width,
     }
 }
 
-void glColorSubTable(GLenum target, GLsizei start, GLsizei count,
+void __indirect_glColorSubTable(GLenum target, GLsizei start, GLsizei count,
 		     GLenum format, GLenum type, const GLvoid *table)
 {
     __GLX_DECLARE_VARIABLES();
@@ -636,7 +636,7 @@ static void __glx_ConvolutionFilter1D2D(GLshort opcode, GLint dim,
     }
 }
 
-void glConvolutionFilter1D(GLenum target, GLenum internalformat,
+void __indirect_glConvolutionFilter1D(GLenum target, GLenum internalformat,
 				GLsizei width, GLenum format,
 				GLenum type, const GLvoid *image)
 {
@@ -645,7 +645,7 @@ void glConvolutionFilter1D(GLenum target, GLenum internalformat,
 				 image);
 }
 
-void glConvolutionFilter2D(GLenum target, GLenum internalformat,
+void __indirect_glConvolutionFilter2D(GLenum target, GLenum internalformat,
 				GLsizei width, GLsizei height, GLenum format,
 				GLenum type, const GLvoid *image)
 {
@@ -654,7 +654,7 @@ void glConvolutionFilter2D(GLenum target, GLenum internalformat,
 				image);
 }
 
-void glSeparableFilter2D(GLenum target, GLenum internalformat,
+void __indirect_glSeparableFilter2D(GLenum target, GLenum internalformat,
 				GLsizei width, GLsizei height, GLenum format,
 				GLenum type, const GLvoid *row,
 				const GLvoid *column)
@@ -743,7 +743,7 @@ void glSeparableFilter2D(GLenum target, GLenum internalformat,
     }
 }
 
-void glTexImage3D(GLenum target, GLint level, GLint internalformat,
+void __indirect_glTexImage3D(GLenum target, GLint level, GLint internalformat,
 		  GLsizei width, GLsizei height, GLsizei depth, GLint border,
 		  GLenum format, GLenum type, const GLvoid *image)
 {
@@ -821,7 +821,7 @@ void glTexImage3D(GLenum target, GLint level, GLint internalformat,
     }
 }
 
-void glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
+void __indirect_glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 		     GLint zoffset, GLsizei width, GLsizei height,
 		     GLsizei depth, GLenum format, GLenum type,
 		     const GLvoid *image)
