@@ -674,11 +674,9 @@ static void radeonBindTexture( GLcontext *ctx, GLenum target,
 	       ctx->Texture.CurrentUnit );
    }
 
-   if ( target == GL_TEXTURE_2D || target == GL_TEXTURE_1D ) {
-      if ( texObj->DriverData == NULL ) {
-	 radeonAllocTexObj( texObj );
-      }
-   }
+   assert( (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D &&
+            target != GL_TEXTURE_RECTANGLE_NV) ||
+           (texObj->DriverData != NULL) );
 }
 
 
@@ -741,6 +739,7 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    if (!obj)
       return NULL;
    obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   radeonAllocTexObj( obj );
    return obj;
 }
 

@@ -370,10 +370,6 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    i830DDInitSpanFuncs( ctx );
    i830DDInitState (ctx);
 
-   driInitTextureObjects( ctx, & imesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_2D
-			  | DRI_TEXMGR_DO_TEXTURE_RECT );
-
 #if DO_DEBUG
    I830_DEBUG  = driParseDebugString( getenv( "I830_DEBUG" ),
 				      debug_control );

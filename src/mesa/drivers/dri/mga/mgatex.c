@@ -484,12 +484,8 @@ static void
 mgaBindTexture( GLcontext *ctx, GLenum target,
 		  struct gl_texture_object *tObj )
 {
-   if ( target == GL_TEXTURE_2D ||
-        target == GL_TEXTURE_RECTANGLE_NV ) {
-      if ( tObj->DriverData == NULL ) {
-	 mgaAllocTexObj( tObj );
-      }
-   }
+   assert( (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_NV) ||
+           (tObj->DriverData != NULL) );
 }
 
 
@@ -523,6 +519,7 @@ mgaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);
+   mgaAllocTexObj( obj );
    return obj;
 }
 

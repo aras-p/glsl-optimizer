@@ -527,10 +527,6 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mgaDDInitPixelFuncs( ctx );
    mgaDDInitTriFuncs( ctx );
 
-   driInitTextureObjects( ctx, & mmesa->swapped,
-                          (DRI_TEXMGR_DO_TEXTURE_2D |
-                           DRI_TEXMGR_DO_TEXTURE_RECT) );
-
    mgaInitVB( ctx );
    mgaInitState( mmesa );
 

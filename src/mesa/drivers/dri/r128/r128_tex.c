@@ -561,11 +561,8 @@ static void r128BindTexture( GLcontext *ctx, GLenum target,
 	       ctx->Texture.CurrentUnit );
    }
 
-   if ( target == GL_TEXTURE_2D || target == GL_TEXTURE_1D ) {
-      if ( tObj->DriverData == NULL ) {
-	 r128AllocTexObj( tObj );
-      }
-   }
+   assert( (target != GL_TEXTURE_2D && target != GL_TEXTURE_1D) ||
+           (tObj->DriverData != NULL) );
 }
 
 
@@ -598,6 +595,7 @@ r128NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);
+   r128AllocTexObj( obj );
    return obj;
 }
 

@@ -354,11 +354,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    rmesa->boxes = 0;
 
-   /* formerly in radeon_tex.c */
-   driInitTextureObjects( ctx, & rmesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_1D
-			  | DRI_TEXMGR_DO_TEXTURE_2D );
-
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );

@@ -245,10 +245,6 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    r128DDInitSpanFuncs( ctx );
    r128DDInitState( rmesa );
 
-   driInitTextureObjects( ctx, & rmesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_1D
-			  | DRI_TEXMGR_DO_TEXTURE_2D );
-
    rmesa->vblank_flags = (rmesa->r128Screen->irq != 0)
        ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 

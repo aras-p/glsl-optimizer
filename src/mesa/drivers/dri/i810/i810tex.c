@@ -412,9 +412,7 @@ static void i810TexSubImage2D( GLcontext *ctx,
 static void i810BindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
-   if (!tObj->DriverData) {
-      i810AllocTexObj( ctx, tObj );
-   }
+   assert( (target != GL_TEXTURE_2D) || (tObj->DriverData != NULL) );
 }
 
 
@@ -532,6 +530,7 @@ i810NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);
+   i810AllocTexObj( ctx, obj );
    return obj;
 }
 

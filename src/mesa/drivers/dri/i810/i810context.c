@@ -292,8 +292,6 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    i810InitVB( ctx );
    i810InitState( ctx );
 
-   driInitTextureObjects( ctx, &imesa->swapped, DRI_TEXMGR_DO_TEXTURE_2D);
-
 #if DO_DEBUG
    I810_DEBUG  = driParseDebugString( getenv( "I810_DEBUG" ),
 				      debug_control );
