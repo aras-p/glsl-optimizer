@@ -109,7 +109,7 @@ static void Init( void )
 	
    /* borrowed from an nvidia demo:
     * c[0..3] = modelview matrix
-    * c[4..7] = inverse modelview matrix
+    * c[4..7] = invtrans modelview matrix
     * c[32] = light pos
     * c[35] = diffuse color
     */
@@ -124,9 +124,9 @@ static void Init( void )
       "DP4   result.position.w, state.matrix.mvp.row[3], vertex.position ;\n"
 
       "# normal x MV-1T -> lighting normal\n"		
-      "DP3   R1.x, state.matrix.modelview.inverse.row[0], vertex.normal ;\n"
-      "DP3   R1.y, state.matrix.modelview.inverse.row[1], vertex.normal;\n"
-      "DP3   R1.z, state.matrix.modelview.inverse.row[2], vertex.normal;\n"
+      "DP3   R1.x, state.matrix.modelview.invtrans.row[0], vertex.normal ;\n"
+      "DP3   R1.y, state.matrix.modelview.invtrans.row[1], vertex.normal;\n"
+      "DP3   R1.z, state.matrix.modelview.invtrans.row[2], vertex.normal;\n"
 
       "DP3   R0, program.local[32], R1;                  # L.N\n"
 #if 0
