@@ -44,9 +44,6 @@ typedef struct {
     int fbFormat;
     int fbOffset;
     int fbSize;
-#ifdef USE_XINERAMA
-    Bool drixinerama;
-#endif
     
     int fbStride;
 

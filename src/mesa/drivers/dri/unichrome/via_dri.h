@@ -29,9 +29,6 @@ typedef struct {
     int priv2;
     int fbOffset;
     int fbSize;
-#ifdef USE_XINERAMA
-    Bool drixinerama;
-#endif
     int backOffset;
     int depthOffset;
     int textureOffset;

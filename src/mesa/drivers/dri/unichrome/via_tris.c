@@ -754,16 +754,14 @@ static void emit_all_state(viaContextPtr vmesa)
     *vb++ = ((HC_SubA_HROP << 24) | vmesa->regHROP);        
     i += 5;
     
-    if (vmesa->hasDepth && vmesa->hasStencil) {
+    if (vmesa->have_hw_stencil) {
 	GLuint pitch, format, offset;
 	
-	format = HC_HZWBFM_24;	    
-	
+	format = HC_HZWBFM_24;	    	
 	offset = vmesa->depth.offset;
 	pitch = vmesa->depth.pitch;
 	
         *vb++ = ((HC_SubA_HZWBBasL << 24) | (offset & 0xFFFFFF));
-
         *vb++ = ((HC_SubA_HZWBBasH << 24) | ((offset & 0xFF000000) >> 24));	
         *vb++ = ((HC_SubA_HZWBType << 24) | HC_HDBLoc_Local | HC_HZONEasFF_MASK | 
 	         format | pitch);            
@@ -793,32 +791,11 @@ static void emit_all_state(viaContextPtr vmesa)
 	pitch = vmesa->depth.pitch;
 	
         *vb++ = ((HC_SubA_HZWBBasL << 24) | (offset & 0xFFFFFF));
-
         *vb++ = ((HC_SubA_HZWBBasH << 24) | ((offset & 0xFF000000) >> 24));	
         *vb++ = ((HC_SubA_HZWBType << 24) | HC_HDBLoc_Local | HC_HZONEasFF_MASK | 
 	         format | pitch);            
         *vb++ = ((HC_SubA_HZWTMD << 24) | vmesa->regHZWTMD);
 	i += 4;	
-    }
-    else if (vmesa->hasStencil) {
-	GLuint pitch, format, offset;
-	
-	format = HC_HZWBFM_24;	    
-	
-	offset = vmesa->depth.offset;
-	pitch = vmesa->depth.pitch;
-	
-        *vb++ = ((HC_SubA_HZWBBasL << 24) | (offset & 0xFFFFFF));
-
-        *vb++ = ((HC_SubA_HZWBBasH << 24) | ((offset & 0xFF000000) >> 24));	
-        *vb++ = ((HC_SubA_HZWBType << 24) | HC_HDBLoc_Local | HC_HZONEasFF_MASK | 
-	         format | pitch);            
-        *vb++ = ((HC_SubA_HZWTMD << 24) | vmesa->regHZWTMD);
-	/* set stencil */
-	*vb++ = ((HC_SubA_HSTREF << 24) | vmesa->regHSTREF);
-	*vb++ = ((HC_SubA_HSTMD << 24) | vmesa->regHSTMD);
-	
-	i += 6;	
     }
     
     if (ctx->Color.AlphaEnabled) {
@@ -1222,97 +1199,6 @@ static void emit_all_state(viaContextPtr vmesa)
 }
 
 
-static void emit_partial_state(viaContextPtr vmesa)
-{
-    GLcontext *ctx = vmesa->glCtx;
-    GLuint dirty = vmesa->dirty;
-    GLuint *vb = viaCheckDma(vmesa, 0x110);
-    GLuint i = 0;
-
-    if( VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
-    vb = vb;
-    
-    *vb++ = HC_HEADER2;
-    *vb++ = (HC_ParaType_NotTex << 16);
-    *vb++ = ((HC_SubA_HEnable << 24) | vmesa->regEnable);
-    *vb++ = ((HC_SubA_HFBBMSKL << 24) | vmesa->regHFBBMSKL);    
-    *vb++ = ((HC_SubA_HROP << 24) | vmesa->regHROP);        
-    i += 5;
-
-    if (dirty & VIA_UPLOAD_DESTBUFFER) {
-    }
-
-    if (dirty & VIA_UPLOAD_DEPTHBUFFER) {
-    }
-    
-    if (dirty * VIA_UPLOAD_DEPTH) {
-        *vb++ = ((HC_SubA_HZWTMD << 24) | vmesa->regHZWTMD);
-        i++;
-    }
-    
-    if (dirty * VIA_UPLOAD_ALPHATEST) {
-        *vb++ = ((HC_SubA_HATMD << 24) | vmesa->regHATMD);
-        i++;
-    }
-
-
-    if (dirty & VIA_UPLOAD_BLEND) {
-        *vb++ = ((HC_SubA_HABLCsat << 24) | vmesa->regHABLCsat);
-        *vb++ = ((HC_SubA_HABLCop  << 24) | vmesa->regHABLCop); 
-        *vb++ = ((HC_SubA_HABLAsat << 24) | vmesa->regHABLAsat);        
-        *vb++ = ((HC_SubA_HABLAop  << 24) | vmesa->regHABLAop); 
-        *vb++ = ((HC_SubA_HABLRCa  << 24) | vmesa->regHABLRCa); 
-        *vb++ = ((HC_SubA_HABLRFCa << 24) | vmesa->regHABLRFCa);        
-        *vb++ = ((HC_SubA_HABLRCbias << 24) | vmesa->regHABLRCbias);    
-        *vb++ = ((HC_SubA_HABLRCb  << 24) | vmesa->regHABLRCb); 
-        *vb++ = ((HC_SubA_HABLRFCb << 24) | vmesa->regHABLRFCb);        
-        *vb++ = ((HC_SubA_HABLRAa  << 24) | vmesa->regHABLRAa); 
-        *vb++ = ((HC_SubA_HABLRAb  << 24) | vmesa->regHABLRAb); 
-        i += 11;
-    }
-    
-    if (dirty & VIA_UPLOAD_FOG) {
-        *vb++ = ((HC_SubA_HFogLF << 24) | vmesa->regHFogLF);        
-        *vb++ = ((HC_SubA_HFogCL << 24) | vmesa->regHFogCL);            
-        *vb++ = ((HC_SubA_HFogCH << 24) | vmesa->regHFogCH);            
-        i += 3;
-    }
-    
-    if (dirty & VIA_UPLOAD_LINESTIPPLE) {
-        *vb++ = ((HC_SubA_HLP << 24) | ctx->Line.StipplePattern);           
-        *vb++ = ((HC_SubA_HLPRF << 24) | ctx->Line.StippleFactor);                  
-    }
-    else {
-        *vb++ = ((HC_SubA_HLP << 24) | 0xFFFF);         
-        *vb++ = ((HC_SubA_HLPRF << 24) | 0x1);              
-    }
-    i += 2;
-    
-    *vb++ = ((HC_SubA_HPixGC << 24) | 0x0);             
-    i++;
-    
-    if (i & 0x1) {
-        *vb++ = HC_DUMMY;
-        i++;    
-    }    
-
-    if (dirty & VIA_UPLOAD_TEXTURE) {
-                
-    }
-    
-    if (dirty & VIA_UPLOAD_POLYGONSTIPPLE) {
-    
-    }
-    
-    vmesa->dmaLow += (i << 2);
-
-    vmesa->dirty = 0;
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-}
 
 /**********************************************************************/
 /*                 High level hooks for t_vb_render.c                 */
@@ -1352,10 +1238,7 @@ static void viaRunPipeline(GLcontext *ctx)
         vmesa->newState = 0;
     }
 
-    if (vmesa->needUploadAllState)
-    	emit_all_state(vmesa);
-    else
-        emit_partial_state(vmesa);
+    emit_all_state(vmesa);
 
     _tnl_run_pipeline(ctx);
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        

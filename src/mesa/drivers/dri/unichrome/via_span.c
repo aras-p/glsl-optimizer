@@ -32,28 +32,13 @@
 #include "swrast/swrast.h"
 
 #define DBG 0
-#define LOCAL_VARS                                      \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
-    GLuint pitch = vmesa->drawPitch;                    \
-    GLuint height = dPriv->h;                           \
-    GLushort p;                                         \
-    char *buf = (char *)(vmesa->drawMap +               \
-	dPriv->x * viaScreen->bytesPerPixel +           \
-                         dPriv->y * pitch);             \
-    char *read_buf = (char *)(vmesa->readMap +          \
-        dPriv->x * viaScreen->bytesPerPixel +           \
-                              dPriv->y * pitch);        \
-    (void)read_buf; (void)buf; (void)p
 
 #define LOCAL_DEPTH_VARS                                \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
     GLuint pitch = viaScreen->backPitch;                \
     GLuint height = dPriv->h;                           \
-    char *buf = (char *)(vmesa->depth.map +             \
-                         dPriv->x * 2 +                 \
-                         dPriv->y * pitch)
+    char *buf = (char *)(vmesa->depth.map)
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx &&    \
                           _y >= miny && _y < maxy)
@@ -72,98 +57,36 @@
 
 #define Y_FLIP(_y) (height - _y - 1)
 
-#define HW_LOCK()                               \
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);     \
-    LOCK_HARDWARE_QUIESCENT(vmesa);
+#define HW_LOCK() 
+#define HW_CLIPLOOP()								\
+    do {									\
+        __DRIdrawablePrivate *dPriv = vmesa->driDrawable;			\
+        int _nc = dPriv->numClipRects;						\
+        while (_nc--) {								\
+		int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;		\
+        	int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;		\
+        	int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;		\
+        	int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;        
 
-/*=* [DBG] csmash saam : bitmap option menu can't be drawn in saam *=*/	
-/*#define HW_CLIPLOOP()                                             \
-    do {                                                            \
-        __DRIdrawablePrivate *dPriv = vmesa->driDrawable;           \
-        int _nc = dPriv->numClipRects;                              \
-        while (_nc--) {                                             \
-            int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;        \
-            int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;        \
-            int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;        \
-            int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;*/
-#define HW_CLIPLOOP()                                               \
-    do {                                                            \
-        __DRIdrawablePrivate *dPriv = vmesa->driDrawable;           \
-        int _nc = dPriv->numClipRects;                              \
-	GLuint scrn = vmesa->saam & S_MASK;                         \
-	if(scrn == S1) _nc = 1;                                     \
-        while (_nc--) {                                             \
-	    int minx;                                               \
-	    int miny;                                               \
-	    int maxx;                                               \
-	    int maxy;                                               \
-	    if (!vmesa->saam) {                                     \
-		minx = dPriv->pClipRects[_nc].x1 - dPriv->x;        \
-        	miny = dPriv->pClipRects[_nc].y1 - dPriv->y;        \
-        	maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;        \
-        	maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;        \
-	    }                                                       \
-	    else {                                                  \
-		minx = -10000;                                      \
-        	miny = -10000;                                      \
-        	maxx = 10000;                                       \
-        	maxy = 10000;                                       \
-	    }
-	    
-	    /*else if (scrn == S0) {                                \
-		minx = dPriv->pClipRects[_nc].x1 - dPriv->x;        \
-        	miny = dPriv->pClipRects[_nc].y1 - dPriv->y;        \
-        	maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;        \
-        	maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;        \
-	    }                                                       \
-	    else if (scrn == S1) {                                  \
-		drm_clip_rect_t *b = vmesa->sarea->boxes;           \
-		minx = b->x1;                                       \
-        	miny = b->y1;                                       \
-        	maxx = b->x2;                                       \
-        	maxy = b->y2;                                       \
-	    }                                                       \
-	    else {                                                  \
-		drm_clip_rect_t *b = vmesa->sarea->boxes + vmesa->numClipRects;\
-		minx = b->x1;        \
-        	miny = b->y1;        \
-        	maxx = b->x2;        \
-        	maxy = b->y2;        \
-	    }*/
 
 #define HW_ENDCLIPLOOP()                                            \
         }                                                           \
     } while (0)
 
-#define HW_UNLOCK()                             	\
-    UNLOCK_HARDWARE(vmesa);
-
+#define HW_UNLOCK()
 
 /* 16 bit, 565 rgb color spanline and pixel functions
  */
-/*=* [DBG] csmash : fix options worng position *=*/
-/*#define LOCAL_VARS                                    \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    GLuint pitch = vmesa->drawPitch;                    \
-    GLuint height = dPriv->h;                           \
-    GLushort p;                                         \
-    char *buf = (char *)(vmesa->drawMap +               \
-                         dPriv->x * 2 +                 \
-                         dPriv->y * pitch);             \
-    char *read_buf = (char *)(vmesa->readMap +          \
-                              dPriv->x * 2 +            \
-                              dPriv->y * pitch);        \
-    (void)read_buf; (void)buf; (void)p*/
-
 #undef LOCAL_VARS
 #define LOCAL_VARS                                                   	\
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     GLuint pitch = vmesa->drawPitch;                                 	\
     GLuint height = dPriv->h;                                        	\
     GLushort p;                                                      	\
     char *buf, *read_buf;                                            	\
     p = 0;							     	\
-    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {	\
+    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
@@ -203,15 +126,19 @@
  */
 #undef LOCAL_VARS
 #undef LOCAL_DEPTH_VARS
+#undef INIT_MONO_PIXEL
+#undef DBG
+#define DBG 0
  
 #define LOCAL_VARS                                                   	\
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     GLuint pitch = vmesa->drawPitch;                                 	\
     GLuint height = dPriv->h;                                        	\
     GLuint p;                                                        	\
     char *buf, *read_buf;                                            	\
     p = 0;	                                                        \
-    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {	\
+    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
@@ -236,20 +163,14 @@
 
 /* 16 bit depthbuffer functions.
  */
-/*=* John Sheng [2003.6.16] fix exy press 'i' dirty screen *=*/
-/*#define LOCAL_DEPTH_VARS                                \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    GLuint pitch = vmesa->depth.pitch;                  \
-    GLuint height = dPriv->h;                           \
-    char *buf = (char *)(vmesa->depth.map +             \
-                         dPriv->x * 2 +                 \
-                         dPriv->y * pitch)   */
 #define LOCAL_DEPTH_VARS                                \
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    /*viaScreenPrivate *viaScreen = vmesa->viaScreen;*/ \
     GLuint pitch = vmesa->depth.pitch;                  \
     GLuint height = dPriv->h;                           \
     char *buf = (char *)(vmesa->depth.map)   
+
+#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
 
 #define WRITE_DEPTH(_x, _y, d)                      \
@@ -272,21 +193,37 @@
 #define TAG(x) via##x##_32
 #include "depthtmp.h"
 
-/* 24/8 bit depthbuffer functions.
- */
-/* 
-#define WRITE_DEPTH(_x, _y, d) {                     		\
-    GLuint tmp = *(GLuint *)(buf + _x * 4 + y * pitch);		\
-    tmp &= 0xff;						\
-    tmp |= (d) & 0xffffff00;					\
-    *(GLuint *)(buf + _x * 4 + _y * pitch) = tmp;		\
 
-#define READ_DEPTH(d, _x, _y)                       		\
-    d = (*(GLuint *)(buf + _x * 4 + _y * pitch) & ~0xff) >> 8; 
+
+/* 24/8 bit interleaved depth/stencil functions
+ */
+#define WRITE_DEPTH( _x, _y, d ) {			\
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
+   tmp &= 0x000000ff;					\
+   tmp |= ((d)<<8);				\
+   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
+}
+
+#define READ_DEPTH( d, _x, _y )		\
+   d = (*(GLuint *)(buf + (_x)*4 + (_y)*pitch)) >> 8;
+
 
 #define TAG(x) via##x##_24_8
 #include "depthtmp.h"
-*/
+
+#define WRITE_STENCIL( _x, _y, d ) {			\
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
+   tmp &= 0xffffff00;					\
+   tmp |= (d);					\
+   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
+}
+
+#define READ_STENCIL( d, _x, _y )			\
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) & 0xff;
+
+#define TAG(x) via##x##_24_8
+#include "stenciltmp.h"
+
 
 
 static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
@@ -312,6 +249,23 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
 }
 
+/* Move locking out to get reasonable span performance.
+ */
+static void viaSpanRenderStart( GLcontext *ctx )
+{
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);     
+   LOCK_HARDWARE(vmesa);
+   viaFlushPrimsLocked(vmesa);
+   WAIT_IDLE(vmesa);
+    
+}
+
+static void viaSpanRenderFinish( GLcontext *ctx )
+{
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( vmesa );
+}
 
 void viaInitSpanFuncs(GLcontext *ctx)
 {
@@ -320,7 +274,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
 
     swdd->SetBuffer = viaSetBuffer;
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-    if (vmesa->viaScreen->bitsPerPixel == 0x10) {
+    if (vmesa->viaScreen->bitsPerPixel == 16) {
 	swdd->WriteRGBASpan = viaWriteRGBASpan_565;
 	swdd->WriteRGBSpan = viaWriteRGBSpan_565;
 	swdd->WriteMonoRGBASpan = viaWriteMonoRGBASpan_565;
@@ -329,24 +283,44 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	swdd->ReadRGBASpan = viaReadRGBASpan_565;
 	swdd->ReadRGBAPixels = viaReadRGBAPixels_565;
     }
-    else if (vmesa->viaScreen->bitsPerPixel == 0x20) {
+    else if (vmesa->viaScreen->bitsPerPixel == 32) {
 	viaInitPointers_8888( swdd );
     }
-    else 
-	ASSERT(0);
+    else {
+       fprintf(stderr, "%s: failed\n", __FUNCTION__);
+	assert(0);
+    }
 	
-    if (vmesa->glCtx->Visual.depthBits == 0x10) {
+    if (vmesa->glCtx->Visual.depthBits == 16) {
     	swdd->ReadDepthSpan = viaReadDepthSpan_16;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_16;
+	swdd->WriteMonoDepthSpan = viaWriteMonoDepthSpan_16;
 	swdd->ReadDepthPixels = viaReadDepthPixels_16;
 	swdd->WriteDepthPixels = viaWriteDepthPixels_16;
     }	
-    else if (vmesa->glCtx->Visual.depthBits == 0x20) {
+    else if (vmesa->glCtx->Visual.depthBits == 24) {
+       fprintf(stderr, "%s: 24/8 span functions\n", __FUNCTION__);
+        swdd->ReadDepthSpan = viaReadDepthSpan_24_8;
+	swdd->WriteDepthSpan = viaWriteDepthSpan_24_8;
+	swdd->ReadDepthPixels = viaReadDepthPixels_24_8;
+	swdd->WriteDepthPixels = viaWriteDepthPixels_24_8;
+
+	swdd->WriteStencilSpan = viaWriteStencilSpan_24_8;
+	swdd->ReadStencilSpan = viaReadStencilSpan_24_8;
+	swdd->WriteStencilPixels = viaWriteStencilPixels_24_8;
+	swdd->ReadStencilPixels = viaReadStencilPixels_24_8;
+    }
+    else if (vmesa->glCtx->Visual.depthBits == 32) {
     	swdd->ReadDepthSpan = viaReadDepthSpan_32;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_32;
+	swdd->WriteMonoDepthSpan = viaWriteMonoDepthSpan_32;
 	swdd->ReadDepthPixels = viaReadDepthPixels_32;
 	swdd->WriteDepthPixels = viaWriteDepthPixels_32;
     }
+
+    swdd->SpanRenderStart = viaSpanRenderStart;
+    swdd->SpanRenderFinish = viaSpanRenderFinish; 
+
     
     swdd->WriteCI8Span = NULL;
     swdd->WriteCI32Span = NULL;

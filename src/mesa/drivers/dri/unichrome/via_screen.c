@@ -117,9 +117,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->irqEnabled = gDRIPriv->irqEnabled;
     viaScreen->irqEnabled = 1;
 
-#ifdef USE_XINERAMA
-    viaScreen->drixinerama = gDRIPriv->drixinerama;
-#endif
     if (VIA_DEBUG) {
 	fprintf(stderr, "deviceID = %08x\n", viaScreen->deviceID);
 	fprintf(stderr, "width = %08x\n", viaScreen->width);	
@@ -219,36 +216,24 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
-    /* KW: Bogus: Do this sort of thing in MakeCurrent or similar.
-     */
-    viaContextPtr vmesa;
+    viaContextPtr vmesa = 0;
     GET_CURRENT_CONTEXT(ctx);
+    GLboolean swStencil = (mesaVis->stencilBits > 0 && 
+			   mesaVis->depthBits != 24);
 
     if (ctx)
        vmesa = VIA_CONTEXT(ctx);
     
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    /*=* John Sheng [2003.7.2] for visual config & patch viewperf *=*/
-    if (vmesa && mesaVis->depthBits == 32 && vmesa->depthBits == 16) {
-	vmesa->depthBits = mesaVis->depthBits;
-	vmesa->depth.size *= 2;
-	vmesa->depth.pitch *= 2;
-	vmesa->depth.bpp *= 2;
-	if (vmesa->depth.map)
-	    via_free_depth_buffer(vmesa);
-	if (!via_alloc_depth_buffer(vmesa)) {
-	    via_free_depth_buffer(vmesa);
-	    return GL_FALSE;
-	}
-	
-	((__GLcontextModes*)mesaVis)->depthBits = 16; /* XXX : sure you want to change read-only data? */
-    }
-    
+
+    /* KW: removed bogus depth recalculations.
+     */
+
     if (isPixmap) {
 	driDrawPriv->driverPrivate = (void *)
             _mesa_create_framebuffer(mesaVis,
                                      GL_FALSE,	/* software depth buffer? */
-                                     mesaVis->stencilBits > 0,
+                                     swStencil,
                                      mesaVis->accumRedBits > 0,
                                      GL_FALSE 	/* s/w alpha planes */);
 
@@ -260,7 +245,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
         driDrawPriv->driverPrivate = (void *)
             _mesa_create_framebuffer(mesaVis,
                                      GL_FALSE,	/* software depth buffer? */
-                                     mesaVis->stencilBits > 0,
+                                     swStencil,
                                      mesaVis->accumRedBits > 0,
                                      GL_FALSE 	/* s/w alpha planes */);
 	

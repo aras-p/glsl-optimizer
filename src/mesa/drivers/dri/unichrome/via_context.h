@@ -40,9 +40,6 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #include "via_tex.h"
 #include "via_common.h"
 #include "xf86drmVIA.h"
-#ifdef USE_XINERAMA
-#include "../../../../../include/extensions/Xinerama.h"
-#endif
 #define VIA_FALLBACK_TEXTURE           	0x1
 #define VIA_FALLBACK_DRAW_BUFFER       	0x2
 #define VIA_FALLBACK_READ_BUFFER       	0x4
@@ -53,6 +50,7 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_FALLBACK_STENCIL           	0x100
 #define VIA_FALLBACK_BLEND_EQ          	0x200
 #define VIA_FALLBACK_BLEND_FUNC        	0x400
+#define VIA_FALLBACK_USER_DISABLE      	0x800
 
 #define VIA_UPLOAD_NONE		  	0x0000
 #define VIA_UPLOAD_ALPHATEST		0x0001
@@ -116,6 +114,13 @@ struct via_context_t {
     GLboolean hasAccum;
     GLuint    depthBits;
     GLuint    stencilBits;
+
+   GLboolean have_hw_stencil;
+   GLuint ClearDepth;
+   GLuint depth_clear_mask;
+   GLuint stencil_clear_mask;
+   GLfloat depth_scale;
+
     GLuint    *dma;
     viaRegion tex;
     
@@ -250,15 +255,6 @@ struct via_context_t {
     
     int drawW;                  
     int drawH;
-    GLuint saam;
-#ifdef USE_XINERAMA
-    XineramaScreenInfo *xsi;
-#endif
-    int drawXoffSaam;
-    drm_clip_rect_t *pSaamRects;
-    int drawXSaam;
-    int drawYSaam;
-    GLuint numSaamRects;
     
     int drawPitch;
     int readPitch;
@@ -386,58 +382,26 @@ extern hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
 
 /* Lock the hardware and validate our state.  
  */
-/*
-#define LOCK_HARDWARE(vmesa)                                \
-    do {                                                    \
-        char __ret = 0;                                     \
-        DRM_CAS(vmesa->driHwLock, vmesa->hHWContext,        \
-            (DRM_LOCK_HELD|vmesa->hHWContext), __ret);      \
-        if (__ret)                                          \
-            viaGetLock(vmesa, 0);                           \
-    } while (0)
-*/
-/*=* John Sheng [2003.6.20] fix pci *=*/
-/*=* John Sheng [2003.7.25] fix viewperf black shadow *=*/
 #define LOCK_HARDWARE(vmesa)                                	\
-    if(1)                                         	\
 	do {                                                    \
     	    char __ret = 0;                                     \
     	    DRM_CAS(vmesa->driHwLock, vmesa->hHWContext,        \
         	(DRM_LOCK_HELD|vmesa->hHWContext), __ret);      \
     	    if (__ret)                                          \
         	viaGetLock(vmesa, 0);                           \
-	} while (0);                                            \
-    else                                                        \
-	viaLock(vmesa, 0)
-	
+	} while (0)
 
-/*
-#define LOCK_HARDWARE(vmesa)                                	\
-    viaLock(vmesa, 0);                           
-*/
 
 /* Release the kernel lock.
  */
-/*
-#define UNLOCK_HARDWARE(vmesa)                                  \
-    DRM_UNLOCK(vmesa->driFd, vmesa->driHwLock, vmesa->hHWContext);
-*/
-/*=* John Sheng [2003.6.20] fix pci *=*/
-/*=* John Sheng [2003.7.25] fix viewperf black shadow *=*/
 #define UNLOCK_HARDWARE(vmesa)                                  	\
-    if(1)                                         		\
-	DRM_UNLOCK(vmesa->driFd, vmesa->driHwLock, vmesa->hHWContext);	\
-    else								\
-	viaUnLock(vmesa, 0);				
-/*	
-#define UNLOCK_HARDWARE(vmesa)                             	\
-    viaUnLock(vmesa, 0);
-*/
-#define WAIT_IDLE                                                             	\
-    while (1) {                                                            	\
+	DRM_UNLOCK(vmesa->driFd, vmesa->driHwLock, vmesa->hHWContext);	
+
+#define WAIT_IDLE(vmesa)                                                       	\
+    do {                                                            	\
 	if ((((GLuint)*vmesa->regEngineStatus) & 0xFFFEFFFF) == 0x00020000)	\
 	    break;                                                        	\
-    }
+    } while (1)
 	
 #define LOCK_HARDWARE_QUIESCENT(vmesa)          \
     do {                                        \
@@ -453,7 +417,6 @@ extern GLuint VIA_DEBUG;
 #endif
 
 
-extern GLuint DRAW_FRONT;
 extern void viaGetLock(viaContextPtr vmesa, GLuint flags);
 extern void viaLock(viaContextPtr vmesa, GLuint flags);
 extern void viaUnLock(viaContextPtr vmesa, GLuint flags);

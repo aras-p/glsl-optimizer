@@ -68,7 +68,6 @@
 #ifdef DEBUG
 GLuint VIA_DEBUG = 0;
 #endif
-GLuint DRAW_FRONT = 0;
 #define DMA_SIZE 2
 GLuint VIA_PERFORMANCE = 0;
 #ifdef PERFORMANCE_MEASURE
@@ -211,12 +210,11 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 
     /* Allocate depth-buffer */
     if ( vmesa->hasStencil || vmesa->hasDepth ) {
-	const unsigned dShift = (vmesa->hasStencil)
-	  ? 2 : (vmesa->depthBits / 16);
+       vmesa->depth.bpp = vmesa->depthBits;
+       if (vmesa->depth.bpp == 24)
+	  vmesa->depth.bpp = 32;
 
-	vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) << dShift)
-	  + extra;
-	vmesa->depth.bpp = 8 << dShift;
+	vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) * (vmesa->depth.bpp/8)) + extra;
 	vmesa->depth.size = vmesa->depth.pitch * vmesa->driDrawable->h;
     }
     else {
@@ -233,7 +231,7 @@ calculate_buffer_parameters( viaContextPtr vmesa )
     /*=* John Sheng [2003.5.31] flip *=*/
     if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
 	vmesa->viaScreen->height == vmesa->driDrawable->h ) {
-#define ALLOW_EXPERIMENTAL_PAGEFLIP 1       
+#define ALLOW_EXPERIMENTAL_PAGEFLIP 0
 #if ALLOW_EXPERIMENTAL_PAGEFLIP
 	vmesa->doPageFlip = GL_TRUE;
 #else
@@ -406,30 +404,50 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 			 sPriv->myNum, "via");
 
     /* pick back buffer */
-    if (mesaVis->doubleBufferMode) {
-	vmesa->hasBack = GL_TRUE;
+    vmesa->hasBack = mesaVis->doubleBufferMode;
+
+    switch(mesaVis->depthBits) {
+    case 0:			
+       vmesa->hasDepth = GL_FALSE;
+       vmesa->depthBits = 0; 
+       break;
+    case 16:
+       vmesa->hasDepth = GL_TRUE;
+       vmesa->depthBits = mesaVis->depthBits;
+       vmesa->have_hw_stencil = GL_FALSE;
+       vmesa->depth_scale = 1.0/0xffff;
+       vmesa->depth_clear_mask = 0xf << 28;
+       vmesa->ClearDepth = 0xffff;
+       break;
+    case 24:
+       vmesa->hasDepth = GL_TRUE;
+       vmesa->depthBits = mesaVis->depthBits;
+       vmesa->depth_scale = 1.0/0xffffff;
+       vmesa->depth_clear_mask = 0xe << 28;
+       vmesa->ClearDepth = 0xffffff00;
+
+       assert(mesaVis->haveStencilBuffer);
+       assert(mesaVis->stencilBits == 8);
+
+       vmesa->have_hw_stencil = GL_TRUE;
+       vmesa->stencilBits = mesaVis->stencilBits;
+       vmesa->stencil_clear_mask = 0x1 << 28;
+       break;
+    case 32:
+       vmesa->hasDepth = GL_TRUE;
+       vmesa->depthBits = mesaVis->depthBits;
+       assert(!mesaVis->haveStencilBuffer);
+       vmesa->have_hw_stencil = GL_FALSE;
+       vmesa->depth_scale = 1.0/0xffffffff;
+       vmesa->depth_clear_mask = 0;
+       vmesa->ClearDepth = 0xffffffff;
+       vmesa->depth_clear_mask = 0xf << 28;
+       break;
+    default:
+       assert(0); 
+       break;
     }
-    else {
-	vmesa->hasBack = GL_FALSE;
-    }
-    /* pick z buffer */	
-    if (mesaVis->haveDepthBuffer) {
-	vmesa->hasDepth = GL_TRUE;
-	vmesa->depthBits = mesaVis->depthBits;
-    }
-    else {
-	vmesa->hasDepth = GL_FALSE;
-	vmesa->depthBits = 0;
-    }
-    /* pick stencil buffer */
-    if (mesaVis->haveStencilBuffer) {
-	vmesa->hasStencil = GL_TRUE;
-	vmesa->stencilBits = mesaVis->stencilBits;
-    }
-    else {
-	vmesa->hasStencil = GL_FALSE;
-	vmesa->stencilBits = 0;
-    }
+
 
     _mesa_init_driver_functions(&functions);
     viaInitTextureFuncs(&functions);
@@ -452,19 +470,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     ctx = vmesa->glCtx;
     
-    /* check */
-    /*=* John Sheng [2003.7.2] for visual config number can't excess 8 *=*/
-    /*if (viaScreen->textureSize < 2 * 1024 * 1024) {
-        ctx->Const.MaxTextureLevels = 9;
-    }
-    else if (viaScreen->textureSize < 8 * 1024 * 1024) {
-        ctx->Const.MaxTextureLevels = 10;
-    }
-    else {
-        ctx->Const.MaxTextureLevels = 11;
-    }*/
-    ctx->Const.MaxTextureLevels = 11;
-    
+    ctx->Const.MaxTextureLevels = 11;    
     ctx->Const.MaxTextureUnits = 2;
     ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
     ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
@@ -550,10 +556,9 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 	VIA_DEBUG = 0;	
 #endif	
 
-    if (getenv("DRAW_FRONT"))
-	DRAW_FRONT = 1;
-    else
-	DRAW_FRONT = 0;	
+    if (getenv("VIA_NO_RAST"))
+       FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
+
 	
 #ifdef PERFORMANCE_MEASURE
     if (getenv("VIA_PERFORMANCE"))
@@ -609,43 +614,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     }
     
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-    {
-#ifndef USE_XINERAMA
-        vmesa->saam = 0;
-#else
-	GLboolean saam = XineramaIsActive(vmesa->display);
-	int count = 0, fbSize;
-
-	if (saam && vmesa->viaScreen->drixinerama) {
-	    vmesa->xsi = XineramaQueryScreens(vmesa->display, &count);
-	    /* Test RightOf or Down */
-	    if (vmesa->xsi[0].x_org == 0 && vmesa->xsi[0].y_org == 0) {
-		if (vmesa->xsi[1].x_org == vmesa->xsi[1].width) {
-		    vmesa->saam = RightOf;
-		}
-		else {
-		    vmesa->saam = Down;
-		}
-	    }
-	    /* Test LeftOf or Up */
-	    else if (vmesa->xsi[0].x_org == vmesa->xsi[0].width) {
-		vmesa->saam = LeftOf;
-	    }
-	    else if (vmesa->xsi[0].y_org == vmesa->xsi[0].height) {
-		vmesa->saam = Up;
-	    }
-	    else
-		vmesa->saam = 0;
-		
-		    
-	    fbSize = vmesa->viaScreen->fbSize;
-	}
-	else
-	    vmesa->saam = 0;
-#endif
-    }
-    
-    vmesa->pSaamRects = (drm_clip_rect_t *) malloc(sizeof(drm_clip_rect_t));    
     return GL_TRUE;
 }
 
@@ -656,10 +624,10 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
     assert(vmesa); /* should never be null */
 /*     viaFlushPrimsLocked(vmesa); */
-    WAIT_IDLE
 
     if (vmesa) {
 	/*=* John Sheng [2003.5.31]  agp tex *=*/
+        WAIT_IDLE(vmesa);
 	if(VIA_DEBUG) fprintf(stderr, "agpFullCount = %d\n", vmesa->agpFullCount);    
 	
 	_swsetup_DestroyContext(vmesa->glCtx);
@@ -687,6 +655,9 @@ void viaXMesaSetFrontClipRects(viaContextPtr vmesa)
 {
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
 
+    if (!dPriv)
+       return;
+
     vmesa->numClipRects = dPriv->numClipRects;
     vmesa->pClipRects = dPriv->pClipRects;
     vmesa->drawX = dPriv->x;
@@ -700,202 +671,52 @@ void viaXMesaSetFrontClipRects(viaContextPtr vmesa)
 
 void viaXMesaSetBackClipRects(viaContextPtr vmesa)
 {
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-    /*=* John Sheng [2003.6.9] fix glxgears dirty screen */
-    /*if (vmesa->saam) {*/
-	    vmesa->numClipRects = dPriv->numClipRects;
-    	    vmesa->pClipRects = dPriv->pClipRects;
-    	    vmesa->drawX = dPriv->x;
-    	    vmesa->drawY = dPriv->y;
-	    vmesa->drawW = dPriv->w;
-	    vmesa->drawH = dPriv->h;
-    /*}
-    else {
-	if (dPriv->numBackClipRects == 0) {
-    	    vmesa->numClipRects = dPriv->numClipRects;
-    	    vmesa->pClipRects = dPriv->pClipRects;
-    	    vmesa->drawX = dPriv->x;
-    	    vmesa->drawY = dPriv->y;
-	    vmesa->drawW = dPriv->w;
-	    vmesa->drawH = dPriv->h;
-	}
-	else {
-    	    vmesa->numClipRects = dPriv->numBackClipRects;
-    	    vmesa->pClipRects = dPriv->pBackClipRects;
-    	    vmesa->drawX = dPriv->backX;
-    	    vmesa->drawY = dPriv->backY;
-	    vmesa->drawW = dPriv->w;
-	    vmesa->drawH = dPriv->h;
-	}
-    }*/
-    viaEmitDrawingRectangle(vmesa);
-    vmesa->uploadCliprects = GL_TRUE;
+   __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+
+   if (!dPriv)
+      return;
+
+   /*=* John Sheng [2003.6.9] fix glxgears dirty screen */
+   vmesa->numClipRects = dPriv->numClipRects;
+   vmesa->pClipRects = dPriv->pClipRects;
+   vmesa->drawX = dPriv->x;
+   vmesa->drawY = dPriv->y;
+   vmesa->drawW = dPriv->w;
+   vmesa->drawH = dPriv->h;
+   viaEmitDrawingRectangle(vmesa);
+   vmesa->uploadCliprects = GL_TRUE;
 }
 
 void viaXMesaWindowMoved(viaContextPtr vmesa)
 {
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-#ifdef USE_XINERAMA
-    GLuint side = 0;
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-#endif
     
     switch (vmesa->glCtx->Color._DrawDestMask[0]) {
-    case __GL_FRONT_BUFFER_MASK: 
+    case DD_FRONT_LEFT_BIT: 
         viaXMesaSetFrontClipRects(vmesa);
         break;
-    case __GL_BACK_BUFFER_MASK:
+    case DD_BACK_LEFT_BIT:
         viaXMesaSetBackClipRects(vmesa);
         break;
     default:
+        viaXMesaSetFrontClipRects(vmesa);
         break;
     }
 
-#ifndef USE_XINERAMA
     vmesa->viaScreen->fbOffset = 0;
-    vmesa->saam &= ~S1;
-    vmesa->saam |= S0;
-#else
-    side = vmesa->saam & P_MASK;
-    
-    switch (side) {
-	case RightOf:
-	    /* full in screen 1 */
-	    if (vmesa->drawX >= vmesa->xsi[0].width) {
-		vmesa->viaScreen->fbOffset = vmesa->viaScreen->fbSize;
-		vmesa->drawX = vmesa->drawX - vmesa->xsi[1].width;
-		vmesa->numClipRects = dPriv->numBackClipRects;
-    		vmesa->pClipRects = dPriv->pBackClipRects;
-    		vmesa->drawX = dPriv->backX;
-    		vmesa->drawY = dPriv->backY;
-		vmesa->saam &= ~S0;
-		vmesa->saam |= S1;
-	    }
-	    /* full in screen 0 */
-	    else if ((vmesa->drawX + vmesa->drawW) <= vmesa->xsi[0].width) {
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam &= ~S1;
-		vmesa->saam |= S0;
-	    }
-	    /* between screen 0 && screen 1 */
-	    else {
-		vmesa->numSaamRects = dPriv->numBackClipRects;
-    		vmesa->pSaamRects = dPriv->pBackClipRects;
-    		vmesa->drawXSaam = dPriv->backX;
-    		vmesa->drawYSaam = dPriv->backY;
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam |= S0;
-		vmesa->saam |= S1;
-	    }
-    	    break;
-	case LeftOf:
-	    /* full in screen 1 */
-	    if (vmesa->drawX + vmesa->drawW <= 0) {
-		vmesa->viaScreen->fbOffset = vmesa->viaScreen->fbSize;
-		vmesa->drawX = vmesa->drawX + vmesa->xsi[1].width;
-		vmesa->numClipRects = dPriv->numBackClipRects;
-    		vmesa->pClipRects = dPriv->pBackClipRects;
-    		vmesa->drawX = dPriv->backX;
-    		vmesa->drawY = dPriv->backY;		
-		vmesa->saam &= ~S0;
-		vmesa->saam |= S1;
-	    }
-	    /* full in screen 0 */
-	    else if (vmesa->drawX >= 0) {
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam &= ~S1;
-		vmesa->saam |= S0;
-	    }
-	    /* between screen 0 && screen 1 */
-	    else {
-		vmesa->numSaamRects = dPriv->numBackClipRects;
-    		vmesa->pSaamRects = dPriv->pBackClipRects;
-    		vmesa->drawXSaam = dPriv->backX;
-    		vmesa->drawYSaam = dPriv->backY;
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam |= S0;
-		vmesa->saam |= S1;
-	    }
-    	    break;
-	case Down :
-	    /* full in screen 1 */
-	    if (vmesa->drawY >= vmesa->xsi[0].height) {
-		vmesa->viaScreen->fbOffset = vmesa->viaScreen->fbSize;
-		vmesa->drawY = vmesa->drawY - vmesa->xsi[1].height;
-		vmesa->numClipRects = dPriv->numBackClipRects;
-    		vmesa->pClipRects = dPriv->pBackClipRects;
-    		vmesa->drawX = dPriv->backX;
-    		vmesa->drawY = dPriv->backY;
-		vmesa->saam &= ~S0;
-		vmesa->saam |= S1;
-	    }
-	    /* full in screen 0 */
-	    else if ((vmesa->drawY + vmesa->drawH) <= vmesa->xsi[0].height) {
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam &= ~S1;
-		vmesa->saam |= S0;
-	    }
-	    /* between screen 0 && screen 1 */
-	    else {
-		vmesa->numSaamRects = dPriv->numBackClipRects;
-    		vmesa->pSaamRects = dPriv->pBackClipRects;
-    		vmesa->drawXSaam = dPriv->backX;
-    		vmesa->drawYSaam = dPriv->backY;
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam |= S0;
-		vmesa->saam |= S1;
-	    }
-    	    break;
-	case Up :
-	    /* full in screen 1 */
-	    if ((vmesa->drawY + vmesa->drawH) <= 0) {
-		vmesa->viaScreen->fbOffset = vmesa->viaScreen->fbSize;
-		vmesa->drawY = vmesa->drawY + vmesa->xsi[1].height;
-		vmesa->numClipRects = dPriv->numBackClipRects;
-    		vmesa->pClipRects = dPriv->pBackClipRects;
-    		vmesa->drawX = dPriv->backX;
-    		vmesa->drawY = dPriv->backY;
-		vmesa->saam &= ~S0;
-		vmesa->saam |= S1;
-	    }
-	    /* full in screen 0 */
-	    else if (vmesa->drawY >= 0) {
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam &= ~S1;
-		vmesa->saam |= S0;
-	    }
-	    /* between screen 0 && screen 1 */
-	    else {
-		vmesa->numSaamRects = dPriv->numBackClipRects;
-    		vmesa->pSaamRects = dPriv->pBackClipRects;
-    		vmesa->drawXSaam = dPriv->backX;
-    		vmesa->drawYSaam = dPriv->backY;
-		vmesa->viaScreen->fbOffset = 0;
-		vmesa->saam |= S0;
-		vmesa->saam |= S1;
-	    }
-    	    break;
-	default:
-	    vmesa->viaScreen->fbOffset = 0;
-    }
-#endif
-    
+
     {
 	GLuint pitch, offset;
 	pitch = vmesa->front.pitch;
 	offset = vmesa->viaScreen->fbOffset + (vmesa->drawY * pitch + vmesa->drawX * bytePerPixel);
-	vmesa->drawXoff = (GLuint)((offset & 0x1f) / bytePerPixel);
-	if (vmesa->saam) {
-	    if (vmesa->pSaamRects) {
-		offset = vmesa->viaScreen->fbOffset + (vmesa->pSaamRects[0].y1 * pitch + 
-		    vmesa->pSaamRects[0].x1 * bytePerPixel);
-		vmesa->drawXoffSaam = (GLuint)((offset & 0x1f) / bytePerPixel);
-	    }
-	    else
-		vmesa->drawXoffSaam = 0;
-	}
-	else
-	    vmesa->drawXoffSaam = 0;
+	assert(vmesa->viaScreen->fbOffset % bytePerPixel == 0);
+	assert(pitch % bytePerPixel == 0);
+
+	/* KW: I don't know what this was, but it was giving incorrect
+	 * results for backbuffer rendering:
+	 */
+/*  	vmesa->drawXoff = (GLuint)(((vmesa->drawX * bytePerPixel) & 0x1f) / bytePerPixel);  */
+	vmesa->drawXoff = 0;
     }
     
     viaCalcViewport(vmesa->glCtx);
@@ -924,6 +745,7 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
     if (driContextPriv) {
         viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
+	GLcontext *ctx = vmesa->glCtx;
 
 	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
@@ -933,6 +755,7 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	   if ( ! calculate_buffer_parameters( vmesa ) ) {
 	      return GL_FALSE;
 	   }
+	   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 	}
 
         _mesa_make_current2(vmesa->glCtx,
@@ -940,6 +763,8 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
                             (GLframebuffer *)driReadPriv->driverPrivate);
 	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
         viaXMesaWindowMoved(vmesa);
+
+
     }
     else {
         _mesa_make_current(0,0);
@@ -980,52 +805,6 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
 
-#if 0
-void viaLock(viaContextPtr vmesa, GLuint flags)
-{
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-    __DRIscreenPrivate *sPriv = vmesa->driScreen;
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-   
-    /*=* John Sheng [2003.6.16] for xf43 */
-    if(dPriv->pStamp == NULL)
-	dPriv->pStamp = &dPriv->lastStamp;
-
-    if (*(dPriv->pStamp) != dPriv->lastStamp || vmesa->saam) {
-	GLuint scrn;
-	scrn = vmesa->saam & S_MASK;
-	
-	DRM_SPINLOCK(&sPriv->pSAREA->drawable_lock, sPriv->drawLockID);
-
-	if (scrn == S1)
-	    __driUtilUpdateDrawableInfo(dPriv);
-	else
-	    DRI_VALIDATE_DRAWABLE_INFO_ONCE(dPriv);
-	    
-	viaXMesaWindowMoved(vmesa);
-	DRM_SPINUNLOCK(&sPriv->pSAREA->drawable_lock, sPriv->drawLockID);
-    }
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-    
-    return;
-}
-#endif
-
-void viaUnLock(viaContextPtr vmesa, GLuint flags)
-{
-    drm_via_sarea_t *sarea = vmesa->sarea;
-    int me = vmesa->hHWContext;
-    
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    if (VIA_DEBUG) fprintf(stderr, "sarea->ctxOwner = %d\n", sarea->ctxOwner);
-    if (VIA_DEBUG) fprintf(stderr, "me = %d\n", me);
-    if (sarea->ctxOwner == me) {
-        sarea->ctxOwner = 0;
-    }
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-}
 
 void
 viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)

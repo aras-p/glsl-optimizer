@@ -39,18 +39,13 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dpriv);
 void viaPageFlip(const __DRIdrawablePrivate *dpriv);
 int via_check_copy(int fd);
 void viaFillFrontBuffer(viaContextPtr vmesa);
-void viaFillFrontBufferSaam(viaContextPtr vmesa);
 void viaFillFrontPBuffer(viaContextPtr vmesa);
 void viaFillBackBuffer(viaContextPtr vmesa);
-void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel);
-void viaFillStencilBuffer(viaContextPtr vmesa, GLuint pixel);
-void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel);
+void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask);
 void viaDoSwapBuffers(viaContextPtr vmesa);
-void viaDoSwapBuffersSaam(viaContextPtr vmesa);
 void viaDoSwapPBuffers(viaContextPtr vmesa);
 
 int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd); 
-int flush_agp_saam(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd); 
 int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf); 
 
 #define VIA_STATECHANGE(vmesa, flag)                            \

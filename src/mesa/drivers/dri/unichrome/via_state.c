@@ -195,7 +195,12 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
                        GLsizei w, GLsizei h)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
+
+    if (!vmesa->driDrawable)
+       return;
+
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
+
     if (ctx->Scissor.Enabled) {
         VIA_FIREVERTICES(vmesa); /* don't pipeline cliprect changes */
         vmesa->uploadCliprects = GL_TRUE;
@@ -257,6 +262,13 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
         return;
     }
+
+   /* We want to update the s/w rast state too so that r200SetBuffer()
+    * gets called.
+    */
+   _swrast_DrawBuffer(ctx, mode);
+
+
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
 }
 
@@ -296,40 +308,6 @@ static void viaPointSize(GLcontext *ctx, GLfloat sz)
     vmesa = vmesa;    
 }
 
-static void viaBitmap( GLcontext *ctx, GLint px, GLint py,
-		GLsizei width, GLsizei height,
-		const struct gl_pixelstore_attrib *unpack,
-		const GLubyte *bitmap ) 
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-        
-    /*=* [DBG] csmash : fix background overlap option menu *=*/
-    LOCK_HARDWARE(vmesa);
-    viaFlushPrimsLocked(vmesa);
-    UNLOCK_HARDWARE(vmesa);
-    
-    WAIT_IDLE
-    /*=* [DBG] csmash : fix segmentation fault *=*/
-    /*=* John Sheng [2003.7.18] texenv *=*/
-    /*if (!vmesa->drawMap && !vmesa->readMap) {*/
-    if (1) {
-	if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
-	    viaDrawBuffer(ctx, GL_BACK);
-	}
-	else {
-	    viaDrawBuffer(ctx, GL_FRONT);
-	}
-    }
-    /*=* [DBG] csmash : white option words become brown *=*/
-    /*_swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap );*/
-    {
-	GLboolean fog;
-	fog = ctx->Fog.Enabled;
-	ctx->Fog.Enabled = GL_FALSE;
-	_swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap );
-	ctx->Fog.Enabled = fog;
-    }
-}
 
 /* =============================================================
  * Color masks
@@ -426,15 +404,8 @@ void viaCalcViewport(GLcontext *ctx)
     m[MAT_TX] =  v[MAT_TX] + vmesa->drawXoff;
     m[MAT_SY] = - v[MAT_SY];
     m[MAT_TY] = - v[MAT_TY] + vmesa->driDrawable->h;
-    /*=* John Sheng [2003.7.2] for visual config & viewperf drv-08 *=*/
-    if (vmesa->depth.bpp == 16) {
-	m[MAT_SZ] =  v[MAT_SZ] * (1.0 / 0xffff);
-	m[MAT_TZ] =  v[MAT_TZ] * (1.0 / 0xffff);
-    }
-    else {
-	m[MAT_SZ] =  v[MAT_SZ] * (1.0 / 0xffffffff);
-	m[MAT_TZ] =  v[MAT_TZ] * (1.0 / 0xffffffff);
-    }
+    m[MAT_SZ] =  v[MAT_SZ] * vmesa->depth_scale;
+    m[MAT_TZ] =  v[MAT_TZ] * vmesa->depth_scale;
 }
 
 static void viaViewport(GLcontext *ctx,
@@ -474,14 +445,86 @@ void viaInitState(GLcontext *ctx)
     vmesa->regCmdB = HC_ACMD_HCmdB | HC_HVPMSK_X | HC_HVPMSK_Y | HC_HVPMSK_Z;
     vmesa->regEnable = HC_HenCW_MASK;
 
-    if (vmesa->glCtx->Color._DrawDestMask[0] == __GL_BACK_BUFFER_MASK) {
-        vmesa->drawMap = vmesa->back.map;
-        vmesa->readMap = vmesa->back.map;
-    }
-    else {
-        vmesa->drawMap = (char *)vmesa->driScreen->pFB;
-        vmesa->readMap = (char *)vmesa->driScreen->pFB;
-    }
+   /* Mesa should do this for us:
+    */
+   ctx->Driver.AlphaFunc( ctx, 
+			  ctx->Color.AlphaFunc,
+			  ctx->Color.AlphaRef);
+
+/*    ctx->Driver.BlendColor( ctx, */
+/* 			   ctx->Color.BlendColor ); */
+
+   ctx->Driver.BlendEquationSeparate( ctx, 
+				      ctx->Color.BlendEquationRGB,
+				      ctx->Color.BlendEquationA);
+
+   ctx->Driver.BlendFuncSeparate( ctx,
+				  ctx->Color.BlendSrcRGB,
+				  ctx->Color.BlendDstRGB,
+				  ctx->Color.BlendSrcA,
+				  ctx->Color.BlendDstA);
+
+   ctx->Driver.ColorMask( ctx, 
+			  ctx->Color.ColorMask[RCOMP],
+			  ctx->Color.ColorMask[GCOMP],
+			  ctx->Color.ColorMask[BCOMP],
+			  ctx->Color.ColorMask[ACOMP]);
+
+   ctx->Driver.CullFace( ctx, ctx->Polygon.CullFaceMode );
+   ctx->Driver.DepthFunc( ctx, ctx->Depth.Func );
+   ctx->Driver.DepthMask( ctx, ctx->Depth.Mask );
+
+   ctx->Driver.Enable( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
+   ctx->Driver.Enable( ctx, GL_BLEND, ctx->Color.BlendEnabled );
+   ctx->Driver.Enable( ctx, GL_COLOR_LOGIC_OP, ctx->Color.ColorLogicOpEnabled );
+   ctx->Driver.Enable( ctx, GL_COLOR_SUM, ctx->Fog.ColorSumEnabled );
+   ctx->Driver.Enable( ctx, GL_CULL_FACE, ctx->Polygon.CullFlag );
+   ctx->Driver.Enable( ctx, GL_DEPTH_TEST, ctx->Depth.Test );
+   ctx->Driver.Enable( ctx, GL_DITHER, ctx->Color.DitherFlag );
+   ctx->Driver.Enable( ctx, GL_FOG, ctx->Fog.Enabled );
+   ctx->Driver.Enable( ctx, GL_LIGHTING, ctx->Light.Enabled );
+   ctx->Driver.Enable( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
+   ctx->Driver.Enable( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
+   ctx->Driver.Enable( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
+   ctx->Driver.Enable( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
+   ctx->Driver.Enable( ctx, GL_TEXTURE_1D, GL_FALSE );
+   ctx->Driver.Enable( ctx, GL_TEXTURE_2D, GL_FALSE );
+   ctx->Driver.Enable( ctx, GL_TEXTURE_RECTANGLE_NV, GL_FALSE );
+   ctx->Driver.Enable( ctx, GL_TEXTURE_3D, GL_FALSE );
+   ctx->Driver.Enable( ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE );
+
+   ctx->Driver.Fogfv( ctx, GL_FOG_COLOR, ctx->Fog.Color );
+   ctx->Driver.Fogfv( ctx, GL_FOG_MODE, 0 );
+   ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
+   ctx->Driver.Fogfv( ctx, GL_FOG_START, &ctx->Fog.Start );
+   ctx->Driver.Fogfv( ctx, GL_FOG_END, &ctx->Fog.End );
+
+   ctx->Driver.FrontFace( ctx, ctx->Polygon.FrontFace );
+
+   {
+      GLfloat f = (GLfloat)ctx->Light.Model.ColorControl;
+      ctx->Driver.LightModelfv( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
+   }
+
+   ctx->Driver.LineWidth( ctx, ctx->Line.Width );
+   ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
+   ctx->Driver.PointSize( ctx, ctx->Point.Size );
+   ctx->Driver.PolygonStipple( ctx, (const GLubyte *)ctx->PolygonStipple );
+   ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			ctx->Scissor.Width, ctx->Scissor.Height );
+   ctx->Driver.ShadeModel( ctx, ctx->Light.ShadeModel );
+/*    ctx->Driver.StencilFunc( ctx,  */
+/* 			    ctx->Stencil.Function[0], */
+/* 			    ctx->Stencil.Ref[0], */
+/* 			    ctx->Stencil.ValueMask[0] ); */
+/*    ctx->Driver.StencilMask( ctx, ctx->Stencil.WriteMask[0] ); */
+/*    ctx->Driver.StencilOp( ctx,  */
+/* 			  ctx->Stencil.FailFunc[0], */
+/* 			  ctx->Stencil.ZFailFunc[0], */
+/* 			  ctx->Stencil.ZPassFunc[0]); */
+
+
+   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 }
 
 /**
@@ -1366,8 +1409,7 @@ void viaInitStateFuncs(GLcontext *ctx)
     /* Pixel path fallbacks.
      */
     ctx->Driver.Accum = _swrast_Accum;
-    ctx->Driver.Bitmap = viaBitmap;
-    
+    ctx->Driver.Bitmap = _swrast_Bitmap;
     ctx->Driver.CopyPixels = _swrast_CopyPixels;
     ctx->Driver.DrawPixels = _swrast_DrawPixels;
     ctx->Driver.ReadPixels = _swrast_ReadPixels;
