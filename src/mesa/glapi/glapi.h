@@ -1,10 +1,10 @@
-/* $Id: glapi.h,v 1.12 2000/01/05 04:36:17 brianp Exp $ */
+/* $Id: glapi.h,v 1.13 2000/01/17 19:28:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,8 @@ struct _glapi_table;
 
 
 extern void *_glapi_CurrentContext;
+
+extern struct _glapi_table *_glapi_Dispatch;
 
 
 extern void
