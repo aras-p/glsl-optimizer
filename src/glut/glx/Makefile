@@ -105,7 +105,9 @@ clean:
 
 
 depend: $(SOURCES)
-	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES)
+	@ echo "running $(MKDEP)"
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES) \
+		> /dev/null 2>&1
 
 include depend
