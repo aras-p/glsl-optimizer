@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.12 2000/08/02 00:41:21 brianp Exp $ */
+/* $Id: glheader.h,v 1.13 2000/09/12 15:41:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,10 +132,10 @@
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
 #if 0
 #	define CALLBACK GLCALLBACK
-#endif
-typedef int (GLAPIENTRY *PROC)();
 typedef void *HGLRC;
 typedef void *HDC;
+#endif
+typedef int (GLAPIENTRY *PROC)();
 typedef unsigned long COLORREF;
 #endif
 
