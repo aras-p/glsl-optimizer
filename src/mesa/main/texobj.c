@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.35 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: texobj.c,v 1.36 2000/12/14 20:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,6 +177,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *t )
 {
    const GLint baseLevel = t->BaseLevel;
+   GLint maxLog2;
 
    t->Complete = GL_TRUE;  /* be optimistic */
 
@@ -187,24 +188,26 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       return;
    }
 
-   /* Compute number of mipmap levels */
+   /* Compute _MaxLevel */
    if (t->Dimensions == 1) {
-      t->_P = t->Image[baseLevel]->WidthLog2;
+      maxLog2 = t->Image[baseLevel]->WidthLog2;
    }
    else if (t->Dimensions == 2 || t->Dimensions == 6) {
-      t->_P = MAX2(t->Image[baseLevel]->WidthLog2,
-		   t->Image[baseLevel]->HeightLog2);
+      maxLog2 = MAX2(t->Image[baseLevel]->WidthLog2,
+                     t->Image[baseLevel]->HeightLog2);
    }
    else if (t->Dimensions == 3) {
       GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
                        t->Image[baseLevel]->HeightLog2);
-      max = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
-      t->_P = max;
+      maxLog2 = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
    }
 
-   /* Compute M (see the 1.2 spec) used during mipmapping */
-   t->_M = (GLfloat) (MIN2(t->MaxLevel, t->_P) - t->BaseLevel);
+   t->_MaxLevel = baseLevel + maxLog2;
+   t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
+   t->_MaxLevel = MIN2(t->_MaxLevel, ctx->Const.MaxTextureLevels - 1);
 
+   /* Compute _MaxLambda = q - b (see the 1.2 spec) used during mipmapping */
+   t->_MaxLambda = (GLfloat) (t->_MaxLevel - t->BaseLevel);
 
    if (t->Dimensions == 6) {
       /* make sure that all six cube map level 0 images are the same size */
@@ -237,8 +240,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
        */
       GLint i;
       GLint minLevel = baseLevel;
-      GLint maxLevel = MIN2(t->_P, ctx->Const.MaxTextureLevels-1);
-      maxLevel = MIN2(maxLevel, t->MaxLevel);
+      GLint maxLevel = t->_MaxLevel;
 
       if (minLevel > maxLevel) {
          t->Complete = GL_FALSE;

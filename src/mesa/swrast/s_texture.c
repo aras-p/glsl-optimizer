@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.3 2000/12/08 00:09:24 brianp Exp $ */
+/* $Id: s_texture.c,v 1.4 2000/12/14 20:25:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,8 +175,8 @@ static void palette_sample(const struct gl_texture_object *tObj,
 {								\
    if (lambda < 0.0F)						\
       lambda = 0.0F;						\
-   else if (lambda > tObj->_M)					\
-      lambda = tObj->_M;					\
+   else if (lambda > tObj->_MaxLambda)				\
+      lambda = tObj->_MaxLambda;				\
    level = (GLint) (tObj->BaseLevel + lambda);			\
 }
 
@@ -188,11 +188,11 @@ static void palette_sample(const struct gl_texture_object *tObj,
 {								\
    if (lambda <= 0.5F)						\
       lambda = 0.0F;						\
-   else if (lambda > tObj->_M + 0.4999F)			\
-      lambda = tObj->_M + 0.4999F;				\
+   else if (lambda > tObj->_MaxLambda + 0.4999F)		\
+      lambda = tObj->_MaxLambda + 0.4999F;			\
    level = (GLint) (tObj->BaseLevel + lambda + 0.5F);		\
-   if (level > tObj->_P)					\
-      level = tObj->_P;						\
+   if (level > tObj->_MaxLevel)					\
+      level = tObj->_MaxLevel;					\
 }
 
 
@@ -433,8 +433,8 @@ sample_1d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_1d_nearest( tObj, tObj->Image[tObj->_P], s, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_1d_nearest( tObj, tObj->Image[tObj->_MaxLevel], s, rgba );
    }
    else {
       GLchan t0[4], t1[4];
@@ -459,8 +459,8 @@ sample_1d_linear_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_1d_linear( tObj, tObj->Image[tObj->_P], s, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_1d_linear( tObj, tObj->Image[tObj->_MaxLevel], s, rgba );
    }
    else {
       GLchan t0[4], t1[4];
@@ -811,8 +811,8 @@ sample_2d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_2d_nearest( tObj, tObj->Image[tObj->_P], s, t, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_2d_nearest( tObj, tObj->Image[tObj->_MaxLevel], s, t, rgba );
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
@@ -837,8 +837,8 @@ sample_2d_linear_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_2d_linear( tObj, tObj->Image[tObj->_P], s, t, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_2d_linear( tObj, tObj->Image[tObj->_MaxLevel], s, t, rgba );
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
@@ -1314,8 +1314,8 @@ sample_3d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_3d_nearest( tObj, tObj->Image[tObj->_P], s, t, r, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_3d_nearest( tObj, tObj->Image[tObj->_MaxLevel], s, t, r, rgba );
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
@@ -1339,8 +1339,8 @@ sample_3d_linear_mipmap_linear( const struct gl_texture_object *tObj,
 
    COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda, level);
 
-   if (level >= tObj->_P) {
-      sample_3d_linear( tObj, tObj->Image[tObj->_P], s, t, r, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_3d_linear( tObj, tObj->Image[tObj->_MaxLevel], s, t, r, rgba );
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
@@ -1602,8 +1602,8 @@ sample_cube_nearest_mipmap_linear( const struct gl_texture_object *tObj,
 
    images = choose_cube_face(tObj, s, t, u, &newS, &newT);
 
-   if (level >= tObj->_P) {
-      sample_2d_nearest( tObj, images[tObj->_P], newS, newT, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_2d_nearest( tObj, images[tObj->_MaxLevel], newS, newT, rgba );
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
@@ -1631,8 +1631,8 @@ sample_cube_linear_mipmap_linear( const struct gl_texture_object *tObj,
 
    images = choose_cube_face(tObj, s, t, u, &newS, &newT);
 
-   if (level >= tObj->_P) {
-      sample_2d_linear( tObj, images[tObj->_P], newS, newT, rgba );
+   if (level >= tObj->_MaxLevel) {
+      sample_2d_linear( tObj, images[tObj->_MaxLevel], newS, newT, rgba );
    }
    else {
       GLchan t0[4], t1[4];

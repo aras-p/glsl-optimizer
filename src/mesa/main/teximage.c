@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.67 2000/12/09 21:30:43 brianp Exp $ */
+/* $Id: teximage.c,v 1.68 2000/12/14 20:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2134,7 +2134,7 @@ _mesa_get_teximages_from_driver(GLcontext *ctx,
           * all but this is easier.  We're on a (slow) software path
           * anyway.
           */
-         for (level = 0; level <= texObj->_P; level++) {
+         for (level = texObj->BaseLevel; level <= texObj->_MaxLevel; level++) {
             struct gl_texture_image *texImg = texObj->Image[level];
             if (texImg && !texImg->Data) {
                _mesa_get_teximage_from_driver(ctx, target, level, texObj);

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.5 2000/12/08 00:20:15 brianp Exp $ */
+/* $Id: mtypes.h,v 1.6 2000/12/14 20:25:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -786,10 +786,10 @@ struct gl_texture_object {
    GLenum MagFilter;		/* magnification filter */
    GLfloat MinLod;		/* OpenGL 1.2 */
    GLfloat MaxLod;		/* OpenGL 1.2 */
-   GLint BaseLevel;		/* OpenGL 1.2 */
-   GLint MaxLevel;		/* OpenGL 1.2 */
-   GLint _P;			/* Highest mipmap level */
-   GLfloat _M;			/* = MIN(MaxLevel, P) - BaseLevel */
+   GLint BaseLevel;		/* user-specified, OpenGL 1.2 */
+   GLint MaxLevel;		/* user-specified, OpenGL 1.2 */
+   GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
+   GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
 
    /* Texture cube faces */
