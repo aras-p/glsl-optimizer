@@ -156,7 +156,8 @@ SHADER_SOURCES = \
 	shader/slang/MachineIndependent/preprocessor/memory.c \
 	shader/slang/MachineIndependent/preprocessor/scanner.c \
 	shader/slang/MachineIndependent/preprocessor/symbols.c \
-	shader/slang/MachineIndependent/preprocessor/tokens.c 
+	shader/slang/MachineIndependent/preprocessor/tokens.c \
+	shader/slang/slang_mesa.cpp 
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -254,7 +255,7 @@ CORE_SOURCES = \
 
 ### Object files
 
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o) $(SHADER_SOURCES:.cpp=.o)
 
 OSMESA_DRIVER_OBJECTS = $(OSMESA_DRIVER_SOURCES:.c=.o)
 
