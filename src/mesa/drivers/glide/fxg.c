@@ -30,6 +30,8 @@
  *  Web   : http://www.geocities.com/dborca
  */
 
+#ifdef FX
+
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -2133,3 +2135,5 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
 
 #undef GET_EXT_ADDR
 }
+
+#endif /* FX */
