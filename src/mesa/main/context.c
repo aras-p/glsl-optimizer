@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.196 2003/04/01 18:57:36 brianp Exp $ */
+/* $Id: context.c,v 1.197 2003/04/01 22:20:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1012,21 +1012,20 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.DitherFlag = GL_TRUE;
 
    /* Current group */
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], 0.0, 0.0, 1.0, 0.0 );
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      ASSIGN_4V( ctx->Current.Attrib[i], 0.0, 0.0, 0.0, 1.0 );
+   }
+   /* special cases: */
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 1.0, 0.0, 0.0, 1.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], 0.0, 0.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], 1.0, 1.0, 1.0, 1.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_FOG], 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_SIX], 0.0, 0.0, 0.0, 1.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_SEVEN], 0.0, 0.0, 0.0, 1.0 );
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-      ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.Index = 1;
    ctx->Current.EdgeFlag = GL_TRUE;
    
    ASSIGN_4V( ctx->Current.RasterPos, 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterDistance = 0.0;
    ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
+   ASSIGN_4V( ctx->Current.RasterSecondaryColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Current.RasterIndex = 1;
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       ASSIGN_4V( ctx->Current.RasterTexCoords[i], 0.0, 0.0, 0.0, 1.0 );
