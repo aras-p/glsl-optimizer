@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include "macros.h"
 
-#define DRIVER_DATE	"20040923"
+#define DRIVER_DATE	"20041215"
 
 #include "utils.h"
 
@@ -252,7 +252,7 @@ void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 {
     GLcontext *ctx;
     viaContextPtr vmesa = current_mesa;
-    
+
     ctx = vmesa->glCtx;
     ctx->DrawBuffer->Width = drawbuffer->Width;
     ctx->DrawBuffer->Height = drawbuffer->Height;
@@ -326,7 +326,7 @@ AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
 #endif
-    if (vmesa->dma[0].map && vmesa->dma[1].map)
+    if (vmesa->dma)
         via_free_dma_buffer(vmesa);
     
     if (!via_alloc_dma_buffer(vmesa)) {
@@ -350,22 +350,15 @@ InitVertexBuffer(viaContextPtr vmesa)
 {
     GLuint *addr;
 
-    addr = (GLuint *)vmesa->dma[0].map;
-    *addr = 0xF210F110;
-    *addr = (HC_ParaType_NotTex << 16);
-    *addr = 0xcccccccc;
-    *addr = 0xdddddddd;
-    
-    addr = (GLuint *)vmesa->dma[1].map;
+    addr = (GLuint *)vmesa->dma;
     *addr = 0xF210F110;
     *addr = (HC_ParaType_NotTex << 16);
     *addr = 0xcccccccc;
     *addr = 0xdddddddd;
 
-    vmesa->dmaIndex = 0;
     vmesa->dmaLow = DMA_OFFSET;
-    vmesa->dmaHigh = vmesa->dma[0].size;
-    vmesa->dmaAddr = (unsigned char *)vmesa->dma[0].map;
+    vmesa->dmaHigh = VIA_DMA_BUFSIZ;
+    vmesa->dmaAddr = (unsigned char *)vmesa->dma;
     vmesa->dmaLastPrim = vmesa->dmaLow;
 }
 
@@ -381,7 +374,7 @@ FreeBuffer(viaContextPtr vmesa)
     if (vmesa->depth.map)
         via_free_depth_buffer(vmesa);
 
-    if (vmesa->dma[0].map && vmesa->dma[1].map)
+    if (vmesa->dma)
         via_free_dma_buffer(vmesa);
 }
 
@@ -534,9 +527,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->CurrentTexObj[0] = 0;
     vmesa->CurrentTexObj[1] = 0;
     
-    vmesa->dma[0].size = DMA_SIZE * 1024 * 1024;
-    vmesa->dma[1].size = DMA_SIZE * 1024 * 1024;
-
     _math_matrix_ctr(&vmesa->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
@@ -640,34 +630,14 @@ void
 viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
     viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
-    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
-    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-    viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
 #endif
     assert(vmesa); /* should never be null */
     viaFlushPrimsLocked(vmesa);
     WAIT_IDLE
-    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
-    /* Enable VQ */
-    if (viaScreen->VQEnable) {
-	*vmesa->regTranSet = 0x00fe0000;
-	*vmesa->regTranSet = 0x00fe0000;
-	*vmesa->regTranSpace = 0x00000006;
-	*vmesa->regTranSpace = 0x40008c0f;
-	*vmesa->regTranSpace = 0x44000000;
-	*vmesa->regTranSpace = 0x45080c04;
-	*vmesa->regTranSpace = 0x46800408;
-    }
+
     if (vmesa) {
-	/*=* John Sheng [2003.5.31] flip *=*/
-	if(vmesa->doPageFlip) {
-	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x43c)) = 0x00fe0000;
-	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x440)) = 0x00001004;
-	    WAIT_IDLE
-	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x214)) = 0;
-	}
 	/*=* John Sheng [2003.5.31]  agp tex *=*/
 	if(VIA_DEBUG) fprintf(stderr, "agpFullCount = %d\n", agpFullCount);    
 	

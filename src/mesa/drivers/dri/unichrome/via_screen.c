@@ -95,8 +95,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 #ifdef USE_XINERAMA
     viaScreen->drixinerama = gDRIPriv->drixinerama;
 #endif
-    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
-    viaScreen->VQEnable = gDRIPriv->VQEnable;
 #ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "deviceID = %08x\n", viaScreen->deviceID);
@@ -390,7 +388,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 2, 0, 0 };
+   static const __DRIversion drm_expected = { 2, 3, 0 };
 
    if ( ! driCheckDriDdxDrmVersions2( "Unichrome",
 				      dri_version, & dri_expected,

@@ -253,7 +253,7 @@ static void viaDeleteTexture(GLcontext *ctx, struct gl_texture_object *texObj)
         if (vmesa) {
 	    /*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
 	    /*VIA_FIREVERTICES(vmesa);*/
-	    if (vmesa->dma[0].map) { /* imply vmesa is not under destroying */
+	    if (vmesa->dma) { /* imply vmesa is not under destroying */
         	VIA_FIREVERTICES(vmesa);
 	    }
     	    viaDestroyTexObj(vmesa, t);

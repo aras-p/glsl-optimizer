@@ -179,7 +179,7 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     tnl->Driver.Render.Finish(ctx);
     
     /*=* DBG - viewperf7.0 : fix command buffer overflow *=*/
-    if (vmesa->dmaLow > (vmesa->dma[0].size / 2))
+    if (vmesa->dmaLow > (VIA_DMA_BUFSIZ / 2))
 	viaFlushPrims(vmesa);
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
@@ -468,7 +468,7 @@ static GLboolean via_run_render(GLcontext *ctx,
     }*/
     
     /*=* DBG viewperf7.0 : fix command buffer overflow *=*/
-    if (vmesa->dmaLow > (vmesa->dma[0].size / 2))
+    if (vmesa->dmaLow > (VIA_DMA_BUFSIZ / 2))
 	viaFlushPrims(vmesa);
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    

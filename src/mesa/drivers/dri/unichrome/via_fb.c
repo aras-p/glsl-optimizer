@@ -27,6 +27,7 @@
 #include "via_context.h"
 #include "via_ioctl.h"
 #include "via_fb.h"
+#include "xf86drm.h"
 #include <sys/ioctl.h>
 
 GLboolean
@@ -170,101 +171,38 @@ via_free_depth_buffer(viaContextPtr vmesa)
 GLboolean
 via_alloc_dma_buffer(viaContextPtr vmesa)
 {
-    drm_via_mem_t fb;
-    drmVIADMABuf dma;
+  drmVIADMAInit init;
+
 #ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
 #endif
-    if (vmesa->viaScreen->agpLinearStart) {
-	/* Allocate DMA in AGP memory*/
-	fb.context = vmesa->hHWContext;
-	fb.size = vmesa->dma[0].size;
-	fb.type = AGP;
-	if (!ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb)) {
-	    vmesa->dma[0].offset = fb.offset;
-	    vmesa->dma[0].index = fb.index;
-	    vmesa->dma[0].map = (unsigned char *)((GLuint)vmesa->viaScreen->agpLinearStart + fb.offset);
-	    if (!ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb)) {
-		vmesa->dma[1].offset = fb.offset;
-		vmesa->dma[1].index = fb.index;
-		vmesa->dma[1].map = (unsigned char *)((GLuint)vmesa->viaScreen->agpLinearStart + fb.offset); 	
-		vmesa->useAgp = GL_TRUE;
-		
-		return GL_TRUE;
-	    } 
-	    else {
-		/* release dma[0]*/
-		return GL_FALSE;		
-	    }
-	}
-	return GL_FALSE;	
-    } 
-    else {
-	/* Allocate DMA in System memory */
-	dma.size = vmesa->dma[0].size;
+    vmesa->dma = (GLuint *) malloc(VIA_DMA_BUFSIZ);
+    
+    /*
+     * Check whether AGP DMA has been initialized.
+     */
 
-	if (drmVIAAllocateDMA(vmesa->driFd,&dma) < 0) {
-	    return GL_FALSE;
-	}
-
-	vmesa->dma[0].offset = 0;
-	vmesa->dma[0].map = (unsigned char *)dma.address;
-	vmesa->dma[0].index = dma.index;
-
-	drmVIAAllocateDMA(vmesa->driFd, &dma);
-
-	vmesa->dma[1].offset = 0;
-	vmesa->dma[1].map = (unsigned char *)dma.address;
-	vmesa->dma[1].index = dma.index;
-	vmesa->useAgp = GL_FALSE;
-	
-	return GL_TRUE;
-    }
+    init.func = VIA_DMA_INITIALIZED;
+    vmesa->useAgp = 
+      ( 0 == drmCommandWrite(vmesa->driFd, DRM_VIA_DMA_INIT, 
+			     &init, sizeof(init)));
+    if (vmesa->useAgp) 
+        printf("unichrome_dri.so: Using AGP.\n");
+    else
+        printf("unichrome_dri.so: Using PCI.\n");
+      
 #ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 #endif
+    return ((vmesa->dma) ? GL_TRUE : GL_FALSE);
 }
 
 void
 via_free_dma_buffer(viaContextPtr vmesa)
 {
-    drmVIADMABuf dma;
-    drm_via_mem_t fb;
-    
-    
     if (!vmesa) return;
-    
-    /* Release AGP command buffer */
-    if (vmesa->useAgp) {
-	fb.context = vmesa->hHWContext;
-	fb.index = vmesa->dma[0].index;
-	fb.type = AGP;
-	ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &fb);
-	vmesa->dma[0].map = NULL;    
-	fb.index = vmesa->dma[1].index;
-	ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &fb);
-	vmesa->dma[1].map = NULL;    
-    }
-    /* Release System command buffer */
-    else {
-	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
-	/*dma.address = (unsigned long *)vmesa->dma[0].offset;*/
-	dma.address = (unsigned long *)vmesa->dma[0].map;
-	/*=* John Sheng [2003.6.16] fix pci path *=*/
-	dma.size = (unsigned int)vmesa->dma[0].size;
-	drmVIAReleaseDMA(vmesa->driFd, &dma);
-	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
-	/*dma.address = (unsigned long *)vmesa->dma[1].offset;*/
-	dma.address = (unsigned long *)vmesa->dma[1].map;
-	/*=* John Sheng [2003.6.16] fix pci path *=*/
-	dma.size = (unsigned int)vmesa->dma[1].size;
-	drmVIAReleaseDMA(vmesa->driFd, &dma);
-	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
-	/*vmesa->dma[0].offset = 0;
-	vmesa->dma[1].offset = 0;*/
-	vmesa->dma[0].map = 0;
-	vmesa->dma[1].map = 0;
-    }
+    free(vmesa->dma);
+    vmesa->dma = 0;
 } 
 
 GLboolean

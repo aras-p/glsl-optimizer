@@ -70,6 +70,8 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_UPLOAD_ENABLE		0x0800
 #define VIA_UPLOAD_ALL 		  	0x1000
   		
+#define VIA_DMA_BUFSIZ                  500000
+
 /* Use the templated vertex formats:
  */
 #define TAG(x) via##x
@@ -99,13 +101,6 @@ typedef struct {
     char *map;
 } viaBuffer, *viaBufferPtr;
 
-typedef struct {
-    drm_handle_t handle;
-    drmSize size;
-    GLuint offset;
-    GLuint index;
-    unsigned char* map;
-} viaDmaBuffer, *viaDmaBufferPtr;
 
 struct via_context_t {
     GLint refcount;   
@@ -121,7 +116,7 @@ struct via_context_t {
     GLboolean hasAccum;
     GLuint    depthBits;
     GLuint    stencilBits;
-    viaDmaBuffer dma[2];
+    GLuint    *dma;
     viaRegion tex;
     
     GLuint isAGP;
@@ -157,7 +152,6 @@ struct via_context_t {
     /* drmBufPtr dma_buffer;
     */
     unsigned char* dmaAddr;
-    GLuint dmaIndex;
     GLuint dmaLow;
     GLuint dmaHigh;
     GLuint dmaLastPrim;
@@ -297,8 +291,6 @@ struct via_context_t {
     volatile GLuint* regTranSpace;
     GLuint* agpBase;
     GLuint drawType;
-    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
-    int VQEnable;
 };
 /*#define DMA_OFFSET 16*/
 #define DMA_OFFSET 32

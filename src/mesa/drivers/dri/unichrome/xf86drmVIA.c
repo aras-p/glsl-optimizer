@@ -131,3 +131,13 @@ int drmVIAReleaseDMA(int fd, drmVIADMABuf *buf)
     
     return 0;
 }
+
+int drmVIACmdBuffer(int fd, drmVIACommandBuffer *buf)
+{
+    if (ioctl(fd, 0x48, buf ) < 0) {
+        return -errno;
+    }
+    else
+        return 0;
+}
+  
