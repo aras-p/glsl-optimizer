@@ -85,8 +85,8 @@ Using the library
 =================
 
 Configuration options:
-   The file src/config.h has many parameters which you can adjust such
-   as maximum number of lights, clipping planes, maximum texture size,
+   The file src/mesa/main/config.h has many parameters which you can adjust
+   such as maximum number of lights, clipping planes, maximum texture size,
    etc.  In particular, you may want to change DEPTH_BITS from 16 to 32
    if a 16-bit depth buffer isn't precise enough for your application.
 
@@ -311,4 +311,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.10 2003/03/08 17:38:57 brianp Exp $
+$Id: README.X11,v 3.11 2003/12/17 15:14:31 brianp Exp $
