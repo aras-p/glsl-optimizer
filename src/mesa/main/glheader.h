@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.8 2000/05/22 16:30:47 brianp Exp $ */
+/* $Id: glheader.h,v 1.9 2000/05/22 19:41:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,14 +64,9 @@
 #endif
 
 /* Make sure we include glext.h */
-#if 0
-#define GL_GLEXT_LEGACY
-#include "GL/gl.h"
-#include "glext_proto.h"
-#else
 #include "GL/gl.h"
 #include "GL/glext.h"
-#endif
+
 
 
 /*
@@ -90,7 +85,7 @@
 #	define __WIN32__
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
+#if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN__))
 #  pragma warning( disable : 4068 ) /* unknown pragma */
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
@@ -116,7 +111,7 @@
 #  define GLAPIENTRYP __stdcall *
 #  define GLCALLBACK __stdcall
 #  define GLCALLBACKP __stdcall *
-#  if defined(__CYGWIN32__)
+#  if defined(__CYGWIN__)
 #    define GLCALLBACKPCAST *
 #  else
 #    define GLCALLBACKPCAST __stdcall *
@@ -133,7 +128,7 @@
 #  define GLCALLBACKPCAST *
 #  define GLWINAPI
 #  define GLWINAPIV
-#endif /* WIN32 / CYGWIN32 bracket */
+#endif /* WIN32 / CYGWIN bracket */
 
 /* compatability guard so we don't need to change client code */
 
