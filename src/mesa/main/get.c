@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.45 2000/12/08 00:20:15 brianp Exp $ */
+/* $Id: get.c,v 1.46 2000/12/09 19:55:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -744,6 +744,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_BOOL(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
          *params = ctx->Visual.RGBAflag;
 	 break;
@@ -1953,6 +1956,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_DOUBLE(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLdouble) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLdouble) ctx->Visual.RGBAflag;
 	 break;
@@ -3164,6 +3170,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_FLOAT(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLfloat) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLfloat) ctx->Visual.RGBAflag;
 	 break;
@@ -4347,6 +4356,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_RENDER_MODE:
 	 *params = (GLint) ctx->RenderMode;
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLint) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLint) ctx->Visual.RGBAflag;
 	 break;
