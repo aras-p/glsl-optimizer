@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.7 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_feedback.c,v 1.8 2001/06/12 22:06:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,10 +49,10 @@
 static void feedback_vertex( GLcontext *ctx,
                              const SWvertex *v, const SWvertex *pv )
 {
+   const GLuint texUnit = 0;  /* See section 5.3 of 1.2.1 spec */
    GLfloat win[4];
    GLfloat color[4];
    GLfloat tc[4];
-   GLuint texUnit = ctx->Texture.CurrentTransformUnit;
    GLuint index;
 
    win[0] = v->win[0];
