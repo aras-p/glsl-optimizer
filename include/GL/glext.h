@@ -1250,6 +1250,14 @@ GLAPI void APIENTRY glGetCombinerInputParameterfvNV(GLenum stage, GLenum portion
 
 GLAPI void APIENTRY glGetCombinerInputParameterivNV(GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint * params);
 
+#ifdef VMS
+/*VMS only allows externals of maximal 31 characters! */
+# define glGetCombinerOutputParameterfvNV glGetCombinerOutputParameterfvN
+#define glGetCombinerOutputParameterivNV glGetCombinerOutputParameterivN
+#define glGetFinalCombinerInputParameterfvNV glGetFnlCmbinerInpParameterfvNV
+#define glGetFinalCombinerInputParameterivNV glGetFnlCmbinerInpParameterivNV
+#endif
+
 GLAPI void APIENTRY glGetCombinerOutputParameterfvNV(GLenum stage, GLenum portion, GLenum pname, GLfloat * params);
 
 GLAPI void APIENTRY glGetCombinerOutputParameterivNV(GLenum stage, GLenum portion, GLenum pname, GLint * params);
@@ -1257,7 +1265,6 @@ GLAPI void APIENTRY glGetCombinerOutputParameterivNV(GLenum stage, GLenum portio
 GLAPI void APIENTRY glGetFinalCombinerInputParameterfvNV(GLenum variable, GLenum pname, GLfloat * params);
 
 GLAPI void APIENTRY glGetFinalCombinerInputParameterivNV(GLenum variable, GLenum pname, GLint * params);
-
 #endif /* GL_NV_register_combiners */
 
 
