@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.27 2001/11/26 12:56:07 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.28 2001/12/03 17:47:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -766,7 +766,10 @@ _tnl_get_purged_copy_verts( GLcontext *ctx, struct immediate *IM )
       GLuint ovf = 0, i;
 
       tnl->ExecCopyCount = 0;
-      tnl->ExecParity = IM->PrimitiveLength[last] & 1;
+      if (IM->LastPrimitive != IM->CopyStart)
+	 tnl->ExecParity = 0;
+	 
+      tnl->ExecParity ^= IM->PrimitiveLength[IM->LastPrimitive] & 1;
 
       if (pincr != 1 && (IM->Count - last - pintro))
 	 ovf = (IM->Count - last - pintro) % pincr;
