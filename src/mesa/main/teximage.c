@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.69 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: teximage.c,v 1.70 2001/01/23 23:35:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1252,7 +1252,8 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   destTex = texUnit->Current2D->Image[level];
+   destTex = _mesa_select_tex_image(ctx, texUnit, target, level);
+
    if (!destTex) {
       gl_error(ctx, GL_INVALID_OPERATION, "glTexSubImage2D");
       return GL_TRUE;
