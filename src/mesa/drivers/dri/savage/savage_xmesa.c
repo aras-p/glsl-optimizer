@@ -413,6 +413,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->new_state = ~0;
    imesa->RenderIndex = ~0;
    imesa->dirty = ~0;
+   imesa->lostContext = GL_TRUE;
    imesa->TextureMode = ctx->Texture.Unit[0].EnvMode;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;
@@ -714,7 +715,7 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
 		       SAVAGE_UPLOAD_CLIPRECTS |
 		       SAVAGE_UPLOAD_TEX0 |
 		       SAVAGE_UPLOAD_TEX1);
-      imesa->Registers.changed.uiRegistersChanged = __HW_ALL_CHANGED;
+      imesa->lostContext = GL_TRUE;
       sarea->ctxOwner = me;
    }
 

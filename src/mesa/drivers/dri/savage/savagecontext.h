@@ -134,7 +134,7 @@ struct savage_context_t {
     /* Hardware state
      */
 
-    REGISTERS Registers;
+    savageRegisters regs, oldRegs, globalRegMask;
 
     /* Manage our own state */
     GLuint new_state; 
@@ -151,6 +151,7 @@ struct savage_context_t {
     GLuint aperturePitch;
     /* Manage hardware state */
     GLuint dirty;
+    GLboolean lostContext;
     memHeap_t *texHeap[SAVAGE_NR_TEX_HEAPS];
     GLuint bTexEn1;
     /* One of the few bits of hardware state that can't be calculated
@@ -227,6 +228,7 @@ struct savage_context_t {
     GLuint any_contend;		/* throttle me harder */
 
     GLuint scissor;
+    GLboolean scissorChanged;
     drm_clip_rect_t draw_rect;
     drm_clip_rect_t scissor_rect;
     XF86DRIClipRectRec tmp_boxes[2][SAVAGE_NR_SAREA_CLIPRECTS];

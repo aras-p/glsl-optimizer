@@ -1026,21 +1026,13 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    struct gl_texture_object	*tObj;
    savageTextureObjectPtr t;
    GLuint format;
-   Reg_TexCtrl TexCtrl;
-   Reg_TexBlendCtrl TexBlendCtrl;
-   Reg_TexDescr TexDescr; 
 
    /* disable */
-   
    if (ctx->Texture.Unit[0]._ReallyEnabled == 0) {
-      imesa->Registers.TexDescr.s4.tex0En = GL_FALSE;
-      imesa->Registers.TexBlendCtrl[0].ui = TBC_NoTexMap;
-      imesa->Registers.TexCtrl[0].ui = 0x20f040;
-      imesa->Registers.TexAddr[0].ui = 0;
-      imesa->Registers.changed.ni.fTex0BlendCtrlChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTex0AddrChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTexDescrChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTex0CtrlChanged = GL_TRUE;
+      imesa->regs.s4.texDescr.ni.tex0En = GL_FALSE;
+      imesa->regs.s4.texBlendCtrl[0].ui = TBC_NoTexMap;
+      imesa->regs.s4.texCtrl[0].ui = 0x20f040;
+      imesa->regs.s4.texAddr[0].ui = 0;
       return;
    }
 
@@ -1074,49 +1066,46 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    
    if (t->MemBlock)
       savageUpdateTexLRU( imesa, t );
-  
-   TexDescr.ui     = imesa->Registers.TexDescr.ui & ~0x01000000;
-   TexCtrl.ui      = imesa->Registers.TexCtrl[0].ui;
-   TexBlendCtrl.ui = imesa->Registers.TexBlendCtrl[0].ui;
 
    format = tObj->Image[0][tObj->BaseLevel]->Format;
 
    switch (ctx->Texture.Unit[0].EnvMode) {
    case GL_REPLACE:
-      TexCtrl.s4.clrArg1Invert = GL_FALSE;
+      imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
       switch(format)
       {
           case GL_LUMINANCE:
           case GL_RGB:
-               TexBlendCtrl.ui = TBC_Decal;
+               imesa->regs.s4.texBlendCtrl[0].ui = TBC_Decal;
                break;
 
           case GL_LUMINANCE_ALPHA:
           case GL_RGBA:
           case GL_INTENSITY:
-               TexBlendCtrl.ui = TBC_Copy;
+               imesa->regs.s4.texBlendCtrl[0].ui = TBC_Copy;
                break;
 
           case GL_ALPHA:
-               TexBlendCtrl.ui = TBC_CopyAlpha;
+               imesa->regs.s4.texBlendCtrl[0].ui = TBC_CopyAlpha;
                break;
       }
-       __HWEnvCombineSingleUnitScale(imesa, 0, 0, &TexBlendCtrl);
+       __HWEnvCombineSingleUnitScale(imesa, 0, 0,
+				     &imesa->regs.s4.texBlendCtrl[0]);
       break;
 
     case GL_DECAL:
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
         switch (format)
         {
             case GL_RGB:
             case GL_LUMINANCE:
-                TexBlendCtrl.ui = TBC_Decal;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_Decal;
                 break;
 
             case GL_RGBA:
             case GL_INTENSITY:
             case GL_LUMINANCE_ALPHA:
-                TexBlendCtrl.ui = TBC_DecalAlpha;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_DecalAlpha;
                 break;
 
             /*
@@ -1125,16 +1114,18 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
             */
 
             case GL_ALPHA:
-                TexBlendCtrl.ui = TBC_CopyAlpha;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_CopyAlpha;
                 break;
         }
-        __HWEnvCombineSingleUnitScale(imesa, 0, 0, &TexBlendCtrl);
+        __HWEnvCombineSingleUnitScale(imesa, 0, 0,
+				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
 
     case GL_MODULATE:
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
-        TexBlendCtrl.ui = TBC_ModulAlpha;
-        __HWEnvCombineSingleUnitScale(imesa, 0, 0, &TexBlendCtrl);
+        imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texBlendCtrl[0].ui = TBC_ModulAlpha;
+        __HWEnvCombineSingleUnitScale(imesa, 0, 0,
+				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
 
     case GL_BLEND:
@@ -1142,85 +1133,69 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
         switch (format)
         {
             case GL_ALPHA:
-                TexBlendCtrl.ui = TBC_ModulAlpha;
-                TexCtrl.s4.clrArg1Invert = GL_FALSE;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_ModulAlpha;
+                imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
                 break;
 
             case GL_LUMINANCE:
             case GL_RGB:
-                TexBlendCtrl.ui = TBC_Blend0;
-                TexDescr.s4.tex1En = GL_TRUE;
-                TexDescr.s4.texBLoopEn = GL_TRUE;
-                TexDescr.s4.tex1Width  = TexDescr.s4.tex0Width;
-                TexDescr.s4.tex1Height = TexDescr.s4.tex0Height;
-                TexDescr.s4.tex1Fmt = TexDescr.s4.tex0Fmt;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_Blend0;
+                imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.tex1Width  =
+		    imesa->regs.s4.texDescr.ni.tex0Width;
+                imesa->regs.s4.texDescr.ni.tex1Height =
+		    imesa->regs.s4.texDescr.ni.tex0Height;
+                imesa->regs.s4.texDescr.ni.tex1Fmt =
+		    imesa->regs.s4.texDescr.ni.tex0Fmt;
 
-                if (imesa->Registers.TexAddr[1].ui != imesa->Registers.TexAddr[0].ui)
-                {
-                    imesa->Registers.TexAddr[1].ui = imesa->Registers.TexAddr[0].ui;
-                    imesa->Registers.changed.ni.fTex1AddrChanged = GL_TRUE;
-                }
+		imesa->regs.s4.texAddr[1].ui = imesa->regs.s4.texAddr[0].ui;
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_Blend1;
 
-                if (imesa->Registers.TexBlendCtrl[1].ui != TBC_Blend1)
-                {
-                    imesa->Registers.TexBlendCtrl[1].ui = TBC_Blend1;
-                    imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-                }
-
-                TexCtrl.s4.clrArg1Invert = GL_TRUE;
+                imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_TRUE;
                 imesa->bTexEn1 = GL_TRUE;
                 break;
 
             case GL_LUMINANCE_ALPHA:
             case GL_RGBA:
-                TexBlendCtrl.ui = TBC_BlendAlpha0;
-                TexDescr.s4.tex1En = GL_TRUE;
-                TexDescr.s4.texBLoopEn = GL_TRUE;
-                TexDescr.s4.tex1Width  = TexDescr.s4.tex0Width;
-                TexDescr.s4.tex1Height = TexDescr.s4.tex0Height;
-                TexDescr.s4.tex1Fmt = TexDescr.s4.tex0Fmt;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_BlendAlpha0;
+                imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.tex1Width  =
+		    imesa->regs.s4.texDescr.ni.tex0Width;
+                imesa->regs.s4.texDescr.ni.tex1Height =
+		    imesa->regs.s4.texDescr.ni.tex0Height;
+                imesa->regs.s4.texDescr.ni.tex1Fmt =
+		    imesa->regs.s4.texDescr.ni.tex0Fmt;
 
-                if (imesa->Registers.TexAddr[1].ui != imesa->Registers.TexAddr[0].ui)
-                {
-                    imesa->Registers.TexAddr[1].ui = imesa->Registers.TexAddr[0].ui;
-                    imesa->Registers.changed.ni.fTex1AddrChanged = GL_TRUE;
-                }
+		imesa->regs.s4.texAddr[1].ui = imesa->regs.s4.texAddr[0].ui;
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_BlendAlpha1;
 
-                if (imesa->Registers.TexBlendCtrl[1].ui != TBC_BlendAlpha1)
-                {
-                    imesa->Registers.TexBlendCtrl[1].ui = TBC_BlendAlpha1;
-                    imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-                }
-
-                TexCtrl.s4.clrArg1Invert = GL_TRUE;
+                imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_TRUE;
                 imesa->bTexEn1 = GL_TRUE;
                 break;
 
             case GL_INTENSITY:
-                TexBlendCtrl.ui = TBC_BlendInt0;
-                TexDescr.s4.tex1En = GL_TRUE;
-                TexDescr.s4.texBLoopEn = GL_TRUE;
-                TexDescr.s4.tex1Width  = TexDescr.s4.tex0Width;
-                TexDescr.s4.tex1Height = TexDescr.s4.tex0Height;
-                TexDescr.s4.tex1Fmt = TexDescr.s4.tex0Fmt;
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_BlendInt0;
+                imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
+                imesa->regs.s4.texDescr.ni.tex1Width  =
+		    imesa->regs.s4.texDescr.ni.tex0Width;
+                imesa->regs.s4.texDescr.ni.tex1Height =
+		    imesa->regs.s4.texDescr.ni.tex0Height;
+                imesa->regs.s4.texDescr.ni.tex1Fmt =
+		    imesa->regs.s4.texDescr.ni.tex0Fmt;
 
-                if (imesa->Registers.TexAddr[1].ui != imesa->Registers.TexAddr[0].ui)
-                {
-                    imesa->Registers.TexAddr[1].ui = imesa->Registers.TexAddr[0].ui;
-                    imesa->Registers.changed.ni.fTex1AddrChanged = GL_TRUE;
-                }
+		imesa->regs.s4.texAddr[1].ui = imesa->regs.s4.texAddr[0].ui;
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_BlendInt1;
 
-                if (imesa->Registers.TexBlendCtrl[1].ui != TBC_BlendInt1)
-                {
-                    imesa->Registers.TexBlendCtrl[1].ui = TBC_BlendInt1;
-                    imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-                }
-                TexCtrl.s4.clrArg1Invert = GL_TRUE;
-                TexCtrl.s4.alphaArg1Invert = GL_TRUE;
+                imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_TRUE;
+                imesa->regs.s4.texCtrl[0].ni.alphaArg1Invert = GL_TRUE;
                 imesa->bTexEn1 = GL_TRUE;
                 break;
         }
-        __HWEnvCombineSingleUnitScale(imesa, 0, 0, &TexBlendCtrl);
+        __HWEnvCombineSingleUnitScale(imesa, 0, 0,
+				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
 
         /*
@@ -1228,14 +1203,16 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
         */
     case GL_ADD:
         printf("Add\n");
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
-        TexBlendCtrl.ui = TBC_AddAlpha;
-        __HWEnvCombineSingleUnitScale(imesa, 0, 0, &TexBlendCtrl);
+        imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texBlendCtrl[0].ui = TBC_AddAlpha;
+        __HWEnvCombineSingleUnitScale(imesa, 0, 0,
+				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
 
 #if GL_ARB_texture_env_combine
     case GL_COMBINE_ARB:
-        __HWParseTexEnvCombine(imesa, 0, &TexCtrl, &TexBlendCtrl);
+        __HWParseTexEnvCombine(imesa, 0, &imesa->regs.s4.texCtrl[0],
+			       &imesa->regs.s4.texBlendCtrl[0]);
         break;
 #endif
 
@@ -1245,39 +1222,40 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
       break;			
    }
 
-    TexCtrl.s4.uMode = !(t->texParams.sWrapMode & 0x01);
-    TexCtrl.s4.vMode = !(t->texParams.tWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[0].ni.uMode = !(t->texParams.sWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[0].ni.vMode = !(t->texParams.tWrapMode & 0x01);
 
     switch (t->texParams.minFilter)
     {
         case GL_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Point;
-            TexCtrl.s4.mipmapEnable = GL_FALSE;
+            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Point;
+            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_FALSE;
             break;
 
         case GL_LINEAR:
-            TexCtrl.s4.filterMode   = TFM_Bilin;
-            TexCtrl.s4.mipmapEnable = GL_FALSE;
+            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Bilin;
+            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_FALSE;
             break;
 
         case GL_NEAREST_MIPMAP_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Point;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Point;
+            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
             break;
 
         case GL_LINEAR_MIPMAP_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Bilin;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Bilin;
+            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
             break;
 
         case GL_NEAREST_MIPMAP_LINEAR:
         case GL_LINEAR_MIPMAP_LINEAR:
-            TexCtrl.s4.filterMode   = TFM_Trilin;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[0].ni.filterMode   = TFM_Trilin;
+            imesa->regs.s4.texCtrl[0].ni.mipmapEnable = GL_TRUE;
             break;
     }
 
-    if((ctx->Texture.Unit[0].LodBias !=0.0F) && (TexCtrl.s4.dBias != 0))
+    if((ctx->Texture.Unit[0].LodBias !=0.0F) &&
+       (imesa->regs.s4.texCtrl[0].ni.dBias != 0))
     {
 	union {
 	    GLfloat f;
@@ -1307,47 +1285,23 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
         }
         
         ul &= 0x1FF;
-        TexCtrl.s4.dBias = ul;
+        imesa->regs.s4.texCtrl[0].ni.dBias = ul;
     }
 
-    TexDescr.s4.tex0En = GL_TRUE;
-    TexDescr.s4.tex0Width  = t->image[0].image->WidthLog2;
-    TexDescr.s4.tex0Height = t->image[0].image->HeightLog2;
-    TexDescr.s4.tex0Fmt = t->image[0].internalFormat;
-    TexCtrl.s4.dMax = t->max_level;
+    imesa->regs.s4.texDescr.ni.tex0En = GL_TRUE;
+    imesa->regs.s4.texDescr.ni.tex0Width  = t->image[0].image->WidthLog2;
+    imesa->regs.s4.texDescr.ni.tex0Height = t->image[0].image->HeightLog2;
+    imesa->regs.s4.texDescr.ni.tex0Fmt = t->image[0].internalFormat;
+    imesa->regs.s4.texCtrl[0].ni.dMax = t->max_level;
 
-    if (TexDescr.s4.tex1En)
-        TexDescr.s4.texBLoopEn = GL_TRUE;
+    if (imesa->regs.s4.texDescr.ni.tex1En)
+        imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    if (imesa->Registers.TexAddr[0].ui != (GLuint)t->texParams.hwPhysAddress)
-    {
-        imesa->Registers.TexAddr[0].ui = (GLuint) t->texParams.hwPhysAddress | 0x2;
-        
-        if(t->heap == SAVAGE_AGP_HEAP)
-            imesa->Registers.TexAddr[0].ui |= 0x1;
-            
-        imesa->Registers.changed.ni.fTex0AddrChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexCtrl[0].ui != TexCtrl.ui)
-    {
-        imesa->Registers.TexCtrl[0].ui = TexCtrl.ui;
-        imesa->Registers.changed.ni.fTex0CtrlChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexBlendCtrl[0].ui != TexBlendCtrl.ui)
-    {
-        imesa->Registers.TexBlendCtrl[0].ui = TexBlendCtrl.ui;
-        imesa->Registers.changed.ni.fTex0BlendCtrlChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexDescr.ui != TexDescr.ui)
-    {
-        imesa->Registers.TexDescr.ui = TexDescr.ui;
-        imesa->Registers.changed.ni.fTexDescrChanged = GL_TRUE;
-    }
-
-   return;
+    imesa->regs.s4.texAddr[0].ui = (GLuint) t->texParams.hwPhysAddress | 0x2;
+    if(t->heap == SAVAGE_AGP_HEAP)
+	imesa->regs.s4.texAddr[0].ui |= 0x1;
+    
+    return;
 }
 static void savageUpdateTex1State_s4( GLcontext *ctx )
 {
@@ -1355,10 +1309,6 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
    struct gl_texture_object	*tObj;
    savageTextureObjectPtr t;
    GLuint format;
-   Reg_TexCtrl           TexCtrl;
-   Reg_TexBlendCtrl      TexBlendCtrl;
-   Reg_TexDescr          TexDescr;
-
 
    /* disable */
    if(imesa->bTexEn1)
@@ -1368,15 +1318,11 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
    }
 
    if (ctx->Texture.Unit[1]._ReallyEnabled == 0) {
-      imesa->Registers.TexDescr.s4.tex1En = GL_FALSE;
-      imesa->Registers.TexBlendCtrl[1].ui = TBC_NoTexMap1;
-      imesa->Registers.TexCtrl[1].ui = 0x20f040;
-      imesa->Registers.TexAddr[1].ui = 0;
-      imesa->Registers.TexDescr.s4.texBLoopEn = GL_FALSE;
-      imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTexDescrChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-      imesa->Registers.changed.ni.fTex1AddrChanged = GL_TRUE;
+      imesa->regs.s4.texDescr.ni.tex1En = GL_FALSE;
+      imesa->regs.s4.texBlendCtrl[1].ui = TBC_NoTexMap1;
+      imesa->regs.s4.texCtrl[1].ui = 0x20f040;
+      imesa->regs.s4.texAddr[1].ui = 0;
+      imesa->regs.s4.texDescr.ni.texBLoopEn = GL_FALSE;
       return;
    }
 
@@ -1413,67 +1359,63 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
    if (t->MemBlock)
       savageUpdateTexLRU( imesa, t );
 
-   TexDescr.ui = imesa->Registers.TexDescr.ui;
-   TexCtrl.ui = imesa->Registers.TexCtrl[1].ui;
-   TexBlendCtrl.ui = imesa->Registers.TexBlendCtrl[1].ui;
-
    format = tObj->Image[0][tObj->BaseLevel]->Format;
 
    switch (ctx->Texture.Unit[1].EnvMode) {
    case GL_REPLACE:
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_FALSE;
         switch (format)
         {
             case GL_LUMINANCE:
             case GL_RGB:
-                TexBlendCtrl.ui = TBC_Decal;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_Decal;
                 break;
 
             case GL_LUMINANCE_ALPHA:
             case GL_INTENSITY:
             case GL_RGBA:
-                TexBlendCtrl.ui = TBC_Copy;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_Copy;
                 break;
 
             case GL_ALPHA:
-                TexBlendCtrl.ui = TBC_CopyAlpha1;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_CopyAlpha1;
                 break;
         }
-        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &TexBlendCtrl);
+        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
       break;
    case GL_MODULATE:
-       TexCtrl.s4.clrArg1Invert = GL_FALSE;
-       TexBlendCtrl.ui = TBC_ModulAlpha1;
-       __HWEnvCombineSingleUnitScale(imesa, 0, 1, &TexBlendCtrl);
+       imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_FALSE;
+       imesa->regs.s4.texBlendCtrl[1].ui = TBC_ModulAlpha1;
+       __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
        break;
 
 /*#if GL_EXT_texture_env_add*/
     case GL_ADD:
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
-        TexBlendCtrl.ui = TBC_AddAlpha1;
-        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &TexBlendCtrl);
+        imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texBlendCtrl[1].ui = TBC_AddAlpha1;
+        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
         break;
 /*#endif*/
 
 #if GL_ARB_texture_env_combine
     case GL_COMBINE_ARB:
-        __HWParseTexEnvCombine(imesa, 1, &TexCtrl, &TexBlendCtrl);
+        __HWParseTexEnvCombine(imesa, 1, &texCtrl, &imesa->regs.s4.texBlendCtrl);
         break;
 #endif
 
    case GL_DECAL:
-        TexCtrl.s4.clrArg1Invert = GL_FALSE;
+        imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_FALSE;
 
         switch (format)
         {
             case GL_LUMINANCE:
             case GL_RGB:
-                TexBlendCtrl.ui = TBC_Decal1;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_Decal1;
                 break;
             case GL_LUMINANCE_ALPHA:
             case GL_INTENSITY:
             case GL_RGBA:
-                TexBlendCtrl.ui = TBC_DecalAlpha1;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_DecalAlpha1;
                 break;
 
                 /*
@@ -1481,10 +1423,10 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
                 // are undefined with GL_DECAL
                 */
             case GL_ALPHA:
-                TexBlendCtrl.ui = TBC_CopyAlpha1;
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_CopyAlpha1;
                 break;
         }
-        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &TexBlendCtrl);
+        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
         break;
 
    case GL_BLEND:
@@ -1493,10 +1435,10 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
             /*
             // This is a hack for GLQuake, invert.
             */
-            TexCtrl.s4.clrArg1Invert = GL_TRUE;
-            TexBlendCtrl.ui = 0;
+            imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_TRUE;
+            imesa->regs.s4.texBlendCtrl[1].ui = 0;
         }
-        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &TexBlendCtrl);
+        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
       break;
 
    default:
@@ -1505,39 +1447,40 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
       break;			
    }
 
-    TexCtrl.s4.uMode = !(t->texParams.sWrapMode & 0x01);
-    TexCtrl.s4.vMode = !(t->texParams.tWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[1].ni.uMode = !(t->texParams.sWrapMode & 0x01);
+    imesa->regs.s4.texCtrl[1].ni.vMode = !(t->texParams.tWrapMode & 0x01);
 
     switch (t->texParams.minFilter)
     {
         case GL_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Point;
-            TexCtrl.s4.mipmapEnable = GL_FALSE;
+            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Point;
+            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_FALSE;
             break;
 
         case GL_LINEAR:
-            TexCtrl.s4.filterMode   = TFM_Bilin;
-            TexCtrl.s4.mipmapEnable = GL_FALSE;
+            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Bilin;
+            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_FALSE;
             break;
 
         case GL_NEAREST_MIPMAP_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Point;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Point;
+            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
             break;
 
         case GL_LINEAR_MIPMAP_NEAREST:
-            TexCtrl.s4.filterMode   = TFM_Bilin;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Bilin;
+            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
             break;
 
         case GL_NEAREST_MIPMAP_LINEAR:
         case GL_LINEAR_MIPMAP_LINEAR:
-            TexCtrl.s4.filterMode   = TFM_Trilin;
-            TexCtrl.s4.mipmapEnable = GL_TRUE;
+            imesa->regs.s4.texCtrl[1].ni.filterMode   = TFM_Trilin;
+            imesa->regs.s4.texCtrl[1].ni.mipmapEnable = GL_TRUE;
             break;
     }
     
-    if((ctx->Texture.Unit[1].LodBias !=0.0F)&&(TexCtrl.s4.dBias != 0))
+    if((ctx->Texture.Unit[1].LodBias !=0.0F)&&
+       (imesa->regs.s4.texCtrl[1].ni.dBias != 0))
     {
 	union {
 	    GLfloat f;
@@ -1567,45 +1510,19 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
         }
         
         ul &= 0x1FF;
-        TexCtrl.s4.dBias = ul;
+        imesa->regs.s4.texCtrl[1].ni.dBias = ul;
     }
 
-    TexDescr.s4.tex1En = GL_TRUE;
-    TexDescr.s4.tex1Width  = t->image[0].image->WidthLog2;
-    TexDescr.s4.tex1Height = t->image[0].image->HeightLog2;
-    TexDescr.s4.tex1Fmt = t->image[0].internalFormat;
-    TexCtrl.s4.dMax = t->max_level;
-    TexDescr.s4.texBLoopEn = GL_TRUE;
+    imesa->regs.s4.texDescr.ni.tex1En = GL_TRUE;
+    imesa->regs.s4.texDescr.ni.tex1Width  = t->image[0].image->WidthLog2;
+    imesa->regs.s4.texDescr.ni.tex1Height = t->image[0].image->HeightLog2;
+    imesa->regs.s4.texDescr.ni.tex1Fmt = t->image[0].internalFormat;
+    imesa->regs.s4.texCtrl[1].ni.dMax = t->max_level;
+    imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    if (imesa->Registers.TexAddr[1].ui != (GLuint)t->texParams.hwPhysAddress)
-    {
-        imesa->Registers.TexAddr[1].ui = (GLuint) t->texParams.hwPhysAddress| 2;
-        
-        if(t->heap == SAVAGE_AGP_HEAP)
-           imesa->Registers.TexAddr[1].ui |= 0x1;
-        
-        /*imesa->Registers.TexAddr[1].ui = (GLuint) t->texParams.hwPhysAddress| 3;*/
-        imesa->Registers.changed.ni.fTex1AddrChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexCtrl[1].ui != TexCtrl.ui)
-    {
-        imesa->Registers.TexCtrl[1].ui = TexCtrl.ui;
-        imesa->Registers.changed.ni.fTex1CtrlChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexBlendCtrl[1].ui != TexBlendCtrl.ui)
-    {
-        imesa->Registers.TexBlendCtrl[1].ui = TexBlendCtrl.ui;
-        imesa->Registers.changed.ni.fTex1BlendCtrlChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexDescr.ui != TexDescr.ui)
-    {
-        imesa->Registers.TexDescr.ui = TexDescr.ui;
-        imesa->Registers.changed.ni.fTexDescrChanged = GL_TRUE;
-    }
-
+    imesa->regs.s4.texAddr[1].ui = (GLuint) t->texParams.hwPhysAddress| 2;
+    if(t->heap == SAVAGE_AGP_HEAP)
+	imesa->regs.s4.texAddr[1].ui |= 0x1;
 }
 static void savageUpdateTexState_s3d( GLcontext *ctx )
 {
@@ -1613,19 +1530,14 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     struct gl_texture_object *tObj;
     savageTextureObjectPtr t;
     GLuint format;
-    Reg_TexCtrl TexCtrl;
-    Reg_DrawCtrl DrawCtrl;
-    Reg_TexDescr TexDescr; 
 
     /* disable */
     if (ctx->Texture.Unit[0]._ReallyEnabled == 0) {
-	imesa->Registers.TexCtrl[0].ui = 0;
-	imesa->Registers.TexCtrl[0].s3d.texEn = GL_FALSE;
-	imesa->Registers.TexCtrl[0].s3d.dBias = 0x08;
-	imesa->Registers.TexCtrl[0].s3d.texXprEn = GL_TRUE;
-	imesa->Registers.TexAddr[0].ui = 0;
-	imesa->Registers.changed.ni.fTex0AddrChanged = GL_TRUE;
-	imesa->Registers.changed.ni.fTex0CtrlChanged = GL_TRUE;
+	imesa->regs.s3d.texCtrl.ui = 0;
+	imesa->regs.s3d.texCtrl.ni.texEn = GL_FALSE;
+	imesa->regs.s3d.texCtrl.ni.dBias = 0x08;
+	imesa->regs.s3d.texCtrl.ni.texXprEn = GL_TRUE;
+	imesa->regs.s3d.texAddr.ui = 0;
 	return;
     }
 
@@ -1659,23 +1571,19 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     if (t->MemBlock)
 	savageUpdateTexLRU( imesa, t );
 
-    TexDescr.ui = imesa->Registers.TexDescr.ui;
-    TexCtrl.ui = imesa->Registers.TexCtrl[0].ui;
-    DrawCtrl.ui = imesa->Registers.DrawCtrl.ui;
-
     format = tObj->Image[0][tObj->BaseLevel]->Format;
 
     /* FIXME: copied from utah-glx, probably needs some tuning */
     switch (ctx->Texture.Unit[0].EnvMode) {
     case GL_DECAL:
-	DrawCtrl.ni.texBlendCtrl = SAVAGETBC_DECAL_S3D;
+	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_DECAL_S3D;
 	break;
     case GL_REPLACE:
-	DrawCtrl.ni.texBlendCtrl = SAVAGETBC_COPY_S3D;
+	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_COPY_S3D;
 	break;
     case GL_BLEND: /* FIXIT */
     case GL_MODULATE:
-	DrawCtrl.ni.texBlendCtrl = SAVAGETBC_MODULATEALPHA_S3D;
+	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_MODULATEALPHA_S3D;
 	break;
     default:
 	fprintf(stderr, "unkown tex env mode\n");
@@ -1683,43 +1591,43 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	break;			
     }
 
-    DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
-    DrawCtrl.ni.flushPdZbufWrites = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
 
     /* FIXME: this is how the utah-driver works. I doubt it's the ultimate 
        truth. */
-    TexCtrl.s3d.uWrapEn = 0;
-    TexCtrl.s3d.vWrapEn = 0;
+    imesa->regs.s3d.texCtrl.ni.uWrapEn = 0;
+    imesa->regs.s3d.texCtrl.ni.vWrapEn = 0;
     if (t->texParams.sWrapMode == GL_CLAMP)
-	TexCtrl.s3d.wrapMode = TAM_Clamp;
+	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Clamp;
     else
-	TexCtrl.s3d.wrapMode = TAM_Wrap;
+	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Wrap;
 
     switch (t->texParams.minFilter) {
     case GL_NEAREST:
-	TexCtrl.s3d.filterMode    = TFM_Point;
-	TexCtrl.s3d.mipmapDisable = GL_TRUE;
+	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Point;
+	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_TRUE;
 	break;
 
     case GL_LINEAR:
-	TexCtrl.s3d.filterMode    = TFM_Bilin;
-	TexCtrl.s3d.mipmapDisable = GL_TRUE;
+	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Bilin;
+	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_TRUE;
 	break;
 
     case GL_NEAREST_MIPMAP_NEAREST:
-	TexCtrl.s3d.filterMode    = TFM_Point;
-	TexCtrl.s3d.mipmapDisable = GL_FALSE;
+	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Point;
+	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_FALSE;
 	break;
 
     case GL_LINEAR_MIPMAP_NEAREST:
-	TexCtrl.s3d.filterMode    = TFM_Bilin;
-	TexCtrl.s3d.mipmapDisable = GL_FALSE;
+	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Bilin;
+	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_FALSE;
 	break;
 
     case GL_NEAREST_MIPMAP_LINEAR:
     case GL_LINEAR_MIPMAP_LINEAR:
-	TexCtrl.s3d.filterMode    = TFM_Trilin;
-	TexCtrl.s3d.mipmapDisable = GL_FALSE;
+	imesa->regs.s3d.texCtrl.ni.filterMode    = TFM_Trilin;
+	imesa->regs.s3d.texCtrl.ni.mipmapDisable = GL_FALSE;
 	break;
     }
 
@@ -1728,54 +1636,30 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     /*
     if (t->max_level < t->image[0].image->WidthLog2 ||
 	t->max_level < t->image[0].image->HeightLog2) {
-	TexCtrl.s3d.mipmapEnable = GL_TRUE;
-	if (TexCtrl.s3d.filterMode == TFM_Trilin)
-	    TexCtrl.s3d.filterMode = TFM_Bilin;
-	TexCtrl.s3d.filterMode = TFM_Point;
+	texCtrl.ni.mipmapEnable = GL_TRUE;
+	if (texCtrl.ni.filterMode == TFM_Trilin)
+	    texCtrl.ni.filterMode = TFM_Bilin;
+	texCtrl.ni.filterMode = TFM_Point;
     }
     */
 
     /* LOD bias makes corruption of small mipmap levels worse on Savage IX
      * but doesn't show the desired effect with the lodbias mesa demo. */
-    TexCtrl.s3d.dBias = 0;
+    imesa->regs.s3d.texCtrl.ni.dBias = 0;
 
-    TexCtrl.s3d.texEn = GL_TRUE;
-    TexDescr.s3d.texWidth  = t->image[0].image->WidthLog2;
-    TexDescr.s3d.texHeight = t->image[0].image->HeightLog2;
+    imesa->regs.s3d.texCtrl.ni.texEn = GL_TRUE;
+    imesa->regs.s3d.texDescr.ni.texWidth  = t->image[0].image->WidthLog2;
+    imesa->regs.s3d.texDescr.ni.texHeight = t->image[0].image->HeightLog2;
     assert (t->image[0].internalFormat <= 7);
-    TexDescr.s3d.texFmt = t->image[0].internalFormat;
+    imesa->regs.s3d.texDescr.ni.texFmt = t->image[0].internalFormat;
 
-    if (imesa->Registers.TexAddr[0].ni.addr != (GLuint)t->texParams.hwPhysAddress >> 3)
-    {
-        imesa->Registers.TexAddr[0].ni.addr = (GLuint) t->texParams.hwPhysAddress >> 3;
-
-        if(t->heap == SAVAGE_AGP_HEAP) {
-            imesa->Registers.TexAddr[0].ni.inSysTex = 1;
-            imesa->Registers.TexAddr[0].ni.inAGPTex = 1;
-	} else {
-            imesa->Registers.TexAddr[0].ni.inSysTex = 0;
-            imesa->Registers.TexAddr[0].ni.inAGPTex = 1;
-	}
-
-        imesa->Registers.changed.ni.fTex0AddrChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexCtrl[0].ui != TexCtrl.ui)
-    {
-        imesa->Registers.TexCtrl[0].ui = TexCtrl.ui;
-        imesa->Registers.changed.ni.fTex0CtrlChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.TexDescr.ui != TexDescr.ui)
-    {
-        imesa->Registers.TexDescr.ui = TexDescr.ui;
-        imesa->Registers.changed.ni.fTexDescrChanged = GL_TRUE;
-    }
-
-    if (imesa->Registers.DrawCtrl.ui != DrawCtrl.ui)
-    {
-        imesa->Registers.DrawCtrl.ui = DrawCtrl.ui;
-        imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
+    imesa->regs.s3d.texAddr.ni.addr = (GLuint) t->texParams.hwPhysAddress >> 3;
+    if(t->heap == SAVAGE_AGP_HEAP) {
+	imesa->regs.s3d.texAddr.ni.inSysTex = 1;
+	imesa->regs.s3d.texAddr.ni.inAGPTex = 1;
+    } else {
+	imesa->regs.s3d.texAddr.ni.inSysTex = 0;
+	imesa->regs.s3d.texAddr.ni.inAGPTex = 1;
     }
 }
 

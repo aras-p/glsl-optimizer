@@ -100,17 +100,12 @@ static void savageDDBlendEquationSeparate(GLcontext *ctx,
 static void savageBlendFunc_s4(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    Reg_DrawLocalCtrl DrawLocalCtrl;
 
     /* set up draw control register (including blending, alpha
-     * test, dithering, and shading model)
+     * test, and shading model)
      */
 
-    /*
-     * And mask removes flushPdDestWrites
-     */
-
-    DrawLocalCtrl.ui = imesa->Registers.DrawLocalCtrl.ui & ~0x40000000;
+    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = 0;
 
     /*
      * blend modes
@@ -119,55 +114,55 @@ static void savageBlendFunc_s4(GLcontext *ctx)
         switch (ctx->Color.BlendDstRGB)
         {
             case GL_ZERO:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
                 break;
 
             case GL_ONE:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_One;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_One;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_COLOR:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_SrcClr;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_SrcClr;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_SRC_COLOR:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_1SrcClr;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_1SrcClr;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_ALPHA:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_SrcAlpha;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_SrcAlpha;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_SRC_ALPHA:
-                DrawLocalCtrl.ni.dstAlphaMode = DAM_1SrcAlpha;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_1SrcAlpha;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawLocalCtrl.ni.dstAlphaMode = DAM_One;
+                    imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_One;
                 }
                 else
                 {
-                    DrawLocalCtrl.ni.dstAlphaMode = DAM_DstAlpha;
+                    imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode= DAM_DstAlpha;
                 }
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
+                    imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
                 }
                 else
                 {
-                    DrawLocalCtrl.ni.dstAlphaMode = DAM_1DstAlpha;
-                    DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode=DAM_1DstAlpha;
+                    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
                 }
                 break;
         }
@@ -175,60 +170,60 @@ static void savageBlendFunc_s4(GLcontext *ctx)
         switch (ctx->Color.BlendSrcRGB)
         {
             case GL_ZERO:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_Zero;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_Zero;
                 break;
 
             case GL_ONE:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_One;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_One;
                 break;
 
             case GL_DST_COLOR:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_DstClr;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_DstClr;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_DST_COLOR:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_1DstClr;
-                DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_1DstClr;
+                imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_ALPHA:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_SrcAlpha;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_SrcAlpha;
                 break;
 
             case GL_ONE_MINUS_SRC_ALPHA:
-                DrawLocalCtrl.ni.srcAlphaMode = SAM_1SrcAlpha;
+                imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_1SrcAlpha;
                 break;
 
             case GL_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawLocalCtrl.ni.srcAlphaMode = SAM_One;
+                    imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_One;
                 }
                 else
                 {
-                    DrawLocalCtrl.ni.srcAlphaMode = SAM_DstAlpha;
-                    DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode= SAM_DstAlpha;
+                    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
                 }
                 break;
 
             case GL_ONE_MINUS_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)          
                 {
-                    DrawLocalCtrl.ni.srcAlphaMode = SAM_Zero;
+                    imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_Zero;
                 }
                 else
                 {
-                    DrawLocalCtrl.ni.srcAlphaMode = SAM_1DstAlpha;
-                    DrawLocalCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode=SAM_1DstAlpha;
+                    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
                 }
                 break;
         }
     }
     else
     {
-        DrawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
-        DrawLocalCtrl.ni.srcAlphaMode = SAM_One;
+        imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
+        imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_One;
     }
 
     /* alpha test*/
@@ -252,82 +247,31 @@ static void savageBlendFunc_s4(GLcontext *ctx)
             default:return;
         }   
       
-        if (imesa->Registers.DrawCtrl1.ni.alphaTestEn != GL_TRUE)
-        {
-            imesa->Registers.DrawCtrl1.ni.alphaTestEn = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawCtrl1Changed = GL_TRUE;
-        }
-
-        if (imesa->Registers.DrawCtrl1.ni.alphaTestCmpFunc !=
-            (a & 0x0F))
-        {
-            imesa->Registers.DrawCtrl1.ni.alphaTestCmpFunc =
-                a & 0x0F;
-            imesa->Registers.changed.ni.fDrawCtrl1Changed = GL_TRUE;
-        }
-
-        /* looks like rounding control is different on katmai than p2*/
-
-        if (imesa->Registers.DrawCtrl0.ni.alphaRefVal != alphaRef)
-        {
-            imesa->Registers.DrawCtrl0.ni.alphaRefVal = alphaRef;
-            imesa->Registers.changed.ni.fDrawCtrl0Changed = GL_TRUE;
-        }
+	imesa->regs.s4.drawCtrl1.ni.alphaTestEn = GL_TRUE;
+	imesa->regs.s4.drawCtrl1.ni.alphaTestCmpFunc = a & 0x0F;
+	imesa->regs.s4.drawCtrl0.ni.alphaRefVal = alphaRef;
     }
     else
     {
-        if (imesa->Registers.DrawCtrl1.ni.alphaTestEn != GL_FALSE)
-        {
-            imesa->Registers.DrawCtrl1.ni.alphaTestEn      = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawCtrl1Changed   = GL_TRUE;
-        }
+	imesa->regs.s4.drawCtrl1.ni.alphaTestEn      = GL_FALSE;
     }
 
     /* Set/Reset Z-after-alpha*/
 
-    DrawLocalCtrl.ni.wrZafterAlphaTst = imesa->Registers.DrawCtrl1.ni.alphaTestEn;
-    /*DrawLocalCtrl.ni.zUpdateEn = ~DrawLocalCtrl.ni.wrZafterAlphaTst;*/
-
-    if (imesa->Registers.DrawLocalCtrl.ui != DrawLocalCtrl.ui)
-    {
-        imesa->Registers.DrawLocalCtrl.ui = DrawLocalCtrl.ui;
-        imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-    }
-
-    /* dithering*/
-
-    if ( ctx->Color.DitherFlag )
-    {
-        if (imesa->Registers.DrawCtrl1.ni.ditherEn != GL_TRUE)
-        {
-            imesa->Registers.DrawCtrl1.ni.ditherEn = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawCtrl1Changed = GL_TRUE;
-        }
-    }
-    else
-    {
-        if (imesa->Registers.DrawCtrl1.ni.ditherEn != GL_FALSE)
-        {
-            imesa->Registers.DrawCtrl1.ni.ditherEn = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawCtrl1Changed = GL_TRUE;
-        }
-    }
+    imesa->regs.s4.drawLocalCtrl.ni.wrZafterAlphaTst =
+	imesa->regs.s4.drawCtrl1.ni.alphaTestEn;
+    /*imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn =
+        ~drawLocalCtrl.ni.wrZafterAlphaTst;*/
 }
 static void savageBlendFunc_s3d(GLcontext *ctx)
 {
-  
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    Reg_DrawCtrl DrawCtrl;
 
     /* set up draw control register (including blending, alpha
      * test, dithering, and shading model)
      */
 
-    /*
-     * And mask removes flushPdDestWrites
-     */
-
-    DrawCtrl.ui = imesa->Registers.DrawCtrl.ui & ~0x20000000;
+    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = 0;
 
     /*
      * blend modes
@@ -336,55 +280,55 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
         switch (ctx->Color.BlendDstRGB)
         {
             case GL_ZERO:
-                DrawCtrl.ni.dstAlphaMode = DAM_Zero;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_Zero;
                 break;
 
             case GL_ONE:
-                DrawCtrl.ni.dstAlphaMode = DAM_One;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_One;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_COLOR:
-                DrawCtrl.ni.dstAlphaMode = DAM_SrcClr;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_SrcClr;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_SRC_COLOR:
-                DrawCtrl.ni.dstAlphaMode = DAM_1SrcClr;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_1SrcClr;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_ALPHA:
-                DrawCtrl.ni.dstAlphaMode = DAM_SrcAlpha;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_SrcAlpha;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_SRC_ALPHA:
-                DrawCtrl.ni.dstAlphaMode = DAM_1SrcAlpha;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_1SrcAlpha;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawCtrl.ni.dstAlphaMode = DAM_One;
+                    imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_One;
                 }
                 else
                 {
-                    DrawCtrl.ni.dstAlphaMode = DAM_DstAlpha;
+                    imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_DstAlpha;
                 }
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawCtrl.ni.dstAlphaMode = DAM_Zero;
+                    imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_Zero;
                 }
                 else
                 {
-                    DrawCtrl.ni.dstAlphaMode = DAM_1DstAlpha;
-                    DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_1DstAlpha;
+                    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 }
                 break;
         }
@@ -392,60 +336,60 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
         switch (ctx->Color.BlendSrcRGB)
         {
             case GL_ZERO:
-                DrawCtrl.ni.srcAlphaMode = SAM_Zero;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_Zero;
                 break;
 
             case GL_ONE:
-                DrawCtrl.ni.srcAlphaMode = SAM_One;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_One;
                 break;
 
             case GL_DST_COLOR:
-                DrawCtrl.ni.srcAlphaMode = SAM_DstClr;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_DstClr;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_ONE_MINUS_DST_COLOR:
-                DrawCtrl.ni.srcAlphaMode = SAM_1DstClr;
-                DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_1DstClr;
+                imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 break;
 
             case GL_SRC_ALPHA:
-                DrawCtrl.ni.srcAlphaMode = SAM_SrcAlpha;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_SrcAlpha;
                 break;
 
             case GL_ONE_MINUS_SRC_ALPHA:
-                DrawCtrl.ni.srcAlphaMode = SAM_1SrcAlpha;
+                imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_1SrcAlpha;
                 break;
 
             case GL_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)
                 {
-                    DrawCtrl.ni.srcAlphaMode = SAM_One;
+                    imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_One;
                 }
                 else
                 {
-                    DrawCtrl.ni.srcAlphaMode = SAM_DstAlpha;
-                    DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_DstAlpha;
+                    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 }
                 break;
 
             case GL_ONE_MINUS_DST_ALPHA:
                 if (imesa->glCtx->Visual.alphaBits == 0)          
                 {
-                    DrawCtrl.ni.srcAlphaMode = SAM_Zero;
+                    imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_Zero;
                 }
                 else
                 {
-                    DrawCtrl.ni.srcAlphaMode = SAM_1DstAlpha;
-                    DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+                    imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_1DstAlpha;
+                    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
                 }
                 break;
         }
     }
     else
     {
-        DrawCtrl.ni.dstAlphaMode = DAM_Zero;
-        DrawCtrl.ni.srcAlphaMode = SAM_One;
+        imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_Zero;
+        imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_One;
     }
 
     /* alpha test*/
@@ -469,42 +413,19 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
             default:return;
         }   
 
-	DrawCtrl.ni.alphaTestEn = GL_TRUE;
-	DrawCtrl.ni.alphaTestCmpFunc = a & 0x07;
-	DrawCtrl.ni.alphaRefVal = alphaRef;
+	imesa->regs.s3d.drawCtrl.ni.alphaTestEn = GL_TRUE;
+	imesa->regs.s3d.drawCtrl.ni.alphaTestCmpFunc = a & 0x07;
+	imesa->regs.s3d.drawCtrl.ni.alphaRefVal = alphaRef;
     }
     else
     {
-	DrawCtrl.ni.alphaTestEn = GL_FALSE;
+	imesa->regs.s3d.drawCtrl.ni.alphaTestEn = GL_FALSE;
     }
 
     /* Set/Reset Z-after-alpha*/
 
-    if (imesa->Registers.ZBufCtrl.s3d.wrZafterAlphaTst !=
-	DrawCtrl.ni.alphaTestEn)
-    {
-	imesa->Registers.ZBufCtrl.s3d.wrZafterAlphaTst =
-	    DrawCtrl.ni.alphaTestEn;
-	imesa->Registers.changed.ni.fZBufCtrlChanged = GL_TRUE;
-    }
-    /*DrawLocalCtrl.ni.zUpdateEn = ~DrawLocalCtrl.ni.wrZafterAlphaTst;*/
-
-    /* dithering*/
-
-    if ( ctx->Color.DitherFlag )
-    {
-	DrawCtrl.ni.ditherEn = GL_TRUE;
-    }
-    else
-    {
-	DrawCtrl.ni.ditherEn = GL_FALSE;
-    }
-
-    if (imesa->Registers.DrawCtrl.ui != DrawCtrl.ui)
-    {
-        imesa->Registers.DrawCtrl.ui = DrawCtrl.ui;
-        imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-    }
+    imesa->regs.s3d.zBufCtrl.ni.wrZafterAlphaTst =
+	imesa->regs.s3d.drawCtrl.ni.alphaTestEn;
 }
 
 static void savageDDBlendFuncSeparate_s4( GLcontext *ctx, GLenum sfactorRGB, 
@@ -549,33 +470,14 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
     if (ctx->Depth.Test)
     {
 
-        if (imesa->Registers.ZBufCtrl.s4.zCmpFunc != (zmode & 0x0F))
-        {
-            imesa->Registers.ZBufCtrl.s4.zCmpFunc = zmode & 0x0F;
-            imesa->Registers.changed.ni.fZBufCtrlChanged  = GL_TRUE;
-        }
-
-        if (imesa->Registers.DrawLocalCtrl.ni.zUpdateEn != ctx->Depth.Mask)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.zUpdateEn = ctx->Depth.Mask;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-        }
-
-        if (imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites == GL_FALSE)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
+	imesa->regs.s4.zBufCtrl.ni.zCmpFunc = zmode & 0x0F;
+	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = ctx->Depth.Mask;
+	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
 #if 1
-            imesa->Registers.ZWatermarks.ni.wLow = 0;
-            imesa->Registers.changed.ni.fZWatermarksChanged = GL_TRUE;
+	imesa->regs.s4.zWatermarks.ni.wLow = 0;
 #endif
-        }
 
-        if (imesa->Registers.ZBufCtrl.s4.zBufEn != GL_TRUE)
-        {
-            imesa->Registers.ZBufCtrl.s4.zBufEn = GL_TRUE;
-            imesa->Registers.changed.ni.fZBufCtrlChanged = GL_TRUE;
-        }
+	imesa->regs.s4.zBufCtrl.ni.zBufEn = GL_TRUE;
     }
     else if (imesa->glCtx->Stencil.Enabled &&
              !imesa->glCtx->DrawBuffer->UseSoftwareStencilBuffer)
@@ -586,70 +488,31 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 #if HW_STENCIL
         if(imesa->hw_stencil)
         {
-            if ((imesa->Registers.ZBufCtrl.ui & STENCIL) != STENCIL)
-            {
-                imesa->Registers.ZBufCtrl.s4.zCmpFunc = GL_ALWAYS & 0x0F;
-                imesa->Registers.ZBufCtrl.s4.zBufEn   = GL_TRUE;
-                imesa->Registers.changed.ni.fZBufCtrlChanged  = GL_TRUE;
-            }
-
-            if (imesa->Registers.DrawLocalCtrl.ni.zUpdateEn != GL_FALSE)
-            {
-                imesa->Registers.DrawLocalCtrl.ni.zUpdateEn = GL_FALSE;
-                imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-            }
-
-            if (imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites == GL_TRUE)
-            {
-                imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-                imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-
-                imesa->Registers.ZWatermarks.ni.wLow        = 8;
-                imesa->Registers.changed.ni.fZWatermarksChanged     = GL_TRUE;
-            }
+	    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+	    imesa->regs.s4.zBufCtrl.ni.zBufEn   = GL_TRUE;
+	    imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
+	    imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
+	    imesa->regs.s4.zWatermarks.ni.wLow        = 8;
         }
 #endif /* end #if HW_STENCIL */
     }
     else
     {
 
-        if (imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn == GL_FALSE)
+        if (imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn == GL_FALSE)
         {
-            imesa->Registers.ZBufCtrl.s4.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
-            imesa->Registers.ZBufCtrl.s4.zBufEn   = GL_TRUE;
-            imesa->Registers.changed.ni.fZBufCtrlChanged  = GL_TRUE;
-
-            if (imesa->Registers.DrawLocalCtrl.ni.zUpdateEn != GL_FALSE)
-            {
-                imesa->Registers.DrawLocalCtrl.ni.zUpdateEn = GL_FALSE;
-                imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-            }
-
-            if (imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites == GL_TRUE)
-            {
-                imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-                imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-
-                imesa->Registers.ZWatermarks.ni.wLow        = 8;
-                imesa->Registers.changed.ni.fZWatermarksChanged     = GL_TRUE;
-
-            }
+            imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+            imesa->regs.s4.zBufCtrl.ni.zBufEn   = GL_TRUE;
         }
         else
 
             /* DRAWUPDATE_REQUIRES_Z_ENABLED*/
         {
-            if (imesa->Registers.ZBufCtrl.s4.zBufEn != GL_FALSE)
-            {
-                imesa->Registers.ZBufCtrl.s4.zBufEn         = GL_FALSE;
-                imesa->Registers.DrawLocalCtrl.ni.zUpdateEn = GL_FALSE;
-                imesa->Registers.changed.ni.fZBufCtrlChanged        = GL_TRUE;
-                imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-                imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-                imesa->Registers.ZWatermarks.ni.wLow        = 8;
-                imesa->Registers.changed.ni.fZWatermarksChanged     = GL_TRUE;
-            }
+	    imesa->regs.s4.zBufCtrl.ni.zBufEn         = GL_FALSE;
         }
+	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
+	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
+	imesa->regs.s4.zWatermarks.ni.wLow        = 8;
     }
   
     imesa->dirty |= SAVAGE_UPLOAD_CTX;
@@ -657,7 +520,6 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    Reg_ZBufCtrl ZBufCtrl;
     int zmode;
 #define depthIndex 0
 
@@ -665,8 +527,6 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
      * set up z-buffer offset register (global)
      * set up z read/write watermarks register (global)
      */
-    ZBufCtrl.ui = imesa->Registers.ZBufCtrl.ui;
-
     switch(func)  { 
         case GL_NEVER: zmode = LCS_Z_NEVER; break;
         case GL_ALWAYS: zmode = LCS_Z_ALWAYS; break;
@@ -680,51 +540,32 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
     } 
     if (ctx->Depth.Test)
     {
-	ZBufCtrl.s3d.zBufEn = GL_TRUE;
-	ZBufCtrl.s3d.zCmpFunc = zmode & 0x0F;
-	ZBufCtrl.s3d.zUpdateEn = ctx->Depth.Mask;
+	imesa->regs.s3d.zBufCtrl.ni.zBufEn = GL_TRUE;
+	imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = zmode & 0x0F;
+	imesa->regs.s3d.zBufCtrl.ni.zUpdateEn = ctx->Depth.Mask;
 	
-        if (imesa->Registers.DrawCtrl.ni.flushPdZbufWrites == GL_FALSE)
-        {
-            imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
+	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
 #if 1
-            imesa->Registers.ZWatermarks.ni.wLow = 0;
-            imesa->Registers.changed.ni.fZWatermarksChanged = GL_TRUE;
+	imesa->regs.s3d.zWatermarks.ni.wLow = 0;
 #endif
-        }
     }
     else
     {
-	if (ZBufCtrl.s3d.drawUpdateEn == GL_FALSE) {
-	    ZBufCtrl.s3d.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
-            ZBufCtrl.s3d.zBufEn = GL_TRUE;
-	    ZBufCtrl.s3d.zUpdateEn = GL_FALSE;
+	if (imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn == GL_FALSE) {
+	    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+            imesa->regs.s3d.zBufCtrl.ni.zBufEn = GL_TRUE;
 	}
         else
 
             /* DRAWUPDATE_REQUIRES_Z_ENABLED*/
         {
-	    ZBufCtrl.s3d.zBufEn = GL_FALSE;
-	    ZBufCtrl.s3d.zUpdateEn = GL_FALSE;
+	    imesa->regs.s3d.zBufCtrl.ni.zBufEn = GL_FALSE;
         }
-
-	if (imesa->Registers.DrawCtrl.ni.flushPdZbufWrites == GL_TRUE)
-        {
-	    imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_FALSE;
-	    imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-
-	    imesa->Registers.ZWatermarks.ni.wLow = 8;
-	    imesa->Registers.changed.ni.fZWatermarksChanged = GL_TRUE;
-	}
+	imesa->regs.s3d.zBufCtrl.ni.zUpdateEn = GL_FALSE;
+	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_FALSE;
+	imesa->regs.s3d.zWatermarks.ni.wLow = 8;
     }
   
-    if (imesa->Registers.ZBufCtrl.ui != ZBufCtrl.ui)
-    {
-        imesa->Registers.ZBufCtrl.ui = ZBufCtrl.ui;
-        imesa->Registers.changed.ni.fZBufCtrlChanged = GL_TRUE;
-    }
-
     imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 
@@ -735,19 +576,11 @@ static void savageDDDepthMask_s4(GLcontext *ctx, GLboolean flag)
     imesa->dirty |= SAVAGE_UPLOAD_CTX;
     if (flag)
     {
-        if (imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites == GL_FALSE)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
     }
     else
     {
-        if (imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites == GL_TRUE)
-	{
-            imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
     }
     savageDDDepthFunc_s4(ctx,ctx->Depth.Func);
 }
@@ -758,19 +591,11 @@ static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
     imesa->dirty |= SAVAGE_UPLOAD_CTX;
     if (flag)
     {
-        if (imesa->Registers.DrawCtrl.ni.flushPdZbufWrites == GL_FALSE)
-        {
-            imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-        }
+	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
     }
     else
     {
-        if (imesa->Registers.DrawCtrl.ni.flushPdZbufWrites == GL_TRUE)
-        {
-            imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawCtrlChanged   = GL_TRUE;
-        }
+	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_FALSE;
     }
     savageDDDepthFunc_s3d(ctx,ctx->Depth.Func);
 }
@@ -783,7 +608,7 @@ static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
  */
 
 
- void savageDDScissor( GLcontext *ctx, GLint x, GLint y, 
+static void savageDDScissor( GLcontext *ctx, GLint x, GLint y, 
                              GLsizei w, GLsizei h )
 { 
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
@@ -795,7 +620,7 @@ static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
                                   imesa->draw_rect.y2);
     
 
-    imesa->Registers.changed.ni.fScissorsChanged=GL_TRUE;
+    imesa->scissorChanged=GL_TRUE;
 
     imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
 }
@@ -977,15 +802,13 @@ static void savageUpdateCull( GLcontext *ctx )
     else
 	cullMode = BCM_None;
     if (imesa->savageScreen->chipset >= S3_SAVAGE4) {
-	if (imesa->Registers.DrawCtrl1.ni.cullMode != cullMode) {
-	    imesa->Registers.DrawCtrl1.ni.cullMode = cullMode;
-	    imesa->Registers.changed.ni.fDrawCtrl1Changed = GL_TRUE;
+	if (imesa->regs.s4.drawCtrl1.ni.cullMode != cullMode) {
+	    imesa->regs.s4.drawCtrl1.ni.cullMode = cullMode;
 	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 	}
     } else {
-	if (imesa->Registers.DrawCtrl.ni.cullMode != cullMode) {
-	    imesa->Registers.DrawCtrl.ni.cullMode = cullMode;
-	    imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
+	if (imesa->regs.s3d.drawCtrl.ni.cullMode != cullMode) {
+	    imesa->regs.s3d.drawCtrl.ni.cullMode = cullMode;
 	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 	}
     }
@@ -1021,22 +844,13 @@ static void savageDDColorMask_s4(GLcontext *ctx,
 
     if (enable)
     {
-        if (imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn == GL_FALSE)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn = GL_TRUE;
     }
     else
     {
-        if (imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn = GL_FALSE;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
     /* TODO: need a software fallback */
 }
 static void savageDDColorMask_s3d(GLcontext *ctx, 
@@ -1057,22 +871,13 @@ static void savageDDColorMask_s3d(GLcontext *ctx,
 
     if (enable)
     {
-        if (imesa->Registers.ZBufCtrl.s3d.drawUpdateEn == GL_FALSE)
-        {
-            imesa->Registers.ZBufCtrl.s3d.drawUpdateEn = GL_TRUE;
-            imesa->Registers.changed.ni.fZBufCtrlChanged = GL_TRUE;
-	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn = GL_TRUE;
     }
     else
     {
-        if (imesa->Registers.ZBufCtrl.s3d.drawUpdateEn)
-        {
-            imesa->Registers.ZBufCtrl.s3d.drawUpdateEn = GL_FALSE;
-            imesa->Registers.changed.ni.fZBufCtrlChanged = GL_TRUE;
-	    imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn = GL_FALSE;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
     /* TODO: need a software fallback */
 }
 
@@ -1088,36 +893,26 @@ static void savageUpdateSpecular_s4(GLcontext *ctx) {
 
     if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
 	ctx->Light.Enabled) {
-	if (imesa->Registers.DrawLocalCtrl.ni.specShadeEn == GL_FALSE) {
-	    imesa->Registers.DrawLocalCtrl.ni.specShadeEn = GL_TRUE;
-	    imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-	}	 
+	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_TRUE;
 	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_TRUE);*/
     } else {
-	if (imesa->Registers.DrawLocalCtrl.ni.specShadeEn == GL_TRUE) {
-	    imesa->Registers.DrawLocalCtrl.ni.specShadeEn = GL_FALSE;
-	    imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-	}
+	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_FALSE;
 	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_FALSE);*/
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 static void savageUpdateSpecular_s3d(GLcontext *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
     if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
 	ctx->Light.Enabled) {
-	if (imesa->Registers.DrawCtrl.ni.specShadeEn == GL_FALSE) {
-	    imesa->Registers.DrawCtrl.ni.specShadeEn = GL_TRUE;
-	    imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-	}	 
-	FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_TRUE);
+	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_TRUE;
+	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_TRUE);*/
     } else {
-	if (imesa->Registers.DrawCtrl.ni.specShadeEn == GL_TRUE) {
-	    imesa->Registers.DrawCtrl.ni.specShadeEn = GL_FALSE;
-	    imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-	}
-	FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_FALSE);
+	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_FALSE;
+	/*FALLBACK (ctx, SAVAGE_FALLBACK_SPECULAR, GL_FALSE);*/
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 
 static void savageDDLightModelfv_s4(GLcontext *ctx, GLenum pname, 
@@ -1137,22 +932,13 @@ static void savageDDShadeModel_s4(GLcontext *ctx, GLuint mod)
 
     if (mod == GL_SMOOTH)  
     {    
-        if(imesa->Registers.DrawLocalCtrl.ni.flatShadeEn == GL_TRUE)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.flatShadeEn = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.flatShadeEn = GL_FALSE;
     }
     else
     {
-        if(imesa->Registers.DrawLocalCtrl.ni.flatShadeEn == GL_FALSE)
-        {
-            imesa->Registers.DrawLocalCtrl.ni.flatShadeEn = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged = GL_TRUE;
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s4.drawLocalCtrl.ni.flatShadeEn = GL_TRUE;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 static void savageDDShadeModel_s3d(GLcontext *ctx, GLuint mod)
 {
@@ -1160,27 +946,20 @@ static void savageDDShadeModel_s3d(GLcontext *ctx, GLuint mod)
 
     if (mod == GL_SMOOTH)  
     {    
-        if(imesa->Registers.DrawCtrl.ni.flatShadeEn == GL_TRUE)
-        {
-            imesa->Registers.DrawCtrl.ni.flatShadeEn = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s3d.drawCtrl.ni.flatShadeEn = GL_FALSE;
     }
     else
     {
-        if(imesa->Registers.DrawCtrl.ni.flatShadeEn == GL_FALSE)
-        {
-            imesa->Registers.DrawCtrl.ni.flatShadeEn = GL_TRUE;
-            imesa->Registers.changed.ni.fDrawCtrlChanged = GL_TRUE;
-            imesa->dirty |= SAVAGE_UPLOAD_CTX;
-        }
+	imesa->regs.s3d.drawCtrl.ni.flatShadeEn = GL_TRUE;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 
 
 /* =============================================================
  * Fog
+ * The fogCtrl register has the same position and the same layout
+ * on savage3d and savage4. No need for two separate functions.
  */
 
 static void savageDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
@@ -1194,36 +973,19 @@ static void savageDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
         fogClr = (((GLubyte)(ctx->Fog.Color[0]*255.0F) << 16) |
                   ((GLubyte)(ctx->Fog.Color[1]*255.0F) << 8) |
                   ((GLubyte)(ctx->Fog.Color[2]*255.0F) << 0));
-        if (imesa->Registers.FogCtrl.ni.fogEn != GL_TRUE)
-        {
-            imesa->Registers.FogCtrl.ni.fogEn  = GL_TRUE;
-            imesa->Registers.changed.ni.fFogCtrlChanged = GL_TRUE;
-        }
+	imesa->regs.s4.fogCtrl.ni.fogEn  = GL_TRUE;
         /*cheap fog*/
-        if (imesa->Registers.FogCtrl.ni.fogMode != GL_TRUE)
-        {
-            imesa->Registers.FogCtrl.ni.fogMode  = GL_TRUE;
-            imesa->Registers.changed.ni.fFogCtrlChanged = GL_TRUE;
-        }
-        if (imesa->Registers.FogCtrl.ni.fogClr != fogClr)
-        {
-            imesa->Registers.FogCtrl.ni.fogClr = fogClr;    
-            imesa->Registers.changed.ni.fFogCtrlChanged = GL_TRUE;
-        }
-        imesa->dirty |= SAVAGE_UPLOAD_CTX;      
+	imesa->regs.s4.fogCtrl.ni.fogMode  = GL_TRUE;
+	imesa->regs.s4.fogCtrl.ni.fogClr = fogClr;    
     }    
     else
     {
         /*No fog*/
         
-        if (imesa->Registers.FogCtrl.ni.fogEn != 0)
-        {
-            imesa->Registers.FogCtrl.ni.fogEn     = 0;
-            imesa->Registers.FogCtrl.ni.fogMode   = 0;
-            imesa->Registers.changed.ni.fFogCtrlChanged   = GL_TRUE;
-        }
-        return;
+	imesa->regs.s4.fogCtrl.ni.fogEn     = 0;
+	imesa->regs.s4.fogCtrl.ni.fogMode   = 0;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;      
 }
 
 
@@ -1250,14 +1012,12 @@ static void savageDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
 static void savageStencilFunc(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    Reg_StencilCtrl StencilCtrl;
     int a=0;
-    
-    StencilCtrl.ui = 0x0; 
     
     if (ctx->Stencil.Enabled)
     {
-         
+	imesa->regs.s4.stencilCtrl.ui = 0x0; 
+
         switch (ctx->Stencil.Function[0])
         {
             case GL_NEVER: a = LCS_S_NEVER; break;
@@ -1272,37 +1032,37 @@ static void savageStencilFunc(GLcontext *ctx)
                 break;
         }
 
-        StencilCtrl.ni.cmpFunc     = (GLuint)a & 0x0F;
-        StencilCtrl.ni.stencilEn   = GL_TRUE;
-        StencilCtrl.ni.readMask    = ctx->Stencil.ValueMask[0];
-        StencilCtrl.ni.writeMask   = ctx->Stencil.WriteMask[0];
+        imesa->regs.s4.stencilCtrl.ni.cmpFunc     = (GLuint)a & 0x0F;
+        imesa->regs.s4.stencilCtrl.ni.stencilEn   = GL_TRUE;
+        imesa->regs.s4.stencilCtrl.ni.readMask    = ctx->Stencil.ValueMask[0];
+        imesa->regs.s4.stencilCtrl.ni.writeMask   = ctx->Stencil.WriteMask[0];
 
         switch (ctx->Stencil.FailFunc[0])
         {
             case GL_KEEP:
-                StencilCtrl.ni.failOp = STC_FAIL_Keep;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Keep;
                 break;
             case GL_ZERO:
-                StencilCtrl.ni.failOp = STC_FAIL_Zero;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Zero;
                 break;
             case GL_REPLACE:
-                StencilCtrl.ni.failOp = STC_FAIL_Equal;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Equal;
                 break;
             case GL_INCR:
-                StencilCtrl.ni.failOp = STC_FAIL_IncClamp;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_IncClamp;
                 break;
             case GL_DECR:
-                StencilCtrl.ni.failOp = STC_FAIL_DecClamp;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_DecClamp;
                 break;
             case GL_INVERT:
-                StencilCtrl.ni.failOp = STC_FAIL_Invert;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Invert;
                 break;
 #if GL_EXT_stencil_wrap
             case GL_INCR_WRAP_EXT:
-                StencilCtrl.ni.failOp = STC_FAIL_Inc;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Inc;
                 break;
             case GL_DECR_WRAP_EXT:
-                StencilCtrl.ni.failOp = STC_FAIL_Dec;
+                imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Dec;
                 break;
 #endif
         }
@@ -1310,29 +1070,29 @@ static void savageStencilFunc(GLcontext *ctx)
         switch (ctx->Stencil.ZFailFunc[0])
         {
             case GL_KEEP:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Keep;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Keep;
                 break;
             case GL_ZERO:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Zero;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Zero;
                 break;
             case GL_REPLACE:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Equal;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Equal;
                 break;
             case GL_INCR:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_IncClamp;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_IncClamp;
                 break;
             case GL_DECR:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_DecClamp;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_DecClamp;
                 break;
             case GL_INVERT:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Invert;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Invert;
                 break;
 #if GL_EXT_stencil_wrap
             case GL_INCR_WRAP_EXT:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Inc;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Inc;
                 break;
             case GL_DECR_WRAP_EXT:
-                StencilCtrl.ni.passZfailOp = STC_FAIL_Dec;
+                imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Dec;
                 break;
 #endif
         }
@@ -1340,67 +1100,52 @@ static void savageStencilFunc(GLcontext *ctx)
         switch (ctx->Stencil.ZPassFunc[0])
         {
             case GL_KEEP:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Keep;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Keep;
                 break;
             case GL_ZERO:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Zero;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Zero;
                 break;
             case GL_REPLACE:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Equal;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Equal;
                 break;
             case GL_INCR:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_IncClamp;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_IncClamp;
                 break;
             case GL_DECR:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_DecClamp;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_DecClamp;
                 break;
             case GL_INVERT:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Invert;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Invert;
                 break;
 #if GL_EXT_stencil_wrap
             case GL_INCR_WRAP_EXT:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Inc;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Inc;
                 break;
             case GL_DECR_WRAP_EXT:
-                StencilCtrl.ni.passZpassOp = STC_FAIL_Dec;
+                imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Dec;
                 break;
 #endif
         }
 
 
-        if (imesa->Registers.StencilCtrl.ui != StencilCtrl.ui)
-        {
-            imesa->Registers.StencilCtrl.ui      = StencilCtrl.ui;
-            imesa->Registers.changed.ni.fStencilCtrlChanged = GL_TRUE;
-        }
-
-        if (imesa->Registers.ZBufCtrl.s4.stencilRefVal != (GLuint) ctx->Stencil.Ref)    {
-            imesa->Registers.ZBufCtrl.s4.stencilRefVal = ctx->Stencil.Ref[0];
-            imesa->Registers.changed.ni.fZBufCtrlChanged       = GL_TRUE;
-        }
+	imesa->regs.s4.zBufCtrl.ni.stencilRefVal = ctx->Stencil.Ref[0];
 
         /*
          * force Z on, HW limitation
          */
 
-        if (imesa->Registers.ZBufCtrl.s4.zBufEn != GL_TRUE)
+        if (imesa->regs.s4.zBufCtrl.ni.zBufEn != GL_TRUE)
         {
-            imesa->Registers.ZBufCtrl.s4.zCmpFunc       = LCS_Z_ALWAYS & 0x0F;
-            imesa->Registers.ZBufCtrl.s4.zBufEn         = GL_TRUE;
-            imesa->Registers.changed.ni.fZBufCtrlChanged        = GL_TRUE;
-            imesa->Registers.DrawLocalCtrl.ni.zUpdateEn = GL_FALSE;
-            imesa->Registers.changed.ni.fDrawLocalCtrlChanged   = GL_TRUE;
+            imesa->regs.s4.zBufCtrl.ni.zCmpFunc       = LCS_Z_ALWAYS & 0x0F;
+            imesa->regs.s4.zBufCtrl.ni.zBufEn         = GL_TRUE;
+            imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
         }
-        imesa->dirty |= SAVAGE_UPLOAD_CTX;
     }
     else
     {
-        if (imesa->Registers.StencilCtrl.ni.stencilEn != GL_FALSE)
-        {
-            imesa->Registers.StencilCtrl.ni.stencilEn = GL_FALSE;
-            imesa->Registers.changed.ni.fStencilCtrlChanged   = GL_TRUE;
-        }
+	imesa->regs.s4.stencilCtrl.ni.stencilEn = GL_FALSE;
     }
+    imesa->dirty |= SAVAGE_UPLOAD_CTX;
 }
 #endif /* end #if HW_STENCIL */
 /* =============================================================
@@ -1410,7 +1155,6 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
 {
    
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    unsigned int ui;
     switch(cap) {
         case GL_ALPHA_TEST:
             /* we should consider the disable case*/
@@ -1439,42 +1183,6 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             imesa->scissor = state;
             imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
             break;
-#if 0
-        case GL_LINE_SMOOTH:
-            if (ctx->PB->primitive == GL_LINE) {
-                imesa->dirty |= SAVAGE_UPLOAD_CTX;
-                if (state) {
-                    ui=imesa->Registers.DrawLocalCtrl.ui;
-                    imesa->Registers.DrawLocalCtrl.ni.flatShadeEn=GL_TRUE; 
-                    if(imesa->Registers.DrawLocalCtrl.ui!=ui)
-                        imesa->Registers.changed.ni.fDrawLocalCtrlChanged=GL_TRUE;
-                }
-            }
-            break;
-        case GL_POINT_SMOOTH:
-            if (ctx->PB->primitive == GL_POINT) {
-                imesa->dirty |= SAVAGE_UPLOAD_CTX;
-                if (state) 
-                {
-                    ui=imesa->Registers.DrawLocalCtrl.ui;
-                    imesa->Registers.DrawLocalCtrl.ni.flatShadeEn=GL_FALSE;
-                    if(imesa->Registers.DrawLocalCtrl.ui!=ui)
-                        imesa->Registers.changed.ni.fDrawLocalCtrlChanged=GL_TRUE;
-                }
-            }
-            break;
-        case GL_POLYGON_SMOOTH:
-            if (ctx->PB->primitive == GL_POLYGON) {
-                imesa->dirty |= SAVAGE_UPLOAD_CTX;
-                if (state) {
-                    ui=imesa->Registers.DrawLocalCtrl.ui;	  
-                    imesa->Registers.DrawLocalCtrl.ni.flatShadeEn=GL_TRUE;
-                    if(imesa->Registers.DrawLocalCtrl.ui!=ui)
-                        imesa->Registers.changed.ni.fDrawLocalCtrlChanged=GL_TRUE;
-                }  
-            }
-            break;
-#endif
         case GL_STENCIL_TEST:
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
             if (state)
@@ -1482,15 +1190,12 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
 #if HW_STENCIL
                 if(imesa->hw_stencil)
                 {
-                    ui=imesa->Registers.StencilCtrl.ui;
 #endif /* end if HW_STENCIL */
                     if(!imesa->hw_stencil)
 			FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, GL_TRUE);
 
 #if HW_STENCIL
-                    imesa->Registers.StencilCtrl.ni.stencilEn=GL_TRUE;
-                    if(imesa->Registers.StencilCtrl.ui!=ui)
-                        imesa->Registers.changed.ni.fStencilCtrlChanged=GL_TRUE;
+                    imesa->regs.s4.stencilCtrl.ni.stencilEn=GL_TRUE;
                 }
 #endif /* end if HW_STENCIL */	
             }
@@ -1500,14 +1205,10 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
 #if HW_STENCIL
                 if(imesa->hw_stencil)
                 {
-                    if(imesa->Registers.StencilCtrl.ni.stencilEn == GL_TRUE)
-                    {
-                        imesa->Registers.StencilCtrl.ni.stencilEn=GL_FALSE;
-                        imesa->Registers.changed.ni.fStencilCtrlChanged=GL_TRUE;
-                    }
+		    imesa->regs.s4.stencilCtrl.ni.stencilEn=GL_FALSE;
                 }
-		FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, GL_FALSE);
 #endif      
+		FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, GL_FALSE);
             }
             break;
         case GL_FOG:
@@ -1517,17 +1218,14 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
         case GL_CULL_FACE:
 #if HW_CULL
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
-            ui=imesa->Registers.DrawCtrl1.ui;
             if (state)
             {
                 savageDDCullFaceFrontFace(ctx,0);
             }
             else
             {
-                imesa->Registers.DrawCtrl1.ni.cullMode=BCM_None;
+                imesa->regs.s4.drawCtrl1.ni.cullMode=BCM_None;
             }
-            if(imesa->Registers.DrawCtrl1.ui!=ui)
-                imesa->Registers.changed.ni.fDrawCtrl1Changed=GL_TRUE;
 #endif
             break;
         case GL_DITHER:
@@ -1536,18 +1234,12 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             {
                 if ( ctx->Color.DitherFlag )
                 {
-                    ui=imesa->Registers.DrawCtrl1.ui;
-                    imesa->Registers.DrawCtrl1.ni.ditherEn=GL_TRUE;
-                    if(imesa->Registers.DrawCtrl1.ui!=ui)
-                        imesa->Registers.changed.ni.fDrawCtrl1Changed=GL_TRUE;
+                    imesa->regs.s4.drawCtrl1.ni.ditherEn=GL_TRUE;
                 }
             }   
             if (!ctx->Color.DitherFlag )
             {
-                ui=imesa->Registers.DrawCtrl1.ui;
-                imesa->Registers.DrawCtrl1.ni.ditherEn=GL_FALSE;
-                if(imesa->Registers.DrawCtrl1.ui!=ui)
-                    imesa->Registers.changed.ni.fDrawCtrl1Changed=GL_TRUE;
+                imesa->regs.s4.drawCtrl1.ni.ditherEn=GL_FALSE;
             }
             break;
  
@@ -1569,7 +1261,6 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
 {
    
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    unsigned int ui;
     switch(cap) {
         case GL_ALPHA_TEST:
             /* we should consider the disable case*/
@@ -1605,17 +1296,14 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
         case GL_CULL_FACE:
 #if HW_CULL
             imesa->dirty |= SAVAGE_UPLOAD_CTX;
-            ui=imesa->Registers.DrawCtrl.ui;
             if (state)
             {
                 savageDDCullFaceFrontFace(ctx,0);
             }
             else
             {
-                imesa->Registers.DrawCtrl.ni.cullMode=BCM_None;
+                imesa->regs.s3d.drawCtrl.ni.cullMode=BCM_None;
             }
-            if(imesa->Registers.DrawCtrl.ui!=ui)
-                imesa->Registers.changed.ni.fDrawCtrlChanged=GL_TRUE;
 #endif
             break;
         case GL_DITHER:
@@ -1624,18 +1312,12 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             {
                 if ( ctx->Color.DitherFlag )
                 {
-                    ui=imesa->Registers.DrawCtrl.ui;
-                    imesa->Registers.DrawCtrl.ni.ditherEn=GL_TRUE;
-                    if(imesa->Registers.DrawCtrl.ui!=ui)
-                        imesa->Registers.changed.ni.fDrawCtrlChanged=GL_TRUE;
+                    imesa->regs.s3d.drawCtrl.ni.ditherEn=GL_TRUE;
                 }
             }
             if (!ctx->Color.DitherFlag )
             {
-                ui=imesa->Registers.DrawCtrl.ui;
-                imesa->Registers.DrawCtrl.ni.ditherEn=GL_FALSE;
-                if(imesa->Registers.DrawCtrl.ui!=ui)
-                    imesa->Registers.changed.ni.fDrawCtrlChanged=GL_TRUE;
+                imesa->regs.s3d.drawCtrl.ni.ditherEn=GL_FALSE;
             }
             break;
  
@@ -1724,10 +1406,10 @@ void savageEmitDrawingRectangle( savageContextPtr imesa )
         imesa->draw_rect.y2 = y1;
     }
    
-    imesa->Registers.changed.ni.fScissorsChanged=GL_TRUE;
+    imesa->scissorChanged = GL_TRUE;
 
-    /*   imesa->Registers.changed.ni.fDrawCtrl0Changed=GL_TRUE;
-         imesa->Registers.changed.ni.fDrawCtrl1Changed=GL_TRUE;*/
+    /*   imesa->regs.ni.changed.ni.fDrawCtrl0Changed=GL_TRUE;
+         imesa->regs.ni.changed.ni.fDrawCtrl1Changed=GL_TRUE;*/
 
 
     imesa->dirty |= SAVAGE_UPLOAD_BUFFERS;
@@ -1748,247 +1430,148 @@ static void savageDDPrintDirty( const char *msg, GLuint state )
 }
 
 
+/**
+ * Check if global registers were changed
+ */
+static GLboolean savageGlobalRegChanged (savageContextPtr imesa,
+					 GLuint first, GLuint last) {
+    GLuint i;
+    for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i) {
+	if (((imesa->oldRegs.ui[i] ^ imesa->regs.ui[i]) &
+	     imesa->globalRegMask.ui[i]) != 0)
+	    return GL_TRUE;
+    }
+    return GL_FALSE;
+}
+static void savageEmitContiguousRegs (savageContextPtr imesa,
+				      GLuint first, GLuint last) {
+    GLuint i;
+    GLuint *pBCIBase;
+    pBCIBase = savageDMAAlloc (imesa, last - first + 2);
+    WRITE_CMD (pBCIBase, SET_REGISTER(first, last - first + 1), GLuint);
 
+    for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i) {
+	WRITE_CMD (pBCIBase, imesa->regs.ui[i], GLuint);
+	imesa->oldRegs.ui[i] = imesa->regs.ui[i];
+    }
+    savageDMACommit (imesa, pBCIBase);
+}
+static void savageEmitChangedRegs (savageContextPtr imesa,
+				   GLuint first, GLuint last) {
+    GLuint i, firstChanged;
+    firstChanged = SAVAGE_NR_REGS;
+    for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i) {
+	if (imesa->oldRegs.ui[i] != imesa->regs.ui[i]) {
+	    if (firstChanged == SAVAGE_NR_REGS)
+		firstChanged = i;
+	} else {
+	    if (firstChanged != SAVAGE_NR_REGS) {
+		savageEmitContiguousRegs (imesa, firstChanged+SAVAGE_FIRST_REG,
+					  i-1+SAVAGE_FIRST_REG);
+		firstChanged = SAVAGE_NR_REGS;
+	    }
+	}
+    }
+    if (firstChanged != SAVAGE_NR_REGS)
+	savageEmitContiguousRegs (imesa, firstChanged+SAVAGE_FIRST_REG,
+				  last);
+}
 static void savageUpdateRegister_s4(savageContextPtr imesa)
 {
     GLuint *pBCIBase;
-    pBCIBase = savageDMAAlloc (imesa, 100);
-    /*
-     *make sure there is enough room for everything
-     */
-    /*savageKickDMA(imesa);*/
-#define PARAMT 1
-#if defined(PARAMT) && PARAMT
-#define GLOBAL_REG SAVAGE_GLOBAL_CHANGED
-#else
-#define GLOBAL_REG (SAVAGE_GLOBAL_CHANGED | SAVAGE_TEXTURE_CHANGED)
-#endif
-    if (imesa->Registers.changed.uiRegistersChanged & GLOBAL_REG)
-    {
-        WRITE_CMD(pBCIBase,WAIT_3D_IDLE,GLuint);
-    }
 
-    if (imesa->Registers.changed.ni.fTexPalAddrChanged)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXPALADDR_S4, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexPalAddr.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.uiRegistersChanged & 0xFC)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXCTRL0_S4, 6),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexCtrl[0].ui,GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexCtrl[1].ui,GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexAddr[0].ui,GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexAddr[1].ui,GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexBlendCtrl[0].ui,GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexBlendCtrl[1].ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fTexDescrChanged)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXDESCR_S4, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexDescr.ui,GLuint);
-        imesa->Registers.TexDescr.s4.newPal = GL_FALSE;
-    }
-
-    if (imesa->Registers.changed.ni.fFogCtrlChanged)
-    {
-
-        WRITE_CMD(pBCIBase,SET_REGISTER(SAVAGE_FOGCTRL_S4, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.FogCtrl.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fDestCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DESTCTRL_S4,1),GLuint);
-	WRITE_CMD( pBCIBase ,imesa->Registers.DestCtrl.ui,GLuint);
-    }
-    
-    if (imesa->Registers.changed.ni.fDrawLocalCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DRAWLOCALCTRL_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DrawLocalCtrl.ui,GLuint);
-    }
     /*
      * Scissors updates drawctrl0 and drawctrl 1
      */
-
-    if (imesa->Registers.changed.ni.fScissorsChanged)
+    if (imesa->scissorChanged)
     {
         if(imesa->scissor)
         {
-            imesa->Registers.DrawCtrl0.ni.scissorXStart = imesa->scissor_rect.x1;
-            imesa->Registers.DrawCtrl0.ni.scissorYStart = imesa->scissor_rect.y1;
-            imesa->Registers.DrawCtrl1.ni.scissorXEnd   = imesa->scissor_rect.x2-1;
-            imesa->Registers.DrawCtrl1.ni.scissorYEnd   = imesa->scissor_rect.y2-1;
+            imesa->regs.s4.drawCtrl0.ni.scissorXStart = imesa->scissor_rect.x1;
+            imesa->regs.s4.drawCtrl0.ni.scissorYStart = imesa->scissor_rect.y1;
+            imesa->regs.s4.drawCtrl1.ni.scissorXEnd = imesa->scissor_rect.x2-1;
+            imesa->regs.s4.drawCtrl1.ni.scissorYEnd = imesa->scissor_rect.y2-1;
         }
         else
         {
-            imesa->Registers.DrawCtrl0.ni.scissorXStart = imesa->draw_rect.x1;
-            imesa->Registers.DrawCtrl0.ni.scissorYStart = imesa->draw_rect.y1;
-            imesa->Registers.DrawCtrl1.ni.scissorXEnd   = imesa->draw_rect.x2-1;
-            imesa->Registers.DrawCtrl1.ni.scissorYEnd   = imesa->draw_rect.y2-1;
+            imesa->regs.s4.drawCtrl0.ni.scissorXStart = imesa->draw_rect.x1;
+            imesa->regs.s4.drawCtrl0.ni.scissorYStart = imesa->draw_rect.y1;
+            imesa->regs.s4.drawCtrl1.ni.scissorXEnd = imesa->draw_rect.x2-1;
+            imesa->regs.s4.drawCtrl1.ni.scissorYEnd = imesa->draw_rect.y2-1;
         }
-        
-        imesa->Registers.changed.ni.fDrawCtrl0Changed=GL_TRUE;
-        imesa->Registers.changed.ni.fDrawCtrl1Changed=GL_TRUE;
-    }
-    if (imesa->Registers.changed.uiRegistersChanged )
-    {
-        
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DRAWCTRLGLOBAL0_S4,2),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DrawCtrl0.ui,GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DrawCtrl1.ui,GLuint);
-        
     }
 
-    if (imesa->Registers.changed.ni.fZBufCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_ZBUFCTRL_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ZBufCtrl.ui,GLuint);
+    /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39 */
+    if (imesa->lostContext || savageGlobalRegChanged (imesa, 0x1e, 0x39)) {
+	pBCIBase = savageDMAAlloc (imesa, 1);
+        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, GLuint);
+	savageDMACommit (imesa, pBCIBase);
     }
+    if (imesa->lostContext)
+	savageEmitContiguousRegs (imesa, 0x1e, 0x39);
+    else
+	savageEmitChangedRegs (imesa, 0x1e, 0x39);
 
-    if (imesa->Registers.changed.ni.fStencilCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_STENCILCTRL_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.StencilCtrl.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fTexBlendColorChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_TEXBLENDCOLOR_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.TexBlendColor.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fZWatermarksChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_ZWATERMARK_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ZWatermarks.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fDestTexWatermarksChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DESTTEXRWWATERMARK_S4,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DestTexWatermarks.ui,GLuint);
-    }
-
-    imesa->Registers.changed.uiRegistersChanged = 0;
-    imesa->dirty=0;	
-    savageDMACommit (imesa, pBCIBase);
+    imesa->dirty=0;
+    imesa->lostContext = GL_FALSE;
 }
 static void savageUpdateRegister_s3d(savageContextPtr imesa)
 {
     GLuint *pBCIBase;
-    pBCIBase = savageDMAAlloc (imesa, 100);
 
-    /* Always wait for idle for now.
-     * FIXME: On the Savage3D individual fields in registers can be
-     * local/global. */
-    WRITE_CMD(pBCIBase,WAIT_3D_IDLE,GLuint);
-
-    if (imesa->Registers.changed.ni.fZBufCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_ZBUFCTRL_S3D,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ZBufCtrl.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fDestCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DESTCTRL_S3D,1),GLuint);
-	WRITE_CMD( pBCIBase ,imesa->Registers.DestCtrl.ui,GLuint);
-    }
-    /* Better leave these alone. They don't seem to be needed and I
-     * don't know exactly what they ary good for. Changing them may
-     * have been responsible for lockups with texturing. */
-/*
-    if (imesa->Registers.changed.ni.fZWatermarksChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_ZWATERMARK_S3D,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ZWatermarks.ui,GLuint);
-    }
-    if (imesa->Registers.changed.ni.fDestTexWatermarksChanged)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DESTTEXRWWATERMARK_S3D,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DestTexWatermarks.ui,GLuint);
-    }
-*/
-    if (imesa->Registers.changed.ni.fDrawCtrlChanged)
-    {
-	/* Same as above. The utah-driver always sets these to true.
-	 * Changing them definitely caused lockups with texturing. */
-	imesa->Registers.DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
-	imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_DRAWCTRL_S3D,1),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.DrawCtrl.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fScissorsChanged)
+    if (imesa->scissorChanged)
     {
         if(imesa->scissor)
         {
-            imesa->Registers.ScissorsStart.ni.scissorXStart =
+            imesa->regs.s3d.scissorsStart.ni.scissorXStart =
 		imesa->scissor_rect.x1;
-            imesa->Registers.ScissorsStart.ni.scissorYStart =
+            imesa->regs.s3d.scissorsStart.ni.scissorYStart =
 		imesa->scissor_rect.y1;
-            imesa->Registers.ScissorsEnd.ni.scissorXEnd =
+            imesa->regs.s3d.scissorsEnd.ni.scissorXEnd =
 		imesa->scissor_rect.x2-1;
-            imesa->Registers.ScissorsEnd.ni.scissorYEnd =
+            imesa->regs.s3d.scissorsEnd.ni.scissorYEnd =
 		imesa->scissor_rect.y2-1;
         }
         else
         {
-            imesa->Registers.ScissorsStart.ni.scissorXStart =
+            imesa->regs.s3d.scissorsStart.ni.scissorXStart =
 		imesa->draw_rect.x1;
-            imesa->Registers.ScissorsStart.ni.scissorYStart =
+            imesa->regs.s3d.scissorsStart.ni.scissorYStart =
 		imesa->draw_rect.y1;
-            imesa->Registers.ScissorsEnd.ni.scissorXEnd =
+            imesa->regs.s3d.scissorsEnd.ni.scissorXEnd =
 		imesa->draw_rect.x2-1;
-            imesa->Registers.ScissorsEnd.ni.scissorYEnd =
+            imesa->regs.s3d.scissorsEnd.ni.scissorYEnd =
 		imesa->draw_rect.y2-1;
         }
-        
-        imesa->Registers.changed.ni.fScissorsStartChanged=GL_TRUE;
-        imesa->Registers.changed.ni.fScissorsEndChanged=GL_TRUE;
-    }
-    if (imesa->Registers.changed.uiRegistersChanged & 0x00C00000)
-    {
-        WRITE_CMD(pBCIBase , SET_REGISTER(SAVAGE_SCSTART_S3D,2),GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ScissorsStart.ui,GLuint);
-        WRITE_CMD(pBCIBase , imesa->Registers.ScissorsEnd.ui,GLuint);
     }
 
-    if (imesa->Registers.changed.ni.fTex0CtrlChanged)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXCTRL_S3D, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexCtrl[0].ui,GLuint);
+    /* Some temporary hacks to workaround lockups. Not sure if they are
+     * still needed. But they work for now. */
+    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
+
+    /* the savage3d uses two contiguous ranges of BCI registers:
+     * 0x18-0x1c and 0x20-0x38. The first range is local. */
+    if (imesa->lostContext || savageGlobalRegChanged (imesa, 0x20, 0x38)) {
+	pBCIBase = savageDMAAlloc (imesa, 1);
+        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, GLuint);
+	savageDMACommit (imesa, pBCIBase);
+    }
+    /* FIXME: watermark registers aren't programmed correctly ATM */
+    /* Emitting only changed registers introduces strange texturing errors
+     * on my SavageIX. Emit them all to be on the safe side.
+     * FIXME: might be smarter to emit all texture regs if one changed and
+     * all other regs independently, if one of them changed. */
+    if (1 || imesa->lostContext) {
+	savageEmitContiguousRegs (imesa, 0x18, 0x1c);
+	savageEmitContiguousRegs (imesa, 0x20, 0x36);
+    } else {
+	savageEmitChangedRegs (imesa, 0x18, 0x1c);
+	savageEmitChangedRegs (imesa, 0x20, 0x36);
     }
 
-    if (imesa->Registers.changed.ni.fFogCtrlChanged)
-    {
-        WRITE_CMD(pBCIBase,SET_REGISTER(SAVAGE_FOGCTRL_S3D, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.FogCtrl.ui,GLuint);
-    }
-
-    if (imesa->Registers.changed.ni.fTex0AddrChanged ||
-	imesa->Registers.changed.ni.fTexDescrChanged)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXADDR_S3D, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexAddr[0].ui,GLuint);
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXDESCR_S3D, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexDescr.ui,GLuint);
-        imesa->Registers.TexDescr.s3d.newPal = GL_FALSE;
-    }
-
-    if (imesa->Registers.changed.ni.fTexPalAddrChanged)
-    {
-        WRITE_CMD(pBCIBase, SET_REGISTER(SAVAGE_TEXPALADDR_S3D, 1),GLuint);
-        WRITE_CMD(pBCIBase, imesa->Registers.TexPalAddr.ui,GLuint);
-    }
-
-    imesa->Registers.changed.uiRegistersChanged = 0;
     imesa->dirty=0;
-    savageDMACommit (imesa, pBCIBase);
+    imesa->lostContext = GL_FALSE;
 }
 
 
@@ -2006,7 +1589,7 @@ void savageEmitHwStateLocked( savageContextPtr imesa )
                             SAVAGE_UPLOAD_TEX1 | SAVAGE_UPLOAD_BUFFERS))
         {
    
-            SAVAGE_STATE_COPY(imesa);
+            /*SAVAGE_STATE_COPY(imesa);*/
             /* update state to hw*/
             if (imesa->driDrawable &&imesa->driDrawable->numClipRects ==0 )
             {
@@ -2029,171 +1612,152 @@ void savageEmitHwStateLocked( savageContextPtr imesa )
 static void savageDDInitState_s4( savageContextPtr imesa )
 {
 #if 1
-    *(GLuint *)&imesa->Registers.DestCtrl          = 1<<7;
-#else
-    *(GLuint *)&imesa->Registers.DestCtrl          = 0;
+    imesa->regs.s4.destCtrl.ui          = 1<<7;
 #endif
-    *(GLuint *)&imesa->Registers.ZBufCtrl          = 0;
 
-    imesa->Registers.ZBufCtrl.s4.zCmpFunc = LCS_Z_LESS;
-    imesa->Registers.ZBufCtrl.s4.wToZEn               = GL_TRUE;
-    /*imesa->Registers.ZBufCtrl.ni.floatZEn          = GL_TRUE;*/
-    *(GLuint *)&imesa->Registers.ZBufOffset        = 0;
-    *(GLuint *)&imesa->Registers.FogCtrl           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[0]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[1]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[2]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[3]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[4]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[5]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[6]           = 0;
-    imesa->Registers.FogTable.ni.ulEntry[7]           = 0;
-    *(GLuint *)&imesa->Registers.TexDescr          = 0;
-    imesa->Registers.TexAddr[0].ui                 = 0;
-    imesa->Registers.TexAddr[1].ui                 = 0;
-    imesa->Registers.TexPalAddr.ui                 = 0;
-    *(GLuint *)&imesa->Registers.TexCtrl[0]        = 0;
-    *(GLuint *)&imesa->Registers.TexCtrl[1]        = 0;
-    imesa->Registers.TexBlendCtrl[0].ui            = TBC_NoTexMap;
-    imesa->Registers.TexBlendCtrl[1].ui            = TBC_NoTexMap1;
-    *(GLuint *)&imesa->Registers.DrawCtrl0         = 0;
-#if 1/*def __GL_HALF_PIXEL_OFFSET*/
-    *(GLuint *)&imesa->Registers.DrawCtrl1         = 0;
-#else
-    *(GLuint *)&imesa->Registers.DrawCtrl1         = 1<<11;
+    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_LESS;
+    imesa->regs.s4.zBufCtrl.ni.wToZEn               = GL_TRUE;
+    /*imesa->regs.s4.ZBufCtrl.ni.floatZEn          = GL_TRUE;*/
+    imesa->regs.s4.texBlendCtrl[0].ui            = TBC_NoTexMap;
+    imesa->regs.s4.texBlendCtrl[1].ui            = TBC_NoTexMap1;
+    imesa->regs.s4.drawCtrl0.ui         = 0;
+#if 0
+    imesa->regs.s4.drawCtrl1.ni.xyOffsetEn = 1;
 #endif
-    *(GLuint *)&imesa->Registers.DrawLocalCtrl     = 0;
-    *(GLuint *)&imesa->Registers.StencilCtrl       = 0;
 
     /* Set DestTexWatermarks_31,30 to 01 always.
      *Has no effect if dest. flush is disabled.
      */
 #if 0
-    *(GLuint *)&imesa->Registers.ZWatermarks       = 0x12000C04;
-    *(GLuint *)&imesa->Registers.DestTexWatermarks = 0x40200400;
+    imesa->regs.s4.zWatermarks.ui       = 0x12000C04;
+    imesa->regs.s4.destTexWatermarks.ui = 0x40200400;
 #else
-    *(GLuint *)&imesa->Registers.ZWatermarks       = 0x16001808;
-    *(GLuint *)&imesa->Registers.DestTexWatermarks = 0x4f000000;
+    imesa->regs.s4.zWatermarks.ui       = 0x16001808;
+    imesa->regs.s4.destTexWatermarks.ui = 0x4f000000;
 #endif
-    imesa->Registers.DrawCtrl0.ni.DPerfAccelEn = GL_TRUE;
+    imesa->regs.s4.drawCtrl0.ni.dPerfAccelEn = GL_TRUE;
 
     /* clrCmpAlphaBlendCtrl is needed to get alphatest and
      * alpha blending working properly
      */
 
-    imesa->Registers.TexCtrl[0].s4.dBias                 = 0x08;
-    imesa->Registers.TexCtrl[1].s4.dBias                 = 0x08;
-    imesa->Registers.TexCtrl[0].s4.texXprEn              = GL_TRUE;
-    imesa->Registers.TexCtrl[1].s4.texXprEn              = GL_TRUE;
-    imesa->Registers.TexCtrl[0].s4.dMax                  = 0x0f;
-    imesa->Registers.TexCtrl[1].s4.dMax                  = 0x0f;
-    imesa->Registers.DrawLocalCtrl.ni.drawUpdateEn     = GL_TRUE;
-    imesa->Registers.DrawLocalCtrl.ni.srcAlphaMode    = SAM_One;
-    imesa->Registers.DrawLocalCtrl.ni.wrZafterAlphaTst = GL_FALSE;
-    imesa->Registers.DrawLocalCtrl.ni.flushPdZbufWrites= GL_TRUE;
-    imesa->Registers.DrawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
+    imesa->regs.s4.texCtrl[0].ni.dBias                 = 0x08;
+    imesa->regs.s4.texCtrl[1].ni.dBias                 = 0x08;
+    imesa->regs.s4.texCtrl[0].ni.texXprEn              = GL_TRUE;
+    imesa->regs.s4.texCtrl[1].ni.texXprEn              = GL_TRUE;
+    imesa->regs.s4.texCtrl[0].ni.dMax                  = 0x0f;
+    imesa->regs.s4.texCtrl[1].ni.dMax                  = 0x0f;
+    imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn     = GL_TRUE;
+    imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode    = SAM_One;
+    imesa->regs.s4.drawLocalCtrl.ni.wrZafterAlphaTst = GL_FALSE;
+    imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites= GL_TRUE;
+    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites= GL_TRUE;
 
-    imesa->Registers.DrawLocalCtrl.ni.zUpdateEn= GL_TRUE;
-    imesa->Registers.DrawCtrl1.ni.ditherEn=GL_TRUE;
-    imesa->Registers.DrawCtrl1.ni.cullMode             = BCM_None;
+    imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn= GL_TRUE;
+    imesa->regs.s4.drawCtrl1.ni.ditherEn=GL_TRUE;
+    imesa->regs.s4.drawCtrl1.ni.cullMode             = BCM_None;
 
     imesa->LcsCullMode=BCM_None;
-    imesa->Registers.TexDescr.s4.palSize               = TPS_256;
+    imesa->regs.s4.texDescr.ni.palSize               = TPS_256;
+
+    /* clear the local registers in the global reg mask */
+    imesa->globalRegMask.s4.drawLocalCtrl.ui   = 0;
+    imesa->globalRegMask.s4.texPalAddr.ui      = 0;
+    imesa->globalRegMask.s4.texCtrl[0].ui      = 0;
+    imesa->globalRegMask.s4.texCtrl[1].ui      = 0;
+    imesa->globalRegMask.s4.texAddr[0].ui      = 0;
+    imesa->globalRegMask.s4.texAddr[1].ui      = 0;
+    imesa->globalRegMask.s4.texBlendCtrl[0].ui = 0;
+    imesa->globalRegMask.s4.texBlendCtrl[1].ui = 0;
+    imesa->globalRegMask.s4.texXprClr.ui       = 0;
+    imesa->globalRegMask.s4.texDescr.ui        = 0;
 }
 static void savageDDInitState_s3d( savageContextPtr imesa )
 {
 #if 1
-    imesa->Registers.DestCtrl.ui           = 1<<7;
-#else
-    imesa->Registers.DestCtrl.ui           = 0;
+    imesa->regs.s3d.destCtrl.ui           = 1<<7;
 #endif
-    imesa->Registers.ZBufCtrl.ui           = 0;
 
-    imesa->Registers.ZBufCtrl.s3d.zCmpFunc = LCS_Z_LESS & 0x07;
-    imesa->Registers.ZBufOffset.ui         = 0;
-    imesa->Registers.FogCtrl.ui            = 0;
-    memset (imesa->Registers.FogTable.ni.ucEntry, 0, 64);
-    imesa->Registers.TexDescr.ui           = 0;
-    imesa->Registers.TexAddr[0].ui         = 0;
-    imesa->Registers.TexPalAddr.ui         = 0;
-    imesa->Registers.TexCtrl[0].ui         = 0;
-#if 1/*def __GL_HALF_PIXEL_OFFSET*/
-    imesa->Registers.DrawCtrl.ui           = 0;
-#else
-    imesa->Registers.DrawCtrl.ui           = 1<<1;
+    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc  = LCS_Z_LESS & 0x07;
+#if 0
+    imesa->regs.s3d.drawCtrl.ni.xyOffsetEn = 1;
 #endif
-    imesa->Registers.ScissorsStart.ui      = 0;
-    imesa->Registers.ScissorsEnd.ui        = 0;
 
     /* Set DestTexWatermarks_31,30 to 01 always.
      *Has no effect if dest. flush is disabled.
      */
 #if 0
-    imesa->Registers.ZWatermarks.ui       = 0x12000C04;
-    imesa->Registers.DestTexWatermarks.ui = 0x40200400;
+    imesa->regs.s3d.zWatermarks.ui       = 0x12000C04;
+    imesa->regs.s3d.destTexWatermarks.ui = 0x40200400;
 #else
-    imesa->Registers.ZWatermarks.ui       = 0x16001808;
-    imesa->Registers.DestTexWatermarks.ui = 0x4f000000;
+    imesa->regs.s3d.zWatermarks.ui       = 0x16001808;
+    imesa->regs.s3d.destTexWatermarks.ui = 0x4f000000;
 #endif
 
     /* clrCmpAlphaBlendCtrl is needed to get alphatest and
      * alpha blending working properly
      */
 
-    imesa->Registers.TexCtrl[0].s3d.dBias          = 0x08;
-    imesa->Registers.TexCtrl[0].s3d.texXprEn       = GL_TRUE;
+    imesa->regs.s3d.texCtrl.ni.dBias          = 0x08;
+    imesa->regs.s3d.texCtrl.ni.texXprEn       = GL_TRUE;
 
-    imesa->Registers.ZBufCtrl.s3d.drawUpdateEn     = GL_TRUE;
-    imesa->Registers.ZBufCtrl.s3d.wrZafterAlphaTst = GL_FALSE;
-    imesa->Registers.ZBufCtrl.s3d.zUpdateEn        = GL_TRUE;
+    imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn     = GL_TRUE;
+    imesa->regs.s3d.zBufCtrl.ni.wrZafterAlphaTst = GL_FALSE;
+    imesa->regs.s3d.zBufCtrl.ni.zUpdateEn        = GL_TRUE;
 
-    imesa->Registers.DrawCtrl.ni.srcAlphaMode      = SAM_One;
-    imesa->Registers.DrawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-    imesa->Registers.DrawCtrl.ni.flushPdDestWrites = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.srcAlphaMode      = SAM_One;
+    imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
 
-    imesa->Registers.DrawCtrl.ni.ditherEn          = GL_TRUE;
-    imesa->Registers.DrawCtrl.ni.cullMode          = BCM_None;
+    imesa->regs.s3d.drawCtrl.ni.ditherEn          = GL_TRUE;
+    imesa->regs.s3d.drawCtrl.ni.cullMode          = BCM_None;
 
     imesa->LcsCullMode = BCM_None;
-    imesa->Registers.TexDescr.s3d.palSize          = TPS_256;
+    imesa->regs.s3d.texDescr.ni.palSize          = TPS_256;
+
+    /* on savage3d all registers are global for now */
 }
 void savageDDInitState( savageContextPtr imesa ) {
-    volatile GLuint* pBCIBase;
+    memset (imesa->regs.ui, 0, SAVAGE_NR_REGS*sizeof(GLuint));
+    memset (imesa->oldRegs.ui, 0, SAVAGE_NR_REGS*sizeof(GLuint));
+    memset (imesa->globalRegMask.ui, 0xff, SAVAGE_NR_REGS*sizeof(GLuint));
     if (imesa->savageScreen->chipset >= S3_SAVAGE4)
 	savageDDInitState_s4 (imesa);
     else
 	savageDDInitState_s3d (imesa);
 
     /*fprintf(stderr,"DBflag:%d\n",imesa->glCtx->Visual->DBflag);*/
-    imesa->Registers.DestCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
+    /* zbufoffset and destctrl have the same position and layout on
+     * savage4 and savage3d. */
+    imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
     if(imesa->savageScreen->cpp == 2)
     {
-        imesa->Registers.DestCtrl.ni.dstPixFmt = 0;
-        imesa->Registers.DestCtrl.ni.dstWidthInTile =
+        imesa->regs.s4.destCtrl.ni.dstPixFmt = 0;
+        imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+63)>>6;
     }
     else
     {
-        imesa->Registers.DestCtrl.ni.dstPixFmt = 1;
-        imesa->Registers.DestCtrl.ni.dstWidthInTile =
+        imesa->regs.s4.destCtrl.ni.dstPixFmt = 1;
+        imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+31)>>5;
     }
 
     imesa->IsDouble = GL_TRUE;
 
     imesa->NotFirstFrame = GL_FALSE;
-    imesa->Registers.ZBufOffset.ni.offset=imesa->savageScreen->depthOffset>>11;
+    imesa->regs.s4.zBufOffset.ni.offset=imesa->savageScreen->depthOffset>>11;
     if(imesa->savageScreen->zpp == 2)
     {
-        imesa->Registers.ZBufOffset.ni.zBufWidthInTiles = 
+        imesa->regs.s4.zBufOffset.ni.zBufWidthInTiles = 
             (imesa->savageScreen->width+63)>>6;
-        imesa->Registers.ZBufOffset.ni.zDepthSelect = 0;
+        imesa->regs.s4.zBufOffset.ni.zDepthSelect = 0;
     }
     else
     {   
-        imesa->Registers.ZBufOffset.ni.zBufWidthInTiles = 
+        imesa->regs.s4.zBufOffset.ni.zBufWidthInTiles = 
             (imesa->savageScreen->width+31)>>5;
-        imesa->Registers.ZBufOffset.ni.zDepthSelect = 1;      
+        imesa->regs.s4.zBufOffset.ni.zDepthSelect = 1;      
     }
  
     if (imesa->glCtx->Color._DrawDestMask == BACK_LEFT_BIT) {
@@ -2225,96 +1789,6 @@ void savageDDInitState( savageContextPtr imesa ) {
             imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
         }
     }
-
-#if 0
-    if(imesa->driDrawable)
-    {
-        LOCK_HARDWARE(imesa);
-    }
-    pBCIBase=SAVAGE_GET_BCI_POINTER(imesa,38);	
-    *pBCIBase++ = WAIT_3D_IDLE;
-    pBCIBase[0] = SET_REGISTER(DST,1);
-    pBCIBase[1] = imesa->Registers.DestCtrl.ui;	
-    pBCIBase+=2;
-   	
-    pBCIBase[0] = SET_REGISTER(ZBUFCTRL,1);
-    pBCIBase[1] = imesa->Registers.ZBufCtrl.ui;	
-    pBCIBase+=2;
-
-    pBCIBase[0] = SET_REGISTER(ZBUFOFF,1);
-    pBCIBase[1] = imesa->Registers.ZBufOffset.ui;	
-    pBCIBase+=2;
-  
-    pBCIBase[0] = SET_REGISTER(FOGCTRL,1);
-    pBCIBase[1] = imesa->Registers.FogCtrl.ui;	
-    pBCIBase+=2;
-  
-  
-    pBCIBase[0] = SET_REGISTER(FOGTABLE,8);
-    memcpy((GLvoid *)(pBCIBase+1),(GLvoid *)imesa->Registers.FogTable.ni.ulEntry,32);
-    pBCIBase+=9;
-
-    pBCIBase[0] = SET_REGISTER(DRAWLOCALCTRL,1);
-    pBCIBase[1] = imesa->Registers.DrawLocalCtrl.ui;	
-    pBCIBase+=2;
-   
-    pBCIBase[0] = SET_REGISTER(DRAWCTRLGLOBAL0,2);
-    pBCIBase[1] = imesa->Registers.DrawCtrl0.ui;	
-    pBCIBase[2] = imesa->Registers.DrawCtrl1.ui;	
-    pBCIBase+=3;
-
-   
-    pBCIBase[0] = SET_REGISTER(TEXPALADDR,1);
-    pBCIBase[1] = imesa->Registers.TexPalAddr.ui;	
-    pBCIBase+=2;
-
-
-    pBCIBase[0] = SET_REGISTER(TEXCTRL0,6);
-    pBCIBase[1] = imesa->Registers.TexCtrl[0].ui;	
-    pBCIBase[2] = imesa->Registers.TexCtrl[1].ui;	
-   
-    pBCIBase[3] = imesa->Registers.TexAddr[0].ui;	
-    pBCIBase[4] = imesa->Registers.TexAddr[1].ui;	
-    pBCIBase[5] = imesa->Registers.TexBlendCtrl[0].ui;	
-    pBCIBase[6] = imesa->Registers.TexBlendCtrl[1].ui;	
-    pBCIBase+=7;
-   
-    pBCIBase[0] = SET_REGISTER(TEXDESCR,1);
-    pBCIBase[1] = imesa->Registers.TexDescr.ui;	
-    pBCIBase+=2;
-
-
-    pBCIBase[0] = SET_REGISTER(STENCILCTRL,1);
-    pBCIBase[1] = imesa->Registers.StencilCtrl.ui;	
-    pBCIBase+=2;
-
-    pBCIBase[0] = SET_REGISTER(ZWATERMARK,1);
-    pBCIBase[1] = imesa->Registers.ZWatermarks.ui;	
-    pBCIBase+=2;
-
-    pBCIBase[0] = SET_REGISTER(DESTTEXRWWATERMARK,1);
-    pBCIBase[1] = imesa->Registers.DestTexWatermarks.ui;	
-    pBCIBase+=2;
-   
-    if(imesa->driDrawable)
-    {
-        UNLOCK_HARDWARE(imesa);
-    }
-#else
-    if(imesa->driDrawable)
-        LOCK_HARDWARE(imesa);
-
-    /* This is the only reg that is not emitted in savageUpdateRegisters.
-     * FIXME: Should this be set by the Xserver? */
-    pBCIBase = SAVAGE_GET_BCI_POINTER(imesa,3);
-    *pBCIBase++ = WAIT_3D_IDLE;
-    *pBCIBase++ = SET_REGISTER(SAVAGE_ZBUFOFF_S4,1); /* The same on S3D. */
-    *pBCIBase++ = imesa->Registers.ZBufOffset.ui;
-
-    if(imesa->driDrawable)
-        UNLOCK_HARDWARE(imesa);
-    imesa->Registers.changed.uiRegistersChanged = ~0;
-#endif
 }
 
 

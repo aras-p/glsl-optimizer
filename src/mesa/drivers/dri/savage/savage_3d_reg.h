@@ -47,11 +47,11 @@ typedef union
         unsigned int ofs      : 28;
     }ni;
     unsigned int ui;
-} Reg_ZPixelOffset;
+} savageRegZPixelOffset;
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int cmpFunc     :  3;
@@ -64,14 +64,14 @@ typedef union
         unsigned int reserved    :  3;
     }ni;
     unsigned int ui;
-} Reg_StencilCtrl;
+} savageRegStencilCtrl;
 
 /**************************
  Texture Registers
 **************************/
+/* The layout of this reg differs between Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg differs between Savage4 and Savage3D. */
     struct
     {
         unsigned int tex0Width  : 4;
@@ -87,7 +87,11 @@ typedef union
         unsigned int reserved   : 1;
         unsigned int palSize    : 2;
         unsigned int newPal     : 1;
-    }s4;
+    }ni;
+    unsigned int ui;
+} savageRegTexDescr_s4;
+typedef union
+{
     struct
     {
         unsigned int texWidth  : 4;
@@ -100,14 +104,14 @@ typedef union
         unsigned int palSize   : 2;
         unsigned int reserved3 : 10;
         unsigned int newPal    : 1;
-    }s3d;
+    }ni;
     unsigned int ui;
-} Reg_TexDescr;
+} savageRegTexDescr_s3d;
 
+/* The layout of this reg is the same on Savage4 and Savage3D,
+   but the Savage4 has two of them, Savage3D has only one. */
 typedef union
 {
-    /* The layout of this reg is the same on Savage4 and Savage3D,
-       but the Savage4 has two of them, Savage3D has only one. */
     struct
     {
         unsigned int inSysTex : 1;
@@ -116,35 +120,34 @@ typedef union
         unsigned int addr     : 29;
     }ni;
     unsigned int ui;
-} Reg_TexAddr;
+} savageRegTexAddr;
 
+/* The layout of this reg is the same on Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg is the same on Savage4 and Savage3D,
-       but the Savage4 has two of them, Savage3D has only one. */
     struct
     {
         unsigned int reserved : 3;
         unsigned int addr     : 29;
     }ni;
     unsigned int ui;
-} Reg_TexPalAddr;
+} savageRegTexPalAddr;
 
+/* The layout of this reg on Savage4 and Savage3D are very similar. */
 typedef union
 {
-    /* The layout of this reg on Savage4 and Savage3D are very similar. */
     struct
     {
         unsigned int xprClr0 : 16;
         unsigned int xprClr1 : 16; /* this is reserved on Savage3D */
     }ni;
     unsigned int ui;
-} Reg_TexXprClr;   /* transparency color in RGB565 format*/
+} savageRegTexXprClr;   /* transparency color in RGB565 format*/
 
+/* The layout of this reg differs between Savage4 and Savage3D.
+ * Savage4 has two of them, Savage3D has only one. */
 typedef union
 {
-    /* The layout of this reg differs between Savage4 and Savage3D.
-     * Savage4 has two of them, Savage3D has only one. */
     struct
     {
         unsigned int filterMode         : 2;
@@ -163,7 +166,11 @@ typedef union
         unsigned int alphaBlendAlphaSel : 2;
         unsigned int alphaArg1Invert    : 1;
         unsigned int alphaArg2Invert    : 1;
-    }s4;
+    }ni;
+    unsigned int ui;
+} savageRegTexCtrl_s4;
+typedef union
+{
     struct
     {
         unsigned int filterMode    : 2;
@@ -182,13 +189,13 @@ typedef union
         unsigned int CCA           : 1;
         unsigned int texXprEn      : 1;
         unsigned int reserved2     : 11;
-    }s3d;
+    }ni;
     unsigned int ui;
-} Reg_TexCtrl;
+} savageRegTexCtrl_s3d;
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int colorArg1Sel    : 2;
@@ -215,11 +222,11 @@ typedef union
         unsigned int LeftShiftVal    : 2;
     }ni;
     unsigned int ui;
-} Reg_TexBlendCtrl;
+} savageRegTexBlendCtrl;
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int blue  : 8;
@@ -228,7 +235,7 @@ typedef union
         unsigned int alpha : 8;
     }ni;
     unsigned int ui;
-} Reg_TexBlendColor;
+} savageRegTexBlendColor;
 
 /********************************
  Tiled Surface Registers
@@ -244,32 +251,32 @@ typedef union
         unsigned int bitPerPixel  : 1;
     }ni;
     unsigned int ui;
-} Reg_TiledSurface;
+} savageRegTiledSurface;
 
 /********************************
  Draw/Shading Control Registers
 **********************************/
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int scissorXStart : 11;
-        unsigned int DPerfAccelEn  : 1;
+        unsigned int dPerfAccelEn  : 1;
         unsigned int scissorYStart : 12;
         unsigned int alphaRefVal   : 8;
     }ni;
     unsigned int ui;
-} Reg_DrawCtrl0;
+} savageRegDrawCtrl0;
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int scissorXEnd      : 11;
-        unsigned int XYOffsetEn       :  1;
+        unsigned int xyOffsetEn       :  1;
         unsigned int scissorYEnd      : 12;
         unsigned int ditherEn         :  1;
         unsigned int nonNormTexCoord  :  1;
@@ -278,15 +285,15 @@ typedef union
         unsigned int alphaTestEn      :  1;
     }ni;
     unsigned int ui;
-} Reg_DrawCtrl1;
+} savageRegDrawCtrl1;
 
+/* This reg exists only on Savage4. */
 typedef union
 {
-    /* This reg exists only on Savage4. */
     struct
     {
         unsigned int dstAlphaMode        :  3;
-        unsigned int DstMinusSrc         :  1;
+        unsigned int dstMinusSrc         :  1;
         unsigned int srcAlphaMode        :  3;
         unsigned int binaryFinalAlpha    :  1;
         unsigned int dstAlphaModeHighBit :  1;
@@ -301,15 +308,15 @@ typedef union
         unsigned int flushPdZbufWrites   :  1;
     }ni;
     unsigned int ui;
-} Reg_DrawLocalCtrl;
+} savageRegDrawLocalCtrl;
 
+/* This reg exists only on Savage3D. */
 typedef union
 {
-    /* This reg exists only on Savage3D. */
     struct
     {
         unsigned int ditherEn          : 1;
-        unsigned int XYOffsetEn        : 1;
+        unsigned int xyOffsetEn        : 1;
         unsigned int cullMode          : 2;
         unsigned int vertexCountReset  : 1;
         unsigned int flatShadeEn       : 1;
@@ -327,7 +334,7 @@ typedef union
         unsigned int interpMode        : 1;
     }ni;
     unsigned int ui;
-} Reg_DrawCtrl;
+} savageRegDrawCtrl;
 
 #define SAVAGETBC_DECAL_S3D                     0
 #define SAVAGETBC_MODULATE_S3D                  1
@@ -338,9 +345,9 @@ typedef union
 #define SAVAGETBC_COPY_S3D                      6
 #define SAVAGETBC_7_S3D                         7
 
+/* This reg exists only on Savage3D. */
 typedef union
 {
-    /* This reg exists only on Savage3D. */
     struct
     {
         unsigned int scissorXStart : 11;
@@ -349,11 +356,11 @@ typedef union
 	unsigned int reserved2     : 5;
     } ni;
     unsigned int ui;
-} Reg_ScissorsStart;
+} savageRegScissorsStart;
 
+/* This reg exists only on Savage3D. */
 typedef union
 {
-    /* This reg exists only on Savage3D. */
     struct
     {
         unsigned int scissorXEnd : 11;
@@ -362,17 +369,17 @@ typedef union
 	unsigned int reserved2   : 5;
     } ni;
     unsigned int ui;
-} Reg_ScissorsEnd;
+} savageRegScissorsEnd;
 
 /********************************
  Address Registers
 **********************************/
 
+/* I havn't found a Savage3D equivalent of this reg in the Utah-driver. 
+ * But Tim Roberts claims that the Savage3D supports DMA vertex and
+ * command buffers. */
 typedef union
 {
-    /* I havn't found a Savage3D equivalent of this reg in the Utah-driver. 
-     * But Tim Roberts claims that the Savage3D supports DMA vertex and
-     * command buffers. */
     struct
     {
         unsigned int isSys    : 1;
@@ -381,13 +388,13 @@ typedef union
         unsigned int addr     : 29; /*quad word aligned*/
     }ni;
     unsigned int ui;
-} Reg_VertBufAddr;
+} savageRegVertBufAddr;
 
+/* I havn't found a Savage3D equivalent of this reg in the Utah-driver. 
+ * But Tim Roberts claims that the Savage3D supports DMA vertex and
+ * command buffers. */
 typedef union
 {
-    /* I havn't found a Savage3D equivalent of this reg in the Utah-driver. 
-     * But Tim Roberts claims that the Savage3D supports DMA vertex and
-     * command buffers. */
     struct
     {
         unsigned int isSys    : 1;
@@ -396,14 +403,14 @@ typedef union
         unsigned int addr     : 29; /*4-quad word aligned*/
     }ni;
     unsigned int ui;
-} Reg_DMABufAddr;
+} savageRegDMABufAddr;
 
 /********************************
  H/W Debug Registers
 **********************************/
+/* The layout of this reg is the same on Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg is the same on Savage4 and Savage3D. */
     struct
     {
         unsigned int y01        : 1;
@@ -424,15 +431,15 @@ typedef union
         unsigned int kickOff    : 1;
     }ni;
     unsigned int ui;
-} Reg_Flag;
+} savageRegFlag;
 
 /********************************
  Z Buffer Registers -- Global
 **********************************/
 
+/* The layout of this reg differs between Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg differs between Savage4 and Savage3D. */
     struct
     {
         unsigned int zCmpFunc      : 3;
@@ -447,7 +454,11 @@ typedef union
         unsigned int reserved4     : 4;
         unsigned int floatZEn      : 1;
         unsigned int wToZEn        : 1;
-    }s4;
+    }ni;
+    unsigned int ui;
+} savageRegZBufCtrl_s4;
+typedef union
+{
     struct {
         unsigned int zCmpFunc         : 3;
         unsigned int drawUpdateEn     : 1;
@@ -457,13 +468,13 @@ typedef union
         unsigned int zExpOffset       : 8;
         unsigned int wrZafterAlphaTst : 1;
         unsigned int reserved2        : 15;
-    }s3d;
-    GLuint ui;
-}Reg_ZBufCtrl;
+    }ni;
+    unsigned int ui;
+} savageRegZBufCtrl_s3d;
 
+/* The layout of this reg on Savage4 and Savage3D is very similar. */
 typedef union
 {
-    /* The layout of this reg on Savage4 and Savage3D are very similar. */
     struct
     {
 	/* In the Utah-Driver the offset is defined as 13-bit, 2k-aligned. */
@@ -473,11 +484,11 @@ typedef union
         unsigned int zDepthSelect     : 1;
     }ni;
     unsigned int ui;
-} Reg_ZBufOffset;
+} savageRegZBufOffset;
 
+/* The layout of this reg is the same on Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg is the same on Savage4 and Savage3D. */
     struct
     {
         unsigned int rLow      : 6;
@@ -490,14 +501,14 @@ typedef union
         unsigned int reserved4 : 2;
     }ni;
     unsigned int ui;
-} Reg_ZWatermarks;
+} savageRegZWatermarks;
 
 /********************************
  Fog Registers -- Global
 **********************************/
+/* The layout of this reg is the same on Savage4 and Savage3D. */
 typedef union
 {
-    /* The layout of this reg is the same on Savage4 and Savage3D. */
     struct
     {
         unsigned int fogClr      : 24;
@@ -508,18 +519,7 @@ typedef union
         unsigned int fogEndShift : 2;
     }ni;
     unsigned int ui;
-}Reg_FogCtrl;
-
-typedef struct
-{
-    /* According to the Utah-driver the fog table has 64 entries on
-       Savage3D. Savage4 uses only 32 entries. */
-    union
-    {
-        unsigned char ucEntry[64];
-        uint32 ulEntry[16];
-    }ni;
-} Reg_FogTable;
+} savageRegFogCtrl;
 
 /*not in spec, but tempo for pp and driver*/
 typedef union
@@ -530,15 +530,15 @@ typedef union
         unsigned int fogStart   : 16;
     }ni;
     unsigned int ui;
-}Reg_FogParam;
+} savageRegFogParam;
 
 /**************************************
  Destination Buffer Registers -- Global
 ***************************************/
 
+/* The layout of this reg on Savage4 and Savage3D are very similar. */
 typedef union
 {
-    /* The layout of this reg on Savage4 and Savage3D are very similar. */
     struct
     {
         unsigned int dstWidthInTile :  7;
@@ -549,16 +549,16 @@ typedef union
 	/* antiAliasMode does not exist in the Utah-driver. But it includes the
 	 * high bit of this in the destPixFmt. However, only values 0 and 2
 	 * are used as dstPixFmt, so antiAliasMode is effectively always 0
-	 * in the Utah-driver. In other words, treat as reserved on SavageIX.*/
+	 * in the Utah-driver. In other words, treat as reserved on Savage3D.*/
         unsigned int antiAliasMode  :  2;
         unsigned int dstPixFmt      :  1;
     }ni;
     unsigned int ui;
-}Reg_DestCtrl;
+} savageRegDestCtrl;
 
+/* The layout of this reg on Savage4 and Savage3D are very similar. */
 typedef union
 {
-    /* The layout of this reg on Savage4 and Savage3D are very similar. */
     struct
     {
         unsigned int destReadLow   : 6;
@@ -573,85 +573,7 @@ typedef union
         unsigned int destFlush     : 2;
     }ni;
     unsigned int ui;
-}Reg_DestTexWatermarks;
-
-typedef struct _REGISTERS_
-{
-    union
-    {
-        struct
-        {
-            unsigned int fDrawLocalCtrlChanged     : 1;
-            unsigned int fTexPalAddrChanged        : 1;
-            unsigned int fTex0CtrlChanged          : 1;
-            unsigned int fTex1CtrlChanged          : 1;
-
-            unsigned int fTex0AddrChanged          : 1;
-            unsigned int fTex1AddrChanged          : 1;
-            unsigned int fTex0BlendCtrlChanged     : 1;
-            unsigned int fTex1BlendCtrlChanged     : 1;
-
-            unsigned int fTexXprClrChanged         : 1;
-            unsigned int fTexDescrChanged          : 1;
-            unsigned int fFogTableChanged          : 1;
-            unsigned int fFogCtrlChanged           : 1;
-
-            unsigned int fStencilCtrlChanged       : 1;
-            unsigned int fZBufCtrlChanged          : 1;
-            unsigned int fZBufOffsetChanged        : 1;
-            unsigned int fDestCtrlChanged          : 1;
-
-            unsigned int fDrawCtrl0Changed         : 1;
-            unsigned int fDrawCtrl1Changed         : 1;
-            unsigned int fZWatermarksChanged       : 1;
-            unsigned int fDestTexWatermarksChanged : 1;
-
-            unsigned int fTexBlendColorChanged     : 1;
-            unsigned int fDrawCtrlChanged          : 1;
-            unsigned int fScissorsStartChanged     : 1;
-            unsigned int fScissorsEndChanged       : 1;
-
-	    unsigned int fScissorsChanged          : 1; /* doesn't correspond to
-							   a real register. */
-
-            unsigned int fReserved                 : 7;
-	}ni;
-        GLuint uiRegistersChanged;
-    }changed;
-
-    Reg_DrawLocalCtrl      DrawLocalCtrl;      /* Savage4 only */
-
-    Reg_TexPalAddr         TexPalAddr;
-    Reg_TexCtrl            TexCtrl[2];         /* Savage3D uses only one */
-    Reg_TexAddr            TexAddr[2];         /* Savage3D uses only one */
-    Reg_TexBlendCtrl       TexBlendCtrl[2];    /* Savage4 only */
-
-    Reg_TexXprClr          TexXprClr;
-    Reg_TexDescr           TexDescr;
-
-    Reg_FogTable           FogTable;           /* Savage4 uses only 32 entries */
-
-    Reg_FogCtrl            FogCtrl;
-
-    Reg_StencilCtrl        StencilCtrl;        /* Savage4 only */
-    Reg_ZBufCtrl           ZBufCtrl;
-    Reg_ZBufOffset         ZBufOffset;
-    Reg_DestCtrl           DestCtrl;
-    Reg_DrawCtrl0          DrawCtrl0;          /* Savage4 only */
-    Reg_DrawCtrl1          DrawCtrl1;          /* Savage4 only */
-    Reg_ZWatermarks        ZWatermarks;
-    Reg_DestTexWatermarks  DestTexWatermarks;
-    Reg_TexBlendColor      TexBlendColor;      /* Savage4 only */
-
-    Reg_DrawCtrl           DrawCtrl;           /* Savage3D only */
-    Reg_ScissorsStart      ScissorsStart;      /* Savage3D only */
-    Reg_ScissorsEnd        ScissorsEnd;        /* Savage3D only */
-} REGISTERS;
-
-/* All registers that affect textures */
-#define SAVAGE_TEXTURE_CHANGED 0x000002FE
-/* Engine must be idle when global registers are changed */
-#define SAVAGE_GLOBAL_CHANGED  0x00FFFC00
+} savageRegDestTexWatermarks;
 
 /* Savage4/Twister/ProSavage register BCI addresses */
 #define SAVAGE_DRAWLOCALCTRL_S4       0x1e
@@ -691,6 +613,55 @@ typedef struct _REGISTERS_
 #define SAVAGE_SCEND_S3D              0x36
 #define SAVAGE_ZWATERMARK_S3D         0x37 
 #define SAVAGE_DESTTEXRWWATERMARK_S3D 0x38
+
+#define SAVAGE_FIRST_REG 0x18
+#define SAVAGE_NR_REGS   34
+typedef struct savage_registers_s4_t {
+    unsigned int               unused1[6];        /* 0x18-0x1d */
+    savageRegDrawLocalCtrl     drawLocalCtrl;     /* 0x1e */
+    savageRegTexPalAddr        texPalAddr;        /* 0x1f */
+    savageRegTexCtrl_s4        texCtrl[2];        /* 0x20, 0x21 */
+    savageRegTexAddr           texAddr[2];        /* 0x22, 0x23 */
+    savageRegTexBlendCtrl      texBlendCtrl[2];   /* 0x24, 0x25 */
+    savageRegTexXprClr         texXprClr;         /* 0x26 */
+    savageRegTexDescr_s4       texDescr;          /* 0x27 */
+    unsigned char              fogTable[32];      /* 0x28-0x2f (8dwords) */
+    savageRegFogCtrl           fogCtrl;           /* 0x30 */
+    savageRegStencilCtrl       stencilCtrl;       /* 0x31 */
+    savageRegZBufCtrl_s4       zBufCtrl;          /* 0x32 */
+    savageRegZBufOffset        zBufOffset;        /* 0x33 */
+    savageRegDestCtrl          destCtrl;          /* 0x34 */
+    savageRegDrawCtrl0         drawCtrl0;         /* 0x35 */
+    savageRegDrawCtrl1         drawCtrl1;         /* 0x36 */
+    savageRegZWatermarks       zWatermarks;       /* 0x37 */
+    savageRegDestTexWatermarks destTexWatermarks; /* 0x38 */
+    savageRegTexBlendColor     texBlendColor;     /* 0x39 */
+} savageRegistersS4;
+typedef struct savage_registers_s3d_t {
+    savageRegTexPalAddr        texPalAddr;        /* 0x18 */
+    savageRegTexXprClr         texXprClr;         /* 0x19 */
+    savageRegTexAddr           texAddr;           /* 0x1a */
+    savageRegTexDescr_s3d      texDescr;          /* 0x1b */
+    savageRegTexCtrl_s3d       texCtrl;           /* 0x1c */
+    unsigned int               unused1[3];        /* 0x1d-0x1f */
+    unsigned char              fogTable[64];      /* 0x20-0x2f (16dwords) */
+    savageRegFogCtrl           fogCtrl;           /* 0x30 */
+    savageRegDrawCtrl          drawCtrl;          /* 0x31 */
+    savageRegZBufCtrl_s3d      zBufCtrl;          /* 0x32 */
+    savageRegZBufOffset        zBufOffset;        /* 0x33 */
+    savageRegDestCtrl          destCtrl;          /* 0x34 */
+    savageRegScissorsStart     scissorsStart;     /* 0x35 */
+    savageRegScissorsEnd       scissorsEnd;       /* 0x36 */
+    savageRegZWatermarks       zWatermarks;       /* 0x37 */
+    savageRegDestTexWatermarks destTexWatermarks; /* 0x38 */
+    unsigned int               unused2;           /* 0x39 */
+} savageRegistersS3D;
+typedef union savage_registers_t {
+    savageRegistersS4  s4;
+    savageRegistersS3D s3d;
+    unsigned int       ui[SAVAGE_NR_REGS];
+} savageRegisters;
+
 
 #define DV_PF_555           (0x1<<8)
 #define DV_PF_565           (0x2<<8)

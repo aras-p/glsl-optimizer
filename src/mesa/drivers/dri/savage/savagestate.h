@@ -33,9 +33,9 @@ extern void savageDDInitState( savageContextPtr imesa );
 extern void savageDDInitStateFuncs( GLcontext *ctx );
 extern void savageDDRenderStart(GLcontext *ctx);
 extern void savageDDRenderEnd(GLcontext *ctx);
-extern void savageDDScissor( GLcontext *ctx, GLint x, GLint y,GLsizei w, GLsizei h );
 
 /*frank 2001/11/13 add macro for sarea state copy*/
+#if 0
 #define SAVAGE_STATE_COPY(ctx) { \
 ctx->sarea->setup[0]=ctx->Registers.DrawLocalCtrl.ui; \
 ctx->sarea->setup[1]=ctx->Registers.TexPalAddr.ui; \
@@ -66,4 +66,5 @@ ctx->sarea->setup[25]=ctx->Registers.ZWatermarks.ui; \
 ctx->sarea->setup[26]=ctx->Registers.DestTexWatermarks.ui; \
 ctx->sarea->setup[27]=ctx->Registers.TexBlendColor.ui; \
 }
+#endif
 #endif

@@ -111,8 +111,9 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		        if(imesa->IsFullScreen && imesa->NotFirstFrame &&
 			   imesa->savageScreen->chipset >= S3_SAVAGE4)
 		        {
-		            imesa->Registers.ZBufCtrl.s4.autoZEnable = GL_TRUE;
-                                imesa->Registers.ZBufCtrl.s4.frameID = ~imesa->Registers.ZBufCtrl.s4.frameID;
+		            imesa->regs.s4.zBufCtrl.ni.autoZEnable = GL_TRUE;
+                            imesa->regs.s4.zBufCtrl.ni.frameID =
+				~imesa->regs.s4.zBufCtrl.ni.frameID;
                             
                             imesa->dirty |= SAVAGE_UPLOAD_CTX;
 		        }
@@ -191,8 +192,7 @@ static void savage_BCI_swap(savageContextPtr imesa)
         imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
         imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
         
-        imesa->Registers.DestCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
-        imesa->Registers.changed.ni.fDestCtrlChanged = GL_TRUE;
+        imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
         imesa->dirty |= SAVAGE_UPLOAD_CTX;
         bciptr = SAVAGE_GET_BCI_POINTER(imesa,3);
         *(bciptr) = 0x960100B0;
