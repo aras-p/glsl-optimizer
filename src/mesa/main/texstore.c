@@ -238,6 +238,8 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 
          /* do post-convolution transfer and pack into tempImage */
          {
+            const GLint logComponents
+               = _mesa_components_in_format(logicalBaseFormat);
             const GLfloat *src = convImage;
             GLfloat *dst = tempImage + img * (convWidth * convHeight * 4);
             for (row = 0; row < convHeight; row++) {
@@ -247,7 +249,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
                                           dst, &ctx->DefaultPacking,
                                           postConvTransferOps);
                src += convWidth * 4;
-               dst += convWidth * 4;
+               dst += convWidth * logComponents;
             }
          }
       } /* loop over 3D image slices */
