@@ -440,6 +440,8 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     ctx->Const.MaxTextureLevels = 11;
     
     ctx->Const.MaxTextureUnits = 2;
+    ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
     ctx->Const.MinLineWidth = 1.0;
     ctx->Const.MinLineWidthAA = 1.0;
