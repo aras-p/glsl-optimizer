@@ -1,10 +1,10 @@
-/* $Id: blend.c,v 1.18 2000/09/07 15:45:27 brianp Exp $ */
+/* $Id: blend.c,v 1.19 2000/10/19 18:08:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -354,11 +354,31 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             /* 100% alpha, no-op */
          }
          else {
+#if 0
+            /* This is pretty close, but Glean complains */
             const GLint s = CHAN_MAX - t;
-            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) >> 8;
-            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) >> 8;
-            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) >> 8;
-            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) >> 8;
+            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s + 1) >> 8;
+            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s + 1) >> 8;
+            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s + 1) >> 8;
+            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s + 1) >> 8;
+#elif 0
+            /* This is slower but satisfies Glean */
+            const GLint s = CHAN_MAX - t;
+            const GLint r = (rgba[i][RCOMP] * t + dest[i][RCOMP] * s) / 255;
+            const GLint g = (rgba[i][GCOMP] * t + dest[i][GCOMP] * s) / 255;
+            const GLint b = (rgba[i][BCOMP] * t + dest[i][BCOMP] * s) / 255;
+            const GLint a = (rgba[i][ACOMP] * t + dest[i][ACOMP] * s) / 255;
+#else
+            /* This satisfies Glean and should be reasonably fast */
+            /* Contributed by Nathan Hand */
+#define DIV255(X)  (((X) << 8) + (X) + 256) >> 16
+            const GLint s = CHAN_MAX - t;
+            const GLint r = DIV255(rgba[i][RCOMP] * t + dest[i][RCOMP] * s);
+            const GLint g = DIV255(rgba[i][GCOMP] * t + dest[i][GCOMP] * s);
+            const GLint b = DIV255(rgba[i][BCOMP] * t + dest[i][BCOMP] * s);
+            const GLint a = DIV255(rgba[i][ACOMP] * t + dest[i][ACOMP] * s);
+#undef DIV255
+#endif
             ASSERT(r <= CHAN_MAX);
             ASSERT(g <= CHAN_MAX);
             ASSERT(b <= CHAN_MAX);
@@ -770,22 +790,22 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
          /* compute blended color */
          if (ctx->Color.BlendEquation==GL_FUNC_ADD_EXT) {
-            r = Rs * sR + Rd * dR;
-            g = Gs * sG + Gd * dG;
-            b = Bs * sB + Bd * dB;
-            a = As * sA + Ad * dA;
+            r = Rs * sR + Rd * dR + 0.5F;
+            g = Gs * sG + Gd * dG + 0.5F;
+            b = Bs * sB + Bd * dB + 0.5F;
+            a = As * sA + Ad * dA + 0.5F;
          }
          else if (ctx->Color.BlendEquation==GL_FUNC_SUBTRACT_EXT) {
-            r = Rs * sR - Rd * dR;
-            g = Gs * sG - Gd * dG;
-            b = Bs * sB - Bd * dB;
-            a = As * sA - Ad * dA;
+            r = Rs * sR - Rd * dR + 0.5F;
+            g = Gs * sG - Gd * dG + 0.5F;
+            b = Bs * sB - Bd * dB + 0.5F;
+            a = As * sA - Ad * dA + 0.5F;
          }
          else if (ctx->Color.BlendEquation==GL_FUNC_REVERSE_SUBTRACT_EXT) {
-            r = Rd * dR - Rs * sR;
-            g = Gd * dG - Gs * sG;
-            b = Bd * dB - Bs * sB;
-            a = Ad * dA - As * sA;
+            r = Rd * dR - Rs * sR + 0.5F;
+            g = Gd * dG - Gs * sG + 0.5F;
+            b = Bd * dB - Bs * sB + 0.5F;
+            a = Ad * dA - As * sA + 0.5F;
          }
          else {
             /* should never get here */
