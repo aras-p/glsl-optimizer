@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -61,6 +61,8 @@ grammar grammar_load_from_text (const byte *text);
 int grammar_set_reg8 (grammar id, const byte *name, byte value);
 
 /*
+    this function is obsolete, use only for debugging purposes
+
     checks if a null-terminated <text> matches given grammar <id>
     returns 0 on error (call grammar_get_last_error to retrieve the error text)
     returns 1 on success, the <prod> points to newly allocated buffer with production and <size>
@@ -68,6 +70,15 @@ int grammar_set_reg8 (grammar id, const byte *name, byte value);
     call grammar_alloc_free to free the memory block pointed by <prod>
 */
 int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size);
+
+/*
+    does the same what grammar_check does but much more (approx. 4 times) faster
+    use this function instead of grammar_check
+    <estimate_prod_size> is a hint - the initial production buffer size will be of this size,
+    but if more room is needed it will be safely resized; set it to 0x1000 or so
+*/
+int grammar_fast_check (grammar id, const byte *text, byte **prod, unsigned int *size,
+    unsigned int estimate_prod_size);
 
 /*
     destroys grammar object identified by <id>
