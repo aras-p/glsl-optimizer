@@ -5,7 +5,6 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
-#include <GL/glut.h>
 #include "glutint.h"
 #include "glutbitmap.h"
 
@@ -17,7 +16,7 @@ glutBitmapCharacter(GLUTbitmapFont font, int c)
   GLint swapbytes, lsbfirst, rowlength;
   GLint skiprows, skippixels, alignment;
 
-#if defined(WIN32)
+#if defined(_WIN32)
   fontinfo = (BitmapFontPtr) __glutFont(font);
 #else
   fontinfo = (BitmapFontPtr) font;

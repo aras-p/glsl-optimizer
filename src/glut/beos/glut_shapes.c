@@ -1,5 +1,5 @@
 
-/* Copyright (c) Mark J. Kilgard, 1994. */
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
 
 /**
 (c) Copyright 1993, Silicon Graphics, Inc.
@@ -45,12 +45,11 @@ OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 */
 
 #include <math.h>
-#include <GL/glut.h>
 #include "glutint.h"
 
 /* Some <math.h> files do not define M_PI... */
 #ifndef M_PI
-#define M_PI 3.14159265
+#define M_PI 3.14159265358979323846
 #endif
 
 static GLUquadricObj *quadObj;
@@ -66,7 +65,7 @@ initQuadObj(void)
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireSphere(GLdouble radius, GLint slices, GLint stacks)
 {
   QUAD_OBJ_INIT();
@@ -78,7 +77,7 @@ glutWireSphere(GLdouble radius, GLint slices, GLint stacks)
   gluSphere(quadObj, radius, slices, stacks);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidSphere(GLdouble radius, GLint slices, GLint stacks)
 {
   QUAD_OBJ_INIT();
@@ -90,7 +89,7 @@ glutSolidSphere(GLdouble radius, GLint slices, GLint stacks)
   gluSphere(quadObj, radius, slices, stacks);
 }
 
-void APIENTRY 
+void APIENTRY
 glutWireCone(GLdouble base, GLdouble height,
   GLint slices, GLint stacks)
 {
@@ -103,7 +102,7 @@ glutWireCone(GLdouble base, GLdouble height,
   gluCylinder(quadObj, base, 0.0, height, slices, stacks);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidCone(GLdouble base, GLdouble height,
   GLint slices, GLint stacks)
 {
@@ -149,7 +148,7 @@ drawBox(GLfloat size, GLenum type)
   v[0][2] = v[3][2] = v[4][2] = v[7][2] = -size / 2;
   v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
 
-  for (i = 0; i < 6; i++) {
+  for (i = 5; i >= 0; i--) {
     glBegin(type);
     glNormal3fv(&n[i][0]);
     glVertex3fv(&v[faces[i][0]][0]);
@@ -161,13 +160,13 @@ drawBox(GLfloat size, GLenum type)
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireCube(GLdouble size)
 {
   drawBox(size, GL_LINE_LOOP);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidCube(GLdouble size)
 {
   drawBox(size, GL_QUADS);
@@ -176,81 +175,62 @@ glutSolidCube(GLdouble size)
 /* ENDCENTRY */
 
 static void
-doughnut(GLfloat r, GLfloat R, GLint nsides,
-  GLint rings, GLenum type)
+doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
 {
   int i, j;
-  GLfloat theta, phi, theta1, phi1;
-  GLfloat p0[03], p1[3], p2[3], p3[3];
-  GLfloat n0[3], n1[3], n2[3], n3[3];
+  GLfloat theta, phi, theta1;
+  GLfloat cosTheta, sinTheta;
+  GLfloat cosTheta1, sinTheta1;
+  GLfloat ringDelta, sideDelta;
 
-  for (i = 0; i < rings; i++) {
-    theta = (GLfloat) i *2.0 * M_PI / rings;
-    theta1 = (GLfloat) (i + 1) * 2.0 * M_PI / rings;
-    for (j = 0; j < nsides; j++) {
-      phi = (GLfloat) j *2.0 * M_PI / nsides;
-      phi1 = (GLfloat) (j + 1) * 2.0 * M_PI / nsides;
+  ringDelta = 2.0 * M_PI / rings;
+  sideDelta = 2.0 * M_PI / nsides;
 
-      p0[0] = cos(theta) * (R + r * cos(phi));
-      p0[1] = -sin(theta) * (R + r * cos(phi));
-      p0[2] = r * sin(phi);
+  theta = 0.0;
+  cosTheta = 1.0;
+  sinTheta = 0.0;
+  for (i = rings - 1; i >= 0; i--) {
+    theta1 = theta + ringDelta;
+    cosTheta1 = cos(theta1);
+    sinTheta1 = sin(theta1);
+    glBegin(GL_QUAD_STRIP);
+    phi = 0.0;
+    for (j = nsides; j >= 0; j--) {
+      GLfloat cosPhi, sinPhi, dist;
 
-      p1[0] = cos(theta1) * (R + r * cos(phi));
-      p1[1] = -sin(theta1) * (R + r * cos(phi));
-      p1[2] = r * sin(phi);
+      phi += sideDelta;
+      cosPhi = cos(phi);
+      sinPhi = sin(phi);
+      dist = R + r * cosPhi;
 
-      p2[0] = cos(theta1) * (R + r * cos(phi1));
-      p2[1] = -sin(theta1) * (R + r * cos(phi1));
-      p2[2] = r * sin(phi1);
-
-      p3[0] = cos(theta) * (R + r * cos(phi1));
-      p3[1] = -sin(theta) * (R + r * cos(phi1));
-      p3[2] = r * sin(phi1);
-
-      n0[0] = cos(theta) * (cos(phi));
-      n0[1] = -sin(theta) * (cos(phi));
-      n0[2] = sin(phi);
-
-      n1[0] = cos(theta1) * (cos(phi));
-      n1[1] = -sin(theta1) * (cos(phi));
-      n1[2] = sin(phi);
-
-      n2[0] = cos(theta1) * (cos(phi1));
-      n2[1] = -sin(theta1) * (cos(phi1));
-      n2[2] = sin(phi1);
-
-      n3[0] = cos(theta) * (cos(phi1));
-      n3[1] = -sin(theta) * (cos(phi1));
-      n3[2] = sin(phi1);
-
-      glBegin(type);
-      glNormal3fv(n3);
-      glVertex3fv(p3);
-      glNormal3fv(n2);
-      glVertex3fv(p2);
-      glNormal3fv(n1);
-      glVertex3fv(p1);
-      glNormal3fv(n0);
-      glVertex3fv(p0);
-      glEnd();
+      glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
+      glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, r * sinPhi);
+      glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
+      glVertex3f(cosTheta * dist, -sinTheta * dist,  r * sinPhi);
     }
+    glEnd();
+    theta = theta1;
+    cosTheta = cosTheta1;
+    sinTheta = sinTheta1;
   }
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireTorus(GLdouble innerRadius, GLdouble outerRadius,
   GLint nsides, GLint rings)
 {
-  doughnut(innerRadius, outerRadius,
-    nsides, rings, GL_LINE_LOOP);
+  glPushAttrib(GL_POLYGON_BIT);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  doughnut(innerRadius, outerRadius, nsides, rings);
+  glPopAttrib();
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidTorus(GLdouble innerRadius, GLdouble outerRadius,
   GLint nsides, GLint rings)
 {
-  doughnut(innerRadius, outerRadius, nsides, rings, GL_QUADS);
+  doughnut(innerRadius, outerRadius, nsides, rings);
 }
 
 /* ENDCENTRY */
@@ -369,13 +349,13 @@ dodecahedron(GLenum type)
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireDodecahedron(void)
 {
   dodecahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidDodecahedron(void)
 {
   dodecahedron(GL_TRIANGLE_FAN);
@@ -480,19 +460,19 @@ octahedron(GLenum shadeType)
 {
   int i;
 
-  for (i = 0; i < 8; i++) {
+  for (i = 7; i >= 0; i--) {
     drawtriangle(i, odata, ondex, shadeType);
   }
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireOctahedron(void)
 {
   octahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidOctahedron(void)
 {
   octahedron(GL_TRIANGLES);
@@ -551,19 +531,19 @@ icosahedron(GLenum shadeType)
 {
   int i;
 
-  for (i = 0; i < 20; i++) {
+  for (i = 19; i >= 0; i--) {
     drawtriangle(i, idata, index, shadeType);
   }
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireIcosahedron(void)
 {
   icosahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidIcosahedron(void)
 {
   icosahedron(GL_TRIANGLES);
@@ -596,18 +576,18 @@ tetrahedron(GLenum shadeType)
 {
   int i;
 
-  for (i = 0; i < 4; i++)
+  for (i = 3; i >= 0; i--)
     drawtriangle(i, tdata, tndex, shadeType);
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutWireTetrahedron(void)
 {
   tetrahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY 
+void APIENTRY
 glutSolidTetrahedron(void)
 {
   tetrahedron(GL_TRIANGLES);

@@ -44,7 +44,7 @@ Graphics, Inc., 2011 N.  Shoreline Blvd., Mountain View, CA
 OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 */
 
-#include <GL/glut.h>
+#include "glutint.h"
 
 /* Rim, body, lid, and bottom data must be reflected in x and
    y; handle and spout data across the y axis only.  */

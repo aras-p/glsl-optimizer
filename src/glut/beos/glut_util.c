@@ -7,11 +7,26 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 
-#include <GL/glut.h>
 #include "glutint.h"
-#include "glutState.h"
+
+/* strdup is actually not a standard ANSI C or POSIX routine
+   so implement a private one for GLUT.  OpenVMS does not have a
+   strdup; Linux's standard libc doesn't declare strdup by default
+   (unless BSD or SVID interfaces are requested). */
+char *
+__glutStrdup(const char *string)
+{
+  char *copy;
+
+  copy = (char*) malloc(strlen(string) + 1);
+  if (copy == NULL)
+    return NULL;
+  strcpy(copy, string);
+  return copy;
+}
 
 void
 __glutWarning(char *format,...)
@@ -20,7 +35,7 @@ __glutWarning(char *format,...)
 
   va_start(args, format);
   fprintf(stderr, "GLUT: Warning in %s: ",
-    gState.programName ? gState.programName : "(unamed)");
+    __glutProgramName ? __glutProgramName : "(unamed)");
   vfprintf(stderr, format, args);
   va_end(args);
   putc('\n', stderr);
@@ -44,7 +59,7 @@ __glutFatalError(char *format,...)
 
   va_start(args, format);
   fprintf(stderr, "GLUT: Fatal Error in %s: ",
-    gState.programName ? gState.programName : "(unamed)");
+    __glutProgramName ? __glutProgramName : "(unamed)");
   vfprintf(stderr, format, args);
   va_end(args);
   putc('\n', stderr);
@@ -58,7 +73,7 @@ __glutFatalUsage(char *format,...)
 
   va_start(args, format);
   fprintf(stderr, "GLUT: Fatal API Usage in %s: ",
-    gState.programName ? gState.programName : "(unamed)");
+    __glutProgramName ? __glutProgramName : "(unamed)");
   vfprintf(stderr, format, args);
   va_end(args);
   putc('\n', stderr);

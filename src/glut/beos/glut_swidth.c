@@ -5,7 +5,6 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-#include <GL/glut.h>
 #include "glutint.h"
 #include "glutstroke.h"
 
@@ -16,7 +15,7 @@ glutStrokeWidth(GLUTstrokeFont font, int c)
   StrokeFontPtr fontinfo;
   const StrokeCharRec *ch;
 
-#if defined(WIN32)
+#if defined(_WIN32)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;
@@ -26,19 +25,19 @@ glutStrokeWidth(GLUTstrokeFont font, int c)
     return 0;
   ch = &(fontinfo->ch[c]);
   if (ch)
-    return (int)ch->right;
+    return ch->right;
   else
     return 0;
 }
 
 int APIENTRY 
-glutStrokeLength(GLUTstrokeFont font, const char *string)
+glutStrokeLength(GLUTstrokeFont font, const unsigned char *string)
 {
   int c, length;
   StrokeFontPtr fontinfo;
   const StrokeCharRec *ch;
 
-#if defined(WIN32)
+#if defined(_WIN32)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;
@@ -50,7 +49,7 @@ glutStrokeLength(GLUTstrokeFont font, const char *string)
     if (c >= 0 && c < fontinfo->num_chars) {
       ch = &(fontinfo->ch[c]);
       if (ch)
-        length += (int)ch->right;
+        length += ch->right;
     }
   }
   return length;

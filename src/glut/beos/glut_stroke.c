@@ -5,7 +5,6 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
-#include <GL/glut.h>
 #include "glutint.h"
 #include "glutstroke.h"
 
@@ -19,7 +18,7 @@ glutStrokeCharacter(GLUTstrokeFont font, int c)
   int i, j;
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
   fontinfo = (StrokeFontPtr) __glutFont(font);
 #else
   fontinfo = (StrokeFontPtr) font;

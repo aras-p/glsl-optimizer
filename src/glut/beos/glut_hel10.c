@@ -1,7 +1,9 @@
 
 /* GENERATED FILE -- DO NOT MODIFY */
 
+#define glutBitmapHelvetica10 XXX
 #include "glutbitmap.h"
+#undef glutBitmapHelvetica10
 
 /* char: 0xff */
 
@@ -765,7 +767,7 @@ static const BitmapCharRec ch161 = {1,8,-1,2,3,ch161data};
 
 /* char: 0xa0 */
 
-#ifdef WIN32
+#ifdef _WIN32
 /* XXX Work around Microsoft OpenGL 1.1 bug where glBitmap with
    a height or width of zero does not advance the raster position
    as specified by OpenGL. (Cosmo OpenGL does not have this bug.) */
@@ -1530,7 +1532,7 @@ static const BitmapCharRec ch33 = {1,8,-1,0,3,ch33data};
 
 /* char: 0x20 ' ' */
 
-#ifdef WIN32
+#ifdef _WIN32
 /* XXX Work around Microsoft OpenGL 1.1 bug where glBitmap with
    a height or width of zero does not advance the raster position
    as specified by OpenGL. (Cosmo OpenGL does not have this bug.) */
@@ -1767,8 +1769,7 @@ static const BitmapCharRec * const chars[] = {
 &ch255,
 };
 
-// jeh: removed const so mwld can export structure to shared lib
-BitmapFontRec glutBitmapHelvetica10 = {
+const BitmapFontRec glutBitmapHelvetica10 = {
 "-adobe-helvetica-medium-r-normal--10-100-75-75-p-56-iso8859-1",
 224,
 32,
