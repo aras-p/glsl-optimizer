@@ -1,10 +1,10 @@
-/* $Id: common_x86.c,v 1.19 2002/07/11 15:33:02 brianp Exp $ */
+/* $Id: common_x86.c,v 1.20 2002/11/13 15:03:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.0
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +45,7 @@
 
 #include "context.h"
 #include "common_x86_asm.h"
+#include "imports.h"
 
 
 int _mesa_x86_cpu_features = 0;
