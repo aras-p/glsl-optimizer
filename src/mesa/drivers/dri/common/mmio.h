@@ -38,12 +38,11 @@
 static __inline__ u_int32_t
 read_MMIO_LE32( volatile void * base, unsigned long offset )
 {
-   volatile void * p = ((volatile char *) base) + offset;
    u_int32_t val;
-   
+
    __asm__ __volatile__( "lwbrx	%0, %1, %2 ; eieio"
 			 : "=r" (val)
-			 : "b" (base), "r" (offset), "m" (p) );
+			 : "b" (base), "r" (offset) );
    return val;
 }
 

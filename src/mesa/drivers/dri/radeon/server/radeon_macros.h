@@ -40,28 +40,22 @@
 #ifndef _RADEON_MACROS_H_
 #define _RADEON_MACROS_H_
 
-
+#include <mmio.h>
 
 #  define MMIO_IN8(base, offset) \
 	*(volatile unsigned char *)(((unsigned char*)(base)) + (offset))
-#  define MMIO_IN16(base, offset) \
-	*(volatile unsigned short *)(void *)(((unsigned char*)(base)) + (offset))
 #  define MMIO_IN32(base, offset) \
-	*(volatile unsigned int *)(void *)(((unsigned char*)(base)) + (offset))
+	read_MMIO_LE32(base, addr)
 #  define MMIO_OUT8(base, offset, val) \
 	*(volatile unsigned char *)(((unsigned char*)(base)) + (offset)) = (val)
-#  define MMIO_OUT16(base, offset, val) \
-	*(volatile unsigned short *)(void *)(((unsigned char*)(base)) + (offset)) = (val)
 #  define MMIO_OUT32(base, offset, val) \
-	*(volatile unsigned int *)(void *)(((unsigned char*)(base)) + (offset)) = (val)
+	*(volatile unsigned int *)(void *)(((unsigned char*)(base)) + (offset)) = CPU_TO_LE32(val)
 
 
 				/* Memory mapped register access macros */
 #define INREG8(addr)        MMIO_IN8(RADEONMMIO, addr)
-#define INREG16(addr)       MMIO_IN16(RADEONMMIO, addr)
 #define INREG(addr)         MMIO_IN32(RADEONMMIO, addr)
 #define OUTREG8(addr, val)  MMIO_OUT8(RADEONMMIO, addr, val)
-#define OUTREG16(addr, val) MMIO_OUT16(RADEONMMIO, addr, val)
 #define OUTREG(addr, val)   MMIO_OUT32(RADEONMMIO, addr, val)
 
 #define ADDRREG(addr)       ((volatile GLuint *)(pointer)(RADEONMMIO + (addr)))
