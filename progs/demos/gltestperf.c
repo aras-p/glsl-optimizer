@@ -164,7 +164,7 @@ init_test04(void)
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    if ((gluerr = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 128, 128, GL_RGB,
 				   GL_UNSIGNED_BYTE, (GLvoid *) (&tex[0])))) {
-      fprintf(stderr, "GLULib%s\n", gluErrorString(gluerr));
+      fprintf(stderr, "GLULib%s\n", (char *) gluErrorString(gluerr));
       exit(-1);
    }
 
@@ -239,7 +239,7 @@ init_test05(void)
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    if ((gluerr = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 128, 128, GL_RGB,
 				   GL_UNSIGNED_BYTE, (GLvoid *) (&tex[0])))) {
-      fprintf(stderr, "GLULib%s\n", gluErrorString(gluerr));
+      fprintf(stderr, "GLULib%s\n", (char *) gluErrorString(gluerr));
       exit(-1);
    }
 

@@ -169,7 +169,7 @@ struct baseFormatInfo baseFormats[] =
 };
 
 #define NUM_ENV_COLORS		(sizeof(envColors) / sizeof(envColors[0]))
-int envColor;
+int envColor = 0;
 GLfloat envColors[][4] =
 {
    { 0.0, 0.0, 0.0, 1.0 },
@@ -200,8 +200,6 @@ struct envModeInfo envModes[] =
 static void checkErrors( void )
 {
    GLenum error;
-
-   return;
 
    while ( (error = glGetError()) != GL_NO_ERROR ) {
       fprintf( stderr, "Error: %s\n", (char *) gluErrorString( error ) );
@@ -271,7 +269,8 @@ static void keyboard( unsigned char c, int x, int y )
 {
    switch ( c ) {
    case 'c':
-      envColor = (++envColor) % (int) NUM_ENV_COLORS;
+      envColor++;
+      envColor = envColor % (int) NUM_ENV_COLORS;
       break;
    case 'g':
       drawBackground = !drawBackground;

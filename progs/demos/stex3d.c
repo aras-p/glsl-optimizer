@@ -1,5 +1,3 @@
-/* $Id: stex3d.c,v 1.9 2003/03/31 16:51:38 brianp Exp $ */
-
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
  *            texturing, it uses a perlin noise and turbulence functions.
@@ -535,7 +533,7 @@ KeyHandler(unsigned char key, int x, int y)
 }
 
 
-void
+static void
 create3Dgradient(void)
 {
    unsigned char *v;

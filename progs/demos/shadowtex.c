@@ -1,5 +1,3 @@
-/* $Id: shadowtex.c,v 1.7 2002/07/12 15:54:02 brianp Exp $ */
-
 /*
  * Shadow demo using the GL_ARB_depth_texture, GL_ARB_shadow and
  * GL_ARB_shadow_ambient extensions (or the old SGIX extensions).
@@ -362,7 +360,7 @@ Display(void)
 
    error = glGetError();
    if (error) {
-      printf("GL Error: %s\n", gluErrorString(error));
+      printf("GL Error: %s\n", (char *) gluErrorString(error));
    }
 }
 

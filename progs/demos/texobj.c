@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.6 2002/01/04 21:05:57 brianp Exp $ */
+/* $Id: texobj.c,v 1.7 2003/04/21 14:50:12 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.
@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "GL/glut.h"
