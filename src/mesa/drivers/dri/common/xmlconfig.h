@@ -99,7 +99,7 @@ void driParseOptionInfo (driOptionCache *info,
  *
  * To be called in <driver>CreateContext. screenNum and driverName select
  * device sections. */
-void driParseConfigFiles (driOptionCache *cache, driOptionCache *info,
+void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
 			  GLint screenNum, const char *driverName);
 /** \brief Destroy option info
  *

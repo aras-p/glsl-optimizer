@@ -837,7 +837,7 @@ static void optConfEndElem (void *userData, const XML_Char *name) {
 }
 
 /** \brief Initialize an option cache based on info */
-static void initOptionCache (driOptionCache *cache, driOptionCache *info) {
+static void initOptionCache (driOptionCache *cache, const driOptionCache *info) {
     cache->info = info->info;
     cache->tableSize = info->tableSize;
     cache->values = MALLOC ((1<<info->tableSize) * sizeof (driOptionValue));
@@ -888,7 +888,7 @@ static void parseOneConfigFile (XML_Parser p) {
 #undef BUF_SIZE
 }
 
-void driParseConfigFiles (driOptionCache *cache, driOptionCache *info,
+void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
 			  GLint screenNum, const char *driverName) {
     char *filenames[2] = {"/etc/drirc", NULL};
     char *home;
