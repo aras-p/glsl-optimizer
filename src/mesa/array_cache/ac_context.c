@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.5 2001/07/19 15:54:35 brianp Exp $ */
+/* $Id: ac_context.c,v 1.6 2001/12/14 02:50:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Normal;
+   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 
@@ -55,7 +55,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Color;
+   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 
@@ -64,7 +64,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.SecondaryColor;
+   cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 
@@ -73,7 +73,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Type = GL_FLOAT;
    cl->Stride = 0;
    cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.FogCoord;
+   cl->Ptr = (void *) &ctx->Current.Attrib[VERT_ATTRIB_FOG];
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 
@@ -92,7 +92,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
       cl->Type = GL_FLOAT;
       cl->Stride = 0;
       cl->StrideB = 0;
-      cl->Ptr = (void *) ctx->Current.Texcoord[i];
+      cl->Ptr = (void *) ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i];
       cl->Enabled = 1;
       cl->Flags = CA_CLIENT_DATA;	/* hack */
    }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.30 2001/11/30 15:43:53 alanh Exp $ */
+/* $Id: t_imm_exec.c,v 1.31 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,6 +96,7 @@ void _tnl_reset_exec_input( GLcontext *ctx,
    reset_input( ctx, start, beginstate, savedbeginstate );
 
    IM->CopyStart = start - tnl->ExecCopyCount;
+
    IM->Primitive[IM->CopyStart] = ctx->Driver.CurrentExecPrimitive;
    if (tnl->ExecParity)
       IM->Primitive[IM->CopyStart] |= PRIM_PARITY;
@@ -117,40 +118,44 @@ void _tnl_reset_compile_input( GLcontext *ctx,
 }
   
 
+/*
+ * Copy the last specified normal, color, texcoord, edge flag, etc
+ * from the immediate struct into the ctx->Current attribute group.
+ */
 void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 			   GLuint flag, GLuint count )
 {
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       _tnl_print_vert_flags("copy to current", flag);
 
-   if (flag & VERT_NORM)
-      COPY_3FV( ctx->Current.Normal, IM->Normal[count]);
+   if (flag & VERT_NORMAL_BIT)
+      COPY_3FV( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], IM->Normal[count]);
 
-   if (flag & VERT_INDEX)
+   if (flag & VERT_INDEX_BIT)
       ctx->Current.Index = IM->Index[count];
 
-   if (flag & VERT_EDGE)
+   if (flag & VERT_EDGEFLAG_BIT)
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
-   if (flag & VERT_RGBA) {
-      COPY_4FV(ctx->Current.Color, IM->Color[count]);
+   if (flag & VERT_COLOR0_BIT) {
+      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], IM->Color[count]);
       if (ctx->Light.ColorMaterialEnabled) {
-	 _mesa_update_color_material( ctx, ctx->Current.Color );
+	 _mesa_update_color_material( ctx, ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
 	 _mesa_validate_all_lighting_tables( ctx );
       }
    }
 
-   if (flag & VERT_SPEC_RGB)
-      COPY_4FV(ctx->Current.SecondaryColor, IM->SecondaryColor[count]);
+   if (flag & VERT_COLOR1_BIT)
+      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_COLOR1], IM->SecondaryColor[count]);
 
-   if (flag & VERT_FOG_COORD)
-      ctx->Current.FogCoord = IM->FogCoord[count];
+   if (flag & VERT_FOG_BIT)
+      ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = IM->FogCoord[count];
 
    if (flag & VERT_TEX_ANY) {
       GLuint i;
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	 if (flag & VERT_TEX(i)) {
-	    COPY_4FV( ctx->Current.Texcoord[0], IM->TexCoord[0][count]);
+	    COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i], IM->TexCoord[i][count]);
 	 }
       }
    }
@@ -202,13 +207,11 @@ void _tnl_compute_orflag( struct immediate *IM, GLuint start )
 }
 
 
-
-
-
-
-
-
-/* Note: The 'start' member of the GLvector structs is now redundant
+/*
+ * This is where the vertex data is transfered from the 'struct immediate
+ * into the 'struct vertex_buffer'.
+ *
+ * Note: The 'start' member of the GLvector structs is now redundant
  * because we always re-transform copied vertices, and the vectors
  * below are set up so that the first copied vertex (if any) appears
  * at position zero.
@@ -263,7 +266,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 
    /* Setup the initial values of array pointers in the vb.
     */
-   if (inputs & VERT_OBJ) {
+   if (inputs & VERT_OBJ_BIT) {
       tmp->Obj.data = IM->Obj + start;
       tmp->Obj.start = (GLfloat *)(IM->Obj + start);
       tmp->Obj.count = count;
@@ -276,7 +279,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 	 tmp->Obj.size = 2;
    }
 
-   if (inputs & VERT_NORM) {
+   if (inputs & VERT_NORMAL_BIT) {
       tmp->Normal.data = IM->Normal + start;
       tmp->Normal.start = (GLfloat *)(IM->Normal + start);
       tmp->Normal.count = count;
@@ -285,40 +288,41 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 	 VB->NormalLengthPtr = IM->NormalLengthPtr + start;
    }
 
-   if (inputs & VERT_INDEX) {
+   if (inputs & VERT_INDEX_BIT) {
       tmp->Index.count = count;
       tmp->Index.data = IM->Index + start;
       tmp->Index.start = IM->Index + start;
       VB->IndexPtr[0] = &tmp->Index;
    }
 
-   if (inputs & VERT_FOG_COORD) {
+   if (inputs & VERT_FOG_BIT) {
       tmp->FogCoord.data = IM->FogCoord + start;
       tmp->FogCoord.start = IM->FogCoord + start;
       tmp->FogCoord.count = count;
       VB->FogCoordPtr = &tmp->FogCoord;
    }
 
-   if (inputs & VERT_SPEC_RGB) {
+   if (inputs & VERT_COLOR1_BIT) {
       tmp->SecondaryColor.Ptr = IM->SecondaryColor + start;
       VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
    }
 
-   if (inputs & VERT_EDGE) {
+   if (inputs & VERT_EDGEFLAG_BIT) {
       VB->EdgeFlag = IM->EdgeFlag + start;
    }
 
-   if (inputs & VERT_RGBA) {
-      if (IM->CopyOrFlag & VERT_RGBA) {
+   if (inputs & VERT_COLOR0_BIT) {
+      if (IM->CopyOrFlag & VERT_COLOR0_BIT) {
 	 tmp->Color.Ptr = IM->Color + start;
 	 tmp->Color.StrideB = 4 * sizeof(GLfloat);
 	 tmp->Color.Flags = 0;
-      } else {
-	 tmp->Color.Ptr = ctx->Current.Color;
+      }
+      else {
+	 tmp->Color.Ptr = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 	 tmp->Color.StrideB = 0;
 	 tmp->Color.Flags = CA_CLIENT_DATA; /* hack */
 	 VB->import_source = IM;
-	 VB->importable_data |= VERT_RGBA;
+	 VB->importable_data |= VERT_COLOR0_BIT;
 	 VB->import_data = _tnl_upgrade_current_data;
       }
       VB->ColorPtr[0] = &tmp->Color;
@@ -347,6 +351,18 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       VB->MaterialMask = IM->MaterialMask + start;
       VB->Material = IM->Material + start;
    }
+
+   /* GL_NV_vertex_program */
+   if (ctx->VertexProgram.Enabled) {
+      GLuint attr;
+      for (attr = 0; attr < 16; attr++) {
+         tmp->Attribs[attr].count = count;
+         tmp->Attribs[attr].data = IM->Attrib[attr] + start;
+         tmp->Attribs[attr].start = (GLfloat *) (IM->Attrib[attr] + start);
+         tmp->Attribs[attr].size = 4;
+         VB->AttribPtr[attr] = &(tmp->Attribs[attr]);
+      }
+   }
 }
 
 
@@ -358,8 +374,6 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    _tnl_vb_bind_immediate( ctx, IM );
 
@@ -449,6 +463,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
+   printf("enter %s()\n", __FUNCTION__);
    _tnl_compute_orflag( IM, IM->Start );
    _tnl_copy_immediate_vertices( ctx, IM ); 
    _tnl_get_exec_copy_verts( ctx, IM );
@@ -456,6 +471,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
+   printf("  CopyStart %d == Count %d ?\n", IM->CopyStart, IM->Count);
    if (IM->CopyStart == IM->Count) {
       exec_empty_cassette( ctx, IM );
    }
@@ -488,6 +504,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1)
       ctx->Driver.NeedFlush &= ~FLUSH_STORED_VERTICES;
+   printf("leave %s()\n", __FUNCTION__);
 }
 
 

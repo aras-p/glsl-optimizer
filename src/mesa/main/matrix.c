@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.36 2001/09/18 16:16:21 kschultz Exp $ */
+/* $Id: matrix.c,v 1.37 2001/12/14 02:50:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,25 +57,38 @@
 /**********************************************************************/
 
 
-#define GET_ACTIVE_MATRIX(ctx, mat, flags, where)		\
+#define GET_ACTIVE_MATRIX(mat, where)					\
 do {									\
+   GLint n;								\
    if (MESA_VERBOSE&VERBOSE_API) fprintf(stderr, "%s\n", where);	\
    switch (ctx->Transform.MatrixMode) {					\
       case GL_MODELVIEW:						\
 	 mat = &ctx->ModelView;						\
-	 flags |= _NEW_MODELVIEW;					\
+	 ctx->NewState |= _NEW_MODELVIEW;				\
 	 break;								\
       case GL_PROJECTION:						\
 	 mat = &ctx->ProjectionMatrix;					\
-	 flags |= _NEW_PROJECTION;					\
+	 ctx->NewState |= _NEW_PROJECTION;				\
 	 break;								\
       case GL_TEXTURE:							\
 	 mat = &ctx->TextureMatrix[ctx->Texture.CurrentUnit];		\
-	 flags |= _NEW_TEXTURE_MATRIX;					\
+	 ctx->NewState |= _NEW_TEXTURE_MATRIX;				\
 	 break;								\
       case GL_COLOR:							\
 	 mat = &ctx->ColorMatrix;					\
-	 flags |= _NEW_COLOR_MATRIX;					\
+	 ctx->NewState |= _NEW_COLOR_MATRIX;				\
+	 break;								\
+      case GL_MATRIX0_NV:						\
+      case GL_MATRIX1_NV:						\
+      case GL_MATRIX2_NV:						\
+      case GL_MATRIX3_NV:						\
+      case GL_MATRIX4_NV:						\
+      case GL_MATRIX5_NV:						\
+      case GL_MATRIX6_NV:						\
+      case GL_MATRIX7_NV:						\
+	 n = ctx->Transform.MatrixMode - GL_MATRIX0_NV;			\
+	 mat = &ctx->VertexProgram.Matrix[n];				\
+	 ctx->NewState |= _NEW_TRACK_MATRIX;				\
 	 break;								\
       default:								\
          _mesa_problem(ctx, where);					\
@@ -92,7 +105,7 @@ _mesa_Frustum( GLdouble left, GLdouble right,
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glFrustrum" );
+   GET_ACTIVE_MATRIX(mat, "glFrustrum");
 
    if (nearval <= 0.0 ||
        farval <= 0.0 ||
@@ -119,7 +132,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glOrtho" );
+   GET_ACTIVE_MATRIX(mat, "glOrtho");
 
    if (left == right ||
        bottom == top ||
@@ -142,6 +155,19 @@ _mesa_MatrixMode( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (mode) {
+      case GL_MATRIX0_NV:
+      case GL_MATRIX1_NV:
+      case GL_MATRIX2_NV:
+      case GL_MATRIX3_NV:
+      case GL_MATRIX4_NV:
+      case GL_MATRIX5_NV:
+      case GL_MATRIX6_NV:
+      case GL_MATRIX7_NV:
+         if (!ctx->Extensions.NV_vertex_program) {
+            _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
+            return;
+         }
+         /* FALL-THROUGH */
       case GL_MODELVIEW:
       case GL_PROJECTION:
       case GL_TEXTURE:
@@ -275,7 +301,7 @@ _mesa_LoadIdentity( void )
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glLoadIdentity");
+   GET_ACTIVE_MATRIX(mat, "glLoadIdentity");
    _math_matrix_set_identity( mat );
 }
 
@@ -286,7 +312,7 @@ _mesa_LoadMatrixf( const GLfloat *m )
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glLoadMatrix");
+   GET_ACTIVE_MATRIX(mat, "glLoadMatrix");
    _math_matrix_loadf( mat, m );
 }
 
@@ -312,7 +338,7 @@ _mesa_MultMatrixf( const GLfloat *m )
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glMultMatrix" );
+   GET_ACTIVE_MATRIX(mat, "glMultMatrix");
    _math_matrix_mul_floats( mat, m );
 }
 
@@ -343,7 +369,7 @@ _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (angle != 0.0F) {
       GLmatrix *mat = 0;
-      GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glRotate" );
+      GET_ACTIVE_MATRIX(mat, "glRotate");
       _math_matrix_rotate( mat, angle, x, y, z );
    }
 }
@@ -364,7 +390,7 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glScale");
+   GET_ACTIVE_MATRIX(mat, "glScale");
    _math_matrix_scale( mat, x, y, z );
 }
 
@@ -385,7 +411,7 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glTranslate");
+   GET_ACTIVE_MATRIX(mat, "glTranslate");
    _math_matrix_translate( mat, x, y, z );
 }
 

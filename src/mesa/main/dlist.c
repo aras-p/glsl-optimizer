@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.80 2001/12/13 19:58:20 kschultz Exp $ */
+/* $Id: dlist.c,v 1.81 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4047,6 +4047,21 @@ _mesa_save_error( GLcontext *ctx, GLenum error, const char *s )
    }
    /* execute already done */
 }
+
+
+/*
+ * Compile an error into current display list.
+ */
+void
+_mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
+{
+   if (ctx->CompileFlag)
+      _mesa_save_error( ctx, error, s );
+
+   if (ctx->ExecuteFlag)
+      _mesa_error( ctx, error, s );
+}
+
 
 
 static GLboolean

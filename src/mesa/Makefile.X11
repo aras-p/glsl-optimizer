@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.59 2001/11/23 20:44:12 brianp Exp $
+# $Id: Makefile.X11,v 1.60 2001/12/14 02:55:08 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -21,9 +21,9 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
+	vpexec.c \
+	vpparse.c \
+	vpstate.c \
 	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
@@ -121,6 +121,9 @@ CORE_SOURCES = \
 	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \
@@ -138,6 +141,7 @@ CORE_SOURCES = \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
 	tnl/t_vb_points.c \
+	tnl/t_vb_program.c \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
@@ -337,3 +341,28 @@ dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
 
 tags:
 	etags `find . -name \*.[ch]` `find ../include`
+
+
+
+# XXX temporary for NV_vertex_program
+VPFILES = \
+	include/GL/glext.h \
+	src/Makefile.X11 \
+	src/vpparse.[ch] \
+	src/vpexec.[ch] \
+	src/vpstate.[ch] \
+	src/attrib.c \
+	src/context.c \
+	src/enable.c \
+	src/extensions.c \
+	src/get.c \
+	src/matrix.c \
+	src/mtypes.h \
+	src/varray.c \
+	src/tnl/t_vb_program.c \
+	tests/vptest1.c \
+	tests/vptest2.c
+	
+vptar:
+	cd .. ; tar cvf vpfiles.tar $(VPFILES) ; gzip vpfiles.tar
+

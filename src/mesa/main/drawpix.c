@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.57 2001/12/13 19:12:42 brianp Exp $ */
+/* $Id: drawpix.c,v 1.58 2001/12/14 02:55:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,13 +71,14 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 			     &ctx->Unpack, pixels);
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
+      /* Feedback the current raster pos info */
       if (ctx->Current.RasterPosValid) {
-	 FLUSH_CURRENT(ctx, 0);
+	 FLUSH_CURRENT( ctx, 0 );
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
          _mesa_feedback_vertex( ctx,
 				ctx->Current.RasterPos,
 				ctx->Current.RasterColor,
-				ctx->Current.RasterIndex, 
+				ctx->Current.RasterIndex,
 				ctx->Current.RasterTexCoord );
       }
    }
@@ -146,13 +147,13 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {
-	 FLUSH_CURRENT(ctx, 0);
+         FLUSH_CURRENT( ctx, 0 );
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
-         _mesa_feedback_vertex( ctx,
-				ctx->Current.RasterPos,
-				ctx->Current.RasterColor,
-				ctx->Current.RasterIndex, 
-				ctx->Current.RasterTexCoord );
+         _mesa_feedback_vertex( ctx, 
+                                ctx->Current.RasterPos,
+                                ctx->Current.RasterColor,
+                                ctx->Current.RasterIndex,
+                                ctx->Current.RasterTexCoord );
       }
    }
    else if (ctx->RenderMode == GL_SELECT) {

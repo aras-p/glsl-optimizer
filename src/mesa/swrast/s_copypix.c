@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.24 2001/07/23 16:07:39 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.25 2001/12/14 02:50:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -748,10 +748,16 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* setup colors or indexes */
    if (ctx->Visual.rgbMode) {
-      GLuint *rgba32 = (GLuint *) rgba;
-      GLuint color = *(GLuint*)( ctx->Current.Color );
+      GLchan r, g, b, a;
+      UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0]);
+      UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1]);
+      UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2]);
+      UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3]);
       for (i = 0; i < width; i++) {
-         rgba32[i] = color;
+         rgba[i][RCOMP] = r;
+         rgba[i][GCOMP] = g;
+         rgba[i][BCOMP] = b;
+         rgba[i][ACOMP] = a;
       }
    }
    else {

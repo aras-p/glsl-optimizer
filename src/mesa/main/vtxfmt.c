@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.8 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: vtxfmt.c,v 1.9 2001/12/14 02:50:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,6 +82,7 @@
 
 static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
 {
+   printf("%s()\n", __FUNCTION__);
    tab->ArrayElement = vfmt->ArrayElement;
    tab->Color3f = vfmt->Color3f;
    tab->Color3fv = vfmt->Color3fv;
@@ -132,18 +133,17 @@ static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
    tab->Vertex3fv = vfmt->Vertex3fv;
    tab->Vertex4f = vfmt->Vertex4f;
    tab->Vertex4fv = vfmt->Vertex4fv;
+   tab->CallList = vfmt->CallList;
    tab->Begin = vfmt->Begin;
    tab->End = vfmt->End;
-
-/*     tab->NewList = vfmt->NewList; */
-   tab->CallList = vfmt->CallList;
-
+   tab->VertexAttrib4fNV = vfmt->VertexAttrib4fNV;
    tab->Rectf = vfmt->Rectf;
    tab->DrawArrays = vfmt->DrawArrays;
    tab->DrawElements = vfmt->DrawElements;
    tab->DrawRangeElements = vfmt->DrawRangeElements;
    tab->EvalMesh1 = vfmt->EvalMesh1;
    tab->EvalMesh2 = vfmt->EvalMesh2;
+   assert(tab->EvalMesh2);
 }
 
 

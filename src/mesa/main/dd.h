@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.64 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: dd.h,v 1.65 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -696,6 +696,9 @@ typedef struct {
    void (*CallList)( GLuint );	/* NOTE */
    void (*Begin)( GLenum );
    void (*End)( void );
+   void (*VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
+   void (*VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
+
    /* Drivers present a reduced set of the functions possible in
     * begin/end objects.  Core mesa provides translation stubs for the
     * remaining functions to map down to these entrypoints.

@@ -1,4 +1,4 @@
-/* $Id: t_imm_debug.c,v 1.4 2001/08/01 05:10:42 keithw Exp $ */
+/* $Id: t_imm_debug.c,v 1.5 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,29 +35,29 @@ void _tnl_print_vert_flags( const char *name, GLuint flags )
 	   name,
 	   flags,
 	   (flags & VERT_CLIP)       ? "clip/proj-clip/glend, " : "",
-	   (flags & VERT_EDGE)       ? "edgeflag, " : "",
+	   (flags & VERT_EDGEFLAG_BIT)       ? "edgeflag, " : "",
 	   (flags & VERT_ELT)        ? "array-elt, " : "",
 	   (flags & VERT_END_VB)     ? "end-vb, " : "",
 	   (flags & VERT_EVAL_ANY)   ? "eval-coord, " : "",
 	   (flags & VERT_EYE)        ? "eye/glbegin, " : "",
-	   (flags & VERT_FOG_COORD)  ? "fog-coord, " : "",
-	   (flags & VERT_INDEX)      ? "index, " : "",
+	   (flags & VERT_FOG_BIT)  ? "fog-coord, " : "",
+	   (flags & VERT_INDEX_BIT)      ? "index, " : "",
 	   (flags & VERT_MATERIAL)   ? "material, " : "",
-	   (flags & VERT_NORM)       ? "normals, " : "",
-	   (flags & VERT_OBJ)        ? "obj, " : "",
+	   (flags & VERT_NORMAL_BIT)       ? "normals, " : "",
+	   (flags & VERT_OBJ_BIT)        ? "obj, " : "",
 	   (flags & VERT_OBJ_3)      ? "obj-3, " : "",
 	   (flags & VERT_OBJ_4)      ? "obj-4, " : "",
 	   (flags & VERT_POINT_SIZE) ? "point-size, " : "",
-	   (flags & VERT_RGBA)       ? "colors, " : "",
-	   (flags & VERT_SPEC_RGB)   ? "specular, " : "",
-	   (flags & VERT_TEX0)       ? "texcoord0, " : "",
-	   (flags & VERT_TEX1)       ? "texcoord1, " : "",
-	   (flags & VERT_TEX2)       ? "texcoord2, " : "",
-	   (flags & VERT_TEX3)       ? "texcoord3, " : "",
-	   (flags & VERT_TEX4)       ? "texcoord4, " : "",
-	   (flags & VERT_TEX5)       ? "texcoord5, " : "",
-	   (flags & VERT_TEX6)       ? "texcoord6, " : "",
-	   (flags & VERT_TEX7)       ? "texcoord7, " : ""
+	   (flags & VERT_COLOR0_BIT)       ? "colors, " : "",
+	   (flags & VERT_COLOR1_BIT)   ? "specular, " : "",
+	   (flags & VERT_TEX0_BIT)       ? "texcoord0, " : "",
+	   (flags & VERT_TEX1_BIT)       ? "texcoord1, " : "",
+	   (flags & VERT_TEX2_BIT)       ? "texcoord2, " : "",
+	   (flags & VERT_TEX3_BIT)       ? "texcoord3, " : "",
+	   (flags & VERT_TEX4_BIT)       ? "texcoord4, " : "",
+	   (flags & VERT_TEX5_BIT)       ? "texcoord5, " : "",
+	   (flags & VERT_TEX6_BIT)       ? "texcoord6, " : "",
+	   (flags & VERT_TEX7_BIT)       ? "texcoord7, " : ""
       );
 }
 
@@ -107,7 +107,7 @@ void _tnl_print_cassette( struct immediate *IM )
       if (req & flags[i] & VERT_ELT)
 	 fprintf(stderr, " Elt %u\t", IM->Elt[i]);
 
-      if (req & flags[i] & VERT_NORM)
+      if (req & flags[i] & VERT_NORMAL_BIT)
 	 fprintf(stderr, " Norm %f %f %f ",
 		IM->Normal[i][0], IM->Normal[i][1], IM->Normal[i][2]);
 
@@ -124,23 +124,23 @@ void _tnl_print_cassette( struct immediate *IM )
 	 }
       }
 
-      if (req & flags[i] & VERT_RGBA)
+      if (req & flags[i] & VERT_COLOR0_BIT)
 	 fprintf(stderr, " Rgba %f %f %f %f ",
 		IM->Color[i][0], IM->Color[i][1],
 		IM->Color[i][2], IM->Color[i][3]);
 
-      if (req & flags[i] & VERT_SPEC_RGB)
+      if (req & flags[i] & VERT_COLOR1_BIT)
 	 fprintf(stderr, " Spec %f %f %f ",
 		IM->SecondaryColor[i][0], IM->SecondaryColor[i][1],
 		IM->SecondaryColor[i][2]);
 
-      if (req & flags[i] & VERT_FOG_COORD)
+      if (req & flags[i] & VERT_FOG_BIT)
 	 fprintf(stderr, " Fog %f ", IM->FogCoord[i]);
 
-      if (req & flags[i] & VERT_INDEX)
+      if (req & flags[i] & VERT_INDEX_BIT)
 	 fprintf(stderr, " Index %u ", IM->Index[i]);
 
-      if (req & flags[i] & VERT_EDGE)
+      if (req & flags[i] & VERT_EDGEFLAG_BIT)
 	 fprintf(stderr, " Edgeflag %d ", IM->EdgeFlag[i]);
 
       if (req & flags[i] & VERT_MATERIAL)

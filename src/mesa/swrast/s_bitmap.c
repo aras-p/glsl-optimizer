@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.12 2001/06/26 21:15:36 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.13 2001/12/14 02:50:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    if (ctx->Fog.Enabled) {
       if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.FogCoord);
+         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
       else
          fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
    }

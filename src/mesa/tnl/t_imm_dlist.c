@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.32 2001/12/13 10:49:04 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.33 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,7 +86,7 @@ static void build_normal_lengths( struct immediate *IM )
    
    for (i = 0 ; i < count ; ) {
       dest[i] = len;
-      if (flags[++i] & VERT_NORM) {
+      if (flags[++i] & VERT_NORMAL_BIT) {
 	 len = (GLfloat) LEN_3FV( data[i] );
 	 if (len > 0.0F) len = 1.0F / len;
       }
@@ -108,7 +108,7 @@ static void fixup_normal_lengths( struct immediate *IM )
    } 
 
    if (i < IM->Count) {
-      while (!(flags[i] & (VERT_NORM|VERT_END_VB))) {
+      while (!(flags[i] & (VERT_NORMAL_BIT|VERT_END_VB))) {
 	 dest[i] = len;
 	 i++;
       }
@@ -611,28 +611,28 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    }
 	 }
 
-	 if (flags[i] & VERT_NORM) {
+	 if (flags[i] & VERT_NORMAL_BIT) {
 /*  	       fprintf(stderr, "normal %d: %f %f %f\n", i, */
 /*  		       IM->Normal[i][0], IM->Normal[i][1], IM->Normal[i][2]);  */
 	    glNormal3fv(IM->Normal[i]);
 	 }
 
-	 if (flags[i] & VERT_RGBA) {
+	 if (flags[i] & VERT_COLOR0_BIT) {
 /*  	       fprintf(stderr, "color %d: %f %f %f\n", i, */
 /*  		       IM->Color[i][0], IM->Color[i][1], IM->Color[i][2]);  */
 	    glColor4fv( IM->Color[i] );
 	 }
 
-	 if (flags[i] & VERT_SPEC_RGB)
+	 if (flags[i] & VERT_COLOR1_BIT)
 	    glSecondaryColor3fvEXT( IM->SecondaryColor[i] );
 
-	 if (flags[i] & VERT_FOG_COORD)
+	 if (flags[i] & VERT_FOG_BIT)
 	    glFogCoordfEXT( IM->FogCoord[i] );
 
-	 if (flags[i] & VERT_INDEX)
+	 if (flags[i] & VERT_INDEX_BIT)
 	    glIndexi( IM->Index[i] );
 
-	 if (flags[i] & VERT_EDGE)
+	 if (flags[i] & VERT_EDGEFLAG_BIT)
 	    glEdgeFlag( IM->EdgeFlag[i] );
 
 	 if (flags[i] & VERT_MATERIAL) 

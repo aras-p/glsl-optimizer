@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.19 2001/05/21 16:33:41 gareth Exp $ */
+/* $Id: t_pipeline.c,v 1.20 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -131,6 +131,8 @@ void _tnl_run_pipeline( GLcontext *ctx )
    pipe->run_state_changes = 0;
    pipe->run_input_changes = 0;
 
+   printf("%s()\n", __FUNCTION__);
+
    /* Done elsewhere.
     */
    ASSERT(pipe->build_state_changes == 0);
@@ -203,6 +205,7 @@ const struct gl_pipeline_stage *_tnl_default_pipeline[] = {
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
+   &_tnl_vertex_program_stage,
    &_tnl_render_stage,
    0
 };

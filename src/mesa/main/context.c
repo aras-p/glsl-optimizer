@@ -1,8 +1,8 @@
-/* $Id: context.c,v 1.149 2001/11/06 15:53:00 brianp Exp $ */
+/* $Id: context.c,v 1.150 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -53,7 +53,6 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "vtxfmt.h"
-
 #include "math/m_translate.h"
 #include "math/m_vertices.h"
 #include "math/m_matrix.h"
@@ -88,6 +87,8 @@ int MESA_DEBUG_FLAGS = 0
 /*                 | DEBUG_ALWAYS_FLUSH */
 ;
 #endif
+
+
 
 /**********************************************************************/
 /*****       OpenGL SI-style interface (new in Mesa 3.5)          *****/
@@ -477,6 +478,37 @@ one_time_init( void )
 }
 
 
+static void
+init_matrix_stack( struct matrix_stack *stack,
+                   GLuint maxDepth, GLuint dirtyFlag )
+{
+   GLuint i;
+
+   stack->Depth = 0;
+   stack->MaxDepth = maxDepth;
+   stack->DirtyFlag = dirtyFlag;
+   /* Top matrix */
+   _math_matrix_ctr( &stack->Top );
+   _math_matrix_alloc_inv( &stack->Top );
+   /* The stack */
+   stack->Stack = MALLOC(maxDepth * sizeof(GLmatrix));
+   for (i = 0; i < maxDepth; i++) {
+      _math_matrix_ctr(&stack->Stack[i]);
+      _math_matrix_alloc_inv(&stack->Stack[i]);
+   }
+}
+
+
+static void
+free_matrix_stack( struct matrix_stack *stack )
+{
+   GLuint i;
+   _math_matrix_dtr( &stack->Top );
+   for (i = 0; i < stack->MaxDepth; i++) {
+      _math_matrix_dtr(&stack->Stack[i]);
+   }
+}
+
 
 /*
  * Allocate and initialize a shared context state structure.
@@ -768,6 +800,9 @@ init_attrib_groups( GLcontext *ctx )
       _math_matrix_ctr( &ctx->ModelViewStack[i] );
       _math_matrix_alloc_inv( &ctx->ModelViewStack[i] );
    }
+#if 1
+   init_matrix_stack(&ctx->ModelviewStack, 32, _NEW_MODELVIEW);
+#endif
 
    /* Projection matrix - need inv for user clipping in clip space*/
    _math_matrix_ctr( &ctx->ProjectionMatrix );
@@ -828,10 +863,16 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.MultiDrawBuffer = GL_FALSE;
 
    /* Current group */
-   ASSIGN_4V( ctx->Current.Color, 1.0, 1.0, 1.0, 1.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], 0.0, 0.0, 1.0, 0.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], 1.0, 1.0, 1.0, 1.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_FOG], 0.0, 0.0, 0.0, 0.0 );
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+      ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.Index = 1;
-   for (i=0; i<MAX_TEXTURE_UNITS; i++)
-      ASSIGN_4V( ctx->Current.Texcoord[i], 0.0, 0.0, 0.0, 1.0 );
+   ctx->Current.EdgeFlag = GL_TRUE;
+   
    ASSIGN_4V( ctx->Current.RasterPos, 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterDistance = 0.0;
    ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
@@ -840,8 +881,6 @@ init_attrib_groups( GLcontext *ctx )
       ASSIGN_4V( ctx->Current.RasterMultiTexCoord[i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterTexCoord = ctx->Current.RasterMultiTexCoord[0];
    ctx->Current.RasterPosValid = GL_TRUE;
-   ctx->Current.EdgeFlag = GL_TRUE;
-   ASSIGN_3V( ctx->Current.Normal, 0.0, 0.0, 1.0 );
 
 
    /* Depth buffer group */
@@ -1279,6 +1318,17 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->PostColorMatrixColorTable);
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
+   /* GL_NV_vertex_program */
+   ctx->VertexProgram.Binding = 0;
+   ctx->VertexProgram.HashTable = _mesa_NewHashTable();
+   ctx->VertexProgram.Enabled = GL_FALSE;
+   ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
+   ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
+   for (i = 0; i < VP_NUM_PROG_REGS / 4; i++) {
+      ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
+      ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
+   }
+
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;
@@ -1600,6 +1650,10 @@ _mesa_free_context_data( GLcontext *ctx )
       _mesa_make_current(NULL, NULL);
    }
 
+#if 1
+   free_matrix_stack(&ctx->ModelviewStack);
+#endif
+
    _math_matrix_dtr( &ctx->ModelView );
    for (i = 0; i < MAX_MODELVIEW_STACK_DEPTH - 1; i++) {
       _math_matrix_dtr( &ctx->ModelViewStack[i] );
@@ -1689,6 +1743,9 @@ _mesa_free_context_data( GLcontext *ctx )
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 
    _mesa_extensions_dtr(ctx);
+
+   /* GL_NV_vertex_program */
+   _mesa_DeleteHashTable(ctx->VertexProgram.HashTable);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);
@@ -1966,21 +2023,6 @@ void
 _mesa_warning( const GLcontext *ctx, const char *s )
 {
    (*ctx->imports.warning)((__GLcontext *) ctx, (char *) s);
-}
-
-
-
-/*
- * Compile an error into current display list.
- */
-void
-_mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
-{
-   if (ctx->CompileFlag)
-      _mesa_save_error( ctx, error, s );
-
-   if (ctx->ExecuteFlag)
-      _mesa_error( ctx, error, s );
 }
 
 

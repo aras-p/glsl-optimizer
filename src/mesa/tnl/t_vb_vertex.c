@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.9 2001/05/30 10:01:41 keithw Exp $ */
+/* $Id: t_vb_vertex.c,v 1.10 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,7 +170,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       if (VB->ClipPtr->size < 4) {
 	 if (VB->ClipPtr->flags & VEC_NOT_WRITEABLE) {
 	    ASSERT(VB->ClipPtr == VB->ObjPtr);
-	    VB->import_data( ctx, VERT_OBJ, VEC_NOT_WRITEABLE );
+	    VB->import_data( ctx, VERT_OBJ_BIT, VEC_NOT_WRITEABLE );
 	    VB->ClipPtr = VB->ObjPtr;
 	 }
 	 if (VB->ClipPtr->size == 2)
@@ -222,7 +222,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       VB->ClipOrMask = store->ormask;
       VB->ClipMask = store->clipmask;
 
-      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ))
+      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ_BIT))
 	 VB->importable_data |= VERT_CLIP;
 
       store->save_eyeptr = VB->EyePtr;
@@ -237,7 +237,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       VB->ProjectedClipPtr = store->save_projptr;
       VB->ClipMask = store->clipmask;
       VB->ClipOrMask = store->ormask;
-      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ))
+      if (VB->ClipPtr == VB->ObjPtr && (VB->importable_data & VERT_OBJ_BIT))
 	 VB->importable_data |= VERT_CLIP;
       if (store->andmask)
 	 return GL_FALSE;
@@ -249,8 +249,7 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
 static void check_vertex( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   (void) ctx;
-   (void) stage;
+   stage->active = !ctx->VertexProgram.Enabled;
 }
 
 static GLboolean init_vertex_stage( GLcontext *ctx,
@@ -308,9 +307,10 @@ const struct gl_pipeline_stage _tnl_vertex_transform_stage =
    _NEW_PROJECTION|
    _NEW_TRANSFORM,		/* re-run */
    GL_TRUE,			/* active */
-   VERT_OBJ,		/* inputs */
+   VERT_OBJ_BIT,		/* inputs */
    VERT_EYE|VERT_CLIP,		/* outputs */
-   0, 0,			/* changed_inputs, private */
+   0,				/* changed_inputs */
+   NULL,			/* private data */
    dtr,				/* destructor */
    check_vertex,		/* check */
    init_vertex_stage		/* run -- initially set to init */

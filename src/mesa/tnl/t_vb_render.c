@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.24 2001/12/03 17:48:58 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.25 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -282,7 +282,6 @@ static GLboolean run_render( GLcontext *ctx,
    render_func *tab;
    GLint pass = 0;
 
-
    /* Allow the drivers to lock before projected verts are built so
     * that window coordinates are guarenteed not to change before
     * rendering.
@@ -354,10 +353,10 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint i;
 
    if (ctx->Visual.rgbMode) {
-      inputs |= VERT_RGBA;
+      inputs |= VERT_COLOR0_BIT;
 
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-	 inputs |= VERT_SPEC_RGB;
+	 inputs |= VERT_COLOR1_BIT;
 
       if (ctx->Texture._ReallyEnabled) {
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
@@ -367,7 +366,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
       }
    }
    else {
-      inputs |= VERT_INDEX;
+      inputs |= VERT_INDEX_BIT;
    }
 
    if (ctx->Point._Attenuated)
@@ -376,10 +375,10 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    /* How do drivers turn this off?
     */
    if (ctx->Fog.Enabled)
-      inputs |= VERT_FOG_COORD;
+      inputs |= VERT_FOG_BIT;
 
    if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
-      inputs |= VERT_EDGE;
+      inputs |= VERT_EDGEFLAG_BIT;
 
    if (ctx->RenderMode==GL_FEEDBACK)
       inputs |= VERT_TEX_ANY;
@@ -397,7 +396,7 @@ static void dtr( struct gl_pipeline_stage *stage )
 
 const struct gl_pipeline_stage _tnl_render_stage =
 {
-   "render",
+   "render",			/* name */
    (_NEW_BUFFERS |
     _DD_NEW_SEPARATE_SPECULAR |
     _DD_NEW_FLATSHADE |
@@ -408,9 +407,11 @@ const struct gl_pipeline_stage _tnl_render_stage =
     _DD_NEW_TRI_UNFILLED |
     _NEW_RENDERMODE),		/* re-check (new inputs, interp function) */
    0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
+   GL_TRUE,			/* active? */
+   0,				/* inputs (set in check_render) */
+   0,				/* outputs */
+   0,				/* changed_inputs */
+   NULL,			/* private data */
    dtr,				/* destructor */
    check_render,		/* check */
    run_render			/* run */

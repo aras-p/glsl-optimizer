@@ -1,8 +1,8 @@
-/* $Id: context.h,v 1.27 2001/05/03 14:11:18 brianp Exp $ */
+/* $Id: context.h,v 1.28 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -203,9 +203,6 @@ _mesa_warning( const GLcontext *ctx, const char *s );
 
 extern void
 _mesa_error( GLcontext *ctx, GLenum error, const char *s );
-
-extern void
-_mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
 
 

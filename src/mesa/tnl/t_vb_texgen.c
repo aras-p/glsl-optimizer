@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.9 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_vb_texgen.c,v 1.10 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -529,7 +529,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i)) {
-	 if (stage->changed_inputs & (VERT_EYE | VERT_NORM | VERT_TEX(i)))
+	 if (stage->changed_inputs & (VERT_EYE | VERT_NORMAL_BIT | VERT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
 
 	 VB->TexCoordPtr[i] = &store->texcoord[i];
@@ -591,18 +591,18 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint i;
    stage->active = 0;
 
-   if (ctx->Texture._TexGenEnabled) {
+   if (ctx->Texture._TexGenEnabled && !ctx->VertexProgram.Enabled) {
       GLuint inputs = 0;
       GLuint outputs = 0;
 
       if (ctx->Texture._GenFlags & TEXGEN_OBJ_LINEAR)
-	 inputs |= VERT_OBJ;
+	 inputs |= VERT_OBJ_BIT;
 
       if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)
 	 inputs |= VERT_EYE;
 
       if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
-	 inputs |= VERT_NORM;
+	 inputs |= VERT_NORMAL_BIT;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i))
@@ -678,11 +678,14 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
 
 const struct gl_pipeline_stage _tnl_texgen_stage =
 {
-   "texgen",
+   "texgen",			/* name */
    _NEW_TEXTURE,		/* when to call check() */
    _NEW_TEXTURE,		/* when to invalidate stored data */
-   0,0,0,			/* active, inputs, outputs */
-   0,0,				/* changed_inputs, private */
+   GL_FALSE,			/* active? */
+   0,				/* inputs */
+   0,				/* outputs */
+   0,				/* changed_inputs */
+   NULL,			/* private data */
    free_texgen_data,		/* destructor */
    check_texgen,		/* check */
    alloc_texgen_data		/* run -- initially set to alloc data */

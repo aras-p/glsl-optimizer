@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.12 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.13 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -166,8 +166,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 
 	 input->count = VB->ObjPtr->count;
       }
-      else
-      {
+      else {
 	 input = &store->input;
 
 	 if (VB->EyePtr->size < 2)
@@ -178,7 +177,8 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 input->stride = VB->EyePtr->stride;
 	 input->count = VB->EyePtr->count;
       }
-   } else {
+   }
+   else {
       /* use glFogCoord() coordinates */
       /* source = VB->FogCoordPtr */
       input = VB->FogCoordPtr;
@@ -190,14 +190,15 @@ static GLboolean run_fog_stage( GLcontext *ctx,
    return GL_TRUE;
 }
 
+
 static void check_fog_stage( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   stage->active = ctx->Fog.Enabled;
+   stage->active = ctx->Fog.Enabled && !ctx->VertexProgram.Enabled;
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
       stage->inputs = VERT_EYE;
    else
-      stage->inputs = VERT_FOG_COORD;
+      stage->inputs = VERT_FOG_BIT;
 }
 
 
@@ -239,11 +240,14 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
 
 const struct gl_pipeline_stage _tnl_fog_coordinate_stage =
 {
-   "build fog coordinates",
-   _NEW_FOG,
-   _NEW_FOG,
-   0, 0, VERT_FOG_COORD,	/* active, inputs, outputs */
-   0, 0,			/* changed_inputs, private_data */
+   "build fog coordinates",	/* name */
+   _NEW_FOG,			/* check_state */
+   _NEW_FOG,			/* run_state */
+   GL_FALSE,			/* active? */
+   0,				/* inputs */
+   VERT_FOG_BIT,		/* outputs */
+   0,				/* changed_inputs */
+   NULL,			/* private_data */
    free_fog_data,		/* dtr */
    check_fog_stage,		/* check */
    alloc_fog_data		/* run -- initially set to init. */

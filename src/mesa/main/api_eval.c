@@ -1,4 +1,4 @@
-/* $Id: api_eval.c,v 1.1 2001/06/04 13:57:35 keithw Exp $ */
+/* $Id: api_eval.c,v 1.2 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -281,16 +281,16 @@ void _mesa_EvalCoord1f( GLfloat u )
    GLfloat normal[3], texcoord[4], color[4];
    GLuint index;
 
-   COPY_3FV( normal, ctx->Current.Normal );
-   COPY_4FV( texcoord, ctx->Current.Texcoord[0] );
-   COPY_4FV( color, ctx->Current.Color );
+   COPY_3FV( normal, ctx->Current.Attrib[VERT_ATTRIB_NORMAL] );
+   COPY_4FV( texcoord, ctx->Current.Attrib[VERT_ATTRIB_TEX0] );
+   COPY_4FV( color, ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
    index = ctx->Current.Index;
 
    do_EvalCoord1f( ctx, u );
 
-   COPY_3FV( ctx->Current.Normal, normal );
-   COPY_4FV( ctx->Current.Texcoord[0], texcoord );
-   COPY_4FV( ctx->Current.Color, color );
+   COPY_3FV( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], normal );
+   COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_TEX0], texcoord );
+   COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], color );
    ctx->Current.Index = index;
 }
 
@@ -300,16 +300,16 @@ void _mesa_EvalCoord2f( GLfloat u, GLfloat v )
    GLfloat normal[3], texcoord[4], color[4];
    GLuint index;
 
-   COPY_3FV( normal, ctx->Current.Normal );
-   COPY_4FV( texcoord, ctx->Current.Texcoord[0] );
-   COPY_4FV( color, ctx->Current.Color );
+   COPY_3FV( normal, ctx->Current.Attrib[VERT_ATTRIB_NORMAL] );
+   COPY_4FV( texcoord, ctx->Current.Attrib[VERT_ATTRIB_TEX0] );
+   COPY_4FV( color, ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
    index = ctx->Current.Index;
 
    do_EvalCoord2f( ctx, u, v );
 
-   COPY_3FV( ctx->Current.Normal, normal );
-   COPY_4FV( ctx->Current.Texcoord[0], texcoord );
-   COPY_4FV( ctx->Current.Color, color );
+   COPY_3FV( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], normal );
+   COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_TEX0], texcoord );
+   COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], color );
    ctx->Current.Index = index;
 }
 

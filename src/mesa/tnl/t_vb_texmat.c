@@ -1,4 +1,4 @@
-/* $Id: t_vb_texmat.c,v 1.5 2001/03/29 21:16:26 keithw Exp $ */
+/* $Id: t_vb_texmat.c,v 1.6 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint i;
    stage->active = 0;
 
-   if (ctx->Texture._TexMatEnabled) {
+   if (ctx->Texture._TexMatEnabled && !ctx->VertexProgram.Enabled) {
       GLuint flags = 0;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
@@ -137,12 +137,15 @@ static void free_texmat_data( struct gl_pipeline_stage *stage )
 
 const struct gl_pipeline_stage _tnl_texture_transform_stage =
 {
-   "texture transform",
-   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,
-   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,
-   0,0,0,			/* active, inputs, outputs */
-   0,0,				/* changed_inputs, private */
-   free_texmat_data,		/* destructor */
-   check_texmat,		/* check */
-   alloc_texmat_data,		/* run -- initially set to init */
+   "texture transform",			/* name */
+   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,	/* check_state */
+   _NEW_TEXTURE|_NEW_TEXTURE_MATRIX,	/* run_state */
+   GL_FALSE,				/* active? */
+   0,					/* inputs */
+   0,					/* outputs */
+   0,					/* changed_inputs */
+   NULL,				/* private data */
+   free_texmat_data,			/* destructor */
+   check_texmat,			/* check */
+   alloc_texmat_data,			/* run -- initially set to init */
 };

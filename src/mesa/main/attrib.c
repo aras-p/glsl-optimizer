@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.57 2001/09/18 15:27:18 kschultz Exp $ */
+/* $Id: attrib.c,v 1.58 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -240,6 +240,10 @@ _mesa_PushAttrib(GLbitfield mask)
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
       }
+      /* GL_NV_vertex_program */
+      attr->VertexProgram = ctx->VertexProgram.Enabled;
+      attr->VertexProgramPointSize = ctx->VertexProgram.PointSizeEnabled;
+      attr->VertexProgramTwoSide = ctx->VertexProgram.TwoSideEnabled;
       newnode = new_attrib_node( GL_ENABLE_BIT );
       newnode->data = attr;
       newnode->next = head;
@@ -537,6 +541,17 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
                    enable->SampleCoverageInvert,
                    GL_SAMPLE_COVERAGE_INVERT_ARB);
+   /* GL_NV_vertex_program */
+   TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
+                   enable->VertexProgram,
+                   GL_VERTEX_PROGRAM_NV);
+   TEST_AND_UPDATE(ctx->VertexProgram.PointSizeEnabled,
+                   enable->VertexProgramPointSize,
+                   GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+   TEST_AND_UPDATE(ctx->VertexProgram.TwoSideEnabled,
+                   enable->VertexProgramTwoSide,
+                   GL_VERTEX_PROGRAM_TWO_SIDE_NV);
+
 #undef TEST_AND_UPDATE
 
    /* texture unit enables */

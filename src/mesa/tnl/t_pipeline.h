@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.8 2001/07/12 22:09:22 keithw Exp $ */
+/* $Id: t_pipeline.h,v 1.9 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,7 @@ extern const struct gl_pipeline_stage _tnl_fog_coordinate_stage;
 extern const struct gl_pipeline_stage _tnl_texgen_stage;
 extern const struct gl_pipeline_stage _tnl_texture_transform_stage;
 extern const struct gl_pipeline_stage _tnl_point_attenuation_stage;
+extern const struct gl_pipeline_stage _tnl_vertex_program_stage;
 extern const struct gl_pipeline_stage _tnl_render_stage;
 
 /* Shorthand to plug in the default pipeline:

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.18 2001/08/13 22:15:54 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.19 2001/12/14 02:51:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -247,45 +247,45 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
    if (writeable || stride) ca_flags |= CA_CLIENT_DATA;
 
    if ((required & VERT_CLIP) && VB->ClipPtr == VB->ObjPtr)
-      required |= VERT_OBJ;
+      required |= VERT_OBJ_BIT;
 
 /*     _tnl_print_vert_flags("_tnl_upgrade_client_data", required); */
 
-   if ((required & VERT_OBJ) && (VB->ObjPtr->flags & flags)) {
+   if ((required & VERT_OBJ_BIT) && (VB->ObjPtr->flags & flags)) {
       ASSERT(VB->ObjPtr == &inputs->Obj);
       _tnl_import_vertex( ctx, writeable, stride );
-      VB->importable_data &= ~(VERT_OBJ|VERT_CLIP);
+      VB->importable_data &= ~(VERT_OBJ_BIT|VERT_CLIP);
    }
 
-   if ((required & VERT_NORM) && (VB->NormalPtr->flags & flags)) {
+   if ((required & VERT_NORMAL_BIT) && (VB->NormalPtr->flags & flags)) {
       ASSERT(VB->NormalPtr == &inputs->Normal);
       _tnl_import_normal( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_NORM;
+      VB->importable_data &= ~VERT_NORMAL_BIT;
    }
 
-   if ((required & VERT_RGBA) && (VB->ColorPtr[0]->Flags & ca_flags)) {
+   if ((required & VERT_COLOR0_BIT) && (VB->ColorPtr[0]->Flags & ca_flags)) {
       ASSERT(VB->ColorPtr[0] == &inputs->Color);
       _tnl_import_color( ctx, GL_FLOAT, writeable, stride );
-      VB->importable_data &= ~VERT_RGBA;
+      VB->importable_data &= ~VERT_COLOR0_BIT;
    }
 
-   if ((required & VERT_SPEC_RGB) && 
+   if ((required & VERT_COLOR1_BIT) && 
        (VB->SecondaryColorPtr[0]->Flags & ca_flags)) {
       ASSERT(VB->SecondaryColorPtr[0] == &inputs->SecondaryColor);
       _tnl_import_secondarycolor( ctx, GL_FLOAT, writeable, stride );
-      VB->importable_data &= ~VERT_SPEC_RGB;
+      VB->importable_data &= ~VERT_COLOR1_BIT;
    }
 
-   if ((required & VERT_FOG_COORD) && (VB->FogCoordPtr->flags & flags)) {
+   if ((required & VERT_FOG_BIT) && (VB->FogCoordPtr->flags & flags)) {
       ASSERT(VB->FogCoordPtr == &inputs->FogCoord);
       _tnl_import_fogcoord( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_FOG_COORD;
+      VB->importable_data &= ~VERT_FOG_BIT;
    }
 
-   if ((required & VERT_INDEX) && (VB->IndexPtr[0]->flags & flags)) {
+   if ((required & VERT_INDEX_BIT) && (VB->IndexPtr[0]->flags & flags)) {
       ASSERT(VB->IndexPtr[0] == &inputs->Index);
       _tnl_import_index( ctx, writeable, stride );
-      VB->importable_data &= ~VERT_INDEX;
+      VB->importable_data &= ~VERT_INDEX_BIT;
    }
 
    if (required & VERT_TEX_ANY)
@@ -332,19 +332,19 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    _ac_import_range( ctx, start, count );
 
-   if (inputs & VERT_OBJ) {
+   if (inputs & VERT_OBJ_BIT) {
       _tnl_import_vertex( ctx, 0, 0 );
       tmp->Obj.count = VB->Count;
       VB->ObjPtr = &tmp->Obj;
    }
 
-   if (inputs & VERT_NORM) {
+   if (inputs & VERT_NORMAL_BIT) {
       _tnl_import_normal( ctx, 0, 0 );
       tmp->Normal.count = VB->Count;
       VB->NormalPtr = &tmp->Normal;
    }
 
-   if (inputs & VERT_RGBA) {
+   if (inputs & VERT_COLOR0_BIT) {
       _tnl_import_color( ctx, 0, 0, 0 );
       VB->ColorPtr[0] = &tmp->Color;
       VB->ColorPtr[1] = 0;
@@ -360,26 +360,26 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       }
    }
 
-   if (inputs & (VERT_INDEX|VERT_FOG_COORD|VERT_EDGE|VERT_SPEC_RGB)) {
-      if (inputs & VERT_INDEX) {
+   if (inputs & (VERT_INDEX_BIT|VERT_FOG_BIT|VERT_EDGEFLAG_BIT|VERT_COLOR1_BIT)) {
+      if (inputs & VERT_INDEX_BIT) {
 	 _tnl_import_index( ctx, 0, 0 );
 	 tmp->Index.count = VB->Count;
 	 VB->IndexPtr[0] = &tmp->Index;
 	 VB->IndexPtr[1] = 0;
       }
 
-      if (inputs & VERT_FOG_COORD) {
+      if (inputs & VERT_FOG_BIT) {
 	 _tnl_import_fogcoord( ctx, 0, 0 );
 	 tmp->FogCoord.count = VB->Count;
 	 VB->FogCoordPtr = &tmp->FogCoord;
       }
 
-      if (inputs & VERT_EDGE) {
+      if (inputs & VERT_EDGEFLAG_BIT) {
 	 _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
 	 VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
       }
 
-      if (inputs & VERT_SPEC_RGB) {
+      if (inputs & VERT_COLOR1_BIT) {
 	 _tnl_import_secondarycolor( ctx, 0, 0, 0 );
 	 VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
 	 VB->SecondaryColorPtr[1] = 0;

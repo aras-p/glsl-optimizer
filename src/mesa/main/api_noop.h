@@ -1,8 +1,8 @@
-/* $Id: api_noop.h,v 1.3 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: api_noop.h,v 1.4 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -115,6 +115,12 @@ extern void _mesa_noop_TexCoord3fv( GLfloat *v );
 extern void _mesa_noop_TexCoord4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d );
 
 extern void _mesa_noop_TexCoord4fv( GLfloat *v );
+
+extern void _mesa_noop_VertexAttrib4fNV( GLuint index, GLfloat x,
+                                         GLfloat y, GLfloat z, GLfloat w );
+
+extern void _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat *v );
+
 
 
 /* Not strictly a noop -- translate Rectf down to Begin/End and

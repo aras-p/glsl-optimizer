@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.10 2001/09/07 06:55:59 joukj Exp $ */
+/* $Id: t_imm_alloc.c,v 1.11 2001/12/14 02:51:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,7 +61,6 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
 
    IM->CopyTexSize = 0;
    IM->CopyStart = IM->Start;
-
 
    /* TexCoord0 is special.
     */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.19 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.20 2001/12/14 02:51:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,9 @@
 #include "t_imm_elt.h"
 #include "t_imm_exec.h"
 #include "t_imm_dlist.h"
+
+
+extern void _tnl_vprog_vtxfmt_init( GLcontext *ctx );
 
 
 /* A cassette is full or flushed on a statechange.
@@ -95,6 +98,13 @@ _tnl_begin( GLcontext *ctx, GLenum p )
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
+
+   /* Either install the normal vertex functions or the vertex program funcs */
+   if (ctx->VertexProgram.Enabled)
+      _tnl_vprog_vtxfmt_init(ctx);
+   else
+      _tnl_imm_vtxfmt_init(ctx);
+   _mesa_init_exec_vtxfmt(ctx);
 
    /* if only a very few slots left, might as well flush now
     */
@@ -161,7 +171,8 @@ _tnl_save_Begin( GLenum mode )
       ctx->Driver.CurrentSavePrimitive = mode;
 }
 
-static void
+
+void
 _tnl_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -313,11 +324,11 @@ _tnl_end( GLcontext *ctx )
    /* You can set this flag to get the old 'flush_vb on glEnd()'
     * behaviour.
     */
-   if (1/*(MESA_DEBUG_FLAGS&DEBUG_ALWAYS_FLUSH)*/)
+   if (1 /*(MESA_DEBUG_FLAGS&DEBUG_ALWAYS_FLUSH)*/ )
       _tnl_flush_immediate( IM );
 }
 
-static void
+void
 _tnl_End(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -335,7 +346,7 @@ _tnl_End(void)
 #define COLOR( IM, r, g, b, a )			\
 {						\
    GLuint count = IM->Count;			\
-   IM->Flag[count] |= VERT_RGBA;		\
+   IM->Flag[count] |= VERT_COLOR0_BIT;		\
    IM->Color[count][0] = r;			\
    IM->Color[count][1] = g;			\
    IM->Color[count][2] = b;			\
@@ -420,7 +431,7 @@ _tnl_Color4ubv( const GLubyte *v)
 #define SECONDARY_COLOR( IM, r, g, b )		\
 {						\
    GLuint count = IM->Count;			\
-   IM->Flag[count] |= VERT_SPEC_RGB;		\
+   IM->Flag[count] |= VERT_COLOR1_BIT;		\
    IM->SecondaryColor[count][0] = r;		\
    IM->SecondaryColor[count][1] = g;		\
    IM->SecondaryColor[count][2] = b;		\
@@ -470,7 +481,7 @@ _tnl_EdgeFlag( GLboolean flag )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->EdgeFlag[count] = flag;
-   IM->Flag[count] |= VERT_EDGE;
+   IM->Flag[count] |= VERT_EDGEFLAG_BIT;
 }
 
 
@@ -481,7 +492,7 @@ _tnl_EdgeFlagv( const GLboolean *flag )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->EdgeFlag[count] = *flag;
-   IM->Flag[count] |= VERT_EDGE;
+   IM->Flag[count] |= VERT_EDGEFLAG_BIT;
 }
 
 
@@ -492,7 +503,7 @@ _tnl_FogCoordfEXT( GLfloat f )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->FogCoord[count] = f;
-   IM->Flag[count] |= VERT_FOG_COORD;
+   IM->Flag[count] |= VERT_FOG_BIT;
 }
 
 static void
@@ -502,7 +513,7 @@ _tnl_FogCoordfvEXT( const GLfloat *v )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->FogCoord[count] = v[0];
-   IM->Flag[count] |= VERT_FOG_COORD;
+   IM->Flag[count] |= VERT_FOG_BIT;
 }
 
 
@@ -513,7 +524,7 @@ _tnl_Indexi( GLint c )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->Index[count] = c;
-   IM->Flag[count] |= VERT_INDEX;
+   IM->Flag[count] |= VERT_INDEX_BIT;
 }
 
 
@@ -524,7 +535,7 @@ _tnl_Indexiv( const GLint *c )
    GET_IMMEDIATE;
    count = IM->Count;
    IM->Index[count] = *c;
-   IM->Flag[count] |= VERT_INDEX;
+   IM->Flag[count] |= VERT_INDEX_BIT;
 }
 
 
@@ -534,7 +545,7 @@ _tnl_Indexiv( const GLint *c )
    GLfloat *normal;				\
    GET_IMMEDIATE;				\
    count = IM->Count;				\
-   IM->Flag[count] |= VERT_NORM;		\
+   IM->Flag[count] |= VERT_NORMAL_BIT;		\
    normal = IM->Normal[count];			\
    ASSIGN_3V(normal, x,y,z);			\
 }
@@ -546,7 +557,7 @@ _tnl_Indexiv( const GLint *c )
    fi_type *normal;						\
    GET_IMMEDIATE;						\
    count = IM->Count;						\
-   IM->Flag[count] |= VERT_NORM;				\
+   IM->Flag[count] |= VERT_NORMAL_BIT;				\
    normal = (fi_type *)IM->Normal[count];			\
    normal[0].i = ((fi_type *)&(x))->i;				\
    normal[1].i = ((fi_type *)&(y))->i;				\
@@ -577,7 +588,7 @@ _tnl_Normal3fv( const GLfloat *v )
    GLfloat *tc;					\
    GET_IMMEDIATE;				\
    count = IM->Count;				\
-   IM->Flag[count] |= VERT_TEX0;		\
+   IM->Flag[count] |= VERT_TEX0_BIT;		\
    tc = IM->TexCoord0[count];			\
    ASSIGN_4V(tc,s,0,0,1);			\
 }
@@ -588,7 +599,7 @@ _tnl_Normal3fv( const GLfloat *v )
    GLfloat *tc;					\
    GET_IMMEDIATE;				\
    count = IM->Count;				\
-   IM->Flag[count] |= VERT_TEX0;		\
+   IM->Flag[count] |= VERT_TEX0_BIT;		\
    tc = IM->TexCoord0[count];			\
    ASSIGN_4V(tc, s,t,0,1);		        \
 }
@@ -599,7 +610,7 @@ _tnl_Normal3fv( const GLfloat *v )
    GLfloat *tc;					\
    GET_IMMEDIATE;				\
    count = IM->Count;				\
-   IM->Flag[count] |= VERT_TEX0;		\
+   IM->Flag[count] |= VERT_TEX0_BIT;		\
    IM->TexSize |= TEX_0_SIZE_3;		\
    tc = IM->TexCoord0[count];			\
    ASSIGN_4V(tc, s,t,u,1);			\
@@ -611,7 +622,7 @@ _tnl_Normal3fv( const GLfloat *v )
    GLfloat *tc;					\
    GET_IMMEDIATE;				\
    count = IM->Count;				\
-   IM->Flag[count] |= VERT_TEX0;		\
+   IM->Flag[count] |= VERT_TEX0_BIT;		\
    IM->TexSize |= TEX_0_SIZE_4;		\
    tc = IM->TexCoord0[count];			\
    ASSIGN_4V(tc, s,t,u,v);			\
@@ -624,7 +635,7 @@ _tnl_Normal3fv( const GLfloat *v )
    fi_type *tc;						\
    GET_IMMEDIATE;					\
    count = IM->Count;					\
-   IM->Flag[count] |= VERT_TEX0;			\
+   IM->Flag[count] |= VERT_TEX0_BIT;			\
    tc = (fi_type *)IM->TexCoord0[count];		\
    tc[0].i = ((fi_type *)&(s))->i;			\
    tc[1].i = ((fi_type *)&(t))->i;			\
@@ -694,7 +705,7 @@ _tnl_TexCoord4fv( const GLfloat *v )
 {						\
    GLuint count = IM->Count++;			\
    GLfloat *dest = IM->Obj[count];		\
-   IM->Flag[count] |= VERT_OBJ;			\
+   IM->Flag[count] |= VERT_OBJ_BIT;			\
    ASSIGN_4V(dest, x, y, 0, 1);			\
 /*     ASSERT(IM->Flag[IM->Count]==0);		 */\
    if (count == IMM_MAXDATA - 1)		\
@@ -727,7 +738,7 @@ _tnl_TexCoord4fv( const GLfloat *v )
 {							\
    GLuint count = IM->Count++;				\
    fi_type *dest = (fi_type *)IM->Obj[count];		\
-   IM->Flag[count] |= VERT_OBJ; 			\
+   IM->Flag[count] |= VERT_OBJ_BIT; 			\
    dest[0].i = ((fi_type *)&(x))->i;			\
    dest[1].i = ((fi_type *)&(y))->i;			\
    dest[2].i = 0;					\
@@ -1100,6 +1111,30 @@ _tnl_vertex2f( GLcontext *ctx, GLfloat x, GLfloat y )
 
 
 
+/*
+ * NV_vertex_program
+ */
+
+static void
+_tnl_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   /* no-op? */
+   printf("%s(%d, %f, %f, %f, %f)\n", __FUNCTION__, index, x, y, z, w);
+   (void) index;
+   (void) x;
+   (void) y;
+   (void) z;
+   (void) w;
+}
+
+static void
+_tnl_VertexAttrib4fvNV(GLuint index, const GLfloat *v)
+{
+   /* no-op? */
+   (void) index;
+   (void) v;
+}
+
 
 
 /* Execute a glRectf() function.  _tnl_hard_begin() ensures the check
@@ -1206,6 +1241,8 @@ void _tnl_imm_vtxfmt_init( GLcontext *ctx )
 {
    GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->vtxfmt);
 
+   printf("%s()\n", __FUNCTION__);
+
    /* All begin/end operations are handled by this vertex format:
     */
    vfmt->ArrayElement = _tnl_ArrayElement;
@@ -1260,6 +1297,8 @@ void _tnl_imm_vtxfmt_init( GLcontext *ctx )
    vfmt->Vertex3fv = _tnl_Vertex3fv;
    vfmt->Vertex4f = _tnl_Vertex4f;
    vfmt->Vertex4fv = _tnl_Vertex4fv;
+   vfmt->VertexAttrib4fNV = _tnl_VertexAttrib4fNV;
+   vfmt->VertexAttrib4fvNV = _tnl_VertexAttrib4fvNV;
 
    /* Outside begin/end functions (from t_varray.c, t_eval.c, ...):
     */

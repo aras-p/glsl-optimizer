@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.72 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: state.c,v 1.73 2001/12/14 02:50:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,6 +69,7 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "vpstate.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -455,6 +456,33 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->WindowPos4ivMESA = _mesa_WindowPos4ivMESA;
    exec->WindowPos4sMESA = _mesa_WindowPos4sMESA;
    exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
+
+   /* ###. GL_NV_vertex_program */
+   exec->BindProgramNV = _mesa_BindProgramNV;
+   exec->DeleteProgramsNV = _mesa_DeleteProgramsNV;
+   exec->ExecuteProgramNV = _mesa_ExecuteProgramNV;
+   exec->GenProgramsNV = _mesa_GenProgramsNV;
+   exec->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
+   exec->RequestResidentProgramsNV = _mesa_RequestResidentProgramsNV;
+   exec->GetProgramParameterfvNV = _mesa_GetProgramParameterfvNV;
+   exec->GetProgramParameterdvNV = _mesa_GetProgramParameterdvNV;
+   exec->GetProgramivNV = _mesa_GetProgramivNV;
+   exec->GetProgramStringNV = _mesa_GetProgramStringNV;
+   exec->GetTrackMatrixivNV = _mesa_GetTrackMatrixivNV;
+   exec->GetVertexAttribdvNV = _mesa_GetVertexAttribdvNV;
+   exec->GetVertexAttribfvNV = _mesa_GetVertexAttribfvNV;
+   exec->GetVertexAttribivNV = _mesa_GetVertexAttribivNV;
+   exec->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
+   exec->IsProgramNV = _mesa_IsProgramNV;
+   exec->LoadProgramNV = _mesa_LoadProgramNV;
+   exec->ProgramParameter4dNV = _mesa_ProgramParameter4dNV;
+   exec->ProgramParameter4dvNV = _mesa_ProgramParameter4dvNV;
+   exec->ProgramParameter4fNV = _mesa_ProgramParameter4fNV;
+   exec->ProgramParameter4fvNV = _mesa_ProgramParameter4fvNV;
+   exec->ProgramParameters4dvNV = _mesa_ProgramParameters4dvNV;
+   exec->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
+   exec->TrackMatrixNV = _mesa_TrackMatrixNV;
+   exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;

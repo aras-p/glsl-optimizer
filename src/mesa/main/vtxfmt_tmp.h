@@ -1,4 +1,4 @@
-/* $Id: vtxfmt_tmp.h,v 1.7 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.8 2001/12/14 02:55:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -391,6 +391,18 @@ static void TAG(EvalMesh2)( GLenum mode, GLint i1, GLint i2,
    _glapi_Dispatch->EvalMesh2( mode, i1, i2, j1, j2 );
 }
 
+static void TAG(VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   PRE_LOOPBACK( VertexAttrib4fNV );
+   glVertexAttrib4fNV( index, x, y, z, w );
+}
+
+static void TAG(VertexAttrib4fvNV)( GLuint index, const GLfloat *v )
+{
+   PRE_LOOPBACK( VertexAttrib4fNV );
+   glVertexAttrib4fvNV( index, v );
+}
+
 
 static GLvertexformat TAG(vtxfmt) = {
    TAG(ArrayElement),
@@ -446,12 +458,14 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(CallList),
    TAG(Begin),
    TAG(End),
+   TAG(VertexAttrib4fNV),
+   TAG(VertexAttrib4fvNV),
    TAG(Rectf),
    TAG(DrawArrays),
    TAG(DrawElements),
    TAG(DrawRangeElements),
    TAG(EvalMesh1),
-   TAG(EvalMesh2),
+   TAG(EvalMesh2)
 };
 
 #undef TAG

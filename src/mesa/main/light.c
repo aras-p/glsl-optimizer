@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.46 2001/09/18 16:16:21 kschultz Exp $ */
+/* $Id: light.c,v 1.47 2001/12/14 02:50:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -881,7 +881,7 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 
    if (ctx->Light.ColorMaterialEnabled) {
       FLUSH_CURRENT( ctx, 0 );
-      _mesa_update_color_material( ctx, ctx->Current.Color );
+      _mesa_update_color_material(ctx,ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
    }
 }
 

@@ -11542,13 +11542,13 @@ GL_PREFIX(PointParameterfSGIS):
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
 	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_PointParameterfARB), %g2
-	or	%g2, %lo(8 * _gloffset_PointParameterfARB), %g2
+	sethi	%hi(8 * _gloffset_PointParameterfEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_PointParameterfARB)], %g3
+	ld	[%g1 + (4 * _gloffset_PointParameterfEXT)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop
@@ -11563,13 +11563,13 @@ GL_PREFIX(PointParameterfvSGIS):
 	or	%g1, %lo(0x00000000), %g1
 	sllx	%g2, 32, %g2
 	ldx	[%g1 + %g2], %g1
-	sethi	%hi(8 * _gloffset_PointParameterfvARB), %g2
-	or	%g2, %lo(8 * _gloffset_PointParameterfvARB), %g2
+	sethi	%hi(8 * _gloffset_PointParameterfvEXT), %g2
+	or	%g2, %lo(8 * _gloffset_PointParameterfvEXT), %g2
 	ldx	[%g1 + %g2], %g3
 #else
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
-	ld	[%g1 + (4 * _gloffset_PointParameterfvARB)], %g3
+	ld	[%g1 + (4 * _gloffset_PointParameterfvEXT)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop
@@ -14384,6 +14384,1350 @@ GL_PREFIX(WindowPos3svARB):
 	sethi	%hi(0x00000000), %g1
 	ld	[%g1 + %lo(0x00000000)], %g1
 	ld	[%g1 + (4 * _gloffset_WindowPos3svARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(BindProgramNV))
+.type glBindProgramNV,#function
+GL_PREFIX(BindProgramNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BindProgramNV), %g2
+	or	%g2, %lo(8 * _gloffset_BindProgramNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BindProgramNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(DeleteProgramsNV))
+.type glDeleteProgramsNV,#function
+GL_PREFIX(DeleteProgramsNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteProgramsNV), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteProgramsNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteProgramsNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ExecuteProgramNV))
+.type glExecuteProgramNV,#function
+GL_PREFIX(ExecuteProgramNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ExecuteProgramNV), %g2
+	or	%g2, %lo(8 * _gloffset_ExecuteProgramNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ExecuteProgramNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GenProgramsNV))
+.type glGenProgramsNV,#function
+GL_PREFIX(GenProgramsNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GenProgramsNV), %g2
+	or	%g2, %lo(8 * _gloffset_GenProgramsNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GenProgramsNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(AreProgramsResidentNV))
+.type glAreProgramsResidentNV,#function
+GL_PREFIX(AreProgramsResidentNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_AreProgramsResidentNV), %g2
+	or	%g2, %lo(8 * _gloffset_AreProgramsResidentNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_AreProgramsResidentNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(RequestResidentProgramsNV))
+.type glRequestResidentProgramsNV,#function
+GL_PREFIX(RequestResidentProgramsNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_RequestResidentProgramsNV), %g2
+	or	%g2, %lo(8 * _gloffset_RequestResidentProgramsNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_RequestResidentProgramsNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetProgramParameterfvNV))
+.type glGetProgramParameterfvNV,#function
+GL_PREFIX(GetProgramParameterfvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetProgramParameterfvNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetProgramParameterfvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetProgramParameterfvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetProgramParameterdvNV))
+.type glGetProgramParameterdvNV,#function
+GL_PREFIX(GetProgramParameterdvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetProgramParameterdvNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetProgramParameterdvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetProgramParameterdvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetProgramivNV))
+.type glGetProgramivNV,#function
+GL_PREFIX(GetProgramivNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetProgramivNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetProgramivNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetProgramivNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetProgramStringNV))
+.type glGetProgramStringNV,#function
+GL_PREFIX(GetProgramStringNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetProgramStringNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetProgramStringNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetProgramStringNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetTrackMatrixivNV))
+.type glGetTrackMatrixivNV,#function
+GL_PREFIX(GetTrackMatrixivNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetTrackMatrixivNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetTrackMatrixivNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetTrackMatrixivNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetVertexAttribdvNV))
+.type glGetVertexAttribdvNV,#function
+GL_PREFIX(GetVertexAttribdvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetVertexAttribdvNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetVertexAttribdvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetVertexAttribdvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetVertexAttribfvNV))
+.type glGetVertexAttribfvNV,#function
+GL_PREFIX(GetVertexAttribfvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetVertexAttribfvNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetVertexAttribfvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetVertexAttribfvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetVertexAttribivNV))
+.type glGetVertexAttribivNV,#function
+GL_PREFIX(GetVertexAttribivNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetVertexAttribivNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetVertexAttribivNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetVertexAttribivNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(GetVertexAttribPointervNV))
+.type glGetVertexAttribPointervNV,#function
+GL_PREFIX(GetVertexAttribPointervNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetVertexAttribPointervNV), %g2
+	or	%g2, %lo(8 * _gloffset_GetVertexAttribPointervNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetVertexAttribPointervNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(IsProgramNV))
+.type glIsProgramNV,#function
+GL_PREFIX(IsProgramNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_IsProgramNV), %g2
+	or	%g2, %lo(8 * _gloffset_IsProgramNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_IsProgramNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(LoadProgramNV))
+.type glLoadProgramNV,#function
+GL_PREFIX(LoadProgramNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_LoadProgramNV), %g2
+	or	%g2, %lo(8 * _gloffset_LoadProgramNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_LoadProgramNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameter4fNV))
+.type glProgramParameter4fNV,#function
+GL_PREFIX(ProgramParameter4fNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameter4fNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameter4fNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameter4fNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameter4dNV))
+.type glProgramParameter4dNV,#function
+GL_PREFIX(ProgramParameter4dNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameter4dNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameter4dNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameter4dNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameter4dvNV))
+.type glProgramParameter4dvNV,#function
+GL_PREFIX(ProgramParameter4dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameter4dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameter4dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameter4dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameter4fvNV))
+.type glProgramParameter4fvNV,#function
+GL_PREFIX(ProgramParameter4fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameter4fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameter4fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameter4fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameters4dvNV))
+.type glProgramParameters4dvNV,#function
+GL_PREFIX(ProgramParameters4dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameters4dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameters4dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameters4dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(ProgramParameters4fvNV))
+.type glProgramParameters4fvNV,#function
+GL_PREFIX(ProgramParameters4fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_ProgramParameters4fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_ProgramParameters4fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_ProgramParameters4fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(TrackMatrixNV))
+.type glTrackMatrixNV,#function
+GL_PREFIX(TrackMatrixNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_TrackMatrixNV), %g2
+	or	%g2, %lo(8 * _gloffset_TrackMatrixNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_TrackMatrixNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribPointerNV))
+.type glVertexAttribPointerNV,#function
+GL_PREFIX(VertexAttribPointerNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribPointerNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribPointerNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribPointerNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1sNV))
+.type glVertexAttrib1sNV,#function
+GL_PREFIX(VertexAttrib1sNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1sNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1sNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1sNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1fNV))
+.type glVertexAttrib1fNV,#function
+GL_PREFIX(VertexAttrib1fNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1fNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1fNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1fNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1dNV))
+.type glVertexAttrib1dNV,#function
+GL_PREFIX(VertexAttrib1dNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1dNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1dNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1dNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2sNV))
+.type glVertexAttrib2sNV,#function
+GL_PREFIX(VertexAttrib2sNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2sNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2sNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2sNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2fNV))
+.type glVertexAttrib2fNV,#function
+GL_PREFIX(VertexAttrib2fNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2fNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2fNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2fNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2dNV))
+.type glVertexAttrib2dNV,#function
+GL_PREFIX(VertexAttrib2dNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2dNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2dNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2dNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3sNV))
+.type glVertexAttrib3sNV,#function
+GL_PREFIX(VertexAttrib3sNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3sNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3sNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3sNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3fNV))
+.type glVertexAttrib3fNV,#function
+GL_PREFIX(VertexAttrib3fNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3fNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3fNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3fNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3dNV))
+.type glVertexAttrib3dNV,#function
+GL_PREFIX(VertexAttrib3dNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3dNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3dNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3dNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4sNV))
+.type glVertexAttrib4sNV,#function
+GL_PREFIX(VertexAttrib4sNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4sNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4sNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4sNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4fNV))
+.type glVertexAttrib4fNV,#function
+GL_PREFIX(VertexAttrib4fNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4fNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4fNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4fNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4dNV))
+.type glVertexAttrib4dNV,#function
+GL_PREFIX(VertexAttrib4dNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4dNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4dNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4dNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4ubNV))
+.type glVertexAttrib4ubNV,#function
+GL_PREFIX(VertexAttrib4ubNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4ubNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4ubNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4ubNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1svNV))
+.type glVertexAttrib1svNV,#function
+GL_PREFIX(VertexAttrib1svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1fvNV))
+.type glVertexAttrib1fvNV,#function
+GL_PREFIX(VertexAttrib1fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib1dvNV))
+.type glVertexAttrib1dvNV,#function
+GL_PREFIX(VertexAttrib1dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib1dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib1dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib1dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2svNV))
+.type glVertexAttrib2svNV,#function
+GL_PREFIX(VertexAttrib2svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2fvNV))
+.type glVertexAttrib2fvNV,#function
+GL_PREFIX(VertexAttrib2fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib2dvNV))
+.type glVertexAttrib2dvNV,#function
+GL_PREFIX(VertexAttrib2dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib2dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib2dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib2dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3svNV))
+.type glVertexAttrib3svNV,#function
+GL_PREFIX(VertexAttrib3svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3fvNV))
+.type glVertexAttrib3fvNV,#function
+GL_PREFIX(VertexAttrib3fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib3dvNV))
+.type glVertexAttrib3dvNV,#function
+GL_PREFIX(VertexAttrib3dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib3dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib3dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib3dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4svNV))
+.type glVertexAttrib4svNV,#function
+GL_PREFIX(VertexAttrib4svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4fvNV))
+.type glVertexAttrib4fvNV,#function
+GL_PREFIX(VertexAttrib4fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4dvNV))
+.type glVertexAttrib4dvNV,#function
+GL_PREFIX(VertexAttrib4dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttrib4ubvNV))
+.type glVertexAttrib4ubvNV,#function
+GL_PREFIX(VertexAttrib4ubvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttrib4ubvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttrib4ubvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttrib4ubvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs1svNV))
+.type glVertexAttribs1svNV,#function
+GL_PREFIX(VertexAttribs1svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs1svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs1svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs1svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs1fvNV))
+.type glVertexAttribs1fvNV,#function
+GL_PREFIX(VertexAttribs1fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs1fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs1fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs1fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs1dvNV))
+.type glVertexAttribs1dvNV,#function
+GL_PREFIX(VertexAttribs1dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs1dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs1dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs1dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs2svNV))
+.type glVertexAttribs2svNV,#function
+GL_PREFIX(VertexAttribs2svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs2svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs2svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs2svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs2fvNV))
+.type glVertexAttribs2fvNV,#function
+GL_PREFIX(VertexAttribs2fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs2fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs2fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs2fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs2dvNV))
+.type glVertexAttribs2dvNV,#function
+GL_PREFIX(VertexAttribs2dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs2dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs2dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs2dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs3svNV))
+.type glVertexAttribs3svNV,#function
+GL_PREFIX(VertexAttribs3svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs3svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs3svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs3svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs3fvNV))
+.type glVertexAttribs3fvNV,#function
+GL_PREFIX(VertexAttribs3fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs3fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs3fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs3fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs3dvNV))
+.type glVertexAttribs3dvNV,#function
+GL_PREFIX(VertexAttribs3dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs3dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs3dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs3dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs4svNV))
+.type glVertexAttribs4svNV,#function
+GL_PREFIX(VertexAttribs4svNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs4svNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs4svNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs4svNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs4fvNV))
+.type glVertexAttribs4fvNV,#function
+GL_PREFIX(VertexAttribs4fvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs4fvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs4fvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs4fvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs4dvNV))
+.type glVertexAttribs4dvNV,#function
+GL_PREFIX(VertexAttribs4dvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs4dvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs4dvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs4dvNV)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+GLOBL_FN(GL_PREFIX(VertexAttribs4ubvNV))
+.type glVertexAttribs4ubvNV,#function
+GL_PREFIX(VertexAttribs4ubvNV):
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_VertexAttribs4ubvNV), %g2
+	or	%g2, %lo(8 * _gloffset_VertexAttribs4ubvNV), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_VertexAttribs4ubvNV)], %g3
 #endif
 	jmpl	%g3, %g0
 	nop

@@ -1,8 +1,8 @@
-/* $Id: dlist.h,v 1.16 2001/03/24 06:01:27 gareth Exp $ */
+/* $Id: dlist.h,v 1.17 2001/12/14 02:50:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -83,19 +83,20 @@ extern void _mesa_ListBase( GLuint base );
 
 extern void _mesa_NewList( GLuint list, GLenum mode );
 
-extern void _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize );
+extern void _mesa_init_dlist_table( struct _glapi_table *table,
+                                    GLuint tableSize );
 
 extern void _mesa_save_error( GLcontext *ctx, GLenum error, const char *s );
 
+extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
-void *
-_mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz );
 
-int
-_mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
-		    void (*execute)( GLcontext *, void * ),
-		    void (*destroy)( GLcontext *, void * ),
-		    void (*print)( GLcontext *, void * ) );
+extern void *_mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz );
+
+extern int _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
+                               void (*execute)( GLcontext *, void * ),
+                               void (*destroy)( GLcontext *, void * ),
+                               void (*print)( GLcontext *, void * ) );
 
 extern void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2,
 				 GLint j1, GLint j2 );

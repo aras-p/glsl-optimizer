@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.32 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_context.h,v 1.33 2001/12/14 02:51:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,43 +71,45 @@
  * 5 spare flags, rearrangement of eval flags can secure at least 3
  * more.
  */
-#define VERT_OBJ             _NEW_ARRAY_VERTEX
-#define VERT_RGBA            _NEW_ARRAY_COLOR
-#define VERT_NORM            _NEW_ARRAY_NORMAL
-#define VERT_INDEX           _NEW_ARRAY_INDEX
-#define VERT_EDGE            _NEW_ARRAY_EDGEFLAG
-#define VERT_SPEC_RGB        _NEW_ARRAY_SECONDARYCOLOR
-#define VERT_FOG_COORD       _NEW_ARRAY_FOGCOORD
-#define VERT_TEX0            _NEW_ARRAY_TEXCOORD_0
-#define VERT_TEX1            _NEW_ARRAY_TEXCOORD_1
-#define VERT_TEX2            _NEW_ARRAY_TEXCOORD_2
-#define VERT_TEX3            _NEW_ARRAY_TEXCOORD_3
-#define VERT_TEX4            _NEW_ARRAY_TEXCOORD_4
-#define VERT_TEX5            _NEW_ARRAY_TEXCOORD_5
-#define VERT_TEX6            _NEW_ARRAY_TEXCOORD_6
-#define VERT_TEX7            _NEW_ARRAY_TEXCOORD_7
-#define VERT_EVAL_C1         0x8000     /* imm only */
-#define VERT_EVAL_C2         0x10000    /* imm only */
-#define VERT_EVAL_P1         0x20000    /* imm only */
-#define VERT_EVAL_P2         0x40000    /* imm only */
-#define VERT_OBJ_3           0x80000    /* imm only */
-#define VERT_OBJ_4           0x100000   /* imm only */
-#define VERT_MATERIAL        0x200000   /* imm only, but tested in vb code */
-#define VERT_ELT             0x400000   /* imm only */
-#define VERT_BEGIN           0x800000   /* imm only, but tested in vb code */
-#define VERT_END             0x1000000  /* imm only, but tested in vb code */
-#define VERT_END_VB          0x2000000  /* imm only, but tested in vb code */
-#define VERT_POINT_SIZE      0x4000000  /* vb only, could reuse a bit */
+#define VERT_OBJ_BIT         _NEW_ARRAY_VERTEX
+#define VERT_WEIGHT_BIT      _NEW_ARRAY_WEIGHT  /* unused */
+#define VERT_NORMAL_BIT      _NEW_ARRAY_NORMAL
+#define VERT_COLOR0_BIT      _NEW_ARRAY_COLOR0
+#define VERT_COLOR1_BIT      _NEW_ARRAY_COLOR1
+#define VERT_FOG_BIT         _NEW_ARRAY_FOGCOORD
+#define VERT_INDEX_BIT       _NEW_ARRAY_INDEX
+#define VERT_EDGEFLAG_BIT    _NEW_ARRAY_EDGEFLAG
+#define VERT_TEX0_BIT        _NEW_ARRAY_TEXCOORD_0
+#define VERT_TEX1_BIT        _NEW_ARRAY_TEXCOORD_1
+#define VERT_TEX2_BIT        _NEW_ARRAY_TEXCOORD_2
+#define VERT_TEX3_BIT        _NEW_ARRAY_TEXCOORD_3
+#define VERT_TEX4_BIT        _NEW_ARRAY_TEXCOORD_4
+#define VERT_TEX5_BIT        _NEW_ARRAY_TEXCOORD_5
+#define VERT_TEX6_BIT        _NEW_ARRAY_TEXCOORD_6
+#define VERT_TEX7_BIT        _NEW_ARRAY_TEXCOORD_7
+#define VERT_EVAL_C1         0x10000    /* imm only */
+#define VERT_EVAL_C2         0x20000    /* imm only */
+#define VERT_EVAL_P1         0x40000    /* imm only */
+#define VERT_EVAL_P2         0x80000    /* imm only */
+#define VERT_OBJ_3           0x100000   /* imm only */
+#define VERT_OBJ_4           0x200000   /* imm only */
+#define VERT_MATERIAL        0x400000   /* imm only, but tested in vb code */
+#define VERT_ELT             0x800000   /* imm only */
+#define VERT_BEGIN           0x1000000  /* imm only, but tested in vb code */
+#define VERT_END             0x2000000  /* imm only, but tested in vb code */
+#define VERT_END_VB          0x4000000  /* imm only, but tested in vb code */
+#define VERT_POINT_SIZE      0x8000000  /* vb only, could reuse a bit */
 #define VERT_EYE             VERT_BEGIN /* vb only, reuse imm bit */
 #define VERT_CLIP            VERT_END   /* vb only, reuse imm bit*/
 
 
+
 /* Flags for IM->TexCoordSize.  Enough flags for 16 units.
  */
-#define TEX_0_SIZE_3          (GLuint) 0x1
-#define TEX_0_SIZE_4          (GLuint) 0x1001
-#define TEX_SIZE_3(unit)      (TEX_0_SIZE_3<<unit)
-#define TEX_SIZE_4(unit)      (TEX_0_SIZE_4<<unit)
+#define TEX_0_SIZE_3          0x1
+#define TEX_0_SIZE_4          0x10001
+#define TEX_SIZE_3(unit)      (TEX_0_SIZE_3 << (unit))
+#define TEX_SIZE_4(unit)      (TEX_0_SIZE_4 << (unit))
 
 
 /* Shorthands.
@@ -115,41 +117,41 @@
 #define VERT_EVAL_ANY      (VERT_EVAL_C1|VERT_EVAL_P1|	\
                             VERT_EVAL_C2|VERT_EVAL_P2)
 
-#define VERT_OBJ_23       (VERT_OBJ_3|VERT_OBJ)
+#define VERT_OBJ_23       (VERT_OBJ_3|VERT_OBJ_BIT)
 #define VERT_OBJ_234      (VERT_OBJ_4|VERT_OBJ_23)
 
-#define VERT_TEX0_SHIFT 11
+#define VERT_TEX0_BIT_SHIFT 11
 
-#define VERT_TEX(i)        (VERT_TEX0 << i)
+#define VERT_TEX(i)        (VERT_TEX0_BIT << (i))
 
-#define VERT_TEX_ANY       (VERT_TEX0 |		\
-                            VERT_TEX1 |		\
-                            VERT_TEX2 |		\
-                            VERT_TEX3 |		\
-                            VERT_TEX4 |		\
-                            VERT_TEX5 |		\
-                            VERT_TEX6 |		\
-                            VERT_TEX7)
+#define VERT_TEX_ANY       (VERT_TEX0_BIT |		\
+                            VERT_TEX1_BIT |		\
+                            VERT_TEX2_BIT |		\
+                            VERT_TEX3_BIT |		\
+                            VERT_TEX4_BIT |		\
+                            VERT_TEX5_BIT |		\
+                            VERT_TEX6_BIT |		\
+                            VERT_TEX7_BIT)
 
 #define VERT_FIXUP        (VERT_TEX_ANY |	\
-                           VERT_RGBA |		\
-                           VERT_SPEC_RGB |	\
-                           VERT_FOG_COORD |	\
-			   VERT_INDEX |		\
-                           VERT_EDGE |		\
-                           VERT_NORM)
+                           VERT_COLOR0_BIT |		\
+                           VERT_COLOR1_BIT |	\
+                           VERT_FOG_BIT |	\
+			   VERT_INDEX_BIT |		\
+                           VERT_EDGEFLAG_BIT |		\
+                           VERT_NORMAL_BIT)
 
 #define VERT_CURRENT_DATA  (VERT_FIXUP |	\
 			    VERT_MATERIAL)
 
 #define VERT_DATA          (VERT_TEX_ANY |	\
-			    VERT_RGBA |		\
-			    VERT_SPEC_RGB |	\
-			    VERT_FOG_COORD |	\
-                            VERT_INDEX |	\
-                            VERT_EDGE |		\
-                            VERT_NORM |		\
-	                    VERT_OBJ |	\
+			    VERT_COLOR0_BIT |		\
+			    VERT_COLOR1_BIT |	\
+			    VERT_FOG_BIT |	\
+                            VERT_INDEX_BIT |	\
+                            VERT_EDGEFLAG_BIT |		\
+                            VERT_NORMAL_BIT |		\
+	                    VERT_OBJ_BIT |	\
                             VERT_MATERIAL |	\
                             VERT_ELT |		\
 	                    VERT_EVAL_ANY)
@@ -200,21 +202,24 @@ struct immediate
    GLuint MaterialOrMask;
    GLuint MaterialAndMask;
 
-   GLfloat (*TexCoord[MAX_TEXTURE_UNITS])[4];
-
    GLuint  Primitive[IMM_SIZE];	    /* BEGIN/END */
    GLuint  PrimitiveLength[IMM_SIZE]; /* BEGIN/END */
    GLuint  Flag[IMM_SIZE];	    /* VERT_* flags */
-   GLfloat Color[IMM_SIZE][4];
-   GLfloat Obj[IMM_SIZE][4];
-   GLfloat Normal[IMM_SIZE][3];
+
+   GLfloat Obj[IMM_SIZE][4];             /* attrib 0 */
+   GLfloat Normal[IMM_SIZE][3];          /* attrib 2 */
    GLfloat *NormalLengthPtr;
-   GLfloat TexCoord0[IMM_SIZE][4];  /* just VERT_TEX0 */
+   GLfloat Color[IMM_SIZE][4];           /* attrib 3 */
+   GLfloat SecondaryColor[IMM_SIZE][4];  /* attrib 4 */
+   GLfloat FogCoord[IMM_SIZE];           /* attrib 5 */
+   GLfloat TexCoord0[IMM_SIZE][4];  /* just VERT_TEX0_BIT */
+   GLfloat (*TexCoord[MAX_TEXTURE_UNITS])[4];  /* attribs 8..15 */
+
    GLuint  Elt[IMM_SIZE];
    GLubyte EdgeFlag[IMM_SIZE];
    GLuint  Index[IMM_SIZE];
-   GLfloat SecondaryColor[IMM_SIZE][4];
-   GLfloat FogCoord[IMM_SIZE];
+
+   GLfloat Attrib[16][IMM_SIZE][4];  /* GL_NV_vertex_program */
 };
 
 
@@ -229,6 +234,7 @@ struct vertex_arrays
    GLvector4f  TexCoord[MAX_TEXTURE_UNITS];
    GLvector1ui Elt;
    GLvector1f  FogCoord;
+   GLvector4f  Attribs[16];
 };
 
 
@@ -244,27 +250,27 @@ typedef struct vertex_buffer
 
    /* Constant over the pipeline.
     */
-   GLuint     Count;		                /* for everything except Elts */
-   GLuint     FirstClipped;	                /* temp verts for clipping */
-   GLuint     FirstPrimitive;	                /* usually zero */
+   GLuint     Count;		              /* for everything except Elts */
+   GLuint     FirstClipped;	              /* temp verts for clipping */
+   GLuint     FirstPrimitive;	              /* usually zero */
 
    /* Pointers to current data.
     */
    GLuint      *Elts;		                /* VERT_ELT */
-   GLvector4f  *ObjPtr;		                /* VERT_OBJ */
+   GLvector4f  *ObjPtr;		                /* VERT_OBJ_BIT */
    GLvector4f  *EyePtr;		                /* VERT_EYE */
    GLvector4f  *ClipPtr;	                /* VERT_CLIP */
    GLvector4f  *ProjectedClipPtr;               /* VERT_CLIP (2) */
    GLubyte     ClipOrMask;	                /* VERT_CLIP (3) */
    GLubyte     *ClipMask;		        /* VERT_CLIP (4) */
-   GLvector3f  *NormalPtr;	                /* VERT_NORM */
-   GLfloat     *NormalLengthPtr;	        /* VERT_NORM */
-   GLboolean   *EdgeFlag;	                /* VERT_EDGE */
+   GLvector3f  *NormalPtr;	                /* VERT_NORMAL_BIT */
+   GLfloat     *NormalLengthPtr;	        /* VERT_NORMAL_BIT */
+   GLboolean   *EdgeFlag;	                /* VERT_EDGEFLAG_BIT */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
-   GLvector1ui *IndexPtr[2];	                /* VERT_INDEX */
-   struct gl_client_array *ColorPtr[2];	                /* VERT_RGBA */
-   struct gl_client_array *SecondaryColorPtr[2];         /* VERT_SPEC_RGB */
-   GLvector1f  *FogCoordPtr;	                /* VERT_FOG_COORD */
+   GLvector1ui *IndexPtr[2];	                /* VERT_INDEX_BIT */
+   struct gl_client_array *ColorPtr[2];	        /* VERT_COLOR0_BIT */
+   struct gl_client_array *SecondaryColorPtr[2];/* VERT_COLOR1_BIT */
+   GLvector1f  *FogCoordPtr;	                /* VERT_FOG_BIT */
    GLvector1f  *PointSizePtr;	                /* VERT_POINT_SIZE */
    GLmaterial (*Material)[2];                   /* VERT_MATERIAL, optional */
    GLuint      *MaterialMask;	                /* VERT_MATERIAL, optional */
@@ -272,6 +278,7 @@ typedef struct vertex_buffer
    GLuint      *Primitive;	                /* GL_(mode)|PRIM_* flags */
    GLuint      *PrimitiveLength;	        /* integers */
 
+   GLvector4f *AttribPtr[16];                   /* GL_NV_vertex_program */
 
    GLuint importable_data;
    void *import_source;

@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: ac_import.c,v 1.15 2001/12/14 02:50:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,9 +59,9 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
    else {
       ac->Raw.TexCoord[unit] = ac->Fallback.TexCoord[unit];
 
-      if (ctx->Current.Texcoord[unit][3] != 1.0)
+      if (ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][3] != 1.0)
 	 ac->Raw.TexCoord[unit].Size = 4;
-      else if (ctx->Current.Texcoord[unit][2] != 0.0)
+      else if (ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][2] != 0.0)
 	 ac->Raw.TexCoord[unit].Size = 3;
       else
 	 ac->Raw.TexCoord[unit].Size = 2;
@@ -104,7 +104,7 @@ static void reset_color( GLcontext *ctx )
    ACcontext *ac = AC_CONTEXT(ctx);
 
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_COLOR) {
+   if (ctx->Array._Enabled & _NEW_ARRAY_COLOR0) {
       ac->Raw.Color = ctx->Array.Color;
       STRIDE_ARRAY(ac->Raw.Color, ac->start);
    }
@@ -112,7 +112,7 @@ static void reset_color( GLcontext *ctx )
       ac->Raw.Color = ac->Fallback.Color;
 
    ac->IsCached.Color = GL_FALSE;
-   ac->NewArrayState &= ~_NEW_ARRAY_COLOR;
+   ac->NewArrayState &= ~_NEW_ARRAY_COLOR0;
 }
 
 
@@ -120,7 +120,7 @@ static void reset_secondarycolor( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array._Enabled & _NEW_ARRAY_SECONDARYCOLOR) {
+   if (ctx->Array._Enabled & _NEW_ARRAY_COLOR1) {
       ac->Raw.SecondaryColor = ctx->Array.SecondaryColor;
       STRIDE_ARRAY(ac->Raw.SecondaryColor, ac->start);
    }
@@ -128,7 +128,7 @@ static void reset_secondarycolor( GLcontext *ctx )
       ac->Raw.SecondaryColor = ac->Fallback.SecondaryColor;
 
    ac->IsCached.SecondaryColor = GL_FALSE;
-   ac->NewArrayState &= ~_NEW_ARRAY_SECONDARYCOLOR;
+   ac->NewArrayState &= ~_NEW_ARRAY_COLOR1;
 }
 
 
@@ -533,7 +533,7 @@ struct gl_client_array *_ac_import_color( GLcontext *ctx,
 
    /* Can we keep the existing version?
     */
-   if (ac->NewArrayState & _NEW_ARRAY_COLOR)
+   if (ac->NewArrayState & _NEW_ARRAY_COLOR0)
       reset_color( ctx );
 
    /* Is the request impossible?
@@ -601,7 +601,7 @@ struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
 
    /* Can we keep the existing version?
     */
-   if (ac->NewArrayState & _NEW_ARRAY_SECONDARYCOLOR)
+   if (ac->NewArrayState & _NEW_ARRAY_COLOR1)
       reset_secondarycolor( ctx );
 
    /* Is the request impossible?

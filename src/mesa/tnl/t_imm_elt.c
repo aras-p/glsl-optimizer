@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.12 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.13 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -757,10 +757,10 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "exec_array_elements %d .. %d\n", start, count);
 
-   if (translate & VERT_OBJ) {
+   if (translate & VERT_OBJ_BIT) {
       _tnl_trans_elt_4f( IM->Obj,
 			 &ctx->Array.Vertex,
-			 flags, elts, (VERT_ELT|VERT_OBJ),
+			 flags, elts, (VERT_ELT|VERT_OBJ_BIT),
 			 start, count);
 
       if (ctx->Array.Vertex.Size == 4)
@@ -770,42 +770,42 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    }
 
 
-   if (translate & VERT_NORM)
+   if (translate & VERT_NORMAL_BIT)
       _tnl_trans_elt_3f( IM->Normal,
 			 &ctx->Array.Normal,
-			 flags, elts, (VERT_ELT|VERT_NORM),
+			 flags, elts, (VERT_ELT|VERT_NORMAL_BIT),
 			 start, count);
 
-   if (translate & VERT_EDGE)
+   if (translate & VERT_EDGEFLAG_BIT)
       _tnl_trans_elt_1ub( IM->EdgeFlag,
 			  &ctx->Array.EdgeFlag,
-			  flags, elts, (VERT_ELT|VERT_EDGE),
+			  flags, elts, (VERT_ELT|VERT_EDGEFLAG_BIT),
 			  start, count);
 
-   if (translate & VERT_RGBA) {
+   if (translate & VERT_COLOR0_BIT) {
       _tnl_trans_elt_4f( IM->Color,
 			 &ctx->Array.Color,
-			 flags, elts, (VERT_ELT|VERT_RGBA),
+			 flags, elts, (VERT_ELT|VERT_COLOR0_BIT),
 			 start, count);
    }
 
-   if (translate & VERT_SPEC_RGB) {
+   if (translate & VERT_COLOR1_BIT) {
       _tnl_trans_elt_4f( IM->SecondaryColor,
 			 &ctx->Array.SecondaryColor,
-			 flags, elts, (VERT_ELT|VERT_SPEC_RGB),
+			 flags, elts, (VERT_ELT|VERT_COLOR1_BIT),
 			 start, count);
    }
 
-   if (translate & VERT_FOG_COORD)
+   if (translate & VERT_FOG_BIT)
       _tnl_trans_elt_1f( IM->FogCoord,
 			 &ctx->Array.FogCoord,
-			 flags, elts, (VERT_ELT|VERT_FOG_COORD),
+			 flags, elts, (VERT_ELT|VERT_FOG_BIT),
 			 start, count);
 
-   if (translate & VERT_INDEX)
+   if (translate & VERT_INDEX_BIT)
       _tnl_trans_elt_1ui( IM->Index,
 			  &ctx->Array.Index,
-			  flags, elts, (VERT_ELT|VERT_INDEX),
+			  flags, elts, (VERT_ELT|VERT_INDEX_BIT),
 			  start, count);
 
    if (translate & VERT_TEX_ANY) {

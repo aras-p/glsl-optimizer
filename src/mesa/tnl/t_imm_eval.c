@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.18 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.19 2001/12/14 02:51:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -379,34 +379,34 @@ static void update_eval( GLcontext *ctx )
    GLuint eval1 = 0, eval2 = 0;
 
    if (ctx->Eval.Map1Index)
-      eval1 |= VERT_INDEX;
+      eval1 |= VERT_INDEX_BIT;
 
    if (ctx->Eval.Map2Index)
-      eval2 |= VERT_INDEX;
+      eval2 |= VERT_INDEX_BIT;
 
    if (ctx->Eval.Map1Color4)
-      eval1 |= VERT_RGBA;
+      eval1 |= VERT_COLOR0_BIT;
 
    if (ctx->Eval.Map2Color4)
-      eval2 |= VERT_RGBA;
+      eval2 |= VERT_COLOR0_BIT;
 
    if (ctx->Eval.Map1Normal)
-      eval1 |= VERT_NORM;
+      eval1 |= VERT_NORMAL_BIT;
 
    if (ctx->Eval.Map2Normal)
-      eval2 |= VERT_NORM;
+      eval2 |= VERT_NORMAL_BIT;
 
    if (ctx->Eval.Map1TextureCoord4 ||
        ctx->Eval.Map1TextureCoord3 ||
        ctx->Eval.Map1TextureCoord2 ||
        ctx->Eval.Map1TextureCoord1)
-      eval1 |= VERT_TEX0;
+      eval1 |= VERT_TEX0_BIT;
 
    if (ctx->Eval.Map2TextureCoord4 ||
        ctx->Eval.Map2TextureCoord3 ||
        ctx->Eval.Map2TextureCoord2 ||
        ctx->Eval.Map2TextureCoord1)
-      eval2 |= VERT_TEX0;
+      eval2 |= VERT_TEX0_BIT;
 
    if (ctx->Eval.Map1Vertex4)
       eval1 |= VERT_OBJ_234;
@@ -416,13 +416,13 @@ static void update_eval( GLcontext *ctx )
 
    if (ctx->Eval.Map2Vertex4) {
       if (ctx->Eval.AutoNormal)
-	 eval2 |= VERT_OBJ_234 | VERT_NORM;
+	 eval2 |= VERT_OBJ_234 | VERT_NORMAL_BIT;
       else
 	 eval2 |= VERT_OBJ_234;
    }
    else if (ctx->Eval.Map2Vertex3) {
       if (ctx->Eval.AutoNormal)
-	 eval2 |= VERT_OBJ_23 | VERT_NORM;
+	 eval2 |= VERT_OBJ_23 | VERT_NORMAL_BIT;
       else
 	 eval2 |= VERT_OBJ_23;
    }
@@ -507,7 +507,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
    /* Perform the evaluations on active data elements.
     */
-   if (req & VERT_INDEX)
+   if (req & VERT_INDEX_BIT)
    {
       GLuint generated = 0;
 
@@ -528,7 +528,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
    }
 
-   if (req & VERT_RGBA)
+   if (req & VERT_COLOR0_BIT)
    {
       GLuint generated = 0;
 
@@ -541,7 +541,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Color.Ptr = store->Color + IM->CopyStart;
       tmp->Color.StrideB = 4 * sizeof(GLfloat);
       tmp->Color.Flags = 0;
-      tnl->vb.importable_data &= ~VERT_RGBA;
+      tnl->vb.importable_data &= ~VERT_COLOR0_BIT;
 
       if (ctx->Eval.Map1Color4 && any_eval1) {
 	 eval1_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map1Color4 );
@@ -616,7 +616,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
 
-   if (req & VERT_NORM)
+   if (req & VERT_NORMAL_BIT)
    {
       GLuint generated = 0;
 
@@ -647,7 +647,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    /* In the AutoNormal case, the copy and assignment of tmp->NormalPtr
     * are done above.
     */
-   if (req & VERT_OBJ)
+   if (req & VERT_OBJ_BIT)
    {
       if (copycount) {
 	 /* This copy may already have occurred when eliminating
@@ -678,7 +678,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       if (any_eval2) {
 	 if (ctx->Eval.Map2Vertex4)
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM))
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
 			       &ctx->EvalMap.Map2Vertex4 );
 	    else
@@ -687,7 +687,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 }
 	 else if (ctx->Eval.Map2Vertex3)
 	 {
-	    if (ctx->Eval.AutoNormal && (req & VERT_NORM))
+	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 3,
 			       &ctx->EvalMap.Map2Vertex3 );
 	    else
@@ -704,7 +704,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
     * must be ignored.
     */
    if (purge_flags) {
-      GLuint vertex = VERT_OBJ|(VERT_EVAL_ANY & ~purge_flags);
+      GLuint vertex = VERT_OBJ_BIT|(VERT_EVAL_ANY & ~purge_flags);
       GLuint last_new_prim = 0;
       GLuint new_prim_length = 0;
       GLuint next_old_prim = 0;

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.54 2001/12/04 23:44:56 brianp Exp $ */
+/* $Id: mtypes.h,v 1.55 2001/12/14 02:50:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,7 +63,7 @@
 #define CHAN_MAXF 1.0F
 #define CHAN_TYPE GL_FLOAT
 #else
-#error  illegal number of color channel bits
+#error "illegal number of color channel bits"
 #endif
 
 
@@ -295,28 +295,46 @@ struct gl_colorbuffer_attrib {
 };
 
 
+/* These define the aliases between numbered vertex attributes and
+ * conventional OpenGL vertex attributes.
+ */
+#define VERT_ATTRIB_POS      0
+#define VERT_ATTRIB_WEIGHT   1
+#define VERT_ATTRIB_NORMAL   2
+#define VERT_ATTRIB_COLOR0   3
+#define VERT_ATTRIB_COLOR1   4
+#define VERT_ATTRIB_FOG      5
+#define VERT_ATTRIB_SIX      6
+#define VERT_ATTRIB_SEVEN    7
+#define VERT_ATTRIB_TEX0     8
+#define VERT_ATTRIB_TEX1     9
+#define VERT_ATTRIB_TEX2     10
+#define VERT_ATTRIB_TEX3     11
+#define VERT_ATTRIB_TEX4     12
+#define VERT_ATTRIB_TEX5     13
+#define VERT_ATTRIB_TEX6     14
+#define VERT_ATTRIB_TEX7     15
+
 struct gl_current_attrib {
    /* These values valid only when FLUSH_VERTICES has been called.
     */
-   GLfloat Normal[3];				/* Current vertex normal */
-   GLfloat Color[4];				/* Current RGBA color */
-   GLfloat SecondaryColor[4];			/* Current secondary color */
-   GLfloat FogCoord;			        /* Current Fog coord */
+   GLfloat Attrib[8 + MAX_TEXTURE_UNITS][4];	/* Current vertex attributes */
+						/* indexed by VERT_ATTRIB_* */
    GLuint Index;				/* Current color index */
    GLboolean EdgeFlag;				/* Current edge flag */
-   GLfloat Texcoord[MAX_TEXTURE_UNITS][4];	/* Current texture coords */
 
-   /* These values are always valid.
+   /* These values are always valid.  BTW, note how similar this set of
+    * attributes is to the SWvertex datatype in the software rasterizer...
     */
    GLfloat RasterPos[4];			/* Current raster position */
    GLfloat RasterDistance;			/* Current raster distance */
    GLfloat RasterColor[4];			/* Current raster color */
    GLfloat RasterSecondaryColor[4];             /* Current rast 2ndary color */
-   GLuint  RasterIndex;				/* Current raster index */
-   GLfloat *RasterTexCoord;			/* Current raster texcoord*/
+   GLuint RasterIndex;				/* Current raster index */
+   GLfloat *RasterTexCoord;			/* Current raster texcoord */
    GLfloat RasterMultiTexCoord[MAX_TEXTURE_UNITS][4];
    GLfloat RasterFogCoord;
-   GLboolean RasterPosValid;			/* Raster po valid flag */
+   GLboolean RasterPosValid;			/* Raster pos valid flag */
 };
 
 
@@ -387,6 +405,10 @@ struct gl_enable_attrib {
    GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
    GLuint Texture[MAX_TEXTURE_UNITS];
    GLuint TexGen[MAX_TEXTURE_UNITS];
+   /* GL_NV_vertex_program */
+   GLboolean VertexProgram;
+   GLboolean VertexProgramPointSize;
+   GLboolean VertexProgramTwoSide;
 };
 
 
@@ -475,6 +497,11 @@ struct gl_convolution_attrib {
 };
 
 
+#define LIGHT_SPOT         0x1
+#define LIGHT_LOCAL_VIEWER 0x2
+#define LIGHT_POSITIONAL   0x4
+#define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
+
 struct gl_light_attrib {
    struct gl_light Light[MAX_LIGHTS];	/* Array of lights */
    struct gl_lightmodel Model;		/* Lighting model */
@@ -494,16 +521,10 @@ struct gl_light_attrib {
 
    /* Derived for optimizations: */
    GLboolean _NeedVertices;		/* Use fast shader? */
-   GLuint  _Flags;		        /* LIGHT_* flags, see below */
+   GLuint  _Flags;		        /* LIGHT_* flags, see above */
    GLfloat _BaseColor[2][3];
 };
 
-
-#define LIGHT_SPOT         0x1
-#define LIGHT_LOCAL_VIEWER 0x2
-#define LIGHT_POSITIONAL   0x4
-
-#define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
 
 struct gl_line_attrib {
    GLboolean SmoothFlag;	/* GL_LINE_SMOOTH enabled? */
@@ -518,6 +539,7 @@ struct gl_line_attrib {
 struct gl_list_attrib {
    GLuint ListBase;
 };
+
 
 struct gl_list_opcode {
    GLuint size;
@@ -1021,6 +1043,8 @@ struct gl_array_attrib {
    struct gl_client_array TexCoord[MAX_TEXTURE_UNITS];
    struct gl_client_array EdgeFlag;
 
+   struct gl_client_array VertexAttrib[16];  /* GL_NV_vertex_program */
+
    GLint TexCoordInterleaveFactor;
    GLint ActiveTexture;		/* Client Active Texture */
    GLuint LockFirst;
@@ -1100,6 +1124,158 @@ struct gl_evaluators {
    struct gl_2d_map Map2Texture3;
    struct gl_2d_map Map2Texture4;
 };
+
+
+/*
+ * Vertex program tokens and datatypes
+ */
+
+#define VP_MAX_INSTRUCTIONS 128
+#define VP_MAX_MATRICES 8
+#define VP_MAX_MATRIX_DEPTH 4
+
+#define VP_NUM_INPUT_REGS 16
+#define VP_NUM_OUTPUT_REGS 15
+#define VP_NUM_TEMP_REGS 12
+#define VP_NUM_PROG_REGS 96
+
+#define VP_NUM_TOTAL_REGISTERS (VP_NUM_INPUT_REGS + VP_NUM_OUTPUT_REGS + VP_NUM_TEMP_REGS + VP_NUM_PROG_REGS)
+
+/* Location of register sets within the whole register file */
+#define VP_INPUT_REG_START  0
+#define VP_INPUT_REG_END    (VP_INPUT_REG_START + VP_NUM_INPUT_REGS - 1)
+#define VP_OUTPUT_REG_START (VP_INPUT_REG_END + 1)
+#define VP_OUTPUT_REG_END   (VP_OUTPUT_REG_START + VP_NUM_OUTPUT_REGS - 1)
+#define VP_TEMP_REG_START   (VP_OUTPUT_REG_END + 1)
+#define VP_TEMP_REG_END     (VP_TEMP_REG_START + VP_NUM_TEMP_REGS - 1)
+#define VP_PROG_REG_START   (VP_TEMP_REG_END + 1)
+#define VP_PROG_REG_END     (VP_PROG_REG_START + VP_NUM_PROG_REGS - 1)
+
+/* Input register names */
+#define VP_IN_OPOS (VP_INPUT_REG_START + 0)
+#define VP_IN_WGHT (VP_INPUT_REG_START + 1)
+#define VP_IN_NRML (VP_INPUT_REG_START + 2)
+#define VP_IN_COL0 (VP_INPUT_REG_START + 3)
+#define VP_IN_COL1 (VP_INPUT_REG_START + 4)
+#define VP_IN_FOGC (VP_INPUT_REG_START + 5)
+#define VP_IN_TEX0 (VP_INPUT_REG_START + 8)
+#define VP_IN_TEX1 (VP_INPUT_REG_START + 9)
+#define VP_IN_TEX2 (VP_INPUT_REG_START + 10)
+#define VP_IN_TEX3 (VP_INPUT_REG_START + 11)
+#define VP_IN_TEX4 (VP_INPUT_REG_START + 12)
+#define VP_IN_TEX5 (VP_INPUT_REG_START + 13)
+#define VP_IN_TEX6 (VP_INPUT_REG_START + 14)
+#define VP_IN_TEX7 (VP_INPUT_REG_START + 15)
+
+/* Output register names */
+#define VP_OUT_HPOS (VP_OUTPUT_REG_START + 0)
+#define VP_OUT_COL0 (VP_OUTPUT_REG_START + 1)
+#define VP_OUT_COL1 (VP_OUTPUT_REG_START + 2)
+#define VP_OUT_BFC0 (VP_OUTPUT_REG_START + 3)
+#define VP_OUT_BFC1 (VP_OUTPUT_REG_START + 4)
+#define VP_OUT_FOGC (VP_OUTPUT_REG_START + 5)
+#define VP_OUT_PSIZ (VP_OUTPUT_REG_START + 6)
+#define VP_OUT_TEX0 (VP_OUTPUT_REG_START + 7)
+#define VP_OUT_TEX1 (VP_OUTPUT_REG_START + 8)
+#define VP_OUT_TEX2 (VP_OUTPUT_REG_START + 9)
+#define VP_OUT_TEX3 (VP_OUTPUT_REG_START + 10)
+#define VP_OUT_TEX4 (VP_OUTPUT_REG_START + 11)
+#define VP_OUT_TEX5 (VP_OUTPUT_REG_START + 12)
+#define VP_OUT_TEX6 (VP_OUTPUT_REG_START + 13)
+#define VP_OUT_TEX7 (VP_OUTPUT_REG_START + 14)
+
+
+
+/* Machine state (i.e. the register file) */
+struct vp_machine
+{
+   GLfloat Registers[VP_NUM_TOTAL_REGISTERS][4];
+   GLint AddressReg;  /* might someday be a 4-vector */
+};
+
+
+/* Vertex program opcodes */
+enum vp_opcode
+{
+   MOV,
+   LIT,
+   RCP,
+   RSQ,
+   EXP,
+   LOG,
+   MUL,
+   ADD,
+   DP3,
+   DP4,
+   DST,
+   MIN,
+   MAX,
+   SLT,
+   SGE,
+   MAD,
+   ARL,
+   END
+};
+
+
+/* Instruction source register */
+struct vp_src_register
+{
+   GLint Register;    /* or the offset from the address register */
+   GLuint Swizzle[4];
+   GLboolean Negate;
+   GLboolean RelAddr;
+};
+
+
+/* Instruction destination register */
+struct vp_dst_register
+{
+   GLint Register;
+   GLboolean WriteMask[4];
+};
+
+
+/* Vertex program instruction */
+struct vp_instruction
+{
+   enum vp_opcode Opcode;
+   struct vp_src_register SrcReg[3];
+   struct vp_dst_register DstReg;
+};
+
+
+/* The actual vertex program, stored in the hash table */
+struct vp_program
+{
+   GLubyte *String;                      /* Original user code */
+   struct vp_instruction *Instructions;  /* Compiled instructions */
+   GLenum Target;      /* GL_VERTEX_PROGRAM_NV or GL_VERTEX_STATE_PROGRAM_NV */
+   GLint ErrorPos;
+   GLboolean Resident;
+};
+
+
+/*
+ * State vars for GL_NV_vertex_program
+ */
+struct gl_vertex_program
+{
+   GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
+   GLboolean PointSizeEnabled;           /* GL_VERTEX_PROGRAM_POINT_SIZE_NV */
+   GLboolean TwoSideEnabled;            /* GL_VERTEX_PROGRAM_TWO_SIDE_NV */
+   GLuint Binding;                       /* currently bound program */
+   struct _mesa_HashTable *HashTable;    /* all programs */
+   struct vp_machine Machine;            /* machine state */
+   GLmatrix Matrix[VP_MAX_MATRICES];          /* Tracking matrices */
+   GLmatrix MatrixStack[VP_MAX_MATRICES][VP_MAX_MATRIX_DEPTH-1];  /* stacks */
+   GLuint MatrixStackDepth[VP_MAX_MATRICES];
+
+   GLenum TrackMatrix[VP_NUM_PROG_REGS / 4];
+   GLenum TrackMatrixTransform[VP_NUM_PROG_REGS / 4];
+
+};
+
 
 
 /*
@@ -1246,6 +1422,7 @@ struct gl_extensions {
    GLboolean MESA_sprite_point;
    GLboolean NV_blend_square;
    GLboolean NV_texgen_reflection;
+   GLboolean NV_vertex_program;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
    GLboolean SGIS_generate_mipmap;
@@ -1258,6 +1435,16 @@ struct gl_extensions {
    GLboolean _3DFX_texture_compression_FXT1;
 };
 
+
+/* XXX just an idea */
+struct matrix_stack
+{
+   GLmatrix Top;
+   GLmatrix *Stack;
+   GLuint Depth;
+   GLuint MaxDepth;
+   GLuint DirtyFlag;   /* _NEW_MODELVIEW or _NEW_PROJECTION, for example */
+};
 
 
 /*
@@ -1319,28 +1506,32 @@ struct gl_extensions {
 #define _NEW_RENDERMODE		0x800000   /* RenderMode, Feedback, Select */
 #define _NEW_BUFFERS            0x1000000  /* ctx->Visual, ctx->DrawBuffer, */
 #define _NEW_MULTISAMPLE        0x2000000  /* ctx->Multisample */
+#define _NEW_TRACK_MATRIX       0x4000000  /* ctx->VertexProgram */
 #define _NEW_ALL ~0
 
 
 
 /* Bits to track array state changes (also used to summarize array enabled)
  */
-#define _NEW_ARRAY_VERTEX           0x1
-#define _NEW_ARRAY_COLOR            0x2
-#define _NEW_ARRAY_NORMAL           0x4
-#define _NEW_ARRAY_INDEX            0x8
-#define _NEW_ARRAY_EDGEFLAG         0x10
-#define _NEW_ARRAY_SECONDARYCOLOR   0x20
-#define _NEW_ARRAY_FOGCOORD         0x40
-#define _NEW_ARRAY_TEXCOORD_0       0x80
-#define _NEW_ARRAY_TEXCOORD_1       0x100
-#define _NEW_ARRAY_TEXCOORD_2       0x200
-#define _NEW_ARRAY_TEXCOORD_3       0x400
-#define _NEW_ARRAY_TEXCOORD_4       0x800
-#define _NEW_ARRAY_TEXCOORD_5       0x1000
-#define _NEW_ARRAY_TEXCOORD_6       0x2000
-#define _NEW_ARRAY_TEXCOORD_7       0x4000
-#define _NEW_ARRAY_ALL              0x7fff
+#define _NEW_ARRAY_VERTEX           (1 << VERT_ATTRIB_POS)
+#define _NEW_ARRAY_WEIGHT           (1 << VERT_ATTRIB_WEIGHT)
+#define _NEW_ARRAY_NORMAL           (1 << VERT_ATTRIB_NORMAL)
+#define _NEW_ARRAY_COLOR0           (1 << VERT_ATTRIB_COLOR0)
+#define _NEW_ARRAY_COLOR1           (1 << VERT_ATTRIB_COLOR1)
+#define _NEW_ARRAY_FOGCOORD         (1 << VERT_ATTRIB_FOG)
+#define _NEW_ARRAY_INDEX            (1 << VERT_ATTRIB_SIX)
+#define _NEW_ARRAY_EDGEFLAG         (1 << VERT_ATTRIB_SEVEN)
+#define _NEW_ARRAY_TEXCOORD_0       (1 << VERT_ATTRIB_TEX0)
+#define _NEW_ARRAY_TEXCOORD_1       (1 << VERT_ATTRIB_TEX1)
+#define _NEW_ARRAY_TEXCOORD_2       (1 << VERT_ATTRIB_TEX2)
+#define _NEW_ARRAY_TEXCOORD_3       (1 << VERT_ATTRIB_TEX3)
+#define _NEW_ARRAY_TEXCOORD_4       (1 << VERT_ATTRIB_TEX4)
+#define _NEW_ARRAY_TEXCOORD_5       (1 << VERT_ATTRIB_TEX5)
+#define _NEW_ARRAY_TEXCOORD_6       (1 << VERT_ATTRIB_TEX6)
+#define _NEW_ARRAY_TEXCOORD_7       (1 << VERT_ATTRIB_TEX7)
+#define _NEW_ARRAY_ALL              0xffff
+#define _NEW_ARRAY_VERT_ATTRIB0     0x10000
+
 
 #define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
 
@@ -1467,6 +1658,9 @@ struct __GLcontextRec {
    GLmatrix ModelView;           /* current matrix, not stored on stack */
    GLuint ModelViewStackDepth;
    GLmatrix ModelViewStack[MAX_MODELVIEW_STACK_DEPTH - 1];
+#if 1
+   struct matrix_stack ModelviewStack;
+#endif
 
    /* Projection matrix and stack */
    GLmatrix ProjectionMatrix;    /* current matrix, not stored on stack */
@@ -1550,6 +1744,8 @@ struct __GLcontextRec {
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
+
+   struct gl_vertex_program VertexProgram;  /* GL_NV_vertex_program */
 
    GLenum ErrorValue;        /* Last error code */
    GLenum RenderMode;        /* either GL_RENDER, GL_SELECT, GL_FEEDBACK */
