@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.5 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.6 2003/03/04 16:34:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -582,8 +582,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
             {
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, a );
-               result[0] = result[1] = result[2] = result[3]
-                  = 1.0F / SQRTF(a[0]);
+               result[0] = result[1] = result[2] = result[3] = INV_SQRTF(a[0]);
                store_vector4( inst, machine, result );
             }
             break;

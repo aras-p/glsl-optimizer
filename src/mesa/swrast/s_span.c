@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.56 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_span.c,v 1.57 2003/03/04 16:34:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -309,8 +309,8 @@ compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    GLfloat dvdx = texH * ((t + dtdx) / (q + dqdx) - t * invQ);
    GLfloat dudy = texW * ((s + dsdy) / (q + dqdy) - s * invQ);
    GLfloat dvdy = texH * ((t + dtdy) / (q + dqdy) - t * invQ);
-   GLfloat x = sqrt(dudx * dudx + dvdx * dvdx);
-   GLfloat y = sqrt(dudy * dudy + dvdy * dvdy);
+   GLfloat x = SQRTF(dudx * dudx + dvdx * dvdx);
+   GLfloat y = SQRTF(dudy * dudy + dvdy * dvdy);
    GLfloat rho = MAX2(x, y);
    GLfloat lambda = LOG2(rho);
    return lambda;

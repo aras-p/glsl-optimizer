@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.31 2003/03/01 01:50:21 brianp Exp $ */
+/* $Id: macros.h,v 1.32 2003/03/04 16:33:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -572,7 +572,7 @@ do {						\
 do {						\
    GLfloat len = (GLfloat) LEN_SQUARED_3FV(V);	\
    if (len) {					\
-      len = (GLfloat) (1.0 / SQRTF(len));	\
+      len = INV_SQRTF(len);			\
       (V)[0] = (GLfloat) ((V)[0] * len);	\
       (V)[1] = (GLfloat) ((V)[1] * len);	\
       (V)[2] = (GLfloat) ((V)[2] * len);	\

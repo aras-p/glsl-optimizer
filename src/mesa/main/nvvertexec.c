@@ -1,4 +1,4 @@
-/* $Id: nvvertexec.c,v 1.2 2003/03/01 01:50:22 brianp Exp $ */
+/* $Id: nvvertexec.c,v 1.3 2003/03/04 16:33:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -380,7 +380,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
             {
                GLfloat t[4];
                fetch_vector1( &inst->SrcReg[0], machine, t );
-               t[0] = (float) (1.0 / sqrt(fabs(t[0])));
+               t[0] = INV_SQRTF(FABSF(t[0]));
                t[1] = t[2] = t[3] = t[0];
                store_vector4( &inst->DstReg, machine, t );
             }

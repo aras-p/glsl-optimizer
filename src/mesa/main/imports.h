@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.16 2003/03/03 21:44:39 brianp Exp $ */
+/* $Id: imports.h,v 1.17 2003/03/04 16:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -165,6 +165,16 @@ float asm_sqrt (float x);
 #  define SQRTF(X)  (float) xf86sqrt((float) (X))
 #else
 #  define SQRTF(X)  (float) sqrt((float) (X))
+#endif
+
+
+/***
+ *** INV_SQRTF: single-precision inverse square root
+ ***/
+#if 0
+#define INV_SQRTF(X) _mesa_inv_sqrt(X)
+#else
+#define INV_SQRTF(X) (1.0F / SQRTF(X))  /* this is faster on a P4 */
 #endif
 
 
@@ -587,6 +597,9 @@ _mesa_sqrtd(double x);
 
 extern float
 _mesa_sqrtf(float x);
+
+extern float
+_mesa_inv_sqrtf(float x);
 
 extern double
 _mesa_pow(double x, double y);

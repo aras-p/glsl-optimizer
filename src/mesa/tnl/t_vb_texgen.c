@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.17 2003/03/01 01:50:27 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.18 2003/03/04 16:34:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,7 +113,7 @@ static void build_m3( GLfloat f[][3], GLfloat m[],
       fz = f[i][2] = u[2] - norm[2] * two_nu;
       m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
       if (m[i] != 0.0F) {
-	 m[i] = 0.5F / SQRTF(m[i]);
+	 m[i] = 0.5F * _mesa_inv_sqrtf(m[i]);
       }
    }
 }
@@ -142,7 +142,7 @@ static void build_m2( GLfloat f[][3], GLfloat m[],
       fz = f[i][2] = u[2] - norm[2] * two_nu;
       m[i] = fx * fx + fy * fy + (fz + 1.0F) * (fz + 1.0F);
       if (m[i] != 0.0F) {
-	 m[i] = 0.5F / SQRTF(m[i]);
+	 m[i] = 0.5F * _mesa_inv_sqrtf(m[i]);
       }
    }
 }
