@@ -72,8 +72,8 @@ typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void * );
 
 static struct {
    emit_func	        emit;
-   copy_pv_func		copy_pv;
-   interp_func		interp;
+   tnl_copy_pv_func		copy_pv;
+   tnl_interp_func		interp;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_format;
 } setup_tab[MAX_SETUP];

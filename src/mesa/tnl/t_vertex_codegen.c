@@ -447,7 +447,7 @@ static struct {
  * the pipeline has been run.
  */
 
-emit_func _tnl_codegen_emit( GLcontext *ctx )
+tnl_emit_func _tnl_codegen_emit( GLcontext *ctx )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);

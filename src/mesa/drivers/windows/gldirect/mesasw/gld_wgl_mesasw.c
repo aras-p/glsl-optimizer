@@ -909,7 +909,7 @@ static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 //---------------------------------------------------------------------------
 
 /* Return pointer to accelerated points function */
-extern points_func choose_points_function( GLcontext* ctx )
+extern tnl_points_func choose_points_function( GLcontext* ctx )
 {
   return NULL;
 }
@@ -923,7 +923,7 @@ static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0,
 
 //---------------------------------------------------------------------------
 
-static line_func choose_line_function( GLcontext* ctx )
+static tnl_line_func choose_line_function( GLcontext* ctx )
 {
 }
 

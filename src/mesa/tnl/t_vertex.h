@@ -125,7 +125,7 @@ extern void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs );
 
 extern void _tnl_invalidate_vertex_state( GLcontext *ctx, GLuint new_state );
 
-extern emit_func _tnl_codegen_emit( GLcontext *ctx );
+extern tnl_emit_func _tnl_codegen_emit( GLcontext *ctx );
 
 #define REG_IN   (0<<16)
 #define REG_OUT  (1<<16)

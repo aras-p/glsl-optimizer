@@ -125,7 +125,7 @@ static GLboolean gld_d3d_render_stage_run(
 	TNLcontext				*tnl;
 	struct vertex_buffer	*VB;
 	GLuint					new_inputs;
-	render_func				*tab;
+	tnl_render_func				*tab;
 	GLint					pass;
 	GLD_pb_dx7				*gldPB = &gld->PB3d;
 	DWORD					dwFlags;

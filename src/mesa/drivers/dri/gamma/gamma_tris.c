@@ -275,10 +275,10 @@ do {						\
 
 
 static struct {
-   points_func		points;
-   line_func		line;
-   triangle_func	triangle;
-   quad_func		quad;
+   tnl_points_func		points;
+   tnl_line_func		line;
+   tnl_triangle_func	triangle;
+   tnl_quad_func		quad;
 } rast_tab[GAMMA_MAX_TRIFUNC];
 
 

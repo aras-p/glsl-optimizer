@@ -229,10 +229,10 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
 
 
 static struct {
-    points_func          points;
-    line_func            line;
-    triangle_func        triangle;
-    quad_func            quad;
+    tnl_points_func          points;
+    tnl_line_func            line;
+    tnl_triangle_func        triangle;
+    tnl_quad_func            quad;
 } rast_tab[VIA_MAX_TRIFUNC];
 
 
@@ -551,9 +551,9 @@ via_fallback_point(viaContextPtr vmesa,
     TNLcontext *tnl = TNL_CONTEXT(ctx);					\
     struct vertex_buffer *VB = &tnl->vb;				\
     const GLuint * const elt = VB->Elts;				\
-    const line_func LineFunc = tnl->Driver.Render.Line;			\
-    const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-    const quad_func QuadFunc = tnl->Driver.Render.Quad;			\
+    const tnl_line_func LineFunc = tnl->Driver.Render.Line;			\
+    const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+    const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;			\
     const GLboolean stipple = ctx->Line.StippleFlag;			\
     (void) (LineFunc && TriangleFunc && QuadFunc);			\
     (void) elt; (void) stipple;

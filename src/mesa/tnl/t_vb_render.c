@@ -123,9 +123,9 @@ do {							\
    const GLuint * const elt = VB->Elts;				\
    const GLubyte *mask = VB->ClipMask;				\
    const GLuint sz = VB->ClipPtr->size;				\
-   const line_func LineFunc = tnl->Driver.Render.Line;		\
-   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
+   const tnl_line_func LineFunc = tnl->Driver.Render.Line;		\
+   const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt; (void) mask; (void) sz; (void) stipple;
@@ -155,7 +155,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 				GLuint flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
+   tnl_render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
    struct vertex_buffer *VB = &tnl->vb;
    const GLuint * const elt = VB->Elts;
    GLubyte *mask = VB->ClipMask;
@@ -212,9 +212,9 @@ static void clip_elt_triangles( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);				\
    struct vertex_buffer *VB = &tnl->vb;				\
    const GLuint * const elt = VB->Elts;				\
-   const line_func LineFunc = tnl->Driver.Render.Line;		\
-   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
+   const tnl_line_func LineFunc = tnl->Driver.Render.Line;		\
+   const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt; (void) stipple
@@ -269,7 +269,7 @@ static GLboolean run_render( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint new_inputs = stage->changed_inputs;
-   render_func *tab;
+   tnl_render_func *tab;
    GLint pass = 0;
 
    /* Allow the drivers to lock before projected verts are built so

@@ -177,7 +177,7 @@ static GLboolean gamma_run_render( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-   render_func *tab;
+   tnl_render_func *tab;
 
 				/* GH: THIS IS A HACK!!! */
    if (VB->ClipOrMask || gmesa->RenderIndex != 0)

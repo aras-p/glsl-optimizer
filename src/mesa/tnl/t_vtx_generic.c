@@ -113,7 +113,7 @@ ATTRS( 13 )
 ATTRS( 14 )
 ATTRS( 15 )
 
-void _tnl_generic_attr_table_init( attrfv_func (*tab)[4] )
+void _tnl_generic_attr_table_init( tnl_attrfv_func (*tab)[4] )
 {
    INIT( tab, 0 );
    INIT( tab, 1 );

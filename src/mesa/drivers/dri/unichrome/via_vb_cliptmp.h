@@ -119,7 +119,7 @@ TAG(clip_line)(GLcontext *ctx, GLuint i, GLuint j, GLubyte mask)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &tnl->vb;
-    interp_func interp = tnl->Driver.Render.Interp;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
     GLfloat (*coord)[4] = VB->ClipPtr->data;
     GLuint ii = i, jj = j, p;
 #ifdef DEBUG    
@@ -168,7 +168,7 @@ TAG(clip_tri)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &tnl->vb;
-    interp_func interp = tnl->Driver.Render.Interp;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
     GLfloat (*coord)[4] = VB->ClipPtr->data;
     GLuint pv = v2;
     GLuint vlist[2][MAX_CLIPPED_VERTICES];
@@ -224,7 +224,7 @@ TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &tnl->vb;
-    interp_func interp = tnl->Driver.Render.Interp;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
     GLfloat (*coord)[4] = VB->ClipPtr->data;
     GLuint pv = v3;
     GLuint vlist[2][MAX_CLIPPED_VERTICES];

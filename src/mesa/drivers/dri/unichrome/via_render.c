@@ -321,9 +321,9 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
     const GLuint * const elt = VB->Elts;				\
     const GLubyte *mask = VB->ClipMask;					\
     const GLuint sz = VB->ClipPtr->size;				\
-    const line_func LineFunc = tnl->Driver.Render.Line;			\
-    const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-    const quad_func QuadFunc = tnl->Driver.Render.Quad;			\
+    const tnl_line_func LineFunc = tnl->Driver.Render.Line;			\
+    const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+    const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;			\
     const GLboolean stipple = ctx->Line.StippleFlag;			\
     (void) (LineFunc && TriangleFunc && QuadFunc);			\
     (void) elt; (void) mask; (void) sz; (void) stipple;
@@ -355,7 +355,7 @@ static void clip_elt_triangles(GLcontext *ctx,
 			       GLuint flags)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
-    render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
+    tnl_render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
     struct vertex_buffer *VB = &tnl->vb;
     const GLuint * const elt = VB->Elts;
     GLubyte *mask = VB->ClipMask;
@@ -423,7 +423,7 @@ static GLboolean via_run_render(GLcontext *ctx,
     GLuint newInputs = stage->changed_inputs;
     /*GLuint newInputs = stage->inputs;*/
     
-    render_func *tab;
+    tnl_render_func *tab;
     GLuint pass = 0;
     
 #ifdef DEBUG

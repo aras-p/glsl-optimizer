@@ -78,7 +78,7 @@ typedef void (*ffb_emit_func)(GLcontext *, GLuint, GLuint);
 
 static struct {
  	ffb_emit_func	emit;
-	interp_func	interp;
+	tnl_interp_func	interp;
 } setup_tab[FFB_VB_MAX];
 
 

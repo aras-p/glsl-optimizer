@@ -70,8 +70,8 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  );
 
 static struct {
    void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
-   interp_func		interp;
-   copy_pv_func	        copy_pv;
+   tnl_interp_func		interp;
+   tnl_copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
    GLuint               vertex_format;
@@ -595,7 +595,7 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   render_func *tab = TAG(render_tab_verts);
+   tnl_render_func *tab = TAG(render_tab_verts);
    GLuint i;
 
    if (rmesa->swtcl.indexed_verts.buf && (!VB->Elts || stage->changed_inputs)) 
@@ -859,10 +859,10 @@ static void radeonResetLineStipple( GLcontext *ctx );
 
 
 static struct {
-   points_func	        points;
-   line_func		line;
-   triangle_func	triangle;
-   quad_func		quad;
+   tnl_points_func	        points;
+   tnl_line_func		line;
+   tnl_triangle_func	triangle;
+   tnl_quad_func		quad;
 } rast_tab[RADEON_MAX_TRIFUNC];
 
 

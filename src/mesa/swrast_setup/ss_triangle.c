@@ -41,8 +41,8 @@
 #define SS_UNFILLED_BIT	    0x8
 #define SS_MAX_TRIFUNC      0x10
 
-static triangle_func tri_tab[SS_MAX_TRIFUNC];
-static quad_func     quad_tab[SS_MAX_TRIFUNC];
+static tnl_triangle_func tri_tab[SS_MAX_TRIFUNC];
+static tnl_quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
 static void _swsetup_render_line_tri( GLcontext *ctx,

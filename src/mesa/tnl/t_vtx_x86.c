@@ -337,8 +337,8 @@ void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
 /* Install the codegen'ed choosers.
  * We should keep a list and free them in the end...
  */
-void _tnl_x86choosers( attrfv_func (*choose)[4],
-		       attrfv_func (*do_choose)( GLuint attr,
+void _tnl_x86choosers( tnl_attrfv_func (*choose)[4],
+		       tnl_attrfv_func (*do_choose)( GLuint attr,
 						 GLuint sz ))
 {
    int attr, size;
@@ -354,7 +354,7 @@ void _tnl_x86choosers( attrfv_func (*choose)[4],
          FIXUP(code, 0, 0, attr);
          FIXUP(code, 0, 1, size + 1);
          FIXUPREL(code, 0, 2, do_choose);
-         choose[attr][size] = (attrfv_func)code;
+         choose[attr][size] = (tnl_attrfv_func)code;
       }
    }
 }
@@ -373,8 +373,8 @@ void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
 }
 
 
-void _tnl_x86choosers( attrfv_func (*choose)[4],
-		       attrfv_func (*do_choose)( GLuint attr,
+void _tnl_x86choosers( tnl_attrfv_func (*choose)[4],
+		       tnl_attrfv_func (*do_choose)( GLuint attr,
 						 GLuint sz ))
 {
    (void) choose;

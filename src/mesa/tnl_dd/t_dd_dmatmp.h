@@ -633,7 +633,7 @@ static void TAG(render_noop)( GLcontext *ctx,
 
 
 
-static render_func TAG(render_tab_verts)[GL_POLYGON+2] =
+static tnl_render_func TAG(render_tab_verts)[GL_POLYGON+2] =
 {
    TAG(render_points_verts),
    TAG(render_lines_verts),
@@ -1121,7 +1121,7 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
 
 
 
-static render_func TAG(render_tab_elts)[GL_POLYGON+2] =
+static tnl_render_func TAG(render_tab_elts)[GL_POLYGON+2] =
 {
    TAG(render_points_elts),
    TAG(render_lines_elts),

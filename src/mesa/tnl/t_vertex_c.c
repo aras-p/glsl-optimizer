@@ -228,7 +228,7 @@ static GLboolean print_attr_footer( struct tnl_clipspace_codegen *p )
       emit(p, "      }\n");
 }
 
-static emit_func print_store_func( struct tnl_clipspace_codegen *p ) 
+static tnl_emit_func print_store_func( struct tnl_clipspace_codegen *p ) 
 {
    fprintf(stderr, "%s: emitted:\n%s\n", __FUNCTION__, p->buf);
    

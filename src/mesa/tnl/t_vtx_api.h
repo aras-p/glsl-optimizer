@@ -72,7 +72,7 @@ extern GLboolean *_tnl_import_current_edgeflag( GLcontext *ctx,
  */
 extern void _tnl_generic_exec_vtxfmt_init( GLcontext *ctx );
 
-extern void _tnl_generic_attr_table_init( attrfv_func (*tab)[4] );
+extern void _tnl_generic_attr_table_init( tnl_attrfv_func (*tab)[4] );
 
 /* t_vtx_x86.c:
  */
@@ -80,8 +80,8 @@ extern void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen );
 
 extern void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx );
 
-extern void _tnl_x86choosers( attrfv_func (*choose)[4],
-			      attrfv_func (*do_choose)( GLuint attr,
+extern void _tnl_x86choosers( tnl_attrfv_func (*choose)[4],
+			      tnl_attrfv_func (*do_choose)( GLuint attr,
 							GLuint sz ));
 
 

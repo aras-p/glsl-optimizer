@@ -45,8 +45,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void reset_attrfv( TNLcontext *tnl );
 
-static attrfv_func choose[_TNL_MAX_ATTR_CODEGEN+1][4]; /* +1 for ERROR_ATTRIB */
-static attrfv_func generic_attr_func[_TNL_MAX_ATTR_CODEGEN][4];
+static tnl_attrfv_func choose[_TNL_MAX_ATTR_CODEGEN+1][4]; /* +1 for ERROR_ATTRIB */
+static tnl_attrfv_func generic_attr_func[_TNL_MAX_ATTR_CODEGEN][4];
 
 
 /* Close off the last primitive, execute the buffer, restart the
@@ -359,7 +359,7 @@ static struct _tnl_dynfn *lookup( struct _tnl_dynfn *l, GLuint key )
 }
 
 
-static attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
+static tnl_attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    struct _tnl_dynfn *dfn = 0;
@@ -382,7 +382,7 @@ static attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
    }
 
    if (dfn) 
-      return (attrfv_func) dfn->code;
+      return (tnl_attrfv_func) dfn->code;
    else
       return 0;
 }
@@ -391,7 +391,7 @@ static attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
  * entrypoint is called for the first time.
  */
 
-static attrfv_func do_choose( GLuint attr, GLuint sz )
+static tnl_attrfv_func do_choose( GLuint attr, GLuint sz )
 { 
    GET_CURRENT_CONTEXT( ctx ); 
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
@@ -432,7 +432,7 @@ static attrfv_func do_choose( GLuint attr, GLuint sz )
 #define CHOOSE( ATTR, N )				\
 static void choose_##ATTR##_##N( const GLfloat *v )	\
 {							\
-   attrfv_func f = do_choose(ATTR, N);			\
+   tnl_attrfv_func f = do_choose(ATTR, N);			\
    f( v );						\
 }
 

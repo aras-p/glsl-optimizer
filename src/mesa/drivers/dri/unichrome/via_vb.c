@@ -39,8 +39,8 @@
 
 static struct {
     void                (*emit)(GLcontext *, GLuint, GLuint, void *, GLuint);
-    interp_func          interp;
-    copy_pv_func         copyPv;
+    tnl_interp_func          interp;
+    tnl_copy_pv_func         copyPv;
     GLboolean           (*check_tex_sizes)(GLcontext *ctx);
     GLuint               vertexSize;
     GLuint               vertexStrideShift;

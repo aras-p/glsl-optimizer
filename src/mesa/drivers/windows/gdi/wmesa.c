@@ -654,7 +654,7 @@ static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 }
 
 /* Return pointer to accelerated points function */
-extern points_func choose_points_function( GLcontext* ctx )
+extern tnl_points_func choose_points_function( GLcontext* ctx )
 {
   return NULL;
 }
@@ -664,7 +664,7 @@ static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0,
 {
 }
 
-static line_func choose_line_function( GLcontext* ctx )
+static tnl_line_func choose_line_function( GLcontext* ctx )
 {
 }
 
@@ -3182,7 +3182,7 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #endif
 /************** END DEAD TRIANGLE CODE ***********************/
 
-static triangle_func choose_triangle_function( GLcontext *ctx )
+static tnl_triangle_func choose_triangle_function( GLcontext *ctx )
 {
 #if 0
     WMesaContext wmesa = (WMesaContext) ctx->DriverCtx;

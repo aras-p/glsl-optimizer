@@ -64,8 +64,8 @@ extern const struct tnl_pipeline_stage *_tnl_default_pipeline[];
 
 /* Convenience routines provided by t_vb_render.c:
  */
-extern render_func _tnl_render_tab_elts[];
-extern render_func _tnl_render_tab_verts[];
+extern tnl_render_func _tnl_render_tab_elts[];
+extern tnl_render_func _tnl_render_tab_verts[];
 
 extern void _tnl_RenderClippedPolygon( GLcontext *ctx, 
 				       const GLuint *elts, GLuint n );

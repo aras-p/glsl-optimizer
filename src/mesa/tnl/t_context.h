@@ -249,7 +249,7 @@ struct tnl_copied_vtx {
 #define VERT_BUFFER_SIZE 2048	/* 8kbytes */
 
 
-typedef void (*attrfv_func)( const GLfloat * );
+typedef void (*tnl_attrfv_func)( const GLfloat * );
 
 struct _tnl_dynfn {
    struct _tnl_dynfn *next, *prev;
@@ -288,7 +288,7 @@ struct tnl_vtx {
    GLuint counter, initial_counter;
    struct tnl_copied_vtx copied;
 
-   attrfv_func tabfv[_TNL_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
+   tnl_attrfv_func tabfv[_TNL_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
 
    struct _tnl_dynfn_lists cache;
    struct _tnl_dynfn_generators gen;
@@ -527,14 +527,17 @@ struct tnl_pipeline {
 struct tnl_clipspace;
 struct tnl_clipspace_attr;
 
-typedef void (*extract_func)( const struct tnl_clipspace_attr *a, GLfloat *out, 
-			      const GLubyte *v );
+typedef void (*tnl_extract_func)( const struct tnl_clipspace_attr *a, 
+				  GLfloat *out, 
+				  const GLubyte *v );
 
-typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v, 
-			     const GLfloat *in );
+typedef void (*tnl_insert_func)( const struct tnl_clipspace_attr *a, 
+				 GLubyte *v, 
+				 const GLfloat *in );
 
-typedef void (*emit_func)( GLcontext *ctx, GLuint start, 
-			   GLuint end, void *dest );
+typedef void (*tnl_emit_func)( GLcontext *ctx, 
+			       GLuint start, 
+			       GLuint end, void *dest );
 
 
 /**
@@ -549,9 +552,9 @@ struct tnl_clipspace_attr
    GLuint vertattrsize;    /* size of the attribute in bytes */
    GLubyte *inputptr;
    GLuint inputstride;
-   insert_func *insert;
-   insert_func emit;
-   extract_func extract;
+   tnl_insert_func *insert;
+   tnl_insert_func emit;
+   tnl_extract_func extract;
    const GLfloat *vp;   /* NDC->Viewport mapping matrix */
 };
 
@@ -579,7 +582,7 @@ struct tnl_clipspace_codegen {
 				     GLint, GLint );
    GLboolean (*emit_const_ubyte)( struct tnl_clipspace_codegen *, 
 				  GLint, GLubyte );
-   emit_func (*emit_store_func)( struct tnl_clipspace_codegen * );
+   tnl_emit_func (*emit_store_func)( struct tnl_clipspace_codegen * );
    
    struct _tnl_dynfn codegen_list;
    
@@ -591,21 +594,21 @@ struct tnl_clipspace_codegen {
 
 
 
-typedef void (*points_func)( GLcontext *ctx, GLuint first, GLuint last );
-typedef void (*line_func)( GLcontext *ctx, GLuint v1, GLuint v2 );
-typedef void (*triangle_func)( GLcontext *ctx,
-                               GLuint v1, GLuint v2, GLuint v3 );
-typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
-                           GLuint v3, GLuint v4 );
-typedef void (*render_func)( GLcontext *ctx, GLuint start, GLuint count,
-			     GLuint flags );
-typedef void (*interp_func)( GLcontext *ctx,
-			     GLfloat t, GLuint dst, GLuint out, GLuint in,
-			     GLboolean force_boundary );
-typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
-typedef void (*setup_func)( GLcontext *ctx,
-			    GLuint start, GLuint end,
-			    GLuint new_inputs);
+typedef void (*tnl_points_func)( GLcontext *ctx, GLuint first, GLuint last );
+typedef void (*tnl_line_func)( GLcontext *ctx, GLuint v1, GLuint v2 );
+typedef void (*tnl_triangle_func)( GLcontext *ctx,
+				   GLuint v1, GLuint v2, GLuint v3 );
+typedef void (*tnl_quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
+			       GLuint v3, GLuint v4 );
+typedef void (*tnl_render_func)( GLcontext *ctx, GLuint start, GLuint count,
+				 GLuint flags );
+typedef void (*tnl_interp_func)( GLcontext *ctx,
+				 GLfloat t, GLuint dst, GLuint out, GLuint in,
+				 GLboolean force_boundary );
+typedef void (*tnl_copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
+typedef void (*tnl_setup_func)( GLcontext *ctx,
+				GLuint start, GLuint end,
+				GLuint new_inputs);
 
 
 /**
@@ -625,9 +628,9 @@ struct tnl_clipspace
    struct tnl_clipspace_attr attr[_TNL_ATTRIB_MAX];
    GLuint attr_count;
 
-   emit_func emit;
-   interp_func interp;
-   copy_pv_func copy_pv;
+   tnl_emit_func emit;
+   tnl_interp_func interp;
+   tnl_copy_pv_func copy_pv;
 
    struct tnl_clipspace_codegen codegen;
 };
@@ -673,14 +676,14 @@ struct tnl_device_driver
        * modes accepted by glBegin().
        */
 
-      interp_func Interp;
+      tnl_interp_func Interp;
       /* The interp function is called by the clipping routines when we need
        * to generate an interpolated vertex.  All pertinant vertex ancilliary
        * data should be computed by interpolating between the 'in' and 'out'
        * vertices.
        */
 
-      copy_pv_func CopyPV;
+      tnl_copy_pv_func CopyPV;
       /* The copy function is used to make a copy of a vertex.  All pertinant
        * vertex attributes should be copied.
        */
@@ -693,16 +696,16 @@ struct tnl_device_driver
       void (*ClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
       /* Render a line between the two vertices given by indexes v0 and v1. */
 
-      points_func           Points; /* must now respect vb->elts */
-      line_func             Line;
-      triangle_func         Triangle;
-      quad_func             Quad;
+      tnl_points_func           Points; /* must now respect vb->elts */
+      tnl_line_func             Line;
+      tnl_triangle_func         Triangle;
+      tnl_quad_func             Quad;
       /* These functions are called in order to render points, lines,
        * triangles and quads.  These are only called via the T&L module.
        */
 
-      render_func          *PrimTabVerts;
-      render_func          *PrimTabElts;
+      tnl_render_func          *PrimTabVerts;
+      tnl_render_func          *PrimTabElts;
       /* Render whole unclipped primitives (points, lines, linestrips,
        * lineloops, etc).  The tables are indexed by the GL enum of the
        * primitive to be rendered.  RenderTabVerts is used for non-indexed
@@ -714,7 +717,7 @@ struct tnl_device_driver
       /* Reset the hardware's line stipple counter.
        */
 
-      setup_func BuildVertices;
+      tnl_setup_func BuildVertices;
       /* This function is called whenever new vertices are required for
        * rendering.  The vertices in question are those n such that start
        * <= n < end.  The new_inputs parameter indicates those fields of

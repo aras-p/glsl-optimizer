@@ -1,4 +1,4 @@
-/* $Id: gld_vb_mesa_render_dx7.c,v 1.1 2004/04/20 11:13:11 alanh Exp $ */
+/* $Id: gld_vb_mesa_render_dx7.c,v 1.2 2004/07/01 13:14:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -143,9 +143,9 @@ do {							\
    const GLuint * const elt = VB->Elts;				\
    const GLubyte *mask = VB->ClipMask;				\
    const GLuint sz = VB->ClipPtr->size;				\
-   const line_func LineFunc = tnl->Driver.Render.Line;		\
-   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
+   const tnl_line_func LineFunc = tnl->Driver.Render.Line;		\
+   const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt; (void) mask; (void) sz; (void) stipple;
@@ -175,7 +175,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 				GLuint flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
+   tnl_render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
    struct vertex_buffer *VB = &tnl->vb;
    const GLuint * const elt = VB->Elts;
    GLubyte *mask = VB->ClipMask;
@@ -232,9 +232,9 @@ static void clip_elt_triangles( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);				\
    struct vertex_buffer *VB = &tnl->vb;				\
    const GLuint * const elt = VB->Elts;				\
-   const line_func LineFunc = tnl->Driver.Render.Line;		\
-   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
-   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
+   const tnl_line_func LineFunc = tnl->Driver.Render.Line;		\
+   const tnl_triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const tnl_quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt;
 
@@ -281,25 +281,25 @@ void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
 /*              Clip and render whole vertex buffers                  */
 /**********************************************************************/
 
-points_func _gldSetupPoints[4] = {
+tnl_points_func _gldSetupPoints[4] = {
 	gld_Points2D_DX7,
 	gld_Points2D_DX7,
 	gld_Points2D_DX7,
 	gld_Points2D_DX7
 };
-line_func _gldSetupLine[4] = {
+tnl_line_func _gldSetupLine[4] = {
 	gld_Line2DFlat_DX7,
 	gld_Line2DSmooth_DX7,
 	gld_Line2DFlat_DX7,
 	gld_Line2DSmooth_DX7,
 };
-triangle_func _gldSetupTriangle[4] = {
+tnl_triangle_func _gldSetupTriangle[4] = {
 	gld_Triangle2DFlat_DX7,
 	gld_Triangle2DSmooth_DX7,
 	gld_Triangle2DFlatExtras_DX7,
 	gld_Triangle2DSmoothExtras_DX7
 };
-quad_func _gldSetupQuad[4] = {
+tnl_quad_func _gldSetupQuad[4] = {
 	gld_Quad2DFlat_DX7,
 	gld_Quad2DSmooth_DX7,
 	gld_Quad2DFlatExtras_DX7,
@@ -318,7 +318,7 @@ static GLboolean _gld_mesa_render_stage_run(
 	TNLcontext				*tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer	*VB = &tnl->vb;
 	GLuint					new_inputs = stage->changed_inputs;
-	render_func				*tab;
+	tnl_render_func				*tab;
 	GLint					pass = 0;
 	GLD_pb_dx7				*gldPB;
 	DWORD					dwFlags;

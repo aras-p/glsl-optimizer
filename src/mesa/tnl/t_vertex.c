@@ -588,8 +588,8 @@ static void extract_1ub_1f( const struct tnl_clipspace_attr *a, GLfloat *out, co
 
 static struct {
    const char *name;
-   extract_func extract;
-   insert_func insert[4];
+   tnl_extract_func extract;
+   tnl_insert_func insert[4];
    const GLuint attrsize;
 } format_info[EMIT_MAX] = {
 
