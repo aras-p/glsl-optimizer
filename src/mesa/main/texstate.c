@@ -525,8 +525,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (texUnit->LodBias == param[0])
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texUnit->LodBias = CLAMP(param[0], -ctx->Const.MaxTextureLodBias,
-                                  ctx->Const.MaxTextureLodBias);
+         texUnit->LodBias = param[0];
       }
       else {
          TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
@@ -1402,9 +1401,10 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_LOD_BIAS:
          /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias*/
          if (ctx->Extensions.EXT_texture_lod_bias) {
-            texObj->LodBias = CLAMP(params[0],
-                                    -ctx->Const.MaxTextureLodBias,
-                                    ctx->Const.MaxTextureLodBias);
+            if (texObj->LodBias != params[0]) {
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texObj->LodBias = params[0];
+            }
          }
          break;
 

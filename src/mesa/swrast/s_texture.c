@@ -4200,9 +4200,12 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
          if (span->arrayMask & SPAN_LAMBDA) {
             if (texUnit->LodBias + curObj->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
+               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->LodBias,
+                                          -ctx->Const.MaxTextureLodBias,
+                                          ctx->Const.MaxTextureLodBias);
                GLuint i;
                for (i = 0; i < span->end; i++) {
-                  lambda[i] += (texUnit->LodBias + curObj->LodBias);
+                  lambda[i] += bias;
                }
             }
 
