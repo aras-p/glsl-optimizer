@@ -313,7 +313,6 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 #ifdef DEBUG    
         if (VIA_DEBUG) fprintf(stderr, "%s SwapPBuffers\n", __FUNCTION__);    
 #endif	/*=* [DBG] for pbuffer *=*/
-	/*viaDoSwapBufferSoftFront(vmesa);*/
     }
     else {
 	GLuint scrn = 0;
@@ -1436,83 +1435,7 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
 #endif
 }
 
-void viaDoSwapBufferSoft(viaContextPtr vmesa)
-{    
-    GLuint nFrontPitch;
-    GLuint nBackPitch;
-    GLuint nFrontBase, nBackBase;
-    GLuint i, j;
-    GLubyte *by, *fy;
-    GLuint w;
-    
-    w = vmesa->viaScreen->width;
-    w = BUFFER_ALIGN_WIDTH(w, BUFFER_ALIGNMENT);
-    
-    if (vmesa->viaScreen->bitsPerPixel == 0x20)
-	nFrontPitch = w << 2;
-    else
-	nFrontPitch = w << 1;
-    
-    nBackPitch = vmesa->back.pitch;
-    
-    /* Caculate Base */
-    nFrontBase = (GLuint) vmesa->driScreen->pFB;
-    nBackBase = ((GLuint) vmesa->back.offset) + ((GLuint) vmesa->driScreen->pFB);
-    by = (GLubyte *) nBackBase;
-    fy = (GLubyte *) nFrontBase;
-    
-    viaFlushPrimsLocked(vmesa);
-    
-    for (i = 0; i < vmesa->driDrawable->h; i++) {
-	fy = (GLubyte *)(nFrontBase + i * nFrontPitch);
-	for (j = 0; j < nBackPitch; j++) {
-	    *((GLubyte*)fy) = *((GLubyte*)by);
-	    fy = fy + 1;
-	    by = by + 1;
-	}
-	
-    }
 
-}
-
-void viaDoSwapBufferSoftFront(viaContextPtr vmesa)
-{    
-    GLuint nFrontPitch;
-    GLuint nBackPitch;
-    GLuint nFrontBase, nBackBase;
-    GLuint i, j;
-    GLubyte *by, *fy;
-    GLuint w;
-    
-    w = vmesa->viaScreen->width;
-    w = BUFFER_ALIGN_WIDTH(w, BUFFER_ALIGNMENT);
-    
-    if (vmesa->viaScreen->bitsPerPixel == 0x20)
-	nFrontPitch = w << 2;
-    else
-	nFrontPitch = w << 1;
-	
-    nBackPitch = vmesa->front.pitch;
-    
-    /* Caculate Base */
-    nFrontBase = (GLuint) vmesa->driScreen->pFB;
-    nBackBase = ((GLuint) vmesa->front.offset) + ((GLuint) vmesa->driScreen->pFB);
-    by = (GLubyte *) nBackBase;
-    fy = (GLubyte *) nFrontBase;
-    
-    viaFlushPrimsLocked(vmesa);
-    
-    for (i = 0; i < vmesa->driDrawable->h; i++) {
-	fy = (GLubyte *)(nFrontBase + i * nFrontPitch);
-	for (j = 0; j < nBackPitch; j++) {
-	    *((GLubyte*)fy) = *((GLubyte*)by);
-	    fy = fy + 1;
-	    by = by + 1;
-	}
-	
-    }
-
-}
 int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd) 
 {   
     GLuint *pnAGPCurrentPhysStart;

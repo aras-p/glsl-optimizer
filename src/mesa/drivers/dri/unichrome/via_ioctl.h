@@ -47,8 +47,6 @@ void viaFillStencilBuffer(viaContextPtr vmesa, GLuint pixel);
 void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel);
 void viaDoSwapBuffers(viaContextPtr vmesa);
 void viaDoSwapBuffersSaam(viaContextPtr vmesa);
-void viaDoSwapBufferSoft(viaContextPtr vmesa);
-void viaDoSwapBufferSoftFront(viaContextPtr vmesa);
 void viaDoSwapPBuffers(viaContextPtr vmesa);
 
 int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd); 

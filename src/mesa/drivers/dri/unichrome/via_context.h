@@ -75,10 +75,7 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define TAG(x) via##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
-#define BUFFER_ALIGNMENT 32
-#define BUFFER_ALIGN_WIDTH1(w, a)   (((w) + ((a) - 1)) & ~((a) - 1))
-#define BUFFER_ALIGN_WIDTH(w, a)    (((w) & ((a) - 1)) ? BUFFER_ALIGN_WIDTH1(w, a) : (w))
-#define BUFFER_ALIGN_ADDRESS(p, a)  ((GLvoid *)(((GLint)(p)) + ((a)-1) & ~((a)-1)))
+
 #define RightOf 1
 #define LeftOf 2
 #define Down 4

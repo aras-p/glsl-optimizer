@@ -136,6 +136,110 @@ static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
    }
 }
 
+
+/**
+ * Calculate a width that satisfies the hardware's alignment requirements.
+ * On the Unichrome hardware, each scanline must be aligned to a multiple of
+ * 16 pixels.
+ *
+ * \param width  Minimum buffer width, in pixels.
+ * 
+ * \returns A pixel width that meets the alignment requirements.
+ */
+static __inline__ unsigned
+buffer_align( unsigned width )
+{
+    return (width + 0x0f) & ~0x0f;
+}
+
+
+/**
+ * Calculate the framebuffer parameters for all buffers (front, back, depth,
+ * and stencil) associated with the specified context.
+ * 
+ * \warning
+ * This function also calls \c AllocateBuffer to actually allocate the
+ * buffers.
+ * 
+ * \sa AllocateBuffer
+ */
+static GLboolean
+calculate_buffer_parameters( viaContextPtr vmesa )
+{
+    const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
+    const unsigned extra = (vmesa->drawType == GLX_PBUFFER_BIT) ? 0 : 32;
+    unsigned w;
+    unsigned h;
+
+    if (vmesa->drawType == GLX_PBUFFER_BIT) {
+	w = vmesa->driDrawable->w;
+	h = vmesa->driDrawable->h;
+    }
+    else { 
+	w = vmesa->viaScreen->width;
+	h = vmesa->viaScreen->height;
+
+	vmesa->front.offset = 0;
+	vmesa->front.map = (char *) vmesa->driScreen->pFB;
+    }
+
+    vmesa->front.pitch = buffer_align( w ) << shift;
+    vmesa->front.size = vmesa->front.pitch * h;
+
+
+    /* Allocate back-buffer */
+
+    vmesa->back.pitch = (buffer_align( vmesa->driDrawable->w ) << shift) 
+      + extra;
+    vmesa->back.size = vmesa->back.pitch * vmesa->driDrawable->h;
+
+#ifdef DEBUG
+    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent backbuffer: w = %d h = %d bpp = %d sizs = %d\n",
+			   vmesa->back.pitch, 
+			   vmesa->driDrawable->h,
+			   8 << shift,
+			   vmesa->back.size);
+#endif
+
+    /* Allocate depth-buffer */
+    if ( vmesa->hasStencil || vmesa->hasDepth ) {
+	const unsigned dShift = (vmesa->hasStencil)
+	  ? 2 : (vmesa->depthBits / 16);
+
+	vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) << dShift)
+	  + extra;
+	vmesa->depth.bpp = 8 << dShift;
+	vmesa->depth.size = vmesa->depth.pitch * vmesa->driDrawable->h;
+    }
+    else {
+	(void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
+    }
+
+#ifdef DEBUG
+    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
+			   vmesa->depth.pitch,
+			   vmesa->driDrawable->h,
+			   vmesa->depth.bpp,
+			   vmesa->depth.size);
+#endif
+
+    /*=* John Sheng [2003.5.31] flip *=*/
+    if( (vmesa->viaScreen->width == vmesa->driDrawable->w)
+	&& (vmesa->viaScreen->height == vmesa->driDrawable->h) ) {
+	vmesa->doPageFlip = GL_FALSE;
+	vmesa->currentPage = 0;
+	vmesa->back.pitch = vmesa->front.pitch;
+    }
+
+    if (!AllocateBuffer(vmesa)) {
+	FREE(vmesa);
+	return GL_FALSE;
+    }
+    
+    return GL_TRUE;
+}
+
+
 void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 {
     GLcontext *ctx;
@@ -152,95 +256,11 @@ void viaReAllocateBuffers(GLframebuffer *drawbuffer)
      
     vmesa->driDrawable->w = ctx->DrawBuffer->Width;
     vmesa->driDrawable->h = ctx->DrawBuffer->Height;
+
     LOCK_HARDWARE(vmesa);
-    
-    /* Allocate back & depth buffer */
-    {
-	int w, h, bpp;	    
-	w = vmesa->driDrawable->w;
-	h = vmesa->driDrawable->h;
-	/* back buffer */
-	bpp = vmesa->viaScreen->bitsPerPixel;
-#ifdef DEBUG	    
-	if (VIA_DEBUG) fprintf(stderr, "driScreen->fbBPP = %d\n", bpp);	    
-#endif	    
-	if (bpp == 32) {
-	    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-	    vmesa->back.size = w * h * bpp / 8;
-	    vmesa->back.pitch = w << 2;
-	}
-	else {
-	    w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2 + 16;
-	    vmesa->back.size = w * h * bpp / 8;
-	    vmesa->back.pitch = w << 1;	       
-	}
-#ifdef DEBUG
-	if (VIA_DEBUG) fprintf(stderr, "resizebuffer backbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
-			    w, h, bpp, vmesa->back.size);
-#endif
-	/* depth buffer */
-	w = vmesa->driDrawable->w;
-	if (vmesa->hasDepth && vmesa->hasStencil) {
-	    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-	    vmesa->depth.size = w * h * 4;
-	    vmesa->depth.pitch = w << 2;
-	    vmesa->depth.bpp = 32;
-#ifdef DEBUG
-	    if (VIA_DEBUG) fprintf(stderr, "depthBits = 24\n");
-	    if (VIA_DEBUG) fprintf(stderr, "StencilBits = 8\n");
-#endif
-	}
-	else if (vmesa->hasDepth) {
-	    /*=* John Sheng [2003.6.16] patch viewperf drv-08 draw nothing */
-	    /*if(vmesa->viaScreen->bitsPerPixel == 32)*/
-		/*vmesa->depthBits = 16;*/
-		
-	    if (vmesa->depthBits == 16) {
-		w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2 + 16;
-		vmesa->depth.size = w * h * 2;	       
-		vmesa->depth.pitch = w << 1;
-		vmesa->depth.bpp = 16;
-#ifdef DEBUG
-		if (VIA_DEBUG) fprintf(stderr, "depthBits = 16\n");
-#endif
-	    }
-	    else {
-		w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-		vmesa->depth.size = w * h * 4;
-		vmesa->depth.pitch = w << 2;
-		vmesa->depth.bpp = 32;
-#ifdef DEBUG
-		if (VIA_DEBUG) fprintf(stderr, "depthBits = 32\n");
-#endif
-	    }
-	}
-	else if (vmesa->hasStencil) {
-	    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-	    vmesa->depth.size = w * h * 4;
-	    vmesa->depth.pitch = w << 2;
-	    vmesa->depth.bpp = 32;
-#ifdef DEBUG		
-	    if (VIA_DEBUG) fprintf(stderr, "StencilBits = 8\n");
-#endif
-	}
-#ifdef DEBUG
-	if (VIA_DEBUG) fprintf(stderr, "resizebuffer depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
-			            w, h, vmesa->depth.bpp, vmesa->depth.size);
-#endif	
-	/*=* John Sheng [2003.5.31] flip *=*/
-	{
-	    if(vmesa->viaScreen->width == vmesa->driDrawable->w &&
-    		vmesa->viaScreen->height == vmesa->driDrawable->h) {
-		vmesa->back.pitch = vmesa->front.pitch;
-		vmesa->back.size = vmesa->front.size;
-	    }
-	}
-    
-	if (!AllocateBuffer(vmesa)) {
-    	    FREE(vmesa);
-	}
-    }
+    calculate_buffer_parameters( vmesa );
     UNLOCK_HARDWARE(vmesa);
+
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 #endif
@@ -259,14 +279,14 @@ static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 static const char * const card_extensions[] = 
 {
    "GL_ARB_multitexture",
-   "GL_ARB_point_parameters",        /* John Sheng [2003.7.18] point param. */
+   "GL_ARB_point_parameters",
    "GL_ARB_texture_env_add",
-   "GL_ARB_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
-   "GL_ARB_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
+   "GL_ARB_texture_env_combine",
+   "GL_ARB_texture_env_dot3",
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
-   "GL_EXT_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
+   "GL_EXT_texture_env_combine",
+   "GL_EXT_texture_env_dot3",
    "GL_EXT_texture_lod_bias",
    "GL_NV_blend_square",
    NULL
@@ -569,12 +589,12 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 #endif
     {
-	GLboolean saam;
-	int count = 0, fbSize;
 #ifndef USE_XINERAMA
         vmesa->saam = 0;
 #else
-	saam = XineramaIsActive(vmesa->display);
+	GLboolean saam = XineramaIsActive(vmesa->display);
+	int count = 0, fbSize;
+
 	if (saam && vmesa->viaScreen->drixinerama) {
 	    vmesa->xsi = XineramaQueryScreens(vmesa->display, &count);
 	    /* Test RightOf or Down */
@@ -718,8 +738,10 @@ void viaXMesaSetBackClipRects(viaContextPtr vmesa)
 void viaXMesaWindowMoved(viaContextPtr vmesa)
 {
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
+#ifdef USE_XINERAMA
     GLuint side = 0;
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+#endif
     
     switch (vmesa->glCtx->Color._DrawDestMask[0]) {
     case __GL_FRONT_BUFFER_MASK: 
@@ -906,178 +928,22 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	fprintf(stderr, "driContextPriv = %08x\n", (GLuint)driReadPriv);
     }	
 #endif    
-    
+
     if (driContextPriv) {
         viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
+
 	current_mesa = vmesa;
-	
+
+#ifdef DEBUG
+	if (VIA_DEBUG) fprintf(stderr, "viaScreen->bitsPerPixel = %d\n", viaScreen->bitsPerPixel);
+	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
+#endif
+
 	vmesa->driDrawable = driDrawPriv;
-	if (vmesa->drawType == GLX_PBUFFER_BIT) {
-	    int w, h, bpp;
-	    
-	    w = vmesa->driDrawable->w;
-	    h = vmesa->driDrawable->h;
-	    bpp = vmesa->viaScreen->bitsPerPixel;
-	    if (bpp == 32) {
-		w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		vmesa->front.size = w * h * bpp / 8;
-		vmesa->front.pitch = w << 2;
-	    }
-	    else {
-		w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2;
-		vmesa->front.size = w * h * bpp / 8;
-		vmesa->front.pitch = w << 1;	       
-	    }	
+	if ( ! calculate_buffer_parameters( vmesa ) ) {
+	    return GL_FALSE;
 	}
-	/*=* John Sheng [2003.6.20] fix resolution 720x480/720x576 front pitch error *=*/
-	else { 
-	    GLuint w;
-	    GLuint h;
-	    GLuint bpp;
-	    bpp = vmesa->viaScreen->bitsPerPixel;
-	    h = vmesa->viaScreen->height;
-	    w = vmesa->viaScreen->width;
-	    if (bpp == 0x20) {
-		w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		vmesa->front.size = w * h * bpp / 8;
-		vmesa->front.pitch = w << 2;
-#ifdef DEBUG
-		if (VIA_DEBUG) fprintf(stderr, "viaScreen->bitsPerPixel = %d\n", 32);	    
-#endif
-	    } 
-	    else if (bpp == 0x10) {
-		w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2;
-		vmesa->front.size = w * h * bpp / 8;
-		vmesa->front.pitch = w << 1;	       
-#ifdef DEBUG
-		if (VIA_DEBUG) fprintf(stderr, "viaScreen->bitsPerPixel = %d\n", 16);	    
-#endif
-	    }
-	    vmesa->front.offset = 0;
-	    vmesa->front.map = (char *) vmesa->driScreen->pFB;
-	    vmesa->front.size = w * h * vmesa->viaScreen->bitsPerPixel /8;
-	}
-	
-	/* Allocate back & depth buffer */
-	{
-	    int w, h, bpp;
-	    
-	    w = vmesa->driDrawable->w;
-#ifdef DEBUG
-	    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", w);	    
-#endif	    
-	    h = vmesa->driDrawable->h;
-	    
-	    /* back buffer */
-	    bpp = vmesa->viaScreen->bitsPerPixel;
-#ifdef DEBUG	    
-	    if (VIA_DEBUG) fprintf(stderr, "driScreen->fbBPP = %d\n", bpp);	    
-#endif	    
-	    if (bpp == 32) {
-		if (vmesa->drawType == GLX_PBUFFER_BIT)
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		else
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-		
-		vmesa->back.size = w * h * bpp / 8;
-		vmesa->back.pitch = w << 2;
-	    }
-	    else {
-		if (vmesa->drawType == GLX_PBUFFER_BIT)
-		    w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2;
-		else
-		    w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2 + 16;
-		
-		vmesa->back.size = w * h * bpp / 8;
-		vmesa->back.pitch = w << 1;	       
-	    }
-#ifdef DEBUG
-	    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent backbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
-				    w, h, bpp, vmesa->back.size);
-#endif
-	    /* depth buffer */
-	    w = vmesa->driDrawable->w;
 
-	    if (vmesa->hasDepth && vmesa->hasStencil) {
-		if (vmesa->drawType == GLX_PBUFFER_BIT)
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		else
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-
-		vmesa->depth.size = w * h * 4;
-		vmesa->depth.pitch = w << 2;
-		vmesa->depth.bpp = 32;
-#ifdef DEBUG
-		if (VIA_DEBUG) fprintf(stderr, "depthBits = 24\n");
-		if (VIA_DEBUG) fprintf(stderr, "StencilBits = 8\n");
-#endif
-	    }
-	    else if (vmesa->hasDepth) {
-
-		/*=* John Sheng [2003.6.16] patch viewperf drv-08 draw nothing */
-		/*if(vmesa->viaScreen->bitsPerPixel == 32)*/
-		    /*vmesa->depthBits = 16;*/
-		    
-		if (vmesa->depthBits == 16) {
-		    if (vmesa->drawType == GLX_PBUFFER_BIT)
-			w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2;
-		    else
-			w = BUFFER_ALIGN_WIDTH(w * 2, BUFFER_ALIGNMENT) / 2 + 16;
-
-		    vmesa->depth.size = w * h * 2;	       
-		    vmesa->depth.pitch = w << 1;
-		    vmesa->depth.bpp = 16;
-#ifdef DEBUG
-		    if (VIA_DEBUG) fprintf(stderr, "depthBits = 16\n");
-#endif
-		}
-		else {
-		    if (vmesa->drawType == GLX_PBUFFER_BIT)
-			w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		    else
-			w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-
-		    vmesa->depth.size = w * h * 4;
-		    vmesa->depth.pitch = w << 2;
-		    vmesa->depth.bpp = 32;
-#ifdef DEBUG
-		    if (VIA_DEBUG) fprintf(stderr, "depthBits = 32\n");
-#endif
-		}
-	    }
-	    else if (vmesa->hasStencil) {
-		if (vmesa->drawType == GLX_PBUFFER_BIT)
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4;
-		else
-		    w = BUFFER_ALIGN_WIDTH(w * 4, BUFFER_ALIGNMENT) / 4 + 8;
-
-		vmesa->depth.size = w * h * 4;
-		vmesa->depth.pitch = w << 2;
-		vmesa->depth.bpp = 32;
-#ifdef DEBUG		
-		if (VIA_DEBUG) fprintf(stderr, "StencilBits = 8\n");
-#endif
-	    }
-#ifdef DEBUG
-	    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
-			           w, h, vmesa->depth.bpp, vmesa->depth.size);
-#endif	    
-	    /*=* John Sheng [2003.5.31] flip *=*/
-	    {
-		viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;	
-		if(vmesa->viaScreen->width == vmesa->driDrawable->w &&
-    		    vmesa->viaScreen->height == vmesa->driDrawable->h) {
-		    vmesa->doPageFlip = GL_FALSE;
-		    vmesa->currentPage = 0;
-		    vmesa->back.pitch = vmesa->front.pitch;
-		}
-	    }
-
-	    if (!AllocateBuffer(vmesa)) {
-    		FREE(vmesa);
-    		return GL_FALSE;
-	    }
-	}
         _mesa_make_current2(vmesa->glCtx,
                             (GLframebuffer *)driDrawPriv->driverPrivate,
                             (GLframebuffer *)driReadPriv->driverPrivate);
