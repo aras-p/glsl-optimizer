@@ -52,6 +52,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef WIN32
+#include <stdint.h>
+#endif
 #include "GL/glxint.h"
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
