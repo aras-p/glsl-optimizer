@@ -556,7 +556,7 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
     ctx->Driver.MultipassFunc = fxMultipassBlend;
 #else
 #ifndef FX_SILENT
-    fprintf(stderr,"fx Driver: GL_BLEND not yet supported\n");
+    /*fprintf(stderr,"fx Driver: GL_BLEND not yet supported\n");*/
 #endif
 #endif    
     break;

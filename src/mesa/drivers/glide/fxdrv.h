@@ -566,11 +566,6 @@ extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
 
 extern void fxPrintTextureData(tfxTexInfo *ti);
-extern void fxDDTexImg(GLcontext *, GLenum, struct gl_texture_object *,
-		       GLint, GLint, const struct gl_texture_image *);
-extern void fxDDTexSubImg(GLcontext *, GLenum, struct gl_texture_object *,
-                          GLint, GLint, GLint, GLint, GLint, GLint,
-                          const struct gl_texture_image *);
 extern GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                               GLenum format, GLenum type, const GLvoid *pixels,
                               const struct gl_pixelstore_attrib *packing,
@@ -584,6 +579,10 @@ extern GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                               const struct gl_pixelstore_attrib *packing,
                               struct gl_texture_object *texObj,
                               struct gl_texture_image *texImage);
+extern GLvoid *fxDDGetTexImage(GLcontext *ctx, GLenum target, GLint level,
+                               const struct gl_texture_object *texObj,
+                               GLenum *formatOut, GLenum *typeOut,
+                               GLboolean *freeImageOut );
 extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);

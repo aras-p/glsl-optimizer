@@ -572,7 +572,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
           }
         }
         /* now make the GL_RENDERER string */
-        sprintf(buffer, "Mesa DRI %s 20000322", hardware);
+        sprintf(buffer, "Mesa DRI %s 20000329", hardware);
         return buffer;
       }
     case GL_VENDOR:
@@ -841,16 +841,19 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
       return GL_FALSE;
     }
 
-    if((ctx->Texture.ReallyEnabled & TEXTURE0_2D) &&
-       (ctx->Texture.Unit[0].EnvMode==GL_BLEND)) {
-      return GL_FALSE;
+    if (ctx->Texture.ReallyEnabled & TEXTURE0_2D) {
+      if (ctx->Texture.Unit[0].EnvMode == GL_BLEND)
+        return GL_FALSE;
+      if (ctx->Texture.Unit[0].Current->Image[0]->Border > 0)
+        return GL_FALSE;
     }
 
-    if((ctx->Texture.ReallyEnabled & TEXTURE1_2D) &&
-       (ctx->Texture.Unit[1].EnvMode==GL_BLEND)) {
-      return GL_FALSE;
+    if (ctx->Texture.ReallyEnabled & TEXTURE1_2D) {
+      if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
+        return GL_FALSE;
+      if (ctx->Texture.Unit[0].Current->Image[0]->Border > 0)
+        return GL_FALSE;
     }
-
 
     if (MESA_VERBOSE & (VERBOSE_DRIVER|VERBOSE_TEXTURE))
        fprintf(stderr, "fxMesa: fxIsInHardware, envmode is %s/%s\n",
@@ -987,9 +990,10 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.RenderStart=NULL;
   ctx->Driver.RenderFinish=NULL;
 
+  ctx->Driver.TexImage2D = fxDDTexImage2D;
+  ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
+  ctx->Driver.GetTexImage = fxDDGetTexImage;
   ctx->Driver.TexEnv=fxDDTexEnv;
-  ctx->Driver.TexImage=fxDDTexImg;
-  ctx->Driver.TexSubImage=fxDDTexSubImg;
   ctx->Driver.TexParameter=fxDDTexParam;
   ctx->Driver.BindTexture=fxDDTexBind;
   ctx->Driver.DeleteTexture=fxDDTexDel;
