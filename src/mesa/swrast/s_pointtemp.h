@@ -1,8 +1,8 @@
-/* $Id: s_pointtemp.h,v 1.20 2002/10/18 17:02:01 kschultz Exp $ */
+/* $Id: s_pointtemp.h,v 1.21 2002/11/09 21:26:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -153,7 +153,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    {{
       GLint x, y;
       const GLfloat radius = 0.5F * size;
-      const GLint z = (GLint) (vert->win[2]);
+      const GLint z = (GLint) (vert->win[2] + 0.5F);
       GLuint count;
 #if FLAGS & SMOOTH
       const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
@@ -359,7 +359,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 
       span->array->x[count] = (GLint) vert->win[0];
       span->array->y[count] = (GLint) vert->win[1];
-      span->array->z[count] = (GLint) vert->win[2];
+      span->array->z[count] = (GLint) (vert->win[2] + 0.5F);
       span->end = count + 1;
    }}
 

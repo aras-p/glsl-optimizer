@@ -1,8 +1,8 @@
-/* $Id: s_linetemp.h,v 1.13 2002/03/19 15:22:50 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.14 2002/11/09 21:26:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -176,8 +176,9 @@
 
    /*
    printf("%s():\n", __FUNCTION__);
-   printf(" (%f, %f) -> (%f, %f)\n",
-          vert0->win[0], vert0->win[1], vert1->win[0], vert1->win[1]);
+   printf(" (%f, %f, %f) -> (%f, %f, %f)\n",
+          vert0->win[0], vert0->win[1], vert0->win[2],
+          vert1->win[0], vert1->win[1], vert1->win[2]);
    printf(" (%d, %d, %d) -> (%d, %d, %d)\n",
           vert0->color[0], vert0->color[1], vert0->color[2], 
           vert1->color[0], vert1->color[1], vert1->color[2]);
@@ -229,8 +230,8 @@
      zPtr = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, x0, y0);
 #  endif
    if (depthBits <= 16) {
-      z0 = FloatToFixed(vert0->win[2]);
-      z1 = FloatToFixed(vert1->win[2]);
+      z0 = FloatToFixed(vert0->win[2]) + FIXED_HALF;
+      z1 = FloatToFixed(vert1->win[2]) + FIXED_HALF;
    }
    else {
       z0 = (int) vert0->win[2];
