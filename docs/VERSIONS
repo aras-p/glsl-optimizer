@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.11 1999/08/20 01:19:36 brianp Exp $
+$Id: VERSIONS,v 1.12 1999/09/15 16:34:43 brianp Exp $
 
 
 Mesa Version History
@@ -644,14 +644,17 @@ Mesa Version History
 	- new copyright on core Mesa code
 
 
-3.1 beta 3  August ??, 1999
+3.1 beta 3  September 17, 1999
     New:
 	- optimized glAccum function
+	- optimized 24bpp rendering in XMesa driver
+	- GLU 1.2 polygon tessellator
     Bug Fixes:
 	- glGetTexLevelParameter wasn't fully implemented
 	- glXUseXFont now handles multi-byte fonts
 	- glIsEnabled(GL_TEXTURE_2D / 3D) returned wrong result
 	- alpha channel of blending points, lines was sometimes incorrect
     Changes:
-	- New library names:  libGL.so and libGLU.so
+	- New library names:  "libGL" instead of "libMesaGL"
+	- New library numbering: libGL.so.1.2.310
 	- New subdirectories:  docs/ and bin/
