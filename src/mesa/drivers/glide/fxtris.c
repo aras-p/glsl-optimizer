@@ -309,10 +309,10 @@ static struct {
 
 #define VERT_SET_RGBA( dst, f )                   \
 do {						\
-   dst->r = CLAMP( f[0], 0, 1 ) * 255.0;	\
-   dst->g = CLAMP( f[1], 0, 1 ) * 255.0;	\
-   dst->b = CLAMP( f[2], 0, 1 ) * 255.0;	\
-   dst->a = CLAMP( f[3], 0, 1 ) * 255.0;	\
+   dst->r = (GLfloat)f[0];	\
+   dst->g = (GLfloat)f[1];	\
+   dst->b = (GLfloat)f[2];	\
+   dst->a = (GLfloat)f[3];	\
 } while (0)
 
 #define VERT_COPY_RGBA( v0, v1 ) 		\

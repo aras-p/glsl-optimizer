@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.22 2001/07/13 16:39:19 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.23 2001/07/17 21:44:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -341,9 +341,6 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
       loopback_compiled_cassette( ctx, IM );
       restore_compiled_primitives( ctx, IM );
    }
-   else if (IM->Count == IM->Start) {
-      _tnl_copy_to_current( ctx, IM, IM->OrFlag );
-   }
    else {
       if (ctx->NewState)
 	 _mesa_update_state(ctx);
@@ -356,16 +353,22 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 
       if (IM->Primitive[IM->LastPrimitive] & PRIM_END)
 	 ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
-      else
+      else if ((IM->Primitive[IM->LastPrimitive] & PRIM_BEGIN) ||
+	       (IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK) == 
+	       PRIM_OUTSIDE_BEGIN_END) {
 	 ctx->Driver.CurrentExecPrimitive =
 	    IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK;
+      }
 
       _tnl_get_exec_copy_verts( ctx, IM );
 
       if (IM->NormalLengthPtr) 
 	 fixup_normal_lengths( IM );
       
-      _tnl_run_cassette( ctx, IM );
+      if (IM->Count == IM->Start) 
+	 _tnl_copy_to_current( ctx, IM, IM->OrFlag );
+      else
+	 _tnl_run_cassette( ctx, IM );
 
       restore_compiled_primitives( ctx, IM );
    }
@@ -394,6 +397,7 @@ print_compiled_cassette( GLcontext *ctx, void *data )
 	   node->IM->id, node->Start, node->Count);
 
    IM->Start = node->Start;
+   IM->CopyStart = node->Start;
    IM->Count = node->Count;
    IM->BeginState = node->BeginState;
    IM->OrFlag = node->OrFlag;

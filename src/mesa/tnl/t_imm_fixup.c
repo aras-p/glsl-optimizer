@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.22 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.23 2001/07/17 21:44:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -512,11 +512,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint fixup;
-   GLuint count = IM->Count;
    GLuint start = IM->Start;
-
-   if (count == start)
-      return;
 
    IM->CopyOrFlag = IM->OrFlag;	  
    IM->CopyAndFlag = IM->AndFlag; 
