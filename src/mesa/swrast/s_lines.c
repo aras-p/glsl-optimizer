@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.22 2001/11/06 16:01:19 brianp Exp $ */
+/* $Id: s_lines.c,v 1.23 2002/01/16 18:22:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -759,6 +759,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    GLchan (*pbspec)[3] = PB->spec;
 
    PB->mono = GL_FALSE;
+   PB->haveSpec = GL_TRUE;
 
    if (ctx->Line.StippleFlag) {
       /* stippled */
@@ -860,6 +861,7 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLchan sBlue  = vert1->specular[2];
 
    PB->mono = GL_FALSE;
+   PB->haveSpec = GL_TRUE;
 
    if (ctx->Line.StippleFlag) {
       /* stippled */
