@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.30 2000/08/23 14:32:06 brianp Exp $ */
+/* $Id: drawpix.c,v 1.31 2000/08/30 18:22:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -746,17 +746,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
        * we'll proceed with the rest of the transfer operations and
        * rasterize the image.
        */
-      const GLuint preConvTransferOps =
-         IMAGE_SCALE_BIAS_BIT |
-         IMAGE_SHIFT_OFFSET_BIT |
-         IMAGE_MAP_COLOR_BIT |
-         IMAGE_COLOR_TABLE_BIT;
-      const GLuint postConvTransferOps =
-         IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT |
-         IMAGE_COLOR_MATRIX_BIT |
-         IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |
-         IMAGE_HISTOGRAM_BIT |
-         IMAGE_MIN_MAX_BIT;
       GLint row;
       GLfloat *dest, *tmpImage;
 
@@ -778,9 +767,9 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLvoid *source = _mesa_image_address(unpack,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_float_color_span(ctx, width, GL_RGBA, (void *) dest,
-                                       format, type, source, unpack,
-                                       transferOps & preConvTransferOps,
-                                       GL_FALSE);
+                                      format, type, source, unpack,
+                                      transferOps & IMAGE_PRE_CONVOLUTION_BITS,
+                                      GL_FALSE);
          dest += width * 4;
       }
 
@@ -799,7 +788,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       pixels = convImage;
       format = GL_RGBA;
       type = GL_FLOAT;
-      transferOps &= postConvTransferOps;
+      transferOps &= IMAGE_POST_CONVOLUTION_BITS;
    }
 
    /*

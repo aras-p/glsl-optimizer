@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.41 2000/08/29 23:31:23 brianp Exp $ */
+/* $Id: teximage.c,v 1.42 2000/08/30 18:22:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "context.h"
+#include "convolve.h"
 #include "image.h"
 #include "mem.h"
 #include "mmath.h"
@@ -636,6 +637,39 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 
 
 
+/*
+ * Calling glTexImage and related functions when convolution is enabled
+ * with GL_REDUCE border mode causes some complications.
+ * The incoming image must be extra large so that the post-convolution
+ * image size is reduced to a power of two size (plus 2 * border).
+ * This function adjusts a texture width and height accordingly if
+ * convolution with GL_REDUCE is enabled.
+ */
+static void
+adjust_texture_size_for_convolution(const GLcontext *ctx, GLuint dimensions,
+                                    GLsizei *width, GLsizei *height)
+{
+   if (ctx->Pixel.Convolution1DEnabled
+       && dimensions == 1
+       && ctx->Pixel.ConvolutionBorderMode[0] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Convolution1D.Width, 1) - 1);
+   }
+   else if (ctx->Pixel.Convolution2DEnabled
+            && dimensions > 1
+            && ctx->Pixel.ConvolutionBorderMode[1] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Convolution2D.Width, 1) - 1);
+      *height = *height - (MAX2(ctx->Convolution2D.Height, 1) - 1);
+   }
+   else if (ctx->Pixel.Separable2DEnabled
+            && dimensions > 1
+            && ctx->Pixel.ConvolutionBorderMode[2] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Separable2D.Width, 1) - 1);
+      *height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
+   }
+}
+
+
+
 /* Need this to prevent an out-of-bounds memory access when using
  * X86 optimized code.
  */
@@ -653,10 +687,10 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
  * NOTE: All texture image parameters should have already been error checked.
  */
 static void
-make_texture_image( GLcontext *ctx,
+make_texture_image( GLcontext *ctx, GLuint dimensions,
                     struct gl_texture_image *texImage,
                     GLenum srcFormat, GLenum srcType, const GLvoid *pixels,
-                    const struct gl_pixelstore_attrib *unpacking)
+                    const struct gl_pixelstore_attrib *srcPacking)
 {
    GLint components, numPixels;
    GLint internalFormat, width, height, depth, border;
@@ -665,7 +699,7 @@ make_texture_image( GLcontext *ctx,
    ASSERT(texImage);
    ASSERT(!texImage->Data);
    ASSERT(pixels);
-   ASSERT(unpacking);
+   ASSERT(srcPacking);
 
    internalFormat = texImage->IntFormat;
    width = texImage->Width;
@@ -678,8 +712,6 @@ make_texture_image( GLcontext *ctx,
    ASSERT(height > 0);
    ASSERT(depth > 0);
    ASSERT(border == 0 || border == 1);
-   ASSERT(pixels);
-   ASSERT(unpacking);
    ASSERT(components);
 
    numPixels = width * height * depth;
@@ -710,8 +742,8 @@ make_texture_image( GLcontext *ctx,
           * GL_LUMINANCE_ALPHA, etc. texture formats.
           */
          const GLubyte *src = (const GLubyte *) _mesa_image_address(
-            unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLint srcStride = _mesa_image_row_stride(unpacking, width,
+            srcPacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
+         const GLint srcStride = _mesa_image_row_stride(srcPacking, width,
                                                         srcFormat, srcType);
          GLubyte *dst = texImage->Data;
          GLint dstBytesPerRow = width * components * sizeof(GLubyte);
@@ -731,8 +763,8 @@ make_texture_image( GLcontext *ctx,
       else if (srcFormat == GL_RGBA && internalFormat == GL_RGB) {
          /* commonly used by Quake */
          const GLubyte *src = (const GLubyte *) _mesa_image_address(
-            unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLint srcStride = _mesa_image_row_stride(unpacking, width,
+            srcPacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
+         const GLint srcStride = _mesa_image_row_stride(srcPacking, width,
                                                         srcFormat, srcType);
          GLubyte *dst = texImage->Data;
          GLint i, j;
@@ -762,10 +794,10 @@ make_texture_image( GLcontext *ctx,
       GLint img, row;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
-            const GLvoid *source = _mesa_image_address(unpacking,
+            const GLvoid *srcAddr = _mesa_image_address(srcPacking,
                 pixels, width, height, srcFormat, srcType, img, row, 0);
             _mesa_unpack_index_span(ctx, width, dstType, dest,
-                                    srcType, source, unpacking,
+                                    srcType, srcAddr, srcPacking,
                                     ctx->ImageTransferState);
             dest += destBytesPerRow;
          }
@@ -777,15 +809,86 @@ make_texture_image( GLcontext *ctx,
       const GLenum dstFormat = texImage->Format;
       GLubyte *dest = texImage->Data;
       GLint img, row;
-      /* XXX convolution */
-      for (img = 0; img < depth; img++) {
-         for (row = 0; row < height; row++) {
-            const GLvoid *source = _mesa_image_address(unpacking,
-                   pixels, width, height, srcFormat, srcType, img, row, 0);
-            _mesa_unpack_ubyte_color_span(ctx, width, dstFormat, dest,
-                                          srcFormat, srcType, source,
-                                          unpacking, ctx->ImageTransferState);
-            dest += destBytesPerRow;
+      GLint w = width, h = height;
+
+      if ((dimensions == 1 && ctx->Pixel.Convolution1DEnabled) ||
+          (dimensions >= 2 &&
+           (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled)
+           )) {
+         GLfloat *tmpImage, *convImage;
+         tmpImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
+         if (!tmpImage) {
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            return;
+         }
+         convImage = (GLfloat *) MALLOC(width * height * sizeof(GLfloat));
+         if (!convImage) {
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            FREE(tmpImage);
+            return;
+         }
+
+         for (img = 0; img < depth; img++) {
+            const GLfloat *srcf;
+            GLfloat *dstf = tmpImage;
+            /* unpack and do transfer ops up to convolution */
+            for (row = 0; row < height; row++) {
+               const GLvoid *srcAddr = _mesa_image_address(srcPacking,
+                      pixels, width, height, srcFormat, srcType, img, row, 0);
+               _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dstf,
+                      srcFormat, srcType, srcAddr, srcPacking,
+                      ctx->ImageTransferState & IMAGE_PRE_CONVOLUTION_BITS,
+                      GL_TRUE);
+               dstf += width * 4;
+            }
+
+            /* convolve */
+            if (dimensions == 1) {
+               if (ctx->Pixel.Convolution1DEnabled) {
+                  _mesa_convolve_1d_image(ctx, &w, tmpImage, convImage);
+               }
+            }
+            else {         
+               if (ctx->Pixel.Convolution2DEnabled) {
+                  _mesa_convolve_2d_image(ctx, &w, &h, tmpImage, convImage);
+               }
+               else {
+                  ASSERT(ctx->Pixel.Separable2DEnabled);
+                  _mesa_convolve_sep_image(ctx, &w, &h, tmpImage, convImage);
+               }
+            }
+
+            /* transfer ops after convolution */
+            srcf = convImage;
+            for (row = 0; row < h; row++) {
+               GLvoid *dest;
+               dest = _mesa_image_address(&_mesa_native_packing, pixels,
+                                          w, h, GL_RGBA, GL_UNSIGNED_BYTE,
+                                          0, row, 0);
+               _mesa_pack_float_rgba_span(ctx, w,
+                                          (const GLfloat (*)[4]) srcf,
+                                          dstFormat, GL_UNSIGNED_BYTE,
+                                          dest, &_mesa_native_packing,
+                                          ctx->ImageTransferState
+                                          & IMAGE_POST_CONVOLUTION_BITS);
+               srcf += w * 4;
+            }
+         }
+
+         FREE(convImage);
+         FREE(tmpImage);
+      }
+      else {
+         /* no convolution */
+         for (img = 0; img < depth; img++) {
+            for (row = 0; row < height; row++) {
+               const GLvoid *srcAddr = _mesa_image_address(srcPacking,
+                      pixels, width, height, srcFormat, srcType, img, row, 0);
+               _mesa_unpack_ubyte_color_span(ctx, width, dstFormat, dest,
+                      srcFormat, srcType, srcAddr, srcPacking,
+                      ctx->ImageTransferState);
+               dest += destBytesPerRow;
+            }
          }
       }
    }
@@ -1403,7 +1506,8 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_RGBA;
          break;
       default:
-         gl_problem(ctx, "unexpected format in get_specific_compressed_tex_format");
+         /* silence compiler warning */
+         ;
    }
    return internalFormat;
 }
@@ -1418,8 +1522,12 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border, GLenum format,
                   GLenum type, const GLvoid *pixels )
 {
+   GLsizei postConvWidth;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage1D");
+
+   postConvWidth = width;
+   adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
 
    if (target==GL_TEXTURE_1D) {
       struct gl_texture_unit *texUnit;
@@ -1440,7 +1548,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
 
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 1, width, 1, 1, border)) {
+                              format, type, 1, postConvWidth, 1, 1, border)) {
          return;   /* error in texture image was detected */
       }
 
@@ -1462,7 +1570,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
 
       /* setup the teximage struct's fields */
-      init_texture_image(ctx, texImage, width, 1, 1, border, internalFormat);
+      init_texture_image(ctx, texImage, postConvWidth, 1, 1, border, internalFormat);
 
       if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
          _mesa_update_image_transfer_state(ctx);
@@ -1479,7 +1587,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          }
          if (retain || !success) {
             /* make internal copy of the texture image */
-            make_texture_image(ctx, texImage, format, type,
+            make_texture_image(ctx, 1, texImage, format, type,
                                pixels, &ctx->Unpack);
             if (!success && ctx->Driver.TexImage1D) {
                /* let device driver try to use unpacked image */
@@ -1512,7 +1620,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    else if (target==GL_PROXY_TEXTURE_1D) {
       /* Proxy texture: check for errors and update proxy state */
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 1, width, 1, 1, border)) {
+                              format, type, 1, postConvWidth, 1, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
             MEMSET( ctx->Texture.Proxy1D->Image[level], 0,
@@ -1538,8 +1646,13 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                   GLenum format, GLenum type,
                   const GLvoid *pixels )
 {
+   GLsizei postConvWidth, postConvHeight;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage2D");
+
+   postConvWidth = width;
+   postConvHeight = height;
+   adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
 
    if (target==GL_TEXTURE_2D ||
        (ctx->Extensions.HaveTextureCubeMap &&
@@ -1563,7 +1676,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
 
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 2, width, height, 1, border)) {
+                              format, type, 2, postConvWidth, postConvHeight,
+                              1, border)) {
          return;   /* error in texture image was detected */
       }
 
@@ -1586,7 +1700,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
 
       /* setup the teximage struct's fields */
-      init_texture_image(ctx, texImage, width, height,
+      init_texture_image(ctx, texImage, postConvWidth, postConvHeight,
                          1, border, internalFormat);
 
       if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
@@ -1604,7 +1718,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          }
          if (retain || !success) {
             /* make internal copy of the texture image */
-            make_texture_image(ctx, texImage, format, type,
+            make_texture_image(ctx, 2, texImage, format, type,
                                pixels, &ctx->Unpack);
             if (!success && ctx->Driver.TexImage2D) {
                /* let device driver try to use unpacked image */
@@ -1646,7 +1760,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    else if (target==GL_PROXY_TEXTURE_2D) {
       /* Proxy texture: check for errors and update proxy state */
       if (texture_error_check(ctx, target, level, internalFormat,
-                              format, type, 2, width, height, 1, border)) {
+                          format, type, 2, postConvWidth, height, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
             MEMSET( ctx->Texture.Proxy2D->Image[level], 0,
@@ -1740,7 +1854,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          }
          if (retain || !success) {
             /* make internal copy of the texture image */
-            make_texture_image(ctx, texImage, format, type,
+            make_texture_image(ctx, 3, texImage, format, type,
                                pixels, &ctx->Unpack);
             if (!success && ctx->Driver.TexImage3D) {
                /* let device driver try to use unpacked image */
@@ -1997,6 +2111,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
          assert(dest);
          if (texImage->Format == GL_RGBA) {
             const GLubyte *src = texImage->Data + row * width * 4 * sizeof(GLubyte);
+            /* XXX convolution */
             _mesa_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
                                   format, type, dest, &ctx->Pack,
                                   ctx->ImageTransferState );
@@ -2062,6 +2177,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                default:
                   gl_problem( ctx, "bad format in gl_GetTexImage" );
             }
+            /* XXX convolution */
             _mesa_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
                                   format, type, dest, &ctx->Pack,
                                   ctx->ImageTransferState );
