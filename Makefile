@@ -11,6 +11,9 @@ default: $(TOP)/configs/current
 	done
 
 
+doxygen:
+	(cd doxygen ; make) ; \
+
 clean:
 	@for dir in $(SUBDIRS) ; do \
 		(cd $$dir ; $(MAKE) clean) ; \
@@ -43,6 +46,7 @@ $(TOP)/configs/current:
 # Rules to set/install a specific build configuration
 aix \
 aix-gcc \
+aix-static \
 darwin \
 darwin-static \
 freebsd \

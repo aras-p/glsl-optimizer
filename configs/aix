@@ -1,4 +1,4 @@
-# Configuration for AIX
+# Configuration for AIX, dynamic libs
 
 include $(TOP)/configs/default
 
@@ -6,12 +6,11 @@ CONFIG_NAME = aix
 
 # Compiler and flags
 CC = cc
-# XXX fix this:
-CXX = c++
+CXX = xlC
 
 CFLAGS = -O -DAIXV3
 CXXFLAGS = -O -DAIXV3
-MKLIB_OPTIONS = -static
+MKLIB_OPTIONS =
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
@@ -20,5 +19,10 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-APP_LIB_DEPS = -L$(LIB_DIR) -lX11 -lXext -lXmu -lXi -lm
+GL_LIB_DEPS = -lX11 -lXext -lm
+GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm -lC
+GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lXi -lXmu -lX11 -lm
+GLW_LIB_DEPS = -L$(TOP)/lib -lGL -lXt -lX11
+OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL
+APP_LIB_DEPS = -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm -lC
 
