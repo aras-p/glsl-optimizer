@@ -1,7 +1,7 @@
 /**
  * \file imports.h
  * Standard C library function wrappers.
- * 
+ *
  * This file provides wrappers for all the standard C library functions
  * like malloc(), free(), printf(), getenv(), etc.
  */
@@ -94,24 +94,24 @@ extern "C" {
 
 /**********************************************************************/
 /** \name [Pseudo] static array declaration.
- * 
- * MACs and BeOS don't support static larger than 32kb, so ... 
+ *
+ * MACs and BeOS don't support static larger than 32kb, so ...
  */
 /*@{*/
 
-/** 
+/**
  * \def DEFARRAY
- * Define a [static] unidimensional array 
+ * Define a [static] unidimensional array
  */
 
-/** 
+/**
  * \def DEFMARRAY
- * Define a [static] bi-dimensional array 
+ * Define a [static] bi-dimensional array
  */
 
-/** 
+/**
  * \def DEFMNARRAY
- * Define a [static] tri-dimensional array 
+ * Define a [static] tri-dimensional array
  */
 
 /**
@@ -156,18 +156,18 @@ extern "C" {
  * specialized allocator you can define MESA_EXTERNAL_BUFFERALLOC and implement
  * _ext_mesa_alloc_pixelbuffer() _ext_mesa_free_pixelbuffer() in your
  * application.
- * 
+ *
  * \author
  * Contributed by Gerk Huisma (gerk@five-d.demon.nl).
  */
 /*@{*/
 
-/** 
+/**
  * \def MESA_PBUFFER_ALLOC
  * Allocate a pixel buffer.
  */
 
-/** 
+/**
  * \def MESA_PBUFFER_FREE
  * Free a pixel buffer.
  */
@@ -196,7 +196,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 #define MAX_GLUINT	0xffffffff
 
 #ifndef M_PI
-#define M_PI (3.1415926536)              
+#define M_PI (3.1415926536)
 #endif
 
 /* Degrees to radians conversion: */
@@ -206,8 +206,8 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 /***
  *** USE_IEEE: Determine if we're using IEEE floating point
  ***/
-#if defined(__i386__) || defined(__sparc__) || defined(__s390x__) || \
-    defined(__powerpc__) || \
+#if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
+    defined(__s390x__) || defined(__powerpc__) || \
     ( defined(__alpha__) && ( defined(__IEEE_FLOAT) || !defined(VMS) ) )
 #define USE_IEEE
 #define IEEE_ONE 0x3f800000
@@ -217,15 +217,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 /***
  *** SQRTF: single-precision square root
  ***/
-#if defined(__WATCOMC__) && defined(USE_X86_ASM)
-float asm_sqrt (float x);
-#pragma aux asm_sqrt =                      \
-	"fsqrt"                             \
-	parm [8087]                         \
-	value [8087]                        \
-	modify exact [];
-#  define SQRTF(X)  asm_sqrt(X)
-#elif 0 /* _mesa_sqrtf() not accurate enough - temporarily disabled */
+#if 0 /* _mesa_sqrtf() not accurate enough - temporarily disabled */
 #  define SQRTF(X)  _mesa_sqrtf(X)
 #elif defined(XFree86LOADER) && defined(IN_MODULE)
 #  define SQRTF(X)  (float) xf86sqrt((float) (X))
@@ -306,7 +298,7 @@ static INLINE int IS_INF_OR_NAN( float x )
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
 #else
 #define IS_INF_OR_NAN(x)        (!finite(x))
-#endif 
+#endif
 
 
 /***
@@ -360,9 +352,9 @@ static INLINE int IS_INF_OR_NAN( float x )
 #if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
 static INLINE int iround(float f)
 {
-       int r;
-       __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
-       return r;
+   int r;
+   __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
+   return r;
 }
 #define IROUND(x)  iround(x)
 #elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
@@ -398,7 +390,7 @@ long iround(float f);
 #ifndef FIST_MAGIC
 #define FIST_MAGIC ((((65536.0 * 65536.0 * 16)+(65536.0 * 0.5))* 65536.0))
 #endif
-inline int iround(float x)
+static INLINE int iround(float x)
 {
    double dtemp = FIST_MAGIC + x;
    return ((*(int *)&dtemp) - 0x80000000);
@@ -601,21 +593,35 @@ do {									\
    __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
 } while (0)
 
-#elif defined(__WATCOMC__) && !defined(NO_FAST_MATH)
-void _wacom_start_fast_math(unsigned short *x);
-#pragma aux _wacom_start_fast_math =    \
-    "fstcw   word ptr [esi]"            \
-    "or      word ptr [esi], 0x3f"      \
-    "fldcw   word ptr [esi]"            \
-    parm [esi]                          \
-    modify exact [];
-void _wacom_end_fast_math(unsigned short *x);
-#pragma aux _wacom_end_fast_math =      \
-    "fldcw   word ptr [esi]"            \
-    parm [esi]                          \
-    modify exact [];
-#define START_FAST_MATH(x)  _wacom_start_fast_math(& x)
-#define END_FAST_MATH(x)  _wacom_end_fast_math(& x)
+#elif defined(__WATCOMC__) && defined(__386__)
+#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
+#define FAST_X86_FPU		0x003f /* See GCC comments above */
+void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
+#pragma aux _watcom_start_fast_math =                                   \
+   "fnstcw  word ptr [eax]"                                             \
+   "fldcw   word ptr [ecx]"                                             \
+   parm [eax ecx]                                                       \
+   modify exact [];
+void _watcom_end_fast_math(unsigned short *x);
+#pragma aux _watcom_end_fast_math =                                     \
+   "fnclex"                                                             \
+   "fldcw   word ptr [eax]"                                             \
+   parm [eax]                                                           \
+   modify exact [];
+#if defined(NO_FAST_MATH)
+#define START_FAST_MATH(x)                                              \
+do {                                                                    \
+   static GLushort mask = DEFAULT_X86_FPU;	                        \
+   _watcom_start_fast_math(&x,&mask);                                   \
+} while (0)
+#else
+#define START_FAST_MATH(x)                                              \
+do {                                                                    \
+   static GLushort mask = FAST_X86_FPU;                                 \
+   _watcom_start_fast_math(&x,&mask);                                   \
+} while (0)
+#endif
+#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
 #else
 #define START_FAST_MATH(x)  x = 0
 #define END_FAST_MATH(x)  (void)(x)

@@ -1,7 +1,7 @@
 /**
  * \file glheader.h
  * Top-most include file.
- * 
+ *
  * This is the top-most include file of the Mesa sources.
  * It includes gl.h and all system headers which are needed.
  * Other Mesa source files should \e not directly include any system
@@ -9,7 +9,7 @@
  * allows system-dependent hacks/workarounds to be collected in one place.
  *
  * \note Actually, a lot of system-dependent stuff is now in imports.[ch].
- * 
+ *
  * If you touch this file, everything gets recompiled!
  *
  * This file should be included before any other header in the .c files.
@@ -252,6 +252,8 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #  define INLINE __inline
 #elif defined(__ICL)
 #  define INLINE __inline
+#elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
+#  define INLINE __inline
 #else
 #  define INLINE
 #endif
@@ -259,9 +261,9 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 
 /*
  * Provide a reasonable replacement for __FUNCTION__ when using
- * non-GNU C compilers.
+ * non-GNU C compilers. Watcom C/C++ 11.0 and later provide this also.
  */
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) && !(defined(__WATCOMC__) && (__WATCOMC__ >= 1100))
 #define STRINGIZE(x) #x
 #define STRINGIZE_EVAL(x) STRINGIZE(x)
 #define __FUNCTION__ STRINGIZE_EVAL(__FILE__) ", line " STRINGIZE_EVAL(__LINE__)

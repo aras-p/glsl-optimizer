@@ -98,7 +98,7 @@
  * - glFinish
  * - glIsEnabled
  * - glGet*
- * 
+ *
  * Functions which cause errors if called while compiling a display list:
  *  - glNewList
  */
@@ -114,7 +114,7 @@
 
 /**
  * How many nodes to allocate at a time.
- * 
+ *
  * \note Reduced now that we hold vertices etc. elsewhere.
  */
 #define BLOCK_SIZE 256
@@ -305,7 +305,7 @@ union node {
 
 
 /**
- * Number of nodes of storage needed for each instruction.  
+ * Number of nodes of storage needed for each instruction.
  * Sizes for dynamically allocated opcodes are stored in the context struct.
  */
 static GLuint InstSize[ OPCODE_END_OF_LIST+1 ];
@@ -1459,7 +1459,7 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 }
 
 
-static void 
+static void
 save_CopyPixels( GLint x, GLint y,
 		 GLsizei width, GLsizei height, GLenum type )
 {
@@ -2367,7 +2367,7 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 static void save_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
                             GLint vn, GLdouble v1, GLdouble v2 )
 {
-   save_MapGrid2f(un, (GLfloat) u1, (GLfloat) u2, 
+   save_MapGrid2f(un, (GLfloat) u1, (GLfloat) u2,
 		  vn, (GLfloat) v1, (GLfloat) v2);
 }
 
@@ -2890,7 +2890,7 @@ static void save_RasterPos3sv(const GLshort *v)
 
 static void save_RasterPos4dv(const GLdouble *v)
 {
-   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1],
 		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -2901,7 +2901,7 @@ static void save_RasterPos4fv(const GLfloat *v)
 
 static void save_RasterPos4iv(const GLint *v)
 {
-   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+   save_RasterPos4f((GLfloat) v[0], (GLfloat) v[1],
 		    (GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -3630,7 +3630,7 @@ static void save_WindowPos3svMESA(const GLshort *v)
 
 static void save_WindowPos4dvMESA(const GLdouble *v)
 {
-   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1],
 			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -3641,7 +3641,7 @@ static void save_WindowPos4fvMESA(const GLfloat *v)
 
 static void save_WindowPos4ivMESA(const GLint *v)
 {
-   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+   save_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1],
 			(GLfloat) v[2], (GLfloat) v[3]);
 }
 
@@ -5471,7 +5471,7 @@ _mesa_CallList( GLuint list )
    /* execute the display list, and restore the CompileFlag. */
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glCallList %d\n", list); 
+      _mesa_debug(ctx, "glCallList %d\n", list);
 
    if (list == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glCallList(list==0)");
@@ -5509,7 +5509,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    GLboolean save_compile_flag;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glCallLists %d\n", n); 
+      _mesa_debug(ctx, "glCallLists %d\n", n);
 
    switch (type) {
       case GL_BYTE:
@@ -5860,7 +5860,7 @@ static void exec_DisableClientState( GLenum cap )
    ctx->Exec->DisableClientState( cap );
 }
 
-static void exec_EdgeFlagPointer(GLsizei stride, const void *vptr)
+static void exec_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
@@ -6901,12 +6901,12 @@ static void print_list( GLcontext *ctx, GLuint list )
                          _mesa_lookup_enum_by_nr(n[1].ui));
 	    break;
 	 case OPCODE_MAP1:
-	    _mesa_printf("Map1 %s %.3f %.3f %d %d\n", 
+	    _mesa_printf("Map1 %s %.3f %.3f %d %d\n",
 		    _mesa_lookup_enum_by_nr(n[1].ui),
 		    n[2].f, n[3].f, n[4].i, n[5].i);
 	    break;
 	 case OPCODE_MAP2:
-	    _mesa_printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n", 
+	    _mesa_printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui),
                          n[2].f, n[3].f, n[4].f, n[5].f,
                          n[6].i, n[7].i, n[8].i, n[9].i);
@@ -6916,7 +6916,7 @@ static void print_list( GLcontext *ctx, GLuint list )
                          n[1].i, n[2].f, n[3].f);
 	    break;
 	 case OPCODE_MAPGRID2:
-	    _mesa_printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n", 
+	    _mesa_printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n",
                          n[1].i, n[2].f, n[3].f,
                          n[4].i, n[5].f, n[6].f);
 	    break;
