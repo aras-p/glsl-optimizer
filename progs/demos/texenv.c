@@ -530,6 +530,32 @@ static void drawCheck( int w, int h, const GLfloat lightCheck[4],
    }
 }
 
+static const char *lookupFormat( GLint format )
+{
+   switch ( format ) {
+   case GL_RGBA:
+      return "GL_RGBA";
+   case GL_RGB:
+      return "GL_RGB";
+   case GL_ALPHA:
+      return "GL_ALPHA";
+   case GL_LUMINANCE:
+      return "GL_LUMINANCE";
+   case GL_LUMINANCE_ALPHA:
+      return "GL_LUMINANCE_ALPHA";
+   case GL_INTENSITY:
+      return "GL_INTENSITY";
+   case GL_COLOR_INDEX:
+      return "GL_COLOR_INDEX";
+   case GL_BGRA:
+      return "GL_BGRA";
+   case GL_BGR:
+      return "GL_BGR";
+   default:
+      return "unknown format";
+   }
+}
+
 static void drawSample( int x, int y, int w, int h,
 			const struct formatInfo *format,
                         const struct envModeInfo *envMode )
@@ -612,7 +638,7 @@ static void drawSample( int x, int y, int w, int h,
       end2D();
    }
    else if ( displayLevelInfo ) {
-      GLint width, height, border, components;
+      GLint width, height, border, format;
       GLint redSize, greenSize, blueSize, alphaSize;
       GLint luminanceSize, intensitySize;
       char buf[255];
@@ -620,7 +646,7 @@ static void drawSample( int x, int y, int w, int h,
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width );
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height );
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, &border );
-      glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_COMPONENTS, &components );
+      glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format );
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &redSize );
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &greenSize );
       glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &blueSize );
@@ -635,16 +661,19 @@ static void drawSample( int x, int y, int w, int h,
       sprintf( buf, "border: %d", border );
       drawStringOutline( buf, 15, h / 2 + 10, labelLevelColor0, labelLevelColor1 );
 
-      sprintf( buf, "components: 0x%04X", components );
+      sprintf( buf, "internal format:" );
       drawStringOutline( buf, 15, h / 2, labelLevelColor0, labelLevelColor1 );
 
-      sprintf( buf, "sizes:" );
+      sprintf( buf, "  %s",  lookupFormat( format ) );
       drawStringOutline( buf, 15, h / 2 - 10, labelLevelColor0, labelLevelColor1 );
+
+      sprintf( buf, "sizes:" );
+      drawStringOutline( buf, 15, h / 2 - 20, labelLevelColor0, labelLevelColor1 );
 
       sprintf( buf, "  %d / %d / %d / %d / %d / %d",
 	       redSize, greenSize, blueSize, alphaSize,
 	       luminanceSize, intensitySize );
-      drawStringOutline( buf, 15, h / 2 - 20, labelLevelColor0, labelLevelColor1 );
+      drawStringOutline( buf, 15, h / 2 - 30, labelLevelColor0, labelLevelColor1 );
 
       end2D();
    }
