@@ -41,6 +41,8 @@ static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB_func;
 #define SPECULAR 2
 #define LIGHTPOS 3
 
+/* Set to one to test ARB_fog_linear program option */
+#define DO_FRAGMENT_FOG 0
 
 
 static void Redisplay( void )
@@ -179,6 +181,9 @@ static void Init( void )
    /* Yes, this could be expressed more efficiently */
    static const char *fragProgramText =
       "!!ARBfp1.0\n"
+#if DO_FRAGMENT_FOG
+      "OPTION ARB_fog_linear; \n"
+#endif
       "PARAM Diffuse = program.local[1]; \n"
       "PARAM Specular = program.local[2]; \n"
       "PARAM LightPos = program.local[3]; \n"
@@ -197,7 +202,7 @@ static void Init( void )
       "MUL normal, fragment.texcoord[0], len.y; \n"
 
       "# Compute dot product of light direction and normal vector\n"
-      "DP3 dotProd, lightDir, normal;"
+      "DP3 dotProd, lightDir, normal; \n"
 
       "MUL diffuseColor, Diffuse, dotProd;            # diffuse attenuation\n"
 
@@ -205,7 +210,13 @@ static void Init( void )
 
       "MUL specularColor, Specular, specAtten.x;      # specular attenuation\n"
 
+#if DO_FRAGMENT_FOG
+      "# need to clamp color to [0,1] before fogging \n"
+      "ADD_SAT result.color, diffuseColor, specularColor; # add colors\n"
+#else
+      "# clamping will be done after program's finished \n"
       "ADD result.color, diffuseColor, specularColor; # add colors\n"
+#endif
       "END \n"
       ;
 
@@ -228,6 +239,10 @@ static void Init( void )
       "DP3 result.texcoord[0].z, norm, invModelview[2]; \n"
       "DP3 result.texcoord[0].w, norm, invModelview[3]; \n"
 
+#if DO_FRAGMENT_FOG
+      "# compute fog coordinate\n"
+      "DP4 result.fogcoord, pos, modelviewProj[2]; \n"
+#endif
       "END\n";
       ;
 
@@ -337,6 +352,18 @@ static void Init( void )
    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Diffuse);
    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Specular);
    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 20.0);
+
+#if DO_FRAGMENT_FOG
+   {
+      /* Green-ish fog color */
+      static const GLfloat fogColor[4] = {0.5, 1.0, 0.5, 0};
+      glFogi(GL_FOG_MODE, GL_LINEAR);
+      glFogfv(GL_FOG_COLOR, fogColor);
+      glFogf(GL_FOG_START, 5.0);
+      glFogf(GL_FOG_END, 10.0);
+      glEnable(GL_FOG);
+   }
+#endif
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
    printf("Press p to toggle between per-pixel and per-vertex lighting\n");
