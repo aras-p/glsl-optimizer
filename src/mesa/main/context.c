@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.122 2001/02/26 23:58:12 brianp Exp $ */
+/* $Id: context.c,v 1.123 2001/02/27 16:14:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -974,6 +974,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Line.SmoothFlag = GL_FALSE;
    ctx->Line.StippleFlag = GL_FALSE;
    ctx->Line.Width = 1.0;
+   ctx->Line._Width = 1.0;
    ctx->Line.StipplePattern = 0xffff;
    ctx->Line.StippleFactor = 1;
 
