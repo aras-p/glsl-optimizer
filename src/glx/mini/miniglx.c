@@ -505,13 +505,13 @@ SetupFBDev( Display *dpy )
    else if (dpy->VarInfo.xres == 800 &&
 	    dpy->VarInfo.yres == 600) {
       /* timing values taken from /etc/fb.modes (800x600 @ 75Hz) */
-      dpy->VarInfo.pixclock = 20203;
-      dpy->VarInfo.left_margin = 160;
-      dpy->VarInfo.right_margin = 16;
-      dpy->VarInfo.upper_margin = 21;
+      dpy->VarInfo.pixclock = 27778;
+      dpy->VarInfo.left_margin = 128;
+      dpy->VarInfo.right_margin = 24;
+      dpy->VarInfo.upper_margin = 22;
       dpy->VarInfo.lower_margin = 1;
-      dpy->VarInfo.hsync_len = 80;
-      dpy->VarInfo.vsync_len = 3;
+      dpy->VarInfo.hsync_len = 72;
+      dpy->VarInfo.vsync_len = 2;
    }
    else if (dpy->VarInfo.xres == 768 &&
 	    dpy->VarInfo.yres == 1024) {
@@ -1452,7 +1452,7 @@ XCreateWindow( Display *dpy, Window parent, int x, int y,
       win->curBottom = win->frontBottom;
    }
 
-   dpy->driScreen.createNewDrawable(dpy, dpy->driver_modes, (int) win,
+   dpy->driScreen.createNewDrawable(dpy, visual->mode, (int) win,
            &win->driDrawable, GLX_WINDOW_BIT, empty_attribute_list);
 
    if (!win->driDrawable.private) {
@@ -1806,6 +1806,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    (void) stereoFlag;
    for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next ) {
       if (mode->rgbMode == rgbFlag &&
+          mode->doubleBufferMode == dbFlag &&
           mode->redBits >= redBits &&
           mode->greenBits >= greenBits &&
           mode->blueBits >= blueBits &&
