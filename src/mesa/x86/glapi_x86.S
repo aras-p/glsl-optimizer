@@ -47,6 +47,10 @@
 #define GLOBL_FN(x) GLOBL x
 #endif
 
+#if defined(PTHREADS) || defined(XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#  define THREADS
+#endif
+
 #if defined(PTHREADS)
 #  define GL_STUB(fn,off,fn_alt)			\
 ALIGNTEXT16;						\
