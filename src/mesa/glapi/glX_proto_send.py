@@ -934,7 +934,7 @@ class PrintGlxSizeStubs_h(GlxProto):
 	def printFunction(self, f):
 		if self.glx_enum_functions.has_key(f.name):
 			ef = self.glx_enum_functions[f.name]
-			print 'extern INTERNAL GLint __gl%s_size(GLenum) PURE FASTCALL;' % (f.name)
+			print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (f.name)
 
 
 def show_usage():
