@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.29 2000/08/21 14:24:10 brianp Exp $ */
+/* $Id: drawpix.c,v 1.30 2000/08/23 14:32:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,7 +739,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       quickDraw = GL_FALSE;
    }
 
-   if (ctx->ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+   if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       /* Convolution has to be handled specially.  We'll create an
        * intermediate image, applying all pixel transfer operations
        * up to convolution.  Then we'll convolve the image.  Then
@@ -788,10 +788,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       if (ctx->Pixel.Convolution2DEnabled) {
          _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
       }
-      else if (ctx->Pixel.Separable2DEnabled) {
+      else {
+         ASSERT(ctx->Pixel.Separable2DEnabled);
          _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
       }
-
       FREE(tmpImage);
 
       /* continue transfer ops and draw the convolved image */
