@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.6 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: enable.c,v 1.7 1999/10/20 22:16:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -192,7 +192,7 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          if (ctx->Light.Enabled!=state) {
             ctx->Light.Enabled = state;
 	    ctx->Enabled &= ~ENABLE_LIGHT;
-	    if (state && !is_empty_list(&ctx->Light.EnabledList))
+            if (state)
 	       ctx->Enabled |= ENABLE_LIGHT;
             ctx->NewState |= NEW_LIGHTING;
          }
