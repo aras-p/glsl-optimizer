@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.11 1999/12/17 15:03:52 brianp Exp $
+# $Id: Makefile.X11,v 1.12 1999/12/17 15:15:46 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -20,9 +20,6 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
-	glapi.c \
-	glapinoop.c \
-	glthread.c \
 	accum.c \
 	alpha.c \
 	alphabuf.c \
@@ -48,7 +45,10 @@ CORE_SOURCES = \
 	feedback.c \
 	fog.c \
 	get.c \
+	glapi.c \
+	glapinoop.c \
 	glmisc.c \
+	glthread.c \
 	hash.c \
 	image.c \
 	imaging.c \

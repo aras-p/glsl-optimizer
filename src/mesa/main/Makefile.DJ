@@ -1,9 +1,7 @@
-# $Id: Makefile.DJ,v 1.2 1999/10/08 09:27:09 keithw Exp $
-
-# Makefile for core library for MS-DOS using djgpp
+# $Id: Makefile.DJ,v 1.3 1999/12/17 15:15:46 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.1
+# Version:  3.3
 # Copyright (C) 1995-1998  Brian Paul
 #
 # This library is free software; you can redistribute it and/or
@@ -21,16 +19,8 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-# $Log: Makefile.DJ,v $
-# Revision 1.2  1999/10/08 09:27:09  keithw
-# Fixed includes & added a few hooks for the DRI.
-#
-# Revision 1.1.1.1  1999/08/19 00:55:41  jtg
-# Imported sources
-#
-# Revision 1.1  1999/01/01 14:35:09  brianp
-# Initial revision
-#
+# Makefile for core library for MS-DOS using djgpp
+
 
 
 
@@ -47,15 +37,79 @@ LIBDIR = ..\lib
 #CFLAGS += -DUNIVBE -D__DOS__ -D__MSDOS32__ -IC:\scitech\include
 CFLAGS +=  -D__DOS__ -D__MSDOS32__
 
-CORE_SOURCES = accum.c alpha.c alphabuf.c api1.c api2.c apiext.c attrib.c \
-	bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
-	dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-	get.c hash.c image.c light.c lines.c logic.c masking.c matrix.c \
-	glmisc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
-	quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
-	stencil.c teximage.c texobj.c texstate.c texture.c triangle.c \
-	varray.c winpos.c vb.c vbfill.c vbrender.c vbxform.c xform.c \
+CORE_SOURCES = \
+	accum.c \
+	alpha.c \
+	alphabuf.c \
+	attrib.c \
+	bbox.c \
+	bitmap.c \
+	blend.c \
+	clip.c \
+	colortab.c \
+	config.c \
+	context.c \
+	copypix.c \
+	cva.c \
+	debug_xform.c \
+	depth.c \
+	dispatch.c \
+	dlist.c \
+	drawpix.c \
+	enable.c \
+	enums.c \
+	eval.c \
+	extensions.c \
+	feedback.c \
+	fog.c \
+	get.c \
+	glapi.c \
+	glapinoop.c \
+	glmisc.c \
+	glthread.c \
+	hash.c \
+	image.c \
+	imaging.c \
+	light.c \
+	lines.c \
+	logic.c \
+	masking.c \
+	matrix.c \
+	mem.c \
+	mmath.c \
+	pb.c \
+	pixel.c \
+	pipeline.c \
+	points.c \
+	polygon.c \
+	quads.c \
+	rastpos.c \
+	readpix.c \
+	rect.c \
+	scissor.c \
+	shade.c \
+	span.c \
+	stages.c \
+	stencil.c \
+	teximage.c \
+	texobj.c \
+	texstate.c \
+	texture.c \
+	translate.c \
+	triangle.c \
+	varray.c \
+	vb.c \
+	vbcull.c \
+	vbfill.c \
+	vbindirect.c \
+	vbrender.c \
+	vbxform.c \
+	vector.c \
+	vertices.c \
+	winpos.c \
+	xform.c \
 	zoom.c
+
 
 DRIVER_SOURCES = DOS\dosmesa.c
 
