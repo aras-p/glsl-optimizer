@@ -6,7 +6,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1202,10 +1202,10 @@ init_attrib_groups( GLcontext *ctx )
 static void
 add_newer_entrypoints(void)
 {
-   unsigned   i;
+   unsigned i;
    static const struct {
       const char * const name;
-      unsigned  offset;
+      unsigned offset;
    }
    newer_entrypoints[] = {
       /* GL_ARB_window_pos aliases with GL_MESA_window_pos */
@@ -1381,11 +1381,15 @@ add_newer_entrypoints(void)
 #endif
       { "glMultiModeDrawArraysIBM", _gloffset_MultiModeDrawArraysIBM },
       { "glMultiModeDrawElementsIBM", _gloffset_MultiModeDrawElementsIBM },
+      /* GL_EXT_stencil_two_side */
+      { "glActiveStencilFaceEXT", _gloffset_ActiveStencilFaceEXT },
+      /* GL_ARB_draw_buffers */
+      { "glDrawBuffersARB", _gloffset_DrawBuffersARB },
    };
    
-   for ( i = 0 ; i < Elements(newer_entrypoints) ; i++ ) {
+   for (i = 0; i < Elements(newer_entrypoints); i++ ) {
       _glapi_add_entrypoint( newer_entrypoints[i].name,
-			     newer_entrypoints[i].offset );
+                             newer_entrypoints[i].offset );
    }
 }
 
