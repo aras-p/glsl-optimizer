@@ -122,7 +122,7 @@ VERSION=Glut V3.7
 
 # Make the library
 $(LIBDIR)$(GLUT_LIB) : $(OBJECTS0) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
-  @ $(MAKELIB) $(GLUT_LIB) $(OBJECTS)
+  @ $(MAKELIB) $(GLUT_LIB) $(OBJECTS0)
   @ library $(GLUT_LIB) $(OBJECTS1)
   @ library $(GLUT_LIB) $(OBJECTS2)
   @ library $(GLUT_LIB) $(OBJECTS3)
