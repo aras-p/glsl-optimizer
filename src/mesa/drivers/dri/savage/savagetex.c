@@ -736,11 +736,12 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 	    savageMarkAllTiles(t, j);
 	    if (SAVAGE_DEBUG & DEBUG_VERBOSE_TEX)
 		fprintf (stderr, "*");
-	 } else if ((SAVAGE_DEBUG & DEBUG_VERBOSE_TEX) &&
-		    t->dirtySubImages & (1 << j))
-	    fprintf (stderr, ".");
-	 else
-	    fprintf (stderr, " ");
+	 } else if (SAVAGE_DEBUG & DEBUG_VERBOSE_TEX) {
+	    if (t->dirtySubImages & (1 << j))
+	       fprintf (stderr, ".");
+	    else
+	       fprintf (stderr, " ");
+	 }
 	 if ((t->base.dirty_images[0] | t->dirtySubImages) & (1 << j))
 	    savageUploadTexLevel( t, j );
       }
