@@ -626,8 +626,8 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i, length, flags = 0;
    render_func *tab = TAG(render_tab_verts);
+   GLuint i;
 
    if (rmesa->swtcl.indexed_verts.buf && (!VB->Elts || stage->changed_inputs)) 
       RELEASE_ELT_VERTS();
@@ -661,7 +661,7 @@ static GLboolean radeon_run_render( GLcontext *ctx,
 		 start, start+length);
 
       if (length)
-	 tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, flags );
+	 tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, prim );
    }
 
    tnl->Driver.Render.Finish( ctx );
