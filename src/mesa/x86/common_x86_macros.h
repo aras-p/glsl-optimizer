@@ -1,4 +1,4 @@
-/* $Id: common_x86_macros.h,v 1.1 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: common_x86_macros.h,v 1.2 2002/08/08 16:53:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,9 +71,9 @@ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d( XFORM_ARGS );
 
 #define NORM_ARGS	const GLmatrix *mat,				\
 			GLfloat scale,					\
-			const GLvector3f *in,				\
+			const GLvector4f *in,				\
 			const GLfloat *lengths,				\
-			GLvector3f *dest
+			GLvector4f *dest
 
 #define DECLARE_NORM_GROUP( pfx ) \
 extern void _ASMAPI _mesa_##pfx##_rescale_normals( NORM_ARGS );				\
