@@ -559,7 +559,7 @@ struct gl_enable_attrib {
    GLboolean VertexProgram;
    GLboolean VertexProgramPointSize;
    GLboolean VertexProgramTwoSide;
-   /* GL_NV_point_sprite */
+   /* GL_ARB_point_sprite / GL_NV_point_sprite */
    GLboolean PointSprite;
 };
 
@@ -846,9 +846,9 @@ struct gl_point_attrib {
    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
    GLfloat Threshold;		/**< GL_EXT_point_parameters */
    GLboolean _Attenuated;	/**< True if Params != [1, 0, 0] */
-   GLboolean PointSprite;	/**< GL_NV_point_sprite */
-   GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV_point_sprite */
-   GLenum SpriteRMode;		/**< GL_NV_point_sprite */
+   GLboolean PointSprite;	/**< GL_NV_point_sprite / GL_NV_point_sprite */
+   GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV_point_sprite / GL_NV_point_sprite */
+   GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
 };
 
 
@@ -1739,6 +1739,7 @@ struct gl_extensions
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
+   GLboolean ARB_point_sprite;
    GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;

@@ -199,7 +199,7 @@ _swrast_choose_point( GLcontext *ctx )
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Point.PointSprite) {
-         /* GL_NV_point_sprite */
+         /* GL_ARB_point_sprite / GL_NV_point_sprite */
          /* XXX this might not be good enough */
          if (ctx->Point._Attenuated)
             USE(atten_sprite_point);

@@ -48,6 +48,7 @@ static const struct {
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
    { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
+   { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
@@ -161,6 +162,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_occlusion_query
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
 #endif
+   ctx->Extensions.ARB_point_sprite = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
@@ -301,6 +303,7 @@ void
 _mesa_enable_1_5_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+   ctx->Extensions.ARB_point_sprite = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;

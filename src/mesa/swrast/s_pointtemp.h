@@ -35,7 +35,7 @@
  *   SPECULAR = do separate specular color
  *   LARGE = do points with diameter > 1 pixel
  *   ATTENUATE = compute point size attenuation
- *   SPRITE = GL_NV_point_sprite
+ *   SPRITE = GL_ARB_point_sprite / GL_NV_point_sprite
  *
  * Notes: LARGE and ATTENUATE are exclusive of each other.
  *        TEXTURE requires RGBA

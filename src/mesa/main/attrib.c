@@ -502,7 +502,7 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_POINT_SMOOTH);
    TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth,
                    GL_POINT_SMOOTH);
-   if (ctx->Extensions.NV_point_sprite) {
+   if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite) {
       TEST_AND_UPDATE(ctx->Point.PointSprite, enable->PointSprite,
                       GL_POINT_SPRITE_NV);
    }
@@ -998,7 +998,8 @@ _mesa_PopAttrib(void)
                   _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
                                            point->Threshold);
                }
-               if (ctx->Extensions.NV_point_sprite) {
+               if (ctx->Extensions.NV_point_sprite
+		   || ctx->Extensions.ARB_point_sprite) {
                   GLuint u;
                   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                      _mesa_TexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV,

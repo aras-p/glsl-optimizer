@@ -59,34 +59,43 @@
 
 /* Check if named extension is enabled, if not generate error and return */
 
-#define CHECK_EXTENSION_B(EXTNAME, PNAME)			\
-   if (!ctx->Extensions.EXTNAME) {				\
+#define CHECK1(E1, str, PNAME)					\
+   if (!ctx->Extensions.E1) {					\
       _mesa_error(ctx, GL_INVALID_VALUE,			\
-                  "glGetBooleanv(0x%x)", (int) PNAME);		\
+                  "glGet" str "v(0x%x)", (int) PNAME);		\
       return;							\
-   }	
+   }
+    
+#define CHECK2(E1, E2, str, PNAME)				\
+   if (!ctx->Extensions.E1 && !ctx->Extensions.E2) {		\
+      _mesa_error(ctx, GL_INVALID_VALUE,			\
+                  "glGet" str "v(0x%x)", (int) PNAME);		\
+      return;							\
+   }
+    
+#define CHECK_EXTENSION_B(EXTNAME, PNAME)			\
+   CHECK1(EXTNAME, "Boolean", PNAME )
 
 #define CHECK_EXTENSION_I(EXTNAME, PNAME)			\
-   if (!ctx->Extensions.EXTNAME) {				\
-      _mesa_error(ctx, GL_INVALID_VALUE,			\
-                  "glGetIntegerv(0x%x)", (int) PNAME);		\
-      return;							\
-   }	
+   CHECK1(EXTNAME, "Integer", PNAME )
 
 #define CHECK_EXTENSION_F(EXTNAME, PNAME)			\
-   if (!ctx->Extensions.EXTNAME) {				\
-      _mesa_error(ctx, GL_INVALID_VALUE,			\
-                  "glGetFloatv(0x%x)", (int) PNAME);		\
-      return;							\
-   }	
+   CHECK1(EXTNAME, "Float", PNAME )
 
 #define CHECK_EXTENSION_D(EXTNAME, PNAME)			\
-   if (!ctx->Extensions.EXTNAME) {				\
-      _mesa_error(ctx, GL_INVALID_VALUE,			\
-                  "glGetDoublev(0x%x)", (int) PNAME);		\
-      return;							\
-   }	
+   CHECK1(EXTNAME, "Double", PNAME )
 
+#define CHECK_EXTENSION2_B(EXT1, EXT2, PNAME)			\
+   CHECK2(EXT1, EXT2, "Boolean", PNAME)
+
+#define CHECK_EXTENSION2_I(EXT1, EXT2, PNAME)			\
+   CHECK2(EXT1, EXT2, "Integer", PNAME)
+
+#define CHECK_EXTENSION2_F(EXT1, EXT2, PNAME)			\
+   CHECK2(EXT1, EXT2, "Float", PNAME)
+
+#define CHECK_EXTENSION2_D(EXT1, EXT2, PNAME)			\
+   CHECK2(EXT1, EXT2, "Double", PNAME)
 
 
 
@@ -1362,7 +1371,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         CHECK_EXTENSION_B(NV_point_sprite, pname);
+         CHECK_EXTENSION2_B(NV_point_sprite, ARB_point_sprite, pname);
          *params = ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -2903,11 +2912,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         CHECK_EXTENSION_B(NV_point_sprite, pname);
+         CHECK_EXTENSION2_D(NV_point_sprite, ARB_point_sprite, pname);
          *params = (GLdouble) ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
-         CHECK_EXTENSION_B(NV_point_sprite, pname);
+         CHECK_EXTENSION_D(NV_point_sprite, pname);
          *params = (GLdouble) ctx->Point.SpriteRMode;
          break;
 
@@ -4418,7 +4427,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         CHECK_EXTENSION_F(NV_point_sprite, pname);
+         CHECK_EXTENSION2_F(NV_point_sprite, ARB_point_sprite, pname);
          *params = (GLfloat) ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -5971,7 +5980,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_NV_point_sprite */
       case GL_POINT_SPRITE_NV:
-         CHECK_EXTENSION_I(NV_point_sprite, pname);
+         CHECK_EXTENSION2_I(NV_point_sprite, ARB_point_sprite, pname);
          *params = (GLint) ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
@@ -6421,6 +6430,7 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_stencil_wrap &&
                    ctx->Extensions.SGIS_generate_mipmap) {
                   if (ctx->Extensions.ARB_occlusion_query &&
+                      ctx->Extensions.ARB_point_sprite &&
                       ctx->Extensions.ARB_vertex_buffer_object &&
                       ctx->Extensions.ARB_texture_non_power_of_two &&
                       ctx->Extensions.EXT_shadow_funcs) {

@@ -207,6 +207,10 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          }
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
+         /* This is one area where ARB_point_sprite and NV_point_sprite
+	  * differ.  In ARB_point_sprite the POINT_SPRITE_R_MODE is
+	  * always ZERO.  NV_point_sprite adds the S and R modes.
+	  */
          if (ctx->Extensions.NV_point_sprite) {
             GLenum value = (GLenum) params[0];
             if (value != GL_ZERO && value != GL_S && value != GL_R) {
@@ -260,9 +264,9 @@ void _mesa_init_point( GLcontext * ctx )
    ctx->Point.MinSize = 0.0;
    ctx->Point.MaxSize = ctx->Const.MaxPointSize;
    ctx->Point.Threshold = 1.0;
-   ctx->Point.PointSprite = GL_FALSE; /* GL_NV_point_sprite */
-   ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite */
+   ctx->Point.PointSprite = GL_FALSE; /* GL_ARB_point_sprite / GL_NV_point_sprite */
+   ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_NV_point_sprite */
+      ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_ARB_point_sprite / GL_NV_point_sprite */
    }
 }

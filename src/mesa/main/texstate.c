@@ -534,8 +534,9 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       }
    }
    else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite) {
+      /* GL_ARB_point_sprite / GL_NV_point_sprite */
+      if (!ctx->Extensions.NV_point_sprite
+	  && !ctx->Extensions.ARB_point_sprite) {
 	 _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(target=0x%x)", target );
 	 return;
       }
@@ -806,8 +807,9 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
       }
    }
    else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite) {
+      /* GL_ARB_point_sprite / GL_NV_point_sprite */
+      if (!ctx->Extensions.NV_point_sprite
+	  && !ctx->Extensions.ARB_point_sprite) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(target)" );
          return;
       }
@@ -1020,8 +1022,9 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
       }
    }
    else if (target == GL_POINT_SPRITE_NV) {
-      /* GL_NV_point_sprite */
-      if (!ctx->Extensions.NV_point_sprite) {
+      /* GL_ARB_point_sprite / GL_NV_point_sprite */
+      if (!ctx->Extensions.NV_point_sprite
+	  && !ctx->Extensions.ARB_point_sprite) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(target)" );
          return;
       }
