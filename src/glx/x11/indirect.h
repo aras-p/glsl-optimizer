@@ -326,7 +326,9 @@ glxproto_2s(EvalPoint2, X_GLrop_EvalPoint2, GLint)
 glxproto_enum1_1s(AlphaFunc, X_GLrop_AlphaFunc, GLclampf)
 
 glxproto_2s(BlendFunc,         X_GLrop_BlendFunc,         GLenum)
-glxproto_4s(BlendFuncSeparate, X_GLrop_BlendFuncSeparate, GLenum)
+
+#define X_GLrop_BlendFuncSeparateEXT 4134
+glxproto_4s(BlendFuncSeparateEXT, X_GLrop_BlendFuncSeparateEXT, GLenum)
 
 glxproto_1s(LogicOp, X_GLrop_LogicOp, GLenum)
 

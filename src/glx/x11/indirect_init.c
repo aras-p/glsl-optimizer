@@ -564,7 +564,7 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
 
     /* 173. GL_EXT_blend_func_separate / GL 1.4 */
-    glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparate;
+    glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparateEXT;
 
     /* 262. GL_NV_point_sprite / GL 1.4 */
     glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
