@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.3 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: matrix.h,v 1.4 1999/11/12 18:10:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,6 +130,9 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z );
 
 extern void
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height );
+
+extern void
+gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height );
 
 extern void
 _mesa_DepthRange( GLclampd nearval, GLclampd farval );

@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.9 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: matrix.c,v 1.10 1999/11/12 18:10:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1332,13 +1332,28 @@ _mesa_Translated( GLdouble x, GLdouble y, GLdouble z )
 
 
 /*
- * Define a new viewport and reallocate auxillary buffers if the size of
- * the window (color buffer) has changed.
+ * Called via glViewport or display list execution.
  */
 void
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
+   gl_Viewport(ctx, x, y, width, height);
+}
+
+
+
+/*
+ * Define a new viewport and reallocate auxillary buffers if the size of
+ * the window (color buffer) has changed.
+ *
+ * XXX This is directly called by device drivers, BUT this function
+ * may be renamed _mesa_Viewport (without ctx arg) in the future so
+ * use of _mesa_Viewport is encouraged.
+ */
+void
+gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
+{
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glViewport");
 
    if (width<0 || height<0) {
