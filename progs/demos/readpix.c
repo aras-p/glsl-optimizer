@@ -1,4 +1,4 @@
-/* $Id: readpix.c,v 1.6 2002/05/02 09:15:22 alanh Exp $ */
+/* $Id: readpix.c,v 1.7 2002/05/02 09:17:59 alanh Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
@@ -34,7 +34,7 @@ static GLubyte *TempImage = NULL;
 #define ReadType GL_UNSIGNED_BYTE
 #endif
 #if 1
-static GLenum ReadFormat = GL_DEPTH_COMPONENT; /*GL_RGBA; */
+static GLenum ReadFormat = GL_RGBA;
 static GLenum ReadType = GL_UNSIGNED_BYTE;
 #endif
 #if 0
@@ -111,8 +111,6 @@ Display( void )
    glRasterPos2i(APosX, APosY);
    glEnable(GL_DITHER);
    SetupPixelTransfer(GL_FALSE);
-            glDrawBuffer(GL_AUX0);
-            glReadBuffer(GL_AUX0);
    glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
 
    /* do readpixels, drawpixels */
@@ -154,7 +152,7 @@ Display( void )
    glRasterPos2i(CPosX, CPosY);
    glDisable(GL_DITHER);
    SetupPixelTransfer(ScaleAndBias);
-   glCopyPixels(APosX, APosY, ImgWidth, ImgHeight, GL_DEPTH);
+   glCopyPixels(APosX, APosY, ImgWidth, ImgHeight, GL_COLOR);
 
    if (!DrawFront)
       glutSwapBuffers();
@@ -190,12 +188,12 @@ Key( unsigned char key, int x, int y )
       case 'f':
          DrawFront = !DrawFront;
          if (DrawFront) {
-            glDrawBuffer(GL_AUX0);
-            glReadBuffer(GL_AUX0);
+            glDrawBuffer(GL_FRONT);
+            glReadBuffer(GL_FRONT);
          }
          else {
-            glDrawBuffer(GL_AUX0);
-            glReadBuffer(GL_AUX0);
+            glDrawBuffer(GL_BACK);
+            glReadBuffer(GL_BACK);
          }
          printf("glDrawBuffer(%s)\n", DrawFront ? "GL_FRONT" : "GL_BACK");
          break;
