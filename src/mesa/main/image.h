@@ -1,10 +1,10 @@
-/* $Id: image.h,v 1.14 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: image.h,v 1.15 2001/02/16 23:29:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,11 +131,23 @@ _mesa_unpack_index_span( const GLcontext *ctx, GLuint n,
 
 
 extern void
+_mesa_pack_index_span( const GLcontext *ctx, GLuint n,
+                       GLenum dstType, GLvoid *dest, const GLuint *source,
+                       const struct gl_pixelstore_attrib *dstPacking,
+                       GLuint transferOps );
+
+
+extern void
 _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *srcPacking,
                            GLuint transferOps );
+
+extern void
+_mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
+                         GLenum dstType, GLvoid *dest, const GLstencil *source,
+                         const struct gl_pixelstore_attrib *dstPacking );
 
 
 extern void
@@ -143,6 +155,11 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking,
                          GLuint transferOps );
+
+extern void
+_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
+                       GLenum dstType, const GLfloat *depthSpan,
+                       const struct gl_pixelstore_attrib *dstPacking );
 
 
 extern void *
