@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.20 2002/04/19 10:33:34 jrfonseca Exp $ */
+/* $Id: s_blend.c,v 1.21 2002/04/19 10:53:08 jrfonseca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -656,7 +656,13 @@ void _swrast_choose_blend_func( GLcontext *ctx )
 	 SWRAST_CONTEXT(ctx)->BlendFunc = blend_transparency;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_ONE && dstRGB==GL_ONE) {
-      SWRAST_CONTEXT(ctx)->BlendFunc = blend_add;
+#if defined(USE_MMX_ASM)
+      if ( cpu_has_mmx ) {
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_add;
+      }
+      else
+#endif
+         SWRAST_CONTEXT(ctx)->BlendFunc = blend_add;
    }
    else if (((eq==GL_FUNC_ADD_EXT || eq==GL_FUNC_REVERSE_SUBTRACT_EXT)
 	     && (srcRGB==GL_ZERO && dstRGB==GL_SRC_COLOR))

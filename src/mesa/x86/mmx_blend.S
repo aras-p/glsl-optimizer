@@ -270,7 +270,22 @@ const_80:
 #include "mmx_blendtmp.h"
 
 
-/* modulate
+/* add bleding mode
+ */
+
+#define TAG(x) x##_add
+
+#define INIT
+
+#define MAIN( rgba, dest ) \
+    GMB_LOAD( rgba, dest, MM1, MM2 )									;\
+    PADDUSB     ( MM1, MM2 )										;\
+    GMB_STORE( rgba, MM2 )
+
+#include "mmx_blendtmp.h"
+
+
+/* modulate blending mode
  */
 
 #define TAG(x) x##_modulate
