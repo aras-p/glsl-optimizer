@@ -52,9 +52,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2004/2/23 */
+/* glext.h last updated 2004/6/22 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 22
+#define GL_GLEXT_VERSION 23
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -251,7 +251,6 @@ extern "C" {
 #define GL_NUM_COMPRESSED_TEXTURE_FORMATS 0x86A2
 #define GL_COMPRESSED_TEXTURE_FORMATS     0x86A3
 #define GL_CLAMP_TO_BORDER                0x812D
-#define GL_CLAMP_TO_BORDER_SGIS           0x812D
 #define GL_COMBINE                        0x8570
 #define GL_COMBINE_RGB                    0x8571
 #define GL_COMBINE_ALPHA                  0x8572
@@ -749,6 +748,14 @@ extern "C" {
 #define GL_FLOAT_MAT2_ARB                 0x8B5A
 #define GL_FLOAT_MAT3_ARB                 0x8B5B
 #define GL_FLOAT_MAT4_ARB                 0x8B5C
+#define GL_SAMPLER_1D_ARB                 0x8B5D
+#define GL_SAMPLER_2D_ARB                 0x8B5E
+#define GL_SAMPLER_3D_ARB                 0x8B5F
+#define GL_SAMPLER_CUBE_ARB               0x8B60
+#define GL_SAMPLER_1D_SHADOW_ARB          0x8B61
+#define GL_SAMPLER_2D_SHADOW_ARB          0x8B62
+#define GL_SAMPLER_2D_RECT_ARB            0x8B63
+#define GL_SAMPLER_2D_RECT_SHADOW_ARB     0x8B64
 #define GL_OBJECT_DELETE_STATUS_ARB       0x8B80
 #define GL_OBJECT_COMPILE_STATUS_ARB      0x8B81
 #define GL_OBJECT_LINK_STATUS_ARB         0x8B82
@@ -773,9 +780,11 @@ extern "C" {
 #ifndef GL_ARB_fragment_shader
 #define GL_FRAGMENT_SHADER_ARB            0x8B30
 #define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB 0x8B49
+#define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB 0x8B8B
 #endif
 
 #ifndef GL_ARB_shading_language_100
+#define GL_SHADING_LANGUAGE_VERSION_ARB   0x8B8C
 #endif
 
 #ifndef GL_ARB_texture_non_power_of_two
@@ -1117,6 +1126,10 @@ extern "C" {
 
 #ifndef GL_SGIS_texture_edge_clamp
 #define GL_CLAMP_TO_EDGE_SGIS             0x812F
+#endif
+
+#ifndef GL_SGIS_texture_border_clamp
+#define GL_CLAMP_TO_BORDER_SGIS           0x812D
 #endif
 
 #ifndef GL_EXT_blend_minmax
@@ -2772,6 +2785,33 @@ extern "C" {
 #define GL_UNSIGNED_SHORT_8_8_MESA        0x85BA
 #define GL_UNSIGNED_SHORT_8_8_REV_MESA    0x85BB
 #define GL_YCBCR_MESA                     0x8757
+#endif
+
+#ifndef GL_EXT_pixel_buffer_object
+#define GL_PIXEL_PACK_BUFFER_EXT          0x88EB
+#define GL_PIXEL_UNPACK_BUFFER_EXT        0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING_EXT  0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING_EXT 0x88EF
+#endif
+
+#ifndef GL_NV_fragment_program_option
+#endif
+
+#ifndef GL_NV_fragment_program2
+#define GL_MAX_PROGRAM_EXEC_INSTRUCTIONS_NV 0x88F4
+#define GL_MAX_PROGRAM_CALL_DEPTH_NV      0x88F5
+#define GL_MAX_PROGRAM_IF_DEPTH_NV        0x88F6
+#define GL_MAX_PROGRAM_LOOP_DEPTH_NV      0x88F7
+#define GL_MAX_PROGRAM_LOOP_COUNT_NV      0x88F8
+#endif
+
+#ifndef GL_NV_vertex_program2_option
+/* reuse GL_MAX_PROGRAM_EXEC_INSTRUCTIONS_NV */
+/* reuse GL_MAX_PROGRAM_CALL_DEPTH_NV */
+#endif
+
+#ifndef GL_NV_vertex_program3
+/* reuse GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB */
 #endif
 
 
@@ -5909,6 +5949,26 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEEXTPROC) (GLenum modeRGB, GLen
 
 #ifndef GL_MESA_ycbcr_texture
 #define GL_MESA_ycbcr_texture 1
+#endif
+
+#ifndef GL_EXT_pixel_buffer_object
+#define GL_EXT_pixel_buffer_object 1
+#endif
+
+#ifndef GL_NV_fragment_program_option
+#define GL_NV_fragment_program_option 1
+#endif
+
+#ifndef GL_NV_fragment_program2
+#define GL_NV_fragment_program2 1
+#endif
+
+#ifndef GL_NV_vertex_program2_option
+#define GL_NV_vertex_program2_option 1
+#endif
+
+#ifndef GL_NV_vertex_program3
+#define GL_NV_vertex_program3 1
 #endif
 
 
