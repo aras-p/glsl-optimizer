@@ -1,148 +1,209 @@
+/* $Id: xfont.c,v 1.2 1999/11/05 08:00:49 brianp Exp $ */
+
 /*
- * (c) Copyright 1993, Silicon Graphics, Inc.
- * ALL RIGHTS RESERVED 
- * Permission to use, copy, modify, and distribute this software for 
- * any purpose and without fee is hereby granted, provided that the above
- * copyright notice appear in all copies and that both the copyright notice
- * and this permission notice appear in supporting documentation, and that 
- * the name of Silicon Graphics, Inc. not be used in advertising
- * or publicity pertaining to distribution of the software without specific,
- * written prior permission. 
- *
- * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
- * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY OR
- * FITNESS FOR A PARTICULAR PURPOSE.  IN NO EVENT SHALL SILICON
- * GRAPHICS, INC.  BE LIABLE TO YOU OR ANYONE ELSE FOR ANY DIRECT,
- * SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY
- * KIND, OR ANY DAMAGES WHATSOEVER, INCLUDING WITHOUT LIMITATION,
- * LOSS OF PROFIT, LOSS OF USE, SAVINGS OR REVENUE, OR THE CLAIMS OF
- * THIRD PARTIES, WHETHER OR NOT SILICON GRAPHICS, INC.  HAS BEEN
- * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
- * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Mesa 3-D graphics library
  * 
- * US Government Users Restricted Rights 
- * Use, duplication, or disclosure by the Government is subject to
- * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
- * (c)(1)(ii) of the Rights in Technical Data and Computer Software
- * clause at DFARS 252.227-7013 and/or in similar or successor
- * clauses in the FAR or the DOD or NASA FAR Supplement.
- * Unpublished-- rights reserved under the copyright laws of the
- * United States.  Contractor/manufacturer is Silicon Graphics,
- * Inc., 2011 N.  Shoreline Blvd., Mountain View, CA 94039-7311.
- *
- * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+
 /*
- *  xfont.c
- *  Draws some text in a bitmapped font.  Uses glBitmap() 
- *  and other pixel routines.  Also demonstrates use of 
- *  display lists.
+ * Example of using glXUseXFont().
+ * 5 November 1999
+ * Brian Paul
  */
+
+
 #include <GL/gl.h>
-#include <GL/glu.h>
 #include <GL/glx.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "glaux.h"
 
-GLuint base;
 
-void makeRasterFont(void)
+static const char *ProgramName = "xfont";
+
+static const char *FontName = "fixed";
+
+static GLuint FontBase = 0;
+
+
+
+static void redraw( Display *dpy, Window w )
+{
+   static const char *text = "This is glXUseXFont()";
+   printf("Redraw event\n");
+
+   glClear( GL_COLOR_BUFFER_BIT );
+
+   /* triangle */
+   glColor3f( 0.2, 0.2, 1.0 );
+   glBegin(GL_TRIANGLES);
+   glVertex2f( 0, 0.8 );
+   glVertex2f( -0.8, -0.7 );
+   glVertex2f( 0.8, -0.7 );
+   glEnd();
+
+   /* text */
+   glColor3f( 1, 1, 1 );
+   glRasterPos2f(-0.8, 0); 
+   glListBase(FontBase);
+   glCallLists(strlen(text), GL_UNSIGNED_BYTE, (GLubyte *) text);
+
+   glXSwapBuffers( dpy, w );
+}
+
+
+
+static void resize( unsigned int width, unsigned int height )
+{
+   printf("Resize event\n");
+   glViewport( 0, 0, width, height );
+   glMatrixMode( GL_PROJECTION );
+   glLoadIdentity();
+   glOrtho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );
+}
+
+
+
+static void setup_font( Display *dpy )
 {
     XFontStruct *fontInfo;
     Font id;
     unsigned int first, last;
-    Display *xdisplay;
 
-    xdisplay = auxXDisplay ();
-    fontInfo = XLoadQueryFont(xdisplay, 
-	"-adobe-helvetica-medium-r-normal--17-120-100-100-p-88-iso8859-1");
-    if (fontInfo == NULL) {
-        printf ("no font found\n");
-	exit (0);
+    fontInfo = XLoadQueryFont(dpy, FontName);
+    if (!fontInfo) {
+        printf("Error: font %s not found\n", FontName);
+	exit(0);
     }
 
     id = fontInfo->fid;
     first = fontInfo->min_char_or_byte2;
     last = fontInfo->max_char_or_byte2;
 
-    base = glGenLists((GLuint) last+1);
-    if (base == 0) {
-        printf ("out of display lists\n");
-	exit (0);
+    FontBase = glGenLists((GLuint) last + 1);
+    if (!FontBase) {
+        printf("Error: unable to allocate display lists\n");
+	exit(0);
     }
-    glXUseXFont(id, first, last-first+1, base+first);
-/*    *height = fontInfo->ascent + fontInfo->descent;
-    *width = fontInfo->max_bounds.width;  */
+    glXUseXFont(id, first, last - first + 1, FontBase + first);
 }
 
-void printString(char *s)
+static Window make_rgb_db_window( Display *dpy, int xpos, int ypos,
+				  unsigned int width, unsigned int height )
 {
-    glPushAttrib (GL_LIST_BIT);
-    glListBase(base);
-    glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *)s);
-    glPopAttrib ();
+   int attrib[] = { GLX_RGBA,
+		    GLX_RED_SIZE, 1,
+		    GLX_GREEN_SIZE, 1,
+		    GLX_BLUE_SIZE, 1,
+		    GLX_DOUBLEBUFFER,
+		    None };
+   int scrnum;
+   XSetWindowAttributes attr;
+   unsigned long mask;
+   Window root;
+   Window win;
+   GLXContext ctx;
+   XVisualInfo *visinfo;
+
+   scrnum = DefaultScreen( dpy );
+   root = RootWindow( dpy, scrnum );
+
+   visinfo = glXChooseVisual( dpy, scrnum, attrib );
+   if (!visinfo) {
+      printf("Error: couldn't get an RGB, Double-buffered visual\n");
+      exit(1);
+   }
+
+   /* window attributes */
+   attr.background_pixel = 0;
+   attr.border_pixel = 0;
+   attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
+   attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+   mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+
+   win = XCreateWindow( dpy, root, 0, 0, width, height,
+		        0, visinfo->depth, InputOutput,
+		        visinfo->visual, mask, &attr );
+
+   {
+      XSizeHints sizehints;
+      sizehints.x = xpos;
+      sizehints.y = ypos;
+      sizehints.width  = width;
+      sizehints.height = height;
+      sizehints.flags = USSize | USPosition;
+      XSetNormalHints(dpy, win, &sizehints);
+      XSetStandardProperties(dpy, win, ProgramName, ProgramName,
+                              None, (char **)NULL, 0, &sizehints);
+   }
+
+
+   ctx = glXCreateContext( dpy, visinfo, NULL, True );
+
+   glXMakeCurrent( dpy, win, ctx );
+
+   return win;
 }
 
-void myinit (void) 
+
+static void event_loop( Display *dpy )
 {
-    makeRasterFont ();
-    glShadeModel (GL_FLAT);    
+   XEvent event;
+
+   while (1) {
+      XNextEvent( dpy, &event );
+
+      switch (event.type) {
+	 case Expose:
+	    redraw( dpy, event.xany.window );
+	    break;
+	 case ConfigureNotify:
+	    resize( event.xconfigure.width, event.xconfigure.height );
+	    break;
+         case KeyPress:
+            exit(0);
+         default:
+            ;  /* no-op */
+      }
+   }
 }
 
-void display(void)
+
+
+int main( int argc, char *argv[] )
 {
-    GLfloat white[3] = { 1.0, 1.0, 1.0 };
-    int i, j;
-    char teststring[33];
+   Display *dpy;
+   Window win;
 
-    glClear(GL_COLOR_BUFFER_BIT);
-    glColor3fv(white);
-    for (i = 32; i < 127; i += 32) {
-	glRasterPos2i(20, 200 - 18*(GLint) i/32);
-	for (j = 0; j < 32; j++)
-	    teststring[j] = (char) (i+j);
-	teststring[32] = 0;
-	printString(teststring);
-    }
-    glRasterPos2i(20, 100);
-    printString("The quick brown fox jumps");
-    glRasterPos2i(20, 82);
-    printString("over a lazy dog.");
-    glFlush ();
+   dpy = XOpenDisplay(NULL);
+
+   win = make_rgb_db_window( dpy, 0, 0, 300, 300 );
+   setup_font( dpy );
+
+   glShadeModel( GL_FLAT );
+   glClearColor( 0.5, 0.5, 1.0, 1.0 );
+
+   XMapWindow( dpy, win );
+
+   event_loop( dpy );
+   return 0;
 }
-
-void myReshape(int w, int h)
-{
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho (0.0, (GLfloat) w, 0.0, (GLfloat) h, -1.0, 1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
-/*  Main Loop
- *  Open window with initial window size, title bar, 
- *  RGBA display mode, and handle input events.
- */
-int main(int argc, char** argv)
-{
-    auxInitDisplayMode (AUX_SINGLE | AUX_RGB);
-    auxInitPosition (0, 0, 500, 500);
-    if (!auxInitWindow (argv[0]))
-       auxQuit();
-    auxReshapeFunc (myReshape);
-    myinit ();
-    auxMainLoop(display);
-    return 0;
-}
-
-
-
-
