@@ -53,6 +53,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_program.h"
 
+#include "r300_lib.h"
+
 
 /**********************************************************************
 *                     Hardware rasterization
@@ -62,25 +64,47 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **********************************************************************/
 
 
-/**
- * Called by the pipeline manager to render a batch of primitives.
- * We can return true to pass on to the next stage (i.e. software
- * rasterization) or false to indicate that the pipeline has finished
- * after we render something.
- */
-static GLboolean r300_run_render(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
+static void r300_render_primitive(r300ContextPtr rmesa, 
+	GLcontext *ctx,
+	int start,
+	int end,
+	int prim)
 {
-   r300ContextPtr mmesa = R300_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-	
-	if (RADEON_DEBUG == DEBUG_PRIMS)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+   int k;
+   ADAPTOR adaptor;
+   LOCAL_VARS
+       	
+   if(end<=start)return; /* do we need to watch for this ? */
+   
+   adaptor=TWO_PIPE_ADAPTOR;
+   
+   adaptor.color_offset[0]=rmesa->radeon.radeonScreen->backOffset+rmesa->radeon.radeonScreen->fbLocation;
+   adaptor.color_pitch[0]=(rmesa->radeon.radeonScreen->backPitch) | (0xc0<<16);
 
-   for(i=0; i < VB->PrimitiveCount; i++){
-       	switch (VB->Primitive[i].mode & PRIM_MODE_MASK) {
+   adaptor.depth_offset=rmesa->radeon.radeonScreen->depthOffset;
+   adaptor.depth_pitch=rmesa->radeon.radeonScreen->depthPitch | (0x2 << 16);
+   
+   init_3d(PASS_PREFIX &adaptor);
+   init_flat_primitive(PASS_PREFIX &adaptor);
+   
+   set_scissors(PASS_PREFIX 0, 0, 2647, 1941);
+
+   set_cliprect(PASS_PREFIX 0, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 1, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 2, 0, 0, 2647,1941);
+   set_cliprect(PASS_PREFIX 3, 0, 0, 2647,1941);
+   
+   reg_start(R300_RE_OCCLUSION_CNTL, 0);
+	     e32(R300_OCCLUSION_ON);
+
+   set_quad0(PASS_PREFIX 1.0,1.0,1.0,1.0);
+   set_init21(PASS_PREFIX 0.0,1.0);
+
+	fprintf(stderr, "[%d-%d]", start, end);
+	switch (prim & PRIM_MODE_MASK) {
 		case GL_LINES:
    		fprintf(stderr, "L ");
       		break;
@@ -101,6 +125,34 @@ static GLboolean r300_run_render(GLcontext *ctx,
       		break;
 		case GL_QUADS:
    		fprintf(stderr, "Q ");
+		
+		for(i=start+3;i<end;i+=4){
+			start_primitive(PASS_PREFIX R300_VAP_VF_CNTL__PRIM_QUADS);
+			for(k=-3;k<=0;k++){
+				#if 1
+				fprintf(stderr, "* (%f %f %f) (%f %f %f)\n", 
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[0],
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[1],
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[2],
+					
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[0],
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[1],
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[2]
+					);
+				#endif
+				emit_flat_vertex(PASS_PREFIX 
+					/* coordinates */
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[0],
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[1],
+					VEC_ELT(VB->ObjPtr, GLfloat, i+k)[2],
+					/* colors */
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[0],
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[1],
+					VEC_ELT(VB->ColorPtr[0], GLfloat, i+k)[2]
+					);
+				}
+			end_primitive(PASS_PREFIX_VOID);
+			}
       		break;
 		case GL_QUAD_STRIP:
    		fprintf(stderr, "QS ");
@@ -109,10 +161,40 @@ static GLboolean r300_run_render(GLcontext *ctx,
    		fprintf(stderr, "%02x ", VB->Primitive[i].mode & PRIM_MODE_MASK);
          	break;
    		}
+   end_3d(PASS_PREFIX_VOID);
+}
+
+/**
+ * Called by the pipeline manager to render a batch of primitives.
+ * We can return true to pass on to the next stage (i.e. software
+ * rasterization) or false to indicate that the pipeline has finished
+ * after we render something.
+ */
+static GLboolean r300_run_render(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+	
+	if (RADEON_DEBUG == DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+   for(i=0; i < VB->PrimitiveCount; i++){
+       GLuint prim = VB->Primitive[i].mode;
+       GLuint start = VB->Primitive[i].start;
+       GLuint length = VB->Primitive[i].count;
+	r300_render_primitive(rmesa, ctx, start, start + length, prim);
    	}
+	
    
    fprintf(stderr, "\n");
+   #if 0
 	return GL_TRUE;
+   #else
+        return GL_FALSE;
+   #endif
 
 #if 0
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);

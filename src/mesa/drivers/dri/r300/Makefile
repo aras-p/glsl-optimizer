@@ -1,5 +1,6 @@
 # src/mesa/drivers/dri/r300/Makefile
 
+
 TOP = ../../../../..
 include $(TOP)/configs/current
 
@@ -31,6 +32,7 @@ DRIVER_SOURCES = \
 		 r300_cmdbuf.c \
 		 r300_state.c \
 		 r300_render.c \
+		 r300_lib.c \
 		 \
 		 r200_context.c \
 		 r200_ioctl.c \
