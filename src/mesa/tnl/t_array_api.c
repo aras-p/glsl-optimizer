@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.25 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.26 2002/04/19 00:45:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,7 +129,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (ctx->CompileFlag) {
       fallback_drawarrays( ctx, mode, start, start + count );
    }    
-   else if (!ctx->Array.LockCount && count < thresh) {
+   else if (!ctx->Array.LockCount && (GLuint) count < thresh) {
       /* Small primitives: attempt to share a vb (at the expense of
        * using the immediate interface).
       */

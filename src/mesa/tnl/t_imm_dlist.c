@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.39 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.40 2002/04/19 00:45:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ static void build_normal_lengths( struct immediate *IM )
    GLuint count = IM->Count - IM->Start;
 
    if (!dest) {
-      dest = IM->NormalLengthPtr = ALIGN_MALLOC( IMM_SIZE*sizeof(GLfloat), 32 );
+      dest = IM->NormalLengthPtr = (GLfloat *) ALIGN_MALLOC( IMM_SIZE*sizeof(GLfloat), 32 );
       if (!dest) return;
    }
    dest += IM->Start;
@@ -391,7 +391,7 @@ destroy_compiled_cassette( GLcontext *ctx, void *data )
    TNLvertexcassette *node = (TNLvertexcassette *)data;
 
    if ( --node->IM->ref_count == 0 )
-      _tnl_free_immediate( node->IM );
+      _tnl_free_immediate( ctx, node->IM );
 }
 
 

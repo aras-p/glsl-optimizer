@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.22 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.23 2002/04/19 00:45:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@ static void _tnl_import_normal( GLcontext *ctx,
 			   stride ? 3*sizeof(GLfloat) : 0, writeable,
 			   &is_writeable);
 
-   inputs->Normal.data = tmp->Ptr;
+   inputs->Normal.data = (GLfloat (*)[4]) tmp->Ptr;
    inputs->Normal.start = (GLfloat *) tmp->Ptr;
    inputs->Normal.stride = tmp->StrideB;
    inputs->Normal.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -394,11 +394,13 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    if (ctx->VertexProgram.Enabled) {
       /* XXX lots of work to do here */
 
-      printf("bind vp arrays!\n");
       VB->AttribPtr[VERT_ATTRIB_POS] = VB->ObjPtr;
+      /*
+      printf("bind vp arrays!\n");
       printf("   data = %p\n", VB->ObjPtr->data);
       printf(" stride = %d\n", VB->ObjPtr->stride);
       printf("   size = %d\n", VB->ObjPtr->size);
+      */
 
       VB->AttribPtr[VERT_ATTRIB_NORMAL] = VB->NormalPtr;
    }
