@@ -227,13 +227,45 @@ class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
 		print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (f.name)
 
 
-class PrintGlxReqSize_h(glX_XML.GlxProto):
+class PrintGlxReqSize_common(glX_XML.GlxProto):
+	"""Common base class for PrintGlxSizeReq_h and PrintGlxSizeReq_h.
+
+	The main purpose of this common base class is to provide the infrastructure
+	for the derrived classes to iterate over the same set of functions.
+	"""
+
 	def __init__(self):
 		glX_XML.GlxProto.__init__(self)
 		self.name = "glX_proto_size.py (from Mesa)"
 		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2005", "IBM")
 		self.aliases = []
 		self.glx_enum_sigs = {}
+		self.size_functions = []
+
+
+	def endElement(self, name):
+		if name == "function":
+			f = self.current_object
+			if f.glx_rop and not f.ignore and f.fn_alias == None and f.vectorequiv == None:
+
+				if self.glx_enum_functions.has_key(f.name) or f.image or f.server_handcode:
+					self.size_functions.append( f )
+				else:
+					for p in f.parameterIterator(1,2):
+						if p.counter and not p.is_output:
+							self.size_functions.append( f )
+							break
+
+		glX_XML.GlxProto.endElement(self, name)
+
+
+	def functionIterator(self):
+		return self.size_functions
+
+
+class PrintGlxReqSize_h(PrintGlxReqSize_common):
+	def __init__(self):
+		PrintGlxReqSize_common.__init__(self)
 		self.header_tag = "_INDIRECT_REQSIZE_H_"
 
 
@@ -245,25 +277,12 @@ class PrintGlxReqSize_h(glX_XML.GlxProto):
 
 
 	def printFunction(self, f):
-		if f.glx_rop == 0: return
-
-		has_counter = 0
-		for p in f.parameterIterator(1,2):
-			if p.is_counter:
-				has_counter = 1
-				break
-
-		if self.glx_enum_functions.has_key(f.name) or f.image or has_counter:
-			print 'extern PURE HIDDEN int __glX%sReqSize(const GLbyte *pc, Bool swap);' % (f.name)
+		print 'extern PURE HIDDEN int __glX%sReqSize(const GLbyte *pc, Bool swap);' % (f.name)
 
 
-class PrintGlxReqSize_c(glX_XML.GlxProto):
+class PrintGlxReqSize_c(PrintGlxReqSize_common):
 	def __init__(self):
-		glX_XML.GlxProto.__init__(self)
-		self.name = "glX_proto_size.py (from Mesa)"
-		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2005", "IBM")
-		self.aliases = []
-		self.glx_enum_sigs = {}
+		PrintGlxReqSize_common.__init__(self)
 		self.counter_sigs = {}
 
 
@@ -304,7 +323,13 @@ class PrintGlxReqSize_c(glX_XML.GlxProto):
 
 
 	def printFunction(self, f):
-		if f.glx_rop == 0 or f.server_handcode: return
+		# Even though server-handcode fuctions are on "the list",
+		# and prototypes are generated for them, there isn't enough
+		# information to generate a size function.  If there was
+		# enough information, they probably wouldn't need to be
+		# handcoded in the first place!
+
+		if f.server_handcode: return
 
 		if self.glx_enum_functions.has_key(f.name):
 			ef = self.glx_enum_functions[f.name]
@@ -425,7 +450,7 @@ class PrintGlxReqSize_c(glX_XML.GlxProto):
 			offset += p.size()
 
 
-		# If the calculate signature matches a function that has
+		# If the calculated signature matches a function that has
 		# already be emitted, don't emit this function.  Instead, add
 		# it to the list of function aliases.
 
