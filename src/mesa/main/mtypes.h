@@ -1329,6 +1329,7 @@ struct gl_buffer_object {
    GLvoid *Pointer;   /**< Only valid while buffer is mapped */
    GLuint Size;       /**< Size of data array in bytes */
    GLubyte *Data;     /**< The storage */
+   GLboolean DeletePending;  /**< Deleted by user? */
 };
 
 

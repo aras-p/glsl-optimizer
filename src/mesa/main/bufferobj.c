@@ -452,8 +452,60 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             _mesa_HashLookup(ctx->Shared->BufferObjects, ids[i]);
          if (bufObj) {
             /* unbind any vertex pointers bound to this buffer */
+            GLuint j;
+
             ASSERT(bufObj->Name == ids[i]);
+
+            if (ctx->Array.Vertex.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.Vertex.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.Normal.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.Normal.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.Color.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.Color.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.SecondaryColor.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.FogCoord.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.FogCoord.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.Index.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.Index.BufferObj = ctx->Array.NullBufferObj;
+            }
+            if (ctx->Array.EdgeFlag.BufferObj == bufObj) {
+               bufObj->RefCount--;
+               ctx->Array.EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
+            }
+            for (j = 0; j < MAX_TEXTURE_UNITS; j++) {
+               if (ctx->Array.TexCoord[j].BufferObj == bufObj) {
+                  bufObj->RefCount--;
+                  ctx->Array.TexCoord[j].BufferObj = ctx->Array.NullBufferObj;
+               }
+            }
+            for (j = 0; j < VERT_ATTRIB_MAX; j++) {
+               if (ctx->Array.VertexAttrib[j].BufferObj == bufObj) {
+                  bufObj->RefCount--;
+                  ctx->Array.VertexAttrib[j].BufferObj = ctx->Array.NullBufferObj;
+               }
+            }
+
+            if (ctx->Array.ArrayBufferObj == bufObj) {
+               _mesa_BindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+            }
+            if (ctx->Array.ElementArrayBufferObj == bufObj) {
+               _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
+            }
+
             /* decrement refcount and delete if <= 0 */
+            bufObj->DeletePending = GL_TRUE;
             bufObj->RefCount--;
             if (bufObj->RefCount <= 0) {
                /* buffer should not be bound anymore! */
@@ -541,7 +593,7 @@ _mesa_IsBufferARB(GLuint id)
    bufObj = (struct gl_buffer_object *) _mesa_HashLookup(ctx->Shared->BufferObjects, id);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-   return (bufObj != NULL);
+   return bufObj && !bufObj->DeletePending;
 }
 
 
