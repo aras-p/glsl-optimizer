@@ -76,6 +76,7 @@ mask:
  */
 
 .globl _generic_read_RGBA_span_BGRA8888_REV_MMX
+.hidden _generic_read_RGBA_span_BGRA8888_REV_MMX
 	.type	_generic_read_RGBA_span_BGRA8888_REV_MMX, @function
 _generic_read_RGBA_span_BGRA8888_REV_MMX:
 	pushl	%ebx
@@ -171,6 +172,7 @@ _generic_read_RGBA_span_BGRA8888_REV_MMX:
  */
 
 .globl _generic_read_RGBA_span_BGRA8888_REV_SSE
+.hidden _generic_read_RGBA_span_BGRA8888_REV_SSE
 	.type	_generic_read_RGBA_span_BGRA8888_REV_SSE, @function
 _generic_read_RGBA_span_BGRA8888_REV_SSE:
 	pushl	%esi
@@ -330,6 +332,7 @@ _generic_read_RGBA_span_BGRA8888_REV_SSE:
 
 	.text
 .globl _generic_read_RGBA_span_BGRA8888_REV_SSE2
+.hidden _generic_read_RGBA_span_BGRA8888_REV_SSE2
 	.type	_generic_read_RGBA_span_BGRA8888_REV_SSE2, @function
 _generic_read_RGBA_span_BGRA8888_REV_SSE2:
 	pushl	%esi
@@ -508,6 +511,7 @@ alpha:	.long	0x00000000
 
 	.text
 	.globl	_generic_read_RGBA_span_RGB565_MMX
+        .hidden _generic_read_RGBA_span_RGB565_MMX
 	.type	_generic_read_RGBA_span_RGB565_MMX, @function
 
 _generic_read_RGBA_span_RGB565_MMX:

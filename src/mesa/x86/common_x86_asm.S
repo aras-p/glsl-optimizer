@@ -46,6 +46,7 @@
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_has_cpuid)
+HIDDEN(_mesa_x86_has_cpuid)
 GLNAME(_mesa_x86_has_cpuid):
 
 	/* Test for the CPUID command.  If the ID Flag bit in EFLAGS
@@ -69,6 +70,7 @@ GLNAME(_mesa_x86_has_cpuid):
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_cpuid)
+HIDDEN(_mesa_x86_cpuid)
 GLNAME(_mesa_x86_cpuid):
 
 	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
@@ -92,6 +94,7 @@ GLNAME(_mesa_x86_cpuid):
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_cpuid_eax)
+HIDDEN(_mesa_x86_cpuid_eax)
 GLNAME(_mesa_x86_cpuid_eax):
 
 	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
@@ -104,6 +107,7 @@ GLNAME(_mesa_x86_cpuid_eax):
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_cpuid_ebx)
+HIDDEN(_mesa_x86_cpuid_ebx)
 GLNAME(_mesa_x86_cpuid_ebx):
 
 	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
@@ -117,6 +121,7 @@ GLNAME(_mesa_x86_cpuid_ebx):
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_cpuid_ecx)
+HIDDEN(_mesa_x86_cpuid_ecx)
 GLNAME(_mesa_x86_cpuid_ecx):
 
 	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
@@ -130,6 +135,7 @@ GLNAME(_mesa_x86_cpuid_ecx):
 
 ALIGNTEXT4
 GLOBL GLNAME(_mesa_x86_cpuid_edx)
+HIDDEN(_mesa_x86_cpuid_edx)
 GLNAME(_mesa_x86_cpuid_edx):
 
 	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
@@ -155,6 +161,7 @@ GLNAME(_mesa_x86_cpuid_edx):
  */
 ALIGNTEXT4
 GLOBL GLNAME( _mesa_test_os_sse_support )
+HIDDEN(_mesa_test_os_sse_support)
 GLNAME( _mesa_test_os_sse_support ):
 
 	XORPS	( XMM0, XMM0 )
@@ -169,6 +176,7 @@ GLNAME( _mesa_test_os_sse_support ):
  */
 ALIGNTEXT4
 GLOBL GLNAME( _mesa_test_os_sse_exception_support )
+HIDDEN(_mesa_test_os_sse_exception_support)
 GLNAME( _mesa_test_os_sse_exception_support ):
 
 	PUSH_L	( EBP )
