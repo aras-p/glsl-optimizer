@@ -668,14 +668,14 @@ static void TAG(interp)( GLcontext *ctx,
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ddverts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
+   GLuint size = GET_VERTEX_SIZE();
    const GLfloat *dstclip = VB->ClipPtr->data[edst];
    GLfloat w;
    const GLfloat *s = GET_VIEWPORT_MAT();
 
-   VERTEX *dst = (VERTEX *)(ddverts + (edst << shift));
-   VERTEX *in  = (VERTEX *)(ddverts + (ein << shift));
-   VERTEX *out = (VERTEX *)(ddverts + (eout << shift));
+   VERTEX *dst = (VERTEX *)(ddverts + (edst * size));
+   VERTEX *in  = (VERTEX *)(ddverts + (ein * size));
+   VERTEX *out = (VERTEX *)(ddverts + (eout * size));
 
    (void)s;
 
@@ -840,12 +840,10 @@ static void TAG(init)( void )
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 18;
-	 setup_tab[IND].vertex_stride_shift = 7;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 14;
-	 setup_tab[IND].vertex_stride_shift = 6;
       }
    }
    else if (DO_TEX2) {
@@ -853,12 +851,10 @@ static void TAG(init)( void )
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 18;
-	 setup_tab[IND].vertex_stride_shift = 7;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX2_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6;
       }
    }
    else if (DO_TEX1) {
@@ -866,41 +862,32 @@ static void TAG(init)( void )
 	 ASSERT(HAVE_PTEX_VERTICES);
 	 setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6;
       }
       else {
 	 setup_tab[IND].vertex_format = TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 10;
-	 setup_tab[IND].vertex_stride_shift = 6;
       }
    }
    else if (DO_TEX0) {
       if (DO_PTEX && HAVE_PTEX_VERTICES) {
 	 setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6;
       } else {
 	 setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 8;
-	 setup_tab[IND].vertex_stride_shift = 5;
       }
    }
    else if (!HAVE_HW_DIVIDE && !DO_SPEC && !DO_FOG && HAVE_TINY_VERTICES) {
       setup_tab[IND].vertex_format = TINY_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 4;
-      setup_tab[IND].vertex_stride_shift = 4;
    } else if (HAVE_NOTEX_VERTICES) {
       setup_tab[IND].vertex_format = NOTEX_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 6;
-      setup_tab[IND].vertex_stride_shift = 5;
    } else {
       setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
       setup_tab[IND].vertex_size = 8;
-      setup_tab[IND].vertex_stride_shift = 5;
    }
 
-   assert(setup_tab[IND].vertex_size * 4 <=
-          1 << setup_tab[IND].vertex_stride_shift);
 }
 
 

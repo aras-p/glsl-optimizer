@@ -1314,21 +1314,21 @@ do {						\
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a > 0)
-#define GET_VERTEX(e) (mmesa->verts + (e<<mmesa->vertex_stride_shift))
+#define GET_VERTEX(e) (mmesa->verts + ((e) * mmesa->vertex_size * sizeof(int)))
 
 #define MACH64_COLOR( dst, src )                \
 do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-   dst[3] = src[3];				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[0], src[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[1], src[1]);				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[2], src[0]);				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[3], src[3]);				\
 } while (0)
 
 #define MACH64_SPEC( dst, src )			\
 do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[0], src[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[1], src[1]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[2], src[0]);	\
 } while (0)
 
 #define VERT_SET_RGBA( v, c )    MACH64_COLOR( v->ub4[coloroffset], c )
@@ -1674,7 +1674,6 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    GLubyte *mach64verts = (GLubyte *)mmesa->verts;
-   const GLuint shift = mmesa->vertex_stride_shift;
    const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i;
 

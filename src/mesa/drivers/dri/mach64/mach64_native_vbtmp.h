@@ -355,7 +355,6 @@ static void TAG(interp)( GLcontext *ctx,
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ddverts = GET_VERTEX_STORE();
-   /*   GLuint shift = GET_VERTEX_STRIDE_SHIFT();*/
    GLuint size = GET_VERTEX_SIZE();
    const GLfloat *dstclip = VB->ClipPtr->data[edst];
    GLfloat w;
@@ -540,9 +539,9 @@ static void TAG(copy_pv)( GLcontext *ctx, GLuint edst, GLuint esrc )
 #if DO_SPEC || DO_FOG || DO_RGBA
    LOCALVARS   
    GLubyte *verts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
-   GLuint *dst = (GLuint *)(verts + (edst << shift));
-   GLuint *src = (GLuint *)(verts + (esrc << shift));
+   GLuint size = GET_VERTEX_SIZE();
+   GLuint *dst = (GLuint *)(verts + (edst * size));
+   GLuint *src = (GLuint *)(verts + (esrc * size));
 #endif
 
 #if DO_SPEC || DO_FOG
@@ -565,30 +564,20 @@ static void TAG(init)( void )
 
    setup_tab[IND].copy_pv = TAG(copy_pv);
 
-   /* vertex_stride_shift must be the same because each
-    * vertex is aligned with the end of the structure and 
-    * not the beginning
-    */
 #if DO_TEX1
    setup_tab[IND].vertex_format = TEX1_VERTEX_FORMAT;
    setup_tab[IND].vertex_size = 10;
-   setup_tab[IND].vertex_stride_shift = 6;
 #elif DO_TEX0
    setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
    setup_tab[IND].vertex_size = 7;
-   setup_tab[IND].vertex_stride_shift = 6;
 #elif DO_SPEC || DO_FOG
    setup_tab[IND].vertex_format = NOTEX_VERTEX_FORMAT;
    setup_tab[IND].vertex_size = 4;
-   setup_tab[IND].vertex_stride_shift = 6;
 #else
    setup_tab[IND].vertex_format = TINY_VERTEX_FORMAT;
    setup_tab[IND].vertex_size = 3;
-   setup_tab[IND].vertex_stride_shift = 6;
 #endif
 
-   assert(setup_tab[IND].vertex_size * 4 <=
-          1 << setup_tab[IND].vertex_stride_shift);
 }
 
 

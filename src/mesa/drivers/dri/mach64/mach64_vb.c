@@ -60,7 +60,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[MACH64_MAX_SETUP];
 
@@ -89,7 +88,7 @@ static struct {
 #define GET_TEXSOURCE(n)  mmesa->tmu_source[n]
 #define GET_VERTEX_FORMAT() mmesa->vertex_format
 #define GET_VERTEX_STORE() mmesa->verts
-#define GET_VERTEX_STRIDE_SHIFT() mmesa->vertex_stride_shift
+#define GET_VERTEX_SIZE() mmesa->vertex_size * sizeof(GLuint)
 
 #define HAVE_HW_VIEWPORT    0
 #define HAVE_HW_DIVIDE      0
@@ -519,8 +518,8 @@ void mach64BuildVertices( GLcontext *ctx,
 			GLuint newinputs )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)mmesa->verts + (start<<mmesa->vertex_stride_shift));
-   GLuint stride = 1<<mmesa->vertex_stride_shift;
+   GLuint stride = mmesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)mmesa->verts + (start * stride));
 
    newinputs |= mmesa->SetupNewInputs;
    mmesa->SetupNewInputs = 0;
@@ -599,7 +598,6 @@ void mach64ChooseVertexState( GLcontext *ctx )
       FLUSH_BATCH(mmesa);
       mmesa->vertex_format = setup_tab[ind].vertex_format;
       mmesa->vertex_size = setup_tab[ind].vertex_size;
-      mmesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
