@@ -46,7 +46,7 @@ SOLO_OBJECTS = $(SOLO_C_SOURCES:.c=.o) \
 		$(ASM_SOURCES:.S=.o)
 
 
-linux-solo: depend mesa.a driver-dirs
+linux-solo: depend subdirs mesa.a driver-dirs
 
 # Make archive of core object files
 mesa.a:	$(SOLO_OBJECTS)
