@@ -1,6 +1,6 @@
 # progs/xdemos/Makefile
 
-TOP = ../../
+TOP = ../..
 include $(TOP)/configs/current
 
 
