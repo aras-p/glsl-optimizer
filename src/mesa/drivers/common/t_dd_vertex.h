@@ -1,4 +1,4 @@
-/* $Id: t_dd_vertex.h,v 1.7 2001/03/14 08:51:09 gareth Exp $ */
+/* $Id: t_dd_vertex.h,v 1.8 2001/03/20 18:33:41 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,19 +76,19 @@ typedef union {
 } TAG(Vertex), *TAG(VertexPtr);
 
 typedef struct {
-   TAG(_coord_t) obj;
-   TAG(_coord_t) normal;
+   GLfloat obj[4];
+   GLfloat normal[4];
 
-   TAG(_coord_t) clip;
+   GLfloat clip[4];
    GLuint mask;
 
-   TAG(_color_t) color;
-   TAG(_color_t) specular;
+   GLubyte color[4];
+   GLubyte specular[4];
    GLuint __padding0;
 
-   TAG(_coord_t) win;
-   TAG(_coord_t) eye;
+   GLfloat win[4];
+   GLfloat eye[4];
 
-   TAG(_coord_t) texture[MAX_TEXTURE_UNITS];
+   GLfloat texture[MAX_TEXTURE_UNITS][4];
    GLuint __padding1[8]; /* FIXME: This is kinda evil... */
 } TAG(TnlVertex), *TAG(TnlVertexPtr);
