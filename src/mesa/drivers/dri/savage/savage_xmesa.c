@@ -480,18 +480,28 @@ savageCreateContext( const __GLcontextModes *mesaVis,
     */
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, savage_pipeline );
+
+   imesa->enable_fastpath = driQueryOptionb(&imesa->optionCache,
+					    "enable_fastpath");
    /* DRM versions before 2.1.3 would only render triangle lists. ELTS
     * support was added in 2.2.0. */
-   if (sPriv->drmMinor < 2) {
-      imesa->enable_fastpath = GL_FALSE;
+   if (imesa->enable_fastpath && sPriv->drmMinor < 2) {
       fprintf (stderr,
 	       "*** Disabling fast path because your DRM version is buggy "
 	       "or doesn't\n*** support ELTS. You need at least Savage DRM "
 	       "version 2.2.\n");
-   } else
-      imesa->enable_fastpath = driQueryOptionb(&imesa->optionCache,
-					       "enable_fastpath");
+      imesa->enable_fastpath = GL_FALSE;
+   }
+      
    imesa->enable_vdma = driQueryOptionb(&imesa->optionCache, "enable_vdma");
+   if (imesa->enable_vdma && savageScreen->chipset == S3_SUPERSAVAGE) {
+       fprintf (stderr,
+		"*** Disabling vertex DMA on SuperSavage. Someone has to "
+		"find out, how to make\n*** it work without locking up. "
+		"To disable this message set option enable_vdma\n"
+		"*** to \"false\" in DRIConf.\n");
+       imesa->enable_vdma = GL_FALSE;
+   }
 
    /* Configure swrast to match hardware characteristics:
     */
