@@ -351,7 +351,9 @@ static void fx_draw_point_wide ( fxMesaContext fxMesa,
  GrVertex *_v_[3];
 
  const GLcontext *ctx = fxMesa->glCtx;
- const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN) ? v0->psize : ctx->Point.Size;
+ const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN)
+                       ? CLAMP(v0->psize, ctx->Point.MinSize, ctx->Point.MaxSize)
+		       : ctx->Point._Size; /* clamped */
 
  if (ctx->Point.PointSprite) {
     fx_draw_point_sprite(fxMesa, v0, psize);
@@ -426,7 +428,9 @@ static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
  GrVertex vtxB, vtxC;
 
  const GLcontext *ctx = fxMesa->glCtx;
- const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN) ? v0->psize : ctx->Point.Size;
+ const GLfloat psize = (ctx->_TriangleCaps & DD_POINT_ATTEN)
+                       ? CLAMP(v0->psize, ctx->Point.MinSize, ctx->Point.MaxSize)
+		       : ctx->Point._Size; /* clamped */
 
  if (ctx->Point.PointSprite) {
     fx_draw_point_sprite(fxMesa, v0, psize);
