@@ -128,7 +128,6 @@ static void SpecialKey( int key, int x, int y )
 static void Init( int argc, char *argv[] )
 {
    const char *file;
-   int error;
    GLenum  format;
 
    if (!glutExtensionSupported("GL_MESA_ycbcr_texture")) {

@@ -18,7 +18,6 @@
 
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLint ImgWidth, ImgHeight;
-static GLenum ImgFormat;
 static GLushort *ImageYUV = NULL;
 
 

@@ -34,7 +34,6 @@ SOURCES = antialias.c \
 	seccolor.c \
 	sharedtex.c \
 	stencilwrap.c \
-	swaplock.c \
 	tex1d.c \
 	texline.c \
 	texrect.c \

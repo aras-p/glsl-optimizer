@@ -164,7 +164,7 @@ static void Init( void )
     */
 
    ver_str = glGetString( GL_VERSION );
-   version = (ver_str == NULL) ? 1.0 : strtof( ver_str, NULL );
+   version = (ver_str == NULL) ? 1.0 : atof( ver_str );
 
    if ( !glutExtensionSupported("GL_EXT_stencil_wrap")
 	&& (version < 1.4) ) {
