@@ -41,7 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_reg.h"
 #include "r128_lock.h"
 
-#define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(int32_t))
+#define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(uint32_t))
 
 
 extern drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa );
@@ -49,7 +49,7 @@ extern void r128FlushVerticesLocked( r128ContextPtr rmesa );
 
 static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int bytes )
 {
-   int32_t *head;
+   uint32_t *head;
 
    if ( !rmesa->vert_buf ) {
       LOCK_HARDWARE( rmesa );
@@ -62,7 +62,7 @@ static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int bytes )
       UNLOCK_HARDWARE( rmesa );
    }
 
-   head = (int32_t *)((char *)rmesa->vert_buf->address + rmesa->vert_buf->used);
+   head = (uint32_t *)((char *)rmesa->vert_buf->address + rmesa->vert_buf->used);
    rmesa->vert_buf->used += bytes;
    return head;
 }

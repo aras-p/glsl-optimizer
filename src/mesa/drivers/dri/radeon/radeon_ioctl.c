@@ -733,11 +733,11 @@ void radeonAllocDmaRegionVerts( radeonContextPtr rmesa,
  * SwapBuffers with client-side throttling
  */
 
-static int32_t radeonGetLastFrame (radeonContextPtr rmesa) 
+static uint32_t radeonGetLastFrame (radeonContextPtr rmesa) 
 {
    unsigned char *RADEONMMIO = rmesa->radeonScreen->mmio.map;
    int ret;
-   int32_t frame;
+   uint32_t frame;
 
    if (rmesa->dri.screen->drmMinor >= 4) {
       drm_radeon_getparam_t gp;
@@ -973,7 +973,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
    drm_radeon_sarea_t *sarea = rmesa->sarea;
    unsigned char *RADEONMMIO = rmesa->radeonScreen->mmio.map;
-   int32_t clear;
+   uint32_t clear;
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLint ret, i;

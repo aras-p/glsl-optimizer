@@ -692,7 +692,7 @@ static void radeonPolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
 static void radeonUpdateSpecular( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   int32_t p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
+   uint32_t p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
 
    RADEON_STATECHANGE( rmesa, tcl );
 

@@ -229,7 +229,7 @@ static void delay( void ) {
 static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
 {
    unsigned char *R128MMIO = rmesa->r128Screen->mmio.map;
-   int32_t frame;
+   uint32_t frame;
    int i;
    int wait = 0;
 

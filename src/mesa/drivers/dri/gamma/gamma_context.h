@@ -160,13 +160,13 @@ struct gamma_texture_object_t {
       int internalFormat;
    } image[GAMMA_TEX_MAXLEVELS];
 
-   int32_t TextureBaseAddr[GAMMA_TEX_MAXLEVELS];
-   int32_t TextureAddressMode;
-   int32_t TextureColorMode;
-   int32_t TextureFilterMode;
-   int32_t TextureFormat;
-   int32_t TextureReadMode;
-   int32_t TextureBorderColor;
+   uint32_t TextureBaseAddr[GAMMA_TEX_MAXLEVELS];
+   uint32_t TextureAddressMode;
+   uint32_t TextureColorMode;
+   uint32_t TextureFilterMode;
+   uint32_t TextureFormat;
+   uint32_t TextureReadMode;
+   uint32_t TextureBorderColor;
 };		
 
 #define GAMMA_NO_PALETTE        0x0
@@ -300,18 +300,18 @@ struct gamma_context {
    	unsigned int lastStamp;
    
 
-    	int32_t 			ClearColor;
-	int32_t			Color;
-	int32_t			DitherMode;
-    	int32_t			ClearDepth;
-	int32_t			FogMode;
-	int32_t			AreaStippleMode;
-	int32_t			LBReadFormat;
-	int32_t			LBWriteFormat;
-	int32_t			LineMode;
-	int32_t			PointMode;
-	int32_t			TriangleMode;
-	int32_t			AntialiasMode;
+    	uint32_t 		ClearColor;
+	uint32_t		Color;
+	uint32_t		DitherMode;
+    	uint32_t		ClearDepth;
+	uint32_t		FogMode;
+	uint32_t		AreaStippleMode;
+	uint32_t		LBReadFormat;
+	uint32_t		LBWriteFormat;
+	uint32_t		LineMode;
+	uint32_t		PointMode;
+	uint32_t		TriangleMode;
+	uint32_t		AntialiasMode;
 	GLfloat			ViewportScaleX;
 	GLfloat			ViewportScaleY;
 	GLfloat			ViewportScaleZ;

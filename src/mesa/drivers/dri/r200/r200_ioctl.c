@@ -312,11 +312,11 @@ void r200AllocDmaRegionVerts( r200ContextPtr rmesa,
  * SwapBuffers with client-side throttling
  */
 
-static int32_t r200GetLastFrame(r200ContextPtr rmesa)
+static uint32_t r200GetLastFrame(r200ContextPtr rmesa)
 {
    drm_radeon_getparam_t gp;
    int ret;
-   int32_t frame;
+   uint32_t frame;
 
    gp.param = RADEON_PARAM_LAST_FRAME;
    gp.value = (int *)&frame;

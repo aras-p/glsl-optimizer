@@ -114,82 +114,82 @@ typedef struct {        /* All values in XCLKS    */
 
 typedef struct {
 				/* Common registers */
-    int32_t     ovr_clr;
-    int32_t     ovr_wid_left_right;
-    int32_t     ovr_wid_top_bottom;
-    int32_t     ov0_scale_cntl;
-    int32_t     mpp_tb_config;
-    int32_t     mpp_gp_config;
-    int32_t     subpic_cntl;
-    int32_t     viph_control;
-    int32_t     i2c_cntl_1;
-    int32_t     gen_int_cntl;
-    int32_t     cap0_trig_cntl;
-    int32_t     cap1_trig_cntl;
-    int32_t     bus_cntl;
-    int32_t     config_cntl;
+    uint32_t     ovr_clr;
+    uint32_t     ovr_wid_left_right;
+    uint32_t     ovr_wid_top_bottom;
+    uint32_t     ov0_scale_cntl;
+    uint32_t     mpp_tb_config;
+    uint32_t     mpp_gp_config;
+    uint32_t     subpic_cntl;
+    uint32_t     viph_control;
+    uint32_t     i2c_cntl_1;
+    uint32_t     gen_int_cntl;
+    uint32_t     cap0_trig_cntl;
+    uint32_t     cap1_trig_cntl;
+    uint32_t     bus_cntl;
+    uint32_t     config_cntl;
 
 				/* Other registers to save for VT switches */
-    int32_t     dp_datatype;
-    int32_t     gen_reset_cntl;
-    int32_t     clock_cntl_index;
-    int32_t     amcgpio_en_reg;
-    int32_t     amcgpio_mask;
+    uint32_t     dp_datatype;
+    uint32_t     gen_reset_cntl;
+    uint32_t     clock_cntl_index;
+    uint32_t     amcgpio_en_reg;
+    uint32_t     amcgpio_mask;
 
 				/* CRTC registers */
-    int32_t     crtc_gen_cntl;
-    int32_t     crtc_ext_cntl;
-    int32_t     dac_cntl;
-    int32_t     crtc_h_total_disp;
-    int32_t     crtc_h_sync_strt_wid;
-    int32_t     crtc_v_total_disp;
-    int32_t     crtc_v_sync_strt_wid;
-    int32_t     crtc_offset;
-    int32_t     crtc_offset_cntl;
-    int32_t     crtc_pitch;
+    uint32_t     crtc_gen_cntl;
+    uint32_t     crtc_ext_cntl;
+    uint32_t     dac_cntl;
+    uint32_t     crtc_h_total_disp;
+    uint32_t     crtc_h_sync_strt_wid;
+    uint32_t     crtc_v_total_disp;
+    uint32_t     crtc_v_sync_strt_wid;
+    uint32_t     crtc_offset;
+    uint32_t     crtc_offset_cntl;
+    uint32_t     crtc_pitch;
 
 				/* CRTC2 registers */
-    int32_t     crtc2_gen_cntl;
+    uint32_t     crtc2_gen_cntl;
 
 				/* Flat panel registers */
-    int32_t     fp_crtc_h_total_disp;
-    int32_t     fp_crtc_v_total_disp;
-    int32_t     fp_gen_cntl;
-    int32_t     fp_h_sync_strt_wid;
-    int32_t     fp_horz_stretch;
-    int32_t     fp_panel_cntl;
-    int32_t     fp_v_sync_strt_wid;
-    int32_t     fp_vert_stretch;
-    int32_t     lvds_gen_cntl;
-    int32_t     tmds_crc;
-    int32_t     tmds_transmitter_cntl;
+    uint32_t     fp_crtc_h_total_disp;
+    uint32_t     fp_crtc_v_total_disp;
+    uint32_t     fp_gen_cntl;
+    uint32_t     fp_h_sync_strt_wid;
+    uint32_t     fp_horz_stretch;
+    uint32_t     fp_panel_cntl;
+    uint32_t     fp_v_sync_strt_wid;
+    uint32_t     fp_vert_stretch;
+    uint32_t     lvds_gen_cntl;
+    uint32_t     tmds_crc;
+    uint32_t     tmds_transmitter_cntl;
 
 				/* Computed values for PLL */
-    int32_t     dot_clock_freq;
-    int32_t     pll_output_freq;
+    uint32_t     dot_clock_freq;
+    uint32_t     pll_output_freq;
     int        feedback_div;
     int        post_div;
 
 				/* PLL registers */
-    int32_t     ppll_ref_div;
-    int32_t     ppll_div_3;
-    int32_t     htotal_cntl;
+    uint32_t     ppll_ref_div;
+    uint32_t     ppll_div_3;
+    uint32_t     htotal_cntl;
 
 				/* DDA register */
-    int32_t     dda_config;
-    int32_t     dda_on_off;
+    uint32_t     dda_config;
+    uint32_t     dda_on_off;
 
 				/* Pallet */
     GLboolean  palette_valid;
-    int32_t     palette[256];
+    uint32_t     palette[256];
 } R128SaveRec, *R128SavePtr;
 
 #ifndef _SOLO
 typedef struct {
     CARD16        reference_freq;
     CARD16        reference_div;
-    int32_t        min_pll_freq;
-    int32_t        max_pll_freq;
+    uint32_t        min_pll_freq;
+    uint32_t        max_pll_freq;
     CARD16        xclk;
 } R128PLLRec, *R128PLLPtr;
 
@@ -220,16 +220,16 @@ typedef struct {
     unsigned char     *MMIO;        /* Map of MMIO region                    */
     unsigned char     *FB;          /* Map of frame buffer                   */
 
-    int32_t            MemCntl;
-    int32_t            BusCntl;
+    uint32_t            MemCntl;
+    uint32_t            BusCntl;
     unsigned long     FbMapSize;    /* Size of frame buffer, in bytes        */
     int               Flags;        /* Saved copy of mode flags              */
 
 #ifndef _SOLO    
-    int8_t             BIOSDisplay;  /* Device the BIOS is set to display to  */
+    uint8_t             BIOSDisplay;  /* Device the BIOS is set to display to  */
 
     GLboolean         HasPanelRegs; /* Current chip can connect to a FP      */
-    int8_t             *VBIOS;       /* Video BIOS for mode validation on FPs */
+    uint8_t             *VBIOS;       /* Video BIOS for mode validation on FPs */
     int               FPBIOSstart;  /* Start of the flat panel info          */
 #endif
 				/* Computed values for FPs */
@@ -273,7 +273,7 @@ typedef struct {
 				/* Computed values for Rage 128 */
     int               pitch;
     int               datatype;
-    int32_t            dp_gui_master_cntl;
+    uint32_t            dp_gui_master_cntl;
 
 				/* Saved values for ScreenToScreenCopy */
     int               xdir;
@@ -394,18 +394,18 @@ typedef struct {
     int               log2TexGran;
 
 				/* Saved scissor values */
-    int32_t            sc_left;
-    int32_t            sc_right;
-    int32_t            sc_top;
-    int32_t            sc_bottom;
+    uint32_t            sc_left;
+    uint32_t            sc_right;
+    uint32_t            sc_top;
+    uint32_t            sc_bottom;
 
-    int32_t            re_top_left;
-    int32_t            re_width_height;
+    uint32_t            re_top_left;
+    uint32_t            re_width_height;
 
-    int32_t            aux_sc_cntl;
+    uint32_t            aux_sc_cntl;
 
     int               irq;
-    int32_t            gen_int_cntl;
+    uint32_t            gen_int_cntl;
 
     GLboolean              DMAForXv;
 #endif
@@ -420,7 +420,7 @@ typedef struct {
     GLboolean              isDFP;
     GLboolean              isPro2;
     I2CBusPtr         pI2CBus;
-    int32_t            DDCReg;
+    uint32_t            DDCReg;
 #endif
 } R128InfoRec, *R128InfoPtr;
 
@@ -489,7 +489,7 @@ do {									\
 
 #define R128_VERBOSE	0
 
-#define RING_LOCALS	int32_t *__head; int __count;
+#define RING_LOCALS	uint32_t *__head; int __count;
 
 #define R128CCE_REFRESH(pScrn, info)					\
 do {									\
@@ -530,12 +530,12 @@ do {									\
          fprintf(stderr,				\
 		  "ADVANCE_RING() used: %d+%d=%d/%d\n",			\
 		  info->indirectBuffer->used - info->indirectStart,	\
-		  __count * sizeof(int32_t),				\
+		  __count * sizeof(uint32_t),				\
 		  info->indirectBuffer->used - info->indirectStart +	\
-		  __count * sizeof(int32_t),				\
+		  __count * sizeof(uint32_t),				\
 		  info->indirectBuffer->total - info->indirectStart );	\
    }									\
-   info->indirectBuffer->used += __count * (int)sizeof(int32_t);		\
+   info->indirectBuffer->used += __count * (int)sizeof(uint32_t);		\
 } while (0)
 
 #define OUT_RING( x ) do {						\

@@ -709,7 +709,7 @@ static void r200PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
 static void r200UpdateSpecular( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   int32_t p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
+   uint32_t p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
 
    R200_STATECHANGE( rmesa, tcl );
    R200_STATECHANGE( rmesa, vtx );
