@@ -499,12 +499,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		r300UpdateCulling(ctx);
 		break;
 	case GL_POLYGON_OFFSET_FILL:
-		R300_STATECHANGE(r300, unk42B4);
-		if (state) {
-			r300->hw.unk42B4.cmd[1] = (1<<1);
-		} else {
-			r300->hw.unk42B4.cmd[1] = 0;
-		}
+		WARN_ONCE("Don't know how to enable polygon offset fill. Help me !\n");
 		break;
 	case GL_VERTEX_PROGRAM_ARB:
 		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
@@ -1662,9 +1657,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
-	#if 0
 	r300->hw.unk42B4.cmd[1] = 0x00000000;
-	#endif
 	
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
