@@ -424,6 +424,8 @@ event_loop(Display *dpy, Window win)
 
       /* next frame */
       angle += 2.0;
+      if (angle > 3600.0)
+	angle -= 3600.0;
 
       draw();
       glXSwapBuffers(dpy, win);
