@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.13 1999/10/17 23:24:49 brianp Exp $ */
+/* $Id: gl.h,v 1.14 1999/10/20 06:56:40 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,6 +55,7 @@
 #	pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
 #	pragma warning( disable : 4550 ) /* 'function' undefined; assuming extern returning int */
 #	pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
+#  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
 #	if defined(_MSC_VER) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
 #		define GLAPI __declspec(dllexport)
 #     define WGLAPI __declspec(dllexport)
@@ -113,7 +114,6 @@ typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLY
 typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
 #include <gl/mesa_wgl.h>
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {

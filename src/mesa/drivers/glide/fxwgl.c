@@ -28,14 +28,14 @@ extern "C" {
 #endif
 
 #include <windows.h>
-#include <GL/gl.h>
+#include "GL/gl.h"
 
 #ifdef __cplusplus
            }
 #endif
 
 #include <stdio.h>
-#include <GL/fxmesa.h>
+#include "GL/fxmesa.h"
 #include "fxdrv.h"
 
 #define MAX_MESA_ATTRS  20
@@ -542,7 +542,7 @@ BOOL GLAPIENTRY wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChar
   SetTextColor(bitDevice, tempColor);
 
   // Place chars based on base line
-  VERIFY(SetTextAlign(bitDevice, TA_BASELINE) >= 0);
+  VERIFY(SetTextAlign(bitDevice, TA_BASELINE) >= 0 ? 1 : 0);
 
   for(i = 0; i < numChars; i++) {
     SIZE size;
