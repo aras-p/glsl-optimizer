@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.21 2000/05/19 16:08:24 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.22 2000/06/12 15:38:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2364,32 +2364,32 @@ KEYWORD1 void KEYWORD2 NAME(SamplePatternSGIS)(GLenum pattern)
 
 KEYWORD1 void KEYWORD2 NAME(VertexPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
-   DISPATCH(VertexPointer, (size, type, stride, ptr), (F, ";"));
+   DISPATCH(VertexPointerEXT, (size, type, stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(NormalPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
-   DISPATCH(NormalPointer, (type, stride, ptr), (F, ";"));
+   DISPATCH(NormalPointerEXT, (type, stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ColorPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
-   DISPATCH(ColorPointer, (size, type, stride, ptr), (F, ";"));
+   DISPATCH(ColorPointerEXT, (size, type, stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(IndexPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
-   DISPATCH(IndexPointer, (type, stride, ptr), (F, ";"));
+   DISPATCH(IndexPointerEXT, (type, stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(TexCoordPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
-   DISPATCH(ColorPointer, (size, type, stride, ptr), (F, ";"));
+   DISPATCH(ColorPointerEXT, (size, type, stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(EdgeFlagPointerEXT)(GLsizei stride, GLsizei count, const GLboolean *ptr)
 {
-   DISPATCH(EdgeFlagPointer, (stride, ptr), (F, ";"));
+   DISPATCH(EdgeFlagPointerEXT, (stride, count, ptr), (F, ";"));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetPointervEXT)(GLenum pname, void **params)
@@ -2665,12 +2665,12 @@ KEYWORD1 void KEYWORD2 NAME(UnlockArraysEXT)(void)
 
 
 /* 98. GL_EXT_cull_vertex */
-KEYWORD1 void KEYWORD2 NAME(CullParameterfvEXT)(GLenum pname, const GLfloat *params)
+KEYWORD1 void KEYWORD2 NAME(CullParameterfvEXT)(GLenum pname, GLfloat *params)
 {
    DISPATCH(CullParameterfvEXT, (pname, params), (F, ";"));
 }
 
-KEYWORD1 void KEYWORD2 NAME(CullParameterdvEXT)(GLenum pname, const GLdouble *params)
+KEYWORD1 void KEYWORD2 NAME(CullParameterdvEXT)(GLenum pname, GLdouble *params)
 {
    DISPATCH(CullParameterdvEXT, (pname, params), (F, ";"));
 }
