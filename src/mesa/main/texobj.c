@@ -228,6 +228,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->GenerateMipmap = src->GenerateMipmap;
    dest->Palette = src->Palette;
    dest->Complete = src->Complete;
+   dest->_IsPowerOfTwo = src->_IsPowerOfTwo;
 }
 
 
@@ -257,6 +258,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    GLint maxLog2 = 0, maxLevels = 0;
 
    t->Complete = GL_TRUE;  /* be optimistic */
+   t->_IsPowerOfTwo = GL_TRUE;  /* may be set FALSE below */
 
    /* Always need the base level image */
    if (!t->Image[baseLevel]) {
@@ -329,6 +331,12 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
    }
 
+   /* check for non power of two */
+   if (!t->Image[baseLevel]->_IsPowerOfTwo) {
+      t->_IsPowerOfTwo = GL_FALSE;
+   }
+
+   /* extra checking for mipmaps */
    if (t->MinFilter != GL_NEAREST && t->MinFilter != GL_LINEAR) {
       /*
        * Mipmapping: determine if we have a complete set of mipmaps

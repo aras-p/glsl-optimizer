@@ -1469,6 +1469,7 @@ struct gl_extensions {
    GLboolean ARB_texture_env_crossbar;
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_mirrored_repeat;
+   GLboolean ARB_texture_non_power_of_two;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_window_pos;

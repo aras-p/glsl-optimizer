@@ -57,6 +57,7 @@ static const struct {
    { OFF, "GL_ARB_texture_env_crossbar",       F(ARB_texture_env_crossbar) },
    { OFF, "GL_ARB_texture_env_dot3",           F(ARB_texture_env_dot3) },
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
+   { OFF, "GL_ARB_texture_non_power_of_two",   F(ARB_texture_non_power_of_two)},
    { ON,  "GL_ARB_transpose_matrix",           0 },
    { OFF, "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
    { OFF, "GL_ARB_vertex_program",             F(ARB_vertex_program) },
@@ -163,6 +164,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
+   ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 #if FEATURE_ARB_vertex_program
    /*ctx->Extensions.ARB_vertex_program = GL_TRUE;*/
 #endif
@@ -291,6 +293,7 @@ _mesa_enable_1_5_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+   ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
 }
 
 

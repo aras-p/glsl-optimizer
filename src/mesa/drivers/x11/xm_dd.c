@@ -937,9 +937,15 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    if (target == GL_PROXY_TEXTURE_3D) {
       /* special case for 3D textures */
       if (width * height * depth > 512 * 512 * 64 ||
-          width  < 2 * border || _mesa_bitcount(width  - 2 * border) != 1 ||
-          height < 2 * border || _mesa_bitcount(height - 2 * border) != 1 ||
-          depth  < 2 * border || _mesa_bitcount(depth  - 2 * border) != 1) {
+          width  < 2 * border ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(width  - 2 * border) != 1) ||
+          height < 2 * border ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(height - 2 * border) != 1) ||
+          depth  < 2 * border ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(depth  - 2 * border) != 1)) {
          /* Bad size, or too many texels */
          return GL_FALSE;
       }

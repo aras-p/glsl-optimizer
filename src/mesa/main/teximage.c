@@ -103,9 +103,8 @@ static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
 
 
 /*
- * Compute log base 2 of n.
- * If n isn't an exact power of two return -1.
- * If n < 0 return -1.
+ * Compute floor(log_base_2(n)).
+ * If n <= 0 return -1.
  */
 static int
 logbase2( int n )
@@ -113,7 +112,7 @@ logbase2( int n )
    GLint i = 1;
    GLint log2 = 0;
 
-   if (n < 0) {
+   if (n <= 0) {
       return -1;
    }
 
@@ -122,7 +121,7 @@ logbase2( int n )
       log2++;
    }
    if (i != n) {
-      return -1;
+      return log2 - 1;
    }
    else {
       return log2;
@@ -820,6 +819,7 @@ clear_teximage_fields(struct gl_texture_image *img)
 
 /*
  * Initialize basic fields of the gl_texture_image struct.
+ * Note: width, height and depth include the border.
  */
 void
 _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
@@ -845,9 +845,9 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
       img->DepthLog2 = 0;
    else
       img->DepthLog2 = logbase2(depth - 2 * border);
-   img->Width2 = 1 << img->WidthLog2;
-   img->Height2 = 1 << img->HeightLog2;
-   img->Depth2 = 1 << img->DepthLog2;
+   img->Width2 = width - 2 * border; /*1 << img->WidthLog2;*/
+   img->Height2 = height - 2 * border; /*1 << img->HeightLog2;*/
+   img->Depth2 = depth - 2 * border; /*1 << img->DepthLog2;*/
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
    img->IsCompressed = is_compressed_format(internalFormat);
    if (img->IsCompressed)
@@ -855,6 +855,13 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
                                                        depth, internalFormat);
    else
       img->CompressedSize = 0;
+
+   if ((width == 1 || _mesa_bitcount(width - 2 * border) == 1) &&
+       (height == 1 || _mesa_bitcount(height - 2 * border) == 1) &&
+       (depth == 1 || _mesa_bitcount(depth - 2 * border) == 1))
+      img->_IsPowerOfTwo = GL_TRUE;
+   else
+      img->_IsPowerOfTwo = GL_FALSE;
 
    /* Compute Width/Height/DepthScale for mipmap lod computation */
    if (target == GL_TEXTURE_RECTANGLE_NV) {
@@ -906,7 +913,8 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    case GL_PROXY_TEXTURE_1D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
-          _mesa_bitcount(width - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(width - 2 * border) != 1) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or level */
          return GL_FALSE;
@@ -915,9 +923,11 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    case GL_PROXY_TEXTURE_2D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
-          _mesa_bitcount(width - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(width - 2 * border) != 1) ||
           height < 2 * border || height > 2 + maxSize ||
-          _mesa_bitcount(height - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(height - 2 * border) != 1) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or height or level */
          return GL_FALSE;
@@ -926,11 +936,14 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    case GL_PROXY_TEXTURE_3D:
       maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
-          _mesa_bitcount(width - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(width - 2 * border) != 1) ||
           height < 2 * border || height > 2 + maxSize ||
-          _mesa_bitcount(height - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(height - 2 * border) != 1) ||
           depth < 2 * border || depth > 2 + maxSize ||
-          _mesa_bitcount(depth - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(depth - 2 * border) != 1) ||
           level >= ctx->Const.Max3DTextureLevels) {
          /* bad width or height or depth or level */
          return GL_FALSE;
@@ -947,9 +960,11 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
-          _mesa_bitcount(width - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(width - 2 * border) != 1) ||
           height < 2 * border || height > 2 + maxSize ||
-          _mesa_bitcount(height - 2 * border) != 1 ||
+          (!ctx->Extensions.ARB_texture_non_power_of_two &&
+           _mesa_bitcount(height - 2 * border) != 1) ||
           level >= ctx->Const.MaxCubeTextureLevels) {
          /* bad width or height */
          return GL_FALSE;
@@ -2458,14 +2473,20 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (border != 0)
       return GL_INVALID_VALUE;
 
-   if (width < 1 || width > maxTextureSize || logbase2(width) < 0)
+   /*
+    * XXX We should probably use the proxy texture error check function here.
+    */
+   if (width < 1 || width > maxTextureSize ||
+       (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(width) < 0))
       return GL_INVALID_VALUE;
 
-   if ((height < 1 || height > maxTextureSize || logbase2(height) < 0)
+   if ((height < 1 || height > maxTextureSize ||
+        (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(height) < 0))
        && dimensions > 1)
       return GL_INVALID_VALUE;
 
-   if ((depth < 1 || depth > maxTextureSize || logbase2(depth) < 0)
+   if ((depth < 1 || depth > maxTextureSize ||
+        (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(depth) < 0))
        && dimensions > 2)
       return GL_INVALID_VALUE;
 
@@ -2538,10 +2559,10 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if (!is_compressed_format(format))
       return GL_INVALID_ENUM;
 
-   if (width < 1 || width > maxTextureSize || logbase2(width) < 0)
+   if (width < 1 || width > maxTextureSize)
       return GL_INVALID_VALUE;
 
-   if ((height < 1 || height > maxTextureSize || logbase2(height) < 0)
+   if ((height < 1 || height > maxTextureSize)
        && dimensions > 1)
       return GL_INVALID_VALUE;
 

@@ -44,6 +44,20 @@
 
 
 /*
+ * Compute the remainder of a divided by b, but be careful with
+ * negative values so that GL_REPEAT mode works right.
+ */
+static INLINE GLint
+repeat_remainder(GLint a, GLint b)
+{
+   if (a >= 0)
+      return a % b;
+   else
+      return (a + 1) % b + b - 1;
+}
+
+
+/*
  * Used to compute texel locations for linear sampling.
  * Input:
  *    wrapMode = GL_REPEAT, GL_CLAMP, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER
@@ -57,8 +71,14 @@
 {									\
    if (wrapMode == GL_REPEAT) {						\
       U = S * SIZE - 0.5F;						\
-      I0 = IFLOOR(U) & (SIZE - 1);					\
-      I1 = (I0 + 1) & (SIZE - 1);					\
+      if (tObj->_IsPowerOfTwo) {					\
+         I0 = IFLOOR(U) & (SIZE - 1);					\
+         I1 = (I0 + 1) & (SIZE - 1);					\
+      }									\
+      else {								\
+         I0 = repeat_remainder(IFLOOR(U), SIZE);			\
+         I1 = repeat_remainder(I0 + 1, SIZE);				\
+      }									\
    }									\
    else if (wrapMode == GL_CLAMP_TO_EDGE) {				\
       if (S <= 0.0F)							\
@@ -75,7 +95,7 @@
       if (I1 >= (GLint) SIZE)						\
          I1 = SIZE - 1;							\
    }									\
-   else  if (wrapMode == GL_CLAMP_TO_BORDER) {			\
+   else if (wrapMode == GL_CLAMP_TO_BORDER) {				\
       const GLfloat min = -1.0F / (2.0F * SIZE);			\
       const GLfloat max = 1.0F - min;					\
       if (S <= min)							\
@@ -88,7 +108,7 @@
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
    }									\
-   else if (wrapMode == GL_MIRRORED_REPEAT) {			\
+   else if (wrapMode == GL_MIRRORED_REPEAT) {				\
       const GLint flr = IFLOOR(S);					\
       if (flr & 1)							\
          U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
@@ -150,7 +170,10 @@
       /* s limited to [0,1) */						\
       /* i limited to [0,size-1] */					\
       I = IFLOOR(S * SIZE);						\
-      I &= (SIZE - 1);							\
+      if (tObj->_IsPowerOfTwo)						\
+         I &= (SIZE - 1);						\
+      else								\
+         I = repeat_remainder(I, SIZE);					\
    }									\
    else if (wrapMode == GL_CLAMP_TO_EDGE) {				\
       /* s limited to [min,max] */					\
@@ -164,7 +187,7 @@
       else								\
          I = IFLOOR(S * SIZE);						\
    }									\
-   else if (wrapMode == GL_CLAMP_TO_BORDER) {			\
+   else if (wrapMode == GL_CLAMP_TO_BORDER) {				\
       /* s limited to [min,max] */					\
       /* i limited to [-1, size] */					\
       const GLfloat min = -1.0F / (2.0F * SIZE);			\
@@ -176,7 +199,7 @@
       else								\
          I = IFLOOR(S * SIZE);						\
    }									\
-   else if (wrapMode == GL_MIRRORED_REPEAT) {			\
+   else if (wrapMode == GL_MIRRORED_REPEAT) {				\
       const GLfloat min = 1.0F / (2.0F * SIZE);				\
       const GLfloat max = 1.0F - min;					\
       const GLint flr = IFLOOR(S);					\
@@ -230,6 +253,7 @@
 }
 
 
+/* Power of two image sizes only */
 #define COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(S, U, SIZE, I0, I1)	\
 {									\
    U = S * SIZE - 0.5F;							\
@@ -1215,6 +1239,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
    ASSERT(img->Format != GL_COLOR_INDEX);
+   ASSERT(img->_IsPowerOfTwo);
 
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[1], v, height, j0, j1);
@@ -1379,6 +1404,7 @@ sample_2d_linear_mipmap_linear_repeat( GLcontext *ctx,
    ASSERT(lambda != NULL);
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
+   ASSERT(tObj->_IsPowerOfTwo);
    for (i = 0; i < n; i++) {
       GLint level;
       COMPUTE_LINEAR_MIPMAP_LEVEL(tObj, lambda[i], level);
@@ -1457,6 +1483,7 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
    ASSERT(img->Format==GL_RGB);
+   ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
       GLint i = IFLOOR(texcoords[k][0] * width) & colMask;
@@ -1496,6 +1523,7 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
    ASSERT(img->Format==GL_RGBA);
+   ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
       const GLint col = IFLOOR(texcoords[i][0] * width) & colMask;
@@ -1521,10 +1549,11 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
    GLuint minStart, minEnd;  /* texels with minification */
    GLuint magStart, magEnd;  /* texels with magnification */
 
-   const GLboolean repeatNoBorder = (tObj->WrapS == GL_REPEAT)
+   const GLboolean repeatNoBorderPOT = (tObj->WrapS == GL_REPEAT)
       && (tObj->WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->Format != GL_COLOR_INDEX);
+      && (tImg->Format != GL_COLOR_INDEX)
+      && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
    compute_min_mag_ranges(SWRAST_CONTEXT(ctx)->_MinMagThresh[texUnit],
@@ -1535,7 +1564,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
       const GLuint m = minEnd - minStart;
       switch (tObj->MinFilter) {
       case GL_NEAREST:
-         if (repeatNoBorder) {
+         if (repeatNoBorderPOT) {
             switch (tImg->Format) {
             case GL_RGB:
                opt_sample_rgb_2d(ctx, texUnit, tObj, m, texcoords + minStart,
@@ -1573,7 +1602,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
                                          lambda + minStart, rgba + minStart);
          break;
       case GL_LINEAR_MIPMAP_LINEAR:
-         if (repeatNoBorder)
+         if (repeatNoBorderPOT)
             sample_2d_linear_mipmap_linear_repeat(ctx, tObj, m,
                   texcoords + minStart, lambda + minStart, rgba + minStart);
          else
@@ -1592,7 +1621,7 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
 
       switch (tObj->MagFilter) {
       case GL_NEAREST:
-         if (repeatNoBorder) {
+         if (repeatNoBorderPOT) {
             switch (tImg->Format) {
             case GL_RGB:
                opt_sample_rgb_2d(ctx, texUnit, tObj, m, texcoords + magStart,
@@ -2977,12 +3006,14 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
          ASSERT(t->MinFilter == GL_NEAREST);
          if (t->WrapS == GL_REPEAT &&
              t->WrapT == GL_REPEAT &&
+             t->_IsPowerOfTwo &&
              t->Image[baseLevel]->Border == 0 &&
              t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGB) {
             return &opt_sample_rgb_2d;
          }
          else if (t->WrapS == GL_REPEAT &&
                   t->WrapT == GL_REPEAT &&
+                  t->_IsPowerOfTwo &&
                   t->Image[baseLevel]->Border == 0 &&
                   t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
             return &opt_sample_rgba_2d;
@@ -4188,6 +4219,7 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
          swrast->TextureSample[unit]( ctx, unit, texUnit->_Current, span->end,
                          (const GLfloat (*)[4]) span->array->texcoords[unit],
                          lambda, texels );
+
          /* GL_SGI_texture_color_table */
          if (texUnit->ColorTableEnabled) {
             _swrast_texture_table_lookup(&texUnit->ColorTable, span->end, texels);
