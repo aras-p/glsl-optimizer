@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.10 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.11 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,10 +49,10 @@
 GLint
 _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span )
 {
-   const GLchan (*rgba)[4] = (const GLchan (*)[4]) span->color.rgba;
+   const GLchan (*rgba)[4] = (const GLchan (*)[4]) span->array->rgba;
    const GLchan ref = ctx->Color.AlphaRef;
    const GLuint n = span->end;
-   GLubyte *mask = span->mask;
+   GLubyte *mask = span->array->mask;
    GLuint i;
 
    if (span->arrayMask & SPAN_RGBA) {

@@ -1,4 +1,4 @@
-/* $Id: s_masking.c,v 1.7 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_masking.c,v 1.8 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,11 +65,11 @@ _mesa_mask_rgba_span( GLcontext *ctx, const struct sw_span *span,
    ASSERT(span->arrayMask & SPAN_RGBA);
 
    if (span->arrayMask & SPAN_XY) {
-      (*swrast->Driver.ReadRGBAPixels)(ctx, n, span->xArray, span->yArray,
-                                       dest, span->mask);
+      (*swrast->Driver.ReadRGBAPixels)(ctx, n, span->array->x, span->array->y,
+                                       dest, span->array->mask);
       if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-         _mesa_read_alpha_pixels(ctx, n, span->xArray, span->yArray,
-                                 dest, span->mask );
+         _mesa_read_alpha_pixels(ctx, n, span->array->x, span->array->y,
+                                 dest, span->array->mask);
       }
    }
    else {
@@ -150,8 +150,9 @@ _mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
 
    if (span->arrayMask & SPAN_XY) {
 
-      (*swrast->Driver.ReadCI32Pixels)(ctx, span->end, span->xArray,
-                                       span->yArray, fbindexes, span->mask);
+      (*swrast->Driver.ReadCI32Pixels)(ctx, span->end, span->array->x,
+                                       span->array->y, fbindexes,
+                                       span->array->mask);
 
       for (i = 0; i < span->end; i++) {
          index[i] = (index[i] & msrc) | (fbindexes[i] & mdest);

@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.64 2002/06/26 14:56:20 brianp Exp $ */
+/* $Id: s_texture.c,v 1.65 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3604,7 +3604,7 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
     * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
     */
    if (swrast->_AnyTextureCombine)
-      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
+      MEMCPY(primary_rgba, span->array->rgba, 4 * span->end * sizeof(GLchan));
 
    /*
     * Must do all texture sampling before combining in order to
@@ -3614,7 +3614,7 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
-         GLfloat *lambda = span->lambda[unit];
+         GLfloat *lambda = span->array->lambda[unit];
          GLchan (*texels)[4] = (GLchan (*)[4])
             (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLchan)));
 
@@ -3642,7 +3642,7 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
 
          /* Sample the texture (span->end fragments) */
          swrast->TextureSample[unit]( ctx, unit, texUnit->_Current,
-                                      span->end, span->texcoords[unit],
+                                      span->end, span->array->texcoords[unit],
                                       lambda, texels );
       }
    }
@@ -3659,14 +3659,14 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
             texture_combine( ctx, unit, span->end,
                              (CONST GLchan (*)[4]) primary_rgba,
                              swrast->TexelBuffer,
-                             span->color.rgba );
+                             span->array->rgba );
          }
          else if (texUnit->EnvMode == GL_COMBINE4_NV) {
             /* GL_NV_texture_env_combine4 */
             texture_combine4( ctx, unit, span->end,
                               (CONST GLchan (*)[4]) primary_rgba,
                               swrast->TexelBuffer,
-                              span->color.rgba );
+                              span->array->rgba );
          }
          else {
             /* conventional texture blend */
@@ -3675,7 +3675,7 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
                 (span->end * 4 * sizeof(GLchan)));
             texture_apply( ctx, texUnit, span->end,
                            (CONST GLchan (*)[4]) primary_rgba, texels,
-                           span->color.rgba );
+                           span->array->rgba );
          }
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.22 2002/04/19 00:38:27 brianp Exp $ */
+/* $Id: s_depth.c,v 1.23 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -549,9 +549,11 @@ depth_test_span( GLcontext *ctx, struct sw_span *span)
       GLdepth zbuffer[MAX_WIDTH];
       GLuint passed;
       (*swrast->Driver.ReadDepthSpan)(ctx, n, x, y, zbuffer);
-      passed = depth_test_span32(ctx, n, zbuffer, span->zArray, span->mask);
+      passed = depth_test_span32(ctx, n, zbuffer, span->array->z,
+                                 span->array->mask);
       ASSERT(swrast->Driver.WriteDepthSpan);
-      (*swrast->Driver.WriteDepthSpan)(ctx, n, x, y, zbuffer, span->mask);
+      (*swrast->Driver.WriteDepthSpan)(ctx, n, x, y, zbuffer,
+                                       span->array->mask);
       if (passed < n)
          span->writeAll = GL_FALSE;
       return passed;
@@ -561,11 +563,11 @@ depth_test_span( GLcontext *ctx, struct sw_span *span)
       /* software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          GLushort *zptr = (GLushort *) Z_ADDRESS16(ctx, x, y);
-         passed = depth_test_span16(ctx, n, zptr, span->zArray, span->mask);
+         passed = depth_test_span16(ctx, n, zptr, span->array->z, span->array->mask);
       }
       else {
          GLuint *zptr = (GLuint *) Z_ADDRESS32(ctx, x, y);
-         passed = depth_test_span32(ctx, n, zptr, span->zArray, span->mask);
+         passed = depth_test_span32(ctx, n, zptr, span->array->z, span->array->mask);
       }
 #if 1
       if (passed < span->end) {
@@ -1321,10 +1323,10 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
-   const GLint *x = span->xArray;
-   const GLint *y = span->yArray;
-   const GLdepth *z = span->zArray;
-   GLubyte *mask = span->mask;
+   const GLint *x = span->array->x;
+   const GLint *y = span->array->y;
+   const GLdepth *z = span->array->z;
+   GLubyte *mask = span->array->mask;
 
    if (swrast->Driver.ReadDepthPixels) {
       /* read depth values from hardware Z buffer */

@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.18 2002/05/02 00:59:20 brianp Exp $ */
+/* $Id: s_context.h,v 1.19 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,7 +170,13 @@ typedef struct
    swrast_tri_func SpecTriangle;
    /*@}*/
 
-   struct sw_span *span;
+   /**
+    * Typically, we'll allocate a sw_span structure as a local variable
+    * and set its 'array' pointer to point to this object.  The reason is
+    * this object is big and causes problems when allocated on the stack
+    * on some systems.
+    */
+   struct span_arrays *span_data;
 
    /** Internal hooks, kept uptodate by the same mechanism as above.
     */

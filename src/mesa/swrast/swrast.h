@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.25 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: swrast.h,v 1.26 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,6 +112,28 @@ typedef struct {
 #define SPAN_MASK         0x800  /* arrayMask only */
 
 
+struct span_arrays {
+   /**
+    * Arrays of fragment values.  These will either be computed from the
+    * x/xStep values above or filled in by glDraw/CopyPixels, etc.
+    */
+   GLchan  rgb[MAX_WIDTH][3];
+   GLchan  rgba[MAX_WIDTH][4];
+   GLuint  index[MAX_WIDTH];
+   GLchan  spec[MAX_WIDTH][4]; /* specular color */
+   GLint   x[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
+   GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
+   GLdepth z[MAX_WIDTH];
+   GLfloat fog[MAX_WIDTH];
+   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
+   GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
+   GLfloat coverage[MAX_WIDTH];
+
+   /** This mask indicates if fragment is alive or culled */
+   GLubyte mask[MAX_WIDTH];
+};
+
+
 struct sw_span {
    GLint x, y;
 
@@ -158,40 +180,28 @@ struct sw_span {
 
    /**
     * This bitmask (of SPAN_* flags) indicates which of the fragment arrays
-    * are relevant.
+    * in the span_arrays struct are relevant.
     */
    GLuint arrayMask;
 
    /**
-    * Arrays of fragment values.  These will either be computed from the
-    * x/xStep values above or filled in by glDraw/CopyPixels, etc.
+    * We store the arrays of fragment values in a separate struct so
+    * that we can allocate sw_span structs on the stack without using
+    * a lot of memory.  The span_arrays struct is about 400KB while the
+    * sw_span struct is only about 512 bytes.
     */
-   union {
-      GLchan rgb[MAX_WIDTH][3];
-      GLchan rgba[MAX_WIDTH][4];
-      GLuint index[MAX_WIDTH];
-   } color;
-   GLchan  specArray[MAX_WIDTH][4];
-   GLint   xArray[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
-   GLint   yArray[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
-   GLdepth zArray[MAX_WIDTH];
-   GLfloat fogArray[MAX_WIDTH];
-   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
-   GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
-   GLfloat coverage[MAX_WIDTH];
-
-  /** This mask indicates if fragment is alive or culled */
-   GLubyte mask[MAX_WIDTH];
+   struct span_arrays *array;
 };
 
 
-#define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)  \
-do {                              \
-   S->primitive = (PRIMITIVE);     \
-   S->interpMask = (INTERP_MASK);  \
-   S->arrayMask = (ARRAY_MASK);    \
-   S->start = 0;                   \
-   S->end = (END);                 \
+#define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)	\
+do {								\
+   (S).primitive = (PRIMITIVE);					\
+   (S).interpMask = (INTERP_MASK);				\
+   (S).arrayMask = (ARRAY_MASK);				\
+   (S).start = 0;						\
+   (S).end = (END);						\
+   (S).array = SWRAST_CONTEXT(ctx)->span_data;			\
 } while (0)
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.23 2002/06/30 15:57:45 brianp Exp $ */
+/* $Id: s_blend.c,v 1.24 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -765,11 +765,12 @@ _mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
    if (span->arrayMask & SPAN_XY) {
       /* array of x/y pixel coords */
       (*swrast->Driver.ReadRGBAPixels)( ctx, span->end,
-                                        span->xArray, span->yArray,
-                                        framebuffer, span->mask );
+                                        span->array->x, span->array->y,
+                                        framebuffer, span->array->mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_read_alpha_pixels( ctx, span->end, span->xArray, span->yArray,
-                                  framebuffer, span->mask );
+         _mesa_read_alpha_pixels( ctx, span->end,
+                                  span->array->x, span->array->y,
+                                  framebuffer, span->array->mask );
       }
    }
    else {
@@ -778,6 +779,6 @@ _mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
                             span->x, span->y, framebuffer );
    }
 
-   SWRAST_CONTEXT(ctx)->BlendFunc( ctx, span->end, span->mask, rgba,
+   SWRAST_CONTEXT(ctx)->BlendFunc( ctx, span->end, span->array->mask, rgba,
 				   (const GLchan (*)[4]) framebuffer );
 }

@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.10 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_logic.c,v 1.11 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,14 +175,15 @@ _mesa_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
 
    /* Read dest values from frame buffer */
    if (span->arrayMask & SPAN_XY) {
-      (*swrast->Driver.ReadCI32Pixels)( ctx, span->end, span->xArray,
-                                        span->yArray, dest, span->mask );
+      (*swrast->Driver.ReadCI32Pixels)( ctx, span->end,
+                                        span->array->x, span->array->y,
+                                        dest, span->array->mask );
    }
    else {
       (*swrast->Driver.ReadCI32Span)( ctx, span->end, span->x, span->y, dest );
    }
 
-   index_logicop( ctx, span->end, index, dest, span->mask );
+   index_logicop( ctx, span->end, index, dest, span->array->mask );
 }
 
 
@@ -472,11 +473,12 @@ _mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
 
    if (span->arrayMask & SPAN_XY) {
       (*swrast->Driver.ReadRGBAPixels)(ctx, span->end,
-                                       span->xArray, span->yArray,
-                                       dest, span->mask);
+                                       span->array->x, span->array->y,
+                                       dest, span->array->mask);
       if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-         _mesa_read_alpha_pixels(ctx, span->end, span->xArray, span->yArray,
-                                 dest, span->mask);
+         _mesa_read_alpha_pixels(ctx, span->end,
+                                 span->array->x, span->array->y,
+                                 dest, span->array->mask);
       }
    }
    else {
@@ -485,11 +487,11 @@ _mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
    }
 
    if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
-      rgba_logicop_ui(ctx, span->end, span->mask,
+      rgba_logicop_ui(ctx, span->end, span->array->mask,
                       (GLuint *) rgba, (const GLuint *) dest);
    }
    else {
-      rgba_logicop_chan(ctx, 4 * span->end, span->mask,
+      rgba_logicop_chan(ctx, 4 * span->end, span->array->mask,
                         (GLchan *) rgba, (const GLchan *) dest);
    }
 }

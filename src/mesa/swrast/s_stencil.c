@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.24 2002/04/20 17:54:55 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.25 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -420,7 +420,7 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
    const GLuint n = span->end;
    const GLint x = span->x;
    const GLint y = span->y;
-   GLubyte *mask = span->mask;
+   GLubyte *mask = span->array->mask;
 
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(ctx->Stencil.Enabled);
@@ -893,9 +893,9 @@ static GLboolean
 stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span )
 {
    const GLuint n = span->end;
-   const GLint *x = span->xArray;
-   const GLint *y = span->yArray;
-   GLubyte *mask = span->mask;
+   const GLint *x = span->array->x;
+   const GLint *y = span->array->y;
+   GLubyte *mask = span->array->mask;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    ASSERT(span->arrayMask & SPAN_XY);

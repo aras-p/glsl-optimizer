@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.16 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.17 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,16 +48,19 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    const GLuint maxWidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
    GLchan rgbaSave[MAX_WIDTH][4];
    GLuint indexSave[MAX_WIDTH];
-   struct sw_span zoomed;
    const GLchan (*rgba)[4] = (const GLchan (*)[4]) src;
    const GLchan (*rgb)[3] = (const GLchan (*)[3]) src;
    const GLuint *indexes = (const GLuint *) src;
+   struct sw_span zoomed;
+   struct span_arrays zoomed_arrays;  /* this is big! */
 
    /* no pixel arrays! */
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(span->primitive == GL_BITMAP);
 
-   INIT_SPAN((&zoomed), GL_BITMAP, 0, 0, 0);
+   INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
+   zoomed.array = &zoomed_arrays;
+
    if (format == GL_RGBA || format == GL_RGB) {
       zoomed.z = span->z;
       zoomed.zStep = span->z;
@@ -141,7 +144,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
-            COPY_CHAN4(zoomed.color.rgba[j], rgba[i]);
+            COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
          }
       }
       else {
@@ -151,7 +154,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
-            COPY_CHAN4(zoomed.color.rgba[j], rgba[i]);
+            COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
          }
       }
    }
@@ -160,10 +163,10 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
-            zoomed.color.rgba[j][0] = rgb[i][0];
-            zoomed.color.rgba[j][1] = rgb[i][1];
-            zoomed.color.rgba[j][2] = rgb[i][2];
-            zoomed.color.rgba[j][3] = CHAN_MAX;
+            zoomed.array->rgba[j][0] = rgb[i][0];
+            zoomed.array->rgba[j][1] = rgb[i][1];
+            zoomed.array->rgba[j][2] = rgb[i][2];
+            zoomed.array->rgba[j][3] = CHAN_MAX;
          }
       }
       else {
@@ -173,10 +176,10 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
-            zoomed.color.rgba[j][0] = rgb[i][0];
-            zoomed.color.rgba[j][1] = rgb[i][1];
-            zoomed.color.rgba[j][2] = rgb[i][2];
-            zoomed.color.rgba[j][3] = CHAN_MAX;
+            zoomed.array->rgba[j][0] = rgb[i][0];
+            zoomed.array->rgba[j][1] = rgb[i][1];
+            zoomed.array->rgba[j][2] = rgb[i][2];
+            zoomed.array->rgba[j][3] = CHAN_MAX;
          }
       }
    }
@@ -185,7 +188,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          /* common case */
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = span->end - (j + skipCol) - 1;
-            zoomed.color.index[j] = indexes[i];
+            zoomed.array->index[j] = indexes[i];
          }
       }
       else {
@@ -195,7 +198,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
             i = (GLint) ((j + skipCol) * xscale);
             if (i < 0)
                i = span->end + i - 1;
-            zoomed.color.index[j] = indexes[i];
+            zoomed.array->index[j] = indexes[i];
          }
       }
    }
@@ -206,25 +209,25 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
        * going to call _mesa_write_zoomed_span() more than once.
        */
       if (r1 - r0 > 1) {
-         MEMCPY(rgbaSave, zoomed.color.rgba, zoomed.end * 4 * sizeof(GLchan));
+         MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * 4 * sizeof(GLchan));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
          _mesa_write_rgba_span(ctx, &zoomed);
          if (r1 - r0 > 1) {
             /* restore the colors */
-            MEMCPY(zoomed.color.rgba, rgbaSave, zoomed.end*4 * sizeof(GLchan));
+            MEMCPY(zoomed.array->rgba, rgbaSave, zoomed.end*4 * sizeof(GLchan));
          }
       }
    }
    else if (format == GL_COLOR_INDEX) {
       if (r1 - r0 > 1) {
-         MEMCPY(indexSave, zoomed.color.index, zoomed.end * sizeof(GLuint));
+         MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
          _mesa_write_index_span(ctx, &zoomed);
          if (r1 - r0 > 1) {
             /* restore the colors */
-            MEMCPY(zoomed.color.index, indexSave, zoomed.end * sizeof(GLuint));
+            MEMCPY(zoomed.array->index, indexSave, zoomed.end * sizeof(GLuint));
          }
       }
    }
@@ -251,7 +254,7 @@ void
 _mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
                                GLint y0 )
 {
-  zoom_span(ctx, span, (const GLvoid *) span->color.index, y0, GL_COLOR_INDEX);
+  zoom_span(ctx, span, (const GLvoid *) span->array->index, y0, GL_COLOR_INDEX);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.30 2002/06/15 03:03:11 brianp Exp $ */
+/* $Id: s_lines.c,v 1.31 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,16 +77,17 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       start = width / 2 - 1;
 
    if (xMajor) {
+      GLint *y = span->array->y;
       GLuint i;
       GLint w;
       for (w = 0; w < width; w++) {
          if (w == 0) {
             for (i = 0; i < span->end; i++)
-               span->yArray[i] -= start;
+               y[i] -= start;
          }
          else {
             for (i = 0; i < span->end; i++)
-               span->yArray[i]++;
+               y[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
             _mesa_write_texture_span(ctx, span);
@@ -97,16 +98,17 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       }
    }
    else {
+      GLint *x = span->array->x;
       GLuint i;
       GLint w;
       for (w = 0; w < width; w++) {
          if (w == 0) {
             for (i = 0; i < span->end; i++)
-               span->xArray[i] -= start;
+               x[i] -= start;
          }
          else {
             for (i = 0; i < span->end; i++)
-               span->xArray[i]++;
+               x[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
             _mesa_write_texture_span(ctx, span);
@@ -130,27 +132,30 @@ static void flat_ci_line( GLcontext *ctx,
                           const SWvertex *vert0,
 			  const SWvertex *vert1 )
 {
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   GLint *x, *y;
+   struct sw_span span;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_INDEX, SPAN_XY);
-   span->index = IntToFixed(vert1->index);
-   span->indexStep = 0;
+   span.index = IntToFixed(vert1->index);
+   span.indexStep = 0;
+   x = span.array->x;
+   y = span.array->y;
 
 #define INTERP_XY 1
-#define PLOT(X,Y)			\
-   {					\
-      span->xArray[span->end] = X;	\
-      span->yArray[span->end] = Y;	\
-      span->end++;			\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      span.end++;		\
    }
 
 #include "s_linetemp.h"
 
-   _mesa_write_index_span(ctx, span);
+   _mesa_write_index_span(ctx, &span);
 }
 
 
@@ -159,33 +164,36 @@ static void flat_rgba_line( GLcontext *ctx,
                             const SWvertex *vert0,
 			    const SWvertex *vert1 )
 {
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA, SPAN_XY);
-   span->red = ChanToFixed(vert1->color[0]);
-   span->green = ChanToFixed(vert1->color[1]);
-   span->blue = ChanToFixed(vert1->color[2]);
-   span->alpha = ChanToFixed(vert1->color[3]);
-   span->redStep = 0;
-   span->greenStep = 0;
-   span->blueStep = 0;
-   span->alphaStep = 0;
+   span.red = ChanToFixed(vert1->color[0]);
+   span.green = ChanToFixed(vert1->color[1]);
+   span.blue = ChanToFixed(vert1->color[2]);
+   span.alpha = ChanToFixed(vert1->color[3]);
+   span.redStep = 0;
+   span.greenStep = 0;
+   span.blueStep = 0;
+   span.alphaStep = 0;
+   x = span.array->x;
+   y = span.array->y;
 
 #define INTERP_XY 1
-#define PLOT(X,Y)			\
-   {					\
-      span->xArray[span->end] = X;	\
-      span->yArray[span->end] = Y;	\
-      span->end++;			\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      span.end++;		\
    }
 
 #include "s_linetemp.h"
 
-   _mesa_write_rgba_span(ctx, span);
+   _mesa_write_rgba_span(ctx, &span);
 }
 
 
@@ -194,27 +202,32 @@ static void smooth_ci_line( GLcontext *ctx,
                             const SWvertex *vert0,
 			    const SWvertex *vert1 )
 {
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLuint *index;
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
    INIT_SPAN(span, GL_LINE, 0, 0, SPAN_XY | SPAN_INDEX);
+   x = span.array->x;
+   y = span.array->y;
+   index = span.array->index;
 
 #define INTERP_XY 1
 #define INTERP_INDEX 1
-#define PLOT(X,Y)			\
-   {					\
-      span->xArray[span->end] = X;	\
-      span->yArray[span->end] = Y;	\
-      span->color.index[span->end] = I;	\
-      span->end++;			\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      index[span.end] = I;	\
+      span.end++;		\
    }
 
 #include "s_linetemp.h"
 
-   _mesa_write_index_span(ctx, span);
+   _mesa_write_index_span(ctx, &span);
 }
 
 
@@ -223,31 +236,36 @@ static void smooth_rgba_line( GLcontext *ctx,
                        	      const SWvertex *vert0,
 			      const SWvertex *vert1 )
 {
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLchan (*rgba)[4];
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
    INIT_SPAN(span, GL_LINE, 0, 0, SPAN_XY | SPAN_RGBA);
+   x = span.array->x;
+   y = span.array->y;
+   rgba = span.array->rgba;
 
 #define INTERP_XY 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define PLOT(X,Y)						\
-   {								\
-      span->xArray[span->end] = X;				\
-      span->yArray[span->end] = Y;				\
-      span->color.rgba[span->end][RCOMP] = FixedToInt(r0);	\
-      span->color.rgba[span->end][GCOMP] = FixedToInt(g0);	\
-      span->color.rgba[span->end][BCOMP] = FixedToInt(b0);	\
-      span->color.rgba[span->end][ACOMP] = FixedToInt(a0);	\
-      span->end++;						\
+#define PLOT(X,Y)				\
+   {						\
+      x[span.end] = X;				\
+      y[span.end] = Y;				\
+      rgba[span.end][RCOMP] = FixedToInt(r0);	\
+      rgba[span.end][GCOMP] = FixedToInt(g0);	\
+      rgba[span.end][BCOMP] = FixedToInt(b0);	\
+      rgba[span.end][ACOMP] = FixedToInt(a0);	\
+      span.end++;				\
    }
 
 #include "s_linetemp.h"
 
-   _mesa_write_rgba_span(ctx, span);
+   _mesa_write_rgba_span(ctx, &span);
 }
 
 
@@ -257,39 +275,48 @@ static void general_smooth_ci_line( GLcontext *ctx,
 				    const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLdepth *z;
+   GLfloat *fog;
+   GLuint *index;
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
    INIT_SPAN(span, GL_LINE, 0, 0,
 	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_INDEX);
+   x = span.array->x;
+   y = span.array->y;
+   z = span.array->z;
+   fog = span.array->fog;
+   index = span.array->index;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
-#define PLOT(X,Y)			\
-   {					\
-      span->xArray[span->end] = X;	\
-      span->yArray[span->end] = Y;	\
-      span->zArray[span->end] = Z;	\
-      span->fogArray[span->end] = fog0;	\
-      span->color.index[span->end] = I;	\
-      span->end++;			\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      z[span.end] = Z;		\
+      fog[span.end] = fog0;	\
+      index[span.end] = I;	\
+      span.end++;		\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_index_span(ctx, span);
+      _mesa_write_index_span(ctx, &span);
    }
 }
 
@@ -300,39 +327,46 @@ static void general_flat_ci_line( GLcontext *ctx,
 				  const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLdepth *z;
+   GLfloat *fog;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_INDEX,
 	     SPAN_XY | SPAN_Z | SPAN_FOG);
-   span->index = IntToFixed(vert1->index);
-   span->indexStep = 0;
+   span.index = IntToFixed(vert1->index);
+   span.indexStep = 0;
+   x = span.array->x;
+   y = span.array->y;
+   z = span.array->z;
+   fog = span.array->fog;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_FOG 1
-#define PLOT(X,Y)			\
-   {					\
-      span->xArray[span->end] = X;	\
-      span->yArray[span->end] = Y;	\
-      span->zArray[span->end] = Z;	\
-      span->fogArray[span->end] = fog0;	\
-      span->end++;			\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      z[span.end] = Z;		\
+      fog[span.end] = fog0;	\
+      span.end++;		\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_index_span(ctx, span);
+      _mesa_write_index_span(ctx, &span);
    }
 }
 
@@ -343,12 +377,21 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 				      const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLdepth *z;
+   GLchan (*rgba)[4];
+   GLfloat *fog;
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
    INIT_SPAN(span, GL_LINE, 0, 0,
 	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA);
+   x = span.array->x;
+   y = span.array->y;
+   z = span.array->z;
+   rgba = span.array->rgba;
+   fog = span.array->fog;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -356,30 +399,30 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 #define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define PLOT(X,Y)						\
-   {								\
-      span->xArray[span->end] = X;				\
-      span->yArray[span->end] = Y;				\
-      span->zArray[span->end] = Z;				\
-      span->color.rgba[span->end][RCOMP] = FixedToInt(r0);	\
-      span->color.rgba[span->end][GCOMP] = FixedToInt(g0);	\
-      span->color.rgba[span->end][BCOMP] = FixedToInt(b0);	\
-      span->color.rgba[span->end][ACOMP] = FixedToInt(a0);	\
-      span->fogArray[span->end] = fog0;				\
-      span->end++;						\
+#define PLOT(X,Y)				\
+   {						\
+      x[span.end] = X;				\
+      y[span.end] = Y;				\
+      z[span.end] = Z;				\
+      rgba[span.end][RCOMP] = FixedToInt(r0);	\
+      rgba[span.end][GCOMP] = FixedToInt(g0);	\
+      rgba[span.end][BCOMP] = FixedToInt(b0);	\
+      rgba[span.end][ACOMP] = FixedToInt(a0);	\
+      fog[span.end] = fog0;			\
+      span.end++;				\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_rgba_span(ctx, span);
+      _mesa_write_rgba_span(ctx, &span);
    }
 }
 
@@ -389,45 +432,52 @@ static void general_flat_rgba_line( GLcontext *ctx,
 				    const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
+   GLint *x, *y;
+   GLdepth *z;
+   GLfloat *fog;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA,
 	     SPAN_XY | SPAN_Z | SPAN_FOG);
-   span->red = ChanToFixed(vert1->color[0]);
-   span->green = ChanToFixed(vert1->color[1]);
-   span->blue = ChanToFixed(vert1->color[2]);
-   span->alpha = ChanToFixed(vert1->color[3]);
-   span->redStep = 0;
-   span->greenStep = 0;
-   span->blueStep = 0;
-   span->alphaStep = 0;
+   span.red = ChanToFixed(vert1->color[0]);
+   span.green = ChanToFixed(vert1->color[1]);
+   span.blue = ChanToFixed(vert1->color[2]);
+   span.alpha = ChanToFixed(vert1->color[3]);
+   span.redStep = 0;
+   span.greenStep = 0;
+   span.blueStep = 0;
+   span.alphaStep = 0;
+   x = span.array->x;
+   y = span.array->y;
+   z = span.array->z;
+   fog = span.array->fog;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_FOG 1
-#define PLOT(X,Y)						\
-   {								\
-      span->xArray[span->end] = X;				\
-      span->yArray[span->end] = Y;				\
-      span->zArray[span->end] = Z;				\
-      span->fogArray[span->end] = fog0;				\
-      span->end++;						\
+#define PLOT(X,Y)		\
+   {				\
+      x[span.end] = X;		\
+      y[span.end] = Y;		\
+      z[span.end] = Z;		\
+      fog[span.end] = fog0;	\
+      span.end++;		\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_rgba_span(ctx, span);
+      _mesa_write_rgba_span(ctx, &span);
    }
 }
 
@@ -438,26 +488,26 @@ static void flat_textured_line( GLcontext *ctx,
 				const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA | SPAN_SPEC,
 	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
-   span->red = ChanToFixed(vert1->color[0]);
-   span->green = ChanToFixed(vert1->color[1]);
-   span->blue = ChanToFixed(vert1->color[2]);
-   span->alpha = ChanToFixed(vert1->color[3]);
-   span->redStep = 0;
-   span->greenStep = 0;
-   span->blueStep = 0;
-   span->alphaStep = 0;
-   span->specRed = ChanToFixed(vert1->specular[0]);
-   span->specGreen = ChanToFixed(vert1->specular[1]);
-   span->specBlue = ChanToFixed(vert1->specular[2]);
-   span->specRedStep = 0;
-   span->specGreenStep = 0;
-   span->specBlueStep = 0;
+   span.red = ChanToFixed(vert1->color[0]);
+   span.green = ChanToFixed(vert1->color[1]);
+   span.blue = ChanToFixed(vert1->color[2]);
+   span.alpha = ChanToFixed(vert1->color[3]);
+   span.redStep = 0;
+   span.greenStep = 0;
+   span.blueStep = 0;
+   span.alphaStep = 0;
+   span.specRed = ChanToFixed(vert1->specular[0]);
+   span.specGreen = ChanToFixed(vert1->specular[1]);
+   span.specBlue = ChanToFixed(vert1->specular[2]);
+   span.specRedStep = 0;
+   span.specGreenStep = 0;
+   span.specBlueStep = 0;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -466,28 +516,28 @@ static void flat_textured_line( GLcontext *ctx,
 #define INTERP_TEX 1
 #define PLOT(X,Y)						\
    {								\
-      span->xArray[span->end] = X;				\
-      span->yArray[span->end] = Y;				\
-      span->zArray[span->end] = Z;				\
-      span->fogArray[span->end] = fog0;				\
-      span->texcoords[0][span->end][0] = fragTexcoord[0];		\
-      span->texcoords[0][span->end][1] = fragTexcoord[1];		\
-      span->texcoords[0][span->end][2] = fragTexcoord[2];		\
-      span->lambda[0][span->end] = 0.0;				\
-      span->end++;						\
+      span.array->x[span.end] = X;				\
+      span.array->y[span.end] = Y;				\
+      span.array->z[span.end] = Z;				\
+      span.array->fog[span.end] = fog0;				\
+      span.array->texcoords[0][span.end][0] = fragTexcoord[0];	\
+      span.array->texcoords[0][span.end][1] = fragTexcoord[1];	\
+      span.array->texcoords[0][span.end][2] = fragTexcoord[2];	\
+      span.array->lambda[0][span.end] = 0.0;			\
+      span.end++;						\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, span);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -499,7 +549,7 @@ static void smooth_textured_line( GLcontext *ctx,
 				  const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
@@ -515,32 +565,32 @@ static void smooth_textured_line( GLcontext *ctx,
 #define INTERP_TEX 1
 #define PLOT(X,Y)						\
    {								\
-      span->xArray[span->end] = X;				\
-      span->yArray[span->end] = Y;				\
-      span->zArray[span->end] = Z;				\
-      span->fogArray[span->end] = fog0;				\
-      span->color.rgba[span->end][RCOMP] = FixedToInt(r0);	\
-      span->color.rgba[span->end][GCOMP] = FixedToInt(g0);	\
-      span->color.rgba[span->end][BCOMP] = FixedToInt(b0);	\
-      span->color.rgba[span->end][ACOMP] = FixedToInt(a0);	\
-      span->texcoords[0][span->end][0] = fragTexcoord[0];		\
-      span->texcoords[0][span->end][1] = fragTexcoord[1];		\
-      span->texcoords[0][span->end][2] = fragTexcoord[2];		\
-      span->lambda[0][span->end] = 0.0;				\
-      span->end++;						\
+      span.array->x[span.end] = X;				\
+      span.array->y[span.end] = Y;				\
+      span.array->z[span.end] = Z;				\
+      span.array->fog[span.end] = fog0;				\
+      span.array->rgba[span.end][RCOMP] = FixedToInt(r0);	\
+      span.array->rgba[span.end][GCOMP] = FixedToInt(g0);	\
+      span.array->rgba[span.end][BCOMP] = FixedToInt(b0);	\
+      span.array->rgba[span.end][ACOMP] = FixedToInt(a0);	\
+      span.array->texcoords[0][span.end][0] = fragTexcoord[0];	\
+      span.array->texcoords[0][span.end][1] = fragTexcoord[1];	\
+      span.array->texcoords[0][span.end][2] = fragTexcoord[2];	\
+      span.array->lambda[0][span.end] = 0.0;			\
+      span.end++;						\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, span);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -553,7 +603,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 				       const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
    GLuint u;
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
@@ -571,39 +621,39 @@ static void smooth_multitextured_line( GLcontext *ctx,
 #define INTERP_MULTITEX 1
 #define PLOT(X,Y)							\
    {									\
-      span->xArray[span->end] = X;					\
-      span->yArray[span->end] = Y;					\
-      span->zArray[span->end] = Z;					\
-      span->fogArray[span->end] = fog0;					\
-      span->color.rgba[span->end][RCOMP] = FixedToInt(r0);		\
-      span->color.rgba[span->end][GCOMP] = FixedToInt(g0);		\
-      span->color.rgba[span->end][BCOMP] = FixedToInt(b0);		\
-      span->color.rgba[span->end][ACOMP] = FixedToInt(a0);		\
-      span->specArray[span->end][RCOMP] = FixedToInt(sr0);		\
-      span->specArray[span->end][GCOMP] = FixedToInt(sb0);		\
-      span->specArray[span->end][BCOMP] = FixedToInt(sb0);		\
+      span.array->x[span.end] = X;					\
+      span.array->y[span.end] = Y;					\
+      span.array->z[span.end] = Z;					\
+      span.array->fog[span.end] = fog0;					\
+      span.array->rgba[span.end][RCOMP] = FixedToInt(r0);		\
+      span.array->rgba[span.end][GCOMP] = FixedToInt(g0);		\
+      span.array->rgba[span.end][BCOMP] = FixedToInt(b0);		\
+      span.array->rgba[span.end][ACOMP] = FixedToInt(a0);		\
+      span.array->spec[span.end][RCOMP] = FixedToInt(sr0);		\
+      span.array->spec[span.end][GCOMP] = FixedToInt(sg0);		\
+      span.array->spec[span.end][BCOMP] = FixedToInt(sb0);		\
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {		\
          if (ctx->Texture.Unit[u]._ReallyEnabled) {			\
-            span->texcoords[u][span->end][0] = fragTexcoord[u][0];	\
-            span->texcoords[u][span->end][1] = fragTexcoord[u][1];	\
-            span->texcoords[u][span->end][2] = fragTexcoord[u][2];	\
-            span->lambda[u][span->end] = 0.0;				\
+            span.array->texcoords[u][span.end][0] = fragTexcoord[u][0];	\
+            span.array->texcoords[u][span.end][1] = fragTexcoord[u][1];	\
+            span.array->texcoords[u][span.end][2] = fragTexcoord[u][2];	\
+            span.array->lambda[u][span.end] = 0.0;			\
          }								\
       }									\
-      span->end++;							\
+      span.end++;							\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, span);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -616,27 +666,27 @@ static void flat_multitextured_line( GLcontext *ctx,
 				     const SWvertex *vert1 )
 {
    GLboolean xMajor = GL_FALSE;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
    GLuint u;
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
    INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA | SPAN_SPEC,
 	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
-   span->red = ChanToFixed(vert1->color[0]);
-   span->green = ChanToFixed(vert1->color[1]);
-   span->blue = ChanToFixed(vert1->color[2]);
-   span->alpha = ChanToFixed(vert1->color[3]);
-   span->redStep = 0;
-   span->greenStep = 0;
-   span->blueStep = 0;
-   span->alphaStep = 0;
-   span->specRed = ChanToFixed(vert1->specular[0]);
-   span->specGreen = ChanToFixed(vert1->specular[1]);
-   span->specBlue = ChanToFixed(vert1->specular[2]);
-   span->specRedStep = 0;
-   span->specGreenStep = 0;
-   span->specBlueStep = 0;
+   span.red = ChanToFixed(vert1->color[0]);
+   span.green = ChanToFixed(vert1->color[1]);
+   span.blue = ChanToFixed(vert1->color[2]);
+   span.alpha = ChanToFixed(vert1->color[3]);
+   span.redStep = 0;
+   span.greenStep = 0;
+   span.blueStep = 0;
+   span.alphaStep = 0;
+   span.specRed = ChanToFixed(vert1->specular[0]);
+   span.specGreen = ChanToFixed(vert1->specular[1]);
+   span.specBlue = ChanToFixed(vert1->specular[2]);
+   span.specRedStep = 0;
+   span.specGreenStep = 0;
+   span.specBlueStep = 0;
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -645,32 +695,32 @@ static void flat_multitextured_line( GLcontext *ctx,
 #define INTERP_MULTITEX 1
 #define PLOT(X,Y)							\
    {									\
-      span->xArray[span->end] = X;					\
-      span->yArray[span->end] = Y;					\
-      span->zArray[span->end] = Z;					\
-      span->fogArray[span->end] = fog0;					\
+      span.array->x[span.end] = X;					\
+      span.array->y[span.end] = Y;					\
+      span.array->z[span.end] = Z;					\
+      span.array->fog[span.end] = fog0;					\
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {		\
          if (ctx->Texture.Unit[u]._ReallyEnabled) {			\
-            span->texcoords[u][span->end][0] = fragTexcoord[u][0];	\
-            span->texcoords[u][span->end][1] = fragTexcoord[u][1];	\
-            span->texcoords[u][span->end][2] = fragTexcoord[u][2];	\
-            span->lambda[u][span->end] = 0.0;				\
+            span.array->texcoords[u][span.end][0] = fragTexcoord[u][0];	\
+            span.array->texcoords[u][span.end][1] = fragTexcoord[u][1];	\
+            span.array->texcoords[u][span.end][2] = fragTexcoord[u][2];	\
+            span.array->lambda[u][span.end] = 0.0;			\
          }								\
       }									\
-      span->end++;							\
+      span.end++;							\
    }
 #include "s_linetemp.h"
 
    if (ctx->Line.StippleFlag) {
-      span->arrayMask |= SPAN_MASK;
-      compute_stipple_mask(ctx, span->end, span->mask);
+      span.arrayMask |= SPAN_MASK;
+      compute_stipple_mask(ctx, span.end, span.array->mask);
    }
 
    if (ctx->Line.Width > 1.0) {
-      draw_wide_line(ctx, span, xMajor);
+      draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, span);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 

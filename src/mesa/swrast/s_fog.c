@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.22 2002/02/17 17:30:58 brianp Exp $ */
+/* $Id: s_fog.c,v 1.23 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,9 +134,11 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                   GLfloat eyez = (ndcz - p14) / p10;
+                  GLfloat f;
                   if (eyez < 0.0)
                      eyez = -eyez;
-                  fogFact[i] = (fogEnd - eyez) * fogScale;
+                  f = (fogEnd - eyez) * fogScale;
+                  fogFact[i] = CLAMP(f, 0.0F, 1.0F);
                }
             }
             else {
@@ -144,9 +146,11 @@ compute_fog_factors_from_z( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                   GLfloat eyez = p14 / (ndcz + p10);
+                  GLfloat f;
                   if (eyez < 0.0)
                      eyez = -eyez;
-                  fogFact[i] = (fogEnd - eyez) * fogScale;
+                  f = (fogEnd - eyez) * fogScale;
+                  fogFact[i] = CLAMP(f, 0.0F, 1.0F);
                }
             }
          }
@@ -214,7 +218,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
 
 /**
  * Apply fog to a span of RGBA pixels.
- * The fog factors are either in the span->fogArray or stored as base/step.
+ * The fog factors are either in the span->array->fog or stored as base/step.
  * These are fog _factors_, not fog coords.  Fog coords were converted to
  * fog factors per vertex.
  */
@@ -223,7 +227,7 @@ _mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
-   GLchan (*rgba)[4] = (GLchan (*)[4]) span->color.rgba;
+   GLchan (*rgba)[4] = (GLchan (*)[4]) span->array->rgba;
    GLchan rFog, gFog, bFog;
 
    ASSERT(ctx->Fog.Enabled);
@@ -238,14 +242,15 @@ _mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
       /* compute fog factor from each fragment's Z value */
       if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
          _mesa_span_interpolate_z(ctx, span);
-      compute_fog_factors_from_z(ctx, n, span->zArray, span->fogArray);
+      compute_fog_factors_from_z(ctx, n, span->array->z, span->array->fog);
       span->arrayMask |= SPAN_FOG;
    }
 
    if (span->arrayMask & SPAN_FOG) {
+      /* use fog array in span */
       GLuint i;
       for (i = 0; i < n; i++) {
-         const GLfloat fog = span->fogArray[i];
+         const GLfloat fog = span->array->fog[i];
          const GLfloat oneMinusFog = 1.0F - fog;
          rgba[i][RCOMP] = (GLchan) (fog * rgba[i][RCOMP] + oneMinusFog * rFog);
          rgba[i][GCOMP] = (GLchan) (fog * rgba[i][GCOMP] + oneMinusFog * gFog);
@@ -253,6 +258,7 @@ _mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
       }
    }
    else {
+      /* interpolate fog factors */
       GLfloat fog = span->fog, dFog = span->fogStep;
       GLuint i;
       for (i = 0; i < n; i++) {
@@ -274,7 +280,7 @@ _mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
-   GLuint *index = span->color.index;
+   GLuint *index = span->array->index;
 
    ASSERT(ctx->Fog.Enabled);
    ASSERT(span->arrayMask & SPAN_INDEX);
@@ -284,7 +290,7 @@ _mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
       /* compute fog factor from each fragment's Z value */
       if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
          _mesa_span_interpolate_z(ctx, span);
-      compute_fog_factors_from_z(ctx, n, span->zArray, span->fogArray);
+      compute_fog_factors_from_z(ctx, n, span->array->z, span->array->fog);
       span->arrayMask |= SPAN_FOG;
    }
 
@@ -292,7 +298,7 @@ _mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
       const GLuint idx = (GLuint) ctx->Fog.Index;
       GLuint i;
       for (i = 0; i < n; i++) {
-         const GLfloat f = CLAMP(span->fogArray[i], 0.0F, 1.0F);
+         const GLfloat f = CLAMP(span->array->fog[i], 0.0F, 1.0F);
          index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * idx);
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.20 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.21 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,47 +39,47 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    const GLfloat fx = (GLfloat) ix;
    const GLfloat fy = (GLfloat) iy;
    const GLfloat coverage = compute_coveragef(line, ix, iy);
-   const GLuint i = line->span->end;
+   const GLuint i = line->span.end;
 
    if (coverage == 0.0)
       return;
 
-   line->span->end++;
-   line->span->coverage[i] = coverage;
-   line->span->xArray[i] = ix;
-   line->span->yArray[i] = iy;
+   line->span.end++;
+   line->span.array->coverage[i] = coverage;
+   line->span.array->x[i] = ix;
+   line->span.array->y[i] = iy;
 
    /*
     * Compute Z, color, texture coords, fog for the fragment by
     * solving the plane equations at (ix,iy).
     */
 #ifdef DO_Z
-   line->span->zArray[i] = (GLdepth) solve_plane(fx, fy, line->zPlane);
+   line->span.array->z[i] = (GLdepth) solve_plane(fx, fy, line->zPlane);
 #endif
 #ifdef DO_FOG
-   line->span->fogArray[i] = solve_plane(fx, fy, line->fPlane);
+   line->span.array->fog[i] = solve_plane(fx, fy, line->fPlane);
 #endif
 #ifdef DO_RGBA
-   line->span->color.rgba[i][RCOMP] = solve_plane_chan(fx, fy, line->rPlane);
-   line->span->color.rgba[i][GCOMP] = solve_plane_chan(fx, fy, line->gPlane);
-   line->span->color.rgba[i][BCOMP] = solve_plane_chan(fx, fy, line->bPlane);
-   line->span->color.rgba[i][ACOMP] = solve_plane_chan(fx, fy, line->aPlane);
+   line->span.array->rgba[i][RCOMP] = solve_plane_chan(fx, fy, line->rPlane);
+   line->span.array->rgba[i][GCOMP] = solve_plane_chan(fx, fy, line->gPlane);
+   line->span.array->rgba[i][BCOMP] = solve_plane_chan(fx, fy, line->bPlane);
+   line->span.array->rgba[i][ACOMP] = solve_plane_chan(fx, fy, line->aPlane);
 #endif
 #ifdef DO_INDEX
-   line->span->color.index[i] = (GLint) solve_plane(fx, fy, line->iPlane);
+   line->span.array->index[i] = (GLint) solve_plane(fx, fy, line->iPlane);
 #endif
 #ifdef DO_SPEC
-   line->span->specArray[i][RCOMP] = solve_plane_chan(fx, fy, line->srPlane);
-   line->span->specArray[i][GCOMP] = solve_plane_chan(fx, fy, line->sgPlane);
-   line->span->specArray[i][BCOMP] = solve_plane_chan(fx, fy, line->sbPlane);
+   line->span.array->spec[i][RCOMP] = solve_plane_chan(fx, fy, line->srPlane);
+   line->span.array->spec[i][GCOMP] = solve_plane_chan(fx, fy, line->sgPlane);
+   line->span.array->spec[i][BCOMP] = solve_plane_chan(fx, fy, line->sbPlane);
 #endif
 #ifdef DO_TEX
    {
       const GLfloat invQ = solve_plane_recip(fx, fy, line->vPlane[0]);
-      line->span->texcoords[0][i][0] = solve_plane(fx, fy, line->sPlane[0]) * invQ;
-      line->span->texcoords[0][i][1] = solve_plane(fx, fy, line->tPlane[0]) * invQ;
-      line->span->texcoords[0][i][2] = solve_plane(fx, fy, line->uPlane[0]) * invQ;
-      line->span->lambda[0][i] = compute_lambda(line->sPlane[0], line->tPlane[0], invQ,
+      line->span.array->texcoords[0][i][0] = solve_plane(fx, fy, line->sPlane[0]) * invQ;
+      line->span.array->texcoords[0][i][1] = solve_plane(fx, fy, line->tPlane[0]) * invQ;
+      line->span.array->texcoords[0][i][2] = solve_plane(fx, fy, line->uPlane[0]) * invQ;
+      line->span.array->lambda[0][i] = compute_lambda(line->sPlane[0], line->tPlane[0], invQ,
                                           line->texWidth[0], line->texHeight[0]);
    }
 #elif defined(DO_MULTITEX)
@@ -88,10 +88,10 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
             const GLfloat invQ = solve_plane_recip(fx, fy, line->vPlane[unit]);
-            line->span->texcoords[unit][i][0] = solve_plane(fx, fy, line->sPlane[unit]) * invQ;
-            line->span->texcoords[unit][i][1] = solve_plane(fx, fy, line->tPlane[unit]) * invQ;
-            line->span->texcoords[unit][i][2] = solve_plane(fx, fy, line->uPlane[unit]) * invQ;
-            line->span->lambda[unit][i] = compute_lambda(line->sPlane[unit],
+            line->span.array->texcoords[unit][i][0] = solve_plane(fx, fy, line->sPlane[unit]) * invQ;
+            line->span.array->texcoords[unit][i][1] = solve_plane(fx, fy, line->tPlane[unit]) * invQ;
+            line->span.array->texcoords[unit][i][2] = solve_plane(fx, fy, line->uPlane[unit]) * invQ;
+            line->span.array->lambda[unit][i] = compute_lambda(line->sPlane[unit],
                                                line->tPlane[unit], invQ,
                                                line->texWidth[unit], line->texHeight[unit]);
          }
@@ -99,15 +99,15 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    }
 #endif
 
-   if (line->span->end == MAX_WIDTH) {
+   if (line->span.end == MAX_WIDTH) {
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-      _mesa_write_texture_span(ctx, line->span);
+      _mesa_write_texture_span(ctx, &(line->span));
 #elif defined(DO_RGBA)
-      _mesa_write_rgba_span(ctx, line->span);
+      _mesa_write_rgba_span(ctx, &(line->span));
 #else
-      _mesa_write_index_span(ctx, line->span);
+      _mesa_write_index_span(ctx, &(line->span));
 #endif
-      line->span->end = 0; /* reset counter */
+      line->span.end = 0; /* reset counter */
    }
 }
 
@@ -138,24 +138,23 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
       return;
 
-   line.span = swrast->span; 
    INIT_SPAN(line.span, GL_LINE, 0, 0, SPAN_XY | SPAN_COVERAGE);
 
    line.xAdj = line.dx / line.len * line.halfWidth;
    line.yAdj = line.dy / line.len * line.halfWidth;
 
 #ifdef DO_Z
-   line.span->arrayMask |= SPAN_Z;
+   line.span.arrayMask |= SPAN_Z;
    compute_plane(line.x0, line.y0, line.x1, line.y1,
                  v0->win[2], v1->win[2], line.zPlane);
 #endif
 #ifdef DO_FOG
-   line.span->arrayMask |= SPAN_FOG;
+   line.span.arrayMask |= SPAN_FOG;
    compute_plane(line.x0, line.y0, line.x1, line.y1,
                  v0->fog, v1->fog, line.fPlane);
 #endif
 #ifdef DO_RGBA
-   line.span->arrayMask |= SPAN_RGBA;
+   line.span.arrayMask |= SPAN_RGBA;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(line.x0, line.y0, line.x1, line.y1,
                     v0->color[RCOMP], v1->color[RCOMP], line.rPlane);
@@ -174,7 +173,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    }
 #endif
 #ifdef DO_SPEC
-   line.span->arrayMask |= SPAN_SPEC;
+   line.span.arrayMask |= SPAN_SPEC;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(line.x0, line.y0, line.x1, line.y1,
                     v0->specular[RCOMP], v1->specular[RCOMP], line.srPlane);
@@ -190,7 +189,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    }
 #endif
 #ifdef DO_INDEX
-   line.span->arrayMask |= SPAN_INDEX;
+   line.span.arrayMask |= SPAN_INDEX;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(line.x0, line.y0, line.x1, line.y1,
                     (GLfloat) v0->index, (GLfloat) v1->index, line.iPlane);
@@ -213,7 +212,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       const GLfloat r1 = v1->texcoord[0][2] * invW0;
       const GLfloat q0 = v0->texcoord[0][3] * invW0;
       const GLfloat q1 = v1->texcoord[0][3] * invW0;
-      line.span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
+      line.span.arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
       compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[0]);
       compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[0]);
       compute_plane(line.x0, line.y0, line.x1, line.y1, r0, r1, line.uPlane[0]);
@@ -224,7 +223,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #elif defined(DO_MULTITEX)
    {
       GLuint u;
-      line.span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
+      line.span.arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
             const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
@@ -295,11 +294,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    }
 
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-   _mesa_write_texture_span(ctx, line.span);
+   _mesa_write_texture_span(ctx, &(line.span));
 #elif defined(DO_RGBA)
-   _mesa_write_rgba_span(ctx, line.span);
+   _mesa_write_rgba_span(ctx, &(line.span));
 #else
-   _mesa_write_index_span(ctx, line.span);
+   _mesa_write_index_span(ctx, &(line.span));
 #endif
 }
 

@@ -1,10 +1,10 @@
-/* $Id: xm_tri.c,v 1.26 2002/06/25 15:25:17 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.27 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,21 +68,21 @@ static void smooth_TRUECOLOR_z_triangle( GLcontext *ctx,
 #define INTERP_RGB 1
 
 #define RENDER_SPAN( span )					\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    GLuint i;							\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
          unsigned long p;					\
-         PACK_TRUECOLOR(p, FixedToInt(span->red),		\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         PACK_TRUECOLOR(p, FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          XMesaPutPixel(img, x, y, p);				\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -108,17 +108,17 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++) {				\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = PACK_8B8G8R(FixedToInt(span->red),		\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         pRow[i] = PACK_8B8G8R(FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -143,17 +143,17 @@ static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++) {				\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = PACK_8R8G8B(FixedToInt(span->red),		\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         pRow[i] = PACK_8R8G8B(FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -178,19 +178,19 @@ static void smooth_8R8G8B24_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span ) 					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++) {				\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
 	 PIXEL_TYPE *ptr = pRow + i;				\
-         ptr->r = FixedToInt(span->red);				\
-         ptr->g = FixedToInt(span->green);			\
-         ptr->b = FixedToInt(span->blue);			\
+         ptr->r = FixedToInt(span.red);				\
+         ptr->g = FixedToInt(span.green);			\
+         ptr->b = FixedToInt(span.blue);			\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -213,20 +213,20 @@ static void smooth_TRUEDITHER_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
          unsigned long p;					\
-         PACK_TRUEDITHER(p, x, y, FixedToInt(span->red),		\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         PACK_TRUEDITHER(p, x, y, FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          XMesaPutPixel(img, x, y, p);				\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -251,17 +251,17 @@ static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++) {				\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = PACK_5R6G5B(FixedToInt(span->red),		\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         pRow[i] = PACK_5R6G5B(FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -286,18 +286,18 @@ static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         PACK_TRUEDITHER(pRow[i], x, y, FixedToInt(span->red),	\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         PACK_TRUEDITHER(pRow[i], x, y, FixedToInt(span.red),	\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -322,19 +322,19 @@ static void smooth_DITHER8_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    XDITHER_SETUP(y);						\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = (PIXEL_TYPE) XDITHER(x, FixedToInt(span->red),\
-            FixedToInt(span->green), FixedToInt(span->blue) );	\
+         pRow[i] = (PIXEL_TYPE) XDITHER(x, FixedToInt(span.red),\
+            FixedToInt(span.green), FixedToInt(span.blue) );	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -357,20 +357,20 @@ static void smooth_DITHER_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    XDITHER_SETUP(y);						\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         unsigned long p = XDITHER(x, FixedToInt(span->red),	\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         unsigned long p = XDITHER(x, FixedToInt(span.red),	\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
 	 XMesaPutPixel(img, x, y, p);			       	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -396,17 +396,17 @@ static void smooth_LOOKUP8_z_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    LOOKUP_SETUP;						\
-   for (i = 0; i < span->end; i++) {				\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++) {				\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = LOOKUP(FixedToInt(span->red),			\
-            FixedToInt(span->green), FixedToInt(span->blue));	\
+         pRow[i] = LOOKUP(FixedToInt(span.red),			\
+            FixedToInt(span.green), FixedToInt(span.blue));	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -432,18 +432,18 @@ static void smooth_HPCR_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = DITHER_HPCR(x, y, FixedToInt(span->red),	\
-            FixedToInt(span->green), FixedToInt(span->blue) );	\
+         pRow[i] = DITHER_HPCR(x, y, FixedToInt(span.red),	\
+            FixedToInt(span.green), FixedToInt(span.blue) );	\
          zRow[i] = z;						\
       }								\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
-      span->z += span->zStep;					\
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -468,14 +468,14 @@ static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
          XMesaPutPixel(img, x, y, pixel);			\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -501,13 +501,13 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx,
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   for (i = 0; i < span->end; i++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);	\
+   for (i = 0; i < span.end; i++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);	\
       if (z < zRow[i]) {				\
 	 pRow[i] = (PIXEL_TYPE) p;			\
          zRow[i] = z;					\
       }							\
-      span->z += span->zStep;				\
+      span.z += span.zStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -533,13 +533,13 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx,
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )			\
    GLuint i;					\
-   for (i = 0; i < span->end; i++) {		\
-      DEPTH_TYPE z = FixedToDepth(span->z);	\
+   for (i = 0; i < span.end; i++) {		\
+      DEPTH_TYPE z = FixedToDepth(span.z);	\
       if (z < zRow[i]) {			\
 	 pRow[i] = (PIXEL_TYPE) p;		\
          zRow[i] = z;				\
       }						\
-      span->z += span->zStep;			\
+      span.z += span.zStep;			\
    }
 
 #include "swrast/s_tritemp.h"
@@ -563,8 +563,8 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   for (i = 0; i < span->end; i++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);	\
+   for (i = 0; i < span.end; i++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);	\
       if (z < zRow[i]) {				\
 	 PIXEL_TYPE *ptr = pRow + i;			\
          ptr->r = color[RCOMP];				\
@@ -572,7 +572,7 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
          ptr->b = color[BCOMP];				\
          zRow[i] = z;					\
       }							\
-      span->z += span->zStep;				\
+      span.z += span.zStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -593,9 +593,9 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
          unsigned long p;					\
          PACK_TRUEDITHER(p, x, y, v2->color[0],			\
@@ -603,7 +603,7 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
          XMesaPutPixel(img, x, y, p);				\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -629,13 +629,13 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx,
             v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   for (i = 0; i < span->end; i++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);	\
+   for (i = 0; i < span.end; i++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);	\
       if (z < zRow[i]) {				\
 	 pRow[i] = (PIXEL_TYPE) p;			\
          zRow[i] = z;					\
       }							\
-      span->z += span->zStep;				\
+      span.z += span.zStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -659,15 +659,15 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
 	 PACK_TRUEDITHER(pRow[i], x, y, color[RCOMP],		\
 			 color[GCOMP], color[BCOMP]);		\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -693,15 +693,15 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    FLAT_DITHER_ROW_SETUP(FLIP(xmesa->xm_buffer, y));		\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
 	 pRow[i] = (PIXEL_TYPE) FLAT_DITHER(x);			\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -725,16 +725,16 @@ static void flat_DITHER_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    FLAT_DITHER_ROW_SETUP(y);					\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
          unsigned long p = FLAT_DITHER(x);			\
 	 XMesaPutPixel(img, x, y, p);				\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -761,14 +761,14 @@ static void flat_HPCR_z_triangle( GLcontext *ctx,
    GLubyte b = v2->color[2];
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);		\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
 	 pRow[i] = (PIXEL_TYPE) DITHER_HPCR(x, y, r, g, b);	\
          zRow[i] = z;						\
       }								\
-      span->z += span->zStep;					\
+      span.z += span.zStep;					\
    }
 
 #include "swrast/s_tritemp.h"
@@ -797,13 +797,13 @@ static void flat_LOOKUP8_z_triangle( GLcontext *ctx,
    GLubyte p = LOOKUP(r,g,b);
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   for (i = 0; i < span->end; i++) {			\
-      const DEPTH_TYPE z = FixedToDepth(span->z);	\
+   for (i = 0; i < span.end; i++) {			\
+      const DEPTH_TYPE z = FixedToDepth(span.z);	\
       if (z < zRow[i]) {				\
 	 pRow[i] = p;					\
          zRow[i] = z;					\
       }							\
-      span->z += span->zStep;				\
+      span.z += span.zStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -824,15 +824,15 @@ static void smooth_TRUECOLOR_triangle( GLcontext *ctx,
 #define INTERP_RGB 1
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       unsigned long p;						\
-      PACK_TRUECOLOR(p, FixedToInt(span->red),			\
-         FixedToInt(span->green), FixedToInt(span->blue));	\
+      PACK_TRUECOLOR(p, FixedToInt(span.red),			\
+         FixedToInt(span.green), FixedToInt(span.blue));	\
       XMesaPutPixel(img, x, y, p);				\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -854,12 +854,12 @@ static void smooth_8A8B8G8R_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      pRow[i] = PACK_8B8G8R(FixedToInt(span->red),		\
-         FixedToInt(span->green), FixedToInt(span->blue) );	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   for (i = 0; i < span.end; i++) {				\
+      pRow[i] = PACK_8B8G8R(FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue) );	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }								\
 
 #include "swrast/s_tritemp.h"
@@ -881,12 +881,12 @@ static void smooth_8R8G8B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      pRow[i] = PACK_8R8G8B(FixedToInt(span->red),		\
-         FixedToInt(span->green), FixedToInt(span->blue) );	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   for (i = 0; i < span.end; i++) {				\
+      pRow[i] = PACK_8R8G8B(FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue) );	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -909,13 +909,13 @@ static void smooth_8R8G8B24_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    PIXEL_TYPE *pixel = pRow;				\
-   for (i = 0; i < span->end; i++, pixel++) {		\
-      pixel->r = FixedToInt(span->red);			\
-      pixel->g = FixedToInt(span->green);		\
-      pixel->b = FixedToInt(span->blue);			\
-      span->red += span->redStep;				\
-      span->green += span->greenStep;			\
-      span->blue += span->blueStep;			\
+   for (i = 0; i < span.end; i++, pixel++) {		\
+      pixel->r = FixedToInt(span.red);			\
+      pixel->g = FixedToInt(span.green);		\
+      pixel->b = FixedToInt(span.blue);		\
+      span.red += span.redStep;			\
+      span.green += span.greenStep;			\
+      span.blue += span.blueStep;			\
    }
 
 #include "swrast/s_tritemp.h"
@@ -935,15 +935,15 @@ static void smooth_TRUEDITHER_triangle( GLcontext *ctx,
 #define INTERP_RGB 1
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       unsigned long p;						\
-      PACK_TRUEDITHER(p, x, y, FixedToInt(span->red),		\
-         FixedToInt(span->green), FixedToInt(span->blue));	\
+      PACK_TRUEDITHER(p, x, y, FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue));	\
       XMesaPutPixel(img, x, y, p );				\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -965,12 +965,12 @@ static void smooth_5R6G5B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   for (i = 0; i < span->end; i++) {				\
-      pRow[i] = (PIXEL_TYPE) PACK_5R6G5B(FixedToInt(span->red),	\
-         FixedToInt(span->green), FixedToInt(span->blue));	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   for (i = 0; i < span.end; i++) {				\
+      pRow[i] = (PIXEL_TYPE) PACK_5R6G5B(FixedToInt(span.red),	\
+         FixedToInt(span.green), FixedToInt(span.blue));	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -992,13 +992,13 @@ static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      PACK_TRUEDITHER(pRow[i], x, y, FixedToInt(span->red),	\
-         FixedToInt(span->green), FixedToInt(span->blue));	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      PACK_TRUEDITHER(pRow[i], x, y, FixedToInt(span.red),	\
+         FixedToInt(span.green), FixedToInt(span.blue));	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -1020,14 +1020,14 @@ static void smooth_DITHER8_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    XDITHER_SETUP(y);						\
-   for (i = 0; i < span->end; i++, x++) {			\
-      pRow[i] = (PIXEL_TYPE) XDITHER(x, FixedToInt(span->red),	\
-         FixedToInt(span->green), FixedToInt(span->blue) );	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   for (i = 0; i < span.end; i++, x++) {			\
+      pRow[i] = (PIXEL_TYPE) XDITHER(x, FixedToInt(span.red),	\
+         FixedToInt(span.green), FixedToInt(span.blue) );	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -1044,19 +1044,18 @@ static void smooth_DITHER_triangle( GLcontext *ctx,
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
-
 #define INTERP_RGB 1
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    XDITHER_SETUP(y);						\
-   for (i = 0; i < span->end; i++, x++) {			\
-      unsigned long p = XDITHER(x, FixedToInt(span->red),	\
-         FixedToInt(span->green), FixedToInt(span->blue) );	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      unsigned long p = XDITHER(x, FixedToInt(span.red),	\
+         FixedToInt(span.green), FixedToInt(span.blue) );	\
       XMesaPutPixel(img, x, y, p);				\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -1072,7 +1071,6 @@ static void smooth_LOOKUP8_triangle( GLcontext *ctx,
 				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-
 #define INTERP_RGB 1
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define PIXEL_TYPE GLubyte
@@ -1080,12 +1078,12 @@ static void smooth_LOOKUP8_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    LOOKUP_SETUP;					\
-   for (i = 0; i < span->end; i++) {			\
-      pRow[i] = LOOKUP(FixedToInt(span->red),		\
-         FixedToInt(span->green), FixedToInt(span->blue));\
-      span->red += span->redStep;				\
-      span->green += span->greenStep;			\
-      span->blue += span->blueStep;			\
+   for (i = 0; i < span.end; i++) {			\
+      pRow[i] = LOOKUP(FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue));\
+      span.red += span.redStep;			\
+      span.green += span.greenStep;			\
+      span.blue += span.blueStep;			\
    }
 
 #include "swrast/s_tritemp.h"
@@ -1102,20 +1100,19 @@ static void smooth_HPCR_triangle( GLcontext *ctx,
 				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-
 #define INTERP_RGB 1
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
-      pRow[i] = DITHER_HPCR(x, y, FixedToInt(span->red),		\
-         FixedToInt(span->green), FixedToInt(span->blue));	\
-      span->red += span->redStep;					\
-      span->green += span->greenStep;				\
-      span->blue += span->blueStep;				\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
+      pRow[i] = DITHER_HPCR(x, y, FixedToInt(span.red),	\
+         FixedToInt(span.green), FixedToInt(span.blue));	\
+      span.red += span.redStep;				\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
    }
 
 #include "swrast/s_tritemp.h"
@@ -1138,8 +1135,8 @@ static void flat_TRUECOLOR_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       XMesaPutPixel(img, x, y, pixel);				\
    }
 
@@ -1164,7 +1161,7 @@ static void flat_8A8B8G8R_triangle( GLcontext *ctx,
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )			\
    GLuint i;					\
-   for (i = 0; i < span->end; i++) {		\
+   for (i = 0; i < span.end; i++) {		\
       pRow[i] = (PIXEL_TYPE) p;			\
    }
 
@@ -1189,7 +1186,7 @@ static void flat_8R8G8B_triangle( GLcontext *ctx,
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )			\
    GLuint i;					\
-   for (i = 0; i < span->end; i++) {		\
+   for (i = 0; i < span.end; i++) {		\
       pRow[i] = (PIXEL_TYPE) p;			\
    }
 
@@ -1213,7 +1210,7 @@ static void flat_8R8G8B24_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    PIXEL_TYPE *pixel = pRow;				\
-   for (i = 0; i < span->end; i++, pixel++) {		\
+   for (i = 0; i < span.end; i++, pixel++) {		\
       pixel->r = color[RCOMP];				\
       pixel->g = color[GCOMP];				\
       pixel->b = color[BCOMP];				\
@@ -1232,11 +1229,10 @@ static void flat_TRUEDITHER_triangle( GLcontext *ctx,
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
-
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       unsigned long p;						\
       PACK_TRUEDITHER(p, x, y, v2->color[0],			\
                v2->color[1], v2->color[2] );			\
@@ -1260,12 +1256,12 @@ static void flat_5R6G5B_triangle( GLcontext *ctx,
 #define PIXEL_ADDRESS(X,Y) PIXELADDR2(xmesa->xm_buffer,X,Y)
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
-#define SETUP_CODE					\
+#define SETUP_CODE				\
    unsigned long p = PACK_5R6G5B( v2->color[0],	\
 		 v2->color[1], v2->color[2] );
 #define RENDER_SPAN( span )			\
    GLuint i;					\
-   for (i = 0; i < span->end; i++) {		\
+   for (i = 0; i < span.end; i++) {		\
       pRow[i] = (PIXEL_TYPE) p;			\
    }
 
@@ -1288,8 +1284,8 @@ static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx,
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       PACK_TRUEDITHER(pRow[i], x, y, color[RCOMP],		\
          color[GCOMP], color[BCOMP]);				\
    }
@@ -1315,9 +1311,9 @@ static void flat_DITHER8_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    FLAT_DITHER_ROW_SETUP(FLIP(xmesa->xm_buffer, y));		\
-   for (i = 0; i < span->end; i++, x++) {			\
+   for (i = 0; i < span.end; i++, x++) {			\
       pRow[i] = (PIXEL_TYPE) FLAT_DITHER(x);			\
    }
 
@@ -1340,9 +1336,9 @@ static void flat_DITHER_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
    FLAT_DITHER_ROW_SETUP(y);					\
-   for (i = 0; i < span->end; i++, x++) {			\
+   for (i = 0; i < span.end; i++, x++) {			\
       unsigned long p = FLAT_DITHER(x);				\
       XMesaPutPixel(img, x, y, p );				\
    }
@@ -1363,14 +1359,14 @@ static void flat_HPCR_triangle( GLcontext *ctx,
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
-#define SETUP_CODE				\
+#define SETUP_CODE		\
    GLubyte r = v2->color[0];	\
    GLubyte g = v2->color[1];	\
    GLubyte b = v2->color[2];
-#define RENDER_SPAN( span )				\
+#define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLint x = span->x, y = FLIP(xmesa->xm_buffer, span->y);	\
-   for (i = 0; i < span->end; i++, x++) {			\
+   GLint x = span.x, y = FLIP(xmesa->xm_buffer, span.y);	\
+   for (i = 0; i < span.end; i++, x++) {			\
       pRow[i] = (PIXEL_TYPE) DITHER_HPCR(x, y, r, g, b);	\
    }
 
@@ -1398,7 +1394,7 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx,
    GLubyte p = LOOKUP(r,g,b);
 #define RENDER_SPAN( span )          		\
    GLuint i;					\
-   for (i = 0; i < span->end; i++) {		\
+   for (i = 0; i < span.end; i++) {		\
       pRow[i] = (PIXEL_TYPE) p;			\
    }
 

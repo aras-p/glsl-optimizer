@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.36 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: s_context.c,v 1.37 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -513,10 +513,10 @@ _swrast_CreateContext( GLcontext *ctx )
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
-   swrast->span = (struct sw_span *) MALLOC(sizeof(struct sw_span));
-   if (!swrast->span) {
-     FREE(swrast);
-     return GL_FALSE;
+   swrast->span_data = MALLOC_STRUCT(span_arrays);
+   if (!swrast->span_data) {
+      FREE(swrast);
+      return GL_FALSE;
    }
 
    assert(ctx->Const.MaxTextureUnits > 0);
@@ -525,7 +525,7 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureUnits *
                                            MAX_WIDTH * 4 * sizeof(GLchan));
    if (!swrast->TexelBuffer) {
-      FREE(swrast->span);
+      FREE(swrast->span_data);
       FREE(swrast);
       return GL_FALSE;
    }
@@ -544,7 +544,7 @@ _swrast_DestroyContext( GLcontext *ctx )
       _mesa_debug(ctx, "_swrast_DestroyContext\n");
    }
 
-   FREE( swrast->span );
+   FREE( swrast->span_data );
    FREE( swrast->TexelBuffer );
    FREE( swrast );
 

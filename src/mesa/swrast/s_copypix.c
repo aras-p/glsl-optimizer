@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.39 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.40 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,14 +106,14 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLuint transferOps = ctx->_ImageTransferState;
    GLfloat *dest, *tmpImage, *convImage;
-   struct sw_span *span = swrast->span;
+   struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, span);
+      _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, span);
+      _mesa_span_default_fog(ctx, &span);
 
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
@@ -239,15 +239,15 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          GLint g = (GLint) (src[i * 4 + GCOMP] * CHAN_MAXF);
          GLint b = (GLint) (src[i * 4 + BCOMP] * CHAN_MAXF);
          GLint a = (GLint) (src[i * 4 + ACOMP] * CHAN_MAXF);
-         span->color.rgba[i][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
-         span->color.rgba[i][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
-         span->color.rgba[i][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
-         span->color.rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
+         span.array->rgba[i][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
+         span.array->rgba[i][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
+         span.array->rgba[i][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
+         span.array->rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
       }
 
       if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-         span->end = width;
-         _swrast_pixel_texture(ctx, span);
+         span.end = width;
+         _swrast_pixel_texture(ctx, &span);
       }
 
       /* write row to framebuffer */
@@ -255,21 +255,21 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
-		       (const GLchan (*)[4])span->color.rgba, NULL );
+		       (const GLchan (*)[4])span.array->rgba, NULL );
       }
       else if (zoom) {
-         span->x = destx;
-         span->y = dy;
-         span->end = width;
-         _mesa_write_zoomed_rgba_span(ctx, span, 
-                                     (CONST GLchan (*)[4])span->color.rgba,
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_zoomed_rgba_span(ctx, &span, 
+                                     (CONST GLchan (*)[4])span.array->rgba,
                                      desty);
       }
       else {
-         span->x = destx;
-         span->y = dy;
-         span->end = width;
-         _mesa_write_rgba_span(ctx, span);
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
 
@@ -292,7 +292,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    const GLuint transferOps = ctx->_ImageTransferState;
-   struct sw_span *span = swrast->span;
+   struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
@@ -319,9 +319,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, span);
+      _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, span);
+      _mesa_span_default_fog(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
        && !zoom
@@ -370,7 +370,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* Get source pixels */
       if (overlapping) {
          /* get from buffered image */
-         MEMCPY(span->color.rgba, p, width * sizeof(GLchan) * 4);
+         MEMCPY(span.array->rgba, p, width * sizeof(GLchan) * 4);
          p += width * 4;
       }
       else {
@@ -378,7 +378,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
          _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy,
-                               span->color.rgba );
+                               span.array->rgba );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
       }
@@ -391,10 +391,10 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
          /* convert chan to float */
          for (k = 0; k < width; k++) {
-            rgbaFloat[k][RCOMP] = (GLfloat) span->color.rgba[k][RCOMP] * scale;
-            rgbaFloat[k][GCOMP] = (GLfloat) span->color.rgba[k][GCOMP] * scale;
-            rgbaFloat[k][BCOMP] = (GLfloat) span->color.rgba[k][BCOMP] * scale;
-            rgbaFloat[k][ACOMP] = (GLfloat) span->color.rgba[k][ACOMP] * scale;
+            rgbaFloat[k][RCOMP] = (GLfloat) span.array->rgba[k][RCOMP] * scale;
+            rgbaFloat[k][GCOMP] = (GLfloat) span.array->rgba[k][GCOMP] * scale;
+            rgbaFloat[k][BCOMP] = (GLfloat) span.array->rgba[k][BCOMP] * scale;
+            rgbaFloat[k][ACOMP] = (GLfloat) span.array->rgba[k][ACOMP] * scale;
          }
          /* scale & bias */
          if (transferOps & IMAGE_SCALE_BIAS_BIT) {
@@ -454,36 +454,36 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             GLint g = (GLint) (rgbaFloat[k][GCOMP] * CHAN_MAXF);
             GLint b = (GLint) (rgbaFloat[k][BCOMP] * CHAN_MAXF);
             GLint a = (GLint) (rgbaFloat[k][ACOMP] * CHAN_MAXF);
-            span->color.rgba[k][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
-            span->color.rgba[k][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
-            span->color.rgba[k][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
-            span->color.rgba[k][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
+            span.array->rgba[k][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
+            span.array->rgba[k][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
+            span.array->rgba[k][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
+            span.array->rgba[k][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
          }
          UNDEFARRAY(rgbaFloat);  /* mac 32k limitation */
       }
 
       if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-         span->end = width;
-         _swrast_pixel_texture(ctx, span);
+         span.end = width;
+         _swrast_pixel_texture(ctx, &span);
       }
 
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
          (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
-				       (const GLchan (*)[4])span->color.rgba, NULL );
+				       (const GLchan (*)[4])span.array->rgba, NULL );
       }
       else if (zoom) {
-         span->x = destx;
-         span->y = dy;
-         span->end = width;
-         _mesa_write_zoomed_rgba_span(ctx, span,
-                                     (CONST GLchan (*)[4]) span->color.rgba,
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_zoomed_rgba_span(ctx, &span,
+                                     (CONST GLchan (*)[4]) span.array->rgba,
                                      desty);
       }
       else {
-         span->x = destx;
-         span->y = dy;
-         span->end = width;
-         _mesa_write_rgba_span(ctx, span);
+         span.x = destx;
+         span.y = dy;
+         span.end = width;
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
 
@@ -496,7 +496,6 @@ static void copy_ci_pixels( GLcontext *ctx,
                             GLint srcx, GLint srcy, GLint width, GLint height,
                             GLint destx, GLint desty )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint *tmpImage,*p;
    GLint sy, dy, stepy;
    GLint j;
@@ -504,7 +503,7 @@ static void copy_ci_pixels( GLcontext *ctx,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
-   struct sw_span *span = swrast->span;
+   struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
@@ -526,9 +525,9 @@ static void copy_ci_pixels( GLcontext *ctx,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, span);
+      _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, span);
+      _mesa_span_default_fog(ctx, &span);
 
    /* If read and draw buffer are different we must do buffer switching */
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
@@ -564,32 +563,32 @@ static void copy_ci_pixels( GLcontext *ctx,
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       if (overlapping) {
-         MEMCPY(span->color.index, p, width * sizeof(GLuint));
+         MEMCPY(span.array->index, p, width * sizeof(GLuint));
          p += width;
       }
       else {
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
          _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy,
-                                span->color.index );
+                                span.array->index );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
       }
 
       if (shift_or_offset) {
-         _mesa_shift_and_offset_ci( ctx, width, span->color.index );
+         _mesa_shift_and_offset_ci( ctx, width, span.array->index );
       }
       if (ctx->Pixel.MapColorFlag) {
-         _mesa_map_ci( ctx, width, span->color.index );
+         _mesa_map_ci( ctx, width, span.array->index );
       }
 
-      span->x = destx;
-      span->y = dy;
-      span->end = width;
+      span.x = destx;
+      span.y = dy;
+      span.end = width;
       if (zoom)
-         _mesa_write_zoomed_index_span(ctx, span, desty);
+         _mesa_write_zoomed_index_span(ctx, &span, desty);
       else
-         _mesa_write_index_span(ctx, span);
+         _mesa_write_index_span(ctx, &span);
    }
 
    if (overlapping)
@@ -611,7 +610,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint i, j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
-   struct sw_span *span = SWRAST_CONTEXT(ctx)->span;
+   struct sw_span span;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
@@ -637,9 +636,9 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
-   _mesa_span_default_color(ctx, span);
+   _mesa_span_default_color(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, span);
+      _mesa_span_default_fog(ctx, &span);
 
    if (overlapping) {
       GLint ssy = sy;
@@ -671,25 +670,25 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       for (i = 0; i < width; i++) {
          GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         span->zArray[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
+         span.array->z[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
       }
 
-      span->x = destx;
-      span->y = dy;
-      span->end = width;
+      span.x = destx;
+      span.y = dy;
+      span.end = width;
       if (ctx->Visual.rgbMode) {
          if (zoom)
-            _mesa_write_zoomed_rgba_span( ctx, span, 
-                                          (const GLchan (*)[4])span->color.rgba,
+            _mesa_write_zoomed_rgba_span( ctx, &span, 
+                                          (const GLchan (*)[4])span.array->rgba,
                                           desty );
          else
-            _mesa_write_rgba_span(ctx, span);
+            _mesa_write_rgba_span(ctx, &span);
       }
       else {
          if (zoom)
-            _mesa_write_zoomed_index_span( ctx, span, desty );
+            _mesa_write_zoomed_index_span( ctx, &span, desty );
          else
-            _mesa_write_index_span(ctx, span);
+            _mesa_write_index_span(ctx, &span);
       }
    }
 

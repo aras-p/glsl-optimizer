@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.9 2002/05/02 00:59:20 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.10 2002/08/07 00:45:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,13 +99,13 @@ _swrast_pixel_texture(GLcontext *ctx, struct sw_span *span)
 
    /* convert colors into texture coordinates */
    pixeltexgen( ctx, span->end,
-                (const GLchan (*)[4]) span->color.rgba,
-                span->texcoords[0] );
+                (const GLchan (*)[4]) span->array->rgba,
+                span->array->texcoords[0] );
 
    /* copy the new texture units for all enabled units */
    for (unit = 1; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-         MEMCPY( span->texcoords[unit], span->texcoords[0],
+         MEMCPY( span->array->texcoords[unit], span->array->texcoords[0],
                  span->end * 4 * sizeof(GLfloat) );
       }
    }
