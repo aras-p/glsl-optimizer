@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.26 2000/08/03 14:03:17 brianp Exp $ */
+/* $Id: texobj.c,v 1.27 2000/09/12 21:07:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,7 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
 
    if (obj) {
       /* init the non-zero fields */
+      _glthread_INIT_MUTEX(obj->Mutex);
       obj->RefCount = 1;
       obj->Name = name;
       obj->Dimensions = dimensions;
