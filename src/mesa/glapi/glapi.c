@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.7 1999/11/12 18:57:50 brianp Exp $ */
+/* $Id: glapi.c,v 1.8 1999/11/19 22:33:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,1575 +27,2530 @@
 
 #include <assert.h>
 #include <stdlib.h>  /* to get NULL */
+#include <string.h>
 #include "glapi.h"
 #include "glapinoop.h"
 
 
 
-#if defined(MULTI_THREAD)
+/*
+ * Define the DISPATCH_SETUP and DISPATCH macros here dependant on
+ * whether or not threading is enabled.
+ */
+#if defined(THREADS)
 
-/* XXX to do */
+/*** Thread-safe API dispatch ***/
+#include "mthreads.h"
+static MesaTSD mesa_dispatch_tsd;
+static void mesa_dispatch_thread_init() {
+  MesaInitTSD(&mesa_dispatch_tsd);
+}
+#define DISPATCH_SETUP struct _glapi_table *dispatch = (struct _glapi_table *) MesaGetTSD(&mesa_dispatch_tsd)
+#define DISPATCH(FUNC) (dispatch->FUNC)
+
 
 #else
 
+/*** Non-threaded API dispatch ***/
 static struct _glapi_table *Dispatch = &__glapi_noop_table;
+#define DISPATCH_SETUP
 #define DISPATCH(FUNC) (Dispatch->FUNC)
 
 #endif
 
 
+
+/*
+ * Set the global or per-thread dispatch table pointer.
+ */
+void
+_glapi_set_dispatch(struct _glapi_table *dispatch)
+{
+   if (!dispatch) {
+      /* use the no-op functions */
+      dispatch = &__glapi_noop_table;
+   }
+#ifdef DEBUG
+   else {
+      _glapi_check_table(dispatch);
+   }
+#endif
+
+#if defined(THREADS)
+   MesaSetTSD(&mesa_dispatch_tsd, (void*) dispatch, mesa_dispatch_thread_init);
+#else
+   Dispatch = dispatch;
+#endif
+}
+
+
+/*
+ * Get the global or per-thread dispatch table pointer.
+ */
+struct _glapi_table *
+_glapi_get_dispatch(void)
+{
+#if defined(THREADS)
+   /* return this thread's dispatch pointer */
+   return (struct _glapi_table *) MesaGetTSD(&mesa_dispatch_tsd);
+#else
+   return Dispatch;
+#endif
+}
+
+
+/*
+ * Get API dispatcher version string.
+ * XXX this isn't well defined yet.
+ */
+const char *
+_glapi_get_version(void)
+{
+   return "1.2";
+}
+
+
+/*
+ * Return list of hard-coded extension entrypoints in the dispatch table.
+ * XXX this isn't well defined yet.
+ */
+const char *
+_glapi_get_extensions(void)
+{
+   return "GL_EXT_paletted_texture GL_EXT_compiled_vertex_array GL_EXT_point_parameters GL_EXT_polygon_offset GL_EXT_blend_minmax GL_EXT_blend_color GL_ARB_multitexture GL_INGR_blend_func_separate GL_MESA_window_pos GL_MESA_resize_buffers";
+}
+
+
+
+/*
+ * XXX the following dynamic extension code is just a prototype and
+ * not used yet.
+ */
+struct _glapi_ext_entrypoint {
+   const char *Name;
+   GLuint Offset;
+};
+
+#define MAX_EXT_ENTRYPOINTS 100
+
+static struct _glapi_ext_entrypoint ExtEntryTable[MAX_EXT_ENTRYPOINTS];
+static GLuint NumExtEntryPoints;
+
+
+
+/*
+ * Dynamically allocate an extension entry point.
+ * Return a slot number or -1 if table is full.
+ */
+GLint
+_glapi_alloc_entrypoint(const char *funcName)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
+         /* found it */
+         return (GLint) ExtEntryTable[i].Offset;
+      }
+   }
+   if (NumExtEntryPoints < MAX_EXT_ENTRYPOINTS) {
+      /* add it */
+      ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
+      ExtEntryTable[NumExtEntryPoints].Offset = NumExtEntryPoints; /* OK? */
+      NumExtEntryPoints++;
+      return (GLint) (NumExtEntryPoints - 1);
+   }
+   /* no more room in the table */
+   return -1;
+}
+
+
+
+/*
+ * Find the dynamic entry point for the named function.
+ * Return a slot number or -1 if not found.
+ */
+GLint
+_glapi_get_entrypoint(const char *funcName)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
+         /* found it */
+         return (GLint) ExtEntryTable[i].Offset;
+      }
+   }
+   /* not in table */
+   return -1;
+}
+
+
+
+static GLvoid *
+get_static_proc_address(const char *funcName)
+{
+   struct name_address {
+      const char *Name;
+      GLvoid *Address;
+   };
+   static struct name_address apitable[] = {
+      { "glAccum", (GLvoid *) glAccum },
+      { "glAlphaFunc", (GLvoid *) glAlphaFunc },
+      { "glBegin", (GLvoid *) glBegin },
+      { "glBitmap", (GLvoid *) glBitmap },
+      /* ... many more ... */
+      { NULL, NULL }  /* end of list marker */
+   };
+   GLuint i;
+   for (i = 0; apitable[i].Name; i++) {
+      if (strcmp(apitable[i].Name, funcName) == 0) {
+         return apitable[i].Address;
+      }
+   }
+   return NULL;
+}
+
+
+/*
+ * Return entrypoint for named function.
+ */
+const GLvoid *
+_glapi_get_proc_address(const char *funcName)
+{
+   /* look for dynamic extension entry point */
+
+   /* look for static entry point */
+   return get_static_proc_address(funcName);
+}
+
+
+
+/*
+ * Make sure there are no NULL pointers in the given dispatch table.
+ * Intented for debugging purposes.
+ */
+void
+_glapi_check_table(const struct _glapi_table *table)
+{
+   assert(table->Accum);
+   assert(table->AlphaFunc);
+   assert(table->Begin);
+   assert(table->Bitmap);
+   assert(table->BlendFunc);
+   assert(table->CallList);
+   assert(table->CallLists);
+   assert(table->Clear);
+   assert(table->ClearAccum);
+   assert(table->ClearColor);
+   assert(table->ClearDepth);
+   assert(table->ClearIndex);
+   assert(table->ClearStencil);
+   assert(table->ClipPlane);
+   assert(table->Color3b);
+   assert(table->Color3bv);
+   assert(table->Color3d);
+   assert(table->Color3dv);
+   assert(table->Color3f);
+   assert(table->Color3fv);
+   assert(table->Color3i);
+   assert(table->Color3iv);
+   assert(table->Color3s);
+   assert(table->Color3sv);
+   assert(table->Color3ub);
+   assert(table->Color3ubv);
+   assert(table->Color3ui);
+   assert(table->Color3uiv);
+   assert(table->Color3us);
+   assert(table->Color3usv);
+   assert(table->Color4b);
+   assert(table->Color4bv);
+   assert(table->Color4d);
+   assert(table->Color4dv);
+   assert(table->Color4f);
+   assert(table->Color4fv);
+   assert(table->Color4i);
+   assert(table->Color4iv);
+   assert(table->Color4s);
+   assert(table->Color4sv);
+   assert(table->Color4ub);
+   assert(table->Color4ubv);
+   assert(table->Color4ui);
+   assert(table->Color4uiv);
+   assert(table->Color4us);
+   assert(table->Color4usv);
+   assert(table->ColorMask);
+   assert(table->ColorMaterial);
+   assert(table->CopyPixels);
+   assert(table->CullFace);
+   assert(table->DeleteLists);
+   assert(table->DepthFunc);
+   assert(table->DepthMask);
+   assert(table->DepthRange);
+   assert(table->Disable);
+   assert(table->DrawBuffer);
+   assert(table->DrawElements);
+   assert(table->DrawPixels);
+   assert(table->EdgeFlag);
+   assert(table->EdgeFlagv);
+   assert(table->Enable);
+   assert(table->End);
+   assert(table->EndList);
+   assert(table->EvalCoord1d);
+   assert(table->EvalCoord1dv);
+   assert(table->EvalCoord1f);
+   assert(table->EvalCoord1fv);
+   assert(table->EvalCoord2d);
+   assert(table->EvalCoord2dv);
+   assert(table->EvalCoord2f);
+   assert(table->EvalCoord2fv);
+   assert(table->EvalMesh1);
+   assert(table->EvalMesh2);
+   assert(table->EvalPoint1);
+   assert(table->EvalPoint2);
+   assert(table->FeedbackBuffer);
+   assert(table->Finish);
+   assert(table->Flush);
+   assert(table->Fogf);
+   assert(table->Fogfv);
+   assert(table->Fogi);
+   assert(table->Fogiv);
+   assert(table->FrontFace);
+   assert(table->Frustum);
+   assert(table->GenLists);
+   assert(table->GetBooleanv);
+   assert(table->GetClipPlane);
+   assert(table->GetDoublev);
+   assert(table->GetError);
+   assert(table->GetFloatv);
+   assert(table->GetIntegerv);
+   assert(table->GetLightfv);
+   assert(table->GetLightiv);
+   assert(table->GetMapdv);
+   assert(table->GetMapfv);
+   assert(table->GetMapiv);
+   assert(table->GetMaterialfv);
+   assert(table->GetMaterialiv);
+   assert(table->GetPixelMapfv);
+   assert(table->GetPixelMapuiv);
+   assert(table->GetPixelMapusv);
+   assert(table->GetPolygonStipple);
+   assert(table->GetString);
+   assert(table->GetTexEnvfv);
+   assert(table->GetTexEnviv);
+   assert(table->GetTexGendv);
+   assert(table->GetTexGenfv);
+   assert(table->GetTexGeniv);
+   assert(table->GetTexImage);
+   assert(table->GetTexLevelParameterfv);
+   assert(table->GetTexLevelParameteriv);
+   assert(table->GetTexParameterfv);
+   assert(table->GetTexParameteriv);
+   assert(table->Hint);
+   assert(table->IndexMask);
+   assert(table->Indexd);
+   assert(table->Indexdv);
+   assert(table->Indexf);
+   assert(table->Indexfv);
+   assert(table->Indexi);
+   assert(table->Indexiv);
+   assert(table->Indexs);
+   assert(table->Indexsv);
+   assert(table->InitNames);
+   assert(table->IsEnabled);
+   assert(table->IsList);
+   assert(table->LightModelf);
+   assert(table->LightModelfv);
+   assert(table->LightModeli);
+   assert(table->LightModeliv);
+   assert(table->Lightf);
+   assert(table->Lightfv);
+   assert(table->Lighti);
+   assert(table->Lightiv);
+   assert(table->LineStipple);
+   assert(table->LineWidth);
+   assert(table->ListBase);
+   assert(table->LoadIdentity);
+   assert(table->LoadMatrixd);
+   assert(table->LoadMatrixf);
+   assert(table->LoadName);
+   assert(table->LogicOp);
+   assert(table->Map1d);
+   assert(table->Map1f);
+   assert(table->Map2d);
+   assert(table->Map2f);
+   assert(table->MapGrid1d);
+   assert(table->MapGrid1f);
+   assert(table->MapGrid2d);
+   assert(table->MapGrid2f);
+   assert(table->Materialf);
+   assert(table->Materialfv);
+   assert(table->Materiali);
+   assert(table->Materialiv);
+   assert(table->MatrixMode);
+   assert(table->MultMatrixd);
+   assert(table->MultMatrixf);
+   assert(table->NewList);
+   assert(table->Normal3b);
+   assert(table->Normal3bv);
+   assert(table->Normal3d);
+   assert(table->Normal3dv);
+   assert(table->Normal3f);
+   assert(table->Normal3fv);
+   assert(table->Normal3i);
+   assert(table->Normal3iv);
+   assert(table->Normal3s);
+   assert(table->Normal3sv);
+   assert(table->Ortho);
+   assert(table->PassThrough);
+   assert(table->PixelMapfv);
+   assert(table->PixelMapuiv);
+   assert(table->PixelMapusv);
+   assert(table->PixelStoref);
+   assert(table->PixelStorei);
+   assert(table->PixelTransferf);
+   assert(table->PixelTransferi);
+   assert(table->PixelZoom);
+   assert(table->PointSize);
+   assert(table->PolygonMode);
+   assert(table->PolygonOffset);
+   assert(table->PolygonStipple);
+   assert(table->PopAttrib);
+   assert(table->PopMatrix);
+   assert(table->PopName);
+   assert(table->PushAttrib);
+   assert(table->PushMatrix);
+   assert(table->PushName);
+   assert(table->RasterPos2d);
+   assert(table->RasterPos2dv);
+   assert(table->RasterPos2f);
+   assert(table->RasterPos2fv);
+   assert(table->RasterPos2i);
+   assert(table->RasterPos2iv);
+   assert(table->RasterPos2s);
+   assert(table->RasterPos2sv);
+   assert(table->RasterPos3d);
+   assert(table->RasterPos3dv);
+   assert(table->RasterPos3f);
+   assert(table->RasterPos3fv);
+   assert(table->RasterPos3i);
+   assert(table->RasterPos3iv);
+   assert(table->RasterPos3s);
+   assert(table->RasterPos3sv);
+   assert(table->RasterPos4d);
+   assert(table->RasterPos4dv);
+   assert(table->RasterPos4f);
+   assert(table->RasterPos4fv);
+   assert(table->RasterPos4i);
+   assert(table->RasterPos4iv);
+   assert(table->RasterPos4s);
+   assert(table->RasterPos4sv);
+   assert(table->ReadBuffer);
+   assert(table->ReadPixels);
+   assert(table->Rectd);
+   assert(table->Rectdv);
+   assert(table->Rectf);
+   assert(table->Rectfv);
+   assert(table->Recti);
+   assert(table->Rectiv);
+   assert(table->Rects);
+   assert(table->Rectsv);
+   assert(table->RenderMode);
+   assert(table->Rotated);
+   assert(table->Rotatef);
+   assert(table->Scaled);
+   assert(table->Scalef);
+   assert(table->Scissor);
+   assert(table->SelectBuffer);
+   assert(table->ShadeModel);
+   assert(table->StencilFunc);
+   assert(table->StencilMask);
+   assert(table->StencilOp);
+   assert(table->TexCoord1d);
+   assert(table->TexCoord1dv);
+   assert(table->TexCoord1f);
+   assert(table->TexCoord1fv);
+   assert(table->TexCoord1i);
+   assert(table->TexCoord1iv);
+   assert(table->TexCoord1s);
+   assert(table->TexCoord1sv);
+   assert(table->TexCoord2d);
+   assert(table->TexCoord2dv);
+   assert(table->TexCoord2f);
+   assert(table->TexCoord2fv);
+   assert(table->TexCoord2i);
+   assert(table->TexCoord2iv);
+   assert(table->TexCoord2s);
+   assert(table->TexCoord2sv);
+   assert(table->TexCoord3d);
+   assert(table->TexCoord3dv);
+   assert(table->TexCoord3f);
+   assert(table->TexCoord3fv);
+   assert(table->TexCoord3i);
+   assert(table->TexCoord3iv);
+   assert(table->TexCoord3s);
+   assert(table->TexCoord3sv);
+   assert(table->TexCoord4d);
+   assert(table->TexCoord4dv);
+   assert(table->TexCoord4f);
+   assert(table->TexCoord4fv);
+   assert(table->TexCoord4i);
+   assert(table->TexCoord4iv);
+   assert(table->TexCoord4s);
+   assert(table->TexCoord4sv);
+   assert(table->TexEnvf);
+   assert(table->TexEnvfv);
+   assert(table->TexEnvi);
+   assert(table->TexEnviv);
+   assert(table->TexGend);
+   assert(table->TexGendv);
+   assert(table->TexGenf);
+   assert(table->TexGenfv);
+   assert(table->TexGeni);
+   assert(table->TexGeniv);
+   assert(table->TexImage1D);
+   assert(table->TexImage2D);
+   assert(table->TexParameterf);
+   assert(table->TexParameterfv);
+   assert(table->TexParameteri);
+   assert(table->TexParameteriv);
+   assert(table->Translated);
+   assert(table->Translatef);
+   assert(table->Vertex2d);
+   assert(table->Vertex2dv);
+   assert(table->Vertex2f);
+   assert(table->Vertex2fv);
+   assert(table->Vertex2i);
+   assert(table->Vertex2iv);
+   assert(table->Vertex2s);
+   assert(table->Vertex2sv);
+   assert(table->Vertex3d);
+   assert(table->Vertex3dv);
+   assert(table->Vertex3f);
+   assert(table->Vertex3fv);
+   assert(table->Vertex3i);
+   assert(table->Vertex3iv);
+   assert(table->Vertex3s);
+   assert(table->Vertex3sv);
+   assert(table->Vertex4d);
+   assert(table->Vertex4dv);
+   assert(table->Vertex4f);
+   assert(table->Vertex4fv);
+   assert(table->Vertex4i);
+   assert(table->Vertex4iv);
+   assert(table->Vertex4s);
+   assert(table->Vertex4sv);
+   assert(table->Viewport);
+
+#ifdef _GLAPI_VERSION_1_1
+   assert(table->AreTexturesResident);
+   assert(table->ArrayElement);
+   assert(table->BindTexture);
+   assert(table->ColorPointer);
+   assert(table->CopyTexImage1D);
+   assert(table->CopyTexImage2D);
+   assert(table->CopyTexSubImage1D);
+   assert(table->CopyTexSubImage2D);
+   assert(table->DeleteTextures);
+   assert(table->DisableClientState);
+   assert(table->DrawArrays);
+   assert(table->EdgeFlagPointer);
+   assert(table->EnableClientState);
+   assert(table->GenTextures);
+   assert(table->GetPointerv);
+   assert(table->IndexPointer);
+   assert(table->Indexub);
+   assert(table->Indexubv);
+   assert(table->InterleavedArrays);
+   assert(table->IsTexture);
+   assert(table->NormalPointer);
+   assert(table->PopClientAttrib);
+   assert(table->PrioritizeTextures);
+   assert(table->PushClientAttrib);
+   assert(table->TexCoordPointer);
+   assert(table->TexSubImage1D);
+   assert(table->TexSubImage2D);
+   assert(table->VertexPointer);
+#endif
+
+#ifdef _GLAPI_VERSION_1_2
+   assert(table->CopyTexSubImage3D);
+   assert(table->DrawRangeElements);
+   assert(table->TexImage3D);
+   assert(table->TexSubImage3D);
+#ifdef _GLAPI_ARB_imaging
+   assert(table->BlendColor);
+   assert(table->BlendEquation);
+   assert(table->ColorSubTable);
+   assert(table->ColorTable);
+   assert(table->ColorTableParameterfv);
+   assert(table->ColorTableParameteriv);
+   assert(table->ConvolutionFilter1D);
+   assert(table->ConvolutionFilter2D);
+   assert(table->ConvolutionParameterf);
+   assert(table->ConvolutionParameterfv);
+   assert(table->ConvolutionParameteri);
+   assert(table->ConvolutionParameteriv);
+   assert(table->CopyColorSubTable);
+   assert(table->CopyColorTable);
+   assert(table->CopyConvolutionFilter1D);
+   assert(table->CopyConvolutionFilter2D);
+   assert(table->GetColorTable);
+   assert(table->GetColorTableParameterfv);
+   assert(table->GetColorTableParameteriv);
+   assert(table->GetConvolutionFilter);
+   assert(table->GetConvolutionParameterfv);
+   assert(table->GetConvolutionParameteriv);
+   assert(table->GetHistogram);
+   assert(table->GetHistogramParameterfv);
+   assert(table->GetHistogramParameteriv);
+   assert(table->GetMinmax);
+   assert(table->GetMinmaxParameterfv);
+   assert(table->GetMinmaxParameteriv);
+   assert(table->Histogram);
+   assert(table->Minmax);
+   assert(table->ResetHistogram);
+   assert(table->ResetMinmax);
+   assert(table->SeparableFilter2D);
+#endif
+#endif
+
+
+#ifdef _GLAPI_EXT_paletted_texture
+   assert(table->ColorTableEXT);
+   assert(table->ColorSubTableEXT);
+   assert(table->GetColorTableEXT);
+   assert(table->GetColorTableParameterfvEXT);
+   assert(table->GetColorTableParameterivEXT);
+#endif
+
+#ifdef _GLAPI_EXT_compiled_vertex_array
+   assert(table->LockArraysEXT);
+   assert(table->UnlockArraysEXT);
+#endif
+
+#ifdef _GLAPI_EXT_point_parameter
+   assert(table->PointParameterfEXT);
+   assert(table->PointParameterfvEXT);
+#endif
+
+#ifdef _GLAPI_EXT_polygon_offset
+   assert(table->PolygonOffsetEXT);
+#endif
+
+#ifdef _GLAPI_ARB_multitexture
+   assert(table->ActiveTextureARB);
+   assert(table->ClientActiveTextureARB);
+   assert(table->MultiTexCoord1dARB);
+   assert(table->MultiTexCoord1dvARB);
+   assert(table->MultiTexCoord1fARB);
+   assert(table->MultiTexCoord1fvARB);
+   assert(table->MultiTexCoord1iARB);
+   assert(table->MultiTexCoord1ivARB);
+   assert(table->MultiTexCoord1sARB);
+   assert(table->MultiTexCoord1svARB);
+   assert(table->MultiTexCoord2dARB);
+   assert(table->MultiTexCoord2dvARB);
+   assert(table->MultiTexCoord2fARB);
+   assert(table->MultiTexCoord2fvARB);
+   assert(table->MultiTexCoord2iARB);
+   assert(table->MultiTexCoord2ivARB);
+   assert(table->MultiTexCoord2sARB);
+   assert(table->MultiTexCoord2svARB);
+   assert(table->MultiTexCoord3dARB);
+   assert(table->MultiTexCoord3dvARB);
+   assert(table->MultiTexCoord3fARB);
+   assert(table->MultiTexCoord3fvARB);
+   assert(table->MultiTexCoord3iARB);
+   assert(table->MultiTexCoord3ivARB);
+   assert(table->MultiTexCoord3sARB);
+   assert(table->MultiTexCoord3svARB);
+   assert(table->MultiTexCoord4dARB);
+   assert(table->MultiTexCoord4dvARB);
+   assert(table->MultiTexCoord4fARB);
+   assert(table->MultiTexCoord4fvARB);
+   assert(table->MultiTexCoord4iARB);
+   assert(table->MultiTexCoord4ivARB);
+   assert(table->MultiTexCoord4sARB);
+   assert(table->MultiTexCoord4svARB);
+#endif
+
+#ifdef _GLAPI_INGR_blend_func_separate
+   assert(table->BlendFuncSeparateINGR);
+#endif
+
+#ifdef _GLAPI_MESA_window_pos
+   assert(table->WindowPos4fMESA);
+#endif
+
+#ifdef _GLAPI_MESA_resize_buffers
+   assert(table->ResizeBuffersMESA);
+#endif
+}
+
+
+
 void GLAPIENTRY glAccum(GLenum op, GLfloat value)
 {
+   DISPATCH_SETUP;
    DISPATCH(Accum)(op, value);
 }
 
 void GLAPIENTRY glAlphaFunc(GLenum func, GLclampf ref)
 {
+   DISPATCH_SETUP;
    DISPATCH(AlphaFunc)(func, ref);
 }
 
 void GLAPIENTRY glBegin(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(Begin)(mode);
 }
 
 void GLAPIENTRY glBitmap(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap)
 {
+   DISPATCH_SETUP;
    DISPATCH(Bitmap)(width, height, xorig, yorig, xmove, ymove, bitmap);
 }
 
 void GLAPIENTRY glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendFunc)(sfactor, dfactor);
 }
 
 void GLAPIENTRY glCallList(GLuint list)
 {
+   DISPATCH_SETUP;
    DISPATCH(CallList)(list);
 }
 
 void GLAPIENTRY glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
+   DISPATCH_SETUP;
    DISPATCH(CallLists)(n, type, lists);
 }
 
 void GLAPIENTRY glClear(GLbitfield mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(Clear)(mask);
 }
 
 void GLAPIENTRY glClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClearAccum)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClearColor)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glClearDepth(GLclampd depth)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClearDepth)(depth);
 }
 
 void GLAPIENTRY glClearIndex(GLfloat c)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClearIndex)(c);
 }
 
 void GLAPIENTRY glClearStencil(GLint s)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClearStencil)(s);
 }
 
 void GLAPIENTRY glClipPlane(GLenum plane, const GLdouble *equation)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClipPlane)(plane, equation);
 }
 
 void GLAPIENTRY glColor3b(GLbyte red, GLbyte green, GLbyte blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3b)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3d(GLdouble red, GLdouble green, GLdouble blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3d)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3f)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3i(GLint red, GLint green, GLint blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3i)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3s(GLshort red, GLshort green, GLshort blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3s)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3ub(GLubyte red, GLubyte green, GLubyte blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3ub)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3ui(GLuint red, GLuint green, GLuint blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3ui)(red, green, blue);
 }
 
 void GLAPIENTRY glColor3us(GLushort red, GLushort green, GLushort blue)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3us)(red, green, blue);
 }
 
 void GLAPIENTRY glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4b)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4d)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4f)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4i(GLint red, GLint green, GLint blue, GLint alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4i)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4s)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4ub)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4ui)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4us)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColor3bv(const GLbyte *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3bv)(v);
 }
 
 void GLAPIENTRY glColor3dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3dv)(v);
 }
 
 void GLAPIENTRY glColor3fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3fv)(v);
 }
 
 void GLAPIENTRY glColor3iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3iv)(v);
 }
 
 void GLAPIENTRY glColor3sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3sv)(v);
 }
 
 void GLAPIENTRY glColor3ubv(const GLubyte *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3ubv)(v);
 }
 
 void GLAPIENTRY glColor3uiv(const GLuint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3uiv)(v);
 }
 
 void GLAPIENTRY glColor3usv(const GLushort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color3usv)(v);
 }
 
 void GLAPIENTRY glColor4bv(const GLbyte *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4bv)(v);
 }
 
 void GLAPIENTRY glColor4dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4dv)(v);
 }
 
 void GLAPIENTRY glColor4fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4fv)(v);
 }
 
 void GLAPIENTRY glColor4iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4iv)(v);
 }
 
 void GLAPIENTRY glColor4sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4sv)(v);
 }
 
 void GLAPIENTRY glColor4ubv(const GLubyte *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4ubv)(v);
 }
 
 void GLAPIENTRY glColor4uiv(const GLuint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4uiv)(v);
 }
 
 void GLAPIENTRY glColor4usv(const GLushort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Color4usv)(v);
 }
 
 void GLAPIENTRY glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorMask)(red, green, blue, alpha);
 }
 
 void GLAPIENTRY glColorMaterial(GLenum face, GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorMaterial)(face, mode);
 }
 
 void GLAPIENTRY glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyPixels)(x, y, width, height, type);
 }
 
 void GLAPIENTRY glCullFace(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(CullFace)(mode);
 }
 
 void GLAPIENTRY glDepthFunc(GLenum func)
 {
+   DISPATCH_SETUP;
    DISPATCH(DepthFunc)(func);
 }
 
 void GLAPIENTRY glDepthMask(GLboolean flag)
 {
+   DISPATCH_SETUP;
    DISPATCH(DepthMask)(flag);
 }
 
 void GLAPIENTRY glDepthRange(GLclampd nearVal, GLclampd farVal)
 {
+   DISPATCH_SETUP;
    DISPATCH(DepthRange)(nearVal, farVal);
 }
 
 void GLAPIENTRY glDeleteLists(GLuint list, GLsizei range)
 {
+   DISPATCH_SETUP;
    DISPATCH(DeleteLists)(list, range);
 }
 
 void GLAPIENTRY glDisable(GLenum cap)
 {
+   DISPATCH_SETUP;
    DISPATCH(Disable)(cap);
 }
 
 void GLAPIENTRY glDrawBuffer(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawBuffer)(mode);
 }
 
 void GLAPIENTRY glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawElements)(mode, count, type, indices);
 }
 
 void GLAPIENTRY glDrawPixels(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawPixels)(width, height, format, type, pixels);
 }
 
 void GLAPIENTRY glEnable(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(Enable)(mode);
 }
 
 void GLAPIENTRY glEnd(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(End)();
 }
 
 void GLAPIENTRY glEndList(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(EndList)();
 }
 
 void GLAPIENTRY glEvalCoord1d(GLdouble u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord1d)(u);
 }
 
 void GLAPIENTRY glEvalCoord1f(GLfloat u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord1f)(u);
 }
 
 void GLAPIENTRY glEvalCoord1dv(const GLdouble *u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord1dv)(u);
 }
 
 void GLAPIENTRY glEvalCoord1fv(const GLfloat *u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord1fv)(u);
 }
 
 void GLAPIENTRY glEvalCoord2d(GLdouble u, GLdouble v)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord2d)(u, v);
 }
 
 void GLAPIENTRY glEvalCoord2f(GLfloat u, GLfloat v)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord2f)(u, v);
 }
 
 void GLAPIENTRY glEvalCoord2dv(const GLdouble *u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord2dv)(u);
 }
 
 void GLAPIENTRY glEvalCoord2fv(const GLfloat *u)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalCoord2fv)(u);
 }
 
 void GLAPIENTRY glEvalPoint1(GLint i)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalPoint1)(i);
 }
 
 void GLAPIENTRY glEvalPoint2(GLint i, GLint j)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalPoint2)(i, j);
 }
 
 void GLAPIENTRY glEvalMesh1(GLenum mode, GLint i1, GLint i2)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalMesh1)(mode, i1, i2);
 }
 
 void GLAPIENTRY glEdgeFlag(GLboolean flag)
 {
+   DISPATCH_SETUP;
    DISPATCH(EdgeFlag)(flag);
 }
 
 void GLAPIENTRY glEdgeFlagv(const GLboolean *flag)
 {
+   DISPATCH_SETUP;
    DISPATCH(EdgeFlagv)(flag);
 }
 
 void GLAPIENTRY glEvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 {
+   DISPATCH_SETUP;
    DISPATCH(EvalMesh2)(mode, i1, i2, j1, j2);
 }
 
 void GLAPIENTRY glFeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer)
 {
+   DISPATCH_SETUP;
    DISPATCH(FeedbackBuffer)(size, type, buffer);
 }
 
 void GLAPIENTRY glFinish(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(Finish)();
 }
 
 void GLAPIENTRY glFlush(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(Flush)();
 }
 
 void GLAPIENTRY glFogf(GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Fogf)(pname, param);
 }
 
 void GLAPIENTRY glFogi(GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Fogi)(pname, param);
 }
 
 void GLAPIENTRY glFogfv(GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Fogfv)(pname, params);
 }
 
 void GLAPIENTRY glFogiv(GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Fogiv)(pname, params);
 }
 
 void GLAPIENTRY glFrontFace(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(FrontFace)(mode);
 }
 
 void GLAPIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble nearval, GLdouble farval)
 {
+   DISPATCH_SETUP;
    DISPATCH(Frustum)(left, right, bottom, top, nearval, farval);
 }
 
 GLuint GLAPIENTRY glGenLists(GLsizei range)
 {
+   DISPATCH_SETUP;
    return DISPATCH(GenLists)(range);
 }
 
 void GLAPIENTRY glGetBooleanv(GLenum pname, GLboolean *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetBooleanv)(pname, params);
 }
 
 void GLAPIENTRY glGetClipPlane(GLenum plane, GLdouble *equation)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetClipPlane)(plane, equation);
 }
 
 void GLAPIENTRY glGetDoublev(GLenum pname, GLdouble *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetDoublev)(pname, params);
 }
 
 GLenum GLAPIENTRY glGetError(void)
 {
+   DISPATCH_SETUP;
    return DISPATCH(GetError)();
 }
 
 void GLAPIENTRY glGetFloatv(GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetFloatv)(pname, params);
 }
 
 void GLAPIENTRY glGetIntegerv(GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetIntegerv)(pname, params);
 }
 
 void GLAPIENTRY glGetLightfv(GLenum light, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetLightfv)(light, pname, params);
 }
 
 void GLAPIENTRY glGetLightiv(GLenum light, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetLightiv)(light, pname, params);
 }
 
 void GLAPIENTRY glGetMapdv(GLenum target, GLenum query, GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMapdv)(target, query, v);
 }
 
 void GLAPIENTRY glGetMapfv(GLenum target, GLenum query, GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMapfv)(target, query, v);
 }
 
 void GLAPIENTRY glGetMapiv(GLenum target, GLenum query, GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMapiv)(target, query, v);
 }
 
 void GLAPIENTRY glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMaterialfv)(face, pname, params);
 }
 
 void GLAPIENTRY glGetMaterialiv(GLenum face, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMaterialiv)(face, pname, params);
 }
 
 void GLAPIENTRY glGetPixelMapfv(GLenum map, GLfloat *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPixelMapfv)(map, values);
 }
 
 void GLAPIENTRY glGetPixelMapuiv(GLenum map, GLuint *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPixelMapuiv)(map, values);
 }
 
 void GLAPIENTRY glGetPixelMapusv(GLenum map, GLushort *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPixelMapusv)(map, values);
 }
 
 void GLAPIENTRY glGetPolygonStipple(GLubyte *mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPolygonStipple)(mask);
 }
 
 const GLubyte * GLAPIENTRY glGetString(GLenum name)
 {
+   DISPATCH_SETUP;
    return DISPATCH(GetString)(name);
 }
 
 void GLAPIENTRY glGetTexEnvfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexEnvfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexEnviv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexEnviv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexGeniv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexGeniv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexGendv(GLenum target, GLenum pname, GLdouble *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexGendv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexGenfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexGenfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexImage)(target, level, format, type, pixels);
 }
 
 void GLAPIENTRY glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexLevelParameterfv)(target, level, pname, params);
 }
 
 void GLAPIENTRY glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexLevelParameteriv)(target, level, pname, params);
 }
 
 void GLAPIENTRY glGetTexParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetTexParameteriv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetTexParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glHint(GLenum target, GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(Hint)(target, mode);
 }
 
 void GLAPIENTRY glIndexd(GLdouble c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexd)(c);
 }
 
 void GLAPIENTRY glIndexdv(const GLdouble *c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexdv)(c);
 }
 
 void GLAPIENTRY glIndexf(GLfloat c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexf)(c);
 }
 
 void GLAPIENTRY glIndexfv(const GLfloat *c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexfv)(c);
 }
 
 void GLAPIENTRY glIndexi(GLint c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexi)(c);
 }
 
 void GLAPIENTRY glIndexiv(const GLint *c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexiv)(c);
 }
 
 void GLAPIENTRY glIndexs(GLshort c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexs)(c);
 }
 
 void GLAPIENTRY glIndexsv(const GLshort *c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexsv)(c);
 }
 
 void GLAPIENTRY glIndexub(GLubyte c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexub)(c);
 }
 
 void GLAPIENTRY glIndexubv(const GLubyte *c)
 {
+   DISPATCH_SETUP;
    DISPATCH(Indexubv)(c);
 }
 
 void GLAPIENTRY glIndexMask(GLuint mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(IndexMask)(mask);
 }
 
 void GLAPIENTRY glInitNames(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(InitNames)();
 }
 
 void GLAPIENTRY glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 {
+   DISPATCH_SETUP;
    DISPATCH(InterleavedArrays)(format, stride, pointer);
 }
 
 GLboolean GLAPIENTRY glIsEnabled(GLenum cap)
 {
+   DISPATCH_SETUP;
    return DISPATCH(IsEnabled)(cap);
 }
 
 GLboolean GLAPIENTRY glIsList(GLuint list)
 {
+   DISPATCH_SETUP;
    return DISPATCH(IsList)(list);
 }
 
 GLboolean GLAPIENTRY glIsTexture(GLuint texture)
 {
+   DISPATCH_SETUP;
    return DISPATCH(IsTexture)(texture);
 }
 
 void GLAPIENTRY glLightf(GLenum light, GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Lightf)(light, pname, param);
 }
 
 void GLAPIENTRY glLighti(GLenum light, GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Lighti)(light, pname, param);
 }
 
 void GLAPIENTRY glLightfv(GLenum light, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Lightfv)(light, pname, params);
 }
 
 void GLAPIENTRY glLightiv(GLenum light, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Lightiv)(light, pname, params);
 }
 
 void GLAPIENTRY glLightModelf(GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(LightModelf)(pname, param);
 }
 
 void GLAPIENTRY glLightModeli(GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(LightModeli)(pname, param);
 }
 
 void GLAPIENTRY glLightModelfv(GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(LightModelfv)(pname, params);
 }
 
 void GLAPIENTRY glLightModeliv(GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(LightModeliv)(pname, params);
 }
 
 void GLAPIENTRY glLineWidth(GLfloat width)
 {
+   DISPATCH_SETUP;
    DISPATCH(LineWidth)(width);
 }
 
 void GLAPIENTRY glLineStipple(GLint factor, GLushort pattern)
 {
+   DISPATCH_SETUP;
    DISPATCH(LineStipple)(factor, pattern);
 }
 
 void GLAPIENTRY glListBase(GLuint base)
 {
+   DISPATCH_SETUP;
    DISPATCH(ListBase)(base);
 }
 
 void GLAPIENTRY glLoadIdentity(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(LoadIdentity)();
 }
 
 void GLAPIENTRY glLoadMatrixd(const GLdouble *m)
 {
+   DISPATCH_SETUP;
    DISPATCH(LoadMatrixd)(m);
 }
 
 void GLAPIENTRY glLoadMatrixf(const GLfloat *m)
 {
+   DISPATCH_SETUP;
    DISPATCH(LoadMatrixf)(m);
 }
 
 void GLAPIENTRY glLoadName(GLuint name)
 {
+   DISPATCH_SETUP;
    DISPATCH(LoadName)(name);
 }
 
 void GLAPIENTRY glLogicOp(GLenum opcode)
 {
+   DISPATCH_SETUP;
    DISPATCH(LogicOp)(opcode);
 }
 
 void GLAPIENTRY glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points)
 {
+   DISPATCH_SETUP;
    DISPATCH(Map1d)(target, u1, u2, stride, order, points);
 }
 
 void GLAPIENTRY glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points)
 {
+   DISPATCH_SETUP;
    DISPATCH(Map1f)(target, u1, u2, stride, order, points);
 }
 
 void GLAPIENTRY glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points)
 {
+   DISPATCH_SETUP;
    DISPATCH(Map2d)(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
 }
 
 void GLAPIENTRY glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points)
 {
+   DISPATCH_SETUP;
    DISPATCH(Map2f)(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
 }
 
 void GLAPIENTRY glMapGrid1d(GLint un, GLdouble u1, GLdouble u2)
 {
+   DISPATCH_SETUP;
    DISPATCH(MapGrid1d)(un, u1, u2);
 }
 
 void GLAPIENTRY glMapGrid1f(GLint un, GLfloat u1, GLfloat u2)
 {
+   DISPATCH_SETUP;
    DISPATCH(MapGrid1f)(un, u1, u2);
 }
 
 void GLAPIENTRY glMapGrid2d(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(MapGrid2d)(un, u1, u2, vn, v1, v2);
 }
 
 void GLAPIENTRY glMapGrid2f(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(MapGrid2f)(un, u1, u2, vn, v1, v2);
 }
 
 void GLAPIENTRY glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Materialf)(face, pname, param);
 }
 
 void GLAPIENTRY glMateriali(GLenum face, GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(Materiali)(face, pname, param);
 }
 
 void GLAPIENTRY glMaterialfv(GLenum face, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Materialfv)(face, pname, params);
 }
 
 void GLAPIENTRY glMaterialiv(GLenum face, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(Materialiv)(face, pname, params);
 }
 
 void GLAPIENTRY glMatrixMode(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(MatrixMode)(mode);
 }
 
 void GLAPIENTRY glMultMatrixd(const GLdouble *m)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultMatrixd)(m);
 }
 
 void GLAPIENTRY glMultMatrixf(const GLfloat *m)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultMatrixf)(m);
 }
 
 void GLAPIENTRY glNewList(GLuint list, GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(NewList)(list, mode);
 }
 
 void GLAPIENTRY glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3b)(nx, ny, nz);
 }
 
 void GLAPIENTRY glNormal3bv(const GLbyte *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3bv)(v);
 }
 
 void GLAPIENTRY glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3d)(nx, ny, nz);
 }
 
 void GLAPIENTRY glNormal3dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3dv)(v);
 }
 
 void GLAPIENTRY glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3f)(nx, ny, nz);
 }
 
 void GLAPIENTRY glNormal3fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3fv)(v);
 }
 
 void GLAPIENTRY glNormal3i(GLint nx, GLint ny, GLint nz)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3i)(nx, ny, nz);
 }
 
 void GLAPIENTRY glNormal3iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3iv)(v);
 }
 
 void GLAPIENTRY glNormal3s(GLshort nx, GLshort ny, GLshort nz)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3s)(nx, ny, nz);
 }
 
 void GLAPIENTRY glNormal3sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Normal3sv)(v);
 }
 
 void GLAPIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble nearval, GLdouble farval)
 {
+   DISPATCH_SETUP;
    DISPATCH(Ortho)(left, right, bottom, top, nearval, farval);
 }
 
 void GLAPIENTRY glPassThrough(GLfloat token)
 {
+   DISPATCH_SETUP;
    DISPATCH(PassThrough)(token);
 }
 
 void GLAPIENTRY glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelMapfv)(map, mapsize, values);
 }
 
 void GLAPIENTRY glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelMapuiv)(map, mapsize, values);
 }
 
 void GLAPIENTRY glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelMapusv)(map, mapsize, values);
 }
 
 void GLAPIENTRY glPixelStoref(GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelStoref)(pname, param);
 }
 
 void GLAPIENTRY glPixelStorei(GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelStorei)(pname, param);
 }
 
 void GLAPIENTRY glPixelTransferf(GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelTransferf)(pname, param);
 }
 
 void GLAPIENTRY glPixelTransferi(GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelTransferi)(pname, param);
 }
 
 void GLAPIENTRY glPixelZoom(GLfloat xfactor, GLfloat yfactor)
 {
+   DISPATCH_SETUP;
    DISPATCH(PixelZoom)(xfactor, yfactor);
 }
 
 void GLAPIENTRY glPointSize(GLfloat size)
 {
+   DISPATCH_SETUP;
    DISPATCH(PointSize)(size);
 }
 
 void GLAPIENTRY glPolygonMode(GLenum face, GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(PolygonMode)(face, mode);
 }
 
 void GLAPIENTRY glPolygonStipple(const GLubyte *pattern)
 {
+   DISPATCH_SETUP;
    DISPATCH(PolygonStipple)(pattern);
 }
 
 void GLAPIENTRY glPopAttrib(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(PopAttrib)();
 }
 
 void GLAPIENTRY glPopMatrix(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(PopMatrix)();
 }
 
 void GLAPIENTRY glPopName(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(PopName)();
 }
 
 void GLAPIENTRY glPushAttrib(GLbitfield mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(PushAttrib)(mask);
 }
 
 void GLAPIENTRY glPushMatrix(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(PushMatrix)();
 }
 
 void GLAPIENTRY glPushName(GLuint name)
 {
+   DISPATCH_SETUP;
    DISPATCH(PushName)(name);
 }
 
 void GLAPIENTRY glRasterPos2d(GLdouble x, GLdouble y)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2d)(x, y);
 }
 
 void GLAPIENTRY glRasterPos2f(GLfloat x, GLfloat y)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2f)(x, y);
 }
 
 void GLAPIENTRY glRasterPos2i(GLint x, GLint y)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2i)(x, y);
 }
 
 void GLAPIENTRY glRasterPos2s(GLshort x, GLshort y)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2s)(x, y);
 }
 
 void GLAPIENTRY glRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3d)(x, y, z);
 }
 
 void GLAPIENTRY glRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3f)(x, y, z);
 }
 
 void GLAPIENTRY glRasterPos3i(GLint x, GLint y, GLint z)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3i)(x, y, z);
 }
 
 void GLAPIENTRY glRasterPos3s(GLshort x, GLshort y, GLshort z)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3s)(x, y, z);
 }
 
 void GLAPIENTRY glRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4d)(x, y, z, w);
 }
 
 void GLAPIENTRY glRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4f)(x, y, z, w);
 }
 
 void GLAPIENTRY glRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4i)(x, y, z, w);
 }
 
 void GLAPIENTRY glRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4s)(x, y, z, w);
 }
 
 void GLAPIENTRY glRasterPos2dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2dv)(v);
 }
 
 void GLAPIENTRY glRasterPos2fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2fv)(v);
 }
 
 void GLAPIENTRY glRasterPos2iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2iv)(v);
 }
 
 void GLAPIENTRY glRasterPos2sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos2sv)(v);
 }
 
 void GLAPIENTRY glRasterPos3dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3dv)(v);
 }
 
 void GLAPIENTRY glRasterPos3fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3fv)(v);
 }
 
 void GLAPIENTRY glRasterPos3iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3iv)(v);
 }
 
 void GLAPIENTRY glRasterPos3sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos3sv)(v);
 }
 
 void GLAPIENTRY glRasterPos4dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4dv)(v);
 }
 
 void GLAPIENTRY glRasterPos4fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4fv)(v);
 }
 
 void GLAPIENTRY glRasterPos4iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4iv)(v);
 }
 
 void GLAPIENTRY glRasterPos4sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(RasterPos4sv)(v);
 }
 
 void GLAPIENTRY glReadBuffer(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(ReadBuffer)(mode);
 }
 
 void GLAPIENTRY glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(ReadPixels)(x, y, width, height, format, type, pixels);
 }
 
 void GLAPIENTRY glRectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectd)(x1, y1, x2, y2);
 }
 
 void GLAPIENTRY glRectdv(const GLdouble *v1, const GLdouble *v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectdv)(v1, v2);
 }
 
 void GLAPIENTRY glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectf)(x1, y1, x2, y2);
 }
 
 void GLAPIENTRY glRectfv(const GLfloat *v1, const GLfloat *v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectfv)(v1, v2);
 }
 
 void GLAPIENTRY glRecti(GLint x1, GLint y1, GLint x2, GLint y2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Recti)(x1, y1, x2, y2);
 }
 
 void GLAPIENTRY glRectiv(const GLint *v1, const GLint *v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectiv)(v1, v2);
 }
 
 void GLAPIENTRY glRects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rects)(x1, y1, x2, y2);
 }
 
 void GLAPIENTRY glRectsv(const GLshort *v1, const GLshort *v2)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rectsv)(v1, v2);
 }
 
 GLint GLAPIENTRY glRenderMode(GLenum mode)
 {
+   DISPATCH_SETUP;
    return DISPATCH(RenderMode)(mode);
 }
 
 void GLAPIENTRY glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rotated)(angle, x, y, z);
 }
 
 void GLAPIENTRY glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Rotatef)(angle, x, y, z);
 }
 
 void GLAPIENTRY glSelectBuffer(GLsizei size, GLuint *buffer)
 {
+   DISPATCH_SETUP;
    DISPATCH(SelectBuffer)(size, buffer);
 }
 
 void GLAPIENTRY glScaled(GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Scaled)(x, y, z);
 }
 
 void GLAPIENTRY glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Scalef)(x, y, z);
 }
 
 void GLAPIENTRY glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(Scissor)(x, y, width, height);
 }
 
 void GLAPIENTRY glShadeModel(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(ShadeModel)(mode);
 }
 
 void GLAPIENTRY glStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(StencilFunc)(func, ref, mask);
 }
 
 void GLAPIENTRY glStencilMask(GLuint mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(StencilMask)(mask);
 }
 
 void GLAPIENTRY glStencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
+   DISPATCH_SETUP;
    DISPATCH(StencilOp)(fail, zfail, zpass);
 }
 
 void GLAPIENTRY glTexCoord1d(GLdouble s)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1d)(s);
 }
 
 void GLAPIENTRY glTexCoord1f(GLfloat s)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1f)(s);
 }
 
 void GLAPIENTRY glTexCoord1i(GLint s)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1i)(s);
 }
 
 void GLAPIENTRY glTexCoord1s(GLshort s)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1s)(s);
 }
 
 void GLAPIENTRY glTexCoord2d(GLdouble s, GLdouble t)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2d)(s, t);
 }
 
 void GLAPIENTRY glTexCoord2f(GLfloat s, GLfloat t)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2f)(s, t);
 }
 
 void GLAPIENTRY glTexCoord2s(GLshort s, GLshort t)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2s)(s, t);
 }
 
 void GLAPIENTRY glTexCoord2i(GLint s, GLint t)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2i)(s, t);
 }
 
 void GLAPIENTRY glTexCoord3d(GLdouble s, GLdouble t, GLdouble r)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3d)(s, t, r);
 }
 
 void GLAPIENTRY glTexCoord3f(GLfloat s, GLfloat t, GLfloat r)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3f)(s, t, r);
 }
 
 void GLAPIENTRY glTexCoord3i(GLint s, GLint t, GLint r)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3i)(s, t, r);
 }
 
 void GLAPIENTRY glTexCoord3s(GLshort s, GLshort t, GLshort r)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3s)(s, t, r);
 }
 
 void GLAPIENTRY glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4d)(s, t, r, q);
 }
 
 void GLAPIENTRY glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4f)(s, t, r, q);
 }
 
 void GLAPIENTRY glTexCoord4i(GLint s, GLint t, GLint r, GLint q)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4i)(s, t, r, q);
 }
 
 void GLAPIENTRY glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4s)(s, t, r, q);
 }
 
 void GLAPIENTRY glTexCoord1dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1dv)(v);
 }
 
 void GLAPIENTRY glTexCoord1fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1fv)(v);
 }
 
 void GLAPIENTRY glTexCoord1iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1iv)(v);
 }
 
 void GLAPIENTRY glTexCoord1sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord1sv)(v);
 }
 
 void GLAPIENTRY glTexCoord2dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2dv)(v);
 }
 
 void GLAPIENTRY glTexCoord2fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2fv)(v);
 }
 
 void GLAPIENTRY glTexCoord2iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2iv)(v);
 }
 
 void GLAPIENTRY glTexCoord2sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord2sv)(v);
 }
 
 void GLAPIENTRY glTexCoord3dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3dv)(v);
 }
 
 void GLAPIENTRY glTexCoord3fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3fv)(v);
 }
 
 void GLAPIENTRY glTexCoord3iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3iv)(v);
 }
 
 void GLAPIENTRY glTexCoord3sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord3sv)(v);
 }
 
 void GLAPIENTRY glTexCoord4dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4dv)(v);
 }
 
 void GLAPIENTRY glTexCoord4fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4fv)(v);
 }
 
 void GLAPIENTRY glTexCoord4iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4iv)(v);
 }
 
 void GLAPIENTRY glTexCoord4sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoord4sv)(v);
 }
 
 void GLAPIENTRY glTexGend(GLenum coord, GLenum pname, GLdouble param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGend)(coord, pname, param);
 }
 
 void GLAPIENTRY glTexGendv(GLenum coord, GLenum pname, const GLdouble *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGendv)(coord, pname, params);
 }
 
 void GLAPIENTRY glTexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGenf)(coord, pname, param);
 }
 
 void GLAPIENTRY glTexGenfv(GLenum coord, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGenfv)(coord, pname, params);
 }
 
 void GLAPIENTRY glTexGeni(GLenum coord, GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGeni)(coord, pname, param);
 }
 
 void GLAPIENTRY glTexGeniv(GLenum coord, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexGeniv)(coord, pname, params);
 }
 
 void GLAPIENTRY glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexEnvf)(target, pname, param);
 }
 
 void GLAPIENTRY glTexEnvfv(GLenum target, GLenum pname, const GLfloat *param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexEnvfv)(target, pname, param);
 }
 
 void GLAPIENTRY glTexEnvi(GLenum target, GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexEnvi)(target, pname, param);
 }
 
 void GLAPIENTRY glTexEnviv(GLenum target, GLenum pname, const GLint *param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexEnviv)(target, pname, param);
 }
 
 void GLAPIENTRY glTexImage1D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexImage1D)(target, level, internalformat, width, border, format, type, pixels);
 }
 
 void GLAPIENTRY glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexImage2D)(target, level, internalformat, width, height, border, format, type, pixels);
 }
 
 void GLAPIENTRY glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexParameterf)(target, pname, param);
 }
 
 void GLAPIENTRY glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glTexParameteri(GLenum target, GLenum pname, GLint param)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexParameteri)(target, pname, param);
 }
 
 void GLAPIENTRY glTexParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glTranslated(GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Translated)(x, y, z);
 }
 
 void GLAPIENTRY glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Translatef)(x, y, z);
 }
 
 void GLAPIENTRY glVertex2d(GLdouble x, GLdouble y)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2d)(x, y);
 }
 
 void GLAPIENTRY glVertex2dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2dv)(v);
 }
 
 void GLAPIENTRY glVertex2f(GLfloat x, GLfloat y)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2f)(x, y);
 }
 
 void GLAPIENTRY glVertex2fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2fv)(v);
 }
 
 void GLAPIENTRY glVertex2i(GLint x, GLint y)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2i)(x, y);
 }
 
 void GLAPIENTRY glVertex2iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2iv)(v);
 }
 
 void GLAPIENTRY glVertex2s(GLshort x, GLshort y)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2s)(x, y);
 }
 
 void GLAPIENTRY glVertex2sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex2sv)(v);
 }
 
 void GLAPIENTRY glVertex3d(GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3d)(x, y, z);
 }
 
 void GLAPIENTRY glVertex3dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3dv)(v);
 }
 
 void GLAPIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3f)(x, y, z);
 }
 
 void GLAPIENTRY glVertex3fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3fv)(v);
 }
 
 void GLAPIENTRY glVertex3i(GLint x, GLint y, GLint z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3i)(x, y, z);
 }
 
 void GLAPIENTRY glVertex3iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3iv)(v);
 }
 
 void GLAPIENTRY glVertex3s(GLshort x, GLshort y, GLshort z)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3s)(x, y, z);
 }
 
 void GLAPIENTRY glVertex3sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex3sv)(v);
 }
 
 void GLAPIENTRY glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4d)(x, y, z, w);
 }
 
 void GLAPIENTRY glVertex4dv(const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4dv)(v);
 }
 
 void GLAPIENTRY glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4f)(x, y, z, w);
 }
 
 void GLAPIENTRY glVertex4fv(const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4fv)(v);
 }
 
 void GLAPIENTRY glVertex4i(GLint x, GLint y, GLint z, GLint w)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4i)(x, y, z, w);
 }
 
 void GLAPIENTRY glVertex4iv(const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4iv)(v);
 }
 
 void GLAPIENTRY glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4s)(x, y, z, w);
 }
 
 void GLAPIENTRY glVertex4sv(const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(Vertex4sv)(v);
 }
 
 void GLAPIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(Viewport)(x, y, width, height);
 }
 
@@ -1606,126 +2561,151 @@ void GLAPIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 GLboolean GLAPIENTRY glAreTexturesResident(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
+   DISPATCH_SETUP;
    return DISPATCH(AreTexturesResident)(n, textures, residences);
 }
 
 void GLAPIENTRY glArrayElement(GLint i)
 {
+   DISPATCH_SETUP;
    DISPATCH(ArrayElement)(i);
 }
 
 void GLAPIENTRY glBindTexture(GLenum target, GLuint texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(BindTexture)(target, texture);
 }
 
 void GLAPIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorPointer)(size, type, stride, ptr);
 }
 
 void GLAPIENTRY glCopyTexImage1D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexImage1D)(target, level, internalformat, x, y, width, border);
 }
 
 void GLAPIENTRY glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexImage2D)(target, level, internalformat, x, y, width, height, border);
 }
 
 void GLAPIENTRY glCopyTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexSubImage1D)(target, level, xoffset, x, y, width);
 }
 
 void GLAPIENTRY glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexSubImage2D)(target, level, xoffset, yoffset, x, y, width, height);
 }
 
 void GLAPIENTRY glDeleteTextures(GLsizei n, const GLuint *textures)
 {
+   DISPATCH_SETUP;
    DISPATCH(DeleteTextures)(n, textures);
 }
 
 void GLAPIENTRY glDisableClientState(GLenum cap)
 {
+   DISPATCH_SETUP;
    DISPATCH(DisableClientState)(cap);
 }
 
 void GLAPIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawArrays)(mode, first, count);
 }
 
 void GLAPIENTRY glEdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(EdgeFlagPointer)(stride, ptr);
 }
 
 void GLAPIENTRY glEnableClientState(GLenum cap)
 {
+   DISPATCH_SETUP;
    DISPATCH(EnableClientState)(cap);
 }
 
 void GLAPIENTRY glGenTextures(GLsizei n, GLuint *textures)
 {
+   DISPATCH_SETUP;
    DISPATCH(GenTextures)(n, textures);
 }
 
 void GLAPIENTRY glGetPointerv(GLenum pname, GLvoid **params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPointerv)(pname, params);
 }
 
 void GLAPIENTRY glIndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(IndexPointer)(type, stride, ptr);
 }
 
 void GLAPIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(NormalPointer)(type, stride, ptr);
 }
 
 void GLAPIENTRY glPolygonOffset(GLfloat factor, GLfloat units)
 {
+   DISPATCH_SETUP;
    DISPATCH(PolygonOffset)(factor, units);
 }
 
 void GLAPIENTRY glPopClientAttrib(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(PopClientAttrib)();
 }
 
 void GLAPIENTRY glPrioritizeTextures(GLsizei n, const GLuint *textures, const GLclampf *priorities)
 {
+   DISPATCH_SETUP;
    DISPATCH(PrioritizeTextures)(n, textures, priorities);
 }
 
 void GLAPIENTRY glPushClientAttrib(GLbitfield mask)
 {
+   DISPATCH_SETUP;
    DISPATCH(PushClientAttrib)(mask);
 }
 
 void GLAPIENTRY glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexCoordPointer)(size, type, stride, ptr);
 }
 
 void GLAPIENTRY glTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexSubImage1D)(target, level, xoffset, width, format, type, pixels);
 }
 
 void GLAPIENTRY glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexSubImage2D)(target, level, xoffset, yoffset, width, height, format, type, pixels);
 }
 
 void GLAPIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    DISPATCH(VertexPointer)(size, type, stride, ptr);
 }
 
@@ -1737,21 +2717,25 @@ void GLAPIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const G
 
 void GLAPIENTRY glCopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexSubImage3D)(target, level, xoffset, yoffset, zoffset, x, y, width, height);
 }
 
 void GLAPIENTRY glDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawRangeElements)(mode, start, end, count, type, indices);
 }
 
 void GLAPIENTRY glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexImage3D)(target, level, internalformat, width, height, depth, border, format, type, pixels);
 }
 
 void GLAPIENTRY glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexSubImage3D)(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 }
 
@@ -1760,171 +2744,205 @@ void GLAPIENTRY glTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint
 
 void GLAPIENTRY glBlendColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendColor)(r, g, b, a);
 }
 
 void GLAPIENTRY glBlendEquation(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendEquation)(mode);
 }
 
 void GLAPIENTRY glColorSubTable(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorSubTable)(target, start, count, format, type, data);
 }
 
 void GLAPIENTRY glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorTable)(target, internalformat, width, format, type, table);
 }
 
 void GLAPIENTRY glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorTableParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorTableParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionFilter1D)(target, internalformat, width, format, type, image);
 }
 
 void GLAPIENTRY glConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionFilter2D)(target, internalformat, width, height, format, type, image);
 }
 
 void GLAPIENTRY glConvolutionParameterf(GLenum target, GLenum pname, GLfloat params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionParameterf)(target, pname, params);
 }
 
 void GLAPIENTRY glConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glConvolutionParameteri(GLenum target, GLenum pname, GLint params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionParameteri)(target, pname, params);
 }
 
 void GLAPIENTRY glConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(ConvolutionParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glCopyColorSubTable(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyColorSubTable)(target, start, x, y, width);
 }
 
 void GLAPIENTRY glCopyColorTable(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyColorTable)(target, internalformat, x, y, width);
 }
 
 void GLAPIENTRY glCopyConvolutionFilter1D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyConvolutionFilter1D)(target, internalformat, x, y, width);
 }
 
 void GLAPIENTRY glCopyConvolutionFilter2D(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyConvolutionFilter2D)(target, internalformat, x, y, width, height);
 }
 
 void GLAPIENTRY glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid *table)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTable)(target, format, type, table);
 }
 
 void GLAPIENTRY glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTableParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTableParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetConvolutionFilter)(target, format, type, image);
 }
 
 void GLAPIENTRY glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetConvolutionParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetConvolutionParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetHistogram)(target, reset, format, type, values);
 }
 
 void GLAPIENTRY glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetHistogramParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetHistogramParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMinmax)(target, reset, format, types, values);
 }
 
 void GLAPIENTRY glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMinmaxParameterfv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetMinmaxParameteriv)(target, pname, params);
 }
 
 void GLAPIENTRY glGetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetSeparableFilter)(target, format, type, row, column, span);
 }
 
 void GLAPIENTRY glHistogram(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
 {
+   DISPATCH_SETUP;
    DISPATCH(Histogram)(target, width, internalformat, sink);
 }
 
 void GLAPIENTRY glMinmax(GLenum target, GLenum internalformat, GLboolean sink)
 {
+   DISPATCH_SETUP;
    DISPATCH(Minmax)(target, internalformat, sink);
 }
 
 void GLAPIENTRY glResetMinmax(GLenum target)
 {
+   DISPATCH_SETUP;
    DISPATCH(ResetMinmax)(target);
 }
 
 void GLAPIENTRY glResetHistogram(GLenum target)
 {
+   DISPATCH_SETUP;
    DISPATCH(ResetHistogram)(target);
 }
 
 void GLAPIENTRY glSeparableFilter2D(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
 {
+   DISPATCH_SETUP;
    DISPATCH(SeparableFilter2D)(target, internalformat, width, height, format, type, row, column);
 }
 
@@ -1941,6 +2959,7 @@ void GLAPIENTRY glSeparableFilter2D(GLenum target, GLenum internalformat, GLsize
 #ifdef _GLAPI_EXT_blend_minmax
 void GLAPIENTRY glBlendEquationEXT(GLenum mode)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendEquationEXT)(mode);
 }
 #endif
@@ -1949,6 +2968,7 @@ void GLAPIENTRY glBlendEquationEXT(GLenum mode)
 #ifdef _GLAPI_EXT_blend_color
 void GLAPIENTRY glBlendColorEXT(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendColorEXT)(red, green, blue, alpha);
 }
 #endif
@@ -1957,6 +2977,7 @@ void GLAPIENTRY glBlendColorEXT(GLclampf red, GLclampf green, GLclampf blue, GLc
 #ifdef _GLAPI_EXT_polygon_offset
 void GLAPIENTRY glPolygonOffsetEXT(GLfloat factor, GLfloat bias)
 {
+   DISPATCH_SETUP;
    DISPATCH(PolygonOffsetEXT)(factor, bias);
 }
 #endif
@@ -1967,52 +2988,61 @@ void GLAPIENTRY glPolygonOffsetEXT(GLfloat factor, GLfloat bias)
 
 void GLAPIENTRY glVertexPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(VertexPointer)(size, type, stride, ptr);
 }
 
 void GLAPIENTRY glNormalPointerEXT(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(NormalPointer)(type, stride, ptr);
 }
 
 void GLAPIENTRY glColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(ColorPointer)(size, type, stride, ptr);
 }
 
 void GLAPIENTRY glIndexPointerEXT(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(IndexPointer)(type, stride, ptr);
 }
 
 void GLAPIENTRY glTexCoordPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(ColorPointer)(size, type, stride, ptr);
 }
 
 void GLAPIENTRY glEdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr)
 {
+   DISPATCH_SETUP;
    (void) count;
    DISPATCH(EdgeFlagPointer)(stride, ptr);
 }
 
 void GLAPIENTRY glGetPointervEXT(GLenum pname, void **params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetPointerv)(pname, params);
 }
 
 void GLAPIENTRY glArrayElementEXT(GLint i)
 {
+   DISPATCH_SETUP;
    DISPATCH(ArrayElement)(i);
 }
 
 void GLAPIENTRY glDrawArraysEXT(GLenum mode, GLint first, GLsizei count)
 {
+   DISPATCH_SETUP;
    DISPATCH(DrawArrays)(mode, first, count);
 }
 
@@ -2024,32 +3054,38 @@ void GLAPIENTRY glDrawArraysEXT(GLenum mode, GLint first, GLsizei count)
 
 void GLAPIENTRY glGenTexturesEXT(GLsizei n, GLuint *textures)
 {
+   DISPATCH_SETUP;
    DISPATCH(GenTextures)(n, textures);
 }
 
 void GLAPIENTRY glDeleteTexturesEXT(GLsizei n, const GLuint *texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(DeleteTextures)(n, texture);
 }
 
 void GLAPIENTRY glBindTextureEXT(GLenum target, GLuint texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(BindTexture)(target, texture);
 }
 
 void GLAPIENTRY glPrioritizeTexturesEXT(GLsizei n, const GLuint *textures, const GLclampf *priorities)
 {
+   DISPATCH_SETUP;
    DISPATCH(PrioritizeTextures)(n, textures, priorities);
 }
 
 GLboolean GLAPIENTRY glAreTexturesResidentEXT(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
+   DISPATCH_SETUP;
    DISPATCH(AreTexturesResident)(n, textures, residences);
    return GL_FALSE;
 }
 
 GLboolean GLAPIENTRY glIsTextureEXT(GLuint texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(IsTexture)(texture);
    return GL_FALSE;
 }
@@ -2061,16 +3097,19 @@ GLboolean GLAPIENTRY glIsTextureEXT(GLuint texture)
 
 void GLAPIENTRY glTexImage3DEXT(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexImage3D)(target, level, internalFormat, width, height, depth, border, format, type, pixels);
 }
 
 void GLAPIENTRY glTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
 {
+   DISPATCH_SETUP;
    DISPATCH(TexSubImage3D)(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 }
 
 void GLAPIENTRY glCopyTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   DISPATCH_SETUP;
    DISPATCH(CopyTexSubImage3D)(target, level, xoffset, yoffset, zoffset, x, y, width, height);
 }
 
@@ -2082,26 +3121,31 @@ void GLAPIENTRY glCopyTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset
 
 void GLAPIENTRY glColorTableEXT(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorTableEXT)(target, internalformat, width, format, type, table);
 }
 
 void GLAPIENTRY glColorSubTableEXT(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data)
 {
+   DISPATCH_SETUP;
    DISPATCH(ColorSubTableEXT)(target, start, count, format, type, data);
 }
 
 void GLAPIENTRY glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid *table)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTableEXT)(target, format, type, table);
 }
 
 void GLAPIENTRY glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTableParameterfvEXT)(target, pname, params);
 }
 
 void GLAPIENTRY glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint *params)
 {
+   DISPATCH_SETUP;
    DISPATCH(GetColorTableParameterivEXT)(target, pname, params);
 }
 
@@ -2113,11 +3157,13 @@ void GLAPIENTRY glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint
 
 void GLAPIENTRY glLockArraysEXT(GLint first, GLsizei count)
 {
+   DISPATCH_SETUP;
    DISPATCH(LockArraysEXT)(first, count);
 }
 
 void GLAPIENTRY glUnlockArraysEXT(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(UnlockArraysEXT)();
 }
 
@@ -2129,11 +3175,13 @@ void GLAPIENTRY glUnlockArraysEXT(void)
 
 void GLAPIENTRY glPointParameterfEXT(GLenum target, GLfloat param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PointParameterfEXT)(target, param);
 }
 
 void GLAPIENTRY glPointParameterfvEXT(GLenum target, const GLfloat *param)
 {
+   DISPATCH_SETUP;
    DISPATCH(PointParameterfvEXT)(target, param);
 }
 
@@ -2145,171 +3193,205 @@ void GLAPIENTRY glPointParameterfvEXT(GLenum target, const GLfloat *param)
 
 void GLAPIENTRY glActiveTextureARB(GLenum texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(ActiveTextureARB)(texture);
 }
 
 void GLAPIENTRY glClientActiveTextureARB(GLenum texture)
 {
+   DISPATCH_SETUP;
    DISPATCH(ClientActiveTextureARB)(texture);
 }
 
 void GLAPIENTRY glMultiTexCoord1dARB(GLenum target, GLdouble s)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1dARB)(target, s);
 }
 
 void GLAPIENTRY glMultiTexCoord1dvARB(GLenum target, const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1dvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord1fARB(GLenum target, GLfloat s)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1fARB)(target, s);
 }
 
 void GLAPIENTRY glMultiTexCoord1fvARB(GLenum target, const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1fvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord1iARB(GLenum target, GLint s)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1iARB)(target, s);
 }
 
 void GLAPIENTRY glMultiTexCoord1ivARB(GLenum target, const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1ivARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord1sARB(GLenum target, GLshort s)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1sARB)(target, s);
 }
 
 void GLAPIENTRY glMultiTexCoord1svARB(GLenum target, const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord1svARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2dARB)(target, s, t);
 }
 
 void GLAPIENTRY glMultiTexCoord2dvARB(GLenum target, const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2dvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2fARB)(target, s, t);
 }
 
 void GLAPIENTRY glMultiTexCoord2fvARB(GLenum target, const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2fvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord2iARB(GLenum target, GLint s, GLint t)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2iARB)(target, s, t);
 }
 
 void GLAPIENTRY glMultiTexCoord2ivARB(GLenum target, const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2ivARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2sARB)(target, s, t);
 }
 
 void GLAPIENTRY glMultiTexCoord2svARB(GLenum target, const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord2svARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3dARB)(target, s, t, r);
 }
 
 void GLAPIENTRY glMultiTexCoord3dvARB(GLenum target, const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3dvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3fARB)(target, s, t, r);
 }
 
 void GLAPIENTRY glMultiTexCoord3fvARB(GLenum target, const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3fvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3iARB)(target, s, t, r);
 }
 
 void GLAPIENTRY glMultiTexCoord3ivARB(GLenum target, const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3ivARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3sARB)(target, s, t, r);
 }
 
 void GLAPIENTRY glMultiTexCoord3svARB(GLenum target, const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord3svARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4dARB)(target, s, t, r, q);
 }
 
 void GLAPIENTRY glMultiTexCoord4dvARB(GLenum target, const GLdouble *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4dvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4fARB)(target, s, t, r, q);
 }
 
 void GLAPIENTRY glMultiTexCoord4fvARB(GLenum target, const GLfloat *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4fvARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4iARB)(target, s, t, r, q);
 }
 
 void GLAPIENTRY glMultiTexCoord4ivARB(GLenum target, const GLint *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4ivARB)(target, v);
 }
 
 void GLAPIENTRY glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4sARB)(target, s, t, r, q);
 }
 
 void GLAPIENTRY glMultiTexCoord4svARB(GLenum target, const GLshort *v)
 {
+   DISPATCH_SETUP;
    DISPATCH(MultiTexCoord4svARB)(target, v);
 }
 
@@ -2320,6 +3402,7 @@ void GLAPIENTRY glMultiTexCoord4svARB(GLenum target, const GLshort *v)
 #ifdef _GLAPI_INGR_blend_func_separate
 void GLAPIENTRY glBlendFuncSeparateINGR(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha)
 {
+   DISPATCH_SETUP;
    DISPATCH(BlendFuncSeparateINGR)(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
 }
 #endif  /* GL_INGR_blend_func_separate */
@@ -2330,121 +3413,145 @@ void GLAPIENTRY glBlendFuncSeparateINGR(GLenum sfactorRGB, GLenum dfactorRGB, GL
 
 void GLAPIENTRY glWindowPos2iMESA(GLint x, GLint y)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2sMESA(GLshort x, GLshort y)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2fMESA(GLfloat x, GLfloat y)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2dMESA(GLdouble x, GLdouble y)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2ivMESA(const GLint *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2svMESA(const GLshort *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2fvMESA(const GLfloat *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], 0, 1);
 }
 
 void GLAPIENTRY glWindowPos2dvMESA(const GLdouble *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], 0, 1);
 }
 
 void GLAPIENTRY glWindowPos3iMESA(GLint x, GLint y, GLint z)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, 1);
 }
 
 void GLAPIENTRY glWindowPos3sMESA(GLshort x, GLshort y, GLshort z)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, 1);
 }
 
 void GLAPIENTRY glWindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, 1);
 }
 
 void GLAPIENTRY glWindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, 1);
 }
 
 void GLAPIENTRY glWindowPos3ivMESA(const GLint *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], 1.0);
 }
 
 void GLAPIENTRY glWindowPos3svMESA(const GLshort *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], 1.0);
 }
 
 void GLAPIENTRY glWindowPos3fvMESA(const GLfloat *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], 1.0);
 }
 
 void GLAPIENTRY glWindowPos3dvMESA(const GLdouble *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], 1.0);
 }
 
 void GLAPIENTRY glWindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, w);
 }
 
 void GLAPIENTRY glWindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, w);
 }
 
 void GLAPIENTRY glWindowPos4fMESA(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, w);
 }
 
 void GLAPIENTRY glWindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(x, y, z, w);
 }
 
 void GLAPIENTRY glWindowPos4ivMESA(const GLint *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], p[3]);
 }
 
 void GLAPIENTRY glWindowPos4svMESA(const GLshort *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], p[3]);
 }
 
 void GLAPIENTRY glWindowPos4fvMESA(const GLfloat *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], p[3]);
 }
 
 void GLAPIENTRY glWindowPos4dvMESA(const GLdouble *p)
 {
+   DISPATCH_SETUP;
    DISPATCH(WindowPos4fMESA)(p[0], p[1], p[2], p[3]);
 }
 
@@ -2455,9 +3562,12 @@ void GLAPIENTRY glWindowPos4dvMESA(const GLdouble *p)
 #ifdef _GLAPI_MESA_resize_buffers
 void GLAPIENTRY glResizeBuffersMESA(void)
 {
+   DISPATCH_SETUP;
    DISPATCH(ResizeBuffersMESA)();
 }
 #endif  /* GL_MESA_resize_buffers */
+
+
 
 
 #ifdef DEBUG
@@ -2936,572 +4046,3 @@ static struct _glapi_table completeness_test = {
 };
 
 #endif /*DEBUG*/
-
-
-
-
-/*
- * Set the global or per-thread dispatch table pointer.
- */
-void
-_glapi_set_dispatch(struct _glapi_table *dispatch)
-{
-#ifdef DEBUG
-   (void) completeness_test;  /* to silence compiler warnings */
-#endif
-
-   if (dispatch) {
-#ifdef DEBUG
-      _glapi_check_table(dispatch);
-#endif
-#if defined(MULTI_THREAD)
-      /* set this thread's dispatch pointer */
-      /* XXX To Do */
-#else
-      Dispatch = dispatch;
-#endif
-   }
-   else {
-      /* no current context, each function is a no-op */
-#if defined(MULTI_THREAD)
-      /* XXX To Do */
-#else
-      Dispatch = &__glapi_noop_table;
-#endif
-   }
-}
-
-
-/*
- * Get the global or per-thread dispatch table pointer.
- */
-struct _glapi_table *
-_glapi_get_dispatch(void)
-{
-#if defined(MULTI_THREAD)
-   /* return this thread's dispatch pointer */
-   return NULL;
-#else
-   return Dispatch;
-#endif
-}
-
-
-/*
- * Get API dispatcher version string.
- */
-const char *
-_glapi_get_version(void)
-{
-   return "1.2";   /* XXX this isn't well defined yet */
-}
-
-
-/*
- * Return list of hard-coded extension entrypoints in the dispatch table.
- */
-const char *
-_glapi_get_extensions(void)
-{
-   return "GL_EXT_paletted_texture GL_EXT_compiled_vertex_array GL_EXT_point_parameters GL_EXT_polygon_offset GL_EXT_blend_minmax GL_EXT_blend_color GL_ARB_multitexture GL_INGR_blend_func_separate GL_MESA_window_pos GL_MESA_resize_buffers";
-}
-
-
-
-/*
- * Dynamically allocate an extension entry point.  Return a slot number.
- */
-GLint
-_glapi_alloc_entrypoint(const char *funcName)
-{
-   /* XXX To Do */
-   return -1;
-}
-
-
-
-/*
- * Find the dynamic entry point for the named function.
- */
-GLint
-_glapi_get_entrypoint(const char *funcName)
-{
-   /* XXX To Do */
-   return -1;
-}
-
-
-/*
- * Return entrypoint for named function.
- */
-const GLvoid *
-_glapi_get_proc_address(const char *funcName)
-{
-   /* XXX To Do */
-   return NULL;
-}
-
-
-
-/*
- * Make sure there are no NULL pointers in the given dispatch table.
- * Intented for debugging purposes.
- */
-void
-_glapi_check_table(const struct _glapi_table *table)
-{
-   assert(table->Accum);
-   assert(table->AlphaFunc);
-   assert(table->Begin);
-   assert(table->Bitmap);
-   assert(table->BlendFunc);
-   assert(table->CallList);
-   assert(table->CallLists);
-   assert(table->Clear);
-   assert(table->ClearAccum);
-   assert(table->ClearColor);
-   assert(table->ClearDepth);
-   assert(table->ClearIndex);
-   assert(table->ClearStencil);
-   assert(table->ClipPlane);
-   assert(table->Color3b);
-   assert(table->Color3bv);
-   assert(table->Color3d);
-   assert(table->Color3dv);
-   assert(table->Color3f);
-   assert(table->Color3fv);
-   assert(table->Color3i);
-   assert(table->Color3iv);
-   assert(table->Color3s);
-   assert(table->Color3sv);
-   assert(table->Color3ub);
-   assert(table->Color3ubv);
-   assert(table->Color3ui);
-   assert(table->Color3uiv);
-   assert(table->Color3us);
-   assert(table->Color3usv);
-   assert(table->Color4b);
-   assert(table->Color4bv);
-   assert(table->Color4d);
-   assert(table->Color4dv);
-   assert(table->Color4f);
-   assert(table->Color4fv);
-   assert(table->Color4i);
-   assert(table->Color4iv);
-   assert(table->Color4s);
-   assert(table->Color4sv);
-   assert(table->Color4ub);
-   assert(table->Color4ubv);
-   assert(table->Color4ui);
-   assert(table->Color4uiv);
-   assert(table->Color4us);
-   assert(table->Color4usv);
-   assert(table->ColorMask);
-   assert(table->ColorMaterial);
-   assert(table->CopyPixels);
-   assert(table->CullFace);
-   assert(table->DeleteLists);
-   assert(table->DepthFunc);
-   assert(table->DepthMask);
-   assert(table->DepthRange);
-   assert(table->Disable);
-   assert(table->DrawBuffer);
-   assert(table->DrawElements);
-   assert(table->DrawPixels);
-   assert(table->EdgeFlag);
-   assert(table->EdgeFlagv);
-   assert(table->Enable);
-   assert(table->End);
-   assert(table->EndList);
-   assert(table->EvalCoord1d);
-   assert(table->EvalCoord1dv);
-   assert(table->EvalCoord1f);
-   assert(table->EvalCoord1fv);
-   assert(table->EvalCoord2d);
-   assert(table->EvalCoord2dv);
-   assert(table->EvalCoord2f);
-   assert(table->EvalCoord2fv);
-   assert(table->EvalMesh1);
-   assert(table->EvalMesh2);
-   assert(table->EvalPoint1);
-   assert(table->EvalPoint2);
-   assert(table->FeedbackBuffer);
-   assert(table->Finish);
-   assert(table->Flush);
-   assert(table->Fogf);
-   assert(table->Fogfv);
-   assert(table->Fogi);
-   assert(table->Fogiv);
-   assert(table->FrontFace);
-   assert(table->Frustum);
-   assert(table->GenLists);
-   assert(table->GetBooleanv);
-   assert(table->GetClipPlane);
-   assert(table->GetDoublev);
-   assert(table->GetError);
-   assert(table->GetFloatv);
-   assert(table->GetIntegerv);
-   assert(table->GetLightfv);
-   assert(table->GetLightiv);
-   assert(table->GetMapdv);
-   assert(table->GetMapfv);
-   assert(table->GetMapiv);
-   assert(table->GetMaterialfv);
-   assert(table->GetMaterialiv);
-   assert(table->GetPixelMapfv);
-   assert(table->GetPixelMapuiv);
-   assert(table->GetPixelMapusv);
-   assert(table->GetPolygonStipple);
-   assert(table->GetString);
-   assert(table->GetTexEnvfv);
-   assert(table->GetTexEnviv);
-   assert(table->GetTexGendv);
-   assert(table->GetTexGenfv);
-   assert(table->GetTexGeniv);
-   assert(table->GetTexImage);
-   assert(table->GetTexLevelParameterfv);
-   assert(table->GetTexLevelParameteriv);
-   assert(table->GetTexParameterfv);
-   assert(table->GetTexParameteriv);
-   assert(table->Hint);
-   assert(table->IndexMask);
-   assert(table->Indexd);
-   assert(table->Indexdv);
-   assert(table->Indexf);
-   assert(table->Indexfv);
-   assert(table->Indexi);
-   assert(table->Indexiv);
-   assert(table->Indexs);
-   assert(table->Indexsv);
-   assert(table->InitNames);
-   assert(table->IsEnabled);
-   assert(table->IsList);
-   assert(table->LightModelf);
-   assert(table->LightModelfv);
-   assert(table->LightModeli);
-   assert(table->LightModeliv);
-   assert(table->Lightf);
-   assert(table->Lightfv);
-   assert(table->Lighti);
-   assert(table->Lightiv);
-   assert(table->LineStipple);
-   assert(table->LineWidth);
-   assert(table->ListBase);
-   assert(table->LoadIdentity);
-   assert(table->LoadMatrixd);
-   assert(table->LoadMatrixf);
-   assert(table->LoadName);
-   assert(table->LogicOp);
-   assert(table->Map1d);
-   assert(table->Map1f);
-   assert(table->Map2d);
-   assert(table->Map2f);
-   assert(table->MapGrid1d);
-   assert(table->MapGrid1f);
-   assert(table->MapGrid2d);
-   assert(table->MapGrid2f);
-   assert(table->Materialf);
-   assert(table->Materialfv);
-   assert(table->Materiali);
-   assert(table->Materialiv);
-   assert(table->MatrixMode);
-   assert(table->MultMatrixd);
-   assert(table->MultMatrixf);
-   assert(table->NewList);
-   assert(table->Normal3b);
-   assert(table->Normal3bv);
-   assert(table->Normal3d);
-   assert(table->Normal3dv);
-   assert(table->Normal3f);
-   assert(table->Normal3fv);
-   assert(table->Normal3i);
-   assert(table->Normal3iv);
-   assert(table->Normal3s);
-   assert(table->Normal3sv);
-   assert(table->Ortho);
-   assert(table->PassThrough);
-   assert(table->PixelMapfv);
-   assert(table->PixelMapuiv);
-   assert(table->PixelMapusv);
-   assert(table->PixelStoref);
-   assert(table->PixelStorei);
-   assert(table->PixelTransferf);
-   assert(table->PixelTransferi);
-   assert(table->PixelZoom);
-   assert(table->PointSize);
-   assert(table->PolygonMode);
-   assert(table->PolygonOffset);
-   assert(table->PolygonStipple);
-   assert(table->PopAttrib);
-   assert(table->PopMatrix);
-   assert(table->PopName);
-   assert(table->PushAttrib);
-   assert(table->PushMatrix);
-   assert(table->PushName);
-   assert(table->RasterPos2d);
-   assert(table->RasterPos2dv);
-   assert(table->RasterPos2f);
-   assert(table->RasterPos2fv);
-   assert(table->RasterPos2i);
-   assert(table->RasterPos2iv);
-   assert(table->RasterPos2s);
-   assert(table->RasterPos2sv);
-   assert(table->RasterPos3d);
-   assert(table->RasterPos3dv);
-   assert(table->RasterPos3f);
-   assert(table->RasterPos3fv);
-   assert(table->RasterPos3i);
-   assert(table->RasterPos3iv);
-   assert(table->RasterPos3s);
-   assert(table->RasterPos3sv);
-   assert(table->RasterPos4d);
-   assert(table->RasterPos4dv);
-   assert(table->RasterPos4f);
-   assert(table->RasterPos4fv);
-   assert(table->RasterPos4i);
-   assert(table->RasterPos4iv);
-   assert(table->RasterPos4s);
-   assert(table->RasterPos4sv);
-   assert(table->ReadBuffer);
-   assert(table->ReadPixels);
-   assert(table->Rectd);
-   assert(table->Rectdv);
-   assert(table->Rectf);
-   assert(table->Rectfv);
-   assert(table->Recti);
-   assert(table->Rectiv);
-   assert(table->Rects);
-   assert(table->Rectsv);
-   assert(table->RenderMode);
-   assert(table->Rotated);
-   assert(table->Rotatef);
-   assert(table->Scaled);
-   assert(table->Scalef);
-   assert(table->Scissor);
-   assert(table->SelectBuffer);
-   assert(table->ShadeModel);
-   assert(table->StencilFunc);
-   assert(table->StencilMask);
-   assert(table->StencilOp);
-   assert(table->TexCoord1d);
-   assert(table->TexCoord1dv);
-   assert(table->TexCoord1f);
-   assert(table->TexCoord1fv);
-   assert(table->TexCoord1i);
-   assert(table->TexCoord1iv);
-   assert(table->TexCoord1s);
-   assert(table->TexCoord1sv);
-   assert(table->TexCoord2d);
-   assert(table->TexCoord2dv);
-   assert(table->TexCoord2f);
-   assert(table->TexCoord2fv);
-   assert(table->TexCoord2i);
-   assert(table->TexCoord2iv);
-   assert(table->TexCoord2s);
-   assert(table->TexCoord2sv);
-   assert(table->TexCoord3d);
-   assert(table->TexCoord3dv);
-   assert(table->TexCoord3f);
-   assert(table->TexCoord3fv);
-   assert(table->TexCoord3i);
-   assert(table->TexCoord3iv);
-   assert(table->TexCoord3s);
-   assert(table->TexCoord3sv);
-   assert(table->TexCoord4d);
-   assert(table->TexCoord4dv);
-   assert(table->TexCoord4f);
-   assert(table->TexCoord4fv);
-   assert(table->TexCoord4i);
-   assert(table->TexCoord4iv);
-   assert(table->TexCoord4s);
-   assert(table->TexCoord4sv);
-   assert(table->TexEnvf);
-   assert(table->TexEnvfv);
-   assert(table->TexEnvi);
-   assert(table->TexEnviv);
-   assert(table->TexGend);
-   assert(table->TexGendv);
-   assert(table->TexGenf);
-   assert(table->TexGenfv);
-   assert(table->TexGeni);
-   assert(table->TexGeniv);
-   assert(table->TexImage1D);
-   assert(table->TexImage2D);
-   assert(table->TexParameterf);
-   assert(table->TexParameterfv);
-   assert(table->TexParameteri);
-   assert(table->TexParameteriv);
-   assert(table->Translated);
-   assert(table->Translatef);
-   assert(table->Vertex2d);
-   assert(table->Vertex2dv);
-   assert(table->Vertex2f);
-   assert(table->Vertex2fv);
-   assert(table->Vertex2i);
-   assert(table->Vertex2iv);
-   assert(table->Vertex2s);
-   assert(table->Vertex2sv);
-   assert(table->Vertex3d);
-   assert(table->Vertex3dv);
-   assert(table->Vertex3f);
-   assert(table->Vertex3fv);
-   assert(table->Vertex3i);
-   assert(table->Vertex3iv);
-   assert(table->Vertex3s);
-   assert(table->Vertex3sv);
-   assert(table->Vertex4d);
-   assert(table->Vertex4dv);
-   assert(table->Vertex4f);
-   assert(table->Vertex4fv);
-   assert(table->Vertex4i);
-   assert(table->Vertex4iv);
-   assert(table->Vertex4s);
-   assert(table->Vertex4sv);
-   assert(table->Viewport);
-
-#ifdef _GLAPI_VERSION_1_1
-   assert(table->AreTexturesResident);
-   assert(table->ArrayElement);
-   assert(table->BindTexture);
-   assert(table->ColorPointer);
-   assert(table->CopyTexImage1D);
-   assert(table->CopyTexImage2D);
-   assert(table->CopyTexSubImage1D);
-   assert(table->CopyTexSubImage2D);
-   assert(table->DeleteTextures);
-   assert(table->DisableClientState);
-   assert(table->DrawArrays);
-   assert(table->EdgeFlagPointer);
-   assert(table->EnableClientState);
-   assert(table->GenTextures);
-   assert(table->GetPointerv);
-   assert(table->IndexPointer);
-   assert(table->Indexub);
-   assert(table->Indexubv);
-   assert(table->InterleavedArrays);
-   assert(table->IsTexture);
-   assert(table->NormalPointer);
-   assert(table->PopClientAttrib);
-   assert(table->PrioritizeTextures);
-   assert(table->PushClientAttrib);
-   assert(table->TexCoordPointer);
-   assert(table->TexSubImage1D);
-   assert(table->TexSubImage2D);
-   assert(table->VertexPointer);
-#endif
-
-#ifdef _GLAPI_VERSION_1_2
-   assert(table->CopyTexSubImage3D);
-   assert(table->DrawRangeElements);
-   assert(table->TexImage3D);
-   assert(table->TexSubImage3D);
-#ifdef _GLAPI_ARB_imaging
-   assert(table->BlendColor);
-   assert(table->BlendEquation);
-   assert(table->ColorSubTable);
-   assert(table->ColorTable);
-   assert(table->ColorTableParameterfv);
-   assert(table->ColorTableParameteriv);
-   assert(table->ConvolutionFilter1D);
-   assert(table->ConvolutionFilter2D);
-   assert(table->ConvolutionParameterf);
-   assert(table->ConvolutionParameterfv);
-   assert(table->ConvolutionParameteri);
-   assert(table->ConvolutionParameteriv);
-   assert(table->CopyColorSubTable);
-   assert(table->CopyColorTable);
-   assert(table->CopyConvolutionFilter1D);
-   assert(table->CopyConvolutionFilter2D);
-   assert(table->GetColorTable);
-   assert(table->GetColorTableParameterfv);
-   assert(table->GetColorTableParameteriv);
-   assert(table->GetConvolutionFilter);
-   assert(table->GetConvolutionParameterfv);
-   assert(table->GetConvolutionParameteriv);
-   assert(table->GetHistogram);
-   assert(table->GetHistogramParameterfv);
-   assert(table->GetHistogramParameteriv);
-   assert(table->GetMinmax);
-   assert(table->GetMinmaxParameterfv);
-   assert(table->GetMinmaxParameteriv);
-   assert(table->Histogram);
-   assert(table->Minmax);
-   assert(table->ResetHistogram);
-   assert(table->ResetMinmax);
-   assert(table->SeparableFilter2D);
-#endif
-#endif
-
-
-#ifdef _GLAPI_EXT_paletted_texture
-   assert(table->ColorTableEXT);
-   assert(table->ColorSubTableEXT);
-   assert(table->GetColorTableEXT);
-   assert(table->GetColorTableParameterfvEXT);
-   assert(table->GetColorTableParameterivEXT);
-#endif
-
-#ifdef _GLAPI_EXT_compiled_vertex_array
-   assert(table->LockArraysEXT);
-   assert(table->UnlockArraysEXT);
-#endif
-
-#ifdef _GLAPI_EXT_point_parameter
-   assert(table->PointParameterfEXT);
-   assert(table->PointParameterfvEXT);
-#endif
-
-#ifdef _GLAPI_EXT_polygon_offset
-   assert(table->PolygonOffsetEXT);
-#endif
-
-#ifdef _GLAPI_ARB_multitexture
-   assert(table->ActiveTextureARB);
-   assert(table->ClientActiveTextureARB);
-   assert(table->MultiTexCoord1dARB);
-   assert(table->MultiTexCoord1dvARB);
-   assert(table->MultiTexCoord1fARB);
-   assert(table->MultiTexCoord1fvARB);
-   assert(table->MultiTexCoord1iARB);
-   assert(table->MultiTexCoord1ivARB);
-   assert(table->MultiTexCoord1sARB);
-   assert(table->MultiTexCoord1svARB);
-   assert(table->MultiTexCoord2dARB);
-   assert(table->MultiTexCoord2dvARB);
-   assert(table->MultiTexCoord2fARB);
-   assert(table->MultiTexCoord2fvARB);
-   assert(table->MultiTexCoord2iARB);
-   assert(table->MultiTexCoord2ivARB);
-   assert(table->MultiTexCoord2sARB);
-   assert(table->MultiTexCoord2svARB);
-   assert(table->MultiTexCoord3dARB);
-   assert(table->MultiTexCoord3dvARB);
-   assert(table->MultiTexCoord3fARB);
-   assert(table->MultiTexCoord3fvARB);
-   assert(table->MultiTexCoord3iARB);
-   assert(table->MultiTexCoord3ivARB);
-   assert(table->MultiTexCoord3sARB);
-   assert(table->MultiTexCoord3svARB);
-   assert(table->MultiTexCoord4dARB);
-   assert(table->MultiTexCoord4dvARB);
-   assert(table->MultiTexCoord4fARB);
-   assert(table->MultiTexCoord4fvARB);
-   assert(table->MultiTexCoord4iARB);
-   assert(table->MultiTexCoord4ivARB);
-   assert(table->MultiTexCoord4sARB);
-   assert(table->MultiTexCoord4svARB);
-#endif
-
-#ifdef _GLAPI_INGR_blend_func_separate
-   assert(table->BlendFuncSeparateINGR);
-#endif
-
-#ifdef _GLAPI_MESA_window_pos
-   assert(table->WindowPos4fMESA);
-#endif
-
-#ifdef _GLAPI_MESA_resize_buffers
-   assert(table->ResizeBuffersMESA);
-#endif
-}
-
