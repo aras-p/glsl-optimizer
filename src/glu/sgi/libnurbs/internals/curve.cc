@@ -35,8 +35,8 @@
 /*
  * curve.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/curve.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2001/08/13 16:52:18 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/curve.cc,v 1.2 2001/08/13 16:52:18 brianp Exp $
  */
 
 #include "glimports.h"
@@ -170,7 +170,7 @@ Curve::getstepsize( void )
             REAL t = mapdesc->getProperty( N_PIXEL_TOLERANCE );
 	    if( mapdesc->isParametricDistanceSampling() ) {
 		REAL d = mapdesc->calcPartialVelocity( &tmp[0][0], tstride, order, 2, range[2] );
-		stepsize = (d > 0.0) ? ::sqrtf( 8.0 * t / d ) : range[2];
+		stepsize = (d > 0.0) ? sqrtf( 8.0 * t / d ) : range[2];
 		minstepsize = ( mapdesc->maxrate > 0.0 ) ? (range[2] / mapdesc->maxrate) : 0.0;
 	    } else if( mapdesc->isPathLengthSampling() ) {
 		// t is upper bound on path (arc) length

@@ -35,8 +35,8 @@
 /*
  * mymath.h
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mymath.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/08/13 16:52:18 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mymath.h,v 1.2 2001/08/13 16:52:18 brianp Exp $
  */
 
 #ifndef __glumymath_h_
@@ -59,6 +59,16 @@ extern "C" float	floorf(float);
 
 #ifdef LIBRARYBUILD
 #include <math.h>
+#endif
+
+#if !defined sqrtf
+#    define sqrtf(x)    ((float)sqrt(x))
+#endif
+#if !defined ceilf
+#    define ceilf(x)    ((float)ceil(x))
+#endif
+#if !defined floorf
+#    define floorf(x)   ((float)floor(x))
 #endif
 
 #endif /* __glumymath_h_ */
