@@ -18,7 +18,7 @@ Version
 
     Last Modified Date: July 20, 2003
     Author Revision: 1.0
-    $Date: 2003/07/23 15:45:25 $ $Revision: 1.2 $
+    $Date: 2003/09/23 14:46:11 $ $Revision: 1.3 $
 
 Number
 
@@ -50,7 +50,7 @@ Overview
     user to register a callback function with the GL.  The callback will
     be called prior to executing each vertex or fragment program instruction.
 
-    From within the callback, the user may issue glGet* commands to
+    From within the callback, the user may issue Get* commands to
     query current GL state.  The GetProgramRegisterfvMESA function allows
     current program values to be queried (such as temporaries, input
     attributes, and result registers).
@@ -72,8 +72,8 @@ Issues
     1. Is this the right model for a debugger?
 
        It seems prudent to minimize the scope of this extension and leave
-       it up to the developer (or developer community) to write (a)
-       debugger(s) that layer on top of this extension.
+       it up to the developer (or developer community) to write debuggers
+       that layer on top of this extension.
 
        If the debugger were fully implemented within the GL it's not
        clear how terminal and GUI-based interfaces would work, for
@@ -127,21 +127,21 @@ New Tokens
     Accepted by the <cap> parameter of Enable, Disable, IsEnabled,
     GetBooleanv, GetDoublev, GetFloatv and GetIntegerv:
 
-        FRAGMENT_PROGRAM_CALLBACK_MESA      0x????
-        VERTEX_PROGRAM_CALLBACK_MESA        0x????
+        FRAGMENT_PROGRAM_CALLBACK_MESA      0x8bb1
+        VERTEX_PROGRAM_CALLBACK_MESA        0x8bb4
 
     Accepted by the <pname> parameter GetBooleanv, GetDoublev,
     GetFloatv and GetIntegerv:
 
-        FRAGMENT_PROGRAM_POSITION_MESA      0x????
-        VERTEX_PROGRAM_POSITION_MESA        0x????
+        FRAGMENT_PROGRAM_POSITION_MESA      0x8bb0
+        VERTEX_PROGRAM_POSITION_MESA        0x8bb4
 
     Accepted by the <pname> parameter of GetPointerv:
 
-        FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA 0x????
-        FRAGMENT_PROGRAM_CALLBACK_DATA_MESA 0x????
-        VERTEX_PROGRAM_CALLBACK_FUNC_MESA   0x????
-        VERTEX_PROGRAM_CALLBACK_DATA_MESA   0x????
+        FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA 0x8bb2
+        FRAGMENT_PROGRAM_CALLBACK_DATA_MESA 0x8bb3
+        VERTEX_PROGRAM_CALLBACK_FUNC_MESA   0x8bb6
+        VERTEX_PROGRAM_CALLBACK_DATA_MESA   0x8bb7
 
 Additions to Chapter 2 of the OpenGL 1.4 Specification (OpenGL Operation)
 
@@ -160,7 +160,8 @@ Additions to Chapter 5 of the OpenGL 1.4 Specification (Special Functions)
 
     In section 5.4 "Display Lists", page 202, add the following command
     to the list of those that are not compiled into display lists:
-    ProgramCallbackMESA.
+
+        ProgramCallbackMESA.
 
 
     Add a new section 5.7 "Callback Functions"
@@ -170,11 +171,12 @@ Additions to Chapter 5 of the OpenGL 1.4 Specification (Special Functions)
         void ProgramCallbackMESA(enum target, programcallbackMESA callback,
                                  void *data)
 
-    registers a user-defined callback function with the GL.  <target> may
-    be FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB.  Callbacks registered
-    with these targets will be called prior to executing each instruction
-    in the current fragment or vertex program, respectively.  The callbacks
-    are enabled and disabled by calling Enable or Disable with <cap>
+    registers a user-defined callback function with the GL.  <target>
+    may be FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB.  The enabled
+    callback functions registered with these targets will be called
+    prior to executing each instruction in the current fragment or
+    vertex program, respectively.  The callbacks are enabled and
+    disabled by calling Enable or Disable with <cap>
     FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB.
 
     The callback function's signature must match the typedef
@@ -216,16 +218,15 @@ State Requests)
                                       float *v)
         
     Is used to query the value of program variables and registers
-    during program execution.  GetProgramRegisterMESA may only be
+    during program execution.  GetProgramRegisterfvMESA may only be
     called from within a callback function registered with
     ProgramCallbackMESA.
 
-    <registerName> and <len> specify the string name of a program
-    register (such as "R3"), input attribute (such as "vertex.color"),
-    an output attribute (such as "result.texcoord[0]") or a user-
-    defined identifier.  The current value of that variable is
-    returned as four floats in <v>.
-
+    <registerName> and <len> specify the name a variable, input
+    attribute, temporary, or result register in the program string.
+    The current value of the named variable is returned as four
+    values in <v>.  If <name> doesn't exist in the program string,
+    the error INVALID_OPERATION is generated.
 
 Additions to Appendix A of the OpenGL 1.4 Specification (Invariance)
 
