@@ -24,12 +24,12 @@
 #define GLUT_BUILDING_LIB  /* Building the GLUT library itself. */
 #include <GL/glut.h>
 
-#ifdef MESA
+#if defined( MESA ) && defined( _WIN32 )
 #include <gl/mesa_wgl.h>
 #endif
 
-/* added by BrianP: */
 #ifndef _WIN32
+/* added by BrianP: */
 #define APIENTRY GLAPIENTRY
 #define __cdecl GLAPIENTRY
 #define CDECL GLAPIENTRY
