@@ -42,8 +42,11 @@
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 
-#if !defined(__GNUC__) && !defined(__extension__)
+#ifndef __extension__
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
 # define __extension__
+#endif
 #endif
 
 /* TODO:

@@ -71,7 +71,7 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrCmpFnc_t func;
-   GrAlphaBlendFnc_t srcRGB, dstRGB, srcA, dstA;
+   GrAlphaBlendFnc_t srcRGB, dstRGB = GR_BLEND_ZERO, srcA, dstA;
    GrAlphaBlendOp_t eqRGB, eqA;
    GrAlpha_t ref = (GLint) (ctx->Color.AlphaRef * 255.0);
    

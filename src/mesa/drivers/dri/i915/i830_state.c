@@ -403,7 +403,7 @@ static void i830_set_blend_state( GLcontext * ctx )
       break;
    default:
       fprintf( stderr, "[%s:%u] Invalid RGB blend equation (0x%04x).\n",
-	       __func__, __LINE__, ctx->Color.BlendEquationRGB );
+	       __FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB );
       return;
    }
 
@@ -431,7 +431,7 @@ static void i830_set_blend_state( GLcontext * ctx )
       break;
    default:
       fprintf( stderr, "[%s:%u] Invalid alpha blend equation (0x%04x).\n",
-	       __func__, __LINE__, ctx->Color.BlendEquationA );
+	       __FUNCTION__, __LINE__, ctx->Color.BlendEquationA );
       return;
    }
 
@@ -465,7 +465,7 @@ static void i830_set_blend_state( GLcontext * ctx )
 
    if (0) {
       fprintf(stderr, "[%s:%u] STATE1: 0x%08x IALPHAB: 0x%08x blend is %sabled\n",
-	      __func__, __LINE__,
+	      __FUNCTION__, __LINE__,
 	      i830->state.Ctx[I830_CTXREG_STATE1],
 	      i830->state.Ctx[I830_CTXREG_IALPHAB],
 	      (ctx->Color.BlendEnabled) ? "en" : "dis");

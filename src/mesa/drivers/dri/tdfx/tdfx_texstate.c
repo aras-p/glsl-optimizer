@@ -1922,8 +1922,10 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
    tdfxTexInfo *ti1 = TDFX_TEXTURE_DATA(tObj1);
    struct gl_texture_image *baseImage0 = tObj0->Image[0][tObj0->BaseLevel];
    struct gl_texture_image *baseImage1 = tObj1->Image[0][tObj1->BaseLevel];
+#if 0/*JJJ*/
    const GLenum envMode0 = ctx->Texture.Unit[0].EnvMode;
    const GLenum envMode1 = ctx->Texture.Unit[1].EnvMode;
+#endif
 
    if (baseImage0->Border > 0 || baseImage1->Border > 0) {
       FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_BORDER, GL_TRUE);

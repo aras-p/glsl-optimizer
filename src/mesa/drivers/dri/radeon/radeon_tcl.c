@@ -105,7 +105,7 @@ static GLboolean discrete_prim[0x10] = {
 };
    
 
-#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx); (void)rmesa
+#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
 #define ELT_TYPE  GLushort
 
 #define ELT_INIT(prim, hw_prim) \

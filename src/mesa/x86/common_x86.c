@@ -230,7 +230,8 @@ static void check_os_sse_support( void )
 #endif /* _POSIX_SOURCE && X86_FXSR_MAGIC */
 #elif defined(__FreeBSD__)
    {
-      int ret, len, enabled;
+      int ret, enabled;
+      unsigned int len;
       len = sizeof(enabled);
       ret = sysctlbyname("hw.instruction_sse", &enabled, &len, NULL, 0);
       if (ret || !enabled)

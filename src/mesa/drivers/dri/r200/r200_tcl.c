@@ -101,7 +101,7 @@ static GLboolean discrete_prim[0x10] = {
 };
    
 
-#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx); (void)rmesa
+#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx)
 #define ELT_TYPE  GLushort
 
 #define ELT_INIT(prim, hw_prim) \
@@ -220,7 +220,7 @@ static void r200EmitPrim( GLcontext *ctx,
 
 #ifdef MESA_BIG_ENDIAN
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
-#define EMIT_ELT(dest, offset, x) do {                                \
+#define EMIT_ELT(dest, offset, x) do {                          \
         int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );     \
         GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );    \
         (des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x);	\

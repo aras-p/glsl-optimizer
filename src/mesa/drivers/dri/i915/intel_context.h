@@ -357,7 +357,7 @@ do {						\
  * From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
  */
-#ifdef __i386__
+#if defined(i386) || defined(__i386__)
 static __inline__ void * __memcpy(void * to, const void * from, size_t n)
 {
    int d0, d1, d2;

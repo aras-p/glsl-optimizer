@@ -89,7 +89,7 @@ typedef struct {
 
    drmBufMapPtr buffers;
 
-   __volatile__ uint32_t *scratch;
+   __volatile__ u_int32_t *scratch;
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;

@@ -645,7 +645,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          texUnit->TexGenEnabled = newenabled;
          break;
       }
-      break;
       case GL_TEXTURE_GEN_S: {
          GLuint unit = ctx->Texture.CurrentUnit;
          struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -658,7 +657,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          texUnit->TexGenEnabled = newenabled;
          break;
       }
-      break;
       case GL_TEXTURE_GEN_T: {
          GLuint unit = ctx->Texture.CurrentUnit;
          struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -671,7 +669,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          texUnit->TexGenEnabled = newenabled;
          break;
       }
-      break;
 
       /*
        * CLIENT STATE!!!

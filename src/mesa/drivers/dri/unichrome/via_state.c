@@ -513,10 +513,10 @@ void viaInitState(GLcontext *ctx)
 /**
  * Convert S and T texture coordinate wrap modes to hardware bits.
  */
-static uint32_t
+static u_int32_t
 get_wrap_mode( GLenum sWrap, GLenum tWrap )
 {
-    uint32_t v = 0;
+    u_int32_t v = 0;
 
 
     switch( sWrap ) {

@@ -32,8 +32,8 @@ static GLuint gammaComputeLodBias(GLfloat bias)
 static void gammaSetTexWrapping(gammaTextureObjectPtr t, 
 			       GLenum wraps, GLenum wrapt)
 {
-   uint32_t t1 = t->TextureAddressMode;
-   uint32_t t2 = t->TextureReadMode;
+   u_int32_t t1 = t->TextureAddressMode;
+   u_int32_t t2 = t->TextureReadMode;
 
    t1 &= ~(TAM_SWrap_Mask | TAM_TWrap_Mask);
    t2 &= ~(TRM_UWrap_Mask | TRM_VWrap_Mask);
@@ -58,8 +58,8 @@ static void gammaSetTexFilter(gammaContextPtr gmesa,
 			     GLenum minf, GLenum magf,
                              GLfloat bias)
 {
-   uint32_t t1 = t->TextureAddressMode;
-   uint32_t t2 = t->TextureReadMode;
+   u_int32_t t1 = t->TextureAddressMode;
+   u_int32_t t2 = t->TextureReadMode;
 
    t2 &= ~(TRM_Mag_Mask | TRM_Min_Mask);
 
@@ -376,6 +376,7 @@ static GLboolean gammaIsTextureResident( GLcontext *ctx,
    return t && t->MemBlock;
 }
 
+#ifdef UNUSED
 /**
  * Allocate a new texture object.
  * Called via ctx->Driver.NewTextureObject.
@@ -391,6 +392,7 @@ gammaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    obj = _mesa_new_texture_object(ctx, name, target);
    return obj;
 }
+#endif
 
 void gammaInitTextureObjects( GLcontext *ctx )
 {

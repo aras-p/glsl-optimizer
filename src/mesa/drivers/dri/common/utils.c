@@ -415,12 +415,12 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 GLboolean
 driFillInModes( __GLcontextModes ** ptr_to_modes,
 		GLenum fb_format, GLenum fb_type,
-		const uint8_t * depth_bits, const uint8_t * stencil_bits,
+		const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
 		unsigned num_depth_stencil_bits,
 		const GLenum * db_modes, unsigned num_db_modes,
 		int visType )
 {
-   static const uint8_t bits_table[3][4] = {
+   static const u_int8_t bits_table[3][4] = {
      /* R  G  B  A */
       { 5, 6, 5, 0 }, /* Any GL_UNSIGNED_SHORT_5_6_5 */
       { 8, 8, 8, 0 }, /* Any RGB with any GL_UNSIGNED_INT_8_8_8_8 */
@@ -431,7 +431,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
     * Given the four supported fb_type values, this results in valid array
     * indices of 3, 4, 5, and 7.
     */
-   static const uint32_t masks_table_rgb[8][4] = {
+   static const u_int32_t masks_table_rgb[8][4] = {
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
@@ -442,7 +442,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000 }  /* 8_8_8_8_REV */
    };
 
-   static const uint32_t masks_table_rgba[8][4] = {
+   static const u_int32_t masks_table_rgba[8][4] = {
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
@@ -453,7 +453,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const uint32_t masks_table_bgr[8][4] = {
+   static const u_int32_t masks_table_bgr[8][4] = {
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
@@ -464,7 +464,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }, /* 8_8_8_8_REV */
    };
 
-   static const uint32_t masks_table_bgra[8][4] = {
+   static const u_int32_t masks_table_bgra[8][4] = {
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
@@ -475,12 +475,12 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const uint8_t bytes_per_pixel[8] = {
+   static const u_int8_t bytes_per_pixel[8] = {
       0, 0, 0, 2, 2, 4, 0, 4
    };
 
-   const uint8_t  * bits;
-   const uint32_t * masks;
+   const u_int8_t  * bits;
+   const u_int32_t * masks;
    const int index = fb_type & 0x07;
    __GLcontextModes * modes = *ptr_to_modes;
    unsigned i;
@@ -490,7 +490,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 
    if ( bytes_per_pixel[ index ] == 0 ) {
       fprintf( stderr, "[%s:%u] Framebuffer type 0x%04x has 0 bytes per pixel.\n",
-	       __func__, __LINE__, fb_type );
+	       __FUNCTION__, __LINE__, fb_type );
       return GL_FALSE;
    }
 
@@ -528,7 +528,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 
       default:
          fprintf( stderr, "[%s:%u] Framebuffer format 0x%04x is not GL_RGB, GL_RGBA, GL_BGR, or GL_BGRA.\n",
-	       __func__, __LINE__, fb_format );
+	       __FUNCTION__, __LINE__, fb_format );
          return GL_FALSE;
    }
 

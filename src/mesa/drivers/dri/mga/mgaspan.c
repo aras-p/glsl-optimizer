@@ -35,7 +35,6 @@
 
 #define DBG 0
 
-
 #define LOCAL_VARS					\
    __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;	\
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\

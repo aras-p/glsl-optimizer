@@ -161,12 +161,6 @@ i830SetTexEnvCombine(i830ContextPtr i830,
       TEXPIPE_ALPHA | TEXBLEND_ARG2 | TEXBLENDARG_MODIFY_PARMS,
       TEXPIPE_ALPHA | TEXBLEND_ARG0 | TEXBLENDARG_MODIFY_PARMS,
    };
-   static const GLuint op_rgb[4] = {
-      0,
-      TEXBLENDARG_INV_ARG,
-      TEXBLENDARG_REPLICATE_ALPHA,
-      TEXBLENDARG_REPLICATE_ALPHA | TEXBLENDARG_INV_ARG,
-   };
 
    if(INTEL_DEBUG&DEBUG_TEXTURE)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -404,8 +398,6 @@ static void emit_texblend( i830ContextPtr i830, GLuint unit, GLuint blendUnit,
 			   GLboolean last_stage )
 {
    struct gl_texture_unit *texUnit = &i830->intel.ctx.Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   i830TextureObjectPtr t = (i830TextureObjectPtr)tObj->DriverData;
    GLuint tmp[I830_TEXBLEND_SIZE], tmp_sz;
 
 
