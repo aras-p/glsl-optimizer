@@ -1146,7 +1146,7 @@ Mesa Version History
 	- build GLUT with -fexceptions so C++ apps propogate exceptions
 
 
-5.1  Month day, 2003  (NOT RELEASED YET)
+5.1  December 17, 2003
     New:
 	- reorganized directory tree
 	- GL_ARB_vertex/fragment_program extensions (Michal Krol & Karl Rasche)

@@ -7,6 +7,55 @@
 <H1>News</H1>
 
 
+
+<h2>December 17, 2003</h2>
+
+<p>
+Mesa 5.1 has been released.  This is a new development release.
+Mesa 6.0 will be the next stable release and will support all
+OpenGL 1.5 features.
+</p>
+<pre>
+    New features:
+	- reorganized directory tree
+	- GL_ARB_vertex/fragment_program extensions (Michal Krol & Karl Rasche)
+	- GL_ATI_texture_env_combine3 extension (Ian Romanick)
+	- GL_SGI_texture_color_table extension (Eric Plante)
+	- GL_NV_fragment_program extension
+	- GL_NV_light_max_exponent extension
+	- GL_EXT_texture_rectangle (identical to GL_NV_texture_rectangle)
+	- GL_ARB_occlusion_query extension
+	- GL_ARB_point_sprite extension
+	- GL_ARB_texture_non_power_of_two extension
+	- GL_IBM_multimode_draw_arrays extension
+	- GL_EXT_texture_mirror_clamp extension (Ian Romanick)
+	- GL_ARB_vertex_buffer_object extension
+	- new X86 feature detection code (Petr Sebor)
+	- less memory used for display lists and vertex buffers
+	- demo of per-pixel lighting with a fragment program (demos/fplight.c)
+	- new version (18) of glext.h header
+	- new spriteblast.c demo of GL_ARB_point_sprite
+	- faster glDrawPixels in X11 driver in some cases (see RELNOTES-5.1)
+	- faster glCopyPixels in X11 driver in some cases (see RELNOTES-5.1)
+    Bug fixes:
+	- really enable OpenGL 1.4 features in DOS driver.
+	- fixed issues in glDrawPixels and glCopyPixels for very wide images
+	- glPixelMapf/ui/usv()'s size parameter is GLsizei, not GLint
+	- fixed some texgen bugs reported by Daniel Borca
+	- fixed wglMakeCurrent(NULL, NULL) bug (#835861)
+	- fixed glTexSubImage3D z-offset bug (Cedric Gautier)
+	- fixed RGBA blend enable bug (Ville Syrjala)
+	- glAccum is supposed to be a no-op in selection/feedback mode
+	- fixed texgen bug #597589 (John Popplewell)
+    Changes:
+	- dropped API trace feature (src/Trace/)
+	- documentation overhaul.  merged with website content.  more html.
+	- glxgears.c demo updated to use GLX swap rate extensions
+	- glTexImage1/2/3D now allows width/height/depth = 0
+	- disable SPARC asm code on Linux (bug 852204)
+</pre>
+
+
 <H2>November 12, 2003</H2>
 
 <p>
@@ -681,6 +730,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.8 2003/11/12 15:32:57 brianp Exp $
+$Id: news.html,v 3.9 2003/12/17 23:54:23 brianp Exp $
 </body>
 </html>
