@@ -974,14 +974,13 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
                ctx->Driver.DeleteProgram(ctx, prog);
             }
          }
-	 else {
-	    /* This is necessary as we can't tell from HashLookup
-	     * whether the entry exists with data == 0, or if it
-	     * doesn't exist at all.  As GenPrograms creates the first
-	     * case below, need to call Remove() to avoid memory leak:
-	     */
-            _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
-	 }
+         /* Always remove entry from hash table.
+          * This is necessary as we can't tell from HashLookup
+          * whether the entry exists with data == 0, or if it
+          * doesn't exist at all.  As GenPrograms creates the first
+          * case below, need to call Remove() to avoid memory leak:
+          */
+         _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
       }
    }
 }
