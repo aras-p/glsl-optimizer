@@ -932,8 +932,6 @@ static __inline GLuint r200PackColor( GLuint cpp,
    }
 }
 
-#define R200_OLD_PACKETS 0
-
 
 extern void r200DestroyContext( __DRIcontextPrivate *driContextPriv );
 extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
