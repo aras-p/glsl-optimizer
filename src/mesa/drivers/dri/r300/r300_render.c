@@ -688,7 +688,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
         if(ctx->Texture.Unit[0].Enabled)
         	return r300_run_tex_render(ctx, stage);
 		else
-        	return r300_run_vb_flat_render(ctx, stage);
+        	return r300_run_flat_render(ctx, stage);
    #else
 	return GL_TRUE;
    #endif
