@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.23 2001/11/19 10:22:41 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.24 2001/12/03 17:48:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -225,10 +225,11 @@ static void clip_elt_triangles( GLcontext *ctx,
    const line_func LineFunc = tnl->Driver.Render.Line;		\
    const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
    const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
+   const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
-   (void) elt;
+   (void) elt; (void) stipple
 
-#define RESET_STIPPLE tnl->Driver.Render.ResetLineStipple( ctx )
+#define RESET_STIPPLE if (stipple) tnl->Driver.Render.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define INIT(x) tnl->Driver.Render.PrimitiveNotify( ctx, x )
 #define RENDER_TAB_QUALIFIER
