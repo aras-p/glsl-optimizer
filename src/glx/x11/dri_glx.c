@@ -119,18 +119,26 @@ static void *DummyCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
 
 
-/*
- * Extract the ith directory path out of a colon-separated list of
- * paths.
- * Input:
- *   index - index of path to extract (starting at zero)
- *   paths - the colon-separated list of paths
- *   dirLen - max length of result to store in <dir>
- * Output:
- *   dir - the extracted directory path, dir[0] will be zero when
- *         extraction fails.
+/**
+ * Extract the ith directory path out of a colon-separated list of paths.  No
+ * more than \c dirLen characters, including the terminating \c NUL, will be
+ * written to \c dir.
+ *
+ * \param index  Index of path to extract (starting at zero)
+ * \param paths  The colon-separated list of paths
+ * \param dirLen Maximum length of result to store in \c dir
+ * \param dir    Buffer to hold the extracted directory path
+ *
+ * \returns
+ * The number of characters that would have been written to \c dir had there
+ * been enough room.  This does not include the terminating \c NUL.  When
+ * extraction fails, zero will be returned.
+ * 
+ * \todo
+ * It seems like this function could be rewritten to use \c strchr.
  */
-static void ExtractDir(int index, const char *paths, int dirLen, char *dir)
+static size_t
+ExtractDir(int index, const char *paths, int dirLen, char *dir)
 {
    int i, len;
    const char *start, *end;
@@ -146,7 +154,7 @@ static void ExtractDir(int index, const char *paths, int dirLen, char *dir)
       else if (*start == 0) {
          /* end of string and couldn't find ith colon */
          dir[0] = 0;
-         return;
+         return 0;
       }
       else {
          start++;
@@ -168,22 +176,27 @@ static void ExtractDir(int index, const char *paths, int dirLen, char *dir)
       len = dirLen - 1;
    strncpy(dir, start, len);
    dir[len] = 0;
+
+   return( end - start );
 }
 
 
-/*
- * Try to dlopen() the named driver.  This function adds the
- * "_dri.so" suffix to the driver name and searches the
- * directories specified by the LIBGL_DRIVERS_PATH env var
- * in order to find the driver.
- * Input:
- *   driverName - a name like "tdfx", "i810", "mga", etc.
- * Return:
- *   handle from dlopen, or NULL if driver file not found.
+/**
+ * Try to \c dlopen the named driver.
+ *
+ * This function adds the "_dri.so" suffix to the driver name and searches the
+ * directories specified by the \c LIBGL_DRIVERS_PATH environment variable in
+ * order to find the driver.
+ *
+ * \param driverName - a name like "tdfx", "i810", "mga", etc.
+ *
+ * \returns
+ * A handle from \c dlopen, or \c NULL if driver file not found.
  */
 static __DRIdriver *OpenDriver(const char *driverName)
 {
    char *libPaths = NULL;
+   char libDir[1000];
    int i;
    __DRIdriver *driver;
 
@@ -204,16 +217,18 @@ static __DRIdriver *OpenDriver(const char *driverName)
    if (!libPaths)
       libPaths = DEFAULT_DRIVER_DIR;
 
-   for (i = 0; ; i++) {
-      char libDir[1000], realDriverName[200];
-      void *handle;
-      ExtractDir(i, libPaths, 1000, libDir);
-      if (!libDir[0])
-         break; /* ran out of paths to search */
-      snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
-      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
-      if (handle) {
+   for ( i = 0 ; ExtractDir(i, libPaths, 1000, libDir) != 0 ; i++ ) {
+      char realDriverName[200];
+      void *handle = NULL;
+
+      
+      if ( handle == NULL ) {
+	 snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
+	 InfoMessageF("OpenDriver: trying %s\n", realDriverName);
+	 handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+      }
+
+      if ( handle != NULL ) {
          /* allocate __DRIdriver struct */
          driver = (__DRIdriver *) Xmalloc(sizeof(__DRIdriver));
          if (!driver)
