@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.32 2002/07/09 01:22:51 brianp Exp $ */
+/* $Id: wmesa.c,v 1.33 2002/07/29 00:01:00 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -1343,7 +1343,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   if (!_mesa_initialize_context(c->gl_ctx,
 				c->gl_visual,
 				(GLcontext *) NULL,
-				(void *) c, GL_TRUE )) {
+				&imports)) {
     _mesa_destroy_visual( c->gl_visual );
     free(c);
     return NULL;
@@ -1426,9 +1426,9 @@ void WMesaMakeCurrent( WMesaContext c )
   if(Current == c)
     return;
   
+  Current = c;
   wmesa_update_state(c->gl_ctx, 0);
   _mesa_make_current(c->gl_ctx, c->gl_buffer);
-  Current = c;
   if (Current->gl_ctx->Viewport.Width==0) {
     /* initialize viewport to window size */
     _mesa_Viewport( 0, 0, Current->width, Current->height );
