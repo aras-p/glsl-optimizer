@@ -204,6 +204,8 @@ i810CreateContext( const __GLcontextModes *mesaVis,
 
    ctx = imesa->glCtx;
    ctx->Const.MaxTextureUnits = 2;
+   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.MaxTextureCoordUnits = 2;
 
 
    /* FIXME: driCalcualteMaxTextureLevels assumes that mipmaps are tightly

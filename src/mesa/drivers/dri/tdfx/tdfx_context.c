@@ -209,6 +209,8 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
       ctx->Const.MaxTextureLevels = 9;
    }
    ctx->Const.MaxTextureUnits = TDFX_IS_BANSHEE( fxMesa ) ? 1 : 2;
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    /* No wide points.
     */

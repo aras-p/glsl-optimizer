@@ -411,11 +411,15 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    ctx = mmesa->glCtx;
    if ( mgaScreen->chipset == MGA_CARD_TYPE_G200 ) {
       ctx->Const.MaxTextureUnits = 1;
+      ctx->Const.MaxTextureImageUnits = 1;
+      ctx->Const.MaxTextureCoordUnits = 1;
       maxlevels = G200_TEX_MAXLEVELS;
 
    }
    else {
       ctx->Const.MaxTextureUnits = 2;
+      ctx->Const.MaxTextureImageUnits = 2;
+      ctx->Const.MaxTextureCoordUnits = 2;
       maxlevels = G400_TEX_MAXLEVELS;
    }
 

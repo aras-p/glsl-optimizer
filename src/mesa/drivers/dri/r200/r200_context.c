@@ -338,6 +338,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    ctx = rmesa->glCtx;
    ctx->Const.MaxTextureUnits = 2;
+   ctx->Const.MaxTextureImageUnits = 2;
+   ctx->Const.MaxTextureCoordUnits = 2;
 
    driCalculateMaxTextureLevels( rmesa->texture_heaps,
 				 rmesa->nr_heaps,
