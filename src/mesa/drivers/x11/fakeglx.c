@@ -1893,28 +1893,6 @@ Fake_glXGetClientString( Display *dpy, int name )
  */
 
 
-static GLXFBConfig *
-Fake_glXChooseFBConfig( Display *dpy, int screen,
-                        const int *attribList, int *nitems )
-{
-   XMesaVisual xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
-   if (xmvis) {
-      GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
-      if (!config) {
-         *nitems = 0;
-         return NULL;
-      }
-      *nitems = 1;
-      config[0] = (GLXFBConfig) xmvis;
-      return (GLXFBConfig *) config;
-   }
-   else {
-      *nitems = 0;
-      return NULL;
-   }
-}
-
-
 static int
 Fake_glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
                            int attribute, int *value )
@@ -1953,6 +1931,35 @@ Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
       return (GLXFBConfig *) results;
    }
    return NULL;
+}
+
+
+static GLXFBConfig *
+Fake_glXChooseFBConfig( Display *dpy, int screen,
+                        const int *attribList, int *nitems )
+{
+   XMesaVisual xmvis;
+
+   if (!attribList || !attribList[0]) {
+      /* return list of all configs (per GLX_SGIX_fbconfig spec) */
+      return Fake_glXGetFBConfigs(dpy, screen, nitems);
+   }
+
+   xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
+   if (xmvis) {
+      GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
+      if (!config) {
+         *nitems = 0;
+         return NULL;
+      }
+      *nitems = 1;
+      config[0] = (GLXFBConfig) xmvis;
+      return (GLXFBConfig *) config;
+   }
+   else {
+      *nitems = 0;
+      return NULL;
+   }
 }
 
 
