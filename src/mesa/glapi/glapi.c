@@ -634,7 +634,7 @@ generate_entrypoint(GLuint functionOffset)
    return code;
 #elif defined(USE_SPARC_ASM)
 
-#if defined(__sparc_v9__) && !defined(__linux__)
+#if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
    static const unsigned int insn_template[] = {
 	   0x05000000,	/* sethi	%uhi(_glapi_Dispatch), %g2	*/
 	   0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	*/
@@ -662,7 +662,7 @@ generate_entrypoint(GLuint functionOffset)
    if (code) {
       memcpy(code, insn_template, sizeof(insn_template));
 
-#if defined(__sparc_v9__) && !defined(__linux__)
+#if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
       code[0] |= (glapi_addr >> (32 + 10));
       code[1] |= ((glapi_addr & 0xffffffff) >> 10);
       __glapi_sparc_icache_flush(&code[0]);
@@ -705,7 +705,7 @@ fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
 
    /* XXX this hasn't been tested! */
    unsigned int *code = (unsigned int *) entrypoint;
-#if defined(__sparc_v9__) && !defined(__linux__)
+#if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
    code[6] = 0x05000000;  /* sethi	%hi(8 * glapioffset), %g2	*/
    code[7] = 0x8410a000;  /* or		%g2, %lo(8 * glapioffset), %g2	*/
    code[6] |= ((offset * 8) >> 10);

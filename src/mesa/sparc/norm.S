@@ -1,4 +1,4 @@
-/* $Id: norm.S,v 1.3 2004/04/26 10:10:25 alanh Exp $ */
+/* $Id: norm.S,v 1.4 2004/11/22 19:27:40 brianp Exp $ */
 
 #include "sparc_matrix.h"
 
@@ -10,7 +10,7 @@
 
 	.text
 
-#if defined(__sparc_v9__) && !defined(__linux__)
+#if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
 #define STACK_VAR_OFF	(2047 + (8 * 16))
 #else
 #define STACK_VAR_OFF	(4 * 16)

@@ -2,7 +2,7 @@
  * Clip testing in SPARC assembly
  */
 
-#if defined(__sparc_v9__) && !defined(__linux__)
+#if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
 #define LDPTR		ldx
 #define V4F_DATA	0x00
 #define V4F_START	0x08
