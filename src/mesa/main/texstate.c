@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.54 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: texstate.c,v 1.55 2001/07/23 16:10:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-#define ERROR(errCode, msg, value)				\
+#define TE_ERROR(errCode, msg, value)				\
    {								\
       char s[100];						\
       sprintf(s, msg, _mesa_lookup_enum_by_nr(value));		\
@@ -83,14 +83,14 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 switch (mode) {
 	 case GL_ADD:
 	    if (!ctx->Extensions.EXT_texture_env_add) {
-	       ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+	       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
 	    break;
 	 case GL_COMBINE_EXT:
 	    if (!ctx->Extensions.EXT_texture_env_combine &&
                 !ctx->Extensions.ARB_texture_env_combine) {
-	       ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+	       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
 	    break;
@@ -100,7 +100,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 case GL_REPLACE:
 	    break;
 	 default:
-            ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	    return;
 	 }
 
@@ -136,26 +136,26 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       break;
             case GL_SUBTRACT_ARB:
                if (!ctx->Extensions.ARB_texture_env_combine) {
-                  ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
                   return;
                }
                break;
 	    case GL_DOT3_RGB_EXT:
 	    case GL_DOT3_RGBA_EXT:
 	       if (!ctx->Extensions.EXT_texture_env_dot3) {
-                  ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 		  return;
 	       }
 	       break;
 	    case GL_DOT3_RGB_ARB:
 	    case GL_DOT3_RGBA_ARB:
 	       if (!ctx->Extensions.ARB_texture_env_dot3) {
-                  ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 		  return;
 	       }
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
 	    if (texUnit->CombineModeRGB == mode)
@@ -164,7 +164,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    texUnit->CombineModeRGB = mode;
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
          break;
@@ -182,12 +182,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       break;
             case GL_SUBTRACT_ARB:
                if (!ctx->Extensions.ARB_texture_env_combine) {
-                  ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
                   return;
                }
                break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 	       return;
 	    }
             if (texUnit->CombineModeA == mode)
@@ -196,7 +196,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
             texUnit->CombineModeA = mode;
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -218,12 +218,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->CombineSourceRGB[s] = source;
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", source);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", source);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -244,12 +244,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->CombineSourceA[s] = source;
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", source);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", source);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -270,12 +270,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->CombineOperandRGB[s] = operand;
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -294,12 +294,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->CombineOperandA[pname-GL_OPERAND0_ALPHA_EXT] = operand;
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -317,12 +317,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->CombineOperandRGB[2] = operand;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -339,12 +339,12 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->CombineOperandA[2] = operand;
 	       break;
 	    default:
-               ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
 	    }
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -372,7 +372,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    texUnit->CombineScaleShiftRGB = newshift;
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -400,7 +400,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    texUnit->CombineScaleShiftA = newshift;
 	 }
 	 else {
-            ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+            TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
@@ -422,7 +422,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 texUnit->LodBias = param[0];
 	 break;
       default:
-         ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	 return;
       }
    }
