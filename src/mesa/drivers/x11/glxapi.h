@@ -1,4 +1,4 @@
-/* $Id: glxapi.h,v 1.4 2000/02/27 18:26:54 brianp Exp $ */
+/* $Id: glxapi.h,v 1.5 2000/04/10 21:13:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,7 +84,7 @@ struct _glxapi_table {
 #endif
 
 #ifdef _GLXAPI_VERSION_1_3
-   GLXFBConfig (*ChooseFBConfig)(Display *dpy, int screen, const int *attribList, int *nitems);
+   GLXFBConfig *(*ChooseFBConfig)(Display *dpy, int screen, const int *attribList, int *nitems);
    GLXContext (*CreateNewContext)(Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct);
    GLXPbuffer (*CreatePbuffer)(Display *dpy, GLXFBConfig config, const int *attribList);
    GLXPixmap (*CreatePixmap)(Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attribList);
@@ -94,6 +94,7 @@ struct _glxapi_table {
    void (*DestroyWindow)(Display *dpy, GLXWindow window);
    /*GLXDrawable (*GetCurrentReadDrawable)(void);*/
    int (*GetFBConfigAttrib)(Display *dpy, GLXFBConfig config, int attribute, int *value);
+   GLXFBConfig *(*GetFBConfigs)(Display *dpy, int screen, int *nelements);
    void (*GetSelectedEvent)(Display *dpy, GLXDrawable drawable, unsigned long *mask);
    XVisualInfo *(*GetVisualFromFBConfig)(Display *dpy, GLXFBConfig config);
    Bool (*MakeContextCurrent)(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx);

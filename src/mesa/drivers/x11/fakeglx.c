@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.31 2000/04/05 22:09:58 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.32 2000/04/10 21:13:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1629,7 +1629,7 @@ Fake_glXGetClientString( Display *dpy, int name )
  * GLX 1.3 and later
  */
 
-static GLXFBConfig
+static GLXFBConfig *
 Fake_glXChooseFBConfig( Display *dpy, int screen,
                         const int *attribList, int *nitems )
 {
@@ -1649,6 +1649,16 @@ Fake_glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
    (void) config;
    (void) attribute;
    (void) value;
+   return 0;
+}
+
+
+static GLXFBConfig *
+Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
+{
+   (void) dpy;
+   (void) screen;
+   (void) nelements;
    return 0;
 }
 

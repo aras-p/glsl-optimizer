@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.15 2000/02/27 18:26:54 brianp Exp $ */
+/* $Id: glxapi.c,v 1.16 2000/04/10 21:13:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -359,7 +359,7 @@ Display *glXGetCurrentDisplay(void)
 
 #ifdef _GLXAPI_VERSION_1_3
 
-GLXFBConfig glXChooseFBConfig(Display *dpy, int screen, const int *attribList, int *nitems)
+GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attribList, int *nitems)
 {
    struct _glxapi_table *t = get_dispatch(dpy);
    if (!t)
@@ -445,6 +445,14 @@ int glXGetFBConfigAttrib(Display *dpy, GLXFBConfig config, int attribute, int *v
    return (t->GetFBConfigAttrib)(dpy, config, attribute, value);
 }
 
+
+GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
+{
+   struct _glxapi_table *t = get_dispatch(dpy);
+   if (!t)
+      return 0;
+   return (t->GetFBConfigs)(dpy, screen, nelements);
+}
 
 void glXGetSelectedEvent(Display *dpy, GLXDrawable drawable, unsigned long *mask)
 {
