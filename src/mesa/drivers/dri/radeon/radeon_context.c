@@ -204,7 +204,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static int
-get_ust_nop( uint64_t * ust )
+get_ust_nop( int64_t * ust )
 {
    *ust = 1;
    return 0;
@@ -577,7 +577,7 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 (radeonContextPtr) driContextPriv->driverPrivate;
 
       if (RADEON_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, newCtx->glCtx);
+	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
@@ -617,7 +617,7 @@ radeonUnbindContext( __DRIcontextPrivate *driContextPriv )
    radeonContextPtr rmesa = (radeonContextPtr) driContextPriv->driverPrivate;
 
    if (RADEON_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s ctx %p\n", __FUNCTION__, rmesa->glCtx);
+      fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) rmesa->glCtx);
 
    return GL_TRUE;
 }
