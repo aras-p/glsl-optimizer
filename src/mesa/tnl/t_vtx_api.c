@@ -102,8 +102,10 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
 
 /* Deal with buffer wrapping where provoked by the vertex buffer
  * filling up, as opposed to upgrade_vertex().
+ *
+ * Make it GLAPIENTRY, so we can tail from the codegen'ed Vertex*fv
  */
-void _tnl_wrap_filled_vertex( GLcontext *ctx )
+void GLAPIENTRY _tnl_wrap_filled_vertex( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLfloat *data = tnl->vtx.copied.buffer;
@@ -403,7 +405,7 @@ static attrfv_func do_choose( GLuint attr, GLuint sz )
 
 
    /* Try to use codegen:
-    */   
+    */
 #ifdef USE_X86_ASM
    if (tnl->AllowCodegen)
       tnl->vtx.tabfv[attr][sz-1] = do_codegen( ctx, attr, sz );
@@ -473,11 +475,15 @@ static void reset_attrfv( TNLcontext *tnl )
 
    for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++) 
       if (tnl->vtx.attrsz[i]) {
-	 GLuint j = tnl->vtx.attrsz[i] - 1;
+	 GLint j = tnl->vtx.attrsz[i] - 1;
 	 tnl->vtx.attrsz[i] = 0;
 
-	 if (i < _TNL_MAX_ATTR_CODEGEN)
-	    tnl->vtx.tabfv[i][j] = choose[i][j];
+	 if (i < _TNL_MAX_ATTR_CODEGEN) {
+            while (j >= 0) {
+	       tnl->vtx.tabfv[i][j] = choose[i][j];
+               j--;
+            }
+         }
       }
 
    tnl->vtx.vertex_size = 0;

@@ -49,7 +49,7 @@ extern void _tnl_vtx_destroy( GLcontext *ctx );
 extern void _tnl_FlushVertices( GLcontext *ctx, GLuint flags );
 extern void _tnl_flush_vtx( GLcontext *ctx );
 
-extern void _tnl_wrap_filled_vertex( GLcontext *ctx );
+extern void GLAPIENTRY _tnl_wrap_filled_vertex( GLcontext *ctx );
 
 /* t_vtx_exec.c:
  */

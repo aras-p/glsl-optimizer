@@ -3,7 +3,7 @@
 
 
 
-Mesa-6.0 release notes:
+Mesa-6.1 release notes:
 -----------------------
 
 1) Glide2 support has been ceased; in order to keep Voodoo Rush
@@ -26,7 +26,7 @@ DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux
 How to compile:
 ---------------
 
-DJGPP/MinGW/MSVC:
+DJGPP/MinGW:
    Place the Glide3 SDK in the top Mesa directory:
 	$(MESA)/glide3/include/*.h
 	$(MESA)/glide3/lib/
@@ -35,11 +35,9 @@ DJGPP/MinGW/MSVC:
    Required libraries:
 	OS specific
    Type:
-	make -f Makefile.DJ HAVE_MMX=1 HAVE_3DNOW=1 FX=1
+	make -f Makefile.DJ X86=1 FX=1
 	or
-	make -f Makefile.mgw HAVE_MMX=1 HAVE_3DNOW=1 FX=1
-	or
-	nmake -f Makefile.wfx
+	make -f Makefile.mgw X86=1 FX=1
    Look into the corresponding makefiles for further information.
 
 Linux:

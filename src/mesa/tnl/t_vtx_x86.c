@@ -60,21 +60,24 @@ EXTERN( _tnl_x86_Vertex2fv );
 EXTERN( _tnl_x86_Vertex3fv );
 EXTERN( _tnl_x86_Vertex4fv );
 
-EXTERN( _tnl_x86_dispatch_attrf );
+EXTERN( _tnl_x86_dispatch_attrf1 );
+EXTERN( _tnl_x86_dispatch_attrf2 );
+EXTERN( _tnl_x86_dispatch_attrf3 );
+EXTERN( _tnl_x86_dispatch_attrf4 );
 EXTERN( _tnl_x86_dispatch_attrfv );
-EXTERN( _tnl_x86_dispatch_multitexcoordf );
+EXTERN( _tnl_x86_dispatch_multitexcoordf1 );
+EXTERN( _tnl_x86_dispatch_multitexcoordf2 );
+EXTERN( _tnl_x86_dispatch_multitexcoordf3 );
+EXTERN( _tnl_x86_dispatch_multitexcoordf4 );
 EXTERN( _tnl_x86_dispatch_multitexcoordfv );
-EXTERN( _tnl_x86_dispatch_vertexattribf );
+EXTERN( _tnl_x86_dispatch_vertexattribf1 );
+EXTERN( _tnl_x86_dispatch_vertexattribf2 );
+EXTERN( _tnl_x86_dispatch_vertexattribf3 );
+EXTERN( _tnl_x86_dispatch_vertexattribf4 );
 EXTERN( _tnl_x86_dispatch_vertexattribfv );
 
 EXTERN( _tnl_x86_choose_fv );
 
-
-static void notify( void )
-{
-   GET_CURRENT_CONTEXT( ctx );
-   _tnl_wrap_filled_vertex( ctx );
-}
 
 #define DONT_KNOW_OFFSETS 1
 
@@ -93,7 +96,7 @@ static void notify( void )
 
 #define FIXUP( CODE, KNOWN_OFFSET, CHECKVAL, NEWVAL )	\
 do {							\
-   GLuint subst = 0x10101010 + CHECKVAL;		\
+   GLint subst = 0x10101010 + CHECKVAL;			\
 							\
    if (DONT_KNOW_OFFSETS) {				\
       while (*(int *)(CODE+offset) != subst) offset++;	\
@@ -112,7 +115,7 @@ do {							\
 
 #define FIXUPREL( CODE, KNOWN_OFFSET, CHECKVAL, NEWVAL )\
 do {							\
-   GLuint subst = 0x10101010 + CHECKVAL;		\
+   GLint subst = 0x10101010 + CHECKVAL;			\
 							\
    if (DONT_KNOW_OFFSETS) {				\
       while (*(int *)(CODE+offset) != subst) offset++;	\
@@ -262,53 +265,16 @@ void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
 }
 
 
-static attrfv_func
-_do_choose( GLuint attr, GLuint sz )
-{
-   return NULL;
-}
-
-
-/* I purposely avoided one single macro, since they might need to be
- * handled in different ways.  Ohwell, once things get much clearer,
- * they could collapse...
- */
-#define MAKE_DISPATCH_ATTR(FUNC, SIZE, TYPE, ATTR)			\
+#define MKDISP(FUNC, SIZE, ATTR, WARP)					\
 do {									\
    char *code;								\
-   char *start = (char *)&_tnl_x86_dispatch_attr##TYPE;			\
-   char *end = (char *)&_tnl_x86_dispatch_attr##TYPE##_end;		\
+   char *start = (char *)&WARP;						\
+   char *end = (char *)&WARP##_end;					\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
    FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[ATTR][SIZE-1]));\
-   vfmt->FUNC##SIZE##TYPE = code;					\
-} while (0)
-
-
-#define MAKE_DISPATCH_MULTITEXCOORD(FUNC, SIZE, TYPE, ATTR)		\
-do {									\
-   char *code;								\
-   char *start = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE;	\
-   char *end = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE##_end;	\
-   int offset = 0;							\
-   code = ALIGN_MALLOC( end - start, 16 );				\
-   memcpy (code, start, end - start);					\
-   FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[_TNL_ATTRIB_TEX0][SIZE-1]));\
-   vfmt->FUNC##SIZE##TYPE##ARB = code;					\
-} while (0)
-
-
-#define MAKE_DISPATCH_VERTEXATTRIB(FUNC, SIZE, TYPE, ATTR)		\
-do {									\
-   char *code;								\
-   char *start = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE;		\
-   char *end = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE##_end;	\
-   int offset = 0;							\
-   code = ALIGN_MALLOC( end - start, 16 );				\
-   memcpy (code, start, end - start);					\
-   FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[0][SIZE-1]));	\
-   vfmt->FUNC##SIZE##TYPE##NV = code;					\
+   *(void **)&vfmt->FUNC = code;					\
 } while (0)
 
 
@@ -319,48 +285,48 @@ void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
 {
    GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->exec_vtxfmt);
 
-   MAKE_DISPATCH_ATTR(Color,3,f,     _TNL_ATTRIB_COLOR0);
-   MAKE_DISPATCH_ATTR(Color,3,fv,    _TNL_ATTRIB_COLOR0);
-   MAKE_DISPATCH_ATTR(Color,4,f,     _TNL_ATTRIB_COLOR0);
-   MAKE_DISPATCH_ATTR(Color,4,fv,    _TNL_ATTRIB_COLOR0);
-/* vfmt->FogCoordfEXT = _tnl_FogCoordfEXT;
-   vfmt->FogCoordfvEXT = _tnl_FogCoordfvEXT;*/
-   MAKE_DISPATCH_ATTR(Normal,3,f,    _TNL_ATTRIB_NORMAL);
-   MAKE_DISPATCH_ATTR(Normal,3,fv,   _TNL_ATTRIB_NORMAL);
-/* vfmt->SecondaryColor3fEXT = _tnl_SecondaryColor3fEXT;
-   vfmt->SecondaryColor3fvEXT = _tnl_SecondaryColor3fvEXT; */
-   MAKE_DISPATCH_ATTR(TexCoord,1,f,  _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,1,fv, _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,2,f,  _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,2,fv, _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,3,f,  _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,3,fv, _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,4,f,  _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(TexCoord,4,fv, _TNL_ATTRIB_TEX0);
-   MAKE_DISPATCH_ATTR(Vertex,2,f,    _TNL_ATTRIB_POS);
-   MAKE_DISPATCH_ATTR(Vertex,2,fv,   _TNL_ATTRIB_POS);
-   MAKE_DISPATCH_ATTR(Vertex,3,f,    _TNL_ATTRIB_POS);
-   MAKE_DISPATCH_ATTR(Vertex,3,fv,   _TNL_ATTRIB_POS);
-   MAKE_DISPATCH_ATTR(Vertex,4,f,    _TNL_ATTRIB_POS);
-   MAKE_DISPATCH_ATTR(Vertex,4,fv,   _TNL_ATTRIB_POS);
+   MKDISP(Color3f,             3, _TNL_ATTRIB_COLOR0, _tnl_x86_dispatch_attrf3);
+   MKDISP(Color3fv,            3, _TNL_ATTRIB_COLOR0, _tnl_x86_dispatch_attrfv);
+   MKDISP(Color4f,             4, _TNL_ATTRIB_COLOR0, _tnl_x86_dispatch_attrf4);
+   MKDISP(Color4fv,            4, _TNL_ATTRIB_COLOR0, _tnl_x86_dispatch_attrfv);
+   MKDISP(FogCoordfEXT,        1, _TNL_ATTRIB_FOG,    _tnl_x86_dispatch_attrf1);
+   MKDISP(FogCoordfvEXT,       1, _TNL_ATTRIB_FOG,    _tnl_x86_dispatch_attrfv);
+   MKDISP(Normal3f,            3, _TNL_ATTRIB_NORMAL, _tnl_x86_dispatch_attrf3);
+   MKDISP(Normal3fv,           3, _TNL_ATTRIB_NORMAL, _tnl_x86_dispatch_attrfv);
+   MKDISP(SecondaryColor3fEXT, 3, _TNL_ATTRIB_COLOR1, _tnl_x86_dispatch_attrf3);
+   MKDISP(SecondaryColor3fvEXT,3, _TNL_ATTRIB_COLOR1, _tnl_x86_dispatch_attrfv);
+   MKDISP(TexCoord1f,          1, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrf1);
+   MKDISP(TexCoord1fv,         1, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrfv);
+   MKDISP(TexCoord2f,          2, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrf2);
+   MKDISP(TexCoord2fv,         2, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrfv);
+   MKDISP(TexCoord3f,          3, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrf3);
+   MKDISP(TexCoord3fv,         3, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrfv);
+   MKDISP(TexCoord4f,          4, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrf4);
+   MKDISP(TexCoord4fv,         4, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_attrfv);
+   MKDISP(Vertex2f,            2, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrf2);
+   MKDISP(Vertex2fv,           2, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrfv);
+   MKDISP(Vertex3f,            3, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrf3);
+   MKDISP(Vertex3fv,           3, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrfv);
+   MKDISP(Vertex4f,            4, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrf4);
+   MKDISP(Vertex4fv,           4, _TNL_ATTRIB_POS,    _tnl_x86_dispatch_attrfv);
 
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,1,f,  0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,1,fv, 0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,f,  0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,fv, 0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,3,f,  0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,3,fv, 0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,4,f,  0);
-   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,4,fv, 0);
+   MKDISP(MultiTexCoord1fARB,  1, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordf1);
+   MKDISP(MultiTexCoord1fvARB, 1, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordfv);
+   MKDISP(MultiTexCoord2fARB,  2, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordf2);
+   MKDISP(MultiTexCoord2fvARB, 2, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordfv);
+   MKDISP(MultiTexCoord3fARB,  3, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordf3);
+   MKDISP(MultiTexCoord3fvARB, 3, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordfv);
+   MKDISP(MultiTexCoord4fARB,  4, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordf4);
+   MKDISP(MultiTexCoord4fvARB, 4, _TNL_ATTRIB_TEX0,   _tnl_x86_dispatch_multitexcoordfv);
 
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,1,f,  0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,1,fv, 0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,f,  0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,fv, 0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,3,f,  0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,3,fv, 0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,4,f,  0);
-   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,4,fv, 0);
+   MKDISP(VertexAttrib1fNV,    1, 0,                  _tnl_x86_dispatch_vertexattribf1);
+   MKDISP(VertexAttrib1fvNV,   1, 0,                  _tnl_x86_dispatch_vertexattribfv);
+   MKDISP(VertexAttrib2fNV,    2, 0,                  _tnl_x86_dispatch_vertexattribf2);
+   MKDISP(VertexAttrib2fvNV,   2, 0,                  _tnl_x86_dispatch_vertexattribfv);
+   MKDISP(VertexAttrib3fNV,    3, 0,                  _tnl_x86_dispatch_vertexattribf3);
+   MKDISP(VertexAttrib3fvNV,   3, 0,                  _tnl_x86_dispatch_vertexattribfv);
+   MKDISP(VertexAttrib4fNV,    4, 0,                  _tnl_x86_dispatch_vertexattribf4);
+   MKDISP(VertexAttrib4fvNV,   4, 0,                  _tnl_x86_dispatch_vertexattribfv);
 }
 
 
@@ -384,7 +350,7 @@ void _tnl_x86choosers( attrfv_func (*choose)[4],
          FIXUP(code, 0, 0, attr);
          FIXUP(code, 0, 1, size + 1);
          FIXUPREL(code, 0, 2, do_choose);
-         choose[attr][size] = code;
+         choose[attr][size] = (attrfv_func)code;
       }
    }
 }

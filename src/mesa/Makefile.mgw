@@ -134,13 +134,18 @@ x86/matypes.h: x86/gen_matypes.exe
 x86/gen_matypes.exe: x86/gen_matypes.c
 	$(CC) -o $@ $(CFLAGS) -s $<
 
-# [dBorca] Hack alert:
+# [dBorca]
 # glapi_x86.S needs some adjustments
 # in order to generate correct entrypoints
 x86/glapi_x86.o: x86/glapi_x86.S
 	$(CC) -o $@ $(CFLAGS) -U__WIN32__ -DSTDCALL_API -c $<
 #main/dispatch.o: main/dispatch.c
 #	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
+
+# [dBorca]
+# if we want codegen, we have to stdcall
+tnl/t_vtx_x86_gcc.o: tnl/t_vtx_x86_gcc.S
+	$(CC) -o $@ $(CFLAGS) -DSTDCALL_API -c $<
 
 clean:
 	-$(call UNLINK,array_cache/*.o)

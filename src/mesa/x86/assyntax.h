@@ -1300,11 +1300,11 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define REPZ			REPE
 #define RET			ret
 #define SAHF			sahf
-#define SAL_L(a, b)		sal L_(b), L_(a)
-#define SAL_W(a, b)		sal W_(b), W_(a)
+#define SAL_L(a, b)		sal L_(b), B_(a)
+#define SAL_W(a, b)		sal W_(b), B_(a)
 #define SAL_B(a, b)		sal B_(b), B_(a)
-#define SAR_L(a, b)		sar L_(b), L_(a)
-#define SAR_W(a, b)		sar W_(b), W_(a)
+#define SAR_L(a, b)		sar L_(b), B_(a)
+#define SAR_W(a, b)		sar W_(b), B_(a)
 #define SAR_B(a, b)		sar B_(b), B_(a)
 #define SBB_L(a, b)		sbb L_(b), L_(a)
 #define SBB_W(a, b)		sbb W_(b), W_(a)
