@@ -310,8 +310,13 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                 ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
@@ -521,8 +526,13 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                 ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
@@ -636,8 +646,13 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                 ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
 
    _swrast_span_default_color(ctx, &span);
    if (ctx->Fog.Enabled)
@@ -736,8 +751,13 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                 ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
 
    if (overlapping) {
       GLint ssy = sy;

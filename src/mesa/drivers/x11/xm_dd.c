@@ -930,7 +930,9 @@ xmesa_CopyPixels( GLcontext *ctx,
    ASSERT(dpy);
    ASSERT(gc);
 
-   if (drawBuffer &&  /* buffer != 0 means it's a Window or Pixmap */
+   if (ctx->Color.DrawBuffer == GL_FRONT &&
+       ctx->Pixel.ReadBuffer == GL_FRONT &&
+       drawBuffer &&  /* buffer != 0 means it's a Window or Pixmap */
        readBuffer &&
        type == GL_COLOR &&
        (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
@@ -1120,7 +1122,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
 #else
-   ctx->Driver.CopyPixels = xmesa_CopyPixels;
+   ctx->Driver.CopyPixels = /*_swrast_CopyPixels;*/xmesa_CopyPixels;
    if (xmesa->xm_visual->undithered_pf == PF_8R8G8B &&
        xmesa->xm_visual->dithered_pf == PF_8R8G8B) {
       ctx->Driver.DrawPixels = xmesa_DrawPixels_8R8G8B;
