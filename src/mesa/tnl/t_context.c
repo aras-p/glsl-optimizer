@@ -196,6 +196,6 @@ _tnl_MakeCurrent( GLcontext *ctx,
 		  GLframebuffer *readBuffer )
 {
 #ifndef THREADS
-   SET_IMMEDIATE(newCtx, newCtx->input);
+   SET_IMMEDIATE( ctx, TNL_VB(ctx)->IM );
 #endif
 }

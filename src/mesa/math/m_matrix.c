@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_matrix.c,v 1.2 2000/11/18 08:10:24 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,8 @@
  * 3. Transformation of a point p by a matrix M is: p' = M * p
  */
 
+#include <math.h>
+#include <tgmath.h>
 
 #include "glheader.h"
 #include "macros.h"
@@ -41,7 +43,6 @@
 #include "mmath.h"
 
 #include "m_matrix.h"
-
 
 static const char *types[] = {
    "MATRIX_GENERAL",

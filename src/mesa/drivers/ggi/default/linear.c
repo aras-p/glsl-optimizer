@@ -292,30 +292,30 @@ void GGIread_rgba_pixels(const GLcontext *ctx,
 	}
 }
 
-int GGIsetup_driver(GGIMesaContext ggictx,struct ggi_mesa_info *info)
+int GGIsetup_driver(GGIMesaContext ggictx, struct ggi_mesa_info *info)
 {
-	GLcontext *ctx=ggictx->gl_ctx;
+	GLcontext *ctx = ggictx->gl_ctx;
 
 	ctx->Driver.WriteRGBASpan	= GGIwrite_rgba_span;
 	ctx->Driver.WriteRGBSpan	= GGIwrite_rgb_span;
-	ctx->Driver.WriteMonoRGBASpan	= GGIwrite_mono_span;
+//	ctx->Driver.WriteMonoRGBASpan	= GGIwrite_mono_span;
 	ctx->Driver.WriteRGBAPixels	= GGIwrite_rgba_pixels;
-	ctx->Driver.WriteMonoRGBAPixels = GGIwrite_mono_pixels;
+//	ctx->Driver.WriteMonoRGBAPixels = GGIwrite_mono_pixels;
 
 	ctx->Driver.WriteCI32Span       = GGIwrite_ci32_span;
 	ctx->Driver.WriteCI8Span       = GGIwrite_ci8_span;
-	ctx->Driver.WriteMonoCISpan   = GGIwrite_mono_span;
+//	ctx->Driver.WriteMonoCISpan   = GGIwrite_mono_span;
 	ctx->Driver.WriteCI32Pixels     = GGIwrite_ci32_pixels;
-	ctx->Driver.WriteMonoCIPixels = GGIwrite_mono_pixels;
+//	ctx->Driver.WriteMonoCIPixels = GGIwrite_mono_pixels;
 
 	ctx->Driver.ReadCI32Span = GGIread_ci32_span;
 	ctx->Driver.ReadRGBASpan = GGIread_rgba_span;
 	ctx->Driver.ReadCI32Pixels = GGIread_ci32_pixels;
 	ctx->Driver.ReadRGBAPixels = GGIread_rgba_pixels;
 
-	info->red_bits=R;
-	info->green_bits=G;
-	info->blue_bits=B;
+	info->red_bits = R;
+	info->green_bits =G;
+	info->blue_bits = B;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
+/* $Id: m_xform.c,v 1.3 2000/11/18 08:10:24 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
  * 3. Transformation of a point p by a matrix M is: p' = M * p
  */
 
+#include <math.h>
 
 #include "glheader.h"
 #include "macros.h"

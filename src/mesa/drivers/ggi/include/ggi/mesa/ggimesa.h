@@ -32,7 +32,6 @@
 #include "context.h"
 #include "matrix.h"
 #include "types.h"
-#include "vb.h"
 #include "macros.h"
 #include "depth.h"
 
