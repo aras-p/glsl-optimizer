@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.11 2000/01/28 19:02:57 brianp Exp $ */
+/* $Id: dispatch.c,v 1.12 2000/01/31 22:54:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,6 +75,7 @@
 
 
 
+
 /**********************************************************************
  * Generate the GL entrypoint functions here.
  */
@@ -100,16 +101,24 @@ trace(void)
    return trace > 0;
 }
 
+#define F stderr
+
 #define DISPATCH(FUNC, ARGS, MESSAGE)					\
    const struct _glapi_table *dispatch;					\
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   if (trace()) printf MESSAGE;						\
+   if (trace()) {							\
+      fprintf MESSAGE;							\
+      fprintf(F, "\n");							\
+   }									\
    (dispatch->FUNC) ARGS
 
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
    const struct _glapi_table *dispatch;					\
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
-   if (trace()) printf MESSAGE;						\
+   if (trace()) {							\
+      fprintf MESSAGE;							\
+      fprintf(F, "\n");							\
+   }									\
    return (dispatch->FUNC) ARGS
 
 #else
@@ -558,6 +567,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->ResetHistogram = _mesa_ResetHistogram;
    exec->ResetMinmax = _mesa_ResetMinmax;
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
+
+   /* 6. GL_EXT_texture3d */
+   exec->CopyTexSubImage3DEXT = _mesa_CopyTexSubImage3D;
+   exec->TexImage3DEXT = _mesa_TexImage3DEXT;
+   exec->TexSubImage3DEXT = _mesa_TexSubImage3D;
 
    /* GL_EXT_paletted_texture */
    exec->ColorTableEXT = _mesa_ColorTableEXT;
