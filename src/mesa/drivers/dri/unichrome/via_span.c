@@ -33,13 +33,6 @@
 
 #define DBG 0
 
-#define LOCAL_DEPTH_VARS                                \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
-    GLuint depth_pitch = vmesa->depth.pitch;                \
-    GLuint height = dPriv->h;                           \
-    char *buf = (char *)(vmesa->depth.map + (vmesa->drawXoff * vmesa->depth.bpp/8))
-
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx &&    \
                           _y >= miny && _y < maxy)
 
@@ -75,62 +68,36 @@
 
 #define HW_UNLOCK()
 
-/* 16 bit, 565 rgb color spanline and pixel functions
- */
 #undef LOCAL_VARS
 #define LOCAL_VARS                                                   	\
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);             		\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
-    GLuint draw_pitch = vmesa->drawBuffer->pitch;                                 	\
-    GLuint read_pitch = vmesa->readBuffer->pitch;                                 	\
+    GLuint draw_pitch = vmesa->drawBuffer->pitch;                       \
+    GLuint read_pitch = vmesa->readBuffer->pitch;                       \
     GLuint height = dPriv->h;                                        	\
-    GLushort p = 0;                                                   	\
-    char *buf = (char *)(vmesa->drawBuffer->origMap + vmesa->drawXoff * 2); \
-    char *read_buf = (char *)(vmesa->readBuffer->origMap + vmesa->drawXoff * 2); \
+    GLint p = 0;							\
+    char *buf = (char *)(vmesa->drawBuffer->origMap + vmesa->drawXoff * vmesa->viaScreen->bytesPerPixel); \
+    char *read_buf = (char *)(vmesa->readBuffer->origMap + vmesa->drawXoff * vmesa->viaScreen->bytesPerPixel); \
     (void) (read_pitch && draw_pitch && buf && read_buf && p);
 
-#define INIT_MONO_PIXEL(p, color)                       \
-    p = PACK_COLOR_565(color[0], color[1], color[2])
-    
-#define WRITE_RGBA(_x, _y, r, g, b, a)                                      \
-    *(GLushort *)(buf + _x * 2 + _y * draw_pitch) = ((((int)r & 0xf8) << 8) |    \
-                                                (((int)g & 0xfc) << 3) |    \
-                                                (((int)b & 0xf8) >> 3))
-
-#define WRITE_PIXEL(_x, _y, p)                      \
-    *(GLushort *)(buf + _x * 2 + _y * draw_pitch) = p
-
-#define READ_RGBA(rgba, _x, _y)                                             \
-    do {                                                                    \
-        GLushort p = *(GLushort *)(read_buf + _x * 2 + _y * read_pitch);         \
-        rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;                           \
-        rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;                           \
-        rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;                           \
-        rgba[3] = 255;                                                      \
-    } while (0)
-
-#define TAG(x) via##x##_565
-#include "spantmp.h"
-
-/* 32 bit, 8888 argb color spanline and pixel functions
+/* ================================================================
+ * Color buffer
  */
-#undef LOCAL_VARS
-#undef LOCAL_DEPTH_VARS
-#undef INIT_MONO_PIXEL
-#undef DBG
-#define DBG 0
- 
-#define LOCAL_VARS                                                   	\
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
-    GLuint draw_pitch = vmesa->drawBuffer->pitch;                                 	\
-    GLuint read_pitch = vmesa->readBuffer->pitch;                                 	\
-    GLuint height = dPriv->h;                                        	\
-    GLuint p = 0;                                                      	\
-    char *buf = (char *)(vmesa->drawBuffer->origMap + vmesa->drawXoff * 4); \
-    char *read_buf = (char *)(vmesa->readBuffer->origMap + vmesa->drawXoff * 4); \
-    (void) (read_pitch && draw_pitch && buf && read_buf && p);
 
+/* 16 bit, RGB565 color spanline and pixel functions
+ */
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * read_pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * draw_pitch)
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+
+#define TAG(x)    via##x##_565
+#define TAG2(x,y) via##x##_565##y
+#include "spantmp2.h"
+
+
+/* 32 bit, ARGB8888 color spanline and pixel functions
+ */
 #define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * read_pitch)
 #define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * draw_pitch)
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -247,13 +214,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
 
     swdd->SetBuffer = viaSetBuffer;
     if (vmesa->viaScreen->bitsPerPixel == 16) {
-	swdd->WriteRGBASpan = viaWriteRGBASpan_565;
-	swdd->WriteRGBSpan = viaWriteRGBSpan_565;
-	swdd->WriteMonoRGBASpan = viaWriteMonoRGBASpan_565;
-	swdd->WriteRGBAPixels = viaWriteRGBAPixels_565;
-	swdd->WriteMonoRGBAPixels = viaWriteMonoRGBAPixels_565;
-	swdd->ReadRGBASpan = viaReadRGBASpan_565;
-	swdd->ReadRGBAPixels = viaReadRGBAPixels_565;
+	viaInitPointers_565( swdd );
     }
     else if (vmesa->viaScreen->bitsPerPixel == 32) {
 	viaInitPointers_8888( swdd );
