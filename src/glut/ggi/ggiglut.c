@@ -234,6 +234,7 @@ int glutCreateWindow(const char *title)
 
 	rgb = !(__glut_mode & GLUT_INDEX);
 	frames = (__glut_mode & GLUT_DOUBLE) ? 2 : 1;
+	
 	gt = (rgb) ? __glut_gt_rgb : __glut_gt_index;
 	
 	__glut_ctx = GGIMesaCreateContext();
@@ -263,6 +264,7 @@ int glutCreateWindow(const char *title)
 
 	if (GGIMesaSetVisual(__glut_ctx, __glut_vis, rgb, frames > 1) < 0) 
 	{
+		glut_ggiDEBUG("AAA\n");
 		ggiPanic("GGIMesaSetVisual failed!\n");
 	}
 	

@@ -145,24 +145,11 @@ static GLbitfield gl_ggiClear(GLcontext *ctx,GLbitfield mask, GLboolean all,
 
 static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLenum mode)
 {
-	int y;
-/*
-	if (mode == GL_FRONT) 
-		gl_ggiPrint("GL_FRONT\n"); 
-	else 
-		gl_ggiPrint("GL_BACK\n");
-*/
 	if (mode == GL_FRONT)
-	{
-		 y = (GGICTX->origin.y) ? 0 : GGICTX->height;
-	}
-	else	
-	{
-		 y = GGICTX->origin.y;
-	}
-
-	GGICTX->flip_y = y + GGICTX->height - 1; 
-
+	  GGICTX->active_buffer = 1;
+	else
+	  GGICTX->active_buffer = 0;
+	
 	return GL_TRUE;
 }
 
@@ -202,20 +189,7 @@ static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
 	ggi_mode mode;
 
 	ggiGetMode(ctx->ggi_vis, &mode);
-
-	if (info->db_flag)
-	{
-		virty = mode.virt.y;
-		visy = mode.visible.y;
-
-		if (virty < 2 * visy)
-		{
-			gl_ggiPrint(" visible y %i, virtual y %i\n",visy,virty);
-			gl_ggiPrint("ggiInitInfo: no doublebuffer possible!\n");
-			return -1;
-		}
-	}
-
+	
 	info->depth_bits = DEPTH_BITS;
 	info->stencil_bits = STENCIL_BITS;
 	info->accum_bits = ACCUM_BITS;
@@ -251,7 +225,6 @@ GGIMesaContext GGIMesaCreateContext(void)
 
 	s = getenv("GGIMESA_DEBUG");
 	gl_ggi_debug = (s && atoi(s));
-	gl_ggiDEBUG("GGIMesaCreateContext:\n");
 
 	if (ggiMesaInit() < 0) 		/* register extensions*/
 	{
@@ -273,7 +246,6 @@ GGIMesaContext GGIMesaCreateContext(void)
 	if (!ctx->gl_ctx) 
 	  return NULL;
 	
-	gl_ggiDEBUG("GGIMesaCreateContext: done.\n");
 	return ctx;
 }
 
@@ -285,7 +257,7 @@ void GGIMesaDestroyContext(GGIMesaContext ctx)
 		gl_destroy_context(ctx->gl_ctx);
 		gl_destroy_framebuffer(ctx->gl_buffer);
 		if (ctx == GGIMesa) 
-			GGIMesa = NULL;
+		  GGIMesa = NULL;
 		if (ctx->ggi_vis) 
 		  ggiExtensionDetach(ctx->ggi_vis, ggiMesaID);
 		ggiExtensionUnregister(ggiMesaID);
@@ -305,8 +277,6 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	ggi_mode mode;
 	int num_buf;
 
-	gl_ggiDEBUG("GGIMesaSetVisual:\n");
-
 	if (!ctx) return -1;
 	if (!vis) return -1;
 	
@@ -325,7 +295,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	  gl_destroy_visual(ctx->gl_vis);
 
 	if (ctx->gl_buffer)
-	  gl_destroy_framebuffer(ctx->gl_buffer);	
+	  gl_destroy_framebuffer(ctx->gl_buffer);
 
 	info.rgb_flag = rgb_flag;
 	info.db_flag = db_flag;
@@ -338,7 +308,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 
 	func = (void *)LIBGGI_MESAEXT(ctx->ggi_vis)->setup_driver;
 
-	if (!func) 
+	if (!func)
 	{
 		gl_ggiPrint("setup_driver==NULL !\n");
 		gl_ggiPrint("Please check your config files!\n");
@@ -369,7 +339,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 
 	if (!ctx->gl_buffer) 
 	{
-		gl_ggiPrint("Can't create gl_buffer!!!\n");
+		gl_ggiPrint("Can't create gl_buffer!\n");
 		return -1;
 	}
 	
@@ -378,31 +348,33 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	ctx->height = mode.visible.y;
 	ctx->stride = mode.virt.x;
 	ctx->origin.x = 0;
-	ctx->origin.y = (info.db_flag) ? ctx->height : 0; 
+	ctx->origin.y = 0;
 	ctx->flip_y = ctx->origin.y + ctx->height - 1; 
 
 	ctx->color = 0;
 
-	ctx->lfb = NULL;
+	ctx->lfb[0] = ctx->lfb[1] = NULL;
 	num_buf = ggiDBGetNumBuffers(ctx->ggi_vis);
-
+	
 	for (i = 0; i < num_buf; i++)
 	{
 		if (ggiDBGetBuffer(ctx->ggi_vis,i)->layout == blPixelLinearBuffer)
 		{
 			ctx->stride = ggiDBGetBuffer(ctx->ggi_vis, i)->buffer.plb.stride /
 			(ggiDBGetBuffer(ctx->ggi_vis, i)->buffer.plb.pixelformat->size / 8);
-			ctx->lfb = ggiDBGetBuffer(ctx->ggi_vis, i)->write;
+			ctx->lfb[0] = ggiDBGetBuffer(ctx->ggi_vis, i)->write;
 		}
-		
 	}
 	
-	if (ctx->lfb == NULL)
+	if (ctx->lfb[0] == NULL)
 	{
 		gl_ggiPrint("No linear frame buffer!\n");
 		return -1;
 	}
-
+	
+	/* FIXME: Use separate buffers */
+	ctx->lfb[1] = ctx->lfb[0];
+	
 	ctx->gl_ctx->Visual = ctx->gl_vis;
 	ctx->gl_ctx->Pixel.ReadBuffer = 
 	ctx->gl_ctx->Color.DrawBuffer = (db_flag) ? GL_BACK : GL_FRONT;
@@ -423,7 +395,6 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 		ggiSetPalette(ctx->ggi_vis, 0, 256, pal);	
 	}
 
-	gl_ggiDEBUG("GGIMesaSetVisual: done.\n");
 	return 0;
 }
 
@@ -453,16 +424,13 @@ GGIMesaContext GGIMesaGetCurrentContext(void)
  */
 void GGIMesaSwapBuffers(void)
 {
-	if (GGIMesa->gl_vis->DBflag) 
+	FLUSH_VB(GGIMesa->gl_ctx, "swap buffers");
+	if (GGIMesa->gl_vis->DBflag)
 	{
-		ggiSetOrigin(VIS, GGIMesa->origin.x, GGIMesa->origin.y);
-
-		if (GGIMesa->origin.y) 
-		  GGIMesa->origin.y = 0;
-		else 
-		  GGIMesa->origin.y = GGIMesa->height;
-		
-		GGIMesa->flip_y = GGIMesa->origin.y + GGIMesa->height - 1;  
+		void *buftemp;
+		buftemp = GGIMesa->lfb[0];
+		GGIMesa->lfb[0] = GGIMesa->lfb[1];
+		GGIMesa->lfb[1] = buftemp;
 	}
 }
 
@@ -483,7 +451,6 @@ static void gl_ggiUpdateState(GLcontext *ctx)
 
 static int changed(ggi_visual_t vis, int whatchanged)
 {
-	gl_ggiDEBUG("Entered ggimesa_changed()\n");
 	switch (whatchanged)
 	{
 		case GGI_CHG_APILIST:
@@ -497,7 +464,6 @@ static int changed(ggi_visual_t vis, int whatchanged)
 			for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++)
 			{
 				strcat(api, "-mesa");
-				gl_ggiDEBUG("api=%s, i=%d\n", api, i);
 				fname = ggMatchConfig(_ggimesaConfigHandle, api, NULL);
 				if (fname == NULL)
 				{

@@ -340,7 +340,7 @@ void GGItriangle_flat(GLcontext *ctx,GLuint v0,GLuint v1,GLuint v2,GLuint pv)
 
 
 void GGItriangle_flat_depth(GLcontext *ctx,GLuint v0,GLuint v1,
-			GLuint v2,GLuint pv)
+			    GLuint v2,GLuint pv)
 {
 #define INTERP_Z 1
 

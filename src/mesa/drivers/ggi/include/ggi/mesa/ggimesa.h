@@ -50,14 +50,15 @@ struct ggi_mesa_context
 	GLcontext *gl_ctx;
 	GLvisual *gl_vis;
 	GLframebuffer *gl_buffer;
-
+	
 	ggi_visual_t ggi_vis; 
 	ggi_coord origin;
 	int flip_y;
 	int width, height, stride;	/* Stride is in pixels */
 	ggi_pixel color;		/* Current color or index*/
 	ggi_pixel clearcolor;
-	void *lfb;			/* Linear frame buffer*/
+	void *lfb[2];			/* Linear frame buffers	*/
+	int active_buffer;
 	int viewport_init;
 };
 
@@ -79,7 +80,7 @@ extern GGIMesaContext GGIMesa;	/* The current context */
 #define VIS (GGICTX->ggi_vis)
 #define FLIP(y) (GGICTX->flip_y-(y))
 
-#define LFB(type,x,y) ((type *)GGICTX->lfb + (x) + (y) * GGICTX->stride)
+#define LFB(type,x,y) ((type *)GGICTX->lfb[0] + (x) + (y) * GGICTX->stride)
 
 #define CTX_OPMESA(ctx) \
 ((struct mesa_ext *)LIBGGI_EXT(((GGIMesaContext)ctx->DriverCtx)->ggi_vis, \

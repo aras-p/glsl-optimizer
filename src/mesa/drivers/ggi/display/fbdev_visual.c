@@ -1,4 +1,4 @@
-/* $Id: fbdev_visual.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
+/* $Id: fbdev_visual.c,v 1.4 1999/08/24 02:03:34 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa: visual handling
@@ -74,7 +74,6 @@ char *conffile = confstub;
 
 static int changed(ggi_visual_t vis, int whatchanged)
 {
-	gl_ggiDEBUG("Entered ggimesa_fbdev_changed\n");
 	switch (whatchanged)
 	{
 		case GGI_CHG_APILIST:
@@ -88,7 +87,6 @@ static int changed(ggi_visual_t vis, int whatchanged)
 			for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++)
 			{
 				strcat(api, "-mesa");
-				gl_ggiDEBUG("ggimesa_fbdev_changed: api=%s, i=%d\n", api, i);
 				fname = ggMatchConfig(_configHandle, api, NULL);
 				if (fname == NULL)
 				{
@@ -101,7 +99,6 @@ static int changed(ggi_visual_t vis, int whatchanged)
 		}
 		break;
 	}
-	gl_ggiDEBUG("Leaving ggimesa_fbdev_changed\n");
 	return 0;
 }
 
@@ -112,8 +109,6 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	int id, err;
 	ggifunc_getapi *oldgetapi;
 
-	gl_ggiDEBUG("display-fbdev-mesa: GGIdlinit start\n");
-	
 	GGIMESA_PRIVATE(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
 	if (priv == NULL) {
 		fprintf(stderr, "Failed to allocate fbdev private data\n");
@@ -143,7 +138,6 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		vis->opdisplay->getapi = oldgetapi;
 	}
 
-	gl_ggiDEBUG("display-fbdev-mesa: GGIdlinit done\n");
 	return 0;
 }
 
