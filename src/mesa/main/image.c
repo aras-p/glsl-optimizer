@@ -358,7 +358,9 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
       case GL_GREEN:
       case GL_BLUE:
       case GL_ALPHA:
+#if 0 /* not legal!  see table 3.6 of the 1.5 spec */
       case GL_INTENSITY:
+#endif
       case GL_LUMINANCE:
       case GL_LUMINANCE_ALPHA:
       case GL_DEPTH_COMPONENT:
