@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.102 2003/01/21 21:47:48 brianp Exp $ */
+/* $Id: dlist.c,v 1.103 2003/03/03 15:37:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5083,7 +5083,7 @@ _mesa_CallList( GLuint list )
 
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "_mesa_CallList %d\n", list); 
+      _mesa_debug(ctx, "glCallList %d\n", list); 
 
 /*     mesa_print_display_list( list ); */
 
@@ -5116,7 +5116,7 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    GLboolean save_compile_flag;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "_mesa_CallLists %d\n", n); 
+      _mesa_debug(ctx, "glCallLists %d\n", n); 
 
    switch (type) {
       case GL_BYTE:
