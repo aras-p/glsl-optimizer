@@ -4,7 +4,7 @@
  *
  * Compile with something like this:
  *
- * gcc osdemo32.c -I../include -L../lib -lOSMesa32 -lm -o osdemo32
+ * gcc osdemo32.c -I../../include -L../../lib -lglut -lGLU -lOSMesa32 -lm -o osdemo32
  */
 
 
@@ -194,13 +194,13 @@ write_targa(const char *filename, const GLfloat *buffer, int width, int height)
 
 
 static void
-write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
+write_ppm(const char *filename, const GLfloat *buffer, int width, int height)
 {
    const int binary = 0;
    FILE *f = fopen( filename, "w" );
    if (f) {
       int i, x, y;
-      const GLubyte *ptr = buffer;
+      const GLfloat *ptr = buffer;
       if (binary) {
          fprintf(f,"P6\n");
          fprintf(f,"# ppm-file created by osdemo.c\n");
@@ -210,10 +210,17 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
          f = fopen( filename, "ab" );  /* reopen in binary append mode */
          for (y=height-1; y>=0; y--) {
             for (x=0; x<width; x++) {
+               int r, g, b;
                i = (y*width + x) * 4;
-               fputc(ptr[i], f);   /* write red */
-               fputc(ptr[i+1], f); /* write green */
-               fputc(ptr[i+2], f); /* write blue */
+               r = (int) (ptr[i+0] * 255.0);
+               g = (int) (ptr[i+1] * 255.0);
+               b = (int) (ptr[i+2] * 255.0);
+               if (r > 255) r = 255;
+               if (g > 255) g = 255;
+               if (b > 255) b = 255;
+               fputc(r, f);   /* write red */
+               fputc(g, f); /* write green */
+               fputc(b, f); /* write blue */
             }
          }
       }
@@ -226,8 +233,15 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
          fprintf(f,"255\n");
          for (y=height-1; y>=0; y--) {
             for (x=0; x<width; x++) {
+               int r, g, b;
                i = (y*width + x) * 4;
-               fprintf(f, " %3d %3d %3d", ptr[i], ptr[i+1], ptr[i+2]);
+               r = (int) (ptr[i+0] * 255.0);
+               g = (int) (ptr[i+1] * 255.0);
+               b = (int) (ptr[i+2] * 255.0);
+               if (r > 255) r = 255;
+               if (g > 255) g = 255;
+               if (b > 255) b = 255;
+               fprintf(f, " %3d %3d %3d", r, g, b);
                counter++;
                if (counter % 5 == 0)
                   fprintf(f, "\n");
@@ -242,7 +256,7 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 
 int main( int argc, char *argv[] )
 {
-   void *buffer;
+   GLfloat *buffer;
 
    /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
@@ -257,7 +271,7 @@ int main( int argc, char *argv[] )
    }
 
    /* Allocate the image buffer */
-   buffer = malloc( WIDTH * HEIGHT * 4 * sizeof(GLfloat));
+   buffer = (GLfloat *) malloc( WIDTH * HEIGHT * 4 * sizeof(GLfloat));
    if (!buffer) {
       printf("Alloc image buffer failed!\n");
       return 0;

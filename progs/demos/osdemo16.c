@@ -4,7 +4,7 @@
  *
  * Compile with something like this:
  *
- * gcc osdemo16.c -I../include -L../lib -lOSMesa16 -lm -o osdemo16
+ * gcc osdemo16.c -I../../include -L../../lib -lglut -lGLU -lOSMesa16 -lm -o osdemo16
  */
 
 
@@ -178,6 +178,7 @@ write_targa(const char *filename, const GLushort *buffer, int width, int height)
       for (y=height-1; y>=0; y--) {
          for (x=0; x<width; x++) {
             i = (y*width + x) * 4;
+            /* just write 8 high bits */
             fputc(ptr[i+2] >> 8, f); /* write blue */
             fputc(ptr[i+1] >> 8, f); /* write green */
             fputc(ptr[i] >> 8, f);   /* write red */
@@ -188,13 +189,13 @@ write_targa(const char *filename, const GLushort *buffer, int width, int height)
 
 
 static void
-write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
+write_ppm(const char *filename, const GLushort *buffer, int width, int height)
 {
    const int binary = 0;
    FILE *f = fopen( filename, "w" );
    if (f) {
       int i, x, y;
-      const GLubyte *ptr = buffer;
+      const GLushort *ptr = buffer;
       if (binary) {
          fprintf(f,"P6\n");
          fprintf(f,"# ppm-file created by osdemo.c\n");
@@ -205,9 +206,10 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
          for (y=height-1; y>=0; y--) {
             for (x=0; x<width; x++) {
                i = (y*width + x) * 4;
-               fputc(ptr[i], f);   /* write red */
-               fputc(ptr[i+1], f); /* write green */
-               fputc(ptr[i+2], f); /* write blue */
+               /* just write 8 high bits */
+               fputc(ptr[i] >> 8, f);   /* write red */
+               fputc(ptr[i+1] >> 8, f); /* write green */
+               fputc(ptr[i+2] >> 8, f); /* write blue */
             }
          }
       }
@@ -221,7 +223,8 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
          for (y=height-1; y>=0; y--) {
             for (x=0; x<width; x++) {
                i = (y*width + x) * 4;
-               fprintf(f, " %3d %3d %3d", ptr[i], ptr[i+1], ptr[i+2]);
+               /* just write 8 high bits */
+               fprintf(f, " %3d %3d %3d", ptr[i] >> 8, ptr[i+1] >> 8, ptr[i+2] >> 8);
                counter++;
                if (counter % 5 == 0)
                   fprintf(f, "\n");
@@ -236,7 +239,7 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
 
 int main( int argc, char *argv[] )
 {
-   void *buffer;
+   GLushort *buffer;
 
    /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
@@ -251,7 +254,7 @@ int main( int argc, char *argv[] )
    }
 
    /* Allocate the image buffer */
-   buffer = malloc( WIDTH * HEIGHT * 4 * sizeof(GLushort));
+   buffer = (GLushort *) malloc( WIDTH * HEIGHT * 4 * sizeof(GLushort));
    if (!buffer) {
       printf("Alloc image buffer failed!\n");
       return 0;
