@@ -12,7 +12,7 @@
 
 VPATH = RCS
 
-INCDIR = [---.include],[-.glapi]
+INCDIR = [---.include],[-.glapi],[-.shader]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 

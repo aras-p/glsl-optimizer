@@ -6,6 +6,8 @@ all :
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.glapi]
 	$(MMS)$(MMSQUALIFIERS)
+	set default [-.shader]
+	$(MMS)$(MMSQUALIFIERS)
 	set default [-.drivers.common]
 	$(MMS)$(MMSQUALIFIERS)
 	set default [-.x11]

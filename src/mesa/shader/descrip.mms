@@ -31,15 +31,15 @@ SOURCES = \
 	program.c
 
 OBJECTS = \
-	arbfragparse.obj \
-	arbprogparse.obj \
-	arbprogram.obj \
-	arbvertparse.obj \
-	grammar_mesa.obj \
-	nvfragparse.obj \
-	nvprogram.obj \
-	nvvertexec.obj \
-	nvvertparse.obj \
+	arbfragparse.obj,\
+	arbprogparse.obj,\
+	arbprogram.obj,\
+	arbvertparse.obj,\
+	grammar_mesa.obj,\
+	nvfragparse.obj,\
+	nvprogram.obj,\
+	nvvertexec.obj,\
+	nvvertparse.obj,\
 	program.obj
 
 
