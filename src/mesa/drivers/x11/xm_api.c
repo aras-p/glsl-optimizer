@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.28 2001/09/01 20:27:31 brianp Exp $ */
+/* $Id: xm_api.c,v 1.29 2001/09/12 03:32:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1636,9 +1636,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    _mesa_enable_sw_extensions(ctx);
    _mesa_enable_1_3_extensions(ctx);
-   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
-   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
-   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;

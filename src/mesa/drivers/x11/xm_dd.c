@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.25 2001/07/12 22:09:21 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.26 2001/09/12 03:32:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "texformat.h"
 #include "xmesaP.h"
 #include "array_cache/acache.h"
+#include "swrast/s_context.h"
 #include "swrast/swrast.h"
 #include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
@@ -969,6 +970,9 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
    ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
 
+   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
+   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
+   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    /* Swrast hooks for imaging extensions:
     */
@@ -998,4 +1002,43 @@ void xmesa_init_pointers( GLcontext *ctx )
    _swsetup_Wakeup(ctx);
 
    (void) DitherValues;  /* silenced unused var warning */
+}
+
+
+
+
+
+#define XMESA_NEW_POINT  (_NEW_POINT | \
+                          _NEW_RENDERMODE | \
+                          _SWRAST_NEW_RASTERMASK)
+
+#define XMESA_NEW_LINE   (_NEW_LINE | \
+                          _NEW_TEXTURE | \
+                          _NEW_LIGHT | \
+                          _NEW_DEPTH | \
+                          _NEW_RENDERMODE | \
+                          _SWRAST_NEW_RASTERMASK)
+
+#define XMESA_NEW_TRIANGLE (_NEW_POLYGON | \
+                            _NEW_TEXTURE | \
+                            _NEW_LIGHT | \
+                            _NEW_DEPTH | \
+                            _NEW_RENDERMODE | \
+                            _SWRAST_NEW_RASTERMASK)
+
+
+/* Extend the software rasterizer with our line/point/triangle
+ * functions.
+ */
+void xmesa_register_swrast_functions( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT( ctx );
+
+   swrast->choose_point = xmesa_choose_point;
+   swrast->choose_line = xmesa_choose_line;
+   swrast->choose_triangle = xmesa_choose_triangle;
+
+   swrast->invalidate_point |= XMESA_NEW_POINT;
+   swrast->invalidate_line |= XMESA_NEW_LINE;
+   swrast->invalidate_triangle |= XMESA_NEW_TRIANGLE;
 }

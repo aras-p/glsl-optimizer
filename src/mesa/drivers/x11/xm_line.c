@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.17 2001/04/27 21:18:25 brianp Exp $ */
+/* $Id: xm_line.c,v 1.18 2001/09/12 03:32:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -630,40 +630,4 @@ void xmesa_choose_line( GLcontext *ctx )
 
    if (!(swrast->Line = get_line_func( ctx )))
       _swrast_choose_line( ctx );
-}
-
-
-#define XMESA_NEW_POINT  (_NEW_POINT | \
-                          _NEW_RENDERMODE | \
-                          _SWRAST_NEW_RASTERMASK)
-
-#define XMESA_NEW_LINE   (_NEW_LINE | \
-                          _NEW_TEXTURE | \
-                          _NEW_LIGHT | \
-                          _NEW_DEPTH | \
-                          _NEW_RENDERMODE | \
-                          _SWRAST_NEW_RASTERMASK)
-
-#define XMESA_NEW_TRIANGLE (_NEW_POLYGON | \
-                            _NEW_TEXTURE | \
-                            _NEW_LIGHT | \
-                            _NEW_DEPTH | \
-                            _NEW_RENDERMODE | \
-                            _SWRAST_NEW_RASTERMASK)
-
-
-/* Extend the software rasterizer with our line/point/triangle
- * functions.
- */
-void xmesa_register_swrast_functions( GLcontext *ctx )
-{
-   SWcontext *swrast = SWRAST_CONTEXT( ctx );
-
-   swrast->choose_point = xmesa_choose_point;
-   swrast->choose_line = xmesa_choose_line;
-   swrast->choose_triangle = xmesa_choose_triangle;
-
-   swrast->invalidate_point |= XMESA_NEW_POINT;
-   swrast->invalidate_line |= XMESA_NEW_LINE;
-   swrast->invalidate_triangle |= XMESA_NEW_TRIANGLE;
 }
