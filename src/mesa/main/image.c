@@ -1,10 +1,10 @@
-/* $Id: image.c,v 1.14 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: image.c,v 1.15 2000/01/05 09:21:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2269,11 +2269,9 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
             dstAlphaIndex = 3;
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
-         case GL_COLOR_INDEX:
-            assert(0);
-            break;
          default:
             gl_problem(ctx, "bad dstFormat in _mesa_unpack_ubyte_span()");
+            return;
       }
 
 
