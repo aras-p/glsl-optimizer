@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.78 2002/04/04 16:58:04 brianp Exp $ */
+/* $Id: osmesa.c,v 1.79 2002/04/19 14:05:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1882,20 +1882,20 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define RENDER_SPAN( span )					\
    GLuint i;							\
-   GLchan *img = PIXELADDR4(span.x, span.y); 			\
-   for (i = 0; i < span.end; i++, img += 4) {			\
-      const GLdepth z = FixedToDepth(span.z);			\
+   GLchan *img = PIXELADDR4(span->x, span->y); 			\
+   for (i = 0; i < span->end; i++, img += 4) {			\
+      const GLdepth z = FixedToDepth(span->z);			\
       if (z < zRow[i]) {					\
-         PACK_RGBA(img, FixedToChan(span.red),			\
-            FixedToChan(span.green), FixedToChan(span.blue),	\
-            FixedToChan(span.alpha));				\
+         PACK_RGBA(img, FixedToChan(span->red),			\
+            FixedToChan(span->green), FixedToChan(span->blue),	\
+            FixedToChan(span->alpha));				\
          zRow[i] = z;						\
       }								\
-      span.red += span.redStep;					\
-      span.green += span.greenStep;				\
-      span.blue += span.blueStep;				\
-      span.alpha += span.alphaStep;				\
-      span.z += span.zStep;					\
+      span->red += span->redStep;					\
+      span->green += span->greenStep;				\
+      span->blue += span->blueStep;				\
+      span->alpha += span->alphaStep;				\
+      span->z += span->zStep;					\
    }
 
 #ifdef WIN32
@@ -1926,14 +1926,14 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   GLuint *img = (GLuint *) PIXELADDR4(span.x, span.y);	\
-   for (i = 0; i < span.end; i++) {			\
-      const GLdepth z = FixedToDepth(span.z);		\
+   GLuint *img = (GLuint *) PIXELADDR4(span->x, span->y);	\
+   for (i = 0; i < span->end; i++) {			\
+      const GLdepth z = FixedToDepth(span->z);		\
       if (z < zRow[i]) {				\
          img[i] = pixel;				\
          zRow[i] = z;					\
       }							\
-      span.z += span.zStep;				\
+      span->z += span->zStep;				\
    }
 
 #ifdef WIN32

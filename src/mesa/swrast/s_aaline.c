@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.13 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.14 2002/04/19 14:05:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ struct LineInfo
    GLfloat lambda[MAX_TEXTURE_UNITS];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
 
-   struct sw_span span;
+   struct sw_span *span;
 };
 
 

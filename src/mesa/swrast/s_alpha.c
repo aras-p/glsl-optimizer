@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.9 2002/02/02 21:40:33 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.10 2002/04/19 14:05:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file swrast/s_alpha.c
+ * \brief Functions to apply alpha test.
+ */
 
 #include "glheader.h"
 #include "context.h"
@@ -35,12 +39,12 @@
 #include "s_context.h"
 
 
-/*
- * Apply the alpha test to a span of pixels.
- * In:  rgba - array of pixels
- * In/Out:  span -
- * Return:  0 = all pixels in the span failed the alpha test.
- *          1 = one or more pixels passed the alpha test.
+/**
+ * \fn GLint _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span )
+ * \brief Apply the alpha test to a span of pixels.
+ * \return
+ *      - "0" = all pixels in the span failed the alpha test.
+ *      - "1" = one or more pixels passed the alpha test.
  */
 GLint
 _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span )

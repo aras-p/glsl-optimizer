@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.57 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.58 2002/04/19 14:05:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,11 +81,11 @@ static void flat_ci_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 
 #define SETUP_CODE					\
-   span.interpMask |= SPAN_INDEX;			\
-   span.index = IntToFixed(v2->index);			\
-   span.indexStep = 0;
+   span->interpMask |= SPAN_INDEX;			\
+   span->index = IntToFixed(v2->index);			\
+   span->indexStep = 0;
 
-#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span);
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, span);
 
 #include "s_tritemp.h"
 }
@@ -104,7 +104,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
 
-#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span);
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, span);
 
 #include "s_tritemp.h"
 }
@@ -126,17 +126,17 @@ static void flat_rgba_triangle( GLcontext *ctx,
 #define SETUP_CODE				\
    ASSERT(!ctx->Texture._ReallyEnabled);	\
    ASSERT(ctx->Light.ShadeModel==GL_FLAT);	\
-   span.interpMask |= SPAN_RGBA;		\
-   span.red = ChanToFixed(v2->color[0]);	\
-   span.green = ChanToFixed(v2->color[1]);	\
-   span.blue = ChanToFixed(v2->color[2]);	\
-   span.alpha = ChanToFixed(v2->color[3]);	\
-   span.redStep = 0;				\
-   span.greenStep = 0;				\
-   span.blueStep = 0;				\
-   span.alphaStep = 0;
+   span->interpMask |= SPAN_RGBA;		\
+   span->red = ChanToFixed(v2->color[0]);	\
+   span->green = ChanToFixed(v2->color[1]);	\
+   span->blue = ChanToFixed(v2->color[2]);	\
+   span->alpha = ChanToFixed(v2->color[3]);	\
+   span->redStep = 0;				\
+   span->greenStep = 0;				\
+   span->blueStep = 0;				\
+   span->alphaStep = 0;
 
-#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span);
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, span);
 
 #include "s_tritemp.h"
 }
@@ -165,7 +165,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
       ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);	\
    }
 
-#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span);
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, span);
 
 #include "s_tritemp.h"
 
@@ -204,21 +204,21 @@ static void simple_textured_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span  )						\
    GLuint i;								\
-   span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
-   span.intTex[1] -= FIXED_HALF;					\
-   for (i = 0; i < span.end; i++) {					\
-      GLint s = FixedToInt(span.intTex[0]) & smask;			\
-      GLint t = FixedToInt(span.intTex[1]) & tmask;			\
+   span->intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
+   span->intTex[1] -= FIXED_HALF;					\
+   for (i = 0; i < span->end; i++) {					\
+      GLint s = FixedToInt(span->intTex[0]) & smask;			\
+      GLint t = FixedToInt(span->intTex[1]) & tmask;			\
       GLint pos = (t << twidth_log2) + s;				\
       pos = pos + pos + pos;  /* multiply by 3 */			\
-      span.color.rgb[i][RCOMP] = texture[pos];				\
-      span.color.rgb[i][GCOMP] = texture[pos+1];			\
-      span.color.rgb[i][BCOMP] = texture[pos+2];			\
-      span.intTex[0] += span.intTexStep[0];				\
-      span.intTex[1] += span.intTexStep[1];				\
+      span->color.rgb[i][RCOMP] = texture[pos];				\
+      span->color.rgb[i][GCOMP] = texture[pos+1];			\
+      span->color.rgb[i][BCOMP] = texture[pos+2];			\
+      span->intTex[0] += span->intTexStep[0];				\
+      span->intTex[1] += span->intTexStep[1];				\
    }									\
-   (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.color.rgb,	\
+   (*swrast->Driver.WriteRGBSpan)(ctx, span->end, span->x, span->y,	\
+                                  (CONST GLchan (*)[3]) span->color.rgb,	\
                                   NULL );
 
 #include "s_tritemp.h"
@@ -260,31 +260,31 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )						\
    GLuint i;				    				\
-   span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
-   span.intTex[1] -= FIXED_HALF;					\
-   for (i = 0; i < span.end; i++) {					\
-      const GLdepth z = FixedToDepth(span.z);				\
+   span->intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
+   span->intTex[1] -= FIXED_HALF;					\
+   for (i = 0; i < span->end; i++) {					\
+      const GLdepth z = FixedToDepth(span->z);				\
       if (z < zRow[i]) {						\
-         GLint s = FixedToInt(span.intTex[0]) & smask;			\
-         GLint t = FixedToInt(span.intTex[1]) & tmask;			\
+         GLint s = FixedToInt(span->intTex[0]) & smask;			\
+         GLint t = FixedToInt(span->intTex[1]) & tmask;			\
          GLint pos = (t << twidth_log2) + s;				\
          pos = pos + pos + pos;  /* multiply by 3 */			\
-         span.color.rgb[i][RCOMP] = texture[pos];			\
-         span.color.rgb[i][GCOMP] = texture[pos+1];			\
-         span.color.rgb[i][BCOMP] = texture[pos+2];			\
+         span->color.rgb[i][RCOMP] = texture[pos];			\
+         span->color.rgb[i][GCOMP] = texture[pos+1];			\
+         span->color.rgb[i][BCOMP] = texture[pos+2];			\
          zRow[i] = z;							\
-         span.mask[i] = 1;						\
+         span->mask[i] = 1;						\
       }									\
       else {								\
-         span.mask[i] = 0;						\
+         span->mask[i] = 0;						\
       }									\
-      span.intTex[0] += span.intTexStep[0];				\
-      span.intTex[1] += span.intTexStep[1];				\
-      span.z += span.zStep;						\
+      span->intTex[0] += span->intTexStep[0];				\
+      span->intTex[1] += span->intTexStep[1];				\
+      span->z += span->zStep;						\
    }									\
-   (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.color.rgb,	\
-                                  span.mask );
+   (*swrast->Driver.WriteRGBSpan)(ctx, span->end, span->x, span->y,	\
+                                  (CONST GLchan (*)[3]) span->color.rgb,	\
+                                  span->mask );
 
 #include "s_tritemp.h"
 }
@@ -589,7 +589,7 @@ static void affine_textured_triangle( GLcontext *ctx,
    info.format = obj->Image[b]->Format;					\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
-   span.arrayMask |= SPAN_RGBA;						\
+   span->arrayMask |= SPAN_RGBA;						\
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
@@ -624,7 +624,7 @@ static void affine_textured_triangle( GLcontext *ctx,
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )   affine_span(ctx, &span, &info);
+#define RENDER_SPAN( span )   affine_span(ctx, span, &info);
 
 #include "s_tritemp.h"
 
@@ -895,9 +895,9 @@ static void persp_textured_triangle( GLcontext *ctx,
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
 #define RENDER_SPAN( span )			\
-   span.interpMask &= ~SPAN_RGBA;		\
-   span.arrayMask |= SPAN_RGBA;			\
-   fast_persp_span(ctx, &span, &info);
+   span->interpMask &= ~SPAN_RGBA;		\
+   span->arrayMask |= SPAN_RGBA;			\
+   fast_persp_span(ctx, span, &info);
 
 #include "s_tritemp.h"
 
@@ -926,7 +926,7 @@ static void general_textured_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
 
-#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, span);
 
 #include "s_tritemp.h"
 }
@@ -953,7 +953,7 @@ multitextured_triangle( GLcontext *ctx,
 #define INTERP_SPEC 1
 #define INTERP_MULTITEX 1
 
-#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, span);
 
 #include "s_tritemp.h"
 
@@ -975,13 +975,13 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 
 #define RENDER_SPAN( span )				\
    GLuint i;						\
-   for (i = 0; i < span.end; i++) {			\
-      GLdepth z = FixedToDepth(span.z);			\
+   for (i = 0; i < span->end; i++) {			\
+      GLdepth z = FixedToDepth(span->z);			\
       if (z < zRow[i]) {				\
          ctx->OcclusionResult = GL_TRUE;		\
          return;					\
       }							\
-      span.z += span.zStep;				\
+      span->z += span->zStep;				\
    }
 
 #include "s_tritemp.h"
