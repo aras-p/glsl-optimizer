@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.13 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.14 2002/01/10 15:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,7 @@ static int id = 0;  /* give each struct immediate a unique ID number */
 
 static struct immediate *real_alloc_immediate( GLcontext *ctx )
 {
-   struct immediate *IM = ALIGN_MALLOC_STRUCT( immediate, 32 );
+   struct immediate *IM = ALIGN_CALLOC_STRUCT( immediate, 32 );
 
    if (!IM)
       return 0;
@@ -60,15 +60,6 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
 
    IM->CopyTexSize = 0;
    IM->CopyStart = IM->Start;
-
-   /* KW: Removed initialization of normals as these are now treated
-    * identically to all other data types.
-    */
-
-   MEMSET(IM->Flag, 0, sizeof(IM->Flag));
-#if 0
-   MEMSET(IM->Normal, 0.0 , sizeof(IM->Normal));
-#endif
 
    return IM;
 }
