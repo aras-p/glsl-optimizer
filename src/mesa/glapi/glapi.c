@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.17 1999/12/17 12:20:23 brianp Exp $ */
+/* $Id: glapi.c,v 1.18 1999/12/17 14:51:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,10 +49,13 @@
 
 
 /* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_FALSE;
+GLboolean _glapi_ThreadSafe = GL_FALSE;
 
 /* This is used when thread safety is disabled */
 static struct _glapi_table *Dispatch = &__glapi_noop_table;
+
+/* Used when thread safety disabled */
+void *_glapi_CurrentContext = NULL;
 
 
 #if defined(THREADS)
@@ -64,6 +67,14 @@ static _glthread_TSD DispatchTSD;
 static void dispatch_thread_init()
 {
    _glthread_InitTSD(&DispatchTSD);
+}
+
+
+static _glthread_TSD ContextTSD;
+
+static void context_thread_init()
+{
+   _glthread_InitTSD(&ContextTSD);
 }
 
 #endif
@@ -84,7 +95,7 @@ void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS)
-   if (!ThreadSafe) {
+   if (!_glapi_ThreadSafe) {
       static unsigned long knownID;
       static GLboolean firstCall = GL_TRUE;
       if (firstCall) {
@@ -92,15 +103,58 @@ _glapi_check_multithread(void)
          firstCall = GL_FALSE;
       }
       else if (knownID != _glthread_GetID()) {
-         ThreadSafe = GL_TRUE;
+         _glapi_ThreadSafe = GL_TRUE;
       }
    }
-   if (ThreadSafe) {
+   if (_glapi_ThreadSafe) {
       /* make sure that this thread's dispatch pointer isn't null */
       if (!_glapi_get_dispatch()) {
          _glapi_set_dispatch(NULL);
       }
    }
+#endif
+}
+
+
+
+/*
+ * Set the current context pointer for this thread.
+ * The context pointer is an opaque type which should be cast to
+ * void from the real context pointer type.
+ */
+void
+_glapi_set_current_context(void *context)
+{
+#if defined(THREADS)
+   _glthread_SetTSD(&ContextTSD, context, context_thread_init);
+   if (_glapi_ThreadSafe)
+      _glapi_CurrentContext = NULL;  /* to help with debugging */
+   else
+      _glapi_CurrentContext = context;
+#else
+   _glapi_CurrentContext = context;
+#endif
+}
+
+
+
+/*
+ * Get the current context pointer for this thread.
+ * The context pointer is an opaque type which should be cast from
+ * void to the real context pointer type.
+ */
+void *
+_glapi_get_current_context(void)
+{
+#if defined(THREADS)
+   if (_glapi_ThreadSafe) {
+      return _glthread_GetTSD(&ContextTSD);
+   }
+   else {
+      return _glapi_CurrentContext;
+   }
+#else
+   return _glapi_CurrentContext;
 #endif
 }
 
@@ -124,7 +178,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 
 #if defined(THREADS)
    _glthread_SetTSD(&DispatchTSD, (void*) dispatch, dispatch_thread_init);
-   if (ThreadSafe)
+   if (_glapi_ThreadSafe)
       Dispatch = NULL;  /* to help with debugging */
    else
       Dispatch = dispatch;
@@ -142,7 +196,7 @@ struct _glapi_table *
 _glapi_get_dispatch(void)
 {
 #if defined(THREADS)
-   if (ThreadSafe) {
+   if (_glapi_ThreadSafe) {
       return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
    }
    else {
@@ -453,7 +507,7 @@ _glapi_check_table(const struct _glapi_table *table)
 
 #define DISPATCH_SETUP			\
    const struct _glapi_table *dispatch;	\
-   if (ThreadSafe) {			\
+   if (_glapi_ThreadSafe) {		\
       dispatch = _glapi_get_dispatch();	\
    }					\
    else {				\
