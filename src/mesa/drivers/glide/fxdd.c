@@ -152,14 +152,8 @@ static void fxDDClear( GLcontext *ctx,
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLbitfield softwareMask = mask & (DD_ACCUM_BIT);
    const GLuint stencil_size = fxMesa->haveHwStencil ? ctx->Visual.stencilBits : 0;
-   const FxU32 clearD = (FxU32) (((1 << ctx->Visual.depthBits) - 1) * ctx->Depth.Clear);
+   const FxU32 clearD = (FxU32) (ctx->DepthMaxF * ctx->Depth.Clear);
    const FxU8 clearS = (FxU8) (ctx->Stencil.Clear & 0xff);
-
-   /* [dBorca] Hack alert:
-    * if we set Mesa for 32bit depth, we'll get
-    * clearD == 0
-    * due to 32bit integer overflow!
-    */
 
    if ( TDFX_DEBUG & MESA_VERBOSE ) {
       fprintf( stderr, "fxDDClear( %d, %d, %d, %d )\n",

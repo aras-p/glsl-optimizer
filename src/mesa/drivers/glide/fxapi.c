@@ -500,6 +500,8 @@ fxMesaCreateContext(GLuint win,
          pixFmt = GR_PIXFMT_RGB_565;
      }
      break;
+   case 24:
+     fxMesa->colDepth = 32;
    case 32:
      redBits   = 8;
      greenBits = 8;
