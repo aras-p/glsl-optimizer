@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.37 2000/05/04 14:12:28 brianp Exp $ */
+/* $Id: gl.h,v 1.38 2000/05/18 18:09:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2026,6 +2026,8 @@ GLAPI void GLAPIENTRY glBlendEquationEXT( GLenum mode );
 
 GLAPI void GLAPIENTRY glPointParameterfEXT( GLenum pname, GLfloat param );
 GLAPI void GLAPIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *params );
+GLAPI void GLAPIENTRY glPointParameterfSGIS(GLenum pname, GLfloat param);
+GLAPI void GLAPIENTRY glPointParameterfvSGIS(GLenum pname, const GLfloat *params);
 
 #endif /* GL_EXT_point_parameters */
 
