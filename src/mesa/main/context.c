@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.34 2000/01/24 16:19:55 brianp Exp $ */
+/* $Id: context.c,v 1.35 2000/01/28 19:02:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -450,11 +450,20 @@ static void one_time_init( void )
       gl_init_vbrender();
       gl_init_vbxform();
       gl_init_vertices();
-      alreadyCalled = GL_TRUE;
-   }
+
+      if (getenv("MESA_DEBUG")) {
+         _glapi_noop_enable_warnings(GL_TRUE);
+      }
+      else {
+         _glapi_noop_enable_warnings(GL_FALSE);
+      }
+
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
    fprintf(stderr, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
 #endif
+
+      alreadyCalled = GL_TRUE;
+   }
 }
 
 
