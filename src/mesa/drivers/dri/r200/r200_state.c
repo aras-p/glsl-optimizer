@@ -786,6 +786,8 @@ static void update_global_ambient( GLcontext *ctx )
    float *fcmd = (float *)R200_DB_STATE( glt );
 
    /* Need to do more if both emmissive & ambient are PREMULT:
+    * I believe this is not nessary when using source_material. This condition thus
+    * will never happen currently, and the function has no dependencies on materials now
     */
    if ((rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1] &
        ((3 << R200_FRONT_EMISSIVE_SOURCE_SHIFT) |
@@ -808,9 +810,6 @@ static void update_global_ambient( GLcontext *ctx )
 /* Update on change to 
  *    - light[p].colors
  *    - light[p].enabled
- *    - material,
- *    - colormaterial enabled
- *    - colormaterial bitmask
  */
 static void update_light_colors( GLcontext *ctx, GLuint p )
 {
@@ -821,102 +820,115 @@ static void update_light_colors( GLcontext *ctx, GLuint p )
    if (l->Enabled) {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);
       float *fcmd = (float *)R200_DB_STATE( lit[p] );
-      GLuint bitmask = ctx->Light.ColorMaterialBitmask;
-      GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
       COPY_4V( &fcmd[LIT_AMBIENT_RED], l->Ambient );	 
       COPY_4V( &fcmd[LIT_DIFFUSE_RED], l->Diffuse );
       COPY_4V( &fcmd[LIT_SPECULAR_RED], l->Specular );
       
-      if (!ctx->Light.ColorMaterialEnabled)
-	 bitmask = 0;
-
-      if ((bitmask & MAT_BIT_FRONT_AMBIENT) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_AMBIENT_RED], mat[MAT_ATTRIB_FRONT_AMBIENT] );
-
-      if ((bitmask & MAT_BIT_FRONT_DIFFUSE) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_DIFFUSE_RED], mat[MAT_ATTRIB_FRONT_DIFFUSE] );
-      
-      if ((bitmask & MAT_BIT_FRONT_SPECULAR) == 0) 
-	 SELF_SCALE_3V( &fcmd[LIT_SPECULAR_RED], mat[MAT_ATTRIB_FRONT_SPECULAR] );
-
       R200_DB_STATECHANGE( rmesa, &rmesa->hw.lit[p] );
    }
 }
 
-/* Also fallback for asym colormaterial mode in twoside lighting...
- */
-static void check_twoside_fallback( GLcontext *ctx )
-{
-   GLboolean fallback = GL_FALSE;
-   GLint i;
-
-   if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
-      if (ctx->Light.ColorMaterialEnabled &&
-	  (ctx->Light.ColorMaterialBitmask & BACK_MATERIAL_BITS) != 
-	  ((ctx->Light.ColorMaterialBitmask & FRONT_MATERIAL_BITS)<<1))
-	 fallback = GL_TRUE;
-      else {
-	 for (i = MAT_ATTRIB_FRONT_AMBIENT; i < MAT_ATTRIB_FRONT_INDEXES; i+=2)
-	    if (memcmp( ctx->Light.Material.Attrib[i],
-			ctx->Light.Material.Attrib[i+1],
-			sizeof(GLfloat)*4) != 0) {
-	       fallback = GL_TRUE;  
-	       break;
-	    }
-      }
-   }
-
-   TCL_FALLBACK( ctx, R200_TCL_FALLBACK_LIGHT_TWOSIDE, fallback );
-}
-
 static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 {
-   if (ctx->Light.ColorMaterialEnabled) {
       r200ContextPtr rmesa = R200_CONTEXT(ctx);
       GLuint light_model_ctl1 = rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1];
-      GLuint mask = ctx->Light.ColorMaterialBitmask;
-
-      /* Default to PREMULT:
-       */
       light_model_ctl1 &= ~((0xf << R200_FRONT_EMISSIVE_SOURCE_SHIFT) |
 			   (0xf << R200_FRONT_AMBIENT_SOURCE_SHIFT) |
 			   (0xf << R200_FRONT_DIFFUSE_SOURCE_SHIFT) |
-			   (0xf << R200_FRONT_SPECULAR_SOURCE_SHIFT)); 
+		   (0xf << R200_FRONT_SPECULAR_SOURCE_SHIFT) |
+		   (0xf << R200_BACK_EMISSIVE_SOURCE_SHIFT) |
+		   (0xf << R200_BACK_AMBIENT_SOURCE_SHIFT) |
+		   (0xf << R200_BACK_DIFFUSE_SOURCE_SHIFT) |
+		   (0xf << R200_BACK_SPECULAR_SOURCE_SHIFT));
+
+   if (ctx->Light.ColorMaterialEnabled) {
+      GLuint mask = ctx->Light.ColorMaterialBitmask;
    
       if (mask & MAT_BIT_FRONT_EMISSION) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_EMISSIVE_SOURCE_SHIFT);
       }
+      else
+	 light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
+			     R200_FRONT_EMISSIVE_SOURCE_SHIFT);
 
       if (mask & MAT_BIT_FRONT_AMBIENT) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_AMBIENT_SOURCE_SHIFT);
       }
+      else
+         light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
+			     R200_FRONT_AMBIENT_SOURCE_SHIFT);
 	 
       if (mask & MAT_BIT_FRONT_DIFFUSE) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_DIFFUSE_SOURCE_SHIFT);
       }
+      else
+         light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
+			     R200_FRONT_DIFFUSE_SOURCE_SHIFT);
    
       if (mask & MAT_BIT_FRONT_SPECULAR) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_SPECULAR_SOURCE_SHIFT);
       }
-   
-      if (light_model_ctl1 != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1]) {
-	 GLuint p;
-
-	 R200_STATECHANGE( rmesa, tcl );
-	 rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1] = light_model_ctl1;      
-
-	 for (p = 0 ; p < MAX_LIGHTS; p++) 
-	    update_light_colors( ctx, p );
-	 update_global_ambient( ctx );
+      else {
+         light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
+			     R200_FRONT_SPECULAR_SOURCE_SHIFT);
       }
+   
+      if (mask & MAT_BIT_BACK_EMISSION) {
+	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
+			     R200_BACK_EMISSIVE_SOURCE_SHIFT);
+      }
+
+      else light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_1 <<
+			     R200_BACK_EMISSIVE_SOURCE_SHIFT);
+
+      if (mask & MAT_BIT_BACK_AMBIENT) {
+	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
+			     R200_BACK_AMBIENT_SOURCE_SHIFT);
+      }
+      else light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_1 <<
+			     R200_BACK_AMBIENT_SOURCE_SHIFT);
+
+      if (mask & MAT_BIT_BACK_DIFFUSE) {
+	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
+			     R200_BACK_DIFFUSE_SOURCE_SHIFT);
+   }
+      else light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_1 <<
+			     R200_BACK_DIFFUSE_SOURCE_SHIFT);
+
+      if (mask & MAT_BIT_BACK_SPECULAR) {
+	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
+			     R200_BACK_SPECULAR_SOURCE_SHIFT);
+      }
+      else {
+         light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_1 <<
+			     R200_BACK_SPECULAR_SOURCE_SHIFT);
+      }
+      }
+   else {
+       /* Default to SOURCE_MATERIAL:
+        */
+     light_model_ctl1 |=
+        (R200_LM1_SOURCE_MATERIAL_0 << R200_FRONT_EMISSIVE_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_0 << R200_FRONT_AMBIENT_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_0 << R200_FRONT_DIFFUSE_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_0 << R200_FRONT_SPECULAR_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_1 << R200_BACK_EMISSIVE_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_1 << R200_BACK_AMBIENT_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_1 << R200_BACK_DIFFUSE_SOURCE_SHIFT) |
+        (R200_LM1_SOURCE_MATERIAL_1 << R200_BACK_SPECULAR_SOURCE_SHIFT);
+   }
+
+   if (light_model_ctl1 != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1]) {
+      R200_STATECHANGE( rmesa, tcl );
+      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1] = light_model_ctl1;
    }
    
-   check_twoside_fallback( ctx );
+   
 }
 
 void r200UpdateMaterial( GLcontext *ctx )
@@ -924,16 +936,16 @@ void r200UpdateMaterial( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    GLfloat *fcmd = (GLfloat *)R200_DB_STATE( mtl[0] );
-   GLuint p;
+   GLfloat *fcmd2 = (GLfloat *)R200_DB_STATE( mtl[1] );
    GLuint mask = ~0;
    
+   /* Might be possible and faster to update everything unconditionally? */
    if (ctx->Light.ColorMaterialEnabled)
       mask &= ~ctx->Light.ColorMaterialBitmask;
 
    if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-      
    if (mask & MAT_BIT_FRONT_EMISSION) {
       fcmd[MTL_EMMISSIVE_RED]   = mat[MAT_ATTRIB_FRONT_EMISSION][0];
       fcmd[MTL_EMMISSIVE_GREEN] = mat[MAT_ATTRIB_FRONT_EMISSION][1];
@@ -962,13 +974,39 @@ void r200UpdateMaterial( GLcontext *ctx )
       fcmd[MTL_SHININESS]       = mat[MAT_ATTRIB_FRONT_SHININESS][0];
    }
 
+   if (mask & MAT_BIT_BACK_EMISSION) {
+      fcmd2[MTL_EMMISSIVE_RED]   = mat[MAT_ATTRIB_BACK_EMISSION][0];
+      fcmd2[MTL_EMMISSIVE_GREEN] = mat[MAT_ATTRIB_BACK_EMISSION][1];
+      fcmd2[MTL_EMMISSIVE_BLUE]  = mat[MAT_ATTRIB_BACK_EMISSION][2];
+      fcmd2[MTL_EMMISSIVE_ALPHA] = mat[MAT_ATTRIB_BACK_EMISSION][3];
+   }
+   if (mask & MAT_BIT_BACK_AMBIENT) {
+      fcmd2[MTL_AMBIENT_RED]     = mat[MAT_ATTRIB_BACK_AMBIENT][0];
+      fcmd2[MTL_AMBIENT_GREEN]   = mat[MAT_ATTRIB_BACK_AMBIENT][1];
+      fcmd2[MTL_AMBIENT_BLUE]    = mat[MAT_ATTRIB_BACK_AMBIENT][2];
+      fcmd2[MTL_AMBIENT_ALPHA]   = mat[MAT_ATTRIB_BACK_AMBIENT][3];
+   }
+   if (mask & MAT_BIT_BACK_DIFFUSE) {
+      fcmd2[MTL_DIFFUSE_RED]     = mat[MAT_ATTRIB_BACK_DIFFUSE][0];
+      fcmd2[MTL_DIFFUSE_GREEN]   = mat[MAT_ATTRIB_BACK_DIFFUSE][1];
+      fcmd2[MTL_DIFFUSE_BLUE]    = mat[MAT_ATTRIB_BACK_DIFFUSE][2];
+      fcmd2[MTL_DIFFUSE_ALPHA]   = mat[MAT_ATTRIB_BACK_DIFFUSE][3];
+   }
+   if (mask & MAT_BIT_BACK_SPECULAR) {
+      fcmd2[MTL_SPECULAR_RED]    = mat[MAT_ATTRIB_BACK_SPECULAR][0];
+      fcmd2[MTL_SPECULAR_GREEN]  = mat[MAT_ATTRIB_BACK_SPECULAR][1];
+      fcmd2[MTL_SPECULAR_BLUE]   = mat[MAT_ATTRIB_BACK_SPECULAR][2];
+      fcmd2[MTL_SPECULAR_ALPHA]  = mat[MAT_ATTRIB_BACK_SPECULAR][3];
+   }
+   if (mask & MAT_BIT_BACK_SHININESS) {
+      fcmd2[MTL_SHININESS]       = mat[MAT_ATTRIB_BACK_SHININESS][0];
+   }
+
    R200_DB_STATECHANGE( rmesa, &rmesa->hw.mtl[0] );
+   R200_DB_STATECHANGE( rmesa, &rmesa->hw.mtl[1] );
 
-   for (p = 0 ; p < MAX_LIGHTS; p++)
-      update_light_colors( ctx, p );
-
-   check_twoside_fallback( ctx );
-   update_global_ambient( ctx );
+   /* currently material changes cannot trigger a global ambient change, I believe this is correct
+    update_global_ambient( ctx ); */
 }
 
 /* _NEW_LIGHT
@@ -1185,10 +1223,7 @@ static void r200LightModelfv( GLcontext *ctx, GLenum pname,
 	 if (ctx->Light.Model.TwoSide)
 	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LIGHT_TWOSIDE;
 	 else
-	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~R200_LIGHT_TWOSIDE;
-
-	 check_twoside_fallback( ctx );
-
+	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~(R200_LIGHT_TWOSIDE);
 	 if (rmesa->TclFallback) {
 	    r200ChooseRenderState( ctx );
 	    r200ChooseVertexState( ctx );
@@ -1809,7 +1844,6 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_LIGHTING:
       r200UpdateSpecular(ctx);
-      check_twoside_fallback( ctx );
       break;
 
    case GL_LINE_SMOOTH:
@@ -2131,7 +2165,7 @@ static void r200InvalidateState( GLcontext *ctx, GLuint new_state )
 }
 
 /* A hack.  The r200 can actually cope just fine with materials
- * between begin/ends, so fix this.
+ * between begin/ends, so fix this. But how ?
  */
 static GLboolean check_material( GLcontext *ctx )
 {
@@ -2148,7 +2182,6 @@ static GLboolean check_material( GLcontext *ctx )
    return GL_FALSE;
 }
       
-
 static void r200WrapRunPipeline( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
