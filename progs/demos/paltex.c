@@ -1,4 +1,4 @@
-/* $Id: paltex.c,v 1.5 2000/10/04 18:15:39 brianp Exp $ */
+/* $Id: paltex.c,v 1.6 2000/10/05 07:17:43 joukj Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #define GL_GLEXT_LEGACY
 #include <GL/glut.h>
 
@@ -167,8 +168,8 @@ static void Init( void )
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#undef HEIGHT 32
-#undef WIDTH 256
+#undef HEIGHT
+#undef WIDTH
 }
 
 
