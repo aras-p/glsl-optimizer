@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.91 2001/03/30 21:12:15 brianp Exp $ */
+/* $Id: teximage.c,v 1.92 2001/04/19 22:39:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -418,6 +418,7 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+      case GL_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.ARB_texture_cube_map
                 ? texUnit->CurrentCubeMap : NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
