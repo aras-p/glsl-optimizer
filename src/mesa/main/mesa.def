@@ -448,6 +448,7 @@ EXPORTS
 	_swrast_alloc_buffers
 	_swrast_GetDeviceDriverReference
 	_swrast_Clear
+	_glapi_get_context
 	wglCopyContext
 	wglCreateContext
 	wglDeleteContext
