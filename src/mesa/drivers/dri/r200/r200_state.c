@@ -1738,6 +1738,9 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~R200_TCL_FOG_MASK;
       }
       r200UpdateSpecular( ctx ); /* for PK_SPEC */
+      if (rmesa->TclFallback) 
+	 r200ChooseVertexState( ctx );
+      _mesa_allow_light_in_model( ctx, !state );
       break;
 
    case GL_LIGHT0:
