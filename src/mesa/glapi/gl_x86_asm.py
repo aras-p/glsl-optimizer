@@ -59,6 +59,13 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '#include "assyntax.h"'
 		print '#include "glapioffsets.h"'
 		print ''
+		print "/* If we build with gcc's -fvisibility=hidden flag, we'll need to change"
+		print "* the symbol visibility mode to 'default'."
+		print '*/'
+		print '#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303'
+		print '#pragma GCC visibility push(default)'
+		print '#endif'
+		print ''
 		print '#ifndef __WIN32__'
 		print ''	
 		print '#if defined(STDCALL_API)'
