@@ -1,10 +1,8 @@
-/* $Id: texstore.h,v 1.11 2002/09/27 02:45:38 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -163,12 +161,6 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
                                 GLsizei imageSize, const GLvoid *data,
                                 struct gl_texture_object *texObj,
                                 struct gl_texture_image *texImage);
-
-
-extern GLboolean
-_mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
-                         GLint internalFormat, GLenum format, GLenum type,
-                         GLint width, GLint height, GLint depth, GLint border);
 
 
 extern void

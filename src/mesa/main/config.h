@@ -1,5 +1,3 @@
-/* $Id: config.h,v 1.45 2003/03/29 17:01:03 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -107,7 +105,7 @@
 #define MAX_TEXTURE_LEVELS 12
 
 /* Number of 3D texture mipmap levels */
-#define MAX_3D_TEXTURE_LEVELS 8
+#define MAX_3D_TEXTURE_LEVELS 9
 
 /* Number of cube texture mipmap levels - GL_ARB_texture_cube_map */
 #define MAX_CUBE_TEXTURE_LEVELS 12

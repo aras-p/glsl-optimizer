@@ -1,5 +1,3 @@
-/* $Id: texstore.c,v 1.55 2003/04/01 16:41:55 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -1262,40 +1260,6 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
 {
    /* this space intentionally left blank */
 }
-
-
-
-
-
-/*
- * This is the fallback for Driver.TestProxyTexImage().
- */
-GLboolean
-_mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
-                          GLint internalFormat, GLenum format, GLenum type,
-                          GLint width, GLint height, GLint depth, GLint border)
-{
-   struct gl_texture_image *texImage;
-
-   (void) format;
-   (void) type;
-
-   texImage = _mesa_get_proxy_tex_image(ctx, target, level);
-
-   /* We always pass.
-    * The core Mesa code will have already tested the image size, etc.
-    * If a driver has more stringent texture limits to enforce it will
-    * have to override this function.
-    */
-   /* choose the texture format */
-   assert(ctx->Driver.ChooseTextureFormat);
-   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                          internalFormat, format, type);
-   assert(texImage->TexFormat);
-
-   return GL_TRUE;
-}
-
 
 
 /*

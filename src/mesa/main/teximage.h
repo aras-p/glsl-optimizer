@@ -1,10 +1,8 @@
-/* $Id: teximage.h,v 1.23 2003/04/01 16:41:54 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,6 +80,11 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level);
 extern GLint
 _mesa_max_texture_levels(GLcontext *ctx, GLenum target);
 
+
+extern GLboolean
+_mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
+                         GLint internalFormat, GLenum format, GLenum type,
+                         GLint width, GLint height, GLint depth, GLint border);
 
 /*** API entry point functions ***/
 

@@ -1,5 +1,3 @@
-/* $Id: osmesa.c,v 1.103 2003/04/01 17:28:55 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -48,6 +46,7 @@
 #include "mtypes.h"
 #include "texformat.h"
 #include "texobj.h"
+#include "teximage.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"

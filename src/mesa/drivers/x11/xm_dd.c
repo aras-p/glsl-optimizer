@@ -1,5 +1,3 @@
-/* $Id: xm_dd.c,v 1.47 2003/04/01 17:28:11 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -36,6 +34,7 @@
 #include "mtypes.h"
 #include "state.h"
 #include "texobj.h"
+#include "teximage.h"
 #include "texstore.h"
 #include "texformat.h"
 #include "xmesaP.h"
@@ -924,6 +923,39 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
 
 
 
+/**
+ * Called via ctx->Driver.TestProxyTeximage().  Normally, we'd just use
+ * the _mesa_test_proxy_teximage() fallback function, but we're going to
+ * special-case the 3D texture case to allow textures up to 512x512x32
+ * texels.
+ */
+static GLboolean
+test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
+                    GLint internalFormat, GLenum format, GLenum type,
+                    GLint width, GLint height, GLint depth, GLint border)
+{
+   if (target == GL_PROXY_TEXTURE_3D) {
+      /* special case for 3D textures */
+      if (width * height * depth > 512 * 512 * 64 ||
+          width  < 2 * border || _mesa_bitcount(width  - 2 * border) != 1 ||
+          height < 2 * border || _mesa_bitcount(height - 2 * border) != 1 ||
+          depth  < 2 * border || _mesa_bitcount(depth  - 2 * border) != 1) {
+         /* Bad size, or too many texels */
+         return GL_FALSE;
+      }
+      return GL_TRUE;
+   }
+   else {
+      /* use the fallback routine for 1D, 2D, cube and rect targets */
+      return _mesa_test_proxy_teximage(ctx, target, level, internalFormat,
+                                       format, type, width, height, depth,
+                                       border);
+   }
+}
+
+
+
+
 /* Setup pointers and other driver state that is constant for the life
  * of a context.
  */
@@ -957,7 +989,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+   ctx->Driver.TestProxyTexImage = test_proxy_teximage;
 
    ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
