@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.12 1999/10/17 21:42:32 brianp Exp $ */
+/* $Id: gl.h,v 1.13 1999/10/17 23:24:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -860,8 +860,8 @@ typedef enum {
 	/* OpenGL 1.2 */
 	GL_RESCALE_NORMAL			= 0x803A,
 	GL_CLAMP_TO_EDGE			= 0x812F,
-	GL_MAX_ELEMENTS_VERTICES		= 0xF0E8,
-	GL_MAX_ELEMENTS_INDICES			= 0xF0E9,
+	GL_MAX_ELEMENTS_VERTICES		= 0x80E8,
+	GL_MAX_ELEMENTS_INDICES			= 0x80E9,
 	GL_BGR					= 0x80E0,
 	GL_BGRA					= 0x80E1,
 	GL_UNSIGNED_BYTE_3_3_2			= 0x8032,
