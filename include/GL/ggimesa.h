@@ -1,4 +1,4 @@
-/* $Id: ggimesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: ggimesa.h,v 1.2 1999/08/23 22:34:08 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,8 +24,11 @@
 
 /*
  * $Log: ggimesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/08/23 22:34:08  jtaylor
+ * Misc small cleanups
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 1.2  1998/09/29 01:46:40  brianp
  * applied Emmanuel Marty's patches for latest GGI
@@ -49,16 +52,16 @@ typedef struct ggi_mesa_context *GGIMesaContext;
 
 extern GGIMesaContext GGIMesaCreateContext(void);
 
-extern void GGIMesaDestroyContext( GGIMesaContext ctx );
+extern void GGIMesaDestroyContext(GGIMesaContext ctx);
 
-extern void GGIMesaMakeCurrent(GGIMesaContext ctx );
+extern void GGIMesaMakeCurrent(GGIMesaContext ctx);
 
-extern GGIMesaContext GGIMesaGetCurrentContext( void );
+extern GGIMesaContext GGIMesaGetCurrentContext(void);
 
-extern void GGIMesaSwapBuffers( void );
+extern void GGIMesaSwapBuffers(void);
 
-extern int GGIMesaSetVisual(GGIMesaContext ctx,ggi_visual_t vis,
-				GLboolean rgb_flag,GLboolean db_flag);
+extern int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
+			    GLboolean rgb_flag, GLboolean db_flag);
 
 #ifdef __cplusplus
 }
