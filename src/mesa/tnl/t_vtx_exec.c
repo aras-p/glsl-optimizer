@@ -170,6 +170,7 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
    VB->IndexPtr[1] = 0;
    VB->SecondaryColorPtr[0] = VB->AttribPtr[_TNL_ATTRIB_COLOR1];
    VB->SecondaryColorPtr[1] = 0;
+   VB->FogCoordPtr = VB->AttribPtr[_TNL_ATTRIB_FOG];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       VB->TexCoordPtr[i] = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i];
