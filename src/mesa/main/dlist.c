@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.13 1999/11/03 17:27:05 brianp Exp $ */
+/* $Id: dlist.c,v 1.14 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,10 +87,6 @@
 #include "vbxform.h"
 #include "winpos.h"
 #include "xform.h"
-#ifdef XFree86Server
-#undef MISC_H
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.4 1999/10/19 20:33:57 brianp Exp $ */
+/* $Id: drawpix.c,v 1.5 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,9 +49,6 @@
 #include "stencil.h"
 #include "types.h"
 #include "zoom.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.8 1999/10/13 18:42:49 brianp Exp $ */
+/* $Id: attrib.c,v 1.9 1999/11/08 07:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,10 +45,6 @@
 #include "simple_list.h"
 #include "texstate.h"
 #include "types.h"
-#ifdef XFree86Server
-#undef MISC_H
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

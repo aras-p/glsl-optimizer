@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.7 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: matrix.c,v 1.8 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,9 +57,6 @@
 #include "matrix.h"
 #include "mmath.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

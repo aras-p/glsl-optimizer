@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.17 1999/10/30 08:22:45 brianp Exp $ */
+/* $Id: context.c,v 1.18 1999/11/08 07:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,9 +92,6 @@
 #include "vbxform.h"
 #include "vertices.h"
 #include "xform.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

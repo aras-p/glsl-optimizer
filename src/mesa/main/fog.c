@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: fog.c,v 1.3 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,9 +41,6 @@
 #include "macros.h"
 #include "mmath.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

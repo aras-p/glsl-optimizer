@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.7 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: depth.c,v 1.8 1999/11/08 07:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,9 +47,6 @@
 #include "depth.h"
 #include "macros.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

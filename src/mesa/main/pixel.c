@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.3 1999/10/30 08:20:57 brianp Exp $ */
+/* $Id: pixel.c,v 1.4 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,9 +47,6 @@
 #include "macros.h"
 #include "pixel.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.3 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: enums.c,v 1.4 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,12 +24,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#ifndef XFree86Server
+#include <stdlib.h>
+#include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 
 #include "GL/gl.h"
 #include "enums.h"
 #include "macros.h"
-#include <stdlib.h>
-#include <string.h>
 
 
 typedef struct { 

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.9 1999/10/16 11:30:31 brianp Exp $ */
+/* $Id: extensions.c,v 1.10 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,7 +25,11 @@
  */
 
 
+#ifndef XFree86Server
 #include <stdlib.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "extensions.h"
 #include "simple_list.h"

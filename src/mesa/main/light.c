@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.6 1999/10/19 20:32:40 brianp Exp $ */
+/* $Id: light.c,v 1.7 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,10 +37,10 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #else
 #include "GL/xf86glx.h"
 #endif
-#include <stdio.h>
 #include "context.h"
 #include "enums.h"
 #include "light.h"

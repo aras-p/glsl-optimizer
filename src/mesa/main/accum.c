@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.9 1999/11/03 19:27:41 brianp Exp $ */
+/* $Id: accum.c,v 1.10 1999/11/08 07:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,9 +44,6 @@
 #include "masking.h"
 #include "span.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

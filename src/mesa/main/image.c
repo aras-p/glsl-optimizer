@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.12 1999/11/03 18:24:05 brianp Exp $ */
+/* $Id: image.c,v 1.13 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,9 +42,6 @@
 #include "mmath.h"
 #include "pixel.h"
 #include "types.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.7 1999/11/05 06:43:11 brianp Exp $ */
+/* $Id: varray.c,v 1.8 1999/11/08 07:36:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,9 +54,6 @@
 #include "vbindirect.h"
 #include "vbxform.h"
 #include "xform.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server) && !defined(GLX_USE_DLOPEN)

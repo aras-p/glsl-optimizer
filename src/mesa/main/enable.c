@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.7 1999/10/20 22:16:45 brianp Exp $ */
+/* $Id: enable.c,v 1.8 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,9 +47,6 @@
 #include "vbfill.h"
 #include "xform.h"
 #include "enums.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.4 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: feedback.c,v 1.5 1999/11/08 07:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,9 +44,6 @@
 #include "mmath.h"
 #include "types.h"
 #include "triangle.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 
