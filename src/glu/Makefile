@@ -10,11 +10,11 @@ SUBDIRS = $(GLU_DIRS)
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; make) ; \
+		(cd $$dir ; $(MAKE)) ; \
 	done
 
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; make clean) ; \
+		(cd $$dir ; $(MAKE) clean) ; \
 	done

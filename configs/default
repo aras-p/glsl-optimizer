@@ -24,7 +24,7 @@ GLU_CFLAGS =
 MKLIB_OPTIONS = 
 MKDEP = makedepend
 MKDEP_OPTIONS = -Y -fdepend
-
+MAKE = make
 
 # Library names (base name)
 GL_LIB = GL

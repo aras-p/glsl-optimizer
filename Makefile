@@ -7,19 +7,19 @@ SUBDIRS = src progs
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; make) || exit 1 ; \
+		(cd $$dir ; $(MAKE)) || exit 1 ; \
 	done
 
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; make clean) ; \
+		(cd $$dir ; $(MAKE) clean) ; \
 	done
 
 
 realclean:
 	touch $(TOP)/configs/current
-	make clean
+	$(MAKE) clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
 
@@ -101,7 +101,7 @@ sunos5-gcc \
 sunos5-smp \
 ultrix-gcc:
 	(cd configs && rm -f current && ln -s $@ current)
-	make default
+	$(MAKE) default
 
 
 # Rules for making release tarballs

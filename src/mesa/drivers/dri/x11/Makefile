@@ -74,7 +74,7 @@ $(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(C_SOURCES) $(ASM_SOURCES) \
-		>& /dev/null
+		> /dev/null 2>&1
 
 
 # Emacs tags

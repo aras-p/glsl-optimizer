@@ -17,12 +17,12 @@ subdirs:
 	echo $(DRI_DIRS)
 	@for dir in $(DRI_DIRS) ; do \
 		echo $$dir ; \
-		(cd $$dir ; make) || exit 1; \
+		(cd $$dir ; $(MAKE)) || exit 1; \
 	done
 
 
 clean:
 	@for dir in $(DRI_DIRS) ; do \
-		(cd $$dir ; make clean) ; \
+		(cd $$dir ; $(MAKE) clean) ; \
 	done
 	rm common/*.o

@@ -7,6 +7,7 @@ CONFIG_NAME = FreeBSD
 # Compiler and flags
 CC = gcc
 CXX = g++
+MAKE = gmake
 
 CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100
 CXXFLAGS = -O2 -fPIC -pedantic

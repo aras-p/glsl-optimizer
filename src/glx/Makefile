@@ -4,9 +4,9 @@ include $(TOP)/configs/current
 
 
 default:
-	cd mini ; make
+	cd mini ; $(MAKE)
 
 
 clean:
-	cd mini ; make clean
+	cd mini ; $(MAKE) clean
 

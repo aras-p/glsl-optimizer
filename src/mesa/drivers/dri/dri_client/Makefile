@@ -43,7 +43,7 @@ default: depend dri.a
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) -Y $(INCLUDES) \
-		$(C_SOURCES) $(ASM_SOURCES) >& /dev/null
+		$(C_SOURCES) $(ASM_SOURCES) > /dev/null 2>&1
 
 
 dri.a:	$(OBJECTS)

@@ -10,7 +10,7 @@ SUBDIRS = $(PROGRAM_DIRS)
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir ; make) || exit 1 ; \
+			(cd $$dir ; $(MAKE)) || exit 1 ; \
 		fi \
 	done
 
@@ -18,6 +18,6 @@ default: $(TOP)/configs/current
 clean:
 	@for dir in $(SUBDIRS) tests ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir ; make clean) ; \
+			(cd $$dir ; $(MAKE) clean) ; \
 		fi \
 	done

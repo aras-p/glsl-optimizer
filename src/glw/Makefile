@@ -44,7 +44,8 @@ $(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
 # 
 depend: $(GLW_SOURCES)
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(GLW_SOURCES) >&/dev/null
+	$(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(GLW_SOURCES) \
+		> /dev/null 2>&1
 
 
 include depend
