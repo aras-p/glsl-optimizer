@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.34 2000/03/20 19:26:51 brianp Exp $ */
+/* $Id: gl.h,v 1.35 2000/03/23 16:54:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2033,40 +2033,6 @@ GLAPI void GLAPIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *params
 
 
 /*
- * GL_PGI_misc_hints (number 77)
- */
-#ifndef GL_PGI_misc_hints
-#define GL_PGI_misc_hints 1
-
-#define GL_PREFER_DOUBLEBUFFER_HINT_PGI		107000
-#define GL_STRICT_DEPTHFUNC_HINT_PGI		107030
-#define GL_STRICT_LIGHTING_HINT_PGI		107031
-#define GL_STRICT_SCISSOR_HINT_PGI		107032
-#define GL_FULL_STIPPLE_HINT_PGI		107033
-#define GL_NATIVE_GRAPHICS_BEGIN_HINT_PGI	107011
-#define GL_NATIVE_GRAPHICS_END_HINT_PGI		107012
-#define GL_CONSERVE_MEMORY_HINT_PGI		107005
-#define GL_RECLAIM_MEMORY_HINT_PGI		107006
-#define GL_ALWAYS_FAST_HINT_PGI			107020
-#define GL_ALWAYS_SOFT_HINT_PGI			107021
-#define GL_ALLOW_DRAW_OBJ_HINT_PGI		107022
-#define GL_ALLOW_DRAW_WIN_HINT_PGI		107023
-#define GL_ALLOW_DRAW_FRG_HINT_PGI		107024
-#define GL_ALLOW_DRAW_SPN_HINT_PGI		107024
-#define GL_ALLOW_DRAW_MEM_HINT_PGI		107025
-#define GL_CLIP_NEAR_HINT_PGI			107040
-#define GL_CLIP_FAR_HINT_PGI			107041
-#define GL_WIDE_LINE_HINT_PGI		  	107042
-#define GL_BACK_NORMALS_HINT_PGI		107043
-#define GL_NATIVE_GRAPHICS_HANDLE_PGI		107010
-
-GLAPI void GLAPIENTRY glHintPGI(GLenum target, GLint mode);
-
-#endif /* GL_PGI_misc_hints */
-
-
-
-/*
  * GL_EXT_paletted_texture (number 78)
  */
 #ifndef GL_EXT_paletted_texture
@@ -2153,23 +2119,6 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 #define GL_DECR_WRAP_EXT			0x8508
 
 #endif /* GL_EXT_stencil_wrap */
-
-
-
-/*
- * GL_EXT_blend_func_separate (EXT number 173) (aka GL_INGR_blend_func_separate)
- */
-#ifndef GL_EXT_blend_func_separate
-#define GL_EXT_blend_func_separate 1
-
-#define GL_BLEND_DST_RGB_EXT			0x80C8
-#define GL_BLEND_SRC_RGB_EXT			0x80C9
-#define GL_BLEND_DST_ALPHA_EXT			0x80CA
-#define GL_BLEND_SRC_ALPHA_EXT			0x80CB
-
-GLAPI void GLAPIENTRY glBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha );
-
-#endif /* GL_EXT_blend_func_separate */
 
 
 
