@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.69 2002/06/17 23:36:31 brianp Exp $ */
+/* $Id: attrib.c,v 1.70 2002/09/03 18:03:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -674,7 +674,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       }
 
       /* Restore texture object state */
-      for (i = 0; i < 5; i++) {
+      for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
          GLenum target = 0;
          const struct gl_texture_object *obj = NULL;
          GLfloat bordColor[4];
