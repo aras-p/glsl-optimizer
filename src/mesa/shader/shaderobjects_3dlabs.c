@@ -31,6 +31,7 @@
 
 #include "glheader.h"
 #include "shaderobjects.h"
+#include "shaderobjects_3dlabs.h"
 #include "context.h"
 #include "macros.h"
 #include "hash.h"
@@ -176,9 +177,11 @@ _generic_GetInfoLog (struct gl2_generic_intf **intf)
 }
 
 static struct gl2_generic_intf _generic_vftbl = {
-	_unknown_AddRef,
-	_unknown_Release,
-	_generic_QueryInterface,
+	{
+		_unknown_AddRef,
+		_unknown_Release,
+		_generic_QueryInterface
+	},
 	_generic_Delete,
 	NULL,
 	_generic_GetName,
@@ -311,14 +314,18 @@ _container_GetAttached (struct gl2_container_intf **intf, GLuint index)
 }
 
 static struct gl2_container_intf _container_vftbl = {
+   {
+      {
 	_unknown_AddRef,
 	_unknown_Release,
 	_container_QueryInterface,
+      },
 	_generic_Delete,
 	NULL,
 	_generic_GetName,
 	_generic_GetDeleteStatus,
 	_generic_GetInfoLog,
+   },
 	_container_Attach,
 	_container_Detach,
 	_container_GetAttachedCount,
@@ -418,14 +425,18 @@ _shader_Compile (struct gl2_shader_intf **intf)
 }
 
 static struct gl2_shader_intf _shader_vftbl = {
+   {
+      {
 	_unknown_AddRef,
 	_unknown_Release,
 	_shader_QueryInterface,
+      },
 	_generic_Delete,
 	_shader_GetType,
 	_generic_GetName,
 	_generic_GetDeleteStatus,
 	_generic_GetInfoLog,
+   },
 	NULL,
 	_shader_GetCompileStatus,
 	_shader_SetSource,
@@ -462,7 +473,7 @@ static void
 _program_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
-
+	(void) impl;
 	_container_destructor (intf);
 }
 
@@ -539,18 +550,24 @@ _program_Validate (struct gl2_program_intf **intf)
 }
 
 static struct gl2_program_intf _program_vftbl = {
-	_unknown_AddRef,
-	_unknown_Release,
-	_program_QueryInterface,
-	_generic_Delete,
-	_program_GetType,
-	_generic_GetName,
-	_generic_GetDeleteStatus,
-	_generic_GetInfoLog,
-	_program_Attach,
-	_container_Detach,
-	_container_GetAttachedCount,
-	_container_GetAttached,
+	{
+		{
+			{
+				_unknown_AddRef,
+				_unknown_Release,
+				_program_QueryInterface,
+			},
+			_generic_Delete,
+			_program_GetType,
+			_generic_GetName,
+			_generic_GetDeleteStatus,
+			_generic_GetInfoLog,
+		},
+		_program_Attach,
+		_container_Detach,
+		_container_GetAttachedCount,
+		_container_GetAttached,
+	},
 	_program_GetLinkStatus,
 	_program_GetValidateStatus,
 	_program_Link,
@@ -582,7 +599,7 @@ static void
 _fragment_shader_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_fragment_shader_impl *impl = (struct gl2_fragment_shader_impl *) intf;
-
+	(void) impl;
 	/* TODO free fragment shader data */
 
 	_shader_destructor (intf);
@@ -606,19 +623,25 @@ _fragment_shader_GetSubType (struct gl2_shader_intf **intf)
 }
 
 static struct gl2_fragment_shader_intf _fragment_shader_vftbl = {
-	_unknown_AddRef,
-	_unknown_Release,
-	_fragment_shader_QueryInterface,
-	_generic_Delete,
-	_shader_GetType,
-	_generic_GetName,
-	_generic_GetDeleteStatus,
-	_generic_GetInfoLog,
-	_fragment_shader_GetSubType,
-	_shader_GetCompileStatus,
-	_shader_SetSource,
-	_shader_GetSource,
-	_shader_Compile
+	{
+		{
+			{
+				_unknown_AddRef,
+				_unknown_Release,
+				_fragment_shader_QueryInterface,
+			},
+			_generic_Delete,
+			_shader_GetType,
+			_generic_GetName,
+			_generic_GetDeleteStatus,
+			_generic_GetInfoLog,
+		},
+		_fragment_shader_GetSubType,
+		_shader_GetCompileStatus,
+		_shader_SetSource,
+		_shader_GetSource,
+		_shader_Compile
+	}
 };
 
 static void
@@ -644,7 +667,7 @@ static void
 _vertex_shader_destructor (struct gl2_unknown_intf **intf)
 {
 	struct gl2_vertex_shader_impl *impl = (struct gl2_vertex_shader_impl *) intf;
-
+	(void) impl;
 	/* TODO free vertex shader data */
 
 	_shader_destructor (intf);
@@ -668,19 +691,25 @@ _vertex_shader_GetSubType (struct gl2_shader_intf **intf)
 }
 
 static struct gl2_vertex_shader_intf _vertex_shader_vftbl = {
-	_unknown_AddRef,
-	_unknown_Release,
-	_vertex_shader_QueryInterface,
-	_generic_Delete,
-	_shader_GetType,
-	_generic_GetName,
-	_generic_GetDeleteStatus,
-	_generic_GetInfoLog,
-	_vertex_shader_GetSubType,
-	_shader_GetCompileStatus,
-	_shader_SetSource,
-	_shader_GetSource,
-	_shader_Compile
+	{
+		{
+			{
+				_unknown_AddRef,
+				_unknown_Release,
+				_vertex_shader_QueryInterface,
+			},
+			_generic_Delete,
+			_shader_GetType,
+			_generic_GetName,
+			_generic_GetDeleteStatus,
+			_generic_GetInfoLog,
+		},
+		_vertex_shader_GetSubType,
+		_shader_GetCompileStatus,
+		_shader_SetSource,
+		_shader_GetSource,
+		_shader_Compile
+	}
 };
 
 static void
@@ -695,7 +724,7 @@ GLhandleARB
 _mesa_3dlabs_create_shader_object (GLenum shaderType)
 {
 	GET_CURRENT_CONTEXT(ctx);
-
+	(void) ctx;
 	switch (shaderType)
 	{
 	case GL_FRAGMENT_SHADER_ARB:
@@ -731,9 +760,10 @@ GLhandleARB
 _mesa_3dlabs_create_program_object (void)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	struct gl2_program_impl *x = (struct gl2_program_impl *) _mesa_malloc (sizeof (
-		struct gl2_program_impl));
+	struct gl2_program_impl *x = (struct gl2_program_impl *)
+		_mesa_malloc (sizeof (struct gl2_program_impl));
 
+	(void) ctx;
 	if (x != NULL)
 	{
 		_program_constructor (x);
