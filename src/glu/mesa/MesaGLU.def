@@ -45,10 +45,17 @@ EXPORTS
     gluPwlCurve
     gluNurbsCallback
     gluNewTess
-    gluTessCallback
     gluDeleteTess
-    gluBeginPolygon
-    gluEndPolygon
-    gluNextContour
+    gluTessBeginPolygon
+    gluTessBeginContour
     gluTessVertex
+    gluTessEndContour
+    gluTessEndPolygon
+    gluTessProperty
+    gluTessNormal
+    gluTessCallback
+    gluGetTessProperty
+    gluBeginPolygon
+    gluNextContour
+    gluEndPolygon
     gluGetString

@@ -9,5 +9,6 @@ nurbsutl.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h nurbs.h
 project.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h
 quadric.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h
 tess.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
-tesselat.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
-polytest.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
+tess_fist.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
+tess_hash.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h
+tess_heap.obj : gluP.h [-.include.gl]gl.h [-.include.gl]glu.h tess.h

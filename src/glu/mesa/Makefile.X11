@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 1999/08/19 00:55:42 jtg Exp $
+# $Id: Makefile.X11,v 1.2 1999/09/10 02:03:31 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -15,7 +15,7 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tesselat.c polytest.c
+	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c
 
 OBJECTS = $(SOURCES:.c=.o)
 

@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: glu.c,v 1.2 1999/09/10 02:03:31 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,11 @@
 
 /*
  * $Log: glu.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  1999/09/10 02:03:31  gareth
+ * Added GLU 1.3 tessellation (except winding rule code).
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.13  1999/03/31 19:07:28  brianp
  * added GL_EXT_abgr to extensions
@@ -220,8 +223,7 @@ const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode )
       "misoriented or self-intersecting loops",
       "coincident vertices",
       "colinear vertices",
-      "intersecting edges",
-      "not coplanar contours"
+      "intersecting edges"
    };
    static char *nurbs_error[] = {
       "spline order un-supported",
@@ -301,7 +303,7 @@ const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode )
    else if (errorCode==GLU_INCOMPATIBLE_GL_VERSION) {
       return (GLubyte *) "incompatible GL version";
    }
-   else if (errorCode>=GLU_TESS_ERROR1 && errorCode<=GLU_TESS_ERROR9) {
+   else if (errorCode>=GLU_TESS_ERROR1 && errorCode<=GLU_TESS_ERROR8) {
       return (GLubyte *) tess_error[errorCode-GLU_TESS_ERROR1];
    }
    else if (errorCode>=GLU_NURBS_ERROR1 && errorCode<=GLU_NURBS_ERROR37) {
