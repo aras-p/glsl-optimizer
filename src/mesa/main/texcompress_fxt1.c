@@ -41,9 +41,7 @@
 
 
 int
-fxt1_encode (GLcontext *ctx,
-             unsigned int width, unsigned int height,
-             int srcFormat,
+fxt1_encode (unsigned int width, unsigned int height, int comps,
              const void *source, int srcRowStride,
              void *dest, int destRowStride);
 void
@@ -107,7 +105,7 @@ texstore_rgb_fxt1(STORE_PARAMS)
                                         GL_COMPRESSED_RGB_FXT1_3DFX,
                                         texWidth, (GLubyte *) dstAddr);
 
-   fxt1_encode(ctx, srcWidth, srcHeight, srcFormat, pixels, srcRowStride,
+   fxt1_encode(srcWidth, srcHeight, 3, pixels, srcRowStride,
                dst, dstRowStride);
 
    if (tempImage)
@@ -163,7 +161,7 @@ texstore_rgba_fxt1(STORE_PARAMS)
                                         GL_COMPRESSED_RGBA_FXT1_3DFX,
                                         texWidth, (GLubyte *) dstAddr);
 
-   fxt1_encode(ctx, srcWidth, srcHeight, srcFormat, pixels, srcRowStride,
+   fxt1_encode(srcWidth, srcHeight, 4, pixels, srcRowStride,
                dst, dstRowStride);
 
    if (tempImage)
@@ -273,9 +271,9 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
  *
  * The encoder was built by reversing the decoder,
  * and is vaguely based on Texus2 by 3dfx. Note that this code
- * is merely a proof of concept, since it is higly UNoptimized;
- * moreover, it is sub-optimal due to inital conditions passed
- * to Lloyd's algorithm (the interpolation modes are worse).
+ * is merely a proof of concept, since it is highly UNoptimized;
+ * moreover, it is sub-optimal due to initial conditions passed
+ * to Lloyd's algorithm (the interpolation modes are even worse).
 \***************************************************************************/
 
 
@@ -322,6 +320,46 @@ typedef struct {
    } while (0)
 
 #endif /* !__GNUC__ */
+
+
+#define F(i) 1 /* can be used to obtain an oblong metric: 0.30 / 0.59 / 0.11 */
+#define SAFECDOT 1 /* for paranoids */
+
+#define MAKEIVEC(NV, NC, IV, B, V0, V1)  \
+   do {                                  \
+      /* compute interpolation vector */ \
+      float d2 = 0;                      \
+      float rd2;                         \
+                                         \
+      for (i = 0; i < NC; i++) {         \
+         IV[i] = (V1[i] - V0[i]) * F(i); \
+         d2 += IV[i] * IV[i];            \
+      }                                  \
+      rd2 = (float)NV / d2;              \
+      B = 0;                             \
+      for (i = 0; i < NC; i++) {         \
+         IV[i] *= F(i);                  \
+         B -= IV[i] * V0[i];             \
+         IV[i] *= rd2;                   \
+      }                                  \
+      B = B * rd2 + 0.5f;                \
+   } while (0)
+
+#define CALCCDOT(TEXEL, NV, NC, IV, B, V)\
+   do {                                  \
+      float dot = 0;                     \
+      for (i = 0; i < NC; i++) {         \
+         dot += V[i] * IV[i];            \
+      }                                  \
+      TEXEL = (int)(dot + B);            \
+      if (SAFECDOT) {                    \
+         if (TEXEL < 0) {                \
+            TEXEL = 0;                   \
+         } else if (TEXEL > NV) {        \
+            TEXEL = NV;                  \
+         }                               \
+      }                                  \
+   } while (0)
 
 
 static int
@@ -419,7 +457,7 @@ fxt1_choose (float vec[][MAX_COMP], int nv,
     * There are probably better algorithms to use (histogram-based).
     */
    int i, j, k;
-   int minSum = 1000; /* big enough */
+   int minSum = 2000; /* big enough */
    int maxSum = -1; /* small enough */
    int minCol = 0; /* phoudoin: silent compiler! */
    int maxCol = 0; /* phoudoin: silent compiler! */
@@ -552,7 +590,7 @@ fxt1_lloyd (float vec[][MAX_COMP], int nv,
             }
          }
 #else
-         int best = fxt1_bestcol(vec, n_vect, input[k], n_comp, &err);
+         int best = fxt1_bestcol(vec, nv, input[k], nc, &err);
 #endif
          /* add in closest color */
          for (i = 0; i < nc; i++) {
@@ -574,7 +612,7 @@ fxt1_lloyd (float vec[][MAX_COMP], int nv,
       /* move each vector to the barycenter of its closest colors */
       for (j = 0; j < nv; j++) {
          if (cnt[j]) {
-            float div = 1.0 / cnt[j];
+            float div = 1.0F / cnt[j];
             for (i = 0; i < nc; i++) {
                vec[j][i] = div * sum[j][i];
             }
@@ -708,7 +746,7 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
     * the 4x4 tile and use those as the two representative colors.
     * There are probably better algorithms to use (histogram-based).
     */
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (k = 0; k < N_TEXELS / 2; k++) {
       int sum = 0;
@@ -725,7 +763,7 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
       }
       sumL += sum;
    }
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (; k < N_TEXELS; k++) {
       int sum = 0;
@@ -779,36 +817,14 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
    cc[0] = 0;
    if (minColL != maxColL) {
       /* compute interpolation vector */
-      float d2 = 0;
-      float rd2;
-
-      for (i = 0; i < n_comp; i++) {
-         iv[i] = vec[1][i] - vec[0][i];
-         d2 += iv[i] * iv[i];
-      }
-      rd2 = (float)n_vect / d2;
-      b = 0;
-      for (i = 0; i < n_comp; i++) {
-         b -= iv[i] * vec[0][i];
-         iv[i] *= rd2;
-      }
-      b = b * rd2 + 0.5f;
+      MAKEIVEC(n_vect, n_comp, iv, b, vec[0], vec[1]);
 
       /* add in texels */
       lolo = 0;
       for (k = N_TEXELS / 2 - 1; k >= 0; k--) {
          int texel;
          /* interpolate color */
-         float dot = 0;
-         for (i = 0; i < n_comp; i++) {
-            dot += input[k][i] * iv[i];
-         }
-         texel = (int)(dot + b);
-         if (texel < 0) {
-            texel = 0;
-         } else if (texel > n_vect) {
-            texel = n_vect;
-         }
+         CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
          /* add in texel */
          lolo <<= 2;
          lolo |= texel;
@@ -821,36 +837,14 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
    cc[1] = 0;
    if (minColR != maxColR) {
       /* compute interpolation vector */
-      float d2 = 0;
-      float rd2;
-
-      for (i = 0; i < n_comp; i++) {
-         iv[i] = vec[1][i] - vec[2][i];
-         d2 += iv[i] * iv[i];
-      }
-      rd2 = (float)n_vect / d2;
-      b = 0;
-      for (i = 0; i < n_comp; i++) {
-         b -= iv[i] * vec[2][i];
-         iv[i] *= rd2;
-      }
-      b = b * rd2 + 0.5f;
+      MAKEIVEC(n_vect, n_comp, iv, b, vec[2], vec[1]);
 
       /* add in texels */
       lohi = 0;
       for (k = N_TEXELS - 1; k >= N_TEXELS / 2; k--) {
          int texel;
          /* interpolate color */
-         float dot = 0;
-         for (i = 0; i < n_comp; i++) {
-            dot += input[k][i] * iv[i];
-         }
-         texel = (int)(dot + b);
-         if (texel < 0) {
-            texel = 0;
-         } else if (texel > n_vect) {
-            texel = n_vect;
-         }
+         CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
          /* add in texel */
          lohi <<= 2;
          lohi |= texel;
@@ -883,15 +877,15 @@ fxt1_quantize_HI (unsigned long *cc,
 {
    const int n_vect = 6; /* highest vector number */
    const int n_comp = 3; /* 3 components: R, G, B */
-   float b = 0.0;		/* phoudoin: silent compiler! */
-   float iv[MAX_COMP]; /* interpolation vector */
+   float b = 0.0;	 /* phoudoin: silent compiler! */
+   float iv[MAX_COMP];   /* interpolation vector */
    int i, k;
    unsigned long hihi; /* high quadword: hi dword */
 
-   int minSum = 1000; /* big enough */
+   int minSum = 2000; /* big enough */
    int maxSum = -1; /* small enough */
-   int minCol = 0;	/* phoudoin: silent compiler! */
-   int maxCol = 0;	/* phoudoin: silent compiler! */
+   int minCol = 0; /* phoudoin: silent compiler! */
+   int maxCol = 0; /* phoudoin: silent compiler! */
 
    /* Our solution here is to find the darkest and brightest colors in
     * the 8x4 tile and use those as the two representative colors.
@@ -928,20 +922,7 @@ fxt1_quantize_HI (unsigned long *cc,
 
    /* compute interpolation vector */
    if (minCol != maxCol) {
-      float d2 = 0;
-      float rd2;
-
-      for (i = 0; i < n_comp; i++) {
-         iv[i] = reord[maxCol][i] - reord[minCol][i];
-         d2 += iv[i] * iv[i];
-      }
-      rd2 = (float)n_vect / d2;
-      b = 0;
-      for (i = 0; i < n_comp; i++) {
-         b -= iv[i] * reord[minCol][i];
-         iv[i] *= rd2;
-      }
-      b = b * rd2 + 0.5f;
+      MAKEIVEC(n_vect, n_comp, iv, b, reord[minCol], reord[maxCol]);
    }
 
    /* add in texels */
@@ -953,16 +934,7 @@ fxt1_quantize_HI (unsigned long *cc,
       if (!ISTBLACK(input[k])) {
          if (minCol != maxCol) {
             /* interpolate color */
-            float dot = 0;
-            for (i = 0; i < n_comp; i++) {
-               dot += input[k][i] * iv[i];
-            }
-            texel = (int)(dot + b);
-            if (texel < 0) {
-               texel = 0;
-            } else if (texel > n_vect) {
-               texel = n_vect;
-            }
+            CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
             /* add in texel */
             kk[0] |= texel << (t & 7);
          }
@@ -995,7 +967,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
     * the 4x4 tile and use those as the two representative colors.
     * There are probably better algorithms to use (histogram-based).
     */
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (k = 0; k < N_TEXELS / 2; k++) {
       if (!ISTBLACK(input[k])) {
@@ -1013,7 +985,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
          }
       }
    }
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (; k < N_TEXELS; k++) {
       if (!ISTBLACK(input[k])) {
@@ -1048,20 +1020,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
       }
       if (minColL != maxColL) {
          /* compute interpolation vector */
-         float d2 = 0;
-         float rd2;
-   
-         for (i = 0; i < n_comp; i++) {
-            iv[i] = vec[1][i] - vec[0][i];
-            d2 += iv[i] * iv[i];
-         }
-         rd2 = (float)n_vect / d2;
-         b = 0;
-         for (i = 0; i < n_comp; i++) {
-            b -= iv[i] * vec[0][i];
-            iv[i] *= rd2;
-         }
-         b = b * rd2 + 0.5f;
+         MAKEIVEC(n_vect, n_comp, iv, b, vec[0], vec[1]);
 
          /* add in texels */
          lolo = 0;
@@ -1069,16 +1028,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
             int texel = n_vect + 1; /* transparent black */
             if (!ISTBLACK(input[k])) {
                /* interpolate color */
-               float dot = 0;
-               for (i = 0; i < n_comp; i++) {
-                  dot += input[k][i] * iv[i];
-               }
-               texel = (int)(dot + b);
-               if (texel < 0) {
-                  texel = 0;
-               } else if (texel > n_vect) {
-                  texel = n_vect;
-               }
+               CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
             }
             /* add in texel */
             lolo <<= 2;
@@ -1104,20 +1054,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
       }
       if (minColR != maxColR) {
          /* compute interpolation vector */
-         float d2 = 0;
-         float rd2;
-   
-         for (i = 0; i < n_comp; i++) {
-            iv[i] = vec[3][i] - vec[2][i];
-            d2 += iv[i] * iv[i];
-         }
-         rd2 = (float)n_vect / d2;
-         b = 0;
-         for (i = 0; i < n_comp; i++) {
-            b -= iv[i] * vec[2][i];
-            iv[i] *= rd2;
-         }
-         b = b * rd2 + 0.5f;
+         MAKEIVEC(n_vect, n_comp, iv, b, vec[2], vec[3]);
 
          /* add in texels */
          lohi = 0;
@@ -1125,16 +1062,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
             int texel = n_vect + 1; /* transparent black */
             if (!ISTBLACK(input[k])) {
                /* interpolate color */
-               float dot = 0;
-               for (i = 0; i < n_comp; i++) {
-                  dot += input[k][i] * iv[i];
-               }
-               texel = (int)(dot + b);
-               if (texel < 0) {
-                  texel = 0;
-               } else if (texel > n_vect) {
-                  texel = n_vect;
-               }
+               CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
             }
             /* add in texel */
             lohi <<= 2;
@@ -1178,7 +1106,7 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
     * the 4x4 tile and use those as the two representative colors.
     * There are probably better algorithms to use (histogram-based).
     */
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (k = 0; k < N_TEXELS / 2; k++) {
       int sum = 0;
@@ -1194,7 +1122,7 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
          maxColL = k;
       }
    }
-   minSum = 1000; /* big enough */
+   minSum = 2000; /* big enough */
    maxSum = -1; /* small enough */
    for (; k < N_TEXELS; k++) {
       int sum = 0;
@@ -1219,7 +1147,7 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
    /* Scan the channel with max variance for lo & hi
     * and use those as the two representative colors.
     */
-   minVal = 1000; /* big enough */
+   minVal = 2000; /* big enough */
    maxVal = -1; /* small enough */
    for (k = 0; k < N_TEXELS / 2; k++) {
       int t = input[k][maxVarL];
@@ -1232,7 +1160,7 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
          maxColL = k;
       }
    }
-   minVal = 1000; /* big enough */
+   minVal = 2000; /* big enough */
    maxVal = -1; /* small enough */
    for (; k < N_TEXELS; k++) {
       int t = input[k][maxVarR];
@@ -1255,36 +1183,14 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
    }
    if (minColL != maxColL) {
       /* compute interpolation vector */
-      float d2 = 0;
-      float rd2;
-
-      for (i = 0; i < n_comp; i++) {
-         iv[i] = vec[1][i] - vec[0][i];
-         d2 += iv[i] * iv[i];
-      }
-      rd2 = (float)n_vect / d2;
-      b = 0;
-      for (i = 0; i < n_comp; i++) {
-         b -= iv[i] * vec[0][i];
-         iv[i] *= rd2;
-      }
-      b = b * rd2 + 0.5f;
+      MAKEIVEC(n_vect, n_comp, iv, b, vec[0], vec[1]);
 
       /* add in texels */
       lolo = 0;
       for (k = N_TEXELS / 2 - 1; k >= 0; k--) {
          int texel;
          /* interpolate color */
-         float dot = 0;
-         for (i = 0; i < n_comp; i++) {
-            dot += input[k][i] * iv[i];
-         }
-         texel = (int)(dot + b);
-         if (texel < 0) {
-            texel = 0;
-         } else if (texel > n_vect) {
-            texel = n_vect;
-         }
+         CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
          /* add in texel */
          lolo <<= 2;
          lolo |= texel;
@@ -1310,36 +1216,14 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
    }
    if (minColR != maxColR) {
       /* compute interpolation vector */
-      float d2 = 0;
-      float rd2;
-
-      for (i = 0; i < n_comp; i++) {
-         iv[i] = vec[3][i] - vec[2][i];
-         d2 += iv[i] * iv[i];
-      }
-      rd2 = (float)n_vect / d2;
-      b = 0;
-      for (i = 0; i < n_comp; i++) {
-         b -= iv[i] * vec[2][i];
-         iv[i] *= rd2;
-      }
-      b = b * rd2 + 0.5f;
+      MAKEIVEC(n_vect, n_comp, iv, b, vec[2], vec[3]);
 
       /* add in texels */
       lohi = 0;
       for (k = N_TEXELS - 1; k >= N_TEXELS / 2; k--) {
          int texel;
          /* interpolate color */
-         float dot = 0;
-         for (i = 0; i < n_comp; i++) {
-            dot += input[k][i] * iv[i];
-         }
-         texel = (int)(dot + b);
-         if (texel < 0) {
-            texel = 0;
-         } else if (texel > n_vect) {
-            texel = n_vect;
-         }
+         CALCCDOT(texel, n_vect, n_comp, iv, b, input[k]);
          /* add in texel */
          lohi <<= 2;
          lohi |= texel;
@@ -1378,7 +1262,10 @@ fxt1_quantize (unsigned long *cc, const unsigned char *lines[], int comps)
    unsigned char input[N_TEXELS][MAX_COMP];
    int i, k, l;
 
-   memset(input, -1, sizeof(input));
+   if (comps == 3) {
+      /* make the whole block opaque */
+      memset(input, -1, sizeof(input));
+   }
 
    /* 8 texels each line */
    for (l = 0; l < 4; l++) {
@@ -1456,29 +1343,22 @@ fxt1_quantize (unsigned long *cc, const unsigned char *lines[], int comps)
 
 
 int
-fxt1_encode (GLcontext *ctx,
-             unsigned int width, unsigned int height,
-             int srcFormat,
+fxt1_encode (unsigned int width, unsigned int height, int comps,
              const void *source, int srcRowStride,
              void *dest, int destRowStride)
 {
-   const int comps = (srcFormat == GL_RGB) ? 3 : 4;
    unsigned int x, y;
    const unsigned char *data;
    unsigned long *encoded = dest;
-   GLubyte *newSource = NULL;
+   unsigned char *newSource = NULL;
 
-   (void) ctx;
-
-   /*
-    * Rescale image if width is less than 8 or height is less than 4.
-    */
-   if (width < 8 || height < 4) {
-      GLint newWidth = (width + 7) & ~7;
-      GLint newHeight = (height + 3) & ~3;
-      newSource = MALLOC(comps * newWidth * newHeight * sizeof(GLchan));
+   /* Replicate image if width is not M8 or height is not M4 */
+   if ((width & 7) | (height & 3)) {
+      int newWidth = (width + 7) & ~7;
+      int newHeight = (height + 3) & ~3;
+      newSource = malloc(comps * newWidth * newHeight * sizeof(unsigned char *));
       _mesa_upscale_teximage2d(width, height, newWidth, newHeight,
-                               comps, source, srcRowStride, newSource);
+                          comps, source, srcRowStride, newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;
@@ -1497,14 +1377,14 @@ fxt1_encode (GLcontext *ctx,
          lines[3] = lines[2] + srcRowStride;
          offs += 8 * comps;
          fxt1_quantize(encoded, lines, comps);
-         /* 128 bits per 8x4 block = 4bpp */
+         /* 128 bits per 8x4 block */
          encoded += 4;
       }
       encoded += destRowStride;
    }
 
    if (newSource != NULL) {
-      FREE(newSource);
+      free(newSource);
    }
 
    return 0;
@@ -1540,7 +1420,7 @@ static unsigned char _rgb_scale_6[] = {
 };
 
 
-#define CC_SEL(cc, which) ((cc)[(which) / 32] >> ((which) & 31))
+#define CC_SEL(cc, which) (((unsigned long *)(cc))[(which) / 32] >> ((which) & 31))
 #define UP5(c) _rgb_scale_5[(c) & 31]
 #define UP6(c, b) _rgb_scale_6[(((c) & 31) << 1) | ((b) & 1)]
 #define LERP(n, t, c0, c1) (((n) - (t)) * (c0) + (t) * (c1) + (n) / 2) / (n)
