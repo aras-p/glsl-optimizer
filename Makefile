@@ -36,7 +36,7 @@ $(TOP)/configs/current:
 	@echo
 	@echo
 	@echo "Please choose a configuration from the following list:"
-	@ls -1 $(TOP)/configs | grep -v current | grep -v default
+	@ls -1 $(TOP)/configs | grep -v "current\|default\|CVS"
 	@echo
 	@echo "Then type 'make <config>' (ex: 'make linux-x86')"
 	@echo "(ignore the following error message)"
