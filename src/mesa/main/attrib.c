@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.70 2002/09/03 18:03:45 brianp Exp $ */
+/* $Id: attrib.c,v 1.71 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -513,6 +513,7 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_POLYGON_STIPPLE);
    TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
    TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
+   /* XXX two-sided stencil */
    TEST_AND_UPDATE(ctx->Multisample.Enabled, enable->MultisampleEnabled,
                    GL_MULTISAMPLE_ARB);
    TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToCoverage,
@@ -1032,15 +1033,17 @@ _mesa_PopAttrib(void)
             break;
          case GL_STENCIL_BUFFER_BIT:
             {
+               const GLint face = 0; /* XXX stencil two side */
                const struct gl_stencil_attrib *stencil;
                stencil = (const struct gl_stencil_attrib *) attr->data;
                _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
                _mesa_ClearStencil(stencil->Clear);
-               _mesa_StencilFunc(stencil->Function, stencil->Ref,
-                                 stencil->ValueMask);
-               _mesa_StencilMask(stencil->WriteMask);
-               _mesa_StencilOp(stencil->FailFunc, stencil->ZFailFunc,
-                               stencil->ZPassFunc);
+               _mesa_StencilFunc(stencil->Function[face], stencil->Ref[face],
+                                 stencil->ValueMask[face]);
+               _mesa_StencilMask(stencil->WriteMask[face]);
+               _mesa_StencilOp(stencil->FailFunc[face],
+                               stencil->ZFailFunc[face],
+                               stencil->ZPassFunc[face]);
             }
             break;
          case GL_TRANSFORM_BIT:

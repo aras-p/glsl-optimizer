@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.88 2002/09/05 21:14:36 brianp Exp $ */
+/* $Id: get.c,v 1.89 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -802,28 +802,28 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Stencil.Clear);
 	 break;
       case GL_STENCIL_FAIL:
-	 *params = ENUM_TO_BOOL(ctx->Stencil.FailFunc);
+	 *params = ENUM_TO_BOOL(ctx->Stencil.FailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_FUNC:
-	 *params = ENUM_TO_BOOL(ctx->Stencil.Function);
+	 *params = ENUM_TO_BOOL(ctx->Stencil.Function[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_FAIL:
-	 *params = ENUM_TO_BOOL(ctx->Stencil.ZFailFunc);
+	 *params = ENUM_TO_BOOL(ctx->Stencil.ZFailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_PASS:
-	 *params = ENUM_TO_BOOL(ctx->Stencil.ZPassFunc);
+	 *params = ENUM_TO_BOOL(ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_REF:
-	 *params = INT_TO_BOOL(ctx->Stencil.Ref);
+	 *params = INT_TO_BOOL(ctx->Stencil.Ref[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_TEST:
 	 *params = ctx->Stencil.Enabled;
 	 break;
       case GL_STENCIL_VALUE_MASK:
-	 *params = INT_TO_BOOL(ctx->Stencil.ValueMask);
+	 *params = INT_TO_BOOL(ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_WRITEMASK:
-	 *params = INT_TO_BOOL(ctx->Stencil.WriteMask);
+	 *params = INT_TO_BOOL(ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STEREO:
 	 *params = ctx->Visual.stereoMode;
@@ -1464,6 +1464,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
          CHECK_EXTENSION_B(NV_texture_rectangle, pname);
          *params = INT_TO_BOOL(ctx->Const.MaxTextureRectSize);
+         break;
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION_B(EXT_stencil_two_side, pname);
+         *params = ctx->Stencil.TestTwoSide;
+         break;
+      case GL_ACTIVE_STENCIL_FACE_EXT:
+         CHECK_EXTENSION_B(EXT_stencil_two_side, pname);
+         *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
          break;
 
       default:
@@ -2159,28 +2169,28 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Stencil.Clear;
 	 break;
       case GL_STENCIL_FAIL:
-	 *params = ENUM_TO_DOUBLE(ctx->Stencil.FailFunc);
+	 *params = ENUM_TO_DOUBLE(ctx->Stencil.FailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_FUNC:
-	 *params = ENUM_TO_DOUBLE(ctx->Stencil.Function);
+	 *params = ENUM_TO_DOUBLE(ctx->Stencil.Function[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_FAIL:
-	 *params = ENUM_TO_DOUBLE(ctx->Stencil.ZFailFunc);
+	 *params = ENUM_TO_DOUBLE(ctx->Stencil.ZFailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_PASS:
-	 *params = ENUM_TO_DOUBLE(ctx->Stencil.ZPassFunc);
+	 *params = ENUM_TO_DOUBLE(ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_REF:
-	 *params = (GLdouble) ctx->Stencil.Ref;
+	 *params = (GLdouble) ctx->Stencil.Ref[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_TEST:
 	 *params = (GLdouble) ctx->Stencil.Enabled;
 	 break;
       case GL_STENCIL_VALUE_MASK:
-	 *params = (GLdouble) ctx->Stencil.ValueMask;
+	 *params = (GLdouble) ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_WRITEMASK:
-	 *params = (GLdouble) ctx->Stencil.WriteMask;
+	 *params = (GLdouble) ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STEREO:
 	 *params = (GLdouble) ctx->Visual.stereoMode;
@@ -2818,6 +2828,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
          CHECK_EXTENSION_D(NV_texture_rectangle, pname);
          *params = (GLdouble) ctx->Const.MaxTextureRectSize;
+         break;
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION_D(EXT_stencil_two_side, pname);
+         *params = (GLdouble) ctx->Stencil.TestTwoSide;
+         break;
+      case GL_ACTIVE_STENCIL_FACE_EXT:
+         CHECK_EXTENSION_D(EXT_stencil_two_side, pname);
+         *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
          break;
 
       default:
@@ -3515,28 +3535,28 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Stencil.Clear;
 	 break;
       case GL_STENCIL_FAIL:
-	 *params = ENUM_TO_FLOAT(ctx->Stencil.FailFunc);
+	 *params = ENUM_TO_FLOAT(ctx->Stencil.FailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_FUNC:
-	 *params = ENUM_TO_FLOAT(ctx->Stencil.Function);
+	 *params = ENUM_TO_FLOAT(ctx->Stencil.Function[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_FAIL:
-	 *params = ENUM_TO_FLOAT(ctx->Stencil.ZFailFunc);
+	 *params = ENUM_TO_FLOAT(ctx->Stencil.ZFailFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_PASS_DEPTH_PASS:
-	 *params = ENUM_TO_FLOAT(ctx->Stencil.ZPassFunc);
+	 *params = ENUM_TO_FLOAT(ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace]);
 	 break;
       case GL_STENCIL_REF:
-	 *params = (GLfloat) ctx->Stencil.Ref;
+	 *params = (GLfloat) ctx->Stencil.Ref[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_TEST:
 	 *params = (GLfloat) ctx->Stencil.Enabled;
 	 break;
       case GL_STENCIL_VALUE_MASK:
-	 *params = (GLfloat) ctx->Stencil.ValueMask;
+	 *params = (GLfloat) ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_WRITEMASK:
-	 *params = (GLfloat) ctx->Stencil.WriteMask;
+	 *params = (GLfloat) ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STEREO:
 	 *params = (GLfloat) ctx->Visual.stereoMode;
@@ -4148,6 +4168,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
          CHECK_EXTENSION_F(NV_texture_rectangle, pname);
          *params = (GLfloat) ctx->Const.MaxTextureRectSize;
+         break;
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION_F(EXT_stencil_two_side, pname);
+         *params = (GLfloat) ctx->Stencil.TestTwoSide;
+         break;
+      case GL_ACTIVE_STENCIL_FACE_EXT:
+         CHECK_EXTENSION_F(EXT_stencil_two_side, pname);
+         *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
          break;
 
       default:
@@ -4844,28 +4874,28 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Stencil.Clear;
 	 break;
       case GL_STENCIL_FAIL:
-	 *params = (GLint) ctx->Stencil.FailFunc;
+	 *params = (GLint) ctx->Stencil.FailFunc[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_FUNC:
-	 *params = (GLint) ctx->Stencil.Function;
+	 *params = (GLint) ctx->Stencil.Function[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_PASS_DEPTH_FAIL:
-	 *params = (GLint) ctx->Stencil.ZFailFunc;
+	 *params = (GLint) ctx->Stencil.ZFailFunc[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_PASS_DEPTH_PASS:
-	 *params = (GLint) ctx->Stencil.ZPassFunc;
+	 *params = (GLint) ctx->Stencil.ZPassFunc[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_REF:
-	 *params = (GLint) ctx->Stencil.Ref;
+	 *params = (GLint) ctx->Stencil.Ref[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_TEST:
 	 *params = (GLint) ctx->Stencil.Enabled;
 	 break;
       case GL_STENCIL_VALUE_MASK:
-	 *params = (GLint) ctx->Stencil.ValueMask;
+	 *params = (GLint) ctx->Stencil.ValueMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STENCIL_WRITEMASK:
-	 *params = (GLint) ctx->Stencil.WriteMask;
+	 *params = (GLint) ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace];
 	 break;
       case GL_STEREO:
 	 *params = (GLint) ctx->Visual.stereoMode;
@@ -5523,6 +5553,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
          CHECK_EXTENSION_I(NV_texture_rectangle, pname);
          *params = (GLint) ctx->Const.MaxTextureRectSize;
+         break;
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION_I(EXT_stencil_two_side, pname);
+         *params = (GLint) ctx->Stencil.TestTwoSide;
+         break;
+      case GL_ACTIVE_STENCIL_FACE_EXT:
+         CHECK_EXTENSION_I(EXT_stencil_two_side, pname);
+         *params = (GLint) (ctx->Stencil.ActiveFace ? GL_FRONT : GL_BACK);
          break;
 
       default:

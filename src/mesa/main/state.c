@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.89 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: state.c,v 1.90 2002/09/06 02:56:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -491,6 +491,11 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* 262. GL_NV_point_sprite */
    exec->PointParameteriNV = _mesa_PointParameteriNV;
    exec->PointParameterivNV = _mesa_PointParameterivNV;
+
+   /* 268. GL_EXT_stencil_two_side */
+#if 0
+   exec->ActiveStencilFaceEXT = _mesa_ActiveStencilFaceEXT;
+#endif
 
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;

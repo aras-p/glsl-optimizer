@@ -1,10 +1,10 @@
-/* $Id: stencil.h,v 1.9 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: stencil.h,v 1.10 2002/09/06 02:56:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,6 +47,9 @@ _mesa_StencilMask( GLuint mask );
 extern void
 _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
 
+
+extern void
+_mesa_ActiveStencilFaceEXT(GLenum face);
 
 
 #endif

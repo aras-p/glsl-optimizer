@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.68 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: enable.c,v 1.69 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -875,6 +875,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION(NV_texture_rectangle, cap);
          {
             const GLuint curr = ctx->Texture.CurrentUnit;
             struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
@@ -887,6 +888,15 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texUnit->Enabled = newenabled;
          }
+         break;
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION(EXT_stencil_two_side, cap);
+         if (ctx->Stencil.TestTwoSide == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_STENCIL);
+         ctx->Stencil.TestTwoSide = state;
          break;
 
       default:
@@ -1262,6 +1272,11 @@ _mesa_IsEnabled( GLenum cap )
             texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
             return (texUnit->Enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE;
          }
+
+      /* GL_EXT_stencil_two_side */
+      case GL_STENCIL_TEST_TWO_SIDE_EXT:
+         CHECK_EXTENSION(EXT_stencil_two_side);
+         return ctx->Stencil.TestTwoSide;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);

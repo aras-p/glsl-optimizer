@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.77 2002/09/05 21:16:30 brianp Exp $ */
+/* $Id: extensions.c,v 1.78 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,6 +95,7 @@ static struct {
    { OFF, "GL_EXT_shadow_funcs",               F(EXT_shadow_funcs) },
    { OFF, "GL_EXT_shared_texture_palette",     F(EXT_shared_texture_palette) },
    { OFF, "GL_EXT_stencil_wrap",               F(EXT_stencil_wrap) },
+   { OFF, "GL_EXT_stencil_two_side",           F(EXT_stencil_two_side) },
    { ON,  "GL_EXT_texture3D",                  F(EXT_texture3D) },
    { OFF, "GL_EXT_texture_compression_s3tc",   F(EXT_texture_compression_s3tc) },
    { OFF, "GL_EXT_texture_edge_clamp",         F(SGIS_texture_edge_clamp) },
@@ -170,6 +171,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_EXT_secondary_color",
       "GL_EXT_shared_texture_palette",
       "GL_EXT_stencil_wrap",
+      "GL_EXT_stencil_two_side",
       "GL_EXT_texture_edge_clamp",
       "GL_EXT_texture_env_add",
       "GL_EXT_texture_env_combine",

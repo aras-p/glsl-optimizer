@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.93 2002/08/17 00:26:29 brianp Exp $ */
+/* $Id: dlist.c,v 1.94 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -253,6 +253,8 @@ typedef enum {
         OPCODE_PROGRAM_PARAMETER4F_NV,
         OPCODE_PROGRAM_PARAMETERS4FV_NV,
         OPCODE_TRACK_MATRIX_NV,
+        /* GL_EXT_stencil_two_face */
+        OPCODE_ACTIVE_STENCIL_FACE_EXT,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
@@ -648,6 +650,8 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_PROGRAM_PARAMETER4F_NV] = 7;
       InstSize[OPCODE_PROGRAM_PARAMETERS4FV_NV] = 4;
       InstSize[OPCODE_TRACK_MATRIX_NV] = 5;
+      /* GL_EXT_stencil_two_side */
+      InstSize[OPCODE_ACTIVE_STENCIL_FACE_EXT] = 2;
    }
    init_flag = 1;
 }
@@ -4094,6 +4098,23 @@ save_TrackMatrixNV(GLenum target, GLuint address,
 }
 
 
+/* GL_EXT_stencil_two_face */
+static void save_ActiveStencilFaceEXT( GLenum face )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_STENCIL_FACE_EXT, 1 );
+   if (n) {
+      n[1].e = face;
+   }
+   if (ctx->ExecuteFlag) {
+#if 0
+      (*ctx->Exec->ActiveStencilFaceEXT)( face );
+#endif
+   }
+}
+
 
 
 /* KW: Compile commands
@@ -6181,6 +6202,11 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* 262. GL_NV_point_sprite */
    table->PointParameteriNV = save_PointParameteriNV;
    table->PointParameterivNV = save_PointParameterivNV;
+
+   /* 268. GL_EXT_stencil_two_side */
+#if 0
+   table->ActiveStencilFaceEXT = save_ActiveStencilFaceEXT;
+#endif
 
    /* ARB 1. GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;

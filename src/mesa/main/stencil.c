@@ -1,10 +1,10 @@
-/* $Id: stencil.c,v 1.27 2001/05/09 16:34:09 brianp Exp $ */
+/* $Id: stencil.c,v 1.28 2002/09/06 02:56:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,7 @@ void
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLint face = ctx->Stencil.ActiveFace;
    GLint maxref;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -85,18 +86,18 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
    maxref = (1 << STENCIL_BITS) - 1;
    ref = (GLstencil) CLAMP( ref, 0, maxref );
 
-   if (ctx->Stencil.Function == func &&
-       ctx->Stencil.ValueMask == (GLstencil) mask &&
-       ctx->Stencil.Ref == ref)
+   if (ctx->Stencil.Function[face] == func &&
+       ctx->Stencil.ValueMask[face] == (GLstencil) mask &&
+       ctx->Stencil.Ref[face] == ref)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.Function = func;
-   ctx->Stencil.Ref = ref;
-   ctx->Stencil.ValueMask = (GLstencil) mask;
+   ctx->Stencil.Function[face] = func;
+   ctx->Stencil.Ref[face] = ref;
+   ctx->Stencil.ValueMask[face] = (GLstencil) mask;
 
    if (ctx->Driver.StencilFunc) {
-      (*ctx->Driver.StencilFunc)( ctx, func, ctx->Stencil.Ref, mask );
+      (*ctx->Driver.StencilFunc)( ctx, func, ref, mask );
    }
 }
 
@@ -106,13 +107,14 @@ void
 _mesa_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLint face = ctx->Stencil.ActiveFace;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Stencil.WriteMask == (GLstencil) mask)
-	 return;
+   if (ctx->Stencil.WriteMask[face] == (GLstencil) mask)
+      return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.WriteMask = (GLstencil) mask;
+   ctx->Stencil.WriteMask[face] = (GLstencil) mask;
 
    if (ctx->Driver.StencilMask) {
       (*ctx->Driver.StencilMask)( ctx, mask );
@@ -125,6 +127,7 @@ void
 _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLint face = ctx->Stencil.ActiveFace;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (fail) {
@@ -182,17 +185,36 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          return;
    }
 
-   if (ctx->Stencil.ZFailFunc == zfail &&
-       ctx->Stencil.ZPassFunc == zpass &&
-       ctx->Stencil.FailFunc == fail)
+   if (ctx->Stencil.ZFailFunc[face] == zfail &&
+       ctx->Stencil.ZPassFunc[face] == zpass &&
+       ctx->Stencil.FailFunc[face] == fail)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_STENCIL);
-   ctx->Stencil.ZFailFunc = zfail;
-   ctx->Stencil.ZPassFunc = zpass;
-   ctx->Stencil.FailFunc = fail;
+   ctx->Stencil.ZFailFunc[face] = zfail;
+   ctx->Stencil.ZPassFunc[face] = zpass;
+   ctx->Stencil.FailFunc[face] = fail;
 
    if (ctx->Driver.StencilOp) {
       (*ctx->Driver.StencilOp)(ctx, fail, zfail, zpass);
    }
 }
+
+
+/* GL_EXT_stencil_two_side */
+void
+_mesa_ActiveStencilFaceEXT(GLenum face)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (face == GL_FRONT || face == GL_BACK) {
+      FLUSH_VERTICES(ctx, _NEW_STENCIL);
+      ctx->Stencil.ActiveFace = (face == GL_FRONT) ? 0 : 1;
+   }
+
+   if (ctx->Driver.ActiveStencilFace) {
+      (*ctx->Driver.ActiveStencilFace)( ctx, (GLuint) ctx->Stencil.ActiveFace );
+   }
+}
+

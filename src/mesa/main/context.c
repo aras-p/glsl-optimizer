@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.175 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: context.c,v 1.176 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1288,14 +1288,23 @@ init_attrib_groups( GLcontext *ctx )
 
    /* Stencil group */
    ctx->Stencil.Enabled = GL_FALSE;
-   ctx->Stencil.Function = GL_ALWAYS;
-   ctx->Stencil.FailFunc = GL_KEEP;
-   ctx->Stencil.ZPassFunc = GL_KEEP;
-   ctx->Stencil.ZFailFunc = GL_KEEP;
-   ctx->Stencil.Ref = 0;
-   ctx->Stencil.ValueMask = STENCIL_MAX;
+   ctx->Stencil.TestTwoSide = GL_FALSE;
+   ctx->Stencil.ActiveFace = 0;  /* 0 = GL_FRONT, 1 = GL_BACK */
+   ctx->Stencil.Function[0] = GL_ALWAYS;
+   ctx->Stencil.Function[1] = GL_ALWAYS;
+   ctx->Stencil.FailFunc[0] = GL_KEEP;
+   ctx->Stencil.FailFunc[1] = GL_KEEP;
+   ctx->Stencil.ZPassFunc[0] = GL_KEEP;
+   ctx->Stencil.ZPassFunc[1] = GL_KEEP;
+   ctx->Stencil.ZFailFunc[0] = GL_KEEP;
+   ctx->Stencil.ZFailFunc[1] = GL_KEEP;
+   ctx->Stencil.Ref[0] = 0;
+   ctx->Stencil.Ref[1] = 0;
+   ctx->Stencil.ValueMask[0] = STENCIL_MAX;
+   ctx->Stencil.ValueMask[1] = STENCIL_MAX;
+   ctx->Stencil.WriteMask[0] = STENCIL_MAX;
+   ctx->Stencil.WriteMask[1] = STENCIL_MAX;
    ctx->Stencil.Clear = 0;
-   ctx->Stencil.WriteMask = STENCIL_MAX;
 
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */

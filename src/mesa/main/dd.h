@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.70 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: dd.h,v 1.71 2002/09/06 02:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -458,14 +458,22 @@ struct dd_function_table {
     *** They're ALSO called by the gl_PopAttrib() function!!!
     *** May add more functions like these to the device driver in the future.
     ***/
+#if 1
    void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLchan ref);
+#else
+   void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLfloat ref);
+#endif
    void (*BlendColor)(GLcontext *ctx, const GLfloat color[4]);
    void (*BlendEquation)(GLcontext *ctx, GLenum mode);
    void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
    void (*BlendFuncSeparate)(GLcontext *ctx,
                              GLenum sfactorRGB, GLenum dfactorRGB,
                              GLenum sfactorA, GLenum dfactorA);
+#if 1
    void (*ClearColor)(GLcontext *ctx, const GLchan color[4]);
+#else
+   void (*ClearColor)(GLcontext *ctx, const GLfloat color[4]);
+#endif
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
    void (*ClearIndex)(GLcontext *ctx, GLuint index);
    void (*ClearStencil)(GLcontext *ctx, GLint s);
@@ -500,6 +508,7 @@ struct dd_function_table {
    void (*StencilFunc)(GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
    void (*StencilMask)(GLcontext *ctx, GLuint mask);
    void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
+   void (*ActiveStencilFace)(GLcontext *ctx, GLuint face);
    void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname,
 		  const GLfloat *params);
    void (*TexEnv)(GLcontext *ctx, GLenum target, GLenum pname,

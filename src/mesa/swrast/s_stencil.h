@@ -1,4 +1,4 @@
-/* $Id: s_stencil.h,v 1.7 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_stencil.h,v 1.8 2002/09/06 02:56:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
 
 
 extern GLboolean
-_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span);
+_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face);
 
 
 
