@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.63 2002/01/09 02:14:29 brianp Exp $ */
+/* $Id: texstate.c,v 1.64 2002/02/15 16:32:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,6 @@
 #ifndef GL_TEXTURE_COMPARE_MODE_ARB
 #define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
 #define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
-#define GL_TEXTURE_COMPARE_RESULT_ARB  0x9992
 #define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
 #endif
 
@@ -1109,7 +1108,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
             const GLenum mode = (GLenum) params[0];
-            if (mode == GL_LUMINANCE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+            if (mode == GL_NONE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareMode = params[0];
             }
@@ -1144,23 +1143,23 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             return;
          }
          break;
-      case GL_TEXTURE_COMPARE_RESULT_ARB:
-         if (ctx->Extensions.ARB_shadow) {
+      case GL_DEPTH_TEXTURE_MODE_ARB:
+         if (ctx->Extensions.ARB_depth_texture) {
             const GLenum result = (GLenum) params[0];
             if (result == GL_LUMINANCE || result == GL_INTENSITY
                 || result == GL_ALPHA) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texObj->CompareResult = params[0];
+               texObj->DepthMode = params[0];
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
-                          "glTexParameter(bad GL_TEXTURE_COMPARE_RESULT_ARB)");
+                          "glTexParameter(bad GL_DEPTH_TEXTURE_MODE_ARB)");
                return;
             }
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexParameter(pname=GL_TEXTURE_COMPARE_RESULT_ARB)");
+                        "glTexParameter(pname=GL_DEPTH_TEXTURE_MODE_ARB)");
             return;
          }
          break;
@@ -1504,9 +1503,9 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
             return;
          }
          break;
-      case GL_TEXTURE_COMPARE_RESULT_ARB:
-         if (ctx->Extensions.ARB_shadow) {
-            *params = (GLfloat) obj->CompareResult;
+      case GL_DEPTH_TEXTURE_MODE_ARB:
+         if (ctx->Extensions.ARB_depth_texture) {
+            *params = (GLfloat) obj->DepthMode;
             return;
          }
          break;
@@ -1633,9 +1632,9 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             return;
          }
          break;
-      case GL_TEXTURE_COMPARE_RESULT_ARB:
-         if (ctx->Extensions.ARB_shadow) {
-            *params = (GLint) obj->CompareResult;
+      case GL_DEPTH_TEXTURE_MODE_ARB:
+         if (ctx->Extensions.ARB_depth_texture) {
+            *params = (GLint) obj->DepthMode;
             return;
          }
          break;

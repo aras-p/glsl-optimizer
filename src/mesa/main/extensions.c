@@ -1,10 +1,10 @@
-/* $Id: extensions.c,v 1.68 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: extensions.c,v 1.69 2002/02/15 16:32:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,7 +56,7 @@ static struct {
    const char *name;
    int flag_offset;
 } default_extensions[] = {
-   { OFF, "GL_ARB_depth_texture",              F(SGIX_depth_texture) },
+   { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },

@@ -1,10 +1,10 @@
-/* $Id: texobj.c,v 1.51 2001/12/04 23:44:56 brianp Exp $ */
+/* $Id: texobj.c,v 1.52 2002/02/15 16:32:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -84,7 +84,7 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
       obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
       obj->CompareMode = GL_LUMINANCE;    /* ARB_shadow */
       obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
-      obj->CompareResult = GL_LUMINANCE;  /* ARB_shadow */
+      obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
       obj->ShadowAmbient = 0;             /* ARB/SGIX_shadow_ambient */
       _mesa_init_colortable(&obj->Palette);
 
@@ -360,6 +360,11 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                   t->Complete = GL_FALSE;
                   return;
                }
+               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
+                  t->Complete = GL_FALSE;
+                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
+                  return;
+               }
                if (t->Image[i]->Width2 != width) {
                   t->Complete = GL_FALSE;
                   incomplete(t, "3D Image[i] bad width");
@@ -393,6 +398,12 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
                height /= 2;
             }
             if (i >= minLevel && i <= maxLevel) {
+               /* Don't support GL_DEPTH_COMPONENT for cube maps */
+               if (t->Image[i]->Format == GL_DEPTH_COMPONENT) {
+                  t->Complete = GL_FALSE;
+                  incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
+                  return;
+               }
                /* check that we have images defined */
                if (!t->Image[i] || !t->NegX[i] ||
                    !t->PosY[i]  || !t->NegY[i] ||
