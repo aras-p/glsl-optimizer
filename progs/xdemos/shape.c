@@ -1,4 +1,4 @@
-/* $Id: shape.c,v 1.2 2000/06/27 15:33:44 brianp Exp $ */
+/* $Id: shape.c,v 1.3 2000/06/27 15:34:35 brianp Exp $ */
 
 /*
  * Example of using the X "shape" extension with OpenGL:  render a spinning
@@ -374,6 +374,7 @@ int main(int argc, char *argv[])
 
    glXMakeCurrent(dpy, win, glCtx);
 
+   printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
    printf("Press ESC to exit.\n");
    printf("Press up/down to change window shape.\n");
 
