@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.9 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.10 2001/01/17 02:49:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,12 +138,12 @@ void _tnl_run_pipeline( GLcontext *ctx )
       }
 
       if (stage[i].active) {
-	 if (stage[i].changed_inputs)
+	 if (stage[i].changed_inputs) 
 	    changed_inputs |= stage[i].outputs;
 
 	 if (running) {
-/*  	    fprintf(stderr, "run %s\n", stage[i].name); */
 	    running = stage[i].run( ctx, &stage[i] );
+	    stage[i].changed_inputs = 0;
 	 }
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.10 2001/01/06 22:46:13 gareth Exp $ */
+/* $Id: enums.c,v 1.11 2001/01/17 02:49:38 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +22,9 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * Author:
+ *    Keith Whitwell <keithw@valinux.com>
  */
 
 
@@ -910,20 +913,3 @@ const char *gl_lookup_enum_by_nr( int nr )
 }
 
 
-#if 0
-int main()
-{
-   int i;
-   static const char *test[] = {
-      "GL_POLYGON",
-      "GL_TRUE",
-      "GL_BANANA",
-      "GL_REFLECTION_MAP_NV",
-   };
-
-   for (i = 0 ; i < Elements(test) ; i++) {
-      int d = gl_lookup_enum_by_name( test[i] );
-      printf("%s --> %d --> %s\n", test[i], d, gl_lookup_enum_by_nr( d ));
-   }
-}
-#endif

@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.6 2001/01/13 05:48:26 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.7 2001/01/17 02:49:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -185,10 +185,10 @@ static void TAG(clip_line)( GLcontext *ctx,
       }
    }
 
-   TAG(build_proj_verts)( ctx );
-
    if ((ctx->_TriangleCaps & DD_FLATSHADE) && j != jj)
       VB->copypvfunc( ctx, jj, j );
+
+   TAG(build_proj_verts)( ctx );
 
    /* Render the new line.
     */

@@ -242,6 +242,20 @@ _swsetup_vb_init( GLcontext *ctx )
    setup_func[INDEX|TEX0|FOG|POINT] = rs_index_tex0_fog_point;
 }
 
+static void printSetupFlags(char *msg, GLuint flags )
+{
+   fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s\n",
+	   msg,
+	   (int)flags,
+	   (flags & COLOR) ? "color, " : "",
+	   (flags & INDEX) ? "index, " : "",
+	   (flags & TEX0) ? "tex0, " : "",
+	   (flags & MULTITEX) ? "multitex, " : "",
+	   (flags & SPEC) ? "spec, " : "",
+	   (flags & FOG) ? "fog, " : "",
+	   (flags & POINT) ? "point, " : "");
+}
+
 
 void 
 _swsetup_choose_rastersetup_func(GLcontext *ctx)
@@ -281,6 +295,7 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
    else
       funcindex = 0;
 
+/*     printSetupFlags("software setup func", funcindex); */
    swsetup->BuildProjVerts = setup_func[funcindex];
    ASSERT(setup_func[funcindex] != rs_invalid);
 }

@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.2 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.3 2001/01/17 02:49:39 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -661,6 +661,9 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    if (IDX & LIGHT_TWOSIDE)
       VB->ColorPtr[1] = &store->LitColor[1];
 
+   if (stage->changed_inputs == 0)
+      return;
+
    if ( CHECK_COLOR_MATERIAL(j) ) 
       gl_update_color_material( ctx, *CMcolor );
 
@@ -782,6 +785,9 @@ static void TAG(light_ci)( GLcontext *ctx,
    VB->IndexPtr[0] = &store->LitIndex[0];
    if (IDX & LIGHT_TWOSIDE)
       VB->IndexPtr[1] = &store->LitIndex[1];
+
+   if (stage->changed_inputs == 0)
+      return;
 
    indexResult[0] = VB->IndexPtr[0]->data;
    indexResult[1] = VB->IndexPtr[1]->data;
