@@ -1,4 +1,4 @@
-/* $Id: t_dd_unfilled.h,v 1.3 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_dd_unfilled.h,v 1.4 2001/04/28 15:26:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,10 @@ static void TAG(unfilled_tri)( GLcontext *ctx,
 	 VERT_COPY_IND(v[1], v[2]);
       }
    }
+
+/*     fprintf(stderr, "%s %s %d %d %d\n", __FUNCTION__, */
+/*  	   _mesa_lookup_enum_by_nr( mode ), */
+/*  	   ef[e0], ef[e1], ef[e2]); */
 
    if (mode == GL_POINT) {
       RASTERIZE(GL_POINTS);

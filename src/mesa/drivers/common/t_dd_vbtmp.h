@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.12 2001/04/28 15:26:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -483,8 +483,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
       IMPORT_FLOAT_COLORS( ctx );
 
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
+   col = VB->ColorPtr[0]->Ptr;
+   col_stride = VB->ColorPtr[0]->StrideB;
 
    if (start)
       STRIDE_4UB(col, col_stride * start);
