@@ -156,7 +156,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	assert(screen);
 
 	/* Allocate the R300 context */
-	r300 = (r300ContextPtr) CALLOC(sizeof(*r300));
+	r300 = (r300ContextPtr)CALLOC(sizeof(*r300));
 	if (!r300)
 		return GL_FALSE;
 
@@ -172,7 +172,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 */
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
-	//r200InitStateFuncs(&functions);
+	r300InitStateFuncs(&functions);
 	//r200InitTextureFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
@@ -296,9 +296,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 
 		r300DestroyCmdBuf(r300);
 
-		/* free the Mesa context */
-		r300->radeon.glCtx->DriverCtx = NULL;
-		_mesa_destroy_context(r300->radeon.glCtx);
+		radeonCleanupContext(&r300->radeon);
 
 		/* free the option cache */
 		driDestroyOptionCache(&r300->radeon.optionCache);

@@ -80,15 +80,6 @@ struct r200_depthbuffer_state {
 	GLfloat scale;
 };
 
-struct r200_scissor_state {
-	drm_clip_rect_t rect;
-	GLboolean enabled;
-
-	GLuint numClipRects;	/* Cliprects active */
-	GLuint numAllocedClipRects;	/* Cliprects available */
-	drm_clip_rect_t *pClipRects;
-};
-
 struct r200_stencilbuffer_state {
 	GLboolean hwBuffer;
 	GLuint clear;		/* rb3d_stencilrefmask value */
@@ -502,7 +493,6 @@ struct r200_state {
 	 */
 	struct r200_colorbuffer_state color;
 	struct r200_depthbuffer_state depth;
-	struct r200_scissor_state scissor;
 	struct r200_stencilbuffer_state stencil;
 	struct r200_stipple_state stipple;
 	struct r200_texture_state texture;

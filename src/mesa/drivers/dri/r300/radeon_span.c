@@ -330,53 +330,46 @@ static void radeonSetBuffer(GLcontext * ctx,
 			  GLframebuffer * colorBuffer, GLuint bufferBit)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	int buffer;
 
 	switch (bufferBit) {
 	case DD_FRONT_LEFT_BIT:
-		if (radeon->doPageFlip && radeon->sarea->pfCurrentPage == 1) {
-			radeon->state.pixel.readOffset =
-			    radeon->radeonScreen->backOffset;
-			radeon->state.pixel.readPitch =
-			    radeon->radeonScreen->backPitch;
-			radeon->state.color.drawOffset =
-			    radeon->radeonScreen->backOffset;
-			radeon->state.color.drawPitch =
-			    radeon->radeonScreen->backPitch;
-		} else {
-			radeon->state.pixel.readOffset =
-			    radeon->radeonScreen->frontOffset;
-			radeon->state.pixel.readPitch =
-			    radeon->radeonScreen->frontPitch;
-			radeon->state.color.drawOffset =
-			    radeon->radeonScreen->frontOffset;
-			radeon->state.color.drawPitch =
-			    radeon->radeonScreen->frontPitch;
-		}
+		buffer = 0;
 		break;
+
 	case DD_BACK_LEFT_BIT:
-		if (radeon->doPageFlip && radeon->sarea->pfCurrentPage == 1) {
-			radeon->state.pixel.readOffset =
-			    radeon->radeonScreen->frontOffset;
-			radeon->state.pixel.readPitch =
-			    radeon->radeonScreen->frontPitch;
-			radeon->state.color.drawOffset =
-			    radeon->radeonScreen->frontOffset;
-			radeon->state.color.drawPitch =
-			    radeon->radeonScreen->frontPitch;
-		} else {
-			radeon->state.pixel.readOffset =
-			    radeon->radeonScreen->backOffset;
-			radeon->state.pixel.readPitch =
-			    radeon->radeonScreen->backPitch;
-			radeon->state.color.drawOffset =
-			    radeon->radeonScreen->backOffset;
-			radeon->state.color.drawPitch =
-			    radeon->radeonScreen->backPitch;
-		}
+		buffer = 1;
 		break;
+
 	default:
 		_mesa_problem(ctx, "Bad bufferBit in %s", __FUNCTION__);
-		break;
+		return;
+	}
+
+	if (radeon->doPageFlip && radeon->sarea->pfCurrentPage == 1)
+		buffer ^= 1;
+
+	fprintf(stderr, "%s: using %s buffer\n", __FUNCTION__,
+		buffer ? "back" : "front");
+
+	if (buffer) {
+		radeon->state.pixel.readOffset =
+			radeon->radeonScreen->backOffset;
+		radeon->state.pixel.readPitch =
+			radeon->radeonScreen->backPitch;
+		radeon->state.color.drawOffset =
+			radeon->radeonScreen->backOffset;
+		radeon->state.color.drawPitch =
+			radeon->radeonScreen->backPitch;
+	} else {
+		radeon->state.pixel.readOffset =
+			radeon->radeonScreen->frontOffset;
+		radeon->state.pixel.readPitch =
+			radeon->radeonScreen->frontPitch;
+		radeon->state.color.drawOffset =
+			radeon->radeonScreen->frontOffset;
+		radeon->state.color.drawPitch =
+			radeon->radeonScreen->frontPitch;
 	}
 }
 

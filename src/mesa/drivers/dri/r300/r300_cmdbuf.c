@@ -80,17 +80,13 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 	cmd.buf = (char*)(r300->cmdbuf.cmd_buf + start);
 	cmd.bufsz = (r300->cmdbuf.count_used - start) * 4;
 
-#if 0 // TODO: scissors
-	if (rmesa->state.scissor.enabled) {
-		cmd.nbox = rmesa->state.scissor.numClipRects;
-		cmd.boxes = (drm_clip_rect_t *) rmesa->state.scissor.pClipRects;
+	if (r300->radeon.state.scissor.enabled) {
+		cmd.nbox = r300->radeon.state.scissor.numClipRects;
+		cmd.boxes = (drm_clip_rect_t *)r300->radeon.state.scissor.pClipRects;
 	} else {
-#endif
 		cmd.nbox = r300->radeon.numClipRects;
-		cmd.boxes = (drm_clip_rect_t *) r300->radeon.pClipRects;
-#if 0
+		cmd.boxes = (drm_clip_rect_t *)r300->radeon.pClipRects;
 	}
-#endif
 
 	if (cmd.nbox) {
 		ret = drmCommandWrite(r300->radeon.dri.fd,

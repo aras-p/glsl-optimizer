@@ -113,6 +113,15 @@ struct radeon_dri_mirror {
 /**
  * Derived state for internal purposes.
  */
+struct radeon_scissor_state {
+	drm_clip_rect_t rect;
+	GLboolean enabled;
+
+	GLuint numClipRects;	/* Cliprects active */
+	GLuint numAllocedClipRects;	/* Cliprects available */
+	drm_clip_rect_t *pClipRects;
+};
+
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	GLint drawOffset, drawPitch;
@@ -125,6 +134,7 @@ struct radeon_pixel_state {
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_pixel_state pixel;
+	struct radeon_scissor_state scissor;
 };
 
 /**
@@ -187,6 +197,7 @@ extern GLboolean radeonInitContext(radeonContextPtr radeon,
 				   const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
+extern void radeonCleanupContext(radeonContextPtr radeon);
 extern GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				   __DRIdrawablePrivate * driDrawPriv,
 				   __DRIdrawablePrivate * driReadPriv);

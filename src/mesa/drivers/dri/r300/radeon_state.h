@@ -1,9 +1,5 @@
 /*
-Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
-
-The Weather Channel (TM) funded Tungsten Graphics to develop the
-initial release of the Radeon 8500 driver under the XFree86 license.
-This notice must be preserved.
+Copyright (C) 2004 Nicolai Haehnle.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -29,7 +25,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #ifndef __RADEON_STATE_H__
@@ -37,6 +33,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 
+extern void radeonRecalcScissorRects(radeonContextPtr radeon);
 extern void radeonSetCliprects(radeonContextPtr radeon, GLenum mode);
+extern void radeonUpdateScissor(GLcontext* ctx);
+
+extern void radeonEnable(GLcontext* ctx, GLenum cap, GLboolean state);
+
+extern void radeonInitState(radeonContextPtr radeon);
+extern void radeonInitStateFuncs(struct dd_function_table* functions);
 
 #endif

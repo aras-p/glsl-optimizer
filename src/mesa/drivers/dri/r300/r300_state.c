@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "state.h"
 #include "imports.h"
+#include "enums.h"
 #include "macros.h"
 #include "context.h"
 #include "dd.h"
@@ -49,11 +50,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 
 #include "radeon_ioctl.h"
+#include "radeon_state.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_program.h"
+
+
+/**
+ * Handle glEnable()/glDisable().
+ */
+static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
+{
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr(cap),
+			state ? "GL_TRUE" : "GL_FALSE");
+
+	switch (cap) {
+	default:
+		radeonEnable(ctx, cap, state);
+		return;
+	}
+}
 
 
 /**
@@ -317,6 +337,7 @@ void r300ResetHwState(r300ContextPtr r300)
 }
 
 
+
 /**
  * Calculate initial hardware state and register state functions.
  * Assumes that the command buffer and state atoms have been
@@ -324,12 +345,20 @@ void r300ResetHwState(r300ContextPtr r300)
  */
 void r300InitState(r300ContextPtr r300)
 {
-	struct dd_function_table* functions;
+	radeonInitState(&r300->radeon);
 
 	r300ResetHwState(r300);
+}
 
-	/* Setup state functions */
-	functions = &r300->radeon.glCtx->Driver;
+
+/**
+ * Initialize driver's state callback functions
+ */
+void r300InitStateFuncs(struct dd_function_table* functions)
+{
+	radeonInitStateFuncs(functions);
+
 	functions->UpdateState = r300InvalidateState;
+	functions->Enable= r300Enable;
 }
 

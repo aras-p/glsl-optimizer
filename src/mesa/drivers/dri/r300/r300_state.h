@@ -44,6 +44,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	} while(0)
 
 extern void r300ResetHwState(r300ContextPtr r300);
+
 extern void r300InitState(r300ContextPtr r300);
+extern void r300InitStateFuncs(struct dd_function_table* functions);
 
 #endif /* __R300_STATE_H__ */

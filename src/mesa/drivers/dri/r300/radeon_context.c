@@ -207,6 +207,23 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 
 
 /**
+ * Cleanup common context fields.
+ * Called by r200DestroyContext/r300DestroyContext
+ */
+void radeonCleanupContext(radeonContextPtr radeon)
+{
+	/* free the Mesa context */
+	radeon->glCtx->DriverCtx = NULL;
+	_mesa_destroy_context(radeon->glCtx);
+
+	if (radeon->state.scissor.pClipRects) {
+		FREE(radeon->state.scissor.pClipRects);
+		radeon->state.scissor.pClipRects = 0;
+	}
+}
+
+
+/**
  * Swap front and back buffer.
  */
 void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
