@@ -2239,6 +2239,47 @@ static void print_info( void )
 }
 
 
+/**
+ * Check if the given context can render into the given framebuffer
+ * by checking visual attributes.
+ * \return GL_TRUE if compatible, GL_FALSE otherwise.
+ */
+static GLboolean 
+check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
+{
+   const GLvisual *ctxvis = &ctx->Visual;
+   const GLvisual *bufvis = &buffer->Visual;
+
+   if (ctxvis == bufvis)
+      return GL_TRUE;
+
+   if (ctxvis->rgbMode != bufvis->rgbMode)
+      return GL_FALSE;
+   if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)
+      return GL_FALSE;
+   if (ctxvis->stereoMode && !bufvis->stereoMode)
+      return GL_FALSE;
+   if (ctxvis->haveAccumBuffer && !bufvis->haveAccumBuffer)
+      return GL_FALSE;
+   if (ctxvis->haveDepthBuffer && !bufvis->haveDepthBuffer)
+      return GL_FALSE;
+   if (ctxvis->haveStencilBuffer && !bufvis->haveStencilBuffer)
+      return GL_FALSE;
+   if (ctxvis->redMask && ctxvis->redMask != bufvis->redMask)
+      return GL_FALSE;
+   if (ctxvis->greenMask && ctxvis->greenMask != bufvis->greenMask)
+      return GL_FALSE;
+   if (ctxvis->blueMask && ctxvis->blueMask != bufvis->blueMask)
+      return GL_FALSE;
+   if (ctxvis->depthBits && ctxvis->depthBits != bufvis->depthBits)
+      return GL_FALSE;
+   if (ctxvis->stencilBits && ctxvis->stencilBits != bufvis->stencilBits)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
 /*
  * Set the current context, binding the given frame buffer to the context.
  */
@@ -2261,17 +2302,14 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
       _mesa_debug(newCtx, "_mesa_make_current2()\n");
 
    /* Check that the context's and framebuffer's visuals are compatible.
-    * We could do a lot more checking here but this'll catch obvious
-    * problems.
     */
-   if (newCtx && drawBuffer && readBuffer) {
-      if (newCtx->Visual.rgbMode != drawBuffer->Visual.rgbMode ||
-          newCtx->Visual.redBits != drawBuffer->Visual.redBits ||
-          newCtx->Visual.depthBits != drawBuffer->Visual.depthBits ||
-          newCtx->Visual.stencilBits != drawBuffer->Visual.stencilBits ||
-          newCtx->Visual.accumRedBits != drawBuffer->Visual.accumRedBits) {
-         return; /* incompatible */
-      }
+   if (newCtx && drawBuffer && newCtx->DrawBuffer != drawBuffer) {
+      if (!check_compatible(newCtx, drawBuffer))
+         return;
+   }
+   if (newCtx && readBuffer && newCtx->ReadBuffer != readBuffer) {
+      if (!check_compatible(newCtx, readBuffer))
+         return;
    }
 
    /* We call this function periodically (just here for now) in
