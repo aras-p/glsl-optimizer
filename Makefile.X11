@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.16 2000/01/08 11:14:01 brianp Exp $
+# $Id: Makefile.X11,v 1.17 2000/01/27 00:11:49 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -433,56 +433,68 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/GGI/include/ggi/mesa/Makefile.am	\
 	$(DIRECTORY)/src/GGI/include/ggi/mesa/Makefile.in	\
 	$(DIRECTORY)/src/GGI/include/ggi/mesa/*.h		\
-	$(DIRECTORY)/src/KNOWN_BUGS		\
-	$(DIRECTORY)/src/MGL/*.[ch]		\
-	$(DIRECTORY)/src/MGL/*.txt		\
-	$(DIRECTORY)/src/OSmesa/Makefile.am	\
-	$(DIRECTORY)/src/OSmesa/Makefile.in	\
-	$(DIRECTORY)/src/OSmesa/*.[ch]		\
-	$(DIRECTORY)/src/S3/*.[ch]		\
-	$(DIRECTORY)/src/S3/*.def		\
-	$(DIRECTORY)/src/S3/*.mak		\
-	$(DIRECTORY)/src/S3/*.rc		\
-	$(DIRECTORY)/src/SVGA/Makefile.am	\
-	$(DIRECTORY)/src/SVGA/Makefile.in	\
-	$(DIRECTORY)/src/SVGA/*.[ch]		\
-	$(DIRECTORY)/src/Windows/*.[ch]		\
-	$(DIRECTORY)/src/Windows/*.def		\
-	$(DIRECTORY)/src/X/Makefile.am		\
-	$(DIRECTORY)/src/X/Makefile.in		\
-	$(DIRECTORY)/src/X/*.[ch]		\
-	$(DIRECTORY)/src/X86/*.[ch]		\
-	$(DIRECTORY)/src/X86/Makefile.am	\
-	$(DIRECTORY)/src/X86/Makefile.in	\
-	$(DIRECTORY)/src/X86/*.m4		\
-	$(DIRECTORY)/src/X86/*.S		\
-	$(DIRECTORY)/src/*.dja			\
-	$(DIRECTORY)/src-glu/README[12]		\
-	$(DIRECTORY)/src-glu/Makefile*		\
-	$(DIRECTORY)/src-glu/descrip.mms	\
-	$(DIRECTORY)/src-glu/mms_depend		\
-	$(DIRECTORY)/src-glu/*.def		\
-	$(DIRECTORY)/src-glu/*.dja		\
-	$(DIRECTORY)/src-glu/depend		\
-	$(DIRECTORY)/src-glu/*.[ch]		\
-	$(DIRECTORY)/widgets-mesa		\
-	$(DIRECTORY)/widgets-sgi		\
-	$(DIRECTORY)/util/README		\
-	$(DIRECTORY)/util/Makefile.am		\
-	$(DIRECTORY)/util/Makefile.in		\
-	$(DIRECTORY)/util/*.[ch]		\
-	$(DIRECTORY)/util/sampleMakefile	\
-	$(DIRECTORY)/BeOS/Makefile		\
-	$(DIRECTORY)/BeOS/*.cpp			
-
-# old stuff
-#	$(DIRECTORY)/Win32			\
-#	$(DIRECTORY)/win32
-
-#	$(DIRECTORY)/OpenStep			\
-#
-#
-
+	$(DIRECTORY)/src/KNOWN_BUGS				\
+	$(DIRECTORY)/src/MGL/*.[ch]				\
+	$(DIRECTORY)/src/MGL/*.txt				\
+	$(DIRECTORY)/src/OSmesa/Makefile.am			\
+	$(DIRECTORY)/src/OSmesa/Makefile.in			\
+	$(DIRECTORY)/src/OSmesa/*.[ch]				\
+	$(DIRECTORY)/src/S3/*.[ch]				\
+	$(DIRECTORY)/src/S3/*.def				\
+	$(DIRECTORY)/src/S3/*.mak				\
+	$(DIRECTORY)/src/S3/*.rc				\
+	$(DIRECTORY)/src/SVGA/Makefile.am			\
+	$(DIRECTORY)/src/SVGA/Makefile.in			\
+	$(DIRECTORY)/src/SVGA/*.[ch]				\
+	$(DIRECTORY)/src/Windows/*.[ch]				\
+	$(DIRECTORY)/src/Windows/*.def				\
+	$(DIRECTORY)/src/X/Makefile.am				\
+	$(DIRECTORY)/src/X/Makefile.in				\
+	$(DIRECTORY)/src/X/*.[ch]				\
+	$(DIRECTORY)/src/X86/*.[ch]				\
+	$(DIRECTORY)/src/X86/Makefile.am			\
+	$(DIRECTORY)/src/X86/Makefile.in			\
+	$(DIRECTORY)/src/X86/*.m4				\
+	$(DIRECTORY)/src/X86/*.S				\
+	$(DIRECTORY)/src/*.dja					\
+	$(DIRECTORY)/src-glu/README[12]				\
+	$(DIRECTORY)/src-glu/Makefile*				\
+	$(DIRECTORY)/src-glu/descrip.mms			\
+	$(DIRECTORY)/src-glu/mms_depend				\
+	$(DIRECTORY)/src-glu/*.def				\
+	$(DIRECTORY)/src-glu/*.dja				\
+	$(DIRECTORY)/src-glu/depend				\
+	$(DIRECTORY)/src-glu/*.[ch]				\
+	$(DIRECTORY)/widgets-mesa				\
+	$(DIRECTORY)/widgets-sgi				\
+	$(DIRECTORY)/util/README				\
+	$(DIRECTORY)/util/Makefile.am				\
+	$(DIRECTORY)/util/Makefile.in				\
+	$(DIRECTORY)/util/*.[ch]				\
+	$(DIRECTORY)/util/sampleMakefile			\
+	$(DIRECTORY)/BeOS/Makefile				\
+	$(DIRECTORY)/BeOS/*.cpp					\
+	$(DIRECTORY)/WIN32/NMAKE.MAK				\
+	$(DIRECTORY)/WIN32/NMAKE.MIF				\
+	$(DIRECTORY)/WIN32/RES/*rc				\
+	$(DIRECTORY)/WIN32/RES/*def				\
+	$(DIRECTORY)/WIN32/RULES/lib.*				\
+	$(DIRECTORY)/WIN32/RULES/progs.*			\
+	$(DIRECTORY)/macos/README				\
+	$(DIRECTORY)/macos/gli_api/*.h				\
+	$(DIRECTORY)/macos/cglpane/CGLPane.*			\
+	$(DIRECTORY)/macos/include-mac/*.h			\
+	$(DIRECTORY)/macos/libraries/*.stub			\
+	$(DIRECTORY)/macos/libraries/*Stub			\
+	$(DIRECTORY)/macos/projects/*.mcp			\
+	$(DIRECTORY)/macos/projects/*.exp			\
+	$(DIRECTORY)/macos/projects/*.h				\
+	$(DIRECTORY)/macos/resources/*.c			\
+	$(DIRECTORY)/macos/resources/*.r			\
+	$(DIRECTORY)/macos/resources/*.rsrc			\
+	$(DIRECTORY)/macos/src-agl/*.exp			\
+	$(DIRECTORY)/macos/src-agl/*.[ch]			\
+	$(DIRECTORY)/macos/src-gli/*.[ch]
 
 DEMO_FILES =	\
 	$(DIRECTORY)/include/GL/glut.h		\
