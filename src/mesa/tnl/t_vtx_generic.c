@@ -151,6 +151,15 @@ do {						\
 
 #define DISPATCH_ATTR1F( ATTR, S ) DISPATCH_ATTRFV( ATTR, 1, &(S) )
 
+#ifdef USE_X86_ASM
+/* Naughty cheat:
+ */
+#define DISPATCH_ATTR2F( ATTR, S,T ) DISPATCH_ATTRFV( ATTR, 2, &(S) )
+#define DISPATCH_ATTR3F( ATTR, S,T,R ) DISPATCH_ATTRFV( ATTR, 3, &(S) )
+#define DISPATCH_ATTR4F( ATTR, S,T,R,Q ) DISPATCH_ATTRFV( ATTR, 4, &(S) )
+#else
+/* Safe:
+ */
 #define DISPATCH_ATTR2F( ATTR, S,T ) 		\
 do { 						\
    GLfloat v[2]; 				\
@@ -169,6 +178,7 @@ do { 						\
    v[0] = S; v[1] = T; v[2] = R; v[3] = Q;	\
    DISPATCH_ATTR4FV( ATTR, v );			\
 } while (0)
+#endif
 
 
 static void GLAPIENTRY _tnl_Vertex2f( GLfloat x, GLfloat y )
@@ -408,8 +418,8 @@ static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index,
 }
 
 
-/* Install the generic versions of the 2nd level dispatch functions.
- * [dBorca] Some of these have a codegen alternative.
+/* Install the generic versions of the 2nd level dispatch
+ * functions.  Some of these have a codegen alternative.
  */
 void _tnl_generic_exec_vtxfmt_init( GLcontext *ctx )
 {

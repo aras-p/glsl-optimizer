@@ -36,15 +36,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 .globl x;		\
 x:
 
-#define EXTRN( x )	x
-
 #else  /* defined(__DJGPP__) */
 
 #define GLOBL( x )	\
 .globl _##x;		\
 _##x:
-
-#define EXTRN( x )	_##x
 
 #endif /* defined(__DJGPP__) */
 
@@ -55,17 +51,22 @@ _##x:
 // macro to note current offsets, etc in a special region of the
 // object file & just make everything work out neat.  I don't know
 // enough to do that...
-	
-#define SUBST( x ) (0x10101010 + x)	
-	
+
+#define SUBST( x ) (0x10101010 + x)
+
 
 
 // [dBorca] TODO
 // Unfold functions for each vertex size?
 // Build super-specialized MMX/SSE versions?
+// STDCALL woes (HAVE_NONSTANDARD_GLAPIENTRY):
+//   need separate routine for the non "fv" case,
+//   to clean up the stack (I guess we could codegen
+//   'ret nn' insn)! Also we need to call notify, then
+//   return, instead of jump!
 
 GLOBL ( _tnl_x86_Vertex1fv )
-	movl    4(%esp), %ecx	
+	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
 	movl	SUBST(0), %edi	// 0x0 --> tnl->vtx.vbptr
@@ -75,7 +76,7 @@ GLOBL ( _tnl_x86_Vertex1fv )
 	movl	$SUBST(1), %ecx	// 0x1 --> (tnl->vtx.vertex_size - 1)
 	movl	$SUBST(2), %esi	// 0x2 --> (tnl->vtx.vertex + 1)
 	repz
-	movsl   %ds:(%esi), %es:(%edi)
+	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edi, SUBST(0)	// 0x0 --> tnl->vtx.vbptr
 	movl	SUBST(3), %edx	// 0x3 --> counter
 	pop	%esi
@@ -90,7 +91,7 @@ GLOBL ( _tnl_x86_Vertex1fv_end )
 
 .align 4
 GLOBL ( _tnl_x86_Vertex2fv )
-	movl    4(%esp), %ecx	
+	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
 	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
@@ -102,7 +103,7 @@ GLOBL ( _tnl_x86_Vertex2fv )
 	movl	$SUBST(1), %ecx	// vertex_size - 2
 	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 2
 	repz
-	movsl %ds:(%esi), %es:(%edi)
+	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
 	movl	SUBST(3), %edx	// load counter
 	pop	%esi
@@ -116,7 +117,7 @@ GLOBL ( _tnl_x86_Vertex2fv_end )
 
 .align 4
 GLOBL ( _tnl_x86_Vertex3fv )
-	movl    4(%esp), %ecx	
+	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
 	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
@@ -130,7 +131,7 @@ GLOBL ( _tnl_x86_Vertex3fv )
 	movl	$SUBST(1), %ecx	// vertex_size - 3
 	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
 	repz
-	movsl %ds:(%esi), %es:(%edi)
+	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
 	movl	SUBST(3), %edx	// load counter
 	pop	%esi
@@ -142,10 +143,10 @@ GLOBL ( _tnl_x86_Vertex3fv )
 	ret			// return
 GLOBL ( _tnl_x86_Vertex3fv_end )
 
-			
+
 .align 4
 GLOBL ( _tnl_x86_Vertex4fv )
-	movl    4(%esp), %ecx	
+	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
 	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
@@ -161,7 +162,7 @@ GLOBL ( _tnl_x86_Vertex4fv )
 	movl	$SUBST(1), %ecx	// vertex_size - 4
 	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
 	repz
-	movsl   %ds:(%esi), %es:(%edi)
+	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
 	movl	SUBST(3), %edx	// load counter
 	pop	%esi
@@ -174,49 +175,49 @@ GLOBL ( _tnl_x86_Vertex4fv )
 GLOBL ( _tnl_x86_Vertex4fv_end )
 
 
-	
+
 /**
  * Generic handlers for vector format data. 
  */
 
 GLOBL( _tnl_x86_Attribute1fv)
-	movl 4(%esp), %ecx	
-	movl (%ecx), %eax       /* load v[0] */
-	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
+	movl	4(%esp), %ecx
+	movl	(%ecx), %eax	/* load v[0] */
+	movl	%eax, SUBST(0)	/* store v[0] to current vertex */
 	ret
 GLOBL ( _tnl_x86_Attribute1fv_end )
 
 GLOBL( _tnl_x86_Attribute2fv)
-	movl 4(%esp), %ecx	
-	movl (%ecx), %eax       /* load v[0] */
-	movl 4(%ecx), %edx      /* load v[1] */
-	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
-	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
+	movl	4(%esp), %ecx
+	movl	(%ecx), %eax	/* load v[0] */
+	movl	4(%ecx), %edx	/* load v[1] */
+	movl	%eax, SUBST(0)	/* store v[0] to current vertex */
+	movl	%edx, SUBST(1)	/* store v[1] to current vertex */
 	ret
 GLOBL ( _tnl_x86_Attribute2fv_end )
 
 
 GLOBL( _tnl_x86_Attribute3fv)
-	movl 4(%esp), %ecx	
-	movl (%ecx), %eax       /* load v[0] */
-	movl 4(%ecx), %edx      /* load v[1] */
-	movl 8(%ecx), %ecx      /* load v[2] */
-	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
-	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
-	movl %ecx, SUBST(2)   	/* store v[2] to current vertex */
+	movl	4(%esp), %ecx
+	movl	(%ecx), %eax	/* load v[0] */
+	movl	4(%ecx), %edx	/* load v[1] */
+	movl	8(%ecx), %ecx	/* load v[2] */
+	movl	%eax, SUBST(0)	/* store v[0] to current vertex */
+	movl	%edx, SUBST(1)	/* store v[1] to current vertex */
+	movl	%ecx, SUBST(2)	/* store v[2] to current vertex */
 	ret
 GLOBL ( _tnl_x86_Attribute3fv_end )
 
 GLOBL( _tnl_x86_Attribute4fv)
-	movl 4(%esp), %ecx	
-	movl (%ecx), %eax       /* load v[0] */
-	movl 4(%ecx), %edx      /* load v[1] */
-	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
-	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
-	movl 8(%ecx), %eax      /* load v[2] */
-	movl 12(%ecx), %edx     /* load v[3] */
-	movl %eax, SUBST(2)    	/* store v[2] to current vertex */
-	movl %edx, SUBST(3)    	/* store v[3] to current vertex */
+	movl	4(%esp), %ecx
+	movl	(%ecx), %eax	/* load v[0] */
+	movl	4(%ecx), %edx	/* load v[1] */
+	movl	%eax, SUBST(0)	/* store v[0] to current vertex */
+	movl	%edx, SUBST(1)	/* store v[1] to current vertex */
+	movl	8(%ecx), %eax	/* load v[2] */
+	movl	12(%ecx), %edx	/* load v[3] */
+	movl	%eax, SUBST(2)	/* store v[2] to current vertex */
+	movl	%edx, SUBST(3)	/* store v[3] to current vertex */
 	ret
 GLOBL ( _tnl_x86_Attribute4fv_end )
 
@@ -225,29 +226,24 @@ GLOBL ( _tnl_x86_Attribute4fv_end )
 
 // Must generate all of these ahead of first usage.  Generate at
 // compile-time?  
-	
-// NOT CURRENTLY USED
 
 
 GLOBL( _tnl_x86_choose_fv)
 	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
 	movl	$SUBST(0), (%esp)	// arg 0 - attrib
 	movl	$SUBST(1), 4(%esp)	// arg 1 - N
-	call    EXTRN(_do_choose)	// new function returned in %eax
-	add     $12, %esp		// tear down stack frame
-	jmp     *%eax			// jump to new func
-GLOBL ( _tnl_x86_choosefv_end )
-	
-	
+	.byte	0xe8			// call ...
+	.long	SUBST(2)		// ... do_choose
+	add	$12, %esp		// tear down stack frame
+	jmp	*%eax			// jump to new func
+GLOBL ( _tnl_x86_choose_fv_end )
+
 
 
 // FIRST LEVEL FUNCTIONS -- these are plugged directly into GL dispatch.
-	
 
-// NOT CURRENTLY USED
 
-	
-		
+
 // In the 1st level dispatch functions, switch to a different
 // calling convention -- (const GLfloat *v) in %ecx.
 // 
@@ -256,7 +252,7 @@ GLOBL ( _tnl_x86_choosefv_end )
 // back to the original caller.
 
 
-	
+
 // Vertex/Normal/Color, etc: the address of the function pointer
 // is known at codegen time.
 
@@ -282,6 +278,13 @@ GLOBL( _tnl_x86_dispatch_attrfv_end )
 // MultiTexcoord: the address of the function pointer must be
 // calculated, but can use the index argument slot to hold 'v', and
 // avoid setting up a new stack frame.
+//
+// [dBorca]
+// right, this would be the preferred approach, but gcc does not
+// clean up the stack after each function call when optimizing (-fdefer-pop);
+// can it make assumptions about what's already on the stack?  I dunno,
+// but in this case, we can't mess with the caller's stack frame, and
+// we must use a model like `_x86_dispatch_attrfv' above.  Caveat emptor!
 
 // Also, will only need a maximum of four of each of these per context:
 // 
@@ -302,15 +305,16 @@ GLOBL( _tnl_x86_dispatch_multitexcoordfv )
 	sall	$4, %ecx
 	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
 GLOBL( _tnl_x86_dispatch_multitexcoordfv_end )
-				
+
 // VertexAttrib: the address of the function pointer must be
 // calculated.
 
 GLOBL( _tnl_x86_dispatch_vertexattribf )
-	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	cmovge	%ecx, %eax	// [dBorca] BADBAD! might not be supported
+	jb	.0		// "cmovge" is not supported on all CPUs
+	movl	$16, %eax
+.0:
 	leal	8(%esp), %ecx	// calculate 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
@@ -318,13 +322,13 @@ GLOBL( _tnl_x86_dispatch_vertexattribf )
 GLOBL( _tnl_x86_dispatch_vertexattribf_end )
 
 GLOBL( _tnl_x86_dispatch_vertexattribfv )
-	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	cmovge	%ecx, %eax	// [dBorca] BADBAD! might not be supported
+	jb	.1		// "cmovge" is not supported on all CPUs
+	movl	$16, %eax
+.1:
 	movl	8(%esp), %ecx	// load 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
 	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
 GLOBL( _tnl_x86_dispatch_vertexattribfv_end )
-

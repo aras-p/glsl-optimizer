@@ -883,6 +883,8 @@ void _tnl_vtx_init( GLcontext *ctx )
       choose[ERROR_ATTRIB][2] = error_attrib;
       choose[ERROR_ATTRIB][3] = error_attrib;
 
+      _tnl_x86choosers(choose, do_choose); /* x86 INIT_CHOOSERS */
+
       _tnl_generic_attr_table_init( generic_attr_func );
    }
 
@@ -901,7 +903,7 @@ void _tnl_vtx_init( GLcontext *ctx )
    _tnl_current_init( ctx );
    _tnl_exec_vtxfmt_init( ctx );
    _tnl_generic_exec_vtxfmt_init( ctx );
-   _tnl_x86_exec_vtxfmt_init( ctx ); /* [dBorca] x86 DISPATCH_ATTRFV */
+   _tnl_x86_exec_vtxfmt_init( ctx ); /* x86 DISPATCH_ATTRFV */
 
    _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
 

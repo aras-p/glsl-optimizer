@@ -28,6 +28,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Daniel Borca <dborca@yahoo.com>
  */
 
 
@@ -66,6 +67,8 @@ EXTERN( _tnl_x86_dispatch_multitexcoordfv );
 EXTERN( _tnl_x86_dispatch_vertexattribf );
 EXTERN( _tnl_x86_dispatch_vertexattribfv );
 
+EXTERN( _tnl_x86_choose_fv );
+
 
 static void notify( void )
 {
@@ -77,7 +80,7 @@ static void notify( void )
 
 
 #define DFN( FUNC, CACHE, KEY )				\
-   struct _tnl_dynfn *dfn = MALLOC_STRUCT( _tnl_dynfn );          \
+   struct _tnl_dynfn *dfn = MALLOC_STRUCT( _tnl_dynfn );\
    char *start = (char *)&FUNC;				\
    char *end = (char *)&FUNC##_end;			\
    int offset = 0;               			\
@@ -254,20 +257,23 @@ void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
    gen->Attribute[3] = makeX86Attribute4fv;
 }
 
-void _do_choose( void )
+
+static attrfv_func
+_do_choose( GLuint attr, GLuint sz )
 {
+   return NULL;
 }
 
 
-/* [dBorca] I purposely avoided one single macro, since they might need to
- * be handled in different ways. Ohwell, once things get much clearer, they
- * could collapse...
+/* I purposely avoided one single macro, since they might need to be
+ * handled in different ways.  Ohwell, once things get much clearer,
+ * they could collapse...
  */
 #define MAKE_DISPATCH_ATTR(FUNC, SIZE, TYPE, ATTR)			\
 do {									\
    char *code;								\
    char *start = (char *)&_tnl_x86_dispatch_attr##TYPE;			\
-   char *end = (char *)&_tnl_x86_dispatch_attr##TYPE##_end;			\
+   char *end = (char *)&_tnl_x86_dispatch_attr##TYPE##_end;		\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
@@ -279,7 +285,7 @@ do {									\
 #define MAKE_DISPATCH_MULTITEXCOORD(FUNC, SIZE, TYPE, ATTR)		\
 do {									\
    char *code;								\
-   char *start = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE;		\
+   char *start = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE;	\
    char *end = (char *)&_tnl_x86_dispatch_multitexcoord##TYPE##_end;	\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
@@ -293,7 +299,7 @@ do {									\
 do {									\
    char *code;								\
    char *start = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE;		\
-   char *end = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE##_end;		\
+   char *end = (char *)&_tnl_x86_dispatch_vertexattrib##TYPE##_end;	\
    int offset = 0;							\
    code = ALIGN_MALLOC( end - start, 16 );				\
    memcpy (code, start, end - start);					\
@@ -301,7 +307,8 @@ do {									\
    vfmt->FUNC##SIZE##TYPE##NV = code;					\
 } while (0)
 
-/* [dBorca] Install the codegen'ed versions of the 2nd level dispatch
+
+/* Install the codegen'ed versions of the 2nd level dispatch
  * functions.  We should keep a list and free them in the end...
  */
 void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
@@ -312,21 +319,70 @@ void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
    MAKE_DISPATCH_ATTR(Color,3,fv,    _TNL_ATTRIB_COLOR0);
    MAKE_DISPATCH_ATTR(Color,4,f,     _TNL_ATTRIB_COLOR0);
    MAKE_DISPATCH_ATTR(Color,4,fv,    _TNL_ATTRIB_COLOR0);
+/* vfmt->FogCoordfEXT = _tnl_FogCoordfEXT;
+   vfmt->FogCoordfvEXT = _tnl_FogCoordfvEXT;*/
    MAKE_DISPATCH_ATTR(Normal,3,f,    _TNL_ATTRIB_NORMAL);
    MAKE_DISPATCH_ATTR(Normal,3,fv,   _TNL_ATTRIB_NORMAL);
+/* vfmt->SecondaryColor3fEXT = _tnl_SecondaryColor3fEXT;
+   vfmt->SecondaryColor3fvEXT = _tnl_SecondaryColor3fvEXT; */
+   MAKE_DISPATCH_ATTR(TexCoord,1,f,  _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,1,fv, _TNL_ATTRIB_TEX0);
    MAKE_DISPATCH_ATTR(TexCoord,2,f,  _TNL_ATTRIB_TEX0);
    MAKE_DISPATCH_ATTR(TexCoord,2,fv, _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,3,f,  _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,3,fv, _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,4,f,  _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,4,fv, _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(Vertex,2,f,    _TNL_ATTRIB_POS);
+   MAKE_DISPATCH_ATTR(Vertex,2,fv,   _TNL_ATTRIB_POS);
    MAKE_DISPATCH_ATTR(Vertex,3,f,    _TNL_ATTRIB_POS);
    MAKE_DISPATCH_ATTR(Vertex,3,fv,   _TNL_ATTRIB_POS);
-   /* just add more */
+   MAKE_DISPATCH_ATTR(Vertex,4,f,    _TNL_ATTRIB_POS);
+   MAKE_DISPATCH_ATTR(Vertex,4,fv,   _TNL_ATTRIB_POS);
 
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,1,f,  0);
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,1,fv, 0);
    MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,f,  0);
    MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,fv, 0);
-   /* just add more */
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,3,f,  0);
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,3,fv, 0);
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,4,f,  0);
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,4,fv, 0);
 
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,1,f,  0);
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,1,fv, 0);
    MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,f,  0);
    MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,fv, 0);
-   /* just add more */
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,3,f,  0);
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,3,fv, 0);
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,4,f,  0);
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,4,fv, 0);
+}
+
+
+/* Install the codegen'ed choosers.
+ * We should keep a list and free them in the end...
+ */
+void _tnl_x86choosers( attrfv_func (*choose)[4],
+		       attrfv_func (*do_choose)( GLuint attr,
+						 GLuint sz ))
+{
+   int attr, size;
+
+   for (attr = 0; attr < _TNL_MAX_ATTR_CODEGEN; attr++) {
+      for (size = 0; size < 4; size++) {
+         char *code;
+         char *start = (char *)&_tnl_x86_choose_fv;
+         char *end = (char *)&_tnl_x86_choose_fv_end;
+         int offset = 0;
+         code = ALIGN_MALLOC( end - start, 16 );
+         memcpy (code, start, end - start);
+         FIXUP(code, 0, 0, attr);
+         FIXUP(code, 0, 1, size + 1);
+         FIXUPREL(code, 0, 2, do_choose);
+         choose[attr][size] = code;
+      }
+   }
 }
 
 #else 
@@ -336,9 +392,19 @@ void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
    (void) gen;
 }
 
+
 void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
 {
    (void) ctx;
+}
+
+
+void _tnl_x86choosers( attrfv_func (*choose)[4],
+		       attrfv_func (*do_choose)( GLuint attr,
+						 GLuint sz ))
+{
+   (void) choose;
+   (void) do_choose;
 }
 
 #endif

@@ -80,6 +80,10 @@ extern void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen );
 
 extern void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx );
 
+extern void _tnl_x86choosers( attrfv_func (*choose)[4],
+			      attrfv_func (*do_choose)( GLuint attr,
+							GLuint sz ));
+
 
 
 
