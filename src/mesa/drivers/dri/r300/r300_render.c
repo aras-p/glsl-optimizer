@@ -259,13 +259,11 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
    FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
    memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
 
-   #if 0
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.length=4;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
-   #endif
    
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
    
@@ -401,21 +399,28 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    upload_vertex_buffer(rmesa, ctx, vb_arrays, &n_arrays);
    fprintf(stderr, "Using %d AOS arrays\n", n_arrays);
    
-   r300EmitState(rmesa);
-   
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
    
    reg_start(0x4f18,0);
 	e32(0x00000003);
    
+   r300EmitState(rmesa);
+   
    reg_start(0x20b0,0);
 	e32(0x0000043f);
  
+   FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].length=16;
+   memcpy(FLAT_COLOR_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.length=4;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
+   FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
+   
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
       
-   //upload_vertex_shader_fragment(PASS_PREFIX VSF_DEST_UNKNOWN1, &default_vector_vsf);
-   
    reg_start(R300_RE_OCCLUSION_CNTL, 0);
 	     e32(R300_OCCLUSION_ON);
 	     
