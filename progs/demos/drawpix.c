@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.5 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: drawpix.c,v 1.6 2002/01/26 17:49:30 brianp Exp $ */
 
 /*
  * glDrawPixels demo/test/benchmark
@@ -8,6 +8,9 @@
 
 /*
  * $Log: drawpix.c,v $
+ * Revision 1.6  2002/01/26 17:49:30  brianp
+ * added fog and raster Z position controls
+ *
  * Revision 1.5  2000/12/24 22:53:54  pesco
  * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
  * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
@@ -78,6 +81,8 @@ static int Xpos, Ypos;
 static int SkipPixels, SkipRows;
 static int DrawWidth, DrawHeight;
 static int Scissor = 0;
+static int Fog = 0;
+static GLfloat Zpos = -1.0;
 static float Xzoom, Yzoom;
 static GLboolean DrawFront = GL_FALSE;
 static GLboolean Dither = GL_TRUE;
@@ -90,6 +95,8 @@ static void Reset( void )
    DrawHeight = ImgHeight;
    SkipPixels = SkipRows = 0;
    Scissor = 0;
+   Fog = 0;
+   Zpos = -1.0;
    Xzoom = Yzoom = 1.0;
 }
 
@@ -102,7 +109,7 @@ static void Display( void )
    glRasterPos2i(Xpos, Ypos);
 #else
    /* This allows negative raster positions: */
-   glRasterPos2i(0, 0);
+   glRasterPos3f(0, 0, Zpos);
    glBitmap(0, 0, 0, 0, Xpos, Ypos, NULL);
 #endif
 
@@ -114,9 +121,13 @@ static void Display( void )
    if (Scissor)
       glEnable(GL_SCISSOR_TEST);
 
+   if (Fog)
+      glEnable(GL_FOG);
+
    glDrawPixels(DrawWidth, DrawHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
 
    glDisable(GL_SCISSOR_TEST);
+   glDisable(GL_FOG);
 
    if (!DrawFront)
       glutSwapBuffers();
@@ -136,6 +147,8 @@ static void Benchmark( void )
    glPixelZoom( Xzoom, Yzoom );
    if (Scissor)
       glEnable(GL_SCISSOR_TEST);
+   if (Fog)
+      glEnable(GL_FOG);
 
    if (DrawFront)
       glDrawBuffer(GL_FRONT);
@@ -153,6 +166,7 @@ static void Benchmark( void )
 
    /* GL clean-up */
    glDisable(GL_SCISSOR_TEST);
+   glDisable(GL_FOG);
 
    /* Results */
    seconds = (double) (endTime - startTime) / 1000.0;
@@ -167,7 +181,7 @@ static void Reshape( int width, int height )
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
-   glOrtho( 0.0, width, 0.0, height, -1.0, 1.0 );
+   glOrtho( 0.0, width, 0.0, height, 0.0, 2.0 );
    glMatrixMode( GL_MODELVIEW );
    glLoadIdentity();
 
@@ -233,8 +247,20 @@ static void Key( unsigned char key, int x, int y )
       case 'Y':
          Yzoom += 0.1;
          break;
+      case 'z':
+         Zpos -= 0.1;
+         printf("RasterPos Z = %g\n", Zpos);
+         break;
+      case 'Z':
+         Zpos += 0.1;
+         printf("RasterPos Z = %g\n", Zpos);
+         break;
       case 'b':
          Benchmark();
+         break;
+      case 'F':
+         Fog = !Fog;
+         printf("Fog %d\n", Fog);
          break;
       case 'f':
          DrawFront = !DrawFront;
@@ -276,6 +302,8 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( GLboolean ciMode )
 {
+   static const GLfloat fogColor[4] = {0, 1, 0, 0};
+
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
@@ -308,6 +336,11 @@ static void Init( GLboolean ciMode )
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ROW_LENGTH, ImgWidth);
 
+   glFogi(GL_FOG_MODE, GL_LINEAR);
+   glFogf(GL_FOG_START, 0);
+   glFogf(GL_FOG_END, 2);
+   glFogfv(GL_FOG_COLOR, fogColor);
+
    Reset();
 }
 
@@ -331,6 +364,10 @@ static void Usage(void)
    printf("           r  Decrease GL_UNPACK_SKIP_ROWS*\n");
    printf("           R  Increase GL_UNPACK_SKIP_ROWS*\n");
    printf("           s  Toggle GL_SCISSOR_TEST\n");
+   printf("           F  Toggle GL_FOG\n");
+   printf("           z  Decrease RasterPos Z\n");
+   printf("           Z  Increase RasterPos Z\n");
+   
    printf("           f  Toggle front/back buffer drawing\n");
    printf("           b  Benchmark test\n");
    printf("         ESC  Exit\n");
