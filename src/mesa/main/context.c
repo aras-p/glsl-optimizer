@@ -1391,6 +1391,45 @@ add_newer_entrypoints(void)
 
 
 /**
+ * This is the default function we plug into all dispatch table slots
+ * This helps prevents a segfault when someone calls a GL function without
+ * first checking if the extension's supported.
+ */
+static int
+generic_nop(void)
+{
+   _mesa_problem(NULL, "User called no-op dispatch function (an unsupported extension function?)");
+   return 0;
+}
+
+
+/**
+ * Allocate and initialize a new dispatch table.
+ */
+static struct _glapi_table *
+alloc_dispatch_table(void)
+{
+   /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
+    * In practice, this'll be the same for stand-alone Mesa.  But for DRI
+    * Mesa we do this to accomodate different versions of libGL and various
+    * DRI drivers.
+    */
+   GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
+                           sizeof(struct _glapi_table) / sizeof(_glapi_proc));
+   struct _glapi_table *table =
+      (struct _glapi_table *) _mesa_malloc(numEntries * sizeof(_glapi_proc));
+   if (table) {
+      _glapi_proc *entry = (_glapi_proc *) table;
+      GLuint i;
+      for (i = 0; i < numEntries; i++) {
+         entry[i] = (_glapi_proc) generic_nop;
+      }
+   }
+   return table;
+}
+
+
+/**
  * Initialize a GLcontext struct (rendering context).
  *
  * This includes allocating all the other structs and arrays which hang off of
@@ -1423,8 +1462,6 @@ _mesa_initialize_context( GLcontext *ctx,
                           const struct dd_function_table *driverFunctions,
                           void *driverContext )
 {
-   GLuint dispatchSize;
-
    ASSERT(driverContext);
    assert(driverFunctions->NewTextureObject);
 
@@ -1473,30 +1510,19 @@ _mesa_initialize_context( GLcontext *ctx,
    /* libGL ABI coordination */
    add_newer_entrypoints();
 
-   /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
-    * In practice, this'll be the same for stand-alone Mesa.  But for DRI
-    * Mesa we do this to accomodate different versions of libGL and various
-    * DRI drivers.
-    */
-   dispatchSize = MAX2(_glapi_get_dispatch_table_size(),
-                       sizeof(struct _glapi_table) / sizeof(void *));
-
-   /* setup API dispatch tables */
-   ctx->Exec = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
-   ctx->Save = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
+   /* setup the API dispatch tables */
+   ctx->Exec = alloc_dispatch_table();
+   ctx->Save = alloc_dispatch_table();
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
       if (ctx->Exec)
-         FREE( ctx->Exec );
+         _mesa_free(ctx->Exec);
    }
-   _mesa_init_exec_table(ctx->Exec, dispatchSize);
+   _mesa_init_exec_table(ctx->Exec);
    ctx->CurrentDispatch = ctx->Exec;
-
 #if _HAVE_FULL_GL
-   _mesa_init_dlist_table(ctx->Save, dispatchSize);
+   _mesa_init_dlist_table(ctx->Save);
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
-
-
    /* Neutral tnl module stuff */
    _mesa_init_exec_vtxfmt( ctx ); 
    ctx->TnlModule.Current = NULL;
