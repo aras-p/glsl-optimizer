@@ -1756,6 +1756,7 @@ struct ati_fragment_shader
   struct program Base;
   struct atifs_instruction *Instructions;
   GLfloat Constants[8][4];
+  GLint NumPasses;
   GLint cur_pass;
 };
 

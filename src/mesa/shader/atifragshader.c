@@ -231,7 +231,8 @@ _mesa_EndFragmentShaderATI(void)
 #endif
 
    ctx->ATIFragmentShader.Compiling = 0;
-
+   ctx->ATIFragmentShader.Current->NumPasses = ctx->ATIFragmentShader.Current->cur_pass;
+   ctx->ATIFragmentShader.Current->cur_pass=0;
 #if MESA_DEBUG_ATI_FS
    for (i = 0; i < curProg->Base.NumInstructions; i++) {
       GLuint op0 = curProg->Instructions[i].Opcode[0];
@@ -254,6 +255,9 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
    struct ati_fragment_shader *curProg = ctx->ATIFragmentShader.Current;
    GLint ci;
    struct atifs_instruction *curI;
+
+   if (ctx->ATIFragmentShader.Current->cur_pass==1)
+     ctx->ATIFragmentShader.Current->cur_pass=2;
 
    new_inst(curProg);
    ci = curProg->Base.NumInstructions - 1;
@@ -287,6 +291,10 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
    GLint ci;
    struct atifs_instruction *curI;
 
+   if (ctx->ATIFragmentShader.Current->cur_pass==1)
+     ctx->ATIFragmentShader.Current->cur_pass=2;
+
+
    new_inst(curProg);
 
    ci = curProg->Base.NumInstructions - 1;
@@ -317,6 +325,9 @@ _mesa_FragmentOpXATI(GLint optype, GLuint arg_count, GLenum op, GLuint dst,
    struct ati_fragment_shader *curProg = ctx->ATIFragmentShader.Current;
    GLint ci;
    struct atifs_instruction *curI;
+
+   if (ctx->ATIFragmentShader.Current->cur_pass==0)
+     ctx->ATIFragmentShader.Current->cur_pass=1;
 
    /* decide whether this is a new instruction or not ... all color instructions are new */
    if (optype == 0)
