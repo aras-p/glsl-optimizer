@@ -54,8 +54,10 @@ extern "C" {
  *      missing tokens values.
  *   9. Brian Paul, 4 May 2000
  *      Added a bunch of missing token values.
+ *  10. Brian Paul, 11 May 2000
+ *      Added extensions 198 .. 212.
  */
-#define GL_GLEXT_VERSION_EXT 9
+#define GL_GLEXT_VERSION_EXT 10
 
 
 /*
@@ -1004,9 +1006,13 @@ typedef void (APIENTRY * PFNGLSPRITEPARAMETERIVSGIXPROC) (GLenum pname, const GL
 
 GLAPI void APIENTRY glPointParameterfEXT(GLenum pname, GLfloat param);
 GLAPI void APIENTRY glPointParameterfvEXT(GLenum pname, const GLfloat *params);
+GLAPI void APIENTRY glPointParameterfSGIS(GLenum pname, GLfloat param);
+GLAPI void APIENTRY glPointParameterfvSGIS(GLenum pname, const GLfloat *params);
 
 typedef void (APIENTRY * PFNGLPOINTPARAMETERFEXTPROC) (GLenum pname, GLfloat param);
 typedef void (APIENTRY * PFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GLfloat *params);
+typedef void (APIENTRY * PFNGLPOINTPARAMETERFSGISPROC) (GLenum pname, GLfloat param);
+typedef void (APIENTRY * PFNGLPOINTPARAMETERFVSGISPROC) (GLenum pname, const GLfloat *params);
 
 #endif /* GL_EXT_point_parameters */
 
@@ -1900,7 +1906,7 @@ GLAPI void APIENTRY glPixelTransformParameterfvEXT(GLenum target, GLenum pname, 
 GLAPI void APIENTRY glGetPixelTransformParameterivEXT(GLenum target, GLenum pname, const GLint *params);
 GLAPI void APIENTRY glGetPixelTransformParameterfvEXT(GLenum target, GLenum pname, const GLfloat *params);
 
-#endif /* #define GL_EXT_pixel_transform */
+#endif /* GL_EXT_pixel_transform */
 
 
 
@@ -2131,7 +2137,7 @@ typedef void (APIENTRY * PFNGLFOGCOORDPOINTEREXTPROC) (GLenum type, GLsizei stri
 
 
 /*
- * 156. GL_EXT_coordinate_frame 
+ * 156. GL_EXT_coordinate_frame
  */
 #ifndef GL_EXT_coordinate_frame
 #define GL_EXT_coordinate_frame 1
@@ -2937,22 +2943,194 @@ typedef void (APIENTRY * PFNGLWINDOWPOS4DVMESAPROC) (const GLdouble *p);
 #endif /* GL_MESA_window_pos */
 
 
+
 /*
  * 198. GL_EXT_texture_compression_s3tc
+ */
+#ifndef GL_EXT_texture_compression_s3tc
+#define GL_EXT_texture_compression_s3tc 1
+
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT		0x83F0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT	0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT	0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT	0x83F3
+
+#endif /* GL_EXT_texture_compression_s3tc */
+
+
+
+/*
  * 199. GL_IBM_cull_vertex
+ */
+#ifndef GL_IBM_cull_vertex
+#define GL_IBM_cull_vertex 1
+
+#define GL_CULL_VERTEX_IBM			103050
+
+#endif /* GL_IBM_cull_vertex */
+
+
+/*
  * 200. GL_IBM_multimode_draw_arrays
+ */
+#ifndef GL_IBM_multimode_draw_arrays
+#define GL_IBM_multimode_draw_arrays 1
+
+GLAPI void APIENTRY glMultiModeDrawArraysIBM(GLenum *mode, GLint *first, GLsizei *count, GLsizei primcount, GLint modestride);
+GLAPI void APIENTRY glMultiModeDrawElementsIBM(GLenum *mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, GLint modestride);
+
+typedef void (APIENTRY * PFNGLGLMULTIMODEDRAWARRAYSIBMPROC) (GLenum *mode, GLint *first, GLsizei *count, GLsizei primcount, GLint modestride);
+typedef void (APIENTRY * PFNGLMULTIMODEDRAWELEMENTSIBMPROC) (GLenum *mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, GLint modestride);
+
+#endif /* GL_IBM_multimode_draw_arrays */
+
+
+
+/*
  * 201. GL_IBM_vertex_array_lists
+ */
+#ifndef GL_IBM_multimode_draw_arrays
+#define GL_IBM_multimode_draw_arrays 1
+
+#define GL_VERTEX_ARRAY_LIST_IBM			103070
+#define GL_NORMAL_ARRAY_LIST_IBM			103071
+#define GL_COLOR_ARRAY_LIST_IBM				103072
+#define GL_INDEX_ARRAY_LIST_IBM				103073
+#define GL_TEXTURE_COORD_ARRAY_LIST_IBM			103074
+#define GL_EDGE_FLAG_ARRAY_LIST_IBM			103075
+#define GL_FOG_COORDINATE_ARRAY_LIST_IBM		103076
+#define GL_SECONDARY_COLOR_ARRAY_LIST_IBM		103077
+#define GL_VERTEX_ARRAY_LIST_STRIDE_IBM			103080
+#define GL_NORMAL_ARRAY_LIST_STRIDE_IBM			103081
+#define GL_COLOR_ARRAY_LIST_STRIDE_IBM			103082
+#define GL_INDEX_ARRAY_LIST_STRIDE_IBM			103083
+#define GL_TEXTURE_COORD_ARRAY_LIST_STRIDE_IBM		103084
+#define GL_EDGE_FLAG_ARRAY_LIST_STRIDE_IBM		103085
+#define GL_FOG_COORDINATE_ARRAY_LIST_STRIDE_IBM		103086
+#define GL_SECONDARY_COLOR_ARRAY_LIST_STRIDE_IBM	103087
+
+GLAPI void APIENTRY glColorPointerListIBM(GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glSecondaryColorPointerListIBM(GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glEdgeFlagPointerListIBM(GLint stride, const GLboolean **pointer, GLint ptrstride);
+GLAPI void APIENTRY glFogCoordPointerListIBM(GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glIndexPointerListIBM(GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glNormalPointerListIBM(GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glTexCoordPointerListIBM(GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+GLAPI void APIENTRY glVertexPointerListIBM(GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+
+typedef void (APIENTRY * PFNGLCOLORPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLSECONDARYCOLORPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLEDGEFLAGPOINTERLISTIBMPROC) (GLint stride, const GLboolean **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLFOGCOORDPOINTERLISTIBMPROC) (GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLINDEXPOINTERLISTIBMPROC) (GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLNORMALPOINTERLISTIBMPROC) (GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLTEXCOORDPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+typedef void (APIENTRY * PFNGLVERTEXPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid **pointer, GLint ptrstride);
+
+#endif /* GL_IBM_multimode_draw_arrays */
+
+
+
+/*
  * 202. ?
  * 203. ?
  * 204. ?
  * 205. ?
+ */
+
+
+/*
  * 206. GL_3DFX_texture_compression_FXT1 
+ */
+#ifndef GL_3DFX_texture_compression_FXT1 
+#define GL_3DFX_texture_compression_FXT1 1
+
+#define GL_COMPRESSED_RGB_FXT1_3DFX		0x86B0
+#define GL_COMPRESSED_RGBA_FXT1_3DFX		0x86B1
+
+#endif /* GL_3DFX_texture_compression_FXT1 */
+
+
+
+/*
  * 207. GL_3DFX_multisample
+ */
+#ifndef GL_3DFX_multisample
+#define GL_3DFX_multisample 1
+
+#define GL_MULTISAMPLE_3DFX			0x86B2
+#define GL_SAMPLE_BUFFERS_3DFX			0x86B3
+#define GL_SAMPLES_3DFX				0x86B4
+#define GL_MULTISAMPLE_BIT_3DFX			0x20000000
+
+#endif /* GL_3DFX_multisample */
+
+
+
+/*
  * 208. GL_3DFX_tbuffer
+ */
+#ifndef GL_3DFX_tbuffer
+#define GL_3DFX_tbuffer 1
+
+GLAPI void APIENTRY glTbufferMask3DFX(GLuint mask);
+
+typedef void (APIENTRY * PFNGLTBUFFERMASK3DFXPROC) (GLuint mask );
+
+#endif /* GL_3DFX_tbuffer */
+
+
+
+/*
  * 209. WGL_EXT_multisample 
+ */
+#ifndef WGL_EXT_multisample
+#define WGL_EXT_multisample 1
+
+#define WGL_SAMPLE_BUFFERS_EXT			0x2041
+#define WGL_SAMPLES_EXT				0x2042
+#define GL_MULTISAMPLE_EXT			0x809D
+#define GL_SAMPLE_ALPHA_TO_MASK_EXT		0x809E
+#define GL_SAMPLE_ALPHA_TO_ONE_EXT		0x809F
+#define GL_SAMPLE_MASK_EXT			0x80A0
+
+GLAPI void APIENTRY glSampleMaskEXT(GLclampf value, GLboolean invert);
+GLAPI void APIENTRY glSamplePatternEXT(GLenum pattern);
+
+typedef void (APIENTRY * PFNGLSAMPLEMASKEXTPROC) (GLclampf value, GLboolean invert);
+typedef void (APIENTRY * PFNGLSAMPLEPATTERNEXTPROC) (GLenum pattern);
+
+#endif /* WGL_EXT_multisample */
+
+
+
+/*
  * 210. GL_SGIX_vertex_preclip 
+ */
+#ifndef GL_SGIX_vertex_preclip
+#define GL_SGIX_vertex_preclip 1
+
+#define GL_VERTEX_PRECLIP_SGIX			0x83EE
+#define GL_VERTEX_PRECLIP_HINT_SGIX		0x83EF
+
+#endif /* GL_SGIX_vertex_preclip */
+
+
+
+/*
  * 212. GL_SGIX_resample 
  */
+#ifndef GL_SGIX_resample
+#define GL_SGIX_resample 1
+
+#define GL_PACK_RESAMPLE_SGIX			0x842E
+#define GL_UNPACK_RESAMPLE_SGIX			0x842F
+#define GL_RESAMPLE_REPLICATE_SGIX		0x8433
+#define GL_RESAMPLE_ZERO_FILL_SGIX		0x8434
+#define GL_RESAMPLE_DECIMATE_SGIX		0x0 /*?*/
+
+#endif /* GL_SGIX_resample */
+
 
 
 /*
@@ -3205,20 +3383,20 @@ typedef void (APIENTRY * PFNGLSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean 
 #define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A2
 #define GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
 
-GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data);
-GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLvoid *data);
-GLAPI void APIENTRY glCompressedTexImage1DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, GLvoid *data);
-GLAPI void APIENTRY glCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLvoid *data);
-GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLvoid *data);
-GLAPI void APIENTRY glCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data);
+GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+GLAPI void APIENTRY glCompressedTexImage1DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data);
 GLAPI void APIENTRY glGetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
 
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE3DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data);
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLvoid *data);
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE1DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, GLvoid *data);
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLvoid *data);
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLvoid *data);
-typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE3DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE1DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data);
 typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLint lod, GLvoid *img);
 
 #endif /* GL_ARB_texture_compression */
