@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.11 2002/09/04 14:14:36 brianp Exp $ */
+/* $Id: wgl.c,v 1.12 2003/01/15 00:34:16 kschultz Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -558,6 +558,8 @@ WGLAPI int GLAPIENTRY wglDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nByte
     int		qt_valid_pix;
 
     qt_valid_pix = qt_pix;
+    if(ppfd == NULL)
+	return(qt_valid_pix);
     if(iPixelFormat < 1 || iPixelFormat > qt_valid_pix || nBytes != sizeof(PIXELFORMATDESCRIPTOR))
     {
         SetLastError(0);
