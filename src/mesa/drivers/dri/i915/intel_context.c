@@ -142,6 +142,7 @@ static const char * const card_extensions[] =
 {
    "GL_ARB_multisample",
    "GL_ARB_multitexture",
+   "GL_ARB_point_parameters",
    "GL_ARB_texture_border_clamp",
    "GL_ARB_texture_compression",
    "GL_ARB_texture_env_add",

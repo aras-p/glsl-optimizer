@@ -48,7 +48,6 @@
 static const char * const card_extensions[] =
 {
    "GL_ARB_fragment_program",
-   "GL_ARB_point_parameters",
    "GL_ARB_texture_cube_map",
    NULL
 };
