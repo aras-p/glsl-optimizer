@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.12 2002/04/21 20:37:04 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.13 2002/06/23 02:40:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -211,15 +211,15 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       _mesa_exec_program(ctx, program);
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,
-             machine->Registers[VP_OUT_HPOS][0],
-             machine->Registers[VP_OUT_HPOS][1],
-             machine->Registers[VP_OUT_HPOS][2],
-             machine->Registers[VP_OUT_HPOS][3]);
+             machine->Registers[VP_OUTPUT_REG_START + 0][0],
+             machine->Registers[VP_OUTPUT_REG_START + 0][1],
+             machine->Registers[VP_OUTPUT_REG_START + 0][2],
+             machine->Registers[VP_OUTPUT_REG_START + 0][3]);
       printf("   color: %f, %f, %f, %f\n",
-             machine->Registers[VP_OUT_COL0][0],
-             machine->Registers[VP_OUT_COL0][1],
-             machine->Registers[VP_OUT_COL0][2],
-             machine->Registers[VP_OUT_COL0][3]);
+             machine->Registers[VP_OUTPUT_REG_START +_1][0],
+             machine->Registers[VP_OUTPUT_REG_START + 1][1],
+             machine->Registers[VP_OUTPUT_REG_START + 1][2],
+             machine->Registers[VP_OUTPUT_REG_START + 1][3]);
       printf("PointSize[%d]: %g\n", i,
              machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]);
 #endif
@@ -403,12 +403,12 @@ static void check_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    stage->active = ctx->VertexProgram.Enabled;
 
    if (stage->active) {
-      /* XXX what do we need here???
-       *
-       * I think that:
-       *   stage->inputs = ctx->VertexProgram.Current->InputsRead;
-       * would be correct, and something similar for the outputs.
+      /* I believe this is right - Keith?
+       * Set stage->inputs equal to the bitmask of vertex attributes
+       * which the program needs for inputs.
        */
+
+      stage->inputs = ctx->VertexProgram.Current->InputsRead;
 
 #if 000
       if (stage->privatePtr)
