@@ -33,10 +33,19 @@
 #define MESA_PATCH 0
 #define MESA_VERSION_STRING "5.1"
 
+/* To make version comparison easy */
+#define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#define MESA_VERSION_CODE MESA_VERSION(MESA_MAJOR, MESA_MINOR, MESA_PATCH)
+
+
 /* OpenGL API version */
 #define OPENGL_MAJOR 1
 #define OPENGL_MINOR 4
 #define OPENGL_VERSION_STRING "1.4"
+
+/* To make version comparison easy */
+#define OPENGL_VERSION(a,b) (((a) << 16) + ((b) << 8) + (c))
+#define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR)
 
 
 #endif /* VERSION_H */
