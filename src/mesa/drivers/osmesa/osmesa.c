@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.25 2000/10/31 18:09:46 keithw Exp $ */
+/* $Id: osmesa.c,v 1.26 2000/11/05 18:28:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,12 @@
 #include "types.h"
 #include "vb.h"
 #include "extensions.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "swrast/s_context.h"
 #include "swrast/s_depth.h"
+#include "swrast/s_lines.h"
+#include "swrast/s_triangle.h"
 #endif
 
 
@@ -84,6 +89,7 @@ struct osmesa_context {
 
 /* A forward declaration: */
 static void osmesa_update_state( GLcontext *ctx );
+static void osmesa_register_swrast_functions( GLcontext *ctx );
 
 
 
@@ -297,6 +303,21 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       osmesa->rind = rind;
       osmesa->gind = gind;
       osmesa->bind = bind;
+
+
+      /* Initialize the software rasterizer and helper modules.
+       */
+      {
+	 GLcontext *ctx = &osmesa->gl_ctx;
+
+	 _swrast_CreateContext( ctx );
+	 _swsetup_CreateContext( ctx );
+
+	 if (ctx->VB) 
+	    _swsetup_RegisterVB( ctx->VB );
+	 
+	 osmesa_register_swrast_functions( ctx );
+      }
    }
    return osmesa;
 }
@@ -1228,10 +1249,10 @@ static void read_index_pixels( const GLcontext *ctx,
  * Draw a flat-shaded, RGB line into an osmesa buffer.
  */
 static void flat_rgba_line( GLcontext *ctx,
-                            GLuint vert0, GLuint vert1, GLuint pvert )
+                            SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
-   GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   GLubyte *color = vert0->color;
    unsigned long pixel = PACK_RGBA( color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -1250,10 +1271,10 @@ static void flat_rgba_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, RGB line into an osmesa buffer.
  */
 static void flat_rgba_z_line( GLcontext *ctx,
-                              GLuint vert0, GLuint vert1, GLuint pvert )
+			      SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
-   GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   GLubyte *color = vert0->color;
    unsigned long pixel = PACK_RGBA( color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -1279,18 +1300,18 @@ static void flat_rgba_z_line( GLcontext *ctx,
  * Draw a flat-shaded, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_line( GLcontext *ctx,
-                                  GLuint vert0, GLuint vert1, GLuint pvert )
+				  SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
-   GLint avalue = VB->ColorPtr->data[pvert][3];
+   GLint avalue = vert0->color[3];
    GLint msavalue = 255 - avalue;
-   GLint rvalue = VB->ColorPtr->data[pvert][0]*avalue;
-   GLint gvalue = VB->ColorPtr->data[pvert][1]*avalue;
-   GLint bvalue = VB->ColorPtr->data[pvert][2]*avalue;
+   GLint rvalue = vert0->color[0]*avalue;
+   GLint gvalue = vert0->color[1]*avalue;
+   GLint bvalue = vert0->color[2]*avalue;
 
 #define INTERP_XY 1
 #define CLIP_HACK 1
@@ -1315,18 +1336,18 @@ static void flat_blend_rgba_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_z_line( GLcontext *ctx,
-                                   GLuint vert0, GLuint vert1, GLuint pvert )
+				    SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
-   GLint avalue = VB->ColorPtr->data[pvert][3];
+   GLint avalue = vert0->color[3];
    GLint msavalue = 256 - avalue;
-   GLint rvalue = VB->ColorPtr->data[pvert][0]*avalue;
-   GLint gvalue = VB->ColorPtr->data[pvert][1]*avalue;
-   GLint bvalue = VB->ColorPtr->data[pvert][2]*avalue;
+   GLint rvalue = vert0->color[0]*avalue;
+   GLint gvalue = vert0->color[1]*avalue;
+   GLint bvalue = vert0->color[2]*avalue;
 
 #define INTERP_XY 1
 #define INTERP_Z 1
@@ -1354,18 +1375,18 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_z_line_write( GLcontext *ctx,
-                                   GLuint vert0, GLuint vert1, GLuint pvert )
+					  SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
-   GLint avalue = VB->ColorPtr->data[pvert][3];
+   GLint avalue = vert0->color[3];
    GLint msavalue = 256 - avalue;
-   GLint rvalue = VB->ColorPtr->data[pvert][0]*avalue;
-   GLint gvalue = VB->ColorPtr->data[pvert][1]*avalue;
-   GLint bvalue = VB->ColorPtr->data[pvert][2]*avalue;
+   GLint rvalue = vert0->color[0]*avalue;
+   GLint gvalue = vert0->color[1]*avalue;
+   GLint bvalue = vert0->color[2]*avalue;
 
 #define INTERP_XY 1
 #define INTERP_Z 1
@@ -1394,18 +1415,20 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
  * Analyze context state to see if we can provide a fast line drawing
  * function, like those in lines.c.  Otherwise, return NULL.
  */
-static line_func choose_line_function( GLcontext *ctx )
+static swrast_line_func 
+osmesa_choose_line_function( GLcontext *ctx )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (ctx->Line.SmoothFlag)              return NULL;
-   if (ctx->Texture.ReallyEnabled)        return NULL;
+   if (ctx->Texture._ReallyEnabled)        return NULL;
    if (ctx->Light.ShadeModel!=GL_FLAT)    return NULL;
 
    if (ctx->Line.Width==1.0F
        && ctx->Line.StippleFlag==GL_FALSE) {
 
-       if (ctx->RasterMask==DEPTH_BIT
+       if (swrast->_RasterMask==DEPTH_BIT
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_TRUE
            && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
@@ -1419,7 +1442,7 @@ static line_func choose_line_function( GLcontext *ctx )
            }
        }
 
-       if (ctx->RasterMask==0) {
+       if (swrast->_RasterMask==0) {
            switch(osmesa->format) {
        		case OSMESA_RGBA:
        		case OSMESA_BGRA:
@@ -1430,7 +1453,7 @@ static line_func choose_line_function( GLcontext *ctx )
            }
        }
 
-       if (ctx->RasterMask==(DEPTH_BIT|BLEND_BIT)
+       if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_TRUE
            && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
@@ -1449,7 +1472,7 @@ static line_func choose_line_function( GLcontext *ctx )
            }
        }
 
-       if (ctx->RasterMask==(DEPTH_BIT|BLEND_BIT)
+       if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_FALSE
            && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
@@ -1468,7 +1491,7 @@ static line_func choose_line_function( GLcontext *ctx )
            }
        }
 
-       if (ctx->RasterMask==BLEND_BIT
+       if (swrast->_RasterMask==BLEND_BIT
            && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
            && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
            && ctx->Color.BlendSrcA==GL_SRC_ALPHA
@@ -1497,15 +1520,14 @@ static line_func choose_line_function( GLcontext *ctx )
 /*
  * Smooth-shaded, z-less triangle, RGBA color.
  */
-static void smooth_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
-                                    GLuint v2, GLuint pv )
+static void smooth_rgba_z_triangle( GLcontext *ctx, 
+				    SWvertex *v0, SWvertex *v1, SWvertex *v2 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
    GLint ashift = osmesa->ashift;
-   (void) pv;
 
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
@@ -1540,17 +1562,17 @@ static void smooth_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 /*
  * Flat-shaded, z-less triangle, RGBA color.
  */
-static void flat_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
-                                   GLuint v2, GLuint pv )
+static void flat_rgba_z_triangle( GLcontext *ctx, 
+				  SWvertex *v0, SWvertex *v1, SWvertex *v2 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE			\
-   GLubyte r = VB->ColorPtr->data[pv][0];	\
-   GLubyte g = VB->ColorPtr->data[pv][1];	\
-   GLubyte b = VB->ColorPtr->data[pv][2];	\
-   GLubyte a = VB->ColorPtr->data[pv][3];	\
+   GLubyte r = v0->color[0];	\
+   GLubyte g = v0->color[1];	\
+   GLubyte b = v0->color[2];	\
+   GLubyte a = v0->color[3];	\
    GLuint pixel = PACK_RGBA(r,g,b,a);
 
 #define INNER_LOOP( LEFT, RIGHT, Y )	\
@@ -1579,17 +1601,20 @@ static void flat_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 /*
  * Return pointer to an accelerated triangle function if possible.
  */
-static triangle_func choose_triangle_function( GLcontext *ctx )
+static swrast_tri_func 
+osmesa_choose_triangle_function( GLcontext *ctx )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if ((osmesa->format==OSMESA_RGB)||(osmesa->format==OSMESA_BGR)) return NULL;
+   if ((osmesa->format==OSMESA_RGB)||(osmesa->format==OSMESA_BGR)) 
+      return (swrast_tri_func)NULL;
 
-   if (ctx->Polygon.SmoothFlag)     return NULL;
-   if (ctx->Polygon.StippleFlag)    return NULL;
-   if (ctx->Texture.ReallyEnabled)  return NULL;
+   if (ctx->Polygon.SmoothFlag)     return (swrast_tri_func)NULL;
+   if (ctx->Polygon.StippleFlag)    return (swrast_tri_func)NULL;
+   if (ctx->Texture._ReallyEnabled)  return (swrast_tri_func)NULL;
 
-   if (ctx->RasterMask==DEPTH_BIT
+   if (swrast->_RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
        && ctx->Depth.Mask==GL_TRUE
        && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
@@ -1601,9 +1626,51 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
          return flat_rgba_z_triangle;
       }
    }
-   return NULL;
+   return (swrast_tri_func)NULL;
 }
 
+/* Override for the swrast triangle-selection function.  Try to use one
+ * of our internal triangle functions, otherwise fall back to the
+ * standard swrast functions.  
+ */
+static void osmesa_choose_triangle( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   swrast->Triangle = osmesa_choose_triangle_function( ctx );
+   if (!swrast->Triangle)
+      _swrast_choose_triangle( ctx );
+}
+
+static void osmesa_choose_line( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   swrast->Line = osmesa_choose_line_function( ctx );
+   if (!swrast->Line)
+      _swrast_choose_line( ctx );
+}
+
+
+#define OSMESA_NEW_LINE   (_NEW_LINE|_NEW_TEXTURE|_NEW_LIGHT|\
+                          _NEW_DEPTH|_SWRAST_NEW_RASTERMASK)
+#define OSMESA_NEW_TRIANGLE (_NEW_POLYGON|_NEW_TEXTURE|_NEW_LIGHT|\
+                            _SWRAST_NEW_RASTERMASK|_NEW_DEPTH)
+
+
+/* Extend the software rasterizer with our line and triangle 
+ * functions.
+ */
+static void osmesa_register_swrast_functions( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT( ctx );
+   
+   swrast->choose_line = osmesa_choose_line;
+   swrast->choose_triangle = osmesa_choose_triangle;
+   
+   swrast->invalidate_line |= OSMESA_NEW_LINE;
+   swrast->invalidate_triangle |= OSMESA_NEW_TRIANGLE;
+}
 
 
 static const GLubyte *get_string( GLcontext *ctx, GLenum name )
@@ -1625,6 +1692,7 @@ static void osmesa_update_state( GLcontext *ctx )
    ASSERT((void *) osmesa == (void *) ctx->DriverCtx);
 
    ctx->Driver.GetString = get_string;
+   ctx->Driver.UpdateStateNotify = ~0;
    ctx->Driver.UpdateState = osmesa_update_state;
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
@@ -1637,9 +1705,11 @@ static void osmesa_update_state( GLcontext *ctx )
 
    ctx->Driver.GetBufferSize = buffer_size;
 
-   ctx->Driver.PointsFunc = NULL;
-   ctx->Driver.LineFunc = choose_line_function( ctx );
-   ctx->Driver.TriangleFunc = choose_triangle_function( ctx );
+   ctx->Driver.PointsFunc = _swsetup_Points;
+   ctx->Driver.LineFunc = _swsetup_Line;
+   ctx->Driver.TriangleFunc = _swsetup_Triangle;
+   ctx->Driver.QuadFunc = _swsetup_Quad;
+   ctx->Driver.RasterSetup = _swsetup_RasterSetup;
 
 
    /* RGB(A) span/pixel functions */
