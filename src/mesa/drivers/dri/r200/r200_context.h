@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include <inttypes.h>
+#include "tnl/t_vertex.h"
 #include "drm.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
@@ -611,12 +612,28 @@ struct r200_tcl_info {
 /* r200_swtcl.c
  */
 struct r200_swtcl_info {
-   GLuint SetupIndex;
-   GLuint SetupNewInputs;
    GLuint RenderIndex;
+   
+   /**
+    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
+    * installed in the Mesa state vector.
+    */
    GLuint vertex_size;
-   GLuint vertex_stride_shift;
-   GLuint vertex_format;
+
+   /**
+    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
+    * data in the hardware buffer.
+    */
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+
+   /**
+    * Number of elements of \c ::vertex_attrs that are actually used.
+    */
+   GLuint vertex_attr_count;
+
+   /**
+    * Cached pointer to the buffer where Mesa will store vertex data.
+    */
    GLubyte *verts;
 
    /* Fallback rasterization functions
@@ -628,6 +645,21 @@ struct r200_swtcl_info {
    GLuint hw_primitive;
    GLenum render_primitive;
    GLuint numverts;
+
+   /**
+    * Offset of the 4UB color data within a hardware (swtcl) vertex.
+    */
+   GLuint coloroffset;
+
+   /**
+    * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
+    */
+   GLuint specoffset;
+
+   /**
+    * Should Mesa project vertex data or will the hardware do it?
+    */
+   GLboolean needproj;
 
    struct r200_dma_region indexed_verts;
 };

@@ -403,7 +403,6 @@ static void transition_to_swtnl( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    R200_NEWPRIM( rmesa );
-   rmesa->swtcl.vertex_format = 0;
 
    r200ChooseVertexState( ctx );
    r200ChooseRenderState( ctx );
@@ -446,7 +445,6 @@ static void transition_to_hwtnl( GLcontext *ctx )
       rmesa->dma.flush( rmesa );	
 
    rmesa->dma.flush = 0;
-   rmesa->swtcl.vertex_format = 0;
    
    if (rmesa->swtcl.indexed_verts.buf) 
       r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
