@@ -108,7 +108,8 @@ enum fp_opcode {
    FP_OPCODE_TEX,
    FP_OPCODE_TXB,            /* ARB_f_p only */
    FP_OPCODE_TXD,            /* NV_f_p only */
-   FP_OPCODE_TXP,
+   FP_OPCODE_TXP,            /* ARB_f_p only */
+   FP_OPCODE_TXP_NV,         /* NV_f_p only */
    FP_OPCODE_UP2H,           /* NV_f_p only */
    FP_OPCODE_UP2US,          /* NV_f_p only */
    FP_OPCODE_UP4B,           /* NV_f_p only */

@@ -124,7 +124,7 @@ static const struct instruction_pattern Instructions[] = {
    { "SUB", FP_OPCODE_SUB, INPUT_2V, OUTPUT_V, _R | _H | _X | _C | _S },
    { "TEX", FP_OPCODE_TEX, INPUT_1V_T, OUTPUT_V,              _C | _S },
    { "TXD", FP_OPCODE_TXD, INPUT_3V_T, OUTPUT_V,              _C | _S },
-   { "TXP", FP_OPCODE_TXP, INPUT_1V_T, OUTPUT_V,              _C | _S },
+   { "TXP", FP_OPCODE_TXP_NV, INPUT_1V_T, OUTPUT_V,              _C | _S },
    { "UP2H",  FP_OPCODE_UP2H,  INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP2US", FP_OPCODE_UP2US, INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP4B",  FP_OPCODE_UP4B,  INPUT_1S, OUTPUT_V,            _C | _S },

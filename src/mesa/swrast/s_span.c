@@ -340,10 +340,16 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    return lambda;
 }
 
-/*
+
+/**
  * Fill in the span.texcoords array from the interpolation values.
- * XXX We could optimize here for the case when dq = 0.  That would
- * usually be the case when using an orthographic projection.
+ * Note: in the places where we divide by Q (or mult by invQ) we're
+ * really doing two things: perspective correction and texcoord
+ * projection.  Remember, for texcoord (s,t,r,q) we need to index
+ * texels with (s/q, t/q, r/q).
+ * If we're using a fragment program, we never do the division
+ * for texcoord projection.  That's done by the TXP instruction
+ * or user-written code.
  */
 static void
 interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
@@ -368,6 +374,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                texH = img->HeightScale;
             }
             else {
+               /* using a fragment program */
                texW = 1.0;
                texH = 1.0;
                needLambda = GL_FALSE;
@@ -387,19 +394,42 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               for (i = 0; i < span->end; i++) {
-                  const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  texcoord[i][0] = s * invQ;
-                  texcoord[i][1] = t * invQ;
-                  texcoord[i][2] = r * invQ;
-                  texcoord[i][3] = q;
-                  lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                                   dqdx, dqdy, texW, texH,
-                                                   s, t, q, invQ);
-                  s += dsdx;
-                  t += dtdx;
-                  r += drdx;
-                  q += dqdx;
+               if (ctx->FragmentProgram.Enabled) {
+                  /* do perspective correction but don't divide s, t, r by q */
+                  const GLfloat dwdx = span->dwdx;
+                  GLfloat w = span->w;
+                  for (i = 0; i < span->end; i++) {
+                     const GLfloat invW = 1.0F / w;
+                     texcoord[i][0] = s * invW;
+                     texcoord[i][1] = t * invW;
+                     texcoord[i][2] = r * invW;
+                     texcoord[i][3] = q * invW;
+                     lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                        dqdx, dqdy, texW, texH,
+                                                        s, t, q, invW);
+                     s += dsdx;
+                     t += dtdx;
+                     r += drdx;
+                     q += dqdx;
+                     w += dwdx;
+                  }
+
+               }
+               else {
+                  for (i = 0; i < span->end; i++) {
+                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+                     texcoord[i][0] = s * invQ;
+                     texcoord[i][1] = t * invQ;
+                     texcoord[i][2] = r * invQ;
+                     texcoord[i][3] = q;
+                     lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                        dqdx, dqdy, texW, texH,
+                                                        s, t, q, invQ);
+                     s += dsdx;
+                     t += dtdx;
+                     r += drdx;
+                     q += dqdx;
+                  }
                }
                span->arrayMask |= SPAN_LAMBDA;
             }
@@ -415,7 +445,25 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (dqdx == 0.0) {
+               if (ctx->FragmentProgram.Enabled) {
+                  /* do perspective correction but don't divide s, t, r by q */
+                  const GLfloat dwdx = span->dwdx;
+                  GLfloat w = span->w;
+                  for (i = 0; i < span->end; i++) {
+                     const GLfloat invW = 1.0F / w;
+                     texcoord[i][0] = s * invW;
+                     texcoord[i][1] = t * invW;
+                     texcoord[i][2] = r * invW;
+                     texcoord[i][3] = q * invW;
+                     lambda[i] = 0.0;
+                     s += dsdx;
+                     t += dtdx;
+                     r += drdx;
+                     q += dqdx;
+                     w += dwdx;
+                  }
+               }
+               else if (dqdx == 0.0F) {
                   /* Ortho projection or polygon's parallel to window X axis */
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                   for (i = 0; i < span->end; i++) {
@@ -480,19 +528,46 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         for (i = 0; i < span->end; i++) {
-            const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                             dqdx, dqdy, texW, texH,
-                                             s, t, q, invQ);
-            texcoord[i][0] = s * invQ;
-            texcoord[i][1] = t * invQ;
-            texcoord[i][2] = r * invQ;
-            texcoord[i][3] = q;
-            s += dsdx;
-            t += dtdx;
-            r += drdx;
-            q += dqdx;
+         if (ctx->FragmentProgram.Enabled) {
+            /* do perspective correction but don't divide s, t, r by q */
+            const GLfloat dwdx = span->dwdx;
+            GLfloat w = span->w;
+            for (i = 0; i < span->end; i++) {
+               const GLfloat invW = 1.0F / w;
+               texcoord[i][0] = s * invW;
+               texcoord[i][1] = t * invW;
+               texcoord[i][2] = r * invW;
+               texcoord[i][3] = q * invW;
+               lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                  dqdx, dqdy, texW, texH,
+                                                  s, t, q, invW);
+               s += dsdx;
+               t += dtdx;
+               r += drdx;
+               q += dqdx;
+               w += dwdx;
+            }
+         }
+         else {
+            /* tex.c */
+            GLfloat w = span->w;
+            GLfloat dwdx = span->dwdx;
+            assert(span->interpMask & SPAN_W);
+            for (i = 0; i < span->end; i++) {
+               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+               lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                dqdx, dqdy, texW, texH,
+                                                s, t, q, invQ);
+               texcoord[i][0] = s * invQ;
+               texcoord[i][1] = t * invQ;
+               texcoord[i][2] = r * invQ;
+               texcoord[i][3] = q;
+               s += dsdx;
+               t += dtdx;
+               r += drdx;
+               q += dqdx;
+               w += dwdx;
+            }
          }
          span->arrayMask |= SPAN_LAMBDA;
       }
@@ -508,7 +583,24 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (dqdx == 0.0) {
+         if (ctx->FragmentProgram.Enabled) {
+            /* do perspective correction but don't divide s, t, r by q */
+            const GLfloat dwdx = span->dwdx;
+            GLfloat w = span->w;
+            for (i = 0; i < span->end; i++) {
+               const GLfloat invW = 1.0F / w;
+               texcoord[i][0] = s * invW;
+               texcoord[i][1] = t * invW;
+               texcoord[i][2] = r * invW;
+               texcoord[i][3] = q * invW;
+               s += dsdx;
+               t += dtdx;
+               r += drdx;
+               q += dqdx;
+               w += dwdx;
+            }
+         }
+         else if (dqdx == 0.0F) {
             /* Ortho projection or polygon's parallel to window X axis */
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
             for (i = 0; i < span->end; i++) {
@@ -1007,7 +1099,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
    /* Fragment program */
    if (ctx->FragmentProgram.Enabled) {
-      /* Now we may need to interpolate the colors */
+      /* Now we may need to interpolate the colors and texcoords */
       if ((span->interpMask & SPAN_RGBA) &&
           (span->arrayMask & SPAN_RGBA) == 0) {
          interpolate_colors(ctx, span);
@@ -1016,6 +1108,9 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_SPEC) {
          interpolate_specular(ctx, span);
       }
+      if ((span->interpMask & SPAN_TEXTURE)
+          && (span->arrayMask & SPAN_TEXTURE) == 0)
+         interpolate_texcoords(ctx, span);
       _swrast_exec_fragment_program(ctx, span);
       monoColor = GL_FALSE;
    }

@@ -1140,19 +1140,19 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case FP_OPCODE_TEX:
+         case FP_OPCODE_TEX: /* Both ARB and NV frag prog */
             /* Texel lookup */
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* XXX: Undo perspective divide from interpolate_texcoords() */
-               fetch_texel( ctx, texcoord,
-                            span->array->lambda[inst->TexSrcUnit][column],
-                            inst->TexSrcUnit, color );
+               /* Note: we pass 0 for LOD.  The ARB extension requires it
+                * while the NV extension says it's implementation dependant.
+                */
+               fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
-         case FP_OPCODE_TXB:
+         case FP_OPCODE_TXB: /* GL_ARB_fragment_program only */
             /* Texel lookup with LOD bias */
             {
                GLfloat texcoord[4], color[4], bias, lambda;
@@ -1168,7 +1168,7 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, color );
             }
             break;
-         case FP_OPCODE_TXD:
+         case FP_OPCODE_TXD: /* GL_NV_fragment_program only */
             /* Texture lookup w/ partial derivatives for LOD */
             {
                GLfloat texcoord[4], dtdx[4], dtdy[4], color[4];
@@ -1180,12 +1180,29 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, color );
             }
             break;
-         case FP_OPCODE_TXP:
-            /* Texture lookup w/ perspective divide */
+         case FP_OPCODE_TXP: /* GL_ARB_fragment_program only */
+            /* Texture lookup w/ projective divide */
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* Already did perspective divide in interpolate_texcoords() */
+               texcoord[0] /= texcoord[3];
+               texcoord[1] /= texcoord[3];
+               texcoord[2] /= texcoord[3];
+               /* Note: LOD=0 */
+               fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
+               store_vector4( inst, machine, color );
+            }
+            break;
+         case FP_OPCODE_TXP_NV: /* GL_NV_fragment_program only */
+            /* Texture lookup w/ projective divide */
+            {
+               GLfloat texcoord[4], color[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
+               if (inst->TexSrcBit != TEXTURE_CUBE_BIT) {
+                  texcoord[0] /= texcoord[3];
+                  texcoord[1] /= texcoord[3];
+                  texcoord[2] /= texcoord[3];
+               }
                fetch_texel( ctx, texcoord,
                             span->array->lambda[inst->TexSrcUnit][column],
                             inst->TexSrcUnit, color );
