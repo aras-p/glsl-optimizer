@@ -51,12 +51,16 @@ static int gWidth, gHeight;
 
 /*
  * Create the pbuffer and return a GLXPbufferSGIX handle.
+ *
+ * We loop over a list of fbconfigs trying to create
+ * a pixel buffer.  We return the first pixel buffer which we successfully
+ * create.
  */
 static GLXPbufferSGIX
 MakePbuffer( Display *dpy, int screen, int width, int height )
 {
 #define NUM_FB_CONFIGS 4
-   char fbString[NUM_FB_CONFIGS][100] = {
+   const char fbString[NUM_FB_CONFIGS][100] = {
       "Single Buffered, depth buffer",
       "Double Buffered, depth buffer",
       "Single Buffered, no depth buffer",

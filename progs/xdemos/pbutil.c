@@ -184,10 +184,8 @@ static int HandleXError( Display *dpy, XErrorEvent *event )
 
 
 /*
- * Create a pixel buffer.  We loop over the list of fbconfigs trying to create
- * a pixel buffer.  We return the first pixel buffer which we successfully
- * create.  This function hides the ugliness of dealing with BadAlloc X
- * protocol errors.
+ * Create a Pbuffer.  Use an X error handler to deal with potential
+ * BadAlloc errors.
  *
  * Input:  dpy - the X display
  *         fbConfig - an FBConfig as returned by glXChooseFBConfigSGIX().
