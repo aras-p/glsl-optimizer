@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.41 2001/10/17 23:03:34 brianp Exp $ */
+/* $Id: s_texture.c,v 1.42 2001/11/19 01:18:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -956,6 +956,28 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    }
 }
 
+#ifdef DEBUG
+static int
+span_is_monotonous (GLuint n, const GLfloat lambda[])
+{
+  GLuint i;
+
+  if (n <= 1) /* array too short */
+    return GL_TRUE;
+  else if (lambda[0] >= lambda[n-1]) { /* decreasing */
+    for (i=0; i<n-1; i++)
+      if (lambda[i] < lambda[i+1])
+	return GL_FALSE;
+  }
+  else { /* increasing */
+    for (i=0; i<n-1; i++)
+      if (lambda[i] > lambda[i+1])
+	return GL_FALSE;
+  }
+
+  return GL_TRUE;
+}
+#endif /* DEBUG */
 
 /*
  * Given an array of (s,t) texture coordinate and lambda (level of detail)
@@ -972,6 +994,10 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
    const GLfloat minMagThresh = SWRAST_CONTEXT(ctx)->_MinMagThresh[texUnit];
    GLuint i;
    (void) u;
+
+#ifdef DEBUG
+   ASSERT (span_is_monotonous(n, lambda) == GL_TRUE);
+#endif /* DEBUG */
 
    /* since lambda is monotonous-array use this check first */
    if (lambda[0] <= minMagThresh && lambda[n-1] <= minMagThresh) {

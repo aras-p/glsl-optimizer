@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.6 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_span.h,v 1.7 2001/11/19 01:18:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 
 #include "mtypes.h"
 #include "swrast.h"
+#include "s_trispan.h"
 
 
 extern void
@@ -59,6 +60,10 @@ _mesa_write_monocolor_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                             const GLdepth z[], const GLfloat fog[],
                             const GLchan color[4], const GLfloat coverage[],
                             GLenum primitive );
+
+
+extern void
+_mesa_rasterize_span(GLcontext *ctx, struct triangle_span *span);
 
 
 extern void
