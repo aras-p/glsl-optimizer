@@ -33,7 +33,7 @@
 #endif
 
 /*
-    $Id: grammar.c,v 1.9 2004/10/20 14:54:17 michal Exp $
+    $Id: grammar.c,v 1.10 2004/12/08 14:00:46 alanh Exp $
 */
 
 /*
@@ -279,7 +279,7 @@ static int error_position = -1;
 
 static byte *unknown = (byte *) "???";
 
-static void clear_last_error ()
+static void clear_last_error (void)
 {
     /* reset error message */
     error_message = NULL;
@@ -826,7 +826,7 @@ GRAMMAR_IMPLEMENT_LIST_APPEND(rule)
 /*
     returns unique grammar id
 */
-static grammar next_valid_grammar_id ()
+static grammar next_valid_grammar_id (void)
 {
     static grammar id = 0;
 

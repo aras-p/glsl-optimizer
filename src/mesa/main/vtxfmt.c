@@ -49,7 +49,7 @@
 {									\
    GET_CURRENT_CONTEXT(ctx);						\
    struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
-   typedef void (*func_ptr_t)();					\
+   typedef void (*func_ptr_t)(void);					\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
