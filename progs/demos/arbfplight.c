@@ -220,10 +220,10 @@ static void Init( void )
       "DP4 result.position.w, pos, modelviewProj[3]; \n"
 
       "# transform normal by inv transpose of modelview, put in tex0 \n"
-      "DP4 result.texcoord[0].x, norm, invModelview[0]; \n"
-      "DP4 result.texcoord[0].y, norm, invModelview[1]; \n"
-      "DP4 result.texcoord[0].z, norm, invModelview[2]; \n"
-      "DP4 result.texcoord[0].w, norm, invModelview[3]; \n"
+      "DP3 result.texcoord[0].x, norm, invModelview[0]; \n"
+      "DP3 result.texcoord[0].y, norm, invModelview[1]; \n"
+      "DP3 result.texcoord[0].z, norm, invModelview[2]; \n"
+      "DP3 result.texcoord[0].w, norm, invModelview[3]; \n"
 
       "END\n";
       ;
