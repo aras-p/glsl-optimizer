@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -17,7 +18,7 @@
 #endif
 
 #include <GL/glut.h>
-#include "readtex.c"
+#include "readtex.h"
 
 #ifdef XMESA
 #include "GL/xmesa.h"
@@ -98,8 +99,8 @@ part;
 static float treepos[NUMTREE][3];
 
 static float black[3] = { 0.0, 0.0, 0.0 };
-static float blu[3] = { 0.0, 0.2, 1.0 };
-static float blu2[3] = { 0.0, 1.0, 1.0 };
+static float blu[3] = { 1.0, 0.2, 0.0 };
+static float blu2[3] = { 1.0, 1.0, 0.0 };
 
 static float fogcolor[4] = { 1.0, 1.0, 1.0, 1.0 };
 
@@ -136,7 +137,7 @@ static GLuint treeid;
 static float obs[3] = { 2.0, 1.0, 0.0 };
 static float dir[3];
 static float v = 0.0;
-static float alpha = -90.0;
+static float alpha = -84.0;
 static float beta = 90.0;
 
 static float
@@ -384,6 +385,12 @@ drawfire(void)
 {
    static char frbuf[80] = "";
    int j;
+   static double t0 = -1.;
+   double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = (t - t0) * 1.0;
+   t0 = t;
 
    dojoy();
 
@@ -563,10 +570,10 @@ key(unsigned char key, int x, int y)
       break;
 
    case 'a':
-      v += 0.01;
+      v += 0.0005;
       break;
    case 'z':
-      v -= 0.01;
+      v -= 0.0005;
       break;
 
    case 'j':
@@ -709,12 +716,12 @@ main(int ac, char **av)
    /* Default settings */
 
    np = 800;
-   eject_r = 0.1;
+   eject_r = -0.35;
    dt = 0.015;
    eject_vy = 4;
    eject_vl = 1;
    shadows = 1;
-   ridtri = 0.1;
+   ridtri = 0.5;
 
    maxage = 1.0 / dt;
 
