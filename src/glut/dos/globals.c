@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -30,10 +30,12 @@
 #include "GL/glut.h"
 #include "internal.h"
 
-GLenum    g_display_mode = 0;
+GLuint    g_display_mode = 0;
 GLuint    g_width        = DEFAULT_WIDTH;
 GLuint    g_height       = DEFAULT_HEIGHT;
-GLint     g_mouse        = GL_FALSE;
+GLuint    g_bpp          = DEFAULT_BPP;
+GLuint    g_refresh      = 0;
+GLuint    g_mouse        = 0;
 GLboolean g_redisplay    = GL_FALSE;
 GLint     g_xpos         = 0;
 GLint     g_ypos         = 0;

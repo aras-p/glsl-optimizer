@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -48,8 +48,10 @@ static void ticks_timer (void *p)
 int APIENTRY glutGet (GLenum type)
 {
  switch (type) {
+        case GLUT_WINDOW_COLORMAP_SIZE:
+             return (g_display_mode & GLUT_INDEX) ? 256 : 0;
         case GLUT_WINDOW_RGBA:
-             return 1;
+             return !(g_display_mode & GLUT_INDEX);
         case GLUT_ELAPSED_TIME:
              if (!timer_installed) {
                 timer_installed = !timer_installed;

@@ -45,10 +45,12 @@
 #define STENCIL_SIZE 8
 #define ACCUM_SIZE   16
 
-extern GLenum    g_display_mode;
+extern GLuint    g_display_mode;
 extern GLuint    g_width;
 extern GLuint    g_height;
-extern GLint     g_mouse;
+extern GLuint    g_bpp;
+extern GLuint    g_refresh;
+extern GLuint    g_mouse;
 extern GLboolean g_redisplay;
 extern GLint     g_xpos;
 extern GLint     g_ypos;

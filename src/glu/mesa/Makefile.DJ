@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glu makefile v1.1 for Mesa 4.0
+# DOS/DJGPP glu makefile v1.3 for Mesa 5.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -52,10 +52,10 @@ CC = gcc
 CFLAGS += -I$(TOP)/include
 
 AR = ar
-ARFLAGS = ru
+ARFLAGS = rus
 
-ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
+DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
 endif
 
 RM = del
@@ -78,7 +78,7 @@ SOURCES = $(CORE_SOURCES)
 OBJECTS = $(SOURCES:.c=.o)
 
 .c.o:
-	$(CC) -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ $(CFLAGS) -c $<
 
 all: $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP)
 
@@ -86,11 +86,11 @@ $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLU_LIB) $(OBJECTS)
 
 $(LIBDIR)/$(GLU_DXE) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
-ifeq ($(DXE2GEN),)
-	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
-	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
+ifeq ($(DXE3GEN),)
+	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
+	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-	-dxe2gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) $(OBJECTS) -E djgpp_ -E glu -D "Mesa DJGPP GLU" -U
+	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) -D "MesaGLU DJGPP" -E glu -X -P gl.dxe -U $(OBJECTS)
 endif
 
 clean:

@@ -1,4 +1,4 @@
-			Mesa 4.1 DOS/DJGPP Port v1.2
+			Mesa 5.0 DOS/DJGPP Port v1.3
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,7 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 4.1, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 5.0, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -33,6 +33,8 @@ Available options:
 	CPU		optimize for the given processor.
 			default = k6
 	BIG_OPT=1	crazy optimizations; not very useful, though...
+			default = no
+	SGI_GLU=1	build SGI's GLU instead of Mesa's.
 			default = no
 	GLIDE		absolute path to Glide library; used with FX.
 			default = $(TOP)/include/glide3
@@ -65,8 +67,9 @@ Available options:
 Tested on:
 	CPU:		K6-2 (CXT) @500(412.5) MHz
 	Mainboard:	ViA Apollo VP2/97 w/ 128 MB SDRAM
-	Video card:	PowerColor Evil King3 (Voodoo3 3000) w/ 16384 kB SDRAM
+	Video card:	PowerColor EvilKing3 (Voodoo3 3000 PCI) w/ 16 MB SDRAM
 	DJGPP:		djdev 2.04 + gcc v3.2 + make v3.79.1
+	OS:		DOS and Win9x
 
 
 
@@ -83,46 +86,34 @@ FAQ:
 2. Dynamic modules
 
    Q) What are you mumbling about dynamic modules?
-   A) You must have the DXE2 package (available on SimTel.Net, courtesy of
-      Andrew Zabolotny) installed in order to build the dynamic modules.
+   A) You must have the DXE3 package (available on my site) installed in order
+      to build the dynamic modules.
 
-   Q) I have DXE2, but I couldn't build the `dxe2gen.exe'.
-   Q) I built `dxe2gen.exe', but it doesn't do the job right.
-   A) There is a patched version on my web page.
-
-   Q) DXE2 modules give me headaches...
-   A) The DXE2 modules are not compulsory. The static libraries are still built
+   Q) DXE3 modules give me headaches...
+   A) The DXE3 modules are not compulsory. The static libraries are still built
       and you can use them in the old-fashioned, classic way... and learn to
-      live with your ~2MB executable size. For example:
+      live with your huge executable size. For example:
 	gcc -o OUT.exe IN.c -lglut -lglu -lgl
 
-   Q) Okay, DXE2 modules are built. How can I use them?
+   Q) Okay, DXE3 modules are built. How can I use them?
    A) Build your export object file; then link it with your application.
       For example:
-	dxe2res -o dmesadxe.c gl.dxe glu.dxe glut.dxe
-	gcc -o dmesadxe.o dmesadxe.c
+	dxe3res -o dmesadxe.c gl.dxe glu.dxe glut.dxe
+	gcc -o dmesadxe.o -c -fno-builtin dmesadxe.c
 	gcc -o OUT.exe dmesadxe.o IN.c -liglut -liglu -ligl -ldl
-
-   Q) What is that `dxe2res.exe' thing?
-   A) That is an utility that generates the export file for a given set of
-      modules. If you can't find it in the DXE2 package, you must be looking at
-      the wrong archive :)
 
 3. Using Mesa for DJGPP
 
-   Q) Does this build work in Win9x?
-   A) Yes.
-
-   Q) Does it work under NT (W2k, XP) core?
-   A) Uh... probably not!
+   Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
+   A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky. The
+      Glide port is on my web page. If you haven't, sorry; everything is done
+      in software. Suggestions?
 
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
-   A) The current version supports only RGB[A] modes, for it made no sense to
-      me to endorse color-index (aka palette) modes.
    A) Single-buffered is not allowed at all. Until I can find a way to use
       *REAL* hardware acceleration, it won't get implemented.
-   A) Another weird "feature" is that buffer width must be multiple of 4 (I'm a
+   A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
 
@@ -132,18 +123,12 @@ FAQ:
       GLUT took this into account for _WIN32 DLL's only; I don't want to modify
       his headers. The only workaround is to link GLUT the old way :-(
 
-   Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much
-      better...
-   A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky. The
-      Glide port is on my web page. If you haven't, sorry; everything is done
-      in software. Suggestions?
+   Q) I tried to set refresh rate w/ DMesa, but without success.
+   A) Refresh rate control works only for VESA 3.0. If you were compiling for
+      Glide, see Glide info. If not, sorry!
 
-   Q) I have a super/mega/ultra monitor and all you can do is 60Hz? My eyes are
-      leaking from the orbits...
-   A) If you were compiling for Glide, see Glide info. If not, be aware that
-      refresh rate control works only for VESA 3.0. The environment variable
-      DMESA_REFRESH sets the default screen refresh. For example:
-	set DMESA_REFRESH=75
+   Q) The GLUT is incomplete.
+   A) See below.
 
 
 
@@ -152,52 +137,71 @@ libGLUT (the toolkit):
 
 Well, this "skeletal" GLUT implementation is not mine. Thanks should go to
 Bernhard Tschirren, Mark Kilgard, Brian Paul and probably others (or probably
-not ;-). I only changed it to be self-standing (Allegro-free). The keyboard,
-mouse and timer drivers were inspired from an old project of mine (D3Xl) and
-fixed with many Allegro "infusions"; I deeply thank to Shawn Hargreaves et co.
+not ;-). GLUT functionality will be extended only on an "as needed" basis.
 
-My keyboard driver used only scancodes, but since GLUT requires ASCII values
-for keys, I borrowed the translation tables (and maybe more) from Allegro.
-Ctrl-Alt-Del (plus Ctrl-Alt-End, for Windows users) will shut down the GLUT
-engine unconditionally: it will raise SIGINT, which in turn will call the
-destructors (let's hope), thus cleaning up your/my mess ;-) NB: since the
-DJGPP guys ensured signal handlers won't go beyond program's space (and since
-dynamic modules shall) the SIGINT can't be hooked (well, it can, but it is
-useless), therefore you must live with the 'Exiting due to signal SIGINT'
-message...
+My keyboard driver used only scancodes; as GLUT requires ASCII values for keys,
+I borrowed the translation tables (and maybe more) from Allegro -- many thanks
+to Shawn Hargreaves et co. Ctrl-Alt-Del (plus Ctrl-Alt-End, for Windows users)
+will shut down the GLUT engine unconditionally: it will raise SIGINT, which in
+turn will (hopefully) call the destructors, thus cleaning up your/my mess ;-)
+NB: since the DJGPP guys ensured signal handlers won't go beyond program's
+space (and since dynamic modules shall) the SIGINT can't be hooked (well, it
+can, but it is useless), therefore you must live with the 'Exiting due to
+signal SIGINT' message...
 
-The mouse driver is far from complete (lack of positioning, drawing, etc),
-but is enough to make almost all the demos work.
+The mouse driver is far from complete (lack of positioning, drawing, etc), but
+is enough to make almost all the demos work.
 
 The timer is pretty versatile for it supports multiple timers with different
-frequencies. It may not be the most accurate timer in the known universe, but
-I think it's OK. Take this example: you have timer A with a very high rate,
-and then you have timer B with very low rate compared to A; now, A ticks OK,
-but timer B will probably loose precision!
+frequencies. While not being the most accurate timer in the known universe, I
+think it's OK. Take this example: you have timer A with a very high rate, and
+then you have timer B with very low rate compared to A; now, A ticks OK, but
+timer B will probably loose precision!
 
 As an addition, stdout and stderr are redirected and dumped upon exit. This
-means that printf can be safely called during graphics, but all messages come
-in bulk! A bit of a hack, I know, but I think it's better than to miss them
-at all. "Borrowed" from RHIDE (Robert Hoehne) or SETEDIT (Salvador Eduardo
-Tropea)... I'm not sure.
+means that `printf' can be safely called during graphics. A bit of a hack, I
+know, because all messages come in bulk, but I think it's better than nothing.
+"Borrowed" from LIBRHUTI (Robert Hoehne).
 
 Window creating defaults: 640x480x16 at (0,0), 8-bit stencil, 16-bit accum.
-However, the video mode is chosen in such a way that first window will fit.
+However, the video mode is chosen in such a way that first window will fit. If
+you need high resolution with small windows, try to place them far to the right
+(or way down).
+
+The following environment variables can customize GLUT behaviour:
+	DMESA_GLUT_REFRESH	-	set vertical screen refresh rate
+	DMESA_GLUT_BPP		-	set default bits per pixel
 
 
 
 History:
 ~~~~~~~~
 
-v1.0	mar-2002	initial release
+v1.0 (mar-2002)
+	initial release
 
-v1.1	sep-2002	+ added 3dfx Glide3 support
-			+ added refresh rate control
-			+ added fonts in glut
-			* lots of minor changes
+v1.1 (sep-2002)
+	+ added 3dfx Glide3 support
+	+ added refresh rate control
+	+ added fonts in GLUT
+	* lots of minor changes
 
-v1.2	nov-2002	* synced w/ Mesa-4.1
-			- removed dmesadxe.h
+v1.2 (nov-2002)
+	* synced w/ Mesa-4.1
+	- removed dmesadxe.h
+
+v1.3 (dec-2002)
+	+ enabled OpenGL 1.4 support
+	+ added MMX clear/blit routines
+	+ enabled SGI's GLU compilation
+	+ added color-index modes
+	+ added 8bit FakeColor (thanks to Neil Funk)
+	+ added VGA support (to keep Ben Decker happy)
+	* fixed GLUT compilation error (reported by Chan Kar Heng)
+	* overhauled virtual buffer and internal video drivers
+	* better fxMesa integration
+	* extended GLUT functionality
+	* switched to DXE3
 
 
 

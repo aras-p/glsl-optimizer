@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -34,60 +34,153 @@
 		.file	"virtual.S"
 
 /*
- * extern word32 vl_hw_granularity;
- * extern int vl_video_selector;
- * extern int vl_current_offset, vl_current_delta;
+ * extern void *vl_current_draw_buffer;
+ * extern int vl_current_width, vl_current_bytes;
  */
 
 		.text
 
-/*
- * void v_clear16 (void *buffer, int bytes, int color);
+/* Desc: void v_clear8 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
-		.global	_v_clear16
-_v_clear16:
-		movl	12(%esp), %eax
+		.p2align 5,,31
+		.global	_v_clear8
+_v_clear8:
+		movl	4(%esp), %eax
+		movb	%al, %ah
 		pushw	%ax
 		pushw	%ax
 		popl	%eax
 		jmp	_v_clear_common
 
-/*
- * void v_clear32 (void *buffer, int bytes, int color);
+/* Desc: void v_clear16 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
+		.p2align 5,,31
+		.global	_v_clear16
+_v_clear16:
+		movl	4(%esp), %eax
+		pushw	%ax
+		pushw	%ax
+		popl	%eax
+		jmp	_v_clear_common
+
+/* Desc: void v_clear32 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
 		.global	_v_clear32
 _v_clear32:
-		movl	12(%esp), %eax
+		movl	4(%esp), %eax
 		.balign	4
 _v_clear_common:
-		movl	8(%esp), %ecx
-		movl	4(%esp), %edx
+		movl	_vl_current_bytes, %ecx
+		movl	_vl_current_draw_buffer, %edx
 		shrl	$2, %ecx
-	0:
 		.balign	4
+	0:
 		movl	%eax, (%edx)
 		addl	$4, %edx
 		decl	%ecx
 		jnz	0b
 		ret
 
-/*
- * void v_clear24 (void *buffer, int bytes, int color);
+/* Desc: void v_clear8_mmx (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
+		.p2align 5,,31
+		.global	_v_clear8_mmx
+_v_clear8_mmx:
+		movl	4(%esp), %eax
+		movb	%al, %ah
+		pushw	%ax
+		pushw	%ax
+		pushw	%ax
+		pushw	%ax
+		jmp	_v_clear_common_mmx
+
+/* Desc: void v_clear16_mmx (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
+		.global	_v_clear16_mmx
+_v_clear16_mmx:
+		movl	4(%esp), %eax
+		pushw	%ax
+		pushw	%ax
+		pushw	%ax
+		pushw	%ax
+		jmp	_v_clear_common_mmx
+
+/* Desc: void v_clear32_mmx (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
+		.global	_v_clear32_mmx
+_v_clear32_mmx:
+		movl	4(%esp), %eax
+		pushl	%eax
+		pushl	%eax
 		.balign	4
+_v_clear_common_mmx:
+#ifdef USE_MMX_ASM
+		movl	_vl_current_bytes, %ecx
+		movl	_vl_current_draw_buffer, %edx
+		movq	(%esp), %mm0
+		shrl	$3, %ecx
+		.balign	4
+	0:
+		movq	%mm0, (%edx)
+		addl	$8, %edx
+		decl	%ecx
+		jnz	0b
+		emms
+#endif
+		addl	$8, %esp
+		ret
+
+/* Desc: void v_clear24 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
 		.global	_v_clear24
 _v_clear24:
-		movl	8(%esp), %edx
 		movl	$0xaaaaaaab, %eax
-		mull	%edx
-		movl	12(%esp), %eax
+		mull	_vl_current_bytes
+		movl	4(%esp), %eax
 		movl	%edx, %ecx
-		movl	4(%esp), %edx
 		pushl	%ebx
+		movl	_vl_current_draw_buffer, %edx
 		shrl	%ecx
-		movb	18(%esp), %bl
+		movb	10(%esp), %bl
 		.balign	4
 	0:
 		movw	%ax, (%edx)
@@ -98,140 +191,304 @@ _v_clear24:
 		popl	%ebx
 		ret
 
-/*
- * void b_dump_virtual (void *buffer, int stride, int height);
+/* Desc: void v_clear24_mmx (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
-		.global	_b_dump_virtual
-_b_dump_virtual:
-		pushl	%ebx
-		pushl	%esi
-		pushl	%edi
-		pushl	%ebp
-		movl	_vl_video_selector, %fs
-		movl	4*4+4+0(%esp), %esi
-		movl	_vl_hw_granularity, %ebp
-		xorl	%edx, %edx
-		movl	_vl_current_offset, %eax
-		divl	%ebp
-		movl	%edx, %edi
-		pushl	%eax
+		.p2align 5,,31
+		.global	_v_clear24_mmx
+_v_clear24_mmx:
+#ifdef USE_MMX_ASM
+		movl	4(%esp), %eax
 		movl	%eax, %edx
-		xorl	%ebx, %ebx
-		movw	$0x4f05, %ax
-		int	$0x10
-		movl	_vl_current_delta, %ebx
-		movl	5*4+4+4(%esp), %ecx
-		movl	5*4+4+8(%esp), %edx
-		shrl	$2, %ecx
+		movl	%eax, %ecx
+		shll	$16, %edx
+		rorl	$8, %ecx
+		movw	%cx, %dx
+		rorl	$16, %ecx
+		movb	%dh, %cl
+		shll	$8, %eax
+		movb	%ch, %al
+		rorl	$8, %eax
+
+		pushl	%edx
+		pushl	%eax
+		movq	(%esp), %mm0
+		pushl	%ecx
+		movq	(%esp), %mm1
+		pushl	%edx
+		movq	(%esp), %mm2
+
+		movl	$0xaaaaaaab, %eax
+		mull	_vl_current_bytes
+		movl	%edx, %ecx
+		movl	_vl_current_draw_buffer, %edx
+		shrl	$4, %ecx
 		.balign	4
 	0:
-		pushl	%ecx
-		.balign	4
-	1:
-		cmpl	%ebp, %edi
-		jb	2f
-		pushl	%ebx
-		pushl	%edx
-		incl	12(%esp)
-		movw	$0x4f05, %ax
-		movl	12(%esp), %edx
-		xorl	%ebx, %ebx
-		int	$0x10
-		popl	%edx
-		popl	%ebx
-		subl	%ebp, %edi
-	2:
-		movl	(%esi), %eax
-		addl	$4, %esi
-		movl	%eax, %fs:(%edi)
-		addl	$4, %edi
+		movq	%mm0, (%edx)
+		movq	%mm1, 8(%edx)
+		movq	%mm2, 16(%edx)
+		addl	$24, %edx
 		decl	%ecx
-		jnz	1b
-		popl	%ecx
-		addl	%ebx, %edi
-		decl	%edx
 		jnz	0b
-		popl	%eax
-		popl	%ebp
-		popl	%edi
-		popl	%esi
-		popl	%ebx
+		emms
+		addl	$16, %esp
+#endif
 		ret
 
-/*
- * void l_dump_virtual (void *buffer, int stride, int height);
+/* Desc: void v_rect8 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
-		.global	_l_dump_virtual
-_l_dump_virtual:
-		pushl	%ebx
+		.p2align 5,,31
+		.global	_v_rect8
+_v_rect8:
+		cld
 		pushl	%esi
 		pushl	%edi
-		movl	_vl_video_selector, %fs
-		movl	3*4+4+0(%esp), %esi
-		movl	_vl_current_offset, %edi
-		movl	3*4+4+4(%esp), %ecx
-		movl	3*4+4+8(%esp), %edx
-		movl	_vl_current_delta, %ebx
-		shrl	$2, %ecx
+		movl	28(%esp), %eax
+		movl	_vl_current_width, %esi
+		movl	16(%esp), %edi
+		movb	%al, %ah
+		movl	20(%esp), %ecx
+		imull	%esi, %edi
+		movl	24(%esp), %edx
+		subl	%ecx, %esi
+		addl	12(%esp), %edi
+		pushw	%ax
+		pushw	%ax
+		pushl	%ds
+		popl	%es
+		addl	_vl_current_draw_buffer, %edi
+		popl	%eax
+		pushl	%ebx
+		movl	%ecx, %ebx
+		andl	$3, %ebx
 		.balign	4
 	0:
 		pushl	%ecx
 		.balign	4
 	1:
-		movl	(%esi), %eax
-		addl	$4, %esi
-		movl	%eax, %fs:(%edi)
-		addl	$4, %edi
-		decl	%ecx
-		jnz	1b
+		shrl	$2, %ecx
+		rep;	stosl
+		testl	%ebx, %ebx
+		jz	2f
+		movl	%ebx, %ecx
+		rep;	stosb
+		.balign	4
+	2:
 		popl	%ecx
-		addl	%ebx, %edi
+		addl	%esi, %edi
+		decl	%edx
+		jnz	0b
+		popl	%ebx
+		popl	%edi
+		popl	%esi
+		ret
+
+/* Desc: void v_rect16 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
+		.global	_v_rect16
+_v_rect16:
+		cld
+		pushl	%esi
+		pushl	%edi
+		movl	28(%esp), %eax
+		movl	_vl_current_width, %esi
+		movl	16(%esp), %edi
+		movl	20(%esp), %ecx
+		imull	%esi, %edi
+		movl	24(%esp), %edx
+		subl	%ecx, %esi
+		addl	12(%esp), %edi
+		pushw	%ax
+		shll	%esi
+		pushw	%ax
+		shll	%edi
+		pushl	%ds
+		popl	%es
+		addl	_vl_current_draw_buffer, %edi
+		popl	%eax
+		.balign	4
+	0:
+		pushl	%ecx
+		.balign	4
+	1:
+		shrl	%ecx
+		rep;	stosl
+		jnc	2f
+		stosw
+		.balign	4
+	2:
+		popl	%ecx
+		addl	%esi, %edi
 		decl	%edx
 		jnz	0b
 		popl	%edi
 		popl	%esi
-		popl	%ebx
 		ret
 
-/*
- * void v_putpixel16 (void *buffer, int offset, int color);
+/* Desc: void v_rect24 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
+		.p2align 5,,31
+		.global	_v_rect24
+_v_rect24:
+		pushl	%esi
+		pushl	%edi
+		movl	28(%esp), %eax
+		movl	_vl_current_width, %esi
+		movl	16(%esp), %edi
+		movl	20(%esp), %ecx
+		imull	%esi, %edi
+		movl	24(%esp), %edx
+		subl	%ecx, %esi
+		addl	12(%esp), %edi
+		leal	(%esi, %esi, 2), %esi
+		pushl	%ebx
+		leal	(%edi, %edi, 2), %edi
+		movl	%eax, %ebx
+		addl	_vl_current_draw_buffer, %edi
+		shrl	$16, %ebx
 		.balign	4
+	0:
+		pushl	%ecx
+		.balign	4
+	1:
+		movw	%ax, (%edi)
+		movb	%bl, 2(%edi)
+		addl	$3, %edi
+		decl	%ecx
+		jnz	1b
+		popl	%ecx
+		addl	%esi, %edi
+		decl	%edx
+		jnz	0b
+		popl	%ebx
+		popl	%edi
+		popl	%esi
+		ret
+
+/* Desc: void v_rect32 (int color);
+ *
+ * In  : color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
+		.global	_v_rect32
+_v_rect32:
+		pushl	%esi
+		pushl	%edi
+		movl	_vl_current_width, %esi
+		movl	16(%esp), %edi
+		movl	20(%esp), %ecx
+		imull	%esi, %edi
+		movl	24(%esp), %edx
+		subl	%ecx, %esi
+		addl	12(%esp), %edi
+		shll	$2, %esi
+		shll	$2, %edi
+		movl	28(%esp), %eax
+		addl	_vl_current_draw_buffer, %edi
+		.balign	4
+	0:
+		pushl	%ecx
+		.balign	4
+	1:
+		movl	%eax, (%edi)
+		addl	$4, %edi
+		decl	%ecx
+		jnz	1b
+		popl	%ecx
+		addl	%esi, %edi
+		decl	%edx
+		jnz	0b
+		popl	%edi
+		popl	%esi
+		ret
+
+/* Desc: void v_putpixel8 (unsigned int offset, int color);
+ *
+ * In  : offset within buffer, color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
+		.global	_v_putpixel8
+_v_putpixel8:
+		movl	8(%esp), %ecx
+		movl	4(%esp), %edx
+		movl	_vl_current_draw_buffer, %eax
+		movb	%cl, (%eax,%edx)
+		ret
+
+/* Desc: void v_putpixel16 (unsigned int offset, int color);
+ *
+ * In  : offset within buffer, color
+ * Out : -
+ *
+ * Note: uses current draw buffer
+ */
+		.p2align 5,,31
 		.global	_v_putpixel16
 _v_putpixel16:
-		movl	8(%esp), %edx
-		shll	%edx
-		movl	12(%esp), %eax
-		addl	4(%esp), %edx
-		movw	%ax, (%edx)
+		movl	8(%esp), %ecx
+		movl	4(%esp), %edx
+		movl	_vl_current_draw_buffer, %eax
+		movw	%cx, (%eax,%edx,2)
 		ret
 
-/*
- * void v_putpixel24 (void *buffer, int offset, int color);
+/* Desc: void v_putpixel24 (unsigned int offset, int color);
+ *
+ * In  : offset within buffer, color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
+		.p2align 5,,31
 		.global	_v_putpixel24
 _v_putpixel24:
+		movl	4(%esp), %eax
 		movl	8(%esp), %edx
-		leal	(%edx, %edx, 2), %edx
-		movl	12(%esp), %eax
-		addl	4(%esp), %edx
-		movw	%ax, (%edx)
-		shrl	$16, %eax
-		movb	%al, 2(%edx)
+		movl	_vl_current_draw_buffer, %ecx
+		leal	(%eax,%eax,2), %eax
+		movw	%dx, (%ecx,%eax)
+		shrl	$16, %edx
+		movb	%dl, 2(%ecx,%eax)
 		ret
 
-/*
- * void v_putpixel32 (void *buffer, int offset, int color);
+/* Desc: void v_putpixel32 (unsigned int offset, int color);
+ *
+ * In  : offset within buffer, color
+ * Out : -
+ *
+ * Note: uses current draw buffer
  */
-		.balign	4
+		.p2align 5,,31
 		.global	_v_putpixel32
 _v_putpixel32:
-		movl	8(%esp), %edx
-		shll	$2, %edx
-		movl	12(%esp), %eax
-		addl	4(%esp), %edx
-		movl	%eax, (%edx)
+		movl	8(%esp), %ecx
+		movl	4(%esp), %edx
+		movl	_vl_current_draw_buffer, %eax
+		movl	%ecx, (%eax,%edx,4)
 		ret

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -34,9 +34,13 @@
 #ifndef VESA_H_included
 #define VESA_H_included
 
-#include "../videoint.h"
+#include "../internal.h"
 
+extern void *vesa_swbank;
 
+extern void vesa_b_dump_virtual (void);
+extern void vesa_l_dump_virtual (void);
+extern void vesa_l_dump_virtual_mmx (void);
 
 extern vl_driver VESA;
 

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -34,19 +34,24 @@
 #ifndef VIDEO_H_included
 #define VIDEO_H_included
 
-int vl_video_init (int width, int height, int bpp, int refresh);
-void vl_video_exit (void);
+typedef int fixed;
+
+extern int (*vl_mixfix) (fixed r, fixed g, fixed b);
+extern int (*vl_mixrgb) (const unsigned char rgb[]);
+extern int (*vl_mixrgba) (const unsigned char rgba[]);
+extern void (*vl_getrgba) (unsigned int offset, unsigned char rgba[4]);
+
+extern void (*vl_clear) (int color);
+extern void (*vl_rect) (int x, int y, int width, int height, int color);
+extern void (*vl_flip) (void);
+extern void (*vl_putpixel) (unsigned int offset, int color);
+
+void vl_setCI (int index, float red, float green, float blue);
+int vl_getCIpixel (unsigned int offset);
 
 void *vl_sync_buffer (void *buffer, int x, int y, int width, int height);
 
-extern void (*vl_clear) (void *buffer, int bytes, int color);
-void vl_rect (void *buffer, int x, int y, int width, int height, int color);
-
-void (*vl_flip) (void *buffer, int stride, int height);
-
-extern int (*vl_mixrgba) (const unsigned char rgba[]);
-extern int (*vl_mixrgb) (const unsigned char rgb[]);
-extern void (*vl_putpixel) (void *buffer, int offset, int color);
-extern void (*vl_getrgba) (void *buffer, int offset, unsigned char rgba[4]);
+void vl_video_exit (void);
+int vl_video_init (int width, int height, int bpp, int rgb, int refresh);
 
 #endif

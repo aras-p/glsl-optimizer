@@ -23,32 +23,33 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
+ *
+ * Thanks to CrazyPyro (Neil Funk) for FakeColor
  */
 
 
 #include <stdlib.h>
 
 #include "video.h"
-#include "videoint.h"
+#include "internal.h"
 #include "vesa/vesa.h"
+#include "vga/vga.h"
 
 
 
-static vl_driver *drv = &VESA;
-/* card specific: valid forever */
-word32 vl_hw_granularity;
-static unsigned int gran_shift, gran_mask;
+static vl_driver *drv;
 /* based upon mode specific data: valid entire session */
 int vl_video_selector;
 static int video_scanlen, video_bypp;
 /* valid until next buffer */
+void *vl_current_draw_buffer, *vl_current_read_buffer;
+int vl_current_stride, vl_current_width, vl_current_height, vl_current_bytes;
 int vl_current_offset, vl_current_delta;
-static int current_width;
 
 
 
@@ -72,38 +73,77 @@ static int _rgb_scale_6[64] = {
    226, 230, 234, 238, 242, 246, 250, 255
 };
 
+/* FakeColor data */
+#define R_CNT 6
+#define G_CNT 6
+#define B_CNT 6
+
+#define R_BIAS 7
+#define G_BIAS 7
+#define B_BIAS 7
+
+static word32 VGAPalette[256];
+static word8 array_r[256];
+static word8 array_g[256];
+static word8 array_b[256];
 
 
-void (*vl_clear) (void *buffer, int bytes, int color);
-void (*vl_flip) (void *buffer, int stride, int height);
-int (*vl_mixrgba) (const unsigned char rgba[]);
+
+int (*vl_mixfix) (fixed r, fixed g, fixed b);
 int (*vl_mixrgb) (const unsigned char rgb[]);
-void (*vl_putpixel) (void *buffer, int offset, int color);
-void (*vl_getrgba) (void *buffer, int offset, unsigned char rgba[4]);
+int (*vl_mixrgba) (const unsigned char rgba[]);
+void (*vl_getrgba) (unsigned int offset, unsigned char rgba[4]);
+void (*vl_clear) (int color);
+void (*vl_rect) (int x, int y, int width, int height, int color);
+void (*vl_flip) (void);
+void (*vl_putpixel) (unsigned int offset, int color);
 
 
 
-/* vl_rect:
- *  Clears a rectange with specified color.
+/* Desc: color composition (w/o ALPHA)
+ *
+ * In  : R, G, B
+ * Out : color
+ *
+ * Note: -
  */
-void vl_rect (void *buffer, int x, int y, int width, int height, int color)
+static int vl_mixfix8fake (fixed r, fixed g, fixed b)
 {
- int offset = y*current_width + x;
- int delta = current_width - width;
-
- for (y=0; y<height; y++) {
-     for (x=0; x<width; x++, offset++) {
-         vl_putpixel(buffer, offset, color);
-     }
-     offset += delta;
- }
+ return array_b[b>>FIXED_SHIFT]*G_CNT*R_CNT
+      + array_g[g>>FIXED_SHIFT]*R_CNT
+      + array_r[r>>FIXED_SHIFT];
+}
+#define vl_mixfix8 vl_mixfix8fake
+static int vl_mixfix15 (fixed r, fixed g, fixed b)
+{
+ return ((r>>(3+FIXED_SHIFT))<<10)
+       |((g>>(3+FIXED_SHIFT))<<5)
+       |(b>>(3+FIXED_SHIFT));
+}
+static int vl_mixfix16 (fixed r, fixed g, fixed b)
+{
+ return ((r>>(3+FIXED_SHIFT))<<11)
+       |((g>>(2+FIXED_SHIFT))<<5)
+       |(b>>(3+FIXED_SHIFT));
+}
+#define vl_mixfix24 vl_mixfix32
+static int vl_mixfix32 (fixed r, fixed g, fixed b)
+{
+ return ((r>>FIXED_SHIFT)<<16)
+       |((g>>FIXED_SHIFT)<<8)
+       |(b>>FIXED_SHIFT);
 }
 
 
 
-/* vl_mixrgba*:
- *  Color composition (w/ ALPHA).
+/* Desc: color composition (w/ ALPHA)
+ *
+ * In  : array of integers (R, G, B, A)
+ * Out : color
+ *
+ * Note: -
  */
+#define vl_mixrgba8 vl_mixrgb8fake
 #define vl_mixrgba15 vl_mixrgb15
 #define vl_mixrgba16 vl_mixrgb16
 #define vl_mixrgba24 vl_mixrgb24
@@ -114,9 +154,20 @@ static int vl_mixrgba32 (const unsigned char rgba[])
 
 
 
-/* vl_mixrgb*:
- *  Color composition (w/o ALPHA).
+/* Desc: color composition (w/o ALPHA)
+ *
+ * In  : array of integers (R, G, B)
+ * Out : color
+ *
+ * Note: -
  */
+static int vl_mixrgb8fake (const unsigned char rgba[])
+{
+ return array_b[rgba[2]]*G_CNT*R_CNT
+      + array_g[rgba[1]]*R_CNT
+      + array_r[rgba[0]];
+}
+#define vl_mixrgb8 vl_mixrgb8fake
 static int vl_mixrgb15 (const unsigned char rgb[])
 {
  return ((rgb[0]>>3)<<10)|((rgb[1]>>3)<<5)|(rgb[2]>>3);
@@ -133,36 +184,57 @@ static int vl_mixrgb32 (const unsigned char rgb[])
 
 
 
-/* v_getrgba*:
- *  Color decomposition.
+/* Desc: color decomposition
+ *
+ * In  : pixel offset, array of integers to hold color components (R, G, B, A)
+ * Out : -
+ *
+ * Note: uses current read buffer
  */
-static void v_getrgba15 (void *buffer, int offset, unsigned char rgba[4])
+static void v_getrgba8fake6 (unsigned int offset, unsigned char rgba[])
 {
- int c = ((word16 *)buffer)[offset];
+ word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
+ rgba[0] = _rgb_scale_6[(c >> 16) & 0x3F];
+ rgba[1] = _rgb_scale_6[(c >> 8) & 0x3F];
+ rgba[2] = _rgb_scale_6[c & 0x3F];
+ rgba[3] = c >> 24;
+}
+static void v_getrgba8fake8 (unsigned int offset, unsigned char rgba[])
+{
+ word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
+ rgba[0] = c >> 16;
+ rgba[1] = c >> 8;
+ rgba[2] = c;
+ rgba[3] = c >> 24;
+}
+#define v_getrgba8 v_getrgba8fake6
+static void v_getrgba15 (unsigned int offset, unsigned char rgba[4])
+{
+ word32 c = ((word16 *)vl_current_read_buffer)[offset];
  rgba[0] = _rgb_scale_5[(c >> 10) & 0x1F];
  rgba[1] = _rgb_scale_5[(c >> 5) & 0x1F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
  rgba[3] = 255;
 }
-static void v_getrgba16 (void *buffer, int offset, unsigned char rgba[4])
+static void v_getrgba16 (unsigned int offset, unsigned char rgba[4])
 {
- int c = ((word16 *)buffer)[offset];
+ word32 c = ((word16 *)vl_current_read_buffer)[offset];
  rgba[0] = _rgb_scale_5[(c >> 11) & 0x1F];
  rgba[1] = _rgb_scale_6[(c >> 5) & 0x3F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
  rgba[3] = 255;
 }
-static void v_getrgba24 (void *buffer, int offset, unsigned char rgba[4])
+static void v_getrgba24 (unsigned int offset, unsigned char rgba[4])
 {
- int c = *(word32 *)((long)buffer+offset*3);
+ word32 c = *(word32 *)((long)vl_current_read_buffer+offset*3);
  rgba[0] = c >> 16;
  rgba[1] = c >> 8;
  rgba[2] = c;
  rgba[3] = 255;
 }
-static void v_getrgba32 (void *buffer, int offset, unsigned char rgba[4])
+static void v_getrgba32 (unsigned int offset, unsigned char rgba[4])
 {
- int c = ((word32 *)buffer)[offset];
+ word32 c = ((word32 *)vl_current_read_buffer)[offset];
  rgba[0] = c >> 16;
  rgba[1] = c >> 8;
  rgba[2] = c; 
@@ -171,54 +243,158 @@ static void v_getrgba32 (void *buffer, int offset, unsigned char rgba[4])
 
 
 
-/* vl_sync_buffer:
- *  Syncs buffer with video hardware. Returns NULL in case of failure.
+/* Desc: set one palette entry
+ *
+ * In  : index, R, G, B
+ * Out : -
+ *
+ * Note: color components are in range [0.0 .. 1.0]
  */
-void *vl_sync_buffer (void *buffer, int x, int y, int width, int height)
+void vl_setCI (int index, float red, float green, float blue)
 {
- void *newbuf;
+ drv->setCI_f(index, red, green, blue);
+}
 
- if (width&3) {
-    return NULL;
- } else {
-    if ((newbuf=realloc(buffer, width*height*video_bypp))!=NULL) {
-       vl_current_offset = video_scanlen * y + video_bypp * x;
-       current_width = width;
-       vl_current_delta = video_scanlen - video_bypp * width;
-    }
-    return newbuf;
+
+
+/* Desc: read pixel from 8bit buffer
+ *
+ * In  : pixel offset
+ * Out : pixel read
+ *
+ * Note: used only for CI modes
+ */
+int vl_getCIpixel (unsigned int offset)
+{
+ return ((word8 *)vl_current_read_buffer)[offset];
+}
+
+
+
+/* Desc: set one palette entry
+ *
+ * In  : color, R, G, B
+ * Out : -
+ *
+ * Note: color components are in range [0 .. 63]
+ */
+static void fake_setcolor (int c, int r, int g, int b)
+{
+ VGAPalette[c] = 0xff000000 | (r<<16) | (g<<8) | b;
+
+ drv->setCI_i(c, r, g, b);
+}
+
+
+
+/* Desc: build FakeColor palette
+ *
+ * In  : CI precision in bits
+ * Out : -
+ *
+ * Note: -
+ */
+static void fake_buildpalette (int bits)
+{
+ double c_r, c_g, c_b;
+ int r, g, b, color = 0;
+
+ double max = (1 << bits) - 1;
+
+ for (b=0; b<B_CNT; ++b) {
+     for (g=0; g<G_CNT; ++g) {
+         for (r=0; r<R_CNT; ++r) {
+             c_r = 0.5 + (double)r*(max-R_BIAS)/(R_CNT-1.) + R_BIAS;
+             c_g = 0.5 + (double)g*(max-G_BIAS)/(G_CNT-1.) + G_BIAS;
+             c_b = 0.5 + (double)b*(max-B_BIAS)/(B_CNT-1.) + B_BIAS;
+             fake_setcolor(color++, (int)c_r, (int)c_g, (int)c_b);
+         }
+     }
+ }
+
+ for (color=0; color<256; color++) {
+     c_r = (double)color*R_CNT/256.;
+     c_g = (double)color*G_CNT/256.;
+     c_b = (double)color*B_CNT/256.;
+     array_r[color] = (int)c_r;
+     array_g[color] = (int)c_g;
+     array_b[color] = (int)c_b;
  }
 }
 
 
 
-/* vl_setup_mode:
+/* Desc: sync buffer with video hardware
  *
- *  success: 0
- *  failure: -1
+ * In  : old buffer, position, size
+ * Out : new buffer
+ *
+ * Note: -
+ */
+void *vl_sync_buffer (void *buffer, int x, int y, int width, int height)
+{
+ void *newbuf;
+
+ if (width&7) {
+    return NULL;
+ } else {
+    if ((newbuf=realloc(buffer, width * height * video_bypp)) != NULL) {
+       vl_current_width = width;
+       vl_current_height = height;
+       vl_current_stride = vl_current_width * video_bypp;
+       vl_current_bytes = vl_current_stride * height;
+
+       vl_current_offset = video_scanlen * y + video_bypp * x;
+       vl_current_delta = video_scanlen - vl_current_stride;
+    }
+    return vl_current_draw_buffer = vl_current_read_buffer = newbuf;
+ }
+}
+
+
+
+/* Desc: retrieve CPU MMX capability
+ *
+ * In  : -
+ * Out : FALSE if CPU cannot do MMX
+ *
+ * Note: -
+ */
+int vl_can_mmx (void)
+{
+#ifdef USE_MMX_ASM
+ extern int _mesa_identify_x86_cpu_features (void);
+ int _mesa_x86_cpu_features = _mesa_identify_x86_cpu_features();
+ return (_mesa_x86_cpu_features & 0x00800000);
+#else
+ return 0;
+#endif
+}
+
+
+
+/* Desc: setup mode
+ *
+ * In  : ptr to mode definition
+ * Out : 0 if success
+ *
+ * Note: -
  */
 static int vl_setup_mode (vl_mode *p)
 {
- if (p->mode&0x4000) {
-    vl_flip = l_dump_virtual;
- } else {
-    { int n; for (gran_shift=0, n=p->gran; n; gran_shift++, n>>=1) ; }
-    gran_mask = (1<<(--gran_shift)) - 1;
-    if ((unsigned)p->gran != (gran_mask+1)) {
-       return -1;
-    }
-    vl_hw_granularity = p->gran;
-    vl_flip = b_dump_virtual;
- }
-
 #define INITPTR(bpp) \
         vl_putpixel = v_putpixel##bpp; \
         vl_getrgba = v_getrgba##bpp;   \
-        vl_clear = v_clear##bpp;       \
+        vl_rect = v_rect##bpp;         \
+        vl_mixfix = vl_mixfix##bpp;    \
         vl_mixrgb = vl_mixrgb##bpp;    \
-        vl_mixrgba = vl_mixrgba##bpp;
-
+        vl_mixrgba = vl_mixrgba##bpp;  \
+        vl_clear = vl_can_mmx() ? v_clear##bpp##_mmx : v_clear##bpp
+        
  switch (p->bpp) {
+        case 8:
+             INITPTR(8);
+             break;
         case 15:
              INITPTR(15);
              break;
@@ -246,9 +422,12 @@ static int vl_setup_mode (vl_mode *p)
 
 
 
-/* vl_video_exit:
- *  Shutdown the video engine.
- *  Restores to the mode prior to first call to `vl_video_init'.
+/* Desc: restore to the mode prior to first call to `vl_video_init'.
+ *
+ * In  : -
+ * Out : -
+ *
+ * Note: -
  */
 void vl_video_exit (void)
 {
@@ -258,20 +437,33 @@ void vl_video_exit (void)
 
 
 
-/* vl_video_init:
- *  Enter mode.
+/* Desc: enter mode
  *
- *  success: 0
- *  failure: -1
+ * In  : xres, yres, bits/pixel, RGB, refresh rate
+ * Out : pixel width in bits if success
+ *
+ * Note: -
  */
-int vl_video_init (int width, int height, int bpp, int refresh)
+int vl_video_init (int width, int height, int bpp, int rgb, int refresh)
 {
+ int fake;
  vl_mode *p, *q;
  unsigned int min;
 
+ fake = 0;
+ if (!rgb) {
+    bpp = 8;
+ } else if (bpp == 8) {
+    fake = 1;
+ }
+
  /* initialize hardware */
- if ((q=drv->getmodes()) == NULL) {
-    return -1;
+ drv = &VESA;
+ if ((q=drv->init()) == NULL) {
+    drv = &VGA;
+    if ((q=drv->init()) == NULL) {
+       return 0;
+    }
  }
 
  /* search for a mode that fits our request */
@@ -286,9 +478,17 @@ int vl_video_init (int width, int height, int bpp, int refresh)
 
  /* check, setup and enter mode */
  if ((p!=NULL) && (vl_setup_mode(p) == 0) && (drv->entermode(p, refresh) == 0)) {
-    return 0;
+    vl_flip = drv->blit;
+    if (fake) {
+       min = drv->getCIprec();
+       fake_buildpalette(min);
+       if (min == 8) {
+          vl_getrgba = v_getrgba8fake8;
+       }
+    }
+    return bpp;
  }
 
  /* abort */
- return -1;
+ return 0;
 }

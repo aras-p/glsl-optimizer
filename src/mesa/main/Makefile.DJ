@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v1.2 for Mesa 4.1
+# DOS/DJGPP core makefile v1.3 for Mesa 5.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -75,10 +75,10 @@ CFLAGS += -D__DOS__ -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
 endif
 
 AR = ar
-ARFLAGS = ru
+ARFLAGS = rus
 
-ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
+DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
 endif
 
 RM = del
@@ -249,15 +249,18 @@ else
 X86_SOURCES =
 endif
 
-ifndef FX
 DRIVER_SOURCES = \
-	DOS/dmesa.c \
+	DOS/dmesa.c
+ifndef FX
+DRIVER_SOURCES += \
 	DOS/video.c \
 	DOS/virtual.S \
 	DOS/vesa/vesa.c \
+	DOS/vesa/blit.S \
+	DOS/vga/vga.c \
 	DOS/dpmi.c
 else
-DRIVER_SOURCES = \
+DRIVER_SOURCES += \
 	FX/fxapi.c \
 	FX/fxdd.c \
 	FX/fxddspan.c \
@@ -276,11 +279,11 @@ OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 X86_OBJECTS = $(addsuffix .o,$(basename $(X86_SOURCES)))
 
 .c.o:
-	$(CC) -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ $(CFLAGS) -c $<
 .S.o:
-	$(CC) -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ $(CFLAGS) -c $<
 .s.o:
-	$(CC) -o $@ -c $(CFLAGS) -x assembler-with-cpp $<
+	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
 
 all: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP)
 
@@ -288,11 +291,15 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GL_LIB) $(OBJECTS)
 
 $(LIBDIR)/$(GL_DXE) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
-ifeq ($(DXE2GEN),)
-	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
-	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
+ifeq ($(DXE3GEN),)
+	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
+	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-	-dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -E djgpp_ -E gl -E DMesa -E fxMesa -D "Mesa DJGPP GL" -U
+ifdef FX
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL/FX DJGPP" -E gl -E DMesa -X -P glid3.dxe -U $(OBJECTS)
+else
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL DJGPP" -E gl -E DMesa -X -U $(OBJECTS)
+endif
 endif
 
 $(X86_OBJECTS): X86/matypes.h
@@ -313,6 +320,7 @@ clean:
 	-$(RM) $(subst /,\,X86/*.o)
 	-$(RM) $(subst /,\,DOS/*.o)
 	-$(RM) $(subst /,\,DOS/vesa/*.o)
+	-$(RM) $(subst /,\,DOS/vga/*.o)
 	-$(RM) $(subst /,\,FX/*.o)
 
 -include depend

@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v1.1 for Mesa 4.0
+# DOS/DJGPP glut makefile v1.3 for Mesa 5.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -33,14 +33,7 @@
 #    Environment variables:
 #	CFLAGS
 #
-#	GLIDE		absolute path to Glide SDK; used with FX.
-#			default = $(TOP)/include/glide3
-#	FX=1		build for 3dfx Glide3; use it if you have the glide
-#			SDK (designed for your platform), and, of course, a
-#			3dfx card... Note that this disables compilation of
-#			actual DMesa code, as Glide does all the stuff!
-#			default = no
-#	MARK		absolute path to original GLUT.
+#	MKGLUT		absolute path to original GLUT.
 #			default = $(TOP)/src-glut
 #
 #    Targets:
@@ -54,23 +47,20 @@
 
 TOP = ..
 GLIDE ?= $(TOP)/include/glide3
-MARK ?= $(TOP)/src-glut
+MKGLUT ?= $(TOP)/src-glut
 LIBDIR = $(TOP)/lib
 GLUT_LIB = libglut.a
 GLUT_DXE = glut.dxe
 GLUT_IMP = libiglut.a
 
 CC = gcc
-CFLAGS += -I$(TOP)/include -I$(MARK)
-ifdef FX
-CFLAGS += -D__DOS__ -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
-endif
+CFLAGS += -I$(TOP)/include -I$(MKGLUT)
 
 AR = ar
 ARFLAGS = ru
 
-ifneq ($(wildcard $(DJDIR)/lib/dxe2.ld),)
-DXE2GEN = $(wildcard $(addsuffix /dxe2gen.exe,$(subst ;, ,$(PATH))))
+ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
+DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
 endif
 
 RM = del
@@ -95,25 +85,25 @@ PC_HW_SOURCES = \
 	PC_HW/pc_timer.c \
 	PC_HW/pc_irq.S
 
-MARK_SOURCES = \
-	$(MARK)/glut_8x13.c \
-	$(MARK)/glut_9x15.c \
-	$(MARK)/glut_hel10.c \
-	$(MARK)/glut_hel12.c \
-	$(MARK)/glut_hel18.c \
-	$(MARK)/glut_tr10.c \
-	$(MARK)/glut_tr24.c
+MKGLUT_SOURCES = \
+	$(MKGLUT)/glut_8x13.c \
+	$(MKGLUT)/glut_9x15.c \
+	$(MKGLUT)/glut_hel10.c \
+	$(MKGLUT)/glut_hel12.c \
+	$(MKGLUT)/glut_hel18.c \
+	$(MKGLUT)/glut_tr10.c \
+	$(MKGLUT)/glut_tr24.c
 
-SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES) $(MARK_SOURCES)
+SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES) $(MKGLUT_SOURCES)
 
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 .c.o:
-	$(CC) -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ $(CFLAGS) -c $<
 .S.o:
-	$(CC) -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ $(CFLAGS) -c $<
 .s.o:
-	$(CC) -o $@ -c $(CFLAGS) -x assembler-with-cpp $<
+	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
 
 all: $(LIBDIR)/$(GLUT_LIB) $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP)
 
@@ -121,16 +111,16 @@ $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/$(GLUT_LIB) $(OBJECTS)
 
 $(LIBDIR)/$(GLUT_DXE) $(LIBDIR)/$(GLUT_IMP): $(OBJECTS)
-ifeq ($(DXE2GEN),)
-	$(warning Missing DXE2GEN and/or DXE2.LD! You must have DXE2GEN)
-	$(warning somewhere in PATH, and DXE2.LD in DJGPP/LIB directory.)
+ifeq ($(DXE3GEN),)
+	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
+	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-	-dxe2gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) $(OBJECTS) -E djgpp_ -E glut -D "Mesa DJGPP GLUT" -U
+	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E glut -X -P gl.dxe -P glu.dxe -U $(OBJECTS)
 endif
 
 clean:
 	-$(RM) $(subst /,\,*.o)
 	-$(RM) $(subst /,\,PC_HW/*.o)
-	-$(RM) $(subst /,\,$(MARK)/*.o)
+	-$(RM) $(subst /,\,$(MKGLUT)/*.o)
 
 -include depend

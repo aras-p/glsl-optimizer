@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -28,17 +28,29 @@
 
 
 #include "GL/glut.h"
+#include "GL/dmesa.h"
+#include "internal.h"
+
+
+
+#define CLAMP(i) ((i) > 1.0 ? 1.0 : ((i) < 0.0 ? 0.0 : (i)))
+
 
 
 void APIENTRY glutSetColor (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 {
+ if (g_display_mode & GLUT_INDEX) {
+    DMesaSetCI(ndx, CLAMP(red), CLAMP(green), CLAMP(blue));
+ }
 }
+
 
 
 GLfloat APIENTRY glutGetColor (int ndx, int component)
 {
  return 0.0;
 }
+
 
 
 void APIENTRY glutCopyColormap (int win)

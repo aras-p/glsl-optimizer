@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.2 for Mesa 4.1
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -32,7 +32,7 @@
 
 
 #include <dpmi.h>
-#include <string.h>
+#include <stdlib.h>
 #include <stubinfo.h>
 #include <sys/exceptn.h>
 #include <sys/segments.h>
@@ -40,7 +40,6 @@
 #include <sys/movedata.h>
 
 #include "vesa.h"
-#include "../dpmiint.h"
 
 
 
@@ -49,6 +48,11 @@ static vl_mode modes[64];
 static word16 vesa_ver;
 static int banked_selector, linear_selector;
 static int oldmode = -1;
+
+static int vesa_color_precision = 6;
+
+static void *vesa_pmcode;
+unsigned int vesa_gran_mask, vesa_gran_shift;
 
 
 
@@ -100,11 +104,14 @@ typedef struct CRTCInfoBlock {
 
 
 
-/* vesa_init:
- *  Attempts to detect VESA, check video modes and create selectors.
- *  Returns 0 if error.
+/* Desc: Attempts to detect VESA, check video modes and create selectors.
+ *
+ * In  : -
+ * Out : mode array
+ *
+ * Note: -
  */
-static word16 vesa_init (void)
+static vl_mode *vesa_init (void)
 {
  __dpmi_regs r;
  word16 *p;
@@ -114,7 +121,7 @@ static word16 vesa_init (void)
  word32 linearfb = 0;
 
  if (vesa_ver) {
-    return vesa_ver;
+    return modes;
  }
 
  _farpokel(_stubinfo->ds_selector, 0, 0x32454256);
@@ -124,7 +131,7 @@ static word16 vesa_init (void)
  __dpmi_int(0x10, &r);
  movedata(_stubinfo->ds_selector, 0, _my_ds(), (unsigned)vesa_info, 512);
  if ((r.x.ax!=0x004f) || ((_32_ vesa_info[V_SIGN])!=0x41534556)) {
-    return 0;
+    return NULL;
  }
 
  p = (word16 *)(((_16_ vesa_info[V_MODE_SEG])<<4) + (_16_ vesa_info[V_MODE_OFS]));
@@ -144,6 +151,7 @@ static word16 vesa_init (void)
             case 16:
                  q->bpp = tmp[M_RED] + tmp[M_GREEN] + tmp[M_BLUE];
                  break;
+            case 8:
             case 15:
             case 24:
             case 32:
@@ -175,54 +183,74 @@ static word16 vesa_init (void)
  } while (TRUE);
 
  if (q==modes) {
-    return 0;
+    return NULL;
  }
  if (linearfb) {
     maxsize = ((maxsize+0xfffUL)&~0xfffUL);
     if (_create_selector(&linear_selector, linearfb, maxsize)) {
-       return 0;
+       return NULL;
     }
  }
  if (_create_selector(&banked_selector, 0xa0000, modes[0].gran)) {
     _remove_selector(&linear_selector);
-    return 0;
+    return NULL;
  }
 
  for (q=modes; q->mode!=0xffff; q++) {
      q->sel = (q->mode&0x4000) ? linear_selector : banked_selector;
  }
 
- return (vesa_ver = _16_ vesa_info[V_MINOR]);
+ if (vesa_info[V_MAJOR] >= 2) {
+    r.x.ax = 0x4f0a;
+    r.h.bl = 0;
+    __dpmi_int(0x10, &r);
+    if (r.x.ax == 0x004f) {
+       vesa_pmcode = malloc(r.x.cx);
+       movedata(__djgpp_dos_sel, (r.x.es << 4) + r.x.di, _my_ds(), (unsigned)vesa_pmcode, r.x.cx);
+       p = (word16 *)((long)vesa_pmcode + ((word16 *)vesa_pmcode)[3]);
+       while (*p++ != 0xffff) ;
+       if (*p != 0xffff) {
+          free(vesa_pmcode);
+          vesa_pmcode = NULL;
+       } else {
+          vesa_swbank = (char *)vesa_pmcode + ((word16 *)vesa_pmcode)[0];
+       }
+    }
+ }
+
+ vesa_ver = _16_ vesa_info[V_MINOR];
+ return modes;
 }
 
 
 
-/* vesa_finit:
- *  Frees all resources allocated by VESA init code.
+/* Desc: Frees all resources allocated by VESA init code.
+ *
+ * In  : -
+ * Out : -
+ *
+ * Note: -
  */
 static void vesa_finit (void)
 {
  if (vesa_ver) {
     _remove_selector(&linear_selector);
     _remove_selector(&banked_selector);
+    if (vesa_pmcode != NULL) {
+       free(vesa_pmcode);
+       vesa_pmcode = NULL;
+    }
  }
 }
 
 
 
-/* vesa_getmodes:
- *  Returns ptr to mode array.
- */
-static vl_mode *vesa_getmodes (void)
-{
- return (vesa_init() == 0) ? NULL : modes;
-}
-
-
-
-/* _closest_pixclk:
- *  Uses VESA 3.0 function 0x4F0B to find the closest pixel clock to the
- *  requested value.
+/* Desc: Uses VESA 3.0 function 0x4F0B to find the closest pixel clock to the requested value.
+ *
+ * In  : mode, clock
+ * Out : desired clock
+ *
+ * Note: -
  */
 static unsigned long _closest_pixclk (int mode_no, unsigned long vclk)
 {
@@ -239,8 +267,12 @@ static unsigned long _closest_pixclk (int mode_no, unsigned long vclk)
 
 
 
-/* _crtc_timing:
- *  Calculates CRTC mode timings.
+/* Desc: Calculates CRTC mode timings.
+ *
+ * In  : crtc block, geometry, adjust
+ * Out :
+ *
+ * Note:
  */
 static void _crtc_timing (CRTCInfoBlock *crtc, int xres, int yres, int xadjust, int yadjust)
 {
@@ -318,15 +350,27 @@ static void _crtc_timing (CRTCInfoBlock *crtc, int xres, int yres, int xadjust, 
 
 
 
-/* vesa_entermode:
- *  Attempts to enter specified video mode.
+/* Desc: Attempts to enter specified video mode.
  *
- *  success: 0
- *  failure: !0
+ * In  : ptr to mode structure, refresh rate
+ * Out : 0 if success
+ *
+ * Note: -
  */
 static int vesa_entermode (vl_mode *p, int refresh)
 {
  __dpmi_regs r;
+
+ if (p->mode & 0x4000) {
+    VESA.blit = vl_can_mmx() ? vesa_l_dump_virtual_mmx : vesa_l_dump_virtual;
+ } else {
+    VESA.blit = vesa_b_dump_virtual;
+    { int n; for (vesa_gran_shift=0, n=p->gran; n; vesa_gran_shift++, n>>=1) ; }
+    vesa_gran_mask = (1<<(--vesa_gran_shift)) - 1;
+    if ((unsigned)p->gran != (vesa_gran_mask+1)) {
+       return !0;
+    }
+ }
 
  if (oldmode == -1) {
     r.x.ax = 0x4f03;
@@ -364,14 +408,33 @@ static int vesa_entermode (vl_mode *p, int refresh)
  }
 
  __dpmi_int(0x10, &r);
+ if (r.x.ax != 0x004f) {
+    return !0;
+ }
 
- return (r.x.ax != 0x004f);
+ if (p->bpp == 8) {
+    r.x.ax = 0x4f08;
+    r.x.bx = 0x0800;
+    __dpmi_int(0x10, &r);
+    if (r.x.ax == 0x004f) {
+       r.x.ax = 0x4f08;
+       r.h.bl = 0x01;
+       __dpmi_int(0x10, &r);
+       vesa_color_precision = r.h.bh;
+    }
+ }
+
+ return 0;
 }
 
 
 
-/* vesa_restore:
- *  Restores to the mode prior to first call to vesa_entermode.
+/* Desc: Restores to the mode prior to first call to vesa_entermode.
+ *
+ * In  : -
+ * Out : -
+ *
+ * Note: -
  */
 static void vesa_restore (void)
 {
@@ -386,12 +449,74 @@ static void vesa_restore (void)
 
 
 
+/* Desc: set one palette entry
+ *
+ * In  : color index, R, G, B
+ * Out : -
+ *
+ * Note: uses normalized values
+ */
+static void vesa_setCI_f (int index, float red, float green, float blue)
+{
+ float max = (1 << vesa_color_precision) - 1;
+
+ int _red = red * max;
+ int _green = green * max;
+ int _blue = blue * max;
+
+ __asm("\n\
+		movw $0x1010, %%ax	\n\
+		movb %1, %%dh		\n\
+		movb %2, %%ch		\n\
+		int  $0x10		\n\
+"::"b"(index), "m"(_red), "m"(_green), "c"(_blue):"%eax", "%edx");
+}
+
+
+
+/* Desc: set one palette entry
+ *
+ * In  : color index, R, G, B
+ * Out : -
+ *
+ * Note: uses integer values
+ */
+static void vesa_setCI_i (int index, int red, int green, int blue)
+{
+ __asm("\n\
+		movw $0x1010, %%ax	\n\
+		movb %1, %%dh		\n\
+		movb %2, %%ch		\n\
+		int  $0x10		\n\
+"::"b"(index), "m"(red), "m"(green), "c"(blue):"%eax", "%edx");
+}
+
+
+
+/* Desc: retrieve CI precision
+ *
+ * In  : -
+ * Out : precision in bits
+ *
+ * Note: -
+ */
+static int vesa_getCIprec (void)
+{
+ return vesa_color_precision;
+}
+
+
+
 /*
  * the driver
  */
 vl_driver VESA = {
-          vesa_getmodes,
+          vesa_init,
           vesa_entermode,
+          NULL,
+          vesa_setCI_f,
+          vesa_setCI_i,
+          vesa_getCIprec,
           vesa_restore,
           vesa_finit
 };

@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.2 for Mesa 4.1
+ * DOS/DJGPP device driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -37,6 +37,17 @@
 #define DMESA_MAJOR_VERSION 5
 #define DMESA_MINOR_VERSION 0
 
+/* Sample Usage:
+ *
+ * 1. Call DMesaCreateVisual() to initialize graphics.
+ * 2. Call DMesaCreateContext() to create a DMesa rendering context.
+ * 3. Call DMesaCreateBuffer() to define the window.
+ * 4. Call DMesaMakeCurrent() to bind the DMesaBuffer to a DMesaContext.
+ * 5. Make gl* calls to render your graphics.
+ * 6. Use DMesaSwapBuffers() when double buffering to swap front/back buffers.
+ * 7. Before exiting, destroy DMesaBuffer, DMesaContext and DMesaVisual.
+ */
+
 typedef struct dmesa_context *DMesaContext;
 typedef struct dmesa_visual *DMesaVisual;
 typedef struct dmesa_buffer *DMesaBuffer;
@@ -45,32 +56,79 @@ typedef struct dmesa_buffer *DMesaBuffer;
 extern "C" {
 #endif
 
-DMesaVisual DMesaCreateVisual (GLint width, GLint height,
-                               GLint colDepth,
-                               GLboolean dbFlag,
-                               GLint depthSize,
-                               GLint stencilSize,
-                               GLint accumSize);
+/*
+ * Create a new Visual and set graphics mode.
+ */
+DMesaVisual DMesaCreateVisual (GLint width,        /* X res */
+                               GLint height,       /* Y res */
+                               GLint colDepth,     /* BPP */
+                               GLint refresh,      /* refresh rate: 0=default */
+                               GLboolean dbFlag,   /* double-buffered */
+                               GLboolean rgbFlag,  /* RGB mode */
+                               GLboolean alphaFlag,/* alpha buffer requested */
+                               GLint depthSize,    /* requested bits/depth */
+                               GLint stencilSize,  /* requested bits/stencil */
+                               GLint accumSize);   /* requested bits/accum */
 
+/*
+ * Destroy Visual and restore screen.
+ */
 void DMesaDestroyVisual (DMesaVisual v);
 
+
+
+/*
+ * Create a new Context for rendering.
+ */
+DMesaContext DMesaCreateContext (DMesaVisual visual, DMesaContext share);
+
+/*
+ * Destroy Context.
+ */
+void DMesaDestroyContext (DMesaContext c);
+
+
+
+/*
+ * Create a new Buffer (window).
+ */
 DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
                                GLint xpos, GLint ypos,
                                GLint width, GLint height);
 
+/*
+ * Destroy Buffer.
+ */
 void DMesaDestroyBuffer (DMesaBuffer b);
 
-DMesaContext DMesaCreateContext (DMesaVisual visual, DMesaContext share);
 
-void DMesaDestroyContext (DMesaContext c);
 
+/*
+ * Bind Buffer to Context and make the Context the current one.
+ */
+GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b);
+
+
+
+/*
+ * Swap the front and back buffers for the given Buffer.
+ * No action is taken if the buffer is not double buffered.
+ */
+void DMesaSwapBuffers (DMesaBuffer b);
+
+
+
+/*
+ * Move/Resize Buffer.
+ */
 GLboolean DMesaViewport (DMesaBuffer b,
                          GLint xpos, GLint ypos,
                          GLint width, GLint height);
 
-GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b);
-
-void DMesaSwapBuffers (DMesaBuffer b);
+/*
+ * Set CI color using normalized values.
+ */
+void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
 
 #ifdef __cplusplus
 }

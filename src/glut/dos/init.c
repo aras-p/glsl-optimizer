@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -33,6 +33,15 @@
 
 void APIENTRY glutInit (int *argcp, char **argv)
 {
+ const char *env;
+
+ if ((env = getenv("DMESA_GLUT_BPP")) != NULL) {
+    g_bpp = atoi(env);
+ }
+ if ((env = getenv("DMESA_GLUT_REFRESH")) != NULL) {
+    g_refresh = atoi(env);
+ }
+
  glutGet(GLUT_ELAPSED_TIME);
 }
 
