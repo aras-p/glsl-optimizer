@@ -816,19 +816,20 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		)){
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047):
 		return 0x1a0c;
-	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047):
-		return 0x53a0c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047):
 		return 0x4ba0c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047):
+		return 0x53a0c;	
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047):
+		return 0x53a0c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047):
 		return 0x53a0c;	
 	default:
 		{
 		static int warn_once=1;
 		if(warn_once){
-			fprintf(stderr, "%s:%s Do not know how to translate texture format %08x - help me !\n",
-				__FILE__, __FUNCTION__,
-				format);
+			fprintf(stderr, "%s:%s Do not know how to translate texture format - help me !\n",
+				__FILE__, __FUNCTION__);
 			warn_once=0;
 			}
 		}
