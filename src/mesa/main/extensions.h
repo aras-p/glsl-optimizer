@@ -1,10 +1,10 @@
-/* $Id: extensions.h,v 1.11 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: extensions.h,v 1.12 2001/02/26 23:58:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,21 +31,24 @@
 #include "mtypes.h"
 
 
-extern void
-_mesa_enable_sw_extensions(GLcontext *ctx);
+extern void _mesa_enable_sw_extensions(GLcontext *ctx);
 
+extern void _mesa_enable_imaging_extensions(GLcontext *ctx);
 
-/* Return 0 on success.
- */
-extern int gl_extensions_add( GLcontext *ctx, GLboolean enabled,
-			      const char *name, GLboolean *flag_ptr );
+extern void _mesa_add_extension( GLcontext *ctx, GLboolean enabled,
+                                 const char *name, GLboolean *flag_ptr );
 
-extern int gl_extensions_enable( GLcontext *ctx, const char *name );
-extern int gl_extensions_disable( GLcontext *ctx, const char *name );
-extern GLboolean gl_extension_is_enabled( GLcontext *ctx, const char *name);
-extern void gl_extensions_dtr( GLcontext *ctx );
-extern void gl_extensions_ctr( GLcontext *ctx );
-extern const char *gl_extensions_get_string( GLcontext *ctx );
+extern void _mesa_enable_extension( GLcontext *ctx, const char *name );
+
+extern void _mesa_disable_extension( GLcontext *ctx, const char *name );
+
+extern GLboolean _mesa_extension_is_enabled( GLcontext *ctx, const char *name);
+
+extern void _mesa_extensions_dtr( GLcontext *ctx );
+
+extern void _mesa_extensions_ctr( GLcontext *ctx );
+
+extern const char *_mesa_extensions_get_string( GLcontext *ctx );
 
 #endif
 

@@ -832,22 +832,14 @@ void fxDDInitExtensions( GLcontext *ctx )
 {
    fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
-   gl_extensions_disable(ctx, "GL_EXT_blend_logic_op");
-   gl_extensions_disable(ctx, "GL_EXT_blend_minmax");
-   gl_extensions_disable(ctx, "GL_EXT_blend_subtract");
-   gl_extensions_disable(ctx, "GL_EXT_blend_color");
-   gl_extensions_disable(ctx, "GL_EXT_fog_coord");
+   _mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
+   _mesa_enable_extension(ctx, "GL_EXT_point_parameters"); 
 
-   if (1)
-      gl_extensions_disable(ctx, "GL_EXT_point_parameters"); 
+   if (fxMesa->haveTwoTMUs)
+      _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
 
-   gl_extensions_add(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
-
-   if (!fxMesa->haveTwoTMUs)
-      gl_extensions_disable(ctx, "GL_EXT_texture_env_add");
-
-   if (!fxMesa->emulateTwoTMUs)
-      gl_extensions_disable(ctx, "GL_ARB_multitexture");
+   if (fxMesa->emulateTwoTMUs)
+      _mesa_enable_extension(ctx, "GL_ARB_multitexture");
 }
 
 

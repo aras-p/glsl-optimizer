@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.121 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: context.c,v 1.122 2001/02/26 23:58:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -362,7 +362,7 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
       assert(visual->alphaBits > 0);
    }
 
-   buffer->Visual = visual;
+   buffer->Visual = visual;  /* XXX copy instead? */
    buffer->UseSoftwareDepthBuffer = softwareDepth;
    buffer->UseSoftwareStencilBuffer = softwareStencil;
    buffer->UseSoftwareAccumBuffer = softwareAccum;
@@ -431,8 +431,8 @@ one_time_init( void )
 
       gl_init_lists();
 
-      _mesa_init_math();
       _math_init();
+      _mesa_init_math();
 
       if (getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
@@ -937,7 +937,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
 
    /* Extensions */
-   gl_extensions_ctr( ctx );
+   _mesa_extensions_ctr( ctx );
 
    /* Lighting group */
    for (i=0;i<MAX_LIGHTS;i++) {
@@ -1614,7 +1614,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
    _mesa_free_colortable_data( &ctx->Texture.Palette );
 
-   gl_extensions_dtr(ctx);
+   _mesa_extensions_dtr(ctx);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);
