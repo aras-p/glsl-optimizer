@@ -156,7 +156,9 @@ ALL_SOURCES = \
 	$(SWRAST_SETUP_SOURCES)	\
 	$(ASM_C_SOURCES)	\
 	$(X86_SOURCES)		\
-	$(COMMON_DRIVER_SOURCES)
+	$(COMMON_DRIVER_SOURCES)\
+	$(X11_DRIVER_SOURCES)	\
+	$(OSMESA_DRIVER_SOURCES)
 
 
 SUBDIRS = array_cache drivers/dri glapi main math sparc swrast swrast_setup \
@@ -172,7 +174,7 @@ depend: $(ALL_SOURCES)
 
 # Emacs tags
 tags:
-	etags `find . -name \*.[ch]` `find ../include`
+	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
 
 clean:
 	-rm -f */*.o
