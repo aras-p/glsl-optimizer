@@ -2,7 +2,7 @@
 #include "glapioffsets.h"
 
 #define GL_PREFIX(n) gl##n
-#define GLOBL_FN(x) .globl x ; .type x,##function
+#define GLOBL_FN(x) .globl x ; .type x,@function
 
 /* The _glapi_Dispatch symbol addresses get relocated into the
  * sethi/or instruction sequences below at library init time.
@@ -21,7 +21,7 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 .align 64
 
 .globl _mesa_sparc_glapi_begin
-.type _mesa_sparc_glapi_begin,#function
+.type _mesa_sparc_glapi_begin,@function
 _mesa_sparc_glapi_begin:
 
 GLOBL_FN(GL_PREFIX(NewList))
@@ -11768,6 +11768,6 @@ GL_PREFIX(SamplePatternSGIS):
 	 nop
 
 .globl _mesa_sparc_glapi_end
-.type _mesa_sparc_glapi_end,#function
+.type _mesa_sparc_glapi_end,@function
 _mesa_sparc_glapi_end:
 
