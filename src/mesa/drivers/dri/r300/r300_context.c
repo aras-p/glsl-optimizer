@@ -217,6 +217,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 */
 
 	ctx = r300->radeon.glCtx;
+	if(ctx->Visual.doubleBufferMode == 0){
+		fprintf(stderr, "Help me! Single buffer mode doesnt work yet.\n");
+		exit(-1);
+	}
 	ctx->Const.MaxTextureImageUnits = driQueryOptioni(&r300->radeon.optionCache,
 						     "texture_image_units");
 	ctx->Const.MaxTextureCoordUnits = driQueryOptioni(&r300->radeon.optionCache,
