@@ -316,6 +316,129 @@ static const struct __DriverAPIRec tdfxAPI = {
    .SwapBuffersMSC  = NULL
 };
 
+#ifdef USE_NEW_INTERFACE
+/*
+ * new interface code, derived from radeon_screen.c
+ * XXX this may still be wrong
+ */
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+
+static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
+					 unsigned depth_bits,
+					 unsigned stencil_bits,
+					 GLboolean have_back_buffer)
+{
+	__GLcontextModes *modes;
+	__GLcontextModes *m;
+	unsigned num_modes;
+	unsigned vis[2] = { GLX_TRUE_COLOR, GLX_DIRECT_COLOR };
+	unsigned deep = (depth_bits > 17);
+	unsigned i, db, depth, accum, stencil;
+
+	/* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
+	 * enough to add support.  Basically, if a context is created with an
+	 * fbconfig where the swap method is GLX_SWAP_COPY_OML, pageflipping
+	 * will never be used.
+	 */
+
+	num_modes = (depth_bits == 16) ? 32 : 16;
+
+	modes = (*create_context_modes)(num_modes, sizeof(__GLcontextModes));
+	m = modes;
+
+	for (i = 0; i <= 1; i++) {
+	    for (db = 0; db <= 1; db++) {
+		for (depth = 0; depth <= 1; depth++) {
+		    for (accum = 0; accum <= 1; accum++) {
+			for (stencil = 0; stencil <= !deep; stencil++) {
+			    if (deep) stencil = depth;
+			    m->redBits		= deep ? 8 : 5;
+			    m->greenBits	= deep ? 8 : 6;
+			    m->blueBits		= deep ? 8 : 5;
+			    m->alphaBits	= deep ? 8 : 0;
+			    m->redMask		= deep ?0xFF000000 :0x0000F800;
+			    m->greenMask	= deep ?0x00FF0000 :0x000007E0;
+			    m->blueMask		= deep ?0x0000FF00 :0x0000001F;
+			    m->alphaMask	= deep ? 0x000000FF : 0;
+			    m->rgbBits		= m->redBits + m->greenBits +
+			    			  m->blueBits + m->alphaBits;
+			    m->accumRedBits	= accum ? 16 : 0;
+			    m->accumGreenBits	= accum ? 16 : 0;
+			    m->accumBlueBits	= accum ? 16 : 0;
+			    m->accumAlphaBits	= accum ? 16 : 0;
+			    m->stencilBits	= stencil ? 8 : 0;
+			    m->depthBits	= deep
+			    			  ? (depth ? 24 : 0)
+			    			  : (depth ? 0 : depth_bits);
+			    m->visualType	= i ? GLX_TRUE_COLOR
+			    			    : GLX_DIRECT_COLOR;
+			    m->renderType	= GLX_RGBA_BIT;
+			    m->drawableType	= GLX_WINDOW_BIT;
+			    m->rgbMode		= GL_TRUE;
+			    m->doubleBufferMode = db ? GL_TRUE : GL_FALSE;
+			    if (db)
+			    	m->swapMethod = GLX_SWAP_UNDEFINED_OML;
+			    m->visualRating	= ((stencil && !deep) || accum)
+			    			  ? GLX_SLOW_CONFIG
+						  : GLX_NONE;
+			    m = m->next;
+			    if (deep) stencil = 0;
+			}
+		    }
+		}
+	    }
+	}
+
+	return modes;
+}
+
+/**
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
+ *
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on
+ *         failure.
+ */
+void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
+			     const __GLcontextModes * modes,
+			     const __DRIversion * ddx_version,
+			     const __DRIversion * dri_version,
+			     const __DRIversion * drm_version,
+			     const __DRIframebuffer * frame_buffer,
+			     drmAddress pSAREA, int fd,
+			     int internal_api_version,
+			     __GLcontextModes ** driver_modes )
+{
+   __DRIscreenPrivate *psp;
+
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+   				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &tdfxAPI);
+
+   create_context_modes = (PFNGLXCREATECONTEXTMODES)
+      glXGetProcAddress((const GLubyte *)"__glXCreateContextModes");
+      
+   if (create_context_modes != NULL) {
+      /* divined from tdfx_dri.c, sketchy */
+      TDFXDRIPtr dri_priv = (TDFXDRIPtr) psp->pDevPriv;
+      int bpp = (dri_priv->cpp > 2) ? 24 : 16;
+
+      /* XXX i wish it was like this */
+      /* bpp = dri_priv->bpp */
+      
+      *driver_modes = tdfxFillInModes(bpp, (bpp == 16) ? 16 : 24,
+				(bpp == 16) ? 0 : 8,
+				(dri_priv->backOffset!=dri_priv->depthOffset));
+   }
+
+   return (void *)psp;
+}
+#endif /* USE_NEW_INTERFACE */
+
 
 /*
  * This is the bootstrap function for the driver.
