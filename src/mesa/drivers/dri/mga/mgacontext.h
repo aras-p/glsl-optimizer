@@ -205,12 +205,6 @@ struct mga_context_t {
     */
    GLuint Fallback;  
 
-
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
-
    /* Texture environment color.
     */
    unsigned int envcolor[2];

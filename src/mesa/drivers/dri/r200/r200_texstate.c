@@ -717,7 +717,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
 	   || (texUnit->_Current != NULL) );
 
    if ( R200_DEBUG & DEBUG_TEXTURE ) {
-      fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, ctx, unit );
+      fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
 
    /* Set the texture environment state.  Isn't this nice and clean?

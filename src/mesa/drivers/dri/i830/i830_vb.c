@@ -58,7 +58,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[I830_MAX_SETUP];
 
@@ -119,9 +118,7 @@ static struct {
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() I830_CONTEXT(ctx)->vertex_format
 #define GET_VERTEX_STORE() ((GLubyte *)I830_CONTEXT(ctx)->verts)
-#define GET_VERTEX_STRIDE_SHIFT() I830_CONTEXT(ctx)->vertex_stride_shift
-#define GET_UBYTE_COLOR_STORE() &I830_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &I830_CONTEXT(ctx)->UbyteSecondaryColor
+#define GET_VERTEX_SIZE() I830_CONTEXT(ctx)->vertex_size * sizeof(int)
 #define INVALIDATE_STORED_VERTICES()
 
 #define HAVE_HW_VIEWPORT    0
@@ -141,9 +138,6 @@ static struct {
 #define UNVIEWPORT_Z(z)  z * (float)I830_CONTEXT(ctx)->ClearDepth
 
 #define PTEX_FALLBACK() FALLBACK(I830_CONTEXT(ctx), I830_FALLBACK_TEXTURE, 1)
-
-#define IMPORT_FLOAT_COLORS i830_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS i830_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[I830_CONTEXT(ctx)->SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[I830_CONTEXT(ctx)->SetupIndex].copy_pv
@@ -416,7 +410,6 @@ void i830CheckTexSizes( GLcontext *ctx )
 	 }
 	 imesa->vertex_format = vfmt;
 	 imesa->vertex_size = setup_tab[ind].vertex_size;
-	 imesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
       }
 
       if (!imesa->Fallback &&
@@ -433,9 +426,8 @@ void i830BuildVertices( GLcontext *ctx,
 			GLuint newinputs )
 {
    i830ContextPtr imesa = I830_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)
-		 imesa->verts + (start<<imesa->vertex_stride_shift));
-   GLuint stride = 1<<imesa->vertex_stride_shift;
+   GLuint stride = imesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *) imesa->verts + (start * stride));
 
    if (0) fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -537,20 +529,20 @@ void i830ChooseVertexState( GLcontext *ctx )
       }
       imesa->vertex_format = vfmt;
       imesa->vertex_size = setup_tab[ind].vertex_size;
-      imesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
 
 
-void i830_emit_contiguous_verts( GLcontext *ctx,
+void *i830_emit_contiguous_verts( GLcontext *ctx,
 				 GLuint start,
-				 GLuint count )
+				 GLuint count, 
+				 void *dest)
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
-   GLuint vertex_size = imesa->vertex_size * 4;
-   GLuint *dest = i830AllocDmaLow( imesa, (count-start) * vertex_size);
-   setup_tab[imesa->SetupIndex].emit( ctx, start, count, dest, vertex_size );
+   GLuint stride = imesa->vertex_size * 4;
+   setup_tab[imesa->SetupIndex].emit( ctx, start, count, dest, stride );
+   return (void *)((char *)dest + stride * (count - start));
 }
 
 
@@ -578,15 +570,5 @@ void i830FreeVB( GLcontext *ctx )
    if (imesa->verts) {
       ALIGN_FREE(imesa->verts);
       imesa->verts = 0;
-   }
-
-   if (imesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(imesa->UbyteSecondaryColor.Ptr);
-      imesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (imesa->UbyteColor.Ptr) {
-      ALIGN_FREE(imesa->UbyteColor.Ptr);
-      imesa->UbyteColor.Ptr = 0;
    }
 }

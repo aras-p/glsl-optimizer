@@ -45,9 +45,10 @@ extern void i810BuildVertices( GLcontext *ctx,
 			       GLuint newinputs );
 
 
-extern void i810_emit_contiguous_verts( GLcontext *ctx,
-					GLuint start,
-					GLuint count );
+extern void *i810_emit_contiguous_verts( GLcontext *ctx,
+					 GLuint start,
+					 GLuint count,
+					 void *dest );
 
 extern void i810_translate_vertex( GLcontext *ctx,
 				   const i810Vertex *src,

@@ -50,6 +50,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_swtcl.h"
 #include "r200_maos.h"
 
+
+#if 0
 /* Usage:
  *   - from r200_tcl_render
  *   - call r200EmitArrays to ensure uptodate arrays in dma
@@ -81,29 +83,6 @@ static void emit_ubyte_rgba3( GLcontext *ctx,
    }
 }
 
-
-#if defined(USE_X86_ASM)
-#define COPY_DWORDS( dst, src, nr )					\
-do {									\
-	int __tmp;							\
-	__asm__ __volatile__( "rep ; movsl"				\
-			      : "=%c" (__tmp), "=D" (dst), "=S" (__tmp)	\
-			      : "0" (nr),				\
-			        "D" ((long)dst),			\
-			        "S" ((long)src) );			\
-} while (0)
-#else
-#define COPY_DWORDS( dst, src, nr )		\
-do {						\
-   int j;					\
-   for ( j = 0 ; j < nr ; j++ )			\
-      dst[j] = ((int *)src)[j];			\
-   dst += nr;					\
-} while (0)
-#endif
-
-
-
 static void emit_ubyte_rgba4( GLcontext *ctx,
 			      struct r200_dma_region *rvb,
 			      char *data,
@@ -129,7 +108,6 @@ static void emit_ubyte_rgba4( GLcontext *ctx,
 }
 
 
-#if 0
 static void emit_ubyte_rgba( GLcontext *ctx,
 			     struct r200_dma_region *rvb,
 			     char *data,
@@ -174,6 +152,30 @@ static void emit_ubyte_rgba( GLcontext *ctx,
    }
 }
 #endif
+
+
+#if defined(USE_X86_ASM)
+#define COPY_DWORDS( dst, src, nr )					\
+do {									\
+	int __tmp;							\
+	__asm__ __volatile__( "rep ; movsl"				\
+			      : "=%c" (__tmp), "=D" (dst), "=S" (__tmp)	\
+			      : "0" (nr),				\
+			        "D" ((long)dst),			\
+			        "S" ((long)src) );			\
+} while (0)
+#else
+#define COPY_DWORDS( dst, src, nr )		\
+do {						\
+   int j;					\
+   for ( j = 0 ; j < nr ; j++ )			\
+      dst[j] = ((int *)src)[j];			\
+   dst += nr;					\
+} while (0)
+#endif
+
+
+
 
 
 static void emit_vec4( GLcontext *ctx,
@@ -235,7 +237,7 @@ static void emit_vec12( GLcontext *ctx,
 
    if (R200_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-	      __FUNCTION__, count, stride, out, (void *)data);
+	      __FUNCTION__, count, stride, (void *)out, (void *)data);
 
    if (stride == 12)
       COPY_DWORDS( out, data, count*3 );

@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "tnl/t_vtx_api.h"
 
 #include "r200_context.h"
 #include "r200_ioctl.h"
@@ -76,7 +77,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[R200_MAX_SETUP];
 
@@ -149,9 +149,7 @@ static int se_vtx_fmt_1[] = {
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() R200_CONTEXT(ctx)->swtcl.vertex_format
 #define GET_VERTEX_STORE() R200_CONTEXT(ctx)->swtcl.verts
-#define GET_VERTEX_STRIDE_SHIFT() R200_CONTEXT(ctx)->swtcl.vertex_stride_shift
-#define GET_UBYTE_COLOR_STORE() &R200_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &R200_CONTEXT(ctx)->UbyteSecondaryColor
+#define GET_VERTEX_SIZE() R200_CONTEXT(ctx)->swtcl.vertex_size * sizeof(GLuint)
 
 #define HAVE_HW_VIEWPORT    1
 #define HAVE_HW_DIVIDE      (IND & ~(R200_XYZW_BIT|R200_RGBA_BIT))
@@ -166,10 +164,6 @@ static int se_vtx_fmt_1[] = {
 
 #define CHECK_HW_DIVIDE    (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE| \
                                                     DD_TRI_UNFILLED)))
-
-#define IMPORT_QUALIFIER
-#define IMPORT_FLOAT_COLORS r200_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS r200_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[R200_CONTEXT(ctx)->swtcl.SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[R200_CONTEXT(ctx)->swtcl.SetupIndex].copy_pv
@@ -291,7 +285,6 @@ static void r200SetVertexFormat( GLcontext *ctx, GLuint ind )
       R200_NEWPRIM(rmesa);
       i = rmesa->swtcl.vertex_format = setup_tab[ind].vertex_format;
       rmesa->swtcl.vertex_size = setup_tab[ind].vertex_size;
-      rmesa->swtcl.vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
 
       R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_VTXFMT_0] = se_vtx_fmt_0[i];
@@ -350,9 +343,8 @@ void r200BuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 			   GLuint newinputs )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)rmesa->swtcl.verts + 
-		 (start << rmesa->swtcl.vertex_stride_shift));
-   GLuint stride = 1 << rmesa->swtcl.vertex_stride_shift;
+   GLuint stride = rmesa->swtcl.vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)rmesa->swtcl.verts + (start * stride));
 
    newinputs |= rmesa->swtcl.SetupNewInputs;
    rmesa->swtcl.SetupNewInputs = 0;
@@ -455,13 +447,15 @@ static __inline void *r200AllocDmaLowVerts( r200ContextPtr rmesa,
 
 
 
-void r200_emit_contiguous_verts( GLcontext *ctx, GLuint start, GLuint count )
+static void *r200_emit_contiguous_verts( GLcontext *ctx, 
+					 GLuint start, 
+					 GLuint count,
+					 void *dest)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint vertex_size = rmesa->swtcl.vertex_size * 4;
-   CARD32 *dest = r200AllocDmaLowVerts( rmesa, count-start, vertex_size );
-   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, dest, 
-					    vertex_size );
+   GLuint stride = rmesa->swtcl.vertex_size * 4;
+   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, dest, stride );
+   return (void *)((char *)dest + stride * (count - start));
 }
 
 
@@ -527,37 +521,13 @@ static __inline void r200EltPrimitive( r200ContextPtr rmesa, GLenum prim )
 }
 
 
-static void VERT_FALLBACK( GLcontext *ctx,
-			   GLuint start,
-			   GLuint count,
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = _TNL_BIT_POS;
-}
-
-static void ELT_FALLBACK( GLcontext *ctx,
-			  GLuint start,
-			  GLuint count,
-			  GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabElts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = _TNL_BIT_POS;
-}
 
 
 #define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx)
-#define ELTS_VARS  GLushort *dest
+#define ELTS_VARS(buf)  GLushort *dest = buf
 #define INIT( prim ) r200DmaPrimitive( rmesa, prim )
 #define ELT_INIT(prim) r200EltPrimitive( rmesa, prim )
-#define NEW_PRIMITIVE()  R200_NEWPRIM( rmesa )
-#define NEW_BUFFER()  r200RefillCurrentDmaRegion( rmesa )
+#define FLUSH()  R200_NEWPRIM( rmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (((int)rmesa->dma.current.end - (int)rmesa->dma.current.ptr) / (rmesa->swtcl.vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
@@ -568,38 +538,36 @@ static void ELT_FALLBACK( GLcontext *ctx,
 #define GET_SUBSEQUENT_VB_MAX_ELTS() \
   ((R200_CMD_BUF_SZ - 1024) / 2)
 
+static void *r200_alloc_elts( r200ContextPtr rmesa, int nr )
+{
+   if (rmesa->dma.flush == r200FlushElts &&
+       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {
+
+      rmesa->store.cmd_used += nr*2;
+
+      return (void *)(rmesa->store.cmd_buf + rmesa->store.cmd_used);
+   }
+   else {
+      if (rmesa->dma.flush) {
+	 rmesa->dma.flush( rmesa );
+      }
+
+      r200EmitVertexAOS( rmesa,
+			   rmesa->swtcl.vertex_size,
+			   (rmesa->r200Screen->gart_buffer_offset +
+			    rmesa->swtcl.indexed_verts.buf->buf->idx *
+			    RADEON_BUFFER_SIZE +
+			    rmesa->swtcl.indexed_verts.start));
+
+      return (void *) r200AllocEltsOpenEnded( rmesa,
+					      rmesa->swtcl.hw_primitive,
+					      nr );
+   }
+}
+
+#define ALLOC_ELTS(nr) r200_alloc_elts(rmesa, nr)
 
 
-/* How do you extend an existing primitive?
- */
-#define ALLOC_ELTS(nr)							\
-do {									\
-   if (rmesa->dma.flush == r200FlushElts &&				\
-       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {		\
-									\
-      dest = (GLushort *)(rmesa->store.cmd_buf +			\
-			  rmesa->store.cmd_used);			\
-      rmesa->store.cmd_used += nr*2;					\
-   }									\
-   else {								\
-      if (rmesa->dma.flush) {						\
-	 rmesa->dma.flush( rmesa );					\
-      }									\
-									\
-      r200EmitVertexAOS( rmesa,					\
-			   rmesa->swtcl.vertex_size,			\
-			   (rmesa->r200Screen->gart_buffer_offset +	\
-			    rmesa->swtcl.indexed_verts.buf->buf->idx * 	\
-			    RADEON_BUFFER_SIZE +			\
-			    rmesa->swtcl.indexed_verts.start));		\
-									\
-      dest = r200AllocEltsOpenEnded( rmesa,				\
-				       rmesa->swtcl.hw_primitive,	\
-				       nr );				\
-   }									\
-} while (0)
-
-#define ALLOC_ELTS_NEW_PRIMITIVE(nr) ALLOC_ELTS( nr )
 
 #ifdef MESA_BIG_ENDIAN
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
@@ -612,12 +580,19 @@ do {									\
 #endif
 #define EMIT_TWO_ELTS(offset, x, y)  *(GLuint *)(dest+offset) = ((y)<<16)|(x);
 #define INCR_ELTS( nr ) dest += nr
+#define ELTPTR dest
 #define RELEASE_ELT_VERTS() \
   r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ )
-#define EMIT_VERTS( ctx, j, nr ) \
-  r200_emit_contiguous_verts(ctx, j, (j)+(nr))
+
 #define EMIT_INDEXED_VERTS( ctx, start, count ) \
   r200_emit_indexed_verts( ctx, start, count )
+
+
+#define ALLOC_VERTS( nr ) \
+  r200AllocDmaLowVerts( rmesa, nr, rmesa->swtcl.vertex_size * 4 )
+#define EMIT_VERTS( ctx, j, nr, buf ) \
+  r200_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
+
 
 
 #define TAG(x) r200_dma_##x
@@ -627,6 +602,7 @@ do {									\
 /**********************************************************************/
 /*                          Render pipeline stage                     */
 /**********************************************************************/
+
 
 
 static GLboolean r200_run_render( GLcontext *ctx,
@@ -643,17 +619,18 @@ static GLboolean r200_run_render( GLcontext *ctx,
    	
    
 
-   if ((R200_DEBUG & DEBUG_VERTS) ||     /* No debug */
-       VB->ClipOrMask ||	         /* No clipping */
-       rmesa->swtcl.RenderIndex != 0 ||  /* No per-vertex manipulations */
-       ctx->Line.StippleFlag)            /* No stipple -- fix me? */
+   if ((R200_DEBUG & DEBUG_VERTS) ||
+       rmesa->swtcl.RenderIndex != 0 ||
+       !r200_dma_validate_render( ctx, VB ))
       return GL_TRUE;		
 
    if (VB->Elts) {
       tab = TAG(render_tab_elts);
-      if (!rmesa->swtcl.indexed_verts.buf)
-	 if (!TAG(emit_elt_verts)(ctx, 0, VB->Count))
-	    return GL_TRUE;	/* too many vertices */
+      if (!rmesa->swtcl.indexed_verts.buf) {
+	 if (VB->Count > GET_SUBSEQUENT_VB_MAX_VERTS())
+	    return GL_TRUE;
+	 EMIT_INDEXED_VERTS(ctx, 0, VB->Count);
+      }
    }
 
    tnl->Driver.Render.Start( ctx );
@@ -760,15 +737,15 @@ static void r200ResetLineStipple( GLcontext *ctx );
  ***********************************************************************/
 
 #undef LOCAL_VARS
+#undef ALLOC_VERTS
 #define CTX_ARG r200ContextPtr rmesa
 #define CTX_ARG2 rmesa
 #define GET_VERTEX_DWORDS() rmesa->swtcl.vertex_size
 #define ALLOC_VERTS( n, size ) r200AllocDmaLowVerts( rmesa, n, size * 4 )
 #define LOCAL_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   const GLuint shift = rmesa->swtcl.vertex_stride_shift;	\
    const char *r200verts = (char *)rmesa->swtcl.verts;
-#define VERT(x) (r200Vertex *)(r200verts + (x << shift))
+#define VERT(x) (r200Vertex *)(r200verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX r200Vertex 
 #define DO_DEBUG_VERTS (1 && (R200_DEBUG & DEBUG_VERTS))
 #define PRINT_VERTEX(v) r200_print_vertex(rmesa->glCtx, v)
@@ -828,7 +805,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a < 0)
-#define GET_VERTEX(e) (rmesa->swtcl.verts + (e<<rmesa->swtcl.vertex_stride_shift))
+#define GET_VERTEX(e) (rmesa->swtcl.verts + (e*rmesa->swtcl.vertex_size*sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -923,7 +900,6 @@ static void init_rast_tab( void )
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (r200Vertex *)(r200verts + (x << shift))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       r200_point( rmesa, VERT(start) )
@@ -939,7 +915,7 @@ static void init_rast_tab( void )
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   const GLuint shift = rmesa->swtcl.vertex_stride_shift;		\
+   const GLuint vertsize = rmesa->swtcl.vertex_size;		\
    const char *r200verts = (char *)rmesa->swtcl.verts;		\
    const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
    const GLboolean stipple = ctx->Line.StippleFlag;		\
@@ -1298,15 +1274,5 @@ void r200DestroySwtcl( GLcontext *ctx )
    if (rmesa->swtcl.verts) {
       ALIGN_FREE(rmesa->swtcl.verts);
       rmesa->swtcl.verts = 0;
-   }
-
-   if (rmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteSecondaryColor.Ptr);
-      rmesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (rmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteColor.Ptr);
-      rmesa->UbyteColor.Ptr = 0;
    }
 }

@@ -55,10 +55,6 @@ extern void radeonBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 extern void radeonPrintSetupFlags(char *msg, GLuint flags );
 
 
-extern void radeon_emit_contiguous_verts( GLcontext *ctx,
-					  GLuint start,
-					  GLuint count );
-
 extern void radeon_emit_indexed_verts( GLcontext *ctx,
 				       GLuint start,
 				       GLuint count );
@@ -68,10 +64,6 @@ extern void radeon_translate_vertex( GLcontext *ctx,
 				     SWvertex *dst );
 
 extern void radeon_print_vertex( GLcontext *ctx, const radeonVertex *v );
-
-extern void radeon_import_float_colors( GLcontext *ctx );
-extern void radeon_import_float_spec_colors( GLcontext *ctx );
-
 
 
 #endif

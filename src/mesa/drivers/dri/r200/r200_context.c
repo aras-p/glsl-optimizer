@@ -459,12 +459,12 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1); 
    }
-   else if (tcl_mode == DRI_CONF_TCL_SW) {
+   else if (tcl_mode == DRI_CONF_TCL_SW || getenv("R200_NO_TCL")) {
       fprintf(stderr, "disabling TCL support\n");
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1); 
    }
    else {
-      if (tcl_mode >= DRI_CONF_TCL_VTXFMT) {
+      if (tcl_mode >= DRI_CONF_TCL_VTXFMT && !getenv("R200_NO_VTXFMT")) {
 	 r200VtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
       }
       _tnl_need_dlist_norm_lengths( ctx, GL_FALSE );
@@ -586,7 +586,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 (r200ContextPtr) driContextPriv->driverPrivate;
 
       if (R200_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, newCtx->glCtx);
+	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
@@ -629,7 +629,7 @@ r200UnbindContext( __DRIcontextPrivate *driContextPriv )
    r200ContextPtr rmesa = (r200ContextPtr) driContextPriv->driverPrivate;
 
    if (R200_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s ctx %p\n", __FUNCTION__, rmesa->glCtx);
+      fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)rmesa->glCtx);
 
    r200VtxfmtUnbindContext( rmesa->glCtx );
    return GL_TRUE;

@@ -58,7 +58,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[MGA_MAX_SETUP];
 
@@ -90,9 +89,7 @@ static struct {
 #define GET_TEXSOURCE(n)  mmesa->tmu_source[n]
 #define GET_VERTEX_FORMAT() mmesa->vertex_format
 #define GET_VERTEX_STORE() mmesa->verts
-#define GET_VERTEX_STRIDE_SHIFT() mmesa->vertex_stride_shift
-#define GET_UBYTE_COLOR_STORE() &mmesa->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &mmesa->UbyteSecondaryColor
+#define GET_VERTEX_SIZE() mmesa->vertex_size * sizeof(GLuint)
 
 #define HAVE_HW_VIEWPORT    0
 #define HAVE_HW_DIVIDE      0
@@ -116,10 +113,6 @@ static struct {
 #define UNVIEWPORT_Z(z)    z * sz;
 
 #define PTEX_FALLBACK() FALLBACK(ctx, MGA_FALLBACK_TEXTURE, 1)
-
-
-#define IMPORT_FLOAT_COLORS mga_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS mga_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[MGA_CONTEXT(ctx)->SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[MGA_CONTEXT(ctx)->SetupIndex].copy_pv
@@ -353,8 +346,8 @@ void mgaBuildVertices( GLcontext *ctx,
 		       GLuint newinputs )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)mmesa->verts + (start<<mmesa->vertex_stride_shift));
-   GLuint stride = 1<<mmesa->vertex_stride_shift;
+   GLuint stride = mmesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)mmesa->verts + (start * stride));
 
    newinputs |= mmesa->SetupNewInputs;
    mmesa->SetupNewInputs = 0;
@@ -436,20 +429,20 @@ void mgaChooseVertexState( GLcontext *ctx )
       mmesa->dirty |= MGA_UPLOAD_PIPE;
       mmesa->vertex_format = setup_tab[ind].vertex_format;
       mmesa->vertex_size = setup_tab[ind].vertex_size;
-      mmesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
 
 
-void mga_emit_contiguous_verts( GLcontext *ctx,
+void *mga_emit_contiguous_verts( GLcontext *ctx,
 				 GLuint start,
-				 GLuint count )
+				 GLuint count,
+				 void *dest)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   GLuint vertex_size = mmesa->vertex_size * 4;
-   GLuint *dest = mgaAllocDmaLow( mmesa, (count-start) * vertex_size);
-   setup_tab[mmesa->SetupIndex].emit( ctx, start, count, dest, vertex_size );
+   GLuint stride = mmesa->vertex_size * 4;
+   setup_tab[mmesa->SetupIndex].emit( ctx, start, count, dest, stride );
+   return (void *)((char *)dest + stride * (count - start));
 }
 				   
 
@@ -472,7 +465,6 @@ void mgaInitVB( GLcontext *ctx )
    mmesa->dirty |= MGA_UPLOAD_PIPE;
    mmesa->vertex_format = setup_tab[0].vertex_format;
    mmesa->vertex_size = setup_tab[0].vertex_size;
-   mmesa->vertex_stride_shift = setup_tab[0].vertex_stride_shift;
 }
 
 
@@ -482,16 +474,6 @@ void mgaFreeVB( GLcontext *ctx )
    if (mmesa->verts) {
       ALIGN_FREE(mmesa->verts);
       mmesa->verts = 0;
-   }
-
-   if (mmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(mmesa->UbyteSecondaryColor.Ptr);
-      mmesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (mmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(mmesa->UbyteColor.Ptr);
-      mmesa->UbyteColor.Ptr = 0;
    }
 }
 

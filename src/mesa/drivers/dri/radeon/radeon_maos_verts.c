@@ -73,11 +73,6 @@ static struct {
 #define DO_TEX3 0
 
 #define GET_TEXSOURCE(n)  n
-#define GET_UBYTE_COLOR_STORE() &RADEON_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &RADEON_CONTEXT(ctx)->UbyteSecondaryColor
-
-#define IMPORT_FLOAT_COLORS radeon_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS radeon_import_float_spec_colors
 
 /***********************************************************************
  *             Generate vertex emit functions               *

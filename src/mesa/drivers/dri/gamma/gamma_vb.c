@@ -55,7 +55,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[GAMMA_MAX_SETUP];
 
@@ -84,10 +83,8 @@ static struct {
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() GAMMA_CONTEXT(ctx)->vertex_format
 #define GET_VERTEX_STORE() GAMMA_CONTEXT(ctx)->verts
-#define GET_VERTEX_STRIDE_SHIFT() GAMMA_CONTEXT(ctx)->vertex_stride_shift
+#define GET_VERTEX_SIZE() GAMMA_CONTEXT(ctx)->vertex_size * sizeof(GLuint)
 #define INVALIDATE_STORED_VERTICES()
-#define GET_UBYTE_COLOR_STORE() &GAMMA_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &GAMMA_CONTEXT(ctx)->UbyteSecondaryColor
 
 #define HAVE_HW_VIEWPORT    1
 #define HAVE_HW_DIVIDE      1
@@ -101,10 +98,6 @@ static struct {
 #define HAVE_PTEX_VERTICES  1
 
 #define PTEX_FALLBACK()		/* never needed */
-
-#define IMPORT_QUALIFIER
-#define IMPORT_FLOAT_COLORS gamma_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS gamma_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[GAMMA_CONTEXT(ctx)->SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[GAMMA_CONTEXT(ctx)->SetupIndex].copy_pv
@@ -269,8 +262,8 @@ void gammaBuildVertices( GLcontext *ctx,
 			 GLuint newinputs )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)gmesa->verts + (start<<gmesa->vertex_stride_shift));
-   GLuint stride = 1<<gmesa->vertex_stride_shift;
+   GLuint stride = gmesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)gmesa->verts + (start * stride));
 
    newinputs |= gmesa->SetupNewInputs;
    gmesa->SetupNewInputs = 0;
@@ -329,7 +322,6 @@ void gammaChooseVertexState( GLcontext *ctx )
    if (setup_tab[ind].vertex_format != gmesa->vertex_format) {
       gmesa->vertex_format = setup_tab[ind].vertex_format;
       gmesa->vertex_size = setup_tab[ind].vertex_size;
-      gmesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 
    if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
@@ -354,7 +346,7 @@ void gammaInitVB( GLcontext *ctx )
       if (firsttime) {
 	 init_setup_tab();
 	 firsttime = 0;
-	 gmesa->vertex_stride_shift = 6; /* FIXME - only one vertex setup */
+	 gmesa->vertex_size = 16; /* FIXME - only one vertex setup */
       }
    }
 }
@@ -366,15 +358,5 @@ void gammaFreeVB( GLcontext *ctx )
    if (gmesa->verts) {
       ALIGN_FREE(gmesa->verts);
       gmesa->verts = 0;
-   }
-
-   if (gmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(gmesa->UbyteSecondaryColor.Ptr);
-      gmesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (gmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(gmesa->UbyteColor.Ptr);
-      gmesa->UbyteColor.Ptr = 0;
    }
 }

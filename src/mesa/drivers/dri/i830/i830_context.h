@@ -130,11 +130,6 @@ struct i830_context_t
    GLuint Fallback;
    GLuint NewGLState;
 
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
-
    /* State for i830vb.c and i830tris.c.
     */
    GLuint SetupNewInputs;

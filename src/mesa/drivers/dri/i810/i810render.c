@@ -93,20 +93,6 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
    GL_TRIANGLES
 };
 
-/* Fallback to normal rendering.
- */
-static void VERT_FALLBACK( GLcontext *ctx,
-			   GLuint start,
-			   GLuint count,
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, 
-							  count, flags );
-   I810_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_POS;
-}
 
 
 
@@ -115,16 +101,17 @@ static void VERT_FALLBACK( GLcontext *ctx,
    I810_STATECHANGE(imesa, 0);						\
    i810RasterPrimitive( ctx, reduced_prim[prim], hw_prim[prim] );	\
 } while (0)
-#define NEW_PRIMITIVE()  I810_STATECHANGE( imesa, 0 )
-#define NEW_BUFFER()  I810_FIREVERTICES( imesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (((int)imesa->vertex_high - (int)imesa->vertex_low) / (imesa->vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
   (I810_DMA_BUF_SZ-4) / (imesa->vertex_size * 4)
 
+#define ALLOC_VERTS( nr ) \
+  i810AllocDmaLow( imesa, nr * imesa->vertex_size * 4)
+#define EMIT_VERTS( ctx, j, nr, buf ) \
+  i810_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
 
-#define EMIT_VERTS( ctx, j, nr ) \
-  i810_emit_contiguous_verts(ctx, j, (j)+(nr))
+#define FLUSH()  I810_FIREVERTICES( imesa )
 
 
 #define TAG(x) i810_##x
@@ -146,7 +133,8 @@ static GLboolean i810_run_render( GLcontext *ctx,
 
    /* Don't handle clipping or indexed vertices.
     */
-   if (VB->ClipOrMask || imesa->RenderIndex != 0 || VB->Elts) {
+   if (imesa->RenderIndex != 0 || 
+       !i810_validate_render( ctx, VB )) {
       return GL_TRUE;
    }
 

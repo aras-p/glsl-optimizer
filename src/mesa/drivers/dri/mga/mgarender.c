@@ -94,15 +94,6 @@ static void mgaDmaPrimitive( GLcontext *ctx, GLenum prim )
    mgaRasterPrimitive( ctx, GL_TRIANGLES, hwprim );
 }
 
-static void VERT_FALLBACK( GLcontext *ctx, GLuint start, GLuint count, 
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   MGA_CONTEXT(ctx)->SetupNewInputs |= VERT_BIT_POS;
-}
 
 #define LOCAL_VARS mgaContextPtr mmesa = MGA_CONTEXT(ctx) 
 #define INIT( prim ) do {			\
@@ -110,14 +101,17 @@ static void VERT_FALLBACK( GLcontext *ctx, GLuint start, GLuint count,
    FLUSH_BATCH(mmesa);				\
    mgaDmaPrimitive( ctx, prim );		\
 } while (0)
-#define NEW_PRIMITIVE()  FLUSH_BATCH( mmesa )
-#define NEW_BUFFER()  FLUSH_BATCH( mmesa )
+#define FLUSH()  FLUSH_BATCH( mmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
    0 /* fix me */
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
    MGA_BUFFER_SIZE / (mmesa->vertex_size * 4)
-#define EMIT_VERTS( ctx, j, nr ) \
-   mga_emit_contiguous_verts(ctx, j, (j)+(nr))
+
+
+#define ALLOC_VERTS( nr ) \
+   mgaAllocDmaLow( mmesa, nr * mmesa->vertex_size * 4)
+#define EMIT_VERTS( ctx, j, nr, buf ) \
+   mga_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
 
  
 #define TAG(x) mga_##x
@@ -140,7 +134,8 @@ static GLboolean mga_run_render( GLcontext *ctx,
 
    /* Don't handle clipping or indexed vertices or vertex manipulations.
     */
-   if (VB->ClipOrMask || mmesa->RenderIndex != 0 || VB->Elts) {
+   if (mmesa->RenderIndex != 0 || 
+       !mga_validate_render( ctx, VB )) {
       return GL_TRUE;
    }
    

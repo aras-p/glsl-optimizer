@@ -763,6 +763,7 @@ CHOOSE(Normal3f, p3f, MASK_NORM, 0,
 CHOOSE(Normal3fv, pfv, MASK_NORM, 0, 
        (const GLfloat *v), (v))
 
+#if 0
 CHOOSE_COLOR(Color4ub, p4ub, 4, MASK_COLOR, 0,
 	(GLubyte a,GLubyte b, GLubyte c, GLubyte d), (a,b,c,d))
 CHOOSE_COLOR(Color4ubv, pubv, 4, MASK_COLOR, 0, 
@@ -771,6 +772,11 @@ CHOOSE_COLOR(Color3ub, p3ub, 3, MASK_COLOR, 0,
 	(GLubyte a,GLubyte b, GLubyte c), (a,b,c))
 CHOOSE_COLOR(Color3ubv, pubv, 3, MASK_COLOR, 0, 
 	(const GLubyte *v), (v))
+CHOOSE_SECONDARY_COLOR(SecondaryColor3ubEXT, p3ub, MASK_SPEC, 0, 
+	(GLubyte a,GLubyte b, GLubyte c), (a,b,c))
+CHOOSE_SECONDARY_COLOR(SecondaryColor3ubvEXT, pubv, MASK_SPEC, 0, 
+	(const GLubyte *v), (v))
+#endif
 
 CHOOSE_COLOR(Color4f, p4f, 4, MASK_COLOR, 0, 
 	(GLfloat a,GLfloat b, GLfloat c, GLfloat d), (a,b,c,d))
@@ -782,10 +788,6 @@ CHOOSE_COLOR(Color3fv, pfv, 3, MASK_COLOR, 0,
 	(const GLfloat *v), (v))
 
 
-CHOOSE_SECONDARY_COLOR(SecondaryColor3ubEXT, p3ub, MASK_SPEC, 0, 
-	(GLubyte a,GLubyte b, GLubyte c), (a,b,c))
-CHOOSE_SECONDARY_COLOR(SecondaryColor3ubvEXT, pubv, MASK_SPEC, 0, 
-	(const GLubyte *v), (v))
 CHOOSE_SECONDARY_COLOR(SecondaryColor3fEXT, p3f, MASK_SPEC, 0,
 	(GLfloat a,GLfloat b, GLfloat c), (a,b,c))
 CHOOSE_SECONDARY_COLOR(SecondaryColor3fvEXT, pfv, MASK_SPEC, 0,

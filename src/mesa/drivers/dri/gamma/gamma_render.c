@@ -115,17 +115,6 @@ static void gamma_emit( GLcontext *ctx, GLuint start, GLuint end)
 
 #define HAVE_ELTS        0
 
-static void VERT_FALLBACK( GLcontext *ctx,
-			   GLuint start,
-			   GLuint count,
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   GAMMA_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_POS;
-}
 
 static const GLuint hw_prim[GL_POLYGON+1] = {
    B_PrimType_Points,
@@ -163,14 +152,14 @@ static __inline void gammaEndPrimitive( gammaContextPtr gmesa )
 
 #define LOCAL_VARS gammaContextPtr gmesa = GAMMA_CONTEXT(ctx)
 #define INIT( prim ) gammaStartPrimitive( gmesa, prim )
-#define FINISH gammaEndPrimitive( gmesa )
-#define NEW_PRIMITIVE()  /* GAMMA_STATECHANGE( gmesa, 0 ) */
-#define NEW_BUFFER()  /* GAMMA_FIREVERTICES( gmesa ) */
+#define FLUSH() gammaEndPrimitive( gmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (gmesa->bufSize - gmesa->bufCount) / 2
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
   GAMMA_DMA_BUFFER_SIZE / 2
-#define EMIT_VERTS( ctx, j, nr ) gamma_emit(ctx, j, (j)+(nr))
+
+#define ALLOC_VERTS( nr ) (void *)0	/* todo: explicit alloc */
+#define EMIT_VERTS( ctx, j, nr, buf ) (gamma_emit(ctx, j, (j)+(nr)), (void *)0)
 
 #define TAG(x) gamma_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -187,7 +176,7 @@ static GLboolean gamma_run_render( GLcontext *ctx,
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i, length, flags = 0;
+   GLuint i;
    render_func *tab;
 
 				/* GH: THIS IS A HACK!!! */
@@ -195,7 +184,7 @@ static GLboolean gamma_run_render( GLcontext *ctx,
       return GL_TRUE;		/* don't handle clipping here */
 
    /* We don't do elts */
-   if (VB->Elts)
+   if (VB->Elts || !gamma_validate_render( ctx, VB ))
       return GL_TRUE;
 
    tab = TAG(render_tab_verts);

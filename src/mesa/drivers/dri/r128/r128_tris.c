@@ -231,7 +231,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a > 0)
-#define GET_VERTEX(e) (rmesa->verts + (e<<rmesa->vertex_stride_shift))
+#define GET_VERTEX(e) (rmesa->verts + (e * rmesa->vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -436,7 +436,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (r128Vertex *)(r128verts + (x << shift))
+#define VERT(x) (r128Vertex *)(r128verts + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       r128_draw_point( rmesa, VERT(start) )
@@ -453,7 +453,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
     r128ContextPtr rmesa = R128_CONTEXT(ctx);		\
-    const GLuint shift = rmesa->vertex_stride_shift;		\
+    const GLuint vertsize = rmesa->vertex_size;		\
     const char *r128verts = (char *)rmesa->verts;		\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
@@ -503,7 +503,6 @@ static void r128FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    GLuint vertsize = rmesa->vertex_size;
    GLuint *vb = r128AllocDmaLow( rmesa, (n-2) * 3 * 4 * vertsize );
    GLubyte *r128verts = (GLubyte *)rmesa->verts;
-   const GLuint shift = rmesa->vertex_stride_shift;
    const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i,j;
 

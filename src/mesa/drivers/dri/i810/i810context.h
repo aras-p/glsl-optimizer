@@ -94,11 +94,6 @@ struct i810_context_t {
     */
    GLuint Fallback;
 
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
-
    /* State for i810vb.c and i810tris.c.
     */
    GLuint new_state;		/* _NEW_* flags */

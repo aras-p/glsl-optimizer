@@ -110,21 +110,6 @@ static const int scale_prim[GL_POLYGON+1] = {
    3
 };
 
-/* Fallback to normal rendering.  Should now never be called.
- */
-static void VERT_FALLBACK( GLcontext *ctx,
-			   GLuint start,
-			   GLuint count,
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, 
-							  count, flags );
-   I830_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_POS;
-}
-
 
 #define LOCAL_VARS i830ContextPtr imesa = I830_CONTEXT(ctx)
 #define INIT( prim ) do {                          			\
@@ -132,15 +117,17 @@ static void VERT_FALLBACK( GLcontext *ctx,
    i830RasterPrimitive( ctx, reduced_prim[prim], hw_prim[prim] );   	\
 } while (0)
 
-#define NEW_PRIMITIVE()  I830_STATECHANGE( imesa, 0 )
-#define NEW_BUFFER()  I830_FIREVERTICES( imesa )
+#define FLUSH()  I830_FIREVERTICES( imesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (((int)imesa->vertex_high - (int)imesa->vertex_low) / (imesa->vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
   (I830_DMA_BUF_SZ-8) / (imesa->vertex_size * 4)
   
-#define EMIT_VERTS( ctx, j, nr ) \
-  i830_emit_contiguous_verts(ctx, j, (j)+(nr))  
+
+#define ALLOC_VERTS( nr ) \
+  i830AllocDmaLow( imesa, nr * imesa->vertex_size * 4)
+#define EMIT_VERTS( ctx, j, nr, buf ) \
+  i830_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
   
 #define TAG(x) i830_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -165,7 +152,6 @@ static GLboolean choose_render( struct vertex_buffer *VB, int bufsz )
    for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
       GLuint prim = VB->Primitive[i].mode;
-      GLuint start = VB->Primitive[i].start;
       GLuint length = VB->Primitive[i].count;
 
       if (!length)
@@ -200,10 +186,11 @@ static GLboolean i830_run_render( GLcontext *ctx,
    i830ContextPtr imesa = I830_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i, length, flags = 0;
+   GLuint i;
    /* Don't handle clipping or indexed vertices.
     */
-   if (VB->ClipOrMask || imesa->RenderIndex != 0 || VB->Elts || 
+   if (imesa->RenderIndex != 0 || 
+       !i830_validate_render( ctx, VB ) ||
        !choose_render( VB, GET_SUBSEQUENT_VB_MAX_VERTS() )) {
       return GL_TRUE;
    }

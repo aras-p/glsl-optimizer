@@ -74,7 +74,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[RADEON_MAX_SETUP];
 
@@ -134,9 +133,7 @@ static struct {
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() RADEON_CONTEXT(ctx)->swtcl.vertex_format
 #define GET_VERTEX_STORE() RADEON_CONTEXT(ctx)->swtcl.verts
-#define GET_VERTEX_STRIDE_SHIFT() RADEON_CONTEXT(ctx)->swtcl.vertex_stride_shift
-#define GET_UBYTE_COLOR_STORE() &RADEON_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &RADEON_CONTEXT(ctx)->UbyteSecondaryColor
+#define GET_VERTEX_SIZE() RADEON_CONTEXT(ctx)->swtcl.vertex_size * sizeof(GLuint)
 
 #define HAVE_HW_VIEWPORT    1
 /* Tiny vertices don't seem to work atm - haven't looked into why.
@@ -153,10 +150,6 @@ static struct {
 
 #define CHECK_HW_DIVIDE    (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE| \
                                                     DD_TRI_UNFILLED)))
-
-#define IMPORT_QUALIFIER
-#define IMPORT_FLOAT_COLORS radeon_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS radeon_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[RADEON_CONTEXT(ctx)->swtcl.SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[RADEON_CONTEXT(ctx)->swtcl.SetupIndex].copy_pv
@@ -271,7 +264,6 @@ static void radeonRenderStart( GLcontext *ctx )
 	 RADEON_NEWPRIM(rmesa);
 	 rmesa->swtcl.vertex_format = setup_tab[ind].vertex_format;
 	 rmesa->swtcl.vertex_size = setup_tab[ind].vertex_size;
-	 rmesa->swtcl.vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
       }
 
       if (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
@@ -290,9 +282,8 @@ void radeonBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 			   GLuint newinputs )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)rmesa->swtcl.verts + 
-		 (start << rmesa->swtcl.vertex_stride_shift));
-   GLuint stride = 1 << rmesa->swtcl.vertex_stride_shift;
+   GLuint stride = rmesa->swtcl.vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)rmesa->swtcl.verts + (start * stride));
 
    newinputs |= rmesa->swtcl.SetupNewInputs;
    rmesa->swtcl.SetupNewInputs = 0;
@@ -337,7 +328,6 @@ void radeonChooseVertexState( GLcontext *ctx )
       RADEON_NEWPRIM(rmesa);
       rmesa->swtcl.vertex_format = setup_tab[ind].vertex_format;
       rmesa->swtcl.vertex_size = setup_tab[ind].vertex_size;
-      rmesa->swtcl.vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 
    {
@@ -440,13 +430,15 @@ static __inline void *radeonAllocDmaLowVerts( radeonContextPtr rmesa,
 
 
 
-void radeon_emit_contiguous_verts( GLcontext *ctx, GLuint start, GLuint count )
+static void *radeon_emit_contiguous_verts( GLcontext *ctx, 
+					   GLuint start, 
+					   GLuint count,
+					   void *dest)
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint vertex_size = rmesa->swtcl.vertex_size * 4;
-   CARD32 *dest = radeonAllocDmaLowVerts( rmesa, count-start, vertex_size );
-   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, dest, 
-					    vertex_size );
+   GLuint stride = rmesa->swtcl.vertex_size * 4;
+   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, dest, stride );
+   return (void *)((char *)dest + stride * (count - start));
 }
 
 
@@ -512,37 +504,13 @@ static __inline void radeonEltPrimitive( radeonContextPtr rmesa, GLenum prim )
 }
 
 
-static void VERT_FALLBACK( GLcontext *ctx,
-			   GLuint start,
-			   GLuint count,
-			   GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_POS;
-}
-
-static void ELT_FALLBACK( GLcontext *ctx,
-			  GLuint start,
-			  GLuint count,
-			  GLuint flags )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
-   tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
-   tnl->Driver.Render.PrimTabElts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_POS;
-}
 
 
 #define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
-#define ELTS_VARS  GLushort *dest
+#define ELTS_VARS( buf )  GLushort *dest = buf
 #define INIT( prim ) radeonDmaPrimitive( rmesa, prim )
 #define ELT_INIT(prim) radeonEltPrimitive( rmesa, prim )
-#define NEW_PRIMITIVE()  RADEON_NEWPRIM( rmesa )
-#define NEW_BUFFER()  radeonRefillCurrentDmaRegion( rmesa )
+#define FLUSH()  RADEON_NEWPRIM( rmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (((int)rmesa->dma.current.end - (int)rmesa->dma.current.ptr) / (rmesa->swtcl.vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
@@ -559,38 +527,35 @@ static void ELT_FALLBACK( GLcontext *ctx,
   ((RADEON_CMD_BUF_SZ - 1024) / 2)
 
 
+static void *radeon_alloc_elts( radeonContextPtr rmesa, int nr )
+{
+   if (rmesa->dma.flush == radeonFlushElts &&
+       rmesa->store.cmd_used + nr*2 < RADEON_CMD_BUF_SZ) {
 
-/* How do you extend an existing primitive?
- */
-#define ALLOC_ELTS(nr)							\
-do {									\
-   if (rmesa->dma.flush == radeonFlushElts &&				\
-       rmesa->store.cmd_used + nr*2 < RADEON_CMD_BUF_SZ) {		\
-									\
-      dest = (GLushort *)(rmesa->store.cmd_buf +			\
-			  rmesa->store.cmd_used);			\
-      rmesa->store.cmd_used += nr*2;					\
-   }									\
-   else {								\
-      if (rmesa->dma.flush) {						\
-	 rmesa->dma.flush( rmesa );					\
-      }									\
-									\
-      radeonEmitVertexAOS( rmesa,					\
-			   rmesa->swtcl.vertex_size,			\
-			   (rmesa->radeonScreen->gart_buffer_offset +	\
-			    rmesa->swtcl.indexed_verts.buf->buf->idx * 	\
-			    RADEON_BUFFER_SIZE +			\
-			    rmesa->swtcl.indexed_verts.start));		\
-									\
-      dest = radeonAllocEltsOpenEnded( rmesa,				\
-				       rmesa->swtcl.vertex_format,	\
-				       rmesa->swtcl.hw_primitive,	\
-				       nr );				\
-   }									\
-} while (0)
+      rmesa->store.cmd_used += nr*2;
 
-#define ALLOC_ELTS_NEW_PRIMITIVE(nr) ALLOC_ELTS( nr )
+      return (void *)(rmesa->store.cmd_buf + rmesa->store.cmd_used);
+   }
+   else {
+      if (rmesa->dma.flush) {
+	 rmesa->dma.flush( rmesa );
+      }
+
+      radeonEmitVertexAOS( rmesa,
+			   rmesa->swtcl.vertex_size,
+			   (rmesa->radeonScreen->gart_buffer_offset +
+			    rmesa->swtcl.indexed_verts.buf->buf->idx *
+			    RADEON_BUFFER_SIZE +
+			    rmesa->swtcl.indexed_verts.start));
+
+      return (void *) radeonAllocEltsOpenEnded( rmesa,
+						rmesa->swtcl.vertex_format,
+						rmesa->swtcl.hw_primitive,
+						nr );
+   }
+}
+
+#define ALLOC_ELTS(nr) radeon_alloc_elts(rmesa, nr)
 
 #ifdef MESA_BIG_ENDIAN
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
@@ -603,13 +568,17 @@ do {									\
 #endif
 #define EMIT_TWO_ELTS(offset, x, y)  *(GLuint *)(dest+offset) = ((y)<<16)|(x);
 #define INCR_ELTS( nr ) dest += nr
+#define ELTPTR dest
 #define RELEASE_ELT_VERTS() \
   radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ )
-#define EMIT_VERTS( ctx, j, nr ) \
-  radeon_emit_contiguous_verts(ctx, j, (j)+(nr))
 #define EMIT_INDEXED_VERTS( ctx, start, count ) \
   radeon_emit_indexed_verts( ctx, start, count )
 
+
+#define ALLOC_VERTS( nr ) \
+  radeonAllocDmaLowVerts( rmesa, nr, rmesa->swtcl.vertex_size * 4 )
+#define EMIT_VERTS( ctx, j, nr, buf ) \
+  radeon_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
 
 #define TAG(x) radeon_dma_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -632,18 +601,19 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    if (rmesa->swtcl.indexed_verts.buf && (!VB->Elts || stage->changed_inputs)) 
       RELEASE_ELT_VERTS();
    	
-   if (VB->ClipOrMask ||	     /* No clipping */
-       rmesa->swtcl.RenderIndex != 0 ||    /* No per-vertex manipulations */
-       ctx->Line.StippleFlag)        /* GH: THIS IS A HACK!!! */
+   if (rmesa->swtcl.RenderIndex != 0 ||   
+       !radeon_dma_validate_render( ctx, VB ))
       return GL_TRUE;		
 
    tnl->Driver.Render.Start( ctx );
 
    if (VB->Elts) {
       tab = TAG(render_tab_elts);
-      if (!rmesa->swtcl.indexed_verts.buf)
-	 if (!TAG(emit_elt_verts)(ctx, 0, VB->Count))
-	    return GL_TRUE;	/* too many vertices */
+      if (!rmesa->swtcl.indexed_verts.buf) {
+	 if (VB->Count > GET_SUBSEQUENT_VB_MAX_VERTS())
+	    return GL_TRUE;
+	 EMIT_INDEXED_VERTS(ctx, 0, VB->Count);
+      }
    }
 
    for (i = 0 ; i < VB->PrimitiveCount ; i++)
@@ -656,7 +626,7 @@ static GLboolean radeon_run_render( GLcontext *ctx,
 	 continue;
 
       if (RADEON_DEBUG & DEBUG_PRIMS)
-	 fprintf(stderr, "r200_render.c: prim %s %d..%d\n", 
+	 fprintf(stderr, "radeon_render.c: prim %s %d..%d\n", 
 		 _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
 		 start, start+length);
 
@@ -870,6 +840,7 @@ static void radeonResetLineStipple( GLcontext *ctx );
  ***********************************************************************/
 
 #undef LOCAL_VARS
+#undef ALLOC_VERTS
 #define CTX_ARG radeonContextPtr rmesa
 #define CTX_ARG2 rmesa
 #define GET_VERTEX_DWORDS() rmesa->swtcl.vertex_size
@@ -877,9 +848,8 @@ static void radeonResetLineStipple( GLcontext *ctx );
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);		\
-   const GLuint shift = rmesa->swtcl.vertex_stride_shift;	\
    const char *radeonverts = (char *)rmesa->swtcl.verts;
-#define VERT(x) (radeonVertex *)(radeonverts + (x << shift))
+#define VERT(x) (radeonVertex *)(radeonverts + (x * vertsize * sizeof(int)))
 #define VERTEX radeonVertex 
 #undef TAG
 #define TAG(x) radeon_##x
@@ -937,7 +907,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a < 0)
-#define GET_VERTEX(e) (rmesa->swtcl.verts + (e<<rmesa->swtcl.vertex_stride_shift))
+#define GET_VERTEX(e) (rmesa->swtcl.verts + (e * rmesa->swtcl.vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -1032,7 +1002,7 @@ static void init_rast_tab( void )
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (radeonVertex *)(radeonverts + (x << shift))
+#define VERT(x) (radeonVertex *)(radeonverts + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       radeon_point( rmesa, VERT(start) )
@@ -1049,7 +1019,7 @@ static void init_rast_tab( void )
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);		\
-   const GLuint shift = rmesa->swtcl.vertex_stride_shift;		\
+   const GLuint vertsize = rmesa->swtcl.vertex_size;		\
    const char *radeonverts = (char *)rmesa->swtcl.verts;		\
    const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
    const GLboolean stipple = ctx->Line.StippleFlag;		\

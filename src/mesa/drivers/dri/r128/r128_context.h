@@ -123,11 +123,6 @@ struct r128_context {
    GLuint dirty;			/* Hardware state to be updated */
    r128_context_regs_t setup;
 
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
-
    GLuint NewGLState;
    GLuint Fallback;
    GLuint SetupIndex;

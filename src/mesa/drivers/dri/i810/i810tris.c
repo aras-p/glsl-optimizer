@@ -232,7 +232,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a > 0)
-#define GET_VERTEX(e) (imesa->verts + (e<<imesa->vertex_stride_shift))
+#define GET_VERTEX(e) (imesa->verts + (e * imesa->vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -445,7 +445,7 @@ i810_fallback_point( i810ContextPtr imesa,
 /**********************************************************************/
 
 #define IND 0
-#define V(x) (i810Vertex *)(vertptr + ((x)<<vertshift))
+#define V(x) (i810Vertex *)(vertptr + ((x)*vertsize*sizeof(int)))
 #define RENDER_POINTS( start, count )	\
    for ( ; start < count ; start++) POINT( V(ELT(start)) );
 #define RENDER_LINE( v0, v1 )         LINE( V(v0), V(v1) )
@@ -456,7 +456,7 @@ i810_fallback_point( i810ContextPtr imesa,
 #define LOCAL_VARS						\
     i810ContextPtr imesa = I810_CONTEXT(ctx);			\
     GLubyte *vertptr = (GLubyte *)imesa->verts;			\
-    const GLuint vertshift = imesa->vertex_stride_shift;       	\
+    const GLuint vertsize = imesa->vertex_size;       	\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 #define RESET_STIPPLE
@@ -514,7 +514,6 @@ static void i810FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    GLuint vertsize = imesa->vertex_size;
    GLuint *vb = i810AllocDmaLow( imesa, (n-2) * 3 * 4 * vertsize );
    GLubyte *vertptr = (GLubyte *)imesa->verts;
-   const GLuint vertshift = imesa->vertex_stride_shift;
    const GLuint *start = (const GLuint *)V(elts[0]);
    int i,j;
 

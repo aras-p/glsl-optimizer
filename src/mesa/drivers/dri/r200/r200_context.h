@@ -788,12 +788,6 @@ struct r200_context {
    GLuint Fallback;
    GLuint NewGLState;
 
-   
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
-
    /* Vertex buffers
     */
    struct r200_ioctl ioctl;

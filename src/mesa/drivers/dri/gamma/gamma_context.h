@@ -238,11 +238,6 @@ struct gamma_context {
 
   	GLINTSAREADRIPtr        sarea; 
 
-        /* Temporaries for translating away float colors:
-	 */
-        struct gl_client_array UbyteColor;
-        struct gl_client_array UbyteSecondaryColor;
-
    	/* Mirrors of some DRI state
     	 */
    	drmContext hHWContext;

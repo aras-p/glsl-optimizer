@@ -52,9 +52,10 @@ extern void mgaPrintSetupFlags(char *msg, GLuint flags );
 extern void mgaInitVB( GLcontext *ctx );
 extern void mgaFreeVB( GLcontext *ctx );
 
-extern void mga_emit_contiguous_verts( GLcontext *ctx,
+extern void *mga_emit_contiguous_verts( GLcontext *ctx,
 					GLuint start,
-					GLuint count );
+					GLuint count,
+					void *dest );
 
 extern void mga_translate_vertex(GLcontext *ctx, 
 				 const mgaVertex *src, 

@@ -273,7 +273,8 @@ static r200TexObjPtr r200AllocTexObj( struct gl_texture_object *texObj )
    texObj->DriverData = t;
    if ( t != NULL ) {
       if ( R200_DEBUG & DEBUG_TEXTURE ) {
-	 fprintf( stderr, "%s( %p, %p )\n", __FUNCTION__, texObj, t );
+	 fprintf( stderr, "%s( %p, %p )\n", __FUNCTION__, (void *)texObj, 
+		  (void *)t );
       }
 
       /* Initialize non-image-dependent parts of the state:
@@ -922,7 +923,7 @@ static void r200BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *texObj )
 {
    if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
-      fprintf( stderr, "%s( %p ) unit=%d\n", __FUNCTION__, texObj,
+      fprintf( stderr, "%s( %p ) unit=%d\n", __FUNCTION__, (void *)texObj,
 	       ctx->Texture.CurrentUnit );
    }
 
@@ -940,7 +941,7 @@ static void r200DeleteTexture( GLcontext *ctx,
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
-      fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, texObj,
+      fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );
    }
 

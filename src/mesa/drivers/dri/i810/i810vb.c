@@ -59,7 +59,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[I810_MAX_SETUP];
 
@@ -107,9 +106,7 @@ static struct {
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() I810_CONTEXT(ctx)->Setup[I810_CTXREG_VF]
 #define GET_VERTEX_STORE() I810_CONTEXT(ctx)->verts
-#define GET_VERTEX_STRIDE_SHIFT() I810_CONTEXT(ctx)->vertex_stride_shift
-#define GET_UBYTE_COLOR_STORE() &I810_CONTEXT(ctx)->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &I810_CONTEXT(ctx)->UbyteSecondaryColor
+#define GET_VERTEX_SIZE() I810_CONTEXT(ctx)->vertex_size * sizeof(GLuint)
 #define INVALIDATE_STORED_VERTICES()
 
 #define HAVE_HW_VIEWPORT    0
@@ -129,9 +126,6 @@ static struct {
 #define UNVIEWPORT_Z(z)  z * (float)0xffff
 
 #define PTEX_FALLBACK() FALLBACK(I810_CONTEXT(ctx), I810_FALLBACK_TEXTURE, 1)
-
-#define IMPORT_FLOAT_COLORS i810_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS i810_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[I810_CONTEXT(ctx)->SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[I810_CONTEXT(ctx)->SetupIndex].copy_pv
@@ -372,8 +366,8 @@ void i810BuildVertices( GLcontext *ctx,
 			GLuint newinputs )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)imesa->verts + (start<<imesa->vertex_stride_shift));
-   GLuint stride = 1<<imesa->vertex_stride_shift;
+   GLuint stride = imesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)imesa->verts + (start * stride));
 
    if (0) fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -450,20 +444,20 @@ void i810ChooseVertexState( GLcontext *ctx )
       I810_STATECHANGE(imesa, I810_UPLOAD_CTX);
       imesa->Setup[I810_CTXREG_VF] = setup_tab[ind].vertex_format;
       imesa->vertex_size = setup_tab[ind].vertex_size;
-      imesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
 
 
-void i810_emit_contiguous_verts( GLcontext *ctx,
-				 GLuint start,
-				 GLuint count )
+void *i810_emit_contiguous_verts( GLcontext *ctx,
+				  GLuint start,
+				  GLuint count,
+				  void *dest )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
-   GLuint vertex_size = imesa->vertex_size * 4;
-   GLuint *dest = i810AllocDmaLow( imesa, (count-start) * vertex_size);
-   setup_tab[imesa->SetupIndex].emit( ctx, start, count, dest, vertex_size );
+   GLuint stride = imesa->vertex_size * 4;
+   setup_tab[imesa->SetupIndex].emit( ctx, start, count, dest, stride );
+   return (void *)((char *)dest + stride * (count - start));
 }
 
 
@@ -491,15 +485,5 @@ void i810FreeVB( GLcontext *ctx )
    if (imesa->verts) {
       ALIGN_FREE(imesa->verts);
       imesa->verts = 0;
-   }
-
-   if (imesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(imesa->UbyteSecondaryColor.Ptr);
-      imesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (imesa->UbyteColor.Ptr) {
-      ALIGN_FREE(imesa->UbyteColor.Ptr);
-      imesa->UbyteColor.Ptr = 0;
    }
 }

@@ -64,7 +64,6 @@ static struct {
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[R128_MAX_SETUP];
 
@@ -108,10 +107,8 @@ static struct {
 #define GET_TEXSOURCE(n)  rmesa->tmu_source[n]
 #define GET_VERTEX_FORMAT() rmesa->vertex_format
 #define GET_VERTEX_STORE() rmesa->verts
-#define GET_VERTEX_STRIDE_SHIFT() rmesa->vertex_stride_shift
+#define GET_VERTEX_SIZE() rmesa->vertex_size * sizeof(GLuint)
 #define INVALIDATE_STORED_VERTICES()
-#define GET_UBYTE_COLOR_STORE() &rmesa->UbyteColor
-#define GET_UBYTE_SPEC_COLOR_STORE() &rmesa->UbyteSecondaryColor
 
 #define HAVE_HW_VIEWPORT    0
 #define HAVE_HW_DIVIDE      0
@@ -130,9 +127,6 @@ static struct {
 #define UNVIEWPORT_Z(z)  z / rmesa->depth_scale
 
 #define PTEX_FALLBACK() FALLBACK(R128_CONTEXT(ctx), R128_FALLBACK_TEXTURE, 1)
-
-#define IMPORT_FLOAT_COLORS r128_import_float_colors
-#define IMPORT_FLOAT_SPEC_COLORS r128_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[rmesa->SetupIndex].interp
 #define COPY_PV_VERTEX setup_tab[rmesa->SetupIndex].copy_pv
@@ -373,8 +367,8 @@ void r128BuildVertices( GLcontext *ctx,
 			GLuint newinputs )
 {
    r128ContextPtr rmesa = R128_CONTEXT( ctx );
-   GLubyte *v = ((GLubyte *)rmesa->verts + (start<<rmesa->vertex_stride_shift));
-   GLuint stride = 1<<rmesa->vertex_stride_shift;
+   GLuint stride = rmesa->vertex_size * sizeof(int);
+   GLubyte *v = ((GLubyte *)rmesa->verts + (start * stride));
 
    newinputs |= rmesa->SetupNewInputs;
    rmesa->SetupNewInputs = 0;
@@ -446,7 +440,6 @@ void r128ChooseVertexState( GLcontext *ctx )
       FLUSH_BATCH(rmesa);
       rmesa->vertex_format = setup_tab[ind].vertex_format;
       rmesa->vertex_size = setup_tab[ind].vertex_size;
-      rmesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
@@ -510,16 +503,5 @@ void r128FreeVB( GLcontext *ctx )
    if (rmesa->verts) {
       ALIGN_FREE(rmesa->verts);
       rmesa->verts = 0;
-   }
-
-
-   if (rmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteSecondaryColor.Ptr);
-      rmesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (rmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteColor.Ptr);
-      rmesa->UbyteColor.Ptr = 0;
    }
 }

@@ -499,8 +499,6 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_COLOR1) {
       if (!rmesa->tcl.spec.buf) {
-	 if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	    radeon_import_float_spec_colors( ctx );
 
 	 emit_ubyte_rgba( ctx, 
 			  &rmesa->tcl.spec, 

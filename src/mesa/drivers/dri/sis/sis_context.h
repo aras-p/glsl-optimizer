@@ -235,11 +235,6 @@ struct sis_context
   /* This must be first in this structure */
   GLcontext *glCtx;
 
-  /* Temporaries for translating away float colors:
-   */
-  struct gl_client_array UbyteColor;
-  struct gl_client_array UbyteSecondaryColor;
-
   GLuint NewGLState;
   GLuint Fallback;
   GLuint SetupIndex;

@@ -360,7 +360,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a > 0)
-#define GET_VERTEX(e) (mmesa->verts + (e<<mmesa->vertex_stride_shift))
+#define GET_VERTEX(e) (mmesa->verts + (e * mmesa->vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -591,7 +591,7 @@ static void init_rast_tab( void )
 /**********************************************************************/
 
 
-#define VERT(x) (mgaVertex *)(vertptr + ((x)<<vertshift))
+#define VERT(x) (mgaVertex *)(vertptr + ((x)*vertex_size*sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       mga_draw_point( mmesa, VERT(ELT(start)) );
@@ -606,7 +606,7 @@ static void init_rast_tab( void )
 #define LOCAL_VARS						\
     mgaContextPtr mmesa = MGA_CONTEXT(ctx);			\
     GLubyte *vertptr = (GLubyte *)mmesa->verts;			\
-    const GLuint vertshift = mmesa->vertex_stride_shift;       	\
+    const GLuint vertex_size = mmesa->vertex_size;       	\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 #define RESET_STIPPLE 
@@ -663,7 +663,6 @@ static void mgaFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    GLuint vertex_size = mmesa->vertex_size;
    GLuint *vb = mgaAllocDmaLow( mmesa, (n-2) * 3 * 4 * vertex_size );
    GLubyte *vertptr = (GLubyte *)mmesa->verts;			
-   const GLuint vertshift = mmesa->vertex_stride_shift;       	
    const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i,j;
 

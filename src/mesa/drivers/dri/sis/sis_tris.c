@@ -265,7 +265,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a > 0)
-#define GET_VERTEX(e) (smesa->verts + (e << smesa->vertex_stride_shift))
+#define GET_VERTEX(e) (smesa->verts + (e * smesa->vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -483,7 +483,7 @@ sis_fallback_point( sisContextPtr smesa,
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (sisVertex *)(sisverts + (x << shift))
+#define VERT(x) (sisVertex *)(sisverts + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       smesa->draw_point( smesa, VERT(start) )
@@ -496,7 +496,7 @@ sis_fallback_point( sisContextPtr smesa,
 #undef LOCAL_VARS
 #define LOCAL_VARS				\
     sisContextPtr smesa = SIS_CONTEXT(ctx);	\
-    const GLuint shift = smesa->vertex_stride_shift;		\
+    const GLuint vertsize = smesa->vertex_size;		\
     const char *sisverts = (char *)smesa->verts;		\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
@@ -546,7 +546,6 @@ static void sisFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    GLuint vertsize = smesa->vertex_size;
    GLuint *vb = r128AllocDmaLow( rmesa, (n-2) * 3 * 4 * vertsize );
    GLubyte *sisverts = (GLubyte *)smesa->verts;
-   const GLuint shift = smesa->vertex_stride_shift;
    const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i,j;
 

@@ -412,7 +412,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv )
    rmesa = (r200ContextPtr) dPriv->driContextPriv->driverPrivate;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, rmesa->glCtx );
+      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *)rmesa->glCtx );
    }
 
    R200_FIREVERTICES( rmesa );
