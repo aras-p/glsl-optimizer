@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.34 2000/06/08 22:50:28 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.35 2000/08/02 20:35:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
  *
  * Thanks to the contributors:
  *
- * Initial version:  Philip Brown (philb@CSUA.Berkeley.EDU)
+ * Initial version:  Philip Brown (phil@bolthole.com)
  * Better glXGetConfig() support: Armin Liebchen (liebchen@asylum.cs.utah.edu)
  * Further visual-handling refinements: Wolfram Gloger
  *    (wmglo@Dent.MED.Uni-Muenchen.DE).
