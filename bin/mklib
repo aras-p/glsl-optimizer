@@ -8,7 +8,8 @@
 # Usage:
 #   mklib [options] objects ...
 # Options:
-#   -o LIBRARY    specifies the name of resulting library ("GL" for example)
+#   -o LIBRARY    specifies the name of resulting library
+#                 ("-o GL" for example, might result in "libGL.so" being made)
 #   -major N      specifies major version number (default is 1)
 #   -minor N      specifies minor version number (default is 0)
 #   -patch N      specifies patch version number (default is 0)
@@ -149,29 +150,43 @@ case $ARCH in
     'SunOS')
 	LIBNAME="lib${LIBNAME}.so"
 	echo "mklib: Making SunOS shared library: " ${LIBNAME}
-	OPTS="-G"
 	if [ $CPLUSPLUS = 1 ] ; then
-	    # link for C++
+	    # determine linker and options for C++ code
 	    if [ "x${CXX}" = "xg++" ] ; then
+		# use g++
 		LINK="g++"
+		OPTS="-shared"
 	    elif [ "x${CXX}" = "xCC" ] ; then
+		# use Sun CC
 		LINK="CC"
-	    elif [ `which c++` ] ; then
+		OPTS="-G"
+	    elif [ "x${CXX}" = "xc++" ] ; then
+		# use Sun c++
 		LINK="c++"
+		OPTS="-G"
+	    elif [ `which c++` ] ; then
+		# use Sun c++
+		LINK="c++"
+		OPTS="-G"
 	    elif [ `type g++` ] ; then
+		# use g++
 		LINK="g++"
+		OPTS="-shared"
 	    else
 		echo "mklib: warning: can't find C++ comiler, trying CC."
 		LINK="CC"
+		OPTS="-G"
 	    fi
 	elif [ "x${CC}" = "xgcc" ] ; then
 	    # use gcc for linking
 	    LINK="gcc"
+	    OPTS="-shared"
 	else
 	    # use native Sun linker
 	    LINK="ld"
+	    OPTS="-G"
 	fi
-	echo "mklib: linker is " ${LINK}
+	echo "mklib: linker is" ${LINK} ${OPTS}
 	rm -f ${LIBNAME}
 	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	FINAL_LIBS=${LIBNAME}
