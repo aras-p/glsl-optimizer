@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.3 2003/02/16 23:07:36 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.4 2003/02/23 05:23:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -139,6 +139,41 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
       string = "";
    ctx->Program.ErrorString = _mesa_strdup(string);
 }
+
+
+const char *
+_mesa_find_line_column(const char *string, const char *pos,
+                       GLint *line, GLint *col)
+{
+   const char *lineStart = string;
+   const char *p = string;
+   char *s;
+   int len;
+
+   *line = 1;
+
+   while (p != pos) {
+      if (*p == '\n') {
+         (*line)++;
+         lineStart = p + 1;
+      }
+      p++;
+   }
+
+   *col = (pos - lineStart) + 1;
+
+   /* return copy of this line */
+   while (*p != 0 && *p != '\n')
+      p++;
+   len = p - lineStart;
+   s = (char *) _mesa_malloc(len + 1);
+   _mesa_memcpy(s, lineStart, len);
+   s[len] = 0;
+
+   return s;
+}
+
+
 
 
 /**
