@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.34 2003/01/28 00:14:32 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.35 2003/02/21 21:00:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -292,7 +292,7 @@
             array->coverage[count] = coverage;
 #endif
 #ifdef DO_Z
-            array->z[count] = (GLdepth) solve_plane(cx, cy, zPlane);
+            array->z[count] = (GLdepth) IROUND(solve_plane(cx, cy, zPlane));
 #endif
 #ifdef DO_FOG
 	    array->fog[count] = solve_plane(cx, cy, fogPlane);
@@ -398,7 +398,7 @@
             array->coverage[ix] = coverage;
 #endif
 #ifdef DO_Z
-            array->z[ix] = (GLdepth) solve_plane(cx, cy, zPlane);
+            array->z[ix] = (GLdepth) IROUND(solve_plane(cx, cy, zPlane));
 #endif
 #ifdef DO_FOG
             array->fog[ix] = solve_plane(cx, cy, fogPlane);
