@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.60 2002/05/05 16:00:06 brianp Exp $
+# $Id: Make-config,v 1.61 2002/05/06 15:46:05 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -615,7 +615,7 @@ linux-icc:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = icc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -O3 -tpp6 -xK -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -tpp6 -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
