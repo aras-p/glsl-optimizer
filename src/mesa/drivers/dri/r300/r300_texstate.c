@@ -105,7 +105,7 @@ static const struct {
 	    {0xffffff09, 0},
 	    {0xffffff10, 0},
 	    {0xffffff11, 0},
-	    {0xffffff12, 0},
+	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
 	    {0xffffff13, 0},
 	    {0xffffff14, 0},
 	    {0xffffff15,  0},

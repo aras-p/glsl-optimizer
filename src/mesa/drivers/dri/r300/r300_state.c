@@ -817,7 +817,6 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 /* =============================================================
  * Polygon state
  */
-#ifdef HAVE_ZBS
 static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -833,7 +832,6 @@ static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 	rmesa->hw.zbs.cmd[R300_ZBS_W_FACTOR] = r300PackFloat32(factor);
 	rmesa->hw.zbs.cmd[R300_ZBS_W_CONSTANT] = r300PackFloat32(constant);
 }
-#endif
 
 /* Routing and texture-related */
 
@@ -1212,7 +1210,7 @@ void r300_setup_textures(GLcontext *ctx)
 				}
 			//fprintf(stderr, "t->format=%08x\n", t->format);
 			if((t->format & 0xffffff00)==0xffffff00){
-				WARN_ONCE("unknown texture format encountered. Help me !\n");
+				WARN_ONCE("unknown texture format (entry %x) encountered. Help me !\n", t->format & 0xff);
 				//fprintf(stderr, "t->format=%08x\n", t->format);
 				}
 			if (RADEON_DEBUG & DEBUG_STATE)
