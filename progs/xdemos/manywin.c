@@ -1,4 +1,4 @@
-/* $Id: manywin.c,v 1.1 2000/06/13 19:41:30 brianp Exp $ */
+/* $Id: manywin.c,v 1.2 2000/12/02 20:33:05 brianp Exp $ */
 
 /*
  * Create N GLX windows/contexts and render to them in round-robin
@@ -50,6 +50,8 @@ struct head {
 #define MAX_HEADS 200
 static struct head Heads[MAX_HEADS];
 static int NumHeads = 0;
+static GLboolean SwapSeparate = GL_TRUE;
+
 
 
 static void
@@ -187,9 +189,16 @@ Redraw(struct head *h)
    glEnd();
    glPopMatrix();
 
-   glXSwapBuffers(h->Dpy, h->Win);
+   if (!SwapSeparate)
+      glXSwapBuffers(h->Dpy, h->Win);
 }
 
+
+static void
+Swap(struct head *h)
+{
+   glXSwapBuffers(h->Dpy, h->Win);
+}
 
 
 static void
@@ -222,6 +231,8 @@ EventLoop(void)
                switch (event.type) {
                   case Expose:
                      Redraw(h);
+                     if (SwapSeparate)
+                        Swap(h);
                      break;
                   case ConfigureNotify:
                      Resize(h, event.xconfigure.width, event.xconfigure.height);
@@ -236,7 +247,17 @@ EventLoop(void)
                printf("window mismatch\n");
             }
          }
-         Redraw(h);
+      }
+
+      /* redraw all windows */
+      for (i = 0; i < NumHeads; i++) {
+         Redraw(&Heads[i]);
+      }
+      /* swapbuffers on all windows, if not already done */
+      if (SwapSeparate) {
+         for (i = 0; i < NumHeads; i++) {
+            Swap(&Heads[i]);
+         }
       }
       usleep(1);
    }
@@ -265,13 +286,26 @@ main(int argc, char *argv[])
       struct head *h;
       printf("manywin: open N simultaneous glx windows\n");
       printf("Usage:\n");
-      printf("  manywin numWindows\n");
+      printf("  manywin [-s] numWindows\n");
+      printf("Options:\n");
+      printf("  -s = swap immediately after drawing (see src code)\n");
       printf("Example:\n");
       printf("  manywin 10\n");
       return 0;
    }
    else {
-      int n = atoi(argv[1]);
+      int n = 3;
+      for (i = 1; i < argc; i++) {
+         if (strcmp(argv[i], "-s") == 0) {
+            SwapSeparate = GL_FALSE;
+         }
+         else {
+            n = atoi(argv[i]);
+         }
+      }
+      if (n < 1)
+         n = 1;
+
       printf("%d windows\n", n);
       for (i = 0; i < n; i++) {
          char name[100];
