@@ -193,7 +193,7 @@ WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #else /* _WIN32 not defined */
 
 /* Define GLUTAPIENTRY and GLUTCALLBACK to nothing if we aren't on Win32. */
-#  define GLUTAPIENTRY
+#  define GLUTAPIENTRY GLAPI
 #  define GLUTAPIENTRYV
 #  define GLUT_APIENTRY_DEFINED
 #  define GLUTCALLBACK

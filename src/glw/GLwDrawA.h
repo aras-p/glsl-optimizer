@@ -182,9 +182,9 @@ extern void GLwDrawingAreaSwapBuffers(Widget w);
 
 #ifdef __GLX_MOTIF
 #ifdef _NO_PROTO
-extern Widget GLwCreateMDrawingArea();
+GLAPI extern Widget GLwCreateMDrawingArea();
 #else
-extern Widget GLwCreateMDrawingArea(Widget parent,char *name,ArgList arglist,Cardinal argcount);
+GLAPI extern Widget GLwCreateMDrawingArea(Widget parent,char *name,ArgList arglist,Cardinal argcount);
 #endif
 #endif 
 
