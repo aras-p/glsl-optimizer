@@ -1,4 +1,3 @@
-/* $Id: texobj.c,v 1.16 2000/03/27 17:55:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -168,7 +167,7 @@ void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_textur
    t->Complete = GL_TRUE;  /* be optimistic */
 
    /* Always need level zero image */
-   if (!t->Image[0] || !t->Image[0]->Data) {
+   if (!t->Image[0]) {
       t->Complete = GL_FALSE;
       return;
    }
@@ -207,10 +206,6 @@ void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_textur
       /* Test dimension-independent attributes */
       for (i = minLevel; i <= maxLevel; i++) {
          if (t->Image[i]) {
-            if (!t->Image[i]->Data) {
-               t->Complete = GL_FALSE;
-               return;
-            }
             if (t->Image[i]->Format != t->Image[0]->Format) {
                t->Complete = GL_FALSE;
                return;
@@ -232,10 +227,6 @@ void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_textur
             }
             if (i >= minLevel && i <= maxLevel) {
                if (!t->Image[i]) {
-                  t->Complete = GL_FALSE;
-                  return;
-               }
-               if (!t->Image[i]->Data) {
                   t->Complete = GL_FALSE;
                   return;
                }

@@ -49,6 +49,29 @@
  */
 
 
+#ifdef DEBUG
+static void PrintTexture(int w, int h, int c, const GLubyte *data)
+{
+  int i, j;
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      if (c==1)
+        printf("%02x  ", data[0]);
+      else if (c==2)
+        printf("%02x %02x  ", data[0], data[1]);
+      else if (c==3)
+        printf("%02x %02x %02x  ", data[0], data[1], data[2]);
+      else if (c==4)
+        printf("%02x %02x %02x %02x  ", data[0], data[1], data[2], data[3]);
+      data += c;
+    }
+    printf("\n");
+  }
+}
+#endif
+
+
+
 /*
  * Compute log base 2 of n.
  * If n isn't an exact power of two return -1.
@@ -1377,7 +1400,7 @@ _mesa_get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
    if (!ctx->Driver.GetTexImage)
       return;
 
-   image = (*ctx->Driver.GetTexImage)( ctx, target, level,
+   image = (*ctx->Driver.GetTexImage)( ctx, target, level, texObj,
                                        &imgFormat, &imgType, &freeImage);
    if (!image)
       return;

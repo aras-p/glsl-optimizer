@@ -1,4 +1,3 @@
-/* $Id: dd.h,v 1.23 2000/03/23 16:22:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -626,6 +625,7 @@ struct dd_function_table {
     */
 
    GLvoid *(*GetTexImage)( GLcontext *ctx, GLenum target, GLint level,
+                           const struct gl_texture_object *texObj,
                            GLenum *formatOut, GLenum *typeOut,
                            GLboolean *freeImageOut );
    /* Called by glGetTexImage or by core Mesa when a texture image
