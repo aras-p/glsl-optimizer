@@ -3,7 +3,7 @@
 
 
 
-Mesa-5.1 release notes:
+Mesa-6.0 release notes:
 -----------------------
 
 1) Glide2 support has been ceased; in order to keep Voodoo Graphics
@@ -18,7 +18,7 @@ Mesa-5.1 release notes:
 Known supported HW/OS:
 ----------------------
 
-Voodoo^2, Voodoo Banshee, Voodoo3, Voodoo4, Voodoo5
+Voodoo Graphics, Voodoo^2, Voodoo Banshee, Voodoo3, Voodoo4, Voodoo5
 DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux
 
 
@@ -46,6 +46,116 @@ Linux:
    Place the Glide3 SDK in /usr/local/glide
    Type:
 	make linux-glide
+	or
+	make linux-x86-glide
+
+
+
+Tuning:
+-------
+
+The following environment variables affect MesaFX. Those that affect Glide
+only, are beyond the scope of this file. Entries that don't have a "Value"
+field, can have any value whatsoever
+	ex: set MESA_FX_IGNORE_CMBEXT=y
+
+"Note" (*) means that the environment variable affects Glide, too; also, if
+the var is not found in the environment, it is searched in windoze registry.
+"Note" (!) means that the environment variable is not working as expected;
+may have undefined effects, might have effects only at Glide level or might
+not have any effect whatsoever. Caveat emptor! Those are to be revised soon.
+
+It is recommended to leave the envvars alone, so that Mesa/Glide will run with
+default values. Use them only when you experience crashes or strange behavior.
+
+FX_GLIDE_NUM_TMU
+	OS: all
+	HW: 2 TMU cards (Voodoo2, Avenger, Napalm)
+	Desc: force single-TMU
+	Note: (*)
+	Value: "1"
+FX_GLIDE_SWAPPENDINGCOUNT
+	OS: all
+	HW: all
+	Desc: max # of buffers allowed to build up
+	Note: (*) (!)
+	Value: "0", "1", "2" or "3"
+FX_GLIDE_SWAPINTERVAL
+	OS: all
+	HW: all
+	Desc: number of vertical retraces to wait before swapping
+	Note: (*) (!) works only at Glide-level?
+SSTH3_SLI_AA_CONFIGURATION
+	OS: all
+	HW: VSA100-based cards
+	Desc: SLI/AA setup
+	Note: (*) (!) works only at Glide-level?
+	Value:
+	    1, 2, 4 chip cards
+		"0" - SLI & AA disable
+		"1" - SLI disabled, 2 sample AA enabled
+	    2, 4 chip cards
+		"2" - 2-way SLI enabled, AA disabled
+		"3" - 2-way SLI enabled, 2 sample AA enabled
+		"4" - SLI disabled, 4 sample AA enabled
+	    4 chip cards
+		"5" - 4-way SLI enabled, AA disabled
+		"6" - 4-way SLI enabled, 2 sample AA enabled
+		"7" - 2-way SLI enabled, 4 sample AA enabled
+		"8" - SLI disabled, 8 sample AA enabled 
+SST_DUALHEAD
+	OS: win32
+	HW: ?
+	Desc: ?
+	Note: (!) disabled?
+MESA_FX_NO_SIGNALS
+	OS: linux
+	HW: all
+	Desc: avoid installing signals
+	Note: (!) untested!
+MESA_FX_INFO
+	OS: all
+	HW: all
+	Desc: verbose to stderr
+	Value: "r" to redirect stderr to MESA.LOG
+MESA_FX_IGNORE_PALEXT
+	OS: all
+	HW: all
+	Desc: disable 6666 palette
+MESA_FX_IGNORE_PIXEXT
+	OS: all
+	HW: Napalm
+	Desc: force 565 16bpp mode (traditional Voodoo, no 32/15bpp)
+MESA_FX_IGNORE_TEXFMT
+	OS: all
+	HW: Napalm
+	Desc: disable 32bit textures; also max texture is 256x256
+MESA_FX_IGNORE_CMBEXT
+	OS: all
+	HW: Napalm
+	Desc: disable Napalm combiners (color/alpha/texture)
+	Note: this means advanced (multi)texturing modes won't
+	      work, but disabling this turns on REAL trilinear
+MESA_FX_IGNORE_MIREXT
+	OS: all
+	HW: all
+	Desc: disable mirror extension
+MESA_FX_IGNORE_TEXUMA
+	OS: all
+	HW: all
+	Desc: disable UMA
+MESA_FX_IGNORE_TEXUS2
+	OS: all
+	HW: all
+	Desc: disable Texus2
+MESA_FX_MAXLOD
+	OS: all
+	HW: non VSA-100 cards
+	Desc: enable large texture support using SW rescaling
+	Value:
+	    "9"  - 512x512 textures
+	    "10" - 1024x1024 textures
+	    "11" - 2048x2048 textures
 
 
 
@@ -57,8 +167,8 @@ Hiroshi Morii <koolsmoky@users.sourceforge.net>
 
 
 
-The info below this line is outdated. You have been warned...
-*************************************************************
+WARNING! The info below this line is outdated (yet some of it useful). WARNING!
+*******************************************************************************
 
 
 

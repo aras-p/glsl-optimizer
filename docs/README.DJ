@@ -65,7 +65,7 @@ Available options:
 
 Tested on:
 	CPU:		AMD Athlon XP 1800+
-	Mainboard:	GA-7VTXE w/ 256 MB DDRAM
+	Mainboard:	GA-7VTXE w/ 512 MB DDRAM
 	Video card:	Voodoo5 6000 AGP w/ 128 MB SDRAM
 	DJGPP:		djdev 2.04 + gcc v3.3.2 + make v3.80
 	OS:		DOS and Win98SE
@@ -105,8 +105,9 @@ FAQ:
       If you haven't, sorry; everything is done in software. Suggestions?
 
    Q) I tried to set refresh rate w/ DMesa, but without success.
-   A) Refresh rate control works only for VESA 3.0. If you were compiling for
-      Glide, see Glide info. If not, sorry!
+   A) Refresh rate control works only for VESA 3.0 and the 3dfx driver (in
+      which case FX_GLIDE_REFRESH will be overwritten if it is defined and
+      is not 0).
 
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
@@ -230,9 +231,11 @@ v1.4 (dec-2003)
 	* minor changes to PC_HW/timer interface
 	x hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
 
-v1.5 (dec-2003)
+v1.5 (jan-2004)
 	+ added interface to query available "visuals" (GLFW - Marcus Geelnard)
+	+ added GLUT timer callback
 	- removed Matrox Millennium MGA2064W driver
+	x more changes to the 3dfx driver
 
 
 
