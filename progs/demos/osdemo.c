@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.6 2001/07/13 20:09:18 brianp Exp $ */
+/* $Id: osdemo.c,v 1.7 2001/09/24 15:29:27 kschultz Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -228,9 +228,9 @@ int main( int argc, char *argv[] )
    /* Create an RGBA-mode context */
 #if OSMESA_MAJOR_VERSION * 100 + OSMESA_MINOR_VERSION >= 305
    /* specify Z, stencil, accum sizes */
-   OSMesaContext ctx = OSMesaCreateContextExt( GL_RGBA, 16, 0, 0, NULL );
+   OSMesaContext ctx = OSMesaCreateContextExt( OSMESA_RGBA, 16, 0, 0, NULL );
 #else
-   OSMesaContext ctx = OSMesaCreateContext( GL_RGBA, NULL );
+   OSMesaContext ctx = OSMesaCreateContext( OSMESA_RGBA, NULL );
 #endif
    if (!ctx) {
       printf("OSMesaCreateContext failed!\n");
