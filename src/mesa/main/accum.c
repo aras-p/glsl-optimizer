@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.6 1999/10/13 18:42:49 brianp Exp $ */
+/* $Id: accum.c,v 1.7 1999/10/20 22:32:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,6 +74,9 @@
  */
 
 
+#define USE_OPTIMIZED_ACCUM   /* enable the optimization */
+
+
 
 void gl_alloc_accum_buffer( GLcontext *ctx )
 {
@@ -91,7 +94,11 @@ void gl_alloc_accum_buffer( GLcontext *ctx )
       /* unable to setup accumulation buffer */
       gl_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
    }
+#ifdef USE_OPTIMIZED_ACCUM
    ctx->IntegerAccumMode = GL_TRUE;
+#else
+   ctx->IntegerAccumMode = GL_FALSE;
+#endif
    ctx->IntegerAccumScaler = 0.0;
 }
 
@@ -118,12 +125,12 @@ void gl_ClearAccum( GLcontext *ctx,
 static void rescale_accum( GLcontext *ctx )
 {
    const GLuint n = ctx->Buffer->Width * ctx->Buffer->Height * 4;
-   const GLfloat s = ctx->IntegerAccumScaler * (32767.0 / 255.0);
+   const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
+   const GLfloat s = ctx->IntegerAccumScaler * (32767.0 / fChanMax);
    GLaccum *accum = ctx->Buffer->Accum;
    GLuint i;
 
    assert(ctx->IntegerAccumMode);
-   assert(sizeof(GLchan) == 1);  /* if not true, 255.0 above must be fixed */
    assert(accum);
 
    for (i = 0; i < n; i++) {
@@ -140,6 +147,8 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
    GLuint xpos, ypos, width, height, width4;
    GLfloat acc_scale;
    GLubyte rgba[MAX_WIDTH][4];
+   const GLint iChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
+   const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
 
@@ -185,7 +194,7 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
          {
 	    const GLaccum intVal = (GLaccum) (value * acc_scale);
 	    GLuint j;
-            /* May have to leave optimized accum buffer mode */
+            /* Leave optimized accum buffer mode */
             if (ctx->IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
@@ -202,7 +211,7 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
       case GL_MULT:
 	 {
 	    GLuint j;
-            /* May have to leave optimized accum buffer mode */
+            /* Leave optimized accum buffer mode */
             if (ctx->IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
@@ -247,10 +256,10 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
          }
          else {
             /* scaled integer accum buffer */
-            const GLfloat rscale = value * acc_scale / 255.0;
-            const GLfloat gscale = value * acc_scale / 255.0;
-            const GLfloat bscale = value * acc_scale / 255.0;
-            const GLfloat ascale = value * acc_scale / 255.0;
+            const GLfloat rscale = value * acc_scale / fChanMax;
+            const GLfloat gscale = value * acc_scale / fChanMax;
+            const GLfloat bscale = value * acc_scale / fChanMax;
+            const GLfloat ascale = value * acc_scale / fChanMax;
             GLuint j;
             for (j=0;j<height;j++) {
                GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
@@ -273,7 +282,11 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
 
          /* This is a change to go into optimized accum buffer mode */
          if (value > 0.0 && value <= 1.0) {
+#ifdef USE_OPTIMIZED_ACCUM
             ctx->IntegerAccumMode = GL_TRUE;
+#else
+            ctx->IntegerAccumMode = GL_FALSE;
+#endif
             ctx->IntegerAccumScaler = value;
          }
          else {
@@ -302,19 +315,20 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
          }
          else {
             /* scaled integer accum buffer */
-            const GLfloat rscale = value * acc_scale / 255.0;
-            const GLfloat gscale = value * acc_scale / 255.0;
-            const GLfloat bscale = value * acc_scale / 255.0;
-            const GLfloat ascale = value * acc_scale / 255.0;
+            const GLfloat rscale = value * acc_scale / fChanMax;
+            const GLfloat gscale = value * acc_scale / fChanMax;
+            const GLfloat bscale = value * acc_scale / fChanMax;
+            const GLfloat ascale = value * acc_scale / fChanMax;
+            const GLfloat d = 3.0 / acc_scale;
             GLuint i, j;
             for (j = 0; j < height; j++) {
                GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos * 4;
                gl_read_rgba_span(ctx, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
-                  *acc++ = (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );
-                  *acc++ = (GLaccum) ( (GLfloat) rgba[i][GCOMP] * gscale );
-                  *acc++ = (GLaccum) ( (GLfloat) rgba[i][BCOMP] * bscale );
-                  *acc++ = (GLaccum) ( (GLfloat) rgba[i][ACOMP] * ascale );
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][RCOMP] * rscale + d);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][GCOMP] * gscale + d);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][BCOMP] * bscale + d);
+                  *acc++ = (GLaccum) ((GLfloat) rgba[i][ACOMP] * ascale + d);
                }
                ypos++;
             }
@@ -329,14 +343,14 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
 
          if (ctx->IntegerAccumMode) {
             /* build lookup table to avoid integer divides */
-            GLint divisor = (GLint) ((1.0F / ctx->IntegerAccumScaler) + 0.5F);
+            GLfloat divisor = 1.0F / ctx->IntegerAccumScaler;
             static GLubyte divTable[32768];
-            static GLint prevDivisor = 0.0;
+            static GLfloat prevDivisor = 0.0;
             GLuint j;
             if (divisor != prevDivisor) {
                assert(divisor * 256 <= 32768);
                for (j = 0; j < divisor * 256; j++)
-                  divTable[j] = j / divisor;
+                  divTable[j] = (GLint) ((GLfloat) j / divisor + 0.5F);
                prevDivisor = divisor;
             }
 
@@ -364,10 +378,10 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
             }
          }
          else {
-            const GLfloat rscale = value / acc_scale * 255.0F;
-            const GLfloat gscale = value / acc_scale * 255.0F;
-            const GLfloat bscale = value / acc_scale * 255.0F;
-            const GLfloat ascale = value / acc_scale * 255.0F;
+            const GLfloat rscale = value / acc_scale * fChanMax;
+            const GLfloat gscale = value / acc_scale * fChanMax;
+            const GLfloat bscale = value / acc_scale * fChanMax;
+            const GLfloat ascale = value / acc_scale * fChanMax;
             GLuint i, j;
             for (j=0;j<height;j++) {
                const GLaccum *acc = ctx->Buffer->Accum + ypos * width4 + xpos*4;
@@ -377,10 +391,10 @@ void gl_Accum( GLcontext *ctx, GLenum op, GLfloat value )
                   g = (GLint) ( (GLfloat) (*acc++) * gscale + 0.5F );
                   b = (GLint) ( (GLfloat) (*acc++) * bscale + 0.5F );
                   a = (GLint) ( (GLfloat) (*acc++) * ascale + 0.5F );
-                  rgba[i][RCOMP] = CLAMP( r, 0, 255 );
-                  rgba[i][GCOMP] = CLAMP( g, 0, 255 );
-                  rgba[i][BCOMP] = CLAMP( b, 0, 255 );
-                  rgba[i][ACOMP] = CLAMP( a, 0, 255 );
+                  rgba[i][RCOMP] = CLAMP( r, 0, iChanMax );
+                  rgba[i][GCOMP] = CLAMP( g, 0, iChanMax );
+                  rgba[i][BCOMP] = CLAMP( b, 0, iChanMax );
+                  rgba[i][ACOMP] = CLAMP( a, 0, iChanMax );
                }
                if (ctx->Color.SWmasking) {
                   gl_mask_rgba_span( ctx, width, xpos, ypos, rgba );
@@ -491,7 +505,11 @@ void gl_clear_accum_buffer( GLcontext *ctx )
       /* update optimized accum state vars */
       if (ctx->Accum.ClearColor[0] == 0.0 && ctx->Accum.ClearColor[1] == 0.0 &&
           ctx->Accum.ClearColor[2] == 0.0 && ctx->Accum.ClearColor[3] == 0.0) {
+#ifdef USE_OPTIMIZED_ACCUM
          ctx->IntegerAccumMode = GL_TRUE;
+#else
+         ctx->IntegerAccumMode = GL_FALSE;
+#endif
          ctx->IntegerAccumScaler = 0.0;  /* denotes empty accum buffer */
       }
       else {
