@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.15 2000/01/28 22:18:03 brianp Exp $
+# $Id: Makefile.X11,v 1.16 2000/02/02 19:15:53 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -27,6 +27,7 @@ CORE_SOURCES = \
 	bbox.c \
 	bitmap.c \
 	blend.c \
+	buffers.c \
 	clip.c \
 	colortab.c \
 	config.c \
@@ -47,9 +48,9 @@ CORE_SOURCES = \
 	get.c \
 	glapi.c \
 	glapinoop.c \
-	glmisc.c \
 	glthread.c \
 	hash.c \
+	hint.c \
 	image.c \
 	imaging.c \
 	light.c \
@@ -72,6 +73,7 @@ CORE_SOURCES = \
 	shade.c \
 	span.c \
 	stages.c \
+	state.c \
 	stencil.c \
 	teximage.c \
 	texobj.c \
@@ -162,6 +164,16 @@ X/xmesa3.o: X/xmesa3.c
 X/xmesa4.o: X/xmesa4.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 SVGA/svgamesa.o: SVGA/svgamesa.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+SVGA/svgamesa8.o: SVGA/svgamesa8.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+SVGA/svgamesa15.o: SVGA/svgamesa15.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+SVGA/svgamesa16.o: SVGA/svgamesa16.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+SVGA/svgamesa24.o: SVGA/svgamesa24.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+SVGA/svgamesa32.o: SVGA/svgamesa32.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 OSmesa/osmesa.o: OSmesa/osmesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
