@@ -1940,6 +1940,7 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    if (fxMesa->HaveCmbExt) {
+      _mesa_enable_extension(ctx, "GL_ARB_texture_env_combine");
       _mesa_enable_extension(ctx, "GL_EXT_texture_env_combine");
    }
 
