@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.83 2003/09/03 20:48:05 brianp Exp $
+# $Id: Makefile.X11,v 1.84 2003/09/08 14:58:05 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -91,6 +91,7 @@ default:
 	@echo "  make sunos5               for Suns with SunOS 5.x"
 	@echo "  make sunos5-smp           for Suns with SunOS 5.x, SMP optimization"
 	@echo "  make sunos5-gcc           for Suns with SunOS 5.x and GCC"
+	@echo "  make sunos5-smp           for Suns with SunOS 5.x, for smp only"
 	@echo "  make ultrix-gcc           for DEC systems with Ultrix and GCC"
 	@echo "  make unixware             for PCs running UnixWare"
 	@echo "  make unixware-shared      for PCs running UnixWare, shared libs"
