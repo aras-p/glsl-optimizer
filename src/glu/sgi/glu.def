@@ -1,0 +1,46 @@
+DESCRIPTION 'Mesa GLU (OpenGL work-alike) for Win32'
+VERSION 3.5
+
+EXPORTS
+	gluBeginPolygon
+	gluBuild1DMipmapLevels
+	gluBuild1DMipmaps
+	gluBuild2DMipmapLevels
+	gluBuild2DMipmaps
+	gluBuild3DMipmapLevels
+	gluBuild3DMipmaps
+	gluCheckExtension
+	gluCylinder
+	gluDeleteQuadric
+	gluDeleteTess
+	gluDisk
+	gluEndPolygon
+	gluErrorString
+	gluGetString
+	gluGetTessProperty
+	gluLookAt
+	gluNewQuadric
+	gluNewTess
+	gluNextContour
+	gluOrtho2D
+	gluPartialDisk
+	gluPerspective
+	gluPickMatrix
+	gluProject
+	gluQuadricCallback
+	gluQuadricDrawStyle
+	gluQuadricNormals
+	gluQuadricOrientation
+	gluQuadricTexture
+	gluScaleImage
+	gluSphere
+	gluTessBeginContour
+	gluTessBeginPolygon
+	gluTessCallback
+	gluTessEndContour
+	gluTessEndPolygon
+	gluTessNormal
+	gluTessProperty
+	gluTessVertex
+	gluUnProject
+	gluUnProject4

@@ -1547,44 +1547,44 @@ extern "C" {
 #ifndef GL_VERSION_1_2
 #define GL_VERSION_1_2 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glBlendColor (GLclampf, GLclampf, GLclampf, GLclampf);
-extern void APIENTRY glBlendEquation (GLenum);
-extern void APIENTRY glDrawRangeElements (GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
-extern void APIENTRY glColorTable (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glColorTableParameterfv (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glColorTableParameteriv (GLenum, GLenum, const GLint *);
-extern void APIENTRY glCopyColorTable (GLenum, GLenum, GLint, GLint, GLsizei);
-extern void APIENTRY glGetColorTable (GLenum, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetColorTableParameterfv (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetColorTableParameteriv (GLenum, GLenum, GLint *);
-extern void APIENTRY glColorSubTable (GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glCopyColorSubTable (GLenum, GLsizei, GLint, GLint, GLsizei);
-extern void APIENTRY glConvolutionFilter1D (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glConvolutionFilter2D (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glConvolutionParameterf (GLenum, GLenum, GLfloat);
-extern void APIENTRY glConvolutionParameterfv (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glConvolutionParameteri (GLenum, GLenum, GLint);
-extern void APIENTRY glConvolutionParameteriv (GLenum, GLenum, const GLint *);
-extern void APIENTRY glCopyConvolutionFilter1D (GLenum, GLenum, GLint, GLint, GLsizei);
-extern void APIENTRY glCopyConvolutionFilter2D (GLenum, GLenum, GLint, GLint, GLsizei, GLsizei);
-extern void APIENTRY glGetConvolutionFilter (GLenum, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetConvolutionParameterfv (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetConvolutionParameteriv (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetSeparableFilter (GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
-extern void APIENTRY glSeparableFilter2D (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
-extern void APIENTRY glGetHistogram (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetHistogramParameterfv (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetHistogramParameteriv (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetMinmax (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetMinmaxParameterfv (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetMinmaxParameteriv (GLenum, GLenum, GLint *);
-extern void APIENTRY glHistogram (GLenum, GLsizei, GLenum, GLboolean);
-extern void APIENTRY glMinmax (GLenum, GLenum, GLboolean);
-extern void APIENTRY glResetHistogram (GLenum);
-extern void APIENTRY glResetMinmax (GLenum);
-extern void APIENTRY glTexImage3D (GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glTexSubImage3D (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glCopyTexSubImage3D (GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
+GLAPI void APIENTRY glBlendColor (GLclampf, GLclampf, GLclampf, GLclampf);
+GLAPI void APIENTRY glBlendEquation (GLenum);
+GLAPI void APIENTRY glDrawRangeElements (GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
+GLAPI void APIENTRY glColorTable (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glColorTableParameterfv (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glColorTableParameteriv (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glCopyColorTable (GLenum, GLenum, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glGetColorTable (GLenum, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetColorTableParameterfv (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetColorTableParameteriv (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glColorSubTable (GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glCopyColorSubTable (GLenum, GLsizei, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glConvolutionFilter1D (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glConvolutionFilter2D (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glConvolutionParameterf (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glConvolutionParameterfv (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glConvolutionParameteri (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glConvolutionParameteriv (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glCopyConvolutionFilter1D (GLenum, GLenum, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glCopyConvolutionFilter2D (GLenum, GLenum, GLint, GLint, GLsizei, GLsizei);
+GLAPI void APIENTRY glGetConvolutionFilter (GLenum, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetConvolutionParameterfv (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetConvolutionParameteriv (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetSeparableFilter (GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
+GLAPI void APIENTRY glSeparableFilter2D (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
+GLAPI void APIENTRY glGetHistogram (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetHistogramParameterfv (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetHistogramParameteriv (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetMinmax (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetMinmaxParameterfv (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetMinmaxParameteriv (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glHistogram (GLenum, GLsizei, GLenum, GLboolean);
+GLAPI void APIENTRY glMinmax (GLenum, GLenum, GLboolean);
+GLAPI void APIENTRY glResetHistogram (GLenum);
+GLAPI void APIENTRY glResetMinmax (GLenum);
+GLAPI void APIENTRY glTexImage3D (GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexSubImage3D (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glCopyTexSubImage3D (GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 typedef void (APIENTRY * PFNGLBLENDEQUATIONPROC) (GLenum mode);
@@ -1629,40 +1629,40 @@ typedef void (APIENTRY * PFNGLCOPYTEXSUBIMAGE3DPROC) (GLenum target, GLint level
 #ifndef GL_ARB_multitexture
 #define GL_ARB_multitexture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glActiveTextureARB (GLenum);
-extern void APIENTRY glClientActiveTextureARB (GLenum);
-extern void APIENTRY glMultiTexCoord1dARB (GLenum, GLdouble);
-extern void APIENTRY glMultiTexCoord1dvARB (GLenum, const GLdouble *);
-extern void APIENTRY glMultiTexCoord1fARB (GLenum, GLfloat);
-extern void APIENTRY glMultiTexCoord1fvARB (GLenum, const GLfloat *);
-extern void APIENTRY glMultiTexCoord1iARB (GLenum, GLint);
-extern void APIENTRY glMultiTexCoord1ivARB (GLenum, const GLint *);
-extern void APIENTRY glMultiTexCoord1sARB (GLenum, GLshort);
-extern void APIENTRY glMultiTexCoord1svARB (GLenum, const GLshort *);
-extern void APIENTRY glMultiTexCoord2dARB (GLenum, GLdouble, GLdouble);
-extern void APIENTRY glMultiTexCoord2dvARB (GLenum, const GLdouble *);
-extern void APIENTRY glMultiTexCoord2fARB (GLenum, GLfloat, GLfloat);
-extern void APIENTRY glMultiTexCoord2fvARB (GLenum, const GLfloat *);
-extern void APIENTRY glMultiTexCoord2iARB (GLenum, GLint, GLint);
-extern void APIENTRY glMultiTexCoord2ivARB (GLenum, const GLint *);
-extern void APIENTRY glMultiTexCoord2sARB (GLenum, GLshort, GLshort);
-extern void APIENTRY glMultiTexCoord2svARB (GLenum, const GLshort *);
-extern void APIENTRY glMultiTexCoord3dARB (GLenum, GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glMultiTexCoord3dvARB (GLenum, const GLdouble *);
-extern void APIENTRY glMultiTexCoord3fARB (GLenum, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glMultiTexCoord3fvARB (GLenum, const GLfloat *);
-extern void APIENTRY glMultiTexCoord3iARB (GLenum, GLint, GLint, GLint);
-extern void APIENTRY glMultiTexCoord3ivARB (GLenum, const GLint *);
-extern void APIENTRY glMultiTexCoord3sARB (GLenum, GLshort, GLshort, GLshort);
-extern void APIENTRY glMultiTexCoord3svARB (GLenum, const GLshort *);
-extern void APIENTRY glMultiTexCoord4dARB (GLenum, GLdouble, GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glMultiTexCoord4dvARB (GLenum, const GLdouble *);
-extern void APIENTRY glMultiTexCoord4fARB (GLenum, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glMultiTexCoord4fvARB (GLenum, const GLfloat *);
-extern void APIENTRY glMultiTexCoord4iARB (GLenum, GLint, GLint, GLint, GLint);
-extern void APIENTRY glMultiTexCoord4ivARB (GLenum, const GLint *);
-extern void APIENTRY glMultiTexCoord4sARB (GLenum, GLshort, GLshort, GLshort, GLshort);
-extern void APIENTRY glMultiTexCoord4svARB (GLenum, const GLshort *);
+GLAPI void APIENTRY glActiveTextureARB (GLenum);
+GLAPI void APIENTRY glClientActiveTextureARB (GLenum);
+GLAPI void APIENTRY glMultiTexCoord1dARB (GLenum, GLdouble);
+GLAPI void APIENTRY glMultiTexCoord1dvARB (GLenum, const GLdouble *);
+GLAPI void APIENTRY glMultiTexCoord1fARB (GLenum, GLfloat);
+GLAPI void APIENTRY glMultiTexCoord1fvARB (GLenum, const GLfloat *);
+GLAPI void APIENTRY glMultiTexCoord1iARB (GLenum, GLint);
+GLAPI void APIENTRY glMultiTexCoord1ivARB (GLenum, const GLint *);
+GLAPI void APIENTRY glMultiTexCoord1sARB (GLenum, GLshort);
+GLAPI void APIENTRY glMultiTexCoord1svARB (GLenum, const GLshort *);
+GLAPI void APIENTRY glMultiTexCoord2dARB (GLenum, GLdouble, GLdouble);
+GLAPI void APIENTRY glMultiTexCoord2dvARB (GLenum, const GLdouble *);
+GLAPI void APIENTRY glMultiTexCoord2fARB (GLenum, GLfloat, GLfloat);
+GLAPI void APIENTRY glMultiTexCoord2fvARB (GLenum, const GLfloat *);
+GLAPI void APIENTRY glMultiTexCoord2iARB (GLenum, GLint, GLint);
+GLAPI void APIENTRY glMultiTexCoord2ivARB (GLenum, const GLint *);
+GLAPI void APIENTRY glMultiTexCoord2sARB (GLenum, GLshort, GLshort);
+GLAPI void APIENTRY glMultiTexCoord2svARB (GLenum, const GLshort *);
+GLAPI void APIENTRY glMultiTexCoord3dARB (GLenum, GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glMultiTexCoord3dvARB (GLenum, const GLdouble *);
+GLAPI void APIENTRY glMultiTexCoord3fARB (GLenum, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glMultiTexCoord3fvARB (GLenum, const GLfloat *);
+GLAPI void APIENTRY glMultiTexCoord3iARB (GLenum, GLint, GLint, GLint);
+GLAPI void APIENTRY glMultiTexCoord3ivARB (GLenum, const GLint *);
+GLAPI void APIENTRY glMultiTexCoord3sARB (GLenum, GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glMultiTexCoord3svARB (GLenum, const GLshort *);
+GLAPI void APIENTRY glMultiTexCoord4dARB (GLenum, GLdouble, GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glMultiTexCoord4dvARB (GLenum, const GLdouble *);
+GLAPI void APIENTRY glMultiTexCoord4fARB (GLenum, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glMultiTexCoord4fvARB (GLenum, const GLfloat *);
+GLAPI void APIENTRY glMultiTexCoord4iARB (GLenum, GLint, GLint, GLint, GLint);
+GLAPI void APIENTRY glMultiTexCoord4ivARB (GLenum, const GLint *);
+GLAPI void APIENTRY glMultiTexCoord4sARB (GLenum, GLshort, GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glMultiTexCoord4svARB (GLenum, const GLshort *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLACTIVETEXTUREARBPROC) (GLenum texture);
 typedef void (APIENTRY * PFNGLCLIENTACTIVETEXTUREARBPROC) (GLenum texture);
@@ -1703,10 +1703,10 @@ typedef void (APIENTRY * PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLs
 #ifndef GL_ARB_transpose_matrix
 #define GL_ARB_transpose_matrix 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glLoadTransposeMatrixfARB (const GLfloat *);
-extern void APIENTRY glLoadTransposeMatrixdARB (const GLdouble *);
-extern void APIENTRY glMultTransposeMatrixfARB (const GLfloat *);
-extern void APIENTRY glMultTransposeMatrixdARB (const GLdouble *);
+GLAPI void APIENTRY glLoadTransposeMatrixfARB (const GLfloat *);
+GLAPI void APIENTRY glLoadTransposeMatrixdARB (const GLdouble *);
+GLAPI void APIENTRY glMultTransposeMatrixfARB (const GLfloat *);
+GLAPI void APIENTRY glMultTransposeMatrixdARB (const GLdouble *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLLOADTRANSPOSEMATRIXFARBPROC) (const GLfloat *m);
 typedef void (APIENTRY * PFNGLLOADTRANSPOSEMATRIXDARBPROC) (const GLdouble *m);
@@ -1717,8 +1717,8 @@ typedef void (APIENTRY * PFNGLMULTTRANSPOSEMATRIXDARBPROC) (const GLdouble *m);
 #ifndef GL_ARB_multisample
 #define GL_ARB_multisample 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSampleCoverageARB (GLclampf, GLboolean);
-extern void APIENTRY glSamplePassARB (GLenum);
+GLAPI void APIENTRY glSampleCoverageARB (GLclampf, GLboolean);
+GLAPI void APIENTRY glSamplePassARB (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean invert);
 typedef void (APIENTRY * PFNGLSAMPLEPASSARBPROC) (GLenum pass);
@@ -1735,13 +1735,13 @@ typedef void (APIENTRY * PFNGLSAMPLEPASSARBPROC) (GLenum pass);
 #ifndef GL_ARB_texture_compression
 #define GL_ARB_texture_compression 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glCompressedTexImage3DARB (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
-extern void APIENTRY glCompressedTexImage2DARB (GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
-extern void APIENTRY glCompressedTexImage1DARB (GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *);
-extern void APIENTRY glCompressedTexSubImage3DARB (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *);
-extern void APIENTRY glCompressedTexSubImage2DARB (GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *);
-extern void APIENTRY glCompressedTexSubImage1DARB (GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *);
-extern void APIENTRY glGetCompressedTexImageARB (GLenum, GLint, void *);
+GLAPI void APIENTRY glCompressedTexImage3DARB (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glCompressedTexImage2DARB (GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glCompressedTexImage1DARB (GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glCompressedTexSubImage3DARB (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glCompressedTexSubImage2DARB (GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glCompressedTexSubImage1DARB (GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glGetCompressedTexImageARB (GLenum, GLint, void *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE3DARBPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid *data);
 typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DARBPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
@@ -1767,7 +1767,7 @@ typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLin
 #ifndef GL_EXT_blend_color
 #define GL_EXT_blend_color 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glBlendColorEXT (GLclampf, GLclampf, GLclampf, GLclampf);
+GLAPI void APIENTRY glBlendColorEXT (GLclampf, GLclampf, GLclampf, GLclampf);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 #endif
@@ -1775,7 +1775,7 @@ typedef void (APIENTRY * PFNGLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green, 
 #ifndef GL_EXT_polygon_offset
 #define GL_EXT_polygon_offset 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glPolygonOffsetEXT (GLfloat, GLfloat);
+GLAPI void APIENTRY glPolygonOffsetEXT (GLfloat, GLfloat);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLPOLYGONOFFSETEXTPROC) (GLfloat factor, GLfloat bias);
 #endif
@@ -1787,8 +1787,8 @@ typedef void (APIENTRY * PFNGLPOLYGONOFFSETEXTPROC) (GLfloat factor, GLfloat bia
 #ifndef GL_EXT_texture3D
 #define GL_EXT_texture3D 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTexImage3DEXT (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glTexSubImage3DEXT (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexImage3DEXT (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexSubImage3DEXT (GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTEXIMAGE3DEXTPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRY * PFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
@@ -1797,8 +1797,8 @@ typedef void (APIENTRY * PFNGLTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint level,
 #ifndef GL_SGIS_texture_filter4
 #define GL_SGIS_texture_filter4 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glGetTexFilterFuncSGIS (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glTexFilterFuncSGIS (GLenum, GLenum, GLsizei, const GLfloat *);
+GLAPI void APIENTRY glGetTexFilterFuncSGIS (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glTexFilterFuncSGIS (GLenum, GLenum, GLsizei, const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLGETTEXFILTERFUNCSGISPROC) (GLenum target, GLenum filter, GLfloat *weights);
 typedef void (APIENTRY * PFNGLTEXFILTERFUNCSGISPROC) (GLenum target, GLenum filter, GLsizei n, const GLfloat *weights);
@@ -1807,8 +1807,8 @@ typedef void (APIENTRY * PFNGLTEXFILTERFUNCSGISPROC) (GLenum target, GLenum filt
 #ifndef GL_EXT_subtexture
 #define GL_EXT_subtexture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTexSubImage1DEXT (GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glTexSubImage2DEXT (GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexSubImage1DEXT (GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexSubImage2DEXT (GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTEXSUBIMAGE1DEXTPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRY * PFNGLTEXSUBIMAGE2DEXTPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
@@ -1817,11 +1817,11 @@ typedef void (APIENTRY * PFNGLTEXSUBIMAGE2DEXTPROC) (GLenum target, GLint level,
 #ifndef GL_EXT_copy_texture
 #define GL_EXT_copy_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glCopyTexImage1DEXT (GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint);
-extern void APIENTRY glCopyTexImage2DEXT (GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint);
-extern void APIENTRY glCopyTexSubImage1DEXT (GLenum, GLint, GLint, GLint, GLint, GLsizei);
-extern void APIENTRY glCopyTexSubImage2DEXT (GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
-extern void APIENTRY glCopyTexSubImage3DEXT (GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
+GLAPI void APIENTRY glCopyTexImage1DEXT (GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint);
+GLAPI void APIENTRY glCopyTexImage2DEXT (GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint);
+GLAPI void APIENTRY glCopyTexSubImage1DEXT (GLenum, GLint, GLint, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glCopyTexSubImage2DEXT (GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
+GLAPI void APIENTRY glCopyTexSubImage3DEXT (GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOPYTEXIMAGE1DEXTPROC) (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border);
 typedef void (APIENTRY * PFNGLCOPYTEXIMAGE2DEXTPROC) (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
@@ -1833,16 +1833,16 @@ typedef void (APIENTRY * PFNGLCOPYTEXSUBIMAGE3DEXTPROC) (GLenum target, GLint le
 #ifndef GL_EXT_histogram
 #define GL_EXT_histogram 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glGetHistogramEXT (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetHistogramParameterfvEXT (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetHistogramParameterivEXT (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetMinmaxEXT (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetMinmaxParameterfvEXT (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetMinmaxParameterivEXT (GLenum, GLenum, GLint *);
-extern void APIENTRY glHistogramEXT (GLenum, GLsizei, GLenum, GLboolean);
-extern void APIENTRY glMinmaxEXT (GLenum, GLenum, GLboolean);
-extern void APIENTRY glResetHistogramEXT (GLenum);
-extern void APIENTRY glResetMinmaxEXT (GLenum);
+GLAPI void APIENTRY glGetHistogramEXT (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetHistogramParameterfvEXT (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetHistogramParameterivEXT (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetMinmaxEXT (GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetMinmaxParameterfvEXT (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetMinmaxParameterivEXT (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glHistogramEXT (GLenum, GLsizei, GLenum, GLboolean);
+GLAPI void APIENTRY glMinmaxEXT (GLenum, GLenum, GLboolean);
+GLAPI void APIENTRY glResetHistogramEXT (GLenum);
+GLAPI void APIENTRY glResetMinmaxEXT (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLGETHISTOGRAMEXTPROC) (GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values);
 typedef void (APIENTRY * PFNGLGETHISTOGRAMPARAMETERFVEXTPROC) (GLenum target, GLenum pname, GLfloat *params);
@@ -1859,19 +1859,19 @@ typedef void (APIENTRY * PFNGLRESETMINMAXEXTPROC) (GLenum target);
 #ifndef GL_EXT_convolution
 #define GL_EXT_convolution 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glConvolutionFilter1DEXT (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glConvolutionFilter2DEXT (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glConvolutionParameterfEXT (GLenum, GLenum, GLfloat);
-extern void APIENTRY glConvolutionParameterfvEXT (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glConvolutionParameteriEXT (GLenum, GLenum, GLint);
-extern void APIENTRY glConvolutionParameterivEXT (GLenum, GLenum, const GLint *);
-extern void APIENTRY glCopyConvolutionFilter1DEXT (GLenum, GLenum, GLint, GLint, GLsizei);
-extern void APIENTRY glCopyConvolutionFilter2DEXT (GLenum, GLenum, GLint, GLint, GLsizei, GLsizei);
-extern void APIENTRY glGetConvolutionFilterEXT (GLenum, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetConvolutionParameterfvEXT (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetConvolutionParameterivEXT (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetSeparableFilterEXT (GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
-extern void APIENTRY glSeparableFilter2DEXT (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
+GLAPI void APIENTRY glConvolutionFilter1DEXT (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glConvolutionFilter2DEXT (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glConvolutionParameterfEXT (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glConvolutionParameterfvEXT (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glConvolutionParameteriEXT (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glConvolutionParameterivEXT (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glCopyConvolutionFilter1DEXT (GLenum, GLenum, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glCopyConvolutionFilter2DEXT (GLenum, GLenum, GLint, GLint, GLsizei, GLsizei);
+GLAPI void APIENTRY glGetConvolutionFilterEXT (GLenum, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetConvolutionParameterfvEXT (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetConvolutionParameterivEXT (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetSeparableFilterEXT (GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
+GLAPI void APIENTRY glSeparableFilter2DEXT (GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCONVOLUTIONFILTER1DEXTPROC) (GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image);
 typedef void (APIENTRY * PFNGLCONVOLUTIONFILTER2DEXTPROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image);
@@ -1895,13 +1895,13 @@ typedef void (APIENTRY * PFNGLSEPARABLEFILTER2DEXTPROC) (GLenum target, GLenum i
 #ifndef GL_SGI_color_table
 #define GL_SGI_color_table 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glColorTableSGI (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glColorTableParameterfvSGI (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glColorTableParameterivSGI (GLenum, GLenum, const GLint *);
-extern void APIENTRY glCopyColorTableSGI (GLenum, GLenum, GLint, GLint, GLsizei);
-extern void APIENTRY glGetColorTableSGI (GLenum, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetColorTableParameterfvSGI (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetColorTableParameterivSGI (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glColorTableSGI (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glColorTableParameterfvSGI (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glColorTableParameterivSGI (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glCopyColorTableSGI (GLenum, GLenum, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glGetColorTableSGI (GLenum, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetColorTableParameterfvSGI (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetColorTableParameterivSGI (GLenum, GLenum, GLint *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLORTABLESGIPROC) (GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table);
 typedef void (APIENTRY * PFNGLCOLORTABLEPARAMETERFVSGIPROC) (GLenum target, GLenum pname, const GLfloat *params);
@@ -1915,7 +1915,7 @@ typedef void (APIENTRY * PFNGLGETCOLORTABLEPARAMETERIVSGIPROC) (GLenum target, G
 #ifndef GL_SGIX_pixel_texture
 #define GL_SGIX_pixel_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glPixelTexGenSGIX (GLenum);
+GLAPI void APIENTRY glPixelTexGenSGIX (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLPIXELTEXGENSGIXPROC) (GLenum mode);
 #endif
@@ -1923,12 +1923,12 @@ typedef void (APIENTRY * PFNGLPIXELTEXGENSGIXPROC) (GLenum mode);
 #ifndef GL_SGIS_pixel_texture
 #define GL_SGIS_pixel_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glPixelTexGenParameteriSGIS (GLenum, GLint);
-extern void APIENTRY glPixelTexGenParameterivSGIS (GLenum, const GLint *);
-extern void APIENTRY glPixelTexGenParameterfSGIS (GLenum, GLfloat);
-extern void APIENTRY glPixelTexGenParameterfvSGIS (GLenum, const GLfloat *);
-extern void APIENTRY glGetPixelTexGenParameterivSGIS (GLenum, GLint *);
-extern void APIENTRY glGetPixelTexGenParameterfvSGIS (GLenum, GLfloat *);
+GLAPI void APIENTRY glPixelTexGenParameteriSGIS (GLenum, GLint);
+GLAPI void APIENTRY glPixelTexGenParameterivSGIS (GLenum, const GLint *);
+GLAPI void APIENTRY glPixelTexGenParameterfSGIS (GLenum, GLfloat);
+GLAPI void APIENTRY glPixelTexGenParameterfvSGIS (GLenum, const GLfloat *);
+GLAPI void APIENTRY glGetPixelTexGenParameterivSGIS (GLenum, GLint *);
+GLAPI void APIENTRY glGetPixelTexGenParameterfvSGIS (GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLPIXELTEXGENPARAMETERISGISPROC) (GLenum pname, GLint param);
 typedef void (APIENTRY * PFNGLPIXELTEXGENPARAMETERIVSGISPROC) (GLenum pname, const GLint *params);
@@ -1941,8 +1941,8 @@ typedef void (APIENTRY * PFNGLGETPIXELTEXGENPARAMETERFVSGISPROC) (GLenum pname, 
 #ifndef GL_SGIS_texture4D
 #define GL_SGIS_texture4D 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTexImage4DSGIS (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glTexSubImage4DSGIS (GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexImage4DSGIS (GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glTexSubImage4DSGIS (GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTEXIMAGE4DSGISPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 typedef void (APIENTRY * PFNGLTEXSUBIMAGE4DSGISPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const GLvoid *pixels);
@@ -1959,12 +1959,12 @@ typedef void (APIENTRY * PFNGLTEXSUBIMAGE4DSGISPROC) (GLenum target, GLint level
 #ifndef GL_EXT_texture_object
 #define GL_EXT_texture_object 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern GLboolean APIENTRY glAreTexturesResidentEXT (GLsizei, const GLuint *, GLboolean *);
-extern void APIENTRY glBindTextureEXT (GLenum, GLuint);
-extern void APIENTRY glDeleteTexturesEXT (GLsizei, const GLuint *);
-extern void APIENTRY glGenTexturesEXT (GLsizei, GLuint *);
-extern GLboolean APIENTRY glIsTextureEXT (GLuint);
-extern void APIENTRY glPrioritizeTexturesEXT (GLsizei, const GLuint *, const GLclampf *);
+GLAPI GLboolean APIENTRY glAreTexturesResidentEXT (GLsizei, const GLuint *, GLboolean *);
+GLAPI void APIENTRY glBindTextureEXT (GLenum, GLuint);
+GLAPI void APIENTRY glDeleteTexturesEXT (GLsizei, const GLuint *);
+GLAPI void APIENTRY glGenTexturesEXT (GLsizei, GLuint *);
+GLAPI GLboolean APIENTRY glIsTextureEXT (GLuint);
+GLAPI void APIENTRY glPrioritizeTexturesEXT (GLsizei, const GLuint *, const GLclampf *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef GLboolean (APIENTRY * PFNGLARETEXTURESRESIDENTEXTPROC) (GLsizei n, const GLuint *textures, GLboolean *residences);
 typedef void (APIENTRY * PFNGLBINDTEXTUREEXTPROC) (GLenum target, GLuint texture);
@@ -1977,8 +1977,8 @@ typedef void (APIENTRY * PFNGLPRIORITIZETEXTURESEXTPROC) (GLsizei n, const GLuin
 #ifndef GL_SGIS_detail_texture
 #define GL_SGIS_detail_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glDetailTexFuncSGIS (GLenum, GLsizei, const GLfloat *);
-extern void APIENTRY glGetDetailTexFuncSGIS (GLenum, GLfloat *);
+GLAPI void APIENTRY glDetailTexFuncSGIS (GLenum, GLsizei, const GLfloat *);
+GLAPI void APIENTRY glGetDetailTexFuncSGIS (GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLDETAILTEXFUNCSGISPROC) (GLenum target, GLsizei n, const GLfloat *points);
 typedef void (APIENTRY * PFNGLGETDETAILTEXFUNCSGISPROC) (GLenum target, GLfloat *points);
@@ -1987,8 +1987,8 @@ typedef void (APIENTRY * PFNGLGETDETAILTEXFUNCSGISPROC) (GLenum target, GLfloat 
 #ifndef GL_SGIS_sharpen_texture
 #define GL_SGIS_sharpen_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSharpenTexFuncSGIS (GLenum, GLsizei, const GLfloat *);
-extern void APIENTRY glGetSharpenTexFuncSGIS (GLenum, GLfloat *);
+GLAPI void APIENTRY glSharpenTexFuncSGIS (GLenum, GLsizei, const GLfloat *);
+GLAPI void APIENTRY glGetSharpenTexFuncSGIS (GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSHARPENTEXFUNCSGISPROC) (GLenum target, GLsizei n, const GLfloat *points);
 typedef void (APIENTRY * PFNGLGETSHARPENTEXFUNCSGISPROC) (GLenum target, GLfloat *points);
@@ -2005,8 +2005,8 @@ typedef void (APIENTRY * PFNGLGETSHARPENTEXFUNCSGISPROC) (GLenum target, GLfloat
 #ifndef GL_SGIS_multisample
 #define GL_SGIS_multisample 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSampleMaskSGIS (GLclampf, GLboolean);
-extern void APIENTRY glSamplePatternSGIS (GLenum);
+GLAPI void APIENTRY glSampleMaskSGIS (GLclampf, GLboolean);
+GLAPI void APIENTRY glSamplePatternSGIS (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSAMPLEMASKSGISPROC) (GLclampf value, GLboolean invert);
 typedef void (APIENTRY * PFNGLSAMPLEPATTERNSGISPROC) (GLenum pattern);
@@ -2019,15 +2019,15 @@ typedef void (APIENTRY * PFNGLSAMPLEPATTERNSGISPROC) (GLenum pattern);
 #ifndef GL_EXT_vertex_array
 #define GL_EXT_vertex_array 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glArrayElementEXT (GLint);
-extern void APIENTRY glColorPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
-extern void APIENTRY glDrawArraysEXT (GLenum, GLint, GLsizei);
-extern void APIENTRY glEdgeFlagPointerEXT (GLsizei, GLsizei, const GLboolean *);
-extern void APIENTRY glGetPointervEXT (GLenum, GLvoid* *);
-extern void APIENTRY glIndexPointerEXT (GLenum, GLsizei, GLsizei, const GLvoid *);
-extern void APIENTRY glNormalPointerEXT (GLenum, GLsizei, GLsizei, const GLvoid *);
-extern void APIENTRY glTexCoordPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
-extern void APIENTRY glVertexPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glArrayElementEXT (GLint);
+GLAPI void APIENTRY glColorPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glDrawArraysEXT (GLenum, GLint, GLsizei);
+GLAPI void APIENTRY glEdgeFlagPointerEXT (GLsizei, GLsizei, const GLboolean *);
+GLAPI void APIENTRY glGetPointervEXT (GLenum, GLvoid* *);
+GLAPI void APIENTRY glIndexPointerEXT (GLenum, GLsizei, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glNormalPointerEXT (GLenum, GLsizei, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glTexCoordPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glVertexPointerEXT (GLint, GLenum, GLsizei, GLsizei, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLARRAYELEMENTEXTPROC) (GLint i);
 typedef void (APIENTRY * PFNGLCOLORPOINTEREXTPROC) (GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer);
@@ -2067,7 +2067,7 @@ typedef void (APIENTRY * PFNGLVERTEXPOINTEREXTPROC) (GLint size, GLenum type, GL
 #ifndef GL_EXT_blend_minmax
 #define GL_EXT_blend_minmax 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glBlendEquationEXT (GLenum);
+GLAPI void APIENTRY glBlendEquationEXT (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLBLENDEQUATIONEXTPROC) (GLenum mode);
 #endif
@@ -2095,10 +2095,10 @@ typedef void (APIENTRY * PFNGLBLENDEQUATIONEXTPROC) (GLenum mode);
 #ifndef GL_SGIX_sprite
 #define GL_SGIX_sprite 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSpriteParameterfSGIX (GLenum, GLfloat);
-extern void APIENTRY glSpriteParameterfvSGIX (GLenum, const GLfloat *);
-extern void APIENTRY glSpriteParameteriSGIX (GLenum, GLint);
-extern void APIENTRY glSpriteParameterivSGIX (GLenum, const GLint *);
+GLAPI void APIENTRY glSpriteParameterfSGIX (GLenum, GLfloat);
+GLAPI void APIENTRY glSpriteParameterfvSGIX (GLenum, const GLfloat *);
+GLAPI void APIENTRY glSpriteParameteriSGIX (GLenum, GLint);
+GLAPI void APIENTRY glSpriteParameterivSGIX (GLenum, const GLint *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSPRITEPARAMETERFSGIXPROC) (GLenum pname, GLfloat param);
 typedef void (APIENTRY * PFNGLSPRITEPARAMETERFVSGIXPROC) (GLenum pname, const GLfloat *params);
@@ -2113,10 +2113,10 @@ typedef void (APIENTRY * PFNGLSPRITEPARAMETERIVSGIXPROC) (GLenum pname, const GL
 #ifndef GL_EXT_point_parameters
 #define GL_EXT_point_parameters 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glPointParameterfEXT (GLenum, GLfloat);
-extern void APIENTRY glPointParameterfvEXT (GLenum, const GLfloat *);
-extern void APIENTRY glPointParameterfSGIS (GLenum, GLfloat);
-extern void APIENTRY glPointParameterfvSGIS (GLenum, const GLfloat *);
+GLAPI void APIENTRY glPointParameterfEXT (GLenum, GLfloat);
+GLAPI void APIENTRY glPointParameterfvEXT (GLenum, const GLfloat *);
+GLAPI void APIENTRY glPointParameterfSGIS (GLenum, GLfloat);
+GLAPI void APIENTRY glPointParameterfvSGIS (GLenum, const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLPOINTPARAMETERFEXTPROC) (GLenum pname, GLfloat param);
 typedef void (APIENTRY * PFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GLfloat *params);
@@ -2127,12 +2127,12 @@ typedef void (APIENTRY * PFNGLPOINTPARAMETERFVSGISPROC) (GLenum pname, const GLf
 #ifndef GL_SGIX_instruments
 #define GL_SGIX_instruments 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern GLint APIENTRY glGetInstrumentsSGIX (void);
-extern void APIENTRY glInstrumentsBufferSGIX (GLsizei, GLint *);
-extern GLint APIENTRY glPollInstrumentsSGIX (GLint *);
-extern void APIENTRY glReadInstrumentsSGIX (GLint);
-extern void APIENTRY glStartInstrumentsSGIX (void);
-extern void APIENTRY glStopInstrumentsSGIX (GLint);
+GLAPI GLint APIENTRY glGetInstrumentsSGIX (void);
+GLAPI void APIENTRY glInstrumentsBufferSGIX (GLsizei, GLint *);
+GLAPI GLint APIENTRY glPollInstrumentsSGIX (GLint *);
+GLAPI void APIENTRY glReadInstrumentsSGIX (GLint);
+GLAPI void APIENTRY glStartInstrumentsSGIX (void);
+GLAPI void APIENTRY glStopInstrumentsSGIX (GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef GLint (APIENTRY * PFNGLGETINSTRUMENTSSGIXPROC) (void);
 typedef void (APIENTRY * PFNGLINSTRUMENTSBUFFERSGIXPROC) (GLsizei size, GLint *buffer);
@@ -2149,7 +2149,7 @@ typedef void (APIENTRY * PFNGLSTOPINSTRUMENTSSGIXPROC) (GLint marker);
 #ifndef GL_SGIX_framezoom
 #define GL_SGIX_framezoom 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFrameZoomSGIX (GLint);
+GLAPI void APIENTRY glFrameZoomSGIX (GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFRAMEZOOMSGIXPROC) (GLint factor);
 #endif
@@ -2157,7 +2157,7 @@ typedef void (APIENTRY * PFNGLFRAMEZOOMSGIXPROC) (GLint factor);
 #ifndef GL_SGIX_tag_sample_buffer
 #define GL_SGIX_tag_sample_buffer 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTagSampleBufferSGIX (void);
+GLAPI void APIENTRY glTagSampleBufferSGIX (void);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTAGSAMPLEBUFFERSGIXPROC) (void);
 #endif
@@ -2165,10 +2165,10 @@ typedef void (APIENTRY * PFNGLTAGSAMPLEBUFFERSGIXPROC) (void);
 #ifndef GL_SGIX_polynomial_ffd
 #define GL_SGIX_polynomial_ffd 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glDeformationMap3dSGIX (GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, const GLdouble *);
-extern void APIENTRY glDeformationMap3fSGIX (GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, const GLfloat *);
-extern void APIENTRY glDeformSGIX (GLbitfield);
-extern void APIENTRY glLoadIdentityDeformationMapSGIX (GLbitfield);
+GLAPI void APIENTRY glDeformationMap3dSGIX (GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, const GLdouble *);
+GLAPI void APIENTRY glDeformationMap3fSGIX (GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, const GLfloat *);
+GLAPI void APIENTRY glDeformSGIX (GLbitfield);
+GLAPI void APIENTRY glLoadIdentityDeformationMapSGIX (GLbitfield);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLDEFORMATIONMAP3DSGIXPROC) (GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble w1, GLdouble w2, GLint wstride, GLint worder, const GLdouble *points);
 typedef void (APIENTRY * PFNGLDEFORMATIONMAP3FSGIXPROC) (GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat w1, GLfloat w2, GLint wstride, GLint worder, const GLfloat *points);
@@ -2179,7 +2179,7 @@ typedef void (APIENTRY * PFNGLLOADIDENTITYDEFORMATIONMAPSGIXPROC) (GLbitfield ma
 #ifndef GL_SGIX_reference_plane
 #define GL_SGIX_reference_plane 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glReferencePlaneSGIX (const GLdouble *);
+GLAPI void APIENTRY glReferencePlaneSGIX (const GLdouble *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLREFERENCEPLANESGIXPROC) (const GLdouble *equation);
 #endif
@@ -2187,7 +2187,7 @@ typedef void (APIENTRY * PFNGLREFERENCEPLANESGIXPROC) (const GLdouble *equation)
 #ifndef GL_SGIX_flush_raster
 #define GL_SGIX_flush_raster 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFlushRasterSGIX (void);
+GLAPI void APIENTRY glFlushRasterSGIX (void);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFLUSHRASTERSGIXPROC) (void);
 #endif
@@ -2199,8 +2199,8 @@ typedef void (APIENTRY * PFNGLFLUSHRASTERSGIXPROC) (void);
 #ifndef GL_SGIS_fog_function
 #define GL_SGIS_fog_function 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFogFuncSGIS (GLsizei, const GLfloat *);
-extern void APIENTRY glGetFogFuncSGIS (const GLfloat *);
+GLAPI void APIENTRY glFogFuncSGIS (GLsizei, const GLfloat *);
+GLAPI void APIENTRY glGetFogFuncSGIS (const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFOGFUNCSGISPROC) (GLsizei n, const GLfloat *points);
 typedef void (APIENTRY * PFNGLGETFOGFUNCSGISPROC) (const GLfloat *points);
@@ -2213,12 +2213,12 @@ typedef void (APIENTRY * PFNGLGETFOGFUNCSGISPROC) (const GLfloat *points);
 #ifndef GL_HP_image_transform
 #define GL_HP_image_transform 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glImageTransformParameteriHP (GLenum, GLenum, GLint);
-extern void APIENTRY glImageTransformParameterfHP (GLenum, GLenum, GLfloat);
-extern void APIENTRY glImageTransformParameterivHP (GLenum, GLenum, const GLint *);
-extern void APIENTRY glImageTransformParameterfvHP (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glGetImageTransformParameterivHP (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetImageTransformParameterfvHP (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glImageTransformParameteriHP (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glImageTransformParameterfHP (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glImageTransformParameterivHP (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glImageTransformParameterfvHP (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glGetImageTransformParameterivHP (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetImageTransformParameterfvHP (GLenum, GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLIMAGETRANSFORMPARAMETERIHPPROC) (GLenum target, GLenum pname, GLint param);
 typedef void (APIENTRY * PFNGLIMAGETRANSFORMPARAMETERFHPPROC) (GLenum target, GLenum pname, GLfloat param);
@@ -2239,8 +2239,8 @@ typedef void (APIENTRY * PFNGLGETIMAGETRANSFORMPARAMETERFVHPPROC) (GLenum target
 #ifndef GL_EXT_color_subtable
 #define GL_EXT_color_subtable 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glColorSubTableEXT (GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glCopyColorSubTableEXT (GLenum, GLsizei, GLint, GLint, GLsizei);
+GLAPI void APIENTRY glColorSubTableEXT (GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glCopyColorSubTableEXT (GLenum, GLsizei, GLint, GLint, GLsizei);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data);
 typedef void (APIENTRY * PFNGLCOPYCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei start, GLint x, GLint y, GLsizei width);
@@ -2253,7 +2253,7 @@ typedef void (APIENTRY * PFNGLCOPYCOLORSUBTABLEEXTPROC) (GLenum target, GLsizei 
 #ifndef GL_PGI_misc_hints
 #define GL_PGI_misc_hints 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glHintPGI (GLenum, GLint);
+GLAPI void APIENTRY glHintPGI (GLenum, GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLHINTPGIPROC) (GLenum target, GLint mode);
 #endif
@@ -2261,10 +2261,10 @@ typedef void (APIENTRY * PFNGLHINTPGIPROC) (GLenum target, GLint mode);
 #ifndef GL_EXT_paletted_texture
 #define GL_EXT_paletted_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glColorTableEXT (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-extern void APIENTRY glGetColorTableEXT (GLenum, GLenum, GLenum, GLvoid *);
-extern void APIENTRY glGetColorTableParameterivEXT (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetColorTableParameterfvEXT (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glColorTableEXT (GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+GLAPI void APIENTRY glGetColorTableEXT (GLenum, GLenum, GLenum, GLvoid *);
+GLAPI void APIENTRY glGetColorTableParameterivEXT (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetColorTableParameterfvEXT (GLenum, GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const GLvoid *table);
 typedef void (APIENTRY * PFNGLGETCOLORTABLEEXTPROC) (GLenum target, GLenum format, GLenum type, GLvoid *data);
@@ -2279,12 +2279,12 @@ typedef void (APIENTRY * PFNGLGETCOLORTABLEPARAMETERFVEXTPROC) (GLenum target, G
 #ifndef GL_SGIX_list_priority
 #define GL_SGIX_list_priority 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glGetListParameterfvSGIX (GLuint, GLenum, GLfloat *);
-extern void APIENTRY glGetListParameterivSGIX (GLuint, GLenum, GLint *);
-extern void APIENTRY glListParameterfSGIX (GLuint, GLenum, GLfloat);
-extern void APIENTRY glListParameterfvSGIX (GLuint, GLenum, const GLfloat *);
-extern void APIENTRY glListParameteriSGIX (GLuint, GLenum, GLint);
-extern void APIENTRY glListParameterivSGIX (GLuint, GLenum, const GLint *);
+GLAPI void APIENTRY glGetListParameterfvSGIX (GLuint, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetListParameterivSGIX (GLuint, GLenum, GLint *);
+GLAPI void APIENTRY glListParameterfSGIX (GLuint, GLenum, GLfloat);
+GLAPI void APIENTRY glListParameterfvSGIX (GLuint, GLenum, const GLfloat *);
+GLAPI void APIENTRY glListParameteriSGIX (GLuint, GLenum, GLint);
+GLAPI void APIENTRY glListParameterivSGIX (GLuint, GLenum, const GLint *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLGETLISTPARAMETERFVSGIXPROC) (GLuint list, GLenum pname, GLfloat *params);
 typedef void (APIENTRY * PFNGLGETLISTPARAMETERIVSGIXPROC) (GLuint list, GLenum pname, GLint *params);
@@ -2317,7 +2317,7 @@ typedef void (APIENTRY * PFNGLLISTPARAMETERIVSGIXPROC) (GLuint list, GLenum pnam
 #ifndef GL_EXT_index_material
 #define GL_EXT_index_material 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glIndexMaterialEXT (GLenum, GLenum);
+GLAPI void APIENTRY glIndexMaterialEXT (GLenum, GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLINDEXMATERIALEXTPROC) (GLenum face, GLenum mode);
 #endif
@@ -2325,7 +2325,7 @@ typedef void (APIENTRY * PFNGLINDEXMATERIALEXTPROC) (GLenum face, GLenum mode);
 #ifndef GL_EXT_index_func
 #define GL_EXT_index_func 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glIndexFuncEXT (GLenum, GLclampf);
+GLAPI void APIENTRY glIndexFuncEXT (GLenum, GLclampf);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLINDEXFUNCEXTPROC) (GLenum func, GLclampf ref);
 #endif
@@ -2337,8 +2337,8 @@ typedef void (APIENTRY * PFNGLINDEXFUNCEXTPROC) (GLenum func, GLclampf ref);
 #ifndef GL_EXT_compiled_vertex_array
 #define GL_EXT_compiled_vertex_array 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glLockArraysEXT (GLint, GLsizei);
-extern void APIENTRY glUnlockArraysEXT (void);
+GLAPI void APIENTRY glLockArraysEXT (GLint, GLsizei);
+GLAPI void APIENTRY glUnlockArraysEXT (void);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLLOCKARRAYSEXTPROC) (GLint first, GLsizei count);
 typedef void (APIENTRY * PFNGLUNLOCKARRAYSEXTPROC) (void);
@@ -2347,8 +2347,8 @@ typedef void (APIENTRY * PFNGLUNLOCKARRAYSEXTPROC) (void);
 #ifndef GL_EXT_cull_vertex
 #define GL_EXT_cull_vertex 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glCullParameterdvEXT (GLenum, GLdouble *);
-extern void APIENTRY glCullParameterfvEXT (GLenum, GLfloat *);
+GLAPI void APIENTRY glCullParameterdvEXT (GLenum, GLdouble *);
+GLAPI void APIENTRY glCullParameterfvEXT (GLenum, GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCULLPARAMETERDVEXTPROC) (GLenum pname, GLdouble *params);
 typedef void (APIENTRY * PFNGLCULLPARAMETERFVEXTPROC) (GLenum pname, GLfloat *params);
@@ -2361,24 +2361,24 @@ typedef void (APIENTRY * PFNGLCULLPARAMETERFVEXTPROC) (GLenum pname, GLfloat *pa
 #ifndef GL_SGIX_fragment_lighting
 #define GL_SGIX_fragment_lighting 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFragmentColorMaterialSGIX (GLenum, GLenum);
-extern void APIENTRY glFragmentLightfSGIX (GLenum, GLenum, GLfloat);
-extern void APIENTRY glFragmentLightfvSGIX (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glFragmentLightiSGIX (GLenum, GLenum, GLint);
-extern void APIENTRY glFragmentLightivSGIX (GLenum, GLenum, const GLint *);
-extern void APIENTRY glFragmentLightModelfSGIX (GLenum, GLfloat);
-extern void APIENTRY glFragmentLightModelfvSGIX (GLenum, const GLfloat *);
-extern void APIENTRY glFragmentLightModeliSGIX (GLenum, GLint);
-extern void APIENTRY glFragmentLightModelivSGIX (GLenum, const GLint *);
-extern void APIENTRY glFragmentMaterialfSGIX (GLenum, GLenum, GLfloat);
-extern void APIENTRY glFragmentMaterialfvSGIX (GLenum, GLenum, const GLfloat *);
-extern void APIENTRY glFragmentMaterialiSGIX (GLenum, GLenum, GLint);
-extern void APIENTRY glFragmentMaterialivSGIX (GLenum, GLenum, const GLint *);
-extern void APIENTRY glGetFragmentLightfvSGIX (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetFragmentLightivSGIX (GLenum, GLenum, GLint *);
-extern void APIENTRY glGetFragmentMaterialfvSGIX (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetFragmentMaterialivSGIX (GLenum, GLenum, GLint *);
-extern void APIENTRY glLightEnviSGIX (GLenum, GLint);
+GLAPI void APIENTRY glFragmentColorMaterialSGIX (GLenum, GLenum);
+GLAPI void APIENTRY glFragmentLightfSGIX (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glFragmentLightfvSGIX (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glFragmentLightiSGIX (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glFragmentLightivSGIX (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glFragmentLightModelfSGIX (GLenum, GLfloat);
+GLAPI void APIENTRY glFragmentLightModelfvSGIX (GLenum, const GLfloat *);
+GLAPI void APIENTRY glFragmentLightModeliSGIX (GLenum, GLint);
+GLAPI void APIENTRY glFragmentLightModelivSGIX (GLenum, const GLint *);
+GLAPI void APIENTRY glFragmentMaterialfSGIX (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glFragmentMaterialfvSGIX (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glFragmentMaterialiSGIX (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glFragmentMaterialivSGIX (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glGetFragmentLightfvSGIX (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetFragmentLightivSGIX (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetFragmentMaterialfvSGIX (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetFragmentMaterialivSGIX (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glLightEnviSGIX (GLenum, GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFRAGMENTCOLORMATERIALSGIXPROC) (GLenum face, GLenum mode);
 typedef void (APIENTRY * PFNGLFRAGMENTLIGHTFSGIXPROC) (GLenum light, GLenum pname, GLfloat param);
@@ -2411,7 +2411,7 @@ typedef void (APIENTRY * PFNGLLIGHTENVISGIXPROC) (GLenum pname, GLint param);
 #ifndef GL_EXT_draw_range_elements
 #define GL_EXT_draw_range_elements 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glDrawRangeElementsEXT (GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
+GLAPI void APIENTRY glDrawRangeElementsEXT (GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLDRAWRANGEELEMENTSEXTPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
 #endif
@@ -2427,9 +2427,9 @@ typedef void (APIENTRY * PFNGLDRAWRANGEELEMENTSEXTPROC) (GLenum mode, GLuint sta
 #ifndef GL_EXT_light_texture
 #define GL_EXT_light_texture 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glApplyTextureEXT (GLenum);
-extern void APIENTRY glTextureLightEXT (GLenum);
-extern void APIENTRY glTextureMaterialEXT (GLenum, GLenum);
+GLAPI void APIENTRY glApplyTextureEXT (GLenum);
+GLAPI void APIENTRY glTextureLightEXT (GLenum);
+GLAPI void APIENTRY glTextureMaterialEXT (GLenum, GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLAPPLYTEXTUREEXTPROC) (GLenum mode);
 typedef void (APIENTRY * PFNGLTEXTURELIGHTEXTPROC) (GLenum pname);
@@ -2447,12 +2447,12 @@ typedef void (APIENTRY * PFNGLTEXTUREMATERIALEXTPROC) (GLenum face, GLenum mode)
 #ifndef GL_SGIX_async
 #define GL_SGIX_async 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glAsyncMarkerSGIX (GLuint);
-extern GLint APIENTRY glFinishAsyncSGIX (GLuint *);
-extern GLint APIENTRY glPollAsyncSGIX (GLuint *);
-extern GLuint APIENTRY glGenAsyncMarkersSGIX (GLsizei);
-extern void APIENTRY glDeleteAsyncMarkersSGIX (GLuint, GLsizei);
-extern GLboolean APIENTRY glIsAsyncMarkerSGIX (GLuint);
+GLAPI void APIENTRY glAsyncMarkerSGIX (GLuint);
+GLAPI GLint APIENTRY glFinishAsyncSGIX (GLuint *);
+GLAPI GLint APIENTRY glPollAsyncSGIX (GLuint *);
+GLAPI GLuint APIENTRY glGenAsyncMarkersSGIX (GLsizei);
+GLAPI void APIENTRY glDeleteAsyncMarkersSGIX (GLuint, GLsizei);
+GLAPI GLboolean APIENTRY glIsAsyncMarkerSGIX (GLuint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLASYNCMARKERSGIXPROC) (GLuint marker);
 typedef GLint (APIENTRY * PFNGLFINISHASYNCSGIXPROC) (GLuint *markerp);
@@ -2473,10 +2473,10 @@ typedef GLboolean (APIENTRY * PFNGLISASYNCMARKERSGIXPROC) (GLuint marker);
 #ifndef GL_INTEL_parallel_arrays
 #define GL_INTEL_parallel_arrays 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glVertexPointervINTEL (GLint, GLenum, const GLvoid* *);
-extern void APIENTRY glNormalPointervINTEL (GLenum, const GLvoid* *);
-extern void APIENTRY glColorPointervINTEL (GLint, GLenum, const GLvoid* *);
-extern void APIENTRY glTexCoordPointervINTEL (GLint, GLenum, const GLvoid* *);
+GLAPI void APIENTRY glVertexPointervINTEL (GLint, GLenum, const GLvoid* *);
+GLAPI void APIENTRY glNormalPointervINTEL (GLenum, const GLvoid* *);
+GLAPI void APIENTRY glColorPointervINTEL (GLint, GLenum, const GLvoid* *);
+GLAPI void APIENTRY glTexCoordPointervINTEL (GLint, GLenum, const GLvoid* *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLVERTEXPOINTERVINTELPROC) (GLint size, GLenum type, const GLvoid* *pointer);
 typedef void (APIENTRY * PFNGLNORMALPOINTERVINTELPROC) (GLenum type, const GLvoid* *pointer);
@@ -2491,10 +2491,10 @@ typedef void (APIENTRY * PFNGLTEXCOORDPOINTERVINTELPROC) (GLint size, GLenum typ
 #ifndef GL_EXT_pixel_transform
 #define GL_EXT_pixel_transform 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glPixelTransformParameteriEXT (GLenum, GLenum, GLint);
-extern void APIENTRY glPixelTransformParameterfEXT (GLenum, GLenum, GLfloat);
-extern void APIENTRY glPixelTransformParameterivEXT (GLenum, GLenum, const GLint *);
-extern void APIENTRY glPixelTransformParameterfvEXT (GLenum, GLenum, const GLfloat *);
+GLAPI void APIENTRY glPixelTransformParameteriEXT (GLenum, GLenum, GLint);
+GLAPI void APIENTRY glPixelTransformParameterfEXT (GLenum, GLenum, GLfloat);
+GLAPI void APIENTRY glPixelTransformParameterivEXT (GLenum, GLenum, const GLint *);
+GLAPI void APIENTRY glPixelTransformParameterfvEXT (GLenum, GLenum, const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLPIXELTRANSFORMPARAMETERIEXTPROC) (GLenum target, GLenum pname, GLint param);
 typedef void (APIENTRY * PFNGLPIXELTRANSFORMPARAMETERFEXTPROC) (GLenum target, GLenum pname, GLfloat param);
@@ -2517,23 +2517,23 @@ typedef void (APIENTRY * PFNGLPIXELTRANSFORMPARAMETERFVEXTPROC) (GLenum target, 
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSecondaryColor3bEXT (GLbyte, GLbyte, GLbyte);
-extern void APIENTRY glSecondaryColor3bvEXT (const GLbyte *);
-extern void APIENTRY glSecondaryColor3dEXT (GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glSecondaryColor3dvEXT (const GLdouble *);
-extern void APIENTRY glSecondaryColor3fEXT (GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glSecondaryColor3fvEXT (const GLfloat *);
-extern void APIENTRY glSecondaryColor3iEXT (GLint, GLint, GLint);
-extern void APIENTRY glSecondaryColor3ivEXT (const GLint *);
-extern void APIENTRY glSecondaryColor3sEXT (GLshort, GLshort, GLshort);
-extern void APIENTRY glSecondaryColor3svEXT (const GLshort *);
-extern void APIENTRY glSecondaryColor3ubEXT (GLubyte, GLubyte, GLubyte);
-extern void APIENTRY glSecondaryColor3ubvEXT (const GLubyte *);
-extern void APIENTRY glSecondaryColor3uiEXT (GLuint, GLuint, GLuint);
-extern void APIENTRY glSecondaryColor3uivEXT (const GLuint *);
-extern void APIENTRY glSecondaryColor3usEXT (GLushort, GLushort, GLushort);
-extern void APIENTRY glSecondaryColor3usvEXT (const GLushort *);
-extern void APIENTRY glSecondaryColorPointerEXT (GLint, GLenum, GLsizei, GLvoid *);
+GLAPI void APIENTRY glSecondaryColor3bEXT (GLbyte, GLbyte, GLbyte);
+GLAPI void APIENTRY glSecondaryColor3bvEXT (const GLbyte *);
+GLAPI void APIENTRY glSecondaryColor3dEXT (GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glSecondaryColor3dvEXT (const GLdouble *);
+GLAPI void APIENTRY glSecondaryColor3fEXT (GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glSecondaryColor3fvEXT (const GLfloat *);
+GLAPI void APIENTRY glSecondaryColor3iEXT (GLint, GLint, GLint);
+GLAPI void APIENTRY glSecondaryColor3ivEXT (const GLint *);
+GLAPI void APIENTRY glSecondaryColor3sEXT (GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glSecondaryColor3svEXT (const GLshort *);
+GLAPI void APIENTRY glSecondaryColor3ubEXT (GLubyte, GLubyte, GLubyte);
+GLAPI void APIENTRY glSecondaryColor3ubvEXT (const GLubyte *);
+GLAPI void APIENTRY glSecondaryColor3uiEXT (GLuint, GLuint, GLuint);
+GLAPI void APIENTRY glSecondaryColor3uivEXT (const GLuint *);
+GLAPI void APIENTRY glSecondaryColor3usEXT (GLushort, GLushort, GLushort);
+GLAPI void APIENTRY glSecondaryColor3usvEXT (const GLushort *);
+GLAPI void APIENTRY glSecondaryColorPointerEXT (GLint, GLenum, GLsizei, GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSECONDARYCOLOR3BEXTPROC) (GLbyte red, GLbyte green, GLbyte blue);
 typedef void (APIENTRY * PFNGLSECONDARYCOLOR3BVEXTPROC) (const GLbyte *v);
@@ -2557,7 +2557,7 @@ typedef void (APIENTRY * PFNGLSECONDARYCOLORPOINTEREXTPROC) (GLint size, GLenum 
 #ifndef GL_EXT_texture_perturb_normal
 #define GL_EXT_texture_perturb_normal 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTextureNormalEXT (GLenum);
+GLAPI void APIENTRY glTextureNormalEXT (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTEXTURENORMALEXTPROC) (GLenum mode);
 #endif
@@ -2565,8 +2565,8 @@ typedef void (APIENTRY * PFNGLTEXTURENORMALEXTPROC) (GLenum mode);
 #ifndef GL_EXT_multi_draw_arrays
 #define GL_EXT_multi_draw_arrays 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glMultiDrawArraysEXT (GLenum, GLint *, GLsizei *, GLsizei);
-extern void APIENTRY glMultiDrawElementsEXT (GLenum, const GLsizei *, GLenum, const GLvoid* *, GLsizei);
+GLAPI void APIENTRY glMultiDrawArraysEXT (GLenum, GLint *, GLsizei *, GLsizei);
+GLAPI void APIENTRY glMultiDrawElementsEXT (GLenum, const GLsizei *, GLenum, const GLvoid* *, GLsizei);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLMULTIDRAWARRAYSEXTPROC) (GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
 typedef void (APIENTRY * PFNGLMULTIDRAWELEMENTSEXTPROC) (GLenum mode, const GLsizei *count, GLenum type, const GLvoid* *indices, GLsizei primcount);
@@ -2575,11 +2575,11 @@ typedef void (APIENTRY * PFNGLMULTIDRAWELEMENTSEXTPROC) (GLenum mode, const GLsi
 #ifndef GL_EXT_fog_coord
 #define GL_EXT_fog_coord 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFogCoordfEXT (GLfloat);
-extern void APIENTRY glFogCoordfvEXT (const GLfloat *);
-extern void APIENTRY glFogCoorddEXT (GLdouble);
-extern void APIENTRY glFogCoorddvEXT (const GLdouble *);
-extern void APIENTRY glFogCoordPointerEXT (GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glFogCoordfEXT (GLfloat);
+GLAPI void APIENTRY glFogCoordfvEXT (const GLfloat *);
+GLAPI void APIENTRY glFogCoorddEXT (GLdouble);
+GLAPI void APIENTRY glFogCoorddvEXT (const GLdouble *);
+GLAPI void APIENTRY glFogCoordPointerEXT (GLenum, GLsizei, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFOGCOORDFEXTPROC) (GLfloat coord);
 typedef void (APIENTRY * PFNGLFOGCOORDFVEXTPROC) (const GLfloat *coord);
@@ -2595,28 +2595,28 @@ typedef void (APIENTRY * PFNGLFOGCOORDPOINTEREXTPROC) (GLenum type, GLsizei stri
 #ifndef GL_EXT_coordinate_frame
 #define GL_EXT_coordinate_frame 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTangent3bEXT (GLbyte, GLbyte, GLbyte);
-extern void APIENTRY glTangent3bvEXT (const GLbyte *);
-extern void APIENTRY glTangent3dEXT (GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glTangent3dvEXT (const GLdouble *);
-extern void APIENTRY glTangent3fEXT (GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTangent3fvEXT (const GLfloat *);
-extern void APIENTRY glTangent3iEXT (GLint, GLint, GLint);
-extern void APIENTRY glTangent3ivEXT (const GLint *);
-extern void APIENTRY glTangent3sEXT (GLshort, GLshort, GLshort);
-extern void APIENTRY glTangent3svEXT (const GLshort *);
-extern void APIENTRY glBinormal3bEXT (GLbyte, GLbyte, GLbyte);
-extern void APIENTRY glBinormal3bvEXT (const GLbyte *);
-extern void APIENTRY glBinormal3dEXT (GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glBinormal3dvEXT (const GLdouble *);
-extern void APIENTRY glBinormal3fEXT (GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glBinormal3fvEXT (const GLfloat *);
-extern void APIENTRY glBinormal3iEXT (GLint, GLint, GLint);
-extern void APIENTRY glBinormal3ivEXT (const GLint *);
-extern void APIENTRY glBinormal3sEXT (GLshort, GLshort, GLshort);
-extern void APIENTRY glBinormal3svEXT (const GLshort *);
-extern void APIENTRY glTangentPointerEXT (GLenum, GLsizei, const GLvoid *);
-extern void APIENTRY glBinormalPointerEXT (GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glTangent3bEXT (GLbyte, GLbyte, GLbyte);
+GLAPI void APIENTRY glTangent3bvEXT (const GLbyte *);
+GLAPI void APIENTRY glTangent3dEXT (GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glTangent3dvEXT (const GLdouble *);
+GLAPI void APIENTRY glTangent3fEXT (GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTangent3fvEXT (const GLfloat *);
+GLAPI void APIENTRY glTangent3iEXT (GLint, GLint, GLint);
+GLAPI void APIENTRY glTangent3ivEXT (const GLint *);
+GLAPI void APIENTRY glTangent3sEXT (GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glTangent3svEXT (const GLshort *);
+GLAPI void APIENTRY glBinormal3bEXT (GLbyte, GLbyte, GLbyte);
+GLAPI void APIENTRY glBinormal3bvEXT (const GLbyte *);
+GLAPI void APIENTRY glBinormal3dEXT (GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glBinormal3dvEXT (const GLdouble *);
+GLAPI void APIENTRY glBinormal3fEXT (GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glBinormal3fvEXT (const GLfloat *);
+GLAPI void APIENTRY glBinormal3iEXT (GLint, GLint, GLint);
+GLAPI void APIENTRY glBinormal3ivEXT (const GLint *);
+GLAPI void APIENTRY glBinormal3sEXT (GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glBinormal3svEXT (const GLshort *);
+GLAPI void APIENTRY glTangentPointerEXT (GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glBinormalPointerEXT (GLenum, GLsizei, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTANGENT3BEXTPROC) (GLbyte tx, GLbyte ty, GLbyte tz);
 typedef void (APIENTRY * PFNGLTANGENT3BVEXTPROC) (const GLbyte *v);
@@ -2661,7 +2661,7 @@ typedef void (APIENTRY * PFNGLBINORMALPOINTEREXTPROC) (GLenum type, GLsizei stri
 #ifndef GL_SUNX_constant_data
 #define GL_SUNX_constant_data 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFinishTextureSUNX (void);
+GLAPI void APIENTRY glFinishTextureSUNX (void);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFINISHTEXTURESUNXPROC) (void);
 #endif
@@ -2669,14 +2669,14 @@ typedef void (APIENTRY * PFNGLFINISHTEXTURESUNXPROC) (void);
 #ifndef GL_SUN_global_alpha
 #define GL_SUN_global_alpha 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glGlobalAlphaFactorbSUN (GLbyte);
-extern void APIENTRY glGlobalAlphaFactorsSUN (GLshort);
-extern void APIENTRY glGlobalAlphaFactoriSUN (GLint);
-extern void APIENTRY glGlobalAlphaFactorfSUN (GLfloat);
-extern void APIENTRY glGlobalAlphaFactordSUN (GLdouble);
-extern void APIENTRY glGlobalAlphaFactorubSUN (GLubyte);
-extern void APIENTRY glGlobalAlphaFactorusSUN (GLushort);
-extern void APIENTRY glGlobalAlphaFactoruiSUN (GLuint);
+GLAPI void APIENTRY glGlobalAlphaFactorbSUN (GLbyte);
+GLAPI void APIENTRY glGlobalAlphaFactorsSUN (GLshort);
+GLAPI void APIENTRY glGlobalAlphaFactoriSUN (GLint);
+GLAPI void APIENTRY glGlobalAlphaFactorfSUN (GLfloat);
+GLAPI void APIENTRY glGlobalAlphaFactordSUN (GLdouble);
+GLAPI void APIENTRY glGlobalAlphaFactorubSUN (GLubyte);
+GLAPI void APIENTRY glGlobalAlphaFactorusSUN (GLushort);
+GLAPI void APIENTRY glGlobalAlphaFactoruiSUN (GLuint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLGLOBALALPHAFACTORBSUNPROC) (GLbyte factor);
 typedef void (APIENTRY * PFNGLGLOBALALPHAFACTORSSUNPROC) (GLshort factor);
@@ -2691,13 +2691,13 @@ typedef void (APIENTRY * PFNGLGLOBALALPHAFACTORUISUNPROC) (GLuint factor);
 #ifndef GL_SUN_triangle_list
 #define GL_SUN_triangle_list 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glReplacementCodeuiSUN (GLuint);
-extern void APIENTRY glReplacementCodeusSUN (GLushort);
-extern void APIENTRY glReplacementCodeubSUN (GLubyte);
-extern void APIENTRY glReplacementCodeuivSUN (const GLuint *);
-extern void APIENTRY glReplacementCodeusvSUN (const GLushort *);
-extern void APIENTRY glReplacementCodeubvSUN (const GLubyte *);
-extern void APIENTRY glReplacementCodePointerSUN (GLenum, GLsizei, const GLvoid* *);
+GLAPI void APIENTRY glReplacementCodeuiSUN (GLuint);
+GLAPI void APIENTRY glReplacementCodeusSUN (GLushort);
+GLAPI void APIENTRY glReplacementCodeubSUN (GLubyte);
+GLAPI void APIENTRY glReplacementCodeuivSUN (const GLuint *);
+GLAPI void APIENTRY glReplacementCodeusvSUN (const GLushort *);
+GLAPI void APIENTRY glReplacementCodeubvSUN (const GLubyte *);
+GLAPI void APIENTRY glReplacementCodePointerSUN (GLenum, GLsizei, const GLvoid* *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLREPLACEMENTCODEUISUNPROC) (GLuint code);
 typedef void (APIENTRY * PFNGLREPLACEMENTCODEUSSUNPROC) (GLushort code);
@@ -2711,46 +2711,46 @@ typedef void (APIENTRY * PFNGLREPLACEMENTCODEPOINTERSUNPROC) (GLenum type, GLsiz
 #ifndef GL_SUN_vertex
 #define GL_SUN_vertex 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glColor4ubVertex2fSUN (GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat);
-extern void APIENTRY glColor4ubVertex2fvSUN (const GLubyte *, const GLfloat *);
-extern void APIENTRY glColor4ubVertex3fSUN (GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glColor4ubVertex3fvSUN (const GLubyte *, const GLfloat *);
-extern void APIENTRY glColor3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glColor3fVertex3fvSUN (const GLfloat *, const GLfloat *);
-extern void APIENTRY glNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *);
-extern void APIENTRY glColor4fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glColor4fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord2fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord2fVertex3fvSUN (const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord4fVertex4fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord4fVertex4fvSUN (const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord2fColor4ubVertex3fSUN (GLfloat, GLfloat, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord2fColor4ubVertex3fvSUN (const GLfloat *, const GLubyte *, const GLfloat *);
-extern void APIENTRY glTexCoord2fColor3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord2fColor3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord2fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord2fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord2fColor4fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord2fColor4fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glTexCoord4fColor4fNormal3fVertex4fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glTexCoord4fColor4fNormal3fVertex4fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiVertex3fvSUN (const GLenum *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiColor4ubVertex3fSUN (GLenum, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiColor4ubVertex3fvSUN (const GLenum *, const GLubyte *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiColor3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiColor3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiTexCoord2fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiTexCoord2fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
-extern void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glColor4ubVertex2fSUN (GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat);
+GLAPI void APIENTRY glColor4ubVertex2fvSUN (const GLubyte *, const GLfloat *);
+GLAPI void APIENTRY glColor4ubVertex3fSUN (GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glColor4ubVertex3fvSUN (const GLubyte *, const GLfloat *);
+GLAPI void APIENTRY glColor3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glColor3fVertex3fvSUN (const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glColor4fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glColor4fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord2fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord2fVertex3fvSUN (const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord4fVertex4fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord4fVertex4fvSUN (const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord2fColor4ubVertex3fSUN (GLfloat, GLfloat, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord2fColor4ubVertex3fvSUN (const GLfloat *, const GLubyte *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord2fColor3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord2fColor3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord2fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord2fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord2fColor4fNormal3fVertex3fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord2fColor4fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glTexCoord4fColor4fNormal3fVertex4fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glTexCoord4fColor4fNormal3fVertex4fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiVertex3fvSUN (const GLenum *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fSUN (GLenum, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fvSUN (const GLenum *, const GLubyte *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLOR4UBVERTEX2FSUNPROC) (GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y);
 typedef void (APIENTRY * PFNGLCOLOR4UBVERTEX2FVSUNPROC) (const GLubyte *c, const GLfloat *v);
@@ -2797,7 +2797,7 @@ typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3F
 #ifndef GL_EXT_blend_func_separate
 #define GL_EXT_blend_func_separate 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glBlendFuncSeparateEXT (GLenum, GLenum, GLenum, GLenum);
+GLAPI void APIENTRY glBlendFuncSeparateEXT (GLenum, GLenum, GLenum, GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLBLENDFUNCSEPARATEEXTPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
 #endif
@@ -2841,9 +2841,9 @@ typedef void (APIENTRY * PFNGLBLENDFUNCSEPARATEEXTPROC) (GLenum sfactorRGB, GLen
 #ifndef GL_EXT_vertex_weighting
 #define GL_EXT_vertex_weighting 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glVertexWeightfEXT (GLfloat);
-extern void APIENTRY glVertexWeightfvEXT (const GLfloat *);
-extern void APIENTRY glVertexWeightPointerEXT (GLsizei, GLenum, GLsizei, const GLvoid *);
+GLAPI void APIENTRY glVertexWeightfEXT (GLfloat);
+GLAPI void APIENTRY glVertexWeightfvEXT (const GLfloat *);
+GLAPI void APIENTRY glVertexWeightPointerEXT (GLsizei, GLenum, GLsizei, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLVERTEXWEIGHTFEXTPROC) (GLfloat weight);
 typedef void (APIENTRY * PFNGLVERTEXWEIGHTFVEXTPROC) (const GLfloat *weight);
@@ -2857,8 +2857,8 @@ typedef void (APIENTRY * PFNGLVERTEXWEIGHTPOINTEREXTPROC) (GLsizei size, GLenum 
 #ifndef GL_NV_vertex_array_range
 #define GL_NV_vertex_array_range 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glFlushVertexArrayRangeNV (void);
-extern void APIENTRY glVertexArrayRangeNV (GLsizei, const GLvoid *);
+GLAPI void APIENTRY glFlushVertexArrayRangeNV (void);
+GLAPI void APIENTRY glVertexArrayRangeNV (GLsizei, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLFLUSHVERTEXARRAYRANGENVPROC) (void);
 typedef void (APIENTRY * PFNGLVERTEXARRAYRANGENVPROC) (GLsizei size, const GLvoid *pointer);
@@ -2867,19 +2867,19 @@ typedef void (APIENTRY * PFNGLVERTEXARRAYRANGENVPROC) (GLsizei size, const GLvoi
 #ifndef GL_NV_register_combiners
 #define GL_NV_register_combiners 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glCombinerParameterfvNV (GLenum, const GLfloat *);
-extern void APIENTRY glCombinerParameterfNV (GLenum, GLfloat);
-extern void APIENTRY glCombinerParameterivNV (GLenum, const GLint *);
-extern void APIENTRY glCombinerParameteriNV (GLenum, GLint);
-extern void APIENTRY glCombinerInputNV (GLenum, GLenum, GLenum, GLenum, GLenum, GLenum);
-extern void APIENTRY glCombinerOutputNV (GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean);
-extern void APIENTRY glFinalCombinerInputNV (GLenum, GLenum, GLenum, GLenum);
-extern void APIENTRY glGetCombinerInputParameterfvNV (GLenum, GLenum, GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetCombinerInputParameterivNV (GLenum, GLenum, GLenum, GLenum, GLint *);
-extern void APIENTRY glGetCombinerOutputParameterfvNV (GLenum, GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetCombinerOutputParameterivNV (GLenum, GLenum, GLenum, GLint *);
-extern void APIENTRY glGetFinalCombinerInputParameterfvNV (GLenum, GLenum, GLfloat *);
-extern void APIENTRY glGetFinalCombinerInputParameterivNV (GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glCombinerParameterfvNV (GLenum, const GLfloat *);
+GLAPI void APIENTRY glCombinerParameterfNV (GLenum, GLfloat);
+GLAPI void APIENTRY glCombinerParameterivNV (GLenum, const GLint *);
+GLAPI void APIENTRY glCombinerParameteriNV (GLenum, GLint);
+GLAPI void APIENTRY glCombinerInputNV (GLenum, GLenum, GLenum, GLenum, GLenum, GLenum);
+GLAPI void APIENTRY glCombinerOutputNV (GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLenum, GLboolean, GLboolean, GLboolean);
+GLAPI void APIENTRY glFinalCombinerInputNV (GLenum, GLenum, GLenum, GLenum);
+GLAPI void APIENTRY glGetCombinerInputParameterfvNV (GLenum, GLenum, GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetCombinerInputParameterivNV (GLenum, GLenum, GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetCombinerOutputParameterfvNV (GLenum, GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetCombinerOutputParameterivNV (GLenum, GLenum, GLenum, GLint *);
+GLAPI void APIENTRY glGetFinalCombinerInputParameterfvNV (GLenum, GLenum, GLfloat *);
+GLAPI void APIENTRY glGetFinalCombinerInputParameterivNV (GLenum, GLenum, GLint *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOMBINERPARAMETERFVNVPROC) (GLenum pname, const GLfloat *params);
 typedef void (APIENTRY * PFNGLCOMBINERPARAMETERFNVPROC) (GLenum pname, GLfloat param);
@@ -2915,7 +2915,7 @@ typedef void (APIENTRY * PFNGLGETFINALCOMBINERINPUTPARAMETERIVNVPROC) (GLenum va
 #ifndef GL_MESA_resize_buffers
 #define GL_MESA_resize_buffers 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glResizeBuffersMESA (void);
+GLAPI void APIENTRY glResizeBuffersMESA (void);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLRESIZEBUFFERSMESAPROC) (void);
 #endif
@@ -2923,30 +2923,30 @@ typedef void (APIENTRY * PFNGLRESIZEBUFFERSMESAPROC) (void);
 #ifndef GL_MESA_window_pos
 #define GL_MESA_window_pos 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glWindowPos2dMESA (GLdouble, GLdouble);
-extern void APIENTRY glWindowPos2dvMESA (const GLdouble *);
-extern void APIENTRY glWindowPos2fMESA (GLfloat, GLfloat);
-extern void APIENTRY glWindowPos2fvMESA (const GLfloat *);
-extern void APIENTRY glWindowPos2iMESA (GLint, GLint);
-extern void APIENTRY glWindowPos2ivMESA (const GLint *);
-extern void APIENTRY glWindowPos2sMESA (GLshort, GLshort);
-extern void APIENTRY glWindowPos2svMESA (const GLshort *);
-extern void APIENTRY glWindowPos3dMESA (GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glWindowPos3dvMESA (const GLdouble *);
-extern void APIENTRY glWindowPos3fMESA (GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glWindowPos3fvMESA (const GLfloat *);
-extern void APIENTRY glWindowPos3iMESA (GLint, GLint, GLint);
-extern void APIENTRY glWindowPos3ivMESA (const GLint *);
-extern void APIENTRY glWindowPos3sMESA (GLshort, GLshort, GLshort);
-extern void APIENTRY glWindowPos3svMESA (const GLshort *);
-extern void APIENTRY glWindowPos4dMESA (GLdouble, GLdouble, GLdouble, GLdouble);
-extern void APIENTRY glWindowPos4dvMESA (const GLdouble *);
-extern void APIENTRY glWindowPos4fMESA (GLfloat, GLfloat, GLfloat, GLfloat);
-extern void APIENTRY glWindowPos4fvMESA (const GLfloat *);
-extern void APIENTRY glWindowPos4iMESA (GLint, GLint, GLint, GLint);
-extern void APIENTRY glWindowPos4ivMESA (const GLint *);
-extern void APIENTRY glWindowPos4sMESA (GLshort, GLshort, GLshort, GLshort);
-extern void APIENTRY glWindowPos4svMESA (const GLshort *);
+GLAPI void APIENTRY glWindowPos2dMESA (GLdouble, GLdouble);
+GLAPI void APIENTRY glWindowPos2dvMESA (const GLdouble *);
+GLAPI void APIENTRY glWindowPos2fMESA (GLfloat, GLfloat);
+GLAPI void APIENTRY glWindowPos2fvMESA (const GLfloat *);
+GLAPI void APIENTRY glWindowPos2iMESA (GLint, GLint);
+GLAPI void APIENTRY glWindowPos2ivMESA (const GLint *);
+GLAPI void APIENTRY glWindowPos2sMESA (GLshort, GLshort);
+GLAPI void APIENTRY glWindowPos2svMESA (const GLshort *);
+GLAPI void APIENTRY glWindowPos3dMESA (GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glWindowPos3dvMESA (const GLdouble *);
+GLAPI void APIENTRY glWindowPos3fMESA (GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glWindowPos3fvMESA (const GLfloat *);
+GLAPI void APIENTRY glWindowPos3iMESA (GLint, GLint, GLint);
+GLAPI void APIENTRY glWindowPos3ivMESA (const GLint *);
+GLAPI void APIENTRY glWindowPos3sMESA (GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glWindowPos3svMESA (const GLshort *);
+GLAPI void APIENTRY glWindowPos4dMESA (GLdouble, GLdouble, GLdouble, GLdouble);
+GLAPI void APIENTRY glWindowPos4dvMESA (const GLdouble *);
+GLAPI void APIENTRY glWindowPos4fMESA (GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glWindowPos4fvMESA (const GLfloat *);
+GLAPI void APIENTRY glWindowPos4iMESA (GLint, GLint, GLint, GLint);
+GLAPI void APIENTRY glWindowPos4ivMESA (const GLint *);
+GLAPI void APIENTRY glWindowPos4sMESA (GLshort, GLshort, GLshort, GLshort);
+GLAPI void APIENTRY glWindowPos4svMESA (const GLshort *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLWINDOWPOS2DMESAPROC) (GLdouble x, GLdouble y);
 typedef void (APIENTRY * PFNGLWINDOWPOS2DVMESAPROC) (const GLdouble *v);
@@ -2981,8 +2981,8 @@ typedef void (APIENTRY * PFNGLWINDOWPOS4SVMESAPROC) (const GLshort *v);
 #ifndef GL_IBM_multimode_draw_arrays
 #define GL_IBM_multimode_draw_arrays 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glMultiModeDrawArraysIBM (GLenum, const GLint *, const GLsizei *, GLsizei, GLint);
-extern void APIENTRY glMultiModeDrawElementsIBM (const GLenum *, const GLsizei *, GLenum, const GLvoid* *, GLsizei, GLint);
+GLAPI void APIENTRY glMultiModeDrawArraysIBM (GLenum, const GLint *, const GLsizei *, GLsizei, GLint);
+GLAPI void APIENTRY glMultiModeDrawElementsIBM (const GLenum *, const GLsizei *, GLenum, const GLvoid* *, GLsizei, GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLMULTIMODEDRAWARRAYSIBMPROC) (GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount, GLint modestride);
 typedef void (APIENTRY * PFNGLMULTIMODEDRAWELEMENTSIBMPROC) (const GLenum *mode, const GLsizei *count, GLenum type, const GLvoid* *indices, GLsizei primcount, GLint modestride);
@@ -2991,14 +2991,14 @@ typedef void (APIENTRY * PFNGLMULTIMODEDRAWELEMENTSIBMPROC) (const GLenum *mode,
 #ifndef GL_IBM_vertex_array_lists
 #define GL_IBM_vertex_array_lists 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glColorPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glSecondaryColorPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glEdgeFlagPointerListIBM (GLint, const GLboolean* *, GLint);
-extern void APIENTRY glFogCoordPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glIndexPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glNormalPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glTexCoordPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
-extern void APIENTRY glVertexPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glColorPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glSecondaryColorPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glEdgeFlagPointerListIBM (GLint, const GLboolean* *, GLint);
+GLAPI void APIENTRY glFogCoordPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glIndexPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glNormalPointerListIBM (GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glTexCoordPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
+GLAPI void APIENTRY glVertexPointerListIBM (GLint, GLenum, GLint, const GLvoid* *, GLint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLORPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid* *pointer, GLint ptrstride);
 typedef void (APIENTRY * PFNGLSECONDARYCOLORPOINTERLISTIBMPROC) (GLint size, GLenum type, GLint stride, const GLvoid* *pointer, GLint ptrstride);
@@ -3037,7 +3037,7 @@ typedef void (APIENTRY * PFNGLVERTEXPOINTERLISTIBMPROC) (GLint size, GLenum type
 #ifndef GL_3DFX_tbuffer
 #define GL_3DFX_tbuffer 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTbufferMask3DFX (GLuint);
+GLAPI void APIENTRY glTbufferMask3DFX (GLuint);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTBUFFERMASK3DFXPROC) (GLuint mask);
 #endif
@@ -3045,8 +3045,8 @@ typedef void (APIENTRY * PFNGLTBUFFERMASK3DFXPROC) (GLuint mask);
 #ifndef GL_EXT_multisample
 #define GL_EXT_multisample 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glSampleMaskEXT (GLclampf, GLboolean);
-extern void APIENTRY glSamplePatternEXT (GLenum);
+GLAPI void APIENTRY glSampleMaskEXT (GLclampf, GLboolean);
+GLAPI void APIENTRY glSamplePatternEXT (GLenum);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLSAMPLEMASKEXTPROC) (GLclampf value, GLboolean invert);
 typedef void (APIENTRY * PFNGLSAMPLEPATTERNEXTPROC) (GLenum pattern);
@@ -3071,7 +3071,7 @@ typedef void (APIENTRY * PFNGLSAMPLEPATTERNEXTPROC) (GLenum pattern);
 #ifndef GL_SGIS_texture_color_mask
 #define GL_SGIS_texture_color_mask 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glTextureColorMaskSGIS (GLboolean, GLboolean, GLboolean, GLboolean);
+GLAPI void APIENTRY glTextureColorMaskSGIS (GLboolean, GLboolean, GLboolean, GLboolean);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLTEXTURECOLORMASKSGISPROC) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 #endif
@@ -3079,7 +3079,7 @@ typedef void (APIENTRY * PFNGLTEXTURECOLORMASKSGISPROC) (GLboolean red, GLboolea
 #ifndef GL_SGIX_igloo_interface
 #define GL_SGIX_igloo_interface 1
 #ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glIglooInterfaceSGIX (GLenum, const GLvoid *);
+GLAPI void APIENTRY glIglooInterfaceSGIX (GLenum, const GLvoid *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLIGLOOINTERFACESGIXPROC) (GLenum pname, const GLvoid *params);
 #endif

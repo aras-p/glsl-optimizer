@@ -10,6 +10,13 @@
 #include <stdlib.h>
 #include <windows.h>
 
+/* These definitions are missing from windows.h */
+WINGDIAPI int WINAPI wglChoosePixelFormat(HDC, PIXELFORMATDESCRIPTOR *);
+WINGDIAPI int WINAPI wglDescribePixelFormat(HDC, int, UINT, LPPIXELFORMATDESCRIPTOR);
+WINGDIAPI int WINAPI wglGetPixelFormat(HDC);
+WINGDIAPI BOOL WINAPI wglSetPixelFormat(HDC, int, PIXELFORMATDESCRIPTOR *);
+WINGDIAPI BOOL WINAPI wglSwapBuffers(HDC);
+
 /* Type definitions (conversions) */
 typedef int Visual;			/* Win32 equivalent of X11 type */
 typedef HWND Window;

@@ -1,0 +1,37 @@
+# Makefile for Win32
+
+!include <win32.mak>
+
+TOP = ..\..
+
+OSMESA_SRCS = osmesa.c
+OSMESA_OBJS = osmesa.obj
+OSMESALIB = OSmesa.lib
+
+ASM_SRCS =
+CORE_SRCS = $(OSMESA_SRCS)
+DRIVER_SRCS =
+
+SRCS	= $(OSMESA_SRCS)
+
+all	: osmesalib install
+
+!include "$(TOP)/mesawin32.mak"
+
+osmesalib	: $(OSMESALIB)
+
+CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -I$(TOP)/src
+LFLAGS	= /LIB
+
+OBJS	= $(ASM_SRCS:.S=.obj) $(CORE_SRCS:.c=.obj) $(DRIVER_SRCS:.c=.obj)
+LIBS	= $(TOP)/lib/OpenGL32.lib $(TOP)/src/opengl32.exp
+
+$(OSMESALIB)	: $(OBJS)
+	$(link) $(LFLAGS) -out:$(OSMESALIB) $(OBJS) $(LIBS)
+
+install	: $(OSMESALIB)
+	@echo "copying OSMesa library to library directory..."
+	-copy $(OSMESALIB) $(TOP)\lib
+
+clean	::
+	@del /f osmesa.obj

@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.23 2001/06/05 23:54:00 davem69 Exp $ */
+/* $Id: dispatch.c,v 1.24 2001/09/14 22:19:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,8 +50,14 @@
 
 #if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
 
+#if defined(WIN32)
+#define KEYWORD1 GLAPI
+#else
 #define KEYWORD1
+#endif
+
 #define KEYWORD2 GLAPIENTRY
+
 #if defined(USE_MGL_NAMESPACE)
 #define NAME(func)  mgl##func
 #else

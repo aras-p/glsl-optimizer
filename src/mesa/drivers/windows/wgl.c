@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.7 2001/07/27 14:03:55 brianp Exp $ */
+/* $Id: wgl.c,v 1.8 2001/09/14 22:19:19 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -131,12 +131,12 @@ static unsigned ctx_count = 0;
 static unsigned ctx_current = -1;
 static unsigned curPFD = 0;
 
-GLAPI BOOL GLWINAPI wglCopyContext(HGLRC hglrcSrc,HGLRC hglrcDst,UINT mask)
+WGLAPI BOOL GLAPIENTRY wglCopyContext(HGLRC hglrcSrc,HGLRC hglrcDst,UINT mask)
 {
     return(FALSE);
 }
 
-GLAPI HGLRC GLWINAPI wglCreateContext(HDC hdc)
+WGLAPI HGLRC GLAPIENTRY wglCreateContext(HDC hdc)
 {
     HWND		hWnd;
     int i = 0;
@@ -170,7 +170,7 @@ GLAPI HGLRC GLWINAPI wglCreateContext(HDC hdc)
     return(NULL);
 }
 
-GLAPI BOOL GLWINAPI wglDeleteContext(HGLRC hglrc)
+WGLAPI BOOL GLAPIENTRY wglDeleteContext(HGLRC hglrc)
 {
     int i;
     for ( i = 0; i < MESAWGL_CTX_MAX_COUNT; i++ )
@@ -189,13 +189,13 @@ GLAPI BOOL GLWINAPI wglDeleteContext(HGLRC hglrc)
     return(FALSE);
 }
 
-GLAPI HGLRC GLWINAPI wglCreateLayerContext(HDC hdc,int iLayerPlane)
+WGLAPI HGLRC GLAPIENTRY wglCreateLayerContext(HDC hdc,int iLayerPlane)
 {
     SetLastError(0);
     return(NULL);
 }
 
-GLAPI HGLRC GLWINAPI wglGetCurrentContext(VOID)
+WGLAPI HGLRC GLAPIENTRY wglGetCurrentContext(VOID)
 {
    if (ctx_current < 0)
       return 0;
@@ -203,7 +203,7 @@ GLAPI HGLRC GLWINAPI wglGetCurrentContext(VOID)
       return (HGLRC) wgl_ctx[ctx_current].ctx;
 }
 
-GLAPI HDC GLWINAPI wglGetCurrentDC(VOID)
+WGLAPI HDC GLAPIENTRY wglGetCurrentDC(VOID)
 {
    if (ctx_current < 0)
       return 0;
@@ -211,7 +211,7 @@ GLAPI HDC GLWINAPI wglGetCurrentDC(VOID)
       return wgl_ctx[ctx_current].hdc;
 }
 
-GLAPI BOOL GLWINAPI wglMakeCurrent(HDC hdc,HGLRC hglrc)
+WGLAPI BOOL GLAPIENTRY wglMakeCurrent(HDC hdc,HGLRC hglrc)
 {
     int i;
 
@@ -235,7 +235,7 @@ GLAPI BOOL GLWINAPI wglMakeCurrent(HDC hdc,HGLRC hglrc)
     return FALSE;
 }
 
-GLAPI BOOL GLWINAPI wglShareLists(HGLRC hglrc1,HGLRC hglrc2)
+WGLAPI BOOL GLAPIENTRY wglShareLists(HGLRC hglrc1,HGLRC hglrc2)
 {
     return(TRUE);
 }
@@ -357,7 +357,7 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
 #undef VERIFY
 }
 
-GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
+WGLAPI BOOL GLAPIENTRY wglUseFontBitmapsA(HDC hdc, DWORD first,
                                        DWORD count, DWORD listBase)
 {
    int i;
@@ -455,12 +455,12 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
 }
 
 
-GLAPI BOOL GLWINAPI wglUseFontBitmapsW(HDC hdc,DWORD first,DWORD count,DWORD listBase)
+WGLAPI BOOL GLAPIENTRY wglUseFontBitmapsW(HDC hdc,DWORD first,DWORD count,DWORD listBase)
 {
     return FALSE;
 }
 
-GLAPI BOOL GLWINAPI wglUseFontOutlinesA(HDC hdc,DWORD first,DWORD count,
+WGLAPI BOOL GLAPIENTRY wglUseFontOutlinesA(HDC hdc,DWORD first,DWORD count,
                                   DWORD listBase,FLOAT deviation,
                                   FLOAT extrusion,int format,
                                   LPGLYPHMETRICSFLOAT lpgmf)
@@ -469,7 +469,7 @@ GLAPI BOOL GLWINAPI wglUseFontOutlinesA(HDC hdc,DWORD first,DWORD count,
     return(FALSE);
 }
 
-GLAPI BOOL GLWINAPI wglUseFontOutlinesW(HDC hdc,DWORD first,DWORD count,
+WGLAPI BOOL GLAPIENTRY wglUseFontOutlinesW(HDC hdc,DWORD first,DWORD count,
                                   DWORD listBase,FLOAT deviation,
                                   FLOAT extrusion,int format,
                                   LPGLYPHMETRICSFLOAT lpgmf)
@@ -478,7 +478,7 @@ GLAPI BOOL GLWINAPI wglUseFontOutlinesW(HDC hdc,DWORD first,DWORD count,
     return(FALSE);
 }
 
-GLAPI BOOL GLWINAPI wglDescribeLayerPlane(HDC hdc,int iPixelFormat,
+WGLAPI BOOL GLAPIENTRY wglDescribeLayerPlane(HDC hdc,int iPixelFormat,
                                     int iLayerPlane,UINT nBytes,
                                     LPLAYERPLANEDESCRIPTOR plpd)
 {
@@ -486,7 +486,7 @@ GLAPI BOOL GLWINAPI wglDescribeLayerPlane(HDC hdc,int iPixelFormat,
     return(FALSE);
 }
 
-GLAPI int GLWINAPI wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane,
+WGLAPI int GLAPIENTRY wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane,
                                        int iStart,int cEntries,
                                        CONST COLORREF *pcr)
 {
@@ -494,7 +494,7 @@ GLAPI int GLWINAPI wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane,
     return(0);
 }
 
-GLAPI int GLWINAPI wglGetLayerPaletteEntries(HDC hdc,int iLayerPlane,
+WGLAPI int GLAPIENTRY wglGetLayerPaletteEntries(HDC hdc,int iLayerPlane,
                                        int iStart,int cEntries,
                                        COLORREF *pcr)
 {
@@ -502,13 +502,13 @@ GLAPI int GLWINAPI wglGetLayerPaletteEntries(HDC hdc,int iLayerPlane,
     return(0);
 }
 
-GLAPI BOOL GLWINAPI wglRealizeLayerPalette(HDC hdc,int iLayerPlane,BOOL bRealize)
+WGLAPI BOOL GLAPIENTRY wglRealizeLayerPalette(HDC hdc,int iLayerPlane,BOOL bRealize)
 {
     SetLastError(0);
     return(FALSE);
 }
 
-GLAPI BOOL GLWINAPI wglSwapLayerBuffers(HDC hdc,UINT fuPlanes)
+WGLAPI BOOL GLAPIENTRY wglSwapLayerBuffers(HDC hdc,UINT fuPlanes)
 {
     if( !hdc )
     {
@@ -519,7 +519,7 @@ GLAPI BOOL GLWINAPI wglSwapLayerBuffers(HDC hdc,UINT fuPlanes)
     return(FALSE);
 }
 
-GLAPI int GLWINAPI wglChoosePixelFormat(HDC hdc,
+WGLAPI int GLAPIENTRY wglChoosePixelFormat(HDC hdc,
                                   CONST PIXELFORMATDESCRIPTOR *ppfd)
 {
     int		i,best = -1,bestdelta = 0x7FFFFFFF,delta,qt_valid_pix;
@@ -575,7 +575,7 @@ GLAPI int GLWINAPI wglChoosePixelFormat(HDC hdc,
     return(best);
 }
 
-GLAPI int GLWINAPI wglDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nBytes,
+WGLAPI int GLAPIENTRY wglDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nBytes,
                                     LPPIXELFORMATDESCRIPTOR ppfd)
 {
     int		qt_valid_pix;
@@ -593,7 +593,7 @@ GLAPI int GLWINAPI wglDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nBytes,
 /*
 * GetProcAddress - return the address of an appropriate extension
 */
-GLAPI PROC GLWINAPI wglGetProcAddress(LPCSTR lpszProc)
+WGLAPI PROC GLAPIENTRY wglGetProcAddress(LPCSTR lpszProc)
 {
     int		i;
     for(i = 0;i < qt_ext;i++)
@@ -604,7 +604,7 @@ GLAPI PROC GLWINAPI wglGetProcAddress(LPCSTR lpszProc)
         return(NULL);
 }
 
-GLAPI int GLWINAPI wglGetPixelFormat(HDC hdc)
+WGLAPI int GLAPIENTRY wglGetPixelFormat(HDC hdc)
 {
     if(curPFD == 0)
     {
@@ -614,7 +614,7 @@ GLAPI int GLWINAPI wglGetPixelFormat(HDC hdc)
     return(curPFD);
 }
 
-GLAPI BOOL GLWINAPI wglSetPixelFormat(HDC hdc,int iPixelFormat,
+WGLAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
                                 PIXELFORMATDESCRIPTOR *ppfd)
 {
     int		qt_valid_pix;
@@ -629,7 +629,7 @@ GLAPI BOOL GLWINAPI wglSetPixelFormat(HDC hdc,int iPixelFormat,
     return(TRUE);
 }
 
-GLAPI BOOL GLWINAPI wglSwapBuffers(HDC hdc)
+WGLAPI BOOL GLAPIENTRY wglSwapBuffers(HDC hdc)
 {
    if (ctx_current < 0)
       return FALSE;

@@ -1,8 +1,14 @@
 # Makefile for Win32
+#
+#  NOTE: the install target may overwrite important files in the system dir
+# Sept 12, 2001
+# Windows driver not working.  OSMesa driver works.
+#
 
 !include <win32.mak>
 
 TOP = ..
+SUBDIRS = osmesa.dir
 
 CORE_SRCS = \
 	tnl\t_array_api.c \
@@ -74,16 +80,17 @@ CORE_SRCS = \
 	state.c \
 	stencil.c \
 	teximage.c \
+	texformat.c \
 	texobj.c \
 	texstate.c \
 	texstore.c \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
-	X86\x86.c \
-	X86\common_x86.c \
-	X86\3dnow.c \
-	X86\sse.c \
+#	X86\x86.c \
+#	X86\common_x86.c \
+#	X86\3dnow.c \
+#	X86\sse.c \
 	math\m_debug_norm.c \
 	math\m_debug_vertex.c \
 	math\m_debug_xform.c \
@@ -110,6 +117,7 @@ CORE_SRCS = \
 	swrast\s_feedback.c \
 	swrast\s_fog.c \
 	swrast\s_histogram.c \
+	swrast\s_imaging.c \
 	swrast\s_lines.c \
 	swrast\s_logic.c \
 	swrast\s_masking.c \
@@ -120,6 +128,7 @@ CORE_SRCS = \
 	swrast\s_scissor.c \
 	swrast\s_span.c \
 	swrast\s_stencil.c \
+	swrast\s_texstore.c \
 	swrast\s_texture.c \
 	swrast\s_triangle.c \
 	swrast\s_zoom.c
@@ -130,43 +139,60 @@ DRIVER_SRCS = \
 	Trace\tr_error.c \
 	Trace\tr_support.c \
 	Trace\tr_wrapper.c \
-	Trace\tr_write.c
+	Trace\tr_write.c \
+	Windows\wgl.c \
+	Windows\wmesa.c
 
 ASM_SRCS =
 
 SRCS	= $(CORE_SRCS) $(DRIVER_SRCS)
 
-OSMESA_SRCS = OSmesa\osmesa.c
-OSMESA_OBJS = OSmesa\osmesa.obj
-
-all	: mesadll install
+all	: mesadll $(SUBDIRS)
 
 !include "$(TOP)/mesawin32.mak"
 
 mesadll	: $(MESADLL)
 
-CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_
+CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -DBUILD_GL32 -DNO_PARALLEL -DNO_STEREO
 LFLAGS	= $(dlllflags) $(LFLAGS)
 
 OBJS	= $(ASM_SRCS:.S=.obj) $(CORE_SRCS:.c=.obj) $(DRIVER_SRCS:.c=.obj)
-LIBS	= $(OPENGL) $(GLU) winmm.lib $(guilibsdll)
+LIBS	= $(GLU) winmm.lib $(guilibsdll)
 
 $(MESADLL)	: $(OBJS) mesa.def
 	$(link) $(LFLAGS) -out:$(MESADLL) -def:mesa.def $(OBJS) $(LIBS)
+	@echo "copying Mesa dynamic link library to lib directory..."
+	-copy $(MESADLL) ..\lib
+	@echo "copying Mesa import library to lib directory..."
+	-copy $(MESALIB) ..\lib
 
-#install	: $(MESADLL)
-#	@echo "copying Mesa dynamic link library to system directory..."
-#	-copy $(MESADLL) $(DLLINSTALL)
-#	@echo "copying Mesa header files to include directory..."
-#	-copy ..\..\include\GL\gl.h $(INCLUDEINSTALL)
-#	-copy ..\..\include\GL\glext.h $(INCLUDEINSTALL)
-#	@echo "copying Mesa import library to library directory..."
-#	-copy $(MESALIB) $(LIBINSTALL)
+$(SUBDIRS)	:
+	@echo.
+	@echo Making in $* directory
+	@cd $*
+	@nmake -f Makefile.win -nologo
+	@cd ..
+
 install	: $(MESADLL)
 	@echo "copying Mesa dynamic link library to system directory..."
-	-copy $(MESADLL) $(TOP)\lib
+	-copy $(MESADLL) $(DLLINSTALL)
+	@echo "copying Mesa header files to include directory..."
+	-copy ..\..\include\GL\gl.h $(INCLUDEINSTALL)
+	-copy ..\..\include\GL\glext.h $(INCLUDEINSTALL)
 	@echo "copying Mesa import library to library directory..."
-	-copy $(MESALIB) $(TOP)\lib
+	-copy $(MESALIB) $(LIBINSTALL)
 
+clean	::
+	@del /f tnl\*.obj
+	@del /f swrast_setup\*.obj
+	@del /f math\*.obj
+	@del /f array_cache\*.obj
+	@del /f swrast\*.obj
+	@del /f Trace\*.obj
+	@del /f osmesa\*.obj
+	@del /f Windows\*.obj
+
+# override default inference rule with one that writes the object to
+# the correct subdir
 .c.obj	:
-	$(cc) $(CFLAGS) -I. $<
+	$(cc) $(CFLAGS) -I. $< /Fo$*.obj

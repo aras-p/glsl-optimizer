@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.17 2001/05/21 14:46:33 brianp Exp $ */
+/* $Id: wmesa.c,v 1.18 2001/09/14 22:19:19 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -29,8 +29,8 @@
 #include "macros.h"
 #include "context.h"
 #include "dd.h"
-#include "xform.h"
-#include "vb.h"
+//#include "xform.h"
+//#include "vb.h"
 #include "matrix.h"
 #include "depth.h"
 #include "wmesadef.h"
@@ -58,7 +58,7 @@
 
 #endif
 #if !defined(NO_PARALLEL)
-//  #include "parallel.h"
+  #include "parallel.h"
 #endif
 
 struct DISPLAY_OPTIONS displayOptions;
@@ -157,7 +157,7 @@ void WMesaViewport( GLcontext *ctx,
                     GLint x, GLint y, GLsizei width, GLsizei height );
 
 
-static triangle_func choose_triangle_function( GLcontext *ctx );
+//static triangle_func choose_triangle_function( GLcontext *ctx );
 
 
 static void wmSetPixelFormat( PWMC wc, HDC hDC)
@@ -587,6 +587,7 @@ static void buffer_size( GLcontext* ctx, GLuint *width, GLuint *height )
 
 static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 {
+#if 0
     GLuint i;
     //  HDC DC=DD_GETDC;
     PWMC    pwc = Current;
@@ -623,13 +624,15 @@ static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
         }
         //   DD_RELEASEDC;
         ENDPROFILE(fast_rgb_points)
+#endif
 }
 
 
 
 /* Return pointer to accerated points function */
-extern points_func choose_points_function( GLcontext* ctx )
+extern /*points_func*/ choose_points_function( GLcontext* ctx )
 {
+#if 0
     STARTPROFILE
         if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->_RasterMask==0
             && !ctx->Texture._ReallyEnabled  && ctx->Visual->RGBAflag) {
@@ -640,6 +643,7 @@ extern points_func choose_points_function( GLcontext* ctx )
             ENDPROFILE(choose_points_function)
                 return NULL;
         }
+#endif
 }
 
 
@@ -647,6 +651,7 @@ extern points_func choose_points_function( GLcontext* ctx )
 /* Draw a line using the color specified by Current->gl_ctx->VB->ColorPtr->data[pv] */
 static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0, GLuint v1, GLuint pv )
 {
+#if 0
     STARTPROFILE
         int x0, y0, x1, y1;
     unsigned long pixel;
@@ -680,13 +685,15 @@ static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0, GLuint v1, GLuint pv 
     ENDGDICALL
 
     ENDPROFILE(fast_flat_rgb_line)
+#endif
 }
 
 
 
 /* Return pointer to accerated line function */
-static line_func choose_line_function( GLcontext* ctx )
+static /*line_func*/ choose_line_function( GLcontext* ctx )
 {
+#if 0
     STARTPROFILE
     if (ctx->Line.Width==1.0 && !ctx->Line.SmoothFlag && !ctx->Line.StippleFlag
         && ctx->Light.ShadeModel==GL_FLAT && ctx->_RasterMask==0
@@ -698,6 +705,7 @@ static line_func choose_line_function( GLcontext* ctx )
        ENDPROFILE(choose_line_function)
        return NULL;
     }
+#endif
 }
 
 
@@ -1084,6 +1092,7 @@ static const GLubyte *get_string(GLcontext *ctx, GLenum name)
 
 void setup_DD_pointers( GLcontext* ctx )
 {
+#if 0
     ctx->Driver.GetString = get_string;
     ctx->Driver.UpdateState = setup_DD_pointers;
     ctx->Driver.GetBufferSize = buffer_size;
@@ -1120,6 +1129,7 @@ void setup_DD_pointers( GLcontext* ctx )
     ctx->Driver.ReadRGBASpan        = read_rgba_span;
     ctx->Driver.ReadCI32Pixels      = read_ci32_pixels;
     ctx->Driver.ReadRGBAPixels      = read_rgba_pixels;
+#endif
 }
 
 
@@ -1286,12 +1296,14 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
     }
 
     _mesa_enable_sw_extensions(c->gl_ctx);
-
+#if 0
     c->gl_buffer = _mesa_create_framebuffer( c->gl_visual,
                                           c->gl_visual->DepthBits > 0,
                                           c->gl_visual->StencilBits > 0,
                                           c->gl_visual->AccumRedBits > 0,
-                                          c->gl_visual->AlphaBits > 0 );
+					  c->gl_visual->AlphaBits > 0 );
+#endif
+    c->gl_buffer = NULL; /* TEMP */
     if (!c->gl_buffer) {
         _mesa_destroy_visual( c->gl_visual );
         _mesa_destroy_context( c->gl_ctx );
@@ -2114,7 +2126,7 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2155,7 +2167,7 @@ static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2197,7 +2209,7 @@ static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2236,7 +2248,7 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx, GLuint v0,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2276,7 +2288,7 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2316,7 +2328,7 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2351,7 +2363,7 @@ static void smooth_8A8B8G8R_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2386,7 +2398,7 @@ static void smooth_8R8G8B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2421,7 +2433,7 @@ static void smooth_5R6G5B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2458,7 +2470,7 @@ static void flat_8A8B8G8R_triangle( GLcontext *ctx, GLuint v0,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2493,7 +2505,7 @@ static void flat_8R8G8B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2528,7 +2540,7 @@ static void flat_5R6G5B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2567,7 +2579,7 @@ static void smooth_ci_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2607,7 +2619,7 @@ static void flat_ci_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2643,7 +2655,7 @@ static void smooth_ci_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2678,7 +2690,7 @@ static void flat_ci_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2719,7 +2731,7 @@ static void smooth_DITHER8_z_triangle( GLcontext *ctx,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2758,7 +2770,7 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2792,7 +2804,7 @@ static void smooth_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2827,7 +2839,7 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #else
 
 	#ifdef WIN32
-		#include "..\tritemp.h"
+//		#include "..\tritemp.h"
 	#else
 		#include "tritemp.h"
 	#endif
@@ -2837,8 +2849,9 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 
 
 
-static triangle_func choose_triangle_function( GLcontext *ctx )
+static /*triangle_func*/ choose_triangle_function( GLcontext *ctx )
 {
+#if 0
     WMesaContext wmesa = (WMesaContext) ctx->DriverCtx;
     int depth = wmesa->cColorBits;
 
@@ -2926,6 +2939,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
 
     return NULL;
     }
+#endif
 }
 
 /*
@@ -2935,6 +2949,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
 void WMesaViewport( GLcontext *ctx,
                    GLint x, GLint y, GLsizei width, GLsizei height )
 {
+#if 0
     /* Save viewport */
     ctx->Viewport.X = x;
     ctx->Viewport.Width = width;
@@ -2952,4 +2967,5 @@ void WMesaViewport( GLcontext *ctx,
 	ctx->Viewport.WindowMap.m[MAT_TX] = ctx->Viewport.WindowMap.m[MAT_SX] + x;
 	ctx->Viewport.WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
 	ctx->Viewport.WindowMap.m[MAT_TY] = ctx->Viewport.WindowMap.m[MAT_SY] + y;
+#endif
 }
