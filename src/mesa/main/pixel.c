@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.24 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: pixel.c,v 1.25 2001/02/27 16:42:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -877,7 +877,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
                   GLuint n, GLfloat rgba[][4])
 {
    ASSERT(table->FloatTable);
-   if (!table->Table)
+   if (!table->Table || table->Size == 0)
       return;
 
    switch (table->Format) {
