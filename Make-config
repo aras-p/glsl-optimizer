@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.43 2001/04/26 22:27:09 brianp Exp $
+# $Id: Make-config,v 1.44 2001/05/10 03:00:58 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -645,7 +645,7 @@ linux-glide:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lglut -lGLU -lGL"
+	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -lglut -lGLU -lGL"
 
 linux-386-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -662,7 +662,7 @@ linux-386-glide:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
+	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -lglut -lGLU -lGL"
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
@@ -677,26 +677,6 @@ linux-386-opt-glide:
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
-	"CCFLAGS = $(CFLAGS)" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
-	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm" \
-	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
-
-linux-386-opt-V2-glide:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"OSMESA_LIB = libOSMesa.so" \
-	"CC = gcc" \
-	"CPLUSPLUS = g++" \
-	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DFX_V2 -DUSE_X86_ASM -DPTHREAD -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
@@ -1466,7 +1446,7 @@ linux-debug:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L/usr/local/glide/lib -lglide2x -lvga" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lglut -lGLU -lGL"
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -L/usr/local/glide/lib -lglide2x"
 
 linux-static-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \

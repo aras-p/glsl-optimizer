@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.43 2001/04/26 22:27:09 brianp Exp $
+# $Id: Makefile.X11,v 1.44 2001/05/10 03:00:58 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -76,7 +76,6 @@ default:
 	@echo "  make linux-glide          for Linux w/ 3Dfx Glide driver"
 	@echo "  make linux-386-glide      for Linux w/ 3Dfx Glide driver, Intel assembly"
 	@echo "  make linux-386-opt-glide  for Linux with 3Dfx Voodoo1 for GLQuake"
-	@echo "  make linux-386-opt-V2-glide  for Linux with 3Dfx Voodoo2 for GLQuake"
 	@echo "  make linux-x86-glide      for Linux w/ all x86 asm for Glide"
 	@echo "  make linux-alpha          for Linux on Alpha systems"
 	@echo "  make linux-alpha-static   for Linux on Alpha systems, static libs"
@@ -144,7 +143,7 @@ irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
 linux linux-static linux-debug linux-static-debug linux-prof \
 linux-x86 linux-x86-static linux-x86-debug \
 linux-glide linux-386-glide linux-386-opt-glide \
-linux-386-opt-V2-glide linux-x86-glide linux-glide-debug linux-glide-prof \
+linux-x86-glide linux-glide-debug linux-glide-prof \
 linux-alpha-static linux-alpha \
 linux-ppc-static linux-ppc \
 linux-sparc \
