@@ -44,9 +44,9 @@
 static void gammaUpdateAlphaMode( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 a = gmesa->AlphaTestMode;
-   CARD32 b = gmesa->AlphaBlendMode;
-   CARD32 f = gmesa->AB_FBReadMode_Save = 0;
+   int32_t a = gmesa->AlphaTestMode;
+   int32_t b = gmesa->AlphaBlendMode;
+   int32_t f = gmesa->AB_FBReadMode_Save = 0;
    GLubyte refByte = (GLint) (ctx->Color.AlphaRef * 255.0);
 
    a &= ~(AT_CompareMask | AT_RefValueMask);
@@ -419,10 +419,10 @@ static void gammaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 static void gammaUpdateZMode( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 z = gmesa->DepthMode;
-   CARD32 delta = gmesa->DeltaMode;
-   CARD32 window = gmesa->Window;
-   CARD32 lbread = gmesa->LBReadMode;
+   int32_t z = gmesa->DepthMode;
+   int32_t delta = gmesa->DeltaMode;
+   int32_t window = gmesa->Window;
+   int32_t lbread = gmesa->LBReadMode;
 
    z &= ~DM_CompareMask;
 
@@ -538,9 +538,9 @@ static void gammaDDFlush( GLcontext *ctx )
 static void gammaUpdateFogAttrib( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 f = gmesa->FogMode;
-   CARD32 g = gmesa->GeometryMode;
-   CARD32 d = gmesa->DeltaMode;
+   int32_t f = gmesa->FogMode;
+   int32_t g = gmesa->GeometryMode;
+   int32_t d = gmesa->DeltaMode;
 
    if (ctx->Fog.Enabled) {
       f |= FogModeEnable;
@@ -634,7 +634,7 @@ static void gammaDDPointSize( GLcontext *ctx, GLfloat size )
 static void gammaUpdatePolygon( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 g = gmesa->GeometryMode;
+   int32_t g = gmesa->GeometryMode;
 
    g &= ~(GM_PolyOffsetFillEnable | GM_PolyOffsetPointEnable |
           GM_PolyOffsetLineEnable);
@@ -752,7 +752,7 @@ static void gammaDDScissor( GLcontext *ctx,
 static void gammaUpdateCull( GLcontext *ctx )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 g = gmesa->GeometryMode;
+   int32_t g = gmesa->GeometryMode;
 
    g &= ~(GM_PolyCullMask | GM_FFMask);
 
@@ -972,8 +972,8 @@ static void gammaDDLightModelfv( GLcontext *ctx, GLenum pname,
 static void gammaDDShadeModel( GLcontext *ctx, GLenum mode )
 {
    gammaContextPtr gmesa = GAMMA_CONTEXT(ctx);
-   CARD32 g = gmesa->GeometryMode;
-   CARD32 c = gmesa->ColorDDAMode;
+   int32_t g = gmesa->GeometryMode;
+   int32_t c = gmesa->ColorDDAMode;
 
    g &= ~GM_ShadingMask;
    c &= ~ColorDDAShadingMask;
@@ -1240,7 +1240,7 @@ static void gammaDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_DITHER:
       do {
-	 CARD32 d = gmesa->DitherMode;
+	 int32_t d = gmesa->DitherMode;
 	 FLUSH_BATCH( gmesa );
 
 	 if ( state ) {
@@ -1272,7 +1272,7 @@ static void gammaDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 #if ENABLELIGHTING
    case GL_LIGHTING:
       do {
-	 CARD32 l = gmesa->LightingMode;
+	 int32_t l = gmesa->LightingMode;
 	 FLUSH_BATCH( gmesa );
 
 	 if ( state ) {
@@ -1290,7 +1290,7 @@ static void gammaDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_COLOR_MATERIAL:
       do {
-	 CARD32 m = gmesa->MaterialMode;
+	 int32_t m = gmesa->MaterialMode;
 	 FLUSH_BATCH( gmesa );
 
 	 if ( state ) {

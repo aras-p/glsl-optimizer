@@ -135,9 +135,9 @@ struct r128_context {
    GLuint num_verts;
    GLubyte *verts;		
 
-   CARD32 ClearColor;			/* Color used to clear color buffer */
-   CARD32 ClearDepth;			/* Value used to clear depth buffer */
-   CARD32 ClearStencil;			/* Value used to clear stencil */
+   int32_t ClearColor;			/* Color used to clear color buffer */
+   int32_t ClearDepth;			/* Value used to clear depth buffer */
+   int32_t ClearStencil;			/* Value used to clear stencil */
 
    /* Map GL texture units onto hardware
     */

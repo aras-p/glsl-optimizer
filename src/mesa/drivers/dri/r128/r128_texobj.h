@@ -53,14 +53,14 @@ typedef struct r128_tex_obj r128TexObj, *r128TexObjPtr;
 struct r128_tex_obj {
    driTextureObject   base;
 
-   CARD32 bufAddr;			/* Offset to start of locally
+   int32_t bufAddr;			/* Offset to start of locally
 					   shared texture block */
 
    GLuint age;
    r128TexImage image[R128_MAX_TEXTURE_LEVELS]; /* Image data for all
 						   mipmap levels */
 
-   CARD32 textureFormat;		/* Actual hardware format */
+   int32_t textureFormat;		/* Actual hardware format */
 
    drm_r128_texture_regs_t setup;		/* Setup regs for texture */
 };

@@ -462,7 +462,7 @@ void r128_emit_indexed_verts( GLcontext *ctx, GLuint start, GLuint count )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint vertex_size = rmesa->vertex_size * 4;
    GLuint bufsz = (count-start) * vertex_size;
-   CARD32 *dest;
+   int32_t *dest;
 
    rmesa->vertex_low = (rmesa->vertex_low + 63) & ~63; /* alignment */
    rmesa->vertex_last_prim = rmesa->vertex_low;

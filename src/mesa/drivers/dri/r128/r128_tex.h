@@ -70,7 +70,7 @@ extern void r128InitTextureFuncs( struct dd_function_table *functions );
 #define R128PACKCOLOR4444( r, g, b, a )					\
    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
 
-static __inline__ CARD32 r128PackColor( GLuint cpp,
+static __inline__ int32_t r128PackColor( GLuint cpp,
 					GLubyte r, GLubyte g,
 					GLubyte b, GLubyte a )
 {

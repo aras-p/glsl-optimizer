@@ -160,13 +160,13 @@ struct gamma_texture_object_t {
       int internalFormat;
    } image[GAMMA_TEX_MAXLEVELS];
 
-   CARD32 TextureBaseAddr[GAMMA_TEX_MAXLEVELS];
-   CARD32 TextureAddressMode;
-   CARD32 TextureColorMode;
-   CARD32 TextureFilterMode;
-   CARD32 TextureFormat;
-   CARD32 TextureReadMode;
-   CARD32 TextureBorderColor;
+   int32_t TextureBaseAddr[GAMMA_TEX_MAXLEVELS];
+   int32_t TextureAddressMode;
+   int32_t TextureColorMode;
+   int32_t TextureFilterMode;
+   int32_t TextureFormat;
+   int32_t TextureReadMode;
+   int32_t TextureBorderColor;
 };		
 
 #define GAMMA_NO_PALETTE        0x0
@@ -300,18 +300,18 @@ struct gamma_context {
    	unsigned int lastStamp;
    
 
-    	CARD32 			ClearColor;
-	CARD32			Color;
-	CARD32			DitherMode;
-    	CARD32			ClearDepth;
-	CARD32			FogMode;
-	CARD32			AreaStippleMode;
-	CARD32			LBReadFormat;
-	CARD32			LBWriteFormat;
-	CARD32			LineMode;
-	CARD32			PointMode;
-	CARD32			TriangleMode;
-	CARD32			AntialiasMode;
+    	int32_t 			ClearColor;
+	int32_t			Color;
+	int32_t			DitherMode;
+    	int32_t			ClearDepth;
+	int32_t			FogMode;
+	int32_t			AreaStippleMode;
+	int32_t			LBReadFormat;
+	int32_t			LBWriteFormat;
+	int32_t			LineMode;
+	int32_t			PointMode;
+	int32_t			TriangleMode;
+	int32_t			AntialiasMode;
 	GLfloat			ViewportScaleX;
 	GLfloat			ViewportScaleY;
 	GLfloat			ViewportScaleZ;

@@ -323,7 +323,7 @@ static GLboolean R128DRIPciInit(const DRIDriverContext *ctx)
 {
     R128InfoPtr info = ctx->driverPrivate;
     unsigned char *R128MMIO = ctx->MMIOAddress;
-    CARD32 chunk;
+    int32_t chunk;
     int ret;
     int flags;
 
