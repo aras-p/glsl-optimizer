@@ -86,7 +86,6 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 /* Don't make it too big. We don't want to buffer up a whole frame
  * that would force the application to wait later. */
 #define SAVAGE_CMDBUF_SIZE 1024
-#define SAVAGE_MAX_VERTS_PENDING 1024
 
 /* Use the templated vertex formats:
  */
@@ -226,7 +225,6 @@ struct savage_context_t {
     GLfloat hw_viewport[16];
     /* DRI stuff */
     GLuint bufferSize;
-    GLuint vertsPending;
 
     GLframebuffer *glBuffer;
    

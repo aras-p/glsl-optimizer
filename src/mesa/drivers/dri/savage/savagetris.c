@@ -1192,11 +1192,8 @@ static void savageRenderStart( GLcontext *ctx )
 
 static void savageRenderFinish( GLcontext *ctx )
 {
-   /* Flush the last primitive now, before any state is changed.
-    * Alternatively state could be emitted in all state-changing
-    * functions in savagestate.c and when changing the vertex format
-    * above. */
-   FLUSH_BATCH(SAVAGE_CONTEXT(ctx));
+   /* Flush the last primitive now, before any state is changed. */
+   savageFlushVertices(SAVAGE_CONTEXT(ctx));
 
    if (SAVAGE_CONTEXT(ctx)->RenderIndex & SAVAGE_FALLBACK_BIT)
       _swrast_flush( ctx );

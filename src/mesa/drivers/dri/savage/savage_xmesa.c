@@ -247,7 +247,8 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
 {
    savageScreenPrivate *savageScreen = (savageScreenPrivate *)sPriv->private;
 
-   drmUnmapBufs(savageScreen->bufs);
+   if (savageScreen->bufs)
+       drmUnmapBufs(savageScreen->bufs);
 
    /* free all option information */
    driDestroyOptionInfo (&savageScreen->optionCache);
@@ -492,16 +493,11 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 	       "version 2.2.\n");
       imesa->enable_fastpath = GL_FALSE;
    }
-      
-   imesa->enable_vdma = driQueryOptionb(&imesa->optionCache, "enable_vdma");
-   if (imesa->enable_vdma && savageScreen->chipset == S3_SUPERSAVAGE) {
-       fprintf (stderr,
-		"*** Disabling vertex DMA on SuperSavage. Someone has to "
-		"find out, how to make\n*** it work without locking up. "
-		"To disable this message set option enable_vdma\n"
-		"*** to \"false\" in DRIConf.\n");
+
+   if (!savageScreen->bufs || savageScreen->chipset == S3_SUPERSAVAGE)
        imesa->enable_vdma = GL_FALSE;
-   }
+   else
+       imesa->enable_vdma = driQueryOptionb(&imesa->optionCache, "enable_vdma");
 
    /* Configure swrast to match hardware characteristics:
     */

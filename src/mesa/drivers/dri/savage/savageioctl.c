@@ -57,6 +57,8 @@ void savageGetDMABuffer( savageContextPtr imesa )
    int retcode;
    drmBufPtr buf;
 
+   assert (imesa->savageScreen->bufs);
+
    if (SAVAGE_DEBUG & DEBUG_DMA)
       fprintf(stderr,  "Getting dma buffer\n");
 
@@ -422,10 +424,9 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 
-/* This is necessary as to prevent annyoing stuttering effects with
- * some games, though it does reduce the frame rate (glxgears)
- * slightly. I believe this is due to texture uploads which do not go
- * through the Savage command pipeline yet. */
+/* This is necessary to avoid very jerky animation on my ProSavageDDR.
+ * Seems to work fine on other Savages though. Make this configurable!
+ */
 #define SYNC_FRAMES 1
 
 /*
@@ -530,13 +531,6 @@ void savageFlushVertices( savageContextPtr imesa )
 	cmd->prim.start = buffer->flushed / imesa->HwVertexSize;
 	cmd->prim.count = buffer->used / imesa->HwVertexSize - cmd->prim.start;
 	buffer->flushed = buffer->used;
-	/* Make sure we don't buffer too many vertices without
-	 * telling the hardware. */
-	imesa->vertsPending += cmd->prim.count;
-	if (imesa->vertsPending > SAVAGE_MAX_VERTS_PENDING) {
-	    savageFlushCmdBuf(imesa, GL_FALSE);
-	    imesa->vertsPending = 0;
-	}
     }
 }
 
