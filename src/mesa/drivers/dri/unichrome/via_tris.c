@@ -977,7 +977,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (0 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                        ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
                 *vb++ = t->regTexWidthLog2[0];
                 *vb++ = t->regTexWidthLog2[1];
                 *vb++ = t->regTexHeightLog2[0];
@@ -1010,7 +1010,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (0 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                           ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
 		*vb++ = t->regTexWidthLog2[0];
 		*vb++ = t->regTexHeightLog2[0];
 		
@@ -1049,7 +1049,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (0 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                           ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
                 *vb++ = t->regTexWidthLog2[0];
                 *vb++ = t->regTexHeightLog2[0];
                 *vb++ = t->regTexBaseH[0];
@@ -1109,7 +1109,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (1 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                        ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
                 *vb++ = t->regTexWidthLog2[0];
                 *vb++ = t->regTexWidthLog2[1];
                 *vb++ = t->regTexHeightLog2[0];
@@ -1142,7 +1142,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (1 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                           ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
 		*vb++ = t->regTexWidthLog2[0];
 		*vb++ = t->regTexHeightLog2[0];
 		
@@ -1181,7 +1181,7 @@ static void emit_all_state(viaContextPtr vmesa)
                 *vb++ = (HC_ParaType_Tex << 16) |  (1 << 24);
                 *vb++ = t->regTexFM;
                 *vb++ = (HC_SubA_HTXnL0OS << 24) |
-                           ((t->actualLevel) << HC_HTXnLVmax_SHIFT);
+		    ((t->lastLevel) << HC_HTXnLVmax_SHIFT) | t->firstLevel;
                 *vb++ = t->regTexWidthLog2[0];
                 *vb++ = t->regTexHeightLog2[0];
                 *vb++ = t->regTexBaseH[0];
