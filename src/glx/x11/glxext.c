@@ -1263,23 +1263,23 @@ CARD8 __glXSetupForCommand(Display *dpy)
     return priv->majorOpcode;
 }
 
-/*
-** Flush the drawing command transport buffer.
-*/
+/**
+ * Flush the drawing command transport buffer.
+ * 
+ * \param ctx  Context whose transport buffer is to be flushed.
+ * \param pc   Pointer to first unused buffer location.
+ * 
+ * \todo
+ * Modify this function to use \c ctx->pc instead of the explicit
+ * \c pc parameter.
+ */
 GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 {
-    Display *dpy;
+    Display * const dpy = ctx->currentDpy;
     xGLXRenderReq *req;
-    GLint size;
+    const GLint size = pc - ctx->buf;
 
-    if (!(dpy = ctx->currentDpy)) {
-	/* Using the dummy context */
-	ctx->pc = ctx->buf;
-	return ctx->pc;
-    }
-
-    size = pc - ctx->buf;
-    if (size) {
+    if ( (dpy != NULL) && (size > 0) ) {
 	/* Send the entire buffer as an X request */
 	LockDisplay(dpy);
 	GetReq(GLXRender,req); 

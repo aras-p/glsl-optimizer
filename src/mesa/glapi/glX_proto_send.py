@@ -56,6 +56,10 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		glX_XML.printFastcall()
 		glX_XML.printNoinline()
 		print ''
+		print '#if !defined __GNUC__ || __GNUC__ < 3'
+		print '#  define __builtin_expect(x, y) x'
+		print '#endif'
+		print ''
 		print '/* If the size and opcode values are known at compile-time, this will, on'
 		print ' * x86 at least, emit them with a single instruction.'
 		print ' */'
@@ -91,7 +95,7 @@ read_reply( Display *dpy, size_t size, void * dest, GLboolean reply_is_always_ar
 
 #define X_GLXSingle 0
 
-static NOINLINE GLubyte *
+static NOINLINE FASTCALL GLubyte *
 setup_single_request( __GLXcontext * gc, GLint sop, GLint cmdlen )
 {
     xGLXSingleReq * req;
@@ -106,7 +110,7 @@ setup_single_request( __GLXcontext * gc, GLint sop, GLint cmdlen )
     return (GLubyte *)(req) + sz_xGLXSingleReq;
 }
 
-static NOINLINE GLubyte *
+static NOINLINE FASTCALL GLubyte *
 setup_vendor_request( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
 {
     xGLXVendorPrivateReq * req;
@@ -147,7 +151,7 @@ generic_%u_byte( GLint rop, const void * ptr )
     emit_header(gc->pc, rop, cmdlen);
     (void) memcpy((void *)(gc->pc + 4), ptr, %u);
     gc->pc += cmdlen;
-    if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 """ % (n, n + 4, n)
 
@@ -189,8 +193,22 @@ generic_%u_byte( GLint rop, const void * ptr )
 		self.common_func_print_just_header(f)
 
 		print '    __GLXcontext * const gc = __glXGetCurrentContext();'
-		print '    Display * const dpy = gc->currentDpy;'
-			
+		
+		# The only reason that single and vendor private commands need
+		# a variable called 'dpy' is becuase they use the SyncHandle
+		# macro.  For whatever brain-dead reason, that macro is hard-
+		# coded to use a variable called 'dpy' instead of taking a
+		# parameter.
+
+		if not f.glx_rop:
+			print '    Display * const dpy = gc->currentDpy;'
+			skip_condition = "dpy != NULL"
+		elif f.can_be_large:
+			skip_condition = "gc->currentDpy != NULL"
+		else:
+			skip_condition = None
+
+
 		if f.fn_return_type != 'void':
 			print '    %s retval = (%s) 0;' % (f.fn_return_type, f.fn_return_type)
 
@@ -199,25 +217,22 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 		print '    const GLuint cmdlen = %s;' % (f.command_length())
 
-		if f.counter != None:
-			print '    if (%s < 0) %s' % (f.counter, f.return_string())
+		if f.counter:
+			if skip_condition:
+				skip_condition = "(%s >= 0) && (%s)" % (f.counter, skip_condition)
+			else:
+				skip_condition = "%s >= 0" % (f.counter)
 
-		if f.can_be_large:
-			print '    if (dpy == NULL) return;'
-			print '    if ( ((gc->pc + cmdlen) > gc->bufEnd)'
-			print '         || (cmdlen > gc->maxSmallRenderCommandSize)) {'
-			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
-			print '    }'
+
+		if skip_condition:
+			print '    if (__builtin_expect(%s, 1)) {' % (skip_condition)
+			return 1
 		else:
-			print '    (void) dpy;'
-
-		return
+			return 0
 
 
 	def printSingleFunction(self, f):
 		self.common_func_print_header(f)
-
-		print '    if (dpy != NULL) {'
 
 		if f.fn_parameters != []:
 			pc_decl = "GLubyte const * pc ="
@@ -249,9 +264,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			else:
 				aa = "GL_FALSE"
 
-			print "       %s read_reply(gc->currentDpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
+			print "       %s read_reply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
 
-		print '        UnlockDisplay(gc->currentDpy); SyncHandle();'
+		print '        UnlockDisplay(dpy); SyncHandle();'
 		print '    }'
 		print '    %s' % f.return_string()
 		print '}'
@@ -278,33 +293,41 @@ generic_%u_byte( GLint rop, const void * ptr )
 					print ''
 					return
 
-		self.common_func_print_header(f)
-
-		if f.can_be_large:
-			print '    if (cmdlen <= gc->maxSmallRenderCommandSize) {'
+		if self.common_func_print_header(f):
 			indent = "    "
+			trailer = "    }"
 		else:
 			indent = ""
+			trailer = None
+
+		if f.can_be_large:
+			print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
+			print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
+			print '%s            (void) __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
+			print '%s        }' % (indent)
+			indent += "    "
 
 		print '%s    emit_header(gc->pc, %s, cmdlen);' % (indent, f.opcode_real_name())
 
 		self.common_emit_args(f, "gc->pc", indent, 4, 0)
 		print '%s    gc->pc += cmdlen;' % (indent)
-		print '%s    if (gc->pc > gc->limit) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
+		print '%s    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }' % (indent)
 
 		if f.can_be_large:
-			print '    }'
-			print '    else {'
-			print '        const GLint op = %s;' % (f.opcode_real_name())
-			print '        const GLuint cmdlenLarge = cmdlen + 4;'
-			print '        (void) memcpy((void *)(gc->pc + 0), (void *)(&op), 4);'
-			print '        (void) memcpy((void *)(gc->pc + 4), (void *)(&cmdlenLarge), 4);'
-			offset = self.common_emit_args(f, "gc->pc", indent, 8, 1)
+			print '%s}' % (indent)
+			print '%selse {' % (indent)
+			print '%s    const GLint op = %s;' % (indent, f.opcode_real_name())
+			print '%s    const GLuint cmdlenLarge = cmdlen + 4;' % (indent)
+			print '%s    GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
+			print '%s    (void) memcpy((void *)(pc + 0), (void *)(&op), 4);' % (indent)
+			print '%s    (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);' % (indent)
+			offset = self.common_emit_args(f, "pc", indent, 8, 1)
 			
 			p = f.variable_length_parameter()
-			print '        __glXSendLargeCommand(gc, gc->pc, %u, %s, %s);' % (offset + 8, p.name, p.size_string())
-			print '    }'
+			print '%s    __glXSendLargeCommand(gc, pc, %u, %s, %s);' % (indent, offset + 8, p.name, p.size_string())
+			print '%s}' % (indent)
 
+		if trailer: print trailer
 		print '}'
 		print ''
 		return
