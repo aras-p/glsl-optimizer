@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.5 2000/02/23 01:36:44 brianp Exp $ */
+/* $Id: glheader.h,v 1.6 2000/02/24 15:12:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,8 +60,8 @@
 #include "conf.h"
 #endif
 
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include "GL/gl.h"
+#include "GL/glext.h"
 
 
 /*
