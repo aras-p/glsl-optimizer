@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.4 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: imports.h,v 1.5 2002/10/15 15:36:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,17 @@ _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
 extern void
 _mesa_printf( const __GLcontext *ctx, const char *fmtString, ... );
 
+extern int CAPI
+_mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...);
+
+extern void * CAPI
+_mesa_fopen(__GLcontext *gc, const char *path, const char *mode);
+
+extern int CAPI
+_mesa_fclose(__GLcontext *gc, void *stream);
+
+extern char * CAPI
+_mesa_getenv(__GLcontext *gc, const char *var);
 
 extern void
 _mesa_init_default_imports(__GLimports *imports, void *driverCtx);
