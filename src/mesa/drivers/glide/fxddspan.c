@@ -444,7 +444,7 @@ static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
 /*****                    Depth functions (optimized)               *****/
 /************************************************************************/
 
-void
+static void
 fxReadDepthSpan_Z16(GLcontext * ctx,
 		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
@@ -464,7 +464,7 @@ fxReadDepthSpan_Z16(GLcontext * ctx,
 }
 
 
-void
+static void
 fxReadDepthSpan_Z24(GLcontext * ctx,
 		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
@@ -487,15 +487,16 @@ fxReadDepthSpan_Z24(GLcontext * ctx,
 /*****                    Stencil functions (optimized)             *****/
 /************************************************************************/
 
-void fxWriteStencilSpan (GLcontext *ctx, GLuint n, GLint x, GLint y,
-                         const GLstencil stencil[], const GLubyte mask[])
+static void
+fxWriteStencilSpan (GLcontext *ctx, GLuint n, GLint x, GLint y,
+                    const GLstencil stencil[], const GLubyte mask[])
 {
  /*
   * XXX todo
   */
 }
 
-void
+static void
 fxReadStencilSpan(GLcontext * ctx,
 		  GLuint n, GLint x, GLint y, GLstencil stencil[])
 {
@@ -514,19 +515,21 @@ fxReadStencilSpan(GLcontext * ctx,
    }
 }
 
-void fxWriteStencilPixels (GLcontext *ctx, GLuint n,
-                           const GLint x[], const GLint y[],
-                           const GLstencil stencil[],
-                           const GLubyte mask[])
+static void
+fxWriteStencilPixels (GLcontext *ctx, GLuint n,
+                      const GLint x[], const GLint y[],
+                      const GLstencil stencil[],
+                      const GLubyte mask[])
 {
  /*
   * XXX todo
   */
 }
 
-void fxReadStencilPixels (GLcontext *ctx, GLuint n,
-                          const GLint x[], const GLint y[],
-                          GLstencil stencil[])
+static void
+fxReadStencilPixels (GLcontext *ctx, GLuint n,
+                     const GLint x[], const GLint y[],
+                     GLstencil stencil[])
 {
  /*
   * XXX todo
