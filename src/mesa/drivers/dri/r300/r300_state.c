@@ -1351,11 +1351,12 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
 				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
 	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
-	#endif	
+	
 	
 	r300->hw.pvs.cmd[R300_PVS_CNTL_1] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_3] = 0;
+	#endif	
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 		| R300_GB_LINE_STUFF_ENABLE
@@ -1418,6 +1419,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
 
+	#if 0
 	r300->hw.fp.cmd[R300_FP_CNTL0] = 0;
 	r300->hw.fp.cmd[R300_FP_CNTL1] = 0;
 	r300->hw.fp.cmd[R300_FP_CNTL2] = 0;
@@ -1425,13 +1427,15 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.fp.cmd[R300_FP_NODE1] = 0;
 	r300->hw.fp.cmd[R300_FP_NODE2] = 0;
 	r300->hw.fp.cmd[R300_FP_NODE3] = 0;
-
+	#endif
+	
 	r300->hw.unk46A4.cmd[1] = 0x00001B01;
 	r300->hw.unk46A4.cmd[2] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[3] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[4] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[5] = 0x00000001;
 
+	#if 0
 	for(i = 1; i <= 64; ++i) {
 		/* create NOP instructions */
 		r300->hw.fpi[0].cmd[i] = FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO));
@@ -1439,7 +1443,8 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.fpi[2].cmd[i] = FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO));
 		r300->hw.fpi[3].cmd[i] = FP_SELA(0,W,NO,FP_TMP(0),0,0);
 	}
-
+	#endif
+	
 	r300->hw.unk4BC0.cmd[1] = 0;
 
 	r300->hw.unk4BC8.cmd[1] = 0;

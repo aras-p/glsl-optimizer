@@ -301,6 +301,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	 * but do keep it like this for now.
 	 */
 	r300ResetHwState(r300);
+	/* r300ClearBuffer has trampled all over the hardware state.. */
+	r300->hw.all_dirty=GL_TRUE;
 }
 
 void r300Flush(GLcontext * ctx)

@@ -242,25 +242,6 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 }
 
 
-static void assign_pipeline(r300ContextPtr rmesa, R300_PIPELINE *p)
-{
-   /* Watch out ! This is buggy .. but will do for now */
-   
-   /* At least one sanity check is in order */
-   if(sizeof(rmesa->state.vertex_shader) != sizeof(p->vertex_shader)){
-   	fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
-	exit(-1);
-   	}
-   if(sizeof(rmesa->state.pixel_shader) != sizeof(p->pixel_shader)){
-   	fprintf(stderr, "Aieee ! vertex_shader sizes don't match.\n");
-	exit(-1);
-   	}
-   
-   memcpy(&rmesa->state.vertex_shader, &(p->vertex_shader), sizeof(rmesa->state.vertex_shader));
-   memcpy(&rmesa->state.pixel_shader, &(p->pixel_shader), sizeof(rmesa->state.pixel_shader));
-
-}
-
 static GLboolean r300_run_immediate_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -277,7 +258,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    /* Update texture state - needs to be done only when actually changed..
       All the time for now.. */
    /* Flush state - make sure command buffer is nice and large */
-   r300Flush(ctx);
+   //r300Flush(ctx);
 
 
 	if (RADEON_DEBUG == DEBUG_PRIMS)
@@ -310,9 +291,6 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    
 	}
 	
-   r300SetupVertexShader(rmesa);
-   r300SetupPixelShader(rmesa);
-      
    r300EmitState(rmesa);
    
    #if 0
