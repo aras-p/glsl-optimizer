@@ -1,4 +1,4 @@
-/* $Id: miniglx.h,v 1.2 2003/12/06 17:17:42 brianp Exp $ */
+/* $Id: miniglx.h,v 1.3 2004/03/24 15:59:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,7 +87,11 @@ typedef struct MiniGLXXVisualInfoRec {
    VisualID visualid;	/**< \brief visual ID */
    int screen;		/**< \brief screen number */
    int depth;		/**< \brief bit depth */
+#if defined(__cplusplus) || defined(c_plusplus)
+   int c_class;		/**< \brief class */
+#else
    int class;		/**< \brief class */
+#endif
    int bits_per_rgb;	/**< \brief total bits per pixel */
 } XVisualInfo;
 
@@ -333,7 +337,7 @@ XCloseDisplay( Display *display );
 extern Window
 XCreateWindow( Display *display, Window parent, int x, int y,
                unsigned int width, unsigned int height,
-               unsigned int border_width, int depth, unsigned int class,
+               unsigned int border_width, int depth, unsigned int winclass,
                Visual *visual, unsigned long valuemask,
                XSetWindowAttributes *attributes );
 

@@ -9,9 +9,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1152,7 +1152,7 @@ XCloseDisplay( Display *dpy )
  * \param border_width the border width. For Mini GLX, it should be zero.
  * \param depth the window pixel depth. For Mini GLX, this should be the depth
  * found in the #XVisualInfo object returned by glXChooseVisual() 
- * \param class the window class. For Mini GLX this value should be
+ * \param winclass the window class. For Mini GLX this value should be
  * #InputOutput.
  * \param visual the visual type. It should be the visual field of the
  * #XVisualInfo object returned by glXChooseVisual().
@@ -1178,7 +1178,7 @@ XCloseDisplay( Display *dpy )
 Window
 XCreateWindow( Display *dpy, Window parent, int x, int y,
                unsigned int width, unsigned int height,
-               unsigned int border_width, int depth, unsigned int class,
+               unsigned int border_width, int depth, unsigned int winclass,
                Visual *visual, unsigned long valuemask,
                XSetWindowAttributes *attributes )
 {
@@ -1189,7 +1189,7 @@ XCreateWindow( Display *dpy, Window parent, int x, int y,
    (void) y;
    (void) border_width;
    (void) depth;
-   (void) class;
+   (void) winclass;
    (void) valuemask;
    (void) attributes;
 
@@ -1425,7 +1425,11 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
 
       results[i].visual = visResults + i;
       results[i].visualid = i;
+#if defined(__cplusplus) || defined(c_plusplus)
+      results[i].c_class = TrueColor;
+#else
       results[i].class = TrueColor;
+#endif
       results[i].depth = dpy->modes[i].redBits +
                          dpy->modes[i].redBits +
                          dpy->modes[i].redBits +
@@ -1612,7 +1616,11 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    /* compute depth and bpp */
    if (rgbFlag) {
       /* XXX maybe support depth 16 someday */
+#if defined(__cplusplus) || defined(c_plusplus)
+      visInfo->c_class = TrueColor;
+#else
       visInfo->class = TrueColor;
+#endif
       visInfo->depth = dpy->driverContext.bpp;
       visInfo->bits_per_rgb = dpy->driverContext.bpp;
       if (dpy->driverContext.bpp == 32)
@@ -1622,7 +1630,11 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    }
    else {
       /* color index mode */
+#if defined(__cplusplus) || defined(c_plusplus)
+      visInfo->c_class = PseudoColor;
+#else
       visInfo->class = PseudoColor;
+#endif
       visInfo->depth = 8;
       visInfo->bits_per_rgb = 8;  /* bits/pixel */
       vis->pixelFormat = PF_CI8;
