@@ -256,18 +256,30 @@ int main(int argc, char **argv)
 {
 	int width, height;
 	GLubyte *data;
+        char buff[32];
+        int n;
+        FILE *fo;
 
-	if (argc != 2)
+	if (argc != 3)
 	{
-		fprintf(stderr, "usage: %s <filename>\n", argv[0]);
+		fprintf(stderr, "usage: %s <infile.rgb> <outfile.p6>\n", argv[0]);
 		return 1;
 	}
 
 	data = read_rgb_texture(argv[1], &width, &height);
 
-	printf("P6\n%d %d\n255\n", width, height);
-	fwrite(data, width * 3, height, stdout);
+	n = sprintf(buff, "P6\n%d %d\n255\n", width, height);
+
+        /* [dBorca] avoid LF to CRLF conversion */
+        if ((fo = fopen(argv[2], "wb")) == NULL) {
+           fprintf(stderr, "Cannot open output file!\n");
+           exit(1);
+        }
+
+	fwrite(buff, n, 1, fo);
+	fwrite(data, width * 3, height, fo);
+
+        fclose(fo);
 
 	return 0;
 }
-
