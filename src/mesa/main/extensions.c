@@ -1,8 +1,8 @@
-/* $Id: extensions.c,v 1.34 2000/08/30 18:21:06 brianp Exp $ */
+/* $Id: extensions.c,v 1.35 2000/09/02 17:52:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -49,10 +49,10 @@ struct extension {
 
 
 static struct { int enabled; const char *name; } default_extensions[] = {
-   { DEFAULT_OFF,    "GL_ARB_imaging" },  /* in progress */
+   { DEFAULT_ON,     "GL_ARB_imaging" },
    { DEFAULT_ON,     "GL_ARB_multitexture" },
    { DEFAULT_OFF,    "GL_ARB_texture_compression" },
-   { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },  /* in progress */
+   { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
@@ -61,7 +61,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_EXT_blend_minmax" },
    { DEFAULT_ON,     "GL_EXT_blend_subtract" },
    { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
-   { DEFAULT_OFF,    "GL_EXT_convolution" },  /* in progress */
+   { DEFAULT_ON,     "GL_EXT_convolution" },
    { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
    { DEFAULT_ON,     "GL_EXT_histogram" },
    { DEFAULT_ON,     "GL_EXT_packed_pixels" },
