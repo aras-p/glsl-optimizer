@@ -1297,8 +1297,8 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
       return;
 
    _save_NotifyBegin( ctx, mode | PRIM_WEAK );
-   for (i = start ; i < count ; i++)
-      _glapi_Dispatch->ArrayElement( i );
+   for (i = 0; i < count; i++)
+      _glapi_Dispatch->ArrayElement(start + i);
    _glapi_Dispatch->End();
 }
 

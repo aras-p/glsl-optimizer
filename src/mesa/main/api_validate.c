@@ -227,8 +227,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       _mesa_update_state(ctx);
 
    /* Always need vertex positions */
-   if (!ctx->Array.Vertex.Enabled
-       && !(ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
+   if (!ctx->Array.Vertex.Enabled && !ctx->Array.VertexAttrib[0].Enabled)
       return GL_FALSE;
 
    if (ctx->Const.CheckArrayBounds) {

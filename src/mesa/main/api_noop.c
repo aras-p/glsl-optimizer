@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -616,8 +615,8 @@ void GLAPIENTRY _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
 
    glBegin(mode);
-   for (i = start ; i < count ; i++)
-      glArrayElement( i );
+   for (i = 0; i < count; i++)
+      glArrayElement(start + i);
    glEnd();
 }
 
