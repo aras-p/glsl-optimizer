@@ -63,7 +63,7 @@ _mesa_init_program(GLcontext *ctx)
    ctx->VertexProgram.Current = (struct vertex_program *) ctx->Shared->DefaultVertexProgram;
    assert(ctx->VertexProgram.Current);
    ctx->VertexProgram.Current->Base.RefCount++;
-   for (i = 0; i < VP_NUM_PROG_REGS / 4; i++) {
+   for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS / 4; i++) {
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
    }
@@ -271,8 +271,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
-      index += FP_PROG_REG_START;
-      ASSIGN_4V(ctx->FragmentProgram.Machine.Registers[index], x, y, z, w);
+      ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
    }
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
@@ -280,8 +279,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
-      index += VP_PROG_REG_START;
-      ASSIGN_4V(ctx->VertexProgram.Machine.Registers[index], x, y, z, w);
+      ASSIGN_4V(ctx->VertexProgram.Parameters[index], x, y, z, w);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameter(target)");
@@ -331,8 +329,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
-      index += FP_PROG_REG_START;
-      COPY_4V(params, ctx->FragmentProgram.Machine.Registers[index]);
+      COPY_4V(params, ctx->FragmentProgram.Parameters[index]);
    }
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
@@ -340,8 +337,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
-      index += VP_PROG_REG_START;
-      COPY_4V(params, ctx->VertexProgram.Machine.Registers[index]);
+      COPY_4V(params, ctx->VertexProgram.Parameters[index]);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramEnvParameter(target)");
@@ -830,8 +826,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            COPY_4V(v, ctx->VertexProgram.Machine.Registers
-                    [VP_TEMP_REG_START + i]);
+            COPY_4V(v, ctx->VertexProgram.Temporaries[i]);
          }
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
@@ -842,8 +837,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                sprintf(number, "%d", i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
                    _mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
-                  COPY_4V(v, ctx->VertexProgram.Machine.Registers
-                          [VP_INPUT_REG_START + i]);
+                  COPY_4V(v, ctx->VertexProgram.Inputs[i]);
                   return;
                }
             }
@@ -896,8 +890,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            COPY_4V(v,
-               ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START + i]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Temporaries[i]);
          }
          else if (reg[0] == 'f' && reg[1] == '[') {
             /* Fragment input attribute */
@@ -905,8 +898,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
             for (i = 0; i < ctx->Const.MaxFragmentProgramAttribs; i++) {
                const char *name = _mesa_nv_fragment_input_register_name(i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0) {
-                  COPY_4V(v, ctx->FragmentProgram.Machine.Registers
-                          [FP_INPUT_REG_START + i]);
+                  COPY_4V(v, ctx->FragmentProgram.Machine.Inputs[i]);
                   return;
                }
             }
@@ -916,18 +908,15 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
-                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_COLR]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_COLR]);
          }
          else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
             /* Fragment output color */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
-                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_COLH]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_COLH]);
          }
          else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
             /* Fragment output depth */
-            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
-                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_DEPR]);
+            COPY_4V(v, ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR]);
          }
          else {
             _mesa_error(ctx, GL_INVALID_VALUE,

@@ -102,7 +102,6 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
-   struct vp_machine *machine = &(ctx->VertexProgram.Machine);
    struct vertex_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
@@ -135,7 +134,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
          /* the traditional glBegin/glVertex/glEnd case */
          for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
             if (attr == 0 || (program->InputsRead & (1 << attr))) {
-               COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
+               COPY_4V(ctx->VertexProgram.Inputs[attr],
                        VB->AttribPtr[attr]->data[i]);
             }
          }
@@ -147,7 +146,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
                const GLubyte *ptr = (const GLubyte*) VB->AttribPtr[attr]->data;
                const GLuint stride = VB->AttribPtr[attr]->stride;
                const GLfloat *data = (GLfloat *) (ptr + stride * i);
-               COPY_4V(machine->Registers[VP_INPUT_REG_START + attr], data);
+               COPY_4V(ctx->VertexProgram.Inputs[attr], data);
                /*ASSERT(VB->AttribPtr[attr]->size == 4);*/
                ASSERT(stride == 4 * sizeof(GLfloat) || stride == 0);
             }
@@ -158,38 +157,22 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       ASSERT(program);
       _mesa_exec_vertex_program(ctx, program);
 
-#if 0
-      printf("Output %d: %f, %f, %f, %f\n", i,
-             machine->Registers[VP_OUTPUT_REG_START + 0][0],
-             machine->Registers[VP_OUTPUT_REG_START + 0][1],
-             machine->Registers[VP_OUTPUT_REG_START + 0][2],
-             machine->Registers[VP_OUTPUT_REG_START + 0][3]);
-      printf("   color: %f, %f, %f, %f\n",
-             machine->Registers[VP_OUTPUT_REG_START +_1][0],
-             machine->Registers[VP_OUTPUT_REG_START + 1][1],
-             machine->Registers[VP_OUTPUT_REG_START + 1][2],
-             machine->Registers[VP_OUTPUT_REG_START + 1][3]);
-      printf("PointSize[%d]: %g\n", i,
-             machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]);
-#endif
-
       /* Fixup fog an point size results if needed */
       if (ctx->Fog.Enabled &&
           (program->OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
-         machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_FOGC][0] = 1.0;
+         ctx->VertexProgram.Outputs[VERT_RESULT_FOGC][0] = 1.0;
       }
 
       if (ctx->VertexProgram.PointSizeEnabled &&
           (program->OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
-         machine->Registers[VP_OUTPUT_REG_START + VERT_RESULT_PSIZ][0]
-            = ctx->Point.Size;
+         ctx->VertexProgram.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
       }
 
       /* copy the output registers into the VB->attribs arrays */
       /* XXX (optimize) could use a conditional and smaller loop limit here */
       for (attr = 0; attr < 15; attr++) {
-         COPY_4V( store->attribs[attr].data[i],
-                  machine->Registers[VP_OUTPUT_REG_START + attr] );
+         COPY_4V(store->attribs[attr].data[i],
+                 ctx->VertexProgram.Outputs[attr]);
       }
    }
 

@@ -113,10 +113,6 @@
 #include "varray.h"
 #if FEATURE_NV_vertex_program
 #include "nvprogram.h"
-#include "nvvertprog.h"
-#endif
-#if FEATURE_NV_fragment_program
-#include "nvfragprog.h"
 #endif
 #include "vtxfmt.h"
 #if _HAVE_FULL_GL

@@ -444,59 +444,6 @@ static const char *OutputRegisters[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS + 1] = {
 };
 
 
-static GLint
-TempRegisterNumber(GLuint r)
-{
-   if (r >= FP_TEMP_REG_START && r <= FP_TEMP_REG_END)
-      return r - FP_TEMP_REG_START;
-   else
-      return -1;
-}
-
-static GLint
-HalfTempRegisterNumber(GLuint r)
-{
-   if (r >= FP_TEMP_REG_START + 32 && r <= FP_TEMP_REG_END)
-      return r - FP_TEMP_REG_START - 32;
-   else
-      return -1;
-}
-
-static GLint
-InputRegisterNumber(GLuint r)
-{
-   if (r >= FP_INPUT_REG_START && r <= FP_INPUT_REG_END)
-      return r - FP_INPUT_REG_START;
-   else
-      return -1;
-}
-
-static GLint
-OutputRegisterNumber(GLuint r)
-{
-   if (r >= FP_OUTPUT_REG_START && r <= FP_OUTPUT_REG_END)
-      return r - FP_OUTPUT_REG_START;
-   else
-      return -1;
-}
-
-static GLint
-ProgramRegisterNumber(GLuint r)
-{
-   if (r >= FP_PROG_REG_START && r <= FP_PROG_REG_END)
-      return r - FP_PROG_REG_START;
-   else
-      return -1;
-}
-
-static GLint
-DummyRegisterNumber(GLuint r)
-{
-   if (r >= FP_DUMMY_REG_START && r <= FP_DUMMY_REG_END)
-      return r - FP_DUMMY_REG_START;
-   else
-      return -1;
-}
 
 
 /**********************************************************************/
@@ -823,7 +770,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
          reg += 32;
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_TEMPS)
          RETURN_ERROR1("Invalid temporary register name");
-      *tempRegNum = FP_TEMP_REG_START + reg;
+      *tempRegNum = reg;
    }
    else {
       RETURN_ERROR1("Invalid temporary register name");
@@ -840,10 +787,10 @@ static GLboolean
 Parse_DummyReg(struct parse_state *parseState, GLint *regNum)
 {
    if (Parse_String(parseState, "RC")) {
-       *regNum = FP_DUMMY_REG_START;
+       *regNum = 0;
    }
    else if (Parse_String(parseState, "HC")) {
-       *regNum = FP_DUMMY_REG_START + 1;
+       *regNum = 1;
    }
    else {
       RETURN_ERROR1("Invalid write-only register name");
@@ -872,7 +819,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
       GLint reg = _mesa_atoi((const char *) token);
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_PARAMS)
          RETURN_ERROR1("Invalid constant program number");
-      *regNum = FP_PROG_REG_START + reg;
+      *regNum = reg;
    }
    else {
       RETURN_ERROR;
@@ -904,7 +851,7 @@ Parse_FragReg(struct parse_state *parseState, GLint *tempRegNum)
    }
    for (j = 0; InputRegisters[j]; j++) {
       if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
-         *tempRegNum = FP_INPUT_REG_START + j;
+         *tempRegNum = j;
          parseState->inputsRead |= (1 << j);
          break;
       }
@@ -940,7 +887,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
    for (j = 0; OutputRegisters[j]; j++) {
       if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
          static GLuint bothColors = (1 << FRAG_OUTPUT_COLR) | (1 << FRAG_OUTPUT_COLH);
-         *outputRegNum = FP_OUTPUT_REG_START + j;
+         *outputRegNum = j;
          parseState->outputsWritten |= (1 << j);
          if ((parseState->outputsWritten & bothColors) == bothColors) {
             RETURN_ERROR1("Illegal to write to both o[COLR] and o[COLH]");
@@ -972,17 +919,20 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    if (_mesa_strcmp((const char *) token, "RC") == 0 ||
        _mesa_strcmp((const char *) token, "HC") == 0) {
       /* a write-only register */
-      if (!Parse_DummyReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_WRITE_ONLY;
+      if (!Parse_DummyReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'R' || token[0] == 'H') {
       /* a temporary register */
-      if (!Parse_TempReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'o') {
       /* an output register */
-      if (!Parse_OutputReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_OUTPUT;
+      if (!Parse_OutputReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else {
@@ -1100,17 +1050,20 @@ Parse_VectorSrc(struct parse_state *parseState,
     * literal or vector literal.
     */
    if (token[0] == 'R' || token[0] == 'H') {
-      if (!Parse_TempReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'f') {
       /* XXX this might be an identier! */
-      if (!Parse_FragReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_INPUT;
+      if (!Parse_FragReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'p') {
       /* XXX this might be an identier! */
-      if (!Parse_ProgramParamReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_LOCAL_PARAM;
+      if (!Parse_ProgramParamReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (IsLetter(token[0])){
@@ -1122,8 +1075,8 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (paramIndex < 0) {
          RETURN_ERROR2("Undefined constant or parameter: ", ident);
       }
-      srcReg->IsParameter = GL_TRUE;
-      srcReg->Register = paramIndex;      
+      srcReg->File = PROGRAM_NAMED_PARAM;
+      srcReg->Index = paramIndex;      
    }
    else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+' || token[0] == '.'){
       /* literal scalar constant */
@@ -1131,13 +1084,9 @@ Parse_VectorSrc(struct parse_state *parseState,
       GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-#if 0
-      srcReg->Register = 0; /* XXX fix */
-#else
       paramIndex = add_unnamed_constant(parseState, values);
-      srcReg->IsParameter = GL_TRUE;
-      srcReg->Register = paramIndex;
-#endif
+      srcReg->File = PROGRAM_NAMED_PARAM;
+      srcReg->Index = paramIndex;
    }
    else if (token[0] == '{'){
       /* literal vector constant */
@@ -1147,8 +1096,8 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = add_unnamed_constant(parseState, values);
-      srcReg->IsParameter = GL_TRUE;
-      srcReg->Register = paramIndex;      
+      srcReg->File = PROGRAM_NAMED_PARAM;
+      srcReg->Index = paramIndex;      
    }
    else {
       RETURN_ERROR2("Invalid source register name", token);
@@ -1216,11 +1165,13 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
 
    /* Src reg can be R<n>, H<n> or a named fragment attrib */
    if (token[0] == 'R' || token[0] == 'H') {
-      if (!Parse_TempReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'f') {
-      if (!Parse_FragReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_INPUT;
+      if (!Parse_FragReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == '{') {
@@ -1231,8 +1182,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = add_unnamed_constant(parseState, values);
-      srcReg->IsParameter = GL_TRUE;
-      srcReg->Register = paramIndex;      
+      srcReg->File = PROGRAM_NAMED_PARAM;
+      srcReg->Index = paramIndex;      
    }
    else if (IsDigit(token[0])) {
       /* scalar literal */
@@ -1241,8 +1192,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = add_unnamed_constant(parseState, values);
-      srcReg->IsParameter = GL_TRUE;
-      srcReg->Register = paramIndex;      
+      srcReg->Index = paramIndex;      
+      srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;
    }
    else {
@@ -1298,13 +1249,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       GLubyte token[100];
 
       /* Initialize the instruction */
-      inst->SrcReg[0].Register = -1;
-      inst->SrcReg[1].Register = -1;
-      inst->SrcReg[2].Register = -1;
-      inst->SrcReg[0].IsParameter = GL_FALSE;
-      inst->SrcReg[1].IsParameter = GL_FALSE;
-      inst->SrcReg[2].IsParameter = GL_FALSE;
-      inst->DstReg.Register = -1;
+      inst->SrcReg[0].File = -1;
+      inst->SrcReg[1].File = -1;
+      inst->SrcReg[2].File = -1;
+      inst->DstReg.File = -1;
       inst->DstReg.CondSwizzle[0] = 0;
       inst->DstReg.CondSwizzle[1] = 1;
       inst->DstReg.CondSwizzle[2] = 2;
@@ -1617,7 +1565,6 @@ PrintSrcReg(const struct fragment_program *program,
             const struct fp_src_register *src)
 {
    static const char comps[5] = "xyzw";
-   GLint r;
 
    if (src->NegateAbs) {
       _mesa_printf("-");
@@ -1628,38 +1575,38 @@ PrintSrcReg(const struct fragment_program *program,
    if (src->NegateBase) {
       _mesa_printf("-");
    }
-   if (src->IsParameter) {
-      if (program->Parameters[src->Register].Constant) {
+   if (src->File == PROGRAM_NAMED_PARAM) {
+      if (program->Parameters[src->Index].Constant) {
          printf("{%g, %g, %g, %g}",
-                program->Parameters[src->Register].Values[0],
-                program->Parameters[src->Register].Values[1],
-                program->Parameters[src->Register].Values[2],
-                program->Parameters[src->Register].Values[3]);
+                program->Parameters[src->Index].Values[0],
+                program->Parameters[src->Index].Values[1],
+                program->Parameters[src->Index].Values[2],
+                program->Parameters[src->Index].Values[3]);
       }
       else {
-         printf("%s", program->Parameters[src->Register].Name);
+         printf("%s", program->Parameters[src->Index].Name);
       }
    }
-   else if ((r = OutputRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("o[%s]", OutputRegisters[r]);
+   else if (src->File == PROGRAM_OUTPUT) {
+      _mesa_printf("o[%s]", OutputRegisters[src->Index]);
    }
-   else if ((r = InputRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("f[%s]", InputRegisters[r]);
+   else if (src->File == PROGRAM_INPUT) {
+      _mesa_printf("f[%s]", InputRegisters[src->Index]);
    }
-   else if ((r = ProgramRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("p[%d]", r);
+   else if (src->File == PROGRAM_LOCAL_PARAM) {
+      _mesa_printf("p[%d]", src->Index);
    }
-   else if ((r = HalfTempRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("H%d", r);
+   else if (src->File == PROGRAM_TEMPORARY) {
+      if (src->Index >= 32)
+         _mesa_printf("H%d", src->Index);
+      else
+         _mesa_printf("R%d", src->Index);
    }
-   else if ((r = TempRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("R%d", r);
-   }
-   else if ((r = DummyRegisterNumber(src->Register)) >= 0) {
-      _mesa_printf("%cC", "HR"[r]);
+   else if (src->File == PROGRAM_WRITE_ONLY) {
+      _mesa_printf("%cC", "HR"[src->Index]);
    }
    else {
-      _mesa_problem(NULL, "Invalid fragment register %d", src->Register);
+      _mesa_problem(NULL, "Invalid fragment register %d", src->Index);
       return;
    }
    if (src->Swizzle[0] == src->Swizzle[1] &&
@@ -1739,22 +1686,21 @@ PrintDstReg(const struct fp_dst_register *dst)
 {
    GLint w = dst->WriteMask[0] + dst->WriteMask[1]
            + dst->WriteMask[2] + dst->WriteMask[3];
-   GLint r;
 
-   if ((r = OutputRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("o[%s]", OutputRegisters[r]);
+   if (dst->File == PROGRAM_OUTPUT) {
+      _mesa_printf("o[%s]", OutputRegisters[dst->Index]);
    }
-   else if ((r = HalfTempRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("H%d", r);
+   else if (dst->File == PROGRAM_TEMPORARY) {
+      if (dst->Index >= 32)
+         _mesa_printf("H%d", dst->Index);
+      else
+         _mesa_printf("R%d", dst->Index);
    }
-   else if ((r = TempRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("R%d", r);
+   else if (dst->File == PROGRAM_LOCAL_PARAM) {
+      _mesa_printf("p[%d]", dst->Index);
    }
-   else if ((r = ProgramRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("p[%d]", r);
-   }
-   else if ((r = DummyRegisterNumber(dst->Register)) >= 0) {
-      _mesa_printf("%cC", "HR"[r]);
+   else if (dst->File == PROGRAM_WRITE_ONLY) {
+      _mesa_printf("%cC", "HR"[dst->Index]);
    }
    else {
       _mesa_printf("???");

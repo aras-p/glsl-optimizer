@@ -32,22 +32,6 @@
 #define NVVERTPROG_H
 
 
-#define VP_NUM_INPUT_REGS   MAX_NV_VERTEX_PROGRAM_INPUTS
-#define VP_NUM_OUTPUT_REGS  MAX_NV_VERTEX_PROGRAM_OUTPUTS
-#define VP_NUM_TEMP_REGS    MAX_NV_VERTEX_PROGRAM_TEMPS
-#define VP_NUM_PROG_REGS    MAX_NV_VERTEX_PROGRAM_PARAMS
-
-/* Location of register groups within the whole register file */
-#define VP_INPUT_REG_START  0
-#define VP_INPUT_REG_END    (VP_INPUT_REG_START + VP_NUM_INPUT_REGS - 1)
-#define VP_OUTPUT_REG_START (VP_INPUT_REG_END + 1)
-#define VP_OUTPUT_REG_END   (VP_OUTPUT_REG_START + VP_NUM_OUTPUT_REGS - 1)
-#define VP_TEMP_REG_START   (VP_OUTPUT_REG_END + 1)
-#define VP_TEMP_REG_END     (VP_TEMP_REG_START + VP_NUM_TEMP_REGS - 1)
-#define VP_PROG_REG_START   (VP_TEMP_REG_END + 1)
-#define VP_PROG_REG_END     (VP_PROG_REG_START + VP_NUM_PROG_REGS - 1)
-
-
 /* for GL_ARB_v_p SWZ instruction */
 #define SWIZZLE_ZERO 100
 #define SWIZZLE_ONE  101
@@ -89,10 +73,12 @@ enum vp_opcode
 };
 
 
+
 /* Instruction source register */
 struct vp_src_register
 {
-   GLint Register;     /* or the offset from the address register */
+   enum register_file File;  /* which register file */
+   GLint Index;              /* index into register file */
    GLubyte Swizzle[4]; /* Each value is 0,1,2,3 for x,y,z,w or */
                        /* SWIZZLE_ZERO or SWIZZLE_ONE for VP_OPCODE_SWZ. */
    GLboolean Negate;
@@ -103,7 +89,8 @@ struct vp_src_register
 /* Instruction destination register */
 struct vp_dst_register
 {
-   GLint Register;
+   enum register_file File;  /* which register file */
+   GLint Index;              /* index into register file */
    GLboolean WriteMask[4];
 };
 

@@ -53,19 +53,6 @@
 #define FRAG_OUTPUT_DEPR  2
 
 
-/* Location of register sets within the whole register file */
-#define FP_INPUT_REG_START  0
-#define FP_INPUT_REG_END    (FP_INPUT_REG_START + MAX_NV_FRAGMENT_PROGRAM_INPUTS - 1)
-#define FP_OUTPUT_REG_START (FP_INPUT_REG_END + 1)
-#define FP_OUTPUT_REG_END   (FP_OUTPUT_REG_START + MAX_NV_FRAGMENT_PROGRAM_OUTPUTS - 1)
-#define FP_TEMP_REG_START   (FP_OUTPUT_REG_END + 1)
-#define FP_TEMP_REG_END     (FP_TEMP_REG_START + MAX_NV_FRAGMENT_PROGRAM_TEMPS - 1)
-#define FP_PROG_REG_START   (FP_TEMP_REG_END + 1)
-#define FP_PROG_REG_END     (FP_PROG_REG_START + MAX_NV_FRAGMENT_PROGRAM_PARAMS - 1)
-#define FP_DUMMY_REG_START  (FP_PROG_REG_END + 1)
-#define FP_DUMMY_REG_END    (FP_DUMMY_REG_START + MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS - 1)
-
-
 /* condition codes */
 #define COND_GT  1  /* greater than zero */
 #define COND_EQ  2  /* equal to zero */
@@ -84,6 +71,7 @@
 #define FIXED12  0x4
 
 
+/* Fragment program instruction opcodes */
 enum fp_opcode {
    FP_OPCODE_ADD = 1000,
    FP_OPCODE_COS,
@@ -134,10 +122,11 @@ enum fp_opcode {
 };
 
 
+/* Instruction source register */
 struct fp_src_register
 {
-   GLint Register;    /* or the offset from the address register */
-   GLboolean IsParameter; /* true if register refers to a param or constant */
+   enum register_file File;
+   GLint Index;
    GLuint Swizzle[4];
    GLboolean NegateBase; /* negate before absolute value? */
    GLboolean Abs;        /* take absolute value? */
@@ -148,13 +137,15 @@ struct fp_src_register
 /* Instruction destination register */
 struct fp_dst_register
 {
-   GLint Register;
+   enum register_file File;
+   GLint Index;
    GLboolean WriteMask[4];
    GLuint CondMask;
    GLuint CondSwizzle[4];
 };
 
 
+/* Fragment program instruction */
 struct fp_instruction
 {
    enum fp_opcode Opcode;

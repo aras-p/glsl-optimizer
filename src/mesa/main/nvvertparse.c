@@ -54,7 +54,7 @@ struct parse_state {
    GLboolean isVersion1_1;
    GLuint inputsRead;
    GLuint outputsWritten;
-   GLuint progRegsWritten;
+   GLboolean anyProgRegsWritten;
    GLuint numInst;                 /* number of instructions parsed */
 };
 
@@ -282,31 +282,16 @@ static const char *OutputRegisters[MAX_NV_VERTEX_PROGRAM_OUTPUTS + 1] = {
    "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
 };
 
+/* NOTE: the order here must match opcodes in nvvertprog.h */
 static const char *Opcodes[] = {
    "MOV", "LIT", "RCP", "RSQ", "EXP", "LOG", "MUL", "ADD", "DP3", "DP4",
    "DST", "MIN", "MAX", "SLT", "SGE", "MAD", "ARL", "DPH", "RCC", "SUB",
-   "ABS", "END", NULL
+   "ABS", "END",
+   /* GL_ARB_vertex_program */
+   "FLR", "FRC", "EX2", "LG2", "POW", "XPD", "SWZ",
+   NULL
 };
 
-
-
-static GLuint
-IsProgRegister(GLuint r)
-{
-   return (GLuint) (r >= VP_PROG_REG_START && r <= VP_PROG_REG_END);
-}
-
-static GLuint
-IsInputRegister(GLuint r)
-{
-   return (GLuint) (r >= VP_INPUT_REG_START && r <= VP_INPUT_REG_END);
-}
-
-static GLuint
-IsOutputRegister(GLuint r)
-{
-   return (GLuint) (r >= VP_OUTPUT_REG_START && r <= VP_OUTPUT_REG_END);
-}
 
 
 /**
@@ -325,9 +310,9 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 
    if (IsDigit(token[1])) {
       GLint reg = _mesa_atoi((char *) (token + 1));
-      if (reg >= VP_NUM_TEMP_REGS)
+      if (reg >= MAX_NV_VERTEX_PROGRAM_TEMPS)
          RETURN_ERROR1("Bad temporary register name");
-      *tempRegNum = VP_TEMP_REG_START + reg;
+      *tempRegNum = reg;
    }
    else {
       RETURN_ERROR1("Bad temporary register name");
@@ -379,9 +364,9 @@ Parse_AbsParamReg(struct parse_state *parseState, GLint *regNum)
    if (IsDigit(token[0])) {
       /* a numbered program parameter register */
       GLint reg = _mesa_atoi((char *) token);
-      if (reg >= VP_NUM_PROG_REGS)
-         RETURN_ERROR1("Bad constant program number");
-      *regNum = VP_PROG_REG_START + reg;
+      if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
+         RETURN_ERROR1("Bad program parameter number");
+      *regNum = reg;
    }
    else {
       RETURN_ERROR;
@@ -413,9 +398,10 @@ Parse_ParamReg(struct parse_state *parseState, struct vp_src_register *srcReg)
       GLint reg;
       (void) Parse_Token(parseState, token);
       reg = _mesa_atoi((char *) token);
-      if (reg >= VP_NUM_PROG_REGS)
-         RETURN_ERROR1("Bad constant program number");
-      srcReg->Register = VP_PROG_REG_START + reg;
+      if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
+         RETURN_ERROR1("Bad program parameter number");
+      srcReg->File = PROGRAM_ENV_PARAM;
+      srcReg->Index = reg;
    }
    else if (_mesa_strcmp((const char *) token, "A0") == 0) {
       /* address register "A0.x" */
@@ -423,8 +409,7 @@ Parse_ParamReg(struct parse_state *parseState, struct vp_src_register *srcReg)
          RETURN_ERROR;
 
       srcReg->RelAddr = GL_TRUE;
-      srcReg->Register = 0;
-
+      srcReg->File = PROGRAM_ENV_PARAM;
       /* Look for +/-N offset */
       if (!Peek_Token(parseState, token))
          RETURN_ERROR;
@@ -442,12 +427,12 @@ Parse_ParamReg(struct parse_state *parseState, struct vp_src_register *srcReg)
             if (sign == '-') {
                if (k > 64)
                   RETURN_ERROR1("Bad address offset");
-               srcReg->Register = -k;
+               srcReg->Index = -k;
             }
             else {
                if (k > 63)
                   RETURN_ERROR1("Bad address offset");
-               srcReg->Register = k;
+               srcReg->Index = k;
             }
          }
          else {
@@ -496,14 +481,14 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
 
    if (IsDigit(token[0])) {
       GLint reg = _mesa_atoi((char *) token);
-      if (reg >= VP_NUM_INPUT_REGS)
+      if (reg >= MAX_NV_VERTEX_PROGRAM_INPUTS)
          RETURN_ERROR1("Bad vertex attribute register name");
-      *tempRegNum = VP_INPUT_REG_START + reg;
+      *tempRegNum = reg;
    }
    else {
       for (j = 0; InputRegisters[j]; j++) {
          if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
-            *tempRegNum = VP_INPUT_REG_START + j;
+            *tempRegNum = j;
             break;
          }
       }
@@ -547,7 +532,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
    /* try to match an output register name */
    for (j = start; OutputRegisters[j]; j++) {
       if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
-         *outputRegNum = VP_OUTPUT_REG_START + j;
+         *outputRegNum = j;
          break;
       }
    }
@@ -573,17 +558,20 @@ Parse_MaskedDstReg(struct parse_state *parseState, struct vp_dst_register *dstRe
 
    if (token[0] == 'R') {
       /* a temporary register */
-      if (!Parse_TempReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else if (!parseState->isStateProgram && token[0] == 'o') {
       /* an output register */
-      if (!Parse_OutputReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_OUTPUT;
+      if (!Parse_OutputReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else if (parseState->isStateProgram && token[0] == 'c') {
       /* absolute program parameter register */
-      if (!Parse_AbsParamReg(parseState, &dstReg->Register))
+      dstReg->File = PROGRAM_ENV_PARAM;
+      if (!Parse_AbsParamReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
    else {
@@ -662,7 +650,8 @@ Parse_SwizzleSrcReg(struct parse_state *parseState, struct vp_src_register *srcR
 
    /* Src reg can be R<n>, c[n], c[n +/- offset], or a named vertex attrib */
    if (token[0] == 'R') {
-      if (!Parse_TempReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'c') {
@@ -670,7 +659,8 @@ Parse_SwizzleSrcReg(struct parse_state *parseState, struct vp_src_register *srcR
          RETURN_ERROR;
    }
    else if (token[0] == 'v') {
-      if (!Parse_AttribReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_INPUT;
+      if (!Parse_AttribReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else {
@@ -751,7 +741,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState, struct vp_src_register *srcRe
 
    /* Src reg can be R<n>, c[n], c[n +/- offset], or a named vertex attrib */
    if (token[0] == 'R') {
-      if (!Parse_TempReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_TEMPORARY;
+      if (!Parse_TempReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else if (token[0] == 'c') {
@@ -759,7 +750,8 @@ Parse_ScalarSrcReg(struct parse_state *parseState, struct vp_src_register *srcRe
          RETURN_ERROR;
    }
    else if (token[0] == 'v') {
-      if (!Parse_AttribReg(parseState, &srcReg->Register))
+      srcReg->File = PROGRAM_INPUT;
+      if (!Parse_AttribReg(parseState, &srcReg->Index))
          RETURN_ERROR;
    }
    else {
@@ -861,15 +853,15 @@ Parse_BiOpInstruction(struct parse_state *parseState,
       RETURN_ERROR;
 
    /* make sure we don't reference more than one program parameter register */
-   if (IsProgRegister(inst->SrcReg[0].Register) &&
-       IsProgRegister(inst->SrcReg[1].Register) &&
-       inst->SrcReg[0].Register != inst->SrcReg[1].Register)
+   if (inst->SrcReg[0].File == PROGRAM_ENV_PARAM &&
+       inst->SrcReg[1].File == PROGRAM_ENV_PARAM &&
+       inst->SrcReg[0].Index != inst->SrcReg[1].Index)
       RETURN_ERROR1("Can't reference two program parameter registers");
 
    /* make sure we don't reference more than one vertex attribute register */
-   if (IsInputRegister(inst->SrcReg[0].Register) &&
-       IsInputRegister(inst->SrcReg[1].Register) &&
-       inst->SrcReg[0].Register != inst->SrcReg[1].Register)
+   if (inst->SrcReg[0].File == PROGRAM_INPUT &&
+       inst->SrcReg[1].File == PROGRAM_INPUT &&
+       inst->SrcReg[0].Index != inst->SrcReg[1].Index)
       RETURN_ERROR1("Can't reference two vertex attribute registers");
 
    return GL_TRUE;
@@ -916,27 +908,27 @@ Parse_TriOpInstruction(struct parse_state *parseState,
       RETURN_ERROR;
 
    /* make sure we don't reference more than one program parameter register */
-   if ((IsProgRegister(inst->SrcReg[0].Register) &&
-        IsProgRegister(inst->SrcReg[1].Register) &&
-        inst->SrcReg[0].Register != inst->SrcReg[1].Register) ||
-       (IsProgRegister(inst->SrcReg[0].Register) &&
-        IsProgRegister(inst->SrcReg[2].Register) &&
-        inst->SrcReg[0].Register != inst->SrcReg[2].Register) ||
-       (IsProgRegister(inst->SrcReg[1].Register) &&
-        IsProgRegister(inst->SrcReg[2].Register) &&
-        inst->SrcReg[1].Register != inst->SrcReg[2].Register))
+   if ((inst->SrcReg[0].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[1].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[0].Index != inst->SrcReg[1].Index) ||
+       (inst->SrcReg[0].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[2].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[0].Index != inst->SrcReg[2].Index) ||
+       (inst->SrcReg[1].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[2].File == PROGRAM_ENV_PARAM &&
+        inst->SrcReg[1].Index != inst->SrcReg[2].Index))
       RETURN_ERROR1("Can only reference one program register");
 
    /* make sure we don't reference more than one vertex attribute register */
-   if ((IsInputRegister(inst->SrcReg[0].Register) &&
-        IsInputRegister(inst->SrcReg[1].Register) &&
-        inst->SrcReg[0].Register != inst->SrcReg[1].Register) ||
-       (IsInputRegister(inst->SrcReg[0].Register) &&
-        IsInputRegister(inst->SrcReg[2].Register) &&
-        inst->SrcReg[0].Register != inst->SrcReg[2].Register) ||
-       (IsInputRegister(inst->SrcReg[1].Register) &&
-        IsInputRegister(inst->SrcReg[2].Register) &&
-        inst->SrcReg[1].Register != inst->SrcReg[2].Register))
+   if ((inst->SrcReg[0].File == PROGRAM_INPUT &&
+        inst->SrcReg[1].File == PROGRAM_INPUT &&
+        inst->SrcReg[0].Index != inst->SrcReg[1].Index) ||
+       (inst->SrcReg[0].File == PROGRAM_INPUT &&
+        inst->SrcReg[2].File == PROGRAM_INPUT &&
+        inst->SrcReg[0].Index != inst->SrcReg[2].Index) ||
+       (inst->SrcReg[1].File == PROGRAM_INPUT &&
+        inst->SrcReg[2].File == PROGRAM_INPUT &&
+        inst->SrcReg[1].Index != inst->SrcReg[2].Index))
       RETURN_ERROR1("Can only reference one input register");
 
    return GL_TRUE;
@@ -1042,10 +1034,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       struct vp_instruction *inst = program + parseState->numInst;
 
       /* Initialize the instruction */
-      inst->SrcReg[0].Register = -1;
-      inst->SrcReg[1].Register = -1;
-      inst->SrcReg[2].Register = -1;
-      inst->DstReg.Register = -1;
+      inst->SrcReg[0].File = -1;
+      inst->SrcReg[1].File = -1;
+      inst->SrcReg[2].File = -1;
+      inst->DstReg.File = -1;
 
       if (Parse_String(parseState, "MOV")) {
          if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_MOV))
@@ -1145,26 +1137,17 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
 
       /* examine input/output registers */
-      {
-         const GLint srcReg0 = inst->SrcReg[0].Register;
-         const GLint srcReg1 = inst->SrcReg[1].Register;
-         const GLint srcReg2 = inst->SrcReg[2].Register;
-         const GLint dstReg  = inst->DstReg.Register;
+      if (inst->DstReg.File == PROGRAM_OUTPUT)
+         parseState->outputsWritten |= (1 << inst->DstReg.Index);
+      else if (inst->DstReg.File == PROGRAM_ENV_PARAM)
+         parseState->anyProgRegsWritten = GL_TRUE;
 
-         if (IsOutputRegister(dstReg))
-            parseState->outputsWritten |= (1 << (dstReg - VP_OUTPUT_REG_START));
-         else if (IsProgRegister(dstReg))
-            parseState->progRegsWritten |= (1 << (dstReg - VP_PROG_REG_START));
-
-         if (IsInputRegister(srcReg0) && !inst->SrcReg[0].RelAddr)
-            parseState->inputsRead |= (1 << (srcReg0 - VP_INPUT_REG_START));
-
-         if (IsInputRegister(srcReg1) && !inst->SrcReg[1].RelAddr)
-            parseState->inputsRead |= (1 << (srcReg1 - VP_INPUT_REG_START));
-
-         if (IsInputRegister(srcReg2) && !inst->SrcReg[2].RelAddr)
-            parseState->inputsRead |= (1 << (srcReg2 - VP_INPUT_REG_START));
-      }
+      if (inst->SrcReg[0].File == PROGRAM_INPUT)
+         parseState->inputsRead |= (1 << inst->SrcReg[0].Index);
+      if (inst->SrcReg[1].File == PROGRAM_INPUT)
+         parseState->inputsRead |= (1 << inst->SrcReg[1].Index);
+      if (inst->SrcReg[2].File == PROGRAM_INPUT)
+         parseState->inputsRead |= (1 << inst->SrcReg[2].Index);
 
       parseState->numInst++;
 
@@ -1222,7 +1205,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
    parseState.numInst = 0;
    parseState.inputsRead = 0;
    parseState.outputsWritten = 0;
-   parseState.progRegsWritten = 0;
+   parseState.anyProgRegsWritten = GL_FALSE;
 
    /* Reset error state */
    _mesa_set_program_error(ctx, -1, NULL);
@@ -1263,7 +1246,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       /* successful parse! */
 
       if (parseState.isStateProgram) {
-         if (parseState.progRegsWritten == 0) {
+         if (!parseState.anyProgRegsWritten) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glLoadProgramNV(c[#] not written)");
             return;
@@ -1331,27 +1314,25 @@ PrintSrcReg(const struct vp_src_register *src)
    if (src->Negate)
       _mesa_printf("-");
    if (src->RelAddr) {
-      if (src->Register > 0)
-         _mesa_printf("c[A0.x + %d]", src->Register);
-      else if (src->Register < 0)
-         _mesa_printf("c[A0.x - %d]", -src->Register);
+      if (src->Index > 0)
+         _mesa_printf("c[A0.x + %d]", src->Index);
+      else if (src->Index < 0)
+         _mesa_printf("c[A0.x - %d]", -src->Index);
       else
          _mesa_printf("c[A0.x]");
    }
-   else if (src->Register >= VP_OUTPUT_REG_START
-       && src->Register <= VP_OUTPUT_REG_END) {
-      _mesa_printf("o[%s]", OutputRegisters[src->Register - VP_OUTPUT_REG_START]);
+   else if (src->File == PROGRAM_OUTPUT) {
+      _mesa_printf("o[%s]", OutputRegisters[src->Index]);
    }
-   else if (src->Register >= VP_INPUT_REG_START
-            && src->Register <= VP_INPUT_REG_END) {
-      _mesa_printf("v[%s]", InputRegisters[src->Register - VP_INPUT_REG_START]);
+   else if (src->File == PROGRAM_INPUT) {
+      _mesa_printf("v[%s]", InputRegisters[src->Index]);
    }
-   else if (src->Register >= VP_PROG_REG_START
-            && src->Register <= VP_PROG_REG_END) {
-      _mesa_printf("c[%d]", src->Register - VP_PROG_REG_START);
+   else if (src->File == PROGRAM_ENV_PARAM) {
+      _mesa_printf("c[%d]", src->Index);
    }
    else {
-      _mesa_printf("R%d", src->Register - VP_TEMP_REG_START);
+      ASSERT(src->File == PROGRAM_TEMPORARY);
+      _mesa_printf("R%d", src->Index);
    }
 
    if (src->Swizzle[0] == src->Swizzle[1] &&
@@ -1378,20 +1359,18 @@ PrintDstReg(const struct vp_dst_register *dst)
    GLint w = dst->WriteMask[0] + dst->WriteMask[1]
            + dst->WriteMask[2] + dst->WriteMask[3];
 
-   if (dst->Register >= VP_OUTPUT_REG_START
-       && dst->Register <= VP_OUTPUT_REG_END) {
-      _mesa_printf("o[%s]", OutputRegisters[dst->Register - VP_OUTPUT_REG_START]);
+   if (dst->File == PROGRAM_OUTPUT) {
+      _mesa_printf("o[%s]", OutputRegisters[dst->Index]);
    }
-   else if (dst->Register >= VP_INPUT_REG_START
-            && dst->Register <= VP_INPUT_REG_END) {
-      _mesa_printf("v[%s]", InputRegisters[dst->Register - VP_INPUT_REG_START]);
+   else if (dst->File == PROGRAM_INPUT) {
+      _mesa_printf("v[%s]", InputRegisters[dst->Index]);
    }
-   else if (dst->Register >= VP_PROG_REG_START
-            && dst->Register <= VP_PROG_REG_END) {
-      _mesa_printf("c[%d]", dst->Register - VP_PROG_REG_START);
+   else if (dst->File == PROGRAM_ENV_PARAM) {
+      _mesa_printf("c[%d]", dst->Index);
    }
    else {
-      _mesa_printf("R%d", dst->Register - VP_TEMP_REG_START);
+      ASSERT(dst->File == PROGRAM_TEMPORARY);
+      _mesa_printf("R%d", dst->Index);
    }
 
    if (w != 0 && w != 4) {

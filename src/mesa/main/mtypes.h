@@ -1352,7 +1352,8 @@ struct gl_selection {
 /**
  * 1-D Evaluator control points
  */
-struct gl_1d_map {
+struct gl_1d_map
+{
    GLuint Order;	/**< Number of control points */
    GLfloat u1, u2, du;	/**< u1, u2, 1.0/(u2-u1) */
    GLfloat *Points;	/**< Points to contiguous control points */
@@ -1362,7 +1363,8 @@ struct gl_1d_map {
 /**
  * 2-D Evaluator control points
  */
-struct gl_2d_map {
+struct gl_2d_map
+{
    GLuint Uorder;		/**< Number of control points in U dimension */
    GLuint Vorder;		/**< Number of control points in V dimension */
    GLfloat u1, u2, du;
@@ -1374,7 +1376,8 @@ struct gl_2d_map {
 /**
  * All evaluator control points
  */
-struct gl_evaluators {
+struct gl_evaluators
+{
    /** 
     * \name 1-D maps
     */
@@ -1410,35 +1413,30 @@ struct gl_evaluators {
 
 
 /**
- * \name NV_vertex_program runtime state
- */
-/*@{*/
-
-
-/** 
- * Machine state (i.e. the register file) 
- */
-struct vp_machine
-{
-   GLfloat Registers[MAX_NV_VERTEX_PROGRAM_TEMPS
-                    + MAX_NV_VERTEX_PROGRAM_PARAMS
-                    + MAX_NV_VERTEX_PROGRAM_INPUTS
-                    + MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
-   GLint AddressReg;  /* might someday be a 4-vector */
-};
-
-
-/**
  * NV_fragment_program runtime state
  */
 struct fp_machine
 {
-   GLfloat Registers[MAX_NV_FRAGMENT_PROGRAM_TEMPS
-                    + MAX_NV_FRAGMENT_PROGRAM_PARAMS
-                    + MAX_NV_FRAGMENT_PROGRAM_INPUTS
-                    + MAX_NV_FRAGMENT_PROGRAM_OUTPUTS
-                    + MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS][4];
+   GLfloat Temporaries[MAX_NV_FRAGMENT_PROGRAM_TEMPS][4];
+   GLfloat Inputs[MAX_NV_FRAGMENT_PROGRAM_INPUTS][4];
+   GLfloat Outputs[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS][4];
    GLuint CondCodes[4];
+};
+
+
+/**
+ * Names of the various vertex/fragment register files
+ */
+enum register_file
+{
+   PROGRAM_TEMPORARY = 10,
+   PROGRAM_INPUT,
+   PROGRAM_OUTPUT,
+   PROGRAM_LOCAL_PARAM,
+   PROGRAM_ENV_PARAM,
+   PROGRAM_NAMED_PARAM,
+   PROGRAM_STATE_VAR,
+   PROGRAM_WRITE_ONLY
 };
 
 
@@ -1446,8 +1444,9 @@ struct fp_machine
 struct vp_instruction;
 struct fp_instruction;
 
+
 /**
- * Program parameters 
+ * Named program parameters 
  */
 struct program_parameter
 {
@@ -1522,10 +1521,16 @@ struct vertex_program_state
    GLboolean PointSizeEnabled;           /**< GL_VERTEX_PROGRAM_POINT_SIZE_NV */
    GLboolean TwoSideEnabled;             /**< GL_VERTEX_PROGRAM_TWO_SIDE_NV */
    struct vertex_program *Current;       /**< ptr to currently bound program */
-   struct vp_machine Machine;            /**< machine state */
 
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
+
+   GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /* Env params */
+   /* Only used during program execution (may be moved someday): */
+   GLfloat Temporaries[MAX_NV_VERTEX_PROGRAM_TEMPS][4];
+   GLfloat Inputs[MAX_NV_VERTEX_PROGRAM_INPUTS][4];
+   GLfloat Outputs[MAX_NV_VERTEX_PROGRAM_OUTPUTS][4];
+   GLint AddressReg[4];
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -1544,6 +1549,7 @@ struct fragment_program_state
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    struct fragment_program *Current;     /* ptr to currently bound program */
    struct fp_machine Machine;            /* machine state */
+   GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -1553,7 +1559,6 @@ struct fragment_program_state
 #endif
 };
 
-/*@}*/
 
 /*
  * State for GL_ARB_occlusion_query
@@ -1570,7 +1575,8 @@ struct occlusion_state
 /**
  * State which can be shared by multiple contexts:
  */
-struct gl_shared_state {
+struct gl_shared_state
+{
    _glthread_Mutex Mutex;		   /**< for thread safety */
    GLint RefCount;			   /**< Reference count */
    struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
@@ -1613,7 +1619,8 @@ struct gl_shared_state {
  * In C++ terms, think of this as a base class from which device drivers
  * will make derived classes.
  */
-struct gl_frame_buffer {
+struct gl_frame_buffer
+{
    GLvisual Visual;		/**< The corresponding visual */
 
    GLuint Width, Height;	/**< size of frame buffer in pixels */
@@ -1664,7 +1671,8 @@ struct gl_frame_buffer {
  * Constants which may be overridden by device driver during context creation
  * but are never changed after that.
  */
-struct gl_constants {
+struct gl_constants
+{
    GLint MaxTextureLevels;		/**< Maximum number of allowed mipmap levels. */ 
    GLint Max3DTextureLevels;		/**< Maximum number of allowed mipmap levels for 3D texture targets. */
    GLint MaxCubeTextureLevels;          /**< Maximum number of allowed mipmap levels for GL_ARB_texture_cube_map */
@@ -1716,7 +1724,8 @@ struct gl_constants {
 /**
  * List of extensions.
  */
-struct gl_extensions {
+struct gl_extensions
+{
    /**
     * \name Flags to quickly test if certain extensions are available.
     * 
