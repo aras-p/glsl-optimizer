@@ -642,18 +642,11 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
     case DD_FRONT_LEFT_BIT:
         imesa->IsDouble = GL_FALSE;
       
-        if(imesa->IsFullScreen)
-        {
-            imesa->drawMap = (char *)imesa->apertureBase[TARGET_FRONT];
-            imesa->readMap = (char *)imesa->apertureBase[TARGET_FRONT];
-        }
-        else
-        {
-            imesa->drawMap = (char *)imesa->apertureBase[TARGET_BACK];
-            imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
-        }
+	imesa->drawMap = (char *)imesa->apertureBase[TARGET_FRONT];
+	imesa->readMap = (char *)imesa->apertureBase[TARGET_FRONT];
+	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->frontOffset>>11;
         imesa->NotFirstFrame = GL_FALSE;
-        imesa->dirty |= SAVAGE_UPLOAD_BUFFERS;
+        imesa->dirty |= SAVAGE_UPLOAD_BUFFERS | SAVAGE_UPLOAD_CTX;
         savageXMesaSetFrontClipRects( imesa );
 	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
@@ -661,8 +654,9 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
         imesa->IsDouble = GL_TRUE;
         imesa->drawMap = (char *)imesa->apertureBase[TARGET_BACK];
         imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
+	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
         imesa->NotFirstFrame = GL_FALSE;
-        imesa->dirty |= SAVAGE_UPLOAD_BUFFERS;
+        imesa->dirty |= SAVAGE_UPLOAD_BUFFERS | SAVAGE_UPLOAD_CTX;
         savageXMesaSetBackClipRects( imesa );
 	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
@@ -1838,13 +1832,6 @@ void savageDDRenderStart(GLcontext *ctx)
 
 void savageDDRenderEnd(GLcontext *ctx)
 {
-    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-       
-    if(!imesa->IsDouble)
-    {
-        savageSwapBuffers(imesa->driDrawable);
-    }
-	
 }
 
 static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )

@@ -71,7 +71,7 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		    pbox->y2 > imesa->savageScreen->height)
 			continue;
 
-	   	if ( (pclear->flags & SAVAGE_FRONT) && imesa->IsFullScreen) {
+	   	if ( pclear->flags & SAVAGE_FRONT ) {
 		        bciptr = savageDMAAlloc (imesa, 8);
 			WRITE_CMD((bciptr) , 0x4BCC8C00,uint32_t);
 			WRITE_CMD((bciptr) , imesa->savageScreen->frontOffset,uint32_t);
@@ -81,7 +81,7 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 			WRITE_CMD((bciptr) , (height << 16) | width,uint32_t);
 			savageDMACommit (imesa, bciptr);
 		}
-		else if ( pclear->flags & (SAVAGE_BACK|SAVAGE_FRONT) ) {
+		if ( pclear->flags & SAVAGE_BACK ) {
 		        bciptr = savageDMAAlloc (imesa, 8);
 			WRITE_CMD((bciptr) , 0x4BCC8C00,uint32_t);
 			WRITE_CMD((bciptr) , imesa->savageScreen->backOffset,uint32_t);
