@@ -1299,7 +1299,7 @@ static void viaChooseColorState(GLcontext *ctx)
 
     if (ctx->Color.AlphaEnabled) {
         vmesa->regEnable |= HC_HenAT_MASK;
-        vmesa->regHATMD = (((GLchan)ctx->Color.AlphaRef) & 0xFF) |
+        vmesa->regHATMD = FLOAT_TO_UBYTE(ctx->Color.AlphaRef) |
             ((ctx->Color.AlphaFunc - GL_NEVER) << 8);
     }
     else {
@@ -1617,12 +1617,16 @@ void viaValidateState( GLcontext *ctx )
      * are incorrectly writen to the z buffer.  This is a pretty big
      * slowdown, it would be good to find out this wasn't necessary:
      */
+#if 0
+    /* Disabling now, as the main problem was that the alpha reference
+     * value was calculated incorrectly, it's now fixed.
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
        GLboolean fallback = (ctx->Color.AlphaEnabled && 
 			     ctx->Color.AlphaFunc != GL_ALWAYS &&
 			     ctx->Depth.Mask);
        FALLBACK( vmesa, VIA_FALLBACK_ALPHATEST, fallback );
     }
+#endif
 
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;
