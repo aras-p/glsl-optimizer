@@ -12,7 +12,6 @@ GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 INCDIRS = -I$(TOP)/include -Iinclude -Iinternals -Ilibnurbs/internals -Ilibnurbs/interface -Ilibnurbs/nurbtess
 
-
 C_SOURCES = \
 	libutil/error.c		\
 	libutil/glue.c		\
@@ -124,7 +123,16 @@ OBJECTS = $(C_OBJECTS) $(CC_OBJECTS)
 
 ##### TARGETS #####
 
-default: $(LIB_DIR)/$(GLU_LIB_NAME)
+default:
+	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
+		echo "GLU library not build under BeOS: integrated into ${LIB_DIR}/${GL_LIB_NAME} library." ; \
+		exit 0 ; \
+	else \
+		$(MAKE) "${LIB_DIR}/${GLU_LIB_NAME}" ; \
+	fi
+
+$(LIB_DIR):
+	-mkdir $(LIB_DIR)
 
 # Make the library:
 $(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
