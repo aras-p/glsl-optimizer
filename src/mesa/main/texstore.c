@@ -195,9 +195,9 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
           texDestFormat == GL_COLOR_INDEX ||
           texDestFormat == GL_DEPTH_COMPONENT);
    ASSERT(texDestAddr);
-   ASSERT(srcWidth >= 1);
-   ASSERT(srcHeight >= 1);
-   ASSERT(srcDepth >= 1);
+   ASSERT(srcWidth >= 0);
+   ASSERT(srcHeight >= 0);
+   ASSERT(srcDepth >= 0);
    ASSERT(dstXoffset >= 0);
    ASSERT(dstYoffset >= 0);
    ASSERT(dstZoffset >= 0);

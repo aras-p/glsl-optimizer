@@ -2716,6 +2716,7 @@ update_texture_state( GLcontext *ctx )
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
       GLuint enableBits;
 
+      texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
 
@@ -2789,8 +2790,7 @@ update_texture_state( GLcontext *ctx )
       }
 
       if (!texUnit->_ReallyEnabled) {
-	 texUnit->_Current = NULL;
-	 continue;
+         continue;
       }
 
       if (texUnit->_ReallyEnabled)

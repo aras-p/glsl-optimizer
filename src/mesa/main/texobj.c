@@ -310,6 +310,15 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       return;
    }
 
+   /* Check width/height/depth for zero */
+   if (t->Image[baseLevel]->Width == 0 ||
+       t->Image[baseLevel]->Height == 0 ||
+       t->Image[baseLevel]->Depth == 0) {
+      incomplete(t, "texture width = 0");
+      t->Complete = GL_FALSE;
+      return;
+   }
+
    /* Compute _MaxLevel */
    if (t->Target == GL_TEXTURE_1D) {
       maxLog2 = t->Image[baseLevel]->WidthLog2;
@@ -559,7 +568,6 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Target == GL_TEXTURE_RECTANGLE_NV) {
          /* XXX special checking? */
-
       }
       else {
          /* Target = ??? */

@@ -105,7 +105,7 @@ static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
 
 /*
  * Compute floor(log_base_2(n)).
- * If n <= 0 return -1.
+ * If n < 0 return -1.
  */
 static int
 logbase2( int n )
@@ -113,9 +113,11 @@ logbase2( int n )
    GLint i = 1;
    GLint log2 = 0;
 
-   if (n <= 0) {
+   if (n < 0)
       return -1;
-   }
+
+   if (n == 0)
+      return 0;
 
    while ( n > i ) {
       i *= 2;
@@ -1094,10 +1096,10 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
-   if (width < 1 || height < 1 || depth < 1) {
+   if (width < 0 || height < 0 || depth < 0) {
       if (!isProxy) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glTexImage%dD(width, height or depth < 1)", dimensions);
+                     "glTexImage%dD(width, height or depth < 0)", dimensions);
       }
       return GL_TRUE;
    }
