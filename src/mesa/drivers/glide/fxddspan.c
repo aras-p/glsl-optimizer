@@ -332,6 +332,7 @@ static void fxDDReadRGBASpan(const GLcontext *ctx,
   GLuint i;
   GLint bottom=fxMesa->height+fxMesa->y_offset-1;
 
+  printf("read span %d, %d, %d\n", x,y,n);
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDReadRGBASpan(...)\n");
   }
@@ -349,6 +350,61 @@ static void fxDDReadRGBASpan(const GLcontext *ctx,
     rgba[i][ACOMP] = 255;
   }
 }
+
+
+/*
+ * Read a span of 16-bit RGB pixels.  Note, we don't worry about cliprects
+ * since OpenGL says obscured pixels have undefined values.
+ */
+static void read_R5G6B5_span(const GLcontext *ctx, 
+                             GLuint n, GLint x, GLint y, GLubyte rgba[][4])
+{
+  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+  GrLfbInfo_t info;
+  BEGIN_BOARD_LOCK();
+  if (grLfbLock(GR_LFB_READ_ONLY,
+                fxMesa->currentFB,
+                GR_LFBWRITEMODE_ANY,
+                GR_ORIGIN_UPPER_LEFT,
+                FXFALSE,
+                &info)) {
+    const GLint winX = fxMesa->x_offset;
+    const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
+    const GLint dstStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
+                          ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+    const GLushort *data16 = (const GLushort *) info.lfbPtr
+                           + (winY - y) * dstStride
+                           + (winX + x);
+    const GLuint *data32 = (const GLuint *) data16;
+    GLuint i, j;
+    GLuint extraPixel = (n & 1);
+    n -= extraPixel;
+    for (i = j = 0; i < n; i += 2, j++) {
+      GLuint pixel = data32[j];
+      GLuint pixel0 = pixel & 0xffff;
+      GLuint pixel1 = pixel >> 16;
+      rgba[i][RCOMP] = FX_PixelToR[pixel0];
+      rgba[i][GCOMP] = FX_PixelToG[pixel0];
+      rgba[i][BCOMP] = FX_PixelToB[pixel0];
+      rgba[i][ACOMP] = 255;
+      rgba[i+1][RCOMP] = FX_PixelToR[pixel1];
+      rgba[i+1][GCOMP] = FX_PixelToG[pixel1];
+      rgba[i+1][BCOMP] = FX_PixelToB[pixel1];
+      rgba[i+1][ACOMP] = 255;
+    }
+    if (extraPixel) {
+      GLushort pixel = data16[n];
+      rgba[n][RCOMP] = FX_PixelToR[pixel];
+      rgba[n][GCOMP] = FX_PixelToG[pixel];
+      rgba[n][BCOMP] = FX_PixelToB[pixel];
+      rgba[n][ACOMP] = 255;
+    }
+
+    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+  }
+  END_BOARD_LOCK();
+}
+
 
 /************************************************************************/
 /*****                    Pixel functions                           *****/
@@ -539,7 +595,8 @@ void fxSetupDDSpanPointers(GLcontext *ctx)
   ctx->Driver.WriteCI32Pixels     =NULL;
   ctx->Driver.WriteMonoCIPixels   =NULL;
 
-  ctx->Driver.ReadRGBASpan        =fxDDReadRGBASpan;
+  /*  ctx->Driver.ReadRGBASpan        =fxDDReadRGBASpan;*/
+  ctx->Driver.ReadRGBASpan = read_R5G6B5_span;
   ctx->Driver.ReadRGBAPixels      =fxDDReadRGBAPixels;
 
   ctx->Driver.ReadCI32Span        =NULL;
