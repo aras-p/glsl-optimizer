@@ -20,9 +20,13 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file via_texcombine.c
+ * Calculate texture combine hardware state.
  *
- * Authors:
- *    Ian Romanick <idr@us.ibm.com>
+ * \author Ian Romanick <idr@us.ibm.com>
  */
 
 #include <stdio.h>
@@ -106,8 +110,8 @@ viaTexCombineState( viaContextPtr vmesa,
    unsigned alpha = 0;
    unsigned bias = 0;
    unsigned op = 0;
-   unsigned a_shift = combine->ScaleShiftRGB;
-   unsigned c_shift = combine->ScaleShiftA;
+   unsigned a_shift = combine->ScaleShiftA;
+   unsigned c_shift = combine->ScaleShiftRGB;
    unsigned i;
    unsigned constant_color[3];
    unsigned ordered_constant_color[4];
@@ -236,7 +240,7 @@ viaTexCombineState( viaContextPtr vmesa,
 
       color |= (color_arg[0] << INPUT_B_SHIFT)
 	| (CONST_ONE << INPUT_A_SHIFT);
-      
+
       bias |= (color_arg[1] << INPUT_BiasC_SHIFT);
       ordered_constant_color[1] = constant_color[0];
       ordered_constant_color[3] = constant_color[1];
