@@ -336,4 +336,9 @@ void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
    (void) gen;
 }
 
+void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
+{
+   (void) ctx;
+}
+
 #endif
