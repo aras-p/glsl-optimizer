@@ -107,13 +107,12 @@ _v_clear_common:
 		.p2align 5,,31
 		.global	_v_clear8_mmx
 _v_clear8_mmx:
-		movl	4(%esp), %eax
-		movb	%al, %ah
-		pushw	%ax
-		pushw	%ax
-		pushw	%ax
-		pushw	%ax
+#ifdef USE_MMX_ASM
+		movq	4(%esp), %mm0
+		punpcklbw %mm0, %mm0
+		punpcklwd %mm0, %mm0
 		jmp	_v_clear_common_mmx
+#endif
 
 /* Desc: void v_clear16_mmx (int color);
  *
@@ -125,12 +124,11 @@ _v_clear8_mmx:
 		.p2align 5,,31
 		.global	_v_clear16_mmx
 _v_clear16_mmx:
-		movl	4(%esp), %eax
-		pushw	%ax
-		pushw	%ax
-		pushw	%ax
-		pushw	%ax
+#ifdef USE_MMX_ASM
+		movq	4(%esp), %mm0
+		punpcklwd %mm0, %mm0
 		jmp	_v_clear_common_mmx
+#endif
 
 /* Desc: void v_clear32_mmx (int color);
  *
@@ -142,15 +140,13 @@ _v_clear16_mmx:
 		.p2align 5,,31
 		.global	_v_clear32_mmx
 _v_clear32_mmx:
-		movl	4(%esp), %eax
-		pushl	%eax
-		pushl	%eax
+#ifdef USE_MMX_ASM
+		movq	4(%esp), %mm0
 		.balign	4
 _v_clear_common_mmx:
-#ifdef USE_MMX_ASM
+		punpckldq %mm0, %mm0
 		movl	_vl_current_bytes, %ecx
 		movl	_vl_current_draw_buffer, %edx
-		movq	(%esp), %mm0
 		shrl	$3, %ecx
 		.balign	4
 	0:
@@ -160,7 +156,6 @@ _v_clear_common_mmx:
 		jnz	0b
 		emms
 #endif
-		addl	$8, %esp
 		ret
 
 /* Desc: void v_clear24 (int color);

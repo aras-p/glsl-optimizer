@@ -119,16 +119,23 @@ void DMesaSwapBuffers (DMesaBuffer b);
 
 
 /*
- * Move/Resize Buffer.
+ * Move/Resize current Buffer.
  */
-GLboolean DMesaViewport (DMesaBuffer b,
-                         GLint xpos, GLint ypos,
-                         GLint width, GLint height);
+GLboolean DMesaMoveBuffer (GLint xpos, GLint ypos);
+GLboolean DMesaResizeBuffer (GLint width, GLint height);
 
 /*
- * Set CI color using normalized values.
+ * Set palette index, using normalized values.
  */
 void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
+
+/*
+ * DMesa state retrieval.
+ */
+#define DMESA_Y_ORIGIN    0x0100
+#define DMESA_SCREEN_SIZE 0x0101
+#define DMESA_ARGB_ORDER  0x0200
+void DMesaGetIntegerv (GLenum pname, GLint *params);
 
 #ifdef __cplusplus
 }

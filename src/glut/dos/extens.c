@@ -27,33 +27,37 @@
  */
 
 
-#include "glutint.h"
-#include "GL/dmesa.h"
+#include <string.h>
+
+#include "GL/glut.h"
 
 
 
-#define CLAMP(i) ((i) > 1.0 ? 1.0 : ((i) < 0.0 ? 0.0 : (i)))
-
-
-
-void APIENTRY glutSetColor (int ndx, GLfloat red, GLfloat green, GLfloat blue)
+int APIENTRY glutExtensionSupported (const char *extension)
 {
- if (g_display_mode & GLUT_INDEX) {
-    if ((ndx >= 0) && (ndx < (256 - RESERVED_COLORS))) {
-       DMesaSetCI(ndx, CLAMP(red), CLAMP(green), CLAMP(blue));
-    }
+ static const GLubyte *extensions = NULL;
+ const GLubyte *last, *where;
+
+ /* Extension names should not have spaces. */
+ if (strchr(extension, ' ') || *extension == '\0') {
+    return GL_FALSE;
  }
-}
 
+ /* Not my problem if you don't have a valid OpenGL context */
+ if (!extensions) {
+    extensions = glGetString(GL_EXTENSIONS);
+ }
 
-
-GLfloat APIENTRY glutGetColor (int ndx, int component)
-{
- return 0.0;
-}
-
-
-
-void APIENTRY glutCopyColormap (int win)
-{
+ /* Take care of sub-strings etc. */
+ for (last = extensions;;) {
+     if ((where = (GLubyte *)strstr((const char *)last, extension)) == NULL) {
+        return GL_FALSE;
+     }
+     last = where + strlen(extension);
+     if (where == extensions || *(where - 1) == ' ') {
+        if (*last == ' ' || *last == '\0') {
+           return GL_TRUE;
+        }
+     }
+ }
 }

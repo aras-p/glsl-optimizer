@@ -45,11 +45,12 @@ extern void (*vl_clear) (int color);
 extern void (*vl_rect) (int x, int y, int width, int height, int color);
 extern void (*vl_flip) (void);
 extern void (*vl_putpixel) (unsigned int offset, int color);
+extern int (*vl_getpixel) (unsigned int offset);
 
 void vl_setCI (int index, float red, float green, float blue);
-int vl_getCIpixel (unsigned int offset);
 
-void *vl_sync_buffer (void *buffer, int x, int y, int width, int height);
+int vl_sync_buffer (void **buffer, int x, int y, int width, int height);
+void vl_get_screen_size (int *width, int *height);
 
 void vl_video_exit (void);
 int vl_video_init (int width, int height, int bpp, int rgb, int refresh);

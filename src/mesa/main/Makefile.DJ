@@ -1,7 +1,7 @@
 # Mesa 3-D graphics library
-# Version:  5.1
+# Version:  4.1
 # 
-# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v1.3 for Mesa 5.1
+# DOS/DJGPP core makefile v1.3 for Mesa 5.0
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -33,18 +33,18 @@
 #    Environment variables:
 #	CFLAGS
 #
-#	GLIDE		absolute path to Glide SDK; used with FX.
+#	GLIDE		path to Glide3 SDK include files; used with FX.
 #			default = $(TOP)/include/glide3
-#	FX=1		build for 3dfx Glide3; use it if you have the glide
-#			SDK (designed for your platform), and, of course, a
-#			3dfx card... Note that this disables compilation of
-#			actual DMesa code, as Glide does all the stuff!
+#	FX=1		build for 3dfx Glide3. Note that this disables
+#			compilation of most DMesa code and requires fxMesa.
+#			As a consequence, you'll need the DJGPP Glide3
+#			library to build any application.
 #			default = no
 #	HAVE_X86=1	optimize for i386.
 #			default = no
-#	HAVE_MMX=1	MMX instructions; use only if you assembler/compiler
-#			supports MMX instruction set; backwards compatibility
-#			with older processors is still preserved.
+#	HAVE_MMX=1	allow MMX specializations, provided your assembler
+#			supports MMX instruction set. However, the true CPU
+#			capabilities are checked at run-time to avoid crashes.
 #			default = no
 #	HAVE_SSE=1	(see HAVE_MMX)
 #			default = no
@@ -119,10 +119,6 @@ CORE_SOURCES = \
 	lines.c \
 	matrix.c \
 	mmath.c \
-	nvprogram.c \
-	nvfragparse.c \
-	nvvertexec.c \
-	nvvertparse.c \
 	pixel.c \
 	points.c \
 	polygon.c \
@@ -136,6 +132,10 @@ CORE_SOURCES = \
 	texstate.c \
 	texstore.c \
 	texutil.c \
+	varray.c \
+	vpexec.c \
+	vpparse.c \
+	vpstate.c \
 	vtxfmt.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
@@ -166,7 +166,6 @@ CORE_SOURCES = \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
-	swrast/s_nvfragprog.c \
 	swrast/s_pixeltex.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
@@ -297,9 +296,9 @@ ifeq ($(DXE3GEN),)
 	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
 ifdef FX
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL/FX DJGPP" -E gl -E DMesa -X -P glid3.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL/FX DJGPP" -E _gl -E _DMesa -P glid3.dxe -U $(OBJECTS)
 else
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL DJGPP" -E gl -E DMesa -X -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL DJGPP" -E _gl -E _DMesa -U $(OBJECTS)
 endif
 endif
 

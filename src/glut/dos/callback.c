@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -27,126 +27,138 @@
  */
 
 
-#include "GL/glut.h"
-#include "internal.h"
+#include "glutint.h"
 
 
-void APIENTRY glutDisplayFunc (void (GLUTCALLBACK *func) (void))
+
+GLUTidleCB g_idle_func = NULL;
+
+
+
+void APIENTRY glutDisplayFunc (GLUTdisplayCB func)
 {
- display_func = func;
+ g_curwin->display = func;
 }
 
 
-void APIENTRY glutReshapeFunc (void (GLUTCALLBACK *func) (int width, int height))
+
+void APIENTRY glutReshapeFunc (GLUTreshapeCB func)
 {
- reshape_func = func;
+ g_curwin->reshape = func;
 }
 
 
-void APIENTRY glutKeyboardFunc (void (GLUTCALLBACK *func) (unsigned char key, int x, int y))
+
+void APIENTRY glutKeyboardFunc (GLUTkeyboardCB func)
 {
- keyboard_func = func;
+ g_curwin->keyboard = func;
 }
 
 
-void APIENTRY glutMouseFunc (void (GLUTCALLBACK *func) (int button, int state, int x, int y))
+
+void APIENTRY glutMouseFunc (GLUTmouseCB func)
 {
- mouse_func = func;
+ g_curwin->mouse = func;
 }
 
 
-void APIENTRY glutMotionFunc (void (GLUTCALLBACK *func) (int x, int y))
+
+void APIENTRY glutMotionFunc (GLUTmotionCB func)
 {
- motion_func = func;
+ g_curwin->motion = func;
 }
 
 
-void APIENTRY glutPassiveMotionFunc (void (GLUTCALLBACK *func) (int x, int y))
+
+void APIENTRY glutPassiveMotionFunc (GLUTpassiveCB func)
 {
- passive_motion_func = func;
+ g_curwin->passive = func;
 }
 
 
-void APIENTRY glutEntryFunc (void (GLUTCALLBACK *func) (int state))
+
+void APIENTRY glutEntryFunc (GLUTentryCB func)
 {
- entry_func = func;
+ g_curwin->entry = func;
 }
 
 
-void APIENTRY glutVisibilityFunc (void (GLUTCALLBACK *func) (int state))
+
+void APIENTRY glutVisibilityFunc (GLUTvisibilityCB func)
 {
- visibility_func = func;
+ g_curwin->visibility = func;
 }
 
 
-void APIENTRY glutIdleFunc (void (GLUTCALLBACK *func) (void))
-{
- idle_func = func;
-}
 
-
-void APIENTRY glutTimerFunc (unsigned int millis, void (GLUTCALLBACK *func) (int value), int value)
-{
-}
-
-
-void APIENTRY glutMenuStateFunc (void (GLUTCALLBACK *func) (int state))
-{
- menu_state_func = func;
-}
-
-
-void APIENTRY glutSpecialFunc (void (GLUTCALLBACK *func) (int key, int x, int y))
-{
- special_func = func;
-}
-
-
-void APIENTRY glutSpaceballMotionFunc (void (GLUTCALLBACK *func) (int x, int y, int z))
+void APIENTRY glutWindowStatusFunc (GLUTwindowStatusCB func)
 {
 }
 
 
-void APIENTRY glutSpaceballRotateFunc (void (GLUTCALLBACK *func) (int x, int y, int z))
+
+void APIENTRY glutIdleFunc (GLUTidleCB func)
+{
+ g_idle_func = func;
+}
+
+
+
+void APIENTRY glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
 {
 }
 
 
-void APIENTRY glutSpaceballButtonFunc (void (GLUTCALLBACK *func) (int button, int state))
+
+void APIENTRY glutSpecialFunc (GLUTspecialCB func)
+{
+ g_curwin->special = func;
+}
+
+
+
+void APIENTRY glutSpaceballMotionFunc (GLUTspaceMotionCB func)
 {
 }
 
 
-void APIENTRY glutButtonBoxFunc (void (GLUTCALLBACK *func) (int button, int state))
+
+void APIENTRY glutSpaceballRotateFunc (GLUTspaceRotateCB func)
 {
 }
 
 
-void APIENTRY glutDialsFunc (void (GLUTCALLBACK *func) (int dial, int value))
+
+void APIENTRY glutSpaceballButtonFunc (GLUTspaceButtonCB func)
 {
 }
 
 
-void APIENTRY glutTabletMotionFunc (void (GLUTCALLBACK *func) (int x, int y))
+
+void APIENTRY glutDialsFunc (GLUTdialsCB func)
 {
 }
 
 
-void APIENTRY glutTabletButtonFunc (void (GLUTCALLBACK *func) (int button, int state, int x, int y))
+
+void APIENTRY glutButtonBoxFunc (GLUTbuttonBoxCB func)
 {
 }
 
 
-void APIENTRY glutMenuStatusFunc (void (GLUTCALLBACK *func) (int status, int x, int y))
+
+void APIENTRY glutTabletMotionFunc (GLUTtabletMotionCB func)
 {
 }
 
 
-void APIENTRY glutOverlayDisplayFunc (void (GLUTCALLBACK *func) (void))
+
+void APIENTRY glutTabletButtonFunc (GLUTtabletButtonCB func)
 {
 }
 
 
-void APIENTRY glutWindowStatusFunc (void (GLUTCALLBACK *func) (int state))
+
+void APIENTRY glutJoystickFunc (GLUTjoystickCB func, int interval)
 {
 }

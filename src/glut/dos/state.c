@@ -27,15 +27,18 @@
  */
 
 
-#include "GL/glut.h"
-#include "internal.h"
+#include "glutint.h"
+
 
 
 #define FREQUENCY 100
 
 
+
 static int timer_installed;
 static volatile int ticks;
+
+
 
 static void ticks_timer (void *p)
 {
@@ -48,25 +51,92 @@ static void ticks_timer (void *p)
 int APIENTRY glutGet (GLenum type)
 {
  switch (type) {
-        case GLUT_WINDOW_COLORMAP_SIZE:
-             return (g_display_mode & GLUT_INDEX) ? 256 : 0;
+        case GLUT_WINDOW_X:
+             return g_curwin->xpos;
+        case GLUT_WINDOW_Y:
+             return g_curwin->ypos;
+        case GLUT_WINDOW_WIDTH:
+             return g_curwin->width;
+        case GLUT_WINDOW_HEIGHT:
+             return g_curwin->height;
+        case GLUT_WINDOW_STENCIL_SIZE:
+             return STENCIL_SIZE;
+        case GLUT_WINDOW_DEPTH_SIZE:
+             return DEPTH_SIZE;
         case GLUT_WINDOW_RGBA:
              return !(g_display_mode & GLUT_INDEX);
+        case GLUT_WINDOW_COLORMAP_SIZE:
+             return (g_display_mode & GLUT_INDEX) ? (256 - RESERVED_COLORS) : 0;
+        case GLUT_SCREEN_WIDTH:
+             return g_screen_w;
+        case GLUT_SCREEN_HEIGHT:
+             return g_screen_h;
+        case GLUT_INIT_WINDOW_X:
+             return g_init_x;
+        case GLUT_INIT_WINDOW_Y:
+             return g_init_y;
+        case GLUT_INIT_WINDOW_WIDTH:
+             return g_init_w;
+        case GLUT_INIT_WINDOW_HEIGHT:
+             return g_init_h;
+        case GLUT_INIT_DISPLAY_MODE:
+             return g_display_mode;
         case GLUT_ELAPSED_TIME:
              if (!timer_installed) {
-                timer_installed = !timer_installed;
+                timer_installed = GL_TRUE;
                 LOCKDATA(ticks);
                 LOCKFUNC(ticks_timer);
                 pc_install_int(ticks_timer, NULL, FREQUENCY);
              }
              return ticks*1000/FREQUENCY;
         default:
-             return 0;
+             return -1;
  }
 }
 
 
+
 int APIENTRY glutDeviceGet (GLenum type)
 {
- return 0;
+ switch (type) {
+        case GLUT_HAS_KEYBOARD:
+             return GL_TRUE;
+        case GLUT_HAS_MOUSE:
+             return (g_mouse != 0);
+        case GLUT_NUM_MOUSE_BUTTONS:
+             return g_mouse;
+        case GLUT_HAS_SPACEBALL:
+        case GLUT_HAS_DIAL_AND_BUTTON_BOX:
+        case GLUT_HAS_TABLET:
+             return GL_FALSE;
+        case GLUT_NUM_SPACEBALL_BUTTONS:
+        case GLUT_NUM_BUTTON_BOX_BUTTONS:
+        case GLUT_NUM_DIALS:
+        case GLUT_NUM_TABLET_BUTTONS:
+             return 0;
+        default:
+             return -1;
+ }
+}
+
+
+
+int APIENTRY glutGetModifiers (void)
+{
+ int mod = 0;
+ int shifts = pc_keyshifts();
+
+ if (shifts & (KB_SHIFT_FLAG | KB_CAPSLOCK_FLAG)) {
+    mod |= GLUT_ACTIVE_SHIFT;
+ }
+
+ if (shifts & KB_ALT_FLAG) {
+    mod |= GLUT_ACTIVE_ALT;
+ }
+
+ if (shifts & KB_CTRL_FLAG) {
+    mod |= GLUT_ACTIVE_CTRL;
+ }
+
+ return mod;
 }

@@ -32,6 +32,7 @@
 
 
 #include <dpmi.h>
+#include <pc.h>
 #include <stdlib.h>
 #include <stubinfo.h>
 #include <sys/exceptn.h>
@@ -454,22 +455,23 @@ static void vesa_restore (void)
  * In  : color index, R, G, B
  * Out : -
  *
- * Note: uses normalized values
+ * Note: uses integer values
  */
-static void vesa_setCI_f (int index, float red, float green, float blue)
+static void vesa_setCI_i (int index, int red, int green, int blue)
 {
- float max = (1 << vesa_color_precision) - 1;
-
- int _red = red * max;
- int _green = green * max;
- int _blue = blue * max;
-
+#if 0
  __asm("\n\
 		movw $0x1010, %%ax	\n\
 		movb %1, %%dh		\n\
 		movb %2, %%ch		\n\
 		int  $0x10		\n\
-"::"b"(index), "m"(_red), "m"(_green), "c"(_blue):"%eax", "%edx");
+ "::"b"(index), "m"(red), "m"(green), "c"(blue):"%eax", "%edx");
+#else
+ outportb(0x03C8, index);
+ outportb(0x03C9, red);
+ outportb(0x03C9, green);
+ outportb(0x03C9, blue);
+#endif
 }
 
 
@@ -479,16 +481,13 @@ static void vesa_setCI_f (int index, float red, float green, float blue)
  * In  : color index, R, G, B
  * Out : -
  *
- * Note: uses integer values
+ * Note: uses normalized values
  */
-static void vesa_setCI_i (int index, int red, int green, int blue)
+static void vesa_setCI_f (int index, float red, float green, float blue)
 {
- __asm("\n\
-		movw $0x1010, %%ax	\n\
-		movb %1, %%dh		\n\
-		movb %2, %%ch		\n\
-		int  $0x10		\n\
-"::"b"(index), "m"(red), "m"(green), "c"(blue):"%eax", "%edx");
+ float max = (1 << vesa_color_precision) - 1;
+
+ vesa_setCI_i(index, (int)(red * max), (int)(green * max), (int)(blue * max));
 }
 
 

@@ -54,10 +54,10 @@ GLUT_DXE = glut.dxe
 GLUT_IMP = libiglut.a
 
 CC = gcc
-CFLAGS += -I$(TOP)/include -I$(MKGLUT)
+CFLAGS += -I- -I$(TOP)/include -I. -I$(MKGLUT) -IPC_HW
 
 AR = ar
-ARFLAGS = ru
+ARFLAGS = rus
 
 ifneq ($(wildcard $(DJDIR)/lib/dxe3.ld),)
 DXE3GEN = $(wildcard $(addsuffix /dxe3gen.exe,$(subst ;, ,$(PATH))))
@@ -66,16 +66,14 @@ endif
 RM = del
 
 CORE_SOURCES = \
-	bitmap.c \
 	callback.c \
 	color.c \
-	globals.c \
+	extens.c \
 	init.c \
 	menu.c \
-	models.c \
+	mouse.c \
 	overlay.c \
 	state.c \
-	teapot.c \
 	window.c
 
 PC_HW_SOURCES = \
@@ -86,13 +84,22 @@ PC_HW_SOURCES = \
 	PC_HW/pc_irq.S
 
 MKGLUT_SOURCES = \
+	$(MKGLUT)/glut_bitmap.c \
+	$(MKGLUT)/glut_bwidth.c \
+	$(MKGLUT)/glut_stroke.c \
+	$(MKGLUT)/glut_swidth.c \
+	$(MKGLUT)/glut_shapes.c \
+	$(MKGLUT)/glut_teapot.c \
 	$(MKGLUT)/glut_8x13.c \
 	$(MKGLUT)/glut_9x15.c \
 	$(MKGLUT)/glut_hel10.c \
 	$(MKGLUT)/glut_hel12.c \
 	$(MKGLUT)/glut_hel18.c \
 	$(MKGLUT)/glut_tr10.c \
-	$(MKGLUT)/glut_tr24.c
+	$(MKGLUT)/glut_tr24.c \
+	$(MKGLUT)/glut_roman.c \
+	$(MKGLUT)/glut_mroman.c \
+	$(MKGLUT)/glut_util.c
 
 SOURCES = $(CORE_SOURCES) $(PC_HW_SOURCES) $(MKGLUT_SOURCES)
 
@@ -115,7 +122,7 @@ ifeq ($(DXE3GEN),)
 	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
 	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E glut -X -P gl.dxe -P glu.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLUT_DXE) -I $(LIBDIR)/$(GLUT_IMP) -D "MesaGLUT DJGPP" -E _glut -P gl.dxe -P glu.dxe -U $(OBJECTS)
 endif
 
 clean:

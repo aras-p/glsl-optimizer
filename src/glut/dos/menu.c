@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -27,17 +27,39 @@
  */
 
 
-#include "GL/glut.h"
+#include "glutint.h"
 
 
-int APIENTRY glutCreateMenu (void (GLUTCALLBACK *func) (int))
+
+GLUTmenuStatusCB g_menu_status_func = NULL;
+
+
+
+void APIENTRY glutMenuStateFunc (GLUTmenuStateCB func)
+{
+ g_menu_status_func = (GLUTmenuStatusCB)func;
+}
+
+
+
+void APIENTRY glutMenuStatusFunc (GLUTmenuStatusCB func)
+{
+ g_menu_status_func = func;
+}
+
+
+
+int APIENTRY glutCreateMenu (GLUTselectCB func)
 {
  return 0;
 }
 
+
+
 void APIENTRY glutDestroyMenu (int menu)
 {
 }
+
 
 
 int APIENTRY glutGetMenu (void)
@@ -46,9 +68,11 @@ int APIENTRY glutGetMenu (void)
 }
 
 
+
 void APIENTRY glutSetMenu (int menu)
 {
 }
+
 
 
 void APIENTRY glutAddMenuEntry (const char *label, int value)
@@ -56,9 +80,11 @@ void APIENTRY glutAddMenuEntry (const char *label, int value)
 }
 
 
+
 void APIENTRY glutAddSubMenu (const char *label, int submenu)
 {
 }
+
 
 
 void APIENTRY glutChangeToMenuEntry (int item, const char *label, int value)
@@ -66,9 +92,11 @@ void APIENTRY glutChangeToMenuEntry (int item, const char *label, int value)
 }
 
 
+
 void APIENTRY glutChangeToSubMenu (int item, const char *label, int submenu)
 {
 }
+
 
 
 void APIENTRY glutRemoveMenuItem (int item)
@@ -76,9 +104,11 @@ void APIENTRY glutRemoveMenuItem (int item)
 }
 
 
+
 void APIENTRY glutAttachMenu (int button)
 {
 }
+
 
 
 void APIENTRY glutDetachMenu (int button)

@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.0 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.3 for Mesa 5.0
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -27,7 +27,33 @@
  */
 
 
-#include "GL/glut.h"
+#include "glutint.h"
+
+
+
+int APIENTRY glutLayerGet (GLenum info)
+{
+ switch (info) {
+        case GLUT_OVERLAY_POSSIBLE:
+        case GLUT_HAS_OVERLAY:
+             return GL_FALSE;
+        case GLUT_LAYER_IN_USE:
+             return GLUT_NORMAL;
+        case GLUT_NORMAL_DAMAGED:
+             return GL_FALSE;
+        case GLUT_OVERLAY_DAMAGED:
+        case GLUT_TRANSPARENT_INDEX:
+        default:
+             return -1;
+ }
+}
+
+
+
+void APIENTRY glutOverlayDisplayFunc (GLUTdisplayCB func)
+{
+}
+
 
 
 void APIENTRY glutEstablishOverlay (void)
@@ -35,9 +61,11 @@ void APIENTRY glutEstablishOverlay (void)
 }
 
 
+
 void APIENTRY glutRemoveOverlay (void)
 {
 }
+
 
 
 void APIENTRY glutUseLayer (GLenum layer)
@@ -45,14 +73,17 @@ void APIENTRY glutUseLayer (GLenum layer)
 }
 
 
+
 void APIENTRY glutPostOverlayRedisplay (void)
 {
 }
 
 
+
 void APIENTRY glutShowOverlay (void)
 {
 }
+
 
 
 void APIENTRY glutHideOverlay (void)

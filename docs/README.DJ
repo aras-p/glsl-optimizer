@@ -32,22 +32,20 @@ Available options:
      Environment variables:
 	CPU		optimize for the given processor.
 			default = k6
-	BIG_OPT=1	crazy optimizations; not very useful, though...
-			default = no
 	SGI_GLU=1	build SGI's GLU instead of Mesa's.
 			default = no
-	GLIDE		absolute path to Glide library; used with FX.
+	GLIDE		path to Glide3 SDK include files; used with FX.
 			default = $(TOP)/include/glide3
-	FX=1		build for 3dfx Glide3; use it if you have the Glide
-			SDK (designed for your platform), and, of course, a
-			3dfx card... Note that this disables compilation of
-			actual DMesa code, as Glide does all the stuff!
+	FX=1		build for 3dfx Glide3. Note that this disables
+			compilation of most DMesa code and requires fxMesa.
+			As a consequence, you'll need the DJGPP Glide3
+			library to build any application.
 			default = no
 	HAVE_X86=1	optimize for i386.
 			default = no
-	HAVE_MMX=1	MMX instructions; use only if you assembler/compiler
-			supports MMX instruction set; backwards compatibility
-			with older processors is still preserved.
+	HAVE_MMX=1	allow MMX specializations, provided your assembler
+			supports MMX instruction set. However, the true CPU
+			capabilities are checked at run-time to avoid crashes.
 			default = no
 	HAVE_SSE=1	(see HAVE_MMX)
 			default = no
@@ -68,7 +66,7 @@ Tested on:
 	CPU:		K6-2 (CXT) @500(412.5) MHz
 	Mainboard:	ViA Apollo VP2/97 w/ 128 MB SDRAM
 	Video card:	PowerColor EvilKing3 (Voodoo3 3000 PCI) w/ 16 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.2 + make v3.79.1
+	DJGPP:		djdev 2.04 + gcc v3.2.1 + make v3.79.1
 	OS:		DOS and Win9x
 
 
@@ -99,7 +97,7 @@ FAQ:
    A) Build your export object file; then link it with your application.
       For example:
 	dxe3res -o dmesadxe.c gl.dxe glu.dxe glut.dxe
-	gcc -o dmesadxe.o -c -fno-builtin dmesadxe.c
+	gcc -o dmesadxe.o -c dmesadxe.c
 	gcc -o OUT.exe dmesadxe.o IN.c -liglut -liglu -ligl -ldl
 
 3. Using Mesa for DJGPP
@@ -109,10 +107,16 @@ FAQ:
       Glide port is on my web page. If you haven't, sorry; everything is done
       in software. Suggestions?
 
+   Q) I tried to set refresh rate w/ DMesa, but without success.
+   A) Refresh rate control works only for VESA 3.0. If you were compiling for
+      Glide, see Glide info. If not, sorry!
+
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
-   A) Single-buffered is not allowed at all. Until I can find a way to use
-      *REAL* hardware acceleration, it won't get implemented.
+   A) Only DMesa+FX supports single-buffered. The standard VESA/VGA drivers
+      will always work in double-buffered modes. If/When I will find a way to
+      use *REAL* hardware acceleration for a specific card, it might or might
+      not support single-buffered modes.
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
@@ -123,10 +127,6 @@ FAQ:
       GLUT took this into account for _WIN32 DLL's only; I don't want to modify
       his headers. The only workaround is to link GLUT the old way :-(
 
-   Q) I tried to set refresh rate w/ DMesa, but without success.
-   A) Refresh rate control works only for VESA 3.0. If you were compiling for
-      Glide, see Glide info. If not, sorry!
-
    Q) The GLUT is incomplete.
    A) See below.
 
@@ -135,9 +135,14 @@ FAQ:
 libGLUT (the toolkit):
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Well, this "skeletal" GLUT implementation is not mine. Thanks should go to
-Bernhard Tschirren, Mark Kilgard, Brian Paul and probably others (or probably
-not ;-). GLUT functionality will be extended only on an "as needed" basis.
+Well, this "skeletal" GLUT implementation was taken from AllegGL project and
+heavily changed. Thanks should go to Bernhard Tschirren, Mark Kilgard, Brian
+Paul and probably others (or probably not ;-). GLUT functionality will be
+extended only on an "as needed" basis.
+
+GLUT talks to hardware via PC_HW package which was put together from various
+pieces I wrote long time ago. It consists from the keyboard, mouse and timer
+drivers.
 
 My keyboard driver used only scancodes; as GLUT requires ASCII values for keys,
 I borrowed the translation tables (and maybe more) from Allegro -- many thanks
@@ -163,14 +168,15 @@ means that `printf' can be safely called during graphics. A bit of a hack, I
 know, because all messages come in bulk, but I think it's better than nothing.
 "Borrowed" from LIBRHUTI (Robert Hoehne).
 
-Window creating defaults: 640x480x16 at (0,0), 8-bit stencil, 16-bit accum.
-However, the video mode is chosen in such a way that first window will fit. If
-you need high resolution with small windows, try to place them far to the right
-(or way down).
+Window creating defaults: 300x300x16 at (0,0), 16-bit depth, 16-bit accum,
+8-bit stencil. However, the video mode is chosen in such a way that first
+window will fit. If you need high resolution with small windows, set initial
+position far to the right (or way down); then you can move them back to any
+position right before the main loop.
 
 The following environment variables can customize GLUT behaviour:
-	DMESA_GLUT_REFRESH	-	set vertical screen refresh rate
-	DMESA_GLUT_BPP		-	set default bits per pixel
+	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
+	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
 
 
 
@@ -190,17 +196,18 @@ v1.2 (nov-2002)
 	* synced w/ Mesa-4.1
 	- removed dmesadxe.h
 
-v1.3 (dec-2002)
+v1.3 (jan-2003)
 	+ enabled OpenGL 1.4 support
 	+ added MMX clear/blit routines
 	+ enabled SGI's GLU compilation
+	+ added new GLUT functions
 	+ added color-index modes
 	+ added 8bit FakeColor (thanks to Neil Funk)
 	+ added VGA support (to keep Ben Decker happy)
 	* fixed GLUT compilation error (reported by Chan Kar Heng)
 	* overhauled virtual buffer and internal video drivers
 	* better fxMesa integration
-	* extended GLUT functionality
+	* revamped GLUT
 	* switched to DXE3
 
 

@@ -90,7 +90,7 @@ ifeq ($(DXE3GEN),)
 	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
 	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) -D "MesaGLU DJGPP" -E glu -X -P gl.dxe -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GLU_DXE) -I $(LIBDIR)/$(GLU_IMP) -D "MesaGLU DJGPP" -E _glu -P gl.dxe -U $(OBJECTS)
 endif
 
 clean:

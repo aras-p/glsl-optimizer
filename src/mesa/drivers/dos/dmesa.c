@@ -356,7 +356,7 @@ static void read_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
  offset = c->Buffer->width * FLIP(y) + x;
  /* read all pixels */
  for (i=0; i<n; i++, offset++) {
-     index[i] = vl_getCIpixel(offset);
+     index[i] = vl_getpixel(offset);
  }
 }
 
@@ -421,13 +421,13 @@ static void read_index_pixels (const GLcontext *ctx,
     /* read some pixels */
     for (i=0; i<n; i++) {
         if (mask[i]) {
-           index[i] = vl_getCIpixel(FLIP2(y[i])*w + x[i]);
+           index[i] = vl_getpixel(FLIP2(y[i])*w + x[i]);
         }
     }
  } else {
     /* read all pixels */
     for (i=0; i<n; i++) {
-        index[i] = vl_getCIpixel(FLIP2(y[i])*w + x[i]);
+        index[i] = vl_getpixel(FLIP2(y[i])*w + x[i]);
     }
  }
 }
@@ -1074,19 +1074,37 @@ void DMesaDestroyContext (DMesaContext c)
 
 
 
-GLboolean DMesaViewport (DMesaBuffer b,
-                         GLint xpos, GLint ypos,
-                         GLint width, GLint height)
+GLboolean DMesaMoveBuffer (GLint xpos, GLint ypos)
 {
 #ifndef FX
- void *new_window;
+ GET_CURRENT_CONTEXT(ctx);
+ DMesaBuffer b = ((DMesaContext)ctx->DriverCtx)->Buffer;
 
- if ((new_window=vl_sync_buffer(b->the_window, xpos, ypos, width, height)) == NULL) {
+ if (vl_sync_buffer(&b->the_window, xpos, ypos, b->width, b->height) != 0) {
     return GL_FALSE;
  } else {
-    b->the_window = new_window;
     b->xpos = xpos;
     b->ypos = ypos;
+    return GL_TRUE;
+ }
+
+#else
+
+ return GL_FALSE;
+#endif
+}
+
+
+
+GLboolean DMesaResizeBuffer (GLint width, GLint height)
+{
+#ifndef FX
+ GET_CURRENT_CONTEXT(ctx);
+ DMesaBuffer b = ((DMesaContext)ctx->DriverCtx)->Buffer;
+
+ if (vl_sync_buffer(&b->the_window, b->xpos, b->ypos, width, height) != 0) {
+    return GL_FALSE;
+ } else {
     b->width = width;
     b->height = height;
     return GL_TRUE;
@@ -1107,7 +1125,7 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 {
 #ifndef FX
  if ((c != NULL) && (b != NULL)) {
-    if (!DMesaViewport(b, b->xpos, b->ypos, b->width, b->height)) {
+    if (vl_sync_buffer(&b->the_window, b->xpos, b->ypos, b->width, b->height) != 0) {
        return GL_FALSE;
     }
 
@@ -1152,4 +1170,47 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 #ifndef FX
  vl_setCI(ndx, red, green, blue);
 #endif
+}
+
+
+
+void DMesaGetIntegerv (GLenum pname, GLint *params)
+{
+#ifndef FX
+ GET_CURRENT_CONTEXT(ctx);
+ const DMesaContext c = (ctx == NULL) ? NULL : (DMesaContext)ctx->DriverCtx;
+#else
+ const fxMesaContext c = fxMesaGetCurrentContext();
+#endif
+
+ if (c == NULL) {
+    return;
+ }
+
+ switch (pname) {
+        case DMESA_Y_ORIGIN:
+             #ifndef FX
+             params[0] = GL_FALSE;
+             #else
+             params[0] = GL_TRUE;
+             #endif
+             break;
+        case DMESA_SCREEN_SIZE:
+             #ifndef FX
+             vl_get_screen_size(&params[0], &params[1]);
+             #else
+             params[0] = c->screen_width;
+             params[1] = c->screen_height;
+             #endif
+             break;
+        case DMESA_ARGB_ORDER:
+             #ifndef FX
+             params[0] = GL_FALSE;
+             #else
+             params[0] = !c->bgrOrder;
+             #endif
+             break;
+        default:
+             break;
+ }
 }

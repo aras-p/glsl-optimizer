@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.0 for DOS/DJGPP
+ * PC/HW routine collection v1.3 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -27,7 +27,7 @@ typedef struct {
         volatile void *parm;
 } TIMER;
 
-TIMER timer_main, timer_func[MAX_TIMERS];
+static TIMER timer_main, timer_func[MAX_TIMERS];
 
 static int timer ()
 {

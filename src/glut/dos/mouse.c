@@ -28,32 +28,31 @@
 
 
 #include "glutint.h"
-#include "GL/dmesa.h"
 
 
 
-#define CLAMP(i) ((i) > 1.0 ? 1.0 : ((i) < 0.0 ? 0.0 : (i)))
+int g_mouse;
+int g_mouse_x = 0, g_mouse_y = 0;
 
 
 
-void APIENTRY glutSetColor (int ndx, GLfloat red, GLfloat green, GLfloat blue)
+void __glutInitMouse (void)
 {
- if (g_display_mode & GLUT_INDEX) {
-    if ((ndx >= 0) && (ndx < (256 - RESERVED_COLORS))) {
-       DMesaSetCI(ndx, CLAMP(red), CLAMP(green), CLAMP(blue));
+ if ((g_mouse = pc_install_mouse())) {
+    GLint yorg;
+    GLint rect[4];
+
+    DMesaGetIntegerv(DMESA_Y_ORIGIN, &yorg);
+    if (yorg) {
+       rect[1] = g_screen_h - g_curwin->height;
+    } else {
+       rect[1] = g_curwin->ypos;
     }
+    rect[0] = g_curwin->xpos;
+    rect[2] = rect[0] + g_curwin->width - 1;
+    rect[3] = rect[1] + g_curwin->height - 1;
+    pc_mouse_area(rect[0], rect[1], rect[2], rect[3]);
+
+    g_curwin->show_mouse = (g_curwin->mouse || g_curwin->motion || g_curwin->passive);
  }
-}
-
-
-
-GLfloat APIENTRY glutGetColor (int ndx, int component)
-{
- return 0.0;
-}
-
-
-
-void APIENTRY glutCopyColormap (int win)
-{
 }

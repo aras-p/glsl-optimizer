@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.2 for DOS/DJGPP
+ * PC/HW routine collection v1.3 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -212,22 +212,9 @@ int pc_query_mouse (int *x, int *y)
  return pc_mouse_b;
 }
 
-void pc_show_mouse (void)
-{
- /* not implemented */
-}
-void pc_scare_mouse (void)
-{
- /* not implemented */
-}
-void pc_unscare_mouse (void)
-{
- /* not implemented */
-}
-
 __asm("\n\
 		.text					\n\
-		.balign	4				\n\
+		.p2align 5,,31				\n\
 		.global	_mouse_wrapper			\n\
 _mouse_wrapper:						\n\
 		cld					\n\

@@ -27,12 +27,29 @@
  */
 
 
-#include "GL/glut.h"
-#include "internal.h"
+#include <string.h>
+
+#include "glutint.h"
 
 
-void APIENTRY glutInit (int *argcp, char **argv)
+
+GLboolean g_redisplay = GL_FALSE;
+
+GLuint g_bpp = DEFAULT_BPP;
+GLuint g_refresh = 0;
+GLuint g_screen_w, g_screen_h;
+
+GLuint g_display_mode = 0;
+int g_init_x = 0, g_init_y = 0;
+GLuint g_init_w = DEFAULT_WIDTH, g_init_h = DEFAULT_HEIGHT;
+
+char *__glutProgramName = NULL;
+
+
+
+void APIENTRY glutInit (int *argc, char **argv)
 {
+ char *str;
  const char *env;
 
  if ((env = getenv("DMESA_GLUT_BPP")) != NULL) {
@@ -42,31 +59,42 @@ void APIENTRY glutInit (int *argcp, char **argv)
     g_refresh = atoi(env);
  }
 
+ /* Determine program name. */
+ str = strrchr(argv[0], '/');
+ if (str == NULL) {
+    str = argv[0];
+ } else {
+    str++;
+ }
+ __glutProgramName = __glutStrdup(str);
+
+ /* Initialize timer */
  glutGet(GLUT_ELAPSED_TIME);
 }
+
 
 
 void APIENTRY glutInitDisplayMode (unsigned int mode)
 {
  g_display_mode = mode;
-
- pc_install_keyb();
- g_mouse = pc_install_mouse();
 }
+
 
 
 void APIENTRY glutInitWindowPosition (int x, int y)
 {
- g_xpos = x;
- g_ypos = y;
+ g_init_x = x;
+ g_init_y = y;
 }
+
 
 
 void APIENTRY glutInitWindowSize (int width, int height)
 {
- g_width  = width;
- g_height = height;
+ g_init_w = width;
+ g_init_h = height;
 }
+
 
 
 void APIENTRY glutMainLoop (void)
@@ -76,52 +104,37 @@ void APIENTRY glutMainLoop (void)
  static int old_mouse_y = 0;
  static int old_mouse_b = 0;
 
+ {
+  GLint screen_size[2];
+  DMesaGetIntegerv(DMESA_SCREEN_SIZE, screen_size);
+  g_screen_w = screen_size[0];
+  g_screen_h = screen_size[1];
+ }
+
+ pc_install_keyb();
+ __glutInitMouse();
+
  glutPostRedisplay();
- if (reshape_func) reshape_func(g_width, g_height);
- if (visibility_func) visibility_func(GLUT_VISIBLE);
- if (g_mouse) pc_show_mouse();
+ if (g_curwin->reshape) {
+    g_curwin->reshape(g_curwin->width, g_curwin->height);
+ }
+ if (g_curwin->visibility) {
+    g_curwin->visibility(GLUT_VISIBLE);
+ }
 
  while (GL_TRUE) {
        idle = GL_TRUE;
 
-       if (g_redisplay && display_func) {
+       if (g_redisplay && g_curwin->display) {
           idle        = GL_FALSE;
           g_redisplay = GL_FALSE;
 
-          if (g_mouse && !(g_display_mode & GLUT_DOUBLE)) pc_scare_mouse();
-          display_func();
-          if (g_mouse && !(g_display_mode & GLUT_DOUBLE)) pc_unscare_mouse();
-       }
-
-       if (pc_keypressed()) {
-          int key;
-
-          idle = GL_FALSE;
-          key  = pc_readkey();
-
-          switch (key>>16) {
-                 case KEY_F1:     if (special_func) special_func(GLUT_KEY_F1,        0, 0); break;
-                 case KEY_F2:     if (special_func) special_func(GLUT_KEY_F2,        0, 0); break;
-                 case KEY_F3:     if (special_func) special_func(GLUT_KEY_F3,        0, 0); break;
-                 case KEY_F4:     if (special_func) special_func(GLUT_KEY_F4,        0, 0); break;
-                 case KEY_F5:     if (special_func) special_func(GLUT_KEY_F5,        0, 0); break;
-                 case KEY_F6:     if (special_func) special_func(GLUT_KEY_F6,        0, 0); break;
-                 case KEY_F7:     if (special_func) special_func(GLUT_KEY_F7,        0, 0); break;
-                 case KEY_F8:     if (special_func) special_func(GLUT_KEY_F8,        0, 0); break;
-                 case KEY_F9:     if (special_func) special_func(GLUT_KEY_F9,        0, 0); break;
-                 case KEY_F10:    if (special_func) special_func(GLUT_KEY_F10,       0, 0); break;
-                 case KEY_F11:    if (special_func) special_func(GLUT_KEY_F11,       0, 0); break;
-                 case KEY_F12:    if (special_func) special_func(GLUT_KEY_F12,       0, 0); break;
-                 case KEY_LEFT:   if (special_func) special_func(GLUT_KEY_LEFT,      0, 0); break;
-                 case KEY_UP:     if (special_func) special_func(GLUT_KEY_UP,        0, 0); break;
-                 case KEY_RIGHT:  if (special_func) special_func(GLUT_KEY_RIGHT,     0, 0); break;
-                 case KEY_DOWN:   if (special_func) special_func(GLUT_KEY_DOWN,      0, 0); break;
-                 case KEY_PGUP:   if (special_func) special_func(GLUT_KEY_PAGE_UP,   0, 0); break;
-                 case KEY_PGDN:   if (special_func) special_func(GLUT_KEY_PAGE_DOWN, 0, 0); break;
-                 case KEY_HOME:   if (special_func) special_func(GLUT_KEY_HOME,      0, 0); break;
-                 case KEY_END:    if (special_func) special_func(GLUT_KEY_END,       0, 0); break;
-                 case KEY_INSERT: if (special_func) special_func(GLUT_KEY_INSERT,    0, 0); break;
-                 default:         if (keyboard_func) keyboard_func(key & 0xFF, 0, 0);
+          if (g_curwin->show_mouse && !(g_display_mode & GLUT_DOUBLE)) {
+             /* XXX scare mouse */
+             g_curwin->display();
+             /* XXX unscare mouse */
+          } else {
+             g_curwin->display();
           }
        }
 
@@ -129,41 +142,101 @@ void APIENTRY glutMainLoop (void)
           int mouse_x;
           int mouse_y;
           int mouse_b;
-       
+
+          /* query mouse */
           mouse_b = pc_query_mouse(&mouse_x, &mouse_y);
-          
-          if (motion_func && ((mouse_x != old_mouse_x) || (mouse_y != old_mouse_y))) {
+
+          /* relative to window coordinates */
+          g_mouse_x = mouse_x - g_curwin->xpos;
+          g_mouse_y = mouse_y - g_curwin->ypos;
+
+          /* mouse was moved? */
+          if ((mouse_x != old_mouse_x) || (mouse_y != old_mouse_y)) {
              idle        = GL_FALSE;
              old_mouse_x = mouse_x;
              old_mouse_y = mouse_y;
-   
-             motion_func(old_mouse_x, old_mouse_y);
+
+             if (mouse_b) {
+                /* any button pressed */
+                if (g_curwin->motion) {
+                   g_curwin->motion(g_mouse_x, g_mouse_y);
+                }
+             } else {
+                /* no button pressed */
+                if (g_curwin->passive) {
+                   g_curwin->passive(g_mouse_x, g_mouse_y);
+                }
+             }
           }
-   
-          if (mouse_func && (mouse_b != old_mouse_b)) {
-             int new_mouse_b = mouse_b;
-   
-             if ((old_mouse_b & 1) && !(new_mouse_b & 1))
-                mouse_func(GLUT_LEFT_BUTTON, GLUT_UP,   mouse_x, mouse_y);
-             else if (!(old_mouse_b & 1) && (new_mouse_b & 1))
-                mouse_func(GLUT_LEFT_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
-   
-             if ((old_mouse_b & 2) && !(new_mouse_b & 2))
-                mouse_func(GLUT_RIGHT_BUTTON, GLUT_UP,   mouse_x, mouse_y);
-             else if (!(old_mouse_b & 2) && (new_mouse_b & 2))
-                mouse_func(GLUT_RIGHT_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
-   
-             if ((old_mouse_b & 4) && !(new_mouse_b & 4))
-                mouse_func(GLUT_MIDDLE_BUTTON, GLUT_UP,   mouse_x, mouse_y);
-             else if (!(old_mouse_b & 3) && (new_mouse_b & 4))
-                mouse_func(GLUT_MIDDLE_BUTTON, GLUT_DOWN, mouse_x, mouse_y);
-   
+
+          /* button state changed? */
+          if (mouse_b != old_mouse_b) {
+             GLUTmouseCB mouse_func;
+
+             if ((mouse_func = g_curwin->mouse)) {
+                if ((old_mouse_b & 1) && !(mouse_b & 1))
+                   mouse_func(GLUT_LEFT_BUTTON, GLUT_UP,     g_mouse_x, g_mouse_y);
+                else if (!(old_mouse_b & 1) && (mouse_b & 1))
+                   mouse_func(GLUT_LEFT_BUTTON, GLUT_DOWN,   g_mouse_x, g_mouse_y);
+
+                if ((old_mouse_b & 2) && !(mouse_b & 2))
+                   mouse_func(GLUT_RIGHT_BUTTON, GLUT_UP,    g_mouse_x, g_mouse_y);
+                else if (!(old_mouse_b & 2) && (mouse_b & 2))
+                   mouse_func(GLUT_RIGHT_BUTTON, GLUT_DOWN,  g_mouse_x, g_mouse_y);
+
+                if ((old_mouse_b & 4) && !(mouse_b & 4))
+                   mouse_func(GLUT_MIDDLE_BUTTON, GLUT_UP,   g_mouse_x, g_mouse_y);
+                else if (!(old_mouse_b & 3) && (mouse_b & 4))
+                   mouse_func(GLUT_MIDDLE_BUTTON, GLUT_DOWN, g_mouse_x, g_mouse_y);
+             }
+
              idle        = GL_FALSE;
-             old_mouse_b = new_mouse_b;
+             old_mouse_b = mouse_b;
           }
        }
 
-       if (idle && idle_func)
-          idle_func();
+       if (pc_keypressed()) {
+          int key;
+          int glut_key;
+
+          idle = GL_FALSE;
+          key  = pc_readkey();
+
+          switch (key>>16) {
+                 case KEY_F1:     glut_key = GLUT_KEY_F1;        goto special;
+                 case KEY_F2:     glut_key = GLUT_KEY_F2;        goto special;
+                 case KEY_F3:     glut_key = GLUT_KEY_F3;        goto special;
+                 case KEY_F4:     glut_key = GLUT_KEY_F4;        goto special;
+                 case KEY_F5:     glut_key = GLUT_KEY_F5;        goto special;
+                 case KEY_F6:     glut_key = GLUT_KEY_F6;        goto special;
+                 case KEY_F7:     glut_key = GLUT_KEY_F7;        goto special;
+                 case KEY_F8:     glut_key = GLUT_KEY_F8;        goto special;
+                 case KEY_F9:     glut_key = GLUT_KEY_F9;        goto special;
+                 case KEY_F10:    glut_key = GLUT_KEY_F10;       goto special;
+                 case KEY_F11:    glut_key = GLUT_KEY_F11;       goto special;
+                 case KEY_F12:    glut_key = GLUT_KEY_F12;       goto special;
+                 case KEY_LEFT:   glut_key = GLUT_KEY_LEFT;      goto special;
+                 case KEY_UP:     glut_key = GLUT_KEY_UP;        goto special;
+                 case KEY_RIGHT:  glut_key = GLUT_KEY_RIGHT;     goto special;
+                 case KEY_DOWN:   glut_key = GLUT_KEY_DOWN;      goto special;
+                 case KEY_PGUP:   glut_key = GLUT_KEY_PAGE_UP;   goto special;
+                 case KEY_PGDN:   glut_key = GLUT_KEY_PAGE_DOWN; goto special;
+                 case KEY_HOME:   glut_key = GLUT_KEY_HOME;      goto special;
+                 case KEY_END:    glut_key = GLUT_KEY_END;       goto special;
+                 case KEY_INSERT: glut_key = GLUT_KEY_INSERT;    goto special;
+                 special:
+                      if (g_curwin->special) {
+                         g_curwin->special(glut_key, g_mouse_x, g_mouse_y);
+                      }
+                      break;
+                 default:
+                      if (g_curwin->keyboard) {
+                         g_curwin->keyboard(key & 0xFF, g_mouse_x, g_mouse_y);
+                      }
+          }
+       }
+
+       if (idle && g_idle_func)
+          g_idle_func();
  }
 }

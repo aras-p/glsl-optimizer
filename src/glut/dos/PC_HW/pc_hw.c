@@ -73,9 +73,6 @@ void *pc_malloc (size_t size)
 /*
  * standard redirection
  */
-#define STDOUT 1
-#define STDERR 2
-
 static char outname[L_tmpnam];
 static int h_out, h_outbak;
 static char errname[L_tmpnam];
@@ -86,9 +83,9 @@ int pc_open_stdout (void)
  tmpnam(outname);
 
  if ((h_out=open(outname, O_WRONLY | O_CREAT | O_TEXT | O_TRUNC, S_IREAD | S_IWRITE)) > 0) {
-    h_outbak = dup(STDOUT);
+    h_outbak = dup(STDOUT_FILENO);
     fflush(stdout);
-    dup2(h_out, STDOUT);
+    dup2(h_out, STDOUT_FILENO);
  }
 
  return h_out;
@@ -100,7 +97,7 @@ void pc_close_stdout (void)
  char *line = alloca(512);
 
  if (h_out > 0) {
-    dup2(h_outbak, STDOUT);
+    dup2(h_outbak, STDOUT_FILENO);
     close(h_out);
     close(h_outbak);
 
@@ -119,9 +116,9 @@ int pc_open_stderr (void)
  tmpnam(errname);
 
  if ((h_err=open(errname, O_WRONLY | O_CREAT | O_TEXT | O_TRUNC, S_IREAD | S_IWRITE)) > 0) {
-    h_errbak = dup(STDERR);
+    h_errbak = dup(STDERR_FILENO);
     fflush(stderr);
-    dup2(h_err, STDERR);
+    dup2(h_err, STDERR_FILENO);
  }
 
  return h_err;
@@ -133,7 +130,7 @@ void pc_close_stderr (void)
  char *line = alloca(512);
 
  if (h_err > 0) {
-    dup2(h_errbak, STDERR);
+    dup2(h_errbak, STDERR_FILENO);
     close(h_err);
     close(h_errbak);
 

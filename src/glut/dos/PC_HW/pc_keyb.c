@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.1 for DOS/DJGPP
+ * PC/HW routine collection v1.3 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -443,6 +443,11 @@ int pc_readkey (void)
 int pc_keydown (int code)
 {
  return pc_key[code];
+}
+
+int pc_keyshifts (void)
+{
+ return key_shifts;
 }
 
 void pc_remove_keyb (void)

@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.2 for DOS/DJGPP
+ * PC/HW routine collection v1.3 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -39,6 +39,7 @@ int pc_clexit (VFUNC f);
 #define ENDOFUNC(x)    static void x##_end() { }
 #define LOCKFUNC(x)    _go32_dpmi_lock_code((void *)x, (long)x##_end - (long)x)
 #define LOCKDATA(x)    _go32_dpmi_lock_data((void *)&x, sizeof(x))
+#define LOCKBUFF(x, l) _go32_dpmi_lock_data((void *)x, l)
 
 void *pc_malloc (size_t size);
 
@@ -194,6 +195,7 @@ void pc_remove_keyb (void);
 int pc_keypressed (void);
 int pc_readkey (void);
 int pc_keydown (int code);
+int pc_keyshifts (void);
 
 /*
  * timer
@@ -210,9 +212,6 @@ MFUNC pc_install_mouse_handler (MFUNC handler);
 void pc_mouse_area (int x1, int y1, int x2, int y2);
 void pc_mouse_speed (int xspeed, int yspeed);
 int pc_query_mouse (int *x, int *y);
-void pc_show_mouse (void);
-void pc_scare_mouse (void);
-void pc_unscare_mouse (void);
 
 /*
  * standard redirection
