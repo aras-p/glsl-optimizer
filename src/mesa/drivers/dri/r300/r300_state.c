@@ -955,7 +955,12 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
-			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=t->pitch;
+			
+			/* Turn off rest of the bits that are wrong */
+			t->filter &= R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK;
+			
+			/* No idea why linear filtered textures shake when puting random data */
+			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=t->format;
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;

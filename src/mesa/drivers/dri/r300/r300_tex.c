@@ -66,7 +66,9 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 {
 	GLboolean is_clamp = GL_FALSE;
 	GLboolean is_clamp_to_border = GL_FALSE;
-
+	
+/* Most of these seem to be incorrect so disable for now */
+#if 0	
 	t->filter &=
 	    ~(R200_CLAMP_S_MASK | R200_CLAMP_T_MASK | R200_BORDER_MODE_D3D);
 
@@ -176,10 +178,14 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 	}
 
 	t->border_fallback = (is_clamp && is_clamp_to_border);
+#endif	
 }
 
 static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 {
+	
+/* Needs testing */	
+#if 0	
 	t->filter &= ~R200_MAX_ANISO_MASK;
 
 	if (max == 1.0) {
@@ -193,6 +199,7 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 	} else {
 		t->filter |= R200_MAX_ANISO_16_TO_1;
 	}
+#endif	
 }
 
 /**
@@ -205,49 +212,51 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 
 static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 {
-	GLuint anisotropy = (t->filter & R200_MAX_ANISO_MASK);
+	GLuint anisotropy = 0; //(t->filter & R200_MAX_ANISO_MASK);
 
-	t->filter &= ~(R200_MIN_FILTER_MASK | R200_MAG_FILTER_MASK);
-	t->format_x &= ~R200_VOLUME_FILTER_MASK;
+	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
+#if 0	
+	//t->format_x &= ~R200_VOLUME_FILTER_MASK;
+#endif	
 	
 	if (anisotropy == R200_MAX_ANISO_1_TO_1) {
 		switch (minf) {
 		case GL_NEAREST:
-			t->filter |= R200_MIN_FILTER_NEAREST;
+			t->filter |= R300_TX_MIN_FILTER_NEAREST;
 			break;
 		case GL_LINEAR:
-			t->filter |= R200_MIN_FILTER_LINEAR;
+			t->filter |= R300_TX_MIN_FILTER_LINEAR;
 			break;
 		case GL_NEAREST_MIPMAP_NEAREST:
-			t->filter |= R200_MIN_FILTER_NEAREST_MIP_NEAREST;
+			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST;
 			break;
 		case GL_NEAREST_MIPMAP_LINEAR:
-			t->filter |= R200_MIN_FILTER_LINEAR_MIP_NEAREST;
+			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST;
 			break;
 		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |= R200_MIN_FILTER_NEAREST_MIP_LINEAR;
+			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR;
 			break;
 		case GL_LINEAR_MIPMAP_LINEAR:
-			t->filter |= R200_MIN_FILTER_LINEAR_MIP_LINEAR;
+			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR;
 			break;
 		}
 	} else {
 		switch (minf) {
 		case GL_NEAREST:
-			t->filter |= R200_MIN_FILTER_ANISO_NEAREST;
+			t->filter |= R300_TX_MIN_FILTER_ANISO_NEAREST;
 			break;
 		case GL_LINEAR:
-			t->filter |= R200_MIN_FILTER_ANISO_LINEAR;
+			t->filter |= R300_TX_MIN_FILTER_ANISO_LINEAR;
 			break;
 		case GL_NEAREST_MIPMAP_NEAREST:
 		case GL_LINEAR_MIPMAP_NEAREST:
 			t->filter |=
-			    R200_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
+				R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
 			break;
 		case GL_NEAREST_MIPMAP_LINEAR:
 		case GL_LINEAR_MIPMAP_LINEAR:
 			t->filter |=
-			    R200_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
+				R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
 			break;
 		}
 	}
@@ -257,12 +266,12 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	 */
 	switch (magf) {
 	case GL_NEAREST:
-		t->filter |= R200_MAG_FILTER_NEAREST;
-		t->format_x |= R200_VOLUME_FILTER_NEAREST;
+		t->filter |= R300_TX_MAG_FILTER_NEAREST;
+		/*t->format_x |= R200_VOLUME_FILTER_NEAREST;*/
 		break;
 	case GL_LINEAR:
-		t->filter |= R200_MAG_FILTER_LINEAR;
-		t->format_x |= R200_VOLUME_FILTER_LINEAR;
+		t->filter |= R300_TX_MAG_FILTER_LINEAR;
+		/*t->format_x |= R200_VOLUME_FILTER_LINEAR;*/
 		break;
 	}
 }
@@ -802,16 +811,15 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 		fprintf(stderr, "%s( %s )\n",
 			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
 	}
-
-	fprintf(stderr, "%s:%s I am broken - Fixme !\n", __FILE__, __FUNCTION__);
-	
-	#if 0
+			
 	/* This is incorrect: Need to maintain this data for each of
 	 * GL_TEXTURE_{123}D, GL_TEXTURE_RECTANGLE_NV, etc, and switch
 	 * between them according to _ReallyEnabled.
 	 */
 	switch (pname) {
 	case GL_TEXTURE_ENV_COLOR:{
+		fprintf(stderr, "%s:%s I am broken - Fixme !\n", __FILE__, __FUNCTION__);
+		/*
 			GLubyte c[4];
 			GLuint envColor;
 			UNCLAMPED_FLOAT_TO_RGBA_CHAN(c, texUnit->EnvColor);
@@ -822,12 +830,11 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 				    envColor;
 			}
 			break;
-		}
+		*/}
 
 	case GL_TEXTURE_LOD_BIAS_EXT:{
 			GLfloat bias, min;
 			GLuint b;
-			const int fixed_one = 0x8000000;
 
 			/* The R200's LOD bias is a signed 2's complement value with a
 			 * range of -16.0 <= bias < 16.0.
@@ -839,15 +846,20 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 			    driQueryOptionb(&rmesa->radeon.optionCache,
 					    "no_neg_lod_bias") ? 0.0 : -16.0;
 			bias = CLAMP(bias, min, 16.0);
-			b = (int)(bias * fixed_one) & R200_LOD_BIAS_MASK;
+			
+#define R300_LOD_BIAS_MASK	0x1fff
+			
+			/* 1.0 is 0x00000100 and 10.0 is 0x00000a00 --aet */
 
-			if ((rmesa->hw.tex[unit].
-			     cmd[TEX_PP_TXFORMAT_X] & R200_LOD_BIAS_MASK) !=
-			    b) {
-				R200_STATECHANGE(rmesa, tex[unit]);
-				rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT_X] &=
-				    ~R200_LOD_BIAS_MASK;
-				rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT_X] |= b;
+			b = 0x1000 / 16.0 * bias;
+			/* No clue about negative biases but this would 
+			   seem logical if positive max is 0x1000 */
+			b &= R300_LOD_BIAS_MASK;
+			
+			if(b != (rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] & R300_LOD_BIAS_MASK)){
+				R300_STATECHANGE(rmesa, tex.unknown1);
+				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] &= ~R300_LOD_BIAS_MASK;
+				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] |= b;
 			}
 			break;
 		}
@@ -855,7 +867,6 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	default:
 		return;
 	}
-	#endif
 }
 
 /**

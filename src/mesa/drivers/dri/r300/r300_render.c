@@ -193,7 +193,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    GLuint i;
    int k, type;
    LOCAL_VARS
-       	
+		   
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
 		
    		#if 0

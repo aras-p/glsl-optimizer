@@ -578,6 +578,17 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_MAG_FILTER_MASK           (3 << 9)
 #       define R300_TX_MIN_FILTER_NEAREST        (1 << 11)
 #       define R300_TX_MIN_FILTER_LINEAR         (2 << 11)
+/* TODO: Test and verify R300_TX_MIN_FILTER_MASK */
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (2  <<  12)
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (3  <<  12)
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  12)
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (7  <<  12)
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST             (8  <<  12)
+#	define R300_TX_MIN_FILTER_ANISO_LINEAR              (9  <<  12)
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST (10 <<  12)
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR  (11 <<  12)
+
+#       define R300_TX_MIN_FILTER_MASK           (0x0000f800)
 #define R300_TX_UNK1_0                      0x4440
 #define R300_TX_SIZE_0                      0x4480
 #       define R300_TX_WIDTHMASK_SHIFT           0
