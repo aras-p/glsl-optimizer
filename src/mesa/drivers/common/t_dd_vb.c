@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.15 2001/05/14 09:00:52 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.16 2001/12/13 10:51:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -277,7 +277,7 @@ IMPORT_QUALIFIER void TAG(import_float_spec_colors)( GLcontext *ctx )
 #define INTERP_QUALIFIER static
 #endif
 
-#define GET_COLOR(ptr, idx) (((GLfloat (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
 
 
 INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
@@ -289,16 +289,16 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4F( t,
-		 GET_COLOR(VB->ColorPtr[1], dst),
-		 GET_COLOR(VB->ColorPtr[1], out),
-		 GET_COLOR(VB->ColorPtr[1], in) );
+      INTERP_4CHAN( t,
+		    GET_COLOR(VB->ColorPtr[1], dst),
+		    GET_COLOR(VB->ColorPtr[1], out),
+		    GET_COLOR(VB->ColorPtr[1], in) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3F( t,
-		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
-		    GET_COLOR(VB->SecondaryColorPtr[1], out),
-		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
+	 INTERP_3CHAN( t,
+		       GET_COLOR(VB->SecondaryColorPtr[1], dst),
+		       GET_COLOR(VB->SecondaryColorPtr[1], out),
+		       GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
    }
 
@@ -316,12 +316,12 @@ INTERP_QUALIFIER void TAG(copy_pv_extras)( GLcontext *ctx,
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
-		GET_COLOR(VB->ColorPtr[1], src) );
+      COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
+		  GET_COLOR(VB->ColorPtr[1], src) );
 
       if (VB->SecondaryColorPtr[1]) {
-	 COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
-		   GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	 COPY_CHAN4( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+		     GET_COLOR(VB->SecondaryColorPtr[1], src) );
       }
    }
 
