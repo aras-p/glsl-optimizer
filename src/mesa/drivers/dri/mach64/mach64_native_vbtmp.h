@@ -163,7 +163,8 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_RGBA
 	 STRIDE_4F(col, start * col_stride);
 #endif
-	 coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
+	 STRIDE_4F(coord, start * coord_stride);
+	 /* coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);*/
    }
 
    for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
@@ -269,10 +270,14 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_RGBA
-	 *((GLubyte *)p)++ = col[0][2];				/* VERTEX_?_B */
-	 *((GLubyte *)p)++ = col[0][1];				/* VERTEX_?_G */
-	 *((GLubyte *)p)++ = col[0][0];				/* VERTEX_?_R */
-	 *((GLubyte *)p)++ = col[0][3];				/* VERTEX_?_A */
+	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][2]);
+	 *((GLubyte *)p)++;
+	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][1]);
+	 *((GLubyte *)p)++;
+	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][0]);
+	 *((GLubyte *)p)++;
+	 UNCLAMPED_FLOAT_TO_UBYTE(*((GLubyte *)p), col[0][3]);
+	 *((GLubyte *)p)++;
 	 STRIDE_4F(col, col_stride);
 #else
 	 p++;
@@ -282,8 +287,8 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (mask[i] == 0) {
 	    /* unclipped */
 	    LE32_OUT( p,
-		      (VIEWPORT_X( coord[0][0] ) << 16) |	/* VERTEX_?_X */
-		      (VIEWPORT_Y( coord[0][1] ) & 0xffff) );	/* VERTEX_?_Y */
+		      (VIEWPORT_X( coord[i][0] ) << 16) |	/* VERTEX_?_X */
+		      (VIEWPORT_Y( coord[i][1] ) & 0xffff) );	/* VERTEX_?_Y */
 	    
 	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
 	       fprintf( stderr, "%s: vert (importable) %d: %.2f %.2f %.2f %x\n",
@@ -297,7 +302,8 @@ static void TAG(emit)( GLcontext *ctx,
 	 }
 #endif
 #if DO_TEX1 || DO_TEX0 || DO_XYZW
-	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
+	 STRIDE_4F(coord, start * coord_stride);
+	 /*	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);*/
 #endif
 	 
 	 assert( p + 1 - (CARD32 *)v == 10 );

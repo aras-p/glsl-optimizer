@@ -184,35 +184,6 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
    fprintf(stderr, "\n");
 }
 
-static void do_import( struct vertex_buffer *VB,
-		       struct gl_client_array *to,
-		       struct gl_client_array *from )
-{
-   GLuint count = VB->Count;
-
-   if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLubyte), 32 );
-      to->Type = GL_UNSIGNED_BYTE;
-   }
-
-   /* No need to transform the same value 3000 times.
-    */
-   if (!from->StrideB) {
-      to->StrideB = 0;
-      count = 1;
-   }
-   else
-      to->StrideB = 4 * sizeof(GLubyte);
-   
-   _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
-		    from->Ptr,
-		    from->StrideB,
-		    from->Type,
-		    from->Size,
-		    0,
-		    count);
-}
-
 /* Interpolate the elements of the VB not included in typical hardware
  * vertices.  
  *
