@@ -26,14 +26,15 @@
  * **************************************************************************/
 /* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_context.c,v 1.9 2003/02/06 04:18:00 dawes Exp $ */
 
-/*
- * Authors:
- *   Jeff Hartmann <jhartmann@2d3d.com>
- *   Graeme Fisher <graeme@2d3d.co.za>
- *   Abraham vd Merwe <abraham@2d3d.co.za>
+/**
+ * \file i830_context.c
+ * 
+ * Heavily Based on I810 driver written by Keith Whitwell.
  *
- * Heavily Based on I810 driver written by:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ * \author Jeff Hartmann <jhartmann@2d3d.com>
+ * \author Graeme Fisher <graeme@2d3d.co.za>
+ * \author Abraham vd Merwe <abraham@2d3d.co.za>
+ * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include "glheader.h"
@@ -71,7 +72,7 @@ int I830_DEBUG = (0);
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20021115"
+#define DRIVER_DATE                     "20040506"
 
 
 const char __driConfigOptions[] = { 0 };
@@ -146,6 +147,7 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_compression",
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_env_combine",
+   "GL_ARB_texture_env_crossbar",
    "GL_ARB_texture_env_dot3",
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_blend_color",
