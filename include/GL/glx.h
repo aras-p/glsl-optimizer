@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.9 1999/11/24 17:04:46 brianp Exp $ */
+/* $Id: glx.h,v 1.10 1999/12/11 09:54:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -185,12 +185,12 @@ extern "C" {
  * Compile-time extension tests
  */
 #define GLX_EXT_visual_info		1
-#define GLX_EXT_get_proc_address	1
 #define GLX_MESA_pixmap_colormap	1
 #define GLX_MESA_release_buffers	1
 #define GLX_MESA_copy_sub_buffer	1
 #define GLX_MESA_set_3dfx_mode		1
 #define GLX_SGI_video_sync		1
+#define GLX_ARB_get_proc_address	1
 
 
 
@@ -337,6 +337,10 @@ extern GLboolean glXSet3DfxModeMESA( GLint mode );
 extern int glXGetVideoSyncSGI(unsigned int *count);
 extern int glXWaitVideoSyncSGI(int divisor, int remainder,
                                unsigned int *count);
+
+
+/* GLX_ARB_get_proc_address */
+extern void (*glXGetProcAddressARB(const GLubyte *procName))();
 
 
 
