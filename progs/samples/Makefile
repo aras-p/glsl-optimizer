@@ -26,9 +26,7 @@ PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
 
 default: $(PROGS)
 
-clean:
-	-rm -f *.o *~
 
-realclean:
+clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~

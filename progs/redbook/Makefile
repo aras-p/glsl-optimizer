@@ -32,10 +32,8 @@ PROGS = aaindex aapoly aargb accanti accpersp alpha alpha3D anti \
 
 default: $(PROGS)
 
-clean:
-	-rm -f *.o *~
 
-realclean:
+clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
 

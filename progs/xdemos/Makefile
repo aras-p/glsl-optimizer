@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-LIBS = -L$(LIB_DIR) $(APP_LIB_DEPS)
+LIBS = $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIB_DIR)/$(GL_LIB) $(LIB_DIR)/$(GLU_LIB)
 
@@ -44,9 +44,6 @@ default: $(PROGS)
 
 
 clean:
-	-rm -f *.o *~
-
-realclean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
 

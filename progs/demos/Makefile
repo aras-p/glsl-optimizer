@@ -73,9 +73,6 @@ default: readtex.c readtex.h $(PROGS)
 
 
 clean:
-	-rm -f *.o *~
-
-realclean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
 	-rm -f readtex.[ch]

@@ -21,8 +21,9 @@ clean:
 	done
 
 
-realclean: clean
-	#-rm -rf $(LIB_DIR)
+realclean:
+	touch $(TOP)/configs/current
+	make clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
 

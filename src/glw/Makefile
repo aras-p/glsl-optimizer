@@ -27,7 +27,9 @@ default: $(LIB_DIR)/$(GLW_LIB_NAME)
 
 
 clean:
+	-rm depend
 	-rm -f *.o *~
+
 
 # Make the library
 $(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)

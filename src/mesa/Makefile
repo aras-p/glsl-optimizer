@@ -165,6 +165,7 @@ tags:
 
 clean:
 	-rm -f */*.o
+	rm -f depend
 	for dir in $(SUBDIRS) ; do \
 		pushd $$dir ; \
 		make clean ; \
