@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.88 2002/09/27 02:45:39 brianp Exp $ */
+/* $Id: osmesa.c,v 1.89 2002/10/05 03:02:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -767,9 +767,10 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 }
 	 else if (osmesa->format == OSMESA_RGB) {
-	    const GLchan r = ctx->Color.ClearColor[0];
-	    const GLchan g = ctx->Color.ClearColor[1];
-	    const GLchan b = ctx->Color.ClearColor[2];
+            GLchan r, g, b;
+            CLAMPED_FLOAT_TO_CHAN(r, ctx->Color.ClearColor[0]);
+            CLAMPED_FLOAT_TO_CHAN(g, ctx->Color.ClearColor[1]);
+            CLAMPED_FLOAT_TO_CHAN(b, ctx->Color.ClearColor[2]);
 	    if (all) {
 	       /* Clear whole RGB buffer */
 	       GLuint n = osmesa->rowlength * osmesa->height;
@@ -793,9 +794,10 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 }
 	 else if (osmesa->format == OSMESA_BGR) {
-	    const GLchan r = ctx->Color.ClearColor[0];
-	    const GLchan g = ctx->Color.ClearColor[1];
-	    const GLchan b = ctx->Color.ClearColor[2];
+            GLchan r, g, b;
+            CLAMPED_FLOAT_TO_CHAN(r, ctx->Color.ClearColor[0]);
+            CLAMPED_FLOAT_TO_CHAN(g, ctx->Color.ClearColor[1]);
+            CLAMPED_FLOAT_TO_CHAN(b, ctx->Color.ClearColor[2]);
 	    if (all) {
 	       /* Clear whole RGB buffer */
 	       const GLint n = osmesa->rowlength * osmesa->height;
@@ -819,10 +821,11 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    }
 	 }
          else if (osmesa->format == OSMESA_RGB_565) {
-	    const GLchan r = ctx->Color.ClearColor[0];
-	    const GLchan g = ctx->Color.ClearColor[1];
-	    const GLchan b = ctx->Color.ClearColor[2];
             GLushort clearPixel;
+            GLchan r, g, b;
+            CLAMPED_FLOAT_TO_CHAN(r, ctx->Color.ClearColor[0]);
+            CLAMPED_FLOAT_TO_CHAN(g, ctx->Color.ClearColor[1]);
+            CLAMPED_FLOAT_TO_CHAN(b, ctx->Color.ClearColor[2]);
             PACK_RGB_565(clearPixel, r, g, b);
             if (all) {
                /* Clear whole RGB buffer */
@@ -851,10 +854,10 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    /* 4-byte pixel value */
 	    GLuint clearPixel;
 	    GLchan *clr = (GLchan *) &clearPixel;
-	    clr[osmesa->rInd] = ctx->Color.ClearColor[0];
-	    clr[osmesa->gInd] = ctx->Color.ClearColor[1];
-	    clr[osmesa->bInd] = ctx->Color.ClearColor[2];
-	    clr[osmesa->aInd] = ctx->Color.ClearColor[3];
+            CLAMPED_FLOAT_TO_CHAN(clr[osmesa->rInd], ctx->Color.ClearColor[0]);
+            CLAMPED_FLOAT_TO_CHAN(clr[osmesa->gInd], ctx->Color.ClearColor[1]);
+            CLAMPED_FLOAT_TO_CHAN(clr[osmesa->bInd], ctx->Color.ClearColor[2]);
+            CLAMPED_FLOAT_TO_CHAN(clr[osmesa->aInd], ctx->Color.ClearColor[3]);
 	    if (all) {
 	       /* Clear whole RGBA buffer */
 	       const GLuint n = osmesa->rowlength * osmesa->height;
@@ -880,10 +883,11 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       }
 	    }
 #else
-	    const GLchan r = ctx->Color.ClearColor[0];
-	    const GLchan g = ctx->Color.ClearColor[1];
-	    const GLchan b = ctx->Color.ClearColor[2];
-	    const GLchan a = ctx->Color.ClearColor[3];
+            GLchan r, g, b, a;
+            CLAMPED_FLOAT_TO_CHAN(r, ctx->Color.ClearColor[0]);
+            CLAMPED_FLOAT_TO_CHAN(g, ctx->Color.ClearColor[1]);
+            CLAMPED_FLOAT_TO_CHAN(b, ctx->Color.ClearColor[2]);
+            CLAMPED_FLOAT_TO_CHAN(a, ctx->Color.ClearColor[3]);
 	    if (all) {
 	       /* Clear whole RGBA buffer */
 	       const GLuint n = osmesa->rowlength * osmesa->height;
