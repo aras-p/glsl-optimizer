@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.25 2000/12/08 18:08:15 brianp Exp $ */
+/* $Id: glx.h,v 1.26 2000/12/14 17:44:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -414,7 +414,7 @@ extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
 #define GLX_3DFX_WINDOW_MODE_MESA       0x1
 #define GLX_3DFX_FULLSCREEN_MODE_MESA   0x2
 
-extern GLboolean glXSet3DfxModeMESA( GLint mode );
+extern Bool glXSet3DfxModeMESA( int mode );
 
 #endif /* GLX_MESA_set_3dfx_mode */
 
