@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.2 2001/03/28 20:40:52 gareth Exp $ */
+/* $Id: s_texstore.c,v 1.3 2001/04/13 00:13:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -274,6 +274,22 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
          return;
       }
 
+      /*
+       * XXX this is a bit of a hack.  We need to be sure that the alpha
+       * channel is 1.0 if the internal texture format is not supposed to
+       * have an alpha channel.  This is because some drivers may store
+       * RGB textures as RGBA and the texutil.c code isn't smart enough
+       * to set the alpha channel to 1.0 in this situation.
+       */
+      if (texImage->Format == GL_LUMINANCE ||
+          texImage->Format == GL_RGB) {
+         const GLuint n = width * 4;
+         GLuint i;
+         for (i = 0; i < n; i += 4) {
+            image[i + 3] = CHAN_MAX;
+         }
+      }
+
       /* now call glTexSubImage1D to do the real work */
       (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
                                    GL_RGBA, CHAN_TYPE, image,
@@ -324,6 +340,22 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
       if (!image) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
          return;
+      }
+
+      /*
+       * XXX this is a bit of a hack.  We need to be sure that the alpha
+       * channel is 1.0 if the internal texture format is not supposed to
+       * have an alpha channel.  This is because some drivers may store
+       * RGB textures as RGBA and the texutil.c code isn't smart enough
+       * to set the alpha channel to 1.0 in this situation.
+       */
+      if (texImage->Format == GL_LUMINANCE ||
+          texImage->Format == GL_RGB) {
+         const GLuint n = width * height * 4;
+         GLuint i;
+         for (i = 0; i < n; i += 4) {
+            image[i + 3] = CHAN_MAX;
+         }
       }
 
       /* now call glTexSubImage2D to do the real work */
@@ -378,6 +410,22 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
       if (!image) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
          return;
+      }
+
+      /*
+       * XXX this is a bit of a hack.  We need to be sure that the alpha
+       * channel is 1.0 if the internal texture format is not supposed to
+       * have an alpha channel.  This is because some drivers may store
+       * RGB textures as RGBA and the texutil.c code isn't smart enough
+       * to set the alpha channel to 1.0 in this situation.
+       */
+      if (texImage->Format == GL_LUMINANCE ||
+          texImage->Format == GL_RGB) {
+         const GLuint n = width * height * 4;
+         GLuint i;
+         for (i = 0; i < n; i += 4) {
+            image[i + 3] = CHAN_MAX;
+         }
       }
 
       /* now call glTexSubImage3D to do the real work */
