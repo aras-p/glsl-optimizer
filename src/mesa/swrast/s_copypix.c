@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.11 2001/02/20 16:42:26 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.12 2001/02/22 17:59:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,23 +47,43 @@
 
 
 /*
- * Determine if there's overlap in an image copy
+ * Determine if there's overlap in an image copy.
+ * This test also compensates for the fact that copies are done from
+ * bottom to top and overlaps can sometimes be handled correctly
+ * without making a temporary image copy.
  */
 static GLboolean
-regions_overlap(int srcx, int srcy, int dstx, int dsty, int width, int height,
-                float zoomX, float zoomY)
+regions_overlap(GLint srcx, GLint srcy,
+                GLint dstx, GLint dsty,
+                GLint width, GLint height,
+                GLfloat zoomX, GLfloat zoomY)
 {
-   if ((srcx > dstx + (width * zoomX) + 1) || (srcx + width + 1 < dstx)) {
-      return GL_FALSE;
-   }
-   else if ((srcy < dsty) && (srcy + height < dsty + (height * zoomY))) {
-      return GL_FALSE;
-   }
-   else if ((srcy > dsty) && (srcy + height > dsty + (height * zoomY))) {
-      return GL_FALSE;
+   if (zoomX == 1.0 && zoomY == 1.0) {
+      /* no zoom */
+      if (srcx >= dstx + width || (srcx + width <= dstx)) {
+         return GL_FALSE;
+      }
+      else if (srcy < dsty) { /* this is OK */
+         return GL_FALSE;
+      }
+      else {
+         return GL_TRUE;
+      }
    }
    else {
-      return GL_TRUE;
+      /* add one pixel of slop when zooming, just to be safe */
+      if ((srcx > dstx + (width * zoomX) + 1) || (srcx + width + 1 < dstx)) {
+         return GL_FALSE;
+      }
+      else if ((srcy < dsty) && (srcy + height < dsty + (height * zoomY))) {
+         return GL_FALSE;
+      }
+      else if ((srcy > dsty) && (srcy + height > dsty + (height * zoomY))) {
+         return GL_FALSE;
+      }
+      else {
+         return GL_TRUE;
+      }
    }
 }
 
