@@ -75,7 +75,7 @@ default: depend symlinks $(LIB_DIR)/$(LIBNAME)
 
 
 $(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(GL_LIB_DEPS)
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
 
