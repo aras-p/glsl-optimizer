@@ -1,8 +1,8 @@
-/* $Id: imports.h,v 1.8 2002/10/30 19:49:29 brianp Exp $ */
+/* $Id: imports.h,v 1.9 2002/12/06 03:10:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -177,7 +177,7 @@ extern void
 _mesa_warning( __GLcontext *gc, const char *fmtString, ... );
 
 extern void
-_mesa_problem( const __GLcontext *ctx, const char *s );
+_mesa_problem( const __GLcontext *ctx, const char *fmtString, ... );
 
 extern void
 _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
