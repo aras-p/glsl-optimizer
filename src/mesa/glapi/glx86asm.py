@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.4 2001/11/18 22:42:57 brianp Exp $
+# $Id: glx86asm.py,v 1.5 2002/04/02 16:18:20 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -52,7 +52,7 @@ def PrintHead():
 	print ''
 	print '#define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))'
 	print ''
-	print '#ifdef GNU_ASSEMBLER'
+	print '#if defined(GNU_ASSEMBLER) && !defined(DJGPP)'
 	print '#define GLOBL_FN(x) GLOBL x ; .type x,@function'
 	print '#else'
 	print '#define GLOBL_FN(x) GLOBL x'

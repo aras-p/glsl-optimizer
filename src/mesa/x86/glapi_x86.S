@@ -12,7 +12,7 @@
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))
 
-#ifdef GNU_ASSEMBLER
+#if defined(GNU_ASSEMBLER) && !defined(DJGPP)
 #define GLOBL_FN(x) GLOBL x ; .type x,@function
 #else
 #define GLOBL_FN(x) GLOBL x
