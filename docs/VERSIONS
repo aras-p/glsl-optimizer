@@ -1287,7 +1287,9 @@ Mesa Version History
 	- fixed a few compilation issues on IRIX
 	- fixed a matrix classification bug (reported by Wes Bethel)
 	- we weren't reseting the vertex/fragment program error state
-	   before parsing (Dave Reveman)
+	  before parsing (Dave Reveman)
 	- adjust texcoords for sampling texture rectangles (Dave Reveman)
 	- glGet*(GL_MAX_VERTEX_ATTRIBS_ARB) wasn't implemented
 	- repeated calls to glDeleteTexture(t) could lead to a crash
+	- fixed potential ref count bugs in VBOs and vertex/fragment programs
+	- spriteblast demo didn't handle window size changes correctly
