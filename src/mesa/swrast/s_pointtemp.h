@@ -1,10 +1,10 @@
-/* $Id: s_pointtemp.h,v 1.2 2001/01/04 15:31:38 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.3 2001/01/30 16:38:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -219,8 +219,8 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
          for (x = xmin; x <= xmax; x++) {
 #if FLAGS & SMOOTH
             /* compute coverage */
-            const GLfloat dx = x - vert->win[0];
-            const GLfloat dy = y - vert->win[1];
+            const GLfloat dx = x - vert->win[0] + 0.5F;
+            const GLfloat dy = y - vert->win[1] + 0.5F;
             const GLfloat dist2 = dx * dx + dy * dy;
             if (dist2 < rmax2) {
 #if FLAGS & RGBA
