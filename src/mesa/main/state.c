@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.51 2000/12/08 00:20:15 brianp Exp $ */
+/* $Id: state.c,v 1.52 2000/12/16 00:19:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -524,12 +524,15 @@ update_polygon( GLcontext *ctx )
    }
 
    /* Any Polygon offsets enabled? */
+   ctx->Polygon._OffsetAny = GL_FALSE;
    ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
 
    if (ctx->Polygon.OffsetPoint ||
        ctx->Polygon.OffsetLine ||
-       ctx->Polygon.OffsetFill)
+       ctx->Polygon.OffsetFill) {
       ctx->_TriangleCaps |= DD_TRI_OFFSET;
+      ctx->Polygon._OffsetAny = GL_TRUE;
+   }
 }
 
 static void
