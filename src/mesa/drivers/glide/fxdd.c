@@ -1855,13 +1855,10 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_shared_texture_palette");
    _mesa_enable_extension(ctx, "GL_EXT_blend_func_separate");
    _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
+   _mesa_enable_extension(ctx, "GL_EXT_stencil_wrap");
 
    if (fxMesa->haveTwoTMUs) {
       _mesa_enable_extension(ctx, "GL_ARB_multitexture");
-   }
-
-   if (fxMesa->haveHwStencil) {
-      _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
    }
 
    if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
