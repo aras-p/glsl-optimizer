@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.13 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: lines.c,v 1.14 2000/09/29 16:58:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -974,9 +974,16 @@ static void aa_multitex_rgba_line( GLcontext *ctx,
 #define INTERP_STUV1 1
 #define PLOT(x, y)							\
    {									\
+      GLfloat texcoord[MAX_TEXTURE_UNITS][4];				\
+      texcoord[0][0] = s;						\
+      texcoord[0][1] = t;						\
+      texcoord[0][2] = u;						\
+      texcoord[1][0] = s1;						\
+      texcoord[1][1] = t1;						\
+      texcoord[1][2] = u1;						\
       PB_WRITE_MULTITEX_SPEC_PIXEL( pb, (x), (y), z,			\
             red, green, blue, coverage, specRed, specGreen, specBlue,	\
-            s, t, u, s1, t1, u1 );					\
+            texcoord );							\
    }
 #include "lnaatemp.h"
 }

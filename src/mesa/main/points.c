@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.13 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: points.c,v 1.14 2000/09/29 16:58:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -412,17 +412,20 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
    for (i = first; i <= last; i++) {
       if (VB->ClipMask[i] == 0) {
+         const GLint red   = VB->ColorPtr->data[i][0];
+         const GLint green = VB->ColorPtr->data[i][1];
+         const GLint blue  = VB->ColorPtr->data[i][2];
+         const GLint alpha = VB->ColorPtr->data[i][3];
+	 const GLint sRed   = VB->Specular ? VB->Specular[i][0] : 0;
+	 const GLint sGreen = VB->Specular ? VB->Specular[i][1] : 0;
+	 const GLint sBlue  = VB->Specular ? VB->Specular[i][2] : 0;
+         const GLint x = (GLint)  VB->Win.data[i][0];
+         const GLint y = (GLint)  VB->Win.data[i][1];
+         const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLint x0, x1, y0, y1;
          GLint ix, iy;
-         GLint radius;
-         GLint red, green, blue, alpha;
-         GLint sRed, sGreen, sBlue;
-         GLfloat s, t, u;
-         GLfloat s1, t1, u1;
-
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+         GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+         GLint radius, u;
          GLint isize = (GLint) (ctx->Point.Size + 0.5F);
 
          if (isize < 1) {
@@ -445,74 +448,45 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-         red   = VB->ColorPtr->data[i][0];
-         green = VB->ColorPtr->data[i][1];
-         blue  = VB->ColorPtr->data[i][2];
-         alpha = VB->ColorPtr->data[i][3];
-	 sRed   = VB->Specular ? VB->Specular[i][0] : 0;
-	 sGreen = VB->Specular ? VB->Specular[i][1] : 0;
-	 sBlue  = VB->Specular ? VB->Specular[i][2] : 0;
-	 
-	 switch (VB->TexCoordPtr[0]->size) {
-	 case 4:
-	    s = VB->TexCoordPtr[0]->data[i][0]/VB->TexCoordPtr[0]->data[i][3];
-	    t = VB->TexCoordPtr[0]->data[i][1]/VB->TexCoordPtr[0]->data[i][3];
-	    u = VB->TexCoordPtr[0]->data[i][2]/VB->TexCoordPtr[0]->data[i][3];
-	    break;
-	 case 3:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = VB->TexCoordPtr[0]->data[i][1];
-	    u = VB->TexCoordPtr[0]->data[i][2];
-	    break;
-	 case 2:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = VB->TexCoordPtr[0]->data[i][1];
-	    u = 0.0;
-	    break;
-	 case 1:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = 0.0;
-	    u = 0.0;
-	    break;
-         default:
-            /* should never get here */
-            s = t = u = 0.0;
-            gl_problem(ctx, "unexpected texcoord size in multitextured_rgba_points()");
-	 }
+         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+            if (ctx->Texture.Unit[u].ReallyEnabled) {
+               switch (VB->TexCoordPtr[0]->size) {
+               case 4:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  break;
+               case 3:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                  texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2];
+                  break;
+               case 2:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                  texcoord[u][2] = 0.0;
+                  break;
+               case 1:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = 0.0;
+                  texcoord[u][2] = 0.0;
+                  break;
+               default:
+                  /* should never get here */
+                  gl_problem(ctx, "unexpected texcoord size");
+               }
+            }
+         }
 
-	 switch (VB->TexCoordPtr[1]->size) {
-	 case 4:
-	    s1 = VB->TexCoordPtr[1]->data[i][0]/VB->TexCoordPtr[1]->data[i][3];
-	    t1 = VB->TexCoordPtr[1]->data[i][1]/VB->TexCoordPtr[1]->data[i][3];
-	    u1 = VB->TexCoordPtr[1]->data[i][2]/VB->TexCoordPtr[1]->data[i][3];
-	    break;
-	 case 3:
-	    s1 = VB->TexCoordPtr[1]->data[i][0];
-	    t1 = VB->TexCoordPtr[1]->data[i][1];
-	    u1 = VB->TexCoordPtr[1]->data[i][2];
-	    break;
-	 case 2:
-	    s1 = VB->TexCoordPtr[1]->data[i][0];
-	    t1 = VB->TexCoordPtr[1]->data[i][1];
-	    u1 = 0.0;
-	    break;
-	 case 1:
-	    s1 = VB->TexCoordPtr[1]->data[i][0];
-	    t1 = 0.0;
-	    u1 = 0.0;
-	    break;
-         default:
-            /* should never get here */
-            s1 = t1 = u1 = 0.0;
-            gl_problem(ctx, "unexpected texcoord size in multitextured_rgba_points()");
-	 }
-
-         for (iy=y0;iy<=y1;iy++) {
-            for (ix=x0;ix<=x1;ix++) {
+         for (iy = y0; iy <= y1; iy++) {
+            for (ix = x0; ix <= x1; ix++) {
                PB_WRITE_MULTITEX_SPEC_PIXEL( PB, ix, iy, z,
                                              red, green, blue, alpha,
                                              sRed, sGreen, sBlue,
-                                             s, t, u, s1, t1, u1 );
+                                             texcoord );
             }
          }
          PB_CHECK_FLUSH(ctx, PB);
@@ -554,85 +528,51 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
       for (i = first; i <= last; i++) {
          if (VB->ClipMask[i] == 0) {
             GLint x, y;
-            GLint red, green, blue, alpha;
-            GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
-            GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
             GLfloat vx = VB->Win.data[i][0];
             GLfloat vy = VB->Win.data[i][1];
+            const GLint xmin = (GLint) (vx - radius);
+            const GLint xmax = (GLint) (vx + radius);
+            const GLint ymin = (GLint) (vy - radius);
+            const GLint ymax = (GLint) (vy + radius);
+            const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+            const GLint red   = VB->ColorPtr->data[i][0];
+            const GLint green = VB->ColorPtr->data[i][1];
+            const GLint blue  = VB->ColorPtr->data[i][2];
+            GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+            GLint u, alpha;
 
-            GLint xmin = (GLint) (vx - radius);
-            GLint xmax = (GLint) (vx + radius);
-            GLint ymin = (GLint) (vy - radius);
-            GLint ymax = (GLint) (vy + radius);
-            GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
-
-            red   = VB->ColorPtr->data[i][0];
-            green = VB->ColorPtr->data[i][1];
-            blue  = VB->ColorPtr->data[i][2];
-
-	    switch (VB->TexCoordPtr[0]->size) {
-	    case 4:
-	       s = (VB->TexCoordPtr[0]->data[i][0]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       t = (VB->TexCoordPtr[0]->data[i][1]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       u = (VB->TexCoordPtr[0]->data[i][2]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       break;
-	    case 3:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = VB->TexCoordPtr[0]->data[i][1];
-	       u = VB->TexCoordPtr[0]->data[i][2];
-	       break;
-	    case 2:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = VB->TexCoordPtr[0]->data[i][1];
-	       u = 0.0;
-	       break;
-	    case 1:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = 0.0;
-	       u = 0.0;
-	       break;
-            default:
-               /* should never get here */
-               s = t = u = 0.0;
-               gl_problem(ctx, "unexpected texcoord size in antialiased_rgba_points()");
-	    }
-
-	    if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
-	       /* Multitextured!  This is probably a slow enough path that
-		  there's no reason to specialize the multitexture case. */
-	       switch (VB->TexCoordPtr[1]->size) {
-	       case 4:
-		  s1 = ( VB->TexCoordPtr[1]->data[i][0] /  
-			 VB->TexCoordPtr[1]->data[i][3]);
-		  t1 = ( VB->TexCoordPtr[1]->data[i][1] / 
-			 VB->TexCoordPtr[1]->data[i][3]);
-		  u1 = ( VB->TexCoordPtr[1]->data[i][2] / 
-			 VB->TexCoordPtr[1]->data[i][3]);
-		  break;
-	       case 3:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = VB->TexCoordPtr[1]->data[i][1];
-		  u1 = VB->TexCoordPtr[1]->data[i][2];
-		  break;
-	       case 2:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = VB->TexCoordPtr[1]->data[i][1];
-		  u1 = 0.0;
-		  break;
-	       case 1:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = 0.0;
-		  u1 = 0.0;
-		  break;
-               default:
-                  /* should never get here */
-                  s1 = t1 = u1 = 0.0;
-                  gl_problem(ctx, "unexpected texcoord size in antialiased_rgba_points()");
-	       }
-	    }
+            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+               if (ctx->Texture.Unit[u].ReallyEnabled) {
+                  switch (VB->TexCoordPtr[0]->size) {
+                  case 4:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     break;
+                  case 3:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                     texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2];
+                     break;
+                  case 2:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                     texcoord[u][2] = 0.0;
+                     break;
+                  case 1:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = 0.0;
+                     texcoord[u][2] = 0.0;
+                     break;
+                  default:
+                     /* should never get here */
+                     gl_problem(ctx, "unexpected texcoord size in antialiased_rgba_points()");
+                  }
+               }
+            }
 
             /* translate by a half pixel to simplify math below */
             vx -= 0.5F;
@@ -652,10 +592,13 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                      }
                      if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
                         PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, red, green, blue, 
-						 alpha, s, t, u, s1, t1, u1 );
-                     } else {
-                        PB_WRITE_TEX_PIXEL( PB, x,y,z, red, green, blue, 
-					    alpha, s, t, u );
+						 alpha, texcoord );
+                     }
+                     else {
+                        PB_WRITE_TEX_PIXEL( PB, x,y,z, red, green, blue, alpha,
+                                            texcoord[0][0],
+                                            texcoord[0][1],
+                                            texcoord[0][2] );
                      }
                   }
                }
@@ -669,19 +612,15 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
       /* Not texture mapped */
       for (i=first;i<=last;i++) {
          if (VB->ClipMask[i]==0) {
-            GLint xmin, ymin, xmax, ymax;
-            GLint x, y, z;
-            GLint red, green, blue, alpha;
-
-            xmin = (GLint) (VB->Win.data[i][0] - 0.0 - radius);
-            xmax = (GLint) (VB->Win.data[i][0] - 0.0 + radius);
-            ymin = (GLint) (VB->Win.data[i][1] - 0.0 - radius);
-            ymax = (GLint) (VB->Win.data[i][1] - 0.0 + radius);
-            z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
-
-            red   = VB->ColorPtr->data[i][0];
-            green = VB->ColorPtr->data[i][1];
-            blue  = VB->ColorPtr->data[i][2];
+            const GLint xmin = (GLint) (VB->Win.data[i][0] - 0.0 - radius);
+            const GLint xmax = (GLint) (VB->Win.data[i][0] - 0.0 + radius);
+            const GLint ymin = (GLint) (VB->Win.data[i][1] - 0.0 - radius);
+            const GLint ymax = (GLint) (VB->Win.data[i][1] - 0.0 + radius);
+            const GLint red   = VB->ColorPtr->data[i][0];
+            const GLint green = VB->ColorPtr->data[i][1];
+            const GLint blue  = VB->ColorPtr->data[i][2];
+            const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+            GLint x, y;
 
             /*
             printf("point %g, %g\n", VB->Win.data[i][0], VB->Win.data[i][1]);
@@ -693,14 +632,13 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                   const GLfloat dy = y + 0.5F - VB->Win.data[i][1];
                   const GLfloat dist2 = dx*dx + dy*dy;
                   if (dist2 < rmax2) {
-                     alpha = VB->ColorPtr->data[i][3];
+                     GLint alpha = VB->ColorPtr->data[i][3];
                      if (dist2 >= rmin2) {
                         GLint coverage = (GLint) (256.0F - (dist2 - rmin2) * cscale);
                         /* coverage is in [0,256] */
                         alpha = (alpha * coverage) >> 8;
                      }
-                     PB_WRITE_RGBA_PIXEL( PB, x, y, z, red, green, blue, 
-					  alpha );
+                     PB_WRITE_RGBA_PIXEL(PB, x, y, z, red, green, blue, alpha);
                   }
                }
             }
@@ -929,8 +867,8 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                        VB->ColorPtr->data[i][2],
                        alpha );
 
-         for (iy=y0;iy<=y1;iy++) {
-            for (ix=x0;ix<=x1;ix++) {
+         for (iy = y0; iy <= y1; iy++) {
+            for (ix = x0; ix <= x1; ix++) {
                PB_WRITE_PIXEL( PB, ix, iy, z );
             }
          }
@@ -958,19 +896,20 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
    for (i=first;i<=last;i++) {
       if (VB->ClipMask[i]==0) {
+         const GLint x = (GLint)  VB->Win.data[i][0];
+         const GLint y = (GLint)  VB->Win.data[i][1];
+         const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
+	 const GLint red   = VB->ColorPtr->data[i][0];
+	 const GLint green = VB->ColorPtr->data[i][1];
+	 const GLint blue  = VB->ColorPtr->data[i][2];
+         GLfloat texcoord[MAX_TEXTURE_UNITS][4];
          GLint x0, x1, y0, y1;
-         GLint ix, iy;
+         GLint ix, iy, alpha, u;
          GLint isize, radius;
-         GLint red, green, blue, alpha;
-         GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
-         GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
-
-         GLint x = (GLint)  VB->Win.data[i][0];
-         GLint y = (GLint)  VB->Win.data[i][1];
-         GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
-
          GLfloat dsize = psize*dist[i];
-         if(dsize >= ctx->Point.Threshold) {
+
+         /* compute point size and alpha */
+         if (dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
             alpha = VB->ColorPtr->data[i][3];
          }
@@ -979,7 +918,6 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             dsize /= ctx->Point.Threshold;
             alpha = (GLint) (VB->ColorPtr->data[i][3] * (dsize * dsize));
          }
-
          if (isize < 1) {
             isize = 1;
          }
@@ -1000,84 +938,52 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             y1 = y0 + isize - 1;
          }
 
-	 red   = VB->ColorPtr->data[i][0];
-	 green = VB->ColorPtr->data[i][1];
-	 blue  = VB->ColorPtr->data[i][2];
-	 
-	 switch (VB->TexCoordPtr[0]->size) {
-	 case 4:
-	    s = (VB->TexCoordPtr[0]->data[i][0]/
-		 VB->TexCoordPtr[0]->data[i][3]);
-	    t = (VB->TexCoordPtr[0]->data[i][1]/
-		 VB->TexCoordPtr[0]->data[i][3]);
-	    u = (VB->TexCoordPtr[0]->data[i][2]/
-		 VB->TexCoordPtr[0]->data[i][3]);
-	    break;
-	 case 3:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = VB->TexCoordPtr[0]->data[i][1];
-	    u = VB->TexCoordPtr[0]->data[i][2];
-	    break;
-	 case 2:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = VB->TexCoordPtr[0]->data[i][1];
-	    u = 0.0;
-	    break;
-	 case 1:
-	    s = VB->TexCoordPtr[0]->data[i][0];
-	    t = 0.0;
-	    u = 0.0;
-	    break;
-         default:
-            /* should never get here */
-            s = t = u = 0.0;
-            gl_problem(ctx, "unexpected texcoord size in dist_atten_textured_rgba_points()");
-	 }
+         /* get texture coordinates */
+         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+            if (ctx->Texture.Unit[u].ReallyEnabled) {
+               switch (VB->TexCoordPtr[0]->size) {
+               case 4:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2] /
+                                   VB->TexCoordPtr[u]->data[i][3];
+                  break;
+               case 3:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                  texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2];
+                  break;
+               case 2:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                  texcoord[u][2] = 0.0;
+                  break;
+               case 1:
+                  texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                  texcoord[u][1] = 0.0;
+                  texcoord[u][2] = 0.0;
+                  break;
+               default:
+                  /* should never get here */
+                  gl_problem(ctx, "unexpected texcoord size");
+               }
+            }
+         }
 
-	 if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
-	    /* Multitextured!  This is probably a slow enough path that
-	       there's no reason to specialize the multitexture case. */
-	    switch (VB->TexCoordPtr[1]->size) {
-	    case 4:
-	       s1 = ( VB->TexCoordPtr[1]->data[i][0] /  
-		      VB->TexCoordPtr[1]->data[i][3] );
-	       t1 = ( VB->TexCoordPtr[1]->data[i][1] / 
-		      VB->TexCoordPtr[1]->data[i][3] );
-	       u1 = ( VB->TexCoordPtr[1]->data[i][2] / 
-		      VB->TexCoordPtr[1]->data[i][3] );
-	       break;
-	    case 3:
-	       s1 = VB->TexCoordPtr[1]->data[i][0];
-	       t1 = VB->TexCoordPtr[1]->data[i][1];
-	       u1 = VB->TexCoordPtr[1]->data[i][2];
-	       break;
-	    case 2:
-	       s1 = VB->TexCoordPtr[1]->data[i][0];
-	       t1 = VB->TexCoordPtr[1]->data[i][1];
-	       u1 = 0.0;
-	       break;
-	    case 1:
-	       s1 = VB->TexCoordPtr[1]->data[i][0];
-	       t1 = 0.0;
-	       u1 = 0.0;
-	       break;
-            default:
-               /* should never get here */
-               s1 = t1 = u1 = 0.0;
-               gl_problem(ctx, "unexpected texcoord size in dist_atten_textured_rgba_points()");
-	    }
-	 }
-
-/*    don't think this is needed
-      PB_SET_COLOR( red, green, blue, alpha );
-*/
-  
-         for (iy=y0;iy<=y1;iy++) {
-            for (ix=x0;ix<=x1;ix++) {
+         for (iy = y0; iy <= y1; iy++) {
+            for (ix = x0; ix <= x1; ix++) {
                if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
-                  PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha, s, t, u, s1, t1, u1 );
-               } else {
-                  PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha, s, t, u );
+                  PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z,
+                                           red, green, blue, alpha,
+                                           texcoord );
+               }
+               else {
+                  PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha,
+                                      texcoord[0][0],
+                                      texcoord[0][1],
+                                      texcoord[0][2] );
                }
             }
          }
@@ -1110,9 +1016,9 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLint xmin, ymin, xmax, ymax;
             GLint x, y, z;
             GLint red, green, blue, alpha;
-            GLfloat s = 0.0F, t = 0.0F, u = 0.0F;
-            GLfloat s1 = 0.0F, t1 = 0.0F, u1 = 0.0F;
+            GLfloat texcoord[MAX_TEXTURE_UNITS][4];
             GLfloat dsize = psize * dist[i];
+            GLint u;
 
             if (dsize >= ctx->Point.Threshold) {
                radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
@@ -1139,69 +1045,39 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 	    green = VB->ColorPtr->data[i][1];
 	    blue  = VB->ColorPtr->data[i][2];
 	 
-	    switch (VB->TexCoordPtr[0]->size) {
-	    case 4:
-	       s = (VB->TexCoordPtr[0]->data[i][0]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       t = (VB->TexCoordPtr[0]->data[i][1]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       u = (VB->TexCoordPtr[0]->data[i][2]/
-		    VB->TexCoordPtr[0]->data[i][3]);
-	       break;
-	    case 3:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = VB->TexCoordPtr[0]->data[i][1];
-	       u = VB->TexCoordPtr[0]->data[i][2];
-	       break;
-	    case 2:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = VB->TexCoordPtr[0]->data[i][1];
-	       u = 0.0;
-	       break;
-	    case 1:
-	       s = VB->TexCoordPtr[0]->data[i][0];
-	       t = 0.0;
-	       u = 0.0;
-	       break;
-            default:
-               /* should never get here */
-               s = t = u = 0.0;
-               gl_problem(ctx, "unexpected texcoord size in dist_atten_antialiased_rgba_points()");
-	    }
-
-	    if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
-	       /* Multitextured!  This is probably a slow enough path that
-		  there's no reason to specialize the multitexture case. */
-	       switch (VB->TexCoordPtr[1]->size) {
-	       case 4:
-		  s1 = ( VB->TexCoordPtr[1]->data[i][0] /  
-			 VB->TexCoordPtr[1]->data[i][3] );
-		  t1 = ( VB->TexCoordPtr[1]->data[i][1] / 
-			 VB->TexCoordPtr[1]->data[i][3] );
-		  u1 = ( VB->TexCoordPtr[1]->data[i][2] / 
-			 VB->TexCoordPtr[1]->data[i][3] );
-		  break;
-	       case 3:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = VB->TexCoordPtr[1]->data[i][1];
-		  u1 = VB->TexCoordPtr[1]->data[i][2];
-		  break;
-	       case 2:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = VB->TexCoordPtr[1]->data[i][1];
-		  u1 = 0.0;
-		  break;
-	       case 1:
-		  s1 = VB->TexCoordPtr[1]->data[i][0];
-		  t1 = 0.0;
-		  u1 = 0.0;
-		  break;
-               default:
-                  /* should never get here */
-                  s = t = u = 0.0;
-                  gl_problem(ctx, "unexpected texcoord size in dist_atten_antialiased_rgba_points()");
-	       }
-	    }
+            /* get texture coordinates */
+            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+               if (ctx->Texture.Unit[u].ReallyEnabled) {
+                  switch (VB->TexCoordPtr[0]->size) {
+                  case 4:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2] /
+                                      VB->TexCoordPtr[u]->data[i][3];
+                     break;
+                  case 3:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                     texcoord[u][2] = VB->TexCoordPtr[u]->data[i][2];
+                     break;
+                  case 2:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = VB->TexCoordPtr[u]->data[i][1];
+                     texcoord[u][2] = 0.0;
+                     break;
+                  case 1:
+                     texcoord[u][0] = VB->TexCoordPtr[u]->data[i][0];
+                     texcoord[u][1] = 0.0;
+                     texcoord[u][2] = 0.0;
+                     break;
+                  default:
+                     /* should never get here */
+                     gl_problem(ctx, "unexpected texcoord size");
+                  }
+               }
+            }
 
             for (y = ymin; y <= ymax; y++) {
                for (x = xmin; x <= xmax; x++) {
@@ -1217,11 +1093,15 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                      }
                      alpha = (GLint) (alpha * alphaf);
                      if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
-                        PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, red, green, blue,
-                                                 alpha, s, t, u, s1, t1, u1 );
-                     } else {
+                        PB_WRITE_MULTITEX_PIXEL( PB, x, y, z,
+                                                 red, green, blue, alpha,
+                                                 texcoord );
+                     }
+                     else {
                         PB_WRITE_TEX_PIXEL( PB, x,y,z, red, green, blue, alpha,
-                                            s, t, u );
+                                            texcoord[0][0],
+                                            texcoord[0][1],
+                                            texcoord[0][2] );
                      }
                   }
                }
