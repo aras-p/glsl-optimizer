@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.53 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: image.c,v 1.54 2001/02/13 23:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2505,9 +2505,6 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
-   /* this is intended for RGBA mode only */
-   assert(ctx->Visual.rgbMode);
-
    /* Try simple cases first */
    if (transferOps == 0 && srcType == CHAN_TYPE) {
       if (dstFormat == GL_RGBA) {
@@ -2828,9 +2825,6 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
           srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
           srcType == GL_UNSIGNED_INT_10_10_10_2 ||
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
-
-   /* this is intended for RGBA mode only */
-   assert(ctx->Visual.rgbMode);
 
    /* general solution, no special cases, yet */
    {
