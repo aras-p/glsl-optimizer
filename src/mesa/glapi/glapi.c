@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.19 2000/01/05 04:36:17 brianp Exp $ */
+/* $Id: glapi.c,v 1.20 2000/01/07 07:30:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,12 +44,7 @@
 #include "glapioffsets.h"
 #include "glapitable.h"
 
-#include <stdio.h>
 
-
-
-/* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_FALSE;
 
 /* This is used when thread safety is disabled */
 static struct _glapi_table *Dispatch = &__glapi_noop_table;
@@ -61,6 +56,9 @@ void *_glapi_CurrentContext = NULL;
 #if defined(THREADS)
 
 #include "glthread.h"
+
+/* Flag to indicate whether thread-safe dispatch is enabled */
+static GLboolean ThreadSafe = GL_FALSE;
 
 static _glthread_TSD DispatchTSD;
 
@@ -492,7 +490,6 @@ _glapi_check_table(const struct _glapi_table *table)
 }
 
 
-
 /**********************************************************************
  * Generate the GL entrypoint functions here.
  */
@@ -512,10 +509,7 @@ _glapi_check_table(const struct _glapi_table *table)
 #define DISPATCH(FUNC, ARGS) (dispatch->FUNC) ARGS
 
 
-
-
 #include "glapitemp.h"
-
 
 
 /*
@@ -842,303 +836,547 @@ static struct name_address_pair static_functions[] = {
 	{ "glViewport", (GLvoid *) glViewport },
 
 	/* GL 1.1 */
-	{ "glAreTexturesResident", (GLvoid *) glAreTexturesResident },
-	{ "glArrayElement", (GLvoid *) glArrayElement },
-	{ "glBindTexture", (GLvoid *) glBindTexture },
-	{ "glColorPointer", (GLvoid *) glColorPointer },
-	{ "glCopyTexImage1D", (GLvoid *) glCopyTexImage1D },
-	{ "glCopyTexImage2D", (GLvoid *) glCopyTexImage2D },
-	{ "glCopyTexSubImage1D", (GLvoid *) glCopyTexSubImage1D },
-	{ "glCopyTexSubImage2D", (GLvoid *) glCopyTexSubImage2D },
-	{ "glDeleteTextures", (GLvoid *) glDeleteTextures },
-	{ "glDisableClientState", (GLvoid *) glDisableClientState },
-	{ "glDrawArrays", (GLvoid *) glDrawArrays },
-	{ "glDrawElements", (GLvoid *) glDrawElements },
-	{ "glEdgeFlagPointer", (GLvoid *) glEdgeFlagPointer },
-	{ "glEnableClientState", (GLvoid *) glEnableClientState },
-	{ "glGenTextures", (GLvoid *) glGenTextures },
-	{ "glGetPointerv", (GLvoid *) glGetPointerv },
-	{ "glIndexPointer", (GLvoid *) glIndexPointer },
-	{ "glIndexub", (GLvoid *) glIndexub },
-	{ "glIndexubv", (GLvoid *) glIndexubv },
-	{ "glInterleavedArrays", (GLvoid *) glInterleavedArrays },
-	{ "glIsTexture", (GLvoid *) glIsTexture },
-	{ "glNormalPointer", (GLvoid *) glNormalPointer },
-	{ "glPopClientAttrib", (GLvoid *) glPopClientAttrib },
-	{ "glPrioritizeTextures", (GLvoid *) glPrioritizeTextures },
-	{ "glPushClientAttrib", (GLvoid *) glPushClientAttrib },
-	{ "glTexCoordPointer", (GLvoid *) glTexCoordPointer },
-	{ "glTexSubImage1D", (GLvoid *) glTexSubImage1D },
-	{ "glTexSubImage2D", (GLvoid *) glTexSubImage2D },
-	{ "glVertexPointer", (GLvoid *) glVertexPointer },
+#ifdef GL_VERSION_1_1
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glAreTexturesResident", (GLvoid *) NAME(glAreTexturesResident) },
+	{ "glArrayElement", (GLvoid *) NAME(glArrayElement) },
+	{ "glBindTexture", (GLvoid *) NAME(glBindTexture) },
+	{ "glColorPointer", (GLvoid *) NAME(glColorPointer) },
+	{ "glCopyTexImage1D", (GLvoid *) NAME(glCopyTexImage1D) },
+	{ "glCopyTexImage2D", (GLvoid *) NAME(glCopyTexImage2D) },
+	{ "glCopyTexSubImage1D", (GLvoid *) NAME(glCopyTexSubImage1D) },
+	{ "glCopyTexSubImage2D", (GLvoid *) NAME(glCopyTexSubImage2D) },
+	{ "glDeleteTextures", (GLvoid *) NAME(glDeleteTextures) },
+	{ "glDisableClientState", (GLvoid *) NAME(glDisableClientState) },
+	{ "glDrawArrays", (GLvoid *) NAME(glDrawArrays) },
+	{ "glDrawElements", (GLvoid *) NAME(glDrawElements) },
+	{ "glEdgeFlagPointer", (GLvoid *) NAME(glEdgeFlagPointer) },
+	{ "glEnableClientState", (GLvoid *) NAME(glEnableClientState) },
+	{ "glGenTextures", (GLvoid *) NAME(glGenTextures) },
+	{ "glGetPointerv", (GLvoid *) NAME(glGetPointerv) },
+	{ "glIndexPointer", (GLvoid *) NAME(glIndexPointer) },
+	{ "glIndexub", (GLvoid *) NAME(glIndexub) },
+	{ "glIndexubv", (GLvoid *) NAME(glIndexubv) },
+	{ "glInterleavedArrays", (GLvoid *) NAME(glInterleavedArrays) },
+	{ "glIsTexture", (GLvoid *) NAME(glIsTexture) },
+	{ "glNormalPointer", (GLvoid *) NAME(glNormalPointer) },
+	{ "glPopClientAttrib", (GLvoid *) NAME(glPopClientAttrib) },
+	{ "glPrioritizeTextures", (GLvoid *) NAME(glPrioritizeTextures) },
+	{ "glPushClientAttrib", (GLvoid *) NAME(glPushClientAttrib) },
+	{ "glTexCoordPointer", (GLvoid *) NAME(glTexCoordPointer) },
+	{ "glTexSubImage1D", (GLvoid *) NAME(glTexSubImage1D) },
+	{ "glTexSubImage2D", (GLvoid *) NAME(glTexSubImage2D) },
+	{ "glVertexPointer", (GLvoid *) NAME(glVertexPointer) },
+#undef NAME
 
 	/* GL 1.2 */
-	{ "glCopyTexSubImage3D", (GLvoid *) glCopyTexSubImage3D },
-	{ "glDrawRangeElements", (GLvoid *) glDrawRangeElements },
-	{ "glTexImage3D", (GLvoid *) glTexImage3D },
-	{ "glTexSubImage3D", (GLvoid *) glTexSubImage3D },
+#ifdef GL_VERSION_1_2
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glCopyTexSubImage3D", (GLvoid *) NAME(glCopyTexSubImage3D) },
+	{ "glDrawRangeElements", (GLvoid *) NAME(glDrawRangeElements) },
+	{ "glTexImage3D", (GLvoid *) NAME(glTexImage3D) },
+	{ "glTexSubImage3D", (GLvoid *) NAME(glTexSubImage3D) },
+#undef NAME
 
 	/* GL_ARB_imaging */
-	{ "glBlendColor", (GLvoid *) glBlendColor },
-	{ "glBlendEquation", (GLvoid *) glBlendEquation },
-	{ "glColorSubTable", (GLvoid *) glColorSubTable },
-	{ "glColorTable", (GLvoid *) glColorTable },
-	{ "glColorTableParameterfv", (GLvoid *) glColorTableParameterfv },
-	{ "glColorTableParameteriv", (GLvoid *) glColorTableParameteriv },
-	{ "glConvolutionFilter1D", (GLvoid *) glConvolutionFilter1D },
-	{ "glConvolutionFilter2D", (GLvoid *) glConvolutionFilter2D },
-	{ "glConvolutionParameterf", (GLvoid *) glConvolutionParameterf },
-	{ "glConvolutionParameterfv", (GLvoid *) glConvolutionParameterfv },
-	{ "glConvolutionParameteri", (GLvoid *) glConvolutionParameteri },
-	{ "glConvolutionParameteriv", (GLvoid *) glConvolutionParameteriv },
-	{ "glCopyColorSubTable", (GLvoid *) glCopyColorSubTable },
-	{ "glCopyColorTable", (GLvoid *) glCopyColorTable },
-	{ "glCopyConvolutionFilter1D", (GLvoid *) glCopyConvolutionFilter1D },
-	{ "glCopyConvolutionFilter2D", (GLvoid *) glCopyConvolutionFilter2D },
-	{ "glGetColorTable", (GLvoid *) glGetColorTable },
-	{ "glGetColorTableParameterfv", (GLvoid *) glGetColorTableParameterfv },
-	{ "glGetColorTableParameteriv", (GLvoid *) glGetColorTableParameteriv },
-	{ "glGetConvolutionFilter", (GLvoid *) glGetConvolutionFilter },
-	{ "glGetConvolutionParameterfv", (GLvoid *) glGetConvolutionParameterfv },
-	{ "glGetConvolutionParameteriv", (GLvoid *) glGetConvolutionParameteriv },
-	{ "glGetHistogram", (GLvoid *) glGetHistogram },
-	{ "glGetHistogramParameterfv", (GLvoid *) glGetHistogramParameterfv },
-	{ "glGetHistogramParameteriv", (GLvoid *) glGetHistogramParameteriv },
-	{ "glGetMinmax", (GLvoid *) glGetMinmax },
-	{ "glGetMinmaxParameterfv", (GLvoid *) glGetMinmaxParameterfv },
-	{ "glGetMinmaxParameteriv", (GLvoid *) glGetMinmaxParameteriv },
-	{ "glGetSeparableFilter", (GLvoid *) glGetSeparableFilter },
-	{ "glHistogram", (GLvoid *) glHistogram },
-	{ "glMinmax", (GLvoid *) glMinmax },
-	{ "glResetHistogram", (GLvoid *) glResetHistogram },
-	{ "glResetMinmax", (GLvoid *) glResetMinmax },
-	{ "glSeparableFilter2D", (GLvoid *) glSeparableFilter2D },
+#ifdef GL_ARB_imaging
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glBlendColor", (GLvoid *) NAME(glBlendColor) },
+	{ "glBlendEquation", (GLvoid *) NAME(glBlendEquation) },
+	{ "glColorSubTable", (GLvoid *) NAME(glColorSubTable) },
+	{ "glColorTable", (GLvoid *) NAME(glColorTable) },
+	{ "glColorTableParameterfv", (GLvoid *) NAME(glColorTableParameterfv) },
+	{ "glColorTableParameteriv", (GLvoid *) NAME(glColorTableParameteriv) },
+	{ "glConvolutionFilter1D", (GLvoid *) NAME(glConvolutionFilter1D) },
+	{ "glConvolutionFilter2D", (GLvoid *) NAME(glConvolutionFilter2D) },
+	{ "glConvolutionParameterf", (GLvoid *) NAME(glConvolutionParameterf) },
+	{ "glConvolutionParameterfv", (GLvoid *) NAME(glConvolutionParameterfv) },
+	{ "glConvolutionParameteri", (GLvoid *) NAME(glConvolutionParameteri) },
+	{ "glConvolutionParameteriv", (GLvoid *) NAME(glConvolutionParameteriv) },
+	{ "glCopyColorSubTable", (GLvoid *) NAME(glCopyColorSubTable) },
+	{ "glCopyColorTable", (GLvoid *) NAME(glCopyColorTable) },
+	{ "glCopyConvolutionFilter1D", (GLvoid *) NAME(glCopyConvolutionFilter1D) },
+	{ "glCopyConvolutionFilter2D", (GLvoid *) NAME(glCopyConvolutionFilter2D) },
+	{ "glGetColorTable", (GLvoid *) NAME(glGetColorTable) },
+	{ "glGetColorTableParameterfv", (GLvoid *) NAME(glGetColorTableParameterfv) },
+	{ "glGetColorTableParameteriv", (GLvoid *) NAME(glGetColorTableParameteriv) },
+	{ "glGetConvolutionFilter", (GLvoid *) NAME(glGetConvolutionFilter) },
+	{ "glGetConvolutionParameterfv", (GLvoid *) NAME(glGetConvolutionParameterfv) },
+	{ "glGetConvolutionParameteriv", (GLvoid *) NAME(glGetConvolutionParameteriv) },
+	{ "glGetHistogram", (GLvoid *) NAME(glGetHistogram) },
+	{ "glGetHistogramParameterfv", (GLvoid *) NAME(glGetHistogramParameterfv) },
+	{ "glGetHistogramParameteriv", (GLvoid *) NAME(glGetHistogramParameteriv) },
+	{ "glGetMinmax", (GLvoid *) NAME(glGetMinmax) },
+	{ "glGetMinmaxParameterfv", (GLvoid *) NAME(glGetMinmaxParameterfv) },
+	{ "glGetMinmaxParameteriv", (GLvoid *) NAME(glGetMinmaxParameteriv) },
+	{ "glGetSeparableFilter", (GLvoid *) NAME(glGetSeparableFilter) },
+	{ "glHistogram", (GLvoid *) NAME(glHistogram) },
+	{ "glMinmax", (GLvoid *) NAME(glMinmax) },
+	{ "glResetHistogram", (GLvoid *) NAME(glResetHistogram) },
+	{ "glResetMinmax", (GLvoid *) NAME(glResetMinmax) },
+	{ "glSeparableFilter2D", (GLvoid *) NAME(glSeparableFilter2D) },
+#undef NAME
 
 	/* GL_ARB_multitexture */
-	{ "glActiveTextureARB", (GLvoid *) glActiveTextureARB },
-	{ "glClientActiveTextureARB", (GLvoid *) glClientActiveTextureARB },
-	{ "glMultiTexCoord1dARB", (GLvoid *) glMultiTexCoord1dARB },
-	{ "glMultiTexCoord1dvARB", (GLvoid *) glMultiTexCoord1dvARB },
-	{ "glMultiTexCoord1fARB", (GLvoid *) glMultiTexCoord1fARB },
-	{ "glMultiTexCoord1fvARB", (GLvoid *) glMultiTexCoord1fvARB },
-	{ "glMultiTexCoord1iARB", (GLvoid *) glMultiTexCoord1iARB },
-	{ "glMultiTexCoord1ivARB", (GLvoid *) glMultiTexCoord1ivARB },
-	{ "glMultiTexCoord1sARB", (GLvoid *) glMultiTexCoord1sARB },
-	{ "glMultiTexCoord1svARB", (GLvoid *) glMultiTexCoord1svARB },
-	{ "glMultiTexCoord2dARB", (GLvoid *) glMultiTexCoord2dARB },
-	{ "glMultiTexCoord2dvARB", (GLvoid *) glMultiTexCoord2dvARB },
-	{ "glMultiTexCoord2fARB", (GLvoid *) glMultiTexCoord2fARB },
-	{ "glMultiTexCoord2fvARB", (GLvoid *) glMultiTexCoord2fvARB },
-	{ "glMultiTexCoord2iARB", (GLvoid *) glMultiTexCoord2iARB },
-	{ "glMultiTexCoord2ivARB", (GLvoid *) glMultiTexCoord2ivARB },
-	{ "glMultiTexCoord2sARB", (GLvoid *) glMultiTexCoord2sARB },
-	{ "glMultiTexCoord2svARB", (GLvoid *) glMultiTexCoord2svARB },
-	{ "glMultiTexCoord3dARB", (GLvoid *) glMultiTexCoord3dARB },
-	{ "glMultiTexCoord3dvARB", (GLvoid *) glMultiTexCoord3dvARB },
-	{ "glMultiTexCoord3fARB", (GLvoid *) glMultiTexCoord3fARB },
-	{ "glMultiTexCoord3fvARB", (GLvoid *) glMultiTexCoord3fvARB },
-	{ "glMultiTexCoord3iARB", (GLvoid *) glMultiTexCoord3iARB },
-	{ "glMultiTexCoord3ivARB", (GLvoid *) glMultiTexCoord3ivARB },
-	{ "glMultiTexCoord3sARB", (GLvoid *) glMultiTexCoord3sARB },
-	{ "glMultiTexCoord3svARB", (GLvoid *) glMultiTexCoord3svARB },
-	{ "glMultiTexCoord4dARB", (GLvoid *) glMultiTexCoord4dARB },
-	{ "glMultiTexCoord4dvARB", (GLvoid *) glMultiTexCoord4dvARB },
-	{ "glMultiTexCoord4fARB", (GLvoid *) glMultiTexCoord4fARB },
-	{ "glMultiTexCoord4fvARB", (GLvoid *) glMultiTexCoord4fvARB },
-	{ "glMultiTexCoord4iARB", (GLvoid *) glMultiTexCoord4iARB },
-	{ "glMultiTexCoord4ivARB", (GLvoid *) glMultiTexCoord4ivARB },
-	{ "glMultiTexCoord4sARB", (GLvoid *) glMultiTexCoord4sARB },
-	{ "glMultiTexCoord4svARB", (GLvoid *) glMultiTexCoord4svARB },
+#ifdef GL_ARB_multitexture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glActiveTextureARB", (GLvoid *) NAME(glActiveTextureARB) },
+	{ "glClientActiveTextureARB", (GLvoid *) NAME(glClientActiveTextureARB) },
+	{ "glMultiTexCoord1dARB", (GLvoid *) NAME(glMultiTexCoord1dARB) },
+	{ "glMultiTexCoord1dvARB", (GLvoid *) NAME(glMultiTexCoord1dvARB) },
+	{ "glMultiTexCoord1fARB", (GLvoid *) NAME(glMultiTexCoord1fARB) },
+	{ "glMultiTexCoord1fvARB", (GLvoid *) NAME(glMultiTexCoord1fvARB) },
+	{ "glMultiTexCoord1iARB", (GLvoid *) NAME(glMultiTexCoord1iARB) },
+	{ "glMultiTexCoord1ivARB", (GLvoid *) NAME(glMultiTexCoord1ivARB) },
+	{ "glMultiTexCoord1sARB", (GLvoid *) NAME(glMultiTexCoord1sARB) },
+	{ "glMultiTexCoord1svARB", (GLvoid *) NAME(glMultiTexCoord1svARB) },
+	{ "glMultiTexCoord2dARB", (GLvoid *) NAME(glMultiTexCoord2dARB) },
+	{ "glMultiTexCoord2dvARB", (GLvoid *) NAME(glMultiTexCoord2dvARB) },
+	{ "glMultiTexCoord2fARB", (GLvoid *) NAME(glMultiTexCoord2fARB) },
+	{ "glMultiTexCoord2fvARB", (GLvoid *) NAME(glMultiTexCoord2fvARB) },
+	{ "glMultiTexCoord2iARB", (GLvoid *) NAME(glMultiTexCoord2iARB) },
+	{ "glMultiTexCoord2ivARB", (GLvoid *) NAME(glMultiTexCoord2ivARB) },
+	{ "glMultiTexCoord2sARB", (GLvoid *) NAME(glMultiTexCoord2sARB) },
+	{ "glMultiTexCoord2svARB", (GLvoid *) NAME(glMultiTexCoord2svARB) },
+	{ "glMultiTexCoord3dARB", (GLvoid *) NAME(glMultiTexCoord3dARB) },
+	{ "glMultiTexCoord3dvARB", (GLvoid *) NAME(glMultiTexCoord3dvARB) },
+	{ "glMultiTexCoord3fARB", (GLvoid *) NAME(glMultiTexCoord3fARB) },
+	{ "glMultiTexCoord3fvARB", (GLvoid *) NAME(glMultiTexCoord3fvARB) },
+	{ "glMultiTexCoord3iARB", (GLvoid *) NAME(glMultiTexCoord3iARB) },
+	{ "glMultiTexCoord3ivARB", (GLvoid *) NAME(glMultiTexCoord3ivARB) },
+	{ "glMultiTexCoord3sARB", (GLvoid *) NAME(glMultiTexCoord3sARB) },
+	{ "glMultiTexCoord3svARB", (GLvoid *) NAME(glMultiTexCoord3svARB) },
+	{ "glMultiTexCoord4dARB", (GLvoid *) NAME(glMultiTexCoord4dARB) },
+	{ "glMultiTexCoord4dvARB", (GLvoid *) NAME(glMultiTexCoord4dvARB) },
+	{ "glMultiTexCoord4fARB", (GLvoid *) NAME(glMultiTexCoord4fARB) },
+	{ "glMultiTexCoord4fvARB", (GLvoid *) NAME(glMultiTexCoord4fvARB) },
+	{ "glMultiTexCoord4iARB", (GLvoid *) NAME(glMultiTexCoord4iARB) },
+	{ "glMultiTexCoord4ivARB", (GLvoid *) NAME(glMultiTexCoord4ivARB) },
+	{ "glMultiTexCoord4sARB", (GLvoid *) NAME(glMultiTexCoord4sARB) },
+	{ "glMultiTexCoord4svARB", (GLvoid *) NAME(glMultiTexCoord4svARB) },
+#undef NAME
 
 	/* 2. GL_EXT_blend_color */
-	{ "glBlendColorEXT", (GLvoid *) glBlendColorEXT },
+#ifdef GL_EXT_blend_color
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glBlendColorEXT", (GLvoid *) NAME(glBlendColorEXT) },
+#undef NAME
 
 	/* 3. GL_EXT_polygon_offset */
-	{ "glPolygonOffsetEXT", (GLvoid *) glPolygonOffsetEXT },
+#ifdef GL_EXT_polygon_offset
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glPolygonOffsetEXT", (GLvoid *) NAME(glPolygonOffsetEXT) },
+#undef NAME
 
 	/* 6. GL_EXT_texture3D */
-	{ "glCopyTexSubImage3DEXT", (GLvoid *) glCopyTexSubImage3DEXT },
-	{ "glTexImage3DEXT", (GLvoid *) glTexImage3DEXT },
-	{ "glTexSubImage3DEXT", (GLvoid *) glTexSubImage3DEXT },
+#ifdef GL_EXT_texture3D
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glCopyTexSubImage3DEXT", (GLvoid *) NAME(glCopyTexSubImage3DEXT) },
+	{ "glTexImage3DEXT", (GLvoid *) NAME(glTexImage3DEXT) },
+	{ "glTexSubImage3DEXT", (GLvoid *) NAME(glTexSubImage3DEXT) },
+#undef NAME
 
 	/* 7. GL_SGI_texture_filter4 */
-	{ "glGetTexFilterFuncSGIS", (GLvoid *) glGetTexFilterFuncSGIS },
-	{ "glTexFilterFuncSGIS", (GLvoid *) glTexFilterFuncSGIS },
+#ifdef GL_SGI_texture_filter4
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glGetTexFilterFuncSGIS", (GLvoid *) NAME(glGetTexFilterFuncSGIS) },
+	{ "glTexFilterFuncSGIS", (GLvoid *) NAME(glTexFilterFuncSGIS) },
+#undef NAME
 
 	/* 9. GL_EXT_subtexture */
-	{ "glTexSubImage1DEXT", (GLvoid *) glTexSubImage1DEXT },
-	{ "glTexSubImage2DEXT", (GLvoid *) glTexSubImage2DEXT },
+#ifdef GL_EXT_subtexture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glTexSubImage1DEXT", (GLvoid *) NAME(glTexSubImage1DEXT) },
+	{ "glTexSubImage2DEXT", (GLvoid *) NAME(glTexSubImage2DEXT) },
+#undef NAME
 
 	/* 10. GL_EXT_copy_texture */
-	{ "glCopyTexImage1DEXT", (GLvoid *) glCopyTexImage1DEXT },
-	{ "glCopyTexImage2DEXT", (GLvoid *) glCopyTexImage2DEXT },
-	{ "glCopyTexSubImage1DEXT", (GLvoid *) glCopyTexSubImage1DEXT },
-	{ "glCopyTexSubImage2DEXT", (GLvoid *) glCopyTexSubImage2DEXT },
+#ifdef GL_EXT_copy_texture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glCopyTexImage1DEXT", (GLvoid *) NAME(glCopyTexImage1DEXT) },
+	{ "glCopyTexImage2DEXT", (GLvoid *) NAME(glCopyTexImage2DEXT) },
+	{ "glCopyTexSubImage1DEXT", (GLvoid *) NAME(glCopyTexSubImage1DEXT) },
+	{ "glCopyTexSubImage2DEXT", (GLvoid *) NAME(glCopyTexSubImage2DEXT) },
+#undef NAME
                               
 	/* 11. GL_EXT_histogram */
-	{ "glGetHistogramEXT", (GLvoid *) glGetHistogramEXT },
-	{ "glGetHistogramParameterfvEXT", (GLvoid *) glGetHistogramParameterfvEXT },
-	{ "glGetHistogramParameterivEXT", (GLvoid *) glGetHistogramParameterivEXT },
-	{ "glGetMinmaxEXT", (GLvoid *) glGetMinmaxEXT },
-	{ "glGetMinmaxParameterfvEXT", (GLvoid *) glGetMinmaxParameterfvEXT },
-	{ "glGetMinmaxParameterivEXT", (GLvoid *) glGetMinmaxParameterivEXT },
-	{ "glHistogramEXT", (GLvoid *) glHistogramEXT },
-	{ "glMinmaxEXT", (GLvoid *) glMinmaxEXT },
-	{ "glResetHistogramEXT", (GLvoid *) glResetHistogramEXT },
-	{ "glResetMinmaxEXT", (GLvoid *) glResetMinmaxEXT },
+#ifdef GL_EXT_histogram
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glGetHistogramEXT", (GLvoid *) NAME(glGetHistogramEXT) },
+	{ "glGetHistogramParameterfvEXT", (GLvoid *) NAME(glGetHistogramParameterfvEXT) },
+	{ "glGetHistogramParameterivEXT", (GLvoid *) NAME(glGetHistogramParameterivEXT) },
+	{ "glGetMinmaxEXT", (GLvoid *) NAME(glGetMinmaxEXT) },
+	{ "glGetMinmaxParameterfvEXT", (GLvoid *) NAME(glGetMinmaxParameterfvEXT) },
+	{ "glGetMinmaxParameterivEXT", (GLvoid *) NAME(glGetMinmaxParameterivEXT) },
+	{ "glHistogramEXT", (GLvoid *) NAME(glHistogramEXT) },
+	{ "glMinmaxEXT", (GLvoid *) NAME(glMinmaxEXT) },
+	{ "glResetHistogramEXT", (GLvoid *) NAME(glResetHistogramEXT) },
+	{ "glResetMinmaxEXT", (GLvoid *) NAME(glResetMinmaxEXT) },
+#undef NAME
 
 	/* 12. GL_EXT_convolution */
-	{ "glConvolutionFilter1DEXT", (GLvoid *) glConvolutionFilter1DEXT },
-	{ "glConvolutionFilter2DEXT", (GLvoid *) glConvolutionFilter2DEXT },
-	{ "glConvolutionParameterfEXT", (GLvoid *) glConvolutionParameterfEXT },
-	{ "glConvolutionParameterfvEXT", (GLvoid *) glConvolutionParameterfvEXT },
-	{ "glConvolutionParameteriEXT", (GLvoid *) glConvolutionParameteriEXT },
-	{ "glConvolutionParameterivEXT", (GLvoid *) glConvolutionParameterivEXT },
-	{ "glCopyConvolutionFilter1DEXT", (GLvoid *) glCopyConvolutionFilter1DEXT },
-	{ "glCopyConvolutionFilter2DEXT", (GLvoid *) glCopyConvolutionFilter2DEXT },
-	{ "glGetConvolutionFilterEXT", (GLvoid *) glGetConvolutionFilterEXT },
-	{ "glGetConvolutionParameterivEXT", (GLvoid *) glGetConvolutionParameterivEXT },
-	{ "glGetConvolutionParameterfvEXT", (GLvoid *) glGetConvolutionParameterfvEXT },
-	{ "glGetSeparableFilterEXT", (GLvoid *) glGetSeparableFilterEXT },
-	{ "glSeparableFilter2DEXT", (GLvoid *) glSeparableFilter2DEXT },
+#ifdef GL_EXT_convolution
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glConvolutionFilter1DEXT", (GLvoid *) NAME(glConvolutionFilter1DEXT) },
+	{ "glConvolutionFilter2DEXT", (GLvoid *) NAME(glConvolutionFilter2DEXT) },
+	{ "glConvolutionParameterfEXT", (GLvoid *) NAME(glConvolutionParameterfEXT) },
+	{ "glConvolutionParameterfvEXT", (GLvoid *) NAME(glConvolutionParameterfvEXT) },
+	{ "glConvolutionParameteriEXT", (GLvoid *) NAME(glConvolutionParameteriEXT) },
+	{ "glConvolutionParameterivEXT", (GLvoid *) NAME(glConvolutionParameterivEXT) },
+	{ "glCopyConvolutionFilter1DEXT", (GLvoid *) NAME(glCopyConvolutionFilter1DEXT) },
+	{ "glCopyConvolutionFilter2DEXT", (GLvoid *) NAME(glCopyConvolutionFilter2DEXT) },
+	{ "glGetConvolutionFilterEXT", (GLvoid *) NAME(glGetConvolutionFilterEXT) },
+	{ "glGetConvolutionParameterivEXT", (GLvoid *) NAME(glGetConvolutionParameterivEXT) },
+	{ "glGetConvolutionParameterfvEXT", (GLvoid *) NAME(glGetConvolutionParameterfvEXT) },
+	{ "glGetSeparableFilterEXT", (GLvoid *) NAME(glGetSeparableFilterEXT) },
+	{ "glSeparableFilter2DEXT", (GLvoid *) NAME(glSeparableFilter2DEXT) },
+#undef NAME
                     
 	/* 14. GL_SGI_color_table */
-	{ "glColorTableSGI", (GLvoid *) NotImplemented },
-	{ "glColorTableParameterfvSGI", (GLvoid *) NotImplemented },
-	{ "glColorTableParameterivSGI", (GLvoid *) NotImplemented },
-	{ "glCopyColorTableSGI", (GLvoid *) NotImplemented },
-	{ "glGetColorTableSGI", (GLvoid *) NotImplemented },
-	{ "glGetColorTableParameterfvSGI", (GLvoid *) NotImplemented },
-	{ "glGetColorTableParameterivSGI", (GLvoid *) NotImplemented },
+#ifdef GL_SGI_color_table
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glColorTableSGI", (GLvoid *) NAME(glColorTableSGI) },
+	{ "glColorTableParameterfvSGI", (GLvoid *) NAME(glColorTableParameterfvSGI) },
+	{ "glColorTableParameterivSGI", (GLvoid *) NAME(glColorTableParameterivSGI) },
+	{ "glCopyColorTableSGI", (GLvoid *) NAME(glCopyColorTableSGI) },
+	{ "glGetColorTableSGI", (GLvoid *) NAME(glGetColorTableSGI) },
+	{ "glGetColorTableParameterfvSGI", (GLvoid *) NAME(glGetColorTableParameterfvSGI) },
+	{ "glGetColorTableParameterivSGI", (GLvoid *) NAME(glGetColorTableParameterivSGI) },
+#undef NAME
 
 	/* 15. GL_SGIS_pixel_texture */
-	{ "glPixelTexGenParameterfSGIS", (GLvoid *) NotImplemented },
-	{ "glPixelTexGenParameteriSGIS", (GLvoid *) NotImplemented },
-	{ "glGetPixelTexGenParameterfvSGIS", (GLvoid *) NotImplemented },
-	{ "glGetPixelTexGenParameterivSGIS", (GLvoid *) NotImplemented },
+#ifdef GL_SGIS_pixel_texture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glPixelTexGenParameterfSGIS", (GLvoid *) NAME(glPixelTexGenParameterfSGIS) },
+	{ "glPixelTexGenParameteriSGIS", (GLvoid *) NAME(glPixelTexGenParameteriSGIS) },
+	{ "glGetPixelTexGenParameterfvSGIS", (GLvoid *) NAME(glGetPixelTexGenParameterfvSGIS) },
+	{ "glGetPixelTexGenParameterivSGIS", (GLvoid *) NAME(glGetPixelTexGenParameterivSGIS) },
+#undef NAME
 
 	/* 16. GL_SGIS_texture4D */
-	{ "glTexImage4DSGIS", (GLvoid *) NotImplemented },
-	{ "glTexSubImage4DSGIS", (GLvoid *) NotImplemented },
+#ifdef  GL_SGIS_texture4D
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glTexImage4DSGIS", (GLvoid *) NAME(glTexImage4DSGIS) },
+	{ "glTexSubImage4DSGIS", (GLvoid *) NAME(glTexSubImage4DSGIS) },
+#undef NAME
 
 	/* 20. GL_EXT_texture_object */
-	{ "glAreTexturesResidentEXT", (GLvoid *) glAreTexturesResidentEXT },
-	{ "glBindTextureEXT", (GLvoid *) glBindTextureEXT },
-	{ "glDeleteTexturesEXT", (GLvoid *) glDeleteTexturesEXT },
-	{ "glGenTexturesEXT", (GLvoid *) glGenTexturesEXT },
-	{ "glIsTextureEXT", (GLvoid *) glIsTextureEXT },
-	{ "glPrioritizeTexturesEXT", (GLvoid *) glPrioritizeTexturesEXT },
+#ifdef GL_EXT_texture_object
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glAreTexturesResidentEXT", (GLvoid *) NAME(glAreTexturesResidentEXT) },
+	{ "glBindTextureEXT", (GLvoid *) NAME(glBindTextureEXT) },
+	{ "glDeleteTexturesEXT", (GLvoid *) NAME(glDeleteTexturesEXT) },
+	{ "glGenTexturesEXT", (GLvoid *) NAME(glGenTexturesEXT) },
+	{ "glIsTextureEXT", (GLvoid *) NAME(glIsTextureEXT) },
+	{ "glPrioritizeTexturesEXT", (GLvoid *) NAME(glPrioritizeTexturesEXT) },
+#undef NAME
 
 	/* 21. GL_SGIS_detail_texture */
-	{ "glDetailTexFuncSGIS", (GLvoid *) NotImplemented },
-	{ "glGetDetailTexFuncSGIS", (GLvoid *) NotImplemented },
+#ifdef GL_SGIS_detail_texture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glDetailTexFuncSGIS", (GLvoid *) NAME(glDetailTexFuncSGIS) },
+	{ "glGetDetailTexFuncSGIS", (GLvoid *) NAME(glGetDetailTexFuncSGIS) },
+#undef NAME
 
 	/* 22. GL_SGIS_sharpen_texture */
-	{ "glGetSharpenTexFuncSGIS", (GLvoid *) NotImplemented },
-	{ "glSharpenTexFuncSGIS", (GLvoid *) NotImplemented },
+#ifdef GL_SGIS_sharpen_texture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glGetSharpenTexFuncSGIS", (GLvoid *) NAME(glGetSharpenTexFuncSGIS) },
+	{ "glSharpenTexFuncSGIS", (GLvoid *) NAME(glSharpenTexFuncSGIS) },
+#undef NAME
 
 	/* 25. GL_SGIS_multisample */
-	{ "glSampleMaskSGIS", (GLvoid *) NotImplemented },
-	{ "glSamplePatternSGIS", (GLvoid *) NotImplemented },
+#ifdef GL_SGIS_multisample
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glSampleMaskSGIS", (GLvoid *) NAME(glSampleMaskSGIS) },
+	{ "glSamplePatternSGIS", (GLvoid *) NAME(glSamplePatternSGIS) },
+#undef NAME
 
 	/* 30. GL_EXT_vertex_array */
-	{ "glArrayElementEXT", (GLvoid *) glArrayElementEXT },
-	{ "glColorPointerEXT", (GLvoid *) glColorPointerEXT },
-	{ "glDrawArraysEXT", (GLvoid *) glDrawArraysEXT },
-	{ "glEdgeFlagPointerEXT", (GLvoid *) glEdgeFlagPointerEXT },
-	{ "glGetPointervEXT", (GLvoid *) glGetPointervEXT },
-	{ "glIndexPointerEXT", (GLvoid *) glIndexPointerEXT },
-	{ "glNormalPointerEXT", (GLvoid *) glNormalPointerEXT },
-	{ "glTexCoordPointerEXT", (GLvoid *) glTexCoordPointerEXT },
-	{ "glVertexPointerEXT", (GLvoid *) glVertexPointerEXT },
+#ifdef GL_EXT_vertex_array
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glArrayElementEXT", (GLvoid *) NAME(glArrayElementEXT) },
+	{ "glColorPointerEXT", (GLvoid *) NAME(glColorPointerEXT) },
+	{ "glDrawArraysEXT", (GLvoid *) NAME(glDrawArraysEXT) },
+	{ "glEdgeFlagPointerEXT", (GLvoid *) NAME(glEdgeFlagPointerEXT) },
+	{ "glGetPointervEXT", (GLvoid *) NAME(glGetPointervEXT) },
+	{ "glIndexPointerEXT", (GLvoid *) NAME(glIndexPointerEXT) },
+	{ "glNormalPointerEXT", (GLvoid *) NAME(glNormalPointerEXT) },
+	{ "glTexCoordPointerEXT", (GLvoid *) NAME(glTexCoordPointerEXT) },
+	{ "glVertexPointerEXT", (GLvoid *) NAME(glVertexPointerEXT) },
+#undef NAME
 
 	/* 37. GL_EXT_blend_minmax */
-	{ "glBlendEquationEXT", (GLvoid *) glBlendEquationEXT },
+#ifdef GL_EXT_blend_minmax
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glBlendEquationEXT", (GLvoid *) NAME(glBlendEquationEXT) },
+#undef NAME
 
 	/* 52. GL_SGIX_sprite */
-	{ "glSpriteParameterfSGIX", (GLvoid *) NotImplemented },
-	{ "glSpriteParameterfvSGIX", (GLvoid *) NotImplemented },
-	{ "glSpriteParameteriSGIX", (GLvoid *) NotImplemented },
-	{ "glSpriteParameterivSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_sprite
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glSpriteParameterfSGIX", (GLvoid *) NAME(glSpriteParameterfSGIX) },
+	{ "glSpriteParameterfvSGIX", (GLvoid *) NAME(glSpriteParameterfvSGIX) },
+	{ "glSpriteParameteriSGIX", (GLvoid *) NAME(glSpriteParameteriSGIX) },
+	{ "glSpriteParameterivSGIX", (GLvoid *) NAME(glSpriteParameterivSGIX) },
+#undef NAME
 
 	/* 54. GL_EXT_point_parameters */
-	{ "glPointParameterfEXT", (GLvoid *) NotImplemented },
-	{ "glPointParameterfvEXT", (GLvoid *) NotImplemented },
+#ifdef GL_EXT_point_parameters
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glPointParameterfEXT", (GLvoid *) NAME(glPointParameterfEXT) },
+	{ "glPointParameterfvEXT", (GLvoid *) NAME(glPointParameterfvEXT) },
+#undef NAME
 
 	/* 55. GL_SGIX_instruments */
-	{ "glInstrumentsBufferSGIX", (GLvoid *) NotImplemented },
-	{ "glStartInstrumentsSGIX", (GLvoid *) NotImplemented },
-	{ "glStopInstrumentsSGIX", (GLvoid *) NotImplemented },
-	{ "glReadInstrumentsSGIX", (GLvoid *) NotImplemented },
-	{ "glPollInstrumentsSGIX", (GLvoid *) NotImplemented },
-	{ "glGetInstrumentsSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_instruments
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glInstrumentsBufferSGIX", (GLvoid *) NAME(glInstrumentsBufferSGIX) },
+	{ "glStartInstrumentsSGIX", (GLvoid *) NAME(glStartInstrumentsSGIX) },
+	{ "glStopInstrumentsSGIX", (GLvoid *) NAME(glStopInstrumentsSGIX) },
+	{ "glReadInstrumentsSGIX", (GLvoid *) NAME(glReadInstrumentsSGIX) },
+	{ "glPollInstrumentsSGIX", (GLvoid *) NAME(glPollInstrumentsSGIX) },
+	{ "glGetInstrumentsSGIX", (GLvoid *) NAME(glGetInstrumentsSGIX) },
+#undef NAME
 
 	/* 57. GL_SGIX_framezoom */
-	{ "glFrameZoomSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_framezoom
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glFrameZoomSGIX", (GLvoid *) NAME(glFrameZoomSGIX) },
+#undef NAME
 
 	/* 60. GL_SGIX_reference_plane */
-	{ "glReferencePlaneSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_reference_plane
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glReferencePlaneSGIX", (GLvoid *) NAME(glReferencePlaneSGIX) },
+#undef NAME
 
 	/* 61. GL_SGIX_flush_raster */
-	{ "glFlushRasterSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_flush_raster
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glFlushRasterSGIX", (GLvoid *) NAME(glFlushRasterSGIX) },
+#undef NAME
 
 	/* 66. GL_HP_image_transform */
-	{ "glGetImageTransformParameterfvHP", (GLvoid *) NotImplemented },
-	{ "glGetImageTransformParameterivHP", (GLvoid *) NotImplemented },
-	{ "glImageTransformParameterfHP", (GLvoid *) NotImplemented },
-	{ "glImageTransformParameterfvHP", (GLvoid *) NotImplemented },
-	{ "glImageTransformParameteriHP", (GLvoid *) NotImplemented },
-	{ "glImageTransformParameterivHP", (GLvoid *) NotImplemented },
+#ifdef GL_HP_image_transform
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glGetImageTransformParameterfvHP", (GLvoid *) NAME(glGetImageTransformParameterfvHP) },
+	{ "glGetImageTransformParameterivHP", (GLvoid *) NAME(glGetImageTransformParameterivHP) },
+	{ "glImageTransformParameterfHP", (GLvoid *) NAME(glImageTransformParameterfHP) },
+	{ "glImageTransformParameterfvHP", (GLvoid *) NAME(glImageTransformParameterfvHP) },
+	{ "glImageTransformParameteriHP", (GLvoid *) NAME(glImageTransformParameteriHP) },
+	{ "glImageTransformParameterivHP", (GLvoid *) NAME(glImageTransformParameterivHP) },
+#undef NAME
 
 	/* 74. GL_EXT_color_subtable */
-	{ "glColorSubTableEXT", (GLvoid *) NotImplemented },
-	{ "glCopyColorSubTableEXT", (GLvoid *) NotImplemented },
+#ifdef GL_EXT_color_subtable
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glColorSubTableEXT", (GLvoid *) NAME(glColorSubTableEXT) },
+	{ "glCopyColorSubTableEXT", (GLvoid *) NAME(glCopyColorSubTableEXT) },
+#undef NAME
 
 	/* 77. GL_PGI_misc_hints */
-	{ "glHintPGI", (GLvoid *) NotImplemented },
+#ifdef GL_PGI_misc_hints
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glHintPGI", (GLvoid *) NAME(glHintPGI) },
+#undef NAME
 
 	/* 78. GL_EXT_paletted_texture */
-	{ "glColorTableEXT", (GLvoid *) glColorTableEXT },
-	{ "glGetColorTableEXT", (GLvoid *) glGetColorTableEXT },
-	{ "glGetColorTableParameterfvEXT", (GLvoid *) glGetColorTableParameterfvEXT },
-	{ "glGetColorTableParameterivEXT", (GLvoid *) glGetColorTableParameterivEXT },
+#ifdef GL_EXT_paletted_texture
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glColorTableEXT", (GLvoid *) NAME(glColorTableEXT) },
+	{ "glGetColorTableEXT", (GLvoid *) NAME(glGetColorTableEXT) },
+	{ "glGetColorTableParameterfvEXT", (GLvoid *) NAME(glGetColorTableParameterfvEXT) },
+	{ "glGetColorTableParameterivEXT", (GLvoid *) NAME(glGetColorTableParameterivEXT) },
+#undef NAME
 
 	/* 80. GL_SGIX_list_priority */
-	{ "glGetListParameterfvSGIX", (GLvoid *) NotImplemented },
-	{ "glGetListParameterivSGIX", (GLvoid *) NotImplemented },
-	{ "glListParameterfSGIX", (GLvoid *) NotImplemented },
-	{ "glListParameterfvSGIX", (GLvoid *) NotImplemented },
-	{ "glListParameteriSGIX", (GLvoid *) NotImplemented },
-	{ "glListParameterivSGIX", (GLvoid *) NotImplemented },
+#ifdef GL_SGIX_list_priority
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glGetListParameterfvSGIX", (GLvoid *) NAME(glGetListParameterfvSGIX) },
+	{ "glGetListParameterivSGIX", (GLvoid *) NAME(glGetListParameterivSGIX) },
+	{ "glListParameterfSGIX", (GLvoid *) NAME(glListParameterfSGIX) },
+	{ "glListParameterfvSGIX", (GLvoid *) NAME(glListParameterfvSGIX) },
+	{ "glListParameteriSGIX", (GLvoid *) NAME(glListParameteriSGIX) },
+	{ "glListParameterivSGIX", (GLvoid *) NAME(glListParameterivSGIX) },
+#undef NAME
 
 	/* 94. GL_EXT_index_material */
-	{ "glIndexMaterialEXT", (GLvoid *) NotImplemented },
+#ifdef GL_EXT_index_material
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glIndexMaterialEXT", (GLvoid *) NAME(glIndexMaterialEXT) },
+#undef NAME
 
 	/* 95. GL_EXT_index_func */
-	{ "glIndexFuncEXT", (GLvoid *) NotImplemented },
+#ifdef GL_EXT_index_func
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glIndexFuncEXT", (GLvoid *) NAME(glIndexFuncEXT) },
+#undef NAME
 
 	/* 97. GL_EXT_compiled_vertex_array */
-	{ "glLockArraysEXT", (GLvoid *) glLockArraysEXT },
-	{ "glUnlockArraysEXT", (GLvoid *) glUnlockArraysEXT },
+#ifdef GL_EXT_compiled_vertex_array
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glLockArraysEXT", (GLvoid *) NAME(glLockArraysEXT) },
+	{ "glUnlockArraysEXT", (GLvoid *) NAME(glUnlockArraysEXT) },
+#undef NAME
 
 	/* 98. GL_EXT_cull_vertex */
-	{ "glCullParameterfvEXT", (GLvoid *) NotImplemented },
-	{ "glCullParameterdvEXT", (GLvoid *) NotImplemented },
+#ifdef GL_EXT_cull_vertex
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glCullParameterfvEXT", (GLvoid *) NAME(glCullParameterfvEXT) },
+	{ "glCullParameterdvEXT", (GLvoid *) NAME(glCullParameterdvEXT) },
+#undef NAME
 
 	/* 173. GL_EXT/INGR_blend_func_separate */
-	{ "glBlendFuncSeparateINGR", (GLvoid *) glBlendFuncSeparateINGR },
+#ifdef GL_INGR_blend_func_separate
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glBlendFuncSeparateINGR", (GLvoid *) NAME(glBlendFuncSeparateINGR) },
+#undef NAME
 
 	/* GL_MESA_window_pos */
-	{ "glWindowPos4fMESA", (GLvoid *) glWindowPos4fMESA },
+#ifdef MESA_window_pos
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glWindowPos4fMESA", (GLvoid *) NAME(glWindowPos4fMESA) },
+#undef NAME
 
 	/* GL_MESA_resize_buffers */
-	{ "glResizeBuffersMESA", (GLvoid *) glResizeBuffersMESA },
+#ifdef MESA_resize_buffers
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glResizeBuffersMESA", (GLvoid *) NAME(glResizeBuffersMESA) },
+#undef NAME
 
 	/* GL_ARB_transpose_matrix */
-	{ "glLoadTransposeMatrixdARB", (GLvoid *) glLoadTransposeMatrixdARB },
-	{ "glLoadTransposeMatrixfARB", (GLvoid *) glLoadTransposeMatrixfARB },
-	{ "glMultTransposeMatrixdARB", (GLvoid *) glMultTransposeMatrixdARB },
-	{ "glMultTransposeMatrixfARB", (GLvoid *) glMultTransposeMatrixfARB },
+#ifdef GL_ARB_transpose_matrix
+#define NAME(X) X
+#else
+#define NAME(X) NotImplemented
+#endif
+	{ "glLoadTransposeMatrixdARB", (GLvoid *) NAME(glLoadTransposeMatrixdARB) },
+	{ "glLoadTransposeMatrixfARB", (GLvoid *) NAME(glLoadTransposeMatrixfARB) },
+	{ "glMultTransposeMatrixdARB", (GLvoid *) NAME(glMultTransposeMatrixdARB) },
+	{ "glMultTransposeMatrixfARB", (GLvoid *) NAME(glMultTransposeMatrixfARB) },
+#undef NAME
+
+        /*
+         * XXX many more extenstion functions to add.
+         */
 
 	{ NULL, NULL }  /* end of list marker */
 };
