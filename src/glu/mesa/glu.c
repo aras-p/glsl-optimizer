@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.7 1999/09/14 00:11:40 brianp Exp $ */
+/* $Id: glu.c,v 1.8 1999/09/16 16:53:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.8  1999/09/16 16:53:28  brianp
+ * clean-up of GLU_EXT_get_proc_address
+ *
  * Revision 1.7  1999/09/14 00:11:40  brianp
  * added gluCheckExtension()
  *
@@ -357,24 +360,24 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 
 #ifdef GLU_EXT_get_proc_address
 
-GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName )
+void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
 {
    struct proc {
       const char *name;
-      GLfunction address;
+      void *address;
    };
    static struct proc procTable[] = {
-      { "gluGetProcAddressEXT", (GLfunction) gluGetProcAddressEXT },  /* me! */
+      { "gluGetProcAddressEXT", gluGetProcAddressEXT },  /* me! */
 
       /* new 1.1 functions */
-      { "gluGetString", (GLfunction) gluGetString },
+      { "gluGetString", gluGetString },
 
       /* new 1.2 functions */
-      { "gluTessBeginPolygon", (GLfunction) gluTessBeginPolygon },
-      { "gluTessBeginContour", (GLfunction) gluTessBeginContour },
-      { "gluTessEndContour", (GLfunction) gluTessEndContour },
-      { "gluTessEndPolygon", (GLfunction) gluTessEndPolygon },
-      { "gluGetTessProperty", (GLfunction) gluGetTessProperty },
+      { "gluTessBeginPolygon", gluTessBeginPolygon },
+      { "gluTessBeginContour", gluTessBeginContour },
+      { "gluTessEndContour", gluTessEndContour },
+      { "gluTessEndPolygon", gluTessEndPolygon },
+      { "gluGetTessProperty", gluGetTessProperty },
 
       /* new 1.3 functions */
 
@@ -384,7 +387,7 @@ GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName )
 
    for (i = 0; procTable[i].address; i++) {
       if (strcmp((const char *) procName, procTable[i].name) == 0)
-	 return procTable[i].address;
+	 return (void (*)()) procTable[i].address;
    }
 
    return NULL;
