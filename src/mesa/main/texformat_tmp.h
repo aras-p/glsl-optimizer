@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.2 2001/03/18 13:34:24 gareth Exp $ */
+/* $Id: texformat_tmp.h,v 1.3 2001/03/18 13:37:18 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,7 +71,7 @@
 #define FETCH(x) fetch_3d_texel_##x
 
 #else
-#error "..."
+#error	illegal number of texture dimensions
 #endif
 
 
