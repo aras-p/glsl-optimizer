@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.11 2000/11/10 18:31:04 brianp Exp $ */
+/* $Id: convolve.c,v 1.12 2000/11/21 23:01:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -464,7 +464,7 @@ void
 _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
 {
    GLenum baseFormat;
-   GLfloat rgba[MAX_CONVOLUTION_WIDTH][4];
+   GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyConvolutionFilter1D");
 
@@ -485,11 +485,13 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
    }
 
    /* read pixels from framebuffer */
+   RENDER_START(ctx);
    gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLchan (*)[4]) rgba);
+   RENDER_FINISH(ctx);
 
    /* store as convolution filter */
    _mesa_ConvolutionFilter1D(target, internalFormat, width,
-                             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+                             GL_RGBA, CHAN_TYPE, rgba);
 }
 
 
@@ -499,7 +501,7 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    GLenum baseFormat;
    GLint i;
    struct gl_pixelstore_attrib packSave;
-   GLfloat rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
+   GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyConvolutionFilter2D");
 
@@ -524,10 +526,12 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    }
 
    /* read pixels from framebuffer */
+   RENDER_START(ctx);
    for (i = 0; i < height; i++) {
       gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
                         (GLchan (*)[4]) rgba[i]);
    }
+   RENDER_FINISH(ctx);
 
    /*
     * store as convolution filter
@@ -545,7 +549,7 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    ctx->NewState |= _NEW_PACKUNPACK;	
 
    _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
-                             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+                             GL_RGBA, CHAN_TYPE, rgba);
 
    ctx->Unpack = packSave;  /* restore pixel packing params */
    ctx->NewState |= _NEW_PACKUNPACK;	
@@ -587,7 +591,6 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
                                          filter->Height, format, type,
                                          0, row, 0);
       const GLfloat *src = filter->Filter + row * filter->Width * 4;
-      /* XXX apply transfer ops or not? */
       _mesa_pack_float_rgba_span(ctx, filter->Width,
                                  (const GLfloat (*)[4]) src,
                                  format, type, dst, &ctx->Pack, 0);
