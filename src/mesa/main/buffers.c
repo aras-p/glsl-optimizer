@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.5 2000/04/11 21:26:57 brianp Exp $ */
+/* $Id: buffers.c,v 1.6 2000/04/11 21:36:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -300,7 +300,7 @@ _mesa_Clear( GLbitfield mask )
       /* clear software-based alpha buffer(s) */
       if ( (mask & GL_COLOR_BUFFER_BIT) && ctx->Visual->SoftwareAlpha
            && ctx->Color.ColorMask[RCOMP]) {
-         gl_clear_alpha_buffers( ctx );
+         _mesa_clear_alpha_buffers( ctx );
       }
 
 #ifdef PROFILE
@@ -559,6 +559,6 @@ _mesa_ResizeBuffersMESA( void )
       _mesa_alloc_accum_buffer( ctx );
    }
    if (ctx->Visual->SoftwareAlpha) {
-      gl_alloc_alpha_buffers( ctx );
+      _mesa_alloc_alpha_buffers( ctx );
    }
 }
