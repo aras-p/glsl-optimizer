@@ -48,7 +48,7 @@
 
 #undef GET_PROGRAM_NAME
 
-#if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
+#if (defined(__GNU_LIBRARY__) || defined(__GLIBC__)) && !defined(__UCLIBC__)
 #    define GET_PROGRAM_NAME() program_invocation_short_name
 #elif defined(__FreeBSD__) && (__FreeBSD__ >= 2)
 #    include <osreldate.h>
@@ -62,12 +62,17 @@
 #endif
 
 #if !defined(GET_PROGRAM_NAME)
-#    if defined(OpenBSD) || defined(NetBSD)
-/* This is a hack. It's said to work on OpenBSD, NetBSD and GNU. It's
+#    if defined(OpenBSD) || defined(NetBSD) || defined(__UCLIBC__)
+/* This is a hack. It's said to work on OpenBSD, NetBSD and GNU.
+ * Rogelio M.Serrano Jr. reported it's also working with UCLIBC. It's
  * used as a last resort, if there is no documented facility available. */
 static const char *__getProgramName () {
     extern const char *__progname;
-    return progname;
+    char * arg = strrchr(__progname, '/');
+    if (arg)
+        return arg+1;
+    else
+        return __progname;
 }
 #        define GET_PROGRAM_NAME() __getProgramName()
 #    else
