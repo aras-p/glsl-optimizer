@@ -1,4 +1,4 @@
-# $Id: Makefile.win,v 1.5 2001/10/04 19:13:36 kschultz Exp $
+# $Id: Makefile.win,v 1.6 2001/10/26 21:01:45 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -79,22 +79,20 @@ OSMESASRCS = osdemo.c
 
 clean::
 
-realclean::
+clobber::
+	@del readtex.c readtex.h
 
-targets: readtex.c readtex.h $(PROGS)
-
-# remove comments when we get non-osmesa pgm working
-$(EXES) : $*.obj
+$(EXES) : $*.obj readtex.c readtex.h
 	@echo $@
-	$(link) -out:$@ $** /LIBPATH:$(LIBDIR) $(LIBS)
+	$(link) -out:$@ $* /LIBPATH:$(LIBDIR) $(LIBS)
 
 $(OSMESAEXES) : $*.obj
 	@echo $@
-	$(link) $(lcommon) -out:$@ $** /LIBPATH:$(LIBDIR) $(LIBS) $(EXTRALIBS)
+	$(link) $(lcommon) -out:$@ $* /LIBPATH:$(LIBDIR) $(LIBS) $(EXTRALIBS)
 
 readtex.c:
-	@copy ../util/readtex.c .
+	-copy ..\util\readtex.c .
 
 readtex.h:
-	@copy ../util/readtex.c .
+	-copy ..\util\readtex.h .
 
