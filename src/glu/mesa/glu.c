@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.11 1999/09/17 01:00:38 brianp Exp $ */
+/* $Id: glu.c,v 1.12 1999/09/17 03:07:28 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.12  1999/09/17 03:07:28  tjump
+ * Win32 build req't updates
+ *
  * Revision 1.11  1999/09/17 01:00:38  brianp
  * fixed typo
  *
@@ -371,9 +374,13 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 
 #ifdef __cplusplus
 /* for BeOS R4.5 */
-void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))(...)
+gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName)
 #else
+<<<<<<< glu.c
+gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName)
+=======
 void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
+>>>>>>> 1.11
 #endif
 {
    struct proc {
@@ -401,7 +408,7 @@ void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
 
    for (i = 0; procTable[i].address; i++) {
       if (strcmp((const char *) procName, procTable[i].name) == 0)
-	 return (void (*)()) procTable[i].address;
+	 return (gluProcAddress) procTable[i].address;
    }
 
    return NULL;

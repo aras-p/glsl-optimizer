@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.7 1999/09/16 06:41:42 gareth Exp $ */
+/* $Id: tess.c,v 1.8 1999/09/17 03:07:28 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.8  1999/09/17 03:07:28  tjump
+ * Win32 build req't updates
+ *
  * Revision 1.7  1999/09/16 06:41:42  gareth
  * Misc winding rule bug fixes.
  *
@@ -578,20 +581,24 @@ void GLAPIENTRY gluEndPolygon( GLUtesselator *tobj )
  *
  * Internal error handler.  Call the user-registered error callback.
  *****************************************************************************/
-void tess_error_callback( GLUtesselator *tobj, GLenum errno, void *data )
+
+/* 2nd arg changed from 'errno' to 'errnum' since MSVC defines errnum as */
+/* a macro (of all things) and thus breaks the build -tjump              */
+
+void tess_error_callback( GLUtesselator *tobj, GLenum errnum, void *data )
 {
     if ( tobj->error == GLU_NO_ERROR )
     {
-	tobj->error = errno;
+	tobj->error = errnum;
     }
 
     if ( tobj->callbacks.errorData != NULL )
     {
-	( tobj->callbacks.errorData )( errno, data );
+	( tobj->callbacks.errorData )( errnum, data );
     }
     else if ( tobj->callbacks.error != NULL )
     {
-	( tobj->callbacks.error )( errno );
+	( tobj->callbacks.error )( errnum );
     }
 }
 

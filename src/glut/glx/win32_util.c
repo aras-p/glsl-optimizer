@@ -70,6 +70,7 @@ __glutFont(void *font)
   }
   __glutFatalError("out of memory.");
   /* NOTREACHED */
+  return NULL; /* MSVC compiler complains if there is no return at all */
 }
 
 int

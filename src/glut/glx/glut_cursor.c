@@ -164,7 +164,7 @@ __glutSetCursor(GLUTwindow *window)
       break;
     case GLUT_CURSOR_FULL_CROSSHAIR:
 #if defined(_WIN32)
-      xcursor = IDC_CROSS;
+      xcursor = (HICON) IDC_CROSS;
 #else
       if (fullCrosshairCusor == None) {
         fullCrosshairCusor = getFullCrosshairCursor();

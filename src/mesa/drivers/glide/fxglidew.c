@@ -1,4 +1,4 @@
-/* $Id: fxglidew.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: fxglidew.c,v 1.2 1999/09/17 03:07:28 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,8 +53,8 @@ FxI32 FX_grGetInteger(FxU32 pname)
     default:
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
           fprintf(stderr,"Wrong parameter in FX_grGetInteger!\n");
-          return -1;
        }
+       return -1;
   }
 #else
   FxU32 grname;
@@ -71,8 +71,8 @@ FxI32 FX_grGetInteger(FxU32 pname)
      default:
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
           fprintf(stderr,"Wrong parameter in FX_grGetInteger!\n");
-          return -1;
        }
+       return -1;
   }
   
   grGet(grname,4,&result);
