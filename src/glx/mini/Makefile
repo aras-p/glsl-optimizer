@@ -18,7 +18,10 @@ C_SOURCES = \
 	  miniglx.c \
 	  miniglx_events.c
 
-OBJECTS = $(C_SOURCES:.c=.o)
+X86_SOURCES = $(TOP)/src/mesa/x86/glapi_x86.S
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o)
 
 INCLUDES = -I. $(INCLUDE_DIRS)
 

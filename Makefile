@@ -81,6 +81,7 @@ linux-osmesa32 \
 linux-ppc \
 linux-ppc-static \
 linux-solo \
+linux-solo-x86 \
 linux-solo-ia64 \
 linux-sparc \
 linux-sparc5 \
