@@ -1,10 +1,10 @@
-/* $Id: attrib.c,v 1.14 2000/02/02 19:17:57 brianp Exp $ */
+/* $Id: attrib.c,v 1.15 2000/02/02 22:03:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,8 @@
  * Allocate a new attribute state node.  These nodes have a
  * "kind" value and a pointer to a struct of state data.
  */
-static struct gl_attrib_node *new_attrib_node( GLbitfield kind )
+static struct gl_attrib_node *
+new_attrib_node( GLbitfield kind )
 {
    struct gl_attrib_node *an = MALLOC_STRUCT(gl_attrib_node);
    if (an) {
@@ -61,8 +62,9 @@ static struct gl_attrib_node *new_attrib_node( GLbitfield kind )
 /*
  * Copy texture object state from one texture object to another.
  */
-static void copy_texobj_state( struct gl_texture_object *dest,
-                               const struct gl_texture_object *src )
+static void
+copy_texobj_state( struct gl_texture_object *dest,
+                   const struct gl_texture_object *src )
 {
    /*
    dest->Name = src->Name;
@@ -92,11 +94,13 @@ static void copy_texobj_state( struct gl_texture_object *dest,
 
 
 
-void gl_PushAttrib( GLcontext* ctx, GLbitfield mask )
+void
+_mesa_PushAttrib(GLbitfield mask)
 {
    struct gl_attrib_node *newnode;
    struct gl_attrib_node *head;
 
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushAttrib");
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -386,9 +390,11 @@ void gl_PushAttrib( GLcontext* ctx, GLbitfield mask )
  * This function is kind of long just because we have to call a lot
  * of device driver functions to update device driver state.
  */
-void gl_PopAttrib( GLcontext* ctx )
+void
+_mesa_PopAttrib(void)
 {
    struct gl_attrib_node *attr, *next;
+   GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopAttrib");
 
@@ -760,11 +766,13 @@ void gl_PopAttrib( GLcontext* ctx )
 #define GL_CLIENT_UNPACK_BIT (1<<21)
 
 
-void gl_PushClientAttrib( GLcontext *ctx, GLbitfield mask )
+void
+_mesa_PushClientAttrib(GLbitfield mask)
 {
    struct gl_attrib_node *newnode;
    struct gl_attrib_node *head;
 
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushClientAttrib");
 
    if (ctx->ClientAttribStackDepth>=MAX_CLIENT_ATTRIB_STACK_DEPTH) {
@@ -810,10 +818,12 @@ void gl_PushClientAttrib( GLcontext *ctx, GLbitfield mask )
 
 
 
-void gl_PopClientAttrib( GLcontext *ctx )
+void
+_mesa_PopClientAttrib(void)
 {
    struct gl_attrib_node *attr, *next;
 
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopClientAttrib");
 
    if (ctx->ClientAttribStackDepth==0) {
@@ -852,37 +862,5 @@ void gl_PopClientAttrib( GLcontext *ctx )
    ctx->NewState = NEW_ALL;
 }
 
-
-
-void
-_mesa_PushAttrib( GLbitfield mask )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   gl_PushAttrib(ctx, mask);
-}
-
-
-void
-_mesa_PopAttrib( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   gl_PopAttrib(ctx);
-}
-
-
-void
-_mesa_PushClientAttrib( GLbitfield mask )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   gl_PushClientAttrib(ctx, mask);
-}
-
-
-void
-_mesa_PopClientAttrib( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   gl_PopClientAttrib(ctx);
-}
 
 

@@ -1,10 +1,10 @@
-/* $Id: attrib.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: attrib.h,v 1.3 2000/02/02 22:03:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,15 +30,6 @@
 
 
 #include "types.h"
-
-
-extern void gl_PushAttrib( GLcontext* ctx, GLbitfield mask );
-
-extern void gl_PopAttrib( GLcontext* ctx );
-
-extern void gl_PushClientAttrib( GLcontext *ctx, GLbitfield mask );
-
-extern void gl_PopClientAttrib( GLcontext *ctx );
 
 
 extern void
