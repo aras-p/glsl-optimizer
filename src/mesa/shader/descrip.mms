@@ -14,7 +14,7 @@
 
 VPATH = RCS
 
-INCDIR = [---.include],[-.main],[-.glapi]
+INCDIR = [---.include],[-.main],[-.glapi],[.slang]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
@@ -45,7 +45,7 @@ OBJECTS = \
 	nvvertexec.obj,\
 	nvvertparse.obj,\
 	program.obj,\
-	shaderobjects.obj \
+	shaderobjects.obj,\
 	shaderobjects_3dlabs.obj
 
 
