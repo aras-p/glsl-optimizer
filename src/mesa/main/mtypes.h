@@ -878,7 +878,7 @@ struct gl_texture_image {
    GLfloat DepthScale;		/* used for mipmap lod computation */
    GLvoid *Data;		/* Image data, accessed via FetchTexel() */
    GLboolean IsClientData;	/* Data owned by client? */
-
+   GLboolean _IsPowerOfTwo;	/* Are all dimensions powers of two? */
 
    const struct gl_texture_format *TexFormat;
 
@@ -920,6 +920,7 @@ struct gl_texture_object {
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /* GL_SGIS_generate_mipmap */
+   GLboolean _IsPowerOfTwo;	/* Are all image dimensions powers of two? */
 
    struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
 
@@ -1449,13 +1450,11 @@ struct gl_constants {
 /*
  * List of extensions.
  */
-struct extension;
 struct gl_extensions {
-   char *ext_string;
-   struct extension *ext_list;
    /* Flags to quickly test if certain extensions are available.
     * Not every extension needs to have such a flag, but it's encouraged.
     */
+   GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_depth_texture;
    GLboolean ARB_fragment_program;
    GLboolean ARB_imaging;
@@ -1504,6 +1503,7 @@ struct gl_extensions {
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
    GLboolean MESA_pack_invert;
+   GLboolean MESA_packed_depth_stencil;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_blend_square;
@@ -1524,6 +1524,8 @@ struct gl_extensions {
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean APPLE_client_storage;
+   /* The extension string */
+   const GLubyte *String;
 };
 
 

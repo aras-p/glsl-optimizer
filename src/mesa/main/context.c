@@ -1202,7 +1202,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
 
    /* Extensions */
-   _mesa_extensions_ctr( ctx );
+   _mesa_init_extensions( ctx );
 
    /* Lighting group */
    for (i=0;i<MAX_LIGHTS;i++) {
@@ -1682,9 +1682,10 @@ static void add_debug_flags( const char *debug )
 }
 
 
-/*
+/**
  * Initialize a GLcontext struct.  This includes allocating all the
  * other structs and arrays which hang off of the context by pointers.
+ * \note the direct parameter is ignored (obsolete).
  */
 GLboolean
 _mesa_initialize_context( GLcontext *ctx,
@@ -1923,12 +1924,12 @@ _mesa_initialize_context( GLcontext *ctx,
 
 
 
-/*
+/**
  * Allocate and initialize a GLcontext structure.
  * Input:  visual - a GLvisual pointer (we copy the struct contents)
  *         sharelist - another context to share display lists with or NULL
  *         driver_ctx - pointer to device driver's context state struct
- *         direct - direct rendering?
+ *         direct - obsolete, ignored
  * Return:  pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
@@ -2078,7 +2079,8 @@ _mesa_free_context_data( GLcontext *ctx )
 
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 
-   _mesa_extensions_dtr(ctx);
+   if (ctx->Extensions.String)
+      FREE((void *) ctx->Extensions.String);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);

@@ -30,19 +30,10 @@
 #include "mtypes.h"
 
 
-#define MAX_EXT_NAMELEN 80
-
-struct extension {
-   struct extension *next, *prev;
-   GLint enabled;
-   GLboolean *flag;			/* optional flag stored elsewhere */
-   char name[MAX_EXT_NAMELEN+1];
-   void (*notify)( GLcontext *, GLboolean );
-};
-
 #define F(x) (int)&(((struct gl_extensions *)0)->x)
 #define ON GL_TRUE
 #define OFF GL_FALSE
+
 
 static const struct {
    GLboolean enabled;
@@ -121,7 +112,7 @@ static const struct {
    { OFF, "GL_IBM_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { OFF, "GL_INGR_blend_func_separate",       F(EXT_blend_func_separate) },
    { OFF, "GL_MESA_pack_invert",               F(MESA_pack_invert) },
-   { OFF, "GL_MESA_packed_depth_stencil",      0 },
+   { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
@@ -149,352 +140,286 @@ static const struct {
 
 
 
-
-/*
+/**
  * Enable all extensions suitable for a software-only renderer.
  * This is a convenience function used by the XMesa, OSMesa, GGI drivers, etc.
  */
 void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
-   const char *extensions[] = {
-      "GL_ARB_depth_texture",
+   ctx->Extensions.ARB_depth_texture = GL_TRUE;
 #if FEATURE_ARB_fragment_program
-      "GL_ARB_fragment_program",
+   /*ctx->Extensions.ARB_fragment_program = GL_TRUE;*/
 #endif
-      "GL_ARB_imaging",
-      "GL_ARB_multitexture",
+   ctx->Extensions.ARB_imaging = GL_TRUE;
+   ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_ARB_occlusion_query
-      "GL_ARB_occlusion_query",
+   ctx->Extensions.ARB_occlusion_query = GL_TRUE;
 #endif
-      "GL_ARB_point_parameters",
-      "GL_ARB_shadow",
-      "GL_ARB_shadow_ambient",
-      "GL_ARB_texture_border_clamp",
-      "GL_ARB_texture_cube_map",
-      "GL_ARB_texture_env_add",
-      "GL_ARB_texture_env_combine",
-      "GL_ARB_texture_env_crossbar",
-      "GL_ARB_texture_env_dot3",
-      "GL_ARB_texture_mirrored_repeat",
+   ctx->Extensions.ARB_shadow = GL_TRUE;
+   ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
+   ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
 #if FEATURE_ARB_vertex_program
-      "GL_ARB_vertex_program",
+   /*ctx->Extensions.ARB_vertex_program = GL_TRUE;*/
 #endif
-      "GL_ATI_texture_env_combine3",
-      "GL_ATI_texture_mirror_once",
-      "GL_EXT_blend_color",
-      "GL_EXT_blend_func_separate",
-      "GL_EXT_blend_logic_op",
-      "GL_EXT_blend_minmax",
-      "GL_EXT_blend_subtract",
-      "GL_EXT_convolution",
-      "GL_EXT_depth_bounds_test",
-      "GL_EXT_fog_coord",
-      "GL_EXT_histogram",
-      "GL_EXT_paletted_texture",
-      "GL_EXT_point_parameters",
-      "GL_EXT_shadow_funcs",
-      "GL_EXT_secondary_color",
-      "GL_EXT_shared_texture_palette",
-      "GL_EXT_stencil_wrap",
-      "GL_EXT_stencil_two_side",
-      "GL_EXT_texture_edge_clamp",
-      "GL_EXT_texture_env_add",
-      "GL_EXT_texture_env_combine",
-      "GL_EXT_texture_env_dot3",
-      "GL_EXT_texture_lod_bias",
-      "GL_EXT_texture_rectangle",
-      "GL_HP_occlusion_test",
-      "GL_IBM_texture_mirrored_repeat",
-      "GL_INGR_blend_func_separate",
-      "GL_MESA_pack_invert",
-      "GL_MESA_resize_buffers",
-      "GL_MESA_ycbcr_texture",
-      "GL_NV_blend_square",
-      "GL_NV_light_max_exponent",
-      "GL_NV_point_sprite",
-      "GL_NV_texture_rectangle",
-      "GL_NV_texgen_reflection",
+   ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
+   ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
+   ctx->Extensions.EXT_blend_color = GL_TRUE;
+   ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
+   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
+   ctx->Extensions.EXT_blend_minmax = GL_TRUE;
+   ctx->Extensions.EXT_blend_subtract = GL_TRUE;
+   ctx->Extensions.EXT_convolution = GL_TRUE;
+   ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
+   ctx->Extensions.EXT_fog_coord = GL_TRUE;
+   ctx->Extensions.EXT_histogram = GL_TRUE;
+   ctx->Extensions.EXT_paletted_texture = GL_TRUE;
+   ctx->Extensions.EXT_point_parameters = GL_TRUE;
+   ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
+   ctx->Extensions.EXT_secondary_color = GL_TRUE;
+   ctx->Extensions.EXT_shared_texture_palette = GL_TRUE;
+   ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
+   ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
+   ctx->Extensions.EXT_texture_env_add = GL_TRUE;
+   ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
+   ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
+   ctx->Extensions.HP_occlusion_test = GL_TRUE;
+   ctx->Extensions.MESA_pack_invert = GL_TRUE;
+   ctx->Extensions.MESA_resize_buffers = GL_TRUE;
+   ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
+   ctx->Extensions.NV_blend_square = GL_TRUE;
+   /*ctx->Extensions.NV_light_max_exponent = GL_TRUE;*/
+   ctx->Extensions.NV_point_sprite = GL_TRUE;
+   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+   /*ctx->Extensions.NV_texgen_reflection = GL_TRUE;*/
 #if FEATURE_NV_vertex_program
-      "GL_NV_vertex_program",
-      "GL_NV_vertex_program1_1",
+   ctx->Extensions.NV_vertex_program = GL_TRUE;
+   ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
 #endif
 #if FEATURE_NV_fragment_program
-      "GL_NV_fragment_program",
+   ctx->Extensions.NV_fragment_program = GL_TRUE;
 #endif
-      "GL_SGI_color_matrix",
-      "GL_SGI_color_table",
-      "GL_SGI_texture_color_table",
-      "GL_SGIS_generate_mipmap",
-      "GL_SGIS_pixel_texture",
-      "GL_SGIS_texture_edge_clamp",
-      "GL_SGIS_texture_border_clamp",
-      "GL_SGIX_depth_texture",
-      "GL_SGIX_pixel_texture",
-      "GL_SGIX_shadow",
-      "GL_SGIX_shadow_ambient",
-      NULL
-   };
-   GLuint i;
-
-   for (i = 0; extensions[i]; i++) {
-      _mesa_enable_extension(ctx, extensions[i]);
-   }
+   ctx->Extensions.SGI_color_matrix = GL_TRUE;
+   ctx->Extensions.SGI_color_table = GL_TRUE;
+   ctx->Extensions.SGI_texture_color_table = GL_TRUE;
+   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
+   ctx->Extensions.SGIS_pixel_texture = GL_TRUE;
+   ctx->Extensions.SGIS_texture_edge_clamp = GL_TRUE;
+   ctx->Extensions.SGIX_depth_texture = GL_TRUE;
+   ctx->Extensions.SGIX_pixel_texture = GL_TRUE;
+   ctx->Extensions.SGIX_shadow = GL_TRUE;
+   ctx->Extensions.SGIX_shadow_ambient = GL_TRUE;
 }
 
 
-/*
+/**
  * Enable GL_ARB_imaging and all the EXT extensions that are subsets of it.
  */
 void
 _mesa_enable_imaging_extensions(GLcontext *ctx)
 {
-   const char *extensions[] = {
-      "GL_ARB_imaging",
-      "GL_EXT_blend_color",
-      "GL_EXT_blend_minmax",
-      "GL_EXT_blend_subtract",
-      "GL_EXT_convolution",
-      "GL_EXT_histogram",
-      "GL_SGI_color_matrix",
-      "GL_SGI_color_table",
-      NULL
-   };
-   GLuint i;
-
-   for (i = 0; extensions[i]; i++) {
-      _mesa_enable_extension(ctx, extensions[i]);
-   }
+   ctx->Extensions.ARB_imaging = GL_TRUE;
+   ctx->Extensions.EXT_blend_color = GL_TRUE;
+   ctx->Extensions.EXT_blend_minmax = GL_TRUE;
+   ctx->Extensions.EXT_blend_subtract = GL_TRUE;
+   ctx->Extensions.EXT_convolution = GL_TRUE;
+   ctx->Extensions.EXT_histogram = GL_TRUE;
+   ctx->Extensions.SGI_color_matrix = GL_TRUE;
+   ctx->Extensions.SGI_color_table = GL_TRUE;
 }
 
 
 
-/*
+/**
  * Enable all OpenGL 1.3 features and extensions.
+ * A convenience function to be called by drivers.
  */
 void
 _mesa_enable_1_3_extensions(GLcontext *ctx)
 {
-   const char *extensions[] = {
-      "GL_ARB_multisample",
-      "GL_ARB_multitexture",
-      "GL_ARB_texture_border_clamp",
-      "GL_ARB_texture_compression",
-      "GL_ARB_texture_cube_map",
-      "GL_ARB_texture_env_add",
-      "GL_ARB_texture_env_combine",
-      "GL_ARB_texture_env_dot3",
-      "GL_ARB_transpose_matrix",
-      NULL
-   };
-   GLuint i;
-
-   for (i = 0; extensions[i]; i++) {
-      _mesa_enable_extension(ctx, extensions[i]);
-   }
+   ctx->Extensions.ARB_multisample = GL_TRUE;
+   ctx->Extensions.ARB_multitexture = GL_TRUE;
+   ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
+   ctx->Extensions.ARB_texture_compression = GL_TRUE;
+   ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.EXT_texture_env_add = GL_TRUE;
+   /*ctx->Extensions.ARB_transpose_matrix = GL_TRUE;*/
 }
 
 
 
-/*
+/**
  * Enable all OpenGL 1.4 features and extensions.
+ * A convenience function to be called by drivers.
  */
 void
 _mesa_enable_1_4_extensions(GLcontext *ctx)
 {
-   const char *extensions[] = {
-      "GL_ARB_depth_texture",
-      "GL_ARB_point_parameters",
-      "GL_ARB_shadow",
-      "GL_ARB_texture_env_crossbar",
-      "GL_ARB_texture_mirrored_repeat",
-      "GL_ARB_window_pos",
-      "GL_EXT_blend_color",
-      "GL_EXT_blend_func_separate",
-      "GL_EXT_blend_logic_op",
-      "GL_EXT_blend_minmax",
-      "GL_EXT_blend_subtract",
-      "GL_EXT_fog_coord",
-      "GL_EXT_multi_draw_arrays",
-      "GL_EXT_secondary_color",
-      "GL_EXT_stencil_wrap",
-      "GL_SGIS_generate_mipmap",
-      NULL
-   };
-   GLuint i;
-
-   for (i = 0; extensions[i]; i++) {
-      _mesa_enable_extension(ctx, extensions[i]);
-   }
+   ctx->Extensions.ARB_depth_texture = GL_TRUE;
+   ctx->Extensions.ARB_shadow = GL_TRUE;
+   ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
+   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
+   ctx->Extensions.ARB_window_pos = GL_TRUE;
+   ctx->Extensions.EXT_blend_color = GL_TRUE;
+   ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
+   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
+   ctx->Extensions.EXT_blend_minmax = GL_TRUE;
+   ctx->Extensions.EXT_blend_subtract = GL_TRUE;
+   ctx->Extensions.EXT_fog_coord = GL_TRUE;
+   ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
+   ctx->Extensions.EXT_point_parameters = GL_TRUE;
+   ctx->Extensions.EXT_secondary_color = GL_TRUE;
+   ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
+   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 }
 
 
-
-/*
- * Add a new extenstion.  This would be called from a Mesa driver.
+/**
+ * Enable all OpenGL 1.5 features and extensions.
+ * A convenience function to be called by drivers.
+ * XXX TENTATIVE!!!
  */
 void
-_mesa_add_extension( GLcontext *ctx,
-                     GLboolean enabled,
-                     const char *name,
-                     GLboolean *flag_ptr )
+_mesa_enable_1_5_extensions(GLcontext *ctx)
 {
-   /* We should never try to add an extension after
-    * _mesa_extensions_get_string() has been called!
-    */
-   assert(ctx->Extensions.ext_string == 0);
-
-   {
-      struct extension *t = MALLOC_STRUCT(extension);
-      t->enabled = enabled;
-      _mesa_strncpy(t->name, name, MAX_EXT_NAMELEN);
-      t->name[MAX_EXT_NAMELEN] = 0;
-      t->flag = flag_ptr;
-      if (t->flag)
-         *t->flag = enabled;
-      insert_at_tail( ctx->Extensions.ext_list, t );
-   }
+   ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+   ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 }
 
 
-/*
+/**
  * Either enable or disable the named extension.
  */
 static void
-set_extension( GLcontext *ctx, const char *name, GLint state )
+set_extension( GLcontext *ctx, const char *name, GLboolean state )
 {
-   /* XXX we should assert that ext_string is null.  We should never be
-    * enabling/disabling extensions after _mesa_extensions_get_string()
-    * has been called!
-    */
-   struct extension *i;
-   foreach( i, ctx->Extensions.ext_list )
-      if (_mesa_strncmp(i->name, name, MAX_EXT_NAMELEN) == 0)
-	 break;
+   GLboolean *base = (GLboolean *) &ctx->Extensions;
+   GLuint i;
 
-   if (i == ctx->Extensions.ext_list) {
-      /* this is an error.  Drivers should never try to enable/disable
-       * an extension which is unknown to Mesa or wasn't added by calling
-       * _mesa_add_extension().
-       */
+   if (ctx->Extensions.String) {
+      /* The string was already queried - can't change it now! */
+      _mesa_problem(ctx, "Trying to enable/disable extension after glGetString(GL_EXTENSIONS): %s", name);
       return;
    }
 
-   if (i->flag)
-      *(i->flag) = state;
-   i->enabled = state;
+   for (i = 0 ; i < Elements(default_extensions) ; i++) {
+      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+         if (default_extensions[i].flag_offset) {
+            GLboolean *enabled = base + default_extensions[i].flag_offset;
+            *enabled = state;
+         }
+         return;
+      }
+   }
+   _mesa_problem(ctx, "Trying to enable unknown extension: %s", name);
 }
 
 
-
+/**
+ * Enable the named extension.
+ * Typically called by drivers.
+ */
 void
 _mesa_enable_extension( GLcontext *ctx, const char *name )
 {
-   if (ctx->Extensions.ext_string == 0)
-      set_extension( ctx, name, 1 );
+   set_extension(ctx, name, GL_TRUE);
 }
 
 
+/**
+ * Disable the named extension.
+ * XXX is this really needed???
+ */
 void
 _mesa_disable_extension( GLcontext *ctx, const char *name )
 {
-   if (ctx->Extensions.ext_string == 0)
-      set_extension( ctx, name, 0 );
+   set_extension(ctx, name, GL_FALSE);
 }
 
 
-/*
+/**
  * Test if the named extension is enabled in this context.
  */
 GLboolean
-_mesa_extension_is_enabled( GLcontext *ctx, const char *name)
+_mesa_extension_is_enabled( GLcontext *ctx, const char *name )
 {
-   struct extension *i;
-   foreach( i, ctx->Extensions.ext_list )
-      if (_mesa_strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) {
-         if (i->enabled)
-            return GL_TRUE;
-         else
-            return GL_FALSE;
-      }
+   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
+   GLuint i;
 
+   for (i = 0 ; i < Elements(default_extensions) ; i++) {
+      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+         if (!default_extensions[i].flag_offset)
+            return GL_TRUE;
+         return *(base + default_extensions[i].flag_offset);
+      }
+   }
    return GL_FALSE;
 }
 
 
+/**
+ * Run through the default_extensions array above and set the
+ * ctx->Extensions.ARB/EXT_* flags accordingly.
+ * To be called during context initialization.
+ */
 void
-_mesa_extensions_dtr( GLcontext *ctx )
+_mesa_init_extensions( GLcontext *ctx )
 {
-   struct extension *i, *nexti;
-
-   if (ctx->Extensions.ext_string) {
-      FREE( ctx->Extensions.ext_string );
-      ctx->Extensions.ext_string = 0;
-   }
-
-   if (ctx->Extensions.ext_list) {
-      foreach_s( i, nexti, ctx->Extensions.ext_list ) {
-	 remove_from_list( i );
-	 FREE( i );
-      }
-
-      FREE(ctx->Extensions.ext_list);
-      ctx->Extensions.ext_list = 0;
-   }
-}
-
-
-void
-_mesa_extensions_ctr( GLcontext *ctx )
-{
+   GLboolean *base = (GLboolean *) &ctx->Extensions;
    GLuint i;
-   GLboolean *base = (GLboolean *)&ctx->Extensions;
-
-   ctx->Extensions.ext_string = NULL;
-   ctx->Extensions.ext_list = MALLOC_STRUCT(extension);
-   make_empty_list( ctx->Extensions.ext_list );
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      GLboolean *ptr = NULL;
-
-      if (default_extensions[i].flag_offset)
-	 ptr = base + default_extensions[i].flag_offset;
-
-      (void) _mesa_add_extension( ctx,
-                                  default_extensions[i].enabled,
-                                  default_extensions[i].name,
-                                  ptr);
+      if (default_extensions[i].enabled &&
+          default_extensions[i].flag_offset) {
+         *(base + default_extensions[i].flag_offset) = GL_TRUE;
+      }
    }
 }
 
 
-const char *
-_mesa_extensions_get_string( GLcontext *ctx )
+/**
+ * Construct the GL_EXTENSIONS string.  Called the first time that
+ * glGetString(GL_EXTENSIONS) is called.
+ */
+GLubyte *
+_mesa_make_extension_string( GLcontext *ctx )
 {
-   if (ctx->Extensions.ext_string == 0)
-   {
-      struct extension *i;
-      char *str;
-      GLuint len = 0;
-      foreach (i, ctx->Extensions.ext_list)
-	 if (i->enabled)
-	    len += _mesa_strlen(i->name) + 1;
+   const GLboolean *base = (const GLboolean *) &ctx->Extensions;
+   GLuint extStrLen = 0;
+   GLubyte *s;
+   GLuint i;
 
-      if (len == 0)
-	 return "";
-
-      str = (char *) _mesa_malloc(len * sizeof(char));
-      ctx->Extensions.ext_string = str;
-
-      foreach (i, ctx->Extensions.ext_list)
-	 if (i->enabled) {
-	    _mesa_strcpy(str, i->name);
-	    str += _mesa_strlen(str);
-	    *str++ = ' ';
-	 }
-
-      *(str-1) = 0;
+   /* first, compute length of the extension string */
+   for (i = 0 ; i < Elements(default_extensions) ; i++) {
+      if (!default_extensions[i].flag_offset ||
+          *(base + default_extensions[i].flag_offset)) {
+         extStrLen += _mesa_strlen(default_extensions[i].name) + 1;
+      }
    }
+   s = _mesa_malloc(extStrLen);
 
-   return ctx->Extensions.ext_string;
+   /* second, build the extension string */
+   extStrLen = 0;
+   for (i = 0 ; i < Elements(default_extensions) ; i++) {
+      if (!default_extensions[i].flag_offset ||
+          *(base + default_extensions[i].flag_offset)) {
+         GLuint len = _mesa_strlen(default_extensions[i].name);
+         _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
+         extStrLen += len;
+         s[extStrLen] = (GLubyte) ' ';
+         extStrLen++;
+      }
+   }
+   ASSERT(extStrLen > 0);
+
+   s[extStrLen - 1] = 0;
+
+   return s;
 }

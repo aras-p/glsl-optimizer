@@ -6243,7 +6243,9 @@ _mesa_GetString( GLenum name )
                return (const GLubyte *) version_1_2;
             }
          case GL_EXTENSIONS:
-            return (const GLubyte *) _mesa_extensions_get_string(ctx);
+            if (!ctx->Extensions.String)
+               ctx->Extensions.String = _mesa_make_extension_string(ctx);
+            return (const GLubyte *) ctx->Extensions.String;
 #if FEATURE_NV_fragment_program
          case GL_PROGRAM_ERROR_STRING_NV:
             if (ctx->Extensions.NV_fragment_program) {

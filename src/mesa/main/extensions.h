@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,19 +37,16 @@ extern void _mesa_enable_1_3_extensions(GLcontext *ctx);
 
 extern void _mesa_enable_1_4_extensions(GLcontext *ctx);
 
-extern void _mesa_add_extension( GLcontext *ctx, GLboolean enabled,
-                                 const char *name, GLboolean *flag_ptr );
+extern void _mesa_enable_1_5_extensions(GLcontext *ctx);
 
-extern void _mesa_enable_extension( GLcontext *ctx, const char *name );
+extern void _mesa_enable_extension(GLcontext *ctx, const char *name);
 
-extern void _mesa_disable_extension( GLcontext *ctx, const char *name );
+extern void _mesa_disable_extension(GLcontext *ctx, const char *name);
 
-extern GLboolean _mesa_extension_is_enabled( GLcontext *ctx, const char *name);
+extern GLboolean _mesa_extension_is_enabled(GLcontext *ctx, const char *name);
 
-extern void _mesa_extensions_dtr( GLcontext *ctx );
+extern void _mesa_init_extensions(GLcontext *ctx);
 
-extern void _mesa_extensions_ctr( GLcontext *ctx );
-
-extern const char *_mesa_extensions_get_string( GLcontext *ctx );
+extern GLubyte *_mesa_make_extension_string(GLcontext *ctx);
 
 #endif
