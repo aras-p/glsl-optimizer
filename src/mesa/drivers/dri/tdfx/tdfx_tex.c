@@ -1051,7 +1051,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
         }
 
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                        &texImage->Format, texImage->Data,
+                                        texImage->TexFormat, texImage->Data,
                                         0, 0, 0, /* dstX/Y/Zoffset */
                                         width * texelBytes, /* dstRowStride */
                                         0, /* dstImageStride */
@@ -1083,7 +1083,7 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     else {
         /* no rescaling needed */
         texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
-                                    &texImage->Format, texImage->Data,
+                                    texImage->TexFormat, texImage->Data,
                                     xoffset, yoffset, 0,
                                     mml->width * texelBytes, /* dstRowStride */
                                     0, /* dstImageStride */
