@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.12 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.13 2001/12/20 15:30:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "glapitable.h"
 #include "macros.h"
 #include "colormac.h"
+#include "api_compat.h"
 #include "api_loopback.h"
 
 /* KW: A set of functions to convert unusual Color/Normal/Vertex/etc
@@ -43,30 +44,31 @@
  * listed in dd.h.  The easiest way for a driver to do this is to
  * install the supplied software t&l module.
  */
-#define DRIVER(x) gl##x
-#define COLORUBV(v)                 DRIVER(Color4ubv)(v)
-#define COLORF(r,g,b,a)             DRIVER(Color4f)(r,g,b,a)
-#define FOGCOORDF(x)                DRIVER(FogCoordfEXT)(x)
-#define VERTEX2(x,y)	            DRIVER(Vertex2f)(x,y)
-#define VERTEX3(x,y,z)	            DRIVER(Vertex3f)(x,y,z)
-#define VERTEX4(x,y,z,w)            DRIVER(Vertex4f)(x,y,z,w)
-#define NORMAL(x,y,z)               DRIVER(Normal3f)(x,y,z)
-#define TEXCOORD1(s)                DRIVER(TexCoord1f)(s)
-#define TEXCOORD2(s,t)              DRIVER(TexCoord2f)(s,t)
-#define TEXCOORD3(s,t,u)            DRIVER(TexCoord3f)(s,t,u)
-#define TEXCOORD4(s,t,u,v)          DRIVER(TexCoord4f)(s,t,u,v)
-#define INDEX(c)		    DRIVER(Indexi)(c)
-#define MULTI_TEXCOORD1(z,s)	    DRIVER(MultiTexCoord1fARB)(z,s)
-#define MULTI_TEXCOORD2(z,s,t)	    DRIVER(MultiTexCoord2fARB)(z,s,t)
-#define MULTI_TEXCOORD3(z,s,t,u)    DRIVER(MultiTexCoord3fARB)(z,s,t,u)
-#define MULTI_TEXCOORD4(z,s,t,u,v)  DRIVER(MultiTexCoord4fARB)(z,s,t,u,v)
-#define EVALCOORD1(x)               DRIVER(EvalCoord1f)(x)
-#define EVALCOORD2(x,y)             DRIVER(EvalCoord2f)(x,y)
-#define MATERIALFV(a,b,c)           DRIVER(Materialfv)(a,b,c)
-#define RECTF(a,b,c,d)              DRIVER(Rectf)(a,b,c,d)
-#define SECONDARYCOLORUB(a,b,c)     DRIVER(SecondaryColor3ubEXT)(a,b,c)
-#define SECONDARYCOLORF(a,b,c)      DRIVER(SecondaryColor3fEXT)(a,b,c)
-#define ATTRIB(index, x, y, z, w)   DRIVER(VertexAttrib4fNV)(index, x, y, z, w)
+#define COLORUBV(v)                 glColor4ubv(v)
+#define COLORF(r,g,b,a)             glColor4f(r,g,b,a)
+#define VERTEX2(x,y)	            glVertex2f(x,y)
+#define VERTEX3(x,y,z)	            glVertex3f(x,y,z)
+#define VERTEX4(x,y,z,w)            glVertex4f(x,y,z,w)
+#define NORMAL(x,y,z)               glNormal3f(x,y,z)
+#define TEXCOORD1(s)                glTexCoord1f(s)
+#define TEXCOORD2(s,t)              glTexCoord2f(s,t)
+#define TEXCOORD3(s,t,u)            glTexCoord3f(s,t,u)
+#define TEXCOORD4(s,t,u,v)          glTexCoord4f(s,t,u,v)
+#define INDEX(c)		    glIndexi(c)
+#define MULTI_TEXCOORD1(z,s)	    glMultiTexCoord1fARB(z,s)
+#define MULTI_TEXCOORD2(z,s,t)	    glMultiTexCoord2fARB(z,s,t)
+#define MULTI_TEXCOORD3(z,s,t,u)    glMultiTexCoord3fARB(z,s,t,u)
+#define MULTI_TEXCOORD4(z,s,t,u,v)  glMultiTexCoord4fARB(z,s,t,u,v)
+#define EVALCOORD1(x)               glEvalCoord1f(x)
+#define EVALCOORD2(x,y)             glEvalCoord2f(x,y)
+#define MATERIALFV(a,b,c)           glMaterialfv(a,b,c)
+#define RECTF(a,b,c,d)              glRectf(a,b,c,d)
+
+
+
+#define FOGCOORDF(x)                _compat_FogCoordfEXT(x)
+#define SECONDARYCOLORUB(a,b,c)     _compat_SecondaryColor3ubEXT(a,b,c)
+#define SECONDARYCOLORF(a,b,c)      _compat_SecondaryColor3fEXT(a,b,c)
 
 
 static void
@@ -1224,10 +1226,10 @@ loopback_SecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue )
 static void
 loopback_SecondaryColor3bvEXT( const GLbyte *v )
 {
-   const GLfloat r = BYTE_TO_FLOAT(v[0]);
-   const GLfloat g = BYTE_TO_FLOAT(v[1]);
-   const GLfloat b = BYTE_TO_FLOAT(v[2]);
-   SECONDARYCOLORF(r, g, b);
+   const GLfloat a = BYTE_TO_FLOAT(v[0]);
+   const GLfloat b = BYTE_TO_FLOAT(v[1]);
+   const GLfloat c = BYTE_TO_FLOAT(v[2]);
+   SECONDARYCOLORF(a,b,c);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.33 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.34 2001/12/20 15:30:46 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 
 
 #include "glheader.h"
+#include "api_compat.h"
 #include "context.h"
 #include "dlist.h"
 #include "debug.h"
@@ -597,7 +598,6 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       ASSERT((prim & PRIM_MODE_MASK) <= GL_POLYGON+1);
 
       if (prim & PRIM_BEGIN) {
-/*  	 fprintf(stderr, "begin %s\n", _mesa_prim_name[prim&PRIM_MODE_MASK]); */
 	 glBegin(prim & PRIM_MODE_MASK);
       }
 
@@ -611,23 +611,17 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    }
 	 }
 
-	 if (flags[i] & VERT_NORMAL_BIT) {
-/*  	       fprintf(stderr, "normal %d: %f %f %f\n", i, */
-/*  		       IM->Normal[i][0], IM->Normal[i][1], IM->Normal[i][2]);  */
+	 if (flags[i] & VERT_NORMAL_BIT) 
 	    glNormal3fv(IM->Normal[i]);
-	 }
 
-	 if (flags[i] & VERT_COLOR0_BIT) {
-/*  	       fprintf(stderr, "color %d: %f %f %f\n", i, */
-/*  		       IM->Color[i][0], IM->Color[i][1], IM->Color[i][2]);  */
+	 if (flags[i] & VERT_COLOR0_BIT) 
 	    glColor4fv( IM->Color[i] );
-	 }
 
 	 if (flags[i] & VERT_COLOR1_BIT)
-	    glSecondaryColor3fvEXT( IM->SecondaryColor[i] );
+	    _compat_SecondaryColor3fvEXT( IM->SecondaryColor[i] );
 
 	 if (flags[i] & VERT_FOG_BIT)
-	    glFogCoordfEXT( IM->FogCoord[i] );
+	    _compat_FogCoordfEXT( IM->FogCoord[i] );
 
 	 if (flags[i] & VERT_INDEX_BIT)
 	    glIndexi( IM->Index[i] );
@@ -638,11 +632,8 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	 if (flags[i] & VERT_MATERIAL) 
 	    emit_material( IM->Material[i], IM->MaterialMask[i] );
 
-	 if (flags[i]&VERT_OBJ_234) {
-/*  	       fprintf(stderr, "vertex %d: %f %f %f\n", i, */
-/*  		       IM->Obj[i][0], IM->Obj[i][1], IM->Obj[i][2]); */
+	 if (flags[i]&VERT_OBJ_234) 
 	    vertex( IM->Obj[i] );
-	 }
 	 else if (flags[i] & VERT_EVAL_C1)
 	    glEvalCoord1f( IM->Obj[i][0] );
 	 else if (flags[i] & VERT_EVAL_P1)
@@ -654,7 +645,6 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       }
 
       if (prim & PRIM_END) {
-/*  	 fprintf(stderr, "end\n"); */
 	 glEnd();
       }
    }

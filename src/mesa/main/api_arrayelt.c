@@ -1,4 +1,4 @@
-/* $Id: api_arrayelt.c,v 1.3 2001/06/01 22:22:10 keithw Exp $ */
+/* $Id: api_arrayelt.c,v 1.4 2001/12/20 15:30:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,9 +24,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/* Author:
+ *    Keith Whitwell <keith_whitwell@yahoo.com>
+ */
+
 #include "glheader.h"
 #include "api_arrayelt.h"
 #include "context.h"
+#include "glapi.h"
 #include "mem.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -164,34 +169,37 @@ static void (*normalfuncs[8])( const void * ) = {
    (void (*)( const void * ))glNormal3dv,
 };
 
-static void (*fogcoordfuncs[8])( const void * ) = {
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   (void (*)( const void * ))glFogCoordfvEXT,
-   (void (*)( const void * ))glFogCoorddvEXT,
-};
-
-static void (*secondarycolorfuncs[8])( const void * ) = {
-   (void (*)( const void * ))glSecondaryColor3bvEXT,
-   (void (*)( const void * ))glSecondaryColor3ubvEXT,
-   (void (*)( const void * ))glSecondaryColor3svEXT,
-   (void (*)( const void * ))glSecondaryColor3usvEXT,
-   (void (*)( const void * ))glSecondaryColor3ivEXT,
-   (void (*)( const void * ))glSecondaryColor3uivEXT,
-   (void (*)( const void * ))glSecondaryColor3fvEXT,
-   (void (*)( const void * ))glSecondaryColor3dvEXT,
-};
-
+static void (*fogcoordfuncs[8])( const void * );
+static void (*secondarycolorfuncs[8])( const void * );
 
 GLboolean _ae_create_context( GLcontext *ctx )
 {
+   static int firsttime = 1;
+
    ctx->aelt_context = MALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context) 
       return GL_FALSE;
+
+
+   if (firsttime)
+   {
+      firsttime = 0;
+
+      /* Don't really want to use api_compat.h for this, but the
+       * rational for using _glaph_get_proc_address is the same.
+       */
+      fogcoordfuncs[0] = _glapi_get_proc_address("glSecondaryColor3bvEXT");
+      fogcoordfuncs[1] = _glapi_get_proc_address("glSecondaryColor3ubvEXT");
+      fogcoordfuncs[2] = _glapi_get_proc_address("glSecondaryColor3svEXT");
+      fogcoordfuncs[3] = _glapi_get_proc_address("glSecondaryColor3usvEXT");
+      fogcoordfuncs[4] = _glapi_get_proc_address("glSecondaryColor3ivEXT");
+      fogcoordfuncs[5] = _glapi_get_proc_address("glSecondaryColor3uivEXT");
+      fogcoordfuncs[6] = _glapi_get_proc_address("glSecondaryColor3fvEXT");
+      fogcoordfuncs[7] = _glapi_get_proc_address("glSecondaryColor3dvEXT");
+
+      secondarycolorfuncs[6] = _glapi_get_proc_address("glFogCoordfvEXT");
+      secondarycolorfuncs[7] = _glapi_get_proc_address("glFogCoorddvEXT");
+   }
 
    AE_CONTEXT(ctx)->NewState = ~0;
    return GL_TRUE;

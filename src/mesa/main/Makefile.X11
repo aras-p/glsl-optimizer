@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.61 2001/12/14 16:35:55 kschultz Exp $
+# $Id: Makefile.X11,v 1.62 2001/12/20 15:30:45 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -25,6 +25,7 @@ CORE_SOURCES = \
 	vpparse.c \
 	vpstate.c \
 	api_arrayelt.c \
+	api_compat.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
