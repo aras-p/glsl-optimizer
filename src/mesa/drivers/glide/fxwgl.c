@@ -345,8 +345,13 @@ wglCreateContext(HDC hdc)
      ShowWindow(hWnd, SW_SHOWNORMAL);
      SetForegroundWindow(hWnd);
      Sleep(100); /* a hack for win95 */
-     GetClientRect(hWnd, &cliRect);
-     error = !(ctx = fxMesaCreateBestContext((GLuint) hWnd, cliRect.right, cliRect.bottom, pix[curPFD - 1].mesaAttr));
+     if (0 && !(GetWindowLong (hWnd, GWL_STYLE) & WS_POPUP)) {
+	/* [dBorca] Hack alert: unfinished business! */
+        error = !(ctx = fxMesaCreateContext((GLuint) hWnd, GR_RESOLUTION_NONE, GR_REFRESH_NONE, pix[curPFD - 1].mesaAttr));
+     } else {
+        GetClientRect(hWnd, &cliRect);
+        error = !(ctx = fxMesaCreateBestContext((GLuint) hWnd, cliRect.right, cliRect.bottom, pix[curPFD - 1].mesaAttr));
+     }
    }
 
    /*if (getenv("SST_DUALHEAD"))

@@ -117,7 +117,7 @@ MESA_FX_INFO
 	OS: all
 	HW: all
 	Desc: verbose to stderr
-	Value: "r" to redirect stderr to MESA.LOG
+	Value: any; special value "r" to redirect stderr to MESA.LOG
 MESA_FX_IGNORE_PALEXT
 	OS: all
 	HW: all
@@ -129,7 +129,7 @@ MESA_FX_IGNORE_PIXEXT
 MESA_FX_IGNORE_TEXFMT
 	OS: all
 	HW: Napalm
-	Desc: disable 32bit textures; also max texture is 256x256
+	Desc: disable 32bit textures
 MESA_FX_IGNORE_CMBEXT
 	OS: all
 	HW: Napalm

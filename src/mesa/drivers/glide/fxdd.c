@@ -1502,10 +1502,14 @@ fxDDInitExtensions(GLcontext * ctx)
 #if 1
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
 #endif
-   /* not just yet */
 #if 0
+   /* not just yet */
    _mesa_enable_extension(ctx, "GL_ARB_fragment_program");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
+#endif
+#if 0
+   /* not until texel fetchers are right */
+   _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmaps");
 #endif
 }
 
