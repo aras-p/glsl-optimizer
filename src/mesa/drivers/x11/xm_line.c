@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.6 2000/11/05 18:26:12 keithw Exp $ */
+/* $Id: xm_line.c,v 1.7 2000/11/06 15:52:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,11 +92,13 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, SWvertex *vert )
  */
 void xmesa_choose_point( GLcontext *ctx )
 {
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (ctx->Point.Size==1.0F && !ctx->Point.SmoothFlag 
-       && swrast->_RasterMask==0
-       && !ctx->Texture._ReallyEnabled) {
+   if (ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag 
+       && swrast->_RasterMask == 0
+       && !ctx->Texture._ReallyEnabled
+       && xmesa->xm_buffer->buffer != XIMAGE) {
       swrast->Point = draw_points_ANY_pixmap;
    }
    else { 
