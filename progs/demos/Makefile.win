@@ -1,4 +1,4 @@
-# $Id: Makefile.win,v 1.4 2001/09/25 16:25:41 kschultz Exp $
+# $Id: Makefile.win,v 1.5 2001/10/04 19:13:36 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -56,7 +56,21 @@ PROGS = anisotropic \
 	tunnel2 \
 	winpos
 
-SRCS =
+SRCS = \
+	bounce.c \
+	clearspd.c \
+	cubemap.c \
+	drawpix.c \
+	fire.c \
+	gamma.c \
+	gears.c \
+	geartrain.c \
+	glinfo.c \
+	gloss.c \
+	isosurf.c \
+	morph3d.c \
+	teapot.c
+
 OSMESASRCS = osdemo.c
 
 !include "../mesawin32.mak"
@@ -70,9 +84,9 @@ realclean::
 targets: readtex.c readtex.h $(PROGS)
 
 # remove comments when we get non-osmesa pgm working
-#$(EXES) : $*.obj
-#	@echo $@
-#	$(link) -out:$@ $** /LIBPATH:$(LIBDIR) $(LIBS)
+$(EXES) : $*.obj
+	@echo $@
+	$(link) -out:$@ $** /LIBPATH:$(LIBDIR) $(LIBS)
 
 $(OSMESAEXES) : $*.obj
 	@echo $@
