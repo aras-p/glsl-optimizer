@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.35 2000/09/02 17:52:53 brianp Exp $ */
+/* $Id: extensions.c,v 1.36 2000/09/25 16:03:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_ARB_multitexture" },
    { DEFAULT_OFF,    "GL_ARB_texture_compression" },
    { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },
+   { DEFAULT_ON,     "GL_ARB_texture_env_add" },
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
@@ -108,7 +109,7 @@ update_extension_flags( GLcontext *ctx )
    ctx->Extensions.HaveHistogram = gl_extension_is_enabled(ctx, "GL_EXT_histogram") || gl_extension_is_enabled(ctx, "GL_ARB_imaging");
    ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
    ctx->Extensions.HaveStencilWrap = gl_extension_is_enabled(ctx, "GL_EXT_stencil_wrap");
-   ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
+   ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add") || gl_extension_is_enabled(ctx, "GL_ARB_texture_env_add");
    ctx->Extensions.HaveTextureEnvCombine = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_combine");
    ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");
    ctx->Extensions.HaveTextureCompression = gl_extension_is_enabled(ctx, "GL_ARB_texture_compression");

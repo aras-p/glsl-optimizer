@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.42 2000/09/08 16:42:44 brianp Exp $
+$Id: VERSIONS,v 1.43 2000/09/25 16:04:35 brianp Exp $
 
 
 Mesa Version History
@@ -760,6 +760,7 @@ Mesa Version History
 	- GL_EXT_convolution extension
 	- GL_ARB_imaging subset
 	- OSMesaCreateContextExt() function
+	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
