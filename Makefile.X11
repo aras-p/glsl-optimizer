@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.23 2000/03/31 16:20:47 brianp Exp $
+# $Id: Makefile.X11,v 1.24 2000/05/03 15:01:08 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -306,6 +306,8 @@ clean:
 	-rm -f xdemos/*.o xdemos/*~
 	-rm -f samples/*.o samples/*~
 	-rm -f ggi/*.o ggi/demos/*.o ggi/*.a
+	-rm -f widgets-sgi/*.o
+	-rm -f widgets-mesa/*/*.o
 
 # Remove everything that can be remade
 realclean: clean
@@ -468,8 +470,33 @@ LIB_FILES =	\
 	$(DIRECTORY)/src-glu/*.dja				\
 	$(DIRECTORY)/src-glu/depend				\
 	$(DIRECTORY)/src-glu/*.[ch]				\
-	$(DIRECTORY)/widgets-mesa				\
-	$(DIRECTORY)/widgets-sgi				\
+	$(DIRECTORY)/widgets-mesa/ChangeLog			\
+	$(DIRECTORY)/widgets-mesa/INSTALL			\
+	$(DIRECTORY)/widgets-mesa/Makefile.in			\
+	$(DIRECTORY)/widgets-mesa/README			\
+	$(DIRECTORY)/widgets-mesa/TODO				\
+	$(DIRECTORY)/widgets-mesa/configure			\
+	$(DIRECTORY)/widgets-mesa/demos/ChangeLog		\
+	$(DIRECTORY)/widgets-mesa/demos/Cube			\
+	$(DIRECTORY)/widgets-mesa/demos/Ed			\
+	$(DIRECTORY)/widgets-mesa/demos/Makefile.in		\
+	$(DIRECTORY)/widgets-mesa/demos/Mcube			\
+	$(DIRECTORY)/widgets-mesa/demos/Tea			\
+	$(DIRECTORY)/widgets-mesa/demos/*.[ch]			\
+	$(DIRECTORY)/widgets-mesa/demos/events			\
+	$(DIRECTORY)/widgets-mesa/include/GL/ChangeLog		\
+	$(DIRECTORY)/widgets-mesa/include/GL/*.h		\
+	$(DIRECTORY)/widgets-mesa/include/GL/Makefile.in	\
+	$(DIRECTORY)/widgets-mesa/man/ChangeLog			\
+	$(DIRECTORY)/widgets-mesa/man/GL*			\
+	$(DIRECTORY)/widgets-mesa/man/Makefile.in		\
+	$(DIRECTORY)/widgets-mesa/man/Mesa*			\
+	$(DIRECTORY)/widgets-mesa/src/ChangeLog			\
+	$(DIRECTORY)/widgets-mesa/*.[ch]			\
+	$(DIRECTORY)/widgets-mesa/Makefile.in			\
+	$(DIRECTORY)/widgets-sgi/*.[ch]				\
+	$(DIRECTORY)/widgets-sgi/Makefile*			\
+	$(DIRECTORY)/widgets-sgi/README				\
 	$(DIRECTORY)/util/README				\
 	$(DIRECTORY)/util/Makefile.am				\
 	$(DIRECTORY)/util/Makefile.in				\
