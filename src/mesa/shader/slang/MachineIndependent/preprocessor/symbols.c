@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // symbols.c
-//
+*/
 
 #include <assert.h>
 #include <stdlib.h>
@@ -85,9 +85,9 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "slglobals.h"
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// Symbol Table Variables: ///////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/
 
 Scope *ScopeList = NULL;
 Scope *CurrentScope = NULL;
@@ -127,7 +127,7 @@ Scope *NewScopeInPool(MemoryPool *pool)
     ScopeList = lScope;
     mem_AddCleanup(pool, unlinkScope, lScope);
     return lScope;
-} // NewScope
+} /* NewScope */
 
 /*
  * PushScope()
@@ -160,7 +160,7 @@ void PushScope(Scope *fScope)
     }
     fScope->parent = CurrentScope;
     CurrentScope = fScope;
-} // PushScope
+} /* PushScope */
 
 /*
  * PopScope()
@@ -175,7 +175,7 @@ Scope *PopScope(void)
     if (CurrentScope)
         CurrentScope = CurrentScope->parent;
     return lScope;
-} // PopScope
+} /* PopScope */
 
 /*
  * NewSymbol() - Allocate a new symbol node;
@@ -196,13 +196,13 @@ Symbol *NewSymbol(SourceLoc *loc, Scope *fScope, int name, symbolkind kind)
     lSymb->loc = *loc;
     lSymb->kind = kind;
     
-    // Clear union area:
+    /* Clear union area: */
 
     pch = (char *) &lSymb->details;
     for (ii = 0; ii < sizeof(lSymb->details); ii++)
         *pch++ = 0;
     return lSymb;
-} // NewSymbol
+} /* NewSymbol */
 
 /*
  * lAddToTree() - Using a binary tree is not a good idea for basic atom values because they
@@ -243,7 +243,7 @@ static void lAddToTree(Symbol **fSymbols, Symbol *fSymb)
     } else {
         *fSymbols = fSymb;
     }
-} // lAddToTree
+} /* lAddToTree */
 
 
 /*
@@ -260,7 +260,7 @@ Symbol *AddSymbol(SourceLoc *loc, Scope *fScope, int atom, symbolkind kind)
     lSymb = NewSymbol(loc, fScope, atom, kind);
     lAddToTree(&fScope->symbols, lSymb);
     return lSymb;
-} // AddSymbol
+} /* AddSymbol */
 
 
 /*********************************************************************************************/
@@ -294,7 +294,7 @@ Symbol *LookUpLocalSymbol(Scope *fScope, int atom)
         }
     }
     return NULL;
-} // LookUpLocalSymbol
+} /* LookUpLocalSymbol */
 
 /*
  * LookUpSymbol()
@@ -314,5 +314,5 @@ Symbol *LookUpSymbol(Scope *fScope, int atom)
         fScope = fScope->parent;
     }
     return NULL;
-} // LookUpSymbol
+} /* LookUpSymbol */
 

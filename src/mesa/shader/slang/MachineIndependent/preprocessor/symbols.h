@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // symbols.h
-//
+*/
 
 #if !defined(__SYMBOLS_H)
 #define __SYMBOLS_H 1
@@ -87,7 +87,7 @@ typedef enum symbolkind {
    MACRO_S
 } symbolkind;
 
-// Typedefs for things defined here in "symbols.h":
+/* Typedefs for things defined here in "symbols.h": */
 
 typedef struct Scope_Rec Scope;
 typedef struct Symbol_Rec Symbol;
@@ -98,27 +98,27 @@ typedef struct SymbolList_Rec {
 } SymbolList;
 
 struct Scope_Rec {
-    Scope *next, *prev;     // doubly-linked list of all scopes
+    Scope *next, *prev;     /* doubly-linked list of all scopes */
     Scope *parent;
-    Scope *funScope;        // Points to base scope of enclosing function
-    MemoryPool *pool;       // pool used for allocation in this scope
+    Scope *funScope;        /* Points to base scope of enclosing function */
+    MemoryPool *pool;       /* pool used for allocation in this scope */
     Symbol *symbols;
     
-	int level;              // 0 = super globals, 1 = globals, etc.
+	int level;              /* 0 = super globals, 1 = globals, etc. */
 
-    // Only used at global scope (level 1):
-    SymbolList *programs;   // List of programs for this compilation.
+    /* Only used at global scope (level 1): */
+    SymbolList *programs;   /* List of programs for this compilation. */
 };
 
 
-// Symbol table is a simple binary tree.
+/* Symbol table is a simple binary tree. */
 
-#include "cpp.h"        // to get MacroSymbol def
+#include "cpp.h"        /* to get MacroSymbol def */
 
 struct Symbol_Rec {
     Symbol *left, *right;
     Symbol *next;
-    int name;       // Name atom
+    int name;       /* Name atom */
     SourceLoc loc;
     symbolkind kind;
     union {
@@ -141,5 +141,5 @@ Symbol *LookUpSymbol(Scope *fScope, int atom);
 void CPPErrorToInfoLog(char *);
 
 
-#endif // !defined(__SYMBOLS_H)
+#endif /* !defined(__SYMBOLS_H) */
 

@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,7 +74,7 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+
 #ifndef __MEMORY_H
 #define __MEMORY_H
 

@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // tokens.c
-//
+*/
 
 #include <assert.h>
 #include <stdlib.h>
@@ -88,9 +88,9 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "slang_mesa.h"
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// Preprocessor and Token Recorder and Playback: ////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /*
  * idstr()
@@ -113,7 +113,7 @@ static char *idstr(const char *fstr)
     }
     *t = 0;
     return str;
-} // idstr
+} /* idstr */
 
 
 /*
@@ -138,7 +138,7 @@ static TokenBlock *lNewBlock(TokenStream *fTok)
     }
     fTok->current = lBlock;
     return lBlock;
-} // lNewBlock
+} /* lNewBlock */
 
 /*
  * lAddByte()
@@ -152,7 +152,7 @@ static void lAddByte(TokenStream *fTok, unsigned char fVal)
     if (lBlock->count >= lBlock->max)
         lBlock = lNewBlock(fTok);
     lBlock->data[lBlock->count++] = fVal;
-} // lAddByte
+} /* lAddByte */
 
 
 
@@ -178,9 +178,9 @@ static int lReadByte(TokenStream *pTok)
             lval = lBlock->data[lBlock->current++];
     }
     return lval;
-} // lReadByte
+} /* lReadByte */
 
-/////////////////////////////////////// Global Functions://////////////////////////////////////
+/*///////////////////////////////////// Global Functions:////////////////////////////////////*/
 
 /*
  * NewTokenStream()
@@ -198,7 +198,7 @@ TokenStream *NewTokenStream(const char *name)
     pTok->current = NULL;
     lNewBlock(pTok);
     return pTok;
-} // NewTokenStream
+} /* NewTokenStream */
 
 /*
  * DeleteTokenStream()
@@ -220,7 +220,7 @@ void DeleteTokenStream(TokenStream *pTok)
             free(pTok->name);
         free(pTok);
     }
-} // DeleteTokenStream
+} /* DeleteTokenStream */
 
 /*
  * RecordToken() - Add a token to the end of a list for later playback or printout.
@@ -259,7 +259,7 @@ void RecordToken(TokenStream *pTok, int token, yystypepp * yylvalpp)
     default:
         break;
     }
-} // RecordToken
+} /* RecordToken */
 
 /*
  * RewindTokenStream() - Reset a token stream in preperation for reading.
@@ -272,7 +272,7 @@ void RewindTokenStream(TokenStream *pTok)
         pTok->current = pTok->head;
         pTok->current->current = 0;
     }
-} // RewindTokenStream
+} /* RewindTokenStream */
 
 /*
  * ReadToken() - Read the next token from a stream.
@@ -358,7 +358,7 @@ int ReadToken(TokenStream *pTok, yystypepp * yylvalpp)
         return ltoken;
     }
     return EOF_SY;
-} // ReadToken
+} /* ReadToken */
 
 typedef struct TokenInputSrc {
     InputSrc            base;
@@ -443,10 +443,10 @@ void DumpTokenStream(FILE *fp, TokenStream *s, yystypepp * yylvalpp) {
             sprintf(str, "\"%s\"", GetAtomString(atable, yylvalpp->sc_ident));
             break;
         case CPP_FLOATCONSTANT:
-            //printf("%g9.6 ", yylvalpp->sc_fval);
+            /*printf("%g9.6 ", yylvalpp->sc_fval);*/
             break;
         case CPP_INTCONSTANT:
-            //printf("%d ", yylvalpp->sc_int);
+            /*printf("%d ", yylvalpp->sc_int);*/
             break;
         default:
             if (token >= 127)
@@ -459,6 +459,6 @@ void DumpTokenStream(FILE *fp, TokenStream *s, yystypepp * yylvalpp) {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////// End of tokens.c ///////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/

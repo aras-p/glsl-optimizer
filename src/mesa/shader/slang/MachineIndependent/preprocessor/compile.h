@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // compile.h
-//
+*/
 
 #if !defined(__COMPILE_H)
 #define __COMPILE_H 1
@@ -88,44 +88,44 @@ typedef struct Options_Rec{
     int ErrorMode;
     int Quiet;
 	
-    // Debug The Compiler options:
+    /* Debug The Compiler options: */
     int DumpAtomTable;
 } Options;
 
 struct CPPStruct_Rec {
-    // Public members
-    SourceLoc *pLastSourceLoc;  // Set at the start of each statement by the tree walkers
-    Options options;            // Compile options and parameters
+    /* Public members */
+    SourceLoc *pLastSourceLoc;  /* Set at the start of each statement by the tree walkers */
+    Options options;            /* Compile options and parameters */
 
-    // Private members
+    /* Private members */
     SourceLoc lastSourceLoc;
 
-    // Scanner data:
+    /* Scanner data: */
 
-    SourceLoc *tokenLoc;        // Source location of most recent token seen by the scanner
-    int mostRecentToken;        // Most recent token seen by the scanner
+    SourceLoc *tokenLoc;        /* Source location of most recent token seen by the scanner */
+    int mostRecentToken;        /* Most recent token seen by the scanner */
     InputSrc *currentInput;
     int previous_token;
-    int notAVersionToken;      // used to make sure that #version is the first token seen in the file, if present
+    int notAVersionToken;      /* used to make sure that #version is the first token seen in the file, if present */
     
-	void *pC;                   // storing the parseContext of the compile object in cpp.  
+	void *pC;                   /* storing the parseContext of the compile object in cpp. */
      
-    // Private members:
+    /* Private members: */
     SourceLoc ltokenLoc;
-	int ifdepth;                //current #if-#else-#endif nesting in the cpp.c file (pre-processor)    
-    int elsedepth[64];          //Keep a track of #if depth..Max allowed is 64.   
-    int elsetracker;            //#if-#else and #endif constructs...Counter.
+	int ifdepth;                /* current #if-#else-#endif nesting in the cpp.c file (pre-processor) */
+    int elsedepth[64];          /* Keep a track of #if depth..Max allowed is 64. */
+    int elsetracker;            /* #if-#else and #endif constructs...Counter. */
     const char *ErrMsg;
-    int CompileError;           //Indicate compile error when #error, #else,#elif mismatch.
+    int CompileError;           /* Indicate compile error when #error, #else,#elif mismatch. */
 
-    //
+    /*
     // Globals used to communicate between PaParseStrings() and yy_input()and 
     // also across the files.(gen_glslang.cpp and scanner.c)
-    //
-    int    PaWhichStr;            // which string we're parsing
-    int*   PaStrLen;              // array of lengths of the PaArgv strings
-    int    PaArgc;                // count of strings in the array
-    char** PaArgv;                // our array of strings to parse    
+    */
+    int    PaWhichStr;            /* which string we're parsing */
+    int*   PaStrLen;              /* array of lengths of the PaArgv strings */
+    int    PaArgc;                /* count of strings in the array */
+    char** PaArgv;                /* our array of strings to parse */ 
 };
 
-#endif // !defined(__COMPILE_H)
+#endif /* !defined(__COMPILE_H) */

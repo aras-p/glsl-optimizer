@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // scanner.h
-//
+*/
 
 #if !defined(__SCANNER_H)
 #define __SCANNER_H 1
@@ -86,7 +86,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "parser.h"
 
-// Not really atom table stuff but needed first...
+/* Not really atom table stuff but needed first... */
 
 typedef struct SourceLoc_Rec {
     unsigned short file, line;
@@ -105,14 +105,14 @@ typedef struct InputSrc {
     int			line;
 } InputSrc;
 
-int InitScanner(CPPStruct *cpp);   // Intialise the cpp scanner. 
-int ScanFromString(char *);      // Start scanning the input from the string mentioned.
-int check_EOF(int);              // check if we hit a EOF abruptly 
-void CPPErrorToInfoLog(char *);   // sticking the msg,line into the Shader's.Info.log
+int InitScanner(CPPStruct *cpp);   /* Intialise the cpp scanner. */
+int ScanFromString(char *);      /* Start scanning the input from the string mentioned. */
+int check_EOF(int);              /* check if we hit a EOF abruptly */
+void CPPErrorToInfoLog(char *);   /* sticking the msg,line into the Shader's.Info.log */
 void SetLineNumber(int);
 void SetStringNumber(int);
 void IncLineNumber(void);
 void DecLineNumber(void);
-int FreeScanner(void);                 // Free the cpp scanner
-#endif // !(defined(__SCANNER_H)
+int FreeScanner(void);                 /* Free the cpp scanner */
+#endif /* !(defined(__SCANNER_H) */
 

@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,7 +74,7 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,11 +89,11 @@ typedef unsigned int uintptr_t;
 
 #include "memory.h"
 
-// default alignment and chunksize, if called with 0 arguments
+/* default alignment and chunksize, if called with 0 arguments */
 #define CHUNKSIZE       (64*1024)
 #define ALIGN           8
 
-// we need to call the `real' malloc and free, not our replacements
+/* we need to call the `real' malloc and free, not our replacements */
 #undef malloc
 #undef free
 
@@ -160,8 +160,8 @@ void *mem_Alloc(MemoryPool *pool, size_t size)
                       & ~pool->alignmask;
         pool->free = (uintptr_t)rv;
         if (minreq >= pool->chunksize) {
-            // request size is too big for the chunksize, so allocate it as
-            // a single chunk of the right size
+            /* request size is too big for the chunksize, so allocate it as
+            // a single chunk of the right size */
             ch = malloc(minreq);
             if (!ch) return 0;
         } else {

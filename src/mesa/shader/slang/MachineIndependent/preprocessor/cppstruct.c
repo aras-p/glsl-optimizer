@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // cppstruct.c
-//
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,7 +107,7 @@ int InitCPPStruct(void)
 
     refCount++;
 
-    // Initialize public members:
+    /* Initialize public members: */
     cpp->pLastSourceLoc = &cpp->lastSourceLoc;
     
 	p = (char *) &cpp->options;
@@ -117,11 +117,11 @@ int InitCPPStruct(void)
      
     ResetPreprocessor();
     return 1;
-} // InitCPPStruct
+} /* InitCPPStruct */
 
 int ResetPreprocessor(void)
 {
-    // Initialize private members:
+    /* Initialize private members: */
 
     cpp->lastSourceLoc.file = 0;
     cpp->lastSourceLoc.line = 0;
@@ -134,7 +134,7 @@ int ResetPreprocessor(void)
     return 1;
 }
 
-//Intializing the Preprocessor.
+/*Intializing the Preprocessor. */
 
 int InitPreprocessor(void)
 {
@@ -152,7 +152,7 @@ int InitPreprocessor(void)
   return 0; 
 }
 
-//FreeCPPStruct() - Free the CPP structure.
+/* FreeCPPStruct() - Free the CPP structure. */
 
 int FreeCPPStruct(void)
 {
@@ -165,7 +165,7 @@ int FreeCPPStruct(void)
     return 1;
 }
 
-//Finalizing the Preprocessor.
+/* Finalizing the Preprocessor. */
 
 int FinalizePreprocessor(void)
 {
@@ -179,6 +179,6 @@ int FinalizePreprocessor(void)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////// End of cppstruct.c //////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/

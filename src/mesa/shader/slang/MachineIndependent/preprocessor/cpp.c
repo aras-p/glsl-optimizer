@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // cpp.c
-//
+*/
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -127,7 +127,7 @@ int InitCPP(void)
 {
     char        buffer[64], *t;
     const char  *f;
-    // Add various atoms needed by the CPP line scanner:
+    /* Add various atoms needed by the CPP line scanner: */
     bindAtom = LookUpAddString(atable, "bind");
     constAtom = LookUpAddString(atable, "const");
     defaultAtom = LookUpAddString(atable, "default");
@@ -158,7 +158,7 @@ int InitCPP(void)
         *t++ = toupper(*f++);
     *t = 0;
 	return 1;
-} // InitCPP
+} /* InitCPP */
 
 int FreeCPP(void)
 {
@@ -194,7 +194,7 @@ static int CPPdefine(yystypepp * yylvalpp)
     name = yylvalpp->sc_ident;
     token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
     if (token == '(' && !yylvalpp->sc_int) {
-        // gather arguments
+        /* gather arguments */
         argc = 0;
         do {
             token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
@@ -232,7 +232,7 @@ static int CPPdefine(yystypepp * yylvalpp)
     symb = LookUpSymbol(macros, name);
     if (symb) {
         if (!symb->details.mac.undef) {
-            // already defined -- need to make sure they are identical
+            /* already defined -- need to make sure they are identical */
             if (symb->details.mac.argc != mac.argc) goto error;
             for (argc=0; argc < mac.argc; argc++)
                 if (symb->details.mac.args[argc] != mac.args[argc])
@@ -264,7 +264,7 @@ static int CPPdefine(yystypepp * yylvalpp)
     }
     symb->details.mac = mac;
     return '\n';
-} // CPPdefine
+} /* CPPdefine */
 
 static int CPPundef(yystypepp * yylvalpp)
 {
@@ -286,7 +286,7 @@ static int CPPundef(yystypepp * yylvalpp)
         CPPErrorToInfoLog("#undef");
     }
     return token;
-} // CPPundef
+} /* CPPundef */
 
 /* CPPelse -- skip forward to appropriate spot.  This is actually used
 ** to skip to and #endif after seeing an #else, AND to skip to a #else,
@@ -476,7 +476,7 @@ error:
     *err = 1;
     *res = 0;
     return token;
-} // eval
+} /* eval */
 
 static int CPPif(yystypepp * yylvalpp) {
     int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
@@ -495,7 +495,7 @@ static int CPPif(yystypepp * yylvalpp) {
         token = CPPelse(1, yylvalpp);
     }
     return token;
-} // CPPif
+} /* CPPif */
 
 static int CPPifdef(int defined, yystypepp * yylvalpp)
 {
@@ -514,7 +514,7 @@ static int CPPifdef(int defined, yystypepp * yylvalpp)
             token = CPPelse(1, yylvalpp);
     }
     return token;
-} // CPPifdef
+} /* CPPifdef */
 
 static int CPPline(yystypepp * yylvalpp) 
 {
@@ -566,14 +566,14 @@ static int CPPerror(yystypepp * yylvalpp) {
 		token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	}
 	DecLineNumber();
-	//store this msg into the shader's information log..set the Compile Error flag!!!!
+	/* store this msg into the shader's information log..set the Compile Error flag!!!! */
 	message=GetStrfromTStr();
     CPPShInfoLogMsg(message);
     ResetTString();
     cpp->CompileError=1;
     IncLineNumber();
     return '\n';
-}//CPPerror
+}/* CPPerror */
 
 static int CPPpragma(yystypepp * yylvalpp)
 {
@@ -598,7 +598,7 @@ static int CPPpragma(yystypepp * yylvalpp)
 	      if (token != ')') goto error;
 		  token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 		  if(token!='\n')goto error;
-	      //make a call to CPP function MapStrings with SrcStr and DestStr.
+	      /* make a call to CPP function MapStrings with SrcStr and DestStr. */
 		  MapStrings(SrcStr,DestStr);
 	}else{
 error:
@@ -607,7 +607,7 @@ error:
 	}
 
 	return token;
-} // CPPpragma
+} /* CPPpragma */
 
 #define GL2_VERSION_NUMBER 110
 
@@ -629,7 +629,7 @@ static int CPPversion(yystypepp * yylvalpp)
         CPPErrorToInfoLog("#version");
 	
     yylvalpp->sc_int=atoi(yylvalpp->symbol_name);
-	//SetVersionNumber(yylvalpp->sc_int);
+	/* SetVersionNumber(yylvalpp->sc_int); */
     
     if (yylvalpp->sc_int != GL2_VERSION_NUMBER)
         CPPShInfoLogMsg("Version number not supported by GL2");
@@ -643,7 +643,7 @@ static int CPPversion(yystypepp * yylvalpp)
         CPPErrorToInfoLog("#version");
 	}
     return token;
-} // CPPversion
+} /* CPPversion */
 
 static int CPPextension(yystypepp * yylvalpp)
 {
@@ -685,7 +685,7 @@ static int CPPextension(yystypepp * yylvalpp)
         CPPErrorToInfoLog("#extension");
 	}
     return token;
-} // CPPextension
+} /* CPPextension */
 
 int readCPPline(yystypepp * yylvalpp)
 {
@@ -758,7 +758,7 @@ int readCPPline(yystypepp * yylvalpp)
     cpp->notAVersionToken = !isVersion;
 
     return token;
-} // readCPPline
+} /* readCPPline */
 
 void FreeMacro(MacroSymbol *s) {
     DeleteTokenStream(s->body);
@@ -806,7 +806,7 @@ static TokenStream *PrescanMacroArg(TokenStream *a, yystypepp * yylvalpp) {
     PopEofSrc();
     DeleteTokenStream(a);
     return n;
-} // PrescanMacroArg
+} /* PrescanMacroArg */
 
 typedef struct MacroInputSrc {
     InputSrc    base;
@@ -838,7 +838,7 @@ static int macro_scan(MacroInputSrc *in, yystypepp * yylvalpp) {
     }
     free(in);
     return cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-} // macro_scan
+} /* macro_scan */
 
 /* MacroExpand
 ** check an identifier (atom) to see if it a macro that should be expanded.
@@ -871,7 +871,7 @@ int MacroExpand(int atom, yystypepp * yylvalpp)
         return 1;
     }
     if (!sym || sym->details.mac.undef) return 0;
-    if (sym->details.mac.busy) return 0;        // no recursive expansions
+    if (sym->details.mac.busy) return 0;        /* no recursive expansions */
     in = malloc(sizeof(*in));
     memset(in, 0, sizeof(*in));
     in->base.scan = (void *)macro_scan;
@@ -964,7 +964,7 @@ int MacroExpand(int atom, yystypepp * yylvalpp)
     RewindTokenStream(sym->details.mac.body);
     cpp->currentInput = &in->base;
     return 1;
-} // MacroExpand
+} /* MacroExpand */
 
 int ChkCorrectElseNesting(void)
 {

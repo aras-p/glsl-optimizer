@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // cpp.h
-//
+*/
 
 #if !defined(__CPP_H)
 #define __CPP_H 1
@@ -101,18 +101,18 @@ typedef struct MacroSymbol {
 void FreeMacro(MacroSymbol *);
 int PredefineMacro(char *);
 
-void  CPPDebugLogMsg(const char *msg);       // Prints information into debug log
-void  CPPShInfoLogMsg(const char*);         // Store cpp Err Msg into Sh.Info.Log
-void  MapStrings(const char*,const char*);  // #pragma directive container.
-void  ResetTString(void);                   // #error Message as TString.
-void  CPPErrorToInfoLog(char*);             // Stick all cpp errors into Sh.Info.log   .
-void  StoreStr(char*);                      // Store the TString in Parse Context.
-void  SetLineNumber(int);                   // Set line number.  
-void  SetStringNumber(int);                 // Set string number.    
-int   GetLineNumber(void);                  // Get the current String Number. 
-int   GetStringNumber(void);                // Get the current String Number. 
-const char* GetStrfromTStr(void);           // Convert TString to String.  
+void  CPPDebugLogMsg(const char *msg);       /* Prints information into debug log */
+void  CPPShInfoLogMsg(const char*);         /* Store cpp Err Msg into Sh.Info.Log */
+void  MapStrings(const char*,const char*);  /* #pragma directive container. */
+void  ResetTString(void);                   /* #error Message as TString. */
+void  CPPErrorToInfoLog(char*);             /* Stick all cpp errors into Sh.Info.log */ 
+void  StoreStr(char*);                      /* Store the TString in Parse Context. */
+void  SetLineNumber(int);                   /* Set line number. */
+void  SetStringNumber(int);                 /* Set string number. */
+int   GetLineNumber(void);                  /* Get the current String Number. */
+int   GetStringNumber(void);                /* Get the current String Number. */
+const char* GetStrfromTStr(void);           /* Convert TString to String. */
 void  updateExtensionBehavior(const char* extName, const char* behavior);
 int   FreeCPP(void);
 
-#endif // !(defined(__CPP_H)
+#endif /* !(defined(__CPP_H) */

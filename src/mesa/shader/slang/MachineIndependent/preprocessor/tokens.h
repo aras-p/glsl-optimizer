@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // tokens.h
-//
+*/
 
 #if !defined(__TOKENS_H)
 #define __TOKENS_H 1
@@ -117,6 +117,6 @@ void UngetToken(int, yystypepp * yylvalpp);
 
 void DumpTokenStream(FILE *, TokenStream *, yystypepp * yylvalpp);
 
-#endif // defined(CPPC_ENABLE_TOOLS)
+#endif /* defined(CPPC_ENABLE_TOOLS) */
 
-#endif // !defined(__TOKENS_H)
+#endif /* !defined(__TOKENS_H) */

@@ -1,4 +1,4 @@
-//
+/*
 //Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
@@ -30,7 +30,7 @@
 //LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 //ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //POSSIBILITY OF SUCH DAMAGE.
-//
+*/
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-//
+/*
 // scanner.c
-//
+*/
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -101,7 +101,7 @@ typedef struct StringInputSrc {
 static int eof_scan(InputSrc *is, yystypepp * yylvalpp)
 {
     return EOF;
-} // eof_scan
+} /* eof_scan */
 
 static void noop(InputSrc *in, int ch, yystypepp * yylvalpp) {}
 
@@ -136,7 +136,7 @@ static int byte_scan(InputSrc *, yystypepp * yylvalpp);
 
 int InitScanner(CPPStruct *cpp)
 {
-    // Add various atoms needed by the CPP line scanner:
+    /* Add various atoms needed by the CPP line scanner: */
     if (!InitCPP())
         return 0;
 
@@ -151,7 +151,7 @@ int InitScanner(CPPStruct *cpp)
     cpp->notAVersionToken = 0;
 
     return 1;
-} // InitScanner
+} /* InitScanner */
 
 int FreeScanner(void)
 {
@@ -189,19 +189,19 @@ static int str_getch(StringInputSrc *in)
           return EOF;
        }  
 	}
-} // str_getch
+} /* str_getch */
 
 static void str_ungetch(StringInputSrc *in, int ch, yystypepp *type) {
     if (in->p[-1] == ch)in->p--;
 	else {
-		*(in->p)='\0'; //this would take care of shifting to the previous string.
+		*(in->p)='\0'; /* this would take care of shifting to the previous string. */
 	    cpp->PaWhichStr--;
 	}  
 	if (ch == '\n') {
         in->base.line--;
         DecLineNumber();
     }
-} // str_ungetch
+} /* str_ungetch */
 
 int ScanFromString(char *s)
 {
@@ -217,12 +217,12 @@ int ScanFromString(char *s)
     cpp->currentInput = &in->base;
 
     return 1;
-} // ScanFromString;
+} /* ScanFromString; */
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// Floating point constants: /////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/
 /*
  * lBuildFloatValue() - Quick and dirty conversion to floating point.  Since all
  *         we need is single precision this should be quite precise.
@@ -259,7 +259,7 @@ static float lBuildFloatValue(const char *str, int len, int exp)
 		CPPErrorToInfoLog(" ERROR___FP_CONST_OVERFLOW");
     }
     return rv;
-} // lBuildFloatValue
+} /* lBuildFloatValue */
 
 
 /*
@@ -298,7 +298,7 @@ static int lFloatConst(char *str, int len, int ch, yystypepp * yylvalpp)
         }
     }
 
-    // Exponent:
+    /* Exponent: */
 
     if (ch == 'e' || ch == 'E') {
         ExpSign = 1;
@@ -331,17 +331,17 @@ static int lFloatConst(char *str, int len, int ch, yystypepp * yylvalpp)
         str[len]='\0';      
         lval = lBuildFloatValue(str, str_len, exp - declen);
     }
-    // Suffix:
+    /* Suffix: */
     
     yylvalpp->sc_fval = lval;
     strcpy(yylvalpp->symbol_name,str);
     cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);            
     return CPP_FLOATCONSTANT;
-} // lFloatConst
+} /* lFloatConst */
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////// Normal Scanner //////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/
     
 static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
 {
@@ -364,7 +364,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
         len = 0;
         switch (ch) {
         default:
-			return ch; // Single character token
+			return ch; /* Single character token */
         case EOF:
             return -1;
 		case 'A': case 'B': case 'C': case 'D': case 'E':
@@ -437,7 +437,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
 				cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);
 				yylvalpp->sc_int = ival;
                 return CPP_INTCONSTANT;
-            } else if (ch >= '0' && ch <= '7') { // octal integer constants
+            } else if (ch >= '0' && ch <= '7') { /* octal integer constants */
                 AlreadyComplained = 0;
                 ival = 0;
                 do {
@@ -462,7 +462,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
 				cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);
 				ch = '0';
             }
-            // Fall through...
+            /* Fall through... */
         case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
             do {
@@ -644,7 +644,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
                 return lFloatConst(yylvalpp->symbol_name, 0, '.', yylvalpp);
             } else {
                 if (ch == '.') {
-                    return -1; // Special EOF hack
+                    return -1; /* Special EOF hack */
                 } else {
                     cpp->currentInput->ungetch(cpp->currentInput, ch, yylvalpp);
                     return '.';
@@ -680,7 +680,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
                 if (nlcount) {
                     return '\n';
                 }
-                // Go try it again...
+                /* Go try it again... */
             } else if (ch == '=') {
                 return CPP_DIV_ASSIGN;
             } else {
@@ -713,7 +713,7 @@ static int byte_scan(InputSrc *in, yystypepp * yylvalpp)
             }
         }
     }
-} // byte_scan
+} /* byte_scan */
 
 int yylex_CPP(char* buf, int maxSize)
 {    
@@ -733,7 +733,7 @@ int yylex_CPP(char* buf, int maxSize)
 			continue;
 		}
         cpp->previous_token = token;
-        // expand macros
+        /* expand macros */
         if (token == CPP_IDENTIFIER && MacroExpand(yylvalpp.sc_ident, &yylvalpp)) {
             cpp->notAVersionToken = 1;
             continue;
@@ -766,9 +766,9 @@ int yylex_CPP(char* buf, int maxSize)
     }
 
     return 0;
-} // yylex
+} /* yylex */
 
-//Checks if the token just read is EOF or not.
+/* Checks if the token just read is EOF or not. */
 int check_EOF(int token)
 {
    if(token==-1){
@@ -781,7 +781,7 @@ int check_EOF(int token)
    return 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////// End of scanner.c //////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////*/
 
