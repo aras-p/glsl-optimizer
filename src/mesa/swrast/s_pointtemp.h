@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.1 2001/01/03 22:17:16 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.2 2001/01/04 15:31:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -223,7 +223,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
             const GLfloat dy = y - vert->win[1];
             const GLfloat dist2 = dx * dx + dy * dy;
             if (dist2 < rmax2) {
+#if FLAGS & RGBA
                alpha = vert->color[3];
+#endif
                if (dist2 >= rmin2) {
                   GLint coverage = (GLint) (256.0F - (dist2 - rmin2) * cscale);
 #if FLAGS & RGBA
@@ -231,7 +233,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 		  alpha = (alpha * coverage) >> 8;
 #else
                   /* 4 fractional index bits */
-                  index = (index & ~f) | (coverage >> 4);  /* XXX verify */
+                  index = (index & ~0xf) | (coverage >> 4);  /* XXX verify */
 #endif
 	       }
 #endif /* SMOOTH */
@@ -245,20 +247,23 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                                             red, green, blue, alpha,
                                             sRed, sGreen, sBlue,
                                             texcoord);
-
 #elif FLAGS & TEXTURE
 	       if (swrast->_MultiTextureEnabled) {
 		  PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, fog,
 					  red, green, blue, alpha,
 					  texcoord);
 	       }
-	       else {
+	       else if (ctx->Texture._ReallyEnabled) {
 		  PB_WRITE_TEX_PIXEL(PB, x,y,z, fog,
 				     red, green, blue, alpha,
 				     texcoord[0][0],
 				     texcoord[0][1],
 				     texcoord[0][2]);
 	       }
+               else {
+                  PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog,
+                                      red, green, blue, alpha);
+               }
 #elif FLAGS & RGBA
 	       PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog, red, green, blue, alpha);
 #else /* color index */
