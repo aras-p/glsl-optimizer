@@ -55,6 +55,7 @@
 #include "via_vb.h"
 #include "via_ioctl.h"
 #include "via_fb.h"
+#include "via_regs.h"
 
 #include <stdio.h>
 #include "macros.h"
@@ -108,12 +109,6 @@ AllocateBuffer(viaContextPtr vmesa)
 
 /**
  * Return various strings for \c glGetString.
- * 
- * \todo
- * This function should look at the PCI ID of the chipset to determine what
- * name to use.  Users with a KM400, for example, might get confused when
- * the driver says "CLE266".  Having the correct information may also help
- * folks on the DRI mailing lists debug problems for people.
  *
  * \sa glGetString
  */
@@ -127,9 +122,22 @@ static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
    case GL_VENDOR:
       return (GLubyte *)"VIA Technology";
 
-   case GL_RENDERER:
-      offset = driGetRendererString( buffer, "CLE266", DRIVER_DATE, 0 );
+   case GL_RENDERER: {
+      static const char * const chipset_names[] = {
+	 "UniChrome",
+	 "CastleRock (CLE266)",
+	 "UniChrome (KM400)",
+	 "UniChrome (K8M800)",
+	 "UniChrome (PM8x0/CN400)",
+      };
+      const viaContext * const via = VIA_CONTEXT(ctx);
+      const unsigned id = via->viaScreen->deviceID;
+
+      offset = driGetRendererString( buffer, 
+				     chipset_names[(id > VIA_PM800) ? 0 : id],
+				     DRIVER_DATE, 0 );
       return (GLubyte *)buffer;
+   }
 
    default:
       return NULL;
