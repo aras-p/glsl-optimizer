@@ -163,7 +163,7 @@ static void MakeObject1(struct object *obj)
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
-   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB);
+   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
 
    /* Make rectangle */
    v[0] = -1;  v[1] = -1;  v[2] = 0;
@@ -191,7 +191,7 @@ static void MakeObject2(struct object *obj)
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
-   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB);
+   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
 
    /* Make triangle */
    v[0] = -1;  v[1] = -1;  v[2] = 0;
@@ -218,7 +218,7 @@ static void MakeObject3(struct object *obj)
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
-   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB);
+   v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
 
    /* Make rectangle */
    v[0] = -1;  v[1] = -0.5;  v[2] = 0;
