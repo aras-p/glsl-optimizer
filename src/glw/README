@@ -13,9 +13,10 @@ many systems so let us know if you have trouble.
 If you want to make a Linux ELF shared lib instead of the non-shared .a
 file see the notes in the Makefile.
 
+If you want to build with Motif support, edit Makefile.X11, looking
+for the "Motif" information.
 
-These files are NOT covered by Mesa's GNU copyright.  The real copyright
-is as follows.
+The SGI copyright is as follows.
 
 
  * (c) Copyright 1993, Silicon Graphics, Inc.

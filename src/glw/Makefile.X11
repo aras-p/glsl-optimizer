@@ -1,8 +1,4 @@
-# Makefile for OpenGL widgets
-
-# NOTE: widget code is from SGI.  See any of the .c or .h files for the
-# complete copyright.  Mesa's GNU copyright DOES NOT apply to this widget
-# code.
+# Makefile for SGI's OpenGL widgets
 
 
 ##### MACROS #####
@@ -16,8 +12,10 @@ VPATH = RCS
 INCDIRS = -I../include -I/usr/include/Motif1.2 -I/usr/X11R6/include
 LIBDIR = ../lib
 
-# Compile GLwMDrawA.c only if you have Motif headers!
+# Use these sources for Motif (and Xt) support.  Requires Motif header files.
 #SOURCES = GLwDrawA.c GLwMDrawA.c
+
+# OR, use these sources for non-Motif (Xt only) build:
 SOURCES = GLwDrawA.c
 
 
