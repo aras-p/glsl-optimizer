@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.10 2000/05/10 22:36:05 brianp Exp $ */
+/* $Id: lines.c,v 1.11 2000/06/28 23:09:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -848,6 +848,104 @@ static void smooth_multitextured_line( GLcontext *ctx,
 }
 
 
+/* Flat-shaded, multitextured, any width, maybe stippled, separate specular
+ * color interpolation.
+ */
+static void flat_multitextured_line( GLcontext *ctx,
+                                     GLuint vert0, GLuint vert1, GLuint pvert )
+{
+   GLint count = ctx->PB->count;
+   GLint *pbx = ctx->PB->x;
+   GLint *pby = ctx->PB->y;
+   GLdepth *pbz = ctx->PB->z;
+   GLfloat *pbs = ctx->PB->s[0];
+   GLfloat *pbt = ctx->PB->t[0];
+   GLfloat *pbu = ctx->PB->u[0];
+   GLfloat *pbs1 = ctx->PB->s[1];
+   GLfloat *pbt1 = ctx->PB->t[1];
+   GLfloat *pbu1 = ctx->PB->u[1];
+   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
+   GLubyte (*pbspec)[3] = ctx->PB->spec;
+   GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   GLubyte sRed   = ctx->VB->Specular ? ctx->VB->Specular[pvert][0] : 0;
+   GLubyte sGreen = ctx->VB->Specular ? ctx->VB->Specular[pvert][1] : 0;
+   GLubyte sBlue  = ctx->VB->Specular ? ctx->VB->Specular[pvert][2] : 0;
+
+   (void) pvert;
+
+   ctx->PB->mono = GL_FALSE;
+
+   if (ctx->Line.StippleFlag) {
+      /* stippled */
+#define INTERP_XY 1
+#define INTERP_Z 1
+#define INTERP_ALPHA 1
+#define INTERP_STUV0 1
+#define INTERP_STUV1 1
+#define WIDE 1
+#define STIPPLE 1
+#define PLOT(X,Y)					\
+	{						\
+	   pbx[count] = X;				\
+	   pby[count] = Y;				\
+	   pbz[count] = Z;				\
+	   pbs[count] = s;				\
+	   pbt[count] = t;				\
+	   pbu[count] = u;				\
+	   pbs1[count] = s1;				\
+	   pbt1[count] = t1;				\
+	   pbu1[count] = u1;				\
+	   pbrgba[count][RCOMP] = color[0];		\
+	   pbrgba[count][GCOMP] = color[1];		\
+	   pbrgba[count][BCOMP] = color[2];		\
+	   pbrgba[count][ACOMP] = color[3];		\
+	   pbspec[count][RCOMP] = sRed;			\
+	   pbspec[count][GCOMP] = sGreen;		\
+	   pbspec[count][BCOMP] = sBlue;		\
+	   count++;					\
+	   CHECK_FULL(count);				\
+	}
+#include "linetemp.h"
+   }
+   else {
+      /* unstippled */
+#define INTERP_XY 1
+#define INTERP_Z 1
+#define INTERP_ALPHA 1
+#define INTERP_STUV0 1
+#define INTERP_STUV1 1
+#define WIDE 1
+#define PLOT(X,Y)					\
+	{						\
+	   pbx[count] = X;				\
+	   pby[count] = Y;				\
+	   pbz[count] = Z;				\
+	   pbs[count] = s;				\
+	   pbt[count] = t;				\
+	   pbu[count] = u;				\
+	   pbs1[count] = s1;				\
+	   pbt1[count] = t1;				\
+	   pbu1[count] = u1;				\
+	   pbrgba[count][RCOMP] = color[0];		\
+	   pbrgba[count][GCOMP] = color[1];		\
+	   pbrgba[count][BCOMP] = color[2];		\
+	   pbrgba[count][ACOMP] = color[3];		\
+	   pbspec[count][RCOMP] = sRed;			\
+	   pbspec[count][GCOMP] = sGreen;		\
+	   pbspec[count][BCOMP] = sBlue;		\
+	   count++;					\
+	   CHECK_FULL(count);				\
+	}
+#include "linetemp.h"
+   }
+
+   ctx->PB->count = count;
+   gl_flush_pb(ctx);
+}
+
+
+
+
 /*
  * Antialiased RGBA line
  *
@@ -976,7 +1074,10 @@ void gl_set_line_function( GLcontext *ctx )
          if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D
              || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
             /* multi-texture and/or separate specular color */
-            ctx->Driver.LineFunc = smooth_multitextured_line;
+            if (ctx->Light.ShadeModel==GL_SMOOTH)
+               ctx->Driver.LineFunc = smooth_multitextured_line;
+            else
+               ctx->Driver.LineFunc = flat_multitextured_line;
          }
          else {
             if (ctx->Light.ShadeModel==GL_SMOOTH) {
