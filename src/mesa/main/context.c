@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.64 2000/05/07 20:41:30 brianp Exp $ */
+/* $Id: context.c,v 1.65 2000/05/18 18:12:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -216,8 +216,16 @@ _mesa_initialize_visual( GLvisual *vis,
       vis->DepthMax = 1;
       vis->DepthMaxF = 1.0F;
    }
-   else {
+   else if (depthBits < 32) {
       vis->DepthMax = (1 << depthBits) - 1;
+      vis->DepthMaxF = (GLfloat) vis->DepthMax;
+   }
+   else {
+      /* Special case since shift values greater than or equal to the
+       * number of bits in the left hand expression's type are
+       * undefined.
+       */
+      vis->DepthMax = 0xffffffff;
       vis->DepthMaxF = (GLfloat) vis->DepthMax;
    }
 
