@@ -161,8 +161,11 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 	def printRealHeader(self):
 		print ''
 		print '#include <GL/gl.h>'
-		print '#include "indirect_size.h"'
+		if self.which_functions & self.do_get:
+			print '#include "indirect_size_get.h"'
 		
+		print '#include "indirect_size.h"'
+
 		print ''
 		self.printHaveAlias()
 		print ''

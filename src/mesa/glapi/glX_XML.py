@@ -125,6 +125,9 @@ class glXEnumFunction:
 		for a in self.enums:
 			count += 1
 
+		if self.count.has_key(-1):
+			return 0
+
 		# Determine if there is some mask M, such that M = (2^N) - 1,
 		# that will generate unique values for all of the enums.
 
@@ -176,7 +179,7 @@ class glXEnumFunction:
 		else:
 			return 0;
 
-	def PrintUsingSwitch(self):
+	def PrintUsingSwitch(self, name):
 		"""Emit the body of the __gl*_size function using a 
 		switch-statement."""
 
@@ -200,7 +203,10 @@ class glXEnumFunction:
 					else:
 						print '/*      case %s:*/' % (j)
 					
-			print '            return %u;' % (c)
+			if c == -1:
+				print '            return __gl%s_variable_size( e );' % (name)
+			else:
+				print '            return %u;' % (c)
 					
 		print '        default: return 0;'
 		print '    }'
@@ -212,7 +218,7 @@ class glXEnumFunction:
 		print '{'
 
 		if not self.PrintUsingTable():
-			self.PrintUsingSwitch()
+			self.PrintUsingSwitch(name)
 
 		print '}'
 		print ''
@@ -226,14 +232,20 @@ class glXEnum(gl_XML.glEnum):
 
 	def startElement(self, name, attrs):
 		if name == "size":
-			[n, c, mode] = self.process_attributes(attrs)
+			[temp_n, c, mode] = self.process_attributes(attrs)
 
-			if not self.context.glx_enum_functions.has_key( n ):
-				f = self.context.createEnumFunction( n )
-				f.set_mode( mode )
-				self.context.glx_enum_functions[ f.name ] = f
+			if temp_n == "Get":
+				names = ["GetIntegerv", "GetBooleanv", "GetFloatv", "GetDoublev" ]
+			else:
+				names = [ temp_n ]
 
-			self.context.glx_enum_functions[ n ].append( c, self.value, self.name )
+			for n in names:
+				if not self.context.glx_enum_functions.has_key( n ):
+					f = self.context.createEnumFunction( n )
+					f.set_mode( mode )
+					self.context.glx_enum_functions[ f.name ] = f
+
+				self.context.glx_enum_functions[ n ].append( c, self.value, self.name )
 		else:
 			gl_XML.glEnum.startElement(self, context, name, attrs)
 		return

@@ -91,9 +91,10 @@ class glEnum( glItem ):
 		glItem.__init__(self, name, enum_name, context)
 
 		temp = attrs.get('count', None)
-		if temp == None:
-			self.default_count = 0
-		else:
+		self.default_count = 0
+		if temp == "?":
+			self.default_count = -1
+		elif temp:
 			try:
 				c = int(temp)
 			except Exception,e:

@@ -203,139 +203,340 @@ glx:
     <enum name="COEFF"                                    value="0x0A00"/>
     <enum name="ORDER"                                    value="0x0A01"/>
     <enum name="DOMAIN"                                   value="0x0A02"/>
-    <enum name="CURRENT_COLOR"                            value="0x0B00"/>
-    <enum name="CURRENT_INDEX"                            value="0x0B01"/>
-    <enum name="CURRENT_NORMAL"                           value="0x0B02"/>
-    <enum name="CURRENT_TEXTURE_COORDS"                   value="0x0B03"/>
-    <enum name="CURRENT_RASTER_COLOR"                     value="0x0B04"/>
-    <enum name="CURRENT_RASTER_INDEX"                     value="0x0B05"/>
-    <enum name="CURRENT_RASTER_TEXTURE_COORDS"            value="0x0B06"/>
-    <enum name="CURRENT_RASTER_POSITION"                  value="0x0B07"/>
-    <enum name="CURRENT_RASTER_POSITION_VALID"            value="0x0B08"/>
-    <enum name="CURRENT_RASTER_DISTANCE"                  value="0x0B09"/>
-    <enum name="POINT_SMOOTH"                             value="0x0B10"/>
-    <enum name="POINT_SIZE"                               value="0x0B11"/>
-    <enum name="POINT_SIZE_RANGE"                         value="0x0B12"/>
-    <enum name="POINT_SIZE_GRANULARITY"                   value="0x0B13"/>
-    <enum name="LINE_SMOOTH"                              value="0x0B20"/>
-    <enum name="LINE_WIDTH"                               value="0x0B21"/>
-    <enum name="LINE_WIDTH_RANGE"                         value="0x0B22"/>
-    <enum name="LINE_WIDTH_GRANULARITY"                   value="0x0B23"/>
-    <enum name="LINE_STIPPLE"                             value="0x0B24"/>
-    <enum name="LINE_STIPPLE_PATTERN"                     value="0x0B25"/>
-    <enum name="LINE_STIPPLE_REPEAT"                      value="0x0B26"/>
-    <enum name="LIST_MODE"                                value="0x0B30"/>
-    <enum name="MAX_LIST_NESTING"                         value="0x0B31"/>
-    <enum name="LIST_BASE"                                value="0x0B32"/>
-    <enum name="LIST_INDEX"                               value="0x0B33"/>
-    <enum name="POLYGON_MODE"                             value="0x0B40"/>
-    <enum name="POLYGON_SMOOTH"                           value="0x0B41"/>
-    <enum name="POLYGON_STIPPLE"                          value="0x0B42"/>
-    <enum name="EDGE_FLAG"                                value="0x0B43"/>
-    <enum name="CULL_FACE"                                value="0x0B44"/>
-    <enum name="CULL_FACE_MODE"                           value="0x0B45"/>
-    <enum name="FRONT_FACE"                               value="0x0B46"/>
-    <enum name="LIGHTING"                                 value="0x0B50"/>
+    <enum name="CURRENT_COLOR"                 count="4"  value="0x0B00">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_INDEX"                 count="1"  value="0x0B01">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_NORMAL"                count="3"  value="0x0B02">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_TEXTURE_COORDS"        count="4"  value="0x0B03">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_COLOR"          count="4"  value="0x0B04">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_INDEX"          count="1"  value="0x0B05">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_TEXTURE_COORDS" count="4"  value="0x0B06">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_POSITION"       count="4"  value="0x0B07">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_POSITION_VALID" count="1"  value="0x0B08">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_RASTER_DISTANCE"       count="1"  value="0x0B09">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SMOOTH"                  count="1"  value="0x0B10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SIZE"                    count="1"  value="0x0B11">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SIZE_RANGE"              count="2"  value="0x0B12">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SIZE_GRANULARITY"        count="1"  value="0x0B13">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_SMOOTH"                   count="1"  value="0x0B20">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_WIDTH"                    count="1"  value="0x0B21">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_WIDTH_RANGE"              count="2"  value="0x0B22">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_WIDTH_GRANULARITY"        count="1"  value="0x0B23">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_STIPPLE"                  count="1"  value="0x0B24">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_STIPPLE_PATTERN"          count="1"  value="0x0B25">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_STIPPLE_REPEAT"           count="1"  value="0x0B26">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIST_MODE"                     count="1"  value="0x0B30">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_LIST_NESTING"              count="1"  value="0x0B31">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIST_BASE"                     count="1"  value="0x0B32">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIST_INDEX"                    count="1"  value="0x0B33">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_MODE"                  count="2"  value="0x0B40">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_SMOOTH"                count="1"  value="0x0B41">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_STIPPLE"               count="1"  value="0x0B42">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="EDGE_FLAG"                     count="1"  value="0x0B43">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CULL_FACE"                     count="1"  value="0x0B44">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CULL_FACE_MODE"                count="1"  value="0x0B45">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FRONT_FACE"                    count="1"  value="0x0B46">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHTING"                      count="1"  value="0x0B50">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="LIGHT_MODEL_LOCAL_VIEWER"      count="1"  value="0x0B51">
         <size name="LightModelfv"/>
         <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="LIGHT_MODEL_TWO_SIDE"          count="1"  value="0x0B52">
         <size name="LightModelfv"/>
         <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="LIGHT_MODEL_AMBIENT"           count="4"  value="0x0B53">
         <size name="LightModelfv"/>
         <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
     </enum>
-    <enum name="SHADE_MODEL"                              value="0x0B54"/>
-    <enum name="COLOR_MATERIAL_FACE"                      value="0x0B55"/>
-    <enum name="COLOR_MATERIAL_PARAMETER"                 value="0x0B56"/>
-    <enum name="COLOR_MATERIAL"                           value="0x0B57"/>
-    <enum name="FOG"                                      value="0x0B60"/>
+    <enum name="SHADE_MODEL"                   count="1"  value="0x0B54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_MATERIAL_FACE"           count="1"  value="0x0B55">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_MATERIAL_PARAMETER"      count="1"  value="0x0B56">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_MATERIAL"                count="1"  value="0x0B57">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG"                           count="1"  value="0x0B60">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_INDEX"                     count="1"  value="0x0B61">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_DENSITY"                   count="1"  value="0x0B62">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_START"                     count="1"  value="0x0B63">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_END"                       count="1"  value="0x0B64">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_MODE"                      count="1"  value="0x0B65">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="FOG_COLOR"                     count="4"  value="0x0B66">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
-    <enum name="DEPTH_RANGE"                              value="0x0B70"/>
-    <enum name="DEPTH_TEST"                               value="0x0B71"/>
-    <enum name="DEPTH_WRITEMASK"                          value="0x0B72"/>
-    <enum name="DEPTH_CLEAR_VALUE"                        value="0x0B73"/>
-    <enum name="DEPTH_FUNC"                               value="0x0B74"/>
-    <enum name="ACCUM_CLEAR_VALUE"                        value="0x0B80"/>
-    <enum name="STENCIL_TEST"                             value="0x0B90"/>
-    <enum name="STENCIL_CLEAR_VALUE"                      value="0x0B91"/>
-    <enum name="STENCIL_FUNC"                             value="0x0B92"/>
-    <enum name="STENCIL_VALUE_MASK"                       value="0x0B93"/>
-    <enum name="STENCIL_FAIL"                             value="0x0B94"/>
-    <enum name="STENCIL_PASS_DEPTH_FAIL"                  value="0x0B95"/>
-    <enum name="STENCIL_PASS_DEPTH_PASS"                  value="0x0B96"/>
-    <enum name="STENCIL_REF"                              value="0x0B97"/>
-    <enum name="STENCIL_WRITEMASK"                        value="0x0B98"/>
-    <enum name="MATRIX_MODE"                              value="0x0BA0"/>
-    <enum name="NORMALIZE"                                value="0x0BA1"/>
-    <enum name="VIEWPORT"                                 value="0x0BA2"/>
-    <enum name="MODELVIEW_STACK_DEPTH"                    value="0x0BA3"/>
-    <enum name="PROJECTION_STACK_DEPTH"                   value="0x0BA4"/>
-    <enum name="TEXTURE_STACK_DEPTH"                      value="0x0BA5"/>
-    <enum name="MODELVIEW_MATRIX"                         value="0x0BA6"/>
-    <enum name="PROJECTION_MATRIX"                        value="0x0BA7"/>
-    <enum name="TEXTURE_MATRIX"                           value="0x0BA8"/>
-    <enum name="ATTRIB_STACK_DEPTH"                       value="0x0BB0"/>
+    <enum name="DEPTH_RANGE"                   count="2"  value="0x0B70">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_TEST"                    count="1"  value="0x0B71">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_WRITEMASK"               count="1"  value="0x0B72">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_CLEAR_VALUE"             count="1"  value="0x0B73">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_FUNC"                    count="1"  value="0x0B74">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACCUM_CLEAR_VALUE"             count="4"  value="0x0B80">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_TEST"                  count="1"  value="0x0B90">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_CLEAR_VALUE"           count="1"  value="0x0B91">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_FUNC"                  count="1"  value="0x0B92">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_VALUE_MASK"            count="1"  value="0x0B93">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_FAIL"                  count="1"  value="0x0B94">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_PASS_DEPTH_FAIL"       count="1"  value="0x0B95">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_PASS_DEPTH_PASS"       count="1"  value="0x0B96">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_REF"                   count="1"  value="0x0B97">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_WRITEMASK"             count="1"  value="0x0B98">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_MODE"                   count="1"  value="0x0BA0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMALIZE"                     count="1"  value="0x0BA1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VIEWPORT"                      count="4"  value="0x0BA2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW_STACK_DEPTH"         count="1"  value="0x0BA3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROJECTION_STACK_DEPTH"        count="1"  value="0x0BA4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_STACK_DEPTH"           count="1"  value="0x0BA5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW_MATRIX"              count="16" value="0x0BA6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROJECTION_MATRIX"             count="16" value="0x0BA7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_MATRIX"                count="16" value="0x0BA8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ATTRIB_STACK_DEPTH"            count="1"  value="0x0BB0">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="CLIENT_ATTRIB_STACK_DEPTH"                value="0x0BB1"/>
-    <enum name="ALPHA_TEST"                               value="0x0BC0"/>
-    <enum name="ALPHA_TEST_FUNC"                          value="0x0BC1"/>
-    <enum name="ALPHA_TEST_REF"                           value="0x0BC2"/>
-    <enum name="DITHER"                                   value="0x0BD0"/>
-    <enum name="BLEND_DST"                                value="0x0BE0"/>
-    <enum name="BLEND_SRC"                                value="0x0BE1"/>
-    <enum name="BLEND"                                    value="0x0BE2"/>
-    <enum name="LOGIC_OP_MODE"                            value="0x0BF0"/>
-    <enum name="LOGIC_OP"                                 value="0x0BF1"/>
-    <enum name="AUX_BUFFERS"                              value="0x0C00"/>
-    <enum name="DRAW_BUFFER"                              value="0x0C01"/>
-    <enum name="READ_BUFFER"                              value="0x0C02"/>
-    <enum name="SCISSOR_BOX"                              value="0x0C10"/>
-    <enum name="SCISSOR_TEST"                             value="0x0C11"/>
-    <enum name="INDEX_CLEAR_VALUE"                        value="0x0C20"/>
-    <enum name="INDEX_WRITEMASK"                          value="0x0C21"/>
-    <enum name="COLOR_CLEAR_VALUE"                        value="0x0C22"/>
-    <enum name="COLOR_WRITEMASK"                          value="0x0C23"/>
-    <enum name="INDEX_MODE"                               value="0x0C30"/>
-    <enum name="RGBA_MODE"                                value="0x0C31"/>
-    <enum name="DOUBLEBUFFER"                             value="0x0C32"/>
-    <enum name="STEREO"                                   value="0x0C33"/>
-    <enum name="RENDER_MODE"                              value="0x0C40"/>
-    <enum name="PERSPECTIVE_CORRECTION_HINT"              value="0x0C50"/>
-    <enum name="POINT_SMOOTH_HINT"                        value="0x0C51"/>
-    <enum name="LINE_SMOOTH_HINT"                         value="0x0C52"/>
-    <enum name="POLYGON_SMOOTH_HINT"                      value="0x0C53"/>
-    <enum name="FOG_HINT"                                 value="0x0C54"/>
-    <enum name="TEXTURE_GEN_S"                            value="0x0C60"/>
-    <enum name="TEXTURE_GEN_T"                            value="0x0C61"/>
-    <enum name="TEXTURE_GEN_R"                            value="0x0C62"/>
-    <enum name="TEXTURE_GEN_Q"                            value="0x0C63"/>
-    <enum name="PIXEL_MAP_I_TO_I"                         value="0x0C70"/>
+    <enum name="ALPHA_TEST"                    count="1"  value="0x0BC0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_TEST_FUNC"               count="1"  value="0x0BC1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_TEST_REF"                count="1"  value="0x0BC2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DITHER"                        count="1"  value="0x0BD0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_DST"                     count="1"  value="0x0BE0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC"                     count="1"  value="0x0BE1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND"                         count="1"  value="0x0BE2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LOGIC_OP_MODE"                 count="1"  value="0x0BF0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LOGIC_OP"                      count="1"  value="0x0BF1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="AUX_BUFFERS"                   count="1"  value="0x0C00">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER"                   count="1"  value="0x0C01">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="READ_BUFFER"                   count="1"  value="0x0C02">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SCISSOR_BOX"                   count="4"  value="0x0C10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SCISSOR_TEST"                  count="1"  value="0x0C11">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_CLEAR_VALUE"             count="1"  value="0x0C20">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_WRITEMASK"               count="1"  value="0x0C21">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_CLEAR_VALUE"             count="4"  value="0x0C22">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_WRITEMASK"               count="4"  value="0x0C23">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_MODE"                    count="1"  value="0x0C30">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RGBA_MODE"                     count="1"  value="0x0C31">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DOUBLEBUFFER"                  count="1"  value="0x0C32">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STEREO"                        count="1"  value="0x0C33">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RENDER_MODE"                   count="1"  value="0x0C40">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PERSPECTIVE_CORRECTION_HINT"   count="1"  value="0x0C50">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SMOOTH_HINT"             count="1"  value="0x0C51">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_SMOOTH_HINT"              count="1"  value="0x0C52">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_SMOOTH_HINT"           count="1"  value="0x0C53">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_HINT"                      count="1"  value="0x0C54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GEN_S"                 count="1"  value="0x0C60">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GEN_T"                 count="1"  value="0x0C61">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GEN_R"                 count="1"  value="0x0C62">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_GEN_Q"                 count="1"  value="0x0C63">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_I_TO_I"              count="1"  value="0x0C70">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PIXEL_MAP_S_TO_S"                         value="0x0C71"/>
     <enum name="PIXEL_MAP_I_TO_R"                         value="0x0C72"/>
     <enum name="PIXEL_MAP_I_TO_G"                         value="0x0C73"/>
@@ -345,153 +546,308 @@ glx:
     <enum name="PIXEL_MAP_G_TO_G"                         value="0x0C77"/>
     <enum name="PIXEL_MAP_B_TO_B"                         value="0x0C78"/>
     <enum name="PIXEL_MAP_A_TO_A"                         value="0x0C79"/>
-    <enum name="PIXEL_MAP_I_TO_I_SIZE"                    value="0x0CB0"/>
-    <enum name="PIXEL_MAP_S_TO_S_SIZE"                    value="0x0CB1"/>
-    <enum name="PIXEL_MAP_I_TO_R_SIZE"                    value="0x0CB2"/>
-    <enum name="PIXEL_MAP_I_TO_G_SIZE"                    value="0x0CB3"/>
-    <enum name="PIXEL_MAP_I_TO_B_SIZE"                    value="0x0CB4"/>
-    <enum name="PIXEL_MAP_I_TO_A_SIZE"                    value="0x0CB5"/>
-    <enum name="PIXEL_MAP_R_TO_R_SIZE"                    value="0x0CB6"/>
-    <enum name="PIXEL_MAP_G_TO_G_SIZE"                    value="0x0CB7"/>
-    <enum name="PIXEL_MAP_B_TO_B_SIZE"                    value="0x0CB8"/>
-    <enum name="PIXEL_MAP_A_TO_A_SIZE"                    value="0x0CB9"/>
-    <enum name="UNPACK_SWAP_BYTES"                        value="0x0CF0"/>
-    <enum name="UNPACK_LSB_FIRST"                         value="0x0CF1"/>
-    <enum name="UNPACK_ROW_LENGTH"                        value="0x0CF2"/>
-    <enum name="UNPACK_SKIP_PIXELS"                       value="0x0CF4"/>
-    <enum name="UNPACK_SKIP_ROWS"                         value="0x0CF3"/>
-    <enum name="UNPACK_ALIGNMENT"                         value="0x0CF5"/>
-    <enum name="PACK_SWAP_BYTES"                          value="0x0D00"/>
-    <enum name="PACK_LSB_FIRST"                           value="0x0D01"/>
-    <enum name="PACK_ROW_LENGTH"                          value="0x0D02"/>
-    <enum name="PACK_SKIP_ROWS"                           value="0x0D03"/>
-    <enum name="PACK_SKIP_PIXELS"                         value="0x0D04"/>
-    <enum name="PACK_ALIGNMENT"                           value="0x0D05"/>
-    <enum name="MAP_COLOR"                                value="0x0D10"/>
-    <enum name="MAP_STENCIL"                              value="0x0D11"/>
-    <enum name="INDEX_SHIFT"                              value="0x0D12"/>
-    <enum name="INDEX_OFFSET"                             value="0x0D13"/>
-    <enum name="RED_SCALE"                                value="0x0D14"/>
-    <enum name="RED_BIAS"                                 value="0x0D15"/>
-    <enum name="ZOOM_X"                                   value="0x0D16"/>
-    <enum name="ZOOM_Y"                                   value="0x0D17"/>
-    <enum name="GREEN_SCALE"                              value="0x0D18"/>
-    <enum name="GREEN_BIAS"                               value="0x0D19"/>
-    <enum name="BLUE_SCALE"                               value="0x0D1A"/>
-    <enum name="BLUE_BIAS"                                value="0x0D1B"/>
+    <enum name="PIXEL_MAP_I_TO_I_SIZE"         count="1"  value="0x0CB0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_S_TO_S_SIZE"         count="1"  value="0x0CB1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_I_TO_R_SIZE"         count="1"  value="0x0CB2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_I_TO_G_SIZE"         count="1"  value="0x0CB3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_I_TO_B_SIZE"         count="1"  value="0x0CB4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_I_TO_A_SIZE"         count="1"  value="0x0CB5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_R_TO_R_SIZE"         count="1"  value="0x0CB6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_G_TO_G_SIZE"         count="1"  value="0x0CB7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_B_TO_B_SIZE"         count="1"  value="0x0CB8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PIXEL_MAP_A_TO_A_SIZE"         count="1"  value="0x0CB9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_SWAP_BYTES"             count="1"  value="0x0CF0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_LSB_FIRST"              count="1"  value="0x0CF1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_ROW_LENGTH"             count="1"  value="0x0CF2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_SKIP_PIXELS"            count="1"  value="0x0CF4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_SKIP_ROWS"              count="1"  value="0x0CF3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_ALIGNMENT"              count="1"  value="0x0CF5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_SWAP_BYTES"               count="1"  value="0x0D00">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_LSB_FIRST"                count="1"  value="0x0D01">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_ROW_LENGTH"               count="1"  value="0x0D02">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_SKIP_ROWS"                count="1"  value="0x0D03">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_SKIP_PIXELS"              count="1"  value="0x0D04">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_ALIGNMENT"                count="1"  value="0x0D05">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAP_COLOR"                     count="1"  value="0x0D10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAP_STENCIL"                   count="1"  value="0x0D11">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_SHIFT"                   count="1"  value="0x0D12">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_OFFSET"                  count="1"  value="0x0D13">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RED_SCALE"                     count="1"  value="0x0D14">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RED_BIAS"                      count="1"  value="0x0D15">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ZOOM_X"                        count="1"  value="0x0D16">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ZOOM_Y"                        count="1"  value="0x0D17">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="GREEN_SCALE"                   count="1"  value="0x0D18">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="GREEN_BIAS"                    count="1"  value="0x0D19">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLUE_SCALE"                    count="1"  value="0x0D1A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLUE_BIAS"                     count="1"  value="0x0D1B">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="ALPHA_SCALE"                   count="1"  value="0x0D1C">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
         <size name="GetTexEnvfv" mode="get"/>
         <size name="GetTexEnviv" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
-    <enum name="ALPHA_BIAS"                               value="0x0D1D"/>
-    <enum name="DEPTH_SCALE"                              value="0x0D1E"/>
-    <enum name="DEPTH_BIAS"                               value="0x0D1F"/>
-    <enum name="MAX_EVAL_ORDER"                           value="0x0D30"/>
-    <enum name="MAX_LIGHTS"                               value="0x0D31"/>
-    <enum name="MAX_CLIP_PLANES"                          value="0x0D32"/>
-    <enum name="MAX_TEXTURE_SIZE"                         value="0x0D33"/>
-    <enum name="MAX_PIXEL_MAP_TABLE"                      value="0x0D34"/>
-    <enum name="MAX_ATTRIB_STACK_DEPTH"                   value="0x0D35"/>
-    <enum name="MAX_MODELVIEW_STACK_DEPTH"                value="0x0D36"/>
-    <enum name="MAX_NAME_STACK_DEPTH"                     value="0x0D37"/>
-    <enum name="MAX_PROJECTION_STACK_DEPTH"               value="0x0D38"/>
-    <enum name="MAX_TEXTURE_STACK_DEPTH"                  value="0x0D39"/>
-    <enum name="MAX_VIEWPORT_DIMS"                        value="0x0D3A"/>
+    <enum name="ALPHA_BIAS"                    count="1"  value="0x0D1D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_SCALE"                   count="1"  value="0x0D1E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_BIAS"                    count="1"  value="0x0D1F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_EVAL_ORDER"                count="1"  value="0x0D30">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_LIGHTS"                    count="1"  value="0x0D31">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_CLIP_PLANES"               count="1"  value="0x0D32">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_SIZE"              count="1"  value="0x0D33">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_PIXEL_MAP_TABLE"           count="1"  value="0x0D34">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_ATTRIB_STACK_DEPTH"        count="1"  value="0x0D35">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_MODELVIEW_STACK_DEPTH"     count="1"  value="0x0D36">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_NAME_STACK_DEPTH"          count="1"  value="0x0D37">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_PROJECTION_STACK_DEPTH"    count="1"  value="0x0D38">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_STACK_DEPTH"       count="1"  value="0x0D39">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_VIEWPORT_DIMS"             count="2"  value="0x0D3A">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MAX_CLIENT_ATTRIB_STACK_DEPTH"            value="0x0D3B"/>
-    <enum name="SUBPIXEL_BITS"                            value="0x0D50"/>
-    <enum name="INDEX_BITS"                               value="0x0D51"/>
-    <enum name="RED_BITS"                                 value="0x0D52"/>
-    <enum name="GREEN_BITS"                               value="0x0D53"/>
-    <enum name="BLUE_BITS"                                value="0x0D54"/>
-    <enum name="ALPHA_BITS"                               value="0x0D55"/>
-    <enum name="DEPTH_BITS"                               value="0x0D56"/>
-    <enum name="STENCIL_BITS"                             value="0x0D57"/>
-    <enum name="ACCUM_RED_BITS"                           value="0x0D58"/>
-    <enum name="ACCUM_GREEN_BITS"                         value="0x0D59"/>
-    <enum name="ACCUM_BLUE_BITS"                          value="0x0D5A"/>
-    <enum name="ACCUM_ALPHA_BITS"                         value="0x0D5B"/>
-    <enum name="NAME_STACK_DEPTH"                         value="0x0D70"/>
-    <enum name="AUTO_NORMAL"                              value="0x0D80"/>
+    <enum name="SUBPIXEL_BITS"                 count="1"  value="0x0D50">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_BITS"                    count="1"  value="0x0D51">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RED_BITS"                      count="1"  value="0x0D52">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="GREEN_BITS"                    count="1"  value="0x0D53">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLUE_BITS"                     count="1"  value="0x0D54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_BITS"                    count="1"  value="0x0D55">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_BITS"                    count="1"  value="0x0D56">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BITS"                  count="1"  value="0x0D57">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACCUM_RED_BITS"                count="1"  value="0x0D58">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACCUM_GREEN_BITS"              count="1"  value="0x0D59">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACCUM_BLUE_BITS"               count="1"  value="0x0D5A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACCUM_ALPHA_BITS"              count="1"  value="0x0D5B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NAME_STACK_DEPTH"              count="1"  value="0x0D70">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="AUTO_NORMAL"                   count="1"  value="0x0D80">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MAP1_COLOR_4"                  count="4"  value="0x0D90">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_INDEX"                    count="1"  value="0x0D91">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_NORMAL"                   count="3"  value="0x0D92">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_1"          count="1"  value="0x0D93">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_2"          count="2"  value="0x0D94">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_3"          count="3"  value="0x0D95">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_4"          count="4"  value="0x0D96">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_VERTEX_3"                 count="3"  value="0x0D97">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP1_VERTEX_4"                 count="4"  value="0x0D98">
         <size name="Map1d"/>
         <size name="Map1f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_COLOR_4"                  count="4"  value="0x0DB0">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_INDEX"                    count="1"  value="0x0DB1">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_NORMAL"                   count="3"  value="0x0DB2">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_1"          count="1"  value="0x0DB3">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_2"          count="2"  value="0x0DB4">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_3"          count="3"  value="0x0DB5">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_4"          count="4"  value="0x0DB6">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_VERTEX_3"                 count="3"  value="0x0DB7">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
     <enum name="MAP2_VERTEX_4"                 count="4"  value="0x0DB8">
         <size name="Map2d"/>
         <size name="Map2f"/>
+        <size name="Get" count="1" mode="get"/>
     </enum>
-    <enum name="MAP1_GRID_DOMAIN"                         value="0x0DD0"/>
-    <enum name="MAP1_GRID_SEGMENTS"                       value="0x0DD1"/>
-    <enum name="MAP2_GRID_DOMAIN"                         value="0x0DD2"/>
-    <enum name="MAP2_GRID_SEGMENTS"                       value="0x0DD3"/>
-    <enum name="TEXTURE_1D"                               value="0x0DE0"/>
-    <enum name="TEXTURE_2D"                               value="0x0DE1"/>
+    <enum name="MAP1_GRID_DOMAIN"              count="2"  value="0x0DD0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAP1_GRID_SEGMENTS"            count="1"  value="0x0DD1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAP2_GRID_DOMAIN"              count="4"  value="0x0DD2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAP2_GRID_SEGMENTS"            count="2"  value="0x0DD3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_1D"                    count="1"  value="0x0DE0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_2D"                    count="1"  value="0x0DE1">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FEEDBACK_BUFFER_POINTER"                  value="0x0DF0"/>
     <enum name="FEEDBACK_BUFFER_SIZE"                     value="0x0DF1"/>
     <enum name="FEEDBACK_BUFFER_TYPE"                     value="0x0DF2"/>
@@ -778,20 +1134,48 @@ glx:
     </enum>
     <enum name="CLAMP"                                    value="0x2900"/>
     <enum name="REPEAT"                                   value="0x2901"/>
-    <enum name="CLIP_PLANE0"                              value="0x3000"/>
-    <enum name="CLIP_PLANE1"                              value="0x3001"/>
-    <enum name="CLIP_PLANE2"                              value="0x3002"/>
-    <enum name="CLIP_PLANE3"                              value="0x3003"/>
-    <enum name="CLIP_PLANE4"                              value="0x3004"/>
-    <enum name="CLIP_PLANE5"                              value="0x3005"/>
-    <enum name="LIGHT0"                                   value="0x4000"/>
-    <enum name="LIGHT1"                                   value="0x4001"/>
-    <enum name="LIGHT2"                                   value="0x4002"/>
-    <enum name="LIGHT3"                                   value="0x4003"/>
-    <enum name="LIGHT4"                                   value="0x4004"/>
-    <enum name="LIGHT5"                                   value="0x4005"/>
-    <enum name="LIGHT6"                                   value="0x4006"/>
-    <enum name="LIGHT7"                                   value="0x4007"/>
+    <enum name="CLIP_PLANE0"                   count="1"  value="0x3000">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE1"                   count="1"  value="0x3001">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE2"                   count="1"  value="0x3002">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE3"                   count="1"  value="0x3003">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE4"                   count="1"  value="0x3004">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE5"                   count="1"  value="0x3005">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT0"                        count="1"  value="0x4000">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT1"                        count="1"  value="0x4001">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT2"                        count="1"  value="0x4002">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT3"                        count="1"  value="0x4003">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT4"                        count="1"  value="0x4004">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT5"                        count="1"  value="0x4005">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT6"                        count="1"  value="0x4006">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT7"                        count="1"  value="0x4007">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="CURRENT_BIT"                              value="0x00000001"/>
     <enum name="POINT_BIT"                                value="0x00000002"/>
     <enum name="LINE_BIT"                                 value="0x00000004"/>
@@ -838,7 +1222,7 @@ glx:
     <function name="NewList" offset="0">
         <param name="list" type="GLuint"/>
         <param name="mode" type="GLenum"/>
-        <glx sop="101"/>
+        <glx sop="101" note_unflushed="true"/>
     </function>
 
     <function name="EndList" offset="1">
@@ -860,7 +1244,7 @@ glx:
     <function name="DeleteLists" offset="4">
         <param name="list" type="GLuint"/>
         <param name="range" type="GLsizei"/>
-        <glx sop="103"/>
+        <glx sop="103" note_unflushed="true"/>
     </function>
 
     <function name="GenLists" offset="5">
@@ -2300,13 +2684,13 @@ glx:
     <function name="PixelStoref" offset="249">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
-        <glx sop="109" handcode="client"/>
+        <glx sop="109" handcode="client" note_unflushed="true"/>
     </function>
 
     <function name="PixelStorei" offset="250">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
-        <glx sop="110" handcode="client"/>
+        <glx sop="110" handcode="client" note_unflushed="true"/>
     </function>
 
     <function name="PixelMapfv" offset="251">
@@ -2684,7 +3068,9 @@ glx:
     <enum name="COLOR_LOGIC_OP"                           value="0x0BF2"/>
     <enum name="TEXTURE_INTERNAL_FORMAT"                  value="0x1003"/>
     <enum name="DOUBLE"                                   value="0x140A"/>
-    <enum name="POLYGON_OFFSET_UNITS"                     value="0x2A00"/>
+    <enum name="POLYGON_OFFSET_UNITS"          count="1"  value="0x2A00">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="POLYGON_OFFSET_POINT"                     value="0x2A01"/>
     <enum name="POLYGON_OFFSET_LINE"                      value="0x2A02"/>
     <enum name="R3_G3_B2"                                 value="0x2A10"/>
@@ -2703,7 +3089,9 @@ glx:
     <enum name="T2F_C4F_N3F_V3F"                          value="0x2A2C"/>
     <enum name="T4F_C4F_N3F_V4F"                          value="0x2A2D"/>
     <enum name="POLYGON_OFFSET_FILL"                      value="0x8037"/>
-    <enum name="POLYGON_OFFSET_FACTOR"                    value="0x8038"/>
+    <enum name="POLYGON_OFFSET_FACTOR"         count="1"  value="0x8038">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="POLYGON_OFFSET_BIAS"                      value="0x8039"/>
     <enum name="ALPHA4"                                   value="0x803B"/>
     <enum name="ALPHA8"                                   value="0x803C"/>
@@ -2773,34 +3161,72 @@ glx:
         <size name="GetTexParameterfv" mode="get"/>
         <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="TEXTURE_BINDING_1D"                       value="0x8068"/>
-    <enum name="TEXTURE_BINDING_2D"                       value="0x8069"/>
-    <enum name="VERTEX_ARRAY"                             value="0x8074"/>
-    <enum name="NORMAL_ARRAY"                             value="0x8075"/>
-    <enum name="COLOR_ARRAY"                              value="0x8076"/>
-    <enum name="INDEX_ARRAY"                              value="0x8077"/>
-    <enum name="TEXTURE_COORD_ARRAY"                      value="0x8078"/>
-    <enum name="EDGE_FLAG_ARRAY"                          value="0x8079"/>
-    <enum name="VERTEX_ARRAY_SIZE"                        value="0x807A"/>
-    <enum name="VERTEX_ARRAY_TYPE"                        value="0x807B"/>
-    <enum name="VERTEX_ARRAY_STRIDE"                      value="0x807C"/>
-    <enum name="VERTEX_ARRAY_COUNT"                       value="0x807D"/>
-    <enum name="NORMAL_ARRAY_TYPE"                        value="0x807E"/>
-    <enum name="NORMAL_ARRAY_STRIDE"                      value="0x807F"/>
-    <enum name="NORMAL_ARRAY_COUNT"                       value="0x8080"/>
-    <enum name="COLOR_ARRAY_SIZE"                         value="0x8081"/>
-    <enum name="COLOR_ARRAY_TYPE"                         value="0x8082"/>
-    <enum name="COLOR_ARRAY_STRIDE"                       value="0x8083"/>
-    <enum name="COLOR_ARRAY_COUNT"                        value="0x8084"/>
-    <enum name="INDEX_ARRAY_TYPE"                         value="0x8085"/>
-    <enum name="INDEX_ARRAY_STRIDE"                       value="0x8086"/>
-    <enum name="INDEX_ARRAY_COUNT"                        value="0x8087"/>
-    <enum name="TEXTURE_COORD_ARRAY_SIZE"                 value="0x8088"/>
-    <enum name="TEXTURE_COORD_ARRAY_TYPE"                 value="0x8089"/>
-    <enum name="TEXTURE_COORD_ARRAY_STRIDE"               value="0x808A"/>
-    <enum name="TEXTURE_COORD_ARRAY_COUNT"                value="0x808B"/>
-    <enum name="EDGE_FLAG_ARRAY_STRIDE"                   value="0x808C"/>
-    <enum name="EDGE_FLAG_ARRAY_COUNT"                    value="0x808D"/>
+    <enum name="TEXTURE_BINDING_1D"            count="1"  value="0x8068">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_2D"            count="1"  value="0x8069">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY"                  count="1"  value="0x8074">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY"                  count="1"  value="0x8075">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY"                   count="1"  value="0x8076">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_ARRAY"                   count="1"  value="0x8077">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY"           count="1"  value="0x8078">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="EDGE_FLAG_ARRAY"               count="1"  value="0x8079">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_SIZE"             count="1"  value="0x807A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_TYPE"             count="1"  value="0x807B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_STRIDE"           count="1"  value="0x807C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_TYPE"             count="1"  value="0x807E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_STRIDE"           count="1"  value="0x807F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_SIZE"              count="1"  value="0x8081">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_TYPE"              count="1"  value="0x8082">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_STRIDE"            count="1"  value="0x8083">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_ARRAY_TYPE"              count="1"  value="0x8085">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_ARRAY_STRIDE"            count="1"  value="0x8086">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_SIZE"      count="1"  value="0x8088">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_TYPE"      count="1"  value="0x8089">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_STRIDE"    count="1"  value="0x808A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="EDGE_FLAG_ARRAY_STRIDE"        count="1"  value="0x808C">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="VERTEX_ARRAY_POINTER"                     value="0x808E"/>
     <enum name="NORMAL_ARRAY_POINTER"                     value="0x808F"/>
     <enum name="COLOR_ARRAY_POINTER"                      value="0x8090"/>
@@ -3038,13 +3464,27 @@ glx:
     <enum name="UNSIGNED_SHORT_5_5_5_1"                   value="0x8034"/>
     <enum name="UNSIGNED_INT_8_8_8_8"                     value="0x8035"/>
     <enum name="UNSIGNED_INT_10_10_10_2"                  value="0x8036"/>
-    <enum name="RESCALE_NORMAL"                           value="0x803A"/>
-    <enum name="TEXTURE_BINDING_3D"                       value="0x806A"/>
-    <enum name="PACK_SKIP_IMAGES"                         value="0x806B"/>
-    <enum name="PACK_IMAGE_HEIGHT"                        value="0x806C"/>
-    <enum name="UNPACK_SKIP_IMAGES"                       value="0x806D"/>
-    <enum name="UNPACK_IMAGE_HEIGHT"                      value="0x806E"/>
-    <enum name="TEXTURE_3D"                               value="0x806F"/>
+    <enum name="RESCALE_NORMAL"                count="1"  value="0x803A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_3D"            count="1"  value="0x806A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_SKIP_IMAGES"              count="1"  value="0x806B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_IMAGE_HEIGHT"             count="1"  value="0x806C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_SKIP_IMAGES"            count="1"  value="0x806D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_IMAGE_HEIGHT"           count="1"  value="0x806E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_3D"                    count="1"  value="0x806F">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PROXY_TEXTURE_3D"                         value="0x8070"/>
     <enum name="TEXTURE_DEPTH"                 count="1"  value="0x8071">
         <size name="GetTexLevelParameterfv" mode="get"/>
@@ -3066,8 +3506,12 @@ glx:
     <enum name="UNSIGNED_INT_2_10_10_10_REV"              value="0x8368"/>
     <enum name="BGR"                                      value="0x80E0"/>
     <enum name="BGRA"                                     value="0x80E1"/>
-    <enum name="MAX_ELEMENTS_VERTICES"                    value="0x80E8"/>
-    <enum name="MAX_ELEMENTS_INDICES"                     value="0x80E9"/>
+    <enum name="MAX_ELEMENTS_VERTICES"         count="1"  value="0x80E8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_ELEMENTS_INDICES"          count="1"  value="0x80E9">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="CLAMP_TO_EDGE"                            value="0x812F"/>
     <enum name="TEXTURE_MIN_LOD"               count="1"  value="0x813A">
         <size name="TexParameterfv"/>
@@ -3096,17 +3540,55 @@ glx:
     <enum name="LIGHT_MODEL_COLOR_CONTROL"     count="1"  value="0x81F8">
         <size name="LightModelfv"/>
         <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="SINGLE_COLOR"                             value="0x81F9"/>
     <enum name="SEPARATE_SPECULAR_COLOR"                  value="0x81FA"/>
-    <enum name="SMOOTH_POINT_SIZE_RANGE"                  value="0x0B12"/>
-    <enum name="SMOOTH_POINT_SIZE_GRANULARITY"            value="0x0B13"/>
-    <enum name="SMOOTH_LINE_WIDTH_RANGE"                  value="0x0B22"/>
-    <enum name="SMOOTH_LINE_WIDTH_GRANULARITY"            value="0x0B23"/>
-    <enum name="ALIASED_POINT_SIZE_RANGE"                 value="0x846D"/>
-    <enum name="ALIASED_LINE_WIDTH_RANGE"                 value="0x846E"/>
+    <enum name="SMOOTH_POINT_SIZE_RANGE"       count="2"  value="0x0B12">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SMOOTH_POINT_SIZE_GRANULARITY" count="1"  value="0x0B13">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SMOOTH_LINE_WIDTH_RANGE"       count="2"  value="0x0B22">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SMOOTH_LINE_WIDTH_GRANULARITY" count="1"  value="0x0B23">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALIASED_POINT_SIZE_RANGE"      count="2"  value="0x846D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALIASED_LINE_WIDTH_RANGE"      count="2"  value="0x846E">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <!-- These enums are actually part of the ARB_imaging subset. -->
+
+    <enum name="CONSTANT_COLOR"                           value="0x8001"/>
+    <enum name="ONE_MINUS_CONSTANT_COLOR"                 value="0x8002"/>
+    <enum name="CONSTANT_ALPHA"                           value="0x8003"/>
+    <enum name="ONE_MINUS_CONSTANT_ALPHA"                 value="0x8004"/>
+    <enum name="BLEND_COLOR"                   count="4"  value="0x8005">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FUNC_ADD"                                 value="0x8006"/>
+    <enum name="MIN"                                      value="0x8007"/>
+    <enum name="MAX"                                      value="0x8008"/>
+    <enum name="BLEND_EQUATION"                count="1"  value="0x8009">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FUNC_SUBTRACT"                            value="0x800A"/>
+    <enum name="FUNC_REVERSE_SUBTRACT"                    value="0x800B"/>
+    <enum name="CONVOLUTION_1D"                count="1"  value="0x8010">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CONVOLUTION_2D"                count="1"  value="0x8011">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SEPARABLE_2D"                  count="1"  value="0x8012">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <enum name="CONVOLUTION_BORDER_MODE"       count="1"  value="0x8013">
         <size name="ConvolutionParameterfv"/>
@@ -3148,21 +3630,41 @@ glx:
     <enum name="MAX_CONVOLUTION_WIDTH"         count="1"  value="0x801A">
         <size name="GetConvolutionParameterfv" mode="get"/>
         <size name="GetConvolutionParameteriv" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="MAX_CONVOLUTION_HEIGHT"        count="1"  value="0x801B">
         <size name="GetConvolutionParameterfv" mode="get"/>
         <size name="GetConvolutionParameteriv" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
-    <enum name="POST_CONVOLUTION_RED_SCALE"    count="1"  value="0x801C"/>
-    <enum name="POST_CONVOLUTION_GREEN_SCALE"  count="1"  value="0x801D"/>
-    <enum name="POST_CONVOLUTION_BLUE_SCALE"   count="1"  value="0x801E"/>
-    <enum name="POST_CONVOLUTION_ALPHA_SCALE"  count="1"  value="0x801F"/>
-    <enum name="POST_CONVOLUTION_RED_BIAS"     count="1"  value="0x8020"/>
-    <enum name="POST_CONVOLUTION_GREEN_BIAS"   count="1"  value="0x8021"/>
-    <enum name="POST_CONVOLUTION_BLUE_BIAS"    count="1"  value="0x8022"/>
-    <enum name="POST_CONVOLUTION_ALPHA_BIAS"   count="1"  value="0x8023"/>
+    <enum name="POST_CONVOLUTION_RED_SCALE"    count="1"  value="0x801C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_GREEN_SCALE"  count="1"  value="0x801D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_BLUE_SCALE"   count="1"  value="0x801E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_ALPHA_SCALE"  count="1"  value="0x801F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_RED_BIAS"     count="1"  value="0x8020">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_GREEN_BIAS"   count="1"  value="0x8021">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_BLUE_BIAS"    count="1"  value="0x8022">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_ALPHA_BIAS"   count="1"  value="0x8023">
+        <size name="Get" mode="get"/>
+    </enum>
 
-    <enum name="HISTOGRAM"                                value="0x8024"/>
+    <enum name="HISTOGRAM"                     count="1"  value="0x8024">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PROXY_HISTOGRAM"                          value="0x8025"/>
     <enum name="HISTOGRAM_WIDTH"               count="1"  value="0x8026">
         <size name="GetHistogramParameterfv" mode="get"/>
@@ -3196,7 +3698,9 @@ glx:
         <size name="GetHistogramParameterfv" mode="get"/>
         <size name="GetHistogramParameteriv" mode="get"/>
     </enum>
-    <enum name="MINMAX"                                   value="0x802E"/>
+    <enum name="MINMAX"                        count="1"  value="0x802E">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MINMAX_FORMAT"                 count="1"  value="0x802F">
         <size name="GetMinmaxParameterfv" mode="get"/>
         <size name="GetMinmaxParameteriv" mode="get"/>
@@ -3206,17 +3710,52 @@ glx:
         <size name="GetMinmaxParameteriv" mode="get"/>
     </enum>
 
-    <enum name="COLOR_MATRIX"                             value="0x80B1"/>
-    <enum name="COLOR_MATRIX_STACK_DEPTH"                 value="0x80B2"/>
-    <enum name="MAX_COLOR_MATRIX_STACK_DEPTH"             value="0x80B3"/>
-    <enum name="POST_COLOR_MATRIX_RED_SCALE"              value="0x80B4"/>
-    <enum name="POST_COLOR_MATRIX_GREEN_SCALE"            value="0x80B5"/>
-    <enum name="POST_COLOR_MATRIX_BLUE_SCALE"             value="0x80B6"/>
-    <enum name="POST_COLOR_MATRIX_ALPHA_SCALE"            value="0x80B7"/>
-    <enum name="POST_COLOR_MATRIX_RED_BIAS"               value="0x80B8"/>
-    <enum name="POST_COLOR_MATRIX_GREEN_BIAS"             value="0x80B9"/>
-    <enum name="POST_COLOR_MATRIX_BLUE_BIAS"              value="0x80BA"/>
-    <enum name="POST_COLOR_MATRIX_ALPHA_BIAS"             value="0x80BB"/>
+    <enum name="COLOR_MATRIX"                  count="16" value="0x80B1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_MATRIX_STACK_DEPTH"      count="1"  value="0x80B2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_COLOR_MATRIX_STACK_DEPTH"  count="1"  value="0x80B3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_RED_SCALE"   count="1"  value="0x80B4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_GREEN_SCALE" count="1"  value="0x80B5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_BLUE_SCALE"  count="1"  value="0x80B6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_ALPHA_SCALE" count="1"  value="0x80B7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_RED_BIAS"    count="1"  value="0x80B8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_GREEN_BIAS"  count="1"  value="0x80B9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_BLUE_BIAS"   count="1"  value="0x80BA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_ALPHA_BIAS"  count="1"  value="0x80BB">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <enum name="COLOR_TABLE"                   count="1"  value="0x80D0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_COLOR_TABLE"  count="1"  value="0x80D1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_COLOR_MATRIX_COLOR_TABLE" count="1"  value="0x80D2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROXY_COLOR_TABLE"                              value="0x80D3"/>
+    <enum name="PROXY_POST_CONVOLUTION_COLOR_TABLE"             value="0x80D4"/>
+    <enum name="PROXY_POST_COLOR_MATRIX_COLOR_TABLE"            value="0x80D5"/>
 
     <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
         <size name="ColorTableParameterfv"/>
@@ -3620,26 +4159,52 @@ glx:
     <enum name="TEXTURE29"                                value="0x84DD"/>
     <enum name="TEXTURE30"                                value="0x84DE"/>
     <enum name="TEXTURE31"                                value="0x84DF"/>
-    <enum name="ACTIVE_TEXTURE"                           value="0x84E0"/>
-    <enum name="CLIENT_ACTIVE_TEXTURE"                    value="0x84E1"/>
-    <enum name="MAX_TEXTURE_UNITS"                        value="0x84E2"/>
+    <enum name="ACTIVE_TEXTURE"                count="1"  value="0x84E0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIENT_ACTIVE_TEXTURE"         count="1"  value="0x84E1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_UNITS"             count="1"  value="0x84E2">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TRANSPOSE_MODELVIEW_MATRIX"               value="0x84E3"/>
     <enum name="TRANSPOSE_PROJECTION_MATRIX"              value="0x84E4"/>
     <enum name="TRANSPOSE_TEXTURE_MATRIX"                 value="0x84E5"/>
     <enum name="TRANSPOSE_COLOR_MATRIX"                   value="0x84E6"/>
-    <enum name="MULTISAMPLE"                              value="0x809D"/>
-    <enum name="SAMPLE_ALPHA_TO_COVERAGE"                 value="0x809E"/>
-    <enum name="SAMPLE_ALPHA_TO_ONE"                      value="0x809F"/>
-    <enum name="SAMPLE_COVERAGE"                          value="0x80A0"/>
-    <enum name="SAMPLE_BUFFERS"                           value="0x80A8"/>
-    <enum name="SAMPLES"                                  value="0x80A9"/>
-    <enum name="SAMPLE_COVERAGE_VALUE"                    value="0x80AA"/>
-    <enum name="SAMPLE_COVERAGE_INVERT"                   value="0x80AB"/>
+    <enum name="MULTISAMPLE"                   count="1"  value="0x809D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_ALPHA_TO_COVERAGE"      count="1"  value="0x809E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_ALPHA_TO_ONE"           count="1"  value="0x809F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE"               count="1"  value="0x80A0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_BUFFERS"                count="1"  value="0x80A8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLES"                       count="1"  value="0x80A9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_VALUE"         count="1"  value="0x80AA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_INVERT"        count="1"  value="0x80AB">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MULTISAMPLE_BIT"                          value="0x20000000"/>
     <enum name="NORMAL_MAP"                               value="0x8511"/>
     <enum name="REFLECTION_MAP"                           value="0x8512"/>
-    <enum name="TEXTURE_CUBE_MAP"                         value="0x8513"/>
-    <enum name="TEXTURE_BINDING_CUBE_MAP"                 value="0x8514"/>
+    <enum name="TEXTURE_CUBE_MAP"              count="1"  value="0x8513">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_CUBE_MAP"      count="1"  value="0x8514">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_X"              value="0x8515"/>
     <enum name="TEXTURE_CUBE_MAP_NEGATIVE_X"              value="0x8516"/>
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_Y"              value="0x8517"/>
@@ -3647,14 +4212,18 @@ glx:
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_Z"              value="0x8519"/>
     <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Z"              value="0x851A"/>
     <enum name="PROXY_TEXTURE_CUBE_MAP"                   value="0x851B"/>
-    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE"                value="0x851C"/>
+    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE"     count="1"  value="0x851C">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="COMPRESSED_ALPHA"                         value="0x84E9"/>
     <enum name="COMPRESSED_LUMINANCE"                     value="0x84EA"/>
     <enum name="COMPRESSED_LUMINANCE_ALPHA"               value="0x84EB"/>
     <enum name="COMPRESSED_INTENSITY"                     value="0x84EC"/>
     <enum name="COMPRESSED_RGB"                           value="0x84ED"/>
     <enum name="COMPRESSED_RGBA"                          value="0x84EE"/>
-    <enum name="TEXTURE_COMPRESSION_HINT"                 value="0x84EF"/>
+    <enum name="TEXTURE_COMPRESSION_HINT"      count="1"  value="0x84EF">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE" count="1"  value="0x86A0">
         <size name="GetTexLevelParameterfv" mode="get"/>
         <size name="GetTexLevelParameteriv" mode="get"/>
@@ -3663,8 +4232,12 @@ glx:
         <size name="GetTexLevelParameterfv" mode="get"/>
         <size name="GetTexLevelParameteriv" mode="get"/>
     </enum>
-    <enum name="NUM_COMPRESSED_TEXTURE_FORMATS"           value="0x86A2"/>
-    <enum name="COMPRESSED_TEXTURE_FORMATS"               value="0x86A3"/>
+    <enum name="NUM_COMPRESSED_TEXTURE_FORMATS" count="1" value="0x86A2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COMPRESSED_TEXTURE_FORMATS"    count="?"  value="0x86A3">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
     <enum name="COMBINE"                                  value="0x8570"/>
     <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
@@ -4056,10 +4629,18 @@ glx:
 </category>
 
 <category name="1.4">
-    <enum name="BLEND_DST_RGB"                            value="0x80C8"/>
-    <enum name="BLEND_SRC_RGB"                            value="0x80C9"/>
-    <enum name="BLEND_DST_ALPHA"                          value="0x80CA"/>
-    <enum name="BLEND_SRC_ALPHA"                          value="0x80CB"/>
+    <enum name="BLEND_DST_RGB"                 count="1"  value="0x80C8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC_RGB"                 count="1"  value="0x80C9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_DST_ALPHA"               count="1"  value="0x80CA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC_ALPHA"               count="1"  value="0x80CB">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="POINT_SIZE_MIN"                count="1"  value="0x8126">
         <size name="PointParameterfvEXT"/>
     </enum>
@@ -4083,22 +4664,44 @@ glx:
     <enum name="DEPTH_COMPONENT24"                        value="0x81A6"/>
     <enum name="DEPTH_COMPONENT32"                        value="0x81A7"/>
     <enum name="MIRRORED_REPEAT"                          value="0x8370"/>
-    <enum name="FOG_COORDINATE_SOURCE"                    value="0x8450"/>
+    <enum name="FOG_COORDINATE_SOURCE"         count="1"  value="0x8450">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_COORDINATE"                           value="0x8451"/>
     <enum name="FRAGMENT_DEPTH"                           value="0x8452"/>
-    <enum name="CURRENT_FOG_COORDINATE"                   value="0x8453"/>
-    <enum name="FOG_COORDINATE_ARRAY_TYPE"                value="0x8454"/>
-    <enum name="FOG_COORDINATE_ARRAY_STRIDE"              value="0x8455"/>
+    <enum name="CURRENT_FOG_COORDINATE"        count="1"  value="0x8453">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COORDINATE_ARRAY_TYPE"     count="1"  value="0x8454">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COORDINATE_ARRAY_STRIDE"   count="1"  value="0x8455">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_COORDINATE_ARRAY_POINTER"             value="0x8456"/>
-    <enum name="FOG_COORDINATE_ARRAY"                     value="0x8457"/>
+    <enum name="FOG_COORDINATE_ARRAY"          count="1"  value="0x8457">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="COLOR_SUM"                                value="0x8458"/>
-    <enum name="CURRENT_SECONDARY_COLOR"                  value="0x8459"/>
-    <enum name="SECONDARY_COLOR_ARRAY_SIZE"               value="0x845A"/>
-    <enum name="SECONDARY_COLOR_ARRAY_TYPE"               value="0x845B"/>
-    <enum name="SECONDARY_COLOR_ARRAY_STRIDE"             value="0x845C"/>
+    <enum name="CURRENT_SECONDARY_COLOR"       count="4"  value="0x8459">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SECONDARY_COLOR_ARRAY_SIZE"    count="1"  value="0x845A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SECONDARY_COLOR_ARRAY_TYPE"    count="1"  value="0x845B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SECONDARY_COLOR_ARRAY_STRIDE"  count="1"  value="0x845C">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="SECONDARY_COLOR_ARRAY_POINTER"            value="0x845D"/>
-    <enum name="SECONDARY_COLOR_ARRAY"                    value="0x845E"/>
-    <enum name="MAX_TEXTURE_LOD_BIAS"                     value="0x84FD"/>
+    <enum name="SECONDARY_COLOR_ARRAY"         count="1"  value="0x845E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_LOD_BIAS"          count="1"  value="0x84FD">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_FILTER_CONTROL"                   value="0x8500"/>
     <enum name="TEXTURE_LOD_BIAS"              count="1"  value="0x8501">
         <size name="TexEnvfv"/>
@@ -4400,14 +5003,24 @@ glx:
     <enum name="DYNAMIC_DRAW"                             value="0x88E8"/>
     <enum name="DYNAMIC_READ"                             value="0x88E9"/>
     <enum name="DYNAMIC_COPY"                             value="0x88EA"/>
-    <enum name="SAMPLES_PASSED"                           value="0x8914"/>
-    <enum name="FOG_COORD_SOURCE"                         value="0x8450"/>
+    <enum name="SAMPLES_PASSED"                count="1"  value="0x8914"/>
+    <enum name="FOG_COORD_SOURCE"                         value="0x8450">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_COORD"                                value="0x8451"/>
-    <enum name="CURRENT_FOG_COORD"                        value="0x8453"/>
-    <enum name="FOG_COORD_ARRAY_TYPE"                     value="0x8454"/>
-    <enum name="FOG_COORD_ARRAY_STRIDE"                   value="0x8455"/>
+    <enum name="CURRENT_FOG_COORD"             count="1"  value="0x8453">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COORD_ARRAY_TYPE"          count="1"  value="0x8454">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COORD_ARRAY_STRIDE"        count="1"  value="0x8455">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_COORD_ARRAY_POINTER"                  value="0x8456"/>
-    <enum name="FOG_COORD_ARRAY"                          value="0x8457"/>
+    <enum name="FOG_COORD_ARRAY"               count="1"  value="0x8457">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="FOG_COORD_ARRAY_BUFFER_BINDING"           value="0x889D"/>
     <enum name="SRC0_RGB"                                 value="0x8580"/>
     <enum name="SRC1_RGB"                                 value="0x8581"/>
@@ -4416,8 +5029,8 @@ glx:
     <enum name="SRC1_ALPHA"                               value="0x8589"/>
     <enum name="SRC2_ALPHA"                               value="0x858A"/>
 
-    <type name="intptr" size="4"/>
-    <type name="sizeiptr" size="4"/>
+    <type name="intptr"   size="4"  glx_name="CARD32"/>
+    <type name="sizeiptr" size="4"  glx_name="CARD32"/>
 
     <function name="BindBuffer" alias="BindBufferARB">
         <param name="target" type="GLenum"/>
@@ -4592,9 +5205,15 @@ glx:
     <enum name="TEXTURE29_ARB"                            value="0x84DD"/>
     <enum name="TEXTURE30_ARB"                            value="0x84DE"/>
     <enum name="TEXTURE31_ARB"                            value="0x84DF"/>
-    <enum name="ACTIVE_TEXTURE_ARB"                       value="0x84E0"/>
-    <enum name="CLIENT_ACTIVE_TEXTURE_ARB"                value="0x84E1"/>
-    <enum name="MAX_TEXTURE_UNITS_ARB"                    value="0x84E2"/>
+    <enum name="ACTIVE_TEXTURE_ARB"            count="1"  value="0x84E0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIENT_ACTIVE_TEXTURE_ARB"     count="1"  value="0x84E1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_UNITS_ARB"         count="1"  value="0x84E2">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <function name="ActiveTextureARB" offset="374">
         <param name="texture" type="GLenum"/>
@@ -4839,14 +5458,30 @@ glx:
 <!-- ARB extension number 4 is a WGL extension. -->
 
 <category name="GL_ARB_multisample" number="5">
-    <enum name="MULTISAMPLE_ARB"                          value="0x809D"/>
-    <enum name="SAMPLE_ALPHA_TO_COVERAGE_ARB"             value="0x809E"/>
-    <enum name="SAMPLE_ALPHA_TO_ONE_ARB"                  value="0x809F"/>
-    <enum name="SAMPLE_COVERAGE_ARB"                      value="0x80A0"/>
-    <enum name="SAMPLE_BUFFERS_ARB"                       value="0x80A8"/>
-    <enum name="SAMPLES_ARB"                              value="0x80A9"/>
-    <enum name="SAMPLE_COVERAGE_VALUE_ARB"                value="0x80AA"/>
-    <enum name="SAMPLE_COVERAGE_INVERT_ARB"               value="0x80AB"/>
+    <enum name="MULTISAMPLE_ARB"               count="1"  value="0x809D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_ALPHA_TO_COVERAGE_ARB"  count="1"  value="0x809E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_ALPHA_TO_ONE_ARB"       count="1"  value="0x809F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_ARB"           count="1"  value="0x80A0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_BUFFERS_ARB"            count="1"  value="0x80A8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLES_ARB"                   count="1"  value="0x80A9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_VALUE_ARB"     count="1"  value="0x80AA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_INVERT_ARB"    count="1"  value="0x80AB">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MULTISAMPLE_BIT_ARB"                      value="0x20000000"/>
 
     <function name="SampleCoverageARB" offset="412">
@@ -4863,8 +5498,12 @@ glx:
 <category name="GL_ARB_texture_cube_map" number="7">
     <enum name="NORMAL_MAP_ARB"                           value="0x8511"/>
     <enum name="REFLECTION_MAP_ARB"                       value="0x8512"/>
-    <enum name="TEXTURE_CUBE_MAP_ARB"                     value="0x8513"/>
-    <enum name="TEXTURE_BINDING_CUBE_MAP_ARB"             value="0x8514"/>
+    <enum name="TEXTURE_CUBE_MAP_ARB"          count="1"  value="0x8513">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_CUBE_MAP_ARB"  count="1"  value="0x8514">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_X_ARB"          value="0x8515"/>
     <enum name="TEXTURE_CUBE_MAP_NEGATIVE_X_ARB"          value="0x8516"/>
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_Y_ARB"          value="0x8517"/>
@@ -4872,7 +5511,9 @@ glx:
     <enum name="TEXTURE_CUBE_MAP_POSITIVE_Z_ARB"          value="0x8519"/>
     <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB"          value="0x851A"/>
     <enum name="PROXY_TEXTURE_CUBE_MAP_ARB"               value="0x851B"/>
-    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE_ARB"            value="0x851C"/>
+    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE_ARB" count="1"  value="0x851C">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <!-- ARB extension number 8 is a WGL extension. -->
@@ -4887,7 +5528,9 @@ glx:
     <enum name="COMPRESSED_INTENSITY_ARB"                 value="0x84EC"/>
     <enum name="COMPRESSED_RGB_ARB"                       value="0x84ED"/>
     <enum name="COMPRESSED_RGBA_ARB"                      value="0x84EE"/>
-    <enum name="TEXTURE_COMPRESSION_HINT_ARB"             value="0x84EF"/>
+    <enum name="TEXTURE_COMPRESSION_HINT_ARB"  count="1"  value="0x84EF">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_COMPRESSED_IMAGE_SIZE_ARB" count="1" value="0x86A0">
         <size name="GetTexLevelParameterfv" mode="get"/>
         <size name="GetTexLevelParameteriv" mode="get"/>
@@ -4896,7 +5539,9 @@ glx:
         <size name="GetTexLevelParameterfv" mode="get"/>
         <size name="GetTexLevelParameteriv" mode="get"/>
     </enum>
-    <enum name="NUM_TEXTURE_COMPRESSED_FORMATS_ARB"       value="0x86A2"/>
+    <enum name="NUM_TEXTURE_COMPRESSED_FORMATS_ARB" count="1" value="0x86A2">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="TEXTURE_COMPRESSED_FORMATS_ARB"           value="0x86A3"/>
 
     <function name="CompressedTexImage3DARB" offset="554">
@@ -5020,48 +5665,130 @@ glx:
 </category>
 
 <category name="GL_ARB_vertex_blend" number="15">
-    <enum name="MAX_VERTEX_UNITS_ARB"                     value="0x86A4"/>
-    <enum name="ACTIVE_VERTEX_UNITS_ARB"                  value="0x86A5"/>
-    <enum name="WEIGHT_SUM_UNITY_ARB"                     value="0x86A6"/>
-    <enum name="VERTEX_BLEND_ARB"                         value="0x86A7"/>
-    <enum name="CURRENT_WEIGHT_ARB"                       value="0x86A8"/>
-    <enum name="WEIGHT_ARRAY_TYPE_ARB"                    value="0x86A9"/>
-    <enum name="WEIGHT_ARRAY_STRIDE_ARB"                  value="0x86AA"/>
-    <enum name="WEIGHT_ARRAY_SIZE_ARB"                    value="0x86AB"/>
+    <enum name="MAX_VERTEX_UNITS_ARB"          count="1"  value="0x86A4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACTIVE_VERTEX_UNITS_ARB"       count="1"  value="0x86A5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="WEIGHT_SUM_UNITY_ARB"          count="1"  value="0x86A6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_BLEND_ARB"              count="1"  value="0x86A7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_WEIGHT_ARB"            count="1"  value="0x86A8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="WEIGHT_ARRAY_TYPE_ARB"         count="1"  value="0x86A9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="WEIGHT_ARRAY_STRIDE_ARB"       count="1"  value="0x86AA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="WEIGHT_ARRAY_SIZE_ARB"         count="1"  value="0x86AB">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="WEIGHT_ARRAY_POINTER_ARB"                 value="0x86AC"/>
-    <enum name="WEIGHT_ARRAY_ARB"                         value="0x86AD"/>
-    <enum name="MODELVIEW0_ARB"                           value="0x1700"/>
-    <enum name="MODELVIEW1_ARB"                           value="0x850A"/>
-    <enum name="MODELVIEW2_ARB"                           value="0x8722"/>
-    <enum name="MODELVIEW3_ARB"                           value="0x8723"/>
-    <enum name="MODELVIEW4_ARB"                           value="0x8724"/>
-    <enum name="MODELVIEW5_ARB"                           value="0x8725"/>
-    <enum name="MODELVIEW6_ARB"                           value="0x8726"/>
-    <enum name="MODELVIEW7_ARB"                           value="0x8727"/>
-    <enum name="MODELVIEW8_ARB"                           value="0x8728"/>
-    <enum name="MODELVIEW9_ARB"                           value="0x8729"/>
-    <enum name="MODELVIEW10_ARB"                          value="0x872A"/>
-    <enum name="MODELVIEW11_ARB"                          value="0x872B"/>
-    <enum name="MODELVIEW12_ARB"                          value="0x872C"/>
-    <enum name="MODELVIEW13_ARB"                          value="0x872D"/>
-    <enum name="MODELVIEW14_ARB"                          value="0x872E"/>
-    <enum name="MODELVIEW15_ARB"                          value="0x872F"/>
-    <enum name="MODELVIEW16_ARB"                          value="0x8730"/>
-    <enum name="MODELVIEW17_ARB"                          value="0x8731"/>
-    <enum name="MODELVIEW18_ARB"                          value="0x8732"/>
-    <enum name="MODELVIEW19_ARB"                          value="0x8733"/>
-    <enum name="MODELVIEW20_ARB"                          value="0x8734"/>
-    <enum name="MODELVIEW21_ARB"                          value="0x8735"/>
-    <enum name="MODELVIEW22_ARB"                          value="0x8736"/>
-    <enum name="MODELVIEW23_ARB"                          value="0x8737"/>
-    <enum name="MODELVIEW24_ARB"                          value="0x8738"/>
-    <enum name="MODELVIEW25_ARB"                          value="0x8739"/>
-    <enum name="MODELVIEW26_ARB"                          value="0x873A"/>
-    <enum name="MODELVIEW27_ARB"                          value="0x873B"/>
-    <enum name="MODELVIEW28_ARB"                          value="0x873C"/>
-    <enum name="MODELVIEW29_ARB"                          value="0x873D"/>
-    <enum name="MODELVIEW30_ARB"                          value="0x873E"/>
-    <enum name="MODELVIEW31_ARB"                          value="0x873F"/>
+    <enum name="WEIGHT_ARRAY_ARB"              count="1"  value="0x86AD">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW0_ARB"                count="16" value="0x1700">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW1_ARB"                count="16" value="0x850A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW2_ARB"                count="16" value="0x8722">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW3_ARB"                count="16" value="0x8723">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW4_ARB"                count="16" value="0x8724">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW5_ARB"                count="16" value="0x8725">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW6_ARB"                count="16" value="0x8726">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW7_ARB"                count="16" value="0x8727">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW8_ARB"                count="16" value="0x8728">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW9_ARB"                count="16" value="0x8729">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW10_ARB"               count="16" value="0x872A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW11_ARB"               count="16" value="0x872B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW12_ARB"               count="16" value="0x872C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW13_ARB"               count="16" value="0x872D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW14_ARB"               count="16" value="0x872E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW15_ARB"               count="16" value="0x872F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW16_ARB"               count="16" value="0x8730">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW17_ARB"               count="16" value="0x8731">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW18_ARB"               count="16" value="0x8732">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW19_ARB"               count="16" value="0x8733">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW20_ARB"               count="16" value="0x8734">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW21_ARB"               count="16" value="0x8735">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW22_ARB"               count="16" value="0x8736">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW23_ARB"               count="16" value="0x8737">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW24_ARB"               count="16" value="0x8738">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW25_ARB"               count="16" value="0x8739">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW26_ARB"               count="16" value="0x873A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW27_ARB"               count="16" value="0x873B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW28_ARB"               count="16" value="0x873C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW29_ARB"               count="16" value="0x873D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW30_ARB"               count="16" value="0x873E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW31_ARB"               count="16" value="0x873F">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <function name="WeightbvARB" offset="?">
         <param name="size" type="GLint"/>
@@ -5117,15 +5844,33 @@ glx:
 </category>
 
 <category name="GL_ARB_matrix_palette" number="16">
-    <enum name="MATRIX_PALETTE_ARB"                       value="0x8840"/>
-    <enum name="MAX_MATRIX_PALETTE_STACK_DEPTH_ARB"       value="0x8841"/>
-    <enum name="MAX_PALETTE_MATRICES_ARB"                 value="0x8842"/>
-    <enum name="CURRENT_PALETTE_MATRIX_ARB"               value="0x8843"/>
-    <enum name="MATRIX_INDEX_ARRAY_ARB"                   value="0x8844"/>
-    <enum name="CURRENT_MATRIX_INDEX_ARB"                 value="0x8845"/>
-    <enum name="MATRIX_INDEX_ARRAY_SIZE_ARB"              value="0x8846"/>
-    <enum name="MATRIX_INDEX_ARRAY_TYPE_ARB"              value="0x8847"/>
-    <enum name="MATRIX_INDEX_ARRAY_STRIDE_ARB"            value="0x8848"/>
+    <enum name="MATRIX_PALETTE_ARB"            count="1"  value="0x8840">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_MATRIX_PALETTE_STACK_DEPTH_ARB" count="1" value="0x8841">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_PALETTE_MATRICES_ARB"      count="1"  value="0x8842">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_PALETTE_MATRIX_ARB"    count="1"  value="0x8843">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_INDEX_ARRAY_ARB"        count="1"  value="0x8844">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_MATRIX_INDEX_ARB"      count="1"  value="0x8845">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_INDEX_ARRAY_SIZE_ARB"   count="1"  value="0x8846">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_INDEX_ARRAY_TYPE_ARB"   count="1"  value="0x8847">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_INDEX_ARRAY_STRIDE_ARB" count="1"  value="0x8848">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MATRIX_INDEX_ARRAY_POINTER_ARB"           value="0x8849"/>
 
     <function name="CurrentPaletteMatrixARB" offset="?">
@@ -5320,11 +6065,14 @@ glx:
 </category>
 
 <category name="GL_ARB_vertex_program" number="26">
-    <enum name="COLOR_SUM_ARB"                            value="0x8458"/>
+    <enum name="COLOR_SUM_ARB"                 count="1"  value="0x8458">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="VERTEX_PROGRAM_ARB"            count="1"  value="0x8620">
         <size name="GetVertexAttribdvARB" mode="get"/>
         <size name="GetVertexAttribfvARB" mode="get"/>
         <size name="GetVertexAttribivARB" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="VERTEX_ATTRIB_ARRAY_ENABLED_ARB" count="1" value="0x8622">
         <size name="GetVertexAttribdvARB" mode="get"/>
@@ -5355,18 +6103,34 @@ glx:
         <size name="GetProgramivARB" mode="get"/>
     </enum>
     <enum name="PROGRAM_STRING_ARB"                       value="0x8628"/>
-    <enum name="MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB"       value="0x862E"/>
-    <enum name="MAX_PROGRAM_MATRICES_ARB"                 value="0x862F"/>
-    <enum name="CURRENT_MATRIX_STACK_DEPTH_ARB"           value="0x8640"/>
-    <enum name="CURRENT_MATRIX_ARB"                       value="0x8641"/>
-    <enum name="VERTEX_PROGRAM_POINT_SIZE_ARB"            value="0x8642"/>
-    <enum name="VERTEX_PROGRAM_TWO_SIDE_ARB"              value="0x8643"/>
+    <enum name="MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB" count="1" value="0x862E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_MATRICES_ARB"      count="1"  value="0x862F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_MATRIX_STACK_DEPTH_ARB" count="1" value="0x8640">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_MATRIX_ARB"            count="16" value="0x8641">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_PROGRAM_POINT_SIZE_ARB" count="1"  value="0x8642">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_PROGRAM_TWO_SIDE_ARB"   count="1"  value="0x8643">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="VERTEX_ATTRIB_ARRAY_POINTER_ARB"          value="0x8645"/>
-    <enum name="PROGRAM_ERROR_POSITION_ARB"               value="0x864B"/>
+    <enum name="PROGRAM_ERROR_POSITION_ARB"    count="1"  value="0x864B">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PROGRAM_BINDING_ARB"           count="1"  value="0x8677">
         <size name="GetProgramivARB" mode="get"/>
     </enum>
-    <enum name="MAX_VERTEX_ATTRIBS_ARB"                   value="0x8869"/>
+    <enum name="MAX_VERTEX_ATTRIBS_ARB"        count="1"  value="0x8869">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB"       value="0x886A"/>
     <enum name="PROGRAM_ERROR_STRING_ARB"                 value="0x8874"/>
     <enum name="PROGRAM_FORMAT_ASCII_ARB"                 value="0x8875"/>
@@ -5442,7 +6206,9 @@ glx:
     <enum name="PROGRAM_UNDER_NATIVE_LIMITS_ARB" count="1" value="0x88B6">
         <size name="GetProgramivARB" mode="get"/>
     </enum>
-    <enum name="TRANSPOSE_CURRENT_MATRIX_ARB"             value="0x88B7"/>
+    <enum name="TRANSPOSE_CURRENT_MATRIX_ARB"  count="16" value="0x88B7">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="MATRIX0_ARB"                              value="0x88C0"/>
     <enum name="MATRIX1_ARB"                              value="0x88C1"/>
     <enum name="MATRIX2_ARB"                              value="0x88C2"/>
@@ -5848,36 +6614,36 @@ glx:
     <function name="GetProgramEnvParameterdvARB" offset="676">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1297" handcode="true" doubles_in_order="true"/>
+        <param name="params" type="GLdouble *" output="true" count="4"/>
+        <glx vendorpriv="1297" handcode="client" doubles_in_order="true"/>
     </function>
 
     <function name="GetProgramEnvParameterfvARB" offset="677">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1296" handcode="true"/>
+        <param name="params" type="GLfloat *" output="true" count="4"/>
+        <glx vendorpriv="1296" handcode="client"/>
     </function>
 
     <function name="GetProgramLocalParameterdvARB" offset="678">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1306" handcode="true" doubles_in_order="true"/>
+        <param name="params" type="GLdouble *" output="true" count="4"/>
+        <glx vendorpriv="1306" handcode="client" doubles_in_order="true"/>
     </function>
 
     <function name="GetProgramLocalParameterfvARB" offset="679">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1305" handcode="true"/>
+        <param name="params" type="GLfloat *" output="true" count="4"/>
+        <glx vendorpriv="1305" handcode="client"/>
     </function>
 
 
     <function name="GetProgramivARB" offset="680">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true" varaible_param="pname"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="1307"/>
     </function>
 
@@ -5896,21 +6662,51 @@ glx:
 </category>
 
 <category name="GL_ARB_fragment_program" number="27">
-    <enum name="FRAGMENT_PROGRAM_ARB"                     value="0x8804"/>
-    <enum name="PROGRAM_ALU_INSTRUCTIONS_ARB"             value="0x8805"/>
-    <enum name="PROGRAM_TEX_INSTRUCTIONS_ARB"             value="0x8806"/>
-    <enum name="PROGRAM_TEX_INDIRECTIONS_ARB"             value="0x8807"/>
-    <enum name="PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB"      value="0x8808"/>
-    <enum name="PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB"      value="0x8809"/>
-    <enum name="PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB"      value="0x880A"/>
-    <enum name="MAX_PROGRAM_ALU_INSTRUCTIONS_ARB"         value="0x880B"/>
-    <enum name="MAX_PROGRAM_TEX_INSTRUCTIONS_ARB"         value="0x880C"/>
-    <enum name="MAX_PROGRAM_TEX_INDIRECTIONS_ARB"         value="0x880D"/>
-    <enum name="MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB"  value="0x880E"/>
-    <enum name="MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB"  value="0x880F"/>
-    <enum name="MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB"  value="0x8810"/>
-    <enum name="MAX_TEXTURE_COORDS_ARB"                   value="0x8871"/>
-    <enum name="MAX_TEXTURE_IMAGE_UNITS_ARB"              value="0x8872"/>
+    <enum name="FRAGMENT_PROGRAM_ARB"          count="1"  value="0x8804">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_ALU_INSTRUCTIONS_ARB"  count="1"  value="0x8805">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_TEX_INSTRUCTIONS_ARB"  count="1"  value="0x8806">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_TEX_INDIRECTIONS_ARB"  count="1"  value="0x8807">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB" count="1" value="0x8808">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB" count="1" value="0x8809">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB" count="1" value="0x880A">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_ALU_INSTRUCTIONS_ARB" count="1" value="0x880B">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_TEX_INSTRUCTIONS_ARB" count="1" value="0x880C">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_TEX_INDIRECTIONS_ARB" count="1" value="0x880D">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB" count="1" value="0x880E">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB" count="1" value="0x880F">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB" count="1" value="0x8810">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_COORDS_ARB"        count="1"  value="0x8871">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_IMAGE_UNITS_ARB"   count="1"  value="0x8872">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_ARB_vertex_buffer_object" number="28">
@@ -6121,8 +6917,8 @@ glx:
     <enum name="OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB"     value="0x8B87"/>
     <enum name="OBJECT_SHADER_SOURCE_LENGTH_ARB"          value="0x8B88"/>
 
-    <type name="charARB" size="1"/>
-    <type name="handleARB" size="4"/>
+    <type name="charARB"   size="1" glx_name="CARD8"/>
+    <type name="handleARB" size="4" glx_name="CARD32"/>
 
     <function name="DeleteObjectARB" offset="711">
         <param name="obj" type="GLhandleARB"/>
@@ -6446,7 +7242,9 @@ glx:
 </category>
 
 <category name="GL_ARB_point_sprite" number="35">
-    <enum name="POINT_SPRITE_ARB"                         value="0x8861"/>
+    <enum name="POINT_SPRITE_ARB"              count="1"  value="0x8861">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="COORD_REPLACE_ARB"             count="1"  value="0x8862">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
@@ -6460,23 +7258,57 @@ glx:
 </category>
 
 <category name="GL_ARB_draw_buffers" number="37">
-    <enum name="MAX_DRAW_BUFFERS_ARB"                     value="0x8824"/>
-    <enum name="DRAW_BUFFER0_ARB"                         value="0x8825"/>
-    <enum name="DRAW_BUFFER1_ARB"                         value="0x8826"/>
-    <enum name="DRAW_BUFFER2_ARB"                         value="0x8827"/>
-    <enum name="DRAW_BUFFER3_ARB"                         value="0x8828"/>
-    <enum name="DRAW_BUFFER4_ARB"                         value="0x8829"/>
-    <enum name="DRAW_BUFFER5_ARB"                         value="0x882A"/>
-    <enum name="DRAW_BUFFER6_ARB"                         value="0x882B"/>
-    <enum name="DRAW_BUFFER7_ARB"                         value="0x882C"/>
-    <enum name="DRAW_BUFFER8_ARB"                         value="0x882D"/>
-    <enum name="DRAW_BUFFER9_ARB"                         value="0x882E"/>
-    <enum name="DRAW_BUFFER10_ARB"                        value="0x882F"/>
-    <enum name="DRAW_BUFFER11_ARB"                        value="0x8830"/>
-    <enum name="DRAW_BUFFER12_ARB"                        value="0x8831"/>
-    <enum name="DRAW_BUFFER13_ARB"                        value="0x8832"/>
-    <enum name="DRAW_BUFFER14_ARB"                        value="0x8833"/>
-    <enum name="DRAW_BUFFER15_ARB"                        value="0x8834"/>
+    <enum name="MAX_DRAW_BUFFERS_ARB"          count="1"  value="0x8824">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER0_ARB"              count="1"  value="0x8825">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER1_ARB"              count="1"  value="0x8826">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER2_ARB"              count="1"  value="0x8827">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER3_ARB"              count="1"  value="0x8828">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER4_ARB"              count="1"  value="0x8829">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER5_ARB"              count="1"  value="0x882A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER6_ARB"              count="1"  value="0x882B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER7_ARB"              count="1"  value="0x882C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER8_ARB"              count="1"  value="0x882D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER9_ARB"              count="1"  value="0x882E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER10_ARB"             count="1"  value="0x882F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER11_ARB"             count="1"  value="0x8830">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER12_ARB"             count="1"  value="0x8831">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER13_ARB"             count="1"  value="0x8832">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER14_ARB"             count="1"  value="0x8833">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER15_ARB"             count="1"  value="0x8834">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <function name="DrawBuffersARB" offset="413">
         <param name="n" type="GLsizei" counter="true"/>
@@ -6486,10 +7318,16 @@ glx:
 </category>
 
 <category name="GL_ARB_texture_rectangle" number="38">
-    <enum name="TEXTURE_RECTANGLE_ARB"                    value="0x84F5"/>
-    <enum name="TEXTURE_BINDING_RECTANGLE_ARB"            value="0x84F6"/>
+    <enum name="TEXTURE_RECTANGLE_ARB"         count="1"  value="0x84F5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_RECTANGLE_ARB" count="1"  value="0x84F6">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PROXY_TEXTURE_RECTANGLE_ARB"              value="0x84F7"/>
-    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_ARB"           value="0x84F8"/>
+    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_ARB" count="1" value="0x84F8">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <!-- Non-ARB extensions sorted by extension number. -->
@@ -6499,7 +7337,9 @@ glx:
     <enum name="ONE_MINUS_CONSTANT_COLOR_EXT"             value="0x8002"/>
     <enum name="CONSTANT_ALPHA_EXT"                       value="0x8003"/>
     <enum name="ONE_MINUS_CONSTANT_ALPHA_EXT"             value="0x8004"/>
-    <enum name="BLEND_COLOR_EXT"                          value="0x8005"/>
+    <enum name="BLEND_COLOR_EXT"               count="4"  value="0x8005">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <function name="BlendColorEXT" alias="BlendColor">
         <param name="red" type="GLclampf"/>
@@ -6859,19 +7699,37 @@ glx:
     <enum name="MAX_CONVOLUTION_WIDTH_EXT"     count="1"  value="0x801A">
         <size name="GetConvolutionParameterfv" mode="get"/>
         <size name="GetConvolutionParameteriv" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="MAX_CONVOLUTION_HEIGHT_EXT"    count="1"  value="0x801B">
         <size name="GetConvolutionParameterfv" mode="get"/>
         <size name="GetConvolutionParameteriv" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
-    <enum name="POST_CONVOLUTION_RED_SCALE_EXT" count="1" value="0x801C"/>
-    <enum name="POST_CONVOLUTION_GREEN_SCALE_EXT" count="1" value="0x801D"/>
-    <enum name="POST_CONVOLUTION_BLUE_SCALE_EXT" count="1" value="0x801E"/>
-    <enum name="POST_CONVOLUTION_ALPHA_SCALE_EXT" count="1" value="0x801F"/>
-    <enum name="POST_CONVOLUTION_RED_BIAS_EXT" count="1"  value="0x8020"/>
-    <enum name="POST_CONVOLUTION_GREEN_BIAS_EXT" count="1" value="0x8021"/>
-    <enum name="POST_CONVOLUTION_BLUE_BIAS_EXT" count="1" value="0x8022"/>
-    <enum name="POST_CONVOLUTION_ALPHA_BIAS_EXT" count="1" value="0x8023"/>
+    <enum name="POST_CONVOLUTION_RED_SCALE_EXT" count="1" value="0x801C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_GREEN_SCALE_EXT" count="1" value="0x801D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_BLUE_SCALE_EXT" count="1" value="0x801E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_ALPHA_SCALE_EXT" count="1" value="0x801F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_RED_BIAS_EXT" count="1"  value="0x8020">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_GREEN_BIAS_EXT" count="1" value="0x8021">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_BLUE_BIAS_EXT" count="1" value="0x8022">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POST_CONVOLUTION_ALPHA_BIAS_EXT" count="1" value="0x8023">
+        <size name="Get" mode="get"/>
+    </enum>
 
     <function name="ConvolutionFilter1DEXT" alias="ConvolutionFilter1D">
         <param name="target" type="GLenum"/>
@@ -7211,7 +8069,9 @@ glx:
 <!-- Extension number 26 is not listed in the extension registry. -->
 
 <category name="GL_EXT_rescale_normal" number="27">
-    <enum name="RESCALE_NORMAL_EXT"                       value="0x803A"/>
+    <enum name="RESCALE_NORMAL_EXT"            count="1"  value="0x803A">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <!-- Extension number 28 is a GLX extension. -->
@@ -7355,9 +8215,25 @@ glx:
 </category>
 
 <category name="GL_EXT_blend_minmax" number="37">
+    <enum name="FUNC_ADD_EXT"                             value="0x8006"/>
+    <enum name="MIN_EXT"                                  value="0x8007"/>
+    <enum name="MAX_EXT"                                  value="0x8008"/>
+    <enum name="BLEND_EQUATION_EXT"            count="1"  value="0x8009">
+        <size name="Get" mode="get"/>
+    </enum>
+
     <function name="BlendEquationEXT" alias="BlendEquation">
         <param name="mode" type="GLenum"/>
     </function>
+</category>
+
+<category name="GL_EXT_blend_subtract" number="38">
+    <enum name="FUNC_SUBTRACT_EXT"                        value="0x800A"/>
+    <enum name="FUNC_REVERSE_SUBTRACT_EXT"                value="0x800B"/>
+
+    <!-- <function name="BlendEquationEXT" alias="BlendEquation">
+        <param name="mode" type="GLenum"/>
+    </function> -->
 </category>
 
 <!-- Extension number 40 is a GLX extension. -->
@@ -7687,7 +8563,9 @@ glx:
 </category>
 
 <category name="GL_EXT_clip_volume_hint" number="79">
-    <enum name="CLIP_VOLUME_CLIPPING_HINT_EXT"            value="0x80F0"/>
+    <enum name="CLIP_VOLUME_CLIPPING_HINT_EXT" count="1"  value="0x80F0">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_SGIX_list_priority" number="80">
@@ -7964,7 +8842,9 @@ glx:
 <!-- Extension number 109 is not listed in the extension registry. -->
 
 <category name="GL_IBM_rasterpos_clip" number="110">
-    <enum name="RASTER_POSITION_UNCLIPPED_IBM"            value="0x19262"/>
+    <enum name="RASTER_POSITION_UNCLIPPED_IBM"  count="1" value="0x19262">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_EXT_draw_range_elements" number="112">
@@ -8065,8 +8945,12 @@ glx:
 </category>
 
 <category name="GL_HP_occlusion_test" number="137">
-    <enum name="OCCLUSION_TEST_HP"                        value="0x8165"/>
-    <enum name="OCCLUSION_TEST_RESULT_HP"                 value="0x8166"/>
+    <enum name="OCCLUSION_TEST_HP"             count="1"  value="0x8165">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="OCCLUSION_TEST_RESULT_HP"      count="1"  value="0x8166">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_EXT_pixel_transform" number="138">
@@ -8918,8 +9802,12 @@ glx:
 </category>
 
 <category name="GL_NV_light_max_exponent" number="189">
-    <enum name="MAX_SHININESS_NV"                         value="0x8504"/>
-    <enum name="MAX_SPOT_EXPONENT_NV"                     value="0x8505"/>
+    <enum name="MAX_SHININESS_NV"              count="1"  value="0x8504">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_SPOT_EXPONENT_NV"          count="1"  value="0x8505">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_NV_vertex_array_range" number="190">
@@ -9044,6 +9932,7 @@ glx:
     <enum name="FOG_DISTANCE_MODE_NV"          count="1"  value="0x855A">
         <size name="Fogfv"/>
         <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="EYE_RADIAL_NV"                            value="0x855B"/>
     <enum name="EYE_PLANE_ABSOLUTE_NV"                    value="0x855C"/>
@@ -9367,7 +10256,7 @@ glx:
         <param name="green" type="GLboolean"/>
         <param name="blue" type="GLboolean"/>
         <param name="alpha" type="GLboolean"/>
-        <glx rop="2082"/>
+        <glx rop="2082" ignore="true"/>
     </function>
 </category>
 
@@ -9529,10 +10418,16 @@ glx:
 </category>
 
 <category name="GL_NV_texture_rectangle" number="229">
-    <enum name="TEXTURE_RECTANGLE_NV"                     value="0x84F5"/>
-    <enum name="TEXTURE_BINDING_RECTANGLE_NV"             value="0x84F6"/>
+    <enum name="TEXTURE_RECTANGLE_NV"          count="1"  value="0x84F5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_RECTANGLE_NV"  count="1"  value="0x84F6">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="PROXY_TEXTURE_RECTANGLE_NV"               value="0x84F7"/>
-    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_NV"            value="0x84F8"/>
+    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_NV" count="1"  value="0x84F8">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_NV_vertex_program" number="233">
@@ -9645,7 +10540,7 @@ glx:
     <function name="AreProgramsResidentNV" offset="578">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
-        <param name="residences" type="GLboolean *" output="true"/>
+        <param name="residences" type="GLboolean *" output="true" count="n"/>
         <return type="GLboolean"/>
         <glx vendorpriv="1293"/>
     </function>
@@ -9736,7 +10631,7 @@ glx:
     <function name="GetVertexAttribivNV" offset="755">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx vendorpriv="1303"/>
     </function>
 
@@ -10272,11 +11167,15 @@ glx:
 </category>
 
 <category name="GL_NV_multisample_filter_hint" number="259">
-    <enum name="MULTISAMPLE_FILTER_HINT_NV"               value="0x8534"/>
+    <enum name="MULTISAMPLE_FILTER_HINT_NV"    count="1"  value="0x8534">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_NV_depth_clamp" number="260">
-    <enum name="DEPTH_CLAMP_NV"                           value="0x864F"/>
+    <enum name="DEPTH_CLAMP_NV"                count="1"  value="0x864F">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_NV_point_sprite" number="262">
@@ -10296,7 +11195,9 @@ glx:
         <size name="PointParameterivNV"/>
     </enum>
 
-    <enum name="POINT_SPRITE_NV"                          value="0x8861"/>
+    <enum name="POINT_SPRITE_NV"               count="1"  value="0x8861">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="COORD_REPLACE_NV"              count="1"  value="0x8862">
         <size name="TexEnvfv"/>
         <size name="TexEnviv"/>
@@ -10306,6 +11207,7 @@ glx:
     <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863">
         <size name="PointParameterfvEXT"/>
         <size name="PointParameterivNV"/>
+        <size name="Get" mode="get"/>
     </enum>
 
     <function name="PointParameteriNV" offset="642">
@@ -10329,6 +11231,13 @@ glx:
 </category>
 
 <category name="EXT_stencil_two_side" number="268">
+    <enum name="STENCIL_TEST_TWO_SIDE_EXT"     count="1"  value="0x8910">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACTIVE_STENCIL_FACE_EXT"       count="1"  value="0x8911">
+        <size name="Get" mode="get"/>
+    </enum>
+
     <function name="ActiveStencilFaceEXT" offset="646">
         <param name="face" type="GLenum"/>
         <glx rop="4220"/>
@@ -10351,6 +11260,58 @@ glx:
 </category>
 
 <category name="GL_ATI_draw_buffers" number="277">
+    <enum name="MAX_DRAW_BUFFERS_ATI"          count="1"  value="0x8824">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER0_ATI"              count="1"  value="0x8825">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER1_ATI"              count="1"  value="0x8826">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER2_ATI"              count="1"  value="0x8827">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER3_ATI"              count="1"  value="0x8828">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER4_ATI"              count="1"  value="0x8829">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER5_ATI"              count="1"  value="0x882A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER6_ATI"              count="1"  value="0x882B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER7_ATI"              count="1"  value="0x882C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER8_ATI"              count="1"  value="0x882D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER9_ATI"              count="1"  value="0x882E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER10_ATI"             count="1"  value="0x882F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER11_ATI"             count="1"  value="0x8830">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER12_ATI"             count="1"  value="0x8831">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER13_ATI"             count="1"  value="0x8832">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER14_ATI"             count="1"  value="0x8833">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DRAW_BUFFER15_ATI"             count="1"  value="0x8834">
+        <size name="Get" mode="get"/>
+    </enum>
+
     <function name="DrawBuffersATI" alias="DrawBuffersARB">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
@@ -10448,6 +11409,13 @@ glx:
 </category>
 
 <category name="GL_EXT_depth_bounds_test" number="297">
+    <enum name="DEPTH_BOUNDS_TEST_EXT"         count="1"  value="0x8890">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_BOUNDS_EXT"              count="2"  value="0x8891">
+        <size name="Get" mode="get"/>
+    </enum>
+
     <function name="DepthBoundsEXT" offset="699">
         <param name="zmin" type="GLclampd"/>
         <param name="zmax" type="GLclampd"/>
@@ -10462,6 +11430,13 @@ glx:
 </category>
 
 <category name="GL_EXT_blend_equation_separate" number="299">
+    <enum name="BLEND_EQUATION_RGB_EXT"        count="1"  value="0x8009">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_EQUATION_ALPHA_EXT"      count="1"  value="0x883D">
+        <size name="Get" mode="get"/>
+    </enum>
+
     <function name="BlendEquationSeparateEXT" offset="710">
         <param name="modeRGB" type="GLenum"/>
         <param name="modeA" type="GLenum"/>
@@ -10470,7 +11445,9 @@ glx:
 </category>
 
 <category name="GL_MESA_pack_invert" number="300">
-    <enum name="PACK_INVERT_MESA"                         value="0x8758"/>
+    <enum name="PACK_INVERT_MESA"              count="1"  value="0x8758">
+        <size name="Get" mode="get"/>
+    </enum>
 </category>
 
 <category name="GL_MESA_ycbcr_texture" number="301">
