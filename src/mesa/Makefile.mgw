@@ -77,8 +77,8 @@ CFLAGS += -DUSE_EXTERNAL_DXTN_LIB=1
 ifeq ($(FX),1)
   CFLAGS += -I$(GLIDE)/include -DFX
   LDLIBS += -L$(GLIDE)/lib -lglide3x
-  GL_DEF = drivers/glide/fxopengl.def
-  GL_RES = drivers/glide/fx.rc
+  GL_DEF = drivers/windows/fx/fxopengl.def
+  GL_RES = drivers/windows/fx/fx.rc
 else
   ifeq ($(ICD),1)
     CFLAGS += -DUSE_MGL_NAMESPACE
@@ -112,7 +112,7 @@ endif
 ifeq ($(FX),1)
 DRIVER_SOURCES = \
 	$(GLIDE_DRIVER_SOURCES) \
-	drivers/glide/fxwgl.c
+	drivers/windows/fx/fxwgl.c
 else
 ifeq ($(ICD),1)
 DRIVER_SOURCES = \
