@@ -159,9 +159,6 @@ static GLuint src_vector( const struct fp_src_register *source )
 {
    GLuint src;
 
-/*    fprintf(stderr, "%s File %d, Index %d\n", */
-/* 	   __FUNCTION__, source->File, source->Index); */
-
    assert(source->Index < 32);	/* limitiation of UREG representation */
 
    src = UREG( src_reg_file( source->File ), source->Index );
@@ -180,13 +177,43 @@ static GLuint src_vector( const struct fp_src_register *source )
 
 static void print_header( void )
 {
-   printf("static void run_program( const GLfloat (*local_param)[4], \n"
-	  "                         const GLfloat (*env_param)[4], \n"
-	  "                         const GLfloat (*state_param)[4], \n"
-	  "                         const GLfloat (*interp)[4], \n"
-	  "                         GLfloat *outputs)\n"
+   printf("\n\n\n");
+
+   /* Texture samplers, not written yet:
+    */
+   printf("extern void TEX( void *ctx, const float *txc, int unit, float *rslt );\n"
+	  "extern void TXB( void *ctx, const float *txc, int unit, float *rslt );\n"
+	  "extern void TXP( void *ctx, const float *txc, int unit, float *rslt );\n");
+
+   /* Resort to the standard math library (float versions):
+    */
+   printf("extern float fabsf( float );\n"
+	  "extern float cosf( float );\n"
+	  "extern float sinf( float );\n"
+	  "extern float expf( float );\n"
+	  "extern float powf( float, float );\n"
+	  "extern float floorf( float );\n");
+
+   /* These ones we have fast code in Mesa for:
+    */
+   printf("extern float LOG2( float );\n"
+	  "extern float _mesa_inv_sqrtf( float );\n");
+
+   /* The usual macros, not really needed, but handy:
+    */
+   printf("#define MIN2(x,y) ((x)<(y)?(x):(y))\n"
+	  "#define MAX2(x,y) ((x)<(y)?(x):(y))\n");
+
+   /* Our function!
+    */
+   printf("void run_program( void *ctx, \n"
+	  "                  const float (*local_param)[4], \n"
+	  "                  const float (*env_param)[4], \n"
+	  "                  const float (*state_param)[4], \n"
+	  "                  const float (*interp)[4], \n"
+	  "                  float (*outputs)[4])\n"
 	  "{\n"
-	  "   GLfloat temp[32][4];\n"
+	  "   float temp[32][4];\n"
       );
 }
 
@@ -326,8 +353,8 @@ static void do_tex( const struct fragment_program *p,
    }
 
    printf("   {\n");
-   printf("       GLfloat texcoord[4];\n");
-   printf("       GLfloat result[4];\n");
+   printf("       float texcoord[4];\n");
+   printf("       float result[4];\n");
 
    for (i = 0; i < 4; i++) {
       printf("      texcoord[%d] = ", i);
@@ -464,7 +491,7 @@ static GLuint nr_args( GLuint opcode )
 
 
 
-static void upload_program( const struct fragment_program *p )
+static void print_program( const struct fragment_program *p )
 {
    const struct fp_instruction *inst = p->Instructions;
 
@@ -477,6 +504,7 @@ static void upload_program( const struct fragment_program *p )
 	 src[i] = src_vector( &inst->SrcReg[i] );
 
       /* Print the original program instruction string */
+      if (p->Base.String)
       {
          const char *s = (const char *) p->Base.String + inst->StringPos;
          printf("   /* ");
@@ -489,7 +517,7 @@ static void upload_program( const struct fragment_program *p )
 
       switch (inst->Opcode) {
       case FP_OPCODE_ABS: 
-	 assign4(p, inst, "FABSF(%s)", src[0]);
+	 assign4(p, inst, "fabsf(%s)", src[0]);
 	 break;
 
       case FP_OPCODE_ADD: 
@@ -541,25 +569,26 @@ static void upload_program( const struct fragment_program *p )
 	  * result[1] = a[1] * b[1];
 	  * result[2] = a[2] * 1;
 	  * result[3] = 1    * b[3];
-	  *
-	  * Here we hope that the compiler can optimize away "x*1" to "x".
 	  */
-	 assign4(p, inst, 
-		 "%s*%s", 
-		 swizzle(src[0], _ONE, _Y, _Z,   _ONE), 
-		 swizzle(src[1], _ONE, _Y, _ONE, _W  ));
+	 assign_single(0, p, inst, "1.0");
+
+	 assign_single(1, p, inst, "%s * %s", 
+		       deref(src[0], _Y), deref(src[1], _Y));
+
+	 assign_single(2, p, inst, "%s", deref(src[0], _Z));
+	 assign_single(3, p, inst, "%s", deref(src[1], _W));
 	 break;
 
       case FP_OPCODE_EX2: 
-	 assign4_replicate(p, inst, "EX2(%s)", src[0]);
+	 assign4_replicate(p, inst, "powf(2.0, %s)", src[0]);
 	 break;
 
       case FP_OPCODE_FLR: 
-	 assign4_replicate(p, inst, "FLR(%s)", src[0]);
+	 assign4_replicate(p, inst, "floorf(%s)", src[0]);
 	 break;
 
       case FP_OPCODE_FRC: 
-	 assign4_replicate(p, inst, "FRC(%s)", src[0]);
+	 assign4_replicate(p, inst, "%s - floorf(%s)", src[0], src[0]);
 	 break;
 
       case FP_OPCODE_KIL:
@@ -567,13 +596,13 @@ static void upload_program( const struct fragment_program *p )
 	 break;
 
       case FP_OPCODE_LG2: 
-	 assign4_replicate(p, inst, "LOG(%s)", deref(src[0], _X));
+	 assign4_replicate(p, inst, "LOG2(%s)", src[0]);
 	 break;
 
       case FP_OPCODE_LIT: 
 	 assign_single(0, p, inst, "1.0");
 	 assign_single(1, p, inst, "MIN2(%s, 0)", deref(src[0], _X));
-	 assign_single(2, p, inst, "(%s > 0.0) ? EXP(%s * MIN2(%s, 0)) : 0.0",
+	 assign_single(2, p, inst, "(%s > 0.0) ? expf(%s * MIN2(%s, 0)) : 0.0",
 		       deref(src[0], _X),
 		       deref(src[0], _Z),
 		       deref(src[0], _Y));
@@ -607,26 +636,24 @@ static void upload_program( const struct fragment_program *p )
 	 break;
 
       case FP_OPCODE_POW: 
-	 assign4_replicate(p, inst, "POW(%s, %s)", 
-			   deref(src[0], _X), 
-			   deref(src[1], _X));
+	 assign4_replicate(p, inst, "powf(%s, %s)", src[0], src[1]);
 	 break;
 
       case FP_OPCODE_RCP: 
-	 assign4_replicate(p, inst, "1.0/%s", deref(src[0], _X));
+	 assign4_replicate(p, inst, "1.0/%s", src[0]);
 	 break;
 
       case FP_OPCODE_RSQ: 
-	 assign4_replicate(p, inst, "INV_SQRTF(%s)", deref(src[0], _X));
+	 assign4_replicate(p, inst, "_mesa_inv_sqrtf(%s)", src[0]);
 	 break;
 	 
       case FP_OPCODE_SCS:
 	 if (inst->DstReg.WriteMask[0]) {
-	    assign_single(0, p, inst, "COS(%s)", deref(src[0], _X));
+	    assign_single(0, p, inst, "cosf(%s)", deref(src[0], _X));
 	 }
 
 	 if (inst->DstReg.WriteMask[1]) {
-	    assign_single(1, p, inst, "SIN(%s)", deref(src[0], _X));
+	    assign_single(1, p, inst, "sinf(%s)", deref(src[0], _X));
 	 }
 	 break;
 
@@ -635,7 +662,7 @@ static void upload_program( const struct fragment_program *p )
 	 break;
 
       case FP_OPCODE_SIN:
-	 assign4_replicate(p, inst, "SIN(%s)", deref(src[0], _X));
+	 assign4_replicate(p, inst, "sinf(%s)", src[0]);
 	 break;
 
       case FP_OPCODE_SLT: 
@@ -691,7 +718,7 @@ void _swrast_translate_program( GLcontext *ctx )
 {
    if (ctx->FragmentProgram.Current) {
       print_header();
-      upload_program( ctx->FragmentProgram.Current );
+      print_program( ctx->FragmentProgram.Current );
       print_footer();
    }
 }
