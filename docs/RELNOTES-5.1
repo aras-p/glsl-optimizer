@@ -66,6 +66,13 @@ GL_ARB_occlusion_query
 GL_ARB_texture_non_power_of_two
    Removes the restriction that texture dimensions must be powers of two.
 
+GL_ARB_vertex_buffer_object
+   Allows server-side vertex arrays, optimized host/card data transfers, etc.
+
+GL_ARB_point_sprite
+   ARB-approved version of GL_NV_point_sprite.  Basically allows textures
+   to be applied to points.
+
 GL_IBM_multimode_draw_arrays
    Allows multiple vertex arrays to be drawn with one call, including arrays
    of different types of primitives.
@@ -73,6 +80,12 @@ GL_IBM_multimode_draw_arrays
 GL_SUN_multi_draw_arrays
    An alias for GL_EXT_multi_draw_arrays, standard in OpenGL 1.4.
 
+
+With the addition of GL_ARB_occlusion_query, GL_ARB_vertex_buffer_object,
+GL_ARB_texture_non_power_of_two and GL_EXT_shadow_funcs, Mesa 5.1 supports
+all the new features of OpenGL 1.5.  Mesa 6.0 (the next stable release)
+will advertise GL_VERSION = "1.5".
+ 
 
 
 Build System Changes

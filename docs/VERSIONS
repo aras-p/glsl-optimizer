@@ -1152,12 +1152,14 @@ Mesa Version History
 	- GL_ATI_texture_env_combine3 extension (Ian Romanick)
 	- GL_SGI_texture_color_table extension (Eric Plante)
 	- GL_NV_fragment_program extension
-	- GL_NV_light_max_exponent
+	- GL_NV_light_max_exponent extension
 	- GL_EXT_texture_rectangle (identical to GL_NV_texture_rectangle)
-	- GL_ARB_occlusion_query
-	- GL_ARB_texture_non_power_of_two
+	- GL_ARB_occlusion_query extension
+	- GL_ARB_point_sprite extension
+	- GL_ARB_texture_non_power_of_two extension
 	- GL_IBM_multimode_draw_arrays extension
 	- GL_EXT_texture_mirror_clamp extension (Ian Romanick)
+	- GL_ARB_vertex_buffer_object extension
 	- new X86 feature detection code (Petr Sebor)
 	- less memory used for display lists and vertex buffers
 	- demo of per-pixel lighting with a fragment program (demos/fplight.c)
