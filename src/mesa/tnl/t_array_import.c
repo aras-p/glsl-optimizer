@@ -89,7 +89,7 @@ static void _tnl_import_color( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_color(ctx,
 			  GL_FLOAT,
@@ -113,7 +113,7 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct tnl_vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-   GLubyte *data;
+   const GLubyte *data;
 
    tmp = _ac_import_secondarycolor(ctx, 
 				   GL_FLOAT,
