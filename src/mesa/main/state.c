@@ -509,6 +509,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
    exec->TrackMatrixNV = _mesa_TrackMatrixNV;
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
+   /* glVertexAttrib*NV functions handled in api_loopback.c */
 #endif
 
    /* 282. GL_NV_fragment_program */
@@ -591,16 +592,16 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* glVertexAttrib4fvARB aliases glVertexAttrib4fvNV */
    /* glVertexAttrib4dvARB aliases glVertexAttrib4dvNV */
    /* glVertexAttrib4NubvARB aliases glVertexAttrib4NubvNV */
-   exec->VertexAttrib4bvARB = _mesa_VertexAttrib4bvARB;
-   exec->VertexAttrib4ivARB = _mesa_VertexAttrib4ivARB;
-   exec->VertexAttrib4ubvARB = _mesa_VertexAttrib4ubvARB;
-   exec->VertexAttrib4usvARB = _mesa_VertexAttrib4usvARB;
-   exec->VertexAttrib4uivARB = _mesa_VertexAttrib4uivARB;
-   exec->VertexAttrib4NbvARB = _mesa_VertexAttrib4NbvARB;
-   exec->VertexAttrib4NsvARB = _mesa_VertexAttrib4NsvARB;
-   exec->VertexAttrib4NivARB = _mesa_VertexAttrib4NivARB;
-   exec->VertexAttrib4NusvARB = _mesa_VertexAttrib4NusvARB;
-   exec->VertexAttrib4NuivARB = _mesa_VertexAttrib4NuivARB;
+   /* glVertexAttrib4bvARB handled in api_loopback.c */
+   /* glVertexAttrib4ivARB handled in api_loopback.c */
+   /* glVertexAttrib4ubvARB handled in api_loopback.c */
+   /* glVertexAttrib4usvARB handled in api_loopback.c */
+   /* glVertexAttrib4uivARB handled in api_loopback.c */
+   /* glVertexAttrib4NbvARB handled in api_loopback.c */
+   /* glVertexAttrib4NsvARB handled in api_loopback.c */
+   /* glVertexAttrib4NivARB handled in api_loopback.c */
+   /* glVertexAttrib4NusvARB handled in api_loopback.c */
+   /* glVertexAttrib4NuivARB handled in api_loopback.c */
    exec->VertexAttribPointerARB = _mesa_VertexAttribPointerARB;
    exec->EnableVertexAttribArrayARB = _mesa_EnableVertexAttribArrayARB;
    exec->DisableVertexAttribArrayARB = _mesa_DisableVertexAttribArrayARB;

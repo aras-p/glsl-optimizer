@@ -178,7 +178,8 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
 
 /**
  * Bind a program (make it current)
- * \note Called from the GL API dispatcher.
+ * \note Called from the GL API dispatcher by both glBindProgramNV
+ * and glBindProgramARB.
  */
 void
 _mesa_BindProgramNV(GLenum target, GLuint id)
@@ -187,8 +188,10 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_NV
-       && ctx->Extensions.NV_vertex_program) {
+   if ((target == GL_VERTEX_PROGRAM_NV
+        && ctx->Extensions.NV_vertex_program) ||
+       (target == GL_VERTEX_PROGRAM_ARB
+        && ctx->Extensions.ARB_vertex_program)) {
       if (ctx->VertexProgram.Current &&
           ctx->VertexProgram.Current->Base.Id == id)
          return;
@@ -202,8 +205,10 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
          }
       }
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
-       && ctx->Extensions.NV_fragment_program) {
+   else if ((target == GL_FRAGMENT_PROGRAM_NV
+             && ctx->Extensions.NV_fragment_program) ||
+            (target == GL_FRAGMENT_PROGRAM_ARB
+             && ctx->Extensions.ARB_fragment_program)) {
       if (ctx->FragmentProgram.Current &&
           ctx->FragmentProgram.Current->Base.Id == id)
          return;
@@ -218,7 +223,7 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV/ARB(target)");
       return;
    }
 
@@ -226,9 +231,12 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
     * That's supposed to be caught in glBegin.
     */
    if (id == 0) {
-      /* OK, the null program object */
-      /* XXX use the ARB_vertex/fragment prorgram default objects??? */
+      /* default program */
       prog = NULL;
+      if (target == GL_VERTEX_PROGRAM_NV || target == GL_VERTEX_PROGRAM_ARB)
+         prog = ctx->Shared->DefaultVertexProgram;
+      else
+         prog = ctx->Shared->DefaultFragmentProgram;
    }
    else {
       prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
@@ -239,7 +247,7 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
          }
          else if (prog->Target != target) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glBindProgramNV(target mismatch)");
+                        "glBindProgramNV/ARB(target mismatch)");
             return;
          }
       }
@@ -247,7 +255,7 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
          /* allocate a new program now */
          prog = _mesa_alloc_program(ctx, target, id);
          if (!prog) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV/ARB");
             return;
          }
          prog->Id = id;
@@ -259,10 +267,10 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
    }
 
    /* bind now */
-   if (target == GL_VERTEX_PROGRAM_NV) {
+   if (target == GL_VERTEX_PROGRAM_NV || target == GL_VERTEX_PROGRAM_ARB) {
       ctx->VertexProgram.Current = (struct vertex_program *) prog;
    }
-   else if (target == GL_FRAGMENT_PROGRAM_NV) {
+   else if (target == GL_FRAGMENT_PROGRAM_NV || target == GL_FRAGMENT_PROGRAM_ARB) {
       ctx->FragmentProgram.Current = (struct fragment_program *) prog;
    }
 
