@@ -907,10 +907,6 @@ _mesa_BindProgram(GLenum target, GLuint id)
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV/ARB");
             return;
          }
-         prog->Id = id;
-         prog->Target = target;
-         prog->Resident = GL_TRUE;
-         prog->RefCount = 1;
          _mesa_HashInsert(ctx->Shared->Programs, id, prog);
       }
    }
