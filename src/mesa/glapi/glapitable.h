@@ -257,9 +257,9 @@ struct _glapi_table
    void (*PixelTransferi)(GLenum pname, GLint param); /* 248 */
    void (*PixelStoref)(GLenum pname, GLfloat param); /* 249 */
    void (*PixelStorei)(GLenum pname, GLint param); /* 250 */
-   void (*PixelMapfv)(GLenum map, GLint mapsize, const GLfloat * values); /* 251 */
-   void (*PixelMapuiv)(GLenum map, GLint mapsize, const GLuint * values); /* 252 */
-   void (*PixelMapusv)(GLenum map, GLint mapsize, const GLushort * values); /* 253 */
+   void (*PixelMapfv)(GLenum map, GLsizei mapsize, const GLfloat * values); /* 251 */
+   void (*PixelMapuiv)(GLenum map, GLsizei mapsize, const GLuint * values); /* 252 */
+   void (*PixelMapusv)(GLenum map, GLsizei mapsize, const GLushort * values); /* 253 */
    void (*ReadBuffer)(GLenum mode); /* 254 */
    void (*CopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type); /* 255 */
    void (*ReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * pixels); /* 256 */

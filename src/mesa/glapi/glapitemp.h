@@ -1303,17 +1303,17 @@ KEYWORD1 void KEYWORD2 NAME(PixelStorei)(GLenum pname, GLint param)
    DISPATCH(PixelStorei, (pname, param), (F, "glPixelStorei(0x%x, %d);\n", pname, param));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PixelMapfv)(GLenum map, GLint mapsize, const GLfloat * values)
+KEYWORD1 void KEYWORD2 NAME(PixelMapfv)(GLenum map, GLsizei mapsize, const GLfloat * values)
 {
    DISPATCH(PixelMapfv, (map, mapsize, values), (F, "glPixelMapfv(0x%x, %d, %p);\n", map, mapsize, (const void *) values));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PixelMapuiv)(GLenum map, GLint mapsize, const GLuint * values)
+KEYWORD1 void KEYWORD2 NAME(PixelMapuiv)(GLenum map, GLsizei mapsize, const GLuint * values)
 {
    DISPATCH(PixelMapuiv, (map, mapsize, values), (F, "glPixelMapuiv(0x%x, %d, %p);\n", map, mapsize, (const void *) values));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PixelMapusv)(GLenum map, GLint mapsize, const GLushort * values)
+KEYWORD1 void KEYWORD2 NAME(PixelMapusv)(GLenum map, GLsizei mapsize, const GLushort * values)
 {
    DISPATCH(PixelMapusv, (map, mapsize, values), (F, "glPixelMapusv(0x%x, %d, %p);\n", map, mapsize, (const void *) values));
 }

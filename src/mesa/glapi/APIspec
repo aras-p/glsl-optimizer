@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.18 2003/06/13 02:37:28 brianp Exp $
+# $Id: APIspec,v 1.19 2003/08/19 01:07:26 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -1811,7 +1811,7 @@ offset		250
 name		PixelMapfv
 return		void
 param		map		GLenum
-param		mapsize		GLint
+param		mapsize		GLsizei
 param		values		const GLfloat *
 category	1.0
 offset		251
@@ -1819,7 +1819,7 @@ offset		251
 name		PixelMapuiv
 return		void
 param		map		GLenum
-param		mapsize		GLint
+param		mapsize		GLsizei
 param		values		const GLuint *
 category	1.0
 offset		252
@@ -1827,7 +1827,7 @@ offset		252
 name		PixelMapusv
 return		void
 param		map		GLenum
-param		mapsize		GLint
+param		mapsize		GLsizei
 param		values		const GLushort *
 category	1.0
 offset		253
@@ -4173,11 +4173,17 @@ param		params		GLint *
 category	GL_SGI_color_table
 offset		429
 
+
+# GL_SGIX_pixel_texture
+
 name		PixelTexGenSGIX
 return		void
 param		mode		GLenum
 category	GL_SGIX_pixel_texture
 offset		430
+
+
+# GL_SGIS_pixel_texture
 
 name		PixelTexGenParameteriSGIS
 return		void
@@ -5532,10 +5538,15 @@ category	GL_EXT_coordinate_frame
 offset		?
 
 
+# GL_SUNX_constant_data
+
 name		FinishTextureSUNX
 return		void
 category	GL_SUNX_constant_data
 offset		?
+
+
+# GL_SUN_global_alpha
 
 name		GlobalAlphaFactorbSUN
 return		void
@@ -5585,6 +5596,9 @@ param		factor		GLuint
 category	GL_SUN_global_alpha
 offset		?
 
+
+# GL_SUN_triangle_list
+
 name		ReplacementCodeuiSUN
 return		void
 param		code		GLuint
@@ -5628,6 +5642,9 @@ param		stride		GLsizei
 param		pointer		const GLvoid *
 category	GL_SUN_triangle_list
 offset		?
+
+
+# GL_SUN_vertex
 
 name		Color4ubVertex2fSUN
 return		void
