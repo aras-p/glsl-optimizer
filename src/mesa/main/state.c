@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.17 2000/06/23 20:28:30 brianp Exp $ */
+/* $Id: state.c,v 1.18 2000/06/24 11:57:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1063,11 +1063,6 @@ void gl_update_state( GLcontext *ctx )
 	     ctx->Polygon.OffsetLine ||
 	     ctx->Polygon.OffsetFill)
 	    ctx->TriangleCaps |= DD_TRI_OFFSET;
-
-	 /* reset Z offsets now */
-	 ctx->PointZoffset   = 0.0;
-	 ctx->LineZoffset    = 0.0;
-	 ctx->PolygonZoffset = 0.0;
       }
    }
 
