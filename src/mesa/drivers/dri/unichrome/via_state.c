@@ -1432,11 +1432,13 @@ static void viaChoosePolygonState(GLcontext *ctx)
         }
     }
 
-    if (ctx->Polygon.StippleFlag) {
-        vmesa->regEnable |= HC_HenSP_MASK;
-    }
-    else {
-        vmesa->regEnable &= ~HC_HenSP_MASK;
+    if (vmesa->viaScreen->deviceID != VIA_CLE266) {
+        if (ctx->Polygon.StippleFlag) {
+            vmesa->regEnable |= HC_HenSP_MASK;
+        }
+        else {
+            vmesa->regEnable &= ~HC_HenSP_MASK;
+        }
     }
 
     if (ctx->Polygon.CullFlag) {
