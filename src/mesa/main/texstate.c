@@ -1048,6 +1048,35 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 /*                       Texture Parameters                           */
 /**********************************************************************/
 
+static GLboolean 
+_mesa_validate_texture_wrap_mode(GLcontext * ctx,
+				 GLenum target, GLenum eparam)
+{
+   const struct gl_extensions * const e = & ctx->Extensions;
+
+   if (eparam == GL_CLAMP || eparam == GL_CLAMP_TO_EDGE ||
+       (eparam == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp)) {
+      /* any texture target */
+      return GL_TRUE;
+   }
+   else if (target != GL_TEXTURE_RECTANGLE_NV &&
+	    (eparam == GL_REPEAT ||
+	     (eparam == GL_MIRRORED_REPEAT &&
+	      e->ARB_texture_mirrored_repeat) ||
+	     (eparam == GL_MIRROR_CLAMP_EXT &&
+	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
+	     (eparam == GL_MIRROR_CLAMP_TO_EDGE_EXT &&
+	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
+	     (eparam == GL_MIRROR_CLAMP_TO_BORDER_EXT &&
+	      (e->EXT_texture_mirror_clamp)))) {
+      /* non-rectangle texture */
+      return GL_TRUE;
+   }
+
+   _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+   return GL_FALSE;
+}
+
 
 void
 _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
@@ -1141,81 +1170,34 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_S:
          if (texObj->WrapS == eparam)
             return;
-         if (eparam == GL_CLAMP || eparam == GL_CLAMP_TO_EDGE ||
-             (eparam == GL_CLAMP_TO_BORDER &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
-            /* any texture target */
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-            texObj->WrapS = eparam;
-         }
-         else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
-                  (eparam == GL_REPEAT ||
-                   (eparam == GL_MIRRORED_REPEAT &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
-                   (eparam == GL_MIRROR_CLAMP_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once) ||
-                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once))) {
-            /* non-rectangle texture */
+         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapS = eparam;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
             return;
          }
          break;
       case GL_TEXTURE_WRAP_T:
          if (texObj->WrapT == eparam)
             return;
-         if (eparam == GL_CLAMP || eparam == GL_CLAMP_TO_EDGE ||
-             (eparam == GL_CLAMP_TO_BORDER &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
-            /* any texture target */
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-            texObj->WrapT = eparam;
-         }
-         else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
-                  (eparam == GL_REPEAT ||
-                   (eparam == GL_MIRRORED_REPEAT &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
-                   (eparam == GL_MIRROR_CLAMP_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once) ||
-                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once))) {
-            /* non-rectangle texture */
+         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapT = eparam;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
             return;
          }
          break;
       case GL_TEXTURE_WRAP_R:
          if (texObj->WrapR == eparam)
             return;
-         if (eparam == GL_CLAMP || eparam == GL_CLAMP_TO_EDGE ||
-             (eparam == GL_CLAMP_TO_BORDER &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
-            /* any texture target */
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-            texObj->WrapR = eparam;
-         }
-         else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
-                  (eparam == GL_REPEAT ||
-                   (eparam == GL_MIRRORED_REPEAT &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
-                   (eparam == GL_MIRROR_CLAMP_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once) ||
-                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
-                    ctx->Extensions.ATI_texture_mirror_once))) {
-            /* non-rectangle texture */
+         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapR = eparam;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+	    return;
          }
          break;
       case GL_TEXTURE_BORDER_COLOR:

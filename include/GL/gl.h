@@ -2211,6 +2211,18 @@ typedef void (APIENTRY * PFNGLDEPTHBOUNDSEXTPROC)(GLclampd zmin, GLclampd zmax);
 
 
 /* XXX temporary until glext.h is updated! */
+#ifndef GL_EXT_texture_mirror_clamp
+#define GL_EXT_texture_mirror_clamp 1
+
+#define GL_MIRROR_CLAMP_EXT                            0x8742
+#define GL_MIRROR_CLAMP_TO_EDGE_EXT                    0x8743
+#define GL_MIRROR_CLAMP_TO_BORDER_EXT                  0x8912
+
+#endif /* GL_EXT_texture_mirror_clamp */
+
+
+
+/* XXX temporary until glext.h is updated! */
 #ifndef GL_ARB_occlusion_query
 #define GL_ARB_occlusion_query 1
 

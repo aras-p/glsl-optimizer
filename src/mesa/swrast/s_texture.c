@@ -122,7 +122,7 @@ repeat_remainder(GLint a, GLint b)
       if (I1 >= (GLint) SIZE)						\
          I1 = SIZE - 1;							\
    }									\
-   else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
+   else if (wrapMode == GL_MIRROR_CLAMP_EXT) {				\
       U = (GLfloat) fabs(S);						\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
@@ -132,7 +132,7 @@ repeat_remainder(GLint a, GLint b)
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
    }									\
-   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_ATI) {			\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_EXT) {			\
       U = (GLfloat) fabs(S);						\
       if (U >= 1.0F)							\
          U = (GLfloat) SIZE;						\
@@ -145,6 +145,20 @@ repeat_remainder(GLint a, GLint b)
          I0 = 0;							\
       if (I1 >= (GLint) SIZE)						\
          I1 = SIZE - 1;							\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_BORDER_EXT) {		\
+      const GLfloat min = -1.0F / (2.0F * SIZE);			\
+      const GLfloat max = 1.0F - min;					\
+      U = (GLfloat) fabs(S);						\
+      if (U <= min)							\
+         U = min * SIZE;						\
+      else if (U >= max)						\
+         U = max * SIZE;						\
+      else								\
+         U *= SIZE;							\
+      U -= 0.5F;							\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
    }									\
    else {								\
       ASSERT(wrapMode == GL_CLAMP);					\
@@ -215,7 +229,7 @@ repeat_remainder(GLint a, GLint b)
       else								\
          I = IFLOOR(u * SIZE);						\
    }									\
-   else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
+   else if (wrapMode == GL_MIRROR_CLAMP_EXT) {				\
       /* s limited to [0,1] */						\
       /* i limited to [0,size-1] */					\
       const GLfloat u = (GLfloat) fabs(S);				\
@@ -226,7 +240,7 @@ repeat_remainder(GLint a, GLint b)
       else								\
          I = IFLOOR(u * SIZE);						\
    }									\
-   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_ATI) {			\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_EXT) {			\
       /* s limited to [min,max] */					\
       /* i limited to [0, size-1] */					\
       const GLfloat min = 1.0F / (2.0F * SIZE);				\
@@ -236,6 +250,19 @@ repeat_remainder(GLint a, GLint b)
          I = 0;								\
       else if (u > max)							\
          I = SIZE - 1;							\
+      else								\
+         I = IFLOOR(u * SIZE);						\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_BORDER_EXT) {		\
+      /* s limited to [min,max] */					\
+      /* i limited to [0, size-1] */					\
+      const GLfloat min = -1.0F / (2.0F * SIZE);			\
+      const GLfloat max = 1.0F - min;					\
+      const GLfloat u = (GLfloat) fabs(S);				\
+      if (u < min)							\
+         I = -1;							\
+      else if (u > max)							\
+         I = SIZE;							\
       else								\
          I = IFLOOR(u * SIZE);						\
    }									\

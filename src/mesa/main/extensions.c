@@ -100,8 +100,9 @@ static const struct {
    { OFF, "GL_EXT_texture_env_combine",        F(EXT_texture_env_combine) },
    { OFF, "GL_EXT_texture_env_dot3",           F(EXT_texture_env_dot3) },
    { OFF, "GL_EXT_texture_filter_anisotropic", F(EXT_texture_filter_anisotropic) },
-   { ON,  "GL_EXT_texture_object",             0 },
    { OFF, "GL_EXT_texture_lod_bias",           F(EXT_texture_lod_bias) },
+   { OFF, "GL_EXT_texture_mirror_clamp",       F(EXT_texture_mirror_clamp) },
+   { ON,  "GL_EXT_texture_object",             0 },
    { OFF, "GL_EXT_texture_rectangle",          F(NV_texture_rectangle) },
    { ON,  "GL_EXT_vertex_array",               0 },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
@@ -196,6 +197,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.HP_occlusion_test = GL_TRUE;
    ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;

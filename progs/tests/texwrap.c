@@ -1,4 +1,4 @@
-/* $Id: texwrap.c,v 1.6 2003/05/30 15:30:17 brianp Exp $ */
+/* $Id: texwrap.c,v 1.7 2003/09/02 19:25:18 idr Exp $ */
 
 /*
  * Test texture wrap modes.
@@ -24,9 +24,10 @@
 #define GL_MIRRORED_REPEAT 0x8370
 #endif
 
-#ifndef GL_ATI_texture_mirror_once
-#define GL_MIRROR_CLAMP_ATI               0x8742
-#define GL_MIRROR_CLAMP_TO_EDGE_ATI       0x8743
+#ifndef GL_EXT_texture_mirror_clamp
+#define GL_MIRROR_CLAMP_EXT               0x8742
+#define GL_MIRROR_CLAMP_TO_EDGE_EXT       0x8743
+#define GL_MIRROR_CLAMP_TO_BORDER_EXT     0x8912
 #endif
 
 #define BORDER_TEXTURE 1
@@ -61,11 +62,14 @@ static struct wrap_mode modes[] = {
    WRAP_EXT ( GL_MIRRORED_REPEAT, "GL_ARB_texture_mirrored_repeat",
 	                          "GL_IBM_texture_mirrored_repeat",
 	      1.4 ),
-   WRAP_EXT ( GL_MIRROR_CLAMP_ATI, "GL_ATI_texture_mirror_once",
-	                           NULL,
+   WRAP_EXT ( GL_MIRROR_CLAMP_EXT, "GL_ATI_texture_mirror_once",
+	                           "GL_EXT_texture_mirror_clamp",
 	      999.0 ),
-   WRAP_EXT ( GL_MIRROR_CLAMP_TO_EDGE_ATI, "GL_ATI_texture_mirror_once",
-	                                   NULL,
+   WRAP_EXT ( GL_MIRROR_CLAMP_TO_EDGE_EXT, "GL_ATI_texture_mirror_once",
+	                                   "GL_EXT_texture_mirror_clamp",
+	      999.0 ),
+   WRAP_EXT ( GL_MIRROR_CLAMP_TO_BORDER_EXT, "GL_EXT_texture_mirror_clamp",
+	                                     NULL,
 	      999.0 ),
    { 0 }
 };

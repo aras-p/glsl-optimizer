@@ -1770,6 +1770,7 @@ struct gl_extensions
    GLboolean EXT_texture_env_dot3;
    GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_lod_bias;
+   GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_vertex_array_set;
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
