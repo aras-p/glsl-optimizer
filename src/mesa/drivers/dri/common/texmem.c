@@ -536,7 +536,7 @@ driAllocateTexture( driTexHeap * const * heap_array, unsigned nr_heaps,
       /* Trying to avoid dynamic memory allocation. If you have more
        * heaps, increase INDEX_ARRAY_SIZE. I'm not aware of any
        * drivers with more than 2 tex heaps. */
-      assert( nr_neaps < INDEX_ARRAY_SIZE );
+      assert( nr_heaps < INDEX_ARRAY_SIZE );
 
       /* Sort large enough heaps by duty. Insertion sort should be
        * fast enough for such a short array. */
