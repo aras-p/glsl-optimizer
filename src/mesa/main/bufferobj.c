@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -592,8 +592,11 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             }
 
             /* decrement refcount and delete if <= 0 */
-            bufObj->DeletePending = GL_TRUE;
-            bufObj->RefCount--;
+            if (!bufObj->DeletePending) {
+               bufObj->DeletePending = GL_TRUE;
+               bufObj->RefCount--;
+            }
+
             if (bufObj->RefCount <= 0) {
                /* buffer should not be bound anymore! */
                ASSERT(ctx->Array.ArrayBufferObj != bufObj);

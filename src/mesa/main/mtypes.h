@@ -1574,10 +1574,11 @@ struct program_parameter_list;
 struct program
 {
    GLuint Id;
-   GLubyte *String;    /* Null-terminated program text */
-   GLenum Target;
-   GLenum Format;      /* String encoding format */
+   GLubyte *String;          /**< Null-terminated program text */
+   GLboolean DeletePending;  /**< User called glDeletePrograms? */
    GLint RefCount;
+   GLenum Target;
+   GLenum Format;            /**< String encoding format */
    GLboolean Resident;
    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
    GLuint NumInstructions;  /* GL_ARB_vertex/fragment_program */
