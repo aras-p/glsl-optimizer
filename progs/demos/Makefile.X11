@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.14 2000/06/27 16:54:18 brianp Exp $
+# $Id: Makefile.X11,v 1.15 2000/11/01 16:02:52 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
+# Version:  3.5
 # Copyright (C) 1995-2000  Brian Paul
 
 # Makefile for GLUT-based demo programs for Unix/X11
@@ -13,6 +13,8 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL $(APP_LIB_DEPS)
+
+OSMESA_LIBS = -L$(LIBDIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
@@ -62,9 +64,14 @@ PROGS = bounce \
 .SUFFIXES:
 .SUFFIXES: .c
 
+
+# make executable from .c file:
 .c: $(LIB_DEP)
 	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
 
+# special case: need the -lOSMesa library:
+osdemo: osdemo.c
+	$(CC) -I$(INCDIR) $(CFLAGS) osdemo.c $(OSMESA_LIBS) -o $@
 
 
 ##### TARGETS #####
