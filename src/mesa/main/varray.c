@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.10 1999/11/09 09:18:40 keithw Exp $ */
+/* $Id: varray.c,v 1.11 1999/11/09 10:12:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -500,8 +500,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
       GLvector4ub col;
       GLvector1ub edge;
       GLvector1ui index;
-      GLuint update = 0, translate = 0;
-      struct vertex_array_pointers VSrc;
       struct immediate *IM = VB->IM;
       struct gl_client_array *client_data;
       struct gl_pipeline *elt = &ctx->CVA.elt;
@@ -522,21 +520,11 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
       required = elt->inputs;
       fallback = (elt->inputs & ~ctx->Array.Summary);
 
-      VSrc.Color = &IM->v.Color;
-      VSrc.Index = &IM->v.Index;
-      VSrc.EdgeFlag = &IM->v.EdgeFlag;
-      VSrc.TexCoord[0] = &IM->v.TexCoord[0];
-      VSrc.TexCoord[1] = &IM->v.TexCoord[1];
-      VSrc.Obj = &IM->v.Obj;
-      VSrc.Normal = &IM->v.Normal;
-
       if (required & VERT_RGBA) 
       {
 	 client_data = &ctx->Array.Color;
 	 if (fallback & VERT_RGBA)
 	    client_data = &ctx->Fallback.Color;
-
-	    translate |= VERT_RGBA;
       }
    
       if (required & VERT_INDEX) 
@@ -544,8 +532,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 client_data = &ctx->Array.Index;
 	 if (fallback & VERT_INDEX)
 	    client_data = &ctx->Fallback.Index;
-
-	    translate |= VERT_INDEX;
       }
 
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) 
@@ -553,7 +539,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 GLuint flag = VERT_TEX_ANY(i);
 
 	 if (required & flag) {
-
 	    client_data = &ctx->Array.TexCoord[i];
 
 	    if (fallback & flag) 
@@ -561,8 +546,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	       client_data = &ctx->Fallback.TexCoord[i];
 	       client_data->Size = gl_texcoord_size( ctx->Current.Flag, i );
 	    }
-
-	    translate |= flag;
 	 }
       }
 
@@ -570,16 +553,12 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 for (i = 0 ; i < VB_MAX ; i++) 
 	    ctx->Array.Flag[i] = ctx->Array.Flags;
 
-      
-      translate |= VERT_OBJ_ANY;
 
       if (required & VERT_NORM) 
       {
 	 client_data = &ctx->Array.Normal;
 	 if (fallback & VERT_NORM) 
 	    client_data = &ctx->Fallback.Normal;
-
-	 translate |= VERT_NORM;	    
       }
 
       if ( (required & VERT_EDGE) && 
@@ -588,11 +567,8 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	    mode == GL_POLYGON)) 
       {
 	 client_data = &ctx->Array.EdgeFlag;
-
 	 if (fallback & VERT_EDGE) 
 	    client_data = &ctx->Fallback.EdgeFlag;
-
-	 translate |= VERT_EDGE;
       }
 
       VB->Primitive = IM->Primitive; 
@@ -605,7 +581,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
          GLint vbspace = VB_MAX - VB_START;
 	 GLuint count, n;
 	 
-
 	 if (vbspace >= remaining) {
 	    n = remaining;
 	    VB->LastPrimitive = VB_START + n;
@@ -616,101 +591,73 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 
 	 VB->CullMode = 0;
 	 
-
-         /* Update pointers.
-	  */
-	    /* Disabled - always do the copy.  No real loss
-	     * until we improve vertex copying anyway.
-	     */
-	 if (0) {
-	    if (update & VERT_OBJ_ANY) 
-	       obj.start = VEC_ELT(&obj, GLfloat, start);
-
-	    if (update & VERT_NORM) 
-	       norm.start = VEC_ELT(&norm, GLfloat, start);
-
-	    if (update & VERT_EDGE) 
-	       edge.start = VEC_ELT(&edge, GLubyte, start);
-
-	    if (update & VERT_RGBA) 
-	       col.start = VEC_ELT(&col, GLubyte, start);
-
-	    if (update & VERT_INDEX) 
-	       index.start = VEC_ELT(&index, GLuint, start);
-
-	    if (update & VERT_TEX0_ANY) 
-	       tc[0].start = VEC_ELT(&tc[0], GLfloat, start);
-
-	    if (update & VERT_TEX1_ANY) 
-	       tc[1].start = VEC_ELT(&tc[1], GLfloat, start);
+	 if (required & VERT_OBJ_ANY) {
+	    ctx->Array.VertexFunc( IM->Obj + VB_START, 
+				   &ctx->Array.Vertex, start, n );
+	 }
+	 
+	 if (required & VERT_NORM) {
+	    ctx->Array.NormalFunc( IM->Normal + VB_START, 
+				   &ctx->Array.Normal, start, n );
+	 }
+	 
+	 if (required & VERT_EDGE) {
+	    ctx->Array.EdgeFlagFunc( IM->EdgeFlag + VB_START, 
+				     &ctx->Array.EdgeFlag, start, n );
+	 }
+	 
+	 if (required & VERT_RGBA) {
+	    ctx->Array.ColorFunc( IM->Color + VB_START, 
+				  &ctx->Array.Color, start, n );
+	 }
+	 
+	 if (required & VERT_INDEX) {
+	    ctx->Array.IndexFunc( IM->Index + VB_START, 
+				  &ctx->Array.Index, start, n );
+	 }
+	 
+	 if (required & VERT_TEX0_ANY) {
+	    IM->v.TexCoord[0].size = tc[0].size;
+	    ctx->Array.TexCoordFunc[0]( IM->TexCoord[0] + VB_START, 
+					&ctx->Array.TexCoord[0], start, n );
+	 }
+	 
+	 if (required & VERT_TEX1_ANY) {
+	    IM->v.TexCoord[1].size = tc[1].size;
+	    ctx->Array.TexCoordFunc[1]( IM->TexCoord[1] + VB_START, 
+					&ctx->Array.TexCoord[1], start, n );
 	 }
 
-
-	 /* Translate data to fix up type and stride.
-	  */
-	 if (translate) {
-	    if (translate & VERT_OBJ_ANY) {
-	       ctx->Array.VertexFunc( IM->Obj + VB_START, 
-				      &ctx->Array.Vertex, start, n );
-	    }
-
-	    if (translate & VERT_NORM) {
-	       ctx->Array.NormalFunc( IM->Normal + VB_START, 
-				      &ctx->Array.Normal, start, n );
-	    }
-
-	    if (translate & VERT_EDGE) {
-	       ctx->Array.EdgeFlagFunc( IM->EdgeFlag + VB_START, 
-					&ctx->Array.EdgeFlag, start, n );
-	    }
-
-	    if (translate & VERT_RGBA) {
-	       ctx->Array.ColorFunc( IM->Color + VB_START, 
-				     &ctx->Array.Color, start, n );
-	    }
-
-	    if (translate & VERT_INDEX) {
-	       ctx->Array.IndexFunc( IM->Index + VB_START, 
-				     &ctx->Array.Index, start, n );
-	    }
-
-	    if (translate & VERT_TEX0_ANY) {
-	       IM->v.TexCoord[0].size = tc[0].size;
-	       ctx->Array.TexCoordFunc[0]( IM->TexCoord[0] + VB_START, 
-					   &ctx->Array.TexCoord[0], start, n );
-	    }
-
-	    if (translate & VERT_TEX1_ANY) {
-	       IM->v.TexCoord[1].size = tc[1].size;
-	       ctx->Array.TexCoordFunc[1]( IM->TexCoord[1] + VB_START, 
-					   &ctx->Array.TexCoord[1], start, n );
-	    }
-	 }
-
-
-	 VB->ObjPtr = VSrc.Obj;
-	 VB->NormalPtr = VSrc.Normal;
-	 VB->Color[0] = VB->Color[1] = VB->ColorPtr = VSrc.Color;
-	 VB->IndexPtr = VSrc.Index;
-	 VB->EdgeFlagPtr = VSrc.EdgeFlag;
-	 VB->TexCoordPtr[0] = VSrc.TexCoord[0];
-	 VB->TexCoordPtr[1] = VSrc.TexCoord[1];
+	 VB->ObjPtr = &IM->v.Obj;
+	 VB->NormalPtr = &IM->v.Normal;
+	 VB->ColorPtr = &IM->v.Color;
+	 VB->Color[0] = VB->Color[1] = VB->ColorPtr;
+	 VB->IndexPtr = &IM->v.Index;
+	 VB->EdgeFlagPtr = &IM->v.EdgeFlag;
+	 VB->TexCoordPtr[0] = &IM->v.TexCoord[0];
+	 VB->TexCoordPtr[1] = &IM->v.TexCoord[1];
 
 	 VB->Flag = ctx->Array.Flag;
 	 VB->OrFlag = ctx->Array.Flags;
 
-	 count = VB->Count = VB_START + n;
+	 VB->Start = IM->Start = VB_START;
+	 count = VB->Count = IM->Count = VB_START + n;
 
-	 VB->ObjPtr->count = count;
-	 VB->NormalPtr->count = count;
-	 VB->ColorPtr->count = count;
-	 VB->IndexPtr->count = count;
-	 VB->EdgeFlagPtr->count = count;
-	 VB->TexCoordPtr[0]->count = count;
-	 VB->TexCoordPtr[1]->count = count;
+#define RESET_VEC(v, t, s, c) (v.start = t v.data[s], v.count = c)  
 
-	 VB->Flag[count] |= VERT_END_VB;
-	 VB->Flag[VB_START] |= VERT_NORM;
+	 RESET_VEC(IM->v.Obj, (GLfloat *), VB_START, count);
+	 RESET_VEC(IM->v.Normal, (GLfloat *), VB_START, count);
+	 RESET_VEC(IM->v.TexCoord[0], (GLfloat *), VB_START, count);
+	 RESET_VEC(IM->v.TexCoord[1], (GLfloat *), VB_START, count);
+	 RESET_VEC(IM->v.Index, &, VB_START, count);
+	 RESET_VEC(IM->v.Elt, &, VB_START, count);
+	 RESET_VEC(IM->v.EdgeFlag, &, VB_START, count);
+	 RESET_VEC(IM->v.Color, (GLubyte *), VB_START, count);
+	 RESET_VEC(VB->Clip, (GLfloat *), VB_START, count);
+	 RESET_VEC(VB->Eye, (GLfloat *), VB_START, count);
+	 RESET_VEC(VB->Win, (GLfloat *), VB_START, count);
+	 RESET_VEC(VB->BColor, (GLubyte *), VB_START, count); 
+	 RESET_VEC(VB->BIndex, &, VB_START, count);
 
 	 VB->NextPrimitive[VB->CopyStart] = VB->Count;
 	 VB->Primitive[VB->CopyStart] = mode;
@@ -722,7 +669,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 
 	 ctx->Array.Flag[count] = ctx->Array.Flags;
 	 ctx->Array.Flag[VB_START] = ctx->Array.Flags;
-	 IM->Flag[VB_START] = 0;
 
          start += n;
          remaining -= n;
@@ -734,9 +680,9 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
    {
       /* The GL_COMPILE and GL_COMPILE_AND_EXECUTE cases.  These
        * could be handled by the above code, but it gets a little
-       * complex.  
+       * complex.  The generated list is still of good quality
+       * this way.
        */
-      /* No need to reset - never called from inside a display list */
       gl_Begin( ctx, mode );
       for (i=0;i<count;i++) {
          gl_ArrayElement( ctx, start+i );
