@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.100 2003/03/15 17:33:26 brianp Exp $ */
+/* $Id: state.c,v 1.101 2003/03/29 16:37:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -504,7 +504,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 #endif
 
-#if 0 && FEATURE_NV_fragment_program
+#if FEATURE_NV_fragment_program
    exec->ProgramNamedParameter4fNV = _mesa_ProgramNamedParameter4fNV;
    exec->ProgramNamedParameter4dNV = _mesa_ProgramNamedParameter4dNV;
    exec->ProgramNamedParameter4fvNV = _mesa_ProgramNamedParameter4fvNV;

@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.9 2003/03/19 05:34:25 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.10 2003/03/29 16:37:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1037,9 +1037,9 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address,
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
-                            GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+void
+_mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
+                                GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    struct program *prog;
    struct fragment_program *fragProg;
@@ -1073,35 +1073,35 @@ glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
-                             const float v[])
+void
+_mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
+                                 const float v[])
 {
    glProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
-                            GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+void
+_mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
+                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
    glProgramNamedParameter4fNV(id, len, name, (GLfloat)x, (GLfloat)y, 
 		   			      (GLfloat)z, (GLfloat)w);
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
-                             const double v[])
+void
+_mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
+                                 const double v[])
 {
    glProgramNamedParameter4fNV(id, len, name, (GLfloat)v[0], (GLfloat)v[1], 
 		   			      (GLfloat)v[2], (GLfloat)v[3]);
 }
 
 
-GLAPI void GLAPIENTRY
-glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
-                               GLfloat *params)
+void
+_mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
+                                   GLfloat *params)
 {
    struct program *prog;
    struct fragment_program *fragProg;
@@ -1135,9 +1135,9 @@ glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-GLAPI void GLAPIENTRY
-glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
-                               GLdouble *params)
+void
+_mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
+                                   GLdouble *params)
 {
    GLfloat floatParams[4];
    glGetProgramNamedParameterfvNV(id, len, name, floatParams);
@@ -1145,9 +1145,9 @@ glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4fARB(GLenum target, GLuint index,
-                             GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+void
+_mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
+                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1174,27 +1174,28 @@ glProgramLocalParameter4fARB(GLenum target, GLuint index,
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                              const GLfloat *params)
+void
+_mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
+                                  const GLfloat *params)
 {
    glProgramLocalParameter4fARB(target, index, params[0], params[1],
                                 params[2], params[3]);
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4dARB(GLenum target, GLuint index,
-                             GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+void
+_mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
+                                 GLdouble x, GLdouble y,
+                                 GLdouble z, GLdouble w)
 {
    glProgramLocalParameter4fARB(target, index, (GLfloat)x, (GLfloat)y, 
 		   			       (GLfloat)z, (GLfloat)w);
 }
 
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                              const GLdouble *params)
+void
+_mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
+                                  const GLdouble *params)
 {
    glProgramLocalParameter4fARB(target, index, (GLfloat)params[0], 
 		   		(GLfloat)params[1], (GLfloat)params[2],
@@ -1202,8 +1203,9 @@ glProgramLocalParameter4dvARB(GLenum target, GLuint index,
 }
 
 
-GLAPI void GLAPIENTRY
-glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params)
+void
+_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
+                                    GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1230,8 +1232,9 @@ glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params)
 }
 
 
-GLAPI void GLAPIENTRY
-glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params)
+void
+_mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
+                                    GLdouble *params)
 {
    GLfloat floatParams[4];
    glGetProgramLocalParameterfvARB(target, index, floatParams);
