@@ -1,10 +1,8 @@
-/* $Id: GLView.cpp,v 1.10 2003/12/13 01:26:14 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  6.1
  * 
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,21 +54,38 @@ extern "C" {
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
+#include "drivers/common/driverfuncs.h"
+
 }	// extern "C"
 
+#include <interface/Screen.h>
 #include "GLView.h"
 
 // BeOS component ordering for B_RGBA32 bitmap format
-#define BE_RCOMP 2
-#define BE_GCOMP 1
-#define BE_BCOMP 0
-#define BE_ACOMP 3
+#if B_HOST_IS_LENDIAN
+	#define BE_RCOMP 2
+	#define BE_GCOMP 1
+	#define BE_BCOMP 0
+	#define BE_ACOMP 3
 
-#define PACK_B_RGBA32(color) (color[BCOMP] | (color[GCOMP] << 8) | \
+	#define PACK_B_RGBA32(color) (color[BCOMP] | (color[GCOMP] << 8) | \
 							(color[RCOMP] << 16) | (color[ACOMP] << 24))
 
-#define PACK_B_RGB32(color) (color[BCOMP] | (color[GCOMP] << 8) | \
-							(color[RCOMP] << 16) | 0xFF000000)
+	#define PACK_B_RGB32(color) (color[BCOMP] | (color[GCOMP] << 8) | \
+  							(color[RCOMP] << 16) | 0xFF000000)
+#else
+	// Big Endian B_RGBA32 bitmap format
+	#define BE_RCOMP 1
+	#define BE_GCOMP 2
+	#define BE_BCOMP 3
+	#define BE_ACOMP 0
+
+	#define PACK_B_RGBA32(color) (color[ACOMP] | (color[RCOMP] << 8) | \
+							(color[GCOMP] << 16) | (color[BCOMP] << 24))
+
+	#define PACK_B_RGB32(color) ((color[RCOMP] << 8) | (color[GCOMP] << 16) | \
+  							(color[BCOMP] << 24) | 0xFF000000)
+#endif
 
 #define FLIP(coord) (LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.y-(coord) - 1) 
 
@@ -82,6 +97,7 @@ extern "C" {
 //
 class MesaDriver
 {
+friend class BGLView;
 public:
 	MesaDriver();
 	~MesaDriver();
@@ -242,27 +258,34 @@ private:
 BGLView::BGLView(BRect rect, char *name,
                  ulong resizingMode, ulong mode,
                  ulong options)
-   :BView(rect, name, resizingMode, mode | B_WILL_DRAW | B_FRAME_EVENTS) //  | B_FULL_UPDATE_ON_RESIZE)
+   : BView(rect, name, resizingMode, mode | B_WILL_DRAW | B_FRAME_EVENTS) //  | B_FULL_UPDATE_ON_RESIZE)
 {
-   const GLboolean rgbFlag = (options & BGL_RGB) == BGL_RGB;
-   const GLboolean alphaFlag = (options & BGL_ALPHA) == BGL_ALPHA;
-   const GLboolean dblFlag = (options & BGL_DOUBLE) == BGL_DOUBLE;
+	// We don't support single buffering (yet): double buffering forced.
+	options |= BGL_DOUBLE;
+
+   const GLboolean rgbFlag = ((options & BGL_INDEX) == 0);
+   const GLboolean alphaFlag = ((options & BGL_ALPHA) == BGL_ALPHA);
+   const GLboolean dblFlag = ((options & BGL_DOUBLE) == BGL_DOUBLE);
    const GLboolean stereoFlag = false;
    const GLint depth = (options & BGL_DEPTH) ? 16 : 0;
    const GLint stencil = (options & BGL_STENCIL) ? 8 : 0;
    const GLint accum = (options & BGL_ACCUM) ? 16 : 0;
    const GLint index = (options & BGL_INDEX) ? 32 : 0;
-   const GLint red = (options & BGL_RGB) ? 8 : 0;
-   const GLint green = (options & BGL_RGB) ? 8 : 0;
-   const GLint blue = (options & BGL_RGB) ? 8 : 0;
-   const GLint alpha = (options & BGL_RGB) ? 8 : 0;
+   const GLint red = rgbFlag ? 8 : 0;
+   const GLint green = rgbFlag ? 8 : 0;
+   const GLint blue = rgbFlag ? 8 : 0;
+   const GLint alpha = alphaFlag ? 8 : 0;
 
+	m_options = options | BGL_INDIRECT;
+
+   struct dd_function_table functions;
+ 
    if (!rgbFlag) {
       fprintf(stderr, "Mesa Warning: color index mode not supported\n");
    }
 
    // Allocate auxiliary data object
-   MesaDriver * md = new MesaDriver;
+   MesaDriver * md = new MesaDriver();
 
    // examine option flags and create gl_context struct
    GLvisual * visual = _mesa_create_visual( rgbFlag,
@@ -276,19 +299,27 @@ BGLView::BGLView(BRect rect, char *name,
                                             1
                                             );
 
-   // create core context
-   GLcontext * ctx = _mesa_create_context(visual, NULL, md, GL_FALSE);
+	// Initialize device driver function table
+	_mesa_init_driver_functions(&functions);
 
-   ctx->Driver.NewTextureObject = _mesa_new_texture_object;
-   ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
+	functions.GetString 	= md->GetString;
+	functions.UpdateState 	= md->UpdateState;
+	functions.GetBufferSize = md->GetBufferSize;
+	functions.Clear 		= md->Clear;
+	functions.ClearIndex 	= md->ClearIndex;
+	functions.ClearColor 	= md->ClearColor;
 
-   _mesa_initialize_context(ctx, visual, NULL, md, GL_FALSE);
-
+	// create core context
+	GLcontext *ctx = _mesa_create_context(visual, NULL, &functions, md);
+	if (! ctx) {
+         _mesa_destroy_visual(visual);
+         delete md;
+         return;
+      }
    _mesa_enable_sw_extensions(ctx);
    _mesa_enable_1_3_extensions(ctx);
    _mesa_enable_1_4_extensions(ctx);
    _mesa_enable_1_5_extensions(ctx);
-
 
 
    // create core framebuffer
@@ -311,12 +342,21 @@ BGLView::BGLView(BRect rect, char *name,
 
    // Hook aux data into BGLView object
    m_gc = md;
+
+   // some stupid applications (Quake2) don't even think about calling LockGL()
+   // before using glGetString and friends... so make sure there is at least a
+   // valid context.
+   if (!_mesa_get_current_context()) {
+      LockGL();
+      // not needed, we don't have a looper yet: UnlockLooper();
+   }
+
 }
 
 
 BGLView::~BGLView()
 {
-   printf("BGLView destructor\n");
+   // printf("BGLView destructor\n");
    MesaDriver * md = (MesaDriver *) m_gc;
    assert(md);
    delete md;
@@ -338,29 +378,42 @@ void BGLView::UnlockGL()
 
 void BGLView::SwapBuffers()
 {
-   MesaDriver * md = (MesaDriver *) m_gc;
-   assert(md);
-   md->SwapBuffers();
+	SwapBuffers(false);
+}
+
+void BGLView::SwapBuffers(bool vSync)
+{
+	MesaDriver * md = (MesaDriver *) m_gc;
+	assert(md);
+	md->SwapBuffers();
+
+	if (vSync) {
+		BScreen screen(Window());
+		screen.WaitForRetrace();
+	}
 }
 
 
+
+
+#if 0
 void BGLView::CopySubBufferMESA(GLint x, GLint y, GLuint width, GLuint height)
 {
    MesaDriver * md = (MesaDriver *) m_gc;
    assert(md);
    md->CopySubBuffer(x, y, width, height);
 }
-
+#endif
 
 BView *	BGLView::EmbeddedView()
 {
-   // XXX to do
+   // TODO
 	return NULL;
 }
 
 status_t BGLView::CopyPixelsOut(BPoint source, BBitmap *dest)
 {
-   // XXX to do
+   // TODO
 	printf("BGLView::CopyPixelsOut() not implemented yet!\n");
 	return B_UNSUPPORTED;
 }
@@ -368,15 +421,17 @@ status_t BGLView::CopyPixelsOut(BPoint source, BBitmap *dest)
 
 status_t BGLView::CopyPixelsIn(BBitmap *source, BPoint dest)
 {
-   // XXX to do
+   // TODO
 	printf("BGLView::CopyPixelsIn() not implemented yet!\n");
 	return B_UNSUPPORTED;
 }
 
-void BGLView::ErrorCallback(unsigned long errorCode) // GLenum errorCode)
+void BGLView::ErrorCallback(unsigned long errorCode) // Mesa's GLenum is not ulong but uint!
 {
-   // XXX to do
-	printf("BGLView::ErrorCallback() not implemented yet!\n");
+	char msg[32];
+	sprintf(msg, "GL: Error code $%04lx.", errorCode);
+	// debugger(msg);
+	printf("%s\n", msg);
 	return;
 }
 
@@ -465,12 +520,40 @@ status_t BGLView::GetSupportedSuites(BMessage *data)
 
 void BGLView::DirectConnected( direct_buffer_info *info )
 {
-   // XXX to do
+#if 0
+	if (! m_direct_connected && m_direct_connection_disabled) 
+		return; 
+
+	direct_info_locker->Lock(); 
+	switch(info->buffer_state & B_DIRECT_MODE_MASK) { 
+	case B_DIRECT_START: 
+		m_direct_connected = true;
+	case B_DIRECT_MODIFY: 
+		// Get clipping information 
+		if (m_clip_list)
+			free(m_clip_list); 
+		m_clip_list_count = info->clip_list_count; 
+		m_clip_list = (clipping_rect *) malloc(m_clip_list_count*sizeof(clipping_rect)); 
+		if (m_clip_list) { 
+			memcpy(m_clip_list, info->clip_list, m_clip_list_count*sizeof(clipping_rect));
+			fBits = (uint8 *) info->bits; 
+			fRowBytes = info->bytes_per_row; 
+			fFormat = info->pixel_format; 
+			fBounds = info->window_bounds; 
+			fDirty = true; 
+		} 
+		break; 
+	case B_DIRECT_STOP: 
+		fConnected = false; 
+		break; 
+	} 
+	direct_info_locker->Unlock(); 
+#endif
 }
 
 void BGLView::EnableDirectMode( bool enabled )
 {
-   // XXX to do
+   // TODO
 }
 
 
@@ -589,49 +672,8 @@ void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLf
 
 	// Use default TCL pipeline
 	tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
-	ctx->Driver.GetString = MesaDriver::GetString;
-	ctx->Driver.UpdateState = MesaDriver::UpdateState;
-	ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-	ctx->Driver.GetBufferSize = MesaDriver::GetBufferSize;
-
-	ctx->Driver.Accum = _swrast_Accum;
-	ctx->Driver.Bitmap = _swrast_Bitmap;
-	ctx->Driver.Clear = MesaDriver::Clear;
-	// ctx->Driver.ClearIndex = MesaDriver::ClearIndex;
-	// ctx->Driver.ClearColor = MesaDriver::ClearColor;
-	ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   	ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   	ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   	ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
-   	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-   	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   	ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-   	ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   	ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   	ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-   	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-    ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-	ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-	ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-	ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-	ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-  	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   	ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   	ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
  
-	swdd->SetBuffer = MesaDriver::SetBuffer;
+	swdd->SetBuffer = this->SetBuffer;
 }
 
 
@@ -646,7 +688,8 @@ void MesaDriver::LockGL()
 
 void MesaDriver::UnlockGL()
 {
-	m_bglview->UnlockLooper();
+	if (m_bglview->Looper()->IsLocked())
+		m_bglview->UnlockLooper();
    // Could call _mesa_make_current(NULL, NULL) but it would just
    // hinder performance
 }
@@ -654,11 +697,11 @@ void MesaDriver::UnlockGL()
 
 void MesaDriver::SwapBuffers() const
 {
-        // _mesa_notifySwapBuffers(m_glcontext);
+    _mesa_notifySwapBuffers(m_glcontext);
 
 	if (m_bitmap) {
 		m_bglview->LockLooper();
-		m_bglview->DrawBitmap(m_bitmap, BPoint(0, 0));
+		m_bglview->DrawBitmap(m_bitmap);
 		m_bglview->UnlockLooper();
 	};
 }
@@ -823,7 +866,7 @@ void MesaDriver::ClearBack(GLcontext *ctx,
    assert(bitmap);
    GLuint *start = (GLuint *) bitmap->Bits();
    const GLuint *clearPixelPtr = (const GLuint *) md->m_clear_color;
-   const GLuint clearPixel = *clearPixelPtr;
+   const GLuint clearPixel = B_LENDIAN_TO_HOST_INT32(*clearPixelPtr);
 
    if (all) {
       const int numPixels = md->m_width * md->m_height;
@@ -1042,20 +1085,23 @@ void MesaDriver::WriteMonoRGBAPixelsFront(const GLcontext *ctx, GLuint n,
 void MesaDriver::WriteCI32SpanFront( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                              const GLuint index[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteCI32SpanFront() not implemented yet!\n");
+   // TODO
 }
 
 void MesaDriver::WriteCI8SpanFront( const GLcontext *ctx, GLuint n, GLint x, GLint y,
                             const GLubyte index[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteCI8SpanFront() not implemented yet!\n");
+   // TODO
 }
 
 void MesaDriver::WriteMonoCISpanFront( const GLcontext *ctx, GLuint n,
                                     GLint x, GLint y,
                                     GLuint colorIndex, const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteMonoCISpanFront() not implemented yet!\n");
+   // TODO
 }
 
 
@@ -1063,14 +1109,16 @@ void MesaDriver::WriteCI32PixelsFront( const GLcontext *ctx, GLuint n,
                                     const GLint x[], const GLint y[],
                                     const GLuint index[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteCI32PixelsFront() not implemented yet!\n");
+   // TODO
 }
 
 void MesaDriver::WriteMonoCIPixelsFront( const GLcontext *ctx, GLuint n,
                                       const GLint x[], const GLint y[],
                                       GLuint colorIndex, const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteMonoCIPixelsFront() not implemented yet!\n");
+   // TODO
 }
 
 
@@ -1078,7 +1126,7 @@ void MesaDriver::ReadCI32SpanFront( const GLcontext *ctx,
                                  GLuint n, GLint x, GLint y, GLuint index[] )
 {
  	printf("ReadCI32SpanFront() not implemented yet!\n");
-  // XXX to do
+  // TODO
 }
 
 
@@ -1086,7 +1134,7 @@ void MesaDriver::ReadRGBASpanFront( const GLcontext *ctx, GLuint n,
                                  GLint x, GLint y, GLubyte rgba[][4] )
 {
  	printf("ReadRGBASpanFront() not implemented yet!\n");
-   // XXX to do
+   // TODO
 }
 
 
@@ -1095,7 +1143,7 @@ void MesaDriver::ReadCI32PixelsFront( const GLcontext *ctx,
                                    GLuint indx[], const GLubyte mask[] )
 {
  	printf("ReadCI32PixelsFront() not implemented yet!\n");
-   // XXX to do
+   // TODO
 }
 
 
@@ -1104,7 +1152,7 @@ void MesaDriver::ReadRGBAPixelsFront( const GLcontext *ctx,
                                    GLubyte rgba[][4], const GLubyte mask[] )
 {
  	printf("ReadRGBAPixelsFront() not implemented yet!\n");
-   // XXX to do
+   // TODO
 }
 
 
@@ -1117,12 +1165,6 @@ void MesaDriver::WriteRGBASpanBack(const GLcontext *ctx, GLuint n,
 {
 	MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
 	BBitmap *bitmap = md->m_bitmap;
-
-	static bool already_called = false;
-	if (! already_called) {
-		printf("WriteRGBASpanBack() called.\n");
-		already_called = true;
-	}
 
 	assert(bitmap);
 
@@ -1153,12 +1195,6 @@ void MesaDriver::WriteRGBSpanBack(const GLcontext *ctx, GLuint n,
 {
 	MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
 	BBitmap *bitmap = md->m_bitmap;
-
-	static bool already_called = false;
-	if (! already_called) {
-		printf("WriteRGBSpanBack() called.\n");
-		already_called = true;
-	}
 
 	assert(bitmap);
 
@@ -1191,12 +1227,6 @@ void MesaDriver::WriteMonoRGBASpanBack(const GLcontext *ctx, GLuint n,
 	MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
 	BBitmap *bitmap = md->m_bitmap;
 
-	static bool already_called = false;
-	if (! already_called) {
-		printf("WriteMonoRGBASpanBack() called.\n");
-		already_called = true;
-	}
-
 	assert(bitmap);
 
 	int row = md->m_bottom - y;
@@ -1225,12 +1255,6 @@ void MesaDriver::WriteRGBAPixelsBack(const GLcontext *ctx,
 {
    MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
    BBitmap *bitmap = md->m_bitmap;
-
-	static bool already_called = false;
-	if (! already_called) {
-		printf("WriteRGBAPixelsBack() called.\n");
-		already_called = true;
-	}
 
 	assert(bitmap);
 #if 0
@@ -1279,12 +1303,6 @@ void MesaDriver::WriteMonoRGBAPixelsBack(const GLcontext *ctx, GLuint n,
 	MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
 	BBitmap *bitmap = md->m_bitmap;
 
-	static bool already_called = false;
-	if (! already_called) {
-		printf("WriteMonoRGBAPixelsBack() called.\n");
-		already_called = true;
-	}
-
 	assert(bitmap);
 
 	uint32 pixel_color = PACK_B_RGBA32(color);
@@ -1324,21 +1342,24 @@ void MesaDriver::WriteCI32SpanBack( const GLcontext *ctx, GLuint n,
                                  GLint x, GLint y,
                                  const GLuint index[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteCI32SpanBack() not implemented yet!\n");
+   // TODO
 }
 
 void MesaDriver::WriteCI8SpanBack( const GLcontext *ctx, GLuint n,
                                 GLint x, GLint y,
                                 const GLubyte index[], const GLubyte mask[] )
 {
-   // XXX to do
+  	printf("WriteCI8SpanBack() not implemented yet!\n");
+  // TODO
 }
 
 void MesaDriver::WriteMonoCISpanBack( const GLcontext *ctx, GLuint n,
                                    GLint x, GLint y,
                                    GLuint colorIndex, const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteMonoCISpanBack() not implemented yet!\n");
+   // TODO
 }
 
 
@@ -1346,21 +1367,24 @@ void MesaDriver::WriteCI32PixelsBack( const GLcontext *ctx, GLuint n,
                                    const GLint x[], const GLint y[],
                                    const GLuint index[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteCI32PixelsBack() not implemented yet!\n");
+   // TODO
 }
 
 void MesaDriver::WriteMonoCIPixelsBack( const GLcontext *ctx, GLuint n,
                                      const GLint x[], const GLint y[],
                                      GLuint colorIndex, const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("WriteMonoCIPixelsBack() not implemented yet!\n");
+   // TODO
 }
 
 
 void MesaDriver::ReadCI32SpanBack( const GLcontext *ctx,
                                 GLuint n, GLint x, GLint y, GLuint index[] )
 {
-   // XXX to do
+ 	printf("ReadCI32SpanBack() not implemented yet!\n");
+   // TODO
 }
 
 
@@ -1388,7 +1412,8 @@ void MesaDriver::ReadCI32PixelsBack( const GLcontext *ctx,
                                    GLuint n, const GLint x[], const GLint y[],
                                    GLuint indx[], const GLubyte mask[] )
 {
-   // XXX to do
+ 	printf("ReadCI32PixelsBack() not implemented yet!\n");
+   // TODO
 }
 
 
