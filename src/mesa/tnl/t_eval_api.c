@@ -1,10 +1,10 @@
-/* $Id: t_eval_api.c,v 1.10 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_eval_api.c,v 1.11 2002/06/23 02:36:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,10 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell - original code
+ *    Brian Paul - vertex program updates
  */
 
 
@@ -38,9 +42,6 @@
 #include "t_imm_api.h"
 #include "t_imm_alloc.h"
 #include "t_imm_exec.h"
-
-
-
 
 
 /* KW: If are compiling, we don't know whether eval will produce a
@@ -61,7 +62,8 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
    GLenum prim;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glEvalMesh1()");
 
    switch (mode) {
       case GL_POINT:
@@ -77,7 +79,8 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 
    /* No effect if vertex maps disabled.
     */
-   if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
+   if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3 &&
+       (!ctx->VertexProgram.Enabled || !ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]))
       return;
 
    du = ctx->Eval.MapGrid1du;
@@ -146,13 +149,14 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
    GLfloat u, du, v, dv, v1, u1;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glEvalMesh2()");
 
    /* No effect if vertex maps disabled.
     */
-   if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
+   if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3 &&
+       (!ctx->VertexProgram.Enabled || !ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]))
       return;
-
 
    du = ctx->Eval.MapGrid2du;
    dv = ctx->Eval.MapGrid2dv;
@@ -234,7 +238,6 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
       }
    }
 }
-
 
 
 void _tnl_eval_init( GLcontext *ctx )
