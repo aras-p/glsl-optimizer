@@ -151,12 +151,14 @@ case $ARCH in
     'SunOS')
 	LIBNAME="lib${LIBNAME}.so"
 	echo "mklib: Making SunOS shared library: " ${LIBNAME}
+	# XXX OPTS for gcc should be -shared, but that doesn't work.
+	# Using -G does work though.
 	if [ $CPLUSPLUS = 1 ] ; then
 	    # determine linker and options for C++ code
 	    if [ "x${CXX}" = "xg++" ] ; then
 		# use g++
 		LINK="g++"
-		OPTS="-shared"
+		OPTS="-G"
 	    elif [ "x${CXX}" = "xCC" ] ; then
 		# use Sun CC
 		LINK="CC"
@@ -172,7 +174,7 @@ case $ARCH in
 	    elif [ `type g++` ] ; then
 		# use g++
 		LINK="g++"
-		OPTS="-shared"
+		OPTS="-G"
 	    else
 		echo "mklib: warning: can't find C++ comiler, trying CC."
 		LINK="CC"
@@ -181,7 +183,7 @@ case $ARCH in
 	elif [ "x${CC}" = "xgcc" ] ; then
 	    # use gcc for linking
 	    LINK="gcc"
-	    OPTS="-shared"
+	    OPTS="-G"
 	else
 	    # use native Sun linker
 	    LINK="ld"
