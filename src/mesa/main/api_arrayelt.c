@@ -337,7 +337,7 @@ static void _ae_update_state( GLcontext *ctx )
 }
 
 
-void _ae_loopback_array_elt( GLint elt )
+void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
 {
    GET_CURRENT_CONTEXT(ctx);
    AEcontext *actx = AE_CONTEXT(ctx);

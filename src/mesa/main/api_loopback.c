@@ -218,7 +218,7 @@ loopback_Color4us_f( GLushort red, GLushort green, GLushort blue, GLushort alpha
 	   USHORT_TO_FLOAT(blue), USHORT_TO_FLOAT(alpha) );
 }
 
-static void
+static void GLAPIENTRY
 loopback_Color4ub_f( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
 {
    COLORF( UBYTE_TO_FLOAT(red), UBYTE_TO_FLOAT(green),
