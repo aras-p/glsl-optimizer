@@ -74,6 +74,7 @@ DRI_CONF_BEGIN
         DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
         DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
         DRI_CONF_TEXTURE_LEVEL_HACK(false)
+        DRI_CONF_TEXTURE_BLEND_QUALITY(1.0,"0.0:1.0")
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
@@ -83,7 +84,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NV_VERTEX_PROGRAM(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 16;
+static const GLuint __driNConfigOptions = 17;
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
@@ -345,6 +346,8 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 	 /* Check if kernel module is new enough to support blend color and
 	    separate blend functions/equations */
 	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
+
+	 screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
       }
       /* Check if ddx has set up a surface reg to cover depth buffer */
       screen->depthHasSurface = (sPriv->ddxMajor > 4);

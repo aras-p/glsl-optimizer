@@ -488,7 +488,10 @@ struct r200_state_atom {
 #define CST_SE_TCL_INPUT_VTX_3                17
 #define CST_STATE_SIZE                        18
 
-
+#define PRF_CMD_0         0
+#define PRF_PP_TRI_PERF   1
+#define PRF_PP_PERF_CNTL  2
+#define PRF_STATE_SIZE    3
 
 
 struct r200_hw_state {
@@ -518,15 +521,16 @@ struct r200_hw_state {
    struct r200_state_atom tex[6];
    struct r200_state_atom cube[6];
    struct r200_state_atom zbs;
-   struct r200_state_atom mtl[2]; 
-   struct r200_state_atom mat[9]; 
+   struct r200_state_atom mtl[2];
+   struct r200_state_atom mat[9];
    struct r200_state_atom lit[8]; /* includes vec, scl commands */
    struct r200_state_atom ucp[6];
    struct r200_state_atom pix[6]; /* pixshader stages */
    struct r200_state_atom eye; /* eye pos */
    struct r200_state_atom grd; /* guard band clipping */
-   struct r200_state_atom fog; 
-   struct r200_state_atom glt; 
+   struct r200_state_atom fog;
+   struct r200_state_atom glt;
+   struct r200_state_atom prf;
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;

@@ -305,6 +305,12 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( pix[3], tex, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
    ALLOC_STATE( pix[4], tex, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
    ALLOC_STATE( pix[5], tex, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
+   if (rmesa->r200Screen->drmSupportsTriPerf) {
+      ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
+   }
+   else {
+      ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
+   }
 
    r200SetUpAtomList( rmesa );
 
@@ -370,6 +376,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.vtx.cmd[VTX_CMD_1] = cmdpkt(R200_EMIT_OUTPUT_VTX_COMP_SEL);
    rmesa->hw.vtx.cmd[VTX_CMD_2] = cmdpkt(R200_EMIT_SE_VTX_STATE_CNTL);
    rmesa->hw.vte.cmd[VTE_CMD_0] = cmdpkt(R200_EMIT_VTE_CNTL);
+   rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(R200_EMIT_PP_TRI_PERF_CNTL);
    rmesa->hw.mtl[0].cmd[MTL_CMD_0] = 
       cmdvec( R200_VS_MAT_0_EMISS, 1, 16 );
    rmesa->hw.mtl[0].cmd[MTL_CMD_1] = 
@@ -503,6 +510,10 @@ void r200InitState( r200ContextPtr rmesa )
    if (rmesa->sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
+
+   rmesa->hw.prf.cmd[PRF_PP_TRI_PERF] = R200_TRI_CUTOFF_MASK - R200_TRI_CUTOFF_MASK * 
+			driQueryOptionf (&rmesa->optionCache,"texture_blend_quality");
+   rmesa->hw.prf.cmd[PRF_PP_PERF_CNTL] = 0;
 
    rmesa->hw.set.cmd[SET_SE_CNTL] = (R200_FFACE_CULL_CCW |
 				     R200_BFACE_SOLID |

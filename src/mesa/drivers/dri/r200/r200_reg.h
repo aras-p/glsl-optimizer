@@ -971,6 +971,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 #define R200_PP_CNTL_X             0x2cc4
 /* gap */
+#define R200_PP_TRI_PERF                  0x2cf8
+#define     R200_TRI_CUTOFF_MASK            (0x1f << 0)
+#define R200_PP_PERF_CNTL                 0x2cfc
 #define R200_PP_TXOFFSET_0                0x2d00
 #define     R200_TXO_ENDIAN_NO_SWAP     (0 << 0)
 #define     R200_TXO_ENDIAN_BYTE_SWAP   (1 << 0)

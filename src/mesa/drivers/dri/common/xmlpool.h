@@ -298,6 +298,12 @@ DRI_CONF_OPT_BEGIN(texture_level_hack,bool,def) \
   DRI_CONF_DESC(en,"Enable texture level hack for radeon/r200 for playing games with compressed textures") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_TEXTURE_BLEND_QUALITY(def,range) \
+DRI_CONF_OPT_BEGIN_V(texture_blend_quality,float,def,range) \
+   DRI_CONF_DESC(en, "texture blend quality, aka brilinear texture filtering") \
+   DRI_CONF_DESC(de, "Texturfilterqualität, auch bekannt als brilineare Texturfilterung") \
+DRI_CONF_OPT_END
+
 #define DRI_CONF_TEXTURE_HEAPS_ALL 0
 #define DRI_CONF_TEXTURE_HEAPS_CARD 1
 #define DRI_CONF_TEXTURE_HEAPS_GART 2
