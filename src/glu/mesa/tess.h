@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.9 1999/10/03 00:56:07 gareth Exp $ */
+/* $Id: tess.h,v 1.10 1999/10/11 17:28:05 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,10 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.10  1999/10/11 17:28:05  gareth
+ * Allow debugging output capture under Win32.  This seems really
+ * broken to me, but that's Windows for you...
+ *
  * Revision 1.9  1999/10/03 00:56:07  gareth
  * Added tessellation winding rule support.  Misc bug fixes.
  *
@@ -112,12 +116,17 @@ extern	int	tess_debug_level;
 int vdebugstr( char *format_str, ... );
 
 #pragma message( "tess: using DEBUGP for debugging output" )
+#ifdef _WIN32
+#define DEBUG_STREAM	stdout
+#else
+#define DEBUG_STREAM	stderr
+#endif
 #define DEBUGP( level, body )						\
     do {								\
 	if ( tess_debug_level >= level ) {				\
 	    vdebugstr( "%11.11s:%-5d ", __FILE__, __LINE__, level );	\
 	    vdebugstr body;						\
-	    fflush( stderr );						\
+	    fflush( DEBUG_STREAM );					\
 	}								\
     } while ( 0 )
 #define DEBUGIF( level )	do { if ( tess_debug_level >= level ) {
