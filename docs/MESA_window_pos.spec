@@ -16,11 +16,11 @@ Status
 
 Version
 
-    $Id: MESA_window_pos.spec,v 1.2 2000/01/07 08:47:15 brianp Exp $
+    $Id: MESA_window_pos.spec,v 1.3 2000/04/04 23:29:32 brianp Exp $
 
 Number
 
-    XXX not assigned
+    197
 
 Dependencies
 
