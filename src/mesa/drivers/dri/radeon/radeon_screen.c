@@ -557,6 +557,7 @@ static struct __DriverAPIRec radeonAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
+#if !defined(DRI_NEW_INTERFACE_ONLY)
 #ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
@@ -565,7 +566,7 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &radeonAPI);
    return (void *) psp;
 }
-#elif !defined(DRI_NEW_INTERFACE_ONLY)
+#else
 void *__driCreateScreen(struct DRIDriverRec *driver,
                         struct DRIDriverContextRec *driverContext)
 {
@@ -574,6 +575,7 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
    return (void *) psp;
 }
 #endif
+#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
