@@ -240,7 +240,8 @@ static void print_header( struct fragment_program *p )
    /* The usual macros, not really needed, but handy:
     */
    emit(p, "#define MIN2(x,y) ((x)<(y)?(x):(y))\n"
-	  "#define MAX2(x,y) ((x)<(y)?(x):(y))\n");
+	  "#define MAX2(x,y) ((x)<(y)?(x):(y))\n"
+	  "#define SATURATE(x) ((x)>1.0?1.0:((x)<0.0?0.0:(x)))\n");
 
    /* Our function!
     */
@@ -449,9 +450,9 @@ static void saturate( struct fragment_program *p,
 {
    emit(p, "   ");
    print_dest(p, inst, i);
-   emit(p, " = CLAMPF( ");
+   emit(p, " = SATURATE( ");
    print_dest(p, inst, i);
-   emit(p, ", 0.0, 1.0);\n");
+   emit(p, ");\n");
 }
 		     
 static void assign_single( GLuint i,
