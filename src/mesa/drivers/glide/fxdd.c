@@ -974,7 +974,7 @@ fxDDReadPixels555 (GLcontext * ctx,
 	       src -= srcStride;
 	    }
 	 }
-	 else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
+	 else if (format == GL_BGRA && type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
 	    /* directly memcpy 5R5G5B pixels into client's buffer */
 	    const GLint widthInBytes = width * 2;
 	    GLint row;
@@ -1368,6 +1368,143 @@ fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
 
 
 void
+fxDDDrawPixels565_rev (GLcontext * ctx, GLint x, GLint y,
+                   GLsizei width, GLsizei height,
+                   GLenum format, GLenum type,
+                   const struct gl_pixelstore_attrib *unpack,
+                   const GLvoid * pixels)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GrLfbInfo_t info;
+   const struct gl_pixelstore_attrib *finalUnpack;
+   struct gl_pixelstore_attrib scissoredUnpack;
+
+   if (ctx->Pixel.ZoomX != 1.0F ||
+       ctx->Pixel.ZoomY != 1.0F ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)) ||
+       (swrast->_RasterMask & (ALPHATEST_BIT |
+			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
+			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
+			      FOG_BIT |         /* could be done with RGB:DEPTH */
+			      LOGIC_OP_BIT |
+			      /*CLIP_BIT |*/    /* clipping ok, below */
+			      STENCIL_BIT |
+			      MASKING_BIT |
+			      ALPHABUF_BIT |
+			      MULTI_DRAW_BIT |
+			      OCCLUSION_BIT |   /* nope! at least not yet */
+			      TEXTURE_BIT |
+			      FRAGPROG_BIT)) ||
+       fxMesa->fallback)
+   {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+			  unpack, pixels );
+      return; 
+   }
+
+   /* make sure the pixelpipe is configured correctly */
+   fxSetupFXUnits(ctx);
+
+   /* FIXME! _RasterMask & CLIP_BIT gets set if we're out of Viewport, also! */
+   if (ctx->Scissor.Enabled) {
+      /* This is a bit tricky, but by carefully adjusting the px, py,
+       * width, height, skipPixels and skipRows values we can do
+       * scissoring without special code in the rendering loop.
+       */
+
+      /* we'll construct a new pixelstore struct */
+      finalUnpack = &scissoredUnpack;
+      scissoredUnpack = *unpack;
+      if (scissoredUnpack.RowLength == 0)
+	 scissoredUnpack.RowLength = width;
+
+      /* clip left */
+      if (x < ctx->Scissor.X) {
+	 scissoredUnpack.SkipPixels += (ctx->Scissor.X - x);
+	 width -= (ctx->Scissor.X - x);
+	 x = ctx->Scissor.X;
+      }
+      /* clip right */
+      if (x + width >= ctx->Scissor.X + ctx->Scissor.Width) {
+	 width -= (x + width - (ctx->Scissor.X + ctx->Scissor.Width));
+      }
+      /* clip bottom */
+      if (y < ctx->Scissor.Y) {
+	 scissoredUnpack.SkipRows += (ctx->Scissor.Y - y);
+	 height -= (ctx->Scissor.Y - y);
+	 y = ctx->Scissor.Y;
+      }
+      /* clip top */
+      if (y + height >= ctx->Scissor.Y + ctx->Scissor.Height) {
+	 height -= (y + height - (ctx->Scissor.Y + ctx->Scissor.Height));
+      }
+
+      if (width <= 0 || height <= 0)
+	 return;
+   }
+   else {
+      finalUnpack = unpack;
+   }
+
+   info.size = sizeof(info);
+   if (!grLfbLock(GR_LFB_WRITE_ONLY,
+                  fxMesa->currentFB,
+                  GR_LFBWRITEMODE_565,
+                  GR_ORIGIN_LOWER_LEFT, FXTRUE, &info)) {
+      _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+      return;
+   }
+
+   {
+      const GLint winX = 0;
+      const GLint winY = 0;
+
+      const GLint dstStride = info.strideInBytes / 2;	/* stride in GLushorts */
+      GLushort *dst = (GLushort *) info.lfbPtr + (winY + y) * dstStride + (winX + x);
+
+      if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR565(src[0], src[1], src[2]);
+                 src += 4;
+             }
+             dst += dstStride;
+         }
+      }
+      else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+         GLint row;
+         for (row = 0; row < height; row++) {
+	     GLubyte *src = (GLubyte *) _mesa_image_address(finalUnpack, pixels,
+							width, height, format,
+							type, 0, row, 0);
+	     GLint col;
+	     for (col = 0; col < width; col++) {
+                 dst[col] = TDFXPACKCOLOR565(src[0], src[1], src[2]);
+                 src += 3;
+             }
+             dst += dstStride;
+         }
+      }
+      else {
+         grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+         _swrast_DrawPixels(ctx, x, y, width, height, format, type, finalUnpack, pixels);
+         return;
+      }
+
+   }
+
+   grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->currentFB);
+}
+
+
+void
 fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height,
                     GLenum format, GLenum type,
@@ -1712,11 +1849,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxDDInitExtensions(ctx);
 
 #if 0
-   /* [dBorca] Hack alert:
-    * do we want dither? It just looks bad...
-    */
+   /* do we want dither? It just looks bad... */
    grEnable(GR_ALLOW_MIPMAP_DITHER);
-   grTexNccTable(GR_NCCTABLE_NCC0); /* set this once... no multipass */
 #endif
    grGlideGetState((GrState *) fxMesa->state);
 
@@ -1955,14 +2089,14 @@ fx_check_IsInHardware(GLcontext * ctx)
        * were enabled.  That's easy!
        */
       if (ctx->Texture._EnabledUnits == 0x3) {
+#if 0
 	 /* Can't use multipass to blend a multitextured triangle - fall
 	  * back to software.
-          * [dBorca] we hit this case only when we try to emulate
-          * multitexture by multipass!
 	  */
 	 if (!fxMesa->haveTwoTMUs && ctx->Color.BlendEnabled) {
 	    return FX_FALLBACK_TEXTURE_MULTI;
 	 }
+#endif
 
 	 if ((ctx->Texture.Unit[0].EnvMode != ctx->Texture.Unit[1].EnvMode) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_MODULATE) &&
@@ -2036,7 +2170,7 @@ fxSetupDDPointers(GLcontext * ctx)
          ctx->Driver.Bitmap = fxDDDrawBitmap2;
          break;
       case 16:
-         ctx->Driver.DrawPixels = fxDDDrawPixels565;
+         ctx->Driver.DrawPixels = !fxMesa->bgrOrder ? fxDDDrawPixels565 : fxDDDrawPixels565_rev;
          ctx->Driver.ReadPixels = fxDDReadPixels565;
          ctx->Driver.Bitmap = fxDDDrawBitmap2;
          break;
