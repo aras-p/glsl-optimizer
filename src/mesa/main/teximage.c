@@ -533,12 +533,13 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: {
-	 GLuint face = ((GLuint) target - 
-			(GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-         tObj->Image[face][level] = texImage;
-	 break;
-      }
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+         {
+            GLuint face = ((GLuint) target - 
+                           (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+            tObj->Image[face][level] = texImage;
+         }
+         break;
       case GL_TEXTURE_RECTANGLE_NV:
          ASSERT(level == 0);
          tObj->Image[0][level] = texImage;
