@@ -4753,7 +4753,7 @@ static void save_Indexf( GLfloat x )
    ctx->ListState.CurrentIndex = x;
 
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->Indexi)( x );
+      (*ctx->Exec->Indexi)( (GLint) x );
    }
 }
 

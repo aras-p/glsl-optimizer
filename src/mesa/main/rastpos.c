@@ -345,7 +345,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
                      ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
          }
          else {
-            ctx->Current.RasterIndex = ctx->Current.Index;
+            ctx->Current.RasterIndex = (GLuint) ctx->Current.Index;
          }
       }
 
@@ -636,7 +636,7 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
          = CLAMP(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3], 0.0F, 1.0F);
    }
    else {
-      ctx->Current.RasterIndex = ctx->Current.Index;
+      ctx->Current.RasterIndex = (GLuint) ctx->Current.Index;
    }
 
    /* raster texcoord = current texcoord */

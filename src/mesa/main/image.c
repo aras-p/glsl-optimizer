@@ -3809,7 +3809,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
          GLhalfNV *dst = (GLhalfNV *) dest;
          GLuint i;
          for (i=0;i<n;i++) {
-            dst[i] = _mesa_half_to_float(source[i]);
+            dst[i] = _mesa_float_to_half( (float) source[i] );
          }
          if (dstPacking->SwapBytes) {
             _mesa_swap2( (GLushort *) dst, n );

@@ -195,7 +195,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       return GL_FALSE;
 
    if (ctx->Const.CheckArrayBounds) {
-      if (start + count > ctx->Array._MaxElement)
+      if (start + count > (GLint) ctx->Array._MaxElement)
          return GL_FALSE;
    }
 
