@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.43 2002/10/05 18:27:41 brianp Exp $ */
+/* $Id: xm_api.c,v 1.44 2002/10/09 19:35:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1929,6 +1929,9 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
                                 unsigned int width, unsigned int height )
 {
+#ifdef XFree86Server
+   return 0;
+#else
    int client = 0;
    XMesaWindow root;
    XMesaDrawable drawable;  /* X Pixmap Drawable */
@@ -1975,6 +1978,7 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
    }
 
    return b;
+#endif
 }
 
 
