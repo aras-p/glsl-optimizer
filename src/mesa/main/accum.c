@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.37 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: accum.c,v 1.38 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,10 +47,10 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP( red, -1.0, 1.0 );
-   tmp[1] = CLAMP( green, -1.0, 1.0 );
-   tmp[2] = CLAMP( blue, -1.0, 1.0 );
-   tmp[3] = CLAMP( alpha, -1.0, 1.0 );
+   tmp[0] = CLAMP( red,   -1.0F, 1.0F );
+   tmp[1] = CLAMP( green, -1.0F, 1.0F );
+   tmp[2] = CLAMP( blue,  -1.0F, 1.0F );
+   tmp[3] = CLAMP( alpha, -1.0F, 1.0F );
 
    if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
       return;

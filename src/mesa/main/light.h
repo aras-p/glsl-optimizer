@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.13 2001/04/28 08:39:17 keithw Exp $ */
+/* $Id: light.h,v 1.14 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,6 +78,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params );
 /* Lerp between adjacent values in the f(x) lookup table, giving a
  * continuous function, with adequeate overall accuracy.  (Though
  * still pretty good compared to a straight lookup).
+ * Result should be a GLfloat.
  */
 #define GET_SHINE_TAB_ENTRY( table, dp, result )			\
 do {									\
@@ -85,7 +86,7 @@ do {									\
    float f = (dp * (SHINE_TABLE_SIZE-1));				\
    int k = (int) f;							\
    if (k > SHINE_TABLE_SIZE-2) 						\
-      result = pow( dp, _tab->shininess );				\
+      result = (GLfloat) pow( dp, _tab->shininess );			\
    else									\
       result = _tab->tab[k] + (f-k)*(_tab->tab[k+1]-_tab->tab[k]);	\
 } while (0)

@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.14 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: ss_tritmp.h,v 1.15 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,11 +92,11 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    GLfloat fz = z[1] - z[2];
 	    GLfloat a = ey*fz - ez*fy;
 	    GLfloat b = ez*fx - ex*fz;
-	    GLfloat ic = 1.0 / cc;
+	    GLfloat ic = 1.0F / cc;
 	    GLfloat ac = a * ic;
 	    GLfloat bc = b * ic;
-	    if (ac < 0.0f) ac = -ac;
-	    if (bc < 0.0f) bc = -bc;
+	    if (ac < 0.0F) ac = -ac;
+	    if (bc < 0.0F) bc = -bc;
 	    offset += MAX2(ac, bc) * ctx->Polygon.OffsetFactor;
 	 }
          offset *= ctx->MRD;

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.55 2001/08/07 23:10:55 brianp Exp $ */
+/* $Id: attrib.c,v 1.56 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -598,12 +598,15 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       GLuint numObjs, i;
 
       _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + u);
-      _mesa_set_enable(ctx, GL_TEXTURE_1D, unit->Enabled & TEXTURE0_1D);
-      _mesa_set_enable(ctx, GL_TEXTURE_2D, unit->Enabled & TEXTURE0_2D);
-      _mesa_set_enable(ctx, GL_TEXTURE_3D, unit->Enabled & TEXTURE0_3D);
+      _mesa_set_enable(ctx, GL_TEXTURE_1D,
+              (GLboolean) (unit->Enabled & TEXTURE0_1D) ? GL_TRUE : GL_FALSE);
+      _mesa_set_enable(ctx, GL_TEXTURE_2D,
+              (GLboolean) (unit->Enabled & TEXTURE0_2D) ? GL_TRUE : GL_FALSE);
+      _mesa_set_enable(ctx, GL_TEXTURE_3D,
+              (GLboolean) (unit->Enabled & TEXTURE0_3D) ? GL_TRUE : GL_FALSE);
       if (ctx->Extensions.ARB_texture_cube_map) {
          _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP_ARB,
-                          unit->Enabled & TEXTURE0_CUBE);
+             (GLboolean) (unit->Enabled & TEXTURE0_CUBE) ? GL_TRUE : GL_FALSE);
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
@@ -786,7 +789,7 @@ _mesa_PopAttrib(void)
             {
                const struct gl_colorbuffer_attrib *color;
                color = (const struct gl_colorbuffer_attrib *) attr->data;
-               _mesa_ClearIndex(color->ClearIndex);
+               _mesa_ClearIndex((GLfloat) color->ClearIndex);
                _mesa_ClearColor(CHAN_TO_FLOAT(color->ClearColor[0]),
                                 CHAN_TO_FLOAT(color->ClearColor[1]),
                                 CHAN_TO_FLOAT(color->ClearColor[2]),

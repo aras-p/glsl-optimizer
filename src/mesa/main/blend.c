@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.33 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: blend.c,v 1.34 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -326,10 +326,10 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP( red,   0.0, 1.0 );
-   tmp[1] = CLAMP( green, 0.0, 1.0 );
-   tmp[2] = CLAMP( blue,  0.0, 1.0 );
-   tmp[3] = CLAMP( alpha, 0.0, 1.0 );
+   tmp[0] = CLAMP( red,   0.0F, 1.0F );
+   tmp[1] = CLAMP( green, 0.0F, 1.0F );
+   tmp[2] = CLAMP( blue,  0.0F, 1.0F );
+   tmp[3] = CLAMP( alpha, 0.0F, 1.0F );
 
    if (TEST_EQ_4V(tmp, ctx->Color.BlendColor))
       return;

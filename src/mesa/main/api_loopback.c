@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.8 2001/05/10 15:42:42 keithw Exp $ */
+/* $Id: api_loopback.c,v 1.9 2001/09/14 21:37:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,9 +83,9 @@ static void
 loopback_Color3d( GLdouble red, GLdouble green, GLdouble blue )
 {
    GLubyte col[4];
-   GLfloat r = red;
-   GLfloat g = green;
-   GLfloat b = blue;
+   GLfloat r = (GLfloat) red;
+   GLfloat g = (GLfloat) green;
+   GLfloat b = (GLfloat) blue;
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -152,10 +152,10 @@ static void
 loopback_Color4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha )
 {
    GLubyte col[4];
-   GLfloat r = red;
-   GLfloat g = green;
-   GLfloat b = blue;
-   GLfloat a = alpha;
+   GLfloat r = (GLfloat) red;
+   GLfloat g = (GLfloat) green;
+   GLfloat b = (GLfloat) blue;
+   GLfloat a = (GLfloat) alpha;
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -224,9 +224,9 @@ static void
 loopback_Color3dv( const GLdouble *v )
 {
    GLubyte col[4];
-   GLfloat r = v[0];
-   GLfloat g = v[1];
-   GLfloat b = v[2];
+   GLfloat r = (GLfloat) v[0];
+   GLfloat g = (GLfloat) v[1];
+   GLfloat b = (GLfloat) v[2];
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -294,10 +294,10 @@ static void
 loopback_Color4dv( const GLdouble *v )
 {
    GLubyte col[4];
-   GLfloat r = v[0];
-   GLfloat g = v[1];
-   GLfloat b = v[2];
-   GLfloat a = v[3];
+   GLfloat r = (GLfloat) v[0];
+   GLfloat g = (GLfloat) v[1];
+   GLfloat b = (GLfloat) v[2];
+   GLfloat a = (GLfloat) v[3];
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -361,7 +361,7 @@ loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
 static void
 loopback_Color3d_f( GLdouble red, GLdouble green, GLdouble blue )
 {
-   COLORF( red, green, blue, 1.0 );
+   COLORF( (GLfloat) red, (GLfloat) green, (GLfloat) blue, 1.0 );
 }
 
 static void
@@ -403,7 +403,7 @@ loopback_Color3bv_f( const GLbyte *v )
 static void
 loopback_Color3dv_f( const GLdouble *v )
 {
-   COLORF( v[0], v[1], v[2], 1.0 );
+   COLORF( (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0 );
 }
 
 static void
@@ -447,7 +447,7 @@ static void
 loopback_Color4d_f( GLdouble red, GLdouble green, GLdouble blue,
 			      GLdouble alpha )
 {
-   COLORF( red, green, blue, alpha );
+   COLORF( (GLfloat) red, (GLfloat) green, (GLfloat) blue, (GLfloat) alpha );
 }
 
 static void
@@ -498,7 +498,7 @@ loopback_Color4bv_f( const GLbyte *v )
 static void
 loopback_Color4dv_f( const GLdouble *v )
 {
-   COLORF( v[0], v[1], v[2], v[3] );
+   COLORF( (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 
@@ -527,13 +527,13 @@ loopback_Color4usv_f( const GLushort *v)
 static void
 loopback_FogCoorddEXT( GLdouble d )
 {
-   FOGCOORDF( d );
+   FOGCOORDF( (GLfloat) d );
 }
 
 static void
 loopback_FogCoorddvEXT( const GLdouble *v )
 {
-   FOGCOORDF( *v );
+   FOGCOORDF( (GLfloat) *v );
 }
 
 
@@ -600,7 +600,7 @@ loopback_Normal3b( GLbyte nx, GLbyte ny, GLbyte nz )
 static void
 loopback_Normal3d( GLdouble nx, GLdouble ny, GLdouble nz )
 {
-   NORMAL(nx, ny, nz);
+   NORMAL((GLfloat) nx, (GLfloat) ny, (GLfloat) nz);
 }
 
 static void
@@ -624,7 +624,7 @@ loopback_Normal3bv( const GLbyte *v )
 static void
 loopback_Normal3dv( const GLdouble *v )
 {
-   NORMAL( v[0], v[1], v[2] );
+   NORMAL( (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] );
 }
 
 static void
@@ -642,145 +642,145 @@ loopback_Normal3sv( const GLshort *v )
 static void
 loopback_TexCoord1d( GLdouble s )
 {
-   TEXCOORD1(s);
+   TEXCOORD1((GLfloat) s);
 }
 
 static void
 loopback_TexCoord1i( GLint s )
 {
-   TEXCOORD1(s);
+   TEXCOORD1((GLfloat) s);
 }
 
 static void
 loopback_TexCoord1s( GLshort s )
 {
-   TEXCOORD1(s);
+   TEXCOORD1((GLfloat) s);
 }
 
 static void
 loopback_TexCoord2d( GLdouble s, GLdouble t )
 {
-   TEXCOORD2(s,t);
+   TEXCOORD2((GLfloat) s,(GLfloat) t);
 }
 
 static void
 loopback_TexCoord2s( GLshort s, GLshort t )
 {
-   TEXCOORD2(s,t);
+   TEXCOORD2((GLfloat) s,(GLfloat) t);
 }
 
 static void
 loopback_TexCoord2i( GLint s, GLint t )
 {
-   TEXCOORD2(s,t);
+   TEXCOORD2((GLfloat) s,(GLfloat) t);
 }
 
 static void
 loopback_TexCoord3d( GLdouble s, GLdouble t, GLdouble r )
 {
-   TEXCOORD3(s,t,r);
+   TEXCOORD3((GLfloat) s,(GLfloat) t,(GLfloat) r);
 }
 
 static void
 loopback_TexCoord3i( GLint s, GLint t, GLint r )
 {
-   TEXCOORD3(s,t,r);
+   TEXCOORD3((GLfloat) s,(GLfloat) t,(GLfloat) r);
 }
 
 static void
 loopback_TexCoord3s( GLshort s, GLshort t, GLshort r )
 {
-   TEXCOORD3(s,t,r);
+   TEXCOORD3((GLfloat) s,(GLfloat) t,(GLfloat) r);
 }
 
 static void
 loopback_TexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q )
 {
-   TEXCOORD4(s,t,r,q);
+   TEXCOORD4((GLfloat) s,(GLfloat) t,(GLfloat) r,(GLfloat) q);
 }
 
 static void
 loopback_TexCoord4i( GLint s, GLint t, GLint r, GLint q )
 {
-   TEXCOORD4(s,t,r,q);
+   TEXCOORD4((GLfloat) s,(GLfloat) t,(GLfloat) r,(GLfloat) q);
 }
 
 static void
 loopback_TexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q )
 {
-   TEXCOORD4(s,t,r,q);
+   TEXCOORD4((GLfloat) s,(GLfloat) t,(GLfloat) r,(GLfloat) q);
 }
 
 static void
 loopback_TexCoord1dv( const GLdouble *v )
 {
-   TEXCOORD1(v[0]);
+   TEXCOORD1((GLfloat) v[0]);
 }
 
 static void
 loopback_TexCoord1iv( const GLint *v )
 {
-   TEXCOORD1(v[0]);
+   TEXCOORD1((GLfloat) v[0]);
 }
 
 static void
 loopback_TexCoord1sv( const GLshort *v )
 {
-   TEXCOORD1(v[0]);
+   TEXCOORD1((GLfloat) v[0]);
 }
 
 static void
 loopback_TexCoord2dv( const GLdouble *v )
 {
-   TEXCOORD2(v[0],v[1]);
+   TEXCOORD2((GLfloat) v[0],(GLfloat) v[1]);
 }
 
 static void
 loopback_TexCoord2iv( const GLint *v )
 {
-   TEXCOORD2(v[0],v[1]);
+   TEXCOORD2((GLfloat) v[0],(GLfloat) v[1]);
 }
 
 static void
 loopback_TexCoord2sv( const GLshort *v )
 {
-   TEXCOORD2(v[0],v[1]);
+   TEXCOORD2((GLfloat) v[0],(GLfloat) v[1]);
 }
 
 static void
 loopback_TexCoord3dv( const GLdouble *v )
 {
-   TEXCOORD2(v[0],v[1]);
+   TEXCOORD2((GLfloat) v[0],(GLfloat) v[1]);
 }
 
 static void
 loopback_TexCoord3iv( const GLint *v )
 {
-   TEXCOORD3(v[0],v[1],v[2]);
+   TEXCOORD3((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2]);
 }
 
 static void
 loopback_TexCoord3sv( const GLshort *v )
 {
-   TEXCOORD3(v[0],v[1],v[2]);
+   TEXCOORD3((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2]);
 }
 
 static void
 loopback_TexCoord4dv( const GLdouble *v )
 {
-   TEXCOORD4(v[0],v[1],v[2],v[3]);
+   TEXCOORD4((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2],(GLfloat) v[3]);
 }
 
 static void
 loopback_TexCoord4iv( const GLint *v )
 {
-   TEXCOORD4(v[0],v[1],v[2],v[3]);
+   TEXCOORD4((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2],(GLfloat) v[3]);
 }
 
 static void
 loopback_TexCoord4sv( const GLshort *v )
 {
-   TEXCOORD4(v[0],v[1],v[2],v[3]);
+   TEXCOORD4((GLfloat) v[0],(GLfloat) v[1],(GLfloat) v[2],(GLfloat) v[3]);
 }
 
 static void
@@ -897,145 +897,151 @@ loopback_Vertex4sv( const GLshort *v )
 static void
 loopback_MultiTexCoord1dARB(GLenum target, GLdouble s)
 {
-   MULTI_TEXCOORD1( target, s );
+   MULTI_TEXCOORD1( target, (GLfloat) s );
 }
 
 static void
 loopback_MultiTexCoord1dvARB(GLenum target, const GLdouble *v)
 {
-   MULTI_TEXCOORD1( target, v[0] );
+   MULTI_TEXCOORD1( target, (GLfloat) v[0] );
 }
 
 static void
 loopback_MultiTexCoord1iARB(GLenum target, GLint s)
 {
-   MULTI_TEXCOORD1( target, s );
+   MULTI_TEXCOORD1( target, (GLfloat) s );
 }
 
 static void
 loopback_MultiTexCoord1ivARB(GLenum target, const GLint *v)
 {
-   MULTI_TEXCOORD1( target, v[0] );
+   MULTI_TEXCOORD1( target, (GLfloat) v[0] );
 }
 
 static void
 loopback_MultiTexCoord1sARB(GLenum target, GLshort s)
 {
-   MULTI_TEXCOORD1( target, s );
+   MULTI_TEXCOORD1( target, (GLfloat) s );
 }
 
 static void
 loopback_MultiTexCoord1svARB(GLenum target, const GLshort *v)
 {
-   MULTI_TEXCOORD1( target, v[0] );
+   MULTI_TEXCOORD1( target, (GLfloat) v[0] );
 }
 
 static void
 loopback_MultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t)
 {
-   MULTI_TEXCOORD2( target, s, t );
+   MULTI_TEXCOORD2( target, (GLfloat) s, (GLfloat) t );
 }
 
 static void
 loopback_MultiTexCoord2dvARB(GLenum target, const GLdouble *v)
 {
-   MULTI_TEXCOORD2( target, v[0], v[1] );
+   MULTI_TEXCOORD2( target, (GLfloat) v[0], (GLfloat) v[1] );
 }
 
 static void
 loopback_MultiTexCoord2iARB(GLenum target, GLint s, GLint t)
 {
-   MULTI_TEXCOORD2( target, s, t );
+   MULTI_TEXCOORD2( target, (GLfloat) s, (GLfloat) t );
 }
 
 static void
 loopback_MultiTexCoord2ivARB(GLenum target, const GLint *v)
 {
-   MULTI_TEXCOORD2( target, v[0], v[1] );
+   MULTI_TEXCOORD2( target, (GLfloat) v[0], (GLfloat) v[1] );
 }
 
 static void
 loopback_MultiTexCoord2sARB(GLenum target, GLshort s, GLshort t)
 {
-   MULTI_TEXCOORD2( target, s, t );
+   MULTI_TEXCOORD2( target, (GLfloat) s, (GLfloat) t );
 }
 
 static void
 loopback_MultiTexCoord2svARB(GLenum target, const GLshort *v)
 {
-   MULTI_TEXCOORD2( target, v[0], v[1] );
+   MULTI_TEXCOORD2( target, (GLfloat) v[0], (GLfloat) v[1] );
 }
 
 static void
 loopback_MultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r)
 {
-   MULTI_TEXCOORD3( target, s, t, r );
+   MULTI_TEXCOORD3( target, (GLfloat) s, (GLfloat) t, (GLfloat) r );
 }
 
 static void
 loopback_MultiTexCoord3dvARB(GLenum target, const GLdouble *v)
 {
-   MULTI_TEXCOORD3( target, v[0], v[1], v[2] );
+   MULTI_TEXCOORD3( target, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] );
 }
 
 static void
 loopback_MultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r)
 {
-   MULTI_TEXCOORD3( target, s, t, r );
+   MULTI_TEXCOORD3( target, (GLfloat) s, (GLfloat) t, (GLfloat) r );
 }
 
 static void
 loopback_MultiTexCoord3ivARB(GLenum target, const GLint *v)
 {
-   MULTI_TEXCOORD3( target, v[0], v[1], v[2] );
+   MULTI_TEXCOORD3( target, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] );
 }
 
 static void
 loopback_MultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r)
 {
-   MULTI_TEXCOORD3( target, s, t, r );
+   MULTI_TEXCOORD3( target, (GLfloat) s, (GLfloat) t, (GLfloat) r );
 }
 
 static void
 loopback_MultiTexCoord3svARB(GLenum target, const GLshort *v)
 {
-   MULTI_TEXCOORD3( target, v[0], v[1], v[2] );
+   MULTI_TEXCOORD3( target, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] );
 }
 
 static void
 loopback_MultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q)
 {
-   MULTI_TEXCOORD4( target, s, t, r, q );
+   MULTI_TEXCOORD4( target, (GLfloat) s, (GLfloat) t, 
+		    (GLfloat) r, (GLfloat) q );
 }
 
 static void
 loopback_MultiTexCoord4dvARB(GLenum target, const GLdouble *v)
 {
-   MULTI_TEXCOORD4( target, v[0], v[1], v[2], v[3] );
+   MULTI_TEXCOORD4( target, (GLfloat) v[0], (GLfloat) v[1], 
+		    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 static void
 loopback_MultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q)
 {
-   MULTI_TEXCOORD4( target, s, t, r, q );
+   MULTI_TEXCOORD4( target, (GLfloat) s, (GLfloat) t,
+		    (GLfloat) r, (GLfloat) q );
 }
 
 static void
 loopback_MultiTexCoord4ivARB(GLenum target, const GLint *v)
 {
-   MULTI_TEXCOORD4( target, v[0], v[1], v[2], v[3] );
+   MULTI_TEXCOORD4( target, (GLfloat) v[0], (GLfloat) v[1],
+		    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 static void
 loopback_MultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q)
 {
-   MULTI_TEXCOORD4( target, s, t, r, q );
+   MULTI_TEXCOORD4( target, (GLfloat) s, (GLfloat) t,
+		    (GLfloat) r, (GLfloat) q );
 }
 
 static void
 loopback_MultiTexCoord4svARB(GLenum target, const GLshort *v)
 {
-   MULTI_TEXCOORD4( target, v[0], v[1], v[2], v[3] );
+   MULTI_TEXCOORD4( target, (GLfloat) v[0], (GLfloat) v[1],
+		    (GLfloat) v[2], (GLfloat) v[3] );
 }
 
 static void
@@ -1122,13 +1128,13 @@ loopback_Materialiv(GLenum face, GLenum pname, const GLint *params )
 static void
 loopback_Rectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
 {
-   RECTF(x1, y1, x2, y2);
+   RECTF((GLfloat) x1, (GLfloat) y1, (GLfloat) x2, (GLfloat) y2);
 }
 
 static void
 loopback_Rectdv(const GLdouble *v1, const GLdouble *v2)
 {
-   RECTF(v1[0], v1[1], v2[0], v2[1]);
+   RECTF((GLfloat) v1[0], (GLfloat) v1[1], (GLfloat) v2[0], (GLfloat) v2[1]);
 }
 
 static void
@@ -1140,25 +1146,25 @@ loopback_Rectfv(const GLfloat *v1, const GLfloat *v2)
 static void
 loopback_Recti(GLint x1, GLint y1, GLint x2, GLint y2)
 {
-   RECTF(x1, y1, x2, y2);
+   RECTF((GLfloat) x1, (GLfloat) y1, (GLfloat) x2, (GLfloat) y2);
 }
 
 static void
 loopback_Rectiv(const GLint *v1, const GLint *v2)
 {
-   RECTF(v1[0], v1[1], v2[0], v2[1]);
+   RECTF((GLfloat) v1[0], (GLfloat) v1[1], (GLfloat) v2[0], (GLfloat) v2[1]);
 }
 
 static void
 loopback_Rects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
 {
-   RECTF(x1, y1, x2, y2);
+   RECTF((GLfloat) x1, (GLfloat) y1, (GLfloat) x2, (GLfloat) y2);
 }
 
 static void
 loopback_Rectsv(const GLshort *v1, const GLshort *v2)
 {
-   RECTF(v1[0], v1[1], v2[0], v2[1]);
+   RECTF((GLfloat) v1[0], (GLfloat) v1[1], (GLfloat) v2[0], (GLfloat) v2[1]);
 }
 
 static void
@@ -1173,9 +1179,9 @@ static void
 loopback_SecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue )
 {
    GLubyte col[3];
-   GLfloat r = red;
-   GLfloat g = green;
-   GLfloat b = blue;
+   GLfloat r = (GLfloat) red;
+   GLfloat g = (GLfloat) green;
+   GLfloat b = (GLfloat) blue;
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -1227,9 +1233,9 @@ static void
 loopback_SecondaryColor3dvEXT( const GLdouble *v )
 {
    GLubyte col[3];
-   GLfloat r = v[0];
-   GLfloat g = v[1];
-   GLfloat b = v[2];
+   GLfloat r = (GLfloat) v[0];
+   GLfloat g = (GLfloat) v[1];
+   GLfloat b = (GLfloat) v[2];
    UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
    UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
    UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
@@ -1280,7 +1286,7 @@ loopback_SecondaryColor3bEXT_f( GLbyte red, GLbyte green, GLbyte blue )
 static void
 loopback_SecondaryColor3dEXT_f( GLdouble red, GLdouble green, GLdouble blue )
 {
-   SECONDARYCOLORF( red, green, blue );
+   SECONDARYCOLORF( (GLfloat) red, (GLfloat) green, (GLfloat) blue );
 }
 
 static void
@@ -1326,7 +1332,7 @@ loopback_SecondaryColor3bvEXT_f( const GLbyte *v )
 static void
 loopback_SecondaryColor3dvEXT_f( const GLdouble *v )
 {
-   SECONDARYCOLORF( v[0], v[1], v[2] );
+   SECONDARYCOLORF( (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] );
 }
 static void
 loopback_SecondaryColor3ivEXT_f( const GLint *v )

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.30 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: buffers.c,v 1.31 2001/09/14 21:36:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ _mesa_Clear( GLbitfield mask )
       }
 
       ASSERT(ctx->Driver.Clear);
-      ctx->Driver.Clear( ctx, ddMask, !ctx->Scissor.Enabled,
+      ctx->Driver.Clear( ctx, ddMask, (GLboolean) !ctx->Scissor.Enabled,
 			 x, y, width, height );
    }
 }
@@ -416,7 +416,7 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
    }
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
-   ctx->Multisample.SampleCoverageValue = CLAMP(value, 0.0, 1.0);
+   ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
    ctx->Multisample.SampleCoverageInvert = invert;
    ctx->NewState |= _NEW_MULTISAMPLE;
 }
