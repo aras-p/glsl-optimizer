@@ -26,7 +26,8 @@
 <!ATTLIST glx      rop      CDATA #IMPLIED
                    sop      CDATA #IMPLIED
                    large    CDATA #IMPLIED
-		   doubles_in_order CDATA #IMPLIED
+                   doubles_in_order CDATA #IMPLIED
+                   always_array CDATA #IMPLIED
                    handcode CDATA #IMPLIED
                    ignore   CDATA #IMPLIED>
 ]>
@@ -322,24 +323,114 @@
     <enum name="ACCUM_ALPHA_BITS"                         value="0x0D5B"/>
     <enum name="NAME_STACK_DEPTH"                         value="0x0D70"/>
     <enum name="AUTO_NORMAL"                              value="0x0D80"/>
-    <enum name="MAP1_COLOR_4"                             value="0x0D90"/>
-    <enum name="MAP1_INDEX"                               value="0x0D91"/>
-    <enum name="MAP1_NORMAL"                              value="0x0D92"/>
-    <enum name="MAP1_TEXTURE_COORD_1"                     value="0x0D93"/>
-    <enum name="MAP1_TEXTURE_COORD_2"                     value="0x0D94"/>
-    <enum name="MAP1_TEXTURE_COORD_3"                     value="0x0D95"/>
-    <enum name="MAP1_TEXTURE_COORD_4"                     value="0x0D96"/>
-    <enum name="MAP1_VERTEX_3"                            value="0x0D97"/>
-    <enum name="MAP1_VERTEX_4"                            value="0x0D98"/>
-    <enum name="MAP2_COLOR_4"                             value="0x0DB0"/>
-    <enum name="MAP2_INDEX"                               value="0x0DB1"/>
-    <enum name="MAP2_NORMAL"                              value="0x0DB2"/>
-    <enum name="MAP2_TEXTURE_COORD_1"                     value="0x0DB3"/>
-    <enum name="MAP2_TEXTURE_COORD_2"                     value="0x0DB4"/>
-    <enum name="MAP2_TEXTURE_COORD_3"                     value="0x0DB5"/>
-    <enum name="MAP2_TEXTURE_COORD_4"                     value="0x0DB6"/>
-    <enum name="MAP2_VERTEX_3"                            value="0x0DB7"/>
-    <enum name="MAP2_VERTEX_4"                            value="0x0DB8"/>
+    <enum name="MAP1_COLOR_4"                             value="0x0D90">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
+    <enum name="MAP1_INDEX"                               value="0x0D91">
+        <size name="Map1d" count="1"/>
+        <size name="Map1f" count="1"/>
+        <size name="Map2d" count="1"/>
+        <size name="Map2f" count="1"/>
+    </enum>
+    <enum name="MAP1_NORMAL"                              value="0x0D92">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP1_TEXTURE_COORD_1"                     value="0x0D93">
+        <size name="Map1d" count="1"/>
+        <size name="Map1f" count="1"/>
+        <size name="Map2d" count="1"/>
+        <size name="Map2f" count="1"/>
+    </enum>
+    <enum name="MAP1_TEXTURE_COORD_2"                     value="0x0D94">
+        <size name="Map1d" count="2"/>
+        <size name="Map1f" count="2"/>
+        <size name="Map2d" count="2"/>
+        <size name="Map2f" count="2"/>
+    </enum>
+    <enum name="MAP1_TEXTURE_COORD_3"                     value="0x0D95">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP1_TEXTURE_COORD_4"                     value="0x0D96">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
+    <enum name="MAP1_VERTEX_3"                            value="0x0D97">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP1_VERTEX_4"                            value="0x0D98">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
+    <enum name="MAP2_COLOR_4"                             value="0x0DB0">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
+    <enum name="MAP2_INDEX"                               value="0x0DB1">
+        <size name="Map1d" count="1"/>
+        <size name="Map1f" count="1"/>
+        <size name="Map2d" count="1"/>
+        <size name="Map2f" count="1"/>
+    </enum>
+    <enum name="MAP2_NORMAL"                              value="0x0DB2">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP2_TEXTURE_COORD_1"                     value="0x0DB3">
+        <size name="Map1d" count="1"/>
+        <size name="Map1f" count="1"/>
+        <size name="Map2d" count="1"/>
+        <size name="Map2f" count="1"/>
+    </enum>
+    <enum name="MAP2_TEXTURE_COORD_2"                     value="0x0DB4">
+        <size name="Map1d" count="2"/>
+        <size name="Map1f" count="2"/>
+        <size name="Map2d" count="2"/>
+        <size name="Map2f" count="2"/>
+    </enum>
+    <enum name="MAP2_TEXTURE_COORD_3"                     value="0x0DB5">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP2_TEXTURE_COORD_4"                     value="0x0DB6">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
+    <enum name="MAP2_VERTEX_3"                            value="0x0DB7">
+        <size name="Map1d" count="3"/>
+        <size name="Map1f" count="3"/>
+        <size name="Map2d" count="3"/>
+        <size name="Map2f" count="3"/>
+    </enum>
+    <enum name="MAP2_VERTEX_4"                            value="0x0DB8">
+        <size name="Map1d" count="4"/>
+        <size name="Map1f" count="4"/>
+        <size name="Map2d" count="4"/>
+        <size name="Map2f" count="4"/>
+    </enum>
     <enum name="MAP1_GRID_DOMAIN"                         value="0x0DD0"/>
     <enum name="MAP1_GRID_SEGMENTS"                       value="0x0DD1"/>
     <enum name="MAP2_GRID_DOMAIN"                         value="0x0DD2"/>
@@ -1856,12 +1947,12 @@
 
     <function name="Disable" offset="214">
         <param name="cap" type="GLenum"/>
-        <glx rop="138"/>
+        <glx rop="138" handcode="true"/>
     </function>
 
     <function name="Enable" offset="215">
         <param name="cap" type="GLenum"/>
-        <glx rop="139"/>
+        <glx rop="139" handcode="true"/>
     </function>
 
     <function name="Finish" offset="216">
@@ -2097,21 +2188,21 @@
     <function name="PixelMapfv" offset="251">
         <param name="map" type="GLenum"/>
         <param name="mapsize" type="GLsizei" counter="true"/>
-        <param name="values" type="const GLfloat *" count="mapsize" variable_param="map" />
+        <param name="values" type="const GLfloat *" count="mapsize"/>
         <glx rop="168" large="true"/>
     </function>
 
     <function name="PixelMapuiv" offset="252">
         <param name="map" type="GLenum"/>
-        <param name="mapsize" type="GLsizei"/>
-        <param name="values" type="const GLuint *" count="mapsize" variable_param="map" />
+        <param name="mapsize" type="GLsizei" counter="true"/>
+        <param name="values" type="const GLuint *" count="mapsize"/>
         <glx rop="169" large="true"/>
     </function>
 
     <function name="PixelMapusv" offset="253">
         <param name="map" type="GLenum"/>
-        <param name="mapsize" type="GLsizei"/>
-        <param name="values" type="const GLushort *" count="mapsize" variable_param="map" />
+        <param name="mapsize" type="GLsizei" counter="true"/>
+        <param name="values" type="const GLushort *" count="mapsize"/>
         <glx rop="170" large="true"/>
     </function>
 
@@ -2158,7 +2249,7 @@
     <function name="GetClipPlane" offset="259">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLdouble *" output="true"/>
-        <glx sop="113" handcode="true"/>
+        <glx sop="113" always_array="true"/>
     </function>
 
     <function name="GetDoublev" offset="260">
@@ -2762,7 +2853,7 @@
     <function name="GenTextures" offset="328">
         <param name="n" type="GLsizei"/>
         <param name="textures" type="GLuint *" output="true"/>
-        <glx sop="145" handcode="true"/>
+        <glx sop="145"/>
     </function>
 
     <function name="IsTexture" offset="330">
@@ -2772,10 +2863,10 @@
     </function>
 
     <function name="PrioritizeTextures" offset="331">
-        <param name="n" type="GLsizei"/>
-        <param name="textures" type="const GLuint *"/>
-        <param name="priorities" type="const GLclampf *"/>
-        <glx rop="4118" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="const GLuint *" count="n"/>
+        <param name="priorities" type="const GLclampf *" count="n"/>
+        <glx rop="4118"/>
     </function>
 
     <function name="Indexub" offset="315" vectorequiv="Indexubv">
@@ -4936,169 +5027,198 @@
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="GetVertexAttribfvARB" offset="589">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="GetVertexAttribivARB" offset="590">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1dARB" offset="603">
+    <function name="VertexAttrib1dARB" offset="603" vectorequiv="VertexAttrib1dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1dvARB" offset="604">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1fARB" offset="605">
+    <function name="VertexAttrib1fARB" offset="605" vectorequiv="VertexAttrib1fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1fvARB" offset="606">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1sARB" offset="607">
+    <function name="VertexAttrib1sARB" offset="607" vectorequiv="VertexAttrib1svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1svARB" offset="608">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2dARB" offset="609">
+    <function name="VertexAttrib2dARB" offset="609" vectorequiv="VertexAttrib2dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2dvARB" offset="610">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2fARB" offset="611">
+    <function name="VertexAttrib2fARB" offset="611" vectorequiv="VertexAttrib2fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2fvARB" offset="612">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2sARB" offset="613">
+    <function name="VertexAttrib2sARB" offset="613" vectorequiv="VertexAttrib2svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2svARB" offset="614">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3dARB" offset="615">
+    <function name="VertexAttrib3dARB" offset="615" vectorequiv="VertexAttrib3dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3dvARB" offset="616">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3fARB" offset="617">
+    <function name="VertexAttrib3fARB" offset="617" vectorequiv="VertexAttrib3fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3fvARB" offset="618">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3sARB" offset="619">
+    <function name="VertexAttrib3sARB" offset="619" vectorequiv="VertexAttrib3svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3svARB" offset="620">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4dARB" offset="621">
+    <function name="VertexAttrib4dARB" offset="621" vectorequiv="VertexAttrib4dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4dvARB" offset="622">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4fARB" offset="623">
+    <function name="VertexAttrib4fARB" offset="623" vectorequiv="VertexAttrib4fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4fvARB" offset="624">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4sARB" offset="625">
+    <function name="VertexAttrib4sARB" offset="625" vectorequiv="VertexAttrib4svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
         <param name="w" type="GLshort"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4svARB" offset="626">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
+        <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4NubARB" offset="627">
+    <function name="VertexAttrib4NubARB" offset="627" vectorequiv="VertexAttrib4NubvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
         <param name="z" type="GLubyte"/>
         <param name="w" type="GLubyte"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4NubvARB" offset="628">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
+        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4bvARB" offset="654">
@@ -8263,7 +8383,6 @@
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
-        <glx handcode="true"/>
     </function>
 
     <function name="WindowPos3fvMESA" offset="524">
@@ -9294,6 +9413,12 @@
     </function>
 </category>
 
+<category name="GL_EXT_pixel_buffer_object" number="302">
+    <enum name="PIXEL_PACK_BUFFER_EXT"                    value="0x88EB"/>
+    <enum name="PIXEL_UNPACK_BUFFER_EXT"                  value="0x88EC"/>
+    <enum name="PIXEL_PACK_BUFFER_BINDING_EXT"            value="0x88ED"/>
+    <enum name="PIXEL_UNPACK_BUFFER_BINDING_EXT"          value="0x88EF"/>
+</category>
 
 <!-- Unnumbered extensions sorted by name. -->
 
