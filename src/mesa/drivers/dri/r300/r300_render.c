@@ -127,7 +127,9 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
 		min_vertices=4;
       		break;
    	default:
-   		fprintf(stderr, "Cannot handle primitive %02x ", prim & PRIM_MODE_MASK);
+ 		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
+			__FILE__, __FUNCTION__,
+			prim & PRIM_MODE_MASK);
 		return -1;
          	break;
    	}
@@ -135,7 +137,13 @@ static int r300_get_primitive_type(r300ContextPtr rmesa,
    fprintf(stderr, "[%d-%d]%s ", start, end, name);
    #endif
    if(start+min_vertices>=end){
-	fprintf(stderr, "Not enough vertices\n");
+	static int warn_once=1;
+	if(warn_once){
+		fprintf(stderr, "%s:%s Not enough vertices to draw primitive %02x - help me !\n",
+				__FILE__, __FUNCTION__,
+				prim & PRIM_MODE_MASK);
+			warn_once=0;
+			}
 	return -1;
    	}
    return type;

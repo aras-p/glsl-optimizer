@@ -761,6 +761,28 @@ static r300TexObj default_tex_obj={
 	unknown5: 0x0
 	};
 
+	/* there is probably a system to these value, but, for now, 
+	   we just try by hand */
+static GLuint translate_texture_format(GLuint format)
+{
+	switch(format){
+	case 0x88047:
+	case 0x55047:
+		return 0x53a0c;
+	default:
+		{
+		static int warn_once=1;
+		if(warn_once){
+			fprintf(stderr, "%s:%s Do not know how to translate texture format %08x - help me !\n",
+				__FILE__, __FUNCTION__,
+				format);
+			warn_once=0;
+			}
+		}
+		return 0;
+	}
+}
+	
 void r300_setup_textures(GLcontext *ctx)
 {
 	int i, mtu;
@@ -813,33 +835,33 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
 			
 			
-			fprintf(stderr, "Want to set format %08x\n", t->format);
 			/* We don't know how to set this yet */
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c;
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88013;
+			//value from r300_lib.c for RGB24
+			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(t->format);
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
-			      #if 0
-				{ 
-				static int fmt=0;
-				static int k=0;
-				k++;
-				if(k>400){
-					k=0;
-					fmt++;
-					if(fmt>0xff){
-						exit(-1);
-						fmt=0;
+			      #if 1
+				if(r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]==0){ 
+					static int fmt=0;
+					static int k=0;
+					k++;
+					if(k>200){
+						k=0;
+						fmt++;
+						fprintf(stderr, "Want to set format %08x\n", t->format);
+						if(fmt>0xff){
+							//exit(-1);
+							fmt=0;
+							}
+						//sleep(1);
+						fprintf(stderr, "Instead trying format %08x\n", 
+							0x00a0c | (fmt<<12));
 						}
-					//sleep(1);
+					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
 					}
-				r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
-				}
 			      #endif
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c;
-			fprintf(stderr, "Instead setting format %08x\n", r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]);
-
 			
 			}
 			
