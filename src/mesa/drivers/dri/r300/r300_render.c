@@ -191,11 +191,13 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
       		break;		
 	case GL_LINE_STRIP:
    		name="LS";
-		verts_off = num_verts % 2;
+		if(num_verts < 2)
+			verts_off = num_verts;
       		break;
 	case GL_LINE_LOOP:
    		name="LL";
-		verts_off = num_verts % 2;
+		if(num_verts < 2)
+			verts_off = num_verts;
       		break;
     	case GL_TRIANGLES:
    		name="T";
@@ -685,10 +687,10 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
-
+	
    #if 1
 	
-   	#if 0
+   	#if 1
         return r300_run_immediate_render(ctx, stage);
 	#else 
         return r300_run_vb_render(ctx, stage);
@@ -779,8 +781,8 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
-	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
-	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
+	//FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
+	//FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
 	//FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
 	//if(ctx->Polygon.OffsetFill)WARN_ONCE("Polygon.OffsetFill not implemented, ignoring\n");
 	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH

@@ -502,15 +502,23 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
 		WARN_ONCE("Don't know how to enable polygon offset point/line. Help me !\n");
+		
+		/* Something is apparently blocking these from working */
+		R300_STATECHANGE(r300, unk42B4);
+		if(state){
+			r300->hw.unk42B4.cmd[1] |= ~(3<<0);
+		} else {
+			r300->hw.unk42B4.cmd[1] &= (3<<0);
+		}
 		break;
 		
 	case GL_POLYGON_OFFSET_FILL:
 		R300_STATECHANGE(r300, unk42B4);
 		if(state){
-			r300->hw.unk42B4.cmd[1] |= 3;
-			} else {
-			r300->hw.unk42B4.cmd[1] &= ~3;
-			}
+			r300->hw.unk42B4.cmd[1] |= (3<<0);
+		} else {
+			r300->hw.unk42B4.cmd[1] &= ~(3<<0);
+		}
 		break;
 		
 	case GL_VERTEX_PROGRAM_ARB:
@@ -632,10 +640,18 @@ static void r300ColorMask(GLcontext* ctx,
 static void r300PointSize(GLcontext * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
+	
+	/* TODO: Validate point size */
+	R300_STATECHANGE(r300, ps);
+	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
+		((int)(size * 6) << R300_POINTSIZE_X_SHIFT) |
+		((int)(size * 6) << R300_POINTSIZE_Y_SHIFT);
+	
+#if 0 /* r200 reg? */
 	/* This might need fixing later */
 	R300_STATECHANGE(r300, vps);
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
+#endif	
 }
 /* =============================================================
  * Stencil
@@ -1767,9 +1783,12 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
+	r300PointSize(ctx, ctx->Point.Size);
+#if 0	
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
 					     (6 << R300_POINTSIZE_Y_SHIFT);
-
+#endif	
+			
 	r300->hw.unk4230.cmd[1] = 0x01800000;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
