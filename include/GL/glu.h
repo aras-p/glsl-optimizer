@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.10 1999/09/19 10:04:01 tjump Exp $ */
+/* $Id: glu.h,v 1.11 1999/10/22 10:47:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.h,v $
+ * Revision 1.11  1999/10/22 10:47:01  brianp
+ * define GLUAPI, GLAPIENTRY and GLCALLBACK to nothing if not using Mesa's gl.h
+ *
  * Revision 1.10  1999/09/19 10:04:01  tjump
  * Changed name 'glGetProcAddressEXT' to 'gluGetProcAddressEXT'
  *
@@ -110,6 +113,18 @@ extern "C" {
 	#if PRAGMA_IMPORT_SUPPORTED
 	#pragma import on
 	#endif
+#endif
+
+#ifndef GLUAPI
+#define GLUAPI
+#endif
+
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
+
+#ifndef GLCALLBACK
+#define GLCALLBACK
 #endif
 
 
