@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.29 2000/01/28 20:17:42 brianp Exp $ */
+/* $Id: glapi.c,v 1.30 2000/01/31 22:51:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -299,13 +299,51 @@ static GLuint NumExtEntryPoints = 0;
 /*
  * Generate a dispatch function (entrypoint) which jumps through
  * the given slot number (offset) in the current dispatch table.
+ * We need assembly language in order to accomplish this.
  */
 static void *
 generate_entrypoint(GLuint offset)
 {
-   /* XXX need to generate some assembly code here */
+#if defined(USE_X86_ASM)
+   /*
+    * This x86 code contributed by Josh Vanderhoof.
+    *
+    *  0:   a1 10 32 54 76          movl   __glapi_Dispatch,%eax
+    *       00 01 02 03 04
+    *  5:   85 c0                   testl  %eax,%eax
+    *       05 06
+    *  7:   74 06                   je     f <entrypoint+0xf>
+    *       07 08
+    *  9:   ff a0 10 32 54 76       jmp    *0x76543210(%eax)
+    *       09 0a 0b 0c 0d 0e
+    *  f:   e8 fc ff ff ff          call   __glapi_get_dispatch
+    *       0f 10 11 12 13
+    * 14:   ff a0 10 32 54 76       jmp    *0x76543210(%eax)
+    *       14 15 16 17 18 19
+    */
+   static const unsigned char temp[] = {
+      0xa1, 0x00, 0x00, 0x00, 0x00,
+      0x85, 0xc0,
+      0x74, 0x06,
+      0xff, 0xa0, 0x00, 0x00, 0x00, 0x00,
+      0xe8, 0x00, 0x00, 0x00, 0x00,
+      0xff, 0xa0, 0x00, 0x00, 0x00, 0x00
+   };
+   unsigned char *code = malloc(sizeof(temp));
+   unsigned int next_insn;
+   if (code) {
+      memcpy(code, temp, sizeof(temp));
 
+      *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_Dispatch;
+      *(unsigned int *)(code + 0x0b) = (unsigned int)functionOffset * 4;
+      next_insn = (unsigned int)(code + 0x14);
+      *(unsigned int *)(code + 0x10) = (unsigned int)_glapi_get_dispatch - next_insn;
+      *(unsigned int *)(code + 0x16) = (unsigned int)functionOffset * 4;
+   }
+   return code;
+#else
    return NULL;
+#endif
 }
 
 
