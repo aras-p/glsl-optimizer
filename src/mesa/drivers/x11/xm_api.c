@@ -2269,7 +2269,7 @@ static void FXgetImage( XMesaBuffer b )
       b->mesa_buffer.Width = MIN2((int)width, b->FXctx->width);
       b->mesa_buffer.Height = MIN2((int)height, b->FXctx->height);
       if (b->mesa_buffer.Width & 1)
-         b->width--;  /* prevent odd width */
+         b->mesa_buffer.Width--;  /* prevent odd width */
       xmesa_alloc_back_buffer( b );
    }
 
