@@ -335,42 +335,6 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 	     
 
-/* This function is called by libGL.so as soon as libGL.so is loaded.
- * This is where we'd register new extension functions with the dispatcher.
- *
- * Note: Most of these are probably already registered - just doing
- * this for the benefit of old libGL.so's out there.
- */
-#include "glapioffsets.h"
-
-void __driRegisterExtensions( void )
-{
-   int i;
-   static struct { const char *name; int offset; } funcs[] = {
-	{ "glSecondaryColor3bEXT", _gloffset_SecondaryColor3bEXT },
-	{ "glSecondaryColor3dEXT", _gloffset_SecondaryColor3dEXT },
-	{ "glSecondaryColor3fEXT", _gloffset_SecondaryColor3fEXT },
-	{ "glSecondaryColor3iEXT", _gloffset_SecondaryColor3iEXT },
-	{ "glSecondaryColor3sEXT", _gloffset_SecondaryColor3sEXT },
-	{ "glSecondaryColor3ubEXT", _gloffset_SecondaryColor3ubEXT },
-	{ "glSecondaryColor3uiEXT", _gloffset_SecondaryColor3uiEXT },
-	{ "glSecondaryColor3usEXT", _gloffset_SecondaryColor3usEXT },
-	{ "glSecondaryColor3bvEXT", _gloffset_SecondaryColor3bvEXT },
-	{ "glSecondaryColor3dvEXT", _gloffset_SecondaryColor3dvEXT },
-	{ "glSecondaryColor3fvEXT", _gloffset_SecondaryColor3fvEXT },
-	{ "glSecondaryColor3ivEXT", _gloffset_SecondaryColor3ivEXT },
-	{ "glSecondaryColor3svEXT", _gloffset_SecondaryColor3svEXT },
-	{ "glSecondaryColor3ubvEXT", _gloffset_SecondaryColor3ubvEXT },
-	{ "glSecondaryColor3uivEXT", _gloffset_SecondaryColor3uivEXT },
-	{ "glSecondaryColor3usvEXT", _gloffset_SecondaryColor3usvEXT },
-	{ "glSecondaryColorPointerEXT", _gloffset_SecondaryColorPointerEXT }
-   };
-
-   for (i = 0 ; i < sizeof(funcs) / sizeof(*funcs) ; i++ ) 
-      _glapi_add_entrypoint( funcs[i].name, funcs[i].offset );
-}
-
-
 #ifdef USE_NEW_INTERFACE
 static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 					 unsigned pixel_bits, 
