@@ -41,6 +41,7 @@ SOURCES =accum.c \
 	feedback.c \
 	fog.c \
 	get.c \
+	getstring.c \
 	hash.c \
 	hint.c \
 	histogram.c \
@@ -92,6 +93,7 @@ extensions.obj,\
 feedback.obj,\
 fog.obj,\
 get.obj,\
+getstring.obj,\
 hash.obj,\
 hint.obj,\
 histogram.obj,\
@@ -157,6 +159,7 @@ extensions.obj : extensions.c
 feedback.obj : feedback.c
 fog.obj : fog.c
 get.obj : get.c
+getstring.obj : getstring.c
 hash.obj : hash.c
 hint.obj : hint.c
 histogram.obj : histogram.c
