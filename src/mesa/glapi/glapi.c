@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.65 2002/10/11 17:41:04 brianp Exp $ */
+/* $Id: glapi.c,v 1.66 2002/10/17 16:29:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -638,7 +638,7 @@ fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
    __glapi_sparc_icache_flush(&code[6]);
 #else /* __sparc_v9__ */
    code[2] = 0xc6006000;  /* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
-   code[2] |= (functionOffset * 4);
+   code[2] |= (offset * 4);
    __glapi_sparc_icache_flush(&code[2]);
 #endif /* __sparc_v9__ */
 
