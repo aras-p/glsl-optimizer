@@ -1,4 +1,4 @@
-/* $Id: manywin.c,v 1.3 2001/01/23 23:45:05 brianp Exp $ */
+/* $Id: manywin.c,v 1.4 2001/04/27 21:19:13 brianp Exp $ */
 
 /*
  * Create N GLX windows/contexts and render to them in round-robin
@@ -142,7 +142,7 @@ AddHead(const char *displayName, const char *name)
    if (!glXMakeCurrent(dpy, win, ctx)) {
       Error(displayName, "glXMakeCurrent failed");
       printf("glXMakeCurrent failed in Redraw()\n");
-      return;
+      return NULL;
    }
 
    /* save the info for this head */
@@ -281,9 +281,9 @@ static void
 PrintInfo(const struct head *h)
 {
    printf("Name: %s\n", h->DisplayName);
-   printf("  Display:     0x%x\n", h->Dpy);
-   printf("  Window:      0x%x\n", h->Win);
-   printf("  Context:     0x%x\n", h->Context);
+   printf("  Display:     %p\n", h->Dpy);
+   printf("  Window:      0x%x\n", (int) h->Win);
+   printf("  Context:     0x%x\n", (int) h->Context);
    printf("  GL_VERSION:  %s\n", h->Version);
    printf("  GL_VENDOR:   %s\n", h->Vendor);
    printf("  GL_RENDERER: %s\n", h->Renderer);
@@ -293,9 +293,10 @@ PrintInfo(const struct head *h)
 int
 main(int argc, char *argv[])
 {
+   char *dpyName = NULL;
    int i;
+
    if (argc == 1) {
-      struct head *h;
       printf("manywin: open N simultaneous glx windows\n");
       printf("Usage:\n");
       printf("  manywin [-s] numWindows\n");
@@ -311,6 +312,10 @@ main(int argc, char *argv[])
          if (strcmp(argv[i], "-s") == 0) {
             SwapSeparate = GL_FALSE;
          }
+         else if (strcmp(argv[i], "-display") == 0 && i < argc) {
+            dpyName = argv[i+1];
+            i++;
+         }
          else {
             n = atoi(argv[i]);
          }
@@ -323,7 +328,7 @@ main(int argc, char *argv[])
          char name[100];
          struct head *h;
          sprintf(name, "%d", i);
-         h = AddHead(NULL, name);
+         h = AddHead(dpyName, name);
          if (h) {
             PrintInfo(h);
          }
