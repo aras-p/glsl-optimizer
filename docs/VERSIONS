@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.76 2001/12/18 14:08:23 brianp Exp $
+$Id: VERSIONS,v 1.77 2001/12/19 01:29:58 brianp Exp $
 
 
 Mesa Version History
@@ -925,6 +925,7 @@ Mesa Version History
 	- glTexParameter didn't flush the vertex buffer (Ray Tice)
 	- feedback attributes for glDraw/CopyPixels and glBitmap were wrong
 	- fixed bug in normal length caching (ParaView lighting bug)
+	- fixed separate_specular color bug found in Chimera (18 Dec 2001)
 
 
 4.1  Month, ??, 2002
