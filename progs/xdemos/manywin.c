@@ -1,6 +1,7 @@
 /*
- * Create N GLX windows/contexts and render to them in round-robin
- * order.
+ * Create N GLX windows/contexts and render to them in round-robin order.
+ * Also, have the contexts share all texture objects.
+ * Press 'd' to delete a texture, 'u' to unbind it.
  *
  * Copyright (C) 2000  Brian Paul   All Rights Reserved.
  * 
@@ -25,10 +26,12 @@
 
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <X11/keysym.h>
 
 
 /*
@@ -50,7 +53,7 @@ struct head {
 static struct head Heads[MAX_HEADS];
 static int NumHeads = 0;
 static GLboolean SwapSeparate = GL_TRUE;
-
+static GLuint TexObj = 0;
 
 
 static void
@@ -129,8 +132,14 @@ AddHead(const char *displayName, const char *name)
                               None, (char **)NULL, 0, &sizehints);
    }
 
-
-   ctx = glXCreateContext(dpy, visinfo, NULL, True);
+   if (NumHeads == 0) {
+      ctx = glXCreateContext(dpy, visinfo, NULL, True);
+   }
+   else {
+      /* share textures & dlists with 0th context */
+      printf("sharing\n");
+      ctx = glXCreateContext(dpy, visinfo, Heads[0].Context, True);
+   }
    if (!ctx) {
       Error(displayName, "Couldn't create GLX context");
       return NULL;
@@ -143,6 +152,27 @@ AddHead(const char *displayName, const char *name)
       printf("glXMakeCurrent failed in Redraw()\n");
       return NULL;
    }
+
+   if (NumHeads == 0) {
+      /* create texture object now */
+      static const GLubyte checker[2][2][4] = {
+         { {255, 255, 255, 255}, {  0,   0,   0, 255} },
+         { {  0,   0,   0,   0}, {255, 255, 255, 255} }
+      };
+      glGenTextures(1, &TexObj);
+      assert(TexObj);
+      glBindTexture(GL_TEXTURE_2D, TexObj);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGB,
+                   GL_UNSIGNED_BYTE, checker);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   }
+   else {
+      /* bind 0th context's texture in this context too */
+      assert(TexObj);
+      glBindTexture(GL_TEXTURE_2D, TexObj);
+   }
+   glEnable(GL_TEXTURE_2D);
 
    /* save the info for this head */
    {
@@ -194,9 +224,9 @@ Redraw(struct head *h)
    glPushMatrix();
    glRotatef(h->Angle, 0, 0, 1);
    glBegin(GL_TRIANGLES);
-   glVertex2f(0, 0.8);
-   glVertex2f(-0.8, -0.7);
-   glVertex2f(0.8, -0.7);
+   glTexCoord2f(0.5, 1.0);   glVertex2f(0, 0.8);
+   glTexCoord2f(0.0, 0.0);   glVertex2f(-0.8, -0.7);
+   glTexCoord2f(1.0, 0.0);   glVertex2f(0.8, -0.7);
    glEnd();
    glPopMatrix();
 
@@ -249,7 +279,30 @@ EventLoop(void)
                      Resize(h, event.xconfigure.width, event.xconfigure.height);
                      break;
                   case KeyPress:
-                     return;
+                     {
+                        char buf[100];
+                        KeySym keySym;
+                        XComposeStatus stat;
+                        XLookupString(&event.xkey, buf, sizeof(buf), &keySym, &stat);
+                        switch (keySym) {
+                           case XK_Escape:
+                              exit(0);
+                              break;
+                           case XK_d:
+                           case XK_D:
+                              printf("Delete Texture in window %d\n", i);
+                              glXMakeCurrent(h->Dpy, h->Win, h->Context);
+                              glDeleteTextures(1, &TexObj);
+                              break;
+                           case XK_u:
+                           case XK_U:
+                              printf("Unbind Texture in window %d\n", i);
+                              glXMakeCurrent(h->Dpy, h->Win, h->Context);
+                              glBindTexture(GL_TEXTURE_2D, 0);
+                              break;
+                        }
+                     }
+                     break;
                   default:
                      /*no-op*/ ;
                }
