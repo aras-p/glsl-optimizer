@@ -12,7 +12,8 @@
 <!ATTLIST category name   CDATA #REQUIRED
                    number CDATA #IMPLIED>
 <!ATTLIST type     name   CDATA #REQUIRED
-                   size   CDATA #REQUIRED>
+                   size   CDATA #REQUIRED
+                   glx_name CDATA #IMPLIED>
 <!ATTLIST enum     name   CDATA #REQUIRED
                    value  CDATA #REQUIRED>
 <!ATTLIST function name   CDATA #REQUIRED
@@ -735,24 +736,24 @@ glx:
     <enum name="SCISSOR_BIT"                              value="0x00080000"/>
     <enum name="ALL_ATTRIB_BITS"                          value="0x000FFFFF"/>
 
-    <type name="double"  size="8"/>
-    <type name="clampd"  size="8"/>
+    <type name="double"  size="8"  glx_name="FLOAT64"/>
+    <type name="clampd"  size="8"  glx_name="FLOAT64"/>
 
-    <type name="float"   size="4"/>
-    <type name="clampf"  size="4"/>
+    <type name="float"   size="4"  glx_name="FLOAT32"/>
+    <type name="clampf"  size="4"  glx_name="FLOAT32"/>
 
-    <type name="int"     size="4"/>
-    <type name="uint"    size="4"/>
-    <type name="sizei"   size="4"/>
-    <type name="enum"    size="4"/>
-    <type name="bitfield" size="4"/>
+    <type name="int"     size="4"  glx_name="CARD32"/>
+    <type name="uint"    size="4"  glx_name="CARD32"/>
+    <type name="sizei"   size="4"  glx_name="CARD32"/>
+    <type name="enum"    size="4"  glx_name="ENUM"/>
+    <type name="bitfield" size="4" glx_name="CARD32"/>
 
-    <type name="short"   size="2"/>
-    <type name="ushort"  size="2"/>
+    <type name="short"   size="2"  glx_name="CARD16"/>
+    <type name="ushort"  size="2"  glx_name="CARD16"/>
 
-    <type name="byte"    size="1"/>
-    <type name="ubyte"   size="1"/>
-    <type name="boolean" size="1"/>
+    <type name="byte"    size="1"  glx_name="CARD8"/>
+    <type name="ubyte"   size="1"  glx_name="CARD8"/>
+    <type name="boolean" size="1"  glx_name="CARD8"/>
     
     <type name="void"    size="0"/>
 

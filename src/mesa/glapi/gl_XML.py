@@ -105,6 +105,7 @@ class glType( glItem ):
 
 	def __init__(self, context, name, attrs):
 		self.size = int(attrs.get('size', "0"))
+		self.glx_name = attrs.get('glx_name', "")
 
 		type_name = "GL" + attrs.get('name', None)
 		glItem.__init__(self, name, type_name, context)
