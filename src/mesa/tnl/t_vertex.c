@@ -973,14 +973,13 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
       vtx->attr[i].insert = format_info[format].insert;
       vtx->attr[i].extract = format_info[format].extract;
       vtx->attr[i].vertattrsize = format_info[format].attrsize;
-      if (!unpacked_size) {
-	 vtx->attr[i].vertoffset = offset;
-	 offset += format_info[format].attrsize;
-      }
-      else {
+
+      if (unpacked_size) 
 	 vtx->attr[i].vertoffset = map[i].offset;
-	 assert(map[i].offset + format_info[format].attrsize < unpacked_size);
-      }
+      else
+	 vtx->attr[i].vertoffset = offset;
+
+      offset += format_info[format].attrsize;
    }
 
    if (unpacked_size)
