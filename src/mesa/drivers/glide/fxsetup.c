@@ -1,4 +1,4 @@
-/* $Id: fxsetup.c,v 1.41 2003/10/09 15:12:21 dborca Exp $ */
+/* $Id: fxsetup.c,v 1.42 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -549,6 +549,12 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       }
       break;
    case GL_BLEND:
+#if 1
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	 fprintf(stderr, "%s: GL_BLEND not quite supported\n", __FUNCTION__);
+      }
+      return;
+#else
       /*
        * XXX we can't do real GL_BLEND mode.  These settings assume that
        * the TexEnv color is black and incoming fragment color is white.
@@ -584,10 +590,8 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
          colorComb.Invert = FXTRUE;
       }
       /* XXX return GL_FALSE for modes we don't support */
-      if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s: GL_BLEND not quite supported\n", __FUNCTION__);
-      }
       break;
+#endif
    case GL_REPLACE:
       if ((ifmt == GL_RGB) || (ifmt == GL_LUMINANCE)) {
          alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;

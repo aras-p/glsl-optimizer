@@ -1,4 +1,4 @@
-/* $Id: fxglidew.c,v 1.22 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxglidew.c,v 1.23 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -205,11 +205,11 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       } else if (strstr(extension, "Voodoo5")) {
          config->SSTs[i].type = GR_SSTTYPE_Voodoo5;
       } else { /* Voodoo1,2,rush */
-         /* ZZZ TO DO */
+         /* ZZZ TO DO: Need to distinguish whether we have V1 or V2 or Rush. */
          config->SSTs[i].type = GR_SSTTYPE_VOODOO;
       }
 
-      grGet(GR_MEMORY_FB, 4, &result);
+      grGet(GR_MEMORY_FB, 4, &result); /* ZZZ: differs after grSstWinOpen */
       config->SSTs[i].fbRam = result / (1024 * 1024);
 
       grGet(GR_NUM_TMU, 4, &result);
@@ -219,7 +219,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       config->SSTs[i].fbiRev = result;
 
       for (j = 0; j < config->SSTs[i].nTexelfx; j++) {
-	 grGet(GR_MEMORY_TMU, 4, &result);
+	 grGet(GR_MEMORY_TMU, 4, &result); /* ZZZ: differs after grSstWinOpen */
 	 config->SSTs[i].tmuConfig[j].tmuRam = result / (1024 * 1024);
 	 grGet(GR_REVISION_TMU, 4, &result);
 	 config->SSTs[i].tmuConfig[j].tmuRev = result;
@@ -232,12 +232,10 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       config->SSTs[i].HaveMirExt = (strstr(extension, " TEXMIRROR ") != NULL);
       config->SSTs[i].HaveTexus2 = GL_FALSE;
 
-      /* need to get the number of SLI units for napalm */
+      /* number of Voodoo chips */
       grGet(GR_NUM_FB, 4, (void *) &numFB);
       config->SSTs[i].numChips = numFB;
-      /* this can only be useful for Voodoo2:
-       * sliDetect = ((config->SSTs[i].type == GR_SSTTYPE_Voodoo2) && (numFB > 1));
-       */
+
    }
 
    tdfx_hook_glide(&config->Glide);

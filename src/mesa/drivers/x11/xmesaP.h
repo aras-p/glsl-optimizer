@@ -40,7 +40,7 @@
 #include "mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
-#include "FX/fxdrv.h"
+#include "../glide/fxdrv.h"
 #endif
 
 

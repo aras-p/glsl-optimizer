@@ -1,4 +1,4 @@
-/* $Id: fxwgl.c,v 1.18 2003/10/02 17:36:45 brianp Exp $ */
+/* $Id: fxwgl.c,v 1.19 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -166,7 +166,7 @@ struct __pixelformat__ pix[] = {
      FXMESA_NONE}
    }
    ,
-#if 1
+#if 0
   /* 24bit RGB888 single buffer with depth */
    {
     {sizeof(PIXELFORMATDESCRIPTOR), 1,

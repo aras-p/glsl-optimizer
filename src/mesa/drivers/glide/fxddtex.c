@@ -1,4 +1,4 @@
-/* $Id: fxddtex.c,v 1.49 2003/10/09 15:12:21 dborca Exp $ */
+/* $Id: fxddtex.c,v 1.50 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -511,7 +511,6 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
 	     float *sscale, float *tscale,
 	     int *wscale, int *hscale)
 {
-   /* [koolsmoky] */
    static GrLOD_t lod[12] = {
           GR_LOD_LOG2_1,
           GR_LOD_LOG2_2,
@@ -983,10 +982,8 @@ fxGlideFormat(GLint mesaFormat)
       return GR_TEXFMT_ARGB_4444;
    case MESA_FORMAT_ARGB1555:
       return GR_TEXFMT_ARGB_1555;
-#if 1 /* [koolsmoky] getting ready for 32bpp textures */
    case MESA_FORMAT_ARGB8888:
       return GR_TEXFMT_ARGB_8888;
-#endif
 #if 0
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
@@ -1027,10 +1024,8 @@ fxFetchFunction(GLint mesaFormat)
       return fetch_r4g4b4a4;
    case MESA_FORMAT_ARGB1555:
       return fetch_r5g5b5a1;
-#if 1 /* [koolsmoky] getting ready for 32bpp textures */
    case MESA_FORMAT_ARGB8888:
       return fetch_a8r8g8b8;
-#endif
 #if 0
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:

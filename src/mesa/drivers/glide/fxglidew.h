@@ -1,4 +1,4 @@
-/* $Id: fxglidew.h,v 1.17 2003/10/09 15:12:21 dborca Exp $ */
+/* $Id: fxglidew.h,v 1.18 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,7 +71,7 @@ typedef struct {
                int fbRam;	/* 1, 2, or 4 MB */
                int fbiRev;	/* Rev of Pixelfx chip */
                int nTexelfx;	/* How many texelFX chips are there? */
-               int numChips;	/* Number of Voodoo chips [koolsmoky] */
+               int numChips;	/* Number of Voodoo chips */
                GrTMUConfig_t tmuConfig[GLIDE_NUM_TMU];	/* Configuration of the Texelfx chips */
                /* Glide3 extensions */
                FxBool HavePixExt;	/* PIXEXT */

@@ -2,7 +2,7 @@
  * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
  */
 
-/* $Id: fxdd.c,v 1.101 2003/10/09 15:12:21 dborca Exp $ */
+/* $Id: fxdd.c,v 1.102 2003/10/13 11:14:58 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1237,7 +1237,6 @@ fx_check_IsInHardware(GLcontext * ctx)
 	 return FX_FALLBACK_TEXTURE_1D_3D;
 
       if (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) {
-#if 0
 	 if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
 	     (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT ||
 	      ctx->Texture.Unit[0].EnvColor[0] != 0 ||
@@ -1246,16 +1245,13 @@ fx_check_IsInHardware(GLcontext * ctx)
 	      ctx->Texture.Unit[0].EnvColor[3] != 1)) {
 	    return FX_FALLBACK_TEXTURE_ENV;
 	 }
-#endif
 	 if (ctx->Texture.Unit[0]._Current->Image[0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 
       if (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) {
-#if 0
 	 if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
 	    return FX_FALLBACK_TEXTURE_ENV;
-#endif
 	 if (ctx->Texture.Unit[1]._Current->Image[0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
@@ -1293,12 +1289,10 @@ fx_check_IsInHardware(GLcontext * ctx)
 	 return FX_FALLBACK_TEXTURE_MULTI;
       }
 
-#if 0
       if ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
 	  (ctx->Texture.Unit[0].EnvMode == GL_BLEND)) {
 	 return FX_FALLBACK_TEXTURE_ENV;
       }
-#endif
    }
 
    return 0;

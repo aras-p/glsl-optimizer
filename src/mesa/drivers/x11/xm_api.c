@@ -1775,7 +1775,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
        int hw;
        if (v->mesa_visual.depthBits > 0) {
 	 attribs[numAttribs++] = FXMESA_DEPTH_SIZE;
-	 attribs[numAttribs++] = 1;
+	 attribs[numAttribs++] = v->mesa_visual.depthBits;
        }
        if (v->mesa_visual.doubleBufferMode) {
 	 attribs[numAttribs++] = FXMESA_DOUBLEBUFFER;
@@ -1790,16 +1790,16 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
        }
        if (v->mesa_visual.alphaBits > 0) {
          attribs[numAttribs++] = FXMESA_ALPHA_SIZE;
-         attribs[numAttribs++] = 1;
+         attribs[numAttribs++] = v->mesa_visual.alphaBits;
        }
        if (1) {
-#define FXMESA_SHARE_CONTEXT 990099  /* keep in sync with fxapi.c! */
          attribs[numAttribs++] = FXMESA_SHARE_CONTEXT;
          attribs[numAttribs++] = (int) &(c->mesa);
        }
        attribs[numAttribs++] = FXMESA_NONE;
 
-       if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
+       /* [dBorca] need to revise this ASAP!!! */
+       /*if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
          b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
          if ((v->undithered_pf!=PF_Index) && (b->backimage)) {
 	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
@@ -1809,7 +1809,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 	     b->FXwindowHack = GL_FALSE;
          }
        }
-       else {
+       else */{
          if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
 	   b->FXctx = fxMesaCreateContext(w, GR_RESOLUTION_NONE,
 					  GR_REFRESH_75Hz, attribs);
