@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: gl.h,v 1.2 1999/09/11 11:26:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1859,7 +1859,7 @@ GLAPI void GLAPIENTRY glPopName( void );
 
 
 /*
- * 1.0 Extensions
+ * Extensions
  */
 
 /* GL_EXT_blend_minmax */
@@ -2187,6 +2187,12 @@ GLAPI void GLAPIENTRY glLockArraysEXT( GLint first, GLsizei count );
 GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 
 
+/* GL_EXT_get_proc_address */
+typedef void (*GLfunction)();
+GLAPI GLfunction GLAPIENTRY glGetProcAddressEXT( const GLubyte *procName );
+
+
+
 #if defined(__BEOS__) || defined(__QUICKDRAW__)
 #pragma export off
 #endif
@@ -2218,6 +2224,7 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 #define GL_PGI_misc_hints               1
 #define GL_EXT_compiled_vertex_array    1
 #define GL_EXT_clip_volume_hint         1
+#define GL_EXT_get_proc_address         1
 
 
 #ifdef macintosh
