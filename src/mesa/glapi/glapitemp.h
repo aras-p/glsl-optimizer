@@ -3800,9 +3800,9 @@ KEYWORD1 GLint KEYWORD2 NAME(GetUniformLocationARB)(GLhandleARB programObj, cons
    RETURN_DISPATCH(GetUniformLocationARB, (programObj, name), (F, "glGetUniformLocationARB(%d, %p);\n", programObj, (const void *) name));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetActiveUniformARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * lenght, GLint * size, GLenum * type, GLcharARB * name)
+KEYWORD1 void KEYWORD2 NAME(GetActiveUniformARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, GLcharARB * name)
 {
-   DISPATCH(GetActiveUniformARB, (programObj, index, maxLength, lenght, size, type, name), (F, "glGetActiveUniformARB(%d, %d, %d, %p, %p, %p, %p);\n", programObj, index, maxLength, (const void *) lenght, (const void *) size, (const void *) type, (const void *) name));
+   DISPATCH(GetActiveUniformARB, (programObj, index, maxLength, length, size, type, name), (F, "glGetActiveUniformARB(%d, %d, %d, %p, %p, %p, %p);\n", programObj, index, maxLength, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetUniformfvARB)(GLhandleARB programObj, GLint location, GLfloat * params)
