@@ -475,7 +475,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
        */
       if (tnl->save.currentsz[attr] == 0) {
 	 assert(oldsz == 0);
-	 tnl->save.dangling_attr_ref = attr;
+	 tnl->save.dangling_attr_ref = GL_TRUE;
 	 _mesa_debug(0, "_save_upgrade_vertex: dangling reference attr %d\n", 
                      attr); 
 
@@ -680,11 +680,12 @@ static void _save_reset_vertex( GLcontext *ctx )
    save_init_13( tnl );
    save_init_14( tnl );
    save_init_15( tnl );
-
+      
    for (i = 0 ; i < _TNL_ATTRIB_MAX ; i++)
       tnl->save.attrsz[i] = 0;
-
+      
    tnl->save.vertex_size = 0;
+   tnl->save.have_materials = 0;
 
    _save_reset_counters( ctx ); 
 }
@@ -989,6 +990,7 @@ static void GLAPIENTRY _save_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 do {							\
    if (tnl->save.attrsz[A] < N) {			\
       _save_upgrade_vertex( ctx, A, N );		\
+      tnl->save.have_materials = GL_TRUE;               \
    }							\
 							\
    {							\

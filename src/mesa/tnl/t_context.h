@@ -255,6 +255,7 @@ struct tnl_vtx {
    attrfv_func tabfv[_TNL_ATTRIB_MAX][4];
    struct tnl_eval eval;
    GLboolean *edgeflag_tmp;
+   GLboolean have_materials;
 };
 
 
@@ -282,7 +283,8 @@ struct tnl_vertex_list {
    GLfloat *buffer;
    GLuint count;
    GLuint wrap_count;		/* number of copied vertices at start */
-   GLuint dangling_attr_ref;	/* current attr implicitly referenced 
+   GLboolean have_materials;	/* bit of a hack - quick check for materials */
+   GLboolean dangling_attr_ref;	/* current attr implicitly referenced 
 				   outside the list */
 
    GLfloat *normal_lengths;
@@ -333,7 +335,8 @@ struct tnl_save {
    GLfloat vertex[_TNL_ATTRIB_MAX*4];	   /* current values */
    GLfloat *attrptr[_TNL_ATTRIB_MAX];
    GLuint counter, initial_counter;
-   GLuint dangling_attr_ref;
+   GLboolean dangling_attr_ref;
+   GLboolean have_materials;
 
    GLuint opcode_vertex_list;
 

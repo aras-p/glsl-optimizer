@@ -132,7 +132,11 @@ static void _tnl_copy_to_current( GLcontext *ctx )
    if (ctx->Light.ColorMaterialEnabled) {
       _mesa_update_color_material(ctx, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
    }
-   
+
+   if (tnl->vtx.have_materials) {
+      tnl->Driver.NotifyMaterialChange( ctx );
+   }
+         
    ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
 }
 
@@ -193,15 +197,12 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
    /* Heuristic: Attempt to isolate attributes received outside
     * begin/end so that they don't bloat the vertices.
     */
-#if 1
    if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END &&
        tnl->vtx.attrsz[attr] == 0 
        && lastcount > 8
       ) {
       init_attrfv( tnl );
    }
-#endif
-      
 
    /* Fix up sizes:
     */
@@ -430,13 +431,7 @@ ATTRS( 14 )
 ATTRS( 15 )
 
 static void init_attrfv( TNLcontext *tnl )
-{
-#if defined( WIN32 ) || defined( __VMS )
-   if (0) fprintf(stderr, "%s %d\n", "init_attrfv", tnl->vtx.vertex_size);
-#else
-   if (0) fprintf(stderr, "%s %d\n", __FUNCTION__, tnl->vtx.vertex_size);
-#endif
-   
+{   
    if (tnl->vtx.vertex_size) {
       GLuint i;
       
@@ -461,6 +456,7 @@ static void init_attrfv( TNLcontext *tnl )
 	 tnl->vtx.attrsz[i] = 0;
 
       tnl->vtx.vertex_size = 0;
+      tnl->vtx.have_materials = 0;
    }
 }
 
@@ -762,6 +758,7 @@ static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 do {							\
    if (tnl->vtx.attrsz[A] != N) {			\
       _tnl_fixup_vertex( ctx, A, N );			\
+      tnl->vtx.have_materials = GL_TRUE;		\
    }							\
 							\
    {							\
@@ -984,13 +981,11 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 	 return;
       }
 
-#if 1
       /* Heuristic: attempt to isolate attributes occuring outside
        * begin/end pairs.
        */
       if (tnl->vtx.vertex_size && !tnl->vtx.attrsz[0]) 
 	 _tnl_FlushVertices( ctx, ~0 );
-#endif
 
       i = tnl->vtx.prim_count++;
       tnl->vtx.prim[i].mode = mode | PRIM_BEGIN;
@@ -1111,14 +1106,8 @@ void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
 
    if (tnl->vtx.counter != tnl->vtx.initial_counter) {
       _tnl_flush_vtx( ctx );
-#if 0
-      init_0(tnl);
-#endif
    }
 
-#if 0
-   if (flags & FLUSH_UPDATE_CURRENT)
-#endif
    {
       _tnl_copy_to_current( ctx );
 

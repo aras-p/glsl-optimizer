@@ -149,6 +149,10 @@ static void _playback_copy_to_current( GLcontext *ctx,
       _mesa_update_color_material(ctx, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
    }
 
+   if (node->have_materials) {
+      tnl->Driver.NotifyMaterialChange( ctx );
+   }
+
    /* CurrentExecPrimitive
     */
    if (node->prim_count) {
