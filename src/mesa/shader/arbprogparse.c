@@ -3865,7 +3865,18 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       _mesa_free (strz);
       grammar_get_last_error ((GLubyte *) error_msg, 300, &error_pos);
       _mesa_set_program_error (ctx, error_pos, error_msg);
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Parse Error");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "glProgramStringARB(syntax error)");
+
+      /* useful for debugging */
+      if (0) {
+         int line, col;
+         char *s;
+         printf("Program: %s\n", strz);
+         printf("Error Pos: %d\n", ctx->Program.ErrorPos);
+         s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos, &line, &col);
+         printf("line %d col %d: %s\n", line, col, s);
+      }
+
       grammar_destroy (arbprogram_syn_id);
       return 1;
    }
@@ -3907,7 +3918,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    /* Check the grammer rev */
    if (*inst++ != REVISION) {
       _mesa_set_program_error (ctx, 0, "Grammar version mismatch");
-      _mesa_error (ctx, GL_INVALID_OPERATION, "Grammar version mismatch");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "glProgramStringARB(Grammar verison mismatch)");
       err = 1;
    }
    else {
