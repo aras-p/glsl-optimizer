@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.46 2000/11/03 15:01:38 brianp Exp $ */
+/* $Id: gl.h,v 1.47 2000/11/03 15:14:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2249,6 +2249,8 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 #define GL_TRACE_ARRAYS_BIT_MESA		0x0008
 #define GL_TRACE_TEXTURES_BIT_MESA		0x0010
 #define GL_TRACE_PIXELS_BIT_MESA		0x0020
+#define GL_TRACE_MASK_MESA			0x8755
+#define GL_TRACE_NAME_MESA			0x8756
 
 GLAPI void GLAPIENTRY glEnableTrace( GLbitfield mask );
 GLAPI void GLAPIENTRY glDisableTrace( GLbitfield mask );
