@@ -235,7 +235,7 @@ static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
 
 	ggiGetMode(ctx->ggi_vis, &mode);
 	
-	info->depth_bits = DEPTH_BITS;
+	info->depth_bits = DEFAULT_SOFTWARE_DEPTH_BITS;
 	info->stencil_bits = STENCIL_BITS;
 	info->accum_bits = ACCUM_BITS;
 

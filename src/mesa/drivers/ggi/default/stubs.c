@@ -325,9 +325,9 @@ void GGIupdate_state(GLcontext *ctx)
 
 void GGItriangle_flat(GLcontext *ctx,GLuint v0,GLuint v1,GLuint v2,GLuint pv)
 {
-#define INTERP_Z 1
-#define INTERP_RGB 1
-#define INTERP_ALPHA 1
+//#define INTERP_Z 1
+//#define INTERP_RGB 1
+//#define INTERP_ALPHA 1
 	
 #define SETUP_CODE			\
 	GLubyte r = VB->ColorPtr->data[pv][0];	\
@@ -343,10 +343,10 @@ void GGItriangle_flat(GLcontext *ctx,GLuint v0,GLuint v1,GLuint v2,GLuint pv)
 }
 
 
-void GGItriangle_flat_depth(GLcontext *ctx,GLuint v0,GLuint v1,
-			    GLuint v2,GLuint pv)
+void GGItriangle_flat_depth(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv)
 {
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 
 #define SETUP_CODE			\
 	GLubyte r = VB->ColorPtr->data[pv][0];	\
