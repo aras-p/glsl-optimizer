@@ -113,7 +113,7 @@ static void Display( void )
                                     /* doesn't clear the result flag! */
    glColorMask(0, 0, 0, 0);
    glDepthMask(GL_FALSE);
-   /* this call clear's the result flag */
+   /* this call clear's the result flag.  Not really needed for this demo. */
    glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP, &result);
 
    glBegin(GL_POLYGON);
