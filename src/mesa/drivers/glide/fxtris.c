@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.22 2003/06/16 14:30:57 brianp Exp $ */
+/* $Id: fxtris.c,v 1.23 2003/09/23 14:41:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -746,8 +746,7 @@ static void fxRasterPrimitive( GLcontext *ctx, GLenum prim )
 
 
 
-/* Determine the rasterized primitive when not drawing unfilled 
- * polygons.
+/* Determine the rasterized primitive when drawing filled polygons.
  */
 static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 {
@@ -756,7 +755,9 @@ static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 
    fxMesa->render_primitive = prim;
 
-   if (rprim == GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
+   if (rprim == GL_TRIANGLES &&
+       (ctx->Polygon.FrontMode != GL_FILL ||
+        ctx->Polygon.BackMode != GL_FILL))
       return;
        
    if (fxMesa->raster_primitive != rprim) {
