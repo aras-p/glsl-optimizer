@@ -1288,3 +1288,4 @@ Mesa Version History
 	- fixed a matrix classification bug (reported by Wes Bethel)
 	- we weren't reseting the vertex/fragment program error state
 	   before parsing (Dave Reveman)
+	- adjust texcoords for sampling texture rectangles (Dave Reveman)
