@@ -2064,12 +2064,12 @@ glx:
 
     <function name="Disable" offset="214">
         <param name="cap" type="GLenum"/>
-        <glx rop="138" handcode="true"/>
+        <glx rop="138" handcode="client"/>
     </function>
 
     <function name="Enable" offset="215">
         <param name="cap" type="GLenum"/>
-        <glx rop="139" handcode="true"/>
+        <glx rop="139" handcode="client"/>
     </function>
 
     <function name="Finish" offset="216">
@@ -2293,13 +2293,13 @@ glx:
     <function name="PixelStoref" offset="249">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
-        <glx sop="109" handcode="true"/>
+        <glx sop="109" handcode="client"/>
     </function>
 
     <function name="PixelStorei" offset="250">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
-        <glx sop="110" handcode="true"/>
+        <glx sop="110" handcode="client"/>
     </function>
 
     <function name="PixelMapfv" offset="251">
@@ -2360,7 +2360,7 @@ glx:
     <function name="GetBooleanv" offset="258">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLboolean *" output="true"/>
-        <glx sop="112" handcode="true"/>
+        <glx sop="112" handcode="client"/>
     </function>
 
     <function name="GetClipPlane" offset="259">
@@ -2372,24 +2372,24 @@ glx:
     <function name="GetDoublev" offset="260">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *" output="true"/>
-        <glx sop="114" handcode="true"/>
+        <glx sop="114" handcode="client"/>
     </function>
 
     <function name="GetError" offset="261">
         <return type="GLenum"/>
-        <glx sop="115" handcode="true"/>
+        <glx sop="115" handcode="client"/>
     </function>
 
     <function name="GetFloatv" offset="262">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
-        <glx sop="116" handcode="true"/>
+        <glx sop="116" handcode="client"/>
     </function>
 
     <function name="GetIntegerv" offset="263">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
-        <glx sop="117" handcode="true"/>
+        <glx sop="117" handcode="client"/>
     </function>
 
     <function name="GetLightfv" offset="264">
@@ -2547,7 +2547,7 @@ glx:
     <function name="IsEnabled" offset="286">
         <param name="cap" type="GLenum"/>
         <return type="GLboolean"/>
-        <glx sop="140" handcode="true"/>
+        <glx sop="140" handcode="client"/>
     </function>
 
     <function name="IsList" offset="287">
@@ -2827,7 +2827,7 @@ glx:
         <param name="mode" type="GLenum"/>
         <param name="first" type="GLint"/>
         <param name="count" type="GLsizei"/>
-        <glx handcode="true"/>
+        <glx rop="193" handcode="true"/>
     </function>
 
     <function name="DrawElements" offset="311">
@@ -4887,7 +4887,7 @@ glx:
         <param name="border" type="GLint"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="216" handcode="true"/>
+        <glx rop="216" handcode="client"/>
     </function>
 
     <function name="CompressedTexImage2DARB" offset="555">
@@ -4899,7 +4899,7 @@ glx:
         <param name="border" type="GLint"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="215" handcode="true"/>
+        <glx rop="215" handcode="client"/>
     </function>
 
     <function name="CompressedTexImage1DARB" offset="556">
@@ -4910,7 +4910,7 @@ glx:
         <param name="border" type="GLint"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="214" handcode="true"/>
+        <glx rop="214" handcode="client"/>
     </function>
 
     <function name="CompressedTexSubImage3DARB" offset="557">
@@ -4925,7 +4925,7 @@ glx:
         <param name="format" type="GLenum"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="219" handcode="true"/>
+        <glx rop="219" handcode="client"/>
     </function>
 
     <function name="CompressedTexSubImage2DARB" offset="558">
@@ -4938,7 +4938,7 @@ glx:
         <param name="format" type="GLenum"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="218" handcode="true"/>
+        <glx rop="218" handcode="client"/>
     </function>
 
     <function name="CompressedTexSubImage1DARB" offset="559">
@@ -4949,7 +4949,7 @@ glx:
         <param name="format" type="GLenum"/>
         <param name="imageSize" type="GLsizei"/>
         <param name="data" type="const GLvoid *"/>
-        <glx rop="217" handcode="true"/>
+        <glx rop="217" handcode="client"/>
     </function>
 
     <function name="GetCompressedTexImageARB" offset="560">

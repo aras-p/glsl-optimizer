@@ -234,7 +234,7 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 		# At some point this should be expanded to support pixel
 		# functions, but I'm not going to lose any sleep over it now.
 
-		if f.fn_offset < 0 or f.handcode or f.ignore or f.vectorequiv or f.image:
+		if f.fn_offset < 0 or f.client_handcode or f.server_handcode or f.ignore or f.vectorequiv or f.image:
 			return
 
 		print '        %s' % (f.name)

@@ -328,8 +328,6 @@ class glXFunction(gl_XML.glFunction):
 	glx_doubles_in_order = 0
 
 	vectorequiv = None
-	handcode = 0
-	ignore = 0
 	can_be_large = 0
 
 	def __init__(self, context, name, attrs):
@@ -339,6 +337,10 @@ class glXFunction(gl_XML.glFunction):
 		self.output = None
 		self.can_be_large = 0
 		self.reply_always_array = 0
+
+		self.server_handcode = 0
+		self.client_handcode = 0
+		self.ignore = 0
 
 		gl_XML.glFunction.__init__(self, context, name, attrs)
 		return
@@ -356,10 +358,25 @@ class glXFunction(gl_XML.glFunction):
 			self.glx_sop = int(attrs.get('sop', "0"))
 			self.glx_vendorpriv = int(attrs.get('vendorpriv', "0"))
 
-			if attrs.get('handcode', "false") == "true":
-				self.handcode = 1
+			# The 'handcode' attribute can be one of 'true',
+			# 'false', 'client', or 'server'.
+
+			handcode = attrs.get('handcode', "false")
+			if handcode == "false":
+				self.server_handcode = 0
+				self.client_handcode = 0
+			elif handcode == "true":
+				self.server_handcode = 1
+				self.client_handcode = 1
+			elif handcode == "client":
+				self.server_handcode = 0
+				self.client_handcode = 1
+			elif handcode == "server":
+				self.server_handcode = 1
+				self.client_handcode = 0
 			else:
-				self.handcode = 0
+				raise RuntimeError('Invalid handcode mode "%s" in function "%s".' % (handcode, self.name))
+
 
 			if attrs.get('ignore', "false") == "true":
 				self.ignore = 1
@@ -395,7 +412,7 @@ class glXFunction(gl_XML.glFunction):
 			# This will also mark functions that don't have a
 			# dispatch offset at ignored.
 
-			if (self.fn_offset == -1 and not self.fn_alias) or not (self.handcode or self.glx_rop or self.glx_sop or self.glx_vendorpriv or self.vectorequiv or self.fn_alias):
+			if (self.fn_offset == -1 and not self.fn_alias) or not (self.client_handcode or self.server_handcode or self.glx_rop or self.glx_sop or self.glx_vendorpriv or self.vectorequiv or self.fn_alias):
 				#if not self.ignore:
 				#	if self.fn_offset == -1:
 				#		print '/* %s ignored becuase no offset assigned. */' % (self.name)
