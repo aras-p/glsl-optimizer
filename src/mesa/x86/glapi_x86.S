@@ -5413,8 +5413,8 @@ GL_PREFIX(BufferData,BufferData@16):
 	JMP(GL_OFFSET(_gloffset_BufferDataARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(BufferSubData,BufferSubData@12))
-GL_PREFIX(BufferSubData,BufferSubData@12):
+GLOBL_FN(GL_PREFIX(BufferSubData,BufferSubData@16))
+GL_PREFIX(BufferSubData,BufferSubData@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_BufferSubDataARB))
 
@@ -5443,8 +5443,8 @@ GL_PREFIX(GetBufferPointerv,GetBufferPointerv@12):
 	JMP(GL_OFFSET(_gloffset_GetBufferPointervARB))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetBufferSubData,GetBufferSubData@12))
-GL_PREFIX(GetBufferSubData,GetBufferSubData@12):
+GLOBL_FN(GL_PREFIX(GetBufferSubData,GetBufferSubData@16))
+GL_PREFIX(GetBufferSubData,GetBufferSubData@16):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetBufferSubDataARB))
 
