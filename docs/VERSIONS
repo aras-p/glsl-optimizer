@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.20 2000/03/06 23:35:51 brianp Exp $
+$Id: VERSIONS,v 1.21 2000/03/07 17:59:54 brianp Exp $
 
 
 Mesa Version History
@@ -689,6 +689,7 @@ Mesa Version History
 	- demos/texdown program to measure texture download performance
 	- glext.h header file
 	- demos/geartrain program
+	- GL_EXT_texture_lod_bias extension
     Bug Fixes:
 	- 
     Changes:
