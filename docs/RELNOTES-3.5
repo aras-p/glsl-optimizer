@@ -1,7 +1,7 @@
 
                          Mesa 3.5 release notes
 
-                             May ??, 2001
+                             June 21, 2001
 
                              PLEASE READ!!!!
 
@@ -17,7 +17,8 @@ Even numbered versions (such as 3.4) designate stable releases.
 The biggest change in Mesa 3.5 is a complete overhaul of the source
 code in order to make it more modular.  This was driven by the DRI
 hardware drivers.  It simplifies the DRI drivers and opens the door
-to hardware transform/clip/lighting (TCL).
+to hardware transform/clip/lighting (TCL).  Keith Whitwell can take
+the credit for that.
 
 
 
@@ -108,6 +109,10 @@ GL_ARB_texture_border_clamp
 
 GL_SGIX_depth_texture, GL_SGIX_shadow and GL_SGIX_shadow_ambient
 	Implements a shadow casting algorithm based on depth map textures
+
+GL_SGIS_generate_mipmap
+	Automatically generate lower mipmap images whenever the base mipmap
+	image is changed with glTexImage, glCopyTexImage, etc.
 
 
 
@@ -220,4 +225,4 @@ In the future I hope to implement support for 32-bit, floating point
 color channels.
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.13 2001/05/04 17:42:53 brianp Exp $
+$Id: RELNOTES-3.5,v 1.14 2001/06/20 19:02:48 brianp Exp $
