@@ -11,6 +11,7 @@ LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME)
 PROGS = glthreads \
 	glxdemo \
 	glxgears \
+	glxgears_fbconfig \
 	glxcontexts \
 	glxheads \
 	glxinfo \
@@ -64,6 +65,11 @@ pbdemo.o: pbdemo.c pbutil.h
 pbutil.o: pbutil.c pbutil.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
 
+glxgears_fbconfig: glxgears_fbconfig.o pbutil.o
+	$(CC) glxgears_fbconfig.o pbutil.o $(APP_LIB_DEPS) -o $@
+
+glxgears_fbconfig.o: glxgears_fbconfig.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) glxgears_fbconfig.c
 
 xrotfontdemo: xrotfontdemo.o xuserotfont.o
 	$(CC) xrotfontdemo.o xuserotfont.o $(APP_LIB_DEPS) -o $@

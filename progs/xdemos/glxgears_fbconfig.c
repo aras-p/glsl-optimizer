@@ -32,6 +32,8 @@
  */
 
 
+#define GLX_GLXEXT_PROTOTYPES
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,7 +46,7 @@
 #include <assert.h>
 #include "pbutil.h"
 
-/* I had to the the SGIX versions of these because for some reason glxext.h
+/* I had to use the SGIX versions of these because for some reason glxext.h
  * doesn't define the core versions if GLX_VERSION_1_3 is defined, and glx.h
  * doesn't define them at all.  One or both header files is clearly broken.
  */
@@ -436,7 +438,7 @@ make_window( Display *dpy, const char *name,
    printf("\nThe following fbconfigs meet the requirements.  The first one "
 	  "will be used.\n\n");
    for ( i = 0 ; i < num_configs ; i++ ) {
-      PrintFBConfigInfo(dpy, fbconfig[i], GL_TRUE);
+      PrintFBConfigInfo(dpy, scrnum, fbconfig[i], GL_TRUE);
    }
 
    /* window attributes */
@@ -557,7 +559,7 @@ main(int argc, char *argv[])
    Display *dpy;
    Window win;
    GLXContext ctx;
-   char *dpyName = ":0";
+   const char *dpyName = NULL;
    GLboolean printInfo = GL_FALSE;
    int i;
 
