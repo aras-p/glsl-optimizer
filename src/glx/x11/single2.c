@@ -91,6 +91,27 @@ static void TransposeMatrixi(GLint m[16])
     }
 }
 
+
+/**
+ * Remap a transpose-matrix enum to a non-transpose-matrix enum.  Enums
+ * that are not transpose-matrix enums are unaffected.
+ */
+static GLenum
+RemapTransposeEnum( GLenum e )
+{
+    switch( e ) {
+    case GL_TRANSPOSE_MODELVIEW_MATRIX:
+    case GL_TRANSPOSE_PROJECTION_MATRIX:
+    case GL_TRANSPOSE_TEXTURE_MATRIX:
+	return e - (GL_TRANSPOSE_MODELVIEW_MATRIX - GL_MODELVIEW_MATRIX);
+    case GL_TRANSPOSE_COLOR_MATRIX:
+	return GL_COLOR_MATRIX;
+    default:
+	return e;
+    };
+}
+
+
 GLenum __indirect_glGetError(void)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -139,18 +160,7 @@ void __indirect_glGetBooleanv(GLenum val, GLboolean *b)
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
-    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
-       val = GL_MODELVIEW_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
-       val = GL_PROJECTION_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
-       val = GL_TEXTURE_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
-       val = GL_COLOR_MATRIX;
-    }
+    val = RemapTransposeEnum( val );
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetBooleanv,4);
@@ -291,18 +301,7 @@ void __indirect_glGetDoublev(GLenum val, GLdouble *d)
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
-    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
-       val = GL_MODELVIEW_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
-       val = GL_PROJECTION_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
-       val = GL_TEXTURE_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
-       val = GL_COLOR_MATRIX;
-    }
+    val = RemapTransposeEnum( val );
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetDoublev,4);
@@ -443,18 +442,7 @@ void __indirect_glGetFloatv(GLenum val, GLfloat *f)
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
-    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
-       val = GL_MODELVIEW_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
-       val = GL_PROJECTION_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
-       val = GL_TEXTURE_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
-       val = GL_COLOR_MATRIX;
-    }
+    val = RemapTransposeEnum( val );
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetFloatv,4);
@@ -595,18 +583,7 @@ void __indirect_glGetIntegerv(GLenum val, GLint *i)
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
-    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
-       val = GL_MODELVIEW_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
-       val = GL_PROJECTION_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
-       val = GL_TEXTURE_MATRIX;
-    }
-    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
-       val = GL_COLOR_MATRIX;
-    }
+    val = RemapTransposeEnum( val );
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetIntegerv,4);
