@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.9 2001/02/06 21:42:49 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.10 2001/02/12 17:02:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,6 +99,7 @@
    GLfloat oneOverArea;
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
+   GLboolean tiny;
 
    /* find the order of the 3 vertices along the Y axis */
    {
@@ -155,10 +156,14 @@
          return;
 
       /* check for very tiny triangle */
-      if (area * area < (0.05F * 0.05F))  /* square to ensure positive value */
+      if (area * area < (0.05F * 0.05F)) { /* square to ensure positive value */
          oneOverArea = 1.0F / 0.05F;  /* a close-enough value */
-      else
+         tiny = GL_TRUE;
+      }
+      else {
          oneOverArea = 1.0F / area;
+         tiny = GL_FALSE;
+      }
    }
 
 #ifndef DO_OCCLUSION_TEST
@@ -328,32 +333,31 @@
       }
 #endif
 #ifdef INTERP_RGB
-      {
+      if (tiny) {
+         /* This is kind of a hack to eliminate RGB color over/underflow
+          * problems when rendering very tiny triangles.  We're not doing
+          * anything with alpha or specular color at this time.
+          */
+         drdx = drdy = 0.0;  fdrdx = 0;
+         dgdx = dgdy = 0.0;  fdgdx = 0;
+         dbdx = dbdy = 0.0;  fdbdx = 0;
+      }
+      else {
          GLfloat eMaj_dr, eBot_dr;
-         eMaj_dr = (GLint) vMax->color[0]
-                 - (GLint) vMin->color[0];
-         eBot_dr = (GLint) vMid->color[0]
-                 - (GLint) vMin->color[0];
+         GLfloat eMaj_dg, eBot_dg;
+         GLfloat eMaj_db, eBot_db;
+         eMaj_dr = (GLint) vMax->color[0] - (GLint) vMin->color[0];
+         eBot_dr = (GLint) vMid->color[0] - (GLint) vMin->color[0];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          fdrdx = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dg, eBot_dg;
-         eMaj_dg = (GLint) vMax->color[1]
-                 - (GLint) vMin->color[1];
-	 eBot_dg = (GLint) vMid->color[1]
-                 - (GLint) vMin->color[1];
+         eMaj_dg = (GLint) vMax->color[1] - (GLint) vMin->color[1];
+	 eBot_dg = (GLint) vMid->color[1] - (GLint) vMin->color[1];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          fdgdx = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
-      }
-      {
-         GLfloat eMaj_db, eBot_db;
-         eMaj_db = (GLint) vMax->color[2]
-                 - (GLint) vMin->color[2];
-         eBot_db = (GLint) vMid->color[2]
-                 - (GLint) vMin->color[2];
+         eMaj_db = (GLint) vMax->color[2] - (GLint) vMin->color[2];
+         eBot_db = (GLint) vMid->color[2] - (GLint) vMin->color[2];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          fdbdx = SignedFloatToFixed(dbdx);
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
@@ -362,30 +366,24 @@
 #ifdef INTERP_SPEC
       {
          GLfloat eMaj_dsr, eBot_dsr;
-         eMaj_dsr = (GLint) vMax->specular[0]
-                  - (GLint) vMin->specular[0];
-         eBot_dsr = (GLint) vMid->specular[0]
-                  - (GLint) vMin->specular[0];
+         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
+         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          fdsrdx = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
       }
       {
          GLfloat eMaj_dsg, eBot_dsg;
-         eMaj_dsg = (GLint) vMax->specular[1]
-                  - (GLint) vMin->specular[1];
-	 eBot_dsg = (GLint) vMid->specular[1]
-                  - (GLint) vMin->specular[1];
+         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
+	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          fdsgdx = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
       }
       {
          GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsb = (GLint) vMax->specular[2]
-                  - (GLint) vMin->specular[2];
-         eBot_dsb = (GLint) vMid->specular[2]
-                  - (GLint) vMin->specular[2];
+         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
+         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          fdsbdx = SignedFloatToFixed(dsbdx);
 	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
@@ -394,10 +392,8 @@
 #ifdef INTERP_ALPHA
       {
          GLfloat eMaj_da, eBot_da;
-         eMaj_da = (GLint) vMax->color[3]
-                 - (GLint) vMin->color[3];
-         eBot_da = (GLint) vMid->color[3]
-                 - (GLint) vMin->color[3];
+         eMaj_da = (GLint) vMax->color[3] - (GLint) vMin->color[3];
+         eBot_da = (GLint) vMid->color[3] - (GLint) vMin->color[3];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
          fdadx = SignedFloatToFixed(dadx);
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
@@ -406,10 +402,8 @@
 #ifdef INTERP_INDEX
       {
          GLfloat eMaj_di, eBot_di;
-         eMaj_di = (GLint) vMax->index
-                 - (GLint) vMin->index;
-         eBot_di = (GLint) vMid->index
-                 - (GLint) vMin->index;
+         eMaj_di = (GLint) vMax->index - (GLint) vMin->index;
+         eBot_di = (GLint) vMid->index - (GLint) vMin->index;
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
          fdidx = SignedFloatToFixed(didx);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
@@ -458,7 +452,6 @@
 	 eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
 	 dudx = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
 	 dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
-
 
 	 eMaj_dv = vMax->texcoord[0][3] * wMax - vMin->texcoord[0][3] * wMin;
 	 eBot_dv = vMid->texcoord[0][3] * wMid - vMin->texcoord[0][3] * wMin;
