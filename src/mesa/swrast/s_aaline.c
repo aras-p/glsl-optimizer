@@ -1,8 +1,8 @@
-/* $Id: s_aaline.c,v 1.16 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.17 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -69,12 +69,13 @@ struct LineInfo
    /* DO_SPEC */
    GLfloat srPlane[4], sgPlane[4], sbPlane[4];
    /* DO_TEX or DO_MULTITEX */
-   GLfloat sPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat tPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat uPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat vPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat lambda[MAX_TEXTURE_UNITS];
-   GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
+   GLfloat sPlane[MAX_TEXTURE_COORD_UNITS][4];
+   GLfloat tPlane[MAX_TEXTURE_COORD_UNITS][4];
+   GLfloat uPlane[MAX_TEXTURE_COORD_UNITS][4];
+   GLfloat vPlane[MAX_TEXTURE_COORD_UNITS][4];
+   GLfloat lambda[MAX_TEXTURE_COORD_UNITS];
+   GLfloat texWidth[MAX_TEXTURE_COORD_UNITS];
+   GLfloat texHeight[MAX_TEXTURE_COORD_UNITS];
 
    struct sw_span span;
 };

@@ -1,8 +1,8 @@
-/* $Id: t_context.h,v 1.43 2002/10/09 19:45:53 brianp Exp $ */
+/* $Id: t_context.h,v 1.44 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -216,7 +216,7 @@ struct vertex_arrays
    struct gl_client_array SecondaryColor;
    GLvector1ui Index;
    GLvector1ub EdgeFlag;
-   GLvector4f  TexCoord[MAX_TEXTURE_UNITS];
+   GLvector4f  TexCoord[MAX_TEXTURE_COORD_UNITS];
    GLvector1ui Elt;
    GLvector4f  FogCoord;
    GLvector4f  Attribs[VERT_ATTRIB_MAX];
@@ -250,7 +250,7 @@ typedef struct vertex_buffer
    GLvector4f  *NormalPtr;	                /* VERT_BIT_NORMAL */
    GLfloat     *NormalLengthPtr;	        /* VERT_BIT_NORMAL */
    GLboolean   *EdgeFlag;	                /* VERT_BIT_EDGEFLAG */
-   GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
+   GLvector4f  *TexCoordPtr[MAX_TEXTURE_COORD_UNITS]; /* VERT_TEX_0..n */
    GLvector1ui *IndexPtr[2];	                /* VERT_BIT_INDEX */
    struct gl_client_array *ColorPtr[2];	        /* VERT_BIT_COLOR0 */
    struct gl_client_array *SecondaryColorPtr[2];/* VERT_BIT_COLOR1 */

@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.10 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: api_noop.c,v 1.11 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -239,7 +239,7 @@ void _mesa_noop_MultiTexCoord1fARB( GLenum target, GLfloat a )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], a);
@@ -256,7 +256,7 @@ void _mesa_noop_MultiTexCoord1fvARB( GLenum target, const GLfloat *v )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], v[0]);
@@ -273,7 +273,7 @@ void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a, GLfloat b )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], a);
@@ -290,7 +290,7 @@ void _mesa_noop_MultiTexCoord2fvARB( GLenum target, const GLfloat *v )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], v[0]);
@@ -307,7 +307,7 @@ void _mesa_noop_MultiTexCoord3fARB( GLenum target, GLfloat a, GLfloat b, GLfloat
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], a);
@@ -324,7 +324,7 @@ void _mesa_noop_MultiTexCoord3fvARB( GLenum target, const GLfloat *v )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], v[0]);
@@ -342,7 +342,7 @@ void _mesa_noop_MultiTexCoord4fARB( GLenum target, GLfloat a, GLfloat b,
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], a);
@@ -359,7 +359,7 @@ void _mesa_noop_MultiTexCoord4fvARB( GLenum target, const GLfloat *v )
 
    /* unit is unsigned -- cannot be less than zero.
     */
-   if (unit < MAX_TEXTURE_UNITS)
+   if (unit < MAX_TEXTURE_COORD_UNITS)
    {
       GLfloat *dest = ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit];
       COPY_FLOAT(dest[0], v[0]);

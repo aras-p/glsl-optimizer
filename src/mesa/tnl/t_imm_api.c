@@ -1,10 +1,10 @@
-/* $Id: t_imm_api.c,v 1.38 2002/12/05 11:49:46 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.39 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -887,7 +887,7 @@ _tnl_Vertex4fv( const GLfloat *v )
  * don't crash.  We no-op on invalid targets.
  */
 
-#define MAX_TARGET (GL_TEXTURE0_ARB + MAX_TEXTURE_UNITS)
+#define MAX_TARGET (GL_TEXTURE0_ARB + MAX_TEXTURE_COORD_UNITS)
 
 #define MULTI_TEXCOORD1(target, s)			\
 {							\

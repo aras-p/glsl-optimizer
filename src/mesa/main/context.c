@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.190 2002/12/12 13:03:15 keithw Exp $ */
+/* $Id: context.c,v 1.191 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,11 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_NV_vertex_program
-#include "vpstate.h"
+#include "nvprogram.h"
+#include "nvvertprog.h"
+#endif
+#if FEATURE_NV_fragment_program
+#include "nvfragprog.h"
 #endif
 #include "vtxfmt.h"
 #include "math/m_translate.h"
@@ -641,7 +645,7 @@ alloc_shared_state( void )
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
 #if FEATURE_NV_vertex_program
-   ss->VertexPrograms = _mesa_NewHashTable();
+   ss->Programs = _mesa_NewHashTable();
 #endif
 
    /* Default Texture objects */
@@ -676,7 +680,7 @@ alloc_shared_state( void )
 
    if (!ss->DisplayList || !ss->TexObjects
 #if FEATURE_NV_vertex_program
-       || !ss->VertexPrograms
+       || !ss->Programs
 #endif
        || outOfMemory) {
       /* Ran out of memory at some point.  Free everything and return NULL */
@@ -684,8 +688,8 @@ alloc_shared_state( void )
          _mesa_DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
          _mesa_DeleteHashTable(ss->TexObjects);
-      if (ss->VertexPrograms)
-         _mesa_DeleteHashTable(ss->VertexPrograms);
+      if (ss->Programs)
+         _mesa_DeleteHashTable(ss->Programs);
       if (ss->Default1D)
          _mesa_free_texture_object(ss, ss->Default1D);
       if (ss->Default2D)
@@ -735,7 +739,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #if FEATURE_NV_vertex_program
    /* Free vertex programs */
    while (1) {
-      GLuint prog = _mesa_HashFirstEntry(ss->VertexPrograms);
+      GLuint prog = _mesa_HashFirstEntry(ss->Programs);
       if (prog) {
          _mesa_delete_program(ctx, prog);
       }
@@ -743,7 +747,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
          break;
       }
    }
-   _mesa_DeleteHashTable(ss->VertexPrograms);
+   _mesa_DeleteHashTable(ss->Programs);
 #endif
 
    _glthread_DESTROY_MUTEX(ss->Mutex);
@@ -918,6 +922,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
    ctx->Const.MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
+   ctx->Const.MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
+   ctx->Const.MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxTextureMaxAnisotropy = MAX_TEXTURE_MAX_ANISOTROPY;
    ctx->Const.MaxTextureLodBias = MAX_TEXTURE_LOD_BIAS;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
@@ -946,7 +952,7 @@ init_attrib_groups( GLcontext *ctx )
                      _NEW_PROJECTION);
    init_matrix_stack(&ctx->ColorMatrixStack, MAX_COLOR_STACK_DEPTH,
                      _NEW_COLOR_MATRIX);
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       init_matrix_stack(&ctx->TextureMatrixStack[i], MAX_TEXTURE_STACK_DEPTH,
                         _NEW_TEXTURE_MATRIX);
    for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
@@ -990,7 +996,7 @@ init_attrib_groups( GLcontext *ctx )
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], 1.0, 1.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_FOG], 0.0, 0.0, 0.0, 0.0 );
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.Index = 1;
    ctx->Current.EdgeFlag = GL_TRUE;
@@ -999,7 +1005,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Current.RasterDistance = 0.0;
    ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
    ctx->Current.RasterIndex = 1;
-   for (i=0; i<MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       ASSIGN_4V( ctx->Current.RasterTexCoords[i], 0.0, 0.0, 0.0, 1.0 );
    ctx->Current.RasterPosValid = GL_TRUE;
 
@@ -1261,7 +1267,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Point.Threshold = 1.0;
    ctx->Point.PointSprite = GL_FALSE; /* GL_NV_point_sprite */
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite */
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_NV_point_sprite */
    }
 
@@ -1388,7 +1394,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Array.Index.Ptr = NULL;
    ctx->Array.Index.Enabled = GL_FALSE;
    ctx->Array.Index.Flags = CA_CLIENT_DATA;
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       ctx->Array.TexCoord[i].Size = 4;
       ctx->Array.TexCoord[i].Type = GL_FLOAT;
       ctx->Array.TexCoord[i].Stride = 0;
@@ -1457,17 +1463,23 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->PostColorMatrixColorTable);
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
-   /* GL_NV_vertex_program */
+   /* Vertex/fragment programs */
+   ctx->Program.ErrorPos = -1;
+   ctx->Program.ErrorString = _mesa_strdup("");
+#if FEATURE_NV_vertex_program
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
-   ctx->VertexProgram.CurrentID = 0;
-   ctx->VertexProgram.ErrorPos = -1;
    ctx->VertexProgram.Current = NULL;
    for (i = 0; i < VP_NUM_PROG_REGS / 4; i++) {
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
    }
+#endif
+#if FEATURE_NV_fragment_program
+   ctx->FragmentProgram.Enabled = GL_FALSE;
+   ctx->FragmentProgram.Current = NULL;
+#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
@@ -1684,11 +1696,11 @@ _mesa_initialize_context( GLcontext *ctx,
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    /* Effectively bind the default textures to all texture units */
-   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
    init_attrib_groups( ctx );
 
@@ -1930,7 +1942,7 @@ _mesa_free_context_data( GLcontext *ctx )
    free_matrix_stack(&ctx->ModelviewMatrixStack);
    free_matrix_stack(&ctx->ProjectionMatrixStack);
    free_matrix_stack(&ctx->ColorMatrixStack);
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       free_matrix_stack(&ctx->TextureMatrixStack[i]);
    for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
       free_matrix_stack(&ctx->ProgramMatrixStack[i]);
@@ -1940,9 +1952,16 @@ _mesa_free_context_data( GLcontext *ctx )
 
 #if FEATURE_NV_vertex_program
    if (ctx->VertexProgram.Current) {
-      ctx->VertexProgram.Current->RefCount--;
-      if (ctx->VertexProgram.Current->RefCount <= 0)
-         _mesa_delete_program(ctx, ctx->VertexProgram.CurrentID);
+      ctx->VertexProgram.Current->Base.RefCount--;
+      if (ctx->VertexProgram.Current->Base.RefCount <= 0)
+         _mesa_delete_program(ctx, ctx->VertexProgram.Current->Base.Id);
+   }
+#endif
+#if FEATURE_NV_fragment_program
+   if (ctx->FragmentProgram.Current) {
+      ctx->FragmentProgram.Current->Base.RefCount--;
+      if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
+         _mesa_delete_program(ctx, ctx->FragmentProgram.Current->Base.Id);
    }
 #endif
 

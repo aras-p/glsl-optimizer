@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.41 2002/11/13 16:51:02 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.42 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -325,10 +325,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       GLfloat dvdx, dvdy;
 #endif
 #ifdef INTERP_MULTITEX
-      GLfloat dsdx[MAX_TEXTURE_UNITS], dsdy[MAX_TEXTURE_UNITS];
-      GLfloat dtdx[MAX_TEXTURE_UNITS], dtdy[MAX_TEXTURE_UNITS];
-      GLfloat dudx[MAX_TEXTURE_UNITS], dudy[MAX_TEXTURE_UNITS];
-      GLfloat dvdx[MAX_TEXTURE_UNITS], dvdy[MAX_TEXTURE_UNITS];
+      GLfloat dsdx[MAX_TEXTURE_COORD_UNITS], dsdy[MAX_TEXTURE_COORD_UNITS];
+      GLfloat dtdx[MAX_TEXTURE_COORD_UNITS], dtdy[MAX_TEXTURE_COORD_UNITS];
+      GLfloat dudx[MAX_TEXTURE_COORD_UNITS], dudy[MAX_TEXTURE_COORD_UNITS];
+      GLfloat dvdx[MAX_TEXTURE_COORD_UNITS], dvdy[MAX_TEXTURE_COORD_UNITS];
 #endif
 
       /*
@@ -766,14 +766,14 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfloat vLeft=0, dvOuter=0, dvInner;
 #endif
 #ifdef INTERP_MULTITEX
-         GLfloat sLeft[MAX_TEXTURE_UNITS];
-         GLfloat tLeft[MAX_TEXTURE_UNITS];
-         GLfloat uLeft[MAX_TEXTURE_UNITS];
-         GLfloat vLeft[MAX_TEXTURE_UNITS];
-         GLfloat dsOuter[MAX_TEXTURE_UNITS], dsInner[MAX_TEXTURE_UNITS];
-         GLfloat dtOuter[MAX_TEXTURE_UNITS], dtInner[MAX_TEXTURE_UNITS];
-         GLfloat duOuter[MAX_TEXTURE_UNITS], duInner[MAX_TEXTURE_UNITS];
-         GLfloat dvOuter[MAX_TEXTURE_UNITS], dvInner[MAX_TEXTURE_UNITS];
+         GLfloat sLeft[MAX_TEXTURE_COORD_UNITS];
+         GLfloat tLeft[MAX_TEXTURE_COORD_UNITS];
+         GLfloat uLeft[MAX_TEXTURE_COORD_UNITS];
+         GLfloat vLeft[MAX_TEXTURE_COORD_UNITS];
+         GLfloat dsOuter[MAX_TEXTURE_COORD_UNITS], dsInner[MAX_TEXTURE_COORD_UNITS];
+         GLfloat dtOuter[MAX_TEXTURE_COORD_UNITS], dtInner[MAX_TEXTURE_COORD_UNITS];
+         GLfloat duOuter[MAX_TEXTURE_COORD_UNITS], duInner[MAX_TEXTURE_COORD_UNITS];
+         GLfloat dvOuter[MAX_TEXTURE_COORD_UNITS], dvInner[MAX_TEXTURE_COORD_UNITS];
 #endif
 
          for (subTriangle=0; subTriangle<=1; subTriangle++) {

@@ -1,10 +1,10 @@
-/* $Id: config.h,v 1.42 2002/10/16 17:57:51 brianp Exp $ */
+/* $Id: config.h,v 1.43 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -118,6 +118,14 @@
 /* Number of texture units - GL_ARB_multitexture */
 #define MAX_TEXTURE_UNITS 8
 
+/* New: separate numbers of texture coordinates and texture image units.
+ * These values will eventually replace most instances of MAX_TEXTURE_UNITS.
+ * We should always have MAX_TEXTURE_COORD_UNITS <= MAX_TEXTURE_IMAGE_UNITS.
+ * And, GL_MAX_TEXTURE_UNITS <= MAX_TEXTURE_COORD_UNITS.
+ */
+#define MAX_TEXTURE_COORD_UNITS 8
+#define MAX_TEXTURE_IMAGE_UNITS 8
+
 /* Maximum viewport/image size: */
 #define MAX_WIDTH 2048
 #define MAX_HEIGHT 2048
@@ -143,6 +151,21 @@
 
 /* GL_EXT_texture_lod_bias */
 #define MAX_TEXTURE_LOD_BIAS 4.0
+
+/* GL_NV_vertex_program */
+#define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
+#define MAX_NV_VERTEX_PROGRAM_TEMPS         12
+#define MAX_NV_VERTEX_PROGRAM_PARAMS        96
+#define MAX_NV_VERTEX_PROGRAM_INPUTS        16
+#define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
+
+/* GL_NV_fragment_program */
+#define MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS 128
+#define MAX_NV_FRAGMENT_PROGRAM_TEMPS         96
+#define MAX_NV_FRAGMENT_PROGRAM_PARAMS        64
+#define MAX_NV_FRAGMENT_PROGRAM_INPUTS        12
+#define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        7
+#define MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS    2
 
 
 
@@ -202,6 +225,8 @@
  * Enable/disable features (blocks of code) by setting FEATURE_xyz to 0 or 1.
  */
 #define FEATURE_NV_vertex_program 1
+
+#define FEATURE_NV_fragment_program 1
 
 
 #endif /* CONFIG_H */

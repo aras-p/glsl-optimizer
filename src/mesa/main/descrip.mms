@@ -49,6 +49,10 @@ CORE_SOURCES =accum.c \
 	lines.c \
 	matrix.c \
 	mmath.c \
+	nvprogram.c \
+	nvfragparse.c \
+	nvvertexec.c \
+	nvvertparse.c \
 	pixel.c \
 	points.c \
 	polygon.c \
@@ -64,8 +68,6 @@ CORE_SOURCES =accum.c \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
-	vpstate.c \
-	vpexec.c \
 	vsnprintf.c \
 	vtparse.c \
 	[.x86]x86.c
@@ -101,6 +103,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
 [.swrast]s_masking.c \
+[.swrast]s_nvfragprog.c \
 [.swrast]s_pixeltex.c \
 [.swrast]s_points.c \
 [.swrast]s_readpix.c \
@@ -189,6 +192,10 @@ lines.obj,\
 matrix.obj
 
 OBJECTS3=mmath.obj,\
+nvprogram.obj \
+nvfragparse.obj \
+nvvertexec.obj \
+nvvertparse.obj \
 pixel.obj,\
 points.obj,\
 polygon.obj,\
@@ -204,9 +211,6 @@ texstore.obj,\
 texutil.obj,\
 varray.obj,\
 vtxfmt.obj,\
-vpstate.obj,\
-vpexec.obj,\
-vpparse.obj,\
 vsnprintf.obj
 
 OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
@@ -241,6 +245,7 @@ OBJECTS8=[.swrast]s_drawpix.obj,\
 [.swrast]s_lines.obj,\
 [.swrast]s_logic.obj,\
 [.swrast]s_masking.obj,\
+[.swrast]s_nvfragprog.obj,\
 [.swrast]s_pixeltex.obj,\
 [.swrast]s_points.obj
 
@@ -438,6 +443,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_logic.obj [.swrast]s_logic.c
 [.swrast]s_masking.obj : [.swrast]s_masking.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_masking.obj [.swrast]s_masking.c
+[.swrast]s_nvfragprog.obj : [.swrast]s_nvfragprog.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_nvfragprog.obj [.swrast]s_nvfragprog.c
 [.swrast]s_pixeltex.obj : [.swrast]s_pixeltex.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_pixeltex.obj [.swrast]s_pixeltex.c
 [.swrast]s_points.obj : [.swrast]s_points.c

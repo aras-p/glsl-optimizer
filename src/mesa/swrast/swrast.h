@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.33 2002/11/13 16:47:18 brianp Exp $ */
+/* $Id: swrast.h,v 1.34 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,7 +66,7 @@ typedef struct {
    /** win[0], win[1] are the screen-coords of SWvertex. win[2] is the
     * z-coord. what is win[3]? */
    GLfloat win[4];
-   GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+   GLfloat texcoord[MAX_TEXTURE_COORD_UNITS][4];
    GLchan color[4];
    GLchan specular[4];
    GLfloat fog;
@@ -138,8 +138,8 @@ struct span_arrays {
    GLint   y[MAX_WIDTH];  /**< X/Y used for point/line rendering only */
    GLdepth z[MAX_WIDTH];
    GLfloat fog[MAX_WIDTH];
-   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
-   GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
+   GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
+   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
 
    /** This mask indicates if fragment is alive or culled */
@@ -189,10 +189,10 @@ struct sw_span {
    GLfixed index, indexStep;
    GLfixed z, zStep;
    GLfloat fog, fogStep;
-   GLfloat tex[MAX_TEXTURE_UNITS][4];
-   GLfloat texStepX[MAX_TEXTURE_UNITS][4];
-   GLfloat texStepY[MAX_TEXTURE_UNITS][4];
-   GLfixed intTex[2], intTexStep[2];
+   GLfloat tex[MAX_TEXTURE_COORD_UNITS][4];  /* s, t, r, q */
+   GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
+   GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
+   GLfixed intTex[2], intTexStep[2];  /* s, t only */
 
    /**
     * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates

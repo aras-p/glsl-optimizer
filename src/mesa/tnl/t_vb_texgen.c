@@ -1,8 +1,8 @@
-/* $Id: t_vb_texgen.c,v 1.15 2002/10/29 20:29:04 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.16 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -59,9 +59,9 @@ struct texgen_stage_data {
 
    /* Per-texunit derived state.
     */
-   GLuint TexgenSize[MAX_TEXTURE_UNITS];
-   GLuint TexgenHoles[MAX_TEXTURE_UNITS];
-   texgen_func TexgenFunc[MAX_TEXTURE_UNITS];
+   GLuint TexgenSize[MAX_TEXTURE_COORD_UNITS];
+   GLuint TexgenHoles[MAX_TEXTURE_COORD_UNITS];
+   texgen_func TexgenFunc[MAX_TEXTURE_COORD_UNITS];
 
    /* Temporary values used in texgen.
     */
@@ -70,7 +70,7 @@ struct texgen_stage_data {
 
    /* Buffered outputs of the stage.
     */
-   GLvector4f texcoord[MAX_TEXTURE_UNITS];
+   GLvector4f texcoord[MAX_TEXTURE_COORD_UNITS];
 };
 
 
@@ -662,7 +662,7 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
    GLuint i;
 
    if (store) {
-      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
+      for (i = 0 ; i < MAX_TEXTURE_COORD_UNITS ; i++)
 	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
 

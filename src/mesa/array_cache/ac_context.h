@@ -1,8 +1,8 @@
-/* $Id: ac_context.h,v 1.5 2002/10/29 20:28:58 brianp Exp $ */
+/* $Id: ac_context.h,v 1.6 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -45,7 +45,7 @@ struct ac_arrays {
    struct gl_client_array SecondaryColor;
    struct gl_client_array FogCoord;
    struct gl_client_array Index;
-   struct gl_client_array TexCoord[MAX_TEXTURE_UNITS];
+   struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
    struct gl_client_array EdgeFlag;
    struct gl_client_array Attrib[VERT_ATTRIB_MAX];  /* GL_NV_vertex_program */
 };
@@ -57,7 +57,7 @@ struct ac_array_pointers {
    struct gl_client_array *SecondaryColor;
    struct gl_client_array *FogCoord;
    struct gl_client_array *Index;
-   struct gl_client_array *TexCoord[MAX_TEXTURE_UNITS];
+   struct gl_client_array *TexCoord[MAX_TEXTURE_COORD_UNITS];
    struct gl_client_array *EdgeFlag;
    struct gl_client_array *Attrib[VERT_ATTRIB_MAX];  /* GL_NV_vertex_program */
 };
@@ -69,7 +69,7 @@ struct ac_array_flags {
    GLboolean SecondaryColor;
    GLboolean FogCoord;
    GLboolean Index;
-   GLboolean TexCoord[MAX_TEXTURE_UNITS];
+   GLboolean TexCoord[MAX_TEXTURE_COORD_UNITS];
    GLboolean EdgeFlag;
    GLboolean Attrib[VERT_ATTRIB_MAX];  /* GL_NV_vertex_program */
 };

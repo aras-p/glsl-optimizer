@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.97 2002/11/06 15:16:23 brianp Exp $ */
+/* $Id: state.c,v 1.98 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,8 +66,8 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#if FEATURE_NV_vertex_program
-#include "vpstate.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "nvprogram.h"
 #endif
 
 #include "math/m_matrix.h"
@@ -502,6 +502,21 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
    exec->TrackMatrixNV = _mesa_TrackMatrixNV;
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
+#endif
+
+#if 0 && FEATURE_NV_fragment_program
+   exec->ProgramNamedParameter4fNV = _mesa_ProgramNamedParameter4fNV;
+   exec->ProgramNamedParameter4dNV = _mesa_ProgramNamedParameter4dNV;
+   exec->ProgramNamedParameter4fvNV = _mesa_ProgramNamedParameter4fvNV;
+   exec->ProgramNamedParameter4dvNV = _mesa_ProgramNamedParameter4dvNV;
+   exec->GetProgramNamedParameterfvNV = _mesa_GetProgramNamedParameterfvNV;
+   exec->GetProgramNamedParameterdvNV = _mesa_GetProgramNamedParameterdvNV;
+   exec->ProgramLocalParameter4dARB = _mesa_ProgramLocalParameter4dARB;
+   exec->ProgramLocalParameter4dvARB = _mesa_ProgramLocalParameter4dvARB;
+   exec->ProgramLocalParameter4fARB = _mesa_ProgramLocalParameter4fARB;
+   exec->ProgramLocalParameter4fvARB = _mesa_ProgramLocalParameter4fvARB;
+   exec->GetProgramLocalParameterdvARB = _mesa_GetProgramLocalParameterdvARB;
+   exec->GetProgramLocalParameterfvARB = _mesa_GetProgramLocalParameterfvARB;
 #endif
 
    /* 262. GL_NV_point_sprite */

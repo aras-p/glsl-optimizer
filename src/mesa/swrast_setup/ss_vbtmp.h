@@ -1,8 +1,8 @@
-/* $Id: ss_vbtmp.h,v 1.22 2002/10/29 20:29:01 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.23 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -35,14 +35,14 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    struct vertex_buffer *VB = &tnl->vb;
    SWvertex *v;
    GLfloat *proj;		/* projected clip coordinates */
-   GLfloat *tc[MAX_TEXTURE_UNITS];
+   GLfloat *tc[MAX_TEXTURE_COORD_UNITS];
    GLchan *color;
    GLchan *spec;
    GLuint *index;
    GLfloat *fog;
    GLfloat *pointSize;
-   GLuint tsz[MAX_TEXTURE_UNITS];
-   GLuint tstride[MAX_TEXTURE_UNITS];
+   GLuint tsz[MAX_TEXTURE_COORD_UNITS];
+   GLuint tstride[MAX_TEXTURE_COORD_UNITS];
    GLuint proj_stride, color_stride, spec_stride, index_stride;
    GLuint fog_stride, pointSize_stride;
    GLuint i;

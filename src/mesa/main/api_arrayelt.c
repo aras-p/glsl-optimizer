@@ -1,8 +1,8 @@
-/* $Id: api_arrayelt.c,v 1.11 2002/10/29 20:28:36 brianp Exp $ */
+/* $Id: api_arrayelt.c,v 1.12 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -53,7 +53,7 @@ typedef struct {
 } AEarray;
 
 typedef struct {
-   AEtexarray texarrays[MAX_TEXTURE_UNITS+1];
+   AEtexarray texarrays[MAX_TEXTURE_COORD_UNITS + 1];
    AEarray arrays[32];
    GLuint NewState;
 } AEcontext;

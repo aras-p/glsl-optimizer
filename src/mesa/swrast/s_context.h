@@ -1,8 +1,8 @@
-/* $Id: s_context.h,v 1.22 2002/10/29 20:29:00 brianp Exp $ */
+/* $Id: s_context.h,v 1.23 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -121,7 +121,7 @@ typedef struct
     * _swrast_validate_derived():
     */
    GLuint _RasterMask;
-   GLfloat _MinMagThresh[MAX_TEXTURE_UNITS];
+   GLfloat _MinMagThresh[MAX_TEXTURE_IMAGE_UNITS];
    GLfloat _backface_sign;
    GLboolean _PreferPixelFog;
    GLboolean _AnyTextureCombine;
@@ -188,7 +188,7 @@ typedef struct
    /** Internal hooks, kept uptodate by the same mechanism as above.
     */
    blend_func BlendFunc;
-   TextureSampleFunc TextureSample[MAX_TEXTURE_UNITS];
+   TextureSampleFunc TextureSample[MAX_TEXTURE_IMAGE_UNITS];
 
    /** Buffer for saving the sampled texture colors.
     * Needed for GL_ARB_texture_env_crossbar implementation.

@@ -1,8 +1,8 @@
-/* $Id: s_context.c,v 1.42 2002/10/29 20:28:59 brianp Exp $ */
+/* $Id: s_context.c,v 1.43 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -516,7 +516,7 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->_IntegerAccumMode = GL_TRUE;
    swrast->_IntegerAccumScaler = 0.0;
 
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
    swrast->SpanArrays = MALLOC_STRUCT(span_arrays);

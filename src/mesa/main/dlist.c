@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.100 2002/11/06 15:16:23 brianp Exp $ */
+/* $Id: dlist.c,v 1.101 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,7 +62,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_NV_vertex_program
-#include "vpstate.h"
+#include "nvprogram.h"
 #endif
 
 #include "math/m_matrix.h"

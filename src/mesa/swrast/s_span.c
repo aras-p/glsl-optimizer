@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.53 2002/11/26 03:00:04 brianp Exp $ */
+/* $Id: s_span.c,v 1.54 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,6 +47,7 @@
 #include "s_fog.h"
 #include "s_logic.h"
 #include "s_masking.h"
+#include "s_nvfragprog.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_texture.h"
@@ -949,6 +950,18 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       stipple_polygon_span(ctx, span);
    }
 
+   /* Fragment program */
+   if (ctx->FragmentProgram.Enabled) {
+      /* Now we may need to interpolate the colors */
+      if ((span->interpMask & SPAN_RGBA) &&
+          (span->arrayMask & SPAN_RGBA) == 0) {
+         interpolate_colors(ctx, span);
+         span->interpMask &= ~SPAN_RGBA;
+      }
+      _swrast_exec_nv_fragment_program(ctx, span);
+      monoColor = GL_FALSE;
+   }
+
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
       if (!_mesa_alpha_test(ctx, span)) {
@@ -1183,7 +1196,10 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.
        */
-      _swrast_texture_span( ctx, span );
+      if (ctx->FragmentProgram.Enabled)
+         _swrast_exec_nv_fragment_program( ctx, span );
+      else
+         _swrast_texture_span( ctx, span );
 
       /* Do the alpha test */
       if (!_mesa_alpha_test(ctx, span)) {
@@ -1232,7 +1248,10 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);
 
-      _swrast_texture_span( ctx, span );
+      if (ctx->FragmentProgram.Enabled)
+         _swrast_exec_nv_fragment_program( ctx, span );
+      else
+         _swrast_texture_span( ctx, span );
    }
 
    ASSERT(span->arrayMask & SPAN_RGBA);

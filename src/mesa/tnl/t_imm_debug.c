@@ -1,10 +1,10 @@
-/* $Id: t_imm_debug.c,v 1.9 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_imm_debug.c,v 1.10 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,7 +127,7 @@ void _tnl_print_cassette( struct immediate *IM )
 
       if (req & flags[i] & VERT_BITS_TEX_ANY) {
 	 GLuint j;
-	 for (j = 0 ; j < MAX_TEXTURE_UNITS ; j++) {
+	 for (j = 0 ; j < MAX_TEXTURE_COORD_UNITS ; j++) {
 	    if (req & flags[i] & VERT_BIT_TEX(j)) {
 	       _mesa_debug(NULL, "TC%d %f %f %f %f", j,
 		       IM->Attrib[VERT_ATTRIB_TEX0 + j][i][0],

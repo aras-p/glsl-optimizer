@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.21 2002/10/29 20:28:58 brianp Exp $ */
+/* $Id: ac_import.c,v 1.22 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -214,7 +214,7 @@ static void reset_attrib( GLcontext *ctx, GLuint index )
       }
       else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
          GLuint unit = index - VERT_ATTRIB_TEX0;
-         ASSERT(unit < MAX_TEXTURE_UNITS);
+         ASSERT(unit < MAX_TEXTURE_COORD_UNITS);
          ac->Raw.Attrib[index] = ctx->Array.TexCoord[unit];
       }
       else {

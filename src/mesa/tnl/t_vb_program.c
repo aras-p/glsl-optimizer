@@ -1,8 +1,8 @@
-/* $Id: t_vb_program.c,v 1.16 2002/10/31 17:14:16 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.17 2003/01/14 04:55:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -24,55 +24,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * -------- Regarding NV_vertex_program --------
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * o Redistribution of the source code must contain a copyright notice
- *   and this list of conditions;
- * 
- * o Redistribution in binary and source code form must contain the
- *   following Notice in the software and any documentation and/or other
- *   materials provided with the distribution; and
- * 
- * o The name of Nvidia may not be used to promote or endorse software
- *   derived from the software.
- * 
- * NOTICE: Nvidia hereby grants to each recipient a non-exclusive worldwide
- * royalty free patent license under patent claims that are licensable by
- * Nvidia and which are necessarily required and for which no commercially
- * viable non infringing alternative exists to make, use, sell, offer to sell,
- * import and otherwise transfer the vertex extension for the Mesa 3D Graphics
- * Library as distributed in source code and object code form.  No hardware or
- * hardware implementation (including a semiconductor implementation and chips)
- * are licensed hereunder. If a recipient makes a patent claim or institutes
- * patent litigation against Nvidia or Nvidia's customers for use or sale of
- * Nvidia products, then this license grant as to such recipient shall
- * immediately terminate and recipient immediately agrees to cease use and
- * distribution of the Mesa Program and derivatives thereof. 
- * 
- * THE MESA 3D GRAPHICS LIBRARY IS PROVIDED ON AN "AS IS BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING,
- * WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-NFRINGEMENT
- * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- * 
- * NVIDIA SHALL NOT HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION
- * LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE MESA 3D GRAPHICS
- * LIBRARY OR EVIDENCE OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDR, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- * If you do not comply with this agreement, then Nvidia may cancel the license
- * and rights granted herein.
- * ---------------------------------------------
- */
 
 /**
  * \file tnl/t_vb_program.c
- * \brief Pipeline stage for executing vertex programs
+ * \brief Pipeline stage for executing NVIDIA vertex programs.
  * \author Brian Paul,  Keith Whitwell
  */
 
@@ -89,7 +44,9 @@
 #include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"
-#include "vpexec.h"
+#include "nvvertprog.h"
+#include "nvvertexec.h"
+#include "nvprogram.h"
 
 #include "math/m_translate.h"
 
@@ -149,7 +106,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
-   struct vp_program *program = ctx->VertexProgram.Current;
+   struct vertex_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
    _mesa_init_tracked_matrices(ctx); /* load registers with matrices */
@@ -202,7 +159,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 
       /* execute the program */
       ASSERT(program);
-      _mesa_exec_program(ctx, program);
+      _mesa_exec_vertex_program(ctx, program);
 
 #if 0
       printf("Output %d: %f, %f, %f, %f\n", i,

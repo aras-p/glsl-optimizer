@@ -1,8 +1,8 @@
-/* $Id: s_aatritemp.h,v 1.30 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.31 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -76,11 +76,12 @@
    GLfloat sPlane[4], tPlane[4], uPlane[4], vPlane[4];
    GLfloat texWidth, texHeight;
 #elif defined(DO_MULTITEX)
-   GLfloat sPlane[MAX_TEXTURE_UNITS][4];  /* texture S */
-   GLfloat tPlane[MAX_TEXTURE_UNITS][4];  /* texture T */
-   GLfloat uPlane[MAX_TEXTURE_UNITS][4];  /* texture R */
-   GLfloat vPlane[MAX_TEXTURE_UNITS][4];  /* texture Q */
-   GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
+   GLfloat sPlane[MAX_TEXTURE_COORD_UNITS][4];  /* texture S */
+   GLfloat tPlane[MAX_TEXTURE_COORD_UNITS][4];  /* texture T */
+   GLfloat uPlane[MAX_TEXTURE_COORD_UNITS][4];  /* texture R */
+   GLfloat vPlane[MAX_TEXTURE_COORD_UNITS][4];  /* texture Q */
+   GLfloat texWidth[MAX_TEXTURE_COORD_UNITS];
+   GLfloat texHeight[MAX_TEXTURE_COORD_UNITS];
 #endif
    GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
    

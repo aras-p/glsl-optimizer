@@ -1,8 +1,8 @@
-/* $Id: ac_context.c,v 1.9 2002/10/29 20:28:58 brianp Exp $ */
+/* $Id: ac_context.c,v 1.10 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -91,7 +91,7 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
 
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
+   for (i = 0 ; i < MAX_TEXTURE_COORD_UNITS ; i++) {
       cl = &ac->Fallback.TexCoord[i];
       cl->Size = 4;
       cl->Type = GL_FLOAT;
@@ -188,7 +188,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Enabled = 1;
    cl->Flags = 0;
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       cl = &ac->Cache.TexCoord[i];
       cl->Size = 4;
       cl->Type = GL_FLOAT;
@@ -254,7 +254,7 @@ static void _ac_raw_init( GLcontext *ctx )
    ac->IsCached.SecondaryColor = GL_FALSE;
    ac->IsCached.Vertex = GL_FALSE;
 
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
+   for (i = 0 ; i < MAX_TEXTURE_COORD_UNITS ; i++) {
       ac->Raw.TexCoord[i] = ac->Fallback.TexCoord[i];
       ac->IsCached.TexCoord[i] = GL_FALSE;
    }
@@ -291,7 +291,7 @@ void _ac_DestroyContext( GLcontext *ctx )
    if (ac->Cache.Index.Ptr) FREE( ac->Cache.Index.Ptr );
    if (ac->Cache.FogCoord.Ptr) FREE( ac->Cache.FogCoord.Ptr );
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       if (ac->Cache.TexCoord[i].Ptr)
 	 FREE( ac->Cache.TexCoord[i].Ptr );
    }

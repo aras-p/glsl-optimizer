@@ -1,8 +1,8 @@
-/* $Id: s_pointtemp.h,v 1.21 2002/11/09 21:26:41 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.22 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -82,7 +82,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    const GLuint colorIndex = vert->index;
 #endif
 #if FLAGS & TEXTURE
-   GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+   GLfloat texcoord[MAX_TEXTURE_COORD_UNITS][4];
    GLuint u;
 #endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);

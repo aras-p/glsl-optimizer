@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.64 2003/01/08 16:48:04 brianp Exp $ */
+/* $Id: texobj.c,v 1.65 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -564,7 +564,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
              * If so, unbind it and decrement the reference count.
              */
             GLuint u;
-            for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
+            for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
                struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
                if (delObj == unit->Current1D) {
                   unit->Current1D = ctx->Shared->Default1D;

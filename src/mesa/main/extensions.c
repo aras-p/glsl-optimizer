@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.85 2002/10/25 21:06:27 brianp Exp $ */
+/* $Id: extensions.c,v 1.86 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,6 +116,7 @@ static struct {
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
    { OFF, "GL_NV_texture_rectangle",           F(NV_texture_rectangle) },
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
+   { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },
    { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
    { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
@@ -190,6 +191,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_NV_vertex_program
       "GL_NV_vertex_program",
       "GL_NV_vertex_program1_1",
+#endif
+#if FEATURE_NV_fragment_program
+      "GL_NV_fragment_program",
 #endif
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",

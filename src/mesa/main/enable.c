@@ -1,8 +1,8 @@
-/* $Id: enable.c,v 1.71 2002/10/24 23:57:20 brianp Exp $ */
+/* $Id: enable.c,v 1.72 2003/01/14 04:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -873,6 +873,16 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
 #endif /* FEATURE_NV_vertex_program */
 
+#if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION(NV_fragment_program, cap);
+         if (ctx->FragmentProgram.Enabled == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+         ctx->FragmentProgram.Enabled = state;
+         break;
+#endif /* FEATURE_NV_fragment_program */
+
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
          CHECK_EXTENSION(NV_texture_rectangle, cap);
@@ -1264,6 +1274,12 @@ _mesa_IsEnabled( GLenum cap )
             return ctx->Eval.Map2Attrib[map];
          }
 #endif /* FEATURE_NV_vertex_program */
+
+#if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION(NV_fragment_program);
+         return ctx->FragmentProgram.Enabled;
+#endif /* FEATURE_NV_fragment_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
