@@ -441,14 +441,12 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
         while (1) {
 
     	    /*=* John Sheng [2003.5.31]  agp tex *=*/
-	    via_alloc_texture(vmesa, t);
-	    /*via_alloc_texture_agp(vmesa, t);*/
+	    if (via_alloc_texture_agp(vmesa, t))
+		break;
+	    if (via_alloc_texture(vmesa, t))
+		break;
 
-	    if (t->texMem.offset)
-                break;
-	    else
-		agpFullCount++;
-
+	    agpFullCount++; 
             if (vmesa->TexObjList.prev == vmesa->CurrentTexObj[0] ||
                 vmesa->TexObjList.prev == vmesa->CurrentTexObj[1]) {
 #ifdef DEBUG
