@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.3 1999/11/12 04:57:23 kendallb Exp $ */
+/* $Id: x86.c,v 1.4 2000/03/27 21:13:58 rjfrank Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,7 @@
 #include "xform.h"
 #include "x86.h"
 
+#ifdef USE_X86_ASM
 extern void _ASMAPI gl_v16_x86_cliptest_points4(GLfloat *first_vert,
 					GLfloat *last_vert,
 					GLubyte *or_mask,
@@ -52,7 +53,7 @@ extern void _ASMAPI gl_v16_x86_general_xform(GLfloat *dest,
 				     const GLfloat *src,
 				     GLuint src_stride,
 				     GLuint count);
-
+#endif
 
 
 #define XFORM_ARGS 	GLvector4f *to_vec, 		\
