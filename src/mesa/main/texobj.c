@@ -1025,7 +1025,7 @@ _mesa_IsTexture( GLuint texture )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (!t)
+   if (!texture)
       return GL_FALSE;
 
    t = (struct gl_texture_object *)
