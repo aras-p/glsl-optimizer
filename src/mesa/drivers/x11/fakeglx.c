@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.76 2002/11/14 16:14:56 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.77 2002/11/18 15:11:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2637,6 +2637,16 @@ Fake_glXFreeMemoryNV( GLvoid *pointer )
 }
 
 
+/*** GLX_MESA_agp_offset */
+
+static GLuint
+Fake_glXGetAGPOffsetMESA( const GLvoid *pointer )
+{
+   (void) pointer;
+   return ~0;
+}
+
+
 
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
@@ -2775,9 +2785,12 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
    /*** GLX_MESA_set_3dfx_mode ***/
    glx.Set3DfxModeMESA = Fake_glXSet3DfxModeMESA;
 
-   /*** GLX AGP memory allocation ***/
+   /*** GLX_NV_vertex_array_range ***/
    glx.AllocateMemoryNV = Fake_glXAllocateMemoryNV;
    glx.FreeMemoryNV = Fake_glXFreeMemoryNV;
+
+   /*** GLX_MESA_agp_offset ***/
+   glx.GetAGPOffsetMESA = Fake_glXGetAGPOffsetMESA;
 
    return &glx;
 }
