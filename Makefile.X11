@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.32 2000/07/21 16:36:35 brianp Exp $
+# $Id: Makefile.X11,v 1.33 2000/07/31 13:59:22 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
+# Version:  3.5
 # 
 # Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
 # 
@@ -326,10 +326,10 @@ realclean: clean
 
 
 
-DIRECTORY = Mesa-3.3
-LIB_NAME = MesaLib-3.3
-DEMO_NAME = MesaDemos-3.3
-GLU_NAME = MesaGLU-3.3
+DIRECTORY = Mesa-3.5
+LIB_NAME = MesaLib-3.5
+DEMO_NAME = MesaDemos-3.5
+GLU_NAME = MesaGLU-3.5
 GLUT_NAME = GLUT-3.7
 
 
@@ -494,6 +494,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/widgets-mesa/man/Makefile.in		\
 	$(DIRECTORY)/widgets-mesa/man/Mesa*			\
 	$(DIRECTORY)/widgets-mesa/src/ChangeLog			\
+	$(DIRECTORY)/widgets-mesa/src/*.c			\
+	$(DIRECTORY)/widgets-mesa/src/Makefile.in		\
 	$(DIRECTORY)/widgets-sgi/*.[ch]				\
 	$(DIRECTORY)/widgets-sgi/Makefile*			\
 	$(DIRECTORY)/widgets-sgi/README				\
