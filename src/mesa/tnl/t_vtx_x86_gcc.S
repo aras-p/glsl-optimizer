@@ -82,9 +82,13 @@ GLOBL ( _tnl_x86_Vertex1fv )
 	pop	%esi
 	pop	%edi
 	dec	%edx		// counter--
-	movl	%edx, SUBST(3)	// 0x3 --> counter 
-	.short	0x840f		// if (counter == 0)
-	.long	SUBST(4)	//    notify()
+	movl	%edx, SUBST(3)	// 0x3 --> counter
+	jne	.0		// if (counter != 0) return
+	pushl	$SUBST(4)	// 0x4 --> ctx
+	.byte	0xe8		// call ...
+	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	pop	%eax
+.0:
 	ret			// return
 GLOBL ( _tnl_x86_Vertex1fv_end )
 
@@ -110,8 +114,12 @@ GLOBL ( _tnl_x86_Vertex2fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	.short	0x840f		// if (counter == 0)
-	.long	SUBST(4)	//    notify()
+	jne	.1		// if (counter != 0) return
+	pushl	$SUBST(4)	// load ctx
+	.byte	0xe8		// call ...
+	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	pop	%eax
+.1:
 	ret			// return
 GLOBL ( _tnl_x86_Vertex2fv_end )
 
@@ -138,8 +146,12 @@ GLOBL ( _tnl_x86_Vertex3fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	.short	0x840f		// if (counter == 0)
-	.long	SUBST(4)	//    notify()
+	jne	.2		// if (counter != 0) return
+	pushl	$SUBST(4)	// load ctx
+	.byte	0xe8		// call ...
+	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	pop	%eax
+.2:
 	ret			// return
 GLOBL ( _tnl_x86_Vertex3fv_end )
 
@@ -169,8 +181,12 @@ GLOBL ( _tnl_x86_Vertex4fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	.short	0x840f		// if (counter == 0)
-	.long	SUBST(4)	//    notify()
+	jne	.3		// if (counter != 0) return
+	pushl	$SUBST(4)	// load ctx
+	.byte	0xe8		// call ...
+	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	pop	%eax
+.3:
 	ret			// return
 GLOBL ( _tnl_x86_Vertex4fv_end )
 
@@ -312,9 +328,9 @@ GLOBL( _tnl_x86_dispatch_multitexcoordfv_end )
 GLOBL( _tnl_x86_dispatch_vertexattribf )
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	jb	.0		// "cmovge" is not supported on all CPUs
+	jb	.8		// "cmovge" is not supported on all CPUs
 	movl	$16, %eax
-.0:
+.8:
 	leal	8(%esp), %ecx	// calculate 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
@@ -324,9 +340,9 @@ GLOBL( _tnl_x86_dispatch_vertexattribf_end )
 GLOBL( _tnl_x86_dispatch_vertexattribfv )
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	jb	.1		// "cmovge" is not supported on all CPUs
+	jb	.9		// "cmovge" is not supported on all CPUs
 	movl	$16, %eax
-.1:
+.9:
 	movl	8(%esp), %ecx	// load 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax

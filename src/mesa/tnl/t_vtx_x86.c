@@ -145,7 +145,8 @@ static struct _tnl_dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUPREL(dfn->code, 0, 4, (int)&notify);
+   FIXUP(dfn->code, 0, 4, (int)ctx);
+   FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
 
    return dfn;
 }
@@ -161,7 +162,8 @@ static struct _tnl_dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUPREL(dfn->code, 0, 4, (int)&notify);
+   FIXUP(dfn->code, 0, 4, (int)ctx);
+   FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
 
    return dfn;
 }
@@ -177,7 +179,8 @@ static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUPREL(dfn->code, 0, 4, (int)&notify);
+   FIXUP(dfn->code, 0, 4, (int)ctx);
+   FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
    return dfn;
 }
 
@@ -192,7 +195,8 @@ static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUPREL(dfn->code, 0, 4, (int)&notify);
+   FIXUP(dfn->code, 0, 4, (int)ctx);
+   FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
 
    return dfn;
 }
