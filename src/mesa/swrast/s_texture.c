@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.17 2001/03/21 16:04:49 brianp Exp $ */
+/* $Id: s_texture.c,v 1.18 2001/03/22 04:54:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,14 @@
 #include "s_pb.h"
 #include "s_texture.h"
 
+
+/* XXX this is temporary, until GL/glext.h is updated. */
+#ifndef GL_DOT3_RGB_ARB
+#define GL_DOT3_RGB_ARB 0x86AE
+#endif
+#ifndef GL_DOT3_RGBA_ARB
+#define GL_DOT3_RGBA_ARB 0x86AF
+#endif
 
 
 /*
@@ -1689,6 +1697,9 @@ texture_combine(const GLcontext *ctx,
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine);
 
+   /*
+    * Do operand setup for up to 3 operands.  Loop over the terms.
+    */
    for (j = 0; j < 3; j++) {
       switch (textureUnit->CombineSourceA[j]) {
          case GL_TEXTURE:
@@ -1763,7 +1774,8 @@ texture_combine(const GLcontext *ctx,
                dst[i][BCOMP] = src[i][ACOMP];
             }
          }
-         else {                      /*  GL_ONE_MINUS_SRC_ALPHA  */
+         else {
+            ASSERT(textureUnit->CombineOperandRGB[j] ==GL_ONE_MINUS_SRC_ALPHA);
             src = (const GLchan (*)[4]) argA[j];
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = CHAN_MAX - src[i][ACOMP];
@@ -1794,6 +1806,9 @@ texture_combine(const GLcontext *ctx,
       }
    }
 
+   /*
+    * Do the texture combine.
+    */
    switch (textureUnit->CombineModeRGB) {
       case GL_REPLACE:
          {
@@ -1887,6 +1902,8 @@ texture_combine(const GLcontext *ctx,
          break;
       case GL_DOT3_RGB_EXT:
       case GL_DOT3_RGBA_EXT:
+      case GL_DOT3_RGB_ARB:
+      case GL_DOT3_RGBA_ARB:
          {
             const GLubyte (*arg0)[4] = (const GLubyte (*)[4]) argRGB[0];
             const GLubyte (*arg1)[4] = (const GLubyte (*)[4]) argRGB[1];
@@ -1980,7 +1997,8 @@ texture_combine(const GLcontext *ctx,
 
    /* Fix the alpha component for GL_DOT3_RGBA_EXT combining.
     */
-   if (textureUnit->CombineModeRGB == GL_DOT3_RGBA_EXT) {
+   if (textureUnit->CombineModeRGB == GL_DOT3_RGBA_EXT ||
+       textureUnit->CombineModeRGB == GL_DOT3_RGBA_ARB) {
       for (i = 0; i < n; i++) {
 	 rgba[i][ACOMP] = rgba[i][RCOMP];
       }

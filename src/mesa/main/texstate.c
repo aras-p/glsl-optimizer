@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.37 2001/03/18 08:53:50 gareth Exp $ */
+/* $Id: texstate.c,v 1.38 2001/03/22 04:54:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,14 @@
 #define ENUM_TO_DOUBLE(X) ((GLdouble)(X))
 #endif
 
+
+/* XXX this is temporary, until GL/glext.h is updated. */
+#ifndef GL_DOT3_RGB_ARB
+#define GL_DOT3_RGB_ARB 0x86AE
+#endif
+#ifndef GL_DOT3_RGBA_ARB
+#define GL_DOT3_RGBA_ARB 0x86AF
+#endif
 
 
 
@@ -127,6 +135,8 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       break;
 	    case GL_DOT3_RGB_EXT:
 	    case GL_DOT3_RGBA_EXT:
+	    case GL_DOT3_RGB_ARB:
+	    case GL_DOT3_RGBA_ARB:
 	       if (!ctx->Extensions.EXT_texture_env_dot3) {
 		  _mesa_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
 		  return;
@@ -272,7 +282,10 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 if (ctx->Extensions.EXT_texture_env_combine) {
 	    GLenum operand = (GLenum) (GLint) *param;
 	    switch (operand) {
+	    case GL_SRC_COLOR:           /* ARB combine only */
+	    case GL_ONE_MINUS_SRC_COLOR: /* ARB combine only */
 	    case GL_SRC_ALPHA:
+	    case GL_ONE_MINUS_SRC_ALPHA: /* ARB combine only */
 	       if (texUnit->CombineOperandRGB[2] == operand)
 		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -292,6 +305,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    GLenum operand = (GLenum) (GLint) *param;
 	    switch (operand) {
 	    case GL_SRC_ALPHA:
+	    case GL_ONE_MINUS_SRC_ALPHA: /* ARB combine only */
 	       if (texUnit->CombineOperandA[2] == operand)
 		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
