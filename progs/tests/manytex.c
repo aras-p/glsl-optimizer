@@ -1,4 +1,4 @@
-/* $Id: manytex.c,v 1.2 2000/10/23 23:32:22 brianp Exp $ */
+/* $Id: manytex.c,v 1.3 2000/11/09 16:53:26 brianp Exp $ */
 
 /*
  * test handling of many texture maps
@@ -230,7 +230,7 @@ static void Init( void )
          GLint level = 0;
          GLint w = TexWidth, h = TexHeight;
          while (1) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+            glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, w, h, 0,
                          GL_RGBA, GL_UNSIGNED_BYTE, texImage);
             if (w == 1 && h == 1)
                break;
