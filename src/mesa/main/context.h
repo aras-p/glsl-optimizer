@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.16 2000/04/22 01:05:00 brianp Exp $ */
+/* $Id: context.h,v 1.17 2000/05/04 13:53:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,6 @@
  */
 extern GLvisual *
 _mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean alphaFlag,
                      GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -78,7 +77,6 @@ _mesa_create_visual( GLboolean rgbFlag,
 extern GLboolean
 _mesa_initialize_visual( GLvisual *v,
                          GLboolean rgbFlag,
-                         GLboolean alphaFlag,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,

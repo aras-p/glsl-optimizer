@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.61 2000/04/22 01:05:00 brianp Exp $ */
+/* $Id: context.c,v 1.62 2000/05/04 13:53:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,6 @@ struct immediate *_mesa_CurrentInput = NULL;
 /*
  * Allocate a new GLvisual object.
  * Input:  rgbFlag - GL_TRUE=RGB(A) mode, GL_FALSE=Color Index mode
- *         alphaFlag - alloc software alpha buffers?
  *         dbFlag - double buffering?
  *         stereoFlag - stereo buffer?
  *         depthBits - requested bits per depth buffer value
@@ -112,7 +111,6 @@ struct immediate *_mesa_CurrentInput = NULL;
  */
 GLvisual *
 _mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean alphaFlag,
                      GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
@@ -130,7 +128,7 @@ _mesa_create_visual( GLboolean rgbFlag,
 {
    GLvisual *vis = (GLvisual *) CALLOC( sizeof(GLvisual) );
    if (vis) {
-      if (!_mesa_initialize_visual(vis, rgbFlag, alphaFlag, dbFlag, stereoFlag,
+      if (!_mesa_initialize_visual(vis, rgbFlag, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
                                    indexBits, depthBits, stencilBits,
                                    accumRedBits, accumGreenBits,
@@ -153,7 +151,6 @@ _mesa_create_visual( GLboolean rgbFlag,
 GLboolean
 _mesa_initialize_visual( GLvisual *vis,
                          GLboolean rgbFlag,
-                         GLboolean alphaFlag,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
@@ -202,7 +199,7 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->RedBits    = redBits;
    vis->GreenBits  = greenBits;
    vis->BlueBits   = blueBits;
-   vis->AlphaBits  = alphaFlag ? (8 * sizeof(GLubyte)) : alphaBits;
+   vis->AlphaBits  = alphaBits;
 
    vis->IndexBits      = indexBits;
    vis->DepthBits      = depthBits;
@@ -211,8 +208,6 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->AccumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
    vis->AccumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
    vis->StencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
-
-   vis->SoftwareAlpha = alphaFlag;
 
    if (depthBits == 0) {
       /* Special case.  Even if we don't have a depth buffer we need
@@ -245,7 +240,8 @@ gl_create_visual( GLboolean rgbFlag,
                   GLint blueBits,
                   GLint alphaBits )
 {
-   return _mesa_create_visual(rgbFlag, alphaFlag, dbFlag, stereoFlag,
+   (void) alphaFlag;
+   return _mesa_create_visual(rgbFlag, dbFlag, stereoFlag,
                               redBits, greenBits, blueBits, alphaBits,
                               indexBits, depthBits, stencilBits,
                               accumBits, accumBits, accumBits, accumBits, 0);

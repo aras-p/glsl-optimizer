@@ -1,4 +1,3 @@
-/* $Id: buffers.c,v 1.7 2000/04/22 01:03:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -240,6 +239,9 @@ void
 _mesa_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
+#ifdef PROFILE
+   GLdouble t0 = gl_time();
+#endif
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClear");
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -295,10 +297,16 @@ _mesa_Clear( GLbitfield mask )
       }
 
       /* clear software-based alpha buffer(s) */
-      if ( (mask & GL_COLOR_BUFFER_BIT) && ctx->Visual->SoftwareAlpha
+      if ( (mask & GL_COLOR_BUFFER_BIT)
+           && ctx->DrawBuffer->UseSoftwareAlphaBuffers
            && ctx->Color.ColorMask[RCOMP]) {
          _mesa_clear_alpha_buffers( ctx );
       }
+
+#ifdef PROFILE
+      ctx->ClearTime += gl_time() - t0;
+      ctx->ClearCount++;
+#endif
    }
 }
 
@@ -420,7 +428,7 @@ _mesa_DrawBuffer( GLenum mode )
    /*
     * Set current alpha buffer pointer
     */
-   if (ctx->Visual->SoftwareAlpha) {
+   if (ctx->DrawBuffer->UseSoftwareAlphaBuffers) {
       if (ctx->Color.DriverDrawBuffer == GL_FRONT_LEFT)
          ctx->DrawBuffer->Alpha = ctx->DrawBuffer->FrontLeftAlpha;
       else if (ctx->Color.DriverDrawBuffer == GL_BACK_LEFT)
@@ -550,7 +558,7 @@ _mesa_ResizeBuffersMESA( void )
    if (ctx->DrawBuffer->UseSoftwareAccumBuffer) {
       _mesa_alloc_accum_buffer( ctx );
    }
-   if (ctx->Visual->SoftwareAlpha) {
+   if (ctx->DrawBuffer->UseSoftwareAlphaBuffers) {
       _mesa_alloc_alpha_buffers( ctx );
    }
 }
