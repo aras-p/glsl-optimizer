@@ -65,7 +65,7 @@ GLfloat *labelInfoColor = labelColor0;
 GLfloat labelLevelColor0[4] = { 0.8, 0.8, 0.1, 1.0 };
 GLfloat labelLevelColor1[4] = { 0.0, 0.0, 0.0, 1.0 };
 
-GLboolean doubleBuffered = GL_FALSE;
+GLboolean doubleBuffered = GL_TRUE;
 GLboolean drawBackground = GL_FALSE;
 GLboolean drawBlended = GL_TRUE;
 GLboolean drawSmooth = GL_FALSE;
@@ -574,6 +574,10 @@ static void drawSample( int x, int y, int w, int h,
       glEnable( GL_TEXTURE_2D );
    }
 
+   /*
+    * if (drawSmooth) then draw quad which goes from purple at the
+    * bottom (100% alpha) to green at the top (50% alpha).
+    */
    glBegin( GL_QUADS );
       if ( drawSmooth )  glColor4f( 1.0, 0.0, 1.0, 1.0 );
       glTexCoord2f( 0.0, 0.0 );
@@ -583,11 +587,11 @@ static void drawSample( int x, int y, int w, int h,
       glTexCoord2f( 1.0, 0.0 );
       glVertex2f( 0.8, -0.8 );
 
-      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 0.5 );
       glTexCoord2f( 1.0, 1.0 );
       glVertex2f( 0.8, 0.8 );
 
-      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 0.5 );
       glTexCoord2f( 0.0, 1.0 );
       glVertex2f( -0.8, 0.8 );
    glEnd();
