@@ -1384,12 +1384,14 @@ static void fxSetupDepthTest(GLcontext *ctx)
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   tfxUnitsState *us=&fxMesa->unitsState;
 
-  if(us->depthTestEnabled)
+  if (us->depthTestEnabled) {
      FX_grDepthBufferFunction(us->depthTestFunc);
-  else
+     FX_grDepthMask(us->depthMask);
+  }
+  else {
      FX_grDepthBufferFunction(GR_CMP_ALWAYS);
-
-  FX_grDepthMask(us->depthMask);
+     FX_grDepthMask(FXFALSE);
+  }
 }
 
 /************************************************************************/
