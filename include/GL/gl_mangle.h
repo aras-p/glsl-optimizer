@@ -1,8 +1,8 @@
-/* $Id: gl_mangle.h,v 1.7 2001/09/21 17:23:30 brianp Exp $ */
+/* $Id: gl_mangle.h,v 1.8 2001/11/09 22:00:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.1
  * 
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
@@ -675,6 +675,54 @@
 #define glSecondaryColor3uiEXT mglSecondaryColor3uiEXT
 #define glSecondaryColor3usEXT mglSecondaryColor3usEXT
 #define glSecondaryColor3sEXT mglSecondaryColor3sEXT
+
+/* 1.3 */
+#define glActiveTexture mglActiveTexture
+#define glClientActiveTexture mglClientActiveTexture
+#define glSampleCoverage mglSampleCoverage 
+#define glSamplePass mglSamplePass
+#define glMultTransposeMatrixf mglMultTransposeMatrixf 
+#define glMultTransposeMatrixd mglMultTransposeMatrixd 
+#define glLoadTransposeMatrixf mglLoadTransposeMatrixf 
+#define glLoadTransposeMatrixd mglLoadTransposeMatrixd 
+#define glGetCompressedTexImage mglGetCompressedTexImage
+#define glCompressedTexSubImage3D mglCompressedTexSubImage3D
+#define glCompressedTexSubImage2D mglCompressedTexSubImage2D
+#define glCompressedTexSubImage1D mglCompressedTexSubImage1D
+#define glCompressedTexImage3D mglCompressedTexImage3D
+#define glCompressedTexImage2D mglCompressedTexImage2D
+#define glMultiTexCoord1d mglMultiTexCoord1d
+#define glMultiTexCoord1dv mglMultiTexCoord1dv
+#define glMultiTexCoord1f mglMultiTexCoord1f
+#define glMultiTexCoord1fv mglMultiTexCoord1fv
+#define glMultiTexCoord1i mglMultiTexCoord1i
+#define glMultiTexCoord1iv mglMultiTexCoord1iv
+#define glMultiTexCoord1s mglMultiTexCoord1s
+#define glMultiTexCoord1sv mglMultiTexCoord1sv
+#define glMultiTexCoord2d mglMultiTexCoord2d
+#define glMultiTexCoord2dv mglMultiTexCoord2dv
+#define glMultiTexCoord2f mglMultiTexCoord2f
+#define glMultiTexCoord2fv mglMultiTexCoord2fv
+#define glMultiTexCoord2i mglMultiTexCoord2i
+#define glMultiTexCoord2iv mglMultiTexCoord2iv
+#define glMultiTexCoord2s mglMultiTexCoord2s
+#define glMultiTexCoord2sv mglMultiTexCoord2sv
+#define glMultiTexCoord3d mglMultiTexCoord3d
+#define glMultiTexCoord3dv mglMultiTexCoord3dv
+#define glMultiTexCoord3f mglMultiTexCoord3f
+#define glMultiTexCoord3fv mglMultiTexCoord3fv
+#define glMultiTexCoord3i mglMultiTexCoord3i
+#define glMultiTexCoord3iv mglMultiTexCoord3iv
+#define glMultiTexCoord3s mglMultiTexCoord3s
+#define glMultiTexCoord3sv mglMultiTexCoord3sv
+#define glMultiTexCoord4d mglMultiTexCoord4d
+#define glMultiTexCoord4dv mglMultiTexCoord4dv
+#define glMultiTexCoord4f mglMultiTexCoord4f
+#define glMultiTexCoord4fv mglMultiTexCoord4fv
+#define glMultiTexCoord4i mglMultiTexCoord4i
+#define glMultiTexCoord4iv mglMultiTexCoord4iv
+#define glMultiTexCoord4s mglMultiTexCoord4s
+#define glMultiTexCoord4sv mglMultiTexCoord4sv
 
 
 /* Internal symbols which may collide with other OpenGL implementations. */
