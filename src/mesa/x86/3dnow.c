@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.13 2000/12/27 19:57:37 keithw Exp $ */
+/* $Id: 3dnow.c,v 1.14 2001/02/03 08:41:03 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,7 +40,7 @@
 #include "tnl/t_context.h"
 
 #ifdef DEBUG
-#include "math/m_debug_xform.h"
+#include "math/m_debug.h"
 #endif
 
 
@@ -168,8 +168,8 @@ void gl_init_3dnow_transform_asm( void )
 /* ASSIGN_NORM_GROUP( 3dnow, CULL_MASK_ACTIVE, masked ); */
 
 #ifdef DEBUG
-   gl_test_all_transform_functions( "3DNow!" );
-   gl_test_all_normal_transform_functions( "3DNow!" );
+   _math_test_all_transform_functions( "3DNow!" );
+   _math_test_all_normal_transform_functions( "3DNow!" );
 #endif
 #endif
 }
@@ -182,7 +182,7 @@ void gl_init_3dnow_vertex_asm( void )
    gl_project_clipped_v16	= gl_3dnow_project_clipped_vertices;
 
 #ifdef DEBUG_NOT
-   gl_test_all_vertex_functions( "3DNow!" );
+   _math_test_all_vertex_functions( "3DNow!" );
 #endif
 #endif
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.41 2001/01/29 20:47:39 keithw Exp $
+# $Id: Makefile.X11,v 1.42 2001/02/03 08:41:03 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -112,6 +112,8 @@ CORE_SOURCES = \
 	X86/common_x86.c \
 	X86/3dnow.c \
 	X86/katmai.c \
+	math/m_debug_norm.c \
+	math/m_debug_vertex.c \
 	math/m_debug_xform.c \
 	math/m_eval.c \
 	math/m_matrix.c \
@@ -149,7 +151,7 @@ CORE_SOURCES = \
 	swrast/s_stencil.c \
 	swrast/s_texture.c \
 	swrast/s_triangle.c \
-	swrast/s_zoom.c 
+	swrast/s_zoom.c
 
 
 DRIVER_SOURCES = \
@@ -184,9 +186,9 @@ DRIVER_SOURCES = \
 	Trace/tr_write.c
 
 
-ASM_SOURCES = 
+ASM_SOURCES =
 
-ADDITIONAL_OBJ = 
+ADDITIONAL_OBJ =
 
 OBJECTS = $(ASM_SOURCES:.S=.o) \
 	$(CORE_SOURCES:.c=.o) \
@@ -336,7 +338,7 @@ include depend
 #
 # Run 'make dep' to update the dependencies if you change what's included
 # by any source file.
-# 
+#
 dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
 	makedepend -fdepend -Y -I../include -DGGI -DSVGA -DFX $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
 

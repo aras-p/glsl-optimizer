@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.7 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: m_xform.c,v 1.8 2001/02/03 08:41:04 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,7 @@
 
 
 #ifdef DEBUG
-#include "m_debug_xform.h"
+#include "m_debug.h"
 #endif
 
 #ifdef USE_X86_ASM
@@ -221,7 +221,7 @@ void gl_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
  * to optimized transformation functions.  This is where we can test for
  * AMD 3Dnow! capability, Intel Katmai, etc. and hook in the right code.
  */
-void 
+void
 _math_init_transformation( void )
 {
    gl_transform_tab[0] = raw_transform_tab;
@@ -238,8 +238,8 @@ _math_init_transformation( void )
    init_dotprod_masked();
 
 #ifdef DEBUG
-   gl_test_all_transform_functions( "default" );
-   gl_test_all_normal_transform_functions( "default" );
+   _math_test_all_transform_functions( "default" );
+   _math_test_all_normal_transform_functions( "default" );
 #endif
 
 #ifdef USE_X86_ASM

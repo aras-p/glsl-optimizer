@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.15 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: x86.c,v 1.16 2001/02/03 08:41:03 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 #include "tnl/t_context.h"
 
 #ifdef DEBUG
-#include "math/m_debug_xform.h"
+#include "math/m_debug.h"
 #endif
 
 
@@ -131,7 +131,7 @@ void gl_init_x86_transform_asm( void )
    gl_clip_np_tab[4] = gl_x86_cliptest_points4_np;
 
 #ifdef DEBUG
-   gl_test_all_transform_functions( "x86" );
+   _math_test_all_transform_functions( "x86" );
 #endif
 #endif
 }
@@ -142,8 +142,8 @@ void gl_init_x86_vertex_asm( void )
    gl_xform_points3_v16_general	= gl_v16_x86_general_xform;
    gl_cliptest_points4_v16	= gl_v16_x86_cliptest_points4;
 
-#ifdef DEBUG_NOT
-   gl_test_all_vertex_functions( "x86" );
+#ifdef DEBUG
+   _math_test_all_vertex_functions( "x86" );
 #endif
 #endif
 }
