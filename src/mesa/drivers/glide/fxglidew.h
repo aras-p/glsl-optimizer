@@ -155,6 +155,50 @@ typedef struct {
   float  oow;                   /* 1/w (used mipmapping - really 0xfff/w) */
 }  GrTmuVertex;
 
+
+#if FX_USE_PARGB
+
+typedef struct
+{
+  float x, y;         /* X and Y in screen space */
+  float ooz;          /* 65535/Z (used for Z-buffering) */
+  float oow;          /* 1/W (used for W-buffering, texturing) */
+  FxU32 argb;         /* R, G, B, A [0..255.0] */
+  GrTmuVertex         tmuvtx[GLIDE_NUM_TMU];
+  float z;            /* Z is ignored */
+} GrVertex;
+
+#define GR_VERTEX_X_OFFSET              0
+#define GR_VERTEX_Y_OFFSET              1
+#define GR_VERTEX_OOZ_OFFSET            2
+#define GR_VERTEX_OOW_OFFSET            3
+#define GR_VERTEX_PARGB_OFFSET          4
+#define GR_VERTEX_SOW_TMU0_OFFSET       5
+#define GR_VERTEX_TOW_TMU0_OFFSET       6
+#define GR_VERTEX_OOW_TMU0_OFFSET       7
+#define GR_VERTEX_SOW_TMU1_OFFSET       8
+#define GR_VERTEX_TOW_TMU1_OFFSET       9
+#define GR_VERTEX_OOW_TMU1_OFFSET       10
+#define GR_VERTEX_Z_OFFSET		11
+
+#define GET_PARGB(v)	((FxU32*)(v))[GR_VERTEX_PARGB_OFFSET]
+/* GET_PA: returns the alpha component */
+#if GLIDE_ENDIAN == GLIDE_ENDIAN_BIG
+   #define GET_PA(v)		((FxU8*)(v))[GR_VERTEX_PARGB_OFFSET*4]
+#else 
+   #define GET_PA(v)		((FxU8*)(v))[GR_VERTEX_PARGB_OFFSET*4+3]
+#endif 
+#define MESACOLOR2PARGB(c)	(c[ACOMP] << 24 | c[GCOMP] << 16 | c[GCOMP] << 8 | c[BCOMP])
+#define PACK_4F_ARGB(dest,a,r,g,b) { 								\
+    					     const GLuint cr = (int)r;				\
+    					     const GLuint cg = (int)g;				\
+    					     const GLuint ca = (int)a;				\
+    					     const GLuint cb = (int)b;				\
+    					     dest = ca << 24 | cr << 16 | cg << 8 | cb;		\
+    				        }
+
+#else /* FX_USE_PARGB */
+
 typedef struct
 {
   float x, y;         /* X and Y in screen space */
@@ -180,6 +224,7 @@ typedef struct
 #define GR_VERTEX_SOW_TMU1_OFFSET       12
 #define GR_VERTEX_TOW_TMU1_OFFSET       13
 #define GR_VERTEX_OOW_TMU1_OFFSET       14
+#endif /* FX_USE_PARGB */
 
 #endif
 
