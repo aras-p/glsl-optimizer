@@ -1407,6 +1407,15 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 static void savageUpdateTextureState_s4( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+
+   if ((imesa->CurrentTexObj[0] && ctx->Texture.Unit[0]._ReallyEnabled &&
+	ctx->Texture.Unit[0]._Current->DriverData != imesa->CurrentTexObj[0]) ||
+       (imesa->CurrentTexObj[1] && ctx->Texture.Unit[1]._ReallyEnabled &&
+	ctx->Texture.Unit[1]._Current->DriverData != imesa->CurrentTexObj[1]) ||
+       (imesa->CurrentTexObj[0] && !ctx->Texture.Unit[0]._ReallyEnabled) ||
+       (imesa->CurrentTexObj[1] && !ctx->Texture.Unit[1]._ReallyEnabled))
+       FLUSH_BATCH(imesa);
+
    if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
    if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->bound &= ~2;
    imesa->CurrentTexObj[0] = 0;
@@ -1419,6 +1428,12 @@ static void savageUpdateTextureState_s4( GLcontext *ctx )
 static void savageUpdateTextureState_s3d( GLcontext *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+
+    if ((imesa->CurrentTexObj[0] && ctx->Texture.Unit[0]._ReallyEnabled &&
+	 ctx->Texture.Unit[0]._Current->DriverData != imesa->CurrentTexObj[0]) ||
+	(imesa->CurrentTexObj[0] && !ctx->Texture.Unit[0]._ReallyEnabled))
+	FLUSH_BATCH(imesa);
+
     if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
     imesa->CurrentTexObj[0] = 0;
     savageUpdateTexState_s3d( ctx );
@@ -1472,13 +1487,16 @@ static void savageTexEnv( GLcontext *ctx, GLenum target,
 
 /* Update a heap's timestamp when a texture image is modified, so the
  * new image is not uploaded while the old one is still in use.
- * FIXME: this should be moved to ../common/texmem.c 
  */
 static void savageTexImageChanged (savageTexObjPtr t) {
     /* Update the heap's time stamp, so the new image is not uploaded
      * while the old one is still in use. */
-    if (t->base.heap && t->base.timestamp > t->base.heap->timestamp)
-	t->base.heap->timestamp = t->base.timestamp;
+    if (t->base.heap) {
+	if (t->base.bound)
+	    FLUSH_BATCH((savageContextPtr)t->base.heap->driverContext);
+	if (t->base.timestamp > t->base.heap->timestamp)
+	    t->base.heap->timestamp = t->base.timestamp;
+    }
 }
 
 static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
