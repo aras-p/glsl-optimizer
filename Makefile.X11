@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.5 1999/09/15 19:38:28 brianp Exp $
+# $Id: Makefile.X11,v 1.6 1999/09/16 16:43:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -314,8 +314,8 @@ realclean: clean
 
 
 DIRECTORY = Mesa-3.1
-LIB_NAME = MesaLib-3.1beta2
-DEMO_NAME = MesaDemos-3.1beta2
+LIB_NAME = MesaLib-3.1beta3
+DEMO_NAME = MesaDemos-3.1beta3
 
 
 LIB_FILES =	\
