@@ -435,7 +435,7 @@ const __GLcontextModes __glModes[] =
 static int viaInitContextModes(const DRIDriverContext *ctx,
                                   int *numModes, const __GLcontextModes **modes)
 {
-    *numModes = sizeof(__glModes)/sizeof(__GLcontextModes *);
+    *numModes = sizeof(__glModes)/sizeof(__glModes[0]);
     *modes = &__glModes[0];
     return 1;
 }
