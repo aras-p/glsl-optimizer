@@ -1491,8 +1491,15 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
       _mesa_enable_extension(ctx, "GL_NV_blend_square");
-   } else if (fxMesa->HaveTexus2) {
-      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
+   } else {
+      if (fxMesa->HaveTexus2) {
+         _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
+      }
+#if FX_TC_NCC
+      else
+#endif
+      /* doesn't like texture compression */
+      _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1517,13 +1524,11 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
 #if 0
-   /* not until texel fetchers are right */
-   _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
-#endif
-#if 0
    /* not just yet */
-   _mesa_enable_extension(ctx, "GL_ARB_fragment_program");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
+   _mesa_enable_extension(ctx, "GL_NV_vertex_program");
+   _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
+   _mesa_enable_extension(ctx, "GL_MESA_program_debug");
 #endif
 }
 
@@ -1555,16 +1560,36 @@ fx_check_IsInHardware(GLcontext * ctx)
    }
 
    if (ctx->Color.BlendEnabled) {
-      if ((ctx->Color.BlendEquationRGB != GL_FUNC_ADD) ||
-          (ctx->Color.BlendEquationA != GL_FUNC_ADD)) {
+      if (ctx->Color.BlendEquationRGB != GL_FUNC_ADD) {
          if (!fxMesa->HavePixExt ||
              ((ctx->Color.BlendEquationRGB != GL_FUNC_SUBTRACT) &&
-              (ctx->Color.BlendEquationRGB != GL_FUNC_REVERSE_SUBTRACT)) ||
+              (ctx->Color.BlendEquationRGB != GL_FUNC_REVERSE_SUBTRACT))) {
+            return FX_FALLBACK_BLEND;
+         }
+      }
+
+      if (ctx->Color.BlendEquationA != GL_FUNC_ADD) {
+         if (!fxMesa->HavePixExt ||
              ((ctx->Color.BlendEquationA != GL_FUNC_SUBTRACT) &&
               (ctx->Color.BlendEquationA != GL_FUNC_REVERSE_SUBTRACT))) {
             return FX_FALLBACK_BLEND;
          }
       }
+
+#if 0
+      /* [dBorca]
+       * We fail the spec here, unless certain blending modes:
+       * (c1 + c2) * 1 + d * 1 = c1 * 1 + d * 1 + c2 * 1
+       * (c1 + c2) * 1 + d * 0 = c1 * 1 + d * 0 + c2 * 1
+       */
+      if (NEED_SECONDARY_COLOR(ctx)) {
+         if ((ctx->Color.BlendEquationRGB != GL_FUNC_ADD) &&
+             (ctx->Color.BlendSrcRGB != GL_ONE)) {
+            /* Can't use multipass to blend ColorSum stage */
+            return FX_FALLBACK_SPECULAR;
+         }
+      }
+#endif
    }
 
    /* [dBorca]
@@ -1577,12 +1602,6 @@ fx_check_IsInHardware(GLcontext * ctx)
    if (ctx->Color.ColorLogicOpEnabled && (ctx->Color.LogicOp != GL_COPY)) {
       return FX_FALLBACK_LOGICOP;
    }
-
-#if 0 /* multipass ColorSum stage */
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) {
-      return FX_FALLBACK_SPECULAR;
-   }
-#endif
 
    if ((fxMesa->colDepth != 32) &&
        ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP]) ||
