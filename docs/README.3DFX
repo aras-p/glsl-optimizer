@@ -9,7 +9,7 @@ Mesa-6.1 release notes:
 1) Glide2 support has been ceased; please visit the Glide SourceForge and
    help us improve Glide3.
 2) The current release is a WIP; among other things, the Linux build works
-   only to some extent. Voodoo Rush not fully supported. Any help will be
+   only to some extent. Voodoo Rush not fully tested. Any help will be
    appreciated.
 3) Although Mesa is designed to work with any Glide3, it would benefit from
    interacting with newer Glide libraries, which can export functions like:
@@ -64,6 +64,7 @@ FX_TC_NAPALM
 	map GL_COMPRESSED_RGB[A] to FXT1. This will have effect on Napalm
 	only (can coexist with FX_TC_NCC, but has higher priority)
 FX_TC_NCC
+	experimental
 	map GL_COMPRESSED_RGB[A] to NCC. This will have effect on any 3dfx
 	HW (can coexist with FX_TC_NAPALM, but has lesser priority)
 FX_COMPRESS_S3TC_AS_FXT1_HACK
@@ -93,7 +94,7 @@ default values. Use them only when you experience crashes or strange behavior.
 
 FX_GLIDE_NUM_TMU
 	OS: all
-	HW: dual-TMU cards (some Voodoo1, Voodoo2, Avenger, Napalm)
+	HW: dual-TMU cards (Voodoo2, Avenger, Napalm)
 	Desc: force single-TMU
 	Note: (*)
 	Value: "1"
