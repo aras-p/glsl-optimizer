@@ -17,7 +17,13 @@ PROGS = cva \
 	projtex \
 	seccolor \
 	sharedtex \
-	texline
+	texline \
+	texwrap \
+	vptest1 \
+	vptest2 \
+	vptest3 \
+	vptorus \
+	vpwarpmesh
 
 
 ##### RULES #####
