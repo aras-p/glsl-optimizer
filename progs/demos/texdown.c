@@ -1,18 +1,18 @@
-/* $Id: texdown.c,v 1.3 2000/03/29 18:02:52 brianp Exp $ */
+/* $Id: texdown.c,v 1.4 2001/02/07 03:04:58 gareth Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -148,6 +148,10 @@ MeasureDownloadRate(void)
       glPixelTransferf(GL_BLUE_BIAS, 0.0);
    }
 
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glEnable(GL_TEXTURE_2D);
+
    count = 0;
    t0 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
    do {
@@ -163,23 +167,19 @@ MeasureDownloadRate(void)
                       FormatTable[Format].Type, texImage);
       }
 
-      if (count == 0) {
-         /* draw a tiny polygon to force texture into texram */
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-         glEnable(GL_TEXTURE_2D);
-         glBegin(GL_TRIANGLES);
-         glTexCoord2f(0, 0);   glVertex2f(1, 1);
-         glTexCoord2f(1, 0);   glVertex2f(3, 1);
-         glTexCoord2f(0.5, 1);   glVertex2f(2, 3);
-         glEnd();
-         glDisable(GL_TEXTURE_2D);
-      }
+      /* draw a tiny polygon to force texture into texram */
+      glBegin(GL_TRIANGLES);
+      glTexCoord2f(0, 0);     glVertex2f(1, 1);
+      glTexCoord2f(1, 0);     glVertex2f(3, 1);
+      glTexCoord2f(0.5, 1);   glVertex2f(2, 3);
+      glEnd();
 
       t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
       time = t1 - t0;
       count++;
    } while (time < 3.0);
+
+   glDisable(GL_TEXTURE_2D);
 
    printf("w*h=%d  count=%d  time=%f\n", w*h, count, time);
    DownloadRate = w * h * count / time;
