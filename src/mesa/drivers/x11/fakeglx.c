@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.26 2000/03/17 15:33:09 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.27 2000/03/31 01:07:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -228,7 +228,9 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
                  GLboolean rgbFlag, GLboolean alphaFlag, GLboolean dbFlag,
                  GLboolean stereoFlag,
                  GLint depth_size, GLint stencil_size,
-                 GLint accum_size, GLint level )
+                 GLint accumRedSize, GLint accumGreenSize,
+                 GLint accumBlueSize, GLint accumAlphaSize,
+                 GLint level )
 {
    GLboolean ximageFlag = GL_TRUE;
    XMesaVisual xmvis;
@@ -271,7 +273,10 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
           && (v->gl_visual->AlphaBits > 0) == alphaFlag
           && (v->gl_visual->DepthBits >= depth_size || depth_size == 0)
           && (v->gl_visual->StencilBits >= stencil_size || stencil_size == 0)
-          && (v->gl_visual->AccumBits >= accum_size || accum_size == 0)) {
+          && (v->gl_visual->AccumRedBits >= accumRedSize || accumRedSize == 0)
+          && (v->gl_visual->AccumGreenBits >= accumGreenSize || accumGreenSize == 0)
+          && (v->gl_visual->AccumBlueBits >= accumBlueSize || accumBlueSize == 0)
+          && (v->gl_visual->AccumAlphaBits >= accumAlphaSize || accumAlphaSize == 0)) {
          /* now either compare XVisualInfo pointers or visual IDs */
          if ((!comparePointers && v->visinfo->visualid == vinfo->visualid)
              || (comparePointers && v->vishandle == vinfo)) {
@@ -287,9 +292,12 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       return NULL;
    }
 
-   xmvis = XMesaCreateVisual( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
-                              stereoFlag, ximageFlag,
-                              depth_size, stencil_size, accum_size, level );
+   xmvis = XMesaCreateVisual2( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
+                               stereoFlag, ximageFlag,
+                               depth_size, stencil_size,
+                               accumRedSize, accumBlueSize,
+                               accumBlueSize, accumAlphaSize, 0, level,
+                               GLX_NONE_EXT );
    if (xmvis) {
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
@@ -322,7 +330,7 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                               GL_FALSE,  /* stereo */
                               0,         /* depth bits */
                               0,         /* stencil bits */
-                              0,         /* accum bits */
+                              0,0,0,0,   /* accum bits */
                               vislevel   /* level */
                             );
    }
@@ -337,7 +345,10 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                               GL_FALSE,  /* stereo */
                               DEFAULT_SOFTWARE_DEPTH_BITS,
                               8 * sizeof(GLstencil),
-                              8 * sizeof(GLaccum),
+                              8 * sizeof(GLaccum), /* r */
+                              8 * sizeof(GLaccum), /* g */
+                              8 * sizeof(GLaccum), /* b */
+                              8 * sizeof(GLaccum), /* a */
                               0          /* level */
                             );
    }
@@ -867,7 +878,10 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
    GLboolean stereo_flag = GL_FALSE;
    GLint depth_size = 0;
    GLint stencil_size = 0;
-   GLint accum_size = 0;
+   GLint accumRedSize = 0;
+   GLint accumGreenSize = 0;
+   GLint accumBlueSize = 0;
+   GLint accumAlphaSize = 0;
    int level = 0;
    int visual_type = DONT_CARE;
    int trans_type = DONT_CARE;
@@ -934,13 +948,31 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 	    stencil_size = *parselist++;
 	    break;
 	 case GLX_ACCUM_RED_SIZE:
+	    parselist++;
+            {
+               GLint size = *parselist++;
+               accumRedSize = MAX2( accumRedSize, size );
+            }
+            break;
 	 case GLX_ACCUM_GREEN_SIZE:
+	    parselist++;
+            {
+               GLint size = *parselist++;
+               accumGreenSize = MAX2( accumGreenSize, size );
+            }
+            break;
 	 case GLX_ACCUM_BLUE_SIZE:
+	    parselist++;
+            {
+               GLint size = *parselist++;
+               accumBlueSize = MAX2( accumBlueSize, size );
+            }
+            break;
 	 case GLX_ACCUM_ALPHA_SIZE:
 	    parselist++;
             {
                GLint size = *parselist++;
-               accum_size = MAX2( accum_size, size );
+               accumAlphaSize = MAX2( accumAlphaSize, size );
             }
 	    break;
 
@@ -997,7 +1029,7 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       else {
          /* Get a color index visual */
          vis = choose_x_visual( dpy, screen, rgb_flag, min_ci, visual_type );
-         accum_size = 0;
+         accumRedSize = accumGreenSize = accumBlueSize = accumAlphaSize = 0;
       }
    }
    else {
@@ -1034,11 +1066,19 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
          stencil_size = STENCIL_BITS;
-      if (accum_size > 0)
-         accum_size = ACCUM_BITS;
+      if (accumRedSize > 0)
+         accumRedSize = ACCUM_BITS;
+      if (accumGreenSize > 0)
+         accumGreenSize = ACCUM_BITS;
+      if (accumBlueSize > 0)
+         accumBlueSize = ACCUM_BITS;
+      if (accumAlphaSize > 0)
+         accumAlphaSize = ACCUM_BITS;
       if (!save_glx_visual( dpy, vis, rgb_flag, alpha_flag, double_flag,
-                            stereo_flag,
-                            depth_size, stencil_size, accum_size, level ))
+                            stereo_flag, depth_size, stencil_size,
+                            accumRedSize, accumGreenSize,
+                            accumBlueSize, accumAlphaSize,
+                            level ))
          return NULL;
    }
 
@@ -1396,15 +1436,16 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 	 *value = glxvis->gl_visual->StencilBits;
 	 return 0;
       case GLX_ACCUM_RED_SIZE:
+	 *value = glxvis->gl_visual->AccumRedBits;
+	 return 0;
       case GLX_ACCUM_GREEN_SIZE:
+	 *value = glxvis->gl_visual->AccumGreenBits;
+	 return 0;
       case GLX_ACCUM_BLUE_SIZE:
-	 *value = glxvis->gl_visual->AccumBits;
+	 *value = glxvis->gl_visual->AccumBlueBits;
 	 return 0;
       case GLX_ACCUM_ALPHA_SIZE:
-         if (glxvis->gl_visual->AlphaBits > 0)
-            *value = glxvis->gl_visual->AccumBits;
-         else
-            *value = 0;
+         *value = glxvis->gl_visual->AccumAlphaBits;
 	 return 0;
 
       /*
@@ -1460,6 +1501,12 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
       case GLX_TRANSPARENT_ALPHA_VALUE_EXT:
          /* undefined */
          return 0;
+
+      /*
+       * GLX_EXT_visual_info extension
+       */
+      case GLX_VISUAL_CAVEAT_EXT:
+         return glxvis->VisualCaveat;
 
       /*
        * Extensions

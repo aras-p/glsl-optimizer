@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.8 2000/02/25 20:36:03 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.9 2000/03/31 01:07:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,6 +86,7 @@ struct xmesa_visual {
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLint level;			/* 0=normal, 1=overlay, etc */
+   GLint VisualCaveat;          /* for GLX_EXT_visual_rating extension */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
 

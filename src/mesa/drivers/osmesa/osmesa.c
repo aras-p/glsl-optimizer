@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.12 2000/03/28 16:59:39 rjfrank Exp $ */
+/* $Id: osmesa.c,v 1.13 2000/03/31 01:07:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -229,7 +229,7 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
       osmesa->gl_buffer = gl_create_framebuffer( osmesa->gl_visual,
                                            osmesa->gl_visual->DepthBits > 0,
                                            osmesa->gl_visual->StencilBits > 0,
-                                           osmesa->gl_visual->AccumBits > 0,
+                                           osmesa->gl_visual->AccumRedBits > 0,
                                            osmesa->gl_visual->AlphaBits > 0 );
 
       if (!osmesa->gl_buffer) {

@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.4 2000/01/25 00:03:02 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.5 2000/03/31 01:07:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -426,7 +426,7 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
    ctx->gl_buffer = gl_create_framebuffer( ctx->gl_vis,
                                            ctx->gl_vis->DepthBits > 0,
                                            ctx->gl_vis->StencilBits > 0,
-                                           ctx->gl_vis->AccumBits > 0,
+                                           ctx->gl_vis->AccumRedBits > 0,
                                            ctx->gl_vis->AlphaBits > 0 );
 
    ctx->index = 1;

@@ -1046,7 +1046,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    fxMesa->glBuffer=gl_create_framebuffer(fxMesa->glVis,
                                           GL_FALSE,  /* no software depth */
                                           fxMesa->glVis->StencilBits > 0,
-                                          fxMesa->glVis->AccumBits > 0,
+                                          fxMesa->glVis->AccumRedBits > 0,
                                           fxMesa->glVis->AlphaBits > 0 );
    if (!fxMesa->glBuffer) {
       errorstr = "gl_create_framebuffer";
