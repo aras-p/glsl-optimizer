@@ -847,6 +847,9 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 			lesson 07
 			*/
 		return 0x53a0c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00077047, 0x00000003):
+		/* Tested with NeHe lesson 08 */
+		return 0x53a0c;
 	//case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047, 0):
 		/* Can't remember what I tested this with.. 
 		   try putting return 0 of you see broken textures which 
@@ -999,7 +1002,7 @@ void r300_setup_textures(GLcontext *ctx)
 							0x00a0c | (fmt<<12));
 						fprintf(stderr, "size=%08x\n", t->size);
 						}
-					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0b | (fmt<<12);
+					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x51a00 | (fmt);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c | (fmt<<24);
 					}
