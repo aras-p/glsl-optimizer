@@ -455,30 +455,6 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
 #endif
 }
 
-/* This waits for *everybody* to finish rendering -- overkill.
- */
-void savageDmaFinish( savageContextPtr imesa  ) 
-{
-    savageWaitEvent( imesa, savageEmitEventLocked( imesa, SAVAGE_WAIT_3D ) );
-}
-
-
-void savageRegetLockQuiescent( savageContextPtr imesa  ) 
-{
-    
-
-}
-
-void savageWaitAgeLocked( savageContextPtr imesa, int age  ) 
-{
-}
-
-
-void savageWaitAge( savageContextPtr imesa, int age  ) 
-{
-}
-
-
 unsigned int savageEmitEventLocked( savageContextPtr imesa, unsigned int flags )
 {
     drm_savage_event_emit_t event;
@@ -559,8 +535,14 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
     drm_savage_cmd_header_t *start;
     int ret;
 
+    if (!imesa->dmaVtxBuf.total)
+	discard = GL_FALSE;
+
     /* complete indexed drawing commands */
     savageFlushElts(imesa);
+
+    if (imesa->cmdBuf.write == imesa->cmdBuf.start && !discard)
+	return;
 
     /* If we lost the context we must restore the initial state (at
      * the start of the command buffer). */
@@ -569,9 +551,6 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
 	imesa->lostContext = GL_FALSE;
     } else
 	start = imesa->cmdBuf.start;
-
-    if (!imesa->dmaVtxBuf.total)
-	discard = GL_FALSE;
 
     if ((SAVAGE_DEBUG & DEBUG_DMA) && discard)
 	fprintf (stderr, "Discarding DMA buffer, used=%u\n",
@@ -647,9 +626,7 @@ static void savageDDFlush( GLcontext *ctx )
 	fprintf (stderr, "%s\n", __FUNCTION__);
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     savageFlushVertices (imesa);
-    LOCK_HARDWARE(imesa);
-    savageFlushCmdBufLocked(imesa, GL_FALSE);
-    UNLOCK_HARDWARE(imesa);
+    savageFlushCmdBuf(imesa, GL_FALSE);
 }
 
 static void savageDDFinish( GLcontext *ctx  ) 
@@ -658,10 +635,8 @@ static void savageDDFinish( GLcontext *ctx  )
 	fprintf (stderr, "%s\n", __FUNCTION__);
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     savageFlushVertices (imesa);
-    LOCK_HARDWARE(imesa);
-    savageFlushCmdBufLocked(imesa, GL_FALSE);
-    savageDmaFinish (imesa);
-    UNLOCK_HARDWARE(imesa);
+    savageFlushCmdBuf(imesa, GL_FALSE);
+    WAIT_IDLE_EMPTY(imesa);
 }
 
 void savageDDInitIoctlFuncs( GLcontext *ctx )

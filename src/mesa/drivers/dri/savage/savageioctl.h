@@ -28,13 +28,7 @@
 
 #include "savagecontext.h"
 
-void savageGetGeneralDmaBufferLocked( savageContextPtr mmesa ); 
-
 void savageFlushVertices( savageContextPtr mmesa ); 
-
-void savageFlushGeneralLocked( savageContextPtr imesa );
-void savageWaitAgeLocked( savageContextPtr imesa, int age );
-void savageWaitAge( savageContextPtr imesa, int age );
 
 unsigned int savageEmitEventLocked( savageContextPtr imesa, unsigned int flags );
 unsigned int savageEmitEvent( savageContextPtr imesa, unsigned int flags );
@@ -43,17 +37,22 @@ void savageWaitEvent( savageContextPtr imesa, unsigned int event);
 void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard );
 void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard );
 
-void savageDmaFinish( savageContextPtr imesa );
-
-void savageRegetLockQuiescent( savageContextPtr imesa );
-
 void savageDDInitIoctlFuncs( GLcontext *ctx );
 
 void savageSwapBuffers( __DRIdrawablePrivate *dPriv );
 
-#define WAIT_IDLE_EMPTY do { \
+#define WAIT_IDLE_EMPTY(imesa) do { \
+    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG) \
+        fprintf (stderr, "WAIT_IDLE_EMPTY in %s\n", __FUNCTION__); \
     savageWaitEvent(imesa, \
-		    savageEmitEvent(imesa, SAVAGE_WAIT_3D|SAVAGE_WAIT_2D)); \
+		    savageEmitEvent(imesa, SAVAGE_WAIT_2D|SAVAGE_WAIT_3D)); \
+} while (0)
+
+#define WAIT_IDLE_EMPTY_LOCKED(imesa) do { \
+    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG) \
+        fprintf (stderr, "WAIT_IDLE_EMPTY_LOCKED in %s\n", __FUNCTION__); \
+    savageWaitEvent(imesa, savageEmitEventLocked( \
+			imesa, SAVAGE_WAIT_2D|SAVAGE_WAIT_3D)); \
 } while (0)
 
 #define FLUSH_BATCH(imesa) do { \

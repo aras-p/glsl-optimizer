@@ -259,7 +259,7 @@ savageCopyPixels( GLcontext *ctx,
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     FLUSH_BATCH(imesa);
-    WAIT_IDLE_EMPTY;
+    WAIT_IDLE_EMPTY(imesa);
     _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type);
 }
 static void
@@ -272,7 +272,7 @@ savageDrawPixels( GLcontext *ctx,
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     FLUSH_BATCH(imesa);
-    WAIT_IDLE_EMPTY;
+    WAIT_IDLE_EMPTY(imesa);
     _swrast_DrawPixels(ctx, x, y, width, height, format, type, packing, pixels);
 }
 static void
@@ -284,7 +284,7 @@ savageReadPixels( GLcontext *ctx,
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     FLUSH_BATCH(imesa);
-    WAIT_IDLE_EMPTY;
+    WAIT_IDLE_EMPTY(imesa);
     _swrast_ReadPixels(ctx, x, y, width, height, format, type, packing, pixels);
 }
 
@@ -295,7 +295,7 @@ static void savageSpanRenderStart( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    FLUSH_BATCH(imesa);
-   WAIT_IDLE_EMPTY;
+   WAIT_IDLE_EMPTY(imesa);
 }
 
 

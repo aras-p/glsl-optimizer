@@ -557,7 +557,7 @@ savage_fallback_tri( savageContextPtr imesa,
    GLcontext *ctx = imesa->glCtx;
    SWvertex v[3];
    FLUSH_BATCH(imesa);
-   WAIT_IDLE_EMPTY;
+   WAIT_IDLE_EMPTY(imesa);
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
    _swsetup_Translate( ctx, v2, &v[2] );
@@ -573,7 +573,7 @@ savage_fallback_line( savageContextPtr imesa,
    GLcontext *ctx = imesa->glCtx;
    SWvertex v[2];
    FLUSH_BATCH(imesa);
-   WAIT_IDLE_EMPTY;
+   WAIT_IDLE_EMPTY(imesa);
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
    _swrast_Line( ctx, &v[0], &v[1] );
@@ -587,7 +587,7 @@ savage_fallback_point( savageContextPtr imesa,
    GLcontext *ctx = imesa->glCtx;
    SWvertex v[1];
    FLUSH_BATCH(imesa);
-   WAIT_IDLE_EMPTY;
+   WAIT_IDLE_EMPTY(imesa);
    _swsetup_Translate( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
 }

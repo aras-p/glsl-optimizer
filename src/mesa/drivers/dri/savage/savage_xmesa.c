@@ -537,7 +537,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       savageFlushVertices(imesa);
       savageReleaseIndexedVerts(imesa);
       savageFlushCmdBuf(imesa, GL_TRUE); /* release DMA buffer */
-      WAIT_IDLE_EMPTY;
+      WAIT_IDLE_EMPTY(imesa);
 
       /* update for multi-tex*/ 
       {
@@ -701,7 +701,7 @@ savageCloseFullScreen(__DRIcontextPrivate *driContextPriv)
     
     if (driContextPriv) {
       savageContextPtr imesa = (savageContextPtr) driContextPriv->driverPrivate;
-      WAIT_IDLE_EMPTY;
+      WAIT_IDLE_EMPTY(imesa);
       imesa->IsFullScreen = GL_FALSE;   
       imesa->savageScreen->frontOffset = imesa->backup_frontOffset;
       imesa->savageScreen->backOffset = imesa->backup_backOffset;

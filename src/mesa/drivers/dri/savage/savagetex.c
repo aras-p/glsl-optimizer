@@ -800,7 +800,7 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
       savageFlushVertices (imesa);
       LOCK_HARDWARE(imesa);
       savageFlushCmdBufLocked (imesa, GL_FALSE);
-      savageDmaFinish (imesa);
+      WAIT_IDLE_EMPTY_LOCKED(imesa);
       if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
 	 fprintf(stderr, "*");
 
