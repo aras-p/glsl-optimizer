@@ -919,5 +919,7 @@ static struct name_address_offset static_functions[] = {
    { "glGetQueryiv", (GLvoid *) glGetQueryiv, _gloffset_GetQueryivARB },
    { "glGetQueryObjectiv", (GLvoid *) glGetQueryObjectiv, _gloffset_GetQueryObjectivARB },
    { "glGetQueryObjectuiv", (GLvoid *) glGetQueryObjectuiv, _gloffset_GetQueryObjectuivARB },
+   { "glBlendEquationSeparateEXT", (GLvoid *) glBlendEquationSeparateEXT, _gloffset_BlendEquationSeparateEXT },
+   { "glBlendEquationSeparateATI", (GLvoid *) glBlendEquationSeparateATI, _gloffset_BlendEquationSeparateEXT },
    { NULL, NULL }  /* end of list marker */
 };

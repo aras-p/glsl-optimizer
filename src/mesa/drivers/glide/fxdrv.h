@@ -620,7 +620,7 @@ extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 extern void fxDDEnable(GLcontext *, GLenum, GLboolean);
 extern void fxDDAlphaFunc(GLcontext *, GLenum, GLfloat);
 extern void fxDDBlendFuncSeparate(GLcontext *, GLenum, GLenum, GLenum, GLenum);
-extern void fxDDBlendEquation(GLcontext *, GLenum);
+extern void fxDDBlendEquationSeparate(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);
 extern void fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask);

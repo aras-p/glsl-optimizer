@@ -359,19 +359,22 @@ static void i830BlendColor(GLcontext *ctx, const GLfloat color[4])
 					  b);
 }
 
-static void i830BlendEquation(GLcontext *ctx, GLenum mode) 
+static void i830BlendEquationSeparate(GLcontext *ctx,
+				      GLenum modeRGB, GLenum modeA)
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
    int func = ENABLE_ALPHA_BLENDFUNC;
 
    if (I830_DEBUG&DEBUG_DRI)
      fprintf(stderr, "%s %s\n", __FUNCTION__,
-	     _mesa_lookup_enum_by_nr(mode));
+	     _mesa_lookup_enum_by_nr(modeRGB));
+
+   assert( modeRGB == modeA );
 
    /* This will catch a logicop blend equation */
    i830EvalLogicOpBlendState(ctx);
 
-   switch(mode) {
+   switch(modeRGB) {
    case GL_FUNC_ADD_EXT: 
       func |= BLENDFUNC_ADD; 
       break;
@@ -1643,7 +1646,7 @@ void i830DDInitStateFuncs(GLcontext *ctx)
    /* API callbacks
     */
    ctx->Driver.AlphaFunc = i830AlphaFunc;
-   ctx->Driver.BlendEquation = i830BlendEquation;
+   ctx->Driver.BlendEquationSeparate = i830BlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate = i830BlendFuncSeparate;
    ctx->Driver.BlendColor = i830BlendColor;
    ctx->Driver.ClearColor = i830ClearColor;

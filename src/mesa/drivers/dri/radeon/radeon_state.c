@@ -102,13 +102,16 @@ static void radeonAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    rmesa->hw.ctx.cmd[CTX_PP_MISC] = pp_misc;
 }
 
-static void radeonBlendEquation( GLcontext *ctx, GLenum mode )
+static void radeonBlendEquationSeparate( GLcontext *ctx,
+					 GLenum modeRGB, GLenum modeA )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & ~RADEON_COMB_FCN_MASK;
    GLboolean fallback = GL_FALSE;
 
-   switch ( mode ) {
+   assert( modeRGB == modeA );
+
+   switch ( modeRGB ) {
    case GL_FUNC_ADD:
    case GL_LOGIC_OP:
       b |= RADEON_COMB_FCN_ADD_CLAMP;
@@ -1693,7 +1696,9 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* Catch a possible fallback:
        */
       if (state) {
-	 ctx->Driver.BlendEquation( ctx, ctx->Color.BlendEquation );
+	 ctx->Driver.BlendEquationSeparate( ctx,
+					    ctx->Color.BlendEquationRGB,
+					    ctx->Color.BlendEquationA );
 	 ctx->Driver.BlendFuncSeparate( ctx, ctx->Color.BlendSrcRGB,
 					ctx->Color.BlendDstRGB,
 					ctx->Color.BlendSrcRGB,
@@ -2186,7 +2191,7 @@ void radeonInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ReadBuffer		= radeonReadBuffer;
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
-   ctx->Driver.BlendEquation		= radeonBlendEquation;
+   ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
    ctx->Driver.ClearColor		= radeonClearColor;
    ctx->Driver.ClearDepth		= radeonClearDepth;

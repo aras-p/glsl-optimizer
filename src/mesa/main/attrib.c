@@ -838,7 +838,16 @@ _mesa_PopAttrib(void)
                                           color->BlendDstRGB,
                                           color->BlendSrcA,
                                           color->BlendDstA);
-               _mesa_BlendEquation(color->BlendEquation);
+	       /* This special case is because glBlendEquationSeparateEXT
+		* cannot take GL_LOGIC_OP as a parameter.
+		*/
+	       if ( color->BlendEquationRGB == color->BlendEquationA ) {
+		  _mesa_BlendEquation(color->BlendEquationRGB);
+	       }
+	       else {
+		  _mesa_BlendEquationSeparateEXT(color->BlendEquationRGB,
+						 color->BlendEquationA);
+	       }
                _mesa_BlendColor(color->BlendColor[0],
                                 color->BlendColor[1],
                                 color->BlendColor[2],

@@ -93,13 +93,16 @@ static void ffbDDAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	}
 }
 
-static void ffbDDBlendEquation(GLcontext *ctx, GLenum mode)
+static void ffbDDBlendEquationSeparate(GLcontext *ctx, 
+				       GLenum modeRGB, GLenum modeA)
 {
 
 #ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDBlendEquation: mode(%s)\n", _mesa_lookup_enum_by_nr(mode));
+	fprintf(stderr, "ffbDDBlendEquation: mode(%s)\n", 
+		_mesa_lookup_enum_by_nr(modeRGB));
 #endif
-	FALLBACK( ctx, (mode != GL_FUNC_ADD_EXT), FFB_BADATTR_BLENDEQN);
+	assert( modeRGB == modeA );
+	FALLBACK( ctx, (modeRGB != GL_FUNC_ADD), FFB_BADATTR_BLENDEQN);
 }
 
 static void ffbDDBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
@@ -1052,7 +1055,7 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 
 	ctx->Driver.Enable = ffbDDEnable;
 	ctx->Driver.AlphaFunc = ffbDDAlphaFunc;
-	ctx->Driver.BlendEquation = ffbDDBlendEquation;
+	ctx->Driver.BlendEquationSeparate = ffbDDBlendEquationSeparate;
 	ctx->Driver.BlendFuncSeparate = ffbDDBlendFuncSeparate;
 	ctx->Driver.DepthFunc = ffbDDDepthFunc;
 	ctx->Driver.DepthMask = ffbDDDepthMask;

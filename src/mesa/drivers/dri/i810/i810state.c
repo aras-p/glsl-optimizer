@@ -75,10 +75,14 @@ static void i810AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
    imesa->Setup[I810_CTXREG_ZA] |= a;
 }
 
-static void i810BlendEquation(GLcontext *ctx, GLenum mode)
+static void i810BlendEquationSeparate(GLcontext *ctx,
+				      GLenum modeRGB, GLenum modeA)
 {
+   assert( modeRGB == modeA );
+
    /* Can only do GL_ADD equation in hardware */
-   FALLBACK( I810_CONTEXT(ctx), I810_FALLBACK_BLEND_EQ, mode != GL_FUNC_ADD_EXT);
+   FALLBACK( I810_CONTEXT(ctx), I810_FALLBACK_BLEND_EQ, 
+	     modeRGB != GL_FUNC_ADD);
 
    /* BlendEquation sets ColorLogicOpEnabled in an unexpected
     * manner.
@@ -961,7 +965,7 @@ void i810InitStateFuncs(GLcontext *ctx)
    /* API callbacks
     */
    ctx->Driver.AlphaFunc = i810AlphaFunc;
-   ctx->Driver.BlendEquation = i810BlendEquation;
+   ctx->Driver.BlendEquationSeparate = i810BlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate = i810BlendFuncSeparate;
    ctx->Driver.ClearColor = i810ClearColor;
    ctx->Driver.ColorMask = i810ColorMask;

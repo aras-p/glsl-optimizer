@@ -1531,10 +1531,10 @@ fx_check_IsInHardware(GLcontext * ctx)
    }
 
    if (ctx->Color.BlendEnabled) {
-      if (ctx->Color.BlendEquation != GL_FUNC_ADD_EXT) {
+      if (ctx->Color.BlendEquationRGB != GL_FUNC_ADD) {
          if (!fxMesa->HavePixExt ||
-             ((ctx->Color.BlendEquation != GL_FUNC_SUBTRACT_EXT) &&
-              (ctx->Color.BlendEquation != GL_FUNC_REVERSE_SUBTRACT_EXT))) {
+             ((ctx->Color.BlendEquationRGB != GL_FUNC_SUBTRACT) &&
+              (ctx->Color.BlendEquationRGB != GL_FUNC_REVERSE_SUBTRACT))) {
             return FX_FALLBACK_BLEND;
          }
       }
@@ -1702,7 +1702,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.UpdateTexturePalette = fxDDTexPalette;
    ctx->Driver.AlphaFunc = fxDDAlphaFunc;
    ctx->Driver.BlendFuncSeparate = fxDDBlendFuncSeparate;
-   ctx->Driver.BlendEquation = fxDDBlendEquation;
+   ctx->Driver.BlendEquationSeparate = fxDDBlendEquationSeparate;
    ctx->Driver.DepthFunc = fxDDDepthFunc;
    ctx->Driver.DepthMask = fxDDDepthMask;
    ctx->Driver.ColorMask = fxDDColorMask;

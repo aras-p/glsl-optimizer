@@ -368,6 +368,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 #if _HAVE_FULL_GL
    exec->BlendColor = _mesa_BlendColor;
    exec->BlendEquation = _mesa_BlendEquation;
+   exec->BlendEquationSeparateEXT = _mesa_BlendEquationSeparateEXT;
    exec->ColorSubTable = _mesa_ColorSubTable;
    exec->ColorTable = _mesa_ColorTable;
    exec->ColorTableParameterfv = _mesa_ColorTableParameterfv;

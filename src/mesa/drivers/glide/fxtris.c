@@ -1407,7 +1407,7 @@ GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
              ctx->Texture.Unit[0]._ReallyEnabled = 0;
              ctx->Texture.Unit[1]._ReallyEnabled = 0;
              /* SUM the colors */
-             fxDDBlendEquation(ctx, GL_FUNC_ADD_EXT);
+             fxDDBlendEquationSeparate(ctx, GL_FUNC_ADD, GL_FUNC_ADD);
              fxDDBlendFuncSeparate(ctx, GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
              fxDDEnable(ctx, GL_BLEND, GL_TRUE);
              /* make sure we draw only where we want to */

@@ -215,6 +215,42 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 
 #if _HAVE_FULL_GL
 
+static GLboolean
+_mesa_validate_blend_equation( GLcontext *ctx,
+			       GLenum mode, GLboolean is_separate )
+{
+       switch (mode) {
+      case GL_FUNC_ADD:
+         break;
+      case GL_MIN:
+      case GL_MAX:
+         if (!ctx->Extensions.EXT_blend_minmax &&
+             !ctx->Extensions.ARB_imaging) {
+            return GL_FALSE;
+         }
+         break;
+      /* glBlendEquationSeparate cannot take GL_LOGIC_OP as a parameter.
+       */
+      case GL_LOGIC_OP:
+         if (!ctx->Extensions.EXT_blend_logic_op || is_separate) {
+            return GL_FALSE;
+         }
+         break;
+      case GL_FUNC_SUBTRACT:
+      case GL_FUNC_REVERSE_SUBTRACT:
+         if (!ctx->Extensions.EXT_blend_subtract &&
+             !ctx->Extensions.ARB_imaging) {
+            return GL_FALSE;
+         }
+         break;
+      default:
+         return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
 /* This is really an extension function! */
 void GLAPIENTRY
 _mesa_BlendEquation( GLenum mode )
@@ -226,41 +262,18 @@ _mesa_BlendEquation( GLenum mode )
       _mesa_debug(ctx, "glBlendEquation %s\n",
                   _mesa_lookup_enum_by_nr(mode));
 
-   switch (mode) {
-      case GL_FUNC_ADD_EXT:
-         break;
-      case GL_MIN_EXT:
-      case GL_MAX_EXT:
-         if (!ctx->Extensions.EXT_blend_minmax &&
-             !ctx->Extensions.ARB_imaging) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
-            return;
-         }
-         break;
-      case GL_LOGIC_OP:
-         if (!ctx->Extensions.EXT_blend_logic_op) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
-            return;
-         }
-         break;
-      case GL_FUNC_SUBTRACT_EXT:
-      case GL_FUNC_REVERSE_SUBTRACT_EXT:
-         if (!ctx->Extensions.EXT_blend_subtract &&
-             !ctx->Extensions.ARB_imaging) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
-            return;
-         }
-         break;
-      default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glBlendEquation" );
-         return;
+   if ( ! _mesa_validate_blend_equation( ctx, mode, GL_FALSE ) ) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
+      return;
    }
 
-   if (ctx->Color.BlendEquation == mode)
+   if ( (ctx->Color.BlendEquationRGB == mode) &&
+	(ctx->Color.BlendEquationA == mode) )
       return;
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
-   ctx->Color.BlendEquation = mode;
+   ctx->Color.BlendEquationRGB = mode;
+   ctx->Color.BlendEquationA = mode;
 
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
@@ -269,10 +282,55 @@ _mesa_BlendEquation( GLenum mode )
                                  (ctx->Color.BlendEnabled &&
                                   mode == GL_LOGIC_OP));
 
-   if (ctx->Driver.BlendEquation)
-      (*ctx->Driver.BlendEquation)( ctx, mode );
+   if (ctx->Driver.BlendEquationSeparate)
+      (*ctx->Driver.BlendEquationSeparate)( ctx, mode, mode );
 }
 
+void GLAPIENTRY
+_mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glBlendEquationSeparateEXT %s %s\n",
+                  _mesa_lookup_enum_by_nr(modeRGB),
+                  _mesa_lookup_enum_by_nr(modeA));
+
+   if ( (modeRGB != modeA) && !ctx->Extensions.EXT_blend_equation_separate ) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+		  "glBlendEquationSeparateEXT not supported by driver");
+      return;
+   }
+
+   if ( ! _mesa_validate_blend_equation( ctx, modeRGB, GL_TRUE ) ) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparateEXT(modeRGB)");
+      return;
+   }
+
+   if ( ! _mesa_validate_blend_equation( ctx, modeA, GL_TRUE ) ) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBlendEquationSeparateEXT(modeA)");
+      return;
+   }
+
+
+   if ( (ctx->Color.BlendEquationRGB == modeRGB) &&
+	(ctx->Color.BlendEquationA == modeA) )
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   ctx->Color.BlendEquationRGB = modeRGB;
+   ctx->Color.BlendEquationA = modeA;
+
+   /* This is needed to support 1.1's RGB logic ops AND
+    * 1.0's blending logicops.  This test is simplified over glBlendEquation
+    * because modeRGB cannot be GL_LOGIC_OP.
+    */
+   ctx->Color._LogicOpEnabled = (ctx->Color.ColorLogicOpEnabled);
+
+   if (ctx->Driver.BlendEquationSeparate)
+      (*ctx->Driver.BlendEquationSeparate)( ctx, modeRGB, modeA );
+}
 #endif
 
 
@@ -500,7 +558,8 @@ void _mesa_init_color( GLcontext * ctx )
    ctx->Color.BlendDstRGB = GL_ZERO;
    ctx->Color.BlendSrcA = GL_ONE;
    ctx->Color.BlendDstA = GL_ZERO;
-   ctx->Color.BlendEquation = GL_FUNC_ADD_EXT;
+   ctx->Color.BlendEquationRGB = GL_FUNC_ADD;
+   ctx->Color.BlendEquationA = GL_FUNC_ADD;
    ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.IndexLogicOpEnabled = GL_FALSE;
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;

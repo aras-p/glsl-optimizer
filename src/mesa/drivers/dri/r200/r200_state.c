@@ -104,12 +104,15 @@ static void r200AlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    rmesa->hw.ctx.cmd[CTX_PP_MISC] = pp_misc;
 }
 
-static void r200BlendEquation( GLcontext *ctx, GLenum mode )
+static void r200BlendEquationSeparate( GLcontext *ctx, 
+				       GLenum modeRGB, GLenum modeA )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint b = rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] & ~R200_COMB_FCN_MASK;
 
-   switch ( mode ) {
+   assert( modeRGB == modeA );
+
+   switch ( modeRGB ) {
    case GL_FUNC_ADD:
    case GL_LOGIC_OP:
       b |= R200_COMB_FCN_ADD_CLAMP;
@@ -2186,7 +2189,7 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->ReadBuffer		= r200ReadBuffer;
 
    functions->AlphaFunc			= r200AlphaFunc;
-   functions->BlendEquation		= r200BlendEquation;
+   functions->BlendEquationSeparate	= r200BlendEquationSeparate;
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
    functions->ClearDepth		= NULL;

@@ -1527,20 +1527,21 @@ which are drawn front-to-back.
 }
 
 void
-fxDDBlendEquation(GLcontext * ctx, GLenum mode)
+fxDDBlendEquationSeparate(GLcontext * ctx, GLenum modeRGB, GLenum modeA)
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
  tfxUnitsState *us = &fxMesa->unitsState;
  GrAlphaBlendOp_t q;
 
- switch (mode) {
-        case GL_FUNC_ADD_EXT:
+ assert( modeRGB == modeA );
+ switch (modeRGB) {
+        case GL_FUNC_ADD:
              q = GR_BLEND_OP_ADD;
              break;
-        case GL_FUNC_SUBTRACT_EXT:
+        case GL_FUNC_SUBTRACT:
              q = GR_BLEND_OP_SUB;
              break;
-        case GL_FUNC_REVERSE_SUBTRACT_EXT:
+        case GL_FUNC_REVERSE_SUBTRACT:
              q = GR_BLEND_OP_REVSUB;
              break;
         default:

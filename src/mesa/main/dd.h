@@ -591,7 +591,7 @@ struct dd_function_table {
    /** Set the blend color */
    void (*BlendColor)(GLcontext *ctx, const GLfloat color[4]);
    /** Set the blend equation */
-   void (*BlendEquation)(GLcontext *ctx, GLenum mode);
+   void (*BlendEquationSeparate)(GLcontext *ctx, GLenum modeRGB, GLenum modeA);
    /** Specify pixel arithmetic */
    void (*BlendFuncSeparate)(GLcontext *ctx,
                              GLenum sfactorRGB, GLenum dfactorRGB,

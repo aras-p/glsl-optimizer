@@ -419,7 +419,8 @@ struct gl_colorbuffer_attrib {
    GLenum BlendDstRGB;			/**< Blending destination operator */
    GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
    GLenum BlendDstA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendEquation;		/**< Blending equation */
+   GLenum BlendEquationRGB;		/**< Blending equation */
+   GLenum BlendEquationA;		/**< GL_EXT_blend_equation_separate */
    GLfloat BlendColor[4];		/**< Blending color */
    /*@}*/
 
@@ -1771,6 +1772,7 @@ struct gl_extensions
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean EXT_blend_color;
+   GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_logic_op;
    GLboolean EXT_blend_minmax;

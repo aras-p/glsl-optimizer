@@ -191,10 +191,12 @@ static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    rmesa->new_state |= R128_NEW_ALPHA;
 }
 
-static void r128DDBlendEquation( GLcontext *ctx, GLenum mode )
+static void r128DDBlendEquationSeparate( GLcontext *ctx, 
+					 GLenum modeRGB, GLenum modeA )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
+   assert( modeRGB == modeA );
    FLUSH_BATCH( rmesa );
 
    /* BlendEquation sets ColorLogicOpEnabled in an unexpected
@@ -206,7 +208,7 @@ static void r128DDBlendEquation( GLcontext *ctx, GLenum mode )
 
    /* Can only do blend addition, not min, max, subtract, etc. */
    FALLBACK( R128_CONTEXT(ctx), R128_FALLBACK_BLEND_EQ,
-	     mode != GL_FUNC_ADD_EXT);
+	     modeRGB != GL_FUNC_ADD);
 
    rmesa->new_state |= R128_NEW_ALPHA;
 }
@@ -1187,7 +1189,7 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= r128DDColorMask;
    ctx->Driver.AlphaFunc		= r128DDAlphaFunc;
-   ctx->Driver.BlendEquation		= r128DDBlendEquation;
+   ctx->Driver.BlendEquationSeparate	= r128DDBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= r128DDBlendFuncSeparate;
    ctx->Driver.ClearDepth		= r128DDClearDepth;
    ctx->Driver.CullFace			= r128DDCullFace;

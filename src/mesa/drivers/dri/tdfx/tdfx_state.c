@@ -267,10 +267,12 @@ static void tdfxDDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
    fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
 
-static void tdfxDDBlendEquation( GLcontext *ctx, GLenum mode )
+static void tdfxDDBlendEquationSeparate( GLcontext *ctx, 
+					 GLenum modeRGB, GLenum modeA )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
+   assert( modeRGB == modeA );
    FLUSH_BATCH( fxMesa );
    fxMesa->new_state |= TDFX_NEW_ALPHA;
 }
@@ -1387,7 +1389,7 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ColorMask		= tdfxDDColorMask;
 
    ctx->Driver.AlphaFunc		= tdfxDDAlphaFunc;
-   ctx->Driver.BlendEquation		= tdfxDDBlendEquation;
+   ctx->Driver.BlendEquationSeparate	= tdfxDDBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= tdfxDDBlendFuncSeparate;
    ctx->Driver.ClearDepth		= tdfxDDClearDepth;
    ctx->Driver.CullFace			= tdfxDDCullFace;

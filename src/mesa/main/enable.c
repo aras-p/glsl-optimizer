@@ -236,7 +236,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
           */
          ctx->Color._LogicOpEnabled =
             (ctx->Color.ColorLogicOpEnabled ||
-             (state && ctx->Color.BlendEquation == GL_LOGIC_OP));
+             (state && ctx->Color.BlendEquationRGB == GL_LOGIC_OP));
          break;
 #if FEATURE_userclip
       case GL_CLIP_PLANE0:
@@ -384,7 +384,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
           */
          ctx->Color._LogicOpEnabled =
             (state || (ctx->Color.BlendEnabled &&
-                       ctx->Color.BlendEquation == GL_LOGIC_OP));
+                       ctx->Color.BlendEquationRGB == GL_LOGIC_OP));
          break;
       case GL_MAP1_COLOR_4:
          if (ctx->Eval.Map1Color4 == state)

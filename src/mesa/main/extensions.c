@@ -67,6 +67,7 @@ static const struct {
    { ON,  "GL_EXT_abgr",                       0 },
    { ON,  "GL_EXT_bgra",                       0 },
    { OFF, "GL_EXT_blend_color",                F(EXT_blend_color) },
+   { OFF, "GL_EXT_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_EXT_blend_func_separate",        F(EXT_blend_func_separate) },
    { OFF, "GL_EXT_blend_logic_op",             F(EXT_blend_logic_op) },
    { OFF, "GL_EXT_blend_minmax",               F(EXT_blend_minmax) },
@@ -109,6 +110,7 @@ static const struct {
    { OFF, "GL_3DFX_texture_compression_FXT1",  F(TDFX_texture_compression_FXT1) },
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            0 },
+   { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_HP_occlusion_test",              F(HP_occlusion_test) },
@@ -182,6 +184,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
+   ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;

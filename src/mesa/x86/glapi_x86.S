@@ -5514,5 +5514,17 @@ GL_PREFIX(GetQueryObjectuiv,GetQueryObjectuiv@12):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
 
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BlendEquationSeparateEXT,BlendEquationSeparateEXT@8))
+GL_PREFIX(BlendEquationSeparateEXT,BlendEquationSeparateEXT@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BlendEquationSeparateEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BlendEquationSeparateATI,BlendEquationSeparateATI@8))
+GL_PREFIX(BlendEquationSeparateATI,BlendEquationSeparateATI@8):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BlendEquationSeparateEXT))
+
 
 #endif  /* __WIN32__ */

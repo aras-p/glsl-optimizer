@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.22 2003/11/24 23:03:29 brianp Exp $
+# $Id: APIspec,v 1.23 2004/01/27 18:52:40 idr Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -8567,7 +8567,25 @@ param		pname		GLenum
 param		params		GLuint *
 category	1.5
 
+# EXT_blend_equation_separate
 
+name		BlendEquationSeparateEXT
+return		void
+param		modeRGB		GLenum
+param		modeA		GLenum
+offset		710
+category	GL_EXT_blend_equation_separate
+
+# ATI_blend_equation_separate
+
+# This is a guess at the name for this function since there is no formal
+# extension spec.
+name		BlendEquationSeparateATI
+alias		BlendEquationSeparateEXT
+return		void
+param		modeRGB		GLenum
+param		modeA		GLenum
+category	GL_ATI_blend_equation_separate
 
 # end of file sentinal
 

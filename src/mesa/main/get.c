@@ -235,8 +235,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_BOOL(ctx->Color.BlendDstA);
          break;
-      case GL_BLEND_EQUATION_EXT:
-	 *params = ENUM_TO_BOOL( ctx->Color.BlendEquation );
+      case GL_BLEND_EQUATION:
+	 *params = ENUM_TO_BOOL( ctx->Color.BlendEquationRGB );
+	 break;
+      case GL_BLEND_EQUATION_ALPHA_EXT:
+	 *params = ENUM_TO_BOOL( ctx->Color.BlendEquationA );
 	 break;
       case GL_BLEND_COLOR_EXT:
 	 params[0] = FLOAT_TO_BOOL( ctx->Color.BlendColor[0] );
@@ -1777,8 +1780,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_DOUBLE(ctx->Color.BlendDstA);
          break;
-      case GL_BLEND_EQUATION_EXT:
-	 *params = ENUM_TO_DOUBLE(ctx->Color.BlendEquation);
+      case GL_BLEND_EQUATION:
+	 *params = ENUM_TO_DOUBLE(ctx->Color.BlendEquationRGB);
+	 break;
+      case GL_BLEND_EQUATION_ALPHA_EXT:
+	 *params = ENUM_TO_DOUBLE(ctx->Color.BlendEquationA);
 	 break;
       case GL_BLEND_COLOR_EXT:
 	 params[0] = (GLdouble) ctx->Color.BlendColor[0];
@@ -3314,8 +3320,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_BLEND_DST_ALPHA_EXT:
          *params = ENUM_TO_FLOAT(ctx->Color.BlendDstA);
          break;
-      case GL_BLEND_EQUATION_EXT:
-	 *params = ENUM_TO_FLOAT(ctx->Color.BlendEquation);
+      case GL_BLEND_EQUATION:
+	 *params = ENUM_TO_FLOAT(ctx->Color.BlendEquationRGB);
+	 break;
+      case GL_BLEND_EQUATION_ALPHA_EXT:
+	 *params = ENUM_TO_FLOAT(ctx->Color.BlendEquationA);
 	 break;
       case GL_BLEND_COLOR_EXT:
 	 params[0] = ctx->Color.BlendColor[0];
@@ -4828,8 +4837,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_BLEND_DST_ALPHA_EXT:
          *params = (GLint) ctx->Color.BlendDstA;
          break;
-      case GL_BLEND_EQUATION_EXT:
-	 *params = (GLint) ctx->Color.BlendEquation;
+      case GL_BLEND_EQUATION:
+	 *params = (GLint) ctx->Color.BlendEquationRGB;
+	 break;
+      case GL_BLEND_EQUATION_ALPHA_EXT:
+	 *params = (GLint) ctx->Color.BlendEquationA;
 	 break;
       case GL_BLEND_COLOR_EXT:
 	 params[0] = FLOAT_TO_INT( ctx->Color.BlendColor[0] );

@@ -124,8 +124,10 @@ static void updateBlendLogicOp(GLcontext *ctx)
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
-static void mgaDDBlendEquation(GLcontext *ctx, GLenum mode)
+static void mgaDDBlendEquationSeparate(GLcontext *ctx, 
+				       GLenum modeRGB, GLenum modeA)
 {
+   assert( modeRGB == modeA );
    updateBlendLogicOp( ctx );
 }
 
@@ -1193,7 +1195,7 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Enable = mgaDDEnable;
    ctx->Driver.LightModelfv = mgaDDLightModelfv;
    ctx->Driver.AlphaFunc = mgaDDAlphaFunc;
-   ctx->Driver.BlendEquation = mgaDDBlendEquation;
+   ctx->Driver.BlendEquationSeparate = mgaDDBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate = mgaDDBlendFuncSeparate;
    ctx->Driver.DepthFunc = mgaDDDepthFunc;
    ctx->Driver.DepthMask = mgaDDDepthMask;
