@@ -80,30 +80,21 @@ static void radeon_emit_state_list( radeonContextPtr rmesa,
 {
    struct radeon_state_atom *state, *tmp;
    char *dest;
+   int i, size, texunits;
 
-   /* From Felix Kuhling: similar to some other lockups, glaxium will
-    * lock with what we believe to be a normal command stream, but
-    * sprinkling some magic waits arounds allows it to run
-    * uninterrupted.  This has a slight effect on q3 framerates, but
-    * it might now be possible to remove the zbs hack, below.
-    *
-    * Felix reports that this can be narrowed down to just
-    * tcl,tex0,tex1 state, but that's pretty much every statechange,
-    * so let's just put the wait in always (unless Felix wants to
-    * narrow it down further...)
+   /* It appears that some permutations of state atoms lock up the
+    * chip.  Therefore we make sure that state atoms are emitted in a
+    * fixed order. First mark all dirty state atoms and then go
+    * through all state atoms in a well defined order and emit only
+    * the marked ones.
+    * FIXME: This requires knowledge of which state atoms exist.
+    * FIXME: Is the zbs hack below still needed?
     */
-   if (1) {
-      drmRadeonCmdHeader *cmd;
-      cmd = (drmRadeonCmdHeader *)radeonAllocCmdBuf( rmesa, sizeof(*cmd), 
-						     __FUNCTION__ );
-      cmd->wait.cmd_type = RADEON_CMD_WAIT;
-      cmd->wait.flags = RADEON_WAIT_3D;
-   }
-
+   size = 0;
    foreach_s( state, tmp, list ) {
       if (state->check( rmesa->glCtx )) {
-	 dest = radeonAllocCmdBuf( rmesa, state->cmd_size * 4, __FUNCTION__);
-	 memcpy( dest, state->cmd, state->cmd_size * 4);
+	 size += state->cmd_size;
+	 state->dirty = GL_TRUE;
 	 move_to_head( &(rmesa->hw.clean), state );
 	 if (RADEON_DEBUG & DEBUG_STATE) 
 	    print_state_atom( state );
@@ -111,6 +102,47 @@ static void radeon_emit_state_list( radeonContextPtr rmesa,
       else if (RADEON_DEBUG & DEBUG_STATE)
 	 fprintf(stderr, "skip state %s\n", state->name);
    }
+   /* short cut */
+   if (!size)
+       return;
+
+   dest = radeonAllocCmdBuf( rmesa, size * 4, __FUNCTION__);
+   texunits = rmesa->glCtx->Const.MaxTextureUnits;
+
+#define EMIT_ATOM(ATOM) \
+do { \
+   if (rmesa->hw.ATOM.dirty) { \
+      rmesa->hw.ATOM.dirty = GL_FALSE; \
+      memcpy( dest, rmesa->hw.ATOM.cmd, rmesa->hw.ATOM.cmd_size * 4); \
+      dest += rmesa->hw.ATOM.cmd_size * 4; \
+   } \
+} while (0)
+
+   EMIT_ATOM (ctx);
+   EMIT_ATOM (set);
+   EMIT_ATOM (lin);
+   EMIT_ATOM (msk);
+   EMIT_ATOM (vpt);
+   EMIT_ATOM (tcl);
+   EMIT_ATOM (msc);
+   for (i = 0; i < texunits; ++i) {
+       EMIT_ATOM (tex[i]);
+       EMIT_ATOM (txr[i]);
+   }
+   EMIT_ATOM (zbs);
+   EMIT_ATOM (mtl);
+   for (i = 0; i < 3 + texunits; ++i)
+       EMIT_ATOM (mat[i]);
+   for (i = 0; i < 8; ++i)
+       EMIT_ATOM (lit[i]);
+   for (i = 0; i < 6; ++i)
+       EMIT_ATOM (ucp[i]);
+   EMIT_ATOM (eye);
+   EMIT_ATOM (grd);
+   EMIT_ATOM (fog);
+   EMIT_ATOM (glt);
+
+#undef EMIT_ATOM
 }
 
 

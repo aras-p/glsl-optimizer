@@ -185,6 +185,7 @@ struct radeon_state_atom {
    GLuint is_tcl;
    int *cmd;			         /* one or more cmd's */
    int *lastcmd;			 /* one or more cmd's */
+   GLboolean dirty;                      /* dirty-mark in emit_state_list */
    GLboolean (*check)( GLcontext * );    /* is this state active? */
 };
    
