@@ -296,7 +296,7 @@ AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 static void
 FreeBuffer(viaContextPtr vmesa)
 {
-    if (vmesa->front.map)
+    if (vmesa->front.map && vmesa->drawType == GLX_PBUFFER_BIT)
 	via_free_draw_buffer(vmesa, &vmesa->front);
 
     if (vmesa->back.map)
