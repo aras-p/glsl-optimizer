@@ -85,7 +85,10 @@ cygnus:
 		-O2 -funroll-loops \
 		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
 		-malign-loops=2 -malign-functions=2" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
+		-O2 -funroll-loops \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
+		-malign-loops=2 -malign-functions=2" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"WLIBS = $(TOP)/lib/wing32.a -lkernel32 -luser32 -lgdi32"
 
@@ -119,7 +122,9 @@ darwin:
 	"CFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math \
                 -funroll-loops -fexpensive-optimizations -no-cpp-precomp \
                 -dynamic -Ddarwin" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math \
+                -funroll-loops -fexpensive-optimizations -no-cpp-precomp \
+                -dynamic -Ddarwin" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL \
@@ -135,7 +140,7 @@ freebsd:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O2 -fPIC -pedantic" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 freebsd-386:
@@ -148,7 +153,7 @@ freebsd-386:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -ffast-math -fPIC -pedantic -DFREEBSD" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
 	"ASM_SOURCES = $(X86_SOURCES)"
 
@@ -162,7 +167,7 @@ gcc-sl:
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
 	"CFLAGS = -fPIC -O3" \
-	"CCFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -fPIC -O3" \
 	"MAKELIB = ../bin/mklib.gcc-sl" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
@@ -196,7 +201,7 @@ hpux9-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -ansi -O3 -D_HPUX_SOURCE" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
@@ -221,7 +226,7 @@ hpux9-gcc-sl:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 # The hpux10 configs should work for hpux11 as well.
@@ -235,7 +240,7 @@ hpux10:
 	"CC = cc" \
 	"CXX = aCC" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CXXFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm -L/usr/lib -lCsup"
 
@@ -249,7 +254,7 @@ hpux10-sl:
 	"CC = cc" \
 	"CXX = aCC" \
 	"CFLAGS = +O3 +DAportable +z -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = +O3 +DAportable +Z -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CXXFLAGS = +O3 +DAportable +Z -Aa -D_HPUX_SOURCE" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10-gcc:
@@ -262,7 +267,7 @@ hpux10-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -ansi -O3 -D_HPUX_SOURCE" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -276,7 +281,7 @@ hpux10-gcc-sl:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 
@@ -355,7 +360,7 @@ irix6-gcc-n32-sl:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -mabi=n32 -mips3 -O3 -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -mabi=n32 -mips3 -O3" \
 	"APP_LIB_DEPS = -rpath $(TOP)/lib32 -lX11 -lXmu -lXi -lm"
 
 # For IRIX 6-64: -woff:
@@ -404,7 +409,7 @@ linux:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -471,7 +476,7 @@ linux-ggi:
 	"CC = gcc"  \
 	"CXX = g++" \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -488,7 +493,7 @@ linux-x86-ggi:
 	"CC = gcc"  \
 	"CXX = g++" \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DCDECL=" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -ggi -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -505,7 +510,7 @@ linux-glide:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -538,7 +543,7 @@ linux-alpha:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -555,7 +560,7 @@ linux-alpha-static:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -D_XOPEN_SOURCE" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lm"
 
@@ -569,7 +574,7 @@ linux-ppc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -586,7 +591,7 @@ linux-ppc-static:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm"
 
@@ -600,7 +605,7 @@ linux-sparc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -617,7 +622,7 @@ linux-sparc5:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -635,7 +640,7 @@ linux-sparc-ultra:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -648,8 +653,8 @@ linux-osmesa16:
 	"OSMESA16_LIB = libOSMesa16.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+	"CXXFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -lm -lpthread" \
 	"APP_LIB_DEPS = -lOSMesa16 -lGL"
 
@@ -659,8 +664,8 @@ linux-osmesa32:
 	"OSMESA16_LIB = libOSMesa32.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+	"CXXFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -lm -lpthread" \
 	"APP_LIB_DEPS = -lOSMesa32 -lGL"
 
@@ -674,7 +679,7 @@ linux-solo:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GL_LIB_DEPS = -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
@@ -694,7 +699,7 @@ lynxos:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lXext -lXi -lXmu -lX11 -lbsd -lm"
 
 mklinux:
@@ -707,7 +712,7 @@ mklinux:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -pedantic -O2" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -pedantic -O2" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lmoto -L/usr/X11/lib -lXmu -lX11 -lm"
 
@@ -721,7 +726,7 @@ netbsd:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O2 -fPIC -DUSE_XSHM -I/usr/X11R6/include -DHZ=100"  \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O2 -fPIC"  \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 openbsd:
@@ -757,7 +762,7 @@ openstep-win32:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -DOPENSTEP -O4" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -DOPENSTEP -O4" \
 	"MAKELIB = $(TOP)/bin/mklib.openstep"
 
 osf1:
@@ -809,7 +814,7 @@ solaris-x86-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -m486 -fPIC" \
 	"MAKELIB = $(TOP)/bin/mklib.solaris" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -847,7 +852,7 @@ sunos4-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -DUSE_XSHM -DSUNOS4 -I/usr/openwin/include" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -O3 -DSUNOS4 -I/usr/openwin/include" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -861,7 +866,7 @@ sunos4-gcc-sl:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -fPIC -O3 -I/usr/openwin/include -DSUNOS4" \
 	"MAKELIB = $(TOP)/bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
@@ -875,7 +880,7 @@ sunos4-gcc-x11r6-sl:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DSUNOS4" \
 	"MAKELIB = $(TOP)/bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi -lm"
 
@@ -905,7 +910,7 @@ sunos5-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
-	"CXXFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
+	"CXXFLAGS = -O3 -I/usr/openwin/include" \
 	"GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
@@ -922,7 +927,7 @@ ultrix-gcc:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -pedantic -O2" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -pedantic -O2" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lXmu -lX11 -lXi -lm"
 
@@ -935,6 +940,7 @@ unixware:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -DUSE_XSHM" \
+	"CXXFLAGS = -O" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
@@ -947,6 +953,7 @@ unixware-shared:
 	"OSMESA_LIB = libOSMesa" \
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -KPIC,inline -DUSE_XSHM" \
+	"CXXFLAGS = -O -KPIC,inline" \
 	"MAKELIB = $(TOP)/bin/mklib.solaris" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
@@ -979,7 +986,7 @@ linux-debug:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
@@ -1012,6 +1019,6 @@ linux-glide-debug:
 	"CC = gcc" \
 	"CXX = g++" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
-	"CXXFLAGS = $(CFLAGS)" \
+	"CXXFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lvga -lm -lpthread"
 
