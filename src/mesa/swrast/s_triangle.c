@@ -192,6 +192,7 @@ _swrast_culltriangle( GLcontext *ctx,
  * Render an RGB, GL_DECAL, textured triangle.
  * Interpolate S,T, GL_LESS depth test, w/out mipmapping or
  * perspective correction.
+ * Depth buffer bits must be <= sizeof(DEFAULT_SOFTWARE_DEPTH_TYPE)
  *
  * No fog.
  */
@@ -1091,7 +1092,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 			&& ctx->Depth.Func == GL_LESS
 			&& ctx->Depth.Mask == GL_TRUE)
 		       || swrast->_RasterMask == TEXTURE_BIT)
-		   && ctx->Polygon.StippleFlag == GL_FALSE) {
+		   && ctx->Polygon.StippleFlag == GL_FALSE
+                   && ctx->Visual.depthBits <= 16) {
 		  if (swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)) {
 		     USE(simple_z_textured_triangle);
 		  }
