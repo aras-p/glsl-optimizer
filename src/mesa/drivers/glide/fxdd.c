@@ -360,7 +360,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 #if defined(GLX_DIRECT_RENDERING)
       return "Mesa Glide - DRI VB/V3";
 #else
-      return "Mesa Glide";
+      return (GLubyte*)"Mesa Glide";
 #endif
    default:
       return NULL;
