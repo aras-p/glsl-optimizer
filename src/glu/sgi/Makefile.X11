@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.3 2001/03/19 17:52:02 pesco Exp $
+# $Id: Makefile.X11,v 1.4 2001/03/28 20:17:55 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -141,6 +141,7 @@ targets: $(LIBDIR)/$(GLU_LIB)
 # Make the library:
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
 	$(MAKELIB) $(GLU_LIB) $(GLU_MAJOR) $(GLU_MINOR) $(GLU_TINY) $(OBJECTS)
+	rm -f $(LIBDIR)/$(GLU_LIB)*
 	mv $(GLU_LIB)* $(LIBDIR)
 
 include ../Make-config
@@ -152,6 +153,6 @@ include depend
 #
 # Run 'make depend' to update the dependencies if you change what's included
 # by any source file.
-# 
+#
 dep: $(SOURCES)
 	makedepend -fdepend -Y -I../include $(SOURCES)
