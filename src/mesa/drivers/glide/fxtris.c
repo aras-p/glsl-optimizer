@@ -152,7 +152,7 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint ts0 = fxMesa->tmu_source[0];
    GLuint ts1 = fxMesa->tmu_source[1];
-   GLfloat w = 1.0 / src->oow;
+   GLfloat w = 1.0F / src->oow;
 
    dst->win[0] = src->x;
    dst->win[1] = src->y;
@@ -185,7 +185,7 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
    if (fxMesa->stw_hint_state & GR_STWHINT_W_DIFF_TMU0)
       dst->texcoord[ts0][3] = src->tmuvtx[0].oow * w;
    else
-      dst->texcoord[ts0][3] = 1.0;
+      dst->texcoord[ts0][3] = 1.0F;
 
    if (fxMesa->SetupIndex & SETUP_TMU1) {
       dst->texcoord[ts1][0] = fxMesa->inv_s1scale * src->tmuvtx[1].sow * w;
@@ -194,7 +194,7 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
       if (fxMesa->stw_hint_state & GR_STWHINT_W_DIFF_TMU1)
 	 dst->texcoord[ts1][3] = src->tmuvtx[1].oow * w;
       else
-	 dst->texcoord[ts1][3] = 1.0;
+	 dst->texcoord[ts1][3] = 1.0F;
    }
 
    dst->pointSize = src->psize;
@@ -317,7 +317,7 @@ static void fx_draw_point_sprite ( fxMesaContext fxMesa,
  GLfloat u1scale = fxMesa->s1scale * w;
  GLfloat v1scale = fxMesa->t1scale * w;
 
- radius = psize / 2.;
+ radius = psize / 2.0F;
  _v_[0] = *v0;
  _v_[1] = *v0;
  _v_[2] = *v0;
@@ -392,10 +392,10 @@ static void fx_draw_point_wide ( fxMesaContext fxMesa,
  _v_[1] = &vtxB;
  _v_[2] = &vtxC;
 
- radius = psize / 2.;
+ radius = psize / 2.0F;
  n = IROUND(psize * 2); /* radius x 4 */
  if (n < 4) n = 4;
- oon = 1.0 / (GLfloat)n;
+ oon = 1.0F / (GLfloat)n;
 
  /* CLIP_LOOP ?!? */
  /* point coverage? */
@@ -465,10 +465,10 @@ static void fx_draw_point_wide_aa ( fxMesaContext fxMesa,
     return;
  }
 
- radius = psize / 2.;
+ radius = psize / 2.0F;
  n = IROUND(psize * 2); /* radius x 4 */
  if (n < 4) n = 4;
- oon = 1.0 / (GLfloat)n;
+ oon = 1.0F / (GLfloat)n;
 
  /* CLIP_LOOP ?!? */
  /* point coverage? */
@@ -1403,15 +1403,15 @@ static void fxRunPipeline( GLcontext *ctx )
       if (t0->_Current && FX_TEXTURE_DATA(t0)) {
          fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
          fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
-         fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
-         fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
+         fxMesa->inv_s0scale = 1.0F / fxMesa->s0scale;
+         fxMesa->inv_t0scale = 1.0F / fxMesa->t0scale;
       }
 
       if (t1->_Current && FX_TEXTURE_DATA(t1)) {
          fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
          fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
-         fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
-         fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
+         fxMesa->inv_s1scale = 1.0F / fxMesa->s1scale;
+         fxMesa->inv_t1scale = 1.0F / fxMesa->t1scale;
       }
    }
 
@@ -1479,7 +1479,7 @@ static char *fallbackStrings[] = {
    "Texture border",
    "glColorMask",
    "blend mode",
-   "line stipple"
+   "multitex"
 };
 
 
