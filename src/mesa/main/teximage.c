@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.46 2000/09/05 15:40:34 brianp Exp $ */
+/* $Id: teximage.c,v 1.47 2000/09/05 22:04:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1000,6 +1000,40 @@ make_null_texture( struct gl_texture_image *texImage )
 
 
 /*
+ * This is called when a proxy texture test fails, we set all the
+ * image members (except DriverData) to zero.
+ */
+static void
+clear_proxy_teximage(struct gl_texture_image *img)
+{
+   ASSERT(img);
+   img->Format = 0;
+   img->IntFormat = 0;
+   img->RedBits = 0;
+   img->GreenBits = 0;
+   img->BlueBits = 0;
+   img->AlphaBits = 0;
+   img->IntensityBits = 0;
+   img->LuminanceBits = 0;
+   img->IndexBits = 0;
+   img->Border = 0;
+   img->Width = 0;
+   img->Height = 0;
+   img->Depth = 0;
+   img->Width2 = 0;
+   img->Height2 = 0;
+   img->Depth2 = 0;
+   img->WidthLog2 = 0;
+   img->HeightLog2 = 0;
+   img->DepthLog2 = 0;
+   img->Data = NULL;
+   img->IsCompressed = 0;
+   img->CompressedSize = 0;
+}
+
+
+
+/*
  * Test glTexImage[123]D() parameters for errors.
  * Input:
  *         dimensions - must be 1 or 2 or 3
@@ -1673,8 +1707,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                               format, type, 1, postConvWidth, 1, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy1D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy1D->Image[level]);
          }
       }
       else {
@@ -1813,8 +1846,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                           format, type, 2, postConvWidth, height, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy2D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy2D->Image[level]);
          }
       }
       else {
@@ -1940,8 +1972,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                               format, type, 3, width, height, depth, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy3D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy3D->Image[level]);
          }
       }
       else {
@@ -2805,8 +2836,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                               GL_NONE, GL_NONE, 1, width, 1, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy1D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy1D->Image[level]);
          }
       }
       else {
@@ -2935,8 +2965,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                               GL_NONE, GL_NONE, 1, width, 1, 1, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy2D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy2D->Image[level]);
          }
       }
       else {
@@ -3059,8 +3088,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                           GL_NONE, GL_NONE, 1, width, height, depth, border)) {
          /* if error, clear all proxy texture image parameters */
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
-            MEMSET( ctx->Texture.Proxy3D->Image[level], 0,
-                    sizeof(struct gl_texture_image) );
+            clear_proxy_teximage(ctx->Texture.Proxy3D->Image[level]);
          }
       }
       else {
