@@ -38,6 +38,7 @@
 #include "context.h"
 #include "image.h"
 #include "mtypes.h"
+#include "pixel.h"
 #include "state.h"
 
 
@@ -177,26 +178,16 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
                               ctx->Unpack.BufferObj);
    }
 
-   /* apply scale and bias */
-   {
-      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[0];
-      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[0];
-      GLint i;
-      for (i = 0; i < width; i++) {
-         GLfloat r = ctx->Convolution1D.Filter[i * 4 + 0];
-         GLfloat g = ctx->Convolution1D.Filter[i * 4 + 1];
-         GLfloat b = ctx->Convolution1D.Filter[i * 4 + 2];
-         GLfloat a = ctx->Convolution1D.Filter[i * 4 + 3];
-         r = r * scale[0] + bias[0];
-         g = g * scale[1] + bias[1];
-         b = b * scale[2] + bias[2];
-         a = a * scale[3] + bias[3];
-         ctx->Convolution1D.Filter[i * 4 + 0] = r;
-         ctx->Convolution1D.Filter[i * 4 + 1] = g;
-         ctx->Convolution1D.Filter[i * 4 + 2] = b;
-         ctx->Convolution1D.Filter[i * 4 + 3] = a;
-      }
-   }
+   _mesa_scale_and_bias_rgba(width,
+                             (GLfloat (*)[4]) ctx->Convolution1D.Filter,
+                             ctx->Pixel.ConvolutionFilterScale[0][0],
+                             ctx->Pixel.ConvolutionFilterScale[0][1],
+                             ctx->Pixel.ConvolutionFilterScale[0][2],
+                             ctx->Pixel.ConvolutionFilterScale[0][3],
+                             ctx->Pixel.ConvolutionFilterBias[0][0],
+                             ctx->Pixel.ConvolutionFilterBias[0][1],
+                             ctx->Pixel.ConvolutionFilterBias[0][2],
+                             ctx->Pixel.ConvolutionFilterBias[0][3]);
 
    ctx->NewState |= _NEW_PIXEL;
 }
@@ -290,25 +281,16 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
                               ctx->Unpack.BufferObj);
    }
 
-   /* apply scale and bias */
-   {
-      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[1];
-      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[1];
-      for (i = 0; i < width * height; i++) {
-         GLfloat r = ctx->Convolution2D.Filter[i * 4 + 0];
-         GLfloat g = ctx->Convolution2D.Filter[i * 4 + 1];
-         GLfloat b = ctx->Convolution2D.Filter[i * 4 + 2];
-         GLfloat a = ctx->Convolution2D.Filter[i * 4 + 3];
-         r = r * scale[0] + bias[0];
-         g = g * scale[1] + bias[1];
-         b = b * scale[2] + bias[2];
-         a = a * scale[3] + bias[3];
-         ctx->Convolution2D.Filter[i * 4 + 0] = r;
-         ctx->Convolution2D.Filter[i * 4 + 1] = g;
-         ctx->Convolution2D.Filter[i * 4 + 2] = b;
-         ctx->Convolution2D.Filter[i * 4 + 3] = a;
-      }
-   }
+   _mesa_scale_and_bias_rgba(width * height,
+                             (GLfloat (*)[4]) ctx->Convolution2D.Filter,
+                             ctx->Pixel.ConvolutionFilterScale[1][0],
+                             ctx->Pixel.ConvolutionFilterScale[1][1],
+                             ctx->Pixel.ConvolutionFilterScale[1][2],
+                             ctx->Pixel.ConvolutionFilterScale[1][3],
+                             ctx->Pixel.ConvolutionFilterBias[1][0],
+                             ctx->Pixel.ConvolutionFilterBias[1][1],
+                             ctx->Pixel.ConvolutionFilterBias[1][2],
+                             ctx->Pixel.ConvolutionFilterBias[1][3]);
 
    ctx->NewState |= _NEW_PIXEL;
 }
@@ -958,26 +940,16 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
                                     format, type, row, &ctx->Unpack,
                                     0);  /* transferOps */
 
-      /* apply scale and bias */
-      {
-         const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[2];
-         const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[2];
-         GLint i;
-         for (i = 0; i < width; i++) {
-            GLfloat r = ctx->Separable2D.Filter[i * 4 + 0];
-            GLfloat g = ctx->Separable2D.Filter[i * 4 + 1];
-            GLfloat b = ctx->Separable2D.Filter[i * 4 + 2];
-            GLfloat a = ctx->Separable2D.Filter[i * 4 + 3];
-            r = r * scale[0] + bias[0];
-            g = g * scale[1] + bias[1];
-            b = b * scale[2] + bias[2];
-            a = a * scale[3] + bias[3];
-            ctx->Separable2D.Filter[i * 4 + 0] = r;
-            ctx->Separable2D.Filter[i * 4 + 1] = g;
-            ctx->Separable2D.Filter[i * 4 + 2] = b;
-            ctx->Separable2D.Filter[i * 4 + 3] = a;
-         }
-      }
+      _mesa_scale_and_bias_rgba(width,
+                             (GLfloat (*)[4]) ctx->Separable2D.Filter,
+                             ctx->Pixel.ConvolutionFilterScale[2][0],
+                             ctx->Pixel.ConvolutionFilterScale[2][1],
+                             ctx->Pixel.ConvolutionFilterScale[2][2],
+                             ctx->Pixel.ConvolutionFilterScale[2][3],
+                             ctx->Pixel.ConvolutionFilterBias[2][0],
+                             ctx->Pixel.ConvolutionFilterBias[2][1],
+                             ctx->Pixel.ConvolutionFilterBias[2][2],
+                             ctx->Pixel.ConvolutionFilterBias[2][3]);
    }
 
    /* unpack column filter */
@@ -987,26 +959,16 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
                                    format, type, column, &ctx->Unpack,
                                    0); /* transferOps */
 
-     /* apply scale and bias */
-     {
-        const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[2];
-        const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[2];
-        GLint i;
-        for (i = 0; i < height; i++) {
-           GLfloat r = ctx->Separable2D.Filter[i * 4 + 0 + colStart];
-           GLfloat g = ctx->Separable2D.Filter[i * 4 + 1 + colStart];
-           GLfloat b = ctx->Separable2D.Filter[i * 4 + 2 + colStart];
-           GLfloat a = ctx->Separable2D.Filter[i * 4 + 3 + colStart];
-           r = r * scale[0] + bias[0];
-           g = g * scale[1] + bias[1];
-           b = b * scale[2] + bias[2];
-           a = a * scale[3] + bias[3];
-           ctx->Separable2D.Filter[i * 4 + 0 + colStart] = r;
-           ctx->Separable2D.Filter[i * 4 + 1 + colStart] = g;
-           ctx->Separable2D.Filter[i * 4 + 2 + colStart] = b;
-           ctx->Separable2D.Filter[i * 4 + 3 + colStart] = a;
-        }
-     }
+      _mesa_scale_and_bias_rgba(height,
+                       (GLfloat (*)[4]) (ctx->Separable2D.Filter + colStart),
+                       ctx->Pixel.ConvolutionFilterScale[2][0],
+                       ctx->Pixel.ConvolutionFilterScale[2][1],
+                       ctx->Pixel.ConvolutionFilterScale[2][2],
+                       ctx->Pixel.ConvolutionFilterScale[2][3],
+                       ctx->Pixel.ConvolutionFilterBias[2][0],
+                       ctx->Pixel.ConvolutionFilterBias[2][1],
+                       ctx->Pixel.ConvolutionFilterBias[2][2],
+                       ctx->Pixel.ConvolutionFilterBias[2][3]);
    }
 
    if (ctx->Unpack.BufferObj->Name) {

@@ -1074,14 +1074,12 @@ _mesa_PixelTransferi( GLenum pname, GLint param )
  * Apply scale and bias factors to an array of RGBA pixels.
  */
 void
-_mesa_scale_and_bias_rgba(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+_mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
                           GLfloat rScale, GLfloat gScale,
                           GLfloat bScale, GLfloat aScale,
                           GLfloat rBias, GLfloat gBias,
                           GLfloat bBias, GLfloat aBias)
 {
-   (void) ctx;
-
    if (rScale != 1.0 || rBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {

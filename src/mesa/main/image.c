@@ -503,7 +503,7 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
    skippixels = packing->SkipPixels;
    skipimages = packing->SkipImages;
 
-   if (type==GL_BITMAP) {
+   if (type == GL_BITMAP) {
       /* BITMAP data */
       GLint comp_per_pixel;   /* components per pixel */
       GLint bytes_per_comp;   /* bytes per component */
@@ -512,13 +512,13 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
 
       /* Compute bytes per component */
       bytes_per_comp = _mesa_sizeof_packed_type( type );
-      if (bytes_per_comp<0) {
+      if (bytes_per_comp < 0) {
          return NULL;
       }
 
       /* Compute number of components per pixel */
       comp_per_pixel = _mesa_components_in_format( format );
-      if (comp_per_pixel<0 && type != GL_BITMAP) {
+      if (comp_per_pixel < 0) {
          return NULL;
       }
 
@@ -922,7 +922,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
 {
    /* scale & bias */
    if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-      _mesa_scale_and_bias_rgba(ctx, n, rgba,
+      _mesa_scale_and_bias_rgba(n, rgba,
                                 ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
                                 ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
                                 ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
@@ -943,7 +943,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
    }
    /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
    if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
-      _mesa_scale_and_bias_rgba(ctx, n, rgba,
+      _mesa_scale_and_bias_rgba(n, rgba,
                                 ctx->Pixel.PostConvolutionScale[RCOMP],
                                 ctx->Pixel.PostConvolutionScale[GCOMP],
                                 ctx->Pixel.PostConvolutionScale[BCOMP],
