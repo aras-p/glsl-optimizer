@@ -1250,6 +1250,7 @@ Mesa Version History
 	- support for AUX buffers in software GLX driver
 	- updated glext.h to version 24 and glxext.h to version 6
 	- new MESA_GLX_FORCE_ALPHA and MESA_GLX_DEPTH_BITS env vars
+	- updated BeOS support (Philippe Houdoin)
     Changes:
 	- fragment fog interpolation is perspective corrected now
 	- new glTexImage code, much cleaner, may be a bit faster
@@ -1272,3 +1273,4 @@ Mesa Version History
 	- glBeginQueryARB and glEndQueryARB didn't work inside display lists
 	- vertex program state references were broken
 	- fixed triangle color interpolation bug on AIX (Shane Blackett)
+	- fixed a number of minor memory leaks (bug #1002030)
