@@ -645,36 +645,31 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 	}
 }
 
-void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start)
+void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 {
-int i, a, count;
-GLuint dw;
-LOCAL_VARS
+	if (RADEON_DEBUG & DEBUG_VERTS)
+	    fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr, offset);
+    int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
+    int i;
+    LOCAL_VARS
 
-count=rmesa->state.aos_count;
+    start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz-1);
+    e32(nr);
+    for(i=0;i+1<nr;i+=2){
+        e32(  (rmesa->state.aos[i].aos_size << 0)
+             |(rmesa->state.aos[i].aos_stride << 8)
+             |(rmesa->state.aos[i+1].aos_size << 16)
+             |(rmesa->state.aos[i+1].aos_stride << 24)
+        );
+        e32(rmesa->state.aos[i].aos_offset+offset*4*rmesa->state.aos[i].aos_stride);
+        e32(rmesa->state.aos[i+1].aos_offset+offset*4*rmesa->state.aos[i+1].aos_stride);
+    }
+    if(nr & 1){
+        e32(  (rmesa->state.aos[nr-1].aos_size << 0)
+             |(rmesa->state.aos[nr-1].aos_stride << 8)
+        );
+        e32(rmesa->state.aos[nr-1].aos_offset+offset*4*rmesa->state.aos[nr-1].aos_stride);
+    }
 
-a=1+(count>>1)*3+(count & 1)*2;
-start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, a-1);
-e32(count);
-for(i=0;i+1<count;i+=2){
-	e32(  (rmesa->state.aos[i].element_size << 0) 
-	     |(rmesa->state.aos[i].stride << 8)
-	     |(rmesa->state.aos[i+1].element_size << 16)
-	     |(rmesa->state.aos[i+1].stride << 24)
-	    );
-	e32(rmesa->state.aos[i].offset+start*4*rmesa->state.aos[i].stride);
-	e32(rmesa->state.aos[i+1].offset+start*4*rmesa->state.aos[i+1].stride);
-	}
-if(count & 1){
-	e32(  (rmesa->state.aos[count-1].element_size << 0) 
-	     |(rmesa->state.aos[count-1].stride << 8)
-	    );
-	e32(rmesa->state.aos[count-1].offset+start*4*rmesa->state.aos[count-1].stride);	
-	}
-
-/* delay ? */
-#if 0
-e32(RADEON_CP_PACKET2);
-e32(RADEON_CP_PACKET2);
-#endif
 }
+

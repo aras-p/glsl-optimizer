@@ -1,0 +1,444 @@
+/* $XFree86: xc/lib/GL/mesa/src/drv/r300/r300_maos_arrays.c,v 1.3 2003/02/23 23:59:01 dawes Exp $ */
+/*
+Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
+
+The Weather Channel (TM) funded Tungsten Graphics to develop the
+initial release of the Radeon 8500 driver under the XFree86 license.
+This notice must be preserved.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice (including the
+next paragraph) shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
+/*
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ */
+
+#include "glheader.h"
+#include "mtypes.h"
+#include "colormac.h"
+#include "imports.h"
+#include "macros.h"
+
+#include "swrast_setup/swrast_setup.h"
+#include "math/m_translate.h"
+#include "tnl/tnl.h"
+#include "tnl/t_context.h"
+
+#include "r300_context.h"
+#include "radeon_ioctl.h"
+#include "r300_state.h"
+#include "r300_maos.h"
+
+#define DEBUG_ALL DEBUG_VERTS
+
+#if defined(USE_X86_ASM)
+#define COPY_DWORDS( dst, src, nr )					\
+do {									\
+	int __tmp;							\
+	__asm__ __volatile__( "rep ; movsl"				\
+			      : "=%c" (__tmp), "=D" (dst), "=S" (__tmp)	\
+			      : "0" (nr),				\
+			        "D" ((long)dst),			\
+			        "S" ((long)src) );			\
+} while (0)
+#else
+#define COPY_DWORDS( dst, src, nr )		\
+do {						\
+   int j;					\
+   for ( j = 0 ; j < nr ; j++ )			\
+      dst[j] = ((int *)src)[j];			\
+   dst += nr;					\
+} while (0)
+#endif
+
+static void emit_vec4(GLcontext * ctx,
+		      struct r300_dma_region *rvb,
+		      char *data, int stride, int count)
+{
+	int i;
+	int *out = (int *)(rvb->address + rvb->start);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s count %d stride %d\n",
+			__FUNCTION__, count, stride);
+
+	if (stride == 4)
+		COPY_DWORDS(out, data, count);
+	else
+		for (i = 0; i < count; i++) {
+			out[0] = *(int *)data;
+			out++;
+			data += stride;
+		}
+}
+
+static void emit_vec8(GLcontext * ctx,
+		      struct r300_dma_region *rvb,
+		      char *data, int stride, int count)
+{
+	int i;
+	int *out = (int *)(rvb->address + rvb->start);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s count %d stride %d\n",
+			__FUNCTION__, count, stride);
+
+	if (stride == 8)
+		COPY_DWORDS(out, data, count * 2);
+	else
+		for (i = 0; i < count; i++) {
+			out[0] = *(int *)data;
+			out[1] = *(int *)(data + 4);
+			out += 2;
+			data += stride;
+		}
+}
+
+static void emit_vec12(GLcontext * ctx,
+		       struct r300_dma_region *rvb,
+		       char *data, int stride, int count)
+{
+	int i;
+	int *out = (int *)(rvb->address + rvb->start);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
+			__FUNCTION__, count, stride, (void *)out, (void *)data);
+
+	if (stride == 12)
+		COPY_DWORDS(out, data, count * 3);
+	else
+		for (i = 0; i < count; i++) {
+			out[0] = *(int *)data;
+			out[1] = *(int *)(data + 4);
+			out[2] = *(int *)(data + 8);
+			out += 3;
+			data += stride;
+		}
+}
+
+static void emit_vec16(GLcontext * ctx,
+		       struct r300_dma_region *rvb,
+		       char *data, int stride, int count)
+{
+	int i;
+	int *out = (int *)(rvb->address + rvb->start);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s count %d stride %d\n",
+			__FUNCTION__, count, stride);
+
+	if (stride == 16)
+		COPY_DWORDS(out, data, count * 4);
+	else
+		for (i = 0; i < count; i++) {
+			out[0] = *(int *)data;
+			out[1] = *(int *)(data + 4);
+			out[2] = *(int *)(data + 8);
+			out[3] = *(int *)(data + 12);
+			out += 4;
+			data += stride;
+		}
+}
+
+static void emit_vector(GLcontext * ctx,
+			struct r300_dma_region *rvb,
+			char *data, int size, int stride, int count)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s count %d size %d stride %d\n",
+			__FUNCTION__, count, size, stride);
+
+	assert(!rvb->buf);
+
+	if (stride == 0) {
+		r300AllocDmaRegion(rmesa, rvb, size * 4, 4);
+		count = 1;
+		rvb->aos_offset	= GET_START(rvb);
+		rvb->aos_stride	= 0;
+		rvb->aos_size	= size;
+	} else {
+		r300AllocDmaRegion(rmesa, rvb, size * count * 4, 4);	/* alignment? */
+		rvb->aos_offset	= GET_START(rvb);
+		rvb->aos_stride	= size;
+		rvb->aos_size	= size;
+	}
+
+	/* Emit the data
+	 */
+	switch (size) {
+	case 1:
+		emit_vec4(ctx, rvb, data, stride, count);
+		break;
+	case 2:
+		emit_vec8(ctx, rvb, data, stride, count);
+		break;
+	case 3:
+		emit_vec12(ctx, rvb, data, stride, count);
+		break;
+	case 4:
+		emit_vec16(ctx, rvb, data, stride, count);
+		break;
+	default:
+		assert(0);
+		exit(1);
+		break;
+	}
+
+}
+
+/* Emit any changed arrays to new GART memory, re-emit a packet to
+ * update the arrays.
+ */
+void r300EmitArrays(GLcontext * ctx, GLuint inputs)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r300ContextPtr r300 = rmesa;
+	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+	GLuint nr = 0;
+	GLuint count = VB->Count;
+	GLuint dw,mask;
+	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
+	GLuint aa_vap_reg = 0; /* VAP register assignment */
+	GLuint i;
+
+/*FIXME: handle vertex program input */
+	if (inputs & _TNL_BIT_POS) {
+		if (RADEON_DEBUG & DEBUG_ALL)
+			fprintf(stderr, "[%d] _TNL_BIT_POS: sz=%d, st=%d, c=%d\n",
+				nr, VB->ObjPtr->size, VB->ObjPtr->stride, count);
+		emit_vector(ctx, &rmesa->state.aos[nr++],
+					(char *)VB->ObjPtr->data,
+					VB->ObjPtr->size,
+					VB->ObjPtr->stride, count);
+
+		vic_1 |= R300_INPUT_CNTL_POS;
+		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
+		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
+	}
+
+	if (inputs & _TNL_BIT_NORMAL) {
+		if (RADEON_DEBUG & DEBUG_ALL)
+			fprintf(stderr, "[%d] _TNL_BIT_NORMAL: sz=%d, st=%d, c=%d\n",
+				nr, VB->NormalPtr->size, VB->NormalPtr->stride, count);
+		emit_vector(ctx, &rmesa->state.aos[nr++],
+				(char *)VB->NormalPtr->data,
+				VB->NormalPtr->size,
+				VB->NormalPtr->stride, count);
+
+		vic_1 |= R300_INPUT_CNTL_NORMAL;
+		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
+		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
+	}
+
+	if (inputs & VERT_BIT_COLOR0) {
+		int emitsize;
+		if (RADEON_DEBUG & DEBUG_ALL)
+			fprintf(stderr, "[%d] _TNL_BIT_COLOR0: sz=%d, st=%d, c=%d\n",
+				nr, VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride, count);
+
+		if (VB->ColorPtr[0]->size == 4 &&
+		    (VB->ColorPtr[0]->stride != 0 ||
+		     VB->ColorPtr[0]->data[0][3] != 1.0)) {
+			emitsize = 4;
+		} else {
+			emitsize = 3;
+		}
+
+		emit_vector(ctx,
+			    &(rmesa->state.aos[nr++]),
+			    (char *)VB->ColorPtr[0]->data,
+			    emitsize, VB->ColorPtr[0]->stride, count);
+//			    emitsize, VB->ColorPtr[0]->stride, count);
+
+		vic_1 |= R300_INPUT_CNTL_COLOR;
+		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
+		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT_COLOR;
+	}
+
+	if (inputs & VERT_BIT_COLOR1) {
+		if (RADEON_DEBUG & DEBUG_ALL)
+			fprintf(stderr, "[%d] _TNL_BIT_COLOR1: sz=%d, st=%d, c=%d\n",
+				nr, VB->SecondaryColorPtr[0]->size, VB->SecondaryColorPtr[0]->stride, count);
+
+		emit_vector(ctx,
+			    &rmesa->state.aos[nr++],
+			    (char *)VB->SecondaryColorPtr[0]->data,
+			    VB->SecondaryColorPtr[0]->size, VB->SecondaryColorPtr[0]->stride, count);
+		rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
+		rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT_COLOR;
+	}
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		if (inputs & (_TNL_BIT_TEX0 << i)) {
+			if (RADEON_DEBUG & DEBUG_ALL)
+				fprintf(stderr, "[%d] _TNL_BIT_TEX%02d: sz=%d, st=%d, c=%d\n",
+					nr, i, VB->TexCoordPtr[i]->size, VB->TexCoordPtr[i]->stride, count);
+			emit_vector(ctx,
+				    &(rmesa->state.aos[nr++]),
+				    (char *)VB->TexCoordPtr[i]->data,
+				    VB->TexCoordPtr[i]->size,
+				    VB->TexCoordPtr[i]->stride, count);
+
+			vic_1 |= R300_INPUT_CNTL_TC0 << i;
+			rmesa->state.aos[nr-1].aos_reg	  = aa_vap_reg++;
+			rmesa->state.aos[nr-1].aos_format = AOS_FORMAT_FLOAT;
+		}
+	}
+
+int cmd_reserved=0;
+int cmd_written=0;
+drm_radeon_cmd_header_t *cmd = NULL;
+
+#define SHOW_INFO(n) do { \
+	if (RADEON_DEBUG & DEBUG_ALL) { \
+	fprintf(stderr, "RR[%d] - sz=%d, reg=%d, fmt=%d -- st=%d, of=0x%08x\n", \
+		n, \
+		r300->state.aos[n].aos_size, \
+		r300->state.aos[n].aos_reg, \
+		r300->state.aos[n].aos_format, \
+		r300->state.aos[n].aos_stride, \
+		r300->state.aos[n].aos_offset); \
+	} \
+} while(0);
+
+	/* setup INPUT_ROUTE */
+	R300_STATECHANGE(r300, vir[0]);
+	for(i=0;i+1<nr;i+=2){
+		SHOW_INFO(i)
+		SHOW_INFO(i+1)
+		dw=(r300->state.aos[i].aos_size-1)
+		| ((r300->state.aos[i].aos_reg)<<8)
+		| (r300->state.aos[i].aos_format<<14)
+		| (((r300->state.aos[i+1].aos_size-1)
+		| ((r300->state.aos[i+1].aos_reg)<<8)
+		| (r300->state.aos[i+1].aos_format<<14))<<16);
+
+		if(i+2==nr){
+			dw|=(1<<(13+16));
+			}
+		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+		}
+	if(nr & 1){
+		SHOW_INFO(nr-1)
+		dw=(r300->state.aos[nr-1].aos_size-1)
+		| (r300->state.aos[nr-1].aos_format<<14)
+		| ((r300->state.aos[nr-1].aos_reg)<<8)
+		| (1<<13);
+		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
+		//fprintf(stderr, "vir0 dw=%08x\n", dw);
+		}
+	/* Set the rest of INPUT_ROUTE_0 to 0 */
+	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = (nr+1)>>1;
+
+
+	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
+	#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
+
+	#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
+		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
+
+	R300_STATECHANGE(r300, vir[1]);
+
+	for(i=0;i+1<nr;i+=2){
+		/* do i first.. */
+		mask=(1<<(r300->state.aos[i].aos_size*3))-1;
+		dw=(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE;
+
+		/* i+1 */
+		mask=(1<<(r300->state.aos[i+1].aos_size*3))-1;
+		dw|=(
+		(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE
+		)<<16;
+
+		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
+		}
+	if(nr & 1){
+		mask=(1<<(r300->state.aos[nr-1].aos_size*3))-1;
+		dw=(ALL_COMPONENTS & mask)
+		| (ALL_DEFAULT & ~mask)
+		| R300_INPUT_ROUTE_ENABLE;
+		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(nr>>1)]=dw;
+		//fprintf(stderr, "vir1 dw=%08x\n", dw);
+		}
+	/* Set the rest of INPUT_ROUTE_1 to 0 */
+	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = (nr+1)>>1;
+
+	/* Set up input_cntl */
+
+	R300_STATECHANGE(r300, vic);
+	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
+	r300->hw.vic.cmd[R300_VIC_CNTL_1]=vic_1;
+
+#if 0
+	r300->hw.vic.cmd[R300_VIC_CNTL_1]=0;
+	
+	if(r300->state.render_inputs & _TNL_BIT_POS)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_POS;
+	
+	if(r300->state.render_inputs & _TNL_BIT_NORMAL)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_NORMAL;
+	
+	if(r300->state.render_inputs & _TNL_BIT_COLOR0)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_COLOR;
+
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
+			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
+#endif
+
+	/* Stage 3: VAP output */
+	R300_STATECHANGE(r300, vof);
+	r300->hw.vof.cmd[R300_VOF_CNTL_0]=R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
+					| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+
+	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
+	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
+			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
+
+	rmesa->state.aos_count = nr;
+}
+
+void r300ReleaseArrays(GLcontext * ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	int i;
+
+	for (i=0;i<rmesa->state.aos_count;i++) {
+		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
+	}
+}

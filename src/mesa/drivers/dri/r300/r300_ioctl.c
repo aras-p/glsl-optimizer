@@ -453,13 +453,13 @@ void r300ReleaseDmaRegion(r300ContextPtr rmesa,
 		if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 			fprintf(stderr, "%s -- DISCARD BUF %d\n", __FUNCTION__,
 				region->buf->buf->idx);
-
 		cmd =
 		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
-								sizeof(*cmd),
+								sizeof(*cmd) / 4,
 								__FUNCTION__);
-		cmd->dma.cmd_type = RADEON_CMD_DMA_DISCARD;
+		cmd->dma.cmd_type = R300_CMD_DMA_DISCARD;
 		cmd->dma.buf_idx = region->buf->buf->idx;
+		
 		FREE(region->buf);
 		rmesa->dma.nr_released_bufs++;
 	}

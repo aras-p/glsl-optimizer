@@ -110,9 +110,20 @@ struct r300_dma_region {
 	struct r300_dma_buffer *buf;
 	char *address;		/* == buf->address */
 	int start, end, ptr;	/* offsets from start of buf */
-	int aos_start;
-	int aos_stride;
-	int aos_size;
+
+    int aos_offset;     /* address in GART memory */
+    int aos_stride;     /* distance between elements, in dwords */
+    int aos_size;       /* number of components (1-4) */
+    int aos_format;     /* format of components */
+    int aos_reg;        /* VAP register assignment */
+
+/* Left here so immediate mode still works unmodified */
+	int element_size;
+	int stride;
+	int offset;
+	int ncomponents;
+	int reg;
+	int format;
 };
 
 struct r300_dma {
@@ -653,8 +664,12 @@ struct r300_state {
 	struct r300_vap_reg_state vap_reg;
 	struct r300_vertex_shader_state vertex_shader;
 	struct r300_pixel_shader_state pixel_shader;
-	struct r300_aos_rec aos[R300_MAX_AOS_ARRAYS];
+
+	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
+
+	GLuint *Elts;
+
 	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
 				 They are the same as tnl->render_inputs for fixed pipeline */
 

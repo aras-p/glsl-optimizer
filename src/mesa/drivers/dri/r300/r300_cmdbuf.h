@@ -46,6 +46,9 @@ extern void r300EmitState(r300ContextPtr r300);
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
 
+extern void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset);
+
+
 /**
  * Make sure that enough space is available in the command buffer
  * by flushing if necessary.
