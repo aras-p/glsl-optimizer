@@ -2638,7 +2638,7 @@ grammar_check (dict * di, const GLubyte * text, GLubyte ** production,
       return 0;
    }
 
-   memcpy (*production, ba->data, ba->len * sizeof (GLubyte));
+   _mesa_memcpy(*production, ba->data, ba->len * sizeof (GLubyte));
    *size = ba->len;
    barray_destroy (&ba);
 

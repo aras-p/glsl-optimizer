@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ static GLint get_size( const GLfloat *f )
  * TODO - remove VB->ColorPtr, etc and just use the AttrPtr's.
  */
 static void _tnl_bind_vertex_list( GLcontext *ctx,
-				    struct tnl_vertex_list *node )
+                                   const struct tnl_vertex_list *node )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
@@ -118,10 +118,10 @@ static void _tnl_bind_vertex_list( GLcontext *ctx,
 }
 
 static void _playback_copy_to_current( GLcontext *ctx,
-				       struct tnl_vertex_list *node )
+				       const struct tnl_vertex_list *node )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
-   GLfloat *data;
+   const GLfloat *data;
    GLuint i;
 
    if (node->count)
@@ -170,13 +170,12 @@ static void _playback_copy_to_current( GLcontext *ctx,
  */
 void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 {
-   struct tnl_vertex_list *node = (struct tnl_vertex_list *)data;
+   const struct tnl_vertex_list *node = (const struct tnl_vertex_list *) data;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    FLUSH_CURRENT(ctx, 0);
 
-   if (node->prim_count &&
-       node->count) {
+   if (node->prim_count > 0 && node->count > 0) {
 
       if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END &&
 	       (node->prim[0].mode & PRIM_BEGIN)) {
@@ -185,7 +184,7 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	  * includes operations such as glBegin or glDrawArrays.
 	  */
 	 _mesa_error( ctx, GL_INVALID_OPERATION, "displaylist recursive begin");
-	 _tnl_loopback_vertex_list( ctx, (struct tnl_vertex_list *) data );
+	 _tnl_loopback_vertex_list( ctx, node );
 	 return;
       }
       else if (tnl->LoopbackDListCassettes ||
@@ -193,7 +192,7 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	 /* Degenerate case: list references current data and would
 	  * require fixup.  Take the easier option & loop it back.
 	  */
-	 _tnl_loopback_vertex_list( ctx, (struct tnl_vertex_list *) data );
+	 _tnl_loopback_vertex_list( ctx, node );
 	 return;
       }
       
@@ -216,8 +215,3 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
     */
    _playback_copy_to_current( ctx, node );
 }
-
-
-
-
-

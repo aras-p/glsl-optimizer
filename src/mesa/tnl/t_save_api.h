@@ -51,7 +51,7 @@ extern void _tnl_save_init( GLcontext *ctx );
 extern void _tnl_save_destroy( GLcontext *ctx );
 
 extern void _tnl_loopback_vertex_list( GLcontext *ctx,
-				       struct tnl_vertex_list *list );
+				       const struct tnl_vertex_list *list );
 
 extern void _tnl_playback_vertex_list( GLcontext *ctx, void *data );
 

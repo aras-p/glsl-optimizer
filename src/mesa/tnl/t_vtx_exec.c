@@ -202,23 +202,23 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
    case GL_LINES:
       ovf = nr&1;
       for (i = 0 ; i < ovf ; i++)
-	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_TRIANGLES:
       ovf = nr%3;
       for (i = 0 ; i < ovf ; i++)
-	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_QUADS:
       ovf = nr&3;
       for (i = 0 ; i < ovf ; i++)
-	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_LINE_STRIP:
       if (nr == 0) 
 	 return 0;
       else {
-	 memcpy( dst, src+(nr-1)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst, src+(nr-1)*sz, sz * sizeof(GLfloat) );
 	 return 1;
       }
    case GL_LINE_LOOP:
@@ -227,11 +227,11 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
       if (nr == 0) 
 	 return 0;
       else if (nr == 1) {
-	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst, src+0, sz * sizeof(GLfloat) );
 	 return 1;
       } else {
-	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
-	 memcpy( dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst, src+0, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat) );
 	 return 2;
       }
    case GL_TRIANGLE_STRIP:
@@ -242,7 +242,7 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
       default: ovf = 2 + (nr&1); break;
       }
       for (i = 0 ; i < ovf ; i++)
-	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_POLYGON+1:
       return 0;

@@ -98,7 +98,7 @@ static void _tnl_wrap_filled_vertex( GLcontext *ctx )
    assert(tnl->vtx.counter > tnl->vtx.copied.nr);
 
    for (i = 0 ; i < tnl->vtx.copied.nr ; i++) {
-      memcpy( tnl->vtx.vbptr, data, tnl->vtx.vertex_size * sizeof(GLfloat));
+      _mesa_memcpy( tnl->vtx.vbptr, data, tnl->vtx.vertex_size * sizeof(GLfloat));
       tnl->vtx.vbptr += tnl->vtx.vertex_size;
       data += tnl->vtx.vertex_size;
       tnl->vtx.counter--;
@@ -275,7 +275,7 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
 static void _tnl_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   static float id[4] = { 0, 0, 0, 1 };
+   static const GLfloat id[4] = { 0, 0, 0, 1 };
    int i;
 
    if (tnl->vtx.attrsz[attr] < sz) {
@@ -893,13 +893,13 @@ static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
    }
 
 
-   memcpy( tnl->vtx.copied.buffer, tnl->vtx.vertex, 
-	   tnl->vtx.vertex_size * sizeof(GLfloat));
+   _mesa_memcpy( tnl->vtx.copied.buffer, tnl->vtx.vertex, 
+                 tnl->vtx.vertex_size * sizeof(GLfloat));
 
    _tnl_do_EvalCoord1f( ctx, u );
 
-   memcpy( tnl->vtx.vertex, tnl->vtx.copied.buffer,
-	   tnl->vtx.vertex_size * sizeof(GLfloat));
+   _mesa_memcpy( tnl->vtx.vertex, tnl->vtx.copied.buffer,
+                 tnl->vtx.vertex_size * sizeof(GLfloat));
 }
 
 static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
@@ -924,13 +924,13 @@ static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 	    _tnl_fixup_vertex( ctx, _TNL_ATTRIB_NORMAL, 3 );
    }
 
-   memcpy( tnl->vtx.copied.buffer, tnl->vtx.vertex, 
-	   tnl->vtx.vertex_size * sizeof(GLfloat));
+   _mesa_memcpy( tnl->vtx.copied.buffer, tnl->vtx.vertex, 
+                 tnl->vtx.vertex_size * sizeof(GLfloat));
 
    _tnl_do_EvalCoord2f( ctx, u, v );
 
-   memcpy( tnl->vtx.vertex, tnl->vtx.copied.buffer, 
-	   tnl->vtx.vertex_size * sizeof(GLfloat));
+   _mesa_memcpy( tnl->vtx.vertex, tnl->vtx.copied.buffer, 
+                 tnl->vtx.vertex_size * sizeof(GLfloat));
 }
 
 static void GLAPIENTRY _tnl_EvalCoord1fv( const GLfloat *u )

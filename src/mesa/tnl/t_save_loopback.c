@@ -183,8 +183,8 @@ struct loopback_attr {
  * precalculated wrapping is wrong.
  */
 static void loopback_prim( GLcontext *ctx,
-			   struct tnl_vertex_list *list, GLuint i,
-			   struct loopback_attr *la, GLuint nr )
+			   const struct tnl_vertex_list *list, GLuint i,
+			   const struct loopback_attr *la, GLuint nr )
 {
    struct tnl_prim *prim = &list->prim[i];
    GLint begin = prim->start;
@@ -195,7 +195,8 @@ static void loopback_prim( GLcontext *ctx,
 
    if (prim->mode & PRIM_BEGIN) {
       glBegin( prim->mode & PRIM_MODE_MASK );
-   } else {
+   }
+   else {
       assert(i == 0);
       assert(begin == 0);
       begin += list->wrap_count;
@@ -231,8 +232,8 @@ static void loopback_prim( GLcontext *ctx,
  * primitives.
  */
 static void loopback_weak_prim( GLcontext *ctx,
-				struct tnl_vertex_list *list, GLuint i,
-				struct loopback_attr *la, GLuint nr )
+				const struct tnl_vertex_list *list, GLuint i,
+				const struct loopback_attr *la, GLuint nr )
 {
    if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) 
       loopback_prim( ctx, list, i, la, nr );
@@ -255,7 +256,8 @@ static void loopback_weak_prim( GLcontext *ctx,
 
 
 
-void _tnl_loopback_vertex_list( GLcontext *ctx, struct tnl_vertex_list *list )
+void _tnl_loopback_vertex_list( GLcontext *ctx,
+                                const struct tnl_vertex_list *list )
 {
    struct loopback_attr la[_TNL_ATTRIB_MAX];
    GLuint i, nr = 0;

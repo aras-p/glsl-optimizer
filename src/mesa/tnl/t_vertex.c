@@ -765,9 +765,9 @@ static void generic_copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
       if (a[j].attrib == VERT_ATTRIB_COLOR0 ||
 	  a[j].attrib == VERT_ATTRIB_COLOR1) {
 
-	 memcpy( vdst + a[j].vertoffset,
-		 vsrc + a[j].vertoffset,
-		 a[j].vertattrsize );
+	 _mesa_memcpy( vdst + a[j].vertoffset,
+                       vsrc + a[j].vertoffset,
+                       a[j].vertattrsize );
       }
    }
 }
@@ -931,7 +931,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
 
    /* Else return the value from ctx->Current
     */
-   memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
+   _mesa_memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
 }
 
 void *_tnl_get_vertex( GLcontext *ctx, GLuint nr )
