@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.11 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: imports.c,v 1.12 2002/06/13 08:27:32 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,12 +39,12 @@
  * the renderer should use the XFree86-wrapped system calls.
  */
 
+#include <stdarg.h>
 
 #include "glheader.h"
 #include "imports.h"
 #include "mem.h"
 #include "mtypes.h"
-
 
 static void *
 _mesa_Malloc(__GLcontext *gc, size_t size)
