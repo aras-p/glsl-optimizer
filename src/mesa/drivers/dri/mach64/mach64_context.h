@@ -35,7 +35,7 @@
 #ifdef GLX_DIRECT_RENDERING
 
 #include "dri_util.h"
-
+#include "drm.h"
 #include "xf86drm.h"
 #include "mach64_common.h"
 
