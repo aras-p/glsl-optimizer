@@ -41,6 +41,7 @@ SOURCES = antialias.c \
 	stencil_wrap.c \
 	tex1d.c \
 	texline.c \
+	texobjshare.c \
 	texrect.c \
 	texwrap.c \
 	vparray.c \
