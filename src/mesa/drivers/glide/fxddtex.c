@@ -48,19 +48,56 @@
 #include "texstore.h"
 
 
+/* no borders! can't halve 1x1! (stride > width * comp) not allowed */
 void
-_mesa_halve2x2_teximage2d ( GLuint bytesPerPixel,
+_mesa_halve2x2_teximage2d ( GLcontext *ctx,
+			    struct gl_texture_image *texImage,
+			    GLuint bytesPerPixel,
 			    GLint srcWidth, GLint srcHeight,
 			    const GLvoid *srcImage, GLvoid *dstImage )
 {
    GLint i, j, k;
-   const GLint dstWidth = srcWidth / 2;
-   const GLint dstHeight = srcHeight / 2;
-   const GLint srcRowStride = srcWidth * bytesPerPixel;
-   const GLubyte *src = srcImage;
+   GLint dstWidth = srcWidth / 2;
+   GLint dstHeight = srcHeight / 2;
+   GLint srcRowStride = srcWidth * bytesPerPixel;
+   GLubyte *src = srcImage;
    GLubyte *dst = dstImage;
 
-   /* no borders! can't halve 1x1! (stride > width * comp) not allowed */
+   GLuint bpt = 0;
+   GLubyte *_s;
+   GLubyte *_d;
+   GLenum _t;
+
+   if (texImage->TexFormat->MesaFormat == MESA_FORMAT_RGB565) {
+      _t = GL_UNSIGNED_SHORT_5_6_5_REV;
+      bpt = bytesPerPixel;
+   } else if (texImage->TexFormat->MesaFormat == MESA_FORMAT_ARGB4444) {
+      _t = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+      bpt = bytesPerPixel;
+   } else if (texImage->TexFormat->MesaFormat == MESA_FORMAT_ARGB1555) {
+      _t = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+      bpt = bytesPerPixel;
+   }
+   if (bpt) {
+      bytesPerPixel = 4;
+      srcRowStride = srcWidth * bytesPerPixel;
+      if (dstWidth == 0) {
+         dstWidth = 1;
+      }
+      if (dstHeight == 0) {
+         dstHeight = 1;
+      }
+      _s = src = MALLOC(srcRowStride * srcHeight);
+      _d = dst = MALLOC(dstWidth * bytesPerPixel * dstHeight);
+      _mesa_texstore_rgba8888(ctx, 2, GL_RGBA,
+                              &_mesa_texformat_rgba8888_rev, src,
+                              0, 0, 0, /* dstX/Y/Zoffset */
+                              srcRowStride, /* dstRowStride */
+                              0, /* dstImageStride */
+                              srcWidth, srcHeight, 1,
+                              texImage->Format, _t, srcImage, &ctx->DefaultPacking);
+   }
+
    if (srcHeight == 1) {
       for (i = 0; i < dstWidth; i++) {
          for (k = 0; k < bytesPerPixel; k++) {
@@ -94,6 +131,20 @@ _mesa_halve2x2_teximage2d ( GLuint bytesPerPixel,
          }
          src += srcRowStride;
       }
+   }
+
+   if (bpt) {
+      src = _s;
+      dst = _d;
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      texImage->TexFormat, dstImage,
+                                      0, 0, 0, /* dstX/Y/Zoffset */
+                                      dstWidth * bpt,
+                                      0, /* dstImageStride */
+                                      dstWidth, dstHeight, 1,
+                                      GL_BGRA, CHAN_TYPE, dst, &ctx->DefaultPacking);
+      FREE(dst);
+      FREE(src);
    }
 }
 
@@ -840,10 +891,10 @@ fetch_r4g4b4a4(const struct gl_texture_image *texImage,
    j = j * mml->hScale;
 
    texel = ((GLushort *) texImage->Data) + j * mml->width + i;
-   rgba[RCOMP] = FX_rgb_scale_4[(*texel >> 12) & 0xF];
-   rgba[GCOMP] = FX_rgb_scale_4[(*texel >>  8) & 0xF];
-   rgba[BCOMP] = FX_rgb_scale_4[(*texel >>  4) & 0xF];
-   rgba[ACOMP] = FX_rgb_scale_4[ *texel        & 0xF];
+   rgba[RCOMP] = FX_rgb_scale_4[(*texel >>  8) & 0xF];
+   rgba[GCOMP] = FX_rgb_scale_4[(*texel >>  4) & 0xF];
+   rgba[BCOMP] = FX_rgb_scale_4[ *texel        & 0xF];
+   rgba[ACOMP] = FX_rgb_scale_4[(*texel >> 12) & 0xF];
 }
 
 
@@ -858,10 +909,10 @@ fetch_r5g5b5a1(const struct gl_texture_image *texImage,
    j = j * mml->hScale;
 
    texel = ((GLushort *) texImage->Data) + j * mml->width + i;
-   rgba[RCOMP] = FX_rgb_scale_5[(*texel >> 11) & 0x1F];
-   rgba[GCOMP] = FX_rgb_scale_5[(*texel >>  6) & 0x1F];
-   rgba[BCOMP] = FX_rgb_scale_5[(*texel >>  1) & 0x1F];
-   rgba[ACOMP] = ((*texel) & 0x01) * 255;
+   rgba[RCOMP] = FX_rgb_scale_5[(*texel >> 10) & 0x1F];
+   rgba[GCOMP] = FX_rgb_scale_5[(*texel >>  5) & 0x1F];
+   rgba[BCOMP] = FX_rgb_scale_5[ *texel        & 0x1F];
+   rgba[ACOMP] = (*texel >> 15) * 255;
 }
 
 
@@ -1322,12 +1373,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 #if FX_COMPRESS_S3TC_AS_FXT1_HACK
    /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
-   /* [dBorca] we should update texture's attribute, then,
-    * because if the application asks us to decompress, we
-    * have to know the REAL format! Also, DXT3/5 might not
-    * be correct, since it would mess with "compressedSize".
-    * Ditto for GL_RGBA[4]_S3TC, which is always mapped to DXT3.
-    */
    if (texImage->IsCompressed) {
      switch (internalFormat) {
      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -1478,7 +1523,9 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                              NULL);
             mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
             mip = FX_MIPMAP_DATA(mipImage);
-            _mesa_halve2x2_teximage2d(texelBytes,
+            _mesa_halve2x2_teximage2d(ctx,
+                                      texImage,
+                                      texelBytes,
                                       mml->width, mml->height,
                                       texImage->Data, mipImage->Data);
             texImage = mipImage;
@@ -1602,7 +1649,9 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
          ++level;
          mipImage = _mesa_select_tex_image(ctx, texUnit, target, level);
          mip = FX_MIPMAP_DATA(mipImage);
-         _mesa_halve2x2_teximage2d(texelBytes,
+         _mesa_halve2x2_teximage2d(ctx,
+                                   texImage,
+                                   texelBytes,
                                    mml->width, mml->height,
                                    texImage->Data, mipImage->Data);
          texImage = mipImage;
