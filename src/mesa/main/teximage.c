@@ -1557,7 +1557,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* if no error, update proxy texture image parameters */
-         init_texture_image(ctx->Texture.Proxy1D->Image[level],
+         init_texture_image(ctx->Texture.Proxy2D->Image[level],
                             width, height, 1, border, internalFormat);
       }
    }
@@ -1667,7 +1667,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* if no error, update proxy texture image parameters */
-         init_texture_image(ctx->Texture.Proxy1D->Image[level],
+         init_texture_image(ctx->Texture.Proxy3D->Image[level],
                             width, height, depth, border, internalFormat);
       }
    }
