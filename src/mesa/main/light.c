@@ -495,26 +495,26 @@ _mesa_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
    /* Make a bitmask indicating what material attribute(s) we're updating */
    switch (pname) {
       case GL_EMISSION:
-         bitmask |= FRONT_EMISSION_BIT | BACK_EMISSION_BIT;
+         bitmask |= MAT_BIT_FRONT_EMISSION | MAT_BIT_BACK_EMISSION;
          break;
       case GL_AMBIENT:
-         bitmask |= FRONT_AMBIENT_BIT | BACK_AMBIENT_BIT;
+         bitmask |= MAT_BIT_FRONT_AMBIENT | MAT_BIT_BACK_AMBIENT;
          break;
       case GL_DIFFUSE:
-         bitmask |= FRONT_DIFFUSE_BIT | BACK_DIFFUSE_BIT;
+         bitmask |= MAT_BIT_FRONT_DIFFUSE | MAT_BIT_BACK_DIFFUSE;
          break;
       case GL_SPECULAR:
-         bitmask |= FRONT_SPECULAR_BIT | BACK_SPECULAR_BIT;
+         bitmask |= MAT_BIT_FRONT_SPECULAR | MAT_BIT_BACK_SPECULAR;
          break;
       case GL_SHININESS:
-         bitmask |= FRONT_SHININESS_BIT | BACK_SHININESS_BIT;
+         bitmask |= MAT_BIT_FRONT_SHININESS | MAT_BIT_BACK_SHININESS;
          break;
       case GL_AMBIENT_AND_DIFFUSE:
-         bitmask |= FRONT_AMBIENT_BIT | BACK_AMBIENT_BIT;
-         bitmask |= FRONT_DIFFUSE_BIT | BACK_DIFFUSE_BIT;
+         bitmask |= MAT_BIT_FRONT_AMBIENT | MAT_BIT_BACK_AMBIENT;
+         bitmask |= MAT_BIT_FRONT_DIFFUSE | MAT_BIT_BACK_DIFFUSE;
          break;
       case GL_COLOR_INDEXES:
-         bitmask |= FRONT_INDEXES_BIT  | BACK_INDEXES_BIT;
+         bitmask |= MAT_BIT_FRONT_INDEXES  | MAT_BIT_BACK_INDEXES;
          break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, where );
@@ -541,74 +541,28 @@ _mesa_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
 }
 
 
-/* Perform a straight copy between pairs of materials.
+
+/* Perform a straight copy between materials.
  */
-void _mesa_copy_material_pairs( struct gl_material dst[2],
-			     const struct gl_material src[2],
-			     GLuint bitmask )
+void _mesa_copy_materials( struct gl_material *dst,
+			   const struct gl_material *src,
+			   GLuint bitmask )
 {
-   if (bitmask & FRONT_EMISSION_BIT) {
-      COPY_4FV( dst[0].Emission, src[0].Emission );
-   }
-   if (bitmask & BACK_EMISSION_BIT) {
-      COPY_4FV( dst[1].Emission, src[1].Emission );
-   }
-   if (bitmask & FRONT_AMBIENT_BIT) {
-      COPY_4FV( dst[0].Ambient, src[0].Ambient );
-   }
-   if (bitmask & BACK_AMBIENT_BIT) {
-      COPY_4FV( dst[1].Ambient, src[1].Ambient );
-   }
-   if (bitmask & FRONT_DIFFUSE_BIT) {
-      COPY_4FV( dst[0].Diffuse, src[0].Diffuse );
-   }
-   if (bitmask & BACK_DIFFUSE_BIT) {
-      COPY_4FV( dst[1].Diffuse, src[1].Diffuse );
-   }
-   if (bitmask & FRONT_SPECULAR_BIT) {
-      COPY_4FV( dst[0].Specular, src[0].Specular );
-   }
-   if (bitmask & BACK_SPECULAR_BIT) {
-      COPY_4FV( dst[1].Specular, src[1].Specular );
-   }
-   if (bitmask & FRONT_SHININESS_BIT) {
-      dst[0].Shininess = src[0].Shininess;
-   }
-   if (bitmask & BACK_SHININESS_BIT) {
-      dst[1].Shininess = src[1].Shininess;
-   }
-   if (bitmask & FRONT_INDEXES_BIT) {
-      dst[0].AmbientIndex = src[0].AmbientIndex;
-      dst[0].DiffuseIndex = src[0].DiffuseIndex;
-      dst[0].SpecularIndex = src[0].SpecularIndex;
-   }
-   if (bitmask & BACK_INDEXES_BIT) {
-      dst[1].AmbientIndex = src[1].AmbientIndex;
-      dst[1].DiffuseIndex = src[1].DiffuseIndex;
-      dst[1].SpecularIndex = src[1].SpecularIndex;
-   }
+   int i;
+
+   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
+      if (bitmask & (1<<i))
+	 COPY_4FV( dst->Attrib[i], src->Attrib[i] );
 }
 
 
-/*
- * Check if the global material has to be updated with info that was
- * associated with a vertex via glMaterial.
- * This function is used when any material values get changed between
- * glBegin/glEnd either by calling glMaterial() or by calling glColor()
- * when GL_COLOR_MATERIAL is enabled.
- *
- * src[0] is front material, src[1] is back material
- *
- * Additionally keeps the precomputed lighting state uptodate.
+
+/* Update derived values following a change in ctx->Light.Material
  */
-void _mesa_update_material( GLcontext *ctx,
-			 const struct gl_material src[2],
-			 GLuint bitmask )
+void _mesa_update_material( GLcontext *ctx, GLuint bitmask )
 {
    struct gl_light *light, *list = &ctx->Light.EnabledList;
-
-   if (ctx->Light.ColorMaterialEnabled)
-      bitmask &= ~ctx->Light.ColorMaterialBitmask;
+   GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE) 
       _mesa_debug(ctx, "_mesa_update_material, mask 0x%x\n", bitmask);
@@ -616,115 +570,72 @@ void _mesa_update_material( GLcontext *ctx,
    if (!bitmask)
       return;
 
-   /* update material emission */
-   if (bitmask & FRONT_EMISSION_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Emission, src[0].Emission );
-   }
-   if (bitmask & BACK_EMISSION_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Emission, src[1].Emission );
-   }
-
    /* update material ambience */
-   if (bitmask & FRONT_AMBIENT_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Ambient, src[0].Ambient );
+   if (bitmask & MAT_BIT_FRONT_AMBIENT) {
       foreach (light, list) {
-         SCALE_3V( light->_MatAmbient[0], light->Ambient, src[0].Ambient);
+         SCALE_3V( light->_MatAmbient[0], light->Ambient, 
+		   mat[MAT_ATTRIB_FRONT_AMBIENT]);
       }
    }
-   if (bitmask & BACK_AMBIENT_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Ambient, src[1].Ambient );
+
+   if (bitmask & MAT_BIT_BACK_AMBIENT) {
       foreach (light, list) {
-         SCALE_3V( light->_MatAmbient[1], light->Ambient, src[1].Ambient);
+         SCALE_3V( light->_MatAmbient[1], light->Ambient, 
+		   mat[MAT_ATTRIB_BACK_AMBIENT]);
       }
    }
 
    /* update BaseColor = emission + scene's ambience * material's ambience */
-   if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient,
+   if (bitmask & (MAT_BIT_FRONT_EMISSION | MAT_BIT_FRONT_AMBIENT)) {
+      COPY_3V( ctx->Light._BaseColor[0], mat[MAT_ATTRIB_FRONT_EMISSION] );
+      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat[MAT_ATTRIB_FRONT_AMBIENT],
 		    ctx->Light.Model.Ambient );
    }
-   if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient,
+
+   if (bitmask & (MAT_BIT_BACK_EMISSION | MAT_BIT_BACK_AMBIENT)) {
+      COPY_3V( ctx->Light._BaseColor[1], mat[MAT_ATTRIB_BACK_EMISSION] );
+      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat[MAT_ATTRIB_BACK_AMBIENT],
 		    ctx->Light.Model.Ambient );
    }
 
    /* update material diffuse values */
-   if (bitmask & FRONT_DIFFUSE_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Diffuse, src[0].Diffuse );
+   if (bitmask & MAT_BIT_FRONT_DIFFUSE) {
       foreach (light, list) {
-	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
+	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, 
+		   mat[MAT_ATTRIB_FRONT_DIFFUSE] );
       }
    }
-   if (bitmask & BACK_DIFFUSE_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Diffuse, src[1].Diffuse );
+
+   if (bitmask & MAT_BIT_BACK_DIFFUSE) {
       foreach (light, list) {
-	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
+	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, 
+		   mat[MAT_ATTRIB_BACK_DIFFUSE] );
       }
    }
 
    /* update material specular values */
-   if (bitmask & FRONT_SPECULAR_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Specular, src[0].Specular );
+   if (bitmask & MAT_BIT_FRONT_SPECULAR) {
       foreach (light, list) {
-	 SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
-      }
-   }
-   if (bitmask & BACK_SPECULAR_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Specular, src[1].Specular );
-      foreach (light, list) {
-	 SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
+	 SCALE_3V( light->_MatSpecular[0], light->Specular, 
+		   mat[MAT_ATTRIB_FRONT_SPECULAR]);
       }
    }
 
-   if (bitmask & FRONT_SHININESS_BIT) {
-      ctx->Light.Material[0].Shininess = src[0].Shininess;
+   if (bitmask & MAT_BIT_BACK_SPECULAR) {
+      foreach (light, list) {
+	 SCALE_3V( light->_MatSpecular[1], light->Specular,
+		   mat[MAT_ATTRIB_BACK_SPECULAR]);
+      }
+   }
+
+   if (bitmask & MAT_BIT_FRONT_SHININESS) {
       _mesa_invalidate_shine_table( ctx, 0 );
    }
-   if (bitmask & BACK_SHININESS_BIT) {
-      ctx->Light.Material[1].Shininess = src[1].Shininess;
+
+   if (bitmask & MAT_BIT_BACK_SHININESS) {
       _mesa_invalidate_shine_table( ctx, 1 );
    }
-
-   if (bitmask & FRONT_INDEXES_BIT) {
-      ctx->Light.Material[0].AmbientIndex = src[0].AmbientIndex;
-      ctx->Light.Material[0].DiffuseIndex = src[0].DiffuseIndex;
-      ctx->Light.Material[0].SpecularIndex = src[0].SpecularIndex;
-   }
-   if (bitmask & BACK_INDEXES_BIT) {
-      ctx->Light.Material[1].AmbientIndex = src[1].AmbientIndex;
-      ctx->Light.Material[1].DiffuseIndex = src[1].DiffuseIndex;
-      ctx->Light.Material[1].SpecularIndex = src[1].SpecularIndex;
-   }
-
-   if (0) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      _mesa_debug(ctx, "update_mat  emission : %f %f %f\n",
-                  mat->Emission[0], mat->Emission[1], mat->Emission[2]);
-      _mesa_debug(ctx, "update_mat  specular : %f %f %f\n",
-                  mat->Specular[0], mat->Specular[1], mat->Specular[2]);
-      _mesa_debug(ctx, "update_mat  diffuse : %f %f %f\n",
-                  mat->Diffuse[0], mat->Diffuse[1], mat->Diffuse[2]);
-      _mesa_debug(ctx, "update_mat  ambient : %f %f %f\n",
-                  mat->Ambient[0], mat->Ambient[1], mat->Ambient[2]);
-   }
 }
-
-
-
-
-
 
 
 /*
@@ -735,98 +646,15 @@ void _mesa_update_material( GLcontext *ctx,
 void _mesa_update_color_material( GLcontext *ctx,
 				  const GLfloat color[4] )
 {
-   struct gl_light *light, *list = &ctx->Light.EnabledList;
    GLuint bitmask = ctx->Light.ColorMaterialBitmask;
+   struct gl_material *mat = &ctx->Light.Material;
+   int i;
 
-   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
-      _mesa_debug(ctx, "_mesa_update_color_material, mask 0x%x\n", bitmask);
+   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
+      if (bitmask & (1<<i))
+	 COPY_4FV( mat->Attrib[i], color );
 
-   /* update emissive colors */
-   if (bitmask & FRONT_EMISSION_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Emission, color );
-   }
-
-   if (bitmask & BACK_EMISSION_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Emission, color );
-   }
-
-   /* update light->_MatAmbient = light's ambient * material's ambient */
-   if (bitmask & FRONT_AMBIENT_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      foreach (light, list) {
-         SCALE_3V( light->_MatAmbient[0], light->Ambient, color);
-      }
-      COPY_4FV( mat->Ambient, color );
-   }
-
-   if (bitmask & BACK_AMBIENT_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      foreach (light, list) {
-         SCALE_3V( light->_MatAmbient[1], light->Ambient, color);
-      }
-      COPY_4FV( mat->Ambient, color );
-   }
-
-   /* update BaseColor = emission + scene's ambience * material's ambience */
-   if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
-   }
-
-   if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
-   }
-
-   /* update light->_MatDiffuse = light's diffuse * material's diffuse */
-   if (bitmask & FRONT_DIFFUSE_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Diffuse, color );
-      foreach (light, list) {
-	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
-      }
-   }
-
-   if (bitmask & BACK_DIFFUSE_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Diffuse, color );
-      foreach (light, list) {
-	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
-      }
-   }
-
-   /* update light->_MatSpecular = light's specular * material's specular */
-   if (bitmask & FRONT_SPECULAR_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      COPY_4FV( mat->Specular, color );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
-      }
-   }
-
-   if (bitmask & BACK_SPECULAR_BIT) {
-      struct gl_material *mat = &ctx->Light.Material[1];
-      COPY_4FV( mat->Specular, color );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
-      }
-   }
-
-   if (0) {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      _mesa_debug(ctx, "update_color_mat  emission : %f %f %f\n",
-                  mat->Emission[0], mat->Emission[1], mat->Emission[2]);
-      _mesa_debug(ctx, "update_color_mat  specular : %f %f %f\n",
-                  mat->Specular[0], mat->Specular[1], mat->Specular[2]);
-      _mesa_debug(ctx, "update_color_mat  diffuse : %f %f %f\n",
-                  mat->Diffuse[0], mat->Diffuse[1], mat->Diffuse[2]);
-      _mesa_debug(ctx, "update_color_mat  ambient : %f %f %f\n",
-                  mat->Ambient[0], mat->Ambient[1], mat->Ambient[2]);
-   }
+   _mesa_update_material( ctx, bitmask );
 }
 
 
@@ -837,10 +665,10 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint bitmask;
-   GLuint legal = (FRONT_EMISSION_BIT | BACK_EMISSION_BIT |
-		   FRONT_SPECULAR_BIT | BACK_SPECULAR_BIT |
-		   FRONT_DIFFUSE_BIT  | BACK_DIFFUSE_BIT  |
-		   FRONT_AMBIENT_BIT  | BACK_AMBIENT_BIT);
+   GLuint legal = (MAT_BIT_FRONT_EMISSION | MAT_BIT_BACK_EMISSION |
+		   MAT_BIT_FRONT_SPECULAR | MAT_BIT_BACK_SPECULAR |
+		   MAT_BIT_FRONT_DIFFUSE  | MAT_BIT_BACK_DIFFUSE  |
+		   MAT_BIT_FRONT_AMBIENT  | MAT_BIT_BACK_AMBIENT);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
@@ -878,6 +706,7 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint f;
+   GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
 
    if (face==GL_FRONT) {
@@ -890,26 +719,27 @@ _mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(face)" );
       return;
    }
+
    switch (pname) {
       case GL_AMBIENT:
-         COPY_4FV( params, ctx->Light.Material[f].Ambient );
+         COPY_4FV( params, mat[MAT_ATTRIB_AMBIENT(f)] );
          break;
       case GL_DIFFUSE:
-         COPY_4FV( params, ctx->Light.Material[f].Diffuse );
+         COPY_4FV( params, mat[MAT_ATTRIB_DIFFUSE(f)] );
 	 break;
       case GL_SPECULAR:
-         COPY_4FV( params, ctx->Light.Material[f].Specular );
+         COPY_4FV( params, mat[MAT_ATTRIB_SPECULAR(f)] );
 	 break;
       case GL_EMISSION:
-	 COPY_4FV( params, ctx->Light.Material[f].Emission );
+	 COPY_4FV( params, mat[MAT_ATTRIB_EMISSION(f)] );
 	 break;
       case GL_SHININESS:
-	 *params = ctx->Light.Material[f].Shininess;
+	 *params = mat[MAT_ATTRIB_SHININESS(f)][0];
 	 break;
       case GL_COLOR_INDEXES:
-	 params[0] = ctx->Light.Material[f].AmbientIndex;
-	 params[1] = ctx->Light.Material[f].DiffuseIndex;
-	 params[2] = ctx->Light.Material[f].SpecularIndex;
+	 params[0] = mat[MAT_ATTRIB_INDEXES(f)][0];
+	 params[1] = mat[MAT_ATTRIB_INDEXES(f)][1];
+	 params[2] = mat[MAT_ATTRIB_INDEXES(f)][2];
 	 break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(pname)" );
@@ -923,6 +753,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint f;
+   GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* update materials */
 
    if (face==GL_FRONT) {
@@ -937,36 +768,36 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
    }
    switch (pname) {
       case GL_AMBIENT:
-         params[0] = FLOAT_TO_INT( ctx->Light.Material[f].Ambient[0] );
-         params[1] = FLOAT_TO_INT( ctx->Light.Material[f].Ambient[1] );
-         params[2] = FLOAT_TO_INT( ctx->Light.Material[f].Ambient[2] );
-         params[3] = FLOAT_TO_INT( ctx->Light.Material[f].Ambient[3] );
+         params[0] = FLOAT_TO_INT( mat[MAT_ATTRIB_AMBIENT(f)][0] );
+         params[1] = FLOAT_TO_INT( mat[MAT_ATTRIB_AMBIENT(f)][1] );
+         params[2] = FLOAT_TO_INT( mat[MAT_ATTRIB_AMBIENT(f)][2] );
+         params[3] = FLOAT_TO_INT( mat[MAT_ATTRIB_AMBIENT(f)][3] );
          break;
       case GL_DIFFUSE:
-         params[0] = FLOAT_TO_INT( ctx->Light.Material[f].Diffuse[0] );
-         params[1] = FLOAT_TO_INT( ctx->Light.Material[f].Diffuse[1] );
-         params[2] = FLOAT_TO_INT( ctx->Light.Material[f].Diffuse[2] );
-         params[3] = FLOAT_TO_INT( ctx->Light.Material[f].Diffuse[3] );
+         params[0] = FLOAT_TO_INT( mat[MAT_ATTRIB_DIFFUSE(f)][0] );
+         params[1] = FLOAT_TO_INT( mat[MAT_ATTRIB_DIFFUSE(f)][1] );
+         params[2] = FLOAT_TO_INT( mat[MAT_ATTRIB_DIFFUSE(f)][2] );
+         params[3] = FLOAT_TO_INT( mat[MAT_ATTRIB_DIFFUSE(f)][3] );
 	 break;
       case GL_SPECULAR:
-         params[0] = FLOAT_TO_INT( ctx->Light.Material[f].Specular[0] );
-         params[1] = FLOAT_TO_INT( ctx->Light.Material[f].Specular[1] );
-         params[2] = FLOAT_TO_INT( ctx->Light.Material[f].Specular[2] );
-         params[3] = FLOAT_TO_INT( ctx->Light.Material[f].Specular[3] );
+         params[0] = FLOAT_TO_INT( mat[MAT_ATTRIB_SPECULAR(f)][0] );
+         params[1] = FLOAT_TO_INT( mat[MAT_ATTRIB_SPECULAR(f)][1] );
+         params[2] = FLOAT_TO_INT( mat[MAT_ATTRIB_SPECULAR(f)][2] );
+         params[3] = FLOAT_TO_INT( mat[MAT_ATTRIB_SPECULAR(f)][3] );
 	 break;
       case GL_EMISSION:
-         params[0] = FLOAT_TO_INT( ctx->Light.Material[f].Emission[0] );
-         params[1] = FLOAT_TO_INT( ctx->Light.Material[f].Emission[1] );
-         params[2] = FLOAT_TO_INT( ctx->Light.Material[f].Emission[2] );
-         params[3] = FLOAT_TO_INT( ctx->Light.Material[f].Emission[3] );
+         params[0] = FLOAT_TO_INT( mat[MAT_ATTRIB_EMISSION(f)][0] );
+         params[1] = FLOAT_TO_INT( mat[MAT_ATTRIB_EMISSION(f)][1] );
+         params[2] = FLOAT_TO_INT( mat[MAT_ATTRIB_EMISSION(f)][2] );
+         params[3] = FLOAT_TO_INT( mat[MAT_ATTRIB_EMISSION(f)][3] );
 	 break;
       case GL_SHININESS:
-         *params = IROUND( ctx->Light.Material[f].Shininess );
+         *params = IROUND( mat[MAT_ATTRIB_SHININESS(f)][0] );
 	 break;
       case GL_COLOR_INDEXES:
-	 params[0] = IROUND( ctx->Light.Material[f].AmbientIndex );
-	 params[1] = IROUND( ctx->Light.Material[f].DiffuseIndex );
-	 params[2] = IROUND( ctx->Light.Material[f].SpecularIndex );
+	 params[0] = IROUND( mat[MAT_ATTRIB_INDEXES(f)][0] );
+	 params[1] = IROUND( mat[MAT_ATTRIB_INDEXES(f)][1] );
+	 params[2] = IROUND( mat[MAT_ATTRIB_INDEXES(f)][2] );
 	 break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetMaterialfv(pname)" );
@@ -1120,11 +951,11 @@ _mesa_validate_all_lighting_tables( GLcontext *ctx )
    GLint i;
    GLfloat shininess;
    
-   shininess = ctx->Light.Material[0].Shininess;
+   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS][0];
    if (!ctx->_ShineTable[0] || ctx->_ShineTable[0]->shininess != shininess)
       validate_shine_table( ctx, 0, shininess );
 
-   shininess = ctx->Light.Material[1].Shininess;
+   shininess = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_SHININESS][0];
    if (!ctx->_ShineTable[1] || ctx->_ShineTable[1]->shininess != shininess)
       validate_shine_table( ctx, 1, shininess );
 
@@ -1180,26 +1011,22 @@ _mesa_update_lighting( GLcontext *ctx )
     * are flushed, they will update the derived state at that time.
     */
    if (ctx->Visual.rgbMode) {
-      GLuint sides = ctx->Light.Model.TwoSide ? 2 : 1;
-      GLuint side;
-      for (side=0; side < sides; side++) {
-	 struct gl_material *mat = &ctx->Light.Material[side];
-
-	 COPY_3V(ctx->Light._BaseColor[side], mat->Emission);
-	 ACC_SCALE_3V(ctx->Light._BaseColor[side],
-		      ctx->Light.Model.Ambient,
-		      mat->Ambient);
-      }
-
-      foreach (light, &ctx->Light.EnabledList) {
-	 for (side=0; side< sides; side++) {
-	    const struct gl_material *mat = &ctx->Light.Material[side];
-	    SCALE_3V( light->_MatDiffuse[side], light->Diffuse, mat->Diffuse );
-	    SCALE_3V( light->_MatAmbient[side], light->Ambient, mat->Ambient );
-	    SCALE_3V( light->_MatSpecular[side], light->Specular,
-		      mat->Specular);
-	 }
-      }
+      if (ctx->Light.Model.TwoSide)
+	 _mesa_update_material( ctx, 
+				MAT_BIT_FRONT_EMISSION |
+				MAT_BIT_FRONT_AMBIENT |
+				MAT_BIT_FRONT_DIFFUSE | 
+				MAT_BIT_FRONT_SPECULAR |
+				MAT_BIT_BACK_EMISSION |
+				MAT_BIT_BACK_AMBIENT |
+				MAT_BIT_BACK_DIFFUSE | 
+				MAT_BIT_BACK_SPECULAR);
+      else
+	 _mesa_update_material( ctx, 
+				MAT_BIT_FRONT_EMISSION |
+				MAT_BIT_FRONT_AMBIENT |
+				MAT_BIT_FRONT_DIFFUSE | 
+				MAT_BIT_FRONT_SPECULAR);
    }
    else {
       static const GLfloat ci[3] = { .30F, .59F, .11F };
@@ -1431,14 +1258,19 @@ init_lightmodel( struct gl_lightmodel *lm )
 static void
 init_material( struct gl_material *m )
 {
-   ASSIGN_4V( m->Ambient,  0.2F, 0.2F, 0.2F, 1.0F );
-   ASSIGN_4V( m->Diffuse,  0.8F, 0.8F, 0.8F, 1.0F );
-   ASSIGN_4V( m->Specular, 0.0F, 0.0F, 0.0F, 1.0F );
-   ASSIGN_4V( m->Emission, 0.0F, 0.0F, 0.0F, 1.0F );
-   m->Shininess = 0.0;
-   m->AmbientIndex = 0;
-   m->DiffuseIndex = 1;
-   m->SpecularIndex = 1;
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_AMBIENT],  0.2F, 0.2F, 0.2F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_DIFFUSE],  0.8F, 0.8F, 0.8F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_SPECULAR], 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_EMISSION], 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_SHININESS], 0.0F, 0.0F, 0.0F, 0.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_FRONT_INDEXES], 0.0F, 1.0F, 1.0F, 0.0F );
+ 
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_AMBIENT],  0.2F, 0.2F, 0.2F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_DIFFUSE],  0.8F, 0.8F, 0.8F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_SPECULAR], 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_EMISSION], 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_SHININESS], 0.0F, 0.0F, 0.0F, 0.0F );
+   ASSIGN_4V( m->Attrib[MAT_ATTRIB_BACK_INDEXES], 0.0F, 1.0F, 1.0F, 0.0F );
 }
 
 
@@ -1453,8 +1285,7 @@ void _mesa_init_lighting( GLcontext *ctx )
    make_empty_list( &ctx->Light.EnabledList );
 
    init_lightmodel( &ctx->Light.Model );
-   init_material( &ctx->Light.Material[0] );
-   init_material( &ctx->Light.Material[1] );
+   init_material( &ctx->Light.Material );
    ctx->Light.ShadeModel = GL_SMOOTH;
    ctx->Light.Enabled = GL_FALSE;
    ctx->Light.ColorMaterialFace = GL_FRONT_AND_BACK;

@@ -111,12 +111,11 @@ extern void _mesa_update_lighting( GLcontext *ctx );
 extern void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state );
 
 extern void _mesa_update_material( GLcontext *ctx,
-                                   const struct gl_material src[2],
                                    GLuint bitmask );
 
-extern void _mesa_copy_material_pairs( struct gl_material dst[2],
-                                       const struct gl_material src[2],
-                                       GLuint bitmask );
+extern void _mesa_copy_materials( struct gl_material *dst,
+				  const struct gl_material *src,
+				  GLuint bitmask );
 
 extern void _mesa_update_color_material( GLcontext *ctx,
                                          const GLfloat rgba[4] );

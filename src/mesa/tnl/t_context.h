@@ -223,7 +223,7 @@ struct immediate
 
    /* allocate storage for these on demand:
     */
-   struct gl_material (*Material)[2];
+   struct gl_material *Material;
    GLuint *MaterialMask;
    GLuint LastMaterial;
    GLuint MaterialOrMask;
@@ -302,7 +302,7 @@ typedef struct vertex_buffer
    struct gl_client_array *SecondaryColorPtr[2];/* VERT_BIT_COLOR1 */
    GLvector4f  *PointSizePtr;	                /* VERT_BIT_POINT_SIZE */
    GLvector4f  *FogCoordPtr;	                /* VERT_BIT_FOG */
-   struct gl_material (*Material)[2];         /* VERT_BIT_MATERIAL, optional */
+   struct gl_material *Material;              /* VERT_BIT_MATERIAL, optional */
    GLuint      *MaterialMask;	              /* VERT_BIT_MATERIAL, optional */
    GLuint      *Flag;		              /* VERT_BIT_* flags, optional */
    GLuint      *Primitive;	              /* GL_(mode)|PRIM_* flags */

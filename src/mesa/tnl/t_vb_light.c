@@ -94,6 +94,14 @@ static void import_color_material( GLcontext *ctx,
 }
 
 
+static void update_materials( GLcontext *ctx,
+			      const struct gl_material *src,
+			      GLuint bitmask )
+{
+   _mesa_copy_materials( &ctx->Light.Material, src, bitmask );
+   _mesa_update_material( ctx, bitmask );
+}
+
 /* Tables for all the shading functions.
  */
 static light_func _tnl_light_tab[MAX_LIGHT_FUNC];

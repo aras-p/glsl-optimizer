@@ -1256,6 +1256,7 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
    GLuint count = IM->Count;
    struct gl_material *mat;
    GLuint bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, "Materialfv");
+   int i, nr;
 
    if (bitmask == 0)
       return;
@@ -1273,15 +1274,15 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 
    if (!(IM->Flag[count] & VERT_BIT_MATERIAL)) {
       if (!IM->Material) {
-	 IM->Material = (struct gl_material (*)[2])
-            MALLOC( sizeof(struct gl_material) * IMM_SIZE * 2 );
+	 IM->Material = (struct gl_material *)
+            MALLOC( sizeof(struct gl_material) * IMM_SIZE );
 	 IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
 	 IM->MaterialMask[IM->LastMaterial] = 0;
       }
       else if (IM->MaterialOrMask & ~bitmask) {
-	 _mesa_copy_material_pairs( IM->Material[count],
-				    IM->Material[IM->LastMaterial],
-				    IM->MaterialOrMask & ~bitmask );
+	 _mesa_copy_materials( &IM->Material[count],
+			       &IM->Material[IM->LastMaterial],
+			       IM->MaterialOrMask & ~bitmask );
       }
 
       IM->Flag[count] |= VERT_BIT_MATERIAL;
@@ -1292,50 +1293,17 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 
    IM->MaterialOrMask |= bitmask;
    IM->MaterialMask[count] |= bitmask;
-   mat = IM->Material[count];
+   mat = &IM->Material[count];
 
-   if (bitmask & FRONT_AMBIENT_BIT) {
-      COPY_4FV( mat[0].Ambient, params );
+   switch (face) {
+   case GL_SHININESS: nr = 1; break;
+   case GL_COLOR_INDEXES: nr = 3; break;
+   default: nr = 4 ; break;
    }
-   if (bitmask & BACK_AMBIENT_BIT) {
-      COPY_4FV( mat[1].Ambient, params );
-   }
-   if (bitmask & FRONT_DIFFUSE_BIT) {
-      COPY_4FV( mat[0].Diffuse, params );
-   }
-   if (bitmask & BACK_DIFFUSE_BIT) {
-      COPY_4FV( mat[1].Diffuse, params );
-   }
-   if (bitmask & FRONT_SPECULAR_BIT) {
-      COPY_4FV( mat[0].Specular, params );
-   }
-   if (bitmask & BACK_SPECULAR_BIT) {
-      COPY_4FV( mat[1].Specular, params );
-   }
-   if (bitmask & FRONT_EMISSION_BIT) {
-      COPY_4FV( mat[0].Emission, params );
-   }
-   if (bitmask & BACK_EMISSION_BIT) {
-      COPY_4FV( mat[1].Emission, params );
-   }
-   if (bitmask & FRONT_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
-      mat[0].Shininess = shininess;
-   }
-   if (bitmask & BACK_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
-      mat[1].Shininess = shininess;
-   }
-   if (bitmask & FRONT_INDEXES_BIT) {
-      mat[0].AmbientIndex = params[0];
-      mat[0].DiffuseIndex = params[1];
-      mat[0].SpecularIndex = params[2];
-   }
-   if (bitmask & BACK_INDEXES_BIT) {
-      mat[1].AmbientIndex = params[0];
-      mat[1].DiffuseIndex = params[1];
-      mat[1].SpecularIndex = params[2];
-   }
+
+   for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
+      if (bitmask & (1<<i))
+	 COPY_SZ_4V( mat->Attrib[i], nr, params ); 
 
    if (tnl->IsolateMaterials && 
        !(IM->BeginState & VERT_BEGIN_1)) /* heuristic */

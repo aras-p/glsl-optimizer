@@ -292,9 +292,9 @@ _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 	    i++;
 
 	 vulnerable &= ~IM->MaterialMask[i];
-	 _mesa_copy_material_pairs( IM->Material[i],
-				    ctx->Light.Material,
-				    vulnerable );
+	 _mesa_copy_materials( &IM->Material[i],
+			       &ctx->Light.Material,
+			       vulnerable );
 
 
 	++i;
@@ -311,14 +311,14 @@ copy_material( struct immediate *next,
 /*     _mesa_debug(NULL, "%s\n", __FUNCTION__); */
 
    if (next->Material == 0) {
-      next->Material = (struct gl_material (*)[2])
-         MALLOC( sizeof(struct gl_material) * IMM_SIZE * 2 );
+      next->Material = (struct gl_material *)
+         MALLOC( sizeof(struct gl_material) * IMM_SIZE );
       next->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * IMM_SIZE );
    }
 
    next->MaterialMask[dst] = prev->MaterialOrMask;
-   MEMCPY(next->Material[dst], prev->Material[src],
-          2 * sizeof(struct gl_material));
+   MEMCPY(&next->Material[dst], &prev->Material[src],
+          sizeof(struct gl_material));
 }
 
 
@@ -590,9 +590,9 @@ _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    i++;
 
 	 vulnerable &= ~IM->MaterialMask[i];
-	 _mesa_copy_material_pairs( IM->Material[i],
-				    ctx->Light.Material,
-				    vulnerable );
+	 _mesa_copy_materials( &IM->Material[i],
+			       &ctx->Light.Material,
+			       vulnerable );
 
 
 	 ++i;

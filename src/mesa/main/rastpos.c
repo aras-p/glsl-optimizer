@@ -140,7 +140,8 @@ shade_rastpos(GLcontext *ctx,
       _mesa_validate_all_lighting_tables( ctx );
 
    COPY_3V(diffuseColor, base[0]);
-   diffuseColor[3] = CLAMP( ctx->Light.Material[0].Diffuse[3], 0.0F, 1.0F );
+   diffuseColor[3] = CLAMP( 
+      ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3], 0.0F, 1.0F );
    ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 0.0);
 
    foreach (light, &ctx->Light.EnabledList) {
@@ -223,9 +224,9 @@ shade_rastpos(GLcontext *ctx,
 	 n_dot_h = DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
-	    const struct gl_material *mat = &ctx->Light.Material[0];
+	    GLfloat (*mat)[4] = ctx->Light.Material.Attrib;
 	    GLfloat spec_coef;
-	    GLfloat shininess = mat->Shininess;
+	    GLfloat shininess = mat[MAT_ATTRIB_FRONT_SHININESS][0];
 
 	    if (!normalized) {
 	       n_dot_h *= n_dot_h;
@@ -264,16 +265,16 @@ shade_rastpos(GLcontext *ctx,
       Rspec[3] = CLAMP(specularColor[3], 0.0F, 1.0F);
    }
    else {
-      struct gl_material *mat = &ctx->Light.Material[0];
-      GLfloat d_a = mat->DiffuseIndex - mat->AmbientIndex;
-      GLfloat s_a = mat->SpecularIndex - mat->AmbientIndex;
-      GLfloat ind = mat->AmbientIndex
-                  + diffuse * (1.0F-specular) * d_a
-                  + specular * s_a;
-      if (ind > mat->SpecularIndex) {
-	 ind = mat->SpecularIndex;
+      GLfloat *ind = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_INDEXES];
+      GLfloat d_a = ind[MAT_INDEX_DIFFUSE] - ind[MAT_INDEX_AMBIENT];
+      GLfloat s_a = ind[MAT_INDEX_SPECULAR] - ind[MAT_INDEX_AMBIENT];
+      GLfloat i = (ind[MAT_INDEX_AMBIENT]
+		   + diffuse * (1.0F-specular) * d_a
+		   + specular * s_a);
+      if (i > ind[MAT_INDEX_SPECULAR]) {
+	 i = ind[MAT_INDEX_SPECULAR];
       }
-      *Rindex = (GLuint) (GLint) ind;
+      *Rindex = (GLuint) (GLint) i;
    }
 }
 

@@ -527,51 +527,43 @@ _tnl_dlist_init( GLcontext *ctx )
 static void
 emit_material( const struct gl_material *src, GLuint bitmask )
 {
-   if (bitmask & FRONT_EMISSION_BIT) 
-      glMaterialfv( GL_FRONT, GL_EMISSION, src[0].Emission );
+   const GLfloat (*attr)[4] = src->Attrib;
 
-   if (bitmask & BACK_EMISSION_BIT) 
-      glMaterialfv( GL_BACK, GL_EMISSION, src[1].Emission );
+   if (bitmask & MAT_BIT_FRONT_EMISSION) 
+      glMaterialfv( GL_FRONT, GL_EMISSION, attr[MAT_ATTRIB_FRONT_EMISSION] );
 
-   if (bitmask & FRONT_AMBIENT_BIT) 
-      glMaterialfv( GL_FRONT, GL_AMBIENT, src[0].Ambient );
+   if (bitmask & MAT_BIT_BACK_EMISSION) 
+      glMaterialfv( GL_BACK, GL_EMISSION, attr[MAT_ATTRIB_BACK_EMISSION] );
 
-   if (bitmask & BACK_AMBIENT_BIT) 
-      glMaterialfv( GL_BACK, GL_AMBIENT, src[1].Ambient );
+   if (bitmask & MAT_BIT_FRONT_AMBIENT) 
+      glMaterialfv( GL_FRONT, GL_AMBIENT, attr[MAT_ATTRIB_FRONT_AMBIENT] );
 
-   if (bitmask & FRONT_DIFFUSE_BIT) 
-      glMaterialfv( GL_FRONT, GL_DIFFUSE, src[0].Diffuse );
+   if (bitmask & MAT_BIT_BACK_AMBIENT) 
+      glMaterialfv( GL_BACK, GL_AMBIENT, attr[MAT_ATTRIB_BACK_AMBIENT] );
 
-   if (bitmask & BACK_DIFFUSE_BIT) 
-      glMaterialfv( GL_BACK, GL_DIFFUSE, src[1].Diffuse );
+   if (bitmask & MAT_BIT_FRONT_DIFFUSE) 
+      glMaterialfv( GL_FRONT, GL_DIFFUSE, attr[MAT_ATTRIB_FRONT_DIFFUSE] );
 
-   if (bitmask & FRONT_SPECULAR_BIT) 
-      glMaterialfv( GL_FRONT, GL_SPECULAR, src[0].Specular );
+   if (bitmask & MAT_BIT_BACK_DIFFUSE) 
+      glMaterialfv( GL_BACK, GL_DIFFUSE, attr[MAT_ATTRIB_BACK_DIFFUSE] );
 
-   if (bitmask & BACK_SPECULAR_BIT) 
-      glMaterialfv( GL_BACK, GL_SPECULAR, src[1].Specular );
+   if (bitmask & MAT_BIT_FRONT_SPECULAR) 
+      glMaterialfv( GL_FRONT, GL_SPECULAR, attr[MAT_ATTRIB_FRONT_SPECULAR] );
 
-   if (bitmask & FRONT_SHININESS_BIT) 
-      glMaterialfv( GL_FRONT, GL_SHININESS, &src[0].Shininess );
+   if (bitmask & MAT_BIT_BACK_SPECULAR) 
+      glMaterialfv( GL_BACK, GL_SPECULAR, attr[MAT_ATTRIB_BACK_SPECULAR] );
 
-   if (bitmask & BACK_SHININESS_BIT) 
-      glMaterialfv( GL_BACK, GL_SHININESS, &src[1].Shininess );
+   if (bitmask & MAT_BIT_FRONT_SHININESS) 
+      glMaterialfv( GL_FRONT, GL_SHININESS, attr[MAT_ATTRIB_FRONT_SHININESS] );
 
-   if (bitmask & FRONT_INDEXES_BIT) {
-      GLfloat ind[3];
-      ind[0] = src[0].AmbientIndex;
-      ind[1] = src[0].DiffuseIndex;
-      ind[2] = src[0].SpecularIndex;
-      glMaterialfv( GL_FRONT, GL_COLOR_INDEXES, ind );
-   }
+   if (bitmask & MAT_BIT_BACK_SHININESS) 
+      glMaterialfv( GL_BACK, GL_SHININESS, attr[MAT_ATTRIB_BACK_SHININESS] );
 
-   if (bitmask & BACK_INDEXES_BIT) {
-      GLfloat ind[3];
-      ind[0] = src[1].AmbientIndex;
-      ind[1] = src[1].DiffuseIndex;
-      ind[2] = src[1].SpecularIndex;
-      glMaterialfv( GL_BACK, GL_COLOR_INDEXES, ind );
-   }
+   if (bitmask & MAT_BIT_FRONT_INDEXES)
+      glMaterialfv( GL_FRONT, GL_COLOR_INDEXES, attr[MAT_ATTRIB_FRONT_INDEXES]);
+
+   if (bitmask & MAT_BIT_BACK_INDEXES) 
+      glMaterialfv( GL_BACK, GL_COLOR_INDEXES, attr[MAT_ATTRIB_BACK_INDEXES] );
 }
 
 
@@ -652,7 +644,7 @@ loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    glEdgeFlag( IM->EdgeFlag[i] );
 
 	 if (flags[i] & VERT_BIT_MATERIAL) 
-	    emit_material( IM->Material[i], IM->MaterialMask[i] );
+	    emit_material( &IM->Material[i], IM->MaterialMask[i] );
 
 	 if (flags[i]&VERT_BITS_OBJ_234) 
 	    vertex( IM->Attrib[VERT_ATTRIB_POS][i] );

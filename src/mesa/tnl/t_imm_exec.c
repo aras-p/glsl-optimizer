@@ -154,9 +154,11 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    }
 
    if (flag & VERT_BIT_MATERIAL) {
-      _mesa_update_material( ctx,
-			  IM->Material[IM->LastMaterial],
-			  IM->MaterialOrMask );
+      _mesa_copy_materials( &ctx->Light.Material,
+			    &IM->Material[IM->LastMaterial],
+			    IM->MaterialOrMask );
+
+      _mesa_update_material( ctx, IM->MaterialOrMask );
 
       TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
    }

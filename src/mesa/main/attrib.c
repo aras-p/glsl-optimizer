@@ -954,8 +954,8 @@ _mesa_PopAttrib(void)
                _mesa_LightModelf(GL_LIGHT_MODEL_COLOR_CONTROL,
                                  (GLfloat) light->Model.ColorControl);
                /* materials */
-               MEMCPY(ctx->Light.Material, light->Material,
-                      2 * sizeof(struct gl_material));
+               MEMCPY(&ctx->Light.Material, &light->Material,
+                      sizeof(struct gl_material));
                /* shade model */
                _mesa_ShadeModel(light->ShadeModel);
                /* color material */

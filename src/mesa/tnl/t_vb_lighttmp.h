@@ -113,7 +113,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
    const GLuint nr = VB->Count;
    const GLuint *flags = VB->Flag;
-   struct gl_material (*new_material)[2] = VB->Material;
+   struct gl_material *new_material = VB->Material;
    const GLuint *new_material_mask = VB->MaterialMask;
 
    (void) flags;
@@ -135,12 +135,12 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
    VB->ColorPtr[0] = &store->LitColor[0];
    VB->SecondaryColorPtr[0] = &store->LitSecondary[0];
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 
    if (IDX & LIGHT_TWOSIDE) {
       VB->ColorPtr[1] = &store->LitColor[1];
       VB->SecondaryColorPtr[1] = &store->LitSecondary[1];
-      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
    }
 
    /* Side-effects done, can we finish now?
@@ -159,13 +159,13 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
-	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
+	 update_materials( ctx, &new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) ) {
 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
-	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 	 if (IDX & LIGHT_TWOSIDE) 
-	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
       }
 
       COPY_3V(sum[0], base[0]);
@@ -325,7 +325,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLchan (*color[2])[4];
    const GLuint *flags = VB->Flag;
 
-   struct gl_material (*new_material)[2] = VB->Material;
+   struct gl_material *new_material = VB->Material;
    const GLuint *new_material_mask = VB->MaterialMask;
    const GLuint nr = VB->Count;
 
@@ -350,11 +350,11 @@ static void TAG(light_rgba)( GLcontext *ctx,
    }
 
    VB->ColorPtr[0] = &store->LitColor[0];
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 
    if (IDX & LIGHT_TWOSIDE) {
       VB->ColorPtr[1] = &store->LitColor[1];
-      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
    }
 
    if (stage->changed_inputs == 0)
@@ -371,13 +371,13 @@ static void TAG(light_rgba)( GLcontext *ctx,
 	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
-	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
+	 update_materials( ctx, &new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) ) {
 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
-	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 	 if (IDX & LIGHT_TWOSIDE)
-	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
       }
 
       COPY_3V(sum[0], base[0]);
@@ -535,7 +535,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    const GLuint *flags = VB->Flag;
    GLchan basechan[2][4];
    GLuint j = 0;
-   struct gl_material (*new_material)[2] = VB->Material;
+   struct gl_material *new_material = VB->Material;
    const GLuint *new_material_mask = VB->MaterialMask;
    GLfloat base[2][3];
    const GLuint nr = VB->Count;
@@ -572,7 +572,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       }
 
       if ( CHECK_MATERIAL(j) )
-	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
+	 update_materials( ctx, &new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
@@ -584,14 +584,14 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       ACC_3V(base[0], ctx->Light._BaseColor[0] );
       UNCLAMPED_FLOAT_TO_RGB_CHAN( basechan[0], base[0] );
       UNCLAMPED_FLOAT_TO_CHAN(basechan[0][3], 
-			      ctx->Light.Material[0].Diffuse[3]);
+			      ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 
       if (IDX & LIGHT_TWOSIDE) {
 	 COPY_3V(base[1], light->_MatAmbient[1]);
 	 ACC_3V(base[1], ctx->Light._BaseColor[1]);
 	 UNCLAMPED_FLOAT_TO_RGB_CHAN( basechan[1], base[1]);
 	 UNCLAMPED_FLOAT_TO_CHAN(basechan[1][3], 
-				 ctx->Light.Material[1].Diffuse[3]);
+				 ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
       }
 
       do {
@@ -663,7 +663,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].Ptr;
    const GLuint *flags = VB->Flag;
    GLuint j = 0;
-   struct gl_material (*new_material)[2] = VB->Material;
+   struct gl_material *new_material = VB->Material;
    GLuint *new_material_mask = VB->MaterialMask;
    const GLuint nr = VB->Count;
    const struct gl_light *light;
@@ -677,8 +677,8 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    (void) nr;
    (void) nstride;
 
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
 
    if (IDX & LIGHT_COLORMATERIAL) {
       if (VB->ColorPtr[0]->Type != GL_FLOAT || 
@@ -704,14 +704,14 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	    _mesa_update_color_material( ctx, CMcolor );
 
 	 if ( CHECK_MATERIAL(j) )
-	    _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
+	    update_materials( ctx, &new_material[j], new_material_mask[j] );
 
 	 if ( CHECK_VALIDATE(j) ) {
 	    TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
-	    UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3]);
 	    if (IDX & LIGHT_TWOSIDE)
 	       UNCLAMPED_FLOAT_TO_CHAN(sumA[1], 
-				       ctx->Light.Material[1].Diffuse[3]);
+				       ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3]);
 	 }
 
 
@@ -804,7 +804,7 @@ static void TAG(light_ci)( GLcontext *ctx,
    GLuint CMstride;
    const GLuint *flags = VB->Flag;
    GLuint *indexResult[2];
-   struct gl_material (*new_material)[2] = VB->Material;
+   struct gl_material *new_material = VB->Material;
    GLuint *new_material_mask = VB->MaterialMask;
    const GLuint nr = VB->Count;
 
@@ -849,7 +849,7 @@ static void TAG(light_ci)( GLcontext *ctx,
 	 _mesa_update_color_material( ctx, CMcolor );
 
       if ( CHECK_MATERIAL(j) )
-	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
+	 update_materials( ctx, &new_material[j], new_material_mask[j] );
 
       if ( CHECK_VALIDATE(j) )
 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
@@ -953,22 +953,20 @@ static void TAG(light_ci)( GLcontext *ctx,
 
       /* Now compute final color index */
       for (side = 0 ; side < NR_SIDES ; side++) {
-	 struct gl_material *mat = &ctx->Light.Material[side];
+	 const GLfloat *ind = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_INDEXES + side];
 	 GLfloat index;
 
 	 if (specular[side] > 1.0F) {
-	    index = mat->SpecularIndex;
+	    index = ind[MAT_INDEX_SPECULAR];
 	 }
 	 else {
-	    GLfloat d_a = mat->DiffuseIndex - mat->AmbientIndex;
-	    GLfloat s_a = mat->SpecularIndex - mat->AmbientIndex;
-
-	    index = mat->AmbientIndex
-	       + diffuse[side] * (1.0F-specular[side]) * d_a
-	       + specular[side] * s_a;
-
-	    if (index > mat->SpecularIndex) {
-	       index = mat->SpecularIndex;
+	    GLfloat d_a = ind[MAT_INDEX_DIFFUSE] - ind[MAT_INDEX_AMBIENT];
+	    GLfloat s_a = ind[MAT_INDEX_SPECULAR] - ind[MAT_INDEX_AMBIENT];
+	    GLfloat i = (ind[MAT_INDEX_AMBIENT]
+			 + diffuse[side] * (1.0F-specular[side]) * d_a
+			 + specular[side] * s_a);
+	    if (i > ind[MAT_INDEX_SPECULAR]) {
+	       i = ind[MAT_INDEX_SPECULAR];
 	    }
 	 }
 	 indexResult[side][j] = (GLuint) (GLint) index;
