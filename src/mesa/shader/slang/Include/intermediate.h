@@ -228,7 +228,7 @@ enum TOperator {
     EOpInclusiveOrAssign,
     EOpExclusiveOrAssign,
     EOpLeftShiftAssign,
-    EOpRightShiftAssign,
+    EOpRightShiftAssign
 };
 
 class TIntermTraverser;

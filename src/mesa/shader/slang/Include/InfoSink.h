@@ -54,7 +54,7 @@ enum TOutputStream {
     ENull = 0,
     EDebugger = 0x01,
     EStdOut = 0x02,
-    EString = 0x04,
+    EString = 0x04
 };
 //
 // Encapsulate info logs for all objects that have them.

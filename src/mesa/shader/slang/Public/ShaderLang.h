@@ -98,7 +98,7 @@ typedef enum {
 	EShLangFragment,
 	EShLangPack,
     EShLangUnpack,
-    EShLangCount,
+    EShLangCount
 } EShLanguage;
 
 /*
@@ -118,7 +118,7 @@ typedef enum {
     EShOptNoGeneration,
     EShOptNone,
     EShOptSimple,       /* Optimizations that can be done quickly */
-    EShOptFull,         /* Optimizations that will take more time */
+    EShOptFull          /* Optimizations that will take more time */
 } EShOptimizationLevel;
 
 /*

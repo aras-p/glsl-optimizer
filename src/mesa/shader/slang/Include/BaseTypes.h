@@ -50,7 +50,7 @@ enum TBasicType {
     EbtSampler1DShadow,
     EbtSampler2DShadow,
     EbtStruct,
-    EbtAddress,
+    EbtAddress
 };
 
 __inline bool IsSampler(TBasicType type)
@@ -97,7 +97,7 @@ enum TQualifier {
     EvqFragDepth,
 
     // end of list
-    EvqLast,
+    EvqLast
 };
 
 //
