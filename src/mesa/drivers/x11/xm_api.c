@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.32 2002/02/20 23:59:03 brianp Exp $ */
+/* $Id: xm_api.c,v 1.33 2002/03/01 04:28:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+/* $XFree86: xc/extras/Mesa/src/X/xm_api.c,v 1.2 2002/02/26 23:37:31 tsi Exp $ */
 
 /*
  * This file contains the implementations of all the XMesa* functions.
@@ -168,6 +168,8 @@ static short hpcr_rgbTbl[3][256] = {
  */
 static void error( const char *msg )
 {
+   (void)DitherValues;		/* Muffle compiler */
+
    if (getenv("MESA_DEBUG"))
       fprintf( stderr, "X/Mesa error: %s\n", msg );
 }

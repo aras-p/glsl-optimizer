@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.28 2002/02/15 19:15:33 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.29 2002/03/01 04:28:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+/* $XFree86: xc/extras/Mesa/src/X/xm_dd.c,v 1.2 2002/02/26 23:37:31 tsi Exp $ */
 
 #include "glxheader.h"
 #include "context.h"
@@ -74,6 +74,8 @@ get_buffer_size( GLcontext *ctx, GLuint *width, GLuint *height )
    winwidth = xmesa->xm_buffer->frontbuffer->width;
    winheight = xmesa->xm_buffer->frontbuffer->height;
 #endif
+
+   (void)kernel8;		/* Muffle compiler */
 
    *width = winwidth;
    *height = winheight;
