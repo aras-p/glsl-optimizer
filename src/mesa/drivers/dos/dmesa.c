@@ -812,7 +812,7 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
                                      (void *)c, direct);
 
     _mesa_enable_sw_extensions(c->gl_ctx);
-    _mesa_enable_1_3_extensions(c->gl_ctx);
+    _mesa_enable_1_4_extensions(c->gl_ctx);
 
     /* you probably have to do a bunch of other initializations here. */
     c->visual = visual;
