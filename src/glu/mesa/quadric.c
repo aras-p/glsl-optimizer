@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.3 1999/11/11 09:55:39 joukj Exp $ */
+/* $Id: quadric.c,v 1.4 1999/12/15 12:59:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: quadric.c,v $
+ * Revision 1.4  1999/12/15 12:59:52  brianp
+ * replaced 0 with 0.0 in sin, cos calls
+ *
  * Revision 1.3  1999/11/11 09:55:39  joukj
  *
  *  tess_macro.h included
@@ -392,8 +395,8 @@ void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
          for (i=0;i<=slices;i++) {
             GLfloat x, y;
             if (i == slices) {
-               x = sin(0);
-               y = cos(0);
+               x = sin(0.0);
+               y = cos(0.0);
             }
             else {
                x = sin(i * da);
