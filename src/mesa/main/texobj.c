@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.67 2003/04/01 16:41:55 brianp Exp $ */
+/* $Id: texobj.c,v 1.68 2003/04/01 18:10:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,7 +101,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->MaxAnisotropy = 1.0;
    obj->CompareFlag = GL_FALSE;                      /* SGIX_shadow */
    obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
-   obj->CompareMode = GL_LUMINANCE;    /* ARB_shadow */
+   obj->CompareMode = GL_NONE;         /* ARB_shadow */
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
