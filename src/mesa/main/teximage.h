@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.4 2000/01/31 23:10:16 brianp Exp $ */
+/* $Id: teximage.h,v 1.5 2000/03/23 16:23:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,10 @@
 
 
 /*** Internal functions ***/
+
+
+extern GLint
+_mesa_base_tex_format( GLint format );
 
 
 extern struct gl_texture_image *

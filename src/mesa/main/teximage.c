@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.24 2000/03/22 17:38:11 brianp Exp $ */
+/* $Id: teximage.c,v 1.25 2000/03/23 16:23:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,8 +85,8 @@ logbase2( int n )
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.
  * Return -1 if invalid enum.
  */
-static GLint
-decode_internal_format( GLint format )
+GLint
+_mesa_base_tex_format( GLint format )
 {
    switch (format) {
       case GL_ALPHA:
@@ -356,7 +356,7 @@ init_texture_image( struct gl_texture_image *img,
 {
    ASSERT(img);
    ASSERT(!img->Data);
-   img->Format = (GLenum) decode_internal_format(internalFormat);
+   img->Format = (GLenum) _mesa_base_tex_format(internalFormat);
    set_teximage_component_sizes( img );
    img->IntFormat = (GLenum) internalFormat;
    img->Border = border;
@@ -696,7 +696,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
-   iformat = decode_internal_format( internalFormat );
+   iformat = _mesa_base_tex_format( internalFormat );
    if (iformat < 0) {
       if (!isProxy) {
          char message[100];
@@ -895,7 +895,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   iformat = decode_internal_format( internalFormat );
+   iformat = _mesa_base_tex_format( internalFormat );
    if (iformat < 0) {
       char message[100];
       sprintf(message, "glCopyTexImage%dD(internalFormat)", dimensions);
