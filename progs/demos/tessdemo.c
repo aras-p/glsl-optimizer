@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: tessdemo.c,v 1.2 1999/09/19 20:09:00 tanner Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -11,8 +11,12 @@
 
 /*
  * $Log: tessdemo.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/09/19 20:09:00  tanner
+ *
+ * lots of autoconf updates
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.5  1999/03/28 18:24:37  brianp
  * minor clean-up
@@ -148,7 +152,7 @@ void set_screen_wh(GLsizei w, GLsizei h)
 
 void tesse(void)
 {
-	GLUtriangulatorObj *tobj;
+	GLUtesselator *tobj;
 	GLdouble data[3];
 	GLuint i,j,point_cnt;
 
