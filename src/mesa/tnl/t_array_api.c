@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.20 2001/11/22 09:23:36 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.21 2001/11/29 15:15:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,7 +158,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       }
    }
    else {
-      int bufsz = (ctx->Const.MaxArrayLockSize - 4) & ~3;
+      int bufsz = 256;		/* Use a small buffer for cache goodness */
       int j, nr;
       int minimum, modulo, skip;
 
