@@ -34,6 +34,7 @@
 #include "glheader.h"
 #include "context.h"
 #ifndef FX
+#include "bufferobj.h"
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
@@ -1143,7 +1144,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
                                      #ifdef MATROX
                                      " (MGA)"
                                      #endif
-                                     "\0port (c) Borca Daniel aug-2003";
+                                     "\0port (c) Borca Daniel oct-2003";
         default:
              return NULL;
  }
@@ -1267,7 +1268,17 @@ static void dmesa_init_pointers (GLcontext *ctx)
  tnl = TNL_CONTEXT(ctx);
  tnl->Driver.RunPipeline = _tnl_run_pipeline;
 
- dd->SetBuffer = set_buffer;
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
+   ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
+   ctx->Driver.BindBuffer = NULL;
+   ctx->Driver.BufferData = _mesa_buffer_data;
+   ctx->Driver.BufferSubData = _mesa_buffer_subdata;
+   ctx->Driver.MapBuffer = _mesa_buffer_map;
+   ctx->Driver.UnmapBuffer = NULL;
+#endif
+
+  dd->SetBuffer = set_buffer;
    
  /* Install swsetup for tnl->Driver.Render.*:
   */
