@@ -51,6 +51,13 @@ struct gl_pixelstore_attrib;
 
 /**
  * Device driver function table.
+ * Core Mesa uses these function pointers to call into device drivers.
+ * Most of these functions directly correspond to OpenGL state commands.
+ * Core Mesa will call these functions after error checking has been done
+ * so that the drivers don't have to worry about error testing.
+ *
+ * Vertex transformation/clipping/lighting is patched into the T&L module.
+ * Rasterization functions are patched into the swrast module.
  */
 struct dd_function_table {
    /**
@@ -713,6 +720,39 @@ struct dd_function_table {
    
 
    /**
+    * \name Vertex buffer object functions
+    */
+#if FEATURE_ARB_vertex_buffer_object
+   /*@{*/
+   void (*BindBuffer)( GLcontext *ctx, GLenum target,
+		       struct gl_buffer_object *obj );
+
+   struct gl_buffer_object * (*NewBufferObject)( GLcontext *ctx, GLuint buffer,
+						 GLenum target );
+   
+   void (*DeleteBuffer)( GLcontext *ctx, struct gl_buffer_object *obj );
+
+   void (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+		       const GLvoid *data, GLenum usage,
+		       struct gl_buffer_object *obj );
+
+   void (*BufferSubData)( GLcontext *ctx, GLenum target, GLintptrARB offset,
+			  GLsizeiptrARB size, const GLvoid *data,
+			  struct gl_buffer_object *obj );
+
+   void (*GetBufferSubData)( GLcontext *ctx, GLenum target,
+			     GLintptrARB offset, GLsizeiptrARB size,
+			     GLvoid *data, struct gl_buffer_object *obj );
+
+   void * (*MapBuffer)( GLcontext *ctx, GLenum target, GLenum access,
+			struct gl_buffer_object *obj );
+
+   GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
+			     struct gl_buffer_object *obj );
+   /*@}*/
+#endif
+
+   /**
     * \name Support for multiple T&L engines
     */
    /*@{*/
@@ -830,38 +870,6 @@ struct dd_function_table {
    void (*UnlockArraysEXT)( GLcontext *ctx );
    /*@}*/
 
-
-   /**
-    * \name Vertex buffer object functions
-    */
-   /*@{*/
-
-   void (*BindBuffer)( GLcontext *ctx, GLenum target,
-		       struct gl_buffer_object *obj );
-
-   struct gl_buffer_object * (*NewBufferObject)( GLcontext *ctx, int buffer,
-						 GLenum target );
-   
-   void (*DeleteBuffer)( GLcontext *ctx, struct gl_buffer_object *obj );
-
-   void (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
-		       const GLvoid *data, GLenum usage,
-		       struct gl_buffer_object *obj );
-
-   void (*BufferSubData)( GLcontext *ctx, GLenum target, GLintptrARB offset,
-			  GLsizeiptrARB size, const GLvoid *data,
-			  struct gl_buffer_object *obj );
-
-   void (*GetBufferSubData)( GLcontext *ctx, GLenum target,
-			     GLintptrARB offset, GLsizeiptrARB size,
-			     GLvoid *data, struct gl_buffer_object *obj );
-
-   void * (*MapBuffer)( GLcontext *ctx, GLenum target, GLenum access,
-			struct gl_buffer_object *obj );
-
-   GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
-			     struct gl_buffer_object *obj );
-   /*@}*/
 };
 
 
