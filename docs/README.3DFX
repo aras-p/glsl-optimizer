@@ -74,7 +74,7 @@ Environment variables:
 ----------------------
 
 The following environment variables affect MesaFX. Those that affect Glide
-only, are beyond the scope of this file. Entries that don't have a "Value"
+only, are beyond the scope of this section. Entries that don't have a "Value"
 field, can have any value whatsoever
 	ex: set MESA_FX_IGNORE_CMBEXT=y
 
@@ -89,7 +89,7 @@ default values. Use them only when you experience crashes or strange behavior.
 
 FX_GLIDE_NUM_TMU
 	OS: all
-	HW: 2 TMU cards (Voodoo2, Avenger, Napalm)
+	HW: dual-TMU cards (some Voodoo1, Voodoo2, Avenger, Napalm)
 	Desc: force single-TMU
 	Note: (*)
 	Value: "1"
@@ -137,6 +137,11 @@ MESA_FX_INFO
 	HW: all
 	Desc: verbose to stderr
 	Value: any; special value "r" to redirect stderr to MESA.LOG
+MESA_FX_POINTCAST
+	OS: all
+	HW: dual-TMU cards (some Voodoo1, Voodoo2, Avenger, Napalm)
+	Desc: try to use pointcast palette
+	Note: may give adverse effects on UMA cards (Avenger, Napalm)
 MESA_FX_IGNORE_PALEXT
 	OS: all
 	HW: all
@@ -153,8 +158,9 @@ MESA_FX_IGNORE_CMBEXT
 	OS: all
 	HW: Napalm
 	Desc: disable Napalm combiners (color/alpha/texture)
-	Note: this means advanced (multi)texturing modes won't
-	      work, but disabling this turns on REAL trilinear
+	Note: this option allows dual-TMU cards perform single-pass
+	      trilinear, but some advanced (multi)texturing modes
+	      won't work (GL_EXT_texture_env_combine)
 MESA_FX_IGNORE_MIREXT
 	OS: all
 	HW: all

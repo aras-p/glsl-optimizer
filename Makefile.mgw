@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# MinGW makefile v1.0 for Mesa
+# MinGW makefile v1.1 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -40,15 +40,7 @@
 #			As a consequence, you'll need the Win32 Glide3
 #			library to build any application.
 #			default = no
-#	HAVE_X86=1	optimize for i386.
-#			default = no
-#	HAVE_MMX=1	allow MMX specializations, provided your assembler
-#			supports MMX instruction set. However, the true CPU
-#			capabilities are checked at run-time to avoid crashes.
-#			default = no
-#	HAVE_SSE=1	(see HAVE_MMX)
-#			default = no
-#	HAVE_3DNOW=1	(see HAVE_MMX)
+#	X86=1		optimize for x86 (if possible, use MMX, SSE, 3DNow).
 #			default = no
 #
 #    Targets:

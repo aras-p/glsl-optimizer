@@ -377,6 +377,6 @@ struct tdfx_glide {
    void (FX_CALL *txPalToNcc) (GuNccTable *ncc_table, const FxU32 *pal);
 };
 
-void tdfx_hook_glide (struct tdfx_glide *Glide);
+void tdfx_hook_glide (struct tdfx_glide *Glide, int pointcast);
 
 #endif

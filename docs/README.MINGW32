@@ -1,3 +1,31 @@
+			     Mesa 6.1 for MinGW32
+			     ~~~~~~~~~~~~~~~~~~~~
+
+
+
+Quick & dirty start:
+--------------------
+
+	mingw32-make -f Makefile.mgw [OPTIONS...]
+
+   Look into the corresponding makefiles for further information.
+   Check README.3DFX to find out how to compile Mesa Glide3 driver
+   with MinGW32!
+
+
+
+Contact:
+--------
+
+Daniel Borca <dborca@users.sourceforge.net>
+
+
+
+WARNING! The info below this line is outdated (yet some of it useful). WARNING!
+*******************************************************************************
+
+
+
 August 30, 1998 -- Paul Garceau
 Updated January 13, 2000 -- Paul Garceau (pgarceau@teleport.com)
 

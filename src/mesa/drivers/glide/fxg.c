@@ -2240,8 +2240,12 @@ void FX_CALL fake_grTexNCCTableExt (GrChipID_t   tmu,
 /****************************************************************************\
 * interface                                                                  *
 \****************************************************************************/
-void tdfx_hook_glide (struct tdfx_glide *Glide)
+void tdfx_hook_glide (struct tdfx_glide *Glide, int pointcast)
 {
+/* GET_EXT_ADDR: get function pointer
+ * GET_EXT_FAKE: get function pointer if possible, else use a fake function
+ * GET_EXT_NULL: get function pointer if possible, else leave NULL pointer
+ */
 #if FX_TRAP_GLIDE
 #define GET_EXT_ADDR(name) *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (real_##name == NULL) real_##name = fake_##name
@@ -2263,9 +2267,15 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  GET_EXT_ADDR(grTexChromaModeExt);
  GET_EXT_ADDR(grTexChromaRangeExt);
  /* pointcast */
- GET_EXT_FAKE(grTexDownloadTableExt);
- GET_EXT_FAKE(grTexDownloadTablePartialExt);
- GET_EXT_FAKE(grTexNCCTableExt);
+ if (pointcast) {
+    GET_EXT_FAKE(grTexDownloadTableExt);
+    GET_EXT_FAKE(grTexDownloadTablePartialExt);
+    GET_EXT_FAKE(grTexNCCTableExt);
+ } else {
+    Glide->grTexDownloadTableExt = fake_grTexDownloadTableExt;
+    Glide->grTexDownloadTablePartialExt = fake_grTexDownloadTablePartialExt;
+    Glide->grTexNCCTableExt = fake_grTexNCCTableExt;
+ }
  /* tbext */
  GET_EXT_ADDR(grTextureBufferExt);
  GET_EXT_ADDR(grTextureAuxBufferExt);

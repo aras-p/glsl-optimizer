@@ -240,7 +240,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
 
    }
 
-   tdfx_hook_glide(&config->Glide);
+   tdfx_hook_glide(&config->Glide, getenv("MESA_FX_POINTCAST") != NULL);
 
    END_BOARD_LOCK();
    return 1;
