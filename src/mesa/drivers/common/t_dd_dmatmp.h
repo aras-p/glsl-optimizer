@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.6 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.7 2001/03/18 00:46:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -235,7 +235,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
 
-      if (flags & PRIM_END)
+      if (start < count - 1 && (flags & PRIM_END))
 	 EMIT_VERTS( ctx, start, 1 );
 
    } else {
