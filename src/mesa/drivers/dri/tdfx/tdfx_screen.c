@@ -67,7 +67,7 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
 
    /* Allocate the private area */
-   fxScreen = (tdfxScreenPrivate *) Xmalloc( sizeof(tdfxScreenPrivate) );
+   fxScreen = (tdfxScreenPrivate *) CALLOC( sizeof(tdfxScreenPrivate) );
    if ( !fxScreen )
       return GL_FALSE;
 
@@ -108,7 +108,7 @@ tdfxDestroyScreen( __DRIscreenPrivate *sPriv )
    if ( fxScreen ) {
       drmUnmap( fxScreen->regs.map, fxScreen->regs.size );
 
-      Xfree( fxScreen );
+      FREE( fxScreen );
       sPriv->private = NULL;
    }
 }
@@ -322,6 +322,7 @@ static const struct __DriverAPIRec tdfxAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
+#ifndef _SOLO
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -329,3 +330,12 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &tdfxAPI);
    return (void *) psp;
 }
+#else
+void *__driCreateScreen(struct DRIDriverRec *driver,
+                        struct DRIDriverContextRec *driverContext)
+{
+   __DRIscreenPrivate *psp;
+   psp = __driUtilCreateScreen(driver, driverContext, &tdfxAPI);
+   return (void *) psp;
+}
+#endif
