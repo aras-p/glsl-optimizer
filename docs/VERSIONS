@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.58 2001/06/08 15:47:48 brianp Exp $
+$Id: VERSIONS,v 1.59 2001/06/12 14:32:15 brianp Exp $
 
 
 Mesa Version History
@@ -863,5 +863,7 @@ Mesa Version History
 	- now appling antialiasing coverage to alpha after texturing
 	- colors weren't getting clamped to [0,1] before color table lookup
 	- fixed RISC alignment errors caused by COPY_4UBV macro
+	- drawing wide, flat-shaded lines could cause a segfault
+	- tri vertices now snapped to 1/16 pixel to fix rendering of tiny triangles
     Changes:
 	- SGI's Sample Implementation (SI) 1.3 GLU library replaces Mesa GLU
