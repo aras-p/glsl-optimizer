@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_lines.c,v 1.3 2000/11/05 23:18:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "vb.h"
-
+#include "s_aaline.h"
 #include "s_pb.h"
 #include "s_context.h"
 #include "s_depth.h"
@@ -51,22 +51,6 @@
  *   4. general:  any other kind of line (slowest)
  */
 
-
-/*
- * All line drawing functions have the same arguments:
- * v1, v2 - indexes of first and second endpoints into vertex buffer arrays
- */
-
-
-
-
-
-
-#if MAX_WIDTH > MAX_HEIGHT
-#  define MAXPOINTS MAX_WIDTH
-#else
-#  define MAXPOINTS MAX_HEIGHT
-#endif
 
 
 /* Flat, color index line */
@@ -264,10 +248,10 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 
-#define PLOT(X,Y)			\
-	pbx[count] = X;			\
-	pby[count] = Y;			\
-	pbz[count] = Z;			\
+#define PLOT(X,Y)				\
+	pbx[count] = X;				\
+	pby[count] = Y;				\
+	pbz[count] = Z;				\
 	pbfog[count] = fog0;			\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
@@ -282,12 +266,12 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 }
 
 
-#define CHECK_FULL(count)			\
-	if (count >= PB_SIZE-MAX_WIDTH) {	\
-	   PB->count = count;		\
-	   gl_flush_pb(ctx);			\
-	   count = PB->count;		\
-	}
+#define CHECK_FULL(count)		\
+   if (count >= PB_SIZE-MAX_WIDTH) {	\
+      PB->count = count;		\
+      gl_flush_pb(ctx);			\
+      count = PB->count;		\
+   }
 
 
 
@@ -317,7 +301,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
-	pbfog[count] = fog0;			\
+	pbfog[count] = fog0;	\
 	pbi[count] = I;		\
 	count++;		\
 	CHECK_FULL(count);
@@ -330,21 +314,21 @@ static void general_smooth_ci_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_INDEX 1
-#define XMAJOR_PLOT(X,Y)			\
-	pbx[count] = X;  pbx[count+1] = X;	\
-	pby[count] = Y;  pby[count+1] = Y+1;	\
-	pbz[count] = Z;  pbz[count+1] = Z;	\
+#define XMAJOR_PLOT(X,Y)				\
+	pbx[count] = X;  pbx[count+1] = X;		\
+	pby[count] = Y;  pby[count+1] = Y+1;		\
+	pbz[count] = Z;  pbz[count+1] = Z;		\
 	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
-	pbi[count] = I;  pbi[count+1] = I;	\
-	count += 2;				\
+	pbi[count] = I;  pbi[count+1] = I;		\
+	count += 2;					\
 	CHECK_FULL(count);
-#define YMAJOR_PLOT(X,Y)			\
-	pbx[count] = X;  pbx[count+1] = X+1;	\
-	pby[count] = Y;  pby[count+1] = Y;	\
-	pbz[count] = Z;  pbz[count+1] = Z;	\
+#define YMAJOR_PLOT(X,Y)				\
+	pbx[count] = X;  pbx[count+1] = X+1;		\
+	pby[count] = Y;  pby[count+1] = Y;		\
+	pbz[count] = Z;  pbz[count+1] = Z;		\
 	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
-	pbi[count] = I;  pbi[count+1] = I;	\
-	count += 2;				\
+	pbi[count] = I;  pbi[count+1] = I;		\
+	count += 2;					\
 	CHECK_FULL(count);
 #include "s_linetemp.h"
       }
@@ -395,7 +379,7 @@ static void general_flat_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
-	pbfog[count] = fog0;		\
+	pbfog[count] = fog0;	\
 	count++;		\
 	CHECK_FULL(count);
 #include "s_linetemp.h"
@@ -406,19 +390,19 @@ static void general_flat_ci_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define XMAJOR_PLOT(X,Y)			\
-	pbx[count] = X;  pbx[count+1] = X;	\
-	pby[count] = Y;  pby[count+1] = Y+1;	\
-	pbz[count] = Z;  pbz[count+1] = Z;	\
+#define XMAJOR_PLOT(X,Y)				\
+	pbx[count] = X;  pbx[count+1] = X;		\
+	pby[count] = Y;  pby[count+1] = Y+1;		\
+	pbz[count] = Z;  pbz[count+1] = Z;		\
 	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
-	count += 2;				\
+	count += 2;					\
 	CHECK_FULL(count);
-#define YMAJOR_PLOT(X,Y)			\
-	pbx[count] = X;  pbx[count+1] = X+1;	\
-	pby[count] = Y;  pby[count+1] = Y;	\
-	pbz[count] = Z;  pbz[count+1] = Z;	\
+#define YMAJOR_PLOT(X,Y)				\
+	pbx[count] = X;  pbx[count+1] = X+1;		\
+	pby[count] = Y;  pby[count+1] = Y;		\
+	pbz[count] = Z;  pbz[count+1] = Z;		\
 	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
-	count += 2;				\
+	count += 2;					\
 	CHECK_FULL(count);
 #include "s_linetemp.h"
       }
@@ -431,7 +415,7 @@ static void general_flat_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
-	pbfog[count] = fog0;		\
+	pbfog[count] = fog0;	\
 	count++;		\
 	CHECK_FULL(count);
 #include "s_linetemp.h"
@@ -470,7 +454,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;				\
 	pby[count] = Y;				\
 	pbz[count] = Z;				\
-	pbfog[count] = fog0;		\
+	pbfog[count] = fog0;			\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -530,7 +514,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;				\
 	pby[count] = Y;				\
 	pbz[count] = Z;				\
-	pbfog[count] = fog0;  	\
+	pbfog[count] = fog0;  			\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -687,7 +671,7 @@ static void smooth_textured_line( GLcontext *ctx,
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;				\
 	   pbs[count] = fragTexcoord[0];		\
 	   pbt[count] = fragTexcoord[1];		\
 	   pbu[count] = fragTexcoord[2];		\
@@ -713,7 +697,7 @@ static void smooth_textured_line( GLcontext *ctx,
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;				\
 	   pbs[count] = fragTexcoord[0];		\
 	   pbt[count] = fragTexcoord[1];		\
 	   pbu[count] = fragTexcoord[2];		\
@@ -766,7 +750,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;					\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -775,7 +759,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbspec[count][GCOMP] = FixedToInt(sg0);		\
 	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-	      if (ctx->Texture.Unit[u]._ReallyEnabled) {		\
+	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
 	         PB->s[u][0] = fragTexcoord[u][0];		\
 	         PB->s[u][1] = fragTexcoord[u][1];		\
 	         PB->s[u][2] = fragTexcoord[u][2];		\
@@ -802,7 +786,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;					\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -811,7 +795,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbspec[count][GCOMP] = FixedToInt(sg0);		\
 	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-	      if (ctx->Texture.Unit[u]._ReallyEnabled) {		\
+	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
 	         PB->s[u][0] = fragTexcoord[u][0];		\
 	         PB->s[u][1] = fragTexcoord[u][1];		\
 	         PB->s[u][2] = fragTexcoord[u][2];		\
@@ -865,7 +849,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;					\
 	   pbrgba[count][RCOMP] = color[0];			\
 	   pbrgba[count][GCOMP] = color[1];			\
 	   pbrgba[count][BCOMP] = color[2];			\
@@ -874,7 +858,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbspec[count][GCOMP] = sGreen;			\
 	   pbspec[count][BCOMP] = sBlue;			\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-	      if (ctx->Texture.Unit[u]._ReallyEnabled) {		\
+	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
 	         PB->s[u][0] = fragTexcoord[u][0];		\
 	         PB->s[u][1] = fragTexcoord[u][1];		\
 	         PB->s[u][2] = fragTexcoord[u][2];		\
@@ -899,7 +883,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
- 	   pbfog[count] = fog0;		\
+ 	   pbfog[count] = fog0;					\
 	   pbrgba[count][RCOMP] = color[0];			\
 	   pbrgba[count][GCOMP] = color[1];			\
 	   pbrgba[count][BCOMP] = color[2];			\
@@ -908,7 +892,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbspec[count][GCOMP] = sGreen;			\
 	   pbspec[count][BCOMP] = sBlue;			\
 	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-	      if (ctx->Texture.Unit[u]._ReallyEnabled) {		\
+	      if (ctx->Texture.Unit[u]._ReallyEnabled) {	\
 	         PB->s[u][0] = fragTexcoord[u][0];		\
 	         PB->s[u][1] = fragTexcoord[u][1];		\
 	         PB->s[u][2] = fragTexcoord[u][2];		\
@@ -923,91 +907,6 @@ static void flat_multitextured_line( GLcontext *ctx,
 
    PB->count = count;
    gl_flush_pb(ctx);
-}
-
-
-
-
-/*
- * Antialiased RGBA line
- *
- * This AA line function isn't terribly efficient but it's pretty
- * straight-forward to understand.  Also, it doesn't exactly conform
- * to the specification.
- */
-static void aa_rgba_line( GLcontext *ctx,
-                          SWvertex *vert0,
-			  SWvertex *vert1 )
-{
-#define INTERP_RGBA 1
-#define PLOT(x, y)						\
-   {								\
-      PB_WRITE_RGBA_PIXEL( pb, (x), (y), z, fog0,		\
-			   red, green, blue, coverage );	\
-   }
-#include "s_lnaatemp.h"
-}
-
-/*
- * Antialiased Textured RGBA line
- *
- * This AA line function isn't terribly efficient but it's pretty
- * straight-forward to understand.  Also, it doesn't exactly conform
- * to the specification.
- */
-static void aa_tex_rgba_line( GLcontext *ctx,
-                              SWvertex *vert0,
-			      SWvertex *vert1 )
-{
-#define INTERP_RGBA 1
-#define INTERP_TEX 1
-#define PLOT(x, y)							\
-   {									\
-      PB_WRITE_TEX_PIXEL( pb, (x), (y), z, fog0,                        \
-			  red, green, blue, coverage,	                \
-                 fragTexcoord[0], fragTexcoord[1], fragTexcoord[2] );	\
-   }
-#include "s_lnaatemp.h"
-}
-
-
-/*
- * Antialiased Multitextured RGBA line
- *
- * This AA line function isn't terribly efficient but it's pretty
- * straight-forward to understand.  Also, it doesn't exactly conform
- * to the specification.
- */
-static void aa_multitex_rgba_line( GLcontext *ctx,
-                                   SWvertex *vert0,
-				   SWvertex *vert1 )
-{
-#define INTERP_RGBA 1
-#define INTERP_SPEC 1
-#define INTERP_MULTITEX 1
-#define PLOT(x, y)							\
-   {									\
-      PB_WRITE_MULTITEX_SPEC_PIXEL( pb, (x), (y), z, fog0,		\
-            red, green, blue, coverage, specRed, specGreen, specBlue,	\
-            fragTexcoord );						\
-   }
-#include "s_lnaatemp.h"
-}
-
-
-/*
- * Antialiased CI line.  Same comments for RGBA antialiased lines apply.
- */
-static void aa_ci_line( GLcontext *ctx,
-                        SWvertex *vert0,
-			SWvertex *vert1 )
-{
-#define INTERP_INDEX 1
-#define PLOT(x, y)						\
-   {								\
-      PB_WRITE_CI_PIXEL( pb, (x), (y), z, fog0, index + coverage );	\
-   }
-#include "s_lnaatemp.h"
 }
 
 
@@ -1051,14 +950,6 @@ _mesa_print_line_function(GLcontext *ctx)
       printf("smooth_multitextured_line\n");
    else if (swrast->Line == flat_multitextured_line)
       printf("flat_multitextured_line\n");
-   else if (swrast->Line == aa_rgba_line)
-      printf("aa_rgba_line\n");
-   else if (swrast->Line == aa_tex_rgba_line)
-      printf("aa_tex_rgba_line\n");
-   else if (swrast->Line == aa_multitex_rgba_line)
-      printf("aa_multitex_rgba_line\n");
-   else if (swrast->Line == aa_ci_line)
-      printf("aa_ci_line\n");
    else
       printf("Driver func %p\n", swrast->Line);
 }
@@ -1077,29 +968,13 @@ void
 _swrast_choose_line( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   GLboolean rgbmode = ctx->Visual.RGBAflag;
-   /* TODO: antialiased lines */
+   const GLboolean rgbmode = ctx->Visual.RGBAflag;
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Line.SmoothFlag) {
          /* antialiased lines */
-         if (rgbmode) {
-            if (ctx->Texture._ReallyEnabled) {
-               if (ctx->Texture._MultiTextureEnabled
-                  || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR
-		  || ctx->Fog.ColorSumEnabled)
-                  /* Multitextured! */
-                  swrast->Line = aa_multitex_rgba_line;
-               else
-                  swrast->Line = aa_tex_rgba_line;
-            } else {
-               swrast->Line = aa_rgba_line;
-            }
-         }
-         else {
-            swrast->Line = aa_ci_line;
-         }
+         _swrast_choose_aa_line_function(ctx);
+         ASSERT(swrast->Triangle);
       }
       else if (ctx->Texture._ReallyEnabled) {
          if (ctx->Texture._MultiTextureEnabled
@@ -1120,8 +995,7 @@ _swrast_choose_line( GLcontext *ctx )
             }
          }
       }
-      else if (ctx->Line.Width!=1.0 || ctx->Line.StippleFlag
-               || ctx->Line.SmoothFlag) {
+      else if (ctx->Line.Width!=1.0 || ctx->Line.StippleFlag) {
          if (ctx->Light.ShadeModel==GL_SMOOTH) {
             if (rgbmode)
                swrast->Line = general_smooth_rgba_line;
@@ -1178,5 +1052,3 @@ _swrast_choose_line( GLcontext *ctx )
 
    /*_mesa_print_line_function(ctx);*/
 }
-
-
