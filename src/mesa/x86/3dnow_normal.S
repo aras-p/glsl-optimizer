@@ -1,4 +1,4 @@
-/* $Id: 3dnow_normal.S,v 1.4 2003/01/28 22:41:18 brianp Exp $ */
+/* $Id: 3dnow_normal.S,v 1.5 2003/01/30 14:30:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -732,13 +732,13 @@ LLBL (G3N_norm2):                       /* need to calculate lengths          */
 
     PREFETCHW  ( REGIND(EAX) )
 
-    MOVQ       ( MM0, MM3 )             /* x1              | x0               */
-    ADD_L      ( STRIDE, ECX )          /* next normal    */
-
     PREFETCH   ( REGIND(ECX) )
 
     MOVQ       ( REGIND(ECX), MM0 )     /* x1              | x0               */
     MOVD       ( REGOFF(8, ECX), MM1 )  /*                 | x2               */
+
+    MOVQ       ( MM0, MM3 )             /* x1              | x0               */
+    ADD_L      ( STRIDE, ECX )          /* next normal    */
 
     PFMUL      ( MM0, MM3 )             /* x1*x1           | x0*x0            */
     MOVQ       ( MM1, MM4 )             /*                 | x2               */
