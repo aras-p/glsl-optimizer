@@ -20,11 +20,14 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Authors:
- *    Ian Romanick <idr@us.ibm.com>
  */
-/* $XFree86:$ */
+
+/**
+ * \file utils.c
+ * Utility functions for DRI drivers.
+ *
+ * \author Ian Romanick <idr@us.ibm.com>
+ */
 
 #include <string.h>
 #include <stdlib.h>
@@ -38,6 +41,10 @@
 
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
+#endif
+
+#if defined(USE_PPC_ASM)
+#include "ppc/common_ppc_features.h"
 #endif
 
 unsigned
@@ -141,6 +148,23 @@ driGetRendererString( char * buffer, const char * hardware_name,
    cpu[0] = " SPARC";
    next = 1;
 
+#elif defined(USE_PPC_ASM)
+   if ( _mesa_ppc_cpu_features ) {
+      cpu[next] = (cpu_has_64) ? " PowerPC 64" : " PowerPC";
+      next++;
+   }
+
+# ifdef USE_VMX_ASM
+   if ( cpu_has_vmx ) {
+      cpu[next] = "/Altivec";
+      next++;
+   }
+# endif
+
+   if ( ! cpu_has_fpu ) {
+      cpu[next] = "/No FPU";
+      next++;
+   }
 #endif
 
    for ( i = 0 ; i < next ; i++ ) {

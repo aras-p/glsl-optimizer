@@ -75,6 +75,7 @@ linux-debug \
 linux-dri \
 linux-dri-x86 \
 linux-dri-x86-64 \
+linux-dri-ppc \
 linux-glide \
 linux-icc \
 linux-icc-static \

@@ -55,6 +55,10 @@
 #include "sparc/sparc.h"
 #endif
 
+#ifdef USE_PPC_ASM
+#include "ppc/common_ppc_features.h"
+#endif
+
 clip_func _mesa_clip_tab[5];
 clip_func _mesa_clip_np_tab[5];
 dotprod_func _mesa_dotprod_tab[5];
@@ -204,9 +208,10 @@ _math_init_transformation( void )
 
 #ifdef USE_X86_ASM
    _mesa_init_all_x86_transform_asm();
-#endif
-#ifdef USE_SPARC_ASM
+#elif defined( USE_SPARC_ASM )
    _mesa_init_all_sparc_transform_asm();
+#elif defined( USE_PPC_ASM )
+   _mesa_init_all_ppc_transform_asm();
 #endif
 }
 
