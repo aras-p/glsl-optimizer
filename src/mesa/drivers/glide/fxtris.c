@@ -63,6 +63,19 @@ GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass);
 static void fxRasterPrimitive( GLcontext *ctx, GLenum prim );
 static void fxRenderPrimitive( GLcontext *ctx, GLenum prim );
 
+static GLenum reduced_prim[GL_POLYGON+1] = {
+   GL_POINTS,
+   GL_LINES,
+   GL_LINES,
+   GL_LINES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES
+};
+
 /***********************************************************************
  *          Macros for t_dd_tritmp.h to draw basic primitives          *
  ***********************************************************************/
@@ -644,8 +657,8 @@ do {						\
  *            Functions to draw basic unfilled primitives              *
  ***********************************************************************/
 
-#define RASTERIZE(x) if (fxMesa->raster_primitive != x) \
-                        fxRasterPrimitive( ctx, x )
+#define RASTERIZE(x) if (fxMesa->raster_primitive != reduced_prim[x]) \
+                        fxRasterPrimitive( ctx, reduced_prim[x] )
 #define RENDER_PRIMITIVE fxMesa->render_primitive
 #define IND FX_FALLBACK_BIT
 #define TAG(x) x
@@ -1406,20 +1419,6 @@ static void fxRunPipeline( GLcontext *ctx )
 
    _tnl_run_pipeline( ctx );
 }
-
-
-static GLenum reduced_prim[GL_POLYGON+1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
-};
 
 
 
