@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.18 2000/10/18 15:02:59 brianp Exp $ */
+/* $Id: config.h,v 1.19 2000/10/26 19:26:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -139,11 +139,16 @@
 
 
 /*
- * Bits per depth buffer value:  16 or 32 (GLushort or GLuint)
- * _mesa_create_visual() can specify any depth in [0, 32].
+ * Bits per depth buffer value.  Any reasonable value up to 31 will
+ * work.  32 doesn't work because of integer overflow problems in the
+ * rasterizer code.
  */
 #define DEFAULT_SOFTWARE_DEPTH_BITS 16
+#if DEFAULT_SOFTWARE_DEPTH_BITS <= 16
 #define DEFAULT_SOFTWARE_DEPTH_TYPE GLushort
+#else
+#define DEFAULT_SOFTWARE_DEPTH_TYPE GLuint
+#endif
 
 
 
