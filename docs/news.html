@@ -7,6 +7,61 @@
 <H1>News</H1>
 
 
+<h2>August 18, 2004</h2>
+<p>
+Mesa 6.1 has been released.
+This is a new development release (version 6.2 will be a stabilization
+release).
+</p>
+<pre>
+    New:
+	- Revamped Makefile system
+	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
+	- internal driver interface changes related to texture object
+	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
+	- option to walk triangle edges with double-precision floats
+	  (Justin Novosad of Discreet) (see config.h file)
+	- support for AUX buffers in software GLX driver
+	- updated glext.h to version 24 and glxext.h to version 6
+	- new MESA_GLX_FORCE_ALPHA and MESA_GLX_DEPTH_BITS env vars
+	- updated BeOS support (Philippe Houdoin)
+    Changes:
+	- fragment fog interpolation is perspective corrected now
+	- new glTexImage code, much cleaner, may be a bit faster
+    Bug fixes:
+	- glArrayElement in display lists didn't handle generic vertex attribs
+	- glFogCoord didn't always work properly
+	- ARB_fragment_program fog options didn't work
+	- frag prog TEX instruction no longer incorrectly divides s,t,r by q
+	- ARB frag prog TEX and TEXP instructions now use LOD=0
+	- glTexEnviv in display lists didn't work
+	- glRasterPos didn't do texgen or apply texture matrix
+	- GL_DOUBLE-valued vertex arrays were broken in some cases
+	- fixed texture rectangle edge/border sampling bugs
+	- sampling an incomplete texture in a fragment program would segfault
+	- glTexImage was missing a few error checks
+	- fixed some minor glGetTexParameter glitches
+	- GL_INTENSITY was mistakenly accepted as a <format> to glTexImage
+	- fragment program writes to RC/HC register were broken
+	- fixed a few glitches in GL_HP_occlusion_test extension
+	- glBeginQueryARB and glEndQueryARB didn't work inside display lists
+	- vertex program state references were broken
+	- fixed triangle color interpolation bug on AIX (Shane Blackett)
+	- fixed a number of minor memory leaks (bug #1002030)
+</pre>
+The MD5 checksums are:
+</p>
+<pre>
+c9284d295ebcd2e0486cc3cd54e5863c  MesaLib-6.1.tar.gz
+5de1f53ec0709f60fc68fdfed57351f3  MesaLib-6.1.tar.bz2
+483e77cac4789a5d36c42f3c0136d6d8  MesaLib-6.1.zip
+8c46cfa6f9732acc6f6c25724aad0246  MesaDemos-6.1.tar.gz
+89bfe0f6c69b39fd0ebd9fff481a4e9b  MesaDemos-6.1.tar.bz2
+161268531fcc6f0c5a056430ee97e0c1  MesaDemos-6.1.zip
+</pre>
+
+
+
 <h2>April 2, 2004</h2>
 
 <p>
@@ -831,6 +886,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.13 2004/04/02 23:37:02 brianp Exp $
+$Id: news.html,v 3.14 2004/08/18 22:41:09 brianp Exp $
 </body>
 </html>
