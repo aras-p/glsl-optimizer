@@ -34,6 +34,10 @@
 
 #include "simple_list.h"
 
+#ifdef WIN32
+#define vsnprintf _vsnprintf
+#endif
+
 /* A version of code generation for t_clipspace_codegen.c which prints
  * out 'c' code to implement the generated function.  A useful
  * debugging tool, and in concert with something like tcc or a
@@ -230,8 +234,11 @@ static GLboolean print_attr_footer( struct tnl_clipspace_codegen *p )
 
 static tnl_emit_func print_store_func( struct tnl_clipspace_codegen *p ) 
 {
+#ifdef WIN32
+   fprintf(stderr, "%s: emitted:\n%s\n", "print_store_func", p->buf);
+#else
    fprintf(stderr, "%s: emitted:\n%s\n", __FUNCTION__, p->buf);
-   
+#endif   
    return 0;
 }
 
