@@ -137,6 +137,136 @@ static GLuint bsearchStr (const XML_Char *name,
 	return count;
 }
 
+/** \brief Locale-independent integer parser.
+ *
+ * Works similar to strtol. Leading space is NOT skipped. The input
+ * number may have an optional sign. Radix is specified by base. If
+ * base is 0 then decimal is assumed unless the input number is
+ * prefixed by 0x or 0X for hexadecimal or 0 for octal. After
+ * returning tail points to the first character that is not part of
+ * the integer number. If no number was found then tail points to the
+ * start of the input string. */
+static GLint strToI (const XML_Char *string, const XML_Char **tail, int base) {
+    GLint radix = base == 0 ? 10 : base;
+    GLint result = 0;
+    GLint sign = 1;
+    GLboolean numberFound = GL_FALSE;
+    const XML_Char *start = string;
+
+    assert (radix >= 2 && radix <= 36);
+
+    if (*string == '-') {
+	sign = -1;
+	string++;
+    } else if (*string == '+')
+	string++;
+    if (base == 0 && *string == '0') {
+	numberFound = GL_TRUE; 
+	if (*(string+1) == 'x' || *(string+1) == 'X') {
+	    radix = 16;
+	    string += 2;
+	} else {
+	    radix = 8;
+	    string++;
+	}
+    }
+    do {
+	GLint digit = -1;
+	if (radix <= 10) {
+	    if (*string >= '0' && *string < '0' + radix)
+		digit = *string - '0';
+	} else {
+	    if (*string >= '0' && *string <= '9')
+		digit = *string - '0';
+	    else if (*string >= 'a' && *string < 'a' + radix - 10)
+		digit = *string - 'a' + 10;
+	    else if (*string >= 'A' && *string < 'A' + radix - 10)
+		digit = *string - 'A' + 10;
+	}
+	if (digit != -1) {
+	    numberFound = GL_TRUE;
+	    result = radix*result + digit;
+	    string++;
+	} else
+	    break;
+    } while (GL_TRUE);
+    *tail = numberFound ? string : start;
+    return sign * result;
+}
+
+/** \brief Locale-independent floating-point parser.
+ *
+ * Works similar to strtod. Leading space is NOT skipped. The input
+ * number may have an optional sign. '.' is interpreted as decimal
+ * point and may occor at most once. Optionally the number may end in
+ * [eE]<exponent>, where <exponent> is an integer as recognized by
+ * strToI. In that case the result is number * 10^exponent. After
+ * returning tail points to the first character that is not part of
+ * the floating point number. If no number was found then tail points
+ * to the start of the input string.
+ *
+ * Uses two passes for maximum accuracy. */
+static GLfloat strToF (const XML_Char *string, const XML_Char **tail) {
+    GLint nDigits = 0, pointPos, exponent;
+    GLfloat sign = 1.0f, result = 0.0f, scale;
+    const XML_Char *start = string, *numStart;
+
+    /* sign */
+    if (*string == '-') {
+	sign = -1.0f;
+	string++;
+    } else if (*string == '+')
+	string++;
+
+    /* first pass: determine position of decimal point, number of
+     * digits, exponent and the end of the number. */
+    numStart = string;
+    while (*string >= '0' && *string <= '9') {
+	string++;
+	nDigits++;
+    }
+    pointPos = nDigits;
+    if (*string == '.') {
+	string++;
+	while (*string >= '0' && *string <= '9') {
+	    string++;
+	    nDigits++;
+	}
+    }
+    if (nDigits == 0) {
+	/* no digits, no number */
+	*tail = start;
+	return 0.0f;
+    }
+    *tail = string;
+    if (*string == 'e' || *string == 'E') {
+	const XML_Char *expTail;
+	exponent = strToI (string+1, &expTail, 10);
+	if (expTail == string+1)
+	    exponent = 0;
+	else
+	    *tail = expTail;
+    } else
+	exponent = 0;
+    string = numStart;
+
+    /* scale of the first digit */
+    scale = sign * powf (10.0f, (GLfloat)(pointPos-1 + exponent));
+
+    /* second pass: parse digits */
+    do {
+	if (*string != '.') {
+	    assert (*string >= '0' && *string <= '9');
+	    result += scale * (GLfloat)(*string - '0');
+	    scale *= 0.1f;
+	    nDigits--;
+	}
+	string++;
+    } while (nDigits > 0);
+
+    return result;
+}
+
 /** \brief Parse a value of a given type. */
 static GLboolean parseValue (driOptionValue *v, driOptionType type,
 			     const XML_Char *string) {
@@ -157,10 +287,10 @@ static GLboolean parseValue (driOptionValue *v, driOptionType type,
 	break;
       case DRI_ENUM: /* enum is just a special integer */
       case DRI_INT:
-	v->_int = strtol (string, (char **)&tail, 0);
+	v->_int = strToI (string, &tail, 0);
 	break;
       case DRI_FLOAT:
-	v->_float = strtod (string, (char **)&tail);
+	v->_float = strToF (string, &tail);
 	break;
     }
 
