@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.83 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: dlist.c,v 1.84 2001/12/19 02:36:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -245,6 +245,14 @@ typedef enum {
         OPCODE_SAMPLE_COVERAGE,
         /* GL_ARB_window_pos */
 	OPCODE_WINDOW_POS_ARB,
+        /* GL_NV_vertex_program */
+        OPCODE_BIND_PROGRAM_NV,
+        OPCODE_EXECUTE_PROGRAM_NV,
+        OPCODE_REQUEST_PROGRAMS_RESIDENT_NV,
+        OPCODE_LOAD_PROGRAM_NV,
+        OPCODE_PROGRAM_PARAMETER4F_NV,
+        OPCODE_PROGRAM_PARAMETERS4FV_NV,
+        OPCODE_TRACK_MATRIX_NV,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
@@ -632,6 +640,14 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
       /* GL_ARB_window_pos */
       InstSize[OPCODE_WINDOW_POS_ARB] = 4;
+      /* GL_NV_vertex_program */
+      InstSize[OPCODE_BIND_PROGRAM_NV] = 3;
+      InstSize[OPCODE_EXECUTE_PROGRAM_NV] = 7;
+      InstSize[OPCODE_REQUEST_PROGRAMS_RESIDENT_NV] = 2;
+      InstSize[OPCODE_LOAD_PROGRAM_NV] = 4;
+      InstSize[OPCODE_PROGRAM_PARAMETER4F_NV] = 7;
+      InstSize[OPCODE_PROGRAM_PARAMETERS4FV_NV] = 4;
+      InstSize[OPCODE_TRACK_MATRIX_NV] = 5;
    }
    init_flag = 1;
 }
@@ -4032,6 +4048,119 @@ save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 }
 
 
+/*
+ * GL_NV_vertex_program
+ */
+static void
+save_BindProgramNV(GLenum target, GLuint id)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BIND_PROGRAM_NV, 2 );
+   if (n) {
+      n[1].e = target;
+      n[2].ui = id;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->BindProgramNV)( target, id );
+   }
+}
+
+static void
+save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_EXECUTE_PROGRAM_NV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].ui = id;
+      n[3].f = params[0];
+      n[4].f = params[1];
+      n[5].f = params[2];
+      n[6].f = params[3];
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ExecuteProgramNV)(target, id, params);
+   }
+}
+
+
+static void
+save_ProgramParameter4fNV(GLenum target, GLuint index,
+                          GLfloat x, GLfloat y,
+                          GLfloat z, GLfloat w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_PROGRAM_PARAMETER4F_NV, 6 );
+   if (n) {
+      n[1].e = target;
+      n[2].ui = index;
+      n[3].f = x;
+      n[4].f = y;
+      n[5].f = z;
+      n[6].f = w;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->ProgramParameter4fNV)(target, index, x, y, z, w);
+   }
+}
+
+
+static void
+save_ProgramParameter4fvNV(GLenum target, GLuint index, const GLfloat *params)
+{
+   save_ProgramParameter4fNV(target, index, params[0], params[1],
+                             params[2], params[3]);
+}
+
+
+static void
+save_ProgramParameter4dNV(GLenum target, GLuint index,
+                          GLdouble x, GLdouble y,
+                          GLdouble z, GLdouble w)
+{
+   save_ProgramParameter4fNV(target, index, (GLfloat) x, (GLfloat) y,
+                             (GLfloat) z, (GLfloat) w);
+}
+
+
+static void
+save_ProgramParameter4dvNV(GLenum target, GLuint index,
+                           const GLdouble *params)
+{
+   save_ProgramParameter4fNV(target, index, (GLfloat) params[0],
+                             (GLfloat) params[1], (GLfloat) params[2],
+                             (GLfloat) params[3]);
+}
+
+
+static void
+save_TrackMatrixNV(GLenum target, GLuint address,
+                   GLenum matrix, GLenum transform)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_TRACK_MATRIX_NV, 4 );
+   if (n) {
+      n[1].e = target;
+      n[2].ui = address;
+      n[3].e = matrix;
+      n[4].e = transform;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->TrackMatrixNV)(target, address, matrix, transform);
+   }
+}
+
+
+
+
 /* KW: Compile commands
  *
  * Will appear in the list before the vertex buffer containing the
@@ -4731,6 +4860,42 @@ execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_WINDOW_POS_ARB: /* GL_ARB_window_pos */
             (*ctx->Exec->WindowPos3fARB)( n[1].f, n[2].f, n[3].f );
 	    break;
+         case OPCODE_BIND_PROGRAM_NV: /* GL_NV_vertex_program */
+            (*ctx->Exec->BindProgramNV)( n[1].e, n[2].ui );
+            break;
+         case OPCODE_EXECUTE_PROGRAM_NV:
+            {
+               GLfloat v[4];
+               v[0] = n[3].f;
+               v[1] = n[4].f;
+               v[2] = n[5].f;
+               v[3] = n[6].f;
+               (*ctx->Exec->ExecuteProgramNV)(n[1].e, n[2].ui, v);
+            }
+            break;
+         case OPCODE_REQUEST_PROGRAMS_RESIDENT_NV:
+            /*
+            (*ctx->Exec->RequestResidentProgramsNV)();
+            */
+            break;
+         case OPCODE_LOAD_PROGRAM_NV:
+            /*
+            (*ctx->Exec->LoadProgramNV)();
+            */
+            break;
+         case OPCODE_PROGRAM_PARAMETER4F_NV:
+            (*ctx->Exec->ProgramParameter4fNV)(n[1].e, n[2].ui, n[3].f,
+                                               n[4].f, n[5].f, n[6].f);
+            break;
+         case OPCODE_PROGRAM_PARAMETERS4FV_NV:
+            /*
+            (*ctx->Exec->ProgramParameters4fvNV)();
+            */
+            break;
+         case OPCODE_TRACK_MATRIX_NV:
+            (*ctx->Exec->TrackMatrixNV)(n[1].e, n[2].ui, n[3].e, n[4].e);
+            break;
+
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
 	    break;
@@ -6001,11 +6166,11 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* XXX Need to implement vertex program in display lists !!! */
    /* The following commands DO NOT go into display lists:
     * AreProgramsResidentNV, IsProgramNV, GenProgramsNV, DeleteProgramsNV,
-    * VertexAttribPointerNV
+    * VertexAttribPointerNV, GetProgram*, GetVertexAttrib*
     */
-   table->BindProgramNV = _mesa_BindProgramNV;
+   table->BindProgramNV = save_BindProgramNV;
    table->DeleteProgramsNV = _mesa_DeleteProgramsNV;
-   table->ExecuteProgramNV = _mesa_ExecuteProgramNV;
+   table->ExecuteProgramNV = save_ExecuteProgramNV;
    table->GenProgramsNV = _mesa_GenProgramsNV;
    table->AreProgramsResidentNV = _mesa_AreProgramsResidentNV;
    table->RequestResidentProgramsNV = _mesa_RequestResidentProgramsNV;
@@ -6020,13 +6185,13 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetVertexAttribPointervNV = _mesa_GetVertexAttribPointervNV;
    table->IsProgramNV = _mesa_IsProgramNV;
    table->LoadProgramNV = _mesa_LoadProgramNV;
-   table->ProgramParameter4dNV = _mesa_ProgramParameter4dNV;
-   table->ProgramParameter4dvNV = _mesa_ProgramParameter4dvNV;
-   table->ProgramParameter4fNV = _mesa_ProgramParameter4fNV;
-   table->ProgramParameter4fvNV = _mesa_ProgramParameter4fvNV;
+   table->ProgramParameter4dNV = save_ProgramParameter4dNV;
+   table->ProgramParameter4dvNV = save_ProgramParameter4dvNV;
+   table->ProgramParameter4fNV = save_ProgramParameter4fNV;
+   table->ProgramParameter4fvNV = save_ProgramParameter4fvNV;
    table->ProgramParameters4dvNV = _mesa_ProgramParameters4dvNV;
    table->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
-   table->TrackMatrixNV = _mesa_TrackMatrixNV;
+   table->TrackMatrixNV = save_TrackMatrixNV;
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
    /* ARB 1. GL_ARB_multitexture */
