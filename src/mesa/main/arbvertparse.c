@@ -5277,7 +5277,7 @@ parse_tree_generate_opcodes(parse_state * s, parse_tree_node * ptn)
 {
    GLint a;
    GLint opcode, dst, src[3];
-   GLint dst_mask[4], src_swz[3][4], src_scalar[2], src_sign[3];
+   GLint dst_mask[4], src_swz[3][4], src_scalar[3], src_sign[3];
    parse_tree_node *dn, *sn[3];
 
    src_sign[0] = src_sign[1] = src_sign[2] = 1;
