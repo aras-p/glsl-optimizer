@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Make a shared library.
-# Basically do a switch/case depending on the OS and make a shared
-# lib conforming to that OS.
+# Basically do a switch/case depending on the OS and make a shared (or static)
+# library conforming to that OS.
 
 
 # Usage:
@@ -17,7 +17,7 @@
 #   -LDIR         search in DIR for library dependencies
 #   -cplusplus    link with C++ runtime
 #   -static       make a static library (default is dynamic/shared)
-#   -install DIR  move resulting library files to DIR
+#   -install DIR  move resulting library file(s) to DIR
 #   -arch ARCH    override using `uname` to determine architecture
 #   -archopt OPT  specify an extra achitecture-specific option OPT
 #
@@ -120,7 +120,7 @@ case $ARCH in
             # make lib
             ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
             # finish up
-            FINAL_LIBS="${LIBNAME}.a"
+            FINAL_LIBS=${LIBNAME}
         else
 	    if [ $ARCH = 'Linux' ] ; then
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
@@ -129,7 +129,7 @@ case $ARCH in
 	    fi
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
-            echo "mklib: Making " $ARCH " shared library: " ${LIBNAME}.so.${VERSION}
+            echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}.so.${VERSION}
 
             if [ $CPLUSPLUS = 1 ] ; then
                 LINK="g++"
@@ -153,114 +153,150 @@ case $ARCH in
 	;;
 
     'SunOS')
-	LIBNAME="lib${LIBNAME}.so"
-	echo "mklib: Making SunOS shared library: " ${LIBNAME}
-	# XXX OPTS for gcc should be -shared, but that doesn't work.
-	# Using -G does work though.
-	if [ $CPLUSPLUS = 1 ] ; then
-	    # determine linker and options for C++ code
-	    if [ "x${CXX}" = "xg++" ] ; then
-		# use g++
-		LINK="g++"
-		OPTS="-G"
-	    elif [ "x${CXX}" = "xCC" ] ; then
-		# use Sun CC
-		LINK="CC"
-		OPTS="-G"
-	    elif [ "x${CXX}" = "xc++" ] ; then
-		# use Sun c++
-		LINK="c++"
-		OPTS="-G"
-	    elif [ `which c++` ] ; then
-		# use Sun c++
-		LINK="c++"
-		OPTS="-G"
-	    elif [ `type g++` ] ; then
-		# use g++
-		LINK="g++"
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making SunOS static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar ru ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	else
+	    LIBNAME="lib${LIBNAME}.so"
+	    echo "mklib: Making SunOS shared library: " ${LIBNAME}
+	    # XXX OPTS for gcc should be -shared, but that doesn't work.
+	    # Using -G does work though.
+	    if [ $CPLUSPLUS = 1 ] ; then
+		# determine linker and options for C++ code
+		if [ "x${CXX}" = "xg++" ] ; then
+		    # use g++
+		    LINK="g++"
+		    OPTS="-G"
+		elif [ "x${CXX}" = "xCC" ] ; then
+		    # use Sun CC
+		    LINK="CC"
+		    OPTS="-G"
+		elif [ "x${CXX}" = "xc++" ] ; then
+		    # use Sun c++
+		    LINK="c++"
+		    OPTS="-G"
+		elif [ `which c++` ] ; then
+		    # use Sun c++
+		    LINK="c++"
+		    OPTS="-G"
+		elif [ `type g++` ] ; then
+		    # use g++
+		    LINK="g++"
+		    OPTS="-G"
+		else
+		    echo "mklib: warning: can't find C++ comiler, trying CC."
+		    LINK="CC"
+		    OPTS="-G"
+		fi
+	    elif [ "x${CC}" = "xgcc" ] ; then
+		# use gcc for linking
+		LINK="gcc"
 		OPTS="-G"
 	    else
-		echo "mklib: warning: can't find C++ comiler, trying CC."
-		LINK="CC"
+		# use native Sun linker
+		LINK="ld"
 		OPTS="-G"
 	    fi
-	elif [ "x${CC}" = "xgcc" ] ; then
-	    # use gcc for linking
-	    LINK="gcc"
-	    OPTS="-G"
-	else
-	    # use native Sun linker
-	    LINK="ld"
-	    OPTS="-G"
+	    echo "mklib: linker is" ${LINK} ${OPTS}
+	    rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
+	    ${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
+	    ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
+	    FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	fi
-	echo "mklib: linker is" ${LINK} ${OPTS}
-	rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
-	${LINK} ${OPTS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
-	ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
-	FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	;;
 
     'FreeBSD')
-	SHLIB="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
-	STLIB="lib${LIBNAME}.a"
-	echo "mklib: Making FreeBSD shared library: " ${SHLIB}
-	rm -f ${SHLIB} ${STLIB}
-	ar cq ${STLIB} ${OBJECTS}
-	ranlib ${STLIB}
-	ld -Bshareable -o ${SHLIB} ${OBJECTS}
-	# XXX make lib${LIBNAME}.so.${MAJOR} symlink?
-	FINAL_LIBS="${SHLIB} ${STLIB}"
+        if [ $STATIC = 1 ] ; then
+	    STLIB="lib${LIBNAME}.a"
+	    echo "mklib: Making FreeBSD static library: " ${STLIB}
+	    rm -f ${STLIB}
+	    ar cq ${STLIB} ${OBJECTS}
+	    ranlib ${STLIB}
+	    FINAL_LIBS=${STLIB}
+	else
+	    SHLIB="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
+	    echo "mklib: Making FreeBSD shared library: " ${SHLIB}
+	    rm -f ${SHLIB}
+	    ld -Bshareable -o ${SHLIB} ${OBJECTS}
+	    # XXX make lib${LIBNAME}.so.${MAJOR} symlink?
+	    FINAL_LIBS=${SHLIB}
+	fi
 	;;
 
     'NetBSD')
-	LIBNAME="lib${LIBNAME}"
-	echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
-	VERSION="${MAJOR}.${MINOR}"
-	rm -f ${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}
-	ar cq ${LIBNAME}_pic.a ${OBJECTS}
-	ranlib ${LIBNAME}_pic.a
-	ld -x -Bshareable -Bforcearchive -o ${LIBNAME}.so.${VERSION} ${LIBNAME}_pic.a
-	FINAL_LIBS="${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}"
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}_pic.a"
+	    echo "mklib: Making NetBSD PIC static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar cq ${LIBNAME} ${OBJECTS}
+	    ranlib ${LIBNAME}
+	    FINAL_LIBS=${LIBNAME}
+	else
+	    LIBNAME="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
+	    echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ld -x -Bshareable -Bforcearchive -o ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	fi
 	;;
 
     'IRIX' | 'IRIX64')
-	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
-	if [ $ARCHOPT = "64" ] ; then
-	    # 64-bit ABI
-	    OPTS="-64 -shared -all"
-	    echo "mklib: Making IRIX 64-bit shared library: " ${LIBNAME}
-	elif [ $ARCHOPT = "o32" ] ; then
-	    # old 32-bit ABI
-	    OPTS="-32 -shared -all"
-	    echo "mklib: Making IRIX o32-bit shared library: " ${LIBNAME}
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    rm -f ${LIBNAME}
+	    ar rc ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
 	else
-	    # new 32-bit ABI
-	    OPTS="-n32 -shared -all"
-	    echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
+	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	    if [ $ARCHOPT = "64" ] ; then
+		# 64-bit ABI
+		OPTS="-64 -shared -all"
+		echo "mklib: Making IRIX 64-bit shared library: " ${LIBNAME}
+	    elif [ $ARCHOPT = "o32" ] ; then
+		# old 32-bit ABI
+		OPTS="-32 -shared -all"
+		echo "mklib: Making IRIX o32-bit shared library: " ${LIBNAME}
+	    else
+		# new 32-bit ABI
+		OPTS="-n32 -shared -all"
+		echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
+	    fi
+	    if [ $CPLUSPLUS = 1 ] ; then
+		LINK="CC"
+	    else
+		LINK="ld"
+	    fi
+	    ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    FINAL_LIBS=${LIBNAME}
 	fi
-	if [ $CPLUSPLUS = 1 ] ; then
-	    LINK="CC"
-	else
-	    LINK="ld"
-	fi
-	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
-	FINAL_LIBS="${LIBNAME}"
 	;;
 
     'linux-cygwin')
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making linux-cygwin library: " ${LIBNAME}
+	rm -f ${LIBNAME}
 	gnuwin32ar ruv ${LIBNAME} ${OBJECTS}
 	FINAL_LIBS=${LIBNAME}
 	;;
 
     'HPUX')
-	RUNLIB="lib${LIBNAME}.${MAJOR}"
-	DEVLIB="lib${LIBNAME}.sl"
-	echo "mklib: Making HPUX library: " ${RUNLIB} ${DEVLIB}
-	ld -b -o ${RUNLIB} +b ${RUNLIB} ${OBJECTS} ${DEPS}
-	ln -s ${RUNLIB} ${DEVLIB}
-	FINAL_LIBS="{RUNLIB} ${DEVLIB}"
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making HPUX static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar ru ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	else
+	    RUNLIB="lib${LIBNAME}.${MAJOR}"
+	    DEVLIB="lib${LIBNAME}.sl"
+	    echo "mklib: Making HPUX stared library: " ${RUNLIB} ${DEVLIB}
+	    ld -b -o ${RUNLIB} +b ${RUNLIB} ${OBJECTS} ${DEPS}
+	    ln -s ${RUNLIB} ${DEVLIB}
+	    FINAL_LIBS="{RUNLIB} ${DEVLIB}"
+	fi
 	;;
 
     'OpenSTEP')
@@ -271,18 +307,21 @@ case $ARCH in
 	;;
 
     'OSF1')
-	VERSION="${MAJOR}.${MINOR}"
-	LIBNAME="lib${LIBNAME}.so"
-	ARNAME="lib${LIBNAME}.a"
-	echo "mklib: Making OSF/1 library: " ${LIBNAME}
-	rm -f ${LIBNAME}.${VERSION}
-	ld -o ${LIBNAME}.${VERSION} -shared -no_archive -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
-	ln -sf ${LIBNAME}.${VERSION} ${LIBNAME}
-
-	# also make static lib
-	rm -f ${ARNAME}
-	ar clqz ${ARNAME} ${OBJECTS}
-	FINAL_LIBS="${ARNAME} ${LIBNAME} ${LIBNAME}.${VERSION}"
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making OSF/1 static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar clqz ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	else
+	    VERSION="${MAJOR}.${MINOR}"
+	    LIBNAME="lib${LIBNAME}.so"
+	    echo "mklib: Making OSF/1 shared library: " ${LIBNAME}
+	    rm -f ${LIBNAME}.${VERSION}
+	    ld -o ${LIBNAME}.${VERSION} -shared -no_archive -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
+	    ln -sf ${LIBNAME}.${VERSION} ${LIBNAME}
+	    FINAL_LIBS="${LIBNAME} ${LIBNAME}.${VERSION}"
+	fi
 	;;
 
     'Darwin')
@@ -294,6 +333,7 @@ case $ARCH in
 	cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	# also make regular .a files,
 	# provided by Danek Duvall (duvall@dhduvall.student.princeton.edu)
+	rm -f ${ARNAME}
 	ar ruv ${ARNAME} ${OBJECTS}
 	ranlib ${ARNAME}
 	FINAL_LIBS="${ARNAME} ${LIBNAME}"
@@ -301,7 +341,8 @@ case $ARCH in
 
     'LynxOS')
 	LIBNAME="lib${LIBNAME}.a"
-	echo "mklib: Making LynxOS library: " ${LIBNAME}
+	echo "mklib: Making LynxOS static library: " ${LIBNAME}
+	rm -f ${LIBNAME}
 	ar ru ${LIBNAME} ${OBJECTS}
 	FINAL_LIBS=${LIBNAME}
 	;;
@@ -368,37 +409,59 @@ case $ARCH in
 
     'aix-gcc')
 	# AIX with gcc
-	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
-	echo "mklib: Making AIX GCC shared library: " ${LIBNAME}
-	# remove old lib
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making AIX GCC static library: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar ru ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS=${LIBNAME}
+	else
+	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	    echo "mklib: Making AIX GCC shared library: " ${LIBNAME}
+	    # remove old lib
+	    rm -f ${LIBNAME}
+	    # make the lib
+	    gcc -shared -Wl,-G ${OBJECTS} ${DEPS} -o ${LIBNAME}
+
+	    # NOTE: the application linking with this library must specify
+	    # the -Wl,-brtl flags to gcc
+
+	    FINAL_LIBS=${LIBNAME}
+	fi
+	;;
+
+    'ultrix')
+	# XXX untested
+        if [ $STATIC = 0 ] ; then
+	    echo "mklib: Warning shared libs not supported on Ultrix"
+	fi
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making static library for Ultrix: " ${LIBNAME}
 	rm -f ${LIBNAME}
-	# make the lib
-	gcc -shared -Wl,-G ${OBJECTS} ${DEPS} -o ${LIBNAME}
-
-	# NOTE: the application linking with this library must specify
-	# the -Wl,-brtl flags to gcc
-
-	FINAL_LIBS=${LIBNAME}
+	ar ru ${LIBNAME} ${OBJECTS}
+	FINAL_LIBS="${LIBNAME}"
 	;;
 
     'example')
 	# If you're adding support for a new architecture, you can
 	# start with this:
-	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib"
-	echo "mklib: Making library for example arch: " ${LIBNAME}
-	ld -o ${LIBNAME} ${OBJECTS} ${DEPS}
-	FINAL_LIBS="${LIBNAME}"
+        if [ $STATIC = 1 ] ; then
+	    LIBNAME="lib${LIBNAME}.a"
+	    echo "mklib: Making static library for example arch: " ${LIBNAME}
+	    rm -f ${LIBNAME}
+	    ar rv ${LIBNAME} ${OBJECTS}
+	    FINAL_LIBS="${LIBNAME}"
+	else
+	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib"
+	    echo "mklib: Making shared library for example arch: " ${LIBNAME}
+	    ld -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    FINAL_LIBS="${LIBNAME}"
+	fi
 	;;
 
     *)
-	echo "mklib: WARNING: making library for unknown platform!"
-	echo "mklib: WARNING: this may not work!"
-	echo "mklib: WARNING: please update the bin/mklib script!"
-	# XXX this is a total hack for Mesa - remove someday
-	# fall-back to an old mklib.* script
-	LIBNAME="lib${LIBNAME}.a"
-	${TOP}/${MAKELIB} "lib${LIBNAME}.a" ${MAJOR} ${MINOR} ${PATCH} ${OBJECTS}
-	FINAL_LIBS="${LIBNAME}"
+	echo "mklib: ERROR: Don't know how to make a static/shared library for" ${ARCH}
+	echo "mklib: Please add necessary commands to mklib script."
 	;;
 esac
 
