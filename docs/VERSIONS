@@ -1210,8 +1210,12 @@ Mesa Version History
 	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
 	- internal driver interface changes related to texture object
 	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
+	- option to walk triangle edges with double-precision floats
+	  (Justin Novosad of Discreet) (see config.h file)
     Changes:
-	- 
+	- fragment fog interpolation is perspective corrected now
     Bug fixes:
 	- everything in 6.0.1 plus TBD
-
+	- glArrayElement in display lists didn't handle generic vertex attribs
+	- glFogCoord didn't always work properly
+	- ARB_fragment_program fog options didn't work
