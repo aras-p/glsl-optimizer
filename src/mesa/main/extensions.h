@@ -1,10 +1,10 @@
-/* $Id: extensions.h,v 1.7 1999/12/10 15:13:57 brianp Exp $ */
+/* $Id: extensions.h,v 1.8 2000/03/07 18:24:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,15 +37,15 @@
 
 /* Return 0 on success.
  */
-extern int gl_extensions_add( struct gl_context *ctx, int state, 
+extern int gl_extensions_add( GLcontext *ctx, int state, 
 			      const char *name, void (*notify)( void ) );
 
-extern int gl_extensions_enable( struct gl_context *ctx, const char *name );
-extern int gl_extensions_disable( struct gl_context *ctx, const char *name );
+extern int gl_extensions_enable( GLcontext *ctx, const char *name );
+extern int gl_extensions_disable( GLcontext *ctx, const char *name );
 extern GLboolean gl_extension_is_enabled( GLcontext *ctx, const char *name);
-extern void gl_extensions_dtr( struct gl_context *ctx );
-extern void gl_extensions_ctr( struct gl_context *ctx );
-extern const char *gl_extensions_get_string( struct gl_context *ctx );
+extern void gl_extensions_dtr( GLcontext *ctx );
+extern void gl_extensions_ctr( GLcontext *ctx );
+extern const char *gl_extensions_get_string( GLcontext *ctx );
 
 #endif
 
