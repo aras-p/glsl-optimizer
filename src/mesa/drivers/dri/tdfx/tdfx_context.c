@@ -59,8 +59,61 @@
 
 #include "drivers/common/driverfuncs.h"
 
+#include "utils.h"
+
 const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
+
+/**
+ * Common extension strings exported by all cards
+ */
+static const char * const card_extensions[] =
+{
+   "GL_ARB_texture_mirrored_repeat",
+   "GL_ARB_vertex_buffer_object",
+   "GL_EXT_blend_func_separate",
+   "GL_EXT_fog_coord",
+   "GL_EXT_multi_draw_arrays",
+   "GL_EXT_paletted_texture",
+   "GL_EXT_shared_texture_palette",
+   "GL_EXT_stencil_wrap",
+   "GL_EXT_texture_env_add",
+   "GL_EXT_texture_lod_bias",
+   "GL_HP_occlusion_test",
+   "GL_IBM_multimode_draw_arrays",
+
+#if 0
+   "GL_ARB_point_sprite",
+   "GL_EXT_point_parameters",
+   "GL_EXT_secondary_color",
+#endif
+#if 0
+   /* not just yet */
+   "GL_ARB_vertex_program",
+   "GL_NV_vertex_program",
+   "GL_NV_vertex_program1_1",
+   "GL_MESA_program_debug",
+#endif
+   NULL
+};
+
+/**
+ * Extension strings exported only by Naplam (e.g., Voodoo4 & Voodoo5) cards.
+ */
+static const char * const napalm_extensions[] =
+{
+   "GL_ARB_texture_compression",
+   "GL_ARB_texture_env_combine",
+   "GL_EXT_blend_equation_separate",
+   "GL_EXT_blend_subtract",
+   "GL_EXT_texture_compression_s3tc",
+   "GL_EXT_texture_env_combine",
+
+   "GL_3DFX_texture_compression_FXT1",
+   "GL_NV_blend_square",
+   "GL_S3_s3tc",
+   NULL
+};
 
 /*
  * Enable/Disable the extensions for this context.
@@ -69,58 +122,17 @@ static void tdfxDDInitExtensions( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
-   _mesa_enable_extension( ctx, "GL_HP_occlusion_test" );
-   _mesa_enable_extension( ctx, "GL_EXT_paletted_texture" );
-   _mesa_enable_extension( ctx, "GL_EXT_shared_texture_palette" );
-   _mesa_enable_extension( ctx, "GL_EXT_texture_lod_bias" );
-   _mesa_enable_extension( ctx, "GL_EXT_blend_func_separate" );
-   _mesa_enable_extension( ctx, "GL_EXT_fog_coord" );
-   _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
-   _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
-
-#if 0
-   _mesa_enable_extension(ctx, "GL_EXT_secondary_color");
-   _mesa_enable_extension(ctx, "GL_ARB_point_sprite");
-   _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
-#endif
+   driInitExtensions( ctx, card_extensions, GL_FALSE );
 
    if ( fxMesa->haveTwoTMUs ) {
       _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
    }
 
    if ( TDFX_IS_NAPALM( fxMesa ) ) {
-      _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
-      _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
-      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
-      _mesa_enable_extension( ctx, "GL_S3_s3tc" );
-
-      _mesa_enable_extension( ctx, "GL_NV_blend_square" );
-      _mesa_enable_extension( ctx, "GL_EXT_blend_subtract" );
-      _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
+      driInitExtensions( ctx, napalm_extensions, GL_FALSE );
    } else {
       _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
    }
-
-   if (1/*fxMesa->Glide.HaveMirrorExt - JJJ*/) {
-      _mesa_enable_extension(ctx, "GL_ARB_texture_mirrored_repeat");
-   }
-
-   if (TDFX_IS_NAPALM(fxMesa)/*fxMesa->Glide.HaveCombineExt - JJJ*/) {
-      _mesa_enable_extension( ctx, "GL_EXT_texture_env_combine" );
-      _mesa_enable_extension( ctx, "GL_ARB_texture_env_combine" );
-   }
-
-   /* core-level extensions */
-   _mesa_enable_extension(ctx, "GL_EXT_multi_draw_arrays");
-   _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
-   _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
-#if 0
-   /* not just yet */
-   _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
-   _mesa_enable_extension(ctx, "GL_NV_vertex_program");
-   _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
-   _mesa_enable_extension(ctx, "GL_MESA_program_debug");
-#endif
 }
 
 
