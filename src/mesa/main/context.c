@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.127 2001/03/11 23:49:20 gareth Exp $ */
+/* $Id: context.c,v 1.128 2001/03/12 01:32:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@
 #include "texobj.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "vtxfmt.h"
 
 #include "math/m_translate.h"
 #include "math/m_vertices.h"
