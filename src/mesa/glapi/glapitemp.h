@@ -4224,6 +4224,401 @@ KEYWORD1 void KEYWORD2 NAME(ActiveStencilFaceEXT)(GLenum face)
    DISPATCH(ActiveStencilFaceEXT, (face), (F, "glActiveStencilFaceEXT(0x%x);\n", face));
 }
 
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1sARB)(GLuint index, GLshort x)
+{
+   DISPATCH(VertexAttrib1sARB, (index, x), (F, "glVertexAttrib1sARB(%d, %d);\n", index, x));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1fARB)(GLuint index, GLfloat x)
+{
+   DISPATCH(VertexAttrib1fARB, (index, x), (F, "glVertexAttrib1fARB(%d, %f);\n", index, x));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1dARB)(GLuint index, GLdouble x)
+{
+   DISPATCH(VertexAttrib1dARB, (index, x), (F, "glVertexAttrib1dARB(%d, %f);\n", index, x));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2sARB)(GLuint index, GLshort x, GLshort y)
+{
+   DISPATCH(VertexAttrib2sARB, (index, x, y), (F, "glVertexAttrib2sARB(%d, %d, %d);\n", index, x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2fARB)(GLuint index, GLfloat x, GLfloat y)
+{
+   DISPATCH(VertexAttrib2fARB, (index, x, y), (F, "glVertexAttrib2fARB(%d, %f, %f);\n", index, x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2dARB)(GLuint index, GLdouble x, GLdouble y)
+{
+   DISPATCH(VertexAttrib2dARB, (index, x, y), (F, "glVertexAttrib2dARB(%d, %f, %f);\n", index, x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3sARB)(GLuint index, GLshort x, GLshort y, GLshort z)
+{
+   DISPATCH(VertexAttrib3sARB, (index, x, y, z), (F, "glVertexAttrib3sARB(%d, %d, %d, %d);\n", index, x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z)
+{
+   DISPATCH(VertexAttrib3fARB, (index, x, y, z), (F, "glVertexAttrib3fARB(%d, %f, %f, %f);\n", index, x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3dARB)(GLuint index, GLdouble x, GLdouble y, GLdouble z)
+{
+   DISPATCH(VertexAttrib3dARB, (index, x, y, z), (F, "glVertexAttrib3dARB(%d, %f, %f, %f);\n", index, x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4sARB)(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w)
+{
+   DISPATCH(VertexAttrib4sARB, (index, x, y, z, w), (F, "glVertexAttrib4sARB(%d, %d, %d, %d, %d);\n", index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   DISPATCH(VertexAttrib4fARB, (index, x, y, z, w), (F, "glVertexAttrib4fARB(%d, %f, %f, %f, %f);\n", index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4dARB)(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   DISPATCH(VertexAttrib4dARB, (index, x, y, z, w), (F, "glVertexAttrib4dARB(%d, %f, %f, %f, %f);\n", index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NubARB)(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w)
+{
+   DISPATCH(VertexAttrib4NubARB, (index, x, y, z, w), (F, "glVertexAttrib4NubARB(%d, %d, %d, %d, %d);\n", index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1svARB)(GLuint index, const GLshort * v)
+{
+   DISPATCH(VertexAttrib1svARB, (index, v), (F, "glVertexAttrib1svARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1fvARB)(GLuint index, const GLfloat * v)
+{
+   DISPATCH(VertexAttrib1fvARB, (index, v), (F, "glVertexAttrib1fvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib1dvARB)(GLuint index, const GLdouble * v)
+{
+   DISPATCH(VertexAttrib1dvARB, (index, v), (F, "glVertexAttrib1dvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2svARB)(GLuint index, const GLshort * v)
+{
+   DISPATCH(VertexAttrib2svARB, (index, v), (F, "glVertexAttrib2svARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2fvARB)(GLuint index, const GLfloat * v)
+{
+   DISPATCH(VertexAttrib2fvARB, (index, v), (F, "glVertexAttrib2fvARB(%d, %p /* %g, %g */);\n", index, (const void *) v, v[0], v[1]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib2dvARB)(GLuint index, const GLdouble * v)
+{
+   DISPATCH(VertexAttrib2dvARB, (index, v), (F, "glVertexAttrib2dvARB(%d, %p /* %g, %g */);\n", index, (const void *) v, v[0], v[1]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3svARB)(GLuint index, const GLshort * v)
+{
+   DISPATCH(VertexAttrib3svARB, (index, v), (F, "glVertexAttrib3svARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3fvARB)(GLuint index, const GLfloat * v)
+{
+   DISPATCH(VertexAttrib3fvARB, (index, v), (F, "glVertexAttrib3fvARB(%d, %p /* %g, %g, %g */);\n", index, (const void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib3dvARB)(GLuint index, const GLdouble * v)
+{
+   DISPATCH(VertexAttrib3dvARB, (index, v), (F, "glVertexAttrib3dvARB(%d, %p /* %g, %g, %g */);\n", index, (const void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4bvARB)(GLuint index, const GLbyte * v)
+{
+   DISPATCH(VertexAttrib4bvARB, (index, v), (F, "glVertexAttrib4bvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4svARB)(GLuint index, const GLshort * v)
+{
+   DISPATCH(VertexAttrib4svARB, (index, v), (F, "glVertexAttrib4svARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4ivARB)(GLuint index, const GLint * v)
+{
+   DISPATCH(VertexAttrib4ivARB, (index, v), (F, "glVertexAttrib4ivARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4ubvARB)(GLuint index, const GLubyte * v)
+{
+   DISPATCH(VertexAttrib4ubvARB, (index, v), (F, "glVertexAttrib4ubvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4usvARB)(GLuint index, const GLushort * v)
+{
+   DISPATCH(VertexAttrib4usvARB, (index, v), (F, "glVertexAttrib4usvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4uivARB)(GLuint index, const GLuint * v)
+{
+   DISPATCH(VertexAttrib4uivARB, (index, v), (F, "glVertexAttrib4uivARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4fvARB)(GLuint index, const GLfloat * v)
+{
+   DISPATCH(VertexAttrib4fvARB, (index, v), (F, "glVertexAttrib4fvARB(%d, %p /* %g, %g, %g, %g */);\n", index, (const void *) v, v[0], v[1], v[2], v[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4dvARB)(GLuint index, const GLdouble * v)
+{
+   DISPATCH(VertexAttrib4dvARB, (index, v), (F, "glVertexAttrib4dvARB(%d, %p /* %g, %g, %g, %g */);\n", index, (const void *) v, v[0], v[1], v[2], v[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NbvARB)(GLuint index, const GLbyte * v)
+{
+   DISPATCH(VertexAttrib4NbvARB, (index, v), (F, "glVertexAttrib4NbvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NsvARB)(GLuint index, const GLshort * v)
+{
+   DISPATCH(VertexAttrib4NsvARB, (index, v), (F, "glVertexAttrib4NsvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NivARB)(GLuint index, const GLint * v)
+{
+   DISPATCH(VertexAttrib4NivARB, (index, v), (F, "glVertexAttrib4NivARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NubvARB)(GLuint index, const GLubyte * v)
+{
+   DISPATCH(VertexAttrib4NubvARB, (index, v), (F, "glVertexAttrib4NubvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NusvARB)(GLuint index, const GLushort * v)
+{
+   DISPATCH(VertexAttrib4NusvARB, (index, v), (F, "glVertexAttrib4NusvARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttrib4NuivARB)(GLuint index, const GLuint * v)
+{
+   DISPATCH(VertexAttrib4NuivARB, (index, v), (F, "glVertexAttrib4NuivARB(%d, %p);\n", index, (const void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(VertexAttribPointerARB)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer)
+{
+   DISPATCH(VertexAttribPointerARB, (index, size, type, normalized, stride, pointer), (F, "glVertexAttribPointerARB(%d, %d, 0x%x, %d, %d, %p);\n", index, size, type, normalized, stride, (const void *) pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EnableVertexAttribArrayARB)(GLuint index)
+{
+   DISPATCH(EnableVertexAttribArrayARB, (index), (F, "glEnableVertexAttribArrayARB(%d);\n", index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DisableVertexAttribArrayARB)(GLuint index)
+{
+   DISPATCH(DisableVertexAttribArrayARB, (index), (F, "glDisableVertexAttribArrayARB(%d);\n", index));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramStringARB)(GLenum target, GLenum format, GLsizei len, const GLvoid * string)
+{
+   DISPATCH(ProgramStringARB, (target, format, len, string), (F, "glProgramStringARB(0x%x, 0x%x, %d, %p);\n", target, format, len, (const void *) string));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BindProgramARB)(GLenum target, GLuint program)
+{
+   DISPATCH(BindProgramARB, (target, program), (F, "glBindProgramARB(0x%x, %d);\n", target, program));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteProgramsARB)(GLsizei n, const GLuint * programs)
+{
+   DISPATCH(DeleteProgramsARB, (n, programs), (F, "glDeleteProgramsARB(%d, %p);\n", n, (const void *) programs));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GenProgramsARB)(GLsizei n, GLuint * programs)
+{
+   DISPATCH(GenProgramsARB, (n, programs), (F, "glGenProgramsARB(%d, %p);\n", n, (const void *) programs));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   DISPATCH(ProgramEnvParameter4dARB, (target, index, x, y, z, w), (F, "glProgramEnvParameter4dARB(0x%x, %d, %f, %f, %f, %f);\n", target, index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params)
+{
+   DISPATCH(ProgramEnvParameter4dvARB, (target, index, params), (F, "glProgramEnvParameter4dvARB(0x%x, %d, %p /* %g, %g, %g, %g */);\n", target, index, (const void *) params, params[0], params[1], params[2], params[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   DISPATCH(ProgramEnvParameter4fARB, (target, index, x, y, z, w), (F, "glProgramEnvParameter4fARB(0x%x, %d, %f, %f, %f, %f);\n", target, index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramEnvParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params)
+{
+   DISPATCH(ProgramEnvParameter4fvARB, (target, index, params), (F, "glProgramEnvParameter4fvARB(0x%x, %d, %p /* %g, %g, %g, %g */);\n", target, index, (const void *) params, params[0], params[1], params[2], params[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameter4dARB)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   DISPATCH(ProgramLocalParameter4dARB, (target, index, x, y, z, w), (F, "glProgramLocalParameter4dARB(0x%x, %d, %f, %f, %f, %f);\n", target, index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameter4dvARB)(GLenum target, GLuint index, const GLdouble * params)
+{
+   DISPATCH(ProgramLocalParameter4dvARB, (target, index, params), (F, "glProgramLocalParameter4dvARB(0x%x, %d, %p /* %g, %g, %g, %g */);\n", target, index, (const void *) params, params[0], params[1], params[2], params[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameter4fARB)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   DISPATCH(ProgramLocalParameter4fARB, (target, index, x, y, z, w), (F, "glProgramLocalParameter4fARB(0x%x, %d, %f, %f, %f, %f);\n", target, index, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramLocalParameter4fvARB)(GLenum target, GLuint index, const GLfloat * params)
+{
+   DISPATCH(ProgramLocalParameter4fvARB, (target, index, params), (F, "glProgramLocalParameter4fvARB(0x%x, %d, %p /* %g, %g, %g, %g */);\n", target, index, (const void *) params, params[0], params[1], params[2], params[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramEnvParameterdvARB)(GLenum target, GLuint index, GLdouble * params)
+{
+   DISPATCH(GetProgramEnvParameterdvARB, (target, index, params), (F, "glGetProgramEnvParameterdvARB(0x%x, %d, %p);\n", target, index, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramEnvParameterfvARB)(GLenum target, GLuint index, GLfloat * params)
+{
+   DISPATCH(GetProgramEnvParameterfvARB, (target, index, params), (F, "glGetProgramEnvParameterfvARB(0x%x, %d, %p);\n", target, index, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramLocalParameterdvARB)(GLenum target, GLuint index, GLdouble * params)
+{
+   DISPATCH(GetProgramLocalParameterdvARB, (target, index, params), (F, "glGetProgramLocalParameterdvARB(0x%x, %d, %p);\n", target, index, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramLocalParameterfvARB)(GLenum target, GLuint index, GLfloat * params)
+{
+   DISPATCH(GetProgramLocalParameterfvARB, (target, index, params), (F, "glGetProgramLocalParameterfvARB(0x%x, %d, %p);\n", target, index, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramivARB)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetProgramivARB, (target, pname, params), (F, "glGetProgramivARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramStringARB)(GLenum target, GLenum pname, GLvoid * string)
+{
+   DISPATCH(GetProgramStringARB, (target, pname, string), (F, "glGetProgramStringARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) string));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribdvARB)(GLuint index, GLenum pname, GLdouble * params)
+{
+   DISPATCH(GetVertexAttribdvARB, (index, pname, params), (F, "glGetVertexAttribdvARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribfvARB)(GLuint index, GLenum pname, GLfloat * params)
+{
+   DISPATCH(GetVertexAttribfvARB, (index, pname, params), (F, "glGetVertexAttribfvARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribivARB)(GLuint index, GLenum pname, GLint * params)
+{
+   DISPATCH(GetVertexAttribivARB, (index, pname, params), (F, "glGetVertexAttribivARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribPointervARB)(GLuint index, GLenum pname, GLvoid ** params)
+{
+   DISPATCH(GetVertexAttribPointervARB, (index, pname, params), (F, "glGetVertexAttribPointervARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsProgramARB)(GLuint program)
+{
+   RETURN_DISPATCH(IsProgramARB, (program), (F, "glIsProgramARB(%d);\n", program));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramNamedParameter4fNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   DISPATCH(ProgramNamedParameter4fNV, (id, len, name, x, y, z, w), (F, "glProgramNamedParameter4fNV(%d, %d, %p, %f, %f, %f, %f);\n", id, len, (const void *) name, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramNamedParameter4dNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   DISPATCH(ProgramNamedParameter4dNV, (id, len, name, x, y, z, w), (F, "glProgramNamedParameter4dNV(%d, %d, %p, %f, %f, %f, %f);\n", id, len, (const void *) name, x, y, z, w));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramNamedParameter4fvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLfloat * v)
+{
+   DISPATCH(ProgramNamedParameter4fvNV, (id, len, name, v), (F, "glProgramNamedParameter4fvNV(%d, %d, %p, %p /* %g, %g, %g, %g */);\n", id, len, (const void *) name, (const void *) v, v[0], v[1], v[2], v[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ProgramNamedParameter4dvNV)(GLuint id, GLsizei len, const GLubyte * name, const GLdouble * v)
+{
+   DISPATCH(ProgramNamedParameter4dvNV, (id, len, name, v), (F, "glProgramNamedParameter4dvNV(%d, %d, %p, %p /* %g, %g, %g, %g */);\n", id, len, (const void *) name, (const void *) v, v[0], v[1], v[2], v[3]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramNamedParameterfvNV)(GLuint id, GLsizei len, const GLubyte * name, GLfloat * params)
+{
+   DISPATCH(GetProgramNamedParameterfvNV, (id, len, name, params), (F, "glGetProgramNamedParameterfvNV(%d, %d, %p, %p);\n", id, len, (const void *) name, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetProgramNamedParameterdvNV)(GLuint id, GLsizei len, const GLubyte * name, GLdouble * params)
+{
+   DISPATCH(GetProgramNamedParameterdvNV, (id, len, name, params), (F, "glGetProgramNamedParameterdvNV(%d, %d, %p, %p);\n", id, len, (const void *) name, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BindBufferARB)(GLenum target, GLuint buffer)
+{
+   DISPATCH(BindBufferARB, (target, buffer), (F, "glBindBufferARB(0x%x, %d);\n", target, buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteBuffersARB)(GLsizei n, const GLuint * buffer)
+{
+   DISPATCH(DeleteBuffersARB, (n, buffer), (F, "glDeleteBuffersARB(%d, %p);\n", n, (const void *) buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GenBuffersARB)(GLsizei n, GLuint * buffer)
+{
+   DISPATCH(GenBuffersARB, (n, buffer), (F, "glGenBuffersARB(%d, %p);\n", n, (const void *) buffer));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsBufferARB)(GLuint buffer)
+{
+   RETURN_DISPATCH(IsBufferARB, (buffer), (F, "glIsBufferARB(%d);\n", buffer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BufferDataARB)(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage)
+{
+   DISPATCH(BufferDataARB, (target, size, data, usage), (F, "glBufferDataARB(0x%x, %p, %p, 0x%x);\n", target, (const void *) size, (const void *) data, usage));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data)
+{
+   DISPATCH(BufferSubDataARB, (target, offset, size, data), (F, "glBufferSubDataARB(0x%x, %p, %p, %p);\n", target, (const void *) offset, (const void *) size, (const void *) data));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data)
+{
+   DISPATCH(GetBufferSubDataARB, (target, offset, size, data), (F, "glGetBufferSubDataARB(0x%x, %p, %p, %p);\n", target, (const void *) offset, (const void *) size, (const void *) data));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MapBufferARB)(GLenum target, GLenum access)
+{
+   DISPATCH(MapBufferARB, (target, access), (F, "glMapBufferARB(0x%x, 0x%x);\n", target, access));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(UnmapBufferARB)(GLenum target)
+{
+   RETURN_DISPATCH(UnmapBufferARB, (target), (F, "glUnmapBufferARB(0x%x);\n", target));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferParameterivARB)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetBufferParameterivARB, (target, pname, params), (F, "glGetBufferParameterivARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetBufferPointervARB)(GLenum target, GLenum pname, GLvoid ** params)
+{
+   DISPATCH(GetBufferPointervARB, (target, pname, params), (F, "glGetBufferPointervARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
 
 
 /*
@@ -4891,6 +5286,85 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(GetFenceivNV),
    TABLE_ENTRY(FinishFenceNV),
    TABLE_ENTRY(SetFenceNV),
+   TABLE_ENTRY(VertexAttrib1sARB),
+   TABLE_ENTRY(VertexAttrib1fARB),
+   TABLE_ENTRY(VertexAttrib1dARB),
+   TABLE_ENTRY(VertexAttrib2sARB),
+   TABLE_ENTRY(VertexAttrib2fARB),
+   TABLE_ENTRY(VertexAttrib2dARB),
+   TABLE_ENTRY(VertexAttrib3sARB),
+   TABLE_ENTRY(VertexAttrib3fARB),
+   TABLE_ENTRY(VertexAttrib3dARB),
+   TABLE_ENTRY(VertexAttrib4sARB),
+   TABLE_ENTRY(VertexAttrib4fARB),
+   TABLE_ENTRY(VertexAttrib4dARB),
+   TABLE_ENTRY(VertexAttrib4NubARB),
+   TABLE_ENTRY(VertexAttrib1svARB),
+   TABLE_ENTRY(VertexAttrib1fvARB),
+   TABLE_ENTRY(VertexAttrib1dvARB),
+   TABLE_ENTRY(VertexAttrib2svARB),
+   TABLE_ENTRY(VertexAttrib2fvARB),
+   TABLE_ENTRY(VertexAttrib2dvARB),
+   TABLE_ENTRY(VertexAttrib3svARB),
+   TABLE_ENTRY(VertexAttrib3fvARB),
+   TABLE_ENTRY(VertexAttrib3dvARB),
+   TABLE_ENTRY(VertexAttrib4bvARB),
+   TABLE_ENTRY(VertexAttrib4svARB),
+   TABLE_ENTRY(VertexAttrib4ivARB),
+   TABLE_ENTRY(VertexAttrib4ubvARB),
+   TABLE_ENTRY(VertexAttrib4usvARB),
+   TABLE_ENTRY(VertexAttrib4uivARB),
+   TABLE_ENTRY(VertexAttrib4fvARB),
+   TABLE_ENTRY(VertexAttrib4dvARB),
+   TABLE_ENTRY(VertexAttrib4NbvARB),
+   TABLE_ENTRY(VertexAttrib4NsvARB),
+   TABLE_ENTRY(VertexAttrib4NivARB),
+   TABLE_ENTRY(VertexAttrib4NubvARB),
+   TABLE_ENTRY(VertexAttrib4NusvARB),
+   TABLE_ENTRY(VertexAttrib4NuivARB),
+   TABLE_ENTRY(VertexAttribPointerARB),
+   TABLE_ENTRY(EnableVertexAttribArrayARB),
+   TABLE_ENTRY(DisableVertexAttribArrayARB),
+   TABLE_ENTRY(ProgramStringARB),
+   TABLE_ENTRY(BindProgramARB),
+   TABLE_ENTRY(DeleteProgramsARB),
+   TABLE_ENTRY(GenProgramsARB),
+   TABLE_ENTRY(ProgramEnvParameter4dARB),
+   TABLE_ENTRY(ProgramEnvParameter4dvARB),
+   TABLE_ENTRY(ProgramEnvParameter4fARB),
+   TABLE_ENTRY(ProgramEnvParameter4fvARB),
+   TABLE_ENTRY(ProgramLocalParameter4dARB),
+   TABLE_ENTRY(ProgramLocalParameter4dvARB),
+   TABLE_ENTRY(ProgramLocalParameter4fARB),
+   TABLE_ENTRY(ProgramLocalParameter4fvARB),
+   TABLE_ENTRY(GetProgramEnvParameterdvARB),
+   TABLE_ENTRY(GetProgramEnvParameterfvARB),
+   TABLE_ENTRY(GetProgramLocalParameterdvARB),
+   TABLE_ENTRY(GetProgramLocalParameterfvARB),
+   TABLE_ENTRY(GetProgramivARB),
+   TABLE_ENTRY(GetProgramStringARB),
+   TABLE_ENTRY(GetVertexAttribdvARB),
+   TABLE_ENTRY(GetVertexAttribfvARB),
+   TABLE_ENTRY(GetVertexAttribivARB),
+   TABLE_ENTRY(GetVertexAttribPointervARB),
+   TABLE_ENTRY(IsProgramARB),
+   TABLE_ENTRY(ProgramNamedParameter4fNV),
+   TABLE_ENTRY(ProgramNamedParameter4dNV),
+   TABLE_ENTRY(ProgramNamedParameter4fvNV),
+   TABLE_ENTRY(ProgramNamedParameter4dvNV),
+   TABLE_ENTRY(GetProgramNamedParameterfvNV),
+   TABLE_ENTRY(GetProgramNamedParameterdvNV),
+   TABLE_ENTRY(BindBufferARB),
+   TABLE_ENTRY(DeleteBuffersARB),
+   TABLE_ENTRY(GenBuffersARB),
+   TABLE_ENTRY(IsBufferARB),
+   TABLE_ENTRY(BufferDataARB),
+   TABLE_ENTRY(BufferSubDataARB),
+   TABLE_ENTRY(GetBufferSubDataARB),
+   TABLE_ENTRY(MapBufferARB),
+   TABLE_ENTRY(UnmapBufferARB),
+   TABLE_ENTRY(GetBufferParameterivARB),
+   TABLE_ENTRY(GetBufferPointervARB),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
