@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.46 2000/10/19 20:13:12 brianp Exp $ */
+/* $Id: glapi.c,v 1.47 2000/10/27 18:31:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -287,7 +287,7 @@ _glapi_get_dispatch_table_size(void)
 const char *
 _glapi_get_version(void)
 {
-   return "20000223";  /* YYYYMMDD */
+   return "20001026";  /* YYYYMMDD */
 }
 
 
@@ -1241,6 +1241,7 @@ static struct name_address_offset static_functions[] = {
         { "glGetPixelTransformParameterivEXT", NAME(glGetPixelTransformParameterivEXT), _gloffset_GetPixelTransformParameterivEXT },
         { "glGetPixelTransformParameterfvEXT", NAME(glGetPixelTransformParameterfvEXT), _gloffset_GetPixelTransformParameterfvEXT },
 #undef NAME
+#endif
 
         /* 145. GL_EXT_secondary_color */
 #ifdef GL_EXT_secondary_color
@@ -1256,14 +1257,6 @@ static struct name_address_offset static_functions[] = {
         { "glSecondaryColor3ubEXT", NAME(glSecondaryColor3ubEXT), _gloffset_SecondaryColor3ubEXT },
         { "glSecondaryColor3uiEXT", NAME(glSecondaryColor3uiEXT), _gloffset_SecondaryColor3uiEXT },
         { "glSecondaryColor3usEXT", NAME(glSecondaryColor3usEXT), _gloffset_SecondaryColor3usEXT },
-        { "glSecondaryColor4bEXT", NAME(glSecondaryColor4bEXT), _gloffset_SecondaryColor4bEXT },
-        { "glSecondaryColor4dEXT", NAME(glSecondaryColor4dEXT), _gloffset_SecondaryColor4dEXT },
-        { "glSecondaryColor4fEXT", NAME(glSecondaryColor4fEXT), _gloffset_SecondaryColor4fEXT },
-        { "glSecondaryColor4iEXT", NAME(glSecondaryColor4iEXT), _gloffset_SecondaryColor4iEXT },
-        { "glSecondaryColor4sEXT", NAME(glSecondaryColor4sEXT), _gloffset_SecondaryColor4sEXT },
-        { "glSecondaryColor4ubEXT", NAME(glSecondaryColor4ubEXT), _gloffset_SecondaryColor4ubEXT },
-        { "glSecondaryColor4uiEXT", NAME(glSecondaryColor4uiEXT), _gloffset_SecondaryColor4uiEXT },
-        { "glSecondaryColor4usEXT", NAME(glSecondaryColor4usEXT), _gloffset_SecondaryColor4usEXT },
         { "glSecondaryColor3bvEXT", NAME(glSecondaryColor3bvEXT), _gloffset_SecondaryColor3bvEXT },
 	{ "glSecondaryColor3dvEXT", NAME(glSecondaryColor3dvEXT), _gloffset_SecondaryColor3dvEXT },
 	{ "glSecondaryColor3fvEXT", NAME(glSecondaryColor3fvEXT), _gloffset_SecondaryColor3fvEXT },
@@ -1272,18 +1265,11 @@ static struct name_address_offset static_functions[] = {
 	{ "glSecondaryColor3ubvEXT", NAME(glSecondaryColor3ubvEXT), _gloffset_SecondaryColor3ubvEXT },
 	{ "glSecondaryColor3uivEXT", NAME(glSecondaryColor3uivEXT), _gloffset_SecondaryColor3uivEXT },
 	{ "glSecondaryColor3usvEXT", NAME(glSecondaryColor3usvEXT), _gloffset_SecondaryColor3usvEXT },
-	{ "glSecondaryColor4bvEXT", NAME(glSecondaryColor4bvEXT), _gloffset_SecondaryColor4bvEXT },
-	{ "glSecondaryColor4dvEXT", NAME(glSecondaryColor4dvEXT), _gloffset_SecondaryColor4dvEXT },
-	{ "glSecondaryColor4fvEXT", NAME(glSecondaryColor4fvEXT), _gloffset_SecondaryColor4fvEXT },
-	{ "glSecondaryColor4ivEXT", NAME(glSecondaryColor4ivEXT), _gloffset_SecondaryColor4ivEXT },
-	{ "glSecondaryColor4svEXT", NAME(glSecondaryColor4svEXT), _gloffset_SecondaryColor4svEXT },
-	{ "glSecondaryColor4ubvEXT", NAME(glSecondaryColor4ubvEXT), _gloffset_SecondaryColor4ubvEXT },
-	{ "glSecondaryColor4uivEXT", NAME(glSecondaryColor4uivEXT), _gloffset_SecondaryColor4uivEXT },
-	{ "glSecondaryColor4usvEXT", NAME(glSecondaryColor4usvEXT), _gloffset_SecondaryColor4usvEXT },
 	{ "glSecondaryColorPointerEXT", NAME(glSecondaryColorPointerEXT), _gloffset_SecondaryColorPointerEXT },
 #undef NAME
 
 	/* 147. GL_EXT_texture_perturb_normal */
+#if 000
 #ifdef GL_EXT_texture_perturb_normal
 #define NAME(X) (GLvoid *) X
 #else
@@ -1291,8 +1277,10 @@ static struct name_address_offset static_functions[] = {
 #endif
 	{ "glTextureNormalEXT", NAME(glTextureNormalEXT), _gloffset_TextureNormalEXT },
 #undef NAME
+#endif
 
 	/* 148. GL_EXT_multi_draw_arrays */
+#if 000
 #ifdef GL_EXT_multi_draw_arrays
 #define NAME(X) (GLvoid *) X
 #else
@@ -1315,8 +1303,8 @@ static struct name_address_offset static_functions[] = {
 	{ "glFogCoordPointerEXT", NAME(glFogCoordPointerEXT), _gloffset_FogCoordPointerEXT },
 #undef NAME
 
-#if 000
 	/* 156. GL_EXT_coordinate_frame */
+#if 000
 #ifdef GL_EXT_coordinate_frame
 #define NAME(X) (GLvoid *) X
 #else
@@ -1345,8 +1333,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glTangentPointerEXT", NAME(glTangentPointerEXT), _gloffset_TangentPointerEXT },
 	{ "glBinormalPointerEXT", NAME(glBinormalPointerEXT), _gloffset_BinormalPointerEXT },
 #undef NAME
+#endif
 
 	/* 164. GL_SUN_global_alpha */
+#if 000
 #ifdef GL_SUN_global_alpha
 #define NAME(X) (GLvoid *) X
 #else
@@ -1361,8 +1351,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glGlobalAlphaFactorusSUN", NAME(glGlobalAlphaFactorusSUN), _gloffset_GlobalAlphaFactorusSUN },
 	{ "glGlobalAlphaFactoruiSUN", NAME(glGlobalAlphaFactoruiSUN), _gloffset_GlobalAlphaFactoruiSUN },
 #undef NAME
+#endif
 
 	/* 165. GL_SUN_triangle_list */
+#if 000
 #ifdef GL_SUN_triangle_list
 #define NAME(X) (GLvoid *) X
 #else
@@ -1376,8 +1368,10 @@ static struct name_address_offset static_functions[] = {
 	{ "glReplacementCodeubvSUN", NAME(glReplacementCodeubvSUN), _gloffset_ReplacementCodeubvSUN },
 	{ "glReplacementCodePointerSUN", NAME(glReplacementCodePointerSUN), _gloffset_ReplacementCodePointerSUN },
 #undef NAME
+#endif
 
 	/* 166. GL_SUN_vertex */
+#if 000
 #ifdef GL_SUN_vertex
 #define NAME(X) (GLvoid *) X
 #else
@@ -1847,6 +1841,14 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (istextureFunc - (char *) table) / sizeof(void *);
       assert(istextureOffset == _gloffset_IsTextureEXT);
       assert(istextureOffset == offset);
+   }
+   {
+      GLuint secondaryColor3fOffset = _glapi_get_proc_offset("glSecondaryColor3fEXT");
+      char *secondaryColor3fFunc = (char*) &table->SecondaryColor3fEXT;
+      GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
+      assert(secondaryColor3fOffset == _gloffset_SecondaryColor3fEXT);
+      assert(secondaryColor3fOffset == offset);
+      assert(_glapi_get_proc_address("glSecondaryColor3fEXT") == (void *) &glSecondaryColor3fEXT);
    }
 #endif
 }

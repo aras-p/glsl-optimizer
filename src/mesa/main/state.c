@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.34 2000/10/27 16:44:41 keithw Exp $ */
+/* $Id: state.c,v 1.35 2000/10/27 18:31:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -360,27 +360,23 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->Scaled = _mesa_Scaled;
    exec->Scalef = _mesa_Scalef;
    exec->Scissor = _mesa_Scissor;
-
-#if 0
-   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3bEXT;
-   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3bvEXT;
-   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3sEXT;
-   exec->SecondaryColordvEXT = _mesa_SecondaryColor3svEXT;
-   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3iEXT;
-   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3ivEXT;
-   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3fEXT;
-   exec->SecondaryColordvEXT = _mesa_SecondaryColor3fvEXT;
-   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3dEXT;
-   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3dvEXT;
-   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3ubEXT;
-   exec->SecondaryColordvEXT = _mesa_SecondaryColor3ubvEXT;
-   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3usEXT;
-   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3usvEXT;
-   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3uiEXT;
-   exec->SecondaryColordvEXT = _mesa_SecondaryColor3uivEXT;
+   exec->SecondaryColor3bEXT = _mesa_SecondaryColor3bEXT;
+   exec->SecondaryColor3bvEXT = _mesa_SecondaryColor3bvEXT;
+   exec->SecondaryColor3sEXT = _mesa_SecondaryColor3sEXT;
+   exec->SecondaryColor3svEXT = _mesa_SecondaryColor3svEXT;
+   exec->SecondaryColor3iEXT = _mesa_SecondaryColor3iEXT;
+   exec->SecondaryColor3ivEXT = _mesa_SecondaryColor3ivEXT;
+   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3fEXT;
+   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3fvEXT;
+   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3dEXT;
+   exec->SecondaryColor3dvEXT = _mesa_SecondaryColor3dvEXT;
+   exec->SecondaryColor3ubEXT = _mesa_SecondaryColor3ubEXT;
+   exec->SecondaryColor3ubvEXT = _mesa_SecondaryColor3ubvEXT;
+   exec->SecondaryColor3usEXT = _mesa_SecondaryColor3usEXT;
+   exec->SecondaryColor3usvEXT = _mesa_SecondaryColor3usvEXT;
+   exec->SecondaryColor3uiEXT = _mesa_SecondaryColor3uiEXT;
+   exec->SecondaryColor3uivEXT = _mesa_SecondaryColor3uivEXT;
    exec->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
-#endif
-
    exec->SelectBuffer = _mesa_SelectBuffer;
    exec->ShadeModel = _mesa_ShadeModel;
    exec->StencilFunc = _mesa_StencilFunc;

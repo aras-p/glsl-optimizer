@@ -4428,6 +4428,142 @@ GL_PREFIX(DrawRangeElementsEXT):
 	JMP(GL_OFFSET(_gloffset_DrawRangeElements))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3bEXT))
+GL_PREFIX(SecondaryColor3bEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3bEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3bEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3bvEXT))
+GL_PREFIX(SecondaryColor3bvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3bvEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3bvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3dEXT))
+GL_PREFIX(SecondaryColor3dEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3dEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3dEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3dvEXT))
+GL_PREFIX(SecondaryColor3dvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3dvEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3dvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3fEXT))
+GL_PREFIX(SecondaryColor3fEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3fEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3fEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3fvEXT))
+GL_PREFIX(SecondaryColor3fvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3fvEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3fvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3iEXT))
+GL_PREFIX(SecondaryColor3iEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3iEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3iEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3ivEXT))
+GL_PREFIX(SecondaryColor3ivEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3ivEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3ivEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3sEXT))
+GL_PREFIX(SecondaryColor3sEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3sEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3sEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3svEXT))
+GL_PREFIX(SecondaryColor3svEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3svEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3svEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3ubEXT))
+GL_PREFIX(SecondaryColor3ubEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3ubEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3ubvEXT))
+GL_PREFIX(SecondaryColor3ubvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3ubvEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3ubvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3uiEXT))
+GL_PREFIX(SecondaryColor3uiEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3uiEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3uiEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3uivEXT))
+GL_PREFIX(SecondaryColor3uivEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3uivEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3uivEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3usEXT))
+GL_PREFIX(SecondaryColor3usEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3usEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3usEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColor3usvEXT))
+GL_PREFIX(SecondaryColor3usvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColor3usvEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColor3usvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SecondaryColorPointerEXT))
+GL_PREFIX(SecondaryColorPointerEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SecondaryColorPointerEXT))
+	JMP(GL_OFFSET(_gloffset_SecondaryColorPointerEXT))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(FogCoordfEXT))
 GL_PREFIX(FogCoordfEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)

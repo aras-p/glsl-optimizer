@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.22 2000/06/12 15:38:43 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.23 2000/10/27 18:31:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2871,7 +2871,90 @@ KEYWORD1 void KEYWORD2 NAME(GetPixelTransformParameterfvEXT)(GLenum target, GLen
 
 
 /* 145. GL_EXT_secondary_color */
-/* XXX todo */
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3bEXT)(GLbyte red, GLbyte green, GLbyte blue)
+{
+   DISPATCH(SecondaryColor3bEXT, (red, green, blue), (F, "glSecondaryColor3bEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3bvEXT)(const GLbyte *v)
+{
+   DISPATCH(SecondaryColor3bvEXT, (v), (F, "glSecondaryColor3bvEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3dEXT)(GLdouble red, GLdouble green, GLdouble blue)
+{
+   DISPATCH(SecondaryColor3dEXT, (red, green, blue), (F, "glSecondaryColor3dEXT(%g, %g, %g);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3dvEXT)(const GLdouble * v)
+{
+   DISPATCH(SecondaryColor3dvEXT, (v), (F, "glSecondaryColor3dvEXT(%g, %g, %g);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3fEXT)(GLfloat red, GLfloat green, GLfloat blue)
+{
+   DISPATCH(SecondaryColor3fEXT, (red, green, blue), (F, "glSecondaryColor3fEXT(%g, %g, %g);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3fvEXT)(const GLfloat * v)
+{
+   DISPATCH(SecondaryColor3fvEXT, (v), (F, "glSecondaryColor3fvEXT(%g, %g, %g);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3iEXT)(GLint red, GLint green, GLint blue)
+{
+   DISPATCH(SecondaryColor3iEXT, (red, green, blue), (F, "glSecondaryColor3iEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ivEXT)(const GLint * v)
+{
+   DISPATCH(SecondaryColor3ivEXT, (v), (F, "glSecondaryColor3ivEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3sEXT)(GLshort red, GLshort green, GLshort blue)
+{
+   DISPATCH(SecondaryColor3sEXT, (red, green, blue), (F, "glSecondaryColor3sEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3svEXT)(const GLshort * v)
+{
+   DISPATCH(SecondaryColor3svEXT, (v), (F, "glSecondaryColor3svEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ubEXT)(GLubyte red, GLubyte green, GLubyte blue)
+{
+   DISPATCH(SecondaryColor3ubEXT, (red, green, blue), (F, "glSecondaryColor3ubEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ubvEXT)(const GLubyte * v)
+{
+   DISPATCH(SecondaryColor3ubvEXT, (v), (F, "glSecondaryColor3ubvEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3uiEXT)(GLuint red, GLuint green, GLuint blue)
+{
+   DISPATCH(SecondaryColor3uiEXT, (red, green, blue), (F, "glSecondaryColor3uiEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3uivEXT)(const GLuint * v)
+{
+   DISPATCH(SecondaryColor3uivEXT, (v), (F, "glSecondaryColor3uivEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3usEXT)(GLushort red, GLushort green, GLushort blue)
+{
+   DISPATCH(SecondaryColor3usEXT, (red, green, blue), (F, "glSecondaryColor3usEXT(%d, %d, %d);", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3usvEXT)(const GLushort * v)
+{
+   DISPATCH(SecondaryColor3usvEXT, (v), (F, "glSecondaryColor3usvEXT(%d, %d, %d);", v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, GLvoid * pointer)
+{
+   DISPATCH(SecondaryColorPointerEXT, (size, type, stride, pointer), (F, "glSecondaryColorPointerEXT(%d, 0x%x, %d, %p);", size, type, stride, pointer));
+}
 
 
 

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.37 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: extensions.c,v 1.38 2000/10/27 18:31:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,20 +56,24 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_ARB_texture_env_add" },
    { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
+   { DEFAULT_OFF,    "GL_EXT_bgra" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
    { DEFAULT_ON,     "GL_EXT_blend_func_separate" },
    { DEFAULT_ON,     "GL_EXT_blend_logic_op" },
    { DEFAULT_ON,     "GL_EXT_blend_minmax" },
    { DEFAULT_ON,     "GL_EXT_blend_subtract" },
    { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
+   { DEFAULT_OFF,    "GL_EXT_cull_vertex" },
    { DEFAULT_ON,     "GL_EXT_convolution" },
    { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
+   { DEFAULT_ON,     "GL_EXT_fog_coord" },
    { DEFAULT_ON,     "GL_EXT_histogram" },
    { DEFAULT_ON,     "GL_EXT_packed_pixels" },
    { DEFAULT_ON,     "GL_EXT_paletted_texture" },
    { DEFAULT_ON,     "GL_EXT_point_parameters" },
    { ALWAYS_ENABLED, "GL_EXT_polygon_offset" },
    { ALWAYS_ENABLED, "GL_EXT_rescale_normal" },
+   { DEFAULT_ON,     "GL_EXT_secondary_color" }, 
    { DEFAULT_ON,     "GL_EXT_shared_texture_palette" },
    { DEFAULT_ON,     "GL_EXT_stencil_wrap" },
    { DEFAULT_ON,     "GL_EXT_texture3D" },
@@ -92,12 +96,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_SGIS_pixel_texture" },
    { DEFAULT_ON,     "GL_SGIS_texture_edge_clamp" },
    { DEFAULT_ON,     "GL_SGIX_pixel_texture" },
-   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" },
-
-   { DEFAULT_OFF,    "GL_EXT_secondary_color" }, 
-   { DEFAULT_ON,     "GL_EXT_fog_coord" },
-   { DEFAULT_OFF,    "GL_EXT_bgra" },
-   { DEFAULT_OFF,    "GL_EXT_cull_vertex" },
+   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" }
 };
 
 

@@ -548,8 +548,8 @@ struct _glapi_table
    void (*IndexFuncEXT)(GLenum func, GLclampf ref); /* 539 */
    void (*LockArraysEXT)(GLint first, GLsizei count); /* 540 */
    void (*UnlockArraysEXT)(void); /* 541 */
-   void (*CullParameterdvEXT)(GLenum pname, const GLdouble * params); /* 542 */
-   void (*CullParameterfvEXT)(GLenum pname, const GLfloat * params); /* 543 */
+   void (*CullParameterdvEXT)(GLenum pname, GLdouble * params); /* 542 */
+   void (*CullParameterfvEXT)(GLenum pname, GLfloat * params); /* 543 */
    void (*HintPGI)(GLenum target, GLint mode); /* 544 */
    void (*FogCoordfEXT)(GLfloat coord); /* 545 */
    void (*FogCoordfvEXT)(const GLfloat * coord); /* 546 */
@@ -567,6 +567,23 @@ struct _glapi_table
    void (*CompressedTexSubImage2DARB)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid * data); /* 558 */
    void (*CompressedTexSubImage1DARB)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid * data); /* 559 */
    void (*GetCompressedTexImageARB)(GLenum target, GLint level, void * img); /* 560 */
+   void (*SecondaryColor3bEXT)(GLbyte red, GLbyte green, GLbyte blue); /* 561 */
+   void (*SecondaryColor3bvEXT)(const GLbyte * v); /* 562 */
+   void (*SecondaryColor3dEXT)(GLdouble red, GLdouble green, GLdouble blue); /* 563 */
+   void (*SecondaryColor3dvEXT)(const GLdouble * v); /* 564 */
+   void (*SecondaryColor3fEXT)(GLfloat red, GLfloat green, GLfloat blue); /* 565 */
+   void (*SecondaryColor3fvEXT)(const GLfloat * v); /* 566 */
+   void (*SecondaryColor3iEXT)(GLint red, GLint green, GLint blue); /* 567 */
+   void (*SecondaryColor3ivEXT)(const GLint * v); /* 568 */
+   void (*SecondaryColor3sEXT)(GLshort red, GLshort green, GLshort blue); /* 569 */
+   void (*SecondaryColor3svEXT)(const GLshort * v); /* 570 */
+   void (*SecondaryColor3ubEXT)(GLubyte red, GLubyte green, GLubyte blue); /* 571 */
+   void (*SecondaryColor3ubvEXT)(const GLubyte * v); /* 572 */
+   void (*SecondaryColor3uiEXT)(GLuint red, GLuint green, GLuint blue); /* 573 */
+   void (*SecondaryColor3uivEXT)(const GLuint * v); /* 574 */
+   void (*SecondaryColor3usEXT)(GLushort red, GLushort green, GLushort blue); /* 575 */
+   void (*SecondaryColor3usvEXT)(const GLushort * v); /* 576 */
+   void (*SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 577 */
 };
 
 #endif

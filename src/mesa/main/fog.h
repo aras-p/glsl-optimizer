@@ -1,8 +1,8 @@
-/* $Id: fog.h,v 1.5 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: fog.h,v 1.6 2000/10/27 18:31:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -49,9 +49,6 @@ extern void
 _mesa_Fogiv(GLenum pname, const GLint *params );
 
 
-
-extern void
-_mesa_fog_vertices( struct vertex_buffer *VB );
 
 extern void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,

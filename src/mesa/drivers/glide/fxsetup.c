@@ -1435,7 +1435,7 @@ static void fxSetupColorMask(GLcontext *ctx)
  */
 static void fxSetupFog(GLcontext *ctx)
 {
-  if (ctx->Fog.Enabled && ctx->FogMode==FOG_FRAGMENT) {
+  if (ctx->Fog.Enabled /*&& ctx->FogMode==FOG_FRAGMENT*/) {
     fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
     /* update fog color */

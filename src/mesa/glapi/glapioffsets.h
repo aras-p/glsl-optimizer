@@ -563,5 +563,22 @@
 #define _gloffset_CompressedTexSubImage2DARB 558
 #define _gloffset_CompressedTexSubImage1DARB 559
 #define _gloffset_GetCompressedTexImageARB 560
+#define _gloffset_SecondaryColor3bEXT 561
+#define _gloffset_SecondaryColor3bvEXT 562
+#define _gloffset_SecondaryColor3dEXT 563
+#define _gloffset_SecondaryColor3dvEXT 564
+#define _gloffset_SecondaryColor3fEXT 565
+#define _gloffset_SecondaryColor3fvEXT 566
+#define _gloffset_SecondaryColor3iEXT 567
+#define _gloffset_SecondaryColor3ivEXT 568
+#define _gloffset_SecondaryColor3sEXT 569
+#define _gloffset_SecondaryColor3svEXT 570
+#define _gloffset_SecondaryColor3ubEXT 571
+#define _gloffset_SecondaryColor3ubvEXT 572
+#define _gloffset_SecondaryColor3uiEXT 573
+#define _gloffset_SecondaryColor3uivEXT 574
+#define _gloffset_SecondaryColor3usEXT 575
+#define _gloffset_SecondaryColor3usvEXT 576
+#define _gloffset_SecondaryColorPointerEXT 577
 
 #endif
