@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.21 2000/01/08 11:01:25 brianp Exp $ */
+/* $Id: glapi.c,v 1.22 2000/01/10 04:29:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -502,15 +502,44 @@ _glapi_check_table(const struct _glapi_table *table)
 #define NAME(func)  gl##func
 #endif
 
-#define DISPATCH(FUNC, ARGS) 					\
+#ifdef DEBUG
+
+#include <stdio.h>
+
+static int
+trace(void)
+{
+   static int trace = -1;
+   if (trace < 0)
+      trace = getenv("MESA_TRACE") ? 1 : 0;
+   return trace > 0;
+}
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)				\
+   const struct _glapi_table *dispatch;				\
+   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+   if (trace()) printf MESSAGE;					\
+   (dispatch->FUNC) ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 			\
+   const struct _glapi_table *dispatch;				\
+   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+   if (trace()) printf MESSAGE;					\
+   return (dispatch->FUNC) ARGS
+
+#else
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)				\
    const struct _glapi_table *dispatch;				\
    dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
    (dispatch->FUNC) ARGS
 
-#define RETURN_DISPATCH(FUNC, ARGS) 				\
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)			\
    const struct _glapi_table *dispatch;				\
    dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
    return (dispatch->FUNC) ARGS
+
+#endif
 
 
 #ifndef GLAPIENTRY
