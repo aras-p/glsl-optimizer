@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glapitemp.py,v 1.1 2001/11/18 22:42:57 brianp Exp $
+# $Id: glapitemp.py,v 1.2 2001/12/14 03:17:00 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -87,7 +87,9 @@ def PrintHead():
 #error RETURN_DISPATCH must be defined
 #endif
 
+extern void gl__unused413(void);  /* silence warning */
 """
+
 #enddef
 
 
@@ -140,8 +142,8 @@ def MakePrintfString(funcName, argTypeList, argNameList):
 		i = i + 1
 	#endfor
 
-	result = result + ');"'
-	
+	result = result + ');\\n"'
+
 	n = len(argNameList)
 	i = 1
 	if n > 0:
