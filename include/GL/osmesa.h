@@ -1,10 +1,10 @@
-/* $Id: osmesa.h,v 1.7 2001/06/27 13:56:17 brianp Exp $ */
+/* $Id: osmesa.h,v 1.8 2001/08/28 23:12:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  3.5.1
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,7 @@ extern "C" {
 
 #define OSMESA_MAJOR_VERSION 3
 #define OSMESA_MINOR_VERSION 5
+#define OSMESA_PATCH_VERSION 1
 
 
 
@@ -95,6 +96,8 @@ extern "C" {
 #define OSMESA_HEIGHT		0x21
 #define OSMESA_FORMAT		0x22
 #define OSMESA_TYPE		0x23
+#define OSMESA_MAX_WIDTH	0x24  /* new in 3.5.1 */
+#define OSMESA_MAX_HEIGHT	0x25  /* new in 3.5.1 */
 
 
 typedef struct osmesa_context *OSMesaContext;

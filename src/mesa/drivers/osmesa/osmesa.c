@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.64 2001/08/28 22:46:22 brianp Exp $ */
+/* $Id: osmesa.c,v 1.65 2001/08/28 23:12:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -552,6 +552,12 @@ void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
          return;
       case OSMESA_Y_UP:
          *value = ctx->yup;
+         return;
+      case OSMESA_MAX_WIDTH:
+         *value = MAX_WIDTH;
+         return;
+      case OSMESA_MAX_HEIGHT:
+         *value = MAX_HEIGHT;
          return;
       default:
          _mesa_error(&ctx->gl_ctx, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
