@@ -1,0 +1,7 @@
+
+This directory is for doxygen (a source code documentation system).
+
+See http://www.doxygen.org/ for more info.
+
+Either run 'make' (Unix) or 'doxy.bat' (Windows) to run doxygen
+and generate souce code documentation.
