@@ -185,6 +185,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
 	    _mesa_BindFragmentShaderATI(0);
 	 }
       }
+#if 0
       if (!prog->DeletePending) {
 	 prog->DeletePending = GL_TRUE;
 	 prog->RefCount--;
@@ -193,6 +194,14 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
 	 _mesa_HashRemove(ctx->Shared->Programs, id);
 	 ctx->Driver.DeleteProgram(ctx, prog);
       }
+#else
+      /* The ID is immediately available for re-use now */
+      _mesa_HashRemove(ctx->Shared->Programs, id);
+      prog->RefCount--;
+      if (prog->RefCount <= 0) {
+         ctx->Driver.DeleteProgram(ctx, prog);
+      }
+#endif
    }
 }
 

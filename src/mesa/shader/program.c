@@ -940,9 +940,8 @@ _mesa_BindProgram(GLenum target, GLuint id)
          curProg->Base.RefCount--;
          /* and delete if refcount goes below one */
          if (curProg->Base.RefCount <= 0) {
-            ASSERT(curProg->Base.DeletePending);
+            /* the program ID was already removed from the hash table */
             ctx->Driver.DeleteProgram(ctx, &(curProg->Base));
-            _mesa_HashRemove(ctx->Shared->Programs, id);
          }
       }
    }
@@ -961,9 +960,8 @@ _mesa_BindProgram(GLenum target, GLuint id)
          curProg->Base.RefCount--;
          /* and delete if refcount goes below one */
          if (curProg->Base.RefCount <= 0) {
-            ASSERT(curProg->Base.DeletePending);
+            /* the program ID was already removed from the hash table */
             ctx->Driver.DeleteProgram(ctx, &(curProg->Base));
-            _mesa_HashRemove(ctx->Shared->Programs, id);
          }
       }
    }
@@ -1068,13 +1066,10 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
                _mesa_problem(ctx, "bad target in glDeleteProgramsNV");
                return;
             }
-            /* Decrement reference count if not already marked for delete */
-            if (!prog->DeletePending) {
-               prog->DeletePending = GL_TRUE;
-               prog->RefCount--;
-            }
+            /* The ID is immediately available for re-use now */
+            _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
+            prog->RefCount--;
             if (prog->RefCount <= 0) {
-               _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
                ctx->Driver.DeleteProgram(ctx, prog);
             }
          }

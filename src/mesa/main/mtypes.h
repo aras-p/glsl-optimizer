@@ -1475,7 +1475,6 @@ struct gl_buffer_object
    GLuint Size;              /**< Size of storage in bytes */
    GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
    GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
-   GLboolean DeletePending;  /**< Deleted by user but RefCount > 0? */
 };
 
 
@@ -1706,7 +1705,6 @@ struct program
 {
    GLuint Id;
    GLubyte *String;          /**< Null-terminated program text */
-   GLboolean DeletePending;  /**< User called glDeletePrograms? */
    GLint RefCount;
    GLenum Target;
    GLenum Format;            /**< String encoding format */

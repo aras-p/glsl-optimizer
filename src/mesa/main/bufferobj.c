@@ -533,9 +533,8 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
       assert(oldBufObj->RefCount >= 0);
       if (oldBufObj->RefCount == 0) {
 	 assert(oldBufObj->Name != 0);
-	 _mesa_remove_buffer_object(ctx, oldBufObj);
 	 ASSERT(ctx->Driver.DeleteBuffer);
-	 (*ctx->Driver.DeleteBuffer)( ctx, oldBufObj );
+	 ctx->Driver.DeleteBuffer( ctx, oldBufObj );
       }
    }
 }
@@ -635,20 +634,15 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
                _mesa_BindBufferARB( GL_PIXEL_UNPACK_BUFFER_EXT, 0 );
             }
 
-            /* decrement refcount and delete if <= 0 */
-            if (!bufObj->DeletePending) {
-               bufObj->DeletePending = GL_TRUE;
-               bufObj->RefCount--;
-            }
-
+            /* The ID is immediately freed for re-use */
+            _mesa_remove_buffer_object(ctx, bufObj);
+            bufObj->RefCount--;
             if (bufObj->RefCount <= 0) {
-               /* buffer should not be bound anymore! */
                ASSERT(ctx->Array.ArrayBufferObj != bufObj);
                ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
                ASSERT(ctx->Array.Vertex.BufferObj != bufObj);
-               _mesa_remove_buffer_object(ctx, bufObj);
                ASSERT(ctx->Driver.DeleteBuffer);
-               (*ctx->Driver.DeleteBuffer)(ctx, bufObj);
+               ctx->Driver.DeleteBuffer(ctx, bufObj);
             }
          }
       }
@@ -727,7 +721,7 @@ _mesa_IsBufferARB(GLuint id)
    bufObj = (struct gl_buffer_object *) _mesa_HashLookup(ctx->Shared->BufferObjects, id);
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-   return bufObj && !bufObj->DeletePending;
+   return bufObj ? GL_TRUE : GL_FALSE;
 }
 
 
