@@ -47,7 +47,7 @@ fxt1_encode (GLcontext *ctx,
              const void *source, int srcRowStride,
              void *dest, int destRowStride);
 void
-fxt1_decode_1 (const void *texture, int width,
+fxt1_decode_1 (const void *texture, int stride,
                int i, int j, unsigned char *rgba);
 
 
@@ -1749,7 +1749,7 @@ fxt1_decode_1ALPHA (unsigned char *code, int t, unsigned char *rgba)
 
 
 void
-fxt1_decode_1 (const void *texture, int width,
+fxt1_decode_1 (const void *texture, int stride, /* in pixels */
                int i, int j, unsigned char *rgba)
 {
    static void (*decode_1[]) (unsigned char *, int, unsigned char *) = {
@@ -1764,7 +1764,7 @@ fxt1_decode_1 (const void *texture, int width,
    };
 
    unsigned char *code = (unsigned char *)texture +
-                         ((j / 4) * (width / 8) + (i / 8)) * 16;
+                         ((j / 4) * (stride / 8) + (i / 8)) * 16;
    int mode = CC_SEL((unsigned long *)code, 125);
    int t = i & 7;
 
