@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.4 1999/12/15 12:52:31 brianp Exp $ */
+/* $Id: glapitable.h,v 1.5 1999/12/16 12:36:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,8 @@
  */
 struct _glapi_table
 {
+   void (*Dummy)(void);
+
    /*
     * OpenGL 1.0
     */
@@ -553,6 +555,8 @@ struct _glapi_table
 
    /* 14. GL_SGI_color_table */
    void (*ColorTableSGI)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*ColorTableParameterfvSGI)(GLenum, GLenum, const GLfloat *); 
+   void (*ColorTableParameterivSGI)(GLenum, GLenum, const GLint *);
    void (*CopyColorTableSGI)(GLenum, GLenum, GLint, GLint, GLsizei);
    void (*GetColorTableSGI)(GLenum, GLenum, GLenum, GLvoid *);
    void (*GetColorTableParameterfvSGI)(GLenum, GLenum, GLfloat *);
@@ -578,6 +582,7 @@ struct _glapi_table
    GLboolean (*AreTexturesResidentEXT)(GLsizei, const GLuint *, GLboolean *);
    void (*BindTextureEXT)(GLenum, GLuint);
    void (*DeleteTexturesEXT)(GLsizei, const GLuint *);
+   void (*GenTexturesEXT)(GLsizei, GLuint *);
    GLboolean (*IsTextureEXT)(GLuint);
    void (*PrioritizeTexturesEXT)(GLsizei, const GLuint *, const GLclampf *);
 
