@@ -33,7 +33,7 @@
 #include "utils.h"
 
 #if defined(USE_X86_ASM)
-#include "X86/common_x86_asm.h"
+#include "x86/common_x86_asm.h"
 #endif
 
 unsigned
