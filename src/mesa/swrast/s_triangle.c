@@ -798,6 +798,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
  */
 #define NAME persp_textured_triangle
 #define INTERP_Z 1
+#define INTERP_W 1
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1

@@ -364,11 +364,6 @@ struct tnl_save {
 };
 
 
-
-
-
-
-
 struct tnl_vertex_arrays
 {
    /* Conventional vertex attribute arrays */
@@ -433,14 +428,13 @@ struct vertex_buffer
    /* Private data from _tnl_render_stage that has no business being
     * in this struct.
     */
-
 };
-
 
 
 /** Describes an individual operation on the pipeline.
  */
-struct tnl_pipeline_stage {
+struct tnl_pipeline_stage
+{
    const char *name;
    GLuint check_state;		/* All state referenced in check() --
 				 * When is the pipeline_stage struct
@@ -513,7 +507,8 @@ typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v,
 			     const GLfloat *in );
 
 
-struct tnl_clipspace_attr {
+struct tnl_clipspace_attr
+{
    int attrib;
    int vertoffset;
    int vertattrsize;
@@ -546,7 +541,8 @@ typedef void (*setup_func)( GLcontext *ctx,
 
 
 
-struct tnl_clipspace {
+struct tnl_clipspace
+{
    GLboolean need_extras;
    
    GLuint new_inputs;
@@ -564,7 +560,8 @@ struct tnl_clipspace {
 };
 
 
-struct tnl_device_driver {
+struct tnl_device_driver
+{
    /***
     *** TNL Pipeline
     ***/
@@ -588,7 +585,8 @@ struct tnl_device_driver {
    /***
     *** Rendering -- These functions called only from t_vb_render.c
     ***/
-   struct {
+   struct
+   {
       void (*Start)(GLcontext *ctx);
       void (*Finish)(GLcontext *ctx);
       /* Called before and after all rendering operations, including DrawPixels,
@@ -667,8 +665,11 @@ struct tnl_device_driver {
 };
    
 
-typedef struct {
-
+/**
+ * Context state for T&L context.
+ */
+typedef struct
+{
    /* Driver interface.
     */
    struct tnl_device_driver Driver;
@@ -693,11 +694,9 @@ typedef struct {
    struct tnl_vertex_arrays current;
    struct tnl_vertex_arrays array_inputs;
 
-
    /* Clipspace/ndc/window vertex managment:
     */
    struct tnl_clipspace clipspace;
-
 
    /* Probably need a better configuration mechanism:
     */
@@ -705,11 +704,11 @@ typedef struct {
    GLboolean LoopbackDListCassettes;
    GLboolean CalcDListNormalLengths;
    GLboolean IsolateMaterials;
+   GLboolean AllowVertexFog;
 
-   /* 
-    */
+   GLboolean _DoVertexFog;  /* eval fog function at each vertex? */
+
    GLuint render_inputs;
-
 
    GLvertexformat exec_vtxfmt;
    GLvertexformat save_vtxfmt;

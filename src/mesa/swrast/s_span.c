@@ -1079,7 +1079,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Fog */
-   if (ctx->Fog.Enabled) {
+   if (swrast->_FogEnabled) {
       _swrast_fog_rgba_span(ctx, span);
       monoColor = GL_FALSE;
    }
@@ -1354,7 +1354,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* Fog */
-   if (ctx->Fog.Enabled) {
+   if (swrast->_FogEnabled) {
       _swrast_fog_rgba_span(ctx, span);
    }
 

@@ -411,8 +411,14 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_FOG
       span.interpMask |= SPAN_FOG;
       {
+#  ifdef INTERP_W
+         const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
+         const GLfloat eMaj_dfog = vMax->fog * wMax - vMin->fog * wMin;
+         const GLfloat eBot_dfog = vMid->fog * wMid - vMin->fog * wMin;
+#  else
          const GLfloat eMaj_dfog = vMax->fog - vMin->fog;
          const GLfloat eBot_dfog = vMid->fog - vMin->fog;
+#  endif
          span.dfogdx = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
          span.dfogdy = oneOverArea * (eMaj.dx * eBot_dfog - eMaj_dfog * eBot.dx);
          span.fogStep = span.dfogdx;
@@ -802,7 +808,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                dwOuter = span.dwdy + dxOuter * span.dwdx;
 #endif
 #ifdef INTERP_FOG
+#  ifdef INTERP_W
+               fogLeft = vLower->fog * vLower->win[3] + (span.dfogdx * adjx + span.dfogdy * adjy) * (1.0F/FIXED_SCALE);
+#  else
                fogLeft = vLower->fog + (span.dfogdx * adjx + span.dfogdy * adjy) * (1.0F/FIXED_SCALE);
+#  endif
                dfogOuter = span.dfogdy + dxOuter * span.dfogdx;
 #endif
 #ifdef INTERP_RGB
