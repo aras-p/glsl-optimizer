@@ -484,6 +484,10 @@ SOURCE=.\slang\slang_mesa.cpp
 
 SOURCE=.\slang\slang_mesa.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\slang\traverse_wrap.h
+# End Source File
 # End Group
 # End Target
 # End Project
