@@ -185,6 +185,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.h				\
+	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
@@ -265,13 +266,14 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
 	$(DIRECTORY)/src/glut/glx/glut.dsp		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
-	$(DIRECTORY)/src/glut/beos/*.h			\
+	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
-	$(DIRECTORY)/src/glut/beos/libglut.def		\
-	$(DIRECTORY)/src/glut/beos/Makefile*		\
+	$(DIRECTORY)/src/glut/beos/Makefile		\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
+	$(DIRECTORY)/progs/beos/*.cpp			\
+	$(DIRECTORY)/progs/beos/Makefile		\
 	$(DIRECTORY)/progs/images/*.rgb			\
 	$(DIRECTORY)/progs/images/*.rgba		\
 	$(DIRECTORY)/progs/demos/Makefile*		\
