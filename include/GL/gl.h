@@ -64,11 +64,7 @@
 #elif defined(__CYGWIN__) && defined(USE_OPENGL32) /* use native windows opengl32 */
 #  define GLAPI extern
 #  define GLAPIENTRY __stdcall
-#else
-/* non-Windows compilation */
-#  define GLAPI extern
-#  define GLAPIENTRY
-#endif /* WIN32 / CYGWIN bracket */
+#endif /* WIN32 && !CYGWIN */
 
 #if (defined(__BEOS__) && defined(__POWERPC__)) || defined(__QUICKDRAW__)
 #  define PRAGMA_EXPORT_SUPPORTED		1
@@ -95,10 +91,22 @@
 #pragma import on
 #endif
 
+#ifndef GLAPI
+#define GLAPI extern
+#endif
+
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
+
 #ifndef APIENTRY
 #define APIENTRY GLAPIENTRY
 #endif
+
+/* "P" suffix for when function returns a pointer */
+#ifndef APIENTRYP
 #define APIENTRYP APIENTRY *
+#endif
 
 #ifndef GLAPIENTRYP
 #define GLAPIENTRYP GLAPIENTRY *
@@ -844,7 +852,7 @@ GLAPI GLint GLAPIENTRY glRenderMode( GLenum mode );
 
 GLAPI GLenum GLAPIENTRY glGetError( void );
 
-GLAPI const GLubyte* GLAPIENTRY glGetString( GLenum name );
+GLAPI const GLubyte GLAPIENTRYP glGetString( GLenum name );
 
 GLAPI void GLAPIENTRY glFinish( void );
 
