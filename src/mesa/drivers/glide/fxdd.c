@@ -2,9 +2,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,7 +102,7 @@ void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 /**********************************************************************/
 
 /* Enalbe/Disable dithering */
-void fxDDDither(GLcontext *ctx, GLboolean enable)
+static void fxDDDither(GLcontext *ctx, GLboolean enable)
 {
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxDDDither()\n");
@@ -117,7 +117,7 @@ void fxDDDither(GLcontext *ctx, GLboolean enable)
 
 
 /* Return buffer size information */
-void fxDDBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
+static void fxDDBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
@@ -489,53 +489,79 @@ void fxDDSetNearFar(GLcontext *ctx, GLfloat n, GLfloat f)
  */
 static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 {
-   switch (name) {
-   case GL_RENDERER:
 #if defined(GLX_DIRECT_RENDERING)
-      return "Mesa Glide - DRI VB/V3";
-#else
+  /* Building for DRI driver */
+  switch (name) {
+    case GL_RENDERER:
       {
-	 static char buf[80];
-
-	 if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) 
-	 {
-	    GrVoodooConfig_t *vc = 
-	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
-
-	    sprintf(buf,
-		    "Mesa Glide v0.30 Voodoo_Graphics %d "
-		    "CARD/%d FB/%d TM/%d TMU/%s",
-		    glbCurrentBoard,
-		    (vc->sliDetect ? (vc->fbRam*2) : vc->fbRam),
-		    (vc->tmuConfig[GR_TMU0].tmuRam +
-		     ((vc->nTexelfx>1) ? vc->tmuConfig[GR_TMU1].tmuRam : 0)),
-		    vc->nTexelfx,
-		    (vc->sliDetect ? "SLI" : "NOSLI"));
-	 }
-	 else if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96)
-	 {
-	    GrSst96Config_t *sc = 
-	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
-
-	    sprintf(buf,
-		    "Glide v0.30 Voodoo_Rush %d "
-		    "CARD/%d FB/%d TM/%d TMU/NOSLI",
-		    glbCurrentBoard,
-		    sc->fbRam,
-		    sc->tmuConfig.tmuRam,
-		    sc->nTexelfx);
-	 }
-	 else
-	 {
-	    strcpy(buf, "Glide v0.30 UNKNOWN");
-	 }
-
-	 return (GLubyte *) buf;
+        static char buffer[100];
+        char hardware[100];
+        strcpy(hardware, grGetString(GR_HARDWARE));
+        if (strcmp(hardware, "Voodoo3 (tm)") == 0)
+          strcpy(hardware, "Voodoo3");
+        else if (strcmp(hardware, "Voodoo Banshee (tm)") == 0)
+          strcpy(hardware, "VoodooBanshee");
+        else {
+          /* unexpected result: replace spaces with hyphens */
+          int i;
+          for (i = 0; hardware[i]; i++) {
+            if (hardware[i] == ' ' || hardware[i] == '\t')
+              hardware[i] = '-';
+          }
+        }
+        /* now make the GL_RENDERER string */
+        sprintf(buffer, "Mesa DRI %s 20000208", hardware);
+        return buffer;
       }
-#endif
-   default:
+    case GL_VENDOR:
+      return "Precision Insight, Inc.";
+    default:
       return NULL;
-   }
+  }
+
+#else
+
+  /* Building for Voodoo1/2 stand-alone Mesa */
+  switch (name) {
+    case GL_RENDERER:
+      {
+        static char buf[80];
+
+        if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) {
+          GrVoodooConfig_t *vc = 
+            &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
+
+          sprintf(buf,
+                  "Mesa Glide v0.30 Voodoo_Graphics %d "
+                  "CARD/%d FB/%d TM/%d TMU/%s",
+                  glbCurrentBoard,
+                  (vc->sliDetect ? (vc->fbRam*2) : vc->fbRam),
+                  (vc->tmuConfig[GR_TMU0].tmuRam +
+                   ((vc->nTexelfx>1) ? vc->tmuConfig[GR_TMU1].tmuRam : 0)),
+                  vc->nTexelfx,
+                  (vc->sliDetect ? "SLI" : "NOSLI"));
+        }
+        else if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96) {
+          GrSst96Config_t *sc = 
+            &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
+
+          sprintf(buf,
+                  "Glide v0.30 Voodoo_Rush %d "
+                  "CARD/%d FB/%d TM/%d TMU/NOSLI",
+                  glbCurrentBoard,
+                  sc->fbRam,
+                  sc->tmuConfig.tmuRam,
+                  sc->nTexelfx);
+        }
+        else {
+          strcpy(buf, "Glide v0.30 UNKNOWN");
+        }
+        return (GLubyte *) buf;
+      }
+    default:
+      return NULL;
+  }
+#endif
 }
 
 
