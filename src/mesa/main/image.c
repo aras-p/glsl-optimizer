@@ -2278,6 +2278,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          greenIndex = 1;
          blueIndex = 2;
          alphaIndex = -1;
+         rComp = 0;
+         gComp = 1;
+         bComp = 2;
+         aComp = 3;
          stride = 3;
          break;
       case GL_BGR:
@@ -2285,6 +2289,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          greenIndex = 1;
          blueIndex = 0;
          alphaIndex = -1;
+         rComp = 2;
+         gComp = 1;
+         bComp = 0;
+         aComp = 3;
          stride = 3;
          break;
       case GL_RGBA:
@@ -2412,10 +2420,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLubyte p = ubsrc[i];
-               rgba[i][RCOMP] = ((p >> 5)      ) * (1.0F / 7.0F);
-               rgba[i][GCOMP] = ((p >> 2) & 0x7) * (1.0F / 7.0F);
-               rgba[i][BCOMP] = ((p     ) & 0x3) * (1.0F / 3.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p >> 5)      ) * (1.0F / 7.0F);
+               rgba[i][gComp] = ((p >> 2) & 0x7) * (1.0F / 7.0F);
+               rgba[i][bComp] = ((p     ) & 0x3) * (1.0F / 3.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          break;
@@ -2425,10 +2433,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLubyte p = ubsrc[i];
-               rgba[i][RCOMP] = ((p     ) & 0x7) * (1.0F / 7.0F);
-               rgba[i][GCOMP] = ((p >> 3) & 0x7) * (1.0F / 7.0F);
-               rgba[i][BCOMP] = ((p >> 6)      ) * (1.0F / 3.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p     ) & 0x7) * (1.0F / 7.0F);
+               rgba[i][gComp] = ((p >> 3) & 0x7) * (1.0F / 7.0F);
+               rgba[i][bComp] = ((p >> 6)      ) * (1.0F / 3.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          break;
@@ -2439,10 +2447,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             for (i = 0; i < n; i ++) {
                GLushort p = ussrc[i];
                SWAP2BYTE(p);
-               rgba[i][RCOMP] = ((p >> 11)       ) * (1.0F / 31.0F);
-               rgba[i][GCOMP] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-               rgba[i][BCOMP] = ((p      ) & 0x1f) * (1.0F / 31.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p >> 11)       ) * (1.0F / 31.0F);
+               rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+               rgba[i][bComp] = ((p      ) & 0x1f) * (1.0F / 31.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          else {
@@ -2450,10 +2458,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLushort p = ussrc[i];
-               rgba[i][RCOMP] = ((p >> 11)       ) * (1.0F / 31.0F);
-               rgba[i][GCOMP] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-               rgba[i][BCOMP] = ((p      ) & 0x1f) * (1.0F / 31.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p >> 11)       ) * (1.0F / 31.0F);
+               rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+               rgba[i][bComp] = ((p      ) & 0x1f) * (1.0F / 31.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          break;
@@ -2464,10 +2472,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             for (i = 0; i < n; i ++) {
                GLushort p = ussrc[i];
                SWAP2BYTE(p);
-               rgba[i][RCOMP] = ((p      ) & 0x1f) * (1.0F / 31.0F);
-               rgba[i][GCOMP] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-               rgba[i][BCOMP] = ((p >> 11)       ) * (1.0F / 31.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p      ) & 0x1f) * (1.0F / 31.0F);
+               rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+               rgba[i][bComp] = ((p >> 11)       ) * (1.0F / 31.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          else {
@@ -2475,10 +2483,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLushort p = ussrc[i];
-               rgba[i][RCOMP] = ((p      ) & 0x1f) * (1.0F / 31.0F);
-               rgba[i][GCOMP] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-               rgba[i][BCOMP] = ((p >> 11)       ) * (1.0F / 31.0F);
-               rgba[i][ACOMP] = 1.0F;
+               rgba[i][rComp] = ((p      ) & 0x1f) * (1.0F / 31.0F);
+               rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+               rgba[i][bComp] = ((p >> 11)       ) * (1.0F / 31.0F);
+               rgba[i][aComp] = 1.0F;
             }
          }
          break;
