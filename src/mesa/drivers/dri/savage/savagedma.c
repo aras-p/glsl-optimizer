@@ -312,8 +312,8 @@ static drmBuf vertex_buffer = {
 };
 
 void savageFakeVertices (savageContextPtr imesa, drmBufPtr buffer) {
-    GLuint vertexStride = imesa->vertex_size; /* stride in dwords */
-    GLuint vertexSize = imesa->vertex_size; /* the real vertex size in dwords */
+    GLuint vertexStride = imesa->HwVertexSize; /* stride in dwords */
+    GLuint vertexSize = imesa->HwVertexSize; /* the real vertex size in dwords */
     GLuint nVertices = buffer->used / (vertexStride*4);
     u_int32_t *data = (u_int32_t*)buffer->address;
     u_int32_t vertexFormat = imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS;

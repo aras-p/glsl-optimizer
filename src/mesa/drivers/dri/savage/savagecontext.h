@@ -141,6 +141,7 @@ struct savage_context_t {
     /* Manage our own state */
     GLuint new_state; 
     GLuint new_gl_state;
+    GLboolean ptexHack;
 
     GLuint BCIBase;  
     GLuint MMIO_BASE;
@@ -179,6 +180,7 @@ struct savage_context_t {
    GLenum render_primitive;
 
    GLuint DrawPrimitiveCmd;
+   GLuint HwVertexSize;
 
    /* Fallback rasterization functions 
     */
