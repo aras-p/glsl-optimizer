@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.31 2000/07/21 16:26:28 brianp Exp $
+# $Id: Makefile.X11,v 1.32 2000/07/21 16:36:35 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -633,14 +633,14 @@ glut_tar:
 
 
 lib_zip:
+	-rm $(LIB_NAME).zip ; \
 	cp Makefile.X11 Makefile ; \
-	-rm $(LIB_NAME).zip
 	cd .. ; \
 	zip -r $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
 demo_zip:
-	-rm $(DEMO_NAME).zip
+	-rm $(DEMO_NAME).zip ; \
 	cd .. ; \
 	zip -r $(DEMO_NAME).zip $(DEMO_FILES) ; \
 	mv $(DEMO_NAME).zip $(DIRECTORY)
