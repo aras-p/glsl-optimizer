@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.15 1999/11/11 01:27:17 brianp Exp $ */
+/* $Id: glu.h,v 1.16 1999/11/11 03:21:43 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,7 +134,7 @@ extern "C" {
 /* NURBS */
 #define GLU_AUTO_LOAD_MATRIX		100200
 #define GLU_CULLING			100201
-#define GLU_PARAMETRIC_TOLERANC		100202
+#define GLU_PARAMETRIC_TOLERANCE	100202
 #define GLU_SAMPLING_TOLERANCE		100203
 #define GLU_DISPLAY_MODE		100204
 #define GLU_SAMPLING_METHOD		100205

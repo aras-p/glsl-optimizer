@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.18 1999/11/11 01:27:17 brianp Exp $ */
+/* $Id: gl.h,v 1.19 1999/11/11 03:21:43 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,14 +77,18 @@
 #     define WGLAPI __declspec(dllimport)
 #	endif /* _STATIC_MESA support */
 #	define GLAPIENTRY __stdcall
+#	define GLAPIENTRYP __stdcall *
 #	define GLCALLBACK __stdcall
+#       define GLCALLBACKP __stdcall *
 #	define GLWINAPI __stdcall
 #	define GLWINAPIV __cdecl
 #else
 /* non-Windows compilation */
 #	define GLAPI extern
 #	define GLAPIENTRY
+#	define GLAPIENTRYP *
 #	define GLCALLBACK
+#	define GLCALLBACKP *
 #	define GLWINAPI
 #	define GLWINAPIV
 #endif /* WIN32 / CYGWIN32 bracket */

@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.20 1999/11/05 20:36:55 gareth Exp $ */
+/* $Id: tess.c,v 1.21 1999/11/11 03:21:43 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -388,60 +388,60 @@ void GLAPIENTRY gluTessEndPolygon( GLUtesselator *tobj )
  * gluTessCallback
  *****************************************************************************/
 void GLAPIENTRY gluTessCallback( GLUtesselator *tobj, GLenum which,
-				 void (GLCALLBACK *fn)() )
+				 void (GLCALLBACKP fn)() )
 {
     switch ( which )
     {
 	/* Register the begin callbacks. */
     case GLU_TESS_BEGIN:
-	tobj->callbacks.begin = (void (GLCALLBACK*)(GLenum)) fn;
+	tobj->callbacks.begin = (void (GLCALLBACKP)(GLenum)) fn;
 	break;
     case GLU_TESS_BEGIN_DATA:
-	tobj->callbacks.beginData = (void (GLCALLBACK*)(GLenum, void *)) fn;
+	tobj->callbacks.beginData = (void (GLCALLBACKP)(GLenum, void *)) fn;
 	break;
 
 	/* Register the edge flag callbacks. */
     case GLU_TESS_EDGE_FLAG:
-	tobj->callbacks.edgeFlag = (void (GLCALLBACK*)(GLboolean)) fn;
+	tobj->callbacks.edgeFlag = (void (GLCALLBACKP)(GLboolean)) fn;
 	break;
     case GLU_TESS_EDGE_FLAG_DATA:
 	tobj->callbacks.edgeFlagData =
-	    (void (GLCALLBACK*)(GLboolean, void *)) fn;
+		(void (GLCALLBACKP)(GLboolean, void *)) fn;
 	break;
 
 	/* Register the vertex callbacks. */
     case GLU_TESS_VERTEX:
-	tobj->callbacks.vertex = (void (GLCALLBACK*)(void *)) fn;
+	tobj->callbacks.vertex = (void (GLCALLBACKP)(void *)) fn;
 	break;
     case GLU_TESS_VERTEX_DATA:
-	tobj->callbacks.vertexData = (void (GLCALLBACK*)(void *, void *)) fn;
+	tobj->callbacks.vertexData = (void (GLCALLBACKP)(void *, void *)) fn;
 	break;
 
 	/* Register the end callbacks. */
     case GLU_TESS_END:
-	tobj->callbacks.end = (void (GLCALLBACK*)(void)) fn;
+	tobj->callbacks.end = (void (GLCALLBACKP)(void)) fn;
 	break;
     case GLU_TESS_END_DATA:
-	tobj->callbacks.endData = (void (GLCALLBACK*)(void *)) fn;
+	tobj->callbacks.endData = (void (GLCALLBACKP)(void *)) fn;
 	break;
 
 	/* Register the error callbacks. */
     case GLU_TESS_ERROR:
-	tobj->callbacks.error = (void (GLCALLBACK*)(GLenum)) fn;
+	tobj->callbacks.error = (void (GLCALLBACKP)(GLenum)) fn;
 	break;
     case GLU_TESS_ERROR_DATA:
-	tobj->callbacks.errorData = (void (GLCALLBACK*)(GLenum, void *)) fn;
+	tobj->callbacks.errorData = (void (GLCALLBACKP)(GLenum, void *)) fn;
 	break;
 
 	/* Register the combine callbacks. */
     case GLU_TESS_COMBINE:
 	tobj->callbacks.combine =
-	    (void (GLCALLBACK*)(GLdouble[3], void *[4],
+		(void (GLCALLBACKP)(GLdouble[3], void *[4],
 				GLfloat [4], void **)) fn;
 	break;
     case GLU_TESS_COMBINE_DATA:
 	tobj->callbacks.combineData =
-	    (void (GLCALLBACK*)(GLdouble[3], void *[4], GLfloat [4],
+		(void (GLCALLBACKP)(GLdouble[3], void *[4], GLfloat [4],
 				void **, void *)) fn;
 	break;
 
@@ -597,19 +597,19 @@ void tess_error_callback( GLUtesselator *tobj, GLenum errnum )
  *****************************************************************************/
 static void init_callbacks( tess_callbacks_t *callbacks )
 {
-    callbacks->begin        = ( void (GLCALLBACK*)(GLenum) ) NULL;
-    callbacks->beginData    = ( void (GLCALLBACK*)(GLenum, void *) ) NULL;
-    callbacks->edgeFlag     = ( void (GLCALLBACK*)(GLboolean) ) NULL;
-    callbacks->edgeFlagData = ( void (GLCALLBACK*)(GLboolean, void *) ) NULL;
-    callbacks->vertex       = ( void (GLCALLBACK*)(void *) ) NULL;
-    callbacks->vertexData   = ( void (GLCALLBACK*)(void *, void *) ) NULL;
-    callbacks->end          = ( void (GLCALLBACK*)(void) ) NULL;
-    callbacks->endData      = ( void (GLCALLBACK*)(void *) ) NULL;
-    callbacks->error        = ( void (GLCALLBACK*)(GLenum) ) NULL;
-    callbacks->errorData    = ( void (GLCALLBACK*)(GLenum, void *) ) NULL;
-    callbacks->combine      = ( void (GLCALLBACK*)(GLdouble [3], void *[4],
+	callbacks->begin        = ( void (GLCALLBACKP)(GLenum) ) NULL;
+	callbacks->beginData    = ( void (GLCALLBACKP)(GLenum, void *) ) NULL;
+	callbacks->edgeFlag     = ( void (GLCALLBACKP)(GLboolean) ) NULL;
+	callbacks->edgeFlagData = ( void (GLCALLBACKP)(GLboolean, void *) ) NULL;
+	callbacks->vertex       = ( void (GLCALLBACKP)(void *) ) NULL;
+	callbacks->vertexData   = ( void (GLCALLBACKP)(void *, void *) ) NULL;
+	callbacks->end          = ( void (GLCALLBACKP)(void) ) NULL;
+	callbacks->endData      = ( void (GLCALLBACKP)(void *) ) NULL;
+	callbacks->error        = ( void (GLCALLBACKP)(GLenum) ) NULL;
+	callbacks->errorData    = ( void (GLCALLBACKP)(GLenum, void *) ) NULL;
+	callbacks->combine      = ( void (GLCALLBACKP)(GLdouble [3], void *[4],
 						   GLfloat [4], void **) ) NULL;
-    callbacks->combineData  = ( void (GLCALLBACK*)(GLdouble [3], void *[4],
+	callbacks->combineData  = ( void (GLCALLBACKP)(GLdouble [3], void *[4],
 						   GLfloat [4], void **,
 						   void *) ) NULL;
 }

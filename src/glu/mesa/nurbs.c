@@ -1,4 +1,4 @@
-/* $Id: nurbs.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: nurbs.c,v 1.2 1999/11/11 03:21:43 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,25 @@
 
 /*
  * $Log: nurbs.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  1999/11/11 03:21:43  kendallb
+ *
+ *  . Updated GL/gl.h with GLCALLACKP and GLAPIENTRYP macros for compatibility
+ *    with the IBM VisualAge C++ compiler. Eventually some more code will be
+ *    needed in the headers to enable the reversal of (__stdcall*) to (*__stdcall)
+ *    for the IBM compilers, however we currently build using our own header files
+ *    that already handle this.
+ *
+ *  . Changed instances of (GLCALLBACK*) to GLCALLBACKP for compatibility
+ *    with the IBM VisualAge C++ compiler in src-glu.
+ *
+ *  . Misc cleanups for warnings generated with Watcom C++ in src-glu. Compiles
+ *    with 0 warnings now.
+ *
+ *  . tess_hash.c: line 244 - Why is this function stubbed out? I removed the
+ *    code with a #if 0 to avoid a compiler warning, but it looks dangerous.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.14  1999/01/03 03:23:15  brianp
  * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
@@ -600,12 +617,12 @@ void GLAPIENTRY gluNurbsSurface( GLUnurbsObj *nobj,
 
 
 void GLAPIENTRY
-gluNurbsCallback( GLUnurbsObj *nobj, GLenum which, void (GLCALLBACK *fn)())
+gluNurbsCallback( GLUnurbsObj *nobj, GLenum which, void (GLCALLBACKP fn)())
 {
 #if defined(__CYGWIN32__) || defined(OPENSTEP)
     nobj->error_callback = (void(*)(GLenum))fn;
 #else
-    nobj->error_callback = (void(GLCALLBACK*)(GLenum))fn;
+	nobj->error_callback = (void(GLCALLBACKP)(GLenum))fn;
 #endif
 
     if(which!=GLU_ERROR)
