@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: macros.h,v 1.3 1999/10/10 12:39:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -478,6 +478,28 @@ do {						\
 /* a close approximation: */
 #define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
 
+
+
+/*
+ * Memory allocation
+ * XXX these should probably go into a new glmemory.h file.
+ */
+#ifdef DEBUG
+extern void *gl_alloc(size_t bytes);
+extern void *gl_calloc(size_t bytes);
+extern void gl_free(void *ptr);
+#define GL_ALLOC(BYTES)      gl_alloc(BYTES)
+#define GL_CALLOC(BYTES)     gl_calloc(BYTES)
+#define GL_ALLOC_STRUCT(T)   (struct T *) GL_ALLOC(sizeof(struct T))
+#define GL_CALLOC_STRUCT(T)  (struct T *) GL_CALLOC(sizeof(struct T))
+#define GL_FREE(PTR)         gl_free(PTR)
+#else
+#define GL_ALLOC(BYTES)      (void *) malloc(BYTES)
+#define GL_CALLOC(BYTES)     (void *) calloc(1, BYTES)
+#define GL_ALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
+#define GL_CALLOC_STRUCT(T)  (struct T *) calloc(sizeof(struct T))
+#define GL_FREE(PTR)         free(PTR)
+#endif
 
 
 /* Memory copy: */
