@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.27 2001/05/24 19:07:14 brianp Exp $ */
+/* $Id: glx.h,v 1.28 2001/06/25 15:29:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -160,6 +160,8 @@ extern "C" {
 #define GLX_SAVED			0x8021
 #define GLX_WINDOW			0x8022
 #define GLX_PBUFFER			0x8023
+#define GLX_PBUFFER_HEIGHT              0x8040
+#define GLX_PBUFFER_WIDTH               0x8041
 
 
 
