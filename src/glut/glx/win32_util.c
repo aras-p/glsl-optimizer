@@ -66,7 +66,7 @@ __glutFont(void *font)
   case (int)GLUT_BITMAP_HELVETICA_18:
     return &glutBitmapHelvetica18;
   }
-  __glutFatalError("out of memory.");
+  __glutFatalError("font not found.");
   /* NOTREACHED */
   return NULL; /* MSVC compiler complains if there is no return at all */
 }
