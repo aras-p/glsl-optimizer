@@ -366,6 +366,8 @@ static void gammaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
       gammaDestroyTexObj( gmesa, t );
       tObj->DriverData = 0;
    }
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, tObj);
 }
 
 static GLboolean gammaIsTextureResident( GLcontext *ctx, 

@@ -693,6 +693,9 @@ static void radeonDeleteTexture( GLcontext *ctx,
 
       driDestroyTextureObject( t );
    }
+
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, texObj);
 }
 
 /* Need:  

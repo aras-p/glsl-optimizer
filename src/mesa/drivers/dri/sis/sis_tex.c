@@ -203,6 +203,8 @@ sisDDDeleteTexture( GLcontext * ctx, struct gl_texture_object *texObj )
 
    FREE(t);
    texObj->DriverData = NULL;
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, texObj);
 }
 
 static GLboolean sisDDIsTextureResident( GLcontext * ctx,

@@ -426,6 +426,8 @@ static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
          I810_FIREVERTICES( imesa );
       driDestroyTextureObject( t );
    }
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, tObj);
 }
 
 static const struct gl_texture_format *

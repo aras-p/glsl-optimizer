@@ -449,6 +449,8 @@ tdfxDDDeleteTexture(GLcontext * ctx, struct gl_texture_object *tObj)
         tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
         tdfxTMFreeTexture(fxMesa, tObj);
         fxMesa->new_state |= TDFX_NEW_TEXTURE;
+        /* Free mipmap images and the texture object itself */
+        _mesa_delete_texture_object(ctx, tObj);
     }
 }
 
