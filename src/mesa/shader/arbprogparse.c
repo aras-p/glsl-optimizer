@@ -3762,6 +3762,9 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
    GLubyte *strz = NULL;
    static int arbprogram_syn_is_ok = 0;		/* XXX temporary */
 
+   /* Reset error state */
+   _mesa_set_program_error(ctx, -1, NULL);
+
 #if DEBUG_PARSING
    fprintf (stderr, "Loading grammar text!\n");
 #endif
