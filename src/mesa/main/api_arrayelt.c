@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,118 +34,35 @@
 #include "macros.h"
 #include "mtypes.h"
 
-
-typedef void (GLAPIENTRY *texarray_func)( GLenum, const void * );
-
-typedef struct {
-   GLint unit;
-   struct gl_client_array *array;
-   texarray_func func;
-} AEtexarray;
-
 typedef void (GLAPIENTRY *array_func)( const void * );
 
 typedef struct {
-   struct gl_client_array *array;
+   const struct gl_client_array *array;
    array_func func;
 } AEarray;
 
+typedef void (GLAPIENTRY *attrib_func)( GLuint indx, const void *data, GLboolean normalized, GLuint size );
+
 typedef struct {
-   AEtexarray texarrays[MAX_TEXTURE_COORD_UNITS + 1];
-   AEarray arrays[32];
+   const struct gl_client_array *array;
+   attrib_func func;
+   GLuint index;
+} AEattrib;
+
+typedef struct {
+   AEarray arrays[3]; /* color index, edge flag, null terminator */
+   AEattrib attribs[VERT_ATTRIB_MAX + 1];
    GLuint NewState;
 } AEcontext;
 
 #define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
+
+/*
+ * Convert GL_BYTE, GL_UNSIGNED_BYTE, .. GL_DOUBLE into an integer
+ * in the range [0, 7].  Luckily these type tokens are sequentially
+ * numbered in gl.h
+ */
 #define TYPE_IDX(t) ((t) & 0xf)
-
-static void (GLAPIENTRY *colorfuncs[2][8])( const void * ) = {
-   { (array_func)glColor3bv,
-     (array_func)glColor3ubv,
-     (array_func)glColor3sv,
-     (array_func)glColor3usv,
-     (array_func)glColor3iv,
-     (array_func)glColor3uiv,
-     (array_func)glColor3fv,
-     (array_func)glColor3dv },
-
-   { (array_func)glColor4bv,
-     (array_func)glColor4ubv,
-     (array_func)glColor4sv,
-     (array_func)glColor4usv,
-     (array_func)glColor4iv,
-     (array_func)glColor4uiv,
-     (array_func)glColor4fv,
-     (array_func)glColor4dv }
-};
-
-static void (GLAPIENTRY *vertexfuncs[3][8])( const void * ) = {
-   { 0,
-     0,
-     (array_func)glVertex2sv,
-     0,
-     (array_func)glVertex2iv,
-     0,
-     (array_func)glVertex2fv,
-     (array_func)glVertex2dv },
-
-   { 0,
-     0,
-     (array_func)glVertex3sv,
-     0,
-     (array_func)glVertex3iv,
-     0,
-     (array_func)glVertex3fv,
-     (array_func)glVertex3dv },
-
-   { 0,
-     0,
-     (array_func)glVertex4sv,
-     0,
-     (array_func)glVertex4iv,
-     0,
-     (array_func)glVertex4fv,
-     (array_func)glVertex4dv }
-};
-
-
-static void (GLAPIENTRY *multitexfuncs[4][8])( GLenum, const void * ) = {
-   { 0,
-     0,
-     (texarray_func)glMultiTexCoord1svARB,
-     0,
-     (texarray_func)glMultiTexCoord1ivARB,
-     0,
-     (texarray_func)glMultiTexCoord1fvARB,
-     (texarray_func)glMultiTexCoord1dvARB },
-
-   { 0,
-     0,
-     (texarray_func)glMultiTexCoord2svARB,
-     0,
-     (texarray_func)glMultiTexCoord2ivARB,
-     0,
-     (texarray_func)glMultiTexCoord2fvARB,
-     (texarray_func)glMultiTexCoord2dvARB },
-
-   { 0,
-     0,
-     (texarray_func)glMultiTexCoord3svARB,
-     0,
-     (texarray_func)glMultiTexCoord3ivARB,
-     0,
-     (texarray_func)glMultiTexCoord3fvARB,
-     (texarray_func)glMultiTexCoord3dvARB },
-
-   { 0,
-     0,
-     (texarray_func)glMultiTexCoord4svARB,
-     0,
-     (texarray_func)glMultiTexCoord4ivARB,
-     0,
-     (texarray_func)glMultiTexCoord4fvARB,
-     (texarray_func)glMultiTexCoord4dvARB }
-};
 
 static void (GLAPIENTRY *indexfuncs[8])( const void * ) = {
    0,
@@ -159,93 +76,316 @@ static void (GLAPIENTRY *indexfuncs[8])( const void * ) = {
 };
 
 
-static void (GLAPIENTRY *normalfuncs[8])( const void * ) = {
-   (array_func)glNormal3bv,
-   0,
-   (array_func)glNormal3sv,
-   0,
-   (array_func)glNormal3iv,
-   0,
-   (array_func)glNormal3fv,
-   (array_func)glNormal3dv,
+/**********************************************************************/
+
+/* 1, 2, 3 or 4 GL_BYTE attribute */
+static void VertexAttribbv(GLuint index, const GLbyte *v,
+                           GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, BYTE_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, BYTE_TO_FLOAT(v[0]),
+                                           BYTE_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, BYTE_TO_FLOAT(v[0]),
+                                           BYTE_TO_FLOAT(v[1]),
+                                           BYTE_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, BYTE_TO_FLOAT(v[0]),
+                                           BYTE_TO_FLOAT(v[1]),
+                                           BYTE_TO_FLOAT(v[2]),
+                                           BYTE_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribbv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_UNSIGNED_BYTE attribute */
+static void VertexAttribubv(GLuint index, const GLubyte *v,
+                            GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UBYTE_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UBYTE_TO_FLOAT(v[0]),
+                                           UBYTE_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UBYTE_TO_FLOAT(v[0]),
+                                           UBYTE_TO_FLOAT(v[1]),
+                                           UBYTE_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UBYTE_TO_FLOAT(v[0]),
+                                           UBYTE_TO_FLOAT(v[1]),
+                                           UBYTE_TO_FLOAT(v[2]),
+                                           UBYTE_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribubv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_SHORT attribute */
+static void VertexAttribsv(GLuint index, const GLshort *v,
+                           GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, SHORT_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, SHORT_TO_FLOAT(v[0]),
+                                           SHORT_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, SHORT_TO_FLOAT(v[0]),
+                                           SHORT_TO_FLOAT(v[1]),
+                                           SHORT_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, SHORT_TO_FLOAT(v[0]),
+                                           SHORT_TO_FLOAT(v[1]),
+                                           SHORT_TO_FLOAT(v[2]),
+                                           SHORT_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribsv");
+   }
+}
+
+
+/* 1, 2, 3 or 4 GL_UNSIGNED_SHORT attribute */
+static void VertexAttribusv(GLuint index, const GLushort *v,
+                            GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, USHORT_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, USHORT_TO_FLOAT(v[0]),
+                                           USHORT_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, USHORT_TO_FLOAT(v[0]),
+                                           USHORT_TO_FLOAT(v[1]),
+                                           USHORT_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, USHORT_TO_FLOAT(v[0]),
+                                           USHORT_TO_FLOAT(v[1]),
+                                           USHORT_TO_FLOAT(v[2]),
+                                           USHORT_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribusv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_INT attribute */
+static void VertexAttribiv(GLuint index, const GLint *v,
+                           GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, INT_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, INT_TO_FLOAT(v[0]),
+                                           INT_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, INT_TO_FLOAT(v[0]),
+                                           INT_TO_FLOAT(v[1]),
+                                           INT_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, INT_TO_FLOAT(v[0]),
+                                           INT_TO_FLOAT(v[1]),
+                                           INT_TO_FLOAT(v[2]),
+                                           INT_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribiv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_UNSIGNED_INT attribute */
+static void VertexAttribuiv(GLuint index, const GLuint *v,
+                            GLboolean normalized, GLuint size)
+{
+   switch (size) {
+   case 1:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UINT_TO_FLOAT(v[0]),
+                                           0, 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], 0, 0, 1);
+      return;
+   case 2:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UINT_TO_FLOAT(v[0]),
+                                           UINT_TO_FLOAT(v[1]), 0, 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], 0, 1);
+      return;
+   case 3:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UINT_TO_FLOAT(v[0]),
+                                           UINT_TO_FLOAT(v[1]),
+                                           UINT_TO_FLOAT(v[2]), 1);
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], 1);
+      return;
+   case 4:
+      if (normalized)
+         _glapi_Dispatch->VertexAttrib4fNV(index, UINT_TO_FLOAT(v[0]),
+                                           UINT_TO_FLOAT(v[1]),
+                                           UINT_TO_FLOAT(v[2]),
+                                           UINT_TO_FLOAT(v[3]));
+      else
+         _glapi_Dispatch->VertexAttrib4fNV(index, v[0], v[1], v[2], v[3]);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribuiv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_FLOAT attribute */
+static void VertexAttribfv(GLuint index, const GLfloat *v,
+                           GLboolean normalized, GLuint size)
+{
+   (void) normalized;
+   switch (size) {
+   case 1:
+      _glapi_Dispatch->VertexAttrib1fvNV(index, v);
+      return;
+   case 2:
+      _glapi_Dispatch->VertexAttrib2fvNV(index, v);
+      return;
+   case 3:
+      _glapi_Dispatch->VertexAttrib3fvNV(index, v);
+      return;
+   case 4:
+      _glapi_Dispatch->VertexAttrib4fvNV(index, v);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribfv");
+   }
+}
+
+/* 1, 2, 3 or 4 GL_DOUBLE attribute */
+static void VertexAttribdv(GLuint index, const GLdouble *v,
+                           GLboolean normalized, GLuint size)
+{
+   (void) normalized;
+   switch (size) {
+   case 1:
+      _glapi_Dispatch->VertexAttrib1dvNV(index, v);
+      return;
+   case 2:
+      _glapi_Dispatch->VertexAttrib2dvNV(index, v);
+      return;
+   case 3:
+      _glapi_Dispatch->VertexAttrib3dvNV(index, v);
+      return;
+   case 4:
+      _glapi_Dispatch->VertexAttrib4dvNV(index, v);
+      return;
+   default:
+      _mesa_problem(NULL, "Bad size in VertexAttribdv");
+   }
+}
+
+/*
+ * Array [size][type] of VertexAttrib functions
+ */
+static void (GLAPIENTRY *attribfuncs[8])( GLuint, const void *, GLboolean, GLuint ) = {
+   (attrib_func) VertexAttribbv,
+   (attrib_func) VertexAttribubv,
+   (attrib_func) VertexAttribsv,
+   (attrib_func) VertexAttribusv,
+   (attrib_func) VertexAttribiv,
+   (attrib_func) VertexAttribuiv,
+   (attrib_func) VertexAttribfv,
+   (attrib_func) VertexAttribdv
 };
 
-
-/* Wrapper functions in case glSecondaryColor*EXT doesn't exist */
-static void SecondaryColor3bvEXT(const GLbyte *c)
-{
-   _glapi_Dispatch->SecondaryColor3bvEXT(c);
-}
-
-static void SecondaryColor3ubvEXT(const GLubyte *c)
-{
-   _glapi_Dispatch->SecondaryColor3ubvEXT(c);
-}
-
-static void SecondaryColor3svEXT(const GLshort *c)
-{
-   _glapi_Dispatch->SecondaryColor3svEXT(c);
-}
-
-static void SecondaryColor3usvEXT(const GLushort *c)
-{
-   _glapi_Dispatch->SecondaryColor3usvEXT(c);
-}
-
-static void SecondaryColor3ivEXT(const GLint *c)
-{
-   _glapi_Dispatch->SecondaryColor3ivEXT(c);
-}
-
-static void SecondaryColor3uivEXT(const GLuint *c)
-{
-   _glapi_Dispatch->SecondaryColor3uivEXT(c);
-}
-
-static void SecondaryColor3fvEXT(const GLfloat *c)
-{
-   _glapi_Dispatch->SecondaryColor3fvEXT(c);
-}
-
-static void SecondaryColor3dvEXT(const GLdouble *c)
-{
-   _glapi_Dispatch->SecondaryColor3dvEXT(c);
-}
-
-static void (GLAPIENTRY *secondarycolorfuncs[8])( const void * ) = {
-   (array_func) SecondaryColor3bvEXT,
-   (array_func) SecondaryColor3ubvEXT,
-   (array_func) SecondaryColor3svEXT,
-   (array_func) SecondaryColor3usvEXT,
-   (array_func) SecondaryColor3ivEXT,
-   (array_func) SecondaryColor3uivEXT,
-   (array_func) SecondaryColor3fvEXT,
-   (array_func) SecondaryColor3dvEXT,
-};
-
-
-/* Again, wrapper functions in case glSecondaryColor*EXT doesn't exist */
-static void FogCoordfvEXT(const GLfloat *f)
-{
-   _glapi_Dispatch->FogCoordfvEXT(f);
-}
-
-static void FogCoorddvEXT(const GLdouble *f)
-{
-   _glapi_Dispatch->FogCoorddvEXT(f);
-}
-
-static void (GLAPIENTRY *fogcoordfuncs[8])( const void * ) = {
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   (array_func) FogCoordfvEXT,
-   (array_func) FogCoorddvEXT
-};
-
+/**********************************************************************/
 
 
 GLboolean _ae_create_context( GLcontext *ctx )
@@ -271,68 +411,88 @@ void _ae_destroy_context( GLcontext *ctx )
 }
 
 
+/*
+ * Return pointer to the conventional vertex array which corresponds
+ * to the given vertex attribute index.
+ */
+static struct gl_client_array *
+conventional_array(GLcontext *ctx, GLuint index)
+{
+   ASSERT(index < VERT_ATTRIB_MAX);
+   switch (index) {
+   case VERT_ATTRIB_POS:
+      return &ctx->Array.Vertex;
+   case VERT_ATTRIB_NORMAL:
+      return &ctx->Array.Normal;
+   case VERT_ATTRIB_COLOR0:
+      return &ctx->Array.Color;
+   case VERT_ATTRIB_COLOR1:
+      return &ctx->Array.SecondaryColor;
+   case VERT_ATTRIB_FOG:
+      return &ctx->Array.FogCoord;
+   case VERT_ATTRIB_TEX0:
+   case VERT_ATTRIB_TEX1:
+   case VERT_ATTRIB_TEX2:
+   case VERT_ATTRIB_TEX3:
+   case VERT_ATTRIB_TEX4:
+   case VERT_ATTRIB_TEX5:
+   case VERT_ATTRIB_TEX6:
+   case VERT_ATTRIB_TEX7:
+      return &ctx->Array.TexCoord[index - VERT_ATTRIB_TEX0];
+   default:
+      return NULL;
+   }
+}
+
+
+/**
+ * Make a list of functions to call per glArrayElement call which will
+ * access the vertex array data.
+ * Most vertex attributes are handled via glVertexAttrib4fvNV.
+ */
 static void _ae_update_state( GLcontext *ctx )
 {
    AEcontext *actx = AE_CONTEXT(ctx);
-   AEtexarray *ta = actx->texarrays;
    AEarray *aa = actx->arrays;
+   AEattrib *at = actx->attribs;
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-      if (ctx->Array.TexCoord[i].Enabled) {
-	 ta->unit = i;
-	 ta->array = &ctx->Array.TexCoord[i];
-	 ta->func = multitexfuncs[ta->array->Size-1][TYPE_IDX(ta->array->Type)];
-	 ta++;
-      }
-
-   ta->func = 0;
-
-   if (ctx->Array.Color.Enabled) {
-      aa->array = &ctx->Array.Color;
-      aa->func = colorfuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
-      aa++;
-   }
-
-   if (ctx->Array.Normal.Enabled) {
-      aa->array = &ctx->Array.Normal;
-      aa->func = normalfuncs[TYPE_IDX(aa->array->Type)];
-      aa++;
-   }
-
+   /* yuck, no generic array to correspond to color index or edge flag */
    if (ctx->Array.Index.Enabled) {
       aa->array = &ctx->Array.Index;
       aa->func = indexfuncs[TYPE_IDX(aa->array->Type)];
       aa++;
    }
-
    if (ctx->Array.EdgeFlag.Enabled) {
       aa->array = &ctx->Array.EdgeFlag;
-      aa->func = (array_func)glEdgeFlagv;
+      aa->func = (array_func) glEdgeFlagv;
       aa++;
    }
+   aa->func = NULL; /* terminate the list */
 
-   if (ctx->Array.FogCoord.Enabled) {
-      aa->array = &ctx->Array.FogCoord;
-      aa->func = fogcoordfuncs[TYPE_IDX(aa->array->Type)];
-      aa++;
+   /* all other arrays handled here */
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      /* Note: we count down to zero so glVertex (attrib 0) is last!!! */
+      const GLuint index = VERT_ATTRIB_MAX - i - 1;
+      struct gl_client_array *array = conventional_array(ctx, index);
+
+      /* check for overriding generic vertex attribute */
+      if (ctx->VertexProgram.Enabled
+          && ctx->Array.VertexAttrib[index].Enabled) {
+         array = &ctx->Array.VertexAttrib[index];
+      }
+
+      /* if array's enabled, add it to the list */
+      if (array && array->Enabled) {
+         at->array = array;
+         at->func = attribfuncs[TYPE_IDX(array->Type)];
+         at->index = index;
+         at++;
+      }
    }
+   ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
+   at->func = NULL;  /* terminate the list */
 
-   if (ctx->Array.SecondaryColor.Enabled) {
-      aa->array = &ctx->Array.SecondaryColor;
-      aa->func = secondarycolorfuncs[TYPE_IDX(aa->array->Type)];
-      aa++;
-   }
-
-   /* Must be last
-    */
-   if (ctx->Array.Vertex.Enabled) {
-      aa->array = &ctx->Array.Vertex;
-      aa->func = vertexfuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
-      aa++;
-   }
-
-   aa->func = 0;
    actx->NewState = 0;
 }
 
@@ -340,27 +500,27 @@ static void _ae_update_state( GLcontext *ctx )
 void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
 {
    GET_CURRENT_CONTEXT(ctx);
-   AEcontext *actx = AE_CONTEXT(ctx);
-   AEtexarray *ta;
-   AEarray *aa;
+   const AEcontext *actx = AE_CONTEXT(ctx);
+   const AEarray *aa;
+   const AEattrib *at;
 
    if (actx->NewState)
       _ae_update_state( ctx );
 
-   for (ta = actx->texarrays ; ta->func ; ta++) {
-      GLubyte *src = ta->array->BufferObj->Data
-                   + (GLuint) ta->array->Ptr
-                   + elt * ta->array->StrideB;
-      ta->func( ta->unit + GL_TEXTURE0_ARB, src);
+   /* color index and edge flags */
+   for (aa = actx->arrays; aa->func ; aa++) {
+      const GLubyte *src = aa->array->BufferObj->Data
+                         + (GLuint) aa->array->Ptr
+                         + elt * aa->array->StrideB;
+      aa->func( src );
    }
 
-   /* Must be last
-    */
-   for (aa = actx->arrays ; aa->func ; aa++) {
-      GLubyte *src = aa->array->BufferObj->Data
-                   + (GLuint) aa->array->Ptr
-                   + elt * aa->array->StrideB;
-      aa->func( src );
+   /* all other attributes */
+   for (at = actx->attribs; at->func; at++) {
+      const GLubyte *src = at->array->BufferObj->Data
+                         + (GLuint) at->array->Ptr
+                         + elt * at->array->StrideB;
+      at->func( at->index, src, at->array->Normalized, at->array->Size );
    }
 }
 
