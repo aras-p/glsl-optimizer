@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.29 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.30 2001/12/17 04:58:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,6 +125,13 @@
 #ifdef INTERP_Z
    (void) fixedToDepthShift;
 #endif
+
+   /*
+   printf("%s()\n", __FUNCTION__);
+   printf("  %g, %g, %g\n", v0->win[0], v0->win[1], v0->win[2]);
+   printf("  %g, %g, %g\n", v1->win[0], v1->win[1], v1->win[2]);
+   printf("  %g, %g, %g\n", v2->win[0], v2->win[1], v2->win[2]);
+   */
 
    /* Compute fixed point x,y coords w/ half-pixel offsets and snapping.
     * And find the order of the 3 vertices along the Y axis.
