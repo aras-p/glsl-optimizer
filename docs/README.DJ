@@ -261,6 +261,7 @@ v1.5 (jan-2004)
 v1.6 (???-2004)
 	+ implemented NUL driver
 	+ added DMesaGetProcAddress and glutGetProcAddress
+	* reorganized fxMesa wrapper to handle multiple contexts
 	! fixed a horrible bug in VGA initialization routine
 
 

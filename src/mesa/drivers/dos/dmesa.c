@@ -33,6 +33,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "imports.h"
 #ifndef FX
 #include "bufferobj.h"
 #include "extensions.h"
@@ -42,7 +43,6 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
-#include "imports.h"
 #include "array_cache/acache.h"
 #include "swrast/s_context.h"
 #include "swrast/s_depth.h"
@@ -950,7 +950,6 @@ DMesaVisual DMesaCreateVisual (GLint width,
                                GLint stencilSize,
                                GLint accumSize)
 {
-#ifndef FX
  DMesaVisual v;
  GLint redBits, greenBits, blueBits, alphaBits, indexBits;
  GLboolean sw_alpha;
@@ -1010,12 +1009,35 @@ DMesaVisual DMesaCreateVisual (GLint width,
  alphaBits = alphaSize;
  sw_alpha = (alphaBits > 0);
 
+#ifndef FX
  if (!dbFlag) {
     return NULL;
  }
  if ((colDepth=vl_video_init(width, height, colDepth, rgbFlag, refresh)) <= 0) {
     return NULL;
  }
+#else  /* FX */
+ if (!rgbFlag) {
+    return NULL;
+ } else {
+    char *env;
+
+    if ((env = getenv("MESA_FX_INFO")) && (env[0] == 'r')) {
+       freopen("MESA.LOG", "w", stderr);
+    }
+
+    if (refresh && (((env = getenv("FX_GLIDE_REFRESH")) == NULL) || !atoi(env))) {
+       /* if we are passed non-zero value for refresh, we need to override
+        * default refresh rate. However, if FX_GLIDE_REFRESH is already set
+        * to 0, we won't override it, because it has a special meaning for
+        * DJGPP Glide3x (switch via VESA, using BIOS default refresh).
+        */
+       char tmp[32];
+       sprintf(tmp, "FX_GLIDE_REFRESH=%u", refresh);
+       putenv(tmp);
+    }
+ }
+#endif /* FX */
 
  if ((v=(DMesaVisual)CALLOC_STRUCT(dmesa_visual)) != NULL) {
     /* Create core visual */
@@ -1036,47 +1058,13 @@ DMesaVisual DMesaCreateVisual (GLint width,
                             alphaBits?accumSize:0,	/* accumAlpha */
                             1);			/* numSamples */
 
+#ifndef FX
     v->sw_alpha = sw_alpha;
     v->z_buffer = (depthSize > 0) ? 1 : 0;
+#endif
  }
 
  return v;
-
-#else  /* FX */
-
- char *env;
- int i = 0, fx_attrib[32];
-
- if (!rgbFlag) {
-    return NULL;
- }
-
- if (dbFlag) fx_attrib[i++] = FXMESA_DOUBLEBUFFER;
- if (depthSize > 0) { fx_attrib[i++] = FXMESA_DEPTH_SIZE; fx_attrib[i++] = depthSize; }
- if (stencilSize > 0) { fx_attrib[i++] = FXMESA_STENCIL_SIZE; fx_attrib[i++] = stencilSize; }
- if (accumSize > 0) { fx_attrib[i++] = FXMESA_ACCUM_SIZE; fx_attrib[i++] = accumSize; }
- if (alphaSize) { fx_attrib[i++] = FXMESA_ALPHA_SIZE; fx_attrib[i++] = alphaSize; }
- fx_attrib[i++] = FXMESA_COLORDEPTH;
- fx_attrib[i++] = colDepth;
- fx_attrib[i] = FXMESA_NONE;
-
- if ((env = getenv("MESA_FX_INFO")) && (env[0] == 'r')) {
-    freopen("MESA.LOG", "w", stderr);
- }
-
- if (refresh && (((env = getenv("FX_GLIDE_REFRESH")) == NULL) || !atoi(env))) {
-    /* if we are passed non-zero value for refresh, we need to override
-     * default refresh rate. However, if FX_GLIDE_REFRESH is already set
-     * to 0, we won't override it, because it has a special meaning for
-     * DJGPP Glide3x (switch via VESA, using BIOS default refresh).
-     */
-    char tmp[256];
-    sprintf(tmp, "FX_GLIDE_REFRESH=%u", refresh);
-    putenv(tmp);
- }
-
- return (DMesaVisual)fxMesaCreateBestContext(-1, width, height, fx_attrib);
-#endif /* FX */
 }
 
 
@@ -1084,13 +1072,9 @@ DMesaVisual DMesaCreateVisual (GLint width,
 void DMesaDestroyVisual (DMesaVisual v)
 {
 #ifndef FX
- _mesa_destroy_visual((GLvisual *)v);
-
  vl_video_exit();
-
-#else
- fxMesaDestroyContext((fxMesaContext)v);
 #endif
+ _mesa_destroy_visual((GLvisual *)v);
 }
 
 
@@ -1116,9 +1100,22 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
  }
 
  return b;
-#else
- return (DMesaBuffer)visual;
-#endif
+#else  /* FX */
+
+ GLvisual *v = (GLvisual *)visual;
+ int i = 0, fx_attrib[32];
+
+ if (v->doubleBufferMode) fx_attrib[i++] = FXMESA_DOUBLEBUFFER;
+ if (v->depthBits > 0) { fx_attrib[i++] = FXMESA_DEPTH_SIZE; fx_attrib[i++] = v->depthBits; }
+ if (v->stencilBits > 0) { fx_attrib[i++] = FXMESA_STENCIL_SIZE; fx_attrib[i++] = v->stencilBits; }
+ if (v->accumRedBits > 0) { fx_attrib[i++] = FXMESA_ACCUM_SIZE; fx_attrib[i++] = v->accumRedBits; }
+ if (v->alphaBits) { fx_attrib[i++] = FXMESA_ALPHA_SIZE; fx_attrib[i++] = v->alphaBits; }
+ fx_attrib[i++] = FXMESA_COLORDEPTH;
+ fx_attrib[i++] = v->redBits + v->greenBits + v->blueBits;
+ fx_attrib[i] = FXMESA_NONE;
+
+ return (DMesaBuffer)fxMesaCreateBestContext(-1, width, height, fx_attrib);
+#endif /* FX */
 }
 
 
@@ -1130,6 +1127,8 @@ void DMesaDestroyBuffer (DMesaBuffer b)
     free(b->the_window);
  }
  _mesa_destroy_framebuffer((GLframebuffer *)b);
+#else
+ fxMesaDestroyContext((fxMesaContext)b);
 #endif
 }
 
@@ -1262,7 +1261,7 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
  }
 
 #else
- fxMesaMakeCurrent((fxMesaContext)c);
+ fxMesaMakeCurrent((fxMesaContext)b);
 #endif
 
  return GL_TRUE;
