@@ -74,7 +74,6 @@ void FX_CALL trap_grFinish (void);
 void FX_CALL trap_grFlush (void);
 GrContext_t FX_CALL trap_grSstWinOpen (FxU32 hWnd, GrScreenResolution_t screen_resolution, GrScreenRefresh_t refresh_rate, GrColorFormat_t color_format, GrOriginLocation_t origin_location, int nColBuffers, int nAuxBuffers);
 FxBool FX_CALL trap_grSstWinClose (GrContext_t context);
-void FX_CALL trap_grSetNumPendingBuffers (FxI32 NumPendingBuffers);
 FxBool FX_CALL trap_grSelectContext (GrContext_t context);
 void FX_CALL trap_grSstOrigin (GrOriginLocation_t origin);
 void FX_CALL trap_grSstSelect (int which_sst);
@@ -207,7 +206,6 @@ void FX_CALL trap_guFogGenerateLinear (GrFog_t *fogtable, float nearZ, float far
 #define grFlush                         trap_grFlush
 #define grSstWinOpen                    trap_grSstWinOpen
 #define grSstWinClose                   trap_grSstWinClose
-#define grSetNumPendingBuffers          trap_grSetNumPendingBuffers
 #define grSelectContext                 trap_grSelectContext
 #define grSstOrigin                     trap_grSstOrigin
 #define grSstSelect                     trap_grSstSelect
@@ -335,6 +333,7 @@ struct tdfx_glide {
    /*
    ** glide extensions
    */
+   void (FX_CALL *grSetNumPendingBuffers) (FxI32 NumPendingBuffers);
    char * (FX_CALL *grGetRegistryOrEnvironmentStringExt) (char *theEntry);
    void (FX_CALL *grGetGammaTableExt) (FxU32 nentries, FxU32 *red, FxU32 *green, FxU32 *blue);
    void (FX_CALL *grChromaRangeModeExt) (GrChromakeyMode_t mode);

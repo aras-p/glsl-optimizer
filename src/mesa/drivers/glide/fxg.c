@@ -814,6 +814,7 @@ const char *TRP_TXCOMPRESS (FxU32 compress)
 /*
 ** glide extensions
 */
+void (FX_CALL *real_grSetNumPendingBuffers) (FxI32 NumPendingBuffers);
 char * (FX_CALL *real_grGetRegistryOrEnvironmentStringExt) (char *theEntry);
 void (FX_CALL *real_grGetGammaTableExt) (FxU32 nentries, FxU32 *red, FxU32 *green, FxU32 *blue);
 void (FX_CALL *real_grChromaRangeModeExt) (GrChromakeyMode_t mode);
@@ -1021,14 +1022,6 @@ FxBool FX_CALL trap_grSstWinClose (GrContext_t context)
  rv = grSstWinClose(context);
  TRAP_LOG(GOT "%s\n", TRP_BOOL(rv));
  return rv;
-#undef FN_NAME
-}
-
-void FX_CALL trap_grSetNumPendingBuffers (FxI32 NumPendingBuffers)
-{
-#define FN_NAME "grSetNumPendingBuffers"
- TRAP_LOG("%s(%ld)\n", FN_NAME, NumPendingBuffers);
- grSetNumPendingBuffers(NumPendingBuffers);
 #undef FN_NAME
 }
 
@@ -1821,6 +1814,15 @@ void FX_CALL trap_guFogGenerateLinear (GrFog_t *fogtable,
 /*
 ** glide extensions
 */
+void FX_CALL trap_grSetNumPendingBuffers (FxI32 NumPendingBuffers)
+{
+#define FN_NAME "grSetNumPendingBuffers"
+ TRAP_LOG("%s(%ld)\n", FN_NAME, NumPendingBuffers);
+ assert(real_grSetNumPendingBuffers);
+ (*real_grSetNumPendingBuffers)(NumPendingBuffers);
+#undef FN_NAME
+}
+
 char *FX_CALL trap_grGetRegistryOrEnvironmentStringExt (char *theEntry)
 {
 #define FN_NAME "grGetRegistryOrEnvironmentStringExt"
@@ -2243,14 +2245,17 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
 #if DEBUG_TRAP
 #define GET_EXT_ADDR(name) *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (real_##name == NULL) real_##name = fake_##name
+#define GET_EXT_NULL(name) GET_EXT_ADDR(name); if (real_##name == NULL) Glide->name = NULL
 #else  /* DEBUG_TRAP */
 #define GET_EXT_ADDR(name) *(GrProc *)&Glide->name = grGetProcAddress(#name)
 #define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (Glide->name == NULL) Glide->name = fake_##name
+#define GET_EXT_NULL(name) GET_EXT_ADDR(name)
 #endif /* DEBUG_TRAP */
 
  /*
  ** glide extensions
  */
+ GET_EXT_NULL(grSetNumPendingBuffers);
  GET_EXT_FAKE(grGetRegistryOrEnvironmentStringExt);
  GET_EXT_ADDR(grGetGammaTableExt);
  GET_EXT_ADDR(grChromaRangeModeExt);
@@ -2284,9 +2289,9 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  /*
  ** texus
  */
- GET_EXT_ADDR(txImgQuantize);
- GET_EXT_ADDR(txMipQuantize);
- GET_EXT_ADDR(txPalToNcc);
+ GET_EXT_NULL(txImgQuantize);
+ GET_EXT_NULL(txMipQuantize);
+ GET_EXT_NULL(txPalToNcc);
 
 #undef GET_EXT_ADDR
 }

@@ -539,7 +539,7 @@ struct tfxMesaContext
    FxBool HaveTexUma;	/* TEXUMA */
    FxBool HaveTexus2;	/* Texus 2 - FXT1 */
    struct tdfx_glide Glide;
-   char rendererString[100];
+   char rendererString[64];
 };
 
 

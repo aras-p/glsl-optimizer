@@ -1338,6 +1338,10 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
       grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
    }
 
+   if (fxMesa->Glide.grSetNumPendingBuffers != NULL) {
+      fxMesa->Glide.grSetNumPendingBuffers(fxMesa->maxPendingSwapBuffers);
+   }
+
    fxMesa->textureAlign = FX_grGetInteger(GR_TEXTURE_ALIGN);
    /* [koolsmoky] */
    {
@@ -1499,6 +1503,10 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    /* core-level extensions */
+#if 0
+   /* not until texel fetchers are right */
+   _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmaps");
+#endif
 #if 1
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
 #endif
@@ -1506,10 +1514,6 @@ fxDDInitExtensions(GLcontext * ctx)
    /* not just yet */
    _mesa_enable_extension(ctx, "GL_ARB_fragment_program");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
-#endif
-#if 0
-   /* not until texel fetchers are right */
-   _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmaps");
 #endif
 }
 

@@ -262,7 +262,7 @@ fxMesaCreateContext(GLuint win,
 
  int i;
  const char *str;
- int sliaa, numSLI, samplesPerChip, tmuRam, fbRam;
+ int sliaa, numSLI, samplesPerChip;
  struct SstCard_St *voodoo;
  struct tdfx_glide *Glide;
 
@@ -273,8 +273,6 @@ fxMesaCreateContext(GLuint win,
  GLuint redBits, greenBits, blueBits, alphaBits;
  GrPixelFormat_t pixFmt;
    
- GLboolean useBGR;
-
  if (TDFX_DEBUG & VERBOSE_DRIVER) {
     fprintf(stderr, "fxMesaCreateContext(...)\n");
  }
@@ -312,11 +310,7 @@ fxMesaCreateContext(GLuint win,
 	           break;
               /* XXX ugly hack here for sharing display lists */
               case FXMESA_SHARE_CONTEXT:
-	           {
-	            const void *vPtr = &attribList[++i];
-	            GLcontext **ctx = (GLcontext **)vPtr;
-	            shareCtx = *ctx;
-                   }
+                   shareCtx = (GLcontext *)attribList[++i];
 	           break;
               default:
                    fprintf(stderr, "fxMesaCreateContext: ERROR: wrong parameter (%d) passed\n", attribList[i]);
@@ -373,11 +367,11 @@ fxMesaCreateContext(GLuint win,
  switch (voodoo->type) {
         case GR_SSTTYPE_VOODOO:
         case GR_SSTTYPE_Banshee:
-             useBGR = GL_TRUE;
+             fxMesa->bgrOrder = GL_TRUE;
              fxMesa->snapVertices = GL_TRUE;
              break;
         case GR_SSTTYPE_Voodoo2:
-             useBGR = GL_TRUE;
+             fxMesa->bgrOrder = GL_TRUE;
              fxMesa->snapVertices = GL_FALSE;
              break;
         case GR_SSTTYPE_Voodoo4:
@@ -387,7 +381,7 @@ fxMesaCreateContext(GLuint win,
              }
         case GR_SSTTYPE_Voodoo3:
         default:
-             useBGR = GL_FALSE;
+             fxMesa->bgrOrder = GL_FALSE;
              fxMesa->snapVertices = GL_FALSE;
              break;
  }
@@ -579,29 +573,6 @@ fxMesaCreateContext(GLuint win,
     goto errorhandler;
  }
 
-  /* Not that it matters, but tmuRam and fbRam change after grSstWinOpen. */
-  tmuRam = voodoo->tmuConfig[GR_TMU0].tmuRam;
-  fbRam  = voodoo->fbRam;
-  BEGIN_BOARD_LOCK();
-  {
-    FxI32 result;
-    grGet(GR_MEMORY_TMU, 4, &result);
-    tmuRam = result / (1024 * 1024);
-    grGet(GR_MEMORY_FB, 4, &result);
-    fbRam = result / (1024 * 1024);
-  }
-  END_BOARD_LOCK();
-
-  sprintf(fxMesa->rendererString, "Mesa %s v0.60 %s %dMB FB, %dMB TM, %d TMU, %s",
-                           grGetString(GR_RENDERER),
-                           grGetString(GR_HARDWARE),
-                           fbRam,
-                           tmuRam * voodoo->nTexelfx,
-                           voodoo->nTexelfx,
-                           (voodoo->numChips > 1) ? "SLI" : "NOSLI");
-
-  fxMesa->bgrOrder = useBGR;
-
    /* screen */
    fxMesa->screen_width = FX_grSstScreenWidth();
    fxMesa->screen_height = FX_grSstScreenHeight();
@@ -617,21 +588,37 @@ fxMesaCreateContext(GLuint win,
    fxMesa->clipMaxY = fxMesa->height;
 
    if (fxMesa->verbose) {
-      char buf[80];
+      FxI32 tmuRam, fbRam;
 
-      strcpy(buf, grGetString(GR_VERSION));
-      fprintf(stderr, "Voodoo Using Glide %s\n", buf);
-      fprintf(stderr, "Voodoo Number of boards: %d\n", glbHWConfig.num_sst);
-      fprintf(stderr, "Voodoo Number of TMUs: %d\n", voodoo->nTexelfx);
-      fprintf(stderr, "Voodoo fbRam: %d\n", voodoo->fbRam);
-      fprintf(stderr, "Voodoo fbiRev: %d\n", voodoo->fbiRev);
-      fprintf(stderr, "Voodoo chips detected: %d\n", voodoo->numChips);
-      fprintf(stderr, "Voodoo pixel order = %s, vertex snapping = %d\n",
-                      useBGR ? "BGR" : "RGB",
-                      fxMesa->snapVertices);
-      fprintf(stderr, "Voodoo screen: %dx%d:%d\n",
-	              fxMesa->screen_width, fxMesa->screen_height, colDepth);
+      /* Not that it matters, but tmuRam and fbRam change after grSstWinOpen. */
+      tmuRam = voodoo->tmuConfig[GR_TMU0].tmuRam;
+      fbRam  = voodoo->fbRam;
+      BEGIN_BOARD_LOCK();
+      grGet(GR_MEMORY_TMU, 4, &tmuRam);
+      grGet(GR_MEMORY_FB, 4, &fbRam);
+      END_BOARD_LOCK();
+
+      fprintf(stderr, "Voodoo Using Glide %s\n", grGetString(GR_VERSION));
+      fprintf(stderr, "Voodoo Board: %d/%d, %s, %d GPU\n",
+                      fxMesa->board + 1,
+                      glbHWConfig.num_sst,
+                      grGetString(GR_HARDWARE),
+                      voodoo->numChips);
+      fprintf(stderr, "Voodoo Memory: FB = %ld, TM = %d x %ld\n",
+                      fbRam,
+                      voodoo->nTexelfx,
+                      tmuRam);
+      fprintf(stderr, "Voodoo Screen: %dx%d:%d %s, %svertex snapping\n",
+	              fxMesa->screen_width,
+                      fxMesa->screen_height,
+                      colDepth,
+                      fxMesa->bgrOrder ? "BGR" : "RGB",
+                      fxMesa->snapVertices ? "" : "no ");
    }
+
+  sprintf(fxMesa->rendererString, "Mesa %s v0.60 %s",
+                           grGetString(GR_RENDERER),
+                           grGetString(GR_HARDWARE));
 
    fxMesa->glVis = _mesa_create_visual(GL_TRUE,		/* RGB mode */
 				       doubleBuffer,
@@ -759,10 +746,10 @@ fxMesaDestroyContext(fxMesaContext fxMesa)
 	 fxMesa->stats.swapBuffer = 1;
 
       fprintf(stderr, "Textures Stats:\n");
-      fprintf(stderr, "  Free texture memory on TMU0: %d:\n",
+      fprintf(stderr, "  Free texture memory on TMU0: %d\n",
 	      fxMesa->freeTexMem[FX_TMU0]);
       if (fxMesa->haveTwoTMUs)
-	 fprintf(stderr, "  Free texture memory on TMU1: %d:\n",
+	 fprintf(stderr, "  Free texture memory on TMU1: %d\n",
 		 fxMesa->freeTexMem[FX_TMU1]);
       fprintf(stderr, "  # request to TMM to upload a texture objects: %u\n",
 	      fxMesa->stats.reqTexUpload);
@@ -872,6 +859,7 @@ fxMesaSwapBuffers(void)
 
 	 grBufferSwap(fxMesaCurrentCtx->swapInterval);
 
+#if 0
 	 /*
 	  * Don't allow swap buffer commands to build up!
 	  */
@@ -883,6 +871,7 @@ fxMesaSwapBuffers(void)
 	       in order to enable this option) */
 	    /* usleep(10000); */
 	    ;
+#endif
 
 	 fxMesaCurrentCtx->stats.swapBuffer++;
       }
@@ -897,7 +886,7 @@ void GLAPIENTRY
 fxCloseHardware(void)
 {
    if (glbGlideInitialized) {
-      if (fxMesaCurrentCtx && fxMesaCurrentCtx->verbose) {
+      if (getenv("MESA_FX_INFO")) {
 	 GrSstPerfStats_t st;
 
 	 FX_grSstPerfStats(&st);

@@ -334,9 +334,7 @@ wglCreateContext(HDC hdc)
    {
     char *env;
     /* always log when debugging, or if user demands */
-#if !FX_DEBUG
-    if ((env = getenv("MESA_FX_INFO")) && env[0] == 'r')
-#endif
+    if (TDFX_DEBUG || ((env = getenv("MESA_FX_INFO")) && env[0] == 'r'))
       freopen("MESA.LOG", "w", stderr);
    }
 
@@ -702,47 +700,12 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
    int i, best = -1, qt_valid_pix;
    PIXELFORMATDESCRIPTOR pfd = *ppfd;
 
-#if 0
-  FILE *pix_file;
-  pix_file = fopen("pix_log.txt", "a");
-  if (pix_file) {
-  fprintf(pix_file, "wglChoosePixelFormat\n");
-  fprintf(pix_file, "nSize           = %d\n",pfd.nSize);
-  fprintf(pix_file, "nVersion        = %d\n",pfd.nVersion);
-  fprintf(pix_file, "dwFlags         = %d\n",pfd.dwFlags);
-  fprintf(pix_file, "iPixelType      = %d\n",pfd.iPixelType);
-  fprintf(pix_file, "cColorBits      = %d\n",pfd.cColorBits);
-  fprintf(pix_file, "cRedBits        = %d\n",pfd.cRedBits);
-  fprintf(pix_file, "cRedShift       = %d\n",pfd.cRedShift);
-  fprintf(pix_file, "cGreenBits      = %d\n",pfd.cGreenBits);
-  fprintf(pix_file, "cGreenShift     = %d\n",pfd.cGreenShift);
-  fprintf(pix_file, "cBlueBits       = %d\n",pfd.cBlueBits);
-  fprintf(pix_file, "cBlueShift      = %d\n",pfd.cBlueShift);
-  fprintf(pix_file, "cAlphaBits      = %d\n",pfd.cAlphaBits);
-  fprintf(pix_file, "cAlphaShift     = %d\n",pfd.cAlphaShift);
-  fprintf(pix_file, "cAccumBits      = %d\n",pfd.cAccumBits);
-  fprintf(pix_file, "cAccumRedBits   = %d\n",pfd.cAccumRedBits);
-  fprintf(pix_file, "cAccumGreenBits = %d\n",pfd.cAccumGreenBits);
-  fprintf(pix_file, "cAccumBlueBits  = %d\n",pfd.cAccumBlueBits);
-  fprintf(pix_file, "cAccumAlphaBits = %d\n",pfd.cAccumAlphaBits);
-  fprintf(pix_file, "cDepthBits      = %d\n",pfd.cDepthBits);
-  fprintf(pix_file, "cStencilBits    = %d\n",pfd.cStencilBits);
-  fprintf(pix_file, "cAuxBuffers     = %d\n",pfd.cAuxBuffers);
-  fprintf(pix_file, "iLayerType      = %d\n",pfd.iLayerType);
-  fprintf(pix_file, "bReserved       = %d\n",pfd.bReserved);
-  fprintf(pix_file, "dwLayerMask     = %d\n",pfd.dwLayerMask);
-  fprintf(pix_file, "dwVisibleMask   = %d\n",pfd.dwVisibleMask);
-  fprintf(pix_file, "dwDamageMask    = %d\n",pfd.dwDamageMask);
-  fclose(pix_file);
-  }
-#endif
-
    qt_valid_pix = pfd_tablen();
 
 #if 1 || QUAKE2 || GORE
   /* QUAKE2: 24+32 */
   /* GORE  : 24+16 */
-  if (pfd.cColorBits == 24) {
+  if ((pfd.cColorBits == 24) || (pfd.cColorBits == 32)) {
      /* the first 2 entries are 16bit */
      pfd.cColorBits = (qt_valid_pix > 2) ? 32 : 16;
   }
@@ -783,10 +746,8 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
       if (pfd.cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
 	 continue;		/* need alpha buffer */
 
-#if 0
-      if ((pfd.cColorBits == 32) && (pfd.cStencilBits > 0 && pix[i].pfd.cStencilBits == 0))
-	 continue;		/* need stencil */
-#endif
+      if (pfd.cStencilBits > 0 && pix[i].pfd.cStencilBits == 0)
+	 continue;		/* need stencil buffer */
 
       if (pfd.iPixelType == pix[i].pfd.iPixelType) {
 	 best = i + 1;
@@ -795,6 +756,38 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
    }
 
    if (best == -1) {
+      FILE *err = fopen("MESA.LOG", "w");
+      if (err != NULL) {
+         fprintf(err, "wglChoosePixelFormat failed\n");
+         fprintf(err, "\tnSize           = %d\n", ppfd->nSize);
+         fprintf(err, "\tnVersion        = %d\n", ppfd->nVersion);
+         fprintf(err, "\tdwFlags         = %d\n", ppfd->dwFlags);
+         fprintf(err, "\tiPixelType      = %d\n", ppfd->iPixelType);
+         fprintf(err, "\tcColorBits      = %d\n", ppfd->cColorBits);
+         fprintf(err, "\tcRedBits        = %d\n", ppfd->cRedBits);
+         fprintf(err, "\tcRedShift       = %d\n", ppfd->cRedShift);
+         fprintf(err, "\tcGreenBits      = %d\n", ppfd->cGreenBits);
+         fprintf(err, "\tcGreenShift     = %d\n", ppfd->cGreenShift);
+         fprintf(err, "\tcBlueBits       = %d\n", ppfd->cBlueBits);
+         fprintf(err, "\tcBlueShift      = %d\n", ppfd->cBlueShift);
+         fprintf(err, "\tcAlphaBits      = %d\n", ppfd->cAlphaBits);
+         fprintf(err, "\tcAlphaShift     = %d\n", ppfd->cAlphaShift);
+         fprintf(err, "\tcAccumBits      = %d\n", ppfd->cAccumBits);
+         fprintf(err, "\tcAccumRedBits   = %d\n", ppfd->cAccumRedBits);
+         fprintf(err, "\tcAccumGreenBits = %d\n", ppfd->cAccumGreenBits);
+         fprintf(err, "\tcAccumBlueBits  = %d\n", ppfd->cAccumBlueBits);
+         fprintf(err, "\tcAccumAlphaBits = %d\n", ppfd->cAccumAlphaBits);
+         fprintf(err, "\tcDepthBits      = %d\n", ppfd->cDepthBits);
+         fprintf(err, "\tcStencilBits    = %d\n", ppfd->cStencilBits);
+         fprintf(err, "\tcAuxBuffers     = %d\n", ppfd->cAuxBuffers);
+         fprintf(err, "\tiLayerType      = %d\n", ppfd->iLayerType);
+         fprintf(err, "\tbReserved       = %d\n", ppfd->bReserved);
+         fprintf(err, "\tdwLayerMask     = %d\n", ppfd->dwLayerMask);
+         fprintf(err, "\tdwVisibleMask   = %d\n", ppfd->dwVisibleMask);
+         fprintf(err, "\tdwDamageMask    = %d\n", ppfd->dwDamageMask);
+         fclose(err);
+      }
+
       SetLastError(0);
       return (0);
    }

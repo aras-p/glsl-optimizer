@@ -152,13 +152,7 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
    chunk = (fxMesa->type >= GR_SSTTYPE_Banshee) ? (end - start) : FX_2MB_SPLIT;
 	
    if (fxMesa->verbose) {
-      fprintf(stderr, "Voodoo %s configuration:\n",
-	      (tmu == FX_TMU0) ? "TMU0" : "TMU1");
-      fprintf(stderr, "Voodoo  Lower texture memory address (%u)\n",
-	      (unsigned int) start);
-      fprintf(stderr, "Voodoo  Higher texture memory address (%u)\n",
-	      (unsigned int) end);
-      fprintf(stderr, "Voodoo  Splitting Texture memory in %luMB blocks:\n", chunk >> 20);
+      fprintf(stderr, "Voodoo TMU%d configuration:\n", tmu);
    }
 
    fxMesa->freeTexMem[tmu] = end - start;
@@ -173,7 +167,7 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
 	 blockend = blockstart + chunk;
 
       if (fxMesa->verbose)
-	 fprintf(stderr, "Voodoo    %07u-%07u\n",
+	 fprintf(stderr, "Voodoo   %08u-%08u\n",
 		 (unsigned int) blockstart, (unsigned int) blockend);
 
       tmn = fxTMNewRangeNode(fxMesa, blockstart, blockend);
