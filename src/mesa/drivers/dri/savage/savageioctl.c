@@ -63,7 +63,7 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 		unsigned int y = pbox->y1;
 		unsigned int width = pbox->x2 - x;
 		unsigned int height = pbox->y2 - y;
- 		unsigned int *bciptr;		
+ 		uint32_t *bciptr;
 
 		if (pbox->x1 > pbox->x2 ||
 		    pbox->y1 > pbox->y2 ||
@@ -73,27 +73,27 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 
 	   	if ( (pclear->flags & SAVAGE_FRONT) && imesa->IsFullScreen) {
 		        bciptr = savageDMAAlloc (imesa, 8);
-			WRITE_CMD((bciptr) , 0x4BCC8C00,GLuint);
-			WRITE_CMD((bciptr) , imesa->savageScreen->frontOffset,GLuint);
-			WRITE_CMD((bciptr) , imesa->savageScreen->frontBitmapDesc,GLuint);
-			WRITE_CMD((bciptr) , pclear->clear_color,GLuint);
-			WRITE_CMD((bciptr) , (y <<16) | x,GLuint);
-			WRITE_CMD((bciptr) , (height << 16) | width,GLuint);
+			WRITE_CMD((bciptr) , 0x4BCC8C00,uint32_t);
+			WRITE_CMD((bciptr) , imesa->savageScreen->frontOffset,uint32_t);
+			WRITE_CMD((bciptr) , imesa->savageScreen->frontBitmapDesc,uint32_t);
+			WRITE_CMD((bciptr) , pclear->clear_color,uint32_t);
+			WRITE_CMD((bciptr) , (y <<16) | x,uint32_t);
+			WRITE_CMD((bciptr) , (height << 16) | width,uint32_t);
 			savageDMACommit (imesa, bciptr);
 		}
 		else if ( pclear->flags & (SAVAGE_BACK|SAVAGE_FRONT) ) {
 		        bciptr = savageDMAAlloc (imesa, 8);
-			WRITE_CMD((bciptr) , 0x4BCC8C00,GLuint);
-			WRITE_CMD((bciptr) , imesa->savageScreen->backOffset,GLuint);
-			WRITE_CMD((bciptr) , imesa->savageScreen->backBitmapDesc,GLuint);
-			WRITE_CMD((bciptr) , pclear->clear_color,GLuint);
-			WRITE_CMD((bciptr) , (y <<16) | x,GLuint);
-			WRITE_CMD((bciptr) , (height << 16) | width,GLuint);
+			WRITE_CMD((bciptr) , 0x4BCC8C00,uint32_t);
+			WRITE_CMD((bciptr) , imesa->savageScreen->backOffset,uint32_t);
+			WRITE_CMD((bciptr) , imesa->savageScreen->backBitmapDesc,uint32_t);
+			WRITE_CMD((bciptr) , pclear->clear_color,uint32_t);
+			WRITE_CMD((bciptr) , (y <<16) | x,uint32_t);
+			WRITE_CMD((bciptr) , (height << 16) | width,uint32_t);
 			savageDMACommit (imesa, bciptr);
 		}
 		
 		if ( pclear->flags & (SAVAGE_DEPTH |SAVAGE_STENCIL) ) {
-		        GLuint writeMask = 0x0;
+		        uint32_t writeMask = 0x0;
 #if HW_STENCIL		
 		        if(imesa->hw_stencil)
 		        {        
@@ -128,8 +128,8 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 				bciptr = savageDMAAlloc (imesa, 10);
 			        if(writeMask != 0xFFFFFFFF)
 			        {
-                                    WRITE_CMD((bciptr) , 0x960100D7,GLuint);
-                                    WRITE_CMD((bciptr) , writeMask,GLuint);  
+                                    WRITE_CMD((bciptr) , 0x960100D7,uint32_t);
+                                    WRITE_CMD((bciptr) , writeMask,uint32_t);
                                 }
                             }
 			    else
@@ -138,19 +138,19 @@ static void savage_BCI_clear(GLcontext *ctx, drm_savage_clear_t *pclear)
 				bciptr = savageDMAAlloc (imesa, 6);
 			    }
 
-			    WRITE_CMD((bciptr) , 0x4BCC8C00,GLuint);
-			    WRITE_CMD((bciptr) , imesa->savageScreen->depthOffset,GLuint);
-			    WRITE_CMD((bciptr) , imesa->savageScreen->depthBitmapDesc,GLuint);
-			    WRITE_CMD((bciptr) , pclear->clear_depth,GLuint);
-			    WRITE_CMD((bciptr) , (y <<16) | x,GLuint);
-			    WRITE_CMD((bciptr) , (height << 16) | width,GLuint);
+			    WRITE_CMD((bciptr) , 0x4BCC8C00,uint32_t);
+			    WRITE_CMD((bciptr) , imesa->savageScreen->depthOffset,uint32_t);
+			    WRITE_CMD((bciptr) , imesa->savageScreen->depthBitmapDesc,uint32_t);
+			    WRITE_CMD((bciptr) , pclear->clear_depth,uint32_t);
+			    WRITE_CMD((bciptr) , (y <<16) | x,uint32_t);
+			    WRITE_CMD((bciptr) , (height << 16) | width,uint32_t);
 #if HW_STENCIL			    
 			    if(imesa->hw_stencil)
 			    {
 			        if(writeMask != 0xFFFFFFFF)
 			        {
-			           WRITE_CMD((bciptr) , 0x960100D7,GLuint);
-                                   WRITE_CMD((bciptr) , 0xFFFFFFFF,GLuint);  
+			           WRITE_CMD((bciptr) , 0x960100D7,uint32_t);
+                                   WRITE_CMD((bciptr) , 0xFFFFFFFF,uint32_t);  
 			        }
 			    }
 #endif
@@ -170,7 +170,7 @@ static void savage_BCI_swap(savageContextPtr imesa)
     int nbox = imesa->sarea->nbox;
     drm_clip_rect_t *pbox = imesa->sarea->boxes;
     int i;
-    volatile unsigned int *bciptr;
+    volatile uint32_t *bciptr;
     
     if (nbox > SAVAGE_NR_SAREA_CLIPRECTS)
         nbox = SAVAGE_NR_SAREA_CLIPRECTS;

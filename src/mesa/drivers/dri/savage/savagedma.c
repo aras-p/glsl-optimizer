@@ -85,7 +85,7 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->end == dmaBuff->allocEnd);
 
-    size *= sizeof (GLuint); /* size in bytes */
+    size *= sizeof (uint32_t); /* size in bytes */
     if (dmaBuff->kickFlag == GL_TRUE) {
 	if (size > DMA_PAGE_SIZE)
 	    return NULL;
@@ -102,9 +102,9 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
 
 /* Flush DMA buffer via DMA */
 void savageDMAFlush (savageContextPtr imesa) {
-    volatile GLuint* BCIbase;
+    volatile uint32_t* BCIbase;
     DMABufferPtr dmaBuff = &imesa->DMABuf;
-    GLuint phyAddress;
+    uint32_t phyAddress;
     GLuint dmaCount, dmaCount1, remain;
     int i;
 
@@ -117,7 +117,7 @@ void savageDMAFlush (savageContextPtr imesa) {
       return;
 
     /* get bci base */
-    BCIbase = (volatile GLuint *)SAVAGE_GET_BCI_POINTER(imesa,4);
+    BCIbase = (volatile uint32_t *)SAVAGE_GET_BCI_POINTER(imesa,4);
 
     /* set the eventtag */
     *BCIbase = (dmaBuff->usingPage & 0xffffL) | (CMD_UpdateShadowStat << 27)
@@ -136,7 +136,7 @@ void savageDMAFlush (savageContextPtr imesa) {
     dmaCount1 = (dmaCount + 31UL) & ~31UL;
     remain = (dmaCount1 - dmaCount) >> 2;
     for (i = 0; i < remain; i++) {
-        *((GLuint *)dmaBuff->end) = 0x40000000L;
+        *((uint32_t *)dmaBuff->end) = 0x40000000L;
         dmaBuff->end+=4;
     }
     dmaCount = (dmaCount1 >> 3) - 1;
@@ -227,7 +227,7 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->end == dmaBuff->allocEnd);
 
-    size *= sizeof (GLuint); /* size in bytes */
+    size *= sizeof (uint32_t); /* size in bytes */
     if (dmaBuff->end + size >= dmaBuff->buf->linear + DMA_PAGE_SIZE) {
 	/* need kick off */
 	savageDMAFlush (imesa);
@@ -238,9 +238,9 @@ void *savageDMAAlloc (savageContextPtr imesa, GLuint size) {
 
 /* Flush DMA buffer via BCI (faked DMA) */
 void savageDMAFlush(savageContextPtr imesa) {
-    volatile GLuint* BCIbase;
+    volatile uint32_t* BCIbase;
     DMABufferPtr dmaBuff = &imesa->DMABuf;
-    GLuint *entry;
+    uint32_t *entry;
 
     /* make sure that everything has been filled in and committed */
     assert (dmaBuff->allocEnd == dmaBuff->end);
@@ -249,11 +249,11 @@ void savageDMAFlush(savageContextPtr imesa) {
       return;
 
     /* get bci base */
-    BCIbase = (volatile GLuint *)SAVAGE_GET_BCI_POINTER(
-	imesa, (dmaBuff->end - dmaBuff->start) / sizeof (GLuint));
+    BCIbase = (volatile uint32_t *)SAVAGE_GET_BCI_POINTER(
+	imesa, (dmaBuff->end - dmaBuff->start) / sizeof (uint32_t));
 
-    for (entry = (GLuint *)dmaBuff->start;
-	 entry < (GLuint *)dmaBuff->end; ++entry)
+    for (entry = (uint32_t *)dmaBuff->start;
+	 entry < (uint32_t *)dmaBuff->end; ++entry)
 	*BCIbase = *entry;
 
     dmaBuff->end = dmaBuff->allocEnd = dmaBuff->start;

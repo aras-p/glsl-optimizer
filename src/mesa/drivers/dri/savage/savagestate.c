@@ -1433,12 +1433,12 @@ static GLboolean savageGlobalRegChanged (savageContextPtr imesa,
 static void savageEmitContiguousRegs (savageContextPtr imesa,
 				      GLuint first, GLuint last) {
     GLuint i;
-    GLuint *pBCIBase;
+    uint32_t *pBCIBase;
     pBCIBase = savageDMAAlloc (imesa, last - first + 2);
-    WRITE_CMD (pBCIBase, SET_REGISTER(first, last - first + 1), GLuint);
+    WRITE_CMD (pBCIBase, SET_REGISTER(first, last - first + 1), uint32_t);
 
     for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i) {
-	WRITE_CMD (pBCIBase, imesa->regs.ui[i], GLuint);
+	WRITE_CMD (pBCIBase, imesa->regs.ui[i], uint32_t);
 	imesa->oldRegs.ui[i] = imesa->regs.ui[i];
     }
     savageDMACommit (imesa, pBCIBase);
@@ -1463,9 +1463,19 @@ static void savageEmitChangedRegs (savageContextPtr imesa,
 	savageEmitContiguousRegs (imesa, firstChanged+SAVAGE_FIRST_REG,
 				  last);
 }
+static void savageEmitChangedRegChunk (savageContextPtr imesa,
+				       GLuint first, GLuint last) {
+    GLuint i;
+    for (i = first - SAVAGE_FIRST_REG; i <= last - SAVAGE_FIRST_REG; ++i) {
+	if (imesa->oldRegs.ui[i] != imesa->regs.ui[i]) {
+	    savageEmitContiguousRegs (imesa, first, last);
+	    break;
+	}
+    }
+}
 static void savageUpdateRegister_s4(savageContextPtr imesa)
 {
-    GLuint *pBCIBase;
+    uint32_t *pBCIBase;
 
     /*
      * Scissors updates drawctrl0 and drawctrl 1
@@ -1488,10 +1498,11 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
         }
     }
 
-    /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39 */
-    if (imesa->lostContext || savageGlobalRegChanged (imesa, 0x1e, 0x39)) {
+    /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39
+     * 0x1e-0x27 are local, no need to check them for global changes */
+    if (imesa->lostContext || savageGlobalRegChanged (imesa, 0x28, 0x39)) {
 	pBCIBase = savageDMAAlloc (imesa, 1);
-        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, GLuint);
+        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, uint32_t);
 	savageDMACommit (imesa, pBCIBase);
     }
     if (imesa->lostContext)
@@ -1504,7 +1515,7 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 }
 static void savageUpdateRegister_s3d(savageContextPtr imesa)
 {
-    GLuint *pBCIBase;
+    uint32_t *pBCIBase;
 
     if (imesa->scissorChanged)
     {
@@ -1541,19 +1552,18 @@ static void savageUpdateRegister_s3d(savageContextPtr imesa)
      * 0x18-0x1c and 0x20-0x38. The first range is local. */
     if (imesa->lostContext || savageGlobalRegChanged (imesa, 0x20, 0x38)) {
 	pBCIBase = savageDMAAlloc (imesa, 1);
-        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, GLuint);
+        WRITE_CMD (pBCIBase, WAIT_3D_IDLE, uint32_t);
 	savageDMACommit (imesa, pBCIBase);
     }
     /* FIXME: watermark registers aren't programmed correctly ATM */
-    /* Emitting only changed registers introduces strange texturing errors
-     * on my SavageIX. Emit them all to be on the safe side.
-     * FIXME: might be smarter to emit all texture regs if one changed and
-     * all other regs independently, if one of them changed. */
-    if (1 || imesa->lostContext) {
+    if (imesa->lostContext) {
 	savageEmitContiguousRegs (imesa, 0x18, 0x1c);
 	savageEmitContiguousRegs (imesa, 0x20, 0x36);
     } else {
-	savageEmitChangedRegs (imesa, 0x18, 0x1c);
+	/* On the Savage IX texture registers (at least some of them)
+	 * have to be emitted as one chunk. */
+	savageEmitChangedRegs (imesa, 0x18, 0x19);
+	savageEmitChangedRegChunk (imesa, 0x1a, 0x1c);
 	savageEmitChangedRegs (imesa, 0x20, 0x36);
     }
 
@@ -1702,12 +1712,31 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->LcsCullMode = BCM_None;
     imesa->regs.s3d.texDescr.ni.palSize          = TPS_256;
 
-    /* on savage3d all registers are global for now */
+    /* clear the local registers in the global reg mask */
+    imesa->globalRegMask.s3d.texPalAddr.ui = 0;
+    imesa->globalRegMask.s3d.texXprClr.ui  = 0;
+    imesa->globalRegMask.s3d.texAddr.ui    = 0;
+    imesa->globalRegMask.s3d.texDescr.ui   = 0;
+    imesa->globalRegMask.s3d.texCtrl.ui    = 0;
+
+    imesa->globalRegMask.s3d.fogCtrl.ui = 0;
+
+    /* drawCtrl is local with some exceptions */
+    imesa->globalRegMask.s3d.drawCtrl.ui = 0;
+    imesa->globalRegMask.s3d.drawCtrl.ni.cullMode = 0x3;
+    imesa->globalRegMask.s3d.drawCtrl.ni.alphaTestCmpFunc = 0x7;
+    imesa->globalRegMask.s3d.drawCtrl.ni.alphaTestEn = 0x1;
+    imesa->globalRegMask.s3d.drawCtrl.ni.alphaRefVal = 0xff;
+
+    /* zBufCtrl is local with some exceptions */
+    imesa->globalRegMask.s3d.zBufCtrl.ui = 0;
+    imesa->globalRegMask.s3d.zBufCtrl.ni.zCmpFunc = 0x7;
+    imesa->globalRegMask.s3d.zBufCtrl.ni.zBufEn = 0x1;
 }
 void savageDDInitState( savageContextPtr imesa ) {
-    memset (imesa->regs.ui, 0, SAVAGE_NR_REGS*sizeof(GLuint));
-    memset (imesa->oldRegs.ui, 0, SAVAGE_NR_REGS*sizeof(GLuint));
-    memset (imesa->globalRegMask.ui, 0xff, SAVAGE_NR_REGS*sizeof(GLuint));
+    memset (imesa->regs.ui, 0, SAVAGE_NR_REGS*sizeof(uint32_t));
+    memset (imesa->oldRegs.ui, 0, SAVAGE_NR_REGS*sizeof(uint32_t));
+    memset (imesa->globalRegMask.ui, 0xff, SAVAGE_NR_REGS*sizeof(uint32_t));
     if (imesa->savageScreen->chipset >= S3_SAVAGE4)
 	savageDDInitState_s4 (imesa);
     else
