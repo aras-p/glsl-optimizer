@@ -159,7 +159,7 @@ tabletPosChange(GLUTwindow * window, int first, int count, int *data)
 }
 #endif /* !_WIN32 */
 
-int
+static int
 __glutProcessDeviceEvents(XEvent * event)
 {
 #if !defined(_WIN32)
@@ -264,18 +264,17 @@ __glutProcessDeviceEvents(XEvent * event)
 #else
   {
     JOYINFOEX info;
-    int njoyId = 0;
-    int nConnected = 0;
-    MMRESULT result;
+    JOYCAPS joyCaps;
 
-    /* Loop through all possible joystick IDs until we get the error
-       JOYERR_PARMS. Count the number of times we get JOYERR_NOERROR
-       indicating an installed joystick driver with a joystick currently
-       attached to the port. */
-    while ((result = joyGetPosEx(njoyId++,&info)) != JOYERR_PARMS) {
-      if (result == JOYERR_NOERROR) {
-        ++nConnected;  /* The count of connected joysticks. */
-      }
+    if (joyGetPosEx(JOYSTICKID1,&info) != JOYERR_NOERROR) {
+      __glutHasJoystick = 1;
+      joyGetDevCaps(JOYSTICKID1, &joyCaps, sizeof(joyCaps));
+      __glutNumJoystickButtons = joyCaps.wNumButtons;
+      __glutNumJoystickAxes = joyCaps.wNumAxes;
+    } else {
+      __glutHasJoystick = 0;
+      __glutNumJoystickButtons = 0;
+      __glutNumJoystickAxes = 0;
     }
   }
 #endif /* !_WIN32 */
