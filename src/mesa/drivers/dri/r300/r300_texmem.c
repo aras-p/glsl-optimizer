@@ -53,7 +53,7 @@ SOFTWARE.
 #include "r300_swtcl.h"
 */
 #include "r300_tex.h"
-
+#include "r300_ioctl.h"
 #include <unistd.h>		/* for usleep() */
 
 /**

@@ -370,7 +370,7 @@ void r300Flush(GLcontext * ctx)
 
 void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 {
-	struct r200_dma_buffer *dmabuf;
+	struct r300_dma_buffer *dmabuf;
 	int fd = rmesa->radeon.dri.fd;
 	int index = 0;
 	int size = 0;

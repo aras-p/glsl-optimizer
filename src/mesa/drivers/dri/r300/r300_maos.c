@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "r300_state.h"
 #include "r300_maos.h"
+#include "r300_ioctl.h"
 
 #define DEBUG_ALL DEBUG_VERTS
 
