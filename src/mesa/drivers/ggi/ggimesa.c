@@ -73,8 +73,8 @@ static void gl_ggiGetSize(GLframebuffer *fb, GLuint *width, GLuint *height)
 	
 	GGIMESADPRINT_CORE("gl_ggiGetSize() called\n");
 	
-	*width = LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.x; 
-	*height = LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.y;
+	*width = LIBGGI_VIRTX(ggi_ctx->ggi_visual);
+	*height = LIBGGI_VIRTY(ggi_ctx->ggi_visual);
 	printf("returning %d, %d\n", *width, *height);
 }
 
@@ -91,9 +91,9 @@ static void gl_ggiSetIndex(GLcontext *ctx, GLuint ci)
 static void gl_ggiSetClearIndex(GLcontext *ctx, GLuint ci)
 {	
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
-	
+
 	GGIMESADPRINT_CORE("gl_ggiSetClearIndex() called\n");
-	
+
 	ggiSetGCForeground(ggi_ctx->ggi_visual, ci);
 	ggi_ctx->clearcolor = (ggi_pixel)ci;
 }
@@ -126,19 +126,15 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	
 	GGIMESADPRINT_CORE("gl_ggiClear() called\n");
 
-	if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) 
-	{
+	if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
 		ggiSetGCForeground(ggi_ctx->ggi_visual, ggi_ctx->clearcolor);
 
-		if (all)
-		{
+		if (all) {
 			int w, h;
-			w = LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.x;
-			h = LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.y;
+			w = LIBGGI_VIRTX(ggi_ctx->ggi_visual);
+			h = LIBGGI_VIRTX(ggi_ctx->ggi_visual);
 			ggiDrawBox(ggi_ctx->ggi_visual, 0, 0, w, h);
-		}
-		else
-		{
+		} else {
 			ggiDrawBox(ggi_ctx->ggi_visual, x, y, //FLIP(y),
 				   width, height);
 		}
@@ -156,7 +152,7 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit)
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
-	
+
 	printf("set read %d\n", bufferBit);
 	GGIMESADPRINT_CORE("gl_ggiSetBuffer() called\n");
 
@@ -184,11 +180,12 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint b
 static const GLubyte * gl_ggiGetString(GLcontext *ctx, GLenum name)
 {
 	GGIMESADPRINT_CORE("gl_ggiGetString() called\n");
-	
-	if (name == GL_RENDERER)
-        	return (GLubyte *) "Mesa GGI";
-	else
+
+	if (name == GL_RENDERER) {
+		return (GLubyte *) "Mesa GGI";
+	} else {
 		return NULL;
+	}
 }
 
 static void gl_ggiFlush(GLcontext *ctx)
@@ -219,7 +216,7 @@ static void gl_ggiEnable(GLcontext *ctx, GLenum pname, GLboolean state)
 static void gl_ggiSetupPointers(GLcontext *ctx)
 {
 	TNLcontext *tnl;
-  
+
 	GGIMESADPRINT_CORE("gl_ggiSetupPointers() called\n");
 
 	/* General information */
@@ -293,13 +290,13 @@ static void get_mode_info(ggi_visual_t vis, int *r, int *g, int *b,
 	*g = 0;
 	*b = 0;
 
-	for(i = 0; i < sizeof(ggi_pixel)*8; ++i){
+	for(i = 0; i < sizeof(ggi_pixel)*8; ++i) {
 		int mask = 1 << i;
-		if(LIBGGI_PIXFMT(vis)->red_mask & mask)
+		if (LIBGGI_PIXFMT(vis)->red_mask & mask)
 			++(*r);
-		if(LIBGGI_PIXFMT(vis)->green_mask & mask)
+		if (LIBGGI_PIXFMT(vis)->green_mask & mask)
 			++(*g);
-		if(LIBGGI_PIXFMT(vis)->blue_mask & mask)
+		if (LIBGGI_PIXFMT(vis)->blue_mask & mask)
 			++(*b);
 	}
 
@@ -317,15 +314,17 @@ int ggiMesaInit()
 	
 	GGIMESADPRINT_CORE("ggiMesaInit() called\n");
 	
-        str = getenv("GGIMESA_DEBUG");
-	if (str != NULL) {
-		_ggimesaDebugState = atoi(str);
-		GGIMESADPRINT_CORE("Debugging=%d\n", _ggimesaDebugState);
-	}
-	
 	str = getenv("GGIMESA_DEBUGSYNC");
 	if (str != NULL) {
 		_ggimesaDebugSync = 1;
+	}
+	
+	str = getenv("GGIMESA_DEBUG");
+	if (str != NULL) {
+		_ggimesaDebugState = atoi(str);
+		GGIMESADPRINT_CORE("%s Debugging=%d\n",
+			_ggimesaDebugSync ? "sync" : "async",
+			_ggimesaDebugState);
 	}
 	
 	GGIMESADPRINT_CORE("ggiMesaInit()\n");
@@ -360,12 +359,12 @@ int ggiMesaInit()
 int ggiMesaExit(void)
 {
 	int rc;
-	
+
 	GGIMESADPRINT_CORE("ggiMesaExit() called\n");
-	
+
 	if (!_ggimesaLibIsUp)
 		return -1;
-	
+
 	if (_ggimesaLibIsUp > 1)
 	{
 		/* Exit only at last call */
@@ -375,18 +374,18 @@ int ggiMesaExit(void)
 	
 	rc = ggiExtensionUnregister(ggiMesaID);
 	ggFreeConfig(_ggimesaConfigHandle);
-	
+
 	_ggimesaLibIsUp = 0;
-	
+
 	return rc;
 }
 
 int ggiMesaAttach(ggi_visual_t vis)
 {
 	int rc;
-	
+
 	GGIMESADPRINT_CORE("ggiMesaAttach() called\n");
-	
+
 	rc = ggiExtensionAttach(vis, ggiMesaID);
 	if (rc == 0)
 	{
@@ -531,10 +530,10 @@ void ggiMesaMakeCurrent(ggi_mesa_context_t ctx, ggi_visual_t vis)
 	if (ctx->gl_ctx->Viewport.Width == 0)
 	{
 		_mesa_Viewport(0, 0,
-			       LIBGGI_MODE(vis)->visible.x,
-			       LIBGGI_MODE(vis)->visible.y);
-		ctx->gl_ctx->Scissor.Width = LIBGGI_MODE(vis)->visible.x;
-		ctx->gl_ctx->Scissor.Height = LIBGGI_MODE(vis)->visible.y;
+			       LIBGGI_VIRTX(vis),
+			       LIBGGI_VIRTY(vis));
+		ctx->gl_ctx->Scissor.Width = LIBGGI_VIRTX(vis);
+		ctx->gl_ctx->Scissor.Height = LIBGGI_VIRTY(vis);
 	}
 }
 
@@ -579,6 +578,7 @@ static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state)
 	_swsetup_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
 	
+	/* XXX: Better use an assertion that bails out here on failure */
 	if (!LIBGGI_MESAEXT(ggi_ctx->ggi_visual)->update_state) {
 		GGIMESADPRINT_CORE("update_state == NULL!\n");
 		GGIMESADPRINT_CORE("Please check your config files!\n");
@@ -595,12 +595,11 @@ static int changed(ggi_visual_t vis, int whatchanged)
 
 	GGIMESADPRINT_CORE("changed() called\n");
 		
-	switch (whatchanged)
-	{
+	switch (whatchanged) {
 	case GGI_CHG_APILIST:
 	{
-		char api[256];
-		char args[256];
+		char api[GGI_API_MAXLEN];
+		char args[GGI_API_MAXLEN];
 		int i;
 		const char *fname;
 		ggi_dlhandle *lib;

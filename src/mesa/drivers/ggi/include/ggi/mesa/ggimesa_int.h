@@ -40,6 +40,6 @@ typedef struct ggi_mesa_ext
 } ggi_mesa_ext_t;
 
 #define LIBGGI_MESAEXT(vis) ((ggi_mesa_ext_t *)LIBGGI_EXT(vis,ggiMesaID))
-#define GGIMESA_PRIVATE(vis) ((LIBGGI_MESAEXT(vis)->private))
+#define GGIMESA_PRIV(vis) ((LIBGGI_MESAEXT(vis)->priv))
 
 #endif /* _GGI_MISC_INT_H */

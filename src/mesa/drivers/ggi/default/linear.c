@@ -39,7 +39,7 @@
                      ((color[GCOMP]>>GS) << B)     |  \
                      ((color[BCOMP]>>BS)))
 
-#define FLIP(coord) (LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.y-(coord) - 1)
+#define FLIP(coord) (LIBGGI_VIRTY(ggi_ctx->ggi_visual) - (coord) - 1)
 
 
 /**********************************************************************/

@@ -75,7 +75,7 @@ struct ggi_mesa_context
 	ggi_pixel color;		/* Current color or index*/
 	ggi_pixel clearcolor;
 	
-	void *private;
+	void *priv;
 };
 
 #define SHIFT (GGI_COLOR_PRECISION - 8)

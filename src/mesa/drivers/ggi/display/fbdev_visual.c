@@ -76,51 +76,47 @@ char *conffile = confstub;
 
 static int changed(ggi_visual_t vis, int whatchanged)
 {
-	switch (whatchanged)
-	{
-		case GGI_CHG_APILIST:
-		{
-			char api[256];
-			char args[256];
-			int i;
-			const char *fname;
-			ggi_dlhandle *lib;
+	switch (whatchanged) {
+	case GGI_CHG_APILIST: {
+		char api[GGI_API_MAXLEN], args[GGI_API_MAXLEN];
+		int i;
+		const char *fname;
+		ggi_dlhandle *lib;
 			
-			for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++)
-			{
-				strcat(api, "-mesa");
-				fname = ggMatchConfig(_configHandle, api, NULL);
-				if (fname == NULL)
-				{
-					/* No special implementation for this sublib */
-					continue;
-				}
-				
-				lib = ggiExtensionLoadDL(vis, fname, args, NULL, GGI_SYMNAME_PREFIX);
+		for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++) {
+			strcat(api, "-mesa");
+			fname = ggMatchConfig(_configHandle, api, NULL);
+			if (fname == NULL) {
+				/* No special implementation for this sublib */
+				continue;
 			}
+				
+			lib = ggiExtensionLoadDL(vis, fname, args, NULL, GGI_SYMNAME_PREFIX);
 		}
-		break;
+	}
+	break;
 	}
 	return 0;
 }
 
-int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
+
+static int GGIopen(ggi_visual *vis, struct ggi_dlhandle *dlh,
+                   const char *args, void *argptr, uint32 *dlret)
 {
 	struct fbdev_priv_mesa *priv;
 	int err;
 	ggifunc_getapi *oldgetapi;
 
-	GGIMESA_PRIVATE(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
+	GGIMESA_PRIV(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
 	if (priv == NULL) {
 		fprintf(stderr, "Failed to allocate fbdev private data\n");
-		return GGI_DL_ERROR;
+		return GGI_ENOMEM;
 	}
 	
 	priv->oldpriv = LIBGGI_PRIVATE(vis);  /* Hook back */
 	
 	err = ggLoadConfig(conffile, &_configHandle);
-	if (err != GGI_OK)
-	{
+	if (err != GGI_OK) {
 		GGIMESADPRINT_CORE("display-fbdev: Couldn't open %s\n", conffile);
 		return err;
 	}
@@ -139,12 +135,35 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		vis->opdisplay->getapi = oldgetapi;
 	}
 
+	*dlret = GGI_DL_EXTENSION;
 	return 0;
 }
 
-int GGIdlcleanup(ggi_visual *vis)
+
+static int GGIclose(ggi_visual *vis, struct ggi_dlhandle *dlh)
 {
 	return 0;
 }
+
+
+int MesaGGIdl_fbdev_mesa(int func, void **funcptr)
+{
+	switch (func) {
+	case GGIFUNC_open:
+		*funcptr = GGIopen;
+		return 0;
+	case GGIFUNC_exit:
+		*funcptr = NULL;
+		return 0;
+	case GGIFUNC_close:
+		*funcptr = GGIclose;
+		return 0;
+	default:
+		*funcptr = NULL;
+	}
+        
+	return GGI_ENOTFOUND;
+}
+
 
 #include <ggi/internal/ggidlinit.h>
