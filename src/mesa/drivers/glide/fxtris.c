@@ -115,11 +115,11 @@ fx_draw_tri(GLcontext * ctx, const fxVertex * v0, const fxVertex * v1,
 
 
 #define FX_COLOR(vert, c) {				\
-  GLubyte *col = c;					\
-  vert->v.r = col[0] * 255;	\
-  vert->v.g = col[1] * 255;	\
-  vert->v.b = col[2] * 255;	\
-  vert->v.a = col[3] * 255;	\
+  GLfloat *col = c;					\
+  UNCLAMPED_FLOAT_TO_UBYTE(vert->v.r, col[0]);		\
+  UNCLAMPED_FLOAT_TO_UBYTE(vert->v.g, col[1]);		\
+  UNCLAMPED_FLOAT_TO_UBYTE(vert->v.b, col[2]);		\
+  UNCLAMPED_FLOAT_TO_UBYTE(vert->v.a, col[3]);		\
 }
 
 #define FX_COPY_COLOR( dst, src ) {		\

@@ -80,10 +80,10 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
 	       }
 	    }
 	    if (IND & SETUP_RGBA) {
-	       v->v.r = color[i][0] * 255.0;
-	       v->v.g = color[i][1] * 255.0;
-	       v->v.b = color[i][2] * 255.0;
-	       v->v.a = color[i][3] * 255.0;
+               UNCLAMPED_FLOAT_TO_UBYTE(v->v.r, color[i][0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(v->v.g, color[i][1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(v->v.b, color[i][2]);
+               UNCLAMPED_FLOAT_TO_UBYTE(v->v.a, color[i][3]);
 	    }
 	    if (IND & SETUP_TMU0) {
 	       v->v.tmuvtx[0].sow = sscale0 * tmu0_data[i][0] * v->v.oow;
@@ -118,10 +118,10 @@ NAME(GLcontext * ctx, GLuint start, GLuint end)
 	    }
 	 }
 	 if (IND & SETUP_RGBA) {
-	    v->v.r = color[i][0] * 255.0;
-	    v->v.g = color[i][1] * 255.0;
-	    v->v.b = color[i][2] * 255.0;
-	    v->v.a = color[i][3] * 255.0;
+            UNCLAMPED_FLOAT_TO_UBYTE(v->v.r, color[i][0]);
+            UNCLAMPED_FLOAT_TO_UBYTE(v->v.g, color[i][1]);
+            UNCLAMPED_FLOAT_TO_UBYTE(v->v.b, color[i][2]);
+            UNCLAMPED_FLOAT_TO_UBYTE(v->v.a, color[i][3]);
 	 }
 	 if (IND & SETUP_TMU0) {
 	    v->v.tmuvtx[0].sow = sscale0 * tmu0_data[i][0] * v->v.oow;
