@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.3 2000/03/01 03:36:40 brianp Exp $ */
+/* $Id: texobj.c,v 1.4 2000/03/23 16:57:14 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.
@@ -6,27 +6,6 @@
  *
  * Brian Paul   June 1996   This file is in the public domain.
  */
-
-
-/*
- * $Log: texobj.c,v $
- * Revision 1.3  2000/03/01 03:36:40  brianp
- * test for GL 1.2
- *
- * Revision 1.2  2000/02/25 23:24:06  brianp
- * fixed bug when using display lists
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1999/03/28 18:24:37  brianp
- * minor clean-up
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 #include <math.h>
 #include <stdlib.h>
@@ -37,7 +16,7 @@ static GLuint Window = 0;
 
 static GLuint TexObj[2];
 static GLfloat Angle = 0.0f;
-static GLboolean HaveTexObj = GL_FALSE;
+static GLboolean UseObj = GL_FALSE;
 
 
 #if defined(GL_VERSION_1_1) || defined(GL_VERSION_1_2)
@@ -64,7 +43,7 @@ static void draw( void )
    glPushMatrix();
    glTranslatef( -1.0, 0.0, 0.0 );
    glRotatef( Angle, 0.0, 0.0, 1.0 );
-   if (HaveTexObj) {
+   if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[0] );
 #endif
@@ -84,7 +63,7 @@ static void draw( void )
    glPushMatrix();
    glTranslatef( 1.0, 0.0, 0.0 );
    glRotatef( Angle-90.0, 0.0, 1.0, 0.0 );
-   if (HaveTexObj) {
+   if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[1] );
 #endif
@@ -180,7 +159,7 @@ static void init( void )
 
 
    /* generate texture object IDs */
-   if (HaveTexObj) {
+   if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glGenTextures( 2, TexObj );
 #endif
@@ -191,7 +170,7 @@ static void init( void )
    }
 
    /* setup first texture object */
-   if (HaveTexObj) {
+   if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[0] );
 #endif
@@ -218,13 +197,13 @@ static void init( void )
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-   if (!HaveTexObj) {
+   if (!UseObj) {
       glEndList();
    }
    /* end of texture object */
 
    /* setup second texture object */
-   if (HaveTexObj) {
+   if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[1] );
 #endif
@@ -250,7 +229,7 @@ static void init( void )
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-   if (!HaveTexObj) {
+   if (!UseObj) {
       glEndList();
    }
    /* end texture object */
@@ -280,7 +259,7 @@ int main( int argc, char *argv[] )
       if (   strstr( exten, "GL_EXT_texture_object" )
           || strncmp( version, "1.1", 3 )==0
           || strncmp( version, "1.2", 3 )==0 ) {
-         HaveTexObj = GL_TRUE;
+         UseObj = GL_TRUE;
       }
    }
 #endif
