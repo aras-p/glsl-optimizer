@@ -626,11 +626,6 @@ struct r300_context {
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
 
-	/* Vertex buffers */
-	int elt_count;  /* size of the buffer for vertices */
-	int attrib_count; /* size of the buffer for vertex attributes.. Somehow it can be different ? */
-
-
 	/* Vertex buffers
 	 */
 	struct r300_dma dma;
