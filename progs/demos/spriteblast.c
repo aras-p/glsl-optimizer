@@ -463,6 +463,7 @@ main(int argc, char **argv)
       linearFiltering = 0;
     }
   }
+  glutInitWindowPosition(0, 0);
   glutInitWindowSize(600,300);
   glutCreateWindow("sprite blast");
   glutReshapeFunc(reshape);
