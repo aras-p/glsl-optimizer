@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.7 1999/11/11 01:22:28 brianp Exp $
+# $Id: Makefile.X11,v 1.8 1999/11/16 15:49:12 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -133,14 +133,6 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 	$(ADDITIONAL_OBJ)
 
 
-#who put these here!?!
-#GL_LIB = libMesaGL.so
-#GLU_LIB = libMesaGLU.so
-#GLUT_LIB = libglut.so
-#CC = gcc
-#INCLUDES=-I. -I../include -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include
-
-
 ##### RULES #####
 
 .c.o:
@@ -222,7 +214,8 @@ X86/3dnow.o: X86/3dnow.c
 #	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~ */*.o */*~
+	-rm *.o *~ */*.o */*~ *.lo *.la
+	-rm -rf .libs
 
 targets: $(LIBDIR)/$(GL_LIB)
 
