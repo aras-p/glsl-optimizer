@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.41 2001/01/23 23:29:15 brianp Exp $
+# $Id: Makefile.X11,v 1.42 2001/03/17 00:45:01 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -133,6 +133,9 @@ default:
 
 
 
+# XXX we may have to split up this group of targets into those that
+# have a C++ compiler and those that don't for the SI-GLU library.
+
 aix aix-sl amix bsdos bsdos4 dgux freebsd freebsd-386 gcc \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
@@ -155,11 +158,11 @@ sunos5-thread sunos5-pthread sunos5-gcc-thread sunos5-gcc-pthread \
 sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	-mkdir lib
 	if [ -d src      ] ; then touch src/depend      ; fi
-	if [ -d src-glu  ] ; then touch src-glu/depend  ; fi
+	if [ -d si-glu   ] ; then touch si-glu/depend  ; fi
 	if [ -d src-glut ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi ] ; then touch widgets-sgi/depend ; fi
 	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src-glu  ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d si-glu   ] ; then cd si-glu   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d demos    ] ; then cd demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d xdemos   ] ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
@@ -261,14 +264,14 @@ os2-x11:
 linux-ggi linux-386-ggi:
 	-mkdir lib
 	touch src/depend
-	touch src-glu/depend
+	touch si-glu/depend
 	if [ -d src-glut        ] ; then touch src-glut/depend ; fi
 	if [ -d widgets-sgi     ] ; then touch widgets-sgi/depend ; fi
 	if [ -d ggi             ] ; then touch ggi/depend      ; fi
 	if [ -d src             ] ; then cd src ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/GGI/default ] ; then cd src/GGI/default ; $(MAKE)      ; fi
 	if [ -d src/GGI/display ] ; then cd src/GGI/display ; $(MAKE)      ; fi
-	if [ -d src-glut ] ; then cd src-glu  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d si-glu ]   ; then cd si-glu   ; $(MAKE) -f Makefile.X11 $@ ; fi
 #	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d ggi ]      ; then cd ggi      ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d ggi ]      ; then cd ggi/demos; $(MAKE)                    ; fi
@@ -300,6 +303,7 @@ clean:
 	-rm -f include/GL/*~
 	-rm -f src/*.o src/*~ src/*.a src/*/*.o src/*/*~
 	-rm -f src-glu/*.o src-glu/*~ src-glu/*.a
+	-rm -f si-glu/*/*.o si-glu/*/*/*.o
 	-rm -f src-glut/*.o
 	-rm -f demos/*.o
 	-rm -f book/*.o book/*~
@@ -468,6 +472,18 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/X86/Makefile.am			\
 	$(DIRECTORY)/src/X86/Makefile.in			\
 	$(DIRECTORY)/src/X86/*.S				\
+	$(DIRECTORY)/si-glu/Makefile.X11			\
+	$(DIRECTORY)/si-glu/include/gluos.h			\
+	$(DIRECTORY)/si-glu/libnurbs/interface/*.h		\
+	$(DIRECTORY)/si-glu/libnurbs/interface/*.cc		\
+	$(DIRECTORY)/si-glu/libnurbs/internals/*.h		\
+	$(DIRECTORY)/si-glu/libnurbs/internals/*.cc		\
+	$(DIRECTORY)/si-glu/libnurbs/nurbstess/*.h		\
+	$(DIRECTORY)/si-glu/libnurbs/nurbstess/*.cc		\
+	$(DIRECTORY)/si-glu/libtess/README			\
+	$(DIRECTORY)/si-glu/libtess/alg-outline			\
+	$(DIRECTORY)/si-glu/libtess/*.[ch]			\
+	$(DIRECTORY)/si-glu/libutil/*.[ch]			\
 	$(DIRECTORY)/src-glu/README[12]				\
 	$(DIRECTORY)/src-glu/Makefile*				\
 	$(DIRECTORY)/src-glu/descrip.mms			\
@@ -568,6 +584,24 @@ DEMO_FILES =	\
 	$(DIRECTORY)/samples/*.c		\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
+
+SI_GLU_FILES = \
+	$(DIRECTORY)/Makefile*				\
+	$(DIRECTORY)/Make-config			\
+	$(DIRECTORY)/bin/mklib*				\
+	$(DIRECTORY)/include/GL/glu.h			\
+	$(DIRECTORY)/si-glu/Makefile.X11		\
+	$(DIRECTORY)/si-glu/include/gluos.h		\
+	$(DIRECTORY)/si-glu/libnurbs/interface/*.h	\
+	$(DIRECTORY)/si-glu/libnurbs/interface/*.cc	\
+	$(DIRECTORY)/si-glu/libnurbs/internals/*.h	\
+	$(DIRECTORY)/si-glu/libnurbs/internals/*.cc	\
+	$(DIRECTORY)/si-glu/libnurbs/nurbstess/*.h	\
+	$(DIRECTORY)/si-glu/libnurbs/nurbstess/*.cc	\
+	$(DIRECTORY)/si-glu/libtess/README		\
+	$(DIRECTORY)/si-glu/libtess/alg-outline		\
+	$(DIRECTORY)/si-glu/libtess/*.[ch]		\
+	$(DIRECTORY)/si-glu/libutil/*.[ch]
 
 GLU_FILES = \
 	$(DIRECTORY)/Makefile*			\
