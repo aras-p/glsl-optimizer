@@ -2739,6 +2739,20 @@ typedef void (APIENTRY * PFNGLGETPROGRAMNAMEDPARAMETERDVNVPROC) (GLuint id, GLsi
 
 
 
+/* XXX temporary until glext.h is updated! */
+#ifndef GL_EXT_depth_bounds_test
+#define GL_EXT_depth_bounds_test 1
+
+#define GL_DEPTH_BOUNDS_TEST_EXT                       0x8890
+#define GL_DEPTH_BOUNDS_EXT                            0x8891
+
+GLAPI void GLAPIENTRY glDepthBoundsEXT(GLclampd zmin, GLclampd zmax);
+
+typedef void (APIENTRY * PFNGLDEPTHBOUNDSEXTPROC)(GLclampd zmin, GLclampd zmax);
+
+#endif /* GL_EXT_depth_bounds_test */
+
+
 
 /**********************************************************************
  * Begin system-specific stuff
