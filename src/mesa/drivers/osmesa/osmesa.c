@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.65 2001/08/28 23:12:37 brianp Exp $ */
+/* $Id: osmesa.c,v 1.66 2001/09/10 18:53:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -135,12 +135,10 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    GLint rind, gind, bind, aind;
    GLint indexBits = 0, redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
    GLboolean rgbmode;
-   GLboolean swalpha;
    const GLuint i4 = 1;
    const GLubyte *i1 = (GLubyte *) &i4;
    const GLint little_endian = *i1;
 
-   swalpha = GL_FALSE;
    rind = gind = bind = aind = 0;
    if (format==OSMESA_COLOR_INDEX) {
       indexBits = 8;
@@ -233,7 +231,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       gind = 1;
       bind = 2;
       rgbmode = GL_TRUE;
-      swalpha = GL_TRUE;
    }
    else if (format==OSMESA_BGR) {
       indexBits = 0;
@@ -249,7 +246,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       gind = 1;
       bind = 0;
       rgbmode = GL_TRUE;
-      swalpha = GL_TRUE;
    }
    else if (format==OSMESA_RGB_565) {
       indexBits = 0;
@@ -265,7 +261,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       gind = 0;
       bind = 0;
       rgbmode = GL_TRUE;
-      swalpha = GL_FALSE;
    }
    else {
       return NULL;
@@ -312,7 +307,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                                           osmesa->gl_visual->depthBits > 0,
                                           osmesa->gl_visual->stencilBits > 0,
                                           osmesa->gl_visual->accumRedBits > 0,
-                                          swalpha );
+                                          GL_FALSE /* s/w alpha */ );
 
       if (!osmesa->gl_buffer) {
          _mesa_destroy_visual( osmesa->gl_visual );
