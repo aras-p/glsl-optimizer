@@ -1,10 +1,10 @@
-/* $Id: histogram.c,v 1.5 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: histogram.c,v 1.6 2001/01/30 17:46:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -623,7 +623,19 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
        type != GL_SHORT &&
        type != GL_UNSIGNED_INT &&
        type != GL_INT &&
-       type != GL_FLOAT) {
+       type != GL_FLOAT &&
+       type != GL_UNSIGNED_BYTE_3_3_2 &&
+       type != GL_UNSIGNED_BYTE_2_3_3_REV &&
+       type != GL_UNSIGNED_SHORT_5_6_5 &&
+       type != GL_UNSIGNED_SHORT_5_6_5_REV &&
+       type != GL_UNSIGNED_SHORT_4_4_4_4 &&
+       type != GL_UNSIGNED_SHORT_4_4_4_4_REV &&
+       type != GL_UNSIGNED_SHORT_5_5_5_1 &&
+       type != GL_UNSIGNED_SHORT_1_5_5_5_REV &&
+       type != GL_UNSIGNED_INT_8_8_8_8 &&
+       type != GL_UNSIGNED_INT_8_8_8_8_REV &&
+       type != GL_UNSIGNED_INT_10_10_10_2 &&
+       type != GL_UNSIGNED_INT_2_10_10_10_REV) {
       gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(type)");
       return;
    }
@@ -678,7 +690,19 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
        type != GL_SHORT &&
        type != GL_UNSIGNED_INT &&
        type != GL_INT &&
-       type != GL_FLOAT) {
+       type != GL_FLOAT &&
+       type != GL_UNSIGNED_BYTE_3_3_2 &&
+       type != GL_UNSIGNED_BYTE_2_3_3_REV &&
+       type != GL_UNSIGNED_SHORT_5_6_5 &&
+       type != GL_UNSIGNED_SHORT_5_6_5_REV &&
+       type != GL_UNSIGNED_SHORT_4_4_4_4 &&
+       type != GL_UNSIGNED_SHORT_4_4_4_4_REV &&
+       type != GL_UNSIGNED_SHORT_5_5_5_1 &&
+       type != GL_UNSIGNED_SHORT_1_5_5_5_REV &&
+       type != GL_UNSIGNED_INT_8_8_8_8 &&
+       type != GL_UNSIGNED_INT_8_8_8_8_REV &&
+       type != GL_UNSIGNED_INT_10_10_10_2 &&
+       type != GL_UNSIGNED_INT_2_10_10_10_REV) {
       gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(type)");
       return;
    }
