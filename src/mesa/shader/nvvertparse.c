@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -299,6 +299,8 @@ static const char *Opcodes[] = {
    "ABS", "END",
    /* GL_ARB_vertex_program */
    "FLR", "FRC", "EX2", "LG2", "POW", "XPD", "SWZ",
+   /* Mesa-specific */
+   "PRINT",
    NULL
 };
 
@@ -1019,6 +1021,98 @@ Parse_EndInstruction(struct parse_state *parseState, struct vp_instruction *inst
 }
 
 
+/**
+ * The PRINT instruction is Mesa-specific and is meant as a debugging aid for
+ * the vertex program developer.
+ * The NV_vertex_program extension grammar is modified as follows:
+ *
+ *  <instruction>        ::= <ARL-instruction>
+ *                         | ...
+ *                         | <PRINT-instruction>
+ *
+ *  <PRINT-instruction>  ::= "PRINT" <string literal>
+ *                         | "PRINT" <string literal> "," <srcReg>
+ *                         | "PRINT" <string literal> "," <dstReg>
+ */
+static GLboolean
+Parse_PrintInstruction(struct parse_state *parseState, struct vp_instruction *inst)
+{
+   const GLubyte *str;
+   GLubyte *msg;
+   GLuint len;
+   GLubyte token[100];
+   struct vp_src_register *srcReg = &inst->SrcReg[0];
+
+   inst->Opcode = VP_OPCODE_PRINT;
+   inst->StringPos = parseState->curLine - parseState->start;
+
+   /* The first argument is a literal string 'just like this' */
+   if (!Parse_String(parseState, "'"))
+      RETURN_ERROR;
+
+   str = parseState->pos;
+   for (len = 0; str[len] != '\''; len++) /* find closing quote */
+      ;
+   parseState->pos += len + 1;
+   msg = _mesa_malloc(len + 1);
+
+   _mesa_memcpy(msg, str, len);
+   msg[len] = 0;
+   inst->Data = msg;
+
+   /* comma */
+   if (Parse_String(parseState, ",")) {
+
+      /* The second argument is a register name */
+      if (!Peek_Token(parseState, token))
+         RETURN_ERROR;
+
+      srcReg->RelAddr = GL_FALSE;
+      srcReg->Negate = GL_FALSE;
+      srcReg->Swizzle[0] = 0;
+      srcReg->Swizzle[1] = 1;
+      srcReg->Swizzle[2] = 2;
+      srcReg->Swizzle[3] = 3;
+
+      /* Register can be R<n>, c[n], c[n +/- offset], a named vertex attrib,
+       * or an o[n] output register.
+       */
+      if (token[0] == 'R') {
+         srcReg->File = PROGRAM_TEMPORARY;
+         if (!Parse_TempReg(parseState, &srcReg->Index))
+            RETURN_ERROR;
+      }
+      else if (token[0] == 'c') {
+         srcReg->File = PROGRAM_ENV_PARAM;
+         if (!Parse_ParamReg(parseState, srcReg))
+            RETURN_ERROR;
+      }
+      else if (token[0] == 'v') {
+         srcReg->File = PROGRAM_INPUT;
+         if (!Parse_AttribReg(parseState, &srcReg->Index))
+            RETURN_ERROR;
+      }
+      else if (token[0] == 'o') {
+         srcReg->File = PROGRAM_OUTPUT;
+         if (!Parse_OutputReg(parseState, &srcReg->Index))
+            RETURN_ERROR;
+      }
+      else {
+         RETURN_ERROR2("Bad source register name", token);
+      }
+   }
+   else {
+      srcReg->File = 0;
+   }
+
+   /* semicolon */
+   if (!Parse_String(parseState, ";"))
+      RETURN_ERROR;
+
+   return GL_TRUE;
+}
+
+
 static GLboolean
 Parse_OptionSequence(struct parse_state *parseState,
                      struct vp_instruction program[])
@@ -1051,6 +1145,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[1].File = (enum register_file) -1;
       inst->SrcReg[2].File = (enum register_file) -1;
       inst->DstReg.File = (enum register_file) -1;
+      inst->Data = NULL;
 
       if (Parse_String(parseState, "MOV")) {
          if (!Parse_UnaryOpInstruction(parseState, inst, VP_OPCODE_MOV))
@@ -1134,6 +1229,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
       else if (Parse_String(parseState, "ARL")) {
          if (!Parse_AddressInstruction(parseState, inst))
+            RETURN_ERROR;
+      }
+      else if (Parse_String(parseState, "PRINT")) {
+         if (!Parse_PrintInstruction(parseState, inst))
             RETURN_ERROR;
       }
       else if (Parse_String(parseState, "END")) {
@@ -1303,7 +1402,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->IsPositionInvariant = parseState.isPositionInvariant;
       program->IsNVProgram = GL_TRUE;
 
-#ifdef DEBUG_foo
+#ifdef DEBUG
       _mesa_printf("--- glLoadProgramNV result ---\n");
       _mesa_print_nv_vertex_program(program);
       _mesa_printf("------------------------------\n");
@@ -1456,6 +1555,17 @@ _mesa_print_nv_vertex_instruction(const struct vp_instruction *inst)
          _mesa_printf("ARL A0.x, ");
          PrintSrcReg(&inst->SrcReg[0]);
          _mesa_printf(";\n");
+         break;
+      case VP_OPCODE_PRINT:
+         _mesa_printf("PRINT '%s'", inst->Data);
+         if (inst->SrcReg[0].File) {
+            _mesa_printf(", ");
+            PrintSrcReg(&inst->SrcReg[0]);
+            _mesa_printf(";\n");
+         }
+         else {
+            _mesa_printf("\n");
+         }
          break;
       case VP_OPCODE_END:
          _mesa_printf("END\n");

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -249,6 +249,10 @@ get_register_pointer( const struct vp_src_register *source,
          case PROGRAM_INPUT:
             ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_INPUTS);
             return state->Inputs[source->Index];
+         case PROGRAM_OUTPUT:
+            /* This is only needed for the PRINT instruction */
+            ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_OUTPUTS);
+            return state->Outputs[source->Index];
          case PROGRAM_LOCAL_PARAM:
             ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
             return state->Current->Base.LocalParams[source->Index];
@@ -774,7 +778,17 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                store_vector4( &inst->DstReg, state, result );
             }
             break;
-
+         case VP_OPCODE_PRINT:
+            if (inst->SrcReg[0].File) {
+               GLfloat t[4];
+               fetch_vector4( &inst->SrcReg[0], state, t );
+               _mesa_printf("%s%g, %g, %g, %g\n",
+                            (char *) inst->Data, t[0], t[1], t[2], t[3]);
+            }
+            else {
+               _mesa_printf("%s\n", (char *) inst->Data);
+            }
+            break;
          case VP_OPCODE_END:
             ctx->_CurrentProgram = 0;
             return;

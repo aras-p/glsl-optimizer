@@ -39,6 +39,7 @@
 #include "nvfragparse.h"
 #include "nvfragprog.h"
 #include "nvvertparse.h"
+#include "nvvertprog.h"
 
 
 /**********************************************************************/
@@ -263,8 +264,14 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
    if (prog->Target == GL_VERTEX_PROGRAM_NV ||
        prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
       struct vertex_program *vprog = (struct vertex_program *) prog;
-      if (vprog->Instructions)
+      if (vprog->Instructions) {
+         GLuint i;
+         for (i = 0; i < vprog->Base.NumInstructions; i++) {
+            if (vprog->Instructions[i].Data)
+               _mesa_free(vprog->Instructions[i].Data);
+         }
          _mesa_free(vprog->Instructions);
+      }
       if (vprog->Parameters)
          _mesa_free_parameter_list(vprog->Parameters);
    }

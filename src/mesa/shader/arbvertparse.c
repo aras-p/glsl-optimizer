@@ -44,6 +44,10 @@
 #include "arbprogparse.h"
 
 
+/**
+ * XXX this is probably redundant.  We've already got code like this
+ * in the nvvertparse.c file.  Combine/clean-up someday.
+ */
 static GLvoid
 debug_vp_inst(GLint num, struct vp_instruction *vp)
 {
@@ -135,6 +139,9 @@ debug_vp_inst(GLint num, struct vp_instruction *vp)
          case VP_OPCODE_SWZ:
             fprintf(stderr, "VP_OPCODE_SWZ"); break;
 				
+         case VP_OPCODE_PRINT:
+            fprintf(stderr, "VP_OPCODE_PRINT"); break;
+
          case VP_OPCODE_END:
             fprintf(stderr, "VP_OPCODE_END"); break;
       }

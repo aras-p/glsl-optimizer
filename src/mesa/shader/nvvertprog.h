@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,7 +66,9 @@ enum vp_opcode
    VP_OPCODE_LG2,
    VP_OPCODE_POW,
    VP_OPCODE_XPD,
-   VP_OPCODE_SWZ
+   VP_OPCODE_SWZ,
+   /* Special Mesa opcodes */
+   VP_OPCODE_PRINT
 };
 
 
@@ -101,6 +103,7 @@ struct vp_instruction
 #if FEATURE_MESA_program_debug
    GLint StringPos;
 #endif
+   void *Data;  /* some arbitrary data, only used for PRINT instruction now */
 };
 
 
