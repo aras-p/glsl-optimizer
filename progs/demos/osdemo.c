@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.2 2000/01/15 06:11:33 rjfrank Exp $ */
+/* $Id: osdemo.c,v 1.3 2000/03/06 23:56:21 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -17,26 +17,13 @@
  */
 
 
-/*
- * $Log: osdemo.c,v $
- * Revision 1.2  2000/01/15 06:11:33  rjfrank
- * Added test for the occlusion test code.
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "GL/osmesa.h"
 #include "GL/glut.h"
 
+
+#define SAVE_TARGA
 
 
 #define WIDTH 400
@@ -143,16 +130,100 @@ static void render_image( void )
 
 
 
+static void
+write_targa(const char *filename, const GLubyte *buffer, int width, int height)
+{
+   FILE *f = fopen( filename, "w" );
+   if (f) {
+      int i, x, y;
+      const GLubyte *ptr = buffer;
+      printf ("osdemo, writing tga file \n");
+      fputc (0x00, f);	/* ID Length, 0 => No ID	*/
+      fputc (0x00, f);	/* Color Map Type, 0 => No color map included	*/
+      fputc (0x02, f);	/* Image Type, 2 => Uncompressed, True-color Image */
+      fputc (0x00, f);	/* Next five bytes are about the color map entries */
+      fputc (0x00, f);	/* 2 bytes Index, 2 bytes length, 1 byte size */
+      fputc (0x00, f);
+      fputc (0x00, f);
+      fputc (0x00, f);
+      fputc (0x00, f);	/* X-origin of Image	*/
+      fputc (0x00, f);
+      fputc (0x00, f);	/* Y-origin of Image	*/
+      fputc (0x00, f);
+      fputc (WIDTH & 0xff, f);      /* Image Width	*/
+      fputc ((WIDTH>>8) & 0xff, f);
+      fputc (HEIGHT & 0xff, f);     /* Image Height	*/
+      fputc ((HEIGHT>>8) & 0xff, f);
+      fputc (0x18, f);		/* Pixel Depth, 0x18 => 24 Bits	*/
+      fputc (0x20, f);		/* Image Descriptor	*/
+      fclose(f);
+      f = fopen( filename, "ab" );  /* reopen in binary append mode */
+      for (y=height-1; y>=0; y--) {
+         for (x=0; x<width; x++) {
+            i = (y*width + x) * 4;
+            fputc(ptr[i+2], f); /* write blue */
+            fputc(ptr[i+1], f); /* write green */
+            fputc(ptr[i], f);   /* write red */
+         }
+      }
+   }
+}
+
+
+static void
+write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
+{
+   const int binary = 0;
+   FILE *f = fopen( filename, "w" );
+   if (f) {
+      int i, x, y;
+      const GLubyte *ptr = buffer;
+      if (binary) {
+         fprintf(f,"P6\n");
+         fprintf(f,"# ppm-file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width,height);
+         fprintf(f,"255\n");
+         fclose(f);
+         f = fopen( filename, "ab" );  /* reopen in binary append mode */
+         for (y=height-1; y>=0; y--) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fputc(ptr[i], f);   /* write red */
+               fputc(ptr[i+1], f); /* write green */
+               fputc(ptr[i+2], f); /* write blue */
+            }
+         }
+      }
+      else {
+         /*ASCII*/
+         int counter = 0;
+         fprintf(f,"P3\n");
+         fprintf(f,"# ascii ppm file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width, height);
+         fprintf(f,"255\n");
+         for (y=height-1; y>=0; y--) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fprintf(f, " %3d %3d %3d", ptr[i], ptr[i+1], ptr[i+2]);
+               counter++;
+               if (counter % 5 == 0)
+                  fprintf(f, "\n");
+            }
+         }
+      }
+      fclose(f);
+   }
+}
+
+
+
 int main( int argc, char *argv[] )
 {
-   OSMesaContext ctx;
-   void *buffer;
-
    /* Create an RGBA-mode context */
-   ctx = OSMesaCreateContext( GL_RGBA, NULL );
+   OSMesaContext ctx = OSMesaCreateContext( GL_RGBA, NULL );
 
    /* Allocate the image buffer */
-   buffer = malloc( WIDTH * HEIGHT * 4 );
+   void *buffer = malloc( WIDTH * HEIGHT * 4 );
 
    /* Bind the buffer to the context and make it current */
    OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT );
@@ -160,48 +231,14 @@ int main( int argc, char *argv[] )
    render_image();
 
    if (argc>1) {
-      /* write PPM file */
-      FILE *f = fopen( argv[1], "w" );
-      if (f) {
-         int i, x, y;
-         GLubyte *ptr = (GLubyte *) buffer;
-#define BINARY 0
-#if BINARY
-         fprintf(f,"P6\n");
-         fprintf(f,"# ppm-file created by %s\n",  argv[0]);
-         fprintf(f,"%i %i\n", WIDTH,HEIGHT);
-         fprintf(f,"255\n");
-         fclose(f);
-         f = fopen( argv[1], "ab" );  /* reopen in binary append mode */
-         for (y=HEIGHT-1; y>=0; y--) {
-            for (x=0; x<WIDTH; x++) {
-               i = (y*WIDTH + x) * 4;
-               fputc(ptr[i], f);   /* write red */
-               fputc(ptr[i+1], f); /* write green */
-               fputc(ptr[i+2], f); /* write blue */
-            }
-         }
-#else /*ASCII*/
-         int counter = 0;
-         fprintf(f,"P3\n");
-         fprintf(f,"# ascii ppm file created by %s\n", argv[0]);
-         fprintf(f,"%i %i\n", WIDTH, HEIGHT);
-         fprintf(f,"255\n");
-         for (y=HEIGHT-1; y>=0; y--) {
-            for (x=0; x<WIDTH; x++) {
-               i = (y*WIDTH + x) * 4;
-               fprintf(f, " %3d %3d %3d", ptr[i], ptr[i+1], ptr[i+2]);
-               counter++;
-               if (counter % 5 == 0)
-                  fprintf(f, "\n");
-            }
-         }
+#ifdef SAVE_TARGA
+      write_targa(argv[1], buffer, WIDTH, HEIGHT);
+#else
+      write_ppm(argv[1], buffer, WIDTH, HEIGHT);
 #endif
-         fclose(f);
-      }
    }
    else {
-      printf("Specify a filename if you want to make a ppm file\n");
+      printf("Specify a filename if you want to make an image file\n");
    }
 
    printf("all done\n");
