@@ -1,4 +1,4 @@
-/* $Id: renormal.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: renormal.c,v 1.2 1999/09/17 02:40:51 tjump Exp $ */
 
 /*
  * Test GL_EXT_rescale_normal extension
@@ -6,7 +6,7 @@
  */
 
 /*
- * $Id: renormal.c,v 1.1 1999/08/19 00:55:40 jtg Exp $
+ * $Id: renormal.c,v 1.2 1999/09/17 02:40:51 tjump Exp $
  */
 
 
@@ -95,6 +95,18 @@ static void ModeMenu(int entry)
    glutPostRedisplay();
 }
 
+static void
+key(unsigned char k, int x, int y)
+{
+  switch (k) {
+  case 27:  /* Escape */
+    exit(0);
+    break;
+  default:
+    return;
+  }
+  glutPostRedisplay();
+}
 
 int main( int argc, char *argv[] )
 {
@@ -110,6 +122,7 @@ int main( int argc, char *argv[] )
    glutIdleFunc( Idle );
    glutReshapeFunc( Reshape );
    glutDisplayFunc( Display );
+   glutKeyboardFunc(key);
 
    glutCreateMenu(ModeMenu);
    glutAddMenuEntry("Unscaled", UNSCALED);

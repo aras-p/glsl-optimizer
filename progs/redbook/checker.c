@@ -3,14 +3,14 @@
 
 /*
  * (c) Copyright 1993, Silicon Graphics, Inc.
- * ALL RIGHTS RESERVED 
- * Permission to use, copy, modify, and distribute this software for 
+ * ALL RIGHTS RESERVED
+ * Permission to use, copy, modify, and distribute this software for
  * any purpose and without fee is hereby granted, provided that the above
  * copyright notice appear in all copies and that both the copyright notice
- * and this permission notice appear in supporting documentation, and that 
+ * and this permission notice appear in supporting documentation, and that
  * the name of Silicon Graphics, Inc. not be used in advertising
  * or publicity pertaining to distribution of the software without specific,
- * written prior permission. 
+ * written prior permission.
  *
  * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
  * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
@@ -24,8 +24,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
  * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
  * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
- * US Government Users Restricted Rights 
+ *
+ * US Government Users Restricted Rights
  * Use, duplication, or disclosure by the Government is subject to
  * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
  * (c)(1)(ii) of the Rights in Technical Data and Computer Software
@@ -52,10 +52,10 @@ GLubyte checkImage[checkImageWidth][checkImageHeight][3];
 void makeCheckImage(void)
 {
     int i, j, c;
-    
+
     for (i = 0; i < checkImageWidth; i++) {
 	for (j = 0; j < checkImageHeight; j++) {
-	    c = ((((i&0x8)==0)^((j&0x8))==0))*255;
+	    c = ((((i&0x8)==0)^((j&0x8)==0)))*255;
 	    checkImage[i][j][0] = (GLubyte) c;
 	    checkImage[i][j][1] = (GLubyte) c;
 	    checkImage[i][j][2] = (GLubyte) c;
@@ -64,15 +64,15 @@ void makeCheckImage(void)
 }
 
 void myinit(void)
-{    
+{
     glClearColor (0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
     makeCheckImage();
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
-	checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth,
+	checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE,
 	&checkImage[0][0][0]);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -111,6 +111,19 @@ void myReshape(int w, int h)
     glTranslatef(0.0, 0.0, -3.6);
 }
 
+static void
+key(unsigned char k, int x, int y)
+{
+  switch (k) {
+  case 27:  /* Escape */
+    exit(0);
+    break;
+  default:
+    return;
+  }
+  glutPostRedisplay();
+}
+
 int
 main(int argc, char** argv)
 {
@@ -120,6 +133,7 @@ main(int argc, char** argv)
     myinit();
     glutReshapeFunc (myReshape);
     glutDisplayFunc(display);
+    glutKeyboardFunc(key);
     glutMainLoop();
     return 0;             /* ANSI C requires main to return int. */
 }

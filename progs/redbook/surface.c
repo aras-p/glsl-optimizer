@@ -2,14 +2,14 @@
 
 /**
  * (c) Copyright 1993, Silicon Graphics, Inc.
- * ALL RIGHTS RESERVED 
- * Permission to use, copy, modify, and distribute this software for 
+ * ALL RIGHTS RESERVED
+ * Permission to use, copy, modify, and distribute this software for
  * any purpose and without fee is hereby granted, provided that the above
  * copyright notice appear in all copies and that both the copyright notice
- * and this permission notice appear in supporting documentation, and that 
+ * and this permission notice appear in supporting documentation, and that
  * the name of Silicon Graphics, Inc. not be used in advertising
  * or publicity pertaining to distribution of the software without specific,
- * written prior permission. 
+ * written prior permission.
  *
  * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
  * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
@@ -23,8 +23,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
  * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
  * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
- * US Government Users Restricted Rights 
+ *
+ * US Government Users Restricted Rights
  * Use, duplication, or disclosure by the Government is subject to
  * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
  * (c)(1)(ii) of the Rights in Technical Data and Computer Software
@@ -38,7 +38,7 @@
  */
 /**
  *  surface.c
- *  This program draws a NURBS surface in the shape of a 
+ *  This program draws a NURBS surface in the shape of a
  *  symmetrical hill.
  */
 #include <GL/glut.h>
@@ -65,9 +65,9 @@ void init_surface(void)
 	    else
 		ctlpoints[u][v][2] = -3.0;
 	}
-    }				
-}				
-			
+    }
+}
+
 /*  Initialize material property and depth buffer.
  */
 void myinit(void)
@@ -111,12 +111,12 @@ void display(void)
     glScalef (0.25, 0.25, 0.25);
 
     gluBeginSurface(theNurb);
-    gluNurbsSurface(theNurb, 
+    gluNurbsSurface(theNurb,
 	    8, knots,
 	    8, knots,
 	    4 * 3,
 	    3,
-	    &ctlpoints[0][0][0], 
+	    &ctlpoints[0][0][0],
 	    4, 4,
 	    GL_MAP2_VERTEX_3);
     gluEndSurface(theNurb);
@@ -134,7 +134,7 @@ void display(void)
     glEnd();
     glEnable(GL_LIGHTING);
     }
-        
+
     glPopMatrix();
     glutSwapBuffers();
 }
@@ -194,6 +194,19 @@ mouse(int button, int state, int x, int y)
     }
 }
 
+static void
+key(unsigned char k, int x, int y)
+{
+  switch (k) {
+  case 27:  /* Escape */
+    exit(0);
+    break;
+  default:
+    return;
+  }
+  glutPostRedisplay();
+}
+
 /* Main Loop */
 int
 main(int argc, char** argv)
@@ -212,6 +225,7 @@ main(int argc, char** argv)
     glutAttachMenu(GLUT_RIGHT_BUTTON);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
+    glutKeyboardFunc(key);
     glutMainLoop();
     return 0;             /* ANSI C requires main to return int. */
 }

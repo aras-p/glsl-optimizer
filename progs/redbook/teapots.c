@@ -188,6 +188,19 @@ myReshape(int w, int h)
   glMatrixMode(GL_MODELVIEW);
 }
 
+static void
+key(unsigned char k, int x, int y)
+{
+  switch (k) {
+  case 27:  /* Escape */
+    exit(0);
+    break;
+  default:
+    return;
+  }
+  glutPostRedisplay();
+}
+
 /*
  * Main Loop Open window with initial window size, title bar, RGBA display
  * mode, and handle input events.
@@ -201,6 +214,7 @@ main(int argc, char **argv)
   myinit();
   glutReshapeFunc(myReshape);
   glutDisplayFunc(display);
+  glutKeyboardFunc(key);
   glutMainLoop();
   return 0;             /* ANSI C requires main to return int. */
 }

@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1993-1997, Silicon Graphics, Inc.
- * ALL RIGHTS RESERVED 
- * Permission to use, copy, modify, and distribute this software for 
+ * ALL RIGHTS RESERVED
+ * Permission to use, copy, modify, and distribute this software for
  * any purpose and without fee is hereby granted, provided that the above
  * copyright notice appear in all copies and that both the copyright notice
- * and this permission notice appear in supporting documentation, and that 
+ * and this permission notice appear in supporting documentation, and that
  * the name of Silicon Graphics, Inc. not be used in advertising
  * or publicity pertaining to distribution of the software without specific,
- * written prior permission. 
+ * written prior permission.
  *
  * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
  * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
  * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
  * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
- * US Government Users Restricted Rights 
+ *
+ * US Government Users Restricted Rights
  * Use, duplication, or disclosure by the Government is subject to
  * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
  * (c)(1)(ii) of the Rights in Technical Data and Computer Software
@@ -36,7 +36,7 @@
  */
 
 /*  texbind.c
- *  This program demonstrates using glBindTexture() by 
+ *  This program demonstrates using glBindTexture() by
  *  creating and managing two textures.
  */
 #include <GL/glut.h>
@@ -55,15 +55,15 @@ static GLuint texName[2];
 void makeCheckImages(void)
 {
    int i, j, c;
-    
+
    for (i = 0; i < checkImageHeight; i++) {
       for (j = 0; j < checkImageWidth; j++) {
-         c = ((((i&0x8)==0)^((j&0x8))==0))*255;
+         c = ((((i&0x8)==0)^((j&0x8)==0)))*255;
          checkImage[i][j][0] = (GLubyte) c;
          checkImage[i][j][1] = (GLubyte) c;
          checkImage[i][j][2] = (GLubyte) c;
          checkImage[i][j][3] = (GLubyte) 255;
-         c = ((((i&0x10)==0)^((j&0x10))==0))*255;
+         c = ((((i&0x10)==0)^((j&0x10)==0)))*255;
          otherImage[i][j][0] = (GLubyte) c;
          otherImage[i][j][1] = (GLubyte) 0;
          otherImage[i][j][2] = (GLubyte) 0;
@@ -73,7 +73,7 @@ void makeCheckImages(void)
 }
 
 void init(void)
-{    
+{
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_FLAT);
    glEnable(GL_DEPTH_TEST);
@@ -85,9 +85,9 @@ void init(void)
    glBindTexture(GL_TEXTURE_2D, texName[0]);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
                    GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    GL_NEAREST);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth,
                 checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -99,8 +99,8 @@ void init(void)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, 
-                checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth,
+                checkImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                 otherImage);
    glEnable(GL_TEXTURE_2D);
 }
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
    glutDisplayFunc(display);
    glutKeyboardFunc (keyboard);
    glutMainLoop();
-   return 0; 
+   return 0;
 }
 #else
 int main(int argc, char** argv)
@@ -169,4 +169,3 @@ int main(int argc, char** argv)
     return 0;
 }
 #endif
-
