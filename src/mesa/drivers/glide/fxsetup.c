@@ -1518,7 +1518,6 @@ void fxSetScissorValues(GLcontext *ctx)
 
 static void fxSetupScissor(GLcontext *ctx)
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
     BEGIN_BOARD_LOCK();
     fxSetScissorValues(ctx);
     END_BOARD_LOCK();
