@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2508,7 +2508,8 @@ GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
    else {
       *width = b->mesa_buffer.Width;
       *height = b->mesa_buffer.Height;
-      *bytesPerValue = sizeof(GLdepth);
+      *bytesPerValue = b->mesa_buffer.Visual.depthBits <= 16
+         ? sizeof(GLushort) : sizeof(GLuint);
       *buffer = b->mesa_buffer.DepthBuffer;
       return GL_TRUE;
    }
