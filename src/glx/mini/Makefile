@@ -68,7 +68,7 @@ drmtest: xf86drm.o drmtest.o
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
-		> /dev/null 2>&1
+		> /dev/null 
 
 
 # Emacs tags

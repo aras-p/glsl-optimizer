@@ -65,7 +65,7 @@ $(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 # what's included by any source file.
 depend: $(SOURCES) 
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 2>&1
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 
 
 # Emacs tags
 tags:

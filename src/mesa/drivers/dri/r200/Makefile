@@ -43,16 +43,15 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 X86_SOURCES = r200_vtxtmp_x86.S
 
 SYMLINKS = \
-	server/radeon_dri.c \
-	server/radeon_dri.h \
-	server/radeon.h \
-	server/radeon_macros.h \
-	server/radeon_reg.h 
+	server/radeon_dri.c 
+
 
 ##### TARGETS #####
 
 
 include ../Makefile.template
+
+INCLUDES += -I../radeon/server
 
 $(SYMLINKS):
 	mkdir -p server

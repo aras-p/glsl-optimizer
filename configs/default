@@ -23,7 +23,7 @@ GLU_CFLAGS =
 # Misc tools and flags
 MKLIB_OPTIONS = 
 MKDEP = makedepend
-MKDEP_OPTIONS = -Y -fdepend
+MKDEP_OPTIONS = -fdepend
 MAKE = make
 
 # Library names (base name)

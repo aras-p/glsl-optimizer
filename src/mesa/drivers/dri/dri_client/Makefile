@@ -42,8 +42,8 @@ default: depend dri.a
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) -Y $(INCLUDES) \
-		$(C_SOURCES) $(ASM_SOURCES) > /dev/null 2>&1
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) \
+		$(C_SOURCES) $(ASM_SOURCES) 
 
 
 dri.a:	$(OBJECTS)

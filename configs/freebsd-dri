@@ -11,7 +11,8 @@ CXX = g++
 WARN_FLAGS = -Wall
 OPT_FLAGS = -O
 
-CFLAGS = -DDRI_NEW_INTERFACE_ONLY -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -I/usr/local/include -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
+X11_INCLUDES = -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
+CFLAGS = -DDRI_NEW_INTERFACE_ONLY -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -I/usr/local/include $(X11_INCLUDES)
 CXXFLAGS = -DDRI_NEW_INTERFACE_ONLY -Wall -g -ansi -pedantic -fPIC
 
 ASM_SOURCES = 

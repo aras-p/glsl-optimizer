@@ -55,9 +55,7 @@ X86_SOURCES = $(TOP)/src/mesa/x86/glapi_x86.S
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o)
 
-INCLUDES = -I. $(INCLUDE_DIRS)
-
-INCLUDE_DIRS = \
+INCLUDES = -I. \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
@@ -69,7 +67,8 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(DRM_SOURCE_PATH)/libdrm \
-	-I$(DRM_SOURCE_PATH)/shared
+	-I$(DRM_SOURCE_PATH)/shared \
+	$(X11_INCLUDES)
 
 
 ##### RULES #####
@@ -100,7 +99,7 @@ drmtest: xf86drm.o drmtest.o
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
-		> /dev/null 2>&1
+		> /dev/null 
 
 
 # Emacs tags

@@ -172,8 +172,8 @@ SUBDIRS = array_cache drivers/dri glapi main math sparc swrast swrast_setup \
 depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(ALL_SOURCES) \
-		> /dev/null 2>&1
+	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+		> /dev/null 
 
 
 # Emacs tags

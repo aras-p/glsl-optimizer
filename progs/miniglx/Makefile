@@ -47,7 +47,7 @@ clean:
 
 depend: $(SOURCES)
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 2>&1
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 
 
 
 # Emacs tags
