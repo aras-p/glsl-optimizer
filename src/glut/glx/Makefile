@@ -36,7 +36,6 @@ SOURCES = \
 	glut_dstr.c \
 	glut_event.c \
 	glut_ext.c \
-	glut_fbc.c \
 	glut_fullscrn.c \
 	glut_gamemode.c \
 	glut_get.c \
