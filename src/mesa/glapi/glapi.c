@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.3 1999/11/11 15:26:45 brianp Exp $ */
+/* $Id: glapi.c,v 1.4 1999/11/12 00:06:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1729,7 +1729,7 @@ void GLAPIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const G
    DISPATCH(VertexPointer)(size, type, stride, ptr);
 }
 
-#endif  /*GL_VERSION_1_1*/
+#endif  /*_GLAPI_VERSION_1_1*/
 
 
 
@@ -1929,8 +1929,8 @@ void GLAPIENTRY glSeparableFilter2D(GLenum target, GLenum internalformat, GLsize
 }
 
 
-#endif  /*GL_ARB_imaging*/
-#endif  /*GL_VERSION_1_2*/
+#endif  /*_GLAPI_ARB_imaging*/
+#endif  /*_GLAPI_VERSION_1_2*/
 
 
 
@@ -2940,9 +2940,6 @@ static struct _glapi_table completeness_test = {
 
 
 
-
-
-
 /*
  * Set the global or per-thread dispatch table pointer.
  */
@@ -2966,7 +2963,11 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
    }
    else {
       /* no current context, each function is a no-op */
+#if defined(MULTI_THREAD)
+      /* XXX To Do */
+#else
       Dispatch = &__glapi_noop_table;
+#endif
    }
 }
 
@@ -3002,7 +3003,7 @@ _glapi_get_version(void)
 const char *
 _glapi_get_extensions(void)
 {
-   return "GL_EXT_color_table GL_EXT_compiled_vertex_array GL_EXT_point_parameters GL_EXT_polygon_offset GL_EXT_blend_minmax GL_EXT_blend_color GL_ARB_multitexture GL_INGR_blend_func_separate GL_MESA_window_pos GL_MESA_resize_buffers";
+   return "GL_EXT_paletted_texture GL_EXT_compiled_vertex_array GL_EXT_point_parameters GL_EXT_polygon_offset GL_EXT_blend_minmax GL_EXT_blend_color GL_ARB_multitexture GL_INGR_blend_func_separate GL_MESA_window_pos GL_MESA_resize_buffers";
 }
 
 
@@ -3013,6 +3014,7 @@ _glapi_get_extensions(void)
 GLint
 _glapi_alloc_entrypoint(const char *funcName)
 {
+   /* XXX To Do */
    return -1;
 }
 
@@ -3024,6 +3026,7 @@ _glapi_alloc_entrypoint(const char *funcName)
 GLint
 _glapi_get_entrypoint(const char *funcName)
 {
+   /* XXX To Do */
    return -1;
 }
 
@@ -3034,6 +3037,7 @@ _glapi_get_entrypoint(const char *funcName)
 const GLvoid *
 _glapi_get_proc_address(const char *funcName)
 {
+   /* XXX To Do */
    return NULL;
 }
 
