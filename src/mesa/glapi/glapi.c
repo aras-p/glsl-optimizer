@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.23 2000/01/14 16:35:25 brianp Exp $ */
+/* $Id: glapi.c,v 1.24 2000/01/16 07:26:35 joshv Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@
 
 
 /* This is used when thread safety is disabled */
-static struct _glapi_table *Dispatch = &__glapi_noop_table;
+struct _glapi_table *_mesa_Dispatch = &__glapi_noop_table;
 
 /* Used when thread safety disabled */
 void *_glapi_CurrentContext = NULL;
@@ -177,11 +177,11 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #if defined(THREADS)
    _glthread_SetTSD(&DispatchTSD, (void*) dispatch, dispatch_thread_init);
    if (ThreadSafe)
-      Dispatch = NULL;  /* to help with debugging */
+      _mesa_Dispatch = NULL;  /* to help with debugging */
    else
-      Dispatch = dispatch;
+      _mesa_Dispatch = dispatch;
 #else
-   Dispatch = dispatch;
+   _mesa_Dispatch = dispatch;
 #endif
 }
 
@@ -198,11 +198,11 @@ _glapi_get_dispatch(void)
       return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
    }
    else {
-      assert(Dispatch);
-      return Dispatch;
+      assert(_mesa_Dispatch);
+      return _mesa_Dispatch;
    }
 #else
-   return Dispatch;
+   return _mesa_Dispatch;
 #endif
 }
 
@@ -517,28 +517,28 @@ trace(void)
    return trace > 0;
 }
 
-#define DISPATCH(FUNC, ARGS, MESSAGE)				\
-   const struct _glapi_table *dispatch;				\
-   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
-   if (trace()) printf MESSAGE;					\
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _mesa_Dispatch ? _mesa_Dispatch : _glapi_get_dispatch();	\
+   if (trace()) printf MESSAGE;						\
    (dispatch->FUNC) ARGS
 
-#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 			\
-   const struct _glapi_table *dispatch;				\
-   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
-   if (trace()) printf MESSAGE;					\
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _mesa_Dispatch ? _mesa_Dispatch : _glapi_get_dispatch();	\
+   if (trace()) printf MESSAGE;						\
    return (dispatch->FUNC) ARGS
 
 #else
 
-#define DISPATCH(FUNC, ARGS, MESSAGE)				\
-   const struct _glapi_table *dispatch;				\
-   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _mesa_Dispatch ? _mesa_Dispatch : _glapi_get_dispatch();	\
    (dispatch->FUNC) ARGS
 
-#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)			\
-   const struct _glapi_table *dispatch;				\
-   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _mesa_Dispatch ? _mesa_Dispatch : _glapi_get_dispatch();	\
    return (dispatch->FUNC) ARGS
 
 #endif
@@ -546,6 +546,11 @@ trace(void)
 
 #ifndef GLAPIENTRY
 #define GLAPIENTRY
+#endif
+
+#if defined(USE_X86_ASM) && !defined(__WIN32__)
+#undef NAME
+#define NAME(func) _mesa_fallback_##func
 #endif
 
 #include "glapitemp.h"

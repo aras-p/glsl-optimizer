@@ -1,4 +1,4 @@
-/* $Id: glapioffsets.h,v 1.1 1999/12/16 12:35:18 brianp Exp $ */
+/* $Id: glapioffsets.h,v 1.2 2000/01/16 07:26:35 joshv Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -779,6 +779,21 @@
 /* 99. ??? */
 
 /* 100. GLU_EXT_nurbs_tessellator - GLU functions */
+
+/* 173. GL_EXT/INGR_blend_func_separate */
+#define _gloffset_BlendFuncSeparateINGR			(_EXTBASE + 107)
+
+/* GL_MESA_window_pos */
+#define _gloffset_WindowPos4fMESA			(_EXTBASE + 108)
+
+/* GL_MESA_resize_buffers */
+#define _gloffset_ResizeBuffersMESA			(_EXTBASE + 109)
+
+/* GL_ARB_transpose_matrix */
+#define _gloffset_LoadTransposeMatrixdARB		(_EXTBASE + 110)
+#define _gloffset_LoadTransposeMatrixfARB		(_EXTBASE + 111)
+#define _gloffset_MultTransposeMatrixdARB		(_EXTBASE + 112)
+#define _gloffset_MultTransposeMatrixfARB		(_EXTBASE + 113)
 
 
 
