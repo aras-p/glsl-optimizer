@@ -6,7 +6,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1066,7 +1066,7 @@ loopback_VertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 static void GLAPIENTRY
 loopback_VertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 {
-   ATTRIB3(index, (GLfloat) x, y, z);
+   ATTRIB3(index, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 static void GLAPIENTRY
@@ -1139,7 +1139,7 @@ loopback_VertexAttrib2dvNV(GLuint index, const GLdouble *v)
 static void GLAPIENTRY
 loopback_VertexAttrib3svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
+   ATTRIB3(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
 }
 
 static void GLAPIENTRY
