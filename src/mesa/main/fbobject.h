@@ -32,6 +32,8 @@ struct gl_render_buffer_object
    GLint RefCount;
    GLuint Name;
    GLuint Width, Height;
+   GLenum InternalFormat;
+   GLvoid *Data;
 };
 
 

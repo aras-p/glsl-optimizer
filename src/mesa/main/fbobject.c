@@ -23,9 +23,17 @@
  */
 
 
+/*
+ * Authors:
+ *   Brian Paul
+ */
+
+
 #include "context.h"
 #include "fbobject.h"
 #include "hash.h"
+#include "teximage.h"
+#include "texstore.h"
 
 
 #define IS_CUBE_FACE(TARGET) \
@@ -56,14 +64,14 @@ lookup_renderbuffer(GLcontext *ctx, GLuint id)
 static struct gl_frame_buffer_object *
 lookup_framebuffer(GLcontext *ctx, GLuint id)
 {
-   struct gl_frame_buffer_object *rb;
+   struct gl_frame_buffer_object *fb;
 
    if (!id == 0)
       return NULL;
 
-   rb = (struct gl_frame_buffer_object *)
+   fb = (struct gl_frame_buffer_object *)
       _mesa_HashLookup(ctx->Shared->FrameBuffers, id);
-   return rb;
+   return fb;
 }
 
 
@@ -234,6 +242,9 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
       }
       newRb->RefCount++;
    }
+   else {
+      newRb = NULL;
+   }
 
    oldRb = ctx->CurrentRenderbuffer;
    if (oldRb) {
@@ -314,45 +325,130 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 }
 
 
+static GLenum
+base_internal_format(GLcontext *ctx, GLenum internalFormat)
+{
+   switch (internalFormat) {
+      /*case GL_ALPHA:*/
+      case GL_ALPHA4:
+      case GL_ALPHA8:
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+         return GL_ALPHA;
+      /*case GL_LUMINANCE:*/
+      case GL_LUMINANCE4:
+      case GL_LUMINANCE8:
+      case GL_LUMINANCE12:
+      case GL_LUMINANCE16:
+         return GL_LUMINANCE;
+      /*case GL_LUMINANCE_ALPHA:*/
+      case GL_LUMINANCE4_ALPHA4:
+      case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+      case GL_LUMINANCE12_ALPHA4:
+      case GL_LUMINANCE12_ALPHA12:
+      case GL_LUMINANCE16_ALPHA16:
+         return GL_LUMINANCE_ALPHA;
+      /*case GL_INTENSITY:*/
+      case GL_INTENSITY4:
+      case GL_INTENSITY8:
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+         return GL_INTENSITY;
+      /*case GL_RGB:*/
+      case GL_R3_G3_B2:
+      case GL_RGB4:
+      case GL_RGB5:
+      case GL_RGB8:
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+         return GL_RGB;
+      /*case GL_RGBA:*/
+      case GL_RGBA2:
+      case GL_RGBA4:
+      case GL_RGB5_A1:
+      case GL_RGBA8:
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return GL_RGBA;
+      case GL_STENCIL_INDEX1_EXT:
+      case GL_STENCIL_INDEX4_EXT:
+      case GL_STENCIL_INDEX8_EXT:
+      case GL_STENCIL_INDEX16_EXT:
+         return GL_STENCIL_INDEX;
+      default:
+         ; /* fallthrough */
+   }
+
+   if (ctx->Extensions.SGIX_depth_texture) {
+      switch (internalFormat) {
+         /*case GL_DEPTH_COMPONENT:*/
+         case GL_DEPTH_COMPONENT16_SGIX:
+         case GL_DEPTH_COMPONENT24_SGIX:
+         case GL_DEPTH_COMPONENT32_SGIX:
+            return GL_DEPTH_COMPONENT;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
+   return 0;
+}
+
+
 void
 _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
                              GLsizei width, GLsizei height)
 {
+   GLenum baseFormat;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   switch (target) {
-   case GL_RENDERBUFFER_EXT:
-      break;
-   default:
+   if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glRenderbufferStorageEXT(target)");
       return;
    }
 
-   switch (internalFormat) {
-   case GL_STENCIL_INDEX_EXT:
-   case GL_STENCIL_INDEX1_EXT:
-   case GL_STENCIL_INDEX4_EXT:
-   case GL_STENCIL_INDEX8_EXT:
-   case GL_STENCIL_INDEX16_EXT:
-      break;
-   default:
+   baseFormat = base_internal_format(ctx, internalFormat);
+   if (baseFormat == 0) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glRenderbufferStorageEXT(internalFormat)");
       return;
    }
 
-   if (width > 0 /*value of MAX_RENDERBUFFER_SIZE_EXT*/) {
+   if (width < 1 || width > ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(width)");
       return;
    }
 
-   if (height > 0 /*value of MAX_RENDERBUFFER_SIZE_EXT*/) {
+   if (height < 1 || height > ctx->Const.MaxRenderbufferSize) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(height)");
       return;
    }
 
+   /* XXX this check isn't in the spec, but seems necessary */
+   if (!ctx->CurrentRenderbuffer) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glRenderbufferStorageEXT");
+      return;
+   }
+
+   if (ctx->CurrentRenderbuffer->Data) {
+      /* XXX device driver free */
+      _mesa_free(ctx->CurrentRenderbuffer->Data);
+   }
+
+   /* XXX device driver allocate, fix size */
+   ctx->CurrentRenderbuffer->Data = _mesa_malloc(width * height * 4);
+   if (ctx->CurrentRenderbuffer->Data == NULL) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRenderbufferStorageEXT");
+      return;
+   }
+   ctx->CurrentRenderbuffer->InternalFormat = internalFormat;
+   ctx->CurrentRenderbuffer->Width = width;
+   ctx->CurrentRenderbuffer->Height = height;
 }
 
 
@@ -363,33 +459,33 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   switch (target) {
-   case GL_RENDERBUFFER_EXT:
-      break;
-   default:
+   if (target != GL_RENDERBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetRenderbufferParameterivEXT(target)");
       return;
    }
 
-   switch (pname) {
-   case GL_RENDERBUFFER_WIDTH_EXT:
-   case GL_RENDERBUFFER_HEIGHT_EXT:
-   case GL_RENDERBUFFER_INTERNAL_FORMAT_EXT:
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetRenderbufferParameterivEXT(target)");
-      return;
-   }
-
-   if (1/*GL_RENDERBUFFER_BINDING_EXT is zero*/) {
+   if (!ctx->CurrentRenderbuffer) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetRenderbufferParameterivEXT");
       return;
    }
 
-   *params = 0;
+   switch (pname) {
+   case GL_RENDERBUFFER_WIDTH_EXT:
+      *params = ctx->CurrentRenderbuffer->Width;
+      return;
+   case GL_RENDERBUFFER_HEIGHT_EXT:
+      *params = ctx->CurrentRenderbuffer->Height;
+      return;
+   case GL_RENDERBUFFER_INTERNAL_FORMAT_EXT:
+      *params = ctx->CurrentRenderbuffer->InternalFormat;
+      return;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glGetRenderbufferParameterivEXT(target)");
+      return;
+   }
 }
 
 
@@ -431,6 +527,9 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 	 }
       }
       newFb->RefCount++;
+   }
+   else {
+      newFb = NULL;
    }
 
    oldFb = ctx->CurrentFramebuffer;
@@ -520,10 +619,7 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FRAMEBUFFER_STATUS_ERROR_EXT);
 
-   switch (target) {
-   case GL_FRAMEBUFFER_EXT:
-      break;
-   default:
+   if (target != GL_FRAMEBUFFER_EXT) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glCheckFramebufferStatus(target)");
       return GL_FRAMEBUFFER_STATUS_ERROR_EXT;
@@ -581,17 +677,7 @@ error_check_framebuffer_texture(GLcontext *ctx, GLuint dims,
 	 return GL_TRUE;
       }
 
-      if ((level < 0)
-	  || (textarget == GL_TEXTURE_1D
-	      && level >= ctx->Const.MaxTextureLevels)
-	  || (textarget == GL_TEXTURE_2D
-	      && level >= ctx->Const.MaxTextureLevels)
-	  || (textarget == GL_TEXTURE_3D
-	      && level >= ctx->Const.Max3DTextureLevels)
-	  || (textarget == GL_TEXTURE_RECTANGLE_ARB
-	      && level != 0)
-	  || (IS_CUBE_FACE(textarget)
-	      && level >= ctx->Const.MaxCubeTextureLevels)) {
+      if ((level < 0) || level >= _mesa_max_texture_levels(ctx, textarget)) {
 	 _mesa_error(ctx, GL_INVALID_VALUE,
 		     "glFramebufferTexture%dDEXT(level)", dims);
 	 return GL_TRUE;
@@ -883,6 +969,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 void
 _mesa_GenerateMipmapEXT(GLenum target)
 {
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -890,12 +978,17 @@ _mesa_GenerateMipmapEXT(GLenum target)
    switch (target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
-   case GL_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_3D:
+   case GL_TEXTURE_CUBE_MAP:
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
       return;
    }
 
+   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+
+   /* XXX this might not handle cube maps correctly */
+   _mesa_generate_mipmap(ctx, target, texUnit, texObj);
 }
