@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.15 2001/02/19 20:01:42 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.16 2001/03/01 00:05:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "xmesaP.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
+#include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
@@ -747,6 +748,12 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+
+   if ((mask & (DD_FRONT_LEFT_BIT | DD_FRONT_RIGHT_BIT)) &&
+       xmesa->xm_buffer->gl_buffer->UseSoftwareAlphaBuffers &&
+       ctx->Color.ColorMask[ACOMP]) {
+      _mesa_clear_alpha_buffers(ctx);
+   }
 
    /* we can't handle color or index masking */
    if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
