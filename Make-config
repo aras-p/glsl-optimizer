@@ -756,11 +756,11 @@ linux-x86-64-static:
 	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib64 -lX11 -lXext -lm -lpthread" \
 	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm"
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm -lpthread" \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm -lpthread"
 
 linux-x86-64-static-nothreads:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -774,11 +774,11 @@ linux-x86-64-static-nothreads:
 	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib64 -lX11 -lXext -lm" \
 	"OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -lm"
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm" \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm"
 
 linux-x86-sse:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
