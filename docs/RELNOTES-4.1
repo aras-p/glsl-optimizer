@@ -172,7 +172,7 @@ are some things to change:
    <none>              TEXTURE_RECT_BIT
 
    These tokens are only used for the ctx->Texture.Unit[i].Enabled and
-   ctx->Texture.Unit[i]._ReallyEnabled fields.  Exactly 0 or 1 bit will
+   ctx->Texture.Unit[i]._ReallyEnabled fields.  Exactly 0 or 1 bits will
    be set in _ReallyEnabled at any time!
 
    Q: "What's the purpose of Unit[i].Enabled vs Unit[i]._ReallyEnabled?"
@@ -202,5 +202,34 @@ are some things to change:
 
 
 
+3. Read/Draw Buffer changes
+
+   The business of setting the current read/draw buffers in Mesa 4.0.x
+   was complicated.  It's much simpler now in Mesa 4.1.
+
+   Here are the changes:
+
+   - Rename ctx->Color.DrawDestMask to ctx->Color._DrawDestMask
+   - Rename ctx->Color.DriverDrawBuffer to ctx->Color._DriverDrawBuffer
+   - Rename ctx->Pixel.DriverReadBuffer to ctx->Pixel._DriverReadBuffer
+   - Removed ctx->Color.MultiDrawBuffer
+   - Removed ctx->Driver.SetDrawBuffer
+   - Added ctx->Driver.DrawBuffer and ctx->Driver.ReadBuffer.  These functions
+     exactly correspond to glDrawBuffer and glReadBuffer calls.
+     Many drivers will set ctx->Driver.DrawBuffer = _swrast_DrawBuffer and
+     leave ctx->Draw.ReadBuffer NULL.
+     DRI drivers should implement their own function for ctx->Driver.DrawBuffer
+     and use it to set the current hardware drawing buffer.  You'll probably
+     also want to check for GL_FRONT_AND_BACK mode and fall back to software.
+     Call _swrast_DrawBuffer() too, to update the swrast state.
+   - Removed swrast->Driver.SetReadBuffer
+   - Added swrast->Driver.SetBuffer.  This function should be implemented by
+     _all_ device drivers.  Mesa will call it to specify the buffer to use
+     for span reading AND writing and point/line/triangle rendering.  There
+     should be no confusion between current read or draw buffer anymore.
+
+
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.12 2002/06/30 15:49:03 brianp Exp $
+$Id: RELNOTES-4.1,v 1.13 2002/07/09 01:28:03 brianp Exp $
