@@ -1273,58 +1273,41 @@ static void fxRunPipeline( GLcontext *ctx )
     */
    if (new_gl_state & _NEW_PROJECTION)
       fxMesa->new_state |= FX_NEW_FOG;
-   /* [dBorca] Hack alert:
-    * the above _NEW_PROJECTION is not included in the test below,
-    * so we may end up with fxMesa->new_state still dirty by the end
-    * of the routine. The fact is, we don't have NearFar callback
-    * anymore. We could use fxDDDepthRange instead, but it seems
-    * fog needs to be updated only by a fog-basis.
-    * Implementing fxDDDepthRange correctly is another story:
-    * that, together with a presumable fxDDViewport function would set
-    *   fxMesa->SetupNewInputs |= VERT_BIT_CLIP;
-    * which might be useful in fxBuildVertices...
-    */
 #endif
 
-   if (new_gl_state & (_FX_NEW_IS_IN_HARDWARE |
-		       _FX_NEW_RENDERSTATE |
-		       _FX_NEW_SETUP_FUNCTION |
-		       _NEW_TEXTURE)) {
+   if (new_gl_state & _FX_NEW_IS_IN_HARDWARE)
+      fxCheckIsInHardware(ctx);
 
-      if (new_gl_state & _FX_NEW_IS_IN_HARDWARE)
-	 fxCheckIsInHardware(ctx);
+   if (fxMesa->new_state)
+      fxSetupFXUnits(ctx);
 
-      if (fxMesa->new_state)
-	 fxSetupFXUnits(ctx);
+   if (!fxMesa->fallback) {
+      if (new_gl_state & _FX_NEW_RENDERSTATE)
+         fxDDChooseRenderState(ctx);
 
-      if (!fxMesa->fallback) {
-	 if (new_gl_state & _FX_NEW_RENDERSTATE)
-	    fxDDChooseRenderState(ctx);
+      if (new_gl_state & _FX_NEW_SETUP_FUNCTION)
+         fxChooseVertexState(ctx);
+   }
 
-	 if (new_gl_state & _FX_NEW_SETUP_FUNCTION)
-	    fxChooseVertexState(ctx);
+   if (new_gl_state & _NEW_TEXTURE) {
+      struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
+      struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
+
+      if (t0->_Current && FX_TEXTURE_DATA(t0)) {
+         fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
+         fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
+         fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
+         fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
       }
 
-      if (new_gl_state & _NEW_TEXTURE) {
-         struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
-         struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
-      
-         if (t0->_Current && FX_TEXTURE_DATA(t0)) {
-            fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
-            fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
-            fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
-            fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
-         }
-      
-         if (t1->_Current && FX_TEXTURE_DATA(t1)) {
-            fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
-            fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
-            fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
-            fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
-         }
+      if (t1->_Current && FX_TEXTURE_DATA(t1)) {
+         fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
+         fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
+         fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
+         fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
       }
    }
-      
+
    fxMesa->new_gl_state = 0;
 
    _tnl_run_pipeline( ctx );
