@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.110 2004/01/28 22:00:13 brianp Exp $
+# $Id: Makefile.X11,v 1.111 2004/01/29 15:21:47 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -240,6 +240,19 @@ irix6-64 irix6-64-dso:
 		cd progs/redbook ; \
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
+
+irix6-mgl-n32-dso:
+        -mkdir libMGL32
+        if [ -d src/mesa ] ; then \
+                cd src/mesa ; \
+                touch depend ; \
+                $(MAKE) -f Makefile.X11 $@ ; \
+        fi
+        if [ -d src/glu/sgi ] ; then \
+                cd src/glu/sgi ; \
+                touch depend ; \
+                $(MAKE) -f Makefile.X11 $@ ; \
+        fi
 
 beos-r4:
 	-mkdir lib
@@ -549,7 +562,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.h				\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms			\
+	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\

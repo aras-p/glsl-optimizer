@@ -223,7 +223,7 @@ case $ARCH in
 	FINAL_LIBS="${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}"
 	;;
 
-    'IRIX')
+    'IRIX' | 'IRIX64')
 	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 	if [ $ARCHOPT = "64" ] ; then
 	    # 64-bit ABI
@@ -238,20 +238,6 @@ case $ARCH in
 	    OPTS="-n32 -shared -all"
 	    echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
 	fi
-	if [ $CPLUSPLUS = 1 ] ; then
-	    LINK="CC"
-	else
-	    LINK="ld"
-	fi
-	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
-	FINAL_LIBS="${LIBNAME}"
-	;;
-
-    'IRIX64')
-	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
-	echo "mklib: Making IRIX64 library: " ${LIBNAME}
-	# 64-bit ABI
-	OPTS="-64 -shared -all"
 	if [ $CPLUSPLUS = 1 ] ; then
 	    LINK="CC"
 	else

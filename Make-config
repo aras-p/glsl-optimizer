@@ -322,6 +322,7 @@ irix6-o32:
 	"CXX = CC" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM" \
 	"CXXFLAGS = -32 -mips2 -O2 -ansi -woff 3262,3666" \
+	"MKLIB_OPTIONS = -archopt o32 -static" \
 	"APP_LIB_DEPS = -32 -glut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-o32-dso:
@@ -336,6 +337,7 @@ irix6-o32-dso:
 	"CXX = CC" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM" \
 	"CXXFLAGS = -32 -mips2 -O2 -ansi -woff 3262,3666" \
+	"MKLIB_OPTIONS = -archopt o32" \
 	"APP_LIB_DEPS = -32 -rpath $(TOP)/lib32 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-n32:
@@ -350,6 +352,7 @@ irix6-n32:
 	"CXX = CC" \
 	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1521,1552 -DUSE_XSHM" \
 	"CXXFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1552" \
+	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -n32 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-n32-dso:
@@ -401,6 +404,7 @@ irix6-64:
 	"CXX = CC" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM" \
 	"CXXFLAGS = -64 -O3 -ansi -woff 1174" \
+	"MKLIB_OPTIONS = -archopt 64 -static" \
 	"APP_LIB_DEPS = -64 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-64-dso:
@@ -415,7 +419,22 @@ irix6-64-dso:
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM" \
 	"CXX = CC" \
 	"CXXFLAGS = -64 -O3 -ansi -woff 1174" \
+	"MKLIB_OPTIONS = -archopt 64" \
 	"APP_LIB_DEPS = -64 -rpath $(TOP)/lib64 -lglut -lGLU -lGL -lX11 -lXmu -lXi -lm"
+
+irix6-mgl-n32-dso:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"LIBDIR = $(TOP)/libMGL32" \
+	"CC = cc" \
+	"CXX = CC" \
+	"CFLAGS = -n32 -DUSE_MGL_NAMESPACE -mips3 -O3 -ansi -woff 1174,1521,1552 -DUSE_XSHM" \
+	"CXXFLAGS = -n32 -DUSE_MGL_NAMESPACE -mips3 -O3 -ansi -woff 1174,1552" \
+	"APP_LIB_DEPS = -n32 -rpath $(TOP)/libMGL32 -lglut -lGLU -lGL -lX11 -lXmu -lXi -lfpe -lm" 
 
 linux:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
