@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.87 2001/03/26 20:02:38 brianp Exp $ */
+/* $Id: teximage.c,v 1.88 2001/03/28 20:40:51 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,7 +108,7 @@ static void PrintTexture(const struct gl_texture_image *img)
 /*
  * Compute log base 2 of n.
  * If n isn't an exact power of two return -1.
- * If n<0 return -1.
+ * If n < 0 return -1.
  */
 static int
 logbase2( int n )
@@ -116,7 +116,7 @@ logbase2( int n )
    GLint i = 1;
    GLint log2 = 0;
 
-   if (n<0) {
+   if (n < 0) {
       return -1;
    }
 
@@ -143,10 +143,10 @@ logbase2( int n )
 GLint
 _mesa_base_tex_format( GLcontext *ctx, GLint format )
 {
-  /*
-   * Ask the driver for the base format, if it doesn't
-   * know, it will return -1;
-   */
+   /*
+    * Ask the driver for the base format, if it doesn't
+    * know, it will return -1;
+    */
    if (ctx->Driver.BaseCompressedTexFormat) {
       GLint ifmt = (*ctx->Driver.BaseCompressedTexFormat)(ctx, format);
       if (ifmt >= 0) {
@@ -558,8 +558,6 @@ clear_teximage_fields(struct gl_texture_image *img)
 {
    ASSERT(img);
    img->Format = 0;
-   img->Type = 0;
-   img->IntFormat = 0;
    img->Border = 0;
    img->Width = 0;
    img->Height = 0;
@@ -588,8 +586,7 @@ init_teximage_fields(GLcontext *ctx,
                      GLint border, GLenum internalFormat)
 {
    ASSERT(img);
-
-   img->IntFormat = internalFormat;
+   img->Format = _mesa_base_tex_format( ctx, internalFormat );
    img->Border = border;
    img->Width = width;
    img->Height = height;
@@ -747,18 +744,17 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
-   if (!is_compressed_format(ctx, internalFormat)) {
-      if (!_mesa_is_legal_format_and_type( format, type )) {
-         /* Yes, generate GL_INVALID_OPERATION, not GL_INVALID_ENUM, if there
-          * is a type/format mismatch.  See 1.2 spec page 94, sec 3.6.4.
-          */
-         if (!isProxy) {
-            char message[100];
-            sprintf(message, "glTexImage%dD(format or type)", dimensions);
-            _mesa_error(ctx, GL_INVALID_OPERATION, message);
-         }
-         return GL_TRUE;
+   if (!is_compressed_format( ctx, internalFormat ) &&
+       !_mesa_is_legal_format_and_type( format, type )) {
+      /* Yes, generate GL_INVALID_OPERATION, not GL_INVALID_ENUM, if there
+       * is a type/format mismatch.  See 1.2 spec page 94, sec 3.6.4.
+       */
+      if (!isProxy) {
+	 char message[100];
+	 sprintf(message, "glTexImage%dD(format or type)", dimensions);
+	 _mesa_error(ctx, GL_INVALID_OPERATION, message);
       }
+      return GL_TRUE;
    }
 
    /* if we get here, the parameters are OK */
@@ -870,19 +866,18 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset)");
          return GL_TRUE;
       }
-      if (zoffset + depth  > (GLint) (destTex->Depth+destTex->Border)) {
+      if (zoffset + depth  > (GLint) (destTex->Depth + destTex->Border)) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexSubImage3D(zoffset+depth)");
          return GL_TRUE;
       }
    }
 
-   if (!is_compressed_format(ctx, destTex->IntFormat)) {
-      if (!_mesa_is_legal_format_and_type(format, type)) {
-         char message[100];
-         sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
-         _mesa_error(ctx, GL_INVALID_ENUM, message);
-         return GL_TRUE;
-      }
+   if (!is_compressed_format(ctx, destTex->TexFormat->IntFormat) &&
+       !_mesa_is_legal_format_and_type(format, type)) {
+      char message[100];
+      sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
+      _mesa_error(ctx, GL_INVALID_ENUM, message);
+      return GL_TRUE;
    }
 
    return GL_FALSE;
@@ -923,7 +918,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    /* Border */
-   if (border!=0 && border!=1) {
+   if (border != 0 && border != 1) {
       char message[100];
       sprintf(message, "glCopyTexImage%dD(border)", dimensions);
       _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -960,7 +955,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    /* Level */
-   if (level<0 || level>=ctx->Const.MaxTextureLevels) {
+   if (level < 0 || level>=ctx->Const.MaxTextureLevels) {
       char message[100];
       sprintf(message, "glCopyTexImage%dD(level=%d)", dimensions, level);
       _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -1050,7 +1045,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       _mesa_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
-   if (xoffset+width > (GLint) (teximage->Width+teximage->Border)) {
+   if (xoffset + width > (GLint) (teximage->Width + teximage->Border)) {
       char message[100];
       sprintf(message, "glCopyTexSubImage%dD(xoffset+width)", dimensions);
       _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -1064,7 +1059,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          return GL_TRUE;
       }
       /* NOTE: we're adding the border here, not subtracting! */
-      if (yoffset+height > (GLint) (teximage->Height+teximage->Border)) {
+      if (yoffset + height > (GLint) (teximage->Height + teximage->Border)) {
          char message[100];
          sprintf(message, "glCopyTexSubImage%dD(yoffset+height)", dimensions);
          _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -1079,7 +1074,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          _mesa_error(ctx, GL_INVALID_VALUE, message);
          return GL_TRUE;
       }
-      if (zoffset > (GLint) (teximage->Depth+teximage->Border)) {
+      if (zoffset > (GLint) (teximage->Depth + teximage->Border)) {
          char message[100];
          sprintf(message, "glCopyTexSubImage%dD(zoffset+depth)", dimensions);
          _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -1349,13 +1344,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
-#if 0
-      /* one of these has to be non-zero! */
-      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits ||
-             texImage->DepthBits);
-      ASSERT(texImage->FetchTexel);
-#endif
+      ASSERT(texImage->TexFormat);
+      texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1404,7 +1394,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
-                                         &postConvHeight);
+					 &postConvHeight);
    }
 
    if (target == GL_TEXTURE_2D ||
@@ -1463,13 +1453,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
-#if 0
-      /* one of these has to be non-zero! */
-      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits ||
-             texImage->DepthBits);
-      ASSERT(texImage->FetchTexel);
-#endif
+      ASSERT(texImage->TexFormat);
+      texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1478,8 +1463,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    else if (target == GL_PROXY_TEXTURE_2D) {
       /* Proxy texture: check for errors and update proxy state */
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
-                                    format, type, 2,
-                                    postConvWidth, postConvHeight, 1, border);
+				format, type, 2,
+				postConvWidth, postConvHeight, 1, border);
       if (!error) {
          struct gl_texture_unit *texUnit;
          struct gl_texture_image *texImage;
@@ -1571,13 +1556,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
          }
       }
 
-#if 0
-      /* one of these has to be non-zero! */
-      ASSERT(texImage->RedBits || texImage->IndexBits || texImage->AlphaBits ||
-             texImage->LuminanceBits || texImage->IntensityBits ||
-             texImage->DepthBits);
-      ASSERT(texImage->FetchTexel);
-#endif
+      ASSERT(texImage->TexFormat);
+      texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
 
       /* state update */
       texObj->Complete = GL_FALSE;

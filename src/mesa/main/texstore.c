@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.20 2001/03/27 20:26:10 brianp Exp $ */
+/* $Id: texstore.c,v 1.21 2001/03/28 20:40:51 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -406,7 +406,6 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -450,7 +449,6 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -490,7 +488,6 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -542,12 +539,10 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   const GLint components = components_in_intformat(texImage->IntFormat);
-   const GLint compSize = _mesa_sizeof_type(texImage->Type);
    _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
                            width, height, 1, /* src size */
                            xoffset, yoffset, 0, /* dest offsets */
-                           texImage->Width * components * compSize,
+                           texImage->Width * texImage->TexFormat->TexelBytes,
                            0, /* dstImageStride */
                            format, type, pixels, packing);
 }
@@ -565,14 +560,12 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   const GLint components = components_in_intformat(texImage->IntFormat);
-   const GLint compSize = _mesa_sizeof_type(texImage->Type);
+   const GLint texelBytes = texImage->TexFormat->TexelBytes;
    _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
                            width, height, depth, /* src size */
                            xoffset, yoffset, xoffset, /* dest offsets */
-                           texImage->Width * components * compSize,
-                           texImage->Width * texImage->Height * components
-                           * compSize,
+                           texImage->Width * texelBytes,
+                           texImage->Width * texImage->Height * texelBytes,
                            format, type, pixels, packing);
 }
 
@@ -648,7 +641,6 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   const struct gl_texture_format *texFormat;
 
    (void) format;
    (void) type;
@@ -664,10 +656,6 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
     */
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-
-   texFormat = texImage->TexFormat;
-   texImage->Format = texFormat->BaseFormat;
-   texImage->Type = texFormat->BaseType;
 
    return GL_TRUE;
 }

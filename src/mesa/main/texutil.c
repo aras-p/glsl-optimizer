@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.20 2001/03/27 20:32:24 brianp Exp $ */
+/* $Id: texutil.c,v 1.21 2001/03/28 20:40:51 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,7 +75,7 @@ typedef GLboolean (*convert_func)( struct gl_texture_convert *convert );
 #define DST_TEXELS_PER_DWORD	1
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( src[3], src[2], src[1], src[0] )
+	dst = PACK_COLOR_8888( src[3], src[2], src[1], src[0] )
 
 #define CONVERT_DIRECT
 
@@ -87,7 +87,7 @@ typedef GLboolean (*convert_func)( struct gl_texture_convert *convert );
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( src[0], src[1], src[2], src[3] )
+	dst = PACK_COLOR_8888( src[0], src[1], src[2], src[3] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )		CONVERT_TEXEL( dst, src )
 
@@ -99,7 +99,7 @@ typedef GLboolean (*convert_func)( struct gl_texture_convert *convert );
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( src[0], src[1], src[2], 0xff )
+	dst = PACK_COLOR_8888( src[0], src[1], src[2], 0xff )
 
 #define CONVERT_TEXEL_DWORD( dst, src )		CONVERT_TEXEL( dst, src )
 
@@ -154,7 +154,7 @@ CONVERT_RGBA8888( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	1
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( src[3], src[2], src[1], src[0] )
+	dst = PACK_COLOR_8888( src[3], src[2], src[1], src[0] )
 
 #define CONVERT_DIRECT
 
@@ -166,7 +166,7 @@ CONVERT_RGBA8888( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( src[3], src[0], src[1], src[2] )
+	dst = PACK_COLOR_8888( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )		CONVERT_TEXEL( dst, src )
 
@@ -178,7 +178,7 @@ CONVERT_RGBA8888( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_8888( 0xff, src[0], src[1], src[2] )
+	dst = PACK_COLOR_8888( 0xff, src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )		CONVERT_TEXEL( dst, src )
 
@@ -254,7 +254,7 @@ convert_texsubimage3d_rgb888( struct gl_texture_convert *convert )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_565( src[0], src[1], src[2] )
+	dst = PACK_COLOR_565( src[0], src[1], src[2] )
 
 #define CONVERT_DIRECT
 
@@ -266,11 +266,11 @@ convert_texsubimage3d_rgb888( struct gl_texture_convert *convert )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_565( src[0], src[1], src[2] )
+	dst = PACK_COLOR_565( src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_565( src[0], src[1], src[2] )) |	\
-		 (PACK_COLOR_565( src[3], src[4], src[5] ) << 16))
+	dst = ((PACK_COLOR_565( src[0], src[1], src[2] )) |		\
+	       (PACK_COLOR_565( src[3], src[4], src[5] ) << 16))
 
 #define SRC_TEXEL_BYTES		3
 
@@ -280,11 +280,11 @@ convert_texsubimage3d_rgb888( struct gl_texture_convert *convert )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_565( src[0], src[1], src[2] )
+	dst = PACK_COLOR_565( src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_565( src[0], src[1], src[2] )) |	\
-		       (PACK_COLOR_565( src[4], src[5], src[6] ) << 16))
+	dst = ((PACK_COLOR_565( src[0], src[1], src[2] )) |		\
+	       (PACK_COLOR_565( src[4], src[5], src[6] ) << 16))
 
 #define SRC_TEXEL_BYTES		4
 
@@ -336,7 +336,7 @@ CONVERT_RGB565( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
+	dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_DIRECT
 
@@ -348,15 +348,15 @@ CONVERT_RGB565( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
+	dst = PACK_COLOR_4444( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_4444( src[3], src[0], src[1], src[2] )) |\
-		   (PACK_COLOR_4444( src[7], src[4], src[5], src[6] ) << 16))
+	dst = ((PACK_COLOR_4444( src[3], src[0], src[1], src[2] )) |	\
+	       (PACK_COLOR_4444( src[7], src[4], src[5], src[6] ) << 16))
 
 #define SRC_TEXEL_BYTES		4
 
-#define TAG(x) x##_rgba8888_to_argb4444
+#define TAG(x) x##_abgr8888_to_argb4444
 #include "texutil_tmp.h"
 
 
@@ -375,7 +375,7 @@ convert_##name##_argb4444( struct gl_texture_convert *convert )		\
    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
    {									\
-      tab = name##_tab_rgba8888_to_argb4444;				\
+      tab = name##_tab_abgr8888_to_argb4444;				\
    }									\
    else									\
    {									\
@@ -399,7 +399,7 @@ CONVERT_ARGB4444( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
+	dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_DIRECT
 
@@ -411,13 +411,13 @@ CONVERT_ARGB4444( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		{ const GLushort s = *(GLushort *)src;			\
-		  dst = (s >> 1) | ((s & 1) << 15); }
+	{ const GLushort s = *(GLushort *)src;				\
+	  dst = (s >> 1) | ((s & 1) << 15); }
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		{ const GLuint s = *(GLuint *)src;			\
-		  dst = (((s & 0xfffefffe) >> 1) |			\
-			 ((s & 0x00010001) << 15)); }
+	{ const GLuint s = *(GLuint *)src;				\
+	  dst = (((s & 0xfffefffe) >> 1) |				\
+		 ((s & 0x00010001) << 15)); }
 
 #define SRC_TEXEL_BYTES		2
 
@@ -427,15 +427,15 @@ CONVERT_ARGB4444( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
+	dst = PACK_COLOR_1555( src[3], src[0], src[1], src[2] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_1555( src[3], src[0], src[1], src[2] )) |\
-		   (PACK_COLOR_1555( src[7], src[4], src[5], src[6] ) << 16))
+	dst = ((PACK_COLOR_1555( src[3], src[0], src[1], src[2] )) |	\
+	       (PACK_COLOR_1555( src[7], src[4], src[5], src[6] ) << 16))
 
 #define SRC_TEXEL_BYTES		4
 
-#define TAG(x) x##_rgba8888_to_argb1555
+#define TAG(x) x##_abgr8888_to_argb1555
 #include "texutil_tmp.h"
 
 
@@ -459,7 +459,7 @@ convert_##name##_argb1555( struct gl_texture_convert *convert )		\
    else if ( convert->format == GL_RGBA &&				\
 	     convert->type == GL_UNSIGNED_BYTE )			\
    {									\
-      tab = name##_tab_rgba8888_to_argb1555;				\
+      tab = name##_tab_abgr8888_to_argb1555;				\
    }									\
    else									\
    {									\
@@ -483,7 +483,7 @@ CONVERT_ARGB1555( texsubimage3d )
 #define DST_TEXELS_PER_DWORD	2
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_88( src[0], src[1] )
+	dst = PACK_COLOR_88( src[0], src[1] )
 
 #define CONVERT_DIRECT
 
@@ -495,11 +495,11 @@ CONVERT_ARGB1555( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_88( src[0], 0x00 )
+	dst = PACK_COLOR_88( src[0], 0x00 )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_88( src[0], 0x00 )) |		\
-		       (PACK_COLOR_88( src[1], 0x00 ) << 16))
+	dst = ((PACK_COLOR_88( src[0], 0x00 )) |			\
+	       (PACK_COLOR_88( src[1], 0x00 ) << 16))
 
 #define SRC_TEXEL_BYTES		1
 
@@ -509,11 +509,11 @@ CONVERT_ARGB1555( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_88( 0xff, src[0] )
+	dst = PACK_COLOR_88( 0xff, src[0] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_88( 0xff, src[0] )) |		\
-		       (PACK_COLOR_88( 0xff, src[1] ) << 16))
+	dst = ((PACK_COLOR_88( 0xff, src[0] )) |			\
+	       (PACK_COLOR_88( 0xff, src[1] ) << 16))
 
 #define SRC_TEXEL_BYTES		1
 
@@ -523,11 +523,11 @@ CONVERT_ARGB1555( texsubimage3d )
 
 
 #define CONVERT_TEXEL( dst, src )					\
-		dst = PACK_COLOR_88( src[3], src[0] )
+	dst = PACK_COLOR_88( src[3], src[0] )
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-		dst = ((PACK_COLOR_88( src[3], src[0] )) |		\
-		       (PACK_COLOR_88( src[7], src[1] ) << 16))
+	dst = ((PACK_COLOR_88( src[3], src[0] )) |			\
+	       (PACK_COLOR_88( src[7], src[1] ) << 16))
 
 #define SRC_TEXEL_BYTES		4
 
@@ -743,13 +743,12 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
 }
 
 
-/*
- * Convert a user's 2D image into a texture image.  This basically repacks
- * pixel data into the special texture formats used by core Mesa and the DRI
- * drivers.  This function can do full images or subimages.
+/* Convert a user's 2D image into a texture image.  This basically
+ * repacks pixel data into the special texture formats used by core Mesa
+ * and the DRI drivers.  This function can do full images or subimages.
  *
- * We return a boolean because this function may not accept some kinds of
- * source image formats and/or types.  For example, if the incoming
+ * We return a boolean because this function may not accept some kinds
+ * of source image formats and/or types.  For example, if the incoming
  * format/type = GL_BGR, GL_UNSIGNED_INT this function probably won't
  * be able to do the conversion.
  *

@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.20 2001/03/26 19:42:40 brianp Exp $ */
+/* $Id: s_texture.c,v 1.21 2001/03/28 20:40:52 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "mem.h"
+#include "texformat.h"
 #include "teximage.h"
 
 #include "s_context.h"
@@ -1671,15 +1672,13 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
                if (t->WrapS == GL_REPEAT &&
                    t->WrapT == GL_REPEAT &&
                    t->Image[baseLevel]->Border == 0 &&
-                   t->Image[baseLevel]->Format == GL_RGB &&
-                   t->Image[baseLevel]->Type == CHAN_TYPE) {
+                   t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGB) {
                   swrast->TextureSample[texUnit] = opt_sample_rgb_2d;
                }
                else if (t->WrapS == GL_REPEAT &&
                         t->WrapT == GL_REPEAT &&
                         t->Image[baseLevel]->Border == 0 &&
-                        t->Image[baseLevel]->Format==GL_RGBA &&
-                        t->Image[baseLevel]->Type == CHAN_TYPE) {
+                        t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
                   swrast->TextureSample[texUnit] = opt_sample_rgba_2d;
                }
                else

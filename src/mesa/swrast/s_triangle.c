@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.21 2001/03/22 04:54:08 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.22 2001/03/28 20:40:52 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
 /*
  * When the device driver doesn't implement triangle rasterization it
  * can hook in _swrast_Triangle, which eventually calls one of these
- * functions to draw triangles.  
+ * functions to draw triangles.
  */
 
 #include "glheader.h"
@@ -2284,7 +2284,7 @@ _swrast_choose_triangle( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLboolean rgbmode = ctx->Visual.rgbMode;
 
-   if (ctx->Polygon.CullFlag && 
+   if (ctx->Polygon.CullFlag &&
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
       USE(nodraw_triangle);
       return;
@@ -2333,7 +2333,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	     && texObj2D->WrapT==GL_REPEAT
              && texImg->Border==0
              && (format == GL_RGB || format == GL_RGBA)
-             && texImg->Type == CHAN_TYPE
+             && texImg->TexFormat->Type == CHAN_TYPE
 	     && minFilter == magFilter
 	     && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
 	     && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
