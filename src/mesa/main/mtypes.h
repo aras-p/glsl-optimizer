@@ -1807,30 +1807,41 @@ struct gl_extensions
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_transpose_matrix;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_window_pos;
-   GLboolean ATI_texture_mirror_once;
-   GLboolean ATI_texture_env_combine3;
+   GLboolean EXT_abgr;
+   GLboolean EXT_bgra;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_logic_op;
    GLboolean EXT_blend_minmax;
    GLboolean EXT_blend_subtract;
+   GLboolean EXT_clip_volume_hint;
    GLboolean EXT_convolution;
    GLboolean EXT_compiled_vertex_array;
+   GLboolean EXT_copy_texture;
    GLboolean EXT_depth_bounds_test;
+   GLboolean EXT_draw_range_elements;
    GLboolean EXT_fog_coord;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
+   GLboolean EXT_packed_pixels;
    GLboolean EXT_point_parameters;
+   GLboolean EXT_polygon_offset;
+   GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
+   GLboolean EXT_separate_specular_color;
    GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
    GLboolean EXT_stencil_two_side;
+   GLboolean EXT_subtexture;
+   GLboolean EXT_texture;
+   GLboolean EXT_texture_object;
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_compression_s3tc;
    GLboolean EXT_texture_env_add;
@@ -1839,7 +1850,13 @@ struct gl_extensions
    GLboolean EXT_texture_filter_anisotropic;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
+   GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_set;
+   /* vendor extensions */
+   GLboolean APPLE_client_storage;
+   GLboolean APPLE_packed_pixels;
+   GLboolean ATI_texture_mirror_once;
+   GLboolean ATI_texture_env_combine3;
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
@@ -1850,7 +1867,9 @@ struct gl_extensions
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
+   GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
+   GLboolean NV_texgen_reflection;
    GLboolean NV_texture_rectangle;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
@@ -1860,12 +1879,12 @@ struct gl_extensions
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
+   GLboolean SGIS_texture_lod;
    GLboolean SGIX_depth_texture;
    GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
-   GLboolean APPLE_client_storage;
    GLboolean S3_s3tc;
    /*@}*/
    /* The extension string */
