@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.150 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: context.c,v 1.151 2001/12/17 22:41:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -800,7 +800,7 @@ init_attrib_groups( GLcontext *ctx )
       _math_matrix_ctr( &ctx->ModelViewStack[i] );
       _math_matrix_alloc_inv( &ctx->ModelViewStack[i] );
    }
-#if 1
+#if 0
    init_matrix_stack(&ctx->ModelviewStack, 32, _NEW_MODELVIEW);
 #endif
 
@@ -1650,7 +1650,7 @@ _mesa_free_context_data( GLcontext *ctx )
       _mesa_make_current(NULL, NULL);
    }
 
-#if 1
+#if 0
    free_matrix_stack(&ctx->ModelviewStack);
 #endif
 
