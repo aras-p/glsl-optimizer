@@ -59,9 +59,9 @@ that several of the configuration names have changed:
 New extensions
 --------------
 
-GL_EXT_transpose_matrix
-	Adds glLoadTransposeMatrix() and glMultTransposeMatrix() functions.
-	See http://reality.sgi.com/opengl/arb/extensions/ext_text/GL_EXT_transpose_matrix.txt
+GL_ARB_transpose_matrix
+	Adds glLoadTransposeMatrixARB() and glMultTransposeMatrixARB()
+        functions.
 
 GL_EXT_texture_add_env
 	Adds GL_ADD texture environment mode.
@@ -88,6 +88,12 @@ GL_SGI_color_table
 
 GL_EXT_histogram
 	Compute histograms for glDraw/Read/CopyPixels.
+
+GL_EXT_blend_func_separate
+	This is the same as GL_INGR_blend_func_separate.
+
+Documentation for all these functions can be found at
+http://oss.sgi.com/projects/ogl-sample/registry/
 
 
 
@@ -207,4 +213,4 @@ Also added constants for NumAuxBuffers and SubPixelBits.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.3,v 1.4 2000/05/04 13:50:33 brianp Exp $
+$Id: RELNOTES-3.3,v 1.5 2000/05/22 18:47:29 brianp Exp $
