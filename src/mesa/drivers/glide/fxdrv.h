@@ -618,7 +618,6 @@ extern void fxPrintHintState( const char *msg, GLuint state );
 
 extern void fxDDDoRenderVB( struct vertex_buffer *VB );
 
-extern int fxDDInitFxMesaContext( fxMesaContext fxMesa, 
-				  int win, int res, int ref, int aux );
+extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
 
 #endif

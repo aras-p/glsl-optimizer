@@ -368,27 +368,10 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 }
 
 
-int fxDDInitFxMesaContext( fxMesaContext fxMesa, 
-			   int win, 
-			   int res,
-			   int ref, 
-			   int aux )
+int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 {
-   FX_GrContext_t glideContext =  FX_grSstWinOpen((FxU32)win,res,ref,
-#if  FXMESA_USE_ARGB
-						  GR_COLORFORMAT_ARGB,
-#else
-						  GR_COLORFORMAT_ABGR,
-#endif
-						  GR_ORIGIN_LOWER_LEFT,
-						  2,
-						  aux);
-   
-   if (!glideContext) return 0;
   
    FX_setupGrVertexLayout();
-   
-   fxMesa->glideContext = glideContext;
    
    if (getenv("FX_EMULATE_SINGLE_TMU")) 
       fxMesa->haveTwoTMUs = GL_FALSE;

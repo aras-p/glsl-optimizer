@@ -926,9 +926,25 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,GrScreenResolution_t res
    fxMesa->haveGlobalPaletteTexture=GL_FALSE;
    fxMesa->haveZBuffer=depthSize ? 1 : 0;
    fxMesa->verbose=verbose;
+   fxMesa->board=glbCurrentBoard;
+
+
+   fxMesa->glideContext = FX_grSstWinOpen((FxU32)win,res,ref,
+#if  FXMESA_USE_ARGB
+					  GR_COLORFORMAT_ARGB,
+#else
+					  GR_COLORFORMAT_ABGR,
+#endif
+					  GR_ORIGIN_LOWER_LEFT,
+					  2,aux);
+   if (!fxMesa->glideContext){
+      errorstr = "grSstWinOpen"; 
+      goto errorhandler;
+   }
+
+
    fxMesa->width=FX_grSstScreenWidth();
    fxMesa->height=FX_grSstScreenHeight();
-   fxMesa->board=glbCurrentBoard;
 
    if(verbose)
       fprintf(stderr,"Glide screen size: %dx%d\n",
@@ -957,7 +973,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,GrScreenResolution_t res
    }
 
 
-   if (!fxDDInitFxMesaContext( fxMesa, win, res, ref, aux )) {
+   if (!fxDDInitFxMesaContext( fxMesa )) {
       errorstr = "fxDDInitFxMesaContext failed"; 
       goto errorhandler;
    }
