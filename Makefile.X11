@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.17 2000/01/27 00:11:49 brianp Exp $
+# $Id: Makefile.X11,v 1.18 2000/02/10 16:00:36 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -494,7 +494,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/macos/resources/*.rsrc			\
 	$(DIRECTORY)/macos/src-agl/*.exp			\
 	$(DIRECTORY)/macos/src-agl/*.[ch]			\
-	$(DIRECTORY)/macos/src-gli/*.[ch]
+	$(DIRECTORY)/macos/src-gli/*.[ch]			\
+	$(DIRECTORY)/OpenStep
 
 DEMO_FILES =	\
 	$(DIRECTORY)/include/GL/glut.h		\
