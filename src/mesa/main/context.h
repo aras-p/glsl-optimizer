@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.12 2000/01/28 20:17:42 brianp Exp $ */
+/* $Id: context.h,v 1.13 2000/02/02 19:16:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -166,13 +166,6 @@ _mesa_get_dispatch(GLcontext *ctx);
 
 
 /*
- * GL_MESA_resize_buffers extension
- */
-extern void _mesa_ResizeBuffersMESA( void );
-
-
-
-/*
  * Miscellaneous
  */
 
@@ -184,14 +177,22 @@ extern void gl_error( GLcontext *ctx, GLenum error, const char *s );
 
 extern void gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
-extern void gl_update_state( GLcontext *ctx );
 
 
-/* for debugging */
-extern void gl_print_state( const char *msg, GLuint state );
+extern void
+_mesa_Finish( void );
 
-/* for debugging */
-extern void gl_print_enable_flags( const char *msg, GLuint flags );
+extern void
+_mesa_Flush( void );
+
+
+
+extern void
+_mesa_init_no_op_table(struct _glapi_table *exec);
+
+extern void
+_mesa_init_exec_table(struct _glapi_table *exec);
+
 
 
 #ifdef PROFILE
