@@ -1,10 +1,10 @@
-/* $Id: dlist.c,v 1.94 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: dlist.c,v 1.95 2002/09/06 03:20:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -253,7 +253,7 @@ typedef enum {
         OPCODE_PROGRAM_PARAMETER4F_NV,
         OPCODE_PROGRAM_PARAMETERS4FV_NV,
         OPCODE_TRACK_MATRIX_NV,
-        /* GL_EXT_stencil_two_face */
+        /* GL_EXT_stencil_two_side */
         OPCODE_ACTIVE_STENCIL_FACE_EXT,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
@@ -4098,7 +4098,7 @@ save_TrackMatrixNV(GLenum target, GLuint address,
 }
 
 
-/* GL_EXT_stencil_two_face */
+/* GL_EXT_stencil_two_side */
 static void save_ActiveStencilFaceEXT( GLenum face )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -4109,9 +4109,7 @@ static void save_ActiveStencilFaceEXT( GLenum face )
       n[1].e = face;
    }
    if (ctx->ExecuteFlag) {
-#if 0
       (*ctx->Exec->ActiveStencilFaceEXT)( face );
-#endif
    }
 }
 
@@ -6204,9 +6202,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->PointParameterivNV = save_PointParameterivNV;
 
    /* 268. GL_EXT_stencil_two_side */
-#if 0
    table->ActiveStencilFaceEXT = save_ActiveStencilFaceEXT;
-#endif
 
    /* ARB 1. GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
