@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.73 2001/02/07 03:27:41 brianp Exp $ */
+/* $Id: teximage.c,v 1.74 2001/02/07 16:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1244,6 +1244,12 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                                          format, type, 1,
                                          postConvWidth, 1, 1, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, postConvWidth, 1, 1,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                                   internalFormat, format, type,
@@ -1346,6 +1352,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                     format, type, 2,
                                     postConvWidth, postConvHeight, 1, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, postConvWidth, postConvHeight, 1,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                     internalFormat, format, type,
@@ -1443,6 +1455,12 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
                                 format, type, 3, width, height, depth, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, width, height, 1,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                                  internalFormat, format, type,
@@ -1938,6 +1956,12 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
                                     GL_NONE, GL_NONE, 1, width, 1, 1, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, width, 1, 1,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                              internalFormat, GL_NONE, GL_NONE,
@@ -2031,6 +2055,12 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
                                 GL_NONE, GL_NONE, 2, width, height, 1, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, width, height, 1,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                               internalFormat, GL_NONE, GL_NONE,
@@ -2122,6 +2152,12 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
       GLenum error = texture_error_check(ctx, target, level, internalFormat,
                             GL_NONE, GL_NONE, 1, width, height, depth, border);
       if (!error) {
+         struct gl_texture_unit *texUnit;
+         struct gl_texture_image *texImage;
+         texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+         texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
+         init_teximage_fields(ctx, texImage, width, height, depth,
+                              border, internalFormat);
          ASSERT(ctx->Driver.TestProxyTexImage);
          error = !(*ctx->Driver.TestProxyTexImage)(ctx, target, level,
                                              internalFormat, GL_NONE, GL_NONE,
@@ -2146,10 +2182,10 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
                               width, 1, 1, format, GL_NONE)) {
@@ -2179,10 +2215,10 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                  GLenum format, GLsizei imageSize,
                                  const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                               width, height, 1, format, GL_NONE)) {
@@ -2212,10 +2248,10 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
                               width, height, depth, format, GL_NONE)) {
@@ -2243,10 +2279,10 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 void
 _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 {
-   GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit;
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
