@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.21 2000/06/08 22:50:24 brianp Exp $ */
+/* $Id: glx.h,v 1.22 2000/06/23 17:39:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -367,44 +367,7 @@ extern int glXQueryContextInfoEXT(Display *dpy, GLXContext context,
 
 
 /*
- * ARB 2. GLX_ARB_get_proc_address
- */
-#ifndef GLX_ARB_get_proc_address
-#define GLX_ARB_get_proc_address 1
-
-extern void (*glXGetProcAddressARB(const GLubyte *procName))();
-
-#endif /* GLX_ARB_get_proc_address */
-
-
-
-/*
- * GLX_MESA_pixmap_colormap
- */
-#ifndef GLX_MESA_pixmap_colormap
-#define GLX_MESA_pixmap_colormap 1
-
-extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
-                                         Pixmap pixmap, Colormap cmap );
-
-#endif /* GLX_MESA_pixmap_colormap */
-
-
-
-/*
- * GLX_MESA_release_buffers
- */
-#ifndef GLX_MESA_release_buffers
-#define GLX_MESA_release_buffers 1
-
-extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
-
-#endif /* GLX_MESA_release_buffers */
-
-
-
-/*
- * GLX_MESA_copy_sub_buffer
+ * 215. GLX_MESA_copy_sub_buffer
  */
 #ifndef GLX_MESA_copy_sub_buffer
 #define GLX_MESA_copy_sub_buffer 1
@@ -417,14 +380,54 @@ extern void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
 
 
 /*
- * GLX_MESA_set_3dfx_mode
+ * 216. GLX_MESA_pixmap_colormap
+ */
+#ifndef GLX_MESA_pixmap_colormap
+#define GLX_MESA_pixmap_colormap 1
+
+extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
+                                         Pixmap pixmap, Colormap cmap );
+
+#endif /* GLX_MESA_pixmap_colormap */
+
+
+
+/*
+ * 217. GLX_MESA_release_buffers
+ */
+#ifndef GLX_MESA_release_buffers
+#define GLX_MESA_release_buffers 1
+
+extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
+
+#endif /* GLX_MESA_release_buffers */
+
+
+
+/*
+ * 218. GLX_MESA_set_3dfx_mode
  */
 #ifndef GLX_MESA_set_3dfx_mode
 #define GLX_MESA_set_3dfx_mode 1
 
+#define GLX_3DFX_WINDOW_MODE_MESA       0x1
+#define GLX_3DFX_FULLSCREEN_MODE_MESA   0x2
+
 extern GLboolean glXSet3DfxModeMESA( GLint mode );
 
 #endif /* GLX_MESA_set_3dfx_mode */
+
+
+
+/*
+ * ARB 2. GLX_ARB_get_proc_address
+ */
+#ifndef GLX_ARB_get_proc_address
+#define GLX_ARB_get_proc_address 1
+
+extern void (*glXGetProcAddressARB(const GLubyte *procName))();
+
+#endif /* GLX_ARB_get_proc_address */
 
 
 
