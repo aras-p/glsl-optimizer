@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.68 2002/11/13 02:34:53 brianp Exp $
+# $Id: Makefile.X11,v 1.69 2002/11/13 15:33:51 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -354,12 +354,10 @@ LIB_FILES =	\
 	$(DIRECTORY)/missing						\
 	$(DIRECTORY)/mkinstalldirs					\
 	$(DIRECTORY)/stamp-h.in						\
-	$(DIRECTORY)/docs/CONFIG					\
 	$(DIRECTORY)/docs/CONFORM					\
 	$(DIRECTORY)/docs/COPYING					\
 	$(DIRECTORY)/docs/COPYRIGHT					\
 	$(DIRECTORY)/docs/DEVINFO					\
-	$(DIRECTORY)/docs/IAFA-PACKAGE					\
 	$(DIRECTORY)/docs/INSTALL					\
 	$(DIRECTORY)/docs/INSTALL.GNU					\
 	$(DIRECTORY)/docs/README					\
