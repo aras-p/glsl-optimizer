@@ -231,7 +231,7 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
 	 tex = (char *)texImage->Data + done * src_pitch;
 
 	 memset(&region, 0, sizeof(region));
-	 r200AllocDmaRegion( rmesa, &region, lines * dstPitch, 64 );
+	 r200AllocDmaRegion( rmesa, &region, lines * dstPitch, 1024 );
 
 	 /* Copy texdata to dma:
 	  */
@@ -240,10 +240,10 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
 		    __FUNCTION__, src_pitch, dstPitch);
 
 	 if (src_pitch == dstPitch) {
-	    memcpy( region.address, tex, lines * src_pitch );
+	    memcpy( region.address + region.start, tex, lines * src_pitch );
 	 } 
 	 else {
-	    char *buf = region.address;
+	    char *buf = region.address + region.start;
 	    int i;
 	    for (i = 0 ; i < lines ; i++) {
 	       memcpy( buf, tex, src_pitch );
