@@ -27,6 +27,33 @@ GL_SGI_texture_color_table
    color table for each texture unit.
    Contributed by Eric Plante.
 
+GL_NV_fragment_program
+   NVIDIA's fragment-level programming feature.
+
+
+
+Source File Changes
+-------------------
+
+The mmath.[ch] files are obsolete.  Their contents have been moved
+into the imports.[ch] and macros.[ch] files.
+
+The files related to vertex and fragment programming have changed.
+Old files:
+	vpexec.[ch]
+	vpparse.[ch]
+	vpstate.[ch]
+New files:
+	nvvertprog.h              - NV vertex program definitions
+	nvfragprog.h              - NV fragment program definitions
+	nvvertparse.[ch]          - NV vertex program parser
+	nvfragparse.[ch]          - NV fragment program parser
+	nvprogram.[ch]            - NV program API functions
+	nvvertexec.[ch]           - NV vertex program execution
+	swrast/s_nvfragprog.[ch]  - NV fragment program execution
+
+
+
 
 Device Driver Status
 --------------------
@@ -56,4 +83,4 @@ driver call the _mesa_enable_1_4_extensions() function.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-5.1,v 1.4 2003/02/13 16:01:33 brianp Exp $
+$Id: RELNOTES-5.1,v 1.5 2003/03/01 01:50:13 brianp Exp $
