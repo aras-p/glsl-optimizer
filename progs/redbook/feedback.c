@@ -143,6 +143,8 @@ void display(void)
 
    size = glRenderMode (GL_RENDER);
    printBuffer (size, feedBuffer);
+
+   glFinish();
 }
 
 /* ARGSUSED1 */
