@@ -138,7 +138,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
-   GLuint texUnit = ctx->Texture.CurrentUnit;
+   const GLuint clientUnit = ctx->Array.ActiveTexture;
+   const GLuint texUnit = ctx->Texture.CurrentUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1003,16 +1004,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = INT_TO_BOOL(0);
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         *params = ctx->Array.TexCoord[texUnit].Enabled;
+         *params = ctx->Array.TexCoord[clientUnit].Enabled;
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-         *params = INT_TO_BOOL(ctx->Array.TexCoord[texUnit].Size);
+         *params = INT_TO_BOOL(ctx->Array.TexCoord[clientUnit].Size);
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-         *params = ENUM_TO_BOOL(ctx->Array.TexCoord[texUnit].Type);
+         *params = ENUM_TO_BOOL(ctx->Array.TexCoord[clientUnit].Type);
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-         *params = INT_TO_BOOL(ctx->Array.TexCoord[texUnit].Stride);
+         *params = INT_TO_BOOL(ctx->Array.TexCoord[clientUnit].Stride);
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
@@ -1561,40 +1562,37 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.VertexArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.Vertex.BufferBinding);
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.NormalArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.Normal.BufferBinding);
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.ColorArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.Color.BufferBinding);
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.IndexArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.Index.BufferBinding);
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.TextureArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.TexCoord[clientUnit].BufferBinding);
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.EdgeFlagArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.EdgeFlag.BufferBinding);
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.SecondaryColorArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.SecondaryColor.BufferBinding);
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.FogCoordArrayBufferBinding);
+         *params = INT_TO_BOOL(ctx->Array.FogCoord.BufferBinding);
          break;
-      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
-         *params = INT_TO_BOOL(ctx->Array.WeightArrayBufferBinding);
-         break;
+      /*case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB: - not supported */
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
          *params = INT_TO_BOOL(ctx->Array.ElementArrayBufferBinding);
@@ -1683,7 +1681,8 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
-   GLuint texUnit = ctx->Texture.CurrentUnit;
+   const GLuint clientUnit = ctx->Array.ActiveTexture;
+   const GLuint texUnit = ctx->Texture.CurrentUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -2544,16 +2543,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = 0.0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         *params = (GLdouble) ctx->Array.TexCoord[texUnit].Enabled;
+         *params = (GLdouble) ctx->Array.TexCoord[clientUnit].Enabled;
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-         *params = (GLdouble) ctx->Array.TexCoord[texUnit].Size;
+         *params = (GLdouble) ctx->Array.TexCoord[clientUnit].Size;
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-         *params = ENUM_TO_DOUBLE(ctx->Array.TexCoord[texUnit].Type);
+         *params = ENUM_TO_DOUBLE(ctx->Array.TexCoord[clientUnit].Type);
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-         *params = (GLdouble) ctx->Array.TexCoord[texUnit].Stride;
+         *params = (GLdouble) ctx->Array.TexCoord[clientUnit].Stride;
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0.0;
@@ -3100,40 +3099,37 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.VertexArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.Vertex.BufferBinding;
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.NormalArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.Normal.BufferBinding;
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.ColorArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.Color.BufferBinding;
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.IndexArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.Index.BufferBinding;
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.TextureArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.TexCoord[clientUnit].BufferBinding;
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.EdgeFlagArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.EdgeFlag.BufferBinding;
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.SecondaryColorArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.SecondaryColor.BufferBinding;
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.FogCoordArrayBufferBinding;
+         *params = (GLdouble) ctx->Array.FogCoord.BufferBinding;
          break;
-      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
-         *params = (GLdouble) ctx->Array.WeightArrayBufferBinding;
-         break;
+      /*case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB: - not supported */
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
          *params = (GLdouble) ctx->Array.ElementArrayBufferBinding;
@@ -3222,7 +3218,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
-   GLuint texUnit = ctx->Texture.CurrentUnit;
+   const GLuint clientUnit = ctx->Array.ActiveTexture;
+   const GLuint texUnit = ctx->Texture.CurrentUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -4085,16 +4082,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = 0.0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         *params = (GLfloat) ctx->Array.TexCoord[texUnit].Enabled;
+         *params = (GLfloat) ctx->Array.TexCoord[clientUnit].Enabled;
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-         *params = (GLfloat) ctx->Array.TexCoord[texUnit].Size;
+         *params = (GLfloat) ctx->Array.TexCoord[clientUnit].Size;
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-         *params = ENUM_TO_FLOAT(ctx->Array.TexCoord[texUnit].Type);
+         *params = ENUM_TO_FLOAT(ctx->Array.TexCoord[clientUnit].Type);
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-         *params = (GLfloat) ctx->Array.TexCoord[texUnit].Stride;
+         *params = (GLfloat) ctx->Array.TexCoord[clientUnit].Stride;
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0.0;
@@ -4615,40 +4612,37 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.VertexArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.Vertex.BufferBinding;
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.NormalArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.Normal.BufferBinding;
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.ColorArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.Color.BufferBinding;
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.IndexArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.Index.BufferBinding;
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.TextureArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.TexCoord[clientUnit].BufferBinding;
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.EdgeFlagArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.EdgeFlag.BufferBinding;
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.SecondaryColorArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.SecondaryColor.BufferBinding;
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.FogCoordArrayBufferBinding;
+         *params = (GLfloat) ctx->Array.FogCoord.BufferBinding;
          break;
-      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
-         *params = (GLfloat) ctx->Array.WeightArrayBufferBinding;
-         break;
+      /*case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB: - not supported */
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
          *params = (GLfloat) ctx->Array.ElementArrayBufferBinding;
@@ -4737,7 +4731,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
-   GLuint texUnit = ctx->Texture.CurrentUnit;
+   const GLuint clientUnit = ctx->Array.ActiveTexture;
+   const GLuint texUnit = ctx->Texture.CurrentUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -5599,16 +5594,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = 0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         *params = (GLint) ctx->Array.TexCoord[texUnit].Enabled;
+         *params = (GLint) ctx->Array.TexCoord[clientUnit].Enabled;
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-         *params = ctx->Array.TexCoord[texUnit].Size;
+         *params = ctx->Array.TexCoord[clientUnit].Size;
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-         *params = ctx->Array.TexCoord[texUnit].Type;
+         *params = ctx->Array.TexCoord[clientUnit].Type;
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-         *params = ctx->Array.TexCoord[texUnit].Stride;
+         *params = ctx->Array.TexCoord[clientUnit].Stride;
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0;
@@ -6168,40 +6163,37 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.VertexArrayBufferBinding;
+         *params = (GLint) ctx->Array.Vertex.BufferBinding;
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.NormalArrayBufferBinding;
+         *params = (GLint) ctx->Array.Normal.BufferBinding;
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.ColorArrayBufferBinding;
+         *params = (GLint) ctx->Array.Color.BufferBinding;
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.IndexArrayBufferBinding;
+         *params = (GLint) ctx->Array.Index.BufferBinding;
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.TextureArrayBufferBinding;
+         *params = (GLint) ctx->Array.TexCoord[clientUnit].BufferBinding;
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.EdgeFlagArrayBufferBinding;
+         *params = (GLint) ctx->Array.EdgeFlag.BufferBinding;
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.SecondaryColorArrayBufferBinding;
+         *params = (GLint) ctx->Array.SecondaryColor.BufferBinding;
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.FogCoordArrayBufferBinding;
+         *params = (GLint) ctx->Array.FogCoord.BufferBinding;
          break;
-      case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
-         *params = (GLint) ctx->Array.WeightArrayBufferBinding;
-         break;
+      /*case GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB: - not supported */
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
          *params = (GLint) ctx->Array.ElementArrayBufferBinding;
@@ -6288,7 +6280,7 @@ void
 _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint texUnit = ctx->Texture.CurrentUnit;
+   const GLuint clientUnit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
@@ -6321,7 +6313,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          *params = ctx->Array.Index.Ptr;
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
-         *params = ctx->Array.TexCoord[texUnit].Ptr;
+         *params = ctx->Array.TexCoord[clientUnit].Ptr;
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
          *params = ctx->Array.EdgeFlag.Ptr;

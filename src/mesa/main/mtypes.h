@@ -1283,6 +1283,7 @@ struct gl_client_array {
    GLuint Flags;
    GLuint Enabled;		/**< one of the _NEW_ARRAY_ bits */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
+   GLuint BufferBinding;        /**< GL_ARB_vertex_buffer_object */
 };
 
 
@@ -1311,17 +1312,7 @@ struct gl_array_attrib {
 
    /* GL_ARB_vertex_buffer_object */
    GLuint ArrayBufferBinding;
-   GLuint VertexArrayBufferBinding;
-   GLuint NormalArrayBufferBinding;
-   GLuint ColorArrayBufferBinding;
-   GLuint IndexArrayBufferBinding;
-   GLuint TextureArrayBufferBinding;
-   GLuint EdgeFlagArrayBufferBinding;
-   GLuint SecondaryColorArrayBufferBinding;
-   GLuint FogCoordArrayBufferBinding;
-   GLuint WeightArrayBufferBinding;
    GLuint ElementArrayBufferBinding;
-   GLuint VertexAttribArrayBufferBinding[VERT_ATTRIB_MAX];
 };
 
 

@@ -256,6 +256,7 @@
 #define FEATURE_ARB_vertex_program 1
 #define FEATURE_ARB_fragment_program 1
 #define FEATURE_ARB_occlusion_query 1
+#define FEATURE_ARB_vertex_buffer_object 1
 #define FEATURE_MESA_program_debug 1
 #define FEATURE_NV_fence 1
 #define FEATURE_userclip 1
