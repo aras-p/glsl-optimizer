@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.8 2000/01/07 07:42:33 brianp Exp $ */
+/* $Id: dispatch.c,v 1.9 2000/01/13 00:31:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,7 @@
 #include "copypix.h"
 #include "cva.h"
 #include "depth.h"
+#include "dispatch.h"
 #include "dlist.h"
 #include "drawpix.h"
 #include "enable.h"
