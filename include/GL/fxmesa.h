@@ -1,8 +1,8 @@
-/* $Id: fxmesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: fxmesa.h,v 1.2 1999/11/24 18:44:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * Copyright (C) 1995-1999  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -18,23 +18,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-
-/*
- * $Log: fxmesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 3.2  1999/01/03 02:46:31  brianp
- * now using GLAPI and GLAPIENTRY keywords (Ted Jump)
- *
- * Revision 3.1  1998/04/01 03:00:28  brianp
- * updated for v0.24 of 3Dfx/Glide driver
- *
- * Revision 3.0  1998/02/20 05:04:45  brianp
- * initial rev
- *
  */
 
 
@@ -58,7 +41,7 @@ extern "C" {
 
 
 #define FXMESA_MAJOR_VERSION 3
-#define FXMESA_MINOR_VERSION 0
+#define FXMESA_MINOR_VERSION 3
 
 
 /*

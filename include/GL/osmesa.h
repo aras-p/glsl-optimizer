@@ -1,8 +1,8 @@
-/* $Id: osmesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: osmesa.h,v 1.2 1999/11/24 18:43:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -22,26 +22,6 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
-/*
- * $Log: osmesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 1.4  1999/02/14 03:39:09  brianp
- * new copyright
- *
- * Revision 1.3  1999/01/03 02:52:30  brianp
- * now using GLAPI and GLAPIENTRY keywords (Ted Jump)
- *
- * Revision 1.2  1998/07/26 01:33:51  brianp
- * added WINGDIAPI and APIENTRY keywords per Ted Jump
- *
- * Revision 1.1  1998/02/13 03:17:50  brianp
- * Initial revision
- *
  */
 
 
@@ -86,7 +66,7 @@ extern "C" {
 
 
 #define OSMESA_MAJOR_VERSION 3
-#define OSMESA_MINOR_VERSION 0
+#define OSMESA_MINOR_VERSION 3
 
 
 
