@@ -278,7 +278,7 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 				      bpp, src, width * bpp, dest);
 		}
 		src += tileInfo->width * bpp;
-		dest += 2048; /* tile size is always 2k */
+		dest += tileInfo->width * bpp * height;
 		if (dirtyMask == 1<<31) {
 		    dirtyMask = 1;
 		    dirtyPtr++;
