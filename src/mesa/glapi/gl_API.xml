@@ -5912,6 +5912,12 @@
     </function>
 </category>
 
+<category name="GL_ARB_texture_rectangle" number="38">
+    <enum name="TEXTURE_RECTANGLE_ARB"                    value="0x84F5"/>
+    <enum name="TEXTURE_BINDING_RECTANGLE_ARB"            value="0x84F6"/>
+    <enum name="PROXY_TEXTURE_RECTANGLE_ARB"              value="0x84F7"/>
+    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_ARB"           value="0x84F8"/>
+</category>
 
 <!-- Non-ARB extensions sorted by extension number. -->
 
@@ -8467,6 +8473,16 @@
 <!-- Extension number 218 is a GLX extension. -->
 <!-- Extension number 219 is not listed in the extension registry. -->
 
+<category name="GL_EXT_texture_env_dot3" number="220">
+    <enum name="DOT3_RGB_EXT"                             value="0x8740"/>
+    <enum name="DOT3_RGBA_EXT"                            value="0x8741"/>
+</category>
+
+<category name="GL_ATI_texture_mirror_once" number="221">
+    <enum name="MIRROR_CLAMP_ATI"                         value="0x8742"/>
+    <enum name="MIRROR_CLAMP_TO_EDGE_ATI"                 value="0x8743"/>
+</category>
+
 <category name="GL_NV_fence" number="222">
     <function name="DeleteFencesNV" offset="647">
         <param name="n" type="GLsizei"/>
@@ -8509,6 +8525,10 @@
         <param name="condition" type="GLenum"/>
         <glx ignore="true"/>
     </function>
+</category>
+
+<category name="GL_IBM_texture_mirrored_repeat" number="224">
+    <enum name="MIRRORED_REPEAT_IBM"                      value="0x8370"/>
 </category>
 
 <category name="GL_NV_evaluators" number="225">
@@ -8578,6 +8598,11 @@
     </function>
 </category>
 
+<category name="GL_NV_packed_depth_stencil" number="226">
+    <enum name="DEPTH_STENCIL_NV"                         value="0x84F9"/>
+    <enum name="UNSIGNED_INT_24_8_NV"                     value="0x84FA"/>
+</category>
+
 <category name="GL_NV_register_combiners2" number="227">
     <function name="CombinerStageParameterfvNV" offset="?">
         <param name="stage" type="GLenum"/>
@@ -8590,6 +8615,13 @@
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *"/>
     </function>
+</category>
+
+<category name="GL_NV_texture_rectangle" number="229">
+    <enum name="TEXTURE_RECTANGLE_NV"                     value="0x84F5"/>
+    <enum name="TEXTURE_BINDING_RECTANGLE_NV"             value="0x84F6"/>
+    <enum name="PROXY_TEXTURE_RECTANGLE_NV"               value="0x84F7"/>
+    <enum name="MAX_RECTANGLE_TEXTURE_SIZE_NV"            value="0x84F8"/>
 </category>
 
 <category name="GL_NV_vertex_program" number="233">
@@ -9248,6 +9280,12 @@
         <param name="zmax" type="GLclampd"/>
         <glx rop="4229" ignore="true"/>
     </function>
+</category>
+
+<category name="GL_EXT_texture_mirror_clamp" number="298">
+    <enum name="MIRROR_CLAMP_EXT"                         value="0x8742"/>
+    <enum name="MIRROR_CLAMP_TO_EDGE_EXT"                 value="0x8743"/>
+    <enum name="MIRROR_CLAMP_TO_BORDER_EXT"               value="0x8912"/>
 </category>
 
 <category name="GL_EXT_blend_equation_separate" number="299">
