@@ -295,14 +295,14 @@ void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
 	fprintf(stderr,"fxmesa: fxDDTexPalette(%d,%x)\n",tObj->Name,(GLuint)tObj->DriverData);
      }
 
-    if(tObj->PaletteFormat!=GL_RGBA) {
+    if(tObj->Palette.Format!=GL_RGBA) {
 #ifndef FX_SILENT
       fprintf(stderr,"fx Driver: unsupported palette format in texpalette()\n");
 #endif
       return;
     }
 
-    if(tObj->PaletteSize>256) {
+    if(tObj->Palette.Size>256) {
 #ifndef FX_SILENT
       fprintf(stderr,"fx Driver: unsupported palette size in texpalette()\n");
 #endif
@@ -314,11 +314,11 @@ void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
   
     ti=(tfxTexInfo *)tObj->DriverData;
 
-    for(i=0;i<tObj->PaletteSize;i++) {
-      r=tObj->Palette[i*4];
-      g=tObj->Palette[i*4+1];
-      b=tObj->Palette[i*4+2];
-      a=tObj->Palette[i*4+3];
+    for(i=0;i<tObj->Palette.Size;i++) {
+      r=tObj->Palette.Table[i*4];
+      g=tObj->Palette.Table[i*4+1];
+      b=tObj->Palette.Table[i*4+2];
+      a=tObj->Palette.Table[i*4+3];
       ti->palette.data[i]=(a<<24)|(r<<16)|(g<<8)|b;
     }
 
@@ -327,25 +327,25 @@ void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
      if (MESA_VERBOSE&VERBOSE_DRIVER) {
 	fprintf(stderr,"fxmesa: fxDDTexPalette(global)\n");
      }
-    if(ctx->Texture.PaletteFormat!=GL_RGBA) {
+    if(ctx->Texture.Palette.Format!=GL_RGBA) {
 #ifndef FX_SILENT
       fprintf(stderr,"fx Driver: unsupported palette format in texpalette()\n");
 #endif
       return;
     }
 
-    if(ctx->Texture.PaletteSize>256) {
+    if(ctx->Texture.Palette.Size>256) {
 #ifndef FX_SILENT
       fprintf(stderr,"fx Driver: unsupported palette size in texpalette()\n");
 #endif
       return;
     }
 
-    for(i=0;i<ctx->Texture.PaletteSize;i++) {
-      r=ctx->Texture.Palette[i*4];
-      g=ctx->Texture.Palette[i*4+1];
-      b=ctx->Texture.Palette[i*4+2];
-      a=ctx->Texture.Palette[i*4+3];
+    for(i=0;i<ctx->Texture.Palette.Size;i++) {
+      r=ctx->Texture.Palette.Table[i*4];
+      g=ctx->Texture.Palette.Table[i*4+1];
+      b=ctx->Texture.Palette.Table[i*4+2];
+      a=ctx->Texture.Palette.Table[i*4+3];
       fxMesa->glbPalette.data[i]=(a<<24)|(r<<16)|(g<<8)|b;
     }
 
