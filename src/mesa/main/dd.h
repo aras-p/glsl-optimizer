@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.17 2000/03/07 18:24:49 brianp Exp $ */
+/* $Id: dd.h,v 1.18 2000/03/20 14:37:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -591,6 +591,50 @@ struct dd_function_table {
                         const struct gl_texture_image *image );
    /*
     * Called from glTexSubImage() to define a sub-region of a texture.
+    */
+
+   GLboolean (*CopyTexImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                                GLenum internalFormat, GLint x, GLint y,
+                                GLsizei width, GLint border );
+   GLboolean (*CopyTexImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                                GLenum internalFormat, GLint x, GLint y,
+                                GLsizei width, GLsizei height, GLint border );
+   /* Called by glCopyTexImage1D and glCopyTexImage2D.
+    * Will not be called if any glPixelTransfer operations are enabled.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.
+    */
+
+   GLboolean (*CopyTexSubImage1D)( GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset,
+                                   GLint x, GLint y, GLsizei width );
+   GLboolean (*CopyTexSubImage2D)( GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset, GLint yoffset,
+                                   GLint x, GLint y,
+                                   GLsizei width, GLsizei height );
+   GLboolean (*CopyTexSubImage3D)( GLcontext *ctx, GLenum target, GLint level,
+                                   GLint xoffset, GLint yoffset, GLint zoffset,
+                                   GLint x, GLint y,
+                                   GLsizei width, GLsizei height );
+   /* Called by glCopyTexSubImage1/2/3D.
+    * Will not be called if any glPixelTransfer operations are enabled.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.
+    */
+
+   GLvoid *(*GetTexImage)( GLcontext *ctx, GLenum target, GLint level,
+                           GLenum *formatOut, GLenum *typeOut,
+                           GLboolean *freeImageOut );
+   /* Called by glGetTexImage or by core Mesa when a texture image
+    * is needed for software fallback rendering.
+    * Return the address of the texture image or NULL if failure.
+    * The image must be tightly packed (i.e. row stride = image width)
+    * Return the image's format and type in formatOut and typeOut.
+    * The format and type must be values which are accepted by glTexImage.
+    * Set the freeImageOut flag if the returned image should be deallocated
+    * with FREE() when finished.
+    * The size of the image can be deduced from the target and level.
+    * Core Mesa will perform any image format/type conversions that are needed.
     */
 
    void (*TexParameter)( GLcontext *ctx, GLenum target,
