@@ -834,6 +834,9 @@ void fxDDInitExtensions( GLcontext *ctx )
 
    _mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters"); 
+   _mesa_enable_extension(ctx, "GL_EXT_paletted_texture");
+   _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
+   _mesa_enable_extension(ctx, "GL_EXT_shared_texture_palette");
 
    if (fxMesa->haveTwoTMUs)
       _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");

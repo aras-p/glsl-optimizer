@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.49 2001/02/26 23:58:12 brianp Exp $ */
+/* $Id: extensions.c,v 1.50 2001/02/27 00:05:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ static struct {
    { OFF, "GL_EXT_point_parameters",          F(EXT_point_parameters) },
    { ON,  "GL_EXT_polygon_offset",            F(EXT_polygon_offset) },
    { ON,  "GL_EXT_rescale_normal",            F(EXT_rescale_normal) },
-   { ON,  "GL_EXT_secondary_color",           F(EXT_secondary_color) },
+   { OFF, "GL_EXT_secondary_color",           F(EXT_secondary_color) },
    { OFF, "GL_EXT_shared_texture_palette",    F(EXT_shared_texture_palette) },
    { OFF, "GL_EXT_stencil_wrap",              F(EXT_stencil_wrap) },
    { ON,  "GL_EXT_texture3D",                 F(EXT_texture3D) },
@@ -105,9 +105,9 @@ static struct {
    { OFF, "GL_SGIS_pixel_texture",            F(SGIS_pixel_texture) },
    { OFF, "GL_SGIS_texture_edge_clamp",       F(SGIS_texture_edge_clamp) },
    { OFF, "GL_SGIX_depth_texture",            F(SGIX_depth_texture) },
+   { OFF, "GL_SGIX_pixel_texture",            F(SGIX_pixel_texture) },
    { OFF, "GL_SGIX_shadow",                   F(SGIX_shadow) },
    { OFF, "GL_SGIX_shadow_ambient",           F(SGIX_shadow_ambient) },
-   { OFF, "GL_SGIX_pixel_texture",            F(SGIX_pixel_texture) },
    { OFF, "GL_3DFX_texture_compression_FXT1", F(_3DFX_texture_compression_FXT1) }
 };
 
@@ -136,6 +136,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_EXT_histogram",
       "GL_EXT_paletted_texture",
       "GL_EXT_point_parameters",
+      "GL_EXT_secondary_color",
       "GL_EXT_shared_texture_palette",
       "GL_EXT_stencil_wrap",
       "GL_EXT_texture_env_add",
@@ -145,16 +146,16 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_HP_occlusion_test",
       "GL_INGR_blend_func_separate",
       "GL_MESA_resize_buffers",
+      "GL_NV_blend_square",
       "GL_NV_texgen_reflection",
-      "GL_SGI_color_matrix",
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",
       "GL_SGIS_pixel_texture",
       "GL_SGIS_texture_edge_clamp",
       "GL_SGIX_depth_texture",
+      "GL_SGIX_pixel_texture",
       "GL_SGIX_shadow",
       "GL_SGIX_shadow_ambient",
-      "GL_SGIX_pixel_texture",
       NULL
    };
    GLuint i;
