@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.60 2000/12/27 23:01:25 keithw Exp $ */
+/* $Id: dlist.c,v 1.61 2001/01/13 18:28:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -869,11 +869,12 @@ static void save_BlendColor( GLfloat red, GLfloat green,
 }
 
 
-static void save_CallList( GLuint list )
+void _mesa_save_CallList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CALL_LIST, 1 );
    if (n) {
       n[1].ui = list;
@@ -884,7 +885,7 @@ static void save_CallList( GLuint list )
 }
 
 
-static void save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
+void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -3981,6 +3982,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
    if (ctx->Driver.BeginCallList)
       ctx->Driver.BeginCallList( ctx, list );
 
+/*     fprintf(stderr, "execute list %d\n", list); */
 /*     mesa_print_display_list( list );  */
 
    ctx->CallDepth++;
@@ -4819,15 +4821,13 @@ _mesa_EndList( void )
 void
 _mesa_CallList( GLuint list )
 {
+   GLboolean save_compile_flag;
    GET_CURRENT_CONTEXT(ctx);
+   FLUSH_CURRENT(ctx, 0);
    /* VERY IMPORTANT:  Save the CompileFlag status, turn it off, */
    /* execute the display list, and restore the CompileFlag. */
-   GLboolean save_compile_flag;
 
-   if (MESA_VERBOSE&VERBOSE_API) {
-      fprintf(stderr, "glCallList %u\n", list);
-      mesa_print_display_list( list );
-   }
+/*     mesa_print_display_list( list ); */
 
    save_compile_flag = ctx->CompileFlag;
    if (save_compile_flag) {
@@ -5536,8 +5536,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->AlphaFunc = save_AlphaFunc;
    table->Bitmap = save_Bitmap;
    table->BlendFunc = save_BlendFunc;
-   table->CallList = save_CallList;
-   table->CallLists = save_CallLists;
+   table->CallList = _mesa_save_CallList;
+   table->CallLists = _mesa_save_CallLists;
    table->Clear = save_Clear;
    table->ClearAccum = save_ClearAccum;
    table->ClearColor = save_ClearColor;

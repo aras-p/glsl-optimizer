@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.10 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: t_context.c,v 1.11 2001/01/13 18:28:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -111,6 +111,8 @@ _tnl_CreateContext( GLcontext *ctx )
     */
    _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
    _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
+   ctx->Save->CallList = _mesa_save_CallList;	/* fixme */
+   ctx->Save->CallLists = _mesa_save_CallLists;
    ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
    ctx->Save->EvalMesh2 = _mesa_save_EvalMesh2;
    ctx->Save->Begin = _tnl_save_Begin;
@@ -192,6 +194,8 @@ _tnl_wakeup_save_exec( GLcontext *ctx )
 
    _tnl_wakeup_exec( ctx );
    _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
+   ctx->Save->CallList = _mesa_save_CallList;	/* fixme */
+   ctx->Save->CallLists = _mesa_save_CallLists;
    ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
    ctx->Save->EvalMesh2 = _mesa_save_EvalMesh2;
    ctx->Save->Begin = _tnl_save_Begin;
