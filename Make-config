@@ -30,10 +30,9 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 # GLU_LIB_DEPS   list of libraries which the GLU library depends on
 # GLUT_LIB_DEPS  list of libraries which the GLUT library depends on
 # GLW_LIB_DEPS   list of libraries which the GLw (Xt/OpenGL) library depends on
+# OSMESA_LIB_DEPS list of libraries which OSMesa depends on (optional)
 # APP_LIB_DEPS   list of libraries which demo programs depend upon
-# ASM_SOURCES    optional list of assembly language files to assemble
-# MAKELIB        the script or command to make a library file
-#                XXX MAKELIB is obsolete; edit bin/mklib to support new systems
+# ASM_SOURCES    optional list of assembly language files to assemble for libGL
 # MKLIB_OPTIONS  extra options to pass to the mklib script (like -arch)
 
 
@@ -46,7 +45,6 @@ aix:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
 aix-sl:
@@ -58,7 +56,6 @@ aix-sl:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
-	"MAKELIB = $(TOP)/bin/mklib.aix" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
 aix-gcc:
@@ -108,7 +105,6 @@ cygnus:
 		-O2 -funroll-loops \
 		-fexpensive-optimizations -fomit-frame-pointer -ffast-math" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"WLIBS = $(TOP)/lib/wing32.a -lkernel32 -luser32 -lgdi32"
 
 cygnus-linux:
@@ -125,7 +121,6 @@ cygnus-linux:
 	"CFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
 		-O2 -funroll-loops \
 		-fexpensive-optimizations -fomit-frame-pointer -ffast-math" \
-	"MAKELIB = $(TOP)/bin/mklib.cygnus-linux" \
 	"WLIBS = $(TOP)/lib/wing32.a -lkernel32 -luser32 -lgdi32"
 
 darwin:
@@ -189,7 +184,6 @@ gcc-sl:
 	"CFLAGS = -fPIC -O3" \
 	"CXXFLAGS = -fPIC -O3" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.gcc-sl" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
 #special hidden target, to make a shared lib for ONLY Mesa "core"
@@ -198,8 +192,7 @@ gcc-mesa-sl:
 	"MESA_LIB = libMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3" \
-	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.gcc-sl" \
+	"GLUT_CFLAGS = -fexceptions"
 
 hpux9:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -210,7 +203,6 @@ hpux9:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = +O3 -Aa -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 hpux9-gcc:
@@ -225,7 +217,6 @@ hpux9-gcc:
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
 	"CXXFLAGS = -ansi -O3 -D_HPUX_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 hpux9-sl:
@@ -265,7 +256,6 @@ hpux10:
 	"CXX = aCC" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"CXXFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm -L/usr/lib -lCsup"
 
 hpux10-sl:
@@ -293,7 +283,6 @@ hpux10-gcc:
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DUSE_XSHM" \
 	"CXXFLAGS = -ansi -O3 -D_HPUX_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10-gcc-sl:
@@ -615,7 +604,6 @@ linux-alpha-static:
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DUSE_XSHM" \
 	"CXXFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -D_XOPEN_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lm"
 
 linux-ppc:
@@ -648,7 +636,6 @@ linux-ppc-static:
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
 	"CXXFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm"
 
 linux-sparc:
@@ -727,7 +714,6 @@ linux-osmesa16-static:
 	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -lm -lpthread" \
-	"MAKELIB_FLAGS = -static" \
 	"APP_LIB_DEPS = -lOSMesa16 -lGL"
 
 # 32-bit/channel Mesa using OSMesa driver
@@ -788,7 +774,6 @@ mklinux:
 	"CFLAGS = -pedantic -O2" \
 	"CXXFLAGS = -pedantic -O2" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lmoto -L/usr/X11/lib -lXmu -lX11 -lm"
 
 netbsd:
@@ -813,8 +798,11 @@ openbsd:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
+	"CXX = g++" \
 	"CFLAGS = -O2 -fPIC -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
+	"CXXFLAGS = -O2 -fPIC -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm" \
+	"OSMESA_LIB_DEPS = -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm"
@@ -826,8 +814,7 @@ openstep:
 	"GLU_LIB = libGLU.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = ${MYCC}" \
-	"CFLAGS = -traditional-cpp -DOPENSTEP -O4" \
-	"MAKELIB = $(TOP)/bin/mklib.openstep"
+	"CFLAGS = -traditional-cpp -DOPENSTEP -O4"
 
 openstep-win32:	
 	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
@@ -839,8 +826,7 @@ openstep-win32:
 	"CXX = g++" \
 	"CFLAGS = -DOPENSTEP -O4" \
 	"CXXFLAGS = -DOPENSTEP -O4" \
-	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.openstep"
+	"GLUT_CFLAGS = -fexceptions"
 
 osf1:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -866,7 +852,6 @@ qnx:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O" \
-	"MAKELIB = $(TOP)/bin/mklib.qnx" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lm"
 
 solaris-x86:
@@ -903,7 +888,6 @@ sunos4:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = acc" \
 	"CFLAGS = -O -DUSE_XSHM -DSUNOS4" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-sl:
@@ -915,7 +899,6 @@ sunos4-sl:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = acc" \
 	"CFLAGS = -Kpic -O -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4" \
-	"MAKELIB = ld -assert pure-text -o" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc:
@@ -930,7 +913,6 @@ sunos4-gcc:
 	"CFLAGS = -O3 -DUSE_XSHM -DSUNOS4 -I/usr/openwin/include" \
 	"CXXFLAGS = -O3 -DSUNOS4 -I/usr/openwin/include" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc-sl:
@@ -945,7 +927,6 @@ sunos4-gcc-sl:
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4" \
 	"CXXFLAGS = -fPIC -O3 -I/usr/openwin/include -DSUNOS4" \
 	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
-	"MAKELIB = $(TOP)/bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc-x11r6-sl:
@@ -960,7 +941,6 @@ sunos4-gcc-x11r6-sl:
 	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DUSE_XSHM -DSUNOS4" \
 	"CXXFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DSUNOS4" \
 	"GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG" \
-	"MAKELIB = $(TOP)/bin/mklib.sunos4" \
 	"APP_LIB_DEPS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5:
@@ -1047,7 +1027,6 @@ ultrix-gcc:
 	"CFLAGS = -pedantic -O2" \
 	"CXXFLAGS = -pedantic -O2" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lXmu -lX11 -lXi -lm"
 
 unixware:
@@ -1060,7 +1039,6 @@ unixware:
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -DUSE_XSHM" \
 	"CXXFLAGS = -O" \
-	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
 unixware-shared:
