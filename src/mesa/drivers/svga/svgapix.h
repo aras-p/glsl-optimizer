@@ -1,9 +1,9 @@
-/* $Id: svgapix.h,v 1.4 2000/11/14 17:51:15 brianp Exp $ */
+/* $Id: svgapix.h,v 1.5 2002/11/11 18:42:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * Copyright (C) 1995-2000  Brian Paul
+ * Version:  5.0
+ * Copyright (C) 1995-2002  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -34,6 +34,7 @@
 #include "GL/gl.h"
 #include "GL/svgamesa.h"
 #include "context.h"
+#include "colormac.h"
 #include "vga.h"
 
 struct svgamesa_context {

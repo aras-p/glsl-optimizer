@@ -1,9 +1,9 @@
-/* $Id: svgamesa32.c,v 1.11 2002/10/04 19:10:11 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.12 2002/11/11 18:42:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * Copyright (C) 1995-2000  Brian Paul
+ * Version:  5.0
+ * Copyright (C) 1995-2002  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -76,7 +76,7 @@ static unsigned long __svga_getpixel32(int x, int y)
     return intBuffer[offset];
 }
 
-void __clear_color32( GLcontext *ctx, const GLchan color[4] )
+void __clear_color32( GLcontext *ctx, const GLfloat color[4] )
 {
    GLubyte col[3];
    CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);

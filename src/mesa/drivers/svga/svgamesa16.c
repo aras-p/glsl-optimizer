@@ -1,9 +1,9 @@
-/* $Id: svgamesa16.c,v 1.10 2002/10/04 19:10:11 brianp Exp $ */
+/* $Id: svgamesa16.c,v 1.11 2002/11/11 18:42:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * Copyright (C) 1995-2000  Brian Paul
+ * Version:  5.0
+ * Copyright (C) 1995-2002  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -57,7 +57,7 @@ static unsigned long __svga_getpixel16(int x, int y)
     return shortBuffer[offset];
 }
 
-void __clear_color16( GLcontext *ctx, const GLchan color[4] )
+void __clear_color16( GLcontext *ctx, const GLfloat color[4] )
 {
    GLubyte col[3];
    CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);

@@ -1,9 +1,9 @@
-/* $Id: svgamesa24.h,v 1.5 2001/02/06 00:03:48 brianp Exp $ */
+/* $Id: svgamesa24.h,v 1.6 2002/11/11 18:42:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.2
- * Copyright (C) 1995-2000  Brian Paul
+ * Version:  5.0
+ * Copyright (C) 1995-2002  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -31,7 +31,7 @@
 #ifndef SVGA_MESA_24_H
 #define SVGA_MESA_24_H
 
-extern void __clear_color24( GLcontext *ctx, const GLchan color[4] );
+extern void __clear_color24( GLcontext *ctx, const GLfloat color[4] );
 extern void __clear24( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
 extern void __write_rgba_span24( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte rgba[][4], const GLubyte mask[] );
 extern void __write_mono_rgba_span24( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLchan color[4], const GLubyte mask[]);
