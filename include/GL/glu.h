@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.5 1999/09/14 03:23:08 gareth Exp $ */
+/* $Id: glu.h,v 1.6 1999/09/16 16:54:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.h,v $
+ * Revision 1.6  1999/09/16 16:54:22  brianp
+ * GLU_EXT_get_proc_address clean-up
+ *
  * Revision 1.5  1999/09/14 03:23:08  gareth
  * Fixed GLUtriangulatorObj again (spelling).
  *
@@ -493,17 +496,15 @@ GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
 
 
 /*
- * GLU_EXT_get_proc_address extensions
+ * GLU_EXT_get_proc_address extension
  */
-
-#ifdef GL_EXT_get_proc_address
-/* This extension requires GL_EXT_get_proc_address */
-
-GLUAPI GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName );
-
+/*
+ * WARNING: this extension is not finalized yet!  Do not release code
+ * which uses this extension yet!  It may change!
+ */
 #define GLU_EXT_get_proc_address 1
+GLUAPI void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))();
 
-#endif /* GL_EXT_get_proc_address */
 
 
 
