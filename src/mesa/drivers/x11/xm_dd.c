@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.12 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.13 2001/01/29 20:56:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,7 +739,7 @@ clear_nbit_ximage( GLcontext *ctx, GLboolean all,
 
 
 
-static GLbitfield
+static void
 clear_buffers( GLcontext *ctx, GLbitfield mask,
                GLboolean all, GLint x, GLint y, GLint width, GLint height )
 {
@@ -747,21 +747,19 @@ clear_buffers( GLcontext *ctx, GLbitfield mask,
    const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
 
    /* we can't handle color or index masking */
-   if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
-      if (*colorMask != 0xffffffff || ctx->Color.IndexMask != 0xffffffff)
-         return mask;
+   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
+      if (mask & DD_FRONT_LEFT_BIT) {
+	 ASSERT(xmesa->xm_buffer->front_clear_func);
+	 (*xmesa->xm_buffer->front_clear_func)( ctx, all, x, y, width, height );
+	 mask &= ~DD_FRONT_LEFT_BIT;
+      }
+      if (mask & DD_BACK_LEFT_BIT) {
+	 ASSERT(xmesa->xm_buffer->back_clear_func);
+	 (*xmesa->xm_buffer->back_clear_func)( ctx, all, x, y, width, height );
+	 mask &= ~DD_BACK_LEFT_BIT;
+      }
    }
 
-   if (mask & DD_FRONT_LEFT_BIT) {
-      ASSERT(xmesa->xm_buffer->front_clear_func);
-      (*xmesa->xm_buffer->front_clear_func)( ctx, all, x, y, width, height );
-      mask &= ~DD_FRONT_LEFT_BIT;
-   }
-   if (mask & DD_BACK_LEFT_BIT) {
-      ASSERT(xmesa->xm_buffer->back_clear_func);
-      (*xmesa->xm_buffer->back_clear_func)( ctx, all, x, y, width, height );
-      mask &= ~DD_BACK_LEFT_BIT;
-   }
    if (mask)
       _swrast_Clear( ctx, mask, all, x, y, width, height );
 }

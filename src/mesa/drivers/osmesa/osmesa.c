@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.42 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: osmesa.c,v 1.43 2001/01/29 20:56:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -644,164 +644,163 @@ static void set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode 
 }
 
 
-static GLbitfield clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-                         GLint x, GLint y, GLint width, GLint height )
+static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
+		   GLint x, GLint y, GLint width, GLint height )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
 
-   /* we can't handle color or index masking */
-   if (*colorMask != 0xffffffff || ctx->Color.IndexMask != 0xffffffff)
-      return mask;
-
    /* sanity check - we only have a front-left buffer */
    ASSERT((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_LEFT_BIT | DD_BACK_RIGHT_BIT)) == 0);
-
-   if (mask & DD_FRONT_LEFT_BIT) {
-      if (osmesa->format == OSMESA_COLOR_INDEX) {
-         if (all) {
-            /* Clear whole CI buffer */
+   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
+      if (mask & DD_FRONT_LEFT_BIT) {
+	 if (osmesa->format == OSMESA_COLOR_INDEX) {
+	    if (all) {
+	       /* Clear whole CI buffer */
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-            MEMSET(osmesa->buffer, ctx->Color.ClearIndex,
-                   osmesa->rowlength * osmesa->height);
+	       MEMSET(osmesa->buffer, ctx->Color.ClearIndex,
+		      osmesa->rowlength * osmesa->height);
 #else
-            const GLint n = osmesa->rowlength * osmesa->height;
-            GLchan *buffer = (GLchan *) osmesa->buffer;
-            GLint i;
-            for (i = 0; i < n; i ++) {
-               buffer[i] = ctx->Color.ClearIndex;
-            }
+	       const GLint n = osmesa->rowlength * osmesa->height;
+	       GLchan *buffer = (GLchan *) osmesa->buffer;
+	       GLint i;
+	       for (i = 0; i < n; i ++) {
+		  buffer[i] = ctx->Color.ClearIndex;
+	       }
 #endif
-         }
-         else {
-            /* Clear part of CI buffer */
-            const GLchan clearIndex = (GLchan) ctx->Color.ClearIndex;
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLchan *ptr1 = PIXELADDR1(x, (y + i));
-               for (j = 0; j < width; j++) {
-                  *ptr1++ = clearIndex;
-               }
-            }
-         }
-      }
-      else if (osmesa->format == OSMESA_RGB) {
-         const GLchan r = ctx->Color.ClearColor[0];
-         const GLchan g = ctx->Color.ClearColor[1];
-         const GLchan b = ctx->Color.ClearColor[2];
-         if (all) {
-            /* Clear whole RGB buffer */
-            GLuint n = osmesa->rowlength * osmesa->height;
-            GLchan *ptr3 = (GLchan *) osmesa->buffer;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               PACK_RGB(ptr3, r, g, b);
-               ptr3 += 3;
-            }
-         }
-         else {
-            /* Clear part of RGB buffer */
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLchan *ptr3 = PIXELADDR3(x, (y + i));
-               for (j = 0; j < width; j++) {
-                  PACK_RGB(ptr3, r, g, b);
-                  ptr3 += 3;
-               }
-            }
-         }
-      }
-      else if (osmesa->format == OSMESA_BGR) {
-         const GLchan r = ctx->Color.ClearColor[0];
-         const GLchan g = ctx->Color.ClearColor[1];
-         const GLchan b = ctx->Color.ClearColor[2];
-         if (all) {
-            /* Clear whole RGB buffer */
-            const GLint n = osmesa->rowlength * osmesa->height;
-            GLchan *ptr3 = (GLchan *) osmesa->buffer;
-            GLint i;
-            for (i = 0; i < n; i++) {
-               PACK_BGR(ptr3, r, g, b);
-               ptr3 += 3;
-            }
-         }
-         else {
-            /* Clear part of RGB buffer */
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLchan *ptr3 = PIXELADDR3(x, (y + i));
-               for (j = 0; j < width; j++) {
-                  PACK_BGR(ptr3, r, g, b);
-                  ptr3 += 3;
-               }
-            }
-         }
-      }
-      else {
+	    }
+	    else {
+	       /* Clear part of CI buffer */
+	       const GLchan clearIndex = (GLchan) ctx->Color.ClearIndex;
+	       GLint i, j;
+	       for (i = 0; i < height; i++) {
+		  GLchan *ptr1 = PIXELADDR1(x, (y + i));
+		  for (j = 0; j < width; j++) {
+		     *ptr1++ = clearIndex;
+		  }
+	       }
+	    }
+	 }
+	 else if (osmesa->format == OSMESA_RGB) {
+	    const GLchan r = ctx->Color.ClearColor[0];
+	    const GLchan g = ctx->Color.ClearColor[1];
+	    const GLchan b = ctx->Color.ClearColor[2];
+	    if (all) {
+	       /* Clear whole RGB buffer */
+	       GLuint n = osmesa->rowlength * osmesa->height;
+	       GLchan *ptr3 = (GLchan *) osmesa->buffer;
+	       GLuint i;
+	       for (i = 0; i < n; i++) {
+		  PACK_RGB(ptr3, r, g, b);
+		  ptr3 += 3;
+	       }
+	    }
+	    else {
+	       /* Clear part of RGB buffer */
+	       GLint i, j;
+	       for (i = 0; i < height; i++) {
+		  GLchan *ptr3 = PIXELADDR3(x, (y + i));
+		  for (j = 0; j < width; j++) {
+		     PACK_RGB(ptr3, r, g, b);
+		     ptr3 += 3;
+		  }
+	       }
+	    }
+	 }
+	 else if (osmesa->format == OSMESA_BGR) {
+	    const GLchan r = ctx->Color.ClearColor[0];
+	    const GLchan g = ctx->Color.ClearColor[1];
+	    const GLchan b = ctx->Color.ClearColor[2];
+	    if (all) {
+	       /* Clear whole RGB buffer */
+	       const GLint n = osmesa->rowlength * osmesa->height;
+	       GLchan *ptr3 = (GLchan *) osmesa->buffer;
+	       GLint i;
+	       for (i = 0; i < n; i++) {
+		  PACK_BGR(ptr3, r, g, b);
+		  ptr3 += 3;
+	       }
+	    }
+	    else {
+	       /* Clear part of RGB buffer */
+	       GLint i, j;
+	       for (i = 0; i < height; i++) {
+		  GLchan *ptr3 = PIXELADDR3(x, (y + i));
+		  for (j = 0; j < width; j++) {
+		     PACK_BGR(ptr3, r, g, b);
+		     ptr3 += 3;
+		  }
+	       }
+	    }
+	 }
+	 else {
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-         /* 4-byte pixel value */
-         GLuint clearPixel;
-         GLchan *clr = (GLchan *) &clearPixel;
-         clr[osmesa->rInd] = ctx->Color.ClearColor[0];
-         clr[osmesa->gInd] = ctx->Color.ClearColor[1];
-         clr[osmesa->bInd] = ctx->Color.ClearColor[2];
-         clr[osmesa->aInd] = ctx->Color.ClearColor[3];
-         if (all) {
-            /* Clear whole RGBA buffer */
-            const GLuint n = osmesa->rowlength * osmesa->height;
-            GLuint *ptr4 = (GLuint *) osmesa->buffer;
-            GLuint i;
-            if (clearPixel) {
-               for (i = 0; i < n; i++) {
-                  *ptr4++ = clearPixel;
-               }
-            }
-            else {
-               BZERO(ptr4, n * sizeof(GLuint));
-            }
-         }
-         else {
-            /* Clear part of RGBA buffer */
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLuint *ptr4 = (GLuint *) PIXELADDR4(x, (y + i));
-               for (j = 0; j < width; j++) {
-                  *ptr4++ = clearPixel;
-               }
-            }
-         }
+	    /* 4-byte pixel value */
+	    GLuint clearPixel;
+	    GLchan *clr = (GLchan *) &clearPixel;
+	    clr[osmesa->rInd] = ctx->Color.ClearColor[0];
+	    clr[osmesa->gInd] = ctx->Color.ClearColor[1];
+	    clr[osmesa->bInd] = ctx->Color.ClearColor[2];
+	    clr[osmesa->aInd] = ctx->Color.ClearColor[3];
+	    if (all) {
+	       /* Clear whole RGBA buffer */
+	       const GLuint n = osmesa->rowlength * osmesa->height;
+	       GLuint *ptr4 = (GLuint *) osmesa->buffer;
+	       GLuint i;
+	       if (clearPixel) {
+		  for (i = 0; i < n; i++) {
+		     *ptr4++ = clearPixel;
+		  }
+	       }
+	       else {
+		  BZERO(ptr4, n * sizeof(GLuint));
+	       }
+	    }
+	    else {
+	       /* Clear part of RGBA buffer */
+	       GLint i, j;
+	       for (i = 0; i < height; i++) {
+		  GLuint *ptr4 = (GLuint *) PIXELADDR4(x, (y + i));
+		  for (j = 0; j < width; j++) {
+		     *ptr4++ = clearPixel;
+		  }
+	       }
+	    }
 #else
-         const GLchan r = ctx->Color.ClearColor[0];
-         const GLchan g = ctx->Color.ClearColor[1];
-         const GLchan b = ctx->Color.ClearColor[2];
-         const GLchan a = ctx->Color.ClearColor[3];
-         if (all) {
-            /* Clear whole RGBA buffer */
-            const GLuint n = osmesa->rowlength * osmesa->height;
-            GLchan *p = (GLchan *) osmesa->buffer;
-            GLuint i;
-            for (i = 0; i < n; i++) {
-               PACK_RGBA(p, r, g, b, a);
-               p += 4;
-            }
-         }
-         else {
-            /* Clear part of RGBA buffer */
-            GLint i, j;
-            for (i = 0; i < height; i++) {
-               GLchan *p = PIXELADDR4(x, (y + i));
-               for (j = 0; j < width; j++) {
-                  PACK_RGBA(p, r, g, b, a);
-                  p += 4;
-               }
-            }
-         }
+	    const GLchan r = ctx->Color.ClearColor[0];
+	    const GLchan g = ctx->Color.ClearColor[1];
+	    const GLchan b = ctx->Color.ClearColor[2];
+	    const GLchan a = ctx->Color.ClearColor[3];
+	    if (all) {
+	       /* Clear whole RGBA buffer */
+	       const GLuint n = osmesa->rowlength * osmesa->height;
+	       GLchan *p = (GLchan *) osmesa->buffer;
+	       GLuint i;
+	       for (i = 0; i < n; i++) {
+		  PACK_RGBA(p, r, g, b, a);
+		  p += 4;
+	       }
+	    }
+	    else {
+	       /* Clear part of RGBA buffer */
+	       GLint i, j;
+	       for (i = 0; i < height; i++) {
+		  GLchan *p = PIXELADDR4(x, (y + i));
+		  for (j = 0; j < width; j++) {
+		     PACK_RGBA(p, r, g, b, a);
+		     p += 4;
+		  }
+	       }
+	    }
 
 #endif
+	 }
+	 mask &= ~DD_FRONT_LEFT_BIT;
       }
    }
-   /* have Mesa clear all other buffers */
-   return mask & (~DD_FRONT_LEFT_BIT);
+   
+   if (mask)
+      _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 
