@@ -50,6 +50,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 
 
+#define RADEON_TXFORMAT_A8        RADEON_TXFORMAT_I8
+#define RADEON_TXFORMAT_L8        RADEON_TXFORMAT_I8
 #define RADEON_TXFORMAT_AL88      RADEON_TXFORMAT_AI88
 #define RADEON_TXFORMAT_YCBCR     RADEON_TXFORMAT_YVYU422
 #define RADEON_TXFORMAT_YCBCR_REV RADEON_TXFORMAT_VYUY422
@@ -62,7 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    [ MESA_FORMAT_ ## f ] = { RADEON_TXFORMAT_ ## f, RADEON_YUV_TO_RGB }
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
-#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_YCBCR_REV) \
+#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
 			     && (tx_table[f].format != 0xffffffff) )
 
 static const struct {
@@ -77,9 +79,9 @@ tx_table[] =
    _ALPHA(ARGB4444),
    _ALPHA(ARGB1555),
    _ALPHA(AL88),
-   _INVALID(A8),
-   _INVALID(L8),
-   _COLOR(I8),
+   _ALPHA(A8),
+   _COLOR(L8),
+   _ALPHA(I8),
    _INVALID(CI8),
    _YUV(YCBCR),
    _YUV(YCBCR_REV),
@@ -556,7 +558,6 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	  * 1.3) does.
 	  */
 	 RGBshift = 0;
-	 Ashift = 0;
 	 /* FALLTHROUGH */
 
       case GL_DOT3_RGB:
@@ -569,7 +570,11 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 }
 
 	 RGBshift += 2;
-	 Ashift = RGBshift;
+	 if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT)
+	    || (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) ) {
+            /* is it necessary to set this or will it be ignored anyway? */
+	    Ashift = RGBshift;
+	 }
 
 	 color_combine = (RADEON_COLOR_ARG_C_ZERO |
 			  RADEON_BLEND_CTL_DOT3 |

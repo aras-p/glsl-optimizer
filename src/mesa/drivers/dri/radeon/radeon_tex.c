@@ -345,7 +345,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_al88;
+      return &_mesa_texformat_a8;
 
    case 1:
    case GL_LUMINANCE:
@@ -354,7 +354,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_al88;
+      return &_mesa_texformat_l8;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
