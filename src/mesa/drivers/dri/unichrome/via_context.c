@@ -986,15 +986,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
 #endif
     drmGetLock(vmesa->driFd, vmesa->hHWContext, flags);
 
-    do {
-	    DRM_UNLOCK(psp->fd, &psp->pSAREA->lock,
-		   pdp->driContextPriv->hHWContext);
-	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-            __driUtilUpdateDrawableInfo(dPriv);
-	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-	    DRM_LIGHT_LOCK(psp->fd, &psp->pSAREA->lock,
-	    	       pdp->driContextPriv->hHWContext);
-    } while (0);
+    DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
 
     if (sarea->ctxOwner != me) {
         vmesa->uploadCliprects = GL_TRUE;
