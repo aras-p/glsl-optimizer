@@ -89,13 +89,10 @@ GetAllFBConfigs(Display *dpy, int screen, int *nConfigs)
 #endif
 #if defined(GLX_SGIX_fbconfig) && defined(GLX_SGIX_pbuffer)
    if (pbSupport == 2) {
-      /* this *seems* to work, but may not be perfect */
-      static int fbAttribs[] = {
-         GLX_RENDER_TYPE, 0,
-         GLX_DRAWABLE_TYPE, 0,
-         None
-      };
-      return glXChooseFBConfigSGIX(dpy, screen, fbAttribs, nConfigs);
+      /* The GLX_SGIX_fbconfig extensions says to pass NULL to get list
+       * of all available configurations.
+       */
+      return glXChooseFBConfigSGIX(dpy, screen, NULL, nConfigs);
    }
 #endif
    return NULL;
