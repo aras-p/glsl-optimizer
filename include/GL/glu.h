@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.16 1999/11/11 03:21:43 kendallb Exp $ */
+/* $Id: glu.h,v 1.17 1999/11/15 14:26:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,8 +22,8 @@
  */
 
 
-#ifndef GLU_H
-#define GLU_H
+#ifndef __glu_h__
+#define __glu_h__
 
 
 #if defined(USE_MGL_NAMESPACE)
@@ -483,4 +483,4 @@ GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
 #endif
 
 
-#endif
+#endif /* __glu_h__ */

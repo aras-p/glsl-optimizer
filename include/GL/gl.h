@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.21 1999/11/12 02:08:59 brianp Exp $ */
+/* $Id: gl.h,v 1.22 1999/11/15 14:26:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,10 +25,8 @@
  */
 
 
-
-
-#ifndef GL_H
-#define GL_H
+#ifndef __gl_h_
+#define __gl_h_
 
 #if defined(USE_MGL_NAMESPACE)
 #include "gl_mangle.h"
@@ -2338,4 +2336,4 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 }
 #endif
 
-#endif
+#endif /* __gl_h_ */
