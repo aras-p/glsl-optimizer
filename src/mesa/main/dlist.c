@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.23 2000/01/07 07:42:34 brianp Exp $ */
+/* $Id: dlist.c,v 1.24 2000/01/13 00:24:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1389,7 +1389,7 @@ static void save_Fogiv(GLenum pname, const GLint *params )
 }
 
 
-void save_Fogi(GLenum pname, GLint param )
+static void save_Fogi(GLenum pname, GLint param )
 {
    save_Fogiv(pname, &param);
 }
@@ -2302,117 +2302,117 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
    }
 }
 
-void save_RasterPos2d(GLdouble x, GLdouble y)
+static void save_RasterPos2d(GLdouble x, GLdouble y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-void save_RasterPos2f(GLfloat x, GLfloat y)
+static void save_RasterPos2f(GLfloat x, GLfloat y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-void save_RasterPos2i(GLint x, GLint y)
+static void save_RasterPos2i(GLint x, GLint y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-void save_RasterPos2s(GLshort x, GLshort y)
+static void save_RasterPos2s(GLshort x, GLshort y)
 {
    save_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
-void save_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
+static void save_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-void save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
+static void save_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-void save_RasterPos3i(GLint x, GLint y, GLint z)
+static void save_RasterPos3i(GLint x, GLint y, GLint z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-void save_RasterPos3s(GLshort x, GLshort y, GLshort z)
+static void save_RasterPos3s(GLshort x, GLshort y, GLshort z)
 {
    save_RasterPos4f(x, y, z, 1.0F);
 }
 
-void save_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+static void save_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
    save_RasterPos4f(x, y, z, w);
 }
 
-void save_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
+static void save_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
    save_RasterPos4f(x, y, z, w);
 }
 
-void save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
+static void save_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
    save_RasterPos4f(x, y, z, w);
 }
 
-void save_RasterPos2dv(const GLdouble *v)
+static void save_RasterPos2dv(const GLdouble *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-void save_RasterPos2fv(const GLfloat *v)
+static void save_RasterPos2fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-void save_RasterPos2iv(const GLint *v)
+static void save_RasterPos2iv(const GLint *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-void save_RasterPos2sv(const GLshort *v)
+static void save_RasterPos2sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
-void save_RasterPos3dv(const GLdouble *v)
+static void save_RasterPos3dv(const GLdouble *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-void save_RasterPos3fv(const GLfloat *v)
+static void save_RasterPos3fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-void save_RasterPos3iv(const GLint *v)
+static void save_RasterPos3iv(const GLint *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-void save_RasterPos3sv(const GLshort *v)
+static void save_RasterPos3sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
-void save_RasterPos4dv(const GLdouble *v)
+static void save_RasterPos4dv(const GLdouble *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
-void save_RasterPos4fv(const GLfloat *v)
+static void save_RasterPos4fv(const GLfloat *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
-void save_RasterPos4iv(const GLint *v)
+static void save_RasterPos4iv(const GLint *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
-void save_RasterPos4sv(const GLshort *v)
+static void save_RasterPos4sv(const GLshort *v)
 {
    save_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
