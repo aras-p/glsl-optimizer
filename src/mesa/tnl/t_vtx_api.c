@@ -329,6 +329,15 @@ static void _tnl_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
       for (i = sz ; i <= tnl->vtx.attrsz[attr] ; i++)
 	 tnl->vtx.attrptr[attr][i-1] = id[i-1];
    }
+
+   /* Does setting NeedFlush belong here?  Necessitates resetting
+    * vtxfmt on each flush (otherwise flags won't get reset
+    * afterwards).
+    */
+   if (attr == 0) 
+      ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+   else 
+      ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -393,14 +402,6 @@ static attrfv_func do_choose( GLuint attr, GLuint sz )
    
       _tnl_fixup_vertex( ctx, attr, sz );
  
-      /* Does setting NeedFlush belong here?  Necessitates resetting
-       * vtxfmt on each flush (otherwise flags won't get reset
-       * afterwards).
-       */
-      if (attr == 0) 
-	 ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-      else 
-	 ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
    }
 
 
@@ -517,7 +518,6 @@ do {							\
       if (N>1) dest[1] = (params)[1];			\
       if (N>2) dest[2] = (params)[2];			\
       if (N>3) dest[3] = (params)[3];			\
-      ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;	\
    }							\
 } while (0)
 
@@ -631,7 +631,7 @@ static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
 
       for (i = 0 ; i <= _TNL_ATTRIB_INDEX ; i++) {
 	 if (tnl->vtx.eval.map1[i].map) 
-	    if (tnl->vtx.attrsz[i] < tnl->vtx.eval.map1[i].sz)
+	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map1[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map1[i].sz );
       }
    }
@@ -659,12 +659,12 @@ static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 
       for (i = 0 ; i <= _TNL_ATTRIB_INDEX ; i++) {
 	 if (tnl->vtx.eval.map2[i].map) 
-	    if (tnl->vtx.attrsz[i] < tnl->vtx.eval.map2[i].sz)
+	    if (tnl->vtx.attrsz[i] != tnl->vtx.eval.map2[i].sz)
 	       _tnl_fixup_vertex( ctx, i, tnl->vtx.eval.map2[i].sz );
       }
 
       if (ctx->Eval.AutoNormal) 
-	 if (tnl->vtx.attrsz[_TNL_ATTRIB_NORMAL] < 3)
+	 if (tnl->vtx.attrsz[_TNL_ATTRIB_NORMAL] != 3)
 	    _tnl_fixup_vertex( ctx, _TNL_ATTRIB_NORMAL, 3 );
    }
 
