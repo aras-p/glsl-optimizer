@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.56 2001/10/17 20:44:26 brianp Exp $
+# $Id: Makefile.X11,v 1.57 2001/10/22 22:45:18 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  4.0
+# Version:  4.1
 # 
 # Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 # 

@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.73 2001/10/22 16:04:46 brianp Exp $
+$Id: VERSIONS,v 1.74 2001/10/22 22:45:18 brianp Exp $
 
 
 Mesa Version History
@@ -897,3 +897,10 @@ Mesa Version History
 	- fixed a dangling pointer problem in the XMesa code (Chris Burghart)
 	- lighting didn't always produce the correct alpha value
 	- fixed 3DNow! code to not read past end of arrays (Andrew Lewycky)
+
+
+4.1  Month, ??, 2002
+    New:
+	- 
+    Bug fixes:
+	- 

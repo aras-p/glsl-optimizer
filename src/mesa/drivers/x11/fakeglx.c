@@ -1,8 +1,8 @@
-/* $Id: fakeglx.c,v 1.58 2001/09/23 16:11:27 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.59 2001/10/22 22:45:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -66,7 +66,7 @@
 #define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa 4.0"
+#define MESA_GLX_VERSION "Mesa 4.1"
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"
