@@ -1,4 +1,4 @@
-/* $Id: pixel.h,v 1.8 2000/11/28 00:07:51 brianp Exp $ */
+/* $Id: pixel.h,v 1.9 2000/12/13 00:46:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,6 +129,11 @@ _mesa_shift_and_offset_stencil(const GLcontext *ctx, GLuint n,
 
 extern void
 _mesa_map_stencil(const GLcontext *ctx, GLuint n, GLstencil index[]);
+
+
+extern void
+_mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
+                         CONST GLchan rgba[][4], GLfloat rgbaf[][4]);
 
 
 #endif

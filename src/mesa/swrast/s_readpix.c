@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.4 2000/11/28 00:04:39 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.5 2000/12/13 00:46:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -716,9 +716,27 @@ static void read_rgba_pixels( GLcontext *ctx,
          }
          dst = _mesa_image_address(packing, pixels, width, height,
                                    format, type, 0, row, 0);
-         _mesa_pack_rgba_span(ctx, readWidth, (const GLchan (*)[4]) rgba,
-                              format, type, dst, packing,
-                              ctx->_ImageTransferState);
+         if (ctx->Visual.RedBits < CHAN_BITS ||
+             ctx->Visual.GreenBits < CHAN_BITS ||
+             ctx->Visual.BlueBits < CHAN_BITS) {
+            /* Requantize the color values into floating point and go from
+             * there.  This fixes conformance failures with 16-bit color
+             * buffers, for example.
+             */
+            GLfloat rgbaf[MAX_WIDTH][4];
+            _mesa_chan_to_float_span(ctx, readWidth,
+                                     (CONST GLchan (*)[4]) rgba, rgbaf);
+            _mesa_pack_float_rgba_span(ctx, readWidth,
+                                       (CONST GLfloat (*)[4]) rgbaf,
+                                       format, type, dst, packing,
+                                       ctx->_ImageTransferState);
+         }
+         else {
+            /* GLubytes are fine */
+            _mesa_pack_rgba_span(ctx, readWidth, (CONST GLchan (*)[4]) rgba,
+                                 format, type, dst, packing,
+                                 ctx->_ImageTransferState);
+         }
       }
    }
 

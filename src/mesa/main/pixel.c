@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.20 2000/11/28 00:07:51 brianp Exp $ */
+/* $Id: pixel.c,v 1.21 2000/12/13 00:46:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1107,5 +1107,50 @@ _mesa_map_stencil( const GLcontext *ctx, GLuint n, GLstencil stencil[] )
    GLuint i;
    for (i=0;i<n;i++) {
       stencil[i] = ctx->Pixel.MapStoS[ stencil[i] & mask ];
+   }
+}
+
+
+
+/*
+ * This function converts an array of GLchan colors to GLfloat colors.
+ * Most importantly, it undoes the non-uniform quantization of pixel
+ * values introduced when we convert shallow (< 8 bit) pixel values
+ * to GLubytes in the ctx->Driver.ReadRGBASpan() functions.
+ * This fixes a number of OpenGL conformance failures when running on
+ * 16bpp displays, for example.
+ */
+void
+_mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
+                         CONST GLchan rgba[][4], GLfloat rgbaf[][4])
+{
+   const GLuint rShift = CHAN_BITS - ctx->Visual.RedBits;
+   const GLuint gShift = CHAN_BITS - ctx->Visual.GreenBits;
+   const GLuint bShift = CHAN_BITS - ctx->Visual.BlueBits;
+   GLuint aShift;
+   const GLfloat rScale = 1.0 / (GLfloat) ((1 << ctx->Visual.RedBits  ) - 1);
+   const GLfloat gScale = 1.0 / (GLfloat) ((1 << ctx->Visual.GreenBits) - 1);
+   const GLfloat bScale = 1.0 / (GLfloat) ((1 << ctx->Visual.BlueBits ) - 1);
+   GLfloat aScale;
+   GLuint i;
+
+   if (ctx->Visual.AlphaBits > 0) {
+      aShift = CHAN_BITS - ctx->Visual.AlphaBits;
+      aScale = 1.0 / (GLfloat) ((1 << ctx->Visual.AlphaBits) - 1);
+   }
+   else {
+      aShift = 0;
+      aScale = 1.0F / CHAN_MAXF;
+   }
+
+   for (i = 0; i < n; i++) {
+      const GLint r = rgba[i][RCOMP] >> rShift;
+      const GLint g = rgba[i][GCOMP] >> gShift;
+      const GLint b = rgba[i][BCOMP] >> bShift;
+      const GLint a = rgba[i][ACOMP] >> aShift;
+      rgbaf[i][RCOMP] = (GLfloat) r * rScale;
+      rgbaf[i][GCOMP] = (GLfloat) g * gScale;
+      rgbaf[i][BCOMP] = (GLfloat) b * bScale;
+      rgbaf[i][ACOMP] = (GLfloat) a * aScale;
    }
 }
