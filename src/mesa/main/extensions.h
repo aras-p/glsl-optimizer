@@ -1,4 +1,4 @@
-/* $Id: extensions.h,v 1.2 1999/09/11 11:31:34 brianp Exp $ */
+/* $Id: extensions.h,v 1.3 1999/09/11 11:48:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,7 @@ extern void gl_extensions_dtr( struct gl_context *ctx );
 extern void gl_extensions_ctr( struct gl_context *ctx );
 extern const char *gl_extensions_get_string( struct gl_context *ctx );
 
-extern void *gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName );
+extern GLfunction gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName );
 
 #endif
 
