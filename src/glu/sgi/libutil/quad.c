@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2001/09/20 21:47:52 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.2 2001/09/20 21:47:52 kschultz Exp $
 */
 
 #include "gluos.h"
@@ -89,7 +89,7 @@ static void gluQuadricError(GLUquadric *qobj, GLenum which)
 }
 
 void GLAPIENTRY
-gluQuadricCallback(GLUquadric *qobj, GLenum which, void (GLAPIENTRY *fn)())
+gluQuadricCallback(GLUquadric *qobj, GLenum which, _GLUfuncptr fn)
 {
     switch (which) {
       case GLU_ERROR:
