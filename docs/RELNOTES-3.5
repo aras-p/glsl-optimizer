@@ -144,6 +144,15 @@ All the drivers have been updated, but not all of them have been
 tested since I can't test some platforms (DOS, Windows, Allegro, etc).
 
 
+X/Mesa Driver
+-------------
+
+The source files for the X/Mesa driver in src/X have been renamed.
+The xmesa[1234].c files are gone.  The new files are xm_api.c,
+xm_dd.c, xm_line.c, xm_span.c and xm_tri.c.
+
+
+
 Multitexture
 ------------
 
@@ -182,5 +191,21 @@ interface structures like __GLimports and __GLexports.
 5. New file: imports.c to setup default import functions for Mesa.
 
 
+
+
+Internal color values
+---------------------
+
+Previously, Mesa treated color channel values as GLubytes in [0,255].
+Mesa 3.5 uses the GLchan datatype for color channel values.  In the
+future it will be possible to define GLchan to be larger than a byte
+in order to support high-precision colors.
+
+Many, many occurances of GLubyte have been replaced with GLchan
+and many occurances of the number 255 have been replaced with CHAN_MAX.
+
+Support for CHAN_BITS > 8 is not ready yet but will be eventually.
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.10 2001/03/26 19:45:08 brianp Exp $
+$Id: RELNOTES-3.5,v 1.11 2001/04/20 02:34:12 brianp Exp $
