@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.2 2000/02/25 23:24:06 brianp Exp $ */
+/* $Id: texobj.c,v 1.3 2000/03/01 03:36:40 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.
@@ -10,6 +10,9 @@
 
 /*
  * $Log: texobj.c,v $
+ * Revision 1.3  2000/03/01 03:36:40  brianp
+ * test for GL 1.2
+ *
  * Revision 1.2  2000/02/25 23:24:06  brianp
  * fixed bug when using display lists
  *
@@ -37,7 +40,7 @@ static GLfloat Angle = 0.0f;
 static GLboolean HaveTexObj = GL_FALSE;
 
 
-#if defined(GL_VERSION_1_1)
+#if defined(GL_VERSION_1_1) || defined(GL_VERSION_1_2)
 #  define TEXTURE_OBJECT 1
 #elif defined(GL_EXT_texture_object)
 #  define TEXTURE_OBJECT 1
@@ -275,7 +278,8 @@ int main( int argc, char *argv[] )
       char *exten = (char *) glGetString( GL_EXTENSIONS );
       char *version = (char *) glGetString( GL_VERSION );
       if (   strstr( exten, "GL_EXT_texture_object" )
-          || strncmp( version, "1.1", 3 )==0 ) {
+          || strncmp( version, "1.1", 3 )==0
+          || strncmp( version, "1.2", 3 )==0 ) {
          HaveTexObj = GL_TRUE;
       }
    }
