@@ -354,7 +354,8 @@ static void loadTexture( int width, int height,
       break;
    case GL_INTENSITY:
       luminanceSize = 1;
-      textureFormat = GL_INTENSITY;
+      /* Note: format=GL_INTENSITY for glTexImage is not legal */
+      textureFormat = GL_LUMINANCE;
       break;
    case GL_ALPHA:
       alphaSize = 1;
