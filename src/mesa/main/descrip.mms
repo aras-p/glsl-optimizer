@@ -50,8 +50,8 @@ matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
 mmath.obj,pb.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,\
-quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj
-
+quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj,\
+pixeltex.obj
 
 OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.obj,\
 triangle.obj,varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
@@ -123,6 +123,8 @@ clean :
 aatriangle.obj : aatriangle.c
 
 triangle.obj : triangle.c
+
+pixeltex.obj : pixeltex.c
 
 [.x86]x86.obj : [.x86]x86.c
 	$(CC) $(CFLAGS) /obj=[.x86]x86.obj [.x86]x86.c
