@@ -1,4 +1,4 @@
-			Mesa 4.0 DOS/DJGPP Port v1.1
+			Mesa 4.1 DOS/DJGPP Port v1.2
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,7 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 4.0.4, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 4.1, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -66,7 +66,7 @@ Tested on:
 	CPU:		K6-2 (CXT) @500(412.5) MHz
 	Mainboard:	ViA Apollo VP2/97 w/ 128 MB SDRAM
 	Video card:	PowerColor Evil King3 (Voodoo3 3000) w/ 16384 kB SDRAM
-	DJGPP:		djdev 2.03 + gcc v3.1 + make v3.79.1
+	DJGPP:		djdev 2.04 + gcc v3.2 + make v3.79.1
 
 
 
@@ -86,33 +86,27 @@ FAQ:
    A) You must have the DXE2 package (available on SimTel.Net, courtesy of
       Andrew Zabolotny) installed in order to build the dynamic modules.
 
-   Q) I have DXE2, but I couln'd build the `dxe2gen.exe'.
+   Q) I have DXE2, but I couldn't build the `dxe2gen.exe'.
    Q) I built `dxe2gen.exe', but it doesn't do the job right.
    A) There is a patched version on my web page.
 
    Q) DXE2 modules give me headaches...
    A) The DXE2 modules are not compulsory. The static libraries are still built
-      and you can use them in the old-fashioned, classic way. For example:
+      and you can use them in the old-fashioned, classic way... and learn to
+      live with your ~2MB executable size. For example:
 	gcc -o OUT.exe IN.c -lglut -lglu -lgl
 
    Q) Okay, DXE2 modules are built. How can I use them?
-   A) Usage of the dynamic modules requires three things:
-	- include DMESADXE.H in one of the sources, so references inside
-	  dynamic modules will get resolved (or use `-include' directive).
-	- link against import libraries (libI*.a) and LIBDL.A, which will do
-	  the dynamic linkage job for you
-	- put the DXEs somewhere along the library path (LD_LIBRARY_PATH) or
-	  in the current directory
+   A) Build your export object file; then link it with your application.
       For example:
-	gcc -o OUT.exe -include dmesadxe.h IN.c -ligl -liglu -liglut -ldl
+	dxe2res -o dmesadxe.c gl.dxe glu.dxe glut.dxe
+	gcc -o dmesadxe.o dmesadxe.c
+	gcc -o OUT.exe dmesadxe.o IN.c -liglut -liglu -ligl -ldl
 
-   Q) The application dies with "Abort!" due to unresolved symbols.
-   A) This is bad! Extract the unresolved symbol list from this module. For
-      example:
-	dxe2gen --show-unres gl.dxe > u
-      Check DMESADXE.H; the symbols in `u' must either be present here or be
-      exported from another module that has to be loaded before your faulting
-      one. Then recompile.
+   Q) What is that `dxe2res.exe' thing?
+   A) That is an utility that generates the export file for a given set of
+      modules. If you can't find it in the DXE2 package, you must be looking at
+      the wrong archive :)
 
 3. Using Mesa for DJGPP
 
@@ -138,7 +132,7 @@ FAQ:
       GLUT took this into account for _WIN32 DLL's only; I don't want to modify
       his headers. The only workaround is to link GLUT the old way :-(
 
-   Q) The DJGPP port of Mesa is so SLOOOW! The Win32 OpenGL performs so much
+   Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much
       better...
    A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky. The
       Glide port is on my web page. If you haven't, sorry; everything is done
@@ -196,10 +190,14 @@ History:
 ~~~~~~~~
 
 v1.0	mar-2002	initial release
+
 v1.1	sep-2002	+ added 3dfx Glide3 support
 			+ added refresh rate control
 			+ added fonts in glut
 			* lots of minor changes
+
+v1.2	nov-2002	* synced w/ Mesa-4.1
+			- removed dmesadxe.h
 
 
 

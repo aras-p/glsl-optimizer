@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.2 for Mesa 4.1
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -337,7 +337,7 @@ static int vesa_entermode (vl_mode *p, int refresh)
  r.x.ax = 0x4f02;
  r.x.bx = p->mode;
 
- if ((vesa_ver>>8) >= 3) {
+ if (refresh && ((vesa_ver>>8) >= 3)) {
     /* VESA 3.0 stuff for controlling the refresh rate */
     CRTCInfoBlock crtc;
     unsigned long vclk;

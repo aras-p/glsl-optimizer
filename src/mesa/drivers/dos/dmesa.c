@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.1 for Mesa 4.0
+ * DOS/DJGPP device driver v1.2 for Mesa 4.1
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -94,25 +94,16 @@ struct dmesa_context {
 
 
 
-static void dmesa_update_state (GLcontext *ctx, GLuint new_state);
-
-
-
-/**********************************************************************/
-/*****            Read/Write pixels                               *****/
-/**********************************************************************/
-
-
-
+/****************************************************************************
+ * Read/Write pixels
+ ***************************************************************************/
 #define FLIP(y)  (c->Buffer->height - (y) - 1)
 #define FLIP2(y) (h - (y) - 1)
-
-
 
 static void write_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
                              const GLubyte rgba[][4], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, offset;
 
@@ -132,10 +123,12 @@ static void write_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
  }
 }
 
+
+
 static void write_rgb_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
                             const GLubyte rgb[][3], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, offset;
 
@@ -155,11 +148,13 @@ static void write_rgb_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
  }
 }
 
+
+
 static void write_mono_rgba_span (const GLcontext *ctx,
                                   GLuint n, GLint x, GLint y,
                                   const GLchan color[4], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, offset, rgba = vl_mixrgba(color);
 
@@ -179,10 +174,12 @@ static void write_mono_rgba_span (const GLcontext *ctx,
  }
 }
 
+
+
 static void read_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
                             GLubyte rgba[][4])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, offset;
 
@@ -193,11 +190,13 @@ static void read_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
  }
 }
 
+
+
 static void write_rgba_pixels (const GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
                                const GLubyte rgba[][4], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, w = c->Buffer->width, h = c->Buffer->height;
 
@@ -216,11 +215,13 @@ static void write_rgba_pixels (const GLcontext *ctx,
  }
 }
 
+
+
 static void write_mono_rgba_pixels (const GLcontext *ctx,
                                     GLuint n, const GLint x[], const GLint y[],
                                     const GLchan color[4], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, w = c->Buffer->width, h = c->Buffer->height, rgba = vl_mixrgba(color);
 
@@ -239,11 +240,13 @@ static void write_mono_rgba_pixels (const GLcontext *ctx,
  }
 }
 
+
+
 static void read_rgba_pixels (const GLcontext *ctx,
                               GLuint n, const GLint x[], const GLint y[],
                               GLubyte rgba[][4], const GLubyte mask[])
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint i, w = c->Buffer->width, h = c->Buffer->height;
 
@@ -264,11 +267,9 @@ static void read_rgba_pixels (const GLcontext *ctx,
 
 
 
-/**********************************************************************/
-/*****                   Optimized triangle rendering             *****/
-/**********************************************************************/
-
-
+/****************************************************************************
+ * Optimized triangle rendering
+ ***************************************************************************/
 
 /*
  * flat, NON-depth-buffered, triangle.
@@ -278,7 +279,7 @@ static void tri_rgb_flat (GLcontext *ctx,
                           const SWvertex *v1,
                           const SWvertex *v2)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint w = c->Buffer->width, h = c->Buffer->height;
 
@@ -286,7 +287,7 @@ static void tri_rgb_flat (GLcontext *ctx,
 
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
- for (i = 0; i < span.count; i++, offset++) {			\
+ for (i = 0; i < span.end; i++, offset++) {			\
      vl_putpixel(b, offset, rgb);				\
  }
 
@@ -303,7 +304,7 @@ static void tri_rgb_flat_z (GLcontext *ctx,
                             const SWvertex *v1,
                             const SWvertex *v2)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint w = c->Buffer->width, h = c->Buffer->height;
 
@@ -313,7 +314,7 @@ static void tri_rgb_flat_z (GLcontext *ctx,
 
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
- for (i = 0; i < span.count; i++, offset++) {			\
+ for (i = 0; i < span.end; i++, offset++) {			\
      const DEPTH_TYPE z = FixedToDepth(span.z);			\
      if (z < zRow[i]) {						\
         vl_putpixel(b, offset, rgb);				\
@@ -335,14 +336,14 @@ static void tri_rgb_smooth (GLcontext *ctx,
                             const SWvertex *v1,
                             const SWvertex *v2)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint w = c->Buffer->width, h = c->Buffer->height;
 
 #define INTERP_RGB 1
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
- for (i = 0; i < span.count; i++, offset++) {			\
+ for (i = 0; i < span.end; i++, offset++) {			\
      unsigned char rgb[3];					\
      rgb[0] = FixedToInt(span.red);				\
      rgb[1] = FixedToInt(span.green);				\
@@ -366,7 +367,7 @@ static void tri_rgb_smooth_z (GLcontext *ctx,
                               const SWvertex *v1,
                               const SWvertex *v2)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  void *b = c->Buffer->the_window;
  GLuint w = c->Buffer->width, h = c->Buffer->height;
 
@@ -376,7 +377,7 @@ static void tri_rgb_smooth_z (GLcontext *ctx,
 
 #define RENDER_SPAN(span)					\
  GLuint i, offset = FLIP2(span.y)*w + span.x;			\
- for (i = 0; i < span.count; i++, offset++) {			\
+ for (i = 0; i < span.end; i++, offset++) {			\
      const DEPTH_TYPE z = FixedToDepth(span.z);			\
      if (z < zRow[i]) {						\
         unsigned char rgb[3];					\
@@ -455,15 +456,13 @@ static void dmesa_choose_tri (GLcontext *ctx)
 
 
 
-/**********************************************************************/
-/*****              Miscellaneous device driver funcs             *****/
-/**********************************************************************/
+/****************************************************************************
+ * Miscellaneous device driver funcs
+ ***************************************************************************/
 
-
-
-static void clear_color (GLcontext *ctx, const GLchan color[4])
+static void clear_color (GLcontext *ctx, const GLfloat color[4])
 {
- const GLubyte col[4];
+ GLubyte col[4];
  DMesaContext c = (DMesaContext)ctx->DriverCtx;
  CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
  CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
@@ -477,7 +476,7 @@ static void clear_color (GLcontext *ctx, const GLchan color[4])
 static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
                    GLint x, GLint y, GLint width, GLint height)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
+ const DMesaContext c = (DMesaContext)ctx->DriverCtx;
  const GLuint *colorMask = (GLuint *)&ctx->Color.ColorMask;
  DMesaBuffer b = c->Buffer;
 
@@ -508,27 +507,29 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 
 
-/*
- * Set the current reading buffer.
- */
-static void set_read_buffer (GLcontext *ctx, GLframebuffer *buffer,
-                             GLenum mode)
+static void color_mask (GLcontext *ctx, GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
-   /*
-     XXX this has to be fixed
-   */
+ /*
+  * XXX todo - Implements glColorMask()
+  */
 }
 
 
 
-/*
- * Set the destination/draw buffer.
- */
-static void set_draw_buffer (GLcontext *ctx, GLenum mode)
+static void set_buffer (GLcontext *ctx, GLframebuffer *colorBuffer, GLuint bufferBit)
 {
-   /*
-     XXX this has to be fixed
-   */
+ /*
+  * XXX todo - examine bufferBit and set read/write pointers
+  */
+}
+
+
+
+static void enable (GLcontext *ctx, GLenum pname, GLboolean state)
+{
+ /*
+  *  XXX todo -
+  */
 }
 
 
@@ -552,7 +553,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
 {
  switch (name) {
         case GL_RENDERER:
-             return (const GLubyte *)"Mesa DJGPP\0port (c) Borca Daniel 3-sep-2002";
+             return (const GLubyte *)"Mesa DJGPP\0port (c) Borca Daniel nov-2002";
         default:
              return NULL;
  }
@@ -560,46 +561,33 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
 
 
 
-/**********************************************************************/
-/*****              Miscellaneous device driver funcs             *****/
-/*****           Note that these functions are mandatory          *****/
-/**********************************************************************/
-
-
-
-/* OPTIONAL FUNCTION: implements glFinish if possible */
 static void finish (GLcontext *ctx)
 {
-/*
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
-*/
+ /*
+  * XXX todo - OPTIONAL FUNCTION: implements glFinish if possible
+  */
 }
 
 
 
-/* OPTIONAL FUNCTION: implements glFlush if possible */
 static void flush (GLcontext *ctx)
 {
-/*
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
-*/
+ /*
+  * XXX todo - OPTIONAL FUNCTION: implements glFlush if possible
+  */
 }
 
 
 
-/**********************************************************************/
-/**********************************************************************/
-
-
-
+/****************************************************************************
+ * State
+ ***************************************************************************/
 #define DMESA_NEW_TRIANGLE (_NEW_POLYGON | \
                             _NEW_TEXTURE | \
                             _NEW_LIGHT | \
                             _NEW_DEPTH | \
                             _NEW_RENDERMODE | \
                             _SWRAST_NEW_RASTERMASK)
-
-
 
 /* Extend the software rasterizer with our line and triangle
  * functions.
@@ -618,11 +606,10 @@ static void dmesa_register_swrast_functions (GLcontext *ctx)
 /* Setup pointers and other driver state that is constant for the life
  * of a context.
  */
-void dmesa_init_pointers (GLcontext *ctx)
+static void dmesa_init_pointers (GLcontext *ctx)
 {
  TNLcontext *tnl;
-
- ctx->Driver.UpdateState = dmesa_update_state;
+ struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
 
  ctx->Driver.GetString = get_string;
  ctx->Driver.GetBufferSize = get_buffer_size;
@@ -638,6 +625,7 @@ void dmesa_init_pointers (GLcontext *ctx)
  ctx->Driver.CopyPixels = _swrast_CopyPixels;
  ctx->Driver.DrawPixels = _swrast_DrawPixels;
  ctx->Driver.ReadPixels = _swrast_ReadPixels;
+ ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
 
  /* Software texture functions:
   */
@@ -650,18 +638,18 @@ void dmesa_init_pointers (GLcontext *ctx)
  ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
  ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
+ ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+ ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+ ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+ ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+ ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+
  ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
  ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
  ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
  ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
  ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
  ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
- ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
- ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
- ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
- ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
- ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
 
  /* Swrast hooks for imaging extensions:
   */
@@ -672,13 +660,16 @@ void dmesa_init_pointers (GLcontext *ctx)
 
  /* Statechange callbacks:
   */
- ctx->Driver.SetDrawBuffer = set_draw_buffer;
  ctx->Driver.ClearColor = clear_color;
+ ctx->Driver.ColorMask = color_mask;
+ ctx->Driver.Enable = enable;
 
  /* Initialize the TNL driver interface:
   */
  tnl = TNL_CONTEXT(ctx);
  tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
+ dd->SetBuffer = set_buffer;
    
  /* Install swsetup for tnl->Driver.Render.*:
   */
@@ -689,36 +680,31 @@ void dmesa_init_pointers (GLcontext *ctx)
 
 static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
 {
- DMesaContext c = (DMesaContext)ctx->DriverCtx;
- struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+ struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
 
- /* Initialize all the pointers in the DD struct.  Do this whenever */
- /* a new context is made current or we change buffers via set_buffer! */
-
- _swrast_InvalidateState(ctx, new_state);
- _swsetup_InvalidateState(ctx, new_state);
- _ac_InvalidateState(ctx, new_state);
- _tnl_InvalidateState(ctx, new_state);
-
- swdd->SetReadBuffer = set_read_buffer;
+ /* Propogate statechange information to swrast and swrast_setup
+  * modules. The DMesa driver has no internal GL-dependent state.
+  */
+ _swrast_InvalidateState( ctx, new_state );
+ _ac_InvalidateState( ctx, new_state );
+ _tnl_InvalidateState( ctx, new_state );
+ _swsetup_InvalidateState( ctx, new_state );
 
  /* RGB(A) span/pixel functions */
- swdd->WriteRGBASpan = write_rgba_span;
- swdd->WriteRGBSpan = write_rgb_span;
- swdd->WriteMonoRGBASpan = write_mono_rgba_span;
- swdd->WriteRGBAPixels = write_rgba_pixels;
- swdd->WriteMonoRGBAPixels = write_mono_rgba_pixels;
- swdd->ReadRGBASpan = read_rgba_span;
- swdd->ReadRGBAPixels = read_rgba_pixels;
+ dd->WriteRGBASpan = write_rgba_span;
+ dd->WriteRGBSpan = write_rgb_span;
+ dd->WriteMonoRGBASpan = write_mono_rgba_span;
+ dd->WriteRGBAPixels = write_rgba_pixels;
+ dd->WriteMonoRGBAPixels = write_mono_rgba_pixels;
+ dd->ReadRGBASpan = read_rgba_span;
+ dd->ReadRGBAPixels = read_rgba_pixels;
 }
 
 
 
-/**********************************************************************/
-/*****               DMesa Public API Functions                   *****/
-/**********************************************************************/
-
-
+/****************************************************************************
+ * DMesa Public API Functions
+ ***************************************************************************/
 
 /*
  * The exact arguments to this function will depend on your window system
@@ -731,15 +717,13 @@ DMesaVisual DMesaCreateVisual (GLint width, GLint height, GLint colDepth,
  DMesaVisual v;
  GLint redBits, greenBits, blueBits, alphaBits;
 
- int refresh;
  char *var = getenv("DMESA_REFRESH");
- if ((var == NULL) || ((refresh=atoi(var)) == 0)) {
-    refresh = 60;
- }
+ int refresh = (var != NULL) ? atoi(var) : 0;
 
  if (!dbFlag) {
     return NULL;
  }
+
  alphaBits = 0;
  switch (colDepth) {
         case 15:
@@ -767,7 +751,7 @@ DMesaVisual DMesaCreateVisual (GLint width, GLint height, GLint colDepth,
     return NULL;
  }
 
- if ((v=(DMesaVisual)calloc(1, sizeof(struct dmesa_visual)))!=NULL) {
+ if ((v=(DMesaVisual)calloc(1, sizeof(struct dmesa_visual))) != NULL) {
     /* Create core visual */
     v->gl_visual = _mesa_create_visual(colDepth>8,		/* rgb */
                                        dbFlag,
@@ -809,7 +793,7 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
 {
  DMesaBuffer b;
 
- if ((b=(DMesaBuffer)calloc(1, sizeof(struct dmesa_buffer)))!=NULL) {
+ if ((b=(DMesaBuffer)calloc(1, sizeof(struct dmesa_buffer))) != NULL) {
 
     _mesa_initialize_framebuffer(&b->gl_buffer,
                                  visual->gl_visual,
@@ -844,7 +828,7 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
  DMesaContext c;
  GLboolean direct = GL_FALSE;
 
- if ((c=(DMesaContext)calloc(1, sizeof(struct dmesa_context)))!=NULL) {
+ if ((c=(DMesaContext)calloc(1, sizeof(struct dmesa_context))) != NULL) {
     c->gl_ctx = _mesa_create_context(visual->gl_visual,
                                      share ? share->gl_ctx : NULL,
                                      (void *)c, direct);
@@ -852,17 +836,19 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _mesa_enable_sw_extensions(c->gl_ctx);
     _mesa_enable_1_3_extensions(c->gl_ctx);
 
-   /* you probably have to do a bunch of other initializations here. */
+    /* you probably have to do a bunch of other initializations here. */
     c->visual = visual;
 
-   /* Initialize the software rasterizer and helper modules.
-    */
+    c->gl_ctx->Driver.UpdateState = dmesa_update_state;
+
+    /* Initialize the software rasterizer and helper modules.
+     */
     _swrast_CreateContext(c->gl_ctx);
     _ac_CreateContext(c->gl_ctx);
     _tnl_CreateContext(c->gl_ctx);
     _swsetup_CreateContext(c->gl_ctx);
-    dmesa_init_pointers(c->gl_ctx);
     dmesa_register_swrast_functions(c->gl_ctx);
+    dmesa_init_pointers(c->gl_ctx);
  }
 
  return c;
@@ -884,7 +870,7 @@ GLboolean DMesaViewport (DMesaBuffer b,
 {
  void *new_window;
 
- if ((new_window=vl_sync_buffer(b->the_window, xpos, ypos, width, height))==NULL) {
+ if ((new_window=vl_sync_buffer(b->the_window, xpos, ypos, width, height)) == NULL) {
     return GL_FALSE;
  } else {
     b->the_window = new_window;
@@ -905,16 +891,15 @@ GLboolean DMesaViewport (DMesaBuffer b,
  */
 GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 {
- if (c&&b) {
+ if ((c != NULL) && (b != NULL)) {
     if (!DMesaViewport(b, b->xpos, b->ypos, b->width, b->height)) {
        return GL_FALSE;
     }
 
     c->Buffer = b;
 
-    dmesa_update_state(c->gl_ctx, 0);
     _mesa_make_current(c->gl_ctx, &b->gl_buffer);
-    if (c->gl_ctx->Viewport.Width==0) {
+    if (c->gl_ctx->Viewport.Width == 0) {
        /* initialize viewport to window size */
        _mesa_Viewport(0, 0, b->width, b->height);
     }

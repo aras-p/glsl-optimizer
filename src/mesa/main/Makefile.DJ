@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v1.1 for Mesa 4.0
+# DOS/DJGPP core makefile v1.2 for Mesa 4.1
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@yahoo.com
@@ -59,6 +59,7 @@
 
 
 .PHONY: all clean
+.INTERMEDIATE: X86/gen_matypes.exe
 
 TOP = ..
 GLIDE ?= $(TOP)/include/glide3
@@ -83,9 +84,6 @@ endif
 RM = del
 
 CORE_SOURCES = \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
 	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
@@ -96,7 +94,6 @@ CORE_SOURCES = \
 	buffers.c \
 	clip.c \
 	colortab.c \
-	config.c \
 	context.c \
 	convolve.c \
 	debug.c \
@@ -136,16 +133,17 @@ CORE_SOURCES = \
 	texstore.c \
 	texutil.c \
 	varray.c \
+	vpexec.c \
+	vpparse.c \
+	vpstate.c \
 	vtxfmt.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
-	math/m_debug_vertex.c \
 	math/m_debug_xform.c \
 	math/m_eval.c \
 	math/m_matrix.c \
 	math/m_translate.c \
 	math/m_vector.c \
-	math/m_vertices.c \
 	math/m_xform.c \
 	array_cache/ac_context.c \
 	array_cache/ac_import.c \
@@ -168,17 +166,18 @@ CORE_SOURCES = \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \
-	swrast/s_pb.c \
 	swrast/s_pixeltex.c \
 	swrast/s_points.c \
 	swrast/s_readpix.c \
-	swrast/s_scissor.c \
 	swrast/s_span.c \
 	swrast/s_stencil.c \
 	swrast/s_texture.c \
 	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \
@@ -196,6 +195,7 @@ CORE_SOURCES = \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
 	tnl/t_vb_points.c \
+	tnl/t_vb_program.c \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
@@ -209,7 +209,6 @@ X86_SOURCES = \
 	X86/x86_xform2.S \
 	X86/x86_xform3.S \
 	X86/x86_xform4.S \
-	X86/x86_vertex.S \
 	X86/x86_cliptest.S
 
 MMX_SOURCES = \
@@ -220,7 +219,6 @@ SSE_SOURCES = \
 	X86/sse_xform2.S \
 	X86/sse_xform3.S \
 	X86/sse_xform4.S \
-	X86/sse_vertex.S \
 	X86/sse_normal.S
 
 K3D_SOURCES = \
@@ -228,7 +226,7 @@ K3D_SOURCES = \
 	X86/3dnow_xform2.S \
 	X86/3dnow_xform3.S \
 	X86/3dnow_xform4.S \
-	X86/3dnow_vertex.S
+	X86/3dnow_normal.S
 
 ifdef HAVE_MMX
 X86_SOURCES += $(MMX_SOURCES)
@@ -275,6 +273,8 @@ SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
 
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
+X86_OBJECTS = $(addsuffix .o,$(basename $(X86_SOURCES)))
+
 .c.o:
 	$(CC) -o $@ -c $(CFLAGS) $<
 .S.o:
@@ -294,6 +294,14 @@ ifeq ($(DXE2GEN),)
 else
 	-dxe2gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) $(OBJECTS) -E djgpp_ -E gl -E DMesa -E fxMesa -D "Mesa DJGPP GL" -U
 endif
+
+$(X86_OBJECTS): X86/matypes.h
+
+X86/matypes.h: X86/gen_matypes.exe
+	$< > $@
+
+X86/gen_matypes.exe: X86/gen_matypes.c
+	$(CC) -o $@ $(CFLAGS) -s $<
 
 clean:
 	-$(RM) $(subst /,\,*.o)

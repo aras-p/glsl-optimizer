@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.1 for DOS/DJGPP
+ * PC/HW routine collection v1.2 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -217,8 +217,8 @@ void pc_unscare_mouse (void);
 /*
  * standard redirection
  */
-void pc_open_stdout (void);
-void pc_open_stderr (void);
+int pc_open_stdout (void);
+int pc_open_stderr (void);
 void pc_close_stdout (void);
 void pc_close_stderr (void);
 

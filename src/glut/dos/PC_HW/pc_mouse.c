@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.1 for DOS/DJGPP
+ * PC/HW routine collection v1.2 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -226,6 +226,7 @@ void pc_unscare_mouse (void)
 }
 
 __asm("\n\
+		.text					\n\
 		.balign	4				\n\
 		.global	_mouse_wrapper			\n\
 _mouse_wrapper:						\n\
@@ -252,7 +253,6 @@ _mouse_wrapper:						\n\
 		movl	%esi, %esp			\n\
 		popl	%es				\n\
 		iret					\n\
-							\n\
 		.balign	4				\n\
 		.global	_mouse_wrapper_end		\n\
 _mouse_wrapper_end:");

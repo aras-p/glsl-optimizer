@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  * Copyright (C) 1995-1998  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.1 for Mesa 4.0
+ * DOS/DJGPP glut driver v1.2 for Mesa 4.1
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -113,6 +113,7 @@ int APIENTRY glutCreateWindow (const char *title)
     if ((context=fxMesaCreateBestContext(-1, screen_w, screen_h, fx_attrib))==NULL) {
        return 0;
     }
+    visual = context;
 #endif
     
     pc_open_stdout();

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  5.0
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.0 for Mesa 4.0
+ * DOS/DJGPP device driver v1.2 for Mesa 4.1
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -31,10 +31,10 @@
  */
 
 
-#ifndef DMESA_included
-#define DMESA_included
+#ifndef DMESA_H_included
+#define DMESA_H_included
 
-#define DMESA_MAJOR_VERSION 4
+#define DMESA_MAJOR_VERSION 5
 #define DMESA_MINOR_VERSION 0
 
 typedef struct dmesa_context *DMesaContext;
@@ -45,8 +45,10 @@ typedef struct dmesa_buffer *DMesaBuffer;
 extern "C" {
 #endif
 
-DMesaVisual DMesaCreateVisual (GLint width, GLint height, GLint colDepth,
-                               GLboolean dbFlag, GLint depthSize,
+DMesaVisual DMesaCreateVisual (GLint width, GLint height,
+                               GLint colDepth,
+                               GLboolean dbFlag,
+                               GLint depthSize,
                                GLint stencilSize,
                                GLint accumSize);
 
