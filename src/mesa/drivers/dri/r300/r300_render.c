@@ -672,7 +672,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		stage->active = GL_FALSE;
 		return;
 	}
-
+		
 
 	/* I'm almost certain I forgot something here */
 #if 0 /* These should work now.. */
@@ -730,4 +730,51 @@ const struct tnl_pipeline_stage _r300_render_stage = {
 	dtr,			/* destructor */
 	r300_check_render,	/* check */
 	r300_run_render		/* run */
+};
+	
+static GLboolean r300_run_tcl_render(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+
+	if (RADEON_DEBUG & DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	return r300_run_vb_render(ctx, stage);
+}
+
+static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i;
+
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	/* We only support rendering in hardware for now */
+	if (ctx->RenderMode != GL_RENDER) {
+		stage->active = GL_FALSE;
+		return;
+	}
+	if((r300->current_vp != NULL) && ctx->VertexProgram._Enabled) {
+		stage->active = GL_TRUE;
+		stage->inputs = ctx->VertexProgram.Current->InputsRead;
+	} else {
+		stage->active = GL_FALSE;
+	}
+}
+
+const struct tnl_pipeline_stage _r300_tcl_stage = {
+	"r300 tcl",
+	_NEW_ALL,		/* re-check (always re-check for now) */
+	0,			/* re-run (always runs) */
+	GL_TRUE,		/* active */
+	0, 0,			/* inputs (set in check_render), outputs */
+	0, 0,			/* changed_inputs, private */
+	dtr,			/* destructor */
+	r300_check_tcl_render,	/* check */
+	r300_run_tcl_render	/* run */
 };

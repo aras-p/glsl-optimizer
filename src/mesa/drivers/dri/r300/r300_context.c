@@ -102,12 +102,13 @@ static const char *const card_extensions[] = {
 };
 
 extern struct tnl_pipeline_stage _r300_render_stage;
+extern struct tnl_pipeline_stage _r300_tcl_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-//	&_r300_tcl_stage,
+	&_r300_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */
