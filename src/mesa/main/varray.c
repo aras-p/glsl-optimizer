@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.9 1999/11/09 07:59:54 brianp Exp $ */
+/* $Id: varray.c,v 1.10 1999/11/09 09:18:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,9 @@
 #include "vbindirect.h"
 #include "vbxform.h"
 #include "xform.h"
+#ifdef XFree86Server
+#include "GL/xf86glx.h"
+#endif
 #endif
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server) && !defined(GLX_USE_DLOPEN)
@@ -533,20 +536,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 if (fallback & VERT_RGBA)
 	    client_data = &ctx->Fallback.Color;
 
-	 if (client_data->Type == GL_UNSIGNED_BYTE && 
-	     client_data->Size == 4)
-	 {
-	    VSrc.Color = &col;
-	    col.data = (GLubyte (*)[4]) client_data->Ptr;
-	    col.stride = client_data->StrideB;
-	    col.flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	    if (client_data->StrideB != 4 * sizeof(GLubyte)) 
-	       col.flags ^= VEC_STRIDE_FLAGS;
-
-	    update |= VERT_RGBA;
-	 } else {
 	    translate |= VERT_RGBA;
-	 }	
       }
    
       if (required & VERT_INDEX) 
@@ -555,19 +545,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 if (fallback & VERT_INDEX)
 	    client_data = &ctx->Fallback.Index;
 
-	 if (client_data->Type == GL_UNSIGNED_INT)
-	 {
-	    VSrc.Index = &index;
-	    index.data = (GLuint *) client_data->Ptr;
-	    index.stride = client_data->StrideB;
-	    index.flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	    if (client_data->StrideB != sizeof(GLuint)) 
-	       index.flags ^= VEC_STRIDE_FLAGS;
-
-	    update |= VERT_INDEX;
-	 } else {
 	    translate |= VERT_INDEX;
-	 }	
       }
 
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) 
@@ -584,19 +562,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	       client_data->Size = gl_texcoord_size( ctx->Current.Flag, i );
 	    }
 
-	    if (client_data->Type == GL_FLOAT)
-	    {
-	       VSrc.TexCoord[i] = &tc[i];
-	       tc[i].data = (GLfloat (*)[4]) client_data->Ptr;
-	       tc[i].stride = client_data->StrideB;
-	       tc[i].size = client_data->Size;
-	       tc[i].flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	       if (tc[i].stride != 4 * sizeof(GLfloat))
-		  tc[i].flags ^= VEC_STRIDE_FLAGS;
-	       update |= flag;
-	    } else {
-	       translate |= flag;
-	    }
+	    translate |= flag;
 	 }
       }
 
@@ -605,22 +571,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	    ctx->Array.Flag[i] = ctx->Array.Flags;
 
       
-      if (ctx->Array.Vertex.Type == GL_FLOAT)
-      {
-	 VSrc.Obj = &obj;
-	 obj.data = (GLfloat (*)[4]) ctx->Array.Vertex.Ptr;
-	 obj.stride = ctx->Array.Vertex.StrideB;
-	 obj.size = ctx->Array.Vertex.Size;
-	 obj.flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	 if (obj.stride != 4 * sizeof(GLfloat)) 
-	    obj.flags ^= VEC_STRIDE_FLAGS;
-
-	 update |= VERT_OBJ_ANY;
-      }
-      else 
-      {
-	 translate |= VERT_OBJ_ANY;
-      }
+      translate |= VERT_OBJ_ANY;
 
       if (required & VERT_NORM) 
       {
@@ -628,16 +579,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 if (fallback & VERT_NORM) 
 	    client_data = &ctx->Fallback.Normal;
 
-	 if (client_data->Type == GL_FLOAT) 
-	 {
-	    VSrc.Normal = &norm;
-	    norm.flags = 0;
-	    norm.data = (GLfloat (*)[3]) client_data->Ptr;
-	    norm.stride = client_data->StrideB;
-	    update |= VERT_NORM;	    
-	 } else {
-	    translate |= VERT_NORM;	    
-	 }
+	 translate |= VERT_NORM;	    
       }
 
       if ( (required & VERT_EDGE) && 
@@ -650,14 +592,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 if (fallback & VERT_EDGE) 
 	    client_data = &ctx->Fallback.EdgeFlag;
 
-	 VSrc.EdgeFlag = &edge;
-	 edge.data = (GLboolean *) client_data->Ptr;
-	 edge.stride = client_data->StrideB;
-	 edge.flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	 if (edge.stride != sizeof(GLubyte))
-	    edge.flags ^= VEC_STRIDE_FLAGS;
-	 
-	 update |= VERT_EDGE;
+	 translate |= VERT_EDGE;
       }
 
       VB->Primitive = IM->Primitive; 
@@ -684,10 +619,13 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 
          /* Update pointers.
 	  */
-	 if (update) {
+	    /* Disabled - always do the copy.  No real loss
+	     * until we improve vertex copying anyway.
+	     */
+	 if (0) {
 	    if (update & VERT_OBJ_ANY) 
 	       obj.start = VEC_ELT(&obj, GLfloat, start);
-	    
+
 	    if (update & VERT_NORM) 
 	       norm.start = VEC_ELT(&norm, GLfloat, start);
 
