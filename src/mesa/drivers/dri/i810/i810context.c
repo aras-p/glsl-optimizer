@@ -431,9 +431,6 @@ i810MakeCurrent(__DRIcontextPrivate *driContextPriv,
       /* Are these necessary?
        */
       i810XMesaWindowMoved( imesa );
-      if (!imesa->glCtx->Viewport.Width)
-	 _mesa_set_viewport(imesa->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
    }
    else {
       _mesa_make_current(0,0);

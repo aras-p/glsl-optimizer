@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "glheader.h"
+#include "buffers.h"
 #include "context.h"
 #include "macros.h"
 #include "enums.h"
@@ -682,6 +683,8 @@ static void i810Viewport( GLcontext *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    i810CalcViewport( ctx );
 }
 

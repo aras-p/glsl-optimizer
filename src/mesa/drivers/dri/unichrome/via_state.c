@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "glheader.h"
+#include "buffers.h"
 #include "context.h"
 #include "macros.h"
 #include "colormac.h"
@@ -464,6 +465,8 @@ static void viaViewport(GLcontext *ctx,
                         GLint x, GLint y,
                         GLsizei width, GLsizei height)
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
     viaCalcViewport(ctx);
 }
 

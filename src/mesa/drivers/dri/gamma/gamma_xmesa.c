@@ -225,11 +225,6 @@ newGammaCtx->new_state |= GAMMA_NEW_WINDOW; /* FIXME */
 	_mesa_make_current2( newGammaCtx->glCtx, 
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate );
-
-	if (!newGammaCtx->glCtx->Viewport.Width) {
-	    _mesa_set_viewport(newGammaCtx->glCtx, 0, 0, 
-					driDrawPriv->w, driDrawPriv->h);
-	}
     } else {
 	_mesa_make_current( 0, 0 );
     }

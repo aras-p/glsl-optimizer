@@ -35,7 +35,6 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "buffers.h"
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
@@ -556,11 +555,6 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
  * Set new viewport parameters and update derived state (the _WindowMap
  * matrix).  Usually called from _mesa_Viewport().
  * 
- * \note  We also call _mesa_ResizeBuffersMESA() because this is a good
- * time to check if the window has been resized.  Many device drivers
- * can't get direct notification from the window system of size changes
- * so this is an ad-hoc solution to that problem.
- * 
  * \param ctx GL context.
  * \param x, y coordinates of the lower left corner of the viewport rectangle.
  * \param width width of the viewport rectangle.
@@ -618,15 +612,10 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
 
-   /* Check if window/buffer has been resized and if so, reallocate the
-    * ancillary buffers.  This is an ad-hoc solution to detecting window
-    * size changes.  99% of all GL apps call glViewport when a window is
-    * resized so this is a good time to check for new window dims and
-    * reallocate color buffers and ancilliary buffers.
-    */
-   _mesa_ResizeBuffersMESA();
-
    if (ctx->Driver.Viewport) {
+      /* Many drivers will use this call to check for window size changes
+       * and reallocate the z/stencil/accum/etc buffers if needed.
+       */
       (*ctx->Driver.Viewport)( ctx, x, y, width, height );
    }
 }

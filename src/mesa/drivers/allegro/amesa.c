@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <allegro.h>
+#include "buffers.h"
 #include "context.h"
 #include "imports.h"
 #include "matrix.h"
@@ -144,6 +145,13 @@ static void get_buffer_size(GLcontext *ctx, GLuint *width, GLuint *height)
     }
 
 
+static void viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   /* poll for window size change and realloc software Z/stencil/etc if needed */
+   _mesa_ResizeBuffersMESA();
+}
+
+
 /**********************************************************************/
 /**********************************************************************/
 
@@ -155,8 +163,9 @@ static void setup_dd_pointers(GLcontext *ctx)
    	/* a new context is made current or we change buffers via set_buffer! */
 
     ctx->Driver.UpdateState   = setup_dd_pointers;
-   	ctx->Driver.SetBuffer     = set_buffer;
-   	ctx->Driver.GetBufferSize = get_buffer_size;
+    ctx->Driver.SetBuffer     = set_buffer;
+    ctx->Driver.GetBufferSize = get_buffer_size;
+    ctx->Driver.Viewport      = viewport;
 
     ctx->Driver.Color               = set_color_generic;
     ctx->Driver.ClearColor          = clear_color_generic;
@@ -371,9 +380,9 @@ GLboolean AMesaMakeCurrent(AMesaContext context, AMesaBuffer buffer)
         
       setup_dd_pointers(context->GLContext);
       _mesa_make_current(context->GLContext, buffer->GLBuffer);
-      _mesa_set_viewport(context->GLContext, 0, 0, buffer->Width, buffer->Height);
    }
    else {
+      /* XXX I don't think you want to destroy anything here! */
       destroy_bitmap(context->Buffer->Screen);
       context->Buffer->Screen = NULL;
       context->Buffer->Active = NULL;

@@ -312,11 +312,6 @@ sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
       sisUpdateBufferSize( newSisCtx );
       sisUpdateClipping( newSisCtx->glCtx );
-
-      if ( newSisCtx->glCtx->Viewport.Width == 0 ) {
-         _mesa_set_viewport(newSisCtx->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
-      }
    } else {
       _mesa_make_current( 0, 0 );
    }

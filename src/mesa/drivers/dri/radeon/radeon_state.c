@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "colormac.h"
 #include "state.h"
+#include "buffers.h"
 #include "context.h"
 
 #include "swrast/swrast.h"
@@ -1451,6 +1452,8 @@ void radeonUpdateWindow( GLcontext *ctx )
 static void radeonViewport( GLcontext *ctx, GLint x, GLint y,
 			    GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    /* Don't pipeline viewport changes, conflict with window offset
     * setting below.  Could apply deltas to rescue pipelined viewport
     * values, or keep the originals hanging around.

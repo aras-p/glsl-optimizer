@@ -45,6 +45,7 @@
 #include "glheader.h"
 #include <linux/fb.h>
 #include "GL/glfbdev.h"
+#include "buffers.h"
 #include "context.h"
 #include "extensions.h"
 #include "imports.h"
@@ -148,6 +149,14 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    const GLFBDevBufferPtr fbdevbuffer = (GLFBDevBufferPtr) buffer;
    *width = fbdevbuffer->var.xres_virtual;
    *height = fbdevbuffer->var.yres_virtual;
+}
+
+
+static void
+viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   /* poll for window size change and realloc software Z/stencil/etc if needed */
+   _mesa_ResizeBuffersMESA();
 }
 
 
@@ -639,6 +648,7 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    functions.GetString = get_string;
    functions.UpdateState = update_state;
    functions.GetBufferSize = get_buffer_size;
+   functions.Viewport = viewport;
 
    if (!_mesa_initialize_context(&ctx->glcontext, &visual->glvisual,
                                  share ? &share->glcontext : NULL,

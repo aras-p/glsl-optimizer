@@ -959,9 +959,6 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
 #endif
         viaXMesaWindowMoved(vmesa);
-        if (!vmesa->glCtx->Viewport.Width)
-            _mesa_set_viewport(vmesa->glCtx, 0, 0,
-                               driDrawPriv->w, driDrawPriv->h);
     }
     else {
         _mesa_make_current(0,0);

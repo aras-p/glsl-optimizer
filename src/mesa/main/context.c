@@ -1606,6 +1606,10 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
 #endif
 
+   /* free dispatch tables */
+   _mesa_free(ctx->Exec);
+   _mesa_free(ctx->Save);
+
    /* Shared context state (display lists, textures, etc) */
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount--;
@@ -1618,9 +1622,6 @@ _mesa_free_context_data( GLcontext *ctx )
 
    if (ctx->Extensions.String)
       FREE((void *) ctx->Extensions.String);
-
-   FREE(ctx->Exec);
-   FREE(ctx->Save);
 }
 
 
@@ -1877,41 +1878,36 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 newCtx->NewState |= _NEW_BUFFERS;
 
 #if _HAVE_FULL_GL
-         if (drawBuffer->Width == 0 && drawBuffer->Height == 0) {
+         if (!drawBuffer->Initialized) {
             /* get initial window size */
             GLuint bufWidth, bufHeight;
-
-            /* ask device driver for size of output buffer */
-            (*newCtx->Driver.GetBufferSize)( drawBuffer, &bufWidth, &bufHeight );
-
-            if (drawBuffer->Width != bufWidth || 
-		drawBuffer->Height != bufHeight) {
-
-	       drawBuffer->Width = bufWidth;
-	       drawBuffer->Height = bufHeight;
-
- 	       newCtx->Driver.ResizeBuffers( drawBuffer );
-	    }
+            /* ask device driver for size of the buffer */
+            (*newCtx->Driver.GetBufferSize)(drawBuffer, &bufWidth, &bufHeight);
+            /* set initial buffer size */
+            drawBuffer->Width = bufWidth;
+            drawBuffer->Height = bufHeight;
+            newCtx->Driver.ResizeBuffers( drawBuffer );
+            drawBuffer->Initialized = GL_TRUE;
          }
 
-         if (readBuffer != drawBuffer &&
-             readBuffer->Width == 0 && readBuffer->Height == 0) {
+         if (readBuffer != drawBuffer && !readBuffer->Initialized) {
             /* get initial window size */
             GLuint bufWidth, bufHeight;
-
-            /* ask device driver for size of output buffer */
-            (*newCtx->Driver.GetBufferSize)( readBuffer, &bufWidth, &bufHeight );
-
-            if (readBuffer->Width != bufWidth ||
-		readBuffer->Height != bufHeight) {
-
-	       readBuffer->Width = bufWidth;
-	       readBuffer->Height = bufHeight;
-
-	       newCtx->Driver.ResizeBuffers( readBuffer );
-	    }
+            /* ask device driver for size of the buffer */
+            (*newCtx->Driver.GetBufferSize)(readBuffer, &bufWidth, &bufHeight);
+            /* set initial buffer size */
+            readBuffer->Width = bufWidth;
+            readBuffer->Height = bufHeight;
+            newCtx->Driver.ResizeBuffers( readBuffer );
+            readBuffer->Initialized = GL_TRUE;
          }
 #endif
+         if (newCtx->FirstTimeCurrent) {
+            /* set initial viewport and scissor size now */
+            _mesa_set_viewport(newCtx, 0, 0, drawBuffer->Width, drawBuffer->Height);
+            newCtx->Scissor.Width = drawBuffer->Width;
+            newCtx->Scissor.Height = drawBuffer->Height;
+         }
       }
 
       /* Alert the driver - usually passed on to the sw t&l module,

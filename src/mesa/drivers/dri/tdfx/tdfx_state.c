@@ -40,6 +40,7 @@
  */
 
 #include "mtypes.h"
+#include "buffers.h"
 #include "colormac.h"
 #include "texformat.h"
 #include "texstore.h"
@@ -902,6 +903,8 @@ static void tdfxDDViewport( GLcontext *ctx, GLint x, GLint y,
 			    GLsizei w, GLsizei h )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    FLUSH_BATCH( fxMesa );
    fxMesa->new_state |= TDFX_NEW_VIEWPORT;
 }

@@ -63,6 +63,7 @@
 #include "miniglxP.h" 		/* window-system-specific */
 #include "dri_util.h"		/* window-system-specific-ish */
 
+#include "buffers.h"
 #include "context.h"
 #include "extensions.h"
 #include "imports.h"
@@ -133,6 +134,13 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 }
 
 
+static void
+viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   _mesa_ResizeBuffersMESA();
+}
+
+
 /* specifies the buffer for swrast span rendering/reading */
 static void
 set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
@@ -166,6 +174,7 @@ init_core_functions( struct dd_function_table *functions )
    functions->UpdateState = update_state;
    functions->ResizeBuffers = _swrast_alloc_buffers;
    functions->GetBufferSize = get_buffer_size;
+   functions->Viewport = viewport;
 
    functions->Clear = _swrast_Clear;  /* could accelerate with blits */
 }
@@ -536,11 +545,6 @@ fbMakeCurrent( __DRIcontextPrivate *driContextPriv,
       _mesa_make_current2( newFbCtx->glCtx,
 			   (GLframebuffer *) driDrawPriv->driverPrivate,
 			   (GLframebuffer *) driReadPriv->driverPrivate );
-
-      if ( !newFbCtx->glCtx->Viewport.Width ) {
-	 _mesa_set_viewport( newFbCtx->glCtx, 0, 0,
-			     driDrawPriv->w, driDrawPriv->h );
-      }
    } else {
       _mesa_make_current( 0, 0 );
    }

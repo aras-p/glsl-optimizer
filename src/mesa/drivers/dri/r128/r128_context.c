@@ -341,13 +341,7 @@ r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
                            (GLframebuffer *) driDrawPriv->driverPrivate,
                            (GLframebuffer *) driReadPriv->driverPrivate );
 
-
       newR128Ctx->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
-
-      if ( !newR128Ctx->glCtx->Viewport.Width ) {
-	 _mesa_set_viewport(newR128Ctx->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
-      }
    } else {
       _mesa_make_current( 0, 0 );
    }

@@ -873,10 +873,6 @@ fxMesaMakeCurrent(fxMesaContext fxMesa)
    _mesa_make_current(fxMesa->glCtx, fxMesa->glBuffer);
 
    fxSetupDDPointers(fxMesa->glCtx);
-
-   /* The first time we call MakeCurrent we set the initial viewport size */
-   if (fxMesa->glCtx->Viewport.Width == 0)
-      _mesa_set_viewport(fxMesa->glCtx, 0, 0, fxMesa->width, fxMesa->height);
 }
 
 

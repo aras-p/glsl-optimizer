@@ -28,6 +28,7 @@
 
 
 #include "mtypes.h"
+#include "buffers.h"
 #include "colormac.h"
 #include "dd.h"
 
@@ -695,6 +696,8 @@ static void mgaViewport( GLcontext *ctx,
 			  GLint x, GLint y, 
 			  GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    mgaCalcViewport( ctx );
 }
 

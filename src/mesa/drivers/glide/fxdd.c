@@ -43,6 +43,7 @@
 #include "image.h"
 #include "mtypes.h"
 #include "fxdrv.h"
+#include "buffers.h"
 #include "enums.h"
 #include "extensions.h"
 #include "macros.h"
@@ -106,7 +107,7 @@ static void fxDisableColor (fxMesaContext fxMesa)
 
 /* Return buffer size information */
 static void
-fxDDBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
+fxDDGetBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx && FX_CONTEXT(ctx)) {
@@ -121,6 +122,12 @@ fxDDBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
    }
 }
 
+static void
+fxDDViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   /* poll for window size change and realloc software Z/stencil/etc if needed */
+   _mesa_ResizeBuffersMESA();
+}
 
 /* Implements glClearColor() */
 static void
@@ -2106,7 +2113,8 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ClearColor = fxDDClearColor;
    ctx->Driver.Clear = fxDDClear;
    ctx->Driver.DrawBuffer = fxDDSetDrawBuffer;
-   ctx->Driver.GetBufferSize = fxDDBufferSize;
+   ctx->Driver.GetBufferSize = fxDDGetBufferSize;
+   ctx->Driver.Viewport = fxDDViewport;
    switch (fxMesa->colDepth) {
       case 15:
          ctx->Driver.DrawPixels = fxDDDrawPixels555;

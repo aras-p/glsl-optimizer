@@ -39,6 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_tex.h"
 
 #include "context.h"
+#include "buffers.h"
 #include "enums.h"
 #include "colormac.h"
 #include "swrast/swrast.h"
@@ -436,6 +437,8 @@ static void sisDDViewport( GLcontext *ctx,
 			   GLint x, GLint y,
 			   GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    sisCalcViewport( ctx );
 }
 

@@ -36,6 +36,7 @@
 #include "imports.h"
 #ifndef FX
 #include "bufferobj.h"
+#include "buffers.h"
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
@@ -812,6 +813,14 @@ get_buffer_size (GLframebuffer *buffer, GLuint *width, GLuint *height)
 }
 
 
+static void
+viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   /* poll for window size change and realloc software Z/stencil/etc if needed */
+   _mesa_ResizeBuffersMESA();
+}
+
+
 static const GLubyte *
 get_string (GLcontext *ctx, GLenum name)
 {
@@ -898,6 +907,7 @@ dmesa_init_driver_functions (DMesaVisual visual,
    driver->UpdateState = dmesa_update_state;
    driver->GetString = get_string;
    driver->GetBufferSize = get_buffer_size;
+   driver->Viewport = viewport;
    driver->Flush = flush;
    driver->Finish = finish;
    driver->Clear = clear;
@@ -1271,11 +1281,8 @@ DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
       c->buffer = b;
 
       _mesa_make_current((GLcontext *)c, (GLframebuffer *)b);
-      if (((GLcontext *)c)->Viewport.Width == 0) {
-         /* initialize viewport to window size */
-         _mesa_Viewport(0, 0, b->width, b->height);
-      }
-   } else {
+   }
+   else {
       /* Detach */
       _mesa_make_current(NULL, NULL);
    }

@@ -25,6 +25,7 @@
 
 #include "glxheader.h"
 #include "bufferobj.h"
+#include "buffers.h"
 #include "context.h"
 #include "colormac.h"
 #include "depth.h"
@@ -1203,6 +1204,23 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 
 /**
+ * Called by glViewport.
+ * This is a good time for us to poll the current X window size and adjust
+ * our ancillary (back color, depth, stencil, etc) buffers to match the
+ * current window size.  Remember, we have no opportunity to respond to
+ * conventional X Resize/StructureNotify events since the X driver has no
+ * event loop.  Thus, we poll.
+ * Note that this trick isn't fool-proof.  If the application never calls
+ * glViewport, our notion of the current window size may be incorrect.
+ */
+static void
+xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   _mesa_ResizeBuffersMESA();
+}
+
+
+/**
  * Initialize the device driver function table with the functions
  * we implement in this driver.
  */
@@ -1222,6 +1240,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Enable = enable;
    driver->Clear = clear_buffers;
    driver->ResizeBuffers = xmesa_resize_buffers;
+   driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;
    if (xmvisual->undithered_pf == PF_8R8G8B &&

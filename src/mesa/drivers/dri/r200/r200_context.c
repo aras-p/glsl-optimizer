@@ -624,11 +624,6 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 			   (GLframebuffer *) driDrawPriv->driverPrivate,
 			   (GLframebuffer *) driReadPriv->driverPrivate );
 
-      if ( !newCtx->glCtx->Viewport.Width ) {
-	 _mesa_set_viewport( newCtx->glCtx, 0, 0,
-			     driDrawPriv->w, driDrawPriv->h );
-      }
-
       if (newCtx->vb.enabled)
 	 r200VtxfmtMakeCurrent( newCtx->glCtx );
 

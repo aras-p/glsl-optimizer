@@ -1869,6 +1869,8 @@ struct gl_frame_buffer
 
    GLuint Width, Height;	/**< size of frame buffer in pixels */
 
+   GLboolean Initialized;
+
    GLboolean UseSoftwareDepthBuffer;
    GLboolean UseSoftwareAccumBuffer;
    GLboolean UseSoftwareStencilBuffer;

@@ -530,10 +530,6 @@ GLboolean i830MakeCurrent(__DRIcontextPrivate *driContextPriv,
       _mesa_make_current2(imesa->glCtx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate);
-
-      if (!imesa->glCtx->Viewport.Width)
-	 _mesa_set_viewport(imesa->glCtx, 0, 0,
-			    driDrawPriv->w, driDrawPriv->h);
    } else {
       _mesa_make_current(0,0);
    }

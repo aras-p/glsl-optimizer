@@ -27,6 +27,7 @@
 
 #include "gamma_context.h"
 #include "gamma_macros.h"
+#include "buffers.h"
 #include "macros.h"
 #include "glint_dri.h"
 #include "colormac.h"
@@ -1098,6 +1099,8 @@ void gammaUpdateWindow( GLcontext *ctx )
 static void gammaDDViewport( GLcontext *ctx, GLint x, GLint y,
 			    GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    gammaUpdateWindow( ctx );
 }
 

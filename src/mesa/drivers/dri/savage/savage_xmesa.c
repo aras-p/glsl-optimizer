@@ -676,10 +676,6 @@ savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
                           (GLframebuffer *) driReadPriv->driverPrivate);
       
       savageXMesaWindowMoved( imesa );
-      
-      if (!imesa->glCtx->Viewport.Width)
-	 _mesa_set_viewport(imesa->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
    }
    else 
    {

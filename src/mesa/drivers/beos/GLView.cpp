@@ -153,6 +153,7 @@ private:
                              GLuint *height);
    static void		Error(GLcontext *ctx);
    static const GLubyte *	GetString(GLcontext *ctx, GLenum name);
+   static void          Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
    // Front-buffer functions
    static void 		WriteRGBASpanFront(const GLcontext *ctx, GLuint n,
@@ -317,6 +318,7 @@ BGLView::BGLView(BRect rect, char *name,
 	functions.ClearIndex 	= md->ClearIndex;
 	functions.ClearColor 	= md->ClearColor;
 	functions.Error			= md->Error;
+        functions.Viewport      = md->Viewport;
 
 	// create core context
 	GLcontext *ctx = _mesa_create_context(visual, NULL, &functions, md);
@@ -1025,6 +1027,13 @@ void MesaDriver::GetBufferSize(GLframebuffer * framebuffer, GLuint *width,
 
    md->m_width = *width;
    md->m_height = *height;
+}
+
+
+void MesaDriver::Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   /* poll for window size change and realloc software Z/stencil/etc if needed */
+   _mesa_ResizeBuffersMESA();
 }
 
 

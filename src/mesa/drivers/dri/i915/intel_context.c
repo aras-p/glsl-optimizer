@@ -534,9 +534,6 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
       _mesa_make_current2(&intel->ctx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate);
-
-      if (!intel->ctx.Viewport.Width)
-	 _mesa_set_viewport(&intel->ctx, 0, 0, driDrawPriv->w, driDrawPriv->h);
    } else {
       _mesa_make_current(0,0);
    }

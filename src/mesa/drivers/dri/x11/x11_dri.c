@@ -409,11 +409,6 @@ x11MakeCurrent(__DRIcontextPrivate *driContextPriv,
       _mesa_make_current2(newFbCtx->glCtx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate);
-
-      if (!newFbCtx->glCtx->Viewport.Width) {
-	 _mesa_set_viewport(newFbCtx->glCtx, 0, 0,
-			    driDrawPriv->w, driDrawPriv->h);
-      }
    } else {
       _mesa_make_current(0, 0);
    }

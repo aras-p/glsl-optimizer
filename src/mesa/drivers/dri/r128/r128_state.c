@@ -41,6 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_tex.h"
 
 #include "context.h"
+#include "buffers.h"
 #include "enums.h"
 #include "colormac.h"
 #include "swrast/swrast.h"
@@ -664,6 +665,8 @@ static void r128Viewport( GLcontext *ctx,
 			  GLint x, GLint y,
 			  GLsizei width, GLsizei height )
 {
+   /* update size of Mesa/software ancillary buffers */
+   _mesa_ResizeBuffersMESA();
    r128CalcViewport( ctx );
 }
 

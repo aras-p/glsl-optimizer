@@ -312,11 +312,6 @@ mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
 
 
       newMach64Ctx->new_state |=  MACH64_NEW_CLIP;
-
-      if ( !newMach64Ctx->glCtx->Viewport.Width ) {
-	 _mesa_set_viewport(newMach64Ctx->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
-      }
    } else {
       _mesa_make_current( 0, 0 );
    }

@@ -666,10 +666,6 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
       _mesa_make_current2( newCtx,
                            (GLframebuffer *) driDrawPriv->driverPrivate,
                            (GLframebuffer *) driReadPriv->driverPrivate );
-
-      if ( !newCtx->Viewport.Width ) {
-	 _mesa_set_viewport( newCtx, 0, 0, driDrawPriv->w, driDrawPriv->h );
-      }
    } else {
       _mesa_make_current( 0, 0 );
    }

@@ -494,12 +494,6 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 			    (GLframebuffer *) driDrawPriv->driverPrivate, 
 			    (GLframebuffer *) driReadPriv->driverPrivate);
 
-		if (!fmesa->glCtx->Viewport.Width)
-			_mesa_set_viewport(fmesa->glCtx,
-					   0, 0,
-					   driDrawPriv->w, 
-					   driDrawPriv->h);
-		
 		first_time = 0;
 		if (fmesa->wid == ~0) {
 			first_time = 1;

@@ -802,11 +802,6 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       _mesa_make_current2(mmesa->glCtx,
                           (GLframebuffer *) driDrawPriv->driverPrivate,
                           (GLframebuffer *) driReadPriv->driverPrivate);
-
-      if (!mmesa->glCtx->Viewport.Width)
-	 _mesa_set_viewport(mmesa->glCtx, 0, 0,
-                            driDrawPriv->w, driDrawPriv->h);
-
    }
    else {
       _mesa_make_current(NULL, NULL);
