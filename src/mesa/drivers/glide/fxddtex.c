@@ -70,7 +70,7 @@ fxPrintTextureData(tfxTexInfo * ti)
       fprintf(stderr, "\tMem1: %x-%x\n", (unsigned) ti->tm[1]->startAddr,
 	      (unsigned) ti->tm[1]->endAddr);
    fprintf(stderr, "\tMipmaps: %d-%d\n", ti->minLevel, ti->maxLevel);
-   fprintf(stderr, "\tFilters: min %d min %d\n",
+   fprintf(stderr, "\tFilters: min %d max %d\n",
 	   (int) ti->minFilt, (int) ti->maxFilt);
    fprintf(stderr, "\tClamps: s %d t %d\n", (int) ti->sClamp,
 	   (int) ti->tClamp);
@@ -219,42 +219,52 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
 	 ti->LODblend = FXFALSE;
 	 break;
       case GL_NEAREST_MIPMAP_LINEAR:
-        /* ZZZ: HACK ALERT! disable LODBlend, because we can't implement
-                on Napalm. Ohwell, until at least I decide what to do...
-                trilinear is bugged! mipmap blending produce
-                incorrect filtered colors for the smallest mipmap levels. */
-#if 0
-	 if (fxMesa->haveTwoTMUs) {
-	    ti->mmMode = GR_MIPMAP_NEAREST;
-	    ti->LODblend = FXTRUE;
-	 }
-	 else {
-	    ti->mmMode = GR_MIPMAP_NEAREST_DITHER;
-	    ti->LODblend = FXFALSE;
-	 }
-	 ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
-	 break; /* ZZZ: we may have to fall through here for V3 */
-#endif
+         /* [koolsmoky]
+          * trilinear is bugged! mipmap blending produce
+          * incorrect filtered colors for the smallest mipmap levels.
+          * [dBorca]
+          * currently Napalm can't do single-pass trilinear,
+          * because the way its combiners are set. So we fall back
+          * to GL_NEAREST_MIPMAP_NEAREST. We'll let true trilinear
+          * enabled for V2, V3. If user shoots foot, not our problem!
+          */
+         if (!fxMesa->HaveCmbExt) {
+	    if (fxMesa->haveTwoTMUs) {
+	       ti->mmMode = GR_MIPMAP_NEAREST;
+	       ti->LODblend = FXTRUE;
+            } else {
+	       ti->mmMode = GR_MIPMAP_NEAREST_DITHER;
+	       ti->LODblend = FXFALSE;
+            }
+	    ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
+	    break;
+         }
       case GL_NEAREST_MIPMAP_NEAREST:
 	 ti->mmMode = GR_MIPMAP_NEAREST;
 	 ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
 	 ti->LODblend = FXFALSE;
 	 break;
       case GL_LINEAR_MIPMAP_LINEAR:
-        /* ZZZ: HACK ALERT! trilinear is bugged! mipmap blending produce
-                incorrect filtered colors for the smallest mipmap levels. */
-#if 0
-	 if (fxMesa->haveTwoTMUs) {
-	    ti->mmMode = GR_MIPMAP_NEAREST;
-	    ti->LODblend = FXTRUE;
-	 }
-	 else {
-	    ti->mmMode = GR_MIPMAP_NEAREST_DITHER;
-	    ti->LODblend = FXFALSE;
-	 }
-	 ti->minFilt = GR_TEXTUREFILTER_BILINEAR;
-	 break; /* ZZZ: we may have to fall through here for V3 */
-#endif
+         /* [koolsmoky]
+          * trilinear is bugged! mipmap blending produce
+          * incorrect filtered colors for the smallest mipmap levels.
+          * [dBorca]
+          * currently Napalm can't do single-pass trilinear,
+          * because the way its combiners are set. So we fall back
+          * to GL_LINEAR_MIPMAP_NEAREST. We'll let true trilinear
+          * enabled for V2, V3. If user shoots foot, not our problem!
+          */
+         if (!fxMesa->HaveCmbExt) {
+            if (fxMesa->haveTwoTMUs) {
+               ti->mmMode = GR_MIPMAP_NEAREST;
+               ti->LODblend = FXTRUE;
+            } else {
+               ti->mmMode = GR_MIPMAP_NEAREST_DITHER;
+               ti->LODblend = FXFALSE;
+            }
+            ti->minFilt = GR_TEXTUREFILTER_BILINEAR;
+            break;
+         }
       case GL_LINEAR_MIPMAP_NEAREST:
 	 ti->mmMode = GR_MIPMAP_NEAREST;
 	 ti->minFilt = GR_TEXTUREFILTER_BILINEAR;
@@ -545,6 +555,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
    l = MAX2(logw, logh);
    aspectratio = logw - logh;
    ws = hs = 1;
+   s = t = 256.0f;
 
    /* hardware only allows a maximum aspect ratio of 8x1, so handle
     * |aspectratio| > 3 by scaling the image and using an 8x1 aspect
@@ -552,45 +563,33 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
     */
    switch (aspectratio) {
    case 0:
-      s = 256.0f;
-      t = 256.0f;
       break;
    case 1:
-      s = 256.0f;
       t = 128.0f;
       break;
    case 2:
-      s = 256.0f;
       t = 64.0f;
       break;
    case 3:
-      s = 256.0f;
       t = 32.0f;
       break;
    case -1:
       s = 128.0f;
-      t = 256.0f;
       break;
    case -2:
       s = 64.0f;
-      t = 256.0f;
       break;
    case -3:
       s = 32.0f;
-      t = 256.0f;
       break;
    default:
       if (aspectratio > 3) {
-         s = 256.0f;
          t = 32.0f;
-         ws = 1;
          hs = 1 << (aspectratio - 3);
          aspectratio = GR_ASPECT_LOG2_8x1;
       } else /*if (aspectratio < -3)*/ {
          s = 32.0f;
-         t = 256.0f;
          ws = 1 << (-aspectratio - 3);
-         hs = 1;
          aspectratio = GR_ASPECT_LOG2_1x8;
       }
    }
@@ -645,6 +644,9 @@ fxIsTexSupported(GLenum target, GLint internalFormat,
  * may get defined in texutil.c) but we have to account for scaled texture
  * images on tdfx hardware (the 8:1 aspect ratio limit).
  * Hence, we need special functions here.
+ *
+ * [dBorca]
+ * this better be right, if we will advertise GL_SGIS_generate_mipmap!
  */
 
 static void
