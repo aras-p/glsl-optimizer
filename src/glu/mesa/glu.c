@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.14 1999/09/17 12:21:53 brianp Exp $ */
+/* $Id: glu.c,v 1.15 1999/09/19 02:03:19 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.15  1999/09/19 02:03:19  tjump
+ * More Win32 build compliance fixups
+ *
  * Revision 1.14  1999/09/17 12:21:53  brianp
  * glGetProcAddressEXT changes to accomodate Win32 and non-Win32
  *
@@ -381,10 +384,8 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 #ifdef __cplusplus
    /* for BeOS R4.5 */
    void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))(...)
-#elif defined(__WIN32__)
-   gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName)
 #else
-   void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
+   void (GLAPIENTRY *gluGetProcAddressEXT(const GLubyte *procName))()
 #endif
 {
    struct proc {
@@ -412,11 +413,7 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 
    for (i = 0; procTable[i].address; i++) {
       if (strcmp((const char *) procName, procTable[i].name) == 0)
-#ifdef __WIN32__
-	 return (gluProcAddress) procTable[i].address;
-#else
-         return (void (*)()) procTable[i].address;
-#endif
+         return (void (GLAPIENTRY *)()) procTable[i].address;
    }
 
    return NULL;

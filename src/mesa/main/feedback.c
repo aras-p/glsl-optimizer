@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: feedback.c,v 1.3 1999/09/19 02:03:19 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "types.h"
+#include "triangle.h"
 #ifdef XFree86Server
 #include "GL/xf86glx.h"
 #endif
@@ -203,7 +204,7 @@ static void gl_do_feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
 void gl_feedback_triangle( GLcontext *ctx,
 			   GLuint v0, GLuint v1, GLuint v2, GLuint pv )
 {
-   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+   if (gl_cull_triangle( ctx, v0, v1, v2, 0 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
       
@@ -294,7 +295,7 @@ void gl_select_triangle( GLcontext *ctx,
 {
    struct vertex_buffer *VB = ctx->VB;
 
-   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+   if (gl_cull_triangle( ctx, v0, v1, v2, 0 )) {
       gl_update_hitflag( ctx, VB->Win.data[v0][3] / DEPTH_SCALE );
       gl_update_hitflag( ctx, VB->Win.data[v1][3] / DEPTH_SCALE );
       gl_update_hitflag( ctx, VB->Win.data[v2][3] / DEPTH_SCALE );
