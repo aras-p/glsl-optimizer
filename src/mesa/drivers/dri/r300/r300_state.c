@@ -417,9 +417,8 @@ static void r300UpdateCulling(GLcontext* ctx)
 		if (ctx->Polygon.FrontFace == GL_CW)
 			val |= R300_FRONT_FACE_CW;
 		else
-			val |= R300_FRONT_FACE_CCW;
+			val |= R300_FRONT_FACE_CCW;		
 	}
-
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
@@ -479,15 +478,8 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 	case GL_STENCIL_TEST:
 
-		{
-		static int stencil=1;
-		if(stencil){
-			fprintf(stderr, "%s:%s - do not know how to enable stencil. Help me !\n",
-				__FILE__, __FUNCTION__);
-			stencil=0;
-			}
-		}
-
+		WARN_ONCE("Do not know how to enable stencil. Help me !\n");
+		
 		if (r300->state.hw_stencil) {
 			//fprintf(stderr, "Stencil %s\n", state ? "enabled" : "disabled");
 			R300_STATECHANGE(r300, zs);
@@ -505,6 +497,14 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
+		break;
+	case GL_POLYGON_OFFSET_FILL:
+		R300_STATECHANGE(r300, unk42B4);
+		if (state) {
+			r300->hw.unk42B4.cmd[1] = (1<<1);
+		} else {
+			r300->hw.unk42B4.cmd[1] = 0;
+		}
 		break;
 	case GL_VERTEX_PROGRAM_ARB:
 		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
@@ -684,6 +684,9 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 		    return R300_ZS_DECR_WRAP;
 	case GL_INVERT:
 		    return R300_ZS_INVERT;
+	default:
+		WARN_ONCE("Do not know how to translate stencil op");
+		return R300_ZS_KEEP;
 	}
 }
 
@@ -803,6 +806,28 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 {
 	r300UpdateWindow(ctx);
 }
+
+/* =============================================================
+ * Polygon state
+ */
+
+static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLfloat constant = units * rmesa->state.depth.scale;
+
+/*    factor *= 2; */
+/*    constant *= 2; */
+
+/*    fprintf(stderr, "%s f:%f u:%f\n", __FUNCTION__, factor, constant); */
+
+	WARN_ONCE("ZBIAS registers locations might not be correct\n");
+
+	R200_STATECHANGE(rmesa, zbs);
+	rmesa->hw.zbs.cmd[R300_ZBS_FACTOR] = r300PackFloat32(factor);
+	rmesa->hw.zbs.cmd[R300_ZBS_CONSTANT] = r300PackFloat32(constant);
+}
+
 
 /* Routing and texture-related */
 
@@ -1637,8 +1662,10 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
+	#if 0
 	r300->hw.unk42B4.cmd[1] = 0x00000000;
-
+	#endif
+	
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
 
@@ -1836,4 +1863,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->Viewport = r300Viewport;
 	functions->DepthRange = r300DepthRange;
 	functions->PointSize = r300PointSize;
+	
+	
+	functions->PolygonOffset = r300PolygonOffset;
 }

@@ -301,6 +301,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* Initialize state atoms */
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
 		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmducs(R300_SE_VPORT_XSCALE, 6);
+	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
+		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmducs(R300_SE_ZBIAS_FACTOR, 2);
 	ALLOC_STATE( unk2080, always, 2, "unk2080", 0 );
 		r300->hw.unk2080.cmd[0] = cmducs(0x2080, 1);
 	ALLOC_STATE( vte, always, 3, "vte", 0 );
@@ -460,6 +462,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.atomlist.name = "atom-list";
 
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpt);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2080);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vte);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2134);

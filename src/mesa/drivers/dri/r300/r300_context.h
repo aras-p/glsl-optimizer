@@ -57,11 +57,11 @@ typedef struct r300_context *r300ContextPtr;
 /* Checkpoint.. for convenience */
 #define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
 #define WARN_ONCE(a)	{ \
-	static int warn=1; \
-	if(warn){ \
+	static int warn##__LINE__=1; \
+	if(warn##__LINE__){ \
 		fprintf(stderr, "%s:%s line %d ***WARN_ONCE*** " a, \
 			__FILE__, __FUNCTION__, __LINE__); \
-		warn=0;\
+		warn##__LINE__=0;\
 		} \
 	}
 
@@ -208,6 +208,11 @@ struct r300_state_atom {
 #define R300_VPT_ZSCALE		5
 #define R300_VPT_ZOFFSET	6
 #define R300_VPT_CMDSIZE	7
+
+#define R300_ZBS_CMD_0		0
+#define R300_ZBS_FACTOR		1
+#define R300_ZBS_CONSTANT	2
+#define R300_ZBS_CMDSIZE	3
 
 #define R300_VIR_CMD_0		0 /* vir is variable size (at least 1) */
 #define R300_VIR_CNTL_0		1
@@ -371,6 +376,7 @@ struct r300_hw_state {
 	int		max_state_size;	/* in dwords */
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
+	struct r300_state_atom zbs;	/* zbias (1DB0) */
 	struct r300_state_atom unk2080;	/* (2080) */
 	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */

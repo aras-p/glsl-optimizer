@@ -16,6 +16,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_SE_VPORT_ZSCALE                0x1DA8
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
+#define R300_SE_ZBIAS_FACTOR                0x1DB0
+#define R300_SE_ZBIAS_CONSTANT              0x1DB4
 
 /* This register is written directly and also starts data section in many 3d CP_PACKET3's */
 #define R300_VAP_VF_CNTL	0x2084
@@ -634,9 +636,9 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_TX_FORMAT_DXT3	    	    0x10
 #	define R300_TX_FORMAT_DXT5	    	    0x11
 #	define R300_TX_FORMAT_D3DMFT_CxV8U8	    0x12     /* no swizzle */
-#	define R300_TX_FORMA_A8R8G8B8	    	    0x13     /* no swizzle */
-#	define R300_TX_FORMA_B8G8_B8G8	    	    0x14     /* no swizzle */
-#	define R300_TX_FORMA_G8R8_G8B8	    	    0x15     /* no swizzle */
+#	define R300_TX_FORMAT_A8R8G8B8	    	    0x13     /* no swizzle */
+#	define R300_TX_FORMAT_B8G8_B8G8	    	    0x14     /* no swizzle */
+#	define R300_TX_FORMAT_G8R8_G8B8	    	    0x15     /* no swizzle */
 						  /* 0x16 - some 16 bit green format.. ?? */
 	/* gap */
 	/* Floating point formats */

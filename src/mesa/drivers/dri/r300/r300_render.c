@@ -208,18 +208,22 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    if(type<0)return;
    
    if(!VB->ObjPtr){
-   	fprintf(stderr, "FIXME: Dont know how to handle GL_ARB_vertex_buffer_object "
-			"correctly\n");
+   	WARN_ONCE("FIXME: Don't know how to handle GL_ARB_vertex_buffer_object correctly\n");
    	return;
    }
    /* A packet cannot have more than 16383 data words.. */
    if(((end-start)*4*rmesa->state.aos_count)>16380){
-   	fprintf(stderr, "%s:%s: Too many vertices to paint. Fix me !\n");
+   	WARN_ONCE("Too many vertices to paint. Fix me !\n");
 	return;   	
 	}
 
    //fprintf(stderr, "aos_count=%d start=%d end=%d\n", rmesa->state.aos_count, start, end);
-	
+
+   if(rmesa->state.aos_count==0){
+   	WARN_ONCE("Aeiee ! aos_count==0, while it shouldn't. Skipping rendering\n");
+	return;
+   	}
+   
    start_immediate_packet(end-start, type, 4*rmesa->state.aos_count);
 
 	for(i=start;i<end;i++){
@@ -622,7 +626,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
 	FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
 	//FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
-	if(ctx->Polygon.OffsetFill)WARN_ONCE("Polygon.OffsetFill not implemented, ignoring\n");
+	//if(ctx->Polygon.OffsetFill)WARN_ONCE("Polygon.OffsetFill not implemented, ignoring\n");
 	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH
 	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
