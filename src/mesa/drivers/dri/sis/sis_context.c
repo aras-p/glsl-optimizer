@@ -59,21 +59,6 @@ int GlobalCurrentHwcx = -1;
 int GlobalHwcxCountBase = 1;
 int GlobalCmdQueueLen = 0;
 
-#include "xmlpool.h"
-
-const char __driConfigOptions[] =
-DRI_CONF_BEGIN
-	DRI_CONF_SECTION_DEBUG
-		DRI_CONF_OPT_BEGIN(agp_disable,bool,false)
-		DRI_CONF_DESC(en,"Disable AGP vertex dispatch")
-		DRI_CONF_OPT_END
-		DRI_CONF_OPT_BEGIN(fallback_force,bool,false)
-		DRI_CONF_DESC(en,"Force software fallback")
-		DRI_CONF_OPT_END
-	DRI_CONF_SECTION_END
-DRI_CONF_END;
-const GLuint __driNConfigOptions = 2;
-
 static const char * const card_extensions[] =
 {
    "GL_ARB_multitexture",

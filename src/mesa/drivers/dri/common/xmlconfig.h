@@ -81,21 +81,20 @@ typedef struct driOptionCache {
    * The value is the same in the screen and all contexts. */
 } driOptionCache;
 
-/** \brief XML document describing available options
+/** \brief Parse XML option info from configOptions
  *
- * This must be defined in a driver-specific soure file. xmlpool.h
- * defines helper macros and common options. */
-extern const char __driConfigOptions[];
-/** \brief The number of options supported by a driver
+ * To be called in <driver>CreateScreen 
  *
- * This is used to choose an appropriate hash table size. So any value
- * larger than the actual number of options will work. */
-extern const GLuint __driNConfigOptions;
-
-/** \brief Parse XML option info from __driConfigOptions
+ * \param info    pointer to a driOptionCache that will store the option info
+ * \param configOptions   XML document describing available configuration opts
+ * \param nConfigOptions  number of options, used to choose a hash table size
  *
- * To be called in <driver>CreateScreen */
-void driParseOptionInfo (driOptionCache *info);
+ * For the option information to be available to external configuration tools
+ * it must be a public symbol __driConfigOptions. It is also passed as a
+ * parameter to driParseOptionInfo in order to avoid driver-independent code
+ * depending on symbols in driver-specific code. */
+void driParseOptionInfo (driOptionCache *info,
+			 const char *configOptions, GLuint nConfigOptions);
 /** \brief Initialize option cache from info and parse configuration files
  *
  * To be called in <driver>CreateContext. screenNum and driverName select

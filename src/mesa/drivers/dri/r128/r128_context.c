@@ -59,30 +59,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "utils.h"
 #include "texmem.h"
-
-/* R128 configuration
- */
-#include "xmlpool.h"
-
-const char __driConfigOptions[] =
-DRI_CONF_BEGIN
-    DRI_CONF_SECTION_PERFORMANCE
-        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
-    DRI_CONF_SECTION_END
-    DRI_CONF_SECTION_QUALITY
-        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
-    DRI_CONF_SECTION_END
-#if ENABLE_PERF_BOXES
-    DRI_CONF_SECTION_DEBUG
-        DRI_CONF_PERFORMANCE_BOXES(false)
-    DRI_CONF_SECTION_END
-#endif
-DRI_CONF_END;
-#if ENABLE_PERF_BOXES
-const GLuint __driNConfigOptions = 3;
-#else
-const GLuint __driNConfigOptions = 2;
-#endif
+#include "xmlpool.h" /* for symbolic values of enum-type options */
 
 #ifndef R128_DEBUG
 int R128_DEBUG = 0;

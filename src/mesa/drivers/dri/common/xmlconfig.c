@@ -504,16 +504,17 @@ static void optInfoEndElem (void *userData, const XML_Char *name) {
     }
 }
 
-void driParseOptionInfo (driOptionCache *info) {
+void driParseOptionInfo (driOptionCache *info,
+			 const char *configOptions, GLuint nConfigOptions) {
     XML_Parser p;
     int status;
     struct OptInfoData userData;
     struct OptInfoData *data = &userData;
-    GLuint nOptions;
+    GLuint realNoptions;
 
   /* determine hash table size and allocate memory */
     GLuint size, log2size;
-    for (size = 1, log2size = 0; size < __driNConfigOptions*3/2;
+    for (size = 1, log2size = 0; size < nConfigOptions*3/2;
 	 size <<= 1, ++log2size);
     info->tableSize = log2size;
     info->info = CALLOC (size * sizeof (driOptionInfo));
@@ -537,21 +538,21 @@ void driParseOptionInfo (driOptionCache *info) {
     userData.inEnum = GL_FALSE;
     userData.curOption = -1;
 
-    status = XML_Parse (p, __driConfigOptions, strlen (__driConfigOptions), 1);
+    status = XML_Parse (p, configOptions, strlen (configOptions), 1);
     if (!status)
 	XML_FATAL ("%s.", XML_ErrorString(XML_GetErrorCode(p)));
 
     XML_ParserFree (p);
 
-  /* Check if the actual number of options matches __driNConfigOptions.
+  /* Check if the actual number of options matches nConfigOptions.
    * A mismatch is not fatal (a hash table overflow would be) but we
    * want the driver developer's attention anyway. */
-    nOptions = countOptions (info);
-    if (nOptions != __driNConfigOptions) {
+    realNoptions = countOptions (info);
+    if (realNoptions != nConfigOptions) {
 	fprintf (stderr,
-		 "Error: __driNConfigOptions (%u) does not match the actual number of options in\n"
+		 "Error: nConfigOptions (%u) does not match the actual number of options in\n"
 		 "       __driConfigOptions (%u).\n",
-		 __driNConfigOptions, nOptions);
+		 nConfigOptions, realNoptions);
     }
 }
 

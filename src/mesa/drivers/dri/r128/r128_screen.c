@@ -50,6 +50,30 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glxextensions.h"
 #endif
 
+/* R128 configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+    DRI_CONF_SECTION_END
+#if ENABLE_PERF_BOXES
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_PERFORMANCE_BOXES(false)
+    DRI_CONF_SECTION_END
+#endif
+DRI_CONF_END;
+#if ENABLE_PERF_BOXES
+static const GLuint __driNConfigOptions = 3;
+#else
+static const GLuint __driNConfigOptions = 2;
+#endif
+
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
  */
@@ -80,7 +104,8 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    if ( !r128Screen ) return NULL;
 
    /* parse information in __driConfigOptions */
-   driParseOptionInfo (&r128Screen->optionCache);
+   driParseOptionInfo (&r128Screen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
 
    /* This is first since which regions we map depends on whether or
     * not we are using a PCI card.

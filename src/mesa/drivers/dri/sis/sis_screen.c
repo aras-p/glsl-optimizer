@@ -39,6 +39,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_dri.h"
 #include "sis_lock.h"
 
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+	DRI_CONF_SECTION_DEBUG
+		DRI_CONF_OPT_BEGIN(agp_disable,bool,false)
+		DRI_CONF_DESC(en,"Disable AGP vertex dispatch")
+		DRI_CONF_OPT_END
+		DRI_CONF_OPT_BEGIN(fallback_force,bool,false)
+		DRI_CONF_DESC(en,"Force software fallback")
+		DRI_CONF_OPT_END
+	DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 2;
+
 /* Create the device specific screen private data struct.
  */
 static sisScreenPtr
@@ -86,7 +101,8 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    sisScreen->driScreen = sPriv;
 
    /* parse information in __driConfigOptions */
-   driParseOptionInfo(&sisScreen->optionCache);
+   driParseOptionInfo(&sisScreen->optionCache,
+		      __driConfigOptions, __driNConfigOptions);
 
    return sisScreen;
 }

@@ -73,7 +73,7 @@ DRI_CONF_BEGIN
         DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-const GLuint __driNConfigOptions = 3;
+static const GLuint __driNConfigOptions = 3;
 
 #ifndef MGA_DEBUG
 int MGA_DEBUG = 0;
@@ -241,7 +241,8 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->sarea_priv_offset = serverInfo->sarea_priv_offset;
 
    /* parse information in __driConfigOptions */
-   driParseOptionInfo (&mgaScreen->optionCache);
+   driParseOptionInfo (&mgaScreen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
 
    return GL_TRUE;
 }
