@@ -117,19 +117,21 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
    }
    /* XXX: Scissoring */
 
-   LOCK_HARDWARE();
-
    /* Mask out any non-existent buffers */
    if (ctx->Visual.depthBits == 0 || !ctx->Depth.Mask)
       mask &= ~DD_DEPTH_BIT;
    if (ctx->Visual.stencilBits == 0)
       mask &= ~DD_STENCIL_BIT;
 
-   /* The 3d clear code is use for masked clears because I don't know how to do
-    * masked clears with the 2d functions.  3d isn't used in general because
-    * it's slower, even in the case of clearing multiple buffers
+   LOCK_HARDWARE();
+
+   /* The 3d clear code is use for masked clears because apparently the SiS
+    * 300-series can't do write masks for 2d blits.  3d isn't used in general
+    * because it's slower, even in the case of clearing multiple buffers.
     */
-   if ((smesa->current.hwDstMask != 0xffffffff &&
+   /* XXX: Appears to be broken with stencil. */
+   if ((smesa->current.hwCapEnable2 & (MASK_AlphaMaskWriteEnable |
+      MASK_ColorMaskWriteEnable) &&
       (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0) ||
       (ctx->Stencil.WriteMask[0] < 0xff && (mask & DD_STENCIL_BIT) != 0) )
    {
@@ -214,7 +216,8 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
          (ctx->Stencil.Clear << 8) | 0xff;
       dwSten2 = SiS_SFAIL_REPLACE | SiS_SPASS_ZFAIL_REPLACE |
          SiS_SPASS_ZPASS_REPLACE;
-      dwEnable1 = MASK_ZWriteEnable | MASK_StencilTestEnable;
+      dwEnable1 = MASK_ZWriteEnable | MASK_StencilWriteEnable |
+	MASK_StencilTestEnable;
       dwEnable2 |= MASK_ZMaskWriteEnable;
       dwDepthMask |= ctx->Stencil.WriteMask[0] << 24;
    } else if (bClrDepth) {
