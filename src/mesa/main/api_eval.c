@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -209,10 +208,13 @@ static void do_EvalCoord2f( GLcontext* ctx, GLfloat u, GLfloat v )
 
          CROSS_PROD(normal, du, dv);
          NORMALIZE_3FV(normal);
+	 glNormal3fv( normal );
+	 glVertex4fv( vertex );
       }
       else {
          _math_horner_bezier_surf(map->Points, vertex, uu, vv, 4,
                             map->Uorder, map->Vorder);
+	 glVertex4fv( vertex );
       }
    }
    else if (ctx->Eval.Map2Vertex3) {
