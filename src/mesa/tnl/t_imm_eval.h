@@ -1,4 +1,3 @@
-/* $Id: t_imm_eval.h,v 1.3 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,5 +1,3 @@
-/* $Id: texobj.c,v 1.68 2003/04/01 18:10:10 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1

@@ -1,4 +1,3 @@
-/* $Id: s_lines.h,v 1.5 2001/03/12 00:48:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,5 +1,3 @@
-/* $Id: ggimesa.h,v 1.4 2002/06/10 15:16:44 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library GGI bindings (GGIGL [giggle])
  * Version:  4.0

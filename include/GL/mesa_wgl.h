@@ -1,5 +1,3 @@
-/* $Id: mesa_wgl.h,v 1.6 2001/05/07 13:58:00 gareth Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.1

@@ -1,4 +1,3 @@
-/* $Id: texobj.c,v 1.7 2003/04/21 14:50:12 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.

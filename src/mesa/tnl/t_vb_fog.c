@@ -1,4 +1,3 @@
-/* $Id: t_vb_fog.c,v 1.20 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

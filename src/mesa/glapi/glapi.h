@@ -1,4 +1,3 @@
-/* $Id: glapi.h,v 1.20 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

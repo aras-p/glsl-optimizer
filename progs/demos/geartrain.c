@@ -1,4 +1,3 @@
-/* $Id: geartrain.c,v 1.8 2001/10/04 19:14:26 kschultz Exp $ */
 
 /*
  * GearTrain Simulator * Version:  1.00

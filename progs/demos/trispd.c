@@ -1,4 +1,3 @@
-/* $Id: trispd.c,v 1.4 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure triangle strip rendering speed.

@@ -1,4 +1,3 @@
-/* $Id: extensions.h,v 1.15 2002/06/29 20:03:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: m_debug_norm.c,v 1.13 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

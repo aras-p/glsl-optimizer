@@ -1,5 +1,3 @@
-/* $Id: glu_mangle.h,v 1.3 2001/09/20 22:18:47 kschultz Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.0
@@ -20,25 +18,6 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-/*
- * $Log: glu_mangle.h,v $
- * Revision 1.3  2001/09/20 22:18:47  kschultz
- * add mangling for new entry points
- *
- * Revision 1.2  1999/09/10 02:08:19  gareth
- * Added GLU 1.3 tessellation (except winding rule code).
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1999/06/21 22:00:42  brianp
- * added #ifndef GLU_MANGLE_H stuff
- *
- * Revision 3.0  1998/02/20 05:04:45  brianp
- * initial rev
- *
- */
 
 #ifndef GLU_MANGLE_H
 #define GLU_MANGLE_H

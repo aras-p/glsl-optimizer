@@ -1,5 +1,3 @@
-/* $Id: foomesa.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.0
@@ -18,17 +16,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-
-/*
- * $Log: foomesa.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 1.1  1998/06/02 01:34:18  brianp
- * Initial revision
- *
  */
 
 

@@ -1,4 +1,3 @@
-/* $Id: buffers.h,v 1.5 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

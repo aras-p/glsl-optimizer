@@ -1,4 +1,3 @@
-/* $Id: state.h,v 1.8 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

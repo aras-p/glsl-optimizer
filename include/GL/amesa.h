@@ -1,5 +1,3 @@
-/* $Id: amesa.h,v 1.2 2000/02/09 19:03:28 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

@@ -1,4 +1,3 @@
-/* $Id: s_nvfragprog.h,v 1.2 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

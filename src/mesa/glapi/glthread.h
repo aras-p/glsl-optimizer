@@ -1,4 +1,3 @@
-/* $Id: glthread.h,v 1.12 2002/12/12 13:03:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

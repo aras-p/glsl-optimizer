@@ -1,4 +1,3 @@
-/* $Id: paltex.c,v 1.9 2002/07/22 13:45:31 brianp Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.

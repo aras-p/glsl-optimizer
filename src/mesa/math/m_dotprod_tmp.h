@@ -1,4 +1,3 @@
-/* $Id: m_dotprod_tmp.h,v 1.6 2001/03/30 14:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library

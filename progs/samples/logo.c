@@ -1,4 +1,3 @@
-/* $Id: logo.c,v 1.3 2002/11/05 20:59:16 brianp Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993 Silicon Graphics, Inc.

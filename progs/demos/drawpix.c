@@ -1,4 +1,3 @@
-/* $Id: drawpix.c,v 1.8 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * glDrawPixels demo/test/benchmark

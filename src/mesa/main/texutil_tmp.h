@@ -1,4 +1,3 @@
-/* $Id: texutil_tmp.h,v 1.13 2003/04/21 14:52:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

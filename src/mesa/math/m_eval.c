@@ -1,4 +1,3 @@
-/* $Id: m_eval.c,v 1.6 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library

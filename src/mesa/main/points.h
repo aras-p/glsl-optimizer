@@ -1,4 +1,3 @@
-/* $Id: points.h,v 1.7 2002/05/27 17:04:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

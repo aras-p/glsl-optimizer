@@ -1,4 +1,3 @@
-/* $Id: quadric.c,v 1.9 2001/01/15 20:04:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

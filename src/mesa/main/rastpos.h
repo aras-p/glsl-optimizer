@@ -1,4 +1,3 @@
-/* $Id: rastpos.h,v 1.6 2002/05/27 17:03:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

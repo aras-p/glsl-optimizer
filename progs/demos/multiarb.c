@@ -1,4 +1,3 @@
-/* $Id: multiarb.c,v 1.12 2003/05/30 15:30:17 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo

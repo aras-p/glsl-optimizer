@@ -1,4 +1,3 @@
-/* $Id: bufferobj.h,v 1.2 2003/05/10 04:35:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

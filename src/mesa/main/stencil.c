@@ -1,4 +1,3 @@
-/* $Id: stencil.c,v 1.30 2003/03/17 21:38:47 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

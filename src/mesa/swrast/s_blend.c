@@ -1,4 +1,3 @@
-/* $Id: s_blend.c,v 1.26 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

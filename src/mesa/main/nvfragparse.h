@@ -1,4 +1,3 @@
-/* $Id: nvfragparse.h,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: texdown.c,v 1.4 2001/02/07 03:04:58 gareth Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.

@@ -1,4 +1,3 @@
-/* $Id: light.h,v 1.15 2002/10/25 21:06:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

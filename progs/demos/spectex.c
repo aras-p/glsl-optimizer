@@ -1,4 +1,3 @@
-/* $Id: spectex.c,v 1.2 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * GLUT demonstration of texturing with specular highlights.

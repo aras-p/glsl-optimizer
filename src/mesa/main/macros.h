@@ -1,4 +1,3 @@
-/* $Id: macros.h,v 1.32 2003/03/04 16:33:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

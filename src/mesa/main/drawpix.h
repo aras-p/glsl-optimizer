@@ -1,4 +1,3 @@
-/* $Id: drawpix.h,v 1.7 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: xm_line.c,v 1.24 2003/04/01 17:28:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: tess.h,v 1.18 2001/03/20 17:56:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

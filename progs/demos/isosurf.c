@@ -1,4 +1,3 @@
-/* $Id: isosurf.c,v 1.15 2002/10/18 17:47:35 kschultz Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.

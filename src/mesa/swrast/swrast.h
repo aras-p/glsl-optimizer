@@ -1,4 +1,3 @@
-/* $Id: swrast.h,v 1.35 2003/02/23 04:10:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

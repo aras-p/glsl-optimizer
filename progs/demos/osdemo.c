@@ -1,4 +1,3 @@
-/* $Id: osdemo.c,v 1.10 2003/03/03 03:14:25 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering

@@ -1,4 +1,3 @@
-/* $Id: gamma.c,v 1.3 2002/04/22 16:03:37 brianp Exp $ */
 
 /* Draw test patterns to help determine correct gamma value for a display.
    When the intensities of the inner squares nearly match the intensities

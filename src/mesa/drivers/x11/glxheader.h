@@ -1,4 +1,3 @@
-/* $Id: glxheader.h,v 1.5 2002/10/25 00:01:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

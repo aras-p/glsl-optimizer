@@ -5,8 +5,8 @@
 *                   Copyright (C) 1996 SciTech Software.
 *                           All rights reserved.
 *
-* Filename:     $Workfile:   mglmesa.h  $
-* Version:      $Revision: 1.1 $
+* Filename:     mglmesa.h
+* Version:      Revision: 1.1.1.1
 *
 * Language:     ANSI C
 * Environment:  Any
@@ -34,7 +34,6 @@
 * License along with this library; if not, write to the Free
 * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
-* $Date: 1999/08/19 00:55:40 $ $Author: jtg $
 *
 ****************************************************************************/
 

@@ -1,5 +1,3 @@
-/* $Id: glx_mangle.h,v 1.2 2001/11/09 22:01:02 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.1

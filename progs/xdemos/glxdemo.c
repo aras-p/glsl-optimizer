@@ -1,4 +1,3 @@
-/* $Id: glxdemo.c,v 1.2 2002/04/02 23:53:56 brianp Exp $ */
 
 
 /*
@@ -7,21 +6,6 @@
  *
  * Brian Paul
  */
-
-
-/*
- * $Log: glxdemo.c,v $
- * Revision 1.2  2002/04/02 23:53:56  brianp
- * added an error check
- *
- * Revision 1.1.1.1  1999/08/19 00:55:43  jtg
- * Imported sources
- *
- * Revision 3.0  1998/02/21 02:16:54  brianp
- * initial rev
- *
- */
-
 
 #include <GL/gl.h>
 #include <GL/glx.h>

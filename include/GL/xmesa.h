@@ -1,5 +1,3 @@
-/* $Id: xmesa.h,v 1.14 2002/10/05 03:03:37 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.1

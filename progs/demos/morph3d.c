@@ -1,27 +1,3 @@
-/* $Id: morph3d.c,v 1.4 2000/06/27 17:04:43 brianp Exp $ */
-
-/*
- * $Log: morph3d.c,v $
- * Revision 1.4  2000/06/27 17:04:43  brianp
- * fixed compiler warnings
- *
- * Revision 1.3  1999/12/15 13:00:45  brianp
- * moved #define to column 0
- *
- * Revision 1.2  1999/09/17 12:27:01  brianp
- * silenced some warnings
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.1  1998/06/29 02:37:30  brianp
- * minor changes for Windows (Ted Jump)
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
 
 /*-
  * morph3d.c - Shows 3D morphing objects

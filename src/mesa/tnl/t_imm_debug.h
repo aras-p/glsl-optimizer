@@ -1,4 +1,3 @@
-/* $Id: t_imm_debug.h,v 1.3 2002/10/29 20:29:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

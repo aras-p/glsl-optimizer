@@ -1,4 +1,3 @@
-/* $Id: vtest.c,v 1.1 1999/08/19 00:55:43 jtg Exp $ */
 
 /*
  * Test SVGA/Mesa interface in 32K color mode.

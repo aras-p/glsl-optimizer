@@ -1,4 +1,3 @@
-/* $Id: xfont.c,v 1.3 1999/11/05 08:12:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

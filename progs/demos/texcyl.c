@@ -1,4 +1,3 @@
-/* $Id: texcyl.c,v 1.6 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Textured cylinder demo: lighting, texturing, reflection mapping.

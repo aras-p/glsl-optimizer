@@ -1,4 +1,3 @@
-/* $Id: pbdemo.c,v 1.1 2002/10/05 18:30:13 brianp Exp $ */
 
 /*
  * This program demonstrates how to do "off-screen" rendering using

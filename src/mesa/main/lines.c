@@ -1,4 +1,3 @@
-/* $Id: lines.c,v 1.31 2003/03/01 01:50:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

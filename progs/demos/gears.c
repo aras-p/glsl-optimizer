@@ -1,4 +1,3 @@
-/* $Id: gears.c,v 1.6 2000/04/06 02:22:59 brianp Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.

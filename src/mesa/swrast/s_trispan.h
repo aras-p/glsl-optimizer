@@ -1,4 +1,3 @@
-/* $Id: s_trispan.h,v 1.4 2001/12/17 04:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

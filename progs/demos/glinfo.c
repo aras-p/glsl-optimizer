@@ -1,4 +1,3 @@
-/* $Id: glinfo.c,v 1.2 2002/04/22 16:03:37 brianp Exp $ */
 
 /*
  * Print GL, GLU and GLUT version and extension info

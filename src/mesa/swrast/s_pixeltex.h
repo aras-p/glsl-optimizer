@@ -1,4 +1,3 @@
-/* $Id: s_pixeltex.h,v 1.5 2002/01/27 18:32:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: ss_tritmp.h,v 1.20 2002/11/13 15:04:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

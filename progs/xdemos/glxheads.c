@@ -1,4 +1,3 @@
-/* $Id: glxheads.c,v 1.4 2003/04/21 14:51:16 brianp Exp $ */
 
 /*
  * Exercise multiple GLX connections on multiple X displays.

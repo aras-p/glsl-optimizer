@@ -1,4 +1,3 @@
-/* $Id: polytest.c,v 1.4 2000/11/10 17:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

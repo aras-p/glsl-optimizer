@@ -1,4 +1,3 @@
-/* $Id: clearspd.c,v 1.5 2002/10/31 12:38:32 keithw Exp $ */
 
 /*
  * Simple GLUT program to measure glClear() and glutSwapBuffers() speed.

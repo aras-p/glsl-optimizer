@@ -1,4 +1,3 @@
-/* $Id: s_zoom.h,v 1.9 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

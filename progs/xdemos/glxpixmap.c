@@ -1,4 +1,3 @@
-/* $Id: glxpixmap.c,v 1.3 2002/07/12 15:54:02 brianp Exp $ */
 
 
 /*

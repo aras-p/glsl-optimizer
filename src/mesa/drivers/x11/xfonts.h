@@ -1,4 +1,3 @@
-/* $Id: xfonts.h,v 1.3 2001/01/08 04:06:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

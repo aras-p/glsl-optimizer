@@ -1,4 +1,3 @@
-/* $Id: s_buffers.c,v 1.17 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

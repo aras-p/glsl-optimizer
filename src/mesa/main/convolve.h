@@ -1,4 +1,3 @@
-/* $Id: convolve.h,v 1.4 2001/02/06 17:22:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

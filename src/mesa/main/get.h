@@ -1,4 +1,3 @@
-/* $Id: get.h,v 1.5 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library

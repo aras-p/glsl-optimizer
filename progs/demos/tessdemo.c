@@ -1,4 +1,3 @@
-/* $Id: tessdemo.c,v 1.13 2002/10/18 17:47:36 kschultz Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.

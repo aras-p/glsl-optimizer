@@ -1,5 +1,3 @@
-/* $Id: xdemo.c,v 1.2 2000/04/05 22:09:58 brianp Exp $ */
-
 
 /*
  * Very simple demo of how to use the Mesa/X11 interface instead of the
@@ -10,22 +8,6 @@
  *
  * Brian Paul
  */
-
-
-/*
- * $Log: xdemo.c,v $
- * Revision 1.2  2000/04/05 22:09:58  brianp
- * new arguments to XMesaCreateVisual()
- *
- * Revision 1.1.1.1  1999/08/19 00:55:43  jtg
- * Imported sources
- *
- * Revision 3.0  1998/02/21 02:16:54  brianp
- * initial rev
- *
- */
-
-
 
 #include <stdio.h>
 #include <stdlib.h>

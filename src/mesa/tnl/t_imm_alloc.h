@@ -1,4 +1,3 @@
-/* $Id: t_imm_alloc.h,v 1.3 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

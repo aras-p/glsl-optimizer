@@ -1,20 +1,6 @@
-# $Id: Makefile.BeOS-R4,v 1.2 1999/09/17 00:08:31 brianp Exp $
 
 # Makefile for OpenGL Programming Guide programs for BeOS R4
 # This file is in the public domain.
-
-
-# $Log: Makefile.BeOS-R4,v $
-# Revision 1.2  1999/09/17 00:08:31  brianp
-# link with -lGLU -lGL instead of -lMesaGLU -lMesaGL
-#
-# Revision 1.1.1.1  1999/08/19 00:55:40  jtg
-# Imported sources
-#
-# Revision 1.1  1999/02/25 02:13:06  brianp
-# initial check-in
-#
-
 
 ##### MACROS #####
 

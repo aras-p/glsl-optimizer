@@ -1,4 +1,3 @@
-/* $Id: shape.c,v 1.3 2000/06/27 15:34:35 brianp Exp $ */
 
 /*
  * Example of using the X "shape" extension with OpenGL:  render a spinning

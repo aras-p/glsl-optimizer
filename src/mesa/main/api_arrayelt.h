@@ -1,4 +1,3 @@
-/* $Id: api_arrayelt.h,v 1.1 2001/06/01 22:22:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

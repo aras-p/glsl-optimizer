@@ -1,4 +1,3 @@
-/* $Id: attrib.h,v 1.6 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library

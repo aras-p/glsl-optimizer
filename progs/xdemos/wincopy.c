@@ -1,4 +1,3 @@
-/* $Id: wincopy.c,v 1.1 1999/11/25 17:41:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

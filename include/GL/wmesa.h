@@ -1,5 +1,3 @@
-/* $Id: wmesa.h,v 1.2 2002/04/23 18:23:32 kschultz Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.0
@@ -18,32 +16,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- */
-
-
-/*
- * $Log: wmesa.h,v $
- * Revision 1.2  2002/04/23 18:23:32  kschultz
- * Fix up alpha buffer handling for Windows.
- * - add two new Pixel Format Descriptors that do not have alpha bits to
- * mirror the two that do.
- * - add logic to wglChoosePixelFormat to match PFD's with respect to alpha.
- * - Create/clear software alpha buffer as required.
- * Now a wgl or GLUT program can control the creation of a software alpha
- * buffer via the PFD or GLUT parms, respectively.
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.2  1999/01/03 02:54:45  brianp
- * updated per Ted Jump
- *
- * Revision 3.1  1998/12/01 02:34:27  brianp
- * applied Mark Kilgard's patches from November 30, 1998
- *
- * Revision 3.0  1998/02/20 05:06:59  brianp
- * initial rev
  *
  */
 

@@ -1,4 +1,3 @@
-/* $Id: bounce.c,v 1.3 2000/08/16 20:36:34 brianp Exp $ */
 
 /*
  * Bouncing ball demo.

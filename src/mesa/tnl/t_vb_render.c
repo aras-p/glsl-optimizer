@@ -1,4 +1,3 @@
-/* $Id: t_vb_render.c,v 1.35 2003/04/08 02:27:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

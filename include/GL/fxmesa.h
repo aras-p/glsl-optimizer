@@ -1,5 +1,3 @@
-/* $Id: fxmesa.h,v 1.4 2001/09/23 16:06:13 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0

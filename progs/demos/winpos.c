@@ -1,4 +1,3 @@
-/* $Id: winpos.c,v 1.7 2003/02/27 19:43:02 kschultz Exp $ */
 
 /*
  * Example of how to use the GL_MESA_window_pos extension.

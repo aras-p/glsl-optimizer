@@ -1,4 +1,3 @@
-/* $Id: reflect.c,v 1.7 2001/04/25 15:51:32 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.

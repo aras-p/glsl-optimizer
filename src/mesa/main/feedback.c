@@ -1,4 +1,3 @@
-/* $Id: feedback.c,v 1.28 2003/03/01 01:50:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

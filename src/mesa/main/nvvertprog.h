@@ -1,4 +1,3 @@
-/* $Id: nvvertprog.h,v 1.2 2003/04/07 14:57:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

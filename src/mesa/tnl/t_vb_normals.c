@@ -1,4 +1,3 @@
-/* $Id: t_vb_normals.c,v 1.18 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

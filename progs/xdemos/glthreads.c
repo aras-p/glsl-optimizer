@@ -1,4 +1,3 @@
-/* $Id: glthreads.c,v 1.2 2002/03/08 19:44:28 brianp Exp $ */
 
 /*
  * Copyright (C) 2000  Brian Paul   All Rights Reserved.

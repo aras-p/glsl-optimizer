@@ -1,4 +1,3 @@
-/* $Id: vindex.c,v 1.1 1999/08/19 00:55:43 jtg Exp $ */
 
 /*
  * Test Linux 8-bit SVGA/Mesa color index mode

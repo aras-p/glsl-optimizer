@@ -1,4 +1,3 @@
-/* $Id: pbutil.c,v 1.1 2002/10/05 18:30:13 brianp Exp $ */
 
 /*
  * OpenGL pbuffers utility functions.

@@ -1,4 +1,3 @@
-/* $Id: texcompress.h,v 1.2 2002/10/18 17:41:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

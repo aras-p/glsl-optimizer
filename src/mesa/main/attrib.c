@@ -1,4 +1,3 @@
-/* $Id: attrib.c,v 1.78 2003/02/05 15:24:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

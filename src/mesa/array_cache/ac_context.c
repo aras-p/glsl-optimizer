@@ -1,4 +1,3 @@
-/* $Id: ac_context.c,v 1.11 2003/03/01 01:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

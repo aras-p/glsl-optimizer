@@ -1,4 +1,3 @@
-/* $Id: mipmap.c,v 1.8 2000/10/26 21:48:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

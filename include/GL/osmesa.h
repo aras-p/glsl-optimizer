@@ -1,5 +1,3 @@
-/* $Id: osmesa.h,v 1.10 2002/04/04 16:58:04 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.1

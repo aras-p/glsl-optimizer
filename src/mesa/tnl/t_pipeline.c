@@ -1,4 +1,3 @@
-/* $Id: t_pipeline.c,v 1.26 2003/03/01 01:50:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

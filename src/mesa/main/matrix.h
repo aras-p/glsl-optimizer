@@ -1,4 +1,3 @@
-/* $Id: matrix.h,v 1.12 2001/03/12 00:48:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,4 +1,3 @@
-/* $Id: gloss.c,v 1.7 2002/11/28 15:51:55 brianp Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
