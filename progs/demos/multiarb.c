@@ -52,7 +52,7 @@ static void Idle( void )
          glLoadIdentity();
          if (i == 0) {
             glTranslatef(Drift, 0.0, 0.0);
-            glScalef(2, 2, 2);
+            glScalef(2, 2, 1);
          }
          else if (i == 1) {
             glTranslatef(0.0, Drift, 0.0);
