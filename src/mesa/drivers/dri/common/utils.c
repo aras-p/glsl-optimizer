@@ -593,6 +593,13 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 		    modes->swapMethod = db_modes[i];
 		}
 
+		modes->haveAccumBuffer = ((modes->accumRedBits +
+					   modes->accumGreenBits +
+					   modes->accumBlueBits +
+					   modes->accumAlphaBits) > 0);
+		modes->haveDepthBuffer = (modes->depthBits > 0);
+		modes->haveStencilBuffer = (modes->stencilBits > 0);
+
 		modes = modes->next;
 	    }
 	}
