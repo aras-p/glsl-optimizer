@@ -63,7 +63,7 @@
 #include "GL/dmesa.h"
 
 
-#define SWTC 1 /* SW texture compression */
+#define SWTC 0 /* SW texture compression */
 
 
 /*
@@ -1351,10 +1351,10 @@ DMesaGetCurrentBuffer (void)
 }
 
 
-void *
+DMesaProc
 DMesaGetProcAddress (const char *name)
 {
-   void *p = (void *)_glapi_get_proc_address(name);
+   DMesaProc p = (DMesaProc)_glapi_get_proc_address(name);
 
    /* TODO: handle DMesa* namespace
    if (p == NULL) {
@@ -1411,7 +1411,7 @@ DMesaGetIntegerv (GLenum pname, GLint *params)
 }
 
 
-#if (((__DJGPP__ << 8) | __DJGPP_MINOR__) >= 0x204) && USE_EXTERNAL_DXTN_LIB
+#if SWTC && (((__DJGPP__ << 8) | __DJGPP_MINOR__) >= 0x204)
 #include <sys/dxe.h>
 
 extern_asm(___dj_assert);
