@@ -90,7 +90,7 @@ CORE_SRCS = \
 	varray.c \
 	vpexec.c \
 	vpparse.c \
-	vpstatee.c \
+	vpstate.c \
 	vtxfmt.c \
 #	X86\x86.c \
 #	X86\common_x86.c \
