@@ -299,28 +299,27 @@ static struct {
 #define AREA_IS_CCW( a ) (a > 0)
 #define GET_VERTEX(e) (imesa->verts + (e * imesa->vertex_size * sizeof(int)))
 
-#define SAVAGE_COLOR( dst, src )		\
-do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-   dst[3] = src[3];				\
+#define VERT_SET_RGBA( v, c )					\
+do {								\
+   savage_color_t *color = (savage_color_t *)&((v)->ub4[coloroffset]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
 } while (0)
-
-#define SAVAGE_SPEC( dst, src )			\
-do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-} while (0)
-
-#define VERT_SET_RGBA( v, c )    SAVAGE_COLOR( v->ub4[coloroffset], c )
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
 
-#define VERT_SET_SPEC( v, c )						\
-   if (specoffset) SAVAGE_SPEC( v->ub4[specoffset], c )
+#define VERT_SET_SPEC( v, c )					\
+do {								\
+   if (specoffset) {						\
+      savage_color_t *spec = (savage_color_t *)&((v)->ub4[specoffset]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);		\
+   }								\
+} while (0)
 #define VERT_COPY_SPEC( v0, v1 )					\
    if (specoffset) COPY_3V(v0->ub4[specoffset], v1->ub4[specoffset])
 #define VERT_SAVE_SPEC( idx )						\
