@@ -53,6 +53,19 @@
 static void tdfxRasterPrimitive( GLcontext *ctx, GLenum prim );
 static void tdfxRenderPrimitive( GLcontext *ctx, GLenum prim );
 
+static GLenum reduced_prim[GL_POLYGON+1] = {
+   GL_POINTS,
+   GL_LINES,
+   GL_LINES,
+   GL_LINES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES
+};
+
 /***********************************************************************
  *          Macros for t_dd_tritmp.h to draw basic primitives          *
  ***********************************************************************/
@@ -364,8 +377,8 @@ do {						\
  *            Functions to draw basic unfilled primitives              *
  ***********************************************************************/
 
-#define RASTERIZE(x) if (fxMesa->raster_primitive != x) \
-                        tdfxRasterPrimitive( ctx, x )
+#define RASTERIZE(x) if (fxMesa->raster_primitive != reduced_prim[x]) \
+                        tdfxRasterPrimitive( ctx, reduced_prim[x] )
 #define RENDER_PRIMITIVE fxMesa->render_primitive
 #define IND TDFX_FALLBACK_BIT
 #define TAG(x) x
@@ -1133,20 +1146,6 @@ static void tdfxRenderStart( GLcontext *ctx )
    else
       tnl->Driver.Render.Multipass = NULL;
 }
-
-
-static GLenum reduced_prim[GL_POLYGON+1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
-};
 
 
 
