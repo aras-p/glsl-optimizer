@@ -165,10 +165,10 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_INT					0x1404
 #define GL_UNSIGNED_INT				0x1405
 #define GL_FLOAT				0x1406
-#define GL_DOUBLE				0x140A
 #define GL_2_BYTES				0x1407
 #define GL_3_BYTES				0x1408
 #define GL_4_BYTES				0x1409
+#define GL_DOUBLE				0x140A
 
 /* Primitives */
 #define GL_POINTS				0x0000
