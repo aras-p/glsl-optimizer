@@ -30,13 +30,15 @@
 
 
 #include "glheader.h"
+#include "arbprogram.h"
 #include "context.h"
 #include "hash.h"
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "nvprogram.h"
-#include "arbprogram.h"
+#include "nvfragprog.h"
+#include "nvvertprog.h"
 
 
 /* XXX temporary */
@@ -554,7 +556,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
-      index += MAX_NV_FRAGMENT_PROGRAM_TEMPS;  /* XXX fix */
+      index += FP_PROG_REG_START;
       ASSIGN_4V(ctx->FragmentProgram.Machine.Registers[index], x, y, z, w);
    }
    if (target == GL_VERTEX_PROGRAM_ARB
@@ -563,7 +565,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
       }
-      index += MAX_NV_VERTEX_PROGRAM_TEMPS;  /* XXX fix */
+      index += VP_PROG_REG_START;
       ASSIGN_4V(ctx->VertexProgram.Machine.Registers[index], x, y, z, w);
    }
    else {
@@ -612,7 +614,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
-      index += MAX_NV_FRAGMENT_PROGRAM_TEMPS;  /* XXX fix */
+      index += FP_PROG_REG_START;
       COPY_4V(params, ctx->FragmentProgram.Machine.Registers[index]);
    }
    if (target == GL_VERTEX_PROGRAM_ARB
@@ -621,7 +623,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
          return;
       }
-      index += MAX_NV_VERTEX_PROGRAM_TEMPS;  /* XXX fix */
+      index += VP_PROG_REG_START;
       COPY_4V(params, ctx->VertexProgram.Machine.Registers[index]);
    }
    else {
@@ -639,46 +641,37 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
                                  GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    GET_CURRENT_CONTEXT(ctx);
+   struct program *prog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if ((target == GL_FRAGMENT_PROGRAM_NV
         && ctx->Extensions.NV_fragment_program) ||
        (target == GL_FRAGMENT_PROGRAM_ARB
         && ctx->Extensions.ARB_fragment_program)) {
-      struct fragment_program *fprog = ctx->FragmentProgram.Current;
-      if (!fprog) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
-         return;
-      }
       if (index >= ctx->Const.MaxFragmentProgramLocalParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
          return;
       }
-      fprog->Base.LocalParams[index][0] = x;
-      fprog->Base.LocalParams[index][1] = y;
-      fprog->Base.LocalParams[index][2] = z;
-      fprog->Base.LocalParams[index][3] = w;
+      prog = &(ctx->FragmentProgram.Current->Base);
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
             && ctx->Extensions.ARB_vertex_program) {
-      struct vertex_program *vprog = ctx->VertexProgram.Current;
-      if (!vprog) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
-         return;
-      }
       if (index >= ctx->Const.MaxVertexProgramLocalParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
          return;
       }
-      vprog->Base.LocalParams[index][0] = x;
-      vprog->Base.LocalParams[index][1] = y;
-      vprog->Base.LocalParams[index][2] = z;
-      vprog->Base.LocalParams[index][3] = w;
+      prog = &(ctx->VertexProgram.Current->Base);
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
       return;
    }
+
+   ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
+   prog->LocalParams[index][0] = x;
+   prog->LocalParams[index][1] = y;
+   prog->LocalParams[index][2] = z;
+   prog->LocalParams[index][3] = w;
 }
 
 
@@ -760,6 +753,7 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
    }
 
    ASSERT(prog);
+   ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
    COPY_4V(params, prog->LocalParams[index]);
 }
 

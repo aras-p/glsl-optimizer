@@ -1371,11 +1371,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_B(NV_vertex_program, pname);
-         *params = (MAX_PROGRAM_STACK_DEPTH > 0) ? GL_TRUE : GL_FALSE;
+         *params = (ctx->Const.MaxProgramMatrixStackDepth > 0) ? GL_TRUE : GL_FALSE;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
          CHECK_EXTENSION_B(NV_vertex_program, pname);
-         *params = (MAX_PROGRAM_MATRICES > 0) ? GL_TRUE : GL_FALSE;
+         *params = (ctx->Const.MaxProgramMatrices > 0) ? GL_TRUE : GL_FALSE;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_B(NV_vertex_program, pname);
@@ -2859,11 +2859,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_D(NV_vertex_program, pname);
-         *params = (GLdouble) MAX_PROGRAM_STACK_DEPTH;
+         *params = (GLdouble) ctx->Const.MaxProgramMatrixStackDepth;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
          CHECK_EXTENSION_D(NV_vertex_program, pname);
-         *params = (GLdouble) MAX_PROGRAM_MATRICES;
+         *params = (GLdouble) ctx->Const.MaxProgramMatrices;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_D(NV_vertex_program, pname);
@@ -4321,11 +4321,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_F(NV_vertex_program, pname);
-         *params = (GLfloat) MAX_PROGRAM_STACK_DEPTH;
+         *params = (GLfloat) ctx->Const.MaxProgramMatrixStackDepth;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
          CHECK_EXTENSION_F(NV_vertex_program, pname);
-         *params = (GLfloat) MAX_PROGRAM_MATRICES;
+         *params = (GLfloat) ctx->Const.MaxProgramMatrices;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_F(NV_vertex_program, pname);
@@ -5821,11 +5821,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_I(NV_vertex_program, pname);
-         *params = MAX_PROGRAM_STACK_DEPTH;
+         *params = ctx->Const.MaxProgramMatrixStackDepth;
          break;
       case GL_MAX_TRACK_MATRICES_NV:
          CHECK_EXTENSION_I(NV_vertex_program, pname);
-         *params = MAX_PROGRAM_MATRICES;
+         *params = ctx->Const.MaxProgramMatrices;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_NV:
          CHECK_EXTENSION_I(NV_vertex_program, pname);

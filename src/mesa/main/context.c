@@ -1,5 +1,3 @@
-/* $Id: context.c,v 1.199 2003/04/17 01:48:20 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -1007,6 +1005,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxFragmentProgramTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
    ctx->Const.MaxFragmentProgramTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
 #endif
+   ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
+   ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
 
    /* Initialize matrix stacks */
@@ -1020,8 +1020,8 @@ init_attrib_groups( GLcontext *ctx )
       init_matrix_stack(&ctx->TextureMatrixStack[i], MAX_TEXTURE_STACK_DEPTH,
                         _NEW_TEXTURE_MATRIX);
    for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
-      init_matrix_stack(&ctx->ProgramMatrixStack[i], MAX_PROGRAM_STACK_DEPTH,
-                        _NEW_TRACK_MATRIX);
+      init_matrix_stack(&ctx->ProgramMatrixStack[i],
+                        MAX_PROGRAM_MATRIX_STACK_DEPTH, _NEW_TRACK_MATRIX);
    ctx->CurrentStack = &ctx->ModelviewMatrixStack;
 
    /* Init combined Modelview*Projection matrix */

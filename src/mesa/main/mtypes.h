@@ -1240,7 +1240,7 @@ struct program
    GLenum Format;      /* String encoding format */
    GLint RefCount;
    GLboolean Resident;
-   GLfloat LocalParams[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4];
+   GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
    GLuint NumInstructions;  /* GL_ARB_vertex/fragment_program */
    GLuint NumTemporaries;
    GLuint NumParameters;
@@ -1424,6 +1424,9 @@ struct gl_constants {
    GLuint MaxFragmentProgramAluInstructions;
    GLuint MaxFragmentProgramTexInstructions;
    GLuint MaxFragmentProgramTexIndirections;
+   /* vertex or fragment program */
+   GLuint MaxProgramMatrices;
+   GLuint MaxProgramMatrixStackDepth;
 };
 
 

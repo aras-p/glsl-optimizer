@@ -53,10 +53,6 @@
 /* Maximum color matrix stack depth: */
 #define MAX_COLOR_STACK_DEPTH 4
 
-/* Vertex program matrix stacks: */
-#define MAX_PROGRAM_MATRICES 8
-#define MAX_PROGRAM_STACK_DEPTH 4
-
 /* Maximum attribute stack depth: */
 #define MAX_ATTRIB_STACK_DEPTH 16
 
@@ -173,6 +169,13 @@
 #define MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS 48
 #define MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS 24
 #define MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS  4
+
+/* Any program target/extension */
+#define MAX_PROGRAM_LOCAL_PARAMS 96
+#define MAX_PROGRAM_MATRICES 8
+#define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
+
+
 
 
 /*

@@ -1,5 +1,3 @@
-/* $Id: matrix.c,v 1.46 2003/03/01 01:50:21 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -132,14 +130,39 @@ _mesa_MatrixMode( GLenum mode )
    case GL_MATRIX5_NV:
    case GL_MATRIX6_NV:
    case GL_MATRIX7_NV:
-      if (!ctx->Extensions.NV_vertex_program) {
-         _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
+      if (ctx->Extensions.NV_vertex_program) {
+         ctx->CurrentStack = &ctx->ProgramMatrixStack[mode - GL_MATRIX0_NV];
+      }
+      else {
+         _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode(mode)" );
          return;
       }
-      ctx->CurrentStack = &ctx->ProgramMatrixStack[mode - GL_MATRIX0_NV];
+      break;
+   case GL_MATRIX0_ARB:
+   case GL_MATRIX1_ARB:
+   case GL_MATRIX2_ARB:
+   case GL_MATRIX3_ARB:
+   case GL_MATRIX4_ARB:
+   case GL_MATRIX5_ARB:
+   case GL_MATRIX6_ARB:
+   case GL_MATRIX7_ARB:
+      if (ctx->Extensions.ARB_vertex_program ||
+          ctx->Extensions.ARB_fragment_program) {
+         const GLint m = mode - GL_MATRIX0_ARB;
+         if (m > ctx->Const.MaxProgramMatrices) {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glMatrixMode(GL_MATRIX%d_ARB)", m);
+            return;
+         }
+         ctx->CurrentStack = &ctx->ProgramMatrixStack[m];
+      }
+      else {
+         _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode(mode)" );
+         return;
+      }
       break;
    default:
-      _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
+      _mesa_error( ctx,  GL_INVALID_ENUM, "glMatrixMode(mode)" );
       return;
    }
 
