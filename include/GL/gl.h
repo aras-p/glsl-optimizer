@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.31 2000/02/11 20:44:22 brianp Exp $ */
+/* $Id: gl.h,v 1.32 2000/02/24 22:03:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1780,7 +1780,7 @@ GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 
 
 /*
- * XXX these extensions may eventually be moved into a new glext.h file
+ * XXX these extensions may eventually be moved into glext.h
  */
 
 
@@ -2154,19 +2154,19 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
 
 
 /*
- * GL_INGR_blend_func_separate (EXT number 173)
+ * GL_EXT_blend_func_separate (EXT number 173) (aka GL_INGR_blend_func_separate)
  */
-#ifndef GL_INGR_blend_func_separate
-#define GL_INGR_blend_func_separate 1
+#ifndef GL_EXT_blend_func_separate
+#define GL_EXT_blend_func_separate 1
 
-#define GL_BLEND_DST_RGB_INGR			0x80C8
-#define GL_BLEND_SRC_RGB_INGR			0x80C9
-#define GL_BLEND_DST_ALPHA_INGR			0x80CA
-#define GL_BLEND_SRC_ALPHA_INGR			0x80CB
+#define GL_BLEND_DST_RGB_EXT			0x80C8
+#define GL_BLEND_SRC_RGB_EXT			0x80C9
+#define GL_BLEND_DST_ALPHA_EXT			0x80CA
+#define GL_BLEND_SRC_ALPHA_EXT			0x80CB
 
-GLAPI void GLAPIENTRY glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha );
+GLAPI void GLAPIENTRY glBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha );
 
-#endif /* GL_INGR_blend_func_separate */
+#endif /* GL_EXT_blend_func_separate */
 
 
 
@@ -2196,7 +2196,7 @@ GLAPI void GLAPIENTRY glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactor
 
 
 /*
- * GL_ARB_multitexture (no number)
+ * GL_ARB_multitexture (ARB 0)
  */
 #ifndef GL_ARB_multitexture
 #define GL_ARB_multitexture 1
@@ -2277,7 +2277,7 @@ GLAPI void GLAPIENTRY glMultiTexCoord4svARB(GLenum target, const GLshort *v);
 
 
 /*
- * GL_MESA_window_pos (no number)
+ * GL_MESA_window_pos (197)
  */
 #ifndef GL_MESA_window_pos
 #define GL_MESA_window_pos 1
@@ -2312,7 +2312,7 @@ GLAPI void GLAPIENTRY glWindowPos4dvMESA( const GLdouble *p );
 
 
 /*
- * GL_MESA_resize_bufffers (no number)
+ * GL_MESA_resize_bufffers (196)
  */
 #ifndef GL_MESA_resize_bufffers
 #define GL_MESA_resize_buffers 1
@@ -2324,7 +2324,7 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 
 /*
- * GL_ARB_tranpose_matrix (number ?)
+ * GL_ARB_tranpose_matrix (ARB 2)
  */
 #ifndef GL_ARB_transpose_matrix
 #define GL_ARB_transpose_matrix 1
@@ -2339,7 +2339,21 @@ GLAPI void GLAPIENTRY glLoadTransposeMatrixfARB( const GLfloat m[16] );
 GLAPI void GLAPIENTRY glMultTransposeMatrixdARB( const GLdouble m[16] );
 GLAPI void GLAPIENTRY glMultTransposeMatrixfARB( const GLfloat m[16] );
 
-#endif
+#endif /* GL_ARB_tranpose_matrix */
+
+
+
+/*
+ * GL_ARB_multisample (ARB 4)
+ */
+#ifndef GL_ARB_multisample
+#define GL_ARB_multisample 1
+
+GLAPI void GLAPIENTRY glSampleCoverageARB(GLclampf value, GLboolean invert);
+
+GLAPI void GLAPIENTRY glSamplePassARB(GLenum pass);
+
+#endif /* GL_ARB_multisample */
 
 
 
