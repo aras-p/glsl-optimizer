@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.5 2000/07/19 23:57:24 brianp Exp $ */
+/* $Id: texobj.c,v 1.6 2002/01/04 21:05:57 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.
@@ -7,6 +7,7 @@
  * Brian Paul   June 1996   This file is in the public domain.
  */
 
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -173,6 +174,7 @@ static void init( void )
    if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[0] );
+      assert(glIsTexture(TexObj[0]));
 #endif
    }
    else {
@@ -206,7 +208,9 @@ static void init( void )
    if (UseObj) {
 #ifdef TEXTURE_OBJECT
       glBindTexture( GL_TEXTURE_2D, TexObj[1] );
+      assert(glIsTexture(TexObj[1]));
 #endif
+      assert(!glIsTexture(TexObj[1] + 999));
    }
    else {
       glNewList( TexObj[1], GL_COMPILE );
