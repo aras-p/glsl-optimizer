@@ -327,7 +327,7 @@ case $ARCH in
 	    echo "mklib: Making HP-UX shared library: " ${RUNLIB} ${DEVLIB}
 	    ld -b -o ${RUNLIB} +b ${RUNLIB} ${OBJECTS} ${DEPS}
 	    ln -s ${RUNLIB} ${DEVLIB}
-	    FINAL_LIBS="{RUNLIB} ${DEVLIB}"
+	    FINAL_LIBS="${RUNLIB} ${DEVLIB}"
 	fi
 	;;
 
