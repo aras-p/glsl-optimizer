@@ -731,13 +731,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 /*@{*/
 
 
-
-
-
-
-
-
-
 /*
  * Update items which depend on vertex/fragment programs.
  */
@@ -786,12 +779,13 @@ void _mesa_update_state( GLcontext *ctx )
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
+   if (new_state & _IMAGE_NEW_TRANSFER_STATE)
+      _mesa_update_pixel( ctx, new_state );
 
    if (new_state & _NEW_PROGRAM)
       update_program( ctx );
 
-
-   /* ctx->_NeedEyeCoords is now uptodate.
+   /* ctx->_NeedEyeCoords is now up to date.
     *
     * If the truth value of this variable has changed, update for the
     * new lighting space and recompute the positions of lights and the

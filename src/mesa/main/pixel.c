@@ -1502,6 +1502,8 @@ void _mesa_init_pixel( GLcontext * ctx )
    ctx->Pack.SkipImages = 0;
    ctx->Pack.SwapBytes = GL_FALSE;
    ctx->Pack.LsbFirst = GL_FALSE;
+   ctx->Pack.ClientStorage = GL_FALSE;
+   ctx->Pack.Invert = GL_FALSE;
    ctx->Unpack.Alignment = 4;
    ctx->Unpack.RowLength = 0;
    ctx->Unpack.ImageHeight = 0;
@@ -1510,6 +1512,8 @@ void _mesa_init_pixel( GLcontext * ctx )
    ctx->Unpack.SkipImages = 0;
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
+   ctx->Unpack.ClientStorage = GL_FALSE;
+   ctx->Unpack.Invert = GL_FALSE;
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Pixel.ReadBuffer = GL_BACK;
