@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.5 1999/09/04 14:40:49 keithw Exp $ */
+/* $Id: context.c,v 1.6 1999/09/07 22:31:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1003,9 +1003,6 @@ static void initialize_context( GLcontext *ctx )
       /* Optimized Accum buffer */
       ctx->IntegerAccumMode = GL_TRUE;
       ctx->IntegerAccumScaler = 0.0;
-
-      /* multitexture */
-      ctx->TexCoordUnit = 0;
 
       /* Renderer and client attribute stacks */
       ctx->AttribStackDepth = 0;

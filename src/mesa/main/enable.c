@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.3 1999/08/26 14:50:49 keithw Exp $ */
+/* $Id: enable.c,v 1.4 1999/09/07 22:31:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -448,7 +448,7 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Array.Index.Enabled = state;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         ctx->Array.TexCoord[ctx->TexCoordUnit].Enabled = state;
+         ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled = state;
          break;
       case GL_EDGE_FLAG_ARRAY:
          ctx->Array.EdgeFlag.Enabled = state;
@@ -638,7 +638,7 @@ GLboolean gl_IsEnabled( GLcontext* ctx, GLenum cap )
       case GL_INDEX_ARRAY:
          return ctx->Array.Index.Enabled;
       case GL_TEXTURE_COORD_ARRAY:
-         return ctx->Array.TexCoord[ctx->TexCoordUnit].Enabled;
+         return ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled;
       case GL_EDGE_FLAG_ARRAY:
          return ctx->Array.EdgeFlag.Enabled;
       default:
@@ -671,7 +671,7 @@ static void gl_client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Array.Index.Enabled = state;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         ctx->Array.TexCoord[ctx->TexCoordUnit].Enabled = state;
+         ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled = state;
          break;
       case GL_EDGE_FLAG_ARRAY:
          ctx->Array.EdgeFlag.Enabled = state;

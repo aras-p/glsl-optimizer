@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: texstate.c,v 1.2 1999/09/07 22:31:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1039,7 +1039,6 @@ void gl_ActiveTexture( GLcontext *ctx, GLenum target )
 
    if (target >= GL_TEXTURE0_ARB && target < GL_TEXTURE0_ARB + maxUnits) {
       GLint texUnit = target - GL_TEXTURE0_ARB;
-      ctx->TexCoordUnit = texUnit;
       ctx->Texture.CurrentUnit = texUnit;
       ctx->Texture.CurrentTransformUnit = texUnit;
       if (ctx->Driver.ActiveTexture) {

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.2 1999/08/26 14:50:49 keithw Exp $ */
+/* $Id: varray.c,v 1.3 1999/09/07 22:31:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -285,7 +285,7 @@ void GLAPIENTRY glTexCoordPointer(CTX_ARG GLint size, GLenum type,
    CHECK_CONTEXT;
    ctx = CC;
    
-   texUnit = ctx->TexCoordUnit;
+   texUnit = ctx->Array.ActiveTexture;
 
    if (size<1 || size>4) {
       gl_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(size)" );
@@ -1135,7 +1135,7 @@ void GLAPIENTRY glInterleavedArrays(CTX_ARG GLenum format, GLsizei stride,
    gl_DisableClientState( ctx, GL_INDEX_ARRAY );
 
    /* Texcoords */
-   coordUnitSave = ctx->TexCoordUnit;
+   coordUnitSave = ctx->Array.ActiveTexture;
    if (tflag) {
       GLint i;
       GLint factor = ctx->Array.TexCoordInterleaveFactor;
