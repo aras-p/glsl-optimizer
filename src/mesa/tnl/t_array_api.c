@@ -1,5 +1,3 @@
-/* $Id: t_array_api.c,v 1.32 2003/04/10 10:03:30 keithw Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -73,7 +71,7 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 
 static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 				      GLuint start, GLuint end,
-				      GLsizei count, const GLuint *indices )
+				      GLsizei count, GLuint *indices )
 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
