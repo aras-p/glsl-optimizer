@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.20 2000/04/19 01:40:00 brianp Exp $ */
+/* $Id: glx.h,v 1.21 2000/06/08 22:50:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,7 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 
 
 #ifndef GLX_H
@@ -59,6 +58,7 @@ extern "C" {
 
 #define GLX_VERSION_1_1		1
 #define GLX_VERSION_1_2		1
+#define GLX_VERSION_1_3		1
 
 #define GLX_EXTENSION_NAME   "GLX"
 
@@ -161,75 +161,16 @@ extern "C" {
 #define GLX_PBUFFER			0x8033
 
 
-/*
- * 28. GLX_EXT_visual_info extension
- */
-#define GLX_X_VISUAL_TYPE_EXT		0x22
-#define GLX_TRANSPARENT_TYPE_EXT	0x23
-#define GLX_TRANSPARENT_INDEX_VALUE_EXT	0x24
-#define GLX_TRANSPARENT_RED_VALUE_EXT	0x25
-#define GLX_TRANSPARENT_GREEN_VALUE_EXT	0x26
-#define GLX_TRANSPARENT_BLUE_VALUE_EXT	0x27
-#define GLX_TRANSPARENT_ALPHA_VALUE_EXT	0x28
-#define GLX_TRUE_COLOR_EXT		0x8002
-#define GLX_DIRECT_COLOR_EXT		0x8003
-#define GLX_PSEUDO_COLOR_EXT		0x8004
-#define GLX_STATIC_COLOR_EXT		0x8005
-#define GLX_GRAY_SCALE_EXT		0x8006
-#define GLX_STATIC_GRAY_EXT		0x8007
-#define GLX_NONE_EXT			0x8000
-#define GLX_TRANSPARENT_RGB_EXT		0x8008
-#define GLX_TRANSPARENT_INDEX_EXT	0x8009
 
-
-/*
- * 42. GLX_EXT_visual_rating
- */
-#define GLX_VISUAL_CAVEAT_EXT		0x20
-/*#define GLX_NONE_EXT			0x8000*/
-#define GLX_SLOW_VISUAL_EXT		0x8001
-#define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
-
-
-/*
- * 47. GLX_EXT_import_context
- */
-#define GLX_SHARE_CONTEXT_EXT		0x800A
-#define GLX_VISUAL_ID_EXT		0x800B
-#define GLX_SCREEN_EXT			0x800C
-
-
-/*
- * Compile-time extension tests
- */
-#define GLX_EXT_visual_info		1
-#define GLX_EXT_visual_rating		1
-#define GLX_EXT_import_context		1
-#define GLX_MESA_pixmap_colormap	1
-#define GLX_MESA_release_buffers	1
-#define GLX_MESA_copy_sub_buffer	1
-#define GLX_MESA_set_3dfx_mode		1
-#define GLX_SGI_video_sync		1
-#define GLX_ARB_get_proc_address	1
-
-
-
-#ifdef MESA
-   typedef XMesaContext GLXContext;
-   typedef Pixmap GLXPixmap;
-   typedef Drawable GLXDrawable;
-#else
-   typedef void * GLXContext;
-   typedef XID GLXPixmap;
-   typedef XID GLXDrawable;
-   /* GLX 1.3 and later */
-   typedef XID GLXFBConfigID;
-   typedef XID GLXPfuffer;
-   typedef XID GLXWindow;
-   typedef XID GLXPbuffer;
-   typedef XID GLXFBConfig;
-#endif
+typedef void * GLXContext;
+typedef XID GLXPixmap;
+typedef XID GLXDrawable;
+/* GLX 1.3 and later */
+typedef void * GLXFBConfig;
+typedef XID GLXFBConfigID;
 typedef XID GLXContextID;
+typedef XID GLXWindow;
+typedef XID GLXPbuffer;
 
 
 
@@ -338,32 +279,78 @@ extern void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
 
 
 
-/* GLX_MESA_pixmap_colormap */
-extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
-                                         Pixmap pixmap, Colormap cmap );
+/*#ifndef GLX_GLXEXT_LEGACY*/
+
+/*#include <GL/glxext.h>*/
+
+/*#else*/
 
 
-/* GLX_MESA_release_buffers */
-extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
+/*
+ * 28. GLX_EXT_visual_info extension
+ */
+#ifndef GLX_EXT_visual_info
+#define GLX_EXT_visual_info		1
+
+#define GLX_X_VISUAL_TYPE_EXT		0x22
+#define GLX_TRANSPARENT_TYPE_EXT	0x23
+#define GLX_TRANSPARENT_INDEX_VALUE_EXT	0x24
+#define GLX_TRANSPARENT_RED_VALUE_EXT	0x25
+#define GLX_TRANSPARENT_GREEN_VALUE_EXT	0x26
+#define GLX_TRANSPARENT_BLUE_VALUE_EXT	0x27
+#define GLX_TRANSPARENT_ALPHA_VALUE_EXT	0x28
+#define GLX_TRUE_COLOR_EXT		0x8002
+#define GLX_DIRECT_COLOR_EXT		0x8003
+#define GLX_PSEUDO_COLOR_EXT		0x8004
+#define GLX_STATIC_COLOR_EXT		0x8005
+#define GLX_GRAY_SCALE_EXT		0x8006
+#define GLX_STATIC_GRAY_EXT		0x8007
+#define GLX_NONE_EXT			0x8000
+#define GLX_TRANSPARENT_RGB_EXT		0x8008
+#define GLX_TRANSPARENT_INDEX_EXT	0x8009
+
+#endif /* 28. GLX_EXT_visual_info extension */
 
 
-/* GLX_MESA_copy_sub_buffer */
-extern void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
-                                  int x, int y, int width, int height );
 
+/*
+ * 41. GLX_SGI_video_sync
+ */
+#ifndef GLX_SGI_video_sync
+#define GLX_SGI_video_sync 1
 
-/* GLX_MESA_set_3dfx_mode */
-extern GLboolean glXSet3DfxModeMESA( GLint mode );
-
-
-/* GLX_SGI_video_sync */
 extern int glXGetVideoSyncSGI(unsigned int *count);
-extern int glXWaitVideoSyncSGI(int divisor, int remainder,
-                               unsigned int *count);
+extern int glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count);
+
+#endif /* GLX_SGI_video_sync */
 
 
 
-/* GLX_EXT_import_context */
+/*
+ * 42. GLX_EXT_visual_rating
+ */
+#ifndef GLX_EXT_visual_rating
+#define GLX_EXT_visual_rating		1
+
+#define GLX_VISUAL_CAVEAT_EXT		0x20
+/*#define GLX_NONE_EXT			0x8000*/
+#define GLX_SLOW_VISUAL_EXT		0x8001
+#define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
+
+#endif /* GLX_EXT_visual_rating	*/
+
+
+
+/*
+ * 47. GLX_EXT_import_context
+ */
+#ifndef GLX_EXT_import_context
+#define GLX_EXT_import_context 1
+
+#define GLX_SHARE_CONTEXT_EXT		0x800A
+#define GLX_VISUAL_ID_EXT		0x800B
+#define GLX_SCREEN_EXT			0x800C
+
 extern void glXFreeContextEXT(Display *dpy, GLXContext context);
 
 extern GLXContextID glXGetContextIDEXT(const GLXContext context);
@@ -375,10 +362,73 @@ extern GLXContext glXImportContextEXT(Display *dpy, GLXContextID contextID);
 extern int glXQueryContextInfoEXT(Display *dpy, GLXContext context,
                                   int attribute,int *value);
 
+#endif /* GLX_EXT_import_context */
 
 
-/* GLX_ARB_get_proc_address */
+
+/*
+ * ARB 2. GLX_ARB_get_proc_address
+ */
+#ifndef GLX_ARB_get_proc_address
+#define GLX_ARB_get_proc_address 1
+
 extern void (*glXGetProcAddressARB(const GLubyte *procName))();
+
+#endif /* GLX_ARB_get_proc_address */
+
+
+
+/*
+ * GLX_MESA_pixmap_colormap
+ */
+#ifndef GLX_MESA_pixmap_colormap
+#define GLX_MESA_pixmap_colormap 1
+
+extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
+                                         Pixmap pixmap, Colormap cmap );
+
+#endif /* GLX_MESA_pixmap_colormap */
+
+
+
+/*
+ * GLX_MESA_release_buffers
+ */
+#ifndef GLX_MESA_release_buffers
+#define GLX_MESA_release_buffers 1
+
+extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
+
+#endif /* GLX_MESA_release_buffers */
+
+
+
+/*
+ * GLX_MESA_copy_sub_buffer
+ */
+#ifndef GLX_MESA_copy_sub_buffer
+#define GLX_MESA_copy_sub_buffer 1
+
+extern void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
+                                  int x, int y, int width, int height );
+
+#endif
+
+
+
+/*
+ * GLX_MESA_set_3dfx_mode
+ */
+#ifndef GLX_MESA_set_3dfx_mode
+#define GLX_MESA_set_3dfx_mode 1
+
+extern GLboolean glXSet3DfxModeMESA( GLint mode );
+
+#endif /* GLX_MESA_set_3dfx_mode */
+
+
+
+/*#endif*/ /* GLX_GLXEXT_LEGACY */
 
 
 
