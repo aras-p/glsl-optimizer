@@ -1,4 +1,4 @@
-/* $Id: paltex.c,v 1.3 2000/06/27 17:04:43 brianp Exp $ */
+/* $Id: paltex.c,v 1.4 2000/06/27 17:12:10 brianp Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
@@ -82,7 +82,6 @@ static void Init( void )
          "                                "
       };
    GLubyte table[256][4];
-   int i;
 
    if (!glutExtensionSupported("GL_EXT_paletted_texture")) {
       printf("Sorry, GL_EXT_paletted_texture not supported\n");

@@ -597,11 +597,12 @@ inittextures(void)
    glGenTextures(1, &treeid);
    glBindTexture(GL_TEXTURE_2D, treeid);
 
+   if (1)
    {
       int w, h;
       GLenum format;
       int x, y;
-      GLubyte *image = LoadRGBImage("../images/tree2.rgb", &w, &h, &format);
+      GLubyte *image = LoadRGBImage("../images/tree3.rgb", &w, &h, &format);
 
       if (!image) {
 	 fprintf(stderr, "Error reading a texture.\n");
@@ -626,7 +627,12 @@ inittextures(void)
 	 exit(-1);
       }
    }
-
+   else {
+      if (!LoadRGBMipmaps("../images/tree2.rgba", GL_RGBA)) {
+	 fprintf(stderr, "Error reading a texture.\n");
+	 exit(-1);
+      }
+   }
 
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
