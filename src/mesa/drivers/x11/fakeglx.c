@@ -1,8 +1,8 @@
-/* $Id: fakeglx.c,v 1.13 1999/11/11 01:29:28 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.14 1999/11/18 15:17:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -258,7 +258,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
           && (v->gl_visual->StencilBits >= stencil_size || stencil_size == 0)
           && (v->gl_visual->AccumBits >= accum_size || accum_size == 0)) {
          /* now either compare XVisualInfo pointers or visual IDs */
-         if ((!comparePointers && v->vishandle->visualid == vinfo->visualid)
+         if ((!comparePointers && v->visinfo->visualid == vinfo->visualid)
              || (comparePointers && v->vishandle == vinfo)) {
             return v;
          }
