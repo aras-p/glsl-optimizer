@@ -264,6 +264,13 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_POINTSIZE_X_SHIFT            16
 #       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) // GUESS
 
+#define R300_RE_CULL_CNTL                   0x42B8
+#       define R300_CULL_FRONT                   (1 << 0)
+#       define R300_CULL_BACK                    (1 << 1)
+#       define R300_FRONT_FACE_CCW               (0 << 2)
+#       define R300_FRONT_FACE_CW                (1 << 2)
+
+
 // BEGIN: Rasterization / Interpolators - many guesses
 // So far, 0_UNKOWN_7 has always been set.
 // 0_UNKNOWN_18 has always been set except for clear operations.
@@ -798,15 +805,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RB3D_Z_TEST                  0x00000012
 #       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
 #define R300_RB3D_ZCNTL_1                   0x4F04
-#       define R300_RB3D_Z_TEST_NEVER            (0 << 0) // GUESS (based on R200)
-#       define R300_RB3D_Z_TEST_LESS             (1 << 0)
-#       define R300_RB3D_Z_TEST_LEQUAL           (2 << 0)
-#       define R300_RB3D_Z_TEST_EQUAL            (3 << 0) // GUESS
-#       define R300_RB3D_Z_TEST_GEQUAL           (4 << 0) // GUESS
-#       define R300_RB3D_Z_TEST_GREATER          (5 << 0) // GUESS
-#       define R300_RB3D_Z_TEST_NEQUAL           (6 << 0)
-#       define R300_RB3D_Z_TEST_ALWAYS           (7 << 0)
-#       define R300_RB3D_Z_TEST_MASK             (7 << 0)
+#       define R300_Z_TEST_NEVER                 (0 << 0) // GUESS (based on R200)
+#       define R300_Z_TEST_LESS                  (1 << 0)
+#       define R300_Z_TEST_LEQUAL                (2 << 0)
+#       define R300_Z_TEST_EQUAL                 (3 << 0) // GUESS
+#       define R300_Z_TEST_GEQUAL                (4 << 0) // GUESS
+#       define R300_Z_TEST_GREATER               (5 << 0) // GUESS
+#       define R300_Z_TEST_NEQUAL                (6 << 0)
+#       define R300_Z_TEST_ALWAYS                (7 << 0)
+#       define R300_Z_TEST_MASK                  (7 << 0)
 /* gap */
 #define R300_RB3D_DEPTHOFFSET               0x4F20
 #define R300_RB3D_DEPTHPITCH                0x4F24
