@@ -1,53 +1,7 @@
-/* $Id: multipal.c,v 1.2 2002/01/16 01:03:25 kschultz Exp $ */
+/* $Id: multipal.c,v 1.3 2002/10/18 13:23:19 brianp Exp $ */
 
 /*
- * GL_ARB_multitexture demo
- *
- * Command line options:
- *    -info      print GL implementation information
- *
- *
- * Brian Paul  November 1998  This program is in the public domain.
- */
-
-/*
- * $Log: multipal.c,v $
- * Revision 1.2  2002/01/16 01:03:25  kschultz
- * get tests working on windows (Robert Bergkvist)
- *
- * Revision 1.1  2000/11/18 17:12:33  brianp
- * test texture palettes with multitexture
- *
- * Revision 1.7  2000/11/01 16:02:01  brianp
- * print number of texture units
- *
- * Revision 1.6  2000/05/23 23:21:00  brianp
- * set default window pos
- *
- * Revision 1.5  2000/02/02 17:31:45  brianp
- * changed > to >=
- *
- * Revision 1.4  2000/02/02 01:07:21  brianp
- * limit Drift to [0, 1]
- *
- * Revision 1.3  1999/10/21 16:40:32  brianp
- * added -info command line option
- *
- * Revision 1.2  1999/10/13 12:02:13  brianp
- * use texture objects now
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 1.3  1999/03/28 18:20:49  brianp
- * minor clean-up
- *
- * Revision 1.2  1998/11/05 04:34:04  brianp
- * moved image files to ../images/ directory
- *
- * Revision 1.1  1998/11/03 01:36:33  brianp
- * Initial revision
- *
+ * Test multitexture and paletted textures.
  */
 
 #include <assert.h>
@@ -306,9 +260,12 @@ static void Init( int argc, char *argv[] )
    GLuint texObj[2];
    GLint units;
 
-   const char *exten = (const char *) glGetString(GL_EXTENSIONS);
-   if (!strstr(exten, "GL_ARB_multitexture")) {
+   if (!glutExtensionSupported("GL_ARB_multitexture")) {
       printf("Sorry, GL_ARB_multitexture not supported by this renderer.\n");
+      exit(1);
+   }
+   if (!glutExtensionSupported("GL_EXT_paletted_texture")) {
+      printf("Sorry, GL_EXT_paletted_texture not supported by this renderer.\n");
       exit(1);
    }
 
