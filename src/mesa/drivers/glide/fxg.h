@@ -307,6 +307,30 @@ void FX_CALL trap_guFogGenerateLinear (GrFog_t *fogtable, float nearZ, float far
 #endif /* DEBUG_TRAP_internal */
 #endif /* DEBUG_TRAP */
 
+
+
+/* <texus.h> */
+#define TX_MAX_LEVEL 16
+typedef struct _TxMip {
+        int format;
+        int width;
+        int height;
+        int depth;
+        int size;
+        void *data[TX_MAX_LEVEL];
+        FxU32 pal[256];
+} TxMip;
+typedef void (*TxErrorCallbackFnc_t) (const char *string, FxBool fatal);
+#define TX_DITHER_NONE                                  0x00000000
+#define TX_DITHER_4x4                                   0x00000001
+#define TX_DITHER_ERR                                   0x00000002
+
+#define TX_COMPRESSION_STATISTICAL                      0x00000000
+#define TX_COMPRESSION_HEURISTIC                        0x00000010
+/* <texus.h> */
+
+
+
 struct tdfx_glide {
    /*
    ** glide extensions
@@ -317,6 +341,11 @@ struct tdfx_glide {
    void (FX_CALL *grChromaRangeExt) (GrColor_t color, GrColor_t range, GrChromaRangeMode_t match_mode);
    void (FX_CALL *grTexChromaModeExt) (GrChipID_t tmu, GrChromakeyMode_t mode);
    void (FX_CALL *grTexChromaRangeExt) (GrChipID_t tmu, GrColor_t min, GrColor_t max, GrTexChromakeyMode_t mode);
+
+   /* pointcast */
+   void (FX_CALL *grTexDownloadTableExt) (GrChipID_t tmu, GrTexTable_t type, void *data);
+   void (FX_CALL *grTexDownloadTablePartialExt) (GrChipID_t tmu, GrTexTable_t type, void *data, int start, int end);
+   void (FX_CALL *grTexNCCTableExt) (GrChipID_t tmu, GrNCCTable_t table);
 
    /* tbext */
    void (FX_CALL *grTextureBufferExt) (GrChipID_t tmu, FxU32 startAddress, GrLOD_t thisLOD, GrLOD_t largeLOD, GrAspectRatio_t aspectRatio, GrTextureFormat_t format, FxU32 odd_even_mask);
@@ -342,9 +371,11 @@ struct tdfx_glide {
    /*
    ** Texus2 functions
    */
-   void (*txImgQuantize) (void *xxx_unknown_arguments);
-   void (*txImgDequantizeFXT1) (void *txMip, void *pxMip);
-   void (*txErrorSetCallback) (void *fnc);
+   int (FX_CALL *txBitsPerPixel) (GrTextureFormat_t format);
+   void (FX_CALL *txImgQuantize) (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
+   void (FX_CALL *txMipQuantize) (TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
+   void (FX_CALL *txPalToNcc) (GuNccTable *ncc_table, const FxU32 *pal);
+   void (FX_CALL *txErrorSetCallback) (TxErrorCallbackFnc_t fnc, TxErrorCallbackFnc_t *old_fnc);
 };
 
 void tdfx_hook_glide (struct tdfx_glide *Glide);

@@ -530,6 +530,7 @@ static void init_rast_tab( void )
 /* Accelerate vertex buffer rendering when renderindex == 0 and
  * there is no clipping.
  */
+#define INIT(x) fxRenderPrimitive( ctx, x )
 
 static void fx_render_vb_points( GLcontext *ctx,
 				 GLuint start,
@@ -545,7 +546,7 @@ static void fx_render_vb_points( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_points\n");
    }
 
-   fxRenderPrimitive(ctx, GL_POINTS);
+   INIT(GL_POINTS);
 
    /* Adjust point coords */
    for (i = start; i < count; i++) {
@@ -576,7 +577,7 @@ static void fx_render_vb_line_strip( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_line_strip\n");
    }
 
-   fxRenderPrimitive(ctx, GL_LINE_STRIP);
+   INIT(GL_LINE_STRIP);
 
    /* adjust line coords */
    for (i = start; i < count; i++) {
@@ -609,7 +610,7 @@ static void fx_render_vb_line_loop( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_line_loop\n");
    }
 
-   fxRenderPrimitive(ctx, GL_LINE_LOOP);
+   INIT(GL_LINE_LOOP);
 
    if (!(flags & PRIM_BEGIN)) {
       j++;
@@ -649,7 +650,7 @@ static void fx_render_vb_lines( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_lines\n");
    }
 
-   fxRenderPrimitive(ctx, GL_LINES);
+   INIT(GL_LINES);
 
    /* adjust line coords */
    for (i = start; i < count; i++) {
@@ -680,7 +681,7 @@ static void fx_render_vb_triangles( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_triangles\n");
    }
 
-   fxRenderPrimitive(ctx, GL_TRIANGLES);
+   INIT(GL_TRIANGLES);
 
 #if 0
    /* [dBorca]
@@ -716,7 +717,7 @@ static void fx_render_vb_tri_strip( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_tri_strip\n");
    }
 
-   fxRenderPrimitive(ctx, GL_TRIANGLE_STRIP);
+   INIT(GL_TRIANGLE_STRIP);
 
    if (flags & PRIM_PARITY) 
       mode = GR_TRIANGLE_STRIP_CONTINUE;
@@ -741,7 +742,7 @@ static void fx_render_vb_tri_fan( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_tri_fan\n");
    }
 
-   fxRenderPrimitive(ctx, GL_TRIANGLE_FAN);
+   INIT(GL_TRIANGLE_FAN);
 
    grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, count-start,
                                 fxVB + start, sizeof(GrVertex) );
@@ -761,7 +762,7 @@ static void fx_render_vb_quads( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_quads\n");
    }
 
-   fxRenderPrimitive(ctx, GL_QUADS);
+   INIT(GL_QUADS);
 
    for (i = start ; i < count-3 ; i += 4 ) {
 #define VERT(x) (fxVB + (x))
@@ -784,7 +785,7 @@ static void fx_render_vb_quad_strip( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_quad_strip\n");
    }
 
-   fxRenderPrimitive(ctx, GL_QUAD_STRIP);
+   INIT(GL_QUAD_STRIP);
 
    count -= (count-start)&1;
 
@@ -805,7 +806,7 @@ static void fx_render_vb_poly( GLcontext *ctx,
       fprintf(stderr, "fx_render_vb_poly\n");
    }
 
-   fxRenderPrimitive(ctx, GL_POLYGON);
+   INIT(GL_POLYGON);
 
    grDrawVertexArrayContiguous( GR_POLYGON, count-start,
                                 fxVB + start, sizeof(GrVertex));
@@ -836,6 +837,7 @@ static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
    fx_render_vb_poly,
    fx_render_vb_noop,
 };
+#undef INIT(x)
 
 
 /**********************************************************************/

@@ -224,6 +224,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       }
 
       extension = grGetString(GR_EXTENSION);
+      config->SSTs[i].HavePalExt = (strstr(extension, " PALETTE6666 ") != NULL);
       config->SSTs[i].HavePixExt = (strstr(extension, " PIXEXT ") != NULL);
       config->SSTs[i].HaveTexFmt = (strstr(extension, " TEXFMT ") != NULL);
       config->SSTs[i].HaveCmbExt = (strstr(extension, " COMBINE ") != NULL);

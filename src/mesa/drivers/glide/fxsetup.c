@@ -327,13 +327,23 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    }
 
    if (ti->LODblend && ti->whichTMU == FX_TMU_SPLIT) {
+      /* broadcast */
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
 	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
 	 }
-	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti->palette));
+	 grTexDownloadTable(ti->paltype, &(ti->palette));
       }
+#if FX_TC_NCC
+      if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
+          (ti->info.format == GR_TEXFMT_YIQ_422)) {
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading NCC table\n", __FUNCTION__);
+	 }
+	 grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
+      }
+#endif
 
       grTexClampMode(GR_TMU0, ti->sClamp, ti->tClamp);
       grTexClampMode(GR_TMU1, ti->sClamp, ti->tClamp);
@@ -353,13 +363,23 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       else
 	 tmu = ti->whichTMU;
 
+      /* pointcast */
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
 	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
 	 }
-	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti->palette));
+	 fxMesa->Glide.grTexDownloadTableExt(tmu, ti->paltype, &(ti->palette));
       }
+#if FX_TC_NCC
+      if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
+          (ti->info.format == GR_TEXFMT_YIQ_422)) {
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading NCC table\n", __FUNCTION__);
+	 }
+	 fxMesa->Glide.grTexDownloadTableExt(tmu, GR_TEXTABLE_NCC0, &(ti->palette));
+      }
+#endif
 
       /* KW: The alternative is to do the download to the other tmu.  If
        * we get to this point, I think it means we are thrashing the
@@ -784,17 +804,40 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
    }
 
    if (!fxMesa->haveGlobalPaletteTexture) {
-      /* [dBorca]
-       * all TMUs share the same table.
-       * The next test shouldn't be TMU specific...
-       */
+      /* pointcast */
       if (ti0->info.format == GR_TEXFMT_P_8) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette TMU0\n", __FUNCTION__);
+	    fprintf(stderr, "%s: uploading texture palette for TMU0\n", __FUNCTION__);
 	 }
-	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti0->palette));
+	 fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, ti0->paltype, &(ti0->palette));
+      }
+#if 1
+      else /* does anyone guess why is this here? :D */
+#endif
+      if (ti1->info.format == GR_TEXFMT_P_8) {
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading texture palette for TMU1\n", __FUNCTION__);
+	 }
+	 fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, ti1->paltype, &(ti1->palette));
       }
    }
+#if FX_TC_NCC
+   /* pointcast */
+   if ((ti0->info.format == GR_TEXFMT_AYIQ_8422) ||
+       (ti0->info.format == GR_TEXFMT_YIQ_422)) {
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+         fprintf(stderr, "%s: uploading NCC0 table for TMU0\n", __FUNCTION__);
+      }
+      fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, GR_TEXTABLE_NCC0, &(ti0->palette));
+   }
+   if ((ti1->info.format == GR_TEXFMT_AYIQ_8422) ||
+       (ti1->info.format == GR_TEXFMT_YIQ_422)) {
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+         fprintf(stderr, "%s: uploading NCC0 table for TMU1\n", __FUNCTION__);
+      }
+      fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, GR_TEXTABLE_NCC0, &(ti1->palette));
+   }
+#endif
 
    grTexSource(tmu0, ti0->tm[tmu0]->startAddr,
 			 GR_MIPMAPLEVELMASK_BOTH, &(ti0->info));

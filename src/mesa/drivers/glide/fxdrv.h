@@ -286,6 +286,7 @@ typedef struct tfxTexInfo_t
 
    GLfloat sScale, tScale;
 
+   GrTexTable_t paltype;
    GuTexPalette palette;
 
    GLboolean fixedPalette;
@@ -426,6 +427,7 @@ typedef void (*fx_point_func) (fxMesaContext, GrVertex *);
 
 struct tfxMesaContext
 {
+   GrTexTable_t glbPalType;
    GuTexPalette glbPalette;
 
    GLcontext *glCtx;		/* the core Mesa context */
@@ -534,6 +536,7 @@ struct tfxMesaContext
     * from `glbHWConfig' when creating a new context...
     */
    GrSstType type;
+   FxBool HavePalExt;	/* PALETTE6666 */
    FxBool HavePixExt;	/* PIXEXT */
    FxBool HaveTexFmt;	/* TEXFMT */
    FxBool HaveCmbExt;	/* COMBINE */
@@ -577,6 +580,10 @@ extern void fxPrintTextureData(tfxTexInfo * ti);
 extern const struct gl_texture_format *
 fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum srcFormat, GLenum srcType );
+extern GLboolean fxDDIsCompressedFormat (GLcontext *ctx, GLenum internalFormat);
+extern GLuint fxDDCompressedTextureSize (GLcontext *ctx,
+                                         GLsizei width, GLsizei height, GLsizei depth,
+                                         GLenum format);
 extern void fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			   GLint internalFormat, GLint width, GLint height,
 			   GLint border, GLenum format, GLenum type,
@@ -584,7 +591,6 @@ extern void fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			   const struct gl_pixelstore_attrib *packing,
 			   struct gl_texture_object *texObj,
 			   struct gl_texture_image *texImage);
-
 extern void fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      GLint xoffset, GLint yoffset,
 			      GLsizei width, GLsizei height,
@@ -593,6 +599,19 @@ extern void fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			      const struct gl_pixelstore_attrib *packing,
 			      struct gl_texture_object *texObj,
 			      struct gl_texture_image *texImage);
+extern void fxDDCompressedTexImage2D(GLcontext *ctx, GLenum target,
+                                     GLint level, GLint internalFormat,
+                                     GLsizei width, GLsizei height, GLint border,
+                                     GLsizei imageSize, const GLvoid *data,
+                                     struct gl_texture_object *texObj,
+                                     struct gl_texture_image *texImage);
+extern void fxDDCompressedTexSubImage2D(GLcontext *ctx, GLenum target,
+                                        GLint level, GLint xoffset,
+                                        GLint yoffset, GLsizei width,
+                                        GLint height, GLenum format,
+                                        GLsizei imageSize, const GLvoid *data,
+                                        struct gl_texture_object *texObj,
+                                        struct gl_texture_image *texImage);
 extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);

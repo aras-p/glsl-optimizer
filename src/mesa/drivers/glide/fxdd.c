@@ -1427,6 +1427,13 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxDDInitExtensions(ctx);
 
+#if 0
+   /* [dBorca] Hack alert:
+    * do we want dither? It just looks bad...
+    */
+   grEnable(GR_ALLOW_MIPMAP_DITHER);
+   grTexNccTable(GR_NCCTABLE_NCC0); /* set this once... no multipass */
+#endif
    grGlideGetState((GrState *) fxMesa->state);
 
    return 1;
@@ -1474,15 +1481,36 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
    }
 
-#if 0 /* not ready yet */
-      /* banshee/avenger should enable this for NCC */
-      _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
-#endif
-   if (0/*IS_NAPALM*/) {
-      /* tex_compress: not ready yet */
-      _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
-      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
-      /*_mesa_enable_extension( ctx, "GL_S3_s3tc" );*/
+   /* [dBorca] Hack alert:
+    * True texture compression can be done only on Napalm.
+    * We will advertise, however, generic texture compression
+    * on all Voodoo cards; the Mesa logic allows us to eventually
+    * fallback to uncompressed. This will fix those dumb applications
+    * which refuse to run w/o texture compression! We actually _can_
+    * do texture compression for pre-Napalm cores, through NCC. But
+    * NCC poses many issues:
+    * 1) NCC w/o DITHER_ERR has poor quality and NCC w/ DITHER_ERR is
+    *    damn slow!
+    * 2) NCC compression cannot be used with multitexturing, because
+    *    the decompression tables are not per TMU anymore (bear in mind
+    *    that earlier Voodoos could handle 2 NCC tables for each TMU --
+    *    just look for POINTCAST_PALETTE). As a last resort, we could
+    *    fake NCC multitexturing through multipass rendering, but...
+    *    ohwell, it's not worth the effort...
+    *    This stand true for multitexturing palletized textures.
+    * 3) since NCC is not an OpenGL standard (as opposed to FXT1), we
+    *    would need to plug deeper into the core... First, we would need to
+    *    bind NCC to GL_COMPRESSED_RGB[A]. Then, we would need to trick
+    *    Mesa into reporting our texture as compressed. Last, we would need
+    *    to stash the NCC decompression table into the mipmap data and adjust
+    *    CompressedSize accordingly!
+    */
+   _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
+
+   if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
+      _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+      /*_mesa_enable_extension(ctx, "GL_S3_s3tc");*/
    }
 
    if (fxMesa->HaveCmbExt) {
@@ -1697,11 +1725,13 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
    ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+   ctx->Driver.CompressedTexImage2D = fxDDCompressedTexImage2D;
    ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
    ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+   ctx->Driver.CompressedTexSubImage2D = fxDDCompressedTexSubImage2D;
    ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+   ctx->Driver.IsCompressedFormat = fxDDIsCompressedFormat;
+   ctx->Driver.CompressedTextureSize = fxDDCompressedTextureSize;
    ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;

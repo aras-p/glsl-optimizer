@@ -318,6 +318,7 @@ fxMesaCreateContext(GLuint win,
  }
 
  fxMesa->type = voodoo->type;
+ fxMesa->HavePalExt = voodoo->HavePalExt;
  fxMesa->HavePixExt = voodoo->HavePixExt;
  fxMesa->HaveTexFmt = voodoo->HaveTexFmt;
  fxMesa->HaveCmbExt = voodoo->HaveCmbExt;
