@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.6 2000/01/07 08:34:44 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.7 2000/06/11 20:11:55 jtaylor Exp $
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
@@ -106,7 +106,8 @@ static int changed(ggi_visual_t vis, int whatchanged)
 	return 0;
 }
 
-int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
+static int GGIdlinit(ggi_visual *vis, struct ggi_dlhandle *dlh,
+			const char *args, void *argptr, uint32 *dlret)
 {
 	struct genkgi_priv_mesa *priv;
 	char libname[256], libargs[256];
@@ -166,12 +167,24 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 #endif	
 	GGIMESADPRINT_CORE("display-fbdev-kgicon-mesa: GGIdlinit finished\n");
 
+	*dlret = GGI_DL_OPDRAW;
 	return 0;
 }
 
-int GGIdlcleanup(ggi_visual *vis)
+int MesaGGIdl_fbdev(int func, void **funcptr)
 {
-	return 0;
+	switch (func) {
+		case GGIFUNC_open:
+			*funcptr = GGIopen;
+			return 0;
+		case GGIFUNC_exit:
+		case GGIFUNC_close:
+			*funcptr = NULL;
+			return 0;
+		default:
+			*funcptr = NULL;
+	}
+	return GGI_ENOTFOUND;
 }
 
 #include <ggi/internal/ggidlinit.h>

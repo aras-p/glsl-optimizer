@@ -30,6 +30,7 @@
 
 #define FB_TYPE uint8
 #define FB_BITS 8
+#define DLOPENFUNC MesaGGIdl_linear_8
 
 #include "linear.c"
 

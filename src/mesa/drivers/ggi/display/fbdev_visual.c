@@ -1,4 +1,4 @@
-/* $Id: fbdev_visual.c,v 1.5 2000/01/07 08:34:44 jtaylor Exp $
+/* $Id: fbdev_visual.c,v 1.6 2000/06/11 20:11:55 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa: visual handling
@@ -38,6 +38,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#define GGI_SYMNAME_PREFIX  "MesaGGIdl_"
 
 #ifdef HAVE_SYS_VT_H
 #include <sys/vt.h>
@@ -95,7 +97,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 					continue;
 				}
 				
-				lib = ggiExtensionLoadDL(vis, fname, args, NULL);
+				lib = ggiExtensionLoadDL(vis, fname, args, NULL, GGI_SYMNAME_PREFIX);
 			}
 		}
 		break;

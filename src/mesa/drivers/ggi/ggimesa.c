@@ -552,7 +552,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 					/* No special implementation for this sublib */
 					continue;
 				}
-				lib = ggiExtensionLoadDL(vis, fname, args, NULL);
+				lib = ggiExtensionLoadDL(vis, fname, args, NULL, GGI_SYMNAME_PREFIX);
 			}
 		} 
 		break;

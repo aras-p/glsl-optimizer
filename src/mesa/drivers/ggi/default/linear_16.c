@@ -30,6 +30,7 @@
 
 #define FB_TYPE uint16
 #define FB_BITS 16
+#define DLOPENFUNC MesaGGIdl_linear_16
 
 #include "linear.c"
 

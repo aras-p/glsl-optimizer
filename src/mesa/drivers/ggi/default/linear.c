@@ -320,14 +320,28 @@ int GGIsetup_driver(GGIMesaContext ggictx,struct ggi_mesa_info *info)
 	return 0;
 }
 
-int GGIdlinit(ggi_visual_t vis,const char *version,void *argptr)
+static int GGIopen(ggi_visual_t vis,struct ggi_dlhandle *dlh,
+			const char *args,void *argptr, uint32 *dlret)
 {	
 	LIBGGI_MESAEXT(vis)->setup_driver=GGIsetup_driver;
 
+	*dlret = GGI_DL_OPDRAW;
 	return 0;
 }
 
-int GGIdlcleanup(ggi_visual_t vis)
+int DLOPENFUNC(int func, void **funcptr)
 {
-	return 0;
+	switch (func) {
+		case GGIFUNC_open:
+			*funcptr = GGIopen;
+			return 0;
+		case GGIFUNC_exit:
+		case GGIFUNC_close:
+			*funcptr = NULL;
+			return 0;
+		default:
+			*funcptr = NULL;
+	}
+	return GGI_ENOTFOUND;
 }
+

@@ -4,6 +4,8 @@
 #include <ggi/internal/internal.h>
 #include "ggimesa.h"
 
+#define GGI_SYMNAME_PREFIX  "MesaGGIdl_"
+
 extern ggi_extid ggiMesaID;
 
 ggifunc_setmode GGIMesa_setmode;
