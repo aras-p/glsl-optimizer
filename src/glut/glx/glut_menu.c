@@ -9,6 +9,10 @@
    the menuing functionality implemented.  This file is used only by
    the X Window System version of GLUT. */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

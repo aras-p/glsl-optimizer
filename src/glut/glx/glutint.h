@@ -7,6 +7,10 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #if defined(__CYGWIN32__)
 #include <sys/time.h>
 #endif

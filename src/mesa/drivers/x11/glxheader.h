@@ -1,4 +1,4 @@
-/* $Id: glxheader.h,v 1.1 1999/11/11 01:29:28 brianp Exp $ */
+/* $Id: glxheader.h,v 1.2 2000/08/22 13:31:04 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,6 +28,9 @@
 #ifndef GLX_HEADER_H
 #define GLX_HEADER_H
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"

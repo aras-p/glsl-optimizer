@@ -5,6 +5,10 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>  /* SunOS multithreaded assert() needs <stdio.h>.  Lame. */

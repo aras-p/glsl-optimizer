@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.8 2000/08/13 03:57:21 brianp Exp $ */
+/* $Id: xfonts.c,v 1.9 2000/08/22 13:31:04 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,9 @@
  * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
  */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"

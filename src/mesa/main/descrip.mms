@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@crys.chem.uva.nl
-# Last revision : 3 May 1999
+# Last revision : 22 August 2000
 
 .first
 	define gl [-.include.gl]
@@ -13,11 +13,11 @@ VPATH = RCS
 
 INCDIR = [-.include]
 LIBDIR = [-.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)
+CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)/name=(as_is,short)
 
 CORE_SOURCES = aatriangle.c accum.c alpha.c alphabuf.c attrib.c \
 bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
-dispatch.c \
+dispatch.c convolve.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
 get.c hash.c hint.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
 mem.c glapi.c glapinoop.c \
@@ -51,7 +51,7 @@ mmath.obj,pb.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj,\
-pixeltex.obj
+pixeltex.obj,convolve.obj
 
 OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.obj,\
 triangle.obj,varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj

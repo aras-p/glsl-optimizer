@@ -9,6 +9,10 @@
 
 /* Based on XLayerUtil.h: Revision: 1.3 */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #if !defined(_WIN32)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

@@ -1,4 +1,4 @@
-/* $Id: xmesa.h,v 1.8 2000/05/02 02:30:01 brianp Exp $ */
+/* $Id: xmesa.h,v 1.9 2000/08/22 13:31:01 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,11 +67,13 @@ See the demos/xdemo.c and xmesa1.c files for examples.
 #ifndef XMESA_H
 #define XMESA_H
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #ifdef XFree86Server
 #include "xmesa_xf86.h"

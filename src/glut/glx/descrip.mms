@@ -14,7 +14,7 @@ VPATH = RCS
 
 INCDIR = [-.include]
 LIBDIR = [-.lib]
-CFLAGS = /nowarn/include=$(INCDIR)/prefix=all
+CFLAGS = /nowarn/include=$(INCDIR)/prefix=all/name=(as_is,short)
 
 SOURCES = \
 glut_8x13.c \

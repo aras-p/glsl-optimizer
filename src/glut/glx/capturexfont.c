@@ -10,6 +10,10 @@
    encoding  the font for GLUT's use. Example usage:
    capturexfont.c 9x15 glutBitmap9By15 > glut_9x15.c */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

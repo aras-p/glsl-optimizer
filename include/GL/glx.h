@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.22 2000/06/23 17:39:18 brianp Exp $ */
+/* $Id: glx.h,v 1.23 2000/08/22 13:31:00 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 
 
 #ifdef __VMS
+#include <GL/vms_x_fix.h>
 # ifdef __cplusplus
 /* VMS Xlib.h gives problems with C++.
  * this avoids a bunch of trivial warnings */

@@ -5,6 +5,10 @@
    and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
