@@ -61,6 +61,9 @@
 #    define GLAPI extern
 #  endif /* _STATIC_MESA support */
 #  define GLAPIENTRY __stdcall
+#elif defined(__CYGWIN__) && defined(USE_OPENGL32) /* use native windows opengl32 */
+#  define GLAPI extern
+#  define GLAPIENTRY __stdcall
 #else
 /* non-Windows compilation */
 #  define GLAPI extern
