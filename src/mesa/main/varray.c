@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.15 1999/11/12 04:57:05 kendallb Exp $ */
+/* $Id: varray.c,v 1.16 1999/11/18 23:56:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -587,6 +587,8 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
       VB->Material = IM->Material;
       VB->BoundsPtr = 0;
 
+      IM->v.Obj.size = ctx->Array.Vertex.Size;  /* added by Andree Borrmann */
+
       while (remaining > 0) {
          GLint vbspace = VB_MAX - VB_START;
 	 GLuint count, n;
@@ -673,6 +675,7 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
          /* Transform and render.
 	  */
          gl_run_pipeline( VB );
+         gl_flush_vb( ctx, "DrawArrays" );  /* added by Andree Borrmann */
 	 gl_reset_vb( VB );
 
 	 ctx->Array.Flag[count] = ctx->Array.Flags;
