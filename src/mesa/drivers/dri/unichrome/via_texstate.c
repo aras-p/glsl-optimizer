@@ -173,7 +173,12 @@ static void viaSetTexImages(viaContextPtr vmesa,
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__); 
     switch (baseImage->TexFormat->MesaFormat) {
     case MESA_FORMAT_ARGB8888:
-	if (t->image[tObj->BaseLevel].internalFormat == GL_RGB)
+       /* KW: I'm not sure what the thinking behind this test was, but
+	* it definitely didn't work, see failures in demos/texenv.c
+	* and glean texEnv test, both of which are corrected by
+	* disabling the 0888 option:
+	*/
+	if (t->image[tObj->BaseLevel].internalFormat == GL_RGB && 0)
     	    texFormat = HC_HTXnFM_ARGB0888;
 	else
 	    texFormat = HC_HTXnFM_ARGB8888;
@@ -408,13 +413,9 @@ static GLboolean viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
     }
 }
 
-void viaUpdateTextureState(GLcontext *ctx)
+GLboolean viaUpdateTextureState(GLcontext *ctx)
 {
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-
-    GLuint ok = (viaUpdateTexUnit(ctx, 0) &&
-		 viaUpdateTexUnit(ctx, 1));
-
-    FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, !ok);
+    return (viaUpdateTexUnit(ctx, 0) &&
+	    viaUpdateTexUnit(ctx, 1));
 }
 
