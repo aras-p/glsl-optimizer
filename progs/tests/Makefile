@@ -19,6 +19,7 @@ SOURCES = antialias.c \
 	arbvptest3.c \
 	arbvptorus.c \
 	arbvpwarpmesh.c \
+	blendsquare.c \
 	bufferobj.c \
 	cva.c \
 	dinoshade.c \
