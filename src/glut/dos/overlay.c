@@ -21,7 +21,7 @@
 /*
  * DOS/DJGPP glut driver v1.3 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */
@@ -30,62 +30,62 @@
 #include "glutint.h"
 
 
-
-int APIENTRY glutLayerGet (GLenum info)
+int APIENTRY
+glutLayerGet (GLenum info)
 {
- switch (info) {
-        case GLUT_OVERLAY_POSSIBLE:
-        case GLUT_HAS_OVERLAY:
-             return GL_FALSE;
-        case GLUT_LAYER_IN_USE:
-             return GLUT_NORMAL;
-        case GLUT_NORMAL_DAMAGED:
-             return GL_FALSE;
-        case GLUT_OVERLAY_DAMAGED:
-        case GLUT_TRANSPARENT_INDEX:
-        default:
-             return -1;
- }
+   switch (info) {
+      case GLUT_OVERLAY_POSSIBLE:
+      case GLUT_HAS_OVERLAY:
+         return GL_FALSE;
+      case GLUT_LAYER_IN_USE:
+         return GLUT_NORMAL;
+      case GLUT_NORMAL_DAMAGED:
+         return GL_FALSE;
+      case GLUT_OVERLAY_DAMAGED:
+      case GLUT_TRANSPARENT_INDEX:
+      default:
+         return -1;
+   }
 }
 
 
-
-void APIENTRY glutOverlayDisplayFunc (GLUTdisplayCB func)
-{
-}
-
-
-
-void APIENTRY glutEstablishOverlay (void)
+void APIENTRY
+glutOverlayDisplayFunc (GLUTdisplayCB func)
 {
 }
 
 
-
-void APIENTRY glutRemoveOverlay (void)
+void APIENTRY
+glutEstablishOverlay (void)
 {
 }
 
 
-
-void APIENTRY glutUseLayer (GLenum layer)
+void APIENTRY
+glutRemoveOverlay (void)
 {
 }
 
 
-
-void APIENTRY glutPostOverlayRedisplay (void)
+void APIENTRY
+glutUseLayer (GLenum layer)
 {
 }
 
 
-
-void APIENTRY glutShowOverlay (void)
+void APIENTRY
+glutPostOverlayRedisplay (void)
 {
 }
 
 
+void APIENTRY
+glutShowOverlay (void)
+{
+}
 
-void APIENTRY glutHideOverlay (void)
+
+void APIENTRY
+glutHideOverlay (void)
 {
 }

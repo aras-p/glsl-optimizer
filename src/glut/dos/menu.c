@@ -21,7 +21,7 @@
 /*
  * DOS/DJGPP glut driver v1.3 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */
@@ -30,87 +30,86 @@
 #include "glutint.h"
 
 
-
 GLUTmenuStatusCB g_menu_status_func = NULL;
 
 
-
-void APIENTRY glutMenuStateFunc (GLUTmenuStateCB func)
+void APIENTRY
+glutMenuStateFunc (GLUTmenuStateCB func)
 {
- g_menu_status_func = (GLUTmenuStatusCB)func;
+   g_menu_status_func = (GLUTmenuStatusCB)func;
 }
 
 
-
-void APIENTRY glutMenuStatusFunc (GLUTmenuStatusCB func)
+void APIENTRY
+glutMenuStatusFunc (GLUTmenuStatusCB func)
 {
- g_menu_status_func = func;
+   g_menu_status_func = func;
 }
 
 
-
-int APIENTRY glutCreateMenu (GLUTselectCB func)
+int APIENTRY
+glutCreateMenu (GLUTselectCB func)
 {
- return 0;
+   return 0;
 }
 
 
-
-void APIENTRY glutDestroyMenu (int menu)
-{
-}
-
-
-
-int APIENTRY glutGetMenu (void)
-{
- return 0;
-}
-
-
-
-void APIENTRY glutSetMenu (int menu)
+void APIENTRY
+glutDestroyMenu (int menu)
 {
 }
 
 
+int APIENTRY
+glutGetMenu (void)
+{
+   return 0;
+}
 
-void APIENTRY glutAddMenuEntry (const char *label, int value)
+
+void APIENTRY
+glutSetMenu (int menu)
 {
 }
 
 
-
-void APIENTRY glutAddSubMenu (const char *label, int submenu)
+void APIENTRY
+glutAddMenuEntry (const char *label, int value)
 {
 }
 
 
-
-void APIENTRY glutChangeToMenuEntry (int item, const char *label, int value)
+void APIENTRY
+glutAddSubMenu (const char *label, int submenu)
 {
 }
 
 
-
-void APIENTRY glutChangeToSubMenu (int item, const char *label, int submenu)
+void APIENTRY
+glutChangeToMenuEntry (int item, const char *label, int value)
 {
 }
 
 
-
-void APIENTRY glutRemoveMenuItem (int item)
+void APIENTRY
+glutChangeToSubMenu (int item, const char *label, int submenu)
 {
 }
 
 
-
-void APIENTRY glutAttachMenu (int button)
+void APIENTRY
+glutRemoveMenuItem (int item)
 {
 }
 
 
+void APIENTRY
+glutAttachMenu (int button)
+{
+}
 
-void APIENTRY glutDetachMenu (int button)
+
+void APIENTRY
+glutDetachMenu (int button)
 {
 }

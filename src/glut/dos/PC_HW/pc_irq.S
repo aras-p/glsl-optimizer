@@ -1,7 +1,7 @@
 /*
  * PC/HW routine collection v1.3 for DOS/DJGPP
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */

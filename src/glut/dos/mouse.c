@@ -21,7 +21,7 @@
 /*
  * DOS/DJGPP glut driver v1.3 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@yahoo.com
  *  Web   : http://www.geocities.com/dborca
  */
@@ -30,31 +30,30 @@
 #include "glutint.h"
 
 
-
 int g_mouse;
 int g_mouse_x = 0, g_mouse_y = 0;
 
 
-
-void __glutInitMouse (void)
+void
+__glutInitMouse (void)
 {
- if ((g_mouse = pc_install_mouse())) {
-    pc_mouse_area(g_curwin->xpos, g_curwin->ypos, g_curwin->xpos + g_curwin->width - 1, g_curwin->ypos + g_curwin->height - 1);
+   if ((g_mouse = pc_install_mouse())) {
+      pc_mouse_area(g_curwin->xpos, g_curwin->ypos, g_curwin->xpos + g_curwin->width - 1, g_curwin->ypos + g_curwin->height - 1);
 
-    g_curwin->show_mouse = (g_curwin->mouse || g_curwin->motion || g_curwin->passive);
- }
+      g_curwin->show_mouse = (g_curwin->mouse || g_curwin->motion || g_curwin->passive);
+   }
 }
 
 
-
-void APIENTRY glutSetCursor (int cursor)
+void APIENTRY
+glutSetCursor (int cursor)
 {
- /* XXX completely futile until full mouse support (maybe never) */
+   /* XXX completely futile until full mouse support (maybe never) */
 }
 
 
-
-void APIENTRY glutWarpPointer (int x, int y)
+void APIENTRY
+glutWarpPointer (int x, int y)
 {
- pc_warp_mouse(x, y);
+   pc_warp_mouse(x, y);
 }
