@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 1999/08/19 00:55:43 jtg Exp $
+# $Id: Makefile.X11,v 1.2 1999/09/16 16:41:03 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -16,7 +16,7 @@ GL_LIBS = -L$(LIBDIR) -lglut -lGLU -lGL -lm $(XLIBS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = glxdemo glxpixmap offset xdemo
+PROGS = glxdemo glxpixmap offset xdemo glxinfo
 
 
 
