@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.5 2000/12/12 00:27:51 brianp Exp $ */
+/* $Id: s_span.c,v 1.6 2001/01/05 21:28:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -818,7 +818,7 @@ void gl_write_texture_span( GLcontext *ctx,
       /* Texturing without alpha is done after depth-testing which
          gives a potential speed-up. */
       ASSERT(ctx->Texture._ReallyEnabled);
-      gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda, rgba, rgba );
      
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
@@ -851,7 +851,7 @@ void gl_write_texture_span( GLcontext *ctx,
    /* Texture without alpha test */
    if (! ctx->Color.AlphaEnabled) {
       ASSERT(ctx->Texture._ReallyEnabled);
-      gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda, rgba, rgba );
    }
 
    /* Add base and specular colors */
@@ -965,7 +965,8 @@ gl_write_multitexture_span( GLcontext *ctx,
        */
       ASSERT(ctx->Texture._ReallyEnabled);
       for (i = 0; i < texUnits; i++)
-         gl_texture_pixels( ctx, i, n, s[i], t[i], u[i], lambda[i], rgbaIn, rgba );
+         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i],
+                                    lambda[i], rgbaIn, rgba );
      
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
@@ -999,8 +1000,8 @@ gl_write_multitexture_span( GLcontext *ctx,
    if (! ctx->Color.AlphaEnabled) {
       ASSERT(ctx->Texture._ReallyEnabled);
       for (i = 0; i < texUnits; i++)
-         gl_texture_pixels( ctx, i, n, s[i], t[i], u[i],
-                            lambda[i], rgbaIn, rgba );
+         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i],
+                                    lambda[i], rgbaIn, rgba );
    }
 
    /* Add base and specular colors */
