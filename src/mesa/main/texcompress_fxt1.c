@@ -106,7 +106,7 @@ texstore_rgb_fxt1(STORE_PARAMS)
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
                                         GL_COMPRESSED_RGB_FXT1_3DFX,
-                                        texWidth, dstAddr);
+                                        texWidth, (GLubyte *) dstAddr);
 
    compress_fxt1(ctx, srcWidth, srcHeight, srcFormat, pixels, srcRowStride,
                  dst, dstRowStride);
@@ -161,7 +161,7 @@ texstore_rgba_fxt1(STORE_PARAMS)
 
    dst = _mesa_compressed_image_address(dstXoffset, dstYoffset, 0,
                                         GL_COMPRESSED_RGBA_FXT1_3DFX,
-                                        texWidth, dstAddr);
+                                        texWidth, (GLubyte *) dstAddr);
 
    compress_fxt1(ctx, srcWidth, srcHeight, srcFormat, pixels, srcRowStride,
                  dst, dstRowStride);
@@ -274,5 +274,5 @@ compress_fxt1 (GLcontext *ctx,
                GLint dstRowStride)
 {
    /* here be dragons */
-   return -1;
+   return 0;
 }

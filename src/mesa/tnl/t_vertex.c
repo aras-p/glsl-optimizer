@@ -940,7 +940,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
    GLuint j;
 
    for (j = 0; j < attr_count; j++) {
-      if (a[j].attrib == (int)attr) {
+      if (a[j].attrib == attr) {
 	 a[j].extract( &a[j], dest, (GLubyte *)vin + a[j].vertoffset );
 	 return;
       }
@@ -963,7 +963,7 @@ void _tnl_set_attr( GLcontext *ctx, void *vout,
    GLuint j;
 
    for (j = 0; j < attr_count; j++) {
-      if (a[j].attrib == (int)attr) {
+      if (a[j].attrib == attr) {
 	 a[j].insert[4-1]( &a[j], (GLubyte *)vout + a[j].vertoffset, src );
 	 return;
       }

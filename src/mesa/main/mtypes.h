@@ -1066,7 +1066,7 @@ struct gl_texture_format {
    GLubyte IndexBits;
    GLubyte DepthBits;
 
-   GLint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
+   GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
 
    StoreTexImageFunc StoreImage;
 

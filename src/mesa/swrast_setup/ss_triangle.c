@@ -58,7 +58,7 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
    SWvertex *v2 = &verts[e2];
    GLchan c[2][4];
    GLchan s[2][4];
-   GLuint i[2];
+   GLfloat i[2];
 
    /* cull testing */
    if (ctx->Polygon.CullFlag) {
@@ -117,7 +117,7 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    SWvertex *v2 = &verts[e2];
    GLchan c[2][4];
    GLchan s[2][4];
-   GLuint i[2];
+   GLfloat i[2];
 
    /* cull testing */
    if (ctx->Polygon.CullFlag) {

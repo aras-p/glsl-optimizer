@@ -3863,7 +3863,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
 
    /* copy the program string to a null-terminated string */
    /* XXX should I check for NULL from malloc()? */
-   strz = _mesa_malloc (len + 1);
+   strz = (GLubyte *) _mesa_malloc (len + 1);
    _mesa_memcpy (strz, str, len);
    strz[len] = '\0';
 

@@ -54,7 +54,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    ASSERT(ctx->RenderMode == GL_RENDER);
 
-   bitmap = _swrast_validate_pbo_access(unpack, width, height, 1,
+   bitmap = (const GLubyte *) _swrast_validate_pbo_access(unpack, width,
+                                        height, 1,
                                         GL_COLOR_INDEX, GL_BITMAP,
                                         (GLvoid *) bitmap);
    if (!bitmap) {

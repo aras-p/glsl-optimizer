@@ -618,9 +618,8 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
       for (img = 0; img < srcDepth; img++) {
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                  srcWidth, srcFormat, srcType);
-         GLchan *srcRow = _mesa_image_address(srcPacking, srcAddr, srcWidth,
-                                              srcHeight, srcFormat, srcType,
-                                              img, 0, 0);
+         GLchan *srcRow = (GLchan *) _mesa_image_address(srcPacking, srcAddr,
+                           srcWidth, srcHeight, srcFormat, srcType, img, 0, 0);
          GLchan *dstRow = dstImage;
          for (row = 0; row < srcHeight; row++) {
             for (col = 0; col < srcWidth; col++) {
@@ -1044,9 +1043,8 @@ _mesa_texstore_rgb888(STORE_PARAMS)
       for (img = 0; img < srcDepth; img++) {
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                  srcWidth, srcFormat, srcType);
-         GLubyte *srcRow = _mesa_image_address(srcPacking, srcAddr, srcWidth,
-                                              srcHeight, srcFormat, srcType,
-                                              img, 0, 0);
+         GLubyte *srcRow = (GLubyte *) _mesa_image_address(srcPacking, srcAddr,
+                           srcWidth, srcHeight, srcFormat, srcType, img, 0, 0);
          GLubyte *dstRow = dstImage;
          for (row = 0; row < srcHeight; row++) {
             for (col = 0; col < srcWidth; col++) {

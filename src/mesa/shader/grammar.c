@@ -381,7 +381,7 @@ typedef struct map_byte_
 
 static void map_byte_create (map_byte **ma)
 {
-    *ma = mem_alloc (sizeof (map_byte));
+    *ma = (map_byte *) mem_alloc (sizeof (map_byte));
     if (*ma)
     {
         (**ma).key = NULL;
@@ -469,7 +469,7 @@ typedef struct regbyte_ctx_
 
 static void regbyte_ctx_create (regbyte_ctx **re)
 {
-    *re = mem_alloc (sizeof (regbyte_ctx));
+    *re = (regbyte_ctx *) mem_alloc (sizeof (regbyte_ctx));
     if (*re)
     {
         (**re).m_regbyte = NULL;
@@ -534,7 +534,7 @@ typedef struct emit_
 
 static void emit_create (emit **em)
 {
-    *em = mem_alloc (sizeof (emit));
+    *em = (emit *) mem_alloc (sizeof (emit));
     if (*em)
     {
         (**em).m_emit_dest = ed_output;
@@ -568,7 +568,7 @@ typedef struct error_
 
 static void error_create (error **er)
 {
-    *er = mem_alloc (sizeof (error));
+    *er = (error *) mem_alloc (sizeof (error));
     if (*er)
     {
         (**er).m_text = NULL;
@@ -630,7 +630,7 @@ typedef struct cond_
 
 static void cond_create (cond **co)
 {
-    *co = mem_alloc (sizeof (cond));
+    *co = (cond *) mem_alloc (sizeof (cond));
     if (*co)
     {
         (**co).m_operands[0].m_regname = NULL;
@@ -680,7 +680,7 @@ typedef struct spec_
 
 static void spec_create (spec **sp)
 {
-    *sp = mem_alloc (sizeof (spec));
+    *sp = (spec *) mem_alloc (sizeof (spec));
     if (*sp)
     {
         (**sp).m_spec_type = st_false;
@@ -738,7 +738,7 @@ typedef struct rule_
 
 static void rule_create (rule **ru)
 {
-    *ru = mem_alloc (sizeof (rule));
+    *ru = (rule *) mem_alloc (sizeof (rule));
     if (*ru)
     {
         (**ru).m_oper = op_none;
@@ -790,7 +790,7 @@ typedef struct dict_
 
 static void dict_create (dict **di)
 {
-    *di = mem_alloc (sizeof (dict));
+    *di = (dict *) mem_alloc (sizeof (dict));
     if (*di)
     {
         (**di).m_rulez = NULL;
@@ -850,7 +850,7 @@ typedef struct barray_
 
 static void barray_create (barray **ba)
 {
-    *ba = mem_alloc (sizeof (barray));
+    *ba = (barray *) mem_alloc (sizeof (barray));
     if (*ba)
     {
         (**ba).data = NULL;
@@ -886,7 +886,7 @@ static int barray_resize (barray **ba, unsigned int nlen)
     }
     else
     {
-        new_pointer = mem_realloc ((**ba).data, (**ba).len * sizeof (byte), nlen * sizeof (byte));
+        new_pointer = (byte *) mem_realloc ((**ba).data, (**ba).len * sizeof (byte), nlen * sizeof (byte));
         if (new_pointer)
         {
             (**ba).data = new_pointer;
@@ -989,7 +989,7 @@ typedef struct map_str_
 
 static void map_str_create (map_str **ma)
 {
-    *ma = mem_alloc (sizeof (map_str));
+    *ma = (map_str *) mem_alloc (sizeof (map_str));
     if (*ma)
     {
         (**ma).key = NULL;
@@ -1054,7 +1054,7 @@ typedef struct map_rule_
 
 static void map_rule_create (map_rule **ma)
 {
-    *ma = mem_alloc (sizeof (map_rule));
+    *ma = (map_rule *) mem_alloc (sizeof (map_rule));
     if (*ma)
     {
         (**ma).key = NULL;
@@ -1181,7 +1181,7 @@ static int string_grow (byte **ptr, unsigned int *len, byte c)
     /* reallocate the string in 16-byte increments */
     if ((*len & 0x0F) == 0x0F || *ptr == NULL)
     {
-        byte *tmp = mem_realloc (*ptr, ((*len + 1) & ~0x0F) * sizeof (byte),
+        byte *tmp = (byte *) mem_realloc (*ptr, ((*len + 1) & ~0x0F) * sizeof (byte),
             ((*len + 1 + 0x10) & ~0x0F) * sizeof (byte));
         if (tmp == NULL)
             return 1;
@@ -2438,7 +2438,7 @@ static byte *error_get_token (error *er, dict *di, const byte *text, unsigned in
             if (match (di, text + ind, &filter_index, er->m_token, &ba, 0, &ctx) == mr_matched &&
                 filter_index)
             {
-                str = mem_alloc (filter_index + 1);
+                str = (byte *) mem_alloc (filter_index + 1);
                 if (str != NULL)
                 {
                     str_copy_n (str, text + ind, filter_index);
@@ -2464,7 +2464,7 @@ typedef struct grammar_load_state_
 
 static void grammar_load_state_create (grammar_load_state **gr)
 {
-    *gr = mem_alloc (sizeof (grammar_load_state));
+    *gr = (grammar_load_state *) mem_alloc (sizeof (grammar_load_state));
     if (*gr)
     {
         (**gr).di = NULL;
@@ -2715,7 +2715,7 @@ int grammar_check (grammar id, const byte *text, byte **prod, unsigned int *size
 
     free_regbyte_ctx_stack (rbc, NULL);
 
-    *prod = mem_alloc (ba->len * sizeof (byte));
+    *prod = (byte *) mem_alloc (ba->len * sizeof (byte));
     if (*prod == NULL)
     {
         barray_destroy (&ba);

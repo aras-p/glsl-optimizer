@@ -253,7 +253,7 @@ typedef void (*attrfv_func)( const GLfloat * );
 
 struct _tnl_dynfn {
    struct _tnl_dynfn *next, *prev;
-   int key;
+   GLuint key;
    char *code;
 };
 

@@ -34,7 +34,7 @@
 void
 _swrast_alloc_aux_buffers( GLframebuffer *buffer )
 {
-   GLuint i;
+   GLint i;
 
    for (i = 0; i < buffer->Visual.numAuxBuffers; i++) {
       if (buffer->AuxBuffers[i]) {
@@ -42,8 +42,8 @@ _swrast_alloc_aux_buffers( GLframebuffer *buffer )
          buffer->AuxBuffers[i] = NULL;
       }
 
-      buffer->AuxBuffers[i] = _mesa_malloc(buffer->Width * buffer->Height
-                                           * 4 * sizeof(GLchan));
+      buffer->AuxBuffers[i] = (GLchan *) _mesa_malloc(buffer->Width
+                                        * buffer->Height * 4 * sizeof(GLchan));
    }
 }
 
