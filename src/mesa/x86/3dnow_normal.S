@@ -1,10 +1,10 @@
-/* $Id: 3dnow_normal.S,v 1.3 2002/08/08 15:36:50 brianp Exp $ */
+/* $Id: 3dnow_normal.S,v 1.4 2003/01/28 22:41:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -171,6 +171,9 @@ LLBL (G3TN_norm):
 
     PREFETCHW  ( REGIND(EAX) )
 
+    MOVQ       ( REGIND (EAX), MM0 )    /*  x1             | x0           */
+    MOVD       ( REGOFF(8, EAX), MM1 )  /*                 | x2           */
+
     MOVQ       ( MM0, MM3 )             /*  x1              | x0           */
     MOVQ       ( MM1, MM4 )             /*                  | x2           */
 
@@ -198,9 +201,6 @@ LLBL (G3TN_norm):
     PFMUL      ( MM5, MM1 )             /*                 | x2 (normalize*/
 
     MOVD       ( MM1, REGOFF(-8, EAX) ) /*  write new x2                  */
-    MOVQ       ( REGIND (EAX), MM0 )    /*  x1             | x0           */
-
-    MOVD       ( REGOFF(8, EAX), MM1 )  /*                 | x2           */
     JA         ( LLBL (G3TN_norm) )
 
 LLBL (G3TN_exit_3dnow):
