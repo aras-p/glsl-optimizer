@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.31 2000/08/30 18:22:28 brianp Exp $ */
+/* $Id: drawpix.c,v 1.32 2000/09/06 17:44:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,7 +142,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       GLint skipRows = unpack->SkipRows;
       GLint rowLength;
       GLdepth zSpan[MAX_WIDTH];  /* only used when zooming */
-      GLint zoomY0;
+      GLint zoomY0 = 0;
 
       if (unpack->RowLength > 0)
          rowLength = unpack->RowLength;
@@ -175,8 +175,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             drawHeight -= (destY + drawHeight - ctx->DrawBuffer->Ymax - 1);
          if (drawHeight <= 0)
             return GL_TRUE;
-
-         zoomY0 = 0;  /* not used - silence compiler warning */
       }
       else if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==-1.0F) {
          /* upside-down image */
