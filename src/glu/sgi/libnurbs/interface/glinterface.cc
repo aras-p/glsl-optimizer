@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
+** $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glinterface.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glinterface.cc,v 1.2 2001/07/16 15:46:42 brianp Exp $
 */
 
 #include "gluos.h"
@@ -429,7 +429,7 @@ gluGetNurbsProperty(GLUnurbs *r, GLenum property, GLfloat *value)
 }
 
 extern "C" void GLAPIENTRY
-gluNurbsCallback(GLUnurbs *r, GLenum which, GLvoid (*fn)())
+gluNurbsCallback(GLUnurbs *r, GLenum which, _GLUfuncptr fn )
 {
     switch (which) {
     case GLU_NURBS_BEGIN:
@@ -444,11 +444,11 @@ gluNurbsCallback(GLUnurbs *r, GLenum which, GLvoid (*fn)())
     case GLU_NURBS_NORMAL_DATA:
     case GLU_NURBS_TEXTURE_COORD_DATA:
     case GLU_NURBS_COLOR_DATA: 
-	r->putSurfCallBack(which, (GLvoid (*)(...))fn);	
+	r->putSurfCallBack(which, fn);
 	break;
 
     case GLU_NURBS_ERROR:
-	r->errorCallback = (void (*)( GLenum )) fn;
+	r->errorCallback = (void (APIENTRY *)( GLenum e )) fn;
 	break;
     default:
 	r->postError(GLU_INVALID_ENUM);

@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/project.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/project.c,v 1.2 2001/07/16 15:46:42 brianp Exp $
 */
 
 #include "gluos.h"
@@ -331,7 +331,7 @@ gluUnProject4(GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
 	      const GLdouble modelMatrix[16], 
 	      const GLdouble projMatrix[16],
 	      const GLint viewport[4],
-	      GLclampd near, GLclampd far,		    
+	      GLclampd near, GLclampd farVal,		    
 	      GLdouble *objx, GLdouble *objy, GLdouble *objz,
 	      GLdouble *objw)
 {
@@ -350,7 +350,7 @@ gluUnProject4(GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
     /* Map x and y from window coordinates */
     in[0] = (in[0] - viewport[0]) / viewport[2];
     in[1] = (in[1] - viewport[1]) / viewport[3];
-    in[2] = (in[2] - near) / (far - near);
+    in[2] = (in[2] - near) / (farVal - near);
 
     /* Map to range -1 to 1 */
     in[0] = in[0] * 2 - 1;

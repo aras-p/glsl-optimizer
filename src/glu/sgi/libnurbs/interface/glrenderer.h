@@ -35,8 +35,8 @@
 /*
  * glrenderer.h
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.2 2001/07/16 15:46:42 brianp Exp $
  */
 
 #ifndef __gluglrenderer_h_
@@ -70,11 +70,11 @@ public:
 		    }
     GLboolean	getautoloadmode( void ) { return autoloadmode; }
 
-    void	(GLAPIENTRY *errorCallback)( GLenum );
+    void	(APIENTRY *errorCallback)( GLenum );
     void	postError( int which ) 
-		    { if (errorCallback) (*errorCallback)( (GLenum)which ); }
+		    { if (errorCallback) (errorCallback)( (GLenum)which ); }
 
-    void        putSurfCallBack(GLenum which, GLvoid (GLAPIENTRY *fn)(...))
+    void        putSurfCallBack(GLenum which, _GLUfuncptr fn )
       {
 	curveEvaluator.putCallBack(which, fn);
 	surfaceEvaluator.putCallBack(which, fn);
