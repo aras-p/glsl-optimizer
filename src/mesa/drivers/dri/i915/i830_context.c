@@ -41,7 +41,6 @@
 static const char * const card_extensions[] =
 {
    "GL_ARB_texture_env_crossbar",
-   "GL_NV_blend_square",
    NULL
 };
 

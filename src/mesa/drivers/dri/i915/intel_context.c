@@ -125,9 +125,16 @@ static void intelBufferSize(GLframebuffer *buffer,
    UNLOCK_HARDWARE(intel);
 }
 
+
+/**
+ * Extension strings exported by the intel driver.
+ *
+ * \note
+ * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
+ * old i830-specific driver.
+ */
 static const char * const card_extensions[] =
 {
-   "GL_APPLE_client_storage",
    "GL_ARB_multisample",
    "GL_ARB_multitexture",
    "GL_ARB_point_parameters",
@@ -149,27 +156,24 @@ static const char * const card_extensions[] =
    "GL_EXT_blend_func_separate",
    "GL_EXT_blend_minmax",
    "GL_EXT_blend_subtract",
+   "GL_EXT_cull_vertex",             /* New: alanh 06-Jan-2005 */
    "GL_EXT_fog_coord",
    "GL_EXT_multi_draw_arrays",
    "GL_EXT_secondary_color",
    "GL_EXT_stencil_wrap",
    "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_env_add",
    "GL_EXT_texture_env_combine",
    "GL_EXT_texture_env_dot3",
    "GL_EXT_texture_filter_anisotropic",
    "GL_EXT_texture_lod_bias",
    "GL_3DFX_texture_compression_FXT1",
-   "GL_IBM_texture_mirrored_repeat",
-   "GL_INGR_blend_func_separate",
+   "GL_APPLE_client_storage",
    "GL_MESA_pack_invert",
    "GL_MESA_ycbcr_texture",
-   "GL_NV_texture_rectangle",
+   "GL_NV_blend_square",	
    "GL_NV_vertex_program",
    "GL_NV_vertex_program1_1",
    "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_border_clamp",
-   "GL_SGIS_texture_edge_clamp",
    NULL
 };
 
