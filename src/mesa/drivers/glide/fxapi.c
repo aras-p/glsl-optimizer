@@ -824,7 +824,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,GrScreenResolution_t res
 					   GrScreenRefresh_t ref,
 					   const GLint attribList[])
 {
-  fxMesaContext fxMesa;
+  fxMesaContext fxMesa = NULL;
   int i,type;
   int aux;
   GLboolean doubleBuffer=GL_FALSE;
@@ -1131,7 +1131,7 @@ errorhandler:
       
       if (fxMesa->state)  
      	free(fxMesa->state);
-      if (fxMesa && fxMesa->fogTable)
+      if (fxMesa->fogTable)
      	free(fxMesa->fogTable);
       if (fxMesa->glBuffer)
       	gl_destroy_framebuffer(fxMesa->glBuffer);
@@ -1141,11 +1141,7 @@ errorhandler:
       	gl_destroy_context(fxMesa->glCtx);
       free(fxMesa);
    }
-
-
-
-     
-
+   
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
       fprintf(stderr,"fxmesa: fxMesaCreateContext() End (%s)\n",errorstr);
   }
