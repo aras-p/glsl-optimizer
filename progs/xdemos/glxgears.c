@@ -85,6 +85,7 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
+static GLboolean fullscreen = GL_FALSE;	/* Create a single fullscreen window */
 static GLboolean stereo = GL_FALSE;	/* Enable stereo.  */
 static GLfloat eyesep = 5.0;		/* Eye separation. */
 static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
@@ -398,6 +399,12 @@ make_window( Display *dpy, const char *name,
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
 
+   if (fullscreen) {
+      x = 0; y = 0;
+      width = DisplayWidth( dpy, scrnum );
+      height = DisplayHeight( dpy, scrnum );
+   }
+
    if (stereo)
       visinfo = glXChooseVisual( dpy, scrnum, stereoAttribs );
    else
@@ -416,7 +423,8 @@ make_window( Display *dpy, const char *name,
    attr.border_pixel = 0;
    attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-   mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+   attr.override_redirect = fullscreen;
+   mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
    win = XCreateWindow( dpy, root, 0, 0, width, height,
 		        0, visinfo->depth, InputOutput,
@@ -543,6 +551,9 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-stereo") == 0) {
          stereo = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-fullscreen") == 0) {
+         fullscreen = GL_TRUE;
       }
       else
 	 printf("Warrning: unknown parameter: %s\n", argv[i]);
