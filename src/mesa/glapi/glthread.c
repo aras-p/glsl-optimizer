@@ -1,4 +1,4 @@
-/* $Id: glthread.c,v 1.3 2000/01/28 18:57:56 brianp Exp $ */
+/* $Id: glthread.c,v 1.4 2000/02/10 21:27:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,14 +26,6 @@
 
 
 /*
- * Thread support for gl dispatch.
- *
- * Initial version by John Stone (j.stone@acm.org) (johns@cs.umr.edu)
- *                and Christoph Poliwoda (poliwoda@volumegraphics.com)
- *
- * Revised by Keith Whitwell
- * Adapted for new gl dispatcher by Brian Paul
- *
  * XXX There's probably some work to do in order to make this file
  * truly reusable outside of Mesa.  First, the glheader.h include must go.
  */
@@ -65,10 +57,11 @@
 
 
 /*
- * magic number for win32 and solaris threads equivalents of pthread_once
- * This could probably be done better, but we haven't figured out how yet. 
+ * Magic number to determine if a TSD object has been initialized.
+ * Kind of a hack but there doesn't appear to be a better cross-platform
+ * solution.
  */
-#define INITFUNC_CALLED_MAGIC 0xff8adc98
+#define INIT_MAGIC 0xff8adc98
 
 
 
@@ -95,20 +88,26 @@ _glthread_InitTSD(_glthread_TSD *tsd)
       perror(INIT_TSD_ERROR);
       exit(-1);
    }
+   tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
    return pthread_getspecific(tsd->key);
 }
 
 
 void
-_glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
+_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   pthread_once(&tsd->once, initfunc);
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
    if (pthread_setspecific(tsd->key, ptr) != 0) {
       perror(SET_TSD_ERROR);
       exit(-1);
@@ -145,6 +144,7 @@ _glthread_InitTSD(_glthread_TSD *tsd)
       perror(INIT_TSD_ERROR);
       exit(-1);
    }
+   tsd->initMagic = INIT_MAGIC;
 }
 
 
@@ -152,6 +152,9 @@ void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
    void* ret;
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
 #ifdef USE_LOCK_FOR_KEY
    mutex_lock(&tsd->keylock);
    thr_getspecific(tsd->key, &ret);
@@ -167,14 +170,10 @@ _glthread_GetTSD(_glthread_TSD *tsd)
 
 
 void
-_glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
+_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   /* the following code assumes that the _glthread_TSD has been initialized
-      to zero at creation */
-   fprintf(stderr, "initfuncCalled = %d\n", tsd->initfuncCalled);
-   if (tsd->initfuncCalled != INITFUNC_CALLED_MAGIC) {
-      initfunc();
-      tsd->initfuncCalled = INITFUNC_CALLED_MAGIC;
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
    }
    if ((errno = thr_setspecific(tsd->key, ptr)) != 0) {
       perror(SET_TSD_ERROR);
@@ -212,24 +211,27 @@ _glthread_InitTSD(_glthread_TSD *tsd)
       /* perror(SET_INIT_ERROR);*/
       exit(-1);
    }
+   tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
    return TlsGetValue(tsd->key);
 }
 
 
 void
-_glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
+_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
    /* the following code assumes that the _glthread_TSD has been initialized
       to zero at creation */
-   if (tsd->initfuncCalled != INITFUNC_CALLED_MAGIC) {
-      initfunc();
-      tsd->initfuncCalled = INITFUNC_CALLED_MAGIC;
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
    }
    if (TlsSetValue(tsd->key, ptr) == 0) {
       /* Can Windows handle stderr messages for non-console
@@ -240,6 +242,56 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr, void (*initfunc)(void))
 }
 
 #endif /* WIN32 */
+
+
+
+/*
+ * XFree86 has its own thread wrapper, Xthreads.h
+ * We wrap it again for GL.
+ */
+#ifdef XTHREADS
+
+unsigned long
+_glthread_GetID(void)
+{
+   return (unsigned long) xthread_self();
+}
+
+
+void
+_glthread_InitTSD(_glthread_TSD *tsd)
+{
+   if (xthread_key_create(&tsd->key, NULL) != 0) {
+      perror(INIT_TSD_ERROR);
+      exit(-1);
+   }
+   tsd->initMagic = INIT_MAGIC;
+}
+
+
+void *
+_glthread_GetTSD(_glthread_TSD *tsd)
+{
+   void *ptr;
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
+   xthread_get_specific(tsd->key, &ptr);
+   return ptr;
+}
+
+
+void
+_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      _glthread_InitTSD(tsd);
+   }
+   xthread_set_specific(tsd->key, ptr);
+}
+
+#endif /* XTHREAD */
+
 
 #endif /* THREADS */
 

@@ -1,10 +1,10 @@
-/* $Id: glthread.h,v 1.2 2000/01/31 23:10:47 brianp Exp $ */
+/* $Id: glthread.h,v 1.3 2000/02/10 21:27:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,30 @@
  *                and Christoph Poliwoda (poliwoda@volumegraphics.com)
  * Revised by Keith Whitwell
  * Adapted for new gl dispatcher by Brian Paul
+ *
+ *
+ *
+ * DOCUMENTATION
+ *
+ * This thread module exports the following types:
+ *   _glthread_TSD     Thread-specific data area
+ *   _glthread_Thread  Thread datatype
+ *   _glthread_Mutex   Mutual exclusion lock
+ *
+ * Macros:
+ *   _glthread_DECLARE_STATIC_MUTEX(name)   Declare a non-local mutex
+ *   _glthread_INIT_MUTEX(name)             Initialize a mutex
+ *   _glthread_LOCK_MUTEX(name)             Lock a mutex
+ *   _glthread_UNLOCK_MUTEX(name)           Unlock a mutex
+ *
+ * Functions:
+ *   _glthread_GetID(v)      Get integer thread ID
+ *   _glthread_InitTSD()     Initialize thread-specific data
+ *   _glthread_GetTSD()      Get thread-specific data
+ *   _glthread_SetTSD()      Set thread-specific data
+ *
  */
+
 
 #ifndef GLTHREAD_H
 #define GLTHREAD_H
@@ -47,8 +70,8 @@
 /*
  * It is an error not to select a specific threads API when compiling.
  */
-#if !defined(PTHREADS) && !defined(SOLARIS_THREADS) && !defined(WIN32)
-#error One of PTHREADS, SOLARIS_THREADS or WIN32 must be defined.
+#if !defined(PTHREADS) && !defined(SOLARIS_THREADS) && !defined(WIN32) && !defined(XTHREADS)
+#error One of PTHREADS, SOLARIS_THREADS, WIN32 or XTHREADS must be defined.
 #endif
 
 
@@ -67,7 +90,7 @@
 
 typedef struct {
    pthread_key_t  key;
-   pthread_once_t once;
+   int initMagic;
 } _glthread_TSD;
 
 typedef pthread_t _glthread_Thread;
@@ -103,7 +126,7 @@ typedef pthread_mutex_t _glthread_Mutex;
 typedef struct {
    thread_key_t key;
    mutex_t      keylock;
-   int          initfuncCalled;
+   int          initMagic;
 } _glthread_TSD;
 
 typedef thread_t _glthread_Thread;
@@ -126,13 +149,12 @@ typedef mutex_t _glthread_Mutex;
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
-
 #ifdef WIN32
 #include <windows.h>
 
 typedef struct {
    DWORD key;
-   int   initfuncCalled;
+   int   initMagic;
 } _glthread_TSD;
 
 typedef HANDLE _glthread_Thread;
@@ -150,25 +172,35 @@ typedef CRITICAL_SECTION _glthread_Mutex;
 
 
 
-
 /*
- * Platform independent thread specific data API. 
+ * XFree86 has its own thread wrapper, Xthreads.h
+ * We wrap it again for GL.
  */
+#ifdef XTHREADS
+#include "Xthreads.h"
 
-extern unsigned long
-_glthread_GetID(void);
+typedef struct {
+   xthread_key_t key;
+   int initMagic;
+} _glthread_TSD;
 
+typedef xthread_t _glthread_Thread;
 
-extern void
-_glthread_InitTSD(_glthread_TSD *);
+typedef xmutex_rec _glthread_Mutex;
 
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   static _glthread_Mutex name = XMUTEX_INITIALIZER
 
-extern void *
-_glthread_GetTSD(_glthread_TSD *);
+#define _glthread_INIT_MUTEX(name) \
+   xmutex_init(&(name))
 
+#define _glthread_LOCK_MUTEX(name) \
+   (void) xmutex_lock(&(name))
 
-extern void
-_glthread_SetTSD(_glthread_TSD *, void *, void (*initfunc)(void));
+#define _glthread_UNLOCK_MUTEX(name) \
+   (void) xmutex_unlock(&(name))
+
+#endif /* XTHREADS */
 
 
 
@@ -195,6 +227,30 @@ typedef GLuint _glthread_Mutex;
 
 
 #endif /* THREADS */
+
+
+
+/*
+ * Platform independent thread specific data API. 
+ */
+
+extern unsigned long
+_glthread_GetID(void);
+
+
+extern void
+_glthread_InitTSD(_glthread_TSD *);
+
+
+extern void *
+_glthread_GetTSD(_glthread_TSD *);
+
+
+extern void
+_glthread_SetTSD(_glthread_TSD *, void *);
+
+
+
 
 #endif /* THREADS_H */
 
