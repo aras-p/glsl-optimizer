@@ -26,16 +26,18 @@ It's not 100% finished at this time but many GLUT-based demos are
 working.  No optimizations have been made at this time.
 
 
-
 * Compiling
 
 Requirements:
   - gcc version 2.95.3 for BeOS 
   You can find it here: http://www.bebits.com/app/2157
 
-Move to the src/mesa sub-directory and then type "make -f Makefile.BeOS".
+To build Mesa-powered BeOS libGL.so version, type this at root folder:
+
+$ make beos
+
 When it finishes the Mesa based libGL.so library for
-BeOS will be in the src/mesa/src/obj.{x86|ppc}/ directory.
+BeOS will be in the lib/ directory.
 
 To install it as Be's default libGL.so replacement, put it in your 
 /boot/home/config/lib/ directory. All your GL/GLUT apps will use 
@@ -44,6 +46,10 @@ the Mesa based then.
 By default, it build a non-debug version library.
 The x86 (MMX, SSE and 3DNOW) optimizations are also supported for x86 target.
 For PowerPC BeOS flavor, sorry, Mesa don't have ppc (Altivec) optimizations yet.
+
+To build a DEBUG version, type instead this :
+
+$ DEBUG=1 make beos
 
 
 * Example Programs
@@ -58,7 +64,7 @@ library.
 A beta version of GLUT 3.7 port for BeOS can be found at 
 http://anobject.com/jehamby/Code/Glut-3.7-x86.zip.
  
-There's is a 2.5 version in src-glut.beos/, too.
+There's is a 3.5 version in src/glut/beos/, too.
 The original distribution can be obtained from
 http://home.beoscentral.com/jehamby/Glut-3.5-x86.zip
 
@@ -78,26 +84,27 @@ that you're actually using Mesa (with glGetString) so you don't
 cause a fatal error when running with Be's OpenGL.
 
 
-
 * Work Left To Do
 
-BDirectWindow single buffering support is not implemented yet.
+- Switch to SGI GLU implementation..
+- Add to build the BeOS GLUT port. Update it to latest known (3.7 ?)
+- BDirectWindow single buffering support is not implemented yet.
+- Color index mode is not implemented yet.
+- Reading pixels from the front buffer not implemented yet.
+- There is also a BGLScreen class in BeOS for full-screen OpenGL rendering.  This should also be implemented for Mesa.
+- Multiple renderers add-ons support, first step toward hardware acceleration support.
 
-Color index mode is not implemented yet.
+* Other contributors to this BeOS port
 
-Reading pixels from the front buffer not implemented yet.
-
-There is also a BGLScreen class in BeOS for full-screen OpenGL
-rendering.  This should also be implemented for Mesa.
+Marcin Konicki                   ahwayakchih <at> neoni <dot> net
+Francois Revol                  revol <at> free <dot> fr
 
 
-
-* Old BeOS Driver
+* Older BeOS Driver
 
 Mesa 2.6 had an earlier BeOS driver.  It was based on Mesa's Off-screen
 rendering interface, not BGLView.  If you're interested in the older
 driver you should get Mesa 2.6.
-
 
 
 * BeOS and Glide
@@ -111,4 +118,4 @@ of February, 1999.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.8 2003/12/13 01:26:14 brianp Exp $
+$Id: README.BEOS,v 1.9 2004/08/14 10:06:21 phoudoin Exp $
