@@ -901,7 +901,7 @@ void savageInitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.Interp = _tnl_interp;
 
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-		       22 * sizeof(GLfloat) );
+		       (6 + 2*ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
    
    SAVAGE_CONTEXT(ctx)->verts = (char *)tnl->clipspace.vertex_buf;
 }
