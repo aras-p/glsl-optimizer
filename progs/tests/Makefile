@@ -105,6 +105,3 @@ readtex.c: $(TOP)/progs/util/readtex.c
 # Emacs tags
 tags:
 	etags `find . -name \*.[ch]` `find ../include`
-
-
-include depend
