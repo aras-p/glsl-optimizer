@@ -27,6 +27,7 @@
  */
 
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -191,16 +192,53 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( void )
 {
-   const char *exten = (const char *) glGetString(GL_EXTENSIONS);
    GLfloat maxBias;
 
-   if (!strstr(exten, "GL_EXT_texture_lod_bias")) {
+   if (!glutExtensionSupported("GL_EXT_texture_lod_bias")) {
       printf("Sorry, GL_EXT_texture_lod_bias not supported by this renderer.\n");
       exit(1);
    }
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
+
+   if (glutExtensionSupported("GL_SGIS_generate_mipmap")) {
+      /* test auto mipmap generation */
+      GLint width, height, i;
+      GLenum format;
+      GLubyte *image = LoadRGBImage(TEXTURE_FILE, &width, &height, &format);
+      if (!image) {
+         printf("Error: could not load texture image %s\n", TEXTURE_FILE);
+         exit(1);
+      }
+      /* resize to 256 x 256 */
+      if (width != 256 || height != 256) {
+         GLubyte *newImage = malloc(256 * 256 * 4);
+         gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image,
+                       256, 256, GL_UNSIGNED_BYTE, newImage);
+         free(image);
+         image = newImage;
+      }
+      printf("Using GL_SGIS_generate_mipmap\n");
+      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+      glTexImage2D(GL_TEXTURE_2D, 0, format, 256, 256, 0,
+                   format, GL_UNSIGNED_BYTE, image);
+      free(image);
+
+      /* make sure mipmap was really generated correctly */
+      width = height = 256;
+      for (i = 0; i < 9; i++) {
+         GLint w, h;
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
+         printf("Level %d size: %d x %d\n", i, w, h);
+         assert(w == width);
+         assert(h == height);
+         width /= 2;
+         height /= 2;
+      }
+
+   }
+   else if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
       printf("Error: could not load texture image %s\n", TEXTURE_FILE);
       exit(1);
    }
