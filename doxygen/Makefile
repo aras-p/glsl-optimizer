@@ -2,45 +2,29 @@ default: full
 
 all: full subset
 	
-full:
-	doxygen tnl_dd.doxy
-	doxygen array_cache.doxy
-	doxygen math.doxy
-	doxygen swrast.doxy
-	doxygen swrast_setup.doxy
-	doxygen tnl.doxy
-	doxygen core.doxy
-	echo "Building again, to resolve tags"
-	doxygen tnl_dd.doxy
-	doxygen array_cache.doxy
-	doxygen math.doxy
-	doxygen swrast.doxy
-	doxygen swrast_setup.doxy
-	doxygen tnl.doxy
-	doxygen core.doxy
+%.tag: %.doxy
+	doxygen $<
 
-subset:
-	doxygen core_subset.doxy
-	doxygen math_subset.doxy
-	doxygen miniglx.doxy
-	echo "Building again, to resolve tags"
-	doxygen core_subset.doxy
-	doxygen math_subset.doxy
-	doxygen miniglx.doxy
-	doxygen radeon_subset.doxy
+FULL = \
+	core.doxy \
+	math.doxy \
+	array_cache.doxy \
+	swrast.doxy \
+	swrast_setup.doxy \
+	tnl.doxy \
+	tnl_dd.doxy
+
+full: $(FULL:.doxy=.tag)
+	$(foreach FILE,$(FULL),doxygen $(FILE);)
+
+SUBSET = \
+	core.doxy \
+	math.doxy \
+	miniglx.doxy
+
+subset: $(SUBSET:.doxy=.tag)
+	$(foreach FILE,$(SUBSET),doxygen $(FILE);)
 
 clean:
-	rm -rf \
-		array_cache \
-		core \
-		core_subset \
-		math \
-		math_subset \
-		swrast \
-		swrast_setup \
-		tnl_dd \
-		tnl \
-		miniglx \
-		radeon_subset
+	rm -rf $(FULL:.doxy=) $(SUBSET:.doxy=)
 	rm -rf *.tag
-
