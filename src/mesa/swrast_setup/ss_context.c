@@ -215,10 +215,17 @@ _swsetup_Wakeup( GLcontext *ctx )
 void 
 _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
 {
+   const GLfloat *m = ctx->Viewport._WindowMap.m;
    GLfloat tmp[4];
    GLint i;
 
-   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POS, dest->win );
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POS, tmp );
+
+   dest->win[0] = m[0]  * tmp[0] + m[12];
+   dest->win[1] = m[5]  * tmp[1] + m[13];
+   dest->win[2] = m[10] * tmp[2] + m[15];
+   dest->win[3] =         tmp[3];
+
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i, dest->texcoord[i] );
@@ -227,7 +234,7 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
    UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1, tmp );
-   UNCLAMPED_FLOAT_TO_RGB_CHAN( dest->specular, tmp );
+   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->specular, tmp );
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->fog = tmp[0];
