@@ -376,7 +376,6 @@ static void Init( int argc, char *argv[] )
          exit(1);
       }
 
-      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0,
                    format, GL_UNSIGNED_BYTE, img);
       free(img);
