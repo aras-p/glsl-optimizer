@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.2 1999/08/19 13:26:16 brianp Exp $
+# $Id: Makefile.X11,v 1.3 1999/09/14 12:20:17 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -84,6 +84,7 @@ default:
 	@echo "  make linux-3dnow-glide    for Linux on AMD w/ 3DNow! for Glide"
 	@echo "  make linux-386-pthread    for Linux w/ Intel assembly and linuxthreads"
 	@echo "  make linux-386-pthread-shared  for Linux w/ Intel assembly and linuxthreads"
+	@echo "  make linux-386-pthread-shared-glide  for Linux w/ Intel assembly, linuxthreads, and 3Dfx Glide driver"
 	@echo "  make linux-sparc          for Linux on Sparc systems"
 	@echo "  make linux-sparc5-elf     for Sparc5 systems, make ELF shared libs"
 	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
@@ -145,7 +146,7 @@ linux-386 linux-386-elf \
 linux-3dnow linux-3dnow-glide \
 linux-alpha linux-alpha-elf \
 linux-ppc linux-ppc-so \
-linux-386-pthread linux-386-pthread-shared \
+linux-386-pthread linux-386-pthread-shared linux-386-pthread-shared-glide \
 linux-sparc \
 linux-sparc5-elf \
 linux-sparc-ultra \

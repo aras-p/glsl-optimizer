@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.1 1999/08/19 00:55:39 jtg Exp $
+# $Id: Make-config,v 1.2 1999/09/14 12:20:17 brianp Exp $
 
 MAJOR=3
 MINOR=1
@@ -589,6 +589,18 @@ linux-3dnow-glide:
 	X86/3dnow_norm_raw.S \
 	FX/X86/fx_3dnow_fastpath.S"
 
+
+# Contributed by C. Alex. North-Keys (erlkonig@talisman.org)
+linux-386-pthread-shared-glide:
+	$(MAKE) $(MFLAGS) targets \
+	"GL_LIB = libMesaGL.so" \
+	"GLU_LIB = libMesaGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../mklib.glide" \
+	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"ASM_SOURCES = asm_386.S"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
