@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.8 1999/10/22 10:59:15 brianp Exp $ */
+/* $Id: image.c,v 1.9 1999/10/22 12:49:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1701,10 +1701,11 @@ void gl_pack_rgba_span( const GLcontext *ctx,
    else {
       GLfloat red[MAX_WIDTH], green[MAX_WIDTH], blue[MAX_WIDTH];
       GLfloat alpha[MAX_WIDTH], luminance[MAX_WIDTH];
-      GLfloat rscale = 1.0F / 255.0F;
-      GLfloat gscale = 1.0F / 255.0F;
-      GLfloat bscale = 1.0F / 255.0F;
-      GLfloat ascale = 1.0F / 255.0F;
+      const GLfloat rscale = 1.0F / 255.0F;
+      const GLfloat gscale = 1.0F / 255.0F;
+      const GLfloat bscale = 1.0F / 255.0F;
+      const GLfloat ascale = 1.0F / 255.0F;
+      const GLint comps = gl_components_in_format(format);
       GLuint i;
 
       assert( n < MAX_WIDTH );
@@ -1957,7 +1958,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap2( (GLushort *) dst, n );
+                  gl_swap2( (GLushort *) dst, n * comps);
                }
             }
 	    break;
@@ -2032,7 +2033,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap2( (GLushort *) dst, n );
+                  gl_swap2( (GLushort *) dst, n * comps );
                }
             }
 	    break;
@@ -2108,7 +2109,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap4( (GLuint *) dst, n );
+                  gl_swap4( (GLuint *) dst, n * comps );
                }
             }
 	    break;
@@ -2184,7 +2185,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
                }
 	       if (packing->SwapBytes) {
-		  gl_swap4( (GLuint *) dst, n );
+		  gl_swap4( (GLuint *) dst, n * comps );
 	       }
 	    }
 	    break;
@@ -2260,7 +2261,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
                }
 	       if (packing->SwapBytes) {
-		  gl_swap4( (GLuint *) dst, n );
+		  gl_swap4( (GLuint *) dst, n * comps );
 	       }
 	    }
 	    break;
