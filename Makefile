@@ -7,17 +7,13 @@ SUBDIRS = src progs
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		pushd $$dir ; \
-		make ; \
-		popd ; \
+		(cd $$dir ; make) ; \
 	done
 
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		pushd $$dir ; \
-		make clean; \
-		popd ; \
+		(cd $$dir ; make clean) ; \
 	done
 
 

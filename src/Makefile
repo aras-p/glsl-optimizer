@@ -13,9 +13,7 @@ default: $(LIB_DIR) subdirs
 subdirs:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			pushd $$dir ; \
-			make ; \
-			popd ; \
+			(cd $$dir ; make) ; \
 		fi \
 	done
 
@@ -27,8 +25,6 @@ $(LIB_DIR):
 clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			pushd $$dir ; \
-			make clean ; \
-			popd ; \
+			(cd $$dir ; make clean) ; \
 		fi \
 	done

@@ -17,15 +17,11 @@ $(LIB_DIR):
 
 subdirs:
 	@for dir in $(SUBDIRS) ; do \
-		pushd $$dir ; \
-		make ; \
-		popd ; \
+		(cd $$dir ; make) ; \
 	done
 
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		pushd $$dir ; \
-		make clean ; \
-		popd ; \
+		(cd $$dir ; make clean) ; \
 	done

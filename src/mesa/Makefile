@@ -97,9 +97,7 @@ stand-alone: depend subdirs $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(OSMESA_LIB_NA
 osmesa-only: depend subdirs $(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 subdirs:
-	@pushd x86 ; \
-	make ; \
-	popd
+	(cd x86 ; make)
 
 # Make the GL library
 $(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
@@ -167,9 +165,7 @@ clean:
 	-rm -f */*.o
 	rm -f depend
 	for dir in $(SUBDIRS) ; do \
-		pushd $$dir ; \
-		make clean ; \
-		popd ; \
+		(cd $$dir ; make clean) ; \
 	done
 
 include depend
