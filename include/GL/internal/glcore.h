@@ -41,8 +41,14 @@
 #include <sys/types.h>
 #endif
 
+#ifdef CAPI
+#undef CAPI
+#endif
+#define CAPI
+
 #define GL_CORE_SGI  1
 #define GL_CORE_MESA 2
+#define GL_CORE_APPLE 4
 
 typedef struct __GLcontextRec __GLcontext;
 typedef struct __GLinterfaceRec __GLinterface;
@@ -65,10 +71,13 @@ typedef struct __GLinterfaceRec __GLinterface;
 ** context to the application.
 */
 typedef struct __GLcontextModesRec {
+    struct __GLcontextModesRec * next;
+
     GLboolean rgbMode;
+    GLboolean floatMode;
     GLboolean colorIndexMode;
-    GLboolean doubleBufferMode;
-    GLboolean stereoMode;
+    GLuint doubleBufferMode;
+    GLuint stereoMode;
 
     GLboolean haveAccumBuffer;
     GLboolean haveDepthBuffer;
@@ -88,6 +97,46 @@ typedef struct __GLcontextModesRec {
     GLint level;
 
     GLint pixmapMode;
+
+    /* GLX */
+    GLint visualID;
+    GLint visualType;     /**< One of the GLX X visual types. (i.e., 
+			   * \c GLX_TRUE_COLOR, etc.)
+			   */
+
+    /* EXT_visual_rating / GLX 1.2 */
+    GLint visualRating;
+
+    /* EXT_visual_info / GLX 1.2 */
+    GLint transparentPixel;
+				/*    colors are floats scaled to ints */
+    GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
+    GLint transparentIndex;
+
+    /* ARB_multisample / SGIS_multisample */
+    GLint sampleBuffers;
+    GLint samples;
+
+    /* SGIX_fbconfig / GLX 1.3 */
+    GLint drawableType;
+    GLint renderType;
+    GLint xRenderable;
+    GLint fbconfigID;
+
+    /* SGIX_pbuffer / GLX 1.3 */
+    GLint maxPbufferWidth;
+    GLint maxPbufferHeight;
+    GLint maxPbufferPixels;
+    GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
+    GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
+
+    /* SGIX_visual_select_group */
+    GLint visualSelectGroup;
+
+    /* OML_swap_method */
+    GLint swapMethod;
+
+    GLint screen;
 } __GLcontextModes;
 
 /************************************************************************/
@@ -219,11 +268,7 @@ struct __GLdrawableBufferRec {
 
     /* exported */
     void (*freePrivate)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv);
-#ifdef __cplusplus
-    void *privatePtr;
-#else
     void *private;
-#endif
 
     /* private */
     void *other;	/* implementation private data */
@@ -314,14 +359,7 @@ struct __GLdrawablePrivateRec {
     void (*unlockDP)(__GLdrawablePrivate *glPriv);
 
     /* exported */
-#if 0 /* disable, just like in __GLimportsRec */
-    void *wsPriv;	/* pointer to the window system DrawablePrivate */
-#endif
-#ifdef __cplusplus
-    void *privatePtr;
-#else
     void *private;
-#endif
     void (*freePrivate)(__GLdrawablePrivate *);
 
     /* client data */
@@ -374,14 +412,7 @@ typedef struct __GLimportsRec {
 
     /* Drawing surface management */
     __GLdrawablePrivate *(*getDrawablePrivate)(__GLcontext *gc);
-
-#if 0
-   /* At some point, this field got removed from the XFree86 glcore.h file.
-    * we're removing it here to prevent interop problems. (Brian)
-    */
-    /* Pointer to the window system context */
-    void *wscx;
-#endif
+    __GLdrawablePrivate *(*getReadablePrivate)(__GLcontext *gc);
 
     /* Operating system dependent data goes here */
     void *other;
@@ -397,6 +428,7 @@ typedef struct __GLexportsRec {
     /* Context management (return GL_FALSE on failure) */
     GLboolean (*destroyContext)(__GLcontext *gc);
     GLboolean (*loseCurrent)(__GLcontext *gc);
+    /* oldglPriv isn't used anymore, kept for backwards compatibility */
     GLboolean (*makeCurrent)(__GLcontext *gc);
     GLboolean (*shareContext)(__GLcontext *gc, __GLcontext *gcShare);
     GLboolean (*copyContext)(__GLcontext *dst, const __GLcontext *src, GLuint mask);
