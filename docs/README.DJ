@@ -59,7 +59,7 @@ Tested on:
 	CPU:		AMD Athlon XP 1800+
 	Mainboard:	GA-7VTXE w/ 512 MB DDRAM
 	Video card:	Voodoo5 6000 AGP w/ 128 MB SDRAM
-	DJGPP:		djdev 2.04 + gcc v3.3.2 + make v3.80
+	DJGPP:		djdev 2.04 + gcc v3.3.3 + make v3.80
 	OS:		DOS and Win98SE
 
 
@@ -90,6 +90,10 @@ FAQ:
       LD_LIBRARY_PATH (or top `lib' directory).
 
 2. Using Mesa for DJGPP
+
+   Q) Every test I tried crashes badly.
+   A) If you have compiled with SSE and you're running under plain DOS, you
+      have to disable SSE at run-time. See environment variables below.
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
    A) Is that a question? If you have a 3dfx Voodoo (any model), you're
@@ -194,6 +198,7 @@ Environment variables:
 ~~~~~~~~~~~~~~~~~~~~~~
 	DMESA_NULDRV		- (any value) force NUL driver
 	GLUT_FPS		- print frames/second statistics to stderr
+	MESA_NO_SSE		- (any value) safe option under pure DOS
 	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
 	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
 	DMESA_GLUT_ALPHA	- set default alpha bits (8)
@@ -260,6 +265,7 @@ v1.6 (aug-2004)
 v1.7 (???-2004)
 	+ enabled OpenGL 2.0 support
 	+ added support for sw texture compression
+	* minor rework
 
 
 
