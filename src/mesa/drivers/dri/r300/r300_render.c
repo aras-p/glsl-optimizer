@@ -71,9 +71,47 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 static GLboolean r300_run_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
+   r300ContextPtr mmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+   for(i=0; i < VB->PrimitiveCount; i++){
+       	switch (VB->Primitive[i].mode & PRIM_MODE_MASK) {
+		case GL_LINES:
+   		fprintf(stderr, "L ");
+      		break;
+		case GL_LINE_STRIP:
+   		fprintf(stderr, "LS ");
+      		break;
+		case GL_LINE_LOOP:
+   		fprintf(stderr, "LL ");
+      		break;
+    		case GL_TRIANGLES:
+   		fprintf(stderr, "T ");
+      		break;
+   		case GL_TRIANGLE_STRIP:
+   		fprintf(stderr, "TS ");
+      		break;
+   		case GL_TRIANGLE_FAN:
+   		fprintf(stderr, "TF ");
+      		break;
+		case GL_QUADS:
+   		fprintf(stderr, "Q ");
+      		break;
+		case GL_QUAD_STRIP:
+   		fprintf(stderr, "QS ");
+      		break;
+   		default:
+   		fprintf(stderr, "%02x ", VB->Primitive[i].mode & PRIM_MODE_MASK);
+         	break;
+   		}
+   	}
+   
+   fprintf(stderr, "\n");
 	return GL_TRUE;
 
 #if 0
@@ -167,7 +205,11 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
+
+	/* let r300_run_render do its job */
+	#if 0  
 	stage->active = GL_FALSE;
+	#endif
 }
 
 
