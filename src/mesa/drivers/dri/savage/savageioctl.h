@@ -66,6 +66,18 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv );
 extern void savageGetDMABuffer( savageContextPtr imesa );
 
 static __inline
+void savageReleaseIndexedVerts( savageContextPtr imesa )
+{
+    imesa->firstElt = -1;
+}
+
+static __inline
+GLboolean savageHaveIndexedVerts( savageContextPtr imesa )
+{
+    return (imesa->firstElt != -1);
+}
+
+static __inline
 u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 {
    struct savage_vtxbuf_t *buffer = imesa->vtxBuf;
@@ -80,7 +92,8 @@ u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 	   if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
 	       fprintf (stderr, "... flushing DMA buffer in %s\n",
 			__FUNCTION__);
-	   savageFlushVertices( imesa );
+	   savageReleaseIndexedVerts(imesa);
+	   savageFlushVertices(imesa);
 	   LOCK_HARDWARE(imesa);
 	   savageFlushCmdBufLocked(imesa, GL_TRUE); /* discard DMA buffer */
 	   savageGetDMABuffer(imesa);
@@ -90,7 +103,8 @@ u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
        if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
 	   fprintf (stderr, "... flushing client vertex buffer in %s\n",
 		    __FUNCTION__);
-       savageFlushVertices( imesa );
+       savageReleaseIndexedVerts(imesa);
+       savageFlushVertices(imesa);
        LOCK_HARDWARE(imesa);
        savageFlushCmdBufLocked(imesa, GL_FALSE); /* free clientVtxBuf */
        UNLOCK_HARDWARE(imesa);
@@ -103,16 +117,87 @@ u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 }
 
 static __inline
+u_int32_t *savageAllocIndexedVerts( savageContextPtr imesa, GLuint n )
+{
+    u_int32_t *ret;
+    savageFlushVertices(imesa);
+    ret = savageAllocVtxBuf(imesa, n*imesa->HwVertexSize);
+    imesa->firstElt = imesa->vtxBuf->flushed / imesa->HwVertexSize;
+    imesa->vtxBuf->flushed = imesa->vtxBuf->used;
+    return ret;
+}
+
+/* Flush Elts:
+ * - Complete the drawing command with the correct number of indices.
+ * - Actually allocate entries for the indices in the command buffer.
+ *   (This allocation must succeed without wrapping the cmd buffer!)
+ */
+static __inline
+void savageFlushElts( savageContextPtr imesa )
+{
+    if (imesa->elts.cmd) {
+	GLuint qwords = (imesa->elts.n + 3) >> 2;
+	assert(imesa->cmdBuf.write - imesa->cmdBuf.base + qwords
+	       <= imesa->cmdBuf.size);
+	imesa->cmdBuf.write += qwords;
+
+	imesa->elts.cmd->idx.count = imesa->elts.n;
+	imesa->elts.cmd = NULL;
+    }
+}
+
+/* Allocate a command buffer entry with <bytes> bytes of arguments:
+ * - implies savageFlushElts
+ */
+static __inline
 drm_savage_cmd_header_t *savageAllocCmdBuf( savageContextPtr imesa, GLuint bytes )
 {
     drm_savage_cmd_header_t *ret;
     GLuint qwords = ((bytes + 7) >> 3) + 1; /* round up */
     assert (qwords < imesa->cmdBuf.size);
-    if (imesa->cmdBuf.write - imesa->cmdBuf.base + qwords > imesa->cmdBuf.size) {
+
+    savageFlushElts(imesa);
+
+    if (imesa->cmdBuf.write - imesa->cmdBuf.base + qwords > imesa->cmdBuf.size)
 	savageFlushCmdBuf(imesa, GL_FALSE);
-    }
+
     ret = (drm_savage_cmd_header_t *)imesa->cmdBuf.write;
     imesa->cmdBuf.write += qwords;
+    return ret;
+}
+
+/* Allocate Elts:
+ * - if it doesn't fit, flush the cmd buffer first
+ * - allocates the drawing command on the cmd buffer if there is no
+ *   incomplete indexed drawing command yet
+ * - increments the number of elts. Final allocation is done in savageFlushElts
+ */
+static __inline
+u_int16_t *savageAllocElts( savageContextPtr imesa, GLuint n )
+{
+    u_int16_t *ret;
+    GLuint qwords;
+    assert (savageHaveIndexedVerts(imesa));
+
+    if (imesa->elts.cmd)
+	qwords = (imesa->elts.n + n + 3) >> 2;
+    else
+	qwords = ((n + 3) >> 2) + 1;
+    if (imesa->cmdBuf.write - imesa->cmdBuf.base + qwords > imesa->cmdBuf.size)
+	savageFlushCmdBuf(imesa, GL_FALSE); /* implies savageFlushElts */
+
+    if (!imesa->elts.cmd) {
+	savageFlushVertices(imesa);
+	imesa->elts.cmd = savageAllocCmdBuf(imesa, 0);
+	imesa->elts.cmd->idx.cmd = (imesa->vtxBuf == &imesa->dmaVtxBuf) ?
+	    SAVAGE_CMD_DMA_IDX : SAVAGE_CMD_VB_IDX;
+	imesa->elts.cmd->idx.prim = imesa->HwPrim;
+	imesa->elts.cmd->idx.skip = imesa->skip;
+	imesa->elts.n = 0;
+    }
+
+    ret = (u_int16_t *)(imesa->elts.cmd+1) + imesa->elts.n;
+    imesa->elts.n += n;
     return ret;
 }
 

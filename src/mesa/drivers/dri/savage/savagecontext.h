@@ -141,6 +141,11 @@ struct savage_cmdbuf_t {
     drm_savage_cmd_header_t *write; /* append stuff here */
 };
 
+struct savage_elt_t {
+    GLuint n;				/* number of elts currently allocated */
+    drm_savage_cmd_header_t *cmd;	/* the indexed drawing command */
+};
+
 
 struct savage_context_t {
     GLint refcount;
@@ -172,6 +177,10 @@ struct savage_context_t {
 
     /* Command buffer */
     struct savage_cmdbuf_t cmdBuf;
+
+    /* Elt book-keeping */
+    struct savage_elt_t elts;
+    GLint firstElt;
 
     /* Vertex buffers */
     struct savage_vtxbuf_t dmaVtxBuf, clientVtxBuf;

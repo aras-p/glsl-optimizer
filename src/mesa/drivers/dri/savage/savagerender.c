@@ -54,7 +54,7 @@
 #define HAVE_QUADS       0
 #define HAVE_QUAD_STRIPS 0
 
-#define HAVE_ELTS        0	/* for now */
+#define HAVE_ELTS        1
 
 #define LOCAL_VARS savageContextPtr imesa = SAVAGE_CONTEXT(ctx) 
 #define INIT( prim ) do {						\
@@ -66,7 +66,8 @@
    case GL_TRIANGLE_FAN:   imesa->HwPrim = SAVAGE_PRIM_TRIFAN; break;	\
    }									\
 } while (0)
-#define FLUSH()		savageFlushVertices(imesa)
+#define FLUSH()		savageFlushElts(imesa), savageFlushVertices(imesa)
+
 #define GET_CURRENT_VB_MAX_VERTS() \
    ((imesa->bufferSize/4 - imesa->vtxBuf->used) / imesa->HwVertexSize)
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
@@ -76,6 +77,38 @@
 	savageAllocVtxBuf( imesa, (nr) * imesa->HwVertexSize )
 #define EMIT_VERTS( ctx, j, nr, buf ) \
 	_tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf )
+
+#define ELTS_VARS( buf ) GLushort *dest = buf, firstElt = imesa->firstElt
+#define ELT_INIT( prim ) INIT(prim)
+
+/* (size - used - 1 qword for drawing command) * 4 elts per qword */
+#define GET_CURRENT_VB_MAX_ELTS() \
+   ((imesa->cmdBuf.size - (imesa->cmdBuf.write - imesa->cmdBuf.base) - 1)*4)
+/* (size - space for initial state - 1 qword for drawing command) * 4 elts
+ * imesa is not defined in validate_render :( */
+#define GET_SUBSEQUENT_VB_MAX_ELTS()					\
+   ((SAVAGE_CONTEXT(ctx)->cmdBuf.size - 				\
+     (SAVAGE_CONTEXT(ctx)->cmdBuf.start - 				\
+      SAVAGE_CONTEXT(ctx)->cmdBuf.base) - 1)*4)
+
+#define ALLOC_ELTS(nr) savageAllocElts(imesa, nr)
+#define EMIT_ELT(offset, x) do {					\
+   (dest)[offset] = (GLushort) ((x)+firstElt);				\
+} while (0)
+#define EMIT_TWO_ELTS(offset, x, y) do {				\
+   *(GLuint *)(dest + offset) = (((y)+firstElt) << 16) |		\
+				((x)+firstElt);				\
+} while (0)
+
+#define INCR_ELTS( nr ) dest += nr
+#define ELTPTR dest
+#define RELEASE_ELT_VERTS() \
+   savageReleaseIndexedVerts(imesa)
+
+#define EMIT_INDEXED_VERTS( ctx, start, count ) do {			\
+   GLuint *buf = savageAllocIndexedVerts(imesa, count-start);		\
+   EMIT_VERTS(ctx, start, count-start, buf);				\
+} while (0)
 
 #define TAG(x) savage_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -114,20 +147,25 @@ static GLboolean savage_run_render( GLcontext *ctx,
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb; 
-   tnl_render_func *tab;
+   tnl_render_func *tab, *tab_elts;
    GLboolean valid;
    GLuint i;
+
+   if (savageHaveIndexedVerts(imesa) && (!VB->Elts || stage->changed_inputs))
+      savageReleaseIndexedVerts(imesa);
 
    if (imesa->savageScreen->chipset < S3_SAVAGE4 &&
        (ctx->_TriangleCaps & DD_FLATSHADE)) {
       tab = savage_flat_render_tab_verts_s3d;
+      tab_elts = savage_flat_render_tab_elts_s3d;
       valid = savage_flat_validate_render_s3d( ctx, VB );
    } else {
       tab = savage_render_tab_verts;
+      tab_elts = savage_render_tab_elts;
       valid = savage_validate_render( ctx, VB );
    }
 
-   /* Don't handle clipping or indexed vertices or vertex manipulations.
+   /* Don't handle clipping or vertex manipulations.
     */
    if (imesa->RenderIndex != 0 || !valid) {
       return GL_TRUE;
@@ -135,7 +173,7 @@ static GLboolean savage_run_render( GLcontext *ctx,
    
    tnl->Driver.Render.Start( ctx );
    /* Check RenderIndex again. The ptexHack is detected late in RenderStart.
-    * Also check for fallbacks detected late.
+    * Also check for ptex fallbacks detected late.
     */
    if (imesa->RenderIndex != 0 || imesa->Fallback != 0) {
       return GL_TRUE;
@@ -144,7 +182,19 @@ static GLboolean savage_run_render( GLcontext *ctx,
    /* setup for hardware culling */
    imesa->raster_primitive = GL_TRIANGLES;
    imesa->new_state |= SAVAGE_NEW_CULL;
+
+   /* update and emit state */
    savageDDUpdateHwState(ctx);
+   savageEmitChangedState(imesa);
+
+   if (VB->Elts) {
+      tab = tab_elts;
+      if (!savageHaveIndexedVerts(imesa)) {
+	 if (VB->Count > GET_SUBSEQUENT_VB_MAX_VERTS())
+	    return GL_TRUE;
+	 EMIT_INDEXED_VERTS(ctx, 0, VB->Count);
+      }
+   }
 
    for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
@@ -164,20 +214,7 @@ static GLboolean savage_run_render( GLcontext *ctx,
 static void savage_check_render( GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage )
 {
-   __DRIscreenPrivate *driScrnPriv =
-      SAVAGE_CONTEXT(ctx)->savageScreen->driScrnPriv;
    stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-   /* This hack will go away when we depend on 2.2.x for ELTS. */
-   if (driScrnPriv->drmMinor <= 1 && driScrnPriv->drmPatch < 3) {
-      static GLboolean firstTime = GL_TRUE;
-      stage->active = GL_FALSE;
-      if (firstTime) {
-	 fprintf (stderr,
-		  "*** Disabling fast path because your DRM version is buggy.\n"
-		  "*** You need at least Savage DRM version 2.1.3.\n");
-	 firstTime = GL_FALSE;
-      }
-   }
 }
 
 static void dtr( struct tnl_pipeline_stage *stage )
@@ -185,7 +222,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
    (void)stage;
 }
 
-const struct tnl_pipeline_stage _savage_render_stage = 
+struct tnl_pipeline_stage _savage_render_stage = 
 { 
    "savage render",
    (_DD_NEW_SEPARATE_SPECULAR |
@@ -340,7 +377,7 @@ static void free_texnorm_data( struct tnl_pipeline_stage *stage )
    }
 }
 
-const struct tnl_pipeline_stage _savage_texnorm_stage =
+struct tnl_pipeline_stage _savage_texnorm_stage =
 {
    "savage texture coordinate normalization stage", /* name */
    _NEW_TEXTURE,	/* check_state */

@@ -109,8 +109,8 @@ static const char *const card_extensions[] =
     NULL
 };
 
-extern const struct tnl_pipeline_stage _savage_texnorm_stage;
-extern const struct tnl_pipeline_stage _savage_render_stage;
+extern struct tnl_pipeline_stage _savage_texnorm_stage;
+extern struct tnl_pipeline_stage _savage_render_stage;
 
 static const struct tnl_pipeline_stage *savage_pipeline[] = {
 
@@ -435,6 +435,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    imesa->vtxBuf = &imesa->clientVtxBuf;
 
+   imesa->firstElt = -1;
+
    /* Uninitialized vertex format. Force setting the vertex state in
     * savageRenderStart.
     */
@@ -463,10 +465,18 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    /* Install the customized pipeline:
     */
-#if 1
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, savage_pipeline );
-#endif
+   /* DRM versions before 2.1.3 would only render triangle lists. ELTS
+    * support was added in 2.2.0. */
+   if (sPriv->drmMinor < 2) {
+      _savage_render_stage.active = GL_FALSE;
+      fprintf (stderr,
+	       "*** Disabling fast path because your DRM version is buggy "
+	       "or doesn't\n*** support ELTS. You need at least Savage DRM "
+	       "version 2.2.\n");
+   }
+
 
    /* Configure swrast to match hardware characteristics:
     */
@@ -508,6 +518,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       savageTextureObjectPtr next_t, t;
 
       savageFlushVertices(imesa);
+      savageReleaseIndexedVerts(imesa);
       savageFlushCmdBuf(imesa, GL_TRUE); /* release DMA buffer */
 
       /* update for multi-tex*/ 

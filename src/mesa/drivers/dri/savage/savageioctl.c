@@ -559,6 +559,9 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
     drm_savage_cmd_header_t *start;
     int ret;
 
+    /* complete indexed drawing commands */
+    savageFlushElts(imesa);
+
     /* If we lost the context we must restore the initial state (at
      * the start of the command buffer). */
     if (imesa->lostContext) {
@@ -609,13 +612,15 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
     }
 
     if (discard) {
+	assert (!savageHaveIndexedVerts(imesa));
 	imesa->dmaVtxBuf.total = 0;
 	imesa->dmaVtxBuf.used = 0;
 	imesa->dmaVtxBuf.flushed = 0;
     }
-    imesa->clientVtxBuf.used = 0;
-    imesa->clientVtxBuf.flushed = 0;
-
+    if (!savageHaveIndexedVerts(imesa)) {
+	imesa->clientVtxBuf.used = 0;
+	imesa->clientVtxBuf.flushed = 0;
+    }
     imesa->cmdBuf.write = imesa->cmdBuf.base;
 
     /* Save the current state at the start of the command buffer. That
