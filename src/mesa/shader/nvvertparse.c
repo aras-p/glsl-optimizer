@@ -1023,6 +1023,7 @@ static GLboolean
 Parse_OptionSequence(struct parse_state *parseState,
                      struct vp_instruction program[])
 {
+   (void) program;
    while (1) {
       if (!Parse_String(parseState, "OPTION"))
          return GL_TRUE;  /* ok, not an OPTION statement */

@@ -556,7 +556,7 @@ static INLINE int iceil(float f)
  ***/
 #if defined(USE_IEEE) && !defined(DEBUG)
 #define COPY_FLOAT( dst, src )					\
-	((fi_type *) &(dst))->i = ((fi_type *) &(src))->i
+	((fi_type *) &(dst))->i = ((fi_type *) (void *) &(src))->i
 #else
 #define COPY_FLOAT( dst, src )		(dst) = (src)
 #endif

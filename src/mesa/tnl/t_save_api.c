@@ -179,6 +179,7 @@ build_normal_lengths( struct tnl_vertex_list *node )
 static struct tnl_vertex_store *alloc_vertex_store( GLcontext *ctx )
 {
    struct tnl_vertex_store *store = MALLOC_STRUCT(tnl_vertex_store);
+   (void) ctx;
    store->used = 0;
    store->refcount = 1;
    return store;
@@ -187,6 +188,7 @@ static struct tnl_vertex_store *alloc_vertex_store( GLcontext *ctx )
 static struct tnl_primitive_store *alloc_prim_store( GLcontext *ctx )
 {
    struct tnl_primitive_store *store = MALLOC_STRUCT(tnl_primitive_store);
+   (void) ctx;
    store->used = 0;
    store->refcount = 1;
    return store;
@@ -1241,6 +1243,7 @@ static void GLAPIENTRY _save_DrawElements(GLenum mode, GLsizei count, GLenum typ
 			       const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) count; (void) type; (void) indices;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawElements" );
 }
 
@@ -1251,24 +1254,28 @@ static void GLAPIENTRY _save_DrawRangeElements(GLenum mode,
 				    const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) start; (void) end; (void) count; (void) type; (void) indices;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawRangeElements" );
 }
 
 static void GLAPIENTRY _save_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) start; (void) count;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glDrawArrays" );
 }
 
 static void GLAPIENTRY _save_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) x1; (void) y1; (void) x2; (void) y2;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glRectf" );
 }
 
 static void GLAPIENTRY _save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) i1; (void) i2;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glEvalMesh1" );
 }
 
@@ -1276,12 +1283,14 @@ static void GLAPIENTRY _save_EvalMesh2( GLenum mode, GLint i1, GLint i2,
 				  GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
+   (void) mode; (void) i1; (void) i2; (void) j1; (void) j2;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "glEvalMesh2" );
 }
 
 static void GLAPIENTRY _save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx );
+   (void) mode;
    _mesa_compile_error( ctx, GL_INVALID_OPERATION, "Recursive glBegin" );
 }
 
@@ -1467,6 +1476,8 @@ void _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
+   (void) list; (void) mode;
+
    if (!tnl->save.prim_store)
       tnl->save.prim_store = alloc_prim_store( ctx );
 
@@ -1481,21 +1492,25 @@ void _tnl_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 
 void _tnl_EndList( GLcontext *ctx )
 {
+   (void) ctx;
    assert(TNL_CONTEXT(ctx)->save.vertex_size == 0);
 }
  
 void _tnl_BeginCallList( GLcontext *ctx, GLuint list )
 {
+   (void) ctx; (void) list;
 }
 
 void _tnl_EndCallList( GLcontext *ctx )
 {
+   (void) ctx;
 }
 
 
 static void _tnl_destroy_vertex_list( GLcontext *ctx, void *data )
 {
    struct tnl_vertex_list *node = (struct tnl_vertex_list *)data;
+   (void) ctx;
 
    if ( --node->vertex_store->refcount == 0 )
       FREE( node->vertex_store );
@@ -1512,6 +1527,7 @@ static void _tnl_print_vertex_list( GLcontext *ctx, void *data )
 {
    struct tnl_vertex_list *node = (struct tnl_vertex_list *)data;
    GLuint i;
+   (void) ctx;
 
    _mesa_debug(0, "TNL-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
                node->count,
@@ -1597,4 +1613,5 @@ void _tnl_save_init( GLcontext *ctx )
  */
 void _tnl_save_destroy( GLcontext *ctx )
 {
+   (void) ctx;
 }

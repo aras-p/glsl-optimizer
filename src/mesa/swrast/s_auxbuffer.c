@@ -93,6 +93,7 @@ void
 _swrast_use_aux_buffer(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   (void) buffer;
 
    switch (bufferBit) {
    case DD_AUX0_BIT:

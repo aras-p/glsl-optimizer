@@ -3778,6 +3778,8 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
 {
+   (void) srcPacking;
+
    switch (srcType) {
       case GL_BYTE:
          {

@@ -45,6 +45,7 @@ void
 _mesa_init_texture_s3tc( GLcontext *ctx )
 {
    /* called during context initialization */
+   (void) ctx;
 }
 
 
@@ -64,6 +65,7 @@ texstore_rgb_dxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
+   (void) dstZoffset; (void) dstImageStride;
 
    if (srcFormat != GL_RGB ||
        srcType != CHAN_TYPE ||
@@ -121,6 +123,7 @@ texstore_rgba_dxt1(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
+   (void) dstZoffset; (void) dstImageStride;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||
@@ -176,6 +179,7 @@ texstore_rgba_dxt3(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
+   (void) dstZoffset; (void) dstImageStride;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||
@@ -230,6 +234,7 @@ texstore_rgba_dxt5(STORE_PARAMS)
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
+   (void) dstZoffset; (void) dstImageStride;
 
    if (srcFormat != GL_RGBA ||
        srcType != CHAN_TYPE ||
@@ -272,6 +277,7 @@ static void
 fetch_texel_2d_rgb_dxt1( const struct gl_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLchan *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k; (void) texel;
 }
 
 
@@ -293,6 +299,7 @@ static void
 fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k; (void) texel;
 }
 
 
@@ -314,6 +321,7 @@ static void
 fetch_texel_2d_rgba_dxt3( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k; (void) texel;
 }
 
 
@@ -335,6 +343,7 @@ static void
 fetch_texel_2d_rgba_dxt5( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k; (void) texel;
 }
 
 

@@ -175,6 +175,7 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
 {
    GLuint retval;
    struct arb_program ap;
+   (void) target;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_VERTEX_PROGRAM_ARB;

@@ -167,6 +167,7 @@ static struct program * _mesa_init_program_struct( GLcontext *ctx,
 						   struct program *prog,
 						   GLenum target, GLuint id)
 {
+   (void) ctx;
    if (prog) {
       prog->Id = id;
       prog->Target = target;
@@ -239,6 +240,7 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 void
 _mesa_delete_program(GLcontext *ctx, struct program *prog)
 {
+   (void) ctx;
    ASSERT(prog);
 
    if (prog->String)

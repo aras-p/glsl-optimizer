@@ -161,6 +161,7 @@ static GLboolean emit_3f_xyw_4( struct tnl_clipspace_codegen *p )
 
 static GLboolean emit_3f_xyw_err( struct tnl_clipspace_codegen *p )
 {
+   (void) p;
    assert(0);
    return GL_FALSE;
 }

@@ -201,6 +201,7 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    const GLubyte *data;
+   (void) writeable; (void) stride;
 
    tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE,
 			     sizeof(GLubyte),

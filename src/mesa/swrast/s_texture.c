@@ -456,6 +456,7 @@ sample_1d_nearest(GLcontext *ctx,
 {
    const GLint width = img->Width2;  /* without border, power of two */
    GLint i;
+   (void) ctx;
 
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width, i);
 
@@ -486,6 +487,7 @@ sample_1d_linear(GLcontext *ctx,
    GLint i0, i1;
    GLfloat u;
    GLuint useBorderColor;
+   (void) ctx;
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width, i0, i1);
 
@@ -657,6 +659,7 @@ sample_nearest_1d( GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_1d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -673,6 +676,7 @@ sample_linear_1d( GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_1d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -774,6 +778,7 @@ sample_2d_nearest(GLcontext *ctx,
    const GLint width = img->Width2;    /* without border, power of two */
    const GLint height = img->Height2;  /* without border, power of two */
    GLint i, j;
+   (void) ctx;
 
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoord[1], height, j);
@@ -809,6 +814,7 @@ sample_2d_linear(GLcontext *ctx,
    GLint i0, j0, i1, j1;
    GLuint useBorderColor;
    GLfloat u, v;
+   (void) ctx;
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
@@ -917,7 +923,9 @@ sample_2d_linear_repeat(GLcontext *ctx,
    const GLint height = img->Height2;
    GLint i0, j0, i1, j1;
    GLfloat u, v;
-
+   (void) ctx;
+   (void) tObj;
+   
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
@@ -1117,6 +1125,7 @@ sample_nearest_2d( GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_2d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -1133,6 +1142,7 @@ sample_linear_2d( GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_2d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -1161,6 +1171,8 @@ opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
    const GLint rowMask = img->Height - 1;
    const GLint shift = img->WidthLog2;
    GLuint k;
+   (void) ctx;
+   (void) texUnit;
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
@@ -1201,6 +1213,8 @@ opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
    const GLint rowMask = img->Height - 1;
    const GLint shift = img->WidthLog2;
    GLuint i;
+   (void) ctx;
+   (void) texUnit;
    (void) lambda;
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
@@ -1366,6 +1380,7 @@ sample_3d_nearest(GLcontext *ctx,
    const GLint height = img->Height2;   /* without border, power of two */
    const GLint depth = img->Depth2;     /* without border, power of two */
    GLint i, j, k;
+   (void) ctx;
 
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoord[1], height, j);
@@ -1400,6 +1415,7 @@ sample_3d_linear(GLcontext *ctx,
    GLint i0, j0, k0, i1, j1, k1;
    GLuint useBorderColor;
    GLfloat u, v, w;
+   (void) ctx;
 
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
    COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
@@ -1651,6 +1667,7 @@ sample_nearest_3d(GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_3d_nearest(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -1667,6 +1684,7 @@ sample_linear_3d( GLcontext *ctx, GLuint texUnit,
 {
    GLuint i;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
+   (void) texUnit;
    (void) lambda;
    for (i=0;i<n;i++) {
       sample_3d_linear(ctx, tObj, image, texcoords[i], rgba[i]);
@@ -1836,6 +1854,7 @@ sample_nearest_cube(GLcontext *ctx, GLuint texUnit,
                     GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    (void) lambda;
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -1854,6 +1873,7 @@ sample_linear_cube(GLcontext *ctx, GLuint texUnit,
 		   const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    (void) lambda;
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -1872,6 +1892,7 @@ sample_cube_nearest_mipmap_nearest(GLcontext *ctx, GLuint texUnit,
                                    const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    ASSERT(lambda != NULL);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -1891,6 +1912,7 @@ sample_cube_linear_mipmap_nearest(GLcontext *ctx, GLuint texUnit,
                                   const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    ASSERT(lambda != NULL);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -1910,6 +1932,7 @@ sample_cube_nearest_mipmap_linear(GLcontext *ctx, GLuint texUnit,
                                   const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    ASSERT(lambda != NULL);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -1942,6 +1965,7 @@ sample_cube_linear_mipmap_linear(GLcontext *ctx, GLuint texUnit,
                                  const GLfloat lambda[], GLchan rgba[][4])
 {
    GLuint i;
+   (void) texUnit;
    ASSERT(lambda != NULL);
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
@@ -2053,6 +2077,7 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
    const GLint height_minus_1 = img->Height - 1;
    GLuint i;
 
+   (void) ctx;
    (void) texUnit;
    (void) lambda;
 
@@ -2108,6 +2133,7 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
    const GLint height_minus_1 = img->Height - 1;
    GLuint i;
 
+   (void) ctx;
    (void) texUnit;
    (void) lambda;
 
@@ -2284,6 +2310,7 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
    GLenum function;
    GLchan result;
 
+   (void) lambda;
    (void) unit;
 
    ASSERT(tObj->Image[0][tObj->BaseLevel]->Format == GL_DEPTH_COMPONENT);
@@ -3494,6 +3521,7 @@ texture_apply( const GLcontext *ctx,
    GLuint i;
    GLint Rc, Gc, Bc, Ac;
    GLenum format;
+   (void) primary_rgba;
 
    ASSERT(texUnit);
    ASSERT(texUnit->_Current);

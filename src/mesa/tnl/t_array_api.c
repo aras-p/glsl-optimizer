@@ -438,4 +438,5 @@ void _tnl_array_init( GLcontext *ctx )
  */
 void _tnl_array_destroy( GLcontext *ctx )
 {
+   (void) ctx;
 }

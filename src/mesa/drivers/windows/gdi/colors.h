@@ -24,6 +24,9 @@
 
 /*
  * $Log: colors.h,v $
+ * Revision 1.2  2004/08/25 15:59:48  brianp
+ * Silence gcc 3.4 warnings on ReactOS.  Mostly unused var warnings.  (patch 1015696)
+ *
  * Revision 1.1  2003/07/24 03:47:46  kschultz
  * Source code for GDI driver.
  *
@@ -49,6 +52,9 @@
 
 /*
  * $Log: colors.h,v $
+ * Revision 1.2  2004/08/25 15:59:48  brianp
+ * Silence gcc 3.4 warnings on ReactOS.  Mostly unused var warnings.  (patch 1015696)
+ *
  * Revision 1.1  2003/07/24 03:47:46  kschultz
  * Source code for GDI driver.
  *
@@ -74,6 +80,9 @@
  
 /*
  * $Log: colors.h,v $
+ * Revision 1.2  2004/08/25 15:59:48  brianp
+ * Silence gcc 3.4 warnings on ReactOS.  Mostly unused var warnings.  (patch 1015696)
+ *
  * Revision 1.1  2003/07/24 03:47:46  kschultz
  * Source code for GDI driver.
  *
@@ -141,7 +150,7 @@ char ColorMap16[] = {
 0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,
 0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F};
 
-#define BGR8(r,g,b)		(unsigned)(((BYTE)(b & 0xc0 | (g & 0xe0)>>2 | (r & 0xe0)>>5)))
+#define BGR8(r,g,b)		(unsigned)(((BYTE)((b & 0xc0) | ((g & 0xe0)>>2) | ((r & 0xe0)>>5))))
 #ifdef DDRAW
 #define BGR16(r,g,b)	((WORD)(((BYTE)(ColorMap16[b]) | ((BYTE)(g&0xfc) << 3)) | (((WORD)(BYTE)(ColorMap16[r])) << 11)))
 #else

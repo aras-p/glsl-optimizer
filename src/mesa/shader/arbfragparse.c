@@ -186,6 +186,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
 {
    GLuint a, retval;
    struct arb_program ap;
+   (void) target;
 
    /* set the program target before parsing */
    ap.Base.Target = GL_FRAGMENT_PROGRAM_ARB;

@@ -44,34 +44,46 @@
 #if DIM == 1
 
 #define CHAN_SRC( t, i, j, k, sz )					\
-	((GLchan *)(t)->Data + (i) * (sz))
+	((void) (j), (void) (k),      					\
+	 ((GLchan *)(t)->Data + (i) * (sz)))
 #define UBYTE_SRC( t, i, j, k, sz )					\
-	((GLubyte *)(t)->Data + (i) * (sz))
+	((void) (j), (void) (k),      					\
+	 ((GLubyte *)(t)->Data + (i) * (sz)))
 #define USHORT_SRC( t, i, j, k )					\
-	((GLushort *)(t)->Data + (i))
+	((void) (j), (void) (k),      					\
+	 ((GLushort *)(t)->Data + (i)))
 #define UINT_SRC( t, i, j, k )						\
-	((GLuint *)(t)->Data + (i))
+	((void) (j), (void) (k),      					\
+	 ((GLuint *)(t)->Data + (i)))
 #define FLOAT_SRC( t, i, j, k, sz )					\
-	((GLfloat *)(t)->Data + (i) * (sz))
+	((void) (j), (void) (k),      					\
+	 ((GLfloat *)(t)->Data + (i) * (sz)))
 #define HALF_SRC( t, i, j, k, sz )					\
-	((GLhalfARB *)(t)->Data + (i) * (sz))
+	((void) (j), (void) (k),      					\
+	 ((GLhalfARB *)(t)->Data + (i) * (sz)))
 
 #define FETCH(x) fetch_texel_1d_##x
 
 #elif DIM == 2
 
 #define CHAN_SRC( t, i, j, k, sz )					\
-	((GLchan *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
+	((void) (k),                  					\
+	 ((GLchan *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz)))
 #define UBYTE_SRC( t, i, j, k, sz )					\
-	((GLubyte *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
+	((void) (k),                  					\
+	 ((GLubyte *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz)))
 #define USHORT_SRC( t, i, j, k )					\
-	((GLushort *)(t)->Data + ((t)->RowStride * (j) + (i)))
+	((void) (k),                  					\
+	 ((GLushort *)(t)->Data + ((t)->RowStride * (j) + (i))))
 #define UINT_SRC( t, i, j, k )						\
-	((GLuint *)(t)->Data + ((t)->RowStride * (j) + (i)))
+	((void) (k),                  					\
+	 ((GLuint *)(t)->Data + ((t)->RowStride * (j) + (i))))
 #define FLOAT_SRC( t, i, j, k, sz )					\
-	((GLfloat *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
+	((void) (k),                  					\
+	 ((GLfloat *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz)))
 #define HALF_SRC( t, i, j, k, sz )					\
-	((GLhalfARB *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
+	((void) (k),                  					\
+	 ((GLhalfARB *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz)))
 
 #define FETCH(x) fetch_texel_2d_##x
 

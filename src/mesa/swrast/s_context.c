@@ -403,6 +403,7 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 static void
 _swrast_sleep( GLcontext *ctx, GLuint new_state )
 {
+   (void) ctx; (void) new_state;
 }
 
 

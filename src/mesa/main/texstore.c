@@ -701,6 +701,7 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
 GLboolean
 _mesa_texstore_depth_component_float32(STORE_PARAMS)
 {
+   (void) dims;
    ASSERT(dstFormat == &_mesa_texformat_depth_component_float32);
    ASSERT(dstFormat->TexelBytes == sizeof(GLfloat));
 
@@ -744,6 +745,7 @@ _mesa_texstore_depth_component_float32(STORE_PARAMS)
 GLboolean
 _mesa_texstore_depth_component16(STORE_PARAMS)
 {
+   (void) dims;
    ASSERT(dstFormat == &_mesa_texformat_depth_component16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
 
@@ -1553,6 +1555,7 @@ _mesa_texstore_a8(STORE_PARAMS)
 GLboolean
 _mesa_texstore_ci8(STORE_PARAMS)
 {
+   (void) dims; (void) baseInternalFormat;
    ASSERT(dstFormat == &_mesa_texformat_ci8);
    ASSERT(dstFormat->TexelBytes == 1);
    ASSERT(baseInternalFormat == GL_COLOR_INDEX);
@@ -1599,6 +1602,7 @@ _mesa_texstore_ycbcr(STORE_PARAMS)
 {
    const GLuint ui = 1;
    const GLubyte littleEndian = *((const GLubyte *) &ui);
+   (void) ctx; (void) dims; (void) baseInternalFormat;
 
    ASSERT((dstFormat == &_mesa_texformat_ycbcr) ||
           (dstFormat == &_mesa_texformat_ycbcr_rev));
@@ -1852,6 +1856,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 {
    GLint postConvWidth = width;
    GLint sizeInBytes;
+   (void) border;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
@@ -1925,6 +1930,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 {
    GLint postConvWidth = width, postConvHeight = height;
    GLint texelBytes, sizeInBytes;
+   (void) border;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
@@ -2004,6 +2010,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    GLint texelBytes, sizeInBytes;
+   (void) border;
 
    /* choose the texture format */
    assert(ctx->Driver.ChooseTextureFormat);
@@ -2228,6 +2235,13 @@ _mesa_store_compressed_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_image *texImage)
 {
    /* this space intentionally left blank */
+   (void) ctx;
+   (void) target; (void) level;
+   (void) internalFormat;
+   (void) width; (void) border;
+   (void) imageSize; (void) data;
+   (void) texObj;
+   (void) texImage;
 }
 
 
@@ -2243,6 +2257,8 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage)
 {
+   (void) width; (void) height; (void) border;
+
    /* This is pretty simple, basically just do a memcpy without worrying
     * about the usual image unpacking or image transfer operations.
     */
@@ -2299,6 +2315,14 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_image *texImage)
 {
    /* this space intentionally left blank */
+   (void) ctx;
+   (void) target; (void) level;
+   (void) internalFormat;
+   (void) width; (void) height; (void) depth;
+   (void) border;
+   (void) imageSize; (void) data;
+   (void) texObj;
+   (void) texImage;
 }
 
 
@@ -2316,6 +2340,13 @@ _mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
                                      struct gl_texture_image *texImage)
 {
    /* this space intentionally left blank */
+   (void) ctx;
+   (void) target; (void) level;
+   (void) xoffset; (void) width;
+   (void) format;
+   (void) imageSize; (void) data;
+   (void) texObj;
+   (void) texImage;
 }
 
 
@@ -2336,6 +2367,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    GLint i, rows;
    GLubyte *dest;
    const GLubyte *src;
+   (void) format;
 
    /* these should have been caught sooner */
    ASSERT((width & 3) == 0 || width == 2 || width == 1);
@@ -2389,6 +2421,14 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
                                 struct gl_texture_image *texImage)
 {
    /* this space intentionally left blank */
+   (void) ctx;
+   (void) target; (void) level;
+   (void) xoffset; (void) yoffset; (void) zoffset;
+   (void) width; (void) height; (void) depth;
+   (void) format;
+   (void) imageSize; (void) data;
+   (void) texObj;
+   (void) texImage;
 }
 
 

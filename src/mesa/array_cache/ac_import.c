@@ -276,6 +276,7 @@ import_texcoord( GLcontext *ctx, GLuint unit, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.TexCoord[unit];
    struct gl_client_array *to = &ac->Cache.TexCoord[unit];
+   (void) type; (void) stride;
 
    ASSERT(unit < ctx->Const.MaxTextureCoordUnits);
 
@@ -305,6 +306,7 @@ import_vertex( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.Vertex;
    struct gl_client_array *to = &ac->Cache.Vertex;
+   (void) type; (void) stride;
 
    /* Limited choices at this stage:
     */
@@ -331,6 +333,7 @@ import_normal( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.Normal;
    struct gl_client_array *to = &ac->Cache.Normal;
+   (void) type; (void) stride;
 
    /* Limited choices at this stage:
     */
@@ -355,6 +358,7 @@ import_color( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.Color;
    struct gl_client_array *to = &ac->Cache.Color;
+   (void) stride;
 
    import( ctx, type, to, from );
    
@@ -367,6 +371,7 @@ import_index( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.Index;
    struct gl_client_array *to = &ac->Cache.Index;
+   (void) type; (void) stride;
 
    /* Limited choices at this stage:
     */
@@ -391,6 +396,7 @@ import_secondarycolor( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.SecondaryColor;
    struct gl_client_array *to = &ac->Cache.SecondaryColor;
+   (void) stride;
 
    import( ctx, type, to, from );
 
@@ -403,6 +409,7 @@ import_fogcoord( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.FogCoord;
    struct gl_client_array *to = &ac->Cache.FogCoord;
+   (void) type; (void) stride;
 
    /* Limited choices at this stage:
     */
@@ -427,6 +434,7 @@ import_edgeflag( GLcontext *ctx, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.EdgeFlag;
    struct gl_client_array *to = &ac->Cache.EdgeFlag;
+   (void) type; (void) stride;
 
    /* Limited choices at this stage:
     */
@@ -451,6 +459,7 @@ import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
    ACcontext *ac = AC_CONTEXT(ctx);
    const struct gl_client_array *from = &ac->Raw.Attrib[index];
    struct gl_client_array *to = &ac->Cache.Attrib[index];
+   (void) type; (void) stride;
 
    ASSERT(index < VERT_ATTRIB_MAX);
 

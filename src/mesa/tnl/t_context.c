@@ -51,6 +51,7 @@ _tnl_MakeCurrent( GLcontext *ctx,
 		  GLframebuffer *drawBuffer,
 		  GLframebuffer *readBuffer )
 {
+   (void) ctx; (void) drawBuffer; (void) readBuffer;
 }
 
 

@@ -345,6 +345,7 @@ static void _tnl_fixup_vertex( GLcontext *ctx, GLuint attr, GLuint sz )
       ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
+#ifdef USE_X86_ASM
 
 static struct _tnl_dynfn *lookup( struct _tnl_dynfn *l, GLuint key )
 {
@@ -382,10 +383,12 @@ static tnl_attrfv_func do_codegen( GLcontext *ctx, GLuint attr, GLuint sz )
    }
 
    if (dfn) 
-      return (tnl_attrfv_func) dfn->code;
+      return *(tnl_attrfv_func *) &dfn->code;
    else
       return 0;
 }
+
+#endif /* USE_X86_ASM */
 
 /* Helper function for 'CHOOSE' macro.  Do what's necessary when an
  * entrypoint is called for the first time.
@@ -824,6 +827,7 @@ static void _tnl_exec_vtxfmt_init( GLcontext *ctx )
 void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   (void) flags;
 
    if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END)
       return;
@@ -860,6 +864,7 @@ static void _tnl_current_init( GLcontext *ctx )
 
 static struct _tnl_dynfn *no_codegen( GLcontext *ctx, int key )
 {
+   (void) ctx; (void) key;
    return 0;
 }
 

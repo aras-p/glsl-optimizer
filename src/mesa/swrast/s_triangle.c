@@ -927,7 +927,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       const GLuint *zRow = (const GLuint *)				\
          _swrast_zbuffer_address(ctx, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
-         if (span.z < zRow[i]) {					\
+         if ((GLuint)span.z < zRow[i]) {				\
             ctx->OcclusionResult = GL_TRUE;				\
             ctx->Occlusion.PassedCounter++;				\
          }								\

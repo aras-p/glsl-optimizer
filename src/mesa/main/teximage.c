@@ -481,6 +481,7 @@ is_ycbcr_format(GLenum format)
 static GLboolean
 is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 {
+   (void) ctx;
    switch (internalFormat) {
       case GL_COMPRESSED_RGB_FXT1_3DFX:
       case GL_COMPRESSED_RGBA_FXT1_3DFX:
@@ -2846,6 +2847,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
                                   GLenum format, GLsizei imageSize)
 {
    GLint expectedSize, maxLevels = 0, maxTextureSize;
+   (void) zoffset;
 
    if (dimensions == 1) {
       /* 1D compressed textures not allowed */

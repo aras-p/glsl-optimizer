@@ -176,6 +176,7 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask,
 	       GLint x, GLint y, GLint width, GLint height )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   (void) all; (void) x; (void) y; (void) width; (void) height;
 #ifdef DEBUG
    {
       const GLbitfield legalBits =
@@ -254,6 +255,7 @@ _swrast_alloc_buffers( GLframebuffer *buffer )
 void
 _swrast_DrawBuffer( GLcontext *ctx, GLenum mode )
 {
+   (void) mode;
    _swrast_use_draw_buffer(ctx);
 }
 

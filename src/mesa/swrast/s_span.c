@@ -151,6 +151,7 @@ interpolate_colors(GLcontext *ctx, struct sw_span *span)
    const GLuint n = span->end;
    GLchan (*rgba)[4] = span->array->rgba;
    GLuint i;
+   (void) ctx;
 
    ASSERT((span->interpMask & SPAN_RGBA)  &&
 	  !(span->arrayMask & SPAN_RGBA));
@@ -211,6 +212,7 @@ interpolate_indexes(GLcontext *ctx, struct sw_span *span)
    const GLuint n = span->end;
    GLuint *indexes = span->array->index;
    GLuint i;
+   (void) ctx;
    ASSERT((span->interpMask & SPAN_INDEX)  &&
 	  !(span->arrayMask & SPAN_INDEX));
 
@@ -236,6 +238,7 @@ interpolate_indexes(GLcontext *ctx, struct sw_span *span)
 static void
 interpolate_specular(GLcontext *ctx, struct sw_span *span)
 {
+   (void) ctx;
    if (span->interpMask & SPAN_FLAT) {
       /* constant color */
       const GLchan r = FixedToChan(span->specRed);

@@ -284,7 +284,7 @@ static void clear_last_error ()
 
     /* free error parameter - if error_param is a "???" don't free it - it's static */
     if (error_param != unknown)
-        mem_free ((void **) &error_param);
+        mem_free ((void **) (void *) &error_param);
     else
         error_param = NULL;
 
@@ -297,7 +297,7 @@ static void set_last_error (const byte *msg, byte *param, int pos)
     /* error message can only be set only once */
     if (error_message != NULL)
     {
-        mem_free ((void **) &param);
+        mem_free ((void **) (void *) &param);
         return;
     }
 
@@ -1230,7 +1230,7 @@ static int get_identifier (const byte **text, byte **id)
     {
         if (string_grow (&p, &len, *t++))
         {
-            mem_free ((void **) &p);
+            mem_free ((void **) (void *) &p);
             return 1;
         }
     }
@@ -1379,7 +1379,7 @@ static int get_string (const byte **text, byte **str)
 
         if (string_grow (&p, &len, c))
         {
-            mem_free ((void **) &p);
+            mem_free ((void **) (void *) &p);
             return 1;
         }
     }
@@ -1424,7 +1424,7 @@ static int get_emtcode (const byte **text, map_byte **ma)
         }
 
         m->data = (byte) c[0];
-        mem_free ((void **) &c);
+        mem_free ((void **) (void *) &c);
     }
     else
     {
@@ -1502,11 +1502,11 @@ static int get_error (const byte **text, error **er, map_str *maps)
 
     if (!str_equal ((byte *) "error", temp))
     {
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
         return 0;
     }
 
-    mem_free ((void **) &temp);
+    mem_free ((void **) (void *) &temp);
 
     error_create (er);
     if (*er == NULL)
@@ -1532,12 +1532,12 @@ static int get_error (const byte **text, error **er, map_str *maps)
 
         if (map_str_find (&maps, temp, &(**er).m_text))
         {
-            mem_free ((void **) &temp);
+            mem_free ((void **) (void *) &temp);
             error_destroy (er);
             return 1;
         }
 
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
     }
 
     /* try to extract "token" from "...$token$..." */
@@ -1558,7 +1558,7 @@ static int get_error (const byte **text, error **er, map_str *maps)
             {
                 if (string_grow (&processed, &len, '$'))
                 {
-                    mem_free ((void **) &processed);
+                    mem_free ((void **) (void *) &processed);
                     error_destroy (er);
                     return 1;
                 }
@@ -1569,7 +1569,7 @@ static int get_error (const byte **text, error **er, map_str *maps)
             {
                 if (string_grow (&processed, &len, (**er).m_text[i]))
                 {
-                    mem_free ((void **) &processed);
+                    mem_free ((void **) (void *) &processed);
                     error_destroy (er);
                     return 1;
                 }
@@ -1580,7 +1580,7 @@ static int get_error (const byte **text, error **er, map_str *maps)
             {
                 if (string_grow (&processed, &len, '$'))
                 {
-                    mem_free ((void **) &processed);
+                    mem_free ((void **) (void *) &processed);
                     error_destroy (er);
                     return 1;
                 }
@@ -1591,7 +1591,7 @@ static int get_error (const byte **text, error **er, map_str *maps)
 
                     if (string_grow (&(**er).m_token_name, &tlen, '\0'))
                     {
-                        mem_free ((void **) &processed);
+                        mem_free ((void **) (void *) &processed);
                         error_destroy (er);
                         return 1;
                     }
@@ -1603,7 +1603,7 @@ static int get_error (const byte **text, error **er, map_str *maps)
                     {
                         if (string_grow (&(**er).m_token_name, &tlen, (**er).m_text[i]))
                         {
-                            mem_free ((void **) &processed);
+                            mem_free ((void **) (void *) &processed);
                             error_destroy (er);
                             return 1;
                         }
@@ -1652,11 +1652,11 @@ static int get_emits (const byte **text, emit **em, map_byte *mapb)
         dest = ed_regbyte;
     else
     {
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
         return 0;
     }
 
-    mem_free ((void **) &temp);
+    mem_free ((void **) (void *) &temp);
 
     emit_create (&e);
     if (e == NULL)
@@ -1706,7 +1706,7 @@ static int get_emits (const byte **text, emit **em, map_byte *mapb)
         }
         e->m_byte = (byte) temp[0];
 
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
 
         e->m_emit_type = et_byte;
     }
@@ -1720,12 +1720,12 @@ static int get_emits (const byte **text, emit **em, map_byte *mapb)
 
         if (map_byte_find (&mapb, temp, &e->m_byte))
         {
-            mem_free ((void **) &temp);
+            mem_free ((void **) (void *) &temp);
             emit_destroy (&e);
             return 1;
         }
 
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
 
         e->m_emit_type = et_byte;
     }
@@ -1819,7 +1819,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             t = u;
         }
 
-        mem_free ((void **) &keyword);
+        mem_free ((void **) (void *) &keyword);
     }
 
     if (*t == '\'')
@@ -1843,7 +1843,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
 
             if (get_string (&t, &temp2))
             {
-                mem_free ((void **) &temp);
+                mem_free ((void **) (void *) &temp);
                 spec_destroy (&s);
                 return 1;
             }
@@ -1853,7 +1853,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             s->m_byte[0] = *temp;
             s->m_byte[1] = *temp2;
 
-            mem_free ((void **) &temp2);
+            mem_free ((void **) (void *) &temp2);
         }
         else
         {
@@ -1861,7 +1861,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             *s->m_byte = *temp;
         }
 
-        mem_free ((void **) &temp);
+        mem_free ((void **) (void *) &temp);
     }
     else if (*t == '"')
     {
@@ -1908,7 +1908,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
         {
             if (get_identifier (&t, &s->m_string))
             {
-                mem_free ((void **) &keyword);
+                mem_free ((void **) (void *) &keyword);
                 spec_destroy (&s);
                 return 1;
             }
@@ -1917,7 +1917,7 @@ static int get_spec (const byte **text, spec **sp, map_str *maps, map_byte *mapb
             s->m_spec_type = st_identifier_loop;
         }
 
-        mem_free ((void **) &keyword);
+        mem_free ((void **) (void *) &keyword);
     }
     else
     {
@@ -1993,7 +1993,7 @@ static int get_rule (const byte **text, rule **ru, map_str *maps, map_byte *mapb
                 r->m_oper = op_or;
         }
 
-        mem_free ((void **) &op);
+        mem_free ((void **) (void *) &op);
 
         if (get_spec (&t, &sp, maps, mapb))
         {
@@ -2550,7 +2550,7 @@ grammar grammar_load_from_text (const byte *text)
         {
             map_byte *ma = NULL;
 
-            mem_free ((void **) &symbol);
+            mem_free ((void **) (void *) &symbol);
 
             if (get_emtcode (&text, &ma))
             {
@@ -2565,7 +2565,7 @@ grammar grammar_load_from_text (const byte *text)
         {
             map_byte *ma = NULL;
 
-            mem_free ((void **) &symbol);
+            mem_free ((void **) (void *) &symbol);
 
             if (get_regbyte (&text, &ma))
             {
@@ -2580,7 +2580,7 @@ grammar grammar_load_from_text (const byte *text)
         {
             map_str *ma = NULL;
 
-            mem_free ((void **) &symbol);
+            mem_free ((void **) (void *) &symbol);
 
             if (get_errtext (&text, &ma))
             {
@@ -2593,7 +2593,7 @@ grammar grammar_load_from_text (const byte *text)
         /* .string */
         else if (is_dot && str_equal (symbol, (byte *) "string"))
         {
-            mem_free ((void **) &symbol);
+            mem_free ((void **) (void *) &symbol);
 
             if (g->di->m_string != NULL)
             {
@@ -2760,7 +2760,7 @@ void grammar_get_last_error (byte *text, unsigned int size, int *pos)
     *text = '\0';
 
 #define APPEND_CHARACTER(x) if (dots_made == 0) {\
-                                if (len < size - 1) {\
+                                if (len < (int)size - 1) {\
                                     text[len++] = (x); text[len] = '\0';\
                                 } else {\
                                     int i;\

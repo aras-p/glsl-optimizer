@@ -45,6 +45,7 @@
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "swrast/s_alphabuf.h"
 #include "swrast/s_context.h"
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
@@ -165,7 +166,6 @@ static BOOL DDCreateOffScreen(WMesaContext wc);
 #define USE_GDI_TO_CLEAR 1
 #endif
 
-static void FlushToFile(PWMC pwc, PSTR  szFile);
 BOOL wmCreateBackingStore(PWMC pwc, long lxSize, long lySize);
 BOOL wmDeleteBackingStore(PWMC pwc);
 void wmCreatePalette( PWMC pwdc );
@@ -347,15 +347,20 @@ BOOL wmSetDIBits(PWMC pwc, UINT uiScanWidth, UINT uiNumScans,
 
 BYTE DITHER_RGB_2_8BIT( int r, int g, int b, int x, int y);
 
+#if 0 /* unused */
+
 /* Finish all pending operations and synchronize. */
 static void finish(GLcontext* ctx)
 {
   /* No op */
+  (void) ctx;
 }
 
+#endif /* unused */
 
 static void flush(GLcontext* ctx)
 {
+  (void) ctx;
   if((Current->rgb_flag &&!(Current->db_flag))
      ||(!Current->rgb_flag))
     {
@@ -371,6 +376,7 @@ static void flush(GLcontext* ctx)
  */
 static void clear_index(GLcontext* ctx, GLuint index)
 {
+  (void) ctx;
   Current->clearpixel = index;
 }
 
@@ -382,6 +388,7 @@ static void clear_index(GLcontext* ctx, GLuint index)
 static void clear_color( GLcontext* ctx, const GLfloat color[4] )
 {
   GLubyte col[4];
+  (void) ctx;
   CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
   CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
   CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
@@ -400,7 +407,7 @@ static void clear_color( GLcontext* ctx, const GLfloat color[4] )
  * Otherwise, we let swrast do it. 
  */ 
 
-static clear(GLcontext* ctx, GLbitfield mask, 
+static void clear(GLcontext* ctx, GLbitfield mask, 
       GLboolean all, GLint x, GLint y, GLint width, GLint height) 
 { 
   const   GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask; 
@@ -467,7 +474,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
    WORD    wColor; 
    BYTE    bColor; 
    LPDWORD lpdw = (LPDWORD)Current->pbPixels; 
-   LPWORD  lpw = (LPWORD)Current->pbPixels; 
+   /*LPWORD  lpw = (LPWORD)Current->pbPixels; */
    LPBYTE  lpb = Current->pbPixels; 
    int     lines; 
    /* Double-buffering - clear back buffer */ 
@@ -513,7 +520,9 @@ static clear(GLcontext* ctx, GLbitfield mask,
        dwColor = BGR32(GetRValue(Current->clearpixel), 
          GetGValue(Current->clearpixel), 
          GetBValue(Current->clearpixel)); 
-   } 
+   }
+   else
+       dwColor = 0;
 
    if (nBypp != 3) 
    { 
@@ -567,6 +576,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
 
 static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 {
+  (void) ctx;
   if (!Current)
     return;
   
@@ -592,6 +602,7 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 static void set_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                        GLuint bufferBit )
 {
+  (void) ctx; (void) colorBuffer; (void) bufferBit;
   /* XXX todo - examine bufferBit and set read/write pointers */
   return;
 }
@@ -601,9 +612,10 @@ static void set_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 /* Return characteristics of the output buffer. */
 static void buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
-  GET_CURRENT_CONTEXT(ctx);
+  /*GET_CURRENT_CONTEXT(ctx);*/
   int New_Size;
   RECT CR;
+  (void) buffer;
   
   GetClientRect(Current->Window,&CR);
   
@@ -649,25 +661,36 @@ static void buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
 /* Accelerated routines are not implemented in 4.0. See OSMesa for ideas. */
 
+#if 0 /* unused */
+
 static void fast_rgb_points( GLcontext* ctx, GLuint first, GLuint last )
 {
+  (void) ctx; (void) first; (void) last;
 }
+
+#endif /* unused */
 
 /* Return pointer to accelerated points function */
 extern tnl_points_func choose_points_function( GLcontext* ctx )
 {
+  (void) ctx;
   return NULL;
 }
+
+#if 0 /* unused */
 
 static void fast_flat_rgb_line( GLcontext* ctx, GLuint v0, 
 				GLuint v1, GLuint pv )
 {
+  (void) ctx; (void) v0; (void) v1; (void) pv;
 }
 
 static tnl_line_func choose_line_function( GLcontext* ctx )
 {
+  (void) ctx;
 }
 
+#endif /* unused */
 
 /**********************************************************************/
 /*****                 Span-based pixel drawing                   *****/
@@ -682,6 +705,7 @@ static void write_ci32_span( const GLcontext* ctx,
 {
   GLuint i;
   PBYTE Mem=Current->ScreenMem+FLIP(y)*Current->ScanWidth+x;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++)
     if (mask[i])
@@ -697,6 +721,7 @@ static void write_ci8_span( const GLcontext* ctx,
 {
   GLuint i;
   PBYTE Mem=Current->ScreenMem+FLIP(y)*Current->ScanWidth+x;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++)
     if (mask[i])
@@ -715,6 +740,7 @@ static void write_mono_ci_span(const GLcontext* ctx,
 {
   GLuint i;
   BYTE *Mem=Current->ScreenMem+FLIP(y)*Current->ScanWidth+x;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++)
     if (mask[i])
@@ -731,11 +757,12 @@ static void write_rgba_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
                              const GLubyte rgba[][4], const GLubyte mask[] )
 {
   PWMC    pwc = Current;
+  (void) ctx;
   
   if (pwc->rgb_flag==GL_TRUE)
     {
       GLuint i;
-      HDC DC=DD_GETDC;
+      /*HDC DC=DD_GETDC;*/
       y=FLIP(y);
       if (mask) {
 	for (i=0; i<n; i++)
@@ -779,11 +806,12 @@ static void write_rgb_span( const GLcontext* ctx,
                             const GLubyte rgb[][3], const GLubyte mask[] )
 {
   PWMC    pwc = Current;
-  
+  (void) ctx;
+
   if (pwc->rgb_flag==GL_TRUE)
     {
       GLuint i;
-      HDC DC=DD_GETDC;
+      /*HDC DC=DD_GETDC;*/
       y=FLIP(y);
       if (mask) {
 	for (i=0; i<n; i++)
@@ -831,6 +859,7 @@ static void write_mono_rgba_span( const GLcontext* ctx,
 {
   GLuint i;
   PWMC pwc = Current;
+  (void) ctx;
   assert(Current->rgb_flag==GL_TRUE);
   y=FLIP(y);
   if(Current->rgb_flag==GL_TRUE)
@@ -863,6 +892,7 @@ static void write_ci32_pixels( const GLcontext* ctx,
                                const GLuint index[], const GLubyte mask[] )
 {
   GLuint i;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++) {
     if (mask[i]) {
@@ -884,6 +914,7 @@ static void write_mono_ci_pixels( const GLcontext* ctx,
                                   GLuint colorIndex, const GLubyte mask[] )
 {
   GLuint i;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++) {
     if (mask[i]) {
@@ -902,7 +933,8 @@ static void write_rgba_pixels( const GLcontext* ctx,
 {
   GLuint i;
   PWMC    pwc = Current;
-  HDC DC=DD_GETDC;
+  /*HDC DC=DD_GETDC;*/
+  (void) ctx;
   assert(Current->rgb_flag==GL_TRUE);
   for (i=0; i<n; i++)
     if (mask[i])
@@ -925,7 +957,8 @@ static void write_mono_rgba_pixels( const GLcontext* ctx,
 {
   GLuint i;
   PWMC    pwc = Current;
-  HDC DC=DD_GETDC;
+  /*HDC DC=DD_GETDC;*/
+  (void) ctx;
   assert(Current->rgb_flag==GL_TRUE);
   for (i=0; i<n; i++)
     if (mask[i])
@@ -946,6 +979,7 @@ static void read_ci32_span( const GLcontext* ctx, GLuint n, GLint x, GLint y,
                             GLuint index[])
 {
   GLuint i;
+  (void) ctx;
   BYTE *Mem=Current->ScreenMem+FLIP(y)*Current->ScanWidth+x;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++)
@@ -961,6 +995,7 @@ static void read_ci32_pixels( const GLcontext* ctx,
                               GLuint indx[], const GLubyte mask[] )
 {
   GLuint i;
+  (void) ctx;
   assert(Current->rgb_flag==GL_FALSE);
   for (i=0; i<n; i++) {
     if (mask[i]) {
@@ -979,6 +1014,7 @@ static void read_rgba_span( const GLcontext* ctx,
   UINT i;
   COLORREF Color;
   HDC DC=DD_GETDC;
+  (void) ctx;
   assert(Current->rgb_flag==GL_TRUE);
   y = Current->height - y - 1;
   for (i=0; i<n; i++) {
@@ -1000,6 +1036,7 @@ static void read_rgba_pixels( const GLcontext* ctx,
   GLuint i;
   COLORREF Color;
   HDC DC=DD_GETDC;
+  (void) ctx;
   assert(Current->rgb_flag==GL_TRUE);
   for (i=0; i<n; i++) {
     if (mask[i]) {
@@ -1022,6 +1059,7 @@ static void read_rgba_pixels( const GLcontext* ctx,
 
 static const GLubyte *get_string(GLcontext *ctx, GLenum name)
 {
+  (void) ctx;
   if (name == GL_RENDERER) {
     return (GLubyte *) "Mesa Windows";
   }
@@ -1074,7 +1112,7 @@ static void SetSWrastPointers(GLcontext *ctx)
 
 static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
-  struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
+  /*struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );*/
   TNLcontext *tnl = TNL_CONTEXT(ctx);
   
   /*
@@ -1166,7 +1204,7 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
 /*****                  WMesa API Functions                       *****/
 /**********************************************************************/
 
-
+#if 0 /* unused */
 
 #define PAL_SIZE 256
 static void GetPalette(HPALETTE Pal,RGBQUAD *aRGB)
@@ -1178,11 +1216,9 @@ static void GetPalette(HPALETTE Pal,RGBQUAD *aRGB)
     WORD Version;
     WORD NumberOfEntries;
     PALETTEENTRY aEntries[PAL_SIZE];
-  } Palette =
-    {
-      0x300,
-      PAL_SIZE
-    };
+  } Palette;
+  Palette.Version = 0x300;
+  Palette.NumberOfEntries = PAL_SIZE;
   hdc=GetDC(NULL);
   if (Pal!=NULL)
     GetPaletteEntries(Pal,0,PAL_SIZE,Palette.aEntries);
@@ -1226,6 +1262,7 @@ static void GetPalette(HPALETTE Pal,RGBQUAD *aRGB)
     }
 }
 
+#endif /* unused */
 
 WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
 				 GLboolean rgb_flag,
@@ -1236,6 +1273,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   WMesaContext c;
   GLboolean true_color_flag;
   struct dd_function_table functions;
+  (void) Pal;
 
   c = (struct wmesa_context * ) calloc(1,sizeof(struct wmesa_context));
   if (!c)
@@ -1436,7 +1474,7 @@ void WMesaMakeCurrent( WMesaContext c )
 
 void WMesaSwapBuffers( void )
 {
-  HDC DC = Current->hDC;
+/*  HDC DC = Current->hDC;*/
   GET_CURRENT_CONTEXT(ctx);
   
   /* If we're swapping the buffer associated with the current context
@@ -1699,6 +1737,8 @@ void  wmCreateDIBSection(
   DWORD   dwScanWidth;
   UINT    nBypp = pwc->cColorBits / 8;
   HDC     hic;
+  (void) hDC;
+  (void) pbmi;
   
   dwScanWidth = (((pwc->ScanWidth * nBypp)+ 3) & ~3);
   
@@ -1742,14 +1782,14 @@ void  wmCreateDIBSection(
   pwc->hbmDIB = CreateDIBSection(hic,
 				 &(pwc->bmi),
 				 (iUsage ? DIB_PAL_COLORS : DIB_RGB_COLORS),
-				 &(pwc->pbPixels),
+				 (void **)&(pwc->pbPixels),
 				 pwc->dib.hFileMap,
 				 0);
 #else
   pwc->hbmDIB = CreateDIBSection(hic,
 				 &(pwc->bmi),
 				 (iUsage ? DIB_PAL_COLORS : DIB_RGB_COLORS),
-				 &(pwc->pbPixels),
+				 (void **)&(pwc->pbPixels),
 				 0,
 				 0);
 #endif // USE_MAPPED_FILE
@@ -1768,7 +1808,7 @@ void  wmCreateDIBSection(
 BOOL wmFlush(PWMC pwc)
 {
   BOOL    bRet = 0;
-  DWORD   dwErr = 0;
+/*  DWORD   dwErr = 0;*/
 #ifdef DDRAW
   HRESULT             ddrval;
 #endif
@@ -3182,8 +3222,11 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #endif
 /************** END DEAD TRIANGLE CODE ***********************/
 
+#if 0 /* unused */
+
 static tnl_triangle_func choose_triangle_function( GLcontext *ctx )
 {
+    (void) ctx;
 #if 0
     WMesaContext wmesa = (WMesaContext) ctx->DriverCtx;
     int depth = wmesa->cColorBits;
@@ -3277,6 +3320,8 @@ static tnl_triangle_func choose_triangle_function( GLcontext *ctx )
 #endif
 }
 
+#endif /* unused */
+
 /*
  * Define a new viewport and reallocate auxillary buffers if the size of
  * the window (color buffer) has changed.
@@ -3284,6 +3329,7 @@ static tnl_triangle_func choose_triangle_function( GLcontext *ctx )
 void WMesaViewport( GLcontext *ctx,
 		    GLint x, GLint y, GLsizei width, GLsizei height )
 {
+  (void) ctx; (void) x; (void) y; (void) width; (void) height;
   assert(0);  /* I don't think that this is being used. */
 #if 0
   /* Save viewport */

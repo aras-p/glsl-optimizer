@@ -62,6 +62,7 @@
 
 /* Fragment program instruction opcodes */
 enum fp_opcode {
+   FP_OPCODE_INVALID = -1,   /* Force signed enum */
    FP_OPCODE_ABS = 1000,     /* ARB_f_p only */
    FP_OPCODE_ADD,
    FP_OPCODE_CMP,            /* ARB_f_p only */

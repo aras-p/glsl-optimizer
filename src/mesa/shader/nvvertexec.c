@@ -358,8 +358,8 @@ store_vector4( const struct vp_dst_register *dest,
  * Set x to positive or negative infinity.
  */
 #if defined(USE_IEEE) || defined(_WIN32)
-#define SET_POS_INFINITY(x)  ( *((GLuint *) &x) = 0x7F800000 )
-#define SET_NEG_INFINITY(x)  ( *((GLuint *) &x) = 0xFF800000 )
+#define SET_POS_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0x7F800000 )
+#define SET_NEG_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0xFF800000 )
 #elif defined(VMS)
 #define SET_POS_INFINITY(x)  x = __MAXFLOAT
 #define SET_NEG_INFINITY(x)  x = -__MAXFLOAT
@@ -368,7 +368,7 @@ store_vector4( const struct vp_dst_register *dest,
 #define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
 #endif
 
-#define SET_FLOAT_BITS(x, bits) ((fi_type *) &(x))->i = bits
+#define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
 
 
 /**
@@ -467,7 +467,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                   GLint ii = (GLint) floor_t0;
                   ii = (ii < 23) + 0x3f800000;
                   SET_FLOAT_BITS(q[0], ii);
-                  q[0] = *((GLfloat *) &ii);
+                  q[0] = *((GLfloat *) (void *)&ii);
 #else
                   q[0] = (GLfloat) pow(2.0, floor_t0);
 #endif

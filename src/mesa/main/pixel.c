@@ -791,6 +791,8 @@ _mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                           GLfloat rBias, GLfloat gBias,
                           GLfloat bBias, GLfloat aBias)
 {
+   (void) ctx;
+
    if (rScale != 1.0 || rBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {

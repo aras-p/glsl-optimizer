@@ -165,6 +165,7 @@ do {									\
  * integer values starting at 0 is very important, see InstSize array usage)
  */
 typedef enum {
+	OPCODE_INVALID = -1,			/* Force signed enum */
 	OPCODE_ACCUM,
 	OPCODE_ALPHA_FUNC,
         OPCODE_BIND_TEXTURE,

@@ -179,6 +179,10 @@ _swrast_execute_codegen_program( GLcontext *ctx,
 			 struct fp_machine *machine, const struct sw_span *span,
 			 GLuint column )
 {
+   (void) ctx;
+   (void) program; (void) maxInst;
+   (void) machine; (void) span;
+   (void) column;
    return 0;
 }
 

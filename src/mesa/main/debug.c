@@ -180,6 +180,8 @@ static void add_debug_flags( const char *debug )
     */
    if (_mesa_strstr(debug, "flush")) 
       MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
+#else
+   (void) debug;
 #endif
 }
 

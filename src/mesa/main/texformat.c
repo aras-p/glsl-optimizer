@@ -63,6 +63,7 @@
 static void fetch_null_texel( const struct gl_texture_image *texImage,
 			      GLint i, GLint j, GLint k, GLchan *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k;
    texel[RCOMP] = 0;
    texel[GCOMP] = 0;
    texel[BCOMP] = 0;
@@ -73,6 +74,7 @@ static void fetch_null_texel( const struct gl_texture_image *texImage,
 static void fetch_null_texelf( const struct gl_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
+   (void) texImage; (void) i; (void) j; (void) k;
    texel[RCOMP] = 0.0;
    texel[GCOMP] = 0.0;
    texel[BCOMP] = 0.0;

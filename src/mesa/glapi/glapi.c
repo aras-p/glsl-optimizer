@@ -684,6 +684,7 @@ generate_entrypoint(GLuint functionOffset)
    }
    return code;
 #else
+   (void) functionOffset;
    return NULL;
 #endif /* USE_*_ASM */
 }
@@ -718,6 +719,12 @@ fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
    __glapi_sparc_icache_flush(&code[2]);
 #endif /* __sparc_v9__ && !linux */
 
+#else
+
+   /* an unimplemented architecture */
+   (void) entrypoint;
+   (void) offset;
+
 #endif /* USE_*_ASM */
 }
 
@@ -732,7 +739,7 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
    /* trivial rejection test */
 #ifdef MANGLE
    if (!funcName || funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
-      return NULL;
+      return GL_FALSE;
 #else
    if (!funcName || funcName[0] != 'g' || funcName[1] != 'l')
       return GL_FALSE;
@@ -1006,5 +1013,7 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(setFenceOffset == offset);
       assert(_glapi_get_proc_address("glSetFenceNV") == (void *) &glSetFenceNV);
    }
+#else
+   (void) table;
 #endif
 }

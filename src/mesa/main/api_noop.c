@@ -568,6 +568,7 @@ void GLAPIENTRY _mesa_noop_EvalPoint2( GLint a, GLint b )
  */
 void GLAPIENTRY _mesa_noop_Begin( GLenum mode )
 {
+   (void) mode;
 }
 
 

@@ -6390,7 +6390,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
             return;
          }
-         *params = (GLvoid *) ctx->FragmentProgram.Callback;
+         *params = *(GLvoid **) &ctx->FragmentProgram.Callback;
          break;
       case GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA:
          if (!ctx->Extensions.MESA_program_debug) {
@@ -6404,7 +6404,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
             return;
          }
-         *params = (GLvoid *) ctx->VertexProgram.Callback;
+         *params = *(GLvoid **) &ctx->VertexProgram.Callback;
          break;
       case GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA:
          if (!ctx->Extensions.MESA_program_debug) {

@@ -59,7 +59,8 @@
 
 CPU ?= pentium
 
-CFLAGS = -Wall -W -pedantic
+# when -std=c99 mingw will not define WIN32
+CFLAGS = -Wall -W -Werror -pedantic -std=c99 -DWIN32
 CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
 
 export CFLAGS

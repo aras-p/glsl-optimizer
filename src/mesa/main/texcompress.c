@@ -113,6 +113,7 @@ _mesa_compressed_texture_size( GLcontext *ctx,
    GLuint size;
 
    ASSERT(depth == 1);
+   (void) depth;
 
    switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:

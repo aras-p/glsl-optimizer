@@ -142,6 +142,9 @@ struct gl_buffer_object *
 _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_buffer_object *obj;
+
+   (void) ctx;
+
    obj = MALLOC_STRUCT(gl_buffer_object);
    _mesa_initialize_buffer_object(obj, name, target);
    return obj;
@@ -157,6 +160,8 @@ _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
 void
 _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
 {
+   (void) ctx;
+
    if (bufObj->Data)
       _mesa_free(bufObj->Data);
    _mesa_free(bufObj);
@@ -170,6 +175,8 @@ void
 _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 				GLuint name, GLenum target )
 {
+   (void) target;
+
    _mesa_bzero(obj, sizeof(struct gl_buffer_object));
    obj->RefCount = 1;
    obj->Name = name;
@@ -231,7 +238,7 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 {
    void * new_data;
 
-   (void) target;
+   (void) ctx; (void) target;
 
    new_data = _mesa_realloc( bufObj->Data, bufObj->Size, size );
    if ( new_data != NULL ) {
@@ -269,6 +276,8 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 		      GLsizeiptrARB size, const GLvoid * data,
 		      struct gl_buffer_object * bufObj )
 {
+   (void) ctx; (void) target;
+
    if ( (bufObj->Data != NULL)
 	&& ((GLuint)(size + offset) <= bufObj->Size) ) {
       _mesa_memcpy( (GLubyte *) bufObj->Data + offset, data, size );
@@ -299,6 +308,8 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, GLvoid * data,
 			  struct gl_buffer_object * bufObj )
 {
+   (void) ctx; (void) target;
+
    if ( (bufObj->Data != NULL)
 	&& ((GLuint)(size + offset) <= bufObj->Size) ) {
       _mesa_memcpy( data, (GLubyte *) bufObj->Data + offset, size );
@@ -326,6 +337,7 @@ void *
 _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
 		  struct gl_buffer_object * bufObj )
 {
+   (void) ctx; (void) target; (void) access;
    return bufObj->Data;
 }
 

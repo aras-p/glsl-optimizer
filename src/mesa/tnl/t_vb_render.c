@@ -353,6 +353,7 @@ static void check_render( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
 static void dtr( struct tnl_pipeline_stage *stage )
 {
+   (void) stage;
 }
 
 

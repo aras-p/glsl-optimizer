@@ -49,6 +49,7 @@
 {									\
    GET_CURRENT_CONTEXT(ctx);						\
    struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
+   typedef void (*func_ptr_t)();					\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
@@ -56,7 +57,7 @@
    /* Save the swapped function's dispatch entry so it can be */	\
    /* restored later. */						\
    tnl->Swapped[tnl->SwapCount][0] = (void *)&(ctx->Exec->FUNC);	\
-   tnl->Swapped[tnl->SwapCount][1] = (void *)TAG(FUNC);			\
+   *(func_ptr_t *)(tnl->Swapped[tnl->SwapCount]+1) = (func_ptr_t)TAG(FUNC);	\
    tnl->SwapCount++;							\
 									\
    if ( 0 )								\

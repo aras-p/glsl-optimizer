@@ -1129,6 +1129,7 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
 {
    const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
+   (void) new_state;
    ctx->_NeedEyeCoords = 0;
 
    if (ctx->_ForceEyeCoords ||

@@ -119,10 +119,11 @@ generic_noop(void)
 void
 _mesa_init_no_op_table(struct _glapi_table *table, GLuint tableSize)
 {
+   typedef void (*func_ptr_t)();
    GLuint i;
-   void **dispatch = (void **) table;
+   func_ptr_t *dispatch = (func_ptr_t *) table;
    for (i = 0; i < tableSize; i++) {
-      dispatch[i] = (void *) generic_noop;
+      dispatch[i] = (func_ptr_t)generic_noop;
    }
 }
 

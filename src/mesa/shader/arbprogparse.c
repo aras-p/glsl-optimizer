@@ -42,6 +42,10 @@
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 
+#if !defined(__GNUC__) && !defined(__extension__)
+# define __extension__
+#endif
+
 /* TODO:
  *    Fragment Program Stuff:
  *    -----------------------------------------------------
@@ -129,7 +133,7 @@ typedef GLubyte *production;
 /**
  * This is the text describing the rules to parse the grammar
  */
-static char arb_grammar_text[] =
+__extension__ static char arb_grammar_text[] =
 #include "arbprogram_syn.h"
 ;
 
@@ -591,6 +595,7 @@ parse_string (GLubyte ** inst, struct var_cache **vc_head,
 {
    GLubyte *i = *inst;
    struct var_cache *va = NULL;
+   (void) Program;
 
    *inst += _mesa_strlen ((char *) i) + 1;
 
@@ -614,7 +619,8 @@ static char *
 parse_string_without_adding (GLubyte ** inst, struct arb_program *Program)
 {
    GLubyte *i = *inst;
-
+   (void) Program;
+   
    *inst += _mesa_strlen ((char *) i) + 1;
 
    return (char *) i;
@@ -788,6 +794,7 @@ static GLuint
 parse_color_type (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
                   GLint * color)
 {
+   (void) ctx; (void) Program;
    *color = *(*inst)++ != COLOR_PRIMARY;
    return 0;
 }
@@ -828,7 +835,7 @@ parse_texcoord_num (GLcontext * ctx, GLubyte ** inst,
 {
    GLint i = parse_integer (inst, Program);
 
-   if ((i < 0) || (i >= ctx->Const.MaxTextureUnits)) {
+   if ((i < 0) || (i >= (int)ctx->Const.MaxTextureUnits)) {
       _mesa_set_program_error (ctx, Program->Position,
                                "Invalid texture unit index");
       _mesa_error (ctx, GL_INVALID_OPERATION, "Invalid texture unit index");
@@ -1890,7 +1897,7 @@ parse_param (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
    /* Test array length here! */
    if (specified_length) {
-      if (specified_length != param_var->param_binding_length) {
+      if (specified_length != (int)param_var->param_binding_length) {
          _mesa_set_program_error (ctx, Program->Position,
                                   "Declared parameter array lenght does not match parameter list");
          _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -2282,6 +2289,7 @@ parse_address_reg (GLcontext * ctx, GLubyte ** inst,
 {
    struct var_cache *dst;
    GLuint result;
+   (void) Index;
 
    dst = parse_string (inst, vc_head, Program, &result);
    Program->Position = parse_position (inst);
@@ -2492,7 +2500,7 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                      offset = parse_integer (inst, Program);
 
                      if ((offset < 0)
-                         || (offset >= src->param_binding_length)) {
+                         || (offset >= (int)src->param_binding_length)) {
                         _mesa_set_program_error (ctx, Program->Position,
                                                  "Index out of range");
                         _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3686,7 +3694,7 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 }
 
 /* XXX temporary */
-static char core_grammar_text[] =
+__extension__ static char core_grammar_text[] =
 #include "grammar_syn.h"
 ;
 
