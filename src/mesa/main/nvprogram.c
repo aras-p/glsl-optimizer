@@ -69,6 +69,8 @@ _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    vprog = (struct vertex_program *)
       _mesa_HashLookup(ctx->Shared->Programs, id);
 
@@ -514,6 +516,8 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
 
    if (prog && prog->Target != 0 && prog->Target != target) {
@@ -599,6 +603,7 @@ _mesa_ProgramParameter4fNV(GLenum target, GLuint index,
 
    if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       if (index < MAX_NV_VERTEX_PROGRAM_PARAMS) {
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ASSIGN_4V(ctx->VertexProgram.Parameters[index], x, y, z, w);
       }
       else {
@@ -700,6 +705,8 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
       if (address & 0x3) {
          /* addr must be multiple of four */
@@ -761,6 +768,8 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {

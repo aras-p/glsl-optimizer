@@ -56,6 +56,7 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.VertexAttrib[index].Enabled = GL_TRUE;
    ctx->Array._Enabled |= _NEW_ARRAY_ATTRIB(index);
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
@@ -74,6 +75,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
       return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.VertexAttrib[index].Enabled = GL_FALSE;
    ctx->Array._Enabled &= ~_NEW_ARRAY_ATTRIB(index);
    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
@@ -189,6 +191,8 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
       struct vertex_program *prog = ctx->VertexProgram.Current;
@@ -240,6 +244,8 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
@@ -296,6 +302,8 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
 
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    if (!ctx->_CurrentProgram)
       ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -332,6 +340,8 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    struct program *prog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if ((target == GL_FRAGMENT_PROGRAM_NV
         && ctx->Extensions.NV_fragment_program) ||

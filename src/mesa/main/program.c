@@ -798,6 +798,9 @@ _mesa_BindProgram(GLenum target, GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   /* texture state is dependent on current fragment and vertex programs */
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
+
    if ((target == GL_VERTEX_PROGRAM_NV
         && ctx->Extensions.NV_vertex_program) ||
        (target == GL_VERTEX_PROGRAM_ARB
@@ -899,7 +902,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (n < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glDeleteProgramsNV" );
