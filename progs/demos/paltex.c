@@ -1,4 +1,4 @@
-/* $Id: paltex.c,v 1.8 2002/07/12 15:54:02 brianp Exp $ */
+/* $Id: paltex.c,v 1.9 2002/07/22 13:45:31 brianp Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
@@ -94,15 +94,16 @@ static void Init( void )
 {
 #define HEIGHT 8
 #define WIDTH 32
-   static char texture[HEIGHT][WIDTH] = {
-         "                                ",
-         "    MMM    EEEE   SSS    AAA    ",
-         "   M M M  E      S   S  A   A   ",
-         "   M M M  EEEE    SS    A   A   ",
-         "   M M M  E         SS  AAAAA   ",
-         "   M   M  E      S   S  A   A   ",
-         "   M   M   EEEE   SSS   A   A   ",
-         "                                "
+   /* 257 = HEIGHT * WIDTH + 1 (for trailing '\0') */
+   static char texture[257] = {"\
+                                \
+    MMM    EEEE   SSS    AAA    \
+   M M M  E      S   S  A   A   \
+   M M M  EEEE    SS    A   A   \
+   M M M  E         SS  AAAAA   \
+   M   M  E      S   S  A   A   \
+   M   M   EEEE   SSS   A   A   \
+                                "
       };
    GLubyte table[256][4];
 
