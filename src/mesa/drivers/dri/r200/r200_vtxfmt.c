@@ -562,7 +562,8 @@ static void wrap_buffer( void )
    for (i = 0 ; i < nrverts; i++) {
       if (R200_DEBUG & DEBUG_VERTS) {
 	 int j;
-	 fprintf(stderr, "re-emit vertex %d to %p\n", i, rmesa->vb.dmaptr);
+	 fprintf(stderr, "re-emit vertex %d to %p\n", i, 
+		 (void *)rmesa->vb.dmaptr);
 	 if (R200_DEBUG & DEBUG_VERBOSE)
 	    for (j = 0 ; j < rmesa->vb.vertex_size; j++) 
 	       fprintf(stderr, "\t%08x/%f\n", *(int*)&tmp[i][j], tmp[i][j]);

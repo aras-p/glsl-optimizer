@@ -69,7 +69,7 @@ static void emit_ubyte_rgba3( GLcontext *ctx,
 
    if (R200_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s count %d stride %d out %p\n",
-	      __FUNCTION__, count, stride, out);
+	      __FUNCTION__, count, stride, (void *)out);
 
    for (i = 0; i < count; i++) {
       out->red   = *data;
@@ -129,6 +129,7 @@ static void emit_ubyte_rgba4( GLcontext *ctx,
 }
 
 
+#if 0
 static void emit_ubyte_rgba( GLcontext *ctx,
 			     struct r200_dma_region *rvb,
 			     char *data,
@@ -172,6 +173,7 @@ static void emit_ubyte_rgba( GLcontext *ctx,
       break;
    }
 }
+#endif
 
 
 static void emit_vec4( GLcontext *ctx,
@@ -233,7 +235,7 @@ static void emit_vec12( GLcontext *ctx,
 
    if (R200_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-	      __FUNCTION__, count, stride, out, data);
+	      __FUNCTION__, count, stride, out, (void *)data);
 
    if (stride == 12)
       COPY_DWORDS( out, data, count*3 );

@@ -259,7 +259,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i,flags = 0,length;
+   GLuint i;
 
    /* TODO: separate this from the swtnl pipeline 
     */
