@@ -88,9 +88,9 @@ static const struct {
 	    _ALPHA_REV(AL88),
 	    _ALPHA(A8),
 	    _COLOR(L8),
-	    _ALPHA(I8), 
-	    _INVALID(CI8), 
-	    _YUV(YCBCR), 
+	    _ALPHA(I8),
+	    _INVALID(CI8),
+	    _YUV(YCBCR),
 	    _YUV(YCBCR_REV),
 	    };
 
@@ -178,7 +178,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	t->format &= ~(R200_TXFORMAT_FORMAT_MASK |
 			    R200_TXFORMAT_ALPHA_IN_MAP);
-#if 0	
+#if 0
 	t->filter &= ~R200_YUV_TO_RGB;
 #endif
 	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
@@ -187,7 +187,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 #if 1
 		t->filter |=
 		    tx_table[baseImage->TexFormat->MesaFormat].filter;
-#endif		
+#endif
 	} else {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
@@ -306,7 +306,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	t->filter &= ~R200_MAX_MIP_LEVEL_MASK;
 	t->filter |= (numLevels - 1) << R200_MAX_MIP_LEVEL_SHIFT;
 #endif
-	#if 0
+#if 0
 	t->format &= ~(R200_TXFORMAT_WIDTH_MASK |
 			    R200_TXFORMAT_HEIGHT_MASK |
 			    R200_TXFORMAT_CUBIC_MAP_ENABLE |
@@ -314,8 +314,8 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 			    R200_TXFORMAT_F5_HEIGHT_MASK);
 	t->format |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
 			   (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
-	#endif
-			   
+#endif
+
 	t->format_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
 	if (tObj->Target == GL_TEXTURE_3D) {
 		t->format_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
@@ -335,7 +335,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 				     (log2Width << R200_FACE_WIDTH_4_SHIFT) |
 				     (log2Height << R200_FACE_HEIGHT_4_SHIFT));
 	}
-	
+
 	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
 			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
 		        |((log2Width>log2Height)?log2Width:log2Height)<<R300_TX_SIZE_SHIFT);
@@ -494,16 +494,16 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 	GLuint color_combine, alpha_combine;
-	
-	#if 0 /* disable for now.. */
+
+#if 0 /* disable for now.. */
 	GLuint color_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] &
 	    ~(R200_TXC_SCALE_MASK);
 	GLuint alpha_scale = rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] &
 	    ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK);
-	#endif
-	
+#endif
+
 	GLuint color_scale=0, alpha_scale=0;
-	    
+
 	/* texUnit->_Current can be NULL if and only if the texture unit is
 	 * not actually enabled.
 	 */
@@ -523,12 +523,12 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 	 */
 	/* Don't cache these results.
 	 */
-	#if 0
+#if 0
 	rmesa->state.texture.unit[unit].format = 0;
-	#endif
+#endif
 	rmesa->state.texture.unit[unit].envMode = 0;
 
-	
+
 	if (!texUnit->_ReallyEnabled) {
 		if (unit == 0) {
 			color_combine =
@@ -799,12 +799,12 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 		 */
 	}
 
-	#if 0
-	fprintf(stderr, "color_combine=%08x alpha_combine=%08x color_scale=%08x alpha_scale=%08x\n", 
+#if 0
+	fprintf(stderr, "color_combine=%08x alpha_combine=%08x color_scale=%08x alpha_scale=%08x\n",
 		color_combine, alpha_combine, color_scale, alpha_scale);
-	#endif
-	
-	#if 0
+#endif
+
+#if 0
 	if (rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] != color_combine ||
 	    rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND] != alpha_combine ||
 	    rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND2] != color_scale ||
@@ -816,8 +816,8 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 		rmesa->hw.pix[unit].cmd[PIX_PP_TXABLEND2] = alpha_scale;
 	}
 
-	#endif
-	
+#endif
+
 	return GL_TRUE;
 }
 
@@ -848,7 +848,7 @@ static GLboolean r300UpdateTextureEnv(GLcontext * ctx, int unit)
 static void import_tex_obj_state(r300ContextPtr rmesa,
 				 int unit, r300TexObjPtr texobj)
 {
-	#if 0 /* needs fixing.. or should be done elsewhere */
+#if 0 /* needs fixing.. or should be done elsewhere */
 	GLuint *cmd = R300_DB_STATE(tex[unit]);
 
 	cmd[TEX_PP_TXFILTER] &= ~TEXOBJ_TXFILTER_MASK;
@@ -883,7 +883,7 @@ static void import_tex_obj_state(r300ContextPtr rmesa,
 	}
 
 	texobj->dirty_state &= ~(1 << unit);
-	#endif
+#endif
 }
 
 static void set_texgen_matrix(r300ContextPtr rmesa,
@@ -1051,7 +1051,7 @@ static void disable_tex(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	#if 0 /* This needs to be redone.. or done elsewhere */
+#if 0 /* This needs to be redone.. or done elsewhere */
 	if (rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_0_ENABLE << unit)) {
 		/* Texture unit disabled */
 		if (rmesa->state.texture.unit[unit].texobj != NULL) {
@@ -1107,7 +1107,7 @@ static void disable_tex(GLcontext * ctx, int unit)
 			}
 		}
 	}
-	#endif
+#endif
 }
 
 static GLboolean enable_tex_2d(GLcontext * ctx, int unit)
@@ -1272,7 +1272,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
 	}
 
-	#if 0 /* do elsewhere ? */
+#if 0 /* do elsewhere ? */
 	/* Newly enabled?
 	 */
 	if (1
@@ -1300,7 +1300,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 		rmesa->recheck_texgen[unit] = 0;
 		rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
 	}
-	#endif
+#endif
 
 	format = tObj->Image[0][tObj->BaseLevel]->Format;
 	if (rmesa->state.texture.unit[unit].format != format ||
@@ -1311,7 +1311,7 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 			return GL_FALSE;
 		}
 	}
-	
+
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_BORDER_MODE, t->border_fallback);
 	return !t->border_fallback;
 }
@@ -1355,20 +1355,20 @@ void r300UpdateTextureState(GLcontext * ctx)
 	      r300UpdateTextureUnit(ctx, 1) &&
 	      r300UpdateTextureUnit(ctx, 2) &&
 	      r300UpdateTextureUnit(ctx, 3) &&
-	      r300UpdateTextureUnit(ctx, 4) && 
+	      r300UpdateTextureUnit(ctx, 4) &&
 	      r300UpdateTextureUnit(ctx, 5) &&
-	      r300UpdateTextureUnit(ctx, 6) && 
+	      r300UpdateTextureUnit(ctx, 6) &&
 	      r300UpdateTextureUnit(ctx, 7)
 	      );
 
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_TEXTURE, !ok);
 
-	/* This needs correction, or just be done elsewhere 
+	/* This needs correction, or just be done elsewhere
 	if (rmesa->radeon.TclFallback)
 		r300ChooseVertexState(ctx);
 	*/
-		
-	#if 0 /* Workaround - disable.. */
+
+#if 0 /* Workaround - disable.. */
 	if (GET_CHIP(rmesa->radeon.radeonScreen) == RADEON_CHIP_REAL_R200) {
 		/*
 		 * T0 hang workaround -------------
@@ -1466,5 +1466,5 @@ void r300UpdateTextureState(GLcontext * ctx)
 				       dbg);
 		}
 	}
-	#endif
+#endif
 }

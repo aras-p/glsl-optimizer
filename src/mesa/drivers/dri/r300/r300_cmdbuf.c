@@ -95,7 +95,7 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 	if (cmd.nbox) {
 		ret = drmCommandWrite(r300->radeon.dri.fd,
 				DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
-		
+
 		if (RADEON_DEBUG & DEBUG_SYNC) {
 			fprintf(stderr, "Syncing in %s\n\n", __FUNCTION__);
 			radeonWaitForIdleLocked(&r300->radeon);
@@ -112,7 +112,7 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 	return ret;
 }
 
- 
+
 int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 {
 	int ret;
@@ -121,7 +121,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
 	int start;
 
 	LOCK_HARDWARE(&r300->radeon);
-	
+
 	ret=r300FlushCmdBufLocked(r300, caller);
 
 	UNLOCK_HARDWARE(&r300->radeon);
@@ -294,7 +294,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	int size, i, mtu;
 
 	r300->hw.max_state_size = 0;
-	
+
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	fprintf(stderr, "Using %d maximum texture units..\n", mtu);
 
@@ -343,10 +343,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4230.cmd[0] = cmducs(0x4230, 3);
 	ALLOC_STATE( lcntl, always, 2, "lcntl", 0 );
 		r300->hw.lcntl.cmd[0] = cmducs(R300_RE_LINE_CNT, 1);
-#ifdef EXP_C		
+#ifdef EXP_C
 	ALLOC_STATE( lsf, always, 2, "lsf", 0 );
 		r300->hw.lsf.cmd[0] = cmducs(R300_RE_LINE_STIPPLE_FACTOR, 1);
-#endif		
+#endif
 	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
 		r300->hw.unk4260.cmd[0] = cmducs(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
@@ -440,25 +440,25 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* Textures */
 	ALLOC_STATE( tex.filter, variable, mtu+1, "tex_filter", 0 );
 		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FILTER_0, 0);
-		
+
 	ALLOC_STATE( tex.unknown1, variable, mtu+1, "tex_unknown1", 0 );
 		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK1_0, 0);
-		
+
 	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
 		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_SIZE_0, 0);
-		
+
 	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
 		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FORMAT_0, 0);
-		
+
 	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
 		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_OFFSET_0, 0);
-		
+
 	ALLOC_STATE( tex.unknown4, variable, mtu+1, "tex_unknown4", 0 );
 		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK4_0, 0);
-		
+
 	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
 		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_BORDER_COLOR_0, 0);
-	
+
 
 	/* Setup the atom linked list */
 	make_empty_list(&r300->hw.atomlist);
@@ -486,9 +486,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ps);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4230);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.lcntl);
-#ifdef EXP_C		
+#ifdef EXP_C
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.lsf);
-#endif	
+#endif
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4274);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
@@ -534,7 +534,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
 
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);	
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown1);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.size);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.format);

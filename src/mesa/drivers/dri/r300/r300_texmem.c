@@ -74,16 +74,16 @@ void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t)
 			if (t == rmesa->state.texture.unit[i].texobj) {
 				rmesa->state.texture.unit[i].texobj = NULL;
 				/* This code below is meant to shorten state
-				   pushed to the hardware by not programming 
+				   pushed to the hardware by not programming
 				   unneeded units.
-				   
+
 				   This does not appear to be worthwhile on R300 */
-				#if 0
+#if 0
 				remove_from_list(&rmesa->hw.tex[i]);
 				make_empty_list(&rmesa->hw.tex[i]);
 				remove_from_list(&rmesa->hw.cube[i]);
 				make_empty_list(&rmesa->hw.cube[i]);
-				#endif
+#endif
 			}
 		}
 	}
@@ -371,9 +371,9 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	tex.offset = offset;
 	tex.pitch = BLIT_WIDTH_BYTES / 64;
 	tex.format = R200_TXFORMAT_I8;	/* any 1-byte texel format */
-	#if 0 /* I am not sure HOSTDATA_BLT actually works.. Experiment here  - V.D */
+#if 0 /* I am not sure HOSTDATA_BLT actually works.. Experiment here  - V.D */
 	tex.format = R200_TXFORMAT_RGBA8888;	/* any 4-byte texel format */
-	#endif
+#endif
 	if (texImage->TexFormat->TexelBytes) {
 		tex.width = imageWidth * texImage->TexFormat->TexelBytes;	/* in bytes */
 		tex.height = imageHeight;
@@ -384,19 +384,19 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 			tex.height = 4;
 	}
 	tex.image = &tmp;
-	#if 0
+#if 0
 	tex.width /= 4;
-	#endif
+#endif
 
 	/* copy (x,y,width,height,data) */
 	memcpy(&tmp, &t->image[face][hwlevel], sizeof(tmp));
-	#if 0
+#if 0
 	tex.image->width /=4;
-	#endif
+#endif
 
-	#if 0	
+#if 0
 	sleep(1);
-	
+
 	fprintf(stderr, "*** Uploading texture\n");
 		fprintf(stderr, "   offset=0x%08x\n", offset);
 		fprintf(stderr, "   image width=%d height=%d\n",
@@ -405,7 +405,7 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 			t->image[face][hwlevel].width,
 			t->image[face][hwlevel].height,
 			t->image[face][hwlevel].data);
-	#endif
+#endif
 
 	LOCK_HARDWARE(&rmesa->radeon);
 	do {
@@ -420,7 +420,7 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	} while (ret && errno == EAGAIN);
 
 	UNLOCK_HARDWARE(&rmesa->radeon);
-	
+
 	if (ret) {
 		fprintf(stderr, "DRM_RADEON_TEXTURE: return = %d\n", ret);
 		fprintf(stderr, "   offset=0x%08x\n", offset);

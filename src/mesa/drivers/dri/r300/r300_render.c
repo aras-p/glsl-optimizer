@@ -326,14 +326,14 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    type=r300_get_primitive_type(rmesa, ctx, prim);
    num_verts=r300_get_num_verts(rmesa, ctx, end-start, prim);
 
-   		#if 0
+#if 0
 		fprintf(stderr,"ObjPtr: size=%d stride=%d\n",
 			VB->ObjPtr->size, VB->ObjPtr->stride);
 		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n",
 			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
 		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n",
 			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
-		#endif
+#endif
 
    if(type<0 || num_verts <= 0)return;
 
@@ -366,7 +366,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    start_immediate_packet(num_verts, type, 4*rmesa->state.aos_count);
 
 	for(i=start;i<start+num_verts;i++){
-		#if 0
+#if 0
 		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n",
 			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
 			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
@@ -378,7 +378,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
 			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]
 			);
-		#endif
+#endif
 
 
 		/* coordinates */
@@ -430,15 +430,15 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-   #if 1 /* we need this, somehow */
+#if 1 /* we need this, somehow */
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
    /* Make sure we have enough space */
-   #else
+#else
    /* Count is very imprecize, but should be good upper bound */
    r300EnsureCmdBufSpace(rmesa, rmesa->hw.max_state_size + 4+2+30
    	+VB->PrimitiveCount*(1+8)+VB->Count*4*rmesa->state.texture.tc_count+4, __FUNCTION__);
-   #endif
+#endif
 
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -448,14 +448,14 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	e32(0x00000003);
 
 
-	#if 0 /* looks like the Z offset issue got fixed */
+#if 0 /* looks like the Z offset issue got fixed */
    rmesa->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA
 				| R300_VPORT_Y_SCALE_ENA
 				| R300_VPORT_Y_OFFSET_ENA
 				| R300_VTX_W0_FMT;
    R300_STATECHANGE(rmesa, vte);
-	#endif
+#endif
 
 
 
@@ -470,7 +470,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 
    r300EmitState(rmesa);
 
-   #if 0
+#if 0
    reg_start(R300_RB3D_COLORMASK, 0);
    	e32(0xf);
 
@@ -485,7 +485,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    efloat(0.0);
    efloat(0.0);
    efloat(1.0);
-   #endif
+#endif
 
 /* Setup INPUT_ROUTE and INPUT_CNTL */
 	r300EmitArrays(ctx, GL_TRUE);
@@ -763,10 +763,10 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	//FALLBACK_IF(ctx->Color.DitherFlag);
 
 	/* I'm almost certain I forgot something here */
-	#if 0 /* This should work now.. */
+#if 0 /* This should work now.. */
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
 	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
-	#endif
+#endif
 	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
 	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
 	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
@@ -787,9 +787,9 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
 	/* let r300_run_render do its job */
-	#if 0
+#if 0
 	stage->active = GL_FALSE;
-	#endif
+#endif
 }
 
 
