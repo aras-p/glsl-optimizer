@@ -236,8 +236,10 @@ get_register_pointer( const struct vp_src_register *source,
         (source->File == PROGRAM_STATE_VAR) );
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
          return ZeroVec;
-      else
+      else if (source->File == PROGRAM_ENV_PARAM)
          return state->Parameters[reg];
+      else
+         return state->Current->Parameters->Parameters[reg].Values;
    }
    else {
       switch (source->File) {
