@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.24 2000/03/23 16:55:13 brianp Exp $
+$Id: VERSIONS,v 1.25 2000/03/28 16:10:43 brianp Exp $
 
 
 Mesa Version History
@@ -681,6 +681,7 @@ Mesa Version History
 
 3.3 (Experimental/advanced development)  Month?, ??, 2000
     New:
+	- antialiased triangles now implemented
 	- GL_EXT_texture_env_add texture mode extension
 	- GLX 1.3 API
 	- support for separate draw/read buffers (ie GL_SGI_make_current_read)
@@ -690,8 +691,8 @@ Mesa Version History
 	- glext.h header file
 	- demos/geartrain program
 	- GL_EXT_texture_lod_bias extension
-	- antialiased triangles now implemented
 	- demos/lodbias program
+	- further optimized glRead/DrawPixels for 16-bit TrueColor X visuals
     Bug Fixes:
 	- none since 3.2
     Changes:
