@@ -134,6 +134,7 @@ static const char * const card_extensions[] =
     "GL_EXT_texture_env_dot3",
     "GL_EXT_texture_filter_anisotropic",
     "GL_EXT_texture_lod_bias",
+    "GL_EXT_texture_mirror_clamp",
     "GL_ATI_texture_env_combine3",
     "GL_ATI_texture_mirror_once",
     "GL_MESA_ycbcr_texture",

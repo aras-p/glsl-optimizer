@@ -88,12 +88,16 @@ static void radeonSetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap )
    case GL_MIRRORED_REPEAT:
       t->pp_txfilter |= RADEON_CLAMP_S_MIRROR;
       break;
-   case GL_MIRROR_CLAMP_ATI:
+   case GL_MIRROR_CLAMP_EXT:
       t->pp_txfilter |= RADEON_CLAMP_S_MIRROR_CLAMP_GL;
       is_clamp = GL_TRUE;
       break;
-   case GL_MIRROR_CLAMP_TO_EDGE_ATI:
+   case GL_MIRROR_CLAMP_TO_EDGE_EXT:
       t->pp_txfilter |= RADEON_CLAMP_S_MIRROR_CLAMP_LAST;
+      break;
+   case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+      t->pp_txfilter |= RADEON_CLAMP_S_MIRROR_CLAMP_GL;
+      is_clamp_to_border = GL_TRUE;
       break;
    default:
       _mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
@@ -117,12 +121,16 @@ static void radeonSetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap )
    case GL_MIRRORED_REPEAT:
       t->pp_txfilter |= RADEON_CLAMP_T_MIRROR;
       break;
-   case GL_MIRROR_CLAMP_ATI:
+   case GL_MIRROR_CLAMP_EXT:
       t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
       is_clamp = GL_TRUE;
       break;
-   case GL_MIRROR_CLAMP_TO_EDGE_ATI:
+   case GL_MIRROR_CLAMP_TO_EDGE_EXT:
       t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_LAST;
+      break;
+   case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+      t->pp_txfilter |= RADEON_CLAMP_T_MIRROR_CLAMP_GL;
+      is_clamp_to_border = GL_TRUE;
       break;
    default:
       _mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
