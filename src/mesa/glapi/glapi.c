@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.14 1999/12/16 12:38:11 brianp Exp $ */
+/* $Id: glapi.c,v 1.15 1999/12/16 17:31:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,39 +44,78 @@
 #include "glapioffsets.h"
 #include "glapitable.h"
 
+#include <stdio.h>
+
 
 
 /* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_TRUE;
+static GLboolean ThreadSafe = GL_FALSE;
 
 /* This is used when thread safety is disabled */
 static struct _glapi_table *Dispatch = &__glapi_noop_table;
 
 
 #if defined(THREADS)
-#include "mthreads.h"
-static MesaTSD mesa_dispatch_tsd;
-static void mesa_dispatch_thread_init() {
-  MesaInitTSD(&mesa_dispatch_tsd);
+
+#include "glthread.h"
+
+static _glthread_TSD DispatchTSD;
+
+static void dispatch_thread_init()
+{
+   _glthread_InitTSD(&DispatchTSD);
 }
+
 #endif
 
 
 
-#define DISPATCH_SETUP			\
-   const struct _glapi_table *dispatch;	\
-   if (ThreadSafe) {			\
-      dispatch = _glapi_get_dispatch();	\
-   }					\
-   else {				\
-      dispatch = Dispatch;		\
-   }
-
-#define DISPATCH(FUNC, ARGS) (dispatch->FUNC) ARGS
-
-
-static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *);
+static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *) - 1;
 static GLboolean GetSizeCalled = GL_FALSE;
+
+
+
+/*
+ * We should call this periodically from a function such as glXMakeCurrent
+ * in order to test if multiple threads are being used.  When we detect
+ * that situation we should then call _glapi_enable_thread_safety()
+ */
+void
+_glapi_check_multithread(void)
+{
+#if defined(THREADS)
+   if (!ThreadSafe) {
+      static unsigned long knownID;
+      static GLboolean firstCall = GL_TRUE;
+      if (firstCall) {
+         knownID = _glthread_GetID();
+         firstCall = GL_FALSE;
+      }
+      else if (knownID != _glthread_GetID()) {
+         ThreadSafe = GL_TRUE;
+      }
+   }
+   if (ThreadSafe) {
+      /* make sure that this thread's dispatch pointer isn't null */
+      if (!_glapi_get_dispatch()) {
+         _glapi_set_dispatch(NULL);
+      }
+   }
+#endif
+}
+
+
+
+/*
+ * Enable thread safe mode.  Once enabled, can't be disabled.
+ */
+void
+_glapi_enable_thread_safety(void)
+{
+   ThreadSafe = GL_TRUE;
+}
+
+
 
 
 /*
@@ -96,33 +135,29 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(THREADS)
-   MesaSetTSD(&mesa_dispatch_tsd, (void*) dispatch, mesa_dispatch_thread_init);
+   _glthread_SetTSD(&DispatchTSD, (void*) dispatch, dispatch_thread_init);
 #else
    Dispatch = dispatch;
 #endif
 }
 
 
+
 /*
- * Get the global or per-thread dispatch table pointer.
+ * Return pointer to current dispatch table for calling thread.
  */
 struct _glapi_table *
 _glapi_get_dispatch(void)
 {
 #if defined(THREADS)
-   /* return this thread's dispatch pointer */
-   return (struct _glapi_table *) MesaGetTSD(&mesa_dispatch_tsd);
+   if (ThreadSafe) {
+      return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
+   }
+   else
+      return Dispatch;
 #else
    return Dispatch;
 #endif
-}
-
-
-
-void
-_glapi_enable_thread_safety(void)
-{
-   ThreadSafe = GL_TRUE;
 }
 
 
@@ -196,7 +231,7 @@ get_static_proc_address(const char *funcName)
 
 /**********************************************************************
  * Extension function management.
- **********************************************************************/
+ */
 
 
 struct _glapi_ext_entrypoint {
@@ -410,7 +445,7 @@ _glapi_check_table(const struct _glapi_table *table)
 
 
 
-/*
+/**********************************************************************
  * Generate the GL entrypoint functions here.
  */
 
@@ -421,6 +456,21 @@ _glapi_check_table(const struct _glapi_table *table)
 #else
 #define NAME(func)  gl##func
 #endif
+
+#define DISPATCH_SETUP			\
+   const struct _glapi_table *dispatch;	\
+   if (ThreadSafe) {			\
+      dispatch = _glapi_get_dispatch();	\
+      assert(dispatch);			\
+   }					\
+   else {				\
+      dispatch = Dispatch;		\
+   }
+
+#define DISPATCH(FUNC, ARGS) (dispatch->FUNC) ARGS
+
+
+
 
 #include "glapitemp.h"
 
