@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.29 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: context.h,v 1.30 2002/06/13 04:31:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -204,7 +204,7 @@ _mesa_notifyDestroy(__GLcontext *gc);
 extern void
 _mesa_notifySwapBuffers(__GLcontext *gc);
 
-extern void
+extern struct __GLdispatchStateRec *
 _mesa_dispatchExec(__GLcontext *gc);
 
 extern void

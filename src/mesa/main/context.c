@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.164 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: context.c,v 1.165 2002/06/13 04:31:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -217,7 +217,7 @@ _mesa_init_default_exports(__GLexports *exports)
     exports->copyContext = _mesa_copyContext;
     exports->forceCurrent = _mesa_forceCurrent;
     exports->notifyResize = _mesa_notifyResize;
-    exports->notifyDestroy = _mesa_notifyCestroy;
+    exports->notifyDestroy = _mesa_notifyDestroy;
     exports->notifySwapBuffers = _mesa_notifySwapBuffers;
     exports->dispatchExec = _mesa_dispatchExec;
     exports->beginDispatchOverride = _mesa_beginDispatchOverride;
