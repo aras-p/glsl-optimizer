@@ -351,7 +351,7 @@ int main(int argc, char **argv)
     }
 
     if (Args(argc, argv) == GL_FALSE) {
-	exit(1);
+	return(1);
     }
 
     windW = 300;
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
     glutInitDisplayMode(type);
 
     if (glutCreateWindow("Overlay Test") == GL_FALSE) {
-	exit(1);
+	return(1);
     }
 
     glutEstablishOverlay();
