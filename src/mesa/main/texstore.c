@@ -1,8 +1,8 @@
-/* $Id: texstore.c,v 1.47 2002/10/30 19:57:21 brianp Exp $ */
+/* $Id: texstore.c,v 1.48 2002/11/20 21:39:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -1968,7 +1968,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       GLint border, bytesPerTexel;
 
       /* get src image parameters */
-      srcImage = texObj->Image[level];
+      srcImage = _mesa_select_tex_image(ctx, texUnit, target, level);
       ASSERT(srcImage);
       srcWidth = srcImage->Width;
       srcHeight = srcImage->Height;
