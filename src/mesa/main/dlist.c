@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.10 1999/10/16 11:31:50 brianp Exp $ */
+/* $Id: dlist.c,v 1.11 1999/10/19 18:37:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -599,7 +599,7 @@ void gl_init_lists( void )
       InstSize[OPCODE_WINDOW_POS] = 5;
       InstSize[OPCODE_CONTINUE] = 2;
       InstSize[OPCODE_ERROR] = 3;
-      InstSize[OPCODE_VERTEX_CASSETTE] = 2;
+      InstSize[OPCODE_VERTEX_CASSETTE] = 9;
       InstSize[OPCODE_END_OF_LIST] = 1;
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
@@ -2382,27 +2382,53 @@ static void save_ClientActiveTexture( GLcontext *ctx, GLenum target )
 
 void gl_compile_cassette( GLcontext *ctx )
 {
-   Node *n = alloc_instruction( ctx, OPCODE_VERTEX_CASSETTE, 1 );
-   struct immediate *new_im = gl_immediate_alloc(ctx);
-   struct immediate *im = ctx->input;
-   
-   if (!n || !new_im) {
-      if (n)
-	 FREE(n);
-      if (new_im)
-	 gl_immediate_free(new_im);
+   Node *n = alloc_instruction( ctx, OPCODE_VERTEX_CASSETTE, 8 );
+   struct immediate *im = ctx->input;   
+
+   if (!n) 
       return;
-   }
+   
 
    /* Do some easy optimizations of the cassette.  
     */
-   if (im->v.Obj.size < 4 && im->Count > 15) {
+#if 0
+   if (0 && im->v.Obj.size < 4 && im->Count > 15) {
       im->Bounds = (GLfloat (*)[3]) MALLOC(6 * sizeof(GLfloat));
       (gl_calc_bound_tab[im->v.Obj.size])( im->Bounds, &im->v.Obj );
    }
+#endif
 
    n[1].data = (void *)im;   
-   SET_IMMEDIATE( ctx, new_im );
+   n[2].ui = im->Start;
+   n[3].ui = im->Count;
+   n[4].ui = im->BeginState;
+   n[5].ui = im->OrFlag;
+   n[6].ui = im->AndFlag;
+   n[7].ui = im->LastData;
+   n[8].ui = im->LastPrimitive;
+
+   if (im->Count > VB_MAX - 4) {
+
+      struct immediate *new_im = gl_immediate_alloc(ctx);      
+      if (!new_im) return;
+      SET_IMMEDIATE( ctx, new_im );
+      gl_reset_input( ctx );
+
+   } else {
+      im->Count++;;
+      im->Start = im->Count;	/* don't clear anything in reset_input */
+      im->ref_count++;
+
+      im->Primitive[im->Start] = ctx->Current.Primitive;
+      im->LastPrimitive = im->Start;
+      im->BeginState = VERT_BEGIN_0;
+      im->OrFlag = 0;
+      im->AndFlag = ~0;
+
+      if (0)
+	 fprintf(stderr, "in compile_cassette, BeginState is %x\n", 
+	      im->BeginState);
+   }   
 }
 
 /* KW: Compile commands  
@@ -2455,7 +2481,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_ERROR:
  	    gl_error( ctx, n[1].e, (const char *) n[2].data ); 
             break;
-         case OPCODE_VERTEX_CASSETTE:
+         case OPCODE_VERTEX_CASSETTE: {
+	    struct immediate *IM;
+
 	    if (ctx->NewState)
 	       gl_update_state(ctx);
 	    if (ctx->CompileCVAFlag) {
@@ -2465,13 +2493,29 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	    if (!ctx->CVA.elt.pipeline_valid)
 	       gl_build_immediate_pipeline( ctx );
 
+	    
+	    IM = (struct immediate *) n[1].data;
+	    IM->Start = n[2].ui;
+	    IM->Count = n[3].ui;
+	    IM->BeginState = n[4].ui;
+	    IM->OrFlag = n[5].ui;
+	    IM->AndFlag = n[6].ui;
+	    IM->LastData = n[7].ui;
+	    IM->LastPrimitive = n[8].ui;
+
 	    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
 		(MESA_VERBOSE & VERBOSE_IMMEDIATE))
 	       gl_print_cassette( (struct immediate *) n[1].data, 0, ~0 );
 
+	    if (0)
+	       fprintf(stderr, "Run cassette %d, rows %d..%d, beginstate %x\n",
+		       IM->id,
+		       IM->Start, IM->Count, IM->BeginState);
+
 	    gl_fixup_cassette( ctx, (struct immediate *) n[1].data ); 
 	    gl_execute_cassette( ctx, (struct immediate *) n[1].data ); 
             break;
+	 }
          case OPCODE_ACCUM:
 	    gl_Accum( ctx, n[1].e, n[2].f );
 	    break;
@@ -3089,7 +3133,9 @@ void gl_EndList( GLcontext *ctx )
 
    /* KW: Put back the old input pointer.
     */
-   FREE( ctx->input );
+   if (--ctx->input->ref_count == 0)
+      gl_immediate_free( ctx->input );
+
    SET_IMMEDIATE( ctx, ctx->VB->IM );
    gl_reset_input( ctx );
 
@@ -3459,6 +3505,13 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
          case OPCODE_TRANSLATE:
             fprintf(f,"Translate %g %g %g\n", n[1].f, n[2].f, n[3].f );
             break;
+         case OPCODE_BIND_TEXTURE:
+	    fprintf(f,"BindTexture %s %d\n", gl_lookup_enum_by_nr(n[1].ui), 
+		    n[2].ui);
+	    break;
+         case OPCODE_SHADE_MODEL:
+	    fprintf(f,"ShadeModel %s\n", gl_lookup_enum_by_nr(n[1].ui)); 
+	    break;
 
 	 /*
 	  * meta opcodes/commands
@@ -3467,9 +3520,12 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
             fprintf(f,"Error: %s %s\n", enum_string(n[1].e), (const char *)n[2].data );
             break;
 	 case OPCODE_VERTEX_CASSETTE:
-            fprintf(f,"VERTEX-CASSETTE, id %u, %u elements\n", 
+            fprintf(f,"VERTEX-CASSETTE, id %u, rows %u..%u\n", 
 		    ((struct immediate *) n[1].data)->id,
-		    ((struct immediate *) n[1].data)->Count - VB_START );
+		    n[2].ui,
+		    n[3].ui);
+/*  	    gl_print_cassette( (struct immediate *) n[1].data, */
+/*  			       0, ~0 ); */
 	    break;
 	 case OPCODE_CONTINUE:
             fprintf(f,"DISPLAY-LIST-CONTINUE\n");
@@ -3512,5 +3568,5 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 void mesa_print_display_list( GLuint list )
 {
    GET_CONTEXT;
-   print_list( CC, stdout, list );
+   print_list( CC, stderr, list );
 }

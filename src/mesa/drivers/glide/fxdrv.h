@@ -61,7 +61,7 @@
 
 
 
-#if defined(MESA_DEBUG) && 0
+#if 0
 extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
 #define grDrawTriangle fx_sanity_triangle
 #endif
@@ -476,6 +476,8 @@ struct tfxMesaContext {
   GLint maxPendingSwapBuffers;
   
   FX_GrContext_t glideContext;
+
+  GLfloat wscale;
 
   DRI_FX_CONTEXT
 

@@ -52,7 +52,7 @@ static tfxTexInfo *fxAllocTexObjData(fxMesaContext fxMesa)
   tfxTexInfo *ti;
   int i;
 
-  if(!(ti=MALLOC(sizeof(tfxTexInfo)))) {
+  if(!(ti=CALLOC(sizeof(tfxTexInfo)))) {
     fprintf(stderr,"fx Driver: out of memory !\n");
     fxCloseHardware();
     exit(-1);
@@ -219,6 +219,7 @@ void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
       ti->sClamp=GR_TEXTURECLAMP_WRAP;
       break;
     default:
+       fprintf(stderr, "BAD CLAMP\n");
       break;
     }
     fxMesa->new_state|=FX_NEW_TEXTURING;

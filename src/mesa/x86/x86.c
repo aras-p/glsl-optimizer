@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: x86.c,v 1.2 1999/10/19 18:37:07 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,8 +36,22 @@
 
 #include "context.h"
 #include "types.h"
+#include "vertices.h"
 #include "xform.h"
 #include "x86.h"
+
+extern void gl_v16_x86_cliptest_points4(GLfloat *first_vert,
+					GLfloat *last_vert,
+					GLubyte *or_mask,
+					GLubyte *and_mask,
+					GLubyte *clip_mask );
+
+  
+extern void gl_v16_x86_general_xform(GLfloat *dest,
+				     const GLfloat *m,
+				     const GLfloat *src,
+				     GLuint src_stride,
+				     GLuint count);
 
 
 
@@ -103,5 +117,8 @@ void gl_init_x86_asm_transforms( void )
    gl_test_all_transform_functions("x86");
 #endif
 
+
+   gl_cliptest_points4_v16 = gl_v16_x86_cliptest_points4;
+   gl_xform_points3_v16_general = gl_v16_x86_general_xform;
 #endif
 }

@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: 3dnow.c,v 1.2 1999/10/19 18:37:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,7 @@
 #include "context.h"
 #include "types.h"
 #include "xform.h"
+#include "vertices.h"
 
 #ifdef DEBUG
 #include "debug_xform.h"
@@ -126,7 +127,22 @@
       gl_##pfx##_transform_normalize_normals_no_rot_##masked##;
 
 
+extern void gl_3dnow_project_vertices( GLfloat *first,
+				       GLfloat *last,
+				       const GLfloat *m,
+				       GLuint stride );
 
+extern void gl_3dnow_project_clipped_vertices( GLfloat *first,
+					       GLfloat *last,
+					       const GLfloat *m,
+					       GLuint stride,
+					       const GLubyte *clipmask );
+
+extern void gl_v16_3dnow_general_xform( GLfloat *first_vert,
+					const GLfloat *m,
+					const GLfloat *src,
+					GLuint src_stride,
+					GLuint count );
 
 void gl_init_3dnow_asm_transforms (void)
 {
@@ -162,6 +178,12 @@ void gl_init_3dnow_asm_transforms (void)
    gl_test_all_transform_functions("3Dnow!");
    gl_test_all_normal_transform_functions("3Dnow!");
 #endif
+
+   /* Hook in some stuff for vertices.c.
+    */
+   gl_xform_points3_v16_general = gl_v16_3dnow_general_xform;
+   gl_project_v16 = gl_3dnow_project_vertices;
+   gl_project_clipped_v16 = gl_3dnow_project_clipped_vertices;
 } 
 
 #endif

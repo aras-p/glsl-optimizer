@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.4 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: light.c,v 1.5 1999/10/19 18:37:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -664,14 +664,22 @@ void gl_Materialfv( GLcontext *ctx,
    IM = ctx->input;
    count = IM->Count;
 
+   if (!IM->Material) {
+      IM->Material = 
+	 (struct gl_material (*)[2]) MALLOC( sizeof(struct gl_material) * 
+					     VB_SIZE * 2 );
+      IM->MaterialMask = (GLuint *) MALLOC( sizeof(GLuint) * VB_SIZE );
+   }
+
+
    if (!(IM->Flag[count] & VERT_MATERIAL)) {
       IM->Flag[count] |= VERT_MATERIAL;
-      IM->MaterialMask[count] = 0;
+      IM->MaterialMask[count] = 0;      
    }
+
 
    IM->MaterialMask[count] |= bitmask;
    mat = IM->Material[count];
-   IM->LastMaterial = count;
 
    if (bitmask & FRONT_AMBIENT_BIT) {
       COPY_4FV( mat[0].Ambient, params );

@@ -347,6 +347,8 @@ void fxDDSetNearFar(GLcontext *ctx, GLfloat n, GLfloat f)
 {
    FX_CONTEXT(ctx)->new_state |= FX_NEW_FOG;
    ctx->Driver.RenderStart = fxSetupFXUnits;
+
+   FX_CONTEXT(ctx)->wscale = fabs(f)/65535.0f;
 }
 
 /* KW: Put the word Mesa in the render string because quakeworld
@@ -360,7 +362,44 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 #if defined(GLX_DIRECT_RENDERING)
       return "Mesa Glide - DRI VB/V3";
 #else
-      return (GLubyte*)"Mesa Glide";
+      {
+	 static char buf[80];
+
+	 if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) 
+	 {
+	    GrVoodooConfig_t *vc = 
+	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
+
+	    sprintf(buf,
+		    "Mesa Glide v0.30 Voodoo_Graphics %d "
+		    "CARD/%d FB/%d TM/%d TMU/%s",
+		    glbCurrentBoard,
+		    (vc->sliDetect ? (vc->fbRam*2) : vc->fbRam),
+		    (vc->tmuConfig[GR_TMU0].tmuRam +
+		     ((vc->nTexelfx>1) ? vc->tmuConfig[GR_TMU1].tmuRam : 0)),
+		    vc->nTexelfx,
+		    (vc->sliDetect ? "SLI" : "NOSLI"));
+	 }
+	 else if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96)
+	 {
+	    GrSst96Config_t *sc = 
+	       &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
+
+	    sprintf(buf,
+		    "Glide v0.30 Voodoo_Rush %d "
+		    "CARD/%d FB/%d TM/%d TMU/NOSLI",
+		    glbCurrentBoard,
+		    sc->fbRam,
+		    sc->tmuConfig.tmuRam,
+		    sc->nTexelfx);
+	 }
+	 else
+	 {
+	    strcpy(buf, "Glide v0.30 UNKNOWN");
+	 }
+
+	 return (GLubyte *) buf;
+      }
 #endif
    default:
       return NULL;

@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: varray.h,v 1.4 1999/10/19 18:37:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,7 +99,9 @@ extern void gl_save_DrawRangeElements( GLcontext *ctx, GLenum mode,
 
 
 extern void gl_exec_array_elements( GLcontext *ctx, 
-				    struct immediate *IM );
+				    struct immediate *IM,
+				    GLuint start, 
+				    GLuint end );
 
 extern void gl_update_client_state( GLcontext *ctx );
 
