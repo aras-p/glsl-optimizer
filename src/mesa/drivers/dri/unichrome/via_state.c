@@ -1559,6 +1559,11 @@ void viaValidateState( GLcontext *ctx )
     if (vmesa->newState & _NEW_STENCIL)
         viaChooseStencilState(ctx);
     
+    if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+        vmesa->regEnable |= HC_HenCS_MASK;
+    else
+        vmesa->regEnable &= ~HC_HenCS_MASK;
+
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;
 }
