@@ -1,4 +1,4 @@
-# $Id: Makefile.DJ,v 1.6 2000/03/24 20:56:50 brianp Exp $
+# $Id: Makefile.DJ,v 1.7 2000/04/07 16:28:37 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -81,6 +81,7 @@ CORE_SOURCES = \
 	mmath.c \
 	pb.c \
 	pixel.c \
+	pixeltex.c \
 	pipeline.c \
 	points.c \
 	polygon.c \
