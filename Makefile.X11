@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.57 2001/10/22 22:45:18 brianp Exp $
+# $Id: Makefile.X11,v 1.58 2001/11/30 19:42:10 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -42,6 +42,7 @@ default:
 	@echo "  make bsdos4               for BSD/OS 4.x, dynamic libraries"
 	@echo "  make cygnus               for Win95/NT using Cygnus-Win32"
 	@echo "  make cygnus-linux         for Win95/NT using Cygnus-Win32 under Linux"
+	@echo "  make darwin               for Darwin - Mac OS X"
 	@echo "  make dgux                 for Data General"
 	@echo "  make freebsd              for FreeBSD systems with GCC"
 	@echo "  make freebsd-386          for FreeBSD systems with GCC, w/ Intel assembly"
@@ -137,7 +138,7 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl amix bsdos bsdos4 dgux freebsd freebsd-386 gcc \
+aix aix-sl amix bsdos bsdos4 darwin dgux freebsd freebsd-386 gcc \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
