@@ -53,6 +53,6 @@ dri.a:	$(OBJECTS)
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.so *.a
+	-rm -f *.o */*.o *~ *.so *.a depend depend.bak
 
 include depend

@@ -176,7 +176,7 @@ tags:
 
 clean:
 	-rm -f */*.o
-	-rm -f depend mesa.a
+	-rm -f depend depend.bak mesa.a
 	-rm -f drivers/*/*.o
 	(cd drivers/dri ; $(MAKE) clean)
 
