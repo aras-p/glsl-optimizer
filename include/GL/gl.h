@@ -37,7 +37,9 @@
  * included. 
  */
 #if !defined(__SCITECH_SNAP__)
- 
+
+#include <malloc.h>     /* to get ptrdiff_t, used below */
+
 #if defined(__BEOS__)
 #include <stdlib.h>     /* to get some BeOS-isms */
 #endif
