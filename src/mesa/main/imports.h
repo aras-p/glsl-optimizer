@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.17 2003/03/04 16:33:53 brianp Exp $ */
+/* $Id: imports.h,v 1.18 2003/03/07 14:54:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -330,8 +330,17 @@ long iround(float f);
 	parm [8087]                         \
 	value [eax]                         \
 	modify exact [eax];
-
 #define IROUND(x)  iround(x)
+#elif defined(__OS2__)
+#ifndef FIST_MAGIC
+#define FIST_MAGIC ((((65536.0 * 65536.0 * 16)+(65536.0 * 0.5))* 65536.0))
+#endif
+inline int iround(float x)
+{
+   double dtemp = FIST_MAGIC + x;
+   return ((*(int *)&dtemp) - 0x80000000);
+}
+#define IROUND(f)  iround((float)f)
 #else
 #define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
 #endif
