@@ -68,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    [ MESA_FORMAT_ ## f ] = { RADEON_TXFORMAT_ ## f, RADEON_YUV_TO_RGB }
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
-#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
+#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_YCBCR_REV) \
 			     && (tx_table[f].format != 0xffffffff) )
 
 static const struct {
