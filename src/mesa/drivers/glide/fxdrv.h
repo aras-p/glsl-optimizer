@@ -636,22 +636,19 @@ extern GLboolean fxDDColorMask(GLcontext *ctx,
 			       GLboolean r, GLboolean g, 
 			       GLboolean b, GLboolean a );
 
-extern GLuint fxDDDepthTestSpanGeneric(GLcontext *ctx,
-                                       GLuint n, GLint x, GLint y, 
-				       const GLdepth z[],
-                                       GLubyte mask[]);
+extern void fxDDWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
+                               const GLdepth depth[], const GLubyte mask[]);
 
-extern void fxDDDepthTestPixelsGeneric(GLcontext* ctx,
-                                       GLuint n, 
-				       const GLint x[], const GLint y[],
-                                       const GLdepth z[], GLubyte mask[]);
+extern void fxDDReadDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
+                              GLdepth depth[]);
 
-extern void fxDDReadDepthSpanFloat(GLcontext *ctx,
-				   GLuint n, GLint x, GLint y, GLfloat depth[]);
+extern void fxDDWriteDepthPixels(GLcontext *ctx, GLuint n,
+                                 const GLint x[], const GLint y[],
+                                 const GLdepth depth[], const GLubyte mask[]);
 
-extern void fxDDReadDepthSpanInt(GLcontext *ctx,
-				 GLuint n, GLint x, GLint y, GLdepth depth[]);
-
+extern void fxDDReadDepthPixels(GLcontext *ctx, GLuint n,
+                                const GLint x[], const GLint y[],
+                                GLdepth depth[]);
 
 extern void fxDDFastPath( struct vertex_buffer *VB );
 

@@ -811,11 +811,10 @@ void fxSetupDDPointers(GLcontext *ctx)
 
   ctx->Driver.UpdateState=fxDDUpdateDDPointers;
 
-  ctx->Driver.AllocDepthBuffer=fxAllocDepthBuffer;
-  ctx->Driver.DepthTestSpan=fxDDDepthTestSpanGeneric;
-  ctx->Driver.DepthTestPixels=fxDDDepthTestPixelsGeneric;
-  ctx->Driver.ReadDepthSpanFloat=fxDDReadDepthSpanFloat;
-  ctx->Driver.ReadDepthSpanInt=fxDDReadDepthSpanInt;
+  ctx->Driver.WriteDepthSpan=fxDDWriteDepthSpan;
+  ctx->Driver.WriteDepthPixels=fxDDWriteDepthPixels;
+  ctx->Driver.ReadDepthSpan=fxDDReadDepthSpan;
+  ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
          
   ctx->Driver.GetString=fxDDGetString;
 
