@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.16 2000/05/04 13:48:49 brianp Exp $ */
+/* $Id: enable.c,v 1.17 2000/05/05 23:41:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,6 +195,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_LINE_SMOOTH:
 	 if (ctx->Line.SmoothFlag!=state) {
             ctx->Line.SmoothFlag = state;
+	    ctx->TriangleCaps ^= DD_LINE_SMOOTH;
             ctx->NewState |= NEW_RASTER_OPS;
          }
 	 break;
