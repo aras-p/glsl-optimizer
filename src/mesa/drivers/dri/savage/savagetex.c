@@ -800,7 +800,7 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
 	    return -1;
 	 }
 	 
-	 savageDestroyTexObj( imesa, imesa->TexObjList[heap].prev );
+	 savageSwapOutTexObj( imesa, imesa->TexObjList[heap].prev );
       }
  
       ofs = t->MemBlock->ofs;
