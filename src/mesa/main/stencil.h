@@ -1,4 +1,4 @@
-/* $Id: stencil.h,v 1.3 1999/12/10 16:15:04 brianp Exp $ */
+/* $Id: stencil.h,v 1.4 1999/12/13 04:08:27 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,9 @@ extern GLboolean
 gl_stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                                 const GLdepth z[], GLubyte mask[] );
 
-
+#ifdef VMS /* VMS allows externals of 31 characters maximum */
+#define gl_stencil_and_depth_test_pixels gl_stencil_and_depth_test_pixel
+#endif
 extern GLboolean
 gl_stencil_and_depth_test_pixels( GLcontext *ctx, GLuint n,
                                   const GLint x[], const GLint y[],
