@@ -98,23 +98,12 @@ extern int prevLockLine;
       DEBUG_LOCK();						\
    } while (0)
 
-/* Unlock the hardware.  We must assume that state has been lost when we unlock,
- * because when we next grab the lock (to emit an accumulated cmdbuf), we don't
- * have the information to recreate the context state as of the last unlock in
- * in the case that we did lose the context state.
- *
- * The alternative to this would be to copy out the state on unlock
- * (approximately) and if we did lose the context, dispatch a cmdbuf to reset
- * the state to that old copy before continuing with the accumulated command
- * buffer.
- */
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
       DRM_UNLOCK( rmesa->dri.fd,					\
 		  rmesa->dri.hwLock,					\
 		  rmesa->dri.hwContext );				\
       DEBUG_RESET();							\
-      rmesa->lost_context = GL_TRUE;					\
    } while (0)
 
 #endif

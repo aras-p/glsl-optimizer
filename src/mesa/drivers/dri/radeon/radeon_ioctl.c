@@ -544,6 +544,19 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
    rmesa->store.statenr = 0;
    rmesa->store.cmd_used = 0;
    rmesa->dma.nr_released_bufs = 0;
+   /* Set lost_context so that the first state emit on the new buffer is a full
+    * one.  This is because the context might get lost while preparing the next
+    * buffer, and when we lock and find out, we don't have the information to
+    * recreate the state.  This function should always be called before the new
+    * buffer is begun, so it's sufficient to just set lost_context here.
+    *
+    * The alternative to this would be to copy out the state on unlock
+    * (approximately) and if we did lose the context, dispatch a cmdbuf to reset
+    * the state to that old copy before continuing with the accumulated command
+    * buffer.
+    */
+   rmesa->lost_context = 1;
+
    return ret;
 }
 
@@ -977,9 +990,6 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       __FUNCTION__, all, cx, cy, cw, ch );
    }
 
-   /* Need to cope with lostcontext here as kernel relies on
-    * some residual state:
-    */
    RADEON_FIREVERTICES( rmesa ); 
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
@@ -1017,6 +1027,13 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    /* Flip top to bottom */
    cx += dPriv->x;
    cy  = dPriv->y + dPriv->h - cy - ch;
+
+   /* We have to emit state along with the clear, since the kernel relies on
+    * some of it.  The EmitState that was above RADEON_FIREVERTICES was an
+    * attempt to do that, except that another context may come in and cause us
+    * to lose our context while we're unlocked.
+    */
+   radeonEmitState( rmesa );
 
    LOCK_HARDWARE( rmesa );
 
@@ -1058,6 +1075,9 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 LOCK_HARDWARE( rmesa );
       }
    }
+
+   /* Send current state to the hardware */
+   radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
 
    for ( i = 0 ; i < dPriv->numClipRects ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
