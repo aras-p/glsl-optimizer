@@ -338,8 +338,8 @@ static GLboolean run_init_vp( GLcontext *ctx,
 
    /* Make the color0[] and color1[] arrays point into the attribs[] arrays */
    init_color_array( &store->color0[0], &store->attribs[VERT_RESULT_COL0] );
-   init_color_array( &store->color0[1], &store->attribs[VERT_RESULT_COL1] );
-   init_color_array( &store->color1[0], &store->attribs[VERT_RESULT_BFC0] );
+   init_color_array( &store->color0[1], &store->attribs[VERT_RESULT_BFC0] );
+   init_color_array( &store->color1[0], &store->attribs[VERT_RESULT_COL1] );
    init_color_array( &store->color1[1], &store->attribs[VERT_RESULT_BFC1] );
 
    /* a few other misc allocations */
