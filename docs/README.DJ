@@ -1,4 +1,4 @@
-			Mesa 6.0 DOS/DJGPP Port v1.5
+			Mesa 6.1 DOS/DJGPP Port v1.6
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,7 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 6.0, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 6.1, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -236,6 +236,9 @@ v1.5 (jan-2004)
 	+ added GLUT timer callback
 	- removed Matrox Millennium MGA2064W driver
 	x more changes to the 3dfx driver
+
+v1.6 (???-2004)
+	* fixed a horrible bug in VGA initialization routine
 
 
 

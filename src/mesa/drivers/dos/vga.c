@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.5 for Mesa
+ * DOS/DJGPP device driver v1.6 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -40,8 +40,24 @@
 
 
 static vl_mode modes[] = {
-       {0x13 | 0x4000, 320, 200, 320, 8, -1, 320*200},
-       {0xffff, -1, -1, -1, -1, -1, -1}
+       {
+        /* .xres    = */ 320,
+        /* .yres    = */ 200,
+        /* .bpp     = */ 8,
+        /* .mode    = */ 0x13 | 0x4000,
+        /* .scanlen = */ 320,
+        /* .sel     = */ -1,
+        /* .gran    = */ 320*200
+       },
+       {
+        /* .xres    = */ -1,
+        /* .yres    = */ -1,
+        /* .bpp     = */ -1,
+        /* .mode    = */ 0xffff,
+        /* .scanlen = */ -1,
+        /* .sel     = */ -1,
+        /* .gran    = */ -1
+       }
 };
 
 static word16 vga_ver;
