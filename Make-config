@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.65 2002/10/31 14:58:36 brianp Exp $
+# $Id: Make-config,v 1.66 2002/11/11 18:56:36 kschultz Exp $
 
 MESA_MAJOR=5
 MESA_MINOR=0
@@ -308,6 +308,7 @@ hpux9-gcc-sl:
 	"MAKELIB = ../bin/mklib.hpux" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
+# The hpux10 configs should work for hpux11 as well.
 hpux10:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -318,7 +319,7 @@ hpux10:
 	"CC = cc" \
 	"CPLUSPLUS = aCC" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CCFLAGS = $(CFLAGS)" \
+	"CCFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm -L/usr/lib -lCsup"
 
@@ -327,12 +328,12 @@ hpux10-sl:
 	"GL_LIB = libGL" \
 	"GLU_LIB = libGLU" \
 	"GLUT_LIB = libglut" \
-	"GLW_LIB = libGLw.a" \
-	"OSMESA_LIB = libOSMesa.a" \
+	"GLW_LIB = libGLw" \
+	"OSMESA_LIB = libOSMesa" \
 	"CC = cc" \
 	"CPLUSPLUS = aCC" \
-	"CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CCFLAGS = $(CFLAGS)" \
+	"CFLAGS = +O3 +DAportable +z -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CCFLAGS = +O3 +DAportable +Z -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
