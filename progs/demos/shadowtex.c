@@ -1,4 +1,4 @@
-/* $Id: shadowtex.c,v 1.3 2001/02/26 18:26:32 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.4 2001/02/28 18:41:50 brianp Exp $ */
 
 /*
  * Shadow demo using the GL_SGIX_depth_texture, GL_SGIX_shadow and
@@ -28,6 +28,7 @@
  */
 
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -54,14 +55,18 @@ static GLfloat SpotAngle = 40.0 * DEG_TO_RAD;
 static GLfloat ShadowNear = 4.0, ShadowFar = 24.0;
 static GLint ShadowTexWidth = 256, ShadowTexHeight = 256;
 
-static GLboolean ShowDepth = GL_FALSE;
 static GLboolean LinearFilter = GL_FALSE;
-
-static GLfloat ShadowImage[256*256];
 
 static GLfloat Bias = -0.06;
 
 static GLboolean Anim = GL_TRUE;
+
+static GLuint DisplayMode;
+#define SHOW_NORMAL         0
+#define SHOW_DEPTH_IMAGE    1
+#define SHOW_DEPTH_MAPPING  2
+#define SHOW_DISTANCE       3
+
 
 
 static void
@@ -111,8 +116,8 @@ DrawScene(void)
  * source's point of view.
  */
 static void
-ShadowMatrix(const GLfloat lightPos[4], const GLfloat spotDir[3],
-             GLfloat spotAngle, GLfloat shadowNear, GLfloat shadowFar)
+MakeShadowMatrix(const GLfloat lightPos[4], const GLfloat spotDir[3],
+                 GLfloat spotAngle, GLfloat shadowNear, GLfloat shadowFar)
 {
    GLfloat d;
    
@@ -132,7 +137,7 @@ ShadowMatrix(const GLfloat lightPos[4], const GLfloat spotDir[3],
 
 
 static void
-EnableTexgen(void)
+EnableIdentityTexgen(void)
 {
    /* texgen so that texcoord = vertex coord */
    static GLfloat sPlane[4] = { 1, 0, 0, 0 };
@@ -156,6 +161,46 @@ EnableTexgen(void)
 }
 
 
+/*
+ * Setup 1-D texgen so that the distance from the light source, between
+ * the near and far planes maps to s=0 and s=1.  When we draw the scene,
+ * the grayness will indicate the fragment's distance from the light
+ * source.
+ */
+static void
+EnableDistanceTexgen(const GLfloat lightPos[4], const GLfloat lightDir[3],
+                     GLfloat lightNear, GLfloat lightFar)
+{
+   GLfloat m, d;
+   GLfloat sPlane[4];
+   GLfloat nearPoint[3];
+
+   m = sqrt(lightDir[0] * lightDir[0] +
+            lightDir[1] * lightDir[1] +
+            lightDir[2] * lightDir[2]);
+
+   d = lightFar - lightNear;
+
+   /* nearPoint = point on light direction vector which intersects the
+    * near plane of the light frustum.
+    */
+   nearPoint[0] = LightPos[0] + lightDir[0] / m * lightNear;
+   nearPoint[1] = LightPos[1] + lightDir[1] / m * lightNear;
+   nearPoint[2] = LightPos[2] + lightDir[2] / m * lightNear;
+
+   sPlane[0] = lightDir[0] / d / m;
+   sPlane[1] = lightDir[1] / d / m;
+   sPlane[2] = lightDir[2] / d / m;
+   sPlane[3] = -(sPlane[0] * nearPoint[0]
+               + sPlane[1] * nearPoint[1]
+               + sPlane[2] * nearPoint[2]);
+
+   glTexGenfv(GL_S, GL_EYE_PLANE, sPlane);
+   glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+   glEnable(GL_TEXTURE_GEN_S);
+}
+
+
 static void
 DisableTexgen(void)
 {
@@ -170,6 +215,7 @@ static void
 ComputeLightPos(GLfloat dist, GLfloat latitude, GLfloat longitude,
                 GLfloat pos[4], GLfloat dir[3])
 {
+
    pos[0] = dist * sin(longitude * DEG_TO_RAD);
    pos[1] = dist * sin(latitude * DEG_TO_RAD);
    pos[2] = dist * cos(latitude * DEG_TO_RAD) * cos(longitude * DEG_TO_RAD);
@@ -209,15 +255,31 @@ Display(void)
    /*
     * Step 2: copy depth buffer into texture map
     */
-   glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                    0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+   if (DisplayMode == SHOW_DEPTH_MAPPING) {
+      /* load depth image as gray-scale luminance texture */
+      GLfloat *depth = malloc(ShadowTexWidth * ShadowTexHeight
+                              * sizeof(GLfloat));
+      if (depth) {
+         glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
+                      GL_DEPTH_COMPONENT, GL_FLOAT, depth);
+         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
+                      ShadowTexWidth, ShadowTexHeight, 0,
+                      GL_LUMINANCE, GL_FLOAT, depth);
+         free(depth);
+      }
+   }
+   else {
+      /* The normal shadow case */
+      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                       0, 0, ShadowTexWidth, ShadowTexHeight, 0);
+   }
 
    /*
     * Step 3: render scene from point of view of the camera
     */
    glViewport(0, 0, WindowWidth, WindowHeight);
-   if (ShowDepth) {
-      ShowDepthBuffer(WindowWidth, WindowHeight, 1, 0);
+   if (DisplayMode == SHOW_DEPTH_IMAGE) {
+      ShowDepthBuffer(WindowWidth, WindowHeight, 0, 1);
    }
    else {
       glMatrixMode(GL_PROJECTION);
@@ -231,7 +293,6 @@ Display(void)
       glRotatef(Zrot, 0, 0, 1);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glLightfv(GL_LIGHT0, GL_POSITION, LightPos);
-      glEnable(GL_TEXTURE_2D);
       if (LinearFilter) {
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -240,10 +301,32 @@ Display(void)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       }
-      ShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
-      EnableTexgen();
+      if (DisplayMode == SHOW_DEPTH_MAPPING) {
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_FALSE);
+         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+         glEnable(GL_TEXTURE_2D);
+         MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
+         EnableIdentityTexgen();
+      }
+      else if (DisplayMode == SHOW_DISTANCE) {
+         glMatrixMode(GL_TEXTURE);
+         glLoadIdentity();
+         glMatrixMode(GL_MODELVIEW);
+         EnableDistanceTexgen(LightPos, SpotDir, ShadowNear+Bias, ShadowFar);
+         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+         glEnable(GL_TEXTURE_1D);
+      }
+      else {
+         assert(DisplayMode == SHOW_NORMAL);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_TRUE);
+         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+         glEnable(GL_TEXTURE_2D);
+         MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
+         EnableIdentityTexgen();
+      }
       DrawScene();
       DisableTexgen();
+      glDisable(GL_TEXTURE_1D);
       glDisable(GL_TEXTURE_2D);
    }
 
@@ -301,11 +384,21 @@ Key(unsigned char key, int x, int y)
          printf("Bias %g\n", Bias);
          break;
       case 'd':
-         ShowDepth = !ShowDepth;
+         DisplayMode = SHOW_DISTANCE;
          break;
       case 'f':
          LinearFilter = !LinearFilter;
          printf("%s filtering\n", LinearFilter ? "Bilinear" : "Nearest");
+         break;
+      case 'i':
+         DisplayMode = SHOW_DEPTH_IMAGE;
+         break;
+      case 'm':
+         DisplayMode = SHOW_DEPTH_MAPPING;
+         break;
+      case 'n':
+      case ' ':
+         DisplayMode = SHOW_NORMAL;
          break;
       case 'z':
          Zrot -= step;
@@ -367,10 +460,13 @@ Init(void)
       exit(1);
    }
 
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #ifdef GL_SGIX_shadow
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_TRUE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
                    GL_TEXTURE_LEQUAL_R_SGIX);
 #endif
@@ -378,6 +474,16 @@ Init(void)
    if (glutExtensionSupported("GL_SGIX_shadow_ambient"))
       glTexParameterf(GL_TEXTURE_2D, GL_SHADOW_AMBIENT_SGIX, 0.3);
 #endif
+
+   /* setup 1-D grayscale texture image for SHOW_DISTANCE mode */
+   {
+      GLuint i;
+      GLubyte image[256];
+      for (i = 0; i < 256; i++)
+         image[i] = i;
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE,
+                   256, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
+   }
 
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHTING);
@@ -390,7 +496,10 @@ PrintHelp(void)
 {
    printf("Keys:\n");
    printf("  a = toggle animation\n");
-   printf("  d = toggle display of depth texture\n");
+   printf("  i = show depth texture image\n");
+   printf("  m = show depth texture mapping\n");
+   printf("  d = show fragment distance from light source\n");
+   printf("  n = show normal, shadowed image\n");
    printf("  f = toggle nearest/bilinear texture filtering\n");
    printf("  b/B = decrease/increase shadow map Z bias\n");
    printf("  cursor keys = rotate scene\n");
