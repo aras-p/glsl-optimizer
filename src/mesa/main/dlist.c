@@ -39,6 +39,9 @@
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
+#if FEATURE_ARB_vertex_buffer_object
+#include "bufferobj.h"
+#endif
 #include "clip.h"
 #include "colormac.h"
 #include "colortab.h"
@@ -6595,7 +6598,22 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* XXX todo */
    /* ARB 27. GL_ARB_vertex_program */
    /* XXX todo */
+
    /* ARB 28. GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
+   /* None of the extension functions get compiled */
+   table->BindBufferARB = _mesa_BindBufferARB;
+   table->BufferDataARB = _mesa_BufferDataARB;
+   table->BufferSubDataARB = _mesa_BufferSubDataARB;
+   table->DeleteBuffersARB = _mesa_DeleteBuffersARB;
+   table->GenBuffersARB = _mesa_GenBuffersARB;
+   table->GetBufferParameterivARB = _mesa_GetBufferParameterivARB;
+   table->GetBufferPointervARB = _mesa_GetBufferPointervARB;
+   table->GetBufferSubDataARB = _mesa_GetBufferSubDataARB;
+   table->IsBufferARB = _mesa_IsBufferARB;
+   table->MapBufferARB = _mesa_MapBufferARB;
+   table->UnmapBufferARB = _mesa_UnmapBufferARB;
+#endif
    /* XXX todo */
 }
 
