@@ -42,7 +42,7 @@ C_SOURCES = \
 	$(DRIVER_SOURCES) 
 
 
-ASM_SOURCES = \
+X86_SOURCES = \
 	radeon_vtxtmp_x86.S 
 
 include ../Makefile.template
