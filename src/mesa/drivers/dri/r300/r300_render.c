@@ -274,6 +274,12 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 	r300_render_flat_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+   
    sync_VAP(PASS_PREFIX_VOID);
    
    end_3d(PASS_PREFIX_VOID);
@@ -424,6 +430,12 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
 	r300_render_vb_flat_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+   
    end_3d(PASS_PREFIX_VOID);
    
    /* Flush state - we are done drawing.. */
@@ -454,6 +466,8 @@ static void r300_render_tex_primitive(r300ContextPtr rmesa,
 			VB->ObjPtr->size, VB->ObjPtr->stride);
 		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
 			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
+		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n", 
+			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
    
    if(type<0)return;
 
@@ -539,7 +553,9 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    vb_arrays[2].ncomponents=4;
    vb_arrays[2].reg=REG_TEX0;
 
-   
+   /* Fill texture with some random data */
+//   for(i=0;i<1000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
+     
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
@@ -569,8 +585,6 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    /* Put it in the beginning of texture memory */
    SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rsp->gartTextures.handle;
    
-   /* Fill texture with some random data */
-   for(i=0;i<1000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
    
    /* Upload texture, a hack, really  we can do a lot better */
    #if 0
@@ -628,6 +642,12 @@ reg_start(R300_RS_INTERP_0,7);
 	r300_render_tex_primitive(rmesa, ctx, start, start + length, prim);
    	}
 	
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+   
    sync_VAP(PASS_PREFIX_VOID);
    
    end_3d(PASS_PREFIX_VOID);
