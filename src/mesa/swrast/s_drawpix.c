@@ -521,12 +521,12 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
       const GLint spanEnd = (width - skipPixels > MAX_WIDTH)
                           ? MAX_WIDTH : (width - skipPixels);
       ASSERT(spanEnd <= MAX_WIDTH);
-      for (row = 0; row < height; row++, span.y++) {
+      for (row = 0; row < height; row++, spanY++) {
          const GLvoid *source = _mesa_image_address(unpack, pixels,
                                                     width, height,
                                                     GL_COLOR_INDEX, type,
                                                     0, row, skipPixels);
-         _mesa_unpack_index_span(ctx, span.end, GL_UNSIGNED_INT,
+         _mesa_unpack_index_span(ctx, spanEnd, GL_UNSIGNED_INT,
                                  span.array->index, type, source, unpack,
                                  ctx->_ImageTransferState);
 
