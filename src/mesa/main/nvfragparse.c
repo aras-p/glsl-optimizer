@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.18 2003/04/07 14:58:58 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.19 2003/04/07 23:12:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1216,6 +1216,16 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    else if (token[0] == 'f') {
       if (!Parse_FragReg(parseState, &srcReg->Register))
          RETURN_ERROR;
+   }
+   else if (token[0] == '{') {
+      /* vector literal */
+      GLfloat values[4];
+      GLuint paramIndex;
+      if (!Parse_VectorOrScalarConstant(parseState, values))
+         RETURN_ERROR;
+      paramIndex = add_unnamed_constant(parseState, values);
+      srcReg->IsParameter = GL_TRUE;
+      srcReg->Register = paramIndex;      
    }
    else {
       RETURN_ERROR2("Invalid source register name", token);
