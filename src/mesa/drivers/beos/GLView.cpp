@@ -1,10 +1,10 @@
-/* $Id: GLView.cpp,v 1.6 2002/09/19 16:19:45 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.7 2002/10/17 14:25:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,54 +24,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-/*
- * $Log: GLView.cpp,v $
- * Revision 1.6  2002/09/19 16:19:45  brianp
- * Updated BeOS support (Philippe Houdoin)
- *
- * Revision 1.5  2000/11/17 21:01:26  brianp
- * Minor header file changes to silence warnings.
- * Added _mesa_enable_sw_extensions(), called by software-only drivers
- * to enable all s/w-supported GL extensions.
- *
- * Revision 1.4  2000/11/14 17:51:15  brianp
- * more Driver.Color, Driver.Index updates
- *
- * Revision 1.3  2000/09/26 20:54:09  brianp
- * First batch of OpenGL SI related changes:
- * Renamed struct gl_context to struct __GLcontextRec.
- * Include glcore.h, setup GL imports/exports.
- * Replaced gl_ prefix with _mesa_ prefix in context.[ch] functions.
- * GLcontext's Visual field is no longer a pointer.
- *
- * Revision 1.2  2000/03/19 01:13:13  brianp
- * updated for Mesa 3.3
- *
- * Revision 1.1.1.1  1999/08/19 00:55:41  jtg
- * Imported sources
- *
- * Revision 1.7  1999/03/28 21:08:17  brianp
- * updated SetBuffer driver function
- *
- * Revision 1.6  1999/02/14 03:44:37  brianp
- * new copyright
- *
- * Revision 1.5  1999/02/11 03:50:57  brianp
- * added CopySubBufferMESA()
- *
- * Revision 1.4  1999/02/06 17:44:59  brianp
- * code clean-up and bug fixes
- *
- * Revision 1.3  1999/02/04 04:13:15  brianp
- * implemented double buffering
- *
- * Revision 1.2  1999/02/03 04:23:28  brianp
- * basic device driver functions now work (yeah!)
- *
- * Revision 1.1  1999/02/02 04:40:46  brianp
- * Initial revision
- */
 
 #include "glheader.h"
 
@@ -151,7 +103,7 @@ private:
 	BGLView *		m_bglview;
 	BBitmap *		m_bitmap;
 
-	GLubyte 		m_clear_color[4];  // buffer clear color
+	GLchan 			m_clear_color[4];  // buffer clear color
 	GLuint 			m_clear_index;      // buffer clear color index
 	GLint 			m_bottom;           // used for flipping Y coords
 	GLuint 			m_width;
@@ -160,7 +112,7 @@ private:
    // Mesa Device Driver functions
    static void 		UpdateState(GLcontext *ctx, GLuint new_state);
    static void 		ClearIndex(GLcontext *ctx, GLuint index);
-   static void 		ClearColor(GLcontext *ctx, const GLchan color[4]);
+   static void 		ClearColor(GLcontext *ctx, const GLfloat color[4]);
    static void 		Clear(GLcontext *ctx, GLbitfield mask,
                                 GLboolean all, GLint x, GLint y,
                                 GLint width, GLint height);
@@ -323,10 +275,10 @@ BGLView::BGLView(BRect rect, char *name,
                                             1
                                             );
 
-	// create core context
-	__GLimports imports;
-	_mesa_init_default_imports(&imports, md);
-	GLcontext * ctx = _mesa_create_context( visual, NULL, &imports);
+   // create core context
+   __GLimports imports;
+   _mesa_init_default_imports(&imports, md);
+   GLcontext * ctx = _mesa_create_context( visual, NULL, &imports);
 
 
    // create core framebuffer
@@ -339,16 +291,15 @@ BGLView::BGLView(BRect rect, char *name,
 
    _mesa_enable_sw_extensions(ctx);
    _mesa_enable_1_3_extensions(ctx);
+   //_mesa_enable_1_4_extensions(ctx);
 
    /* Initialize the software rasterizer and helper modules.
-       */
-
-	_swrast_CreateContext(ctx);
-	_ac_CreateContext(ctx);
-	_tnl_CreateContext(ctx);
-	_swsetup_CreateContext(ctx);
-	
-	_swsetup_Wakeup(ctx);
+    */
+   _swrast_CreateContext(ctx);
+   _ac_CreateContext(ctx);
+   _tnl_CreateContext(ctx);
+   _swsetup_CreateContext(ctx);
+   _swsetup_Wakeup(ctx);
 
    md->Init(this, ctx, visual, buffer );
 
@@ -663,9 +614,12 @@ void MesaDriver::Init(BGLView * bglview, GLcontext * ctx, GLvisual * visual, GLf
    	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
-   	ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
-   	ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
-   	ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
+        ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
+        ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+        ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
+        ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+        ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+        ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
 
 	swdd->SetBuffer = MesaDriver::SetBuffer;
 
@@ -780,15 +734,13 @@ void MesaDriver::ClearIndex(GLcontext *ctx, GLuint index)
 }
 
 
-void MesaDriver::ClearColor(GLcontext *ctx, const GLchan color[4])
-						// GLubyte r, GLubyte g,
-                        // GLubyte b, GLubyte a)
+void MesaDriver::ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
    MesaDriver *md = (MesaDriver *) ctx->DriverCtx;
-   md->m_clear_color[BE_RCOMP] = color[0];
-   md->m_clear_color[BE_GCOMP] = color[1];
-   md->m_clear_color[BE_BCOMP] = color[2];
-   md->m_clear_color[BE_ACOMP] = color[3];
+   CLAMPED_FLOAT_TO_CHAN(md->m_clear_color[BE_RCOMP], color[0]);
+   CLAMPED_FLOAT_TO_CHAN(md->m_clear_color[BE_GCOMP], color[1]);
+   CLAMPED_FLOAT_TO_CHAN(md->m_clear_color[BE_BCOMP], color[2]);
+   CLAMPED_FLOAT_TO_CHAN(md->m_clear_color[BE_ACOMP], color[3]); 
    assert(md->m_bglview);
 }
 
