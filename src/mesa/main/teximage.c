@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.22 2000/03/21 00:49:33 brianp Exp $ */
+/* $Id: teximage.c,v 1.23 2000/03/21 01:03:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -483,7 +483,7 @@ make_texture_image( GLcontext *ctx,
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
           * GL_LUMINANCE_ALPHA, etc. texture formats.
           */
-         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(
+         const GLubyte *src = (const GLubyte *) _mesa_image_address(
             unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
          const GLint srcStride = _mesa_image_row_stride(unpacking, width,
                                                         srcFormat, srcType);
@@ -504,7 +504,7 @@ make_texture_image( GLcontext *ctx,
       }
       else if (srcFormat == GL_RGBA && internalFormat == GL_RGB) {
          /* commonly used by Quake */
-         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(
+         const GLubyte *src = (const GLubyte *) _mesa_image_address(
             unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
          const GLint srcStride = _mesa_image_row_stride(unpacking, width,
                                                         srcFormat, srcType);
@@ -536,7 +536,7 @@ make_texture_image( GLcontext *ctx,
       GLint img, row;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
-            const GLvoid *source = gl_pixel_addr_in_image(unpacking,
+            const GLvoid *source = _mesa_image_address(unpacking,
                 pixels, width, height, srcFormat, srcType, img, row, 0);
             _mesa_unpack_index_span(ctx, width, dstType, dest,
                                     srcType, source, unpacking, GL_TRUE);
@@ -552,7 +552,7 @@ make_texture_image( GLcontext *ctx,
       GLint img, row;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
-            const GLvoid *source = gl_pixel_addr_in_image(unpacking,
+            const GLvoid *source = _mesa_image_address(unpacking,
                    pixels, width, height, srcFormat, srcType, img, row, 0);
             _mesa_unpack_ubyte_color_span(ctx, width, dstFormat, dest,
                    srcFormat, srcType, source, unpacking, GL_TRUE);
@@ -725,7 +725,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
-   if (!gl_is_legal_format_and_type( format, type )) {
+   if (!_mesa_is_legal_format_and_type( format, type )) {
       /* Yes, generate GL_INVALID_OPERATION, not GL_INVALID_ENUM, if there
        * is a type/format mismatch.  See 1.2 spec page 94, sec 3.6.4.
        */
@@ -841,7 +841,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-   if (!gl_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(format, type)) {
       char message[100];
       sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
       gl_error(ctx, GL_INVALID_ENUM, message);
@@ -1297,7 +1297,7 @@ get_teximage_from_driver( GLcontext *ctx, GLenum target, GLint level,
    assert(destComponents > 0);
    numPixels = texImage->Width * texImage->Height * texImage->Depth;
    assert(numPixels > 0);
-   srcBytesPerTexel = gl_bytes_per_pixel(imgFormat, imgType);
+   srcBytesPerTexel = _mesa_bytes_per_pixel(imgFormat, imgType);
    assert(srcBytesPerTexel > 0);
 
    if (!texImage->Data) {
@@ -1373,12 +1373,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (gl_sizeof_type(type) <= 0) {
+   if (_mesa_sizeof_type(type) <= 0) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexImage(type)" );
       return;
    }
 
-   if (gl_components_in_format(format) <= 0) {
+   if (_mesa_components_in_format(format) <= 0) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexImage(format)" );
       return;
    }
@@ -1423,16 +1423,15 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
       for (row = 0; row < height; row++) {
          /* compute destination address in client memory */
-         GLvoid *dest = gl_pixel_addr_in_image( &ctx->Unpack, pixels,
+         GLvoid *dest = _mesa_image_address( &ctx->Unpack, pixels,
                                                 width, height,
                                                 format, type, 0, row, 0);
 
          assert(dest);
          if (texImage->Format == GL_RGBA) {
             const GLubyte *src = texImage->Data + row * width * 4 * sizeof(GLubyte);
-            gl_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
-                               format, type, dest,
-                               &ctx->Pack, GL_TRUE );
+            _mesa_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
+                                  format, type, dest, &ctx->Pack, GL_TRUE );
          }
          else {
             /* fetch RGBA row from texture image then pack it in client mem */
@@ -1495,8 +1494,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                default:
                   gl_problem( ctx, "bad format in gl_GetTexImage" );
             }
-            gl_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
-                               format, type, dest, &ctx->Pack, GL_TRUE );
+            _mesa_pack_rgba_span( ctx, width, (const GLubyte (*)[4])rgba,
+                                  format, type, dest, &ctx->Pack, GL_TRUE );
          }
       }
 
@@ -1542,14 +1541,14 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
       GLubyte *dst = destTex->Data + xoffsetb * texComponents;
       if (texFormat == GL_COLOR_INDEX) {
          /* color index texture */
-         const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+         const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                   width, 1, format, type, 0, 0, 0);
          _mesa_unpack_index_span(ctx, width, GL_UNSIGNED_BYTE, dst,
                                     type, src, &ctx->Unpack, GL_TRUE);
       }
       else {
          /* color texture */
-         const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+         const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                   width, 1, format, type, 0, 0, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, texFormat, dst,
                               format, type, src, &ctx->Unpack, GL_TRUE);
@@ -1616,7 +1615,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
          const GLint stride = destTex->Width * sizeof(GLubyte);
          GLint row;
          for (row = 0; row < height; row++) {
-            const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+            const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                      width, height, format, type, 0, row, 0);
             _mesa_unpack_index_span(ctx, width, GL_UNSIGNED_BYTE, dst,
                                     type, src, &ctx->Unpack, GL_TRUE);
@@ -1628,7 +1627,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
          const GLint stride = destTex->Width * texComponents * sizeof(GLubyte);
          GLint row;
          for (row = 0; row < height; row++) {
-            const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+            const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                      width, height, format, type, 0, row, 0);
             _mesa_unpack_ubyte_color_span(ctx, width, texFormat, dst,
                                  format, type, src, &ctx->Unpack, GL_TRUE);
@@ -1702,7 +1701,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
          GLint img, row;
          for (img = 0; img < depth; img++) {
             for (row = 0; row < height; row++) {
-               const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+               const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                     width, height, format, type, img, row, 0);
                _mesa_unpack_index_span(ctx, width, GL_UNSIGNED_BYTE, dst,
                                        type, src, &ctx->Unpack, GL_TRUE);
@@ -1716,7 +1715,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
          GLint img, row;
          for (img = 0; img < depth; img++) {
             for (row = 0; row < height; row++) {
-               const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack, pixels,
+               const GLvoid *src = _mesa_image_address(&ctx->Unpack, pixels,
                                      width, height, format, type, img, row, 0);
                _mesa_unpack_ubyte_color_span(ctx, width, texFormat, dst,
                                     format, type, src, &ctx->Unpack, GL_TRUE);

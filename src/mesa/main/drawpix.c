@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.14 2000/03/03 17:54:56 brianp Exp $ */
+/* $Id: drawpix.c,v 1.15 2000/03/21 01:03:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -425,7 +425,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
     */
    for (row = 0; row < height; row++, y++) {
       GLuint indexes[MAX_WIDTH];
-      const GLvoid *source = gl_pixel_addr_in_image(&ctx->Unpack,
+      const GLvoid *source = _mesa_image_address(&ctx->Unpack,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, GL_UNSIGNED_INT, indexes,
                               type, source, &ctx->Unpack, GL_TRUE);
@@ -471,7 +471,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       GLstencil values[MAX_WIDTH];
       GLenum destType = (sizeof(GLstencil) == sizeof(GLubyte))
                       ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-      const GLvoid *source = gl_pixel_addr_in_image(&ctx->Unpack,
+      const GLvoid *source = _mesa_image_address(&ctx->Unpack,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, destType, values,
                               type, source, &ctx->Unpack, GL_TRUE);
@@ -541,7 +541,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       GLint row;
       for (row = 0; row < height; row++, y++) {
          GLdepth zspan[MAX_WIDTH];
-         const GLushort *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
+         const GLushort *zptr = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          GLint i;
          for (i = 0; i < width; i++)
@@ -554,7 +554,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       /* Special case: directly write 32-bit depth values */
       GLint row;
       for (row = 0; row < height; row++, y++) {
-         const GLuint *zptr = gl_pixel_addr_in_image(&ctx->Unpack,
+         const GLuint *zptr = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          gl_write_rgba_span( ctx, width, x, y, zptr, rgba, GL_BITMAP );
       }
@@ -564,7 +564,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       GLint row;
       for (row = 0; row < height; row++, y++) {
          GLdepth zspan[MAX_WIDTH];
-         const GLvoid *src = gl_pixel_addr_in_image(&ctx->Unpack,
+         const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          _mesa_unpack_depth_span( ctx, drawWidth, zspan, type, src,
                                   &ctx->Unpack, GL_TRUE );
@@ -640,7 +640,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       if (width > MAX_WIDTH)
          width = MAX_WIDTH;
       for (row = 0; row < height; row++, y++) {
-         const GLvoid *source = gl_pixel_addr_in_image(unpack,
+         const GLvoid *source = _mesa_image_address(unpack,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
                    format, type, source, unpack, GL_TRUE);

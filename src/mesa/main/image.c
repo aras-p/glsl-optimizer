@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.21 2000/03/21 00:48:53 brianp Exp $ */
+/* $Id: image.c,v 1.22 2000/03/21 01:03:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,7 +63,8 @@ struct gl_pixelstore_attrib _mesa_native_packing = {
 /*
  * Flip the 8 bits in each byte of the given array.
  */
-void gl_flip_bytes( GLubyte *p, GLuint n )
+static void
+flip_bytes( GLubyte *p, GLuint n )
 {
    register GLuint i, a, b;
 
@@ -85,7 +86,8 @@ void gl_flip_bytes( GLubyte *p, GLuint n )
 /*
  * Flip the order of the 2 bytes in each word in the given array.
  */
-void gl_swap2( GLushort *p, GLuint n )
+void
+_mesa_swap2( GLushort *p, GLuint n )
 {
    register GLuint i;
 
@@ -99,7 +101,8 @@ void gl_swap2( GLushort *p, GLuint n )
 /*
  * Flip the order of the 4 bytes in each word in the given array.
  */
-void gl_swap4( GLuint *p, GLuint n )
+void
+_mesa_swap4( GLuint *p, GLuint n )
 {
    register GLuint i, a, b;
 
@@ -121,7 +124,7 @@ void gl_swap4( GLuint *p, GLuint n )
  * Return 0 if GL_BITMAP.
  * Return -1 if invalid type enum.
  */
-GLint gl_sizeof_type( GLenum type )
+GLint _mesa_sizeof_type( GLenum type )
 {
    switch (type) {
       case GL_BITMAP:
@@ -147,10 +150,10 @@ GLint gl_sizeof_type( GLenum type )
 
 
 /*
- * Same as gl_sizeof_packed_type() but we also accept the
+ * Same as _mesa_sizeof_packed_type() but we also accept the
  * packed pixel format datatypes.
  */
-GLint gl_sizeof_packed_type( GLenum type )
+GLint _mesa_sizeof_packed_type( GLenum type )
 {
    switch (type) {
       case GL_BITMAP:
@@ -204,7 +207,7 @@ GLint gl_sizeof_packed_type( GLenum type )
  * Return the number of components in a GL enum pixel type.
  * Return -1 if bad format.
  */
-GLint gl_components_in_format( GLenum format )
+GLint _mesa_components_in_format( GLenum format )
 {
    switch (format) {
       case GL_COLOR_INDEX:
@@ -244,9 +247,9 @@ GLint gl_components_in_format( GLenum format )
  * Return bytes per pixel for given format and type
  * Return -1 if bad format or type.
  */
-GLint gl_bytes_per_pixel( GLenum format, GLenum type )
+GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
 {
-   GLint comps = gl_components_in_format( format );
+   GLint comps = _mesa_components_in_format( format );
    if (comps < 0)
       return -1;
 
@@ -302,7 +305,8 @@ GLint gl_bytes_per_pixel( GLenum format, GLenum type )
  * Test if the given pixel format and type are legal.
  * Return GL_TRUE for legal, GL_FALSE for illegal.
  */
-GLboolean gl_is_legal_format_and_type( GLenum format, GLenum type )
+GLboolean
+_mesa_is_legal_format_and_type( GLenum format, GLenum type )
 {
    switch (format) {
       case GL_COLOR_INDEX:
@@ -400,10 +404,11 @@ GLboolean gl_is_legal_format_and_type( GLenum format, GLenum type )
  *         row, column - location of pixel in the image
  * Return:  address of pixel at (image,row,column) in image or NULL if error.
  */
-GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
-                                const GLvoid *image, GLsizei width,
-                                GLsizei height, GLenum format, GLenum type,
-                                GLint img, GLint row, GLint column )
+GLvoid *
+_mesa_image_address( const struct gl_pixelstore_attrib *packing,
+                     const GLvoid *image, GLsizei width,
+                     GLsizei height, GLenum format, GLenum type,
+                     GLint img, GLint row, GLint column )
 {
    GLint alignment;        /* 1, 2 or 4 */
    GLint pixels_per_row;
@@ -438,13 +443,13 @@ GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
       GLint bytes_per_image;
 
       /* Compute bytes per component */
-      bytes_per_comp = gl_sizeof_packed_type( type );
+      bytes_per_comp = _mesa_sizeof_packed_type( type );
       if (bytes_per_comp<0) {
          return NULL;
       }
 
       /* Compute number of components per pixel */
-      comp_per_pixel = gl_components_in_format( format );
+      comp_per_pixel = _mesa_components_in_format( format );
       if (comp_per_pixel<0 && type != GL_BITMAP) {
          return NULL;
       }
@@ -463,7 +468,7 @@ GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
       /* Non-BITMAP data */
       GLint bytes_per_pixel, bytes_per_row, remainder, bytes_per_image;
 
-      bytes_per_pixel = gl_bytes_per_pixel( format, type );
+      bytes_per_pixel = _mesa_bytes_per_pixel( format, type );
 
       /* The pixel type and format should have been error checked earlier */
       assert(bytes_per_pixel > 0);
@@ -511,7 +516,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
    }
    else {
       /* Non-BITMAP data */
-      const GLint bytesPerPixel = gl_bytes_per_pixel(format, type);
+      const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
       if (bytesPerPixel <= 0)
          return -1;  /* error */
       if (packing->RowLength == 0) {
@@ -595,11 +600,12 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
  *         packing - pixel packing parameters
  *         applyTransferOps - apply scale/bias/lookup-table ops?
  */
-void gl_pack_rgba_span( const GLcontext *ctx,
-                        GLuint n, CONST GLubyte rgba[][4],
-                        GLenum format, GLenum type, GLvoid *destination,
-                        const struct gl_pixelstore_attrib *packing,
-                        GLboolean applyTransferOps )
+void
+_mesa_pack_rgba_span( const GLcontext *ctx,
+                      GLuint n, CONST GLubyte rgba[][4],
+                      GLenum format, GLenum type, GLvoid *destination,
+                      const struct gl_pixelstore_attrib *packing,
+                      GLboolean applyTransferOps )
 {
    applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag);
 
@@ -627,7 +633,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
       const GLfloat gscale = 1.0F / 255.0F;
       const GLfloat bscale = 1.0F / 255.0F;
       const GLfloat ascale = 1.0F / 255.0F;
-      const GLint comps = gl_components_in_format(format);
+      const GLint comps = _mesa_components_in_format(format);
       GLuint i;
 
       assert(n <= MAX_WIDTH);
@@ -732,7 +738,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
 	    }
 	    break;
@@ -804,7 +810,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
             }
 	    break;
@@ -877,10 +883,10 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap2( (GLushort *) dst, n * comps);
+                  _mesa_swap2( (GLushort *) dst, n * comps);
                }
             }
 	    break;
@@ -952,10 +958,10 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap2( (GLushort *) dst, n * comps );
+                  _mesa_swap2( (GLushort *) dst, n * comps );
                }
             }
 	    break;
@@ -1028,10 +1034,10 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
                if (packing->SwapBytes) {
-                  gl_swap4( (GLuint *) dst, n * comps );
+                  _mesa_swap4( (GLuint *) dst, n * comps );
                }
             }
 	    break;
@@ -1104,10 +1110,10 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
 	       if (packing->SwapBytes) {
-		  gl_swap4( (GLuint *) dst, n * comps );
+		  _mesa_swap4( (GLuint *) dst, n * comps );
 	       }
 	    }
 	    break;
@@ -1180,10 +1186,10 @@ void gl_pack_rgba_span( const GLcontext *ctx,
                      }
                      break;
                   default:
-                     gl_problem(ctx, "bad format in gl_pack_rgba_span\n");
+                     gl_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
                }
 	       if (packing->SwapBytes) {
-		  gl_swap4( (GLuint *) dst, n * comps );
+		  _mesa_swap4( (GLuint *) dst, n * comps );
 	       }
 	    }
 	    break;
@@ -1388,7 +1394,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
             }
             break;
          default:
-            gl_problem( ctx, "bad type in gl_pack_rgba_span" );
+            gl_problem( ctx, "bad type in _mesa_pack_rgba_span" );
       }
    }
 }
@@ -2196,7 +2202,7 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
          }
       }
       else if (dstFormat == srcFormat) {
-         GLint comps = gl_components_in_format(srcFormat);
+         GLint comps = _mesa_components_in_format(srcFormat);
          assert(comps > 0);
          MEMCPY( dest, source, n * comps * sizeof(GLubyte) );
          return;
@@ -2211,7 +2217,7 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
       GLint dstRedIndex, dstGreenIndex, dstBlueIndex, dstAlphaIndex;
       GLint dstLuminanceIndex, dstIntensityIndex;
 
-      dstComponents = gl_components_in_format( dstFormat );
+      dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
       assert(dstComponents > 0);
 
@@ -2721,8 +2727,8 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
       compsPerRow = 0;
    }
    else {
-      const GLint bytesPerPixel = gl_bytes_per_pixel(format, type);
-      const GLint components = gl_components_in_format(format);
+      const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
+      const GLint components = _mesa_components_in_format(format);
       GLint bytesPerComp;
       if (bytesPerPixel <= 0 || components <= 0)
          return NULL;   /* bad format or type.  generate error later */
@@ -2745,18 +2751,18 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
       dst = destBuffer;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
-            const GLvoid *src = gl_pixel_addr_in_image(unpack, pixels,
+            const GLvoid *src = _mesa_image_address(unpack, pixels,
                                width, height, format, type, img, row, 0);
             MEMCPY(dst, src, bytesPerRow);
             /* byte flipping/swapping */
             if (flipBytes) {
-               gl_flip_bytes((GLubyte *) dst, bytesPerRow);
+               flip_bytes((GLubyte *) dst, bytesPerRow);
             }
             else if (swap2) {
-               gl_swap2((GLushort*) dst, compsPerRow);
+               _mesa_swap2((GLushort*) dst, compsPerRow);
             }
             else if (swap4) {
-               gl_swap4((GLuint*) dst, compsPerRow);
+               _mesa_swap4((GLuint*) dst, compsPerRow);
             }
             dst += bytesPerRow;
          }
@@ -2790,9 +2796,9 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
    width_in_bytes = CEILING( width, 8 );
    dst = buffer;
    for (row = 0; row < height; row++) {
-      GLubyte *src = gl_pixel_addr_in_image( packing, pixels, width, height,
-                                             GL_COLOR_INDEX, GL_BITMAP,
-                                             0, row, 0 );
+      GLubyte *src = _mesa_image_address( packing, pixels, width, height,
+                                          GL_COLOR_INDEX, GL_BITMAP,
+                                          0, row, 0 );
       if (!src) {
          FREE(buffer);
          return NULL;
@@ -2801,7 +2807,7 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
       if (packing->SkipPixels == 0) {
          MEMCPY( dst, src, width_in_bytes );
          if (packing->LsbFirst) {
-            gl_flip_bytes( dst, width_in_bytes );
+            flip_bytes( dst, width_in_bytes );
          }
       }
       else {
@@ -2885,16 +2891,16 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
    width_in_bytes = CEILING( width, 8 );
    src = source;
    for (row = 0; row < height; row++) {
-      GLubyte *dst = gl_pixel_addr_in_image( packing, dest, width, height,
-                                             GL_COLOR_INDEX, GL_BITMAP,
-                                             0, row, 0 );
+      GLubyte *dst = _mesa_image_address( packing, dest, width, height,
+                                          GL_COLOR_INDEX, GL_BITMAP,
+                                          0, row, 0 );
       if (!dst)
          return;
 
       if (packing->SkipPixels == 0) {
          MEMCPY( dst, src, width_in_bytes );
          if (packing->LsbFirst) {
-            gl_flip_bytes( dst, width_in_bytes );
+            flip_bytes( dst, width_in_bytes );
          }
       }
       else {

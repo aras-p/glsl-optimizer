@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.5 2000/03/21 00:48:53 brianp Exp $ */
+/* $Id: image.h,v 1.6 2000/03/21 01:03:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,30 +35,33 @@
 extern struct gl_pixelstore_attrib _mesa_native_packing;
 
 
-extern void gl_flip_bytes( GLubyte *p, GLuint n );
+extern void
+_mesa_swap2( GLushort *p, GLuint n );
 
+extern void
+_mesa_swap4( GLuint *p, GLuint n );
 
-extern void gl_swap2( GLushort *p, GLuint n );
+extern GLint
+_mesa_sizeof_type( GLenum type );
 
-extern void gl_swap4( GLuint *p, GLuint n );
+extern GLint
+_mesa_sizeof_packed_type( GLenum type );
 
+extern GLint
+_mesa_components_in_format( GLenum format );
 
-extern GLint gl_sizeof_type( GLenum type );
+extern GLint
+_mesa_bytes_per_pixel( GLenum format, GLenum type );
 
-extern GLint gl_sizeof_packed_type( GLenum type );
-
-extern GLint gl_components_in_format( GLenum format );
-
-extern GLint gl_bytes_per_pixel( GLenum format, GLenum type );
-
-extern GLboolean gl_is_legal_format_and_type( GLenum format, GLenum type );
+extern GLboolean
+_mesa_is_legal_format_and_type( GLenum format, GLenum type );
 
 
 extern GLvoid *
-gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
-                        const GLvoid *image, GLsizei width,
-                        GLsizei height, GLenum format, GLenum type,
-                        GLint img, GLint row, GLint column );
+_mesa_image_address( const struct gl_pixelstore_attrib *packing,
+                     const GLvoid *image, GLsizei width,
+                     GLsizei height, GLenum format, GLenum type,
+                     GLint img, GLint row, GLint column );
 
 
 extern GLint
@@ -77,11 +80,11 @@ _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
 
 
 extern void
-gl_pack_rgba_span( const GLcontext *ctx,
-                   GLuint n, CONST GLubyte rgba[][4],
-                   GLenum format, GLenum type, GLvoid *dest,
-                   const struct gl_pixelstore_attrib *packing,
-                   GLboolean applyTransferOps );
+_mesa_pack_rgba_span( const GLcontext *ctx,
+                      GLuint n, CONST GLubyte rgba[][4],
+                      GLenum format, GLenum type, GLvoid *dest,
+                      const struct gl_pixelstore_attrib *packing,
+                      GLboolean applyTransferOps );
 
 
 extern void

@@ -463,7 +463,7 @@ static GLboolean fxDDDrawBitMap(GLcontext *ctx, GLint px, GLint py,
                   + (winX + px);
 
     for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image( finalUnpack,
+      const GLubyte *src = (const GLubyte *) _mesa_image_address( finalUnpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
       if (finalUnpack->LsbFirst) {
         /* least significan bit first */

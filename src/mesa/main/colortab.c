@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.9 2000/02/28 20:38:37 brianp Exp $ */
+/* $Id: colortab.c,v 1.10 2000/03/21 01:03:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -163,7 +163,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    assert(palette);
 
-   if (!gl_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorTable(format or type)");
       return;
    }
@@ -246,7 +246,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    assert(palette);
 
-   if (!gl_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(format or type)");
       return;
    }
@@ -256,7 +256,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       return;
    }
 
-   comps = gl_components_in_format(format);
+   comps = _mesa_components_in_format(format);
    assert(comps > 0);  /* error should be caught sooner */
 
    if (start + count > palette->Size) {
@@ -370,8 +370,8 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          return;
    }
 
-   gl_pack_rgba_span(ctx, palette->Size, (const GLubyte (*)[]) rgba,
-                     format, type, table, &ctx->Pack, GL_FALSE);
+   _mesa_pack_rgba_span(ctx, palette->Size, (const GLubyte (*)[]) rgba,
+                        format, type, table, &ctx->Pack, GL_FALSE);
 
    (void) format;
    (void) type;
