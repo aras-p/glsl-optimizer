@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.67 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.68 2003/03/14 15:41:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1066,6 +1066,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 
          /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledUnits == 1
+             && !ctx->FragmentProgram.Enabled
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS==GL_REPEAT
 	     && texObj2D->WrapT==GL_REPEAT

@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.45 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_context.c,v 1.46 2003/03/14 15:41:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,12 +25,13 @@
  *
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Brian Paul
  */
 
-#include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "mtypes.h"
-#include "imports.h"
+#include "texobj.h"
 
 #include "swrast.h"
 #include "s_blend.h"
@@ -305,11 +306,40 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
       }
    }
 
+   if (ctx->FragmentProgram.Enabled) {
+      ASSERT(ctx->FragmentProgram.Current);
+      /* only one target can be referenced per unit per fragment program */
+      switch (ctx->FragmentProgram.Current->TexturesUsed[texUnit]) {
+      case TEXTURE_1D_BIT:
+         tObj = ctx->Texture.Unit[texUnit].Current1D;
+         break;
+      case TEXTURE_2D_BIT:
+         tObj = ctx->Texture.Unit[texUnit].Current2D;
+         break;
+      case TEXTURE_3D_BIT:
+         tObj = ctx->Texture.Unit[texUnit].Current3D;
+         break;
+      case TEXTURE_CUBE_BIT:
+         tObj = ctx->Texture.Unit[texUnit].CurrentCubeMap;
+         break;
+      case TEXTURE_RECT_BIT:
+         tObj = ctx->Texture.Unit[texUnit].CurrentRect;
+         break;
+      default:
+         _mesa_problem(ctx, "Bad texture in _swrast_validate_texture_sample");
+         return;
+      }
+      if (!tObj->Complete) {
+         _mesa_test_texobj_completeness(ctx,
+                                        (struct gl_texture_object *) tObj );
+      }
+   }
+
    swrast->TextureSample[texUnit] =
       _swrast_choose_texture_sample_func( ctx, tObj );
 
    swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, texcoords,
-				   lambda, rgba );
+                                   lambda, rgba );
 
    /* GL_SGI_texture_color_table */
    if (ctx->Texture.Unit[texUnit].ColorTableEnabled) {

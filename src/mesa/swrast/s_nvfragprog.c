@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.6 2003/03/04 16:34:03 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.7 2003/03/14 15:41:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 #include "macros.h"
 
 #include "s_nvfragprog.h"
-
+#include "s_texture.h"
 
 
 /**
@@ -41,27 +41,27 @@
  */
 static void
 fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
-             GLuint targetIndex, GLfloat color[4] )
+             GLuint targetBit, GLfloat color[4] )
 {
    const GLfloat *lambda = NULL;
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_object *texObj = NULL;
 
-   switch (targetIndex) {
-      case TEXTURE_1D_INDEX:
+   switch (targetBit) {
+      case TEXTURE_1D_BIT:
          texObj = ctx->Texture.Unit[unit].Current1D;
          break;
-      case TEXTURE_2D_INDEX:
+      case TEXTURE_2D_BIT:
          texObj = ctx->Texture.Unit[unit].Current2D;
          break;
-      case TEXTURE_3D_INDEX:
+      case TEXTURE_3D_BIT:
          texObj = ctx->Texture.Unit[unit].Current3D;
          break;
-      case TEXTURE_CUBE_INDEX:
+      case TEXTURE_CUBE_BIT:
          texObj = ctx->Texture.Unit[unit].CurrentCubeMap;
          break;
-      case TEXTURE_RECT_INDEX:
+      case TEXTURE_RECT_BIT:
          texObj = ctx->Texture.Unit[unit].CurrentRect;
          break;
       default:
@@ -69,8 +69,12 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
    }
 
    swrast->TextureSample[unit](ctx, unit, texObj, 1,
-                               (const GLfloat (*)[4]) &texcoord,
+                               (const GLfloat (*)[4]) texcoord,
                                lambda, &rgba);
+   color[0] = CHAN_TO_FLOAT(rgba[0]);
+   color[1] = CHAN_TO_FLOAT(rgba[1]);
+   color[2] = CHAN_TO_FLOAT(rgba[2]);
+   color[3] = CHAN_TO_FLOAT(rgba[3]);
 }
 
 
@@ -80,7 +84,7 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
                    const GLfloat dtdx[4], const GLfloat dtdy[4],
-                   GLuint unit, GLuint targetIndex, GLfloat color[4] )
+                   GLuint unit, GLuint targetBit, GLfloat color[4] )
 {
    /* XXX to do */
 
@@ -259,7 +263,9 @@ store_vector4( const struct fp_instruction *inst,
 
 
 /**
- * Execute the given vertex program
+ * Execute the given vertex program.
+ * NOTE: we do everything in single-precision floating point; we don't
+ * currently observe the single/half/fixed-precision qualifiers.
  * \return GL_TRUE if program completed or GL_FALSE if program executed KIL.
  */
 static GLboolean
@@ -696,7 +702,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                GLfloat texcoord[4], color[4];
                fetch_vector4( &inst->SrcReg[0], machine, texcoord );
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
-                            inst->TexSrcIndex, color );
+                            inst->TexSrcBit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -708,7 +714,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                fetch_vector4( &inst->SrcReg[1], machine, dtdx );
                fetch_vector4( &inst->SrcReg[2], machine, dtdy );
                fetch_texel_deriv( ctx, texcoord, dtdx, dtdy, inst->TexSrcUnit,
-                                  inst->TexSrcIndex, color );
+                                  inst->TexSrcBit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -721,7 +727,7 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                texcoord[1] /= texcoord[3];
                texcoord[2] /= texcoord[3];
                fetch_texel( ctx, texcoord, inst->TexSrcUnit,
-                            inst->TexSrcIndex, color );
+                            inst->TexSrcBit, color );
                store_vector4( inst, machine, color );
             }
             break;

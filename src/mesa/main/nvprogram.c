@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.7 2003/03/10 00:26:24 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.8 2003/03/14 15:40:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -260,35 +260,41 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
    /* NOTE: binding to a non-existant program is not an error.
     * That's supposed to be caught in glBegin.
     */
-   prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
+   if (id == 0) {
+      /* OK, the null program object */
+      prog = NULL;
+   }
+   else {
+      prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
 
-   if (!prog && id > 0){
-      /* allocate new program */
-      if (target == GL_VERTEX_PROGRAM_NV) {
-         struct vertex_program *vprog = CALLOC_STRUCT(vertex_program);
-         if (!vprog) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
+      if (!prog && id > 0){
+         /* allocate new program */
+         if (target == GL_VERTEX_PROGRAM_NV) {
+            struct vertex_program *vprog = CALLOC_STRUCT(vertex_program);
+            if (!vprog) {
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
+               return;
+            }
+            prog = &(vprog->Base);
+         }
+         else if (target == GL_FRAGMENT_PROGRAM_NV) {
+            struct fragment_program *fprog = CALLOC_STRUCT(fragment_program);
+            if (!fprog) {
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
+               return;
+            }
+            prog = &(fprog->Base);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV(target)");
             return;
          }
-         prog = &(vprog->Base);
+         prog->Id = id;
+         prog->Target = target;
+         prog->Resident = GL_TRUE;
+         prog->RefCount = 1;
+         _mesa_HashInsert(ctx->Shared->Programs, id, prog);
       }
-      else if (target == GL_FRAGMENT_PROGRAM_NV) {
-         struct fragment_program *fprog = CALLOC_STRUCT(fragment_program);
-         if (!fprog) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
-            return;
-         }
-         prog = &(fprog->Base);
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBindProgramNV(target)");
-         return;
-      }
-      prog->Id = id;
-      prog->Target = target;
-      prog->Resident = GL_TRUE;
-      prog->RefCount = 1;
-      _mesa_HashInsert(ctx->Shared->Programs, id, prog);
    }
 
    /* bind now */

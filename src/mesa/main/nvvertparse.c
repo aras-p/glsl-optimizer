@@ -1,4 +1,4 @@
-/* $Id: nvvertparse.c,v 1.3 2003/02/25 19:27:54 brianp Exp $ */
+/* $Id: nvvertparse.c,v 1.4 2003/03/14 15:40:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,6 +47,8 @@
  * program attributes.
  */
 struct parse_state {
+   GLcontext *ctx;
+   const GLubyte *start;
    const GLubyte *pos;
    GLboolean isStateProgram;
    GLboolean isPositionInvariant;
@@ -56,6 +58,58 @@ struct parse_state {
    GLuint progRegsWritten;
    GLuint numInst;                 /* number of instructions parsed */
 };
+
+
+/*
+ * Called whenever we find an error during parsing.
+ */
+static void
+record_error(struct parse_state *parseState, const char *msg, int lineNo)
+{
+#ifdef DEBUG
+   GLint line, column;
+   const GLubyte *lineStr;
+   lineStr = _mesa_find_line_column(parseState->start,
+                                    parseState->pos, &line, &column);
+   _mesa_debug(parseState->ctx,
+               "nvfragparse.c(%d): line %d, column %d:%s (%s)\n",
+               lineNo, line, column, (char *) lineStr, msg);
+   _mesa_free((void *) lineStr);
+#else
+   (void) lineNo;
+#endif
+
+   /* Check that no error was already recorded.  Only record the first one. */
+   if (parseState->ctx->Program.ErrorString[0] == 0) {
+      _mesa_set_program_error(parseState->ctx,
+                              parseState->pos - parseState->start,
+                              msg);
+   }
+}
+
+
+#define RETURN_ERROR							\
+do {									\
+   record_error(parseState, "Unexpected end of input.", __LINE__);	\
+   return GL_FALSE;							\
+} while(0)
+
+#define RETURN_ERROR1(msg)						\
+do {									\
+   record_error(parseState, msg, __LINE__);				\
+   return GL_FALSE;							\
+} while(0)
+
+#define RETURN_ERROR2(msg1, msg2)					\
+do {									\
+   char err[1000];							\
+   _mesa_sprintf(err, "%s %s", msg1, msg2);				\
+   record_error(parseState, err, __LINE__);				\
+   return GL_FALSE;							\
+} while(0)
+
+
+
 
 
 static GLboolean IsLetter(GLubyte b)
@@ -226,34 +280,6 @@ static const char *Opcodes[] = {
    "ABS", "END", NULL
 };
 
-
-#ifdef DEBUG
-
-#define RETURN_ERROR						\
-do {								\
-   _mesa_printf("vert prog error at %d\n", __LINE__);		\
-   return GL_FALSE;						\
-} while(0)
-
-#define RETURN_ERROR1(msg)					\
-do {								\
-   _mesa_printf("vert prog error at %d: %s\n", __LINE__, msg);	\
-   return GL_FALSE;						\
-} while(0)
-
-#define RETURN_ERROR2(msg1, msg2)					\
-do {									\
-   _mesa_printf("vert prog error at %d: %s %s\n", __LINE__, msg1, msg2);\
-   return GL_FALSE;							\
-} while(0)
-
-#else
-
-#define RETURN_ERROR                return GL_FALSE
-#define RETURN_ERROR1(msg1)         return GL_FALSE
-#define RETURN_ERROR2(msg1, msg2)   return GL_FALSE
-
-#endif
 
 
 static GLuint
@@ -1174,13 +1200,18 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
    MEMCPY(programString, str, len);
    programString[len] = 0;
 
-   /* get ready to parse */
+   /* Get ready to parse */
+   parseState.ctx = ctx;
+   parseState.start = programString;
    parseState.isPositionInvariant = GL_FALSE;
    parseState.isVersion1_1 = GL_FALSE;
    parseState.numInst = 0;
    parseState.inputsRead = 0;
    parseState.outputsWritten = 0;
    parseState.progRegsWritten = 0;
+
+   /* Reset error state */
+   _mesa_set_program_error(ctx, -1, NULL);
 
    /* check the program header */
    if (_mesa_strncmp((const char *) programString, "!!VP1.0", 7) == 0) {
@@ -1268,19 +1299,12 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
    }
    else {
       /* Error! */
-      ctx->Program.ErrorPos = parseState.pos - str;
       _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV");
-#ifdef DEBUG
-      {
-         GLint line, column;
-         const GLubyte *lineStr;
-         lineStr = _mesa_find_line_column(programString,
-                                          parseState.pos, &line, &column);
-         _mesa_debug(ctx, "Parse error on line %d, column %d:%s\n",
-                     line, column, (char *) lineStr);
-         _mesa_free((void *) lineStr);
-      }
-#endif
+      /* NOTE: _mesa_set_program_error would have been called already */
+      /* GL_NV_vertex_program isn't supposed to set the error string
+       * so we reset it here.
+       */
+      _mesa_set_program_error(ctx, ctx->Program.ErrorPos, NULL);
    }
 }
 
