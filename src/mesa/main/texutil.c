@@ -1,10 +1,10 @@
-/* $Id: texutil.c,v 1.25 2001/06/15 15:22:08 brianp Exp $ */
+/* $Id: texutil.c,v 1.26 2002/02/21 15:12:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@ struct gl_texture_convert {
                                         /* Needed for subimage replacement */
    GLenum format, type;                 /* Source (user) format and type */
 
-   const struct gl_pixelstore_attrib *packing;
+   const struct gl_pixelstore_attrib *unpacking;
 
    const GLvoid *srcImage;
    GLvoid *dstImage;
@@ -63,7 +63,7 @@ struct gl_texture_convert {
 typedef GLboolean (*convert_func)( struct gl_texture_convert *convert );
 
 #define CONVERT_STRIDE_BIT	0x1
-#define CONVERT_PACKING_BIT	0x2
+#define CONVERT_UNPACKING_BIT	0x2
 
 
 
@@ -681,23 +681,23 @@ static convert_func gl_convert_texsubimage3d_tab[] = {
 
 /* See if we need to care about the pixel store attributes when we're
  * converting the texture image.  This should be stored as
- * packing->_SomeBoolean and updated when the values change, to avoid
+ * unpacking->_SomeBoolean and updated when the values change, to avoid
  * testing every time...
  */
 static INLINE GLboolean
-convert_needs_packing( const struct gl_pixelstore_attrib *packing,
+convert_needs_unpacking( const struct gl_pixelstore_attrib *unpacking,
 		       GLenum format, GLenum type )
 {
-   if ( ( packing->Alignment == 1 ||
-	  ( packing->Alignment == 4 &&	/* Pick up the common Q3A case... */
+   if ( ( unpacking->Alignment == 1 ||
+	  ( unpacking->Alignment == 4 &&   /* Pick up the common Q3A case... */
 	    format == GL_RGBA && type == GL_UNSIGNED_BYTE ) ) &&
-	packing->RowLength == 0 &&
-	packing->SkipPixels == 0 &&
-	packing->SkipRows == 0 &&
-	packing->ImageHeight == 0 &&
-	packing->SkipImages == 0 &&
-	packing->SwapBytes == GL_FALSE &&
-	packing->LsbFirst == GL_FALSE ) {
+	unpacking->RowLength == 0 &&
+	unpacking->SkipPixels == 0 &&
+	unpacking->SkipRows == 0 &&
+	unpacking->ImageHeight == 0 &&
+	unpacking->SkipImages == 0 &&
+	unpacking->SwapBytes == GL_FALSE &&
+	unpacking->LsbFirst == GL_FALSE ) {
       return GL_FALSE;
    } else {
       return GL_TRUE;
@@ -710,12 +710,12 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
 			     GLint xoffset,
 			     GLint width,
 			     GLenum format, GLenum type,
-			     const struct gl_pixelstore_attrib *packing,
+			     const struct gl_pixelstore_attrib *unpacking,
 			     const GLvoid *srcImage, GLvoid *dstImage )
 {
    struct gl_texture_convert convert;
 
-   ASSERT( packing );
+   ASSERT( unpacking );
    ASSERT( srcImage );
    ASSERT( dstImage );
 
@@ -730,14 +730,14 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
    convert.height = 1;
    convert.format = format;
    convert.type = type;
-   convert.packing = packing;
+   convert.unpacking = unpacking;
    convert.srcImage = srcImage;
    convert.dstImage = dstImage;
 
    convert.index = 0;
 
-   if ( convert_needs_packing( packing, format, type ) )
-      convert.index |= CONVERT_PACKING_BIT;
+   if ( convert_needs_unpacking( unpacking, format, type ) )
+      convert.index |= CONVERT_UNPACKING_BIT;
 
    return gl_convert_texsubimage2d_tab[mesaFormat]( &convert );
 }
@@ -764,7 +764,7 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
  *   width, height - incoming image size, also size of dest region.
  *   dstImageWidth - width (row stride) of dest image in pixels
  *   format, type - incoming image format and type
- *   packing - describes incoming image packing
+ *   unpacking - describes incoming image unpacking
  *   srcImage - pointer to source image
  *   destImage - pointer to dest image
  */
@@ -774,12 +774,12 @@ _mesa_convert_texsubimage2d( GLint mesaFormat,
 			     GLint width, GLint height,
 			     GLint destImageWidth,
 			     GLenum format, GLenum type,
-			     const struct gl_pixelstore_attrib *packing,
+			     const struct gl_pixelstore_attrib *unpacking,
 			     const GLvoid *srcImage, GLvoid *dstImage )
 {
    struct gl_texture_convert convert;
 
-   ASSERT( packing );
+   ASSERT( unpacking );
    ASSERT( srcImage );
    ASSERT( dstImage );
 
@@ -795,14 +795,14 @@ _mesa_convert_texsubimage2d( GLint mesaFormat,
    convert.dstImageWidth = destImageWidth;
    convert.format = format;
    convert.type = type;
-   convert.packing = packing;
+   convert.unpacking = unpacking;
    convert.srcImage = srcImage;
    convert.dstImage = dstImage;
 
    convert.index = 0;
 
-   if ( convert_needs_packing( packing, format, type ) )
-      convert.index |= CONVERT_PACKING_BIT;
+   if ( convert_needs_unpacking( unpacking, format, type ) )
+      convert.index |= CONVERT_UNPACKING_BIT;
 
    if ( width != destImageWidth )
       convert.index |= CONVERT_STRIDE_BIT;
@@ -816,12 +816,12 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
 			     GLint width, GLint height, GLint depth,
 			     GLint dstImageWidth, GLint dstImageHeight,
 			     GLenum format, GLenum type,
-			     const struct gl_pixelstore_attrib *packing,
+			     const struct gl_pixelstore_attrib *unpacking,
 			     const GLvoid *srcImage, GLvoid *dstImage )
 {
    struct gl_texture_convert convert;
 
-   ASSERT( packing );
+   ASSERT( unpacking );
    ASSERT( srcImage );
    ASSERT( dstImage );
 
@@ -840,14 +840,14 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
    convert.dstImageHeight = dstImageHeight;
    convert.format = format;
    convert.type = type;
-   convert.packing = packing;
+   convert.unpacking = unpacking;
    convert.srcImage = srcImage;
    convert.dstImage = dstImage;
 
    convert.index = 0;
 
-   if ( convert_needs_packing( packing, format, type ) )
-      convert.index |= CONVERT_PACKING_BIT;
+   if ( convert_needs_unpacking( unpacking, format, type ) )
+      convert.index |= CONVERT_UNPACKING_BIT;
 
    if ( width != dstImageWidth || height != dstImageHeight )
       convert.index |= CONVERT_STRIDE_BIT;
