@@ -1212,6 +1212,7 @@ Mesa Version History
 	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
 	- option to walk triangle edges with double-precision floats
 	  (Justin Novosad of Discreet) (see config.h file)
+	- support for AUX buffers in software GLX driver
     Changes:
 	- fragment fog interpolation is perspective corrected now
     Bug fixes:
