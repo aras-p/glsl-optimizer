@@ -28,6 +28,7 @@
 #include "glheader.h"
 #include "mtypes.h"
 #include "imports.h"
+#include "macros.h"
 #include "simple_list.h"
 #include "enums.h"
 #include "image.h"
@@ -509,10 +510,7 @@ intelChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-/*       if (1 || intel->intelScreen->deviceID == PCI_CHIP_I915_G) */
-	 return &_mesa_texformat_a8;
-/*       else */
-/* 	 return &_mesa_texformat_al88; */
+      return &_mesa_texformat_a8;
 
    case 1:
    case GL_LUMINANCE:
@@ -570,8 +568,16 @@ intelChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       return &_mesa_texformat_rgba_dxt5;
 
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_COMPONENT16:
+   case GL_DEPTH_COMPONENT24:
+   case GL_DEPTH_COMPONENT32:
+      return &_mesa_texformat_depth_component16;
+
    default:
-      fprintf(stderr, "unexpected texture format in %s\n", __FUNCTION__);
+      fprintf(stderr, "unexpected texture format %s in %s\n", 
+	      _mesa_lookup_enum_by_nr(internalFormat),
+	      __FUNCTION__);
       return NULL;
    }
 

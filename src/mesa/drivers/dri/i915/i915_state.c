@@ -42,35 +42,13 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 
-static int translate_compare_func( GLenum func )
-{
-   switch(func) {
-   case GL_NEVER: 
-      return COMPAREFUNC_NEVER; 
-   case GL_LESS: 
-      return COMPAREFUNC_LESS; 
-   case GL_LEQUAL: 
-      return COMPAREFUNC_LEQUAL; 
-   case GL_GREATER: 
-      return COMPAREFUNC_GREATER; 
-   case GL_GEQUAL: 
-      return COMPAREFUNC_GEQUAL; 
-   case GL_NOTEQUAL: 
-      return COMPAREFUNC_NOTEQUAL; 
-   case GL_EQUAL: 
-      return COMPAREFUNC_EQUAL; 
-   case GL_ALWAYS: 
-   default:
-      return COMPAREFUNC_ALWAYS; 
-   }
-}
 
 
 static void i915StencilFunc(GLcontext *ctx, GLenum func, GLint ref,
 			    GLuint mask)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
-   int test = translate_compare_func( func );
+   int test = intel_translate_compare_func( func );
 
    mask = mask & 0xff;
 
@@ -106,37 +84,14 @@ static void i915StencilMask(GLcontext *ctx, GLuint mask)
 					STENCIL_WRITE_MASK(mask));
 }
 
-static int translate_stencil_op( GLenum op )
-{
-   switch(op) {
-   case GL_KEEP: 
-      return STENCILOP_KEEP; 
-   case GL_ZERO: 
-      return STENCILOP_ZERO; 
-   case GL_REPLACE: 
-      return STENCILOP_REPLACE; 
-   case GL_INCR: 
-      return STENCILOP_INCRSAT;
-   case GL_DECR: 
-      return STENCILOP_DECRSAT;
-   case GL_INCR_WRAP:
-      return STENCILOP_INCR; 
-   case GL_DECR_WRAP:
-      return STENCILOP_DECR; 
-   case GL_INVERT: 
-      return STENCILOP_INVERT; 
-   default: 
-      return 0;
-   }
-}
 
 static void i915StencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
 			  GLenum zpass)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
-   int fop = translate_stencil_op(fail); 
-   int dfop = translate_stencil_op(zfail); 
-   int dpop = translate_stencil_op(zpass);
+   int fop = intel_translate_stencil_op(fail); 
+   int dfop = intel_translate_stencil_op(zfail); 
+   int dpop = intel_translate_stencil_op(zpass);
 
 
    if (INTEL_DEBUG&DEBUG_DRI)
@@ -159,7 +114,7 @@ static void i915StencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
 static void i915AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
-   int test = translate_compare_func( func );
+   int test = intel_translate_compare_func( func );
    GLubyte refByte;
 
    UNCLAMPED_FLOAT_TO_UBYTE(refByte, ref);
@@ -214,43 +169,6 @@ static void i915BlendColor(GLcontext *ctx, const GLfloat color[4])
    i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] = (a<<24) | (r<<16) | (g<<8) | b;
 }
 
-static int translate_blend_factor( GLenum factor )
-{
-   switch(factor) {
-   case GL_ZERO: 
-      return BLENDFACT_ZERO; 
-   case GL_SRC_ALPHA: 
-      return BLENDFACT_SRC_ALPHA; 
-   case GL_ONE: 
-      return BLENDFACT_ONE; 
-   case GL_SRC_COLOR: 
-      return BLENDFACT_SRC_COLR; 
-   case GL_ONE_MINUS_SRC_COLOR: 
-      return BLENDFACT_INV_SRC_COLR; 
-   case GL_DST_COLOR: 
-      return BLENDFACT_DST_COLR; 
-   case GL_ONE_MINUS_DST_COLOR: 
-      return BLENDFACT_INV_DST_COLR; 
-   case GL_ONE_MINUS_SRC_ALPHA:
-      return BLENDFACT_INV_SRC_ALPHA; 
-   case GL_DST_ALPHA: 
-      return BLENDFACT_DST_ALPHA; 
-   case GL_ONE_MINUS_DST_ALPHA:
-      return BLENDFACT_INV_DST_ALPHA; 
-   case GL_SRC_ALPHA_SATURATE: 
-      return BLENDFACT_SRC_ALPHA_SATURATE;
-   case GL_CONSTANT_COLOR:
-      return BLENDFACT_CONST_COLOR; 
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      return BLENDFACT_INV_CONST_COLOR;
-   case GL_CONSTANT_ALPHA:
-      return BLENDFACT_CONST_ALPHA; 
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      return BLENDFACT_INV_CONST_ALPHA;
-   default:
-      return BLENDFACT_ZERO;
-   }
-}
 
 #define DST_BLND_FACT(f) ((f)<<S6_CBUF_DST_BLEND_FACT_SHIFT)
 #define SRC_BLND_FACT(f) ((f)<<S6_CBUF_SRC_BLEND_FACT_SHIFT)
@@ -300,12 +218,12 @@ static void i915UpdateBlendState( GLcontext *ctx )
       srcA = dstA = GL_ONE;
    }
 
-   lis6 |= SRC_BLND_FACT(translate_blend_factor(srcRGB)); 
-   lis6 |= DST_BLND_FACT(translate_blend_factor(dstRGB)); 
+   lis6 |= SRC_BLND_FACT(intel_translate_blend_factor(srcRGB)); 
+   lis6 |= DST_BLND_FACT(intel_translate_blend_factor(dstRGB)); 
    lis6 |= translate_blend_equation( eqRGB ) << S6_CBUF_BLEND_FUNC_SHIFT;
 
-   iab |= SRC_ABLND_FACT(translate_blend_factor(srcA)); 
-   iab |= DST_ABLND_FACT(translate_blend_factor(dstA)); 
+   iab |= SRC_ABLND_FACT(intel_translate_blend_factor(srcA)); 
+   iab |= DST_ABLND_FACT(intel_translate_blend_factor(dstA)); 
    iab |= translate_blend_equation( eqA ) << IAB_FUNC_SHIFT;
 
    if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) 
@@ -341,7 +259,7 @@ static void i915BlendEquationSeparate(GLcontext *ctx, GLenum eqRGB,
 static void i915DepthFunc(GLcontext *ctx, GLenum func)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
-   int test = translate_compare_func( func );
+   int test = intel_translate_compare_func( func );
 
    if (INTEL_DEBUG&DEBUG_DRI)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -462,63 +380,10 @@ static void i915Scissor(GLcontext *ctx, GLint x, GLint y,
 static void i915LogicOp(GLcontext *ctx, GLenum opcode)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
-   int tmp = 0;
+   int tmp = intel_translate_logic_op(opcode);
 
    if (INTEL_DEBUG&DEBUG_DRI)
       fprintf(stderr, "%s\n", __FUNCTION__);
-
-   switch(opcode) {
-   case GL_CLEAR: 
-      tmp = LOGICOP_CLEAR; 
-      break;
-   case GL_AND: 
-      tmp = LOGICOP_AND; 
-      break;
-   case GL_AND_REVERSE: 
-      tmp = LOGICOP_AND_RVRSE; 
-      break;
-   case GL_COPY: 
-      tmp = LOGICOP_COPY; 
-      break;
-   case GL_COPY_INVERTED: 
-      tmp = LOGICOP_COPY_INV; 
-      break;
-   case GL_AND_INVERTED: 
-      tmp = LOGICOP_AND_INV; 
-      break;
-   case GL_NOOP: 
-      tmp = LOGICOP_NOOP; 
-      break;
-   case GL_XOR: 
-      tmp = LOGICOP_XOR; 
-      break;
-   case GL_OR: 
-      tmp = LOGICOP_OR; 
-      break;
-   case GL_OR_INVERTED: 
-      tmp = LOGICOP_OR_INV; 
-      break;
-   case GL_NOR: 
-      tmp = LOGICOP_NOR; 
-      break;
-   case GL_EQUIV: 
-      tmp = LOGICOP_EQUIV; 
-      break;
-   case GL_INVERT: 
-      tmp = LOGICOP_INV; 
-      break;
-   case GL_OR_REVERSE: 
-      tmp = LOGICOP_OR_RVRSE; 
-      break;
-   case GL_NAND: 
-      tmp = LOGICOP_NAND; 
-      break;
-   case GL_SET: 
-      tmp = LOGICOP_SET; 
-      break;
-   default:
-      return;
-   }
 
    I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    i915->state.Ctx[I915_CTXREG_STATE4] &= ~LOGICOP_MASK;

@@ -44,7 +44,7 @@ static void i830StencilFunc(GLcontext *ctx, GLenum func, GLint ref,
 			    GLuint mask)
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int test = 0;
+   int test = intel_translate_compare_func(func);
 
    mask = mask & 0xff;
 
@@ -52,34 +52,6 @@ static void i830StencilFunc(GLcontext *ctx, GLenum func, GLint ref,
       fprintf(stderr, "%s : func: %s, ref : 0x%x, mask: 0x%x\n", __FUNCTION__,
 	      _mesa_lookup_enum_by_nr(func), ref, mask);
 
-   switch(func) {
-   case GL_NEVER: 
-      test = COMPAREFUNC_NEVER; 
-      break;
-   case GL_LESS: 
-      test = COMPAREFUNC_LESS; 
-      break;
-   case GL_LEQUAL: 
-      test = COMPAREFUNC_LEQUAL; 
-      break;
-   case GL_GREATER: 
-      test = COMPAREFUNC_GREATER; 
-      break;
-   case GL_GEQUAL: 
-      test = COMPAREFUNC_GEQUAL; 
-      break;
-   case GL_NOTEQUAL: 
-      test = COMPAREFUNC_NOTEQUAL; 
-      break;
-   case GL_EQUAL: 
-      test = COMPAREFUNC_EQUAL; 
-      break;
-   case GL_ALWAYS: 
-      test = COMPAREFUNC_ALWAYS; 
-      break;
-   default:
-      return;
-   }
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_STATE4] &= ~MODE4_ENABLE_STENCIL_TEST_MASK;
@@ -219,41 +191,12 @@ static void i830StencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
 static void i830AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int test = 0;
+   int test = intel_translate_compare_func(func);
    GLubyte refByte;
    GLuint refInt;
 
    UNCLAMPED_FLOAT_TO_UBYTE(refByte, ref);
    refInt = (GLuint)refByte;
-
-   switch(func) {
-   case GL_NEVER: 
-      test = COMPAREFUNC_NEVER; 
-      break;
-   case GL_LESS: 
-      test = COMPAREFUNC_LESS; 
-      break;
-   case GL_LEQUAL: 
-      test = COMPAREFUNC_LEQUAL; 
-      break;
-   case GL_GREATER: 
-      test = COMPAREFUNC_GREATER; 
-      break;
-   case GL_GEQUAL: 
-      test = COMPAREFUNC_GEQUAL; 
-      break;
-   case GL_NOTEQUAL: 
-      test = COMPAREFUNC_NOTEQUAL; 
-      break;
-   case GL_EQUAL: 
-      test = COMPAREFUNC_EQUAL; 
-      break;
-   case GL_ALWAYS: 
-      test = COMPAREFUNC_ALWAYS; 
-      break;
-   default:
-      return;
-   }
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_STATE2] &= ~ALPHA_TEST_REF_MASK;
@@ -314,55 +257,6 @@ static void i830BlendColor(GLcontext *ctx, const GLfloat color[4])
    i830->state.Ctx[I830_CTXREG_BLENDCOLOR1] = (a<<24) | (r<<16) | (g<<8) | b;
 }
 
-
-/**
- * Calculate the hardware blend factor setting.  This same function is used
- * for source and destination of both alpha and RGB.  
- *
- * \returns
- * The hardware register value for the specified blend factor.  This value
- * will need to be shifted into the correct position for either source or
- * destination factor.
- */
-static int translate_blend_factor( GLenum factor )
-{
-   switch(factor) {
-   case GL_ZERO: 
-      return BLENDFACT_ZERO; 
-   case GL_SRC_ALPHA: 
-      return BLENDFACT_SRC_ALPHA; 
-   case GL_ONE: 
-      return BLENDFACT_ONE; 
-   case GL_SRC_COLOR: 
-      return BLENDFACT_SRC_COLR; 
-   case GL_ONE_MINUS_SRC_COLOR: 
-      return BLENDFACT_INV_SRC_COLR; 
-   case GL_DST_COLOR: 
-      return BLENDFACT_DST_COLR; 
-   case GL_ONE_MINUS_DST_COLOR: 
-      return BLENDFACT_INV_DST_COLR; 
-   case GL_ONE_MINUS_SRC_ALPHA:
-      return BLENDFACT_INV_SRC_ALPHA; 
-   case GL_DST_ALPHA: 
-      return BLENDFACT_DST_ALPHA; 
-   case GL_ONE_MINUS_DST_ALPHA:
-      return BLENDFACT_INV_DST_ALPHA; 
-   case GL_SRC_ALPHA_SATURATE: 
-      return BLENDFACT_SRC_ALPHA_SATURATE;
-   case GL_CONSTANT_COLOR:
-      return BLENDFACT_CONST_COLOR; 
-   case GL_ONE_MINUS_CONSTANT_COLOR:
-      return BLENDFACT_INV_CONST_COLOR;
-   case GL_CONSTANT_ALPHA:
-      return BLENDFACT_CONST_ALPHA; 
-   case GL_ONE_MINUS_CONSTANT_ALPHA:
-      return BLENDFACT_INV_CONST_ALPHA;
-   default:
-      return BLENDFACT_ZERO;
-   }
-}
-
-
 /**
  * Sets both the blend equation (called "function" in i830 docs) and the
  * blend function (called "factor" in i830 docs).  This is done in a single
@@ -380,8 +274,8 @@ static void i830_set_blend_state( GLcontext * ctx )
    int s1;
 
 
-   funcRGB = SRC_BLND_FACT( translate_blend_factor( ctx->Color.BlendSrcRGB ) )
-       | DST_BLND_FACT( translate_blend_factor( ctx->Color.BlendDstRGB ) );
+   funcRGB = SRC_BLND_FACT( intel_translate_blend_factor( ctx->Color.BlendSrcRGB ) )
+       | DST_BLND_FACT( intel_translate_blend_factor( ctx->Color.BlendDstRGB ) );
 
    switch(ctx->Color.BlendEquationRGB) {
    case GL_FUNC_ADD:
@@ -408,8 +302,8 @@ static void i830_set_blend_state( GLcontext * ctx )
    }
 
 
-   funcA = SRC_ABLEND_FACT( translate_blend_factor( ctx->Color.BlendSrcA ) )
-       | DST_ABLEND_FACT( translate_blend_factor( ctx->Color.BlendDstA ) );
+   funcA = SRC_ABLEND_FACT( intel_translate_blend_factor( ctx->Color.BlendSrcA ) )
+       | DST_ABLEND_FACT( intel_translate_blend_factor( ctx->Color.BlendDstA ) );
 
    switch(ctx->Color.BlendEquationA) {
    case GL_FUNC_ADD:
@@ -510,38 +404,10 @@ static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
 static void i830DepthFunc(GLcontext *ctx, GLenum func)
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int test = 0;
+   int test = intel_translate_compare_func(func);
 
    if (INTEL_DEBUG&DEBUG_DRI)
       fprintf(stderr, "%s\n", __FUNCTION__);
-
-   switch(func) {
-   case GL_NEVER: 
-      test = COMPAREFUNC_NEVER; 
-      break;
-   case GL_LESS: 
-      test = COMPAREFUNC_LESS; 
-      break;
-   case GL_LEQUAL: 
-      test = COMPAREFUNC_LEQUAL; 
-      break;
-   case GL_GREATER: 
-      test = COMPAREFUNC_GREATER; 
-      break;
-   case GL_GEQUAL: 
-      test = COMPAREFUNC_GEQUAL; 
-      break;
-   case GL_NOTEQUAL: 
-      test = COMPAREFUNC_NOTEQUAL; 
-      break;
-   case GL_EQUAL: 
-      test = COMPAREFUNC_EQUAL; 
-      break;
-   case GL_ALWAYS: 
-      test = COMPAREFUNC_ALWAYS; 
-      break;
-   default: return;
-   }
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_STATE3] &= ~DEPTH_TEST_FUNC_MASK;
@@ -662,64 +528,10 @@ static void i830Scissor(GLcontext *ctx, GLint x, GLint y,
 static void i830LogicOp(GLcontext *ctx, GLenum opcode)
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int tmp = 0;
+   int tmp = intel_translate_logic_op( opcode );
 
    if (INTEL_DEBUG&DEBUG_DRI)
       fprintf(stderr, "%s\n", __FUNCTION__);
-
-   /* FIXME: This should be a look-up table, like the r200 driver. */
-   switch(opcode) {
-   case GL_CLEAR: 
-      tmp = LOGICOP_CLEAR; 
-      break;
-   case GL_AND: 
-      tmp = LOGICOP_AND; 
-      break;
-   case GL_AND_REVERSE: 
-      tmp = LOGICOP_AND_RVRSE; 
-      break;
-   case GL_COPY: 
-      tmp = LOGICOP_COPY; 
-      break;
-   case GL_COPY_INVERTED: 
-      tmp = LOGICOP_COPY_INV; 
-      break;
-   case GL_AND_INVERTED: 
-      tmp = LOGICOP_AND_INV; 
-      break;
-   case GL_NOOP: 
-      tmp = LOGICOP_NOOP; 
-      break;
-   case GL_XOR: 
-      tmp = LOGICOP_XOR; 
-      break;
-   case GL_OR: 
-      tmp = LOGICOP_OR; 
-      break;
-   case GL_OR_INVERTED: 
-      tmp = LOGICOP_OR_INV; 
-      break;
-   case GL_NOR: 
-      tmp = LOGICOP_NOR; 
-      break;
-   case GL_EQUIV: 
-      tmp = LOGICOP_EQUIV; 
-      break;
-   case GL_INVERT: 
-      tmp = LOGICOP_INV; 
-      break;
-   case GL_OR_REVERSE: 
-      tmp = LOGICOP_OR_RVRSE; 
-      break;
-   case GL_NAND: 
-      tmp = LOGICOP_NAND; 
-      break;
-   case GL_SET: 
-      tmp = LOGICOP_SET; 
-      break;
-   default:
-      return;
-   }
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_STATE4] &= ~LOGICOP_MASK;

@@ -236,23 +236,6 @@
 #define IAB_DST_FACTOR_SHIFT		0
 #define IAB_DST_FACTOR_MASK		(BLENDFACT_MASK<<0)
 
-#define BLENDFACT_ZERO			0x01
-#define BLENDFACT_ONE			0x02
-#define BLENDFACT_SRC_COLR		0x03
-#define BLENDFACT_INV_SRC_COLR 		0x04
-#define BLENDFACT_SRC_ALPHA		0x05
-#define BLENDFACT_INV_SRC_ALPHA 	0x06
-#define BLENDFACT_DST_ALPHA		0x07
-#define BLENDFACT_INV_DST_ALPHA 	0x08
-#define BLENDFACT_DST_COLR		0x09
-#define BLENDFACT_INV_DST_COLR		0x0a
-#define BLENDFACT_SRC_ALPHA_SATURATE	0x0b
-#define BLENDFACT_CONST_COLOR		0x0c
-#define BLENDFACT_INV_CONST_COLOR	0x0d
-#define BLENDFACT_CONST_ALPHA		0x0e
-#define BLENDFACT_INV_CONST_ALPHA	0x0f
-#define BLENDFACT_MASK          	0x0f
-
 
 #define BLENDFUNC_ADD			0x0
 #define BLENDFUNC_SUBTRACT		0x1
@@ -393,23 +376,6 @@
 		      S4_VFMT_XYZW_MASK     |	\
 		      S4_VFMT_FOG_PARAM)
 
-#define COMPAREFUNC_ALWAYS		0
-#define COMPAREFUNC_NEVER		0x1
-#define COMPAREFUNC_LESS		0x2
-#define COMPAREFUNC_EQUAL		0x3
-#define COMPAREFUNC_LEQUAL		0x4
-#define COMPAREFUNC_GREATER		0x5
-#define COMPAREFUNC_NOTEQUAL		0x6
-#define COMPAREFUNC_GEQUAL		0x7
-
-#define STENCILOP_KEEP			0
-#define STENCILOP_ZERO			0x1
-#define STENCILOP_REPLACE		0x2
-#define STENCILOP_INCRSAT		0x3
-#define STENCILOP_DECRSAT		0x4
-#define STENCILOP_INCR			0x5
-#define STENCILOP_DECR			0x6
-#define STENCILOP_INVERT		0x7
 
 #define S5_WRITEDISABLE_ALPHA          (1<<31)
 #define S5_WRITEDISABLE_RED            (1<<30)
@@ -466,23 +432,7 @@
 #define _3DSTATE_MODES_4_CMD		(CMD_3D|(0x0d<<24))
 #define ENABLE_LOGIC_OP_FUNC		(1<<23)
 #define LOGIC_OP_FUNC(x)		((x)<<18)
-#define LOGICOP_MASK			((1<<18)|(1<<19)|(1<<20)|(1<<21))
-#define LOGICOP_CLEAR			0
-#define LOGICOP_NOR			0x1
-#define LOGICOP_AND_INV 		0x2
-#define LOGICOP_COPY_INV		0x3
-#define LOGICOP_AND_RVRSE		0x4
-#define LOGICOP_INV			0x5
-#define LOGICOP_XOR			0x6
-#define LOGICOP_NAND			0x7
-#define LOGICOP_AND			0x8
-#define LOGICOP_EQUIV			0x9
-#define LOGICOP_NOOP			0xa
-#define LOGICOP_OR_INV			0xb
-#define LOGICOP_COPY			0xc
-#define LOGICOP_OR_RVRSE		0xd
-#define LOGICOP_OR			0xe
-#define LOGICOP_SET			0xf
+#define LOGICOP_MASK			(0xf<<18)
 #define MODE4_ENABLE_STENCIL_TEST_MASK	((1<<17)|(0xff00))
 #define ENABLE_STENCIL_TEST_MASK	(1<<17)
 #define STENCIL_TEST_MASK(x)		((x)<<8)
@@ -769,6 +719,12 @@
 #define    MT_32BIT_XLVU8888	           (7<<3)
 #define    MT_32BIT_ARGB2101010	           (8<<3)
 #define    MT_32BIT_ABGR2101010	           (9<<3)
+#define    MT_32BIT_AWVU2101010	           (0xA<<3)
+#define    MT_32BIT_GR1616	           (0xB<<3)
+#define    MT_32BIT_VU1616	           (0xC<<3)
+#define    MT_32BIT_xI824	           (0xD<<3)
+#define    MT_32BIT_xA824	           (0xE<<3)
+#define    MT_32BIT_xL824	           (0xF<<3)
 #define    MT_422_YCRCB_SWAPY	           (0<<3) /* SURFACE_422 */
 #define    MT_422_YCRCB_NORMAL	           (1<<3)
 #define    MT_422_YCRCB_SWAPUV	           (2<<3)
@@ -792,6 +748,7 @@
 #define MS4_CUBE_FACE_ENA_MASK          (0x3f<<15)
 #define MS4_MAX_LOD_SHIFT		9
 #define MS4_MAX_LOD_MASK		(0x3f<<9)
+#define MS4_MIP_LAYOUT_LEGACY           (0<<8)
 #define MS4_VOLUME_DEPTH_SHIFT          0    
 #define MS4_VOLUME_DEPTH_MASK           (0xff<<0)
 
@@ -826,20 +783,17 @@
 #define SS2_LOD_BIAS_SHIFT            5
 #define SS2_LOD_BIAS_ONE              (0x10<<5)
 #define SS2_LOD_BIAS_MASK             (0x1ff<<5)
+/* Shadow requires:
+ *  MT_X8{I,L,A}24 or MT_{I,L,A}16 texture format
+ *  FILTER_4X4_x  MIN and MAG filters
+ */
 #define SS2_SHADOW_ENABLE             (1<<4)
 #define SS2_MAX_ANISO_MASK            (1<<3)
 #define SS2_MAX_ANISO_2               (0<<3)
 #define SS2_MAX_ANISO_4               (1<<3)
 #define SS2_SHADOW_FUNC_SHIFT         0
 #define SS2_SHADOW_FUNC_MASK          (0x7<<0)
-#define   SHADOWOP_ALWAYS               0
-#define   SHADOWOP_NEVER                1
-#define   SHADOWOP_LESS                 2
-#define   SHADOWOP_EQUAL                3
-#define   SHADOWOP_LEQUAL               4
-#define   SHADOWOP_GREATER              5
-#define   SHADOWOP_NOTEQUAL             6
-#define   SHADOWOP_GEQUAL               7
+/* SS2_SHADOW_FUNC values: see COMPAREFUNC_* */
 
 #define SS3_MIN_LOD_SHIFT            24
 #define SS3_MIN_LOD_ONE              (0x10<<24)

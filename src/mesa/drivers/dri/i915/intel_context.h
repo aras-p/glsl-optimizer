@@ -411,6 +411,7 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I855_GM		0x3582
 #define PCI_CHIP_I865_G			0x2572
 #define PCI_CHIP_I915_G			0x2582
+#define PCI_CHIP_I915_GM		0x2592
 
 
 /* ================================================================
@@ -438,6 +439,64 @@ extern const GLubyte *intelGetString( GLcontext *ctx, GLenum name );
  * intel_state.c:
  */
 extern void intelInitStateFuncs( struct dd_function_table *functions );
+
+#define COMPAREFUNC_ALWAYS		0
+#define COMPAREFUNC_NEVER		0x1
+#define COMPAREFUNC_LESS		0x2
+#define COMPAREFUNC_EQUAL		0x3
+#define COMPAREFUNC_LEQUAL		0x4
+#define COMPAREFUNC_GREATER		0x5
+#define COMPAREFUNC_NOTEQUAL		0x6
+#define COMPAREFUNC_GEQUAL		0x7
+
+#define STENCILOP_KEEP			0
+#define STENCILOP_ZERO			0x1
+#define STENCILOP_REPLACE		0x2
+#define STENCILOP_INCRSAT		0x3
+#define STENCILOP_DECRSAT		0x4
+#define STENCILOP_INCR			0x5
+#define STENCILOP_DECR			0x6
+#define STENCILOP_INVERT		0x7
+
+#define LOGICOP_CLEAR			0
+#define LOGICOP_NOR			0x1
+#define LOGICOP_AND_INV 		0x2
+#define LOGICOP_COPY_INV		0x3
+#define LOGICOP_AND_RVRSE		0x4
+#define LOGICOP_INV			0x5
+#define LOGICOP_XOR			0x6
+#define LOGICOP_NAND			0x7
+#define LOGICOP_AND			0x8
+#define LOGICOP_EQUIV			0x9
+#define LOGICOP_NOOP			0xa
+#define LOGICOP_OR_INV			0xb
+#define LOGICOP_COPY			0xc
+#define LOGICOP_OR_RVRSE		0xd
+#define LOGICOP_OR			0xe
+#define LOGICOP_SET			0xf
+
+#define BLENDFACT_ZERO			0x01
+#define BLENDFACT_ONE			0x02
+#define BLENDFACT_SRC_COLR		0x03
+#define BLENDFACT_INV_SRC_COLR 		0x04
+#define BLENDFACT_SRC_ALPHA		0x05
+#define BLENDFACT_INV_SRC_ALPHA 	0x06
+#define BLENDFACT_DST_ALPHA		0x07
+#define BLENDFACT_INV_DST_ALPHA 	0x08
+#define BLENDFACT_DST_COLR		0x09
+#define BLENDFACT_INV_DST_COLR		0x0a
+#define BLENDFACT_SRC_ALPHA_SATURATE	0x0b
+#define BLENDFACT_CONST_COLOR		0x0c
+#define BLENDFACT_INV_CONST_COLOR	0x0d
+#define BLENDFACT_CONST_ALPHA		0x0e
+#define BLENDFACT_INV_CONST_ALPHA	0x0f
+#define BLENDFACT_MASK          	0x0f
+
+
+extern int intel_translate_compare_func( GLenum func );
+extern int intel_translate_stencil_op( GLenum op );
+extern int intel_translate_blend_factor( GLenum factor );
+extern int intel_translate_logic_op( GLenum opcode );
 
 
 /* ================================================================

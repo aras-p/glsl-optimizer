@@ -292,6 +292,7 @@ static GLboolean intelCreateContext( const __GLcontextModes *mesaVis,
 				sharedContextPrivate );
 
    case PCI_CHIP_I915_G:
+   case PCI_CHIP_I915_GM:
       return i915CreateContext( mesaVis, driContextPriv, 
 			       sharedContextPrivate );
  

@@ -85,6 +85,13 @@ static void i915TexParameter( GLcontext *ctx, GLenum target,
       t->intel.dirty = I915_UPLOAD_TEX_ALL;
       break;
 
+   case GL_TEXTURE_COMPARE_MODE:
+      t->intel.dirty = I915_UPLOAD_TEX_ALL;
+      break;
+   case GL_TEXTURE_COMPARE_FUNC:
+      t->intel.dirty = I915_UPLOAD_TEX_ALL;
+      break;
+
    case GL_TEXTURE_BASE_LEVEL:
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:

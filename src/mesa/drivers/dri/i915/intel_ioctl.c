@@ -108,7 +108,7 @@ void intel_dump_batchbuffer( long offset,
    fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count);
    for (i = 0; i < count/4; i += 4) 
       fprintf(stderr, "\t0x%lx: 0x%08x 0x%08x 0x%08x 0x%08x\n", 
-	      offset + i*4, ptr[i], ptr[i+1], ptr[i+2], ptr[i+3]);
+	      (unsigned int)offset + i*4, ptr[i], ptr[i+1], ptr[i+2], ptr[i+3]);
    fprintf(stderr, "END BATCH\n\n\n");
 }
 

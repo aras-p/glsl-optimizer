@@ -74,6 +74,19 @@ static GLuint get_source( struct i915_fragment_program *p,
       }
 
       return p->src_texture;
+
+      /* Crossbar: */
+   case GL_TEXTURE0:
+   case GL_TEXTURE1:
+   case GL_TEXTURE2:
+   case GL_TEXTURE3:
+   case GL_TEXTURE4:
+   case GL_TEXTURE5:
+   case GL_TEXTURE6:
+   case GL_TEXTURE7: {
+      return UREG_BAD;
+   }
+
    case GL_CONSTANT:
       return i915_emit_const4fv( p, p->ctx->Texture.Unit[unit].EnvColor );
    case GL_PRIMARY_COLOR:

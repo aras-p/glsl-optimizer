@@ -48,6 +48,21 @@
 static const char * const card_extensions[] =
 {
    "GL_ARB_fragment_program",
+   "GL_ARB_texture_cube_map",
+   "GL_EXT_blend_equation_separate",
+   "GL_ATI_blend_equation_separate",
+   "GL_ARB_point_parameters",
+
+/* New
+ */
+   "GL_NV_blend_square",	
+   "GL_EXT_cull_vertex", 	
+   "GL_ARB_depth_texture",
+   "GL_SGIX_depth_texture",	/* ARB extn won't work if not enabled */
+   "GL_ARB_shadow",
+   "GL_EXT_shadow_funcs",
+   "GL_3DFX_texture_compression_FXT1", 
+
    NULL
 };
 
@@ -84,9 +99,12 @@ static const GLubyte *i915GetString( GLcontext *ctx, GLenum name )
 {
    if (name == GL_EXTENSIONS)
       return 
+	 "GL_3DFX_texture_compression_FXT1 " 
+	 "GL_ARB_depth_texture "
 	 "GL_ARB_fragment_program "
 	 "GL_ARB_multitexture "
 	 "GL_ARB_point_parameters "
+	 "GL_ARB_shadow "
 	 "GL_ARB_texture_border_clamp "
 	 "GL_ARB_texture_compression "
 	 "GL_ARB_texture_cube_map "
@@ -106,6 +124,7 @@ static const GLubyte *i915GetString( GLcontext *ctx, GLenum name )
 	 "GL_EXT_blend_subtract "
 	 "GL_EXT_clip_volume_hint "
 	 "GL_EXT_compiled_vertex_array "
+	 "GL_EXT_cull_vertex "	
 	 "GL_EXT_draw_range_elements "
 	 "GL_EXT_fog_coord "
 	 "GL_EXT_multi_draw_arrays "
@@ -113,16 +132,19 @@ static const GLubyte *i915GetString( GLcontext *ctx, GLenum name )
 	 "GL_EXT_rescale_normal "
 	 "GL_EXT_secondary_color "
 	 "GL_EXT_separate_specular_color "
+	 "GL_EXT_shadow_funcs "
 	 "GL_EXT_stencil_wrap "
 	 "GL_EXT_texture3D "
 	 "GL_EXT_texture_env_add "
 	 "GL_EXT_texture_env_combine "
 	 "GL_EXT_texture_filter_anisotropic "
 	 "GL_IBM_texture_mirrored_repeat "
-	 "GL_MESA_ycbcr_texture "
 	 "GL_MESA_window_pos "
+	 "GL_MESA_ycbcr_texture "
+	 "GL_NV_blend_square "	
 	 "GL_NV_texgen_reflection "
-	 "GL_SGIS_generate_mipmap";
+	 "GL_SGIS_generate_mipmap ";
+
 
    return intelGetString( ctx, name );
 }
@@ -177,8 +199,9 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
 			    sizeof( struct i915_texture_object ),
 			    (destroy_texture_object_t *)intelDestroyTexObj );
 
-   /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are tightly
-    * FIXME: packed, but they're not in Intel graphics hardware.
+   /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are
+    * tightly packed, but they're not in Intel graphics
+    * hardware.
     */
    ctx->Const.MaxTextureUnits = 1;
    driCalculateMaxTextureLevels( intel->texture_heaps,
