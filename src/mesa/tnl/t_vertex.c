@@ -675,7 +675,7 @@ static void generic_emit( GLcontext *ctx,
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    struct tnl_clipspace_attr *a = vtx->attr;
    GLubyte *v = (GLubyte *)dest;
-   int i, j;
+   GLuint i, j;
    GLuint count = vtx->attr_count;
    GLuint stride;
 
@@ -717,7 +717,7 @@ static void generic_interp( GLcontext *ctx,
    if (tnl->NeedNdcCoords) {
       const GLfloat *dstclip = VB->ClipPtr->data[edst];
       if (dstclip[3] != 0.0) {
-	 const GLfloat w = 1.0 / dstclip[3];
+	 const GLfloat w = 1.0f / dstclip[3];
 	 GLfloat pos[4];
 
 	 pos[0] = dstclip[0] * w;
@@ -923,7 +923,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
    int j;
 
    for (j = 0; j < attr_count; j++) {
-      if (a[j].attrib == attr) {
+      if (a[j].attrib == (int)attr) {
 	 a[j].extract( &a[j], dest, (GLubyte *)vin + a[j].vertoffset );
 	 return;
       }
@@ -958,7 +958,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    int offset = 0;
-   int i;
+   GLuint i;
 
    assert(nr < _TNL_ATTRIB_MAX);
    assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);

@@ -169,7 +169,7 @@ static void index_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
 
 static void edgeflag_attr1fv(GLcontext *ctx, GLint target, const GLfloat *v)
 {
-   ctx->Exec->EdgeFlag((v[0] == 1.0));
+   ctx->Exec->EdgeFlag((GLboolean)(v[0] == 1.0));
 }
 
 struct loopback_attr {
