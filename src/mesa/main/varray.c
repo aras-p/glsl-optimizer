@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.20 2000/02/05 02:05:14 brianp Exp $ */
+/* $Id: varray.c,v 1.21 2000/02/25 03:55:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -681,6 +681,7 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
 	 VB->NextPrimitive[VB->CopyStart] = VB->Count;
 	 VB->Primitive[VB->CopyStart] = mode;
+	 ctx->Array.Flag[count] |= VERT_END_VB;
 
          /* Transform and render.
 	  */
@@ -816,7 +817,7 @@ _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indice
       return;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode < 0 || mode > GL_POLYGON) {
       gl_error( ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return;
    }

@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.6 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: lines.c,v 1.7 2000/02/25 03:55:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1024,8 +1024,7 @@ void gl_set_line_function( GLcontext *ctx )
       else {
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* Width==1, non-stippled, smooth-shaded */
-            if (ctx->Depth.Test
-	        || (ctx->Fog.Enabled && ctx->Hint.Fog==GL_NICEST)) {
+            if (ctx->Depth.Test || ctx->FogMode == FOG_FRAGMENT) {
                if (rgbmode)
                   ctx->Driver.LineFunc = smooth_rgba_z_line;
                else
@@ -1040,8 +1039,7 @@ void gl_set_line_function( GLcontext *ctx )
 	 }
          else {
 	    /* Width==1, non-stippled, flat-shaded */
-            if (ctx->Depth.Test
-                || (ctx->Fog.Enabled && ctx->Hint.Fog==GL_NICEST)) {
+            if (ctx->Depth.Test || ctx->FogMode == FOG_FRAGMENT) {
                if (rgbmode)
                   ctx->Driver.LineFunc = flat_rgba_z_line;
                else
