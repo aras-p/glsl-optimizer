@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.20 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.21 2001/12/19 01:07:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,7 +89,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLfloat (*base)[3] = ctx->Light._BaseColor;
    GLchan sumA[2];
-
    GLuint j;
 
    GLuint  vstride = input->stride;
@@ -104,7 +103,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].Ptr;
    GLchan (*Fspec)[4] = (GLchan (*)[4]) store->LitSecondary[0].Ptr;
    GLchan (*Bspec)[4] = (GLchan (*)[4]) store->LitSecondary[1].Ptr;
-   GLchan (*spec[2])[4];
 
    GLuint nr = VB->Count;
    GLuint *flags = VB->Flag;
@@ -115,12 +113,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    (void) nstride;
    (void) vstride;
 
-
-
 /*     fprintf(stderr, "%s\n", __FUNCTION__ );   */
-
-   spec[0] = Fspec;
-   spec[1] = Bspec;
 
    if (IDX & LIGHT_COLORMATERIAL) {
       if (VB->ColorPtr[0]->Type != GL_FLOAT || 
