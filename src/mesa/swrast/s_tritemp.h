@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.4 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.5 2000/11/21 23:17:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,8 +153,8 @@
          return;
 
       /* check for very tiny triangle */
-      if (area * area < 0.0025F)  /* square it to ensure positive value */
-         oneOverArea = 1.0F / 0.0025F;  /* a close-enough value */
+      if (area * area < (0.05F * 0.05F))  /* square to ensure positive value */
+         oneOverArea = 1.0F / 0.05F;  /* a close-enough value */
       else
          oneOverArea = 1.0F / area;
    }
@@ -173,7 +173,7 @@
       GLfixed vMax_fy = FloatToFixed(vMax->win[1] - 0.5F);
 
       eMaj.fsy = FixedCeil(vMin_fy);
-      eMaj.lines = FixedToInt(vMax_fy + FIXED_ONE - FIXED_EPSILON - eMaj.fsy);
+      eMaj.lines = FixedToInt(FixedCeil(vMax_fy - eMaj.fsy));
       if (eMaj.lines > 0) {
          GLfloat dxdy = eMaj.dx / eMaj.dy;
          eMaj.fdxdy = SignedFloatToFixed(dxdy);
@@ -186,7 +186,7 @@
       }
 
       eTop.fsy = FixedCeil(vMid_fy);
-      eTop.lines = FixedToInt(vMax_fy + FIXED_ONE - FIXED_EPSILON - eTop.fsy);
+      eTop.lines = FixedToInt(FixedCeil(vMax_fy - eTop.fsy));
       if (eTop.lines > 0) {
          GLfloat dxdy = eTop.dx / eTop.dy;
          eTop.fdxdy = SignedFloatToFixed(dxdy);
@@ -196,7 +196,7 @@
       }
 
       eBot.fsy = FixedCeil(vMin_fy);
-      eBot.lines = FixedToInt(vMid_fy + FIXED_ONE - FIXED_EPSILON - eBot.fsy);
+      eBot.lines = FixedToInt(FixedCeil(vMid_fy - eBot.fsy));
       if (eBot.lines > 0) {
          GLfloat dxdy = eBot.dx / eBot.dy;
          eBot.fdxdy = SignedFloatToFixed(dxdy);
