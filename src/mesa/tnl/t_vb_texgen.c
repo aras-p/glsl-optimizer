@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.18 2003/03/04 16:34:04 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.19 2003/03/31 16:48:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -367,7 +367,7 @@ static void texgen( GLcontext *ctx,
    GLuint count = VB->Count;
    GLfloat (*f)[3] = store->tmp_f;
    GLfloat *m = store->tmp_m;
-	 GLuint holes = 0;
+   GLuint holes = 0;
 
 
    if (texUnit->_GenFlags & TEXGEN_NEED_M) {
@@ -399,6 +399,7 @@ static void texgen( GLcontext *ctx,
    }
 
    if (holes) {
+      if (holes & VEC_DIRTY_3) _mesa_vector4f_clean_elem(out, count, 3);
       if (holes & VEC_DIRTY_2) _mesa_vector4f_clean_elem(out, count, 2);
       if (holes & VEC_DIRTY_1) _mesa_vector4f_clean_elem(out, count, 1);
       if (holes & VEC_DIRTY_0) _mesa_vector4f_clean_elem(out, count, 0);
