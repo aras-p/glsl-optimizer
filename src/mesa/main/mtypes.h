@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.64 2002/02/13 00:53:19 keithw Exp $ */
+/* $Id: mtypes.h,v 1.65 2002/02/15 16:37:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -362,7 +362,6 @@ struct gl_current_attrib {
    GLuint RasterIndex;				/* Current raster index */
    GLfloat *RasterTexCoord;			/* Current raster texcoord */
    GLfloat RasterMultiTexCoord[MAX_TEXTURE_UNITS][4];
-   GLfloat RasterFogCoord;
    GLboolean RasterPosValid;			/* Raster pos valid flag */
 };
 
@@ -900,7 +899,7 @@ struct gl_texture_object {
    GLchan ShadowAmbient;	/* GL_SGIX/ARB_shadow_ambient */
    GLenum CompareMode;		/* GL_ARB_shadow */
    GLenum CompareFunc;		/* GL_ARB_shadow */
-   GLenum CompareResult;	/* GL_ARB_shadow */
+   GLenum DepthMode;		/* GL_ARB_depth_texture */
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /* GL_SGIS_generate_mipmap */
@@ -1377,6 +1376,7 @@ struct gl_extensions {
    /* Flags to quickly test if certain extensions are available.
     * Not every extension needs to have such a flag, but it's encouraged.
     */
+   GLboolean ARB_depth_texture;
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
@@ -1429,7 +1429,7 @@ struct gl_extensions {
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
-   GLboolean SGIX_depth_texture;  /* or GL_ARB_depth_texture */
+   GLboolean SGIX_depth_texture;
    GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
