@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "colormac.h"
 #include "state.h"
+#include "context.h"
 
 #include "swrast/swrast.h"
 #include "array_cache/acache.h"
