@@ -1,9 +1,14 @@
-/* $Id: gloss.c,v 1.1 1999/10/22 20:34:57 brianp Exp $ */
+/* $Id: gloss.c,v 1.2 1999/10/23 08:12:23 brianp Exp $ */
 
 /*
- * Specular reflection demo.  The specular hightlight is modulated by
+ * Specular reflection demo.  The specular highlight is modulated by
  * a sphere-mapped texture.  The result is a high-gloss surface.
  * NOTE: you really need hardware acceleration for this.
+ * Also note, this technique can't be implemented with multi-texture
+ * and separate specular color interpolation because there's no way
+ * to indicate that the second texture unit (the reflection map)
+ * should modulate the specular color and not the base color.
+ * A future multi-texture extension could fix that.
  *
  * Command line options:
  *    -info      print GL implementation information
@@ -104,7 +109,6 @@ static void Display( void )
    glDisable(GL_TEXTURE_GEN_S);
    glDisable(GL_TEXTURE_GEN_T);
    glDisable(GL_BLEND);
-   glDepthFunc(GL_LESS);
 
    glPopMatrix();
 
