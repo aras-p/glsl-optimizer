@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.21 2003/01/21 16:13:55 brianp Exp $ */
+/* $Id: common_x86.c,v 1.22 2003/02/04 02:22:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -362,6 +362,7 @@ void _mesa_init_all_x86_transform_asm( void )
          message( "SSE cpu detected.\n" );
          _mesa_init_sse_transform_asm();
       } else {
+         message( "SSE cpu detected, but switched off by user.\n" );
          _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
    }
