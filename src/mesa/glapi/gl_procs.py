@@ -36,48 +36,137 @@ import sys, getopt
 class PrintGlProcs(gl_XML.FilterGLAPISpecBase):
 	name = "gl_procs.py (from Mesa)"
 
-	def __init__(self):
+	def __init__(self, long_strings):
+		self.long_strings = long_strings
 		gl_XML.FilterGLAPISpecBase.__init__(self)
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
 
+
 	def printRealHeader(self):
-		print ''
 		print '/* This file is only included by glapi.c and is used for'
 		print ' * the GetProcAddress() function'
 		print ' */'
 		print ''
-		print 'static const struct name_address_offset static_functions[] = {'
+		print 'typedef struct {'
+		print '    int Name_offset;'
+		print '#ifdef NEED_FUNCTION_POINTER'
+		print '    void * Address;'
+		print '#endif'
+		print '    unsigned int Offset;'
+		print '} glprocs_table_t;'
+		print ''
+		print '#ifdef NEED_FUNCTION_POINTER'
+		print '#  define NAME_FUNC_OFFSET(n,f,o) { n , (void *) f , o }'
+		print '#else'
+		print '#  define NAME_FUNC_OFFSET(n,f,o) { n , o }'
+		print '#endif'
+		print ''
 		return
 
 	def printRealFooter(self):
-		print '   { NULL, NULL, 0 }  /* end of list marker */'
+		print ''
+		print '#undef NAME_FUNC_OFFSET'
+		return
+
+	def printFunctionString(self, f):
+		if self.long_strings:
+			print '    "gl%s\\0"' % (f.name)
+		else:
+			print "    'g','l',",
+			for c in f.name:
+				print "'%s'," % (c),
+			
+			print "'\\0',"
+
+	def printFunctionOffset(self, f, offset_of_name):
+		print '    NAME_FUNC_OFFSET( % 5u, gl%s, _gloffset_%s ),' % (offset_of_name, f.name, f.real_name)
+
+
+	def printFunctions(self):
+		print ''
+		if self.long_strings:
+			print 'static const char gl_string_table[] ='
+		else:
+			print 'static const char gl_string_table[] = {'
+
+		keys = self.functions.keys()
+		keys.sort()
+		for k in keys:
+			if k < 0: continue
+			self.printFunctionString(self.functions[k])
+
+		keys.reverse()
+		for k in keys:
+			if k >= -1: continue
+			self.printFunctionString(self.functions[k])
+
+		if self.long_strings:
+			print '    ;'
+		else:
+			print '};'
+
+		print ''
+		print 'static const glprocs_table_t static_functions[] = {'
+
+		keys = self.functions.keys()
+		keys.sort()
+		base_offset = 0
+		for k in keys:
+			if k < 0: continue
+			self.printFunctionOffset(self.functions[k], base_offset)
+
+			# The length of the function's name, plus 2 for "gl",
+			# plus 1 for the NUL.
+
+			base_offset += len(self.functions[k].name) + 3
+
+		keys.reverse()
+		for k in keys:
+			if k >= -1: continue
+			self.printFunctionOffset(self.functions[k], base_offset)
+
+			# The length of the function's name, plus 2 for "gl",
+			# plus 1 for the NUL.
+
+			base_offset += len(self.functions[k].name) + 3
+
+		print '    NAME_FUNC_OFFSET( -1, NULL, -1 )'
 		print '};'
 		return
 
-	def printFunction(self, f):
-		print '   { "gl%s", (GLvoid *) gl%s, _gloffset_%s },' \
-			% (f.name, f.name, f.real_name)
-
 
 def show_usage():
-	print "Usage: %s [-f input_file_name]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-m mode]" % sys.argv[0]
+	print "mode can be one of:"
+	print "    long  - Create code for compilers that can handle very "
+	print "            long string constants. (default)"
+	print "    short - Create code for compilers that can only handle "
+	print "            ANSI C89 string constants."
 	sys.exit(1)
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
     
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:")
 	except Exception,e:
 		show_usage()
 
+	long_string = 1
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
+		elif arg == "-m":
+			if val == "short":
+				long_string = 0
+			elif val == "long":
+				long_string = 1
+			else:
+				show_usage()
 
-	dh = PrintGlProcs()
+	dh = PrintGlProcs( long_string )
 
 	parser = make_parser()
 	parser.setFeature(feature_namespaces, 0)

@@ -446,9 +446,27 @@ struct name_address_offset {
 };
 
 
+#define NEED_FUNCTION_POINTER
+
 /* The code in this file is auto-generated with Python */
 #include "glprocs.h"
 
+
+static const glprocs_table_t *
+find_entry( const char * n )
+{
+   unsigned   i;
+
+   for ( i = 0 ; static_functions[i].Name_offset >= 0 ; i++ ) {
+      const char * test_name;
+
+      test_name = gl_string_table + static_functions[i].Name_offset;
+      if (strcmp(test_name, n) == 0) {
+	 return & static_functions[i];
+      }
+   }
+   return NULL;
+}
 
 
 /*
@@ -458,11 +476,10 @@ struct name_address_offset {
 static GLint
 get_static_proc_offset(const char *funcName)
 {
-   GLuint i;
-   for (i = 0; static_functions[i].Name; i++) {
-      if (strcmp(static_functions[i].Name, funcName) == 0) {
-	 return static_functions[i].Offset;
-      }
+   const glprocs_table_t * const f = find_entry( funcName );
+
+   if ( f != NULL ) {
+      return f->Offset;
    }
    return -1;
 }
@@ -472,13 +489,22 @@ get_static_proc_offset(const char *funcName)
  * Return dispatch function address the named static (built-in) function.
  * Return NULL if function not found.
  */
-static GLvoid *
+static const GLvoid *
 get_static_proc_address(const char *funcName)
 {
-   GLint i;
-   for (i = 0; static_functions[i].Name; i++) {
-      if (strcmp(static_functions[i].Name, funcName) == 0) {
-         return static_functions[i].Address;
+   const glprocs_table_t * const f = find_entry( funcName );
+   return ( f != NULL ) ? f->Address : NULL;
+}
+
+
+static const char *
+get_static_proc_name( GLuint offset )
+{
+   unsigned   i;
+
+   for ( i = 0 ; static_functions[i].Name_offset >= 0 ; i++ ) {
+      if (static_functions[i].Offset == offset) {
+	 return gl_string_table + static_functions[i].Name_offset;
       }
    }
    return NULL;
@@ -802,13 +828,13 @@ _glapi_get_proc_address(const char *funcName)
 const char *
 _glapi_get_proc_name(GLuint offset)
 {
-   const GLuint n = sizeof(static_functions) / sizeof(struct name_address_offset);
    GLuint i;
+   const char * n;
 
    /* search built-in functions */
-   for (i = 0; i < n; i++) {
-      if (static_functions[i].Offset == offset)
-         return static_functions[i].Name;
+   n = get_static_proc_name(offset);
+   if ( n != NULL ) {
+      return n;
    }
 
    /* search added extension functions */
