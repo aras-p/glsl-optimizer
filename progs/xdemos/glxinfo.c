@@ -271,12 +271,20 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       const char *glRenderer = (const char *) glGetString(GL_RENDERER);
       const char *glVersion = (const char *) glGetString(GL_VERSION);
       const char *glExtensions = (const char *) glGetString(GL_EXTENSIONS);
+      int glxVersionMajor;
+      int glxVersionMinor;
       char *displayName = NULL;
       char *colon = NULL, *period = NULL;
 #ifdef DO_GLU
       const char *gluVersion = (const char *) gluGetString(GLU_VERSION);
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
 #endif
+      
+      if (! glXQueryVersion( dpy, & glxVersionMajor, & glxVersionMinor )) {
+         fprintf(stderr, "Error: glXQueryVersion failed\n");
+         exit(1);
+      }
+
       /* Strip the screen number from the display name, if present. */
       if (!(displayName = (char *) malloc(strlen(DisplayString(dpy)) + 1))) {
          fprintf(stderr, "Error: malloc() failed\n");
@@ -300,6 +308,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       printf("client glx version string: %s\n", clientVersion);
       printf("client glx extensions:\n");
       print_extension_list(clientExtensions);
+      printf("GLX version: %u.%u\n", glxVersionMajor, glxVersionMinor);
       printf("GLX extensions:\n");
       print_extension_list(glxExtensions);
       printf("OpenGL vendor string: %s\n", glVendor);
