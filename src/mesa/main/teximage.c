@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.79 2001/02/26 18:24:55 brianp Exp $ */
+/* $Id: teximage.c,v 1.80 2001/02/27 22:16:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1662,6 +1662,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
                                 format, type, pixels, &ctx->Unpack,
                                 texObj, texImage);
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1704,6 +1705,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    (*ctx->Driver.TexSubImage2D)(ctx, target, level, xoffset, yoffset,
                                 width, height, format, type, pixels,
                                 &ctx->Unpack, texObj, texImage);
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1742,6 +1744,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                                 width, height, depth,
                                 format, type, pixels,
                                 &ctx->Unpack, texObj, texImage );
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1879,6 +1882,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
 
    ASSERT(ctx->Driver.CopyTexSubImage1D);
    (*ctx->Driver.CopyTexSubImage1D)(ctx, target, level, xoffset, x, y, width);
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1905,6 +1909,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    ASSERT(ctx->Driver.CopyTexSubImage2D);
    (*ctx->Driver.CopyTexSubImage2D)(ctx, target, level,
                                     xoffset, yoffset, x, y, width, height);
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1932,6 +1937,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    (*ctx->Driver.CopyTexSubImage3D)(ctx, target, level,
                                     xoffset, yoffset, zoffset,
                                     x, y, width, height);
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -2256,6 +2262,7 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                              format, imageSize, data,
                                              texObj, texImage);
    }
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -2289,6 +2296,7 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
                                              format, imageSize, data,
                                              texObj, texImage);
    }
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -2323,6 +2331,7 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                              format, imageSize, data,
                                              texObj, texImage);
    }
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
