@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.3 1999/11/11 01:29:28 brianp Exp $ */
+/* $Id: xfonts.c,v 1.4 1999/11/28 20:11:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,7 +43,6 @@
 #include "GL/glx.h"
 #include "GL/xmesa.h"
 #include "context.h"
-#include "fakeglx.h"
 #include "mem.h"
 #include "xmesaP.h"
 
