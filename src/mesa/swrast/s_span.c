@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.17 2001/08/14 14:08:44 brianp Exp $ */
+/* $Id: s_span.c,v 1.18 2001/10/17 23:03:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -463,6 +463,13 @@ multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 
+/*
+ * Apply fragment processing to a span of RGBA fragments.
+ * Input:
+ *         n - number of fragments in the span
+ *         x,y - location of first (left) fragment
+ *         fog - array of fog factor values in [0,1]
+ */
 void
 _mesa_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                        const GLdepth z[], const GLfloat fog[],
@@ -802,6 +809,7 @@ add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
  * Input:  n - number of pixels in the span
  *         x, y - location of leftmost pixel in the span
  *         z - array of [n] z-values
+ *         fog - array of fog factor values in [0,1]
  *         s, t - array of (s,t) texture coordinates for each pixel
  *         lambda - array of texture lambda values
  *         rgba - array of [n] color components
