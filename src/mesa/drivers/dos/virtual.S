@@ -108,7 +108,7 @@ _v_clear_common:
 		.global	_v_clear8_mmx
 _v_clear8_mmx:
 #ifdef USE_MMX_ASM
-		movq	4(%esp), %mm0
+		movd	4(%esp), %mm0
 		punpcklbw %mm0, %mm0
 		punpcklwd %mm0, %mm0
 		jmp	_v_clear_common_mmx
@@ -125,7 +125,7 @@ _v_clear8_mmx:
 		.global	_v_clear16_mmx
 _v_clear16_mmx:
 #ifdef USE_MMX_ASM
-		movq	4(%esp), %mm0
+		movd	4(%esp), %mm0
 		punpcklwd %mm0, %mm0
 		jmp	_v_clear_common_mmx
 #endif
@@ -141,7 +141,7 @@ _v_clear16_mmx:
 		.global	_v_clear32_mmx
 _v_clear32_mmx:
 #ifdef USE_MMX_ASM
-		movq	4(%esp), %mm0
+		movd	4(%esp), %mm0
 		.balign	4
 _v_clear_common_mmx:
 		punpckldq %mm0, %mm0

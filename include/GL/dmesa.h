@@ -87,6 +87,11 @@ DMesaContext DMesaCreateContext (DMesaVisual visual, DMesaContext share);
  */
 void DMesaDestroyContext (DMesaContext c);
 
+/*
+ * Return a handle to the current context.
+ */
+DMesaContext DMesaGetCurrentContext (void);
+
 
 
 /*
@@ -101,20 +106,16 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
  */
 void DMesaDestroyBuffer (DMesaBuffer b);
 
-
-
-/*
- * Bind Buffer to Context and make the Context the current one.
- */
-GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b);
-
-
-
 /*
  * Swap the front and back buffers for the given Buffer.
  * No action is taken if the buffer is not double buffered.
  */
 void DMesaSwapBuffers (DMesaBuffer b);
+
+/*
+ * Bind Buffer to Context and make the Context the current one.
+ */
+GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b);
 
 
 
@@ -132,10 +133,12 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
 /*
  * DMesa state retrieval.
  */
-#define DMESA_Y_ORIGIN    0x0100
-#define DMESA_SCREEN_SIZE 0x0101
-#define DMESA_ARGB_ORDER  0x0200
-void DMesaGetIntegerv (GLenum pname, GLint *params);
+#define DMESA_GET_SCREEN_SIZE 0x0100
+#define DMESA_GET_DRIVER_CAPS 0x0200
+
+#define DMESA_DRIVER_SWDB_BIT 0x1 /* software double-buffered */
+#define DMESA_DRIVER_LLWO_BIT 0x2 /* lower-left window origin */
+int DMesaGetIntegerv (GLenum pname, GLint *params);
 
 #ifdef __cplusplus
 }

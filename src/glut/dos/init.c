@@ -38,6 +38,9 @@ GLboolean g_redisplay = GL_FALSE;
 GLuint g_bpp = DEFAULT_BPP;
 GLuint g_refresh = 0;
 GLuint g_screen_w, g_screen_h;
+GLint g_driver_caps;
+
+GLuint g_fps = 0;
 
 GLuint g_display_mode = 0;
 int g_init_x = 0, g_init_y = 0;
@@ -67,6 +70,13 @@ void APIENTRY glutInit (int *argc, char **argv)
     str++;
  }
  __glutProgramName = __glutStrdup(str);
+
+ /* check if GLUT_FPS env var is set */
+ if ((env = getenv("GLUT_FPS")) != NULL) {
+    if ((g_fps = atoi(env)) <= 0) {
+       g_fps = 5000; /* 5000 milliseconds */
+    }
+ }
 
  /* Initialize timer */
  glutGet(GLUT_ELAPSED_TIME);
@@ -106,9 +116,10 @@ void APIENTRY glutMainLoop (void)
 
  {
   GLint screen_size[2];
-  DMesaGetIntegerv(DMESA_SCREEN_SIZE, screen_size);
+  DMesaGetIntegerv(DMESA_GET_SCREEN_SIZE, screen_size);
   g_screen_w = screen_size[0];
   g_screen_h = screen_size[1];
+  DMesaGetIntegerv(DMESA_GET_DRIVER_CAPS, &g_driver_caps);
  }
 
  pc_install_keyb();

@@ -79,9 +79,9 @@ typedef struct {
         void (*blit) (void);
         void (*setCI_f) (int index, float red, float green, float blue);
         void (*setCI_i) (int index, int red, int green, int blue);
-        int (*getCIprec) (void);
+        int (*get) (int pname, int *params);
         void (*restore) (void);
-        void (*finit) (void);
+        void (*fini) (void);
 } vl_driver;
 
 
@@ -89,13 +89,15 @@ typedef struct {
 /*
  * memory mapping
  */
+int _create_linear_mapping (unsigned long *linear, unsigned long physaddr, int size);
+void _remove_linear_mapping (unsigned long *linear);
 int _create_selector (int *segment, unsigned long base, int size);
 void _remove_selector (int *segment);
 
 /*
  * system routines
  */
-int vl_can_mmx (void);
+int _can_mmx (void);
 
 /*
  * asm routines to deal with virtual buffering

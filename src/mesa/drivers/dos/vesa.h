@@ -31,12 +31,17 @@
  */
 
 
-#ifndef VGA_H_included
-#define VGA_H_included
+#ifndef VESA_H_included
+#define VESA_H_included
 
-#include "../internal.h"
-#include "../vesa/vesa.h"
+#include "internal.h"
 
-extern vl_driver VGA;
+extern void *vesa_swbank;
+
+extern void vesa_b_dump_virtual (void);
+extern void vesa_l_dump_virtual (void);
+extern void vesa_l_dump_virtual_mmx (void);
+
+extern vl_driver VESA;
 
 #endif

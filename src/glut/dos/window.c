@@ -27,12 +27,15 @@
  */
 
 
+#include <stdio.h>
+
 #include "glutint.h"
 #include "GL/dmesa.h"
 
 
 
 GLUTwindow *g_curwin;
+static GLuint swaptime, swapcount;
 
 static DMesaVisual  visual  = NULL;
 static DMesaContext context = NULL;
@@ -59,7 +62,6 @@ static void clean (void)
 int APIENTRY glutCreateWindow (const char *title)
 {
  int i;
- GLint screen_size[2];
  int m8width = (g_init_w + 7) & ~7;
 
  if (!visual) {
@@ -153,6 +155,20 @@ void APIENTRY glutSwapBuffers (void)
     /* XXX unscare mouse */
  } else {
     DMesaSwapBuffers(g_curwin->buffer);
+ }
+
+ if (g_fps) {
+    GLint t = glutGet(GLUT_ELAPSED_TIME);
+    swapcount++;
+    if (swaptime == 0)
+       swaptime = t;
+    else if (t - swaptime > g_fps) {
+       double time = 0.001 * (t - swaptime);
+       double fps = (double)swapcount / time;
+       fprintf(stderr, "GLUT: %d frames in %.2f seconds = %.2f FPS\n", swapcount, time, fps);
+       swaptime = t;
+       swapcount = 0;
+    }
  }
 }
 

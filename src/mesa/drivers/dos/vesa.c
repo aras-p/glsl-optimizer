@@ -40,11 +40,12 @@
 #include <sys/farptr.h>
 #include <sys/movedata.h>
 
+#include "video.h"
 #include "vesa.h"
 
 
 
-static vl_mode modes[64];
+static vl_mode modes[128];
 
 static word16 vesa_ver;
 static int banked_selector, linear_selector;
@@ -52,7 +53,7 @@ static int oldmode = -1;
 
 static int vesa_color_precision = 6;
 
-static void *vesa_pmcode;
+static word16 *vesa_pmcode;
 unsigned int vesa_gran_mask, vesa_gran_shift;
 
 
@@ -203,18 +204,22 @@ static vl_mode *vesa_init (void)
 
  if (vesa_info[V_MAJOR] >= 2) {
     r.x.ax = 0x4f0a;
-    r.h.bl = 0;
+    r.x.bx = 0;
     __dpmi_int(0x10, &r);
     if (r.x.ax == 0x004f) {
-       vesa_pmcode = malloc(r.x.cx);
+       vesa_pmcode = (word16 *)malloc(r.x.cx);
        movedata(__djgpp_dos_sel, (r.x.es << 4) + r.x.di, _my_ds(), (unsigned)vesa_pmcode, r.x.cx);
-       p = (word16 *)((long)vesa_pmcode + ((word16 *)vesa_pmcode)[3]);
-       while (*p++ != 0xffff) ;
-       if (*p != 0xffff) {
+       if (vesa_pmcode[3]) {
+          p = (word16 *)((long)vesa_pmcode + vesa_pmcode[3]);
+          while (*p++ != 0xffff) ;
+       } else {
+          p = NULL;
+       }
+       if (p && (*p != 0xffff)) {
           free(vesa_pmcode);
           vesa_pmcode = NULL;
        } else {
-          vesa_swbank = (char *)vesa_pmcode + ((word16 *)vesa_pmcode)[0];
+          vesa_swbank = (void *)((long)vesa_pmcode + vesa_pmcode[0]);
        }
     }
  }
@@ -232,7 +237,7 @@ static vl_mode *vesa_init (void)
  *
  * Note: -
  */
-static void vesa_finit (void)
+static void vesa_fini (void)
 {
  if (vesa_ver) {
     _remove_selector(&linear_selector);
@@ -363,7 +368,7 @@ static int vesa_entermode (vl_mode *p, int refresh)
  __dpmi_regs r;
 
  if (p->mode & 0x4000) {
-    VESA.blit = vl_can_mmx() ? vesa_l_dump_virtual_mmx : vesa_l_dump_virtual;
+    VESA.blit = _can_mmx() ? vesa_l_dump_virtual_mmx : vesa_l_dump_virtual;
  } else {
     VESA.blit = vesa_b_dump_virtual;
     { int n; for (vesa_gran_shift=0, n=p->gran; n; vesa_gran_shift++, n>>=1) ; }
@@ -492,16 +497,23 @@ static void vesa_setCI_f (int index, float red, float green, float blue)
 
 
 
-/* Desc: retrieve CI precision
+/* Desc: state retrieval
  *
- * In  : -
- * Out : precision in bits
+ * In  : parameter name, ptr to storage
+ * Out : 0 if request successfully processed
  *
  * Note: -
  */
-static int vesa_getCIprec (void)
+static int vesa_get (int pname, int *params)
 {
- return vesa_color_precision;
+ switch (pname) {
+        case VL_GET_CI_PREC:
+             params[0] = vesa_color_precision;
+             break;
+        default:
+             return -1;
+ }
+ return 0;
 }
 
 
@@ -515,7 +527,7 @@ vl_driver VESA = {
           NULL,
           vesa_setCI_f,
           vesa_setCI_i,
-          vesa_getCIprec,
+          vesa_get,
           vesa_restore,
-          vesa_finit
+          vesa_fini
 };

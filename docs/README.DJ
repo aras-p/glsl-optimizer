@@ -32,14 +32,18 @@ Available options:
      Environment variables:
 	CPU		optimize for the given processor.
 			default = k6
-	SGI_GLU=1	build SGI's GLU instead of Mesa's.
-			default = no
+	GLU=[src|si]	specify GLU directory; can be `src' (src-glu = Mesa)
+			or `si' (si-glu = SGI's GLU -- requires GNU/C++).
+			default = src
 	GLIDE		path to Glide3 SDK include files; used with FX.
 			default = $(TOP)/include/glide3
 	FX=1		build for 3dfx Glide3. Note that this disables
 			compilation of most DMesa code and requires fxMesa.
 			As a consequence, you'll need the DJGPP Glide3
 			library to build any application.
+			default = no
+	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
+			This is experimental and not intensively tested.
 			default = no
 	HAVE_X86=1	optimize for i386.
 			default = no
@@ -81,6 +85,15 @@ FAQ:
    A) You need LFN support.
    A) When compiling for Glide (FX=1), pay attention to Glide path.
 
+   Q) Libraries built OK, but linker complains about `vsnprintf' every time I
+      compile some demo.
+   A) Upgrade to DJGPP 2.04.
+   A) Add `vsnprintf.c' to the CORE_SOURCES in `src/Makefile.DJ' (untested!).
+   A) The following hack should be safe in 90% of the cases, but if anything
+      goes wrong, don't come back to me crying. Anyway, patch `src/imports.c'
+      with the following line:
+	#define vsnprintf(buf, max, fmt, arg) vsprintf(buf, fmt, arg)
+
 2. Dynamic modules
 
    Q) What are you mumbling about dynamic modules?
@@ -103,9 +116,10 @@ FAQ:
 3. Using Mesa for DJGPP
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
-   A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky. The
-      Glide port is on my web page. If you haven't, sorry; everything is done
-      in software. Suggestions?
+   A) Is that a question? If you have a Voodoo3/Banshee card, you're lucky (the
+      Glide port is on my web page). If you have a Matrox Millennium I card,
+      you just MIGHT be lucky... If you haven't, sorry; everything is done in
+      software. Suggestions?
 
    Q) I tried to set refresh rate w/ DMesa, but without success.
    A) Refresh rate control works only for VESA 3.0. If you were compiling for
@@ -113,15 +127,12 @@ FAQ:
 
    Q) I made a simple application and it does nothing. It exits right away. Not
       even a blank screen.
-   A) Only DMesa+FX supports single-buffered. The standard VESA/VGA drivers
-      will always work in double-buffered modes. If/When I will find a way to
-      use *REAL* hardware acceleration for a specific card, it might or might
-      not support single-buffered modes.
+   A) The pure software drivers (VESA/VGA) support only double-buffered modes.
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
 
-   Q) My demo doesn't display text. I know I used the glut font routines!
+   Q) My demo doesn't display text. I know I used the GLUT font routines!
    A) Then you probably use GLUT as a DXE. Well, there is no direct access to
       variables due to the way DXE works. Read the documentation. The author of
       GLUT took this into account for _WIN32 DLL's only; I don't want to modify
@@ -196,15 +207,17 @@ v1.2 (nov-2002)
 	* synced w/ Mesa-4.1
 	- removed dmesadxe.h
 
-v1.3 (jan-2003)
+v1.3 (feb-2003)
 	+ enabled OpenGL 1.4 support
 	+ added MMX clear/blit routines
 	+ enabled SGI's GLU compilation
+	+ added samples makefile
 	+ added new GLUT functions
 	+ added color-index modes
+	+ added Matrox Millennium MGA2064W driver
 	+ added 8bit FakeColor (thanks to Neil Funk)
 	+ added VGA support (to keep Ben Decker happy)
-	* fixed GLUT compilation error (reported by Chan Kar Heng)
+	! fixed GLUT compilation error (reported by Chan Kar Heng)
 	* overhauled virtual buffer and internal video drivers
 	* better fxMesa integration
 	* revamped GLUT

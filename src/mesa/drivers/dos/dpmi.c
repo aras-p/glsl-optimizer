@@ -46,7 +46,7 @@
 /* _create_linear_mapping:
  *  Maps a physical address range into linear memory.
  */
-static int _create_linear_mapping (unsigned long *linear, unsigned long physaddr, int size)
+int _create_linear_mapping (unsigned long *linear, unsigned long physaddr, int size)
 {
  __dpmi_meminfo meminfo;
 
@@ -71,7 +71,7 @@ static int _create_linear_mapping (unsigned long *linear, unsigned long physaddr
 /* _remove_linear_mapping:
  *  Frees the DPMI resources being used to map a linear address range.
  */
-static void _remove_linear_mapping (unsigned long *linear)
+void _remove_linear_mapping (unsigned long *linear)
 {
  __dpmi_meminfo meminfo;
 
@@ -126,4 +126,23 @@ void _remove_selector (int *segment)
     __dpmi_free_ldt_descriptor(*segment);
     *segment = 0;
  }
+}
+
+
+
+/* Desc: retrieve CPU MMX capability
+ *
+ * In  : -
+ * Out : FALSE if CPU cannot do MMX
+ *
+ * Note: -
+ */
+int _can_mmx (void)
+{
+#ifdef USE_MMX_ASM
+ extern int _mesa_identify_x86_cpu_features (void);
+ return (_mesa_identify_x86_cpu_features() & 0x00800000);
+#else
+ return 0;
+#endif
 }

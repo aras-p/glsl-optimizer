@@ -65,16 +65,12 @@ CFLAGS += -I$(TOP)/include
 
 LDFLAGS = -s -L$(TOP)/lib
 
-ifdef DXE
+ifeq ($(DXE),1)
 DMESADXE = $(TOP)/lib/dmesadxe.o
-LDLIBS += -liglut -liglu -ligl
-ifdef FX
-LDFLAGS += -L$(GLIDE)
-endif
-LDLIBS += -ldl
+LDLIBS += -liglut -liglu -ligl -ldl
 else
 LDLIBS = -lglut -lglu -lgl
-ifdef FX
+ifeq ($(FX),1)
 LDFLAGS += -L$(GLIDE)
 LDLIBS += -lglid3
 endif

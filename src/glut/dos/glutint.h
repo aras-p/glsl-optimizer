@@ -105,6 +105,9 @@ extern GLboolean g_redisplay;
 extern GLuint g_bpp;                  /* HW: bits per pixel */
 extern GLuint g_refresh;              /* HW: vertical refresh rate */
 extern GLuint g_screen_w, g_screen_h; /* HW: physical screen size */
+extern GLint g_driver_caps;
+
+extern GLuint g_fps;
 
 extern GLuint g_display_mode;         /* display bits */
 extern int g_init_x, g_init_y;        /* initial window position */
@@ -132,7 +135,7 @@ extern void __glutFatalUsage(char *format,...);
 
 
 
-#define MAX_WINDOWS    2
+#define MAX_WINDOWS 2
 
 #define DEFAULT_WIDTH  300
 #define DEFAULT_HEIGHT 300

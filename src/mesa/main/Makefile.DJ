@@ -40,6 +40,9 @@
 #			As a consequence, you'll need the DJGPP Glide3
 #			library to build any application.
 #			default = no
+#	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
+#			This is experimental and not intensively tested.
+#			default = no
 #	HAVE_X86=1	optimize for i386.
 #			default = no
 #	HAVE_MMX=1	allow MMX specializations, provided your assembler
@@ -70,8 +73,17 @@ GL_IMP = libigl.a
 
 CC = gcc
 CFLAGS += -I$(TOP)/include -I.
-ifdef FX
-CFLAGS += -D__DOS__ -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
+ifeq ($(FX),1)
+CFLAGS += -D__DOS__ -DH3
+CFLAGS += -I$(GLIDE) -DFX -DFX_GLIDE3 -DFXMESA_USE_ARGB
+LIBNAME = "MesaGL/FX DJGPP"
+else
+ifeq ($(MATROX),1)
+CFLAGS += -DMATROX
+LIBNAME = "MesaGL/MGA DJGPP"
+else
+LIBNAME = "MesaGL DJGPP"
+endif
 endif
 
 AR = ar
@@ -228,22 +240,22 @@ K3D_SOURCES = \
 	X86/3dnow_xform4.S \
 	X86/3dnow_normal.S
 
-ifdef HAVE_MMX
+ifeq ($(HAVE_MMX),1)
 X86_SOURCES += $(MMX_SOURCES)
 CFLAGS += -DUSE_MMX_ASM
 HAVE_X86 = 1
 endif
-ifdef HAVE_SSE
+ifeq ($(HAVE_SSE),1)
 X86_SOURCES += $(SSE_SOURCES)
 CFLAGS += -DUSE_SSE_ASM
 HAVE_X86 = 1
 endif
-ifdef HAVE_3DNOW
+ifeq ($(HAVE_3DNOW),1)
 X86_SOURCES += $(K3D_SOURCES)
 CFLAGS += -DUSE_3DNOW_ASM
 HAVE_X86 = 1
 endif
-ifdef HAVE_X86
+ifeq ($(HAVE_X86),1)
 CFLAGS += -DUSE_X86_ASM
 else
 X86_SOURCES =
@@ -251,15 +263,7 @@ endif
 
 DRIVER_SOURCES = \
 	DOS/dmesa.c
-ifndef FX
-DRIVER_SOURCES += \
-	DOS/video.c \
-	DOS/virtual.S \
-	DOS/vesa/vesa.c \
-	DOS/vesa/blit.S \
-	DOS/vga/vga.c \
-	DOS/dpmi.c
-else
+ifeq ($(FX),1)
 DRIVER_SOURCES += \
 	FX/fxapi.c \
 	FX/fxdd.c \
@@ -270,6 +274,22 @@ DRIVER_SOURCES += \
 	FX/fxtris.c \
 	FX/fxvb.c \
 	FX/fxglidew.c
+else
+ifeq ($(MATROX),1)
+DRIVER_SOURCES += \
+	DOS/mga/mga.c \
+	DOS/mga/mga_hw.c \
+	DOS/mga/mga_mode.c \
+	DOS/dpmi.c
+else
+DRIVER_SOURCES += \
+	DOS/video.c \
+	DOS/virtual.S \
+	DOS/vesa.c \
+	DOS/blit.S \
+	DOS/vga.c \
+	DOS/dpmi.c
+endif
 endif
 
 SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
@@ -295,10 +315,10 @@ ifeq ($(DXE3GEN),)
 	$(warning Missing DXE3GEN and/or DXE3.LD! You must have DXE3GEN)
 	$(warning somewhere in PATH, and DXE3.LD in DJGPP/LIB directory.)
 else
-ifdef FX
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL/FX DJGPP" -E _gl -E _DMesa -P glid3.dxe -U $(OBJECTS)
+ifeq ($(FX),1)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glid3.dxe -U $(OBJECTS)
 else
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D "MesaGL DJGPP" -E _gl -E _DMesa -U $(OBJECTS)
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -I $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -U $(OBJECTS)
 endif
 endif
 
@@ -319,8 +339,7 @@ clean:
 	-$(RM) $(subst /,\,tnl/*.o)
 	-$(RM) $(subst /,\,X86/*.o)
 	-$(RM) $(subst /,\,DOS/*.o)
-	-$(RM) $(subst /,\,DOS/vesa/*.o)
-	-$(RM) $(subst /,\,DOS/vga/*.o)
+	-$(RM) $(subst /,\,DOS/mga/*.o)
 	-$(RM) $(subst /,\,FX/*.o)
 
 -include depend

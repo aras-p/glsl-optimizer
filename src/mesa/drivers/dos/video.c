@@ -35,10 +35,10 @@
 
 #include <stdlib.h>
 
-#include "video.h"
 #include "internal.h"
-#include "vesa/vesa.h"
-#include "vga/vga.h"
+#include "vesa.h"
+#include "vga.h"
+#include "video.h"
 
 
 
@@ -56,22 +56,22 @@ int vl_current_offset, vl_current_delta;
 
 /* lookup table for scaling 5 bit colors up to 8 bits */
 static int _rgb_scale_5[32] = {
-   0,   8,   16,  24,  32,  41,  49,  57,
-   65,  74,  82,  90,  98,  106, 115, 123,
-   131, 139, 148, 156, 164, 172, 180, 189,
-   197, 205, 213, 222, 230, 238, 246, 255
+   0,   8,   16,  25,  33,  41,  49,  58,
+   66,  74,  82,  90,  99,  107, 115, 123,
+   132, 140, 148, 156, 165, 173, 181, 189,
+   197, 206, 214, 222, 230, 239, 247, 255
 };
 
 /* lookup table for scaling 6 bit colors up to 8 bits */
 static int _rgb_scale_6[64] = {
    0,   4,   8,   12,  16,  20,  24,  28,
-   32,  36,  40,  44,  48,  52,  56,  60,
-   64,  68,  72,  76,  80,  85,  89,  93,
+   32,  36,  40,  45,  49,  53,  57,  61,
+   65,  69,  73,  77,  81,  85,  89,  93,
    97,  101, 105, 109, 113, 117, 121, 125,
-   129, 133, 137, 141, 145, 149, 153, 157,
-   161, 165, 170, 174, 178, 182, 186, 190,
-   194, 198, 202, 206, 210, 214, 218, 222,
-   226, 230, 234, 238, 242, 246, 250, 255
+   130, 134, 138, 142, 146, 150, 154, 158,
+   162, 166, 170, 174, 178, 182, 186, 190,
+   194, 198, 202, 206, 210, 215, 219, 223,
+   227, 231, 235, 239, 243, 247, 251, 255
 };
 
 /* FakeColor data */
@@ -376,36 +376,24 @@ int vl_sync_buffer (void **buffer, int x, int y, int width, int height)
 
 
 
-/* Desc: get screen geometry
+/* Desc: state retrieval
  *
- * In  : ptr to WIDTH, ptr to HEIGHT
+ * In  : name, storage
  * Out : -
  *
  * Note: -
  */
-void vl_get_screen_size (int *width, int *height)
+int vl_get (int pname, int *params)
 {
- *width = video_mode->xres;
- *height = video_mode->yres;
-}
-
-
-
-/* Desc: retrieve CPU MMX capability
- *
- * In  : -
- * Out : FALSE if CPU cannot do MMX
- *
- * Note: -
- */
-int vl_can_mmx (void)
-{
-#ifdef USE_MMX_ASM
- extern int _mesa_identify_x86_cpu_features (void);
- return (_mesa_identify_x86_cpu_features() & 0x00800000);
-#else
+ switch (pname) {
+        case VL_GET_SCREEN_SIZE:
+             params[0] = video_mode->xres;
+             params[1] = video_mode->yres;
+             break;
+        default:
+             return drv->get(pname, params);
+ }
  return 0;
-#endif
 }
 
 
@@ -431,7 +419,7 @@ static int vl_setup_mode (vl_mode *p)
         vl_mixfix = vl_mixfix##bpp;    \
         vl_mixrgb = vl_mixrgb##bpp;    \
         vl_mixrgba = vl_mixrgba##bpp;  \
-        vl_clear = vl_can_mmx() ? v_clear##bpp##_mmx : v_clear##bpp
+        vl_clear = _can_mmx() ? v_clear##bpp##_mmx : v_clear##bpp
         
  switch (p->bpp) {
         case 8:
@@ -475,7 +463,7 @@ static int vl_setup_mode (vl_mode *p)
 void vl_video_exit (void)
 {
  drv->restore();
- drv->finit();
+ drv->fini();
 }
 
 
@@ -523,7 +511,7 @@ int vl_video_init (int width, int height, int bpp, int rgb, int refresh)
  if ((vl_setup_mode(p) == 0) && (drv->entermode(p, refresh) == 0)) {
     vl_flip = drv->blit;
     if (fake) {
-       min = drv->getCIprec();
+       drv->get(VL_GET_CI_PREC, (int *)(&min));
        fake_buildpalette(min);
        if (min == 8) {
           vl_getrgba = v_getrgba8fake8;
