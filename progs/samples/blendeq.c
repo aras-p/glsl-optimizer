@@ -14,9 +14,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#define GL_GLEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
-
 
 GLenum doubleBuffer;
 static int dithering = 0;
