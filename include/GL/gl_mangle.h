@@ -517,6 +517,7 @@
 #define glGetShaderSourceARB		MANGLE(GetShaderSourceARB)
 #define glGetShaderSource		MANGLE(GetShaderSource)
 #define glGetSharpenTexFuncSGIS		MANGLE(GetSharpenTexFuncSGIS)
+#define glGetString		MANGLE(GetString)
 #define glGetTexBumpParameterfvATI		MANGLE(GetTexBumpParameterfvATI)
 #define glGetTexBumpParameterivATI		MANGLE(GetTexBumpParameterivATI)
 #define glGetTexEnvfv		MANGLE(GetTexEnvfv)
@@ -1447,6 +1448,5 @@
 #define glWindowPos4sMESA		MANGLE(WindowPos4sMESA)
 #define glWindowPos4svMESA		MANGLE(WindowPos4svMESA)
 #define glWriteMaskEXT		MANGLE(WriteMaskEXT)
-gl.h:GLAPI const GLubyte GLAPIENTRYP glGetString( GLenum name );
 
 #endif /* GL_MANGLE_H */
