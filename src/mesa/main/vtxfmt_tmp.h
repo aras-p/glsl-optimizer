@@ -1,4 +1,4 @@
-/* $Id: vtxfmt_tmp.h,v 1.1 2001/03/09 16:08:13 gareth Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.2 2001/03/10 02:50:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@ static void TAG(Color3ub)( GLubyte a, GLubyte b, GLubyte c )
 static void TAG(Color3ubv)( const GLubyte *v )
 {
    PRE_LOOPBACK( Color3ubv );
-   glColor( 3ubv );
+   glColor3ubv( v );
 }
 
 static void TAG(Color4f)( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
@@ -163,7 +163,7 @@ static void TAG(Materialfv)( GLenum face, GLenum pname, const GLfloat *v )
    glMaterialfv( face, pname, v );
 }
 
-static void TAG(MultiTexCoord1fARB)( GLenum target, GLfloat a );
+static void TAG(MultiTexCoord1fARB)( GLenum target, GLfloat a )
 {
    PRE_LOOPBACK( MultiTexCoord1fARB );
    glMultiTexCoord1fARB( target, a );
@@ -211,6 +211,42 @@ static void TAG(MultiTexCoord4fvARB)( GLenum target, const GLfloat *tc )
 {
    PRE_LOOPBACK( MultiTexCoord4fvARB );
    glMultiTexCoord4fvARB( target, tc );
+}
+
+static void TAG(Normal3f)( GLfloat a, GLfloat b, GLfloat c )
+{
+   PRE_LOOPBACK( Normal3f );
+   glNormal3f( a, b, c );
+}
+
+static void TAG(Normal3fv)( const GLfloat *v )
+{
+   PRE_LOOPBACK( Normal3fv );
+   glNormal3fv( v );
+}
+
+static void TAG(SecondaryColor3fEXT)( GLfloat a, GLfloat b, GLfloat c )
+{
+   PRE_LOOPBACK( SecondaryColor3fEXT );
+   glSecondaryColor3fEXT( a, b, c );
+}
+
+static void TAG(SecondaryColor3fvEXT)( const GLfloat *v )
+{
+   PRE_LOOPBACK( SecondaryColor3fvEXT );
+   glSecondaryColor3fvEXT( v );
+}
+
+static void TAG(SecondaryColor3ubEXT)( GLubyte a, GLubyte b, GLubyte c )
+{
+   PRE_LOOPBACK( SecondaryColor3ubEXT );
+   glSecondaryColor3ubEXT( a, b, c );
+}
+
+static void TAG(SecondaryColor3ubvEXT)( const GLubyte *v )
+{
+   PRE_LOOPBACK( SecondaryColor3ubvEXT );
+   glSecondaryColor3ubvEXT( v );
 }
 
 static void TAG(TexCoord1f)( GLfloat a )
@@ -315,6 +351,12 @@ static void TAG(End)( void )
    glEnd();
 }
 
+static void TAG(Rectf)( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
+{
+   PRE_LOOPBACK( Rectf );
+   glRectf( x1, y1, x2, y2 );
+}
+
 static void TAG(DrawArrays)( GLenum mode, GLint start, GLsizei count )
 {
    PRE_LOOPBACK( DrawArrays );
@@ -350,72 +392,67 @@ static void TAG(EvalMesh2)( GLenum mode, GLint i1, GLint i2,
 }
 
 
-
-/* Hack from hell:
- * Call or reference this function to stop unused symbol warnings...
- */
-static void TAG(silence_compiler)( void )
-{
-   (void)TAG(ArrayElement);
-   (void)TAG(Color3f);
-   (void)TAG(Color3fv);
-   (void)TAG(Color3ub);
-   (void)TAG(Color3ubv);
-   (void)TAG(Color4f);
-   (void)TAG(Color4fv);
-   (void)TAG(Color4ub);
-   (void)TAG(Color4ubv);
-   (void)TAG(EdgeFlag);
-   (void)TAG(EdgeFlagv);
-   (void)TAG(EvalCoord1f);
-   (void)TAG(EvalCoord1fv);
-   (void)TAG(EvalCoord2f);
-   (void)TAG(EvalCoord2fv);
-   (void)TAG(EvalPoint1);
-   (void)TAG(EvalPoint2);
-   (void)TAG(FogCoordfEXT);
-   (void)TAG(FogCoordfvEXT);
-   (void)TAG(Indexi);
-   (void)TAG(Indexiv);
-   (void)TAG(Materialfv);
-   (void)TAG(MultiTexCoord1fARB);
-   (void)TAG(MultiTexCoord1fvARB);
-   (void)TAG(MultiTexCoord2fARB);
-   (void)TAG(MultiTexCoord2fvARB);
-   (void)TAG(MultiTexCoord3fARB);
-   (void)TAG(MultiTexCoord3fvARB);
-   (void)TAG(MultiTexCoord4fARB);
-   (void)TAG(MultiTexCoord4fvARB);
-   (void)TAG(Normal3f);
-   (void)TAG(Normal3fv);
-   (void)TAG(SecondaryColor3fEXT);
-   (void)TAG(SecondaryColor3fvEXT);
-   (void)TAG(SecondaryColor3ubEXT);
-   (void)TAG(SecondaryColor3ubvEXT);
-   (void)TAG(TexCoord1f);
-   (void)TAG(TexCoord1fv);
-   (void)TAG(TexCoord2f);
-   (void)TAG(TexCoord2fv);
-   (void)TAG(TexCoord3f);
-   (void)TAG(TexCoord3fv);
-   (void)TAG(TexCoord4f);
-   (void)TAG(TexCoord4fv);
-   (void)TAG(Vertex2f);
-   (void)TAG(Vertex2fv);
-   (void)TAG(Vertex3f);
-   (void)TAG(Vertex3fv);
-   (void)TAG(Vertex4f);
-   (void)TAG(Vertex4fv);
-   (void)TAG(CallList);
-   (void)TAG(Begin);
-   (void)TAG(End);
-   (void)TAG(Rectf);
-   (void)TAG(DrawArrays);
-   (void)TAG(DrawElements);
-   (void)TAG(DrawRangeElements);
-   (void)TAG(EvalMesh1);
-   (void)TAG(EvalMesh2);
-}
+static GLvertexformat TAG(vtxfmt) = {
+   TAG(ArrayElement),
+   TAG(Color3f),
+   TAG(Color3fv),
+   TAG(Color3ub),
+   TAG(Color3ubv),
+   TAG(Color4f),
+   TAG(Color4fv),
+   TAG(Color4ub),
+   TAG(Color4ubv),
+   TAG(EdgeFlag),
+   TAG(EdgeFlagv),
+   TAG(EvalCoord1f),
+   TAG(EvalCoord1fv),
+   TAG(EvalCoord2f),
+   TAG(EvalCoord2fv),
+   TAG(EvalPoint1),
+   TAG(EvalPoint2),
+   TAG(FogCoordfEXT),
+   TAG(FogCoordfvEXT),
+   TAG(Indexi),
+   TAG(Indexiv),
+   TAG(Materialfv),
+   TAG(MultiTexCoord1fARB),
+   TAG(MultiTexCoord1fvARB),
+   TAG(MultiTexCoord2fARB),
+   TAG(MultiTexCoord2fvARB),
+   TAG(MultiTexCoord3fARB),
+   TAG(MultiTexCoord3fvARB),
+   TAG(MultiTexCoord4fARB),
+   TAG(MultiTexCoord4fvARB),
+   TAG(Normal3f),
+   TAG(Normal3fv),
+   TAG(SecondaryColor3fEXT),
+   TAG(SecondaryColor3fvEXT),
+   TAG(SecondaryColor3ubEXT),
+   TAG(SecondaryColor3ubvEXT),
+   TAG(TexCoord1f),
+   TAG(TexCoord1fv),
+   TAG(TexCoord2f),
+   TAG(TexCoord2fv),
+   TAG(TexCoord3f),
+   TAG(TexCoord3fv),
+   TAG(TexCoord4f),
+   TAG(TexCoord4fv),
+   TAG(Vertex2f),
+   TAG(Vertex2fv),
+   TAG(Vertex3f),
+   TAG(Vertex3fv),
+   TAG(Vertex4f),
+   TAG(Vertex4fv),
+   TAG(CallList),
+   TAG(Begin),
+   TAG(End),
+   TAG(Rectf),
+   TAG(DrawArrays),
+   TAG(DrawElements),
+   TAG(DrawRangeElements),
+   TAG(EvalMesh1),
+   TAG(EvalMesh2),
+};
 
 #undef TAG
 #undef PRE_LOOPBACK
