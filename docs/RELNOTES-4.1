@@ -87,6 +87,22 @@ DOS			needs updating
 
 
 
+Porting Information
+-------------------
+
+When moving from Mesa 4.0.x to Mesa 4.1 there are a number of things
+you may have to update.
+
+1. _mesa_create_context() changes.  This function now takes a pointer to
+   a __GLimports object.  The __GLimports structure contains function
+   pointers to system functions like fprintf(), malloc(), etc.
+   The _mesa_init_default_imports() function can be used to initialize
+   a __GLimports object.  Most device drivers (like the DRI drivers)
+   should use this.
+
+2. more to come...
+
+
 
 XXX Things To Do Yet XXXX
 -------------------------
@@ -97,8 +113,7 @@ vector arrays.  Pretty sure the SSE code is wrong.
 Finish up NV_vertex_program support for evaluators.  Vertex arrays seem
 to work as of 4/21/2002.
 
-Move sw_span struct into swrast context instead of allocating it on
-the stack.  Allow multiple points to be rendered into one sw_span.
+Allow multiple points to be rendered into one sw_span.
 
 Investigate the normal transformation bug when using non-uniform
 scale matrices.
@@ -115,4 +130,4 @@ GL_ARB_texture_env_crossbar: Allows any texture combine stage to reference
 any texture source unit
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.8 2002/05/27 17:05:51 brianp Exp $
+$Id: RELNOTES-4.1,v 1.9 2002/06/13 04:50:09 brianp Exp $
