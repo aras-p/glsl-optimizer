@@ -452,29 +452,46 @@ static void fxDDWriteMonoRGBAPixels(const GLcontext *ctx,
                        GR_LFB_SRC_FMT_8888,1,1,0,(void *) &fxMesa->color);
 }
 
-static void fxDDReadRGBAPixels(const GLcontext *ctx,
+
+static void read_R5G6B5_pixels(const GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
                                GLubyte rgba[][4], const GLubyte mask[])
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLuint i;
-  GLint bottom=fxMesa->height+fxMesa->y_offset-1;
-
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDReadRGBAPixels(...)\n");
-  }
-
-  for(i=0;i<n;i++) {
-    if(mask[i]) {
-      GLushort pixel;
-      FX_grLfbReadRegion(fxMesa->currentFB,x[i],bottom-y[i],1,1,0,&pixel);
-      rgba[i][RCOMP] = FX_PixelToR[pixel];
-      rgba[i][GCOMP] = FX_PixelToG[pixel];
-      rgba[i][BCOMP] = FX_PixelToB[pixel];
-      rgba[i][ACOMP] = 255;
+  fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+  GrLfbInfo_t info;
+  BEGIN_BOARD_LOCK();
+  if (grLfbLock(GR_LFB_READ_ONLY,
+                fxMesa->currentFB,
+                GR_LFBWRITEMODE_ANY,
+                GR_ORIGIN_UPPER_LEFT,
+                FXFALSE,
+                &info)) {
+#ifdef XF86DRI
+    const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
+                          ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+#else
+    const GLint srcStride = info.strideInBytes / 2; /* stride in GLushorts */
+#endif
+    const GLint winX = fxMesa->x_offset;
+    const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
+    GLuint i;
+    for(i=0;i<n;i++) {
+      if(mask[i]) {
+        const GLushort *data16 = (const GLushort *) info.lfbPtr
+                               + (winY - y[i]) * srcStride
+                               + (winX + x[i]);
+        const GLushort pixel = *data16;
+        rgba[i][RCOMP] = FX_PixelToR[pixel];
+        rgba[i][GCOMP] = FX_PixelToG[pixel];
+        rgba[i][BCOMP] = FX_PixelToB[pixel];
+        rgba[i][ACOMP] = 255;
+      }
     }
+    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
   }
+  END_BOARD_LOCK();
 }
+
 
 
 /************************************************************************/
@@ -603,7 +620,7 @@ void fxSetupDDSpanPointers(GLcontext *ctx)
 
   /*  ctx->Driver.ReadRGBASpan        =fxDDReadRGBASpan;*/
   ctx->Driver.ReadRGBASpan = read_R5G6B5_span;
-  ctx->Driver.ReadRGBAPixels      =fxDDReadRGBAPixels;
+  ctx->Driver.ReadRGBAPixels      = read_R5G6B5_pixels;
 
   ctx->Driver.ReadCI32Span        =NULL;
   ctx->Driver.ReadCI32Pixels      =NULL;
