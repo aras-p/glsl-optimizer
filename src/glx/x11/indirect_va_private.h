@@ -207,22 +207,16 @@ struct array_state_vector {
      * the buffer.  This will always be greater than or equal to
      * \c array_info_cache_size.
      *
-     * \c large_header doesn't completely belong in this group.  This is a
-     * pointer to a buffer to hold the header information for DrawArrays in
-     * a RenderLarge command.  This buffer is immediately before
-     * \c array_info_cache.  The idea is that the header data will be written
-     * to \c large_header and a single call to \c __glXSendLargeChunk can be
-     * made to send the header and the ARRAY_INFO data.
-     * 
      * \note
-     * \c array_info_cache_size and \c array_info_cache_buffer_size do
-     * NOT include the size of \c large_header.
+     * There are some bytes of extra data before \c array_info_cache that is
+     * used to hold the header for RenderLarge commands.  This is
+     * \b not included in \c array_info_cache_size or
+     * \c array_info_cache_buffer_size.
      */
     /*@{*/
     size_t array_info_cache_size;
     size_t array_info_cache_buffer_size;
     void * array_info_cache;
-    GLubyte * large_header;
     /*@}*/
 
 

@@ -151,7 +151,7 @@ __glXInitVertexArrayState( __GLXcontext * gc )
      * GL_COLOR_ARRAY, GL_INDEX_ARRAY, GL_TEXTURE_COORD_ARRAY, and
      * GL_EDGE_FLAG_ARRAY are supported.
      */
-    
+
     array_count = 5;
     
     if ( __glExtensionBitIsEnabled( gc, GL_EXT_fog_coord_bit )
@@ -380,15 +380,16 @@ static GLboolean
 allocate_array_info_cache( struct array_state_vector * arrays,
 			   size_t required_size )
 {
+#define MAX_HEADER_SIZE 20
     if ( arrays->array_info_cache_buffer_size < required_size ) {
-	GLubyte * temp = realloc( arrays->array_info_cache, required_size + 20 );
+	GLubyte * temp = realloc( arrays->array_info_cache, required_size 
+				  + MAX_HEADER_SIZE );
 
 	if ( temp == NULL ) {
 	    return GL_FALSE;
 	}
 
-	arrays->large_header = temp;
-	arrays->array_info_cache = temp + 20;
+	arrays->array_info_cache = temp + MAX_HEADER_SIZE;
 	arrays->array_info_cache_buffer_size = required_size;
     }
 
@@ -590,7 +591,7 @@ emit_DrawArrays_header_old( __GLXcontext * gc,
 
 	command_size += 4;
 
-	pc = arrays->large_header;
+	pc = ((GLubyte *) arrays->array_info_cache) - (header_size + 4);
 	*(uint32_t *)(pc +  0) = command_size;
 	*(uint32_t *)(pc +  4) = X_GLrop_DrawArrays;
 	*(uint32_t *)(pc +  8) = count;
@@ -774,9 +775,6 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
     unsigned total_requests = 0;
     unsigned i;
     unsigned req;
-    const GLuint   * ui_ptr = (const GLuint   *) indices;
-    const GLushort * us_ptr = (const GLushort *) indices;
-    const GLubyte  * ub_ptr = (const GLubyte  *) indices;
 
 
     pc = emit_DrawArrays_header_old( gc, arrays, & elements_per_request,
@@ -793,24 +791,33 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 	}
 
 	switch( type ) {
-	case GL_UNSIGNED_INT:
+	case GL_UNSIGNED_INT: {
+	    const GLuint   * ui_ptr = (const GLuint   *) indices;
+
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(ui_ptr++);
 		pc = emit_element_old( pc, arrays, index );
 	    }
 	    break;
-	case GL_UNSIGNED_SHORT:
+	}
+	case GL_UNSIGNED_SHORT: {
+	    const GLushort * us_ptr = (const GLushort *) indices;
+
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(us_ptr++);
 		pc = emit_element_old( pc, arrays, index );
 	    }
 	    break;
-	case GL_UNSIGNED_BYTE:
+	}
+	case GL_UNSIGNED_BYTE: {
+	    const GLubyte  * ub_ptr = (const GLubyte  *) indices;
+
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(ub_ptr++);
 		pc = emit_element_old( pc, arrays, index );
 	    }
 	    break;
+	}
 	}
 
 	if ( total_requests != 0 ) {
