@@ -1489,6 +1489,9 @@ void _mesa_init_pixel( GLcontext * ctx )
    }
    ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
+   /* GL_SGI_texture_color_table */
+   ASSIGN_4V(ctx->Pixel.TextureColorTableScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.TextureColorTableBias, 0.0, 0.0, 0.0, 0.0);
 
    /* Pixel transfer */
    ctx->Pack.Alignment = 4;

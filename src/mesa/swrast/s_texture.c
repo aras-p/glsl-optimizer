@@ -533,19 +533,19 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
-         if (!table->FloatTable) {
+         if (table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
-            const GLchan *lut = (const GLchan *) table->Table;
+            const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
             for (i = 0; i < n; i++) {
                GLint jR = IROUND((GLfloat) rgba[i][RCOMP] * scale);
                GLint jG = IROUND((GLfloat) rgba[i][GCOMP] * scale);
                GLint jB = IROUND((GLfloat) rgba[i][BCOMP] * scale);
                GLint jA = IROUND((GLfloat) rgba[i][ACOMP] * scale);
-               rgba[i][RCOMP] = lut[jR * 4 + 0];
-               rgba[i][GCOMP] = lut[jG * 4 + 1];
-               rgba[i][BCOMP] = lut[jB * 4 + 2];
-               rgba[i][ACOMP] = lut[jA * 4 + 3];
+               CLAMPED_FLOAT_TO_CHAN(rgba[i][RCOMP], lut[jR * 4 + 0]);
+               CLAMPED_FLOAT_TO_CHAN(rgba[i][GCOMP], lut[jG * 4 + 1]);
+               CLAMPED_FLOAT_TO_CHAN(rgba[i][BCOMP], lut[jB * 4 + 2]);
+               CLAMPED_FLOAT_TO_CHAN(rgba[i][ACOMP], lut[jA * 4 + 3]);
             }
          }
          else {
