@@ -1,10 +1,10 @@
-/* $Id: glapi.c,v 1.22 2000/01/10 04:29:09 brianp Exp $ */
+/* $Id: glapi.c,v 1.23 2000/01/14 16:35:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -442,6 +442,7 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(tab[i]);
    }
 
+#ifdef DEBUG
    /* Do some spot checks to be sure that the dispatch table
     * slots are assigned correctly.
     */
@@ -487,6 +488,7 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(istextureOffset == _gloffset_IsTextureEXT);
       assert(istextureOffset == offset);
    }
+#endif
 }
 
 
