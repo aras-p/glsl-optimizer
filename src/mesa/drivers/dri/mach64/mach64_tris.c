@@ -1265,21 +1265,21 @@ static struct {
 #define VERT_SET_Z(_v,val) LE32_OUT( &(_v)->ui[zoffset], (GLuint)(val) )
 #define VERT_Z_ADD(_v,val) LE32_OUT( &(_v)->ui[zoffset], LE32_IN( &(_v)->ui[zoffset] ) + (GLuint)(val) )
 #define AREA_IS_CCW( a ) ((a) < 0)
-#define GET_VERTEX(e) (mmesa->verts + ((e)<<mmesa->vertex_stride_shift))
+#define GET_VERTEX(e) (mmesa->verts + ((e) * mmesa->vertex_size * sizeof(int)))
 
 #define MACH64_COLOR( dst, src )                \
 do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
-   dst[3] = src[3];				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[0], src[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[1], src[1]);				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[2], src[0]);				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[3], src[3]);				\
 } while (0)
 
 #define MACH64_SPEC( dst, src )			\
 do {						\
-   dst[0] = src[2];				\
-   dst[1] = src[1];				\
-   dst[2] = src[0];				\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[0], src[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[1], src[1]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst[2], src[0]);	\
 } while (0)
 
 #define VERT_SET_RGBA( v, c )    MACH64_COLOR( v->ub4[coloroffset], c )
@@ -1508,7 +1508,7 @@ mach64_fallback_point( mach64ContextPtr mmesa,
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (mach64Vertex *)(mach64verts + ((x) << shift))
+#define VERT(x) (mach64Vertex *)(mach64verts + ((x) * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       mach64_draw_point( mmesa, VERT(start) )
@@ -1525,7 +1525,7 @@ mach64_fallback_point( mach64ContextPtr mmesa,
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
     mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);		\
-    const GLuint shift = mmesa->vertex_stride_shift;		\
+    const GLuint vertsize = mmesa->vertex_size;                 \
     const char *mach64verts = (char *)mmesa->verts;		\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
@@ -1590,7 +1590,6 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    unsigned vbsiz = (vertsize + (vertsize > 7 ? 2 : 1)) * n + (n-2);
    CARD32 *vb, *vbchk;
    GLubyte *mach64verts = (GLubyte *)mmesa->verts;
-   const GLuint shift = mmesa->vertex_stride_shift;
    mach64VertexPtr v0, v1, v2;
    int i;
    

@@ -123,8 +123,13 @@ static void TAG(emit)( GLcontext *ctx,
 #endif
 
 #if DO_SPEC
-   spec = VB->SecondaryColorPtr[0]->data;
-   spec_stride = VB->SecondaryColorPtr[0]->stride;
+   if (VB->SecondaryColorPtr[0]) {
+      spec = VB->SecondaryColorPtr[0]->data;
+      spec_stride = VB->SecondaryColorPtr[0]->stride;
+   } else {
+      spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
+      spec_stride = 0;
+   }
 #endif
 
 #if DO_FOG
@@ -148,17 +153,16 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (start) {
 #if DO_TEX1
-	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
+         STRIDE_4F(tc1, start * tc1_stride);
 #endif
 #if DO_TEX0
-	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
+         STRIDE_4F(tc0, start * tc0_stride);
 #endif
 #if DO_SPEC
 	 STRIDE_4F(spec, start * spec_stride);
 #endif
 #if DO_FOG
-	 /*  STRIDE_F(fog, start * fog_stride); */
-	 fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
+	 STRIDE_4F(fog, start * fog_stride);
 #endif
 #if DO_RGBA
 	 STRIDE_4F(col, start * col_stride);
@@ -207,7 +211,7 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_PTEX
 	 }
 #endif /* DO_PTEX */
-	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
+	 STRIDE_4F(tc1, tc1_stride);
 #else /* !DO_TEX1 */
 	 p += 3;
 #endif /* !DO_TEX1 */
@@ -239,20 +243,22 @@ static void TAG(emit)( GLcontext *ctx,
 #if DO_PTEX
 	 }
 #endif /* DO_PTEX */
-	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
+	 STRIDE_4F(tc0, tc0_stride);
 #else /* !DO_TEX0 */
 	 p += 3;
 #endif /* !DO_TEX0 */
 
 #if DO_SPEC
-	 ((GLubyte *)p)[0] = spec[0][2];	/* VERTEX_?_SPEC_B */
-	 ((GLubyte *)p)[1] = spec[0][1];	/* VERTEX_?_SPEC_G */
-	 ((GLubyte *)p)[2] = spec[0][0];	/* VERTEX_?_SPEC_R */
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[0],  spec[0][2]); 	/* VERTEX_?_SPEC_B */
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[1],  spec[0][1]);	/* VERTEX_?_SPEC_G */
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[2],  spec[0][0]);	/* VERTEX_?_SPEC_R */
+
 	 STRIDE_4F(spec, spec_stride);
 #endif
 #if DO_FOG
-	 ((GLubyte *)p)[3] = fog[0][0] * 255.0;		/* VERTEX_?_SPEC_A */
-	 fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
+	 UNCLAMPED_FLOAT_TO_UBYTE(((GLubyte *)p)[3], fog[0][0]);  /* VERTEX_?_SPEC_A */
+	 /*	 ((GLubyte *)p)[3] = fog[0][0] * 255.0;	 */
+	 STRIDE_4F(fog, fog_stride);
 #endif
 	 p++;
 	    
@@ -349,14 +355,15 @@ static void TAG(interp)( GLcontext *ctx,
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ddverts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
+   /*   GLuint shift = GET_VERTEX_STRIDE_SHIFT();*/
+   GLuint size = GET_VERTEX_SIZE();
    const GLfloat *dstclip = VB->ClipPtr->data[edst];
    GLfloat w;
    const GLfloat *s = GET_VIEWPORT_MAT();
 
-   CARD32 *dst = (CARD32 *)(ddverts + (edst << shift));
-   CARD32 *in  = (CARD32 *)(ddverts + (ein  << shift));
-   CARD32 *out = (CARD32 *)(ddverts + (eout << shift));
+   CARD32 *dst = (CARD32 *)(ddverts + (edst * size));
+   CARD32 *in  = (CARD32 *)(ddverts + (ein  * size));
+   CARD32 *out = (CARD32 *)(ddverts + (eout * size));
 
    (void)s;
 
@@ -511,9 +518,9 @@ static void TAG(interp)( GLcontext *ctx,
 	     (VIEWPORT_X( dstclip[0] * w ) << 16) |		/* VERTEX_?_X */
 	     (VIEWPORT_Y( dstclip[1] * w ) & 0xffff) );		/* VERTEX_?_Y */
 
-   assert( dst + 1 - (CARD32 *)(ddverts + (edst << shift)) == 10 );
-   assert( in  + 2 - (CARD32 *)(ddverts + (ein  << shift)) == 10 );
-   assert( out + 2 - (CARD32 *)(ddverts + (eout << shift)) == 10 );
+   assert( dst + 1 - (CARD32 *)(ddverts + (edst * size)) == 10 );
+   assert( in  + 2 - (CARD32 *)(ddverts + (ein  * size)) == 10 );
+   assert( out + 2 - (CARD32 *)(ddverts + (eout * size)) == 10 );
 
    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
       fprintf( stderr, "%s: dst vert: %.2f %.2f %.2f %x\n",
