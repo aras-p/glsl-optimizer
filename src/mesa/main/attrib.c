@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.64 2002/05/27 17:04:52 brianp Exp $ */
+/* $Id: attrib.c,v 1.65 2002/06/07 16:01:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -223,6 +223,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->RasterPositionUnclipped = ctx->Transform.RasterPositionUnclipped;
       attr->PixelTexture = ctx->Pixel.PixelTextureEnabled;
       attr->PointSmooth = ctx->Point.SmoothFlag;
+      attr->PointSprite = ctx->Point.PointSprite;
       attr->PolygonOffsetPoint = ctx->Polygon.OffsetPoint;
       attr->PolygonOffsetLine = ctx->Polygon.OffsetLine;
       attr->PolygonOffsetFill = ctx->Polygon.OffsetFill;
