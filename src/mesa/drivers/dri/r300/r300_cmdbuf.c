@@ -273,9 +273,12 @@ CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
  */
 void r300InitCmdBuf(r300ContextPtr r300)
 {
-	int size;
+	int size, i, mtu;
 
 	r300->hw.max_state_size = 0;
+	
+	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
+	fprintf(stderr, "Using %d maximum texture units..\n", mtu);
 
 	/* Initialize state atoms */
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
@@ -408,6 +411,29 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( vps, vpu, R300_VPS_CMDSIZE, "vps", 0 );
 		r300->hw.vps.cmd[R300_VPS_CMD_0] = cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
 
+	/* Textures */
+	ALLOC_STATE( tex.filter, always, mtu, "tex_filter", 0 );
+		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FILTER_0, mtu-1);
+		
+	ALLOC_STATE( tex.unknown1, always, mtu, "tex_unknown1", 0 );
+		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK1_0, mtu-1);
+		
+	ALLOC_STATE( tex.size, always, mtu, "tex_size", 0 );
+		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_SIZE_0, mtu-1);
+		
+	ALLOC_STATE( tex.format, always, mtu, "tex_format", 0 );
+		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FORMAT_0, mtu-1);
+		
+	ALLOC_STATE( tex.offset, always, mtu, "tex_offset", 0 );
+		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_OFFSET_0, mtu-1);
+		
+	ALLOC_STATE( tex.unknown4, always, mtu, "tex_unknown4", 0 );
+		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK4_0, mtu-1);
+		
+	ALLOC_STATE( tex.unknown5, always, mtu, "tex_unknown5", 0 );
+		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK5_0, mtu-1);
+	
+
 	/* Setup the atom linked list */
 	make_empty_list(&r300->hw.atomlist);
 	r300->hw.atomlist.name = "atom-list";
@@ -476,6 +502,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpi);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
+
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);	
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown1);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.size);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.format);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.offset);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown4);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown5);
 
 	r300->hw.is_dirty = GL_TRUE;
 	r300->hw.all_dirty = GL_TRUE;

@@ -66,6 +66,55 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 	return u.u;
 }
 
+       /* Texture related */
+
+#define TEX_0   0x1
+#define TEX_1   0x2
+#define TEX_2	0x4
+#define TEX_3	0x8
+#define TEX_4	0x10
+#define TEX_5	0x20
+#define TEX_6	0x20
+#define TEX_7	0x20
+#define TEX_ALL 0xff
+
+typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
+
+/* Texture object in locally shared texture space.
+ */
+struct r300_tex_obj {
+	driTextureObject base;
+
+	GLuint bufAddr;		/* Offset to start of locally
+				   shared texture block */
+
+	GLuint dirty_state;	/* Flags (1 per texunit) for
+				   whether or not this texobj
+				   has dirty hardware state
+				   (pp_*) that needs to be
+				   brought into the
+				   texunit. */
+
+	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
+	/* Six, for the cube faces */
+
+
+	/* hardware register values */
+	/* Note that R200 has 8 registers per texture and R300 only 7 */
+	GLuint filter;	
+	GLuint pitch; /* one of the unknown registers.. unknown 1 ?*/
+	GLuint size;	/* npot only */
+	GLuint format;
+	GLuint offset;	/* Image location in texmem.
+				   All cube faces follow. */
+	GLuint unknown4;
+	GLuint unknown5; 
+	/* end hardware registers */
+	
+	GLboolean border_fallback;
+};
+
+
 /**
  * A block of hardware state.
  *
@@ -233,6 +282,13 @@ struct r300_state_atom {
 #define R300_VPS_ZERO_3		4
 #define R300_VPS_CMDSIZE	5
 
+	/* the layout is common for all fields inside tex */
+#define R300_TEX_CMD_0		0
+#define R300_TEX_VALUE_0	1
+/* We don't really use this, instead specify mtu+1 dynamically 
+#define R300_TEX_CMDSIZE	(MAX_TEXTURE_UNITS+1)
+*/
+
 /**
  * Cache for hardware register state.
  */
@@ -303,6 +359,21 @@ struct r300_hw_state {
 	struct r300_state_atom vpi;	/* vp instructions */
 	struct r300_state_atom vpp;	/* vp parameters */
 	struct r300_state_atom vps;	/* vertex point size (?) */
+
+		/* 8 texture units */
+		/* the state is grouped by function and not by 
+		   texture unit. This makes single unit updates
+		   really awkward - we are much better off 
+		   updating the whole thing at once */
+	struct {
+		struct r300_state_atom filter;
+		struct r300_state_atom unknown1;
+		struct r300_state_atom size;
+		struct r300_state_atom format;
+		struct r300_state_atom offset;
+		struct r300_state_atom unknown4;
+		struct r300_state_atom unknown5;		
+		} tex;
 };
 
 

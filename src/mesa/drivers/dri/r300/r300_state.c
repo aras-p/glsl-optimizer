@@ -547,8 +547,19 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
+	
+	/* Initialize texture units */
+	for(i=0;i<r300->radeon.glCtx->Const.MaxTextureUnits;i++){
+		r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
+		r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
+		}
 //END: TODO
-
+	
 	r300->hw.all_dirty = GL_TRUE;
 }
 
