@@ -2724,16 +2724,16 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
     * XXX We should probably use the proxy texture error check function here.
     */
    if (width < 1 || width > maxTextureSize ||
-       (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(width) < 0))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(width) != 1))
       return GL_INVALID_VALUE;
 
    if ((height < 1 || height > maxTextureSize ||
-        (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(height) < 0))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(height) != 1))
        && dimensions > 1)
       return GL_INVALID_VALUE;
 
    if ((depth < 1 || depth > maxTextureSize ||
-        (!ctx->Extensions.ARB_texture_non_power_of_two && logbase2(depth) < 0))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(depth) != 1))
        && dimensions > 2)
       return GL_INVALID_VALUE;
 
