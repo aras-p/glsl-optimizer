@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/08/06 18:11:57 keithw Exp $
+# $Id: Makefile.X11,v 1.2 2003/08/23 04:58:24 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -7,7 +7,7 @@
 TOP = ../../../../..
 
 SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
-MINIGLX_INCLUDES = -I$(TOP)/src/miniglx 
+MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
 
@@ -23,11 +23,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
 
 
-ifeq ($(WINDOW_SYSTEM),dri)
-default2: clean
-else
-default2: fb_dri.so
-endif
+default: linux-solo
 
 
 ### Include directories
@@ -54,7 +50,7 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: fb_dri.so
+targets: depend fb_dri.so
 
 fb_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
@@ -63,7 +59,7 @@ fb_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
 # what's included by any source file.
-dep: $(C_SOURCES) $(ASM_SOURCES)
+depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) \
 		$(C_SOURCES) $(ASM_SOURCES)
 
