@@ -3706,7 +3706,7 @@ texture_apply( const GLcontext *ctx,
 	       break;
             case GL_INTENSITY:
 	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-It) + CcLt */
+		  /* Cv = Cf(1-It) + CcIt */
 		  GLchan It = texel[i][RCOMP], s = CHAN_MAX - It;
 		  rgba[i][RCOMP] = CHAN_PRODUCT(rgba[i][RCOMP], s) + CHAN_PRODUCT(Rc, It);
 		  rgba[i][GCOMP] = CHAN_PRODUCT(rgba[i][GCOMP], s) + CHAN_PRODUCT(Gc, It);
