@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.17 2000/03/31 01:03:41 brianp Exp $ */
+/* $Id: glx.h,v 1.18 2000/03/31 14:48:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -189,7 +189,7 @@ extern "C" {
  */
 #define GLX_VISUAL_CAVEAT_EXT		0x20
 /*#define GLX_NONE_EXT			0x8000*/
-#define GLX_SLOW_VISUALEXT		0x8001
+#define GLX_SLOW_VISUAL_EXT		0x8001
 #define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
 
 
