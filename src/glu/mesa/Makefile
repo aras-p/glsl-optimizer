@@ -34,7 +34,7 @@ INCLUDES = -I. -I- -I$(TOP)/include
 
 default:
 	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
-		echo "GLU library not build under BeOS: integrated into ${LIB_DIR}/${GL_LIB_NAME} library." ; \
+		echo "$(GLU_LIB_NAME) not build under BeOS, but integrated into ${GL_LIB_NAME}." ; \
 		exit 0 ; \
 	else \
 		$(MAKE) "${LIB_DIR}/${GLU_LIB_NAME}" ; \
