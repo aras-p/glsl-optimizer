@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.55 2001/11/30 19:41:19 kschultz Exp $
+# $Id: Make-config,v 1.56 2001/12/14 16:42:23 kschultz Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -415,34 +415,46 @@ irix5-dso:
 	"MAKELIB = ../bin/mklib.irix5" \
 	"APP_LIB_DEPS = -rpath ../lib -lX11 -lXmu -lXi -lm"
 
+# IRIX 6 32-bit Targets
+#	Turn Warnings off for these errors (MIPSpro Compiler 7.30)
+#	1521:   A nonstandard preprocessing directive is used.
+#	1552:   The variable "" is set but never used.
+#	C++
+#	3262:   The variable "" was declared but never referenced.
+#	3666:   The variable "" is set but never used.
+#	Use -v on pmake to compile files in subdirectories.
 irix6-o32:
-	pmake $(MFLAGS) -f Makefile.X11 targets \
+	pmake -v $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
+	"LIBDIR = ../lib32" \
 	"CC = cc" \
-	"CFLAGS = -32 -mips2 -O2 -ansi -DUSE_XSHM -DNO_CONST" \
+	"CPLUSPLUS = CC" \
+	"CFLAGS = -32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM" \
+	"CCFLAGS = -32 -mips2 -O2 -ansi -woff 3262,3666" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-o32-dso:
-	pmake $(MFLAGS) -f Makefile.X11 targets \
+	pmake -v $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
+	"LIBDIR = ../lib32" \
 	"CC = cc" \
-	"CFLAGS = -32 -mips2 -O2 -ansi -DUSE_XSHM -DNO_CONST" \
+	"CPLUSPLUS = CC" \
+	"CFLAGS = -32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM" \
+	"CCFLAGS = -32 -mips2 -O2 -ansi -woff 3262,3666" \
 	"MAKELIB = ../bin/mklib.irix6-32" \
-	"APP_LIB_DEPS = -rpath ../lib -lX11 -lXext -lXmu -lXi -lm"
+	"APP_LIB_DEPS = -rpath ../lib32 -lX11 -lXext -lXmu -lXi -lm"
 
-# For IRIX 6: -woff:
-#   1209 - controlling expression is constant
 irix6-n32:
-	pmake $(MFLAGS) -f Makefile.X11 targets \
+	pmake -v $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
@@ -450,20 +462,24 @@ irix6-n32:
 	"OSMESA_LIB = libOSMesa.a" \
 	"LIBDIR = ../lib32" \
 	"CC = cc" \
-	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1209,1521" \
+	"CPLUSPLUS = CC" \
+	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1521,1552 -DUSE_XSHM" \
+	"CCFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1552" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-n32-dso:
-	pmake $(MFLAGS) -f Makefile.X11 targets \
+	pmake -v $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.a" \
-	"OSMESA_LIB = libOSMesa.a" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"LIBDIR = ../lib32" \
 	"CC = cc" \
-	"CFLAGS = -n32 -mips3 -O3 -ansi -DUSE_XSHM -woff 1185,1521" \
+	"CPLUSPLUS = CC" \
+	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1521,1552 -DUSE_XSHM" \
+	"CCFLAGS = -n32 -mips3 -O3 -ansi -woff 1174,1552" \
 	"MAKELIB = ../bin/mklib.irix6-n32" \
 	"APP_LIB_DEPS = -rpath ../lib32 -lX11 -lXmu -lXi -lfpe -lm"
 
