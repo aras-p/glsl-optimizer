@@ -1,4 +1,4 @@
-/* $Id: assyntax.h,v 1.19 2002/04/02 16:18:20 brianp Exp $ */
+/* $Id: assyntax.h,v 1.20 2002/06/06 15:33:37 brianp Exp $ */
 
 #ifndef __ASSYNTAX_H__
 #define __ASSYNTAX_H__
@@ -991,12 +991,21 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define B_CONST(a)		a
 
 /* Indirect Mode */
+#ifdef NASM_ASSEMBLER
+#define P_CONTENT(a)		[a]
+#define X_CONTENT(a)		TBYTE_PTR [a]
+#define D_CONTENT(a)		QWORD_PTR [a]
+#define L_CONTENT(a)		DWORD_PTR [a]
+#define W_CONTENT(a)		WORD_PTR [a]
+#define B_CONTENT(a)		BYTE_PTR [a]
+#else
 #define P_CONTENT(a)		a
 #define X_CONTENT(a)		TBYTE_PTR a
 #define D_CONTENT(a)		QWORD_PTR a
 #define L_CONTENT(a)		DWORD_PTR a
 #define W_CONTENT(a)		WORD_PTR a
 #define B_CONTENT(a)		BYTE_PTR a
+#endif
 
 /* Register a indirect */
 #define P_REGIND(a)		[a]
