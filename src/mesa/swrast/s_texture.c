@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.24 2001/04/17 21:25:53 brianp Exp $ */
+/* $Id: s_texture.c,v 1.25 2001/04/17 22:08:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2005,9 +2005,8 @@ texture_combine(const GLcontext *ctx,
 				   (GLint)arg1[i][GCOMP] - 128) +
 			    S_PROD((GLint)arg0[i][BCOMP] - 128,
 				   (GLint)arg1[i][BCOMP] - 128)) >> 6;
-               rgba[i][RCOMP] = (GLubyte) CLAMP(dot, 0, 255);
-               rgba[i][GCOMP] = (GLubyte) CLAMP(dot, 0, 255);
-               rgba[i][BCOMP] = (GLubyte) CLAMP(dot, 0, 255);
+               dot = CLAMP(dot, 0, 255);
+               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLubyte)dot;
             }
          }
          break;
