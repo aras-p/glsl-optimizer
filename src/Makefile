@@ -7,7 +7,11 @@ include $(TOP)/configs/current
 SUBDIRS = $(SRC_DIRS)
 
 
-default: $(LIB_DIR) subdirs
+default: message $(LIB_DIR) subdirs
+
+
+message:
+	@echo "Making sources for" $(CONFIG_NAME)
 
 
 subdirs:

@@ -7,7 +7,14 @@ include $(TOP)/configs/current
 SUBDIRS = $(PROGRAM_DIRS)
 
 
-default: $(TOP)/configs/current
+default: message subdirs
+
+
+message:
+	@echo "Making programs for" $(CONFIG_NAME)
+
+
+subdirs:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir ; $(MAKE)) || exit 1 ; \
