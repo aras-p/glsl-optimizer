@@ -1,10 +1,8 @@
-/* $Id: texformat_tmp.h,v 1.10 2002/10/29 20:28:50 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -354,6 +352,48 @@ static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
    rgba[BCOMP] = CLAMP(b, 0, CHAN_MAX);
    rgba[ACOMP] = CHAN_MAX;
 }
+
+
+#if DIM == 2
+static void FETCH(rgb_dxt1)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
+#if DIM == 2
+static void FETCH(rgba_dxt1)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
+#if DIM == 2
+static void FETCH(rgba_dxt3)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
+#if DIM == 2
+static void FETCH(rgba_dxt5)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLvoid *texel )
+{
+   /* Extract the (i,j) pixel from texImage->Data and return it
+    * in texel[RCOMP], texel[GCOMP], texel[BCOMP], texel[ACOMP].
+    */
+}
+#endif
+
 
 
 /* big-endian */

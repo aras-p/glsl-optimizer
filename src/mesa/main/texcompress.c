@@ -1,5 +1,3 @@
-/* $Id: texcompress.c,v 1.4 2003/03/24 20:00:09 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -52,6 +50,21 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
             n += 2;
          }
       }
+      if (ctx->Extensions.EXT_texture_compression_s3tc) {
+         if (formats) {
+            formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            /* Skip this one because it has a restriction (all transparent
+             * pixels become black).  See the texture compressions spec for
+             * a detailed explanation.  This is what NVIDIA does.
+            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            */
+            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+         }
+         else {
+            n += 3;
+         }
+      }
    }
    return n;
 }
@@ -61,8 +74,8 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
 /**
  * Return bytes of storage needed for the given texture size and compressed
  * format.
- * \param width, height, depth - texture size in texels
- * \param texFormat - one of the compressed format enums
+ * \param width, height, depth  the texture size in texels
+ * \param texFormat   one of the specific compressed format enums
  * \return size in bytes, or zero if bad texFormat
  */
 GLuint
@@ -78,6 +91,34 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* round up to multiple of 4 */
       size = ((width + 7) / 8) * ((height + 3) / 4) * 16;
       return size;
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      /* round up width, height to next multiple of 4 */
+      width = (width + 3) & ~3;
+      height = (height + 3) & ~3;
+      ASSERT(depth == 1);
+      /* 8 bytes per 4x4 tile of RGB[A] texels */
+      size = (width * height * 8) / 16;
+      /* Textures smaller than 4x4 will effectively be made into 4x4 and
+       * take 8 bytes.
+       */
+      if (size < 8)
+         size = 8;
+      return size;
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      /* round up width, height to next multiple of 4 */
+      width = (width + 3) & ~3;
+      height = (height + 3) & ~3;
+      ASSERT(depth == 1);
+      /* 16 bytes per 4x4 tile of RGBA texels */
+      size = width * height; /* simple! */
+      /* Textures smaller than 4x4 will effectively be made into 4x4 and
+       * take 16 bytes.
+       */
+      if (size < 16)
+         size = 16;
+      return size;
    default:
       _mesa_problem(ctx, "bad texformat in compressed_texture_size");
       return 0;
@@ -85,8 +126,12 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 }
 
 
-/*
+/**
  * Compute the bytes per row in a compressed texture image.
+ * We use this for computing the destination address for sub-texture updates.
+ * \param format  one of the specific texture compression formats
+ * \param width  image width in pixels
+ * \return stride, in bytes, between rows for compressed image
  */
 GLint
 _mesa_compressed_row_stride(GLenum format, GLsizei width)
@@ -94,6 +139,14 @@ _mesa_compressed_row_stride(GLenum format, GLsizei width)
    GLint bytesPerTile, stride;
 
    switch (format) {
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      bytesPerTile = 8;
+      break;
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      bytesPerTile = 16;
+      break;
    default:
       return 0;
    }
@@ -103,7 +156,7 @@ _mesa_compressed_row_stride(GLenum format, GLsizei width)
 }
 
 
-/*
+/**
  * Return the address of the pixel at (col, row, img) in a
  * compressed texture image.
  * \param col, row, img - image position (3D)
@@ -125,6 +178,14 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
    (void) img;
 
    switch (format) {
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      bytesPerTile = 8;
+      break;
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      bytesPerTile = 16;
+      break;
    default:
       return 0;
    }

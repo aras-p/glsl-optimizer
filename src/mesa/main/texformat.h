@@ -1,10 +1,8 @@
-/* $Id: texformat.h,v 1.13 2002/10/29 20:28:49 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,6 +64,11 @@ enum _format {
    MESA_FORMAT_CI8,		/*                               CCCC CCCC */
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
+
+   MESA_FORMAT_RGB_DXT1,
+   MESA_FORMAT_RGBA_DXT1,
+   MESA_FORMAT_RGBA_DXT3,
+   MESA_FORMAT_RGBA_DXT5,
 
 #if 0
    /* upcoming little-endian formats: */
@@ -141,6 +144,10 @@ extern const struct gl_texture_format _mesa_texformat_i8;
 extern const struct gl_texture_format _mesa_texformat_ci8;
 extern const struct gl_texture_format _mesa_texformat_ycbcr;
 extern const struct gl_texture_format _mesa_texformat_ycbcr_rev;
+extern const struct gl_texture_format _mesa_texformat_rgb_dxt1;
+extern const struct gl_texture_format _mesa_texformat_rgba_dxt1;
+extern const struct gl_texture_format _mesa_texformat_rgba_dxt3;
+extern const struct gl_texture_format _mesa_texformat_rgba_dxt5;
 
 /* The null format:
  */
