@@ -512,11 +512,11 @@ via_fallback_point(viaContextPtr vmesa,
 #define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 #define ELT(x) x
-#define TAG(x) via_fast##x##_verts
+#define TAG(x) via_##x##_verts
 #include "tnl/t_vb_rendertmp.h"
 #undef ELT
 #undef TAG
-#define TAG(x) via_fast##x##_elts
+#define TAG(x) via_##x##_elts
 #define ELT(x) elt[x]
 #include "tnl/t_vb_rendertmp.h"
 #undef ELT
@@ -654,8 +654,8 @@ static void viaChooseRenderState(GLcontext *ctx)
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
       if (index == 0) {
-	 tnl->Driver.Render.PrimTabVerts = via_fastrender_tab_verts;
-	 tnl->Driver.Render.PrimTabElts = via_fastrender_tab_elts;
+	 tnl->Driver.Render.PrimTabVerts = via_render_tab_verts;
+	 tnl->Driver.Render.PrimTabElts = via_render_tab_elts;
 	 tnl->Driver.Render.ClippedLine = line; /* from tritmp.h */
 	 tnl->Driver.Render.ClippedPolygon = viaFastRenderClippedPoly;
       }
@@ -768,7 +768,7 @@ static void viaChooseVertexState( GLcontext *ctx )
 
 
 /* Check if projective texture coordinates are used and if we can fake
- * them. Fallback to swrast we can't. Returns GL_TRUE if projective
+ * them. Fallback to swrast if we can't. Returns GL_TRUE if projective
  * texture coordinates must be faked, GL_FALSE otherwise.
  */
 static GLboolean viaCheckPTexHack( GLcontext *ctx )
