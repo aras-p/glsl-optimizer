@@ -35,8 +35,8 @@
 /*
  * subdivider.cxx
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/subdivider.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/subdivider.cc,v 1.2 2003/10/15 21:11:13 brianp Exp $
  */
 
 #include "glimports.h"
@@ -112,13 +112,13 @@ Subdivider::makePatchBoundary( const REAL *from, const REAL *to )
  */
 
 Subdivider::Subdivider( Renderhints& r, Backend& b ) 
-	: arcpool( sizeof( Arc), 1, "arcpool" ),
+	: slicer( b ),
+	  arctessellator( trimvertexpool, pwlarcpool ), 
+	  arcpool( sizeof( Arc), 1, "arcpool" ),
  	  bezierarcpool( sizeof( BezierArc ), 1, "Bezarcpool" ),
 	  pwlarcpool( sizeof( PwlArc ), 1, "Pwlarcpool" ),
 	  renderhints( r ),
-	  arctessellator( trimvertexpool, pwlarcpool ), 
-	  backend( b ),
-	  slicer( b )
+	  backend( b )
 {
 }
 

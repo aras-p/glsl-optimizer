@@ -35,8 +35,8 @@
 /*
  * glcurveval.h
  *
- * $Date: 2003/04/30 15:20:37 $ $Revision: 1.5 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.5 2003/04/30 15:20:37 brianp Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.6 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.6 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __gluglcurveval_h_
@@ -72,7 +72,7 @@ typedef struct curveEvalMachine{
 class OpenGLCurveEvaluator : public BasicCurveEvaluator  {  
 public:
 			OpenGLCurveEvaluator(void);
-			~OpenGLCurveEvaluator(void);
+			virtual ~OpenGLCurveEvaluator(void);
     void		range1f(long, REAL *, REAL *);
     void		domain1f(REAL, REAL);
     void		addMap(CurveMap *);

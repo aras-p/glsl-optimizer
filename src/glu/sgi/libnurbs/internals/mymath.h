@@ -35,8 +35,8 @@
 /*
  * mymath.h
  *
- * $Date: 2001/08/13 16:52:18 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mymath.h,v 1.2 2001/08/13 16:52:18 brianp Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mymath.h,v 1.3 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __glumymath_h_
@@ -46,7 +46,7 @@
 #define sqrtf		gl_fsqrt
 #endif
 
-#if GLBUILD | STANDALONE
+#if defined(GLBUILD) || defined(STANDALONE)
 #define M_SQRT2		1.41421356237309504880
 #define ceilf		myceilf
 #define floorf		myfloorf	

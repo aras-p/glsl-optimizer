@@ -35,8 +35,8 @@
 /*
  * glsurfeval.h
  *
- * $Date: 2001/08/07 17:34:11 $ $Revision: 1.4 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.4 2001/08/07 17:34:11 brianp Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.5 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.5 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __gluglsurfeval_h_
@@ -106,7 +106,7 @@ private:
 class OpenGLSurfaceEvaluator : public BasicSurfaceEvaluator {
 public:
 			OpenGLSurfaceEvaluator();
-    			~OpenGLSurfaceEvaluator( void );
+    			virtual ~OpenGLSurfaceEvaluator( void );
     void		polymode( long style );
     void		range2f( long, REAL *, REAL * );
     void		domain2f( REAL, REAL, REAL, REAL );

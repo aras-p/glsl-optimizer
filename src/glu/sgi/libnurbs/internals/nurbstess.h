@@ -35,8 +35,8 @@
 /*
  * nurbstess.h
  *
- * $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/nurbstess.h,v 1.2 2001/08/07 17:34:11 brianp Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/nurbstess.h,v 1.3 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __glunurbstess_h_
@@ -60,7 +60,7 @@ class NurbsTessellator {
 public:
     			NurbsTessellator( BasicCurveEvaluator &c,
                                           BasicSurfaceEvaluator &e );
-    			~NurbsTessellator( void );
+    			virtual ~NurbsTessellator( void );
 
     void     		getnurbsproperty( long, INREAL * );
     void     		getnurbsproperty( long, long, INREAL * );

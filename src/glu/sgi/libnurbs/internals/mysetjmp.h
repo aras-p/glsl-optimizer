@@ -35,8 +35,8 @@
 /*
  * mysetjmp.h
  *
- * $Date: 2001/03/22 11:38:36 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mysetjmp.h,v 1.2 2001/03/22 11:38:36 joukj Exp $
+ * $Date: 2003/10/15 21:11:13 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mysetjmp.h,v 1.3 2003/10/15 21:11:13 brianp Exp $
  */
 
 #ifndef __glumysetjmp_h_
@@ -55,7 +55,7 @@ extern "C" int mysetjmp( JumpBuffer * );
 #define longjmp 	gl_longjmp
 #endif
 
-#if LIBRARYBUILD | GLBUILD
+#if defined(LIBRARYBUILD) || defined(GLBUILD)
 #include <setjmp.h>
 #include <stdlib.h>
 
