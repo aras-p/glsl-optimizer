@@ -3873,7 +3873,7 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
       if (0) {
          int line, col;
          char *s;
-         printf("Program: %s\n", strz);
+         printf("Program: %s\n", (char *) strz);
          printf("Error Pos: %d\n", ctx->Program.ErrorPos);
          s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos, &line, &col);
          printf("line %d col %d: %s\n", line, col, s);
