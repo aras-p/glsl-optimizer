@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.50 2001/05/03 14:11:18 brianp Exp $ */
+/* $Id: attrib.c,v 1.51 2001/05/29 15:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -233,6 +233,11 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->RescaleNormals = ctx->Transform.RescaleNormals;
       attr->Scissor = ctx->Scissor.Enabled;
       attr->Stencil = ctx->Stencil.Enabled;
+      attr->MultisampleEnabled = ctx->Multisample.Enabled;
+      attr->SampleAlphaToCoverage = ctx->Multisample.SampleAlphaToCoverage;
+      attr->SampleAlphaToOne = ctx->Multisample.SampleAlphaToOne;
+      attr->SampleCoverage = ctx->Multisample.SampleCoverage;
+      attr->SampleCoverageInvert = ctx->Multisample.SampleCoverageInvert;
       for (i=0; i<MAX_TEXTURE_UNITS; i++) {
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
@@ -411,6 +416,17 @@ _mesa_PushAttrib(GLbitfield mask)
       head = newnode;
    }
 
+   /* GL_ARB_multisample */
+   if (mask & GL_MULTISAMPLE_BIT_ARB) {
+      struct gl_multisample_attrib *attr;
+      attr = MALLOC_STRUCT( gl_multisample_attrib );
+      MEMCPY( attr, &ctx->Multisample, sizeof(struct gl_multisample_attrib) );
+      newnode = new_attrib_node( GL_MULTISAMPLE_BIT_ARB );
+      newnode->data = attr;
+      newnode->next = head;
+      head = newnode;
+   }
+
    ctx->AttribStack[ctx->AttribStackDepth] = head;
    ctx->AttribStackDepth++;
 }
@@ -506,6 +522,20 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_POLYGON_STIPPLE);
    TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
    TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
+   TEST_AND_UPDATE(ctx->Multisample.Enabled, enable->MultisampleEnabled,
+                   GL_MULTISAMPLE_ARB);
+   TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToCoverage,
+                   enable->SampleAlphaToCoverage,
+                   GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+   TEST_AND_UPDATE(ctx->Multisample.SampleAlphaToOne,
+                   enable->SampleAlphaToOne,
+                   GL_SAMPLE_ALPHA_TO_ONE_ARB);
+   TEST_AND_UPDATE(ctx->Multisample.SampleCoverage,
+                   enable->SampleCoverage,
+                   GL_SAMPLE_COVERAGE_ARB);
+   TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
+                   enable->SampleCoverageInvert,
+                   GL_SAMPLE_COVERAGE_INVERT_ARB);
 #undef TEST_AND_UPDATE
 
    /* texture unit enables */
@@ -993,11 +1023,20 @@ _mesa_PopAttrib(void)
          case GL_VIEWPORT_BIT:
             {
                const struct gl_viewport_attrib *vp;
-               vp = (const struct gl_viewport_attrib *)attr->data;
+               vp = (const struct gl_viewport_attrib *) attr->data;
                _mesa_Viewport(vp->X, vp->Y, vp->Width, vp->Height);
                _mesa_DepthRange(vp->Near, vp->Far);
             }
             break;
+         case GL_MULTISAMPLE_BIT_ARB:
+            {
+               const struct gl_multisample_attrib *ms;
+               ms = (const struct gl_multisample_attrib *) attr->data;
+               _mesa_SampleCoverageARB(ms->SampleCoverageValue,
+                                       ms->SampleCoverageInvert);
+            }
+            break;
+
          default:
             _mesa_problem( ctx, "Bad attrib flag in PopAttrib");
             break;

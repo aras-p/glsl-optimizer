@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.53 2001/03/28 17:39:12 brianp Exp $ */
+/* $Id: glapi.c,v 1.54 2001/05/29 15:23:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -912,7 +912,6 @@ static struct name_address_offset static_functions[] = {
 #else
 #define NAME(X) (GLvoid *) NotImplemented
 #endif
-        { "glSamplePassARB", NAME(glSamplePassARB), _gloffset_SamplePassARB },
         { "glSampleCoverageARB", NAME(glSampleCoverageARB), _gloffset_SampleCoverageARB },
 #undef NAME
 

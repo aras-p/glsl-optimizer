@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.42 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: mtypes.h,v 1.43 2001/05/29 15:23:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,6 +375,11 @@ struct gl_enable_attrib {
    GLboolean RescaleNormals;
    GLboolean Scissor;
    GLboolean Stencil;
+   GLboolean MultisampleEnabled;     /* GL_ARB_multisample */
+   GLboolean SampleAlphaToCoverage;  /* GL_ARB_multisample */
+   GLboolean SampleAlphaToOne;       /* GL_ARB_multisample */
+   GLboolean SampleCoverage;         /* GL_ARB_multisample */
+   GLboolean SampleCoverageInvert;   /* GL_ARB_multisample */
    GLuint Texture[MAX_TEXTURE_UNITS];
    GLuint TexGen[MAX_TEXTURE_UNITS];
 };
@@ -523,6 +528,17 @@ struct gl_list_extensions {
    struct gl_list_opcode opcode[GL_MAX_EXT_OPCODES];
    GLuint nr_opcodes;
 };
+
+
+struct gl_multisample_attrib {
+   GLboolean Enabled;
+   GLboolean SampleAlphaToCoverage;
+   GLboolean SampleAlphaToOne;
+   GLboolean SampleCoverage;
+   GLfloat SampleCoverageValue;
+   GLboolean SampleCoverageInvert;
+};
+
 
 struct gl_pixel_attrib {
    GLenum ReadBuffer;		/* src buffer for glRead/CopyPixels */
@@ -1175,6 +1191,7 @@ struct gl_extensions {
     * Not every extension needs to have such a flag, but it's encouraged.
     */
    GLboolean ARB_imaging;
+   GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
@@ -1273,21 +1290,21 @@ struct gl_extensions {
 #define _NEW_FOG		0x100      /* ctx->Fog */
 #define _NEW_HINT		0x200      /* ctx->Hint */
 #define _NEW_LIGHT		0x400      /* ctx->Light */
-#define _NEW_LINE		0x800     /* ctx->Line */
+#define _NEW_LINE		0x800      /* ctx->Line */
 #define _NEW_PIXEL		0x1000     /* ctx->Pixel */
-#define _NEW_POINT		0x2000    /* ctx->Point */
-#define _NEW_POLYGON		0x4000    /* ctx->Polygon */
-#define _NEW_POLYGONSTIPPLE	0x8000    /* ctx->PolygonStipple */
+#define _NEW_POINT		0x2000     /* ctx->Point */
+#define _NEW_POLYGON		0x4000     /* ctx->Polygon */
+#define _NEW_POLYGONSTIPPLE	0x8000     /* ctx->PolygonStipple */
 #define _NEW_SCISSOR		0x10000    /* ctx->Scissor */
-#define _NEW_STENCIL		0x20000   /* ctx->Stencil */
-#define _NEW_TEXTURE		0x40000   /* ctx->Texture */
-#define _NEW_TRANSFORM		0x80000   /* ctx->Transform */
+#define _NEW_STENCIL		0x20000    /* ctx->Stencil */
+#define _NEW_TEXTURE		0x40000    /* ctx->Texture */
+#define _NEW_TRANSFORM		0x80000    /* ctx->Transform */
 #define _NEW_VIEWPORT		0x100000   /* ctx->Viewport */
-#define _NEW_PACKUNPACK		0x200000  /* ctx->Pack, ctx->Unpack */
-#define _NEW_ARRAY	        0x400000  /* ctx->Array */
-#define _NEW_RENDERMODE		0x800000  /* RenderMode, Feedback, Select */
-#define _NEW_BUFFERS            0x1000000 /* ctx->Visual, ctx->DrawBuffer, */
-
+#define _NEW_PACKUNPACK		0x200000   /* ctx->Pack, ctx->Unpack */
+#define _NEW_ARRAY	        0x400000   /* ctx->Array */
+#define _NEW_RENDERMODE		0x800000   /* RenderMode, Feedback, Select */
+#define _NEW_BUFFERS            0x1000000  /* ctx->Visual, ctx->DrawBuffer, */
+#define _NEW_MULTISAMPLE        0x2000000  /* ctx->Multisample */
 #define _NEW_ALL ~0
 
 
@@ -1482,6 +1499,7 @@ struct __GLcontextRec {
    struct gl_light_attrib	Light;
    struct gl_line_attrib	Line;
    struct gl_list_attrib	List;
+   struct gl_multisample_attrib Multisample;
    struct gl_pixel_attrib	Pixel;
    struct gl_point_attrib	Point;
    struct gl_polygon_attrib	Polygon;

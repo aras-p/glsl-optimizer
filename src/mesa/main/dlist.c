@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.71 2001/05/14 08:57:36 keithw Exp $ */
+/* $Id: dlist.c,v 1.72 2001/05/29 15:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -246,6 +246,8 @@ typedef enum {
         OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D,
         OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D,
         OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D,
+        /* GL_ARB_multisample */
+        OPCODE_SAMPLE_COVERAGE,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
@@ -627,6 +629,8 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D] = 8;
       InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D] = 10;
       InstSize[OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D] = 12;
+      /* GL_ARB_multisample */
+      InstSize[OPCODE_SAMPLE_COVERAGE] = 3;
       /* GL_ARB_multitexture */
       InstSize[OPCODE_ACTIVE_TEXTURE] = 2;
       InstSize[OPCODE_CLIENT_ACTIVE_TEXTURE] = 2;
@@ -3887,6 +3891,24 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 }
 
 
+/* GL_ARB_multisample */
+static void
+save_SampleCoverageARB(GLclampf value, GLboolean invert)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_SAMPLE_COVERAGE, 2 );
+   if (n) {
+      n[1].f = value;
+      n[2].b = invert;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->SampleCoverageARB)( value, invert );
+   }
+}
+
+
 /* GL_SGIS_pixel_texture */
 
 static void
@@ -4607,6 +4629,9 @@ execute_list( GLcontext *ctx, GLuint list )
             (*ctx->Exec->CompressedTexSubImage3DARB)(n[1].e, n[2].i, n[3].i,
                                         n[4].i, n[5].i, n[6].i, n[7].i, n[8].i,
                                         n[9].e, n[10].i, n[11].data);
+            break;
+         case OPCODE_SAMPLE_COVERAGE: /* GL_ARB_multisample */
+            (*ctx->Exec->SampleCoverageARB)(n[1].f, n[2].b);
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -5869,6 +5894,9 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->LoadTransposeMatrixfARB = save_LoadTransposeMatrixfARB;
    table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
    table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
+
+   /* GL_ARB_multisample */
+   table->SampleCoverageARB = save_SampleCoverageARB;
 
    /* ARB 12. GL_ARB_texture_compression */
    table->CompressedTexImage3DARB = save_CompressedTexImage3DARB;

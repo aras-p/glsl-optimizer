@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.138 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: context.c,v 1.139 2001/05/29 15:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -987,6 +987,14 @@ init_attrib_groups( GLcontext *ctx )
 
    /* Display List group */
    ctx->List.ListBase = 0;
+
+   /* Multisample */
+   ctx->Multisample.Enabled = GL_FALSE;
+   ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
+   ctx->Multisample.SampleAlphaToOne = GL_FALSE;
+   ctx->Multisample.SampleCoverage = GL_FALSE;
+   ctx->Multisample.SampleCoverageValue = 1.0;
+   ctx->Multisample.SampleCoverageInvert = GL_FALSE;
 
    /* Pixel group */
    ctx->Pixel.RedBias = 0.0;

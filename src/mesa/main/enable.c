@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.48 2001/03/29 21:16:25 keithw Exp $ */
+/* $Id: enable.c,v 1.49 2001/05/29 15:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -733,6 +733,63 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
       break;
 
+      /* GL_ARB_multisample */
+   case GL_MULTISAMPLE_ARB:
+      if (!ctx->Extensions.ARB_multisample) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Multisample.Enabled == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+      ctx->Multisample.Enabled = state;
+      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+   case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+      if (!ctx->Extensions.ARB_multisample) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Multisample.SampleAlphaToCoverage == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+      ctx->Multisample.SampleAlphaToCoverage = state;
+      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+   case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+      if (!ctx->Extensions.ARB_multisample) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Multisample.SampleAlphaToOne == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+      ctx->Multisample.SampleAlphaToOne = state;
+      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+   case GL_SAMPLE_COVERAGE_ARB:
+      if (!ctx->Extensions.ARB_multisample) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Multisample.SampleCoverage == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+      ctx->Multisample.SampleCoverage = state;
+      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+   case GL_SAMPLE_COVERAGE_INVERT_ARB:
+      if (!ctx->Extensions.ARB_multisample) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Multisample.SampleCoverageInvert == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
+      ctx->Multisample.SampleCoverageInvert = state;
+      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+
       /* GL_MESA_sprite_point */
    case GL_SPRITE_POINT_MESA:
       if (!ctx->Extensions.MESA_sprite_point) {
@@ -987,6 +1044,48 @@ _mesa_IsEnabled( GLenum cap )
          if (ctx->Extensions.ARB_texture_cube_map) {
             const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
             return (texUnit->Enabled & TEXTURE0_CUBE) ? GL_TRUE : GL_FALSE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            return ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            return ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            return ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            return ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            return ctx->Multisample.SampleCoverageInvert;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");

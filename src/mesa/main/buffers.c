@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.28 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: buffers.c,v 1.29 2001/05/29 15:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -370,3 +370,24 @@ _mesa_ResizeBuffersMESA( void )
 
    ctx->Driver.ResizeBuffersMESA( ctx );
 }
+
+
+/*
+ * XXX move somewhere else someday?
+ */
+void
+_mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
+{
+   GLcontext *ctx = _mesa_get_current_context();
+
+   if (!ctx->Extensions.ARB_multisample) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+   ctx->Multisample.SampleCoverageValue = CLAMP(value, 0.0, 1.0);
+   ctx->Multisample.SampleCoverageInvert = invert;
+   ctx->NewState |= _NEW_MULTISAMPLE;
+}
+			   

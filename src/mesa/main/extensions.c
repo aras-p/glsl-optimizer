@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.60 2001/05/24 14:47:56 brianp Exp $ */
+/* $Id: extensions.c,v 1.61 2001/05/29 15:23:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,7 @@ static struct {
    int flag_offset;
 } default_extensions[] = {
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
+   { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
    { OFF, "GL_ARB_texture_compression",        F(ARB_texture_compression) },

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.60 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: get.c,v 1.61 2001/05/29 15:23:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1269,6 +1269,72 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
 	 break;
 
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = FLOAT_TO_BOOL(ctx->Multisample.SampleCoverageValue);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -2484,6 +2550,72 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
 	 break;
 
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -3672,6 +3804,72 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             return;
          }
 	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
@@ -4910,6 +5108,72 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             return;
          }
 	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
 
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
