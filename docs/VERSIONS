@@ -1289,3 +1289,4 @@ Mesa Version History
 	- we weren't reseting the vertex/fragment program error state
 	   before parsing (Dave Reveman)
 	- adjust texcoords for sampling texture rectangles (Dave Reveman)
+	- glGet*(GL_MAX_VERTEX_ATTRIBS_ARB) wasn't implemented
