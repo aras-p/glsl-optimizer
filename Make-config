@@ -68,9 +68,9 @@ aix-gcc:
 	"GLW_LIB = libGLw.so" \
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
-	"CFLAGS = -O -DAIXV3" \
+	"CFLAGS = -O2 -DAIXV3" \
 	"CXX = g++" \
-	"CXXFLAGS = -O -DAIXV3" \
+	"CXXFLAGS = -O2 -DAIXV3" \
 	"MKLIB_OPTIONS = -arch aix-gcc" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm -lXi -lXmu" \
