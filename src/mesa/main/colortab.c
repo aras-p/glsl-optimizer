@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.8 2000/02/24 22:04:03 brianp Exp $ */
+/* $Id: colortab.c,v 1.9 2000/02/28 20:38:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -408,6 +408,15 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_3D:
          palette = &texUnit->CurrentD[3]->Palette;
+         break;
+      case GL_PROXY_TEXTURE_1D:
+         palette = &ctx->Texture.Proxy1D->Palette;
+         break;
+      case GL_PROXY_TEXTURE_2D:
+         palette = &ctx->Texture.Proxy2D->Palette;
+         break;
+      case GL_PROXY_TEXTURE_3D:
+         palette = &ctx->Texture.Proxy3D->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          palette = &ctx->Texture.Palette;
