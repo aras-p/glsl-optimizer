@@ -54,8 +54,7 @@ enum _format {
     * Drivers can override the default formats and convert texture images to
     * one of these as required.  The driver's
     * dd_function_table::ChooseTextureFormat function will choose one of these
-    * formats.  These formats are all little endian, as shown below.  They will
-    * be most useful for x86-based PC graphics card drivers.
+    * formats.
     *
     * \note In the default case, some of these formats will be duplicates of
     * the generic formats listed below.  However, these formats guarantee their
@@ -80,7 +79,6 @@ enum _format {
    MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
    MESA_FORMAT_LA88,		/*                     LLLL LLLL AAAA AAAA */
    MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
-   MESA_FORMAT_BGR233,		/*                               BBGG GRRR */
    MESA_FORMAT_A8,		/*                               AAAA AAAA */
    MESA_FORMAT_L8,		/*                               LLLL LLLL */
    MESA_FORMAT_I8,		/*                               IIII IIII */
@@ -105,7 +103,7 @@ enum _format {
     * \name Generic GLchan-based formats.
     *
     * Software-oriented texture formats.  Texels are arrays of GLchan
-    * values so there will be no big/little endian issues.
+    * values so there are no byte order issues.
     *
     * \note Because these are based on the GLchan data type, one cannot assume
     * 8 bits per channel with these formats.  If you require GLubyte channels,
@@ -197,7 +195,6 @@ extern const struct gl_texture_format _mesa_texformat_bgra5551;
 extern const struct gl_texture_format _mesa_texformat_al88;
 extern const struct gl_texture_format _mesa_texformat_la88;
 extern const struct gl_texture_format _mesa_texformat_rgb332;
-extern const struct gl_texture_format _mesa_texformat_bgr233;
 extern const struct gl_texture_format _mesa_texformat_a8;
 extern const struct gl_texture_format _mesa_texformat_l8;
 extern const struct gl_texture_format _mesa_texformat_i8;

@@ -863,28 +863,6 @@ const struct gl_texture_format _mesa_texformat_rgb332 = {
    fetch_texel_3d_f_rgb332,		/* FetchTexel3Df */
 };
 
-const struct gl_texture_format _mesa_texformat_bgr233 = {
-   MESA_FORMAT_BGR233,			/* MesaFormat */
-   GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
-   3,					/* RedBits */
-   3,					/* GreenBits */
-   2,					/* BlueBits */
-   0,					/* AlphaBits */
-   0,					/* LuminanceBits */
-   0,					/* IntensityBits */
-   0,					/* IndexBits */
-   0,					/* DepthBits */
-   1,					/* TexelBytes */
-   _mesa_texstore_bgr233,		/* StoreTexImageFunc */
-   fetch_texel_1d_bgr233,		/* FetchTexel1D */
-   fetch_texel_2d_bgr233,		/* FetchTexel2D */
-   fetch_texel_3d_bgr233,		/* FetchTexel3D */
-   fetch_texel_1d_f_bgr233,		/* FetchTexel1Df */
-   fetch_texel_2d_f_bgr233,		/* FetchTexel2Df */
-   fetch_texel_3d_f_bgr233,		/* FetchTexel3Df */
-};
-
 const struct gl_texture_format _mesa_texformat_a8 = {
    MESA_FORMAT_A8,			/* MesaFormat */
    GL_ALPHA,				/* BaseFormat */

@@ -1759,59 +1759,6 @@ _mesa_texstore_rgb332(STORE_PARAMS)
 }
 
 
-GLboolean
-_mesa_texstore_bgr233(STORE_PARAMS)
-{
-   ASSERT(dstFormat == &_mesa_texformat_bgr233);
-   ASSERT(dstFormat->TexelBytes == 1);
-
-   if (!ctx->_ImageTransferState &&
-       !srcPacking->SwapBytes &&
-       baseInternalFormat == GL_RGB &&
-       srcFormat == GL_BGR && srcType == GL_UNSIGNED_BYTE_3_3_2) {
-      /* simple memcpy path */
-      memcpy_texture(dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
-                     dstRowStride, dstImageStride,
-                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
-                     srcAddr, srcPacking);
-   }
-   else {
-      /* general path */
-      const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
-                                                 baseInternalFormat,
-                                                 dstFormat->BaseFormat,
-                                                 srcWidth, srcHeight, srcDepth,
-                                                 srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLchan *src = tempImage;
-      GLubyte *dstImage = (GLubyte *) dstAddr
-                        + dstZoffset * dstImageStride
-                        + dstYoffset * dstRowStride
-                        + dstXoffset * dstFormat->TexelBytes;
-      GLint img, row, col;
-      if (!tempImage)
-         return GL_FALSE;
-      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
-      for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = dstImage;
-         for (row = 0; row < srcHeight; row++) {
-            for (col = 0; col < srcWidth; col++) {
-               dstRow[col] = PACK_COLOR_233( CHAN_TO_UBYTE(src[BCOMP]),
-                                             CHAN_TO_UBYTE(src[GCOMP]),
-                                             CHAN_TO_UBYTE(src[RCOMP]) );
-               src += 3;
-            }
-            dstRow += dstRowStride;
-         }
-         dstImage += dstImageStride;
-      }
-      _mesa_free((void *) tempImage);
-   }
-   return GL_TRUE;
-}
-
-
-
 /**
  * Texstore for _mesa_texformat_a8, _mesa_texformat_l8, _mesa_texformat_i8.
  */
