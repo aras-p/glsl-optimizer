@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.2 2000/09/06 17:33:40 brianp Exp $
+# $Id: glx86asm.py,v 1.3 2001/03/28 17:22:11 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.4
@@ -77,8 +77,6 @@ def GenerateDispatchCode(name, offset):
 	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
 	print "GL_PREFIX(%s):" % (name)
 	print '\tMOV_L(GLNAME(_glapi_Dispatch), EAX)'
-	print '\tTEST_L(EAX, EAX)'
-	print "\tJZ(GLNAME(_glapi_fallback_%s))" % (name)
 	print "\tJMP(GL_OFFSET(_gloffset_%s))" % (offset)
 	print ''
 #enddef
