@@ -1179,17 +1179,18 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             savageBlendFunc_s4(ctx);
             break;
         case GL_BLEND:
-            /*Can't find Enable bit in the 3D registers.*/ 
-            /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
-             */
-	    FALLBACK (ctx, SAVAGE_FALLBACK_LOGICOP,
-		      (ctx->Color.ColorLogicOpEnabled &&
-		       ctx->Color.LogicOp != GL_COPY));
             /*add the savageBlendFunc 2001/11/25
              * if call no such function, then glDisable(GL_BLEND) will do noting,
              *our chip has no disable bit
              */ 
             savageBlendFunc_s4(ctx);
+        case GL_COLOR_LOGIC_OP:
+            /* Fall through: 
+	     * For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
+             */
+	    FALLBACK (ctx, SAVAGE_FALLBACK_LOGICOP,
+		      (ctx->Color.ColorLogicOpEnabled &&
+		       ctx->Color.LogicOp != GL_COPY));
             break;
         case GL_DEPTH_TEST:
             savageDDDepthFunc_s4(ctx,ctx->Depth.Func);
@@ -1269,17 +1270,18 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             savageBlendFunc_s3d(ctx);
             break;
         case GL_BLEND:
-            /*Can't find Enable bit in the 3D registers.*/ 
-            /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
-             */
-	    FALLBACK (ctx, SAVAGE_FALLBACK_LOGICOP,
-		      (ctx->Color.ColorLogicOpEnabled &&
-		       ctx->Color.LogicOp != GL_COPY));
             /*add the savageBlendFunc 2001/11/25
              * if call no such function, then glDisable(GL_BLEND) will do noting,
              *our chip has no disable bit
              */ 
             savageBlendFunc_s3d(ctx);
+        case GL_COLOR_LOGIC_OP:
+            /* Fall through: 
+	     * For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
+             */
+	    FALLBACK (ctx, SAVAGE_FALLBACK_LOGICOP,
+		      (ctx->Color.ColorLogicOpEnabled &&
+		       ctx->Color.LogicOp != GL_COPY));
             break;
         case GL_DEPTH_TEST:
             savageDDDepthFunc_s3d(ctx,ctx->Depth.Func);
