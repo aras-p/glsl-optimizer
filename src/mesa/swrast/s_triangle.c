@@ -1,8 +1,8 @@
-/* $Id: s_triangle.c,v 1.42 2001/12/17 04:47:57 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.43 2001/12/19 01:08:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -1145,6 +1145,13 @@ static void nodraw_triangle( GLcontext *ctx,
    (void) (ctx && v0 && v1 && v2);
 }
 
+
+/*
+ * This is used when separate specular color is enabled, but not
+ * texturing.  We cadd the specular color to the primary color,
+ * draw the triangle, then restore the original primary color.
+ * Inefficient, but seldom needed.
+ */
 void _swrast_add_spec_terms_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
@@ -1153,14 +1160,40 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
    SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
    SWvertex *ncv1 = (SWvertex *)v1;
    SWvertex *ncv2 = (SWvertex *)v2;
+#if CHAN_TYPE == GL_FLOAT
+   GLfloat rSum, gSum, bSum;
+#else
+   GLint rSum, gSum, bSum;
+#endif
    GLchan c[3][4];
+   /* save original colors */
    COPY_CHAN4( c[0], ncv0->color );
    COPY_CHAN4( c[1], ncv1->color );
    COPY_CHAN4( c[2], ncv2->color );
-   ACC_3V( ncv0->color, ncv0->specular );
-   ACC_3V( ncv1->color, ncv1->specular );
-   ACC_3V( ncv2->color, ncv2->specular );
+   /* sum v0 */
+   rSum = ncv0->color[0] + ncv0->specular[0];
+   gSum = ncv0->color[1] + ncv0->specular[1];
+   bSum = ncv0->color[2] + ncv0->specular[2];
+   ncv0->color[0] = MIN2(rSum, CHAN_MAX);
+   ncv0->color[1] = MIN2(gSum, CHAN_MAX);
+   ncv0->color[2] = MIN2(bSum, CHAN_MAX);
+   /* sum v1 */
+   rSum = ncv1->color[0] + ncv1->specular[0];
+   gSum = ncv1->color[1] + ncv1->specular[1];
+   bSum = ncv1->color[2] + ncv1->specular[2];
+   ncv1->color[0] = MIN2(rSum, CHAN_MAX);
+   ncv1->color[1] = MIN2(gSum, CHAN_MAX);
+   ncv1->color[2] = MIN2(bSum, CHAN_MAX);
+   /* sum v2 */
+   rSum = ncv2->color[0] + ncv2->specular[0];
+   gSum = ncv2->color[1] + ncv2->specular[1];
+   bSum = ncv2->color[2] + ncv2->specular[2];
+   ncv2->color[0] = MIN2(rSum, CHAN_MAX);
+   ncv2->color[1] = MIN2(gSum, CHAN_MAX);
+   ncv2->color[2] = MIN2(bSum, CHAN_MAX);
+   /* draw */
    SWRAST_CONTEXT(ctx)->SpecTriangle( ctx, ncv0, ncv1, ncv2 );
+   /* restore original colors */
    COPY_CHAN4( ncv0->color, c[0] );
    COPY_CHAN4( ncv1->color, c[1] );
    COPY_CHAN4( ncv2->color, c[2] );
