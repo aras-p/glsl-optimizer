@@ -1254,6 +1254,9 @@ static const struct tnl_pipeline_stage *fx_pipeline[] = {
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
+#if defined(FEATURE_NV_vertex_program) || defined(FEATURE_ARB_vertex_program)
+   &_tnl_vertex_program_stage,
+#endif
    &_tnl_render_stage,
    0,
 };
@@ -1523,7 +1526,7 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_multi_draw_arrays");
    _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
    _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
-#if 0
+#if 1
    /* not just yet */
    _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
    _mesa_enable_extension(ctx, "GL_NV_vertex_program");
