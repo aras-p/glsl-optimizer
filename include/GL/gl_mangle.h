@@ -1,4 +1,4 @@
-/* $Id: gl_mangle.h,v 1.6 2001/04/19 22:33:03 brianp Exp $ */
+/* $Id: gl_mangle.h,v 1.7 2001/09/21 17:23:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -675,5 +675,11 @@
 #define glSecondaryColor3uiEXT mglSecondaryColor3uiEXT
 #define glSecondaryColor3usEXT mglSecondaryColor3usEXT
 #define glSecondaryColor3sEXT mglSecondaryColor3sEXT
+
+
+/* Internal symbols which may collide with other OpenGL implementations. */
+#define __glCoreCreateContext __mglCoreCreateContext
+#define __glCoreNopDispatch __mglCoreNopDispatch
+
 
 #endif
