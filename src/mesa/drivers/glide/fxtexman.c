@@ -651,12 +651,11 @@ void fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 
   fxTMMoveOutTM(fxMesa, tObj);
 
-  for(i=0; i<MAX_TEXTURE_LEVELS; i++) {
-    if (ti->mipmapLevel[i].used &&
-	ti->mipmapLevel[i].translated)
+  for (i=0; i<MAX_TEXTURE_LEVELS; i++) {
+    if (ti->mipmapLevel[i].data) {
       FREE(ti->mipmapLevel[i].data);
-
-    (void)ti->mipmapLevel[i].data;
+      ti->mipmapLevel[i].data = NULL;
+    }
   }
   switch (ti->whichTMU) {
   case FX_TMU0:

@@ -274,9 +274,7 @@ typedef struct MemRange_t {
 typedef struct {
   GLsizei width, height;              /* image size */
   GrTextureFormat_t glideFormat;      /* Glide image format */
-  unsigned short *data;         /* Glide-formated texture image */
-  GLboolean translated;         /* True if data points to a reformated image */
-  GLboolean used;               /* True if we've given the image to Glide */
+  unsigned short *data;               /* Glide-formated texture image */
 } tfxMipMapLevel;
 
 typedef struct tfxTexInfo_t {
