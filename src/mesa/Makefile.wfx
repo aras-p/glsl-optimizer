@@ -90,7 +90,7 @@ LINK = link
 AR   = lib
 AS   = nasm
 
-CFLAGS  = -G6 -c -D__MSC__ -D_MSC_VER=1200 -D_WIN32 -DWIN32 -DSTRICT -W3 #-WX -D__WIN32__
+CFLAGS  = -nologo -G6 -c -D__MSC__ -D_MSC_VER=1200 -D_WIN32 -DWIN32 -DSTRICT -W3 #-WX -D__WIN32__
 LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB #/SUBSYSTEM:WINDOWS,4.00
 ARFLAGS = -nologo
 ASFLAGS = -O2 -fwin32
@@ -386,7 +386,7 @@ x86\matypes.h: x86\gen_matypes.exe
 	x86\gen_matypes.exe > $@
 
 x86\gen_matypes.exe: x86\gen_matypes.obj
-	$(CC) -o $@ x86\gen_matypes.obj
+	$(LINK) -out:$@ -nologo x86\gen_matypes.obj
 
 $(LIBDIR)\x86.lib: x86\matypes.h $(X86_OBJS)
 	$(AR) -out:$@ $(ARFLAGS) $(X86_OBJS)
