@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.25 2001/08/02 22:39:51 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.26 2001/08/03 00:16:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -592,10 +592,13 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	 fixup_first_1ui(IM->Index, IM->Flag, VERT_INDEX, start,
 			 ctx->Current.Index );
 
-      if (fixup & VERT_RGBA)
+      if (fixup & VERT_RGBA) {
 	 if (IM->CopyOrFlag & VERT_RGBA)
 	    fixup_first_4f(IM->Color, IM->Flag, VERT_RGBA, start,
 			   ctx->Current.Color );
+	 else
+	    fixup &= ~VERT_RGBA;
+      }
 
       if (fixup & VERT_SPEC_RGB)
 	 fixup_first_4f(IM->SecondaryColor, IM->Flag, VERT_SPEC_RGB, start,
