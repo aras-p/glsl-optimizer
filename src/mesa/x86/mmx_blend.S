@@ -49,20 +49,6 @@
  */
 #define GMBT_GEOMETRIC_CORRECTION	1
 
-/*
- * do
- *
- *   s = (q - p)*a + q
- *
- * instead of
- *
- *   s = p*a + q*(1-a)
- *
- * this eliminates a multiply at the expense of
- * complicating the roundoff but is generally worth it
- */
-#define GMBT_SIGNED_ARITHMETIC	1
-
 #if GMBT_ROUNDOFF
     SEG_DATA
 
@@ -126,7 +112,6 @@ GLNAME( _mesa_mmx_blend_transparency ):
     PSUBW      ( MM4, MM3 )                     /*   pa1 + 1 |   pa1 + 1 |   pa1 + 1 |   pa1 + 1 */
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PSUBW      ( MM1, MM2 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */
 
     PSLLW      ( CONST(8), MM1 )		/*                    q1 << 8                    */
@@ -143,20 +128,6 @@ GLNAME( _mesa_mmx_blend_transparency ):
     PSLLW      ( CONST(8), MM4 )		/*             q1 > p1 ? 0x100 : 0               */
 
     PSUBW      ( MM4, MM2 )                     /*                  t1 -=? 0x100                 */
-#endif
-
-#else
-    PCMPEQW    ( MM4, MM4 )			/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
-    PUNPCKLBW  ( MM0, MM4 )			/*   0x00ff  |   0x00ff  |   0x00ff  |   0x00ff  */
-    MOVQ       ( MM4, MM0 )
-    
-    PMULLW     ( MM3, MM2 )			/*                     p1*pa1                    */
-
-    PSUBW      ( MM3, MM0 )			/* 255 - pa1 | 255 - pa1 | 255 - pa1 | 255 - pa1 */
-
-    PMULLW     ( MM0, MM1 )			/*                  q1*(255 - pa1)               */
-
-    PADDW      ( MM1, MM2 )			/*           t1 = p1*pa1 + q1*(255 - pa1)        */
 #endif
 
 #if GMBT_ROUNDOFF
@@ -179,9 +150,7 @@ GLNAME( _mesa_mmx_blend_transparency ):
 #endif
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PADDW      ( MM1, MM2 )			/*              (t1/255 + q1) << 8               */
-#endif
 
     PSRLW      ( CONST(8), MM2 )		/*    sa1    |    sb1    |    sg1    |    sr1    */
     
@@ -236,7 +205,6 @@ LLBL (GMBT_loop_begin):
     PSUBW      ( MM4, MM5 )                     /*   pa2 + 1 |   pa2 + 1 |   pa2 + 1 |   pa2 + 1 */
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PSUBW      ( MM1, MM2 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */
     PSUBW      ( MM7, MM6 )                     /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */
 
@@ -260,24 +228,6 @@ LLBL (GMBT_loop_begin):
 
     PSUBW      ( MM0, MM2 )                     /*                  t1 -=? 0x100                 */
     PSUBW      ( MM4, MM7 )                     /*                  t2 -=? 0x100                 */ 
-#endif
-
-#else
-    PCMPEQW    ( MM4, MM4 )			/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
-    PUNPCKLBW  ( MM0, MM4 )			/*   0x00ff  |   0x00ff  |   0x00ff  |   0x00ff  */
-    MOVQ       ( MM4, MM0 )
-    
-    PMULLW     ( MM3, MM2 )			/*                     p1*pa1                    */
-    PMULLW     ( MM5, MM6 )			/*                     p2*pa2                    */
-
-    PSUBW      ( MM3, MM0 )			/* 255 - pa1 | 255 - pa1 | 255 - pa1 | 255 - pa1 */
-    PSUBW      ( MM5, MM4 )			/* 255 - pa2 | 255 - pa2 | 255 - pa2 | 255 - pa2 */
-
-    PMULLW     ( MM0, MM1 )			/*                  q1*(255 - pa1)               */
-    PMULLW     ( MM4, MM7 )			/*                  q2*(255 - pa2)               */
-
-    PADDW      ( MM1, MM2 )			/*           t1 = p1*pa1 + q1*(255 - pa1)        */
-    PADDW      ( MM7, MM6 )			/*           t2 = p2*pa2 + q2*(255 - pa2)        */
 #endif
 
 #if GMBT_ROUNDOFF
@@ -306,10 +256,8 @@ LLBL (GMBT_loop_begin):
 #endif
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PADDW      ( MM1, MM2 )			/*              (t1/255 + q1) << 8               */
     PADDW      ( MM7, MM6 )			/*              (t2/255 + q2) << 8               */
-#endif
 
     PSRLW      ( CONST(8), MM2 )		/*    sa1    |    sb1    |    sg1    |    sr1    */
     PSRLW      ( CONST(8), MM6 )		/*    sa2    |    sb2    |    sg2    |    sr2    */
@@ -354,7 +302,6 @@ LLBL (GMBT_loop_end):
     PSUBW      ( MM4, MM3 )                     /*   pa1 + 1 |   pa1 + 1 |   pa1 + 1 |   pa1 + 1 */
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PSUBW      ( MM1, MM2 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */
 
     PSLLW      ( CONST(8), MM1 )		/*                    q1 << 8                    */
@@ -371,20 +318,6 @@ LLBL (GMBT_loop_end):
     PSLLW      ( CONST(8), MM4 )		/*             q1 > p1 ? 0x100 : 0               */
 
     PSUBW      ( MM4, MM2 )                     /*                  t1 -=? 0x100                 */
-#endif
-
-#else
-    PCMPEQW    ( MM4, MM4 )			/*   0xffff  |   0xffff  |   0xffff  |   0xffff  */
-    PUNPCKLBW  ( MM0, MM4 )			/*   0x00ff  |   0x00ff  |   0x00ff  |   0x00ff  */
-    MOVQ       ( MM4, MM0 )
-    
-    PMULLW     ( MM3, MM2 )			/*                     p1*pa1                    */
-
-    PSUBW      ( MM3, MM0 )			/* 255 - pa1 | 255 - pa1 | 255 - pa1 | 255 - pa1 */
-
-    PMULLW     ( MM0, MM1 )			/*                  q1*(255 - pa1)               */
-
-    PADDW      ( MM1, MM2 )			/*           t1 = p1*pa1 + q1*(255 - pa1)        */
 #endif
 
 #if GMBT_ROUNDOFF
@@ -407,9 +340,7 @@ LLBL (GMBT_loop_end):
 #endif
 #endif
 
-#if GMBT_SIGNED_ARITHMETIC
     PADDW      ( MM1, MM2 )			/*              (t1/255 + q1) << 8               */
-#endif
 
     PSRLW      ( CONST(8), MM2 )		/*    sa1    |    sb1    |    sg1    |    sr1    */
     
