@@ -51,10 +51,143 @@ glutExtensionSupported(const char *extension)
 }
 
 
+struct name_address_pair {
+   const char *name;
+   const void *address;
+};
+
+static struct name_address_pair glut_functions[] = {
+   { "glutInit", (const void *) glutInit },
+   { "glutInitDisplayMode", (const void *) glutInitDisplayMode },
+   { "glutInitDisplayString", (const void *) glutInitDisplayString },
+   { "glutInitWindowPosition", (const void *) glutInitWindowPosition },
+   { "glutInitWindowSize", (const void *) glutInitWindowSize },
+   { "glutMainLoop", (const void *) glutMainLoop },
+   { "glutCreateWindow", (const void *) glutCreateWindow },
+   { "glutCreateSubWindow", (const void *) glutCreateSubWindow },
+   { "glutDestroyWindow", (const void *) glutDestroyWindow },
+   { "glutPostRedisplay", (const void *) glutPostRedisplay },
+   { "glutPostWindowRedisplay", (const void *) glutPostWindowRedisplay },
+   { "glutSwapBuffers", (const void *) glutSwapBuffers },
+   { "glutGetWindow", (const void *) glutGetWindow },
+   { "glutSetWindow", (const void *) glutSetWindow },
+   { "glutSetWindowTitle", (const void *) glutSetWindowTitle },
+   { "glutSetIconTitle", (const void *) glutSetIconTitle },
+   { "glutPositionWindow", (const void *) glutPositionWindow },
+   { "glutReshapeWindow", (const void *) glutReshapeWindow },
+   { "glutPopWindow", (const void *) glutPopWindow },
+   { "glutPushWindow", (const void *) glutPushWindow },
+   { "glutIconifyWindow", (const void *) glutIconifyWindow },
+   { "glutShowWindow", (const void *) glutShowWindow },
+   { "glutHideWindow", (const void *) glutHideWindow },
+   { "glutFullScreen", (const void *) glutFullScreen },
+   { "glutSetCursor", (const void *) glutSetCursor },
+   { "glutWarpPointer", (const void *) glutWarpPointer },
+   { "glutEstablishOverlay", (const void *) glutEstablishOverlay },
+   { "glutRemoveOverlay", (const void *) glutRemoveOverlay },
+   { "glutUseLayer", (const void *) glutUseLayer },
+   { "glutPostOverlayRedisplay", (const void *) glutPostOverlayRedisplay },
+   { "glutPostWindowOverlayRedisplay", (const void *) glutPostWindowOverlayRedisplay },
+   { "glutShowOverlay", (const void *) glutShowOverlay },
+   { "glutHideOverlay", (const void *) glutHideOverlay },
+   { "glutCreateMenu", (const void *) glutCreateMenu },
+   { "glutDestroyMenu", (const void *) glutDestroyMenu },
+   { "glutGetMenu", (const void *) glutGetMenu },
+   { "glutSetMenu", (const void *) glutSetMenu },
+   { "glutAddMenuEntry", (const void *) glutAddMenuEntry },
+   { "glutAddSubMenu", (const void *) glutAddSubMenu },
+   { "glutChangeToMenuEntry", (const void *) glutChangeToMenuEntry },
+   { "glutChangeToSubMenu", (const void *) glutChangeToSubMenu },
+   { "glutRemoveMenuItem", (const void *) glutRemoveMenuItem },
+   { "glutAttachMenu", (const void *) glutAttachMenu },
+   { "glutDetachMenu", (const void *) glutDetachMenu },
+   { "glutDisplayFunc", (const void *) glutDisplayFunc },
+   { "glutReshapeFunc", (const void *) glutReshapeFunc },
+   { "glutKeyboardFunc", (const void *) glutKeyboardFunc },
+   { "glutMouseFunc", (const void *) glutMouseFunc },
+   { "glutMotionFunc", (const void *) glutMotionFunc },
+   { "glutPassiveMotionFunc", (const void *) glutPassiveMotionFunc },
+   { "glutEntryFunc", (const void *) glutEntryFunc },
+   { "glutVisibilityFunc", (const void *) glutVisibilityFunc },
+   { "glutIdleFunc", (const void *) glutIdleFunc },
+   { "glutTimerFunc", (const void *) glutTimerFunc },
+   { "glutMenuStateFunc", (const void *) glutMenuStateFunc },
+   { "glutSpecialFunc", (const void *) glutSpecialFunc },
+   { "glutSpaceballMotionFunc", (const void *) glutSpaceballMotionFunc },
+   { "glutSpaceballRotateFunc", (const void *) glutSpaceballRotateFunc },
+   { "glutSpaceballButtonFunc", (const void *) glutSpaceballButtonFunc },
+   { "glutButtonBoxFunc", (const void *) glutButtonBoxFunc },
+   { "glutDialsFunc", (const void *) glutDialsFunc },
+   { "glutTabletMotionFunc", (const void *) glutTabletMotionFunc },
+   { "glutTabletButtonFunc", (const void *) glutTabletButtonFunc },
+   { "glutMenuStatusFunc", (const void *) glutMenuStatusFunc },
+   { "glutOverlayDisplayFunc", (const void *) glutOverlayDisplayFunc },
+   { "glutWindowStatusFunc", (const void *) glutWindowStatusFunc },
+   { "glutKeyboardUpFunc", (const void *) glutKeyboardUpFunc },
+   { "glutSpecialUpFunc", (const void *) glutSpecialUpFunc },
+   { "glutJoystickFunc", (const void *) glutJoystickFunc },
+   { "glutSetColor", (const void *) glutSetColor },
+   { "glutGetColor", (const void *) glutGetColor },
+   { "glutCopyColormap", (const void *) glutCopyColormap },
+   { "glutGet", (const void *) glutGet },
+   { "glutDeviceGet", (const void *) glutDeviceGet },
+   { "glutExtensionSupported", (const void *) glutExtensionSupported },
+   { "glutGetModifiers", (const void *) glutGetModifiers },
+   { "glutLayerGet", (const void *) glutLayerGet },
+   { "glutGetProcAddress", (const void *) glutGetProcAddress },
+   { "glutBitmapCharacter", (const void *) glutBitmapCharacter },
+   { "glutBitmapWidth", (const void *) glutBitmapWidth },
+   { "glutStrokeCharacter", (const void *) glutStrokeCharacter },
+   { "glutStrokeWidth", (const void *) glutStrokeWidth },
+   { "glutBitmapLength", (const void *) glutBitmapLength },
+   { "glutStrokeLength", (const void *) glutStrokeLength },
+   { "glutWireSphere", (const void *) glutWireSphere },
+   { "glutSolidSphere", (const void *) glutSolidSphere },
+   { "glutWireCone", (const void *) glutWireCone },
+   { "glutSolidCone", (const void *) glutSolidCone },
+   { "glutWireCube", (const void *) glutWireCube },
+   { "glutSolidCube", (const void *) glutSolidCube },
+   { "glutWireTorus", (const void *) glutWireTorus },
+   { "glutSolidTorus", (const void *) glutSolidTorus },
+   { "glutWireDodecahedron", (const void *) glutWireDodecahedron },
+   { "glutSolidDodecahedron", (const void *) glutSolidDodecahedron },
+   { "glutWireTeapot", (const void *) glutWireTeapot },
+   { "glutSolidTeapot", (const void *) glutSolidTeapot },
+   { "glutWireOctahedron", (const void *) glutWireOctahedron },
+   { "glutSolidOctahedron", (const void *) glutSolidOctahedron },
+   { "glutWireTetrahedron", (const void *) glutWireTetrahedron },
+   { "glutSolidTetrahedron", (const void *) glutSolidTetrahedron },
+   { "glutWireIcosahedron", (const void *) glutWireIcosahedron },
+   { "glutSolidIcosahedron", (const void *) glutSolidIcosahedron },
+   { "glutVideoResizeGet", (const void *) glutVideoResizeGet },
+   { "glutSetupVideoResizing", (const void *) glutSetupVideoResizing },
+   { "glutStopVideoResizing", (const void *) glutStopVideoResizing },
+   { "glutVideoResize", (const void *) glutVideoResize },
+   { "glutVideoPan", (const void *) glutVideoPan },
+   { "glutReportErrors", (const void *) glutReportErrors },
+   { "glutIgnoreKeyRepeat", (const void *) glutIgnoreKeyRepeat },
+   { "glutSetKeyRepeat", (const void *) glutSetKeyRepeat },
+   { "glutForceJoystickFunc", (const void *) glutForceJoystickFunc },
+   { "glutGameModeString", (const void *) glutGameModeString },
+   { "glutEnterGameMode", (const void *) glutEnterGameMode },
+   { "glutLeaveGameMode", (const void *) glutLeaveGameMode },
+   { "glutGameModeGet", (const void *) glutGameModeGet },
+   { NULL, NULL }
+};   
+
+
 /* XXX This isn't an official GLUT function, yet */
 void * APIENTRY 
 glutGetProcAddress(const char *procName)
 {
+   /* Try GLUT functions first */
+   int i;
+   for (i = 0; glut_functions[i].name; i++) {
+      if (strcmp(glut_functions[i].name, procName) == 0)
+         return (void *) glut_functions[i].address;
+   }
+
+   /* Try core GL functions */
 #if defined(_WIN32)
   return (void *) wglGetProcAddress((LPCSTR) procName);
 #elif defined(GLX_ARB_get_proc_address)
