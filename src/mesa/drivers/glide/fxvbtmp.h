@@ -52,7 +52,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint fog_stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
-   const GLubyte *mask = VB->ClipMask;
+   /*const GLubyte *mask = VB->ClipMask;*/ /* XXX dangerous? */
    const GLfloat *const s = ctx->Viewport._WindowMap.m;
    int i;
 
@@ -118,7 +118,7 @@ static void TAG(emit)( GLcontext *ctx,
       }
    
       if (IND & SETUP_XYZW) {
-         if (mask[i] == 0) {
+         if (1/*mask[i] == 0*/) {
 	    /* unclipped */
 	    VIEWPORT_X(v->x,   proj[0][0]);
 	    VIEWPORT_Y(v->y,   proj[0][1]);
