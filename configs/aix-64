@@ -1,15 +1,15 @@
-# Configuration for AIX, dynamic libs
+# Configuration for AIX 64-bit, dynamic libs
 
 include $(TOP)/configs/default
 
-CONFIG_NAME = aix
+CONFIG_NAME = aix-64
 
 # Compiler and flags
 CC = xlc
 CXX = xlC
 
 CFLAGS = -q64 -qmaxmem=16384 -O -DAIXV3
-CXXFLAGS = -O -DAIXV3
+CXXFLAGS = -q64 -qmaxmem=16384 -O -DAIXV3
 MKLIB_OPTIONS = -arch AIX64
 
 # Library names (actual file names)
