@@ -23,6 +23,7 @@
                    offset CDATA #IMPLIED
                    vectorequiv CDATA #IMPLIED>
 <!ATTLIST size     name   CDATA #REQUIRED
+                   count  CDATA #IMPLIED
                    mode   CDATA #IMPLIED>
 <!ATTLIST param    name   CDATA #REQUIRED
                    type   CDATA #REQUIRED
@@ -44,6 +45,7 @@
                    img_send_null CDATA #IMPLIED
                    img_null_flag CDATA #IMPLIED
                    img_pad_dimensions CDATA #IMPLIED
+                   doubles_in_order CDATA #IMPLIED
                    variable_param  CDATA #IMPLIED>
 <!ATTLIST return   type     CDATA #REQUIRED>
 <!ATTLIST glx      rop      CDATA #IMPLIED
@@ -1222,7 +1224,7 @@ glx:
     <function name="NewList" offset="0">
         <param name="list" type="GLuint"/>
         <param name="mode" type="GLenum"/>
-        <glx sop="101" note_unflushed="true"/>
+        <glx sop="101"/>
     </function>
 
     <function name="EndList" offset="1">
@@ -1244,7 +1246,7 @@ glx:
     <function name="DeleteLists" offset="4">
         <param name="list" type="GLuint"/>
         <param name="range" type="GLsizei"/>
-        <glx sop="103" note_unflushed="true"/>
+        <glx sop="103"/>
     </function>
 
     <function name="GenLists" offset="5">
@@ -2684,13 +2686,13 @@ glx:
     <function name="PixelStoref" offset="249">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
-        <glx sop="109" handcode="client" note_unflushed="true"/>
+        <glx sop="109" handcode="client"/>
     </function>
 
     <function name="PixelStorei" offset="250">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
-        <glx sop="110" handcode="client" note_unflushed="true"/>
+        <glx sop="110" handcode="client"/>
     </function>
 
     <function name="PixelMapfv" offset="251">
