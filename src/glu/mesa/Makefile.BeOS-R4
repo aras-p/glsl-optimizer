@@ -1,8 +1,9 @@
+# $Id: Makefile.BeOS-R4,v 1.7 2000/07/11 14:11:04 brianp Exp $
 # Makefile for GLU for BeOS R4
 
 # Mesa 3-D graphics library
-# Version:  3.1
-# Copyright (C) 1995-1999  Brian Paul
+# Version:  3.3
+# Copyright (C) 1995-2000  Brian Paul
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -19,41 +20,11 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-# $Id: Makefile.BeOS-R4,v 1.6 1999/12/06 09:39:34 gareth Exp $
-
-# $Log: Makefile.BeOS-R4,v $
-# Revision 1.6  1999/12/06 09:39:34  gareth
-# Merging in work from 3.1/3.2 branch.  Tessellator is essentially fully
-# functional now.
-#
-# Revision 1.5  1999/10/03 00:53:38  gareth
-# Added tessellation winding rule files.
-#
-# Revision 1.4  1999/09/17 00:06:57  brianp
-# version symbol changes
-#
-# Revision 1.3  1999/09/15 15:11:01  brianp
-# added third, tiny version number to mklib scripts
-#
-# Revision 1.2  1999/09/10 02:03:31  gareth
-# Added GLU 1.3 tessellation (except winding rule code).
-#
-# Revision 1.1.1.1  1999/08/19 00:55:42  jtg
-# Imported sources
-#
-# Revision 1.2  1999/02/02 04:44:40  brianp
-# fixed some problems
-#
-# Revision 1.1  1999/01/19 04:10:02  brianp
-# Initial revision
-#
-
-
 
 ##### MACROS #####
 
 GLU_MAJOR = 1
-GLU_MINOR = 2
+GLU_MINOR = 1
 GLU_TINY = $(MESA_MAJOR)$(MESA_MINOR)$(MESA_TINY)
 
 VPATH = RCS
@@ -62,8 +33,7 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c \
-	tess_winding.c tess_clip.c
+	polytest.c project.c quadric.c tess.c tesselat.c
 
 OBJECTS = $(SOURCES:.c=.o)
 

@@ -2,8 +2,8 @@
 # Tinic Uro <5uro@informatik.uni-hamburg.de>
 
 # Mesa 3-D graphics library
-# Version:  2.6
-# Copyright (C) 1995-1997  Brian Paul
+# Version:  3.3
+# Copyright (C) 1995-2000 Brian Paul
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -29,8 +29,7 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c \
-	tess_winding.c tess_clip.c
+	polytest.c project.c quadric.c tess.c tesselat.c
 
 OBJECTS = $(SOURCES:.c=.o)
 

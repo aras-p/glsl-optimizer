@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.7 1999/12/06 09:39:34 gareth Exp $
+# $Id: Makefile.X11,v 1.8 2000/07/11 14:11:04 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.1
-# Copyright (C) 1995-1999  Brian Paul
+# Version:  3.3
+# Copyright (C) 1995-2000  Brian Paul
 
 # Makefile for GLU library
 
@@ -10,7 +10,7 @@
 ##### MACROS #####
 
 GLU_MAJOR = 1
-GLU_MINOR = 2
+GLU_MINOR = 1
 GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 VPATH = RCS
@@ -19,8 +19,7 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c \
-	tess_winding.c tess_clip.c
+	polytest.c project.c quadric.c tess.c tesselat.c
 
 OBJECTS = $(SOURCES:.c=.o)
 

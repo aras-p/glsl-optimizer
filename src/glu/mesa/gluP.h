@@ -1,9 +1,9 @@
-/* $Id: gluP.h,v 1.4 2000/05/22 19:41:11 brianp Exp $ */
+/* $Id: gluP.h,v 1.5 2000/07/11 14:11:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * Copyright (C) 1995-1999  Brian Paul
+ * Version:  3.3
+ * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -22,43 +22,6 @@
 
 
 /*
- * $Log: gluP.h,v $
- * Revision 1.4  2000/05/22 19:41:11  brianp
- * replaced __CYGWIN32__ with __CYGWIN__
- *
- * Revision 1.3  2000/05/22 16:25:37  brianp
- * added some Window-isms formerly in gl.h
- *
- * Revision 1.2  1999/12/07 09:02:12  joukj
- *
- *  Committing in .
- *
- *  Make supportupdate for VMS
- *
- *  Modified Files:
- *  	Mesa/src-glu/descrip.mms Mesa/src-glu/gluP.h
- *  ----------------------------------------------------------------------
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 1.4  1999/01/03 03:23:15  brianp
- * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
- *
- * Revision 1.3  1997/08/01 22:25:27  brianp
- * check for Cygnus Win32 (Stephen Rehel)
- *
- * Revision 1.2  1997/05/27 02:59:46  brianp
- * added defines for APIENTRY and CALLBACK if not compiling on Win32
- *
- * Revision 1.1  1996/09/27 01:19:39  brianp
- * Initial revision
- *
- */
-
-
-
-/*
  * This file allows the GLU code to be compiled either with the Mesa
  * headers or with the real OpenGL headers.
  */
@@ -68,10 +31,9 @@
 #define GLUP_H
 
 
-#include "GL/gl.h"
-#include "GL/glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include <string.h>
-
 
 
 #if defined(_WIN32) && !defined(__WIN32__)
@@ -153,8 +115,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 
 
 
-
-#ifndef MESA
+#ifndef GLU_TESS_ERROR9
    /* If we're using the real OpenGL header files... */
 #  define GLU_TESS_ERROR9	100159
 #endif

@@ -1,10 +1,9 @@
-/* $Id: glu.h,v 1.21 2000/05/22 19:40:43 brianp Exp $ */
+/* $Id: glu.h,v 1.22 2000/07/11 14:11:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- *
- * Copyright (C) 1995-1999  Brian Paul
+ * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -22,20 +21,21 @@
  */
 
 
-#ifndef __glu_h__
-#define __glu_h__
+#ifndef GLU_H
+#define GLU_H
 
 
 #if defined(USE_MGL_NAMESPACE)
 #include "glu_mangle.h"
 #endif
 
-#include "GL/gl.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#include <GL/gl.h>
 
 
 	/* to facilitate clean DLL building ... */
@@ -61,7 +61,6 @@ extern "C" {
 #endif
 
 
-
 #ifdef macintosh
 	#pragma enumsalwaysint on
 	#if PRAGMA_IMPORT_SUPPORTED
@@ -83,7 +82,7 @@ extern "C" {
 
 
 #define GLU_VERSION_1_1			1
-#define GLU_VERSION_1_2			1
+
 
 
 #define GLU_TRUE			1
@@ -215,8 +214,7 @@ extern "C" {
 #define GLU_EXTENSIONS			100801
 
 
-
-/*** GLU 1.0 tessellation - obsolete! ***/
+/*** GLU 1.0 tessellation  ***/
 
 /* Contour types */
 #define GLU_CW				100120
@@ -233,20 +231,26 @@ extern "C" {
 #define GLU_EDGE_FLAG			GLU_TESS_EDGE_FLAG
 
 
-/*
- * These are the GLU 1.1 typedefs.  GLU 1.3 has different ones!
- */
+
 #if defined(__BEOS__)
     /* The BeOS does something funky and makes these typedefs in one
      * of its system headers.
      */
 #else
+
+#if defined GLU_VERSION_1_2
     typedef struct GLUquadric GLUquadricObj;
     typedef struct GLUnurbs GLUnurbsObj;
-
     /* FIXME: We need to implement the other 1.3 typedefs - GH */
     typedef struct GLUtesselator GLUtesselator;
     typedef GLUtesselator GLUtriangulatorObj;
+#else
+    /* GLU 1.1 and older */
+    typedef struct GLUquadric GLUquadricObj;
+    typedef struct GLUtriangulatorObj GLUtriangulatorObj;
+    typedef struct GLUnurbs GLUnurbsObj;
+#endif
+
 #endif
 
 
@@ -306,17 +310,17 @@ GLUAPI const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode );
  */
 
 GLUAPI GLint GLAPIENTRY gluScaleImage( GLenum format,
-                                       GLint widthin, GLint heightin,
+                                       GLsizei widthin, GLsizei heightin,
                                        GLenum typein, const void *datain,
-                                       GLint widthout, GLint heightout,
+                                       GLsizei widthout, GLsizei heightout,
                                        GLenum typeout, void *dataout );
 
 GLUAPI GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
-                                           GLint width, GLenum format,
+                                           GLsizei width, GLenum format,
                                            GLenum type, const void *data );
 
 GLUAPI GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
-                                           GLint width, GLint height,
+                                           GLsizei width, GLsizei height,
                                            GLenum format,
                                            GLenum type, const void *data );
 
@@ -355,14 +359,15 @@ GLUAPI void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
                                     GLint slices, GLint stacks );
 
 GLUAPI void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
-                                  GLdouble radius, GLint slices,
-                                  GLint stacks );
+                                  GLdouble radius,
+                                  GLint slices, GLint stacks );
 
 GLUAPI void GLAPIENTRY gluDisk( GLUquadricObj *qobj,
                                 GLdouble innerRadius, GLdouble outerRadius,
                                 GLint slices, GLint loops );
 
-GLUAPI void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
+GLUAPI void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj,
+                                       GLdouble innerRadius,
                                        GLdouble outerRadius, GLint slices,
                                        GLint loops, GLdouble startAngle,
                                        GLdouble sweepAngle );
@@ -416,8 +421,8 @@ GLUAPI void GLAPIENTRY gluBeginTrim( GLUnurbsObj *nobj );
 GLUAPI void GLAPIENTRY gluEndTrim( GLUnurbsObj *nobj );
 
 GLUAPI void GLAPIENTRY gluPwlCurve( GLUnurbsObj *nobj, GLint count,
-                                    GLfloat *array, GLint stride,
-                                    GLenum type );
+                                    GLfloat *array,
+                                    GLint stride, GLenum type );
 
 GLUAPI void GLAPIENTRY gluNurbsCallback( GLUnurbsObj *nobj, GLenum which,
                                          void (GLCALLBACK *fn)() );
@@ -429,6 +434,8 @@ GLUAPI void GLAPIENTRY gluNurbsCallback( GLUnurbsObj *nobj, GLenum which,
  * Polygon tessellation
  *
  */
+
+#ifdef GLU_VERSION_1_2
 
 GLUAPI GLUtesselator* GLAPIENTRY gluNewTess( void );
 
@@ -458,17 +465,26 @@ GLUAPI void GLAPIENTRY gluTessCallback( GLUtesselator *tobj, GLenum which,
 GLUAPI void GLAPIENTRY gluGetTessProperty( GLUtesselator *tobj, GLenum which,
 					   GLdouble *value );
 
-/*
- *
- * Obsolete 1.0 tessellation functions
- *
- */
+#else
 
-GLUAPI void GLAPIENTRY gluBeginPolygon( GLUtesselator *tobj );
+GLUAPI GLUtriangulatorObj* GLAPIENTRY gluNewTess( void );
 
-GLUAPI void GLAPIENTRY gluNextContour( GLUtesselator *tobj, GLenum type );
+GLUAPI void GLAPIENTRY gluTessCallback( GLUtriangulatorObj *tobj, GLenum which,
+                                        void (GLCALLBACK *fn)() );
 
-GLUAPI void GLAPIENTRY gluEndPolygon( GLUtesselator *tobj );
+GLUAPI void GLAPIENTRY gluDeleteTess( GLUtriangulatorObj *tobj );
+
+GLUAPI void GLAPIENTRY gluBeginPolygon( GLUtriangulatorObj *tobj );
+
+GLUAPI void GLAPIENTRY gluEndPolygon( GLUtriangulatorObj *tobj );
+
+GLUAPI void GLAPIENTRY gluNextContour( GLUtriangulatorObj *tobj, GLenum type );
+
+GLUAPI void GLAPIENTRY gluTessVertex( GLUtriangulatorObj *tobj, GLdouble v[3],
+                                      void *data );
+
+#endif
+
 
 
 
@@ -488,38 +504,12 @@ GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
  *
  */
 
+#ifdef GLU_VERSION_1_3
+
 GLUAPI GLboolean GLAPIENTRY
-gluCheckExtension(const char *extName, const GLubyte *extString);
+gluCheckExtension( const char *extName, const GLubyte *extString );
 
-
-GLUAPI GLint GLAPIENTRY
-gluBuild3DMipmaps( GLenum target, GLint internalFormat, GLsizei width,
-                   GLsizei height, GLsizei depth, GLenum format,
-                   GLenum type, const void *data );
-
-GLUAPI GLint GLAPIENTRY
-gluBuild1DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
-                        GLenum format, GLenum type, GLint level, GLint base,
-                        GLint max, const void *data );
-
-GLUAPI GLint GLAPIENTRY
-gluBuild2DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
-                        GLsizei height, GLenum format, GLenum type,
-                        GLint level, GLint base, GLint max,
-                        const void *data );
-
-GLUAPI GLint GLAPIENTRY
-gluBuild3DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
-                        GLsizei height, GLsizei depth, GLenum format,
-                        GLenum type, GLint level, GLint base, GLint max,
-                        const void *data );
-
-GLUAPI GLint GLAPIENTRY
-gluUnProject4( GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
-               const GLdouble modelMatrix[16], const GLdouble projMatrix[16],
-               const GLint viewport[4], GLclampd zNear, GLclampd zFar,
-               GLdouble *objx, GLdouble *objy, GLdouble *objz,
-               GLdouble *objw );
+#endif
 
 
 
@@ -541,4 +531,4 @@ gluUnProject4( GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
 #endif
 
 
-#endif /* __glu_h__ */
+#endif

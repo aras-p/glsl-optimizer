@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.7 2000/02/10 17:45:52 brianp Exp $ */
+/* $Id: quadric.c,v 1.8 2000/07/11 14:11:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,9 +36,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gluP.h"
-#include "tess_macros.h"
 #endif
 
+
+
+#ifndef M_PI
+#  define M_PI (3.1415926)
+#endif
+
+
+/*
+ * Convert degrees to radians:
+ */
+#define DEG_TO_RAD(A)   ((A)*(M_PI/180.0))
 
 
 /*
@@ -55,12 +65,13 @@
 
 
 
-struct GLUquadric {
-	GLenum	DrawStyle;		/* GLU_FILL, LINE, SILHOUETTE, or POINT */
-	GLenum Orientation;		/* GLU_INSIDE or GLU_OUTSIDE */
-	GLboolean TextureFlag;		/* Generate texture coords? */
-	GLenum Normals;		/* GLU_NONE, GLU_FLAT, or GLU_SMOOTH */
-	void (GLCALLBACKP ErrorFunc)(GLenum err);	/* Error handler callback function */
+struct GLUquadric
+{
+   GLenum DrawStyle;		/* GLU_FILL, LINE, SILHOUETTE, or POINT */
+   GLenum Orientation;		/* GLU_INSIDE or GLU_OUTSIDE */
+   GLboolean TextureFlag;	/* Generate texture coords? */
+   GLenum Normals;		/* GLU_NONE, GLU_FLAT, or GLU_SMOOTH */
+   void (GLCALLBACK * ErrorFunc) (GLenum err);	/* Error handler callback function */
 };
 
 
@@ -68,26 +79,29 @@ struct GLUquadric {
 /*
  * Process a GLU error.
  */
-static void quadric_error( GLUquadricObj *qobj, GLenum error, const char *msg )
+static void
+quadric_error(GLUquadricObj * qobj, GLenum error, const char *msg)
 {
    /* Call the error call back function if any */
    if (qobj->ErrorFunc) {
-      (*qobj->ErrorFunc)( error );
+      (*qobj->ErrorFunc) (error);
    }
    /* Print a message to stdout if MESA_DEBUG variable is defined */
    if (getenv("MESA_DEBUG")) {
-      fprintf(stderr,"GLUError: %s: %s\n", (char*) gluErrorString(error), msg);
+      fprintf(stderr, "GLUError: %s: %s\n", (char *) gluErrorString(error),
+	      msg);
    }
 }
 
 
 
 
-GLUquadricObj * GLAPIENTRY gluNewQuadric( void )
+GLUquadricObj *GLAPIENTRY
+gluNewQuadric(void)
 {
    GLUquadricObj *q;
 
-   q = (GLUquadricObj *) malloc( sizeof(struct GLUquadric) );
+   q = (GLUquadricObj *) malloc(sizeof(struct GLUquadric));
    if (q) {
       q->DrawStyle = GLU_FILL;
       q->Orientation = GLU_OUTSIDE;
@@ -100,10 +114,11 @@ GLUquadricObj * GLAPIENTRY gluNewQuadric( void )
 
 
 
-void GLAPIENTRY gluDeleteQuadric( GLUquadricObj *state )
+void GLAPIENTRY
+gluDeleteQuadric(GLUquadricObj * state)
 {
    if (state) {
-      free( (void *) state );
+      free((void *) state);
    }
 }
 
@@ -113,14 +128,16 @@ void GLAPIENTRY gluDeleteQuadric( GLUquadricObj *state )
  * Set the drawing style to be GLU_FILL, GLU_LINE, GLU_SILHOUETTE,
  * or GLU_POINT.
  */
-void GLAPIENTRY gluQuadricDrawStyle( GLUquadricObj *quadObject, GLenum drawStyle )
+void GLAPIENTRY
+gluQuadricDrawStyle(GLUquadricObj * quadObject, GLenum drawStyle)
 {
-   if (quadObject && (drawStyle==GLU_FILL || drawStyle==GLU_LINE
-		   || drawStyle==GLU_SILHOUETTE || drawStyle==GLU_POINT)) {
+   if (quadObject && (drawStyle == GLU_FILL || drawStyle == GLU_LINE
+		      || drawStyle == GLU_SILHOUETTE
+		      || drawStyle == GLU_POINT)) {
       quadObject->DrawStyle = drawStyle;
    }
    else {
-      quadric_error( quadObject, GLU_INVALID_ENUM, "qluQuadricDrawStyle" );
+      quadric_error(quadObject, GLU_INVALID_ENUM, "qluQuadricDrawStyle");
    }
 }
 
@@ -129,14 +146,15 @@ void GLAPIENTRY gluQuadricDrawStyle( GLUquadricObj *quadObject, GLenum drawStyle
 /*
  * Set the orientation to GLU_INSIDE or GLU_OUTSIDE.
  */
-void GLAPIENTRY gluQuadricOrientation( GLUquadricObj *quadObject,
-                                     GLenum orientation )
+void GLAPIENTRY
+gluQuadricOrientation(GLUquadricObj * quadObject, GLenum orientation)
 {
-   if (quadObject && (orientation==GLU_INSIDE || orientation==GLU_OUTSIDE)) {
+   if (quadObject
+       && (orientation == GLU_INSIDE || orientation == GLU_OUTSIDE)) {
       quadObject->Orientation = orientation;
    }
    else {
-      quadric_error( quadObject, GLU_INVALID_ENUM, "qluQuadricOrientation" );
+      quadric_error(quadObject, GLU_INVALID_ENUM, "qluQuadricOrientation");
    }
 }
 
@@ -145,41 +163,44 @@ void GLAPIENTRY gluQuadricOrientation( GLUquadricObj *quadObject,
 /*
  * Set the error handler callback function.
  */
-void GLAPIENTRY gluQuadricCallback( GLUquadricObj *qobj,
-								  GLenum which, void (GLCALLBACKP fn)() )
+void GLAPIENTRY
+gluQuadricCallback(GLUquadricObj * qobj,
+		   GLenum which, void (GLCALLBACK * fn) ())
 {
    /*
     * UGH, this is a mess!  I thought ANSI was a standard.
     */
-   if (qobj && which==GLU_ERROR) {
+   if (qobj && which == GLU_ERROR) {
 #ifdef __CYGWIN32__
-      qobj->ErrorFunc = (void(GLCALLBACKPCAST)(GLenum))fn;
+      qobj->ErrorFunc = (void (GLCALLBACKPCAST) (GLenum)) fn;
 #elif defined(OPENSTEP)
-      qobj->ErrorFunc = (void(*)(GLenum))fn;
+      qobj->ErrorFunc = (void (*)(GLenum)) fn;
 #elif defined(_WIN32)
-	  qobj->ErrorFunc = (void(GLCALLBACKP)(int))fn;
+      qobj->ErrorFunc = (void (GLCALLBACK *) (int)) fn;
 #elif defined(__STORM__)
-	  qobj->ErrorFunc = (void(GLCALLBACKP)(GLenum))fn;
+      qobj->ErrorFunc = (void (GLCALLBACK *) (GLenum)) fn;
 #elif defined(__BEOS__)
-      qobj->ErrorFunc = (void(*)(GLenum))fn;
+      qobj->ErrorFunc = (void (*)(GLenum)) fn;
 #else
-	  qobj->ErrorFunc = (void(GLCALLBACKP)())fn;
+      qobj->ErrorFunc = (void (GLCALLBACK *) ()) fn;
 #endif
    }
 }
 
 
-void GLAPIENTRY gluQuadricNormals( GLUquadricObj *quadObject, GLenum normals )
+void GLAPIENTRY
+gluQuadricNormals(GLUquadricObj * quadObject, GLenum normals)
 {
    if (quadObject
-         && (normals==GLU_NONE || normals==GLU_FLAT || normals==GLU_SMOOTH)) {
+       && (normals == GLU_NONE || normals == GLU_FLAT
+	   || normals == GLU_SMOOTH)) {
       quadObject->Normals = normals;
    }
 }
 
 
-void GLAPIENTRY gluQuadricTexture( GLUquadricObj *quadObject,
-                                 GLboolean textureCoords )
+void GLAPIENTRY
+gluQuadricTexture(GLUquadricObj * quadObject, GLboolean textureCoords)
 {
    if (quadObject) {
       quadObject->TextureFlag = textureCoords;
@@ -192,70 +213,72 @@ void GLAPIENTRY gluQuadricTexture( GLUquadricObj *quadObject,
 /*
  * Call glNormal3f after scaling normal to unit length.
  */
-static void normal3f( GLfloat x, GLfloat y, GLfloat z )
+static void
+normal3f(GLfloat x, GLfloat y, GLfloat z)
 {
    GLdouble mag;
 
-   mag = sqrt( x*x + y*y + z*z );
-   if (mag>0.00001F) {
+   mag = sqrt(x * x + y * y + z * z);
+   if (mag > 0.00001F) {
       x /= mag;
       y /= mag;
       z /= mag;
    }
-   glNormal3f( x, y, z );
+   glNormal3f(x, y, z);
 }
 
 
 
-void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
-                           GLdouble baseRadius, GLdouble topRadius,
-                           GLdouble height, GLint slices, GLint stacks )
+void GLAPIENTRY
+gluCylinder(GLUquadricObj * qobj,
+	    GLdouble baseRadius, GLdouble topRadius,
+	    GLdouble height, GLint slices, GLint stacks)
 {
    GLdouble da, r, dr, dz;
    GLfloat x, y, z, nz, nsign;
    GLint i, j;
 
-   if (qobj->Orientation==GLU_INSIDE) {
+   if (qobj->Orientation == GLU_INSIDE) {
       nsign = -1.0;
    }
    else {
       nsign = 1.0;
    }
 
-   da = 2.0*M_PI / slices;
-   dr = (topRadius-baseRadius) / stacks;
+   da = 2.0 * M_PI / slices;
+   dr = (topRadius - baseRadius) / stacks;
    dz = height / stacks;
-   nz = (baseRadius-topRadius) / height;  /* Z component of normal vectors */
+   nz = (baseRadius - topRadius) / height;	/* Z component of normal vectors */
 
-   if (qobj->DrawStyle==GLU_POINT) {
-      glBegin( GL_POINTS );
-      for (i=0;i<slices;i++) {
-	 x = cos(i*da);
-	 y = sin(i*da);
-	 normal3f( x*nsign, y*nsign, nz*nsign );
+   if (qobj->DrawStyle == GLU_POINT) {
+      glBegin(GL_POINTS);
+      for (i = 0; i < slices; i++) {
+	 x = cos(i * da);
+	 y = sin(i * da);
+	 normal3f(x * nsign, y * nsign, nz * nsign);
 
 	 z = 0.0;
 	 r = baseRadius;
-	 for (j=0;j<=stacks;j++) {
-	    glVertex3f( x*r, y*r, z );
+	 for (j = 0; j <= stacks; j++) {
+	    glVertex3f(x * r, y * r, z);
 	    z += dz;
 	    r += dr;
 	 }
       }
       glEnd();
    }
-   else if (qobj->DrawStyle==GLU_LINE || qobj->DrawStyle==GLU_SILHOUETTE) {
+   else if (qobj->DrawStyle == GLU_LINE || qobj->DrawStyle == GLU_SILHOUETTE) {
       /* Draw rings */
-      if (qobj->DrawStyle==GLU_LINE) {
+      if (qobj->DrawStyle == GLU_LINE) {
 	 z = 0.0;
 	 r = baseRadius;
-	 for (j=0;j<=stacks;j++) {
-	    glBegin( GL_LINE_LOOP );
-	    for (i=0;i<slices;i++) {
-	       x = cos(i*da);
-	       y = sin(i*da);
-	       normal3f( x*nsign, y*nsign, nz*nsign );
-	       glVertex3f( x*r, y*r, z );
+	 for (j = 0; j <= stacks; j++) {
+	    glBegin(GL_LINE_LOOP);
+	    for (i = 0; i < slices; i++) {
+	       x = cos(i * da);
+	       y = sin(i * da);
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       glVertex3f(x * r, y * r, z);
 	    }
 	    glEnd();
 	    z += dz;
@@ -264,78 +287,78 @@ void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
       }
       else {
 	 /* draw one ring at each end */
-	 if (baseRadius!=0.0) {
-	    glBegin( GL_LINE_LOOP );
-	    for (i=0;i<slices;i++) {
-	       x = cos(i*da);
-	       y = sin(i*da);
-	       normal3f( x*nsign, y*nsign, nz*nsign );
-	       glVertex3f( x*baseRadius, y*baseRadius, 0.0 );
+	 if (baseRadius != 0.0) {
+	    glBegin(GL_LINE_LOOP);
+	    for (i = 0; i < slices; i++) {
+	       x = cos(i * da);
+	       y = sin(i * da);
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       glVertex3f(x * baseRadius, y * baseRadius, 0.0);
 	    }
 	    glEnd();
-	    glBegin( GL_LINE_LOOP );
-	    for (i=0;i<slices;i++) {
-	       x = cos(i*da);
-	       y = sin(i*da);
-	       normal3f( x*nsign, y*nsign, nz*nsign );
-	       glVertex3f( x*topRadius, y*topRadius, height );
+	    glBegin(GL_LINE_LOOP);
+	    for (i = 0; i < slices; i++) {
+	       x = cos(i * da);
+	       y = sin(i * da);
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       glVertex3f(x * topRadius, y * topRadius, height);
 	    }
 	    glEnd();
 	 }
       }
       /* draw length lines */
-      glBegin( GL_LINES );
-      for (i=0;i<slices;i++) {
-	 x = cos(i*da);
-	 y = sin(i*da);
-	 normal3f( x*nsign, y*nsign, nz*nsign );
-	 glVertex3f( x*baseRadius, y*baseRadius, 0.0 );
-	 glVertex3f( x*topRadius, y*topRadius, height );
+      glBegin(GL_LINES);
+      for (i = 0; i < slices; i++) {
+	 x = cos(i * da);
+	 y = sin(i * da);
+	 normal3f(x * nsign, y * nsign, nz * nsign);
+	 glVertex3f(x * baseRadius, y * baseRadius, 0.0);
+	 glVertex3f(x * topRadius, y * topRadius, height);
       }
       glEnd();
    }
-   else if (qobj->DrawStyle==GLU_FILL) {
+   else if (qobj->DrawStyle == GLU_FILL) {
       GLfloat ds = 1.0 / slices;
       GLfloat dt = 1.0 / stacks;
       GLfloat t = 0.0;
       z = 0.0;
       r = baseRadius;
-      for (j=0;j<stacks;j++) {
-         GLfloat s = 0.0;
-         glBegin( GL_QUAD_STRIP );
-         for (i=0;i<=slices;i++) {
-            GLfloat x, y;
-            if (i == slices) {
-               x = sin(0.0);
-               y = cos(0.0);
-            }
-            else {
-               x = sin(i * da);
-               y = cos(i * da);
-            }
-            if (nsign==1.0) {
-               normal3f( x*nsign, y*nsign, nz*nsign );
-               TXTR_COORD(s, t);
-               glVertex3f( x * r, y * r, z );
-               normal3f( x*nsign, y*nsign, nz*nsign );
-               TXTR_COORD(s, t + dt);
-               glVertex3f( x * (r + dr), y * (r + dr), z + dz);
-            }
-            else {
-               normal3f( x*nsign, y*nsign, nz*nsign );
-               TXTR_COORD(s, t);
-               glVertex3f( x * r, y * r, z );
-               normal3f( x*nsign, y*nsign, nz*nsign );
-               TXTR_COORD(s, t + dt);
-               glVertex3f( x * (r + dr), y * (r + dr), z + dz);
-            }
-            s += ds;
-         } /* for slices */
-         glEnd();
-         r += dr;
-         t += dt;
-         z += dz;
-      } /* for stacks */
+      for (j = 0; j < stacks; j++) {
+	 GLfloat s = 0.0;
+	 glBegin(GL_QUAD_STRIP);
+	 for (i = 0; i <= slices; i++) {
+	    GLfloat x, y;
+	    if (i == slices) {
+	       x = sin(0.0);
+	       y = cos(0.0);
+	    }
+	    else {
+	       x = sin(i * da);
+	       y = cos(i * da);
+	    }
+	    if (nsign == 1.0) {
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       TXTR_COORD(s, t);
+	       glVertex3f(x * r, y * r, z);
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       TXTR_COORD(s, t + dt);
+	       glVertex3f(x * (r + dr), y * (r + dr), z + dz);
+	    }
+	    else {
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       TXTR_COORD(s, t);
+	       glVertex3f(x * r, y * r, z);
+	       normal3f(x * nsign, y * nsign, nz * nsign);
+	       TXTR_COORD(s, t + dt);
+	       glVertex3f(x * (r + dr), y * (r + dr), z + dz);
+	    }
+	    s += ds;
+	 }			/* for slices */
+	 glEnd();
+	 r += dr;
+	 t += dt;
+	 z += dz;
+      }				/* for stacks */
    }
 }
 
@@ -343,8 +366,8 @@ void GLAPIENTRY gluCylinder( GLUquadricObj *qobj,
 
 
 
-void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
-                         GLdouble radius, GLint slices, GLint stacks )
+void GLAPIENTRY
+gluSphere(GLUquadricObj * qobj, GLdouble radius, GLint slices, GLint stacks)
 {
    GLfloat rho, drho, theta, dtheta;
    GLfloat x, y, z;
@@ -353,13 +376,13 @@ void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
    GLboolean normals;
    GLfloat nsign;
 
-   if (qobj->Normals==GLU_NONE) {
+   if (qobj->Normals == GLU_NONE) {
       normals = GL_FALSE;
    }
    else {
       normals = GL_TRUE;
    }
-   if (qobj->Orientation==GLU_INSIDE) {
+   if (qobj->Orientation == GLU_INSIDE) {
       nsign = -1.0;
    }
    else {
@@ -373,131 +396,140 @@ void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
    /* t goes from -1.0/+1.0 at z = -radius/+radius (linear along longitudes) */
    /* cannot use triangle fan on texturing (s coord. at top/bottom tip varies) */
 
-   if (qobj->DrawStyle==GLU_FILL) {
-     if (!qobj->TextureFlag) {
-      /* draw +Z end as a triangle fan */
-      glBegin( GL_TRIANGLE_FAN );
-      glNormal3f( 0.0, 0.0, 1.0 );
-      TXTR_COORD(0.5,1.0);
-      glVertex3f( 0.0, 0.0, nsign * radius );
-      for (j=0;j<=slices;j++) {
-	 theta = (j==slices) ? 0.0 : j * dtheta;
-	 x = -sin(theta) * sin(drho);
-	 y = cos(theta) * sin(drho);
-	 z = nsign * cos(drho);
-	 if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	 glVertex3f( x*radius, y*radius, z*radius );
+   if (qobj->DrawStyle == GLU_FILL) {
+      if (!qobj->TextureFlag) {
+	 /* draw +Z end as a triangle fan */
+	 glBegin(GL_TRIANGLE_FAN);
+	 glNormal3f(0.0, 0.0, 1.0);
+	 TXTR_COORD(0.5, 1.0);
+	 glVertex3f(0.0, 0.0, nsign * radius);
+	 for (j = 0; j <= slices; j++) {
+	    theta = (j == slices) ? 0.0 : j * dtheta;
+	    x = -sin(theta) * sin(drho);
+	    y = cos(theta) * sin(drho);
+	    z = nsign * cos(drho);
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    glVertex3f(x * radius, y * radius, z * radius);
+	 }
+	 glEnd();
       }
-      glEnd();
-     }
 
       ds = 1.0 / slices;
       dt = 1.0 / stacks;
-      t = 1.0;  /* because loop now runs from 0 */
+      t = 1.0;			/* because loop now runs from 0 */
       if (qobj->TextureFlag) {
-        imin = 0;
-        imax = stacks;
+	 imin = 0;
+	 imax = stacks;
       }
       else {
-        imin = 1;
-        imax = stacks-1;
+	 imin = 1;
+	 imax = stacks - 1;
       }
 
       /* draw intermediate stacks as quad strips */
-      for (i=imin;i<imax;i++) {
+      for (i = imin; i < imax; i++) {
 	 rho = i * drho;
-	 glBegin( GL_QUAD_STRIP );
-         s = 0.0;
-	 for (j=0;j<=slices;j++) {
-	    theta = (j==slices) ? 0.0 : j * dtheta;
+	 glBegin(GL_QUAD_STRIP);
+	 s = 0.0;
+	 for (j = 0; j <= slices; j++) {
+	    theta = (j == slices) ? 0.0 : j * dtheta;
 	    x = -sin(theta) * sin(rho);
 	    y = cos(theta) * sin(rho);
 	    z = nsign * cos(rho);
-	    if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	    TXTR_COORD(s,t);
-	    glVertex3f( x*radius, y*radius, z*radius );
-	    x = -sin(theta) * sin(rho+drho);
-	    y = cos(theta) * sin(rho+drho);
-	    z = nsign * cos(rho+drho);
-	    if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	    TXTR_COORD(s,t-dt);
-            s += ds;
-	    glVertex3f( x*radius, y*radius, z*radius );
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    TXTR_COORD(s, t);
+	    glVertex3f(x * radius, y * radius, z * radius);
+	    x = -sin(theta) * sin(rho + drho);
+	    y = cos(theta) * sin(rho + drho);
+	    z = nsign * cos(rho + drho);
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    TXTR_COORD(s, t - dt);
+	    s += ds;
+	    glVertex3f(x * radius, y * radius, z * radius);
 	 }
 	 glEnd();
 	 t -= dt;
       }
 
-     if (!qobj->TextureFlag) {
-      /* draw -Z end as a triangle fan */
-      glBegin( GL_TRIANGLE_FAN );
-      glNormal3f( 0.0, 0.0, -1.0 );
-      TXTR_COORD(0.5,0.0);
-      glVertex3f( 0.0, 0.0, -radius*nsign );
-      rho = M_PI - drho;
-      s = 1.0;
-      t = dt;
-      for (j=slices;j>=0;j--) {
-	 theta = (j==slices) ? 0.0 : j * dtheta;
-	 x = -sin(theta) * sin(rho);
-	 y = cos(theta) * sin(rho);
-	 z = nsign * cos(rho);
-	 if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	 TXTR_COORD(s,t);
-         s -= ds;
-	 glVertex3f( x*radius, y*radius, z*radius );
+      if (!qobj->TextureFlag) {
+	 /* draw -Z end as a triangle fan */
+	 glBegin(GL_TRIANGLE_FAN);
+	 glNormal3f(0.0, 0.0, -1.0);
+	 TXTR_COORD(0.5, 0.0);
+	 glVertex3f(0.0, 0.0, -radius * nsign);
+	 rho = M_PI - drho;
+	 s = 1.0;
+	 t = dt;
+	 for (j = slices; j >= 0; j--) {
+	    theta = (j == slices) ? 0.0 : j * dtheta;
+	    x = -sin(theta) * sin(rho);
+	    y = cos(theta) * sin(rho);
+	    z = nsign * cos(rho);
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    TXTR_COORD(s, t);
+	    s -= ds;
+	    glVertex3f(x * radius, y * radius, z * radius);
+	 }
+	 glEnd();
       }
-      glEnd();
-     }
    }
-   else if (qobj->DrawStyle==GLU_LINE || qobj->DrawStyle==GLU_SILHOUETTE) {
+   else if (qobj->DrawStyle == GLU_LINE || qobj->DrawStyle == GLU_SILHOUETTE) {
       /* draw stack lines */
-      for (i=1;i<stacks;i++) {  /* stack line at i==stacks-1 was missing here */
+      for (i = 1; i < stacks; i++) {	/* stack line at i==stacks-1 was missing here */
 	 rho = i * drho;
-	 glBegin( GL_LINE_LOOP );
-	 for (j=0;j<slices;j++) {
+	 glBegin(GL_LINE_LOOP);
+	 for (j = 0; j < slices; j++) {
 	    theta = j * dtheta;
 	    x = cos(theta) * sin(rho);
 	    y = sin(theta) * sin(rho);
 	    z = cos(rho);
-	    if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	    glVertex3f( x*radius, y*radius, z*radius );
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    glVertex3f(x * radius, y * radius, z * radius);
 	 }
 	 glEnd();
       }
       /* draw slice lines */
-      for (j=0;j<slices;j++) {
+      for (j = 0; j < slices; j++) {
 	 theta = j * dtheta;
-	 glBegin( GL_LINE_STRIP );
-	 for (i=0;i<=stacks;i++) {
+	 glBegin(GL_LINE_STRIP);
+	 for (i = 0; i <= stacks; i++) {
 	    rho = i * drho;
 	    x = cos(theta) * sin(rho);
 	    y = sin(theta) * sin(rho);
 	    z = cos(rho);
-	    if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	    glVertex3f( x*radius, y*radius, z*radius );
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    glVertex3f(x * radius, y * radius, z * radius);
 	 }
 	 glEnd();
       }
    }
-   else if (qobj->DrawStyle==GLU_POINT) {
+   else if (qobj->DrawStyle == GLU_POINT) {
       /* top and bottom-most points */
-      glBegin( GL_POINTS );
-      if (normals)  glNormal3f( 0.0, 0.0, nsign );
-      glVertex3d( 0.0, 0.0, radius );
-      if (normals)  glNormal3f( 0.0, 0.0, -nsign );
-      glVertex3d( 0.0, 0.0, -radius );
+      glBegin(GL_POINTS);
+      if (normals)
+	 glNormal3f(0.0, 0.0, nsign);
+      glVertex3d(0.0, 0.0, radius);
+      if (normals)
+	 glNormal3f(0.0, 0.0, -nsign);
+      glVertex3d(0.0, 0.0, -radius);
 
       /* loop over stacks */
-      for (i=1;i<stacks-1;i++) {
+      for (i = 1; i < stacks - 1; i++) {
 	 rho = i * drho;
-	 for (j=0;j<slices;j++) {
+	 for (j = 0; j < slices; j++) {
 	    theta = j * dtheta;
 	    x = cos(theta) * sin(rho);
 	    y = sin(theta) * sin(rho);
 	    z = cos(rho);
-	    if (normals)  glNormal3f( x*nsign, y*nsign, z*nsign );
-	    glVertex3f( x*radius, y*radius, z*radius );
+	    if (normals)
+	       glNormal3f(x * nsign, y * nsign, z * nsign);
+	    glVertex3f(x * radius, y * radius, z * radius);
 	 }
       }
       glEnd();
@@ -507,9 +539,9 @@ void GLAPIENTRY gluSphere( GLUquadricObj *qobj,
 
 
 
-void GLAPIENTRY gluDisk( GLUquadricObj *qobj,
-                       GLdouble innerRadius, GLdouble outerRadius,
-                       GLint slices, GLint loops )
+void GLAPIENTRY
+gluDisk(GLUquadricObj * qobj,
+	GLdouble innerRadius, GLdouble outerRadius, GLint slices, GLint loops)
 {
    GLfloat da, dr;
 #if 0
@@ -521,172 +553,179 @@ void GLAPIENTRY gluDisk( GLUquadricObj *qobj,
 #endif
 
    /* Normal vectors */
-   if (qobj->Normals!=GLU_NONE) {
-      if (qobj->Orientation==GLU_OUTSIDE) {
-	 glNormal3f( 0.0, 0.0, +1.0 );
+   if (qobj->Normals != GLU_NONE) {
+      if (qobj->Orientation == GLU_OUTSIDE) {
+	 glNormal3f(0.0, 0.0, +1.0);
       }
       else {
-	 glNormal3f( 0.0, 0.0, -1.0 );
+	 glNormal3f(0.0, 0.0, -1.0);
       }
    }
 
-   da = 2.0*M_PI / slices;
-   dr = (outerRadius-innerRadius) / (GLfloat) loops;
+   da = 2.0 * M_PI / slices;
+   dr = (outerRadius - innerRadius) / (GLfloat) loops;
 
    switch (qobj->DrawStyle) {
-      case GLU_FILL:
+   case GLU_FILL:
       {
-         /* texture of a gluDisk is a cut out of the texture unit square
-          * x, y in [-outerRadius, +outerRadius]; s, t in [0, 1]
-          * (linear mapping)
-          */
-         GLfloat dtc = 2.0f * outerRadius;
-         GLfloat sa,ca;
-         GLfloat r1 = innerRadius;
-         GLint l;
-         for (l=0; l<loops; l++) {
+	 /* texture of a gluDisk is a cut out of the texture unit square
+	  * x, y in [-outerRadius, +outerRadius]; s, t in [0, 1]
+	  * (linear mapping)
+	  */
+	 GLfloat dtc = 2.0f * outerRadius;
+	 GLfloat sa, ca;
+	 GLfloat r1 = innerRadius;
+	 GLint l;
+	 for (l = 0; l < loops; l++) {
 	    GLfloat r2 = r1 + dr;
-	    if (qobj->Orientation==GLU_OUTSIDE) {
-               GLint s;
-	       glBegin( GL_QUAD_STRIP );
-	       for (s=0;s<=slices;s++) {
-                  GLfloat a;
-		  if (s==slices) a = 0.0;
-		  else  a = s * da;
-		  sa = sin(a); ca = cos(a);
-                  TXTR_COORD(0.5+sa*r2/dtc,0.5+ca*r2/dtc);
-                  glVertex2f( r2*sa, r2*ca );
-                  TXTR_COORD(0.5+sa*r1/dtc,0.5+ca*r1/dtc);
-                  glVertex2f( r1*sa, r1*ca );
+	    if (qobj->Orientation == GLU_OUTSIDE) {
+	       GLint s;
+	       glBegin(GL_QUAD_STRIP);
+	       for (s = 0; s <= slices; s++) {
+		  GLfloat a;
+		  if (s == slices)
+		     a = 0.0;
+		  else
+		     a = s * da;
+		  sa = sin(a);
+		  ca = cos(a);
+		  TXTR_COORD(0.5 + sa * r2 / dtc, 0.5 + ca * r2 / dtc);
+		  glVertex2f(r2 * sa, r2 * ca);
+		  TXTR_COORD(0.5 + sa * r1 / dtc, 0.5 + ca * r1 / dtc);
+		  glVertex2f(r1 * sa, r1 * ca);
 	       }
 	       glEnd();
 	    }
 	    else {
-               GLint s;
-	       glBegin( GL_QUAD_STRIP );
-	       for (s=slices;s>=0;s--) {
-                  GLfloat a;
-		  if (s==slices) a = 0.0;
-		  else  a = s * da;
-		  sa = sin(a); ca = cos(a);
-                  TXTR_COORD(0.5-sa*r2/dtc,0.5+ca*r2/dtc);
-                  glVertex2f( r2*sa, r2*ca );
-                  TXTR_COORD(0.5-sa*r1/dtc,0.5+ca*r1/dtc);
-                  glVertex2f( r1*sa, r1*ca );
+	       GLint s;
+	       glBegin(GL_QUAD_STRIP);
+	       for (s = slices; s >= 0; s--) {
+		  GLfloat a;
+		  if (s == slices)
+		     a = 0.0;
+		  else
+		     a = s * da;
+		  sa = sin(a);
+		  ca = cos(a);
+		  TXTR_COORD(0.5 - sa * r2 / dtc, 0.5 + ca * r2 / dtc);
+		  glVertex2f(r2 * sa, r2 * ca);
+		  TXTR_COORD(0.5 - sa * r1 / dtc, 0.5 + ca * r1 / dtc);
+		  glVertex2f(r1 * sa, r1 * ca);
 	       }
 	       glEnd();
 	    }
 	    r1 = r2;
 	 }
-         break;
+	 break;
       }
-      case GLU_LINE:
+   case GLU_LINE:
       {
-         GLint l, s;
+	 GLint l, s;
 	 /* draw loops */
-         for (l=0; l<=loops; l++) {
-            GLfloat r = innerRadius + l * dr;
-	    glBegin( GL_LINE_LOOP );
-            for (s=0; s<slices; s++) {
-               GLfloat a = s * da;
-	       glVertex2f( r*sin(a), r*cos(a) );
-            }
+	 for (l = 0; l <= loops; l++) {
+	    GLfloat r = innerRadius + l * dr;
+	    glBegin(GL_LINE_LOOP);
+	    for (s = 0; s < slices; s++) {
+	       GLfloat a = s * da;
+	       glVertex2f(r * sin(a), r * cos(a));
+	    }
 	    glEnd();
 	 }
 	 /* draw spokes */
-         for (s=0; s<slices; s++) {
-            GLfloat a = s * da;
+	 for (s = 0; s < slices; s++) {
+	    GLfloat a = s * da;
 	    GLfloat x = sin(a);
 	    GLfloat y = cos(a);
-	    glBegin( GL_LINE_STRIP );
-            for (l=0; l<=loops; l++) {
-               GLfloat r = innerRadius + l * dr;
-	       glVertex2f( r*x, r*y );
+	    glBegin(GL_LINE_STRIP);
+	    for (l = 0; l <= loops; l++) {
+	       GLfloat r = innerRadius + l * dr;
+	       glVertex2f(r * x, r * y);
 	    }
 	    glEnd();
 	 }
 	 break;
       }
-      case GLU_POINT:
+   case GLU_POINT:
       {
-         GLint s;
-	 glBegin( GL_POINTS );
-         for (s=0; s<slices; s++) {
-            GLfloat a = s * da;
+	 GLint s;
+	 glBegin(GL_POINTS);
+	 for (s = 0; s < slices; s++) {
+	    GLfloat a = s * da;
 	    GLfloat x = sin(a);
 	    GLfloat y = cos(a);
-            GLint l;
-            for (l=0; l<=loops; l++) {
-               GLfloat r = innerRadius * l * dr;
-	       glVertex2f( r*x, r*y );
+	    GLint l;
+	    for (l = 0; l <= loops; l++) {
+	       GLfloat r = innerRadius * l * dr;
+	       glVertex2f(r * x, r * y);
 	    }
 	 }
 	 glEnd();
 	 break;
       }
-      case GLU_SILHOUETTE:
+   case GLU_SILHOUETTE:
       {
-	 if (innerRadius!=0.0) {
-            GLfloat a;
-	    glBegin( GL_LINE_LOOP );
-	    for (a=0.0; a<2.0*M_PI; a+=da) {
+	 if (innerRadius != 0.0) {
+	    GLfloat a;
+	    glBegin(GL_LINE_LOOP);
+	    for (a = 0.0; a < 2.0 * M_PI; a += da) {
 	       GLfloat x = innerRadius * sin(a);
 	       GLfloat y = innerRadius * cos(a);
-	       glVertex2f( x, y );
+	       glVertex2f(x, y);
 	    }
 	    glEnd();
 	 }
-         {
-            GLfloat a;
-            glBegin( GL_LINE_LOOP );
-            for (a=0; a<2.0*M_PI; a+=da) {
-               GLfloat x = outerRadius * sin(a);
-               GLfloat y = outerRadius * cos(a);
-               glVertex2f( x, y );
-            }
-            glEnd();
-         }
+	 {
+	    GLfloat a;
+	    glBegin(GL_LINE_LOOP);
+	    for (a = 0; a < 2.0 * M_PI; a += da) {
+	       GLfloat x = outerRadius * sin(a);
+	       GLfloat y = outerRadius * cos(a);
+	       glVertex2f(x, y);
+	    }
+	    glEnd();
+	 }
 	 break;
       }
-      default:
-         abort();
+   default:
+      abort();
    }
 }
 
 
 
-void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
-                              GLdouble outerRadius, GLint slices, GLint loops,
-                              GLdouble startAngle, GLdouble sweepAngle )
+void GLAPIENTRY
+gluPartialDisk(GLUquadricObj * qobj, GLdouble innerRadius,
+	       GLdouble outerRadius, GLint slices, GLint loops,
+	       GLdouble startAngle, GLdouble sweepAngle)
 {
-   if (qobj->Normals!=GLU_NONE) {
-      if (qobj->Orientation==GLU_OUTSIDE) {
-	 glNormal3f( 0.0, 0.0, +1.0 );
+   if (qobj->Normals != GLU_NONE) {
+      if (qobj->Orientation == GLU_OUTSIDE) {
+	 glNormal3f(0.0, 0.0, +1.0);
       }
       else {
-	 glNormal3f( 0.0, 0.0, -1.0 );
+	 glNormal3f(0.0, 0.0, -1.0);
       }
    }
 
-   if (qobj->DrawStyle==GLU_POINT) {
+   if (qobj->DrawStyle == GLU_POINT) {
       GLint loop, slice;
       GLdouble radius, delta_radius;
       GLdouble angle, delta_angle;
-      delta_radius = (outerRadius - innerRadius) / (loops-1);
-      delta_angle = DEG_TO_RAD((sweepAngle) / (slices-1));
-      glBegin( GL_POINTS );
+      delta_radius = (outerRadius - innerRadius) / (loops - 1);
+      delta_angle = DEG_TO_RAD((sweepAngle) / (slices - 1));
+      glBegin(GL_POINTS);
       radius = innerRadius;
-      for (loop=0; loop<loops; loop++) {
+      for (loop = 0; loop < loops; loop++) {
 	 angle = DEG_TO_RAD(startAngle);
-	 for (slice=0; slice<slices; slice++) {
-	    glVertex2d( radius * sin(angle), radius * cos(angle) );
+	 for (slice = 0; slice < slices; slice++) {
+	    glVertex2d(radius * sin(angle), radius * cos(angle));
 	    angle += delta_angle;
 	 }
 	 radius += delta_radius;
       }
       glEnd();
    }
-   else if (qobj->DrawStyle==GLU_LINE) {
+   else if (qobj->DrawStyle == GLU_LINE) {
       GLint loop, slice;
       GLdouble radius, delta_radius;
       GLdouble angle, delta_angle;
@@ -694,11 +733,11 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       delta_angle = DEG_TO_RAD(sweepAngle / slices);
       /* draw rings */
       radius = innerRadius;
-      for (loop=0; loop<loops; loop++) {
+      for (loop = 0; loop < loops; loop++) {
 	 angle = DEG_TO_RAD(startAngle);
-	 glBegin( GL_LINE_STRIP );
-	 for (slice=0; slice<=slices; slice++) {
-	    glVertex2d( radius * sin(angle), radius * cos(angle) );
+	 glBegin(GL_LINE_STRIP);
+	 for (slice = 0; slice <= slices; slice++) {
+	    glVertex2d(radius * sin(angle), radius * cos(angle));
 	    angle += delta_angle;
 	 }
 	 glEnd();
@@ -706,70 +745,74 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       }
       /* draw spokes */
       angle = DEG_TO_RAD(startAngle);
-      for (slice=0; slice<=slices; slice++) {
+      for (slice = 0; slice <= slices; slice++) {
 	 radius = innerRadius;
-	 glBegin( GL_LINE_STRIP );
-	 for (loop=0; loop<loops; loop++) {
-	    glVertex2d( radius * sin(angle), radius * cos(angle) );
+	 glBegin(GL_LINE_STRIP);
+	 for (loop = 0; loop < loops; loop++) {
+	    glVertex2d(radius * sin(angle), radius * cos(angle));
 	    radius += delta_radius;
 	 }
 	 glEnd();
 	 angle += delta_angle;
       }
    }
-   else if (qobj->DrawStyle==GLU_SILHOUETTE) {
+   else if (qobj->DrawStyle == GLU_SILHOUETTE) {
       GLint slice;
       GLdouble angle, delta_angle;
       delta_angle = DEG_TO_RAD(sweepAngle / slices);
       /* draw outer ring */
-      glBegin( GL_LINE_STRIP );
+      glBegin(GL_LINE_STRIP);
       angle = DEG_TO_RAD(startAngle);
-      for (slice=0; slice<=slices; slice++) {
-	 glVertex2d( outerRadius * sin(angle), outerRadius * cos(angle) );
+      for (slice = 0; slice <= slices; slice++) {
+	 glVertex2d(outerRadius * sin(angle), outerRadius * cos(angle));
 	 angle += delta_angle;
       }
       glEnd();
       /* draw inner ring */
-      if (innerRadius>0.0) {
-	 glBegin( GL_LINE_STRIP );
+      if (innerRadius > 0.0) {
+	 glBegin(GL_LINE_STRIP);
 	 angle = DEG_TO_RAD(startAngle);
-	 for (slice=0; slice<slices; slice++) {
-	    glVertex2d( innerRadius * sin(angle), innerRadius * cos(angle) );
+	 for (slice = 0; slice < slices; slice++) {
+	    glVertex2d(innerRadius * sin(angle), innerRadius * cos(angle));
 	    angle += delta_angle;
 	 }
 	 glEnd();
       }
       /* draw spokes */
-      if (sweepAngle<360.0) {
+      if (sweepAngle < 360.0) {
 	 GLdouble stopAngle = startAngle + sweepAngle;
-	 glBegin( GL_LINES );
-	 glVertex2d( innerRadius*SIND(startAngle), innerRadius*COSD(startAngle) );
-	 glVertex2d( outerRadius*SIND(startAngle), outerRadius*COSD(startAngle) );
-	 glVertex2d( innerRadius*SIND(stopAngle), innerRadius*COSD(stopAngle) );
-	 glVertex2d( outerRadius*SIND(stopAngle), outerRadius*COSD(stopAngle) );
+	 glBegin(GL_LINES);
+	 glVertex2d(innerRadius * SIND(startAngle),
+		    innerRadius * COSD(startAngle));
+	 glVertex2d(outerRadius * SIND(startAngle),
+		    outerRadius * COSD(startAngle));
+	 glVertex2d(innerRadius * SIND(stopAngle),
+		    innerRadius * COSD(stopAngle));
+	 glVertex2d(outerRadius * SIND(stopAngle),
+		    outerRadius * COSD(stopAngle));
 	 glEnd();
       }
    }
-   else if (qobj->DrawStyle==GLU_FILL) {
+   else if (qobj->DrawStyle == GLU_FILL) {
       GLint loop, slice;
       GLdouble radius, delta_radius;
       GLdouble angle, delta_angle;
       delta_radius = (outerRadius - innerRadius) / loops;
       delta_angle = DEG_TO_RAD(sweepAngle / slices);
       radius = innerRadius;
-      for (loop=0; loop<loops; loop++) {
-	 glBegin( GL_QUAD_STRIP );
+      for (loop = 0; loop < loops; loop++) {
+	 glBegin(GL_QUAD_STRIP);
 	 angle = DEG_TO_RAD(startAngle);
-	 for (slice=0; slice<=slices; slice++) {
-	    if (qobj->Orientation==GLU_OUTSIDE) {
-	       glVertex2d( (radius+delta_radius)*sin(angle),
-			   (radius+delta_radius)*cos(angle) );
-	       glVertex2d( radius * sin(angle), radius * cos(angle) );
+	 for (slice = 0; slice <= slices; slice++) {
+	    if (qobj->Orientation == GLU_OUTSIDE) {
+	       glVertex2d((radius + delta_radius) * sin(angle),
+			  (radius + delta_radius) * cos(angle));
+	       glVertex2d(radius * sin(angle), radius * cos(angle));
 	    }
 	    else {
-	       glVertex2d( radius * sin(angle), radius * cos(angle) );
-	       glVertex2d( (radius+delta_radius)*sin(angle),
-			   (radius+delta_radius)*cos(angle) );
+	       glVertex2d(radius * sin(angle), radius * cos(angle));
+	       glVertex2d((radius + delta_radius) * sin(angle),
+			  (radius + delta_radius) * cos(angle));
 	    }
 	    angle += delta_angle;
 	 }
@@ -778,6 +821,3 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       }
    }
 }
-
-
-
