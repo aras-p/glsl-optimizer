@@ -162,16 +162,16 @@ void viaEmitState(viaContextPtr vmesa)
       ADVANCE_RING();
    }
     
-   if (0 && ctx->Line.StippleFlag) {
+   if (ctx->Line.StippleFlag) {
       BEGIN_RING(2);
       OUT_RING( ((HC_SubA_HLP << 24) | ctx->Line.StipplePattern) );           
-      OUT_RING( ((HC_SubA_HLPRF << 24) | ctx->Line.StippleFactor) );                  
+      OUT_RING( ((HC_SubA_HLPRF << 24) | ctx->Line.StippleFactor) );
       ADVANCE_RING();
    }
    else {
       BEGIN_RING(2);
       OUT_RING( ((HC_SubA_HLP << 24) | 0xFFFF) );         
-      OUT_RING( ((HC_SubA_HLPRF << 24) | 0x1) );              
+      OUT_RING( ((HC_SubA_HLPRF << 24) | 0xFFFF) );              
       ADVANCE_RING();
    }
 
@@ -1367,7 +1367,7 @@ static void viaChooseLineState(GLcontext *ctx)
         }
     }
 
-    if (0 && ctx->Line.StippleFlag) {
+    if (ctx->Line.StippleFlag) {
         vmesa->regEnable |= HC_HenLP_MASK;
         vmesa->regHLP = ctx->Line.StipplePattern;
         vmesa->regHLPRF = ctx->Line.StippleFactor;

@@ -490,6 +490,12 @@ via_fallback_point(viaContextPtr vmesa,
     viaSpanRenderFinish( ctx );
 }
 
+static void viaResetLineStipple( GLcontext *ctx )
+{
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+   vmesa->regCmdB |= HC_HLPrst_MASK;
+}
+
 /**********************************************************************/
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
@@ -507,8 +513,9 @@ via_fallback_point(viaContextPtr vmesa,
     GLubyte *vertptr = (GLubyte *)vmesa->verts;                 \
     const GLuint vertsize = vmesa->vertexSize;          \
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
-    (void)elt;
-#define RESET_STIPPLE
+   const GLboolean stipple = ctx->Line.StippleFlag;		\
+   (void) elt; (void) stipple;
+#define RESET_STIPPLE	if ( stipple ) { printf("RESET\n"); viaResetLineStipple( ctx ); }
 #define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 #define ELT(x) x
@@ -599,10 +606,7 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                               _DD_NEW_TRI_STIPPLE |             \
                               _NEW_POLYGONSTIPPLE)
 
-/* Via does support line stipple in hardware, and it is partially
- * working in the older versions of this driver:
- */
-#define LINE_FALLBACK (DD_LINE_STIPPLE)
+#define LINE_FALLBACK (0)
 #define POINT_FALLBACK (0)
 #define TRI_FALLBACK (0)
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
@@ -1064,6 +1068,7 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
 	    tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
 	    tnl->Driver.Render.CopyPV = _tnl_copy_pv;
 	    tnl->Driver.Render.Interp = _tnl_interp;
+    	    tnl->Driver.Render.ResetLineStipple = viaResetLineStipple;
 
 	    _tnl_invalidate_vertex_state( ctx, ~0 );
 	    _tnl_invalidate_vertices( ctx, ~0 );
@@ -1098,7 +1103,7 @@ void viaInitTriFuncs(GLcontext *ctx)
     tnl->Driver.Render.Start = viaRenderStart;
     tnl->Driver.Render.Finish = viaRenderFinish;
     tnl->Driver.Render.PrimitiveNotify = viaRenderPrimitive;
-    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
+    tnl->Driver.Render.ResetLineStipple = viaResetLineStipple;
     tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
     tnl->Driver.Render.CopyPV = _tnl_copy_pv;
     tnl->Driver.Render.Interp = _tnl_interp;
