@@ -5,9 +5,9 @@
 #ifndef __WIN32__
 
 #if defined(USE_MGL_NAMESPACE)
-#define GL_PREFIX(n) GLNAME(mgl ## n)
+#define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))
 #else
-#define GL_PREFIX(n) GLNAME(gl ## n)
+#define GL_PREFIX(n) GLNAME(CONCAT(gl,n))
 #endif
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))

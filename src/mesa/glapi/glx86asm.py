@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.1 2000/05/11 23:14:57 brianp Exp $
+# $Id: glx86asm.py,v 1.2 2000/09/06 17:33:40 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
+# Version:  3.4
 # 
 # Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
 # 
@@ -48,9 +48,9 @@ def PrintHead():
 	print '#ifndef __WIN32__'
 	print ''
 	print '#if defined(USE_MGL_NAMESPACE)'
-	print '#define GL_PREFIX(n) GLNAME(mgl ## n)'
+	print '#define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))'
 	print '#else'
-	print '#define GL_PREFIX(n) GLNAME(gl ## n)'
+	print '#define GL_PREFIX(n) GLNAME(CONCAT(gl,n))'
 	print '#endif'
 	print ''
 	print '#define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))'
