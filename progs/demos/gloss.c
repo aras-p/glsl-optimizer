@@ -34,6 +34,9 @@
 #define ANIMATE 3
 #define QUIT 100
 
+/* for convolution */
+#define FILTER_SIZE 7
+
 static GLuint CylinderObj = 0;
 static GLuint TeapotObj = 0;
 static GLuint Object = 0;
@@ -226,6 +229,22 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( int argc, char *argv[] )
 {
+   GLboolean convolve = GL_FALSE;
+   int i;
+
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-info")==0) {
+         printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+         printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+         printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+         printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+      }
+      else if (strcmp(argv[i], "-c")==0) {
+         convolve = GL_TRUE;
+      }
+   }
+
+
    /* Cylinder object */
    {
       static GLfloat height = 100.0;
@@ -322,17 +341,53 @@ static void Init( int argc, char *argv[] )
    glBindTexture(GL_TEXTURE_2D, SpecularTexture);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#if 1
    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-#else
-   glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-   glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-   glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-#endif
-   if (!LoadRGBMipmaps(SPECULAR_TEXTURE_FILE, GL_RGB)) {
-      printf("Error: couldn't load texture image file %s\n", SPECULAR_TEXTURE_FILE);
-      exit(1);
+   if (convolve) {
+      /* use convolution to blur the texture to simulate a dull finish
+       * on the object.
+       */
+      GLubyte *img;
+      GLenum format;
+      GLint w, h;
+      GLfloat filter[FILTER_SIZE][FILTER_SIZE][4];
+
+      for (h = 0; h < FILTER_SIZE; h++) {
+         for (w = 0; w < FILTER_SIZE; w++) {
+            const GLfloat k = 1.0 / (FILTER_SIZE * FILTER_SIZE);
+            filter[h][w][0] = k;
+            filter[h][w][1] = k;
+            filter[h][w][2] = k;
+            filter[h][w][3] = k;
+         }
+      }
+
+      glEnable(GL_CONVOLUTION_2D);
+      glConvolutionParameteri(GL_CONVOLUTION_2D,
+                              GL_CONVOLUTION_BORDER_MODE, GL_CONSTANT_BORDER);
+      glConvolutionFilter2D(GL_CONVOLUTION_2D, GL_RGBA,
+                            FILTER_SIZE, FILTER_SIZE,
+                            GL_RGBA, GL_FLOAT, filter);
+
+      img = LoadRGBImage(SPECULAR_TEXTURE_FILE, &w, &h, &format);
+      if (!img) {
+         printf("Error: couldn't load texture image file %s\n",
+                SPECULAR_TEXTURE_FILE);
+         exit(1);
+      }
+
+      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0,
+                   format, GL_UNSIGNED_BYTE, img);
+      free(img);
+   }
+   else {
+      /* regular path */
+      if (!LoadRGBMipmaps(SPECULAR_TEXTURE_FILE, GL_RGB)) {
+         printf("Error: couldn't load texture image file %s\n",
+                SPECULAR_TEXTURE_FILE);
+         exit(1);
+      }
    }
 
    /* misc */
@@ -342,13 +397,6 @@ static void Init( int argc, char *argv[] )
    glEnable(GL_NORMALIZE);
 
    glPolygonOffset( -1, -1 );
-
-   if (argc > 1 && strcmp(argv[1], "-info")==0) {
-      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
-      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
-      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
-   }
 }
 
 
