@@ -266,8 +266,8 @@ static unsigned char direct_glx_support[8];
 /**
  * Highest core GL version that can be supported for indirect rendering.
  */
-static unsigned gl_major = 0;
-static unsigned gl_minor = 0;
+static const unsigned gl_major = 1;
+static const unsigned gl_minor = 4;
 
 /* client extensions string */
 static const char * __glXGLXClientExtensions = NULL;
@@ -386,11 +386,8 @@ __glXScrEnableExtension( __GLXscreenConfigs *psc, const char * name )
 static void
 __glXExtensionsCtr( void )
 {
-   static const char major_table[32] = { 1, 1, 1, 1, 1, 1, 2, };
-   static const char minor_table[32] = { 0, 1, 2, 3, 4, 5, 0, };
    unsigned   i;
    static GLboolean ext_list_first_time = GL_TRUE;
-   unsigned   full_support = ~0;
 
 
    if ( ext_list_first_time ) {
@@ -430,31 +427,12 @@ __glXExtensionsCtr( void )
 	 if ( known_gl_extensions[i].client_support ) {
 	    SET_BIT( client_gl_support, bit );
 	 }
-	 else if ( known_gl_extensions[i].version_major != 0 ) {
-	    /* If an extension that is required for some core GL version is
-	     * not supported, clear the bit for that core GL version as well.
-	     */
-
-	    unsigned ver_bit = (6 * (known_gl_extensions[i].version_major - 1))
-	      + (known_gl_extensions[i].version_minor);
-
-	    full_support &= ~(1U << ver_bit);
-	 }
 
 	 if ( known_gl_extensions[i].client_only ) {
 	    SET_BIT( client_gl_only, bit );
 	 }
       }
       
-      /* Determine the lowest unsupported core GL version.  The version before
-       * that is, therefore, the highest supported core GL version.
-       */
-      for ( i = 0 ; (full_support & (1 << i)) != 0 ; i++ )
-	 /* empty */ ;
-
-      i--;
-      gl_major = major_table[i];
-      gl_minor = minor_table[i];
 #if 0
       fprintf( stderr, "[%s:%u] Maximum client library version: %u.%u\n",
 	       __func__, __LINE__, gl_major, gl_minor );
