@@ -86,10 +86,10 @@ else
 endif
 
 # Directories
-SRC_DIRS = mesa glut/beos
-GLU_DIRS = # sgi
+SRC_DIRS = mesa glu glut/beos
+GLU_DIRS = sgi
 DRIVER_DIRS = beos
-PROGRAM_DIRS = beos samples redbook tests demos
+PROGRAM_DIRS = beos samples redbook demos tests
 
 # Library/program dependencies
 GL_LIB_DEPS = 
