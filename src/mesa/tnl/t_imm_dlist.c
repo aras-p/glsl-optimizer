@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.28 2001/08/02 22:39:51 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.29 2001/09/14 21:30:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,13 +82,13 @@ static void build_normal_lengths( struct immediate *IM )
    dest += IM->Start;
 
    len = (GLfloat) LEN_3FV( data[0] );
-   if (len > 0.0) len = 1.0/len;
+   if (len > 0.0F) len = 1.0F / len;
    
    for (i = 0 ; i < count ; ) {
       dest[i] = len;
       if (flags[++i] & VERT_NORM) {
 	 len = (GLfloat) LEN_3FV( data[i] );
-	 if (len > 0.0) len = 1.0/len;
+	 if (len > 0.0F) len = 1.0F / len;
       }
    } 
 }
@@ -96,14 +96,14 @@ static void build_normal_lengths( struct immediate *IM )
 static void fixup_normal_lengths( struct immediate *IM ) 
 {
    GLuint i;
-   GLfloat len = 1.0;  /* just to silence warnings */
+   GLfloat len = 1.0F;  /* just to silence warnings */
    GLfloat (*data)[3] = IM->Normal;
    GLfloat *dest = IM->NormalLengthPtr;
    GLuint *flags = IM->Flag;
 
    for (i = IM->CopyStart ; i <= IM->Start ; i++) {
       len = (GLfloat) LEN_3FV( data[i] );
-      if (len > 0.0) len = 1.0/len;
+      if (len > 0.0F) len = 1.0F / len;
       dest[i] = len;
    } 
 
@@ -638,13 +638,13 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    vertex( IM->Obj[i] );
 	 }
 	 else if (flags[i] & VERT_EVAL_C1)
-	    glEvalCoord1f(IM->Obj[i][0]);
+	    glEvalCoord1f( IM->Obj[i][0] );
 	 else if (flags[i] & VERT_EVAL_P1)
-	    glEvalPoint1(IM->Obj[i][0]);
+	    glEvalPoint1( (GLint) IM->Obj[i][0] );
 	 else if (flags[i] & VERT_EVAL_C2)
-	    glEvalCoord2f( IM->Obj[i][0], IM->Obj[i][1]);
+	    glEvalCoord2f( IM->Obj[i][0], IM->Obj[i][1] );
 	 else if (flags[i] & VERT_EVAL_P2)
-	    glEvalPoint2( IM->Obj[i][0], IM->Obj[i][1]);
+	    glEvalPoint2( (GLint) IM->Obj[i][0], (GLint) IM->Obj[i][1] );
       }
 
       if (prim & PRIM_END) {

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.11 2001/05/15 20:52:51 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.12 2001/09/14 21:30:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,10 +59,10 @@ static GLfloat inited = 0;
 #if 1
 #define NEG_EXP( result, narg )						\
 do {									\
-   float f = (narg * (1.0/FOG_INCR));					\
-   int k = (int) f;							\
+   GLfloat f = (GLfloat) (narg * (1.0/FOG_INCR));			\
+   GLint k = (GLint) f;							\
    if (k > FOG_EXP_TABLE_SIZE-2) 					\
-      result = EXP_FOG_MAX;						\
+      result = (GLfloat) EXP_FOG_MAX;					\
    else									\
       result = exp_table[k] + (f-k)*(exp_table[k+1]-exp_table[k]);	\
 } while (0)
@@ -76,10 +76,10 @@ do {								\
 
 static void init_static_data( void )
 {
-   float f = 0;
-   int i = 0;
+   GLfloat f = 0.0F;
+   GLint i = 0;
    for ( ; i < FOG_EXP_TABLE_SIZE ; i++, f += FOG_INCR) {
-      exp_table[i] = exp(-f);
+      exp_table[i] = (GLfloat) exp(-f);
    }
    inited = 1;
 }

@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.17 2001/08/14 00:59:08 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.18 2001/09/14 21:30:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -353,7 +353,7 @@ static void copy_4f_stride( GLfloat to[][4], GLfloat *from,
 
 static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
 {
-   int i;
+   GLuint i;
 /*     MEMCPY( to, from, (count) * sizeof(to[0])); */
    for (i = 0 ; i < count ; i++) {
 /*        fprintf(stderr, "copy norm %d from %p: %f %f %f\n", i, */

@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.17 2001/08/13 22:17:19 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.18 2001/09/14 21:30:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -215,15 +215,14 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
-		  double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-		  int k = (int) x;
+		  GLdouble x = PV_dot_dir * (EXP_TABLE_SIZE-1);
+		  GLint k = (GLint) x;
 		  GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
-					    + (x-k)*light->_SpotExpTable[k][1]);
+				    + (x-k)*light->_SpotExpTable[k][1]);
 		  attenuation *= spot;
 	       }
 	    }
 	 }
-
 
 	 if (attenuation < 1e-3)
 	    continue;		/* this light makes no contribution */
@@ -405,7 +404,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
 	    SUB_3V(VP, light->_Position, vertex);
 
-	    d = LEN_3FV( VP );
+	    d = (GLfloat) LEN_3FV( VP );
 
 	    if ( d > 1e-6) {
 	       GLfloat invd = 1.0F / d;
@@ -424,19 +423,17 @@ static void TAG(light_rgba)( GLcontext *ctx,
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
-		  double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-		  int k = (int) x;
-		  GLfloat spot = (light->_SpotExpTable[k][0]
+		  GLdouble x = PV_dot_dir * (EXP_TABLE_SIZE-1);
+		  GLint k = (GLint) x;
+		  GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
 				  + (x-k)*light->_SpotExpTable[k][1]);
 		  attenuation *= spot;
 	       }
 	    }
 	 }
 
-
 	 if (attenuation < 1e-3)
 	    continue;		/* this light makes no contribution */
-
 
 	 /* Compute dot product or normal and vector from V to light pos */
 	 n_dot_VP = DOT3( normal, VP );
@@ -880,7 +877,7 @@ static void TAG(light_ci)( GLcontext *ctx,
 
 	    SUB_3V(VP, light->_Position, vertex);
 
-	    d = LEN_3FV( VP );
+	    d = (GLfloat) LEN_3FV( VP );
 	    if ( d > 1e-6) {
 	       GLfloat invd = 1.0F / d;
 	       SELF_SCALE_SCALAR_3V(VP, invd);
@@ -897,9 +894,9 @@ static void TAG(light_ci)( GLcontext *ctx,
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
-		  double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
-		  int k = (int) x;
-		  GLfloat spot = (light->_SpotExpTable[k][0]
+		  GLdouble x = PV_dot_dir * (EXP_TABLE_SIZE-1);
+		  GLint k = (GLint) x;
+		  GLfloat spot = (GLfloat) (light->_SpotExpTable[k][0]
 				  + (x-k)*light->_SpotExpTable[k][1]);
 		  attenuation *= spot;
 	       }
