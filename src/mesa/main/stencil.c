@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.26 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: stencil.c,v 1.27 2001/05/09 16:34:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,7 +134,6 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
       case GL_INCR:
       case GL_DECR:
       case GL_INVERT:
-         ctx->Stencil.FailFunc = fail;
          break;
       case GL_INCR_WRAP_EXT:
       case GL_DECR_WRAP_EXT:
