@@ -97,43 +97,19 @@ SOURCE=.\t_context.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\t_eval_api.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_alloc.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_api.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_debug.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_dlist.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_elt.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_eval.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_exec.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_fixup.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\t_pipeline.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_save_api.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_save_loopback.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_save_playback.c
 # End Source File
 # Begin Source File
 
@@ -171,6 +147,18 @@ SOURCE=.\t_vb_texmat.c
 
 SOURCE=.\t_vb_vertex.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\t_vtx_api.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_vtx_eval.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_vtx_exec.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -189,43 +177,11 @@ SOURCE=.\t_context.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\t_eval_api.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_alloc.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_api.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_debug.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_dlist.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_elt.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_eval.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_exec.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\t_imm_fixup.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\t_pipeline.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\t_save_api.h
 # End Source File
 # Begin Source File
 

@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FR /YX /FD /GZ /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -93,10 +93,6 @@ SOURCE=.\api_arrayelt.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\api_eval.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\api_loopback.c
 # End Source File
 # Begin Source File
@@ -110,6 +106,10 @@ SOURCE=.\api_validate.c
 # Begin Source File
 
 SOURCE=.\arbfragparse.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\arbparse.c
 # End Source File
 # Begin Source File
 
@@ -346,6 +346,14 @@ SOURCE=.\api_validate.h
 # Begin Source File
 
 SOURCE=.\arbfragparse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\arbparse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\arbparse_syn.h
 # End Source File
 # Begin Source File
 
