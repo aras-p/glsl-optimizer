@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.9 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.10 2001/09/07 06:55:59 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,7 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
     */
 
    MEMSET(IM->Flag, 0, sizeof(IM->Flag));
+   MEMSET(IM->Normal, 0.0 , sizeof(IM->Normal));
 
    return IM;
 }
