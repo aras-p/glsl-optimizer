@@ -70,7 +70,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       {
          /* Single buffered, with depth buffer */
          GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PIXMAP_BIT_SGIX,
+         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -82,7 +82,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       {
          /* Double buffered, with depth buffer */
          GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PIXMAP_BIT_SGIX,
+         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -94,7 +94,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       {
          /* Single bufferd, without depth buffer */
          GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PIXMAP_BIT_SGIX,
+         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -106,7 +106,7 @@ MakePbuffer( Display *dpy, int screen, int width, int height )
       {
          /* Double bufferd, without depth buffer */
          GLX_RENDER_TYPE_SGIX, GLX_RGBA_BIT_SGIX,
-         GLX_DRAWABLE_TYPE_SGIX, GLX_PIXMAP_BIT_SGIX,
+         GLX_DRAWABLE_TYPE_SGIX, GLX_PBUFFER_BIT_SGIX,
          GLX_RED_SIZE, 1,
          GLX_GREEN_SIZE, 1,
          GLX_BLUE_SIZE, 1,
@@ -268,7 +268,6 @@ InitGL(void)
    glMatrixMode( GL_MODELVIEW );
    glLoadIdentity();
    glTranslatef( 0.0, 0.0, -15.0 );
-
 }
 
 
