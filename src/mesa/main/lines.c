@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.4 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: lines.c,v 1.5 1999/11/08 14:36:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,7 +130,7 @@ static void flat_ci_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -158,7 +158,7 @@ static void flat_ci_z_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -184,7 +184,7 @@ static void flat_rgba_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -213,7 +213,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -240,7 +240,7 @@ static void smooth_ci_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -270,7 +270,7 @@ static void smooth_ci_z_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -301,7 +301,7 @@ static void smooth_rgba_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -335,7 +335,7 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 #include "linetemp.h"
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -416,7 +416,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -481,7 +481,7 @@ static void general_flat_ci_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -576,7 +576,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -641,7 +641,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -701,7 +701,7 @@ static void flat_textured_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -773,7 +773,7 @@ static void smooth_textured_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
@@ -866,7 +866,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    }
 
    ctx->PB->count = count;
-   PB_CHECK_FLUSH( ctx, ctx->PB );
+   gl_flush_pb(ctx);
 }
 
 
