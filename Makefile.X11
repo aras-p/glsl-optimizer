@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.70 2002/11/14 16:14:50 brianp Exp $
+# $Id: Makefile.X11,v 1.71 2002/12/19 15:18:22 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -429,7 +429,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/windml/man3/*.3				\
 	$(DIRECTORY)/src/windml/man3/*.html				\
 	$(DIRECTORY)/src/DOS/*.[chS]					\
-	$(DIRECTORY)/src/DOS/vesa/*.[ch]				\
+	$(DIRECTORY)/src/DOS/vesa/*.[chS]				\
+	$(DIRECTORY)/src/DOS/vga/*.[ch]					\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
