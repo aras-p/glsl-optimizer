@@ -345,29 +345,8 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 	 CLOSE_ELTS();
       }
    }
-   else if (HAVE_TRI_STRIP_1)
-      EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_1, start, count );
-   else {
-      /* Emit the first triangle with elts, then the rest as a regular strip.
-       * TODO:  Make this unlikely in t_imm_api.c
-       */
-      ELT_TYPE *dest;
-
-      ELT_INIT( GL_TRIANGLES, HW_TRIANGLES );
-      dest = ALLOC_ELTS( 3 );
-      EMIT_ELT( dest, 0, (start+1) );
-      EMIT_ELT( dest, 1, (start+0) );
-      EMIT_ELT( dest, 2, (start+2) );
-      dest += 3;
-      CLOSE_ELTS();
-
-      start++;
-      if (start + 2 >= count)
-	 return;
-
-      EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0, start, 
-		 count );
-   }
+   else
+      EMIT_PRIM( ctx, GL_TRIANGLE_STRIP, HW_TRIANGLE_STRIP_0, start, count );
 }
 
 static void TAG(render_tri_fan_verts)( GLcontext *ctx,
