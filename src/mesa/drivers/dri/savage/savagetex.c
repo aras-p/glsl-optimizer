@@ -50,6 +50,8 @@
  *
  *    4 2
  *    x 1
+ *
+ * Yuck! 8-bit texture formats use 4x8 subtiles. See below.
  */
 static const savageTileInfo tileInfo_pro[5] = {
     {64, 64,  8, 8, 8, 8, {0x12, 0x02}}, /* 4-bit */
@@ -84,8 +86,8 @@ static const savageTileInfo tileInfo_s3d_s4[5] = {
  * \param srcStride    Byte stride of rows in the source data
  * \param dest         Pointer to destination
  *
- * Processes rows of source data linearly and scatters them into the
- * subtiles.
+ * Writes linearly to the destination memory in order to exploit write
+ * combining.
  *
  * For a complete tile wInSub and hInSub are set to the same values as
  * in tileInfo. If the source image is smaller than a whole tile in
@@ -96,114 +98,157 @@ static const savageTileInfo tileInfo_s3d_s4[5] = {
 static void savageUploadTile (const savageTileInfo *tileInfo,
 			      GLuint wInSub, GLuint hInSub, GLuint bpp,
 			      GLubyte *src, GLuint srcStride, GLubyte *dest) {
-    GLuint destStride = tileInfo->subWidth * tileInfo->subHeight * bpp;
     GLuint subStride = tileInfo->subWidth * bpp;
-    GLubyte *srcRow = src, *destSRow = dest, *destRow = dest;
+    GLubyte *srcSRow = src, *srcSTile = src;
     GLuint sx, sy, y;
-    /* iterate over subtile rows */
     for (sy = 0; sy < hInSub; ++sy) {
-	destRow = destSRow;
-	/* iterate over pixel rows within the subtile row */
-	for (y = 0; y < tileInfo->subHeight; ++y) {
-	    src = srcRow;
-	    dest = destRow;
-	    /* iterate over subtile columns */
-	    for (sx = 0; sx < wInSub; ++sx) {
+	srcSTile = srcSRow;
+	for (sx = 0; sx < wInSub; ++sx) {
+	    src = srcSTile;
+	    for (y = 0; y < tileInfo->subHeight; ++y) {
 		memcpy (dest, src, subStride);
-		src += subStride;
-		dest += destStride;
+		src += srcStride;
+		dest += subStride;
 	    }
-	    srcRow += srcStride;
-	    destRow += subStride;
+	    srcSTile += subStride;
 	}
-	destSRow += destStride * wInSub;
+	srcSRow += srcStride * tileInfo->subHeight;
     }
 }
 
-/** \brief Upload a texture image that is smaller than 8x8 pixels.
+/** \brief Upload a image that is smaller than 8 pixels in either dimension.
  *
- * \param tileInfo
- * \param width
- * \param height
- * \param bpp
- * \param src
- * \param dest
+ * \param tileInfo    Pointer to tiling information
+ * \param width       Width of the image
+ * \param height      Height of the image
+ * \param bpp         Bytes per pixel
+ * \param src         Pointer to source data
+ * \param dest        Pointer to destination
+ *
+ * This function handles all the special cases that need to be taken
+ * care off. The caller may need to call this function multiple times
+ * with the destination offset in different ways since small texture
+ * images must be repeated in order to fill a whole tile (or 4x4 for
+ * the last 3 levels).
+ *
+ * FIXME: Repeating inside this function would be more efficient.
  */
 static void savageUploadTiny (const savageTileInfo *tileInfo,
 			      GLuint width, GLuint height, GLuint bpp,
 			      GLubyte *src, GLubyte *dest) {
     GLuint size = MAX2(width, height);
-    GLuint offset = (size <= 2 ? tileInfo->tinyOffset[size-1] : 0);
-    GLuint wInSub = width / tileInfo->subWidth;
 
-#if 0
-    /* Fill the file with a test pattern */
-    GLuint i;
-    GLushort *sdest = (GLushort*)dest;
-    if (offset)
-	sdest += 0x20;
-    for (i = 0; i < tileInfo->subWidth*tileInfo->subHeight; ++i) {
-	GLuint x = i;
-	GLuint mask = 0;
-	GLushort val = 0;
-	switch (i & 3) {
-	case 0: mask = 1; break;
-	case 1: mask = 2; break;
-	case 2: mask = 4; break;
-	case 3: mask = 7; break;
-	}
-	if (mask & 1)
-	    val |= x;
-	if (mask & 2)
-	    val |= x*2 << 5;
-	if (mask & 4)
-	    val |= x << (5+6);
-	*sdest++ = val;
-    }
-#else
-    if (wInSub > 1) { /* several subtiles wide but less than a subtile high */
-	GLuint destStride = tileInfo->subWidth * tileInfo->subHeight * bpp;
-	GLuint subStride = tileInfo->subWidth * bpp;
+    if (width > tileInfo->subWidth) { /* assert: height <= subtile height */
+	GLuint wInSub = width / tileInfo->subWidth;
 	GLuint srcStride = width * bpp;
-	GLubyte *srcRow = src, *destRow = dest;
+	GLuint subStride = tileInfo->subWidth * bpp;
+	GLuint subSkip = (tileInfo->subHeight - height) * subStride;
+	GLubyte *srcSTile = src;
 	GLuint sx, y;
-	for (y = 0; y < height; ++y) {
-	    src = srcRow;
-	    dest = destRow;
-	    /* iterate over subtile columns */
-	    for (sx = 0; sx < wInSub; ++sx) {
+	for (sx = 0; sx < wInSub; ++sx) {
+	    src = srcSTile;
+	    for (y = 0; y < height; ++y) {
 		memcpy (dest, src, subStride);
-		src += subStride;
-		dest += destStride;
+		src += srcStride;
+		dest += subStride;
 	    }
-	    srcRow += srcStride;
-	    destRow += subStride;
-	    /* if the subtile width is 4 skip every other tile */
-	    if ((y & 7) == 7 && tileInfo->subWidth == 4)
-		destRow += destStride;
+	    dest += subSkip;
+	    srcSTile += subStride;
 	}
-    } else if (size > 4) { /* not the last 3 mipmap levels */
+    } else if (size > 4) { /* a tile or less wide, except the last 3 levels */
+	GLuint srcStride = width * bpp;
+	GLuint subStride = tileInfo->subWidth * bpp;
+	/* if the subtile width is 4 we have to skip every other subtile */
+	GLuint subSkip = tileInfo->subWidth == 4 ?
+	    subStride * tileInfo->subHeight : 0;
 	GLuint y;
 	for (y = 0; y < height; ++y) {
-	    memcpy (dest, src, bpp*width);
-	    src += width * bpp;
-	    dest += tileInfo->subWidth * bpp;
-	    /* if the subtile width is 4 skip every other tile */
-	    if ((y & 7) == 7 && tileInfo->subWidth == 4)
-		dest += tileInfo->subHeight * tileInfo->subWidth * bpp;
+	    memcpy (dest, src, srcStride);
+	    src += srcStride;
+	    dest += subStride;
+	    if ((y & 7) == 7)
+		dest += subSkip;
 	}
     } else { /* the last 3 mipmap levels */
+	GLuint offset = (size <= 2 ? tileInfo->tinyOffset[size-1] : 0);
+	GLuint subStride = tileInfo->subWidth * bpp;
 	GLuint y;
 	dest += offset;
 	for (y = 0; y < height; ++y) {
 	    memcpy (dest, src, bpp*width);
 	    src += width * bpp;
-	    dest += tileInfo->subWidth * bpp;
+	    dest += subStride;
 	}
     }
-#endif
 }
 
+/** \brief Upload an image from mesa's internal copy.
+ */
+static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
+{
+    const struct gl_texture_image *image = t->image[level].image;
+    const savageTileInfo *tileInfo = t->tileInfo;
+    GLuint width = image->Width2, height = image->Height2;
+    GLuint bpp = t->texelBytes;
+
+    /* FIXME: Need triangle (rather than pixel) fallbacks to simulate
+     * this using normal textured triangles.
+     *
+     * DO THIS IN DRIVER STATE MANAGMENT, not hardware state.
+     */
+    if(image->Border != 0) 
+	fprintf (stderr, "Not supported texture border %d.\n",
+		 (int) image->Border);
+
+    if (width >= 8 && height >= tileInfo->subHeight) {
+	if (width >= tileInfo->width && height >= tileInfo->height) {
+	    GLuint wInTiles = width / tileInfo->width;
+	    GLuint hInTiles = height / tileInfo->height;
+	    GLubyte *srcTRow = image->Data, *src;
+	    GLubyte *dest = (GLubyte *)(t->BufAddr + t->image[level].offset);
+	    GLuint x, y;
+	    for (y = 0; y < hInTiles; ++y) {
+		src = srcTRow;
+		for (x = 0; x < wInTiles; ++x) {
+		    savageUploadTile (tileInfo,
+				      tileInfo->wInSub, tileInfo->hInSub, bpp,
+				      src, width * bpp, dest);
+		    src += tileInfo->width * bpp;
+		    dest += 2048; /* tile size is always 2k */
+		}
+		srcTRow += width * tileInfo->height * bpp;
+	    }
+	} else {
+	    savageUploadTile (tileInfo, width / tileInfo->subWidth,
+			      height / tileInfo->subHeight, bpp,
+			      image->Data, width * bpp,
+			      (GLubyte *)(t->BufAddr+t->image[level].offset));
+	}
+    } else {
+	GLuint minHeight, minWidth, hRepeat, vRepeat, x, y;
+	if (width > 4 || height > 4) {
+	    minWidth = tileInfo->subWidth;
+	    minHeight = tileInfo->subHeight;
+	} else {
+	    minWidth = 4;
+	    minHeight = 4;
+	}
+	hRepeat = width  >= minWidth  ? 1 : minWidth  / width;
+	vRepeat = height >= minHeight ? 1 : minHeight / height;
+	for (y = 0; y < vRepeat; ++y) {
+	    GLuint offset = y * tileInfo->subWidth*height * bpp;
+	    for (x = 0; x < hRepeat; ++x) {
+		savageUploadTiny (tileInfo, width, height, bpp, image->Data,
+				  (GLubyte *)(t->BufAddr +
+					      t->image[level].offset+offset));
+		offset += width * bpp;
+	    }
+	}
+    }
+}
+
+/** \brief Compute the destination size of a texture image
+ */
 static GLuint savageTexImageSize (GLuint width, GLuint height, GLuint bpp) {
     /* full subtiles */
     if (width >= 8 && height >= 8)
@@ -529,74 +574,6 @@ static void savageSwapOutTexObj(savageContextPtr imesa, savageTextureObjectPtr t
 
    t->dirty_images = ~0;
    move_to_tail(&(imesa->SwappedOut), t);
-}
-
-
-
-/* Upload an image from mesa's internal copy.
- */
-static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
-{
-   const struct gl_texture_image *image = t->image[level].image;
-   const savageTileInfo *tileInfo = t->tileInfo;
-   GLuint width = image->Width2, height = image->Height2;
-   GLuint bpp = t->texelBytes;
-
-   /* Need triangle (rather than pixel) fallbacks to simulate this using
-    * normal textured triangles.
-    *
-    * DO THIS IN DRIVER STATE MANAGMENT, not hardware state.
-    * 
-    */
-
-   if(image->Border != 0) 
-       fprintf (stderr, "Not supported texture border %d.\n",
-		(int) image->Border);
-
-   if (width >= 8 && height >= tileInfo->subHeight) {
-       if (width >= tileInfo->width && height >= tileInfo->height) {
-	   GLuint wInTiles = width / tileInfo->width;
-	   GLuint hInTiles = height / tileInfo->height;
-	   GLubyte *srcTRow = image->Data, *src;
-	   GLubyte *dest = (GLubyte *)(t->BufAddr + t->image[level].offset);
-	   GLuint x, y;
-	   for (y = 0; y < hInTiles; ++y) {
-	       src = srcTRow;
-	       for (x = 0; x < wInTiles; ++x) {
-		   savageUploadTile (tileInfo,
-				     tileInfo->wInSub, tileInfo->hInSub, bpp,
-				     src, width * bpp, dest);
-		   src += tileInfo->width * bpp;
-		   dest += 2048; /* tile size is always 2k */
-	       }
-	       srcTRow += width * tileInfo->height * bpp;
-	   }
-       } else {
-	   savageUploadTile (tileInfo, width / tileInfo->subWidth,
-			     height / tileInfo->subHeight, bpp,
-			     image->Data, width * bpp,
-			     (GLubyte *)(t->BufAddr + t->image[level].offset));
-       }
-   } else {
-       GLuint minHeight, minWidth, hRepeat, vRepeat, x, y;
-       if (width > 4 || height > 4) {
-	   minWidth = tileInfo->subWidth;
-	   minHeight = tileInfo->subHeight;
-       } else {
-	   minWidth = 4;
-	   minHeight = 4;
-       }
-       hRepeat = width  >= minWidth  ? 1 : minWidth  / width;
-       vRepeat = height >= minHeight ? 1 : minHeight / height;
-       for (y = 0; y < vRepeat; ++y)
-	   for (x = 0; x < hRepeat; ++x) {
-	       GLuint offset = (y * tileInfo->subWidth*height +
-				x * width) * bpp;
-	       savageUploadTiny (tileInfo, width, height, bpp, image->Data,
-				 (GLubyte *)(t->BufAddr +
-					     t->image[level].offset + offset));
-	   }
-   }
 }
 
 
