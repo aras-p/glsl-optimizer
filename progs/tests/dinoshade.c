@@ -260,6 +260,7 @@ extrudeSolidFromPolygon(GLfloat data[][2], unsigned int dataSize,
                              from being "smoothed" */
   glBegin(GL_QUAD_STRIP);
   for (i = 0; i <= count; i++) {
+#if 1 /* weird, but seems to be legal */
     /* mod function handles closing the edge */
     glVertex3f(data[i % count][0], data[i % count][1], 0.0);
     glVertex3f(data[i % count][0], data[i % count][1], thickness);
@@ -271,6 +272,19 @@ extrudeSolidFromPolygon(GLfloat data[][2], unsigned int dataSize,
     dy = data[i % count][0] - data[(i + 1) % count][0];
     len = sqrt(dx * dx + dy * dy);
     glNormal3f(dx / len, dy / len, 0.0);
+#else /* the nice way of doing it */
+    /* Calculate a unit normal by dividing by Euclidean
+       distance. We * could be lazy and use
+       glEnable(GL_NORMALIZE) so we could pass in * arbitrary
+       normals for a very slight performance hit. */
+    dx = data[i % count][1] - data[(i - 1 + count) % count][1];
+    dy = data[(i - 1 + count) % count][0] - data[i % count][0];
+    len = sqrt(dx * dx + dy * dy);
+    glNormal3f(dx / len, dy / len, 0.0);
+    /* mod function handles closing the edge */
+    glVertex3f(data[i % count][0], data[i % count][1], 0.0);
+    glVertex3f(data[i % count][0], data[i % count][1], thickness);
+#endif
   }
   glEnd();
   glEndList();
