@@ -36,6 +36,14 @@
 
 #include <GL/gl.h>
 
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
+
+#ifndef GLAPI
+#define GLAPI
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
