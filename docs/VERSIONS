@@ -1170,6 +1170,7 @@ Mesa Version History
 	- fixed issues in glDrawPixels and glCopyPixels for very wide images
 	- glPixelMapf/ui/usv()'s size parameter is GLsizei, not GLint
 	- fixed some texgen bugs reported by Daniel Borca
+	- fixed wglMakeCurrent(NULL, NULL) bug (#835861)
     Changes:
 	- dropped API trace feature (src/Trace/)
 	- documentation overhaul.  merged with website content.  more html.
