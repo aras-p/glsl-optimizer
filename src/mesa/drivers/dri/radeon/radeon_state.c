@@ -946,15 +946,13 @@ void radeonUpdateMaterial( GLcontext *ctx )
       fcmd[MTL_SHININESS]       = mat[MAT_ATTRIB_FRONT_SHININESS][0];
    }
 
-   if (RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.mtl )) {
-      for (p = 0 ; p < MAX_LIGHTS; p++) 
-	 update_light_colors( ctx, p );
+   RADEON_DB_STATECHANGE( rmesa, &rmesa->hw.mtl );
 
-      check_twoside_fallback( ctx );
-      update_global_ambient( ctx );
-   }
-   else if (RADEON_DEBUG & (DEBUG_PRIMS|DEBUG_STATE))
-      fprintf(stderr, "%s: Elided noop material call\n", __FUNCTION__);
+   for (p = 0 ; p < MAX_LIGHTS; p++)
+      update_light_colors( ctx, p );
+
+   check_twoside_fallback( ctx );
+   update_global_ambient( ctx );
 }
 
 /* _NEW_LIGHT
@@ -1726,8 +1724,7 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_COLOR_MATERIAL:
       radeonColorMaterial( ctx, 0, 0 );
-      if (!state) 
-	 radeonUpdateMaterial( ctx );
+      radeonUpdateMaterial( ctx );
       break;
 
    case GL_CULL_FACE:

@@ -959,15 +959,13 @@ void r200UpdateMaterial( GLcontext *ctx )
       fcmd[MTL_SHININESS]       = mat[MAT_ATTRIB_FRONT_SHININESS][0];
    }
 
-   if (R200_DB_STATECHANGE( rmesa, &rmesa->hw.mtl[0] )) {
-      for (p = 0 ; p < MAX_LIGHTS; p++) 
-	 update_light_colors( ctx, p );
+   R200_DB_STATECHANGE( rmesa, &rmesa->hw.mtl[0] );
 
-      check_twoside_fallback( ctx );
-      update_global_ambient( ctx );
-   }
-   else if (R200_DEBUG & (DEBUG_PRIMS|DEBUG_STATE))
-      fprintf(stderr, "%s: Elided noop material call\n", __FUNCTION__);
+   for (p = 0 ; p < MAX_LIGHTS; p++)
+      update_light_colors( ctx, p );
+
+   check_twoside_fallback( ctx );
+   update_global_ambient( ctx );
 }
 
 /* _NEW_LIGHT
@@ -1734,8 +1732,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_COLOR_MATERIAL:
       r200ColorMaterial( ctx, 0, 0 );
-      if (!state) 
-	 r200UpdateMaterial( ctx );
+      r200UpdateMaterial( ctx );
       break;
 
    case GL_CULL_FACE:
