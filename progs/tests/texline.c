@@ -1,4 +1,4 @@
-/* $Id: texline.c,v 1.2 2001/01/23 23:44:39 brianp Exp $ */
+/* $Id: texline.c,v 1.3 2001/05/21 17:45:25 brianp Exp $ */
 
 /*
  * Test textured lines.
@@ -17,12 +17,14 @@
 #define TEXTURE_FILE "../images/girl.rgb"
 
 static GLboolean Antialias = GL_FALSE;
-static GLboolean Animate = GL_TRUE;
+static GLboolean Animate = GL_FALSE;
 static GLboolean Texture = GL_TRUE;
 static GLfloat LineWidth = 1.0;
+static GLboolean Multitex = GL_FALSE;
 
 static GLfloat Xrot = -60.0, Yrot = 0.0, Zrot = 0.0;
 static GLfloat DYrot = 1.0;
+static GLboolean Points = GL_FALSE;
 
 
 static void Idle( void )
@@ -36,7 +38,7 @@ static void Idle( void )
 
 static void Display( void )
 {
-   GLfloat x, t;
+   GLfloat x, y, s, t;
 
    glClear( GL_COLOR_BUFFER_BIT );
 
@@ -48,17 +50,38 @@ static void Display( void )
    if (Texture)
       glColor3f(1, 1, 1);
 
-   glBegin(GL_LINES);
-   for (t = 0.0; t <= 1.0; t += 0.025) {
-      x = t * 2.0 - 1.0;
-      if (!Texture)
-         glColor3f(1, 0, 1);
-      glTexCoord2f(t, 0.0);  glVertex2f(x, -1.0);
-      if (!Texture)
-         glColor3f(0, 1, 0);
-      glTexCoord2f(t, 1.0);  glVertex2f(x, 1.0);
+   if (Points) {
+      glBegin(GL_POINTS);
+      for (t = 0.0; t <= 1.0; t += 0.025) {
+         for (s = 0.0; s <= 1.0; s += 0.025) {
+            x = s * 2.0 - 1.0;
+            y = t * 2.0 - 1.0;
+            if (!Texture)
+               glColor3f(1, 0, 1);
+            glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t, s);
+            glTexCoord2f(s, t);
+            glVertex2f(x, y);
+         }
+      }
+      glEnd();
    }
-   glEnd();
+   else {
+      glBegin(GL_LINES);
+      for (t = 0.0; t <= 1.0; t += 0.025) {
+         x = t * 2.0 - 1.0;
+         if (!Texture)
+            glColor3f(1, 0, 1);
+         glTexCoord2f(t, 0.0);
+         glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0.0, t);
+         glVertex2f(x, -1.0);
+         if (!Texture)
+            glColor3f(0, 1, 0);
+         glTexCoord2f(t, 1.0);
+         glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1.0, t);
+         glVertex2f(x, 1.0);
+      }
+      glEnd();
+   }
 
    glPopMatrix();
 
@@ -88,11 +111,13 @@ static void Key( unsigned char key, int x, int y )
          Antialias = !Antialias;
          if (Antialias) {
             glEnable(GL_LINE_SMOOTH);
+            glEnable(GL_POINT_SMOOTH);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
          }
          else {
             glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POINT_SMOOTH);
             glDisable(GL_BLEND);
          }
          break;
@@ -108,12 +133,26 @@ static void Key( unsigned char key, int x, int y )
          if (LineWidth < 0.25)
             LineWidth = 0.25;
          glLineWidth(LineWidth);
+         glPointSize(LineWidth);
          break;
       case 'W':
          LineWidth += 0.25;
          if (LineWidth > 8.0)
             LineWidth = 8.0;
          glLineWidth(LineWidth);
+         glPointSize(LineWidth);
+         break;
+      case 'm':
+         Multitex = !Multitex;
+         if (Multitex) {
+            glEnable(GL_TEXTURE_2D);
+         }
+         else {
+            glDisable(GL_TEXTURE_2D);
+         }
+         break;
+      case 'p':
+         Points = !Points;
          break;
       case ' ':
          Animate = !Animate;
@@ -126,7 +165,7 @@ static void Key( unsigned char key, int x, int y )
          exit(0);
          break;
    }
-   printf("Width %f\n", LineWidth);
+   printf("LineWidth, PointSize = %f\n", LineWidth);
    glutPostRedisplay();
 }
 
@@ -157,18 +196,27 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( int argc, char *argv[] )
 {
-   glEnable(GL_TEXTURE_2D);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   GLuint u;
+   for (u = 0; u < 2; u++) {
+      glActiveTextureARB(GL_TEXTURE0_ARB + u);
+      glBindTexture(GL_TEXTURE_2D, 10+u);
+      if (u == 0 || Multitex)
+         glEnable(GL_TEXTURE_2D);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      if (u == 0)
+         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      else
+         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
 
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
-      printf("Error: couldn't load texture image\n");
-      exit(1);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
+         printf("Error: couldn't load texture image\n");
+         exit(1);
+      }
    }
 
    if (argc > 1 && strcmp(argv[1], "-info")==0) {
@@ -195,7 +243,8 @@ int main( int argc, char *argv[] )
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
-   glutIdleFunc( Idle );
+   if (Animate)
+      glutIdleFunc( Idle );
 
    glutMainLoop();
    return 0;
