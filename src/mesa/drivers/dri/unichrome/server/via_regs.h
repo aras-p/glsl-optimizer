@@ -36,21 +36,6 @@
 
 /*#define VIA_SERIES(chip)  (chip == VIA_CLE266)*/
 
-
-/* Chip tags.  These are used to group the adapters into
- * related families.
- */
-
-enum VIACHIPTAGS {
-    VIA_UNKNOWN = 0,
-    VIA_CLE266,
-    VIA_KM400,
-    VIA_K8M800,
-    VIA_PM800,
-    VIA_LAST
-};
-
-
 #define PCI_VIA_VENDOR_ID       0x1106
 
 #define PCI_CHIP_CLE3122        0x3122

@@ -126,18 +126,11 @@ static void VIADRIIrqExit( DRIDriverContext *ctx ) {
     }
 }
 	    
-
-/* Locks up engine - FIXME 
-#define ENABLE_AGP_RINGBUF
-*/
-
-#ifdef ENABLE_AGP_RINGBUF
-
 static void VIADRIRingBufferCleanup(DRIDriverContext *ctx)
 {
     VIAPtr pVia = VIAPTR(ctx);
     VIADRIPtr pVIADRI = pVia->devPrivate;
-    drmVIADMAInit ringBufInit;
+    drm_via_dma_init_t ringBufInit;
 
     if (pVIADRI->ringBufActive) {
 	xf86DrvMsg(pScreen->myNum, X_INFO, 
@@ -156,7 +149,7 @@ static int VIADRIRingBufferInit(DRIDriverContext *ctx)
 {
     VIAPtr pVia = VIAPTR(ctx);
     VIADRIPtr pVIADRI = pVia->devPrivate;
-    drmVIADMAInit ringBufInit;
+    drm_via_dma_init_t ringBufInit;
     drmVersionPtr drmVer;
 
     pVIADRI->ringBufActive = 0;
@@ -198,9 +191,6 @@ static int VIADRIRingBufferInit(DRIDriverContext *ctx)
     pVIADRI->ringBufActive = 1;
     return GL_TRUE;
 }	    
-
-#endif
-	
 
 static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
 {
@@ -456,9 +446,7 @@ VIADRICloseScreen(DRIDriverContext * ctx)
     VIAPtr pVia = VIAPTR(ctx);
     VIADRIPtr pVIADRI=(VIADRIPtr)pVia->devPrivate;
 
-#ifdef ENABLE_AGP_RINGBUF
     VIADRIRingBufferCleanup(ctx);
-#endif
 
     if (pVia->MapBase) {
 	xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] Unmapping MMIO registers\n");
@@ -527,10 +515,8 @@ VIADRIFinishScreenInit(DRIDriverContext * ctx)
 #endif
 	VIADRIIrqInit(ctx);
     
-#ifdef ENABLE_AGP_RINGBUF
     pVIADRI->ringBufActive = 0;
     VIADRIRingBufferInit(ctx);
-#endif     
 
     return GL_TRUE;
 }
