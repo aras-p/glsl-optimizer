@@ -7727,6 +7727,58 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
                          n[1].i, n[2].i, n[3].i, n[4].i);
 	    break;
 
+
+
+	 case OPCODE_ATTR_1F:
+	    _mesa_printf("ATTR_1F attr %d: %f\n",
+			 n[1].i, n[2].f);
+	    break;
+	 case OPCODE_ATTR_2F:
+	    _mesa_printf("ATTR_2F attr %d: %f %f\n",
+			 n[1].i, n[2].f, n[3].f);
+	    break;
+	 case OPCODE_ATTR_3F:
+	    _mesa_printf("ATTR_3F attr %d: %f %f %f\n",
+			 n[1].i, n[2].f, n[3].f, n[4].f);
+	    break;
+	 case OPCODE_ATTR_4F:
+	    _mesa_printf("ATTR_4F attr %d: %f %f %f %f\n",
+			 n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
+	    break;
+	 case OPCODE_MATERIAL:
+	    _mesa_printf("MATERIAL %x %x: %f %f %f %f\n",
+			 n[1].i, n[2].i, n[3].f, n[4].f, n[5].f, n[6].f);
+	    break;
+	 case OPCODE_INDEX:
+	    _mesa_printf("INDEX: %f\n", n[1].f);
+	    break;
+	 case OPCODE_EDGEFLAG:
+	    _mesa_printf("EDGEFLAG: %d\n", n[1].i);
+	    break;
+	 case OPCODE_BEGIN:
+	    _mesa_printf("BEGIN %x\n", n[1].i);
+	    break;
+	 case OPCODE_END:
+	    _mesa_printf("END\n");
+	    break;
+	 case OPCODE_RECTF:
+	    _mesa_printf("RECTF %f %f %f %f\n", n[1].f, n[2].f, n[3].f, n[4].f);
+	    break;
+	 case OPCODE_EVAL_C1:
+	    _mesa_printf("EVAL_C1 %f\n", n[1].f);
+	    break;
+	 case OPCODE_EVAL_C2:
+	    _mesa_printf("EVAL_C2 %f %f\n", n[1].f, n[2].f);
+	    break;
+	 case OPCODE_EVAL_P1:
+	    _mesa_printf("EVAL_P1 %d\n", n[1].i);
+	    break;
+	 case OPCODE_EVAL_P2:
+	    _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
+	    break;
+
+
+
 	 /*
 	  * meta opcodes/commands
 	  */
