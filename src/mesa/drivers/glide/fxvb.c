@@ -1,5 +1,3 @@
-/* $Id: fxvb.c,v 1.17 2003/03/01 01:50:23 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -39,6 +37,7 @@
 #include "mtypes.h"
 #include "imports.h"
 #include "macros.h"
+#include "context.h"
 #include "colormac.h"
 
 #include "math/m_translate.h"
@@ -286,7 +285,9 @@ void fxCheckTexSizes( GLcontext *ctx )
 	  * In the unfilled and twosided cases we are using the
 	  * Extras ones anyway, so leave them in place.
 	  */
-	 if (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
+         if (!(NEED_TWO_SIDED_LIGHTING(ctx) ||
+               ctx->Polygon.FrontMode != GL_FILL ||
+               ctx->Polygon.BackMode != GL_FILL)) {
 	    tnl->Driver.Render.Interp = setup_tab[fxMesa->SetupIndex].interp;
 	 }
       }
@@ -357,10 +358,13 @@ void fxChooseVertexState( GLcontext *ctx )
    
    fxMesa->SetupIndex = ind;
 
-   if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
+   if (NEED_TWO_SIDED_LIGHTING(ctx) ||
+       ctx->Polygon.FrontMode != GL_FILL ||
+       ctx->Polygon.BackMode != GL_FILL) {
       tnl->Driver.Render.Interp = interp_extras;
       tnl->Driver.Render.CopyPV = copy_pv_extras;
-   } else {
+   }
+   else {
       tnl->Driver.Render.Interp = setup_tab[ind].interp;
       tnl->Driver.Render.CopyPV = copy_pv;
    }
