@@ -1,21 +1,21 @@
-/* $Id: accum.c,v 1.31 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: accum.c,v 1.32 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -34,7 +34,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "state.h"
-#include "types.h"
+#include "mtypes.h"
 #include "swrast/swrast.h"
 #endif
 
@@ -60,7 +60,7 @@ _mesa_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint xpos, ypos, width, height;
-   
+
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
 
    if (ctx->Visual.AccumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {

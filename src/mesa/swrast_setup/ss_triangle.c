@@ -1,19 +1,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -27,7 +27,7 @@
 
 #include "glheader.h"
 #include "macros.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "tnl/t_context.h"
 
@@ -233,8 +233,8 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
 
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
       ind |= SS_TWOSIDE_BIT;
-   
-   if (ctx->Polygon._Unfilled) 
+
+   if (ctx->Polygon._Unfilled)
       ind |= SS_UNFILLED_BIT;
 
    if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) ||

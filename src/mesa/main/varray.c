@@ -1,21 +1,21 @@
-/* $Id: varray.c,v 1.31 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: varray.c,v 1.32 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -37,7 +37,7 @@
 #include "mmath.h"
 #include "state.h"
 #include "texstate.h"
-#include "types.h"
+#include "mtypes.h"
 #include "varray.h"
 #include "math/m_translate.h"
 #endif
@@ -48,7 +48,7 @@ void
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   
+
    if (size<2 || size>4) {
       gl_error( ctx, GL_INVALID_VALUE, "glVertexPointer(size)" );
       return;
@@ -57,9 +57,9 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       gl_error( ctx, GL_INVALID_VALUE, "glVertexPointer(stride)" );
       return;
    }
-   
+
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glVertexPointer( sz %d type %s stride %d )\n", size, 
+      fprintf(stderr, "glVertexPointer( sz %d type %s stride %d )\n", size,
 	      gl_lookup_enum_by_nr( type ),
 	      stride);
 
@@ -101,14 +101,14 @@ void
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
-   
+
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glNormalPointer(stride)" );
       return;
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glNormalPointer( type %s stride %d )\n", 
+      fprintf(stderr, "glNormalPointer( type %s stride %d )\n",
 	      gl_lookup_enum_by_nr( type ),
 	      stride);
 
@@ -162,7 +162,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size, 
+      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size,
 	  gl_lookup_enum_by_nr( type ),
 	  stride);
 
@@ -215,7 +215,7 @@ void
 _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   
+
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
       return;
@@ -250,7 +250,7 @@ void
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   
+
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glIndexPointer(stride)" );
       return;
@@ -291,7 +291,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 void
-_mesa_SecondaryColorPointerEXT(GLint size, GLenum type, 
+_mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -306,7 +306,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size, 
+      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size,
 	  gl_lookup_enum_by_nr( type ),
 	  stride);
 
@@ -360,7 +360,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit;
-   
+
    texUnit = ctx->Array.ActiveTexture;
 
    if (size<1 || size>4) {
@@ -373,9 +373,9 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
    }
 
    if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
-      fprintf(stderr, "glTexCoordPointer( unit %u sz %d type %s stride %d )\n", 
+      fprintf(stderr, "glTexCoordPointer( unit %u sz %d type %s stride %d )\n",
 	  texUnit,
-	  size, 
+	  size,
 	  gl_lookup_enum_by_nr( type ),
 	  stride);
 
@@ -510,7 +510,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    GLint defstride;                /* default stride */
    GLint c, f;
    GLint coordUnitSave;
-   
+
    f = sizeof(GLfloat);
    c = f * ((4*sizeof(GLubyte) + (f-1)) / f);
 

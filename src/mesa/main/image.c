@@ -1,21 +1,21 @@
-/* $Id: image.c,v 1.48 2000/11/10 18:06:14 brianp Exp $ */
+/* $Id: image.c,v 1.49 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -37,7 +37,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "pixel.h"
-#include "types.h"
+#include "mtypes.h"
 #endif
 
 
@@ -1997,7 +1997,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          alphaIndex = 0;
          stride = 1;
          break;
-      case GL_LUMINANCE: 
+      case GL_LUMINANCE:
          redIndex = greenIndex = blueIndex = 0;
          alphaIndex = -1;
          stride = 1;
@@ -2345,7 +2345,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       ); 
+               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
                rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
                rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
                rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
@@ -2359,7 +2359,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
                rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
                rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
                rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
-               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       ); 
+               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
             }
          }
          break;
@@ -2447,7 +2447,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
                               GLuint transferOps )
 {
    ASSERT(dstFormat == GL_ALPHA ||
-          dstFormat == GL_LUMINANCE || 
+          dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
           dstFormat == GL_INTENSITY ||
           dstFormat == GL_RGB ||
@@ -2648,7 +2648,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
-         case GL_LUMINANCE: 
+         case GL_LUMINANCE:
             dstLuminanceIndex = 0;
             dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
             dstIntensityIndex = -1;
@@ -2755,7 +2755,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
                                GLuint transferOps, GLboolean clamp )
 {
    ASSERT(dstFormat == GL_ALPHA ||
-          dstFormat == GL_LUMINANCE || 
+          dstFormat == GL_LUMINANCE ||
           dstFormat == GL_LUMINANCE_ALPHA ||
           dstFormat == GL_INTENSITY ||
           dstFormat == GL_RGB ||
@@ -2906,7 +2906,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             dstRedIndex = dstGreenIndex = dstBlueIndex = -1;
             dstLuminanceIndex = dstIntensityIndex = -1;
             break;
-         case GL_LUMINANCE: 
+         case GL_LUMINANCE:
             dstLuminanceIndex = 0;
             dstRedIndex = dstGreenIndex = dstBlueIndex = dstAlphaIndex = -1;
             dstIntensityIndex = -1;

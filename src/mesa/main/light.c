@@ -1,21 +1,21 @@
-/* $Id: light.c,v 1.26 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: light.c,v 1.27 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -37,7 +37,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "simple_list.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
@@ -69,7 +69,7 @@ _mesa_ShadeModel( GLenum mode )
 
          ctx->NewState |= _NEW_LIGHT;
 
-         if (ctx->Driver.ShadeModel) 
+         if (ctx->Driver.ShadeModel)
             (*ctx->Driver.ShadeModel)( ctx, mode );
       }
    }
@@ -114,7 +114,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       case GL_POSITION:
 	 /* transform position by ModelView matrix */
 	 TRANSFORM_POINT( l->EyePosition, ctx->ModelView.m, params );
-	 if (l->EyePosition[3] != 0.0F) 
+	 if (l->EyePosition[3] != 0.0F)
 	    l->_Flags |= LIGHT_POSITIONAL;
 	 else
 	    l->_Flags &= ~LIGHT_POSITIONAL;
@@ -143,7 +143,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
          }
          l->SpotCutoff = params[0];
          l->_CosCutoff = cos(params[0]*DEG2RAD);
-         if (l->_CosCutoff < 0) 
+         if (l->_CosCutoff < 0)
 	    l->_CosCutoff = 0;
 	 if (l->SpotCutoff != 180.0F)
 	    l->_Flags |= LIGHT_SPOT;
@@ -372,7 +372,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
             ctx->Light.Model.LocalViewer = GL_TRUE;
          break;
       case GL_LIGHT_MODEL_TWO_SIDE:
-         if (params[0]==0.0) 
+         if (params[0]==0.0)
             ctx->Light.Model.TwoSide = GL_FALSE;
          else
             ctx->Light.Model.TwoSide = GL_TRUE;
@@ -396,7 +396,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          break;
    }
 
-   if (ctx->Driver.LightModelfv) 
+   if (ctx->Driver.LightModelfv)
       ctx->Driver.LightModelfv( ctx, pname, params );
 
    ctx->NewState |= _NEW_LIGHT;
@@ -452,7 +452,7 @@ _mesa_LightModelf( GLenum pname, GLfloat param )
  * Given a face and pname value (ala glColorMaterial), compute a bitmask
  * of the targeted material values.
  */
-GLuint gl_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname, 
+GLuint gl_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
 			    GLuint legal,
 			    const char *where )
 {
@@ -497,7 +497,7 @@ GLuint gl_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
       gl_error( ctx, GL_INVALID_ENUM, where );
       return 0;
    }
-   
+
    if (bitmask & ~legal) {
       gl_error( ctx, GL_INVALID_ENUM, where );
       return 0;
@@ -519,12 +519,12 @@ GLuint gl_material_bitmask( GLcontext *ctx, GLenum face, GLenum pname,
  *
  * KW: Added code here to keep the precomputed variables uptodate.
  *     This means we can use the faster shade functions when using
- *     GL_COLOR_MATERIAL, and we can also now use the precomputed 
+ *     GL_COLOR_MATERIAL, and we can also now use the precomputed
  *     values in the slower shading functions, which further offsets
  *     the cost of doing this here.
  */
-void gl_update_material( GLcontext *ctx, 
-			 const struct gl_material src[2], 
+void gl_update_material( GLcontext *ctx,
+			 const struct gl_material src[2],
 			 GLuint bitmask )
 {
    struct gl_light *light, *list = &ctx->Light.EnabledList;
@@ -532,10 +532,10 @@ void gl_update_material( GLcontext *ctx,
    if (ctx->Light.ColorMaterialEnabled)
       bitmask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (MESA_VERBOSE&VERBOSE_IMMEDIATE) 
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "gl_update_material, mask 0x%x\n", bitmask);
 
-   if (!bitmask) 
+   if (!bitmask)
       return;
 
    /* update material emission */
@@ -605,7 +605,7 @@ void gl_update_material( GLcontext *ctx,
       SUB_3V( tmp, src[0].Specular, mat->Specular );
       foreach (light, list) {
 	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	 light->_IsMatSpecular[0] = 
+	 light->_IsMatSpecular[0] =
 	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
       }
       COPY_4FV( mat->Specular, src[0].Specular );
@@ -616,7 +616,7 @@ void gl_update_material( GLcontext *ctx,
       SUB_3V( tmp, src[1].Specular, mat->Specular );
       foreach (light, list) {
 	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	 light->_IsMatSpecular[1] = 
+	 light->_IsMatSpecular[1] =
 	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
       }
       COPY_4FV( mat->Specular, src[1].Specular );
@@ -674,7 +674,7 @@ void gl_update_material( GLcontext *ctx,
  * according to the bitmask in ColorMaterialBitmask, which is
  * set by glColorMaterial().
  */
-void gl_update_color_material( GLcontext *ctx, 
+void gl_update_color_material( GLcontext *ctx,
 			       const GLchan rgba[4] )
 {
    struct gl_light *light, *list = &ctx->Light.EnabledList;
@@ -760,7 +760,7 @@ void gl_update_color_material( GLcontext *ctx,
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
 	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	 light->_IsMatSpecular[0] = 
+	 light->_IsMatSpecular[0] =
 	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
       }
       COPY_4FV( mat->Specular, color );
@@ -772,7 +772,7 @@ void gl_update_color_material( GLcontext *ctx,
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
 	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	 light->_IsMatSpecular[1] = 
+	 light->_IsMatSpecular[1] =
 	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
       }
       COPY_4FV( mat->Specular, color );
@@ -815,8 +815,8 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorMaterial");
 
-   if (MESA_VERBOSE&VERBOSE_API) 
-      fprintf(stderr, "glColorMaterial %s %s\n", 
+   if (MESA_VERBOSE&VERBOSE_API)
+      fprintf(stderr, "glColorMaterial %s %s\n",
 	      gl_lookup_enum_by_nr(face),
 	      gl_lookup_enum_by_nr(mode));
 
@@ -1002,7 +1002,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
  *   orientation of the facet is later learned, we can determine which
  *   color (or index) to use for rendering.
  *
- *   KW: We now know orientation in advance and only shade for 
+ *   KW: We now know orientation in advance and only shade for
  *       the side or sides which are actually required.
  *
  * Variables:
@@ -1016,7 +1016,7 @@ _mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
  *       // light at infinity
  *       IF local_viewer THEN
  *           _VP_inf_norm = unit vector from V to P      // Precompute
- *       ELSE 
+ *       ELSE
  *           // eye at infinity
  *           _h_inf_norm = Normalize( VP + <0,0,1> )     // Precompute
  *       ENDIF
@@ -1084,7 +1084,7 @@ compute_shine_table( struct gl_shine_tab *tab, GLfloat shininess )
             m[i] = t;
          else
             m[i] = 0.0;
-      }      
+      }
       m[SHINE_TABLE_SIZE] = 1.0;
    }
 
@@ -1099,12 +1099,12 @@ gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
    struct gl_shine_tab *list = ctx->_ShineTabList;
    struct gl_shine_tab *s;
 
-   foreach(s, list) 
-      if ( DISTSQR(s->shininess, shininess) < 1e-4 ) 
+   foreach(s, list)
+      if ( DISTSQR(s->shininess, shininess) < 1e-4 )
 	 break;
 
    if (s == list) {
-      foreach(s, list) 
+      foreach(s, list)
 	 if (s->refcount == 0)
             break;
 
@@ -1135,8 +1135,8 @@ gl_update_lighting( GLcontext *ctx )
    ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT;
    ctx->_NeedNormals &= ~NEED_NORMALS_LIGHT;
    ctx->Light._Flags = 0;
-   
-   if (!ctx->Light.Enabled) 
+
+   if (!ctx->Light.Enabled)
       return;
 
    ctx->_NeedNormals |= NEED_NORMALS_LIGHT;
@@ -1148,23 +1148,23 @@ gl_update_lighting( GLcontext *ctx )
       ctx->Light._Flags |= light->_Flags;
    }
 
-   ctx->Light._NeedVertices = 
+   ctx->Light._NeedVertices =
       ((ctx->Light._Flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
        ctx->Light.Model.LocalViewer);
-   
-   if ((ctx->Light._Flags & LIGHT_POSITIONAL) || 
-       ctx->Light.Model.LocalViewer) 
+
+   if ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
+       ctx->Light.Model.LocalViewer)
       ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
-      
-   
+
+
    /* XXX: This test is overkill & needs to be fixed both for software and
     * hardware t&l drivers.  The above should be sufficient & should
-    * be tested to verify this.  
+    * be tested to verify this.
     */
    if (ctx->Light._NeedVertices)
       ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
-  
+
 
    /* Precompute some shading values.
     */
@@ -1175,26 +1175,26 @@ gl_update_lighting( GLcontext *ctx )
 	 struct gl_material *mat = &ctx->Light.Material[side];
 
 	 COPY_3V(ctx->Light._BaseColor[side], mat->Emission);
-	 ACC_SCALE_3V(ctx->Light._BaseColor[side], 
+	 ACC_SCALE_3V(ctx->Light._BaseColor[side],
 		      ctx->Light.Model.Ambient,
 		      mat->Ambient);
 
 	 FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[side],
                              ctx->Light.Material[side].Diffuse[3] );
       }
-      
-      foreach (light, &ctx->Light.EnabledList) {	 
+
+      foreach (light, &ctx->Light.EnabledList) {	
 	 for (side=0; side< sides; side++) {
 	    const struct gl_material *mat = &ctx->Light.Material[side];
 	    SCALE_3V( light->_MatDiffuse[side], light->Diffuse, mat->Diffuse );
 	    SCALE_3V( light->_MatAmbient[side], light->Ambient, mat->Ambient );
 	    SCALE_3V( light->_MatSpecular[side], light->Specular,
 		      mat->Specular);
-	    light->_IsMatSpecular[side] = 
+	    light->_IsMatSpecular[side] =
 	       (LEN_SQUARED_3FV(light->_MatSpecular[side]) > 1e-16);
 	 }
       }
-   } 
+   }
    else {
       static const GLfloat ci[3] = { .30, .59, .11 };
       foreach(light, &ctx->Light.EnabledList) {
@@ -1227,14 +1227,14 @@ gl_compute_light_positions( GLcontext *ctx )
    else {
       TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelView.m );
    }
-   
+
    foreach (light, &ctx->Light.EnabledList) {
 
       if (ctx->_NeedEyeCoords) {
 	 COPY_4FV( light->_Position, light->EyePosition );
       }
       else {
-	 TRANSFORM_POINT( light->_Position, ctx->ModelView.inv, 
+	 TRANSFORM_POINT( light->_Position, ctx->ModelView.inv,
 			  light->EyePosition );
       }
 
@@ -1250,13 +1250,13 @@ gl_compute_light_positions( GLcontext *ctx )
 	 }
 	 light->_VP_inf_spot_attenuation = 1.0;
       }
-      
+
       if (light->_Flags & LIGHT_SPOT) {
 	 if (ctx->_NeedEyeCoords) {
 	    COPY_3V( light->_NormDirection, light->EyeDirection );
 	 }
          else {
-	    TRANSFORM_NORMAL( light->_NormDirection, 
+	    TRANSFORM_NORMAL( light->_NormDirection,
 			      light->EyeDirection,
 			      ctx->ModelView.m);
 	 }
@@ -1264,14 +1264,14 @@ gl_compute_light_positions( GLcontext *ctx )
 	 NORMALIZE_3FV( light->_NormDirection );
 
 	 if (!(light->_Flags & LIGHT_POSITIONAL)) {
-	    GLfloat PV_dot_dir = - DOT3(light->_VP_inf_norm, 
+	    GLfloat PV_dot_dir = - DOT3(light->_VP_inf_norm,
 					light->_NormDirection);
 
 	    if (PV_dot_dir > light->_CosCutoff) {
 	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
 	       int k = (int) x;
-	       light->_VP_inf_spot_attenuation = 
-		  (light->_SpotExpTable[k][0] + 
+	       light->_VP_inf_spot_attenuation =
+		  (light->_SpotExpTable[k][0] +
 		   (x-k)*light->_SpotExpTable[k][1]);
 	    }
 	    else {

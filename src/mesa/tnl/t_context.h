@@ -1,22 +1,22 @@
 
-/* $Id: t_context.h,v 1.2 2000/11/20 13:39:36 keithw Exp $ */
+/* $Id: t_context.h,v 1.3 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -29,7 +29,7 @@
 #define _T_CONTEXT_H
 
 #include "glheader.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_matrix.h"
 #include "math/m_vector.h"
@@ -73,7 +73,7 @@
 
 
 /* KW: Flags that describe the current vertex state, and the contents
- * of a vertex in a vertex-cassette.  
+ * of a vertex in a vertex-cassette.
  *
  * For really major expansion, consider a 'VERT_ADDITIONAL_FLAGS' flag,
  * which means there is data in another flags array (eg, extra_flags[]).
@@ -91,7 +91,7 @@
 #define VERT_EDGE            0x200	/* glEdgeFlag */
 #define VERT_MATERIAL        0x400	/* glMaterial */
 #define VERT_END_VB          0x800	/* end vb marker */
-#define VERT_TEX0_12         0x1000	   
+#define VERT_TEX0_12         0x1000	
 #define VERT_TEX0_3          0x2000
 #define VERT_TEX0_4          0x4000
 #define VERT_TEX1_12         0x8000
@@ -209,7 +209,7 @@ struct vertex_arrays
    GLvector1ui Index;
    GLvector1ub EdgeFlag;
    GLvector4f  TexCoord[MAX_TEXTURE_UNITS];
-   GLvector1ui Elt;     
+   GLvector1ui Elt;
    GLvector4ub SecondaryColor;
    GLvector1f  FogCoord;
 };
@@ -222,9 +222,9 @@ struct vertex_array_pointers
    GLvector1ui *Index;
    GLvector1ub *EdgeFlag;
    GLvector4f  *TexCoord[MAX_TEXTURE_UNITS];
-   GLvector1ui *Elt;     
+   GLvector1ui *Elt;
    GLvector4ub *SecondaryColor;
-   GLvector1f *FogCoord;     
+   GLvector1f *FogCoord;
 };
 
 /* Values for VB->Type */
@@ -244,14 +244,14 @@ enum {
 /* KW: Represents everything that can take place between a begin and
  * end, and can represent multiple begin/end pairs.  This plus *any*
  * state variable (GLcontext) should be all you need to replay the
- * represented begin/end pairs as if they took place in that state.  
+ * represented begin/end pairs as if they took place in that state.
  *
  * Thus this is sufficient for both immediate and compiled modes, but
  * we could/should throw some elements away for compiled mode if we
- * know they were empty. 
+ * know they were empty.
  */
-struct immediate 
-{ 
+struct immediate
+{
    struct immediate *next;	/* for cache of free IM's */
    GLuint id, ref_count;
 
@@ -273,18 +273,18 @@ struct immediate
    GLuint TF4[MAX_TEXTURE_UNITS];
 
    GLuint  Primitive[VB_SIZE];	/* GLubyte would do... */
-   GLuint  NextPrimitive[VB_SIZE]; 
+   GLuint  NextPrimitive[VB_SIZE];
 
    /* allocate storage for these on demand:
     */
-   struct  gl_material (*Material)[2]; 
-   GLuint  *MaterialMask;       
+   struct  gl_material (*Material)[2];
+   GLuint  *MaterialMask;
 
-   GLfloat (*TexCoordPtr[MAX_TEXTURE_UNITS])[4]; 
+   GLfloat (*TexCoordPtr[MAX_TEXTURE_UNITS])[4];
 
    struct vertex_arrays v;
-   
-   struct __GLcontextRec *backref;		    
+
+   struct __GLcontextRec *backref;		
 
    /* Normal lengths, zero if not available.
     */
@@ -325,7 +325,7 @@ typedef struct vertex_buffer
    /* Temporary storage used by immediate mode functions and various
     * operations in the pipeline.
     */
-   struct immediate *IM;	        
+   struct immediate *IM;	
    struct vertex_array_pointers store;	
 
    /* Where to find outstanding untransformed vertices.
@@ -357,16 +357,16 @@ typedef struct vertex_buffer
    GLvector1f  *FogCoordPtr;
    GLuint      *Flag, FlagMax;
    struct      gl_material (*Material)[2];
-   GLuint      *MaterialMask;       
+   GLuint      *MaterialMask;
 
-   GLuint      *NextPrimitive; 
-   GLuint      *Primitive;     
+   GLuint      *NextPrimitive;
+   GLuint      *Primitive;
    GLuint      LastPrimitive;
 
    GLfloat (*BoundsPtr)[3];	/* Bounds for cull check */
    GLfloat  *NormalLengthPtr;	/* Array of precomputed inv. normal lengths */
-   
-   /* Holds malloced storage for pipeline data not supplied by 
+
+   /* Holds malloced storage for pipeline data not supplied by
     * the immediate struct.
     */
    GLvector4f Eye;
@@ -377,11 +377,11 @@ typedef struct vertex_buffer
    GLvector4ub BSecondary;	/* not used in cva vb's */
 
    /* Temporary storage - may point into IM, or be dynamically
-    * allocated (for cva).  
+    * allocated (for cva).
     */
    GLubyte *ClipMask;
    GLubyte *UserClipMask;
-   
+
    /* Internal values.  Where these point depends on whether
     * there were any identity matrices defined as transformations
     * in the pipeline.
@@ -399,7 +399,7 @@ typedef struct vertex_buffer
    GLvector1ui *Index[2];
    GLvector4ub *SecondaryColor[2];
 
-   /* Storage for colors which have been lit but not yet fogged.  
+   /* Storage for colors which have been lit but not yet fogged.
     * Required for CVA, just point into store for normal VB's.
     */
    GLvector4ub *LitColor[2];
@@ -415,7 +415,7 @@ typedef struct vertex_buffer
     */
    GLuint *EvaluatedFlags;
 
-   /* Not used for cva: 
+   /* Not used for cva:
     */
    GLubyte *NormCullStart;
    GLubyte *CullMask;	        /* Results of vertex culling */
@@ -442,7 +442,7 @@ typedef void (*gl_shade_func)( struct vertex_buffer *VB );
 typedef void (*clip_interp_func)( struct vertex_buffer *VB, GLuint dst,
                                   GLfloat t, GLuint in, GLuint out );
 
-typedef GLuint (*clip_line_func)( struct vertex_buffer *VB, 
+typedef GLuint (*clip_line_func)( struct vertex_buffer *VB,
 				  GLuint *i, GLuint *j,
 				  GLubyte mask);
 
@@ -539,7 +539,7 @@ struct gl_cva {
 
 
 
-typedef void (*texgen_func)( struct vertex_buffer *VB, 
+typedef void (*texgen_func)( struct vertex_buffer *VB,
 			     GLuint textureSet);
 
 
@@ -569,7 +569,7 @@ typedef struct tnl_context {
     */
    GLuint opcode_vertex_cassette;
 
-   /* Cva 
+   /* Cva
     */
    struct gl_cva CVA;
    GLboolean CompileCVAFlag;
@@ -577,7 +577,7 @@ typedef struct tnl_context {
    clip_poly_func *_poly_clip_tab;
    clip_line_func *_line_clip_tab;
    clip_interp_func _ClipInterpFunc; /* Clip interpolation function */
-   normal_func *_NormalTransform; 
+   normal_func *_NormalTransform;
    gl_shade_func *_shade_func_tab;   /* Current shading function table */
 
    GLenum _CurrentPrimitive;         /* Prim or GL_POLYGON+1 */
@@ -586,7 +586,7 @@ typedef struct tnl_context {
    GLuint _RenderFlags;	      /* Active inputs to render stage */
 
    /* Cache of unused immediate structs */
-   struct immediate *freed_im_queue; 
+   struct immediate *freed_im_queue;
    GLuint nr_im_queued;
 
 } TNLcontext;
@@ -602,8 +602,8 @@ extern GLboolean _tnl_flush_vertices( GLcontext *ctx, GLuint flush_flags );
 
 
 extern void
-_tnl_MakeCurrent( GLcontext *ctx, 
-		  GLframebuffer *drawBuffer, 
+_tnl_MakeCurrent( GLcontext *ctx,
+		  GLframebuffer *drawBuffer,
 		  GLframebuffer *readBuffer );
 
 

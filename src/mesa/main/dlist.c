@@ -1,21 +1,21 @@
-/* $Id: dlist.c,v 1.51 2000/11/16 21:05:34 keithw Exp $ */
+/* $Id: dlist.c,v 1.52 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -67,7 +67,7 @@
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "types.h"
+#include "mtypes.h"
 #include "varray.h"
 
 #include "math/m_matrix.h"
@@ -109,7 +109,7 @@ Functions which cause errors if called while compiling a display list:
  */
 
 
-/* How many nodes to allocate at a time: 
+/* How many nodes to allocate at a time:
  * - reduced now that we hold vertices etc. elsewhere.
  */
 #define BLOCK_SIZE 64
@@ -440,7 +440,7 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
 	 }
       }
    }
-   
+
    _mesa_HashRemove(ctx->Shared->DisplayList, list);
 }
 
@@ -695,7 +695,7 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
  */
 int
 _mesa_alloc_opcode( GLcontext *ctx,
-		    GLuint sz, 
+		    GLuint sz,
 		    void (*execute)( GLcontext *, void * ),
 		    void (*destroy)( GLcontext *, void * ),
 		    void (*print)( GLcontext *, void * ) )
@@ -713,7 +713,7 @@ _mesa_alloc_opcode( GLcontext *ctx,
 
 
 
-/* Mimic the old behaviour of alloc_instruction:  
+/* Mimic the old behaviour of alloc_instruction:
  *   - sz is in units of sizeof(Node)
  *   - return value a pointer to sizeof(Node) before the actual
  *     usable data area.
@@ -1681,7 +1681,7 @@ static void save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 }
 
 
-static void save_EvalMesh2( 
+static void save_EvalMesh2(
                         GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2883,7 +2883,7 @@ static void save_Rectfv( const GLfloat *v1, const GLfloat *v2 )
 {
    save_Rectf(v1[0], v1[1], v2[0], v2[1]);
 }
- 
+
 static void save_Recti(GLint x1, GLint y1, GLint x2, GLint y2)
 {
    save_Rectf(x1, y1, x2, y2);
@@ -3322,7 +3322,7 @@ static void save_TexImage3D( GLenum target,
          n[3].i = internalFormat;
          n[4].i = (GLint) width;
          n[5].i = (GLint) height;
-         n[6].i = (GLint) depth; 
+         n[6].i = (GLint) depth;
          n[7].i = border;
          n[8].e = format;
          n[9].e = type;
@@ -3989,10 +3989,10 @@ static void save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 }
 
 
-/* KW: Compile commands  
- * 
+/* KW: Compile commands
+ *
  * Will appear in the list before the vertex buffer containing the
- * command that provoked the error.  I don't see this as a problem.  
+ * command that provoked the error.  I don't see this as a problem.
  */
 void gl_save_error( GLcontext *ctx, GLenum error, const char *s )
 {
@@ -4056,7 +4056,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
       else {
 	 switch (opcode) {
 	 case OPCODE_ERROR:
-	    gl_error( ctx, n[1].e, (const char *) n[2].data ); 
+	    gl_error( ctx, n[1].e, (const char *) n[2].data );
 	    break;
          case OPCODE_ACCUM:
 	    (*ctx->Exec->Accum)( n[1].e, n[2].f );
@@ -4442,7 +4442,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
 		params[0] = n[2].f;
 		params[1] = n[3].f;
 		params[2] = n[4].f;
-		(*ctx->Exec->PointParameterfvEXT)( n[1].e, params ); 
+		(*ctx->Exec->PointParameterfvEXT)( n[1].e, params );
 	    }
 	    break;
 	 case OPCODE_POLYGON_MODE:
@@ -4881,12 +4881,12 @@ _mesa_CallList( GLuint list )
 
    if (MESA_VERBOSE&VERBOSE_API) {
       fprintf(stderr, "glCallList %u\n", list);
-      mesa_print_display_list( list ); 
+      mesa_print_display_list( list );
    }
 
-   save_compile_flag = ctx->CompileFlag;   
+   save_compile_flag = ctx->CompileFlag;
    ctx->CompileFlag = GL_FALSE;
-   
+
    FLUSH_TNL( ctx, (FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT) );
    execute_list( ctx, list );
    ctx->CompileFlag = save_compile_flag;
@@ -5363,7 +5363,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
 
    /* 2. GL_EXT_blend_color */
-#if 0 
+#if 0
    table->BlendColorEXT = save_BlendColorEXT;
 #endif
 
@@ -5636,11 +5636,11 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
             fprintf(f,"Translate %g %g %g\n", n[1].f, n[2].f, n[3].f );
             break;
          case OPCODE_BIND_TEXTURE:
-	    fprintf(f,"BindTexture %s %d\n", gl_lookup_enum_by_nr(n[1].ui), 
+	    fprintf(f,"BindTexture %s %d\n", gl_lookup_enum_by_nr(n[1].ui),
 		    n[2].ui);
 	    break;
          case OPCODE_SHADE_MODEL:
-	    fprintf(f,"ShadeModel %s\n", gl_lookup_enum_by_nr(n[1].ui)); 
+	    fprintf(f,"ShadeModel %s\n", gl_lookup_enum_by_nr(n[1].ui));
 	    break;
 
 	 /*

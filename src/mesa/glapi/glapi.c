@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.47 2000/10/27 18:31:22 brianp Exp $ */
+/* $Id: glapi.c,v 1.48 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,7 @@
 #include "glthread.h"
 
 #if defined(MESA_TRACE)
-#include "types.h"
+#include "mtypes.h"
 #endif
 
 /* This is used when thread safety is disabled */
@@ -835,7 +835,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glCopyTexSubImage1DEXT", NAME(glCopyTexSubImage1DEXT), _gloffset_CopyTexSubImage1D },
 	{ "glCopyTexSubImage2DEXT", NAME(glCopyTexSubImage2DEXT), _gloffset_CopyTexSubImage2D },
 #undef NAME
-                              
+
 	/* 11. GL_EXT_histogram */
 #ifdef GL_EXT_histogram
 #define NAME(X) (GLvoid *) X
@@ -874,7 +874,7 @@ static struct name_address_offset static_functions[] = {
 	{ "glGetSeparableFilterEXT", NAME(glGetSeparableFilterEXT), _gloffset_GetSeparableFilterEXT },
 	{ "glSeparableFilter2DEXT", NAME(glSeparableFilter2DEXT), _gloffset_SeparableFilter2D },
 #undef NAME
-                    
+
 	/* 14. GL_SGI_color_table */
 #ifdef GL_SGI_color_table
 #define NAME(X) (GLvoid *) X

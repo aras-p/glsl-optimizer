@@ -1,4 +1,4 @@
-#include "types.h"
+#include "mtypes.h"
 #include "mem.h"
 
 #include "t_context.h"
@@ -22,18 +22,18 @@ struct immediate *_mesa_CurrentInput = NULL;
 #endif
 
 
-GLboolean 
+GLboolean
 _tnl_flush_vertices( GLcontext *ctx, GLuint flush_flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *IM = TNL_CURRENT_IM(ctx);
 
    if ((IM->Flag[IM->Count] & (VERT_BEGIN|VERT_END)) != VERT_END ||
-       (flush_flags & (FLUSH_STORED_VERTICES|FLUSH_UPDATE_CURRENT))) 
+       (flush_flags & (FLUSH_STORED_VERTICES|FLUSH_UPDATE_CURRENT)))
    {
-      if (IM->Flag[IM->Start]) 
+      if (IM->Flag[IM->Start])
 	 _mesa_flush_vb( ctx );
-      
+
       /* Although this code updates the ctx->Current values, that bit
        * is left set as there is no easy mechanism to set it
        * elsewhere.  This means that each time core wants to examine
@@ -57,7 +57,7 @@ _tnl_CreateContext( GLcontext *ctx )
    static int firsttime = 1;
 
    /* Onetime initializations.  Doesn't really matter if this gets
-    * done twice: no need for mutexes. 
+    * done twice: no need for mutexes.
     */
    if (firsttime) {
       firsttime = 0;
@@ -88,7 +88,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
    ctx->swtnl_im = (void *)TNL_VB(ctx)->IM;
 
-   
+
    /* Initialize tnl state.
     */
    _tnl_dlist_init( ctx );
@@ -113,7 +113,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
 
    /* Set a few default values in the driver struct.  This is a
-    * temporary mechanism.  
+    * temporary mechanism.
     */
    ctx->Driver.RenderVBCulledTab = _tnl_render_tab_cull;
    ctx->Driver.RenderVBClippedTab = _tnl_render_tab_clipped;
@@ -156,16 +156,16 @@ _tnl_DestroyContext( GLcontext *ctx )
 }
 
 
-/* Update all state that references _NeedEyeCoords 
+/* Update all state that references _NeedEyeCoords
  */
 void
 _tnl_LightingSpaceChange( GLcontext *ctx )
 {
-   _tnl_update_normal_transform( ctx ); 
+   _tnl_update_normal_transform( ctx );
 }
 
 
-void 
+void
 _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    if (new_state & _NEW_LIGHT)
@@ -177,7 +177,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    if (new_state & _NEW_TEXTURE)
       if (ctx->_Enabled & ENABLE_TEXGEN_ANY)
 	 _tnl_update_texgen( ctx );
-      
+
    if (new_state & (_NEW_LIGHT|_NEW_TEXTURE|_NEW_FOG|
 		    _DD_NEW_TRI_LIGHT_TWOSIDE |
 		    _DD_NEW_SEPERATE_SPECULAR |
@@ -191,8 +191,8 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 }
 
 void
-_tnl_MakeCurrent( GLcontext *ctx, 
-		  GLframebuffer *drawBuffer, 
+_tnl_MakeCurrent( GLcontext *ctx,
+		  GLframebuffer *drawBuffer,
 		  GLframebuffer *readBuffer )
 {
 #ifndef THREADS

@@ -1,21 +1,21 @@
-/* $Id: get.c,v 1.42 2000/11/19 23:10:25 brianp Exp $ */
+/* $Id: get.c,v 1.43 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -37,7 +37,7 @@
 #include "get.h"
 #include "macros.h"
 #include "mmath.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_matrix.h"
 #endif
@@ -97,7 +97,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
+   if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetBooleanv %s\n", gl_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetBooleanv
@@ -844,7 +844,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_TEXTURE_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = 
+	    params[i] =
 	       FLOAT_TO_BOOL(ctx->TextureMatrix[texTransformUnit].m[i]);
 	 }
 	 break;
@@ -1035,12 +1035,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -1235,12 +1235,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
-	 
+	
       /* GL_EXT_secondary_color */
-      case GL_COLOR_SUM_EXT: 
+      case GL_COLOR_SUM_EXT:
 	 *params = ctx->Fog.ColorSumEnabled;
 	 break;
-      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
          params[0] = INT_TO_BOOL(ctx->Current.SecondaryColor[0]);
          params[1] = INT_TO_BOOL(ctx->Current.SecondaryColor[1]);
@@ -1249,28 +1249,28 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = ctx->Array.SecondaryColor.Enabled;
          break;
-      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
 	 *params = ENUM_TO_BOOL(ctx->Array.SecondaryColor.Type);
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
 	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
 	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
 	 break;
 
       /* GL_EXT_fog_coord */
-      case GL_CURRENT_FOG_COORDINATE_EXT: 
+      case GL_CURRENT_FOG_COORDINATE_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
 	 *params = FLOAT_TO_BOOL(ctx->Current.FogCoord);
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          *params = ctx->Array.FogCoord.Enabled;
          break;
-      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
 	 *params = ENUM_TO_BOOL(ctx->Array.FogCoord.Type);
 	 break;
-      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
 	 break;
 
@@ -1296,7 +1296,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
+   if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetDoublev %s\n", gl_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
@@ -2233,12 +2233,12 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -2435,10 +2435,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
 
       /* GL_EXT_secondary_color */
-      case GL_COLOR_SUM_EXT: 
+      case GL_COLOR_SUM_EXT:
 	 *params = (GLdouble) ctx->Fog.ColorSumEnabled;
 	 break;
-      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
          params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
          params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
@@ -2447,28 +2447,28 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLdouble) ctx->Array.SecondaryColor.Enabled;
          break;
-      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
 	 *params = (GLdouble) ctx->Array.SecondaryColor.Type;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
 	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
 	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
 	 break;
 
       /* GL_EXT_fog_coord */
-      case GL_CURRENT_FOG_COORDINATE_EXT: 
+      case GL_CURRENT_FOG_COORDINATE_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
 	 *params = (GLdouble) ctx->Current.FogCoord;
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          *params = (GLdouble) ctx->Array.FogCoord.Enabled;
          break;
-      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
 	 *params = (GLdouble) ctx->Array.FogCoord.Type;
 	 break;
-      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
 	 break;
 
@@ -2495,7 +2495,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
+   if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetFloatv %s\n", gl_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
@@ -3434,12 +3434,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
+			      ctx->Hint.AllowDrawFrg == GL_FALSE &&
 			      ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
+			      ctx->Hint.AllowDrawFrg == GL_TRUE &&
 			      ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -3608,10 +3608,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
 
       /* GL_EXT_secondary_color */
-      case GL_COLOR_SUM_EXT: 
+      case GL_COLOR_SUM_EXT:
 	 *params = (GLfloat) ctx->Fog.ColorSumEnabled;
 	 break;
-      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
          params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
          params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
@@ -3620,28 +3620,28 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLfloat) ctx->Array.SecondaryColor.Enabled;
          break;
-      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
 	 *params = (GLfloat) ctx->Array.SecondaryColor.Type;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
 	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
 	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
 	 break;
 
       /* GL_EXT_fog_coord */
-      case GL_CURRENT_FOG_COORDINATE_EXT: 
+      case GL_CURRENT_FOG_COORDINATE_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
 	 *params = (GLfloat) ctx->Current.FogCoord;
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          *params = (GLfloat) ctx->Array.FogCoord.Enabled;
          break;
-      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
 	 *params = (GLfloat) ctx->Array.FogCoord.Type;
 	 break;
-      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
 	 break;
 
@@ -3668,7 +3668,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
+   if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetIntegerv %s\n", gl_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetIntegerv
@@ -4607,12 +4607,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		    ctx->Hint.AllowDrawFrg == GL_FALSE && 
+		    ctx->Hint.AllowDrawFrg == GL_FALSE &&
 		    ctx->Hint.AllowDrawMem == GL_FALSE);
 	 break;
       case GL_ALWAYS_SOFT_HINT_PGI:
 	 *params =  (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		     ctx->Hint.AllowDrawFrg == GL_TRUE && 
+		     ctx->Hint.AllowDrawFrg == GL_TRUE &&
 		     ctx->Hint.AllowDrawMem == GL_TRUE);
 	 break;
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
@@ -4648,7 +4648,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
 	 *params = ctx->Array.LockCount;
 	 break;
-	 
+	
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
          {
@@ -4810,10 +4810,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
 
       /* GL_EXT_secondary_color */
-      case GL_COLOR_SUM_EXT: 
+      case GL_COLOR_SUM_EXT:
 	 *params = (GLint) ctx->Fog.ColorSumEnabled;
 	 break;
-      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
          params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[0] ) );
          params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[1] ) );
@@ -4822,28 +4822,28 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLint) ctx->Array.SecondaryColor.Enabled;
          break;
-      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
 	 *params = (GLint) ctx->Array.SecondaryColor.Type;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
 	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
 	 break;
-      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
 	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
 	 break;
 
       /* GL_EXT_fog_coord */
-      case GL_CURRENT_FOG_COORDINATE_EXT: 
+      case GL_CURRENT_FOG_COORDINATE_EXT:
 	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
 	 *params = (GLint) ctx->Current.FogCoord;
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          *params = (GLint) ctx->Array.FogCoord.Enabled;
          break;
-      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
 	 *params = (GLint) ctx->Array.FogCoord.Type;
 	 break;
-      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
 	 *params = (GLint) ctx->Array.FogCoord.Stride;
 	 break;
 
@@ -4865,7 +4865,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
+   if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetPointerv %s\n", gl_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetPointerv

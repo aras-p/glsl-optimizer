@@ -1,4 +1,4 @@
-/* $Id: convolve.h,v 1.2 2000/08/23 14:31:25 brianp Exp $ */
+/* $Id: convolve.h,v 1.3 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 #define CONVOLVE_H
 
 
-#include "types.h"
+#include "mtypes.h"
 
 
 extern void

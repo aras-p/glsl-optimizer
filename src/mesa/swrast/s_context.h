@@ -1,19 +1,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,7 +28,7 @@
 #ifndef S_CONTEXT_H
 #define S_CONTEXT_H
 
-#include "types.h"
+#include "mtypes.h"
 #include "swrast.h"
 
 /*
@@ -103,7 +103,7 @@ typedef void (*swrast_quad_func)( GLcontext *ctx,
 typedef struct
 {
    /* Configuration mechanisms to make software rasterizer match
-    * characteristics of the hardware rasterizer (if present): 
+    * characteristics of the hardware rasterizer (if present):
     */
    GLboolean AllowVertexFog;
    GLboolean AllowPixelFog;
@@ -117,19 +117,19 @@ typedef struct
    GLfloat _backface_sign;
    GLboolean _PreferPixelFog;
 
-   /* Accum buffer temporaries.  
+   /* Accum buffer temporaries.
     */
    GLboolean _IntegerAccumMode;	/* Storing unscaled integers? */
    GLfloat _IntegerAccumScaler;	/* Implicit scale factor */
 
-   
+
    /* Working values:
     */
    struct pixel_buffer* PB;
    GLuint StippleCounter;    /* Line stipple counter */
    GLuint NewState;
    GLuint StateChanges;
-   
+
    /* Mechanism to allow driver (like X11) to register further
     * software rasterization routines.
     */

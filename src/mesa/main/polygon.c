@@ -1,21 +1,21 @@
-/* $Id: polygon.c,v 1.15 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: polygon.c,v 1.16 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -35,7 +35,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "polygon.h"
-#include "types.h"
+#include "mtypes.h"
 #endif
 
 
@@ -94,7 +94,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonMode");
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glPolygonMode %s %s\n", 
+      fprintf(stderr, "glPolygonMode %s %s\n",
 	      gl_lookup_enum_by_nr(face),
 	      gl_lookup_enum_by_nr(mode));
 
@@ -144,7 +144,7 @@ _mesa_PolygonStipple( const GLubyte *pattern )
    _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
 
    ctx->NewState |= _NEW_POLYGONSTIPPLE;
-   
+
    if (ctx->Driver.PolygonStipple)
       ctx->Driver.PolygonStipple( ctx, (const GLubyte *) ctx->PolygonStipple );
 }

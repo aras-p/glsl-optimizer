@@ -1,21 +1,21 @@
-/* $Id: enable.c,v 1.32 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: enable.c,v 1.33 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -35,7 +35,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "simple_list.h"
-#include "types.h"
+#include "mtypes.h"
 #include "enums.h"
 
 #include "math/m_matrix.h"
@@ -52,8 +52,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 {
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "gl_enable/disable" );
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "%s %s (newstate is %x)\n", 
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "%s %s (newstate is %x)\n",
 	      state ? "glEnable" : "glDisable",
 	      gl_lookup_enum_by_nr(cap),
 	      ctx->NewState);
@@ -88,7 +88,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_CLIP_PLANE3:
       case GL_CLIP_PLANE4:
       case GL_CLIP_PLANE5:
-	 if (ctx->Transform.ClipEnabled[cap-GL_CLIP_PLANE0] != state) 
+	 if (ctx->Transform.ClipEnabled[cap-GL_CLIP_PLANE0] != state)
 	 {
 	    GLuint p = cap-GL_CLIP_PLANE0;
 
@@ -98,11 +98,11 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	    if (state) {
 	       ctx->_Enabled |= ENABLE_USERCLIP;
 	       ctx->Transform._AnyClip++;
-	       
+	
 	       if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
  		  _math_matrix_analyze( &ctx->ProjectionMatrix );
 	       }
-	       
+	
 	       /* This derived state also calculated in clip.c and
 		* from gl_update_state() on changes to EyeUserPlane
 		* and ctx->ProjectionMatrix respectively.
@@ -112,8 +112,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 				    ctx->ProjectionMatrix.inv );
 	    } else {
 	       if (--ctx->Transform._AnyClip == 0)
-		  ctx->_Enabled &= ~ENABLE_USERCLIP;	       
-	    }	    
+		  ctx->_Enabled &= ~ENABLE_USERCLIP;	
+	    }	
 	 }
 	 break;
       case GL_COLOR_MATERIAL:
@@ -183,7 +183,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	    ctx->Light.Light[cap-GL_LIGHT0].Enabled = state;
 
 	    if (state) {
-	       insert_at_tail(&ctx->Light.EnabledList, 
+	       insert_at_tail(&ctx->Light.EnabledList,
 			      &ctx->Light.Light[cap-GL_LIGHT0]);
 	       if (ctx->Light.Enabled)
 		  ctx->_Enabled |= ENABLE_LIGHT;
@@ -279,7 +279,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 ctx->Eval.Map2Normal = state;
 	 ctx->NewState |= _NEW_EVAL;
 	 break;
-      case GL_MAP2_TEXTURE_COORD_1: 
+      case GL_MAP2_TEXTURE_COORD_1:
 	 ctx->Eval.Map2TextureCoord1 = state;
 	 ctx->NewState |= _NEW_EVAL;
 	 break;
@@ -691,7 +691,7 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Eval.Map2Index;
       case GL_MAP2_NORMAL:
 	 return ctx->Eval.Map2Normal;
-      case GL_MAP2_TEXTURE_COORD_1: 
+      case GL_MAP2_TEXTURE_COORD_1:
 	 return ctx->Eval.Map2TextureCoord1;
       case GL_MAP2_TEXTURE_COORD_2:
 	 return ctx->Eval.Map2TextureCoord2;
@@ -837,9 +837,9 @@ _mesa_IsEnabled( GLenum cap )
 static void
 client_state( GLcontext *ctx, GLenum cap, GLboolean state )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, 
-				       (state 
-					? "glEnableClientState" 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx,
+				       (state
+					? "glEnableClientState"
 					: "glDisableClientState") );
 
    switch (cap) {

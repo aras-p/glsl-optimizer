@@ -1,21 +1,21 @@
-/* $Id: t_pipeline.c,v 1.2 2000/11/20 18:06:13 brianp Exp $ */
+/* $Id: t_pipeline.c,v 1.3 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -33,7 +33,7 @@
 #include "mem.h"
 #include "mmath.h"
 #include "state.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_translate.h"
 #include "math/m_xform.h"
@@ -57,7 +57,7 @@
 
 void gl_print_pipe_ops( const char *msg, GLuint flags )
 {
-   fprintf(stderr, 
+   fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   flags,
@@ -86,9 +86,9 @@ void gl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipe_ops( "reset cva vb", stages ); 
+      gl_print_pipe_ops( "reset cva vb", stages );
 
-   if (stages & PIPE_OP_VERT_XFORM) 
+   if (stages & PIPE_OP_VERT_XFORM)
    {
       if (VB->ClipOrMask & CLIP_USER_BIT)
 	 MEMSET(VB->UserClipMask, 0, VB->Count);
@@ -104,18 +104,18 @@ void gl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages )
       VB->NormalPtr = &tnl->CVA.v.Normal;
    }
 
-   if (stages & PIPE_OP_LIGHT) 
+   if (stages & PIPE_OP_LIGHT)
    {
       VB->ColorPtr = VB->Color[0] = VB->Color[1] = &tnl->CVA.v.Color;
       VB->IndexPtr = VB->Index[0] = VB->Index[1] = &tnl->CVA.v.Index;
    }
-   else if (stages & PIPE_OP_FOG) 
+   else if (stages & PIPE_OP_FOG)
    {
       if (ctx->Light.Enabled) {
 	 VB->Color[0] = VB->LitColor[0];
-	 VB->Color[1] = VB->LitColor[1];      
+	 VB->Color[1] = VB->LitColor[1];
 	 VB->Index[0] = VB->LitIndex[0];
-	 VB->Index[1] = VB->LitIndex[1];      
+	 VB->Index[1] = VB->LitIndex[1];
       } else {
 	 VB->Color[0] = VB->Color[1] = &tnl->CVA.v.Color;
 	 VB->Index[0] = VB->Index[1] = &tnl->CVA.v.Index;
@@ -142,7 +142,7 @@ static void pipeline_ctr( struct gl_pipeline *p, GLcontext *ctx, GLuint type )
    p->type = type;
    p->ops = 0;
 
-   for (i = 0 ; i < gl_default_nr_stages ; i++) 
+   for (i = 0 ; i < gl_default_nr_stages ; i++)
       p->state_change |= gl_default_pipeline[i].state_change;
 }
 
@@ -151,12 +151,12 @@ void _tnl_pipeline_init( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   MEMCPY( tnl->PipelineStage, 
-	   gl_default_pipeline, 
+   MEMCPY( tnl->PipelineStage,
+	   gl_default_pipeline,
 	   sizeof(*gl_default_pipeline) * gl_default_nr_stages );
-   
+
    tnl->NrPipelineStages = gl_default_nr_stages;
-      
+
    pipeline_ctr( &tnl->CVA.elt, ctx, PIPE_IMMEDIATE);
    pipeline_ctr( &tnl->CVA.pre, ctx, PIPE_PRECALC );
 }
@@ -189,16 +189,16 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline_stage *pipeline = tnl->PipelineStage;
    struct gl_cva *cva = &tnl->CVA;
-   struct gl_pipeline *pre = &cva->pre;   
+   struct gl_pipeline *pre = &cva->pre;
    struct gl_pipeline_stage **stages = pre->stages;
    GLuint i;
    GLuint newstate = pre->new_state;
    GLuint changed_ops = 0;
    GLuint oldoutputs = pre->outputs;
    GLuint oldinputs = pre->inputs;
-   GLuint fallback = (VERT_CURRENT_DATA & tnl->_CurrentFlag & 
+   GLuint fallback = (VERT_CURRENT_DATA & tnl->_CurrentFlag &
 		      ~tnl->_ArraySummary);
-   GLuint changed_outputs = (tnl->_ArrayNewState | 
+   GLuint changed_outputs = (tnl->_ArrayNewState |
 			     (fallback & cva->orflag));
    GLuint available = fallback | tnl->_ArrayFlags;
 
@@ -213,12 +213,12 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
     */
    newstate = ~0;
 
-   if (tnl->_ArraySummary & VERT_ELT) 
+   if (tnl->_ArraySummary & VERT_ELT)
       cva->orflag &= VERT_MATERIAL;
-  
+
    cva->orflag &= ~(tnl->_ArraySummary & ~VERT_OBJ_ANY);
    available &= ~cva->orflag;
-   
+
    pre->outputs = available;
    pre->inputs = available;
 
@@ -226,8 +226,8 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
       fprintf(stderr, ": Rebuild pipeline\n");
       gl_print_vert_flags("orflag", cva->orflag);
    }
-      
-   
+
+
 
    /* If something changes in the pipeline, tag all subsequent stages
     * using this value for recalcuation.  Also used to build the full
@@ -237,16 +237,16 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
     * are enough to fully specify what needs to be calculated, and a
     * single pass identifies all stages requiring recalculation.
     */
-   for (i = 0 ; i < tnl->NrPipelineStages ; i++) 
+   for (i = 0 ; i < tnl->NrPipelineStages ; i++)
    {
       pipeline[i].check(ctx, &pipeline[i]);
 
-      if (pipeline[i].type & PIPE_PRECALC) 
+      if (pipeline[i].type & PIPE_PRECALC)
       {
 	 if ((newstate & pipeline[i].cva_state_change) ||
 	     (changed_outputs & pipeline[i].inputs) ||
 	     !pipeline[i].inputs)
-	 {	    
+	 {	
 	    changed_ops |= pipeline[i].ops;
 	    changed_outputs |= pipeline[i].outputs;
 	    pipeline[i].active &= ~PIPE_PRECALC;
@@ -256,9 +256,9 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
 	    {
 	       pipeline[i].active |= PIPE_PRECALC;
 	       *stages++ = &pipeline[i];
-	    } 
+	    }
 	 }
-      
+
 	 /* Incompatible with multiple stages structs implementing
 	  * the same stage.
 	  */
@@ -271,8 +271,8 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
 	    available |= pipeline[i].outputs;
 	    pre->forbidden_inputs |= pipeline[i].pre_forbidden_inputs;
 	 }
-      } 
-      else if (pipeline[i].active & PIPE_PRECALC) 
+      }
+      else if (pipeline[i].active & PIPE_PRECALC)
       {
 	 pipeline[i].active &= ~PIPE_PRECALC;
 	 changed_outputs |= pipeline[i].outputs;
@@ -293,8 +293,8 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
 void gl_build_precalc_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct gl_pipeline *pre = &tnl->CVA.pre;   
-   struct gl_pipeline *elt = &tnl->CVA.elt;   
+   struct gl_pipeline *pre = &tnl->CVA.pre;
+   struct gl_pipeline *elt = &tnl->CVA.elt;
 
    if (!ctx->Driver.BuildPrecalcPipeline ||
        !ctx->Driver.BuildPrecalcPipeline( ctx ))
@@ -303,11 +303,11 @@ void gl_build_precalc_pipeline( GLcontext *ctx )
    pre->data_valid = 0;
    pre->pipeline_valid = 1;
    elt->pipeline_valid = 0;
-   
+
    tnl->CVA.orflag = 0;
-   
+
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipeline( ctx, pre ); 
+      gl_print_pipeline( ctx, pre );
 }
 
 
@@ -316,7 +316,7 @@ static void build_full_immediate_pipeline( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline_stage *pipeline = tnl->PipelineStage;
    struct gl_cva *cva = &tnl->CVA;
-   struct gl_pipeline *pre = &cva->pre;   
+   struct gl_pipeline *pre = &cva->pre;
    struct gl_pipeline *elt = &cva->elt;
    struct gl_pipeline_stage **stages = elt->stages;
    GLuint i;
@@ -340,17 +340,17 @@ static void build_full_immediate_pipeline( GLcontext *ctx )
       pipeline[i].active &= ~PIPE_IMMEDIATE;
 
       if ((pipeline[i].state_change & newstate) ||
-  	  (pipeline[i].elt_forbidden_inputs & available)) 
+  	  (pipeline[i].elt_forbidden_inputs & available))
       {
 	 pipeline[i].check(ctx, &pipeline[i]);
       }
 
       if ((pipeline[i].type & PIPE_IMMEDIATE) &&
-	  (pipeline[i].ops & active_ops) == 0 && 
+	  (pipeline[i].ops & active_ops) == 0 &&
 	  (pipeline[i].elt_forbidden_inputs & available) == 0
 	 )
       {
-	 if (pipeline[i].inputs & ~available) 
+	 if (pipeline[i].inputs & ~available)
 	    elt->forbidden_inputs |= pipeline[i].inputs & ~available;
 	 else
 	 {
@@ -366,7 +366,7 @@ static void build_full_immediate_pipeline( GLcontext *ctx )
    }
 
    *stages = 0;
-   
+
    elt->copy_transformed_data = 1;
    elt->replay_copied_vertices = 0;
 
@@ -381,7 +381,7 @@ static void build_full_immediate_pipeline( GLcontext *ctx )
 void gl_build_immediate_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct gl_pipeline *elt = &tnl->CVA.elt;   
+   struct gl_pipeline *elt = &tnl->CVA.elt;
 
    if (!ctx->Driver.BuildEltPipeline ||
        !ctx->Driver.BuildEltPipeline( ctx )) {
@@ -390,11 +390,11 @@ void gl_build_immediate_pipeline( GLcontext *ctx )
 
    elt->pipeline_valid = 1;
    tnl->CVA.orflag = 0;
-   
+
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipeline( ctx, elt ); 
+      gl_print_pipeline( ctx, elt );
 }
-   
+
 #define INTERESTED ~0
 
 void gl_update_pipelines( GLcontext *ctx )
@@ -412,17 +412,17 @@ void gl_update_pipelines( GLcontext *ctx )
        cva->lock_changed ||
        cva->orflag != cva->last_orflag ||
        tnl->_ArrayFlags != cva->last_array_flags)
-   {   
+   {
       GLuint flags = VERT_WIN;
 
       if (ctx->Visual.RGBAflag) {
 	 flags |= VERT_RGBA;
 	 if (ctx->_TriangleCaps && DD_SEPERATE_SPECULAR)
  	    flags |= VERT_SPEC_RGB;
-      } else 
+      } else
 	 flags |= VERT_INDEX;
 
-      if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY) 
+      if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY)
 	 flags |= VERT_TEX0_ANY;
 
       if (ctx->Texture._ReallyEnabled & TEXTURE1_ANY)
@@ -436,10 +436,10 @@ void gl_update_pipelines( GLcontext *ctx )
       if (ctx->Texture._ReallyEnabled & TEXTURE3_ANY)
 	 flags |= VERT_TEX3_ANY;
 #endif
-   
-      if (ctx->Polygon._Unfilled) 
+
+      if (ctx->Polygon._Unfilled)
 	 flags |= VERT_EDGE;
- 
+
       if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
  	 flags |= VERT_FOG_COORD;
 
@@ -485,10 +485,10 @@ void gl_run_pipeline( struct vertex_buffer *VB )
    pipe->data_valid = 1;	/* optimized stages might want to reset this. */
 
    if (0) gl_print_pipeline( VB->ctx, pipe );
-   
+
    START_FAST_MATH(x);
-   
-   for ( VB->Culled = 0; *stages && !VB->Culled ; stages++ ) 
+
+   for ( VB->Culled = 0; *stages && !VB->Culled ; stages++ )
       (*stages)->run( VB );
 
    END_FAST_MATH(x);

@@ -1,4 +1,4 @@
-/* $Id: histogram.h,v 1.1 2000/11/10 18:06:14 brianp Exp $ */
+/* $Id: histogram.h,v 1.2 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "types.h"
+#include "mtypes.h"
 #endif
 
 

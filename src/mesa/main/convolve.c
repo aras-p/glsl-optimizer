@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.13 2000/11/21 23:26:13 brianp Exp $ */
+/* $Id: convolve.c,v 1.14 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@
 #include "convolve.h"
 #include "context.h"
 #include "image.h"
-#include "types.h"
+#include "mtypes.h"
 #include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
@@ -885,7 +885,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
          ctx->Separable2D.Filter[i * 4 + 3 + colStart] = a;
       }
    }
-   
+
    ctx->NewState |= _NEW_PIXEL;
 }
 

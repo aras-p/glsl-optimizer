@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.46 2000/11/19 23:10:25 brianp Exp $ */
+/* $Id: state.c,v 1.47 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "texture.h"
-#include "types.h"
+#include "mtypes.h"
 #include "varray.h"
 #include "winpos.h"
 
@@ -725,7 +725,7 @@ update_polygon( GLcontext *ctx )
       ctx->_TriangleCaps |= DD_TRI_OFFSET;
 }
 
-static void 
+static void
 calculate_model_project_matrix( GLcontext *ctx )
 {
    if (!ctx->_NeedEyeCoords) {
@@ -756,13 +756,13 @@ update_modelview_scale( GLcontext *ctx )
 }
 
 
-/* Bring uptodate any state that relies on _NeedEyeCoords.  
+/* Bring uptodate any state that relies on _NeedEyeCoords.
  */
 static void
 update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
-{   
+{
    /* Check if the truth-value interpretations of the bitfields have
-    * changed: 
+    * changed:
     */
    if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0)) {
       /* Recalculate all state that depends on _NeedEyeCoords.
@@ -780,12 +780,12 @@ update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
       /* Recalculate that same state if and only if it has been
        * invalidated by other statechanges.
        */
-      if (new_state & _NEW_MODELVIEW) 
+      if (new_state & _NEW_MODELVIEW)
 	 update_modelview_scale(ctx);
 
-      if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION)) 
+      if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
 	 calculate_model_project_matrix(ctx);
-	    
+	
       if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
 	 gl_compute_light_positions( ctx );
    }
@@ -825,7 +825,7 @@ static void
 update_projection( GLcontext *ctx )
 {
    _math_matrix_analyze( &ctx->ProjectionMatrix );
-      
+
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
     */
@@ -860,7 +860,7 @@ update_image_transfer_state(GLcontext *ctx)
 
    if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset)
       mask |= IMAGE_SHIFT_OFFSET_BIT;
-   
+
    if (ctx->Pixel.MapColorFlag)
       mask |= IMAGE_MAP_COLOR_BIT;
 
@@ -910,7 +910,7 @@ update_image_transfer_state(GLcontext *ctx)
  * state references this value, and must be treated with care to
  * ensure that updates are done correctly.  All state dependent on
  * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
- * and from nowhere else.  
+ * and from nowhere else.
  */
 void gl_update_state( GLcontext *ctx )
 {
@@ -920,18 +920,18 @@ void gl_update_state( GLcontext *ctx )
    if (MESA_VERBOSE & VERBOSE_STATE)
       gl_print_state("", new_state);
 
-   if (new_state & _NEW_MODELVIEW) 
+   if (new_state & _NEW_MODELVIEW)
       _math_matrix_analyze( &ctx->ModelView );
 
-   if (new_state & _NEW_PROJECTION) 
+   if (new_state & _NEW_PROJECTION)
       update_projection( ctx );
 
-   if (new_state & _NEW_TEXTURE_MATRIX) 
+   if (new_state & _NEW_TEXTURE_MATRIX)
       _mesa_update_texture_matrices( ctx );
 
-   if (new_state & _NEW_COLOR_MATRIX) 
+   if (new_state & _NEW_COLOR_MATRIX)
       _math_matrix_analyze( &ctx->ColorMatrix );
-   
+
    /* References ColorMatrix.type (derived above).
     */
    if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
@@ -939,18 +939,18 @@ void gl_update_state( GLcontext *ctx )
 
    /* Contributes to NeedEyeCoords, NeedNormals.
     */
-   if (new_state & _NEW_TEXTURE) 
+   if (new_state & _NEW_TEXTURE)
       _mesa_update_texture_state( ctx );
 
-   if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR)) 
+   if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR))
       update_drawbuffer( ctx );
 
-   if (new_state & _NEW_POLYGON) 
+   if (new_state & _NEW_POLYGON)
       update_polygon( ctx );
 
    /* Contributes to NeedEyeCoords, NeedNormals.
     */
-   if (new_state & _NEW_LIGHT) 
+   if (new_state & _NEW_LIGHT)
       gl_update_lighting( ctx );
 
    /* We can light in object space if the modelview matrix preserves
@@ -968,15 +968,15 @@ void gl_update_state( GLcontext *ctx )
     * If the truth value of either has changed, update for the new
     * lighting space and recompute the positions of lights and the
     * normal transform.
-    * 
+    *
     * If the lighting space hasn't changed, may still need to recompute
-    * light positions & normal transforms for other reasons.  
+    * light positions & normal transforms for other reasons.
     */
    if (new_state & (_NEW_MODELVIEW |
 		    _NEW_PROJECTION |
 		    _TNL_NEW_NORMAL_TRANSFORM |
 		    _NEW_LIGHT |
-		    _TNL_NEW_NEED_EYE_COORDS)) 
+		    _TNL_NEW_NEED_EYE_COORDS))
       update_tnl_spaces( ctx, oldneedeyecoords );
 
    /*

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.107 2000/11/19 23:10:25 brianp Exp $ */
+/* $Id: context.c,v 1.108 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "texture.h"
-#include "types.h"
+#include "mtypes.h"
 #include "varray.h"
 
 #include "math/m_translate.h"
@@ -69,7 +69,7 @@
 
 
 #ifndef MESA_VERBOSE
-int MESA_VERBOSE = 0 
+int MESA_VERBOSE = 0
 /*                 | VERBOSE_PIPELINE */
 /*                 | VERBOSE_IMMEDIATE */
 /*                 | VERBOSE_VARRAY */
@@ -83,7 +83,7 @@ int MESA_VERBOSE = 0
 #endif
 
 #ifndef MESA_DEBUG_FLAGS
-int MESA_DEBUG_FLAGS = 0 
+int MESA_DEBUG_FLAGS = 0
 /*                 | DEBUG_ALWAYS_FLUSH */
 ;
 #endif
@@ -1457,7 +1457,7 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
-   
+
    if (share_list) {
       /* share the group of display lists of another context */
       ctx->Shared = share_list->Shared;
@@ -1808,13 +1808,13 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 
 static void print_info( void )
 {
-   fprintf(stderr, "Mesa GL_VERSION = %s\n", 
+   fprintf(stderr, "Mesa GL_VERSION = %s\n",
 	   (char *) _mesa_GetString(GL_VERSION));
-   fprintf(stderr, "Mesa GL_RENDERER = %s\n", 
+   fprintf(stderr, "Mesa GL_RENDERER = %s\n",
 	   (char *) _mesa_GetString(GL_RENDERER));
-   fprintf(stderr, "Mesa GL_VENDOR = %s\n", 
+   fprintf(stderr, "Mesa GL_VENDOR = %s\n",
 	   (char *) _mesa_GetString(GL_VENDOR));
-   fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", 
+   fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n",
 	   (char *) _mesa_GetString(GL_EXTENSIONS));
 #if defined(THREADS)
    fprintf(stderr, "Mesa thread-safe: YES\n");
@@ -1837,7 +1837,7 @@ void
 _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
                      GLframebuffer *readBuffer )
 {
-   if (MESA_VERBOSE) 
+   if (MESA_VERBOSE)
       fprintf(stderr, "_mesa_make_current2()\n");
 
    /* We call this function periodically (just here for now) in
@@ -1863,7 +1863,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 /* gl_update_state( newCtx ); */
       }
 
-      if (newCtx->Driver.MakeCurrent) 
+      if (newCtx->Driver.MakeCurrent)
 	 newCtx->Driver.MakeCurrent( newCtx, drawBuffer, readBuffer );
 
       /* We can use this to help debug user's problems.  Tell them to set

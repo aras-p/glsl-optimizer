@@ -1,21 +1,21 @@
-/* $Id: s_context.c,v 1.5 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_context.c,v 1.6 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,7 +28,7 @@
  */
 
 #include "glheader.h"
-#include "types.h"
+#include "mtypes.h"
 #include "mem.h"
 
 #include "s_pb.h"
@@ -48,7 +48,7 @@
  * Recompute the value of swrast->_RasterMask, etc. according to
  * the current context.
  */
-static void 
+static void
 _swrast_update_rasterflags( GLcontext *ctx )
 {
    GLuint RasterMask = 0;
@@ -147,9 +147,9 @@ _swrast_update_polygon( GLcontext *ctx )
 static void
 _swrast_update_hint( GLcontext *ctx )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);   
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
-			      (ctx->Hint.Fog == GL_NICEST && 
+			      (ctx->Hint.Fog == GL_NICEST &&
 			       swrast->AllowPixelFog));
 }
 
@@ -185,11 +185,11 @@ _swrast_update_hint( GLcontext *ctx )
 
 
 
-/* Stub for swrast->Triangle to select a true triangle function 
+/* Stub for swrast->Triangle to select a true triangle function
  * after a state change.
  */
 static void
-_swrast_validate_quad( GLcontext *ctx, 
+_swrast_validate_quad( GLcontext *ctx,
 		       const SWvertex *v0, const SWvertex *v1,
                        const SWvertex *v2, const SWvertex *v3 )
 {
@@ -202,7 +202,7 @@ _swrast_validate_quad( GLcontext *ctx,
 }
 
 static void
-_swrast_validate_triangle( GLcontext *ctx, 
+_swrast_validate_triangle( GLcontext *ctx,
 			   const SWvertex *v0,
                            const SWvertex *v1,
                            const SWvertex *v2 )
@@ -237,10 +237,10 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    swrast->Point( ctx, v0 );
 }
 
-static void 
+static void
 _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 			     const GLubyte mask[],
-			     GLchan src[][4], 
+			     GLchan src[][4],
 			     CONST GLchan dst[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -252,7 +252,7 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 }
 
 
-static void 
+static void
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
 				 GLuint n,
@@ -265,7 +265,7 @@ _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
    _swrast_validate_derived( ctx );
    _swrast_choose_texture_sample_func( ctx, texUnit, tObj );
 
-   swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, s, t, u, 
+   swrast->TextureSample[texUnit]( ctx, texUnit, tObj, n, s, t, u,
 				   lambda, rgba );
 }
 
@@ -285,14 +285,14 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
    swrast->NewState |= new_state;
 
    /* After 10 statechanges without any swrast functions being called,
-    * put the module to sleep. 
+    * put the module to sleep.
     */
    if (++swrast->StateChanges > 10) {
       swrast->InvalidateState = _swrast_sleep;
       swrast->NewState = ~0;
       new_state = ~0;
    }
-   
+
    if (new_state & swrast->invalidate_triangle)
       swrast->Triangle = _swrast_validate_triangle;
 
@@ -307,8 +307,8 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
 
    if (new_state & _SWRAST_NEW_BLEND_FUNC)
       swrast->BlendFunc = _swrast_validate_blend_func;
-   
-   if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC) 
+
+   if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
 	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
 }
@@ -320,13 +320,13 @@ _swrast_validate_derived( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (swrast->NewState) 
+   if (swrast->NewState)
    {
-      if (swrast->NewState & _SWRAST_NEW_RASTERMASK) 
+      if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
 
       if (swrast->NewState & _NEW_TEXTURE)
-	 swrast->_MultiTextureEnabled = (ctx->Texture._ReallyEnabled & 
+	 swrast->_MultiTextureEnabled = (ctx->Texture._ReallyEnabled &
 					 ~ENABLE_TEX0);
 
       if (swrast->NewState & _NEW_POLYGON)
@@ -346,7 +346,7 @@ _swrast_validate_derived( GLcontext *ctx )
 /* Public entrypoints:  See also s_accum.c, s_bitmap.c, etc.
  */
 void
-_swrast_Quad( GLcontext *ctx, 
+_swrast_Quad( GLcontext *ctx,
 	      const SWvertex *v0, const SWvertex *v1,
               const SWvertex *v2, const SWvertex *v3 )
 {
@@ -385,14 +385,14 @@ _swrast_get_stipple_counter_ref( GLcontext *ctx )
    return &SWRAST_CONTEXT(ctx)->StippleCounter;
 }
 
-void 
+void
 _swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 {
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
    SWRAST_CONTEXT(ctx)->AllowVertexFog = value;
 }
 
-void 
+void
 _swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value )
 {
    SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
@@ -415,7 +415,7 @@ _swrast_CreateContext( GLcontext *ctx )
    }
 
    swrast->NewState = ~0;
-   
+
    swrast->choose_point = _swrast_choose_point;
    swrast->choose_line = _swrast_choose_line;
    swrast->choose_triangle = _swrast_choose_triangle;
@@ -443,7 +443,7 @@ _swrast_CreateContext( GLcontext *ctx )
 
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;
-   
+
    ctx->swrast_context = swrast;
    return GL_TRUE;
 }
@@ -455,7 +455,7 @@ _swrast_DestroyContext( GLcontext *ctx )
 
    FREE( swrast->PB );
    FREE( swrast );
-   
+
    ctx->swrast_context = 0;
 }
 

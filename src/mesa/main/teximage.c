@@ -1,21 +1,21 @@
-/* $Id: teximage.c,v 1.64 2000/11/21 23:25:40 brianp Exp $ */
+/* $Id: teximage.c,v 1.65 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -38,7 +38,7 @@
 #include "state.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "types.h"
+#include "mtypes.h"
 #include "swrast/s_span.h" /* XXX SWRAST hack */
 #endif
 
@@ -759,7 +759,7 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
          }
          return;  /* all done */
       }
-   }      
+   }
 
    /*
     * General case solutions
@@ -829,7 +829,7 @@ fill_texture_image( GLcontext *ctx, GLuint dimensions,
                ASSERT(ctx->Pixel.Convolution1DEnabled);
                _mesa_convolve_1d_image(ctx, &convWidth, tmpImage, convImage);
             }
-            else {         
+            else {
                if (ctx->Pixel.Convolution2DEnabled) {
                   _mesa_convolve_2d_image(ctx, &convWidth, &convHeight,
                                           tmpImage, convImage);
@@ -2657,7 +2657,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
 
-   if (ctx->_ImageTransferState || !ctx->Driver.CopyTexImage1D 
+   if (ctx->_ImageTransferState || !ctx->Driver.CopyTexImage1D
        || !(*ctx->Driver.CopyTexImage1D)(ctx, target, level,
                          internalFormat, x, y, width, border)) {
       struct gl_pixelstore_attrib unpackSave;
@@ -2754,7 +2754,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
          gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
          return;
       }
-      
+
       /* now call glTexSubImage1D to do the real work */
       unpackSave = ctx->Unpack;
       ctx->Unpack = _mesa_native_packing;
@@ -2808,7 +2808,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       _mesa_TexSubImage2D(target, level, xoffset, yoffset, width, height,
                           GL_RGBA, GL_UNSIGNED_BYTE, image);
       ctx->Unpack = unpackSave;
-      
+
       FREE(image);
    }
 }
@@ -2855,7 +2855,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       _mesa_TexSubImage3D(target, level, xoffset, yoffset, zoffset,
                           width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
       ctx->Unpack = unpackSave;
-      
+
       FREE(image);
    }
 }

@@ -1,4 +1,4 @@
-#include "types.h"
+#include "mtypes.h"
 #include "debug.h"
 
 void gl_print_state( const char *msg, GLuint state )
@@ -59,9 +59,9 @@ void gl_print_enable_flags( const char *msg, GLuint flags )
 	   (flags & ENABLE_RESCALE)    ? "rescale, " : "");
 }
 
-void gl_print_tri_caps( const char *name, GLuint flags ) 
+void gl_print_tri_caps( const char *name, GLuint flags )
 {
-   fprintf(stderr, 
+   fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
@@ -79,10 +79,10 @@ void gl_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_LINE_SMOOTH)         ? "line-smooth, " : "",
 	   (flags & DD_LINE_STIPPLE)        ? "line-stipple, " : "",
 	   (flags & DD_LINE_WIDTH)          ? "line-wide, " : "",
-	   (flags & DD_POINT_SMOOTH)        ? "point-smooth, " : "", 
-	   (flags & DD_POINT_SIZE)          ? "point-size, " : "", 
-	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : "", 
-	   (flags & DD_LIGHTING_CULL)       ? "lighting-cull, " : "", 
+	   (flags & DD_POINT_SMOOTH)        ? "point-smooth, " : "",
+	   (flags & DD_POINT_SIZE)          ? "point-size, " : "",
+	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : "",
+	   (flags & DD_LIGHTING_CULL)       ? "lighting-cull, " : "",
 	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : "",
 	   (flags & DD_STENCIL)             ? "stencil, " : ""
       );

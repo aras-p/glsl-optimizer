@@ -1,21 +1,21 @@
-/* $Id: matrix.c,v 1.26 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: matrix.c,v 1.27 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -46,7 +46,7 @@
 #include "matrix.h"
 #include "mem.h"
 #include "mmath.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_matrix.h"
 #endif
@@ -95,15 +95,15 @@ _mesa_Frustum( GLdouble left, GLdouble right,
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glFrustrum" );
 
    if (nearval <= 0.0 ||
-       farval <= 0.0 || 
-       nearval == farval || 
-       left == right || 
-       top == bottom) 
+       farval <= 0.0 ||
+       nearval == farval ||
+       left == right ||
+       top == bottom)
    {
       gl_error( ctx,  GL_INVALID_VALUE, "glFrustum" );
       return;
    }
-   
+
    _math_matrix_frustrum( mat, left, right, bottom, top, nearval, farval );
 }
 
@@ -117,10 +117,10 @@ _mesa_Ortho( GLdouble left, GLdouble right,
    GLmatrix *mat = 0;
 
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glOrtho" );
-   
-   if (left == right || 
-       bottom == top || 
-       nearval == farval) 
+
+   if (left == right ||
+       bottom == top ||
+       nearval == farval)
    {
       gl_error( ctx,  GL_INVALID_VALUE, "gl_Ortho" );
       return;
@@ -156,7 +156,7 @@ _mesa_PushMatrix( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushMatrix");
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glPushMatrix %s\n", 
+      fprintf(stderr, "glPushMatrix %s\n",
 	      gl_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    switch (ctx->Transform.MatrixMode) {
@@ -209,7 +209,7 @@ _mesa_PopMatrix( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopMatrix");
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glPopMatrix %s\n", 
+      fprintf(stderr, "glPopMatrix %s\n",
 	      gl_lookup_enum_by_nr(ctx->Transform.MatrixMode));
 
    switch (ctx->Transform.MatrixMode) {
@@ -306,7 +306,7 @@ _mesa_MultMatrixf( const GLfloat *m )
 
 
 /*
- * Multiply the active matrix by an arbitary matrix.  
+ * Multiply the active matrix by an arbitary matrix.
  */
 void
 _mesa_MultMatrixd( const GLdouble *m )
@@ -450,7 +450,7 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glViewport %d %d %d %d\n", x, y, width, height);
-   
+
    /* clamp width, and height to implementation dependent range */
    width  = CLAMP( width,  1, MAX_WIDTH );
    height = CLAMP( height, 1, MAX_HEIGHT );
@@ -503,7 +503,7 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthRange");
 
    if (MESA_VERBOSE&VERBOSE_API)
-      fprintf(stderr, "glDepthRange %f %f\n", nearval, farval); 
+      fprintf(stderr, "glDepthRange %f %f\n", nearval, farval);
 
    n = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
    f = (GLfloat) CLAMP( farval, 0.0, 1.0 );

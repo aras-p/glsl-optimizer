@@ -1,21 +1,21 @@
-/* $Id: xm_tri.c,v 1.11 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.12 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -35,7 +35,7 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
-#include "types.h"
+#include "mtypes.h"
 #include "xmesaP.h"
 
 /* Internal swrast includes:
@@ -368,7 +368,7 @@ static void smooth_DITHER_z_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, depth-buffered, 8-bit PF_LOOKUP triangle.
  */
-static void smooth_LOOKUP8_z_triangle( GLcontext *ctx, 
+static void smooth_LOOKUP8_z_triangle( GLcontext *ctx,
 				       const SWvertex *v0,
 				       const SWvertex *v1,
 				       const SWvertex *v2 )
@@ -404,7 +404,7 @@ static void smooth_LOOKUP8_z_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, depth-buffered, 8-bit PF_HPCR triangle.
  */
-static void smooth_HPCR_z_triangle( GLcontext *ctx, 
+static void smooth_HPCR_z_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -471,7 +471,7 @@ static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_8A8B8G8R triangle.
  */
-static void flat_8A8B8G8R_z_triangle( GLcontext *ctx, 
+static void flat_8A8B8G8R_z_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
 				      const SWvertex *v2 )
@@ -505,7 +505,7 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_8R8G8B triangle.
  */
-static void flat_8R8G8B_z_triangle( GLcontext *ctx, 
+static void flat_8R8G8B_z_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -539,7 +539,7 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_8R8G8B24 triangle.
  */
-static void flat_8R8G8B24_z_triangle( GLcontext *ctx, 
+static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
 				      const SWvertex *v2 )
@@ -574,7 +574,7 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_TRUEDITHER triangle.
  */
-static void flat_TRUEDITHER_z_triangle( GLcontext *ctx, 
+static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
 					const SWvertex *v0,
 					const SWvertex *v1,
 					const SWvertex *v2 )
@@ -606,7 +606,7 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_5R6G5B triangle.
  */
-static void flat_5R6G5B_z_triangle( GLcontext *ctx, 
+static void flat_5R6G5B_z_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -640,7 +640,7 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_DITHER_5R6G5B triangle.
  */
-static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx, 
+static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 					   const SWvertex *v0,
 					   const SWvertex *v1,
 					   const SWvertex *v2 )
@@ -673,7 +673,7 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, 8-bit PF_DITHER triangle.
  */
-static void flat_DITHER8_z_triangle( GLcontext *ctx, 
+static void flat_DITHER8_z_triangle( GLcontext *ctx,
 				     const SWvertex *v0,
 				     const SWvertex *v1,
 				     const SWvertex *v2 )
@@ -708,7 +708,7 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, PF_DITHER triangle.
  */
-static void flat_DITHER_z_triangle( GLcontext *ctx, 
+static void flat_DITHER_z_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -742,7 +742,7 @@ static void flat_DITHER_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, 8-bit PF_HPCR triangle.
  */
-static void flat_HPCR_z_triangle( GLcontext *ctx, 
+static void flat_HPCR_z_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
 				  const SWvertex *v1,
 				  const SWvertex *v2 )
@@ -777,7 +777,7 @@ static void flat_HPCR_z_triangle( GLcontext *ctx,
 /*
  * XImage, flat, depth-buffered, 8-bit PF_LOOKUP triangle.
  */
-static void flat_LOOKUP8_z_triangle( GLcontext *ctx, 
+static void flat_LOOKUP8_z_triangle( GLcontext *ctx,
 				     const SWvertex *v0,
 				     const SWvertex *v1,
 				     const SWvertex *v2 )
@@ -815,7 +815,7 @@ static void flat_LOOKUP8_z_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_TRUECOLOR triangle.
  */
-static void smooth_TRUECOLOR_triangle( GLcontext *ctx, 
+static void smooth_TRUECOLOR_triangle( GLcontext *ctx,
 				       const SWvertex *v0,
 				       const SWvertex *v1,
 				       const SWvertex *v2 )
@@ -840,7 +840,7 @@ static void smooth_TRUECOLOR_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_8A8B8G8R triangle.
  */
-static void smooth_8A8B8G8R_triangle( GLcontext *ctx, 
+static void smooth_8A8B8G8R_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
 				      const SWvertex *v2 )
@@ -867,7 +867,7 @@ static void smooth_8A8B8G8R_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_8R8G8B triangle.
  */
-static void smooth_8R8G8B_triangle( GLcontext *ctx, 
+static void smooth_8R8G8B_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -894,7 +894,7 @@ static void smooth_8R8G8B_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_8R8G8B triangle.
  */
-static void smooth_8R8G8B24_triangle( GLcontext *ctx, 
+static void smooth_8R8G8B24_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
 				      const SWvertex *v2 )
@@ -923,7 +923,7 @@ static void smooth_8R8G8B24_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_TRUEDITHER triangle.
  */
-static void smooth_TRUEDITHER_triangle( GLcontext *ctx, 
+static void smooth_TRUEDITHER_triangle( GLcontext *ctx,
 					const SWvertex *v0,
 					const SWvertex *v1,
 					const SWvertex *v2 )
@@ -949,7 +949,7 @@ static void smooth_TRUEDITHER_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_5R6G5B triangle.
  */
-static void smooth_5R6G5B_triangle( GLcontext *ctx, 
+static void smooth_5R6G5B_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -976,7 +976,7 @@ static void smooth_5R6G5B_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_DITHER_5R6G5B triangle.
  */
-static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx, 
+static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx,
 					   const SWvertex *v0,
 					   const SWvertex *v1,
 					   const SWvertex *v2 )
@@ -1003,7 +1003,7 @@ static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, 8-bit PF_DITHER triangle.
  */
-static void smooth_DITHER8_triangle( GLcontext *ctx, 
+static void smooth_DITHER8_triangle( GLcontext *ctx,
 				     const SWvertex *v0,
 				     const SWvertex *v1,
 				     const SWvertex *v2 )
@@ -1031,7 +1031,7 @@ static void smooth_DITHER8_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, PF_DITHER triangle.
  */
-static void smooth_DITHER_triangle( GLcontext *ctx, 
+static void smooth_DITHER_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -1058,7 +1058,7 @@ static void smooth_DITHER_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, 8-bit PF_LOOKUP triangle.
  */
-static void smooth_LOOKUP8_triangle( GLcontext *ctx, 
+static void smooth_LOOKUP8_triangle( GLcontext *ctx,
 				     const SWvertex *v0,
 				     const SWvertex *v1,
 				     const SWvertex *v2 )
@@ -1088,7 +1088,7 @@ static void smooth_LOOKUP8_triangle( GLcontext *ctx,
 /*
  * XImage, smooth, NON-depth-buffered, 8-bit PF_HPCR triangle.
  */
-static void smooth_HPCR_triangle( GLcontext *ctx, 
+static void smooth_HPCR_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
 				  const SWvertex *v1,
 				  const SWvertex *v2 )
@@ -1116,7 +1116,7 @@ static void smooth_HPCR_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_TRUECOLOR triangle.
  */
-static void flat_TRUECOLOR_triangle( GLcontext *ctx, 
+static void flat_TRUECOLOR_triangle( GLcontext *ctx,
 				     const SWvertex *v0,
 				     const SWvertex *v1,
 				     const SWvertex *v2 )
@@ -1141,7 +1141,7 @@ static void flat_TRUECOLOR_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_8A8B8G8R triangle.
  */
-static void flat_8A8B8G8R_triangle( GLcontext *ctx, 
+static void flat_8A8B8G8R_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -1168,7 +1168,7 @@ static void flat_8A8B8G8R_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_8R8G8B triangle.
  */
-static void flat_8R8G8B_triangle( GLcontext *ctx, 
+static void flat_8R8G8B_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
 				  const SWvertex *v1,
 				  const SWvertex *v2 )
@@ -1195,7 +1195,7 @@ static void flat_8R8G8B_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_8R8G8B24 triangle.
  */
-static void flat_8R8G8B24_triangle( GLcontext *ctx, 
+static void flat_8R8G8B24_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
 				    const SWvertex *v1,
 				    const SWvertex *v2 )
@@ -1222,7 +1222,7 @@ static void flat_8R8G8B24_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_TRUEDITHER triangle.
  */
-static void flat_TRUEDITHER_triangle( GLcontext *ctx, 
+static void flat_TRUEDITHER_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
 				      const SWvertex *v1,
 				      const SWvertex *v2 )
@@ -1247,7 +1247,7 @@ static void flat_TRUEDITHER_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_5R6G5B triangle.
  */
-static void flat_5R6G5B_triangle( GLcontext *ctx, 
+static void flat_5R6G5B_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
 				  const SWvertex *v1,
 				  const SWvertex *v2 )
@@ -1274,7 +1274,7 @@ static void flat_5R6G5B_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_DITHER_5R6G5B triangle.
  */
-static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx, 
+static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx,
 					 const SWvertex *v0,
 					 const SWvertex *v1,
 					 const SWvertex *v2 )
@@ -1300,7 +1300,7 @@ static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, 8-bit PF_DITHER triangle.
  */
-static void flat_DITHER8_triangle( GLcontext *ctx, 
+static void flat_DITHER8_triangle( GLcontext *ctx,
 				   const SWvertex *v0,
 				   const SWvertex *v1,
 				   const SWvertex *v2 )
@@ -1328,7 +1328,7 @@ static void flat_DITHER8_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, PF_DITHER triangle.
  */
-static void flat_DITHER_triangle( GLcontext *ctx, 
+static void flat_DITHER_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
 				  const SWvertex *v1,
 				  const SWvertex *v2 )
@@ -1354,7 +1354,7 @@ static void flat_DITHER_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, 8-bit PF_HPCR triangle.
  */
-static void flat_HPCR_triangle( GLcontext *ctx, 
+static void flat_HPCR_triangle( GLcontext *ctx,
 				const SWvertex *v0,
 				const SWvertex *v1,
 				const SWvertex *v2 )
@@ -1382,7 +1382,7 @@ static void flat_HPCR_triangle( GLcontext *ctx,
 /*
  * XImage, flat, NON-depth-buffered, 8-bit PF_LOOKUP triangle.
  */
-static void flat_LOOKUP8_triangle( GLcontext *ctx, 
+static void flat_LOOKUP8_triangle( GLcontext *ctx,
 				   const SWvertex *v0,
 				   const SWvertex *v1,
 				   const SWvertex *v2 )
@@ -1648,7 +1648,7 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
 
 /* Override for the swrast tri-selection function.  Try to use one
  * of our internal tri functions, otherwise fall back to the
- * standard swrast functions.  
+ * standard swrast functions.
  */
 void xmesa_choose_triangle( GLcontext *ctx )
 {

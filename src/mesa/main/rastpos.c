@@ -1,21 +1,21 @@
-/* $Id: rastpos.c,v 1.14 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: rastpos.c,v 1.15 2000/11/22 07:32:17 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -39,7 +39,7 @@
 #include "rastpos.h"
 #include "state.h"
 #include "simple_list.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -91,7 +91,7 @@ static GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 
 
 /* This has been split off to allow the normal shade routines to
- * get a little closer to the vertex buffer, and to use the 
+ * get a little closer to the vertex buffer, and to use the
  * GLvector objects directly.
  */
 static void gl_shade_rastpos( GLcontext *ctx,
@@ -112,7 +112,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
    foreach (light, &ctx->Light.EnabledList) {
       GLfloat n_dot_h;
       GLfloat attenuation = 1.0;
-      GLfloat VP[3];  
+      GLfloat VP[3];
       GLfloat n_dot_VP;
       GLfloat *h;
       GLfloat contrib[3];
@@ -123,27 +123,27 @@ static void gl_shade_rastpos( GLcontext *ctx,
 	 attenuation = light->_VP_inf_spot_attenuation;
       }
       else {
-	 GLfloat d; 
-	 
+	 GLfloat d;
+	
 	 SUB_3V(VP, light->_Position, vertex);
 	 d = LEN_3FV( VP );
-	 
+	
 	 if ( d > 1e-6) {
 	    GLfloat invd = 1.0F / d;
 	    SELF_SCALE_SCALAR_3V(VP, invd);
 	 }
-	 attenuation = 1.0F / (light->ConstantAttenuation + d * 
-			       (light->LinearAttenuation + d * 
+	 attenuation = 1.0F / (light->ConstantAttenuation + d *
+			       (light->LinearAttenuation + d *
 				light->QuadraticAttenuation));
-	 
-	 if (light->_Flags & LIGHT_SPOT) 
+	
+	 if (light->_Flags & LIGHT_SPOT)
 	 {
 	    GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
-	    
+	
 	    if (PV_dot_dir<light->_CosCutoff) {
-	       continue; 
+	       continue;
 	    }
-	    else 
+	    else
 	    {
 	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
 	       int k = (int) x;
@@ -154,7 +154,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
 	 }
       }
 
-      if (attenuation < 1e-3) 
+      if (attenuation < 1e-3)
 	 continue;
 
       n_dot_VP = DOT3( normal, VP );
@@ -162,7 +162,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
       if (n_dot_VP < 0.0F) {
 	 ACC_SCALE_SCALAR_3V(color, attenuation, light->_MatAmbient[0]);
 	 continue;
-      } 
+      }
 
       COPY_3V(contrib, light->_MatAmbient[0]);
       ACC_SCALE_SCALAR_3V(contrib, n_dot_VP, light->_MatDiffuse[0]);
@@ -186,7 +186,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
 	    h = light->_h_inf_norm;
 	    normalized = 1;
 	 }
-	 
+	
 	 n_dot_h = DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
@@ -199,7 +199,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
 	       n_dot_h /= LEN_SQUARED_3FV( h );
 	       shininess *= .5;
 	    }
-	    
+	
 	    GET_SHINE_TAB_ENTRY( ctx->_ShineTable[0], n_dot_h, spec_coef );
 
 	    if (spec_coef > 1.0e-10) {
@@ -211,7 +211,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
       }
 
       ACC_SCALE_SCALAR_3V( color, attenuation, contrib );
-   } 
+   }
 
    if (ctx->Visual.RGBAflag) {
       Rcolor[0] = CLAMP(color[0], 0.0F, 1.0F);
@@ -244,7 +244,7 @@ static void raster_pos4f( GLcontext *ctx,
 
    /* KW: Added this test, which is in the spec.  We can't do this
     *     inside begin/end any more because the ctx->Current values
-    *     aren't uptodate during that period. 
+    *     aren't uptodate during that period.
     */
    FLUSH_TNL_RETURN(ctx, (FLUSH_INSIDE_BEGIN_END|
 			  FLUSH_STORED_VERTICES|
@@ -257,7 +257,7 @@ static void raster_pos4f( GLcontext *ctx,
    TRANSFORM_POINT( eye, ctx->ModelView.m, v );
 
    /* raster color */
-   if (ctx->Light.Enabled) 
+   if (ctx->Light.Enabled)
    {
       GLfloat *norm, eyenorm[3];
       GLfloat *objnorm = ctx->Current.Normal;
@@ -270,7 +270,7 @@ static void raster_pos4f( GLcontext *ctx,
 	 norm = objnorm;
       }
 
-      gl_shade_rastpos( ctx, v, norm, 
+      gl_shade_rastpos( ctx, v, norm,
 			ctx->Current.RasterColor,
 			&ctx->Current.RasterIndex );
 
@@ -303,7 +303,7 @@ static void raster_pos4f( GLcontext *ctx,
 
    /* clip to user clipping planes */
    if ( ctx->Transform._AnyClip &&
-	gl_userclip_point(ctx, clip) == 0) 
+	gl_userclip_point(ctx, clip) == 0)
    {
       ctx->Current.RasterPosValid = GL_FALSE;
       return;
@@ -316,11 +316,11 @@ static void raster_pos4f( GLcontext *ctx,
    ndc[1] = clip[1] * d;
    ndc[2] = clip[2] * d;
 
-   ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX] + 
+   ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX] +
 				ctx->Viewport._WindowMap.m[MAT_TX]);
-   ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] + 
+   ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] +
 				ctx->Viewport._WindowMap.m[MAT_TY]);
-   ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] + 
+   ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] +
 				ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->Visual.DepthMaxF;
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;

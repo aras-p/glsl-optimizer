@@ -1,19 +1,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,7 +28,7 @@
 #ifndef SWRAST_H
 #define SWRAST_H
 
-#include "types.h"
+#include "mtypes.h"
 
 
 
@@ -40,10 +40,10 @@
  * drivers.
  *
  * Full software drivers:
- *   - Register the rastersetup and triangle functions from 
+ *   - Register the rastersetup and triangle functions from
  *     utils/software_helper.
  *   - On statechange, update the rasterization pointers in that module.
- * 
+ *
  * Rasterization hardware drivers:
  *   - Keep native rastersetup.
  *   - Implement native twoside,offset and unfilled triangle setup.
@@ -52,7 +52,7 @@
  *   prims), call a pass-through function which translates native
  *   vertices to SWvertices and calls the appropriate swrast function.
  *   - On total fallback (vertex format insufficient for state or all
- *     primitives unaccelerated), hook in swrast_setup instead. 
+ *     primitives unaccelerated), hook in swrast_setup instead.
  */
 typedef struct {
    GLfloat win[4];
@@ -67,7 +67,7 @@ typedef struct {
 
 
 
-/* These are the public-access functions exported from swrast.  
+/* These are the public-access functions exported from swrast.
  */
 extern void
 _swrast_alloc_buffers( GLcontext *ctx );
@@ -80,25 +80,25 @@ _swrast_DestroyContext( GLcontext *ctx );
 
 
 
-extern void 
-_swrast_Bitmap( GLcontext *ctx, 
+extern void
+_swrast_Bitmap( GLcontext *ctx,
 		GLint px, GLint py,
 		GLsizei width, GLsizei height,
 		const struct gl_pixelstore_attrib *unpack,
 		const GLubyte *bitmap );
 
 extern void
-_swrast_CopyPixels( GLcontext *ctx, 
-		    GLint srcx, GLint srcy, 
-		    GLint destx, GLint desty, 
+_swrast_CopyPixels( GLcontext *ctx,
+		    GLint srcx, GLint srcy,
+		    GLint destx, GLint desty,
 		    GLsizei width, GLsizei height,
 		    GLenum type );
 
 extern void
-_swrast_DrawPixels( GLcontext *ctx, 
+_swrast_DrawPixels( GLcontext *ctx,
 		    GLint x, GLint y,
 		    GLsizei width, GLsizei height,
-		    GLenum format, GLenum type, 
+		    GLenum format, GLenum type,
 		    const struct gl_pixelstore_attrib *unpack,
 		    const GLvoid *pixels );
 
@@ -109,13 +109,13 @@ _swrast_ReadPixels( GLcontext *ctx,
 		    const struct gl_pixelstore_attrib *unpack,
 		    GLvoid *pixels );
 
-extern void 
+extern void
 _swrast_Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       GLint x, GLint y, GLint width, GLint height );
 
 extern void
-_swrast_Accum( GLcontext *ctx, GLenum op, 
-	       GLfloat value, GLint xpos, GLint ypos, 
+_swrast_Accum( GLcontext *ctx, GLenum op,
+	       GLfloat value, GLint xpos, GLint ypos,
 	       GLint width, GLint height );
 
 
@@ -143,7 +143,7 @@ _swrast_Quad( GLcontext *ctx,
               const SWvertex *v0, const SWvertex *v1,
 	      const SWvertex *v2,  const SWvertex *v3);
 
-extern void 
+extern void
 _swrast_flush( GLcontext *ctx );
 
 

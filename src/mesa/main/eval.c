@@ -1,21 +1,21 @@
-/* $Id: eval.c,v 1.15 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: eval.c,v 1.16 2000/11/22 07:32:16 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -48,7 +48,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
-#include "types.h"
+#include "mtypes.h"
 #endif
 
 
@@ -89,7 +89,7 @@ GLuint _mesa_evaluator_components( GLenum target )
 
 
 /*
- * Copy 1-parametric evaluator control points from user-specified 
+ * Copy 1-parametric evaluator control points from user-specified
  * memory space to a buffer of contiguous control points.
  * Input:  see glMap1f for details
  * Return:  pointer to buffer of contiguous control points or NULL if out
@@ -107,7 +107,7 @@ GLfloat *gl_copy_map_points1f( GLenum target, GLint ustride, GLint uorder,
 
    buffer = (GLfloat *) MALLOC(uorder * size * sizeof(GLfloat));
 
-   if(buffer) 
+   if(buffer)
       for(i=0, p=buffer; i<uorder; i++, points+=ustride)
 	for(k=0; k<size; k++)
 	  *p++ = points[k];
@@ -143,7 +143,7 @@ GLfloat *gl_copy_map_points1d( GLenum target, GLint ustride, GLint uorder,
 
 
 /*
- * Copy 2-parametric evaluator control points from user-specified 
+ * Copy 2-parametric evaluator control points from user-specified
  * memory space to a buffer of contiguous control points.
  * Additional memory is allocated to be used by the horner and
  * de Casteljau evaluation schemes.
@@ -181,7 +181,7 @@ GLfloat *gl_copy_map_points2f( GLenum target,
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
 
-   if (buffer) 
+   if (buffer)
       for (i=0, p=buffer; i<uorder; i++, points += uinc)
 	 for (j=0; j<vorder; j++, points += vstride)
 	    for (k=0; k<size; k++)
@@ -224,7 +224,7 @@ GLfloat *gl_copy_map_points2d(GLenum target,
    /* compute the increment value for the u-loop */
    uinc = ustride - vorder*vstride;
 
-   if (buffer) 
+   if (buffer)
       for (i=0, p=buffer; i<uorder; i++, points += uinc)
 	 for (j=0; j<vorder; j++, points += vstride)
 	    for (k=0; k<size; k++)
@@ -691,7 +691,7 @@ _mesa_Map2d( GLenum target,
 }
 
 
-   
+
 void
 _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
 {

@@ -1,21 +1,21 @@
-/* $Id: xm_dd.c,v 1.6 2000/11/16 21:05:40 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.7 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -32,7 +32,7 @@
 #include "state.h"
 #include "depth.h"
 #include "macros.h"
-#include "types.h"
+#include "mtypes.h"
 #include "xmesaP.h"
 #include "extensions.h"
 #include "swrast/swrast.h"
@@ -434,14 +434,14 @@ clear_16bit_ximage( GLcontext *ctx, GLboolean all,
       }
       else {
          pixel = pixel | (pixel<<16);
-         n = xmesa->xm_buffer->backimage->bytes_per_line 
+         n = xmesa->xm_buffer->backimage->bytes_per_line
             * xmesa->xm_buffer->height / 4;
          do {
             *ptr4++ = pixel;
                n--;
          } while (n!=0);
-         
-         if ((xmesa->xm_buffer->backimage->bytes_per_line * 
+
+         if ((xmesa->xm_buffer->backimage->bytes_per_line *
               xmesa->xm_buffer->height) & 0x2)
             *(GLushort *)ptr4 = pixel & 0xffff;
       }
@@ -905,7 +905,7 @@ void xmesa_update_state( GLcontext *ctx )
       break;
    }
 
-   xmesa_update_span_funcs(ctx); 
+   xmesa_update_span_funcs(ctx);
 }
 
 
@@ -919,7 +919,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.Flush = flush;
    ctx->Driver.Finish = finish;
-   
+
    ctx->Driver.RenderStart = 0;
    ctx->Driver.RenderFinish = _swrast_flush;
 

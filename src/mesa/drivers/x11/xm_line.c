@@ -1,21 +1,21 @@
-/* $Id: xm_line.c,v 1.11 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: xm_line.c,v 1.12 2000/11/22 07:32:18 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -35,7 +35,7 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
-#include "types.h"
+#include "mtypes.h"
 #include "xmesaP.h"
 
 /* Internal swrast includes:
@@ -65,8 +65,8 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
       register int x, y;
       const GLubyte *color = vert->color;
       unsigned long pixel = xmesa_color_to_pixel( xmesa,
-						  color[0], color[1], 
-						  color[2], color[3], 
+						  color[0], color[1],
+						  color[2], color[3],
 						  xmesa->pixelformat);
       XMesaSetForeground( dpy, gc, pixel );
       x =                         (GLint) vert->win[0];
@@ -95,13 +95,13 @@ void xmesa_choose_point( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    if (ctx->RenderMode == GL_RENDER
-       && ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag 
+       && ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag
        && swrast->_RasterMask == 0
        && !ctx->Texture._ReallyEnabled
        && xmesa->xm_buffer->buffer != XIMAGE) {
       swrast->Point = draw_points_ANY_pixmap;
    }
-   else { 
+   else {
       _swrast_choose_point( ctx );
    }
 }
@@ -615,7 +615,7 @@ static swrast_line_func get_line_func( GLcontext *ctx )
 
 /* Override for the swrast line-selection function.  Try to use one
  * of our internal line functions, otherwise fall back to the
- * standard swrast functions.  
+ * standard swrast functions.
  */
 void xmesa_choose_line( GLcontext *ctx )
 {
@@ -645,17 +645,17 @@ void xmesa_choose_line( GLcontext *ctx )
                             _SWRAST_NEW_RASTERMASK)
 
 
-/* Extend the software rasterizer with our line/point/triangle 
+/* Extend the software rasterizer with our line/point/triangle
  * functions.
  */
 void xmesa_register_swrast_functions( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   
+
    swrast->choose_point = xmesa_choose_point;
    swrast->choose_line = xmesa_choose_line;
    swrast->choose_triangle = xmesa_choose_triangle;
-   
+
    swrast->invalidate_point |= XMESA_NEW_POINT;
    swrast->invalidate_line |= XMESA_NEW_LINE;
    swrast->invalidate_triangle |= XMESA_NEW_TRIANGLE;
