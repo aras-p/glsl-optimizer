@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.89 2002/07/09 01:22:51 brianp Exp $ */
+/* $Id: fxdd.c,v 1.90 2002/08/21 02:59:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -245,7 +245,7 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
       FX_grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP]
 		     && fxMesa->haveAlphaBuffer);
-      if (ctx->Color.DrawDestMask & FRONT_LEFT_BIT)
+      if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
 	 FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       if (!ctx->Depth.Test || !ctx->Depth.Mask)
 	 FX_grDepthMask(FXFALSE);
@@ -318,7 +318,9 @@ fxDDDrawBitmap(GLcontext * ctx, GLint px, GLint py,
        ctx->Stencil.Enabled ||
        ctx->Scissor.Enabled ||
        (ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
-	ctx->Color.ColorMask[ACOMP]) || ctx->Color.MultiDrawBuffer) {
+	ctx->Color.ColorMask[ACOMP]) ||
+       (ctx->Color._DrawDestMask != FRONT_LEFT_BIT &&
+        ctx->Color._DrawDestMask != BACK_LEFT_BIT)) {
       _swrast_Bitmap(ctx, px, py, width, height, unpack, bitmap);
       return;
    }
@@ -827,7 +829,8 @@ fx_check_IsInHardware(GLcontext * ctx)
       return GL_FALSE;
 
    if (ctx->Stencil.Enabled ||
-       ctx->Color.MultiDrawBuffer ||
+       (ctx->Color._DrawDestMask != FRONT_LEFT_BIT &&
+        ctx->Color._DrawDestMask != BACK_LEFT_BIT) ||
        ((ctx->Color.BlendEnabled)
 	&& (ctx->Color.BlendEquation != GL_FUNC_ADD_EXT))
        || ((ctx->Color.ColorLogicOpEnabled)
