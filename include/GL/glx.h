@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.2 1999/09/11 11:33:45 brianp Exp $ */
+/* $Id: glx.h,v 1.3 1999/09/16 15:52:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,9 @@
 
 /*
  * $Log: glx.h,v $
+ * Revision 1.3  1999/09/16 15:52:51  brianp
+ * added GLX_MESA_set_3dfx_mode.  clean-up of glXGetProcAddress
+ *
  * Revision 1.2  1999/09/11 11:33:45  brianp
  * added GLX_EXT_get_proc_address
  *
@@ -158,11 +161,12 @@ enum _GLX_CONFIGS {
  * Compile-time extension tests
  */
 #define GLX_EXT_visual_info		1
+#define GLX_EXT_get_proc_address	1
 #define GLX_MESA_pixmap_colormap	1
 #define GLX_MESA_release_buffers	1
 #define GLX_MESA_copy_sub_buffer	1
+#define GLX_MESA_set_3dfx_mode		1
 #define GLX_SGI_video_sync		1
-#define GLX_EXT_get_proc_address	1
 
 
 
@@ -229,33 +233,36 @@ extern const char *glXQueryServerString( Display *dpy, int screen, int name );
 extern const char *glXGetClientString( Display *dpy, int name );
 
 
+
 /* GLX_EXT_get_proc_address */
-extern GLfunction glXGetProcAddressEXT(const GLubyte *procName);
-
-
-/*
- * Mesa GLX Extensions
+/* WARNING: this extension is not finalized yet!  Do not release code
+ * which uses this extension yet!  It may change!
  */
+extern void (*glXGetProcAddressEXT(const GLubyte *procName))();
 
-#ifdef GLX_MESA_pixmap_colormap
+
+/* GLX_MESA_pixmap_colormap */
 extern GLXPixmap glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visual,
                                          Pixmap pixmap, Colormap cmap );
-#endif
 
-#ifdef GLX_MESA_release_buffers
+
+/* GLX_MESA_release_buffers */
 extern Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
-#endif
 
-#ifdef GLX_MESA_copy_sub_buffer
+
+/* GLX_MESA_copy_sub_buffer */
 extern void glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
                                   int x, int y, int width, int height );
-#endif
 
-#ifdef GLX_SGI_video_sync
+
+/* GLX_MESA_set_3dfx_mode */
+extern GLboolean glXSet3DfxModeMESA( GLint mode );
+
+
+/* GLX_SGI_video_sync */
 extern int glXGetVideoSyncSGI(unsigned int *count);
 extern int glXWaitVideoSyncSGI(int divisor, int remainder,
                                unsigned int *count);
-#endif
 
 
 

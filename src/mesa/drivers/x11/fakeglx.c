@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.6 1999/09/15 20:04:04 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.7 1999/09/16 15:53:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,6 +62,17 @@
 #include "macros.h"
 #include "types.h"
 #include "xmesaP.h"
+
+
+
+/* Silence compiler warnings */
+void Fake_glXDummyFunc( void )
+{
+   (void) kernel8;
+   (void) DitherValues;
+   (void) HPCR_DRGB;
+   (void) kernel1;
+}
 
 
 
@@ -1387,17 +1398,28 @@ void Fake_glXWaitX( void )
 }
 
 
+/*
+ * Return the extensions string, which is 3Dfx-dependant.
+ */
+static const char *get_extensions( void )
+{
+#ifdef FX
+   const char *fx = getenv("MESA_GLX_FX");
+   if (fx && fx[0] != 'd') {
+      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_MESA_set_3dfx_mode";
+   }
+#endif
+   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync";
+}
 
-#define EXTENSIONS "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync"
 
 
 /* GLX 1.1 and later */
 const char *Fake_glXQueryExtensionsString( Display *dpy, int screen )
 {
-   static char *extensions = EXTENSIONS;
    (void) dpy;
    (void) screen;
-   return extensions;
+   return get_extensions();
 }
 
 
@@ -1405,7 +1427,6 @@ const char *Fake_glXQueryExtensionsString( Display *dpy, int screen )
 /* GLX 1.1 and later */
 const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
-   static char *extensions = EXTENSIONS;
    static char *vendor = "Brian Paul";
    static char *version = "1.1 Mesa 3.1";
 
@@ -1414,7 +1435,7 @@ const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 
    switch (name) {
       case GLX_EXTENSIONS:
-         return extensions;
+         return get_extensions();
       case GLX_VENDOR:
 	 return vendor;
       case GLX_VERSION:
@@ -1429,7 +1450,6 @@ const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 /* GLX 1.1 and later */
 const char *Fake_glXGetClientString( Display *dpy, int name )
 {
-   static char *extensions = EXTENSIONS;
    static char *vendor = "Brian Paul";
    static char *version = "1.1 Mesa 3.1";
 
@@ -1437,7 +1457,7 @@ const char *Fake_glXGetClientString( Display *dpy, int name )
 
    switch (name) {
       case GLX_EXTENSIONS:
-         return extensions;
+         return get_extensions();
       case GLX_VENDOR:
 	 return vendor;
       case GLX_VERSION:
@@ -1464,19 +1484,21 @@ Bool Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
 }
 
 
-/* Silence compiler warnings */
-void Fake_glXDummyFunc( void )
+/*
+ * GLX_MESA_set_3dfx_mode
+ */
+GLboolean Fake_glXSet3DfxModeMESA( GLint mode )
 {
-   (void) kernel8;
-   (void) DitherValues;
-   (void) HPCR_DRGB;
-   (void) kernel1;
+   return XMesaSetFXmode( mode );
 }
 
 
-GLfunction Fake_glXGetProcAddress( const GLubyte *procName )
+
+/*GLfunction Fake_glXGetProcAddress( const GLubyte *procName )*/
+void (*Fake_glXGetProcAddress( const GLubyte *procName ))()
 {
-    struct proc {
+   typedef void (*GLfunction)();
+   struct proc {
       const char *name;
       GLfunction address;
    };
@@ -1485,6 +1507,7 @@ GLfunction Fake_glXGetProcAddress( const GLubyte *procName )
       { "glXCreateGLXPixmapMESA", (GLfunction) glXCreateGLXPixmapMESA },
       { "glXReleaseBuffersMESA", (GLfunction) glXReleaseBuffersMESA },
       { "glXCopySubBufferMESA", (GLfunction) glXCopySubBufferMESA },
+      { "glXSet3DfxModeMESA", (GLfunction) glXSet3DfxModeMESA },
       /* NOTE: GLX_SGI_video_sync not implemented in Mesa */
       { NULL, NULL }  /* end of list token */
    };
