@@ -71,7 +71,7 @@ CORE_SOURCES =accum.c \
 	teximage.c \
 	texobj.c \
 	texstate.c \
-	texture.c \
+	texstore.c \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
@@ -220,7 +220,7 @@ stencil.obj,\
 teximage.obj,\
 texobj.obj,\
 texstate.obj,\
-texture.obj,\
+texstore.obj,\
 texutil.obj,\
 varray.obj,\
 vtxfmt.obj,\
