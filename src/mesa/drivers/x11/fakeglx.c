@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -80,10 +80,6 @@
    "GLX_SGI_video_sync " \
    "GLX_SGIX_fbconfig " \
    "GLX_SGIX_pbuffer "
-/*
-   "GLX_ARB_render_texture"
-*/
-
 
 /*
  * Our fake GLX context will contain a "real" GLX context and an XMesa context.
@@ -144,7 +140,8 @@ typedef struct _OverlayInfo {
 /*
  * Test if the given XVisualInfo is usable for Mesa rendering.
  */
-static GLboolean is_usable_visual( XVisualInfo *vinfo )
+static GLboolean
+is_usable_visual( XVisualInfo *vinfo )
 {
    switch (vinfo->CLASS) {
       case StaticGray:
@@ -181,7 +178,8 @@ static GLboolean is_usable_visual( XVisualInfo *vinfo )
  *            >0 = overlay planes
  *            <0 = underlay planes
  */
-static int level_of_visual( Display *dpy, XVisualInfo *vinfo )
+static int
+level_of_visual( Display *dpy, XVisualInfo *vinfo )
 {
    Atom overlayVisualsAtom;
    OverlayInfo *overlay_info = NULL;
@@ -332,7 +330,9 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       /* add xmvis to the list */
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
-      /* XXX minor hack */
+      /* XXX minor hack, because XMesaCreateVisual doesn't support an
+       * aux buffers parameter.
+       */
       xmvis->mesa_visual.numAuxBuffers = numAuxBuffers;
    }
    return xmvis;
@@ -467,7 +467,8 @@ find_glx_visual( Display *dpy, XVisualInfo *vinfo )
  * Input:  glxvis - the glx_visual
  * Return:  a pixel value or -1 if no transparent pixel
  */
-static int transparent_pixel( XMesaVisual glxvis )
+static int
+transparent_pixel( XMesaVisual glxvis )
 {
    Display *dpy = glxvis->display;
    XVisualInfo *vinfo = glxvis->visinfo;
@@ -532,8 +533,8 @@ static int transparent_pixel( XMesaVisual glxvis )
 /*
  * Try to get an X visual which matches the given arguments.
  */
-static XVisualInfo *get_visual( Display *dpy, int scr,
-			        unsigned int depth, int xclass )
+static XVisualInfo *
+get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
 {
    XVisualInfo temp, *vis;
    long mask;
@@ -586,7 +587,8 @@ static XVisualInfo *get_visual( Display *dpy, int scr,
  *         varname - the name of the environment variable
  * Return:  an XVisualInfo pointer to NULL if error.
  */
-static XVisualInfo *get_env_visual(Display *dpy, int scr, const char *varname)
+static XVisualInfo *
+get_env_visual(Display *dpy, int scr, const char *varname)
 {
    char value[100], type[100];
    int depth, xclass = -1;
@@ -631,9 +633,9 @@ static XVisualInfo *get_env_visual(Display *dpy, int scr, const char *varname)
  *         preferred_class - preferred GLX visual class or DONT_CARE
  * Return:  pointer to an XVisualInfo or NULL.
  */
-static XVisualInfo *choose_x_visual( Display *dpy, int screen,
-				     GLboolean rgba, int min_depth,
-                                     int preferred_class )
+static XVisualInfo *
+choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
+                 int preferred_class )
 {
    XVisualInfo *vis;
    int xclass, visclass = 0;
@@ -801,12 +803,10 @@ static XVisualInfo *choose_x_visual( Display *dpy, int screen,
  *         preferred_class - preferred GLX visual class or DONT_CARE
  * Return:  pointer to an XVisualInfo or NULL.
  */
-static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
-                                             GLboolean rgbFlag,
-                                             int level, int trans_type,
-                                             int trans_value,
-                                             int min_depth,
-                                             int preferred_class )
+static XVisualInfo *
+choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
+                         int level, int trans_type, int trans_value,
+                         int min_depth, int preferred_class )
 {
    Atom overlayVisualsAtom;
    OverlayInfo *overlay_info;
@@ -931,8 +931,9 @@ static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
 /**********************************************************************/
 
 
-static XMesaVisual choose_visual( Display *dpy, int screen, const int *list,
-                                  GLboolean rgbModeDefault )
+static XMesaVisual
+choose_visual( Display *dpy, int screen, const int *list,
+               GLboolean rgbModeDefault )
 {
    const int *parselist;
    XVisualInfo *vis;
@@ -1392,13 +1393,11 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
 }
 
 
-
 static Bool
 Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
    return Fake_glXMakeContextCurrent( dpy, drawable, drawable, ctx );
 }
-
 
 
 static GLXPixmap
@@ -1463,7 +1462,6 @@ Fake_glXDestroyGLXPixmap( Display *dpy, GLXPixmap pixmap )
 }
 
 
-
 static void
 Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                      unsigned long mask )
@@ -1475,7 +1473,6 @@ Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
    (void) dpy;
    _mesa_copy_context( &(xm_src->mesa), &(xm_dst->mesa), (GLuint) mask );
 }
-
 
 
 static Bool
@@ -1510,7 +1507,6 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
    XMesaDestroyContext( glxCtx->xmesaContext );
    XMesaGarbageCollect();
 }
-
 
 
 static Bool
@@ -1554,7 +1550,6 @@ Fake_glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
 }
 
 
-
 static Bool
 Fake_glXQueryVersion( Display *dpy, int *maj, int *min )
 {
@@ -1565,7 +1560,6 @@ Fake_glXQueryVersion( Display *dpy, int *maj, int *min )
    *min = MIN2( CLIENT_MINOR_VERSION, SERVER_MINOR_VERSION );
    return True;
 }
-
 
 
 /*
@@ -2738,9 +2732,19 @@ Fake_glXDrawableAttribARB( Display *dpy, GLXDrawable draw, const int *attribList
 }
 
 
-
+/* silence warning */
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
-struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
+
+
+/**
+ * Create a new GLX API dispatch table with its function pointers
+ * initialized to point to Mesa's "fake" GLX API functions.
+ * Note: there's a similar function (_real_GetGLXDispatchTable) that
+ * returns a new dispatch table with all pointers initalized to point
+ * to "real" GLX functions (which understand GLX wire protocol, etc).
+ */
+struct _glxapi_table *
+_mesa_GetGLXDispatchTable(void)
 {
    static struct _glxapi_table glx;
 
