@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.82 2003/09/03 14:34:55 brianp Exp $
+# $Id: Makefile.X11,v 1.83 2003/09/03 20:48:05 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -251,9 +251,9 @@ linux-solo:
 	if [ -d src/mesa/drivers/dri/fb ] ; then cd src/mesa/drivers/dri/fb         ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/glx/mini  ] ; then cd src/glx/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/glu/mini  ] ; then cd src/glu/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d src/glut/mini ] ; then cd src/glut/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos   ] ; then cd progs/miniglx ; $(MAKE) -f Makefile.X11 $@ ; fi
-	if [ -d progs/demos   ] ; then cd progs/tests   ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/glut/mini ] ; then cd src/glut/mini ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/miniglx ] ; then cd progs/miniglx ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/tests   ] ; then cd progs/tests   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d progs/xdemos  ] ; then cd progs/xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
