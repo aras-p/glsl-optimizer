@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: blend.c,v 1.2 1999/08/19 15:48:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -794,15 +794,8 @@ void gl_blend_pixels( GLcontext *ctx,
 
    /* Read pixels from current color buffer */
    (*ctx->Driver.ReadRGBAPixels)( ctx, n, x, y, dest, mask );
-
    if (ctx->RasterMask & ALPHABUF_BIT) {
       gl_read_alpha_pixels( ctx, n, x, y, dest, mask );
-   }
-   else {
-      GLuint i;
-      for (i=0; i<n; i++) {
-         dest[i][ACOMP] = 255;
-      }
    }
 
    if (!ctx->Color.BlendFunc)
