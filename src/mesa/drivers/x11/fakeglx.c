@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.11 1999/10/16 11:32:15 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.12 1999/10/27 09:50:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1518,6 +1518,7 @@ GLboolean Fake_glXSet3DfxModeMESA( GLint mode )
 
 
 
+#if 0
 /*GLfunction Fake_glXGetProcAddress( const GLubyte *procName )*/
 void (*Fake_glXGetProcAddress( const GLubyte *procName ))()
 {
@@ -1550,3 +1551,4 @@ void (*Fake_glXGetProcAddress( const GLubyte *procName ))()
 
    return NULL;
 }
+#endif
