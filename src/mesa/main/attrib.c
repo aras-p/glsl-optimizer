@@ -1060,17 +1060,26 @@ _mesa_PopAttrib(void)
             break;
          case GL_STENCIL_BUFFER_BIT:
             {
-               const GLint face = 0; /* XXX stencil two side */
+               GLint face;
                const struct gl_stencil_attrib *stencil;
                stencil = (const struct gl_stencil_attrib *) attr->data;
                _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
                _mesa_ClearStencil(stencil->Clear);
-               _mesa_StencilFunc(stencil->Function[face], stencil->Ref[face],
-                                 stencil->ValueMask[face]);
-               _mesa_StencilMask(stencil->WriteMask[face]);
-               _mesa_StencilOp(stencil->FailFunc[face],
-                               stencil->ZFailFunc[face],
-                               stencil->ZPassFunc[face]);
+               face = stencil->ActiveFace;
+               if (ctx->Extensions.EXT_stencil_two_side) {
+                  _mesa_set_enable(ctx, GL_STENCIL_TEST_TWO_SIDE_EXT, stencil->TestTwoSide);
+                  face ^= 1;
+               }
+               do {
+                  _mesa_ActiveStencilFaceEXT(face);
+                  _mesa_StencilFunc(stencil->Function[face], stencil->Ref[face],
+                                    stencil->ValueMask[face]);
+                  _mesa_StencilMask(stencil->WriteMask[face]);
+                  _mesa_StencilOp(stencil->FailFunc[face],
+                                  stencil->ZFailFunc[face],
+                                  stencil->ZPassFunc[face]);
+                  face ^= 1;
+               } while (face != stencil->ActiveFace ^ 1);
             }
             break;
          case GL_TRANSFORM_BIT:
