@@ -1,8 +1,8 @@
-/* $Id: drawpix.c,v 1.28 2000/08/16 20:51:53 brianp Exp $ */
+/* $Id: drawpix.c,v 1.29 2000/08/21 14:24:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "context.h"
+#include "convolve.h"
 #include "drawpix.h"
 #include "feedback.h"
 #include "image.h"
@@ -99,10 +100,21 @@ _mesa_clip_pixelrect(const GLcontext *ctx,
  * Return:  GL_TRUE if success, GL_FALSE if slow path must be used instead
  */
 static GLboolean
-simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
-                   GLsizei width, GLsizei height, GLenum format, GLenum type,
-                   const GLvoid *pixels )
+fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
+                 GLsizei width, GLsizei height,
+                 GLenum format, GLenum type, const GLvoid *pixels)
 {
+   const GLuint cantTransferBits =
+      IMAGE_SCALE_BIAS_BIT |
+      IMAGE_SHIFT_OFFSET_BIT |
+      IMAGE_MAP_COLOR_BIT |
+      IMAGE_COLOR_TABLE_BIT |
+      IMAGE_CONVOLUTION_BIT |
+      IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT |
+      IMAGE_COLOR_MATRIX_BIT |
+      IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |
+      IMAGE_HISTOGRAM_BIT |
+      IMAGE_MIN_MAX_BIT;
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
    GLubyte rgb[MAX_WIDTH][3];
    GLubyte rgba[MAX_WIDTH][4];
@@ -112,23 +124,13 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
 
 
    if (!ctx->Current.RasterPosValid) {
-      /* no-op */
-      return GL_TRUE;
+      return GL_TRUE;      /* no-op */
    }
 
    if ((ctx->RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
-       && !ctx->Pixel.ScaleOrBiasRGBA
-       && !ctx->Pixel.ScaleOrBiasRGBApcm
-       && ctx->ColorMatrix.type == MATRIX_IDENTITY
-       && !ctx->Pixel.ColorTableEnabled
-       && !ctx->Pixel.PostColorMatrixColorTableEnabled
-       && !ctx->Pixel.PostConvolutionColorTableEnabled
-       && !ctx->Pixel.MinMaxEnabled
-       && !ctx->Pixel.HistogramEnabled
-       && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
-       && ctx->Pixel.MapColorFlag==0
+       && (ctx->ImageTransferState & cantTransferBits) == 0
        && ctx->Texture.ReallyEnabled == 0
-       && unpack->Alignment==1
+       && unpack->Alignment == 1
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
 
@@ -525,7 +527,8 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
       const GLvoid *source = _mesa_image_address(&ctx->Unpack,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, GL_UNSIGNED_INT, indexes,
-                              type, source, &ctx->Unpack, GL_TRUE);
+                              type, source, &ctx->Unpack,
+                              ctx->ImageTransferState);
       if (zoom) {
          gl_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, indexes, desty);
       }
@@ -547,7 +550,6 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                      GLenum type, const GLvoid *pixels )
 {
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
-   const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    const GLint desty = y;
    GLint row, drawWidth;
 
@@ -572,8 +574,9 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       const GLvoid *source = _mesa_image_address(&ctx->Unpack,
                     pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
       _mesa_unpack_index_span(ctx, drawWidth, destType, values,
-                              type, source, &ctx->Unpack, GL_FALSE);
-      if (shift_or_offset) {
+                              type, source, &ctx->Unpack,
+                              ctx->ImageTransferState);
+      if (ctx->ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
          _mesa_shift_and_offset_stencil( ctx, drawWidth, values );
       }
       if (ctx->Pixel.MapStencilFlag) {
@@ -671,7 +674,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
          _mesa_unpack_depth_span( ctx, drawWidth, zspan, type, src,
-                                  &ctx->Unpack, GL_TRUE );
+                                  &ctx->Unpack, ctx->ImageTransferState );
          if (ctx->Visual->RGBAflag) {
             if (zoom) {
                gl_write_zoomed_rgba_span(ctx, width, x, y, zspan,
@@ -709,9 +712,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLint desty = y;
    GLdepth zspan[MAX_WIDTH];
    GLboolean quickDraw;
+   GLfloat *convImage = NULL;
+   GLuint transferOps = ctx->ImageTransferState;
 
    /* Try an optimized glDrawPixels first */
-   if (simple_DrawPixels(ctx, x, y, width, height, format, type, pixels))
+   if (fast_draw_pixels(ctx, x, y, width, height, format, type, pixels))
       return;
 
    /* Fragment depth values */
@@ -725,14 +730,76 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    }
 
 
-   if (ctx->RasterMask == 0 && !zoom
-       && x >= 0 && y >= 0
+   if (ctx->RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= ctx->DrawBuffer->Width
        && y + height <= ctx->DrawBuffer->Height) {
       quickDraw = GL_TRUE;
    }
    else {
       quickDraw = GL_FALSE;
+   }
+
+   if (ctx->ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+      /* Convolution has to be handled specially.  We'll create an
+       * intermediate image, applying all pixel transfer operations
+       * up to convolution.  Then we'll convolve the image.  Then
+       * we'll proceed with the rest of the transfer operations and
+       * rasterize the image.
+       */
+      const GLuint preConvTransferOps =
+         IMAGE_SCALE_BIAS_BIT |
+         IMAGE_SHIFT_OFFSET_BIT |
+         IMAGE_MAP_COLOR_BIT |
+         IMAGE_COLOR_TABLE_BIT;
+      const GLuint postConvTransferOps =
+         IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT |
+         IMAGE_COLOR_MATRIX_BIT |
+         IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |
+         IMAGE_HISTOGRAM_BIT |
+         IMAGE_MIN_MAX_BIT;
+      GLint row;
+      GLfloat *dest, *tmpImage;
+
+      tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      if (!tmpImage) {
+         gl_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+         return;
+      }
+      convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
+      if (!convImage) {
+         FREE(tmpImage);
+         gl_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
+         return;
+      }
+
+      /* Unpack the image and apply transfer ops up to convolution */
+      dest = tmpImage;
+      for (row = 0; row < height; row++) {
+         const GLvoid *source = _mesa_image_address(unpack,
+                  pixels, width, height, format, type, 0, row, 0);
+         _mesa_unpack_float_color_span(ctx, width, GL_RGBA, (void *) dest,
+                                       format, type, source, unpack,
+                                       transferOps & preConvTransferOps,
+                                       GL_FALSE);
+         dest += width * 4;
+      }
+
+      /* do convolution */
+      if (ctx->Pixel.Convolution2DEnabled) {
+         _mesa_convolve_2d_image(ctx, &width, &height, tmpImage, convImage);
+      }
+      else if (ctx->Pixel.Separable2DEnabled) {
+         _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
+      }
+
+      FREE(tmpImage);
+
+      /* continue transfer ops and draw the convolved image */
+      unpack = &_mesa_native_packing;
+      pixels = convImage;
+      format = GL_RGBA;
+      type = GL_FLOAT;
+      transferOps &= postConvTransferOps;
    }
 
    /*
@@ -747,7 +814,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          const GLvoid *source = _mesa_image_address(unpack,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
-                   format, type, source, unpack, GL_TRUE);
+                                       format, type, source, unpack,
+                                       transferOps);
          if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
              (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
             continue;
@@ -781,6 +849,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          }
       }
    }
+
+   if (convImage) {
+      FREE(convImage);
+   }
 }
 
 
@@ -804,6 +876,9 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       if (ctx->NewState) {
          gl_update_state(ctx);
       }
+
+      if (ctx->ImageTransferState == UPDATE_IMAGE_TRANSFER_STATE)
+         _mesa_update_image_transfer_state(ctx);
 
       x = (GLint) (ctx->Current.RasterPos[0] + 0.5F);
       y = (GLint) (ctx->Current.RasterPos[1] + 0.5F);
