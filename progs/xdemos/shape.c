@@ -1,4 +1,4 @@
-/* $Id: shape.c,v 1.1 1999/08/19 00:55:43 jtg Exp $ */
+/* $Id: shape.c,v 1.2 2000/06/27 15:33:44 brianp Exp $ */
 
 /*
  * Example of using the X "shape" extension with OpenGL:  render a spinning
@@ -45,7 +45,7 @@ static void display(Display *dpy, Window win)
 {
    float scale = 1.7;
 
-   glClear(GL_COLOR_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    glPushMatrix();
 
@@ -53,6 +53,9 @@ static void display(Display *dpy, Window win)
    glRotatef(Xangle, 1.0, 0.0, 0.0);
    glRotatef(Yangle, 0.0, 1.0, 0.0);
 
+   /*
+    * wireframe box
+    */
    glColor3f(1.0, 1.0, 1.0);
    glBegin(GL_LINE_LOOP);
    glVertex3f(-1.0, -1.0, -1.0);
@@ -74,6 +77,62 @@ static void display(Display *dpy, Window win)
    glVertex3f( 1.0,  1.0, -1.0);   glVertex3f( 1.0,  1.0, 1.0);
    glVertex3f(-1.0,  1.0, -1.0);   glVertex3f(-1.0,  1.0, 1.0);
    glEnd();
+
+   /*
+    * Solid box
+    */
+   glPushMatrix();
+   glScalef(0.75, 0.75, 0.75);
+
+   glColor3f(1, 0, 0);
+   glBegin(GL_POLYGON);
+   glVertex3f(1, -1, -1);
+   glVertex3f(1,  1, -1);
+   glVertex3f(1,  1,  1);
+   glVertex3f(1, -1,  1);
+   glEnd();
+
+   glColor3f(0, 1, 1);
+   glBegin(GL_POLYGON);
+   glVertex3f(-1, -1, -1);
+   glVertex3f(-1,  1, -1);
+   glVertex3f(-1,  1,  1);
+   glVertex3f(-1, -1,  1);
+   glEnd();
+
+   glColor3f(0, 1, 0);
+   glBegin(GL_POLYGON);
+   glVertex3f(-1, 1, -1);
+   glVertex3f( 1, 1, -1);
+   glVertex3f( 1, 1,  1);
+   glVertex3f(-1, 1,  1);
+   glEnd();
+
+   glColor3f(1, 0, 1);
+   glBegin(GL_POLYGON);
+   glVertex3f(-1, -1, -1);
+   glVertex3f( 1, -1, -1);
+   glVertex3f( 1, -1,  1);
+   glVertex3f(-1, -1,  1);
+   glEnd();
+
+   glColor3f(0, 0, 1);
+   glBegin(GL_POLYGON);
+   glVertex3f(-1, -1, 1);
+   glVertex3f( 1, -1, 1);
+   glVertex3f( 1,  1, 1);
+   glVertex3f(-1,  1, 1);
+   glEnd();
+
+   glColor3f(1, 1, 0);
+   glBegin(GL_POLYGON);
+   glVertex3f(-1, -1, -1);
+   glVertex3f( 1, -1, -1);
+   glVertex3f( 1,  1, -1);
+   glVertex3f(-1,  1, -1);
+   glEnd();
+   glPopMatrix();
+
 
    glPopMatrix();
 
@@ -152,6 +211,8 @@ static void reshape(int width, int height)
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -10.0);
+
+   glEnable(GL_DEPTH_TEST);
 }
 
 
@@ -249,6 +310,7 @@ int main(int argc, char *argv[])
    unsigned long winAttribsMask;
    GLXContext glCtx;
    int ignore;
+   const char *name = "OpenGL in a Shaped Window";
 
    dpy = XOpenDisplay(NULL);
    if (!dpy) {
@@ -292,6 +354,22 @@ int main(int argc, char *argv[])
                        visInfo->depth, InputOutput,
                        visInfo->visual,
                        winAttribsMask, &winAttribs);
+
+   {
+      XSizeHints sizehints;
+      /*
+      sizehints.x = xpos;
+      sizehints.y = ypos;
+      sizehints.width  = width;
+      sizehints.height = height;
+      */
+      sizehints.flags = 0;
+      XSetNormalHints(dpy, win, &sizehints);
+      XSetStandardProperties(dpy, win, name, name,
+                              None, (char **)NULL, 0, &sizehints);
+   }
+
+
    XMapWindow(dpy, win);
 
    glXMakeCurrent(dpy, win, glCtx);
