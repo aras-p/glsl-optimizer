@@ -2241,10 +2241,11 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	    else {
 		GLuint j;
 		GLuint *data;
-		data = (GLuint *)vmesa->dmaAddr;
 		/*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
 		GLuint k;
 		GLuint *ES;
+
+		data = (GLuint *)vmesa->dmaAddr;
 		ES = pnEngBase;
 
 		if (i == 500000) {
