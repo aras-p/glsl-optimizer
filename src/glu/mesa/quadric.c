@@ -1,9 +1,9 @@
-/* $Id: quadric.c,v 1.4 1999/12/15 12:59:52 brianp Exp $ */
+/* $Id: quadric.c,v 1.5 2000/01/11 17:21:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
- * Copyright (C) 1995-1999  Brian Paul
+ * Version:  3.3
+ * Copyright (C) 1999-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,95 +18,6 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-
-/*
- * $Log: quadric.c,v $
- * Revision 1.4  1999/12/15 12:59:52  brianp
- * replaced 0 with 0.0 in sin, cos calls
- *
- * Revision 1.3  1999/11/11 09:55:39  joukj
- *
- *  tess_macro.h included
- *
- * Revision 1.2  1999/11/11 03:21:43  kendallb
- *
- *  . Updated GL/gl.h with GLCALLACKP and GLAPIENTRYP macros for compatibility
- *    with the IBM VisualAge C++ compiler. Eventually some more code will be
- *    needed in the headers to enable the reversal of (__stdcall*) to (*__stdcall)
- *    for the IBM compilers, however we currently build using our own header files
- *    that already handle this.
- *
- *  . Changed instances of (GLCALLBACK*) to GLCALLBACKP for compatibility
- *    with the IBM VisualAge C++ compiler in src-glu.
- *
- *  . Misc cleanups for warnings generated with Watcom C++ in src-glu. Compiles
- *    with 0 warnings now.
- *
- *  . tess_hash.c: line 244 - Why is this function stubbed out? I removed the
- *    code with a #if 0 to avoid a compiler warning, but it looks dangerous.
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 1.19  1999/02/27 13:55:31  brianp
- * fixed BeOS-related GLU typedef problems
- *
- * Revision 1.18  1999/01/03 03:23:15  brianp
- * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
- *
- * Revision 1.17  1999/01/03 03:19:15  brianp
- * rewrote some of gluCylinder
- *
- * Revision 1.16  1998/06/01 01:08:36  brianp
- * small update for Next/OpenStep from Alexander Mai
- *
- * Revision 1.15  1998/03/15 18:28:54  brianp
- * reimplemented gluDisk() point and line mode
- *
- * Revision 1.14  1998/03/15 18:14:17  brianp
- * fixed a compiler cast warning
- *
- * Revision 1.13  1998/02/07 14:28:34  brianp
- * another change to gluQuadricCallback(), this time for StormC compiler
- *
- * Revision 1.12  1998/02/05 00:43:19  brianp
- * Yes, still another change to gluQuadricCallback()!
- *
- * Revision 1.11  1998/02/04 00:27:43  brianp
- * yet another change to gluQuadricCallback()!
- *
- * Revision 1.10  1998/02/04 00:23:23  brianp
- * fixed CALLBACK problem in gluQuadricCallback() (Stephane Rehel)
- *
- * Revision 1.9  1998/02/04 00:20:09  brianp
- * added missing (int) in ErrorFunc cast
- *
- * Revision 1.8  1998/01/16 03:37:51  brianp
- * fixed another assignment warning in gluQuadricCallback()
- *
- * Revision 1.7  1998/01/16 03:35:26  brianp
- * fixed Windows compilation warnings (Theodore Jump)
- *
- * Revision 1.6  1997/10/29 02:02:20  brianp
- * various MS Windows compiler changes (David Bucciarelli, v20 3dfx driver)
- *
- * Revision 1.5  1997/09/17 01:51:48  brianp
- * changed glu*Callback() functions to match prototype in glu.h
- *
- * Revision 1.4  1997/07/24 01:28:44  brianp
- * changed precompiled header symbol from PCH to PC_HEADER
- *
- * Revision 1.3  1997/05/28 02:29:38  brianp
- * added support for precompiled headers (PCH), inserted APIENTRY keyword
- *
- * Revision 1.2  1997/03/12 02:15:38  brianp
- * fixed problem in gluPartialDisk() reported by Kenneth H. Carpenter
- *
- * Revision 1.1  1996/09/27 01:19:39  brianp
- * Initial revision
- *
  */
 
 
@@ -786,7 +697,7 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       for (loop=0; loop<loops; loop++) {
 	 angle = DEG_TO_RAD(startAngle);
 	 glBegin( GL_LINE_STRIP );
-	 for (slice=0; slice<slices; slice++) {
+	 for (slice=0; slice<=slices; slice++) {
 	    glVertex2d( radius * sin(angle), radius * cos(angle) );
 	    angle += delta_angle;
 	 }
@@ -849,7 +760,7 @@ void GLAPIENTRY gluPartialDisk( GLUquadricObj *qobj, GLdouble innerRadius,
       for (loop=0; loop<loops; loop++) {
 	 glBegin( GL_QUAD_STRIP );
 	 angle = DEG_TO_RAD(startAngle);
-	 for (slice=0; slice<slices; slice++) {
+	 for (slice=0; slice<=slices; slice++) {
 	    if (qobj->Orientation==GLU_OUTSIDE) {
 	       glVertex2d( (radius+delta_radius)*sin(angle),
 			   (radius+delta_radius)*cos(angle) );
