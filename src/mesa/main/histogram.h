@@ -41,13 +41,6 @@
 
 #if _HAVE_FULL_GL
 
-extern void
-_mesa_update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
-
-extern void
-_mesa_update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
-
-
 extern void GLAPIENTRY 
 _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values);
 
