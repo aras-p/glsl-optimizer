@@ -1,10 +1,10 @@
-/* $Id: t_dd_vbtmp.h,v 1.16 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.17 2002/06/03 16:06:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.3
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -235,7 +235,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 }
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v->v.color = *(GLuint *)&col[0];
+	       *(GLuint *)&v->v.color = LE32_TO_CPU(*(GLuint *)&col[0]);
 	       STRIDE_4UB(col, col_stride);
 	    } else {
 	       v->v.color.blue  = col[0][2];
@@ -336,7 +336,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 }
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v->v.color = *(GLuint *)&col[i];
+	       *(GLuint *)&v->v.color = LE32_TO_CPU(*(GLuint *)&col[i]);
 	    }
 	    else {
 	       v->v.color.blue  = col[i][2];
@@ -443,7 +443,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v[3] = *(GLuint *)col;
+	       *(GLuint *)&v[3] = LE32_TO_CPU(*(GLuint *)col);
 	    }
 	    else {
 	       GLubyte *b = (GLubyte *)&v[3];
@@ -467,7 +467,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	 }
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v[3] = *(GLuint *)&col[i];
+	       *(GLuint *)&v[3] = LE32_TO_CPU(*(GLuint *)&col[i]);
 	    }
 	    else {
 	       GLubyte *b = (GLubyte *)&v[3];
@@ -512,7 +512,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    for (i=start; i < end; i++, STRIDE_F(v, stride)) {
       if (HAVE_RGBA_COLOR) {
-	 *(GLuint *)v = *(GLuint *)col[0];
+	 *(GLuint *)v = LE32_TO_CPU(*(GLuint *)col[0]);
       }
       else {
 	 GLubyte *b = (GLubyte *)v;
@@ -644,12 +644,12 @@ static void TAG(interp)( GLcontext *ctx,
       INTERP_UB( t, dst->ub4[4][3], out->ub4[4][3], in->ub4[4][3] );
 
       if (DO_SPEC) {
-	 INTERP_UB( t, dst->ub4[5][0], out->ub4[5][0], in->ub4[5][0] );
-	 INTERP_UB( t, dst->ub4[5][1], out->ub4[5][1], in->ub4[5][1] );
-	 INTERP_UB( t, dst->ub4[5][2], out->ub4[5][2], in->ub4[5][2] );
+	 INTERP_UB( t, dst->v.specular.red,   out->v.specular.red,   in->v.specular.red );
+	 INTERP_UB( t, dst->v.specular.green, out->v.specular.green, in->v.specular.green );
+	 INTERP_UB( t, dst->v.specular.blue,  out->v.specular.blue,  in->v.specular.blue );
       }
       if (DO_FOG) {
-	 INTERP_UB( t, dst->ub4[5][3], out->ub4[5][3], in->ub4[5][3] );
+	 INTERP_UB( t, dst->v.specular.alpha, out->v.specular.alpha, in->v.specular.alpha );
       }
       if (DO_TEX0) {
 	 if (DO_PTEX) {

@@ -1,10 +1,10 @@
-/* $Id: t_dd_vertex.h,v 1.9 2001/09/23 15:19:16 keithw Exp $ */
+/* $Id: t_dd_vertex.h,v 1.10 2002/06/03 16:06:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.3
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,17 +33,19 @@ typedef struct {
 
 #ifdef COLOR_IS_RGBA
 typedef struct {
-   GLubyte red;
-   GLubyte green;
-   GLubyte blue;
-   GLubyte alpha;
+#ifdef __BIG_ENDIAN
+   GLubyte alpha, blue, green, red;
+#else
+   GLubyte red, green, blue, alpha;
+#endif
 } TAG(_color_t);
 #else
 typedef struct {
-   GLubyte blue;
-   GLubyte green;
-   GLubyte red;
-   GLubyte alpha;
+#ifdef __BIG_ENDIAN
+   GLubyte alpha, red, green, blue;
+#else
+   GLubyte blue, green, red, alpha;
+#endif
 } TAG(_color_t);
 #endif
 

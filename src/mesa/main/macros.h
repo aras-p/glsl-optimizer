@@ -1,4 +1,3 @@
-/* $Id: macros.h,v 1.25 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -454,6 +453,19 @@ do {						\
 
 
 
+/* Byte swapping
+ */
+
+#ifdef __BIG_ENDIAN
+#include <byteswap.h>
+#define CPU_TO_LE32( x )	bswap_32( x )
+#else
+#define CPU_TO_LE32( x )	( x )
+#endif
+
+#define LE32_TO_CPU( x )	CPU_TO_LE32( x )
+
+
 /* Generic color packing macros
  */
 
@@ -478,6 +490,37 @@ do {						\
 
 #define PACK_COLOR_332( a, b, c )					\
    (((a) & 0xe0) | (((b) & 0xe0) >> 3) | (((c) & 0xc0) >> 6))
+
+
+#ifdef __BIG_ENDIAN
+
+#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( d, c, b, a )
+
+#define PACK_COLOR_565_LE( a, b, c )					\
+   (((a) & 0xf8) | (((b) & 0xe0) >> 5) | (((b) & 0x1c) << 11) |		\
+   (((c) & 0xf8) << 5))
+
+#define PACK_COLOR_1555_LE( a, b, c, d )				\
+   ((((b) & 0xf8) >> 1) | (((c) & 0xc0) >> 6) | (((c) & 0x38) << 10) |	\
+    (((d) & 0xf8) << 5) | ((a) ? 0x80 : 0))
+
+#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( c, d, a, b )
+
+#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( b, a )
+
+#else	/* little endian */
+
+#define PACK_COLOR_8888_LE( a, b, c, d )	PACK_COLOR_8888( a, b, c, d )
+
+#define PACK_COLOR_565_LE( a, b, c )		PACK_COLOR_565( a, b, c )
+
+#define PACK_COLOR_1555_LE( a, b, c, d )	PACK_COLOR_1555( a, b, c, d )
+
+#define PACK_COLOR_4444_LE( a, b, c, d )	PACK_COLOR_4444( a, b, c, d )
+
+#define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( a, b )
+
+#endif	/* endianness */
 
 
 #endif
