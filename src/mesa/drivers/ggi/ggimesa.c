@@ -29,6 +29,7 @@
 #ifdef GGI
 
 #include <ggi/mesa/ggimesa_int.h>
+#include <ggi/mesa/debug.h>
 
 #undef VIS
 #undef FLIP
@@ -53,6 +54,7 @@ int gl_ggi_debug = GL_FALSE;
 static void gl_ggiUpdateState(GLcontext *ctx);
 static int changed(ggi_visual_t vis, int whatchanged);
 
+#if 0
 /* FIXME: Move this debugging stuff to include/ggi/mesa/internal/ */
 void gl_ggiPrint(char *format,...)
 {
@@ -74,6 +76,7 @@ void gl_ggiDEBUG(char *format,...)
 		va_end(args);
 	}
 }
+#endif
 
 static void gl_ggiGetSize(GLcontext *ctx, GLuint *width, GLuint *height)
 {
@@ -143,6 +146,7 @@ static GLbitfield gl_ggiClear(GLcontext *ctx,GLbitfield mask, GLboolean all,
 	return mask & (~GL_COLOR_BUFFER_BIT);
 }
 
+#if 0
 static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLenum mode)
 {
 	if (mode == GL_FRONT)
@@ -152,6 +156,42 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLenum mode)
 	
 	return GL_TRUE;
 }
+#endif
+
+/* Set the buffer used for drawing */
+static GLboolean gl_ggiSetDrawBuffer(GLcontext *ctx, GLenum mode)
+{
+	if (mode == GL_FRONT_LEFT) 
+	{
+		GGICTX->active_buffer = 1;
+		return GL_TRUE;
+	}
+	else if (mode == GL_BACK_LEFT) 
+	{
+		GGICTX->active_buffer = 0;
+		return GL_TRUE;
+	}
+	else 
+	{
+		return GL_FALSE;
+	}
+}
+
+
+/* Set the buffer used for reading */
+/* XXX support for separate read/draw buffers hasn't been tested */
+static void gl_ggiSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
+{
+	if (mode == GL_FRONT_LEFT) 
+	{
+		GGICTX->active_buffer = 1;
+	}
+	else if (mode == GL_BACK_LEFT) 
+	{
+		GGICTX->active_buffer = 0;
+	}
+}
+
 
 static const char * gl_ggiRendererString(void)
 {
@@ -176,7 +216,10 @@ static void gl_ggiSetupPointers( GLcontext *ctx )
 	ctx->Driver.Clear = gl_ggiClear;
 	ctx->Driver.Index = gl_ggiSetIndex;
 	ctx->Driver.Color = gl_ggiSetColor;
-	ctx->Driver.SetBuffer = gl_ggiSetBuffer;
+	
+	ctx->Driver.SetDrawBuffer = gl_ggiSetDrawBuffer;
+	ctx->Driver.SetReadBuffer = gl_ggiSetReadBuffer;
+	
 	ctx->Driver.GetBufferSize = gl_ggiGetSize;
 	ctx->Driver.Finish = gl_ggiFlush;
 	ctx->Driver.Flush = gl_ggiFlush;
@@ -185,7 +228,6 @@ static void gl_ggiSetupPointers( GLcontext *ctx )
 
 static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
 {
-	int virty,visy,err;
 	ggi_mode mode;
 
 	ggiGetMode(ctx->ggi_vis, &mode);
@@ -217,6 +259,36 @@ static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
 
 	return 0;
 }
+
+int ggiMesaInit()
+{
+	int err;
+	
+	_ggimesaLibIsUp++;
+	if (_ggimesaLibIsUp > 1)
+	  return 0; /* Initialize only at first call */
+	
+	err = ggLoadConfig(ggimesaconffile, &_ggimesaConfigHandle);
+	if (err != GGI_OK)
+	{
+		fprintf(stderr, "GGIMesa: Couldn't open %s\n", ggimesaconffile);
+		_ggimesaLibIsUp--;
+		return err;
+	}
+	
+	ggiMesaID = ggiExtensionRegister("GGIMesa", sizeof(struct mesa_ext), changed);
+	
+	if (ggiMesaID < 0)
+	{
+		fprintf(stderr, "GGIMesa: failed to register as extension\n");
+		_ggimesaLibIsUp--;
+		ggFreeConfig(_ggimesaConfigHandle);
+		return ggiMesaID;
+	}
+	
+	return 0;
+}
+
 
 GGIMesaContext GGIMesaCreateContext(void)
 {
@@ -310,8 +382,8 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 
 	if (!func)
 	{
-		gl_ggiPrint("setup_driver==NULL !\n");
-		gl_ggiPrint("Please check your config files!\n");
+		fprintf(stderr, "setup_driver==NULL!\n");
+		fprintf(stderr, "Please check your config files!\n");
 		return -1;
 	}
 
@@ -331,15 +403,20 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 				       info.blue_bits, info.alpha_bits);
 	if (!ctx->gl_vis) 
 	{
-		gl_ggiPrint("Can't create gl_visual!\n");
+		fprintf(stderr, "Can't create gl_visual!\n");
 		return -1;
 	}
 
-	ctx->gl_buffer = gl_create_framebuffer(ctx->gl_vis);
+	ctx->gl_buffer = gl_create_framebuffer(ctx->gl_vis,
+					       ctx->gl_vis->DepthBits > 0,
+					       ctx->gl_vis->StencilBits > 0,
+					       ctx->gl_vis->AccumBits > 0,
+					       ctx->gl_vis->AlphaBits > 0);
+					       
 
 	if (!ctx->gl_buffer) 
 	{
-		gl_ggiPrint("Can't create gl_buffer!\n");
+		fprintf(stderr, "Can't create gl_buffer!\n");
 		return -1;
 	}
 	
@@ -368,7 +445,7 @@ int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
 	
 	if (ctx->lfb[0] == NULL)
 	{
-		gl_ggiPrint("No linear frame buffer!\n");
+		fprintf(stderr, "No linear frame buffer!\n");
 		return -1;
 	}
 	
@@ -425,9 +502,11 @@ GGIMesaContext GGIMesaGetCurrentContext(void)
  */
 void GGIMesaSwapBuffers(void)
 {
-	gl_ggiDEBUG("GGIMesaSwapBuffers\n");
+	GGIMESADPRINT_CORE("GGIMesaSwapBuffers\n");
+	
 	FLUSH_VB(GGIMesa->gl_ctx, "swap buffers");
 	gl_ggiFlush(GGIMesa->gl_ctx);
+	
 	if (GGIMesa->gl_vis->DBflag)
 	{
 		memcpy(GGIMesa->lfb[0], GGIMesa->lfb[1], GGIMesa->bufsize);
@@ -441,8 +520,8 @@ static void gl_ggiUpdateState(GLcontext *ctx)
 	func = (void *)CTX_OPMESA(ctx)->update_state;
 
 	if (!func) {
-		gl_ggiPrint("update_state==NULL !\n");
-		gl_ggiPrint("Please check your config files!\n");
+		fprintf(stderr, "update_state == NULL!\n");
+		fprintf(stderr, "Please check your config files!\n");
 		ggiPanic("");
 	}
 
@@ -478,34 +557,6 @@ static int changed(ggi_visual_t vis, int whatchanged)
 	return 0;
 }
 
-int ggiMesaInit()
-{
-	int err;
-	
-	_ggimesaLibIsUp++;
-	if (_ggimesaLibIsUp > 1)
-	  return 0; /* Initialize only at first call */
-	
-	err = ggLoadConfig(ggimesaconffile, &_ggimesaConfigHandle);
-	if (err != GGI_OK)
-	{
-		fprintf(stderr, "GGIMesa: Couldn't open %s\n", ggimesaconffile);
-		_ggimesaLibIsUp--;
-		return err;
-	}
-	
-	ggiMesaID = ggiExtensionRegister("GGIMesa", sizeof(struct mesa_ext), changed);
-	
-	if (ggiMesaID < 0)
-	{
-		fprintf(stderr, "GGIMesa: failed to register as extension\n");
-		_ggimesaLibIsUp--;
-		ggFreeConfig(_ggimesaConfigHandle);
-		return ggiMesaID;
-	}
-	
-	return 0;
-}
 
 int ggiMesaExit(void)
 {

@@ -1,4 +1,4 @@
-/* $Id: fbdev_mode.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
+/* $Id: fbdev_mode.c,v 1.4 2000/01/07 08:34:44 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa
@@ -38,6 +38,7 @@
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/display_fbdev.h>
+#include <ggi/mesa/debug.h>
 
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void*)-1)
@@ -86,7 +87,7 @@ static int do_setmode(ggi_visual *vis)
 			return GGI_EFATAL;
 		}
 
-		gl_ggiDEBUG("Success in loading %s (%s)\n", libname, libargs);
+		GGIMESADPRINT_CORE("Success in loading %s (%s)\n", libname, libargs);
 	}
 
 	if (priv->oldpriv->accel &&
@@ -101,7 +102,7 @@ static int do_setmode(ggi_visual *vis)
 	
 	ggiIndicateChange(vis, GGI_CHG_APILIST);
 
-	gl_ggiDEBUG("display-fbdev-mesa: do_setmode SUCCESS\n");
+	GGIMESADPRINT_CORE("display-fbdev-mesa: do_setmode SUCCESS\n");
 
 	return 0;
 }
@@ -115,7 +116,7 @@ int GGIMesa_fbdev_setmode(ggi_visual *vis, ggi_mode *mode)
 		return err;
 	}
 
-	gl_ggiDEBUG("display-fbdev-mesa: setmode %dx%d#%dx%dF%d[0x%02x]\n",
+	GGIMESADPRINT_CORE("display-fbdev-mesa: setmode %dx%d#%dx%dF%d[0x%02x]\n",
 		    mode->visible.x, mode->visible.y,
 		    mode->virt.x, mode->virt.y, 
 		    mode->frames, mode->graphtype);
@@ -128,7 +129,7 @@ int GGIMesa_fbdev_setmode(ggi_visual *vis, ggi_mode *mode)
 		return err;
 	}
 
-	gl_ggiDEBUG("display-fbdev-mesa: setmode success.\n");
+	GGIMESADPRINT_CORE("display-fbdev-mesa: setmode success.\n");
 
 	return 0;
 }

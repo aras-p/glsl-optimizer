@@ -14,7 +14,7 @@ struct fbdev_priv_mesa
 	char *accel;
 	int have_accel;
 	void *accelpriv;
-	fbdev_hook *oldpriv;	// Hooks back to the LibGGI fbdev target's private data
+	fbdev_hook *oldpriv;	/* Hooks back to the LibGGI fbdev target's private data */
 };
 
 #endif /* _GGIMESA_DISPLAY_FBDEV_H */

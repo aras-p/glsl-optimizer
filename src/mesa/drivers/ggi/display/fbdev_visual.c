@@ -1,4 +1,4 @@
-/* $Id: fbdev_visual.c,v 1.4 1999/08/24 02:03:34 jtaylor Exp $
+/* $Id: fbdev_visual.c,v 1.5 2000/01/07 08:34:44 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa: visual handling
@@ -28,6 +28,7 @@
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/display_fbdev.h>
+#include <ggi/mesa/debug.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,8 +106,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 {
 	struct fbdev_priv_mesa *priv;
-	char libname[256], libargs[256];
-	int id, err;
+	int err;
 	ggifunc_getapi *oldgetapi;
 
 	GGIMESA_PRIVATE(vis) = priv = malloc(sizeof(struct fbdev_priv_mesa));
@@ -115,12 +115,12 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		return GGI_DL_ERROR;
 	}
 	
-	priv->oldpriv = LIBGGI_PRIVATE(vis);  // Hook back
+	priv->oldpriv = LIBGGI_PRIVATE(vis);  /* Hook back */
 	
 	err = ggLoadConfig(conffile, &_configHandle);
 	if (err != GGI_OK)
 	{
-		gl_ggiPrint("display-fbdev: Couldn't open %s\n", conffile);
+		GGIMESADPRINT_CORE("display-fbdev: Couldn't open %s\n", conffile);
 		return err;
 	}
 	

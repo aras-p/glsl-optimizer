@@ -1,4 +1,4 @@
-/* $Id: genkgi_mode.c,v 1.3 1999/08/22 08:56:50 jtaylor Exp $
+/* $Id: genkgi_mode.c,v 1.4 2000/01/07 08:34:44 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-kgicon-generic-mesa
@@ -33,17 +33,16 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-//#include <linux/fb.h>
-
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
+#include <ggi/mesa/debug.h>
 #include "genkgi.h"
 
 int GGIMesa_genkgi_getapi(ggi_visual *vis, int num, char *apiname, char *arguments)
 {
 	struct genkgi_priv_mesa *priv = GENKGI_PRIV_MESA(vis);
 	
-	gl_ggiDEBUG("Entered mesa_genkgi_getapi, num=%d\n", num);
+	GGIMESADPRINT_CORE("Entered mesa_genkgi_getapi, num=%d\n", num);
 	
 	strcpy(arguments, "");
 
@@ -63,7 +62,7 @@ int GGIMesa_genkgi_getapi(ggi_visual *vis, int num, char *apiname, char *argumen
 int GGIMesa_genkgi_flush(ggi_visual *vis, int x, int y, int w, int h, int tryflag)
 {
 	struct genkgi_priv_mesa *priv = GENKGI_PRIV_MESA(vis);
-	int junkval; // There must be a better way to do this
+	int junkval; 
 
 	priv->oldpriv->kgicommand_ptr += getpagesize(); 
 	(kgiu32)(priv->oldpriv->kgicommand_ptr) &= 0xfffff000;
@@ -81,9 +80,7 @@ int GGIMesa_genkgi_flush(ggi_visual *vis, int x, int y, int w, int h, int tryfla
 	if ((priv->oldpriv->kgicommand_ptr - priv->oldpriv->mapped_kgicommand)
 	    >= (priv->oldpriv->kgicommand_buffersize - getpagesize()))
 	{
-		gl_ggiDEBUG("Hit end of FIFO, attempting remap");
 		munmap(priv->oldpriv->mapped_kgicommand, priv->oldpriv->kgicommand_buffersize);
-		gl_ggiDEBUG("Passed munmap");
 		if ((priv->oldpriv->mapped_kgicommand = 
 		     mmap(NULL, 
 			  priv->oldpriv->kgicommand_buffersize, 
@@ -94,9 +91,7 @@ int GGIMesa_genkgi_flush(ggi_visual *vis, int x, int y, int w, int h, int tryfla
 		{
 			ggiPanic("Failed to remap kgicommand!");
 		}
-		gl_ggiDEBUG("Passed mmap");
 		priv->oldpriv->kgicommand_ptr = priv->oldpriv->mapped_kgicommand;
-		gl_ggiDEBUG("Passed kgicommand_ptr reset");
 	}
 	return 0;
 }

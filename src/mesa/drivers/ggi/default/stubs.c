@@ -325,6 +325,10 @@ void GGIupdate_state(GLcontext *ctx)
 
 void GGItriangle_flat(GLcontext *ctx,GLuint v0,GLuint v1,GLuint v2,GLuint pv)
 {
+#define INTERP_Z 1
+#define INTERP_RGB 1
+#define INTERP_ALPHA 1
+	
 #define SETUP_CODE			\
 	GLubyte r = VB->ColorPtr->data[pv][0];	\
 	GLubyte g = VB->ColorPtr->data[pv][1];	\
@@ -335,7 +339,7 @@ void GGItriangle_flat(GLcontext *ctx,GLuint v0,GLuint v1,GLuint v2,GLuint pv)
 #define INNER_LOOP(LEFT,RIGHT,Y)				\
 		ggiDrawHLine(VIS,LEFT,FLIP(Y),RIGHT-LEFT);	
 		
-#include "tritemp.h"	
+#include "tritemp.h"
 }
 
 

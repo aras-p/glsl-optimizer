@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.5 1999/09/21 00:46:26 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.6 2000/01/07 08:34:44 jtaylor Exp $
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
@@ -28,6 +28,7 @@
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/display_fbdev.h>
+#include <ggi/mesa/debug.h>
 #include "genkgi.h"
 
 #include <stdio.h>
@@ -74,7 +75,8 @@ char *conffile = confstub;
 
 static int changed(ggi_visual_t vis, int whatchanged)
 {
-	gl_ggiDEBUG("Entered ggimesa_genkgi_changed\n");
+	GGIMESADPRINT_CORE("Entered ggimesa_genkgi_changed\n");
+	
 	switch (whatchanged)
 	{
 		case GGI_CHG_APILIST:
@@ -88,7 +90,7 @@ static int changed(ggi_visual_t vis, int whatchanged)
 			for (i = 0; ggiGetAPI(vis, i, api, args) == 0; i++)
 			{
 				strcat(api, "-mesa");
-				gl_ggiDEBUG("ggimesa_genkgi_changed: api=%s, i=%d\n", api, i);
+				GGIMESADPRINT_CORE("ggimesa_genkgi_changed: api=%s, i=%d\n", api, i);
 				fname = ggMatchConfig(_configHandle, api, NULL);
 				if (fname == NULL)
 				{
@@ -112,7 +114,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	struct stat junk;
 	ggifunc_getapi *oldgetapi;
 
-	gl_ggiDEBUG("display-fbdev-kgicon-mesa: GGIdlinit start\n");
+	GGIMESADPRINT_CORE("display-fbdev-kgicon-mesa: GGIdlinit start\n");
 	
 	GENKGI_PRIV_MESA(vis) = priv = malloc(sizeof(struct genkgi_priv_mesa));
 	if (priv == NULL) 
@@ -139,7 +141,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	{
 		sprintf(priv->accel, "%s%s", accel_prefix, "d3dim");
 		priv->have_accel = 1;
-		gl_ggiDEBUG("display-fbdev-kgicon-mesa: Using accel: \"%s\"\n", priv->accel);
+		GGIMESADPRINT_CORE("display-fbdev-kgicon-mesa: Using accel: \"%s\"\n", priv->accel);
 	}
 
 	/* Mode management */
@@ -162,7 +164,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	LIBGGI_MESAEXT(vis)->update_state = genkgi_update_state;
 	LIBGGI_MESAEXT(vis)->setup_driver = genkgi_setup_driver;
 #endif	
-	gl_ggiDEBUG("display-fbdev-kgicon-mesa: GGIdlinit finished\n");
+	GGIMESADPRINT_CORE("display-fbdev-kgicon-mesa: GGIdlinit finished\n");
 
 	return 0;
 }
