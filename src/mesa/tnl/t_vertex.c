@@ -843,6 +843,31 @@ static struct {
  * vertices
  */
 
+
+static void emit_xyz3_rgba4(  GLcontext *ctx,
+				   GLuint count,
+				   GLubyte *v )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   struct tnl_clipspace_attr *a = vtx->attr;
+   GLuint i;
+
+   if (a[0].emit != insert_3f_3 ||
+       a[1].emit != insert_4ub_4f_rgba_4) {
+      choose_emit_func( ctx, count, v );
+      return;
+   }
+
+   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
+      insert_3f_3( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
+      a[0].inputptr += a[0].inputstride;
+
+      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
+      a[1].inputptr += a[1].inputstride;
+   }
+}
+
+
 static void emit_viewport3_rgba4(  GLcontext *ctx,
 				   GLuint count,
 				   GLubyte *v )
@@ -887,6 +912,34 @@ static void emit_viewport3_bgra4(  GLcontext *ctx,
 
       insert_4ub_4f_bgra_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
       a[1].inputptr += a[1].inputstride;
+   }
+}
+
+
+static void emit_xyzw4_rgba4_st2( GLcontext *ctx,
+				      GLuint count,
+				      GLubyte *v )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   struct tnl_clipspace_attr *a = vtx->attr;
+   GLuint i;
+
+   if (a[0].emit != insert_4f_4 ||
+       a[1].emit != insert_4ub_4f_rgba_4 ||
+       a[2].emit != insert_2f_2) {
+      choose_emit_func( ctx, count, v );
+      return;
+   }
+
+   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
+      insert_4f_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
+      a[0].inputptr += a[0].inputstride;
+
+      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
+      a[1].inputptr += a[1].inputstride;
+
+      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
+      a[2].inputptr += a[2].inputstride;
    }
 }
 
@@ -946,6 +999,37 @@ static void emit_viewport4_bgra4_st2(  GLcontext *ctx,
    }
 }
 
+
+static void emit_xyzw4_rgba4_st2_st2( GLcontext *ctx,
+				      GLuint count,
+				      GLubyte *v )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   struct tnl_clipspace_attr *a = vtx->attr;
+   GLuint i;
+
+   if (a[0].emit != insert_4f_4 ||
+       a[1].emit != insert_4ub_4f_rgba_4 ||
+       a[2].emit != insert_2f_2 ||
+       a[3].emit != insert_2f_2) {
+      choose_emit_func( ctx, count, v );
+      return;
+   }
+
+   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
+      insert_4f_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
+      a[0].inputptr += a[0].inputstride;
+
+      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
+      a[1].inputptr += a[1].inputstride;
+
+      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
+      a[2].inputptr += a[2].inputstride;
+
+      insert_2f_2( &a[3], v + a[3].vertoffset, (GLfloat *)a[3].inputptr );
+      a[3].inputptr += a[3].inputstride;
+   }
+}
 
 
 static void emit_viewport4_rgba4_st2_st2( GLcontext *ctx,
@@ -1198,7 +1282,8 @@ static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
    if (0) 
       vtx->emit = _tnl_codegen_emit(ctx);
 
-   /* Does it fit a hardwired fastpath?
+   /* Does it fit a hardwired fastpath?  Help! this is growing out of
+    * control!
     */
    switch (attr_count) {
    case 2:
@@ -1208,25 +1293,37 @@ static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
 	 else if (a[1].emit == insert_4ub_4f_rgba_4) 
 	    vtx->emit = emit_viewport3_rgba4;
       }
+      else if (a[0].emit == insert_3f_3 &&
+	       a[1].emit == insert_4ub_4f_rgba_4) {
+ 	 vtx->emit = emit_xyz3_rgba4; 
+      }
       break;
    case 3:
-      if (a[0].emit == insert_4f_viewport_4 &&
-	  a[2].emit == insert_2f_2) {
-	 if (a[1].emit == insert_4ub_4f_bgra_4) 
+      if (a[2].emit == insert_2f_2) {
+	 if (a[1].emit == insert_4ub_4f_rgba_4) {
+	    if (a[0].emit == insert_4f_viewport_4)
+	       vtx->emit = emit_viewport4_rgba4_st2;
+	    else if (a[0].emit == insert_4f_4) 
+	       vtx->emit = emit_xyzw4_rgba4_st2;
+	 }
+	 else if (a[1].emit == insert_4ub_4f_bgra_4 &&
+		  a[0].emit == insert_4f_viewport_4)
 	    vtx->emit = emit_viewport4_bgra4_st2;
-	 else if (a[1].emit == insert_4ub_4f_rgba_4) 
-	    vtx->emit = emit_viewport4_rgba4_st2;
+      }
+   case 4:
+      if (a[2].emit == insert_2f_2 &&
+	  a[3].emit == insert_2f_2) {
+	 if (a[1].emit == insert_4ub_4f_rgba_4) {
+	    if (a[0].emit == insert_4f_viewport_4)
+	       vtx->emit = emit_viewport4_rgba4_st2_st2;
+	    else if (a[0].emit == insert_4f_4) 
+	       vtx->emit = emit_xyzw4_rgba4_st2_st2;
+	 }
+	 else if (a[1].emit == insert_4ub_4f_bgra_4 &&
+		  a[0].emit == insert_4f_viewport_4)
+	    vtx->emit = emit_viewport4_bgra4_st2_st2;
       }
       break;
-   case 4:
-      if (a[0].emit == insert_4f_viewport_4 &&
-	  a[2].emit == insert_2f_2 &&
-	  a[3].emit == insert_2f_2) {
-	 if (a[1].emit == insert_4ub_4f_bgra_4) 
-	    vtx->emit = emit_viewport4_bgra4_st2_st2;
-	 else if (a[1].emit == insert_4ub_4f_rgba_4) 
-	    vtx->emit = emit_viewport4_rgba4_st2_st2;
-      }
    }
    
    /* Otherwise use the generic version:
@@ -1316,7 +1413,7 @@ void _tnl_get_attr( GLcontext *ctx, const void *vin,
       }
    }
 
-   /* Else return the value from ctx->Current -- dangerous???
+   /* Else return the value from ctx->Current.
     */
    _mesa_memcpy( dest, ctx->Current.Attrib[attr], 4*sizeof(GLfloat));
 }
@@ -1370,7 +1467,9 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
    assert(nr < _TNL_ATTRIB_MAX);
    assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);
 
-   vtx->emit = choose_emit_func;
+   if (vtx->emit == generic_emit)
+      vtx->emit = choose_emit_func;
+
    vtx->interp = choose_interp_func;
    vtx->copy_pv = choose_copy_pv_func;
    vtx->new_inputs = ~0;
@@ -1458,7 +1557,9 @@ void _tnl_build_vertices( GLcontext *ctx,
    }
 }
 
-
+/* Emit VB vertices start..end to dest.  Note that VB vertex at
+ * postion start will be emitted to dest at position zero.
+ */
 void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
 				    GLuint start,
 				    GLuint end,
@@ -1498,6 +1599,7 @@ void _tnl_init_vertices( GLcontext *ctx,
       _tnl_free_vertices( ctx );
       vtx->max_vertex_size = max_vertex_size;
       vtx->vertex_buf = (GLubyte *)ALIGN_CALLOC(vb_size * max_vertex_size, 32 );
+      vtx->emit = choose_emit_func;
    }
 
    _tnl_init_c_codegen( &vtx->codegen );
