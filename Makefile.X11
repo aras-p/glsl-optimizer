@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.21 2000/03/19 00:16:41 brianp Exp $
+# $Id: Makefile.X11,v 1.22 2000/03/22 23:48:16 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -169,7 +169,7 @@ sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	if [ -d xdemos ]   ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d samples ]  ; then cd samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d book ]     ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
-
+	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
 irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	-mkdir lib32
@@ -183,6 +183,7 @@ irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	if [ -d xdemos ]   ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d samples ]  ; then cd samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d book ]     ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
 
 irix6-64 irix6-64-dso:
@@ -197,6 +198,7 @@ irix6-64 irix6-64-dso:
 	if [ -d xdemos ]   ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d samples ]  ; then cd samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d book ]     ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
 
 amiwin:
@@ -225,9 +227,10 @@ cygnus cygnus-linux:
 	touch src-glu/depend
 	cd src ; $(MAKE) -f Makefile.X11 $@
 	cd src-glu ; $(MAKE) -f Makefile.X11 $@
-	cd src-glut ; $(MAKE) -f Makefile.X11 $@
-	cd demos ; $(MAKE) -f Makefile.X11 $@
+	if [ -d src-glut ] ; then cd src-glut ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d demos ]    ; then cd demos    ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d xdemos ]  ; then cd xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
 macintosh:
 	@echo "See the README file for Macintosh intallation information"
@@ -272,6 +275,7 @@ linux-ggi linux-386-ggi:
 	if [ -d xdemos ]   ; then cd xdemos   ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d samples ]  ; then cd samples  ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d book ]     ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
 # if you change GGI_DEST please change it in ggimesa.conf, too.
 DESTDIR=/usr/local
