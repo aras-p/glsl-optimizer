@@ -1,8 +1,8 @@
-# Configuration for linux-solo: Linux DRI hardware drivers for fbdev
+# Configuration for linux-solo-ia64: Linux DRI hardware drivers for fbdev
 
 include $(TOP)/configs/default
 
-CONFIG_NAME = linux-solo
+CONFIG_NAME = linux-solo-ia64
 
 # Compiler and flags
 CC = gcc
@@ -12,8 +12,6 @@ CFLAGS = -Wmissing-prototypes -g -std=c99 -pedantic -Wundef -fPIC -ffast-math -D
 
 CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
 
-
-ASM_SOURCES = $(X86_SOURCES)
 
 # Library/program dependencies
 GL_LIB_DEPS = -lm -lpthread -lexpat -ldl
@@ -26,4 +24,4 @@ SRC_DIRS = mesa glx glu glut/mini
 DRIVER_DIRS = dri
 PROGRAM_DIRS = miniglx
 
-DRI_DIRS = fb gamma i810 i830 mach64 mga r128 r200 radeon sis tdfx
+DRI_DIRS = fb gamma mach64 mga r128 r200 radeon sis tdfx
