@@ -1,5 +1,5 @@
 /*
- * (c) Copyright IBM Corporation 2002
+ * (C) Copyright IBM Corporation 2002, 2004
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -61,5 +61,11 @@ extern GLboolean driCheckDriDdxDrmVersions2(const char * driver_name,
 extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
+
+extern GLboolean driFillInModes( __GLcontextModes ** modes,
+    GLenum fb_format, GLenum fb_type,
+    const uint8_t * depth_bits, const uint8_t * stencil_bits,
+    unsigned num_depth_stencil_bits,
+    const GLenum * db_modes, unsigned num_db_modes, int visType );
 
 #endif /* DRI_DEBUG_H */
