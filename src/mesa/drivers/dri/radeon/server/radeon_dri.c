@@ -421,6 +421,88 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    return 1;
 }
 
+/* Initialize the PCI GART state.  Request memory for use in PCI space,
+ * and initialize the Radeon registers to point to that memory.
+ */
+static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
+{
+    int  ret;
+    int  flags = DRM_READ_ONLY | DRM_LOCKED | DRM_KERNEL;
+    int            s, l;
+
+    ret = drmScatterGatherAlloc(ctx->drmFD, info->gartSize*1024*1024,
+				&info->gartMemHandle);
+    if (ret < 0) {
+	fprintf(stderr, "[pci] Out of memory (%d)\n", ret);
+	return 0;
+    }
+    fprintf(stderr,
+	       "[pci] %d kB allocated with handle 0x%08x\n",
+	       info->gartSize*1024, info->gartMemHandle);
+
+   info->gartOffset = 0;
+   
+   /* Initialize the CP ring buffer data */
+   info->ringStart       = info->gartOffset;
+   info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+
+   info->ringReadOffset  = info->ringStart + info->ringMapSize;
+   info->ringReadMapSize = DRM_PAGE_SIZE;
+
+   /* Reserve space for vertex/indirect buffers */
+   info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
+   info->bufMapSize      = info->bufSize*1024*1024;
+
+   /* Reserve the rest for AGP textures */
+   info->gartTexStart     = info->bufStart + info->bufMapSize;
+   s = (info->gartSize*1024*1024 - info->gartTexStart);
+   l = RADEONMinBits((s-1) / RADEON_NR_TEX_REGIONS);
+   if (l < RADEON_LOG_TEX_GRANULARITY) l = RADEON_LOG_TEX_GRANULARITY;
+   info->gartTexMapSize   = (s >> l) << l;
+   info->log2GARTTexGran  = l;
+
+    if (drmAddMap(ctx->drmFD, info->ringStart, info->ringMapSize,
+		  DRM_SCATTER_GATHER, flags, &info->ringHandle) < 0) {
+	fprintf(stderr,
+		   "[pci] Could not add ring mapping\n");
+	return 0;
+    }
+    fprintf(stderr,
+	       "[pci] ring handle = 0x%08lx\n", info->ringHandle);
+
+    if (drmAddMap(ctx->drmFD, info->ringReadOffset, info->ringReadMapSize,
+		  DRM_SCATTER_GATHER, flags, &info->ringReadPtrHandle) < 0) {
+	fprintf(stderr,
+		   "[pci] Could not add ring read ptr mapping\n");
+	return 0;
+    }
+    fprintf(stderr,
+	       "[pci] ring read ptr handle = 0x%08lx\n",
+	       info->ringReadPtrHandle);
+
+    if (drmAddMap(ctx->drmFD, info->bufStart, info->bufMapSize,
+		  DRM_SCATTER_GATHER, 0, &info->bufHandle) < 0) {
+	fprintf(stderr,
+		   "[pci] Could not add vertex/indirect buffers mapping\n");
+	return 0;
+    }
+    fprintf(stderr,
+	       "[pci] vertex/indirect buffers handle = 0x%08lx\n",
+	       info->bufHandle);
+
+    if (drmAddMap(ctx->drmFD, info->gartTexStart, info->gartTexMapSize,
+		  DRM_SCATTER_GATHER, 0, &info->gartTexHandle) < 0) {
+	fprintf(stderr,
+		   "[pci] Could not add GART texture map mapping\n");
+	return 0;
+    }
+    fprintf(stderr,
+	       "[pci] GART texture map handle = 0x%08lx\n",
+	       info->gartTexHandle);
+
+    return 1;
+}
+
 
 /**
  * \brief Initialize the kernel data structures and enable the CP engine.
@@ -452,7 +534,7 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
 
    /* This is the struct passed to the kernel module for its initialization */
    drmInfo.sarea_priv_offset   = sizeof(drm_sarea_t);
-   drmInfo.is_pci              = 0;
+   drmInfo.is_pci              = ctx->isPCI;
    drmInfo.cp_mode             = RADEON_DEFAULT_CP_BM_MODE;
    drmInfo.gart_size            = info->gartSize*1024*1024;
    drmInfo.ring_size           = info->ringSize*1024*1024;
@@ -526,7 +608,7 @@ static int RADEONDRIBufInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    info->bufNumBufs = drmAddBufs(ctx->drmFD,
 				 info->bufMapSize / RADEON_BUFFER_SIZE,
 				 RADEON_BUFFER_SIZE,
-				 DRM_AGP_BUFFER,
+				 ctx->isPCI ? DRM_SG_BUFFER : DRM_AGP_BUFFER,
 				 info->bufStart);
 
    if (info->bufNumBufs <= 0) {
@@ -838,11 +920,16 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
       return 0;
    }
 
-   /* Initialize AGP */
-   if (!RADEONDRIAgpInit(ctx, info)) {
-      return 0;
+   if (ctx->isPCI) {
+      /* Initialize PCI */
+      if (!RADEONDRIPciInit(ctx, info))
+         return 0;
    }
-
+   else {
+      /* Initialize AGP */
+      if (!RADEONDRIAgpInit(ctx, info))
+         return 0;
+   }
 
    /* Memory manager setup */
    if (!RADEONMemoryInit(ctx, info)) {
@@ -912,7 +999,7 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    pRADEONDRI->height            = ctx->shared.virtualHeight;
    pRADEONDRI->depth             = ctx->bpp; /* XXX: depth */
    pRADEONDRI->bpp               = ctx->bpp;
-   pRADEONDRI->IsPCI             = 0;
+   pRADEONDRI->IsPCI             = ctx->isPCI;
    pRADEONDRI->AGPMode           = ctx->agpmode;
    pRADEONDRI->frontOffset       = info->frontOffset;
    pRADEONDRI->frontPitch        = info->frontPitch;
