@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.24 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.25 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,7 +268,7 @@
       GLint iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, startX = (GLint) (x - xAdj);
-         GLuint count, n;
+         GLuint count;
          GLfloat coverage = 0.0F;
          SW_SPAN_RESET(span);
 
@@ -343,42 +343,15 @@
          if (ix <= startX)
             continue;
          
-         n = (GLuint) ix - (GLuint) startX;
-
-#ifdef DO_MULTITEX
-#  ifdef DO_SPEC
-         _old_write_multitexture_span(ctx, n, startX, iy, span.zArray,
-                                      span.fogArray,
-				      span.texcoords,
-				      span.lambda, span.color.rgba,
-				      span.specArray,
-				      span.coverage,  GL_POLYGON);
-#  else
-         _old_write_multitexture_span(ctx, n, startX, iy, span.zArray,
-                                      span.fogArray,
-				      span.texcoords,
-				      span.lambda, span.color.rgba,
-				      NULL, span.coverage,
-				      GL_POLYGON);
-#  endif
-#elif defined(DO_TEX)
-
          span.x = startX;
          span.y = iy;
-         span.end = n;
-         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
-
-#elif defined(DO_RGBA)
-         span.x = startX;
-         span.y = iy;
-         span.end = n;
+         span.end = (GLuint) ix - (GLuint) startX;
          ASSERT(span.interpMask == 0);
+#if defined(DO_MULTITEX) || defined(DO_TEX)
+         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+#elif defined(DO_RGBA)
          _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
 #elif defined(DO_INDEX)
-         span.x = startX;
-         span.y = iy;
-         span.end = n;
-         ASSERT(span.interpMask == 0);
          _mesa_write_index_span(ctx, &span, GL_POLYGON);
 #endif
       }
@@ -479,7 +452,38 @@
          n = (GLuint) startX - (GLuint) ix;
 
          left = ix + 1;
+
+         /* shift all values to the left */
+         /* XXX this is temporary */
+         {
+            GLint j;
+            for (j = 0; j < (GLint) n; j++) {
+#ifdef DO_RGBA
+               COPY_4V(span.color.rgba[j], span.color.rgba[j + left]);
+#endif
+#ifdef DO_SPEC
+               COPY_4V(span.specArray[j], span.specArray[j + left]);
+#endif
+#ifdef DO_INDEX
+               span.color.index[j] = span.color.index[j + left];
+#endif
+#ifdef DO_Z
+               span.zArray[j] = span.zArray[j + left];
+#endif
+#ifdef DO_FOG
+               span.fogArray[j] = span.fogArray[j + left];
+#endif
+#ifdef DO_TEX
+               COPY_4V(span.texcoords[0][j], span.texcoords[0][j + left]);
+#endif
+#if defined(DO_MULTITEX) || defined(DO_TEX)
+               span.lambda[0][j] = span.lambda[0][j + left];
+#endif
+               span.coverage[j] = span.coverage[j + left];
+            }
+         }
 #ifdef DO_MULTITEX
+         /* shift texcoords */
          {
             GLuint unit;
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
@@ -494,73 +498,17 @@
                }
             }
          }
-#  ifdef DO_SPEC
-         _old_write_multitexture_span(ctx, n, left, iy, span.zArray + left,
-                                      span.fogArray + left,
-				      span.texcoords, span.lambda,
-				      span.color.rgba + left,
-				      span.specArray + left,
-				      span.coverage + left,
-				      GL_POLYGON);
-#  else
-         _old_write_multitexture_span(ctx, n, left, iy, span.zArray + left,
-                                      span.fogArray + left,
-				      span.texcoords, span.lambda,
-				      span.color.rgba + left, NULL,
-				      span.coverage + left,
-				      GL_POLYGON);
-#  endif
-#elif defined(DO_TEX)
+#endif
 
-         /* XXX this is temporary */
-         {
-            GLint j;
-            for (j = 0; j < (GLint) n; j++) {
-               span.fogArray[j] = span.fogArray[j + left];
-               span.zArray[j] = span.zArray[j + left];
-               COPY_4V(span.color.rgba[j], span.color.rgba[j + left]);
-               COPY_4V(span.specArray[j], span.specArray[j + left]);
-               COPY_4V(span.texcoords[0][j], span.texcoords[0][j + left]);
-               span.lambda[0][j] = span.lambda[0][j + left];
-               span.coverage[j] = span.coverage[j + left];
-            }
-         }
-         span.x = left;
-         span.y = iy;
-         span.end = n;
-         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
-
-#elif defined(DO_RGBA)
-         /* XXX this is temporary */
-         {
-            GLint j;
-            for (j = 0; j < (GLint) n; j++) {
-               span.fogArray[j] = span.fogArray[j + left];
-               span.zArray[j] = span.zArray[j + left];
-               COPY_4V(span.color.rgba[j], span.color.rgba[j + left]);
-               span.coverage[j] = span.coverage[j + left];
-            }
-         }
          span.x = left;
          span.y = iy;
          span.end = n;
          ASSERT(span.interpMask == 0);
+#if defined(DO_MULTITEX) || defined(DO_TEX)
+         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+#elif defined(DO_RGBA)
          _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
 #elif defined(DO_INDEX)
-         /* XXX this is temporary */
-         {
-            GLint j;
-            for (j = 0; j < (GLint) n; j++) {
-               span.fogArray[j] = span.fogArray[j + left];
-               span.zArray[j] = span.zArray[j + left];
-               span.color.index[j] = span.color.index[j + left];
-               span.coverage[j] = span.coverage[j + left];
-            }
-         }
-         span.x = left;
-         span.y = iy;
-         span.end = n;
-         ASSERT(span.interpMask == 0);
          _mesa_write_index_span(ctx, &span, GL_POLYGON);
 #endif
       }

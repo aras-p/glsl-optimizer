@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.12 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_depth.c,v 1.13 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -572,8 +572,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   ASSERT((span->interpMask & SPAN_Z) || (span->arrayMask & SPAN_Z));
-   ASSERT((span->filledDepth == GL_TRUE) || (span->arrayMask & SPAN_Z));
+   ASSERT(span->arrayMask & SPAN_Z);
    
    if (swrast->Driver.ReadDepthSpan) {
       /* hardware-based depth buffer */

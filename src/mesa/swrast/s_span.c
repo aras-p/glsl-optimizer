@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.24 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_span.c,v 1.25 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -139,11 +139,6 @@ interpolate_colors(GLcontext *ctx, struct sw_span *span)
 
    ASSERT(span->interpMask & SPAN_RGBA);
 
-   /*
-   SW_SPAN_SET_FLAG(span->filledColor);
-   SW_SPAN_SET_FLAG(span->filledAlpha);
-   */
-
    if (span->interpMask & SPAN_FLAT) {
       /* constant color */
       GLchan color[4];
@@ -251,8 +246,6 @@ interpolate_z(GLcontext *ctx, struct sw_span *span)
 
    ASSERT(span->interpMask & SPAN_Z);
 
-   /*   SW_SPAN_SET_FLAG(span->filledDepth);*/
-      
    if (ctx->Visual.depthBits <= 16) {
       GLfixed zval = span->z;
       for (i = 0; i < n; i++) {
@@ -294,8 +287,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               SW_SPAN_SET_FLAG(span->filledLambda[u]);
-               SW_SPAN_SET_FLAG(span->filledTex[u]);
                for (i = 0; i < span->end; i++) {
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                   span->texcoords[u][i][0] = s * invQ;
@@ -326,7 +317,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               SW_SPAN_SET_FLAG(span->filledTex[u]);
                for (i = 0; i < span->end; i++) {
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                   span->texcoords[u][i][0] = s * invQ;
@@ -342,13 +332,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       }
    }
    else {
-#ifdef DEBUG
-      {GLint i;
-      for (i=0; i<ctx->Const.MaxTextureUnits; i++) {
-         ASSERT(span->filledTex[i] == GL_FALSE  &&
-                span->filledLambda[i] == GL_FALSE);
-      }}
-#endif
       if (span->interpMask & SPAN_LAMBDA) {
          /* just texture unit 0, with lambda */
          const GLfloat ds = span->texStep[0][0];
@@ -360,8 +343,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         SW_SPAN_SET_FLAG(span->filledLambda[0]);
-         SW_SPAN_SET_FLAG(span->filledTex[0]);
          for (i = 0; i < span->end; i++) {
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
             span->texcoords[0][i][0] = s * invQ;
@@ -387,7 +368,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         SW_SPAN_SET_FLAG(span->filledTex[0]);
          for (i = 0; i < span->end; i++) {
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
             span->texcoords[0][i][0] = s * invQ;
@@ -398,31 +378,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             r += dr;
             q += dq;
          }
-      }
-   }
-}
-
-
-/*
- * Apply the current polygon stipple pattern to a span of pixels.
- */
-static void
-old_stipple_polygon_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                      GLubyte mask[] )
-{
-   const GLuint highbit = 0x80000000;
-   GLuint i, m, stipple;
-
-   stipple = ctx->PolygonStipple[y % 32];
-   m = highbit >> (GLuint) (x % 32);
-
-   for (i = 0; i < n; i++) {
-      if ((m & stipple) == 0) {
-         mask[i] = 0;
-      }
-      m = m >> 1;
-      if (m == 0) {
-         m = highbit;
       }
    }
 }
@@ -450,49 +405,6 @@ stipple_polygon_span( GLcontext *ctx, struct sw_span *span)
       }
    }
    span->writeAll = GL_FALSE;
-}
-
-
-
-/*
- * Clip a pixel span to the current buffer/window boundaries.
- * Return:  'n' such that pixel 'n', 'n+1' etc. are clipped,
- *           as a special case:
- *           0 = all pixels clipped
- */
-static GLuint
-old_clip_span( GLcontext *ctx, GLint n, GLint x, GLint y, GLubyte mask[] )
-{
-   /* Clip to top and bottom */
-   if (y < 0 || y >= ctx->DrawBuffer->Height) {
-      return 0;
-   }
-
-   /* Clip to the left */
-   if (x < 0) {
-      if (x + n <= 0) {
-         /* completely off left side */
-         return 0;
-      }
-      else {
-         /* partially off left side */
-         BZERO(mask, -x * sizeof(GLubyte));
-      }
-   }
-
-   /* Clip to right */
-   if (x + n > ctx->DrawBuffer->Width) {
-      if (x >= ctx->DrawBuffer->Width) {
-         /* completely off right side */
-         return 0;
-      }
-      else {
-         /* partially off right side */
-         return ctx->DrawBuffer->Width - x;
-      }
-   }
-
-   return n;
 }
 
 
@@ -596,6 +508,8 @@ multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 /*
  * Draw to more than one RGBA color buffer (or none).
+ * All fragment operations, up to (but not) blending/logicop should
+ * have been done first.
  */
 static void
 multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
@@ -845,44 +759,25 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
       }
    }
 
-   /* I have to think where to put this!! */
-   if (span->interpMask & SPAN_Z) {
-#ifdef DEBUG
-      span->filledDepth = GL_TRUE;
-#endif
-      
-      if (ctx->Visual.depthBits <= 16) {
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = FixedToInt(zval);
-            zval += span->zStep;
+   /* Stencil and Z testing */
+   if (ctx->Stencil.Enabled || ctx->Depth.Test) {
+      if (span->interpMask & SPAN_Z)
+         interpolate_z(ctx, span);
+
+      if (ctx->Stencil.Enabled) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
+            span->arrayMask = origArrayMask;
+            return;
          }
       }
       else {
-         /* Deep Z buffer, no fixed->int shift */
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = zval;
-            zval += span->zStep;
+         ASSERT(ctx->Depth.Test);
+         ASSERT(span->arrayMask & SPAN_Z);
+         /* regular depth testing */
+         if (!_mesa_depth_test_span(ctx, span)) {
+            span->arrayMask = origArrayMask;
+            return;
          }
-      }
-      span->arrayMask |= SPAN_Z;
-   }
-
-   if (ctx->Stencil.Enabled) {
-      /* first stencil test */
-      if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE) {
-         span->arrayMask = origArrayMask;
-         return;
-      }
-   }
-   else if (ctx->Depth.Test) {
-      /* regular depth testing */
-      if (_mesa_depth_test_span(ctx, span) == GL_FALSE) {
-         span->arrayMask = origArrayMask;
-	 return;
       }
    }
 
@@ -895,8 +790,11 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
 	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray, rgba);
       else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
          _mesa_fog_rgba_pixels( ctx, span, rgba );
-      else
+      else {
+         if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
+            interpolate_z(ctx, span);
          _mesa_depth_fog_rgba_pixels( ctx, span, rgba );
+      }
    }
 
    /* Antialias coverage application */
@@ -985,7 +883,9 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      SW_SPAN_SET_FLAG(span->filledAlpha);
+      if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
+         interpolate_colors(ctx, span);
+
       for (i = 0; i < span->end; i++) {
          rgba[i][ACOMP] = color[ACOMP];
       }
@@ -994,29 +894,8 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
       }
    }
 
-   /* I have to think where to put this!! */
-   if (span->interpMask & SPAN_Z) {
-      SW_SPAN_SET_FLAG(span->filledDepth);
-      
-      if (ctx->Visual.depthBits <= 16) {
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = FixedToInt(zval);
-            zval += span->zStep;
-         }
-      }
-      else {
-         /* Deep Z buffer, no fixed->int shift */
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = zval;
-            zval += span->zStep;
-         }
-      }
-      span->arrayMask |= SPAN_Z;
-   }
+   if (span->interpMask & SPAN_Z)
+      interpolate_z(ctx, span);
 
    if (ctx->Stencil.Enabled) {
       /* first stencil test */
@@ -1130,516 +1009,10 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
 
 /*
  * Add specular color to base color.  This is used only when
- * GL_LIGHT_MODEL_COLOR_CONTROL = GL_SEPARATE_SPECULAR_COLOR
- * or GL_COLOR_SUM_EXT is enabled.
- */
-static void
-add_colors(CONST struct sw_span *span, GLchan rgba[][4])
-{
-   GLuint i;
-   assert(span->arrayMask & SPAN_RGBA);
-   assert(span->arrayMask & SPAN_SPEC);
-
-   for (i = 0; i < span->end; i++) {
-#if CHAN_TYPE == GL_FLOAT
-      /* no clamping */
-      rgba[i][RCOMP] += span->specArray[i][RCOMP];
-      rgba[i][GCOMP] += span->specArray[i][GCOMP];
-      rgba[i][BCOMP] += span->specArray[i][BCOMP];
-#else
-      GLint r = rgba[i][RCOMP] + span->specArray[i][RCOMP];
-      GLint g = rgba[i][GCOMP] + span->specArray[i][GCOMP];
-      GLint b = rgba[i][BCOMP] + span->specArray[i][BCOMP];
-      rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
-      rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
-      rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
-#endif
-   }
-}
-
-
-/*
- * Write a horizontal span of textured pixels to the frame buffer.
- * The color of each pixel is different.
- * Alpha-testing, stenciling, depth-testing, and blending are done
- * as needed.
- * Input:  span - contains span-data with the exception of
- *         fog - array of fog factor values in [0,1]
- *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
- */
-void
-_mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
-			 GLenum primitive )
-{
-   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
-   GLchan rgbaBackup[MAX_WIDTH][4];
-   GLchan (*rgba)[4];   /* points to either rgbaIn or rgbaBackup */
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   MEMSET(span->mask, 1, span->end);
-
-   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx,span) == GL_FALSE) {
-	 return;
-      }
-   }
-
-   /* Do the scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
-         return;
-      }
-   }
-
-   /* Polygon Stippling */
-   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
-      stipple_polygon_span( ctx, span);
-   }
-
-
-   if (primitive==GL_BITMAP || (swrast->_RasterMask & MULTI_DRAW_BIT)) {
-      /* must make a copy of the colors since they may be modified */
-      MEMCPY(rgbaBackup, span->color.rgba, 4 * span->end * sizeof(GLchan));
-      rgba = rgbaBackup;
-   }
-   else {
-      rgba = span->color.rgba;
-   }
-
-
-   /* Texture with alpha test */
-   if (ctx->Color.AlphaEnabled) {
-      /* Texturing without alpha is done after depth-testing which
-         gives a potential speed-up. */
-      ASSERT(ctx->Texture._ReallyEnabled);
-      _swrast_texture_fragments( ctx, 0, span, rgba );
-
-      /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4]) rgba ) == 0) {
-         return;
-      }
-   }
-
-   if (ctx->Stencil.Enabled) {
-      /* first stencil test */
-      if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE)
-	 return;
-   }
-   else if (ctx->Depth.Test) {
-      /* regular depth testing */
-      if (_mesa_depth_test_span(ctx, span) == 0)
-	 return;
-   }
-
-   /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
-
-   /* Texture without alpha test */
-   if (! ctx->Color.AlphaEnabled) {
-      ASSERT(ctx->Texture._ReallyEnabled);
-      _swrast_texture_fragments( ctx, 0, span, rgba );
-   }
-
-
-   /* Add base and specular colors */
-   if ((span->arrayMask & SPAN_SPEC) && /* Is this right test ???*/
-       (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled &&
-         ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR))) {
-      add_colors(span, rgba);   /* rgba = rgba + span->spec */
-   }
-
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
-	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray, rgba);
-      else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
-	 _mesa_fog_rgba_pixels( ctx, span, rgba );
-      else
-	 _mesa_depth_fog_rgba_pixels(ctx, span, rgba);
-   }
-
-
-   /* Antialias coverage application */
-   if (span->arrayMask & SPAN_COVERAGE) {
-      GLuint i;
-      for (i = 0; i < span->end; i++) {
-         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * span->coverage[i]);
-      }
-   }
-
-   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba, span->mask );
-   }
-   else {
-      /* normal: write to exactly one buffer */
-      if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-      else  if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-      if (colorMask == 0x0) {
-         return;
-      }
-      else if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
-      }
-
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
-                                       (const GLchan (*)[4]) rgba,
-                                       span->writeAll ? NULL : span->mask );
-      if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
-                                 (const GLchan (*)[4]) rgba,
-                                 span->writeAll ? NULL : span->mask );
-      }
-   }
-}
-
-
-/*
- * Write a horizontal span of textured pixels to the frame buffer.
- * The color of each pixel is different.
- * Depth-testing, stenciling, scissor-testing etc. should already 
- * have been done,
- * only if alpha-testing is used, depth-testing is still done in this
- * function.
- * Input:  n - number of pixels in the span
- *         x, y - location of leftmost pixel in the span
- *         z - array of [n] z-values
- *         s, t - array of (s,t) texture coordinates for each pixel
- *         lambda - array of texture lambda values
- *         rgba - array of [n] color components
- *         mask - masked pixels
- *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
- * Contributed by Klaus Niederkrueger.
- */
-static void
-masked_texture_span( GLcontext *ctx, struct sw_span *span)
-{
-   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
-   GLchan rgbaBackup[MAX_WIDTH][4];
-   GLchan (*rgba)[4];   /* points to either span->color.rgba or rgbaBackup */
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-
-   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      /* must make a copy of the colors since they may be modified */
-      MEMCPY(rgbaBackup, span->color.rgba, 4 * span->end * sizeof(GLchan));
-      rgba = rgbaBackup;
-   }
-   else {
-      rgba = span->color.rgba;
-   }
-
-
-   ASSERT(ctx->Texture._ReallyEnabled);
-   _swrast_texture_fragments( ctx, 0, span, rgba );
-   
-   
-   /* Texture with alpha test */
-   if (ctx->Color.AlphaEnabled) {
-      /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4]) rgba ) == 0) {
-         return;
-      }
-      
-      /* Depth test usually in 'rasterize_span' but if alpha test
-         needed, we have to wait for that test before depth test can
-         be done. */
-      if (ctx->Stencil.Enabled) {
-         /* first stencil test */
-         if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE)
-            return;
-      }
-      else if (ctx->Depth.Test) {
-         /* regular depth testing */
-         if (_mesa_depth_test_span(ctx, span) == 0)
-            return;
-      }
-   }
-
-   /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
-   
-   
-   /* Add base and specular colors */
-   if ((span->interpMask & SPAN_SPEC) && /* Is this right test ???*/
-       (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled &&
-         ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
-      add_colors(span, rgba);   /* rgba = rgba + span->spec */
-   
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      /* Is this the right 'if' ?? */
-      if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
-	 _mesa_fog_rgba_pixels(ctx, span, rgba);
-      else
-	 _mesa_depth_fog_rgba_pixels(ctx, span, rgba);
-   }
-
-   /* Antialias coverage application */
-   if (span->arrayMask & SPAN_COVERAGE) {
-      GLuint i;
-      for (i = 0; i < span->end; i++) {
-         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * span->coverage[i]);
-      }
-   }
-
-   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba, span->mask );
-   }
-   else {
-      /* normal: write to exactly one buffer */
-      if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-      else  if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-      if (colorMask == 0x0) {
-         return;
-      }
-      else if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
-      }
-
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
-                                       (const GLchan (*)[4]) rgba,
-				       span->writeAll ? NULL : span->mask );
-      if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
-                                 (const GLchan (*)[4]) rgba,
-                                 span->writeAll ? NULL : span->mask );
-      }
-   }
-}
-
-
-/*
- * As above but perform multiple stages of texture application.
- * Contributed by Klaus Niederkrueger.
- */
-static void
-masked_multitexture_span( GLcontext *ctx, struct sw_span *span)
-{
-   GLchan rgbaBackup[MAX_WIDTH][4];
-   GLchan (*rgba)[4];   /* points to either span->color.rgba or rgbaBackup */
-   GLuint i;
-   const GLuint texUnits = ctx->Const.MaxTextureUnits;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   
-   if ( (swrast->_RasterMask & MULTI_DRAW_BIT) || texUnits > 1) {
-      /* must make a copy of the colors since they may be modified */
-      MEMCPY(rgbaBackup, span->color.rgba, 4 * span->end * sizeof(GLchan));
-      rgba = rgbaBackup;
-   }
-   else {
-      rgba = span->color.rgba;
-   }
-   
-   
-   ASSERT(ctx->Texture._ReallyEnabled);
-   for (i = 0; i < texUnits; i++)
-      _swrast_texture_fragments( ctx, i, span, rgba );
-
-   /* Texture with alpha test */
-   if (ctx->Color.AlphaEnabled) {
-      /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4])rgba ) == 0) {
-         return;
-      }
-
-      /* Depth test usually in 'rasterize_span' but if alpha test
-         needed, we have to wait for that test before depth test can
-         be done. */
-      if (ctx->Stencil.Enabled) {
-         /* first stencil test */
-         if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE)
-            return;
-      }
-      else if (ctx->Depth.Test) {
-         /* regular depth testing */
-         if (_mesa_depth_test_span(ctx, span) == GL_FALSE)
-            return;
-      }
-   }
-
-   /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
-   
-   
-   /* Add base and specular colors */
-   if ((span->interpMask & SPAN_SPEC) && /* Is this right test ???*/
-       (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled &&
-	 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
-      add_colors(span, rgba);   /* rgba = rgba + span->spec */
-   
-   /* Per-pixel fog */
-   if (ctx->Fog.Enabled) {
-      /* Is this the right 'if' ?? */
-      if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
-	 _mesa_fog_rgba_pixels( ctx, span, rgba );
-      else
-	 _mesa_depth_fog_rgba_pixels( ctx, span, rgba );
-   }
-   
-   /* Antialias coverage application */
-   if (span->arrayMask & SPAN_COVERAGE) {
-      GLuint i;
-      for (i = 0; i < span->end; i++) {
-         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * span->coverage[i]);
-      }
-   }
-
-   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y,
-                             (const GLchan (*)[4]) rgba, span->mask );
-   }
-   else {
-      /* normal: write to exactly one buffer */
-      const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
-      
-      if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-      else  if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, span->end, span->x, span->y, rgba, span->mask );
-      }
-
-      if (colorMask == 0x0) {
-         return;
-      }
-      else if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
-      }
-
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
-                                       (const GLchan (*)[4])rgba,
-                                       span->writeAll ? NULL : span->mask );
-      if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
-                                 (const GLchan (*)[4])rgba,
-                                 span->writeAll ? NULL : span->mask );
-      }
-   }
-}
-
-
-/*
- * Generate arrays of fragment colors, z, fog, texcoords, etc from a
- * triangle span object.  Then call the span/fragment processsing
- * functions in s_span.[ch].  This is used by a bunch of the textured
- * triangle functions.
- * Contributed by Klaus Niederkrueger.
- */
-void
-_mesa_rasterize_span(GLcontext *ctx, struct sw_span *span)
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   MEMSET(span->mask, 1, span->end);
-
-   if (swrast->_RasterMask & WINCLIP_BIT) {
-      if (clip_span(ctx, span) == GL_FALSE) {
-	 return;
-      }
-   }
-
-   /* Do the scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
-         return;
-      }
-   }
-
-   /* Polygon Stippling */
-   if (ctx->Polygon.StippleFlag) {
-      stipple_polygon_span( ctx, span );
-   }
-
-   /* I have to think where to put this!! */
-   if (span->interpMask & SPAN_Z) {
-      SW_SPAN_SET_FLAG(span->filledDepth);
-      
-      if (ctx->Visual.depthBits <= 16) {
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = FixedToInt(zval);
-            zval += span->zStep;
-         }
-      }
-      else {
-         /* Deep Z buffer, no fixed->int shift */
-         GLuint i;
-         GLfixed zval = span->z;
-         for (i = 0; i < span->end; i++) {
-            span->zArray[i] = zval;
-            zval += span->zStep;
-         }
-      }
-      span->arrayMask |= SPAN_Z;
-   }
-
-   /* Correct order: texturing --> alpha test --> depth test.  But if
-      no alpha test needed, we can do here the depth test and
-      potentially avoid some of the texturing (otherwise alpha test,
-      depth test etc.  happens in masked_texture_span(). */
-   if (span->interpMask & SPAN_Z  &&  !ctx->Color.AlphaEnabled) {
-     if (ctx->Stencil.Enabled) {
-       /* first stencil test */
-       if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE)
-	 return;
-     }
-     else if (ctx->Depth.Test) {
-       /* regular depth testing */
-       if (_mesa_depth_test_span( ctx, span) == 0) {
-	 return;
-       }
-     }
-   }
-
-   if (span->interpMask & SPAN_RGBA)
-      interpolate_colors(ctx, span);
-
-   if (span->interpMask & SPAN_SPEC)
-      interpolate_specular(ctx, span);
-
-   if (span->interpMask & SPAN_INDEX)
-      interpolate_indexes(ctx, span);
-
-   if (span->interpMask & SPAN_TEXTURE)
-      interpolate_texcoords(ctx, span);
-
-   /* examine interpMask and call a s_span.c function */
-   if (span->interpMask & SPAN_TEXTURE) {
-
-      if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
-         /* multi texture */
-            masked_multitexture_span(ctx, span);
-      }
-      else {
-         /* single texture */
-            masked_texture_span(ctx, span);
-      }
-   }
-   else {
-      _mesa_problem(ctx, "rasterize_span() should only be used for texturing");
-   }
-
-}
-
-/*
- * Add specular color to base color.  This is used only when
  * GL_LIGHT_MODEL_COLOR_CONTROL = GL_SEPARATE_SPECULAR_COLOR.
  */
 static void
-_old_add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
+add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 {
    GLuint i;
    for (i = 0; i < n; i++) {
@@ -1661,162 +1034,186 @@ _old_add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 
 
 /*
- * As above but perform multiple stages of texture application.
+ * This function may modify any of the array values in the span.
+ * span->arrayMask, however, will not be modified (or we'll
+ * restore it to the original incoming value before returning.
  */
 void
-_old_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-			      const GLdepth z[], const GLfloat fog[],
-			      GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][4],
-			      GLfloat lambda[][MAX_WIDTH],
-			      GLchan rgbaIn[MAX_TEXTURE_UNITS][4],
-			      GLchan spec[MAX_TEXTURE_UNITS][4],
-			      const GLfloat coverage[],
-			      GLenum primitive )
+_mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
+                          GLenum primitive )
 {
-   GLubyte mask[MAX_WIDTH];
-   GLboolean write_all = GL_TRUE;
-   GLchan rgbaBackup[MAX_WIDTH][4];
-   GLchan (*rgba)[4];   /* points to either rgbaIn or rgbaBackup */
-   GLuint i;
-   const GLubyte *Null = 0;
-   const GLuint texUnits = ctx->Const.MaxTextureUnits;
+   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const GLuint origArrayMask = span->arrayMask;
 
-   /* init mask to 1's (all pixels are to be written) */
-   MEMSET(mask, 1, n);
+   /*   printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);*/
 
+   ASSERT(ctx->Texture._ReallyEnabled);
+
+   MEMSET(span->mask, 1, span->end);
+
+   /* clip against window bounds */
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if ((n=old_clip_span(ctx, n, x, y, mask)) == 0) {
+      if (clip_span(ctx,span) == GL_FALSE) {
 	 return;
       }
-      if (mask[0] == 0)
-	write_all = GL_FALSE;
    }
 
-
-   if (primitive==GL_BITMAP || (swrast->_RasterMask & MULTI_DRAW_BIT)
-                            || texUnits > 1) {
-      /* must make a copy of the colors since they may be modified */
-      MEMCPY(rgbaBackup, rgbaIn, 4 * n * sizeof(GLchan));
-      rgba = rgbaBackup;
-   }
-   else {
-      rgba = rgbaIn;
-   }
-
-   /* Do the scissor test */
+   /* Scissor test */
    if (ctx->Scissor.Enabled) {
-      if ((n = _old_scissor_span( ctx, n, x, y, mask )) == 0) {
+      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
          return;
       }
-      if (mask[0] == 0)
-         write_all = GL_FALSE;
    }
 
    /* Polygon Stippling */
    if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
-      old_stipple_polygon_span( ctx, n, x, y, mask );
-      write_all = GL_FALSE;
+      stipple_polygon_span( ctx, span);
    }
+
+   /* Need texture coordinates now */
+   if ((span->interpMask & SPAN_TEXTURE)
+       && (span->arrayMask & SPAN_TEXTURE) == 0)
+      interpolate_texcoords(ctx, span);
 
    /* Texture with alpha test */
    if (ctx->Color.AlphaEnabled) {
+
+      /* Now we need the rgba array, fill it in if needed */
+      if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
+         interpolate_colors(ctx, span);
+
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.
        */
-      ASSERT(ctx->Texture._ReallyEnabled);
-      for (i = 0; i < texUnits; i++)
-         _old_swrast_texture_fragments( ctx, i, n, texcoord[i], lambda[i],
-                                    (CONST GLchan (*)[4]) rgbaIn, rgba );
+      _swrast_multitexture_fragments( ctx, span );
 
       /* Do the alpha test */
-      if (_old_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
+      if (!_old_alpha_test(ctx, span->end,
+                           (CONST GLchan (*)[4]) span->color.rgba,
+                           span->mask)) {
+         span->arrayMask = origArrayMask;
          return;
-      }
-      write_all = GL_FALSE;
-   }
-
-   if (ctx->Stencil.Enabled) {
-      /* first stencil test */
-      if (_old_stencil_and_ztest_span(ctx, n, x, y, z, mask) == GL_FALSE) {
-	 return;
-      }
-      write_all = GL_FALSE;
-   }
-   else if (ctx->Depth.Test) {
-      /* regular depth testing */
-      GLuint m = _old_depth_test_span( ctx, n, x, y, z, mask );
-      if (m == 0) {
-         return;
-      }
-      if (m < n) {
-         write_all = GL_FALSE;
       }
    }
 
-   /* if we get here, something passed the depth test */
+   /* Stencil and Z testing */
+   if (ctx->Stencil.Enabled || ctx->Depth.Test) {
+      if (span->interpMask & SPAN_Z)
+         interpolate_z(ctx, span);
+
+      if (ctx->Stencil.Enabled) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
+            span->arrayMask = origArrayMask;
+            return;
+         }
+      }
+      else {
+         ASSERT(ctx->Depth.Test);
+         ASSERT(span->arrayMask & SPAN_Z);
+         /* regular depth testing */
+         if (!_mesa_depth_test_span(ctx, span)) {
+            span->arrayMask = origArrayMask;
+            return;
+         }
+      }
+   }
+
+   /* if we get here, some fragments passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
-   /* Texture without alpha test */
-   if (! ctx->Color.AlphaEnabled) {
-      ASSERT(ctx->Texture._ReallyEnabled);
-      for (i = 0; i < texUnits; i++)
-         _old_swrast_texture_fragments( ctx, i, n, texcoord[i], lambda[i],
-                                    (CONST GLchan (*)[4]) rgbaIn, rgba );
+   /* We had to wait until now to check for glColorMask(F,F,F,F) because of
+    * the occlusion test.
+    */
+   if (colorMask == 0x0) {
+      span->arrayMask = origArrayMask;
+      return;
    }
 
+   /* Texture without alpha test */
+   if (!ctx->Color.AlphaEnabled) {
+
+      /* Now we need the rgba array, fill it in if needed */
+      if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
+         interpolate_colors(ctx, span);
+
+      _swrast_multitexture_fragments( ctx, span );
+   }
+
+   ASSERT(span->arrayMask & SPAN_RGBA);
+
    /* Add base and specular colors */
-   if (spec &&
-       (ctx->Fog.ColorSumEnabled ||
-	(ctx->Light.Enabled &&
-	 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
-      _old_add_colors( n, rgba, spec );   /* rgba = rgba + spec */
+   if (ctx->Fog.ColorSumEnabled ||
+       (ctx->Light.Enabled &&
+        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
+      if (span->interpMask & SPAN_SPEC) {
+         interpolate_specular(ctx, span);
+      }
+      ASSERT(span->arrayMask & SPAN_SPEC);
+      add_colors( span->end, span->color.rgba, span->specArray );
+   }
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && !swrast->_PreferPixelFog)
-	 _old_fog_rgba_pixels( ctx, n, fog, rgba );
-      else
-	 _old_depth_fog_rgba_pixels( ctx, n, z, rgba );
+#if 0
+      if ((span->interpMask & SPAN_FOG) && (span->arrayMask & SPAN_FOG) == 0)
+         interpolate_fog(ctx, span);
+#endif
+      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray,
+                                           span->color.rgba);
+      else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels( ctx, span, span->color.rgba );
+      else {
+         if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
+            interpolate_z(ctx, span);
+	 _mesa_depth_fog_rgba_pixels(ctx, span, span->color.rgba);
+      }
    }
 
    /* Antialias coverage application */
-   if (coverage) {
+   if (span->arrayMask & SPAN_COVERAGE) {
+      GLchan (*rgba)[4] = span->color.rgba;
       GLuint i;
-      for (i = 0; i < n; i++) {
-         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * coverage[i]);
+      for (i = 0; i < span->end; i++) {
+         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * span->coverage[i]);
       }
    }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, n, x, y, (const GLchan (*)[4]) rgba, mask );
+      multi_write_rgba_span( ctx, span->end, span->x, span->y,
+                             (const GLchan (*)[4]) span->color.rgba,
+                             span->mask );
    }
    else {
       /* normal: write to exactly one buffer */
-      const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
-
       if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, n, x, y, rgba, mask );
+         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y,
+                                  span->color.rgba, span->mask );
       }
       else  if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, n, x, y, rgba, mask );
+         _mesa_blend_span( ctx, span->end, span->x, span->y,
+                           span->color.rgba, span->mask);
       }
 
-      if (colorMask == 0x0) {
-         return;
-      }
-      else if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, n, x, y, rgba );
+      if (colorMask != 0xffffffff) {
+         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y,
+                               span->color.rgba );
       }
 
-      (*swrast->Driver.WriteRGBASpan)( ctx, n, x, y, (const GLchan (*)[4])rgba,
-                                    write_all ? Null : mask );
+      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+                                       (const GLchan (*)[4]) span->color.rgba,
+                                       span->writeAll ? NULL : span->mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, n, x, y, (const GLchan (*)[4])rgba,
-                                 write_all ? Null : mask );
+         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
+                                 (const GLchan (*)[4]) span->color.rgba,
+                                 span->writeAll ? NULL : span->mask );
       }
    }
+
+   span->arrayMask = origArrayMask;
 }
+
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.16 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.17 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -561,7 +561,7 @@ _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
    ASSERT(span->end <= MAX_WIDTH);
 #ifdef DEBUG
    if (ctx->Depth.Test) {
-      ASSERT((span->filledDepth == GL_TRUE) || (span->arrayMask & SPAN_Z));
+      ASSERT(span->arrayMask & SPAN_Z);
    }
 #endif
    

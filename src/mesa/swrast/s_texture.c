@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.46 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_texture.c,v 1.47 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3100,10 +3100,6 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
       
       lambda = (span->arrayMask & SPAN_LAMBDA) ? span->lambda[texUnit] : NULL;
 
-      /* XXXX
-      ASSERT(span->filledTex[texUnit] == GL_TRUE);
-      */
-
       if (textureUnit->_Current) {   /* XXX need this? */
          const struct gl_texture_object *curObj = textureUnit->_Current;
          GLchan texel[PB_SIZE][4];
@@ -3147,5 +3143,51 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
                         (CONST GLchan (*)[4]) texel,
                         rgbaOut );
       }
+   }
+}
+
+
+/*
+ * Apply multiple texture stages (or just unit 0) to the span.
+ * At some point in the future we'll probably modify this so that
+ * texels from any texture unit are available in any combiner unit.
+ * That'll require doing all the texture sampling first, and then
+ * all the application (blending) afterward.
+ */
+void
+_swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
+{
+   if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
+      /* multitexture */
+      GLchan primary_rgba[PB_SIZE][4];
+      GLuint unit;
+
+      ASSERT(span->end < PB_SIZE);
+
+      /* save copy of the span colors (the GL_PRIMARY_COLOR) */
+      MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
+
+      /* loop over texture units, modifying the span->color.rgba values */
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+            _old_swrast_texture_fragments( ctx, unit, span->end,
+                                           span->texcoords[unit],
+                                           (span->arrayMask & SPAN_LAMBDA) ?
+                                              span->lambda[unit] : NULL,
+                                           (CONST GLchan (*)[4]) primary_rgba,
+                                           span->color.rgba );
+         }
+      }
+   }
+   else {
+      /* Just unit 0 enabled */
+      ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
+
+      _old_swrast_texture_fragments( ctx, 0, span->end,
+                                     span->texcoords[0],
+                                     (span->arrayMask & SPAN_LAMBDA) ?
+                                        span->lambda[0] : NULL,
+                                     (CONST GLchan (*)[4]) span->color.rgba,
+                                     span->color.rgba );
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.26 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.27 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -634,7 +634,6 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          span.x = x;
          span.y = y;
          span.end = drawWidth;
-         span.filledDepth = GL_TRUE;  /* XXX temporary */
          _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
       }
    }

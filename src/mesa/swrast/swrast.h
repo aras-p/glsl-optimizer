@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.16 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: swrast.h,v 1.17 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,9 +162,7 @@ struct sw_span {
    GLubyte mask[MAX_WIDTH];
 
 #ifdef DEBUG
-   GLboolean filledDepth, filledAlpha;
-   GLboolean filledColor, filledSpecular;
-   GLboolean filledLambda[MAX_TEXTURE_UNITS], filledTex[MAX_TEXTURE_UNITS];
+   GLboolean filledAlpha, filledColor;
 #endif
 };
 
@@ -180,12 +178,7 @@ do {			\
 #ifdef DEBUG
 #define SW_SPAN_SET_FLAG(flag) {ASSERT((flag) == GL_FALSE);(flag) = GL_TRUE;}
 #define SW_SPAN_RESET(span) {                                        \
-         (span).filledDepth = (span).filledAlpha \
-         = (span).filledColor = (span).filledSpecular = GL_FALSE;    \
-         MEMSET((span).filledTex, GL_FALSE,                          \
-		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
-         MEMSET((span).filledLambda, GL_FALSE,                       \
-		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
+         (span).filledAlpha = (span).filledColor = GL_FALSE;    \
          (span).start = 0; (span).writeAll = GL_TRUE;}
 #else
 #define SW_SPAN_SET_FLAG(flag) ;

@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.6 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.7 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,7 @@ _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
    const GLchan ref = ctx->Color.AlphaRef;
    GLubyte *mask = span->mask;
 
-   ASSERT (span->filledAlpha == GL_TRUE || (span->arrayMask & SPAN_RGBA));
+   ASSERT(span->arrayMask & SPAN_RGBA);
 
    /* switch cases ordered from most frequent to less frequent */
    switch (ctx->Color.AlphaFunc) {

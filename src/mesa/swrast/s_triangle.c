@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.49 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.50 2002/01/28 00:07:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,6 +130,17 @@ static void flat_rgba_triangle( GLcontext *ctx,
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
+
+#define SETUP_CODE				\
+   span.interpMask |= SPAN_RGBA;		\
+   span.red = ChanToFixed(v2->color[0]);	\
+   span.green = ChanToFixed(v2->color[1]);	\
+   span.blue = ChanToFixed(v2->color[2]);	\
+   span.alpha = ChanToFixed(v2->color[3]);	\
+   span.redStep = 0;				\
+   span.greenStep = 0;				\
+   span.blueStep = 0;				\
+   span.alphaStep = 0;
 
 #define RENDER_SPAN( span )						\
    _mesa_write_monocolor_span(ctx, &span, v2->color, GL_POLYGON );
@@ -274,7 +285,6 @@ static void simple_z_textured_triangle( GLcontext *ctx,
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
    SW_SPAN_SET_FLAG(span.filledColor);					\
-   SW_SPAN_SET_FLAG(span.filledDepth);					\
    for (i = 0; i < span.end; i++) {					\
       const GLdepth z = FixedToDepth(span.z);				\
       if (z < zRow[i]) {						\
@@ -940,63 +950,6 @@ static void general_textured_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
-#define INTERP_ALPHA 1
-#define INTERP_TEX 1
-
-#define SETUP_CODE							\
-   const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
-   const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   span.texWidth[0] = (GLfloat) texImage->Width;			\
-   span.texHeight[0] = (GLfloat) texImage->Height;			\
-   (void) fixedToDepthShift;
-
-#define RENDER_SPAN( span )						\
-   GLuint i;								\
-   SW_SPAN_SET_FLAG(span.filledColor);					\
-   SW_SPAN_SET_FLAG(span.filledAlpha);					\
-   SW_SPAN_SET_FLAG(span.filledTex[0]);					\
-   SW_SPAN_SET_FLAG(span.filledDepth);					\
-   /* NOTE: we could just call rasterize_span() here instead */		\
-   for (i = 0; i < span.end; i++) {					\
-      GLdouble invQ = span.tex[0][3] ? (1.0 / span.tex[0][3]) : 1.0;	\
-      span.zArray[i] = FixedToDepth(span.z);				\
-      span.z += span.zStep;						\
-      span.color.rgba[i][RCOMP] = FixedToChan(span.red);		\
-      span.color.rgba[i][GCOMP] = FixedToChan(span.green);		\
-      span.color.rgba[i][BCOMP] = FixedToChan(span.blue);		\
-      span.color.rgba[i][ACOMP] = FixedToChan(span.alpha);		\
-      span.red += span.redStep;						\
-      span.green += span.greenStep;					\
-      span.blue += span.blueStep;					\
-      span.alpha += span.alphaStep;					\
-      span.texcoords[0][i][0] = (GLfloat) (span.tex[0][0] * invQ);	\
-      span.texcoords[0][i][1] = (GLfloat) (span.tex[0][1] * invQ);	\
-      span.texcoords[0][i][2] = (GLfloat) (span.tex[0][2] * invQ);	\
-      span.tex[0][0] += span.texStep[0][0];				\
-      span.tex[0][1] += span.texStep[0][1];				\
-      span.tex[0][2] += span.texStep[0][2];				\
-      span.tex[0][3] += span.texStep[0][3];				\
-   }									\
-   _mesa_write_texture_span( ctx, &span, GL_POLYGON );
-
-#include "s_tritemp.h"
-}
-
-
-/*
- * Render a smooth-shaded, textured, RGBA triangle with separate specular
- * color interpolation.
- * Interpolate texcoords with perspective correction, w/out mipmapping.
- */
-static void general_textured_spec_triangle( GLcontext *ctx,
-					    const SWvertex *v0,
-					    const SWvertex *v1,
-					    const SWvertex *v2 )
-{
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
@@ -1008,10 +961,11 @@ static void general_textured_spec_triangle( GLcontext *ctx,
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )   _mesa_rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
 }
+
 
 
 /*
@@ -1030,40 +984,6 @@ static void lambda_textured_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
-#define INTERP_ALPHA 1
-#define INTERP_TEX 1
-#define INTERP_LAMBDA 1
-
-#define SETUP_CODE							\
-   const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
-   const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   span.texWidth[0] = (GLfloat) texImage->Width;			\
-   span.texHeight[0] = (GLfloat) texImage->Height;			\
-   (void) fixedToDepthShift;
-
-#define RENDER_SPAN( span )   _mesa_rasterize_span(ctx, &span);
-
-#include "s_tritemp.h"
-}
-
-
-/*
- * Render a smooth-shaded, textured, RGBA triangle with separate specular
- * interpolation.
- * Interpolate S,T,R with perspective correction and compute lambda for
- * each fragment.  Lambda is used to determine whether to use the
- * minification or magnification filter.  If minification and using
- * mipmaps, lambda is also used to select the texture level of detail.
- */
-static void lambda_textured_spec_triangle( GLcontext *ctx,
-					   const SWvertex *v0,
-					   const SWvertex *v1,
-					   const SWvertex *v2 )
-{
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
@@ -1076,7 +996,7 @@ static void lambda_textured_spec_triangle( GLcontext *ctx,
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )   _mesa_rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
 }
@@ -1118,7 +1038,7 @@ lambda_multitextured_triangle( GLcontext *ctx,
    }									\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )   _mesa_rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
 #include "s_tritemp.h"
 
@@ -1346,15 +1266,6 @@ _swrast_choose_triangle( GLcontext *ctx )
                needLambda = GL_FALSE;
             if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
                USE(lambda_multitextured_triangle);
-            }
-            else if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-               /* separate specular color interpolation */
-               if (needLambda) {
-                  USE(lambda_textured_spec_triangle);
-	       }
-               else {
-                  USE(general_textured_spec_triangle);
-	       }
             }
             else {
                if (needLambda) {
