@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.6 2002/05/27 16:58:24 brianp Exp $
+# $Id: APIspec,v 1.7 2002/05/29 15:14:13 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -7341,6 +7341,25 @@ param		v	const GLubyte *
 category	GL_NV_vertex_program
 offset		641
 
+
+# GL_NV_point_sprite
+
+name		PointParameteriNV
+return		void
+param		pname		GLenum
+param		params		GLint
+category	GL_NV_point_sprite
+offset		642
+
+name		PointParameterivNV
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	GL_NV_point_sprite
+offset		643
+
+
+# end of file sentinal
 
 name		dummy
 offset		?
