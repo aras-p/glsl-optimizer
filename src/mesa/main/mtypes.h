@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.61 2002/01/11 17:25:35 brianp Exp $ */
+/* $Id: mtypes.h,v 1.62 2002/01/12 03:01:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1554,9 +1554,11 @@ struct matrix_stack
 #define _IMAGE_NEW_TRANSFER_STATE         (_NEW_PIXEL | _NEW_COLOR_MATRIX)
 
 
+/* Bits for ctx->_NeedNormals */
 #define NEED_NORMALS_TEXGEN      0x1
 #define NEED_NORMALS_LIGHT       0x2
 
+/* Bits for ctx->_NeedEyeCoords */
 #define NEED_EYE_TEXGEN          0x1
 #define NEED_EYE_LIGHT           0x2
 #define NEED_EYE_LIGHT_MODELVIEW 0x4
