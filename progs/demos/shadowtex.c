@@ -1,4 +1,4 @@
-/* $Id: shadowtex.c,v 1.5 2002/02/16 14:54:18 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.6 2002/03/23 16:34:18 brianp Exp $ */
 
 /*
  * Shadow demo using the GL_ARB_depth_texture, GL_ARB_shadow and
@@ -6,6 +6,8 @@
  *
  * Brian Paul
  * 19 Feb 2001
+ *
+ * Added GL_EXT_shadow_funcs support on 23 March 2002
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -66,6 +68,16 @@ static GLboolean LinearFilter = GL_FALSE;
 static GLfloat Bias = -0.06;
 
 static GLboolean Anim = GL_TRUE;
+
+static GLboolean HaveEXTshadowFuncs = GL_FALSE;
+static GLint Operator = 0;
+static const GLenum OperatorFunc[8] = {
+   GL_LEQUAL, GL_LESS, GL_GEQUAL, GL_GREATER,
+   GL_EQUAL, GL_NOTEQUAL, GL_ALWAYS, GL_NEVER };
+static const char *OperatorName[8] = {
+   "GL_LEQUAL", "GL_LESS", "GL_GEQUAL", "GL_GREATER",
+   "GL_EQUAL", "GL_NOTEQUAL", "GL_ALWAYS", "GL_NEVER" };
+
 
 static GLuint DisplayMode;
 #define SHOW_NORMAL         0
@@ -237,6 +249,7 @@ Display(void)
 {
    GLfloat ar = (GLfloat) WindowWidth / (GLfloat) WindowHeight;
    GLfloat d;
+   GLenum error;
 
    ComputeLightPos(LightDist, LightLatitude, LightLongitude,
                    LightPos, SpotDir);
@@ -346,6 +359,11 @@ Display(void)
    }
 
    glutSwapBuffers();
+
+   error = glGetError();
+   if (error) {
+      printf("GL Error: %s\n", gluErrorString(error));
+   }
 }
 
 
@@ -414,6 +432,16 @@ Key(unsigned char key, int x, int y)
       case 'n':
       case ' ':
          DisplayMode = SHOW_NORMAL;
+         break;
+      case 'o':
+         if (HaveEXTshadowFuncs) {
+            Operator++;
+            if (Operator >= 8)
+               Operator = 0;
+            printf("Operator: %s\n", OperatorName[Operator]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB,
+                            OperatorFunc[Operator]);
+         }
          break;
       case 'z':
          Zrot -= step;
@@ -484,6 +512,7 @@ Init(void)
    }
    printf("Using GL_SGIX_depth_texture and GL_SGIX_shadow\n");
 #endif
+   HaveEXTshadowFuncs = glutExtensionSupported("GL_EXT_shadow_funcs");
 
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -541,6 +570,8 @@ PrintHelp(void)
    printf("  b/B = decrease/increase shadow map Z bias\n");
    printf("  cursor keys = rotate scene\n");
    printf("  <shift> + cursor keys = rotate light source\n");
+   if (HaveEXTshadowFuncs)
+      printf("  o = cycle through comparison modes\n");
 }
 
 
