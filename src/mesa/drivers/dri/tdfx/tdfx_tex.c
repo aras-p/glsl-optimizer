@@ -1010,9 +1010,8 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                               texImage->Width * texelBytes,
                               0, /* dstImageStride */
                               format, type, pixels, packing);
-    }
 #else
-    texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
                                     texImage->Format, texImage->Data,
                                     0, 0, 0, /* dstX/Y/Zoffset */
                                     width * texelBytes, /* dstRowStride */
@@ -1020,6 +1019,7 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                                     width, height, 1,
                                     format, type, pixels, packing);
 #endif
+    }
 
     RevalidateTexture(ctx, texObj);
 
