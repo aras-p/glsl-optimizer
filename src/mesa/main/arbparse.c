@@ -800,7 +800,7 @@ emit;
 static GLvoid
 emit_create (emit ** em)
 {
-   *em = mem_alloc (sizeof (emit));
+   *em = (emit *) mem_alloc (sizeof (emit));
    if (*em) {
       (**em).m_emit_type = et_byte;
       (**em).m_byte = 0;
@@ -840,7 +840,7 @@ error;
 static GLvoid
 error_create (error ** er)
 {
-   *er = mem_alloc (sizeof (error));
+   *er = (error *) mem_alloc (sizeof (error));
    if (*er) {
       (**er).m_text = NULL;
       (**er).m_token_name = NULL;
@@ -895,7 +895,7 @@ typedef struct spec_
 static GLvoid
 spec_create (spec ** sp)
 {
-   *sp = mem_alloc (sizeof (spec));
+   *sp = (spec *) mem_alloc (sizeof (spec));
    if (*sp) {
       (**sp).m_spec_type = st_false;
       (**sp).m_byte[0] = '\0';
@@ -957,7 +957,7 @@ typedef struct defntn_
 static GLvoid
 defntn_create (defntn ** de)
 {
-   *de = mem_alloc (sizeof (defntn));
+   *de = (defntn *) mem_alloc (sizeof (defntn));
    if (*de) {
       (**de).m_oper = op_none;
       (**de).m_specs = NULL;
@@ -1002,7 +1002,7 @@ typedef struct dict_
 static GLvoid
 dict_create (dict ** di)
 {
-   *di = mem_alloc (sizeof (dict));
+   *di = (dict *) mem_alloc (sizeof (dict));
    if (*di) {
       (**di).m_defntns = NULL;
       (**di).m_syntax = NULL;
@@ -1034,7 +1034,7 @@ typedef struct barray_
 static GLvoid
 barray_create (barray ** ba)
 {
-   *ba = mem_alloc (sizeof (barray));
+   *ba = (barray *) mem_alloc (sizeof (barray));
    if (*ba) {
       (**ba).data = NULL;
       (**ba).len = 0;
@@ -1068,7 +1068,7 @@ barray_resize (barray ** ba, GLuint nlen)
       return 0;
    }
    else {
-      new_pointer =
+      new_pointer = (GLubyte *)
          mem_realloc ((**ba).data, (**ba).len * sizeof (GLubyte),
                       nlen * sizeof (GLubyte));
       if (new_pointer) {
@@ -1166,7 +1166,7 @@ typedef struct map_str_
 static GLvoid
 map_str_create (map_str ** ma)
 {
-   *ma = mem_alloc (sizeof (map_str));
+   *ma = (map_str *) mem_alloc (sizeof (map_str));
    if (*ma) {
       (**ma).key = NULL;
       (**ma).data = NULL;
@@ -1231,7 +1231,7 @@ typedef struct map_byte_
 static GLvoid
 map_byte_create (map_byte ** ma)
 {
-   *ma = mem_alloc (sizeof (map_byte));
+   *ma = (map_byte *) mem_alloc (sizeof (map_byte));
    if (*ma) {
       (**ma).key = NULL;
       (**ma).data = 0;
@@ -1292,7 +1292,7 @@ typedef struct map_def_
 static GLvoid
 map_def_create (map_def ** ma)
 {
-   *ma = mem_alloc (sizeof (map_def));
+   *ma = (map_def *) mem_alloc (sizeof (map_def));
    if (*ma) {
       (**ma).key = NULL;
       (**ma).data = NULL;
@@ -1420,7 +1420,7 @@ string_grow (GLubyte ** ptr, GLuint * len, GLubyte c)
 {
    /* reallocate the string in 16-length increments */
    if ((*len & 0x0F) == 0x0F || *ptr == NULL) {
-      GLubyte *tmp = mem_realloc (*ptr, (*len) * sizeof (GLubyte),
+      GLubyte *tmp = (GLubyte *) mem_realloc (*ptr, (*len) * sizeof (GLubyte),
                                ((*len + 1 + 1 +
                                  0x0F) & ~0x0F) * sizeof (GLubyte));
       if (tmp == NULL)
@@ -2387,7 +2387,7 @@ error_get_token (error * er, dict * di, const GLubyte * text, unsigned int ind)
       if (ba != NULL) {
          if (match (di, text + ind, &filter_index, er->m_token, &ba, 0) ==
              mr_matched && filter_index) {
-            str = mem_alloc (filter_index + 1);
+            str = (GLubyte *) mem_alloc (filter_index + 1);
             if (str != NULL) {
                _mesa_strncpy ((char *) str, (char *) (text + ind),
                               filter_index);
@@ -2415,7 +2415,7 @@ typedef struct grammar_load_state_
 static GLvoid
 grammar_load_state_create (grammar_load_state ** gr)
 {
-   *gr = mem_alloc (sizeof (grammar_load_state));
+   *gr = (grammar_load_state *) mem_alloc (sizeof (grammar_load_state));
    if (*gr) {
       (**gr).di = NULL;
       (**gr).syntax_symbol = NULL;
@@ -2619,7 +2619,7 @@ grammar_check (dict * di, const GLubyte * text, GLubyte ** production,
       return 0;
    }
 
-   *production = mem_alloc (ba->len * sizeof (GLubyte));
+   *production = (GLubyte *) mem_alloc (ba->len * sizeof (GLubyte));
    if (*production == NULL) {
       barray_destroy (&ba);
       return 0;
@@ -2728,18 +2728,18 @@ struct var_cache
 static GLvoid
 var_cache_create (struct var_cache **va)
 {
-   *va = _mesa_malloc (sizeof (struct var_cache));
+   *va = (struct var_cache *) _mesa_malloc (sizeof (struct var_cache));
    if (*va) {
       (**va).name = NULL;
       (**va).type = vt_none;
-      (**va).attrib_binding = -1;
+      (**va).attrib_binding = ~0;
       (**va).attrib_is_generic = 0;
-      (**va).temp_binding = -1;
-      (**va).output_binding = -1;
-      (**va).output_binding_idx = -1;
-      (**va).param_binding_type = -1;
-      (**va).param_binding_begin = -1;
-      (**va).param_binding_length = -1;
+      (**va).temp_binding = ~0;
+      (**va).output_binding = ~0;
+      (**va).output_binding_idx = ~0;
+      (**va).param_binding_type = ~0;
+      (**va).param_binding_begin = ~0;
+      (**va).param_binding_length = ~0;
       (**va).alias_binding = NULL;
       (**va).next = NULL;
    }
@@ -3072,7 +3072,7 @@ parse_clipplane_num (GLcontext * ctx, GLubyte ** inst,
 {
    *coord = parse_integer (inst, Program);
 
-   if ((*coord < 0) || (*coord >= ctx->Const.MaxClipPlanes)) {
+   if ((*coord < 0) || (*coord >= (GLint) ctx->Const.MaxClipPlanes)) {
       _mesa_set_program_error (ctx, Program->Position,
                                "Invalid clip plane index");
       _mesa_error (ctx, GL_INVALID_OPERATION, "Invalid clip plane index");
@@ -3135,7 +3135,7 @@ parse_matrix (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
       case MATRIX_TEXTURE:
          *matrix = STATE_TEXTURE;
          *matrix_idx = parse_integer (inst, Program);
-         if (*matrix_idx >= ctx->Const.MaxTextureUnits) {
+         if (*matrix_idx >= (GLint) ctx->Const.MaxTextureUnits) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Texture Unit");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3152,7 +3152,7 @@ parse_matrix (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
       case MATRIX_PROGRAM:
          *matrix = STATE_PROGRAM;
          *matrix_idx = parse_integer (inst, Program);
-         if (*matrix_idx >= ctx->Const.MaxProgramMatrices) {
+         if (*matrix_idx >= (GLint) ctx->Const.MaxProgramMatrices) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Program Matrix");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3221,7 +3221,7 @@ parse_state_single_item (GLcontext * ctx, GLubyte ** inst,
          state_tokens[1] = parse_integer (inst, Program);
 
          /* Check the value of state_tokens[1] against the # of lights */
-         if (state_tokens[1] >= ctx->Const.MaxLights) {
+         if (state_tokens[1] >= (GLint) ctx->Const.MaxLights) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Light Number");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3271,7 +3271,7 @@ parse_state_single_item (GLcontext * ctx, GLubyte ** inst,
          state_tokens[1] = parse_integer (inst, Program);
 
          /* Check the value of state_tokens[1] against the # of lights */
-         if (state_tokens[1] >= ctx->Const.MaxLights) {
+         if (state_tokens[1] >= (GLint) ctx->Const.MaxLights) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Light Number");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3461,10 +3461,10 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
 
          /* Check state_tokens[2] against the number of ENV parameters available */
          if (((Program->type == GL_FRAGMENT_PROGRAM_ARB) &&
-              (state_tokens[2] >= ctx->Const.MaxFragmentProgramEnvParams))
+              (state_tokens[2] >= (GLint) ctx->Const.MaxFragmentProgramEnvParams))
              ||
              ((Program->type == GL_VERTEX_PROGRAM_ARB) &&
-              (state_tokens[2] >= ctx->Const.MaxVertexProgramEnvParams))) {
+              (state_tokens[2] >= (GLint) ctx->Const.MaxVertexProgramEnvParams))) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Program Env Parameter");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3481,10 +3481,10 @@ parse_program_single_item (GLcontext * ctx, GLubyte ** inst,
 
          /* Check state_tokens[2] against the number of LOCAL parameters available */
          if (((Program->type == GL_FRAGMENT_PROGRAM_ARB) &&
-              (state_tokens[2] >= ctx->Const.MaxFragmentProgramLocalParams))
+              (state_tokens[2] >= (GLint) ctx->Const.MaxFragmentProgramLocalParams))
              ||
              ((Program->type == GL_VERTEX_PROGRAM_ARB) &&
-              (state_tokens[2] >= ctx->Const.MaxVertexProgramLocalParams))) {
+              (state_tokens[2] >= (GLint) ctx->Const.MaxVertexProgramLocalParams))) {
             _mesa_set_program_error (ctx, Program->Position,
                                      "Invalid Program Local Parameter");
             _mesa_error (ctx, GL_INVALID_OPERATION,
@@ -3512,29 +3512,29 @@ generic_attrib_check(struct var_cache *vc_head)
 {
    int a;
    struct var_cache *curr;
-   GLubyte explicit[MAX_VERTEX_PROGRAM_ATTRIBS], 
-           generic[MAX_VERTEX_PROGRAM_ATTRIBS];
-			  
+   GLboolean explicitAttrib[MAX_VERTEX_PROGRAM_ATTRIBS],
+      genericAttrib[MAX_VERTEX_PROGRAM_ATTRIBS];
+
    for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
-      explicit[a] = 0;
-      generic[a] = 0;		
+      explicitAttrib[a] = GL_FALSE;
+      genericAttrib[a] = GL_FALSE;
    }	
    
    curr = vc_head;
    while (curr) {
       if (curr->type == vt_attrib) {
          if (curr->attrib_is_generic)
-            generic[ curr->attrib_binding_idx ] = 1;
+            genericAttrib[ curr->attrib_binding_idx ] = GL_TRUE;
          else
-            explicit[ curr->attrib_binding_idx ] = 1;			
+            explicitAttrib[ curr->attrib_binding_idx ] = GL_TRUE;
       }
-		
-      curr = curr->next;	
+
+      curr = curr->next;
    }
-			  
+
    for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
-      if ((explicit[a]) && (generic[a]))	
-         return 1;		
+      if ((explicitAttrib[a]) && (genericAttrib[a]))
+         return 1;
    }	
 
    return 0;	
@@ -3816,7 +3816,7 @@ parse_attrib (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    attrib_var = parse_string (inst, vc_head, Program, &found);
    Program->Position = parse_position (inst);
    if (found) {
-      error_msg =
+      error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) attrib_var->name) + 40);
       _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                      attrib_var->name);
@@ -3890,7 +3890,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
                idx =
                   _mesa_add_state_reference (Program->Parameters,
                                              state_tokens);
-               if (param_var->param_binding_begin == -1)
+               if (param_var->param_binding_begin == ~0U)
                   param_var->param_binding_begin = idx;
                param_var->param_binding_length++;
                Program->Base.NumParameters++;
@@ -3899,7 +3899,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
          else {
             idx =
                _mesa_add_state_reference (Program->Parameters, state_tokens);
-            if (param_var->param_binding_begin == -1)
+            if (param_var->param_binding_begin == ~0U)
                param_var->param_binding_begin = idx;
             param_var->param_binding_length++;
             Program->Base.NumParameters++;
@@ -3911,7 +3911,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
          if (parse_program_single_item (ctx, inst, Program, state_tokens))
             return 1;
          idx = _mesa_add_state_reference (Program->Parameters, state_tokens);
-         if (param_var->param_binding_begin == -1)
+         if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
          param_var->param_binding_length++;
          Program->Base.NumParameters++;
@@ -3967,7 +3967,7 @@ parse_param_elements (GLcontext * ctx, GLubyte ** inst,
          idx =
             _mesa_add_named_constant (Program->Parameters,
                                       (char *) param_var->name, const_values);
-         if (param_var->param_binding_begin == -1)
+         if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
          param_var->param_binding_length++;
          Program->Base.NumParameters++;
@@ -4017,7 +4017,7 @@ parse_param (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    Program->Position = parse_position (inst);
 
    if (found) {
-      error_msg = _mesa_malloc (_mesa_strlen ((char *) param_var->name) + 40);
+      error_msg = (char *) _mesa_malloc (_mesa_strlen ((char *) param_var->name) + 40);
       _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                      param_var->name);
 
@@ -4125,7 +4125,7 @@ parse_temp (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
       temp_var = parse_string (inst, vc_head, Program, &found);
       Program->Position = parse_position (inst);
       if (found) {
-         error_msg =
+         error_msg = (char *)
             _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
          _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                         temp_var->name);
@@ -4176,7 +4176,7 @@ parse_output (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    Program->Position = parse_position (inst);
    if (found) {
       char *error_msg;
-      error_msg =
+      error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) output_var->name) + 40);
       _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                      output_var->name);
@@ -4211,7 +4211,7 @@ parse_alias (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
    Program->Position = parse_position (inst);
 
    if (found) {
-      error_msg =
+      error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
       _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                      temp_var->name);
@@ -4229,16 +4229,16 @@ parse_alias (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
 
    if (!found)
    {
-       error_msg =
-            _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Alias value %s is not defined",
-                        temp_var->alias_binding->name);
-
-         _mesa_set_program_error (ctx, Program->Position, error_msg);
-         _mesa_error (ctx, GL_INVALID_OPERATION, error_msg);
-
-         _mesa_free (error_msg);
-         return 1;
+      error_msg = (char *)
+         _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
+      _mesa_sprintf (error_msg, "Alias value %s is not defined",
+                     temp_var->alias_binding->name);
+      
+      _mesa_set_program_error (ctx, Program->Position, error_msg);
+      _mesa_error (ctx, GL_INVALID_OPERATION, error_msg);
+      
+      _mesa_free (error_msg);
+      return 1;
    }
 
    return 0;
@@ -4261,7 +4261,7 @@ parse_address (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
       temp_var = parse_string (inst, vc_head, Program, &found);
       Program->Position = parse_position (inst);
       if (found) {
-         error_msg =
+         error_msg = (char *)
             _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
          _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
                         temp_var->name);
@@ -4756,7 +4756,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
    GLint a, b;
    GLubyte swz[4]; /* FP's swizzle mask is a GLubyte, while VP's is GLuint */
    GLuint texcoord;
-   GLubyte class, type, code;
+   GLubyte instClass, type, code;
 
    /* No condition codes in ARB_fp */
    fp->UpdateCondRegister = 0;
@@ -4765,7 +4765,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
    fp->StringPos = Program->Position;
 
    /* F_ALU_INST or F_TEX_INST */
-   class = *(*inst)++;
+   instClass = *(*inst)++;
 
    /* F_ALU_{VECTOR, SCALAR, BINSC, BIN, TRI, SWZ}, 
     * F_TEX_{SAMPLE, KIL}
@@ -4776,7 +4776,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
    code = *(*inst)++;
 
    /* Increment the correct count */
-   switch (class) {
+   switch (instClass) {
       case F_ALU_INST:
          Program->NumAluInstructions++;
          break;
