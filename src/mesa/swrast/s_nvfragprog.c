@@ -38,7 +38,6 @@
 /* if 1, print some debugging info */
 #define DEBUG_FRAG 0
 
-
 /**
  * Fetch a texel.
  */
@@ -120,12 +119,13 @@ get_register_pointer( GLcontext *ctx,
          ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
          src = ctx->FragmentProgram.Parameters[source->Index];
          break;
+
+      case PROGRAM_STATE_VAR:
+			/* Fallthrough */
+
       case PROGRAM_NAMED_PARAM:
          ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
          src = program->Parameters->Parameters[source->Index].Values;
-         break;
-      case PROGRAM_STATE_VAR:
-         src = NULL;
          break;
       default:
          _mesa_problem(ctx, "Invalid input register file in fetch_vector4");
@@ -571,6 +571,12 @@ execute_program( GLcontext *ctx,
 #if DEBUG_FRAG
    printf("execute fragment program --------------------\n");
 #endif
+
+	/* XXX: This should go someplace else, but it is safe here (and slow!) 
+	 *        - karl
+	 */
+   _mesa_load_state_parameters(ctx, program->Parameters); 
+
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct fp_instruction *inst = program->Instructions + pc;
