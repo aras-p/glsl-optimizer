@@ -1,4 +1,4 @@
-/* $Id: glapi_x86.S,v 1.3 2000/01/17 19:29:08 brianp Exp $ */
+/* $Id: glapi_x86.S,v 1.4 2000/01/28 22:18:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 
 
 #include "assyntax.h"
-#include "../glapioffsets.h"
+#include "glapioffsets.h"
 
 #ifndef __WIN32__
 
