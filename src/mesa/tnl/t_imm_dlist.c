@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.48 2003/03/31 18:19:56 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.49 2003/03/31 23:06:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,13 +73,8 @@ build_normal_lengths( struct immediate *IM )
    GLfloat len;
    GLfloat (*data)[4] = IM->Attrib[VERT_ATTRIB_NORMAL] + IM->Start;
    GLfloat *dest = IM->NormalLengthPtr;
-   GLuint *flags = IM->Flag + IM->Start;
-   GLuint count = IM->Count - IM->Start;
-
-#if 0
-   if (!IM->Attrib[VERT_ATTRIB_NORMAL])
-      return;
-#endif
+   const GLuint *flags = IM->Flag + IM->Start;
+   const GLuint count = IM->Count - IM->Start;
 
    if (!dest) {
       dest = IM->NormalLengthPtr = (GLfloat *) ALIGN_MALLOC( IMM_SIZE*sizeof(GLfloat), 32 );
@@ -107,11 +102,12 @@ fixup_normal_lengths( struct immediate *IM )
    GLfloat len = 1.0F;  /* just to silence warnings */
    GLfloat (*data)[4] = IM->Attrib[VERT_ATTRIB_NORMAL];
    GLfloat *dest = IM->NormalLengthPtr;
-   GLuint *flags = IM->Flag;
+   const GLuint *flags = IM->Flag;
 
    for (i = IM->CopyStart ; i <= IM->Start ; i++) {
       len = (GLfloat) LEN_3FV( data[i] );
-      if (len > 0.0F) len = 1.0F / len;
+      if (len > 0.0F)
+         len = 1.0F / len;
       dest[i] = len;
    } 
 
