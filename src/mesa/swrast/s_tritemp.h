@@ -29,7 +29,8 @@
  *
  * The following macros may be defined to indicate what auxillary information
  * must be interplated across the triangle:
- *    INTERP_Z        - if defined, interpolate Z values
+ *    INTERP_Z        - if defined, interpolate vertex Z values
+ *    INTERP_W        - if defined, interpolate vertex W values
  *    INTERP_FOG      - if defined, interpolate fog values
  *    INTERP_RGB      - if defined, interpolate RGB values
  *    INTERP_ALPHA    - if defined, interpolate Alpha values (req's INTERP_RGB)
@@ -93,7 +94,6 @@
  * SUB_PIXEL_BITS.
  */
 
-
 /*
  * ColorTemp is used for intermediate color values.
  */
@@ -102,6 +102,21 @@
 #else
 #define ColorTemp GLint  /* same as GLfixed */
 #endif
+
+
+/*
+ * Walk triangle edges with GLfixed or GLdouble
+ */
+#if TRIANGLE_WALK_DOUBLE
+#define GLinterp        GLdouble
+#define InterpToInt(X)  ((GLint) (X))
+#define INTERP_ONE      1.0
+#else
+#define GLinterp        GLfixed
+#define InterpToInt(X)  FixedToInt(X)
+#define INTERP_ONE      FIXED_ONE
+#endif
+
 
 /*
  * Either loop over all texture units, or just use unit zero.
@@ -131,15 +146,23 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                                  const SWvertex *v2 )
 {
    typedef struct {
-        const SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
-        GLfloat dx;	/* X(v1) - X(v0) */
-        GLfloat dy;	/* Y(v1) - Y(v0) */
-        GLfixed fdxdy;	/* dx/dy in fixed-point */
-        GLfixed fsx;	/* first sample point x coord */
-        GLfixed fsy;
-        GLfloat adjy;	/* adjust from v[0]->fy to fsy, scaled */
-        GLint lines;	/* number of lines to be sampled on this edge */
-        GLfixed fx0;	/* fixed pt X of lower endpoint */
+      const SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
+#if TRIANGLE_WALK_DOUBLE
+      GLdouble dx;	/* X(v1) - X(v0) */
+      GLdouble dy;	/* Y(v1) - Y(v0) */
+      GLdouble dxdy;	/* dx/dy */
+      GLdouble adjy;	/* adjust from v[0]->fy to fsy, scaled */
+#else
+      GLfloat dx;	/* X(v1) - X(v0) */
+      GLfloat dy;	/* Y(v1) - Y(v0) */
+      GLfloat dxdy;	/* dx/dy */
+      GLfixed fdxdy;	/* dx/dy in fixed-point */
+      GLfloat adjy;	/* adjust from v[0]->fy to fsy, scaled */
+#endif
+      GLfixed fsx;	/* first sample point x coord */
+      GLfixed fsy;
+      GLint lines;	/* number of lines to be sampled on this edge */
+      GLfixed fx0;	/* fixed pt X of lower endpoint */
    } EdgeT;
 
 #ifdef INTERP_Z
@@ -228,12 +251,21 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    eBot.v0 = vMin;   eBot.v1 = vMid;
 
    /* compute deltas for each edge:  vertex[upper] - vertex[lower] */
+#if TRIANGLE_WALK_DOUBLE
+   eMaj.dx = FixedToDouble(vMax_fx - vMin_fx);
+   eMaj.dy = FixedToDouble(vMax_fy - vMin_fy);
+   eTop.dx = FixedToDouble(vMax_fx - vMid_fx);
+   eTop.dy = FixedToDouble(vMax_fy - vMid_fy);
+   eBot.dx = FixedToDouble(vMid_fx - vMin_fx);
+   eBot.dy = FixedToDouble(vMid_fy - vMin_fy);
+#else
    eMaj.dx = FixedToFloat(vMax_fx - vMin_fx);
    eMaj.dy = FixedToFloat(vMax_fy - vMin_fy);
    eTop.dx = FixedToFloat(vMax_fx - vMid_fx);
    eTop.dy = FixedToFloat(vMax_fy - vMid_fy);
    eBot.dx = FixedToFloat(vMid_fx - vMin_fx);
    eBot.dy = FixedToFloat(vMid_fy - vMin_fy);
+#endif
 
    /* compute area, oneOverArea and perform backface culling */
    {
@@ -259,11 +291,13 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       eMaj.fsy = FixedCeil(vMin_fy);
       eMaj.lines = FixedToInt(FixedCeil(vMax_fy - eMaj.fsy));
       if (eMaj.lines > 0) {
-         GLfloat dxdy = eMaj.dx / eMaj.dy;
-         eMaj.fdxdy = SignedFloatToFixed(dxdy);
+         eMaj.dxdy = eMaj.dx / eMaj.dy;
+#ifndef INTERP_DOUBLE
+         eMaj.fdxdy = SignedFloatToFixed(eMaj.dxdy);
+#endif
          eMaj.adjy = (GLfloat) (eMaj.fsy - vMin_fy);  /* SCALED! */
          eMaj.fx0 = vMin_fx;
-         eMaj.fsx = eMaj.fx0 + (GLfixed) (eMaj.adjy * dxdy);
+         eMaj.fsx = eMaj.fx0 + (GLfixed) (eMaj.adjy * eMaj.dxdy);
       }
       else {
          return;  /*CULLED*/
@@ -272,21 +306,25 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       eTop.fsy = FixedCeil(vMid_fy);
       eTop.lines = FixedToInt(FixedCeil(vMax_fy - eTop.fsy));
       if (eTop.lines > 0) {
-         GLfloat dxdy = eTop.dx / eTop.dy;
-         eTop.fdxdy = SignedFloatToFixed(dxdy);
+         eTop.dxdy = eTop.dx / eTop.dy;
+#ifndef INTERP_DOUBLE
+         eTop.fdxdy = SignedFloatToFixed(eTop.dxdy);
+#endif
          eTop.adjy = (GLfloat) (eTop.fsy - vMid_fy); /* SCALED! */
          eTop.fx0 = vMid_fx;
-         eTop.fsx = eTop.fx0 + (GLfixed) (eTop.adjy * dxdy);
+         eTop.fsx = eTop.fx0 + (GLfixed) (eTop.adjy * eTop.dxdy);
       }
 
       eBot.fsy = FixedCeil(vMin_fy);
       eBot.lines = FixedToInt(FixedCeil(vMid_fy - eBot.fsy));
       if (eBot.lines > 0) {
-         GLfloat dxdy = eBot.dx / eBot.dy;
-         eBot.fdxdy = SignedFloatToFixed(dxdy);
+         eBot.dxdy = eBot.dx / eBot.dy;
+#ifndef INTERP_DOUBLE
+         eBot.fdxdy = SignedFloatToFixed(eBot.dxdy);
+#endif
          eBot.adjy = (GLfloat) (eBot.fsy - vMin_fy);  /* SCALED! */
          eBot.fx0 = vMin_fx;
-         eBot.fsx = eBot.fx0 + (GLfixed) (eBot.adjy * dxdy);
+         eBot.fsx = eBot.fx0 + (GLfixed) (eBot.adjy * eBot.dxdy);
       }
    }
 
@@ -362,6 +400,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       }
 #endif
 #ifdef INTERP_W
+      span.interpMask |= SPAN_W;
       {
          const GLfloat eMaj_dw = vMax->win[3] - vMin->win[3];
          const GLfloat eBot_dw = vMid->win[3] - vMin->win[3];
@@ -587,9 +626,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
       {
          GLint subTriangle;
-         GLfixed fxLeftEdge = 0, fxRightEdge = 0;
-         GLfixed fdxLeftEdge = 0, fdxRightEdge = 0;
-         GLfixed fError = 0, fdError = 0;
+         GLinterp fxLeftEdge = 0, fxRightEdge = 0;
+         GLinterp fdxLeftEdge = 0, fdxRightEdge = 0;
+         GLinterp fError = 0, fdError = 0;
 #ifdef PIXEL_ADDRESS
          PIXEL_TYPE *pRow = NULL;
          GLint dPRowOuter = 0, dPRowInner;  /* offset in bytes */
@@ -685,11 +724,21 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                const GLfixed fsx = eLeft->fsx;  /* no fractional part */
                const GLfixed fsy = eLeft->fsy;
                const GLfixed fx = FixedCeil(fsx);  /* no fractional part */
-               const GLfloat adjx = (GLfloat) (fx - eLeft->fx0); /* SCALED! */
-               const GLfloat adjy = eLeft->adjy;                 /* SCALED! */
-               GLfixed fdxOuter;
+               const GLinterp adjx = (GLinterp) (fx - eLeft->fx0); /* SCALED! */
+               const GLinterp adjy = eLeft->adjy;                 /* SCALED! */
                GLint idxOuter;
+#if TRIANGLE_WALK_DOUBLE
+               GLdouble dxOuter;
+
+               fError = FixedToFloat(fx - fsx - FIXED_ONE);
+               fxLeftEdge = FixedToFloat(fsx);
+               fdxLeftEdge = eLeft->dxdy;
+               dxOuter = floor(fdxLeftEdge);
+               fdError = dxOuter - fdxLeftEdge + 1.0;
+               idxOuter = (GLint) dxOuter;
+#else
                GLfloat dxOuter;
+               GLfixed fdxOuter;
 
                fError = fx - fsx - FIXED_ONE;
                fxLeftEdge = fsx - FIXED_EPSILON;
@@ -698,7 +747,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                fdError = fdxOuter - fdxLeftEdge + FIXED_ONE;
                idxOuter = FixedToInt(fdxOuter);
                dxOuter = (GLfloat) idxOuter;
-
+#endif
                span.y = FixedToInt(fsy);
 
                /* silence warnings on some compilers */
@@ -709,7 +758,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
 #ifdef PIXEL_ADDRESS
                {
-                  pRow = (PIXEL_TYPE *) PIXEL_ADDRESS(FixedToInt(fxLeftEdge), span.y);
+                  pRow = (PIXEL_TYPE *) PIXEL_ADDRESS(InterpToInt(fxLeftEdge), span.y);
                   dPRowOuter = -((int)BYTES_PER_ROW) + idxOuter * sizeof(PIXEL_TYPE);
                   /* negative because Y=0 at bottom and increases upward */
                }
@@ -743,7 +792,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   }
 #  ifdef DEPTH_TYPE
                   zRow = (DEPTH_TYPE *)
-                    _swrast_zbuffer_address(ctx, FixedToInt(fxLeftEdge), span.y);
+                    _swrast_zbuffer_address(ctx, InterpToInt(fxLeftEdge), span.y);
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }
@@ -887,8 +936,13 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
 
             if (setupRight && eRight->lines>0) {
+#if TRIANGLE_WALK_DOUBLE
+               fxRightEdge = FixedToDouble(eRight->fsx);
+               fdxRightEdge = eRight->dxdy;
+#else
                fxRightEdge = eRight->fsx - FIXED_EPSILON;
                fdxRightEdge = eRight->fdxdy;
+#endif
             }
 
             if (lines==0) {
@@ -944,9 +998,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             while (lines > 0) {
                /* initialize the span interpolants to the leftmost value */
                /* ff = fixed-pt fragment */
-               const GLint right = FixedToInt(fxRightEdge);
-
-               span.x = FixedToInt(fxLeftEdge);
+               const GLint right = InterpToInt(fxRightEdge);
+               span.x = InterpToInt(fxLeftEdge);
 
                if (right <= span.x)
                   span.end = 0;
@@ -1075,10 +1128,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                fxLeftEdge += fdxLeftEdge;
                fxRightEdge += fdxRightEdge;
 
-
                fError += fdError;
                if (fError >= 0) {
-                  fError -= FIXED_ONE;
+                  fError -= INTERP_ONE;
+
 #ifdef PIXEL_ADDRESS
                   pRow = (PIXEL_TYPE *) ((GLubyte *) pRow + dPRowOuter);
 #endif
@@ -1203,6 +1256,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef T_SCALE
 
 #undef FixedToDepth
+#undef ColorTemp
+#undef GLinterp
+#undef InterpToInt
+#undef INTERP_ONE
 
 #undef DO_OCCLUSION_TEST
 #undef NAME

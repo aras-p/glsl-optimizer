@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -149,44 +149,54 @@
 /** Max convolution filter height */
 #define MAX_CONVOLUTION_HEIGHT 9
 
-/** GL_ARB_texture_compression */
+/** For GL_ARB_texture_compression */
 #define MAX_COMPRESSED_TEXTURE_FORMATS 25
 
-/** GL_EXT_texture_filter_anisotropic */
+/** For GL_EXT_texture_filter_anisotropic */
 #define MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
-/** GL_EXT_texture_lod_bias */
+/** For GL_EXT_texture_lod_bias */
 #define MAX_TEXTURE_LOD_BIAS 4.0
 
-/* GL_NV_vertex_program */
+/** For GL_NV_vertex_program */
+/*@{*/
 #define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
 #define MAX_NV_VERTEX_PROGRAM_TEMPS         12
 #define MAX_NV_VERTEX_PROGRAM_PARAMS        96
 #define MAX_NV_VERTEX_PROGRAM_INPUTS        16
 #define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
+/*@}*/
 
-/* GL_NV_fragment_program */
+/** For GL_NV_fragment_program */
+/*@{*/
 #define MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS 128
 #define MAX_NV_FRAGMENT_PROGRAM_TEMPS         96
 #define MAX_NV_FRAGMENT_PROGRAM_PARAMS        64
 #define MAX_NV_FRAGMENT_PROGRAM_INPUTS        12
 #define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        3
 #define MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS    2
+/*@}*/
 
-/* GL_ARB_vertex_program */
+/** For GL_ARB_vertex_program */
+/*@{*/
 #define MAX_VERTEX_PROGRAM_ADDRESS_REGS 1
 #define MAX_VERTEX_PROGRAM_ATTRIBS     16
+/*@}*/
 
-/* GL_ARB_fragment_program */
+/** For GL_ARB_fragment_program */
+/*@{*/
 #define MAX_FRAGMENT_PROGRAM_ADDRESS_REGS 1
 #define MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS 48
 #define MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS 24
 #define MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS  4
+/*@}*/
 
-/* Any program target/extension */
+/** For any program target/extension */
+/*@{*/
 #define MAX_PROGRAM_LOCAL_PARAMS 96
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
+/*@}*/
 
 /*@}*/
 
@@ -196,6 +206,11 @@
  */
 /*@{*/
 
+
+/**
+ * If non-zero use GLdouble for walking triangle edges, for better accuracy.
+ */
+#define TRIANGLE_WALK_DOUBLE 0
 
 /**
  * Bits per accumulation buffer color component:  8, 16 or 32
