@@ -294,24 +294,19 @@ _glapi_get_context(void)
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-   struct _glapi_table * old_style_dispatch;
-
-
-   /* Use the no-op functions if a NULL dispatch table was requested.
-    */
-
-   old_style_dispatch = (dispatch == NULL)
-     ? (struct _glapi_table *) __glapi_noop_table : dispatch;
-
+   if (!dispatch) {
+      /* use the no-op functions */
+      dispatch = (struct _glapi_table *) __glapi_noop_table;
+   }
 #ifdef DEBUG
-   if (dispatch != NULL) {
+   else {
       _glapi_check_table(dispatch);
    }
 #endif
 
 #if defined(THREADS)
    if (DispatchOverride) {
-      _glthread_SetTSD(&RealDispatchTSD, (void *) old_style_dispatch);
+      _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
       if (ThreadSafe)
          _glapi_RealDispatch = (struct _glapi_table*) __glapi_threadsafe_table;
       else
@@ -319,13 +314,13 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
    }
    else {
       /* normal operation */
-      _glthread_SetTSD(&_gl_DispatchTSD, (void *) old_style_dispatch);
+      _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
       if (ThreadSafe) {
 	 _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
 	 _glapi_DispatchTSD = NULL;
       }
       else {
-	 _glapi_Dispatch = old_style_dispatch;
+	 _glapi_Dispatch = dispatch;
 	 _glapi_DispatchTSD = dispatch;
       }
    }
