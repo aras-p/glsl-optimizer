@@ -109,7 +109,8 @@ fi
 #
 case $ARCH in
 
-    'Linux')
+    'Linux' | 'OpenBSD')
+	# GCC-based environment
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
         if [ $STATIC = 1 ] ; then
@@ -124,7 +125,7 @@ case $ARCH in
             OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
-            echo "mklib: Making Linux shared library: " ${LIBNAME}.so.${VERSION}
+            echo "mklib: Making " $ARCH " shared library: " ${LIBNAME}.so.${VERSION}
 
             if [ $CPLUSPLUS = 1 ] ; then
                 LINK="g++"
@@ -202,18 +203,6 @@ case $ARCH in
 	ld -Bshareable -o ${SHLIB} ${OBJECTS}
 	# XXX make lib${LIBNAME}.so.${MAJOR} symlink?
 	FINAL_LIBS="${SHLIB} ${STLIB}"
-	;;
-
-    'OpenBSD')
-	LIBNAME="lib${LIBNAME}"
-	VERSION="${MAJOR}.${MINOR}"
-	echo "Building OpenBSD PIC library: " ${LIBNAME}
-	rm -f ${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}
-	ar cq ${LIBNAME}_pic.a ${OBJECTS}
-	ranlib ${LIBNAME}_pic.a
-	ld -x -Bshareable -Bforcearchive -o ${LIBNAME}.so.${VERSION} ${LIBNAME}_pic.a
-	ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so
-	FINAL_LIBS="${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION} ${LIBNAME}.so"
 	;;
 
     'NetBSD')
@@ -374,6 +363,20 @@ case $ARCH in
         fi
 	;;
 
+    'aix-gcc')
+	# AIX with gcc
+	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	echo "mklib: Making AIX GCC shared library: " ${LIBNAME}
+	# remove old lib
+	rm -f ${LIBNAME}
+	# make the lib
+	gcc -shared -Wl,-G ${OBJECTS} ${DEPS} -o ${LIBNAME}
+
+	# NOTE: the application linking with this library must specify
+	# the -Wl,-brtl flags to gcc
+
+	FINAL_LIBS=${LIBNAME}
+	;;
 
     'example')
 	# If you're adding support for a new architecture, you can
