@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.33 2002/02/14 00:39:53 brianp Exp $ */
+/* $Id: s_span.c,v 1.34 2002/02/15 16:27:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,10 +74,7 @@ _mesa_span_default_z( GLcontext *ctx, struct sw_span *span )
 void
 _mesa_span_default_fog( GLcontext *ctx, struct sw_span *span )
 {
-   if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-      span->fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
-   else
-      span->fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   span->fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
    span->fogStep = 0;
    span->interpMask |= SPAN_FOG;
 }
