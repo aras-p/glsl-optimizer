@@ -138,7 +138,6 @@ static int
 Setup(int width, int height)
 {
 #if defined(GLX_VERSION_1_3) || defined(GLX_VERSION_1_4)
-   XVisualInfo *visInfo;
    GLXContext glCtx;
 
    /* Open the X display */
@@ -175,7 +174,6 @@ Setup(int width, int height)
    }
    else {
       printf("Error: Couldn't create GLXContext\n");
-      XFree(visInfo);
       XCloseDisplay(gDpy);
       return 0;
    }
@@ -183,7 +181,6 @@ Setup(int width, int height)
    /* Bind context to pbuffer */
    if (!glXMakeCurrent(gDpy, gPBuffer, glCtx)) {
       printf("Error: glXMakeCurrent failed\n");
-      XFree(visInfo);
       XCloseDisplay(gDpy);
       return 0;
    }
