@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.113 2004/01/30 23:32:19 brianp Exp $
+# $Id: Makefile.X11,v 1.114 2004/03/02 17:28:56 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.1
@@ -60,6 +60,7 @@ default:
 	@echo "  make irix6-64-dso          for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
 	@echo "  make linux                 for Linux"
+	@echo "  make linux-static          for Linux, make static libs"
 	@echo "  make linux-x86             for Linux with x86 optimizations"
 	@echo "  make linux-ggi             for Linux with libggi driver"
 	@echo "  make linux-x86-ggi         for Linux with libggi driver and x86 optimizations"
@@ -109,7 +110,7 @@ aix aix-sl aix-gcc darwin freebsd freebsd-386 gcc-sl \
 cygnus cygnus-linux \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
-linux linux-debug \
+linux linux-debug linux-static \
 linux-x86 linux-x86-sse linux-icc linux-x86-static linux-x86-debug \
 linux-glide linux-x86-glide linux-glide-debug \
 linux-alpha-static linux-alpha \

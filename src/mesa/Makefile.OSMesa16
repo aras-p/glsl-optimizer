@@ -66,7 +66,7 @@ targets: $(LIBDIR)/$(OSMESA_LIB)
 $(LIBDIR)/$(OSMESA_LIB): $(OBJECTS)
 	$(TOP)/bin/mklib $(MAKELIB_FLAGS) -o $(OSMESA_LIB_NAME) \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(LIBDIR) $(GL_LIB_DEPS) $(OBJECTS)
+		$(MKLIB_OPTIONS) -install $(LIBDIR) $(GL_LIB_DEPS) $(OBJECTS)
 
 
 # Run 'make dep' to update the dependencies if you change what's included

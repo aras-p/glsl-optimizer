@@ -454,6 +454,25 @@ linux:
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/X11R6/lib -lXt -lX11" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL -lm" \
 
+linux-static:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
+	"CC = gcc" \
+	"CXX = g++" \
+	"CFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"GLUT_CFLAGS = -fexceptions" \
+	"GL_LIB_DEPS = " \
+	"GLU_LIB_DEPS = " \
+	"GLUT_LIB_DEPS = " \
+	"GLW_LIB_DEPS = " \
+	"APP_LIB_DEPS = -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lXi -lXmu -lpthread -lm -lstdc++" \
+	"MKLIB_OPTIONS = -static"
+
 linux-x86:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
@@ -735,7 +754,8 @@ linux-osmesa16-static:
 	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -lm -lpthread" \
-	"APP_LIB_DEPS = -lOSMesa16 -lGL"
+	"APP_LIB_DEPS = -lOSMesa16 -lGL" \
+	"MKLIB_OPTIONS = -static"
 
 # 32-bit/channel Mesa using OSMesa driver
 linux-osmesa32:
