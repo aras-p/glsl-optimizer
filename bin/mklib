@@ -360,17 +360,11 @@ case $ARCH in
             ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
-            VERSION="${MAJOR}.${MINOR}.${PATCH}"
             LIBNAME="${LIBNAME}.dylib"
-            ARNAME="${LIBNAME}.dylib.a"
-            echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
+            echo "mklib: Making Darwin libraries: " ${LIBNAME}
             FLAGS="-dynamiclib -multiply_defined suppress"
             cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
-            # also make regular .a files,
-            # provided by Danek Duvall (duvall@dhduvall.student.princeton.edu)
-            ar ruv ${ARNAME} ${OBJECTS}
-            ranlib ${ARNAME}
-            FINAL_LIBS="${ARNAME} ${LIBNAME}"
+            FINAL_LIBS=${LIBNAME}
         fi
         ;;
 
