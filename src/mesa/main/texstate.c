@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
@@ -176,19 +176,19 @@ _mesa_print_texunit_state( GLcontext *ctx, GLuint unit )
  * \param state  texture_env_combine state vector to be filled-in.
  * \param mode   Classic texture environment mode (i.e., \c GL_REPLACE,
  *               \c GL_BLEND, \c GL_DECAL, etc.).
- * \param tex_base_format  Base format of the texture associated with the
+ * \param texBaseFormat  Base format of the texture associated with the
  *               texture unit.
  */
 static void
-calculate_derived_texenv( struct gl_tex_env_combine_state * state,
-			  GLenum mode, GLenum tex_base_format )
+calculate_derived_texenv( struct gl_tex_env_combine_state *state,
+			  GLenum mode, GLenum texBaseFormat )
 {
    GLenum mode_rgb;
    GLenum mode_a;
 
    *state = default_combine_state;
 
-   switch( tex_base_format ) {
+   switch (texBaseFormat) {
    case GL_ALPHA:
       state->SourceRGB[0] = GL_PREVIOUS;
       break;
@@ -205,18 +205,14 @@ calculate_derived_texenv( struct gl_tex_env_combine_state * state,
       break;
       
    default:
-      state->SourceRGB[0] = GL_PREVIOUS;
-      state->SourceA[0]   = GL_PREVIOUS;
-      state->ModeRGB      = GL_REPLACE;
-      state->ModeA        = GL_REPLACE;
-      ASSERT(0);
+      _mesa_problem(NULL, "Invalid texBaseFormat in calculate_derived_texenv");
       return;
    }
 
-   switch( mode ) {
+   switch (mode) {
    case GL_REPLACE:
    case GL_MODULATE:
-      mode_rgb = (tex_base_format == GL_ALPHA) ? GL_REPLACE : mode;
+      mode_rgb = (texBaseFormat == GL_ALPHA) ? GL_REPLACE : mode;
       mode_a   = mode;
       break;
    
@@ -230,7 +226,7 @@ calculate_derived_texenv( struct gl_tex_env_combine_state * state,
        * incoming fragment color matches the definition in NV_texture_shader.
        * The 1.5 spec simply marks these as "undefined".
        */
-      switch( tex_base_format ) {
+      switch (texBaseFormat) {
       case GL_ALPHA:
       case GL_LUMINANCE:
       case GL_LUMINANCE_ALPHA:
@@ -251,7 +247,7 @@ calculate_derived_texenv( struct gl_tex_env_combine_state * state,
       mode_rgb = GL_INTERPOLATE;
       mode_a   = GL_MODULATE;
 
-      switch( tex_base_format ) {
+      switch (texBaseFormat) {
       case GL_ALPHA:
 	 mode_rgb = GL_REPLACE;
 	 break;
@@ -272,15 +268,14 @@ calculate_derived_texenv( struct gl_tex_env_combine_state * state,
       break;
 
    case GL_ADD:
-      mode_rgb = (tex_base_format == GL_ALPHA) ? GL_REPLACE : GL_ADD;
-      mode_a   = (tex_base_format == GL_INTENSITY) ? GL_ADD : GL_MODULATE;
+      mode_rgb = (texBaseFormat == GL_ALPHA) ? GL_REPLACE : GL_ADD;
+      mode_a   = (texBaseFormat == GL_INTENSITY) ? GL_ADD : GL_MODULATE;
       break;
 
    default:
-      mode_rgb = GL_REPLACE;
-      mode_a   = GL_REPLACE;
-      ASSERT(0);
-      break;
+      _mesa_problem(NULL,
+                    "Invalid texture env mode in calculate_derived_texenv");
+      return;
    }
    
    state->ModeRGB = (state->SourceRGB[0] != GL_PREVIOUS)
@@ -288,6 +283,7 @@ calculate_derived_texenv( struct gl_tex_env_combine_state * state,
    state->ModeA   = (state->SourceA[0]   != GL_PREVIOUS)
        ? mode_a   : GL_REPLACE;
 }
+
 
 void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
@@ -2954,9 +2950,11 @@ update_texture_state( GLcontext *ctx )
 	 texUnit->_CurrentCombine = & texUnit->Combine;
       }
       else {
-	 calculate_derived_texenv( & texUnit->_EnvMode, 
-				    texUnit->EnvMode,
-				    texUnit->_Current->Image[0][0]->Format );
+         GLenum format = texUnit->_Current->Image[0][0]->Format;
+         if (format == GL_COLOR_INDEX) {
+            format = GL_RGBA;  /* a bit of a hack */
+         }
+	 calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
 	 texUnit->_CurrentCombine = & texUnit->_EnvMode;
       }
 
@@ -2982,8 +2980,8 @@ update_texture_state( GLcontext *ctx )
 	 break;
       default:
 	 texUnit->_CurrentCombine->_NumArgsRGB = 0;
-	 ASSERT(0);
-	 break;
+         _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
+         return;
       }
 
       switch (texUnit->_CurrentCombine->ModeA) {
@@ -3004,7 +3002,7 @@ update_texture_state( GLcontext *ctx )
 	 break;
       default:
 	 texUnit->_CurrentCombine->_NumArgsA = 0;
-	 ASSERT(0);
+         _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
 	 break;
       }
 
