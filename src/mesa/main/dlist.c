@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.21 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: dlist.c,v 1.22 1999/12/15 12:55:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4032,6 +4032,7 @@ _mesa_init_dlist_table( struct _glapi_table *table )
 {
    _mesa_init_no_op_table(table);
 
+   /* GL 1.0 */
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
    table->Begin = save_Begin;
@@ -4340,7 +4341,7 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->Vertex4sv = _mesa_Vertex4sv;
    table->Viewport = save_Viewport;
 
-#ifdef _GLAPI_VERSION_1_1
+   /* GL 1.1 */
    table->AreTexturesResident = _mesa_AreTexturesResident;
    table->ArrayElement = _mesa_ArrayElement;
    table->BindTexture = save_BindTexture;
@@ -4370,16 +4371,14 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->TexSubImage1D = save_TexSubImage1D;
    table->TexSubImage2D = save_TexSubImage2D;
    table->VertexPointer = _mesa_VertexPointer;
-#endif
 
-#ifdef _GLAPI_VERSION_1_2
+   /* GL 1.2 */
    table->CopyTexSubImage3D = save_CopyTexSubImage3D;
    table->DrawRangeElements = _mesa_DrawRangeElements;
    table->TexImage3D = save_TexImage3D;
    table->TexSubImage3D = save_TexSubImage3D;
-#endif
 
-#ifdef _GLAPI_ARB_imaging
+   /* GL_ARB_imaging */
    /* NOT supported, just call stub functions */
    table->BlendColor = _mesa_BlendColor;
    table->BlendEquation = _mesa_BlendEquation;
@@ -4415,39 +4414,32 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->ResetHistogram = _mesa_ResetHistogram;
    table->ResetMinmax = _mesa_ResetMinmax;
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
-#endif
 
-#ifdef _GLAPI_EXT_paletted_texture
+   /* GL_EXT_paletted_texture */
    table->ColorTableEXT = save_ColorTableEXT;
    table->ColorSubTableEXT = save_ColorSubTableEXT;
    table->GetColorTableEXT = _mesa_GetColorTableEXT;
    table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfvEXT;
    table->GetColorTableParameterivEXT = _mesa_GetColorTableParameterivEXT;
-#endif
 
-#ifdef _GLAPI_EXT_compiled_vertex_array
+   /* GL_EXT_compiled_vertex_array */
    table->LockArraysEXT = _mesa_LockArraysEXT;
    table->UnlockArraysEXT = _mesa_UnlockArraysEXT;
-#endif
 
-#ifdef _GLAPI_EXT_point_parameters
+   /* GL_EXT_point_parameters */
    table->PointParameterfEXT = save_PointParameterfEXT;
    table->PointParameterfvEXT = save_PointParameterfvEXT;
-#endif
 
-#ifdef _GLAPI_EXT_polygon_offset
+   /* GL_EXT_polygon_offset */
    table->PolygonOffsetEXT = save_PolygonOffsetEXT;
-#endif
 
-#ifdef _GLAPI_EXT_blend_minmax
+   /* GL_EXT_blend_minmax */
    table->BlendEquationEXT = save_BlendEquation;
-#endif
 
-#ifdef _GLAPI_EXT_blend_color
+   /* GL_EXT_blend_color */
    table->BlendColorEXT = save_BlendColor;
-#endif
 
-#ifdef _GLAPI_ARB_multitexture
+   /* GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
    table->ClientActiveTextureARB = save_ClientActiveTextureARB;
    table->MultiTexCoord1dARB = _mesa_MultiTexCoord1dARB;
@@ -4482,26 +4474,21 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->MultiTexCoord4ivARB = _mesa_MultiTexCoord4ivARB;
    table->MultiTexCoord4sARB = _mesa_MultiTexCoord4sARB;
    table->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
-#endif
 
-#ifdef _GLAPI_INGR_blend_func_separate
+   /* GL_INGR_blend_func_separate */
    table->BlendFuncSeparateINGR = save_BlendFuncSeparateINGR;
-#endif
 
-#ifdef _GLAPI_MESA_window_pos
+   /* GL_MESA_window_pos */
    table->WindowPos4fMESA = save_WindowPos4fMESA;
-#endif
 
-#ifdef _GLAPI_MESA_resize_buffers
+   /* GL_MESA_resize_buffers */
    table->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
-#endif
 
-#ifdef _GLAPI_ARB_transpose_matrix
+   /* GL_ARB_transpose_matrix */
    table->LoadTransposeMatrixdARB = save_LoadTransposeMatrixdARB;
    table->LoadTransposeMatrixfARB = save_LoadTransposeMatrixfARB;
    table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
    table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
-#endif
 
 }
 
