@@ -409,7 +409,7 @@ static void insert_3ub_3f_bgr_1( const struct tnl_clipspace_attr *a, GLubyte *v,
 {
    UNCLAMPED_FLOAT_TO_UBYTE(v[2], in[0]);
    v[1] = 0;
-   v[0]= 0;
+   v[0] = 0;
 }
 
 
@@ -433,6 +433,9 @@ static void extract_4f_viewport( const struct tnl_clipspace_attr *a, GLfloat *ou
    const GLfloat *in = (const GLfloat *)v;
    const GLfloat * const vp = a->vp;
    
+   /* Although included for completeness, the position coordinate is
+    * usually handled differently during clipping.
+    */
    out[0] = (in[0] - vp[12]) / vp[0];
    out[1] = (in[1] - vp[13]) / vp[5];
    out[2] = (in[2] - vp[14]) / vp[10];
@@ -834,7 +837,7 @@ static void generic_copy_pv_extras( GLcontext *ctx,
       VB->IndexPtr[1]->data[dst][0] = VB->IndexPtr[1]->data[src][0];
    }
 
-   _tnl_copy_pv(ctx, dst, src);
+   generic_copy_pv(ctx, dst, src);
 }
 
 
