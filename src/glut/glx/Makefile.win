@@ -25,8 +25,8 @@ OBJS   = $(SRCS:.c=.obj)
 MS_LIBS   = ../lib/$(MESALIB) ../lib/$(GLULIB) winmm.lib $(guilibsdll)
 SGI_LIBS   = $(SGI_OPENGL) $(SGI_GLU) winmm.lib $(guilibsdll)
 
-glut32.dll : $(OBJS) glut.def
-	$(link) $(LFLAGS) -out:glut32.dll -def:glut.def $(OBJS) $(MS_LIBS)
+MesaGlut.dll : $(OBJS) glut.def
+	$(link) $(LFLAGS) -out:MesaGlut.dll -def:glut.def $(OBJS) $(MS_LIBS)
 	@echo "copying GLUT dynamic link library to lib directory..."
 	-copy $(GLUTDLL) ..\lib
 	@echo "copying GLUT import library to lib directory..."
