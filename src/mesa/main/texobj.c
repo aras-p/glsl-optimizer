@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.49 2001/06/13 14:56:14 brianp Exp $ */
+/* $Id: texobj.c,v 1.50 2001/07/27 14:30:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -495,18 +495,26 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
                if (delObj == unit->Current1D) {
                   unit->Current1D = ctx->Shared->Default1D;
                   ctx->Shared->Default1D->RefCount++;
+                  if (delObj == unit->_Current)
+                     unit->_Current = unit->Current1D;
                }
                else if (delObj == unit->Current2D) {
                   unit->Current2D = ctx->Shared->Default2D;
                   ctx->Shared->Default2D->RefCount++;
+                  if (delObj == unit->_Current)
+                     unit->_Current = unit->Current2D;
                }
                else if (delObj == unit->Current3D) {
                   unit->Current3D = ctx->Shared->Default3D;
                   ctx->Shared->Default3D->RefCount++;
+                  if (delObj == unit->_Current)
+                     unit->_Current = unit->Current3D;
                }
                else if (delObj == unit->CurrentCubeMap) {
                   unit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
                   ctx->Shared->DefaultCubeMap->RefCount++;
+                  if (delObj == unit->_Current)
+                     unit->_Current = unit->CurrentCubeMap;
                }
             }
             ctx->NewState |= _NEW_TEXTURE;
