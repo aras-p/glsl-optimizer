@@ -441,9 +441,6 @@ sisDDLogicOpCode( GLcontext *ctx, GLenum opcode )
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
 
-   if (!ctx->Color.ColorLogicOpEnabled)
-      return;
-
    current->hwDstSet &= ~MASK_ROP2;
    switch (opcode)
    {
