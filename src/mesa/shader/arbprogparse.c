@@ -171,6 +171,9 @@ __extension__ static char arb_grammar_text[] =
 /* GL_ARB_fragment_program_shadow option flags */
 #define  ARB_FRAGMENT_PROGRAM_SHADOW                0x40
 
+/* GL_ARB_draw_buffers option flags */
+#define  ARB_DRAW_BUFFERS                           0x80
+
 /* GL_ARB_fragment_program instruction class */
 #define  OP_ALU_INST                                0x00
 #define  OP_TEX_INST                                0x01
@@ -3623,6 +3626,12 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
 	             /* TODO ARB_fragment_program_shadow code */
 		  }
 		  break;
+
+               case ARB_DRAW_BUFFERS:
+	          if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
+                     /* do nothing for now */
+                  }
+                  break;
             }
             break;
 
@@ -3873,7 +3882,9 @@ _mesa_parse_arb_program (GLcontext * ctx, const GLubyte * str, GLsizei len,
        enable_ext (ctx, arbprogram_syn_id,
           (byte *) "texture_rectangle", (byte *) "GL_NV_texture_rectangle") ||
        enable_ext (ctx, arbprogram_syn_id,
-          (byte *) "fragment_program_shadow", (byte *) "GL_ARB_fragment_program_shadow")) {
+          (byte *) "fragment_program_shadow", (byte *) "GL_ARB_fragment_program_shadow") ||
+       enable_ext (ctx, arbprogram_syn_id,
+          (byte *) "draw_buffers", (byte *) "GL_ARB_draw_buffers")) {
       grammar_destroy (arbprogram_syn_id);
       return 1;
    }
