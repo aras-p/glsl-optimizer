@@ -20,7 +20,7 @@ bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
 dispatch.c convolve.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
 get.c hash.c hint.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
-mem.c glapi.c glapinoop.c \
+mem.c glapi.c glapinoop.c imports.c\
 mmath.c pb.c pixel.c points.c polygon.c \
 quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
@@ -49,7 +49,7 @@ OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,maski
 matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
 mmath.obj,pb.obj,pixel.obj,points.obj
 
-OBJECTS7=polygon.obj,\
+OBJECTS7=polygon.obj,imports.obj,\
 quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj,\
 pixeltex.obj,convolve.obj
 
@@ -125,6 +125,8 @@ aatriangle.obj : aatriangle.c
 triangle.obj : triangle.c
 
 pixeltex.obj : pixeltex.c
+
+imports.obj : imports.c
 
 [.x86]x86.obj : [.x86]x86.c
 	$(CC) $(CFLAGS) /obj=[.x86]x86.obj [.x86]x86.c
