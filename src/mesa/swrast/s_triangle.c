@@ -1051,7 +1051,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram.Enabled) {
+      if (ctx->Texture._EnabledCoordUnits) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
 	 const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
