@@ -804,7 +804,7 @@ int drmSetBusid(int fd, const char *busid)
     return 0;
 }
 
-int drmGetMagic(int fd, drmMagicPtr magic)
+int drmGetMagic(int fd, drm_magic_t * magic)
 {
     drm_auth_t auth;
 
@@ -814,7 +814,7 @@ int drmGetMagic(int fd, drmMagicPtr magic)
     return 0;
 }
 
-int drmAuthMagic(int fd, drmMagic magic)
+int drmAuthMagic(int fd, drm_magic_t magic)
 {
     drm_auth_t auth;
 
@@ -874,11 +874,11 @@ int drmAuthMagic(int fd, drmMagic magic)
  * the arguments in a drm_map structure.
  */
 int drmAddMap(int fd,
-	      drmHandle offset,
+	      drm_handle_t offset,
 	      drmSize size,
 	      drmMapType type,
 	      drmMapFlags flags,
-	      drmHandlePtr handle)
+	      drm_handle_t * handle)
 {
     drm_map_t map;
 
@@ -894,11 +894,11 @@ int drmAddMap(int fd,
     map.type    = type;
     map.flags   = flags;
     if (ioctl(fd, DRM_IOCTL_ADD_MAP, &map)) return -errno;
-    if (handle) *handle = (drmHandle)map.handle;
+    if (handle) *handle = (drm_handle_t)map.handle;
     return 0;
 }
 
-int drmRmMap(int fd, drmHandle handle)
+int drmRmMap(int fd, drm_handle_t handle)
 {
     drm_map_t map;
 
@@ -1041,7 +1041,7 @@ int drmClose(int fd)
  * This function is a wrapper for mmap().
  */
 int drmMap(int fd,
-	   drmHandle handle,
+	   drm_handle_t handle,
 	   drmSize size,
 	   drmAddressPtr address)
 {
@@ -1135,9 +1135,11 @@ drmBufMapPtr drmMapBufs(int fd)
 
     bufs.count = 0;
     bufs.list  = NULL;
+    bufs.virtual = NULL;
     if (ioctl(fd, DRM_IOCTL_MAP_BUFS, &bufs)) return NULL;
 
-    if (bufs.count) {
+    if (!bufs.count) return NULL;
+
 	if (!(bufs.list = drmMalloc(bufs.count * sizeof(*bufs.list))))
 	    return NULL;
 
@@ -1156,9 +1158,10 @@ drmBufMapPtr drmMapBufs(int fd)
 	    retval->list[i].used    = 0;
 	    retval->list[i].address = bufs.list[i].address;
 	}
+
+	drmFree(bufs.list);
+	
 	return retval;
-    }
-    return NULL;
 }
 
 
@@ -1168,7 +1171,8 @@ drmBufMapPtr drmMapBufs(int fd)
  * \return zero on success, or negative value on failure.
  *
  * \internal
- * Calls munmap() for every buffer stored in \p bufs.
+ * Calls munmap() for every buffer stored in \p bufs and frees the
+ * memory allocated by drmMapBufs().
  */
 int drmUnmapBufs(drmBufMapPtr bufs)
 {
@@ -1177,6 +1181,10 @@ int drmUnmapBufs(drmBufMapPtr bufs)
     for (i = 0; i < bufs->count; i++) {
 	munmap(bufs->list[i].address, bufs->list[i].total);
     }
+
+    drmFree(bufs->list);
+    drmFree(bufs);
+	
     return 0;
 }
 
@@ -1210,6 +1218,7 @@ int drmDMA(int fd, drmDMAReqPtr request)
     dma.request_size    = request->request_size;
     dma.request_indices = request->request_list;
     dma.request_sizes   = request->request_sizes;
+    dma.granted_count   = 0;
 
     do {
 	ret = ioctl( fd, DRM_IOCTL_DMA, &dma );
@@ -1238,7 +1247,7 @@ int drmDMA(int fd, drmDMAReqPtr request)
  * This function translates the arguments into a drm_lock structure and issue
  * the DRM_IOCTL_LOCK ioctl until the lock is successfully acquired.
  */
-int drmGetLock(int fd, drmContext context, drmLockFlags flags)
+int drmGetLock(int fd, drm_context_t context, drmLockFlags flags)
 {
     drm_lock_t lock;
 
@@ -1268,7 +1277,7 @@ int drmGetLock(int fd, drmContext context, drmLockFlags flags)
  * This function is a wrapper around the DRM_IOCTL_UNLOCK ioctl, passing the
  * argument in a drm_lock structure.
  */
-int drmUnlock(int fd, drmContext context)
+int drmUnlock(int fd, drm_context_t context)
 {
     drm_lock_t lock;
 
@@ -1277,11 +1286,11 @@ int drmUnlock(int fd, drmContext context)
     return ioctl(fd, DRM_IOCTL_UNLOCK, &lock);
 }
 
-drmContextPtr drmGetReservedContextList(int fd, int *count)
+drm_context_t * drmGetReservedContextList(int fd, int *count)
 {
     drm_ctx_res_t res;
     drm_ctx_t     *list;
-    drmContextPtr retval;
+    drm_context_t * retval;
     int           i;
 
     res.count    = 0;
@@ -1306,7 +1315,7 @@ drmContextPtr drmGetReservedContextList(int fd, int *count)
     return retval;
 }
 
-void drmFreeReservedContextList(drmContextPtr pt)
+void drmFreeReservedContextList(drm_context_t * pt)
 {
     drmFree(pt);
 }
@@ -1329,7 +1338,7 @@ void drmFreeReservedContextList(drmContextPtr pt)
  * This function is a wrapper around the DRM_IOCTL_ADD_CTX ioctl, passing the
  * argument in a drm_ctx structure.
  */
-int drmCreateContext(int fd, drmContextPtr handle)
+int drmCreateContext(int fd, drm_context_t * handle)
 {
     drm_ctx_t ctx;
 
@@ -1339,7 +1348,7 @@ int drmCreateContext(int fd, drmContextPtr handle)
     return 0;
 }
 
-int drmSwitchToContext(int fd, drmContext context)
+int drmSwitchToContext(int fd, drm_context_t context)
 {
     drm_ctx_t ctx;
 
@@ -1348,7 +1357,7 @@ int drmSwitchToContext(int fd, drmContext context)
     return 0;
 }
 
-int drmSetContextFlags(int fd, drmContext context, drmContextFlags flags)
+int drmSetContextFlags(int fd, drm_context_t context, drm_context_tFlags flags)
 {
     drm_ctx_t ctx;
 
@@ -1368,7 +1377,7 @@ int drmSetContextFlags(int fd, drmContext context, drmContextFlags flags)
     return 0;
 }
 
-int drmGetContextFlags(int fd, drmContext context, drmContextFlagsPtr flags)
+int drmGetContextFlags(int fd, drm_context_t context, drm_context_tFlagsPtr flags)
 {
     drm_ctx_t ctx;
 
@@ -1397,7 +1406,7 @@ int drmGetContextFlags(int fd, drmContext context, drmContextFlagsPtr flags)
  * This function is a wrapper around the DRM_IOCTL_RM_CTX ioctl, passing the
  * argument in a drm_ctx structure.
  */
-int drmDestroyContext(int fd, drmContext handle)
+int drmDestroyContext(int fd, drm_context_t handle)
 {
     drm_ctx_t ctx;
     ctx.handle = handle;
@@ -1405,7 +1414,7 @@ int drmDestroyContext(int fd, drmContext handle)
     return 0;
 }
 
-int drmCreateDrawable(int fd, drmDrawablePtr handle)
+int drmCreateDrawable(int fd, drm_drawable_t * handle)
 {
     drm_draw_t draw;
     if (ioctl(fd, DRM_IOCTL_ADD_DRAW, &draw)) return -errno;
@@ -1413,7 +1422,7 @@ int drmCreateDrawable(int fd, drmDrawablePtr handle)
     return 0;
 }
 
-int drmDestroyDrawable(int fd, drmDrawable handle)
+int drmDestroyDrawable(int fd, drm_drawable_t handle)
 {
     drm_draw_t draw;
     draw.handle = handle;
@@ -1906,7 +1915,7 @@ int drmGetInterruptFromBusID(int fd, int busnum, int devnum, int funcnum)
     return p.irq;
 }
 
-int drmAddContextTag(int fd, drmContext context, void *tag)
+int drmAddContextTag(int fd, drm_context_t context, void *tag)
 {
     drmHashEntry  *entry = drmGetEntry(fd);
 
@@ -1917,14 +1926,14 @@ int drmAddContextTag(int fd, drmContext context, void *tag)
     return 0;
 }
 
-int drmDelContextTag(int fd, drmContext context)
+int drmDelContextTag(int fd, drm_context_t context)
 {
     drmHashEntry  *entry = drmGetEntry(fd);
 
     return drmHashDelete(entry->tagTable, context);
 }
 
-void *drmGetContextTag(int fd, drmContext context)
+void *drmGetContextTag(int fd, drm_context_t context)
 {
     drmHashEntry  *entry = drmGetEntry(fd);
     void          *value;
@@ -1934,7 +1943,7 @@ void *drmGetContextTag(int fd, drmContext context)
     return value;
 }
 
-int drmAddContextPrivateMapping(int fd, drmContext ctx_id, drmHandle handle)
+int drmAddContextPrivateMapping(int fd, drm_context_t ctx_id, drm_handle_t handle)
 {
     drm_ctx_priv_map_t map;
 
@@ -1945,20 +1954,20 @@ int drmAddContextPrivateMapping(int fd, drmContext ctx_id, drmHandle handle)
     return 0;
 }
 
-int drmGetContextPrivateMapping(int fd, drmContext ctx_id, drmHandlePtr handle)
+int drmGetContextPrivateMapping(int fd, drm_context_t ctx_id, drm_handle_t * handle)
 {
     drm_ctx_priv_map_t map;
 
     map.ctx_id = ctx_id;
 
     if (ioctl(fd, DRM_IOCTL_GET_SAREA_CTX, &map)) return -errno;
-    if (handle) *handle = (drmHandle)map.handle;
+    if (handle) *handle = (drm_handle_t)map.handle;
 
     return 0;
 }
 
-int drmGetMap(int fd, int idx, drmHandle *offset, drmSize *size,
-	      drmMapType *type, drmMapFlags *flags, drmHandle *handle,
+int drmGetMap(int fd, int idx, drm_handle_t *offset, drmSize *size,
+	      drmMapType *type, drmMapFlags *flags, drm_handle_t *handle,
 	      int *mtrr)
 {
     drm_map_t map;
@@ -2268,8 +2277,8 @@ static void drmSIGIOHandler(int interrupt, void *closure)
     drm_ctx_t     ctx;
     typedef void  (*_drmCallback)(int, void *, void *);
     char          buf[256];
-    drmContext    old;
-    drmContext    new;
+    drm_context_t    old;
+    drm_context_t    new;
     void          *oldctx;
     void          *newctx;
     char          *pt;

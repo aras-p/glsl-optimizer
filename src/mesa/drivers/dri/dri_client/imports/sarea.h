@@ -88,7 +88,7 @@ typedef struct _XF86DRISAREA {
     drmLock			drawable_lock;
     XF86DRISAREADrawableRec	drawableTable[SAREA_MAX_DRAWABLES];
     XF86DRISAREAFrameRec        frame;
-    drmContext			dummy_context;
+    drm_context_t			dummy_context;
 } XF86DRISAREARec, *XF86DRISAREAPtr;
 
 #endif

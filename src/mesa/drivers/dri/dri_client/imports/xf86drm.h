@@ -36,6 +36,8 @@
 #ifndef _XF86DRM_H_
 #define _XF86DRM_H_
 
+#include <drm.h>
+
 				/* Defaults, if nothing set in xf86config */
 #define DRM_DEV_UID	 0
 #define DRM_DEV_GID	 0
@@ -56,12 +58,8 @@
 
 #define DRM_AGP_NO_HANDLE 0
 
-typedef unsigned long drmHandle,   *drmHandlePtr;   /**< To mapped regions */
 typedef unsigned int  drmSize,     *drmSizePtr;	    /**< For mapped regions */
 typedef void          *drmAddress, **drmAddressPtr; /**< For mapped regions */
-typedef unsigned int  drmContext,  *drmContextPtr;  /**< GLXContext handle */
-typedef unsigned int  drmDrawable, *drmDrawablePtr; /**< Unused */
-typedef unsigned int  drmMagic,    *drmMagicPtr;    /**< Magic for authentication */
 
 /**
  * Driver version information.
@@ -168,7 +166,7 @@ typedef enum {
     DRM_CONTEXT_PRESERVED = 0x01, /**< This context is preserved and
 				     never swapped. */
     DRM_CONTEXT_2DONLY    = 0x02  /**< This context is for 2D rendering only. */
-} drmContextFlags, *drmContextFlagsPtr;
+} drm_context_tFlags, *drm_context_tFlagsPtr;
 
 typedef struct _drmBufDesc {
     int              count;	  /**< Number of buffers of this size */
@@ -221,7 +219,7 @@ typedef struct _drmLock {
  * list in drmBufInfo
  */
 typedef struct _drmDMAReq {
-    drmContext    context;  	  /**< Context handle */
+    drm_context_t    context;  	  /**< Context handle */
     int           send_count;     /**< Number of buffers to send */
     int           *send_list;     /**< List of handles to buffers */
     int           *send_sizes;    /**< Lengths of data to send, in bytes */
@@ -234,7 +232,7 @@ typedef struct _drmDMAReq {
 } drmDMAReq, *drmDMAReqPtr;
 
 typedef struct _drmRegion {
-    drmHandle     handle;
+    drm_handle_t     handle;
     unsigned int  offset;
     drmSize       size;
     drmAddress    map;
@@ -247,14 +245,6 @@ typedef struct _drmTextureRegion {
     unsigned char padding;	/**< Explicitly pad this out */
     unsigned int  age;
 } drmTextureRegion, *drmTextureRegionPtr;
-
-
-typedef struct _drmClipRect {
-    unsigned short	x1; /* Upper left: inclusive */
-    unsigned short	y1;
-    unsigned short	x2; /* Lower right: exclusive */
-    unsigned short	y2;
-} drmClipRect, *drmClipRectPtr;
 
 
 typedef enum {
@@ -499,13 +489,13 @@ extern int           drmClose(int fd);
 extern drmVersionPtr drmGetVersion(int fd);
 extern drmVersionPtr drmGetLibVersion(int fd);
 extern void          drmFreeVersion(drmVersionPtr);
-extern int           drmGetMagic(int fd, drmMagicPtr magic);
+extern int           drmGetMagic(int fd, drm_magic_t * magic);
 extern char          *drmGetBusid(int fd);
 extern int           drmGetInterruptFromBusID(int fd, int busnum, int devnum,
 					      int funcnum);
-extern int           drmGetMap(int fd, int idx, drmHandle *offset,
+extern int           drmGetMap(int fd, int idx, drm_handle_t *offset,
 			       drmSize *size, drmMapType *type,
-			       drmMapFlags *flags, drmHandle *handle,
+			       drmMapFlags *flags, drm_handle_t *handle,
 			       int *mtrr);
 extern int           drmGetClient(int fd, int idx, int *auth, int *pid,
 				  int *uid, unsigned long *magic,
@@ -523,35 +513,35 @@ extern int           drmCommandWriteRead(int fd, unsigned long drmCommandIndex,
 /* General user-level programmer's API: X server (root) only  */
 extern void          drmFreeBusid(const char *busid);
 extern int           drmSetBusid(int fd, const char *busid);
-extern int           drmAuthMagic(int fd, drmMagic magic);
+extern int           drmAuthMagic(int fd, drm_magic_t magic);
 extern int           drmAddMap(int fd,
-			       drmHandle offset,
+			       drm_handle_t offset,
 			       drmSize size,
 			       drmMapType type,
 			       drmMapFlags flags,
-			       drmHandlePtr handle);
-extern int	     drmRmMap(int fd, drmHandle handle);
-extern int	     drmAddContextPrivateMapping(int fd, drmContext ctx_id,
-						 drmHandle handle);
+			       drm_handle_t * handle);
+extern int	     drmRmMap(int fd, drm_handle_t handle);
+extern int	     drmAddContextPrivateMapping(int fd, drm_context_t ctx_id,
+						 drm_handle_t handle);
 
 extern int           drmAddBufs(int fd, int count, int size,
 				drmBufDescFlags flags,
 				int agp_offset);
 extern int           drmMarkBufs(int fd, double low, double high);
-extern int           drmCreateContext(int fd, drmContextPtr handle);
-extern int           drmSetContextFlags(int fd, drmContext context,
-					drmContextFlags flags);
-extern int           drmGetContextFlags(int fd, drmContext context,
-					drmContextFlagsPtr flags);
-extern int           drmAddContextTag(int fd, drmContext context, void *tag);
-extern int           drmDelContextTag(int fd, drmContext context);
-extern void          *drmGetContextTag(int fd, drmContext context);
-extern drmContextPtr drmGetReservedContextList(int fd, int *count);
-extern void          drmFreeReservedContextList(drmContextPtr);
-extern int           drmSwitchToContext(int fd, drmContext context);
-extern int           drmDestroyContext(int fd, drmContext handle);
-extern int           drmCreateDrawable(int fd, drmDrawablePtr handle);
-extern int           drmDestroyDrawable(int fd, drmDrawable handle);
+extern int           drmCreateContext(int fd, drm_context_t * handle);
+extern int           drmSetContextFlags(int fd, drm_context_t context,
+					drm_context_tFlags flags);
+extern int           drmGetContextFlags(int fd, drm_context_t context,
+					drm_context_tFlagsPtr flags);
+extern int           drmAddContextTag(int fd, drm_context_t context, void *tag);
+extern int           drmDelContextTag(int fd, drm_context_t context);
+extern void          *drmGetContextTag(int fd, drm_context_t context);
+extern drm_context_t * drmGetReservedContextList(int fd, int *count);
+extern void          drmFreeReservedContextList(drm_context_t *);
+extern int           drmSwitchToContext(int fd, drm_context_t context);
+extern int           drmDestroyContext(int fd, drm_context_t handle);
+extern int           drmCreateDrawable(int fd, drm_drawable_t * handle);
+extern int           drmDestroyDrawable(int fd, drm_drawable_t handle);
 extern int           drmCtlInstHandler(int fd, int irq);
 extern int           drmCtlUninstHandler(int fd);
 extern int           drmInstallSIGIOHandler(int fd,
@@ -562,7 +552,7 @@ extern int           drmRemoveSIGIOHandler(int fd);
 
 /* General user-level programmer's API: authenticated client and/or X */
 extern int           drmMap(int fd,
-			    drmHandle handle,
+			    drm_handle_t handle,
 			    drmSize size,
 			    drmAddressPtr address);
 extern int           drmUnmap(drmAddress address, drmSize size);
@@ -572,12 +562,12 @@ extern int           drmUnmapBufs(drmBufMapPtr bufs);
 extern int           drmDMA(int fd, drmDMAReqPtr request);
 extern int           drmFreeBufs(int fd, int count, int *list);
 extern int           drmGetLock(int fd,
-			        drmContext context,
+			        drm_context_t context,
 			        drmLockFlags flags);
-extern int           drmUnlock(int fd, drmContext context);
+extern int           drmUnlock(int fd, drm_context_t context);
 extern int           drmFinish(int fd, int context, drmLockFlags flags);
-extern int	     drmGetContextPrivateMapping(int fd, drmContext ctx_id, 
-						 drmHandlePtr handle);
+extern int	     drmGetContextPrivateMapping(int fd, drm_context_t ctx_id, 
+						 drm_handle_t * handle);
 
 /* AGP/GART support: X server (root) only */
 extern int           drmAgpAcquire(int fd);
