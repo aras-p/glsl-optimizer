@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  * 
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,7 @@
 #include <X11/keysym.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 
@@ -247,6 +248,7 @@ Init(void)
 		    GLX_BLUE_SIZE, 1,
 		    GLX_DOUBLEBUFFER,
 		    None };
+   int major, minor;
 
    Dpy = XOpenDisplay(NULL);
    if (!Dpy) {
@@ -255,6 +257,12 @@ Init(void)
    }
 
    ScrNum = DefaultScreen(Dpy);
+
+   glXQueryVersion(Dpy, &major, &minor);
+   if (major * 100 + minor < 103) {
+      fprintf(stderr, "Sorry, this program requires GLX 1.3\n");
+      exit(1);
+   }
 
    visinfo = glXChooseVisual(Dpy, ScrNum, attrib);
    if (!visinfo) {
