@@ -92,7 +92,8 @@ static const GLuint __driNConfigOptions = 14;
 #define PCI_CHIP_R200_QG	0x5147
 #define PCI_CHIP_R200_QY	0x5159
 #define PCI_CHIP_R200_QZ	0x515A
-#define PCI_CHIP_R200_LW	0x4C57 
+#define PCI_CHIP_R200_LW	0x4C57
+#define PCI_CHIP_R200_LX	0x4C58
 #define PCI_CHIP_R200_LY	0x4C59
 #define PCI_CHIP_R200_LZ	0x4C5A
 #define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
@@ -117,8 +118,14 @@ static const GLuint __driNConfigOptions = 14;
 #define PCI_CHIP_R200_QM        0x514D
 #define PCI_CHIP_R200_QN        0x514E
 #define PCI_CHIP_R200_QO        0x514F /* r200 (non-derived) end */
-/* are the R200 Qh (0x5168) and following needed too? They are not in xf86PciInfo.h
-   but in the pci database. Maybe just secondary ports or something ? */
+/* are the R200 Qh (0x5168) and following needed too? They are not in
+   xf86PciInfo.h but in the pci database. Maybe just secondary ports or
+   something ? Ah well, better be safe than sorry */
+#define PCI_CHIP_R200_Qh        0x5168
+#define PCI_CHIP_R200_Qi        0x5169
+#define PCI_CHIP_R200_Qj        0x516A
+#define PCI_CHIP_R200_Qk        0x516B
+#define PCI_CHIP_R200_Ql        0x516C
 
 #endif
 
@@ -242,6 +249,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV200_QW:
    case PCI_CHIP_RV200_QX:
    case PCI_CHIP_R200_LW:
+   case PCI_CHIP_R200_LX:
    case PCI_CHIP_R200_LY:
    case PCI_CHIP_R200_LZ:
    case PCI_CHIP_RS100_4136:
@@ -270,6 +278,11 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R200_QM:
    case PCI_CHIP_R200_QN:
    case PCI_CHIP_R200_QO:
+   case PCI_CHIP_R200_Qh:
+   case PCI_CHIP_R200_Qi:
+   case PCI_CHIP_R200_Qj:
+   case PCI_CHIP_R200_Qk:
+   case PCI_CHIP_R200_Ql:
       screen->chipset |= R200_CHIPSET_REAL_R200;
    /* fallthrough */
    default:

@@ -88,11 +88,14 @@ static const GLuint __driNConfigOptions = 11;
 #define PCI_CHIP_RADEON_QZ	0x515A
 
 #define PCI_CHIP_RADEON_LW	0x4C57 /* mobility 7 - has tcl */
+#define PCI_CHIP_RADEON_LX	0x4C58 /* mobility FireGL 7800 m7 */
 
 #define PCI_CHIP_RADEON_LY	0x4C59
 #define PCI_CHIP_RADEON_LZ	0x4C5A
 
 #define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
+#define PCI_CHIP_RV200_QX	0x5158
+
 /* IGP Chipsets */
 #define PCI_CHIP_RS100_4136     0x4136
 #define PCI_CHIP_RS200_4137     0x4137
@@ -310,7 +313,9 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RADEON_QF:
    case PCI_CHIP_RADEON_QG:
    case PCI_CHIP_RV200_QW:
+   case PCI_CHIP_RV200_QX:
    case PCI_CHIP_RADEON_LW:
+   case PCI_CHIP_RADEON_LX:
       screen->chipset |= RADEON_CHIPSET_TCL;
    case PCI_CHIP_RADEON_QY:
    case PCI_CHIP_RADEON_QZ:
