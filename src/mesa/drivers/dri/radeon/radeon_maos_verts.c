@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 
 #include "array_cache/acache.h"
+#include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 

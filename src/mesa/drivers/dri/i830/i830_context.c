@@ -245,7 +245,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 	    12,
 	    I830_NR_TEX_REGIONS,
 	    imesa->sarea->texList,
-	    & imesa->sarea->texAge,
+	    (unsigned) & imesa->sarea->texAge, /* XXX shouldn't need cast! */
 	    & imesa->swapped,
 	    sizeof( struct i830_texture_object_t ),
 	    (destroy_texture_object_t *) i830DestroyTexObj );
@@ -415,7 +415,7 @@ void i830DestroyContext(__DRIcontextPrivate *driContextPriv)
 	 assert( is_empty_list( & imesa->swapped ) );
       }
 
-      Xfree (imesa);
+      FREE(imesa);
    }
 }
 

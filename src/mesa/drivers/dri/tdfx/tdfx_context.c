@@ -495,7 +495,7 @@ tdfxDestroyContext( __DRIcontextPrivate *driContextPriv )
       _mesa_destroy_context(fxMesa->glCtx);
 
       /* free the tdfx context */
-      XFree( fxMesa );
+      FREE( fxMesa );
    }
 }
 
