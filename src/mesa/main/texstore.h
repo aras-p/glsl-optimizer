@@ -1,4 +1,4 @@
-/* $Id: texstore.h,v 1.4 2001/03/21 01:08:37 brianp Exp $ */
+/* $Id: texstore.h,v 1.5 2001/03/21 16:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 
 extern void
 _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
-                        GLenum texFormat, GLvoid *texDestAddr,
+                        GLenum texDestFormat, GLvoid *texDestAddr,
                         GLint srcWidth, GLint srcHeight, GLint srcDepth,
                         GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
                         GLint dstRowStride, GLint dstImageStride,

@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.17 2001/03/21 01:08:37 brianp Exp $ */
+/* $Id: texstore.c,v 1.18 2001/03/21 16:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,7 +156,7 @@ components_in_intformat( GLint format )
  */
 void
 _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
-                        GLenum texFormat, GLvoid *texDestAddr,
+                        GLenum texDestFormat, GLvoid *texDestAddr,
                         GLint srcWidth, GLint srcHeight, GLint srcDepth,
                         GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
                         GLint dstRowStride, GLint dstImageStride,
@@ -180,12 +180,12 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    ASSERT(srcAddr);
    ASSERT(srcPacking);
 
-   texComponents = components_in_intformat(texFormat);
+   texComponents = components_in_intformat(texDestFormat);
 
    /* try common 2D texture cases first */
    if (!ctx->_ImageTransferState && dimensions == 2 && srcType == CHAN_TYPE) {
 
-      if (srcFormat == texFormat) {
+      if (srcFormat == texDestFormat) {
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
           * GL_LUMINANCE_ALPHA, etc. texture formats.  Use memcpy().
           */
@@ -210,7 +210,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
          }
          return;  /* all done */
       }
-      else if (srcFormat == GL_RGBA && texFormat == GL_RGB) {
+      else if (srcFormat == GL_RGBA && texDestFormat == GL_RGB) {
          /* commonly used by Quake */
          const GLchan *src = (const GLchan *) _mesa_image_address(
                                    srcPacking, srcAddr, srcWidth, srcHeight,
@@ -239,7 +239,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    /*
     * General case solutions
     */
-   if (texFormat == GL_COLOR_INDEX) {
+   if (texDestFormat == GL_COLOR_INDEX) {
       /* color index texture */
       const GLenum texType = CHAN_TYPE;
       GLint img, row;
@@ -259,7 +259,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
          dest += dstImageStride;
       }
    }
-   else if (texFormat == GL_DEPTH_COMPONENT) {
+   else if (texDestFormat == GL_DEPTH_COMPONENT) {
       /* Depth texture (shadow maps) */
       GLint img, row;
       GLubyte *dest = (GLubyte *) texDestAddr
@@ -342,7 +342,7 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_float_rgba_span(ctx, convWidth,
                                           (const GLfloat (*)[4]) srcf,
-                                          texFormat, CHAN_TYPE,
+                                          texDestFormat, CHAN_TYPE,
                                           dest, &_mesa_native_packing,
                                           ctx->_ImageTransferState
                                           & IMAGE_POST_CONVOLUTION_BITS);
@@ -368,9 +368,9 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                const GLvoid *srcRow = _mesa_image_address(srcPacking,
                                               srcAddr, srcWidth, srcHeight,
                                               srcFormat, srcType, img, row, 0);
-               _mesa_unpack_chan_color_span(ctx, srcWidth, texFormat, destRow,
-                                       srcFormat, srcType, srcRow, srcPacking,
-                                       ctx->_ImageTransferState);
+               _mesa_unpack_chan_color_span(ctx, srcWidth, texDestFormat,
+                                       destRow, srcFormat, srcType, srcRow,
+                                       srcPacking, ctx->_ImageTransferState);
                destRow += dstRowStride;
             }
             dest += dstImageStride;

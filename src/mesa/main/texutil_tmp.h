@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.4 2001/03/20 10:18:13 joukj Exp $ */
+/* $Id: texutil_tmp.h,v 1.5 2001/03/21 16:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,20 +37,20 @@
 
 #define DST_TEXEL_BYTES		(4 / DST_TEXELS_PER_DWORD)
 #define DST_ROW_WIDTH		(convert->width * DST_TEXEL_BYTES)
-#define DST_ROW_STRIDE		(convert->imageWidth * DST_TEXEL_BYTES)
-#define DST_IMG_STRIDE		(convert->imageWidth *			\
-				 convert->imageHeight * DST_TEXEL_BYTES)
+#define DST_ROW_STRIDE		(convert->dstImageWidth * DST_TEXEL_BYTES)
+#define DST_IMG_STRIDE		(convert->dstImageWidth *		\
+				 convert->dstImageHeight * DST_TEXEL_BYTES)
 
 
 /* ================================================================
- * PRE: No pixelstore attribs, width == imageWidth.
+ * PRE: No pixelstore attribs, width == dstImageWidth.
  */
 static GLboolean
 TAG(texsubimage2d)( struct gl_texture_convert *convert )
 {
    const GLubyte *src = (const GLubyte *)convert->srcImage;
    GLuint *dst = (GLuint *)((GLubyte *)convert->dstImage +
-			    (convert->yoffset * convert->imageWidth +
+			    (convert->yoffset * convert->dstImageWidth +
 			     convert->xoffset) * DST_TEXEL_BYTES);
    GLint dwords, i;
    (void) dwords; (void) i;
@@ -73,7 +73,7 @@ TAG(texsubimage2d)( struct gl_texture_convert *convert )
    return GL_TRUE;
 }
 
-/* PRE: As above, height == imageHeight also.
+/* PRE: As above, height == dstImageHeight also.
  */
 static GLboolean
 TAG(texsubimage3d)( struct gl_texture_convert *convert )
@@ -107,25 +107,25 @@ TAG(texsubimage3d)( struct gl_texture_convert *convert )
 
 
 /* ================================================================
- * PRE: No pixelstore attribs, width != imageWidth.
+ * PRE: No pixelstore attribs, width != dstImageWidth.
  */
 static GLboolean
 TAG(texsubimage2d_stride)( struct gl_texture_convert *convert )
 {
    const GLubyte *src = (const GLubyte *)convert->srcImage;
    DST_TYPE *dst = (DST_TYPE *)((GLubyte *)convert->dstImage +
-				(convert->yoffset * convert->imageWidth +
+				(convert->yoffset * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
    GLint row, col;
 
-   adjust = convert->imageWidth - convert->width;
+   adjust = convert->dstImageWidth - convert->width;
 
    if ( DBG ) {
       fprintf( stderr, __FUNCTION__ ":\n" );
       fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
 	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->imageWidth );
+	       convert->height, convert->dstImageWidth );
       fprintf( stderr, "   adjust=%d\n", adjust );
    }
 
@@ -140,26 +140,26 @@ TAG(texsubimage2d_stride)( struct gl_texture_convert *convert )
    return GL_TRUE;
 }
 
-/* PRE: As above, or height != imageHeight also.
+/* PRE: As above, or height != dstImageHeight also.
  */
 static GLboolean
 TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
 {
    const GLubyte *src = (const GLubyte *)convert->srcImage;
    DST_TYPE *dst = (DST_TYPE *)((GLubyte *)convert->dstImage +
-				((convert->zoffset * convert->imageHeight +
-				  convert->yoffset) * convert->imageWidth +
+				((convert->zoffset * convert->dstImageHeight +
+				  convert->yoffset) * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
    GLint row, col, img;
 
-   adjust = convert->imageWidth - convert->width;
+   adjust = convert->dstImageWidth - convert->width;
 
    if ( DBG ) {
       fprintf( stderr, __FUNCTION__ ":\n" );
       fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
 	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->imageWidth );
+	       convert->height, convert->dstImageWidth );
       fprintf( stderr, "   adjust=%d\n", adjust );
    }
 
@@ -180,7 +180,7 @@ TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
 
 
 /* ================================================================
- * PRE: Require pixelstore attribs, width == imageWidth.
+ * PRE: Require pixelstore attribs, width == dstImageWidth.
  */
 static GLboolean
 TAG(texsubimage2d_pack)( struct gl_texture_convert *convert )
@@ -223,7 +223,7 @@ TAG(texsubimage2d_pack)( struct gl_texture_convert *convert )
    return GL_TRUE;
 }
 
-/* PRE: as above, height == imageHeight also.
+/* PRE: as above, height == dstImageHeight also.
  */
 static GLboolean
 TAG(texsubimage3d_pack)( struct gl_texture_convert *convert )
@@ -272,7 +272,7 @@ TAG(texsubimage3d_pack)( struct gl_texture_convert *convert )
 
 
 /* ================================================================
- * PRE: Require pixelstore attribs, width != imageWidth.
+ * PRE: Require pixelstore attribs, width != dstImageWidth.
  */
 static GLboolean
 TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
@@ -285,19 +285,19 @@ TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
       _mesa_image_row_stride( convert->packing, convert->width,
 			      convert->format, convert->type );
    DST_TYPE *dst = (DST_TYPE *)((GLubyte *)convert->dstImage +
-				(convert->yoffset * convert->imageWidth +
+				(convert->yoffset * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
    GLint row, col;
    (void) col;
 
-   adjust = convert->imageWidth - convert->width;
+   adjust = convert->dstImageWidth - convert->width;
 
    if ( DBG ) {
       fprintf( stderr, __FUNCTION__ ":\n" );
       fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
 	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->imageWidth );
+	       convert->height, convert->dstImageWidth );
       fprintf( stderr, "   adjust=%d\n", adjust );
    }
 
@@ -305,7 +305,7 @@ TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
 #ifdef CONVERT_DIRECT
       MEMCPY( dst, src, DST_ROW_WIDTH );
       src += srcRowStride;
-      dst += convert->imageWidth;
+      dst += convert->dstImageWidth;
 #else
       const GLubyte *srcRow = src;
       for ( col = 0 ; col < convert->width ; col++ ) {
@@ -320,7 +320,7 @@ TAG(texsubimage2d_stride_pack)( struct gl_texture_convert *convert )
    return GL_TRUE;
 }
 
-/* PRE: As above, or height != imageHeight also.
+/* PRE: As above, or height != dstImageHeight also.
  */
 static GLboolean
 TAG(texsubimage3d_stride_pack)( struct gl_texture_convert *convert )
@@ -333,20 +333,20 @@ TAG(texsubimage3d_stride_pack)( struct gl_texture_convert *convert )
       _mesa_image_row_stride( convert->packing, convert->width,
 			      convert->format, convert->type );
    DST_TYPE *dst = (DST_TYPE *)((GLubyte *)convert->dstImage +
-				((convert->zoffset * convert->imageHeight +
-				  convert->yoffset) * convert->imageWidth +
+				((convert->zoffset * convert->dstImageHeight +
+				  convert->yoffset) * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
    GLint row, col, img;
    (void) col;
 
-   adjust = convert->imageWidth - convert->width;
+   adjust = convert->dstImageWidth - convert->width;
 
    if ( DBG ) {
       fprintf( stderr, __FUNCTION__ ":\n" );
       fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
 	       convert->xoffset, convert->yoffset, convert->width,
-	       convert->height, convert->imageWidth );
+	       convert->height, convert->dstImageWidth );
       fprintf( stderr, "   adjust=%d\n", adjust );
    }
 
@@ -355,7 +355,7 @@ TAG(texsubimage3d_stride_pack)( struct gl_texture_convert *convert )
 #ifdef CONVERT_DIRECT
 	 MEMCPY( dst, src, DST_ROW_WIDTH );
 	 src += srcRowStride;
-	 dst += convert->imageWidth;
+	 dst += convert->dstImageWidth;
 #else
 	 const GLubyte *srcRow = src;
 	 for ( col = 0 ; col < convert->width ; col++ ) {

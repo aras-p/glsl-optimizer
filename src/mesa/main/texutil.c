@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.16 2001/03/18 13:40:58 gareth Exp $ */
+/* $Id: texutil.c,v 1.17 2001/03/21 16:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,8 +48,9 @@ struct gl_texture_convert {
    GLint xoffset, yoffset, zoffset;	/* Subimage offset */
    GLint width, height, depth;		/* Subimage region */
 
-   GLint imageWidth, imageHeight;	/* Full image dimensions */
-   GLenum format, type;
+   GLint dstImageWidth, dstImageHeight;	/* Dest image size */
+                                        /* Needed for subimage replacement */
+   GLenum format, type;                 /* Source (user) format and type */
 
    const struct gl_pixelstore_attrib *packing;
 
@@ -701,11 +702,38 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
    return gl_convert_texsubimage2d_tab[mesaFormat]( &convert );
 }
 
+
+/*
+ * Convert a user's 2D image into a texture image.  This basically repacks
+ * pixel data into the special texture formats used by core Mesa and the DRI
+ * drivers.  This function can do full images or subimages.
+ *
+ * We return a boolean because this function may not accept some kinds of
+ * source image formats and/or types.  For example, if the incoming
+ * format/type = GL_BGR, GL_UNSIGNED_INT this function probably won't
+ * be able to do the conversion.
+ *
+ * In that case, the incoming image should first be simplified to one of
+ * the "canonical" formats (GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
+ * GL_INTENSITY, GL_RGB, GL_RGBA) and types (GL_CHAN).  We can do that
+ * with the _mesa_transfer_teximage() function.  That function will also
+ * do image transfer operations such as scale/bias and convolution.
+ *
+ * Input:
+ *   mesaFormat - one of the MESA_FORMAT_* values from texformat.h
+ *   xoffset, yoffset - position in dest image to put data
+ *   width, height - incoming image size, also size of dest region.
+ *   dstImageWidth - width (row stride) of dest image in pixels
+ *   format, type - incoming image format and type
+ *   packing - describes incoming image packing
+ *   srcImage - pointer to source image
+ *   destImage - pointer to dest image
+ */
 GLboolean
 _mesa_convert_texsubimage2d( GLint mesaFormat,
 			     GLint xoffset, GLint yoffset,
 			     GLint width, GLint height,
-			     GLint imageWidth,
+			     GLint destImageWidth,
 			     GLenum format, GLenum type,
 			     const struct gl_pixelstore_attrib *packing,
 			     const GLvoid *srcImage, GLvoid *dstImage )
@@ -725,7 +753,7 @@ _mesa_convert_texsubimage2d( GLint mesaFormat,
    convert.yoffset = yoffset;
    convert.width = width;
    convert.height = height;
-   convert.imageWidth = imageWidth;
+   convert.dstImageWidth = destImageWidth;
    convert.format = format;
    convert.type = type;
    convert.packing = packing;
@@ -737,7 +765,7 @@ _mesa_convert_texsubimage2d( GLint mesaFormat,
    if ( convert_needs_packing( packing, format, type ) )
       convert.index |= CONVERT_PACKING_BIT;
 
-   if ( width != imageWidth )
+   if ( width != destImageWidth )
       convert.index |= CONVERT_STRIDE_BIT;
 
    return gl_convert_texsubimage2d_tab[mesaFormat]( &convert );
@@ -747,7 +775,7 @@ GLboolean
 _mesa_convert_texsubimage3d( GLint mesaFormat,
 			     GLint xoffset, GLint yoffset, GLint zoffset,
 			     GLint width, GLint height, GLint depth,
-			     GLint imageWidth, GLint imageHeight,
+			     GLint dstImageWidth, GLint dstImageHeight,
 			     GLenum format, GLenum type,
 			     const struct gl_pixelstore_attrib *packing,
 			     const GLvoid *srcImage, GLvoid *dstImage )
@@ -769,8 +797,8 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
    convert.width = width;
    convert.height = height;
    convert.depth = depth;
-   convert.imageWidth = imageWidth;
-   convert.imageHeight = imageHeight;
+   convert.dstImageWidth = dstImageWidth;
+   convert.dstImageHeight = dstImageHeight;
    convert.format = format;
    convert.type = type;
    convert.packing = packing;
@@ -782,7 +810,7 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
    if ( convert_needs_packing( packing, format, type ) )
       convert.index |= CONVERT_PACKING_BIT;
 
-   if ( width != imageWidth || height != imageHeight )
+   if ( width != dstImageWidth || height != dstImageHeight )
       convert.index |= CONVERT_STRIDE_BIT;
 
    return gl_convert_texsubimage3d_tab[mesaFormat]( &convert );
