@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.36 2000/01/28 20:17:42 brianp Exp $ */
+/* $Id: context.c,v 1.37 2000/01/31 23:11:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,6 +44,7 @@
 #include "get.h"
 #include "glapi.h"
 #include "glapinoop.h"
+#include "glthread.h"
 #include "hash.h"
 #include "light.h"
 #include "lines.h"
@@ -424,12 +425,16 @@ void gl_destroy_framebuffer( GLframebuffer *buffer )
 /**********************************************************************/
 
 
+_glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
+
+
 /*
  * This function just calls all the various one-time-init functions in Mesa.
  */
 static void one_time_init( void )
 {
    static GLboolean alreadyCalled = GL_FALSE;
+   _glthread_LOCK_MUTEX(OneTimeLock);
    if (!alreadyCalled) {
       /* do some implementation tests */
       assert( sizeof(GLbyte) == 1 );
@@ -465,6 +470,7 @@ static void one_time_init( void )
 
       alreadyCalled = GL_TRUE;
    }
+   _glthread_UNLOCK_MUTEX(OneTimeLock);
 }
 
 
@@ -1325,7 +1331,9 @@ GLboolean gl_initialize_context_data( GLcontext *ctx,
          return GL_FALSE;
       }
    }
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount++;
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    init_attrib_groups( ctx );
 
@@ -1434,9 +1442,11 @@ void gl_free_context_data( GLcontext *ctx )
 
    gl_vb_free( ctx->VB );
 
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount--;
-   assert(ctx->Shared->RefCount>=0);
-   if (ctx->Shared->RefCount==0) {
+   assert(ctx->Shared->RefCount >= 0);
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   if (ctx->Shared->RefCount == 0) {
       /* free shared state */
       free_shared_state( ctx, ctx->Shared );
    }

@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.6 2000/01/24 16:19:54 brianp Exp $ */
+/* $Id: hash.c,v 1.7 2000/01/31 23:11:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "glthread.h"
 #include "hash.h"
 #include "mem.h"
 #endif
@@ -53,6 +54,7 @@ struct HashEntry {
 struct _mesa_HashTable {
    struct HashEntry *Table[TABLE_SIZE];
    GLuint MaxKey;
+   _glthread_Mutex Mutex;
 };
 
 
@@ -130,6 +132,8 @@ void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    assert(table);
    assert(key);
 
+   _glthread_LOCK_MUTEX(table->Mutex);
+
    if (key > table->MaxKey)
       table->MaxKey = key;
 
@@ -139,6 +143,7 @@ void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
       if (entry->Key == key) {
          /* replace entry's data */
 	 entry->Data = data;
+         _glthread_UNLOCK_MUTEX(table->Mutex);
 	 return;
       }
       entry = entry->Next;
@@ -150,6 +155,8 @@ void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    entry->Data = data;
    entry->Next = table->Table[pos];
    table->Table[pos] = entry;
+
+   _glthread_UNLOCK_MUTEX(table->Mutex);
 }
 
 
@@ -167,6 +174,8 @@ void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
    assert(table);
    assert(key);
 
+   _glthread_LOCK_MUTEX(table->Mutex);
+
    pos = key & (TABLE_SIZE-1);
    prev = NULL;
    entry = table->Table[pos];
@@ -180,11 +189,14 @@ void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
             table->Table[pos] = entry->Next;
          }
          FREE(entry);
+         _glthread_UNLOCK_MUTEX(table->Mutex);
 	 return;
       }
       prev = entry;
       entry = entry->Next;
    }
+
+   _glthread_UNLOCK_MUTEX(table->Mutex);
 }
 
 

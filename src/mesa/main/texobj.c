@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.12 2000/01/24 20:53:32 brianp Exp $ */
+/* $Id: texobj.c,v 1.13 2000/01/31 23:11:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,8 +84,10 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
 
       /* insert into linked list */
       if (shared) {
+         _glthread_LOCK_MUTEX(shared->Mutex);
          obj->Next = shared->TexObjectList;
          shared->TexObjectList = obj;
+         _glthread_UNLOCK_MUTEX(shared->Mutex);
       }
 
       if (name > 0) {
@@ -118,6 +120,7 @@ void gl_free_texture_object( struct gl_shared_state *shared,
 
    /* unlink t from the linked list */
    if (shared) {
+      _glthread_LOCK_MUTEX(shared->Mutex);
       tprev = NULL;
       tcurr = shared->TexObjectList;
       while (tcurr) {
@@ -133,6 +136,7 @@ void gl_free_texture_object( struct gl_shared_state *shared,
          tprev = tcurr;
          tcurr = tcurr->Next;
       }
+      _glthread_UNLOCK_MUTEX(shared->Mutex);
    }
 
    if (t->Name) {
