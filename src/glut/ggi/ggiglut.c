@@ -238,11 +238,6 @@ int glutCreateWindow(const char *title)
 	
 	gt = (rgb) ? __glut_gt_rgb : __glut_gt_index;
 	
-	__glut_ctx = GGIMesaCreateContext();
-	
-	if (__glut_ctx == NULL) 
-	  ggiPanic("Can't create mesa-context\n");
-
 	__glut_vis = ggiOpen(NULL);
 	if (__glut_vis == NULL) 
 	{
@@ -261,12 +256,19 @@ int glutCreateWindow(const char *title)
 	  /* return GL_FALSE; */
 	}
 	
-	ggiGetMode(__glut_vis, &mode);
-
-	if (GGIMesaSetVisual(__glut_ctx, __glut_vis, rgb, frames > 1) < 0) 
+	if (ggiMesaExtendVisual(__glut_vis, GL_FALSE, GL_FALSE, 
+	                        16, 0, 0, 0, 0, 0, 1) < 0) 
 	{
 		ggiPanic("GGIMesaSetVisual failed!\n");
 	}
+	
+	__glut_ctx = ggiMesaCreateContext(__glut_vis);
+	
+	if (__glut_ctx == NULL) 
+	  ggiPanic("Can't create mesa-context\n");
+
+	ggiGetMode(__glut_vis, &mode);
+
 	
 	__glut_width = mode.visible.x;
 	__glut_height = mode.visible.y;
@@ -274,7 +276,7 @@ int glutCreateWindow(const char *title)
 	mousex = mode.visible.x / 2;
 	mousey = mode.visible.y / 2;
 	
-	GGIMesaMakeCurrent(__glut_ctx);
+	ggiMesaMakeCurrent(__glut_ctx, __glut_vis);
 	
 	if (__glut_reshape) 
 	  __glut_reshape(__glut_width, __glut_height);

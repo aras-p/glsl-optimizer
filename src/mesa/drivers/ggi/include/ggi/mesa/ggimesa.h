@@ -45,50 +45,40 @@
 #include <ggi/ggi.h>
 #include "GL/ggimesa.h"
 
-struct ggi_mesa_info;
+/*
+ * GGIMesa visual configuration.
+ * 
+ * This structure "derives" from Mesa's GLvisual and extends it by
+ * GGI's visual. Combination of these two structures is enough to fully
+ * describe the mode the application is currently running in.  GGI
+ * visual provides information about color configuration and buffering
+ * method, GLvisual fills the rest.
+ */
+struct ggi_mesa_visual {
+	GLvisual gl_visual;
+	ggi_visual_t ggi_visual;
+};
 
+/*
+ * GGIMesa context.
+ *
+ * GGIMesa context expands the Mesa's context (it doesn't actualy derive
+ * from it, but this ability isn't needed, and it is best if GL context
+ * creation is left up to Mesa). It also contains a reference to the GGI
+ * visual it is attached to, which is very useful for all Mesa callbacks.
+ */
 struct ggi_mesa_context
 {
 	GLcontext *gl_ctx;
-	GLvisual *gl_vis;
-	GLframebuffer *gl_buffer;
+	ggi_visual_t ggi_visual;
 	
-	ggi_visual_t ggi_vis;
-	ggi_coord origin;
-	int flip_y;
-	int width, height, stride;	/* Stride is in pixels */
 	ggi_pixel color;		/* Current color or index*/
 	ggi_pixel clearcolor;
-	void *lfb[2];			/* Linear frame buffers	*/
-	int active_buffer;
-	int bufsize;
-	int viewport_init;
+	
+	void *private;
 };
-
-struct ggi_mesa_info
-{
-	GLboolean rgb_flag;
-	GLboolean db_flag;
-	GLboolean alpha_flag;
-	GLint index_bits;
-	GLint red_bits, green_bits, blue_bits, alpha_bits;
-	GLint depth_bits, stencil_bits, accum_bits;
-};
-
-extern GGIMesaContext GGIMesa;	/* The current context */
 
 #define SHIFT (GGI_COLOR_PRECISION - 8)
 
-#define GGICTX ((GGIMesaContext)ctx->DriverCtx)
-#define VIS (GGICTX->ggi_vis)
-#define FLIP(y) (GGICTX->flip_y-(y))
-
-#define LFB(type,x,y) ((type *)GGICTX->lfb[0] + (x) + (y) * GGICTX->stride)
-
-#define CTX_OPMESA(ctx) \
-((struct mesa_ext *)LIBGGI_EXT(((GGIMesaContext)ctx->DriverCtx)->ggi_vis, \
-	ggiMesaID))
-
-	
 #endif
 

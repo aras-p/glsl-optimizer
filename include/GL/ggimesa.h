@@ -1,10 +1,11 @@
-/* $Id: ggimesa.h,v 1.3 2000/02/09 19:03:28 brianp Exp $ */
+/* $Id: ggimesa.h,v 1.4 2002/06/10 15:16:44 brianp Exp $ */
 
 /*
- * Mesa 3-D graphics library
- * Version:  3.3
+ * Mesa 3-D graphics library GGI bindings (GGIGL [giggle])
+ * Version:  4.0
  * Copyright (C) 1995-2000  Brian Paul
  * Copyright (C) 1998  Uwe Maurer
+ * Copyrigth (C) 2001 Filip Spacek
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -25,34 +26,59 @@
 #ifndef GGIMESA_H
 #define GGIMESA_H
 
-
-#define GGIMESA_MAJOR_VERSION 3
-#define GGIMESA_MINOR_VERSION 3
-
+#define GGIMESA_MAJOR_VERSION 4
+#define GGIMESA_MINOR_VERSION 0
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "GL/gl.h"
-
-
-typedef struct ggi_mesa_context *GGIMesaContext;
-
 #include <ggi/ggi.h>
+#include "GL/gl.h"
+  
+typedef struct ggi_mesa_context *ggi_mesa_context_t;
 
-extern GGIMesaContext GGIMesaCreateContext(void);
+/*
+ * Initialize Mesa GGI extension
+ */
+int ggiMesaInit(void);
+/*
+ * Clean up Mesa GGI exension
+ */
+int ggiMesaExit(void);
 
-extern void GGIMesaDestroyContext(GGIMesaContext ctx);
+/*
+ * Attach Mesa GGI extension to the visual 'vis'
+ */
+int ggiMesaAttach(ggi_visual_t vis);
+/*
+ * Detach Mesa GGI extension from the visual 'vis'
+ */
+int ggiMesaDetach(ggi_visual_t vis);
 
-extern void GGIMesaMakeCurrent(GGIMesaContext ctx);
+int ggiMesaExtendVisual(ggi_visual_t vis, GLboolean alpha_flag,
+			GLboolean stereo_flag, GLint depth_size,
+			GLint stencil_size, GLint accum_red_size,
+			GLint accum_green_size, GLint accum_blue_size,
+			GLint accum_alpha_size, GLint num_samples);
 
-extern GGIMesaContext GGIMesaGetCurrentContext(void);
+/*
+ * Create a new context capable of displaying on the visual vis.
+ */
+ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis);
+/*
+ * Destroy the context 'ctx'
+ */
+void ggiMesaDestroyContext(ggi_mesa_context_t ctx);
 
-extern void GGIMesaSwapBuffers(void);
+/*
+ * Make context 'ctx' the current context and bind it to visual 'vis'.
+ * Note that the context must have been created with respect to that visual.
+ */
+void ggiMesaMakeCurrent(ggi_mesa_context_t ctx, ggi_visual_t vis);
 
-extern int GGIMesaSetVisual(GGIMesaContext ctx, ggi_visual_t vis,
-			    GLboolean rgb_flag, GLboolean db_flag);
+void ggiMesaSwapBuffers(void);
+
 
 #ifdef __cplusplus
 }

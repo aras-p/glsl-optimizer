@@ -11,14 +11,35 @@ extern ggi_extid ggiMesaID;
 ggifunc_setmode GGIMesa_setmode;
 ggifunc_getapi GGIMesa_getapi;
 
-typedef struct mesa_ext
+typedef struct ggi_mesa_ext
 {
-	void (*update_state)(GLcontext *ctx);
-	int (*setup_driver)(GGIMesaContext ctx, struct ggi_mesa_info *info);
-	void *private;
-} mesaext;
+	/*
+	 * How mesa extends this visual; i.e., size of the depth buffer etc.
+	 *
+	 * By default (upon attaching) this structure is initialized to what
+	 * libggi is guaranteed to handle without any help: single buffered
+	 * visual without any ancilary buffers.
+	 */
+	struct ggi_mesa_visual mesa_visual;
 
-#define LIBGGI_MESAEXT(vis) ((mesaext *)LIBGGI_EXT(vis,ggiMesaID))
+	/*
+	 * Mesa framebuffer is a collection of all ancilary buffers required.
+	 *
+	 * This structure contains the ancilary buffers provided in in
+	 * software. On each mode change it is loaded with the list of
+	 * required buffers and the target is expected to clear the ones
+	 * it can provide in hw. The remaining ones are then provided in sw.
+	 *
+	 */
+	GLframebuffer mesa_buffer;
+
+	void (*update_state)(ggi_mesa_context_t ctx);
+	int (*setup_driver)(ggi_mesa_context_t ctx);
+	
+	void *private;
+} ggi_mesa_ext_t;
+
+#define LIBGGI_MESAEXT(vis) ((ggi_mesa_ext_t *)LIBGGI_EXT(vis,ggiMesaID))
 #define GGIMESA_PRIVATE(vis) ((LIBGGI_MESAEXT(vis)->private))
 
 #endif /* _GGI_MISC_INT_H */

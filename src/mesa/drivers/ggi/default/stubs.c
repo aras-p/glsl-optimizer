@@ -26,13 +26,16 @@
 
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
+#include <ggi/mesa/debug.h>
 
 #include "mmath.h"
 #include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
-#include "swrast/s_context.h"
-#include "swrast/s_depth.h"
-#include "swrast/s_triangle.h"
+//#include "swrast_setup/swrast_setup.h"
+//#include "swrast/s_context.h"
+//#include "swrast/s_depth.h"
+//#include "swrast/s_triangle.h"
+
+#define FLIP(coord) (LIBGGI_MODE(ggi_ctx->ggi_visual)->visible.y-(coord)-1)
 
 /**********************************************************************/
 /*****            Write spans of pixels                           *****/
@@ -43,18 +46,21 @@ void GGIwrite_ci32_span(const GLcontext *ctx,
                          const GLuint ci[],
                          const GLubyte mask[] )
 {
-	y=FLIP(y);
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+	y = FLIP(y);
 	if (mask)
 	{
 		while (n--) {
-			if (*mask++) ggiPutPixel(VIS,x,y,*ci);
+			if (*mask++)
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, *ci);
 			x++;
 			ci++;
 		}
 	}
 	else
 	{
-		while (n--) ggiPutPixel(VIS,x++,y,*ci++);
+		while (n--)
+			ggiPutPixel(ggi_ctx->ggi_visual, x++, y, *ci++);
 	}
 }
 
@@ -63,36 +69,69 @@ void GGIwrite_ci8_span(const GLcontext *ctx,
                          const GLubyte ci[],
                          const GLubyte mask[] )
 {
-	y=FLIP(y);
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+	y = FLIP(y);
 	if (mask)
 	{
 		while (n--) {
-			if (*mask++) ggiPutPixel(VIS,x,y,*ci);
+			if (*mask++)
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, *ci);
 			x++;
 			ci++;
 		}
 	}
 	else
 	{
-		while (n--) ggiPutPixel(VIS,x++,y,*ci++);
+		while (n--)
+			ggiPutPixel(ggi_ctx->ggi_visual, x++, y, *ci++);
 	}
 }
 
-void GGIwrite_mono_span( const GLcontext *ctx,
-                         GLuint n, GLint x, GLint y,
-                         const GLubyte mask[] )
+void GGIwrite_mono_ci_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
+			   const GLuint ci, const GLubyte mask[])
 {
-	y=FLIP(y);
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+	y = FLIP(y);
 	if (mask)
 	{
 		while (n--) {
-			if (*mask++) ggiDrawPixel(VIS,x,y);
+			if (*mask++)
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, ci);
 			x++;
 		}
 	}
 	else
 	{
-		ggiDrawHLine(VIS,x,y,n);
+		while (n--)
+			ggiPutPixel(ggi_ctx->ggi_visual, x++, y, ci);
+	}
+}
+
+void GGIwrite_mono_rgba_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
+			     const GLchan rgba[4], const GLubyte mask[])
+{
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+	ggi_color rgb;
+	ggi_pixel col;	
+
+	y = FLIP(y);
+
+	rgb.r = (uint16)(rgba[RCOMP]) << SHIFT;
+	rgb.g = (uint16)(rgba[GCOMP]) << SHIFT;
+	rgb.b = (uint16)(rgba[BCOMP]) << SHIFT;
+	col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+
+	if (mask)
+	{
+		while (n--) {
+			if (*mask++)
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, col);
+			x++;
+		}
+	}
+	else
+	{
+		ggiDrawHLine(ggi_ctx->ggi_visual, x, y, n);
 	}
 }
 
@@ -101,20 +140,21 @@ void GGIwrite_rgba_span( const GLcontext *ctx,
                           const GLubyte rgba[][4],
                           const GLubyte mask[])
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_color rgb;
 	ggi_pixel col;	
-	y=FLIP(y);
+	y = FLIP(y);
 
 	if (mask)
 	{
 		while (n--) {
 			if (*mask++) 
 			{
-				rgb.r=(uint16)(rgba[0][RCOMP]) << SHIFT;
-				rgb.g=(uint16)(rgba[0][GCOMP]) << SHIFT;
-				rgb.b=(uint16)(rgba[0][BCOMP]) << SHIFT;
-				col=ggiMapColor(VIS,&rgb);
-				ggiPutPixel(VIS,x,y,col);
+				rgb.r = (uint16)(rgba[0][RCOMP]) << SHIFT;
+				rgb.g = (uint16)(rgba[0][GCOMP]) << SHIFT;
+				rgb.b = (uint16)(rgba[0][BCOMP]) << SHIFT;
+				col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, col);
 			}
 			x++;
 			rgba++;
@@ -124,34 +164,36 @@ void GGIwrite_rgba_span( const GLcontext *ctx,
 	{
 		while (n--)
 		{
-			rgb.r=(uint16)(rgba[0][RCOMP]) << SHIFT;
-			rgb.g=(uint16)(rgba[0][GCOMP]) << SHIFT;
-			rgb.b=(uint16)(rgba[0][BCOMP]) << SHIFT;
-			col=ggiMapColor(VIS,&rgb);
-			ggiPutPixel(VIS,x++,y,col);
+			rgb.r = (uint16)(rgba[0][RCOMP]) << SHIFT;
+			rgb.g = (uint16)(rgba[0][GCOMP]) << SHIFT;
+			rgb.b = (uint16)(rgba[0][BCOMP]) << SHIFT;
+			col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+			ggiPutPixel(ggi_ctx->ggi_visual, x++, y, col);
 			rgba++;
 		}
 	}
 }
+
 void GGIwrite_rgb_span( const GLcontext *ctx,
                           GLuint n, GLint x, GLint y,
                           const GLubyte rgba[][3],
                           const GLubyte mask[] )
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_color rgb;
 	ggi_pixel col;	
-	y=FLIP(y);
+	y = FLIP(y);
 
 	if (mask)
 	{
 		while (n--) {
 			if (*mask++) 
 			{
-				rgb.r=(uint16)(rgba[0][RCOMP]) << SHIFT;
-				rgb.g=(uint16)(rgba[0][GCOMP]) << SHIFT;
-				rgb.b=(uint16)(rgba[0][BCOMP]) << SHIFT;
-				col=ggiMapColor(VIS,&rgb);
-				ggiPutPixel(VIS,x,y,col);
+				rgb.r = (uint16)(rgba[0][RCOMP]) << SHIFT;
+				rgb.g = (uint16)(rgba[0][GCOMP]) << SHIFT;
+				rgb.b = (uint16)(rgba[0][BCOMP]) << SHIFT;
+				col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+				ggiPutPixel(ggi_ctx->ggi_visual, x, y, col);
 			}
 			x++;
 			rgba++;
@@ -161,11 +203,11 @@ void GGIwrite_rgb_span( const GLcontext *ctx,
 	{
 		while (n--)
 		{
-			rgb.r=(uint16)(rgba[0][RCOMP]) << SHIFT;
-			rgb.g=(uint16)(rgba[0][GCOMP]) << SHIFT;
-			rgb.b=(uint16)(rgba[0][BCOMP]) << SHIFT;
-			col=ggiMapColor(VIS,&rgb);
-			ggiPutPixel(VIS,x++,y,col);
+			rgb.r = (uint16)(rgba[0][RCOMP]) << SHIFT;
+			rgb.g = (uint16)(rgba[0][GCOMP]) << SHIFT;
+			rgb.b = (uint16)(rgba[0][BCOMP]) << SHIFT;
+			col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+			ggiPutPixel(ggi_ctx->ggi_visual, x++, y, col);
 			rgba++;
 		}
 	}
@@ -181,24 +223,26 @@ void GGIwrite_rgb_span( const GLcontext *ctx,
 void GGIread_ci32_span( const GLcontext *ctx,
                          GLuint n, GLint x, GLint y, GLuint ci[])
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	y = FLIP(y);
 	while (n--)
-		ggiGetPixel(VIS, x++, y,ci++);
+		ggiGetPixel(ggi_ctx->ggi_visual, x++, y, ci++);
 }
 
 void GGIread_rgba_span( const GLcontext *ctx,
                          GLuint n, GLint x, GLint y,
                          GLubyte rgba[][4])
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_color rgb;
 	ggi_pixel col;
 
-	y=FLIP(y);
+	y = FLIP(y);
 
 	while (n--)
 	{
-		ggiGetPixel(VIS,x++,y,&col);
-		ggiUnmapPixel(VIS,col,&rgb);
+		ggiGetPixel(ggi_ctx->ggi_visual, x++, y, &col);
+		ggiUnmapPixel(ggi_ctx->ggi_visual, col, &rgb);
 		rgba[0][RCOMP] = (GLubyte) (rgb.r >> SHIFT);
 		rgba[0][GCOMP] = (GLubyte) (rgb.g >> SHIFT);
 		rgba[0][BCOMP] = (GLubyte) (rgb.b >> SHIFT);
@@ -215,21 +259,24 @@ void GGIwrite_ci32_pixels( const GLcontext *ctx,
                             GLuint n, const GLint x[], const GLint y[],
                             const GLuint ci[], const GLubyte mask[] )
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	while (n--) {
-		if (*mask++) ggiPutPixel(VIS,*x, FLIP(*y),*ci);
+		if (*mask++)
+			ggiPutPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), *ci);
 		ci++;
 		x++;
 		y++;
 	}
 }
 
-void GGIwrite_mono_pixels( const GLcontext *ctx,
-                                GLuint n,
-                                const GLint x[], const GLint y[],
-                                const GLubyte mask[] )
+void GGIwrite_mono_ci_pixels(const GLcontext *ctx,
+			     GLuint n, const GLint x[], const GLint y[],
+			     GLuint ci, const GLubyte mask[])
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	while (n--) {
-		if (*mask++) ggiDrawPixel(VIS,*x,FLIP(*y));
+		if (*mask++)
+			ggiPutPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), ci);
 		x++;
 		y++;
 	}
@@ -240,21 +287,43 @@ void GGIwrite_rgba_pixels( const GLcontext *ctx,
                             const GLubyte rgba[][4],
                             const GLubyte mask[] )
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_pixel col;
 	ggi_color rgb;
 	while (n--) {
 		if (*mask++) {
-			rgb.r=(uint16)(rgba[0][RCOMP]) << SHIFT;
-			rgb.g=(uint16)(rgba[0][GCOMP]) << SHIFT;
-			rgb.b=(uint16)(rgba[0][BCOMP]) << SHIFT;
-			col=ggiMapColor(VIS,&rgb);
-			ggiPutPixel(VIS,*x,FLIP(*y),col);
+			rgb.r = (uint16)(rgba[0][RCOMP]) << SHIFT;
+			rgb.g = (uint16)(rgba[0][GCOMP]) << SHIFT;
+			rgb.b = (uint16)(rgba[0][BCOMP]) << SHIFT;
+			col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+			ggiPutPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), col);
 		}
-		x++;y++;
+		x++;
+		y++;
 		rgba++;
 	}
 }
 
+void GGIwrite_mono_rgba_pixels(const GLcontext *ctx,
+			       GLuint n, const GLint x[], const GLint y[],
+			       const GLchan rgba[4], const GLubyte mask[])
+{
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
+	ggi_color rgb;
+	ggi_pixel col;	
+
+	rgb.r = (uint16)(rgba[RCOMP]) << SHIFT;
+	rgb.g = (uint16)(rgba[GCOMP]) << SHIFT;
+	rgb.b = (uint16)(rgba[BCOMP]) << SHIFT;
+	col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
+	
+	while (n--) {
+		if (*mask++)
+			ggiPutPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), col);
+		x++;
+		y++;
+	}
+}
 
 /**********************************************************************/
 /*****                   Read arrays of pixels                    *****/
@@ -264,9 +333,10 @@ void GGIread_ci32_pixels( const GLcontext *ctx,
                            GLuint n, const GLint x[], const GLint y[],
                            GLuint ci[], const GLubyte mask[])
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	while (n--) {
 		if (*mask++) 
-			ggiGetPixel(VIS, *x, FLIP(*y) ,ci);
+			ggiGetPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), ci);
 		ci++;
 		x++;
 		y++;
@@ -278,6 +348,7 @@ void GGIread_rgba_pixels( const GLcontext *ctx,
                            GLubyte rgba[][4],
                            const GLubyte mask[] )
 {
+	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_color rgb;
 	ggi_pixel col;
 
@@ -285,47 +356,59 @@ void GGIread_rgba_pixels( const GLcontext *ctx,
 	{
 		if (*mask++)
 		{
-			ggiGetPixel(VIS,*x,FLIP(*y),&col);
-			ggiUnmapPixel(VIS,col,&rgb);
-			rgba[0][RCOMP]= rgb.r >> SHIFT; 
-			rgba[0][GCOMP]= rgb.g >> SHIFT;
-			rgba[0][BCOMP]= rgb.b >> SHIFT;
-			rgba[0][ACOMP]=0;
+			ggiGetPixel(ggi_ctx->ggi_visual, *x, FLIP(*y), &col);
+			ggiUnmapPixel(ggi_ctx->ggi_visual, col, &rgb);
+			rgba[0][RCOMP] = rgb.r >> SHIFT; 
+			rgba[0][GCOMP] = rgb.g >> SHIFT;
+			rgba[0][BCOMP] = rgb.b >> SHIFT;
+			rgba[0][ACOMP] = 0;
 		}	
-		x++; y++;
+		x++;
+		y++;
 		rgba++;
 	}
 }
 
-
-static swrast_tri_func ggimesa_stubs_get_triangle_func(GLcontext *ctx);
-
-int GGIsetup_driver(GGIMesaContext ggictx, struct ggi_mesa_info *info)
+int GGIextend_visual(ggi_visual_t vis)
 {
-	GLcontext *ctx = ggictx->gl_ctx;
+	return 0;
+}
 
-	ctx->Driver.WriteRGBASpan	= GGIwrite_rgba_span;
-	ctx->Driver.WriteRGBSpan	= GGIwrite_rgb_span;
-	ctx->Driver.WriteRGBAPixels     = GGIwrite_rgba_pixels;
+//static swrast_tri_func ggimesa_stubs_get_triangle_func(GLcontext *ctx);
 
-	ctx->Driver.WriteCI32Span       = GGIwrite_ci32_span;
-	ctx->Driver.WriteCI8Span       	= GGIwrite_ci8_span;
-	ctx->Driver.WriteCI32Pixels     = GGIwrite_ci32_pixels;
+int GGIsetup_driver(ggi_mesa_context_t ggi_ctx)
+{
+	struct swrast_device_driver *swdd =
+		_swrast_GetDeviceDriverReference(ggi_ctx->gl_ctx);
 
-	ctx->Driver.ReadCI32Span 	= GGIread_ci32_span;
-	ctx->Driver.ReadRGBASpan	= GGIread_rgba_span;
-	ctx->Driver.ReadCI32Pixels	= GGIread_ci32_pixels;
-	ctx->Driver.ReadRGBAPixels	= GGIread_rgba_pixels;
+	GGIMESADPRINT_CORE("stubs: setup_driver\n");
+	
+	swdd->WriteRGBASpan	= GGIwrite_rgba_span;
+	swdd->WriteRGBSpan	= GGIwrite_rgb_span;
+	swdd->WriteMonoRGBASpan = GGIwrite_mono_rgba_span;
+	swdd->WriteRGBAPixels   = GGIwrite_rgba_pixels;
+	swdd->WriteMonoRGBAPixels = GGIwrite_mono_rgba_pixels;
+
+	swdd->WriteCI32Span     = GGIwrite_ci32_span;
+	swdd->WriteCI8Span      = GGIwrite_ci8_span;
+	swdd->WriteMonoCISpan	= GGIwrite_mono_ci_span;
+	swdd->WriteCI32Pixels   = GGIwrite_ci32_pixels;
+	swdd->WriteMonoCIPixels = GGIwrite_mono_ci_pixels;
+
+	swdd->ReadCI32Span 	= GGIread_ci32_span;
+	swdd->ReadRGBASpan	= GGIread_rgba_span;
+	swdd->ReadCI32Pixels	= GGIread_ci32_pixels;
+	swdd->ReadRGBAPixels	= GGIread_rgba_pixels;
 	
 	return 0;
 }
 
-void GGIupdate_state(GLcontext *ctx)
+void GGIupdate_state(ggi_mesa_context_t *ctx)
 {
-	ctx->Driver.TriangleFunc = _swsetup_Triangle;
+	//ctx->Driver.TriangleFunc = _swsetup_Triangle;
 }
 
-
+/*
 void GGItriangle_flat(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1, const SWvertex *v2)
 {
 //#define INTERP_Z 1
@@ -402,10 +485,10 @@ static swrast_tri_func ggimesa_stubs_get_triangle_func(GLcontext *ctx)
 
 	return GGItriangle_flat;	
 }
-
+*/
 static int GGIopen(ggi_visual_t vis, struct ggi_dlhandle *dlh,
 			const char *args, void *argptr, uint32 *dlret)
-{ 
+{
        	LIBGGI_MESAEXT(vis)->update_state = GGIupdate_state;
 	LIBGGI_MESAEXT(vis)->setup_driver = GGIsetup_driver;
 
@@ -416,15 +499,15 @@ static int GGIopen(ggi_visual_t vis, struct ggi_dlhandle *dlh,
 int MesaGGIdl_stubs(int func, void **funcptr)
 {
 	switch (func) {
-		case GGIFUNC_open:
-			*funcptr = GGIopen;
-			return 0;
-		case GGIFUNC_exit:
-		case GGIFUNC_close:
-			*funcptr = NULL;
-			return 0;
-		default:
-			*funcptr = NULL;
+	case GGIFUNC_open:
+		*funcptr = GGIopen;
+		return 0;
+	case GGIFUNC_exit:
+	case GGIFUNC_close:
+		*funcptr = NULL;
+		return 0;
+	default:
+		*funcptr = NULL;
 	}
 	return GGI_ENOTFOUND;
 }

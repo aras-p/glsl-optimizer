@@ -19,6 +19,7 @@
 
 ggi_visual_t vis;
 char text[100];
+int db_flag,vis_x, vis_y, vir_x, vir_y, gt;
 
 /*
  * Draw a gear wheel.  You'll probably want to call this function when
@@ -157,6 +158,7 @@ static GLuint count = 1;
 
 static void draw( void )
 {
+   static int n = 0;
    glClearColor(0,0,0,0);
    glClearIndex(0);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -197,12 +199,25 @@ static void draw( void )
    ggiPuts(vis,0,ggiGetInfo(vis)->mode->visible.y+16,text);
 #endif
 
-   GGIMesaSwapBuffers();
+    if(db_flag)
+   ggiMesaSwapBuffers();
  			
    count++;
    if (count==limit) {
       exit(1);
    }
+    ++n;
+    /*
+   if (!(n%10)){
+	ggi_color rgb = { 10000, 10000, 10000 };
+	ggiSetSimpleMode(vis,vis_x+(n/10),vis_y+(n/10),db_flag?2:1, gt); 
+	glViewport(0, 0,vis_x+(n/10),vis_y+(n/10));
+	ggiSetGCForeground(vis, ggiMapColor(vis, &rgb));
+	ggiDrawBox(vis, 20, 20, 100, 100);
+	if(db_flag)
+	  ggiSetWriteFrame(vis, 1);
+    }
+    */
 }
 
 static void idle( void )
@@ -216,6 +231,10 @@ static void reshape( int width, int height )
 {
    GLfloat  h = (GLfloat) height / (GLfloat) width;
 
+    if(db_flag)
+	glDrawBuffer(GL_BACK);
+    else
+	glDrawBuffer(GL_FRONT);
    glViewport(0, 0, (GLint)width, (GLint)height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
@@ -231,8 +250,8 @@ static void reshape( int width, int height )
 static void init( void )
 {
    static GLfloat pos[4] = {5.0, 5.0, 10.0, 0.0 };
-   static GLfloat red[4] = {0.8, 0.1, 0.0, 1.0 };
-   static GLfloat green[4] = {0.0, 0.8, 0.2, 1.0 };
+   static GLfloat red[4] = {0.9, 0.9, 0.9, 1.0 };
+   static GLfloat green[4] = {0.0, 0.8, 0.9, 1.0 };
    static GLfloat blue[4] = {0.2, 0.2, 1.0, 1.0 };
 
    glLightfv( GL_LIGHT0, GL_POSITION, pos );
@@ -276,9 +295,9 @@ static void usage(char *s)
 
 int main( int argc, char *argv[] )
 {
-	GGIMesaContext ctx;
-	int vis_x,vis_y,vir_x,vir_y,bpp,db_flag,gt;
+	ggi_mesa_context_t ctx;
 	ggi_mode mode;
+	int bpp;
 
 	limit=0;
 
@@ -313,13 +332,12 @@ int main( int argc, char *argv[] )
 		exit(1);
 	}
  
-	ctx=GGIMesaCreateContext(); 
-	if (ctx==NULL)
+	if (ggiMesaInit() < 0)
 	{
-		printf("GGIMesaCreateContext() failed\n");
+		printf("ggiMesaInit failed\n");
 		exit(1);
 	}
-
+	
 	vis=ggiOpen(NULL);
 	if (vis==NULL)
 	{
@@ -327,29 +345,42 @@ int main( int argc, char *argv[] )
 		exit(1);
 	}
 
-	if (ggiSetGraphMode(vis,vis_x,vis_y,vir_x,vir_y,gt)<0) 
+	if (ggiSetSimpleMode(vis,vis_x,vis_y,db_flag ? 2 : 1,gt)<0) 
 	{
 		printf("%s: can't set graphmode (%i %i %i %i)  %i BPP\n",
 			argv[0],vis_x,vis_y,vir_x,vir_y,bpp);
 		exit(1);
 	}
 
-	if (GGIMesaSetVisual(ctx,vis,GL_TRUE,db_flag)<0)
+	if (ggiMesaAttach(vis) < 0)
+	{
+		printf("ggiMesaAttach failed\n");
+		exit(1);
+	}
+	if (ggiMesaExtendVisual(vis, GL_FALSE, GL_FALSE, 16,
+	                        0, 0, 0, 0, 0, 1)  < 0)
 	{
 		printf ("GGIMesaSetVisual() failed\n");
 		exit(1);
 	}
 
-	GGIMesaMakeCurrent(ctx);
+	ctx = ggiMesaCreateContext(vis); 
+	if (ctx==NULL)
+	{
+		printf("GGIMesaCreateContext() failed\n");
+		exit(1);
+	}
+
+	ggiMesaMakeCurrent(ctx, vis);
 	ggiGetMode(vis,&mode);
 
 	reshape(mode.visible.x,mode.visible.y);
 
 	init();
  
-	while (!ggiKbhit(vis)) idle();
+	while (!ggiKbhit(vis)) { /*sleep(1);*/ idle(); }
 
-	GGIMesaDestroyContext(ctx);
+	ggiMesaDestroyContext(ctx);
 	ggiClose(vis);
 
 	printf("%s\n",text);
