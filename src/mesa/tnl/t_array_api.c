@@ -150,7 +150,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       /* Small primitives: attempt to share a vb (at the expense of
        * using the immediate interface).
       */
-      fallback_drawarrays( ctx, mode, start, start + count );
+      fallback_drawarrays( ctx, mode, start, count );
    } 
    else if (start >= (GLint) ctx->Array.LockFirst &&
 	    start + count <= (GLint)(ctx->Array.LockFirst + ctx->Array.LockCount)) {
@@ -233,7 +233,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	    skip = 0;
 	 }
 	 else {
-	    fallback_drawarrays( ctx, mode, start, start + count );
+	    fallback_drawarrays( ctx, mode, start, count );
 	    return;
 	 }
       }
