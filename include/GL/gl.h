@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.73 2003/01/14 04:50:14 brianp Exp $ */
+/* $Id: gl.h,v 1.74 2003/02/10 20:22:08 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2658,50 +2658,50 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 #define GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV 0x8868
 
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
                             GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
                             GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
                              const float v[]);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
                              const double v[]);
 
-extern void
+GLAPI void GLAPIENTRY
 glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
                                GLfloat *params);
 
-extern void
+GLAPI void GLAPIENTRY
 glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
                                GLdouble *params);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramLocalParameter4dARB(GLenum target, GLuint index,
                              GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramLocalParameter4dvARB(GLenum target, GLuint index,
                               const GLdouble *params);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramLocalParameter4fARB(GLenum target, GLuint index,
                              GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-extern void
+GLAPI void GLAPIENTRY
 glProgramLocalParameter4fvARB(GLenum target, GLuint index,
                               const GLfloat *params);
 
-extern void
+GLAPI void GLAPIENTRY
 glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
 
-extern void
+GLAPI void GLAPIENTRY
 glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
 
 
