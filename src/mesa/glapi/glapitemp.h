@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.16 2000/02/24 22:14:07 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.17 2000/04/10 23:13:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2932,6 +2932,117 @@ KEYWORD1 void KEYWORD2 NAME(LightEnviSGIX)(GLenum pname, GLint param)
 {
    DISPATCH(LightEnviSGIX, (pname, param), (F, ";"));
 }
+
+
+/* 112. GL_EXT_draw_range_elements */
+
+#if 00
+KEYWORD1 void KEYWORD2 NAME(DrawRangeElementsEXT)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+{
+   DISPATCH(DrawRangeElementsEXT, (mode, start, end, count, type, indices), (F, "glDrawRangeElementsEXT(0x%x, %u %u %d 0x%x %p);", mode, start, end, count, type, indices));
+}
+#endif
+
+
+/* 117. GL_EXT_light_texture */
+
+#if 00
+KEYWORD1 void KEYWORD2 NAME(ApplyTextureEXT)(GLenum mode)
+{
+   DISPATCH(ApplyTextureEXT, (mode), (F, "glApplyTextureEXT(0x%x);", mode));
+}
+
+
+KEYWORD1 void KEYWORD2 NAME(TextureLightEXT)(GLenum pname)
+{
+   DISPATCH(TextureLightEXT, (pname), (F, "glTextureLightEXT(0x%x);", pname));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TextureMaterialEXT)(GLenum face, GLenum mode)
+{
+   DISPATCH(TextureMaterialEXT, (face, mode), (F, "glTextureMaterialEXT(0x%x, 0x%x);", face, mode));
+}
+#endif
+
+
+
+/* 135. GL_INTEL_texture_scissor */
+#if 00
+KEYWORD1 void KEYWORD2 NAME(TexScissorINTEL)(GLenum target, GLclampf tlow, GLclampf thigh)
+{
+   DISPATCH(TexScissorINTEL, (target, tlow, thigh), (F, "glTexScissorINTEL(0x%x %g %g);", target, tlow, thigh));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TexScissorFuncINTEL)(GLenum target, GLenum lfunc, GLenum hfunc)
+{
+   DISPATCH(TexScissorFuncINTEL, (target, lfunc, hfunc), (F, "glTexScissorFuncINTEL(0x%x 0x%x 0x%x);", target, tlow, thigh));
+}
+#endif
+
+
+
+/* 136. GL_INTEL_parallel_arrays */
+#if 00
+KEYWORD1 void KEYWORD2 NAME(VertexPointervINTEL)(GLint size, GLenum type, const void ** pointer)
+{
+   DISPATCH(VertexPointervINTEL, (size, type, pointer), (F, "glVertexPointervINTEL(%d, 0x%x, %p);", size, type, pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(NormalPointervINTEL)(GLenum type, const void** pointer)
+{
+   DISPATCH(NormalPointervINTEL, (size, pointer), (F, "glNormalPointervINTEL(%d, %p);", size, pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorPointervINTEL)(GLint size, GLenum type, const void** pointer)
+{
+   DISPATCH(ColorPointervINTEL, (size, type, pointer), (F, "glColorPointervINTEL(%d, 0x%x, %p);", size, type, pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TexCoordPointervINTEL)(GLint size, GLenum type, const void** pointer)
+{
+   DISPATCH(TexCoordPointervINTEL, (size, type, pointer), (F, "glTexCoordPointervINTEL(%d, 0x%x, %p);", size, type, pointer));
+}
+#endif
+
+
+/* 138. GL_EXT_pixel_transform */
+#if 0
+KEYWORD1 void KEYWORD2 NAME(PixelTransformParameteriEXT)(GLenum target, GLenum pname, const GLint param)
+{
+   DISPATCH(PixelTransformParameteriEXT, (target, pname, param), (F, "glPixelTransformParameteriEXT(0x%x, 0x%x, %d);", target, pname, param));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PixelTransformParameterfEXT)(GLenum target, GLenum pname, const GLfloat param)
+{
+   DISPATCH(PixelTransformParameterfEXT, (target, pname, param), (F, "glPixelTransformParameterfEXT(0x%x, 0x%x, %f);", target, pname, param));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PixelTransformParameterivEXT)(GLenum target, GLenum pname, const GLint *params)
+{
+   DISPATCH(PixelTransformParameterivEXT, (target, pname, params), (F, "glPixelTransformParameterivEXT(0x%x, 0x%x, %p);", target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PixelTransformParameterfvEXT)(GLenum target, GLenum pname, const GLfloat *params)
+{
+   DISPATCH(PixelTransformParameterfvEXT, (target, pname, params), (F, "glPixelTransformParameterfvEXT(0x%x, 0x%x, %p);", target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetPixelTransformParameterivEXT)(GLenum target, GLenum pname, const GLint *params)
+{
+   DISPATCH(GetPixelTransformParameterivEXT, (target, pname, params), (F, "glGetPixelTransformParameterivEXT(0x%x, 0x%x, %p);", target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetPixelTransformParameterfvEXT)(GLenum target, GLenum pname, const GLfloat *params)
+{
+   DISPATCH(GetPixelTransformParameterfvEXT, (target, pname, params), (F, "glGetPixelTransformParameterfvEXT(0x%x, 0x%x, %p);", target, pname, params));
+}
+#endif
+
+
+
+/* 145. GL_EXT_secondary_color */
+/* XXX todo */
+
 
 
 /* 149. GL_EXT_fog_coord */
