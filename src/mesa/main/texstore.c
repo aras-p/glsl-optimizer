@@ -65,7 +65,23 @@
 #include "texstore.h"
 
 
-static const GLint ZERO = 1000, ONE = 1001;
+static const GLint ZERO = 4, ONE = 5;
+
+static GLboolean can_swizzle(GLenum logicalBaseFormat)
+{
+   switch (logicalBaseFormat) {
+   case GL_RGBA:
+   case GL_RGB:
+   case GL_LUMINANCE_ALPHA:
+   case GL_INTENSITY:
+   case GL_ALPHA:
+   case GL_LUMINANCE:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
 
 /**
  * When promoting texture formats (see below) we need to compute the
@@ -77,8 +93,11 @@ static const GLint ZERO = 1000, ONE = 1001;
  */
 static void
 compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
-                          GLint map[4])
+                          GLubyte map[6])
 {
+   map[ZERO] = ZERO;
+   map[ONE] = ONE;
+
    /* compute mapping from dest components back to src components */
    switch (textureBaseFormat) {
    case GL_RGB:
@@ -111,6 +130,13 @@ compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
          map[2] = 2;
          map[3] = ONE;
          break;
+      case GL_RGBA:
+         ASSERT(textureBaseFormat == GL_RGBA);
+         map[0] = 0;
+         map[1] = 1;
+         map[2] = 2;
+         map[3] = 3;
+         break;
       default:
          _mesa_problem(NULL, "Unexpected logicalBaseFormat");
          map[0] = map[1] = map[2] = map[3] = 0;
@@ -134,7 +160,12 @@ compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
          _mesa_problem(NULL, "Unexpected logicalBaseFormat");
          map[0] = map[1] = 0;
       }
-   }
+      break;
+   default:
+      _mesa_problem(NULL, "Unexpected logicalBaseFormat");
+      map[0] = map[1] = 0;
+      break;
+   }   
 }
 
 
@@ -319,7 +350,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLfloat *newImage;
       GLint i, n;
-      GLint map[4];
+      GLubyte map[6];
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -473,7 +504,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       GLint logComponents = _mesa_components_in_format(logicalBaseFormat);
       GLchan *newImage;
       GLint i, n;
-      GLint map[4];
+      GLubyte map[6];
 
       /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
       ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
@@ -513,6 +544,114 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 
    return tempImage;
 }
+
+
+static void swizzle_copy(GLubyte *dst,
+			 GLuint dstComponents,
+			 const GLubyte *src, 
+			 GLuint srcComponents,
+			 GLubyte *map,
+			 GLuint count)
+{
+   GLubyte tmp[8];
+   GLint i;
+
+   tmp[ZERO] = 0x0;
+   tmp[ONE] = 0xff;
+
+   switch (dstComponents) {
+   case 4:
+      for (i = 0; i < count; i++) {
+ 	 COPY_4UBV(tmp, src); 
+	 src += srcComponents;      
+	 dst[0] = tmp[map[0]];
+	 dst[1] = tmp[map[1]];
+	 dst[2] = tmp[map[2]];
+	 dst[3] = tmp[map[3]];
+	 dst += 4;
+      }
+      break;
+   case 3:
+      for (i = 0; i < count; i++) {
+ 	 COPY_4UBV(tmp, src); 
+	 src += srcComponents;      
+	 dst[0] = tmp[map[0]];
+	 dst[1] = tmp[map[1]];
+	 dst[2] = tmp[map[2]];
+	 dst += 3;
+      }
+      break;
+   case 2:
+      for (i = 0; i < count; i++) {
+ 	 COPY_4UBV(tmp, src); 
+	 src += srcComponents;      
+	 dst[0] = tmp[map[0]];
+	 dst[1] = tmp[map[1]];
+	 dst += 2;
+      }
+      break;
+   }
+}
+
+
+static void
+_mesa_swizzle_ubyte_image(GLcontext *ctx, 
+			  GLuint dimensions,
+			  GLenum srcFormat,
+			  const GLubyte *dstmap, GLint dstComponents,
+
+			  GLvoid *dstAddr,
+			  GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
+			  GLint dstRowStride, GLint dstImageStride,
+
+			  GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			  const GLvoid *srcAddr,
+			  const struct gl_pixelstore_attrib *srcPacking )
+{
+   GLint srcComponents = _mesa_components_in_format(srcFormat);
+   GLubyte srcmap[6], map[4];
+   GLint i;
+
+   const GLint srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth,
+                                                     srcFormat, GL_UNSIGNED_BYTE);
+   const GLint srcImageStride = _mesa_image_image_stride(srcPacking,
+                                      srcWidth, srcHeight, srcFormat, GL_UNSIGNED_BYTE);
+   const GLubyte *srcImage = (const GLubyte *) _mesa_image_address(dimensions,
+        srcPacking, srcAddr, srcWidth, srcHeight, srcFormat, GL_UNSIGNED_BYTE, 0, 0, 0);
+
+   GLubyte *dstImage = (GLubyte *) dstAddr
+                     + dstZoffset * dstImageStride
+                     + dstYoffset * dstRowStride
+                     + dstXoffset * dstComponents;
+
+   compute_component_mapping(srcFormat, GL_RGBA, srcmap);
+
+   for (i = 0; i < 4; i++)
+      map[i] = srcmap[dstmap[i]];
+
+   if (srcRowStride == srcWidth * srcComponents &&
+       (srcImageStride == srcWidth * srcHeight * srcComponents ||
+        srcDepth == 1)) {
+      swizzle_copy(dstImage, dstComponents, srcImage, srcComponents, map, 
+		   srcWidth * srcHeight * srcDepth);
+   }
+   else {
+      GLint img, row;
+      for (img = 0; img < srcDepth; img++) {
+         const GLubyte *srcRow = srcImage;
+         GLubyte *dstRow = dstImage;
+         for (row = 0; row < srcHeight; row++) {
+	    swizzle_copy(dstRow, dstComponents, srcRow, srcComponents, map, srcWidth);
+            dstRow += dstRowStride;
+            srcRow += srcRowStride;
+         }
+         srcImage += srcImageStride;
+         dstImage += dstImageStride;
+      }
+   }
+}
+
+
 
 
 
@@ -903,6 +1042,10 @@ _mesa_texstore_rgb565(STORE_PARAMS)
 GLboolean
 _mesa_texstore_rgba8888(STORE_PARAMS)
 {
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+
+   (void)littleEndian;
    ASSERT(dstFormat == &_mesa_texformat_rgba8888 ||
           dstFormat == &_mesa_texformat_rgba8888_rev);
    ASSERT(dstFormat->TexelBytes == 4);
@@ -920,6 +1063,33 @@ _mesa_texstore_rgba8888(STORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
+#if 0
+   else if (!ctx->_ImageTransferState &&
+	    !srcPacking->SwapBytes &&
+	    srcType == GL_UNSIGNED_BYTE && 
+	    dstFormat == &_mesa_texformat_rgba8888 &&
+	    littleEndian &&
+	    can_swizzle(srcFormat)) {
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from GL_RGBA to dst format:
+       *
+       * FIXME - add !litteEndian and _rev varients:
+       */
+      dstmap[3] = 0;
+      dstmap[2] = 1;
+      dstmap[1] = 2;
+      dstmap[0] = 3;
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				dstmap, 4,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageStride,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }
+#endif
    else {
       /* general path */
       const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
@@ -1006,6 +1176,90 @@ _mesa_texstore_argb8888(STORE_PARAMS)
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
+   }
+   else if (!ctx->_ImageTransferState &&
+            !srcPacking->SwapBytes &&
+	    dstFormat == &_mesa_texformat_argb8888 &&
+            srcFormat == GL_RGB &&
+            srcType == GL_UNSIGNED_BYTE) {
+
+      int img, row, col;
+      GLubyte *dstImage = (GLubyte *) dstAddr
+                        + dstZoffset * dstImageStride
+                        + dstYoffset * dstRowStride
+                        + dstXoffset * dstFormat->TexelBytes;
+      for (img = 0; img < srcDepth; img++) {
+         const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
+                                                 srcWidth, srcFormat, srcType);
+         GLubyte *srcRow = (GLubyte *) _mesa_image_address(dims, srcPacking,
+                  srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, 0, 0);
+         GLubyte *dstRow = dstImage;
+         for (row = 0; row < srcHeight; row++) {
+            for (col = 0; col < srcWidth; col++) {
+               dstRow[col * 4 + 0] = srcRow[col * 3 + BCOMP];
+               dstRow[col * 4 + 1] = srcRow[col * 3 + GCOMP];
+               dstRow[col * 4 + 2] = srcRow[col * 3 + RCOMP];
+               dstRow[col * 4 + 3] = 0xff;
+            }
+            dstRow += dstRowStride;
+            srcRow += srcRowStride;
+         }
+         dstImage += dstImageStride;
+      }
+   }
+   else if (!ctx->_ImageTransferState &&
+            !srcPacking->SwapBytes &&
+	    dstFormat == &_mesa_texformat_argb8888 &&
+            srcFormat == GL_RGBA &&
+            srcType == GL_UNSIGNED_BYTE) {
+
+      int img, row, col;
+      GLubyte *dstImage = (GLubyte *) dstAddr
+                        + dstZoffset * dstImageStride
+                        + dstYoffset * dstRowStride
+                        + dstXoffset * dstFormat->TexelBytes;
+      for (img = 0; img < srcDepth; img++) {
+         const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
+                                                 srcWidth, srcFormat, srcType);
+         GLubyte *srcRow = (GLubyte *) _mesa_image_address(dims, srcPacking,
+                  srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, 0, 0);
+         GLubyte *dstRow = dstImage;
+         for (row = 0; row < srcHeight; row++) {
+            for (col = 0; col < srcWidth; col++) {
+               dstRow[col * 4 + 0] = srcRow[col * 4 + BCOMP];
+               dstRow[col * 4 + 1] = srcRow[col * 4 + GCOMP];
+               dstRow[col * 4 + 2] = srcRow[col * 4 + RCOMP];
+               dstRow[col * 4 + 3] = srcRow[col * 4 + ACOMP];
+            }
+            dstRow += dstRowStride;
+            srcRow += srcRowStride;
+         }
+         dstImage += dstImageStride;
+      }
+   }
+   else if (!ctx->_ImageTransferState &&
+	    !srcPacking->SwapBytes &&
+	    dstFormat == &_mesa_texformat_argb8888 &&
+	    srcType == GL_UNSIGNED_BYTE && 
+	    littleEndian &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from GL_RGBA to dst format:
+       */
+      dstmap[3] = 3;		/* alpha */
+      dstmap[2] = 0;		/* red */
+      dstmap[1] = 1;		/* green */
+      dstmap[0] = 2;		/* blue */
+ 
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				dstmap, 4,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageStride,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
    }
    else {
       /* general path */
@@ -1811,14 +2065,14 @@ _mesa_texstore_rgba_float16(STORE_PARAMS)
  * Check if an unpack PBO is active prior to fetching a texture image.
  * If so, do bounds checking and map the buffer into main memory.
  * Any errors detected will be recorded.
- * The caller _must_ call unmap_teximage_pbo() too!
+ * The caller _must_ call _mesa_unmap_teximage_pbo() too!
  */
-static const GLvoid *
-validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
-                      GLsizei width, GLsizei height, GLsizei depth,
-                      GLenum format, GLenum type, const GLvoid *pixels,
-                      const struct gl_pixelstore_attrib *unpack,
-                      const char *funcName)
+const GLvoid *
+_mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
+			    GLsizei width, GLsizei height, GLsizei depth,
+			    GLenum format, GLenum type, const GLvoid *pixels,
+			    const struct gl_pixelstore_attrib *unpack,
+			    const char *funcName)
 {
    GLubyte *buf;
 
@@ -1848,10 +2102,10 @@ validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
  * image.
  * If so, do bounds checking and map the buffer into main memory.
  * Any errors detected will be recorded.
- * The caller _must_ call unmap_teximage_pbo() too!
+ * The caller _must_ call _mesa_unmap_teximage_pbo() too!
  */
-static const GLvoid *
-validate_pbo_compressed_teximage(GLcontext *ctx,
+const GLvoid *
+_mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
                                  GLsizei imageSize, const GLvoid *pixels,
                                  const struct gl_pixelstore_attrib *packing,
                                  const char *funcName)
@@ -1884,8 +2138,8 @@ validate_pbo_compressed_teximage(GLcontext *ctx,
  * This function must be called after either of the validate_pbo_*_teximage()
  * functions.  It unmaps the PBO buffer if it was mapped earlier.
  */
-static void
-unmap_teximage_pbo(GLcontext *ctx, const struct gl_pixelstore_attrib *unpack)
+void
+_mesa_unmap_teximage_pbo(GLcontext *ctx, const struct gl_pixelstore_attrib *unpack)
 {
    if (unpack->BufferObj->Name) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
@@ -1935,7 +2189,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   pixels = validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
+   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
                                   packing, "glTexImage1D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
@@ -1966,7 +2220,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2023,7 +2277,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   pixels = validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
+   pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
                                   pixels, packing, "glTexImage2D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
@@ -2060,7 +2314,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2103,7 +2357,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   pixels = validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
+   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
                                   pixels, packing, "glTexImage3D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
@@ -2142,7 +2396,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2160,7 +2414,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   pixels = validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
+   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
                                   packing, "glTexSubImage1D");
    if (!pixels)
       return;
@@ -2188,7 +2442,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2206,7 +2460,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   pixels = validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
+   pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
                                   pixels, packing, "glTexSubImage2D");
    if (!pixels)
       return;
@@ -2241,7 +2495,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2258,7 +2512,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   pixels = validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
+   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
                                   pixels, packing, "glTexSubImage3D");
    if (!pixels)
       return;
@@ -2295,7 +2549,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, packing);
+   _mesa_unmap_teximage_pbo(ctx, packing);
 }
 
 
@@ -2360,7 +2614,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   data = validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
+   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
                                            "glCompressedTexImage2D");
    if (!data)
       return;
@@ -2376,7 +2630,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, &ctx->Unpack);
+   _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
 }
 
 
@@ -2454,7 +2708,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    ASSERT((xoffset & 3) == 0);
    ASSERT((yoffset & 3) == 0);
 
-   data = validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
+   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
                                            "glCompressedTexSubImage2D");
    if (!data)
       return;
@@ -2485,7 +2739,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
                             texObj);
    }
 
-   unmap_teximage_pbo(ctx, &ctx->Unpack);
+   _mesa_unmap_teximage_pbo(ctx, &ctx->Unpack);
 }
 
 

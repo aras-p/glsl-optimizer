@@ -240,5 +240,15 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               const struct gl_texture_object *texObj,
                               const struct gl_texture_image *texImage);
 
+extern const GLvoid *
+_mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,
+			    GLsizei width, GLsizei height, GLsizei depth,
+			    GLenum format, GLenum type, const GLvoid *pixels,
+			    const struct gl_pixelstore_attrib *unpack,
+			    const char *funcName);
+
+extern void
+_mesa_unmap_teximage_pbo(GLcontext *ctx, const struct gl_pixelstore_attrib *unpack);
+
 
 #endif
