@@ -1,4 +1,4 @@
-/* $Id: GLView.cpp,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: GLView.cpp,v 1.2 2000/03/19 01:13:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,8 +27,11 @@
 
 /*
  * $Log: GLView.cpp,v $
- * Revision 1.1  1999/08/19 00:55:41  jtg
- * Initial revision
+ * Revision 1.2  2000/03/19 01:13:13  brianp
+ * updated for Mesa 3.3
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:41  jtg
+ * Imported sources
  *
  * Revision 1.7  1999/03/28 21:08:17  brianp
  * updated SetBuffer driver function
@@ -107,16 +110,19 @@ private:
    static void ClearIndex(GLcontext *ctx, GLuint index);
    static void ClearColor(GLcontext *ctx, GLubyte r, GLubyte g,
                           GLubyte b, GLubyte a);
-   static GLbitfield ClearFront(GLcontext *ctx, GLbitfield mask,
+   static GLbitfield Clear(GLcontext *ctx, GLbitfield mask,
                                 GLboolean all, GLint x, GLint y,
                                 GLint width, GLint height);
-   static GLbitfield ClearBack(GLcontext *ctx, GLbitfield mask,
-                               GLboolean all, GLint x, GLint y,
-                               GLint width, GLint height);
+   static void ClearFront(GLcontext *ctx, GLboolean all, GLint x, GLint y,
+                          GLint width, GLint height);
+   static void ClearBack(GLcontext *ctx, GLboolean all, GLint x, GLint y,
+                         GLint width, GLint height);
    static void Index(GLcontext *ctx, GLuint index);
    static void Color(GLcontext *ctx, GLubyte r, GLubyte g,
                      GLubyte b, GLubyte a);
-   static GLboolean SetBuffer(GLcontext *ctx, GLenum mode);
+   static GLboolean SetDrawBuffer(GLcontext *ctx, GLenum mode);
+   static void SetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+                             GLenum mode);
    static void GetBufferSize(GLcontext *ctgx, GLuint *width,
                              GLuint *height);
    static const GLubyte *GetString(GLcontext *ctx, GLenum name);
@@ -289,17 +295,18 @@ void AuxInfo::UpdateState( GLcontext *ctx )
    assert(aux->mContext == ctx );
 
    ctx->Driver.UpdateState = AuxInfo::UpdateState;
-   ctx->Driver.SetBuffer = AuxInfo::SetBuffer;
+   ctx->Driver.SetDrawBuffer = AuxInfo::SetDrawBuffer;
+   ctx->Driver.SetReadBuffer = AuxInfo::SetReadBuffer;
    ctx->Driver.Color = AuxInfo::Color;
    ctx->Driver.Index = AuxInfo::Index;
    ctx->Driver.ClearIndex = AuxInfo::ClearIndex;
    ctx->Driver.ClearColor = AuxInfo::ClearColor;
    ctx->Driver.GetBufferSize = AuxInfo::GetBufferSize;
    ctx->Driver.GetString = AuxInfo::GetString;
+   ctx->Driver.Clear = AuxInfo::Clear;
 
    if (ctx->Color.DrawBuffer == GL_FRONT) {
       /* read/write front buffer */
-      ctx->Driver.Clear = AuxInfo::ClearFront;
       ctx->Driver.WriteRGBASpan = AuxInfo::WriteRGBASpanFront;
       ctx->Driver.WriteRGBSpan = AuxInfo::WriteRGBSpanFront;
       ctx->Driver.WriteRGBAPixels = AuxInfo::WriteRGBAPixelsFront;
@@ -317,7 +324,6 @@ void AuxInfo::UpdateState( GLcontext *ctx )
    }
    else {
       /* read/write back buffer */
-      ctx->Driver.Clear = AuxInfo::ClearBack;
       ctx->Driver.WriteRGBASpan = AuxInfo::WriteRGBASpanBack;
       ctx->Driver.WriteRGBSpan = AuxInfo::WriteRGBSpanBack;
       ctx->Driver.WriteRGBAPixels = AuxInfo::WriteRGBAPixelsBack;
@@ -355,9 +361,21 @@ void AuxInfo::ClearColor(GLcontext *ctx, GLubyte r, GLubyte g,
 }
 
 
-GLbitfield AuxInfo::ClearFront(GLcontext *ctx, GLbitfield mask,
+GLbitfield AuxInfo::Clear(GLcontext *ctx, GLbitfield mask,
                                GLboolean all, GLint x, GLint y,
                                GLint width, GLint height)
+{
+   if (mask & DD_FRONT_LEFT_BIT)
+      ClearFront(ctx, all, x, y, width, height);
+   if (mask & DD_BACK_LEFT_BIT)
+      ClearBack(ctx, all, x, y, width, height);
+   return mask & ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+}
+
+
+void AuxInfo::ClearFront(GLcontext *ctx,
+                         GLboolean all, GLint x, GLint y,
+                         GLint width, GLint height)
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BGLView *bglview = aux->mBGLView;
@@ -394,14 +412,12 @@ GLbitfield AuxInfo::ClearFront(GLcontext *ctx, GLbitfield mask,
                         aux->mColor[BE_GCOMP],
                         aux->mColor[BE_BCOMP],
                         aux->mColor[BE_ACOMP]);
-   
-   return mask & (~GL_COLOR_BUFFER_BIT);
 }
 
 
-GLbitfield AuxInfo::ClearBack(GLcontext *ctx, GLbitfield mask,
-                               GLboolean all, GLint x, GLint y,
-                               GLint width, GLint height)
+void AuxInfo::ClearBack(GLcontext *ctx,
+                        GLboolean all, GLint x, GLint y,
+                        GLint width, GLint height)
 {
    AuxInfo *aux = (AuxInfo *) ctx->DriverCtx;
    BGLView *bglview = aux->mBGLView;
@@ -433,8 +449,6 @@ GLbitfield AuxInfo::ClearBack(GLcontext *ctx, GLbitfield mask,
          start += aux->mWidth;
       }
    }
-
-   return mask & (~GL_COLOR_BUFFER_BIT);
 }
 
 
@@ -461,7 +475,7 @@ void AuxInfo::Color(GLcontext *ctx, GLubyte r, GLubyte g,
    bglview->SetLowColor(r, g, b, a);
 }
 
-GLboolean AuxInfo::SetBuffer(GLcontext *ctx, GLenum buffer)
+GLboolean AuxInfo::SetDrawBuffer(GLcontext *ctx, GLenum buffer)
 {
    if (buffer == GL_FRONT_LEFT)
       return GL_TRUE;
@@ -469,6 +483,12 @@ GLboolean AuxInfo::SetBuffer(GLcontext *ctx, GLenum buffer)
       return GL_TRUE;
    else
       return GL_FALSE;
+}
+
+void AuxInfo::SetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+                            GLenum buffer)
+{
+   /* XXX to do */
 }
 
 void AuxInfo::GetBufferSize(GLcontext *ctx, GLuint *width,
@@ -994,7 +1014,12 @@ BGLView::BGLView(BRect rect, char *name,
                                         red, green, blue, alpha);
 
    // create core framebuffer
-   GLframebuffer *buffer = gl_create_framebuffer(visual);
+   GLframebuffer *buffer = gl_create_framebuffer(visual,
+                                              depth > 0 ? GL_TRUE : GL_FALSE,
+                                              stencil > 0 ? GL_TRUE: GL_FALSE,
+                                              accum > 0 ? GL_TRUE : GL_FALSE,
+                                              alphaFlag
+                                              );
 
    // create core context
    const GLboolean direct = GL_TRUE;
