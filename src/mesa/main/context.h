@@ -1,10 +1,10 @@
-/* $Id: context.h,v 1.10 2000/01/14 04:45:47 brianp Exp $ */
+/* $Id: context.h,v 1.11 2000/01/18 17:36:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -140,16 +140,16 @@ do {					\
 
 #else
 
-extern struct immediate *CURRENT_INPUT;
+extern struct immediate *_mesa_CurrentInput;
 
 #define GET_CURRENT_CONTEXT(C)  GLcontext *C = _glapi_CurrentContext
 
-#define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
+#define GET_IMMEDIATE struct immediate *IM = _mesa_CurrentInput
 
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
    ctx->input = im;			\
-   CURRENT_INPUT = im;			\
+   _mesa_CurrentInput = im;		\
 } while (0)
 
 #endif

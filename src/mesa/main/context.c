@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.32 2000/01/17 20:00:15 brianp Exp $ */
+/* $Id: context.c,v 1.33 2000/01/18 17:36:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@
 
 #if !defined(THREADS)
 
-struct immediate *CURRENT_INPUT = NULL;
+struct immediate *_mesa_CurrentInput = NULL;
 
 #endif
 
