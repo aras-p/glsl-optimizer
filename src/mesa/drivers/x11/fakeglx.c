@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.15 1999/11/22 21:52:23 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.16 1999/11/22 22:17:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,23 @@
 #include "macros.h"
 #include "types.h"
 #include "xmesaP.h"
+
+
+/* This indicates the client-side GLX API and GLX encoder version. */
+#define CLIENT_MAJOR_VERSION 1
+#define CLIENT_MINOR_VERSION 2
+
+/* This indicates the server-side GLX decoder version.
+ * GLX 1.3 indicates OpenGL 1.2 support
+ */
+#define SERVER_MAJOR_VERSION 1
+#define SERVER_MINOR_VERSION 3
+
+/* This is appended onto the glXGetClient/ServerString version strings. */
+#define MESA_GLX_VERSION "Mesa 3.1"
+
+/* Who implemented this GLX? */
+#define VENDOR "Brian Paul"
 
 
 
@@ -1227,8 +1244,9 @@ Bool Fake_glXQueryVersion( Display *dpy, int *maj, int *min )
 {
    (void) dpy;
    /* Return GLX version, not Mesa version */
-   *maj = 1;
-   *min = 1;
+   assert(CLIENT_MAJOR_VERSION == SERVER_MAJOR_VERSION);
+   *maj = CLIENT_MAJOR_VERSION;
+   *min = MIN2( CLIENT_MINOR_VERSION, SERVER_MINOR_VERSION );
    return True;
 }
 
@@ -1422,10 +1440,10 @@ static const char *get_extensions( void )
 #ifdef FX
    const char *fx = getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
-      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_EXT_get_proc_address GLX_MESA_set_3dfx_mode";
+      return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GLX_MESA_set_3dfx_mode";
    }
 #endif
-   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync GL_EXT_get_proc_address";
+   return "GLX_MESA_pixmap_colormap GLX_EXT_visual_info GLX_MESA_release_buffers GLX_MESA_copy_sub_buffer GLX_SGI_video_sync";
 }
 
 
@@ -1443,8 +1461,9 @@ const char *Fake_glXQueryExtensionsString( Display *dpy, int screen )
 /* GLX 1.1 and later */
 const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
-   static char *vendor = "Brian Paul";
-   static char *version = "1.1 Mesa 3.1";
+   static char version[1000];
+   sprintf(version, "%d.%d %s", SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION,
+           MESA_GLX_VERSION);
 
    (void) dpy;
    (void) screen;
@@ -1453,7 +1472,7 @@ const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
       case GLX_EXTENSIONS:
          return get_extensions();
       case GLX_VENDOR:
-	 return vendor;
+	 return VENDOR;
       case GLX_VERSION:
 	 return version;
       default:
@@ -1466,8 +1485,9 @@ const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 /* GLX 1.1 and later */
 const char *Fake_glXGetClientString( Display *dpy, int name )
 {
-   static char *vendor = "Brian Paul";
-   static char *version = "1.1 Mesa 3.1";
+   static char version[1000];
+   sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION, CLIENT_MINOR_VERSION,
+           MESA_GLX_VERSION);
 
    (void) dpy;
 
@@ -1475,7 +1495,7 @@ const char *Fake_glXGetClientString( Display *dpy, int name )
       case GLX_EXTENSIONS:
          return get_extensions();
       case GLX_VENDOR:
-	 return vendor;
+	 return VENDOR;
       case GLX_VERSION:
 	 return version;
       default:
