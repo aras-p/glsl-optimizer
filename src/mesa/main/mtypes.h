@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.103 2003/02/16 23:07:34 brianp Exp $ */
+/* $Id: mtypes.h,v 1.104 2003/02/23 04:07:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -733,21 +733,27 @@ struct gl_stencil_attrib {
 };
 
 
+#define NUM_TEXTURE_TARGETS 5   /* 1D, 2D, 3D, CUBE and RECT */
+
+#define TEXTURE_1D_INDEX    0
+#define TEXTURE_2D_INDEX    1
+#define TEXTURE_3D_INDEX    2
+#define TEXTURE_CUBE_INDEX  3
+#define TEXTURE_RECT_INDEX  4
+
+/* Texture.Unit[]._ReallyEnabled flags: */
+#define TEXTURE_1D_BIT   (1 << TEXTURE_1D_INDEX)
+#define TEXTURE_2D_BIT   (1 << TEXTURE_2D_INDEX)
+#define TEXTURE_3D_BIT   (1 << TEXTURE_3D_INDEX)
+#define TEXTURE_CUBE_BIT (1 << TEXTURE_CUBE_INDEX)
+#define TEXTURE_RECT_BIT (1 << TEXTURE_RECT_INDEX)
+
+
 /* TexGenEnabled flags */
 #define S_BIT 1
 #define T_BIT 2
 #define R_BIT 4
 #define Q_BIT 8
-
-/* Texture.Unit[]._ReallyEnabled flags: */
-#define TEXTURE_1D_BIT   0x01
-#define TEXTURE_2D_BIT   0x02
-#define TEXTURE_3D_BIT   0x04
-#define TEXTURE_CUBE_BIT 0x08
-#define TEXTURE_RECT_BIT 0x10
-
-#define NUM_TEXTURE_TARGETS 5   /* 1D, 2D, 3D, CUBE and RECT */
-
 
 /* Bitmap versions of the GL_ constants. */
 #define TEXGEN_SPHERE_MAP        0x1
@@ -763,8 +769,6 @@ struct gl_stencil_attrib {
 				  TEXGEN_REFLECTION_MAP_NV | \
 				  TEXGEN_NORMAL_MAP_NV     | \
 				  TEXGEN_EYE_LINEAR)
-
-
 
 /* A selection of state flags to make driver and module's lives easier. */
 #define ENABLE_TEXGEN0        0x1
@@ -1212,6 +1216,7 @@ struct fragment_program
    struct fp_instruction *Instructions;  /* Compiled instructions */
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
+   GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /* TEXTURE_x_INDEX bitmask */
    GLfloat LocalParams[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4];
    struct symbol_table SymbolTable;
 };
