@@ -1975,8 +1975,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   /* XXX - someday the rest of this function should be moved into a
+    * fallback routine called via ctx->Driver.GetTexImage()
+    */
+
    if (ctx->Pack.BufferObj->Name) {
-      /* pack texture imaage into a PBO */
+      /* pack texture image into a PBO */
       GLubyte *buf;
       if (!_mesa_validate_pbo_access(&ctx->Pack, texImage->Width,
                                      texImage->Height, texImage->Depth,
@@ -3384,9 +3388,40 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
       return;
    }
 
-   if (!img)
+   /* XXX - someday the rest of this function should be moved into a
+    * fallback routine called via ctx->Driver.GetCompressedTexImage()
+    */
+ 
+   if (ctx->Pack.BufferObj->Name) {
+      /* pack texture image into a PBO */
+      GLubyte *buf;
+      if ((const GLubyte *) img + texImage->CompressedSize >
+          (const GLubyte *) ctx->Pack.BufferObj->Size) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetCompressedTexImage(invalid PBO access)");
+         return;
+      }
+      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                                              GL_WRITE_ONLY_ARB,
+                                              ctx->Pack.BufferObj);
+      if (!buf) {
+         /* buffer is already mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetCompressedTexImage(PBO is mapped)");
+         return;
+      }
+      img = ADD_POINTERS(buf, img);
+   }
+   else if (!img) {
+      /* not an error */
       return;
+   }
 
    /* just memcpy, no pixelstore or pixel transfer */
    MEMCPY(img, texImage->Data, texImage->CompressedSize);
+
+   if (ctx->Pack.BufferObj->Name) {
+      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                              ctx->Pack.BufferObj);
+   }
 }
