@@ -22,7 +22,7 @@ if HAVE_X11
 INC_X11 = glx.h glx_mangle.h xmesa.h xmesa_x.h xmesa_xf86.h
 endif
 
-if ENABLE_GLUT_BUILD
+if NEED_GLUT
 INC_GLUT = glut.h
 endif
 
