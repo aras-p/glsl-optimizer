@@ -8,13 +8,9 @@
 
 
 #include "glutint.h"
-#if defined(__CYGWIN32__)
-typedef MINMAXINFO* LPMINMAXINFO;
-#else
 #include <sys/timeb.h>
-#endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN32__)
 #include <mmsystem.h>  /* Win32 Multimedia API header. */
 #endif
 

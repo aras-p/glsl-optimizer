@@ -11,11 +11,7 @@
 #include "glutint.h"
 #include "glutstroke.h"
 #include "glutbitmap.h"
-#if defined(__CYGWIN32__)
-typedef MINMAXINFO* LPMINMAXINFO;
-#else
 #include <sys/timeb.h>
-#endif
 
 /* The following added by Paul Garceau <pgarceau@teleport.com> */
 #if defined(__MINGW32__)
@@ -27,6 +23,7 @@ struct timeval;
 extern StrokeFontRec glutStrokeRoman, glutStrokeMonoRoman;
 extern BitmapFontRec glutBitmap8By13, glutBitmap9By15, glutBitmapTimesRoman10, glutBitmapTimesRoman24, glutBitmapHelvetica10, glutBitmapHelvetica12, glutBitmapHelvetica18;
 
+#ifndef __CYGWIN32__
 int
 gettimeofday(struct timeval* tp, void* tzp)
 {
@@ -39,6 +36,7 @@ gettimeofday(struct timeval* tp, void* tzp)
   /* 0 indicates that the call succeeded. */
   return 0;
 }
+#endif
 
 /* To get around the fact that Microsoft DLLs only allow functions
    to be exported and now data addresses (as Unix DSOs support), the

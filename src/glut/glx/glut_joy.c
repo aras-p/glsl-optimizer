@@ -7,7 +7,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#ifndef __CYGWIN32
 #include <mmsystem.h>  /* Win32 Multimedia API header. */
+#endif
 #endif
 
 #include "glutint.h"

@@ -20,7 +20,9 @@
 #include <X11/Xutil.h>
 #else
 #include <windows.h>
+#ifndef __CYGWIN32__
 #include <mmsystem.h>  /* Win32 Multimedia API header. */
+#endif
 #endif /* !_WIN32 */
 
 #include "glutint.h"

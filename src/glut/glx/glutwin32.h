@@ -40,9 +40,57 @@
 #define XA_STRING 0
 
 /* Private routines from win32_util.c */
+#ifndef __CYGWIN32__
 extern int gettimeofday(struct timeval* tp, void* tzp);
+#endif
 extern void *__glutFont(void *font);
 extern int __glutGetTransparentPixel(Display *dpy, XVisualInfo *vinfo);
 extern void __glutAdjustCoords(Window parent, int *x, int *y, int *width, int *height);
+
+
+/* Cygwin B20.1 misses the following definitions */
+#ifdef __CYGWIN32__
+
+/* from winuser.h */
+#define CDS_FULLSCREEN 4
+
+/* from mmsystem.h */
+#define WINMMAPI __declspec(dllimport)
+typedef UINT MMRESULT;
+
+#define MM_JOY1MOVE 0x3A0
+#define MM_JOY1ZMOVE 0x3A2
+#define MM_JOY1BUTTONDOWN 0x3B5
+#define MM_JOY1BUTTONUP 0x3B7
+
+#define JOYERR_NOERROR 0
+#define JOYERR_PARMS 165
+
+#define JOY_RETURNALL 0x000000ffl
+
+#define JOYSTICKID1 0
+
+typedef struct joyinfoex_tag {
+    DWORD dwSize;                /* size of structure */
+    DWORD dwFlags;               /* flags to indicate what to return */
+    DWORD dwXpos;                /* x position */
+    DWORD dwYpos;                /* y position */
+    DWORD dwZpos;                /* z position */
+    DWORD dwRpos;                /* rudder/4th axis position */
+    DWORD dwUpos;                /* 5th axis position */
+    DWORD dwVpos;                /* 6th axis position */
+    DWORD dwButtons;             /* button states */
+    DWORD dwButtonNumber;        /* current button number pressed */
+    DWORD dwPOV;                 /* point of view state */
+    DWORD dwReserved1;           /* reserved for communication between winmm & driver */
+    DWORD dwReserved2;           /* reserved for future expansion */
+} JOYINFOEX, *PJOYINFOEX, /* NEAR */ *NPJOYINFOEX, /* FAR */ *LPJOYINFOEX;
+
+WINMMAPI MMRESULT WINAPI joyGetPosEx( UINT uJoyID, LPJOYINFOEX pji);
+WINMMAPI MMRESULT WINAPI joyReleaseCapture( UINT uJoyID);
+WINMMAPI MMRESULT WINAPI joySetCapture( HWND hwnd, UINT uJoyID, UINT uPeriod, BOOL fChanged);
+WINMMAPI MMRESULT WINAPI joySetThreshold( UINT uJoyID, UINT uThreshold);
+
+#endif
 
 #endif /* __glutwin32_h__ */
