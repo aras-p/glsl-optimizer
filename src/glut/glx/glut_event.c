@@ -301,7 +301,15 @@ interruptibleXNextEvent(Display * dpy, XEvent * event)
       XNextEvent(dpy, event);
       return 1;
     }
-    FD_ZERO(&fds);
+#ifndef VMS
+     /* the combination ConectionNumber-select is buggy on VMS. Sometimes it
+      * fails. This part of the code hangs the program on VMS7.2. But even
+      * without it the program seems to run correctly.
+      * Note that this is a bug in the VMS/DECWindows run-time-libraries.
+      * Compaq engeneering does not want or is not able to make a fix.
+      * (last sentence is a quotation from Compaq when I reported the
+      * problem January 2000) */
+     FD_ZERO(&fds);
     FD_SET(__glutConnectionFD, &fds);
     rc = select(__glutConnectionFD + 1, &fds,
       NULL, NULL, NULL);
@@ -312,6 +320,7 @@ interruptibleXNextEvent(Display * dpy, XEvent * event)
         __glutFatalError("select error.");
       }
     }
+#endif
   }
 }
 
