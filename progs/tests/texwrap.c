@@ -1,4 +1,4 @@
-/* $Id: texwrap.c,v 1.2 2001/04/12 20:50:26 brianp Exp $ */
+/* $Id: texwrap.c,v 1.3 2002/10/17 17:39:37 brianp Exp $ */
 
 /*
  * Test texture wrap modes.
@@ -16,10 +16,18 @@
 #include <GL/glut.h>
 
 
-#ifndef GL_CLAMP_TO_BORDER_ARB
-#define GL_CLAMP_TO_BORDER_ARB 0x812D
+#ifndef GL_CLAMP_TO_BORDER
+#define GL_CLAMP_TO_BORDER 0x812D
 #endif
 
+#ifndef GL_MIRRORED_REPEAT
+#define GL_MIRRORED_REPEAT 0x8370
+#endif
+
+#ifndef GL_ATI_texture_mirror_once
+#define GL_MIRROR_CLAMP_ATI               0x8742
+#define GL_MIRROR_CLAMP_TO_EDGE_ATI       0x8743
+#endif
 
 #define BORDER_TEXTURE 1
 #define NO_BORDER_TEXTURE 2
@@ -29,6 +37,38 @@ static GLubyte BorderImage[SIZE+2][SIZE+2][4];
 static GLubyte NoBorderImage[SIZE][SIZE][4];
 static GLuint Border = 1;
 
+
+#define WRAP_MODE(m)        { m , # m, GL_TRUE,  1.0, { NULL, NULL } }
+#define WRAP_EXT(m,e1,e2,v) { m , # m, GL_FALSE, v,   { e1,   e2   } }
+    
+struct wrap_mode {
+   GLenum       mode;
+   const char * name;
+   GLboolean    supported;
+   GLfloat      version;
+   const char * extension_names[2];
+};
+
+static struct wrap_mode modes[] = {
+   WRAP_MODE( GL_REPEAT ),
+   WRAP_MODE( GL_CLAMP ),
+   WRAP_EXT ( GL_CLAMP_TO_EDGE,   "GL_EXT_texture_edge_clamp",
+	                          "GL_SGIS_texture_edge_clamp",
+	      1.2 ),
+   WRAP_EXT ( GL_CLAMP_TO_BORDER, "GL_ARB_texture_border_clamp",
+	                          "GL_SGIS_texture_border_clamp",
+	      1.3 ),
+   WRAP_EXT ( GL_MIRRORED_REPEAT, "GL_ARB_texture_mirrored_repeat",
+	                          "GL_IBM_texture_mirrored_repeat",
+	      1.4 ),
+   WRAP_EXT ( GL_MIRROR_CLAMP_ATI, "GL_ATI_texture_mirror_once",
+	                           NULL,
+	      999.0 ),
+   WRAP_EXT ( GL_MIRROR_CLAMP_TO_EDGE_ATI, "GL_ATI_texture_mirror_once",
+	                                   NULL,
+	      999.0 ),
+   { 0 }
+};
 
 static void
 PrintString(const char *s)
@@ -42,23 +82,36 @@ PrintString(const char *s)
 
 static void Display( void )
 {
-   static const GLenum modes[] = {
-      GL_REPEAT,
-      GL_CLAMP,
-      GL_CLAMP_TO_EDGE,
-      GL_CLAMP_TO_BORDER_ARB
-   };
-   static const char *names[] = {
-      "GL_REPEAT",
-      "GL_CLAMP",
-      "GL_CLAMP_TO_EDGE",
-      "GL_CLAMP_TO_BORDER_ARB"
-   };
-
    GLint i, j;
-   GLint numModes;
+   GLint offset;
+   GLfloat version;
 
-   numModes = glutExtensionSupported("GL_ARB_texture_border_clamp") ? 4 : 3;
+   /* Fill in the extensions that are supported.
+    */
+    
+   version = atof( (char *) glGetString( GL_VERSION ) );
+   for ( i = 0 ; modes[i].mode != 0 ; i++ ) {
+      if ( ((modes[i].extension_names[0] != NULL)
+	    && glutExtensionSupported(modes[i].extension_names[0]))
+	   || ((modes[i].extension_names[1] != NULL)
+	       && glutExtensionSupported(modes[i].extension_names[1])) ) {
+	 modes[i].supported = GL_TRUE;
+      }
+      else if ( !modes[i].supported && (modes[i].version <= version) ) {
+	 fprintf( stderr, "WARNING: OpenGL library meets minimum version\n"
+		          "         requirement for %s, but the\n"
+		          "         extension string is not advertised.\n"
+		  	  "         (%s%s%s)\n",
+		  modes[i].name,
+		  modes[i].extension_names[0],
+		  (modes[i].extension_names[1] != NULL) 
+		      ? " or " : "",
+		  (modes[i].extension_names[1] != NULL)
+		      ? modes[i].extension_names[1] : "" );
+	 modes[i].supported = GL_TRUE;
+      }
+   }
+
 
    glClearColor(0.5, 0.5, 0.5, 1.0);
    glClear( GL_COLOR_BUFFER_BIT );
@@ -72,8 +125,11 @@ static void Display( void )
 
    glBindTexture(GL_TEXTURE_2D, Border ? BORDER_TEXTURE : NO_BORDER_TEXTURE);
 
+
    /* loop over min/mag filters */
    for (i = 0; i < 2; i++) {
+      offset = 0;
+
       if (i) {
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -84,15 +140,20 @@ static void Display( void )
       }
 
       /* loop over border modes */
-      for (j = 0; j < numModes; j++) {
+      for (j = 0; j < modes[j].mode != 0; j++) {
          const GLfloat x0 = 0, y0 = 0, x1 = 140, y1 = 140;
          const GLfloat b = 0.2;
          const GLfloat s0 = -b, t0 = -b, s1 = 1.0+b, t1 = 1.0+b;
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, modes[j]);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, modes[j]);
+
+	 if ( modes[j].supported != GL_TRUE )
+	     continue;
+
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, modes[j].mode);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, modes[j].mode);
 
          glPushMatrix();
-            glTranslatef(j * 150 + 10, i * 150 + 25, 0);
+            glTranslatef(offset * 150 + 10, i * 150 + 40, 0);
+	    offset++;
 
             glEnable(GL_TEXTURE_2D);
             glColor3f(1, 1, 1);
@@ -119,9 +180,13 @@ static void Display( void )
 
    glDisable(GL_TEXTURE_2D);
    glColor3f(1, 1, 1);
-   for (i = 0; i < numModes; i++) {
-      glWindowPos2iMESA( i * 150 + 10, 5);
-      PrintString(names[i]);
+   offset = 0;
+   for (i = 0; i < modes[i].mode != 0; i++) {
+      if ( modes[i].supported ) {
+         glWindowPos2iMESA( offset * 150 + 10, 5 + ((offset & 1) * 15) );
+	 PrintString(modes[i].name);
+	 offset++;
+      }
    }
 
    glutSwapBuffers();
@@ -192,7 +257,6 @@ static void Init( void )
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SIZE+2, SIZE+2, 1,
                 GL_RGBA, GL_UNSIGNED_BYTE, (void *) BorderImage);
 
-
    for (i = 0; i < SIZE; i++) {
       for (j = 0; j < SIZE; j++) {
          if ((i + j) & 1) {
@@ -223,7 +287,7 @@ int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize( 650, 340 );
+   glutInitWindowSize( 800, 355 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
