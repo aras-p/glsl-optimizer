@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.36 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: image.c,v 1.37 2000/08/29 14:25:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -669,7 +669,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
          }
          /* convolution */
          if (transferOps & IMAGE_CONVOLUTION_BIT) {
-            /* XXX to do */
+            /* this has to be done in the calling code */
          }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
@@ -694,6 +694,9 @@ _mesa_pack_rgba_span( GLcontext *ctx,
                return;
          }
       }
+
+      /* XXX clamp rgba to [0,1]? */
+
 
       if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA) {
          for (i = 0; i < n; i++) {
@@ -2304,7 +2307,7 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          }
          /* convolution */
          if (transferOps & IMAGE_CONVOLUTION_BIT) {
-            /* XXX to do */
+            /* this has to be done in the calling code */
          }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
