@@ -1009,9 +1009,9 @@ void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs )
 
 
 void _tnl_build_vertices( GLcontext *ctx,
-		       GLuint start,
-		       GLuint count,
-		       GLuint newinputs )
+			  GLuint start,
+			  GLuint end,
+			  GLuint newinputs )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    GLuint stride = vtx->vertex_size;
@@ -1021,18 +1021,18 @@ void _tnl_build_vertices( GLcontext *ctx,
    vtx->new_inputs = 0;
 
    if (newinputs)
-      vtx->emit( ctx, start, count, v );
+      vtx->emit( ctx, start, end, v );
 }
 
 
 void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
-				   GLuint start,
-				   GLuint count,
-				   void *dest )
+				    GLuint start,
+				    GLuint end,
+				    void *dest )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   vtx->emit( ctx, start, count, dest );
-   return (void *)((GLubyte *)dest + vtx->vertex_size * (count - start));
+   vtx->emit( ctx, start, end, dest );
+   return (void *)((GLubyte *)dest + vtx->vertex_size * (end - start));
 }
 
 

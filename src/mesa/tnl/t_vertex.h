@@ -103,12 +103,12 @@ extern void _tnl_init_vertices( GLcontext *ctx,
 
 extern void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
 					   GLuint start,
-					   GLuint count,
+					   GLuint end,
 					   void *dest );
 
 extern void _tnl_build_vertices( GLcontext *ctx,
 				 GLuint start,
-				 GLuint count,
+				 GLuint end,
 				 GLuint newinputs );
 
 extern void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs );
