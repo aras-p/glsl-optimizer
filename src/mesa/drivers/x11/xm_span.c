@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.7 2001/01/29 22:40:23 brianp Exp $ */
+/* $Id: xm_span.c,v 1.8 2001/02/13 23:57:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2300,7 +2300,7 @@ static void write_pixels_TRUEDITHER_ximage( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
          unsigned long p;
-         PACK_TRUEDITHER(p, x[i], FLIP(xmesa->xm_buffer, y[i]), rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
+         PACK_TRUEDITHER(p, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
 	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), p );
       }
    }
@@ -3287,10 +3287,18 @@ static void write_span_index_pixmap( INDEX_SPAN_ARGS )
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
-   for (i=0;i<n;i++,x++) {
-      if (mask[i]) {
-	 XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+   if (mask) {
+      for (i=0;i<n;i++,x++) {
+         if (mask[i]) {
+            XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
+            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+         }
+      }
+   }
+   else {
+      for (i=0;i<n;i++,x++) {
+         XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
       }
    }
 }
@@ -3307,10 +3315,18 @@ static void write_span_index8_pixmap( INDEX8_SPAN_ARGS )
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
-   for (i=0;i<n;i++,x++) {
-      if (mask[i]) {
-	 XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+   if (mask) {
+      for (i=0;i<n;i++,x++) {
+         if (mask[i]) {
+            XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
+            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+         }
+      }
+   }
+   else {
+      for (i=0;i<n;i++,x++) {
+         XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
       }
    }
 }
@@ -3325,9 +3341,16 @@ static void write_span_index_ximage( INDEX_SPAN_ARGS )
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    y = FLIP(xmesa->xm_buffer, y);
-   for (i=0;i<n;i++,x++) {
-      if (mask[i]) {
-	 XMesaPutPixel( img, x, y, (unsigned long) index[i] );
+   if (mask) {
+      for (i=0;i<n;i++,x++) {
+         if (mask[i]) {
+            XMesaPutPixel( img, x, y, (unsigned long) index[i] );
+         }
+      }
+   }
+   else {
+      for (i=0;i<n;i++,x++) {
+         XMesaPutPixel( img, x, y, (unsigned long) index[i] );
       }
    }
 }
