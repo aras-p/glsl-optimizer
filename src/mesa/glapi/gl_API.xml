@@ -9391,6 +9391,11 @@
     </enum>
 </category>
 
+<category name="GL_OES_read_format" number="295">
+    <enum name="IMPLEMENTATION_COLOR_READ_TYPE_OES"       value="0x8B9A"/>
+    <enum name="IMPLEMENTATION_COLOR_READ_FORMAT_OES"     value="0x8B9B"/>
+</category>
+
 <category name="GL_EXT_depth_bounds_test" number="297">
     <function name="DepthBoundsEXT" offset="699">
         <param name="zmin" type="GLclampd"/>
