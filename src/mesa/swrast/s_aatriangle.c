@@ -1,8 +1,8 @@
-/* $Id: s_aatriangle.c,v 1.19 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_aatriangle.c,v 1.20 2001/11/13 00:26:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -142,27 +142,43 @@ static GLfloat
 compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
                   const GLfloat v2[3], GLint winx, GLint winy)
 {
-#define B 0.125
+   /* Given a position [0,3]x[0,3] return the sub-pixel sample position.
+    * Contributed by Ray Tice.
+    *
+    * Jitter sample positions -
+    * - average should be .5 in x & y for each column
+    * - each of the 16 rows and columns should be used once
+    * - the rectangle formed by the first four points
+    *   should contain the other points
+    * - the distrubition should be fairly even in any given direction
+    *
+    * The pattern drawn below isn't optimal, but it's better than a regular
+    * grid.  In the drawing, the center of each subpixel is surrounded by
+    * four dots.  The "x" marks the jittered position relative to the
+    * subpixel center.
+    */
+#define POS(a, b) (0.5+a*4+b)/16
    static const GLfloat samples[16][2] = {
       /* start with the four corners */
-      { 0.00+B, 0.00+B },
-      { 0.75+B, 0.00+B },
-      { 0.00+B, 0.75+B },
-      { 0.75+B, 0.75+B },
+      { POS(0, 2), POS(0, 0) },
+      { POS(3, 3), POS(0, 2) },
+      { POS(0, 0), POS(3, 1) },
+      { POS(3, 1), POS(3, 3) },
       /* continue with interior samples */
-      { 0.25+B, 0.00+B },
-      { 0.50+B, 0.00+B },
-      { 0.00+B, 0.25+B },
-      { 0.25+B, 0.25+B },
-      { 0.50+B, 0.25+B },
-      { 0.75+B, 0.25+B },
-      { 0.00+B, 0.50+B },
-      { 0.25+B, 0.50+B },
-      { 0.50+B, 0.50+B },
-      { 0.75+B, 0.50+B },
-      { 0.25+B, 0.75+B },
-      { 0.50+B, 0.75+B }
+      { POS(1, 1), POS(0, 1) },
+      { POS(2, 0), POS(0, 3) },
+      { POS(0, 3), POS(1, 3) },
+      { POS(1, 2), POS(1, 0) },
+      { POS(2, 3), POS(1, 2) },
+      { POS(3, 2), POS(1, 1) },
+      { POS(0, 1), POS(2, 2) },
+      { POS(1, 0), POS(2, 1) },
+      { POS(2, 1), POS(2, 3) },
+      { POS(3, 0), POS(2, 0) },
+      { POS(1, 3), POS(3, 0) },
+      { POS(2, 2), POS(3, 2) }
    };
+
    const GLfloat x = (GLfloat) winx;
    const GLfloat y = (GLfloat) winy;
    const GLfloat dx0 = v1[0] - v0[0];
@@ -226,28 +242,25 @@ static GLint
 compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
                   const GLfloat v2[3], GLint winx, GLint winy)
 {
-   /* NOTE: 15 samples instead of 16.
-    * A better sample distribution could be used.
-    */
+   /* NOTE: 15 samples instead of 16. */
    static const GLfloat samples[15][2] = {
       /* start with the four corners */
-      { 0.00+B, 0.00+B },
-      { 0.75+B, 0.00+B },
-      { 0.00+B, 0.75+B },
-      { 0.75+B, 0.75+B },
+      { POS(0, 2), POS(0, 0) },
+      { POS(3, 3), POS(0, 2) },
+      { POS(0, 0), POS(3, 1) },
+      { POS(3, 1), POS(3, 3) },
       /* continue with interior samples */
-      { 0.25+B, 0.00+B },
-      { 0.50+B, 0.00+B },
-      { 0.00+B, 0.25+B },
-      { 0.25+B, 0.25+B },
-      { 0.50+B, 0.25+B },
-      { 0.75+B, 0.25+B },
-      { 0.00+B, 0.50+B },
-      { 0.25+B, 0.50+B },
-      /*{ 0.50, 0.50 },*/
-      { 0.75+B, 0.50+B },
-      { 0.25+B, 0.75+B },
-      { 0.50+B, 0.75+B }
+      { POS(1, 1), POS(0, 1) },
+      { POS(2, 0), POS(0, 3) },
+      { POS(0, 3), POS(1, 3) },
+      { POS(1, 2), POS(1, 0) },
+      { POS(2, 3), POS(1, 2) },
+      { POS(3, 2), POS(1, 1) },
+      { POS(0, 1), POS(2, 2) },
+      { POS(1, 0), POS(2, 1) },
+      { POS(2, 1), POS(2, 3) },
+      { POS(3, 0), POS(2, 0) },
+      { POS(1, 3), POS(3, 0) }
    };
    const GLfloat x = (GLfloat) winx;
    const GLfloat y = (GLfloat) winy;
