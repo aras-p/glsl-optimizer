@@ -1,4 +1,4 @@
-/* $Id: stencil.h,v 1.6 2000/04/11 21:26:57 brianp Exp $ */
+/* $Id: stencil.h,v 1.7 2000/10/31 18:09:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,34 +47,6 @@ _mesa_StencilMask( GLuint mask );
 extern void
 _mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
 
-
-
-extern GLboolean
-_mesa_stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                              const GLdepth z[], GLubyte mask[] );
-
-extern GLboolean
-_mesa_stencil_and_ztest_pixels( GLcontext *ctx, GLuint n,
-                                const GLint x[], const GLint y[],
-                                const GLdepth z[], GLubyte mask[] );
-
-
-extern void
-_mesa_read_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
-                         GLstencil stencil[] );
-
-
-extern void
-_mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
-                          const GLstencil stencil[] );
-
-
-extern void
-_mesa_alloc_stencil_buffer( GLcontext *ctx );
-
-
-extern void
-_mesa_clear_stencil_buffer( GLcontext *ctx );
 
 
 #endif

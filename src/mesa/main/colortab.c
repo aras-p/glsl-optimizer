@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.24 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: colortab.c,v 1.25 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
-#include "span.h"
 #endif
 
 

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.26 2000/10/31 12:40:57 keithw Exp $
+# $Id: Makefile.X11,v 1.27 2000/10/31 18:09:44 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -20,10 +20,8 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
-	aatriangle.c \
 	accum.c \
 	alpha.c \
-	alphabuf.c \
 	attrib.c \
 	bbox.c \
 	bitmap.c \
@@ -52,6 +50,7 @@ CORE_SOURCES = \
 	glapinoop.c \
 	glthread.c \
 	hash.c \
+	highpc.c \
 	hint.c \
 	image.c \
 	imaging.c \
@@ -59,23 +58,21 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	logic.c \
+	lowpc.c \
 	masking.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
-	pb.c \
 	pipeline.c \
 	pixel.c \
 	pixeltex.c \
 	points.c \
 	polygon.c \
-	quads.c \
 	rastpos.c \
 	readpix.c \
 	rect.c \
 	scissor.c \
 	shade.c \
-	span.c \
 	stages.c \
 	state.c \
 	stencil.c \
@@ -85,7 +82,6 @@ CORE_SOURCES = \
 	texture.c \
 	texutil.c \
 	translate.c \
-	triangle.c \
 	varray.c \
 	vb.c \
 	vbcull.c \
@@ -97,11 +93,39 @@ CORE_SOURCES = \
 	vertices.c \
 	winpos.c \
 	xform.c \
-	zoom.c \
 	X86/x86.c \
 	X86/common_x86.c \
 	X86/3dnow.c \
-	X86/katmai.c
+	X86/katmai.c \
+	swrast/s_aatriangle.c \
+	swrast/s_accum.c \
+	swrast/s_alpha.c \
+	swrast/s_alphabuf.c \
+	swrast/s_bitmap.c \
+	swrast/s_blend.c \
+	swrast/s_buffers.c \
+	swrast/s_copypix.c \
+	swrast/s_context.c \
+	swrast/s_depth.c \
+	swrast/s_drawpix.c \
+	swrast/s_fog.c \
+	swrast/s_imaging.c \
+	swrast/s_lines.c \
+	swrast/s_logic.c \
+	swrast/s_masking.c \
+	swrast/s_pb.c \
+	swrast/s_pixeltex.c \
+	swrast/s_points.c \
+	swrast/s_quads.c \
+	swrast/s_readpix.c \
+	swrast/s_scissor.c \
+	swrast/s_span.c \
+	swrast/s_stencil.c \
+	swrast/s_texture.c \
+	swrast/s_triangle.c \
+	swrast/s_zoom.c 
+
+
 
 DRIVER_SOURCES = \
 	X/glxapi.c \

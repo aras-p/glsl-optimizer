@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.36 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: dd.h,v 1.37 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -474,6 +474,11 @@ struct dd_function_table {
    /* This is called by glBitmap.  Works the same as DrawPixels, above.
     */
 
+   GLboolean (*Accum)( GLcontext *ctx, GLenum op, 
+		       GLfloat value, GLint xpos, GLint ypos, 
+		       GLint width, GLint height );
+   /* Hardware accum buffer.
+    */
 
    /***
     *** Texture mapping functions:

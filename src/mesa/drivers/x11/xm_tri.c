@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.5 2000/10/30 13:32:03 keithw Exp $ */
+/* $Id: xm_tri.c,v 1.6 2000/10/31 18:09:47 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,10 @@
 #include "vb.h"
 #include "types.h"
 #include "xmesaP.h"
+
+/* Internal swrast includes:
+ */
+#include "swrast/s_depth.h"
 
 
 
@@ -119,7 +123,7 @@ static void smooth_TRUECOLOR_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -154,7 +158,7 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -188,7 +192,7 @@ static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -224,7 +228,7 @@ static void smooth_8R8G8B24_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -258,7 +262,7 @@ static void smooth_TRUEDITHER_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -292,7 +296,7 @@ static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -326,7 +330,7 @@ static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -361,7 +365,7 @@ static void smooth_DITHER8_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -398,7 +402,7 @@ static void smooth_DITHER_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -432,7 +436,7 @@ static void smooth_LOOKUP8_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -466,7 +470,7 @@ static void smooth_HPCR_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -498,7 +502,7 @@ static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -530,7 +534,7 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx, GLuint v0,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -562,7 +566,7 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;					\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -595,7 +599,7 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;					\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -625,7 +629,7 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -657,7 +661,7 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;					\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -688,7 +692,7 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx, GLuint v0,
       ffz += fdzdx;						\
    }								\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -721,7 +725,7 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;						\
    }								\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -753,7 +757,7 @@ static void flat_DITHER_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -786,7 +790,7 @@ static void flat_HPCR_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;							\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -821,7 +825,7 @@ static void flat_LOOKUP8_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffz += fdzdx;					\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -846,7 +850,7 @@ static void smooth_TRUECOLOR_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -872,7 +876,7 @@ static void smooth_8A8B8G8R_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -898,7 +902,7 @@ static void smooth_8R8G8B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -926,7 +930,7 @@ static void smooth_8R8G8B24_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       pixel++;							\
    }								\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -951,7 +955,7 @@ static void smooth_TRUEDITHER_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -977,7 +981,7 @@ static void smooth_5R6G5B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1003,7 +1007,7 @@ static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx, GLuint v0,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1030,7 +1034,7 @@ static void smooth_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1055,7 +1059,7 @@ static void smooth_DITHER_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1082,7 +1086,7 @@ static void smooth_LOOKUP8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1109,7 +1113,7 @@ static void smooth_HPCR_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;			\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1132,7 +1136,7 @@ static void flat_TRUECOLOR_triangle( GLcontext *ctx, GLuint v0,
       XMesaPutPixel( img, xx, yy, pixel );			\
    }								\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1157,7 +1161,7 @@ static void flat_8A8B8G8R_triangle( GLcontext *ctx, GLuint v0,
       *pixel = (PIXEL_TYPE) p;				\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1182,7 +1186,7 @@ static void flat_8R8G8B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       *pixel = (PIXEL_TYPE) p;				\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1208,7 +1212,7 @@ static void flat_8R8G8B24_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       pixel++;						\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 /*
@@ -1229,7 +1233,7 @@ static void flat_TRUEDITHER_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       XMesaPutPixel( img, xx, yy, p );					\
    }									\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1255,7 +1259,7 @@ static void flat_5R6G5B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       *pixel = (PIXEL_TYPE) p;				\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1279,7 +1283,7 @@ static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
                      color[GCOMP], color[BCOMP]);	\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1305,7 +1309,7 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       *pixel = (PIXEL_TYPE) FLAT_DITHER(xx);		\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1329,7 +1333,7 @@ static void flat_DITHER_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       XMesaPutPixel( img, xx, yy, p );			\
    }							\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1355,7 +1359,7 @@ static void flat_HPCR_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       *pixel = (PIXEL_TYPE) DITHER_HPCR( xx, yy, r, g, b );	\
    }								\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 
@@ -1383,7 +1387,7 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
       *pixel = p;				\
    }						\
 }
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.4 2000/10/30 13:32:03 keithw Exp $ */
+/* $Id: xm_api.c,v 1.5 2000/10/31 18:09:46 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,6 +76,7 @@
 #include "conf.h"
 #endif
 #include "macros.h"
+#include "swrast/swrast.h"
 
 #ifndef GLX_NONE_EXT
 #define GLX_NONE_EXT 0x8000

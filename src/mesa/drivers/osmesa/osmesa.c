@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.24 2000/10/30 16:32:43 brianp Exp $ */
+/* $Id: osmesa.c,v 1.25 2000/10/31 18:09:46 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,10 @@
 #include "types.h"
 #include "vb.h"
 #include "extensions.h"
+#include "swrast/s_depth.h"
 #endif
+
+
 
 
 /*
@@ -1236,9 +1239,9 @@ static void flat_rgba_line( GLcontext *ctx,
 #define PLOT(X,Y) { GLuint *ptr4 = PIXELADDR4(X,Y); *ptr4 = pixel; }
 
 #ifdef WIN32
-#include "..\linetemp.h"
+#include "..\swrast\s_linetemp.h"
 #else
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 #endif
 }
 
@@ -1265,9 +1268,9 @@ static void flat_rgba_z_line( GLcontext *ctx,
 	}
 
 #ifdef WIN32
-#include "..\linetemp.h"
+#include "..\swrast\s_linetemp.h"
 #else
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 #endif
 }
 
@@ -1301,9 +1304,9 @@ static void flat_blend_rgba_line( GLcontext *ctx,
    }
 
 #ifdef WIN32
-#include "..\linetemp.h"
+#include "..\swrast\s_linetemp.h"
 #else
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 #endif
 }
 
@@ -1340,9 +1343,9 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
 	}
 
 #ifdef WIN32
-#include "..\linetemp.h"
+#include "..\swrast\s_linetemp.h"
 #else
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 #endif
 }
 
@@ -1380,9 +1383,9 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
 	}
 
 #ifdef WIN32
-#include "..\linetemp.h"
+#include "..\swrast\s_linetemp.h"
 #else
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 #endif
 }
 
@@ -1512,6 +1515,7 @@ static void smooth_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 {								\
    GLint i, len = RIGHT-LEFT;					\
    GLuint *img = PIXELADDR4(LEFT,Y);   				\
+   (void) fffog;                        \
    for (i=0;i<len;i++,img++) {					\
       GLdepth z = FixedToDepth(ffz);				\
       if (z < zRow[i]) {					\
@@ -1524,9 +1528,9 @@ static void smooth_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
    }								\
 }
 #ifdef WIN32
-#include "..\tritemp.h"
+#include "..\swrast\s_tritemp.h"
 #else
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 #endif
 }
 
@@ -1553,6 +1557,7 @@ static void flat_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 {					\
    GLint i, len = RIGHT-LEFT;		\
    GLuint *img = PIXELADDR4(LEFT,Y);   	\
+   (void) fffog;                        \
    for (i=0;i<len;i++,img++) {		\
       GLdepth z = FixedToDepth(ffz);	\
       if (z < zRow[i]) {		\
@@ -1563,9 +1568,9 @@ static void flat_rgba_z_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
    }					\
 }
 #ifdef WIN32
-#include "..\tritemp.h"
+#include "..\swrast\s_tritemp.h"
 #else
-#include "tritemp.h"
+#include "swrast/s_tritemp.h"
 #endif
 }
 

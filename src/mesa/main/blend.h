@@ -1,4 +1,4 @@
-/* $Id: blend.h,v 1.5 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: blend.h,v 1.6 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,19 +30,6 @@
 
 
 #include "types.h"
-
-
-
-extern void
-_mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                  GLchan rgba[][4], const GLubyte mask[] );
-
-
-extern void
-_mesa_blend_pixels( GLcontext *ctx,
-                    GLuint n, const GLint x[], const GLint y[],
-                    GLchan rgba[][4], const GLubyte mask[] );
-
 
 extern void
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor );

@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.8 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: convolve.c,v 1.9 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,6 @@
 #include "convolve.h"
 #include "context.h"
 #include "image.h"
-#include "span.h"
 #include "types.h"
 #endif
 

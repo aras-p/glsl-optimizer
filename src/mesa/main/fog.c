@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.26 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: fog.c,v 1.27 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -148,10 +148,6 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 
 
 
-void
-_mesa_init_fog( void )
-{
-}
 
 static GLvector1f *get_fogcoord_ptr( GLcontext *ctx, GLvector1f *tmp )
 {
@@ -247,159 +243,5 @@ _mesa_make_win_fog_coords( struct vertex_buffer *VB )
    GLvector1f tmp;
 
    make_win_fog_coords( VB, get_fogcoord_ptr( VB->ctx, &tmp ) );
-}
-
-
-
-/*
- * Apply fog to an array of RGBA pixels.
- * Input:  n - number of pixels
- *         fog - array of interpolated screen-space fog coordinates in [0..1]
- *         red, green, blue, alpha - pixel colors
- * Output:  red, green, blue, alpha - fogged pixel colors
- */
-void
-_mesa_fog_rgba_pixels( const GLcontext *ctx,
-                       GLuint n, 
-		       const GLfixed fog[], 
-		       GLchan rgba[][4] )
-{
-   GLfixed rFog = ctx->Fog.Color[0] * CHAN_MAXF;
-   GLfixed gFog = ctx->Fog.Color[1] * CHAN_MAXF;
-   GLfixed bFog = ctx->Fog.Color[2] * CHAN_MAXF;
-   GLuint i;
-
-   for (i=0;i<n;i++) {
-      GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
-      GLfixed g = FIXED_ONE - f;
-      rgba[i][0] = (f*rgba[i][0] + g*rFog) >> FIXED_SHIFT;
-      rgba[i][1] = (f*rgba[i][1] + g*gFog) >> FIXED_SHIFT;
-      rgba[i][2] = (f*rgba[i][2] + g*bFog) >> FIXED_SHIFT;
-   }
-}
-
-
-
-
-/*
- * Apply fog to an array of color index pixels.
- * Input:  n - number of pixels
- *         z - array of integer depth values
- *         index - pixel color indexes
- * Output:  index - fogged pixel color indexes
- */
-void
-_mesa_fog_ci_pixels( const GLcontext *ctx,
-                     GLuint n, const GLfixed fog[], GLuint index[] )
-{
-   GLuint idx = ctx->Fog.Index;
-   GLuint i;
-
-   for (i=0;i<n;i++) {
-      GLfixed f = FixedToFloat(CLAMP(fog[i], 0, FIXED_ONE));
-      index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * idx);
-   }
-}
-
-
-
-/*
- * Calculate fog coords from window z values 
- * Input:  n - number of pixels
- *         z - array of integer depth values
- *         red, green, blue, alpha - pixel colors
- * Output:  red, green, blue, alpha - fogged pixel colors
- *
- * Use lookup table & interpolation? 
- */
-void
-_mesa_win_fog_coords_from_z( const GLcontext *ctx,
-			     GLuint n, 
-			     const GLdepth z[], 
-			     GLfixed fogcoord[] )
-{
-   GLfloat c = ctx->ProjectionMatrix.m[10];
-   GLfloat d = ctx->ProjectionMatrix.m[14];
-   GLuint i;
-
-   GLfloat tz = ctx->Viewport.WindowMap.m[MAT_TZ];
-   GLfloat szInv = 1.0F / ctx->Viewport.WindowMap.m[MAT_SZ];
-
-   switch (ctx->Fog.Mode) {
-      case GL_LINEAR:
-         {
-            GLfloat fogEnd = ctx->Fog.End;
-            GLfloat fogScale = (GLfloat) FIXED_ONE / (ctx->Fog.End - 
-						      ctx->Fog.Start);
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = -d / (c+ndcz);
-	       if (eyez < 0.0)  eyez = -eyez;
-               fogcoord[i] = (GLint)(fogEnd - eyez) * fogScale;
-            }
-         }
-	 break;
-      case GL_EXP:
-	 for (i=0;i<n;i++) {
-	    GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-	    GLfloat eyez = d / (c+ndcz);
-	    if (eyez < 0.0) eyez = -eyez;
-	    fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
-	 }
-	 break;
-      case GL_EXP2:
-         {
-            GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = d / (c+ndcz);
-               GLfloat tmp = negDensitySquared * eyez * eyez;
-#if defined(__alpha__) || defined(__alpha)
-               /* XXX this underflow check may be needed for other systems */
-               if (tmp < FLT_MIN_10_EXP)
-		  tmp = FLT_MIN_10_EXP;
-#endif
-	       fogcoord[i] = FloatToFixed(exp( tmp ));
-            }
-         }
-	 break;
-      default:
-         gl_problem(ctx, "Bad fog mode in _mesa_win_fog_coords_from_z");
-         return;
-   }
-}
-
-
-/*
- * Apply fog to an array of RGBA pixels.
- * Input:  n - number of pixels
- *         z - array of integer depth values
- *         red, green, blue, alpha - pixel colors
- * Output:  red, green, blue, alpha - fogged pixel colors
- */
-void
-_mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
-			     GLuint n, const GLdepth z[], GLchan rgba[][4] )
-{
-   GLfixed fog[MAX_WIDTH];
-   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
-   _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
-}
-
-
-/*
- * Apply fog to an array of color index pixels.
- * Input:  n - number of pixels
- *         z - array of integer depth values
- *         index - pixel color indexes
- * Output:  index - fogged pixel color indexes
- */
-void
-_mesa_depth_fog_ci_pixels( const GLcontext *ctx,
-                     GLuint n, const GLdepth z[], GLuint index[] )
-{
-   GLfixed fog[MAX_WIDTH];
-   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
-   _mesa_fog_ci_pixels( ctx, n, fog, index );
 }
 

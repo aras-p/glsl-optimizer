@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.19 2000/10/30 13:32:01 keithw Exp $ */
+/* $Id: texstate.c,v 1.20 2000/10/31 18:09:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "texture.h"
 #include "types.h"
 #include "xform.h"
+#include "swrast/swrast.h"
 #endif
 
 
@@ -1683,7 +1684,7 @@ void gl_update_dirty_texobjs( GLcontext *ctx )
    for (t = ctx->Shared->DirtyTexObjList; t; t = next) {
       next = t->NextDirty;
       _mesa_test_texobj_completeness(ctx, t);
-      _mesa_set_texture_sampler(t);
+      _swrast_set_texture_sampler(t); /*  swrast should do this internally */
       t->NextDirty = NULL;
       t->Dirty = GL_FALSE;
    }

@@ -1,4 +1,4 @@
-/* $Id: drawpix.h,v 1.3 1999/11/22 22:21:38 brianp Exp $ */
+/* $Id: drawpix.h,v 1.4 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,14 +30,6 @@
 
 
 #include "types.h"
-
-
-extern GLboolean
-_mesa_clip_pixelrect(const GLcontext *ctx,
-                     GLint *destX, GLint *destY,
-                     GLsizei *width, GLsizei *height,
-                     GLint *skipPixels, GLint *skipRows);
-
 
 extern void
 _mesa_DrawPixels( GLsizei width, GLsizei height,

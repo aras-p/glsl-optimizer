@@ -1,4 +1,4 @@
-/* $Id: depth.h,v 1.8 2000/04/11 20:42:22 brianp Exp $ */
+/* $Id: depth.h,v 1.9 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,42 +47,6 @@ _mesa_DepthFunc( GLenum func );
 extern void
 _mesa_DepthMask( GLboolean flag );
 
-
-
-/*
- * Internal functions
- */
-
-extern GLvoid *
-_mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
-
-
-extern GLuint
-_mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       const GLdepth z[], GLubyte mask[] );
-
-extern void
-_mesa_depth_test_pixels( GLcontext *ctx,
-                         GLuint n, const GLint x[], const GLint y[],
-                         const GLdepth z[], GLubyte mask[] );
-
-
-extern void
-_mesa_read_depth_span( GLcontext *ctx,
-                       GLint n, GLint x, GLint y, GLdepth depth[] );
-
-
-extern void
-_mesa_read_depth_span_float( GLcontext *ctx, GLint n, GLint x, GLint y,
-                             GLfloat depth[] );
-
-
-extern void
-_mesa_alloc_depth_buffer( GLcontext* ctx );
-
-
-extern void
-_mesa_clear_depth_buffer( GLcontext* ctx );
 
 
 

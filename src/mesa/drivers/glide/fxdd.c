@@ -57,7 +57,7 @@
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
-#include "pb.h"
+#include "swrast/swrast.h"
 
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
@@ -1061,7 +1061,7 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
 static void fxDDReducedPrimitiveChange(GLcontext *ctx, GLenum prim)
 {
   if (ctx->Polygon.CullFlag) {
-    if (ctx->PB->primitive != GL_POLYGON) { /* Lines or Points */
+    if (ctx->ReducedPrimitive != GL_POLYGON) { /* Lines or Points */
       FX_grCullMode(GR_CULL_DISABLE);
       FX_CONTEXT(ctx)->cullMode=GR_CULL_DISABLE;
     }

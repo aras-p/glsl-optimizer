@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.101 2000/10/30 18:50:42 keithw Exp $ */
+/* $Id: context.c,v 1.102 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,6 @@
 #include "matrix.h"
 #include "mem.h"
 #include "mmath.h"
-#include "pb.h"
 #include "pipeline.h"
 #include "shade.h"
 #include "simple_list.h"
@@ -66,6 +65,7 @@
 #include "vbxform.h"
 #include "vertices.h"
 #include "xform.h"
+#include "swrast/swrast.h"
 #endif
 
 #if defined(MESA_TRACE)
@@ -445,7 +445,6 @@ one_time_init( void )
 
       gl_init_clip();
       gl_init_eval();
-      _mesa_init_fog();
       _mesa_init_math();
       gl_init_lists();
       gl_init_shade();
@@ -1470,9 +1469,8 @@ _mesa_initialize_context( GLcontext *ctx,
       return GL_FALSE;
    }
    ctx->input = ctx->VB->IM;
-
-   ctx->PB = gl_alloc_pb();
-   if (!ctx->PB) {
+   
+   if (!_swrast_create_context( ctx )) {
       ALIGN_FREE( ctx->VB );
       return GL_FALSE;
    }
@@ -1486,7 +1484,7 @@ _mesa_initialize_context( GLcontext *ctx,
       ctx->Shared = alloc_shared_state();
       if (!ctx->Shared) {
          ALIGN_FREE( ctx->VB );
-         FREE( ctx->PB );
+	 _swrast_destroy_context( ctx );
          return GL_FALSE;
       }
    }
@@ -1517,7 +1515,7 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!alloc_proxy_textures(ctx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
+      _swrast_destroy_context( ctx );
       return GL_FALSE;
    }
 
@@ -1545,7 +1543,7 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
+      _swrast_destroy_context( ctx );
       if (ctx->Exec)
          FREE( ctx->Exec );
    }
@@ -1561,7 +1559,7 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!(ctx->TraceCtx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
+      _swrast_destroy_context( ctx );
       FREE( ctx->Exec );
       FREE( ctx->Save );
       return GL_FALSE;
@@ -1575,7 +1573,7 @@ _mesa_initialize_context( GLcontext *ctx,
    if (!(ctx->TraceCtx)) {
       free_shared_state(ctx, ctx->Shared);
       ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
+      _swrast_destroy_context( ctx );
       FREE( ctx->Exec );
       FREE( ctx->Save );
       FREE( ctx->TraceCtx );
@@ -1649,7 +1647,7 @@ _mesa_free_context_data( GLcontext *ctx )
       }
    }
 
-   FREE( ctx->PB );
+   _swrast_destroy_context( ctx );
 
    if (ctx->input != ctx->VB->IM)
       gl_immediate_free( ctx->input );

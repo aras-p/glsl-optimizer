@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.4 2000/09/28 22:44:32 brianp Exp $ */
+/* $Id: xm_line.c,v 1.5 2000/10/31 18:09:46 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,6 +39,9 @@
 #include "types.h"
 #include "xmesaP.h"
 
+/* Internal swrast includes:
+ */
+#include "swrast/s_depth.h"
 
 
 /**********************************************************************/
@@ -167,7 +170,7 @@ static void flat_TRUECOLOR_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) XMesaPutPixel( img, X, FLIP(xmesa->xm_buffer, Y), pixel );
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -188,7 +191,7 @@ static void flat_8A8B8G8R_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -208,7 +211,7 @@ static void flat_8R8G8B_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -231,7 +234,7 @@ static void flat_8R8G8B24_line( GLcontext *ctx,
       pixelPtr->b = color[BCOMP];	\
 }
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -251,7 +254,7 @@ static void flat_5R6G5B_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -270,7 +273,7 @@ static void flat_DITHER_5R6G5B_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) PACK_TRUEDITHER( *pixelPtr, X, Y, color[0], color[1], color[2] );
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -293,7 +296,7 @@ static void flat_DITHER8_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = DITHER(X,Y,r,g,b);
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -315,7 +318,7 @@ static void flat_LOOKUP8_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -336,7 +339,7 @@ static void flat_HPCR_line( GLcontext *ctx,
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = (GLubyte) DITHER_HPCR(X,Y,r,g,b);
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -363,7 +366,7 @@ static void flat_TRUECOLOR_z_line( GLcontext *ctx,
            XMesaPutPixel( img, X, FLIP(xmesa->xm_buffer, Y), pixel );	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -389,7 +392,7 @@ static void flat_8A8B8G8R_z_line( GLcontext *ctx,
 	   *pixelPtr = pixel;	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -415,7 +418,7 @@ static void flat_8R8G8B_z_line( GLcontext *ctx,
 	   *pixelPtr = pixel;	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -442,7 +445,7 @@ static void flat_8R8G8B24_z_line( GLcontext *ctx,
            pixelPtr->b = color[BCOMP];	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -467,7 +470,7 @@ static void flat_5R6G5B_z_line( GLcontext *ctx,
 	   *zPtr = Z;		\
 	   *pixelPtr = pixel;	\
 	}
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -491,7 +494,7 @@ static void flat_DITHER_5R6G5B_z_line( GLcontext *ctx,
 	   *zPtr = Z;		\
 	   PACK_TRUEDITHER(*pixelPtr, X, Y, color[0], color[1], color[2]); \
 	}
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -518,7 +521,7 @@ static void flat_DITHER8_z_line( GLcontext *ctx,
 	   *zPtr = Z;						\
 	   *pixelPtr = (GLubyte) DITHER( X, Y, r, g, b);	\
 	}
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -546,7 +549,7 @@ static void flat_LOOKUP8_z_line( GLcontext *ctx,
 	   *pixelPtr = pixel;	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 
@@ -573,7 +576,7 @@ static void flat_HPCR_z_line( GLcontext *ctx,
 	   *pixelPtr = (GLubyte) DITHER_HPCR( X, Y, r, g, b);	\
 	}
 
-#include "linetemp.h"
+#include "swrast/s_linetemp.h"
 }
 
 

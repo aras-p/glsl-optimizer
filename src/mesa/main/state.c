@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.38 2000/10/30 16:32:43 brianp Exp $ */
+/* $Id: state.c,v 1.39 2000/10/31 18:09:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,6 @@
 #include "pixeltex.h"
 #include "points.h"
 #include "polygon.h"
-#include "quads.h"
 #include "rastpos.h"
 #include "readpix.h"
 #include "rect.h"
@@ -80,12 +79,12 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "texture.h"
-#include "triangle.h"
 #include "types.h"
 #include "varray.h"
 #include "vbfill.h"
 #include "vbrender.h"
 #include "winpos.h"
+#include "swrast/swrast.h"
 #endif
 
 
@@ -1002,10 +1001,10 @@ void gl_update_state( GLcontext *ctx )
        * and triangle functions.
        */
       if (ctx->IndirectTriangles & DD_SW_RASTERIZE) {
-	 gl_set_point_function(ctx);
-	 gl_set_line_function(ctx);
-	 gl_set_triangle_function(ctx);
-	 gl_set_quad_function(ctx);
+	 _swrast_set_point_function(ctx);
+	 _swrast_set_line_function(ctx);
+	 _swrast_set_triangle_function(ctx);
+	 _swrast_set_quad_function(ctx);
 
 	 if ((ctx->IndirectTriangles & 
 	      (DD_TRI_SW_RASTERIZE|DD_QUAD_SW_RASTERIZE|DD_TRI_CULL)) ==

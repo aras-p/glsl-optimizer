@@ -1,4 +1,4 @@
-/* $Id: points.h,v 1.2 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: points.h,v 1.3 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,8 +46,6 @@ _mesa_PointParameterfEXT( GLenum pname, GLfloat param);
 extern void
 _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params );
 
-
-extern void gl_set_point_function( GLcontext *ctx );
 
 
 #endif

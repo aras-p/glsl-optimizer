@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.14 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: feedback.c,v 1.15 2000/10/31 18:09:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,6 @@
 #include "macros.h"
 #include "mmath.h"
 #include "types.h"
-#include "triangle.h"
 #endif
 
 
@@ -205,6 +204,24 @@ static void feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
 }
 
 
+static GLboolean cull_triangle( GLcontext *ctx,
+				GLuint v0, GLuint v1, GLuint v2, GLuint pv )
+{
+   struct vertex_buffer *VB = ctx->VB;
+   GLfloat (*win)[4] = VB->Win.data;
+   GLfloat ex = win[v1][0] - win[v0][0];
+   GLfloat ey = win[v1][1] - win[v0][1];
+   GLfloat fx = win[v2][0] - win[v0][0];
+   GLfloat fy = win[v2][1] - win[v0][1];
+   GLfloat c = ex*fy-ey*fx;
+
+   if (c * ctx->backface_sign > 0)
+      return 0;
+   
+   return 1;
+}
+
+
 
 /*
  * Put triangle in feedback buffer.
@@ -212,7 +229,7 @@ static void feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
 void gl_feedback_triangle( GLcontext *ctx,
 			   GLuint v0, GLuint v1, GLuint v2, GLuint pv )
 {
-   if (gl_cull_triangle( ctx, v0, v1, v2, 0 )) {
+   if (cull_triangle( ctx, v0, v1, v2, 0 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
       
@@ -308,7 +325,7 @@ void gl_select_triangle( GLcontext *ctx,
 {
    const struct vertex_buffer *VB = ctx->VB;
 
-   if (gl_cull_triangle( ctx, v0, v1, v2, 0 )) {
+   if (cull_triangle( ctx, v0, v1, v2, 0 )) {
       const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
       gl_update_hitflag( ctx, VB->Win.data[v0][2] * zs );
       gl_update_hitflag( ctx, VB->Win.data[v1][2] * zs );
