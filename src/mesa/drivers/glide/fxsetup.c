@@ -167,6 +167,9 @@ GLuint fxGetTexSetConfiguration(GLcontext *ctx,
     case GL_BLEND:
       envmode|=FX_UM_E0_BLEND;
       break;
+    case GL_ADD:
+      envmode|=FX_UM_E0_ADD;
+      break;
     default:
       /* do nothing */
       break;
@@ -212,6 +215,9 @@ GLuint fxGetTexSetConfiguration(GLcontext *ctx,
       break;
     case GL_BLEND:
       envmode|=FX_UM_E1_BLEND;
+      break;
+    case GL_ADD:
+      envmode|=FX_UM_E1_ADD;
       break;
     default:
       /* do nothing */
@@ -786,6 +792,57 @@ static void fxSetupTextureDoubleTMU(GLcontext *ctx)
 		   GR_COMBINE_OTHER_TEXTURE,
 		   FXFALSE);
     break;
+  
+
+  case (FX_UM_E0_MODULATE | FX_UM_E1_ADD): /* Quake 3 Sky */
+    {
+      GLboolean isalpha[FX_NUM_TMU];
+
+      if(ti0->baseLevelInternalFormat==GL_ALPHA)
+	isalpha[ti0->tmi.whichTMU]=GL_TRUE;
+      else
+	isalpha[ti0->tmi.whichTMU]=GL_FALSE;
+
+      if(ti1->baseLevelInternalFormat==GL_ALPHA)
+	isalpha[ti1->tmi.whichTMU]=GL_TRUE;
+      else
+	isalpha[ti1->tmi.whichTMU]=GL_FALSE;
+	
+      if(isalpha[FX_TMU1])
+	grTexCombine(GR_TMU1,
+		     GR_COMBINE_FUNCTION_ZERO,GR_COMBINE_FACTOR_NONE,
+		     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+		     FXTRUE,FXFALSE);
+      else
+	grTexCombine(GR_TMU1,
+		     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+		     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+		     FXFALSE,FXFALSE);
+
+      if(isalpha[FX_TMU0])
+	grTexCombine(GR_TMU0,
+		     GR_COMBINE_FUNCTION_SCALE_OTHER,GR_COMBINE_FACTOR_ONE,
+		     GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,GR_COMBINE_FACTOR_ONE,
+		     FXFALSE,FXFALSE);
+      else
+	grTexCombine(GR_TMU0,
+		     GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,GR_COMBINE_FACTOR_ONE,
+		     GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,GR_COMBINE_FACTOR_ONE,
+		     FXFALSE,FXFALSE);
+
+      grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+		     GR_COMBINE_FACTOR_LOCAL,
+		     localc,
+		     GR_COMBINE_OTHER_TEXTURE,
+		     FXFALSE);
+
+      grAlphaCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+		     GR_COMBINE_FACTOR_LOCAL,
+		     locala,		     GR_COMBINE_OTHER_TEXTURE,
+		     FXFALSE);
+      break;
+    }
+    
   }
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
