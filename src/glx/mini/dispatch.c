@@ -36,6 +36,7 @@
  */
 
 #include <GL/gl.h>
+#include "glheader.h"
 #include "glapi.h"
 #include "glapitable.h"
 
