@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.25 2000/10/23 19:43:38 brianp Exp $
+# $Id: Makefile.X11,v 1.26 2000/10/31 12:40:57 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -120,7 +120,6 @@ DRIVER_SOURCES = \
 	SVGA/svgamesa32.c \
 	FX/fxapi.c \
 	FX/fxclip.c \
-	FX/fxcva.c \
 	FX/fxdd.c \
 	FX/fxddspan.c \
 	FX/fxddtex.c \
@@ -203,8 +202,6 @@ OSmesa/osmesa.o: OSmesa/osmesa.c
 FX/fxapi.o: FX/fxapi.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 FX/fxclip.o: FX/fxclip.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxcva.o: FX/fxcva.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 FX/fxdd.o: FX/fxdd.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@

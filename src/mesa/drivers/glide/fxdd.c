@@ -834,7 +834,6 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    fxMesa->new_state = _NEW_ALL;
   
    fxDDSetupInit();
-   fxDDCvaInit();
    fxDDClipInit();
    fxDDTrifuncInit();
    fxDDFastPathInit();

@@ -575,9 +575,6 @@ extern void fxDDChooseRenderState( GLcontext *ctx );
 extern void fxRenderClippedLine( struct vertex_buffer *VB, 
 				 GLuint v1, GLuint v2 );
 
-extern void fxRenderClippedTriangle( struct vertex_buffer *VB,
-				     GLuint n, GLuint vlist[] );
-
 
 extern tfxSetupFunc fxDDChooseSetupFunction(GLcontext *);
 
@@ -634,8 +631,6 @@ extern void fxDDCheckMergeAndRender( GLcontext *ctx,
 
 extern void fxDDMergeAndRender( struct vertex_buffer *VB );
 
-extern void fxDDCheckPartialRasterSetup( GLcontext *ctx, 
-					 struct gl_pipeline_stage *d );
 
 extern void fxDDPartialRasterSetup( struct vertex_buffer *VB );
 
@@ -651,7 +646,6 @@ extern void fxDDOptimizePrecalcPipeline( GLcontext *ctx,
 					 struct gl_pipeline *pipe );
 
 extern void fxDDRenderElementsDirect( struct vertex_buffer *VB );
-extern void fxDDRenderVBIndirectDirect( struct vertex_buffer *VB );
 
 extern void fxDDInitExtensions( GLcontext *ctx );
 
