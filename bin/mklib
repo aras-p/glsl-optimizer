@@ -331,8 +331,8 @@ case $ARCH in
 
     'Darwin')
 	VERSION="${MAJOR}.${MINOR}.${PATCH}"
-	LIBNAME="lib${LIBNAME}.dylib"
 	ARNAME="lib${LIBNAME}.dylib.a"
+	LIBNAME="lib${LIBNAME}.dylib"
 	echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
 	FLAGS="-dynamiclib -multiply_defined suppress"
 	cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
