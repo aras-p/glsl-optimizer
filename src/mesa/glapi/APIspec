@@ -1,0 +1,7229 @@
+# $Id: APIspec,v 1.1 2001/11/18 22:43:16 brianp Exp $
+
+# This file describes all the OpenGL functions.
+# We use a number of Python scripts to parse this file and
+# generate some source files.  We used to use the SGI gl.spec
+# file but that got to be a PITA.
+
+# Every entry _must_ either have an 'offset' or 'alias' line.
+# The offset may be ? to indicate an unallocated dispatch offset.
+
+
+# OpenGL 1.0
+
+name		NewList
+return		void
+param		list		GLuint
+param		mode		GLenum
+category	1.0
+offset		0
+
+name		EndList
+return		void
+category	1.0
+offset		1
+
+name		CallList
+return		void
+param		list		GLuint
+category	1.0
+offset		2
+
+name		CallLists
+return		void
+param		n		GLsizei
+param		type		GLenum
+param		lists		const GLvoid *
+category	1.0
+offset		3
+
+name		DeleteLists
+return		void
+param		list		GLuint
+param		range		GLsizei
+category	1.0
+offset		4
+
+name		GenLists
+return		GLuint
+param		range		GLsizei
+category	1.0
+offset		5
+
+name		ListBase
+return		void
+param		base		GLuint
+category	1.0
+offset		6
+
+name		Begin
+return		void
+param		mode		GLenum
+category	1.0
+offset		7
+
+name		Bitmap
+return		void
+param		width		GLsizei
+param		height		GLsizei
+param		xorig		GLfloat
+param		yorig		GLfloat
+param		xmove		GLfloat
+param		ymove		GLfloat
+param		bitmap		const GLubyte *
+category	1.0
+offset		8
+
+name		Color3b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	1.0
+offset		9
+
+name		Color3bv
+return		void
+param		v		const GLbyte *
+category	1.0
+offset		10
+
+name		Color3d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	1.0
+offset		11
+
+name		Color3dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		12
+
+name		Color3f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	1.0
+offset		13
+
+name		Color3fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		14
+
+name		Color3i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	1.0
+offset		15
+
+name		Color3iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		16
+
+name		Color3s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	1.0
+offset		17
+
+name		Color3sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		18
+
+name		Color3ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	1.0
+offset		19
+
+name		Color3ubv
+return		void
+param		v		const GLubyte *
+category	1.0
+offset		20
+
+name		Color3ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	1.0
+offset		21
+
+name		Color3uiv
+return		void
+param		v		const GLuint *
+category	1.0
+offset		22
+
+name		Color3us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	1.0
+offset		23
+
+name		Color3usv
+return		void
+param		v		const GLushort *
+category	1.0
+offset		24
+
+name		Color4b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+param		alpha		GLbyte
+category	1.0
+offset		25
+
+name		Color4bv
+return		void
+param		v		const GLbyte *
+category	1.0
+offset		26
+
+name		Color4d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+param		alpha		GLdouble
+category	1.0
+offset		27
+
+name		Color4dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		28
+
+name		Color4f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+param		alpha		GLfloat
+category	1.0
+offset		29
+
+name		Color4fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		30
+
+name		Color4i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+param		alpha		GLint
+category	1.0
+offset		31
+
+name		Color4iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		32
+
+name		Color4s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+param		alpha		GLshort
+category	1.0
+offset		33
+
+name		Color4sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		34
+
+name		Color4ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+param		alpha		GLubyte
+category	1.0
+offset		35
+
+name		Color4ubv
+return		void
+param		v		const GLubyte *
+category	1.0
+offset		36
+
+name		Color4ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+param		alpha		GLuint
+category	1.0
+offset		37
+
+name		Color4uiv
+return		void
+param		v		const GLuint *
+category	1.0
+offset		38
+
+name		Color4us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+param		alpha		GLushort
+category	1.0
+offset		39
+
+name		Color4usv
+return		void
+param		v		const GLushort *
+category	1.0
+offset		40
+
+name		EdgeFlag
+return		void
+param		flag		GLboolean
+category	1.0
+offset		41
+
+name		EdgeFlagv
+return		void
+param		flag		const GLboolean *
+category	1.0
+offset		42
+
+name		End
+return		void
+category	1.0
+offset		43
+
+name		Indexd
+return		void
+param		c		GLdouble
+category	1.0
+offset		44
+
+name		Indexdv
+return		void
+param		c		const GLdouble *
+category	1.0
+offset		45
+
+name		Indexf
+return		void
+param		c		GLfloat
+category	1.0
+offset		46
+
+name		Indexfv
+return		void
+param		c		const GLfloat *
+category	1.0
+offset		47
+
+name		Indexi
+return		void
+param		c		GLint
+category	1.0
+offset		48
+
+name		Indexiv
+return		void
+param		c		const GLint *
+category	1.0
+offset		49
+
+name		Indexs
+return		void
+param		c		GLshort
+category	1.0
+offset		50
+
+name		Indexsv
+return		void
+param		c		const GLshort *
+category	1.0
+offset		51
+
+name		Normal3b
+return		void
+param		nx		GLbyte
+param		ny		GLbyte
+param		nz		GLbyte
+category	1.0
+offset		52
+
+name		Normal3bv
+return		void
+param		v		const GLbyte *
+category	1.0
+offset		53
+
+name		Normal3d
+return		void
+param		nx		GLdouble
+param		ny		GLdouble
+param		nz		GLdouble
+category	1.0
+offset		54
+
+name		Normal3dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		55
+
+name		Normal3f
+return		void
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+category	1.0
+offset		56
+
+name		Normal3fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		57
+
+name		Normal3i
+return		void
+param		nx		GLint
+param		ny		GLint
+param		nz		GLint
+category	1.0
+offset		58
+
+name		Normal3iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		59
+
+name		Normal3s
+return		void
+param		nx		GLshort
+param		ny		GLshort
+param		nz		GLshort
+category	1.0
+offset		60
+
+name		Normal3sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		61
+
+name		RasterPos2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.0
+offset		62
+
+name		RasterPos2dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		63
+
+name		RasterPos2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.0
+offset		64
+
+name		RasterPos2fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		65
+
+name		RasterPos2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.0
+offset		66
+
+name		RasterPos2iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		67
+
+name		RasterPos2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.0
+offset		68
+
+name		RasterPos2sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		69
+
+name		RasterPos3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+offset		70
+
+name		RasterPos3dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		71
+
+name		RasterPos3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+offset		72
+
+name		RasterPos3fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		73
+
+name		RasterPos3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.0
+offset		74
+
+name		RasterPos3iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		75
+
+name		RasterPos3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.0
+offset		76
+
+name		RasterPos3sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		77
+
+name		RasterPos4d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	1.0
+offset		78
+
+name		RasterPos4dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		79
+
+name		RasterPos4f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	1.0
+offset		80
+
+name		RasterPos4fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		81
+
+name		RasterPos4i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+param		w		GLint
+category	1.0
+offset		82
+
+name		RasterPos4iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		83
+
+name		RasterPos4s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	1.0
+offset		84
+
+name		RasterPos4sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		85
+
+name		Rectd
+return		void
+param		x1		GLdouble
+param		y1		GLdouble
+param		x2		GLdouble
+param		y2		GLdouble
+category	1.0
+offset		86
+
+name		Rectdv
+return		void
+param		v1		const GLdouble *
+param		v2		const GLdouble *
+category	1.0
+offset		87
+
+name		Rectf
+return		void
+param		x1		GLfloat
+param		y1		GLfloat
+param		x2		GLfloat
+param		y2		GLfloat
+category	1.0
+offset		88
+
+name		Rectfv
+return		void
+param		v1		const GLfloat *
+param		v2		const GLfloat *
+category	1.0
+offset		89
+
+name		Recti
+return		void
+param		x1		GLint
+param		y1		GLint
+param		x2		GLint
+param		y2		GLint
+category	1.0
+offset		90
+
+name		Rectiv
+return		void
+param		v1		const GLint *
+param		v2		const GLint *
+category	1.0
+offset		91
+
+name		Rects
+return		void
+param		x1		GLshort
+param		y1		GLshort
+param		x2		GLshort
+param		y2		GLshort
+category	1.0
+offset		92
+
+name		Rectsv
+return		void
+param		v1		const GLshort *
+param		v2		const GLshort *
+category	1.0
+offset		93
+
+name		TexCoord1d
+return		void
+param		s		GLdouble
+category	1.0
+offset		94
+
+name		TexCoord1dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		95
+
+name		TexCoord1f
+return		void
+param		s		GLfloat
+category	1.0
+offset		96
+
+name		TexCoord1fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		97
+
+name		TexCoord1i
+return		void
+param		s		GLint
+category	1.0
+offset		98
+
+name		TexCoord1iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		99
+
+name		TexCoord1s
+return		void
+param		s		GLshort
+category	1.0
+offset		100
+
+name		TexCoord1sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		101
+
+name		TexCoord2d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+category	1.0
+offset		102
+
+name		TexCoord2dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		103
+
+name		TexCoord2f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+category	1.0
+offset		104
+
+name		TexCoord2fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		105
+
+name		TexCoord2i
+return		void
+param		s		GLint
+param		t		GLint
+category	1.0
+offset		106
+
+name		TexCoord2iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		107
+
+name		TexCoord2s
+return		void
+param		s		GLshort
+param		t		GLshort
+category	1.0
+offset		108
+
+name		TexCoord2sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		109
+
+name		TexCoord3d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	1.0
+offset		110
+
+name		TexCoord3dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		111
+
+name		TexCoord3f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	1.0
+offset		112
+
+name		TexCoord3fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		113
+
+name		TexCoord3i
+return		void
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	1.0
+offset		114
+
+name		TexCoord3iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		115
+
+name		TexCoord3s
+return		void
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	1.0
+offset		116
+
+name		TexCoord3sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		117
+
+name		TexCoord4d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	1.0
+offset		118
+
+name		TexCoord4dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		119
+
+name		TexCoord4f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	1.0
+offset		120
+
+name		TexCoord4fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		121
+
+name		TexCoord4i
+return		void
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	1.0
+offset		122
+
+name		TexCoord4iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		123
+
+name		TexCoord4s
+return		void
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	1.0
+offset		124
+
+name		TexCoord4sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		125
+
+name		Vertex2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.0
+offset		126
+
+name		Vertex2dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		127
+
+name		Vertex2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.0
+offset		128
+
+name		Vertex2fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		129
+
+name		Vertex2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.0
+offset		130
+
+name		Vertex2iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		131
+
+name		Vertex2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.0
+offset		132
+
+name		Vertex2sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		133
+
+name		Vertex3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+offset		134
+
+name		Vertex3dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		135
+
+name		Vertex3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+offset		136
+
+name		Vertex3fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		137
+
+name		Vertex3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.0
+offset		138
+
+name		Vertex3iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		139
+
+name		Vertex3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.0
+offset		140
+
+name		Vertex3sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		141
+
+name		Vertex4d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	1.0
+offset		142
+
+name		Vertex4dv
+return		void
+param		v		const GLdouble *
+category	1.0
+offset		143
+
+name		Vertex4f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	1.0
+offset		144
+
+name		Vertex4fv
+return		void
+param		v		const GLfloat *
+category	1.0
+offset		145
+
+name		Vertex4i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+param		w		GLint
+category	1.0
+offset		146
+
+name		Vertex4iv
+return		void
+param		v		const GLint *
+category	1.0
+offset		147
+
+name		Vertex4s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	1.0
+offset		148
+
+name		Vertex4sv
+return		void
+param		v		const GLshort *
+category	1.0
+offset		149
+
+name		ClipPlane
+return		void
+param		plane		GLenum
+param		equation	const GLdouble *
+category	1.0
+offset		150
+
+name		ColorMaterial
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	1.0
+offset		151
+
+name		CullFace
+return		void
+param		mode		GLenum
+category	1.0
+offset		152
+
+name		Fogf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		153
+
+name		Fogfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		154
+
+name		Fogi
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		155
+
+name		Fogiv
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		156
+
+name		FrontFace
+return		void
+param		mode		GLenum
+category	1.0
+offset		157
+
+name		Hint
+return		void
+param		target		GLenum
+param		mode		GLenum
+category	1.0
+offset		158
+
+name		Lightf
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		159
+
+name		Lightfv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		160
+
+name		Lighti
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		161
+
+name		Lightiv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		162
+
+name		LightModelf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		163
+
+name		LightModelfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		164
+
+name		LightModeli
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		165
+
+name		LightModeliv
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		166
+
+name		LineStipple
+return		void
+param		factor		GLint
+param		pattern		GLushort
+category	1.0
+offset		167
+
+name		LineWidth
+return		void
+param		width		GLfloat
+category	1.0
+offset		168
+
+name		Materialf
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		169
+
+name		Materialfv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		170
+
+name		Materiali
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		171
+
+name		Materialiv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		172
+
+name		PointSize
+return		void
+param		size		GLfloat
+category	1.0
+offset		173
+
+name		PolygonMode
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	1.0
+offset		174
+
+name		PolygonStipple
+return		void
+param		mask		const GLubyte *
+category	1.0
+offset		175
+
+name		Scissor
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.0
+offset		176
+
+name		ShadeModel
+return		void
+param		mode		GLenum
+category	1.0
+offset		177
+
+name		TexParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		178
+
+name		TexParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		179
+
+name		TexParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		180
+
+name		TexParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		181
+
+name		TexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+offset		182
+
+name		TexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+offset		183
+
+name		TexEnvf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		184
+
+name		TexEnvfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		185
+
+name		TexEnvi
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		186
+
+name		TexEnviv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		187
+
+name		TexGend
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLdouble
+category	1.0
+offset		188
+
+name		TexGendv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLdouble *
+category	1.0
+offset		189
+
+name		TexGenf
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		190
+
+name		TexGenfv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+offset		191
+
+name		TexGeni
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		192
+
+name		TexGeniv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+offset		193
+
+name		FeedbackBuffer
+return		void
+param		size		GLsizei
+param		type		GLenum
+param		buffer		GLfloat *
+category	1.0
+offset		194
+
+name		SelectBuffer
+return		void
+param		size		GLsizei
+param		buffer		GLuint *
+category	1.0
+offset		195
+
+name		RenderMode
+return		GLint
+param		mode		GLenum
+category	1.0
+offset		196
+
+name		InitNames
+return		void
+category	1.0
+offset		197
+
+name		LoadName
+return		void
+param		name		GLuint
+category	1.0
+offset		198
+
+name		PassThrough
+return		void
+param		token		GLfloat
+category	1.0
+offset		199
+
+name		PopName
+return		void
+category	1.0
+offset		200
+
+name		PushName
+return		void
+param		name		GLuint
+category	1.0
+offset		201
+
+name		DrawBuffer
+return		void
+param		mode		GLenum
+category	1.0
+offset		202
+
+name		Clear
+return		void
+param		mask		GLbitfield
+category	1.0
+offset		203
+
+name		ClearAccum
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+param		alpha		GLfloat
+category	1.0
+offset		204
+
+name		ClearIndex
+return		void
+param		c		GLfloat
+category	1.0
+offset		205
+
+name		ClearColor
+return		void
+param		red		GLclampf
+param		green		GLclampf
+param		blue		GLclampf
+param		alpha		GLclampf
+category	1.0
+offset		206
+
+name		ClearStencil
+return		void
+param		s		GLint
+category	1.0
+offset		207
+
+name		ClearDepth
+return		void
+param		depth		GLclampd
+category	1.0
+offset		208
+
+name		StencilMask
+return		void
+param		mask		GLuint
+category	1.0
+offset		209
+
+name		ColorMask
+return		void
+param		red		GLboolean
+param		green		GLboolean
+param		blue		GLboolean
+param		alpha		GLboolean
+category	1.0
+offset		210
+
+name		DepthMask
+return		void
+param		flag		GLboolean
+category	1.0
+offset		211
+
+name		IndexMask
+return		void
+param		mask		GLuint
+category	1.0
+offset		212
+
+name		Accum
+return		void
+param		op		GLenum
+param		value		GLfloat
+category	1.0
+offset		213
+
+name		Disable
+return		void
+param		cap		GLenum
+category	1.0
+offset		214
+
+name		Enable
+return		void
+param		cap		GLenum
+category	1.0
+offset		215
+
+name		Finish
+return		void
+category	1.0
+offset		216
+
+name		Flush
+return		void
+category	1.0
+offset		217
+
+name		PopAttrib
+return		void
+category	1.0
+offset		218
+
+name		PushAttrib
+return		void
+param		mask		GLbitfield
+category	1.0
+offset		219
+
+name		Map1d
+return		void
+param		target		GLenum
+param		u1		GLdouble
+param		u2		GLdouble
+param		stride		GLint
+param		order		GLint
+param		points		const GLdouble *
+category	1.0
+offset		220
+
+name		Map1f
+return		void
+param		target		GLenum
+param		u1		GLfloat
+param		u2		GLfloat
+param		stride		GLint
+param		order		GLint
+param		points		const GLfloat *
+category	1.0
+offset		221
+
+name		Map2d
+return		void
+param		target		GLenum
+param		u1		GLdouble
+param		u2		GLdouble
+param		ustride		GLint
+param		uorder		GLint
+param		v1		GLdouble
+param		v2		GLdouble
+param		vstride		GLint
+param		vorder		GLint
+param		points		const GLdouble *
+category	1.0
+offset		222
+
+name		Map2f
+return		void
+param		target		GLenum
+param		u1		GLfloat
+param		u2		GLfloat
+param		ustride		GLint
+param		uorder		GLint
+param		v1		GLfloat
+param		v2		GLfloat
+param		vstride		GLint
+param		vorder		GLint
+param		points		const GLfloat *
+category	1.0
+offset		223
+
+name		MapGrid1d
+return		void
+param		un		GLint
+param		u1		GLdouble
+param		u2		GLdouble
+category	1.0
+offset		224
+
+name		MapGrid1f
+return		void
+param		un		GLint
+param		u1		GLfloat
+param		u2		GLfloat
+category	1.0
+offset		225
+
+name		MapGrid2d
+return		void
+param		un		GLint
+param		u1		GLdouble
+param		u2		GLdouble
+param		vn		GLint
+param		v1		GLdouble
+param		v2		GLdouble
+category	1.0
+offset		226
+
+name		MapGrid2f
+return		void
+param		un		GLint
+param		u1		GLfloat
+param		u2		GLfloat
+param		vn		GLint
+param		v1		GLfloat
+param		v2		GLfloat
+category	1.0
+offset		227
+
+name		EvalCoord1d
+return		void
+param		u		GLdouble
+category	1.0
+offset		228
+
+name		EvalCoord1dv
+return		void
+param		u		const GLdouble *
+category	1.0
+offset		229
+
+name		EvalCoord1f
+return		void
+param		u		GLfloat
+category	1.0
+offset		230
+
+name		EvalCoord1fv
+return		void
+param		u		const GLfloat *
+category	1.0
+offset		231
+
+name		EvalCoord2d
+return		void
+param		u		GLdouble
+param		v		GLdouble
+category	1.0
+offset		232
+
+name		EvalCoord2dv
+return		void
+param		u		const GLdouble *
+category	1.0
+offset		233
+
+name		EvalCoord2f
+return		void
+param		u		GLfloat
+param		v		GLfloat
+category	1.0
+offset		234
+
+name		EvalCoord2fv
+return		void
+param		u		const GLfloat *
+category	1.0
+offset		235
+
+name		EvalMesh1
+return		void
+param		mode		GLenum
+param		i1		GLint
+param		i2		GLint
+category	1.0
+offset		236
+
+name		EvalPoint1
+return		void
+param		i		GLint
+category	1.0
+offset		237
+
+name		EvalMesh2
+return		void
+param		mode		GLenum
+param		i1		GLint
+param		i2		GLint
+param		j1		GLint
+param		j2		GLint
+category	1.0
+offset		238
+
+name		EvalPoint2
+return		void
+param		i		GLint
+param		j		GLint
+category	1.0
+offset		239
+
+name		AlphaFunc
+return		void
+param		func		GLenum
+param		ref		GLclampf
+category	1.0
+offset		240
+
+name		BlendFunc
+return		void
+param		sfactor		GLenum
+param		dfactor		GLenum
+category	1.0
+offset		241
+
+name		LogicOp
+return		void
+param		opcode		GLenum
+category	1.0
+offset		242
+
+name		StencilFunc
+return		void
+param		func		GLenum
+param		ref		GLint
+param		mask		GLuint
+category	1.0
+offset		243
+
+name		StencilOp
+return		void
+param		fail		GLenum
+param		zfail		GLenum
+param		zpass		GLenum
+category	1.0
+offset		244
+
+name		DepthFunc
+return		void
+param		func		GLenum
+category	1.0
+offset		245
+
+name		PixelZoom
+return		void
+param		xfactor		GLfloat
+param		yfactor		GLfloat
+category	1.0
+offset		246
+
+name		PixelTransferf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		247
+
+name		PixelTransferi
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		248
+
+name		PixelStoref
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+offset		249
+
+name		PixelStorei
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+offset		250
+
+name		PixelMapfv
+return		void
+param		map		GLenum
+param		mapsize		GLint
+param		values		const GLfloat *
+category	1.0
+offset		251
+
+name		PixelMapuiv
+return		void
+param		map		GLenum
+param		mapsize		GLint
+param		values		const GLuint *
+category	1.0
+offset		252
+
+name		PixelMapusv
+return		void
+param		map		GLenum
+param		mapsize		GLint
+param		values		const GLushort *
+category	1.0
+offset		253
+
+name		ReadBuffer
+return		void
+param		mode		GLenum
+category	1.0
+offset		254
+
+name		CopyPixels
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		type		GLenum
+category	1.0
+offset		255
+
+name		ReadPixels
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		GLvoid *
+category	1.0
+offset		256
+
+name		DrawPixels
+return		void
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+offset		257
+
+name		GetBooleanv
+return		void
+param		pname		GLenum
+param		params		GLboolean *
+category	1.0
+offset		258
+
+name		GetClipPlane
+return		void
+param		plane		GLenum
+param		equation	GLdouble *
+category	1.0
+offset		259
+
+name		GetDoublev
+return		void
+param		pname		GLenum
+param		params		GLdouble *
+category	1.0
+offset		260
+
+name		GetError
+return		GLenum
+category	1.0
+offset		261
+
+name		GetFloatv
+return		void
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		262
+
+name		GetIntegerv
+return		void
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		263
+
+name		GetLightfv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		264
+
+name		GetLightiv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		265
+
+name		GetMapdv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLdouble *
+category	1.0
+offset		266
+
+name		GetMapfv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLfloat *
+category	1.0
+offset		267
+
+name		GetMapiv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLint *
+category	1.0
+offset		268
+
+name		GetMaterialfv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		269
+
+name		GetMaterialiv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		270
+
+name		GetPixelMapfv
+return		void
+param		map		GLenum
+param		values		GLfloat *
+category	1.0
+offset		271
+
+name		GetPixelMapuiv
+return		void
+param		map		GLenum
+param		values		GLuint *
+category	1.0
+offset		272
+
+name		GetPixelMapusv
+return		void
+param		map		GLenum
+param		values		GLushort *
+category	1.0
+offset		273
+
+name		GetPolygonStipple
+return		void
+param		mask		GLubyte *
+category	1.0
+offset		274
+
+name		GetString
+return		const GLubyte *
+param		name		GLenum
+category	1.0
+offset		275
+
+name		GetTexEnvfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		276
+
+name		GetTexEnviv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		277
+
+name		GetTexGendv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLdouble *
+category	1.0
+offset		278
+
+name		GetTexGenfv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		279
+
+name		GetTexGeniv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		280
+
+name		GetTexImage
+return		void
+param		target		GLenum
+param		level		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		GLvoid *
+category	1.0
+offset		281
+
+name		GetTexParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		282
+
+name		GetTexParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		283
+
+name		GetTexLevelParameterfv
+return		void
+param		target		GLenum
+param		level		GLint
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+offset		284
+
+name		GetTexLevelParameteriv
+return		void
+param		target		GLenum
+param		level		GLint
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+offset		285
+
+name		IsEnabled
+return		GLboolean
+param		cap		GLenum
+category	1.0
+offset		286
+
+name		IsList
+return		GLboolean
+param		list		GLuint
+category	1.0
+offset		287
+
+name		DepthRange
+return		void
+param		near		GLclampd
+param		far		GLclampd
+category	1.0
+offset		288
+
+name		Frustum
+return		void
+param		left		GLdouble
+param		right		GLdouble
+param		bottom		GLdouble
+param		top		GLdouble
+param		zNear		GLdouble
+param		zFar		GLdouble
+category	1.0
+offset		289
+
+name		LoadIdentity
+return		void
+category	1.0
+offset		290
+
+name		LoadMatrixf
+return		void
+param		m		const GLfloat *
+category	1.0
+offset		291
+
+name		LoadMatrixd
+return		void
+param		m		const GLdouble *
+category	1.0
+offset		292
+
+name		MatrixMode
+return		void
+param		mode		GLenum
+category	1.0
+offset		293
+
+name		MultMatrixf
+return		void
+param		m		const GLfloat *
+category	1.0
+offset		294
+
+name		MultMatrixd
+return		void
+param		m		const GLdouble *
+category	1.0
+offset		295
+
+name		Ortho
+return		void
+param		left		GLdouble
+param		right		GLdouble
+param		bottom		GLdouble
+param		top		GLdouble
+param		zNear		GLdouble
+param		zFar		GLdouble
+category	1.0
+offset		296
+
+name		PopMatrix
+return		void
+category	1.0
+offset		297
+
+name		PushMatrix
+return		void
+category	1.0
+offset		298
+
+name		Rotated
+return		void
+param		angle		GLdouble
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+offset		299
+
+name		Rotatef
+return		void
+param		angle		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+offset		300
+
+name		Scaled
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+offset		301
+
+name		Scalef
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+offset		302
+
+name		Translated
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+offset		303
+
+name		Translatef
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+offset		304
+
+name		Viewport
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.0
+offset		305
+
+
+# OpenGL 1.1
+
+name		ArrayElement
+return		void
+param		i		GLint
+category	1.1
+offset		306
+
+name		ColorPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		308
+
+name		DisableClientState
+return		void
+param		array		GLenum
+category	1.1
+offset		309
+
+name		DrawArrays
+return		void
+param		mode		GLenum
+param		first		GLint
+param		count		GLsizei
+category	1.1
+offset		310
+
+name		DrawElements
+return		void
+param		mode		GLenum
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	1.1
+offset		311
+
+name		EdgeFlagPointer
+return		void
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		312
+
+name		EnableClientState
+return		void
+param		array		GLenum
+category	1.1
+offset		313
+
+name		GetPointerv
+return		void
+param		pname		GLenum
+param		params		GLvoid **
+category	1.1
+offset		329
+
+name		IndexPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		314
+
+name		InterleavedArrays
+return		void
+param		format		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		317
+
+name		NormalPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		318
+
+name		TexCoordPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		320
+
+name		VertexPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+offset		321
+
+name		PolygonOffset
+return		void
+param		factor		GLfloat
+param		units		GLfloat
+category	1.1
+offset		319
+
+name		CopyTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		border		GLint
+category	1.1
+offset		323
+
+name		CopyTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+category	1.1
+offset		324
+
+name		CopyTexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.1
+offset		325
+
+name		CopyTexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.1
+offset		326
+
+name		TexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.1
+offset		332
+
+name		TexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.1
+offset		333
+
+name		AreTexturesResident
+return		GLboolean
+param		n		GLsizei
+param		textures	const GLuint *
+param		residences	GLboolean *
+category	1.1
+offset		322
+
+name		BindTexture
+return		void
+param		target		GLenum
+param		texture		GLuint
+category	1.1
+offset		307
+
+name		DeleteTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+category	1.1
+offset		327
+
+name		GenTextures
+return		void
+param		n		GLsizei
+param		textures	GLuint *
+category	1.1
+offset		328
+
+name		IsTexture
+return		GLboolean
+param		texture		GLuint
+category	1.1
+offset		330
+
+name		PrioritizeTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+param		priorities	const GLclampf *
+category	1.1
+offset		331
+
+name		Indexub
+return		void
+param		c		GLubyte
+category	1.1
+offset		315
+
+name		Indexubv
+return		void
+param		c		const GLubyte *
+category	1.1
+offset		316
+
+name		PopClientAttrib
+return		void
+category	1.1
+offset		334
+
+name		PushClientAttrib
+return		void
+param		mask		GLbitfield
+category	1.1
+offset		335
+
+
+# OpenGL 1.2
+
+name		BlendColor
+return		void
+param		red		GLclampf
+param		green		GLclampf
+param		blue		GLclampf
+param		alpha		GLclampf
+category	1.2
+offset		336
+
+name		BlendEquation
+return		void
+param		mode		GLenum
+category	1.2
+offset		337
+
+name		DrawRangeElements
+return		void
+param		mode		GLenum
+param		start		GLuint
+param		end		GLuint
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	1.2
+offset		338
+
+name		ColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		table		const GLvoid *
+category	1.2
+offset		339
+
+name		ColorTableParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.2
+offset		340
+
+name		ColorTableParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.2
+offset		341
+
+name		CopyColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+offset		342
+
+name		GetColorTable
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		table		GLvoid *
+category	1.2
+offset		343
+
+name		GetColorTableParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+offset		344
+
+name		GetColorTableParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+offset		345
+
+name		ColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		count		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		data		const GLvoid *
+category	1.2
+offset		346
+
+name		CopyColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+offset		347
+
+name		ConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	1.2
+offset		348
+
+name		ConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	1.2
+offset		349
+
+name		ConvolutionParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat
+category	1.2
+offset		350
+
+name		ConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.2
+offset		351
+
+name		ConvolutionParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint
+category	1.2
+offset		352
+
+name		ConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.2
+offset		353
+
+name		CopyConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+offset		354
+
+name		CopyConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.2
+offset		355
+
+name		GetConvolutionFilter
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		image		GLvoid *
+category	1.2
+offset		356
+
+name		GetConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+offset		357
+
+name		GetConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+offset		358
+
+name		GetSeparableFilter
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		row		GLvoid *
+param		column		GLvoid *
+param		span		GLvoid *
+category	1.2
+offset		359
+
+name		SeparableFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		row		const GLvoid *
+param		column		const GLvoid *
+category	1.2
+offset		360
+
+name		GetHistogram
+return		void
+param		target		GLenum
+param		reset		GLboolean
+param		format		GLenum
+param		type		GLenum
+param		values		GLvoid *
+category	1.2
+offset		361
+
+name		GetHistogramParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+offset		362
+
+name		GetHistogramParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+offset		363
+
+name		GetMinmax
+return		void
+param		target		GLenum
+param		reset		GLboolean
+param		format		GLenum
+param		type		GLenum
+param		values		GLvoid *
+category	1.2
+offset		364
+
+name		GetMinmaxParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+offset		365
+
+name		GetMinmaxParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+offset		366
+
+name		Histogram
+return		void
+param		target		GLenum
+param		width		GLsizei
+param		internalformat	GLenum
+param		sink		GLboolean
+category	1.2
+offset		367
+
+name		Minmax
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		sink		GLboolean
+category	1.2
+offset		368
+
+name		ResetHistogram
+return		void
+param		target		GLenum
+category	1.2
+offset		369
+
+name		ResetMinmax
+return		void
+param		target		GLenum
+category	1.2
+offset		370
+
+name		TexImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.2
+offset		371
+
+name		TexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.2
+offset		372
+
+name		CopyTexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.2
+offset		373
+
+
+# OpenGL 1.3
+
+name		ActiveTexture
+return		void
+param		texture		GLenum
+category	1.3
+offset		374
+
+name		ClientActiveTexture
+return		void
+param		texture		GLenum
+category	1.3
+offset		375
+
+name		MultiTexCoord1d
+return		void
+param		target		GLenum
+param		s		GLdouble
+category	1.3
+offset		376
+
+name		MultiTexCoord1dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+offset		377
+
+name		MultiTexCoord1f
+return		void
+param		target		GLenum
+param		s		GLfloat
+category	1.3
+offset		378
+
+name		MultiTexCoord1fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+offset		379
+
+name		MultiTexCoord1i
+return		void
+param		target		GLenum
+param		s		GLint
+category	1.3
+offset		380
+
+name		MultiTexCoord1iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+offset		381
+
+name		MultiTexCoord1s
+return		void
+param		target		GLenum
+param		s		GLshort
+category	1.3
+offset		382
+
+name		MultiTexCoord1sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+offset		383
+
+name		MultiTexCoord2d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+category	1.3
+offset		384
+
+name		MultiTexCoord2dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+offset		385
+
+name		MultiTexCoord2f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+category	1.3
+offset		386
+
+name		MultiTexCoord2fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+offset		387
+
+name		MultiTexCoord2i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+category	1.3
+offset		388
+
+name		MultiTexCoord2iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+offset		389
+
+name		MultiTexCoord2s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+category	1.3
+offset		390
+
+name		MultiTexCoord2sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+offset		391
+
+name		MultiTexCoord3d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	1.3
+offset		392
+
+name		MultiTexCoord3dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+offset		393
+
+name		MultiTexCoord3f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	1.3
+offset		394
+
+name		MultiTexCoord3fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+offset		395
+
+name		MultiTexCoord3i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	1.3
+offset		396
+
+name		MultiTexCoord3iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+offset		397
+
+name		MultiTexCoord3s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	1.3
+offset		398
+
+name		MultiTexCoord3sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+offset		399
+
+name		MultiTexCoord4d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	1.3
+offset		400
+
+name		MultiTexCoord4dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	1.3
+offset		401
+
+name		MultiTexCoord4f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	1.3
+offset		402
+
+name		MultiTexCoord4fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	1.3
+offset		403
+
+name		MultiTexCoord4i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	1.3
+offset		404
+
+name		MultiTexCoord4iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	1.3
+offset		405
+
+name		MultiTexCoord4s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	1.3
+offset		406
+
+name		MultiTexCoord4sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	1.3
+offset		407
+
+name		LoadTransposeMatrixf
+return		void
+param		m		const GLfloat *
+category	1.3
+offset		408
+
+name		LoadTransposeMatrixd
+return		void
+param		m		const GLdouble *
+category	1.3
+offset		409
+
+name		MultTransposeMatrixf
+return		void
+param		m		const GLfloat *
+category	1.3
+offset		410
+
+name		MultTransposeMatrixd
+return		void
+param		m		const GLdouble *
+category	1.3
+offset		411
+
+name		SampleCoverage
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	1.3
+offset		412
+
+name		CompressedTexImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		554
+
+name		CompressedTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		555
+
+name		CompressedTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		556
+
+name		CompressedTexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		557
+
+name		CompressedTexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		558
+
+name		CompressedTexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+offset		559
+
+name		GetCompressedTexImage
+return		void
+param		target		GLenum
+param		level		GLint
+param		img		GLvoid *
+category	1.3
+offset		560
+
+
+# GL_ARB_multitexture
+
+name		ActiveTextureARB
+alias		ActiveTexture
+return		void
+param		texture		GLenum
+category	GL_ARB_multitexture
+
+name		ClientActiveTextureARB
+alias		ClientActiveTexture
+return		void
+param		texture		GLenum
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1dARB
+alias		MultiTexCoord1d
+return		void
+param		target		GLenum
+param		s		GLdouble
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1dvARB
+alias		MultiTexCoord1dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1fARB
+alias		MultiTexCoord1f
+return		void
+param		target		GLenum
+param		s		GLfloat
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1fvARB
+alias		MultiTexCoord1fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1iARB
+alias		MultiTexCoord1i
+return		void
+param		target		GLenum
+param		s		GLint
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1ivARB
+alias		MultiTexCoord1iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1sARB
+alias		MultiTexCoord1s
+return		void
+param		target		GLenum
+param		s		GLshort
+category	GL_ARB_multitexture
+
+name		MultiTexCoord1svARB
+alias		MultiTexCoord1sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2dARB
+alias		MultiTexCoord2d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2dvARB
+alias		MultiTexCoord2dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2fARB
+alias		MultiTexCoord2f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2fvARB
+alias		MultiTexCoord2fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2iARB
+alias		MultiTexCoord2i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2ivARB
+alias		MultiTexCoord2iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2sARB
+alias		MultiTexCoord2s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+category	GL_ARB_multitexture
+
+name		MultiTexCoord2svARB
+alias		MultiTexCoord2sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3dARB
+alias		MultiTexCoord3d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3dvARB
+alias		MultiTexCoord3dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3fARB
+alias		MultiTexCoord3f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3fvARB
+alias		MultiTexCoord3fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3iARB
+alias		MultiTexCoord3i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3ivARB
+alias		MultiTexCoord3iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3sARB
+alias		MultiTexCoord3s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	GL_ARB_multitexture
+
+name		MultiTexCoord3svARB
+alias		MultiTexCoord3sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4dARB
+alias		MultiTexCoord4d
+return		void
+param		target		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4dvARB
+alias		MultiTexCoord4dv
+return		void
+param		target		GLenum
+param		v		const GLdouble *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4fARB
+alias		MultiTexCoord4f
+return		void
+param		target		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4fvARB
+alias		MultiTexCoord4fv
+return		void
+param		target		GLenum
+param		v		const GLfloat *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4iARB
+alias		MultiTexCoord4i
+return		void
+param		target		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4ivARB
+alias		MultiTexCoord4iv
+return		void
+param		target		GLenum
+param		v		const GLint *
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4sARB
+alias		MultiTexCoord4s
+return		void
+param		target		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	GL_ARB_multitexture
+
+name		MultiTexCoord4svARB
+alias		MultiTexCoord4sv
+return		void
+param		target		GLenum
+param		v		const GLshort *
+category	GL_ARB_multitexture
+
+
+# GL_ARB_transpose_matrix
+
+name		LoadTransposeMatrixfARB
+alias		LoadTransposeMatrixf
+return		void
+param		m		const GLfloat *
+category	GL_ARB_transpose_matrix
+
+name		LoadTransposeMatrixdARB
+alias		LoadTransposeMatrixd
+return		void
+param		m		const GLdouble *
+category	GL_ARB_transpose_matrix
+
+name		MultTransposeMatrixfARB
+alias		MultTransposeMatrixf
+return		void
+param		m		const GLfloat *
+category	GL_ARB_transpose_matrix
+
+name		MultTransposeMatrixdARB
+alias		MultTransposeMatrixd
+return		void
+param		m		const GLdouble *
+category	GL_ARB_transpose_matrix
+
+
+# GL_ARB_multisample
+
+name		SampleCoverageARB
+alias		SampleCoverage
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	GL_ARB_multisample
+
+name		__unused413
+return		void
+category	unused
+offset		413
+
+
+# GL_ARB_texture_compression
+
+name		CompressedTexImage3DARB
+alias		CompressedTexImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		CompressedTexImage2DARB
+alias		CompressedTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		CompressedTexImage1DARB
+alias		CompressedTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		CompressedTexSubImage3DARB
+alias		CompressedTexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		CompressedTexSubImage2DARB
+alias		CompressedTexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		CompressedTexSubImage1DARB
+alias		CompressedTexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+
+name		GetCompressedTexImageARB
+alias		GetCompressedTexImage
+return		void
+param		target		GLenum
+param		level		GLint
+param		img		GLvoid *
+category	GL_ARB_texture_compression
+
+
+# GL_ARB_vertex_blend
+
+name		WeightbvARB
+return		void
+param		size		GLint
+param		weights		const GLbyte *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightsvARB
+return		void
+param		size		GLint
+param		weights		const GLshort *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightivARB
+return		void
+param		size		GLint
+param		weights		const GLint *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightfvARB
+return		void
+param		size		GLint
+param		weights		const GLfloat *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightdvARB
+return		void
+param		size		GLint
+param		weights		const GLdouble *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightubvARB
+return		void
+param		size		GLint
+param		weights		const GLubyte *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightusvARB
+return		void
+param		size		GLint
+param		weights		const GLushort *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightuivARB
+return		void
+param		size		GLint
+param		weights		const GLuint *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		WeightPointerARB
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_ARB_vertex_blend
+offset		?
+
+name		VertexBlendARB
+return		void
+param		count		GLint
+category	GL_ARB_vertex_blend
+offset		?
+
+
+# GL_ARB_matrix_palette
+
+name		CurrentPaletteMatrixARB
+return		void
+param		index		GLint
+category	GL_ARB_matrix_palette
+offset		?
+
+name		MatrixIndexubvARB
+return		void
+param		size		GLint
+param		indices		const GLubyte *
+category	GL_ARB_matrix_palette
+offset		?
+
+name		MatrixIndexusvARB
+return		void
+param		size		GLint
+param		indices		const GLushort *
+category	GL_ARB_matrix_palette
+offset		?
+
+name		MatrixIndexuivARB
+return		void
+param		size		GLint
+param		indices		const GLuint *
+category	GL_ARB_matrix_palette
+offset		?
+
+name		MatrixIndexPointerARB
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_ARB_matrix_palette
+offset		?
+
+
+# GL_EXT_blend_color
+
+name		BlendColorEXT
+alias		BlendColor
+return		void
+param		red	GLclampf
+param		green	GLclampf
+param		blue	GLclampf
+param		alpha	GLclampf
+category	GL_EXT_blend_color
+
+
+# GL_EXT_polygon_offset
+
+name		PolygonOffsetEXT
+return		void
+param		factor		GLfloat
+param		bias		GLfloat
+category	GL_EXT_polygon_offset
+offset		414
+
+
+# GL_EXT_texture3D
+
+name		TexImage3DEXT
+alias		TexImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	GL_EXT_texture3D
+
+name		TexSubImage3DEXT
+alias		TexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset 	GLint
+param		yoffset 	GLint
+param		zoffset 	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	GL_EXT_texture3D
+
+
+# GL_SGIS_texture_filter4
+
+name		GetTexFilterFuncSGIS
+return		void
+param		target		GLenum
+param		filter		GLenum
+param		weights 	GLfloat *
+category	GL_SGIS_texture_filter4
+offset		415
+
+name		TexFilterFuncSGIS
+return		void
+param		target		GLenum
+param		filter		GLenum
+param		n		GLsizei
+param		weights		const GLfloat *
+category	GL_SGIS_texture_filter4
+offset		416
+
+
+# GL_EXT_subtexture
+name		TexSubImage1DEXT
+alias		TexSubImage1D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		width	GLsizei
+param		format	GLenum
+param		type	GLenum
+param		pixels	const GLvoid *
+category	GL_EXT_subtexture
+
+name		TexSubImage2DEXT
+alias		TexSubImage2D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		yoffset GLint
+param		width	GLsizei
+param		height	GLsizei
+param		format	GLenum
+param		type	GLenum
+param		pixels	const GLvoid *
+category	GL_EXT_subtexture
+
+name		CopyTexImage1DEXT
+alias		CopyTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		border		GLint
+category	GL_EXT_copy_texture
+
+name		CopyTexImage2DEXT
+alias		CopyTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage1DEXT
+alias		CopyTexSubImage1D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage2DEXT
+alias		CopyTexSubImage2D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		yoffset GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+param		height	GLsizei
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage3DEXT
+alias		CopyTexSubImage3D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		yoffset GLint
+param		zoffset GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+param		height	GLsizei
+category	GL_EXT_copy_texture
+
+
+# GL_EXT_histogram
+
+name		GetHistogramEXT
+return		void
+param		target	GLenum
+param		reset	GLboolean
+param		format	GLenum
+param		type	GLenum
+param		values	GLvoid *
+category	GL_EXT_histogram
+offset		417
+
+name		GetHistogramParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_histogram
+offset		418
+
+name		GetHistogramParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_histogram
+offset		419
+
+name		GetMinmaxEXT
+return		void
+param		target	GLenum
+param		reset	GLboolean
+param		format	GLenum
+param		type	GLenum
+param		values	GLvoid *
+category	GL_EXT_histogram
+offset		420
+
+name		GetMinmaxParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_histogram
+offset		421
+
+name		GetMinmaxParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_histogram
+offset		422
+
+name		HistogramEXT
+alias		Histogram
+return		void
+param		target		GLenum
+param		width		GLsizei
+param		internalformat	GLenum
+param		sink		GLboolean
+category	GL_EXT_histogram
+
+name		MinmaxEXT
+alias		Minmax
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		sink		GLboolean
+category	GL_EXT_histogram
+
+name		ResetHistogramEXT
+alias		ResetHistogram
+return		void
+param		target		GLenum
+category	GL_EXT_histogram
+
+name		ResetMinmaxEXT
+alias		ResetMinmax
+return		void
+param		target		GLenum
+category	GL_EXT_histogram
+
+name		ConvolutionFilter1DEXT
+alias		ConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	GL_EXT_convolution
+
+name		ConvolutionFilter2DEXT
+alias		ConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	GL_EXT_convolution
+
+name		ConvolutionParameterfEXT
+alias		ConvolutionParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat
+category	GL_EXT_convolution
+
+name		ConvolutionParameterfvEXT
+alias		ConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_EXT_convolution
+
+name		ConvolutionParameteriEXT
+alias		ConvolutionParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint
+category	GL_EXT_convolution
+
+name		ConvolutionParameterivEXT
+alias		ConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	GL_EXT_convolution
+
+name		CopyConvolutionFilter1DEXT
+alias		CopyConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	GL_EXT_convolution
+
+name		CopyConvolutionFilter2DEXT
+alias		CopyConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	GL_EXT_convolution
+
+name		GetConvolutionFilterEXT
+return		void
+param		target	GLenum
+param		format	GLenum
+param		type	GLenum
+param		image	GLvoid *
+category	GL_EXT_convolution
+offset		423
+
+name		GetConvolutionParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_convolution
+offset		424
+
+name		GetConvolutionParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_convolution
+offset		425
+
+name		GetSeparableFilterEXT
+return		void
+param		target	GLenum
+param		format	GLenum
+param		type	GLenum
+param		row	GLvoid *
+param		column	GLvoid *
+param		span	GLvoid *
+category	GL_EXT_convolution
+offset		426
+
+name		SeparableFilter2DEXT
+alias		SeparableFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		row		const GLvoid *
+param		column		const GLvoid *
+category	GL_EXT_convolution
+
+name		ColorTableSGI
+alias		ColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		table		const GLvoid *
+category	GL_SGI_color_table
+
+name		ColorTableParameterfvSGI
+alias		ColorTableParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_SGI_color_table
+
+name		ColorTableParameterivSGI
+alias		ColorTableParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	GL_SGI_color_table
+
+name		CopyColorTableSGI
+alias		CopyColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	GL_SGI_color_table
+
+name		GetColorTableSGI
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		table		GLvoid *
+category	GL_SGI_color_table
+offset		427
+
+name		GetColorTableParameterfvSGI
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_SGI_color_table
+offset		428
+
+name		GetColorTableParameterivSGI
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_SGI_color_table
+offset		429
+
+name		PixelTexGenSGIX
+return		void
+param		mode		GLenum
+category	GL_SGIX_pixel_texture
+offset		430
+
+name		PixelTexGenParameteriSGIS
+return		void
+param		pname		GLenum
+param		param		GLint
+category	GL_SGIS_pixel_texture
+offset		431
+
+name		PixelTexGenParameterivSGIS
+return		void
+param		pname		GLenum
+param		params	const GLint *
+category	GL_SGIS_pixel_texture
+offset		432
+
+name		PixelTexGenParameterfSGIS
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_SGIS_pixel_texture
+offset		433
+
+name		PixelTexGenParameterfvSGIS
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_SGIS_pixel_texture
+offset		434
+
+name		GetPixelTexGenParameterivSGIS
+return		void
+param		pname		GLenum
+param		params		GLint *
+category	GL_SGIS_pixel_texture
+offset		435
+
+name		GetPixelTexGenParameterfvSGIS
+return		void
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_SGIS_pixel_texture
+offset		436
+
+
+# GL_SGIS_texture4D
+
+name		TexImage4DSGIS
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		size4d		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	GL_SGIS_texture4D
+offset		437
+
+name		TexSubImage4DSGIS
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset GLint
+param		yoffset GLint
+param		zoffset GLint
+param		woffset GLint
+param		width	GLsizei
+param		height	GLsizei
+param		depth	GLsizei
+param		size4d	GLsizei
+param		format	GLenum
+param		type	GLenum
+param		pixels	const GLvoid *
+category	GL_SGIS_texture4D
+offset		438
+
+
+# GL_EXT_texture_object
+
+name		AreTexturesResidentEXT
+return		GLboolean
+param		n		GLsizei
+param		textures	const GLuint *
+param		residences	GLboolean *
+category	GL_EXT_texture_object
+offset		439
+
+name		BindTextureEXT
+alias		BindTexture
+return		void
+param		target		GLenum
+param		texture		GLuint
+category	GL_EXT_texture_object
+
+name		DeleteTexturesEXT
+alias		DeleteTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+category	GL_EXT_texture_object
+
+name		GenTexturesEXT
+return		void
+param		n		GLsizei
+param		textures	GLuint *
+category	GL_EXT_texture_object
+offset		440
+
+name		IsTextureEXT
+return		GLboolean
+param		texture 	GLuint
+category	GL_EXT_texture_object
+offset		441
+
+name		PrioritizeTexturesEXT
+alias		PrioritizeTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+param		priorities	const GLclampf *
+category	GL_EXT_texture_object
+
+
+# GL_SGIS_detail_texture
+
+name		DetailTexFuncSGIS
+return		void
+param		target		GLenum
+param		n		GLsizei
+param		points		const GLfloat *
+category	GL_SGIS_detail_texture
+offset		442
+
+name		GetDetailTexFuncSGIS
+return		void
+param		target		GLenum
+param		points		GLfloat *
+category	GL_SGIS_detail_texture
+offset		443
+
+
+# GL_SGIS_sharpen_texture
+
+name		SharpenTexFuncSGIS
+return		void
+param		target		GLenum
+param		n		GLsizei
+param		points		const GLfloat *
+category	GL_SGIS_sharpen_texture
+offset		444
+
+name		GetSharpenTexFuncSGIS
+return		void
+param		target		GLenum
+param		points		GLfloat *
+category	GL_SGIS_sharpen_texture
+offset		445
+
+
+# GL_SGIS_multisample
+
+name		SampleMaskSGIS
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	GL_SGIS_multisample
+offset		446
+
+name		SamplePatternSGIS
+return		void
+param		pattern 	GLenum
+category	GL_SGIS_multisample
+offset		447
+
+
+# GL_EXT_vertex_array
+
+name		ArrayElementEXT
+alias		ArrayElement
+return		void
+param		i		GLint
+category	GL_EXT_vertex_array
+
+name		ColorPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+offset		448
+
+name		DrawArraysEXT
+alias		DrawArrays
+return		void
+param		mode		GLenum
+param		first		GLint
+param		count		GLsizei
+category	GL_EXT_vertex_array
+
+name		EdgeFlagPointerEXT
+return		void
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLboolean *
+category	GL_EXT_vertex_array
+offset		449
+
+name		GetPointervEXT
+alias		GetPointerv
+return		void
+param		pname		GLenum
+param		params		GLvoid **
+category	GL_EXT_vertex_array
+
+name		IndexPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+offset		450
+
+name		NormalPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+offset		451
+
+name		TexCoordPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+offset		452
+
+name		VertexPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+offset		453
+
+
+# GL_EXT_blend_minmax
+
+name		BlendEquationEXT
+alias		BlendEquation
+return		void
+param		mode		GLenum
+category	GL_EXT_blend_minmax
+
+
+# GL_SGIX_sprite
+
+name		SpriteParameterfSGIX
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_SGIX_sprite
+offset		454
+
+name		SpriteParameterfvSGIX
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_SGIX_sprite
+offset		455
+
+name		SpriteParameteriSGIX
+return		void
+param		pname		GLenum
+param		param		GLint
+category	GL_SGIX_sprite
+offset		456
+
+name		SpriteParameterivSGIX
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	GL_SGIX_sprite
+offset		457
+
+
+# GL_ARB_point_parameters
+
+name		PointParameterfARB
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_ARB_point_parameters
+offset		458
+
+name		PointParameterfvARB
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_ARB_point_parameters
+offset		459
+
+
+# GL_EXT_point_parameters
+
+name		PointParameterfEXT
+alias		PointParameterfARB
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_EXT_point_parameters
+
+name		PointParameterfvEXT
+alias		PointParameterfvARB
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_EXT_point_parameters
+
+
+# GL_SGIS_point_parameters
+
+name		PointParameterfSGIS
+alias		PointParameterfARB
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_SGIS_point_parameters
+
+name		PointParameterfvSGIS
+alias		PointParameterfvARB
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_SGIS_point_parameters
+
+
+# GL_SGIX_instruments
+
+name		GetInstrumentsSGIX
+return		GLint
+category	GL_SGIX_instruments
+offset		460
+
+name		InstrumentsBufferSGIX
+return		void
+param		size		GLsizei
+param		buffer		GLint *
+category	GL_SGIX_instruments
+offset		461
+
+name		PollInstrumentsSGIX
+return		GLint
+param		marker_p	GLint *
+category	GL_SGIX_instruments
+offset		462
+
+name		ReadInstrumentsSGIX
+return		void
+param		marker		GLint
+category	GL_SGIX_instruments
+offset		463
+
+name		StartInstrumentsSGIX
+return		void
+category	GL_SGIX_instruments
+offset		464
+
+name		StopInstrumentsSGIX
+return		void
+param		marker		GLint
+category	GL_SGIX_instruments
+offset		465
+
+
+# GL_SGIX_framezoom
+
+name		FrameZoomSGIX
+return		void
+param		factor		GLint
+category	GL_SGIX_framezoom
+offset		466
+
+
+# GL_SGIX_tag_sample_buffer
+
+name		TagSampleBufferSGIX
+return		void
+category	GL_SGIX_tag_sample_buffer
+offset		467
+
+
+# GL_SGIX_polynomial_ffd
+
+name		DeformationMap3dSGIX
+return		void
+param		target	GLenum
+param		u1	GLdouble
+param		u2	GLdouble
+param		ustride GLint
+param		uorder	GLint
+param		v1	GLdouble
+param		v2	GLdouble
+param		vstride GLint
+param		vorder	GLint
+param		w1	GLdouble
+param		w2	GLdouble
+param		wstride GLint
+param		worder	GLint
+param		points	const GLdouble *
+category	GL_SGIX_polynomial_ffd
+offset		?
+
+name		DeformationMap3fSGIX
+return		void
+param		target	GLenum
+param		u1	GLfloat
+param		u2	GLfloat
+param		ustride GLint
+param		uorder	GLint
+param		v1	GLfloat
+param		v2	GLfloat
+param		vstride GLint
+param		vorder	GLint
+param		w1	GLfloat
+param		w2	GLfloat
+param		wstride GLint
+param		worder	GLint
+param		points	const GLfloat *
+category	GL_SGIX_polynomial_ffd
+offset		?
+
+name		DeformSGIX
+return		void
+param		mask		GLenum
+category	GL_SGIX_polynomial_ffd
+offset		?
+
+name		LoadIdentityDeformationMapSGIX
+return		void
+param		mask		GLenum
+category	GL_SGIX_polynomial_ffd
+offset		?
+
+
+# GL_SGIX_reference_plane
+
+name		ReferencePlaneSGIX
+return		void
+param		equation	const GLdouble *
+category	GL_SGIX_reference_plane
+offset		468
+
+
+# GL_SGIX_flush_raster
+
+name		FlushRasterSGIX
+return		void
+category	GL_SGIX_flush_raster
+offset		469
+
+
+# GL_SGIS_fog_function
+
+name		FogFuncSGIS
+return		void
+param		n		GLsizei
+param		points		const GLfloat *
+category	GL_SGIS_fog_function
+offset		?
+
+name		GetFogFuncSGIS
+return		void
+param		points		GLfloat *
+category	GL_SGIS_fog_function
+offset		?
+
+
+# GL_HP_image_transform
+
+name		ImageTransformParameteriHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		param	    GLint
+category	GL_HP_image_transform
+offset		?
+
+name		ImageTransformParameterfHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		param	    GLfloat
+category	GL_HP_image_transform
+offset		?
+
+name		ImageTransformParameterivHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		params	const     GLint *
+category	GL_HP_image_transform
+offset		?
+
+name		ImageTransformParameterfvHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		params	const     GLfloat *
+category	GL_HP_image_transform
+offset		?
+
+name		GetImageTransformParameterivHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		params	    GLint *
+category	GL_HP_image_transform
+offset		?
+
+name		GetImageTransformParameterfvHP
+return		void
+param		target	    GLenum
+param		pname	    GLenum
+param		params	    GLfloat *
+category	GL_HP_image_transform
+offset		?
+
+
+# GL_EXT_color_subtable
+
+name		ColorSubTableEXT
+alias		ColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		count		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		data		const GLvoid *
+category	GL_EXT_color_subtable
+
+name		CopyColorSubTableEXT
+alias		CopyColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	GL_EXT_color_subtable
+
+
+# GL_PGI_misc_hints
+
+name		HintPGI
+return		void
+param		target		GLenum
+param		mode		GLint
+category	GL_PGI_misc_hints
+offset		544
+
+
+# GL_EXT_paletted_texture
+
+name		ColorTableEXT
+alias		ColorTable
+return		void
+param		target		GLenum
+param		internalFormat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		table		const GLvoid *
+category	GL_EXT_paletted_texture
+
+name		GetColorTableEXT
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		data		GLvoid *
+category	GL_EXT_paletted_texture
+offset		550
+
+name		GetColorTableParameterivEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_EXT_paletted_texture
+offset		551
+
+name		GetColorTableParameterfvEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_EXT_paletted_texture
+offset		552
+
+
+# GL_SGIX_list_priority
+
+name		GetListParameterfvSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_SGIX_list_priority
+offset		470
+
+name		GetListParameterivSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_SGIX_list_priority
+offset		471
+
+name		ListParameterfSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		param	GLfloat
+category	GL_SGIX_list_priority
+offset		472
+
+name		ListParameterfvSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_SGIX_list_priority
+offset		473
+
+name		ListParameteriSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		param	GLint
+category	GL_SGIX_list_priority
+offset		474
+
+name		ListParameterivSGIX
+return		void
+param		list	GLuint
+param		pname	GLenum
+param		params	const GLint *
+category	GL_SGIX_list_priority
+offset		475
+
+
+# GL_EXT_index_material
+
+name		IndexMaterialEXT
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	GL_EXT_index_material
+offset		538
+
+
+# GL_EXT_index_func
+
+name		IndexFuncEXT
+return		void
+param		func		GLenum
+param		ref		GLclampf
+category	GL_EXT_index_func
+offset		539
+
+
+# GL_EXT_compiled_vertex_array
+
+name		LockArraysEXT
+return		void
+param		first		GLint
+param		count		GLsizei
+category	GL_EXT_compiled_vertex_array
+offset		540
+
+name		UnlockArraysEXT
+return		void
+category	GL_EXT_compiled_vertex_array
+offset		541
+
+
+# GL_EXT_cull_vertex
+name		CullParameterdvEXT
+return		void
+param		pname		GLenum
+param		params		GLdouble *
+category	GL_EXT_cull_vertex
+offset		542
+
+name		CullParameterfvEXT
+return		void
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_EXT_cull_vertex
+offset		543
+
+
+# GL_SGIX_fragment_lighting
+
+name		FragmentColorMaterialSGIX
+return		void
+param		face	GLenum
+param		mode	GLenum
+category	GL_SGIX_fragment_lighting
+offset		476
+
+name		FragmentLightfSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		param	GLfloat
+category	GL_SGIX_fragment_lighting
+offset		477
+
+name		FragmentLightfvSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_SGIX_fragment_lighting
+offset		478
+
+name		FragmentLightiSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		param	GLint
+category	GL_SGIX_fragment_lighting
+offset		479
+
+name		FragmentLightivSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		params	const GLint *
+category	GL_SGIX_fragment_lighting
+offset		480
+
+name		FragmentLightModelfSGIX
+return		void
+param		pname	GLenum
+param		param	GLfloat
+category	GL_SGIX_fragment_lighting
+offset		481
+
+name		FragmentLightModelfvSGIX
+return		void
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_SGIX_fragment_lighting
+offset		482
+
+name		FragmentLightModeliSGIX
+return		void
+param		pname	GLenum
+param		param	GLint
+category	GL_SGIX_fragment_lighting
+offset		483
+
+name		FragmentLightModelivSGIX
+return		void
+param		pname	GLenum
+param		params	const GLint *
+category	GL_SGIX_fragment_lighting
+offset		484
+
+name		FragmentMaterialfSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		param	GLfloat
+category	GL_SGIX_fragment_lighting
+offset		485
+
+name		FragmentMaterialfvSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_SGIX_fragment_lighting
+offset		486
+
+name		FragmentMaterialiSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		param	GLint
+category	GL_SGIX_fragment_lighting
+offset		487
+
+name		FragmentMaterialivSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		params	const GLint *
+category	GL_SGIX_fragment_lighting
+offset		488
+
+name		GetFragmentLightfvSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_SGIX_fragment_lighting
+offset		489
+
+name		GetFragmentLightivSGIX
+return		void
+param		light	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_SGIX_fragment_lighting
+offset		490
+
+name		GetFragmentMaterialfvSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_SGIX_fragment_lighting
+offset		491
+
+name		GetFragmentMaterialivSGIX
+return		void
+param		face	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_SGIX_fragment_lighting
+offset		492
+
+name		LightEnviSGIX
+return		void
+param		pname	GLenum
+param		param	GLint
+category	GL_SGIX_fragment_lighting
+offset		493
+
+
+# GL_EXT_draw_range_elements
+
+name		DrawRangeElementsEXT
+alias		DrawRangeElements
+return		void
+param		mode		GLenum
+param		start		GLuint
+param		end		GLuint
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	GL_EXT_draw_range_elements
+
+
+# GL_EXT_light_texture
+
+name		ApplyTextureEXT
+return		void
+param		mode		GLenum
+category	GL_EXT_light_texture
+offset		?
+
+name		TextureLightEXT
+return		void
+param		pname		GLenum
+category	GL_EXT_light_texture
+offset		?
+
+name		TextureMaterialEXT
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	GL_EXT_light_texture
+offset		?
+
+
+# GL_SGIX_async
+
+name		AsyncMarkerSGIX
+return		void
+param		marker		GLuint
+category	GL_SGIX_async
+offset		?
+
+name		FinishAsyncSGIX
+return		GLint
+param		markerp		GLuint *
+category	GL_SGIX_async
+offset		?
+
+name		PollAsyncSGIX
+return		GLint
+param		markerp		GLuint *
+category	GL_SGIX_async
+offset		?
+
+name		GenAsyncMarkersSGIX
+return		GLuint
+param		range		GLsizei
+category	GL_SGIX_async
+offset		?
+
+name		DeleteAsyncMarkersSGIX
+return		void
+param		marker		GLuint
+param		range		GLsizei
+category	GL_SGIX_async
+offset		?
+
+name		IsAsyncMarkerSGIX
+return		GLboolean
+param		marker		GLuint
+category	GL_SGIX_async
+offset		?
+
+
+# GL_INTEL_parallel_arrays
+
+name		VertexPointervINTEL
+return		void
+param		size		GLint
+param		type		GLenum
+param		pointer		const GLvoid **
+category	GL_INTEL_parallel_arrays
+offset		?
+
+name		NormalPointervINTEL
+return		void
+param		type		GLenum
+param		pointer		const GLvoid **
+category	GL_INTEL_parallel_arrays
+offset		?
+
+name		ColorPointervINTEL
+return		void
+param		size		GLint
+param		type		GLenum
+param		pointer		const GLvoid **
+category	GL_INTEL_parallel_arrays
+offset		?
+
+name		TexCoordPointervINTEL
+return		void
+param		size		GLint
+param		type		GLenum
+param		pointer		const GLvoid **
+category	GL_INTEL_parallel_arrays
+offset		?
+
+
+# GL_EXT_pixel_transform
+
+name		PixelTransformParameteriEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLint
+category	GL_EXT_pixel_transform
+offset		?
+
+
+# GL_EXT_pixel_transform
+name		PixelTransformParameterfEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	GL_EXT_pixel_transform
+offset		?
+
+name		PixelTransformParameterivEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	GL_EXT_pixel_transform
+offset		?
+
+name		PixelTransformParameterfvEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_EXT_pixel_transform
+offset		?
+
+
+# GL_EXT_secondary_color
+
+name		SecondaryColor3bEXT
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	GL_EXT_secondary_color
+offset		561
+
+name		SecondaryColor3bvEXT
+return		void
+param		v		const GLbyte *
+category	GL_EXT_secondary_color
+offset		562
+
+name		SecondaryColor3dEXT
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	GL_EXT_secondary_color
+offset		563
+
+name		SecondaryColor3dvEXT
+return		void
+param		v		const GLdouble *
+category	GL_EXT_secondary_color
+offset		564
+
+name		SecondaryColor3fEXT
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	GL_EXT_secondary_color
+offset		565
+
+name		SecondaryColor3fvEXT
+return		void
+param		v		const GLfloat *
+category	GL_EXT_secondary_color
+offset		566
+
+name		SecondaryColor3iEXT
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	GL_EXT_secondary_color
+offset		567
+
+name		SecondaryColor3ivEXT
+return		void
+param		v		const GLint *
+category	GL_EXT_secondary_color
+offset		568
+
+name		SecondaryColor3sEXT
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	GL_EXT_secondary_color
+offset		569
+
+name		SecondaryColor3svEXT
+return		void
+param		v		const GLshort *
+category	GL_EXT_secondary_color
+offset		570
+
+name		SecondaryColor3ubEXT
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	GL_EXT_secondary_color
+offset		571
+
+name		SecondaryColor3ubvEXT
+return		void
+param		v		const GLubyte *
+category	GL_EXT_secondary_color
+offset		572
+
+name		SecondaryColor3uiEXT
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	GL_EXT_secondary_color
+offset		573
+
+name		SecondaryColor3uivEXT
+return		void
+param		v		const GLuint *
+category	GL_EXT_secondary_color
+offset		574
+
+name		SecondaryColor3usEXT
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	GL_EXT_secondary_color
+offset		575
+
+name		SecondaryColor3usvEXT
+return		void
+param		v		const GLushort *
+category	GL_EXT_secondary_color
+offset		576
+
+name		SecondaryColorPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_EXT_secondary_color
+offset		577
+
+
+# GL_EXT_texture_perturb_normal
+
+name		TextureNormalEXT
+return		void
+param		mode		GLenum
+category	GL_EXT_texture_perturb_normal
+offset		?
+
+name		MultiDrawArraysEXT
+return		void
+param		mode		GLenum
+param		first		GLint *
+param		count		GLsizei *
+param		primcount	GLsizei
+category	GL_EXT_multi_draw_arrays
+offset		?
+
+name		MultiDrawElementsEXT
+return		void
+param		mode		GLenum
+param		count		const GLsizei *
+param		type		GLenum
+param		indices		const GLvoid **
+param		primcount	GLsizei
+category	GL_EXT_multi_draw_arrays
+offset		?
+
+name		FogCoordfEXT
+return		void
+param		coord		GLfloat
+category	GL_EXT_fog_coord
+offset		545
+
+name		FogCoordfvEXT
+return		void
+param		coord		const GLfloat *
+category	GL_EXT_fog_coord
+offset		546
+
+name		FogCoorddEXT
+return		void
+param		coord		GLdouble
+category	GL_EXT_fog_coord
+offset		547
+
+name		FogCoorddvEXT
+return		void
+param		coord		const GLdouble *
+category	GL_EXT_fog_coord
+offset		548
+
+name		FogCoordPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_fog_coord
+offset		549
+
+
+name		Tangent3bEXT
+return		void
+param		tx		GLbyte
+param		ty		GLbyte
+param		tz		GLbyte
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3bvEXT
+return		void
+param		v		const GLbyte *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3dEXT
+return		void
+param		tx		GLdouble
+param		ty		GLdouble
+param		tz		GLdouble
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3dvEXT
+return		void
+param		v		const GLdouble *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3fEXT
+return		void
+param		tx		GLfloat
+param		ty		GLfloat
+param		tz		GLfloat
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3fvEXT
+return		void
+param		v		const GLfloat *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3iEXT
+return		void
+param		tx		GLint
+param		ty		GLint
+param		tz		GLint
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3ivEXT
+return		void
+param		v		const GLint *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3sEXT
+return		void
+param		tx		GLshort
+param		ty		GLshort
+param		tz		GLshort
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Tangent3svEXT
+return		void
+param		v		const GLshort *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3bEXT
+return		void
+param		bx		GLbyte
+param		by		GLbyte
+param		bz		GLbyte
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3bvEXT
+return		void
+param		v		const GLbyte *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3dEXT
+return		void
+param		bx		GLdouble
+param		by		GLdouble
+param		bz		GLdouble
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3dvEXT
+return		void
+param		v		const GLdouble *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3fEXT
+return		void
+param		bx		GLfloat
+param		by		GLfloat
+param		bz		GLfloat
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3fvEXT
+return		void
+param		v		const GLfloat *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3iEXT
+return		void
+param		bx		GLint
+param		by		GLint
+param		bz		GLint
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3ivEXT
+return		void
+param		v		const GLint *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3sEXT
+return		void
+param		bx		GLshort
+param		by		GLshort
+param		bz		GLshort
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		Binormal3svEXT
+return		void
+param		v		const GLshort *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		TangentPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_coordinate_frame
+offset		?
+
+name		BinormalPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_coordinate_frame
+offset		?
+
+
+name		FinishTextureSUNX
+return		void
+category	GL_SUNX_constant_data
+offset		?
+
+name		GlobalAlphaFactorbSUN
+return		void
+param		factor		GLbyte
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactorsSUN
+return		void
+param		factor		GLshort
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactoriSUN
+return		void
+param		factor		GLint
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactorfSUN
+return		void
+param		factor		GLfloat
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactordSUN
+return		void
+param		factor		GLdouble
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactorubSUN
+return		void
+param		factor		GLubyte
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactorusSUN
+return		void
+param		factor		GLushort
+category	GL_SUN_global_alpha
+offset		?
+
+name		GlobalAlphaFactoruiSUN
+return		void
+param		factor		GLuint
+category	GL_SUN_global_alpha
+offset		?
+
+name		ReplacementCodeuiSUN
+return		void
+param		code		GLuint
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodeusSUN
+return		void
+param		code		GLushort
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodeubSUN
+return		void
+param		code		GLubyte
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodeuivSUN
+return		void
+param		code		const GLuint *
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodeusvSUN
+return		void
+param		code		const GLushort *
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodeubvSUN
+return		void
+param		code		const GLubyte *
+category	GL_SUN_triangle_list
+offset		?
+
+name		ReplacementCodePointerSUN
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_SUN_triangle_list
+offset		?
+
+name		Color4ubVertex2fSUN
+return		void
+param		r		GLubyte
+param		g		GLubyte
+param		b		GLubyte
+param		a		GLubyte
+param		x		GLfloat
+param		y		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		Color4ubVertex2fvSUN
+return		void
+param		c		const GLubyte *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		Color4ubVertex3fSUN
+return		void
+param		r		GLubyte
+param		g		GLubyte
+param		b		GLubyte
+param		a		GLubyte
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		Color4ubVertex3fvSUN
+return		void
+param		c		const GLubyte *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		Color3fVertex3fSUN
+return		void
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		Color3fVertex3fvSUN
+return		void
+param		c		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		Normal3fVertex3fSUN
+return		void
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		Normal3fVertex3fvSUN
+return		void
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		Color4fNormal3fVertex3fSUN
+return		void
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		a		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		Color4fNormal3fVertex3fvSUN
+return		void
+param		c		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fVertex3fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fVertex3fvSUN
+return		void
+param		tc		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord4fVertex4fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		p		GLfloat
+param		q		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord4fVertex4fvSUN
+return		void
+param		tc		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor4ubVertex3fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLubyte
+param		g		GLubyte
+param		b		GLubyte
+param		a		GLubyte
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor4ubVertex3fvSUN
+return		void
+param		tc		const GLfloat *
+param		c		const GLubyte *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor3fVertex3fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor3fVertex3fvSUN
+return		void
+param		tc		const GLfloat *
+param		c		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fNormal3fVertex3fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fNormal3fVertex3fvSUN
+return		void
+param		tc		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor4fNormal3fVertex3fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		a		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord2fColor4fNormal3fVertex3fvSUN
+return		void
+param		tc		const GLfloat *
+param		c		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord4fColor4fNormal3fVertex4fSUN
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		p		GLfloat
+param		q		GLfloat
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		a		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		TexCoord4fColor4fNormal3fVertex4fvSUN
+return		void
+param		tc		const GLfloat *
+param		c		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiVertex3fSUN
+return		void
+param		rc		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor4ubVertex3fSUN
+return		void
+param		rc		GLuint
+param		r		GLubyte
+param		g		GLubyte
+param		b		GLubyte
+param		a		GLubyte
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor4ubVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		c		const GLubyte *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor3fVertex3fSUN
+return		void
+param		rc		GLuint
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor3fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		c		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiNormal3fVertex3fSUN
+return		void
+param		rc		GLuint
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiNormal3fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor4fNormal3fVertex3fSUN
+return		void
+param		rc		GLuint
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		a		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiColor4fNormal3fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		c		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fVertex3fSUN
+return		void
+param		rc		GLuint
+param		s		GLfloat
+param		t		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		tc		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN
+return		void
+param		rc		GLuint
+param		s		GLfloat
+param		t		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		tc		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN
+return		void
+param		rc		GLuint
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		g		GLfloat
+param		b		GLfloat
+param		a		GLfloat
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_SUN_vertex
+offset		?
+
+name		ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN
+return		void
+param		rc		const GLuint *
+param		tc		const GLfloat *
+param		c		const GLfloat *
+param		n		const GLfloat *
+param		v		const GLfloat *
+category	GL_SUN_vertex
+offset		?
+
+
+# GL_EXT_blend_func_separate
+
+name		BlendFuncSeparateEXT
+return		void
+param		sfactorRGB	GLenum
+param		dfactorRGB	GLenum
+param		sfactorAlpha	GLenum
+param		dfactorAlpha	GLenum
+category	GL_EXT_blend_func_separate
+offset		537
+
+name		BlendFuncSeparateINGR
+alias		BlendFuncSeparateEXT
+return		void
+param		sfactorRGB	GLenum
+param		dfactorRGB	GLenum
+param		sfactorAlpha	GLenum
+param		dfactorAlpha	GLenum
+category	GL_EXT_blend_func_separate
+
+
+# GL_EXT_vertex_weighting
+
+name		VertexWeightfEXT
+return		void
+param		weight		GLfloat
+category	GL_EXT_vertex_weighting
+offset		494
+
+name		VertexWeightfvEXT
+return		void
+param		weight		const GLfloat *
+category	GL_EXT_vertex_weighting
+offset		495
+
+name		VertexWeightPointerEXT
+return		void
+param		size		GLsizei
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_EXT_vertex_weighting
+offset		496
+
+
+# GL_NV_vertex_array_range
+
+name		FlushVertexArrayRangeNV
+return		void
+category	GL_NV_vertex_array_range
+offset		497
+
+name		VertexArrayRangeNV
+return		void
+param		length		GLsizei
+param		pointer		const GLvoid *
+category	GL_NV_vertex_array_range
+offset		498
+
+
+# GL_NV_register_combiners
+
+name		CombinerParameterfvNV
+return		void
+param		pname			GLenum
+param		params			const GLfloat *
+category	GL_NV_register_combiners
+offset		499
+
+name		CombinerParameterfNV
+return		void
+param		pname			GLenum
+param		param			GLfloat
+category	GL_NV_register_combiners
+offset		500
+
+name		CombinerParameterivNV
+return		void
+param		pname			GLenum
+param		params			const GLint *
+category	GL_NV_register_combiners
+offset		501
+
+name		CombinerParameteriNV
+return		void
+param		pname			GLenum
+param		param			GLint
+category	GL_NV_register_combiners
+offset		502
+
+name		CombinerInputNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		input			GLenum
+param		mapping			GLenum
+param		componentUsage		GLenum
+category	GL_NV_register_combiners
+offset		503
+
+name		CombinerOutputNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		abOutput		GLenum
+param		cdOutput		GLenum
+param		sumOutput		GLenum
+param		scale			GLenum
+param		bias			GLenum
+param		abDotProduct		GLboolean
+param		cdDotProduct		GLboolean
+param		muxSum			GLboolean
+category	GL_NV_register_combiners
+offset		504
+
+name		FinalCombinerInputNV
+return		void
+param		variable		GLenum
+param		input			GLenum
+param		mapping			GLenum
+param		componentUsage		GLenum
+category	GL_NV_register_combiners
+offset		505
+
+name		GetCombinerInputParameterfvNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+offset		506
+
+name		GetCombinerInputParameterivNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+offset		507
+
+name		GetCombinerOutputParameterfvNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+offset		508
+
+name		GetCombinerOutputParameterivNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+offset		509
+
+name		GetFinalCombinerInputParameterfvNV
+return		void
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+offset		510
+
+name		GetFinalCombinerInputParameterivNV
+return		void
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+offset		511
+
+
+# GL_MESA_resize_buffers
+
+name		ResizeBuffersMESA
+return		void
+category	GL_MESA_resize_buffers
+offset		512
+
+
+# GL_MESA_window_pos
+
+name		WindowPos2dMESA
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	GL_MESA_window_pos
+offset		513
+
+name		WindowPos2dvMESA
+return		void
+param		v		const GLdouble *
+category	GL_MESA_window_pos
+offset		514
+
+name		WindowPos2fMESA
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	GL_MESA_window_pos
+offset		515
+
+name		WindowPos2fvMESA
+return		void
+param		v		const GLfloat *
+category	GL_MESA_window_pos
+offset		516
+
+name		WindowPos2iMESA
+return		void
+param		x		GLint
+param		y		GLint
+category	GL_MESA_window_pos
+offset		517
+
+name		WindowPos2ivMESA
+return		void
+param		v		const GLint *
+category	GL_MESA_window_pos
+offset		518
+
+name		WindowPos2sMESA
+return		void
+param		x		GLshort
+param		y		GLshort
+category	GL_MESA_window_pos
+offset		519
+
+name		WindowPos2svMESA
+return		void
+param		v		const GLshort *
+category	GL_MESA_window_pos
+offset		520
+
+name		WindowPos3dMESA
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	GL_MESA_window_pos
+offset		521
+
+name		WindowPos3dvMESA
+return		void
+param		v		const GLdouble *
+category	GL_MESA_window_pos
+offset		522
+
+name		WindowPos3fMESA
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_MESA_window_pos
+offset		523
+
+name		WindowPos3fvMESA
+return		void
+param		v		const GLfloat *
+category	GL_MESA_window_pos
+offset		524
+
+name		WindowPos3iMESA
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	GL_MESA_window_pos
+offset		525
+
+name		WindowPos3ivMESA
+return		void
+param		v		const GLint *
+category	GL_MESA_window_pos
+offset		526
+
+name		WindowPos3sMESA
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	GL_MESA_window_pos
+offset		527
+
+name		WindowPos3svMESA
+return		void
+param		v		const GLshort *
+category	GL_MESA_window_pos
+offset		528
+
+name		WindowPos4dMESA
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_MESA_window_pos
+offset		529
+
+name		WindowPos4dvMESA
+return		void
+param		v		const GLdouble *
+category	GL_MESA_window_pos
+offset		530
+
+name		WindowPos4fMESA
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_MESA_window_pos
+offset		531
+
+name		WindowPos4fvMESA
+return		void
+param		v		const GLfloat *
+category	GL_MESA_window_pos
+offset		532
+
+name		WindowPos4iMESA
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+param		w		GLint
+category	GL_MESA_window_pos
+offset		533
+
+name		WindowPos4ivMESA
+return		void
+param		v		const GLint *
+category	GL_MESA_window_pos
+offset		534
+
+name		WindowPos4sMESA
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	GL_MESA_window_pos
+offset		535
+
+name		WindowPos4svMESA
+return		void
+param		v		const GLshort *
+category	GL_MESA_window_pos
+offset		536
+
+
+# GL_IBM_multimode_draw_arrays
+
+name		MultiModeDrawArraysIBM
+return		void
+param		mode		GLenum
+param		first		const GLint *
+param		count		const GLsizei *
+param		primcount	GLsizei
+param		modestride	GLint
+category	GL_IBM_multimode_draw_arrays
+offset		?
+
+name		MultiModeDrawElementsIBM
+return		void
+param		mode		const GLenum *
+param		count		const GLsizei *
+param		type		GLenum
+param		indices		const GLvoid **
+param		primcount	GLsizei
+param		modestride	GLint
+category	GL_IBM_multimode_draw_arrays
+offset		?
+
+
+# GL_IBM_vertex_array_lists
+
+name		ColorPointerListIBM
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		SecondaryColorPointerListIBM
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		EdgeFlagPointerListIBM
+return		void
+param		stride		GLint
+param		pointer		const GLboolean **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		FogCoordPointerListIBM
+return		void
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		IndexPointerListIBM
+return		void
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		NormalPointerListIBM
+return		void
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		TexCoordPointerListIBM
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+name		VertexPointerListIBM
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLint
+param		pointer		const GLvoid **
+param		ptrstride	GLint
+category	GL_IBM_vertex_array_lists
+offset		?
+
+
+# GL_3DFX_tbuffer
+
+name		TbufferMask3DFX
+return		void
+param		mask		GLuint
+category	GL_3DFX_tbuffer
+offset		553
+
+
+# GL_EXT_multisample
+
+name		SampleMaskEXT
+alias		SampleMaskSGIS
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	GL_EXT_multisample
+
+name		SamplePatternEXT
+alias		SamplePatternSGIS
+return		void
+param		pattern		GLenum
+category	GL_EXT_multisample
+
+
+# GL_SGIS_texture_color_mask
+
+name		TextureColorMaskSGIS
+return		void
+param		red		GLboolean
+param		green		GLboolean
+param		blue		GLboolean
+param		alpha		GLboolean
+category	GL_SGIS_texture_color_mask
+offset		?
+
+
+# GL_SGIX_igloo_interface
+
+name		IglooInterfaceSGIX
+return		void
+param		pname		GLenum
+param		params		const GLvoid *
+category	GL_SGIX_igloo_interface
+offset		?
+
+
+# GL_NV_fence
+
+name		GenFencesNV
+return		void
+param		n		GLsizei
+param		fences		GLuint *
+category	GL_NV_fence
+offset		?
+
+name		DeleteFencesNV
+return		void
+param		n		GLsizei
+param		fences		const GLuint *
+category	GL_NV_fence
+offset		?
+
+name		SetFenceNV
+return		void
+param		fence		GLuint
+param		condition	GLenum
+category	GL_NV_fence
+offset		?
+
+name		TestFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+offset		?
+
+name		FinishFenceNV
+return		void
+param		fence		GLuint
+category	GL_NV_fence
+offset		?
+
+name		IsFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+offset		?
+
+name		GetFenceivNV
+return		void
+param		fence		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_NV_fence
+offset		?
+
+
+# GL_NV_evaluators
+
+name		MapControlPointsNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		type	GLenum
+param		ustride GLsizei
+param		vstride GLsizei
+param		uorder	GLint
+param		vorder	GLint
+param		packed	GLboolean
+param		points	const GLvoid *
+category	GL_NV_evaluators
+offset		?
+
+name		MapParameterivNV
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	const GLint *
+category	GL_NV_evaluators
+offset		?
+
+name		MapParameterfvNV
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_NV_evaluators
+offset		?
+
+name		GetMapControlPointsNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		type	GLenum
+param		ustride GLsizei
+param		vstride GLsizei
+param		packed	GLboolean
+param		points	GLvoid *
+category	GL_NV_evaluators
+offset		?
+
+name		GetMapParameterivNV
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_evaluators
+offset		?
+
+name		GetMapParameterfvNV
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_evaluators
+offset		?
+
+name		GetMapAttribParameterivNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_evaluators
+offset		?
+
+name		GetMapAttribParameterfvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_evaluators
+offset		?
+
+name		EvalMapsNV
+return		void
+param		target	GLenum
+param		mode	GLenum
+category	GL_NV_evaluators
+offset		?
+
+
+# GL_NV_register_combiners2
+
+name		CombinerStageParameterfvNV
+return		void
+param		stage	GLenum
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_NV_register_combiners2
+offset		?
+
+name		GetCombinerStageParameterfvNV
+return		void
+param		stage	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_register_combiners2
+offset		?
+
+
+# GL_NV_vertex_program
+
+name		BindProgramNV
+return		void
+param		target	GLenum
+param		id	GLuint
+category	GL_NV_vertex_program
+offset		?
+
+name		DeleteProgramsNV
+return		void
+param		n	GLsizei
+param		ids	const GLuint *
+category	GL_NV_vertex_program
+offset		?
+
+name		ExecuteProgramNV
+return		void
+param		target	GLenum
+param		id	GLuint
+param		params	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		GenProgramsNV
+return		void
+param		n	GLsizei
+param		ids	GLuint *
+category	GL_NV_vertex_program
+offset		?
+
+name		AreProgramsResidentNV
+return		GLboolean
+param		n		GLsizei
+param		ids		const GLuint *
+param		residences	GLboolean *
+category	GL_NV_vertex_program
+offset		?
+
+name		RequestResidentProgramsNV
+return		void
+param		n	GLsizei
+param		ids	const GLuint *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetProgramParameterfvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetProgramParameterdvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetProgramivNV
+return		void
+param		id	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetProgramStringNV
+return		void
+param		id	GLuint
+param		pname	GLenum
+param		program GLubyte *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetTrackMatrixivNV
+return		void
+param		target	GLenum
+param		address GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetVertexAttribdvNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetVertexAttribfvNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetVertexAttribivNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+offset		?
+
+name		GetVertexAttribPointervNV
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		pointer 	GLvoid **
+category	GL_NV_vertex_program
+offset		?
+
+name		IsProgramNV
+return		GLboolean
+param		id	GLuint
+category	GL_NV_vertex_program
+offset		?
+
+name		LoadProgramNV
+return		void
+param		target		GLenum
+param		id		GLuint
+param		len		GLsizei
+param		program		const GLubyte *
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameter4fNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameter4dNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+param		w	GLdouble
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameter4dvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameter4fvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameters4dvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		num		GLuint
+param		params		const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		ProgramParameters4fvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		num		GLuint
+param		params		const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		TrackMatrixNV
+return		void
+param		target		GLenum
+param		address		GLuint
+param		matrix		GLenum
+param		transform	GLenum
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribPointerNV
+return		void
+param		index		GLuint
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+param		w	GLshort
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+param		w	GLdouble
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4ubNV
+return		void
+param		index	GLuint
+param		x	GLubyte
+param		y	GLubyte
+param		z	GLubyte
+param		w	GLubyte
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib1dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib2dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib3dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttrib4ubvNV
+return		void
+param		index	GLuint
+param		v	const GLubyte *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs1svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs1fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs1dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs2svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs2fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs2dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs3svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs3fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs3dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs4svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs4fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs4dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		?
+
+name		VertexAttribs4ubvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLubyte *
+category	GL_NV_vertex_program
+offset		?
+
