@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.9 2000/03/31 01:07:14 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.10 2000/05/19 13:08:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -512,8 +512,9 @@ static int const kernel1[16] = {
  * External functions:
  */
 
-extern unsigned long xmesa_color_to_pixel( XMesaContext xmesa,
-		                  GLubyte r, GLubyte g, GLubyte b, GLubyte a );
+extern unsigned long
+xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLubyte a,
+                      GLuint pixelFormat );
 
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
