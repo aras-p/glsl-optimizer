@@ -1,4 +1,4 @@
-# $Id: Makefile.OSMesa16,v 1.1 2001/04/26 22:27:09 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.2 2001/05/29 22:06:13 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -110,6 +110,7 @@ CORE_SOURCES = \
 	X86/common_x86.c \
 	X86/3dnow.c \
 	X86/sse.c \
+	math/m_debug_clip.c \
 	math/m_debug_norm.c \
 	math/m_debug_vertex.c \
 	math/m_debug_xform.c \
