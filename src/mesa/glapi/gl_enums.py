@@ -53,11 +53,11 @@ class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
 		print '   int n;'
 		print '} enum_elt;'
 		print ''
-		print 'static enum_elt all_enums[] ='
+		print 'static const enum_elt all_enums[] ='
 		print '{'
 		return
 
-	def printRealFooter(self):
+	def printBody(self):
 		print """
 };
 
@@ -65,59 +65,16 @@ class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
 
 typedef int (*cfunc)(const void *, const void *);
 
-static enum_elt **index1;
-static int sorted;
-
-static int compar_name( const enum_elt *a, const enum_elt *b )
-{
-   return _mesa_strcmp(a->c, b->c);
-}
-
-
 /* note the extra level of indirection
  */
-static int compar_nr( const enum_elt **a, const enum_elt **b )
+static int compar_name( const enum_elt **a, const enum_elt **b )
 {
-   return (*a)->n - (*b)->n;
+   return _mesa_strcmp((*a)->c, (*b)->c);
 }
 
-
-static void sort_enums( void )
+static int compar_nr( const enum_elt *a, const enum_elt *b )
 {
-   GLuint i;
-   index1 = (enum_elt **)MALLOC( Elements(all_enums) * sizeof(enum_elt *) );
-   sorted = 1;
-
-   if (!index1)
-      return;  /* what else can we do? */
-
-   qsort( all_enums, Elements(all_enums), sizeof(*all_enums),
-	  (cfunc) compar_name );
-
-   for (i = 0 ; i < Elements(all_enums) ; i++)
-      index1[i] = &all_enums[i];
-
-   qsort( index1, Elements(all_enums), sizeof(*index1), (cfunc) compar_nr );
-}
-
-
-
-int _mesa_lookup_enum_by_name( const char *symbol )
-{
-   enum_elt tmp;
-   enum_elt *e;
-
-   if (!sorted)
-      sort_enums();
-
-   if (!symbol)
-      return 0;
-
-   tmp.c = symbol;
-   e = (enum_elt *)bsearch( &tmp, all_enums, Elements(all_enums),
-			    sizeof(*all_enums), (cfunc) compar_name );
-
-   return e ? e->n : -1;
+   return a->n - b->n;
 }
 
 
@@ -125,19 +82,15 @@ static char token_tmp[20];
 
 const char *_mesa_lookup_enum_by_nr( int nr )
 {
-   enum_elt tmp, *e, **f;
-
-   if (!sorted)
-      sort_enums();
+   enum_elt tmp, *e;
 
    tmp.n = nr;
-   e = &tmp;
 
-   f = (enum_elt **)bsearch( &e, index1, Elements(all_enums),
-			     sizeof(*index1), (cfunc) compar_nr );
+   e = (enum_elt *)bsearch( &tmp, all_enums, Elements(all_enums),
+			     sizeof(*all_enums), (cfunc) compar_nr );
 
-   if (f) {
-      return (*f)->c;
+   if (e) {
+      return e->c;
    }
    else {
       /* this isn't re-entrant safe, no big deal here */
@@ -145,12 +98,39 @@ const char *_mesa_lookup_enum_by_nr( int nr )
       return token_tmp;
    }
 }
+
+int _mesa_lookup_enum_by_name( const char *symbol )
+{
+   enum_elt tmp, *e, **f;
+   static const enum_elt * const index1[] = {"""
+
+	def printRealFooter(self):
+		print """   };
+
+   if (!symbol)
+      return 0;
+
+   tmp.c = symbol;
+   e = &tmp;
+
+   f = (enum_elt **)bsearch( &e, index1, Elements(all_enums),
+			    sizeof(*index1), (cfunc) compar_name );
+
+   return f ? (*f)->n : -1;
+}
+
 """
 		return
 
 	def printFunctions(self):
+		self.enums.sort(lambda x,y: x.value - y.value)
 		for enum in self.enums:
 			print '   { "%s", 0x%X },' % (enum.name, enum.value)
+		nameEnums = self.enums[:]
+		self.printBody();
+		self.enums.sort(lambda x,y: cmp(x.name, y.name))
+		for enum in self.enums:
+			print '      &all_enums[%d], ' % (nameEnums.index(enum))
 		return
 
 
