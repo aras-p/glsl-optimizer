@@ -505,7 +505,8 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
    if (imesa) {
       savageTextureObjectPtr next_t, t;
 
-      FLUSH_BATCH(imesa);
+      savageFlushVertices(imesa);
+      savageFlushCmdBuf(imesa, GL_TRUE); /* release DMA buffer */
 
       /* update for multi-tex*/ 
       {
