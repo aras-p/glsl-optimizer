@@ -1270,6 +1270,11 @@
 #       define RADEON_TXFORMAT_DXT1               (12 <<  0)
 #       define RADEON_TXFORMAT_DXT23              (14 <<  0)
 #       define RADEON_TXFORMAT_DXT45              (15 <<  0)
+#       define RADEON_TXFORMAT_SHADOW16           (16 <<  0)
+#       define RADEON_TXFORMAT_SHADOW32           (17 <<  0)
+#       define RADEON_TXFORMAT_DUDV88             (18 <<  0)
+#       define RADEON_TXFORMAT_LDUDV655           (19 <<  0)
+#       define RADEON_TXFORMAT_LDUDUV8888         (20 <<  0)
 #       define RADEON_TXFORMAT_FORMAT_MASK        (31 <<  0)
 #       define RADEON_TXFORMAT_FORMAT_SHIFT       0
 #       define RADEON_TXFORMAT_APPLE_YUV_MODE     (1  <<  5)
