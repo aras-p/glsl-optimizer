@@ -93,7 +93,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint * buffer);
 extern void
 _mesa_GenBuffersARB(GLsizei n, GLuint * buffer);
 
-GLboolean
+extern GLboolean
 _mesa_IsBufferARB(GLuint buffer);
 
 extern void
@@ -108,7 +108,7 @@ _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size,
 extern void *
 _mesa_MapBufferARB(GLenum target, GLenum access);
 
-GLboolean
+extern GLboolean
 _mesa_UnmapBufferARB(GLenum target);
 
 extern void

@@ -623,7 +623,7 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
-                                              "glBufferSubDataARB" );
+                                              "BufferSubDataARB" );
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferSubDataARB" );
       return;
@@ -648,7 +648,7 @@ _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
-                                              "glGetBufferSubDataARB" );
+                                              "GetBufferSubDataARB" );
    if (!bufObj) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetBufferSubDataARB" );
       return;
