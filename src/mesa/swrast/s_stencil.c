@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.23 2002/04/19 00:38:27 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.24 2002/04/20 17:54:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1018,7 +1018,7 @@ _mesa_read_stencil_span( GLcontext *ctx,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLint bufWidth = (GLint) ctx->DrawBuffer->Width;
-   const GLint bufHeight = (GLint) ctx->DrawBuffer->Width;
+   const GLint bufHeight = (GLint) ctx->DrawBuffer->Height;
 
    if (y < 0 || y >= bufHeight || x + n <= 0 || x >= bufWidth) {
       /* span is completely outside framebuffer */
@@ -1072,7 +1072,7 @@ _mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLstencil *ssrc = stencil;
    const GLint bufWidth = (GLint) ctx->DrawBuffer->Width;
-   const GLint bufHeight = (GLint) ctx->DrawBuffer->Width;
+   const GLint bufHeight = (GLint) ctx->DrawBuffer->Height;
 
    if (y < 0 || y >= bufHeight || x + n <= 0 || x >= bufWidth) {
       /* span is completely outside framebuffer */
