@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.85 2002/03/23 16:35:40 brianp Exp $
+$Id: VERSIONS,v 1.86 2002/04/02 16:19:21 brianp Exp $
 
 
 Mesa Version History
@@ -928,7 +928,7 @@ Mesa Version History
 	- fixed separate_specular color bug found in Chimera (18 Dec 2001)
 
 
-4.0.2  March 25, 2002
+4.0.2  April 2, 2002
     New:
 	- New DOS (DJGPP) driver written by Daniel Borca
 	- New driver interface functions for TCL drivers (such as Radeon DRI)
@@ -949,6 +949,8 @@ Mesa Version History
 	- N threads rendering into one window didn't work reliably
 	- glCopyPixels didn't work for deep color channels
 	- improved 8 -> 16bit/channel texture image conversion (Gerk Huisma)
+	- glPopAttrib() didn't correctly restore user clip planes
+	- user clip planes failed for some perspective projections (Chromium)
     Known bugs:
 	- mipmap LOD computation
 
@@ -962,6 +964,7 @@ Mesa Version History
 	- GL_ARB_shadow extension
 	- GL_ARB_shadow_ambient extension
 	- GL_EXT_shadow_funcs extension
+	- GL_ARB_point_parameters extension
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
