@@ -52,6 +52,42 @@
 #include <GL/glxtokens.h>
 #endif
 
+
+
+/*
+ * Dithering kernels and lookup tables.
+ */
+
+const int xmesa_kernel8[DITH_DY * DITH_DX] = {
+    0 * MAXC,  8 * MAXC,  2 * MAXC, 10 * MAXC,
+   12 * MAXC,  4 * MAXC, 14 * MAXC,  6 * MAXC,
+    3 * MAXC, 11 * MAXC,  1 * MAXC,  9 * MAXC,
+   15 * MAXC,  7 * MAXC, 13 * MAXC,  5 * MAXC,
+};
+
+const short xmesa_HPCR_DRGB[3][2][16] = {
+   {
+      { 16, -4,  1,-11, 14, -6,  3, -9, 15, -5,  2,-10, 13, -7,  4, -8},
+      {-15,  5,  0, 12,-13,  7, -2, 10,-14,  6, -1, 11,-12,  8, -3,  9}
+   },
+   {
+      {-11, 15, -7,  3, -8, 14, -4,  2,-10, 16, -6,  4, -9, 13, -5,  1},
+      { 12,-14,  8, -2,  9,-13,  5, -1, 11,-15,  7, -3, 10,-12,  6,  0}
+   },
+   {
+      {  6,-18, 26,-14,  2,-22, 30,-10,  8,-16, 28,-12,  4,-20, 32, -8},
+      { -4, 20,-24, 16,  0, 24,-28, 12, -6, 18,-26, 14, -2, 22,-30, 10}
+   }
+};
+
+const int xmesa_kernel1[16] = {
+   0*47,  9*47,  4*47, 12*47,     /* 47 = (255*3)/16 */
+   6*47,  2*47, 14*47,  8*47,
+  10*47,  1*47,  5*47, 11*47,
+   7*47, 13*47,  3*47, 15*47
+};
+
+
 /*
  * Return the size (width, height) of the X window for the given GLframebuffer.
  * Output:  width - width of buffer in pixels.
@@ -87,8 +123,6 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 		 &winx, &winy, &winwidth, &winheight, &bw, &d );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
 #endif
-
-   (void)kernel8;		/* Muffle compiler */
 
    *width = winwidth;
    *height = winheight;

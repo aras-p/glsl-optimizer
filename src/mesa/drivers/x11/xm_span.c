@@ -186,8 +186,6 @@ static void write_span_TRUECOLOR_pixmap( RGBA_SPAN_ARGS )
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
 
-   (void)DitherValues;		/* Muffle compiler */
-
    y = FLIP(xmesa->xm_buffer, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {

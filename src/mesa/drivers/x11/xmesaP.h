@@ -30,10 +30,8 @@
 #ifdef XFree86Server
 # include "GL/xf86glx.h"
 # include "xf86glx_util.h"
-#else
-# ifdef USE_XSHM
-#  include <X11/extensions/XShm.h>
-# endif
+#elif defined(USE_XSHM)
+# include <X11/extensions/XShm.h>
 #endif
 #include "GL/xmesa.h"
 #include "mtypes.h"
@@ -86,12 +84,12 @@ enum pixel_format {
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
-#ifndef XFree86Server
-   XVisualInfo *vishandle;	/* Only used in fakeglx.c */
-   XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
-#else
+#ifdef XFree86Server
    GLint ColormapEntries;
    GLint nplanes;
+#else
+   XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
+   XVisualInfo *vishandle;	/* Only used in fakeglx.c */
 #endif
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
@@ -254,6 +252,9 @@ struct xmesa_buffer {
 #define BACK_PIXMAP	2
 #define BACK_XIMAGE	4
 
+/* Special value for X Drawable variables to indicate use of XImage instead */
+#define XIMAGE None
+
 
 /*
  * If pixelformat==PF_TRUECOLOR:
@@ -327,16 +328,10 @@ struct xmesa_buffer {
 #define DITH_DY	4
 #define DITH_N	(DITH_DX * DITH_DY)
 
-/*#define _dither(C,c,d)	(((unsigned)((DITH_N*(C-1)+1)*c+d))/(DITH_N*256))*/
 #define _dither(C, c, d)   (((unsigned)((DITH_N * (C - 1) + 1) * c + d)) >> 12)
 
 #define MAXC	256
-static int kernel8[DITH_DY * DITH_DX] = {
-    0 * MAXC,  8 * MAXC,  2 * MAXC, 10 * MAXC,
-   12 * MAXC,  4 * MAXC, 14 * MAXC,  6 * MAXC,
-    3 * MAXC, 11 * MAXC,  1 * MAXC,  9 * MAXC,
-   15 * MAXC,  7 * MAXC, 13 * MAXC,  5 * MAXC,
-};
+extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 
 /* Dither for random X,Y */
 #define DITHER_SETUP						\
@@ -344,7 +339,7 @@ static int kernel8[DITH_DY * DITH_DX] = {
 	unsigned long *ctable = xmesa->xm_buffer->color_table;
 
 #define DITHER( X, Y, R, G, B )				\
-	(__d = kernel8[(((Y)&3)<<2) | ((X)&3)],		\
+	(__d = xmesa_kernel8[(((Y)&3)<<2) | ((X)&3)],	\
 	 ctable[DITH_MIX(_dither(DITH_R, (R), __d),	\
 		         _dither(DITH_G, (G), __d),	\
 		         _dither(DITH_B, (B), __d))])
@@ -353,7 +348,7 @@ static int kernel8[DITH_DY * DITH_DX] = {
 #define XDITHER_SETUP(Y)					\
 	int __d;						\
 	unsigned long *ctable = xmesa->xm_buffer->color_table;	\
-	int *kernel = &kernel8[ ((Y)&3) << 2 ];
+	const int *kernel = &xmesa_kernel8[ ((Y)&3) << 2 ];
 
 #define XDITHER( X, R, G, B )				\
 	(__d = kernel[(X)&3],				\
@@ -367,9 +362,8 @@ static int kernel8[DITH_DY * DITH_DX] = {
  * Dithering for flat-shaded triangles.  Precompute all 16 possible
  * pixel values given the triangle's RGB color.  Contributed by Martin Shenk.
  */
-static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
-
 #define FLAT_DITHER_SETUP( R, G, B )					\
+	GLushort ditherValues[16];					\
 	{								\
 	   unsigned long *ctable = xmesa->xm_buffer->color_table;	\
 	   int msdr = (DITH_N*((DITH_R)-1)+1) * (R);			\
@@ -377,14 +371,14 @@ static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
 	   int msdb = (DITH_N*((DITH_B)-1)+1) * (B);			\
 	   int i;							\
 	   for (i=0;i<16;i++) {						\
-	      int k = kernel8[i];					\
-	      int j = DITH_MIX( (msdr+k)>>12, (msdg+k)>>12, (msdb+k)>>12 );	\
-	      DitherValues[i] = (GLushort) ctable[j];			\
+	      int k = xmesa_kernel8[i];					\
+	      int j = DITH_MIX( (msdr+k)>>12, (msdg+k)>>12, (msdb+k)>>12 );\
+	      ditherValues[i] = (GLushort) ctable[j];			\
 	   }								\
         }
 
 #define FLAT_DITHER_ROW_SETUP(Y)					\
-	GLushort *ditherRow = DitherValues + ( ((Y)&3) << 2);
+	GLushort *ditherRow = ditherValues + ( ((Y)&3) << 2);
 
 #define FLAT_DITHER(X)  ditherRow[(X)&3]
 
@@ -415,25 +409,12 @@ static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
  *      corresponding  colormap (see tkInitWindow) AND doing some special
  *      dither.
  */
-static const short HPCR_DRGB[3][2][16] = {
-{
-    { 16, -4,  1,-11, 14, -6,  3, -9, 15, -5,  2,-10, 13, -7,  4, -8},
-    {-15,  5,  0, 12,-13,  7, -2, 10,-14,  6, -1, 11,-12,  8, -3,  9}
-},
-{
-    {-11, 15, -7,  3, -8, 14, -4,  2,-10, 16, -6,  4, -9, 13, -5,  1},
-    { 12,-14,  8, -2,  9,-13,  5, -1, 11,-15,  7, -3, 10,-12,  6,  0}
-},
-{
-    {  6,-18, 26,-14,  2,-22, 30,-10,  8,-16, 28,-12,  4,-20, 32, -8},
-    { -4, 20,-24, 16,  0, 24,-28, 12, -6, 18,-26, 14, -2, 22,-30, 10}
-}
-};
+extern const short xmesa_HPCR_DRGB[3][2][16];
 
 #define DITHER_HPCR( X, Y, R, G, B )					   \
-  ( ((xmesa->xm_visual->hpcr_rgbTbl[0][R] + HPCR_DRGB[0][(Y)&1][(X)&15]) & 0xE0)     \
-  |(((xmesa->xm_visual->hpcr_rgbTbl[1][G] + HPCR_DRGB[1][(Y)&1][(X)&15]) & 0xE0)>>3) \
-  | ((xmesa->xm_visual->hpcr_rgbTbl[2][B] + HPCR_DRGB[2][(Y)&1][(X)&15])>>6)	   \
+  ( ((xmesa->xm_visual->hpcr_rgbTbl[0][R] + xmesa_HPCR_DRGB[0][(Y)&1][(X)&15]) & 0xE0)     \
+  |(((xmesa->xm_visual->hpcr_rgbTbl[1][G] + xmesa_HPCR_DRGB[1][(Y)&1][(X)&15]) & 0xE0)>>3) \
+  | ((xmesa->xm_visual->hpcr_rgbTbl[2][B] + xmesa_HPCR_DRGB[2][(Y)&1][(X)&15])>>6)	   \
   )
 
 
@@ -441,15 +422,11 @@ static const short HPCR_DRGB[3][2][16] = {
 /*
  * If pixelformat==PF_1BIT:
  */
-static int const kernel1[16] = {
-   0*47,  9*47,  4*47, 12*47,     /* 47 = (255*3)/16 */
-   6*47,  2*47, 14*47,  8*47,
-  10*47,  1*47,  5*47, 11*47,
-   7*47, 13*47,  3*47, 15*47 };
+extern const int xmesa_kernel1[16];
 
 #define SETUP_1BIT  int bitFlip = xmesa->xm_visual->bitFlip
 #define DITHER_1BIT( X, Y, R, G, B )	\
-	(( ((int)(R)+(int)(G)+(int)(B)) > kernel1[(((Y)&3) << 2) | ((X)&3)] ) ^ bitFlip)
+	(( ((int)(R)+(int)(G)+(int)(B)) > xmesa_kernel1[(((Y)&3) << 2) | ((X)&3)] ) ^ bitFlip)
 
 
 
@@ -458,9 +435,6 @@ static int const kernel1[16] = {
  */
 #define GRAY_RGB( R, G, B )   xmesa->xm_buffer->color_table[((R) + (G) + (B))/3]
 
-
-
-#define XIMAGE None
 
 
 /*
@@ -507,14 +481,18 @@ xmesa_color_to_pixel( XMesaContext xmesa,
 
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
+extern void xmesa_resize_buffers( GLframebuffer *buffer );
+
 extern void xmesa_init_driver_functions( XMesaVisual xmvisual,
                                          struct dd_function_table *driver );
+
 extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
 
 extern void xmesa_update_span_funcs( GLcontext *ctx );
 
 extern void xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer,
                               GLuint bufferBit );
+
 
 /* Plugged into the software rasterizer.  Try to use internal
  * swrast-style point, line and triangle functions.
@@ -531,8 +509,7 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 /* XXX this is a hack to implement shared display lists with 3Dfx */
 extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
 					     XMesaWindow w,
-					     XMesaContext c
-					   );
+					     XMesaContext c );
 
 /*
  * These are the extra routines required for integration with XFree86.
@@ -542,8 +519,6 @@ extern void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v );
 extern GLboolean XMesaForceCurrent(XMesaContext c);
 extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
-
-extern void xmesa_resize_buffers( GLframebuffer *buffer );
 
 
 #endif

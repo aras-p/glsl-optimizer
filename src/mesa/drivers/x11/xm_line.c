@@ -492,9 +492,6 @@ static swrast_line_func get_line_func( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
 
-   (void) DitherValues;  /* silence unused var warning */
-   (void) kernel1;  /* silence unused var warning */
-
    if (ctx->RenderMode != GL_RENDER)      return (swrast_line_func) NULL;
    if (ctx->Line.SmoothFlag)              return (swrast_line_func) NULL;
    if (ctx->Texture._EnabledUnits)        return (swrast_line_func) NULL;

@@ -84,16 +84,6 @@
    "GLX_ARB_render_texture"
 */
 
-/* Silence compiler warnings */
-extern void Fake_glXDummyFunc( void );
-void Fake_glXDummyFunc( void )
-{
-   (void) kernel8;
-   (void) DitherValues;
-   (void) HPCR_DRGB;
-   (void) kernel1;
-}
-
 
 /*
  * Our fake GLX context will contain a "real" GLX context and an XMesa context.

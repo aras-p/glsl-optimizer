@@ -1309,8 +1309,6 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
 
-   (void) kernel1;
-
 #ifdef DEBUG
    triFuncName = NULL;
 #endif

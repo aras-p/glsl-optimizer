@@ -882,8 +882,6 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
 static GLboolean setup_dithered_color( int client, XMesaVisual v,
                                        XMesaBuffer buffer, XMesaColormap cmap )
 {
-   (void) DitherValues;  /* silence warning */
-
    if (GET_VISUAL_DEPTH(v)<4 || GET_VISUAL_DEPTH(v)>16) {
       return GL_FALSE;
    }
@@ -2601,8 +2599,6 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
    GLint g = (GLint) (green * 255.0F);
    GLint b = (GLint) (blue  * 255.0F);
    GLint a = (GLint) (alpha * 255.0F);
-
-   (void) DitherValues; /* silence warning */
 
    switch (xmesa->pixelformat) {
       case PF_Index:
