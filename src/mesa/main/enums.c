@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.24 2002/10/29 20:28:45 brianp Exp $ */
+/* $Id: enums.c,v 1.25 2003/01/21 15:49:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -837,11 +837,16 @@ enum_elt all_enums[] =
    { "GL_DOT3_RGBA_EXT", 0x8741 },
 
    /* GL_ARB_texture_env_dot3 */
-   { "GL_DOT3_RGB_EXT", 0x86ae },
-   { "GL_DOT3_RGBA_EXT", 0x86af },
+   { "GL_DOT3_RGB_ARB", 0x86ae },
+   { "GL_DOT3_RGBA_ARB", 0x86af },
 
    /* GL_ARB_texture_border_clamp */
    { "GL_CLAMP_TO_BORDER_ARB", 0x812D },
+
+   /* GL_ATI_texture_env_combine3 */
+   { "GL_MODULATE_ADD_ATI", 0x8744 },
+   { "GL_MODULATE_SIGNED_ADD_ATI", 0x8745 },
+   { "GL_MODULATE_SUBTRACT_ATI", 0x8746 },
 };
 
 #define Elements(x) sizeof(x)/sizeof(*x)

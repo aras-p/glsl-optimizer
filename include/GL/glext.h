@@ -2423,6 +2423,11 @@ extern "C" {
 #define GL_ACTIVE_STENCIL_FACE_EXT        0x8911
 #endif
 
+#ifndef GL_ATI_texture_env_combine3
+#define GL_MODULATE_ADD_ATI               0x8744
+#define GL_MODULATE_SIGNED_ADD_ATI        0x8745
+#define GL_MODULATE_SUBTRACT_ATI          0x8746
+#endif
 
 /*************************************************************/
 
@@ -5016,6 +5021,9 @@ GLAPI void APIENTRY glActiveStencilFaceEXT (GLenum);
 typedef void (APIENTRY * PFNGLACTIVESTENCILFACEEXTPROC) (GLenum face);
 #endif
 
+#ifndef GL_ATI_texture_env_combine3
+#define GL_ATI_texture_env_combine3 1
+#endif
 
 #ifdef __cplusplus
 }

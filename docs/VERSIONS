@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.120 2002/12/18 14:56:59 brianp Exp $
+$Id: VERSIONS,v 1.121 2003/01/21 15:50:24 brianp Exp $
 
 
 Mesa Version History
@@ -1084,10 +1084,11 @@ Mesa Version History
 
 5.1  Month day, 2003
     New:
-	-
+	- GL_ATI_texture_env_combine3 extension (Ian Romanick)
     Bug fixes:
 	- really enable OpenGL 1.4 features in DOS driver.
 	- glAreProgramsResidentNV was slightly incorrect
+	- fixed issues in glDrawPixels and glCopyPixels for very wide images
     Changes:
 	- dropped API trace feature (src/Trace/)
 

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.86 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: extensions.c,v 1.87 2003/01/21 15:49:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,6 +69,7 @@ static struct {
    { ON,  "GL_ARB_transpose_matrix",           0 },
    { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
+   { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { ON,  "GL_EXT_abgr",                       0 },
    { ON,  "GL_EXT_bgra",                       0 },
    { OFF, "GL_EXT_blend_color",                F(EXT_blend_color) },
@@ -157,6 +158,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_ARB_texture_env_crossbar",
       "GL_ARB_texture_env_dot3",
       "GL_ARB_texture_mirrored_repeat",
+      "GL_ATI_texture_env_combine3",
       "GL_ATI_texture_mirror_once",
       "GL_EXT_blend_color",
       "GL_EXT_blend_func_separate",
