@@ -253,6 +253,8 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 	 break;
       case GL_INTENSITY:
 	 mode_a = GL_INTERPOLATE;
+	 state->SourceA[0] = GL_CONSTANT;
+	 state->OperandA[2] = GL_SRC_ALPHA;
 	 /* FALLTHROUGH */
       case GL_LUMINANCE:
       case GL_RGB:
