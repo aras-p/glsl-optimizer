@@ -1,8 +1,7 @@
 
 # Simple makefile for compiling test programs on Linux
 # These programs aren't intended to be included with the normal
-# distro as they're not too interesting but good for testing during
-# development.
+# distro.  They're not too interesting but they're good for testing.
 
 
 CC = gcc
@@ -17,6 +16,7 @@ PROGS = cva \
 	projtex \
 	seccolor \
 	sharedtex \
+	stencilwrap \
 	texline \
 	texwrap \
 	vptest1 \
