@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.76 2001/09/18 16:16:21 kschultz Exp $ */
+/* $Id: dlist.c,v 1.77 2001/11/18 22:48:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2486,7 +2486,7 @@ save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
       n[4].f = params[2];
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->PointParameterfvEXT)( pname, params );
+      (*ctx->Exec->PointParameterfvARB)( pname, params );
    }
 }
 
@@ -3228,7 +3228,7 @@ static void save_TexImage2D( GLenum target,
 
 
 static void save_TexImage3D( GLenum target,
-                             GLint level, GLenum internalFormat,
+                             GLint level, GLint internalFormat,
                              GLsizei width, GLsizei height, GLsizei depth,
                              GLint border,
                              GLenum format, GLenum type,
@@ -3557,7 +3557,7 @@ static void save_ActiveTextureARB( GLenum target )
       n[1].e = target;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->ActiveTextureARB)( target );
+      (*ctx->Exec->ActiveTexture)( target );
    }
 }
 
@@ -3624,8 +3624,8 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_1D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec->CompressedTexImage1DARB)(target, level, internalFormat,
-                                            width, border, imageSize, data);
+      (*ctx->Exec->CompressedTexImage1D)(target, level, internalFormat,
+                                         width, border, imageSize, data);
    }
    else {
       Node *n;
@@ -3652,8 +3652,8 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec->CompressedTexImage1DARB)(target, level, internalFormat,
-                                               width, border, imageSize, data);
+         (*ctx->Exec->CompressedTexImage1D)(target, level, internalFormat,
+                                            width, border, imageSize, data);
       }
    }
 }
@@ -3668,7 +3668,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_2D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec->CompressedTexImage2DARB)(target, level, internalFormat,
+      (*ctx->Exec->CompressedTexImage2D)(target, level, internalFormat,
                                        width, height, border, imageSize, data);
    }
    else {
@@ -3697,7 +3697,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec->CompressedTexImage2DARB)(target, level, internalFormat,
+         (*ctx->Exec->CompressedTexImage2D)(target, level, internalFormat,
                                       width, height, border, imageSize, data);
       }
    }
@@ -3713,7 +3713,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    if (target == GL_PROXY_TEXTURE_3D) {
       /* don't compile, execute immediately */
-      (*ctx->Exec->CompressedTexImage3DARB)(target, level, internalFormat,
+      (*ctx->Exec->CompressedTexImage3D)(target, level, internalFormat,
                                 width, height, depth, border, imageSize, data);
    }
    else {
@@ -3743,7 +3743,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          FREE(image);
       }
       if (ctx->ExecuteFlag) {
-         (*ctx->Exec->CompressedTexImage3DARB)(target, level, internalFormat,
+         (*ctx->Exec->CompressedTexImage3D)(target, level, internalFormat,
                                 width, height, depth, border, imageSize, data);
       }
    }
@@ -3782,8 +3782,8 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->CompressedTexSubImage1DARB)(target, level, xoffset,
-                                               width, format, imageSize, data);
+      (*ctx->Exec->CompressedTexSubImage1D)(target, level, xoffset,
+                                            width, format, imageSize, data);
    }
 }
 
@@ -3823,7 +3823,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->CompressedTexSubImage2DARB)(target, level, xoffset, yoffset,
+      (*ctx->Exec->CompressedTexSubImage2D)(target, level, xoffset, yoffset,
                                        width, height, format, imageSize, data);
    }
 }
@@ -3866,7 +3866,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       FREE(image);
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->CompressedTexSubImage3DARB)(target, level, xoffset, yoffset,
+      (*ctx->Exec->CompressedTexSubImage3D)(target, level, xoffset, yoffset,
                        zoffset, width, height, depth, format, imageSize, data);
    }
 }
@@ -3885,7 +3885,7 @@ save_SampleCoverageARB(GLclampf value, GLboolean invert)
       n[2].b = invert;
    }
    if (ctx->ExecuteFlag) {
-      (*ctx->Exec->SampleCoverageARB)( value, invert );
+      (*ctx->Exec->SampleCoverage)( value, invert );
    }
 }
 
@@ -4386,7 +4386,7 @@ execute_list( GLcontext *ctx, GLuint list )
 		params[0] = n[2].f;
 		params[1] = n[3].f;
 		params[2] = n[4].f;
-		(*ctx->Exec->PointParameterfvEXT)( n[1].e, params );
+		(*ctx->Exec->PointParameterfvARB)( n[1].e, params );
 	    }
 	    break;
 	 case OPCODE_POLYGON_MODE:
@@ -4575,7 +4575,7 @@ execute_list( GLcontext *ctx, GLuint list )
             (*ctx->Exec->WindowPos4fMESA)( n[1].f, n[2].f, n[3].f, n[4].f );
 	    break;
          case OPCODE_ACTIVE_TEXTURE:  /* GL_ARB_multitexture */
-            (*ctx->Exec->ActiveTextureARB)( n[1].e );
+            (*ctx->Exec->ActiveTexture)( n[1].e );
             break;
          case OPCODE_PIXEL_TEXGEN_SGIX:  /* GL_SGIX_pixel_texture */
             (*ctx->Exec->PixelTexGenSGIX)( n[1].e );
@@ -4584,32 +4584,32 @@ execute_list( GLcontext *ctx, GLuint list )
             (*ctx->Exec->PixelTexGenParameteriSGIS)( n[1].e, n[2].i );
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_1D: /* GL_ARB_texture_compression */
-            (*ctx->Exec->CompressedTexImage1DARB)(n[1].e, n[2].i, n[3].e,
+            (*ctx->Exec->CompressedTexImage1D)(n[1].e, n[2].i, n[3].e,
                                             n[4].i, n[5].i, n[6].i, n[7].data);
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_2D: /* GL_ARB_texture_compression */
-            (*ctx->Exec->CompressedTexImage2DARB)(n[1].e, n[2].i, n[3].e,
+            (*ctx->Exec->CompressedTexImage2D)(n[1].e, n[2].i, n[3].e,
                                     n[4].i, n[5].i, n[6].i, n[7].i, n[8].data);
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_3D: /* GL_ARB_texture_compression */
-            (*ctx->Exec->CompressedTexImage3DARB)(n[1].e, n[2].i, n[3].e,
+            (*ctx->Exec->CompressedTexImage3D)(n[1].e, n[2].i, n[3].e,
                             n[4].i, n[5].i, n[6].i, n[7].i, n[8].i, n[9].data);
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D: /* GL_ARB_texture_compress */
-            (*ctx->Exec->CompressedTexSubImage1DARB)(n[1].e, n[2].i, n[3].i,
+            (*ctx->Exec->CompressedTexSubImage1D)(n[1].e, n[2].i, n[3].i,
                                             n[4].i, n[5].e, n[6].i, n[7].data);
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D: /* GL_ARB_texture_compress */
-            (*ctx->Exec->CompressedTexSubImage2DARB)(n[1].e, n[2].i, n[3].i,
+            (*ctx->Exec->CompressedTexSubImage2D)(n[1].e, n[2].i, n[3].i,
                             n[4].i, n[5].i, n[6].i, n[7].e, n[8].i, n[9].data);
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D: /* GL_ARB_texture_compress */
-            (*ctx->Exec->CompressedTexSubImage3DARB)(n[1].e, n[2].i, n[3].i,
+            (*ctx->Exec->CompressedTexSubImage3D)(n[1].e, n[2].i, n[3].i,
                                         n[4].i, n[5].i, n[6].i, n[7].i, n[8].i,
                                         n[9].e, n[10].i, n[11].data);
             break;
          case OPCODE_SAMPLE_COVERAGE: /* GL_ARB_multisample */
-            (*ctx->Exec->SampleCoverageARB)(n[1].f, n[2].b);
+            (*ctx->Exec->SampleCoverage)(n[1].f, n[2].b);
             break;
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -5271,7 +5271,7 @@ static void exec_GetCompressedTexImageARB(GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
-   ctx->Exec->GetCompressedTexImageARB( target, level, img);
+   ctx->Exec->GetCompressedTexImage( target, level, img);
 }
 
 static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride,
@@ -5503,7 +5503,7 @@ static void exec_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
-   ctx->Exec->ClientActiveTextureARB(target);
+   ctx->Exec->ClientActiveTexture(target);
 }
 
 static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
@@ -5823,8 +5823,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 #endif
 
    /* 54. GL_EXT_point_parameters */
-   table->PointParameterfEXT = save_PointParameterfEXT;
-   table->PointParameterfvEXT = save_PointParameterfvEXT;
+   table->PointParameterfARB = save_PointParameterfEXT;
+   table->PointParameterfvARB = save_PointParameterfvEXT;
 
    /* 78. GL_EXT_paletted_texture */
 #if 0
@@ -5840,8 +5840,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->UnlockArraysEXT = exec_UnlockArraysEXT;
 
    /* GL_ARB_multitexture */
-   table->ActiveTextureARB = save_ActiveTextureARB;
-   table->ClientActiveTextureARB = exec_ClientActiveTextureARB;
+   table->ActiveTexture = save_ActiveTextureARB;
+   table->ClientActiveTexture = exec_ClientActiveTextureARB;
 
    /* GL_EXT_blend_func_separate */
    table->BlendFuncSeparateEXT = save_BlendFuncSeparateEXT;
@@ -5876,22 +5876,22 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ResizeBuffersMESA = exec_ResizeBuffersMESA;
 
    /* GL_ARB_transpose_matrix */
-   table->LoadTransposeMatrixdARB = save_LoadTransposeMatrixdARB;
-   table->LoadTransposeMatrixfARB = save_LoadTransposeMatrixfARB;
-   table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
-   table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
+   table->LoadTransposeMatrixd = save_LoadTransposeMatrixdARB;
+   table->LoadTransposeMatrixf = save_LoadTransposeMatrixfARB;
+   table->MultTransposeMatrixd = save_MultTransposeMatrixdARB;
+   table->MultTransposeMatrixf = save_MultTransposeMatrixfARB;
 
    /* GL_ARB_multisample */
-   table->SampleCoverageARB = save_SampleCoverageARB;
+   table->SampleCoverage = save_SampleCoverageARB;
 
    /* ARB 12. GL_ARB_texture_compression */
-   table->CompressedTexImage3DARB = save_CompressedTexImage3DARB;
-   table->CompressedTexImage2DARB = save_CompressedTexImage2DARB;
-   table->CompressedTexImage1DARB = save_CompressedTexImage1DARB;
-   table->CompressedTexSubImage3DARB = save_CompressedTexSubImage3DARB;
-   table->CompressedTexSubImage2DARB = save_CompressedTexSubImage2DARB;
-   table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
-   table->GetCompressedTexImageARB = exec_GetCompressedTexImageARB;
+   table->CompressedTexImage3D = save_CompressedTexImage3DARB;
+   table->CompressedTexImage2D = save_CompressedTexImage2DARB;
+   table->CompressedTexImage1D = save_CompressedTexImage1DARB;
+   table->CompressedTexSubImage3D = save_CompressedTexSubImage3DARB;
+   table->CompressedTexSubImage2D = save_CompressedTexSubImage2DARB;
+   table->CompressedTexSubImage1D = save_CompressedTexSubImage1DARB;
+   table->GetCompressedTexImage = exec_GetCompressedTexImageARB;
 
    /* GL_EXT_secondary_color */
    table->SecondaryColorPointerEXT = exec_SecondaryColorPointerEXT;

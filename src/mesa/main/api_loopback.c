@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.9 2001/09/14 21:37:52 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.10 2001/11/18 22:48:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1522,30 +1522,30 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest,
    dest->Vertex4dv = loopback_Vertex4dv;
    dest->Vertex4iv = loopback_Vertex4iv;
    dest->Vertex4sv = loopback_Vertex4sv;
-   dest->MultiTexCoord1dARB = loopback_MultiTexCoord1dARB;
-   dest->MultiTexCoord1dvARB = loopback_MultiTexCoord1dvARB;
-   dest->MultiTexCoord1iARB = loopback_MultiTexCoord1iARB;
-   dest->MultiTexCoord1ivARB = loopback_MultiTexCoord1ivARB;
-   dest->MultiTexCoord1sARB = loopback_MultiTexCoord1sARB;
-   dest->MultiTexCoord1svARB = loopback_MultiTexCoord1svARB;
-   dest->MultiTexCoord2dARB = loopback_MultiTexCoord2dARB;
-   dest->MultiTexCoord2dvARB = loopback_MultiTexCoord2dvARB;
-   dest->MultiTexCoord2iARB = loopback_MultiTexCoord2iARB;
-   dest->MultiTexCoord2ivARB = loopback_MultiTexCoord2ivARB;
-   dest->MultiTexCoord2sARB = loopback_MultiTexCoord2sARB;
-   dest->MultiTexCoord2svARB = loopback_MultiTexCoord2svARB;
-   dest->MultiTexCoord3dARB = loopback_MultiTexCoord3dARB;
-   dest->MultiTexCoord3dvARB = loopback_MultiTexCoord3dvARB;
-   dest->MultiTexCoord3iARB = loopback_MultiTexCoord3iARB;
-   dest->MultiTexCoord3ivARB = loopback_MultiTexCoord3ivARB;
-   dest->MultiTexCoord3sARB = loopback_MultiTexCoord3sARB;
-   dest->MultiTexCoord3svARB = loopback_MultiTexCoord3svARB;
-   dest->MultiTexCoord4dARB = loopback_MultiTexCoord4dARB;
-   dest->MultiTexCoord4dvARB = loopback_MultiTexCoord4dvARB;
-   dest->MultiTexCoord4iARB = loopback_MultiTexCoord4iARB;
-   dest->MultiTexCoord4ivARB = loopback_MultiTexCoord4ivARB;
-   dest->MultiTexCoord4sARB = loopback_MultiTexCoord4sARB;
-   dest->MultiTexCoord4svARB = loopback_MultiTexCoord4svARB;
+   dest->MultiTexCoord1d = loopback_MultiTexCoord1dARB;
+   dest->MultiTexCoord1dv = loopback_MultiTexCoord1dvARB;
+   dest->MultiTexCoord1i = loopback_MultiTexCoord1iARB;
+   dest->MultiTexCoord1iv = loopback_MultiTexCoord1ivARB;
+   dest->MultiTexCoord1s = loopback_MultiTexCoord1sARB;
+   dest->MultiTexCoord1sv = loopback_MultiTexCoord1svARB;
+   dest->MultiTexCoord2d = loopback_MultiTexCoord2dARB;
+   dest->MultiTexCoord2dv = loopback_MultiTexCoord2dvARB;
+   dest->MultiTexCoord2i = loopback_MultiTexCoord2iARB;
+   dest->MultiTexCoord2iv = loopback_MultiTexCoord2ivARB;
+   dest->MultiTexCoord2s = loopback_MultiTexCoord2sARB;
+   dest->MultiTexCoord2sv = loopback_MultiTexCoord2svARB;
+   dest->MultiTexCoord3d = loopback_MultiTexCoord3dARB;
+   dest->MultiTexCoord3dv = loopback_MultiTexCoord3dvARB;
+   dest->MultiTexCoord3i = loopback_MultiTexCoord3iARB;
+   dest->MultiTexCoord3iv = loopback_MultiTexCoord3ivARB;
+   dest->MultiTexCoord3s = loopback_MultiTexCoord3sARB;
+   dest->MultiTexCoord3sv = loopback_MultiTexCoord3svARB;
+   dest->MultiTexCoord4d = loopback_MultiTexCoord4dARB;
+   dest->MultiTexCoord4dv = loopback_MultiTexCoord4dvARB;
+   dest->MultiTexCoord4i = loopback_MultiTexCoord4iARB;
+   dest->MultiTexCoord4iv = loopback_MultiTexCoord4ivARB;
+   dest->MultiTexCoord4s = loopback_MultiTexCoord4sARB;
+   dest->MultiTexCoord4sv = loopback_MultiTexCoord4svARB;
    dest->EvalCoord2dv = loopback_EvalCoord2dv;
    dest->EvalCoord2fv = loopback_EvalCoord2fv;
    dest->EvalCoord2d = loopback_EvalCoord2d;

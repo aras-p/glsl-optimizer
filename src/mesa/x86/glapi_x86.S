@@ -2264,286 +2264,562 @@ GL_PREFIX(CopyTexSubImage3D):
 	JMP(GL_OFFSET(_gloffset_CopyTexSubImage3D))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ActiveTexture))
+GL_PREFIX(ActiveTexture):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_ActiveTexture))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ClientActiveTexture))
+GL_PREFIX(ClientActiveTexture):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_ClientActiveTexture))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1d))
+GL_PREFIX(MultiTexCoord1d):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1d))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1dv))
+GL_PREFIX(MultiTexCoord1dv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1f))
+GL_PREFIX(MultiTexCoord1f):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1f))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1fv))
+GL_PREFIX(MultiTexCoord1fv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1i))
+GL_PREFIX(MultiTexCoord1i):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1i))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1iv))
+GL_PREFIX(MultiTexCoord1iv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1s))
+GL_PREFIX(MultiTexCoord1s):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1s))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord1sv))
+GL_PREFIX(MultiTexCoord1sv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2d))
+GL_PREFIX(MultiTexCoord2d):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2d))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2dv))
+GL_PREFIX(MultiTexCoord2dv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2f))
+GL_PREFIX(MultiTexCoord2f):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2f))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2fv))
+GL_PREFIX(MultiTexCoord2fv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2i))
+GL_PREFIX(MultiTexCoord2i):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2i))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2iv))
+GL_PREFIX(MultiTexCoord2iv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2s))
+GL_PREFIX(MultiTexCoord2s):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2s))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord2sv))
+GL_PREFIX(MultiTexCoord2sv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3d))
+GL_PREFIX(MultiTexCoord3d):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3d))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3dv))
+GL_PREFIX(MultiTexCoord3dv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3f))
+GL_PREFIX(MultiTexCoord3f):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3f))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3fv))
+GL_PREFIX(MultiTexCoord3fv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3i))
+GL_PREFIX(MultiTexCoord3i):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3i))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3iv))
+GL_PREFIX(MultiTexCoord3iv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3s))
+GL_PREFIX(MultiTexCoord3s):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3s))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord3sv))
+GL_PREFIX(MultiTexCoord3sv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4d))
+GL_PREFIX(MultiTexCoord4d):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4d))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4dv))
+GL_PREFIX(MultiTexCoord4dv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4f))
+GL_PREFIX(MultiTexCoord4f):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4f))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4fv))
+GL_PREFIX(MultiTexCoord4fv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4i))
+GL_PREFIX(MultiTexCoord4i):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4i))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4iv))
+GL_PREFIX(MultiTexCoord4iv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4s))
+GL_PREFIX(MultiTexCoord4s):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4s))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultiTexCoord4sv))
+GL_PREFIX(MultiTexCoord4sv):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sv))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixf))
+GL_PREFIX(LoadTransposeMatrixf):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixf))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(LoadTransposeMatrixd))
+GL_PREFIX(LoadTransposeMatrixd):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixd))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixf))
+GL_PREFIX(MultTransposeMatrixf):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixf))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(MultTransposeMatrixd))
+GL_PREFIX(MultTransposeMatrixd):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixd))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SampleCoverage))
+GL_PREFIX(SampleCoverage):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_SampleCoverage))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexImage3D))
+GL_PREFIX(CompressedTexImage3D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage3D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexImage2D))
+GL_PREFIX(CompressedTexImage2D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage2D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexImage1D))
+GL_PREFIX(CompressedTexImage1D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage1D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage3D))
+GL_PREFIX(CompressedTexSubImage3D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage2D))
+GL_PREFIX(CompressedTexSubImage2D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CompressedTexSubImage1D))
+GL_PREFIX(CompressedTexSubImage1D):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1D))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetCompressedTexImage))
+GL_PREFIX(GetCompressedTexImage):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_GetCompressedTexImage))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ActiveTextureARB))
 GL_PREFIX(ActiveTextureARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_ActiveTextureARB))
+	JMP(GL_OFFSET(_gloffset_ActiveTexture))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(ClientActiveTextureARB))
 GL_PREFIX(ClientActiveTextureARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_ClientActiveTextureARB))
+	JMP(GL_OFFSET(_gloffset_ClientActiveTexture))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1dARB))
 GL_PREFIX(MultiTexCoord1dARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1d))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1dvARB))
 GL_PREFIX(MultiTexCoord1dvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1fARB))
 GL_PREFIX(MultiTexCoord1fARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1f))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1fvARB))
 GL_PREFIX(MultiTexCoord1fvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1iARB))
 GL_PREFIX(MultiTexCoord1iARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1i))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1ivARB))
 GL_PREFIX(MultiTexCoord1ivARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1ivARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1sARB))
 GL_PREFIX(MultiTexCoord1sARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1s))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord1svARB))
 GL_PREFIX(MultiTexCoord1svARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1svARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2dARB))
 GL_PREFIX(MultiTexCoord2dARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2d))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2dvARB))
 GL_PREFIX(MultiTexCoord2dvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2fARB))
 GL_PREFIX(MultiTexCoord2fARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2f))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2fvARB))
 GL_PREFIX(MultiTexCoord2fvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2iARB))
 GL_PREFIX(MultiTexCoord2iARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2i))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2ivARB))
 GL_PREFIX(MultiTexCoord2ivARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2ivARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2sARB))
 GL_PREFIX(MultiTexCoord2sARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2s))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord2svARB))
 GL_PREFIX(MultiTexCoord2svARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2svARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3dARB))
 GL_PREFIX(MultiTexCoord3dARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3d))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3dvARB))
 GL_PREFIX(MultiTexCoord3dvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3fARB))
 GL_PREFIX(MultiTexCoord3fARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3f))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3fvARB))
 GL_PREFIX(MultiTexCoord3fvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3iARB))
 GL_PREFIX(MultiTexCoord3iARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3i))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3ivARB))
 GL_PREFIX(MultiTexCoord3ivARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3ivARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3sARB))
 GL_PREFIX(MultiTexCoord3sARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3s))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord3svARB))
 GL_PREFIX(MultiTexCoord3svARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3svARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4dARB))
 GL_PREFIX(MultiTexCoord4dARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4d))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4dvARB))
 GL_PREFIX(MultiTexCoord4dvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4fARB))
 GL_PREFIX(MultiTexCoord4fARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4f))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4fvARB))
 GL_PREFIX(MultiTexCoord4fvARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fvARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4iARB))
 GL_PREFIX(MultiTexCoord4iARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4i))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4ivARB))
 GL_PREFIX(MultiTexCoord4ivARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4ivARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4sARB))
 GL_PREFIX(MultiTexCoord4sARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4s))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultiTexCoord4svARB))
 GL_PREFIX(MultiTexCoord4svARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4svARB))
+	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sv))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(LoadTransposeMatrixfARB))
 GL_PREFIX(LoadTransposeMatrixfARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixfARB))
+	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixf))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(LoadTransposeMatrixdARB))
 GL_PREFIX(LoadTransposeMatrixdARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixdARB))
+	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixd))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultTransposeMatrixfARB))
 GL_PREFIX(MultTransposeMatrixfARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixfARB))
+	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixf))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(MultTransposeMatrixdARB))
 GL_PREFIX(MultTransposeMatrixdARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixdARB))
+	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixd))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(SampleCoverageARB))
 GL_PREFIX(SampleCoverageARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_SampleCoverageARB))
+	JMP(GL_OFFSET(_gloffset_SampleCoverage))
 
 ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SamplePassARB))
-GL_PREFIX(SamplePassARB):
+GLOBL_FN(GL_PREFIX(__unused413))
+GL_PREFIX(__unused413):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_SamplePassARB))
+	JMP(GL_OFFSET(_gloffset___unused413))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexImage3DARB))
 GL_PREFIX(CompressedTexImage3DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage3DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage3D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexImage2DARB))
 GL_PREFIX(CompressedTexImage2DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage2DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage2D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexImage1DARB))
 GL_PREFIX(CompressedTexImage1DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage1DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexImage1D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexSubImage3DARB))
 GL_PREFIX(CompressedTexSubImage3DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexSubImage2DARB))
 GL_PREFIX(CompressedTexSubImage2DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(CompressedTexSubImage1DARB))
 GL_PREFIX(CompressedTexSubImage1DARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1DARB))
+	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1D))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetCompressedTexImageARB))
 GL_PREFIX(GetCompressedTexImageARB):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_GetCompressedTexImageARB))
+	JMP(GL_OFFSET(_gloffset_GetCompressedTexImage))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(BlendColorEXT))
@@ -3014,28 +3290,40 @@ GL_PREFIX(SpriteParameterivSGIX):
 	JMP(GL_OFFSET(_gloffset_SpriteParameterivSGIX))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PointParameterfARB))
+GL_PREFIX(PointParameterfARB):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_PointParameterfARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PointParameterfvARB))
+GL_PREFIX(PointParameterfvARB):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_PointParameterfvARB))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(PointParameterfEXT))
 GL_PREFIX(PointParameterfEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
+	JMP(GL_OFFSET(_gloffset_PointParameterfARB))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(PointParameterfvEXT))
 GL_PREFIX(PointParameterfvEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
+	JMP(GL_OFFSET(_gloffset_PointParameterfvARB))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(PointParameterfSGIS))
 GL_PREFIX(PointParameterfSGIS):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_PointParameterfEXT))
+	JMP(GL_OFFSET(_gloffset_PointParameterfARB))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(PointParameterfvSGIS))
 GL_PREFIX(PointParameterfvSGIS):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_PointParameterfvEXT))
+	JMP(GL_OFFSET(_gloffset_PointParameterfvARB))
 
 ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(GetInstrumentsSGIX))
@@ -3464,6 +3752,12 @@ GL_PREFIX(BlendFuncSeparateEXT):
 	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
 
 ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BlendFuncSeparateINGR))
+GL_PREFIX(BlendFuncSeparateINGR):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	JMP(GL_OFFSET(_gloffset_BlendFuncSeparateEXT))
+
+ALIGNTEXT16
 GLOBL_FN(GL_PREFIX(VertexWeightfEXT))
 GL_PREFIX(VertexWeightfEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
@@ -3738,284 +4032,6 @@ GLOBL_FN(GL_PREFIX(SamplePatternEXT))
 GL_PREFIX(SamplePatternEXT):
 	MOV_L(GLNAME(_glapi_Dispatch), EAX)
 	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
-
-/* XXX these were added by hand because we need a new gl.spec file */
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ActiveTexture))
-GL_PREFIX(ActiveTexture):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_ActiveTextureARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(ClientActiveTexture))
-GL_PREFIX(ClientActiveTexture):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_ClientActiveTextureARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage1D))
-GL_PREFIX(CompressedTexImage1D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage1DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage2D))
-GL_PREFIX(CompressedTexImage2D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage2DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexImage3D))
-GL_PREFIX(CompressedTexImage3D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexImage3DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage1D))
-GL_PREFIX(CompressedTexSubImage1D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage1DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage2D))
-GL_PREFIX(CompressedTexSubImage2D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage2DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(CompressedTexSubImage3D))
-GL_PREFIX(CompressedTexSubImage3D):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_CompressedTexSubImage3DARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(GetCompressedTexImage))
-GL_PREFIX(GetCompressedTexImage):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_GetCompressedTexImageARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1d))
-GL_PREFIX(MultiTexCoord1d):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1dv))
-GL_PREFIX(MultiTexCoord1dv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1dvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1f))
-GL_PREFIX(MultiTexCoord1f):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1fv))
-GL_PREFIX(MultiTexCoord1fv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1fvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1i))
-GL_PREFIX(MultiTexCoord1i):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1iARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1iv))
-GL_PREFIX(MultiTexCoord1iv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1ivARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1s))
-GL_PREFIX(MultiTexCoord1s):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1sARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord1sv))
-GL_PREFIX(MultiTexCoord1sv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord1svARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2d))
-GL_PREFIX(MultiTexCoord2d):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2dv))
-GL_PREFIX(MultiTexCoord2dv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2dvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2f))
-GL_PREFIX(MultiTexCoord2f):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2fv))
-GL_PREFIX(MultiTexCoord2fv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2fvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2i))
-GL_PREFIX(MultiTexCoord2i):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2iARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2iv))
-GL_PREFIX(MultiTexCoord2iv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2ivARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2s))
-GL_PREFIX(MultiTexCoord2s):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2sARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord2sv))
-GL_PREFIX(MultiTexCoord2sv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord2svARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3d))
-GL_PREFIX(MultiTexCoord3d):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3dv))
-GL_PREFIX(MultiTexCoord3dv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3dvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3f))
-GL_PREFIX(MultiTexCoord3f):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3fv))
-GL_PREFIX(MultiTexCoord3fv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3fvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3i))
-GL_PREFIX(MultiTexCoord3i):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3iARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3iv))
-GL_PREFIX(MultiTexCoord3iv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3ivARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3s))
-GL_PREFIX(MultiTexCoord3s):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3sARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord3sv))
-GL_PREFIX(MultiTexCoord3sv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord3svARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4d))
-GL_PREFIX(MultiTexCoord4d):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4dv))
-GL_PREFIX(MultiTexCoord4dv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4dvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4f))
-GL_PREFIX(MultiTexCoord4f):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4fv))
-GL_PREFIX(MultiTexCoord4fv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4fvARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4i))
-GL_PREFIX(MultiTexCoord4i):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4iARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4iv))
-GL_PREFIX(MultiTexCoord4iv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4ivARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4s))
-GL_PREFIX(MultiTexCoord4s):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4sARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultiTexCoord4sv))
-GL_PREFIX(MultiTexCoord4sv):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultiTexCoord4svARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixd))
-GL_PREFIX(LoadTransposeMatrixd):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixdARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(LoadTransposeMatrixf))
-GL_PREFIX(LoadTransposeMatrixf):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_LoadTransposeMatrixfARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixd))
-GL_PREFIX(MultTransposeMatrixd):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixdARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(MultTransposeMatrixf))
-GL_PREFIX(MultTransposeMatrixf):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixfARB))
-
-ALIGNTEXT16
-GLOBL_FN(GL_PREFIX(SampleCoverage))
-GL_PREFIX(SampleCoverage):
-	MOV_L(GLNAME(_glapi_Dispatch), EAX)
-	JMP(GL_OFFSET(_gloffset_SampleCoverageARB))
 
 
 #endif  /* __WIN32__ */

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.69 2001/09/18 23:06:14 kschultz Exp $ */
+/* $Id: state.c,v 1.70 2001/11/18 22:48:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -408,8 +408,8 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 #endif
 
    /* 54. GL_EXT_point_parameters */
-   exec->PointParameterfEXT = _mesa_PointParameterfEXT;
-   exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
+   exec->PointParameterfARB = _mesa_PointParameterfEXT;
+   exec->PointParameterfvARB = _mesa_PointParameterfvEXT;
 
    /* 78. GL_EXT_paletted_texture */
 #if 0
@@ -457,26 +457,26 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 
    /* ARB 1. GL_ARB_multitexture */
-   exec->ActiveTextureARB = _mesa_ActiveTextureARB;
-   exec->ClientActiveTextureARB = _mesa_ClientActiveTextureARB;
+   exec->ActiveTexture = _mesa_ActiveTextureARB;
+   exec->ClientActiveTexture = _mesa_ClientActiveTextureARB;
 
    /* ARB 3. GL_ARB_transpose_matrix */
-   exec->LoadTransposeMatrixdARB = _mesa_LoadTransposeMatrixdARB;
-   exec->LoadTransposeMatrixfARB = _mesa_LoadTransposeMatrixfARB;
-   exec->MultTransposeMatrixdARB = _mesa_MultTransposeMatrixdARB;
-   exec->MultTransposeMatrixfARB = _mesa_MultTransposeMatrixfARB;
+   exec->LoadTransposeMatrixd = _mesa_LoadTransposeMatrixdARB;
+   exec->LoadTransposeMatrixf = _mesa_LoadTransposeMatrixfARB;
+   exec->MultTransposeMatrixd = _mesa_MultTransposeMatrixdARB;
+   exec->MultTransposeMatrixf = _mesa_MultTransposeMatrixfARB;
 
    /* ARB 5. GL_ARB_multisample */
-   exec->SampleCoverageARB = _mesa_SampleCoverageARB;
+   exec->SampleCoverage = _mesa_SampleCoverageARB;
 
    /* ARB 12. GL_ARB_texture_compression */
-   exec->CompressedTexImage3DARB = _mesa_CompressedTexImage3DARB;
-   exec->CompressedTexImage2DARB = _mesa_CompressedTexImage2DARB;
-   exec->CompressedTexImage1DARB = _mesa_CompressedTexImage1DARB;
-   exec->CompressedTexSubImage3DARB = _mesa_CompressedTexSubImage3DARB;
-   exec->CompressedTexSubImage2DARB = _mesa_CompressedTexSubImage2DARB;
-   exec->CompressedTexSubImage1DARB = _mesa_CompressedTexSubImage1DARB;
-   exec->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
+   exec->CompressedTexImage3D = _mesa_CompressedTexImage3DARB;
+   exec->CompressedTexImage2D = _mesa_CompressedTexImage2DARB;
+   exec->CompressedTexImage1D = _mesa_CompressedTexImage1DARB;
+   exec->CompressedTexSubImage3D = _mesa_CompressedTexSubImage3DARB;
+   exec->CompressedTexSubImage2D = _mesa_CompressedTexSubImage2DARB;
+   exec->CompressedTexSubImage1D = _mesa_CompressedTexSubImage1DARB;
+   exec->GetCompressedTexImage = _mesa_GetCompressedTexImageARB;
 
 }
 

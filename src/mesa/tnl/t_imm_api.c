@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.17 2001/09/14 17:23:39 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.18 2001/11/18 22:48:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1232,14 +1232,14 @@ void _tnl_imm_vtxfmt_init( GLcontext *ctx )
    vfmt->Indexi = _tnl_Indexi;
    vfmt->Indexiv = _tnl_Indexiv;
    vfmt->Materialfv = _tnl_Materialfv;
-   vfmt->MultiTexCoord1fARB = _tnl_MultiTexCoord1fARB;
-   vfmt->MultiTexCoord1fvARB = _tnl_MultiTexCoord1fvARB;
-   vfmt->MultiTexCoord2fARB = _tnl_MultiTexCoord2fARB;
-   vfmt->MultiTexCoord2fvARB = _tnl_MultiTexCoord2fvARB;
-   vfmt->MultiTexCoord3fARB = _tnl_MultiTexCoord3fARB;
-   vfmt->MultiTexCoord3fvARB = _tnl_MultiTexCoord3fvARB;
-   vfmt->MultiTexCoord4fARB = _tnl_MultiTexCoord4fARB;
-   vfmt->MultiTexCoord4fvARB = _tnl_MultiTexCoord4fvARB;
+   vfmt->MultiTexCoord1f = _tnl_MultiTexCoord1fARB;
+   vfmt->MultiTexCoord1fv = _tnl_MultiTexCoord1fvARB;
+   vfmt->MultiTexCoord2f = _tnl_MultiTexCoord2fARB;
+   vfmt->MultiTexCoord2fv = _tnl_MultiTexCoord2fvARB;
+   vfmt->MultiTexCoord3f = _tnl_MultiTexCoord3fARB;
+   vfmt->MultiTexCoord3fv = _tnl_MultiTexCoord3fvARB;
+   vfmt->MultiTexCoord4f = _tnl_MultiTexCoord4fARB;
+   vfmt->MultiTexCoord4fv = _tnl_MultiTexCoord4fvARB;
    vfmt->Normal3f = _tnl_Normal3f;
    vfmt->Normal3fv = _tnl_Normal3fv;
    vfmt->SecondaryColor3fEXT = _tnl_SecondaryColor3fEXT;

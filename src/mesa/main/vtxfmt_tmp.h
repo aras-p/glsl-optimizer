@@ -1,4 +1,4 @@
-/* $Id: vtxfmt_tmp.h,v 1.4 2001/03/12 00:48:39 gareth Exp $ */
+/* $Id: vtxfmt_tmp.h,v 1.5 2001/11/18 22:48:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -163,54 +163,54 @@ static void TAG(Materialfv)( GLenum face, GLenum pname, const GLfloat *v )
    glMaterialfv( face, pname, v );
 }
 
-static void TAG(MultiTexCoord1fARB)( GLenum target, GLfloat a )
+static void TAG(MultiTexCoord1f)( GLenum target, GLfloat a )
 {
-   PRE_LOOPBACK( MultiTexCoord1fARB );
-   glMultiTexCoord1fARB( target, a );
+   PRE_LOOPBACK( MultiTexCoord1f );
+   glMultiTexCoord1f( target, a );
 }
 
-static void TAG(MultiTexCoord1fvARB)( GLenum target, const GLfloat *tc )
+static void TAG(MultiTexCoord1fv)( GLenum target, const GLfloat *tc )
 {
-   PRE_LOOPBACK( MultiTexCoord1fvARB );
-   glMultiTexCoord1fvARB( target, tc );
+   PRE_LOOPBACK( MultiTexCoord1fv );
+   glMultiTexCoord1fv( target, tc );
 }
 
-static void TAG(MultiTexCoord2fARB)( GLenum target, GLfloat a, GLfloat b )
+static void TAG(MultiTexCoord2f)( GLenum target, GLfloat a, GLfloat b )
 {
-   PRE_LOOPBACK( MultiTexCoord2fARB );
-   glMultiTexCoord2fARB( target, a, b );
+   PRE_LOOPBACK( MultiTexCoord2f );
+   glMultiTexCoord2f( target, a, b );
 }
 
-static void TAG(MultiTexCoord2fvARB)( GLenum target, const GLfloat *tc )
+static void TAG(MultiTexCoord2fv)( GLenum target, const GLfloat *tc )
 {
-   PRE_LOOPBACK( MultiTexCoord2fvARB );
-   glMultiTexCoord2fvARB( target, tc );
+   PRE_LOOPBACK( MultiTexCoord2fv );
+   glMultiTexCoord2fv( target, tc );
 }
 
-static void TAG(MultiTexCoord3fARB)( GLenum target, GLfloat a,
+static void TAG(MultiTexCoord3f)( GLenum target, GLfloat a,
 				     GLfloat b, GLfloat c )
 {
-   PRE_LOOPBACK( MultiTexCoord3fARB );
-   glMultiTexCoord3fARB( target, a, b, c );
+   PRE_LOOPBACK( MultiTexCoord3f );
+   glMultiTexCoord3f( target, a, b, c );
 }
 
-static void TAG(MultiTexCoord3fvARB)( GLenum target, const GLfloat *tc )
+static void TAG(MultiTexCoord3fv)( GLenum target, const GLfloat *tc )
 {
-   PRE_LOOPBACK( MultiTexCoord3fvARB );
-   glMultiTexCoord3fvARB( target, tc );
+   PRE_LOOPBACK( MultiTexCoord3fv );
+   glMultiTexCoord3fv( target, tc );
 }
 
-static void TAG(MultiTexCoord4fARB)( GLenum target, GLfloat a,
+static void TAG(MultiTexCoord4f)( GLenum target, GLfloat a,
 				     GLfloat b, GLfloat c, GLfloat d )
 {
-   PRE_LOOPBACK( MultiTexCoord4fARB );
-   glMultiTexCoord4fARB( target, a, b, c, d );
+   PRE_LOOPBACK( MultiTexCoord4f );
+   glMultiTexCoord4f( target, a, b, c, d );
 }
 
-static void TAG(MultiTexCoord4fvARB)( GLenum target, const GLfloat *tc )
+static void TAG(MultiTexCoord4fv)( GLenum target, const GLfloat *tc )
 {
-   PRE_LOOPBACK( MultiTexCoord4fvARB );
-   glMultiTexCoord4fvARB( target, tc );
+   PRE_LOOPBACK( MultiTexCoord4fv );
+   glMultiTexCoord4fv( target, tc );
 }
 
 static void TAG(Normal3f)( GLfloat a, GLfloat b, GLfloat c )
@@ -415,14 +415,14 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(Indexi),
    TAG(Indexiv),
    TAG(Materialfv),
-   TAG(MultiTexCoord1fARB),
-   TAG(MultiTexCoord1fvARB),
-   TAG(MultiTexCoord2fARB),
-   TAG(MultiTexCoord2fvARB),
-   TAG(MultiTexCoord3fARB),
-   TAG(MultiTexCoord3fvARB),
-   TAG(MultiTexCoord4fARB),
-   TAG(MultiTexCoord4fvARB),
+   TAG(MultiTexCoord1f),
+   TAG(MultiTexCoord1fv),
+   TAG(MultiTexCoord2f),
+   TAG(MultiTexCoord2fv),
+   TAG(MultiTexCoord3f),
+   TAG(MultiTexCoord3fv),
+   TAG(MultiTexCoord4f),
+   TAG(MultiTexCoord4fv),
    TAG(Normal3f),
    TAG(Normal3fv),
    TAG(SecondaryColor3fEXT),

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.105 2001/11/03 04:11:26 brianp Exp $ */
+/* $Id: teximage.c,v 1.106 2001/11/18 22:48:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1565,7 +1565,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
  * Note that width and height include the border.
  */
 void
-_mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
+_mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth,
                   GLint border, GLenum format, GLenum type,
                   const GLvoid *pixels )
