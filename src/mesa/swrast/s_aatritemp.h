@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.16 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.17 2001/05/30 17:44:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,7 +65,7 @@
 #endif
 #ifdef DO_RGBA
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
-   DEFMARRAY(GLubyte, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+   DEFMARRAY(GLchan, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
 #endif
 #ifdef DO_INDEX
    GLfloat iPlane[4];
@@ -76,7 +76,7 @@
 #endif
 #ifdef DO_SPEC
    GLfloat srPlane[4], sgPlane[4], sbPlane[4];
-   DEFMARRAY(GLubyte, spec, MAX_WIDTH, 4);
+   DEFMARRAY(GLchan, spec, MAX_WIDTH, 4);
 #endif
 #ifdef DO_TEX
    GLfloat sPlane[4], tPlane[4], uPlane[4], vPlane[4];

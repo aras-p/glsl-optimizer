@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.30 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_texture.c,v 1.31 2001/05/30 17:47:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1748,7 +1748,7 @@ texture_combine(const GLcontext *ctx,
    GLuint i, j;
    const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
    const GLuint Ashift   = textureUnit->CombineScaleShiftA;
-   DEFMNARRAY(GLubyte, ccolor, 3, 3 * MAX_WIDTH, 4);  /* mac 32k limitation */
+   DEFMNARRAY(GLchan, ccolor, 3, 3 * MAX_WIDTH, 4);  /* mac 32k limitation */
    CHECKARRAY(ccolor, return);  /* mac 32k limitation */
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
@@ -1977,8 +1977,8 @@ texture_combine(const GLcontext *ctx,
       case GL_DOT3_RGB_ARB:
       case GL_DOT3_RGBA_ARB:
          {
-            const GLubyte (*arg0)[4] = (const GLubyte (*)[4]) argRGB[0];
-            const GLubyte (*arg1)[4] = (const GLubyte (*)[4]) argRGB[1];
+            const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
+            const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
 	    /* ATI's EXT extension has a constant scale by 4.  The ARB
 	     * one will likely remove this restriction, and we should
 	     * drop the EXT extension in favour of the ARB one.
@@ -1991,7 +1991,7 @@ texture_combine(const GLcontext *ctx,
 			    S_PROD((GLint)arg0[i][BCOMP] - 128,
 				   (GLint)arg1[i][BCOMP] - 128)) >> 6;
                dot = CLAMP(dot, 0, 255);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLubyte)dot;
+               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLchan) dot;
             }
          }
          break;
