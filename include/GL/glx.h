@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.16 2000/03/20 21:31:15 brianp Exp $ */
+/* $Id: glx.h,v 1.17 2000/03/31 01:03:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -164,7 +164,7 @@ extern "C" {
 
 
 /*
- * GLX_EXT_visual_info extension
+ * 28. GLX_EXT_visual_info extension
  */
 #define GLX_X_VISUAL_TYPE_EXT		0x22
 #define GLX_TRANSPARENT_TYPE_EXT	0x23
@@ -173,11 +173,6 @@ extern "C" {
 #define GLX_TRANSPARENT_GREEN_VALUE_EXT	0x26
 #define GLX_TRANSPARENT_BLUE_VALUE_EXT	0x27
 #define GLX_TRANSPARENT_ALPHA_VALUE_EXT	0x28
-
-
-/*
- * GLX_visual_info extension
- */
 #define GLX_TRUE_COLOR_EXT		0x8002
 #define GLX_DIRECT_COLOR_EXT		0x8003
 #define GLX_PSEUDO_COLOR_EXT		0x8004
@@ -190,9 +185,19 @@ extern "C" {
 
 
 /*
+ * 42. GLX_EXT_visual_rating
+ */
+#define GLX_VISUAL_CAVEAT_EXT		0x20
+/*#define GLX_NONE_EXT			0x8000*/
+#define GLX_SLOW_VISUALEXT		0x8001
+#define GLX_NON_CONFORMANT_VISUAL_EXT	0x800D
+
+
+/*
  * Compile-time extension tests
  */
 #define GLX_EXT_visual_info		1
+#define GLX_EXT_visual_rating		1
 #define GLX_MESA_pixmap_colormap	1
 #define GLX_MESA_release_buffers	1
 #define GLX_MESA_copy_sub_buffer	1
