@@ -4,11 +4,13 @@ include $(TOP)/configs/default
 
 CONFIG_NAME = sunos5-gcc
 
+ASM_SOURCES = $(SPARC_SOURCES) $(SPARC_API)
+
 # Compiler and flags
 CC = gcc
 CXX = g++
-CFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_XSHM
-CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT
+CFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_XSHM -DUSE_SPARC_ASM
+CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_SPARC_ASM
 GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
 GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm

@@ -124,7 +124,7 @@
 #endif
 
 #ifdef USE_SPARC_ASM
-#include "SPARC/sparc.h"
+#include "sparc/sparc.h"
 #endif
 
 #ifndef MESA_VERBOSE
