@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.32 2001/09/23 16:06:13 brianp Exp $ */
+/* $Id: glx.h,v 1.33 2001/09/24 14:15:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,7 +141,6 @@ extern "C" {
 #define GLX_FRONT_RIGHT_BUFFER_BIT	0x00000002
 #define GLX_BACK_LEFT_BUFFER_BIT	0x00000004
 #define GLX_BACK_RIGHT_BUFFER_BIT	0x00000008
-#define GLX_AUX_BUFFERS_BIT		0x00000010
 #define GLX_DEPTH_BUFFER_BIT		0x00000020
 #define GLX_STENCIL_BUFFER_BIT		0x00000040
 #define GLX_ACCUM_BUFFER_BIT		0x00000080
