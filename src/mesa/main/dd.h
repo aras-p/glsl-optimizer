@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.55 2001/03/03 00:12:47 brianp Exp $ */
+/* $Id: dd.h,v 1.56 2001/03/07 00:21:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -718,6 +718,7 @@ struct dd_function_table {
     *** May add more functions like these to the device driver in the future.
     ***/
    void (*AlphaFunc)(GLcontext *ctx, GLenum func, GLchan ref);
+   void (*BlendColor)(GLcontext *ctx, const GLfloat color[4]);
    void (*BlendEquation)(GLcontext *ctx, GLenum mode);
    void (*BlendFunc)(GLcontext *ctx, GLenum sfactor, GLenum dfactor);
    void (*BlendFuncSeparate)(GLcontext *ctx,

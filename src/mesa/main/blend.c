@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.29 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: blend.c,v 1.30 2001/03/07 00:21:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -302,7 +302,7 @@ _mesa_BlendEquation( GLenum mode )
 
    if (ctx->Color.BlendEquation == mode)
       return;
-   
+
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.BlendEquation = mode;
 
@@ -313,7 +313,7 @@ _mesa_BlendEquation( GLenum mode )
 				     ctx->Color.BlendEnabled);
 
    if (ctx->Driver.BlendEquation)
-      ctx->Driver.BlendEquation( ctx, mode );
+      (*ctx->Driver.BlendEquation)( ctx, mode );
 }
 
 
@@ -335,5 +335,8 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4FV( ctx->Color.BlendColor, tmp );
+
+   if (ctx->Driver.BlendColor)
+      (*ctx->Driver.BlendColor)(ctx, tmp);
 }
 
