@@ -172,8 +172,8 @@ handleTimeouts(void)
   GETTIMEOFDAY(&now);
   while (IS_AT_OR_AFTER(__glutTimerList->timeout, now)) {
     timer = __glutTimerList;
-    timer->func(timer->value);
     __glutTimerList = timer->next;
+    timer->func(timer->value);
     timer->next = freeTimerList;
     freeTimerList = timer;
     if (!__glutTimerList)
