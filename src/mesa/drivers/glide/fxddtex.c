@@ -659,6 +659,10 @@ int fxTexGetInfo(int w, int h, GrLOD_t *lodlevel, GrAspectRatio_t *ar,
   return 1;
 }
 
+/*
+ * Given an OpenGL internal texture format, return the corresponding
+ * Glide internal texture format and base texture format.
+ */
 void fxTexGetFormat(GLenum glformat, GrTextureFormat_t *tfmt, GLint *ifmt)
 {
   switch(glformat) {
@@ -724,7 +728,6 @@ void fxTexGetFormat(GLenum glformat, GrTextureFormat_t *tfmt, GLint *ifmt)
   case GL_RGBA:
   case GL_RGBA2:
   case GL_RGBA4:
-  case GL_RGB5_A1:
   case GL_RGBA8:
   case GL_RGB10_A2:
   case GL_RGBA12:
@@ -734,6 +737,12 @@ void fxTexGetFormat(GLenum glformat, GrTextureFormat_t *tfmt, GLint *ifmt)
     if(ifmt)
       (*ifmt)=GL_RGBA;
     break;
+  case GL_RGB5_A1:
+     if(tfmt)
+       (*tfmt)=GR_TEXFMT_ARGB_1555;
+     if(ifmt)
+       (*ifmt)=GL_RGBA;
+     break;
   case GL_COLOR_INDEX:
   case GL_COLOR_INDEX1_EXT:
   case GL_COLOR_INDEX2_EXT:
@@ -961,7 +970,7 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
     if(wscale==hscale==1) {
       int i=0;
       int lenght=h*w;
-      unsigned short r,g,b;
+      unsigned int r,g,b;
 
       while(i++<lenght) {
         r=*data++;
@@ -973,7 +982,7 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
           ((0xf8 & b) >> 3); 
       }
     } else {
-      unsigned short r,g,b;
+      unsigned int r,g,b;
 
       for(y=0;y<h;y++)
         for(x=0;x<w;x++) {
@@ -992,7 +1001,6 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
   case GL_RGBA:
   case GL_RGBA2:
   case GL_RGBA4:
-  case GL_RGB5_A1:
   case GL_RGBA8:
   case GL_RGB10_A2:
   case GL_RGBA12:
@@ -1011,7 +1019,7 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
     if(wscale==hscale==1) {
       int i=0;
       int lenght=h*w;
-      unsigned short r,g,b,a;
+      unsigned int r,g,b,a;
 
       while(i++<lenght) {
         r=*data++;
@@ -1025,7 +1033,7 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
           ((0xf0 & b) >> 4);
       }
     } else {
-      unsigned short r,g,b,a;
+      unsigned int r,g,b,a;
 
       for(y=0;y<h;y++)
         for(x=0;x<w;x++) {
@@ -1039,6 +1047,51 @@ static void fxTexBuildImageMap(const struct gl_texture_image *image,
             ((0xf0 & r) << 4)      |
             (0xf0 & g)             |
             ((0xf0 & b) >> 4);
+        }
+    }
+    break;
+  case GL_RGB5_A1:
+    (*istranslate)=GL_TRUE;
+
+    if(!(*dest)) {
+      if(!((*dest)=src=(unsigned short *)malloc(sizeof(unsigned short)*w*h))) {
+        fprintf(stderr,"fx Driver: out of memory !\n");
+        fxCloseHardware();
+        exit(-1);
+      }
+    } else
+      src=(*dest);
+
+    if(wscale==hscale==1) {
+      int i=0;
+      int lenght=h*w;
+      unsigned  r,g,b,a;
+
+      while(i++<lenght) {
+        r=*data++;
+        g=*data++;
+        b=*data++;
+        a=*data++;
+        *src++=((0x80 & a) << 8) |
+          ((0xf8 & r) << 7)      |
+          ((0xf8 & g) << 2)      |
+          ((0xf8 & b) >> 3);
+      }
+    } else {
+      unsigned r,g,b,a;
+
+      for(y=0;y<h;y++)
+        for(x=0;x<w;x++) {
+          idx=(x/wscale+(y/hscale)*(w/wscale))*4;
+          r=data[idx];
+          g=data[idx+1];
+          b=data[idx+2];
+          a=data[idx+3];
+
+          src[x+y*w]=((0x80 & a) << 8) |
+          ((0xf8 & r) << 7)      |
+          ((0xf8 & g) << 2)      |
+          ((0xf8 & b) >> 3);
         }
     }
     break;
@@ -1231,7 +1284,6 @@ static void fxTexBuildSubImageMap(const struct gl_texture_image *image,
   case GL_RGBA:
   case GL_RGBA2:
   case GL_RGBA4:
-  case GL_RGB5_A1:
   case GL_RGBA8:
   case GL_RGB10_A2:
   case GL_RGBA12:
@@ -1264,6 +1316,36 @@ static void fxTexBuildSubImageMap(const struct gl_texture_image *image,
       }
     }
     break;
+  case GL_RGB5_A1:
+    {
+      int x,y;
+      unsigned char *src;
+      unsigned short *dst,r,g,b,a;
+      int simgw,dimgw;
+
+      src=(unsigned char *)(image->Data+(yoffset*image->Width+xoffset)*4);
+      dst=destimg+(yoffset*image->Width+xoffset);
+    
+      simgw=(image->Width-width)*4;
+      dimgw=image->Width-width;
+      for(y=0;y<height;y++) {
+        for(x=0;x<width;x++) {
+          r=*src++;
+          g=*src++;
+          b=*src++;
+          a=*src++;
+          *dst++=
+          ((0x80 & a) << 8) |
+          ((0xf8 & r) << 7)      |
+          ((0xf8 & g) << 2)      |
+          ((0xf8 & b) >> 3);
+        }
+
+        src += simgw;
+        dst += dimgw;
+      }
+    }
+    break; 
   default:
     fprintf(stderr,"fx Driver: wrong internalFormat in fxTexBuildSubImageMap()\n");
     fxCloseHardware();
