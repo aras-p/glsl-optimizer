@@ -1,10 +1,10 @@
-/* $Id: fakeglx.c,v 1.60 2002/03/15 18:24:53 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.61 2002/03/15 18:43:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1233,8 +1233,9 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       if (XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer)) {
          ((__GLXcontext *) ctx)->currentDpy = dpy;
          ((__GLXcontext *) ctx)->currentDrawable = draw;
+#ifndef GLX_BUILT_IN_XMESA
          ((__GLXcontext *) ctx)->currentReadable = read;
-#ifdef GLX_BUILT_IN_XMESA
+#else
          __glXSetCurrentContext(ctx);
 #endif
          return True;
