@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.40 2001/10/17 13:31:07 brianp Exp $ */
+/* $Id: s_texture.c,v 1.41 2001/10/17 23:03:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@
    else if (wrapMode == GL_MIRRORED_REPEAT_ARB) {			\
       const GLint flr = IFLOOR(S);					\
       if (flr & 1)							\
-         U = 1.0 - (S - (GLfloat) flr);	/* flr is odd */		\
+         U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          U = S - (GLfloat) flr;		/* flr is even */		\
       I0 = IFLOOR(U);							\
@@ -161,7 +161,7 @@
       const GLint flr = IFLOOR(S);					\
       GLfloat u;							\
       if (flr & 1)							\
-         u = 1.0 - (S - (GLfloat) flr);	/* flr is odd */		\
+         u = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          u = S - (GLfloat) flr;		/* flr is even */		\
       if (u < min)							\
