@@ -162,12 +162,20 @@ i810CreateContext( const __GLcontextModes *mesaVis,
       return GL_FALSE;
    }
 
+   driContextPriv->driverPrivate = imesa;
+
+   imesa->i810Screen = i810Screen;
+   imesa->driScreen = sPriv;
+   imesa->sarea = saPriv;
+   imesa->glBuffer = NULL;
+
    /* Init default driver functions then plug in our I810-specific functions
     * (the texture functions are especially important)
     */
    _mesa_init_driver_functions( &functions );
-   i810InitTextureFuncs( &functions );
    i810InitIoctlFuncs( &functions );
+   i810InitTextureFuncs( &functions );
+
 
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
@@ -180,12 +188,6 @@ i810CreateContext( const __GLcontextModes *mesaVis,
       FREE(imesa);
       return GL_FALSE;
    }
-   driContextPriv->driverPrivate = imesa;
-
-   imesa->i810Screen = i810Screen;
-   imesa->driScreen = sPriv;
-   imesa->sarea = saPriv;
-   imesa->glBuffer = NULL;
 
    (void) memset( imesa->texture_heaps, 0, sizeof( imesa->texture_heaps ) );
    make_empty_list( & imesa->swapped );
