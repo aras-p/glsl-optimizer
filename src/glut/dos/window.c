@@ -37,7 +37,7 @@
 GLUTwindow *g_curwin;
 static GLuint swaptime, swapcount;
 
-static DMesaVisual  visual  = NULL;
+static DMesaVisual visual = NULL;
 GLUTwindow *g_windows[MAX_WINDOWS];
 
 
@@ -49,7 +49,7 @@ static void clean (void)
  for (i=1; i<=MAX_WINDOWS; i++) {
      glutDestroyWindow(i);
  }
- if (visual)  DMesaDestroyVisual(visual);
+ if (visual) DMesaDestroyVisual(visual);
 
  pc_close_stdout();
  pc_close_stderr();

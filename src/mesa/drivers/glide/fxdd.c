@@ -2,7 +2,7 @@
  * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
  */
 
-/* $Id: fxdd.c,v 1.99 2003/08/19 15:52:53 brianp Exp $ */
+/* $Id: fxdd.c,v 1.100 2003/10/02 17:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,8 +63,6 @@
 
 
 
-float gl_ubyte_to_float_255_color_tab[256];
-
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
  */
@@ -72,12 +70,30 @@ GLubyte FX_PixelToR[0x10000];
 GLubyte FX_PixelToG[0x10000];
 GLubyte FX_PixelToB[0x10000];
 
+/* lookup table for scaling 4 bit colors up to 8 bits */
+GLuint FX_rgb_scale_4[16] = {
+   0,   17,  34,  51,  68,  85,  102, 119,
+   136, 153, 170, 187, 204, 221, 238, 255
+};
+
 /* lookup table for scaling 5 bit colors up to 8 bits */
 GLuint FX_rgb_scale_5[32] = {
    0,   8,   16,  25,  33,  41,  49,  58,
    66,  74,  82,  90,  99,  107, 115, 123,
    132, 140, 148, 156, 165, 173, 181, 189,
    197, 206, 214, 222, 230, 239, 247, 255
+};
+
+/* lookup table for scaling 6 bit colors up to 8 bits */
+GLuint FX_rgb_scale_6[64] = {
+   0,   4,   8,   12,  16,  20,  24,  28,
+   32,  36,  40,  45,  49,  53,  57,  61,
+   65,  69,  73,  77,  81,  85,  89,  93,
+   97,  101, 105, 109, 113, 117, 121, 125,
+   130, 134, 138, 142, 146, 150, 154, 158,
+   162, 166, 170, 174, 178, 182, 186, 190,
+   194, 198, 202, 206, 210, 215, 219, 223,
+   227, 231, 235, 239, 243, 247, 251, 255
 };
 
 
@@ -120,22 +136,18 @@ fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 
 /* Return buffer size information */
 static void
-fxDDBufferSize(GLframebuffer *buffer, GLuint * width, GLuint * height)
+fxDDBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (ctx && ctx->DriverCtx) {
-      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   if (ctx && FX_CONTEXT(ctx)) {
+      fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-      if (MESA_VERBOSE & VERBOSE_DRIVER) {
-         fprintf(stderr, "fxmesa: fxDDBufferSize(...) Start\n");
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+         fprintf(stderr, "%s(...)\n", __FUNCTION__);
       }
 
       *width = fxMesa->width;
       *height = fxMesa->height;
-
-      if (MESA_VERBOSE & VERBOSE_DRIVER) {
-         fprintf(stderr, "fxmesa: fxDDBufferSize(...) End\n");
-      }
    }
 }
 
@@ -144,11 +156,11 @@ fxDDBufferSize(GLframebuffer *buffer, GLuint * width, GLuint * height)
 static void
 fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLubyte col[4];
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDClearColor(%f,%f,%f,%f)\n",
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%f, %f, %f, %f)\n", __FUNCTION__,
 	      color[0], color[1], color[2], color[3]);
    }
 
@@ -163,122 +175,264 @@ fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
 
 
 /* Clear the color and/or depth buffers */
-static void
-fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
-	  GLint x, GLint y, GLint width, GLint height)
+static void fxDDClear( GLcontext *ctx,
+			 GLbitfield mask, GLboolean all,
+			 GLint x, GLint y, GLint width, GLint height )
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-   const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
-   /* [dBorca] should use an adequate scaler for 16 vs 32bit (GR_ZDEPTH_MIN_MAX) */
-   const FxU32 clearD = (FxU32) (ctx->Depth.Clear * 0x00ffffff);
-   GLbitfield softwareMask = mask & (DD_STENCIL_BIT | DD_ACCUM_BIT);
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GLbitfield softwareMask = mask & (DD_ACCUM_BIT);
+   const GLuint stencil_size = fxMesa->haveHwStencil ? ctx->Visual.stencilBits : 0;
+   const FxU32 clearD = (FxU32) (((1 << ctx->Visual.depthBits) - 1) * ctx->Depth.Clear);
+   const FxU8 clearS = (FxU8) (ctx->Stencil.Clear & 0xff);
 
-   /* we can't clear stencil or accum buffers */
-   mask &= ~(DD_STENCIL_BIT | DD_ACCUM_BIT);
-
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDClear(%d,%d,%d,%d)\n", (int) x, (int) y,
-	      (int) width, (int) height);
+   if ( TDFX_DEBUG & MESA_VERBOSE ) {
+      fprintf( stderr, "%s( %d, %d, %d, %d )\n",
+	       __FUNCTION__, (int) x, (int) y, (int) width, (int) height );
    }
 
-   if (colorMask != 0xffffffff) {
-      /* do masked color buffer clears in software */
-      softwareMask |= (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
-      mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+/*jejeje*/
+   /* Need this check to respond to glScissor and clipping updates */
+   if (fxMesa->new_state & FX_NEW_SCISSOR) {
+      extern void fxSetupScissor(GLcontext * ctx);
+      fxSetupScissor(ctx);
+   }
+
+   /* we can't clear accum buffers */
+   mask &= ~(DD_ACCUM_BIT);
+
+   if (mask & DD_STENCIL_BIT) {
+      if (!fxMesa->haveHwStencil || fxMesa->unitsState.stencilWriteMask != 0xff) {
+         /* Napalm seems to have trouble with stencil write masks != 0xff */
+         /* do stencil clear in software */
+         mask &= ~(DD_STENCIL_BIT);
+         softwareMask |= DD_STENCIL_BIT;
+      }
+   }
+
+   if (ctx->Visual.greenBits != 8 && ctx->Visual.greenBits != 5) {
+      /* can only do color masking if running in 24/32bpp on Napalm */
+      if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
+          ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]) {
+         softwareMask |= (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+         mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+      }
+   }
+
+   if (fxMesa->haveHwStencil) {
+      /*
+       * If we want to clear stencil, it must be enabled
+       * in the HW, even if the stencil test is not enabled
+       * in the OGL state.
+       */
+      BEGIN_BOARD_LOCK();
+      if (mask & DD_STENCIL_BIT) {
+	 fxMesa->Glide.grStencilMaskExt(0xff /*fxMesa->unitsState.stencilWriteMask*/);
+	 /* set stencil ref value = desired clear value */
+	 fxMesa->Glide.grStencilFuncExt(GR_CMP_ALWAYS, clearS, 0xff);
+	 fxMesa->Glide.grStencilOpExt(GR_STENCILOP_REPLACE,
+                                   GR_STENCILOP_REPLACE, GR_STENCILOP_REPLACE);
+	 grEnable(GR_STENCIL_MODE_EXT);
+      }
+      else {
+	 grDisable(GR_STENCIL_MODE_EXT);
+      }
+      END_BOARD_LOCK();
    }
 
    /*
-    * This could probably be done fancier but doing each possible case
-    * explicitly is less error prone.
+    * This may be ugly, but it's needed in order to work around a number
+    * of Glide bugs.
     */
-   switch (mask) {
-   case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
-      /* back buffer & depth */
-      grDepthMask(FXTRUE);
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (!ctx->Depth.Mask) {
-	 grDepthMask(FXFALSE);
-      }
-      break;
-   case DD_FRONT_LEFT_BIT | DD_DEPTH_BIT:
-      /* XXX it appears that the depth buffer isn't cleared when
-       * glRenderBuffer(GR_BUFFER_FRONTBUFFER) is set.
-       * This is a work-around/
+   BEGIN_CLIP_LOOP();
+   {
+      /*
+       * This could probably be done fancier but doing each possible case
+       * explicitly is less error prone.
        */
-      /* clear depth */
-      grDepthMask(FXTRUE);
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      grColorMask(FXFALSE, FXFALSE);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      /* clear front */
-      grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
-      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      break;
-   case DD_BACK_LEFT_BIT:
-      /* back buffer only */
-      grDepthMask(FXFALSE);
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (ctx->Depth.Mask) {
+      switch (mask & ~DD_STENCIL_BIT) {
+      case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
+	 /* back buffer & depth */
+	 fxColorMask(fxMesa, GL_TRUE); /* work around Voodoo3 bug */
 	 grDepthMask(FXTRUE);
-      }
-      break;
-   case DD_FRONT_LEFT_BIT:
-      /* front buffer only */
-      grDepthMask(FXFALSE);
-      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (ctx->Depth.Mask) {
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 if (stencil_size > 0) {
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+         }
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (!ctx->Depth.Mask || !ctx->Depth.Test) {
+            grDepthMask(FXFALSE);
+	 }
+	 break;
+      case DD_FRONT_LEFT_BIT | DD_DEPTH_BIT:
+	 /* XXX it appears that the depth buffer isn't cleared when
+	  * glRenderBuffer(GR_BUFFER_FRONTBUFFER) is set.
+	  * This is a work-around/
+	  */
+	 /* clear depth */
 	 grDepthMask(FXTRUE);
-      }
-      break;
-   case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
-      /* front and back */
-      grDepthMask(FXFALSE);
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (ctx->Depth.Mask) {
-	 grDepthMask(FXTRUE);
-      }
-      break;
-   case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
-      /* clear front */
-      grDepthMask(FXFALSE);
-      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      /* clear back and depth */
-      grDepthMask(FXTRUE);
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      if (!ctx->Depth.Mask) {
-	 grDepthMask(FXFALSE);
-      }
-      break;
-   case DD_DEPTH_BIT:
-      /* just the depth buffer */
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      grColorMask(FXFALSE, FXFALSE);
-      grDepthMask(FXTRUE);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, clearD);
-      grColorMask(FXTRUE, ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
-      if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 fxColorMask(fxMesa, GL_FALSE);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 /* clear front */
+	 fxColorMask(fxMesa, GL_TRUE);
 	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-      if (!ctx->Depth.Test || !ctx->Depth.Mask)
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (!ctx->Depth.Mask || !ctx->Depth.Test) {
+            grDepthMask(FXFALSE);
+	 }
+	 break;
+      case DD_BACK_LEFT_BIT:
+	 /* back buffer only */
 	 grDepthMask(FXFALSE);
-      break;
-   default:
-      /* error */
-      ;
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+            grDepthMask(FXTRUE);
+	 }
+	 break;
+      case DD_FRONT_LEFT_BIT:
+	 /* front buffer only */
+	 grDepthMask(FXFALSE);
+	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+            grDepthMask(FXTRUE);
+	 }
+	 break;
+      case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
+	 /* front and back */
+	 grDepthMask(FXFALSE);
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+            grDepthMask(FXTRUE);
+	 }
+	 break;
+      case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
+	 /* clear front */
+	 grDepthMask(FXFALSE);
+	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 /* clear back and depth */
+	 grDepthMask(FXTRUE);
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+         if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 if (!ctx->Depth.Mask || !ctx->Depth.Mask) {
+            grDepthMask(FXFALSE);
+	 }
+	 break;
+      case DD_DEPTH_BIT:
+	 /* just the depth buffer */
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+	 fxColorMask(fxMesa, GL_FALSE);
+	 grDepthMask(FXTRUE);
+	 if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
+	 fxColorMask(fxMesa, GL_TRUE);
+	 if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+            grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+	 if (!ctx->Depth.Test || !ctx->Depth.Mask)
+	    grDepthMask(FXFALSE);
+	 break;
+      default:
+         /* clear no color buffers or depth buffer but might clear stencil */
+	 if (stencil_size > 0 && (mask & DD_STENCIL_BIT)) {
+            /* XXX need this RenderBuffer call to work around Glide bug */
+            grRenderBuffer(GR_BUFFER_BACKBUFFER);
+            grDepthMask(FXFALSE);
+            fxColorMask(fxMesa, GL_FALSE);
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+            if (ctx->Depth.Mask && ctx->Depth.Test) {
+               grDepthMask(FXTRUE);
+            }
+            fxColorMask(fxMesa, GL_TRUE);
+            if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+               grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+         }
+      }
+   }
+   END_CLIP_LOOP();
+
+   if (fxMesa->haveHwStencil && (mask & DD_STENCIL_BIT)) {
+      /* We changed the stencil state above.  Signal that we need to
+       * upload it again.
+       */
+      fxMesa->new_state |= FX_NEW_STENCIL;
    }
 
-   /* Clear any remaining buffers:
-    */
    if (softwareMask)
-      _swrast_Clear(ctx, softwareMask, all, x, y, width, height);
+      _swrast_Clear( ctx, softwareMask, all, x, y, width, height );
 }
 
 
@@ -287,10 +441,10 @@ fxDDClear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 static void
 fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%x)\n", __FUNCTION__, (int)mode);
    }
 
    if (mode == GL_FRONT_LEFT) {
@@ -302,7 +456,7 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
       grRenderBuffer(fxMesa->currentFB);
    }
    else if (mode == GL_NONE) {
-      grColorMask(FXFALSE, FXFALSE);
+      fxColorMask(fxMesa, GL_FALSE);
    }
    else {
       /* we'll need a software fallback */
@@ -323,7 +477,7 @@ fxDDDrawBitmap(GLcontext * ctx, GLint px, GLint py,
 	       const struct gl_pixelstore_attrib *unpack,
 	       const GLubyte * bitmap)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrLfbInfo_t info;
    FxU16 color;
    const struct gl_pixelstore_attrib *finalUnpack;
@@ -409,9 +563,7 @@ fxDDDrawBitmap(GLcontext * ctx, GLint px, GLint py,
 		  fxMesa->currentFB,
 		  GR_LFBWRITEMODE_565,
 		  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
-#ifndef FX_SILENT
-      fprintf(stderr, "fx Driver: error locking the linear frame buffer\n");
-#endif
+      fprintf(stderr, "%s: ERROR: locking the linear frame buffer\n", __FUNCTION__);
       return;
    }
 
@@ -493,7 +645,7 @@ fxDDReadPixels(GLcontext * ctx, GLint x, GLint y,
       return;
    }
    else {
-      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+      fxMesaContext fxMesa = FX_CONTEXT(ctx);
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
@@ -608,7 +760,7 @@ static void fxDDReadPixels555 (GLcontext * ctx,
       return;
    }
    else {
-      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+      fxMesaContext fxMesa = FX_CONTEXT(ctx);
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
@@ -719,7 +871,7 @@ static void fxDDReadPixels888 (GLcontext * ctx,
       return;
    }
    else {
-      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+      fxMesaContext fxMesa = FX_CONTEXT(ctx);
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
@@ -798,20 +950,11 @@ fxDDFinish(GLcontext * ctx)
 static const GLubyte *
 fxDDGetString(GLcontext * ctx, GLenum name)
 {
+ fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
  switch (name) {
         case GL_RENDERER:
-             {
-              static char buf[80];
-              GrVoodooConfig_t *vc = &glbHWConfig.SSTs[glbCurrentBoard].VoodooConfig;
-              sprintf(buf, "Mesa %s v0.31 %s %dMB FB, %dMB TM, %d TMU, %s",
-                           grGetString(GR_RENDERER),
-                           grGetString(GR_HARDWARE),
-                           vc->fbRam,
-                           (vc->tmuConfig[GR_TMU0].tmuRam + ((vc->nTexelfx > 1) ? vc->tmuConfig[GR_TMU1].tmuRam : 0)),
-                           (vc->nTexelfx * vc->numChips),
-                           (vc->numChips > 1) ? "SLI" : "NOSLI");
-              return (GLubyte *)buf;
-             }
+             return (GLubyte *)fxMesa->rendererString;
         default:
              return NULL;
  }
@@ -821,10 +964,10 @@ static const struct gl_pipeline_stage *fx_pipeline[] = {
    &_tnl_vertex_transform_stage,	/* TODO: Add the fastpath here */
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
-   &_tnl_fog_coordinate_stage,	/* TODO: Omit fog stage */
+   /*&_tnl_fog_coordinate_stage,*/	/* TODO: Omit fog stage ZZZ ZZZ ZZZ */
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
-   &_tnl_point_attenuation_stage,
+   /*&_tnl_point_attenuation_stage,*/	/* TODO: For AA primitives ZZZ ZZZ ZZZ */
    &_tnl_render_stage,
    0,
 };
@@ -836,30 +979,9 @@ int
 fxDDInitFxMesaContext(fxMesaContext fxMesa)
 {
    int i;
-
-   for (i = 0; i < 256; i++) {
-      gl_ubyte_to_float_255_color_tab[i] = (float) i;
-   }
+   GLcontext *ctx = fxMesa->glCtx;
 
    FX_setupGrVertexLayout();
-
-   if (getenv("FX_EMULATE_SINGLE_TMU"))
-      fxMesa->haveTwoTMUs = GL_FALSE;
-
-   if (getenv("FX_GLIDE_SWAPINTERVAL"))
-      fxMesa->swapInterval = atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
-   else
-      fxMesa->swapInterval = 1;
-
-   if (getenv("MESA_FX_SWAP_PENDING"))
-      fxMesa->maxPendingSwapBuffers = atoi(getenv("MESA_FX_SWAP_PENDING"));
-   else
-      fxMesa->maxPendingSwapBuffers = 2;
-
-   if (getenv("MESA_FX_INFO"))
-      fxMesa->verbose = GL_TRUE;
-   else
-      fxMesa->verbose = GL_FALSE;
 
    fxMesa->color = 0xffffffff;
    fxMesa->clearC = 0;
@@ -877,7 +999,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    /* FX units setup */
 
    fxMesa->unitsState.alphaTestEnabled = GL_FALSE;
-   fxMesa->unitsState.alphaTestFunc = GR_CMP_ALWAYS;
+   fxMesa->unitsState.alphaTestFunc = GL_ALWAYS;
    fxMesa->unitsState.alphaTestRefValue = 0.0;
 
    fxMesa->unitsState.blendEnabled = GL_FALSE;
@@ -888,9 +1010,12 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->unitsState.depthTestEnabled = GL_FALSE;
    fxMesa->unitsState.depthMask = GL_TRUE;
-   fxMesa->unitsState.depthTestFunc = GR_CMP_LESS;
+   fxMesa->unitsState.depthTestFunc = GL_LESS;
+   fxMesa->unitsState.depthBias = 0;
 
-   grColorMask(FXTRUE, fxMesa->haveAlphaBuffer ? FXTRUE : FXFALSE);
+   fxMesa->unitsState.stencilWriteMask = 0xff;
+
+   fxColorMask(fxMesa, GL_TRUE);
    if (fxMesa->haveDoubleBuffer) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
       grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -900,15 +1025,15 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
       grRenderBuffer(GR_BUFFER_FRONTBUFFER);
    }
 
-   fxMesa->state = malloc(FX_grGetInteger(GR_GLIDE_STATE_SIZE));
-   fxMesa->fogTable = (GrFog_t *) malloc(FX_grGetInteger(GR_FOG_TABLE_ENTRIES) *
+   fxMesa->state = MALLOC(FX_grGetInteger(GR_GLIDE_STATE_SIZE));
+   fxMesa->fogTable = (GrFog_t *) MALLOC(FX_grGetInteger(GR_FOG_TABLE_ENTRIES) *
 			     sizeof(GrFog_t));
 
    if (!fxMesa->state || !fxMesa->fogTable) {
       if (fxMesa->state)
-	 free(fxMesa->state);
+	 FREE(fxMesa->state);
       if (fxMesa->fogTable)
-	 free(fxMesa->fogTable);
+	 FREE(fxMesa->fogTable);
       return 0;
    }
 
@@ -920,42 +1045,50 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxMesa->textureAlign = FX_grGetInteger(GR_TEXTURE_ALIGN);
    /* [koolsmoky] */
    {
-    int textureSize = ((fxMesa->maxTextureSize > 2048) ? 2048 : fxMesa->maxTextureSize);
-    fxMesa->glCtx->Const.MaxTextureLevels = 0;
+    int textureLevels = 0;
+    int textureSize = FX_grGetInteger(GR_MAX_TEXTURE_SIZE);
     do {
-        fxMesa->glCtx->Const.MaxTextureLevels++;
+        textureLevels++;
     } while ((textureSize >>= 0x1) & 0x7ff);
+    ctx->Const.MaxTextureLevels = textureLevels;
    }
-   fxMesa->glCtx->Const.MaxTextureUnits = fxMesa->haveTwoTMUs ? 2 : 1;
+   ctx->Const.MaxTextureCoordUnits = fxMesa->haveTwoTMUs ? 2 : 1;
+   ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;
+   ctx->Const.MaxTextureUnits = MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
+
    fxMesa->new_state = _NEW_ALL;
+   if (!fxMesa->haveHwStencil) {
+      /* don't touch stencil if there is none */
+      fxMesa->new_state &= ~FX_NEW_STENCIL;
+   }
 
    /* Initialize the software rasterizer and helper modules.
     */
-   _swrast_CreateContext(fxMesa->glCtx);
-   _ac_CreateContext(fxMesa->glCtx);
-   _tnl_CreateContext(fxMesa->glCtx);
-   _swsetup_CreateContext(fxMesa->glCtx);
+   _swrast_CreateContext(ctx);
+   _ac_CreateContext(ctx);
+   _tnl_CreateContext(ctx);
+   _swsetup_CreateContext(ctx);
 
    /* Install customized pipeline */
-   _tnl_destroy_pipeline(fxMesa->glCtx);
-   _tnl_install_pipeline(fxMesa->glCtx, fx_pipeline);
+   _tnl_destroy_pipeline(ctx);
+   _tnl_install_pipeline(ctx, fx_pipeline);
 
-   fxAllocVB(fxMesa->glCtx);
+   fxAllocVB(ctx);
 
-   fxSetupDDPointers(fxMesa->glCtx);
-   fxDDInitTriFuncs(fxMesa->glCtx);
+   fxSetupDDPointers(ctx);
+   fxDDInitTriFuncs(ctx);
 
    /* Tell the software rasterizer to use pixel fog always.
     */
-   _swrast_allow_vertex_fog(fxMesa->glCtx, GL_FALSE);
-   _swrast_allow_pixel_fog(fxMesa->glCtx, GL_TRUE);
+   _swrast_allow_vertex_fog(ctx, GL_FALSE);
+   _swrast_allow_pixel_fog(ctx, GL_TRUE);
 
    /* Tell tnl not to calculate or use vertex fog factors.  (Needed to
     * tell render stage not to clip fog coords).
     */
-/*     _tnl_calculate_vertex_fog( fxMesa->glCtx, GL_FALSE ); */
+/*     _tnl_calculate_vertex_fog( ctx, GL_FALSE ); */
 
-   fxDDInitExtensions(fxMesa->glCtx);
+   fxDDInitExtensions(ctx);
 
    grGlideGetState((GrState *) fxMesa->state);
 
@@ -973,9 +1106,9 @@ fxDDDestroyFxMesaContext(fxMesaContext fxMesa)
    _swrast_DestroyContext(fxMesa->glCtx);
 
    if (fxMesa->state)
-      free(fxMesa->state);
+      FREE(fxMesa->state);
    if (fxMesa->fogTable)
-      free(fxMesa->fogTable);
+      FREE(fxMesa->fogTable);
    fxTMClose(fxMesa);
    fxFreeVB(fxMesa->glCtx);
 }
@@ -986,7 +1119,7 @@ fxDDDestroyFxMesaContext(fxMesaContext fxMesa)
 void
 fxDDInitExtensions(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    /*_mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);*/
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
@@ -994,11 +1127,32 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
    _mesa_enable_extension(ctx, "GL_EXT_shared_texture_palette");
 
-   if (fxMesa->haveTwoTMUs)
+   if (fxMesa->haveTwoTMUs) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
-
-   if (fxMesa->haveTwoTMUs)
       _mesa_enable_extension(ctx, "GL_ARB_multitexture");
+   }
+
+   if (fxMesa->haveHwStencil) {
+      _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
+   }
+
+#if 0 /* not ready yet */
+      /* banshee/avenger should enable this for NCC */
+      _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
+#endif
+   if (0/*IS_NAPALM*/) {
+      /* tex_compress: not ready yet */
+      _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
+      _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+      /*_mesa_enable_extension( ctx, "GL_S3_s3tc" );*/
+
+      /* env_combine: not ready yet */
+      /*_mesa_enable_extension( ctx, "GL_EXT_texture_env_combine" );*/
+   }
+
+   if (fxMesa->HaveMirExt) {
+      _mesa_enable_extension(ctx, "GL_ARB_texture_mirrored_repeat");
+   }
 }
 
 
@@ -1010,38 +1164,52 @@ fxDDInitExtensions(GLcontext * ctx)
  *
  * Performs similar work to fxDDChooseRenderState() - should be merged.
  */
-GLboolean
+GLuint
 fx_check_IsInHardware(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   if (ctx->RenderMode != GL_RENDER)
-      return GL_FALSE;
-
-   if (ctx->Stencil.Enabled ||
-       (ctx->Color._DrawDestMask != FRONT_LEFT_BIT &&
-        ctx->Color._DrawDestMask != BACK_LEFT_BIT) ||
-       ((ctx->Color.BlendEnabled)
-	&& (ctx->Color.BlendEquation != GL_FUNC_ADD_EXT))
-       || ((ctx->Color.ColorLogicOpEnabled)
-	   && (ctx->Color.LogicOp != GL_COPY))
-       || (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-       ||
-       (!((ctx->
-	   Color.ColorMask[RCOMP] == ctx->Color.ColorMask[GCOMP])
-	  && (ctx->Color.ColorMask[GCOMP] == ctx->Color.ColorMask[BCOMP])
-	  && (ctx->Color.ColorMask[ACOMP] == ctx->Color.ColorMask[ACOMP])))
-      ) {
-      return GL_FALSE;
+   if (ctx->RenderMode != GL_RENDER) {
+      return FX_FALLBACK_RENDER_MODE;
    }
+
+   if (ctx->Stencil.Enabled && !fxMesa->haveHwStencil) {
+      return FX_FALLBACK_STENCIL;
+   }
+
+   if (ctx->Color._DrawDestMask != FRONT_LEFT_BIT && ctx->Color._DrawDestMask != BACK_LEFT_BIT) {
+      return FX_FALLBACK_DRAW_BUFFER;
+   }
+
+   if (ctx->Color.BlendEnabled && (ctx->Color.BlendEquation != GL_FUNC_ADD_EXT)) {
+      return FX_FALLBACK_BLEND;
+   }
+
+   if (ctx->Color.ColorLogicOpEnabled && (ctx->Color.LogicOp != GL_COPY)) {
+      return FX_FALLBACK_LOGICOP;
+   }
+
+   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) {
+      return FX_FALLBACK_SPECULAR;
+   }
+
+   if ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP])
+       ||
+       (ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP])
+       ||
+       (ctx->Color.ColorMask[BCOMP] != ctx->Color.ColorMask[ACOMP])
+      ) {
+      return FX_FALLBACK_COLORMASK;
+   }
+
    /* Unsupported texture/multitexture cases */
 
    if (fxMesa->haveTwoTMUs) {
       /* we can only do 2D textures */
       if (ctx->Texture.Unit[0]._ReallyEnabled & ~TEXTURE_2D_BIT)
-	 return GL_FALSE;
+	 return FX_FALLBACK_TEXTURE_1D_3D;
       if (ctx->Texture.Unit[1]._ReallyEnabled & ~TEXTURE_2D_BIT)
-	 return GL_FALSE;
+	 return FX_FALLBACK_TEXTURE_1D_3D;
 
       if (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) {
 	 if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
@@ -1050,21 +1218,21 @@ fx_check_IsInHardware(GLcontext * ctx)
 	      ctx->Texture.Unit[0].EnvColor[1] != 0 ||
 	      ctx->Texture.Unit[0].EnvColor[2] != 0 ||
 	      ctx->Texture.Unit[0].EnvColor[3] != 1)) {
-	    return GL_FALSE;
+	    return FX_FALLBACK_TEXTURE_ENV;
 	 }
 	 if (ctx->Texture.Unit[0]._Current->Image[0]->Border > 0)
-	    return GL_FALSE;
+	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 
       if (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) {
 	 if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
-	    return GL_FALSE;
+	    return FX_FALLBACK_TEXTURE_ENV;
 	 if (ctx->Texture.Unit[1]._Current->Image[0]->Border > 0)
-	    return GL_FALSE;
+	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 
-      if (MESA_VERBOSE & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-	 fprintf(stderr, "fxMesa: fxIsInHardware, envmode is %s/%s\n",
+      if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
+	 fprintf(stderr, "%s: envmode is %s/%s\n", __FUNCTION__,
 		 _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
 		 _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
@@ -1078,56 +1246,34 @@ fx_check_IsInHardware(GLcontext * ctx)
 	  * back to software.
 	  */
 	 if (!fxMesa->haveTwoTMUs && ctx->Color.BlendEnabled) {
-	    return GL_FALSE;
+	    return FX_FALLBACK_TEXTURE_MULTI;
 	 }
 
 	 if ((ctx->Texture.Unit[0].EnvMode != ctx->Texture.Unit[1].EnvMode) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_MODULATE) &&
 	     (ctx->Texture.Unit[0].EnvMode != GL_REPLACE)) {	/* q2, seems ok... */
-	    if (MESA_VERBOSE & VERBOSE_DRIVER)
-	       fprintf(stderr, "fxMesa: unsupported multitex env mode\n");
-	    return GL_FALSE;
+	    if (TDFX_DEBUG & VERBOSE_DRIVER)
+	       fprintf(stderr, "%s: unsupported multitex env mode\n", __FUNCTION__);
+	    return FX_FALLBACK_TEXTURE_MULTI;
 	 }
       }
    }
    else {
       /* we have just one texture unit */
       if (ctx->Texture._EnabledUnits > 0x1) {
-	 return GL_FALSE;
+	 return FX_FALLBACK_TEXTURE_MULTI;
       }
 
       if ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
 	  (ctx->Texture.Unit[0].EnvMode == GL_BLEND)) {
-	 return GL_FALSE;
+	 return FX_FALLBACK_TEXTURE_ENV;
       }
    }
 
-   return GL_TRUE;
+   return 0;
 }
 
 
-
-static void
-update_texture_scales(GLcontext * ctx)
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
-   struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
-
-   if (t0 && t0->_Current && FX_TEXTURE_DATA(t0)) {
-      fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
-      fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
-      fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
-      fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
-   }
-
-   if (t1 && t1->_Current && FX_TEXTURE_DATA(t1)) {
-      fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
-      fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
-      fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
-      fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
-   }
-}
 
 static void
 fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
@@ -1135,39 +1281,16 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
    /*   TNLcontext *tnl = TNL_CONTEXT(ctx);*/
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxDDUpdateDDPointers(%08x)\n", new_state);
+   }
+
    _swrast_InvalidateState(ctx, new_state);
    _ac_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
 
-   /* Recalculate fog table on projection matrix changes.  This used to
-    * be triggered by the NearFar callback.
-    */
-   if (new_state & _NEW_PROJECTION)
-      fxMesa->new_state |= FX_NEW_FOG;
-
-   if (new_state & (_FX_NEW_IS_IN_HARDWARE |
-		    _FX_NEW_RENDERSTATE |
-		    _FX_NEW_SETUP_FUNCTION | 
-		    _NEW_TEXTURE)) {
-
-      if (new_state & _FX_NEW_IS_IN_HARDWARE)
-	 fxCheckIsInHardware(ctx);
-
-      if (fxMesa->new_state)
-	 fxSetupFXUnits(ctx);
-
-      if (fxMesa->is_in_hardware) {
-	 if (new_state & _FX_NEW_RENDERSTATE)
-	    fxDDChooseRenderState(ctx);
-
-	 if (new_state & _FX_NEW_SETUP_FUNCTION)
-	    fxChooseVertexState(ctx);
-      }
-
-      if (new_state & _NEW_TEXTURE)
-	 update_texture_scales(ctx);
-   }
+   fxMesa->new_gl_state |= new_state;
 }
 
 
@@ -1176,10 +1299,11 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 void
 fxSetupDDPointers(GLcontext * ctx)
 {
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupDDPointers()\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s()\n", __FUNCTION__);
    }
 
    ctx->Driver.UpdateState = fxDDUpdateDDPointers;
@@ -1193,8 +1317,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.Bitmap = fxDDDrawBitmap;
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
-  {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    switch (fxMesa->colDepth) {
           case 15:
                ctx->Driver.ReadPixels = fxDDReadPixels555;
@@ -1206,7 +1328,6 @@ fxSetupDDPointers(GLcontext * ctx)
                ctx->Driver.ReadPixels = fxDDReadPixels888;
                break;
    }
-  }
    ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
@@ -1249,8 +1370,11 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.CullFace = fxDDCullFace;
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
-
-   tnl->Driver.RunPipeline = _tnl_run_pipeline;
+   if (fxMesa->haveHwStencil) {
+      ctx->Driver.StencilFunc	= fxDDStencilFunc;
+      ctx->Driver.StencilMask	= fxDDStencilMask;
+      ctx->Driver.StencilOp	= fxDDStencilOp;
+   }
 
    fxSetupDDSpanPointers(ctx);
    fxDDUpdateDDPointers(ctx, ~0);

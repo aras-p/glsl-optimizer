@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 
-#define FXMESA_MAJOR_VERSION 4
+#define FXMESA_MAJOR_VERSION 5
 #define FXMESA_MINOR_VERSION 0
 
 
@@ -52,6 +52,7 @@ extern "C" {
 #define FXMESA_STENCIL_SIZE	13      /* followed by an integer */
 #define FXMESA_ACCUM_SIZE	14      /* followed by an integer */
 #define FXMESA_COLORDEPTH	20      /* followed by an integer */
+#define FXMESA_SHARE_CONTEXT 990099	/* keep in sync with xmesa1.c! */
 
 
 
@@ -84,7 +85,7 @@ GLAPI void GLAPIENTRY fxMesaSetNearFar(GLfloat nearVal, GLfloat farVal);
 
 GLAPI void GLAPIENTRY fxMesaUpdateScreenSize(fxMesaContext ctx);
 
-GLAPI int GLAPIENTRY fxQueryHardware(void);
+GLAPI GLboolean GLAPIENTRY fxQueryHardware(void);
 
 GLAPI void GLAPIENTRY fxCloseHardware(void);
 

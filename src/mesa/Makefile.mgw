@@ -60,6 +60,7 @@
 
 .PHONY: all clean
 .INTERMEDIATE: x86/gen_matypes.exe
+.SUFFIXES: .rc .res
 
 TOP = ../..
 GLIDE ?= $(TOP)/glide3
@@ -75,8 +76,9 @@ CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
 ifeq ($(FX),1)
 CFLAGS += -DH3
 CFLAGS += -I$(GLIDE)/include -DFX
-LDLIBS += -L$(GLIDE)/lib -lglide3
+LDLIBS += -L$(GLIDE)/lib -lglide3x
 GL_DEF = drivers/glide/fxopengl.def
+GL_RES = drivers/glide/fx.rc
 else
 GL_DEF = drivers/windows/gdi/mesa.def
 endif
@@ -135,6 +137,7 @@ MAIN_SOURCES = \
 	main/pixel.c \
 	main/points.c \
 	main/polygon.c \
+	main/program.c \
 	main/rastpos.c \
 	main/state.c \
 	main/stencil.c \
@@ -293,6 +296,7 @@ DRIVER_SOURCES = \
 	drivers/glide/fxtris.c \
 	drivers/glide/fxvb.c \
 	drivers/glide/fxglidew.c \
+	drivers/glide/fxg.c \
 	drivers/glide/fxwgl.c
 else
 DRIVER_SOURCES = \
@@ -306,16 +310,20 @@ OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 
 X86_OBJECTS = $(addsuffix .o,$(basename $(X86_SOURCES)))
 
+RESOURCE = $(GL_RES:.rc=.res)
+
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
 .S.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
 .s.o:
 	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
+.rc.res:
+	windres -o $@ -Irc -Ocoff $<
 
 all: $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP)
 
-$(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
+$(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP): $(OBJECTS) $(RESOURCE)
 	dllwrap -o $(LIBDIR)/$(GL_DLL) --output-lib $(LIBDIR)/$(GL_IMP) --target i386-mingw32 --def $(GL_DEF) $^ $(LDLIBS)
 
 $(X86_OBJECTS): x86/matypes.h
@@ -325,6 +333,12 @@ x86/matypes.h: x86/gen_matypes.exe
 
 x86/gen_matypes.exe: x86/gen_matypes.c
 	$(CC) -o $@ $(CFLAGS) -s $<
+
+# [dBorca] Hack alert:
+# use standard API, to work around Win32 @x names
+# also glapi_x86.S is protected against __WIN32__
+main/dispatch.o: main/dispatch.c
+	$(CC) -o $@ $(CFLAGS) -UUSE_X86_ASM -c $<
 
 clean:
 	-$(call UNLINK,array_cache/*.o)
@@ -337,3 +351,4 @@ clean:
 	-$(call UNLINK,x86/*.o)
 	-$(call UNLINK,drivers/windows/gdi/*.o)
 	-$(call UNLINK,drivers/glide/*.o)
+	-$(call UNLINK,drivers/glide/*.res)

@@ -1,4 +1,4 @@
-/* $Id: fxvbtmp.h,v 1.12 2002/10/29 20:28:57 brianp Exp $ */
+/* $Id: fxvbtmp.h,v 1.13 2003/10/02 17:36:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint proj_stride = VB->NdcPtr->stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
+   const GLubyte *mask = VB->ClipMask;
    const GLfloat *const s = ctx->Viewport._WindowMap.m;
    int i;
 
@@ -86,11 +87,16 @@ static void TAG(emit)( GLcontext *ctx,
 
    for (i=start; i < end; i++, v++) {
       if (IND & SETUP_XYZW) {
-	 /* unclipped */
-	 v->x   = s[0]  * proj[0][0] + s[12];	
-	 v->y   = s[5]  * proj[0][1] + s[13];	
-	 v->ooz = s[10] * proj[0][2] + s[14];	
-	 v->oow = proj[0][3];	
+         if (mask[i] == 0) {
+	    /* unclipped */
+	    v->x   = s[0]  * proj[0][0] + s[12];
+	    v->y   = s[5]  * proj[0][1] + s[13];
+	    v->ooz = s[10] * proj[0][2] + s[14];
+	    v->oow = proj[0][3];
+         } else {
+            /* clipped */
+            v->oow = 1.0;
+         }
 
 	 if (IND & SETUP_SNAP) {
 #if defined(USE_IEEE)
@@ -108,10 +114,10 @@ static void TAG(emit)( GLcontext *ctx,
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
       }
       if (IND & SETUP_RGBA) {
-	 v->r = (GLfloat) col[0][0];
-	 v->g = (GLfloat) col[0][1];
-	 v->b = (GLfloat) col[0][2];
-	 v->a = (GLfloat) col[0][3];
+	 v->pargb[2] = col[0][0];
+	 v->pargb[1] = col[0][1];
+	 v->pargb[0] = col[0][2];
+	 v->pargb[3] = col[0][3];
 	 STRIDE_4UB(col, col_stride);
       }
       if (IND & SETUP_TMU0) {
@@ -210,10 +216,10 @@ static void TAG(interp)( GLcontext *ctx,
    }
 
    
-   INTERP_F( t, dst->r, out->r, in->r );
-   INTERP_F( t, dst->g, out->g, in->g );
-   INTERP_F( t, dst->b, out->b, in->b );
-   INTERP_F( t, dst->a, out->a, in->a );
+   INTERP_UB( t, dst->pargb[0], out->pargb[0], in->pargb[0] );
+   INTERP_UB( t, dst->pargb[1], out->pargb[1], in->pargb[1] );
+   INTERP_UB( t, dst->pargb[2], out->pargb[2], in->pargb[2] );
+   INTERP_UB( t, dst->pargb[3], out->pargb[3], in->pargb[3] );
 
    if (IND & SETUP_TMU0) {
       if (IND & SETUP_PTEX) {

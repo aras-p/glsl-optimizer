@@ -1,4 +1,4 @@
-/* $Id: fxwgl.c,v 1.17 2003/08/19 15:52:53 brianp Exp $ */
+/* $Id: fxwgl.c,v 1.18 2003/10/02 17:36:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
  */
 
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #ifdef __cplusplus
 extern "C"
@@ -51,11 +51,11 @@ extern "C"
 }
 #endif
 
-#include <stdio.h>
 #include "GL/fxmesa.h"
 #include "glheader.h"
-#include "fxdrv.h"
 #include "glapi.h"
+#include "imports.h"
+#include "fxdrv.h"
 
 #define MAX_MESA_ATTRS  20
 
@@ -71,73 +71,16 @@ struct __pixelformat__
    GLint mesaAttr[MAX_MESA_ATTRS];
 };
 
-WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
+//WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
 
 struct __pixelformat__ pix[] = {
-#if 0
-   /* None */
+   /* 16bit RGB565 single buffer with depth */
    {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
      PFD_TYPE_RGBA,
      16,
-     5, 11, 6, 5, 5, 0, 0, 0,
-     0, 0, 0, 0, 0,
-     0,
-     0,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {
-     FXMESA_COLORDEPTH, 16,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 0,
-     FXMESA_DEPTH_SIZE, 0,
-     FXMESA_STENCIL_SIZE, 0,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-    }
-   ,
-
-   /* Alpha */
-   {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     16,
-     5, 10, 5, 5, 5, 0, 1, 15,
-     0, 0, 0, 0, 0,
-     0,
-     0,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {
-     FXMESA_COLORDEPTH, 15,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 1,
-     FXMESA_DEPTH_SIZE, 0,
-     FXMESA_STENCIL_SIZE, 0,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-    }
-   ,
-
-   /* Depth */
-   {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     16,
-     5, 11, 6, 5, 5, 0, 0, 0,
+     5, 0, 6, 5, 5, 11, 0, 0,
      0, 0, 0, 0, 0,
      16,
      0,
@@ -145,105 +88,22 @@ struct __pixelformat__ pix[] = {
      PFD_MAIN_PLANE,
      0, 0, 0, 0}
     ,
-    {
-     FXMESA_COLORDEPTH, 16,
-     FXMESA_DOUBLEBUFFER,
+    {FXMESA_COLORDEPTH, 16,
      FXMESA_ALPHA_SIZE, 0,
      FXMESA_DEPTH_SIZE, 16,
      FXMESA_STENCIL_SIZE, 0,
      FXMESA_ACCUM_SIZE, 0,
      FXMESA_NONE}
-    }
+   }
    ,
-
-   /* None */
-   {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     32,
-     8, 16, 8, 8, 8, 0, 0, 0,
-     0, 0, 0, 0, 0,
-     0,
-     0,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {
-     FXMESA_COLORDEPTH, 32,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 0,
-     FXMESA_DEPTH_SIZE, 0,
-     FXMESA_STENCIL_SIZE, 0,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-    }
-   ,
-
-   /* Alpha */
-   {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     32,
-     8, 16, 8, 8, 8, 0, 8, 24,
-     0, 0, 0, 0, 0,
-     0,
-     0,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {
-     FXMESA_COLORDEPTH, 32,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 8,
-     FXMESA_DEPTH_SIZE, 0,
-     FXMESA_STENCIL_SIZE, 0,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-    }
-   ,
-
-   /* Depth */
-   {
-    {
-     sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     32,
-     8, 16, 8, 8, 8, 0, 0, 0,
-     0, 0, 0, 0, 0,
-     16,
-     0,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {
-     FXMESA_COLORDEPTH, 32,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 0,
-     FXMESA_DEPTH_SIZE, 16,
-     FXMESA_STENCIL_SIZE, 0,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-    }
-#endif
-   /* 16bit RGB565 */
+   /* 16bit RGB565 double buffer with depth */
    {
     {sizeof(PIXELFORMATDESCRIPTOR), 1,
      PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
      16,
-     5, 11, 6, 5, 5, 0, 0, 0,
+     5, 0, 6, 5, 5, 11, 0, 0,
      0, 0, 0, 0, 0,
      16,
      0,
@@ -260,14 +120,36 @@ struct __pixelformat__ pix[] = {
      FXMESA_NONE}
    }
    ,
-   /* 16bit ARGB1555 */
+   /* 16bit ARGB1555 single buffer with depth */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
+     PFD_TYPE_RGBA,
+     16,
+     5, 0, 5, 5, 5, 10, 1, 15,
+     0, 0, 0, 0, 0,
+     16,
+     0,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 15,
+     FXMESA_ALPHA_SIZE, 1,
+     FXMESA_DEPTH_SIZE, 16,
+     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
+   ,
+   /* 16bit ARGB1555 double buffer with depth */
    {
     {sizeof(PIXELFORMATDESCRIPTOR), 1,
      PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
      16,
-     5, 10, 5, 5, 5, 0, 1, 15,
+     5, 0, 5, 5, 5, 10, 1, 15,
      0, 0, 0, 0, 0,
      16,
      0,
@@ -284,17 +166,40 @@ struct __pixelformat__ pix[] = {
      FXMESA_NONE}
    }
    ,
-   /* 32bit ARGB8888 */
+#if 1
+  /* 24bit RGB888 single buffer with depth */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
+     PFD_TYPE_RGBA,
+     24,
+     8, 0, 8, 8, 8, 16, 0, 0,
+     0, 0, 0, 0, 0,
+     24,
+     8,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 32,
+     FXMESA_ALPHA_SIZE, 8,
+     FXMESA_DEPTH_SIZE, 24,
+     FXMESA_STENCIL_SIZE, 8,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
+   ,
+   /* 24bit RGB888 double buffer with depth */
    {
     {sizeof(PIXELFORMATDESCRIPTOR), 1,
      PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
      PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
      PFD_TYPE_RGBA,
-     32,
-     8, 16, 8, 8, 8, 0, 8, 24,
+     24,
+     8, 0, 8, 8, 8, 16, 0, 0,
      0, 0, 0, 0, 0,
      24,
-     0,
+     8,
      0,
      PFD_MAIN_PLANE,
      0, 0, 0, 0}
@@ -303,7 +208,53 @@ struct __pixelformat__ pix[] = {
      FXMESA_DOUBLEBUFFER,
      FXMESA_ALPHA_SIZE, 8,
      FXMESA_DEPTH_SIZE, 24,
-     FXMESA_STENCIL_SIZE, 0,
+     FXMESA_STENCIL_SIZE, 8,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   },
+#endif
+   /* 32bit ARGB8888 single buffer with depth */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
+     PFD_TYPE_RGBA,
+     32,
+     8, 0, 8, 8, 8, 16, 8, 24,
+     0, 0, 0, 0, 0,
+     24,
+     8,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 32,
+     FXMESA_ALPHA_SIZE, 8,
+     FXMESA_DEPTH_SIZE, 24,
+     FXMESA_STENCIL_SIZE, 8,
+     FXMESA_ACCUM_SIZE, 0,
+     FXMESA_NONE}
+   }
+   ,
+   /* 32bit ARGB8888 double buffer with depth */
+   {
+    {sizeof(PIXELFORMATDESCRIPTOR), 1,
+     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
+     PFD_TYPE_RGBA,
+     32,
+     8, 0, 8, 8, 8, 16, 8, 24,
+     0, 0, 0, 0, 0,
+     24,
+     8,
+     0,
+     PFD_MAIN_PLANE,
+     0, 0, 0, 0}
+    ,
+    {FXMESA_COLORDEPTH, 32,
+     FXMESA_DOUBLEBUFFER,
+     FXMESA_ALPHA_SIZE, 8,
+     FXMESA_DEPTH_SIZE, 24,
+     FXMESA_STENCIL_SIZE, 8,
      FXMESA_ACCUM_SIZE, 0,
      FXMESA_NONE}
    }
@@ -331,7 +282,7 @@ static BITMAPINFO *dibBMI;
 static HBITMAP dibHBM;
 static HWND dibWnd;
 
-LONG GLAPIENTRY
+static LRESULT APIENTRY 
 __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
  {
    long ret;			/* Now gives the resized window at the end to hWNDOldProc */
@@ -343,6 +294,7 @@ __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
 	   break;
        case WM_DISPLAYCHANGE:
        case WM_SIZE:
+#if 0
        if (wParam != SIZE_MINIMIZED) {
          static int moving = 0;
          if (!moving) {
@@ -361,6 +313,7 @@ __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
            fxMesaUpdateScreenSize(ctx);
 	     }
 	   }
+#endif
        break;
        case WM_ACTIVATE:
        break;
@@ -379,13 +332,13 @@ __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
    return (ret);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask)
 {
    return (FALSE);
 }
 
-HGLRC GLAPIENTRY
+GLAPI HGLRC GLAPIENTRY
 wglCreateContext(HDC hdc)
 {
    HWND hWnd;
@@ -412,7 +365,7 @@ wglCreateContext(HDC hdc)
       SetWindowLong(hWnd, GWL_WNDPROC, (LONG) __wglMonitor);
    }
 
-#ifndef FX_SILENT
+#ifdef FX_DEBUG
    freopen("MESA.LOG", "w", stderr);
 #endif
 
@@ -425,11 +378,11 @@ wglCreateContext(HDC hdc)
      error = !(ctx = fxMesaCreateBestContext((GLuint) hWnd, cliRect.right, cliRect.bottom, pix[curPFD - 1].mesaAttr));
    }
 
-   if (getenv("SST_DUALHEAD"))
+   /*if (getenv("SST_DUALHEAD"))
       haveDualHead =
 	 ((atoi(getenv("SST_DUALHEAD")) == 1) ? GL_TRUE : GL_FALSE);
    else
-      haveDualHead = GL_FALSE;
+      haveDualHead = GL_FALSE;*/
 
    if (error) {
       SetLastError(0);
@@ -445,14 +398,14 @@ wglCreateContext(HDC hdc)
    return ((HGLRC) 1);
 }
 
-HGLRC GLAPIENTRY
+GLAPI HGLRC GLAPIENTRY
 wglCreateLayerContext(HDC hdc, int iLayerPlane)
 {
    SetLastError(0);
    return (NULL);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglDeleteContext(HGLRC hglrc)
 {
    if (ctx && hglrc == (HGLRC) 1) {
@@ -471,7 +424,7 @@ wglDeleteContext(HGLRC hglrc)
    return (FALSE);
 }
 
-HGLRC GLAPIENTRY
+GLAPI HGLRC GLAPIENTRY
 wglGetCurrentContext(VOID)
 {
    if (ctx)
@@ -481,7 +434,7 @@ wglGetCurrentContext(VOID)
    return (NULL);
 }
 
-HDC GLAPIENTRY
+GLAPI HDC GLAPIENTRY
 wglGetCurrentDC(VOID)
 {
    if (ctx)
@@ -491,10 +444,11 @@ wglGetCurrentDC(VOID)
    return (NULL);
 }
 
-PROC GLAPIENTRY
+GLAPI PROC GLAPIENTRY
 wglGetProcAddress(LPCSTR lpszProc)
-{
+{ 
    PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
+  
    if (p)
       return p;
 
@@ -502,7 +456,7 @@ wglGetProcAddress(LPCSTR lpszProc)
    return (NULL);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglMakeCurrent(HDC hdc, HGLRC hglrc)
 {
    if ((hdc == NULL) && (hglrc == NULL))
@@ -520,7 +474,7 @@ wglMakeCurrent(HDC hdc, HGLRC hglrc)
    return (TRUE);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
 {
    if (!ctx || hglrc1 != (HGLRC) 1 || hglrc1 != hglrc2) {
@@ -531,19 +485,17 @@ wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
    return (TRUE);
 }
 
-BOOL GLAPIENTRY
-wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
-		  DWORD listBase)
+static BOOL
+wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar, DWORD numChars,
+		     DWORD listBase)
 {
-#define VERIFY(a) a
-
    TEXTMETRIC metric;
    BITMAPINFO *dibInfo;
    HDC bitDevice;
    COLORREF tempColor;
    int i;
 
-   VERIFY(GetTextMetrics(fontDevice, &metric));
+   GetTextMetrics(fontDevice, &metric);
 
    dibInfo = (BITMAPINFO *) calloc(sizeof(BITMAPINFO) + sizeof(RGBQUAD), 1);
    dibInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -552,8 +504,6 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
    dibInfo->bmiHeader.biCompression = BI_RGB;
 
    bitDevice = CreateCompatibleDC(fontDevice);
-   // HDC bitDevice = CreateDC("DISPLAY", NULL, NULL, NULL);
-   // VERIFY(bitDevice);
 
    // Swap fore and back colors so the bitmap has the right polarity
    tempColor = GetBkColor(bitDevice);
@@ -561,7 +511,7 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
    SetTextColor(bitDevice, tempColor);
 
    // Place chars based on base line
-   VERIFY(SetTextAlign(bitDevice, TA_BASELINE) >= 0 ? 1 : 0);
+   SetTextAlign(bitDevice, TA_BASELINE);
 
    for (i = 0; i < (int)numChars; i++) {
       SIZE size;
@@ -574,8 +524,8 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
       curChar = (char)(i + firstChar); // [koolsmoky] explicit cast
 
       // Find how high/wide this character is
-      VERIFY(GetTextExtentPoint32(bitDevice, &curChar, 1, &size));
-
+      GetTextExtentPoint32(bitDevice, &curChar, 1, &size);
+ 
       // Create the output bitmap
       charWidth = size.cx;
       charHeight = size.cy;
@@ -586,18 +536,17 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
 
       // Assign the output bitmap to the device
       origBmap = SelectObject(bitDevice, bitObject);
-      VERIFY(origBmap);
 
-      VERIFY(PatBlt(bitDevice, 0, 0, bmapWidth, bmapHeight, BLACKNESS));
+      PatBlt(bitDevice, 0, 0, bmapWidth, bmapHeight, BLACKNESS);
 
       // Use our source font on the device
-      VERIFY(SelectObject(bitDevice, GetCurrentObject(fontDevice, OBJ_FONT)));
+      SelectObject(bitDevice, GetCurrentObject(fontDevice, OBJ_FONT));
 
       // Draw the character
-      VERIFY(TextOut(bitDevice, 0, metric.tmAscent, &curChar, 1));
+      TextOut(bitDevice, 0, metric.tmAscent, &curChar, 1);
 
       // Unselect our bmap object
-      VERIFY(SelectObject(bitDevice, origBmap));
+      SelectObject(bitDevice, origBmap);
 
       // Convert the display dependant representation to a 1 bit deep DIB
       numBytes = (bmapWidth * bmapHeight) / 8;
@@ -606,7 +555,6 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
       dibInfo->bmiHeader.biHeight = bmapHeight;
       res = GetDIBits(bitDevice, bitObject, 0, bmapHeight, bmap,
 		      dibInfo, DIB_RGB_COLORS);
-      //VERIFY(res);
 
       // Create the GL object
       glNewList(i + listBase, GL_COMPILE);
@@ -623,21 +571,20 @@ wglUseFontBitmaps(HDC fontDevice, DWORD firstChar, DWORD numChars,
    }
 
    // Destroy the DC
-   VERIFY(DeleteDC(bitDevice));
+   DeleteDC(bitDevice);
 
    FREE(dibInfo);
 
    return TRUE;
-#undef VERIFY
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
 {
    return (FALSE);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglUseFontOutlinesA(HDC hdc, DWORD first, DWORD count,
 		    DWORD listBase, FLOAT deviation,
 		    FLOAT extrusion, int format, LPGLYPHMETRICSFLOAT lpgmf)
@@ -646,7 +593,7 @@ wglUseFontOutlinesA(HDC hdc, DWORD first, DWORD count,
    return (FALSE);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglUseFontOutlinesW(HDC hdc, DWORD first, DWORD count,
 		    DWORD listBase, FLOAT deviation,
 		    FLOAT extrusion, int format, LPGLYPHMETRICSFLOAT lpgmf)
@@ -656,7 +603,7 @@ wglUseFontOutlinesW(HDC hdc, DWORD first, DWORD count,
 }
 
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglSwapLayerBuffers(HDC hdc, UINT fuPlanes)
 {
    if (ctx && WindowFromDC(hdc) == hWND) {
@@ -669,10 +616,45 @@ wglSwapLayerBuffers(HDC hdc, UINT fuPlanes)
    return (FALSE);
 }
 
-int GLAPIENTRY
-wglChoosePixelFormat(HDC hdc, CONST PIXELFORMATDESCRIPTOR * ppfd)
+GLAPI int GLAPIENTRY
+wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
 {
    int i, best = -1, qt_valid_pix;
+
+#if 0
+  FILE *pix_file;
+  pix_file = fopen("pix_log.txt", "a");
+  if (pix_file) {
+  fprintf(pix_file, "wglChoosePixelFormat\n");
+  fprintf(pix_file, "nSize           = %d\n",ppfd->nSize);
+  fprintf(pix_file, "nVersion        = %d\n",ppfd->nVersion);
+  fprintf(pix_file, "dwFlags         = %d\n",ppfd->dwFlags);
+  fprintf(pix_file, "iPixelType      = %d\n",ppfd->iPixelType);
+  fprintf(pix_file, "cColorBits      = %d\n",ppfd->cColorBits);
+  fprintf(pix_file, "cRedBits        = %d\n",ppfd->cRedBits);
+  fprintf(pix_file, "cRedShift       = %d\n",ppfd->cRedShift);
+  fprintf(pix_file, "cGreenBits      = %d\n",ppfd->cGreenBits);
+  fprintf(pix_file, "cGreenShift     = %d\n",ppfd->cGreenShift);
+  fprintf(pix_file, "cBlueBits       = %d\n",ppfd->cBlueBits);
+  fprintf(pix_file, "cBlueShift      = %d\n",ppfd->cBlueShift);
+  fprintf(pix_file, "cAlphaBits      = %d\n",ppfd->cAlphaBits);
+  fprintf(pix_file, "cAlphaShift     = %d\n",ppfd->cAlphaShift);
+  fprintf(pix_file, "cAccumBits      = %d\n",ppfd->cAccumBits);
+  fprintf(pix_file, "cAccumRedBits   = %d\n",ppfd->cAccumRedBits);
+  fprintf(pix_file, "cAccumGreenBits = %d\n",ppfd->cAccumGreenBits);
+  fprintf(pix_file, "cAccumBlueBits  = %d\n",ppfd->cAccumBlueBits);
+  fprintf(pix_file, "cAccumAlphaBits = %d\n",ppfd->cAccumAlphaBits);
+  fprintf(pix_file, "cDepthBits      = %d\n",ppfd->cDepthBits);
+  fprintf(pix_file, "cStencilBits    = %d\n",ppfd->cStencilBits);
+  fprintf(pix_file, "cAuxBuffers     = %d\n",ppfd->cAuxBuffers);
+  fprintf(pix_file, "iLayerType      = %d\n",ppfd->iLayerType);
+  fprintf(pix_file, "bReserved       = %d\n",ppfd->bReserved);
+  fprintf(pix_file, "dwLayerMask     = %d\n",ppfd->dwLayerMask);
+  fprintf(pix_file, "dwVisibleMask   = %d\n",ppfd->dwVisibleMask);
+  fprintf(pix_file, "dwDamageMask    = %d\n",ppfd->dwDamageMask);
+  }
+  fclose(pix_file);
+#endif
 
    qt_valid_pix = qt_pix;
 
@@ -706,6 +688,11 @@ wglChoosePixelFormat(HDC hdc, CONST PIXELFORMATDESCRIPTOR * ppfd)
       if (ppfd->cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
 	 continue;		/* need alpha buffer */
 
+#if 0
+      if ((ppfd->cColorBits == 32) && (ppfd->cStencilBits > 0 && pix[i].pfd.cStencilBits == 0))
+	 continue;		/* need stencil */
+#endif
+
       if (ppfd->iPixelType == pix[i].pfd.iPixelType) {
 	 best = i + 1;
 	 break;
@@ -720,13 +707,14 @@ wglChoosePixelFormat(HDC hdc, CONST PIXELFORMATDESCRIPTOR * ppfd)
    return (best);
 }
 
-int GLAPIENTRY
-ChoosePixelFormat(HDC hdc, CONST PIXELFORMATDESCRIPTOR * ppfd)
+GLAPI int GLAPIENTRY
+ChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
 {
+  
    return wglChoosePixelFormat(hdc, ppfd);
 }
 
-int GLAPIENTRY
+GLAPI int GLAPIENTRY
 wglDescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes,
 		       LPPIXELFORMATDESCRIPTOR ppfd)
 {
@@ -746,14 +734,14 @@ wglDescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes,
    return (qt_valid_pix);
 }
 
-int GLAPIENTRY
+GLAPI int GLAPIENTRY
 DescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes,
 		    LPPIXELFORMATDESCRIPTOR ppfd)
 {
    return wglDescribePixelFormat(hdc, iPixelFormat, nBytes, ppfd);
 }
 
-int GLAPIENTRY
+GLAPI int GLAPIENTRY
 wglGetPixelFormat(HDC hdc)
 {
    if (curPFD == 0) {
@@ -764,15 +752,14 @@ wglGetPixelFormat(HDC hdc)
    return (curPFD);
 }
 
-int GLAPIENTRY
+GLAPI int GLAPIENTRY
 GetPixelFormat(HDC hdc)
 {
    return wglGetPixelFormat(hdc);
 }
 
-BOOL GLAPIENTRY
-wglSetPixelFormat(HDC hdc, int iPixelFormat,
-		  CONST PIXELFORMATDESCRIPTOR * ppfd)
+GLAPI BOOL GLAPIENTRY
+wglSetPixelFormat(HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR * ppfd)
 {
    int qt_valid_pix;
 
@@ -788,7 +775,7 @@ wglSetPixelFormat(HDC hdc, int iPixelFormat,
    return (TRUE);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 wglSwapBuffers(HDC hdc)
 {
    if (!ctx) {
@@ -801,16 +788,152 @@ wglSwapBuffers(HDC hdc)
    return (TRUE);
 }
 
-BOOL GLAPIENTRY
-SetPixelFormat(HDC hdc, int iPixelFormat, CONST PIXELFORMATDESCRIPTOR * ppfd)
+GLAPI BOOL GLAPIENTRY
+SetPixelFormat(HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR * ppfd)
 {
    return wglSetPixelFormat(hdc, iPixelFormat, ppfd);
 }
 
-BOOL GLAPIENTRY
+GLAPI BOOL GLAPIENTRY
 SwapBuffers(HDC hdc)
 {
    return wglSwapBuffers(hdc);
+}
+
+static FIXED FixedFromDouble(double d)
+{
+  long l = (long) (d * 65536L);
+  return *(FIXED *)&l;
+}
+
+/*
+** This was yanked from windows/gdi/wgl.c
+*/
+GLAPI BOOL GLAPIENTRY
+wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+{
+  int i;
+  GLuint font_list;
+  DWORD size;
+  GLYPHMETRICS gm;
+  HANDLE hBits;
+  LPSTR lpBits;
+  MAT2 mat;
+  int  success = TRUE;
+
+  if (first<0)
+     return FALSE;
+  if (count<0)
+     return FALSE;
+  if (listBase<0)
+     return FALSE;
+
+  font_list = listBase;
+
+  mat.eM11 = FixedFromDouble(1);
+  mat.eM12 = FixedFromDouble(0);
+  mat.eM21 = FixedFromDouble(0);
+  mat.eM22 = FixedFromDouble(-1);
+
+  memset(&gm,0,sizeof(gm));
+
+  /*
+  ** If we can't get the glyph outline, it may be because this is a fixed
+  ** font.  Try processing it that way.
+  */
+  if( GetGlyphOutline(hdc, first, GGO_BITMAP, &gm, 0, NULL, &mat)
+      == GDI_ERROR )
+  {
+    return wglUseFontBitmaps_FX( hdc, first, count, listBase );
+  }
+
+  /*
+  ** Otherwise process all desired characters.
+  */
+  for (i = 0; i < count; i++)
+  {
+    DWORD err;
+
+    glNewList( font_list+i, GL_COMPILE );
+
+    /* allocate space for the bitmap/outline */
+    size = GetGlyphOutline(hdc, first + i, GGO_BITMAP, &gm, 0, NULL, &mat);
+    if (size == GDI_ERROR)
+    {
+      glEndList( );
+      err = GetLastError();
+      success = FALSE;
+      continue;
+    }
+
+    hBits  = GlobalAlloc(GHND, size+1);
+    lpBits = GlobalLock(hBits);
+
+    err = GetGlyphOutline(hdc,                /* handle to device context */
+                          first + i,          /* character to query */
+                          GGO_BITMAP,         /* format of data to return */
+                          &gm,                /* pointer to structure for metrics*/
+                          size,               /* size of buffer for data */
+                          lpBits,             /* pointer to buffer for data */
+                          &mat                /* pointer to transformation */
+                                              /* matrix structure */
+                          );
+
+    if (err == GDI_ERROR)
+    {
+      GlobalUnlock(hBits);
+      GlobalFree(hBits);
+      
+      glEndList( );
+      err = GetLastError();
+      success = FALSE;
+      continue;
+    }
+
+    glBitmap(gm.gmBlackBoxX,gm.gmBlackBoxY,
+             -gm.gmptGlyphOrigin.x,
+             gm.gmptGlyphOrigin.y,
+             gm.gmCellIncX,gm.gmCellIncY,
+             (const GLubyte * )lpBits);
+
+    GlobalUnlock(hBits);
+    GlobalFree(hBits);
+
+    glEndList( );
+  }
+
+  return success;
+}
+
+GLAPI BOOL GLAPIENTRY
+wglDescribeLayerPlane(HDC hdc, int iPixelFormat, int iLayerPlane,
+                      UINT nBytes, LPLAYERPLANEDESCRIPTOR ppfd)
+{
+  SetLastError(0);
+  return (FALSE);
+}
+
+GLAPI int GLAPIENTRY
+wglGetLayerPaletteEntries(HDC hdc, int iLayerPlane, int iStart,
+                          int cEntries, CONST COLORREF *pcr)
+{
+  SetLastError(0);
+  return (FALSE);
+}
+
+GLAPI BOOL GLAPIENTRY
+wglRealizeLayerPalette(HDC hdc,int iLayerPlane,BOOL bRealize)
+{
+  SetLastError(0);
+  return(FALSE);
+}
+
+GLAPI int GLAPIENTRY
+wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane, int iStart,
+                          int cEntries, CONST COLORREF *pcr)
+{
+  SetLastError(0);
+  return(FALSE);
 }
 
 #endif /* FX */

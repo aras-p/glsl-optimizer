@@ -1,4 +1,4 @@
-/* $Id: fxsetup.c,v 1.39 2003/08/19 15:52:53 brianp Exp $ */
+/* $Id: fxsetup.c,v 1.40 2003/10/02 17:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,16 +52,15 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    tfxTexInfo *ti = fxTMGetTexInfo(tObj);
    GLint minl, maxl;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxTexValidate(...) Start\n");
-   }
-
    if (ti->validated) {
-      if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	 fprintf(stderr,
-		 "fxmesa: fxTexValidate(...) End (validated=GL_TRUE)\n");
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	 fprintf(stderr, "%s: validated=GL_TRUE\n", __FUNCTION__);
       }
       return;
+   }
+
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
    }
 
    ti->tObj = tObj;
@@ -71,38 +70,48 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    fxTexGetInfo(tObj->Image[minl]->Width, tObj->Image[minl]->Height,
 		&(FX_largeLodLog2(ti->info)), &(FX_aspectRatioLog2(ti->info)),
 		&(ti->sScale), &(ti->tScale),
-		&(ti->int_sScale), &(ti->int_tScale), NULL, NULL);
+		NULL, NULL);
 
    if ((tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR))
       fxTexGetInfo(tObj->Image[maxl]->Width, tObj->Image[maxl]->Height,
 		   &(FX_smallLodLog2(ti->info)), NULL,
-		   NULL, NULL, NULL, NULL, NULL, NULL);
+		   NULL, NULL, NULL, NULL);
    else
       FX_smallLodLog2(ti->info) = FX_largeLodLog2(ti->info);
 
+/*jejeje*/
+ti->baseLevelInternalFormat = tObj->Image[minl]->Format;
+#if 0
    fxTexGetFormat(ctx, tObj->Image[minl]->TexFormat->BaseFormat, &(ti->info.format),
 		  &(ti->baseLevelInternalFormat)); /* [koolsmoky] */
+#endif
 
    switch (tObj->WrapS) {
+   case GL_MIRRORED_REPEAT:
+      ti->sClamp = GR_TEXTURECLAMP_MIRROR_EXT;
+      break;
    case GL_CLAMP_TO_EDGE:
       /* What's this really mean compared to GL_CLAMP? */
    case GL_CLAMP:
-      ti->sClamp = 1;
+      ti->sClamp = GR_TEXTURECLAMP_CLAMP;
       break;
    case GL_REPEAT:
-      ti->sClamp = 0;
+      ti->sClamp = GR_TEXTURECLAMP_WRAP;
       break;
    default:
       ;				/* silence compiler warning */
    }
    switch (tObj->WrapT) {
+   case GL_MIRRORED_REPEAT:
+      ti->tClamp = GR_TEXTURECLAMP_MIRROR_EXT;
+      break;
    case GL_CLAMP_TO_EDGE:
       /* What's this really mean compared to GL_CLAMP? */
    case GL_CLAMP:
-      ti->tClamp = 1;
+      ti->tClamp = GR_TEXTURECLAMP_CLAMP;
       break;
    case GL_REPEAT:
-      ti->tClamp = 0;
+      ti->tClamp = GR_TEXTURECLAMP_WRAP;
       break;
    default:
       ;				/* silence compiler warning */
@@ -111,10 +120,6 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    ti->validated = GL_TRUE;
 
    ti->info.data = NULL;
-
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxTexValidate(...) End\n");
-   }
 }
 
 static void
@@ -274,8 +279,8 @@ fxGetTexSetConfiguration(GLcontext * ctx,
 
    unitsmode |= (ifmt | envmode);
 
-   if (MESA_VERBOSE & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fxPrintUnitsMode("unitsmode", unitsmode);
+   if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
+      fxPrintUnitsMode(__FUNCTION__, unitsmode);
 
    return unitsmode;
 }
@@ -291,6 +296,10 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 {
    tfxTexInfo *ti = fxTMGetTexInfo(tObj);
    int tmu;
+
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%p (%d))\n", __FUNCTION__, (void *)tObj, tObj->Name);
+   }
 
    /* Make sure we're not loaded incorrectly */
    if (ti->isInTM) {
@@ -309,7 +318,10 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if (ti->LODblend)
 	 fxTMMoveInTM_NoLock(fxMesa, tObj, FX_TMU_SPLIT);
       else {
-	 if (fxMesa->haveTwoTMUs) {
+         /* XXX putting textures into the second memory bank when the
+          * first bank is full is not working at this time.
+          */
+	 if (/*[dBorca]: fixme*/0 && fxMesa->haveTwoTMUs) {
 	    if (fxMesa->freeTexMem[FX_TMU0] >
 		grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,
 						  &(ti->info))) {
@@ -327,8 +339,8 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
    if (ti->LODblend && ti->whichTMU == FX_TMU_SPLIT) {
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
-	 if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxmesa: uploading texture palette\n");
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
 	 }
 	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti->palette));
       }
@@ -353,8 +365,8 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 
       if ((ti->info.format == GR_TEXFMT_P_8)
 	  && (!fxMesa->haveGlobalPaletteTexture)) {
-	 if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxmesa: uploading texture palette\n");
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading texture palette\n", __FUNCTION__);
 	 }
 	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti->palette));
       }
@@ -363,8 +375,9 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
        * we get to this point, I think it means we are thrashing the
        * texture memory, so perhaps it's not a good idea.  
        */
-      if (ti->LODblend && (MESA_VERBOSE & VERBOSE_DRIVER))
-	 fprintf(stderr, "fxmesa: not blending texture - only on one tmu\n");
+      if (ti->LODblend && (TDFX_DEBUG & VERBOSE_DRIVER)) {
+	 fprintf(stderr, "%s: not blending texture - only one tmu\n", __FUNCTION__);
+      }
 
       grTexClampMode(tmu, ti->sClamp, ti->tClamp);
       grTexFilterMode(tmu, ti->minFilt, ti->maxFilt);
@@ -377,8 +390,8 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 static void
 fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
 {
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSelectSingleTMUSrc(%d,%d)\n", tmu, LODblend);
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%d, %d)\n", __FUNCTION__, tmu, LODblend);
    }
 
    if (LODblend) {
@@ -436,7 +449,7 @@ fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
 static void
 fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrCombineLocal_t localc, locala;
    GLuint unitsmode;
    GLint ifmt;
@@ -444,8 +457,8 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
    struct gl_texture_object *tObj = ctx->Texture.Unit[textureset].Current2D;
    int tmu;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTextureSingleTMU(...) Start\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    ti = fxTMGetTexInfo(tObj);
@@ -486,8 +499,8 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
    else
       localc = GR_COMBINE_LOCAL_CONSTANT;
 
-   if (MESA_VERBOSE & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "fxMesa: fxSetupTextureSingleTMU, envmode is %s\n",
+   if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
+      fprintf(stderr, "%s: envmode is %s\n", __FUNCTION__,
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[textureset].EnvMode));
 
    switch (ctx->Texture.Unit[textureset].EnvMode) {
@@ -515,8 +528,8 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
 				  localc, GR_COMBINE_OTHER_TEXTURE, FXFALSE);
       break;
    case GL_BLEND:
-      if (MESA_VERBOSE & VERBOSE_DRIVER)
-	 fprintf(stderr, "fx Driver: GL_BLEND not yet supported\n");
+      if (TDFX_DEBUG & VERBOSE_DRIVER)
+	 fprintf(stderr, "%s: GL_BLEND not yet supported\n", __FUNCTION__);
       break;
    case GL_REPLACE:
       if ((ifmt == GL_RGB) || (ifmt == GL_LUMINANCE))
@@ -538,14 +551,10 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
 				  localc, GR_COMBINE_OTHER_TEXTURE, FXFALSE);
       break;
    default:
-      if (MESA_VERBOSE & VERBOSE_DRIVER)
-	 fprintf(stderr, "fx Driver: %x Texture.EnvMode not yet supported\n",
+      if (TDFX_DEBUG & VERBOSE_DRIVER)
+	 fprintf(stderr, "%s: %x Texture.EnvMode not yet supported\n", __FUNCTION__,
 		 ctx->Texture.Unit[textureset].EnvMode);
       break;
-   }
-
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTextureSingleTMU(...) End\n");
    }
 }
 
@@ -579,8 +588,8 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
    GLuint tstate = 0;
    int tmu0 = 0, tmu1 = 1;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupDoubleTMU(...)\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    /* We shouldn't need to do this. There is something wrong with
@@ -675,8 +684,8 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
        * The next test shouldn't be TMU specific...
        */
       if (ti0->info.format == GR_TEXFMT_P_8) {
-	 if (MESA_VERBOSE & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxmesa: uploading texture palette TMU0\n");
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading texture palette TMU0\n", __FUNCTION__);
 	 }
 	 grTexDownloadTable(GR_TEXTABLE_PALETTE, &(ti0->palette));
       }
@@ -705,7 +714,7 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
 static void
 fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrCombineLocal_t localc, locala;
    tfxTexInfo *ti0, *ti1;
    struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
@@ -713,8 +722,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
    GLuint envmode, ifmt, unitsmode;
    int tmu0 = 0, tmu1 = 1;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTextureDoubleTMU(...) Start\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    ti0 = fxTMGetTexInfo(tObj0);
@@ -749,8 +758,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
       localc = GR_COMBINE_LOCAL_CONSTANT;
 
 
-   if (MESA_VERBOSE & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
-      fprintf(stderr, "fxMesa: fxSetupTextureDoubleTMU, envmode is %s/%s\n",
+   if (TDFX_DEBUG & (VERBOSE_DRIVER | VERBOSE_TEXTURE))
+      fprintf(stderr, "%s: envmode is %s/%s\n", __FUNCTION__,
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[0].EnvMode),
 	      _mesa_lookup_enum_by_nr(ctx->Texture.Unit[1].EnvMode));
 
@@ -765,15 +774,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
       {
 	 GLboolean isalpha[FX_NUM_TMU];
 
-	 if (ti0->baseLevelInternalFormat == GL_ALPHA)
-	    isalpha[tmu0] = GL_TRUE;
-	 else
-	    isalpha[tmu0] = GL_FALSE;
-
-	 if (ti1->baseLevelInternalFormat == GL_ALPHA)
-	    isalpha[tmu1] = GL_TRUE;
-	 else
-	    isalpha[tmu1] = GL_FALSE;
+	 isalpha[tmu0] = (ti0->baseLevelInternalFormat == GL_ALPHA);
+	 isalpha[tmu1] = (ti1->baseLevelInternalFormat == GL_ALPHA);
 
 	 if (isalpha[FX_TMU1])
 	    grTexCombine(GR_TMU1,
@@ -896,15 +898,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
       {
 	 GLboolean isalpha[FX_NUM_TMU];
 
-	 if (ti0->baseLevelInternalFormat == GL_ALPHA)
-	    isalpha[tmu0] = GL_TRUE;
-	 else
-	    isalpha[tmu0] = GL_FALSE;
-
-	 if (ti1->baseLevelInternalFormat == GL_ALPHA)
-	    isalpha[tmu1] = GL_TRUE;
-	 else
-	    isalpha[tmu1] = GL_FALSE;
+	 isalpha[tmu0] = (ti0->baseLevelInternalFormat == GL_ALPHA);
+	 isalpha[tmu1] = (ti1->baseLevelInternalFormat == GL_ALPHA);
 
 	 if (isalpha[FX_TMU1])
 	    grTexCombine(GR_TMU1,
@@ -942,12 +937,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 	 break;
       }
    default:
-      fprintf(stderr, "Unexpected dual texture mode encountered\n");
+      fprintf(stderr, "%s: Unexpected dual texture mode encountered\n", __FUNCTION__);
       break;
-   }
-
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTextureDoubleTMU(...) End\n");
    }
 }
 
@@ -956,11 +947,11 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 static void
 fxSetupTextureNone_NoLock(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrCombineLocal_t localc, locala;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTextureNone(...)\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    if ((ctx->Light.ShadeModel == GL_SMOOTH) || 1 ||
@@ -993,10 +984,10 @@ fxSetupTextureNone_NoLock(GLcontext * ctx)
 static void
 fxSetupTexture_NoLock(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxSetupTexture(...)\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    /* Texture Combine, Color Combine and Alpha Combine. */
@@ -1032,7 +1023,7 @@ fxSetupTexture(GLcontext * ctx)
 void
 fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
    GrAlphaBlendFnc_t sfact, dfact, asfact, adfact;
 
@@ -1149,7 +1140,7 @@ fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
 static void
 fxSetupBlend(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (us->blendEnabled)
@@ -1167,48 +1158,15 @@ fxSetupBlend(GLcontext * ctx)
 void
 fxDDAlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
-   GrCmpFnc_t newfunc;
 
-   switch (func) {
-   case GL_NEVER:
-      newfunc = GR_CMP_NEVER;
-      break;
-   case GL_LESS:
-      newfunc = GR_CMP_LESS;
-      break;
-   case GL_EQUAL:
-      newfunc = GR_CMP_EQUAL;
-      break;
-   case GL_LEQUAL:
-      newfunc = GR_CMP_LEQUAL;
-      break;
-   case GL_GREATER:
-      newfunc = GR_CMP_GREATER;
-      break;
-   case GL_NOTEQUAL:
-      newfunc = GR_CMP_NOTEQUAL;
-      break;
-   case GL_GEQUAL:
-      newfunc = GR_CMP_GEQUAL;
-      break;
-   case GL_ALWAYS:
-      newfunc = GR_CMP_ALWAYS;
-      break;
-   default:
-      fprintf(stderr, "fx Driver: internal error in fxDDAlphaFunc()\n");
-      fxCloseHardware();
-      exit(-1);
-      break;
-   }
-
-   if (newfunc != us->alphaTestFunc) {
-      us->alphaTestFunc = newfunc;
-      fxMesa->new_state |= FX_NEW_ALPHA;
-   }
-
-   if (ref != us->alphaTestRefValue) {
+   if (
+       (us->alphaTestFunc != func)
+       ||
+       (us->alphaTestRefValue != ref)
+      ) {
+      us->alphaTestFunc = func;
       us->alphaTestRefValue = ref;
       fxMesa->new_state |= FX_NEW_ALPHA;
    }
@@ -1217,12 +1175,12 @@ fxDDAlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 static void
 fxSetupAlphaTest(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (us->alphaTestEnabled) {
       GrAlpha_t ref = (GLint) (us->alphaTestRefValue * 255.0);
-      grAlphaTestFunction(us->alphaTestFunc);
+      grAlphaTestFunction(us->alphaTestFunc - GL_NEVER + GR_CMP_NEVER);
       grAlphaTestReferenceValue(ref);
    }
    else
@@ -1236,53 +1194,19 @@ fxSetupAlphaTest(GLcontext * ctx)
 void
 fxDDDepthFunc(GLcontext * ctx, GLenum func)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
-   GrCmpFnc_t dfunc;
 
-   switch (func) {
-   case GL_NEVER:
-      dfunc = GR_CMP_NEVER;
-      break;
-   case GL_LESS:
-      dfunc = GR_CMP_LESS;
-      break;
-   case GL_GEQUAL:
-      dfunc = GR_CMP_GEQUAL;
-      break;
-   case GL_LEQUAL:
-      dfunc = GR_CMP_LEQUAL;
-      break;
-   case GL_GREATER:
-      dfunc = GR_CMP_GREATER;
-      break;
-   case GL_NOTEQUAL:
-      dfunc = GR_CMP_NOTEQUAL;
-      break;
-   case GL_EQUAL:
-      dfunc = GR_CMP_EQUAL;
-      break;
-   case GL_ALWAYS:
-      dfunc = GR_CMP_ALWAYS;
-      break;
-   default:
-      fprintf(stderr, "fx Driver: internal error in fxDDDepthFunc()\n");
-      fxCloseHardware();
-      exit(-1);
-      break;
-   }
-
-   if (dfunc != us->depthTestFunc) {
-      us->depthTestFunc = dfunc;
+   if (us->depthTestFunc != func) {
+      us->depthTestFunc = func;
       fxMesa->new_state |= FX_NEW_DEPTH;
    }
-
 }
 
 void
 fxDDDepthMask(GLcontext * ctx, GLboolean flag)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (flag != us->depthMask) {
@@ -1294,11 +1218,11 @@ fxDDDepthMask(GLcontext * ctx, GLboolean flag)
 static void
 fxSetupDepthTest(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
    if (us->depthTestEnabled) {
-      grDepthBufferFunction(us->depthTestFunc);
+      grDepthBufferFunction(us->depthTestFunc - GL_NEVER + GR_CMP_NEVER);
       grDepthMask(us->depthMask);
    }
    else {
@@ -1308,14 +1232,134 @@ fxSetupDepthTest(GLcontext * ctx)
 }
 
 /************************************************************************/
+/************************** Stencil SetUp *******************************/
+/************************************************************************/
+
+static GrStencil_t convertGLStencilOp( GLenum op )
+{
+   switch ( op ) {
+   case GL_KEEP:
+      return GR_STENCILOP_KEEP;
+   case GL_ZERO:
+      return GR_STENCILOP_ZERO;
+   case GL_REPLACE:
+      return GR_STENCILOP_REPLACE;
+   case GL_INCR:
+      return GR_STENCILOP_INCR_CLAMP;
+   case GL_DECR:
+      return GR_STENCILOP_DECR_CLAMP;
+   case GL_INVERT:
+      return GR_STENCILOP_INVERT;
+   case GL_INCR_WRAP_EXT:
+      return GR_STENCILOP_INCR_WRAP;
+   case GL_DECR_WRAP_EXT:
+      return GR_STENCILOP_DECR_WRAP;
+   default:
+      _mesa_problem( NULL, "bad stencil op in convertGLStencilOp" );
+   }
+   return GR_STENCILOP_KEEP;   /* never get, silence compiler warning */
+}
+
+void
+fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (
+       (us->stencilFunction != func)
+       ||
+       (us->stencilRefValue != ref)
+       ||
+       (us->stencilValueMask != mask)
+      ) {
+      us->stencilFunction = func;
+      us->stencilRefValue = ref;
+      us->stencilValueMask = mask;
+      fxMesa->new_state |= FX_NEW_STENCIL;
+   }
+}
+
+void
+fxDDStencilMask (GLcontext *ctx, GLuint mask)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (us->stencilWriteMask != mask) {
+      us->stencilWriteMask = mask;
+      fxMesa->new_state |= FX_NEW_STENCIL;
+   }
+}
+
+void
+fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (
+       (us->stencilFailFunc != sfail)
+       ||
+       (us->stencilZFailFunc != zfail)
+       ||
+       (us->stencilZPassFunc != zpass)
+      ) {
+      us->stencilFailFunc = sfail;
+      us->stencilZFailFunc = zfail;
+      us->stencilZPassFunc = zpass;
+      fxMesa->new_state |= FX_NEW_STENCIL;
+   }
+}
+
+static void
+fxSetupStencil (GLcontext * ctx)
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   tfxUnitsState *us = &fxMesa->unitsState;
+
+   if (us->stencilEnabled) {
+      grEnable(GR_STENCIL_MODE_EXT);
+      fxMesa->Glide.grStencilOpExt(convertGLStencilOp(us->stencilFailFunc),
+                                   convertGLStencilOp(us->stencilZFailFunc),
+                                   convertGLStencilOp(us->stencilZPassFunc));
+      fxMesa->Glide.grStencilFuncExt(us->stencilFunction - GL_NEVER + GR_CMP_NEVER,
+                                     us->stencilRefValue,
+                                     us->stencilValueMask);
+      fxMesa->Glide.grStencilMaskExt(us->stencilWriteMask);
+   } else {
+      grDisable(GR_STENCIL_MODE_EXT);
+   }
+}
+
+/************************************************************************/
 /**************************** Color Mask SetUp **************************/
 /************************************************************************/
+
+void fxColorMask (fxMesaContext fxMesa, GLboolean enable)
+{
+/* These are used in calls to FX_grColorMask() */
+static const FxBool false4[4] = { FXFALSE, FXFALSE, FXFALSE, FXFALSE };
+static const FxBool true4[4] = { FXTRUE, FXTRUE, FXTRUE, FXTRUE };
+
+   const FxBool *rgba = enable ? true4 : false4;
+
+   if (fxMesa->colDepth != 16) {
+      /* 32bpp mode or 15bpp mode */
+      fxMesa->Glide.grColorMaskExt(rgba[RCOMP], rgba[GCOMP],
+                                   rgba[BCOMP], rgba[ACOMP] && fxMesa->haveHwAlpha);
+   }
+   else {
+      /* 16 bpp mode */
+      grColorMask(rgba[RCOMP] || rgba[GCOMP] || rgba[BCOMP], rgba[ACOMP] && fxMesa->haveHwAlpha);
+   }
+}
 
 void
 fxDDColorMask(GLcontext * ctx,
 	      GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    fxMesa->new_state |= FX_NEW_COLOR_MASK;
    (void) r;
    (void) g;
@@ -1329,13 +1373,10 @@ fxSetupColorMask(GLcontext * ctx)
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    if (ctx->Color.DrawBuffer == GL_NONE) {
-      grColorMask(FXFALSE, FXFALSE);
+      fxColorMask(fxMesa, GL_FALSE);
    }
    else {
-      grColorMask(ctx->Color.ColorMask[RCOMP] ||
-		     ctx->Color.ColorMask[GCOMP] ||
-		     ctx->Color.ColorMask[BCOMP],
-		     ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+      fxColorMask(fxMesa, GL_TRUE);
    }
 }
 
@@ -1389,7 +1430,7 @@ fxSetupFog(GLcontext * ctx)
       }
 
       grFogTable(fxMesa->fogTable);
-      grFogMode(GR_FOG_WITH_TABLE);
+      grFogMode(GR_FOG_WITH_TABLE_ON_Q);
    }
    else {
       grFogMode(GR_FOG_DISABLE);
@@ -1410,7 +1451,7 @@ fxDDFogfv(GLcontext * ctx, GLenum pname, const GLfloat * params)
 void
 fxSetScissorValues(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    int xmin, xmax;
    int ymin, ymax, check;
 
@@ -1439,7 +1480,7 @@ fxSetScissorValues(GLcontext * ctx)
    grClipWindow(xmin, ymin, xmax, ymax);
 }
 
-static void
+void
 fxSetupScissor(GLcontext * ctx)
 {
    BEGIN_BOARD_LOCK();
@@ -1473,35 +1514,42 @@ fxDDFrontFace(GLcontext * ctx, GLenum mode)
 }
 
 
-static void
+void
 fxSetupCull(GLcontext * ctx)
 {
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrCullMode_t mode = GR_CULL_DISABLE;
+
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
 	 if (ctx->Polygon.FrontFace == GL_CCW)
-	    FX_CONTEXT(ctx)->cullMode = GR_CULL_NEGATIVE;
+	    mode = GR_CULL_NEGATIVE;
 	 else
-	    FX_CONTEXT(ctx)->cullMode = GR_CULL_POSITIVE;
+	    mode = GR_CULL_POSITIVE;
 	 break;
       case GL_FRONT:
 	 if (ctx->Polygon.FrontFace == GL_CCW)
-	    FX_CONTEXT(ctx)->cullMode = GR_CULL_POSITIVE;
+	    mode = GR_CULL_POSITIVE;
 	 else
-	    FX_CONTEXT(ctx)->cullMode = GR_CULL_NEGATIVE;
+	    mode = GR_CULL_NEGATIVE;
 	 break;
       case GL_FRONT_AND_BACK:
-	 FX_CONTEXT(ctx)->cullMode = GR_CULL_DISABLE;
-	 break;
+	 /* Handled as a fallback on triangles in tdfx_tris.c */
+	 return;
       default:
+	 ASSERT(0);
 	 break;
       }
    }
-   else
-      FX_CONTEXT(ctx)->cullMode = GR_CULL_DISABLE;
 
-   if (FX_CONTEXT(ctx)->raster_primitive == GL_TRIANGLES)
-      grCullMode(FX_CONTEXT(ctx)->cullMode);
+   /* KW: don't need to check raster_primitive here as we don't
+    * attempt to draw lines or points with triangles.
+    */
+   if (fxMesa->cullMode != mode) {
+      fxMesa->cullMode = mode;
+      grCullMode(mode);
+   }
 }
 
 
@@ -1512,11 +1560,12 @@ fxSetupCull(GLcontext * ctx)
 void
 fxDDEnable(GLcontext * ctx, GLenum cap, GLboolean state)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDEnable(...)\n");
+   if (TDFX_DEBUG & VERBOSE_DRIVER) {
+      fprintf(stderr, "%s(%s)\n", state ? __FUNCTION__ : "fxDDDisable",
+	      _mesa_lookup_enum_by_nr(cap));
    }
 
    switch (cap) {
@@ -1536,6 +1585,12 @@ fxDDEnable(GLcontext * ctx, GLenum cap, GLboolean state)
       if (state != us->depthTestEnabled) {
 	 us->depthTestEnabled = state;
 	 fxMesa->new_state |= FX_NEW_DEPTH;
+      }
+      break;
+   case GL_STENCIL_TEST:
+      if (fxMesa->haveHwStencil && state != us->stencilEnabled) {
+	 us->stencilEnabled = state;
+	 fxMesa->new_state |= FX_NEW_STENCIL;
       }
       break;
    case GL_DITHER:
@@ -1595,7 +1650,7 @@ static void
 fx_print_state_flags(const char *msg, GLuint flags)
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s\n",
 	   msg,
 	   flags,
 	   (flags & FX_NEW_TEXTURING) ? "texture, " : "",
@@ -1604,17 +1659,18 @@ fx_print_state_flags(const char *msg, GLuint flags)
 	   (flags & FX_NEW_FOG) ? "fog, " : "",
 	   (flags & FX_NEW_SCISSOR) ? "scissor, " : "",
 	   (flags & FX_NEW_COLOR_MASK) ? "colormask, " : "",
-	   (flags & FX_NEW_CULL) ? "cull, " : "");
+	   (flags & FX_NEW_CULL) ? "cull, " : "",
+	   (flags & FX_NEW_STENCIL) ? "stencil, " : "");
 }
 
 void
 fxSetupFXUnits(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint newstate = fxMesa->new_state;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER)
-      fx_print_state_flags("fxmesa: fxSetupFXUnits", newstate);
+   if (TDFX_DEBUG & VERBOSE_DRIVER)
+      fx_print_state_flags(__FUNCTION__, newstate);
 
    if (newstate) {
       if (newstate & FX_NEW_TEXTURING)
@@ -1628,6 +1684,9 @@ fxSetupFXUnits(GLcontext * ctx)
 
       if (newstate & FX_NEW_DEPTH)
 	 fxSetupDepthTest(ctx);
+
+      if (newstate & FX_NEW_STENCIL)
+	 fxSetupStencil(ctx);
 
       if (newstate & FX_NEW_FOG)
 	 fxSetupFog(ctx);

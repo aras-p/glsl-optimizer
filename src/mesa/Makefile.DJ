@@ -304,7 +304,8 @@ DRIVER_SOURCES += \
 	drivers/glide/fxtexman.c \
 	drivers/glide/fxtris.c \
 	drivers/glide/fxvb.c \
-	drivers/glide/fxglidew.c
+	drivers/glide/fxglidew.c \
+	drivers/glide/fxg.c
 else
 ifeq ($(MATROX),1)
 DRIVER_SOURCES += \

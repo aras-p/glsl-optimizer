@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.23 2003/09/23 14:41:02 brianp Exp $ */
+/* $Id: fxtris.c,v 1.24 2003/10/02 17:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,10 +136,10 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
    dst->win[2] = src->ooz;
    dst->win[3] = src->oow;
 
-   dst->color[0] = (GLubyte) src->r;
-   dst->color[1] = (GLubyte) src->g;
-   dst->color[2] = (GLubyte) src->b;
-   dst->color[3] = (GLubyte) src->a;
+   dst->color[0] = src->pargb[2];
+   dst->color[1] = src->pargb[1];
+   dst->color[2] = src->pargb[0];
+   dst->color[3] = src->pargb[3];
 
    dst->texcoord[ts0][0] = fxMesa->inv_s0scale * src->tmuvtx[0].sow * w;
    dst->texcoord[ts0][1] = fxMesa->inv_t0scale * src->tmuvtx[0].tow * w;
@@ -208,17 +208,14 @@ fx_fallback_point( fxMesaContext fxMesa,
 
 static void fx_print_vertex( GLcontext *ctx, const GrVertex *v )
 {
-   fprintf(stderr, "vertex at %p\n", (void *) v);
+ fprintf(stderr, "%s:\n", __FUNCTION__);
 
-   fprintf(stderr, "x %f y %f z %f oow %f\n", 
-	   v->x, v->y, v->ooz, v->oow);
-   fprintf(stderr, "r %f g %f b %f a %f\n", 
-	   v->r,
-	   v->g,
-	   v->b,
-	   v->a);
+ fprintf(stderr, "\tvertex at %p\n", (void *) v);
+
+ fprintf(stderr, "\tx %f y %f z %f oow %f\n", v->x, v->y, v->ooz, v->oow);
+ fprintf(stderr, "\tr %d g %d b %d a %d\n", v->pargb[2], v->pargb[1], v->pargb[0], v->pargb[3]);
    
-   fprintf(stderr, "\n");
+ fprintf(stderr, "\n");
 }
 
 #define DO_FALLBACK 0
@@ -233,7 +230,9 @@ static void fx_draw_quad( fxMesaContext fxMesa,
 			  GrVertex *v2,
 			  GrVertex *v3 )
 {
+   BEGIN_CLIP_LOOP();
    QUAD( v0, v1, v2, v3 );
+   END_CLIP_LOOP();
 }
 
 static void fx_draw_triangle( fxMesaContext fxMesa,
@@ -241,7 +240,9 @@ static void fx_draw_triangle( fxMesaContext fxMesa,
 				GrVertex *v1,
 				GrVertex *v2 )
 {
+   BEGIN_CLIP_LOOP();
    TRI( v0, v1, v2 );
+   END_CLIP_LOOP();
 }
 
 static void fx_draw_line( fxMesaContext fxMesa,
@@ -250,7 +251,9 @@ static void fx_draw_line( fxMesaContext fxMesa,
 {
    /* No support for wide lines (avoid wide/aa line fallback).
     */
+   BEGIN_CLIP_LOOP();
    LINE(v0, v1);
+   END_CLIP_LOOP();
 }
 
 static void fx_draw_point( fxMesaContext fxMesa,
@@ -258,7 +261,9 @@ static void fx_draw_point( fxMesaContext fxMesa,
 {
    /* No support for wide points.
     */
+   BEGIN_CLIP_LOOP();
    POINT( v0 );
+   END_CLIP_LOOP();
 }
 
 #undef DO_FALLBACK
@@ -307,41 +312,26 @@ static struct {
 
 #define VERT_SET_RGBA( dst, f )                   \
 do {						\
-   dst->r = (GLfloat)f[0];	\
-   dst->g = (GLfloat)f[1];	\
-   dst->b = (GLfloat)f[2];	\
-   dst->a = (GLfloat)f[3];	\
+   dst->pargb[2] = f[0];	\
+   dst->pargb[1] = f[1];	\
+   dst->pargb[0] = f[2];	\
+   dst->pargb[3] = f[3];	\
 } while (0)
 
 #define VERT_COPY_RGBA( v0, v1 ) 		\
-do {						\
-   v0->r = v1->r;				\
-   v0->g = v1->g;				\
-   v0->b = v1->b;				\
-   v0->a = v1->a;				\
-} while (0)
+   *(GLuint *)&v0->pargb = *(GLuint *)&v1->pargb
 
 #define VERT_SAVE_RGBA( idx )  			\
-do {						\
-   color[idx][0] = v[idx]->r;			\
-   color[idx][1] = v[idx]->g;			\
-   color[idx][2] = v[idx]->b;			\
-   color[idx][3] = v[idx]->a;			\
-} while (0)
+   *(GLuint *)&color[idx] = *(GLuint *)&v[idx]->pargb
 
 
 #define VERT_RESTORE_RGBA( idx )		\
-do {						\
-   v[idx]->r = color[idx][0];			\
-   v[idx]->g = color[idx][1];			\
-   v[idx]->b = color[idx][2];			\
-   v[idx]->a = color[idx][3];			\
-} while (0)
+   *(GLuint *)&v[idx]->pargb = *(GLuint *)&color[idx]
 
 
 #define LOCAL_VARS(n)					\
    fxMesaContext fxMesa = FX_CONTEXT(ctx);		\
-   GLfloat color[n][4];					\
+   GLubyte color[n][4];					\
    (void) color; 
 
 
@@ -534,6 +524,321 @@ static void init_rast_tab( void )
 }
 
 
+/**********************************************************************/
+/*                 Render whole begin/end objects                     */
+/**********************************************************************/
+
+
+/* Accelerate vertex buffer rendering when renderindex == 0 and
+ * there is no clipping.
+ */
+
+static void fx_render_vb_points( GLcontext *ctx,
+				 GLuint start,
+				 GLuint count,
+				 GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   GLint i;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_points\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_POINTS);
+
+   /* Adjust point coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x += PNT_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += PNT_Y_OFFSET - TRI_Y_OFFSET;
+   }
+
+   grDrawVertexArrayContiguous( GR_POINTS, count-start,
+                                fxVB + start, sizeof(GrVertex));
+   /* restore point coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= PNT_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= PNT_Y_OFFSET - TRI_Y_OFFSET;
+   }
+}
+
+static void fx_render_vb_line_strip( GLcontext *ctx,
+				     GLuint start,
+				     GLuint count,
+				     GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   GLint i;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_line_strip\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_LINE_STRIP);
+
+   /* adjust line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+
+   grDrawVertexArrayContiguous( GR_LINE_STRIP, count-start,
+                                fxVB + start, sizeof(GrVertex));
+
+   /* restore line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+}
+
+static void fx_render_vb_line_loop( GLcontext *ctx,
+				    GLuint start,
+				    GLuint count,
+				    GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   GLint i;
+   GLint j = start;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_line_loop\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_LINE_LOOP);
+
+   if (!(flags & PRIM_BEGIN)) {
+      j++;
+   }
+
+   /* adjust line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+
+   grDrawVertexArrayContiguous( GR_LINE_STRIP, count-j,
+                                fxVB + j, sizeof(GrVertex));
+
+   if (flags & PRIM_END) 
+      grDrawLine( fxVB + (count - 1),
+                  fxVB + start );
+
+   /* restore line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+}
+
+static void fx_render_vb_lines( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   GLint i;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_lines\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_LINES);
+
+   /* adjust line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+
+   grDrawVertexArrayContiguous( GR_LINES, count-start,
+                                fxVB + start, sizeof(GrVertex));
+
+   /* restore line coords */
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   }
+}
+
+static void fx_render_vb_triangles( GLcontext *ctx,
+				    GLuint start,
+				    GLuint count,
+				    GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_triangles\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_TRIANGLES);
+
+#if 0
+   /* [dBorca]
+    * apparently, this causes troubles with some programs (GLExcess);
+    * might be a bug in Glide... However, "grDrawVertexArrayContiguous"
+    * eventually calls "grDrawTriangle" for GR_TRIANGLES, so we're better
+    * off doing it by hand...
+    */
+   grDrawVertexArrayContiguous( GR_TRIANGLES, count-start,
+                                fxVB + start, sizeof(GrVertex));
+#else
+   {
+    GLuint j;
+    for (j=start+2; j<count; j+=3) {
+        grDrawTriangle(fxVB + (j-2), fxVB + (j-1), fxVB + j);
+    }
+   }
+#endif
+}
+
+
+static void fx_render_vb_tri_strip( GLcontext *ctx,
+				    GLuint start,
+				    GLuint count,
+				    GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   int mode;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_tri_strip\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_TRIANGLE_STRIP);
+
+   if (flags & PRIM_PARITY) 
+      mode = GR_TRIANGLE_STRIP_CONTINUE;
+   else
+      mode = GR_TRIANGLE_STRIP;
+
+   grDrawVertexArrayContiguous( mode, count-start,
+                                fxVB + start, sizeof(GrVertex));
+}
+
+
+static void fx_render_vb_tri_fan( GLcontext *ctx,
+				  GLuint start,
+				  GLuint count,
+				  GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_tri_fan\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_TRIANGLE_FAN);
+
+   grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, count-start,
+                                fxVB + start, sizeof(GrVertex) );
+}
+
+static void fx_render_vb_quads( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   GLuint i;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_quads\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_QUADS);
+
+   for (i = start ; i < count-3 ; i += 4 ) {
+#define VERT(x) (fxVB + (x))
+      grDrawTriangle( VERT(i),   VERT(i+1), VERT(i+3) );
+      grDrawTriangle( VERT(i+1), VERT(i+2), VERT(i+3) );
+#undef VERT
+   }
+}
+
+static void fx_render_vb_quad_strip( GLcontext *ctx,
+				     GLuint start,
+				     GLuint count,
+				     GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_quad_strip\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_QUAD_STRIP);
+
+   count -= (count-start)&1;
+
+   grDrawVertexArrayContiguous( GR_TRIANGLE_STRIP,
+                                count-start, fxVB + start, sizeof(GrVertex));
+}
+
+static void fx_render_vb_poly( GLcontext *ctx,
+				GLuint start,
+				GLuint count,
+				GLuint flags )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GrVertex *fxVB = fxMesa->verts;
+   (void) flags;
+
+   if (TDFX_DEBUG & VERBOSE_VARRAY) {
+      fprintf(stderr, "fx_render_vb_poly\n");
+   }
+
+   fxRenderPrimitive(ctx, GL_POLYGON);
+
+   grDrawVertexArrayContiguous( GR_POLYGON, count-start,
+                                fxVB + start, sizeof(GrVertex));
+}
+
+static void fx_render_vb_noop( GLcontext *ctx,
+				 GLuint start,
+				 GLuint count,
+				 GLuint flags )
+{
+   (void) (ctx && start && count && flags);
+}
+
+static void (*fx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
+						   GLuint,
+						   GLuint,
+						   GLuint) = 
+{
+   fx_render_vb_points,
+   fx_render_vb_lines,
+   fx_render_vb_line_loop,
+   fx_render_vb_line_strip,
+   fx_render_vb_triangles,
+   fx_render_vb_tri_strip,
+   fx_render_vb_tri_fan,
+   fx_render_vb_quads,
+   fx_render_vb_quad_strip,
+   fx_render_vb_poly,
+   fx_render_vb_noop,
+};
+
 
 /**********************************************************************/
 /*            Render whole (indexed) begin/end objects                */
@@ -582,7 +887,7 @@ static void init_rast_tab( void )
 #undef TAG
 #define TAG(x) fx_##x##_verts
 #define ELT(x) x
-#include "../common/t_dd_rendertmp.h"
+/*#include "../common/t_dd_rendertmp.h"*/ /* we have fx_render_vb_* now */
 
 
 
@@ -621,7 +926,7 @@ static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 				       GLuint n )
 {
    fxMesaContext fxMesa = FX_CONTEXT( ctx );
-   GrVertex *vertptr = fxMesa->verts;			
+   GrVertex *vertptr = fxMesa->verts;
    const GrVertex *start = VERT(elts[0]);
    int i;
    for (i = 2 ; i < n ; i++) {
@@ -650,8 +955,6 @@ void fxDDChooseRenderState(GLcontext *ctx)
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
    if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
       if (flags & ANY_RASTER_FLAGS) {
 	 if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= FX_TWOSIDE_BIT;
@@ -665,29 +968,30 @@ void fxDDChooseRenderState(GLcontext *ctx)
       fxMesa->draw_tri = fx_draw_triangle;
 
       /* Hook in fallbacks for specific primitives.
-       *
-       *
+       * [dBorca] Hack alert:
+       * If we're in FSAA mode, we always do anti-aliased primitives.
        */
       if (flags & (POINT_FALLBACK|
 		   LINE_FALLBACK|
 		   TRI_FALLBACK))
       {
+         if (fxMesa->verbose) {
+            fprintf(stderr, "Voodoo ! fallback (%x), raster (%x)\n",
+                            flags & ANY_FALLBACK_FLAGS, flags & ANY_RASTER_FLAGS);
+         }
+
 	 if (flags & POINT_FALLBACK)
 	    fxMesa->draw_point = fx_fallback_point;
 
 	 if (flags & LINE_FALLBACK)
 	    fxMesa->draw_line = fx_fallback_line;
 
-	 if (flags & TRI_FALLBACK) {
-/*  	    fprintf(stderr, "tri fallback\n"); */
+	 if (flags & TRI_FALLBACK)
 	    fxMesa->draw_tri = fx_fallback_tri;
-	 }
 
 	 index |= FX_FALLBACK_BIT;
       }
    }
-
-/*     fprintf(stderr, "render index %x\n", index); */
 
    tnl->Driver.Render.Points = rast_tab[index].points;
    tnl->Driver.Render.Line = rast_tab[index].line;
@@ -699,20 +1003,78 @@ void fxDDChooseRenderState(GLcontext *ctx)
       tnl->Driver.Render.PrimTabVerts = fx_render_tab_verts;
       tnl->Driver.Render.PrimTabElts = fx_render_tab_elts;
       tnl->Driver.Render.ClippedPolygon = fxFastRenderClippedPoly;
-
-      tnl->Driver.Render.ClippedPolygon = fxRenderClippedPoly;
-
    } else {
       tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
       tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
       tnl->Driver.Render.ClippedPolygon = fxRenderClippedPoly;
    }
+
+   fxMesa->render_index = index;
 }
 
 
 /**********************************************************************/
 /*                Runtime render state and callbacks                  */
 /**********************************************************************/
+
+static void fxRunPipeline( GLcontext *ctx )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GLuint new_gl_state = fxMesa->new_gl_state;
+
+   if (TDFX_DEBUG & VERBOSE_PIPELINE) {
+      fprintf(stderr, "fxRunPipeline()\n");
+   }
+
+   /* Recalculate fog table on projection matrix changes.  This used to
+    * be triggered by the NearFar callback.
+    */
+   if (new_gl_state & _NEW_PROJECTION)
+      fxMesa->new_state |= FX_NEW_FOG;
+
+   if (new_gl_state & (_FX_NEW_IS_IN_HARDWARE |
+		       _FX_NEW_RENDERSTATE |
+		       _FX_NEW_SETUP_FUNCTION |
+		       _NEW_TEXTURE)) {
+
+      if (new_gl_state & _FX_NEW_IS_IN_HARDWARE)
+	 fxCheckIsInHardware(ctx);
+
+      if (fxMesa->new_state)
+	 fxSetupFXUnits(ctx);
+
+      if (!fxMesa->fallback) {
+	 if (new_gl_state & _FX_NEW_RENDERSTATE)
+	    fxDDChooseRenderState(ctx);
+
+	 if (new_gl_state & _FX_NEW_SETUP_FUNCTION)
+	    fxChooseVertexState(ctx);
+      }
+
+      if (new_gl_state & _NEW_TEXTURE) {
+         struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
+         struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
+      
+         if (t0 && t0->_Current && FX_TEXTURE_DATA(t0)) {
+            fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
+            fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
+            fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
+            fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
+         }
+      
+         if (t1 && t1->_Current && FX_TEXTURE_DATA(t1)) {
+            fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
+            fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
+            fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
+            fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
+         }
+      }
+   }
+      
+   fxMesa->new_gl_state = 0;
+
+   _tnl_run_pipeline( ctx );
+}
 
 
 static GLenum reduced_prim[GL_POLYGON+1] = {
@@ -735,18 +1097,19 @@ static GLenum reduced_prim[GL_POLYGON+1] = {
  */
 static void fxRasterPrimitive( GLcontext *ctx, GLenum prim )
 {
+ extern void fxSetupCull (GLcontext *ctx);
+
    fxMesaContext fxMesa = FX_CONTEXT( ctx );
 
    fxMesa->raster_primitive = prim;
-   if (prim == GL_TRIANGLES)
-      grCullMode( fxMesa->cullMode );
-   else
-      grCullMode( GR_CULL_DISABLE );
+
+   fxSetupCull(ctx);
 }
 
 
 
-/* Determine the rasterized primitive when drawing filled polygons.
+/* Determine the rasterized primitive when not drawing unfilled 
+ * polygons.
  */
 static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 {
@@ -755,14 +1118,20 @@ static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 
    fxMesa->render_primitive = prim;
 
-   if (rprim == GL_TRIANGLES &&
-       (ctx->Polygon.FrontMode != GL_FILL ||
-        ctx->Polygon.BackMode != GL_FILL))
+   if (rprim == GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
       return;
        
    if (fxMesa->raster_primitive != rprim) {
       fxRasterPrimitive( ctx, rprim );
    }
+}
+
+static void fxRenderFinish( GLcontext *ctx )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
+   if (fxMesa->render_index & FX_FALLBACK_BIT)
+      _swrast_flush( ctx );
 }
 
 
@@ -771,29 +1140,52 @@ static void fxRenderPrimitive( GLcontext *ctx, GLenum prim )
 /*               Manage total rasterization fallbacks                 */
 /**********************************************************************/
 
+static char *fallbackStrings[] = {
+   "1D/3D Texture map",
+   "glDrawBuffer(GL_FRONT_AND_BACK)",
+   "Separate specular color",
+   "glEnable/Disable(GL_STENCIL_TEST)",
+   "glRenderMode(selection or feedback)",
+   "glLogicOp()",
+   "Texture env mode",
+   "Texture border",
+   "glColorMask",
+   "blend mode",
+   "line stipple"
+};
+
+
+static char *getFallbackString(GLuint bit)
+{
+   int i = 0;
+   while (bit > 1) {
+      i++;
+      bit >>= 1;
+   }
+   return fallbackStrings[i];
+}
+
 
 void fxCheckIsInHardware( GLcontext *ctx )
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint oldfallback = !fxMesa->is_in_hardware;
-   GLuint newfallback;
-
-   fxMesa->is_in_hardware = fx_check_IsInHardware( ctx );
-   newfallback = !fxMesa->is_in_hardware;
+   GLuint oldfallback = fxMesa->fallback;
+   GLuint newfallback = fxMesa->fallback = fx_check_IsInHardware( ctx );
 
    if (newfallback) {
       if (oldfallback == 0) {
-/*  	 fprintf(stderr, "goint to fallback\n"); */
+         if (fxMesa->verbose) {
+            fprintf(stderr, "Voodoo ! begin SW 0x08%x %s\n", newfallback, getFallbackString(newfallback));
+         }
 	 _swsetup_Wakeup( ctx );
       }
    }
    else {
       if (oldfallback) {
-/*  	 fprintf(stderr, "leaving fallback\n"); */
 	 _swrast_flush( ctx );
 	 tnl->Driver.Render.Start = fxCheckTexSizes;
-	 tnl->Driver.Render.Finish = _swrast_flush;
+	 tnl->Driver.Render.Finish = fxRenderFinish;
 	 tnl->Driver.Render.PrimitiveNotify = fxRenderPrimitive;
 	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon; 
 	 tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;
@@ -804,6 +1196,9 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 tnl->Driver.Render.Multipass = 0;
 	 fxChooseVertexState(ctx);
 	 fxDDChooseRenderState(ctx);
+         if (fxMesa->verbose) {
+            fprintf(stderr, "Voodoo ! end SW 0x08%x %s\n", oldfallback, getFallbackString(oldfallback));
+         }
       }
    }
 }
@@ -818,8 +1213,9 @@ void fxDDInitTriFuncs( GLcontext *ctx )
       firsttime = 0;
    }
 
+   tnl->Driver.RunPipeline = fxRunPipeline;
    tnl->Driver.Render.Start = fxCheckTexSizes;
-   tnl->Driver.Render.Finish = _swrast_flush;
+   tnl->Driver.Render.Finish = fxRenderFinish;
    tnl->Driver.Render.PrimitiveNotify = fxRenderPrimitive;
    tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon; 
    tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;

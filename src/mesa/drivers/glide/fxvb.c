@@ -1,3 +1,5 @@
+/* $Id: fxvb.c,v 1.19 2003/10/02 17:36:45 brianp Exp $ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -37,7 +39,6 @@
 #include "mtypes.h"
 #include "imports.h"
 #include "macros.h"
-#include "context.h"
 #include "colormac.h"
 
 #include "math/m_translate.h"
@@ -55,10 +56,7 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
    GrVertex *dst = fxMesa->verts + edst;
    GrVertex *src = fxMesa->verts + esrc;
 
-   dst->r = src->r;
-   dst->g = src->g;
-   dst->b = src->b;
-   dst->a = src->a;
+   *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
 }
 
 typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void * );
@@ -104,7 +102,8 @@ static void import_float_colors( GLcontext *ctx )
 }
 
 
-#define GET_COLOR(ptr, idx) (((GLfloat (*)[4])((ptr)->Ptr))[idx])
+/* Hack alert: assume chan is 8 bits */
+#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
 
 
 static void interp_extras( GLcontext *ctx,
@@ -114,20 +113,19 @@ static void interp_extras( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
-   /*fprintf(stderr, "%s\n", __FUNCTION__);*/
-
    if (VB->ColorPtr[1]) {
-      INTERP_4F( t,
+      INTERP_4CHAN( t,
 		 GET_COLOR(VB->ColorPtr[1], dst),
 		 GET_COLOR(VB->ColorPtr[1], out),
 		 GET_COLOR(VB->ColorPtr[1], in) );
-
+#if 0 /* [dBorca] leaving disabled for now */
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3F( t,
+	 INTERP_3CHAN( t,
 		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		    GET_COLOR(VB->SecondaryColorPtr[1], out),
 		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
+#endif
    }
 
    if (VB->EdgeFlag) {
@@ -143,13 +141,14 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
+	 COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst),
 		   GET_COLOR(VB->ColorPtr[1], src) );
-
+#if 0 /* [dBorca] leaving disabled for now */
 	 if (VB->SecondaryColorPtr[1]) {
-	    COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+	    COPY_CHAN4( GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
 	 }
+#endif
    }
 
    copy_pv(ctx, dst, src);
@@ -285,9 +284,7 @@ void fxCheckTexSizes( GLcontext *ctx )
 	  * In the unfilled and twosided cases we are using the
 	  * Extras ones anyway, so leave them in place.
 	  */
-         if (!(NEED_TWO_SIDED_LIGHTING(ctx) ||
-               ctx->Polygon.FrontMode != GL_FILL ||
-               ctx->Polygon.BackMode != GL_FILL)) {
+	 if (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
 	    tnl->Driver.Render.Interp = setup_tab[fxMesa->SetupIndex].interp;
 	 }
       }
@@ -358,13 +355,10 @@ void fxChooseVertexState( GLcontext *ctx )
    
    fxMesa->SetupIndex = ind;
 
-   if (NEED_TWO_SIDED_LIGHTING(ctx) ||
-       ctx->Polygon.FrontMode != GL_FILL ||
-       ctx->Polygon.BackMode != GL_FILL) {
+   if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
       tnl->Driver.Render.Interp = interp_extras;
       tnl->Driver.Render.CopyPV = copy_pv_extras;
-   }
-   else {
+   } else {
       tnl->Driver.Render.Interp = setup_tab[ind].interp;
       tnl->Driver.Render.CopyPV = copy_pv;
    }

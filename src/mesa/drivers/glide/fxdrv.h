@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.58 2003/08/19 15:52:53 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.59 2003/10/02 17:36:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,23 +69,10 @@
 #define ZCOORD   GR_VERTEX_OOZ_OFFSET
 #define OOWCOORD GR_VERTEX_OOW_OFFSET
 
-#define RCOORD   GR_VERTEX_R_OFFSET
-#define GCOORD   GR_VERTEX_G_OFFSET
-#define BCOORD   GR_VERTEX_B_OFFSET
-#define ACOORD   GR_VERTEX_A_OFFSET
-
 #define S0COORD  GR_VERTEX_SOW_TMU0_OFFSET
 #define T0COORD  GR_VERTEX_TOW_TMU0_OFFSET
 #define S1COORD  GR_VERTEX_SOW_TMU1_OFFSET
 #define T1COORD  GR_VERTEX_TOW_TMU1_OFFSET
-
-
-extern float gl_ubyte_to_float_255_color_tab[256];
-#define UBYTE_COLOR_TO_FLOAT_255_COLOR(c) gl_ubyte_to_float_255_color_tab[c]
-#define UBYTE_COLOR_TO_FLOAT_255_COLOR2(f,c) \
-    (*(int *)&(f)) = ((int *)gl_ubyte_to_float_255_color_tab)[c]
-
-
 
 
 
@@ -208,10 +195,6 @@ typedef struct tfxTexInfo_t
    GrMipMapMode_t mmMode;
 
    GLfloat sScale, tScale;
-   GLint int_sScale, int_tScale;	/* x86 floating point trick for
-					 * multiplication by powers of 2.
-					 * Used in fxfasttmp.h
-					 */
 
    GuTexPalette palette;
 
@@ -252,6 +235,19 @@ typedef struct
    GLboolean depthTestEnabled;
    GLboolean depthMask;
    GrCmpFnc_t depthTestFunc;
+   FxI32 depthBias;
+
+   /* Stencil */
+
+   GLboolean stencilEnabled;
+   GrCmpFnc_t stencilFunction;		/* Stencil function */
+   GrStencil_t stencilRefValue;		/* Stencil reference value */
+   GrStencil_t stencilValueMask;	/* Value mask */
+   GrStencil_t stencilWriteMask;	/* Write mask */
+   GrCmpFnc_t stencilFailFunc;		/* Stencil fail function */
+   GrCmpFnc_t stencilZFailFunc;		/* Stencil pass, depth fail function */
+   GrCmpFnc_t stencilZPassFunc;		/* Stencil pass, depth pass function */
+   GrStencil_t stencilClear;		/* Buffer clear value */
 }
 tfxUnitsState;
 
@@ -268,6 +264,7 @@ tfxUnitsState;
 #define FX_NEW_SCISSOR        0x20
 #define FX_NEW_COLOR_MASK     0x40
 #define FX_NEW_CULL           0x80
+#define FX_NEW_STENCIL        0x100
 
 
 #define FX_CONTEXT(ctx) ((fxMesaContext)((ctx)->DriverCtx))
@@ -327,8 +324,10 @@ extern GLubyte FX_PixelToR[0x10000];
 extern GLubyte FX_PixelToG[0x10000];
 extern GLubyte FX_PixelToB[0x10000];
 
-/* lookup table for scaling 5 bit colors up to 8 bits */
-GLuint FX_rgb_scale_5[32];
+/* lookup table for scaling y bit colors up to 8 bits */
+extern GLuint FX_rgb_scale_4[16];
+extern GLuint FX_rgb_scale_5[32];
+extern GLuint FX_rgb_scale_6[64];
 
 typedef void (*fx_tri_func) (fxMesaContext, GrVertex *, GrVertex *, GrVertex *);
 typedef void (*fx_line_func) (fxMesaContext, GrVertex *, GrVertex *);
@@ -359,6 +358,7 @@ struct tfxMesaContext
 
 
    GLuint new_state;
+   GLuint new_gl_state;
 
    /* Texture Memory Manager Data 
     */
@@ -387,7 +387,7 @@ struct tfxMesaContext
    /* Rasterization:
     */
    GLuint render_index;
-   GLuint is_in_hardware;
+   GLuint fallback;
    GLenum render_primitive;
    GLenum raster_primitive;
 
@@ -419,7 +419,8 @@ struct tfxMesaContext
 
    GLboolean verbose;
    GLboolean haveTwoTMUs;	/* True if we really have 2 tmu's  */
-   GLboolean haveAlphaBuffer;
+   GLboolean haveHwAlpha;
+   GLboolean haveHwStencil;
    GLboolean haveZBuffer;
    GLboolean haveDoubleBuffer;
    GLboolean haveGlobalPaletteTexture;
@@ -430,19 +431,27 @@ struct tfxMesaContext
 
    int screen_width;
    int screen_height;
-   int initDone;
    int clipMinX;
    int clipMaxX;
    int clipMinY;
    int clipMaxY;
 
    int colDepth;
-   int maxTextureSize; /* [koolsmoky] */
+   GLboolean fsaa;
+
+   /* Glide (per card) capabilities. These get mirrored
+    * from `glbHWConfig' when creating a new context...
+    */
+   GrSstType type;
+   FxBool HavePixExt;	/* PIXEXT */
+   FxBool HaveTexFmt;	/* TEXFMT */
+   FxBool HaveCmbExt;	/* COMBINE */
+   FxBool HaveMirExt;	/* TEXMIRROR */
+   FxBool HaveTexus2;	/* Texus 2 - FXT1 */
+   struct tdfx_glide Glide;
+   char rendererString[100];
 };
 
-
-extern GrHwConfiguration glbHWConfig;
-extern int glbCurrentBoard;
 
 extern void fxSetupFXUnits(GLcontext *);
 extern void fxSetupDDPointers(GLcontext *);
@@ -505,6 +514,9 @@ extern void fxDDAlphaFunc(GLcontext *, GLenum, GLfloat);
 extern void fxDDBlendFunc(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);
+extern void fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
+extern void fxDDStencilMask (GLcontext *ctx, GLuint mask);
+extern void fxDDStencilOp (GLcontext *ctx, GLenum sfail, GLenum zfail, GLenum zpass);
 
 extern void fxDDInitExtensions(GLcontext * ctx);
 
@@ -524,7 +536,7 @@ extern void fxTMReloadSubMipMapLevel(fxMesaContext,
 extern void fxTexGetFormat(GLcontext *, GLenum, GrTextureFormat_t *, GLint *); /* [koolsmoky] */
 
 extern int fxTexGetInfo(int, int, GrLOD_t *, GrAspectRatio_t *,
-			float *, float *, int *, int *, int *, int *);
+			float *, float *, int *, int *);
 
 extern void fxDDScissor(GLcontext * ctx,
 			GLint x, GLint y, GLsizei w, GLsizei h);
@@ -558,6 +570,7 @@ extern int fxDDInitFxMesaContext(fxMesaContext fxMesa);
 extern void fxDDDestroyFxMesaContext(fxMesaContext fxMesa);
 
 
+void fxColorMask (fxMesaContext fxMesa, GLboolean enable);
 
 
 extern void fxSetScissorValues(GLcontext * ctx);
@@ -567,6 +580,19 @@ extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 extern void fxCheckIsInHardware(GLcontext *ctx);
 
-extern GLboolean fx_check_IsInHardware(GLcontext *ctx);
+/* Flags for software fallback cases */
+#define FX_FALLBACK_TEXTURE_1D_3D	0x0001
+#define FX_FALLBACK_DRAW_BUFFER		0x0002
+#define FX_FALLBACK_SPECULAR		0x0004
+#define FX_FALLBACK_STENCIL		0x0008
+#define FX_FALLBACK_RENDER_MODE		0x0010
+#define FX_FALLBACK_LOGICOP		0x0020
+#define FX_FALLBACK_TEXTURE_ENV		0x0040
+#define FX_FALLBACK_TEXTURE_BORDER	0x0080
+#define FX_FALLBACK_COLORMASK		0x0100
+#define FX_FALLBACK_BLEND		0x0200
+#define FX_FALLBACK_TEXTURE_MULTI	0x0400
+
+extern GLuint fx_check_IsInHardware(GLcontext *ctx);
 
 #endif
