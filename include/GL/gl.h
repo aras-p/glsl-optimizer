@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.6 1999/09/17 12:21:36 brianp Exp $ */
+/* $Id: gl.h,v 1.7 1999/09/18 01:06:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2181,7 +2181,6 @@ GLAPI void GLAPIENTRY glUnlockArraysEXT( void );
  * If you want to try it out, #define GL_EXT_get_proc_address before
  * #include <GL/gl.h>
  */
-#define  GL_EXT_get_proc_address 1
 #ifdef GL_EXT_get_proc_address
 #ifdef __WIN32__
    typedef (void GLAPIENTRY *glProcAddress)();
