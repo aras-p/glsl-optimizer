@@ -480,6 +480,7 @@ struct tfxMesaContext {
   GLfloat fogDensity;
   GLfloat fogStart, fogEnd;
   GrFog_t *fogTable;
+  GLint textureAlign;
 
   /* Acc. functions */
 

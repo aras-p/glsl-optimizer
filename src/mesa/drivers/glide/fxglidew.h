@@ -66,11 +66,13 @@
 	#define FX_GLIDE_STATE_SIZE             0x0006	  /* Size of buffer, in bytes, needed to save Glide state. */
 	#define FX_LFB_PIXEL_PIPE               0x0009	  /* 1 if LFB writes can go through the 3D pixel pipe. */		
 	#define FX_PENDING_BUFFERSWAPS          0x0014    /* The number of buffer swaps pending. */
+	#define FX_TEXTURE_ALIGN		0x0024    /* The required alignment for textures */
 #else
-        #define FX_FOG_TABLE_ENTRIES            GR_FOG_TABLE_ENTRIES  
+	#define FX_FOG_TABLE_ENTRIES            GR_FOG_TABLE_ENTRIES
 	#define FX_GLIDE_STATE_SIZE             GR_GLIDE_STATE_SIZE
-	#define FX_LFB_PIXEL_PIPE               GR_LFB_PIXEL_PIPE		
-	#define FX_PENDING_BUFFERSWAPS          GR_PENDING_BUFFERSWAPS  
+	#define FX_LFB_PIXEL_PIPE               GR_LFB_PIXEL_PIPE
+	#define FX_PENDING_BUFFERSWAPS          GR_PENDING_BUFFERSWAPS
+	#define FX_TEXTURE_ALIGN		GR_TEXTURE_ALIGN
 #endif
 
 /*

@@ -708,6 +708,7 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    FX_grLfbWriteColorFormat(GR_COLORFORMAT_ABGR); /* Not every Glide has this */
 #endif
 
+   fxMesa->textureAlign=FX_grGetInteger(FX_TEXTURE_ALIGN);
    fxMesa->glCtx->Const.MaxTextureLevels=9;
    fxMesa->glCtx->Const.MaxTextureSize=256;
    fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;

@@ -68,6 +68,9 @@ FxI32 FX_grGetInteger_NoLock(FxU32 pname)
        return FXFALSE;
     case FX_PENDING_BUFFERSWAPS:
 	return grBufferNumPending();
+    case FX_TEXTURE_ALIGN:
+        /* This is a guess from reading the glide3 docs */
+        return 8;
     default:
        if (MESA_VERBOSE&VERBOSE_DRIVER) {
           fprintf(stderr,"Wrong parameter in FX_grGetInteger!\n");
@@ -84,6 +87,7 @@ FxI32 FX_grGetInteger_NoLock(FxU32 pname)
      case FX_GLIDE_STATE_SIZE:
      case FX_LFB_PIXEL_PIPE:
      case FX_PENDING_BUFFERSWAPS:
+     case FX_TEXTURE_ALIGN:
        grname = pname;
        break;
      default:
