@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.22 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.23 2001/07/26 15:57:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
  *    INTERP_Z        - if defined, interpolate Z values
  *    INTERP_FOG      - if defined, interpolate fog values
  *    INTERP_RGB      - if defined, interpolate RGB values
- *    INTERP_ALPHA    - if defined, interpolate Alpha values
+ *    INTERP_ALPHA    - if defined, interpolate Alpha values (req's INTERP_RGB)
  *    INTERP_SPEC     - if defined, interpolate specular RGB values
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
@@ -280,7 +280,7 @@
     */
 
    {
-      GLint ltor;		/* true if scanning left-to-right */
+      GLint scan_from_left_to_right;  /* true if scanning left-to-right */
 #ifdef INTERP_Z
       GLfloat dzdx, dzdy;
 #endif
@@ -331,7 +331,7 @@
       SETUP_CODE
 #endif
 
-      ltor = (oneOverArea < 0.0F);
+      scan_from_left_to_right = (oneOverArea < 0.0F);
 
       span.activeMask = 0;
 
@@ -368,122 +368,158 @@
 #endif
 #ifdef INTERP_RGB
       span.activeMask |= SPAN_RGBA;
-      {
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dr, eBot_dr;
          GLfloat eMaj_dg, eBot_dg;
          GLfloat eMaj_db, eBot_db;
-         eMaj_dr = (GLint) vMax->color[0] - (GLint) vMin->color[0];
-         eBot_dr = (GLint) vMid->color[0] - (GLint) vMin->color[0];
+#  ifdef INTERP_ALPHA
+         GLfloat eMaj_da, eBot_da;
+#  endif
+         eMaj_dr = (GLint) vMax->color[RCOMP] - (GLint) vMin->color[RCOMP];
+         eBot_dr = (GLint) vMid->color[RCOMP] - (GLint) vMin->color[RCOMP];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          span.redStep = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
-         eMaj_dg = (GLint) vMax->color[1] - (GLint) vMin->color[1];
-	 eBot_dg = (GLint) vMid->color[1] - (GLint) vMin->color[1];
+         eMaj_dg = (GLint) vMax->color[GCOMP] - (GLint) vMin->color[GCOMP];
+	 eBot_dg = (GLint) vMid->color[GCOMP] - (GLint) vMin->color[GCOMP];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          span.greenStep = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
-         eMaj_db = (GLint) vMax->color[2] - (GLint) vMin->color[2];
-         eBot_db = (GLint) vMid->color[2] - (GLint) vMin->color[2];
+         eMaj_db = (GLint) vMax->color[BCOMP] - (GLint) vMin->color[BCOMP];
+         eBot_db = (GLint) vMid->color[BCOMP] - (GLint) vMin->color[BCOMP];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          span.blueStep = SignedFloatToFixed(dbdx);
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
-      }
-#endif
-#ifdef INTERP_ALPHA
-      {
-         GLfloat eMaj_da, eBot_da;
-         eMaj_da = (GLint) vMax->color[3] - (GLint) vMin->color[3];
-         eBot_da = (GLint) vMid->color[3] - (GLint) vMin->color[3];
+#  ifdef INTERP_ALPHA
+         eMaj_da = (GLint) vMax->color[ACOMP] - (GLint) vMin->color[ACOMP];
+         eBot_da = (GLint) vMid->color[ACOMP] - (GLint) vMin->color[ACOMP];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
          span.alphaStep = SignedFloatToFixed(dadx);
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
+#  endif
+      }
+      else {
+         ASSERT (ctx->Light.ShadeModel == GL_FLAT);
+         drdx = drdy = 0.0F;
+         dgdx = dgdy = 0.0F;
+         dbdx = dbdy = 0.0F;
+         span.redStep = 0;
+         span.greenStep = 0;
+         span.blueStep = 0;
+#  ifdef INTERP_ALPHA
+         dadx = dady = 0.0F;
+         span.alphaStep = 0;
+#  endif
       }
 #endif
 #ifdef INTERP_FLOAT_RGBA
       span.activeMask |= SPAN_RGBA;
-      {
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dr, eBot_dr;
          GLfloat eMaj_dg, eBot_dg;
          GLfloat eMaj_db, eBot_db;
          GLfloat eMaj_da, eBot_da;
-         eMaj_dr = (GLint) vMax->color[0] - (GLint) vMin->color[0];
-         eBot_dr = (GLint) vMid->color[0] - (GLint) vMin->color[0];
+         eMaj_dr = (GLint) vMax->color[RCOMP] - (GLint) vMin->color[RCOMP];
+         eBot_dr = (GLint) vMid->color[RCOMP] - (GLint) vMin->color[RCOMP];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          span.redStep = drdx;
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
-         eMaj_dg = (GLint) vMax->color[1] - (GLint) vMin->color[1];
-	 eBot_dg = (GLint) vMid->color[1] - (GLint) vMin->color[1];
+         eMaj_dg = (GLint) vMax->color[GCOMP] - (GLint) vMin->color[GCOMP];
+	 eBot_dg = (GLint) vMid->color[GCOMP] - (GLint) vMin->color[GCOMP];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          span.greenStep = dgdx;
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
-         eMaj_db = (GLint) vMax->color[2] - (GLint) vMin->color[2];
-         eBot_db = (GLint) vMid->color[2] - (GLint) vMin->color[2];
+         eMaj_db = (GLint) vMax->color[BCOMP] - (GLint) vMin->color[BCOMP];
+         eBot_db = (GLint) vMid->color[BCOMP] - (GLint) vMin->color[BCOMP];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          span.blueStep = dbdx;
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
-         eMaj_da = (GLint) vMax->color[3] - (GLint) vMin->color[3];
-         eBot_da = (GLint) vMid->color[3] - (GLint) vMin->color[3];
+         eMaj_da = (GLint) vMax->color[ACOMP] - (GLint) vMin->color[ACOMP];
+         eBot_da = (GLint) vMid->color[ACOMP] - (GLint) vMin->color[ACOMP];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
          span.alphaStep = dadx;
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
       }
+      else {
+         drdx = drdy = span.redStep = 0.0F;
+         dgdx = dgdy = span.greenStep = 0.0F;
+         dbdx = dbdy = span.blueStep = 0.0F;
+         dadx = dady = span.alphaStep = 0.0F;
+      }
 #endif
 #ifdef INTERP_SPEC
       span.activeMask |= SPAN_SPEC;
-      {
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dsr, eBot_dsr;
          GLfloat eMaj_dsg, eBot_dsg;
          GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
-         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
+         eMaj_dsr = (GLint) vMax->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
+         eBot_dsr = (GLint) vMid->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          span.specRedStep = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
-         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
-	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
+         eMaj_dsg = (GLint) vMax->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
+	 eBot_dsg = (GLint) vMid->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
-         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
-         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
+         eMaj_dsb = (GLint) vMax->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
+         eBot_dsb = (GLint) vMid->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.specBlueStep = SignedFloatToFixed(dsbdx);
 	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
       }
+      else {
+         dsrdx = dsrdy = 0.0F;
+         dsgdx = dsgdy = 0.0F;
+         dsbdx = dsbdy = 0.0F;
+         span.specRedStep = 0;
+         span.specGreenStep = 0;
+         span.specBlueStep = 0;
+      }
 #endif
 #ifdef INTERP_FLOAT_SPEC
       span.activeMask |= SPAN_SPEC;
-      {
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_dsr, eBot_dsr;
          GLfloat eMaj_dsg, eBot_dsg;
          GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
-         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
+         eMaj_dsr = (GLint) vMax->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
+         eBot_dsr = (GLint) vMid->specular[RCOMP] - (GLint) vMin->specular[RCOMP];
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          span.specRedStep = dsrdx;
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
-         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
-	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
+         eMaj_dsg = (GLint) vMax->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
+	 eBot_dsg = (GLint) vMid->specular[GCOMP] - (GLint) vMin->specular[GCOMP];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = dsgdx;
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
-         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
-         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
+         eMaj_dsb = (GLint) vMax->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
+         eBot_dsb = (GLint) vMid->specular[BCOMP] - (GLint) vMin->specular[BCOMP];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.specBlueStep = dsbdx;
 	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
+      }
+      else {
+         dsrdx = dsrdy = span.specRedStep = 0;
+         dsgdx = dsgdy = span.specGreenStep = 0;
+         dsbdx = dsbdy = span.specBlueStep = 0;
       }
 #endif
 
 #ifdef INTERP_INDEX
       span.activeMask |= SPAN_INDEX;
-      {
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
          GLfloat eMaj_di, eBot_di;
          eMaj_di = (GLint) vMax->index - (GLint) vMin->index;
          eBot_di = (GLint) vMid->index - (GLint) vMin->index;
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
          span.indexStep = SignedFloatToFixed(didx);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
+      }
+      else {
+         didx = didy = 0.0F;
+         span.indexStep = 0;
       }
 #endif
 #ifdef INTERP_INT_TEX
@@ -696,7 +732,7 @@
          GLfixed fb, fdbOuter, fdbInner;
 #endif
 #ifdef INTERP_ALPHA
-         GLfixed fa=0, fdaOuter=0, fdaInner;
+         GLfixed fa, fdaOuter, fdaInner;
 #endif
 #ifdef INTERP_FLOAT_RGBA
          GLfloat fr, fdrOuter, fdrInner;
@@ -745,7 +781,7 @@
 
             if (subTriangle==0) {
                /* bottom half */
-               if (ltor) {
+               if (scan_from_left_to_right) {
                   eLeft = &eMaj;
                   eRight = &eBot;
                   lines = eRight->lines;
@@ -762,7 +798,7 @@
             }
             else {
                /* top half */
-               if (ltor) {
+               if (scan_from_left_to_right) {
                   eLeft = &eMaj;
                   eRight = &eTop;
                   lines = eRight->lines;
@@ -853,54 +889,98 @@
                dfogOuter = dfogdy + dxOuter * span.fogStep;
 #endif
 #ifdef INTERP_RGB
-               fr = (GLfixed) (ChanToFixed(vLower->color[0])
-                                + drdx * adjx + drdy * adjy) + FIXED_HALF;
-               fdrOuter = SignedFloatToFixed(drdy + dxOuter * drdx);
-               fg = (GLfixed) (ChanToFixed(vLower->color[1])
-                                + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
-               fdgOuter = SignedFloatToFixed(dgdy + dxOuter * dgdx);
-               fb = (GLfixed) (ChanToFixed(vLower->color[2])
-                                 + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
-               fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
-#endif
-#ifdef INTERP_ALPHA
-               fa = (GLfixed) (ChanToFixed(vLower->color[3])
-                                + dadx * adjx + dady * adjy) + FIXED_HALF;
-               fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
+               if (ctx->Light.ShadeModel == GL_SMOOTH) {
+                  fr = (GLfixed) (ChanToFixed(vLower->color[RCOMP])
+                                   + drdx * adjx + drdy * adjy) + FIXED_HALF;
+                  fdrOuter = SignedFloatToFixed(drdy + dxOuter * drdx);
+                  fg = (GLfixed) (ChanToFixed(vLower->color[GCOMP])
+                                   + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
+                  fdgOuter = SignedFloatToFixed(dgdy + dxOuter * dgdx);
+                  fb = (GLfixed) (ChanToFixed(vLower->color[BCOMP])
+                                    + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
+                  fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
+#  ifdef INTERP_ALPHA
+                  fa = (GLfixed) (ChanToFixed(vLower->color[ACOMP])
+                                   + dadx * adjx + dady * adjy) + FIXED_HALF;
+                  fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
+#  endif
+               }
+               else {
+                  ASSERT (ctx->Light.ShadeModel == GL_FLAT);
+                  fr = ChanToFixed(v2->color[RCOMP]);
+                  fg = ChanToFixed(v2->color[GCOMP]);
+                  fb = ChanToFixed(v2->color[BCOMP]);
+                  fdrOuter = fdgOuter = fdbOuter = 0;
+#  ifdef INTERP_ALPHA
+                  fa =  ChanToFixed(v2->color[ACOMP]);
+                  fdaOuter = 0;
+#  endif
+               }
 #endif
 #ifdef INTERP_FLOAT_RGBA
-               fr = vLower->color[0] + drdx * adjx + drdy * adjy;
-               fdrOuter = drdy + dxOuter * drdx;
-               fg = vLower->color[1] + dgdx * adjx + dgdy * adjy;
-               fdgOuter = dgdy + dxOuter * dgdx;
-               fb = vLower->color[2] + dbdx * adjx + dbdy * adjy;
-               fdbOuter = dbdy + dxOuter * dbdx;
-               fa = vLower->color[3] + dadx * adjx + dady * adjy;
-               fdaOuter = dady + dxOuter * dadx;
+               if (ctx->Light.ShadeModel == GL_SMOOTH) {
+                  fr = vLower->color[RCOMP] + drdx * adjx + drdy * adjy;
+                  fdrOuter = drdy + dxOuter * drdx;
+                  fg = vLower->color[GCOMP] + dgdx * adjx + dgdy * adjy;
+                  fdgOuter = dgdy + dxOuter * dgdx;
+                  fb = vLower->color[BCOMP] + dbdx * adjx + dbdy * adjy;
+                  fdbOuter = dbdy + dxOuter * dbdx;
+                  fa = vLower->color[ACOMP] + dadx * adjx + dady * adjy;
+                  fdaOuter = dady + dxOuter * dadx;
+               }
+               else {
+                  fr = v2->color[RCOMP];
+                  fg = v2->color[GCOMP];
+                  fb = v2->color[BCOMP];
+                  fa = v2->color[ACOMP];
+                  fdrOuter = fdgOuter = fdbOuter = fdaOuter = 0.0F;
+               }
 #endif
 #ifdef INTERP_SPEC
-               fsr = (GLfixed) (ChanToFixed(vLower->specular[0])
-                                 + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
-               fdsrOuter = SignedFloatToFixed(dsrdy + dxOuter * dsrdx);
-               fsg = (GLfixed) (ChanToFixed(vLower->specular[1])
-                                 + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
-               fdsgOuter = SignedFloatToFixed(dsgdy + dxOuter * dsgdx);
-               fsb = (GLfixed) (ChanToFixed(vLower->specular[2])
-                                 + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
-               fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
+               if (ctx->Light.ShadeModel == GL_SMOOTH) {
+                  fsr = (GLfixed) (ChanToFixed(vLower->specular[RCOMP])
+                                    + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
+                  fdsrOuter = SignedFloatToFixed(dsrdy + dxOuter * dsrdx);
+                  fsg = (GLfixed) (ChanToFixed(vLower->specular[GCOMP])
+                                    + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
+                  fdsgOuter = SignedFloatToFixed(dsgdy + dxOuter * dsgdx);
+                  fsb = (GLfixed) (ChanToFixed(vLower->specular[BCOMP])
+                                    + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
+                  fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
+               }
+               else {
+                  fsr = ChanToFixed(v2->specular[RCOMP]);
+                  fsg = ChanToFixed(v2->specular[GCOMP]);
+                  fsb = ChanToFixed(v2->specular[BCOMP]);
+                  fdsrOuter = fdsgOuter = fdsbOuter = 0;
+               }
 #endif
 #ifdef INTERP_FLOAT_SPEC
-               fsr = vLower->specular[0] + dsrdx * adjx + dsrdy * adjy;
-               fdsrOuter = dsrdy + dxOuter * dsrdx;
-               fsg = vLower->specular[1] + dsgdx * adjx + dsgdy * adjy;
-               fdsgOuter = dsgdy + dxOuter * dsgdx;
-               fsb = vLower->specular[2] + dsbdx * adjx + dsbdy * adjy;
-               fdsbOuter = dsbdy + dxOuter * dsbdx;
+               if (ctx->Light.ShadeModel == GL_SMOOTH) {
+                  fsr = vLower->specular[RCOMP] + dsrdx * adjx + dsrdy * adjy;
+                  fdsrOuter = dsrdy + dxOuter * dsrdx;
+                  fsg = vLower->specular[GCOMP] + dsgdx * adjx + dsgdy * adjy;
+                  fdsgOuter = dsgdy + dxOuter * dsgdx;
+                  fsb = vLower->specular[BCOMP] + dsbdx * adjx + dsbdy * adjy;
+                  fdsbOuter = dsbdy + dxOuter * dsbdx;
+               }
+               else {
+                  fsr = v2->specular[RCOMP];
+                  fsg = v2->specular[GCOMP];
+                  fsb = v2->specular[BCOMP];
+                  fdsrOuter = fdsgOuter = fdsbOuter = 0.0F:
+               }
 #endif
 #ifdef INTERP_INDEX
-               fi = (GLfixed)(vLower->index * FIXED_SCALE
-                              + didx * adjx + didy * adjy) + FIXED_HALF;
-               fdiOuter = SignedFloatToFixed(didy + dxOuter * didx);
+               if (ctx->Light.ShadeModel == GL_SMOOTH) {
+                  fi = (GLfixed)(vLower->index * FIXED_SCALE
+                                 + didx * adjx + didy * adjy) + FIXED_HALF;
+                  fdiOuter = SignedFloatToFixed(didy + dxOuter * didx);
+               }
+               else {
+                  fi = (GLfixed) (v2->index * FIXED_SCALE);
+                  fdiOuter = 0;
+               }
 #endif
 #ifdef INTERP_INT_TEX
                {

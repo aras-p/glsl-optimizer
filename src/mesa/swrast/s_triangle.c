@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.35 2001/07/23 16:47:53 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.36 2001/07/26 15:57:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -671,14 +671,7 @@ static void affine_textured_triangle( GLcontext *ctx,
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )				\
-   if (ctx->Light.ShadeModel == GL_FLAT) {		\
-      span.red   = IntToFixed(v2->color[RCOMP]);	\
-      span.green = IntToFixed(v2->color[GCOMP]);	\
-      span.blue  = IntToFixed(v2->color[BCOMP]);	\
-      span.alpha = IntToFixed(v2->color[ACOMP]);	\
-   }							\
-   affine_span(ctx, &span, &info);
+#define RENDER_SPAN( span )   affine_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
 
@@ -970,14 +963,7 @@ static void persp_textured_triangle( GLcontext *ctx,
    }									\
    info.tsize = obj->Image[b]->Height * info.tbytesline;
 
-#define RENDER_SPAN( span )				\
-   if (ctx->Light.ShadeModel == GL_FLAT) {		\
-      span.red   = IntToFixed(v2->color[RCOMP]);	\
-      span.green = IntToFixed(v2->color[GCOMP]);	\
-      span.blue  = IntToFixed(v2->color[BCOMP]);	\
-      span.alpha = IntToFixed(v2->color[ACOMP]);	\
-   }							\
-   fast_persp_span(ctx, &span, &info);
+#define RENDER_SPAN( span )   fast_persp_span(ctx, &span, &info);
 
 #include "s_tritemp.h"
 
@@ -1294,20 +1280,12 @@ static void general_textured_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
    const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   const GLboolean flatShade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLfixed rFlat, gFlat, bFlat, aFlat;					\
    DEFARRAY(GLfloat, sSpan, MAX_WIDTH);  /* mac 32k limitation */	\
    DEFARRAY(GLfloat, tSpan, MAX_WIDTH);  /* mac 32k limitation */	\
    DEFARRAY(GLfloat, uSpan, MAX_WIDTH);  /* mac 32k limitation */	\
    CHECKARRAY(sSpan, return);  /* mac 32k limitation */			\
    CHECKARRAY(tSpan, return);  /* mac 32k limitation */			\
    CHECKARRAY(uSpan, return);  /* mac 32k limitation */			\
-   if (flatShade) {							\
-      rFlat = ChanToFixed(v2->color[RCOMP]);				\
-      gFlat = ChanToFixed(v2->color[GCOMP]);				\
-      bFlat = ChanToFixed(v2->color[BCOMP]);				\
-      aFlat = ChanToFixed(v2->color[ACOMP]);				\
-   }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
@@ -1317,12 +1295,6 @@ static void general_textured_triangle( GLcontext *ctx,
    GLfloat fogSpan[MAX_WIDTH];						\
    GLchan rgbaSpan[MAX_WIDTH][4];					\
    GLuint i;								\
-   if (flatShade) {							\
-      span.red = rFlat;    span.redStep = 0;				\
-      span.green = gFlat;  span.greenStep = 0;				\
-      span.blue = bFlat;   span.blueStep = 0;				\
-      span.alpha = aFlat;  span.alphaStep = 0;				\
-   }									\
    /* NOTE: we could just call rasterize_span() here instead */		\
    for (i = 0; i < span.count; i++) {					\
       GLdouble invQ = span.tex[0][3] ? (1.0 / span.tex[0][3]) : 1.0;	\
@@ -1380,33 +1352,11 @@ static void general_textured_spec_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
    const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   const GLboolean flatShade = (ctx->Light.ShadeModel == GL_FLAT);	\
-   GLfixed rFlat, gFlat, bFlat, aFlat;					\
-   GLfixed srFlat, sgFlat, sbFlat;					\
-   if (flatShade) {							\
-      rFlat = ChanToFixed(v2->color[RCOMP]);				\
-      gFlat = ChanToFixed(v2->color[GCOMP]);				\
-      bFlat = ChanToFixed(v2->color[BCOMP]);				\
-      aFlat = ChanToFixed(v2->color[ACOMP]);				\
-      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
-      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
-      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
-   }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )					\
-   if (flatShade) {						\
-      span.red = rFlat;    span.redStep = 0;			\
-      span.green = gFlat;  span.greenStep = 0;			\
-      span.blue = bFlat;   span.blueStep = 0;			\
-      span.alpha = aFlat;  span.alphaStep = 0;			\
-      span.specRed = srFlat;    span.specRedStep = 0;		\
-      span.specGreen = sgFlat;  span.specGreenStep = 0;		\
-      span.specBlue = sbFlat;   span.specBlueStep = 0;		\
-   }								\
-   rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   rasterize_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -1435,33 +1385,11 @@ static void lambda_textured_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
    const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   const GLboolean flatShade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLfixed rFlat, gFlat, bFlat, aFlat;					\
-   GLfixed srFlat, sgFlat, sbFlat;					\
-   if (flatShade) {							\
-      rFlat = ChanToFixed(v2->color[RCOMP]);				\
-      gFlat = ChanToFixed(v2->color[GCOMP]);				\
-      bFlat = ChanToFixed(v2->color[BCOMP]);				\
-      aFlat = ChanToFixed(v2->color[ACOMP]);				\
-      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
-      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
-      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
-   }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )					\
-   if (flatShade) {						\
-      span.red = rFlat;    span.redStep = 0;			\
-      span.green = gFlat;  span.greenStep = 0;			\
-      span.blue = bFlat;   span.blueStep = 0;			\
-      span.alpha = aFlat;  span.alphaStep = 0;			\
-      span.specRed = srFlat;    span.specRedStep = 0;		\
-      span.specGreen = sgFlat;  span.specGreenStep = 0;		\
-      span.specBlue = sbFlat;   span.specBlueStep = 0;		\
-   }								\
-   rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   rasterize_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -1492,33 +1420,11 @@ static void lambda_textured_spec_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
    const struct gl_texture_image *texImage = obj->Image[obj->BaseLevel];\
-   const GLboolean flatShade = (ctx->Light.ShadeModel == GL_FLAT);	\
-   GLfixed rFlat, gFlat, bFlat, aFlat;					\
-   GLfixed srFlat, sgFlat, sbFlat;					\
-   if (flatShade) {							\
-      rFlat = ChanToFixed(v2->color[RCOMP]);				\
-      gFlat = ChanToFixed(v2->color[GCOMP]);				\
-      bFlat = ChanToFixed(v2->color[BCOMP]);				\
-      aFlat = ChanToFixed(v2->color[ACOMP]);				\
-      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
-      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
-      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
-   }									\
    span.texWidth[0] = (GLfloat) texImage->Width;			\
    span.texHeight[0] = (GLfloat) texImage->Height;			\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )					\
-   if (flatShade) {						\
-      span.red = rFlat;    span.redStep = 0;			\
-      span.green = gFlat;  span.greenStep = 0;			\
-      span.blue = bFlat;   span.blueStep = 0;			\
-      span.alpha = aFlat;  span.alphaStep = 0;			\
-      span.specRed = srFlat;    span.specRedStep = 0;		\
-      span.specGreen = sgFlat;  span.specGreenStep = 0;		\
-      span.specBlue = sbFlat;   span.specBlueStep = 0;		\
-   }								\
-   rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   rasterize_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -1547,19 +1453,7 @@ lambda_multitextured_triangle( GLcontext *ctx,
 #define INTERP_LAMBDA 1
 
 #define SETUP_CODE							\
-   const GLboolean flatShade = (ctx->Light.ShadeModel == GL_FLAT);	\
-   GLfixed rFlat, gFlat, bFlat, aFlat;					\
-   GLfixed srFlat, sgFlat, sbFlat;					\
    GLuint u;								\
-   if (flatShade) {							\
-      rFlat = ChanToFixed(v2->color[RCOMP]);				\
-      gFlat = ChanToFixed(v2->color[GCOMP]);				\
-      bFlat = ChanToFixed(v2->color[BCOMP]);				\
-      aFlat = ChanToFixed(v2->color[ACOMP]);				\
-      srFlat = ChanToFixed(v2->specular[RCOMP]);			\
-      sgFlat = ChanToFixed(v2->specular[GCOMP]);			\
-      sbFlat = ChanToFixed(v2->specular[BCOMP]);			\
-   }									\
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {			\
       if (ctx->Texture.Unit[u]._ReallyEnabled) {			\
          const struct gl_texture_object *texObj;			\
@@ -1572,17 +1466,7 @@ lambda_multitextured_triangle( GLcontext *ctx,
    }									\
    (void) fixedToDepthShift;
 
-#define RENDER_SPAN( span )					\
-   if (flatShade) {						\
-      span.red = rFlat;    span.redStep = 0;			\
-      span.green = gFlat;  span.greenStep = 0;			\
-      span.blue = bFlat;   span.blueStep = 0;			\
-      span.alpha = aFlat;  span.alphaStep = 0;			\
-      span.specRed = srFlat;    span.specRedStep = 0;		\
-      span.specGreen = sgFlat;  span.specGreenStep = 0;		\
-      span.specBlue = sbFlat;   span.specBlueStep = 0;		\
-   }								\
-   rasterize_span(ctx, &span);
+#define RENDER_SPAN( span )   rasterize_span(ctx, &span);
 
 #include "s_tritemp.h"
 
