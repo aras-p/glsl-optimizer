@@ -38,6 +38,7 @@ class PrintGlTable(gl_XML.FilterGLAPISpecBase):
 
 	def __init__(self):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
+		self.header_tag = '_GLAPI_TABLE_H_'
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
@@ -51,9 +52,6 @@ class PrintGlTable(gl_XML.FilterGLAPISpecBase):
 			(f.fn_return_type, f.name, arg_string, f.fn_offset)
 
 	def printRealHeader(self):
-		print '#ifndef _GLAPI_TABLE_H_'
-		print '#define _GLAPI_TABLE_H_'
-		print ''
 		print '#ifndef GLAPIENTRYP'
 		print '#define GLAPIENTRYP'
 		print '#endif'
@@ -64,8 +62,6 @@ class PrintGlTable(gl_XML.FilterGLAPISpecBase):
 
 	def printRealFooter(self):
 		print '};'
-		print ''
-		print '#endif'
 		return
 
 

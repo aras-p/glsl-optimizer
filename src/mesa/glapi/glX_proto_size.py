@@ -166,18 +166,13 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 				
 class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
 	def printRealHeader(self):
-		print """
-/**
+		print """/**
  * \\file
  * Prototypes for functions used to determine the number of data elements in
  * various GLX protocol messages.
  *
  * \\author Ian Romanick <idr@us.ibm.com>
  */
-
-#if !defined( _GLXSIZE_H_ )
-#  define _GLXSIZE_H_
-
 """
 		glX_XML.printPure();
 		print ''
@@ -191,7 +186,6 @@ class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
 		print "#  undef INTERNAL"
 		print "#  undef PURE"
 		print "#  undef FASTCALL"
-		print "#endif /* !defined( _GLXSIZE_H_ ) */"
 
 
 	def printFunction(self, f):
@@ -215,11 +209,12 @@ if __name__ == '__main__':
 	file_name = "gl_API.xml"
 
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:", ["only-get", "only-set", "get-alias-set"])
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:h:", ["only-get", "only-set", "get-alias-set", "header-tag"])
 	except Exception,e:
 		show_usage()
 
 	mode = None
+	header_tag = None
 	which_functions = PrintGlxSizeStubs_common.do_get | PrintGlxSizeStubs_common.do_set
 
 	for (arg,val) in args:
@@ -233,11 +228,15 @@ if __name__ == '__main__':
 			which_functions = PrintGlxSizeStubs_common.do_set
 		elif arg == "--get-alias-set":
 			which_functions |= PrintGlxSizeStubs_common.do_get_alias_set
+		elif (arg == '-h') or (arg == "--header-tag"):
+			header_tag = val
 
 	if mode == "size_c":
 		dh = PrintGlxSizeStubs_c( which_functions )
 	elif mode == "size_h":
 		dh = PrintGlxSizeStubs_h( which_functions )
+		if header_tag:
+			dh.header_tag = header_tag
 	else:
 		show_usage()
 

@@ -26,8 +26,8 @@
  * SOFTWARE.
  */
 
-#ifndef _GLAPI_TABLE_H_
-#define _GLAPI_TABLE_H_
+#if !defined( _GLAPI_TABLE_H_ )
+#  define _GLAPI_TABLE_H_
 
 #ifndef GLAPIENTRYP
 #define GLAPIENTRYP
@@ -836,4 +836,4 @@ struct _glapi_table
    void (GLAPIENTRYP StencilMaskSeparate)(GLenum face, GLuint mask); /* 798 */
 };
 
-#endif
+#endif /* !defined( _GLAPI_TABLE_H_ ) */

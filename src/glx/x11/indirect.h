@@ -26,6 +26,8 @@
  * SOFTWARE.
  */
 
+#if !defined( _INDIRECT_H_ )
+#  define _INDIRECT_H_
 
 /**
  * \file
@@ -34,10 +36,6 @@
  * \author Kevin E. Martin <kevin@precisioninsight.com>
  * \author Ian Romanick <idr@us.ibm.com>
  */
-
-#if !defined( _INDIRECT_H_ )
-#  define _INDIRECT_H_
-
 
 #  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
 #    define HIDDEN  __attribute__((visibility("hidden")))
@@ -522,4 +520,5 @@ extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, G
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 extern HIDDEN void __indirect_glActiveStencilFaceEXT(GLenum face);
 #  undef HIDDEN
+
 #endif /* !defined( _INDIRECT_H_ ) */

@@ -758,28 +758,23 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
 		self.license = license.bsd_license_template % ( \
 """Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
 (C) Copyright IBM Corporation 2004""", "PRECISION INSIGHT, IBM")
-
+		self.header_tag = "_INDIRECT_H_"
 
 	def printRealHeader(self):
-		print """
-/**
+		print """/**
  * \\file
  * Prototypes for indirect rendering functions.
  *
  * \\author Kevin E. Martin <kevin@precisioninsight.com>
  * \\author Ian Romanick <idr@us.ibm.com>
  */
-
-#if !defined( _INDIRECT_H_ )
-#  define _INDIRECT_H_
-
 """
 		glX_XML.printVisibility( "HIDDEN", "hidden" )
 
 
 	def printRealFooter(self):
 		print "#  undef HIDDEN"
-		print "#endif /* !defined( _INDIRECT_H_ ) */"
+
 
 	def printFunction(self, f):
 		if f.fn_offset < 0 or f.ignore: return

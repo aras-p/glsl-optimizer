@@ -494,6 +494,7 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.types = {}
 		self.xref = {}
 		self.factory = glItemFactory()
+		self.header_tag = None
 
 
 	def find_type(self,type_name):
@@ -529,6 +530,10 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		print ' * ' + self.license.replace('\n', '\n * ')
 		print ' */'
 		print ''
+		if self.header_tag:
+		    print '#if !defined( %s )' % (self.header_tag)
+		    print '#  define %s' % (self.header_tag)
+		    print ''
 		self.printRealHeader();
 		return
 
@@ -538,6 +543,9 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 
 		self.printFunctions()
 		self.printRealFooter()
+		if self.header_tag:
+		    print ''
+		    print '#endif /* !defined( %s ) */' % (self.header_tag)
 
 
 	def get_category_define(self):

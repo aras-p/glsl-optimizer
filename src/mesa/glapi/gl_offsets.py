@@ -38,6 +38,7 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 
 	def __init__(self):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
+		self.header_tag = '_GLAPI_OFFSETS_H_'
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
@@ -46,16 +47,6 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 		if f.fn_offset < 0: return
 		print '#define _gloffset_%s %d' % (f.name, f.fn_offset)
 
-	def printRealHeader(self):
-		print '#ifndef _GLAPI_OFFSETS_H_'
-		print '#define _GLAPI_OFFSETS_H_'
-		print ''
-		return
-
-	def printRealFooter(self):
-		print ''
-		print '#endif'
-		return
 
 def show_usage():
 	print "Usage: %s [-f input_file_name]" % sys.argv[0]

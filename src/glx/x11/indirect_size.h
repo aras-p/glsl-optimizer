@@ -25,6 +25,8 @@
  * SOFTWARE.
  */
 
+#if !defined( _INDIRECT_SIZE_H_ )
+#  define _INDIRECT_SIZE_H_
 
 /**
  * \file
@@ -33,10 +35,6 @@
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
-
-#if !defined( _GLXSIZE_H_ )
-#  define _GLXSIZE_H_
-
 
 #  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
 #    define PURE __attribute__((pure))
@@ -86,4 +84,5 @@ extern INTERNAL PURE FASTCALL GLint __glPointParameterivNV_size(GLenum);
 #  undef INTERNAL
 #  undef PURE
 #  undef FASTCALL
-#endif /* !defined( _GLXSIZE_H_ ) */
+
+#endif /* !defined( _INDIRECT_SIZE_H_ ) */
