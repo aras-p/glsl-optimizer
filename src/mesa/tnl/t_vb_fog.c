@@ -113,7 +113,7 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
       else
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         const GLfloat z = FABSF(*v);
+         const GLfloat z = *v;
          GLfloat f = (end - z) * d;
 	 data[i][0] = CLAMP(f, 0.0F, 1.0F);
       }
@@ -121,7 +121,7 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) {
-         const GLfloat z = FABSF(*v);
+         const GLfloat z = *v;
          NEG_EXP( data[i][0], d * z );
       }
       break;
@@ -165,10 +165,11 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	  */
 	 input = &store->fogcoord;
 
-	 plane[0] = m[2];
-	 plane[1] = m[6];
-	 plane[2] = m[10];
-	 plane[3] = m[14];
+         /* NOTE: negate plane here so we get positive fog coords! */
+	 plane[0] = -m[2];
+	 plane[1] = -m[6];
+	 plane[2] = -m[10];
+	 plane[3] = -m[14];
 
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.

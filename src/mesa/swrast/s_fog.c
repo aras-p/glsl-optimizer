@@ -55,10 +55,12 @@ _swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z)
    case GL_EXP:
       d = ctx->Fog.Density;
       f = (GLfloat) exp(-d * z);
+      f = CLAMP(f, 0.0F, 1.0F);
       return f;
    case GL_EXP2:
       d = ctx->Fog.Density;
       f = (GLfloat) exp(-(d * d * z * z));
+      f = CLAMP(f, 0.0F, 1.0F);
       return f;
    default:
       _mesa_problem(ctx, "Bad fog mode in _swrast_z_to_fogfactor");
@@ -110,7 +112,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
             GLuint i;
             for (i = 0; i < span->end; i++) {
                GLfloat f, oneMinusF;
-               f = (fogEnd - FABSF(fogCoord/w)) * fogScale;
+               f = (fogEnd - fogCoord / w) * fogScale;
                f = CLAMP(f, 0.0F, 1.0F);
                oneMinusF = 1.0F - f;
                rgba[i][RCOMP] = (GLchan) (f * rgba[i][RCOMP] + oneMinusF * rFog);
@@ -131,7 +133,8 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
             GLuint i;
             for (i = 0; i < span->end; i++) {
                GLfloat f, oneMinusF;
-               f = (GLfloat) exp(density * FABSF(fogCoord/w));
+               f = (GLfloat) exp(density * fogCoord / w);
+               f = CLAMP(f, 0.0F, 1.0F);
                oneMinusF = 1.0F - f;
                rgba[i][RCOMP] = (GLchan) (f * rgba[i][RCOMP] + oneMinusF * rFog);
                rgba[i][GCOMP] = (GLchan) (f * rgba[i][GCOMP] + oneMinusF * gFog);
@@ -242,7 +245,7 @@ _swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
             GLfloat w = haveW ? span->w : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
-               GLfloat f = (fogEnd - FABSF(fogCoord/w)) * fogScale;
+               GLfloat f = (fogEnd - fogCoord / w) * fogScale;
                f = CLAMP(f, 0.0F, 1.0F);
                index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);
                fogCoord += fogStep;
@@ -259,7 +262,8 @@ _swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
             GLfloat w = haveW ? span->w : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
-               GLfloat f = (GLfloat) exp(density * FABSF(fogCoord/w));
+               GLfloat f = (GLfloat) exp(density * fogCoord / w);
+               f = CLAMP(f, 0.0F, 1.0F);
                index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);
                fogCoord += fogStep;
                w += wStep;
