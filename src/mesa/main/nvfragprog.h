@@ -75,12 +75,15 @@
 
 /* Fragment program instruction opcodes */
 enum fp_opcode {
-   FP_OPCODE_ADD = 1000,
+   FP_OPCODE_ABS = 1000,     /* ARB_f_p only */
+   FP_OPCODE_ADD,
+   FP_OPCODE_CMP,            /* ARB_f_p only */
    FP_OPCODE_COS,
-   FP_OPCODE_DDX,
-   FP_OPCODE_DDY,
+   FP_OPCODE_DDX,            /* NV_f_p only */
+   FP_OPCODE_DDY,            /* NV_f_p only */
    FP_OPCODE_DP3,
    FP_OPCODE_DP4,
+   FP_OPCODE_DPH,            /* ARB_f_p only */
    FP_OPCODE_DST,
    FP_OPCODE_EX2,
    FP_OPCODE_FLR,
@@ -94,32 +97,35 @@ enum fp_opcode {
    FP_OPCODE_MIN,
    FP_OPCODE_MOV,
    FP_OPCODE_MUL,
-   FP_OPCODE_PK2H,
-   FP_OPCODE_PK2US,
-   FP_OPCODE_PK4B,
-   FP_OPCODE_PK4UB,
+   FP_OPCODE_PK2H,           /* NV_f_p only */
+   FP_OPCODE_PK2US,          /* NV_f_p only */
+   FP_OPCODE_PK4B,           /* NV_f_p only */
+   FP_OPCODE_PK4UB,          /* NV_f_p only */
    FP_OPCODE_POW,
    FP_OPCODE_RCP,
-   FP_OPCODE_RFL,
+   FP_OPCODE_RFL,            /* NV_f_p only */
    FP_OPCODE_RSQ,
-   FP_OPCODE_SEQ,
-   FP_OPCODE_SFL,
-   FP_OPCODE_SGE,
-   FP_OPCODE_SGT,
+   FP_OPCODE_SCS,            /* ARB_f_p only */
+   FP_OPCODE_SEQ,            /* NV_f_p only */
+   FP_OPCODE_SFL,            /* NV_f_p only */
+   FP_OPCODE_SGE,            /* NV_f_p only */
+   FP_OPCODE_SGT,            /* NV_f_p only */
    FP_OPCODE_SIN,
-   FP_OPCODE_SLE,
+   FP_OPCODE_SLE,            /* NV_f_p only */
    FP_OPCODE_SLT,
-   FP_OPCODE_SNE,
-   FP_OPCODE_STR,
+   FP_OPCODE_SNE,            /* NV_f_p only */
+   FP_OPCODE_STR,            /* NV_f_p only */
    FP_OPCODE_SUB,
+   FP_OPCODE_SWZ,            /* ARB_f_p only */
    FP_OPCODE_TEX,
-   FP_OPCODE_TXD,
+   FP_OPCODE_TXB,            /* ARB_f_p only */
+   FP_OPCODE_TXD,            /* NV_f_p only */
    FP_OPCODE_TXP,
-   FP_OPCODE_UP2H,
-   FP_OPCODE_UP2US,
-   FP_OPCODE_UP4B,
-   FP_OPCODE_UP4UB,
-   FP_OPCODE_X2D,
+   FP_OPCODE_UP2H,           /* NV_f_p only */
+   FP_OPCODE_UP2US,          /* NV_f_p only */
+   FP_OPCODE_UP4B,           /* NV_f_p only */
+   FP_OPCODE_UP4UB,          /* NV_f_p only */
+   FP_OPCODE_X2D,            /* XPD in ARB_f_p */
    FP_OPCODE_END /* private opcode */
 };
 
