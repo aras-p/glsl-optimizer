@@ -2645,6 +2645,7 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 
 
 
+/* XXX temporary until glext.h is updated! */
 #ifndef GL_NV_fragment_program
 #define GL_NV_fragment_program 1
 
@@ -2711,6 +2712,28 @@ typedef void (APIENTRY * PFNGLGETPROGRAMNAMEDPARAMETERFVNVPROC) (GLuint id, GLsi
 typedef void (APIENTRY * PFNGLGETPROGRAMNAMEDPARAMETERDVNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLdouble *params);
 
 #endif /* GL_NV_fragment_program */
+
+
+
+/* XXX temporary until glext.h is updated! */
+#ifndef GL_ARB_fragment_program
+#define GL_ARB_fragment_program 1
+
+#define GL_FRAGMENT_PROGRAM_ARB                            0x8804
+#define GL_PROGRAM_ALU_INSTRUCTIONS_ARB                    0x8805
+#define GL_PROGRAM_TEX_INSTRUCTIONS_ARB                    0x8806
+#define GL_PROGRAM_TEX_INDIRECTIONS_ARB                    0x8807
+#define GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB             0x8808
+#define GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB             0x8809
+#define GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB             0x880A
+#define GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB                0x880B
+#define GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB                0x880C
+#define GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB                0x880D
+#define GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB         0x880E
+#define GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB         0x880F
+#define GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB         0x8810
+
+#endif /* GL_ARB_fragment_program */
 
 
 
