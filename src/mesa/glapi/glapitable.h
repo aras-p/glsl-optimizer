@@ -1,854 +1,564 @@
-/* $Id: glapitable.h,v 1.11 2000/02/23 01:52:42 brianp Exp $ */
+/* DO NOT EDIT - This file generated automatically */
+#ifndef _GLAPI_TABLE_H_
+#define _GLAPI_TABLE_H_
 
-/*
- * Mesa 3-D graphics library
- * Version:  3.3
- *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+#include <GL/gl.h>
 
-
-/*
- * This file is not specific to Mesa.  It defines a dispatch table
- * which could be used by any number of OpenGL implementations.
- * It's designed to be gl.h-independent as well.  That is, it does
- * not depend on any particular extensions being defined in the gl.h
- * header.  We #define extension symbols (like _GLAPI_EXT_blend_color)
- * to determine which entry points to compile.  Clients of this dispatcher
- * (like Mesa) can #ifdef test these symbols to know how to fill in the
- * table.
- */
-
-
-#ifndef _GLAPI_TABLE_H
-#define _GLAPI_TABLE_H
-
-
-#include "GL/gl.h"
-
-
-/*
- * This struct contains pointers for all the GL API entrypoints
- * plus some reserved slots for dynamic extensions.
- *
- * Strictly speaking, this struct isn't needed if we have assembly
- * language entrypoint functions since no knowledge of function
- * arguments is needed.
- *
- * This struct may be replaced by an automatically-generated struct
- * using the spec files in the OpenGL SI.
- */
 struct _glapi_table
 {
-   void (*Dummy)(void);
-
-   /*
-    * OpenGL 1.0
-    */
-   void (*Accum)(GLenum, GLfloat);
-   void (*AlphaFunc)(GLenum, GLclampf);
-   void (*Begin)(GLenum);
-   void (*Bitmap)(GLsizei, GLsizei, GLfloat, GLfloat, GLfloat, GLfloat, const GLubyte *);
-   void (*BlendFunc)(GLenum, GLenum);
-   void (*CallList)(GLuint list);
-   void (*CallLists)(GLsizei, GLenum, const GLvoid *);
-   void (*Clear)(GLbitfield);
-   void (*ClearAccum)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*ClearColor)(GLclampf, GLclampf, GLclampf, GLclampf);
-   void (*ClearDepth)(GLclampd);
-   void (*ClearIndex)(GLfloat);
-   void (*ClearStencil)(GLint);
-   void (*ClipPlane)(GLenum, const GLdouble *);
-   void (*Color3b)(GLbyte, GLbyte, GLbyte);
-   void (*Color3bv)(const GLbyte *);
-   void (*Color3d)(GLdouble, GLdouble, GLdouble);
-   void (*Color3dv)(const GLdouble *);
-   void (*Color3f)(GLfloat, GLfloat, GLfloat);
-   void (*Color3fv)(const GLfloat *);
-   void (*Color3i)(GLint, GLint, GLint);
-   void (*Color3iv)(const GLint *);
-   void (*Color3s)(GLshort, GLshort, GLshort);
-   void (*Color3sv)(const GLshort *);
-   void (*Color3ub)(GLubyte, GLubyte, GLubyte);
-   void (*Color3ubv)(const GLubyte *);
-   void (*Color3ui)(GLuint, GLuint, GLuint);
-   void (*Color3uiv)(const GLuint *);
-   void (*Color3us)(GLushort, GLushort, GLushort);
-   void (*Color3usv)(const GLushort *);
-   void (*Color4b)(GLbyte, GLbyte, GLbyte, GLbyte);
-   void (*Color4bv)(const GLbyte *);
-   void (*Color4d)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*Color4dv)(const GLdouble *);
-   void (*Color4f)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*Color4fv)(const GLfloat *);
-   void (*Color4i)(GLint, GLint, GLint, GLint);
-   void (*Color4iv)(const GLint *);
-   void (*Color4s)(GLshort, GLshort, GLshort, GLshort);
-   void (*Color4sv)(const GLshort *);
-   void (*Color4ub)(GLubyte, GLubyte, GLubyte, GLubyte);
-   void (*Color4ubv)(const GLubyte *);
-   void (*Color4ui)(GLuint, GLuint, GLuint, GLuint);
-   void (*Color4uiv)(const GLuint *);
-   void (*Color4us)(GLushort, GLushort, GLushort, GLushort);
-   void (*Color4usv)(const GLushort *);
-   void (*ColorMask)(GLboolean, GLboolean, GLboolean, GLboolean);
-   void (*ColorMaterial)(GLenum, GLenum);
-   void (*CopyPixels)(GLint, GLint, GLsizei, GLsizei, GLenum);
-   void (*CullFace)(GLenum);
-   void (*DeleteLists)(GLuint, GLsizei);
-   void (*DepthFunc)(GLenum);
-   void (*DepthMask)(GLboolean);
-   void (*DepthRange)(GLclampd, GLclampd);
-   void (*Disable)(GLenum);
-   void (*DrawBuffer)(GLenum);
-   void (*DrawPixels)(GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*EdgeFlag)(GLboolean);
-   void (*EdgeFlagv)(const GLboolean *);
-   void (*Enable)(GLenum);
-   void (*End)(void);
-   void (*EndList)(void);
-   void (*EvalCoord1d)(GLdouble);
-   void (*EvalCoord1dv)(const GLdouble *);
-   void (*EvalCoord1f)(GLfloat);
-   void (*EvalCoord1fv)(const GLfloat *);
-   void (*EvalCoord2d)(GLdouble u, GLdouble);
-   void (*EvalCoord2dv)(const GLdouble *);
-   void (*EvalCoord2f)(GLfloat u, GLfloat);
-   void (*EvalCoord2fv)(const GLfloat *);
-   void (*EvalMesh1)(GLenum, GLint, GLint);
-   void (*EvalMesh2)(GLenum, GLint, GLint, GLint, GLint);
-   void (*EvalPoint1)(GLint);
-   void (*EvalPoint2)(GLint, GLint);
-   void (*FeedbackBuffer)(GLsizei, GLenum, GLfloat *);
-   void (*Finish)(void);
-   void (*Flush)(void);
-   void (*Fogf)(GLenum, GLfloat);
-   void (*Fogfv)(GLenum, const GLfloat *);
-   void (*Fogi)(GLenum, GLint);
-   void (*Fogiv)(GLenum, const GLint *);
-   void (*FrontFace)(GLenum);
-   void (*Frustum)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble);
-   GLuint (*GenLists)(GLsizei);
-   void (*GetBooleanv)(GLenum, GLboolean *);
-   void (*GetClipPlane)(GLenum, GLdouble *);
-   void (*GetDoublev)(GLenum, GLdouble *);
-   GLenum (*GetError)(void);
-   void (*GetFloatv)(GLenum, GLfloat *);
-   void (*GetIntegerv)(GLenum, GLint *);
-   void (*GetLightfv)(GLenum light, GLenum, GLfloat *);
-   void (*GetLightiv)(GLenum light, GLenum, GLint *);
-   void (*GetMapdv)(GLenum, GLenum, GLdouble *);
-   void (*GetMapfv)(GLenum, GLenum, GLfloat *);
-   void (*GetMapiv)(GLenum, GLenum, GLint *);
-   void (*GetMaterialfv)(GLenum, GLenum, GLfloat *);
-   void (*GetMaterialiv)(GLenum, GLenum, GLint *);
-   void (*GetPixelMapfv)(GLenum, GLfloat *);
-   void (*GetPixelMapuiv)(GLenum, GLuint *);
-   void (*GetPixelMapusv)(GLenum, GLushort *);
-   void (*GetPolygonStipple)(GLubyte *);
-   const GLubyte* (*GetString)(GLenum name);
-   void (*GetTexEnvfv)(GLenum, GLenum, GLfloat *);
-   void (*GetTexEnviv)(GLenum, GLenum, GLint *);
-   void (*GetTexGendv)(GLenum coord, GLenum, GLdouble *);
-   void (*GetTexGenfv)(GLenum coord, GLenum, GLfloat *);
-   void (*GetTexGeniv)(GLenum coord, GLenum, GLint *);
-   void (*GetTexImage)(GLenum, GLint level, GLenum, GLenum, GLvoid *);
-   void (*GetTexLevelParameterfv)(GLenum, GLint, GLenum, GLfloat *);
-   void (*GetTexLevelParameteriv)(GLenum, GLint, GLenum, GLint *);
-   void (*GetTexParameterfv)(GLenum, GLenum, GLfloat *);
-   void (*GetTexParameteriv)(GLenum, GLenum, GLint *);
-   void (*Hint)(GLenum, GLenum);
-   void (*IndexMask)(GLuint);
-   void (*Indexd)(GLdouble);
-   void (*Indexdv)(const GLdouble *);
-   void (*Indexf)(GLfloat);
-   void (*Indexfv)(const GLfloat *);
-   void (*Indexi)(GLint);
-   void (*Indexiv)(const GLint *);
-   void (*Indexs)(GLshort);
-   void (*Indexsv)(const GLshort *);
-   void (*InitNames)(void);
-   GLboolean (*IsEnabled)(GLenum);
-   GLboolean (*IsList)(GLuint);
-   void (*LightModelf)(GLenum, GLfloat);
-   void (*LightModelfv)(GLenum, const GLfloat *);
-   void (*LightModeli)(GLenum, GLint);
-   void (*LightModeliv)(GLenum, const GLint *);
-   void (*Lightf)(GLenum light, GLenum, GLfloat);
-   void (*Lightfv)(GLenum light, GLenum, const GLfloat *);
-   void (*Lighti)(GLenum light, GLenum, GLint);
-   void (*Lightiv)(GLenum light, GLenum, const GLint *);
-   void (*LineStipple)(GLint factor, GLushort);
-   void (*LineWidth)(GLfloat);
-   void (*ListBase)(GLuint);
-   void (*LoadIdentity)(void);
-   void (*LoadMatrixd)(const GLdouble *);
-   void (*LoadMatrixf)(const GLfloat *);
-   void (*LoadName)(GLuint);
-   void (*LogicOp)(GLenum);
-   void (*Map1d)(GLenum, GLdouble, GLdouble, GLint, GLint, const GLdouble *);
-   void (*Map1f)(GLenum, GLfloat, GLfloat, GLint, GLint, const GLfloat *);
-   void (*Map2d)(GLenum, GLdouble, GLdouble, GLint, GLint, GLdouble, GLdouble, GLint, GLint, const GLdouble *);
-   void (*Map2f)(GLenum, GLfloat, GLfloat, GLint, GLint, GLfloat, GLfloat, GLint, GLint, const GLfloat *);
-   void (*MapGrid1d)(GLint, GLdouble, GLdouble);
-   void (*MapGrid1f)(GLint, GLfloat, GLfloat);
-   void (*MapGrid2d)(GLint, GLdouble, GLdouble, GLint, GLdouble, GLdouble);
-   void (*MapGrid2f)(GLint, GLfloat, GLfloat, GLint, GLfloat, GLfloat);
-   void (*Materialf)(GLenum, GLenum, GLfloat);
-   void (*Materialfv)(GLenum, GLenum, const GLfloat *);
-   void (*Materiali)(GLenum, GLenum, GLint);
-   void (*Materialiv)(GLenum, GLenum, const GLint *);
-   void (*MatrixMode)(GLenum);
-   void (*MultMatrixd)(const GLdouble *);
-   void (*MultMatrixf)(const GLfloat *);
-   void (*NewList)(GLuint list, GLenum);
-   void (*Normal3b)(GLbyte, GLbyte, GLbyte);
-   void (*Normal3bv)(const GLbyte *);
-   void (*Normal3d)(GLdouble, GLdouble, GLdouble);
-   void (*Normal3dv)(const GLdouble *);
-   void (*Normal3f)(GLfloat, GLfloat, GLfloat);
-   void (*Normal3fv)(const GLfloat *);
-   void (*Normal3i)(GLint, GLint, GLint);
-   void (*Normal3iv)(const GLint *);
-   void (*Normal3s)(GLshort, GLshort, GLshort);
-   void (*Normal3sv)(const GLshort *);
-   void (*Ortho)(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*PassThrough)(GLfloat);
-   void (*PixelMapfv)(GLenum, GLint, const GLfloat *);
-   void (*PixelMapuiv)(GLenum, GLint, const GLuint *);
-   void (*PixelMapusv)(GLenum, GLint, const GLushort *);
-   void (*PixelStoref)(GLenum, GLfloat);
-   void (*PixelStorei)(GLenum, GLint);
-   void (*PixelTransferf)(GLenum, GLfloat);
-   void (*PixelTransferi)(GLenum, GLint);
-   void (*PixelZoom)(GLfloat, GLfloat);
-   void (*PointSize)(GLfloat);
-   void (*PolygonMode)(GLenum, GLenum);
-   void (*PolygonOffset)(GLfloat, GLfloat);
-   void (*PolygonStipple)(const GLubyte *);
-   void (*PopAttrib)(void);
-   void (*PopMatrix)(void);
-   void (*PopName)(void);
-   void (*PushAttrib)(GLbitfield);
-   void (*PushMatrix)(void);
-   void (*PushName)(GLuint);
-   void (*RasterPos2d)(GLdouble, GLdouble);
-   void (*RasterPos2dv)(const GLdouble *);
-   void (*RasterPos2f)(GLfloat, GLfloat);
-   void (*RasterPos2fv)(const GLfloat *);
-   void (*RasterPos2i)(GLint, GLint);
-   void (*RasterPos2iv)(const GLint *);
-   void (*RasterPos2s)(GLshort, GLshort);
-   void (*RasterPos2sv)(const GLshort *);
-   void (*RasterPos3d)(GLdouble, GLdouble, GLdouble);
-   void (*RasterPos3dv)(const GLdouble *);
-   void (*RasterPos3f)(GLfloat, GLfloat, GLfloat);
-   void (*RasterPos3fv)(const GLfloat *);
-   void (*RasterPos3i)(GLint, GLint, GLint);
-   void (*RasterPos3iv)(const GLint *);
-   void (*RasterPos3s)(GLshort, GLshort, GLshort);
-   void (*RasterPos3sv)(const GLshort *);
-   void (*RasterPos4d)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*RasterPos4dv)(const GLdouble *);
-   void (*RasterPos4f)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*RasterPos4fv)(const GLfloat *);
-   void (*RasterPos4i)(GLint, GLint, GLint, GLint);
-   void (*RasterPos4iv)(const GLint *);
-   void (*RasterPos4s)(GLshort, GLshort, GLshort, GLshort);
-   void (*RasterPos4sv)(const GLshort *);
-   void (*ReadBuffer)(GLenum);
-   void (*ReadPixels)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLvoid *);
-   void (*Rectd)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*Rectdv)(const GLdouble *, const GLdouble *);
-   void (*Rectf)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*Rectfv)(const GLfloat *, const GLfloat *);
-   void (*Recti)(GLint, GLint, GLint, GLint);
-   void (*Rectiv)(const GLint *, const GLint *);
-   void (*Rects)(GLshort, GLshort, GLshort, GLshort);
-   void (*Rectsv)(const GLshort *, const GLshort *);
-   GLint (*RenderMode)(GLenum);
-   void (*Rotated)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*Rotatef)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*Scaled)(GLdouble, GLdouble, GLdouble);
-   void (*Scalef)(GLfloat, GLfloat, GLfloat);
-   void (*Scissor)(GLint, GLint, GLsizei, GLsizei);
-   void (*SelectBuffer)(GLsizei, GLuint *);
-   void (*ShadeModel)(GLenum);
-   void (*StencilFunc)(GLenum, GLint, GLuint);
-   void (*StencilMask)(GLuint);
-   void (*StencilOp)(GLenum, GLenum, GLenum);
-   void (*TexCoord1d)(GLdouble);
-   void (*TexCoord1dv)(const GLdouble *);
-   void (*TexCoord1f)(GLfloat);
-   void (*TexCoord1fv)(const GLfloat *);
-   void (*TexCoord1i)(GLint);
-   void (*TexCoord1iv)(const GLint *);
-   void (*TexCoord1s)(GLshort);
-   void (*TexCoord1sv)(const GLshort *);
-   void (*TexCoord2d)(GLdouble, GLdouble);
-   void (*TexCoord2dv)(const GLdouble *);
-   void (*TexCoord2f)(GLfloat, GLfloat);
-   void (*TexCoord2fv)(const GLfloat *);
-   void (*TexCoord2i)(GLint, GLint);
-   void (*TexCoord2iv)(const GLint *);
-   void (*TexCoord2s)(GLshort, GLshort);
-   void (*TexCoord2sv)(const GLshort *);
-   void (*TexCoord3d)(GLdouble, GLdouble, GLdouble);
-   void (*TexCoord3dv)(const GLdouble *);
-   void (*TexCoord3f)(GLfloat, GLfloat, GLfloat);
-   void (*TexCoord3fv)(const GLfloat *);
-   void (*TexCoord3i)(GLint, GLint, GLint);
-   void (*TexCoord3iv)(const GLint *);
-   void (*TexCoord3s)(GLshort, GLshort, GLshort);
-   void (*TexCoord3sv)(const GLshort *);
-   void (*TexCoord4d)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*TexCoord4dv)(const GLdouble *);
-   void (*TexCoord4f)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*TexCoord4fv)(const GLfloat *);
-   void (*TexCoord4i)(GLint, GLint, GLint, GLint);
-   void (*TexCoord4iv)(const GLint *);
-   void (*TexCoord4s)(GLshort, GLshort, GLshort, GLshort);
-   void (*TexCoord4sv)(const GLshort *);
-   void (*TexEnvf)(GLenum, GLenum, GLfloat);
-   void (*TexEnvfv)(GLenum, GLenum, const GLfloat *);
-   void (*TexEnvi)(GLenum, GLenum, GLint);
-   void (*TexEnviv)(GLenum, GLenum, const GLint *);
-   void (*TexGend)(GLenum, GLenum, GLdouble);
-   void (*TexGendv)(GLenum, GLenum, const GLdouble *);
-   void (*TexGenf)(GLenum, GLenum, GLfloat);
-   void (*TexGenfv)(GLenum, GLenum, const GLfloat *);
-   void (*TexGeni)(GLenum, GLenum, GLint);
-   void (*TexGeniv)(GLenum, GLenum, const GLint *);
-   void (*TexImage1D)(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-   void (*TexImage2D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-   void (*TexParameterf)(GLenum, GLenum, GLfloat);
-   void (*TexParameterfv)(GLenum, GLenum, const GLfloat *);
-   void (*TexParameteri)(GLenum, GLenum, GLint);
-   void (*TexParameteriv)(GLenum, GLenum, const GLint *);
-   void (*Translated)(GLdouble, GLdouble, GLdouble);
-   void (*Translatef)(GLfloat, GLfloat, GLfloat);
-   void (*Vertex2d)(GLdouble, GLdouble);
-   void (*Vertex2dv)(const GLdouble *);
-   void (*Vertex2f)(GLfloat, GLfloat);
-   void (*Vertex2fv)(const GLfloat *);
-   void (*Vertex2i)(GLint, GLint);
-   void (*Vertex2iv)(const GLint *);
-   void (*Vertex2s)(GLshort, GLshort);
-   void (*Vertex2sv)(const GLshort *);
-   void (*Vertex3d)(GLdouble, GLdouble, GLdouble);
-   void (*Vertex3dv)(const GLdouble *);
-   void (*Vertex3f)(GLfloat, GLfloat, GLfloat);
-   void (*Vertex3fv)(const GLfloat *);
-   void (*Vertex3i)(GLint, GLint, GLint);
-   void (*Vertex3iv)(const GLint *);
-   void (*Vertex3s)(GLshort, GLshort, GLshort);
-   void (*Vertex3sv)(const GLshort *);
-   void (*Vertex4d)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*Vertex4dv)(const GLdouble *);
-   void (*Vertex4f)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*Vertex4fv)(const GLfloat *);
-   void (*Vertex4i)(GLint, GLint, GLint, GLint);
-   void (*Vertex4iv)(const GLint *);
-   void (*Vertex4s)(GLshort, GLshort, GLshort, GLshort);
-   void (*Vertex4sv)(const GLshort *);
-   void (*Viewport)(GLint, GLint, GLsizei, GLsizei);
-
-   /*
-    * OpenGL 1.1
-    */
-   GLboolean (*AreTexturesResident)(GLsizei, const GLuint *, GLboolean *);
-   void (*ArrayElement)(GLint);
-   void (*BindTexture)(GLenum, GLuint);
-   void (*ColorPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-   void (*CopyTexImage1D)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint);
-   void (*CopyTexImage2D)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint);
-   void (*CopyTexSubImage1D)(GLenum, GLint, GLint, GLint, GLint, GLsizei);
-   void (*CopyTexSubImage2D)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
-   void (*DeleteTextures)(GLsizei, const GLuint *);
-   void (*DisableClientState)(GLenum);
-   void (*DrawArrays)(GLenum, GLint, GLsizei);
-   void (*DrawElements)(GLenum, GLsizei, GLenum, const GLvoid *);
-   void (*EdgeFlagPointer)(GLsizei, const GLvoid *);
-   void (*EnableClientState)(GLenum);
-   void (*GenTextures)(GLsizei, GLuint *);
-   void (*GetPointerv)(GLenum, GLvoid **);
-   void (*IndexPointer)(GLenum, GLsizei, const GLvoid *);
-   void (*Indexub)(GLubyte);
-   void (*Indexubv)(const GLubyte *);
-   void (*InterleavedArrays)(GLenum, GLsizei, const GLvoid *);
-   GLboolean (*IsTexture)(GLuint);
-   void (*NormalPointer)(GLenum, GLsizei, const GLvoid *);
-   void (*PopClientAttrib)(void);
-   void (*PrioritizeTextures)(GLsizei, const GLuint *, const GLclampf *);
-   void (*PushClientAttrib)(GLbitfield);
-   void (*TexCoordPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-   void (*TexSubImage1D)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*TexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*VertexPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-
-
-   /*
-    * OpenGL 1.2
-    */
-   void (*CopyTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
-   void (*DrawRangeElements)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
-   void (*TexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-   void (*TexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-
-
-   /*
-    * GL_ARB_imaging
-    */
-   void (*BlendColor)(GLclampf, GLclampf, GLclampf, GLclampf);
-   void (*BlendEquation)(GLenum);
-   void (*ColorSubTable)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ColorTable)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ColorTableParameterfv)(GLenum, GLenum, const GLfloat *);
-   void (*ColorTableParameteriv)(GLenum, GLenum, const GLint *);
-   void (*ConvolutionFilter1D)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ConvolutionFilter2D)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ConvolutionParameterf)(GLenum, GLenum, GLfloat);
-   void (*ConvolutionParameterfv)(GLenum, GLenum, const GLfloat *);
-   void (*ConvolutionParameteri)(GLenum, GLenum, GLint);
-   void (*ConvolutionParameteriv)(GLenum, GLenum, const GLint *);
-   void (*CopyColorSubTable)(GLenum, GLsizei, GLint, GLint, GLsizei);
-   void (*CopyColorTable)(GLenum, GLenum, GLint, GLint, GLsizei);
-   void (*CopyConvolutionFilter1D)(GLenum, GLenum, GLint x, GLint y, GLsizei);
-   void (*CopyConvolutionFilter2D)(GLenum, GLenum, GLint x, GLint y, GLsizei, GLsizei);
-   void (*GetColorTable)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetColorTableParameterfv)(GLenum, GLenum, GLfloat *);
-   void (*GetColorTableParameteriv)(GLenum, GLenum, GLint *);
-   void (*GetConvolutionFilter)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetConvolutionParameterfv)(GLenum, GLenum, GLfloat *);
-   void (*GetConvolutionParameteriv)(GLenum, GLenum, GLint *);
-   void (*GetHistogram)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-   void (*GetHistogramParameterfv)(GLenum, GLenum, GLfloat *);
-   void (*GetHistogramParameteriv)(GLenum, GLenum, GLint *);
-   void (*GetMinmax)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-   void (*GetMinmaxParameterfv)(GLenum, GLenum, GLfloat *);
-   void (*GetMinmaxParameteriv)(GLenum, GLenum, GLint *);
-   void (*GetSeparableFilter)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
-   void (*Histogram)(GLenum, GLsizei, GLenum, GLboolean);
-   void (*Minmax)(GLenum, GLenum, GLboolean);
-   void (*ResetHistogram)(GLenum);
-   void (*ResetMinmax)(GLenum);
-   void (*SeparableFilter2D)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
-
-   /*
-    * GL_ARB_multitexture
-    */
-   void (*ActiveTextureARB)(GLenum);
-   void (*ClientActiveTextureARB)(GLenum);
-   void (*MultiTexCoord1dARB)(GLenum, GLdouble);
-   void (*MultiTexCoord1dvARB)(GLenum, const GLdouble *);
-   void (*MultiTexCoord1fARB)(GLenum, GLfloat);
-   void (*MultiTexCoord1fvARB)(GLenum, const GLfloat *);
-   void (*MultiTexCoord1iARB)(GLenum, GLint);
-   void (*MultiTexCoord1ivARB)(GLenum, const GLint *);
-   void (*MultiTexCoord1sARB)(GLenum, GLshort);
-   void (*MultiTexCoord1svARB)(GLenum, const GLshort *);
-   void (*MultiTexCoord2dARB)(GLenum, GLdouble, GLdouble);
-   void (*MultiTexCoord2dvARB)(GLenum, const GLdouble *);
-   void (*MultiTexCoord2fARB)(GLenum, GLfloat, GLfloat);
-   void (*MultiTexCoord2fvARB)(GLenum, const GLfloat *);
-   void (*MultiTexCoord2iARB)(GLenum, GLint, GLint);
-   void (*MultiTexCoord2ivARB)(GLenum, const GLint *);
-   void (*MultiTexCoord2sARB)(GLenum, GLshort, GLshort);
-   void (*MultiTexCoord2svARB)(GLenum, const GLshort *);
-   void (*MultiTexCoord3dARB)(GLenum, GLdouble, GLdouble, GLdouble);
-   void (*MultiTexCoord3dvARB)(GLenum, const GLdouble *);
-   void (*MultiTexCoord3fARB)(GLenum, GLfloat, GLfloat, GLfloat);
-   void (*MultiTexCoord3fvARB)(GLenum, const GLfloat *);
-   void (*MultiTexCoord3iARB)(GLenum, GLint, GLint, GLint);
-   void (*MultiTexCoord3ivARB)(GLenum, const GLint *);
-   void (*MultiTexCoord3sARB)(GLenum, GLshort, GLshort, GLshort);
-   void (*MultiTexCoord3svARB)(GLenum, const GLshort *);
-   void (*MultiTexCoord4dARB)(GLenum, GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*MultiTexCoord4dvARB)(GLenum, const GLdouble *);
-   void (*MultiTexCoord4fARB)(GLenum, GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*MultiTexCoord4fvARB)(GLenum, const GLfloat *);
-   void (*MultiTexCoord4iARB)(GLenum, GLint, GLint, GLint, GLint);
-   void (*MultiTexCoord4ivARB)(GLenum, const GLint *);
-   void (*MultiTexCoord4sARB)(GLenum, GLshort, GLshort, GLshort, GLshort);
-   void (*MultiTexCoord4svARB)(GLenum, const GLshort *);
-
-
-   /*
-    * Extensions
-    */
-
-   /* 1. GL_EXT_abgr - no functions */
-
-   /* 2. GL_EXT_blend_color */
-   void (*BlendColorEXT)(GLclampf, GLclampf, GLclampf, GLclampf);
-
-   /* 3. GL_EXT_polygon_offset */
-   void (*PolygonOffsetEXT)(GLfloat, GLfloat);
-
-   /* 4. GL_EXT_texture - no functions */
-
-   /* 5. ??? */
-
-   /* 6. GL_EXT_texture3D */
-   void (*CopyTexSubImage3DEXT)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
-   void (*TexImage3DEXT)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-   void (*TexSubImage3DEXT)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-
-   /* 7. GL_SGI_texture_filter4 */
-   void (*GetTexFilterFuncSGIS)(GLenum, GLenum, GLfloat *);
-   void (*TexFilterFuncSGIS)(GLenum, GLenum, GLsizei, const GLfloat *);
-
-   /* 8. ??? */
-
-   /* 9. GL_EXT_subtexture */
-   void (*TexSubImage1DEXT)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*TexSubImage2DEXT)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-
-   /* 10. GL_EXT_copy_texture */
-   void (*CopyTexImage1DEXT)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint);
-   void (*CopyTexImage2DEXT)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint);
-   void (*CopyTexSubImage1DEXT)(GLenum, GLint, GLint, GLint, GLint, GLsizei);
-   void (*CopyTexSubImage2DEXT)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
-
-   /* 11. GL_EXT_histogram */
-   void (*GetHistogramEXT)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-   void (*GetHistogramParameterfvEXT)(GLenum, GLenum, GLfloat *);
-   void (*GetHistogramParameterivEXT)(GLenum, GLenum, GLint *);
-   void (*GetMinmaxEXT)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
-   void (*GetMinmaxParameterfvEXT)(GLenum, GLenum, GLfloat *);
-   void (*GetMinmaxParameterivEXT)(GLenum, GLenum, GLint *);
-   void (*HistogramEXT)(GLenum, GLsizei, GLenum, GLboolean);
-   void (*MinmaxEXT)(GLenum, GLenum, GLboolean);
-   void (*ResetHistogramEXT)(GLenum);
-   void (*ResetMinmaxEXT)(GLenum);
-
-   /* 12. GL_EXT_convolution */
-   void (*ConvolutionFilter1DEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ConvolutionFilter2DEXT)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ConvolutionParameterfEXT)(GLenum, GLenum, GLfloat);
-   void (*ConvolutionParameterfvEXT)(GLenum, GLenum, const GLfloat *);
-   void (*ConvolutionParameteriEXT)(GLenum, GLenum, GLint);
-   void (*ConvolutionParameterivEXT)(GLenum, GLenum, const GLint *);
-   void (*CopyConvolutionFilter1DEXT)(GLenum, GLenum, GLint x, GLint y, GLsizei);
-   void (*CopyConvolutionFilter2DEXT)(GLenum, GLenum, GLint x, GLint y, GLsizei, GLsizei);
-   void (*GetConvolutionFilterEXT)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetConvolutionParameterfvEXT)(GLenum, GLenum, GLfloat *);
-   void (*GetConvolutionParameterivEXT)(GLenum, GLenum, GLint *);
-   void (*GetSeparableFilterEXT)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
-   void (*SeparableFilter2DEXT)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
-
-   /* 13. GL_SGI_color_matrix - no functions */
-
-   /* 14. GL_SGI_color_table */
-   void (*ColorTableSGI)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ColorTableParameterfvSGI)(GLenum, GLenum, const GLfloat *); 
-   void (*ColorTableParameterivSGI)(GLenum, GLenum, const GLint *);
-   void (*CopyColorTableSGI)(GLenum, GLenum, GLint, GLint, GLsizei);
-   void (*GetColorTableSGI)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetColorTableParameterfvSGI)(GLenum, GLenum, GLfloat *);
-   void (*GetColorTableParameterivSGI)(GLenum, GLenum, GLint *);
-
-   /* 15. GL_SGIS_pixel_texture */
-   void (*PixelTexGenParameterfSGIS)(GLenum, GLfloat);
-   void (*PixelTexGenParameteriSGIS)(GLenum, GLint);
-   void (*GetPixelTexGenParameterfvSGIS)(GLenum, GLfloat *);
-   void (*GetPixelTexGenParameterivSGIS)(GLenum, GLint *);
-
-   /* 16. GL_SGIS_texture4D */
-   void (*TexImage4DSGIS)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
-   void (*TexSubImage4DSGIS)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const void *);
-
-   /* 17. GL_SGI_texture_color_table - no functions */
-
-   /* 18. GL_EXT_cmyka - no functions */
-
-   /* 19. ??? */
-
-   /* 20. GL_EXT_texture_object */
-   GLboolean (*AreTexturesResidentEXT)(GLsizei, const GLuint *, GLboolean *);
-   void (*BindTextureEXT)(GLenum, GLuint);
-   void (*DeleteTexturesEXT)(GLsizei, const GLuint *);
-   void (*GenTexturesEXT)(GLsizei, GLuint *);
-   GLboolean (*IsTextureEXT)(GLuint);
-   void (*PrioritizeTexturesEXT)(GLsizei, const GLuint *, const GLclampf *);
-
-   /* 21. GL_SGIS_detail_texture */
-   void (*DetailTexFuncSGIS)(GLenum, GLsizei, const GLfloat *);
-   void (*GetDetailTexFuncSGIS)(GLenum, GLfloat *);
-
-   /* 22. GL_SGIS_sharpen_texture */
-   void (*GetSharpenTexFuncSGIS)(GLenum, GLfloat *);
-   void (*SharpenTexFuncSGIS)(GLenum, GLsizei, const GLfloat *);
-
-   /* 23. GL_EXT_packed_pixels - no functions */
-
-   /* 24. GL_SGIS_texture_lod - no functions */
-
-   /* 25. GL_SGIS_multisample */
-   void (*SampleMaskSGIS)(GLclampf, GLboolean);
-   void (*SamplePatternSGIS)(GLenum);
-
-   /* 26. ??? */
-
-   /* 27. GL_EXT_rescale_normal - no functions */
-   
-   /* 28. GLX_EXT_visual_info - no functions */
-
-   /* 29. ??? */
-
-   /* 30. GL_EXT_vertex_array */
-   void (*ArrayElementEXT)(GLint);
-   void (*ColorPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
-   void (*DrawArraysEXT)(GLenum, GLint, GLsizei);
-   void (*EdgeFlagPointerEXT)(GLsizei, GLsizei, const GLboolean *);
-   void (*GetPointervEXT)(GLenum, void **);
-   void (*IndexPointerEXT)(GLenum, GLsizei, GLsizei, const void *);
-   void (*NormalPointerEXT)(GLenum, GLsizei, GLsizei, const void *);
-   void (*TexCoordPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
-   void (*VertexPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
-
-   /* 31. GL_EXT_misc_attribute - no functions */
-
-   /* 32. GL_SGIS_generate_mipmap - no functions */
-
-   /* 33. GL_SGIX_clipmap - no functions */
-
-   /* 34. GL_SGIX_shadow - no functions */
-
-   /* 35. GL_SGIS_texture_edge_clamp - no functions */
-
-   /* 36. GL_SGIS_texture_border_clamp - no functions */
-
-   /* 37. GL_EXT_blend_minmax */
-   void (*BlendEquationEXT)(GLenum);
-
-   /* 38. GL_EXT_blend_subtract - no functions */
-
-   /* 39. GL_EXT_blend_logic_op - no functions */
-
-   /* 40. GLX_SGI_swap_control - GLX functions */
-
-   /* 41. GLX_SGI_video_sync - GLX functions */
-
-   /* 42. GLX_SGI_make_current_read - GLX functions */
-
-   /* 43. GLX_SGIX_video_source - GLX functions */
-
-   /* 44. GLX_EXT_visual_rating - no functions */
-
-   /* 45. GL_SGIX_interlace - no functions */
-
-   /* 46. ??? */
-
-   /* 47. GLX_EXT_import_context - GLX functions */
-
-   /* 48. ??? */
-
-   /* 49. GLX_SGIX_fbconfig - GLX functions */
-
-   /* 50. GLX_SGIX_pbuffer - GLX functions */
-
-   /* 51. GL_SGIS_texture_select - no functions */
-
-   /* 52. GL_SGIX_sprite */
-   void (*SpriteParameterfSGIX)(GLenum, GLfloat);
-   void (*SpriteParameterfvSGIX)(GLenum, const GLfloat *);
-   void (*SpriteParameteriSGIX)(GLenum, GLint);
-   void (*SpriteParameterivSGIX)(GLenum, const GLint *);
-
-   /* 53. ??? */
-
-   /* 54. GL_EXT_point_parameters */
-   void (*PointParameterfEXT)(GLenum, GLfloat);
-   void (*PointParameterfvEXT)(GLenum, const GLfloat *);
-
-   /* 55. GL_SGIX_instruments */
-   GLint (*GetInstrumentsSGIX)(void);
-   void (*InstrumentsBufferSGIX)(GLsizei, GLint *);
-   GLint (*PollInstrumentsSGIX)(GLint *);
-   void (*ReadInstrumentsSGIX)(GLint);
-   void (*StartInstrumentsSGIX)(void);
-   void (*StopInstrumentsSGIX)(GLint);
-
-   /* 56. GL_SGIX_texture_scale_bias - no functions */
-
-   /* 57. GL_SGIX_framezoom */
-   void (*FrameZoomSGIX)(GLint);
-
-   /* 58. GL_SGIX_tag_sample_buffer - no functions */
-
-   /* 59. ??? */
-
-   /* 60. GL_SGIX_reference_plane */
-   void (*ReferencePlaneSGIX)(const GLdouble *);
-
-   /* 61. GL_SGIX_flush_raster */
-   void (*FlushRasterSGIX)(void);
-
-   /* 62. GLX_SGI_cushion - GLX functions */
-
-   /* 63. GL_SGIX_depth_texture - no functions */
-
-   /* 64. ??? */
-
-   /* 65. GL_SGIX_fog_offset - no functions */
-
-   /* 66. GL_HP_image_transform */
-#ifdef VMS
-#define glGetImageTransformParameterfvHP glGetImageTransformParameterfvH
-#define glGetImageTransformParameterivHP glGetImageTransformParameterivH
-#endif
-   void (*GetImageTransformParameterfvHP)(GLenum, GLenum, GLfloat *);
-   void (*GetImageTransformParameterivHP)(GLenum, GLenum, GLint *);
-   void (*ImageTransformParameterfHP)(GLenum, GLenum, const GLfloat);
-   void (*ImageTransformParameterfvHP)(GLenum, GLenum, const GLfloat *);
-   void (*ImageTransformParameteriHP)(GLenum, GLenum, const GLint);
-   void (*ImageTransformParameterivHP)(GLenum, GLenum, const GLint *);
-
-   /* 67. GL_HP_convolution_border_modes - no functions */
-
-   /* 68. ??? */
-
-   /* 69. GL_SGIX_texture_add_env - no functions */
-
-   /* 70. ??? */
-
-   /* 71. ??? */
-
-   /* 72. ??? */
-
-   /* 73. ??? */
-
-   /* 74. GL_EXT_color_subtable */
-   void (*ColorSubTableEXT)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const void *);
-   void (*CopyColorSubTableEXT)(GLenum, GLsizei, GLint, GLint, GLsizei);
-
-   /* 75. GLU_EXT_object_space_tess - GLU functions */
-
-   /* 76. GL_PGI_vertex_hints - no functions */
-
-   /* 77. GL_PGI_misc_hints */
-   void (*HintPGI)(GLenum, GLint);
-
-   /* 78. GL_EXT_paletted_texture */
-   /* ColorSubTableEXT already defined */
-   void (*ColorTableEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*GetColorTableEXT)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetColorTableParameterfvEXT)(GLenum, GLenum, GLfloat *);
-   void (*GetColorTableParameterivEXT)(GLenum, GLenum, GLint *);
-
-   /* 79. GL_EXT_clip_volume_hint - no functions */
-
-   /* 80. GL_SGIX_list_priority */
-   void (*GetListParameterfvSGIX)(GLuint, GLenum, GLfloat *);
-   void (*GetListParameterivSGIX)(GLuint, GLenum, GLint *);
-   void (*ListParameterfSGIX)(GLuint, GLenum, GLfloat);
-   void (*ListParameterfvSGIX)(GLuint, GLenum, const GLfloat *);
-   void (*ListParameteriSGIX)(GLuint, GLenum, GLint);
-   void (*ListParameterivSGIX)(GLuint, GLenum, const GLint *);
-
-   /* 81. GL_SGIX_ir_instrument1 - no functions */
-
-   /* 82. ??? */
-
-   /* 83. GLX_SGIX_video_resize - GLX functions */
-
-   /* 84. GL_SGIX_texture_lod_bias - no functions */
-
-   /* 85. GLU_SGI_filter4_parameters - GLU functions */
-
-   /* 86. GLX_SGIX_dm_buffer - GLX functions */
-
-   /* 87. ??? */
-
-   /* 88. ??? */
-
-   /* 89. ??? */
-
-   /* 90. ??? */
-
-   /* 91. GLX_SGIX_swap_group - GLX functions */
-
-   /* 92. GLX_SGIX_swap_barrier - GLX functions */
-
-   /* 93. GL_EXT_index_texture - no functions */
-
-   /* 94. GL_EXT_index_material */
-   void (*IndexMaterialEXT)(GLenum, GLenum);
-
-   /* 95. GL_EXT_index_func */
-   void (*IndexFuncEXT)(GLenum, GLfloat);
-
-   /* 96. GL_EXT_index_array_formats - no functions */
-
-   /* 97. GL_EXT_compiled_vertex_array */
-   void (*LockArraysEXT)(GLint, GLsizei);
-   void (*UnlockArraysEXT)(void);
-
-   /* 98. GL_EXT_cull_vertex */
-   void (*CullParameterfvEXT)(GLenum, const GLfloat *);
-   void (*CullParameterdvEXT)(GLenum, const GLdouble *);
-
-   /* 99. ??? */
-
-   /* 100. GLU_EXT_nurbs_tessellator - GLU functions */
-
-   /* 173. GL_EXT/INGR_blend_func_separate */
-   void (*BlendFuncSeparateINGR)(GLenum, GLenum, GLenum, GLenum);
-
-   /* GL_MESA_window_pos */
-   void (*WindowPos2dMESA)(GLdouble, GLdouble);
-   void (*WindowPos2dvMESA)(const GLdouble *);
-   void (*WindowPos2fMESA)(GLfloat, GLfloat);
-   void (*WindowPos2fvMESA)(const GLfloat *);
-   void (*WindowPos2iMESA)(GLint, GLint);
-   void (*WindowPos2ivMESA)(const GLint *);
-   void (*WindowPos2sMESA)(GLshort, GLshort);
-   void (*WindowPos2svMESA)(const GLshort *);
-   void (*WindowPos3dMESA)(GLdouble, GLdouble, GLdouble);
-   void (*WindowPos3dvMESA)(const GLdouble *);
-   void (*WindowPos3fMESA)(GLfloat, GLfloat, GLfloat);
-   void (*WindowPos3fvMESA)(const GLfloat *);
-   void (*WindowPos3iMESA)(GLint, GLint, GLint);
-   void (*WindowPos3ivMESA)(const GLint *);
-   void (*WindowPos3sMESA)(GLshort, GLshort, GLshort);
-   void (*WindowPos3svMESA)(const GLshort *);
-   void (*WindowPos4dMESA)(GLdouble, GLdouble, GLdouble, GLdouble);
-   void (*WindowPos4dvMESA)(const GLdouble *);
-   void (*WindowPos4fMESA)(GLfloat, GLfloat, GLfloat, GLfloat);
-   void (*WindowPos4fvMESA)(const GLfloat *);
-   void (*WindowPos4iMESA)(GLint, GLint, GLint, GLint);
-   void (*WindowPos4ivMESA)(const GLint *);
-   void (*WindowPos4sMESA)(GLshort, GLshort, GLshort, GLshort);
-   void (*WindowPos4svMESA)(const GLshort *);
-
-   /* GL_MESA_resize_buffers */
-   void (*ResizeBuffersMESA)(void);
-
-   /* GL_ARB_transpose_matrix */
-   void (*LoadTransposeMatrixdARB)(const GLdouble m[16]);
-   void (*LoadTransposeMatrixfARB)(const GLfloat m[16]);
-   void (*MultTransposeMatrixdARB)(const GLdouble m[16]);
-   void (*MultTransposeMatrixfARB)(const GLfloat m[16]);
-
+   void (*NewList)(GLuint list, GLenum mode); /* 0 */
+   void (*EndList)(void); /* 1 */
+   void (*CallList)(GLuint list); /* 2 */
+   void (*CallLists)(GLsizei n, GLenum type, const GLvoid * lists); /* 3 */
+   void (*DeleteLists)(GLuint list, GLsizei range); /* 4 */
+   GLuint (*GenLists)(GLsizei range); /* 5 */
+   void (*ListBase)(GLuint base); /* 6 */
+   void (*Begin)(GLenum mode); /* 7 */
+   void (*Bitmap)(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte * bitmap); /* 8 */
+   void (*Color3b)(GLbyte red, GLbyte green, GLbyte blue); /* 9 */
+   void (*Color3bv)(const GLbyte * v); /* 10 */
+   void (*Color3d)(GLdouble red, GLdouble green, GLdouble blue); /* 11 */
+   void (*Color3dv)(const GLdouble * v); /* 12 */
+   void (*Color3f)(GLfloat red, GLfloat green, GLfloat blue); /* 13 */
+   void (*Color3fv)(const GLfloat * v); /* 14 */
+   void (*Color3i)(GLint red, GLint green, GLint blue); /* 15 */
+   void (*Color3iv)(const GLint * v); /* 16 */
+   void (*Color3s)(GLshort red, GLshort green, GLshort blue); /* 17 */
+   void (*Color3sv)(const GLshort * v); /* 18 */
+   void (*Color3ub)(GLubyte red, GLubyte green, GLubyte blue); /* 19 */
+   void (*Color3ubv)(const GLubyte * v); /* 20 */
+   void (*Color3ui)(GLuint red, GLuint green, GLuint blue); /* 21 */
+   void (*Color3uiv)(const GLuint * v); /* 22 */
+   void (*Color3us)(GLushort red, GLushort green, GLushort blue); /* 23 */
+   void (*Color3usv)(const GLushort * v); /* 24 */
+   void (*Color4b)(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha); /* 25 */
+   void (*Color4bv)(const GLbyte * v); /* 26 */
+   void (*Color4d)(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha); /* 27 */
+   void (*Color4dv)(const GLdouble * v); /* 28 */
+   void (*Color4f)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha); /* 29 */
+   void (*Color4fv)(const GLfloat * v); /* 30 */
+   void (*Color4i)(GLint red, GLint green, GLint blue, GLint alpha); /* 31 */
+   void (*Color4iv)(const GLint * v); /* 32 */
+   void (*Color4s)(GLshort red, GLshort green, GLshort blue, GLshort alpha); /* 33 */
+   void (*Color4sv)(const GLshort * v); /* 34 */
+   void (*Color4ub)(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha); /* 35 */
+   void (*Color4ubv)(const GLubyte * v); /* 36 */
+   void (*Color4ui)(GLuint red, GLuint green, GLuint blue, GLuint alpha); /* 37 */
+   void (*Color4uiv)(const GLuint * v); /* 38 */
+   void (*Color4us)(GLushort red, GLushort green, GLushort blue, GLushort alpha); /* 39 */
+   void (*Color4usv)(const GLushort * v); /* 40 */
+   void (*EdgeFlag)(GLboolean flag); /* 41 */
+   void (*EdgeFlagv)(const GLboolean * flag); /* 42 */
+   void (*End)(void); /* 43 */
+   void (*Indexd)(GLdouble c); /* 44 */
+   void (*Indexdv)(const GLdouble * c); /* 45 */
+   void (*Indexf)(GLfloat c); /* 46 */
+   void (*Indexfv)(const GLfloat * c); /* 47 */
+   void (*Indexi)(GLint c); /* 48 */
+   void (*Indexiv)(const GLint * c); /* 49 */
+   void (*Indexs)(GLshort c); /* 50 */
+   void (*Indexsv)(const GLshort * c); /* 51 */
+   void (*Normal3b)(GLbyte nx, GLbyte ny, GLbyte nz); /* 52 */
+   void (*Normal3bv)(const GLbyte * v); /* 53 */
+   void (*Normal3d)(GLdouble nx, GLdouble ny, GLdouble nz); /* 54 */
+   void (*Normal3dv)(const GLdouble * v); /* 55 */
+   void (*Normal3f)(GLfloat nx, GLfloat ny, GLfloat nz); /* 56 */
+   void (*Normal3fv)(const GLfloat * v); /* 57 */
+   void (*Normal3i)(GLint nx, GLint ny, GLint nz); /* 58 */
+   void (*Normal3iv)(const GLint * v); /* 59 */
+   void (*Normal3s)(GLshort nx, GLshort ny, GLshort nz); /* 60 */
+   void (*Normal3sv)(const GLshort * v); /* 61 */
+   void (*RasterPos2d)(GLdouble x, GLdouble y); /* 62 */
+   void (*RasterPos2dv)(const GLdouble * v); /* 63 */
+   void (*RasterPos2f)(GLfloat x, GLfloat y); /* 64 */
+   void (*RasterPos2fv)(const GLfloat * v); /* 65 */
+   void (*RasterPos2i)(GLint x, GLint y); /* 66 */
+   void (*RasterPos2iv)(const GLint * v); /* 67 */
+   void (*RasterPos2s)(GLshort x, GLshort y); /* 68 */
+   void (*RasterPos2sv)(const GLshort * v); /* 69 */
+   void (*RasterPos3d)(GLdouble x, GLdouble y, GLdouble z); /* 70 */
+   void (*RasterPos3dv)(const GLdouble * v); /* 71 */
+   void (*RasterPos3f)(GLfloat x, GLfloat y, GLfloat z); /* 72 */
+   void (*RasterPos3fv)(const GLfloat * v); /* 73 */
+   void (*RasterPos3i)(GLint x, GLint y, GLint z); /* 74 */
+   void (*RasterPos3iv)(const GLint * v); /* 75 */
+   void (*RasterPos3s)(GLshort x, GLshort y, GLshort z); /* 76 */
+   void (*RasterPos3sv)(const GLshort * v); /* 77 */
+   void (*RasterPos4d)(GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 78 */
+   void (*RasterPos4dv)(const GLdouble * v); /* 79 */
+   void (*RasterPos4f)(GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 80 */
+   void (*RasterPos4fv)(const GLfloat * v); /* 81 */
+   void (*RasterPos4i)(GLint x, GLint y, GLint z, GLint w); /* 82 */
+   void (*RasterPos4iv)(const GLint * v); /* 83 */
+   void (*RasterPos4s)(GLshort x, GLshort y, GLshort z, GLshort w); /* 84 */
+   void (*RasterPos4sv)(const GLshort * v); /* 85 */
+   void (*Rectd)(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2); /* 86 */
+   void (*Rectdv)(const GLdouble * v1, const GLdouble * v2); /* 87 */
+   void (*Rectf)(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2); /* 88 */
+   void (*Rectfv)(const GLfloat * v1, const GLfloat * v2); /* 89 */
+   void (*Recti)(GLint x1, GLint y1, GLint x2, GLint y2); /* 90 */
+   void (*Rectiv)(const GLint * v1, const GLint * v2); /* 91 */
+   void (*Rects)(GLshort x1, GLshort y1, GLshort x2, GLshort y2); /* 92 */
+   void (*Rectsv)(const GLshort * v1, const GLshort * v2); /* 93 */
+   void (*TexCoord1d)(GLdouble s); /* 94 */
+   void (*TexCoord1dv)(const GLdouble * v); /* 95 */
+   void (*TexCoord1f)(GLfloat s); /* 96 */
+   void (*TexCoord1fv)(const GLfloat * v); /* 97 */
+   void (*TexCoord1i)(GLint s); /* 98 */
+   void (*TexCoord1iv)(const GLint * v); /* 99 */
+   void (*TexCoord1s)(GLshort s); /* 100 */
+   void (*TexCoord1sv)(const GLshort * v); /* 101 */
+   void (*TexCoord2d)(GLdouble s, GLdouble t); /* 102 */
+   void (*TexCoord2dv)(const GLdouble * v); /* 103 */
+   void (*TexCoord2f)(GLfloat s, GLfloat t); /* 104 */
+   void (*TexCoord2fv)(const GLfloat * v); /* 105 */
+   void (*TexCoord2i)(GLint s, GLint t); /* 106 */
+   void (*TexCoord2iv)(const GLint * v); /* 107 */
+   void (*TexCoord2s)(GLshort s, GLshort t); /* 108 */
+   void (*TexCoord2sv)(const GLshort * v); /* 109 */
+   void (*TexCoord3d)(GLdouble s, GLdouble t, GLdouble r); /* 110 */
+   void (*TexCoord3dv)(const GLdouble * v); /* 111 */
+   void (*TexCoord3f)(GLfloat s, GLfloat t, GLfloat r); /* 112 */
+   void (*TexCoord3fv)(const GLfloat * v); /* 113 */
+   void (*TexCoord3i)(GLint s, GLint t, GLint r); /* 114 */
+   void (*TexCoord3iv)(const GLint * v); /* 115 */
+   void (*TexCoord3s)(GLshort s, GLshort t, GLshort r); /* 116 */
+   void (*TexCoord3sv)(const GLshort * v); /* 117 */
+   void (*TexCoord4d)(GLdouble s, GLdouble t, GLdouble r, GLdouble q); /* 118 */
+   void (*TexCoord4dv)(const GLdouble * v); /* 119 */
+   void (*TexCoord4f)(GLfloat s, GLfloat t, GLfloat r, GLfloat q); /* 120 */
+   void (*TexCoord4fv)(const GLfloat * v); /* 121 */
+   void (*TexCoord4i)(GLint s, GLint t, GLint r, GLint q); /* 122 */
+   void (*TexCoord4iv)(const GLint * v); /* 123 */
+   void (*TexCoord4s)(GLshort s, GLshort t, GLshort r, GLshort q); /* 124 */
+   void (*TexCoord4sv)(const GLshort * v); /* 125 */
+   void (*Vertex2d)(GLdouble x, GLdouble y); /* 126 */
+   void (*Vertex2dv)(const GLdouble * v); /* 127 */
+   void (*Vertex2f)(GLfloat x, GLfloat y); /* 128 */
+   void (*Vertex2fv)(const GLfloat * v); /* 129 */
+   void (*Vertex2i)(GLint x, GLint y); /* 130 */
+   void (*Vertex2iv)(const GLint * v); /* 131 */
+   void (*Vertex2s)(GLshort x, GLshort y); /* 132 */
+   void (*Vertex2sv)(const GLshort * v); /* 133 */
+   void (*Vertex3d)(GLdouble x, GLdouble y, GLdouble z); /* 134 */
+   void (*Vertex3dv)(const GLdouble * v); /* 135 */
+   void (*Vertex3f)(GLfloat x, GLfloat y, GLfloat z); /* 136 */
+   void (*Vertex3fv)(const GLfloat * v); /* 137 */
+   void (*Vertex3i)(GLint x, GLint y, GLint z); /* 138 */
+   void (*Vertex3iv)(const GLint * v); /* 139 */
+   void (*Vertex3s)(GLshort x, GLshort y, GLshort z); /* 140 */
+   void (*Vertex3sv)(const GLshort * v); /* 141 */
+   void (*Vertex4d)(GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 142 */
+   void (*Vertex4dv)(const GLdouble * v); /* 143 */
+   void (*Vertex4f)(GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 144 */
+   void (*Vertex4fv)(const GLfloat * v); /* 145 */
+   void (*Vertex4i)(GLint x, GLint y, GLint z, GLint w); /* 146 */
+   void (*Vertex4iv)(const GLint * v); /* 147 */
+   void (*Vertex4s)(GLshort x, GLshort y, GLshort z, GLshort w); /* 148 */
+   void (*Vertex4sv)(const GLshort * v); /* 149 */
+   void (*ClipPlane)(GLenum plane, const GLdouble * equation); /* 150 */
+   void (*ColorMaterial)(GLenum face, GLenum mode); /* 151 */
+   void (*CullFace)(GLenum mode); /* 152 */
+   void (*Fogf)(GLenum pname, GLfloat param); /* 153 */
+   void (*Fogfv)(GLenum pname, const GLfloat * params); /* 154 */
+   void (*Fogi)(GLenum pname, GLint param); /* 155 */
+   void (*Fogiv)(GLenum pname, const GLint * params); /* 156 */
+   void (*FrontFace)(GLenum mode); /* 157 */
+   void (*Hint)(GLenum target, GLenum mode); /* 158 */
+   void (*Lightf)(GLenum light, GLenum pname, GLfloat param); /* 159 */
+   void (*Lightfv)(GLenum light, GLenum pname, const GLfloat * params); /* 160 */
+   void (*Lighti)(GLenum light, GLenum pname, GLint param); /* 161 */
+   void (*Lightiv)(GLenum light, GLenum pname, const GLint * params); /* 162 */
+   void (*LightModelf)(GLenum pname, GLfloat param); /* 163 */
+   void (*LightModelfv)(GLenum pname, const GLfloat * params); /* 164 */
+   void (*LightModeli)(GLenum pname, GLint param); /* 165 */
+   void (*LightModeliv)(GLenum pname, const GLint * params); /* 166 */
+   void (*LineStipple)(GLint factor, GLushort pattern); /* 167 */
+   void (*LineWidth)(GLfloat width); /* 168 */
+   void (*Materialf)(GLenum face, GLenum pname, GLfloat param); /* 169 */
+   void (*Materialfv)(GLenum face, GLenum pname, const GLfloat * params); /* 170 */
+   void (*Materiali)(GLenum face, GLenum pname, GLint param); /* 171 */
+   void (*Materialiv)(GLenum face, GLenum pname, const GLint * params); /* 172 */
+   void (*PointSize)(GLfloat size); /* 173 */
+   void (*PolygonMode)(GLenum face, GLenum mode); /* 174 */
+   void (*PolygonStipple)(const GLubyte * mask); /* 175 */
+   void (*Scissor)(GLint x, GLint y, GLsizei width, GLsizei height); /* 176 */
+   void (*ShadeModel)(GLenum mode); /* 177 */
+   void (*TexParameterf)(GLenum target, GLenum pname, GLfloat param); /* 178 */
+   void (*TexParameterfv)(GLenum target, GLenum pname, const GLfloat * params); /* 179 */
+   void (*TexParameteri)(GLenum target, GLenum pname, GLint param); /* 180 */
+   void (*TexParameteriv)(GLenum target, GLenum pname, const GLint * params); /* 181 */
+   void (*TexImage1D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 182 */
+   void (*TexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 183 */
+   void (*TexEnvf)(GLenum target, GLenum pname, GLfloat param); /* 184 */
+   void (*TexEnvfv)(GLenum target, GLenum pname, const GLfloat * params); /* 185 */
+   void (*TexEnvi)(GLenum target, GLenum pname, GLint param); /* 186 */
+   void (*TexEnviv)(GLenum target, GLenum pname, const GLint * params); /* 187 */
+   void (*TexGend)(GLenum coord, GLenum pname, GLdouble param); /* 188 */
+   void (*TexGendv)(GLenum coord, GLenum pname, const GLdouble * params); /* 189 */
+   void (*TexGenf)(GLenum coord, GLenum pname, GLfloat param); /* 190 */
+   void (*TexGenfv)(GLenum coord, GLenum pname, const GLfloat * params); /* 191 */
+   void (*TexGeni)(GLenum coord, GLenum pname, GLint param); /* 192 */
+   void (*TexGeniv)(GLenum coord, GLenum pname, const GLint * params); /* 193 */
+   void (*FeedbackBuffer)(GLsizei size, GLenum type, GLfloat * buffer); /* 194 */
+   void (*SelectBuffer)(GLsizei size, GLuint * buffer); /* 195 */
+   GLint (*RenderMode)(GLenum mode); /* 196 */
+   void (*InitNames)(void); /* 197 */
+   void (*LoadName)(GLuint name); /* 198 */
+   void (*PassThrough)(GLfloat token); /* 199 */
+   void (*PopName)(void); /* 200 */
+   void (*PushName)(GLuint name); /* 201 */
+   void (*DrawBuffer)(GLenum mode); /* 202 */
+   void (*Clear)(GLbitfield mask); /* 203 */
+   void (*ClearAccum)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha); /* 204 */
+   void (*ClearIndex)(GLfloat c); /* 205 */
+   void (*ClearColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha); /* 206 */
+   void (*ClearStencil)(GLint s); /* 207 */
+   void (*ClearDepth)(GLclampd depth); /* 208 */
+   void (*StencilMask)(GLuint mask); /* 209 */
+   void (*ColorMask)(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha); /* 210 */
+   void (*DepthMask)(GLboolean flag); /* 211 */
+   void (*IndexMask)(GLuint mask); /* 212 */
+   void (*Accum)(GLenum op, GLfloat value); /* 213 */
+   void (*Disable)(GLenum cap); /* 214 */
+   void (*Enable)(GLenum cap); /* 215 */
+   void (*Finish)(void); /* 216 */
+   void (*Flush)(void); /* 217 */
+   void (*PopAttrib)(void); /* 218 */
+   void (*PushAttrib)(GLbitfield mask); /* 219 */
+   void (*Map1d)(GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble * points); /* 220 */
+   void (*Map1f)(GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat * points); /* 221 */
+   void (*Map2d)(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble * points); /* 222 */
+   void (*Map2f)(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat * points); /* 223 */
+   void (*MapGrid1d)(GLint un, GLdouble u1, GLdouble u2); /* 224 */
+   void (*MapGrid1f)(GLint un, GLfloat u1, GLfloat u2); /* 225 */
+   void (*MapGrid2d)(GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2); /* 226 */
+   void (*MapGrid2f)(GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2); /* 227 */
+   void (*EvalCoord1d)(GLdouble u); /* 228 */
+   void (*EvalCoord1dv)(const GLdouble * u); /* 229 */
+   void (*EvalCoord1f)(GLfloat u); /* 230 */
+   void (*EvalCoord1fv)(const GLfloat * u); /* 231 */
+   void (*EvalCoord2d)(GLdouble u, GLdouble v); /* 232 */
+   void (*EvalCoord2dv)(const GLdouble * u); /* 233 */
+   void (*EvalCoord2f)(GLfloat u, GLfloat v); /* 234 */
+   void (*EvalCoord2fv)(const GLfloat * u); /* 235 */
+   void (*EvalMesh1)(GLenum mode, GLint i1, GLint i2); /* 236 */
+   void (*EvalPoint1)(GLint i); /* 237 */
+   void (*EvalMesh2)(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2); /* 238 */
+   void (*EvalPoint2)(GLint i, GLint j); /* 239 */
+   void (*AlphaFunc)(GLenum func, GLclampf ref); /* 240 */
+   void (*BlendFunc)(GLenum sfactor, GLenum dfactor); /* 241 */
+   void (*LogicOp)(GLenum opcode); /* 242 */
+   void (*StencilFunc)(GLenum func, GLint ref, GLuint mask); /* 243 */
+   void (*StencilOp)(GLenum fail, GLenum zfail, GLenum zpass); /* 244 */
+   void (*DepthFunc)(GLenum func); /* 245 */
+   void (*PixelZoom)(GLfloat xfactor, GLfloat yfactor); /* 246 */
+   void (*PixelTransferf)(GLenum pname, GLfloat param); /* 247 */
+   void (*PixelTransferi)(GLenum pname, GLint param); /* 248 */
+   void (*PixelStoref)(GLenum pname, GLfloat param); /* 249 */
+   void (*PixelStorei)(GLenum pname, GLint param); /* 250 */
+   void (*PixelMapfv)(GLenum map, GLint mapsize, const GLfloat * values); /* 251 */
+   void (*PixelMapuiv)(GLenum map, GLint mapsize, const GLuint * values); /* 252 */
+   void (*PixelMapusv)(GLenum map, GLint mapsize, const GLushort * values); /* 253 */
+   void (*ReadBuffer)(GLenum mode); /* 254 */
+   void (*CopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type); /* 255 */
+   void (*ReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * pixels); /* 256 */
+   void (*DrawPixels)(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels); /* 257 */
+   void (*GetBooleanv)(GLenum pname, GLboolean * params); /* 258 */
+   void (*GetClipPlane)(GLenum plane, GLdouble * equation); /* 259 */
+   void (*GetDoublev)(GLenum pname, GLdouble * params); /* 260 */
+   GLenum (*GetError)(void); /* 261 */
+   void (*GetFloatv)(GLenum pname, GLfloat * params); /* 262 */
+   void (*GetIntegerv)(GLenum pname, GLint * params); /* 263 */
+   void (*GetLightfv)(GLenum light, GLenum pname, GLfloat * params); /* 264 */
+   void (*GetLightiv)(GLenum light, GLenum pname, GLint * params); /* 265 */
+   void (*GetMapdv)(GLenum target, GLenum query, GLdouble * v); /* 266 */
+   void (*GetMapfv)(GLenum target, GLenum query, GLfloat * v); /* 267 */
+   void (*GetMapiv)(GLenum target, GLenum query, GLint * v); /* 268 */
+   void (*GetMaterialfv)(GLenum face, GLenum pname, GLfloat * params); /* 269 */
+   void (*GetMaterialiv)(GLenum face, GLenum pname, GLint * params); /* 270 */
+   void (*GetPixelMapfv)(GLenum map, GLfloat * values); /* 271 */
+   void (*GetPixelMapuiv)(GLenum map, GLuint * values); /* 272 */
+   void (*GetPixelMapusv)(GLenum map, GLushort * values); /* 273 */
+   void (*GetPolygonStipple)(GLubyte * mask); /* 274 */
+   const GLubyte * (*GetString)(GLenum name); /* 275 */
+   void (*GetTexEnvfv)(GLenum target, GLenum pname, GLfloat * params); /* 276 */
+   void (*GetTexEnviv)(GLenum target, GLenum pname, GLint * params); /* 277 */
+   void (*GetTexGendv)(GLenum coord, GLenum pname, GLdouble * params); /* 278 */
+   void (*GetTexGenfv)(GLenum coord, GLenum pname, GLfloat * params); /* 279 */
+   void (*GetTexGeniv)(GLenum coord, GLenum pname, GLint * params); /* 280 */
+   void (*GetTexImage)(GLenum target, GLint level, GLenum format, GLenum type, GLvoid * pixels); /* 281 */
+   void (*GetTexParameterfv)(GLenum target, GLenum pname, GLfloat * params); /* 282 */
+   void (*GetTexParameteriv)(GLenum target, GLenum pname, GLint * params); /* 283 */
+   void (*GetTexLevelParameterfv)(GLenum target, GLint level, GLenum pname, GLfloat * params); /* 284 */
+   void (*GetTexLevelParameteriv)(GLenum target, GLint level, GLenum pname, GLint * params); /* 285 */
+   GLboolean (*IsEnabled)(GLenum cap); /* 286 */
+   GLboolean (*IsList)(GLuint list); /* 287 */
+   void (*DepthRange)(GLclampd near, GLclampd far); /* 288 */
+   void (*Frustum)(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar); /* 289 */
+   void (*LoadIdentity)(void); /* 290 */
+   void (*LoadMatrixf)(const GLfloat * m); /* 291 */
+   void (*LoadMatrixd)(const GLdouble * m); /* 292 */
+   void (*MatrixMode)(GLenum mode); /* 293 */
+   void (*MultMatrixf)(const GLfloat * m); /* 294 */
+   void (*MultMatrixd)(const GLdouble * m); /* 295 */
+   void (*Ortho)(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar); /* 296 */
+   void (*PopMatrix)(void); /* 297 */
+   void (*PushMatrix)(void); /* 298 */
+   void (*Rotated)(GLdouble angle, GLdouble x, GLdouble y, GLdouble z); /* 299 */
+   void (*Rotatef)(GLfloat angle, GLfloat x, GLfloat y, GLfloat z); /* 300 */
+   void (*Scaled)(GLdouble x, GLdouble y, GLdouble z); /* 301 */
+   void (*Scalef)(GLfloat x, GLfloat y, GLfloat z); /* 302 */
+   void (*Translated)(GLdouble x, GLdouble y, GLdouble z); /* 303 */
+   void (*Translatef)(GLfloat x, GLfloat y, GLfloat z); /* 304 */
+   void (*Viewport)(GLint x, GLint y, GLsizei width, GLsizei height); /* 305 */
+   void (*ArrayElement)(GLint i); /* 306 */
+   void (*BindTexture)(GLenum target, GLenum texture); /* 307 */
+   void (*ColorPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 308 */
+   void (*DisableClientState)(GLenum array); /* 309 */
+   void (*DrawArrays)(GLenum mode, GLint first, GLsizei count); /* 310 */
+   void (*DrawElements)(GLenum mode, GLsizei count, GLenum type, const GLvoid * indices); /* 311 */
+   void (*EdgeFlagPointer)(GLsizei stride, const GLvoid * pointer); /* 312 */
+   void (*EnableClientState)(GLenum array); /* 313 */
+   void (*IndexPointer)(GLenum type, GLsizei stride, const GLvoid * pointer); /* 314 */
+   void (*Indexub)(GLubyte c); /* 315 */
+   void (*Indexubv)(const GLubyte * c); /* 316 */
+   void (*InterleavedArrays)(GLenum format, GLsizei stride, const GLvoid * pointer); /* 317 */
+   void (*NormalPointer)(GLenum type, GLsizei stride, const GLvoid * pointer); /* 318 */
+   void (*PolygonOffset)(GLfloat factor, GLfloat units); /* 319 */
+   void (*TexCoordPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 320 */
+   void (*VertexPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 321 */
+   GLboolean (*AreTexturesResident)(GLsizei n, const GLenum * textures, GLboolean * residences); /* 322 */
+   void (*CopyTexImage1D)(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border); /* 323 */
+   void (*CopyTexImage2D)(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border); /* 324 */
+   void (*CopyTexSubImage1D)(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width); /* 325 */
+   void (*CopyTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height); /* 326 */
+   void (*DeleteTextures)(GLsizei n, const GLenum * textures); /* 327 */
+   void (*GenTextures)(GLsizei n, GLenum * textures); /* 328 */
+   void (*GetPointerv)(GLenum pname, GLvoid * * params); /* 329 */
+   GLboolean (*IsTexture)(GLenum texture); /* 330 */
+   void (*PrioritizeTextures)(GLsizei n, const GLenum * textures, const GLclampf * priorities); /* 331 */
+   void (*TexSubImage1D)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid * pixels); /* 332 */
+   void (*TexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels); /* 333 */
+   void (*PopClientAttrib)(void); /* 334 */
+   void (*PushClientAttrib)(GLbitfield mask); /* 335 */
+   void (*BlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha); /* 336 */
+   void (*BlendEquation)(GLenum mode); /* 337 */
+   void (*DrawRangeElements)(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices); /* 338 */
+   void (*ColorTable)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table); /* 339 */
+   void (*ColorTableParameterfv)(GLenum target, GLenum pname, const GLfloat * params); /* 340 */
+   void (*ColorTableParameteriv)(GLenum target, GLenum pname, const GLint * params); /* 341 */
+   void (*CopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width); /* 342 */
+   void (*GetColorTable)(GLenum target, GLenum format, GLenum type, GLvoid * table); /* 343 */
+   void (*GetColorTableParameterfv)(GLenum target, GLenum pname, GLfloat * params); /* 344 */
+   void (*GetColorTableParameteriv)(GLenum target, GLenum pname, GLint * params); /* 345 */
+   void (*ColorSubTable)(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid * data); /* 346 */
+   void (*CopyColorSubTable)(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width); /* 347 */
+   void (*ConvolutionFilter1D)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * image); /* 348 */
+   void (*ConvolutionFilter2D)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * image); /* 349 */
+   void (*ConvolutionParameterf)(GLenum target, GLenum pname, GLfloat params); /* 350 */
+   void (*ConvolutionParameterfv)(GLenum target, GLenum pname, const GLfloat * params); /* 351 */
+   void (*ConvolutionParameteri)(GLenum target, GLenum pname, GLint params); /* 352 */
+   void (*ConvolutionParameteriv)(GLenum target, GLenum pname, const GLint * params); /* 353 */
+   void (*CopyConvolutionFilter1D)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width); /* 354 */
+   void (*CopyConvolutionFilter2D)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height); /* 355 */
+   void (*GetConvolutionFilter)(GLenum target, GLenum format, GLenum type, GLvoid * image); /* 356 */
+   void (*GetConvolutionParameterfv)(GLenum target, GLenum pname, GLfloat * params); /* 357 */
+   void (*GetConvolutionParameteriv)(GLenum target, GLenum pname, GLint * params); /* 358 */
+   void (*GetSeparableFilter)(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span); /* 359 */
+   void (*SeparableFilter2D)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * row, const GLvoid * column); /* 360 */
+   void (*GetHistogram)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values); /* 361 */
+   void (*GetHistogramParameterfv)(GLenum target, GLenum pname, GLfloat * params); /* 362 */
+   void (*GetHistogramParameteriv)(GLenum target, GLenum pname, GLint * params); /* 363 */
+   void (*GetMinmax)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values); /* 364 */
+   void (*GetMinmaxParameterfv)(GLenum target, GLenum pname, GLfloat * params); /* 365 */
+   void (*GetMinmaxParameteriv)(GLenum target, GLenum pname, GLint * params); /* 366 */
+   void (*Histogram)(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink); /* 367 */
+   void (*Minmax)(GLenum target, GLenum internalformat, GLboolean sink); /* 368 */
+   void (*ResetHistogram)(GLenum target); /* 369 */
+   void (*ResetMinmax)(GLenum target); /* 370 */
+   void (*TexImage3D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 371 */
+   void (*TexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels); /* 372 */
+   void (*CopyTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height); /* 373 */
+   void (*ActiveTextureARB)(GLenum texture); /* 374 */
+   void (*ClientActiveTextureARB)(GLenum texture); /* 375 */
+   void (*MultiTexCoord1dARB)(GLenum target, GLdouble s); /* 376 */
+   void (*MultiTexCoord1dvARB)(GLenum target, const GLdouble * v); /* 377 */
+   void (*MultiTexCoord1fARB)(GLenum target, GLfloat s); /* 378 */
+   void (*MultiTexCoord1fvARB)(GLenum target, const GLfloat * v); /* 379 */
+   void (*MultiTexCoord1iARB)(GLenum target, GLint s); /* 380 */
+   void (*MultiTexCoord1ivARB)(GLenum target, const GLint * v); /* 381 */
+   void (*MultiTexCoord1sARB)(GLenum target, GLshort s); /* 382 */
+   void (*MultiTexCoord1svARB)(GLenum target, const GLshort * v); /* 383 */
+   void (*MultiTexCoord2dARB)(GLenum target, GLdouble s, GLdouble t); /* 384 */
+   void (*MultiTexCoord2dvARB)(GLenum target, const GLdouble * v); /* 385 */
+   void (*MultiTexCoord2fARB)(GLenum target, GLfloat s, GLfloat t); /* 386 */
+   void (*MultiTexCoord2fvARB)(GLenum target, const GLfloat * v); /* 387 */
+   void (*MultiTexCoord2iARB)(GLenum target, GLint s, GLint t); /* 388 */
+   void (*MultiTexCoord2ivARB)(GLenum target, const GLint * v); /* 389 */
+   void (*MultiTexCoord2sARB)(GLenum target, GLshort s, GLshort t); /* 390 */
+   void (*MultiTexCoord2svARB)(GLenum target, const GLshort * v); /* 391 */
+   void (*MultiTexCoord3dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r); /* 392 */
+   void (*MultiTexCoord3dvARB)(GLenum target, const GLdouble * v); /* 393 */
+   void (*MultiTexCoord3fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r); /* 394 */
+   void (*MultiTexCoord3fvARB)(GLenum target, const GLfloat * v); /* 395 */
+   void (*MultiTexCoord3iARB)(GLenum target, GLint s, GLint t, GLint r); /* 396 */
+   void (*MultiTexCoord3ivARB)(GLenum target, const GLint * v); /* 397 */
+   void (*MultiTexCoord3sARB)(GLenum target, GLshort s, GLshort t, GLshort r); /* 398 */
+   void (*MultiTexCoord3svARB)(GLenum target, const GLshort * v); /* 399 */
+   void (*MultiTexCoord4dARB)(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q); /* 400 */
+   void (*MultiTexCoord4dvARB)(GLenum target, const GLdouble * v); /* 401 */
+   void (*MultiTexCoord4fARB)(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q); /* 402 */
+   void (*MultiTexCoord4fvARB)(GLenum target, const GLfloat * v); /* 403 */
+   void (*MultiTexCoord4iARB)(GLenum target, GLint s, GLint t, GLint r, GLint q); /* 404 */
+   void (*MultiTexCoord4ivARB)(GLenum target, const GLint * v); /* 405 */
+   void (*MultiTexCoord4sARB)(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q); /* 406 */
+   void (*MultiTexCoord4svARB)(GLenum target, const GLshort * v); /* 407 */
+   void (*LoadTransposeMatrixfARB)(const GLfloat * m); /* 408 */
+   void (*LoadTransposeMatrixdARB)(const GLdouble * m); /* 409 */
+   void (*MultTransposeMatrixfARB)(const GLfloat * m); /* 410 */
+   void (*MultTransposeMatrixdARB)(const GLdouble * m); /* 411 */
+   void (*SampleCoverageARB)(GLclampf value, GLboolean invert); /* 412 */
+   void (*SamplePassARB)(GLenum pass); /* 413 */
+   void (*PolygonOffsetEXT)(GLfloat factor, GLfloat bias); /* 414 */
+   void (*GetTexFilterFuncSGIS)(GLenum target, GLenum filter, GLfloat * weights); /* 415 */
+   void (*TexFilterFuncSGIS)(GLenum target, GLenum filter, GLsizei n, const GLfloat * weights); /* 416 */
+   void (*GetHistogramEXT)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values); /* 417 */
+   void (*GetHistogramParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params); /* 418 */
+   void (*GetHistogramParameterivEXT)(GLenum target, GLenum pname, GLint * params); /* 419 */
+   void (*GetMinmaxEXT)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values); /* 420 */
+   void (*GetMinmaxParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params); /* 421 */
+   void (*GetMinmaxParameterivEXT)(GLenum target, GLenum pname, GLint * params); /* 422 */
+   void (*GetConvolutionFilterEXT)(GLenum target, GLenum format, GLenum type, GLvoid * image); /* 423 */
+   void (*GetConvolutionParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params); /* 424 */
+   void (*GetConvolutionParameterivEXT)(GLenum target, GLenum pname, GLint * params); /* 425 */
+   void (*GetSeparableFilterEXT)(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span); /* 426 */
+   void (*GetColorTableSGI)(GLenum target, GLenum format, GLenum type, GLvoid * table); /* 427 */
+   void (*GetColorTableParameterfvSGI)(GLenum target, GLenum pname, GLfloat * params); /* 428 */
+   void (*GetColorTableParameterivSGI)(GLenum target, GLenum pname, GLint * params); /* 429 */
+   void (*PixelTexGenSGIX)(GLenum mode); /* 430 */
+   void (*PixelTexGenParameteriSGIS)(GLenum pname, GLint param); /* 431 */
+   void (*PixelTexGenParameterivSGIS)(GLenum pname, const GLint * params); /* 432 */
+   void (*PixelTexGenParameterfSGIS)(GLenum pname, GLfloat param); /* 433 */
+   void (*PixelTexGenParameterfvSGIS)(GLenum pname, const GLfloat * params); /* 434 */
+   void (*GetPixelTexGenParameterivSGIS)(GLenum pname, GLint * params); /* 435 */
+   void (*GetPixelTexGenParameterfvSGIS)(GLenum pname, GLfloat * params); /* 436 */
+   void (*TexImage4DSGIS)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const GLvoid * pixels); /* 437 */
+   void (*TexSubImage4DSGIS)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const GLvoid * pixels); /* 438 */
+   GLboolean (*AreTexturesResidentEXT)(GLsizei n, const GLenum * textures, GLboolean * residences); /* 439 */
+   void (*GenTexturesEXT)(GLsizei n, GLenum * textures); /* 440 */
+   GLboolean (*IsTextureEXT)(GLenum texture); /* 441 */
+   void (*DetailTexFuncSGIS)(GLenum target, GLsizei n, const GLfloat * points); /* 442 */
+   void (*GetDetailTexFuncSGIS)(GLenum target, GLfloat * points); /* 443 */
+   void (*SharpenTexFuncSGIS)(GLenum target, GLsizei n, const GLfloat * points); /* 444 */
+   void (*GetSharpenTexFuncSGIS)(GLenum target, GLfloat * points); /* 445 */
+   void (*SampleMaskSGIS)(GLclampf value, GLboolean invert); /* 446 */
+   void (*SamplePatternSGIS)(GLenum pattern); /* 447 */
+   void (*ColorPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer); /* 448 */
+   void (*EdgeFlagPointerEXT)(GLsizei stride, GLsizei count, const GLboolean * pointer); /* 449 */
+   void (*IndexPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer); /* 450 */
+   void (*NormalPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer); /* 451 */
+   void (*TexCoordPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer); /* 452 */
+   void (*VertexPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid * pointer); /* 453 */
+   void (*SpriteParameterfSGIX)(GLenum pname, GLfloat param); /* 454 */
+   void (*SpriteParameterfvSGIX)(GLenum pname, const GLfloat * params); /* 455 */
+   void (*SpriteParameteriSGIX)(GLenum pname, GLint param); /* 456 */
+   void (*SpriteParameterivSGIX)(GLenum pname, const GLint * params); /* 457 */
+   void (*PointParameterfEXT)(GLenum pname, GLfloat param); /* 458 */
+   void (*PointParameterfvEXT)(GLenum pname, const GLfloat * params); /* 459 */
+   GLint (*GetInstrumentsSGIX)(void); /* 460 */
+   void (*InstrumentsBufferSGIX)(GLsizei size, GLint * buffer); /* 461 */
+   GLint (*PollInstrumentsSGIX)(GLint * marker_p); /* 462 */
+   void (*ReadInstrumentsSGIX)(GLint marker); /* 463 */
+   void (*StartInstrumentsSGIX)(void); /* 464 */
+   void (*StopInstrumentsSGIX)(GLint marker); /* 465 */
+   void (*FrameZoomSGIX)(GLint factor); /* 466 */
+   void (*TagSampleBufferSGIX)(void); /* 467 */
+   void (*ReferencePlaneSGIX)(const GLdouble * equation); /* 468 */
+   void (*FlushRasterSGIX)(void); /* 469 */
+   void (*GetListParameterfvSGIX)(GLuint list, GLenum pname, GLfloat * params); /* 470 */
+   void (*GetListParameterivSGIX)(GLuint list, GLenum pname, GLint * params); /* 471 */
+   void (*ListParameterfSGIX)(GLuint list, GLenum pname, GLfloat param); /* 472 */
+   void (*ListParameterfvSGIX)(GLuint list, GLenum pname, const GLfloat * params); /* 473 */
+   void (*ListParameteriSGIX)(GLuint list, GLenum pname, GLint param); /* 474 */
+   void (*ListParameterivSGIX)(GLuint list, GLenum pname, const GLint * params); /* 475 */
+   void (*FragmentColorMaterialSGIX)(GLenum face, GLenum mode); /* 476 */
+   void (*FragmentLightfSGIX)(GLenum light, GLenum pname, GLfloat param); /* 477 */
+   void (*FragmentLightfvSGIX)(GLenum light, GLenum pname, const GLfloat * params); /* 478 */
+   void (*FragmentLightiSGIX)(GLenum light, GLenum pname, GLint param); /* 479 */
+   void (*FragmentLightivSGIX)(GLenum light, GLenum pname, const GLint * params); /* 480 */
+   void (*FragmentLightModelfSGIX)(GLenum pname, GLfloat param); /* 481 */
+   void (*FragmentLightModelfvSGIX)(GLenum pname, const GLfloat * params); /* 482 */
+   void (*FragmentLightModeliSGIX)(GLenum pname, GLint param); /* 483 */
+   void (*FragmentLightModelivSGIX)(GLenum pname, const GLint * params); /* 484 */
+   void (*FragmentMaterialfSGIX)(GLenum face, GLenum pname, GLfloat param); /* 485 */
+   void (*FragmentMaterialfvSGIX)(GLenum face, GLenum pname, const GLfloat * params); /* 486 */
+   void (*FragmentMaterialiSGIX)(GLenum face, GLenum pname, GLint param); /* 487 */
+   void (*FragmentMaterialivSGIX)(GLenum face, GLenum pname, const GLint * params); /* 488 */
+   void (*GetFragmentLightfvSGIX)(GLenum light, GLenum pname, GLfloat * params); /* 489 */
+   void (*GetFragmentLightivSGIX)(GLenum light, GLenum pname, GLint * params); /* 490 */
+   void (*GetFragmentMaterialfvSGIX)(GLenum face, GLenum pname, GLfloat * params); /* 491 */
+   void (*GetFragmentMaterialivSGIX)(GLenum face, GLenum pname, GLint * params); /* 492 */
+   void (*LightEnviSGIX)(GLenum pname, GLint param); /* 493 */
+   void (*VertexWeightfEXT)(GLfloat weight); /* 494 */
+   void (*VertexWeightfvEXT)(const GLfloat * weight); /* 495 */
+   void (*VertexWeightPointerEXT)(GLsizei size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 496 */
+   void (*FlushVertexArrayRangeNV)(void); /* 497 */
+   void (*VertexArrayRangeNV)(GLsizei size, const GLvoid * pointer); /* 498 */
+   void (*CombinerParameterfvNV)(GLenum pname, const GLfloat * params); /* 499 */
+   void (*CombinerParameterfNV)(GLenum pname, GLfloat param); /* 500 */
+   void (*CombinerParameterivNV)(GLenum pname, const GLint * params); /* 501 */
+   void (*CombinerParameteriNV)(GLenum pname, GLint param); /* 502 */
+   void (*CombinerInputNV)(GLenum stage, GLenum portion, GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage); /* 503 */
+   void (*CombinerOutputNV)(GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum); /* 504 */
+   void (*FinalCombinerInputNV)(GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage); /* 505 */
+   void (*GetCombinerInputParameterfvNV)(GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat * params); /* 506 */
+   void (*GetCombinerInputParameterivNV)(GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint * params); /* 507 */
+   void (*GetCombinerOutputParameterfvNV)(GLenum stage, GLenum portion, GLenum pname, GLfloat * params); /* 508 */
+   void (*GetCombinerOutputParameterivNV)(GLenum stage, GLenum portion, GLenum pname, GLint * params); /* 509 */
+   void (*GetFinalCombinerInputParameterfvNV)(GLenum variable, GLenum pname, GLfloat * params); /* 510 */
+   void (*GetFinalCombinerInputParameterivNV)(GLenum variable, GLenum pname, GLint * params); /* 511 */
+   void (*ResizeBuffersMESA)(void); /* 512 */
+   void (*WindowPos2dMESA)(GLdouble x, GLdouble y); /* 513 */
+   void (*WindowPos2dvMESA)(const GLdouble * v); /* 514 */
+   void (*WindowPos2fMESA)(GLfloat x, GLfloat y); /* 515 */
+   void (*WindowPos2fvMESA)(const GLfloat * v); /* 516 */
+   void (*WindowPos2iMESA)(GLint x, GLint y); /* 517 */
+   void (*WindowPos2ivMESA)(const GLint * v); /* 518 */
+   void (*WindowPos2sMESA)(GLshort x, GLshort y); /* 519 */
+   void (*WindowPos2svMESA)(const GLshort * v); /* 520 */
+   void (*WindowPos3dMESA)(GLdouble x, GLdouble y, GLdouble z); /* 521 */
+   void (*WindowPos3dvMESA)(const GLdouble * v); /* 522 */
+   void (*WindowPos3fMESA)(GLfloat x, GLfloat y, GLfloat z); /* 523 */
+   void (*WindowPos3fvMESA)(const GLfloat * v); /* 524 */
+   void (*WindowPos3iMESA)(GLint x, GLint y, GLint z); /* 525 */
+   void (*WindowPos3ivMESA)(const GLint * v); /* 526 */
+   void (*WindowPos3sMESA)(GLshort x, GLshort y, GLshort z); /* 527 */
+   void (*WindowPos3svMESA)(const GLshort * v); /* 528 */
+   void (*WindowPos4dMESA)(GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 529 */
+   void (*WindowPos4dvMESA)(const GLdouble * v); /* 530 */
+   void (*WindowPos4fMESA)(GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 531 */
+   void (*WindowPos4fvMESA)(const GLfloat * v); /* 532 */
+   void (*WindowPos4iMESA)(GLint x, GLint y, GLint z, GLint w); /* 533 */
+   void (*WindowPos4ivMESA)(const GLint * v); /* 534 */
+   void (*WindowPos4sMESA)(GLshort x, GLshort y, GLshort z, GLshort w); /* 535 */
+   void (*WindowPos4svMESA)(const GLshort * v); /* 536 */
+   void (*BlendFuncSeparateEXT)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha); /* 537 */
+   void (*IndexMaterialEXT)(GLenum face, GLenum mode); /* 538 */
+   void (*IndexFuncEXT)(GLenum func, GLclampf ref); /* 539 */
+   void (*LockArraysEXT)(GLint first, GLsizei count); /* 540 */
+   void (*UnlockArraysEXT)(void); /* 541 */
+   void (*CullParameterdvEXT)(GLenum pname, const GLdouble * params); /* 542 */
+   void (*CullParameterfvEXT)(GLenum pname, const GLfloat * params); /* 543 */
+   void (*HintPGI)(GLenum target, GLint mode); /* 544 */
+   void (*FogCoordfEXT)(GLfloat coord); /* 545 */
+   void (*FogCoordfvEXT)(const GLfloat * coord); /* 546 */
+   void (*FogCoorddEXT)(GLdouble coord); /* 547 */
+   void (*FogCoorddvEXT)(const GLdouble * coord); /* 548 */
+   void (*FogCoordPointerEXT)(GLenum type, GLsizei stride, const GLvoid * pointer); /* 549 */
+   void (*GetColorTableEXT)(GLenum target, GLenum format, GLenum type, GLvoid * data); /* 550 */
+   void (*GetColorTableParameterivEXT)(GLenum target, GLenum pname, GLint * params); /* 551 */
+   void (*GetColorTableParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params); /* 552 */
 };
-
 
 #endif
