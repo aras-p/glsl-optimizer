@@ -1,28 +1,35 @@
-This is a port of Mesa-3.0 to OpenStep and Rhapsody/YellowBox. Only
-the GL and GLU libraries have been ported. As OpenStep has it's own
-window handling code we simply use the offscreen rendering capability
-of Mesa to generate a bitmap which can then be drawn into a View. An
-example application using Mesa can be found in OpenStep/MesaView.
-Currently only static libraries are built. The code has been tested on the
-Intel hardware version of the following systems:
+This is a port of the GL and GLU libraries to NeXT/Apple object
+orientated systems. As these systems have their own window handling
+systems we simply use the offscreen rendering capability of Mesa
+to generate bitmaps which may then be displayed by the application
+with a View as required. Example pieces of code may be found in the
+OpenStep directory.
 
-	OpenStep for Mach 4.2
-	Rhapsody (DR1)
-	YellowBox for NT4 (DR1)
+Sadly there are now a proliferation of different system that we need to
+support compilation for: The original NextStep system, The OpenStep
+system, the Rhapsody/Mac OS X system and also the windows implementations
+of the latter two systems. This version of the code has been compiled and
+tested under the following architectures:
 
-It should, however, work on all other variants of OpenStep for other
-processors without modification. Feedback on this would be appreciated.
+	NextStep 3.3 
+	OpenStep 4.2
+	Rhapsody DR2
+	WebObjects for NT 3.5
+	WebObjects for NT 4.0
 
-To build on UNIX based systems simply type "make openstep".
+All tests were done with Intel processors. Feedback on other systems would,
+however, be appreciated !
 
-To build on Win95/WinNT based systems run the "win32-openstep.sh" script from
-the Bourne shell provided with the development environment.
+On UNIX systems simply type "make openstep". Under Windows systems
+with WebObjects run the "win32-openstep.sh" script from within the Bourne
+shell provided with the development environment. In both cases this will
+build the libraries and place them into the "lib" directory. Some examples
+may be found in the OpenStep directory showing how to use the code in an
+actual application (MesaView) as well as some command line demos.
 
-Thiss build the libraries, places them in the "lib" directory and also builds
-the "MesaView" example application. Older examples may be found in the
-OpenStep/Old_Demos directory. These only work on UNIX based systems. The CC
-variable is passed around by the Makefiles so fat libraries may be created
-by alreting this on the command line, e.g. for m68k and i486 support you
-can use the command "make CC='cc -arch m68k -arch i386' openstep".
+The CC variable may be specified on the command line for doing such things
+as building FFAT libraries or using alternative compilers to the standard 'cc'
+e.g.  make CC='cc -arch m68k -arch i386' openstep" will build the libraries
+with both intel and motorola architectures.
 
--Pete French. (pete@ohm.york.ac.uk) 28/5/98
+-Pete French. (pete@ohm.york.ac.uk) 7/6/1999
