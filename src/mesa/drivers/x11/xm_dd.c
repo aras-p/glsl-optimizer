@@ -1,10 +1,10 @@
-/* $Id: xm_dd.c,v 1.26 2001/09/12 03:32:29 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.27 2002/02/14 00:40:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -854,7 +854,7 @@ get_string( GLcontext *ctx, GLenum name )
 #endif
       case GL_VENDOR:
 #ifdef XFree86Server
-         return (const GLubyte *) "VA Linux Systems, Inc.";
+         return (const GLubyte *) "Mesa project: www.mesa3d.org";
 #else
          return NULL;
 #endif
