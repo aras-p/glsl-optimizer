@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.3 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: attrib.c,v 1.4 1999/09/19 23:43:02 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -492,6 +492,7 @@ void gl_PopAttrib( GLcontext* ctx )
                }
                TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial, GL_COLOR_MATERIAL);
                TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
+               TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
                TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
                TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
                TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);

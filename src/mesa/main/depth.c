@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.2 1999/09/10 14:24:35 keithw Exp $ */
+/* $Id: depth.c,v 1.3 1999/09/19 23:43:02 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -817,6 +817,7 @@ void gl_alloc_depth_buffer( GLcontext* ctx )
    if (!ctx->Buffer->Depth) {
       /* out of memory */
       ctx->Depth.Test = GL_FALSE;
+      ctx->NewState |= NEW_RASTER_OPS;
       gl_error( ctx, GL_OUT_OF_MEMORY, "Couldn't allocate depth buffer" );
    }
 }

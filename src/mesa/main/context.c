@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.8 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: context.c,v 1.9 1999/09/19 23:43:02 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1350,10 +1350,17 @@ void gl_destroy_context( GLcontext *ctx )
       for (i = 0 ; i < MAX_MODELVIEW_STACK_DEPTH ; i++) {
 	 gl_matrix_dtr( &ctx->ModelViewStack[i] );
       }
-
+      gl_matrix_dtr( &ctx->ProjectionMatrix );
+      for (i = 0 ; i < MAX_PROJECTION_STACK_DEPTH ; i++) {
+	 gl_matrix_dtr( &ctx->ProjectionStack[i] );
+      }
 
       free( ctx->PB );
-      free( ctx->VB );
+
+      if(ctx->input != ctx->VB->IM)
+         gl_immediate_free( ctx->input );
+
+      gl_vb_free( ctx->VB );
 
       ctx->Shared->RefCount--;
       assert(ctx->Shared->RefCount>=0);
@@ -1410,6 +1417,14 @@ void gl_destroy_context( GLcontext *ctx )
          free( ctx->EvalMap.Map2Texture3.Points );
       if (ctx->EvalMap.Map2Texture4.Points)
          free( ctx->EvalMap.Map2Texture4.Points );
+
+      /* Free cache of immediate buffers. */
+      while (ctx->nr_im_queued-- > 0) {
+         struct immediate * next = ctx->freed_im_queue->next;
+         free( ctx->freed_im_queue );
+         ctx->freed_im_queue = next;
+      }
+      gl_extensions_dtr(ctx);
 
       free( (void *) ctx );
 
