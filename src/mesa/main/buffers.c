@@ -439,7 +439,7 @@ _mesa_ReadBuffer( GLenum mode )
 void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void )
 {
-   GLcontext *ctx = _mesa_get_current_context();
+   GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glResizeBuffersMESA\n");
@@ -491,7 +491,7 @@ _mesa_ResizeBuffersMESA( void )
 void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
 {
-   GLcontext *ctx = _mesa_get_current_context();
+   GET_CURRENT_CONTEXT(ctx);
 
    if (!ctx->Extensions.ARB_multisample) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
