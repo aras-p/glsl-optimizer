@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.15 2000/03/31 01:05:51 brianp Exp $ */
+/* $Id: context.h,v 1.16 2000/04/22 01:05:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,19 +75,39 @@ _mesa_create_visual( GLboolean rgbFlag,
                      GLint accumAlphaBits,
                      GLint numSamples );
 
+extern GLboolean
+_mesa_initialize_visual( GLvisual *v,
+                         GLboolean rgbFlag,
+                         GLboolean alphaFlag,
+                         GLboolean dbFlag,
+                         GLboolean stereoFlag,
+                         GLint redBits,
+                         GLint greenBits,
+                         GLint blueBits,
+                         GLint alphaBits,
+                         GLint indexBits,
+                         GLint depthBits,
+                         GLint stencilBits,
+                         GLint accumRedBits,
+                         GLint accumGreenBits,
+                         GLint accumBlueBits,
+                         GLint accumAlphaBits,
+                         GLint numSamples );
+
 /* this function is obsolete */
-extern GLvisual *gl_create_visual( GLboolean rgbFlag,
-                                   GLboolean alphaFlag,
-                                   GLboolean dbFlag,
-                                   GLboolean stereoFlag,
-                                   GLint depthBits,
-                                   GLint stencilBits,
-                                   GLint accumBits,
-                                   GLint indexBits,
-                                   GLint redBits,
-                                   GLint greenBits,
-                                   GLint blueBits,
-                                   GLint alphaBits );
+extern GLvisual *
+gl_create_visual( GLboolean rgbFlag,
+                  GLboolean alphaFlag,
+                  GLboolean dbFlag,
+                  GLboolean stereoFlag,
+                  GLint depthBits,
+                  GLint stencilBits,
+                  GLint accumBits,
+                  GLint indexBits,
+                  GLint redBits,
+                  GLint greenBits,
+                  GLint blueBits,
+                  GLint alphaBits );
 
 
 extern void
@@ -96,18 +116,29 @@ _mesa_destroy_visual( GLvisual *vis );
 /*obsolete */ extern void gl_destroy_visual( GLvisual *vis );
 
 
+
 /*
  * Create/destroy a GLframebuffer.  A GLframebuffer is like a GLX drawable.
  * It bundles up the depth buffer, stencil buffer and accum buffers into a
  * single entity.
  */
-extern GLframebuffer *gl_create_framebuffer( GLvisual *visual,
-                                             GLboolean softwareDepth,
-                                             GLboolean softwareStencil,
-                                             GLboolean softwareAccum,
-                                             GLboolean softwareAlpha );
+extern GLframebuffer *
+gl_create_framebuffer( GLvisual *visual,
+                       GLboolean softwareDepth,
+                       GLboolean softwareStencil,
+                       GLboolean softwareAccum,
+                       GLboolean softwareAlpha );
 
-extern void gl_destroy_framebuffer( GLframebuffer *buffer );
+extern void
+_mesa_initialize_framebuffer( GLframebuffer *fb,
+                              GLvisual *visual,
+                              GLboolean softwareDepth,
+                              GLboolean softwareStencil,
+                              GLboolean softwareAccum,
+                              GLboolean softwareAlpha );
+
+extern void
+gl_destroy_framebuffer( GLframebuffer *buffer );
 
 
 
@@ -115,36 +146,46 @@ extern void gl_destroy_framebuffer( GLframebuffer *buffer );
  * Create/destroy a GLcontext.  A GLcontext is like a GLX context.  It
  * contains the rendering state.
  */
-extern GLcontext *gl_create_context( GLvisual *visual,
-                                     GLcontext *share_list,
-                                     void *driver_ctx,
-                                     GLboolean direct);
+extern GLcontext *
+gl_create_context( GLvisual *visual,
+                   GLcontext *share_list,
+                   void *driver_ctx,
+                   GLboolean direct);
 
-extern GLboolean gl_initialize_context_data( GLcontext *ctx,
-                                             GLvisual *visual,
-                                             GLcontext *share_list,
-                                             void *driver_ctx,
-                                             GLboolean direct );
+extern GLboolean
+_mesa_initialize_context( GLcontext *ctx,
+                          GLvisual *visual,
+                          GLcontext *share_list,
+                          void *driver_ctx,
+                          GLboolean direct );
 
-extern void gl_free_context_data( GLcontext *ctx );
+extern void
+gl_free_context_data( GLcontext *ctx );
 
-extern void gl_destroy_context( GLcontext *ctx );
-
-
-extern void gl_context_initialize( GLcontext *ctx );
-
-
-extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
+extern void
+gl_destroy_context( GLcontext *ctx );
 
 
-extern void gl_make_current( GLcontext *ctx, GLframebuffer *buffer );
+extern void
+gl_context_initialize( GLcontext *ctx );
 
 
-extern void gl_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
-                              GLframebuffer *readBuffer );
+extern void
+gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
-extern GLcontext *gl_get_current_context(void);
+extern void
+gl_make_current( GLcontext *ctx, GLframebuffer *buffer );
+
+
+extern void
+gl_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
+                  GLframebuffer *readBuffer );
+
+
+extern GLcontext *
+gl_get_current_context(void);
+
 
 
 /*
@@ -192,13 +233,17 @@ _mesa_get_dispatch(GLcontext *ctx);
  * Miscellaneous
  */
 
-extern void gl_problem( const GLcontext *ctx, const char *s );
+extern void
+gl_problem( const GLcontext *ctx, const char *s );
 
-extern void gl_warning( const GLcontext *ctx, const char *s );
+extern void
+gl_warning( const GLcontext *ctx, const char *s );
 
-extern void gl_error( GLcontext *ctx, GLenum error, const char *s );
+extern void
+gl_error( GLcontext *ctx, GLenum error, const char *s );
 
-extern void gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
+extern void
+gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
 
 
@@ -215,12 +260,6 @@ _mesa_init_no_op_table(struct _glapi_table *exec);
 
 extern void
 _mesa_init_exec_table(struct _glapi_table *exec);
-
-
-
-#ifdef PROFILE
-extern GLdouble gl_time( void );
-#endif
 
 
 #endif
