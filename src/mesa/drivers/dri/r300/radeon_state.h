@@ -32,28 +32,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef __R200_STATE_H__
-#define __R200_STATE_H__
+#ifndef __RADEON_STATE_H__
+#define __RADEON_STATE_H__
 
-#ifdef GLX_DIRECT_RENDERING
+#include "radeon_context.h"
 
-#include "r200_context.h"
+extern void radeonSetCliprects(radeonContextPtr radeon, GLenum mode);
 
-extern void r200InitState(r200ContextPtr rmesa);
-extern void r200InitStateFuncs(struct dd_function_table *functions);
-extern void r200InitTnlFuncs(GLcontext * ctx);
-
-extern void r200UpdateMaterial(GLcontext * ctx);
-
-extern void r200RecalcScissorRects(r200ContextPtr rmesa);
-extern void r200UpdateViewportOffset(GLcontext * ctx);
-extern void r200UpdateWindow(GLcontext * ctx);
-
-extern void r200ValidateState(GLcontext * ctx);
-
-extern void r200PrintDirty(r200ContextPtr rmesa, const char *msg);
-
-extern void r200LightingSpaceChange(GLcontext * ctx);
-
-#endif
 #endif

@@ -142,12 +142,16 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // Native reported limits and the VPI layout suggest size 256, whereas
 // difference between known addresses suggests size 512.
 //
+// At address UPLOAD_POINTSIZE is a vector (0, 0, ps, 0), where ps is the
+// floating point pointsize. The exact purpose of this state is uncertain,
+// as there is also the R300_RE_POINTSIZE register.
+//
 // Multiple vertex programs and parameter sets can be loaded at once,
 // which could explain the size discrepancy.
 #define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
 #       define R300_PVS_UPLOAD_PROGRAM           0x00000000
 #       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
-#       define R300_PVS_UPLOAD_UNKNOWN           0x00000400
+#       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
 /* gap */
 #define R300_VAP_PVS_UPLOAD_DATA            0x2208
 // END
@@ -251,11 +255,14 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_ENABLE_14                 (1 << 14)
 #       define R300_TX_ENABLE_15                 (1 << 15)
 
-// No idea what the purpose is, but it is set to 421C_CLEAR just before
-// issuing the clear command and then reset to 421C_NORMAL afterwards.
-#define R300_UNKNOWN_421C                   0x421C
-#       define R300_421C_NORMAL                  0x00060006
-#       define R300_421C_CLEAR                   0x0F000B40
+// The pointsize is given in multiples of 6. The pointsize can be
+// enormous: Clear() renders a single point that fills the entire
+// framebuffer.
+#define R300_RE_POINTSIZE                   0x421C
+#       define R300_POINTSIZE_Y_SHIFT            0
+#       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) // GUESS
+#       define R300_POINTSIZE_X_SHIFT            16
+#       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) // GUESS
 
 // BEGIN: Rasterization / Interpolators - many guesses
 // So far, 0_UNKOWN_7 has always been set.
@@ -325,6 +332,62 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
 #       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  (1 << 17)
 #       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 6) // GUESS
+// END
+
+// BEGIN: Scissors and cliprects
+// There are four clipping rectangles. Their corner coordinates are inclusive.
+// Every pixel is assigned a number from 0 and 15 by setting bits 0-3 depending
+// on whether the pixel is inside cliprects 0-3, respectively. For example,
+// if a pixel is inside cliprects 0 and 1, but outside 2 and 3, it is assigned
+// the number 3 (binary 0011).
+// Iff the bit corresponding to the pixel's number in RE_CLIPRECT_CNTL is set,
+// the pixel is rasterized.
+//
+// In addition to this, there is a scissors rectangle. Only pixels inside the
+// scissors rectangle are drawn. (coordinates are inclusive)
+//
+// For some reason, the top-left corner of the framebuffer is at (1440, 1440)
+// for the purpose of clipping and scissors.
+#define R300_RE_CLIPRECT_TL_0               0x43B0
+#define R300_RE_CLIPRECT_BR_0               0x43B4
+#define R300_RE_CLIPRECT_TL_1               0x43B8
+#define R300_RE_CLIPRECT_BR_1               0x43BC
+#define R300_RE_CLIPRECT_TL_2               0x43C0
+#define R300_RE_CLIPRECT_BR_2               0x43C4
+#define R300_RE_CLIPRECT_TL_3               0x43C8
+#define R300_RE_CLIPRECT_BR_3               0x43CC
+#       define R300_CLIPRECT_OFFSET              1440
+#       define R300_CLIPRECT_MASK                0x1FFF
+#       define R300_CLIPRECT_X_SHIFT             0
+#       define R300_CLIPRECT_X_MASK              (0x1FFF << 0)
+#       define R300_CLIPRECT_Y_SHIFT             13
+#       define R300_CLIPRECT_Y_MASK              (0x1FFF << 13)
+#define R300_RE_CLIPRECT_CNTL               0x43D0
+#       define R300_CLIP_OUT                     (1 << 0)
+#       define R300_CLIP_0                       (1 << 1)
+#       define R300_CLIP_1                       (1 << 2)
+#       define R300_CLIP_10                      (1 << 3)
+#       define R300_CLIP_2                       (1 << 4)
+#       define R300_CLIP_20                      (1 << 5)
+#       define R300_CLIP_21                      (1 << 6)
+#       define R300_CLIP_210                     (1 << 7)
+#       define R300_CLIP_3                       (1 << 8)
+#       define R300_CLIP_30                      (1 << 9)
+#       define R300_CLIP_31                      (1 << 10)
+#       define R300_CLIP_310                     (1 << 11)
+#       define R300_CLIP_32                      (1 << 12)
+#       define R300_CLIP_320                     (1 << 13)
+#       define R300_CLIP_321                     (1 << 14)
+#       define R300_CLIP_3210                    (1 << 15)
+
+/* gap */
+#define R300_RE_SCISSORS_TL                 0x43E0
+#define R300_RE_SCISSORS_BR                 0x43E4
+#       define R300_SCISSORS_OFFSET              1440
+#       define R300_SCISSORS_X_SHIFT             0
+#       define R300_SCISSORS_X_MASK              (0x1FFF << 0)
+#       define R300_SCISSORS_Y_SHIFT             13
+#       define R300_SCISSORS_Y_MASK              (0x1FFF << 13)
 // END
 
 // BEGIN: Texture specification

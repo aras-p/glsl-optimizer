@@ -70,8 +70,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    GLuint height = dPriv->h;						\
    GLuint xo = dPriv->x;						\
    GLuint yo = dPriv->y;						\
-   char *buf = (char *)(sPriv->pFB + radeon->radeonScreen->depthOffset);	\
-   GLuint pitch = radeon->radeonScreen->depthPitch;			\
+   char *buf = (char *)(sPriv->pFB + radeonScreen->depthOffset);	\
+   GLuint pitch = radeonScreen->depthPitch;				\
    (void) buf; (void) pitch
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
@@ -248,10 +248,10 @@ do {									\
 /* 16-bit depth buffer functions
  */
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)(buf + (_x + xo)*2 + (_y + yo)*pitch ) = d;
+   *(GLushort *)(buf + (_x + xo + (_y + yo)*pitch)*2 ) = d;
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)(buf + (_x + xo)*2 + (_y + yo)*pitch );
+   d = *(GLushort *)(buf + (_x + xo + (_y + yo)*pitch)*2 );
 
 #define TAG(x) radeon##x##_16_LINEAR
 #include "depthtmp.h"
@@ -260,7 +260,7 @@ do {									\
  */
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint offset = (_x + xo)*4 + (_y + yo)*pitch;			\
+   GLuint offset = (_x + xo + (_y + yo)*pitch)*4;			\
    GLuint tmp = *(GLuint *)(buf + offset);				\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -268,7 +268,7 @@ do {									\
 } while (0)
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint *)(buf + (_x + xo)*4 + (_y + yo)*pitch) & 0x00ffffff;
+   d = *(GLuint *)(buf + (_x + xo + (_y + yo)*pitch)*4) & 0x00ffffff;
 
 #define TAG(x) radeon##x##_24_8_LINEAR
 #include "depthtmp.h"
@@ -426,7 +426,6 @@ static void radeonSpanRenderFinish(GLcontext * ctx)
 
 void radeonInitSpanFuncs(GLcontext * ctx)
 {
-	r200ContextPtr rmesa = R200_CONTEXT(ctx);
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct swrast_device_driver *swdd =
 	    _swrast_GetDeviceDriverReference(ctx);

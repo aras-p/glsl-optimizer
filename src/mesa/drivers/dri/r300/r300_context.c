@@ -100,14 +100,15 @@ static const char *const card_extensions[] = {
 	NULL
 };
 
-//extern const struct tnl_pipeline_stage _r300_render_stage;
-//extern const struct tnl_pipeline_stage _r300_tcl_stage;
+#if 0
+extern const struct tnl_pipeline_stage _r300_render_stage;
+extern const struct tnl_pipeline_stage _r300_tcl_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-	//&_r200_tcl_stage,
+	&_r300_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */
@@ -131,11 +132,11 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
-	//&_r300_render_stage,
+	&_r300_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
 };
-
+#endif
 
 /* Create the device specific rendering context.
  */
@@ -148,7 +149,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	struct dd_function_table functions;
 	r300ContextPtr r300;
 	GLcontext *ctx;
-	int i;
 	int tcl_mode;
 
 	assert(glVisual);

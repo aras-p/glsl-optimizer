@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 
 #include "r200_context.h"
+#include "r300_context.h"
 #include "r200_state.h"
 #include "radeon_ioctl.h"
 #include "r200_ioctl.h"
@@ -161,6 +162,8 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 
 	if (IS_FAMILY_R200(radeon))
 		R200_FIREVERTICES((r200ContextPtr)radeon);
+	else
+		r300Flush(radeon->glCtx);
 
 	LOCK_HARDWARE(radeon);
 
@@ -190,7 +193,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 		ret = drmCommandNone(radeon->dri.fd, DRM_RADEON_SWAP);
 
 		if (ret) {
-			fprintf(stderr, "DRM_R200_SWAP_BUFFERS: return = %d\n",
+			fprintf(stderr, "DRM_RADEON_SWAP: return = %d\n",
 				ret);
 			UNLOCK_HARDWARE(radeon);
 			exit(1);
@@ -201,6 +204,8 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 
 	if (IS_FAMILY_R200(radeon))
 		((r200ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
+	else
+		((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
 
 	radeon->swap_count++;
 	(*radeon->get_ust) (&ust);

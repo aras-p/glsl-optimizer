@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tex.h"
 #include "r200_state.h"
 #include "radeon_ioctl.h"
+#include "radeon_state.h"
 
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
@@ -70,7 +71,6 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 static void r200RegainedLock(r200ContextPtr r200)
 {
 	__DRIdrawablePrivate *dPriv = r200->radeon.dri.drawable;
-	__DRIscreenPrivate *sPriv = r200->radeon.dri.screen;
 	int i;
 
 	if (r200->radeon.lastStamp != dPriv->lastStamp) {
@@ -83,9 +83,9 @@ static void r200RegainedLock(r200ContextPtr r200)
 			r200->radeon.state.color.drawPitch;
 
 		if (r200->radeon.glCtx->Color._DrawDestMask == DD_BACK_LEFT_BIT)
-			r200SetCliprects(r200, GL_BACK_LEFT);
+			radeonSetCliprects(&r200->radeon, GL_BACK_LEFT);
 		else
-			r200SetCliprects(r200, GL_FRONT_LEFT);
+			radeonSetCliprects(&r200->radeon, GL_FRONT_LEFT);
 		r200UpdateViewportOffset(r200->radeon.glCtx);
 		r200->radeon.lastStamp = dPriv->lastStamp;
 	}
@@ -98,17 +98,16 @@ static void r200RegainedLock(r200ContextPtr r200)
 static void r300RegainedLock(radeonContextPtr radeon)
 {
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
-	__DRIscreenPrivate *sPriv = radeon->dri.screen;
-	int i;
 
 	if (radeon->lastStamp != dPriv->lastStamp) {
 		radeonUpdatePageFlipping(radeon);
 
-#if 0
 		if (radeon->glCtx->Color._DrawDestMask == DD_BACK_LEFT_BIT)
-			r200SetCliprects(r200, GL_BACK_LEFT);
+			radeonSetCliprects(radeon, GL_BACK_LEFT);
 		else
-			r200SetCliprects(r200, GL_FRONT_LEFT);
+			radeonSetCliprects(radeon, GL_FRONT_LEFT);
+
+#if 0
 		r200UpdateViewportOffset(r200->radeon.glCtx);
 #endif
 		radeon->lastStamp = dPriv->lastStamp;

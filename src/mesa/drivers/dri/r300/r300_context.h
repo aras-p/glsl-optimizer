@@ -122,6 +122,10 @@ struct r300_state_atom {
 #define R300_TXE_ENABLE		1
 #define R300_TXE_CMDSIZE	2
 
+#define R300_PS_CMD_0		0
+#define R300_PS_POINTSIZE	1
+#define R300_PS_CMDSIZE		2
+
 #define R300_RC_CMD_0		0
 #define R300_RC_CNTL_0		1
 #define R300_RC_CNTL_1		2
@@ -201,6 +205,13 @@ struct r300_state_atom {
 #define R300_VPP_PARAM_0	1
 #define R300_VPP_CMDSIZE	1025 /* 256 4-component parameters */
 
+#define R300_VPS_CMD_0		0
+#define R300_VPS_ZERO_0		1
+#define R300_VPS_ZERO_1		2
+#define R300_VPS_POINTSIZE	3
+#define R300_VPS_ZERO_3		4
+#define R300_VPS_CMDSIZE	5
+
 /**
  * Cache for hardware register state.
  */
@@ -229,7 +240,7 @@ struct r300_hw_state {
 	struct r300_state_atom txe;	/* tex enable (4104) */
 	struct r300_state_atom unk4200; /* (4200) */
 	struct r300_state_atom unk4214; /* (4214) */
-	// what about UNKNOWN_421C? (see r300_reg.h)
+	struct r300_state_atom ps;	/* pointsize (421C) */
 	struct r300_state_atom unk4230; /* (4230) */
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
@@ -241,7 +252,7 @@ struct r300_hw_state {
 	struct r300_state_atom ri;	/* rs interpolators (4310) */
 	struct r300_state_atom rr;	/* rs route (4330) */
 	struct r300_state_atom unk43A4;	/* (43A4) */
-	struct r300_state_atom unk43E0;	/* (43E0) */
+	struct r300_state_atom unk43E8;	/* (43E8) */
 	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
 	struct r300_state_atom unk46A4;	/* (46A4) */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
@@ -266,6 +277,7 @@ struct r300_hw_state {
 
 	struct r300_state_atom vpi;	/* vp instructions */
 	struct r300_state_atom vpp;	/* vp parameters */
+	struct r300_state_atom vps;	/* vertex point size (?) */
 };
 
 

@@ -165,6 +165,9 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
+	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
+					     (6 << R300_POINTSIZE_Y_SHIFT);
+
 	r300->hw.unk4230.cmd[1] = 0x01800000;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
@@ -205,9 +208,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk43A4.cmd[1] = 0x0000001C;
 	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
 
-	r300->hw.unk43E0.cmd[1] = 0x00000000;
-	r300->hw.unk43E0.cmd[2] = 0x03FFFFFF;
-	r300->hw.unk43E0.cmd[3] = 0x00FFFFFF;
+	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
 
 	r300->hw.fp.cmd[R300_FP_CNTL0] = 0;
 	r300->hw.fp.cmd[R300_FP_CNTL1] = 0;
@@ -305,6 +306,11 @@ void r300ResetHwState(r300ContextPtr r300)
 	((drm_r300_cmd_header_t*)r300->hw.vpp.cmd)->vpu.count = 0;
 	for(i = 1; i < R300_VPP_CMDSIZE; ++i)
 		r300->hw.vpp.cmd[i] = 0;
+
+	r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
+	r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;
+	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
+	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 //END: TODO
 
 	r300->hw.all_dirty = GL_TRUE;

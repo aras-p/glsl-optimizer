@@ -1,4 +1,5 @@
-/*
+/**************************************************************************
+
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -32,28 +33,56 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef __R200_STATE_H__
-#define __R200_STATE_H__
+#include "glheader.h"
+#include "imports.h"
+#include "api_arrayelt.h"
+#include "enums.h"
+#include "colormac.h"
+#include "light.h"
 
-#ifdef GLX_DIRECT_RENDERING
+#include "swrast/swrast.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "r200_context.h"
+#include "radeon_ioctl.h"
+#include "radeon_state.h"
+#include "r200_state.h"
 
-extern void r200InitState(r200ContextPtr rmesa);
-extern void r200InitStateFuncs(struct dd_function_table *functions);
-extern void r200InitTnlFuncs(GLcontext * ctx);
 
-extern void r200UpdateMaterial(GLcontext * ctx);
+/**
+ * Update cliprects and scissors.
+ */
+void radeonSetCliprects(radeonContextPtr radeon, GLenum mode)
+{
+	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
 
-extern void r200RecalcScissorRects(r200ContextPtr rmesa);
-extern void r200UpdateViewportOffset(GLcontext * ctx);
-extern void r200UpdateWindow(GLcontext * ctx);
+	switch (mode) {
+	case GL_FRONT_LEFT:
+		radeon->numClipRects = dPriv->numClipRects;
+		radeon->pClipRects = dPriv->pClipRects;
+		break;
+	case GL_BACK_LEFT:
+		/* Can't ignore 2d windows if we are page flipping.
+		 */
+		if (dPriv->numBackClipRects == 0 || radeon->doPageFlip) {
+			radeon->numClipRects = dPriv->numClipRects;
+			radeon->pClipRects = dPriv->pClipRects;
+		} else {
+			radeon->numClipRects = dPriv->numBackClipRects;
+			radeon->pClipRects = dPriv->pBackClipRects;
+		}
+		break;
+	default:
+		fprintf(stderr, "bad mode in radeonSetCliprects\n");
+		return;
+	}
 
-extern void r200ValidateState(GLcontext * ctx);
+	if (IS_FAMILY_R200(radeon)) {
+		if (((r200ContextPtr)radeon)->state.scissor.enabled)
+			r200RecalcScissorRects((r200ContextPtr)radeon);
+	}
+}
 
-extern void r200PrintDirty(r200ContextPtr rmesa, const char *msg);
-
-extern void r200LightingSpaceChange(GLcontext * ctx);
-
-#endif
-#endif
