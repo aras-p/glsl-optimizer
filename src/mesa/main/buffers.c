@@ -407,9 +407,9 @@ _mesa_ResizeBuffersMESA( void )
 
       if (ctx->ReadBuffer && ctx->ReadBuffer != ctx->DrawBuffer) {
          GLuint buf_width, buf_height;
-         GLframebuffer *buffer = ctx->DrawBuffer;
+         GLframebuffer *buffer = ctx->ReadBuffer;
 
-         /* ask device driver for size of output buffer */
+         /* ask device driver for size of read buffer */
          (*ctx->Driver.GetBufferSize)( buffer, &buf_width, &buf_height );
 
          /* see if size of device driver's color buffer (window) has changed */
