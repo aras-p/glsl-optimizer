@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.0.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -326,8 +326,16 @@ store_vector4( const struct vp_dst_register *dest,
       case PROGRAM_OUTPUT:
          dst = state->Outputs[dest->Index];
          break;
+      case PROGRAM_ENV_PARAM:
+         {
+            /* a slight hack */
+            GET_CURRENT_CONTEXT(ctx);
+            dst = ctx->VertexProgram.Parameters[dest->Index];
+         }
+         break;
       default:
-         _mesa_problem(NULL, "Invalid register file in fetch_vector1(vp)");
+         _mesa_problem(NULL, "Invalid register file in store_vector4(file=%d)",
+                       dest->File);
          return;
    }
 

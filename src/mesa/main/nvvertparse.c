@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -578,8 +578,10 @@ Parse_MaskedDstReg(struct parse_state *parseState, struct vp_dst_register *dstRe
       if (!Parse_OutputReg(parseState, &dstReg->Index))
          RETURN_ERROR;
    }
-   else if (parseState->isStateProgram && token[0] == 'c') {
+   else if (parseState->isStateProgram && token[0] == 'c' &&
+            parseState->isStateProgram) {
       /* absolute program parameter register */
+      /* Only valid for vertex state programs */
       dstReg->File = PROGRAM_ENV_PARAM;
       if (!Parse_AbsParamReg(parseState, &dstReg->Index))
          RETURN_ERROR;
