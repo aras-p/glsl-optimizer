@@ -121,6 +121,11 @@ EXPORTS
 	glutWireTeapot
 	glutWireTetrahedron
 	glutWireTorus
+	glutStrokeRoman
+	glutBitmap9By15
+	glutBitmapHelvetica10
+	glutBitmapHelvetica18
+	glutBitmapTimesRoman24
 ;    __glutSetFCB
 ;    __glutGetFCB
 
