@@ -1,4 +1,4 @@
-/* $Id: nurbsutl.c,v 1.2 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: nurbsutl.c,v 1.3 2000/07/11 20:39:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -373,7 +373,7 @@ GLenum explode_knot(knot_str_type * the_knot)
    /* alloc space for new_knot */
    if (
        (new_knot =
-	(GLfloat *) malloc(sizeof(GLfloat) * (nknots + n_new_knots))) == NULL) {
+	(GLfloat *) malloc(sizeof(GLfloat) * (nknots + n_new_knots + 1))) == NULL) {
       return GLU_OUT_OF_MEMORY;
    }
    /* fill in new knot */
