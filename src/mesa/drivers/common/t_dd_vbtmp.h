@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.12 2001/04/28 15:26:43 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.13 2001/04/29 08:41:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -102,11 +102,15 @@
 #endif
 
 #if (HAVE_HW_DIVIDE && !HAVE_PTEX_VERTICES)
-#error "can't cope with this combination"
-#endif
+#error "can't cope with this combination" 
+#endif 
 
 #ifndef LOCALVARS
 #define LOCALVARS
+#endif
+
+#ifndef CHECK_HW_DIVIDE
+#define CHECK_HW_DIVIDE 1
 #endif
 
 #if (HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICES)
@@ -132,7 +136,7 @@ static void TAG(emit)( GLcontext *ctx,
    const GLubyte *mask = VB->ClipMask;
    int i;
 
-   if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE) {
+   if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
       (void) s;
       coord = VB->ClipPtr->data;
       coord_stride = VB->ClipPtr->stride;
@@ -604,21 +608,21 @@ static void TAG(interp)( GLcontext *ctx,
 
    (void)s;
 
-
-   if (!HAVE_HW_DIVIDE) {
-      w = 1.0 / dstclip[3];
-      VIEWPORT_X( dst->v.x, dstclip[0] * w );
-      VIEWPORT_Y( dst->v.y, dstclip[1] * w );
-      VIEWPORT_Z( dst->v.z, dstclip[2] * w );
-   }
-   else {
+   if (HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
       VIEWPORT_X( dst->v.x, dstclip[0] );
       VIEWPORT_Y( dst->v.y, dstclip[1] );
       VIEWPORT_Z( dst->v.z, dstclip[2] );
       w = dstclip[3];
    }
+   else {
+      w = 1.0 / dstclip[3];
+      VIEWPORT_X( dst->v.x, dstclip[0] * w );
+      VIEWPORT_Y( dst->v.y, dstclip[1] * w );
+      VIEWPORT_Z( dst->v.z, dstclip[2] * w );
+   }
 
-   if (HAVE_HW_DIVIDE || DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 ||
+   if ((HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) || 
+       DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 ||
        DO_TEX2 || DO_TEX3) {
 
       dst->v.w = w;

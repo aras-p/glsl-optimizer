@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.9 2001/04/28 15:26:43 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.10 2001/04/29 08:41:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -284,8 +284,6 @@ INTERP_QUALIFIER void TAG(interp_extras)( GLcontext *ctx,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-
-   fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (VB->ColorPtr[1]) {
       INTERP_4F( t,
