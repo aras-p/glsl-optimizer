@@ -63,10 +63,10 @@
         __DRIdrawablePrivate *dPriv = vmesa->driDrawable;			\
         int _nc = dPriv->numClipRects;						\
         while (_nc--) {								\
-		int minx = dPriv->pClipRects[_nc].x1 - vmesa->drawX;		\
-        	int miny = dPriv->pClipRects[_nc].y1 - vmesa->drawY;		\
-        	int maxx = dPriv->pClipRects[_nc].x2 - vmesa->drawX;		\
-        	int maxy = dPriv->pClipRects[_nc].y2 - vmesa->drawY;        
+		int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;		\
+        	int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;		\
+        	int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;		\
+        	int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;        
 
 
 #define HW_ENDCLIPLOOP()                                            \
