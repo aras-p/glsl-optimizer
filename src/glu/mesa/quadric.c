@@ -1,4 +1,4 @@
-/* $Id: quadric.c,v 1.2 1999/11/11 03:21:43 kendallb Exp $ */
+/* $Id: quadric.c,v 1.3 1999/11/11 09:55:39 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,10 @@
 
 /*
  * $Log: quadric.c,v $
+ * Revision 1.3  1999/11/11 09:55:39  joukj
+ *
+ *  tess_macro.h included
+ *
  * Revision 1.2  1999/11/11 03:21:43  kendallb
  *
  *  . Updated GL/gl.h with GLCALLACKP and GLAPIENTRYP macros for compatibility
@@ -118,6 +122,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gluP.h"
+#include "tess_macros.h"
 #endif
 
 
