@@ -1095,6 +1095,7 @@ DMesaVisual DMesaCreateVisual (GLint width,
 
 #else  /* FX */
 
+ char *env;
  int i = 0, fx_attrib[32];
 
  if (!rgbFlag) {
@@ -1109,6 +1110,10 @@ DMesaVisual DMesaCreateVisual (GLint width,
  fx_attrib[i++] = FXMESA_COLORDEPTH;
  fx_attrib[i++] = colDepth;
  fx_attrib[i] = FXMESA_NONE;
+
+ if ((env = getenv("MESA_FX_INFO")) && (env[0] == 'r')) {
+    freopen("MESA.LOG", "w", stderr);
+ }
 
  return (DMesaVisual)fxMesaCreateBestContext(-1, width, height, fx_attrib);
 #endif /* FX */
