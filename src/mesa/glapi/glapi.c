@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.11 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: glapi.c,v 1.12 1999/12/15 12:52:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,51 +132,6 @@ _glapi_get_version(void)
 {
    return "1.2";
 }
-
-
-/*
- * Return list of the hard-coded extension entrypoints in the dispatch table.
- */
-const char **
-_glapi_get_extensions(void)
-{
-   static const char *extensions[] = {
-#ifdef _GLAPI_EXT_paletted_texture
-      "GL_EXT_paletted_texture",
-#endif
-#ifdef _GLAPI_EXT_compiled_vertex_array
-      "GL_EXT_compiled_vertex_array",
-#endif
-#ifdef _GLAPI_EXT_point_parameters
-      "GL_EXT_point_parameters",
-#endif
-#ifdef _GLAPI_EXT_polygon_offset
-      "GL_EXT_polygon_offset",
-#endif
-#ifdef _GLAPI_EXT_blend_minmax
-      "GL_EXT_blend_minmax",
-#endif
-#ifdef _GLAPI_EXT_blend_color
-      "GL_EXT_blend_color",
-#endif
-#ifdef _GLAPI_ARB_multitexture
-      "GL_ARB_multitexture",
-#endif
-#ifdef _GLAPI_INGR_blend_func_separate
-      "GL_INGR_blend_func_separate",
-#endif
-#ifdef _GLAPI_MESA_window_pos
-      "GL_MESA_window_pos",
-#endif
-#ifdef _GLAPI_MESA_resize_buffers
-      "GL_MESA_resize_buffers",
-#endif
-      NULL
-   };
-
-   return extensions;
-}
-
 
 
 struct name_address_pair {
@@ -573,37 +528,7 @@ static struct name_address_pair static_functions[] = {
 #endif
 #endif
 
-#ifdef _GLAPI_EXT_paletted_texture
-	{ "glColorTableEXT", (GLvoid *) glColorTableEXT },
-	{ "glColorSubTableEXT", (GLvoid *) glColorSubTableEXT },
-	{ "glGetColorTableEXT", (GLvoid *) glGetColorTableEXT },
-	{ "glGetColorTableParameterfvEXT", (GLvoid *) glGetColorTableParameterfvEXT },
-	{ "glGetColorTableParameterivEXT", (GLvoid *) glGetColorTableParameterivEXT },
-#endif
-
-#ifdef _GLAPI_EXT_compiled_vertex_array
-	{ "glLockArraysEXT", (GLvoid *) glLockArraysEXT },
-	{ "glUnlockArraysEXT", (GLvoid *) glUnlockArraysEXT },
-#endif
-
-#ifdef _GLAPI_EXT_point_parameters
-	{ "glPointParameterfEXT", (GLvoid *) glPointParameterfEXT },
-	{ "glPointParameterfvEXT", (GLvoid *) glPointParameterfvEXT },
-#endif
-
-#ifdef _GLAPI_EXT_polygon_offset
-	{ "glPolygonOffsetEXT", (GLvoid *) glPolygonOffsetEXT },
-#endif
-
-#ifdef _GLAPI_EXT_blend_minmax
-	{ "glBlendEquationEXT", (GLvoid *) glBlendEquationEXT },
-#endif
-
-#ifdef _GLAPI_EXT_blend_color
-	{ "glBlendColorEXT", (GLvoid *) glBlendColorEXT },
-#endif
-
-#ifdef _GLAPI_ARB_multitexture
+	/* GL_ARB_multitexture */
 	{ "glActiveTextureARB", (GLvoid *) glActiveTextureARB },
 	{ "glClientActiveTextureARB", (GLvoid *) glClientActiveTextureARB },
 	{ "glMultiTexCoord1dARB", (GLvoid *) glMultiTexCoord1dARB },
@@ -638,28 +563,47 @@ static struct name_address_pair static_functions[] = {
 	{ "glMultiTexCoord4ivARB", (GLvoid *) glMultiTexCoord4ivARB },
 	{ "glMultiTexCoord4sARB", (GLvoid *) glMultiTexCoord4sARB },
 	{ "glMultiTexCoord4svARB", (GLvoid *) glMultiTexCoord4svARB },
-#endif
 
-#ifdef _GLAPI_INGR_blend_func_separate
+	/* 2. GL_EXT_blend_color */
+	{ "glBlendColorEXT", (GLvoid *) glBlendColorEXT },
+
+	/* 3. GL_EXT_polygon_offset */
+	{ "glPolygonOffsetEXT", (GLvoid *) glPolygonOffsetEXT },
+
+	/* 54. GL_EXT_point_parameters */
+	{ "glPointParameterfEXT", (GLvoid *) glPointParameterfEXT },
+	{ "glPointParameterfvEXT", (GLvoid *) glPointParameterfvEXT },
+
+	/* 78. GL_EXT_paletted_texture */
+	{ "glColorTableEXT", (GLvoid *) glColorTableEXT },
+	{ "glColorSubTableEXT", (GLvoid *) glColorSubTableEXT },
+	{ "glGetColorTableEXT", (GLvoid *) glGetColorTableEXT },
+	{ "glGetColorTableParameterfvEXT", (GLvoid *) glGetColorTableParameterfvEXT },
+	{ "glGetColorTableParameterivEXT", (GLvoid *) glGetColorTableParameterivEXT },
+
+	/* 97. GL_EXT_compiled_vertex_array */
+	{ "glLockArraysEXT", (GLvoid *) glLockArraysEXT },
+	{ "glUnlockArraysEXT", (GLvoid *) glUnlockArraysEXT },
+
+	/* 37. GL_EXT_blend_minmax */
+	{ "glBlendEquationEXT", (GLvoid *) glBlendEquationEXT },
+
+	/* 173. GL_EXT/INGR_blend_func_separate */
 	{ "glBlendFuncSeparateINGR", (GLvoid *) glBlendFuncSeparateINGR },
-#endif
 
-#ifdef _GLAPI_MESA_window_pos
+	/* GL_MESA_window_pos */
 	{ "glWindowPos4fMESA", (GLvoid *) glWindowPos4fMESA },
-#endif
 
-#ifdef _GLAPI_MESA_resize_buffers
+	/* GL_MESA_resize_buffers */
 	{ "glResizeBuffersMESA", (GLvoid *) glResizeBuffersMESA },
-#endif
 
-#ifdef _GLAPI_ARB_transpose_matrix
-        { "glLoadTransposeMatrixdARB", (GLvoid *) glLoadTransposeMatrixdARB },
-        { "glLoadTransposeMatrixfARB", (GLvoid *) glLoadTransposeMatrixfARB },
-        { "glMultTransposeMatrixdARB", (GLvoid *) glMultTransposeMatrixdARB },
-        { "glMultTransposeMatrixfARB", (GLvoid *) glMultTransposeMatrixfARB },
-#endif
+	/* GL_ARB_transpose_matrix */
+	{ "glLoadTransposeMatrixdARB", (GLvoid *) glLoadTransposeMatrixdARB },
+	{ "glLoadTransposeMatrixfARB", (GLvoid *) glLoadTransposeMatrixfARB },
+	{ "glMultTransposeMatrixdARB", (GLvoid *) glMultTransposeMatrixdARB },
+	{ "glMultTransposeMatrixfARB", (GLvoid *) glMultTransposeMatrixfARB },
 
-      { NULL, NULL }  /* end of list marker */
+	{ NULL, NULL }  /* end of list marker */
 };
 
 
@@ -815,6 +759,13 @@ _glapi_get_proc_address(const char *funcName)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
+   const GLuint entries = sizeof(struct _glapi_table) / sizeof(void *);
+   const void **tab = (const void **) table;
+   GLuint i;
+   for (i = 0; i < entries; i++) {
+      assert(tab[i]);
+   }
+#if 000
    assert(table->Accum);
    assert(table->AlphaFunc);
    assert(table->Begin);
@@ -1274,6 +1225,7 @@ _glapi_check_table(const struct _glapi_table *table)
    assert(table->LoadTransposeMatrixfARB);
    assert(table->MultTransposeMatrixdARB);
    assert(table->MultTransposeMatrixfARB);
+#endif
 #endif
 }
 

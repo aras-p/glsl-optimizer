@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.3 1999/12/10 20:01:06 brianp Exp $ */
+/* $Id: glapitable.h,v 1.4 1999/12/15 12:52:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,29 +42,6 @@
 
 
 #include "GL/gl.h"
-
-
-/* Which OpenGL API revisisions are supported by the table: */
-#define _GLAPI_VERSION_1_1  1
-#define _GLAPI_VERSION_1_2  1
-
-/* And which extensions: */
-#define _GLAPI_ARB_imaging  1
-#define _GLAPI_ARB_multitexture  1
-#define _GLAPI_EXT_paletted_texture  1
-#define _GLAPI_EXT_compiled_vertex_array  1
-#define _GLAPI_EXT_point_parameters  1
-#define _GLAPI_EXT_polygon_offset  1
-#define _GLAPI_EXT_blend_minmax  1
-#define _GLAPI_EXT_blend_color  1
-#define _GLAPI_EXT_texture3D 1
-#define _GLAPI_EXT_texture_object 1
-#define _GLAPI_EXT_vertex_array 1
-#define _GLAPI_INGR_blend_func_separate  1
-#define _GLAPI_MESA_window_pos  1
-#define _GLAPI_MESA_resize_buffers  1
-#define _GLAPI_ARB_transpose_matrix  1
-
 
 
 #define _GLAPI_EXTRA_SLOTS 1000
@@ -391,7 +368,6 @@ struct _glapi_table
    /*
     * OpenGL 1.1
     */
-#ifdef _GLAPI_VERSION_1_1
    GLboolean (*AreTexturesResident)(GLsizei, const GLuint *, GLboolean *);
    void (*ArrayElement)(GLint);
    void (*BindTexture)(GLenum, GLuint);
@@ -421,18 +397,20 @@ struct _glapi_table
    void (*TexSubImage1D)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
    void (*TexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
    void (*VertexPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-#endif
+
 
    /*
     * OpenGL 1.2
     */
-#ifdef _GLAPI_VERSION_1_2
    void (*CopyTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
    void (*DrawRangeElements)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
    void (*TexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
    void (*TexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
 
-#ifdef _GLAPI_ARB_imaging
+
+   /*
+    * GL_ARB_imaging
+    */
    void (*BlendColor)(GLclampf, GLclampf, GLclampf, GLclampf);
    void (*BlendEquation)(GLenum);
    void (*ColorSubTable)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
@@ -467,45 +445,10 @@ struct _glapi_table
    void (*ResetHistogram)(GLenum);
    void (*ResetMinmax)(GLenum);
    void (*SeparableFilter2D)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
-#endif  /*_GLAPI_ARB_imaging*/
-#endif  /*_GLAPI_VERSION_1_2*/
-
 
    /*
-    * Extensions
+    * GL_ARB_multitexture
     */
-
-#ifdef _GLAPI_EXT_paletted_texture
-   void (*ColorTableEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*ColorSubTableEXT)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
-   void (*GetColorTableEXT)(GLenum, GLenum, GLenum, GLvoid *);
-   void (*GetColorTableParameterfvEXT)(GLenum, GLenum, GLfloat *);
-   void (*GetColorTableParameterivEXT)(GLenum, GLenum, GLint *);
-#endif
-
-#ifdef _GLAPI_EXT_compiled_vertex_array
-   void (*LockArraysEXT)(GLint, GLsizei);
-   void (*UnlockArraysEXT)(void);
-#endif
-
-#ifdef _GLAPI_EXT_point_parameters
-   void (*PointParameterfEXT)(GLenum, GLfloat);
-   void (*PointParameterfvEXT)(GLenum, const GLfloat *);
-#endif
-
-#ifdef _GLAPI_EXT_polygon_offset
-   void (*PolygonOffsetEXT)(GLfloat, GLfloat);
-#endif
-
-#ifdef _GLAPI_EXT_blend_minmax
-   void (*BlendEquationEXT)(GLenum);
-#endif
-
-#ifdef _GLAPI_EXT_blend_color
-   void (*BlendColorEXT)(GLclampf, GLclampf, GLclampf, GLclampf);
-#endif
-
-#ifdef _GLAPI_ARB_multitexture
    void (*ActiveTextureARB)(GLenum);
    void (*ClientActiveTextureARB)(GLenum);
    void (*MultiTexCoord1dARB)(GLenum, GLdouble);
@@ -540,28 +483,339 @@ struct _glapi_table
    void (*MultiTexCoord4ivARB)(GLenum, const GLint *);
    void (*MultiTexCoord4sARB)(GLenum, GLshort, GLshort, GLshort, GLshort);
    void (*MultiTexCoord4svARB)(GLenum, const GLshort *);
-#endif
 
-#ifdef _GLAPI_INGR_blend_func_separate
+
+   /*
+    * Extensions
+    */
+
+   /* 1. GL_EXT_abgr - no functions */
+
+   /* 2. GL_EXT_blend_color */
+   void (*BlendColorEXT)(GLclampf, GLclampf, GLclampf, GLclampf);
+
+   /* 3. GL_EXT_polygon_offset */
+   void (*PolygonOffsetEXT)(GLfloat, GLfloat);
+
+   /* 4. GL_EXT_texture - no functions */
+
+   /* 5. ??? */
+
+   /* 6. GL_EXT_texture3D */
+   void (*CopyTexSubImage3DEXT)(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
+   void (*TexImage3DEXT)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
+   void (*TexSubImage3DEXT)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+
+   /* 7. GL_SGI_texture_filter4 */
+   void (*GetTexFilterFuncSGIS)(GLenum, GLenum, GLsizei, const GLfloat *);
+   void (*TexFilterFuncSGIS)(GLenum, GLenum, GLfloat *);
+
+   /* 8. ??? */
+
+   /* 9. GL_EXT_subtexture */
+   void (*TexSubImage1DEXT)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*TexSubImage2DEXT)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+
+   /* 10. GL_EXT_copy_texture */
+   void (*CopyTexImage1DEXT)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint);
+   void (*CopyTexImage2DEXT)(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint);
+   void (*CopyTexSubImage1DEXT)(GLenum, GLint, GLint, GLint, GLint, GLsizei);
+   void (*CopyTexSubImage2DEXT)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei);
+
+   /* 11. GL_EXT_histogram */
+   void (*GetHistogramEXT)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+   void (*GetHistogramParameterfvEXT)(GLenum, GLenum, GLfloat *);
+   void (*GetHistogramParameterivEXT)(GLenum, GLenum, GLint *);
+   void (*GetMinmaxEXT)(GLenum, GLboolean, GLenum, GLenum, GLvoid *);
+   void (*GetMinmaxParameterfvEXT)(GLenum, GLenum, GLfloat *);
+   void (*GetMinmaxParameterivEXT)(GLenum, GLenum, GLint *);
+   void (*HistogramEXT)(GLenum, GLsizei, GLenum, GLboolean);
+   void (*MinmaxEXT)(GLenum, GLenum, GLboolean);
+   void (*ResetHistogramEXT)(GLenum);
+   void (*ResetMinmaxEXT)(GLenum);
+
+   /* 12. GL_EXT_convolution */
+   void (*ConvolutionFilter1DEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*ConvolutionFilter2DEXT)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*ConvolutionParameterfEXT)(GLenum, GLenum, GLfloat);
+   void (*ConvolutionParameterfvEXT)(GLenum, GLenum, const GLfloat *);
+   void (*ConvolutionParameteriEXT)(GLenum, GLenum, GLint);
+   void (*ConvolutionParameterivEXT)(GLenum, GLenum, const GLint *);
+   void (*CopyConvolutionFilter1DEXT)(GLenum, GLenum, GLint x, GLint y, GLsizei);
+   void (*CopyConvolutionFilter2DEXT)(GLenum, GLenum, GLint x, GLint y, GLsizei, GLsizei);
+   void (*GetConvolutionFilterEXT)(GLenum, GLenum, GLenum, GLvoid *);
+   void (*GetConvolutionParameterfvEXT)(GLenum, GLenum, GLfloat *);
+   void (*GetConvolutionParameterivEXT)(GLenum, GLenum, GLint *);
+   void (*GetSeparableFilterEXT)(GLenum, GLenum, GLenum, GLvoid *, GLvoid *, GLvoid *);
+   void (*SeparableFilter2DEXT)(GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *, const GLvoid *);
+
+   /* 13. GL_SGI_color_matrix - no functions */
+
+   /* 14. GL_SGI_color_table */
+   void (*ColorTableSGI)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*CopyColorTableSGI)(GLenum, GLenum, GLint, GLint, GLsizei);
+   void (*GetColorTableSGI)(GLenum, GLenum, GLenum, GLvoid *);
+   void (*GetColorTableParameterfvSGI)(GLenum, GLenum, GLfloat *);
+   void (*GetColorTableParameterivSGI)(GLenum, GLenum, GLint *);
+
+   /* 15. GL_SGIS_pixel_texture */
+   void (*PixelTexGenParameterfSGIS)(GLenum, GLfloat);
+   void (*PixelTexGenParameteriSGIS)(GLenum, GLint);
+   void (*GetPixelTexGenParameterfvSGIS)(GLenum, GLfloat *);
+   void (*GetPixelTexGenParameterivSGIS)(GLenum, GLint *);
+
+   /* 16. GL_SGIS_texture4D */
+   void (*TexImage4DSGIS)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
+   void (*TexSubImage4DSGIS)(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const void *);
+
+   /* 17. GL_SGI_texture_color_table - no functions */
+
+   /* 18. GL_EXT_cmyka - no functions */
+
+   /* 19. ??? */
+
+   /* 20. GL_EXT_texture_object */
+   GLboolean (*AreTexturesResidentEXT)(GLsizei, const GLuint *, GLboolean *);
+   void (*BindTextureEXT)(GLenum, GLuint);
+   void (*DeleteTexturesEXT)(GLsizei, const GLuint *);
+   GLboolean (*IsTextureEXT)(GLuint);
+   void (*PrioritizeTexturesEXT)(GLsizei, const GLuint *, const GLclampf *);
+
+   /* 21. GL_SGIS_detail_texture */
+   void (*DetailTexFuncSGIS)(GLenum, GLsizei, const GLfloat *);
+   void (*GetDetailTexFuncSGIS)(GLenum target, GLfloat *);
+
+   /* 22. GL_SGIS_sharpen_texture */
+   void (*GetSharpenTexFuncSGIS)(GLenum, GLfloat *);
+   void (*SharpenTexFuncSGIS)(GLenum, GLsizei, const GLfloat *);
+
+   /* 23. GL_EXT_packed_pixels - no functions */
+
+   /* 24. GL_SGIS_texture_lod - no functions */
+
+   /* 25. GL_SGIS_multisample */
+   void (*SampleMaskSGIS)(GLclampf, GLboolean);
+   void (*SamplePatternSGIS)(GLenum);
+
+   /* 26. ??? */
+
+   /* 27. GL_EXT_rescale_normal - no functions */
+   
+   /* 28. GLX_EXT_visual_info - no functions */
+
+   /* 29. ??? */
+
+   /* 30. GL_EXT_vertex_array */
+   void (*ArrayElementEXT)(GLint);
+   void (*ColorPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
+   void (*DrawArraysEXT)(GLenum, GLint, GLsizei);
+   void (*EdgeFlagPointerEXT)(GLsizei, GLsizei, const GLboolean *);
+   void (*GetPointervEXT)(GLenum, void **);
+   void (*IndexPointerEXT)(GLenum, GLsizei, GLsizei, const void *);
+   void (*NormalPointerEXT)(GLenum, GLsizei, GLsizei, const void *);
+   void (*TexCoordPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
+   void (*VertexPointerEXT)(GLint, GLenum, GLsizei, GLsizei, const void *);
+
+   /* 31. GL_EXT_misc_attribute - no functions */
+
+   /* 32. GL_SGIS_generate_mipmap - no functions */
+
+   /* 33. GL_SGIX_clipmap - no functions */
+
+   /* 34. GL_SGIX_shadow - no functions */
+
+   /* 35. GL_SGIS_texture_edge_clamp - no functions */
+
+   /* 36. GL_SGIS_texture_border_clamp - no functions */
+
+   /* 37. GL_EXT_blend_minmax */
+   void (*BlendEquationEXT)(GLenum);
+
+   /* 38. GL_EXT_blend_subtract - no functions */
+
+   /* 39. GL_EXT_blend_logic_op - no functions */
+
+   /* 40. GLX_SGI_swap_control - GLX functions */
+
+   /* 41. GLX_SGI_video_sync - GLX functions */
+
+   /* 42. GLX_SGI_make_current_read - GLX functions */
+
+   /* 43. GLX_SGIX_video_source - GLX functions */
+
+   /* 44. GLX_EXT_visual_rating - no functions */
+
+   /* 45. GL_SGIX_interlace - no functions */
+
+   /* 46. ??? */
+
+   /* 47. GLX_EXT_import_context - GLX functions */
+
+   /* 48. ??? */
+
+   /* 49. GLX_SGIX_fbconfig - GLX functions */
+
+   /* 50. GLX_SGIX_pbuffer - GLX functions */
+
+   /* 51. GL_SGIS_texture_select - no functions */
+
+   /* 52. GL_SGIX_sprite */
+   void (*SpriteParameterfSGIX)(GLenum, GLfloat);
+   void (*SpriteParameterfvSGIX)(GLenum, const GLfloat *);
+   void (*SpriteParameteriSGIX)(GLenum, GLint);
+   void (*SpriteParameterivSGIX)(GLenum, const GLint *);
+
+   /* 53. ??? */
+
+   /* 54. GL_EXT_point_parameters */
+   void (*PointParameterfEXT)(GLenum, GLfloat);
+   void (*PointParameterfvEXT)(GLenum, const GLfloat *);
+
+   /* 55. GL_SGIX_instruments */
+   GLint (*GetInstrumentsSGIX)(void);
+   void (*InstrumentsBufferSGIX)(GLsizei, GLint *);
+   GLint (*PollInstrumentsSGIX)(GLint *);
+   void (*ReadInstrumentsSGIX)(GLint);
+   void (*StartInstrumentsSGIX)(void);
+   void (*StopInstrumentsSGIX)(GLint);
+
+   /* 56. GL_SGIX_texture_scale_bias - no functions */
+
+   /* 57. GL_SGIX_framezoom */
+   void (*FrameZoomSGIX)(GLint);
+
+   /* 58. GL_SGIX_tag_sample_buffer - no functions */
+
+   /* 59. ??? */
+
+   /* 60. GL_SGIX_reference_plane */
+   void (*ReferencePlaneSGIX)(const GLdouble *);
+
+   /* 61. GL_SGIX_flush_raster */
+   void (*FlushRasterSGIX)(void);
+
+   /* 62. GLX_SGI_cushion - GLX functions */
+
+   /* 63. GL_SGIX_depth_texture - no functions */
+
+   /* 64. ??? */
+
+   /* 65. GL_SGIX_fog_offset - no functions */
+
+   /* 66. GL_HP_image_transform */
+   void (*GetImageTransformParameterfvHP)(GLenum, GLenum, GLfloat *);
+   void (*GetImageTransformParameterivHP)(GLenum, GLenum, GLint *);
+   void (*ImageTransformParameterfHP)(GLenum, GLenum, const GLfloat);
+   void (*ImageTransformParameterfvHP)(GLenum, GLenum, const GLfloat *);
+   void (*ImageTransformParameteriHP)(GLenum, GLenum, const GLint);
+   void (*ImageTransformParameterivHP)(GLenum, GLenum, const GLint *);
+
+   /* 67. GL_HP_convolution_border_modes - no functions */
+
+   /* 68. ??? */
+
+   /* 69. GL_SGIX_texture_add_env - no functions */
+
+   /* 70. ??? */
+
+   /* 71. ??? */
+
+   /* 72. ??? */
+
+   /* 73. ??? */
+
+   /* 74. GL_EXT_color_subtable */
+   void (*ColorSubTableEXT)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const void *);
+   void (*CopyColorSubTableEXT)(GLenum, GLsizei, GLint, GLint, GLsizei);
+
+   /* 75. GLU_EXT_object_space_tess - GLU functions */
+
+   /* 76. GL_PGI_vertex_hints - no functions */
+
+   /* 77. GL_PGI_misc_hints */
+   void (*HintPGI)(GLenum, GLint);
+
+   /* 78. GL_EXT_paletted_texture */
+   /* ColorSubTableEXT already defined */
+   void (*ColorTableEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
+   void (*GetColorTableEXT)(GLenum, GLenum, GLenum, GLvoid *);
+   void (*GetColorTableParameterfvEXT)(GLenum, GLenum, GLfloat *);
+   void (*GetColorTableParameterivEXT)(GLenum, GLenum, GLint *);
+
+   /* 79. GL_EXT_clip_volume_hint - no functions */
+
+   /* 80. GL_SGIX_list_priority */
+   void (*GetListParameterfvSGIX)(GLuint, GLenum, GLfloat *);
+   void (*GetListParameterivSGIX)(GLuint, GLenum, GLint *);
+   void (*ListParameterfSGIX)(GLuint, GLenum, GLfloat);
+   void (*ListParameterfvSGIX)(GLuint, GLenum, const GLfloat *);
+   void (*ListParameteriSGIX)(GLuint, GLenum, GLint);
+   void (*ListParameterivSGIX)(GLuint, GLenum, const GLint *);
+
+   /* 81. GL_SGIX_ir_instrument1 - no functions */
+
+   /* 82. ??? */
+
+   /* 83. GLX_SGIX_video_resize - GLX functions */
+
+   /* 84. GL_SGIX_texture_lod_bias - no functions */
+
+   /* 85. GLU_SGI_filter4_parameters - GLU functions */
+
+   /* 86. GLX_SGIX_dm_buffer - GLX functions */
+
+   /* 87. ??? */
+
+   /* 88. ??? */
+
+   /* 89. ??? */
+
+   /* 90. ??? */
+
+   /* 91. GLX_SGIX_swap_group - GLX functions */
+
+   /* 92. GLX_SGIX_swap_barrier - GLX functions */
+
+   /* 93. GL_EXT_index_texture - no functions */
+
+   /* 94. GL_EXT_index_material */
+   void (*IndexMaterialEXT)(GLenum, GLenum);
+
+   /* 95. GL_EXT_index_func */
+   void (*IndexFuncEXT)(GLenum, GLfloat);
+
+   /* 96. GL_EXT_index_array_formats - no functions */
+
+   /* 97. GL_EXT_compiled_vertex_array */
+   void (*LockArraysEXT)(GLint, GLsizei);
+   void (*UnlockArraysEXT)(void);
+
+   /* 98. GL_EXT_cull_vertex */
+   void (*CullParameterfvEXT)(GLenum, const GLfloat *);
+   void (*CullParameterdvEXT)(GLenum, const GLdouble *);
+
+   /* 99. ??? */
+
+   /* 100. GLU_EXT_nurbs_tessellator - GLU functions */
+
+   /* 173. GL_EXT/INGR_blend_func_separate */
    void (*BlendFuncSeparateINGR)(GLenum, GLenum, GLenum, GLenum);
-#endif
 
-#ifdef _GLAPI_MESA_window_pos
+   /* GL_MESA_window_pos */
    void (*WindowPos4fMESA)(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-#endif
 
-#ifdef _GLAPI_MESA_resize_buffers
+   /* GL_MESA_resize_buffers */
    void (*ResizeBuffersMESA)(void);
-#endif
 
-#ifdef _GLAPI_ARB_transpose_matrix
+   /* GL_ARB_transpose_matrix */
    void (*LoadTransposeMatrixdARB)(const GLdouble m[16]);
    void (*LoadTransposeMatrixfARB)(const GLfloat m[16]);
    void (*MultTransposeMatrixdARB)(const GLdouble m[16]);
    void (*MultTransposeMatrixfARB)(const GLfloat m[16]);
-#endif
 
+#if 0
    void *ExtensionFuncs[_GLAPI_EXTRA_SLOTS];
+#endif
 };
 
 

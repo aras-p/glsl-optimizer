@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.4 1999/11/27 21:30:40 brianp Exp $ */
+/* $Id: glapi.h,v 1.5 1999/12/15 12:52:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,10 +47,6 @@ _glapi_get_dispatch_table_size(void);
 
 extern const char *
 _glapi_get_version(void);
-
-
-extern const char **
-_glapi_get_extensions(void);
 
 
 extern void
