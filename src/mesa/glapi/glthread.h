@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.10 2001/11/30 22:11:45 kschultz Exp $ */
+/* $Id: glthread.h,v 1.11 2002/03/07 21:50:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -186,8 +186,13 @@ typedef xthread_t _glthread_Thread;
 
 typedef xmutex_rec _glthread_Mutex;
 
+#ifdef XMUTEX_INITIALIZER
 #define _glthread_DECLARE_STATIC_MUTEX(name) \
    static _glthread_Mutex name = XMUTEX_INITIALIZER
+#else
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   static _glthread_Mutex name
+#endif
 
 #define _glthread_INIT_MUTEX(name) \
    xmutex_init(&(name))

@@ -1,10 +1,10 @@
-/* $Id: glapi.c,v 1.60 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: glapi.c,v 1.61 2002/03/07 21:50:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -194,8 +194,7 @@ str_dup(const char *str)
 
 /*
  * We should call this periodically from a function such as glXMakeCurrent
- * in order to test if multiple threads are being used.  When we detect
- * that situation we should then call _glapi_enable_thread_safety()
+ * in order to test if multiple threads are being used.
  */
 void
 _glapi_check_multithread(void)
@@ -789,11 +788,12 @@ _glapi_get_proc_name(GLuint offset)
 
 /*
  * Make sure there are no NULL pointers in the given dispatch table.
- * Intented for debugging purposes.
+ * Intended for debugging purposes.
  */
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
+#ifdef DEBUG
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
@@ -801,7 +801,6 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(tab[i]);
    }
 
-#ifdef DEBUG
    /* Do some spot checks to be sure that the dispatch table
     * slots are assigned correctly.
     */
