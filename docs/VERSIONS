@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.67 2001/08/20 16:16:37 brianp Exp $
+$Id: VERSIONS,v 1.68 2001/08/20 16:45:02 brianp Exp $
 
 
 Mesa Version History
@@ -887,3 +887,4 @@ Mesa Version History
 	- fixed state-update bugs in glPopClientAttrib()
 	- fixed glDrawRangeElements() bug
 	- fixed a glPush/PopAttrib() bug related to texture binding
+	- flat-shaded, textured lines were broken
