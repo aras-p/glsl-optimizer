@@ -7,9 +7,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -955,20 +955,31 @@ struct gl_stencil_attrib {
 #define ENABLE_TEXGEN(i) (ENABLE_TEXGEN0 << (i))
 #define ENABLE_TEXMAT(i) (ENABLE_TEXMAT0 << (i))
 
+
 /**
- * Texel fetch function prototype.
+ * Texel fetch function prototype.  We use texel fetch functions to
+ * extract RGBA, color indexes and depth components out of 1D, 2D and 3D
+ * texture images.  These functions help to isolate us from the gritty
+ * details of all the various texture image encodings.
  * 
  * \param texImage texture image.
  * \param col texel column.
  * \param row texel row.
- * \param img texel level.
- * \param texelOut output texel. If \p texImage is color-index, \p texelOut
- * returns <tt>GLchan[1]</tt>.  If \p texImage is depth, \p texelOut returns
- * <tt>GLfloat[1]</tt>.  Otherwise, \p texelOut returns <tt>GLchan[4]</tt>.
+ * \param img texel image level/layer.
+ * \param texelOut output texel (up to 4 GLchans)
  */
-typedef void (*FetchTexelFunc)( const struct gl_texture_image *texImage,
-                                GLint col, GLint row, GLint img,
-                                GLvoid *texelOut );
+typedef void (*FetchTexelFuncC)( const struct gl_texture_image *texImage,
+                                 GLint col, GLint row, GLint img,
+                                 GLchan *texelOut );
+
+/**
+ * As above, but returns floats.
+ * Used for depth component images and for upcoming signed/float
+ * texture images.
+ */
+typedef void (*FetchTexelFuncF)( const struct gl_texture_image *texImage,
+                                 GLint col, GLint row, GLint img,
+                                 GLfloat *texelOut );
 
 /**
  * Texture format record 
@@ -995,9 +1006,12 @@ struct gl_texture_format {
     * \name Texel fetch function pointers
     */
    /*@{*/
-   FetchTexelFunc FetchTexel1D;
-   FetchTexelFunc FetchTexel2D;
-   FetchTexelFunc FetchTexel3D;
+   FetchTexelFuncC FetchTexel1D;
+   FetchTexelFuncC FetchTexel2D;
+   FetchTexelFuncC FetchTexel3D;
+   FetchTexelFuncF FetchTexel1Df;
+   FetchTexelFuncF FetchTexel2Df;
+   FetchTexelFuncF FetchTexel3Df;
    /*@}*/
 };
 
@@ -1033,7 +1047,8 @@ struct gl_texture_image {
 
    const struct gl_texture_format *TexFormat;
 
-   FetchTexelFunc FetchTexel;	/**< Texel fetch function pointer */
+   FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
+   FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
 
    GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
    GLuint CompressedSize;	/**< GL_ARB_texture_compression */

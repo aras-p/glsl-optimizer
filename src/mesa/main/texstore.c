@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -770,7 +770,8 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
+   texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
+   texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -846,7 +847,8 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
+   texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
+   texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -917,7 +919,8 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
+   texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
+   texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -1155,7 +1158,8 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, 0, 0);
    assert(texImage->TexFormat);
-   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
+   texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
+   texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
 
    /* allocate storage */
    texImage->Data = MESA_PBUFFER_ALLOC(imageSize);
@@ -1919,7 +1923,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       for (row = 0; row < srcImage->Height; row++) {
          GLuint col;
          for (col = 0; col < srcImage->Width; col++) {
-            (*srcImage->FetchTexel)(srcImage, col, row, 0, (GLvoid *) dst);
+            srcImage->FetchTexelc(srcImage, col, row, 0, dst);
             dst += components;
          }
       }
@@ -1993,9 +1997,11 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                                  dstDepth, border, srcImage->IntFormat);
       dstImage->DriverData = NULL;
       dstImage->TexFormat = srcImage->TexFormat;
-      dstImage->FetchTexel = srcImage->FetchTexel;
+      dstImage->FetchTexelc = srcImage->FetchTexelc;
+      dstImage->FetchTexelf = srcImage->FetchTexelf;
       ASSERT(dstImage->TexFormat);
-      ASSERT(dstImage->FetchTexel);
+      ASSERT(dstImage->FetchTexelc);
+      ASSERT(dstImage->FetchTexelf);
 
       /* Alloc new teximage data buffer.
        * Setup src and dest data pointers.

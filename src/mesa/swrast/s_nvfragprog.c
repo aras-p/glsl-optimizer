@@ -56,6 +56,7 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
+   /* XXX use a float-valued TextureSample routine here!!! */
    swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);

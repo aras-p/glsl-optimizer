@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -787,7 +787,7 @@ sample_1d_nearest(GLcontext *ctx,
       COPY_CHAN4(rgba, tObj->_BorderChan);
    }
    else {
-      (*img->FetchTexel)(img, i, 0, 0, (GLvoid *) rgba);
+      img->FetchTexelc(img, i, 0, 0, rgba);
       if (img->Format == GL_COLOR_INDEX) {
          palette_sample(ctx, tObj, rgba[0], rgba);
       }
@@ -839,7 +839,7 @@ sample_1d_linear(GLcontext *ctx,
          COPY_CHAN4(t0, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, 0, 0, (GLvoid *) t0);
+         img->FetchTexelc(img, i0, 0, 0, t0);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t0[0], t0);
          }
@@ -848,7 +848,7 @@ sample_1d_linear(GLcontext *ctx,
          COPY_CHAN4(t1, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, 0, 0, (GLvoid *) t1);
+         img->FetchTexelc(img, i1, 0, 0, t1);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t1[0], t1);
          }
@@ -1116,7 +1116,7 @@ sample_2d_nearest(GLcontext *ctx,
       COPY_CHAN4(rgba, tObj->_BorderChan);
    }
    else {
-      (*img->FetchTexel)(img, i, j, 0, (GLvoid *) rgba);
+      img->FetchTexelc(img, i, j, 0, rgba);
       if (img->Format == GL_COLOR_INDEX) {
          palette_sample(ctx, tObj, rgba[0], rgba);
       }
@@ -1184,7 +1184,7 @@ sample_2d_linear(GLcontext *ctx,
          COPY_CHAN4(t00, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j0, 0, (GLvoid *) t00);
+         img->FetchTexelc(img, i0, j0, 0, t00);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t00[0], t00);
          }
@@ -1193,7 +1193,7 @@ sample_2d_linear(GLcontext *ctx,
          COPY_CHAN4(t10, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j0, 0, (GLvoid *) t10);
+         img->FetchTexelc(img, i1, j0, 0, t10);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t10[0], t10);
          }
@@ -1202,7 +1202,7 @@ sample_2d_linear(GLcontext *ctx,
          COPY_CHAN4(t01, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j1, 0, (GLvoid *) t01);
+         img->FetchTexelc(img, i0, j1, 0, t01);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t01[0], t01);
          }
@@ -1211,7 +1211,7 @@ sample_2d_linear(GLcontext *ctx,
          COPY_CHAN4(t11, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j1, 0, (GLvoid *) t11);
+         img->FetchTexelc(img, i1, j1, 0, t11);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t11[0], t11);
          }
@@ -1292,10 +1292,10 @@ sample_2d_linear_repeat(GLcontext *ctx,
       GLchan t01[4];
       GLchan t11[4];
 
-      (*img->FetchTexel)(img, i0, j0, 0, (GLvoid *) t00);
-      (*img->FetchTexel)(img, i1, j0, 0, (GLvoid *) t10);
-      (*img->FetchTexel)(img, i0, j1, 0, (GLvoid *) t01);
-      (*img->FetchTexel)(img, i1, j1, 0, (GLvoid *) t11);
+      img->FetchTexelc(img, i0, j0, 0, t00);
+      img->FetchTexelc(img, i1, j0, 0, t10);
+      img->FetchTexelc(img, i0, j1, 0, t01);
+      img->FetchTexelc(img, i1, j1, 0, t11);
 
 #if CHAN_TYPE == GL_FLOAT
       rgba[0] = w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0];
@@ -1710,7 +1710,7 @@ sample_3d_nearest(GLcontext *ctx,
       COPY_CHAN4(rgba, tObj->_BorderChan);
    }
    else {
-      (*img->FetchTexel)(img, i, j, k, (GLvoid *) rgba);
+      img->FetchTexelc(img, i, j, k, rgba);
       if (img->Format == GL_COLOR_INDEX) {
          palette_sample(ctx, tObj, rgba[0], rgba);
       }
@@ -1793,7 +1793,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t000, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j0, k0, (GLvoid *) t000);
+         img->FetchTexelc(img, i0, j0, k0, t000);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t000[0], t000);
          }
@@ -1802,7 +1802,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t100, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j0, k0, (GLvoid *) t100);
+         img->FetchTexelc(img, i1, j0, k0, t100);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t100[0], t100);
          }
@@ -1811,7 +1811,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t010, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j1, k0, (GLvoid *) t010);
+         img->FetchTexelc(img, i0, j1, k0, t010);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t010[0], t010);
          }
@@ -1820,7 +1820,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t110, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j1, k0, (GLvoid *) t110);
+         img->FetchTexelc(img, i1, j1, k0, t110);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t110[0], t110);
          }
@@ -1830,7 +1830,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t001, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j0, k1, (GLvoid *) t001);
+         img->FetchTexelc(img, i0, j0, k1, t001);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t001[0], t001);
          }
@@ -1839,7 +1839,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t101, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j0, k1, (GLvoid *) t101);
+         img->FetchTexelc(img, i1, j0, k1, t101);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t101[0], t101);
          }
@@ -1848,7 +1848,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t011, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i0, j1, k1, (GLvoid *) t011);
+         img->FetchTexelc(img, i0, j1, k1, t011);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t011[0], t011);
          }
@@ -1857,7 +1857,7 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t111, tObj->_BorderChan);
       }
       else {
-         (*img->FetchTexel)(img, i1, j1, k1, (GLvoid *) t111);
+         img->FetchTexelc(img, i1, j1, k1, t111);
          if (img->Format == GL_COLOR_INDEX) {
             palette_sample(ctx, tObj, t111[0], t111);
          }
@@ -2449,7 +2449,7 @@ sample_nearest_rect(GLcontext *ctx, GLuint texUnit,
       col = CLAMP(col, 0, width_minus_1);
       row = CLAMP(row, 0, height_minus_1);
 
-      (*img->FetchTexel)(img, col, row, 0, (GLvoid *) rgba[i]);
+      img->FetchTexelc(img, col, row, 0, rgba[i]);
    }
 }
 
@@ -2516,10 +2516,10 @@ sample_linear_rect(GLcontext *ctx, GLuint texUnit,
       row1 = CLAMP(row1, 0, height_minus_1);
 
       /* get four texel samples */
-      (*img->FetchTexel)(img, col0, row0, 0, (GLvoid *) t00);
-      (*img->FetchTexel)(img, col1, row0, 0, (GLvoid *) t10);
-      (*img->FetchTexel)(img, col0, row1, 0, (GLvoid *) t01);
-      (*img->FetchTexel)(img, col1, row1, 0, (GLvoid *) t11);
+      img->FetchTexelc(img, col0, row0, 0, t00);
+      img->FetchTexelc(img, col1, row0, 0, t10);
+      img->FetchTexelc(img, col0, row1, 0, t01);
+      img->FetchTexelc(img, col1, row1, 0, t11);
 
       /* compute sample weights */
       a = FRAC(fcol);
@@ -2635,7 +2635,7 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
          /* XXX fix for texture rectangle! */
          COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0], width, col);
          COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1], height, row);
-         depthSample = *((const GLfloat *) texImage->Data + row * width + col);
+         texImage->FetchTexelf(texImage, col, row, 0, &depthSample);
 
          switch (function) {
          case GL_LEQUAL:
@@ -2726,25 +2726,25 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
             depth00 = 1.0;
          }
          else {
-            depth00 = *((const GLfloat *) texImage->Data + j0 * width + i0);
+            texImage->FetchTexelf(texImage, i0, j0, 0, &depth00);
          }
          if (useBorderTexel & (I1BIT | J0BIT)) {
             depth10 = 1.0;
          }
          else {
-            depth10 = *((const GLfloat *) texImage->Data + j0 * width + i1);
+            texImage->FetchTexelf(texImage, i1, j0, 0, &depth10);
          }
          if (useBorderTexel & (I0BIT | J1BIT)) {
             depth01 = 1.0;
          }
          else {
-            depth01 = *((const GLfloat *) texImage->Data + j1 * width + i0);
+            texImage->FetchTexelf(texImage, i0, j1, 0, &depth01);
          }
          if (useBorderTexel & (I1BIT | J1BIT)) {
             depth11 = 1.0;
          }
          else {
-            depth11 = *((const GLfloat *) texImage->Data + j1 * width + i1);
+            texImage->FetchTexelf(texImage, i1, j1, 0, &depth11);
          }
 
          if (0) {
@@ -2943,8 +2943,8 @@ sample_depth_texture2(const GLcontext *ctx,
          count = 0;
          for (jj = jmin; jj <= jmax; jj++) {
             for (ii = imin; ii <= imax; ii++) {
-               GLfloat depthSample = *((const GLfloat *) texImage->Data
-                                       + jj * width + ii);
+               GLfloat depthSample;
+               texImage->FetchTexelf(texImage, ii, jj, 0, &depthSample);
                if ((depthSample <= r[i] && lequal) ||
                    (depthSample >= r[i] && gequal)) {
                   count++;

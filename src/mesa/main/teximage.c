@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -904,7 +904,8 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->DepthLog2 = 0;
    img->Data = NULL;
    img->TexFormat = &_mesa_null_texformat;
-   img->FetchTexel = NULL;
+   img->FetchTexelc = NULL;
+   img->FetchTexelf = NULL;
    img->IsCompressed = 0;
    img->CompressedSize = 0;
 }
@@ -1875,8 +1876,9 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLuint indexRow[MAX_WIDTH];
                GLint col;
                for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexel)(texImage, col, row, img,
-                                          (GLvoid *) &indexRow[col]);
+                  GLchan indx;
+                  (*texImage->FetchTexelc)(texImage, col, row, img, &indx);
+                  indexRow[col] = indx;
                }
                _mesa_pack_index_span(ctx, width, type, dest,
                                      indexRow, &ctx->Pack,
@@ -1886,8 +1888,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLfloat depthRow[MAX_WIDTH];
                GLint col;
                for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexel)(texImage, col, row, img,
-                                          (GLvoid *) &depthRow[col]);
+                  (*texImage->FetchTexelf)(texImage, col, row, img,
+                                           (GLvoid *) &depthRow[col]);
                }
                _mesa_pack_depth_span(ctx, width, dest, type,
                                      depthRow, &ctx->Pack);
@@ -1915,8 +1917,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLchan rgba[MAX_WIDTH][4];
                GLint col;
                for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexel)(texImage, col, row, img,
-                                          (GLvoid *) rgba[col]);
+                  (*texImage->FetchTexelc)(texImage, col, row, img, rgba[col]);
                }
                _mesa_pack_rgba_span(ctx, width, (const GLchan (*)[4])rgba,
                                     format, type, dest, &ctx->Pack,
@@ -1984,11 +1985,14 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                                 &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
-      if (!texImage->FetchTexel) {
-         /* If driver didn't explicitly set this, use the default */
-         texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
-      }
-      ASSERT(texImage->FetchTexel);
+
+      /* If driver didn't explicitly set this, use the defaults */
+      if (!texImage->FetchTexelc)
+         texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
+      if (!texImage->FetchTexelf)
+         texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
+      ASSERT(texImage->FetchTexelc);
+      ASSERT(texImage->FetchTexelf);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2081,11 +2085,14 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                 &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
-      if (!texImage->FetchTexel) {
-         /* If driver didn't explicitly set this, use the default */
-         texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
-      }
-      ASSERT(texImage->FetchTexel);
+
+      /* If driver didn't explicitly set these, use the defaults */
+      if (!texImage->FetchTexelc)
+         texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
+      if (!texImage->FetchTexelf)
+         texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
+      ASSERT(texImage->FetchTexelc);
+      ASSERT(texImage->FetchTexelf);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2172,11 +2179,14 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                                 pixels, &ctx->Unpack, texObj, texImage);
 
       ASSERT(texImage->TexFormat);
-      if (!texImage->FetchTexel) {
-         /* If driver didn't explicitly set this, use the default */
-         texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
-      }
-      ASSERT(texImage->FetchTexel);
+
+      /* If driver didn't explicitly set these, use the defaults */
+      if (!texImage->FetchTexelc)
+         texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
+      if (!texImage->FetchTexelf)
+         texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
+      ASSERT(texImage->FetchTexelc);
+      ASSERT(texImage->FetchTexelf);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2405,11 +2415,14 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
                                  x, y, width, border);
 
    ASSERT(texImage->TexFormat);
-   if (!texImage->FetchTexel) {
-      /* If driver didn't explicitly set this, use the default */
-      texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
-   }
-   ASSERT(texImage->FetchTexel);
+
+   /* If driver didn't explicitly set these, use the defaults */
+   if (!texImage->FetchTexelc)
+      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
+   if (!texImage->FetchTexelf)
+      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
+   ASSERT(texImage->FetchTexelc);
+   ASSERT(texImage->FetchTexelf);
 
    /* state update */
    texObj->Complete = GL_FALSE;
@@ -2465,11 +2478,14 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                  x, y, width, height, border);
 
    ASSERT(texImage->TexFormat);
-   if (!texImage->FetchTexel) {
-      /* If driver didn't explicitly set this, use the default */
-      texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
-   }
-   ASSERT(texImage->FetchTexel);
+
+   /* If driver didn't explicitly set these, use the defaults */
+   if (!texImage->FetchTexelc)
+      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
+   if (!texImage->FetchTexelf)
+      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
+   ASSERT(texImage->FetchTexelc);
+   ASSERT(texImage->FetchTexelf);
 
    /* state update */
    texObj->Complete = GL_FALSE;

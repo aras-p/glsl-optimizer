@@ -705,9 +705,8 @@ fxGlideFormat(GLint mesaFormat)
 
 static void
 fetch_intensity8(const struct gl_texture_image *texImage,
-		 GLint i, GLint j, GLint k, GLvoid * texelOut)
+		 GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLubyte *texel;
 
@@ -724,9 +723,8 @@ fetch_intensity8(const struct gl_texture_image *texImage,
 
 static void
 fetch_luminance8(const struct gl_texture_image *texImage,
-		 GLint i, GLint j, GLint k, GLvoid * texelOut)
+		 GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLubyte *texel;
 
@@ -743,9 +741,8 @@ fetch_luminance8(const struct gl_texture_image *texImage,
 
 static void
 fetch_alpha8(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLubyte *texel;
 
@@ -764,7 +761,7 @@ fetch_alpha8(const struct gl_texture_image *texImage,
 
 static void
 fetch_index8(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan * rgba)
 {
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     (void) mml;
@@ -774,28 +771,26 @@ fetch_index8(const struct gl_texture_image *texImage,
 
 static void
 fetch_luminance8_alpha8(const struct gl_texture_image *texImage,
-			GLint i, GLint j, GLint k, GLvoid * texelOut)
+			GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLubyte *texel;
 
-   i = i * mml->wScale;
-   j = j * mml->hScale;
+    i = i * mml->wScale;
+    j = j * mml->hScale;
 
-   texel = ((GLubyte *) texImage->Data) + (j * mml->width + i) * 2;
-   rgba[RCOMP] = texel[0];
-   rgba[GCOMP] = texel[0];
-   rgba[BCOMP] = texel[0];
-   rgba[ACOMP] = texel[1];
+    texel = ((GLubyte *) texImage->Data) + (j * mml->width + i) * 2;
+    rgba[RCOMP] = texel[0];
+    rgba[GCOMP] = texel[0];
+    rgba[BCOMP] = texel[0];
+    rgba[ACOMP] = texel[1];
 }
 
 
 static void
 fetch_r5g6b5(const struct gl_texture_image *texImage,
-	     GLint i, GLint j, GLint k, GLvoid * texelOut)
+	     GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLushort *texel;
 
@@ -812,9 +807,8 @@ fetch_r5g6b5(const struct gl_texture_image *texImage,
 
 static void
 fetch_r4g4b4a4(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLushort *texel;
 
@@ -831,9 +825,8 @@ fetch_r4g4b4a4(const struct gl_texture_image *texImage,
 
 static void
 fetch_r5g5b5a1(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLushort *texel;
 
@@ -850,9 +843,8 @@ fetch_r5g5b5a1(const struct gl_texture_image *texImage,
 
 static void
 fetch_a8r8g8b8(const struct gl_texture_image *texImage,
-	       GLint i, GLint j, GLint k, GLvoid * texelOut)
+	       GLint i, GLint j, GLint k, GLchan * rgba)
 {
-    GLchan *rgba = (GLchan *) texelOut;
     const tdfxMipMapLevel *mml = TDFX_TEXIMAGE_DATA(texImage);
     const GLuint *texel;
 
