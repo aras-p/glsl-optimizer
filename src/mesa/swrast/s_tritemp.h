@@ -785,7 +785,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                const GLfixed fx = FixedCeil(fsx);  /* no fractional part */
                const GLfixed adjx = (GLinterp) (fx - eLeft->fx0); /* SCALED! */
 #endif
-               const GLinterp adjy = eLeft->adjy;                 /* SCALED! */
+               const GLinterp adjy = (GLinterp) eLeft->adjy;      /* SCALED! */
                GLint idxOuter;
 #if TRIANGLE_WALK_DOUBLE
                GLdouble dxOuter;
