@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.53 2002/01/30 16:54:02 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.54 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,14 +158,17 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
 
-#define RENDER_SPAN( span )				\
-   ASSERT(span.interpMask & SPAN_RGBA);			\
-   _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
+#define SETUP_CODE				\
+   {						\
+      /* texturing must be off */		\
+      ASSERT(!ctx->Texture._ReallyEnabled);	\
+      ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);	\
+   }
+
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span, GL_POLYGON)
 
 #include "s_tritemp.h"
 
-   ASSERT(!ctx->Texture._ReallyEnabled);  /* texturing must be off */
-   ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);
 }
 
 
@@ -545,7 +548,8 @@ affine_span(GLcontext *ctx, struct sw_span *span,
       }
       break;
    }
-   ASSERT(span->interpMask & SPAN_RGBA);
+   ASSERT(span->interpMask & SPAN_RGBA); /* XXXX unset */
+   span->interpMask &= ~SPAN_RGBA;
    ASSERT(span->arrayMask & SPAN_RGBA);
    _mesa_write_rgba_span(ctx, span, GL_POLYGON);
 

@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.19 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: swrast.h,v 1.20 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,6 +95,8 @@ typedef struct {
 #define SPAN_LAMBDA       0x080
 #define SPAN_COVERAGE     0x100
 #define SPAN_FLAT         0x200  /* flat shading? */
+#define SPAN_XY           0x400  /* arrayMask only - for xArray, yArray */
+#define SPAN_MASK         0x800  /* arrayMask only */
 
 
 struct sw_span {
@@ -152,6 +154,8 @@ struct sw_span {
       GLuint index[MAX_WIDTH];
    } color;
    GLchan  specArray[MAX_WIDTH][4];
+   GLint   xArray[MAX_WIDTH];  /* X/Y used for point/line rendering only */
+   GLint   yArray[MAX_WIDTH];
    GLdepth zArray[MAX_WIDTH];
    GLfloat fogArray[MAX_WIDTH];
    GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];

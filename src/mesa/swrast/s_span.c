@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.28 2002/01/31 00:27:43 brianp Exp $ */
+/* $Id: s_span.c,v 1.29 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -358,7 +358,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          span->arrayMask |= SPAN_LAMBDA;
       }
       else {
-         /* just texture 0, witout lambda */
+         /* just texture 0, without lambda */
          const GLfloat ds = span->texStep[0][0];
          const GLfloat dt = span->texStep[0][1];
          const GLfloat dr = span->texStep[0][2];
@@ -387,12 +387,15 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
  * Apply the current polygon stipple pattern to a span of pixels.
  */
 static void
-stipple_polygon_span( GLcontext *ctx, struct sw_span *span)
+stipple_polygon_span( GLcontext *ctx, struct sw_span *span )
 {
    const GLuint highbit = 0x80000000;
-   GLuint i, m, stipple;
+   const GLuint stipple = ctx->PolygonStipple[span->y % 32];
+   GLuint i, m;
 
-   stipple = ctx->PolygonStipple[span->y % 32];
+   ASSERT(ctx->Polygon.StippleFlag);
+   ASSERT((span->arrayMask & SPAN_XY) == 0);
+
    m = highbit >> (GLuint) (span->x % 32);
 
    for (i = 0; i < span->end; i++) {
@@ -409,51 +412,61 @@ stipple_polygon_span( GLcontext *ctx, struct sw_span *span)
 
 
 /*
- * Clip a pixel span to the current buffer/window boundaries.
- * Return:   GL_TRUE   some pixel still visible
+ * Clip a pixel span to the current buffer/window boundaries:
+ * DrawBuffer->_Xmin, _Xmax, _Ymin, _Ymax.  This will accomplish
+ * window clipping and scissoring.
+ * Return:   GL_TRUE   some pixels still visible
  *           GL_FALSE  nothing visible
  */
 static GLuint
-clip_span( GLcontext *ctx, struct sw_span *span)
+clip_span( GLcontext *ctx, struct sw_span *span )
 {
-   GLint x = span->x, y = span->y, n = span->end;
+   const GLint xmin = ctx->DrawBuffer->_Xmin;
+   const GLint xmax = ctx->DrawBuffer->_Xmax;
+   const GLint ymin = ctx->DrawBuffer->_Ymin;
+   const GLint ymax = ctx->DrawBuffer->_Ymax;
 
-   /* Clip to top and bottom */
-   if (y < 0 || y >= ctx->DrawBuffer->Height) {
-      span->end = 0;
-      return GL_FALSE;
+   if (span->arrayMask & SPAN_XY) {
+      /* arrays of x/y pixel coords */
+      const GLint *x = span->xArray;
+      const GLint *y = span->yArray;
+      const GLint n = span->end;
+      GLubyte *mask = span->mask;
+      GLint i;
+      /* note: using & intead of && to reduce branches */
+      for (i = 0; i < n; i++) {
+         mask[i] = (x[i] >= xmin) & (x[i] < xmax)
+                 & (y[i] >= ymin) & (y[i] < ymax);
+      }
+      return GL_TRUE;  /* some pixels visible */
    }
+   else {
+      /* horizontal span of pixels */
+      const GLint x = span->x;
+      const GLint y = span->y;
+      const GLint n = span->end;
 
-   /* Clip to the left */
-   if (x < 0) {
-      if (x + n <= 0) {
-         /* completely off left side */
-	 span->end = 0;
-         return GL_FALSE;
+      /* Trivial rejection tests */
+      if (y < ymin || y >= ymax || x + n <= xmin || x >= xmax) {
+         span->end = 0;
+         return GL_FALSE;  /* all pixels clipped */
       }
-      else {
-         /* partially off left side */
-	 span->writeAll = GL_FALSE;
-         BZERO(span->mask, -x * sizeof(GLubyte));
-	 return GL_TRUE;
+
+      /* Clip to the left */
+      if (x < xmin) {
+         ASSERT(x + n > xmin);
+         span->writeAll = GL_FALSE;
+         BZERO(span->mask, (xmin - x) * sizeof(GLubyte));
       }
+
+      /* Clip to right */
+      if (x + n > xmax) {
+         ASSERT(x < xmax);
+         span->end = xmax - x;
+      }
+
+      return GL_TRUE;  /* some pixels visible */
    }
-
-   /* Clip to right */
-   if (x + n > ctx->DrawBuffer->Width) {
-      if (x >= ctx->DrawBuffer->Width) {
-         /* completely off right side */
-	 span->end = 0;
-         return GL_FALSE;
-      }
-      else {
-         /* partially off right side */
-         span->end = ctx->DrawBuffer->Width - x;
-	 return GL_TRUE;
-      }
-   }
-
-   return GL_TRUE;
 }
 
 
@@ -462,20 +475,16 @@ clip_span( GLcontext *ctx, struct sw_span *span)
  * Draw to more than one color buffer (or none).
  */
 static void
-multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                        const GLuint indexes[], const GLubyte mask[] )
+multi_write_index_span( GLcontext *ctx, struct sw_span *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint bufferBit;
-
-   if (ctx->Color.DrawBuffer == GL_NONE)
-      return;
 
    /* loop over four possible dest color buffers */
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
       if (bufferBit & ctx->Color.DrawDestMask) {
          GLuint indexTmp[MAX_WIDTH];
-         ASSERT(n < MAX_WIDTH);
+         ASSERT(span->end < MAX_WIDTH);
 
          if (bufferBit == FRONT_LEFT_BIT)
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
@@ -487,14 +496,27 @@ multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
 
          /* make copy of incoming indexes */
-         MEMCPY( indexTmp, indexes, n * sizeof(GLuint) );
+         MEMCPY( indexTmp, span->color.index, span->end * sizeof(GLuint) );
+
          if (ctx->Color.IndexLogicOpEnabled) {
-            _mesa_logicop_ci_span( ctx, n, x, y, indexTmp, mask );
+            _mesa_logicop_ci_span(ctx, span, indexTmp);
          }
+
          if (ctx->Color.IndexMask != 0xffffffff) {
-            _mesa_mask_index_span( ctx, n, x, y, indexTmp );
+            _mesa_mask_index_span(ctx, span, indexTmp);
          }
-         (*swrast->Driver.WriteCI32Span)( ctx, n, x, y, indexTmp, mask );
+
+         if (span->arrayMask & SPAN_XY) {
+            /* array of pixel coords */
+            (*swrast->Driver.WriteCI32Pixels)(ctx, span->end,
+                                              span->xArray, span->yArray,
+                                              indexTmp, span->mask);
+         }
+         else {
+            /* horizontal run of pixels */
+            (*swrast->Driver.WriteCI32Span)(ctx, span->end, span->x, span->y,
+                                            indexTmp, span->mask);
+         }
       }
    }
 
@@ -509,12 +531,13 @@ multi_write_index_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * have been done first.
  */
 static void
-multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       CONST GLchan rgba[][4], const GLubyte mask[] )
+multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLuint bufferBit;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   ASSERT(colorMask != 0x0);
 
    if (ctx->Color.DrawBuffer == GL_NONE)
       return;
@@ -523,7 +546,7 @@ multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    for (bufferBit = 1; bufferBit <= 8; bufferBit = bufferBit << 1) {
       if (bufferBit & ctx->Color.DrawDestMask) {
          GLchan rgbaTmp[MAX_WIDTH][4];
-         ASSERT(n < MAX_WIDTH);
+         ASSERT(span->end < MAX_WIDTH);
 
          if (bufferBit == FRONT_LEFT_BIT) {
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_FRONT_LEFT);
@@ -543,26 +566,42 @@ multi_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
          }
 
          /* make copy of incoming colors */
-         MEMCPY( rgbaTmp, rgba, 4 * n * sizeof(GLchan) );
+         MEMCPY( rgbaTmp, span->color.rgba, 4 * span->end * sizeof(GLchan) );
 
          if (ctx->Color.ColorLogicOpEnabled) {
-            _mesa_logicop_rgba_span( ctx, n, x, y, rgbaTmp, mask );
+            _mesa_logicop_rgba_span(ctx, span, rgbaTmp);
          }
          else if (ctx->Color.BlendEnabled) {
-            _mesa_blend_span( ctx, n, x, y, rgbaTmp, mask );
-         }
-         if (colorMask == 0x0) {
-            break;
-         }
-         else if (colorMask != 0xffffffff) {
-            _mesa_mask_rgba_span( ctx, n, x, y, rgbaTmp );
+            _mesa_blend_span(ctx, span, rgbaTmp);
          }
 
-         (*swrast->Driver.WriteRGBASpan)( ctx, n, x, y,
-				       (const GLchan (*)[4]) rgbaTmp, mask );
-         if (swrast->_RasterMask & ALPHABUF_BIT) {
-            _mesa_write_alpha_span( ctx, n, x, y,
-                                    (const GLchan (*)[4])rgbaTmp, mask );
+         if (colorMask != 0xffffffff) {
+            _mesa_mask_rgba_span(ctx, span, rgbaTmp);
+         }
+
+         if (span->arrayMask & SPAN_XY) {
+            /* array of pixel coords */
+            (*swrast->Driver.WriteRGBAPixels)(ctx, span->end,
+                                              span->xArray, span->yArray,
+                                              (const GLchan (*)[4]) rgbaTmp,
+                                              span->mask);
+            if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
+               _mesa_write_alpha_pixels(ctx, span->end,
+                                        span->xArray, span->yArray,
+                                        (const GLchan (*)[4]) rgbaTmp,
+                                        span->mask);
+            }
+         }
+         else {
+            /* horizontal run of pixels */
+            (*swrast->Driver.WriteRGBASpan)(ctx, span->end, span->x, span->y,
+                                            (const GLchan (*)[4]) rgbaTmp,
+                                            span->mask);
+            if (swrast->_RasterMask & ALPHABUF_BIT) {
+               _mesa_write_alpha_span(ctx, span->end, span->x, span->y,
+                                      (const GLchan (*)[4]) rgbaTmp,
+                                      span->mask);
+            }
          }
       }
    }
@@ -586,27 +625,29 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
    const GLuint origInterpMask = span->interpMask;
    const GLuint origArrayMask = span->arrayMask;
 
+   ASSERT(span->end <= MAX_WIDTH);
+   ASSERT((span->interpMask | span->arrayMask) & SPAN_INDEX);
    ASSERT((span->interpMask & span->arrayMask) == 0);
 
-   MEMSET(span->mask, 1, span->end);
-   span->writeAll = GL_TRUE;
-
-   /* Window clipping */
-   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx,span) == GL_FALSE) {
-         return;
-      }
+   if (span->arrayMask & SPAN_MASK) {
+      /* mask was initialized by caller, probably glBitmap */
+      span->writeAll = GL_FALSE;
+   }
+   else {
+      MEMSET(span->mask, 1, span->end);
+      span->writeAll = GL_TRUE;
    }
 
-   /* Scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
+   /* Clipping */
+   if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
+       || (primitive == GL_POINT)) {
+      if (!clip_span(ctx, span)) {
          return;
       }
    }
 
    /* Polygon Stippling */
-   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
+   if (ctx->Polygon.StippleFlag && primitive == GL_POLYGON) {
       stipple_polygon_span(ctx, span);
    }
 
@@ -671,31 +712,46 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span,
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
       /* draw to zero or two or more buffers */
-      multi_write_index_span( ctx, span->end, span->x, span->y,
-			      span->color.index, span->mask );
+      multi_write_index_span(ctx, span);
    }
    else {
       /* normal situation: draw to exactly one buffer */
       if (ctx->Color.IndexLogicOpEnabled) {
-         _mesa_logicop_ci_span( ctx, span->end, span->x, span->y,
-				span->color.index, span->mask );
+         _mesa_logicop_ci_span(ctx, span, span->color.index);
       }
 
       if (ctx->Color.IndexMask != 0xffffffff) {
-         _mesa_mask_index_span( ctx, span->end, span->x, span->y,
-                                span->color.index );
+         _mesa_mask_index_span(ctx, span, span->color.index);
       }
 
       /* write pixels */
-      if ((span->interpMask & SPAN_INDEX) && span->indexStep == 0) {
-         /* all pixels have same color index */
-         (*swrast->Driver.WriteMonoCISpan)( ctx, span->end, span->x, span->y,
-                                            FixedToInt(span->index),
-                                            span->mask );
+      if (span->arrayMask & SPAN_XY) {
+         /* array of pixel coords */
+         if ((span->interpMask & SPAN_INDEX) && span->indexStep == 0) {
+            /* all pixels have same color index */
+            (*swrast->Driver.WriteMonoCIPixels)(ctx, span->end,
+                                                span->xArray, span->yArray,
+                                                FixedToInt(span->index),
+                                                span->mask);
+         }
+         else {
+            (*swrast->Driver.WriteCI32Pixels)(ctx, span->end, span->xArray,
+                                              span->yArray, span->color.index,
+                                              span->mask );
+         }
       }
       else {
-         (*swrast->Driver.WriteCI32Span)( ctx, span->end, span->x, span->y,
-                                          span->color.index, span->mask );
+         /* horizontal run of pixels */
+         if ((span->interpMask & SPAN_INDEX) && span->indexStep == 0) {
+            /* all pixels have same color index */
+            (*swrast->Driver.WriteMonoCISpan)(ctx, span->end, span->x, span->y,
+                                              FixedToInt(span->index),
+                                              span->mask);
+         }
+         else {
+            (*swrast->Driver.WriteCI32Span)(ctx, span->end, span->x, span->y,
+                                            span->color.index, span->mask);
+         }
       }
    }
 
@@ -719,27 +775,34 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    const GLuint origArrayMask = span->arrayMask;
    GLboolean monoColor;
 
+   ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT((span->interpMask | span->arrayMask) & SPAN_RGBA);
+   if (ctx->Fog.Enabled)
+      ASSERT((span->interpMask | span->arrayMask) & SPAN_FOG);
 
-   MEMSET(span->mask, 1, span->end);
-   span->writeAll = GL_TRUE;
+   /*
+     printf("%s()  interp 0x%x  array 0x%x  p=0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask, primitive);
+   */
+
+   if (span->arrayMask & SPAN_MASK) {
+      /* mask was initialized by caller, probably glBitmap */
+      span->writeAll = GL_FALSE;
+   }
+   else {
+      MEMSET(span->mask, 1, span->end);
+      span->writeAll = GL_TRUE;
+   }
 
    /* Determine if we have mono-chromatic colors */
    monoColor = (span->interpMask & SPAN_RGBA) &&
       span->redStep == 0 && span->greenStep == 0 &&
       span->blueStep == 0 && span->alphaStep == 0;
 
-   /* Window clipping */
-   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive == GL_BITMAP) {
-      if (clip_span(ctx, span) == GL_FALSE) {
-         return;
-      }
-   }
-
-   /* Scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (!_mesa_scissor_span(ctx, span)) {
+   /* Clipping */
+   if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
+       || (primitive == GL_POINT)) {
+      if (!clip_span(ctx, span)) {
          return;
       }
    }
@@ -802,11 +865,13 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    /* Fog */
    /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
+      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
 	 _mesa_fog_rgba_pixels_with_array(ctx, span, span->fogArray,
                                           span->color.rgba);
-      else if ((span->interpMask & SPAN_FOG) && !swrast->_PreferPixelFog)
+      }
+      else if ((span->interpMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
          _mesa_fog_rgba_pixels(ctx, span, span->color.rgba);
+      }
       else {
          if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
             interpolate_z(ctx, span);
@@ -826,51 +891,63 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y,
-                             (const GLchan (*)[4]) span->color.rgba,
-                             span->mask );
+      multi_write_rgba_span(ctx, span);
    }
    else {
       /* normal: write to exactly one buffer */
+#if 1
       if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y,
-                                  span->color.rgba, span->mask );
+         _mesa_logicop_rgba_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
       else if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, span->end, span->x, span->y,
-                           span->color.rgba, span->mask );
+         _mesa_blend_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
-
+#endif
       /* Color component masking */
       if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y,
-                               span->color.rgba );
+         _mesa_mask_rgba_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
 
       /* write pixels */
-      if (monoColor) {
-         /* all pixels have same color */
-         GLchan color[4];
-         color[RCOMP] = FixedToChan(span->red);
-         color[GCOMP] = FixedToChan(span->green);
-         color[BCOMP] = FixedToChan(span->blue);
-         color[ACOMP] = FixedToChan(span->alpha);
-         (*swrast->Driver.WriteMonoRGBASpan)( ctx, span->end, span->x, span->y,
-                                              color, span->mask);
+      if (span->arrayMask & SPAN_XY) {
+         /* array of pixel coords */
+         /* XXX test for mono color */
+         (*swrast->Driver.WriteRGBAPixels)(ctx, span->end, span->xArray,
+             span->yArray, (const GLchan (*)[4]) span->color.rgba, span->mask);
+         if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
+            _mesa_write_alpha_pixels(ctx, span->end,
+                                     span->xArray, span->yArray,
+                                     (const GLchan (*)[4]) span->color.rgba,
+                                     span->mask);
+         }
       }
       else {
-         (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+         /* horizontal run of pixels */
+         if (monoColor) {
+            /* all pixels have same color */
+            GLchan color[4];
+            color[RCOMP] = FixedToChan(span->red);
+            color[GCOMP] = FixedToChan(span->green);
+            color[BCOMP] = FixedToChan(span->blue);
+            color[ACOMP] = FixedToChan(span->alpha);
+            (*swrast->Driver.WriteMonoRGBASpan)(ctx, span->end, span->x,
+                                                span->y, color, span->mask);
+            /* XXX software alpha buffer writes! */
+         }
+         else {
+            /* each pixel is a different color */
+            (*swrast->Driver.WriteRGBASpan)(ctx, span->end, span->x, span->y,
                       (const GLchan (*)[4]) span->color.rgba,
-                      span->writeAll ? ((const GLubyte *) NULL) : span->mask );
-      }
-
-      if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
+                      span->writeAll ? ((const GLubyte *) NULL) : span->mask);
+            if (swrast->_RasterMask & ALPHABUF_BIT) {
+               _mesa_write_alpha_span(ctx, span->end, span->x, span->y,
                       (const GLchan (*)[4]) span->color.rgba,
-                      span->writeAll ? ((const GLubyte *) NULL) : span->mask );
+                      span->writeAll ? ((const GLubyte *) NULL) : span->mask);
+            }
+         }
       }
    }
 
@@ -918,6 +995,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint origArrayMask = span->arrayMask;
 
+   ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT(ctx->Texture._ReallyEnabled);
 
@@ -925,26 +1003,26 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);
    */
 
-   MEMSET(span->mask, 1, span->end);
-   span->writeAll = GL_TRUE;
+   if (span->arrayMask & SPAN_MASK) {
+      /* mask was initialized by caller, probably glBitmap */
+      span->writeAll = GL_FALSE;
+   }
+   else {
+      MEMSET(span->mask, 1, span->end);
+      span->writeAll = GL_TRUE;
+   }
 
-   /* clip against window bounds */
-   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
-      if (clip_span(ctx,span) == GL_FALSE) {
+   /* Clipping */
+   if ((swrast->_RasterMask & CLIP_BIT) || (primitive == GL_BITMAP)
+       || (primitive == GL_POINT)) {
+      if (!clip_span(ctx, span)) {
 	 return;
       }
    }
 
-   /* Scissor test */
-   if (ctx->Scissor.Enabled) {
-      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
-         return;
-      }
-   }
-
    /* Polygon Stippling */
-   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
-      stipple_polygon_span( ctx, span);
+   if (ctx->Polygon.StippleFlag && primitive == GL_POLYGON) {
+      stipple_polygon_span(ctx, span);
    }
 
    /* Need texture coordinates now */
@@ -1052,33 +1130,43 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    }
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y,
-                             (const GLchan (*)[4]) span->color.rgba,
-                             span->mask );
+      multi_write_rgba_span(ctx, span);
    }
    else {
       /* normal: write to exactly one buffer */
       if (ctx->Color.ColorLogicOpEnabled) {
-         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y,
-                                  span->color.rgba, span->mask );
+         _mesa_logicop_rgba_span(ctx, span, span->color.rgba);
       }
       else  if (ctx->Color.BlendEnabled) {
-         _mesa_blend_span( ctx, span->end, span->x, span->y,
-                           span->color.rgba, span->mask);
+         _mesa_blend_span(ctx, span, span->color.rgba);
       }
 
       if (colorMask != 0xffffffff) {
-         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y,
-                               span->color.rgba );
+         _mesa_mask_rgba_span(ctx, span, span->color.rgba);
       }
 
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+ 
+      if (span->arrayMask & SPAN_XY) {
+         /* array of pixel coords */
+         (*swrast->Driver.WriteRGBAPixels)(ctx, span->end, span->xArray,
+             span->yArray, (const GLchan (*)[4]) span->color.rgba, span->mask);
+         if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
+            _mesa_write_alpha_pixels(ctx, span->end,
+                                     span->xArray, span->yArray,
+                                     (const GLchan (*)[4]) span->color.rgba,
+                                     span->mask);
+         }
+      }
+      else {
+         /* horizontal run of pixels */
+         (*swrast->Driver.WriteRGBASpan)(ctx, span->end, span->x, span->y,
                                        (const GLchan (*)[4]) span->color.rgba,
-                                       span->writeAll ? NULL : span->mask );
-      if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
-                                 (const GLchan (*)[4]) span->color.rgba,
-                                 span->writeAll ? NULL : span->mask );
+                                       span->writeAll ? NULL : span->mask);
+         if (swrast->_RasterMask & ALPHABUF_BIT) {
+            _mesa_write_alpha_span(ctx, span->end, span->x, span->y,
+                                   (const GLchan (*)[4]) span->color.rgba,
+                                   span->writeAll ? NULL : span->mask);
+         }
       }
    }
 
@@ -1133,7 +1221,7 @@ _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
 
       (*swrast->Driver.ReadRGBASpan)( ctx, length, x + skip, y, rgba + skip );
       if (buffer->UseSoftwareAlphaBuffers) {
-         _mesa_read_alpha_span( ctx, length, x + skip, y, rgba + skip );
+         _mesa_read_alpha_span(ctx, length, x + skip, y, rgba + skip);
       }
    }
 }

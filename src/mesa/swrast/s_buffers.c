@@ -1,10 +1,10 @@
-/* $Id: s_buffers.c,v 1.8 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_buffers.c,v 1.9 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,7 +67,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
             rgba[j][BCOMP] = b;
             rgba[j][ACOMP] = a;
          }
-         _mesa_mask_rgba_span( ctx, width, x, y + i, rgba );
+         _mesa_mask_rgba_array( ctx, width, x, y + i, rgba );
          (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,
 				       (CONST GLchan (*)[4]) rgba, NULL );
       }
@@ -82,7 +82,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          for (j=0;j<width;j++) {
             span[j] = ctx->Color.ClearIndex;
          }
-         _mesa_mask_index_span( ctx, width, x, y + i, span );
+         _mesa_mask_index_array( ctx, width, x, y + i, span );
          (*swrast->Driver.WriteCI32Span)( ctx, width, x, y + i, span, mask );
       }
    }

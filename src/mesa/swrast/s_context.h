@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.14 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_context.h,v 1.15 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,11 +73,10 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
 #define DEPTH_BIT		0x004	/* Depth-test pixels */
 #define FOG_BIT			0x008	/* Fog pixels */
 #define LOGIC_OP_BIT		0x010	/* Apply logic op in software */
-#define SCISSOR_BIT		0x020	/* Scissor pixels */
+#define CLIP_BIT		0x020	/* Scissor or window clip pixels */
 #define STENCIL_BIT		0x040	/* Stencil pixels */
 #define MASKING_BIT		0x080	/* Do glColorMask or glIndexMask */
 #define ALPHABUF_BIT		0x100	/* Using software alpha buffer */
-#define WINCLIP_BIT		0x200	/* Clip pixels/primitives to window */
 #define MULTI_DRAW_BIT		0x400	/* Write to more than one color- */
                                         /* buffer or no buffers. */
 #define OCCLUSION_BIT           0x800   /* GL_HP_occlusion_test enabled */

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.28 2002/01/31 00:27:43 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.29 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -117,7 +117,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
 
-   if ((SWRAST_CONTEXT(ctx)->_RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
+   if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
        && ctx->Texture._ReallyEnabled == 0
        && unpack->Alignment == 1
        && !unpack->SwapBytes
@@ -740,27 +740,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    if (fast_draw_pixels(ctx, x, y, width, height, format, type, pixels))
       return;
 
-   /* Fragment depth values */
-   if (ctx->Depth.Test || ctx->Fog.Enabled) {
-      /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
-      GLfloat fog;
-      GLint i;
-
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterFogCoord);
-      else
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-
-      for (i=0;i<width;i++) {
-	 span.zArray[i] = z;
-         span.fogArray[i] = fog;
-      }
-   }
-
+   if (ctx->Depth.Test)
+      _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
-   span.arrayMask |= SPAN_Z;
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= ctx->DrawBuffer->Width

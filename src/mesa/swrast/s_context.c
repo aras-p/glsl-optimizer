@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.27 2002/01/10 16:54:28 brianp Exp $ */
+/* $Id: s_context.c,v 1.28 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (ctx->Color.BlendEnabled)           RasterMask |= BLEND_BIT;
    if (ctx->Depth.Test)                   RasterMask |= DEPTH_BIT;
    if (ctx->Fog.Enabled)                  RasterMask |= FOG_BIT;
-   if (ctx->Scissor.Enabled)              RasterMask |= SCISSOR_BIT;
+   if (ctx->Scissor.Enabled)              RasterMask |= CLIP_BIT;
    if (ctx->Stencil.Enabled)              RasterMask |= STENCIL_BIT;
    if (ctx->Visual.rgbMode) {
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
@@ -78,7 +78,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
        || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
        || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
-      RasterMask |= WINCLIP_BIT;
+      RasterMask |= CLIP_BIT;
    }
 
    if (ctx->Depth.OcclusionTest)

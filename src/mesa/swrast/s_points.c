@@ -1,10 +1,10 @@
-/* $Id: s_points.c,v 1.16 2002/01/06 20:39:19 brianp Exp $ */
+/* $Id: s_points.c,v 1.17 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,20 +33,19 @@
 #include "texstate.h"
 #include "s_context.h"
 #include "s_feedback.h"
-#include "s_pb.h"
 #include "s_points.h"
 #include "s_span.h"
 
 
 
-#define INDEX      0x0
 #define RGBA       0x1
-#define SMOOTH     0x2
-#define TEXTURE    0x4
-#define SPECULAR   0x8
-#define LARGE     0x10
-#define ATTENUATE 0x20
-#define SPRITE    0x40
+#define INDEX      0x2
+#define SMOOTH     0x4
+#define TEXTURE    0x8
+#define SPECULAR  0x10
+#define LARGE     0x20
+#define ATTENUATE 0x40
+#define SPRITE    0x80
 
 
 /*

@@ -1,10 +1,10 @@
-/* $Id: s_logic.c,v 1.8 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_logic.c,v 1.9 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,9 +40,9 @@
 /*
  * Apply logic op to array of CI pixels.
  */
-static void index_logicop( GLcontext *ctx, GLuint n,
-                           GLuint index[], const GLuint dest[],
-                           const GLubyte mask[] )
+static void
+index_logicop( GLcontext *ctx, GLuint n, GLuint index[], const GLuint dest[],
+               const GLubyte mask[] )
 {
    GLuint i;
    switch (ctx->Color.LogicOp) {
@@ -166,14 +166,24 @@ static void index_logicop( GLcontext *ctx, GLuint n,
  * used if the device driver can't do logic ops.
  */
 void
-_mesa_logicop_ci_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       GLuint index[], const GLubyte mask[] )
+_mesa_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
+                       GLuint index[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint dest[MAX_WIDTH];
+
+   ASSERT(span->end < MAX_WIDTH);
+
    /* Read dest values from frame buffer */
-   (*swrast->Driver.ReadCI32Span)( ctx, n, x, y, dest );
-   index_logicop( ctx, n, index, dest, mask );
+   if (span->arrayMask & SPAN_XY) {
+      (*swrast->Driver.ReadCI32Pixels)( ctx, span->end, span->xArray,
+                                        span->yArray, dest, span->mask );
+   }
+   else {
+      (*swrast->Driver.ReadCI32Span)( ctx, span->end, span->x, span->y, dest );
+   }
+
+   index_logicop( ctx, span->end, index, dest, span->mask );
 }
 
 
@@ -207,9 +217,9 @@ _mesa_logicop_ci_pixels( GLcontext *ctx,
  * Note:  Since the R, G, B, and A channels are all treated the same we
  * process them as 4-byte GLuints instead of four GLubytes.
  */
-static void rgba_logicop_ui( const GLcontext *ctx, GLuint n,
-                             const GLubyte mask[],
-                             GLuint src[], const GLuint dest[] )
+static void
+rgba_logicop_ui( const GLcontext *ctx, GLuint n, const GLubyte mask[],
+                 GLuint src[], const GLuint dest[] )
 {
    GLuint i;
    switch (ctx->Color.LogicOp) {
@@ -332,9 +342,9 @@ static void rgba_logicop_ui( const GLcontext *ctx, GLuint n,
  * As above, but operate on GLchan values
  * Note: need to pass n = numPixels * 4.
  */
-static void rgba_logicop_chan( const GLcontext *ctx, GLuint n,
-                               const GLubyte mask[],
-                               GLchan srcPtr[], const GLchan destPtr[] )
+static void
+rgba_logicop_chan( const GLcontext *ctx, GLuint n, const GLubyte mask[],
+                   GLchan srcPtr[], const GLchan destPtr[] )
 {
 #if CHAN_TYPE == GL_FLOAT
    GLuint *src = (GLuint *) srcPtr;
@@ -466,20 +476,39 @@ static void rgba_logicop_chan( const GLcontext *ctx, GLuint n,
 
 /*
  * Apply the current logic operator to a span of RGBA pixels.
- * This is only used if the device driver can't do logic ops.
+ * We can handle horizontal runs of pixels (spans) or arrays of x/y
+ * pixel coordinates.
  */
 void
-_mesa_logicop_rgba_span( GLcontext *ctx,
-                         GLuint n, GLint x, GLint y,
-                         GLchan rgba[][4], const GLubyte mask[] )
+_mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
+                         GLchan rgba[][4] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[MAX_WIDTH][4];
-   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
-   if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
-      rgba_logicop_ui(ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest);
+
+   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->arrayMask & SPAN_RGBA);
+
+   if (span->arrayMask & SPAN_XY) {
+      (*swrast->Driver.ReadRGBAPixels)(ctx, span->end,
+                                       span->xArray, span->yArray,
+                                       dest, span->mask);
+      if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
+         _mesa_read_alpha_pixels(ctx, span->end, span->xArray, span->yArray,
+                                 dest, span->mask);
+      }
    }
    else {
-      rgba_logicop_chan(ctx, 4 * n, mask,
+      _mesa_read_rgba_span(ctx, ctx->DrawBuffer, span->end,
+                           span->x, span->y, dest);
+   }
+
+   if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
+      rgba_logicop_ui(ctx, span->end, span->mask,
+                      (GLuint *) rgba, (const GLuint *) dest);
+   }
+   else {
+      rgba_logicop_chan(ctx, 4 * span->end, span->mask,
                         (GLchan *) rgba, (const GLchan *) dest);
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.17 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.18 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,8 +37,6 @@
 
 
 
-
-
 /* Stencil Logic:
 
 IF stencil test fails THEN
@@ -53,8 +51,6 @@ ELSE
 ENDIF
 
 */
-
-
 
 
 /*
@@ -488,7 +484,6 @@ stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 
-
 /*
  * Apply stencil and depth testing to the span of pixels.
  * Both software and hardware stencil buffers are acceptable.
@@ -501,55 +496,8 @@ stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  *         GL_FALSE - one or more fragments passed the testing
  *
  */
-GLboolean
-_old_stencil_and_ztest_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                              const GLdepth z[], GLubyte mask[] )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLstencil stencilRow[MAX_WIDTH];
-   GLstencil *stencil;
-   GLboolean result;
-
-   ASSERT(ctx->Stencil.Enabled);
-   ASSERT(n <= MAX_WIDTH);
-
-   /* Get initial stencil values */
-   if (swrast->Driver.WriteStencilSpan) {
-      ASSERT(swrast->Driver.ReadStencilSpan);
-      /* Get stencil values from the hardware stencil buffer */
-      (*swrast->Driver.ReadStencilSpan)(ctx, n, x, y, stencilRow);
-      stencil = stencilRow;
-   }
-   else {
-      /* software stencil buffer */
-      stencil = STENCIL_ADDRESS(x, y);
-   }
-
-   /* do all the stencil/depth testing/updating */
-   result = stencil_and_ztest_span( ctx, n, x, y, z, stencil, mask );
-
-   if (swrast->Driver.WriteStencilSpan) {
-      /* Write updated stencil values into hardware stencil buffer */
-      (swrast->Driver.WriteStencilSpan)(ctx, n, x, y, stencil, mask );
-   }
-
-   return result;
-}
-
-/*
- * Apply stencil and depth testing to the span of pixels.
- * Both software and hardware stencil buffers are acceptable.
- * Input:  n - number of pixels in the span
- *         x, y - location of leftmost pixel in span
- *         z - array [n] of z values
- *         mask - array [n] of flags  (1=test this pixel, 0=skip the pixel)
- * Output:  mask - array [n] of flags (1=stencil and depth test passed)
- * Return: GL_TRUE - all fragments failed the testing
- *         GL_FALSE - one or more fragments passed the testing
- *
- */
-GLboolean
-_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
+static GLboolean
+stencil_and_ztest_span2(GLcontext *ctx, struct sw_span *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -1056,6 +1004,20 @@ _mesa_stencil_and_ztest_pixels( GLcontext *ctx,
    }
 }
 
+
+
+GLboolean
+_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
+{
+   if (span->arrayMask & SPAN_XY) {
+      return _mesa_stencil_and_ztest_pixels(ctx, span->end,
+                                            span->xArray, span->yArray,
+                                            span->zArray, span->mask);
+   }
+   else {
+      return stencil_and_ztest_span2(ctx, span);
+   }
+}
 
 
 /*

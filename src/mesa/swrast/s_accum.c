@@ -1,10 +1,10 @@
-/* $Id: s_accum.c,v 1.13 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_accum.c,v 1.14 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -474,7 +474,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                   rgba[i][ACOMP] = multTable[acc[i4+3]];
                }
                if (colorMask != 0xffffffff) {
-                  _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
+                  _mesa_mask_rgba_array( ctx, width, xpos, ypos, rgba );
                }
                (*swrast->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );
@@ -509,7 +509,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                   rgba[i][ACOMP] = CLAMP( a, 0, CHAN_MAX );
                }
                if (colorMask != 0xffffffff) {
-                  _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
+                  _mesa_mask_rgba_array( ctx, width, xpos, ypos, rgba );
                }
                (*swrast->Driver.WriteRGBASpan)( ctx, width, xpos, ypos,
                                              (const GLchan (*)[4])rgba, NULL );

@@ -1,10 +1,10 @@
-/* $Id: s_aaline.c,v 1.12 2001/09/18 23:06:14 kschultz Exp $ */
+/* $Id: s_aaline.c,v 1.13 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,8 +27,8 @@
 
 #include "glheader.h"
 #include "swrast/s_aaline.h"
-#include "swrast/s_pb.h"
 #include "swrast/s_context.h"
+#include "swrast/s_span.h"
 #include "swrast/swrast.h"
 #include "mtypes.h"
 #include "mmath.h"
@@ -75,6 +75,8 @@ struct LineInfo
    GLfloat vPlane[MAX_TEXTURE_UNITS][4];
    GLfloat lambda[MAX_TEXTURE_UNITS];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
+
+   struct sw_span span;
 };
 
 
@@ -326,8 +328,9 @@ compute_coveragef(const struct LineInfo *info,
 
 
 
-typedef void (*plot_func)(GLcontext *ctx, const struct LineInfo *line,
-                          struct pixel_buffer *pb, int ix, int iy);
+typedef void (*plot_func)(GLcontext *ctx, struct LineInfo *line,
+                          int ix, int iy);
+                         
 
 
 /*
@@ -337,7 +340,6 @@ static void
 segment(GLcontext *ctx,
         struct LineInfo *line,
         plot_func plot,
-        struct pixel_buffer *pb,
         GLfloat t0, GLfloat t1)
 {
    const GLfloat absDx = (line->dx < 0.0F) ? -line->dx : line->dx;
@@ -407,7 +409,7 @@ segment(GLcontext *ctx,
          GLint iy;
          /* scan across the line, bottom-to-top */
          for (iy = iyBot; iy < iyTop; iy++) {
-            (*plot)(ctx, line, pb, ix, iy);
+            (*plot)(ctx, line, ix, iy);
          }
          yBot += dydx;
          yTop += dydx;
@@ -453,7 +455,7 @@ segment(GLcontext *ctx,
          GLint ix;
          /* scan across the line, left-to-right */
          for (ix = ixLeft; ix < ixRight; ix++) {
-            (*plot)(ctx, line, pb, ix, iy);
+            (*plot)(ctx, line, ix, iy);
          }
          xLeft += dxdy;
          xRight += dxdy;
@@ -486,6 +488,7 @@ segment(GLcontext *ctx,
 
 #define NAME(x)  aa_multitex_rgba_##x
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_MULTITEX
 #include "s_aalinetemp.h"
@@ -493,6 +496,7 @@ segment(GLcontext *ctx,
 
 #define NAME(x)  aa_multitex_spec_##x
 #define DO_Z
+#define DO_FOG
 #define DO_RGBA
 #define DO_MULTITEX
 #define DO_SPEC

@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.12 2002/01/31 00:27:43 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.13 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,6 +52,9 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    const GLchan (*rgba)[4] = (const GLchan (*)[4]) src;
    const GLchan (*rgb)[3] = (const GLchan (*)[3]) src;
    const GLuint *indexes = (const GLuint *) src;
+
+   /* no pixel arrays! */
+   ASSERT((span->arrayMask & SPAN_XY) == 0);
 
    INIT_SPAN(zoomed);
    if (format == GL_RGBA || format == GL_RGB) {

@@ -1,10 +1,10 @@
-/* $Id: s_bitmap.c,v 1.13 2001/12/14 02:50:57 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.14 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,11 +28,12 @@
 #include "glheader.h"
 #include "image.h"
 #include "macros.h"
+#include "mmath.h"
 #include "pixel.h"
 
 #include "s_context.h"
 #include "s_fog.h"
-#include "s_pb.h"
+#include "s_span.h"
 
 
 
@@ -46,10 +47,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 		const GLubyte *bitmap )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct pixel_buffer *PB = swrast->PB;
    GLint row, col;
-   GLdepth fragZ;
-   GLfloat fog;
+   GLuint count = 0;
+   struct sw_span span;
 
    ASSERT(ctx->RenderMode == GL_RENDER);
    ASSERT(bitmap);
@@ -59,41 +59,40 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
 
-   /* Set bitmap drawing color */
+   INIT_SPAN(span);
+   span.arrayMask |= SPAN_XY;
+   span.end = width;
    if (ctx->Visual.rgbMode) {
-      GLint r, g, b, a;
-      r = (GLint) (ctx->Current.RasterColor[0] * CHAN_MAXF);
-      g = (GLint) (ctx->Current.RasterColor[1] * CHAN_MAXF);
-      b = (GLint) (ctx->Current.RasterColor[2] * CHAN_MAXF);
-      a = (GLint) (ctx->Current.RasterColor[3] * CHAN_MAXF);
-      PB_SET_COLOR( PB, r, g, b, a );
+      span.interpMask |= SPAN_RGBA;
+      span.red   = FloatToFixed(ctx->Current.RasterColor[0] * CHAN_MAXF);
+      span.green = FloatToFixed(ctx->Current.RasterColor[1] * CHAN_MAXF);
+      span.blue  = FloatToFixed(ctx->Current.RasterColor[2] * CHAN_MAXF);
+      span.alpha = FloatToFixed(ctx->Current.RasterColor[3] * CHAN_MAXF);
+      span.redStep = span.greenStep = span.blueStep = span.alphaStep = 0;
    }
    else {
-      PB_SET_INDEX( PB, ctx->Current.RasterIndex );
+      span.interpMask |= SPAN_INDEX;
+      span.index = ChanToFixed(ctx->Current.RasterIndex);
+      span.indexStep = 0;
    }
 
-   fragZ = (GLdepth) ( ctx->Current.RasterPos[2] * ctx->DepthMaxF);
+   if (ctx->Depth.Test)
+      _mesa_span_default_z(ctx, &span);
+   if (ctx->Fog.Enabled)
+      _mesa_span_default_fog(ctx, &span);
 
-   if (ctx->Fog.Enabled) {
-      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
-      else
-         fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-   }
-   else {
-      fog = 0.0;
-   }
-
-   for (row=0; row<height; row++) {
+   for (row = 0; row < height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
 
       if (unpack->LsbFirst) {
          /* Lsb first */
          GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col=0; col<width; col++) {
+         for (col = 0; col < width; col++) {
             if (*src & mask) {
-               PB_WRITE_PIXEL( PB, px+col, py+row, fragZ, fog );
+               span.xArray[count] = px + col;
+               span.yArray[count] = py + row;
+               count++;
             }
             if (mask == 128U) {
                src++;
@@ -104,8 +103,6 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
             }
          }
 
-         PB_CHECK_FLUSH( ctx, PB );
-
          /* get ready for next row */
          if (mask != 1)
             src++;
@@ -113,9 +110,11 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       else {
          /* Msb first */
          GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col=0; col<width; col++) {
+         for (col = 0; col < width; col++) {
             if (*src & mask) {
-               PB_WRITE_PIXEL( PB, px+col, py+row, fragZ, fog );
+               span.xArray[count] = px + col;
+               span.yArray[count] = py + row;
+               count++;
             }
             if (mask == 1U) {
                src++;
@@ -126,15 +125,22 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
             }
          }
 
-         PB_CHECK_FLUSH( ctx, PB );
-
          /* get ready for next row */
          if (mask != 128)
             src++;
       }
-   }
 
-   _mesa_flush_pb(ctx);
+      if (count + width >= MAX_WIDTH || row + 1 == height) {
+         /* flush the span */
+         span.end = count;
+         if (ctx->Visual.rgbMode)
+            _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+         else
+            _mesa_write_index_span(ctx, &span, GL_BITMAP);
+         span.end = 0;
+         count = 0;
+      }
+   }
 
    RENDER_FINISH(swrast,ctx);
 }

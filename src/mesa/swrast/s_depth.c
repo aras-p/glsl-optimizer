@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.13 2002/01/28 00:07:33 brianp Exp $ */
+/* $Id: s_depth.c,v 1.14 2002/02/02 17:24:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,9 +44,11 @@ GLvoid *
 _mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y)
 {
    if (ctx->Visual.depthBits <= 16)
-      return (GLushort *) ctx->DrawBuffer->DepthBuffer + ctx->DrawBuffer->Width * y + x;
+      return (GLushort *) ctx->DrawBuffer->DepthBuffer
+         + ctx->DrawBuffer->Width * y + x;
    else
-      return (GLuint *) ctx->DrawBuffer->DepthBuffer + ctx->DrawBuffer->Width * y + x;
+      return (GLuint *) ctx->DrawBuffer->DepthBuffer
+         + ctx->DrawBuffer->Width * y + x;
 }
 
 
@@ -73,7 +75,7 @@ _mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y)
  * Return:  number of fragments which pass the test.
  */
 static GLuint
-depth_test_span16( GLcontext *ctx, GLuint n, GLint x, GLint y,
+depth_test_span16( GLcontext *ctx, GLuint n,
                    GLushort zbuffer[], const GLdepth z[], GLubyte mask[] )
 {
    GLuint passed = 0;
@@ -302,7 +304,7 @@ depth_test_span16( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static GLuint
-depth_test_span32( GLcontext *ctx, GLuint n, GLint x, GLint y,
+depth_test_span32( GLcontext *ctx, GLuint n,
                    GLuint zbuffer[], const GLdepth z[], GLubyte mask[] )
 {
    GLuint passed = 0;
@@ -544,7 +546,7 @@ _old_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       GLdepth zbuffer[MAX_WIDTH];
       GLuint passed;
       (*swrast->Driver.ReadDepthSpan)(ctx, n, x, y, zbuffer);
-      passed = depth_test_span32(ctx, n, x, y, zbuffer, z, mask);
+      passed = depth_test_span32(ctx, n, zbuffer, z, mask);
       assert(swrast->Driver.WriteDepthSpan);
       (*swrast->Driver.WriteDepthSpan)(ctx, n, x, y, zbuffer, mask);
       return passed;
@@ -553,22 +555,23 @@ _old_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       /* software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          GLushort *zptr = (GLushort *) Z_ADDRESS16(ctx, x, y);
-         GLuint passed = depth_test_span16(ctx, n, x, y, zptr, z, mask);
+         GLuint passed = depth_test_span16(ctx, n, zptr, z, mask);
          return passed;
       }
       else {
          GLuint *zptr = (GLuint *) Z_ADDRESS32(ctx, x, y);
-         GLuint passed = depth_test_span32(ctx, n, x, y, zptr, z, mask);
+         GLuint passed = depth_test_span32(ctx, n, zptr, z, mask);
          return passed;
       }
    }
 }
 
+
 /*
  * Apply depth test to span of fragments.  Hardware or software z buffer.
  */
-GLuint
-_mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
+static GLuint
+depth_test_span( GLcontext *ctx, struct sw_span *span)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -579,7 +582,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
       GLdepth zbuffer[MAX_WIDTH];
       GLuint passed;
       (*swrast->Driver.ReadDepthSpan)(ctx, span->end, span->x, span->y, zbuffer);
-      passed = depth_test_span32(ctx, span->end, span->x, span->y,
+      passed = depth_test_span32(ctx, span->end,
 	                         zbuffer, span->zArray, span->mask);
       ASSERT(swrast->Driver.WriteDepthSpan);
       (*swrast->Driver.WriteDepthSpan)(ctx, span->end, span->x, span->y, zbuffer, span->mask);
@@ -592,11 +595,11 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
       /* software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          GLushort *zptr = (GLushort *) Z_ADDRESS16(ctx, span->x, span->y);
-         passed = depth_test_span16(ctx, span->end, span->x, span->y, zptr, span->zArray, span->mask);
+         passed = depth_test_span16(ctx, span->end, zptr, span->zArray, span->mask);
       }
       else {
          GLuint *zptr = (GLuint *) Z_ADDRESS32(ctx, span->x, span->y);
-         passed = depth_test_span32(ctx, span->end, span->x, span->y, zptr, span->zArray, span->mask);
+         passed = depth_test_span32(ctx, span->end, zptr, span->zArray, span->mask);
       }
       if (passed < span->end)
          span->writeAll = GL_FALSE;
@@ -1360,6 +1363,20 @@ _mesa_depth_test_pixels( GLcontext *ctx,
 }
 
 
+
+GLuint
+_mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
+{
+   if (span->arrayMask & SPAN_XY) {
+      _mesa_depth_test_pixels(ctx, span->end,
+                              span->xArray, span->yArray,
+                              span->zArray, span->mask);
+      return 1;
+   }
+   else {
+      return depth_test_span(ctx, span);
+   }
+}
 
 
 
