@@ -299,18 +299,6 @@ static GLboolean color_mask( GLcontext* ctx,
 
 
 
-/*
- * Set the pixel logic operation.  Return GL_TRUE if the device driver
- * can perform the operation, otherwise return GL_FALSE.  If GL_FALSE
- * is returned, the logic op will be done in software by Mesa.
- */
-GLboolean logicop( GLcontext* ctx, GLenum op )
-{
-   /* can't implement */
-   return GL_FALSE;
-}
-
-
 static void dither( GLcontext* ctx, GLboolean enable )
 {
    /* No op */
@@ -1046,7 +1034,6 @@ void setup_DD_pointers( GLcontext* ctx )
    ctx->Driver.IndexMask = index_mask;
    ctx->Driver.ColorMask = color_mask;
 
-   ctx->Driver.LogicOp = logicop;
    ctx->Driver.Dither = dither;
 
    ctx->Driver.SetBuffer = set_buffer;

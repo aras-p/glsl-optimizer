@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.82 2000/09/05 20:28:06 brianp Exp $ */
+/* $Id: context.c,v 1.83 2000/09/07 15:45:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -815,7 +815,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.ColorMask[1] = 0xff;
    ctx->Color.ColorMask[2] = 0xff;
    ctx->Color.ColorMask[3] = 0xff;
-   ctx->Color.SWmasking = GL_FALSE;
    ctx->Color.ClearIndex = 0;
    ASSIGN_4V( ctx->Color.ClearColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.DrawBuffer = GL_FRONT;
@@ -832,7 +831,6 @@ init_attrib_groups( GLcontext *ctx )
    ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.IndexLogicOpEnabled = GL_FALSE;
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;
-   ctx->Color.SWLogicOpEnabled = GL_FALSE;
    ctx->Color.LogicOp = GL_COPY;
    ctx->Color.DitherFlag = GL_TRUE;
    ctx->Color.MultiDrawBuffer = GL_FALSE;

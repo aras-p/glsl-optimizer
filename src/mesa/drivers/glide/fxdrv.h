@@ -644,9 +644,9 @@ extern int fxTexGetInfo(int, int, GrLOD_t *, GrAspectRatio_t *,
 extern void fxDDScissor( GLcontext *ctx,
 			      GLint x, GLint y, GLsizei w, GLsizei h );
 extern void fxDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params );
-extern GLboolean fxDDColorMask(GLcontext *ctx, 
-			       GLboolean r, GLboolean g, 
-			       GLboolean b, GLboolean a );
+extern void fxDDColorMask(GLcontext *ctx, 
+                          GLboolean r, GLboolean g, 
+                          GLboolean b, GLboolean a );
 
 extern void fxDDWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
                                const GLdepth depth[], const GLubyte mask[]);

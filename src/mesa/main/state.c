@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.23 2000/08/23 14:33:04 brianp Exp $ */
+/* $Id: state.c,v 1.24 2000/09/07 15:45:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -666,114 +666,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 /**********************************************************************/
 
 
-/*
- * Since the device driver may or may not support pixel logic ops we
- * have to make some extensive tests to determine whether or not
- * software-implemented logic operations have to be used.
- */
-static void update_pixel_logic( GLcontext *ctx )
-{
-   if (ctx->Visual->RGBAflag) {
-      /* RGBA mode blending w/ Logic Op */
-      if (ctx->Color.ColorLogicOpEnabled) {
-	 if (ctx->Driver.LogicOp
-             && (*ctx->Driver.LogicOp)( ctx, ctx->Color.LogicOp )) {
-	    /* Device driver can do logic, don't have to do it in software */
-	    ctx->Color.SWLogicOpEnabled = GL_FALSE;
-	 }
-	 else {
-	    /* Device driver can't do logic op so we do it in software */
-	    ctx->Color.SWLogicOpEnabled = GL_TRUE;
-	 }
-      }
-      else {
-	 /* no logic op */
-	 if (ctx->Driver.LogicOp) {
-            (void) (*ctx->Driver.LogicOp)( ctx, GL_COPY );
-         }
-	 ctx->Color.SWLogicOpEnabled = GL_FALSE;
-      }
-   }
-   else {
-      /* CI mode Logic Op */
-      if (ctx->Color.IndexLogicOpEnabled) {
-	 if (ctx->Driver.LogicOp
-             && (*ctx->Driver.LogicOp)( ctx, ctx->Color.LogicOp )) {
-	    /* Device driver can do logic, don't have to do it in software */
-	    ctx->Color.SWLogicOpEnabled = GL_FALSE;
-	 }
-	 else {
-	    /* Device driver can't do logic op so we do it in software */
-	    ctx->Color.SWLogicOpEnabled = GL_TRUE;
-	 }
-      }
-      else {
-	 /* no logic op */
-	 if (ctx->Driver.LogicOp) {
-            (void) (*ctx->Driver.LogicOp)( ctx, GL_COPY );
-         }
-	 ctx->Color.SWLogicOpEnabled = GL_FALSE;
-      }
-   }
-}
-
-
-
-/*
- * Check if software implemented RGBA or Color Index masking is needed.
- */
-static void update_pixel_masking( GLcontext *ctx )
-{
-   if (ctx->Visual->RGBAflag) {
-      GLuint *colorMask = (GLuint *) ctx->Color.ColorMask;
-      if (*colorMask == 0xffffffff) {
-         /* disable masking */
-         if (ctx->Driver.ColorMask) {
-            (void) (*ctx->Driver.ColorMask)( ctx, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-         }
-         ctx->Color.SWmasking = GL_FALSE;
-      }
-      else {
-         /* Ask driver to do color masking, if it can't then
-          * do it in software
-          */
-         GLboolean red   = ctx->Color.ColorMask[RCOMP] ? GL_TRUE : GL_FALSE;
-         GLboolean green = ctx->Color.ColorMask[GCOMP] ? GL_TRUE : GL_FALSE;
-         GLboolean blue  = ctx->Color.ColorMask[BCOMP] ? GL_TRUE : GL_FALSE;
-         GLboolean alpha = ctx->Color.ColorMask[ACOMP] ? GL_TRUE : GL_FALSE;
-         if (ctx->Driver.ColorMask
-             && (*ctx->Driver.ColorMask)( ctx, red, green, blue, alpha )) {
-            ctx->Color.SWmasking = GL_FALSE;
-         }
-         else {
-            ctx->Color.SWmasking = GL_TRUE;
-         }
-      }
-   }
-   else {
-      if (ctx->Color.IndexMask==0xffffffff) {
-         /* disable masking */
-         if (ctx->Driver.IndexMask) {
-            (void) (*ctx->Driver.IndexMask)( ctx, 0xffffffff );
-         }
-         ctx->Color.SWmasking = GL_FALSE;
-      }
-      else {
-         /* Ask driver to do index masking, if it can't then
-          * do it in software
-          */
-         if (ctx->Driver.IndexMask
-             && (*ctx->Driver.IndexMask)( ctx, ctx->Color.IndexMask )) {
-            ctx->Color.SWmasking = GL_FALSE;
-         }
-         else {
-            ctx->Color.SWmasking = GL_TRUE;
-         }
-      }
-   }
-}
-
-
 static void update_fog_mode( GLcontext *ctx )
 {
    int old_mode = ctx->FogMode;
@@ -807,15 +699,22 @@ static void update_rasterflags( GLcontext *ctx )
 {
    ctx->RasterMask = 0;
 
-   if (ctx->Color.AlphaEnabled)		ctx->RasterMask |= ALPHATEST_BIT;
-   if (ctx->Color.BlendEnabled)		ctx->RasterMask |= BLEND_BIT;
-   if (ctx->Depth.Test)			ctx->RasterMask |= DEPTH_BIT;
-   if (ctx->FogMode==FOG_FRAGMENT)	ctx->RasterMask |= FOG_BIT;
-   if (ctx->Color.SWLogicOpEnabled)	ctx->RasterMask |= LOGIC_OP_BIT;
-   if (ctx->Scissor.Enabled)		ctx->RasterMask |= SCISSOR_BIT;
-   if (ctx->Stencil.Enabled)		ctx->RasterMask |= STENCIL_BIT;
-   if (ctx->Color.SWmasking)		ctx->RasterMask |= MASKING_BIT;
-   if (ctx->Texture.ReallyEnabled)	ctx->RasterMask |= TEXTURE_BIT;
+   if (ctx->Color.AlphaEnabled)           ctx->RasterMask |= ALPHATEST_BIT;
+   if (ctx->Color.BlendEnabled)           ctx->RasterMask |= BLEND_BIT;
+   if (ctx->Depth.Test)                   ctx->RasterMask |= DEPTH_BIT;
+   if (ctx->FogMode == FOG_FRAGMENT)      ctx->RasterMask |= FOG_BIT;
+   if (ctx->Scissor.Enabled)              ctx->RasterMask |= SCISSOR_BIT;
+   if (ctx->Stencil.Enabled)              ctx->RasterMask |= STENCIL_BIT;
+   if (ctx->Visual->RGBAflag) {
+      const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
+      if (colorMask != 0xffffffff)        ctx->RasterMask |= MASKING_BIT;
+      if (ctx->Color.ColorLogicOpEnabled) ctx->RasterMask |= LOGIC_OP_BIT;
+      if (ctx->Texture.ReallyEnabled)     ctx->RasterMask |= TEXTURE_BIT;
+   }
+   else {
+      if (ctx->Color.IndexMask != 0xffffffff) ctx->RasterMask |= MASKING_BIT;
+      if (ctx->Color.IndexLogicOpEnabled)     ctx->RasterMask |= LOGIC_OP_BIT;
+   }
 
    if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
        && ctx->Color.ColorMask[ACOMP]
@@ -984,8 +883,6 @@ void gl_update_state( GLcontext *ctx )
    if (ctx->NewState & (NEW_RASTER_OPS | NEW_LIGHTING | NEW_FOG | NEW_TEXTURE_ENABLE)) {
 
       if (ctx->NewState & (NEW_RASTER_OPS | NEW_TEXTURE_ENABLE)) {
-	 update_pixel_logic(ctx);
-	 update_pixel_masking(ctx);
 	 update_fog_mode(ctx);
 	 update_rasterflags(ctx);
 	 if (ctx->Driver.Dither) {

@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.17 2000/08/30 18:21:06 brianp Exp $ */
+/* $Id: blend.c,v 1.18 2000/09/07 15:45:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -875,7 +875,8 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    GLubyte dest[MAX_WIDTH][4];
 
    /* Check if device driver can do the work */
-   if (ctx->Color.BlendEquation==GL_LOGIC_OP && !ctx->Color.SWLogicOpEnabled) {
+   if (ctx->Color.BlendEquation==GL_LOGIC_OP &&
+       !ctx->Color.ColorLogicOpEnabled) {
       return;
    }
 
@@ -887,8 +888,6 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
    (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLubyte (*)[4])dest );
 }
-
-
 
 
 
@@ -907,7 +906,8 @@ _mesa_blend_pixels( GLcontext *ctx,
    GLubyte dest[PB_SIZE][4];
 
    /* Check if device driver can do the work */
-   if (ctx->Color.BlendEquation==GL_LOGIC_OP && !ctx->Color.SWLogicOpEnabled) {
+   if (ctx->Color.BlendEquation==GL_LOGIC_OP &&
+       !ctx->Color.ColorLogicOpEnabled) {
       return;
    }
 

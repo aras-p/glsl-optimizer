@@ -1398,9 +1398,9 @@ static void fxSetupDepthTest(GLcontext *ctx)
 /**************************** Color Mask SetUp **************************/
 /************************************************************************/
 
-GLboolean fxDDColorMask(GLcontext *ctx, 
-			GLboolean r, GLboolean g, 
-			GLboolean b, GLboolean a )
+void fxDDColorMask(GLcontext *ctx, 
+                   GLboolean r, GLboolean g, 
+                   GLboolean b, GLboolean a )
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   fxMesa->new_state |= FX_NEW_COLOR_MASK;

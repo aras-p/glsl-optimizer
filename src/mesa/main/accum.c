@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.23 2000/07/15 03:14:25 brianp Exp $ */
+/* $Id: accum.c,v 1.24 2000/09/07 15:45:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,6 +140,7 @@ _mesa_Accum( GLenum op, GLfloat value )
    GLuint xpos, ypos, width, height, width4;
    GLfloat acc_scale;
    GLubyte rgba[MAX_WIDTH][4];
+   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
    const GLint iChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    
@@ -350,11 +351,11 @@ _mesa_Accum( GLenum op, GLfloat value )
 
          if (ctx->IntegerAccumMode && ctx->IntegerAccumScaler > 0) {
             /* build lookup table to avoid many floating point multiplies */
-            const GLfloat mult = ctx->IntegerAccumScaler;
             static GLchan multTable[32768];
             static GLfloat prevMult = 0.0;
-            GLuint j;
+            const GLfloat mult = ctx->IntegerAccumScaler;
             const GLint max = MIN2((GLint) (256 / mult), 32767);
+            GLuint j;
             if (mult != prevMult) {
                for (j = 0; j < max; j++)
                   multTable[j] = (GLint) ((GLfloat) j * mult + 0.5F);
@@ -376,7 +377,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   rgba[i][BCOMP] = multTable[acc[i4+2]];
                   rgba[i][ACOMP] = multTable[acc[i4+3]];
                }
-               if (ctx->Color.SWmasking) {
+               if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
@@ -403,7 +404,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   rgba[i][BCOMP] = CLAMP( b, 0, iChanMax );
                   rgba[i][ACOMP] = CLAMP( a, 0, iChanMax );
                }
-               if (ctx->Color.SWmasking) {
+               if (colorMask != 0xffffffff) {
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 

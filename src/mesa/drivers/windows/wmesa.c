@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.4 2000/08/02 20:29:03 brianp Exp $ */
+/* $Id: wmesa.c,v 1.5 2000/09/07 15:45:28 brianp Exp $ */
 
 /*
 *   File name   :   wmesa.c
@@ -22,6 +22,14 @@
 
 /*
  * $Log: wmesa.c,v $
+ * Revision 1.5  2000/09/07 15:45:28  brianp
+ * Removed ctx->Driver.LogicOp().
+ * ctx->Driver.Index/ColorMask() now return void.
+ * Removed SWmasking and SWLogicOpEnabled variables.
+ * LogicOps and color/index masking are no longer special-case device
+ * driver functions.  The Xlib driver was the only driver that used
+ * them.  Things are more uniform now.
+ *
  * Revision 1.4  2000/08/02 20:29:03  brianp
  * updates from mesa3d@billbaxter.com
  *
@@ -560,27 +568,6 @@ static void set_color( GLcontext* ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte 
         Current->pixel = RGB( r, g, b );
     ENDPROFILE(set_color)
 }
-
-
-
-/* Set the index mode bitplane mask. */
-static GLboolean index_mask(GLcontext* ctx, GLuint mask)
-{
-    /* can't implement */
-    return GL_FALSE;
-}
-
-
-
-/* Set the RGBA drawing mask. */
-static GLboolean color_mask( GLcontext* ctx,
-                            GLboolean rmask, GLboolean gmask,
-                            GLboolean bmask, GLboolean amask)
-{
-    /* can't implement */
-    return GL_FALSE;
-}
-
 
 
 static void dither( GLcontext* ctx, GLboolean enable )
@@ -1177,8 +1164,6 @@ void setup_DD_pointers( GLcontext* ctx )
 
     ctx->Driver.Index = set_index;
     ctx->Driver.Color = set_color;
-    ctx->Driver.IndexMask = index_mask;
-    ctx->Driver.ColorMask = color_mask;
 
     ctx->Driver.Dither = dither;
 

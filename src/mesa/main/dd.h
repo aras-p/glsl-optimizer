@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.29 2000/09/07 15:38:49 brianp Exp $ */
+/* $Id: dd.h,v 1.30 2000/09/07 15:45:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -334,23 +334,6 @@ struct dd_function_table {
    void (*Flush)( GLcontext *ctx );
    /*
     * This is called whenever glFlush() is called.
-    */
-
-   GLboolean (*IndexMask)( GLcontext *ctx, GLuint mask );
-   /*
-    * Implements glIndexMask() if possible, else return GL_FALSE.
-    */
-
-   GLboolean (*ColorMask)( GLcontext *ctx,
-                           GLboolean rmask, GLboolean gmask,
-                           GLboolean bmask, GLboolean amask );
-   /*
-    * Implements glColorMask() if possible, else return GL_FALSE.
-    */
-
-   GLboolean (*LogicOp)( GLcontext *ctx, GLenum op );
-   /*
-    * Implements glLogicOp() if possible, else return GL_FALSE.
     */
 
    void (*Dither)( GLcontext *ctx, GLboolean enable );
@@ -933,6 +916,8 @@ struct dd_function_table {
 			      GLenum dfactorRGB, GLenum sfactorA,
 			      GLenum dfactorA );
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
+   void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+                     GLboolean bmask, GLboolean amask );
    void (*CullFace)(GLcontext *ctx, GLenum mode);
    void (*FrontFace)(GLcontext *ctx, GLenum mode);
    void (*DepthFunc)(GLcontext *ctx, GLenum func);
@@ -941,6 +926,7 @@ struct dd_function_table {
    void (*Enable)(GLcontext* ctx, GLenum cap, GLboolean state);
    void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
+   void (*IndexMask)(GLcontext *ctx, GLuint mask);
    void (*Lightfv)(GLcontext *ctx, GLenum light,
 		   GLenum pname, const GLfloat *params, GLint nparams );
    void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);

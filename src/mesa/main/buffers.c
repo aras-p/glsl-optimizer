@@ -142,6 +142,7 @@ clear_color_buffer(GLcontext *ctx)
    const GLint y = ctx->DrawBuffer->Ymin;
    const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
    const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
+   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
 
    if (ctx->Visual->RGBAflag) {
       /* RGBA mode */
@@ -152,7 +153,7 @@ clear_color_buffer(GLcontext *ctx)
       GLubyte span[MAX_WIDTH][4];
       GLint i;
 
-      ASSERT(!ctx->Color.SWmasking);
+      ASSERT(colorMask == 0xffffffff);
 
       for (i = 0; i < width; i++) {
          span[i][RCOMP] = r;
@@ -201,6 +202,7 @@ clear_color_buffer(GLcontext *ctx)
 static void
 clear_color_buffers(GLcontext *ctx)
 {
+   const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
    GLuint bufferBit;
 
    /* loop over four possible dest color buffers */
@@ -219,7 +221,7 @@ clear_color_buffers(GLcontext *ctx)
             (void) (*ctx->Driver.SetDrawBuffer)( ctx, GL_BACK_RIGHT);
          }
          
-         if (ctx->Color.SWmasking) {
+         if (colorMask != 0xffffffff) {
             clear_color_buffer_with_masking(ctx);
          }
          else {
