@@ -4452,7 +4452,7 @@ execute_list( GLcontext *ctx, GLuint list )
    Node *n;
    GLboolean done;
 
-   if (!islist(ctx,list))
+   if (list == 0 || !islist(ctx,list))
       return;
 
    if (ctx->Driver.BeginCallList)
@@ -5353,6 +5353,11 @@ _mesa_CallList( GLuint list )
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCallList %d\n", list); 
+
+   if (list == 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glCallList(list==0)");
+      return;
+   }
 
 /*     mesa_print_display_list( list ); */
 
