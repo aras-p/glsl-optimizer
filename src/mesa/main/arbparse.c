@@ -2735,7 +2735,7 @@ var_cache_find (struct var_cache *va, byte * name)
    struct var_cache *first = va;
 
    while (va) {
-      if (!strcmp (name, va->name)) {
+      if (!strcmp ( (const char*) name, (const char*) va->name)) {
          if (va->type == vt_alias)
             return var_cache_find (first, va->name);
          return va;

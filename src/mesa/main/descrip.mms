@@ -20,6 +20,7 @@ SOURCES =accum.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
+	arbparse.c \
 	arbfragparse.c \
 	arbprogram.c \
 	arbvertparse.c \
@@ -77,6 +78,7 @@ OBJECTS=accum.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
+arbparse.obj,\
 arbfragparse.obj,\
 arbprogram.obj,\
 arbvertparse.obj,\
@@ -148,6 +150,7 @@ accum.obj : accum.c
 api_loopback.obj : api_loopback.c
 api_noop.obj : api_noop.c
 api_validate.obj : api_validate.c
+arbparse.obj : arbparse.c
 arbfragparse.obj : arbfragparse.c
 arbprogram.obj : arbprogram.c
 arbvertparse.obj : arbvertparse.c
