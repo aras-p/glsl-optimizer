@@ -43,6 +43,7 @@ SKIP_FUNCTION_MACROS   = YES
 TAGFILES               = tnl_dd.tag=../tnl \
                          main.tag=../core \
                          math.tag=../math \
+                         shader.tag=../shader \
                          swrast.tag=../swrast \
                          swrast_setup.tag=swrast_setup \
                          array_cache.tag=array_cache

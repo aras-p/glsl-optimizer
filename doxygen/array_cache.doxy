@@ -41,9 +41,10 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = main.tag=../core \
-			 tnl.tag=../tnl \
-			 swrast_setup.tag=../swrast_setup \
-			 swrast.tag=../swrast \
 			 math.tag=../math \
+                         shader.tag=../shader \
+			 swrast.tag=../swrast \
+			 swrast_setup.tag=../swrast_setup \
+			 tnl.tag=../tnl \
 			 tnl_dd.tag=../tnl_dd
 GENERATE_TAGFILE       = array_cache.tag

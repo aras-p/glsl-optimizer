@@ -10,6 +10,8 @@ FULL = \
 	main.doxy \
 	math.doxy \
 	array_cache.doxy \
+	glapi.doxy \
+	shader.doxy \
 	swrast.doxy \
 	swrast_setup.doxy \
 	tnl.doxy \

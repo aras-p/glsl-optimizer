@@ -5,15 +5,15 @@
 #---------------------------------------------------------------------------
 # General configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "Mesa Main"
+PROJECT_NAME           = "Mesa GL API dispatcher"
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/mesa/main/
+INPUT                  = ../src/mesa/glapi/
 FILE_PATTERNS          = *.c *.h
 RECURSIVE              = NO
-EXCLUDE                = ../src/glapitemp.h ../src/glapioffsets.h
-EXCLUDE_PATTERNS       = subset_*
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = 
 EXAMPLE_RECURSIVE      = NO
@@ -23,28 +23,27 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to the HTML output
 #---------------------------------------------------------------------------
-HTML_OUTPUT            = main
+HTML_OUTPUT            = glapi
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 ENABLE_PREPROCESSING   = YES
-MACRO_EXPANSION        = YES
-EXPAND_ONLY_PREDEF     = YES
+MACRO_EXPANSION        = NO
+EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = ../include/
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = _HAVE_FULL_GL=1
-EXPAND_AS_DEFINED      = _glthread_DECLARE_STATIC_MUTEX
+PREDEFINED             = 
+EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
-TAGFILES		= tnl_dd.tag=../tnl_dd \
-			 array_cache.tag=../array_cache \
-                         glapi.tag=../glapi \
+TAGFILES               = main.tag=../core \
                          math.tag=../math \
-                         shader.tag=../shader \
+                         tnl_dd.tag=../tnl_dd \
                          swrast.tag=../swrast \
                          swrast_setup.tag=../swrast_setup \
-                         tnl.tag=../tnl
-GENERATE_TAGFILE       = main.tag
+                         tnl.tag=../tnl \
+                         array_cache.tag=array_cache
+GENERATE_TAGFILE       = swrast.tag
