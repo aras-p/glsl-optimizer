@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.3 2000/08/22 18:54:25 brianp Exp $ */
+/* $Id: convolve.c,v 1.4 2000/08/23 14:31:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,9 +39,793 @@
 #include "glheader.h"
 #include "convolve.h"
 #include "context.h"
+#include "image.h"
+#include "span.h"
 #include "types.h"
 #endif
 
+
+/*
+ * Given an internalFormat token passed to glConvolutionFilter
+ * or glSeparableFilter, return the corresponding base format.
+ * Return -1 if invalid token.
+ */
+static GLint
+base_filter_format( GLenum format )
+{
+   switch (format) {
+      case GL_ALPHA:
+      case GL_ALPHA4:
+      case GL_ALPHA8:
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+         return GL_ALPHA;
+      case GL_LUMINANCE:
+      case GL_LUMINANCE4:
+      case GL_LUMINANCE8:
+      case GL_LUMINANCE12:
+      case GL_LUMINANCE16:
+         return GL_LUMINANCE;
+      case GL_LUMINANCE_ALPHA:
+      case GL_LUMINANCE4_ALPHA4:
+      case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+      case GL_LUMINANCE12_ALPHA4:
+      case GL_LUMINANCE12_ALPHA12:
+      case GL_LUMINANCE16_ALPHA16:
+         return GL_LUMINANCE_ALPHA;
+      case GL_INTENSITY:
+      case GL_INTENSITY4:
+      case GL_INTENSITY8:
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+         return GL_INTENSITY;
+      case GL_RGB:
+      case GL_R3_G3_B2:
+      case GL_RGB4:
+      case GL_RGB5:
+      case GL_RGB8:
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+         return GL_RGB;
+      case 4:
+      case GL_RGBA:
+      case GL_RGBA2:
+      case GL_RGBA4:
+      case GL_RGB5_A1:
+      case GL_RGBA8:
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return GL_RGBA;
+      default:
+         return -1;  /* error */
+   }
+}
+
+
+void
+_mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
+{
+   GLenum baseFormat;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionFilter1D");
+
+   if (target != GL_CONVOLUTION_1D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(target)");
+      return;
+   }
+
+   baseFormat = base_filter_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(internalFormat)");
+      return;
+   }
+
+   if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
+      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter1D(width)");
+      return;
+   }
+
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_COLOR_INDEX ||
+       format == GL_STENCIL_INDEX ||
+       format == GL_DEPTH_COMPONENT ||
+       format == GL_INTENSITY ||
+       type == GL_BITMAP) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D(format or type)");
+      return;
+   }
+
+   ctx->Convolution1D.Format = format;
+   ctx->Convolution1D.InternalFormat = internalFormat;
+   ctx->Convolution1D.Width = width;
+   ctx->Convolution1D.Height = 1;
+
+   /* unpack filter image */
+   _mesa_unpack_float_color_span(ctx, width, GL_RGBA,
+                                 ctx->Convolution1D.Filter,
+                                 format, type, image, &ctx->Unpack,
+                                 0, GL_FALSE);
+
+   /* apply scale and bias */
+   {
+      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[0];
+      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[0];
+      GLint i;
+      for (i = 0; i < width; i++) {
+         GLfloat r = ctx->Convolution1D.Filter[i * 4 + 0];
+         GLfloat g = ctx->Convolution1D.Filter[i * 4 + 1];
+         GLfloat b = ctx->Convolution1D.Filter[i * 4 + 2];
+         GLfloat a = ctx->Convolution1D.Filter[i * 4 + 3];
+         r = r * scale[0] + bias[0];
+         g = g * scale[1] + bias[1];
+         b = b * scale[2] + bias[2];
+         a = a * scale[3] + bias[3];
+         ctx->Convolution1D.Filter[i * 4 + 0] = r;
+         ctx->Convolution1D.Filter[i * 4 + 1] = g;
+         ctx->Convolution1D.Filter[i * 4 + 2] = b;
+         ctx->Convolution1D.Filter[i * 4 + 3] = a;
+      }
+   }
+}
+
+
+void
+_mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
+{
+   GLenum baseFormat;
+   GLint i, components;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionFilter2D");
+
+   if (target != GL_CONVOLUTION_2D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(target)");
+      return;
+   }
+
+   baseFormat = base_filter_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(internalFormat)");
+      return;
+   }
+
+   if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
+      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(width)");
+      return;
+   }
+   if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
+      gl_error(ctx, GL_INVALID_VALUE, "glConvolutionFilter2D(height)");
+      return;
+   }
+
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_COLOR_INDEX ||
+       format == GL_STENCIL_INDEX ||
+       format == GL_DEPTH_COMPONENT ||
+       format == GL_INTENSITY ||
+       type == GL_BITMAP) {
+      gl_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D(format or type)");
+      return;
+   }
+
+   components = _mesa_components_in_format(format);
+   assert(components > 0);  /* this should have been caught earlier */
+
+   ctx->Convolution2D.Format = format;
+   ctx->Convolution2D.InternalFormat = internalFormat;
+   ctx->Convolution2D.Width = width;
+   ctx->Convolution2D.Height = height;
+
+   /* Unpack filter image.  We always store filters in RGBA format. */
+   for (i = 0; i < height; i++) {
+      const GLvoid *src = _mesa_image_address(&ctx->Unpack, image, width,
+                                              height, format, type, 0, i, 0);
+      GLfloat *dst = ctx->Convolution2D.Filter + i * width * 4;
+      _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dst,
+                                    format, type, src, &ctx->Unpack,
+                                    0, GL_FALSE);
+   }
+
+   /* apply scale and bias */
+   {
+      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[1];
+      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[1];
+      for (i = 0; i < width * height * 4; i++) {
+         GLfloat r = ctx->Convolution2D.Filter[i * 4 + 0];
+         GLfloat g = ctx->Convolution2D.Filter[i * 4 + 1];
+         GLfloat b = ctx->Convolution2D.Filter[i * 4 + 2];
+         GLfloat a = ctx->Convolution2D.Filter[i * 4 + 3];
+         r = r * scale[0] + bias[0];
+         g = g * scale[1] + bias[1];
+         b = b * scale[2] + bias[2];
+         a = a * scale[3] + bias[3];
+         ctx->Convolution2D.Filter[i * 4 + 0] = r;
+         ctx->Convolution2D.Filter[i * 4 + 1] = g;
+         ctx->Convolution2D.Filter[i * 4 + 2] = b;
+         ctx->Convolution2D.Filter[i * 4 + 3] = a;
+      }
+   }
+}
+
+
+void
+_mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionParameterf");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_MODE:
+         if (param == (GLfloat) GL_REDUCE ||
+             param == (GLfloat) GL_CONSTANT_BORDER ||
+             param == (GLfloat) GL_REPLICATE_BORDER) {
+            ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) param;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(params)");
+            return;
+         }
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_convolution_attrib *conv;
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionParameterfv");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         conv = &ctx->Convolution1D;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         conv = &ctx->Convolution2D;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         conv = &ctx->Separable2D;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_COLOR:
+         COPY_4V(ctx->Pixel.ConvolutionBorderColor[c], params);
+         break;
+      case GL_CONVOLUTION_BORDER_MODE:
+         if (params[0] == (GLfloat) GL_REDUCE ||
+             params[0] == (GLfloat) GL_CONSTANT_BORDER ||
+             params[0] == (GLfloat) GL_REPLICATE_BORDER) {
+            ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) params[0];
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(params)");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_FILTER_SCALE:
+         COPY_4V(ctx->Pixel.ConvolutionFilterScale[c], params);
+         break;
+      case GL_CONVOLUTION_FILTER_BIAS:
+         COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params);
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionParameteri");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_MODE:
+         if (param == (GLint) GL_REDUCE ||
+             param == (GLint) GL_CONSTANT_BORDER ||
+             param == (GLint) GL_REPLICATE_BORDER) {
+            ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) param;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(params)");
+            return;
+         }
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_convolution_attrib *conv;
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glConvolutionParameteriv");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         conv = &ctx->Convolution1D;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         conv = &ctx->Convolution2D;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         conv = &ctx->Separable2D;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_COLOR:
+	 ctx->Pixel.ConvolutionBorderColor[c][0] = INT_TO_FLOAT(params[0]);
+	 ctx->Pixel.ConvolutionBorderColor[c][1] = INT_TO_FLOAT(params[1]);
+	 ctx->Pixel.ConvolutionBorderColor[c][2] = INT_TO_FLOAT(params[2]);
+	 ctx->Pixel.ConvolutionBorderColor[c][3] = INT_TO_FLOAT(params[3]);
+         break;
+      case GL_CONVOLUTION_BORDER_MODE:
+         if (params[0] == (GLint) GL_REDUCE ||
+             params[0] == (GLint) GL_CONSTANT_BORDER ||
+             params[0] == (GLint) GL_REPLICATE_BORDER) {
+            ctx->Pixel.ConvolutionBorderMode[c] = (GLenum) params[0];
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(params)");
+            return;
+         }
+         break;
+      case GL_CONVOLUTION_FILTER_SCALE:
+         COPY_4V(ctx->Pixel.ConvolutionFilterScale[c], params);
+         break;
+      case GL_CONVOLUTION_FILTER_BIAS:
+         COPY_4V(ctx->Pixel.ConvolutionFilterBias[c], params);
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
+{
+   GLenum baseFormat;
+   GLfloat rgba[MAX_CONVOLUTION_WIDTH][4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyConvolutionFilter1D");
+
+   if (target != GL_CONVOLUTION_1D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(target)");
+      return;
+   }
+
+   baseFormat = base_filter_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D(internalFormat)");
+      return;
+   }
+
+   if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
+      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter1D(width)");
+      return;
+   }
+
+   /* read pixels from framebuffer */
+   gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLubyte (*)[4]) rgba);
+
+   /* store as convolution filter */
+   _mesa_ConvolutionFilter1D(target, internalFormat, width,
+                             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+}
+
+
+void
+_mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   GLenum baseFormat;
+   GLint i;
+   struct gl_pixelstore_attrib packSave;
+   GLfloat rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyConvolutionFilter2D");
+
+   if (target != GL_CONVOLUTION_2D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(target)");
+      return;
+   }
+
+   baseFormat = base_filter_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+      gl_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D(internalFormat)");
+      return;
+   }
+
+   if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
+      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(width)");
+      return;
+   }
+   if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
+      gl_error(ctx, GL_INVALID_VALUE, "glCopyConvolutionFilter2D(height)");
+      return;
+   }
+
+   /* read pixels from framebuffer */
+   for (i = 0; i < height; i++) {
+      gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
+                        (GLubyte (*)[4]) rgba[i]);
+   }
+
+   /*
+    * store as convolution filter
+    */
+   packSave = ctx->Unpack;  /* save pixel packing params */
+
+   ctx->Unpack.Alignment = 1;
+   ctx->Unpack.RowLength = MAX_CONVOLUTION_WIDTH;
+   ctx->Unpack.SkipPixels = 0;
+   ctx->Unpack.SkipRows = 0;
+   ctx->Unpack.ImageHeight = 0;
+   ctx->Unpack.SkipImages = 0;
+   ctx->Unpack.SwapBytes = GL_FALSE;
+   ctx->Unpack.LsbFirst = GL_FALSE;
+
+   _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
+                             GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+
+   ctx->Unpack = packSave;  /* restore pixel packing params */
+}
+
+
+void
+_mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetConvolutionFilter");
+
+   if (target != GL_CONVOLUTION_1D && target != GL_CONVOLUTION_2D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(target)");
+      return;
+   }
+
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_COLOR_INDEX ||
+       format == GL_STENCIL_INDEX ||
+       format == GL_DEPTH_COMPONENT ||
+       format == GL_INTENSITY ||
+       type == GL_BITMAP) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
+      return;
+   }
+
+   (void) image;
+   /* XXX store image */
+}
+
+
+void
+_mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const struct gl_convolution_attrib *conv;
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetConvolutionParameterfv");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         conv = &ctx->Convolution1D;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         conv = &ctx->Convolution2D;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         conv = &ctx->Separable2D;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_COLOR:
+         COPY_4V(params, ctx->Pixel.ConvolutionBorderColor[c]);
+         break;
+      case GL_CONVOLUTION_BORDER_MODE:
+         *params = (GLfloat) ctx->Pixel.ConvolutionBorderMode[c];
+         break;
+      case GL_CONVOLUTION_FILTER_SCALE:
+         COPY_4V(params, ctx->Pixel.ConvolutionFilterScale[c]);
+         break;
+      case GL_CONVOLUTION_FILTER_BIAS:
+         COPY_4V(params, ctx->Pixel.ConvolutionFilterBias[c]);
+         break;
+      case GL_CONVOLUTION_FORMAT:
+         *params = (GLfloat) conv->Format;
+         break;
+      case GL_CONVOLUTION_WIDTH:
+         *params = (GLfloat) conv->Width;
+         break;
+      case GL_CONVOLUTION_HEIGHT:
+         *params = (GLfloat) conv->Height;
+         break;
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = (GLfloat) ctx->Const.MaxConvolutionWidth;
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = (GLfloat) ctx->Const.MaxConvolutionHeight;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const struct gl_convolution_attrib *conv;
+   GLuint c;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetConvolutionParameteriv");
+
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         c = 0;
+         conv = &ctx->Convolution1D;
+         break;
+      case GL_CONVOLUTION_2D:
+         c = 1;
+         conv = &ctx->Convolution2D;
+         break;
+      case GL_SEPARABLE_2D:
+         c = 2;
+         conv = &ctx->Separable2D;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(target)");
+         return;
+   }
+
+   switch (pname) {
+      case GL_CONVOLUTION_BORDER_COLOR:
+         params[0] = FLOAT_TO_INT(ctx->Pixel.ConvolutionBorderColor[c][0]);
+         params[1] = FLOAT_TO_INT(ctx->Pixel.ConvolutionBorderColor[c][1]);
+         params[2] = FLOAT_TO_INT(ctx->Pixel.ConvolutionBorderColor[c][2]);
+         params[3] = FLOAT_TO_INT(ctx->Pixel.ConvolutionBorderColor[c][3]);
+         break;
+      case GL_CONVOLUTION_BORDER_MODE:
+         *params = (GLint) ctx->Pixel.ConvolutionBorderMode[c];
+         break;
+      case GL_CONVOLUTION_FILTER_SCALE:
+         params[0] = (GLint) ctx->Pixel.ConvolutionFilterScale[c][0];
+         params[1] = (GLint) ctx->Pixel.ConvolutionFilterScale[c][1];
+         params[2] = (GLint) ctx->Pixel.ConvolutionFilterScale[c][2];
+         params[3] = (GLint) ctx->Pixel.ConvolutionFilterScale[c][3];
+         break;
+      case GL_CONVOLUTION_FILTER_BIAS:
+         params[0] = (GLint) ctx->Pixel.ConvolutionFilterBias[c][0];
+         params[1] = (GLint) ctx->Pixel.ConvolutionFilterBias[c][1];
+         params[2] = (GLint) ctx->Pixel.ConvolutionFilterBias[c][2];
+         params[3] = (GLint) ctx->Pixel.ConvolutionFilterBias[c][3];
+         break;
+      case GL_CONVOLUTION_FORMAT:
+         *params = (GLint) conv->Format;
+         break;
+      case GL_CONVOLUTION_WIDTH:
+         *params = (GLint) conv->Width;
+         break;
+      case GL_CONVOLUTION_HEIGHT:
+         *params = (GLint) conv->Height;
+         break;
+      case GL_MAX_CONVOLUTION_WIDTH:
+         *params = (GLint) ctx->Const.MaxConvolutionWidth;
+         break;
+      case GL_MAX_CONVOLUTION_HEIGHT:
+         *params = (GLint) ctx->Const.MaxConvolutionHeight;
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv(pname)");
+         return;
+   }
+}
+
+
+void
+_mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetSeparableFilter");
+
+   if (target != GL_SEPARABLE_2D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetSeparableFilter(target)");
+      return;
+   }
+
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_COLOR_INDEX ||
+       format == GL_STENCIL_INDEX ||
+       format == GL_DEPTH_COMPONENT ||
+       format == GL_INTENSITY ||
+       type == GL_BITMAP) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(format or type)");
+      return;
+   }
+
+   /* XXX to do */
+   (void) row;
+   (void) column;
+   (void) span;
+}
+
+
+void
+_mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
+{
+   const GLint colStart = MAX_CONVOLUTION_WIDTH * 4;
+   GLenum baseFormat;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glSeparableFilter2D");
+
+   if (target != GL_SEPARABLE_2D) {
+      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(target)");
+      return;
+   }
+
+   baseFormat = base_filter_format(internalFormat);
+   if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
+      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(internalFormat)");
+      return;
+   }
+
+   if (width < 0 || width > MAX_CONVOLUTION_WIDTH) {
+      gl_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(width)");
+      return;
+   }
+   if (height < 0 || height > MAX_CONVOLUTION_HEIGHT) {
+      gl_error(ctx, GL_INVALID_VALUE, "glSeparableFilter2D(height)");
+      return;
+   }
+
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_COLOR_INDEX ||
+       format == GL_STENCIL_INDEX ||
+       format == GL_DEPTH_COMPONENT ||
+       format == GL_INTENSITY ||
+       type == GL_BITMAP) {
+      gl_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D(format or type)");
+      return;
+   }
+
+   ctx->Separable2D.Format = format;
+   ctx->Separable2D.InternalFormat = internalFormat;
+   ctx->Separable2D.Width = width;
+   ctx->Separable2D.Height = height;
+
+   /* unpack row filter */
+   _mesa_unpack_float_color_span(ctx, width, GL_RGBA,
+                                 ctx->Separable2D.Filter,
+                                 format, type, row, &ctx->Unpack,
+                                 0, GL_FALSE);
+
+   /* apply scale and bias */
+   {
+      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[2];
+      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[2];
+      GLint i;
+      for (i = 0; i < width; i++) {
+         GLfloat r = ctx->Separable2D.Filter[i * 4 + 0];
+         GLfloat g = ctx->Separable2D.Filter[i * 4 + 1];
+         GLfloat b = ctx->Separable2D.Filter[i * 4 + 2];
+         GLfloat a = ctx->Separable2D.Filter[i * 4 + 3];
+         r = r * scale[0] + bias[0];
+         g = g * scale[1] + bias[1];
+         b = b * scale[2] + bias[2];
+         a = a * scale[3] + bias[3];
+         ctx->Separable2D.Filter[i * 4 + 0] = r;
+         ctx->Separable2D.Filter[i * 4 + 1] = g;
+         ctx->Separable2D.Filter[i * 4 + 2] = b;
+         ctx->Separable2D.Filter[i * 4 + 3] = a;
+      }
+   }
+
+   /* unpack column filter */
+   _mesa_unpack_float_color_span(ctx, width, GL_RGBA,
+                                 &ctx->Separable2D.Filter[colStart],
+                                 format, type, column, &ctx->Unpack,
+                                 0, GL_FALSE);
+
+   /* apply scale and bias */
+   {
+      const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[2];
+      const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[2];
+      GLint i;
+      for (i = 0; i < width; i++) {
+         GLfloat r = ctx->Separable2D.Filter[i * 4 + 0 + colStart];
+         GLfloat g = ctx->Separable2D.Filter[i * 4 + 1 + colStart];
+         GLfloat b = ctx->Separable2D.Filter[i * 4 + 2 + colStart];
+         GLfloat a = ctx->Separable2D.Filter[i * 4 + 3 + colStart];
+         r = r * scale[0] + bias[0];
+         g = g * scale[1] + bias[1];
+         b = b * scale[2] + bias[2];
+         a = a * scale[3] + bias[3];
+         ctx->Separable2D.Filter[i * 4 + 0 + colStart] = r;
+         ctx->Separable2D.Filter[i * 4 + 1 + colStart] = g;
+         ctx->Separable2D.Filter[i * 4 + 2 + colStart] = b;
+         ctx->Separable2D.Filter[i * 4 + 3 + colStart] = a;
+      }
+   }
+}
+
+
+/**********************************************************************/
+/***                   image convolution functions                  ***/
+/**********************************************************************/
 
 static void
 convolve_1d_reduce(GLint srcWidth, const GLfloat src[][4],

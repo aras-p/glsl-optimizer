@@ -1,4 +1,4 @@
-/* $Id: convolve.h,v 1.1 2000/08/21 14:24:31 brianp Exp $ */
+/* $Id: convolve.h,v 1.2 2000/08/23 14:31:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,58 @@
 
 
 #include "types.h"
+
+
+extern void
+_mesa_ConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width,
+                          GLenum format, GLenum type, const GLvoid *image);
+
+extern void
+_mesa_ConvolutionFilter2D(GLenum target, GLenum internalformat, GLsizei width,
+                          GLsizei height, GLenum format, GLenum type,
+                          const GLvoid *image);
+
+extern void
+_mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat params);
+
+extern void
+_mesa_ConvolutionParameterfv(GLenum target, GLenum pname,
+                             const GLfloat *params);
+
+extern void
+_mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint params);
+
+extern void
+_mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params);
+
+extern void
+_mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalformat,
+                              GLint x, GLint y, GLsizei width);
+
+extern void
+_mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalformat,
+                              GLint x, GLint y, GLsizei width, GLsizei height);
+
+extern void
+_mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
+                           GLvoid *image);
+
+extern void
+_mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params);
+
+extern void
+_mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params);
+
+extern void
+_mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
+                         GLvoid *row, GLvoid *column, GLvoid *span);
+
+extern void
+_mesa_SeparableFilter2D(GLenum target, GLenum internalformat,
+                        GLsizei width, GLsizei height,
+                        GLenum format, GLenum type,
+                        const GLvoid *row, const GLvoid *column);
+
 
 
 extern void
