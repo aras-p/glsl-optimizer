@@ -168,6 +168,9 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
 
          if (ctx->Point._Attenuated)
             funcindex |= EYE;
+
+	 if (ctx->Fog.Enabled)
+	    funcindex |= FOG;
       }
       else {
          funcindex = INDEX;
