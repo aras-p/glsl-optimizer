@@ -58,6 +58,9 @@
 #include "get.h"
 #include "feedback.h"
 #include "fog.h"
+#if FEATURE_EXT_framebuffer_object
+#include "fbobject.h"
+#endif
 #include "hint.h"
 #include "histogram.h"
 #include "imports.h"
@@ -770,6 +773,26 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->AlphaFragmentOp2ATI = _mesa_AlphaFragmentOp2ATI;
    exec->AlphaFragmentOp3ATI = _mesa_AlphaFragmentOp3ATI;
    exec->SetFragmentShaderConstantATI = _mesa_SetFragmentShaderConstantATI;
+#endif
+
+#if FEATURE_EXT_framebuffer_object
+   exec->IsRenderbufferEXT = _mesa_IsRenderbufferEXT;
+   exec->BindRenderbufferEXT = _mesa_BindRenderbufferEXT;
+   exec->DeleteRenderbuffersEXT = _mesa_DeleteRenderbuffersEXT;
+   exec->GenRenderbuffersEXT = _mesa_GenRenderbuffersEXT;
+   exec->RenderbufferStorageEXT = _mesa_RenderbufferStorageEXT;
+   exec->GetRenderbufferParameterivEXT = _mesa_GetRenderbufferParameterivEXT;
+   exec->IsFramebufferEXT = _mesa_IsFramebufferEXT;
+   exec->BindFramebufferEXT = _mesa_BindFramebufferEXT;
+   exec->DeleteFramebuffersEXT = _mesa_DeleteFramebuffersEXT;
+   exec->GenFramebuffersEXT = _mesa_GenFramebuffersEXT;
+   exec->CheckFramebufferStatusEXT = _mesa_CheckFramebufferStatusEXT;
+   exec->FramebufferTexture1DEXT = _mesa_FramebufferTexture1DEXT;
+   exec->FramebufferTexture2DEXT = _mesa_FramebufferTexture2DEXT;
+   exec->FramebufferTexture3DEXT = _mesa_FramebufferTexture3DEXT;
+   exec->FramebufferRenderbufferEXT = _mesa_FramebufferRenderbufferEXT;
+   exec->GetFramebufferAttachmentParameterivEXT = _mesa_GetFramebufferAttachmentParameterivEXT;
+   exec->GenerateMipmapEXT = _mesa_GenerateMipmapEXT;
 #endif
 }
 
