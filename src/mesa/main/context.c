@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.74 2000/06/27 23:38:45 brianp Exp $ */
+/* $Id: context.c,v 1.75 2000/06/28 04:20:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1005,6 +1005,11 @@ init_attrib_groups( GLcontext *ctx )
       ctx->ShineTable[i] = ctx->ShineTabList->prev;
       ctx->ShineTable[i]->refcount++;
    }
+
+   gl_compute_shine_table( ctx, 0, ctx->Light.Material[0].Shininess );
+   gl_compute_shine_table( ctx, 2, ctx->Light.Material[0].Shininess * .5 );
+   gl_compute_shine_table( ctx, 1, ctx->Light.Material[1].Shininess );
+   gl_compute_shine_table( ctx, 3, ctx->Light.Material[1].Shininess * .5 );
 
 
    /* Line group */
