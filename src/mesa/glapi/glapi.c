@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.51 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: glapi.c,v 1.52 2001/03/28 17:19:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,31 +48,128 @@
 
 #include "glheader.h"
 #include "glapi.h"
-#include "glapinoop.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
 #include "glthread.h"
 
-/* This is used when thread safety is disabled */
+
+
+/***** BEGIN NO-OP DISPATCH *****/
+
+static GLboolean WarnFlag = GL_FALSE;
+
+void
+_glapi_noop_enable_warnings(GLboolean enable)
+{
+   WarnFlag = enable;
+}
+
+static GLboolean
+warn(void)
+{
+   if (WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
+
+
+#define KEYWORD1 static
+#define KEYWORD2
+#define NAME(func)  NoOp##func
+
+#define F stderr
+
+#define DISPATCH(func, args, msg)			\
+   if (warn()) {					\
+      fprintf(stderr, "GL User Error: calling ");	\
+      fprintf msg;					\
+      fprintf(stderr, " without a current context\n");	\
+   }
+
+#define RETURN_DISPATCH(func, args, msg)		\
+   if (warn()) {					\
+      fprintf(stderr, "GL User Error: calling ");	\
+      fprintf msg;					\
+      fprintf(stderr, " without a current context\n");	\
+   }							\
+   return 0
+
+#define DISPATCH_TABLE_NAME __glapi_noop_table
+#define UNUSED_TABLE_NAME __usused_noop_functions
+
+#define TABLE_ENTRY(name) (void *) NoOp##name
+
+static int NoOpUnused(void)
+{
+   if (warn()) {
+      fprintf(stderr, "GL User Error: calling extension function without a current context\n");
+   }
+   return 0;
+}
+
+#include "glapitemp.h"
+
+/***** END NO-OP DISPATCH *****/
+
+
+
+/***** BEGIN THREAD-SAFE DISPATCH *****/
+/* if we support thread-safety, build a special dispatch table for use
+ * in thread-safety mode (ThreadSafe == GL_TRUE).  Each entry in the
+ * dispatch table will call _glthread_GetTSD() to get the actual dispatch
+ * table bound to the current thread, then jump through that table.
+ */
+
+#if defined(THREADS)
+
+static GLboolean ThreadSafe = GL_FALSE;  /* In thread-safe mode? */
+static _glthread_TSD DispatchTSD;        /* Per-thread dispatch pointer */
+static _glthread_TSD RealDispatchTSD;    /* only when using override */
+static _glthread_TSD ContextTSD;         /* Per-thread context pointer */
+
+
+#define KEYWORD1 static
+#define KEYWORD2 GLAPIENTRY
+#define NAME(func)  _ts_##func
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   struct _glapi_table *dispatch;					\
+   dispatch = (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);	\
+   if (!dispatch)							\
+      dispatch = (struct _glapi_table *) __glapi_noop_table;		\
+   (dispatch->FUNC) ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
+   struct _glapi_table *dispatch;					\
+   dispatch = (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);	\
+   if (!dispatch)							\
+      dispatch = (struct _glapi_table *) __glapi_noop_table;		\
+   return (dispatch->FUNC) ARGS
+
+#define DISPATCH_TABLE_NAME __glapi_threadsafe_table
+#define UNUSED_TABLE_NAME __usused_threadsafe_functions
+
+#define TABLE_ENTRY(name) (void *) _ts_##name
+
+static int _ts_Unused(void)
+{
+   return 0;
+}
+
+#include "glapitemp.h"
+
+#endif
+
+/***** END THREAD-SAFE DISPATCH *****/
+
+
+
 struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
 struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_table;
 
 /* Used when thread safety disabled */
 void *_glapi_Context = NULL;
-
-
-#if defined(THREADS)
-
-/* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_FALSE;
-
-static _glthread_TSD DispatchTSD;
-static _glthread_TSD RealDispatchTSD; /* only when using override */
-
-static _glthread_TSD ContextTSD;
-
-#endif
-
 
 
 static GLuint MaxDispatchOffset = sizeof(struct _glapi_table) / sizeof(void *) - 1;
@@ -81,10 +178,11 @@ static GLboolean GetSizeCalled = GL_FALSE;
 static GLboolean DispatchOverride = GL_FALSE;
 
 
-
-/* strdup is actually not a standard ANSI C or POSIX routine
-   Irix will not define it if ANSI mode is in effect. */
-static char *str_dup(const char *str)
+/* strdup() is actually not a standard ANSI C or POSIX routine.
+ * Irix will not define it if ANSI mode is in effect.
+ */
+static char *
+str_dup(const char *str)
 {
    char *copy;
    copy = (char*) malloc(strlen(str) + 1);
@@ -113,6 +211,7 @@ _glapi_check_multithread(void)
          firstCall = GL_FALSE;
       }
       else if (knownID != _glthread_GetID()) {
+         printf("Going thread-safe\n");
          ThreadSafe = GL_TRUE;
       }
    }
@@ -190,7 +289,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
    if (DispatchOverride) {
       _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
       if (ThreadSafe)
-         _glapi_RealDispatch = NULL;
+         _glapi_RealDispatch = (struct _glapi_table*) __glapi_threadsafe_table;
       else
          _glapi_RealDispatch = dispatch;
    }
@@ -198,7 +297,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
       /* normal operation */
       _glthread_SetTSD(&DispatchTSD, (void *) dispatch);
       if (ThreadSafe)
-         _glapi_Dispatch = NULL;
+         _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
       else
          _glapi_Dispatch = dispatch;
    }
@@ -280,7 +379,7 @@ _glapi_begin_dispatch_override(struct _glapi_table *override)
 #if defined(THREADS)
    _glthread_SetTSD(&DispatchTSD, (void *) override);
    if (ThreadSafe)
-      _glapi_Dispatch = NULL;
+      _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
    else
       _glapi_Dispatch = override;
 #else

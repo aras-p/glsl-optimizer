@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.130 2001/03/24 06:01:27 gareth Exp $ */
+/* $Id: context.c,v 1.131 2001/03/28 17:20:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,6 @@
 #include "extensions.h"
 #include "fog.h"
 #include "get.h"
-#include "glapinoop.h"
 #include "glthread.h"
 #include "hash.h"
 #include "imports.h"

@@ -1,27 +1,10 @@
-# $Id: Makefile.DJ,v 1.9 2000/09/26 21:22:20 brianp Exp $
+# $Id: Makefile.DJ,v 1.10 2001/03/28 17:19:58 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
-# Copyright (C) 1995-1998  Brian Paul
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Library General Public License for more details.
-#
-# You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the Free
-# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
+# Copyright (C) 1995-2001  Brian Paul
 
 # Makefile for core library for MS-DOS using djgpp
-
-
 
 
 ##### MACROS #####
@@ -67,7 +50,6 @@ CORE_SOURCES = \
 	fog.c \
 	get.c \
 	glapi.c \
-	glapinoop.c \
 	glthread.c \
 	hash.c \
 	hint.c \
