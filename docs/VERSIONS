@@ -1282,3 +1282,4 @@ Mesa Version History
     Changes:
     Bug fixes:
 	- OpenGL version 1.5 doesn't need GL_ARB_texture_non_power_of_two
+	- fixed a few compilation issues on IRIX
