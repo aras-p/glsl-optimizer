@@ -16,6 +16,7 @@ static void RunTest(void)
    const GLenum prim = GL_LINES;
    GLubyte val;
    int bits, max, i;
+   GLboolean failed;
 
    glGetIntegerv(GL_STENCIL_BITS, &bits);
    max = (1 << bits) - 1;
@@ -27,20 +28,29 @@ static void RunTest(void)
    /* test GL_INCR (saturation) */
    glClear(GL_STENCIL_BUFFER_BIT);
    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+   failed = GL_FALSE;
    printf("Testing GL_INCR...\n");
    for (i = 1; i < max+10; i++) {
       int expected = (i > max) ? max : i;
       glBegin(prim);
       glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
       glEnd();
+
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
-      assert(val == expected);
+      if (val != expected) {
+	 printf( "Failed GL_INCR test on iteration #%u "
+		 "(got %u, expected %u)\n", i, val, expected );
+	 failed = GL_TRUE;
+      }	   
    }
-   printf("OK!\n");
+
+   if ( !failed ) printf("OK!\n");
+
 
    /* test GL_INCR_WRAP_EXT (wrap around) */
    glClear(GL_STENCIL_BUFFER_BIT);
    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR_WRAP_EXT);
+   failed = GL_FALSE;
    printf("Testing GL_INCR_WRAP_EXT...\n");
    for (i = 1; i < max+10; i++) {
       int expected = i % (max + 1);
@@ -48,15 +58,20 @@ static void RunTest(void)
       glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
-      assert(val == expected);
+      if (val != expected) {
+	 printf( "Failed GL_INCR_WRAP test on iteration #%u "
+		 "(got %u, expected %u)\n", i, val, expected );
+	 failed = GL_TRUE;
+      }	   
    }
-   printf("OK!\n");
+   if ( !failed ) printf("OK!\n");
 
    glClearStencil(max);
 
    /* test GL_INCR (saturation) */
    glClear(GL_STENCIL_BUFFER_BIT);
    glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+   failed = GL_FALSE;
    printf("Testing GL_DECR...\n");
    for (i = max-1; i > -10; i--) {
       int expected = (i < 0) ? 0 : i;
@@ -64,13 +79,18 @@ static void RunTest(void)
       glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
-      assert(val == expected);
+      if (val != expected) {
+	 printf( "Failed GL_DECR test on iteration #%u "
+		 "(got %u, expected %u)\n", max - i, val, expected );
+	 failed = GL_TRUE;
+      }	   
    }
-   printf("OK!\n");
+   if ( !failed ) printf("OK!\n");
 
    /* test GL_INCR_WRAP_EXT (wrap-around) */
    glClear(GL_STENCIL_BUFFER_BIT);
    glStencilOp(GL_KEEP, GL_KEEP, GL_DECR_WRAP_EXT);
+   failed = GL_FALSE;
    printf("Testing GL_DECR_WRAP_EXT...\n");
    for (i = max-1; i > -10; i--) {
       int expected = (i < 0) ? max + i + 1: i;
@@ -78,9 +98,13 @@ static void RunTest(void)
       glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
-      assert(val == expected);
+      if (val != expected) {
+	 printf( "Failed GL_DECR_WRAP test on iteration #%u "
+		 "(got %u, expected %u)\n", max - i, val, expected );
+	 failed = GL_TRUE;
+      }	   
    }
-   printf("OK!\n");
+   if ( !failed ) printf("OK!\n");
 
    glDisable(GL_STENCIL_TEST);
 }
@@ -122,9 +146,24 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
+   const char * ver_str;
+   float        version;
+
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
-   if (!glutExtensionSupported("GL_EXT_stencil_wrap")) {
+
+
+   /* Check for both the extension string and GL version 1.4 on the
+    * outside chance that some silly vendor exports version 1.4 but doesn't
+    * export the extension string.  The stencil-wrap modes are a required
+    * part of GL 1.4.
+    */
+
+   ver_str = glGetString( GL_VERSION );
+   version = (ver_str == NULL) ? 1.0 : strtof( ver_str, NULL );
+
+   if ( !glutExtensionSupported("GL_EXT_stencil_wrap")
+	&& (version < 1.4) ) {
       printf("Sorry, GL_EXT_stencil_wrap not supported.\n");
       exit(1);
    }

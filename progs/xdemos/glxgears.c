@@ -58,7 +58,14 @@ typedef GLint ( * PFNGLXGETSWAPINTERVALMESAPROC) ( void );
 typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
+#ifndef GLX_MESA_swap_frame_usage
+#define GLX_MESA_swap_frame_usage 1
+typedef int ( * PFNGLXGETFRAMEUSAGEMESAPROC) (Display *dpy, GLXDrawable drawable, float * usage );
+#endif
+
 #define BENCHMARK
+
+PFNGLXGETFRAMEUSAGEMESAPROC get_frame_usage = NULL;
 
 #ifdef BENCHMARK
 
@@ -108,9 +115,13 @@ static GLfloat angle = 0.0;
 static GLboolean has_OML_sync_control = GL_FALSE;
 static GLboolean has_SGI_swap_control = GL_FALSE;
 static GLboolean has_MESA_swap_control = GL_FALSE;
+static GLboolean has_MESA_swap_frame_usage = GL_FALSE;
 
 static char ** extension_table = NULL;
 static unsigned num_extensions;
+
+static GLboolean use_ztrick = GL_FALSE;
+static GLfloat   aspect;
 
 /*
  *
@@ -139,6 +150,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
    da = 2.0 * M_PI / teeth / 4.0;
 
    glShadeModel(GL_FLAT);
+   glPolygonMode( GL_FRONT, GL_LINE );
 
    glNormal3f(0.0, 0.0, 1.0);
 
@@ -254,7 +266,65 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 static void
 draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   if ( use_ztrick ) {
+      static GLboolean flip = GL_FALSE;
+      static const GLfloat vert[4][3] = {
+	 { -1, -1, -0.999 },
+	 {  1, -1, -0.999 },
+	 {  1,  1, -0.999 },
+	 { -1,  1, -0.999 }
+      };
+      static const GLfloat col[4][3] = {
+	 { 1.0, 0.6, 0.0 },
+	 { 1.0, 0.6, 0.0 },
+	 { 0.0, 0.0, 0.0 },
+	 { 0.0, 0.0, 0.0 },
+      };
+      
+      if ( flip ) {
+	 glDepthRange(0, 0.5);
+	 glDepthFunc(GL_LEQUAL);
+      }
+      else {
+	 glDepthRange(1.0, 0.4999);
+	 glDepthFunc(GL_GEQUAL);
+      }
+
+      flip = !flip;
+
+      /* The famous Quake "Z trick" only works when the whole screen is
+       * re-drawn each frame.
+       */
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(-1, 1, -1, 1, -1, 1);
+      glDisable(GL_LIGHTING);
+      glShadeModel(GL_SMOOTH);
+
+      glEnable( GL_VERTEX_ARRAY );
+      glEnable( GL_COLOR_ARRAY );
+      glVertexPointer( 3, GL_FLOAT, 0, vert );
+      glColorPointer( 3, GL_FLOAT, 0, col );
+      glDrawArrays( GL_POLYGON, 0, 4 );
+      glDisable( GL_COLOR_ARRAY );
+      glDisable( GL_VERTEX_ARRAY );
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+
+      glEnable(GL_LIGHTING);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glTranslatef(0.0, 0.0, -40.0);
+   }
+   else {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   }
 
    glPushMatrix();
    glRotatef(view_rotx, 1.0, 0.0, 0.0);
@@ -287,12 +357,14 @@ draw(void)
 static void
 reshape(int width, int height)
 {
-   GLfloat h = (GLfloat) height / (GLfloat) width;
+   aspect = (GLfloat) height / (GLfloat) width;
 
+   
    glViewport(0, 0, (GLint) width, (GLint) height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+
+   glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -40.0);
@@ -409,6 +481,8 @@ make_window( Display *dpy, const char *name,
 static void
 event_loop(Display *dpy, Window win)
 {
+   float  frame_usage = 0.0;
+
    while (1) {
       while (XPending(dpy) > 0) {
          XEvent event;
@@ -453,6 +527,13 @@ event_loop(Display *dpy, Window win)
       angle += 2.0;
 
       draw();
+      if ( get_frame_usage != NULL ) {
+	 GLfloat   temp;
+	 
+	 (*get_frame_usage)( dpy, win, & temp );
+	 frame_usage += temp;
+      }
+
       glXSwapBuffers(dpy, win);
 
       /* calc framerate */
@@ -469,10 +550,19 @@ event_loop(Display *dpy, Window win)
          if (t - t0 >= 5.0) {
             GLfloat seconds = t - t0;
             GLfloat fps = frames / seconds;
-            printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
-                   fps);
+	    if ( get_frame_usage != NULL ) {
+	       printf("%d frames in %3.1f seconds = %6.3f FPS (%3.1f%% usage)\n",
+		      frames, seconds, fps,
+		      (frame_usage * 100.0) / (float) frames );
+	    }
+	    else {
+	       printf("%d frames in %3.1f seconds = %6.3f FPS\n",
+		      frames, seconds, fps);
+	    }
+
             t0 = t;
             frames = 0;
+	    frame_usage = 0.0;
          }
       }
    }
@@ -642,6 +732,9 @@ main(int argc, char *argv[])
 	  */
 	 force_get_rate = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-ztrick") == 0) {
+	 use_ztrick = GL_TRUE;
+      }
       else if (strcmp(argv[i], "-help") == 0) {
          printf("Usage:\n");
          printf("  gears [options]\n");
@@ -669,6 +762,7 @@ main(int argc, char *argv[])
    has_OML_sync_control = is_extension_supported( "GLX_OML_sync_control" );
    has_SGI_swap_control = is_extension_supported( "GLX_SGI_swap_control" );
    has_MESA_swap_control = is_extension_supported( "GLX_MESA_swap_control" );
+   has_MESA_swap_frame_usage = is_extension_supported( "GLX_MESA_swap_frame_usage" );
 
    if ( has_MESA_swap_control ) {
       set_swap_interval = (PFNGLXSWAPINTERVALMESAPROC) glXGetProcAddressARB( (const GLubyte *) "glXSwapIntervalMESA" );
@@ -678,6 +772,11 @@ main(int argc, char *argv[])
       set_swap_interval = (PFNGLXSWAPINTERVALMESAPROC) glXGetProcAddressARB( (const GLubyte *) "glXSwapIntervalSGI" );
    }
 
+
+   if ( has_MESA_swap_frame_usage ) {
+      get_frame_usage = (PFNGLXGETFRAMEUSAGEMESAPROC)  glXGetProcAddressARB( (const GLubyte *) "glXGetFrameUsageMESA" );
+   }
+      
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));

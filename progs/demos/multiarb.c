@@ -1,4 +1,4 @@
-/* $Id: multiarb.c,v 1.11 2002/02/13 02:23:33 brianp Exp $ */
+/* $Id: multiarb.c,v 1.12 2003/05/30 15:30:17 brianp Exp $ */
 
 /*
  * GL_ARB_multitexture demo
@@ -33,6 +33,7 @@ static GLint NumUnits = 1;
 static GLboolean TexEnabled[8];
 
 static GLfloat Drift = 0.0;
+static GLfloat drift_increment = 0.005;
 static GLfloat Xrot = 20.0, Yrot = 30.0, Zrot = 0.0;
 
 
@@ -42,7 +43,7 @@ static void Idle( void )
    if (Animate) {
       GLint i;
 
-      Drift += 0.05;
+      Drift += drift_increment;
       if (Drift >= 1.0)
          Drift = 0.0;
 
@@ -74,6 +75,9 @@ static void Idle( void )
 static void DrawObject(void)
 {
    GLint i;
+   GLint j;
+   static const GLfloat   tex_coords[] = {  0.0,  0.0,  1.0,  1.0,  0.0 };
+   static const GLfloat   vtx_coords[] = { -1.0, -1.0,  1.0,  1.0, -1.0 };
 
    if (!TexEnabled[0] && !TexEnabled[1])
       glColor3f(0.1, 0.1, 0.1);  /* add onto this */
@@ -82,21 +86,24 @@ static void DrawObject(void)
 
    glBegin(GL_QUADS);
 
-   for (i = 0; i < NumUnits; i++)
-      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 0.0, 0.0);
-   glVertex2f(-1.0, -1.0);
-
-   for (i = 0; i < NumUnits; i++)
-      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 1.0, 0.0);
-   glVertex2f(1.0, -1.0);
-
-   for (i = 0; i < NumUnits; i++)
-      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 1.0, 1.0);
-   glVertex2f(1.0, 1.0);
-
-   for (i = 0; i < NumUnits; i++)
-      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 0.0, 1.0);
-   glVertex2f(-1.0, 1.0);
+   /* Toggle between the vector and scalar entry points.  This is done purely
+    * to hit multiple paths in the driver.
+    */
+   if ( Drift > 0.49 ) {
+      for (j = 0; j < 4; j++ ) {
+	 for (i = 0; i < NumUnits; i++)
+	    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 
+				 tex_coords[j], tex_coords[j+1]);
+	 glVertex2f( vtx_coords[j], vtx_coords[j+1] );
+      }
+   }
+   else {
+      for (j = 0; j < 4; j++ ) {
+	 for (i = 0; i < NumUnits; i++)
+	    glMultiTexCoord2fvARB(GL_TEXTURE0_ARB + i, & tex_coords[j]);
+	 glVertex2fv( & vtx_coords[j] );
+      }
+   }
 
    glEnd();
 }
@@ -105,6 +112,10 @@ static void DrawObject(void)
 
 static void Display( void )
 {
+   static GLint T0 = 0;
+   static GLint Frames = 0;
+   GLint t;
+
    glClear( GL_COLOR_BUFFER_BIT );
 
    glPushMatrix();
@@ -116,6 +127,16 @@ static void Display( void )
    glPopMatrix();
 
    glutSwapBuffers();
+
+   Frames++;
+
+   t = glutGet(GLUT_ELAPSED_TIME);
+   if (t - T0 >= 250) {
+      GLfloat seconds = (t - T0) / 1000.0;
+      drift_increment = 2.2 * seconds / Frames;
+      T0 = t;
+      Frames = 0;
+   }
 }
 
 

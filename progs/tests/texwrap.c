@@ -1,4 +1,4 @@
-/* $Id: texwrap.c,v 1.5 2003/02/04 02:35:00 brianp Exp $ */
+/* $Id: texwrap.c,v 1.6 2003/05/30 15:30:17 brianp Exp $ */
 
 /*
  * Test texture wrap modes.
@@ -35,7 +35,7 @@
 #define SIZE 8
 static GLubyte BorderImage[SIZE+2][SIZE+2][4];
 static GLubyte NoBorderImage[SIZE][SIZE][4];
-static GLuint Border = 1;
+static GLuint Border = 0;
 
 
 #define WRAP_MODE(m)        { m , # m, GL_TRUE,  1.0, { NULL, NULL } }
@@ -142,7 +142,7 @@ static void Display( void )
       /* loop over border modes */
       for (j = 0; j < modes[j].mode != 0; j++) {
          const GLfloat x0 = 0, y0 = 0, x1 = 140, y1 = 140;
-         const GLfloat b = 0.2;
+         const GLfloat b = 1.2;
          const GLfloat s0 = -b, t0 = -b, s1 = 1.0+b, t1 = 1.0+b;
 
 	 if ( modes[j].supported != GL_TRUE )
