@@ -17,14 +17,16 @@
                    value  CDATA #REQUIRED>
 <!ATTLIST function name   CDATA #REQUIRED
                    offset CDATA #REQUIRED
-		   vectorequiv CDATA #IMPLIED>
+                   vectorequiv CDATA #IMPLIED>
 <!ATTLIST param    name   CDATA #REQUIRED
                    type   CDATA #REQUIRED
-		   count  CDATA #IMPLIED
-		   variable_param  CDATA #IMPLIED>
+                   count  CDATA #IMPLIED
+                   variable_param  CDATA #IMPLIED>
 <!ATTLIST return   type     CDATA #REQUIRED>
 <!ATTLIST glx      rop      CDATA #IMPLIED
                    sop      CDATA #IMPLIED
+                   large    CDATA #IMPLIED
+		   doubles_in_order CDATA #IMPLIED
                    handcode CDATA #IMPLIED
                    ignore   CDATA #IMPLIED>
 ]>
@@ -517,8 +519,8 @@
     <function name="CallLists" offset="3">
         <param name="n" type="GLsizei"/>
         <param name="type" type="GLenum"/>
-        <param name="lists" type="const GLvoid *" variable_count="n, type"/>
-        <glx rop="2" handcode="true"/>
+        <param name="lists" type="const GLvoid *" variable_param="type" count="n"/>
+        <glx rop="2" large="true"/>
     </function>
 
     <function name="DeleteLists" offset="4">
@@ -1964,34 +1966,34 @@
     <function name="PixelStoref" offset="249">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfloat"/>
-        <glx rop="109" handcode="true"/>
+        <glx sop="109" handcode="true"/>
     </function>
 
     <function name="PixelStorei" offset="250">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLint"/>
-        <glx rop="110" handcode="true"/>
+        <glx sop="110" handcode="true"/>
     </function>
 
     <function name="PixelMapfv" offset="251">
         <param name="map" type="GLenum"/>
-        <param name="mapsize" type="GLsizei"/>
-        <param name="values" type="const GLfloat *"/>
-        <glx sop="125" handcode="true"/>
+        <param name="mapsize" type="GLsizei" counter="true"/>
+        <param name="values" type="const GLfloat *" count="mapsize" variable_param="map" />
+        <glx rop="168" large="true"/>
     </function>
 
     <function name="PixelMapuiv" offset="252">
         <param name="map" type="GLenum"/>
         <param name="mapsize" type="GLsizei"/>
-        <param name="values" type="const GLuint *"/>
-        <glx sop="126" handcode="true"/>
+        <param name="values" type="const GLuint *" count="mapsize" variable_param="map" />
+        <glx rop="169" large="true"/>
     </function>
 
     <function name="PixelMapusv" offset="253">
         <param name="map" type="GLenum"/>
         <param name="mapsize" type="GLsizei"/>
-        <param name="values" type="const GLushort *"/>
-        <glx sop="127" handcode="true"/>
+        <param name="values" type="const GLushort *" count="mapsize" variable_param="map" />
+        <glx rop="170" large="true"/>
     </function>
 
     <function name="ReadBuffer" offset="254">
@@ -2613,11 +2615,11 @@
     </function>
 
     <function name="AreTexturesResident" offset="322">
-        <param name="n" type="GLsizei"/>
-        <param name="textures" type="const GLuint *"/>
-        <param name="residences" type="GLboolean *"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="const GLuint *" count="n"/>
+        <param name="residences" type="GLboolean *" output="true"/>
         <return type="GLboolean"/>
-        <glx sop="143" handcode="true"/>
+        <glx sop="143"/>
     </function>
 
     <function name="BindTexture" offset="307">
@@ -5672,9 +5674,9 @@
     <function name="TexFilterFuncSGIS" offset="416">
         <param name="target" type="GLenum"/>
         <param name="filter" type="GLenum"/>
-        <param name="n" type="GLsizei"/>
-        <param name="weights" type="const GLfloat *"/>
-        <glx rop="2064" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="weights" type="const GLfloat *" count="n"/>
+        <glx rop="2064"/>
     </function>
 </category>
 
@@ -6062,11 +6064,11 @@
 
 <category name="GL_EXT_texture_object" number="20">
     <function name="AreTexturesResidentEXT" offset="439">
-        <param name="n" type="GLsizei"/>
-        <param name="textures" type="const GLuint *"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="11" handcode="true"/>
+        <glx vendorpriv="11"/>
     </function>
 
     <function name="BindTextureEXT" alias="BindTexture">
@@ -6074,6 +6076,9 @@
         <param name="texture" type="GLuint"/>
     </function>
 
+    <!-- For GLX, this is wrong.  DeleteTexturesEXT and DeleteTextures
+         do not have the same protocol!
+    -->
     <function name="DeleteTexturesEXT" alias="DeleteTextures">
         <param name="n" type="GLsizei"/>
         <param name="textures" type="const GLuint *"/>
@@ -6082,7 +6087,7 @@
     <function name="GenTexturesEXT" offset="440">
         <param name="n" type="GLsizei"/>
         <param name="textures" type="GLuint *" output="true"/>
-        <glx vendorpriv="13" handcode="true"/>
+        <glx vendorpriv="13"/>
     </function>
 
     <function name="IsTextureEXT" offset="441">
@@ -6101,9 +6106,9 @@
 <category name="GL_SGIS_detail_texture" number="21">
     <function name="DetailTexFuncSGIS" offset="442">
         <param name="target" type="GLenum"/>
-        <param name="n" type="GLsizei"/>
-        <param name="points" type="const GLfloat *"/>
-        <glx rop="2051" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="points" type="const GLfloat *" count="n"/>
+        <glx rop="2051"/>
     </function>
 
     <function name="GetDetailTexFuncSGIS" offset="443">
@@ -6118,6 +6123,10 @@
         <param name="target" type="GLenum"/>
         <param name="n" type="GLsizei"/>
         <param name="points" type="const GLfloat *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'points' is 2*n.
+        -->
         <glx rop="2052" handcode="true"/>
     </function>
 
@@ -8067,11 +8076,11 @@
 
 <category name="GL_NV_vertex_program" number="233">
     <function name="AreProgramsResidentNV" offset="578">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="const GLuint *"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="1293" handcode="true"/>
+        <glx vendorpriv="1293"/>
     </function>
 
     <function name="BindProgramNV" offset="579">
@@ -8081,9 +8090,9 @@
     </function>
 
     <function name="DeleteProgramsNV" offset="580">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="const GLuint *"/>
-        <glx vendorpriv="1294" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="const GLuint *" count="n"/>
+        <glx vendorpriv="1294"/>
     </function>
 
     <function name="ExecuteProgramNV" offset="581">
@@ -8096,7 +8105,7 @@
     <function name="GenProgramsNV" offset="582">
         <param name="n" type="GLsizei"/>
         <param name="ids" type="GLuint *"/>
-        <glx vendorpriv="1295" handcode="true"/>
+        <glx vendorpriv="1295"/>
     </function>
 
     <function name="GetProgramParameterdvNV" offset="583">
@@ -8174,9 +8183,9 @@
     <function name="LoadProgramNV" offset="593">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="program" type="const GLubyte *"/>
-        <glx rop="4183" handcode="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="program" type="const GLubyte *" count="len"/>
+        <glx rop="4183"/>
     </function>
 
     <function name="ProgramParameter4dNV" offset="594" vectorequiv="ProgramParameter4dvNV">
@@ -8216,14 +8225,22 @@
         <param name="index" type="GLuint"/>
         <param name="num" type="GLuint"/>
         <param name="params" type="const GLdouble *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'params' is 4*num.
+        -->
         <glx rop="4187" handcode="true"/>
     </function>
 
     <function name="ProgramParameters4fvNV" offset="599">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="num" type="GLuint"/>
-        <param name="params" type="const GLfloat *"/>
+        <param name="num" type="GLuint" counter="true"/>
+        <param name="params" type="const GLfloat *" count="num"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'params' is 4*num.
+        -->
         <glx rop="4186" handcode="true"/>
     </function>
 
@@ -8416,29 +8433,33 @@
 
     <function name="VertexAttribs1dvNV" offset="629">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLdouble *"/>
-        <glx rop="4210" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="v" type="const GLdouble *" count="n"/>
+        <glx rop="4210" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttribs1fvNV" offset="630">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLfloat *"/>
-        <glx rop="4206" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="v" type="const GLfloat *" count="n"/>
+        <glx rop="4206"/>
     </function>
 
     <function name="VertexAttribs1svNV" offset="631">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLshort *"/>
-        <glx rop="4202" handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="v" type="const GLshort *" count="n"/>
+        <glx rop="4202"/>
     </function>
 
     <function name="VertexAttribs2dvNV" offset="632">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLdouble *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 2*n.
+        -->
         <glx rop="4211" handcode="true"/>
     </function>
 
@@ -8446,6 +8467,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLfloat *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 2*n.
+        -->
         <glx rop="4207" handcode="true"/>
     </function>
 
@@ -8454,12 +8479,20 @@
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLshort *"/>
         <glx rop="4203" handcode="true"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 2*n.
+        -->
     </function>
 
     <function name="VertexAttribs3dvNV" offset="635">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLdouble *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 3*n.
+        -->
         <glx rop="4212" handcode="true"/>
     </function>
 
@@ -8467,6 +8500,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLfloat *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 3*n.
+        -->
         <glx rop="4208" handcode="true"/>
     </function>
 
@@ -8474,6 +8511,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLshort *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 3*n.
+        -->
         <glx rop="4204" handcode="true"/>
     </function>
 
@@ -8481,6 +8522,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLdouble *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 4*n.
+        -->
         <glx rop="4213" handcode="true"/>
     </function>
 
@@ -8488,6 +8533,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLfloat *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 4*n.
+        -->
         <glx rop="4209" handcode="true"/>
     </function>
 
@@ -8495,6 +8544,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLshort *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 4*n.
+        -->
         <glx rop="4205" handcode="true"/>
     </function>
 
@@ -8502,6 +8555,10 @@
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
         <param name="v" type="const GLubyte *"/>
+
+        <!-- This is hand coded because the number of array elements
+             pointed to by 'v' is 4*n.
+        -->
         <glx rop="4214" handcode="true"/>
     </function>
 </category>
@@ -8544,9 +8601,9 @@
 
 <category name="GL_ATI_draw_buffers" number="277">
     <function name="DrawBuffersATI" offset="?">
-        <param name="n" type="GLsizei"/>
-        <param name="bufs" type="const GLenum *"/>
-        <glx handcode="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="bufs" type="const GLenum *" count="n"/>
+	<!-- GLX protocol is not fully defined for this extension. -->
     </function>
 </category>
 
