@@ -282,6 +282,41 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
 #define ISTBLACK(v) (*((unsigned long *)(v)) == 0)
 
 
+#ifdef __GNUC__
+
+#define FX64_NATIVE 1
+
+typedef unsigned long long Fx64;
+
+#define FX64_MOV32(a, b) a = b;
+#define FX64_OR32(a, b)  a |= b;
+#define FX64_SHL(a, c)   a <<= c;
+
+#else  /* !__GNUC__ */
+
+#define FX64_NATIVE 0
+
+typedef struct {
+        unsigned long lo, hi;
+} Fx64;
+
+#define FX64_MOV32(a, b) a.lo = b
+#define FX64_OR32(a, b)  a.lo |= b
+
+#define FX64_SHL(a, c)                                 \
+   do {                                                \
+       if ((c) >= 32) {                                \
+          a.hi = a.lo << ((c) - 32);                   \
+          a.lo = 0;                                    \
+       } else {                                        \
+          a.hi = (a.hi << (c)) | (a.lo >> (32 - (c))); \
+          a.lo <<= (c);                                \
+       }                                               \
+   } while (0)
+
+#endif /* !__GNUC__ */
+
+
 static int
 fxt1_bestcol (float vec[][MAX_COMP], int nv,
               unsigned char input[MAX_COMP], int nc)
@@ -558,22 +593,22 @@ fxt1_quantize_CHROMA (unsigned long *cc,
    const int n_comp = 3; /* 3 components: R, G, B */
    float vec[MAX_VECT][MAX_COMP];
    int i, j, k;
-   unsigned long long hi; /* high quadword */
+   Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
    if (fxt1_choose(vec, n_vect, input, n_comp, N_TEXELS) != 0) {
       fxt1_lloyd(vec, n_vect, input, n_comp, N_TEXELS);
    }
 
-   hi = 4; /* cc-chroma = "010" + unused bit */
+   FX64_MOV32(hi, 4); /* cc-chroma = "010" + unused bit */
    for (j = n_vect - 1; j >= 0; j--) {
       for (i = 0; i < n_comp; i++) {
          /* add in colors */
-         hi <<= 5;
-         hi |= (unsigned int)(vec[j][i] / 8.0);
+         FX64_SHL(hi, 5);
+         FX64_OR32(hi, (unsigned int)(vec[j][i] / 8.0));
       }
    }
-   ((unsigned long long *)cc)[1] = hi;
+   ((Fx64 *)cc)[1] = hi;
 
    lohi = lolo = 0;
    /* right microtile */
@@ -600,7 +635,7 @@ fxt1_quantize_ALPHA0 (unsigned long *cc,
    const int n_comp = 4; /* 4 components: R, G, B, A */
    float vec[MAX_VECT][MAX_COMP];
    int i, j, k;
-   unsigned long long hi; /* high quadword */
+   Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
    /* the last vector indicates zero */
@@ -613,20 +648,20 @@ fxt1_quantize_ALPHA0 (unsigned long *cc,
       fxt1_lloyd(vec, n_vect, reord, n_comp, n);
    }
 
-   hi = 6; /* alpha = "011" + lerp = 0 */
+   FX64_MOV32(hi, 6); /* alpha = "011" + lerp = 0 */
    for (j = n_vect - 1; j >= 0; j--) {
       /* add in alphas */
-      hi <<= 5;
-      hi |= (unsigned int)(vec[j][ACOMP] / 8.0);
+      FX64_SHL(hi, 5);
+      FX64_OR32(hi, (unsigned int)(vec[j][ACOMP] / 8.0));
    }
    for (j = n_vect - 1; j >= 0; j--) {
       for (i = 0; i < n_comp - 1; i++) {
          /* add in colors */
-         hi <<= 5;
-         hi |= (unsigned int)(vec[j][i] / 8.0);
+         FX64_SHL(hi, 5);
+         FX64_OR32(hi, (unsigned int)(vec[j][i] / 8.0));
       }
    }
-   ((unsigned long long *)cc)[1] = hi;
+   ((Fx64 *)cc)[1] = hi;
 
    lohi = lolo = 0;
    /* right microtile */
@@ -653,7 +688,7 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
    float vec[1 + 1 + 1][MAX_COMP]; /* 1.5 extrema for each sub-block */
    float b, iv[MAX_COMP]; /* interpolation vector */
    int i, j, k;
-   unsigned long long hi; /* high quadword */
+   Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
    int minSum;
@@ -817,20 +852,20 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
       cc[1] = lohi;
    }
 
-   hi = 7; /* alpha = "011" + lerp = 1 */
+   FX64_MOV32(hi, 7); /* alpha = "011" + lerp = 1 */
    for (j = n_vect - 1; j >= 0; j--) {
       /* add in alphas */
-      hi <<= 5;
-      hi |= (unsigned int)(vec[j][ACOMP] / 8.0);
+      FX64_SHL(hi, 5);
+      FX64_OR32(hi, (unsigned int)(vec[j][ACOMP] / 8.0));
    }
    for (j = n_vect - 1; j >= 0; j--) {
       for (i = 0; i < n_comp - 1; i++) {
          /* add in colors */
-         hi <<= 5;
-         hi |= (unsigned int)(vec[j][i] / 8.0);
+         FX64_SHL(hi, 5);
+         FX64_OR32(hi, (unsigned int)(vec[j][i] / 8.0));
       }
    }
-   ((unsigned long long *)cc)[1] = hi;
+   ((Fx64 *)cc)[1] = hi;
 }
 
 
@@ -940,7 +975,7 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
    unsigned char vec[2 * 2][MAX_COMP]; /* 2 extrema for each sub-block */
    float b, iv[MAX_COMP]; /* interpolation vector */
    int i, j, k;
-   unsigned long long hi; /* high quadword */
+   Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
    int minSum;
@@ -1101,15 +1136,15 @@ fxt1_quantize_MIXED1 (unsigned long *cc,
       }
    }
 
-   hi = 9 | (vec[3][GCOMP] & 4) | ((vec[1][GCOMP] >> 1) & 2); /* chroma = "1" */
+   FX64_MOV32(hi, 9 | (vec[3][GCOMP] & 4) | ((vec[1][GCOMP] >> 1) & 2)); /* chroma = "1" */
    for (j = 2 * 2 - 1; j >= 0; j--) {
       for (i = 0; i < n_comp; i++) {
          /* add in colors */
-         hi <<= 5;
-         hi |= vec[j][i] >> 3;
+         FX64_SHL(hi, 5);
+         FX64_OR32(hi, vec[j][i] >> 3);
       }
    }
-   ((unsigned long long *)cc)[1] = hi;
+   ((Fx64 *)cc)[1] = hi;
 }
 
 
@@ -1122,7 +1157,7 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
    unsigned char vec[2 * 2][MAX_COMP]; /* 2 extrema for each sub-block */
    float b, iv[MAX_COMP]; /* interpolation vector */
    int i, j, k;
-   unsigned long long hi; /* high quadword */
+   Fx64 hi; /* high quadword */
    unsigned long lohi, lolo; /* low quadword: hi dword, lo dword */
 
    int minColL, maxColL;
@@ -1314,15 +1349,15 @@ fxt1_quantize_MIXED0 (unsigned long *cc,
       cc[1] = lohi;
    }
 
-   hi = 8 | (vec[3][GCOMP] & 4) | ((vec[1][GCOMP] >> 1) & 2); /* chroma = "1" */
+   FX64_MOV32(hi, 8 | (vec[3][GCOMP] & 4) | ((vec[1][GCOMP] >> 1) & 2)); /* chroma = "1" */
    for (j = 2 * 2 - 1; j >= 0; j--) {
       for (i = 0; i < n_comp; i++) {
          /* add in colors */
-         hi <<= 5;
-         hi |= vec[j][i] >> 3;
+         FX64_SHL(hi, 5);
+         FX64_OR32(hi, vec[j][i] >> 3);
       }
    }
-   ((unsigned long long *)cc)[1] = hi;
+   ((Fx64 *)cc)[1] = hi;
 }
 
 
