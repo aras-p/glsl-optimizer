@@ -141,7 +141,7 @@ struct formatInfo rgbFormats[] =
 #define NUM_RGBA_FORMATS	(sizeof(rgbaFormats) / sizeof(rgbaFormats[0]))
 struct formatInfo rgbaFormats[] =
 {
-   { GL_RGBA, 4, "RGBA" },
+   { GL_RGBA, GL_RGBA, "RGBA" },
    { GL_RGBA, GL_RGBA2, "RGBA2" },
    { GL_RGBA, GL_RGBA4, "RGBA4" },
    { GL_RGBA, GL_RGB5_A1, "RGB5_A1" },
@@ -751,6 +751,7 @@ int main( int argc, char *argv[] )
    }
 
    glutInitWindowSize( winWidth, winHeight );
+   glutInitWindowPosition( 0, 0 );
    glutCreateWindow( "Texture Environment Test" );
 
    initialize();
