@@ -351,6 +351,10 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 
 	 /* Check if kernel module is new enough to support cube maps */
 	 screen->drmSupportsCubeMaps = (sPriv->drmMinor >= 7);
+	 /* Check if kernel module is new enough to support blend color and
+            separate blend functions/equations */
+         screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
+
       }
    }
 
