@@ -18,9 +18,11 @@
 struct object
 {
    GLuint BufferID;
+   GLuint ElementsBufferID;
    GLuint NumVerts;
    GLuint VertexOffset;
    GLuint ColorOffset;
+   GLuint NumElements;
 };
 
 static struct object Objects[NUM_OBJECTS];
@@ -46,7 +48,16 @@ static void DrawObject( const struct object *obj )
    glEnable(GL_VERTEX_ARRAY);
    glColorPointer(3, GL_FLOAT, 0, (void *) obj->ColorOffset);
    glEnable(GL_COLOR_ARRAY);
-   glDrawArrays(GL_LINE_LOOP, 0, obj->NumVerts);
+   if (obj->NumElements > 0) {
+      /* indexed arrays */
+      glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
+      glDrawElements(GL_LINE_LOOP, obj->NumElements, GL_UNSIGNED_INT, NULL);
+   }
+   else {
+      /* non-indexed arrays */
+      glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+      glDrawArrays(GL_LINE_LOOP, 0, obj->NumVerts);
+   }
 }
 
 
@@ -167,6 +178,7 @@ static void MakeObject1(struct object *obj)
    obj->NumVerts = 4;
    obj->VertexOffset = 0;
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
+   obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 }
@@ -192,6 +204,7 @@ static void MakeObject2(struct object *obj)
    obj->NumVerts = 3;
    obj->VertexOffset = 0;
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
+   obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
 }
@@ -200,6 +213,7 @@ static void MakeObject2(struct object *obj)
 static void MakeObject3(struct object *obj)
 {
    GLfloat *v, *c;
+   GLuint *i;
 
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
@@ -221,6 +235,18 @@ static void MakeObject3(struct object *obj)
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+
+   /* Setup a buffer of indices to test the ELEMENTS path */
+   glGenBuffersARB(1, &obj->ElementsBufferID);
+   glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
+   glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 100, NULL, GL_STATIC_DRAW_ARB);
+   i = (GLuint *) glMapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB);
+   i[0] = 0;
+   i[1] = 1;
+   i[2] = 2;
+   i[3] = 3;
+   glUnmapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB);
+   obj->NumElements = 4;
 }
 
 
