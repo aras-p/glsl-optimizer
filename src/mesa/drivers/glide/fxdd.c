@@ -628,7 +628,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
    struct gl_pixelstore_attrib scissoredUnpack;
 
    /* check if there's any raster operations enabled which we can't handle */
-   if ((swrast->_RasterMask & (ALPHATEST_BIT |
+   if ((swrast->_RasterMask & (/*ALPHATEST_BIT |*/
 			      /*BLEND_BIT |*/   /* blending ok, through pixpipe */
 			      DEPTH_BIT |       /* could be done with RGB:DEPTH */
 			      FOG_BIT |         /* could be done with RGB:DEPTH */

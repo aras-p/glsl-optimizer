@@ -660,6 +660,9 @@ fxIsTexSupported(GLenum target, GLint internalFormat,
 /**********************************************************************/
 /**** NEW TEXTURE IMAGE FUNCTIONS                                  ****/
 /**********************************************************************/
+extern void
+fxt1_decode_1 (const void *texture, int width,
+               int i, int j, unsigned char *rgba);
 
 /* Texel-fetch functions for software texturing and glGetTexImage().
  * We should have been able to use some "standard" fetch functions (which
@@ -836,7 +839,8 @@ fetch_rgb_fxt1(const struct gl_texture_image *texImage,
     i = i * mml->wScale;
     j = j * mml->hScale;
 
-    _mesa_texformat_rgb_fxt1.FetchTexel2D(texImage, i, j, k, rgba);
+    fxt1_decode_1(texImage->Data, mml->width, i, j, rgba);
+    rgba[ACOMP] = 255;
 }
 
 
@@ -849,7 +853,7 @@ fetch_rgba_fxt1(const struct gl_texture_image *texImage,
     i = i * mml->wScale;
     j = j * mml->hScale;
 
-    _mesa_texformat_rgba_fxt1.FetchTexel2D(texImage, i, j, k, rgba);
+    fxt1_decode_1(texImage->Data, mml->width, i, j, rgba);
 }
 
 
@@ -1303,15 +1307,19 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
      case GL_RGB4_S3TC:
        internalFormat = GL_COMPRESSED_RGB_FXT1_3DFX;
        break;
+     case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
      case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
      case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
      case GL_RGBA_S3TC:
      case GL_RGBA4_S3TC:
-       texImage->CompressedSize /= 2;
-     case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
        internalFormat = GL_COMPRESSED_RGBA_FXT1_3DFX;
      }
      texImage->IntFormat = internalFormat;
+     texImage->CompressedSize = _mesa_compressed_texture_size(ctx,
+                                                              mml->width,
+                                                              mml->height,
+                                                              1,
+                                                              internalFormat);
    }
 #endif
 #if FX_TC_NAPALM

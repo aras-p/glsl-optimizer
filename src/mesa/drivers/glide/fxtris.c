@@ -1387,9 +1387,6 @@ void fxDDInitTriFuncs( GLcontext *ctx )
 }
 
 
-/* [dBorca] Hack alert:
- * does this approach work with multitex?
- */
 GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
