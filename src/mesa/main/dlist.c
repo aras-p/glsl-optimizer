@@ -4891,7 +4891,7 @@ static void GLAPIENTRY save_Begin( GLenum mode )
    Node *n;
    GLboolean error = GL_FALSE;
 
-   if (mode < GL_POINTS || mode > GL_POLYGON) {
+   if (/*mode < GL_POINTS ||*/ mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "Begin (mode)");
       error = GL_TRUE;
    }

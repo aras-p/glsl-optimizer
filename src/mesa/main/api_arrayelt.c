@@ -791,7 +791,7 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    /* generic attributes */
    for (at = actx->attribs; at->func; at++) {
       const GLubyte *src = at->array->BufferObj->Data
-                         + (GLuint) at->array->Ptr
+                         + (unsigned long) at->array->Ptr
                          + elt * at->array->StrideB;
       at->func( at->index, src );
    }
@@ -799,7 +799,7 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
    /* conventional arrays */
    for (aa = actx->arrays; aa->func ; aa++) {
       const GLubyte *src = aa->array->BufferObj->Data
-                         + (GLuint) aa->array->Ptr
+                         + (unsigned long) aa->array->Ptr
                          + elt * aa->array->StrideB;
       aa->func( src );
    }

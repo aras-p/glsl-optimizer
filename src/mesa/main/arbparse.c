@@ -3062,7 +3062,7 @@ parse_generic_attrib_num(GLcontext *ctx, GLubyte ** inst,
 {
    *attrib = parse_integer(inst, Program);
 
-   if ((*attrib < 0) || (*attrib > MAX_VERTEX_PROGRAM_ATTRIBS))
+   if (*attrib > MAX_VERTEX_PROGRAM_ATTRIBS)
    {
       _mesa_set_program_error (ctx, Program->Position,
                                "Invalid generic vertex attribute index");
@@ -3085,7 +3085,7 @@ parse_texcoord_num (GLcontext * ctx, GLubyte ** inst,
 {
    *coord = parse_integer (inst, Program);
 
-   if ((*coord < 0) || (*coord >= ctx->Const.MaxTextureUnits)) {
+   if (*coord >= ctx->Const.MaxTextureUnits) {
       _mesa_set_program_error (ctx, Program->Position,
                                "Invalid texture unit index");
       _mesa_error (ctx, GL_INVALID_OPERATION, "Invalid texture unit index");
@@ -4092,7 +4092,8 @@ static GLuint
 parse_param (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
              struct arb_program *Program)
 {
-   GLuint found, specified_length, err;
+   GLuint found, err;
+   GLint specified_length;
    char *error_msg;
    struct var_cache *param_var;
 
@@ -4690,7 +4691,8 @@ parse_src_reg (GLcontext * ctx, GLubyte ** inst, struct var_cache **vc_head,
                GLboolean *IsRelOffset )
 {
    struct var_cache *src;
-   GLuint binding_state, binding_idx, is_generic, found, offset;
+   GLuint binding_state, binding_idx, is_generic, found;
+   GLint offset;
 
    /* And the binding for the src */
    switch (*(*inst)++) {
