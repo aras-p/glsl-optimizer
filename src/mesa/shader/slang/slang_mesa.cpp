@@ -112,12 +112,14 @@ namespace std
 
 void _Xran ()
 {
-	_THROW(out_of_range, "invalid string position");
+	/* XXX fix this under Linux */
+	/*_THROW(out_of_range, "invalid string position");*/
 }
 
 void _Xlen ()
 {
-	_THROW(length_error, "string too long");
+	/* XXX fix this under Linux */
+	/*_THROW(length_error, "string too long");*/
 }
 
 }
