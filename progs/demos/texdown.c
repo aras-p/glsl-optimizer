@@ -1,4 +1,4 @@
-/* $Id: texdown.c,v 1.1 2000/01/28 16:25:44 brianp Exp $ */
+/* $Id: texdown.c,v 1.2 2000/03/29 15:47:48 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -41,8 +41,6 @@
 
 static GLsizei MaxSize = 1024;
 static GLsizei TexWidth = 256, TexHeight = 256, TexBorder = 0;
-static GLenum TexFormat = GL_RGBA, TexType = GL_UNSIGNED_BYTE;
-static GLenum TexIntFormat = GL_RGBA;
 static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean SubImage = GL_FALSE;
 static GLdouble DownloadRate = 0.0;  /* texels/sec */
@@ -50,34 +48,29 @@ static GLdouble DownloadRate = 0.0;  /* texels/sec */
 static GLuint Mode = 0;
 
 
+#define NUM_FORMATS 4
+struct FormatRec {
+   GLenum Format;
+   GLenum Type;
+   GLenum IntFormat;
+   GLint TexelSize;
+};
+
+
+static const struct FormatRec FormatTable[NUM_FORMATS] = {
+  /* Format   Type                         IntFormat   TexelSize */
+   { GL_RGB,  GL_UNSIGNED_BYTE,            GL_RGB,         3    },
+   { GL_RGBA, GL_UNSIGNED_BYTE,            GL_RGBA,        4    },
+   { GL_RGBA, GL_UNSIGNED_BYTE,            GL_RGB,         4    },
+   { GL_RGB,  GL_UNSIGNED_SHORT_5_6_5,     GL_RGB,         2    },
+};
+static GLint Format;
+
+
 static int
-BytesPerTexel(GLenum format, GLenum type)
+BytesPerTexel(GLint format)
 {
-   int b, c;
-
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-         b = 1;
-         break;
-      case GL_UNSIGNED_SHORT:
-         b = 2;
-         break;
-      default:
-         abort();
-   }
-
-   switch (format) {
-      case GL_RGB:
-         c = 3;
-         break;
-      case GL_RGBA:
-         c = 4;
-         break;
-      default:
-         abort();
-   }
-
-   return b * c;
+   return FormatTable[format].TexelSize;
 }
 
 
@@ -100,9 +93,13 @@ TypeStr(GLenum type)
 {
    switch (type) {
       case GL_UNSIGNED_BYTE:
-         return "GLubyte";
+         return "GL_UNSIGNED_BYTE";
       case GL_UNSIGNED_SHORT:
-         return "GLushort";
+         return "GL_UNSIGNED_SHORT";
+      case GL_UNSIGNED_SHORT_5_6_5:
+         return "GL_UNSIGNED_SHORT_5_6_5";
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
+         return "GL_UNSIGNED_SHORT_5_6_5_REV";
       default:
          return "";
    }
@@ -114,7 +111,7 @@ MeasureDownloadRate(void)
 {
    const int w = TexWidth + 2 * TexBorder;
    const int h = TexHeight + 2 * TexBorder;
-   const int bytes = w * h * BytesPerTexel(TexFormat, TexType);
+   const int bytes = w * h * BytesPerTexel(Format);
    GLubyte *texImage, *getImage;
    GLdouble t0, t1, time;
    int count;
@@ -156,11 +153,27 @@ MeasureDownloadRate(void)
    do {
       if (SubImage && count > 0) {
          glTexSubImage2D(GL_TEXTURE_2D, 0, -TexBorder, -TexBorder, w, h,
-                         TexFormat, TexType, texImage);
+                         FormatTable[Format].Format,
+                         FormatTable[Format].Type, texImage);
       }
       else {
-         glTexImage2D(GL_TEXTURE_2D, 0, TexIntFormat, w, h,
-                      TexBorder, TexFormat, TexType, texImage);
+         glTexImage2D(GL_TEXTURE_2D, 0,
+                      FormatTable[Format].IntFormat, w, h, TexBorder,
+                      FormatTable[Format].Format,
+                      FormatTable[Format].Type, texImage);
+      }
+
+      if (count == 0) {
+         /* draw a tiny polygon to force texture into texram */
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+         glEnable(GL_TEXTURE_2D);
+         glBegin(GL_TRIANGLES);
+         glTexCoord2f(0, 0);   glVertex2f(1, 1);
+         glTexCoord2f(1, 0);   glVertex2f(3, 1);
+         glTexCoord2f(0.5, 1);   glVertex2f(2, 3);
+         glEnd();
+         glDisable(GL_TEXTURE_2D);
       }
 
       t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
@@ -174,7 +187,9 @@ MeasureDownloadRate(void)
 #if 0
    if (!ScaleAndBias) {
       /* verify texture readback */
-      glGetTexImage(GL_TEXTURE_2D, 0, TexFormat, TexType, getImage);
+      glGetTexImage(GL_TEXTURE_2D, 0,
+                    FormatTable[Format].Format,
+                    FormatTable[Format].Type, getImage);
       for (i = 0; i < w * h; i++) {
          if (texImage[i] != getImage[i]) {
             printf("[%d] %d != %d\n", i, texImage[i], getImage[i]);
@@ -213,16 +228,18 @@ Display(void)
 
    glClear(GL_COLOR_BUFFER_BIT);
 
-   glRasterPos2i(10, 70);
+   glRasterPos2i(10, 80);
    sprintf(s, "Texture size[cursor]: %d x %d  Border[b]: %d", w, h, TexBorder);
    PrintString(s);
 
-   glRasterPos2i(10, 55);
-   sprintf(s, "Texture format[f]: %s  Type[t]: %s  IntFormat[i]: %s",
-           FormatStr(TexFormat), TypeStr(TexType), FormatStr(TexIntFormat));
+   glRasterPos2i(10, 65);
+   sprintf(s, "Format[f]: %s  Type: %s  IntFormat: %s",
+           FormatStr(FormatTable[Format].Format),
+           TypeStr(  FormatTable[Format].Type),
+           FormatStr(FormatTable[Format].IntFormat));
    PrintString(s);
 
-   glRasterPos2i(10, 40);
+   glRasterPos2i(10, 50);
    sprintf(s, "Pixel Scale&Bias[p]: %s   TexSubImage[s]: %s",
            ScaleAndBias ? "Yes" : "No",
            SubImage ? "Yes" : "No");
@@ -246,8 +263,21 @@ Display(void)
       glRasterPos2i(10, 10);
       sprintf(s, "Download rate: %g Mtexels/second  %g MB/second",
               DownloadRate / 1000000.0,
-              DownloadRate * BytesPerTexel(TexFormat, TexType) / 1000000.0);
+              DownloadRate * BytesPerTexel(Format) / 1000000.0);
       PrintString(s);
+      {
+         GLint r, g, b, a, l, i;
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &r);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &g);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &b);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &a);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_LUMINANCE_SIZE, &l);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTENSITY_SIZE, &i);
+         sprintf(s, "TexelBits: R=%d G=%d B=%d A=%d L=%d I=%d", r, g, b, a, l, i);
+         glRasterPos2i(10, 25);
+         PrintString(s);
+      }
+
       glutSwapBuffers();
    }
 }
@@ -265,35 +295,6 @@ Reshape(int width, int height)
 }
 
 
-static GLenum
-NextFormat(GLenum format)
-{
-   if (format == GL_RGB) {
-      return GL_RGBA;
-   }
-   else if (format == GL_RGBA) {
-      return GL_RGB;
-   }
-   else {
-      return GL_RGBA;
-   }
-}
-
-
-static GLenum
-NextType(GLenum type)
-{
-   if (type == GL_UNSIGNED_BYTE) {
-      return GL_UNSIGNED_SHORT;
-   }
-   else if (type == GL_UNSIGNED_SHORT) {
-      return GL_UNSIGNED_BYTE;
-   }
-   else {
-      return GL_UNSIGNED_SHORT;
-   }
-}
-
 
 static void
 Key(unsigned char key, int x, int y)
@@ -310,12 +311,7 @@ Key(unsigned char key, int x, int y)
          break;
       case 'f':
          /* change format */
-         TexFormat = NextFormat(TexFormat);
-         Mode = 0;
-         break;
-      case 'i':
-         /* change internal format */
-         TexIntFormat = NextFormat(TexIntFormat);
+         Format = (Format + 1) % NUM_FORMATS;
          Mode = 0;
          break;
       case 'p':
@@ -325,11 +321,6 @@ Key(unsigned char key, int x, int y)
          break;
       case 's':
          SubImage = !SubImage;
-         Mode = 0;
-         break;
-      case 't':
-         /* change type */
-         TexType = NextType(TexType);
          Mode = 0;
          break;
       case 27:
