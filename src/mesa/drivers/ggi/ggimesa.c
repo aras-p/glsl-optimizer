@@ -27,7 +27,7 @@
 #endif
 
 #include <ggi/mesa/ggimesa_int.h>
-#include "debug.h"
+#include <ggi/mesa/debug.h>
 #include "extensions.h"
 #include "matrix.h"
 
