@@ -3,49 +3,46 @@
 
 
 
-Mesa-6.2 release notes:
------------------------
+Requirements:
+-------------
 
-1) Glide2 support has been ceased; please visit the Glide SourceForge and
-   help us improve Glide3.
-2) The current release is a WIP; among other things, the Linux build works
-   only to some extent. Voodoo Rush not fully tested. Any help will be
-   appreciated.
-3) Although Mesa is designed to work with any Glide3, it would benefit from
-   interacting with newer Glide libraries, which can export functions like:
-   `grGetRegistryOrEnvironmentStringExt', `grSetNumPendingBuffers', Texus2
-   and pointcast palette. The latest Glide3 can be reached here:
-	http://sourceforge.net/projects/glide/
+A Voodoo-based videocard/accelerator
+DOS (with DJGPP), Windows9x/2k (with MinGW), Linux
+Glide3x library for your OS
 
-
-
-Known supported HW/OS:
-----------------------
-
-Voodoo-based videocards/accelerators
-DOS (DJGPP), Windows9x/2k (MinGW/MSVC), Linux
+http://sourceforge.net/projects/glide/
 
 
 
 How to compile:
 ---------------
 
-DJGPP/MinGW:
+DJGPP:
    Place the Glide3 SDK in the top Mesa directory:
 	$(MESA)/glide3/include/*.h
+		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
 	$(MESA)/glide3/lib/
-   Required headers:
-	3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
-   Required libraries:
-	OS specific
+		libgld3x.a, libgld3i.a, glide3x.dxe
    Type:
 	make -f Makefile.DJ X86=1 FX=1
-	or
+   Look into the makefile for further information.
+
+MinGW:
+   Place the Glide3 SDK in the top Mesa directory:
+	$(MESA)/glide3/include/*.h
+		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
+	$(MESA)/glide3/lib/
+		libglide3x.a, glide3x.dll
+   Type:
 	make -f Makefile.mgw X86=1 FX=1
-   Look into the corresponding makefiles for further information.
+   Look into the makefile for further information.
 
 Linux:
    Place the Glide3 SDK in /usr/local/glide
+	/usr/local/glide/include/*.h
+		3dfx.h, g3ext.h, glide.h, glidesys.h, glideutl.h, sst1vid.h
+	/usr/local/glide/lib/*.h
+		libglide3x.a, libglide3x.so
    Type:
 	make linux-glide
 	or
@@ -63,12 +60,7 @@ FX_TRAP_GLIDE
 FX_PACKEDCOLOR
 	use packed color in vertex structure
 FX_TC_NAPALM
-	map GL_COMPRESSED_RGB[A] to FXT1. This will have effect on Napalm
-	only (can coexist with FX_TC_NCC, but has higher priority)
-FX_TC_NCC
-	experimental
-	map GL_COMPRESSED_RGB[A] to NCC. This will have effect on any 3dfx
-	HW (can coexist with FX_TC_NAPALM, but has lesser priority)
+	map GL_COMPRESSED_RGB[A] to FXT1. Works with VSA100-based cards only.
 FX_COMPRESS_S3TC_AS_FXT1_HACK
 	map S3TC to FXT1
 FX_RESCALE_BIG_TEXURES_HACK
@@ -148,7 +140,7 @@ MESA_FX_NOSNAP
 	OS: all
 	HW: Voodoo1, Rush, Banshee
 	Desc: do not snap vertices inside Mesa
-	Note: to be used with Glide3x that snaps vertices itself
+	Note: to be used with Glide3x that snaps vertices internally
 MESA_FX_POINTCAST
 	OS: all
 	HW: dual-TMU cards (some Voodoo1, Voodoo2, Avenger, Napalm)
@@ -197,11 +189,17 @@ MESA_GLX_FX
 	OS: linux
 	HW: Voodoo1, Rush, Voodoo2
 	Desc: display mode
-	Note: (!) experimental: "w" may work in Win32 using non-V1/V2 HW
+	Note: (!) experimental
 	Value:
 	    "w" - windowed mode
 	    "f" - fullscreen mode
 	    "d" - disable glide driver
+	OS: win32
+	HW: Rush, Banshee, Avenger, Napalm
+	Desc: display mode
+	Note: (!) experimental
+	Value:
+	    "w" - windowed mode
 
 
 
