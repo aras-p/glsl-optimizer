@@ -1,7 +1,7 @@
-# $Id: Makefile.OSMesa16,v 1.9 2002/10/25 13:50:48 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.10 2003/01/14 03:00:55 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  4.1
+# Version:  5.0
 # Copyright (C) 1995-2002  Brian Paul
 
 # Makefile for building Mesa for 16/32-bit/channel rendering with the OSMesa
@@ -11,7 +11,7 @@
 ##### MACROS #####
 
 GL_MAJOR = 1
-GL_MINOR = 2
+GL_MINOR = 4
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 VPATH = RCS
@@ -22,6 +22,7 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
+	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
@@ -70,6 +71,9 @@ CORE_SOURCES = \
 	texstore.c \
 	texutil.c \
 	varray.c \
+	vpexec.c \
+	vpparse.c \
+	vpstate.c \
 	vtxfmt.c \
 	X86/x86.c \
 	X86/common_x86.c \
@@ -77,13 +81,11 @@ CORE_SOURCES = \
 	X86/sse.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
-	math/m_debug_vertex.c \
 	math/m_debug_xform.c \
 	math/m_eval.c \
 	math/m_matrix.c \
 	math/m_translate.c \
 	math/m_vector.c \
-	math/m_vertices.c \
 	math/m_xform.c \
 	array_cache/ac_context.c \
 	array_cache/ac_import.c \
@@ -135,6 +137,7 @@ CORE_SOURCES = \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
 	tnl/t_vb_points.c \
+	tnl/t_vb_program.c \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
@@ -177,8 +180,9 @@ X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
 	./X86/gen_matypes > X86/matypes.h
 	rm -f X86/gen_matypes X86/*.o
 
-$(ASM_SOURCES): X86/matypes.h
-
+# We have X86/matypes.h depend on X86/matypes.h so that if ASM_SOURCES
+# is empty we don't get an invalid Makefile.
+$(ASM_SOURCES) X86/matypes.h: X86/matypes.h
 
 
 ##### TARGETS #####
@@ -187,7 +191,7 @@ $(ASM_SOURCES): X86/matypes.h
 #	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~ */*.o */*~ *.lo *.la
+	-rm -f *.o *~ */*.o */*~ *.lo *.la
 	-rm -rf .libs
 
 targets: $(LIBDIR)/$(OSMESA16_LIB)
