@@ -1,5 +1,5 @@
 
-/* $Id: api_validate.c,v 1.1 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: api_validate.c,v 1.2 2001/01/02 21:40:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,9 +26,10 @@
  */
 
 #include "glheader.h"
+#include "api_validate.h"
 #include "context.h"
 #include "mtypes.h"
-#include "api_validate.h"
+#include "state.h"
 
 GLboolean
 _mesa_validate_DrawElements(GLcontext *ctx,
