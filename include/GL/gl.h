@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.16 1999/10/30 18:39:06 tjump Exp $ */
+/* $Id: gl.h,v 1.17 1999/11/05 18:20:31 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,8 +53,8 @@
 #  pragma warning( disable : 4068 ) /* unknown pragma */
 #  pragma warning( disable : 4710 ) /* function 'foo' not inlined */
 #  pragma warning( disable : 4711 ) /* function 'foo' selected for automatic inline expansion */
+#  pragma warning( disable : 4127 ) /* conditional expression is constant */
 #	if defined(MESA_MINWARN)
-#    pragma warning( disable : 4127 ) /* conditional expression is constant */
 #	  pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
 #	  pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
 #	  pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
