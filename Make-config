@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.26 2000/08/08 16:16:22 brianp Exp $
+# $Id: Make-config,v 1.27 2000/09/15 15:55:24 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -1292,7 +1292,7 @@ linux-elf-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
