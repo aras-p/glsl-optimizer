@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.20 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.21 2001/07/14 16:05:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,8 +94,7 @@
    GLfloat oneOverArea;
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
-   GLboolean tiny;
-   const GLint snapMask = ~((FIXED_ONE / 16) - 1);  /* for x/y coord snapping */
+   const GLint snapMask = ~((FIXED_ONE / 16) - 1); /* for x/y coord snapping */
    GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
    struct triangle_span span;
@@ -180,19 +179,7 @@
       if (area == 0.0F)
          return;
 
-      /* This may not be needed anymore.  Let's see if anyone reports a problem. */
-#if 0
-      /* check for very tiny triangle */
-      if (area * area < (0.001F * 0.001F)) { /* square to ensure positive value */
-         oneOverArea = 1.0F / 0.001F;  /* a close-enough value */
-         tiny = GL_TRUE;
-      }
-      else
-#endif
-      {
-         oneOverArea = 1.0F / area;
-         tiny = GL_FALSE;
-      }
+      oneOverArea = 1.0F / area;
    }
 
 #ifndef DO_OCCLUSION_TEST
@@ -358,16 +345,7 @@
 #endif
 #ifdef INTERP_RGB
       span.activeMask |= SPAN_RGBA;
-      if (tiny) {
-         /* This is kind of a hack to eliminate RGB color over/underflow
-          * problems when rendering very tiny triangles.  We're not doing
-          * anything with alpha or specular color at this time.
-          */
-         drdx = drdy = 0.0;  span.redStep = 0;
-         dgdx = dgdy = 0.0;  span.greenStep = 0;
-         dbdx = dbdy = 0.0;  span.blueStep = 0;
-      }
-      else {
+      {
          GLfloat eMaj_dr, eBot_dr;
          GLfloat eMaj_dg, eBot_dg;
          GLfloat eMaj_db, eBot_db;
