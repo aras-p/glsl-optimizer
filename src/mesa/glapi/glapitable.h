@@ -703,7 +703,7 @@ struct _glapi_table
    void (*GetBufferPointervARB)(GLenum target, GLenum pname, GLvoid ** params); /* 694 */
    void (*GetBufferSubDataARB)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data); /* 695 */
    GLboolean (*IsBufferARB)(GLuint buffer); /* 696 */
-   void (*MapBufferARB)(GLenum target, GLenum access); /* 697 */
+   void * (*MapBufferARB)(GLenum target, GLenum access); /* 697 */
    GLboolean (*UnmapBufferARB)(GLenum target); /* 698 */
    void (*DepthBoundsEXT)(GLclampd zmin, GLclampd zmax); /* 699 */
 };

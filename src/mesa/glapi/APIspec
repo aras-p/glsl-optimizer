@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.16 2003/04/21 14:53:40 brianp Exp $
+# $Id: APIspec,v 1.17 2003/05/10 04:35:36 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -8321,7 +8321,7 @@ category	GL_ARB_vertex_buffer_object
 offset		696
 
 name		MapBufferARB
-return		void
+return		void *
 param		target		GLenum
 param		access		GLenum
 category	GL_ARB_vertex_buffer_object

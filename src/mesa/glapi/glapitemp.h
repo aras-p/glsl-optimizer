@@ -4609,9 +4609,9 @@ KEYWORD1 GLboolean KEYWORD2 NAME(IsBufferARB)(GLuint buffer)
    RETURN_DISPATCH(IsBufferARB, (buffer), (F, "glIsBufferARB(%d);\n", buffer));
 }
 
-KEYWORD1 void KEYWORD2 NAME(MapBufferARB)(GLenum target, GLenum access)
+KEYWORD1 void * KEYWORD2 NAME(MapBufferARB)(GLenum target, GLenum access)
 {
-   DISPATCH(MapBufferARB, (target, access), (F, "glMapBufferARB(0x%x, 0x%x);\n", target, access));
+   RETURN_DISPATCH(MapBufferARB, (target, access), (F, "glMapBufferARB(0x%x, 0x%x);\n", target, access));
 }
 
 KEYWORD1 GLboolean KEYWORD2 NAME(UnmapBufferARB)(GLenum target)

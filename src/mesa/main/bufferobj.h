@@ -1,4 +1,4 @@
-/* $Id: bufferobj.h,v 1.1 2003/03/29 17:01:00 brianp Exp $ */
+/* $Id: bufferobj.h,v 1.2 2003/05/10 04:35:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,7 +51,7 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, co
 extern void
 _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
 
-extern void
+extern void *
 _mesa_MapBufferARB(GLenum target, GLenum access);
 
 GLboolean

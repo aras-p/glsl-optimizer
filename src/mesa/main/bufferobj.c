@@ -174,11 +174,11 @@ _mesa_GetBufferSubDataARB(GLenum target, GLintptrARB offset,
    }
 }
 
-void
+void *
 _mesa_MapBufferARB(GLenum target, GLenum access)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    switch (access) {
       case GL_READ_ONLY_ARB:
@@ -188,7 +188,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glMapBufferARB(access)");
-         return;
+         return NULL;
    }
 
    if (target == GL_ARRAY_BUFFER_ARB) {
@@ -199,8 +199,10 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glMapBufferARB(target)");
-      return;
+      return NULL;
    }
+
+   return NULL;
 }
 
 GLboolean
