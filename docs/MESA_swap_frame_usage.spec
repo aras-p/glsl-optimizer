@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Ian Romanick, IBM  (idr 'at' us.ibm.com)
+    Ian Romanick, IBM, idr at us.ibm.com
 
 Status
 
@@ -16,7 +16,7 @@ Status
 
 Version
 
-    Date: 3/17/2003   Revision: 1.0
+    Date: 5/1/2003   Revision: 1.1
 
 Number
 
@@ -194,3 +194,8 @@ New State
 New Implementation Dependent State
 
     None
+
+Revision History
+
+    1.1,  5/1/03   Added contact information.
+    1.0,  3/17/03  Initial version based on WGL_I3D_swap_frame_usage.
