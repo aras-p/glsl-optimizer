@@ -32,11 +32,17 @@
 #ifndef __WIN32__
 
 #if defined(STDCALL_API)
-#define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n2))
-#elif defined(USE_MGL_NAMESPACE)
-#define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n))
+# if defined(USE_MGL_NAMESPACE)
+#  define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n2))
+# else
+#  define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n2))
+# endif
 #else
-#define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n))
+# if defined(USE_MGL_NAMESPACE)
+#  define GL_PREFIX(n,n2) GLNAME(CONCAT(mgl,n))
+# else
+#  define GL_PREFIX(n,n2) GLNAME(CONCAT(gl,n))
+# endif
 #endif
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))
