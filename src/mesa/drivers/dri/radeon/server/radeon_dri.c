@@ -221,7 +221,6 @@ static int RADEONEngineRestore( const DRIDriverContext *ctx )
    OUTREG(RADEON_GEN_INT_CNTL, info->gen_int_cntl);
    OUTREG(RADEON_CRTC_OFFSET_CNTL, info->crtc_offset_cntl);
 
-
    /* Initialize and start the CP if required */
    if ((err = drmCommandNone(ctx->drmFD, DRM_RADEON_CP_START)) != 0) {
       fprintf(stderr, "%s: CP start %d\n", __FUNCTION__, err);
@@ -888,13 +887,14 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    /* Initialize kernel gart memory manager */
    RADEONDRIAgpHeapInit(ctx, info);
 
+   fprintf(stderr,"page flipping %sabled\n", info->page_flip_enable?"en":"dis");
    /* Initialize the SAREA private data structure */
    {
       drm_radeon_sarea_t *pSAREAPriv;
       pSAREAPriv = (drm_radeon_sarea_t *)(((char*)ctx->pSAREA) + 
 					sizeof(drm_sarea_t));
       memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
-      pSAREAPriv->pfState = 1;
+      pSAREAPriv->pfState = info->page_flip_enable;
    }
 
 
@@ -1153,6 +1153,7 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
    info->gartTexSize    = RADEON_DEFAULT_AGP_TEX_SIZE;
    info->bufSize       = RADEON_DEFAULT_BUFFER_SIZE;
    info->ringSize      = RADEON_DEFAULT_RING_SIZE;
+   info->page_flip_enable = RADEON_DEFAULT_PAGE_FLIP;
   
    info->Chipset = ctx->chipset;
 

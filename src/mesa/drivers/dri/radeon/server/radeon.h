@@ -173,6 +173,7 @@ typedef struct {
    unsigned int      depthPitchOffset;
 
    int               irq;              /**< \brief IRQ number */
+   int               page_flip_enable; /**< \brief Page Flip enable */
    unsigned int      gen_int_cntl;
    unsigned int      crtc_offset_cntl;
 

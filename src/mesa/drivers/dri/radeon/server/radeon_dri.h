@@ -53,6 +53,7 @@
 #define RADEON_DEFAULT_BUFFER_SIZE    2 /* MB (must be page aligned) */
 #define RADEON_DEFAULT_AGP_TEX_SIZE   1 /* MB (must be page aligned) */
 #define RADEON_DEFAULT_CP_TIMEOUT     10000  /* usecs */
+#define RADEON_DEFAULT_PAGE_FLIP      0 /* page flipping diabled */
 #define RADEON_BUFFER_ALIGN           0x00000fff
 
 /**
