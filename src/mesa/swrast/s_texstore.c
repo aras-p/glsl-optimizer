@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.10 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.11 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    dst = image;
    stride = width * 4;
    for (i = 0; i < height; i++) {
-      _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
+      _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
                          (GLchan (*)[4]) dst );
       dst += stride;
    }
@@ -114,7 +114,7 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
 
    dst = image;
    for (i = 0; i < height; i++) {
-      _mesa_read_depth_span_float(ctx, width, x, y + i, dst);
+      _swrast_read_depth_span_float(ctx, width, x, y + i, dst);
       dst += width;
    }
 

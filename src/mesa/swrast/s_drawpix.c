@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.46 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.47 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,7 @@
  *          GL_FALSE if image was completely clipped away (draw nothing)
  */
 GLboolean
-_mesa_clip_pixelrect(const GLcontext *ctx,
+_swrast_clip_pixelrect(const GLcontext *ctx,
                      GLint *destX, GLint *destY,
                      GLsizei *width, GLsizei *height,
                      GLint *skipPixels, GLint *skipRows)
@@ -108,11 +108,11 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledUnits)
-      _mesa_span_default_texcoords(ctx, &span);
+      _swrast_span_default_texcoords(ctx, &span);
 
    if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
        && ctx->Texture._EnabledUnits == 0
@@ -136,7 +136,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          rowLength = width;
 
       /* If we're not using pixel zoom then do all clipping calculations
-       * now.  Otherwise, we'll let the _mesa_write_zoomed_*_span() functions
+       * now.  Otherwise, we'll let the _swrast_write_zoomed_*_span() functions
        * handle the clipping.
        */
       if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
@@ -240,7 +240,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
-                  _mesa_write_zoomed_rgba_span(ctx, &span,
+                  _swrast_write_zoomed_rgba_span(ctx, &span,
                                         (CONST GLchan (*)[4]) src, zoomY0, 0);
                   src += rowLength * 4;
                   destY++;
@@ -280,7 +280,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
-                  _mesa_write_zoomed_rgb_span(ctx, &span, 
+                  _swrast_write_zoomed_rgb_span(ctx, &span, 
                                          (CONST GLchan (*)[3]) src, zoomY0, 0);
                   src += rowLength * 3;
                   destY++;
@@ -342,7 +342,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
-                  _mesa_write_zoomed_rgb_span(ctx, &span,
+                  _swrast_write_zoomed_rgb_span(ctx, &span,
                              (CONST GLchan (*)[3]) span.array->rgb, zoomY0, 0);
                   src += rowLength;
                   destY++;
@@ -410,7 +410,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
-                  _mesa_write_zoomed_rgba_span(ctx, &span,
+                  _swrast_write_zoomed_rgba_span(ctx, &span,
                             (CONST GLchan (*)[4]) span.array->rgba, zoomY0, 0);
                   src += rowLength*2;
                   destY++;
@@ -458,7 +458,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.x = destX;
                   span.y = destY;
                   span.end = drawWidth;
-                  _mesa_write_zoomed_rgba_span(ctx, &span,
+                  _swrast_write_zoomed_rgba_span(ctx, &span,
                             (CONST GLchan (*)[4]) span.array->rgba, zoomY0, 0);
                   src += rowLength;
                   destY++;
@@ -512,9 +512,9 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
 
    /*
     * General solution
@@ -541,9 +541,9 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
          span.end = spanEnd;
          
          if (zoom)
-            _mesa_write_zoomed_index_span(ctx, &span, y, skipPixels);
+            _swrast_write_zoomed_index_span(ctx, &span, y, skipPixels);
          else
-            _mesa_write_index_span(ctx, &span);
+            _swrast_write_index_span(ctx, &span);
       }
       skipPixels += spanEnd;
    }
@@ -607,11 +607,11 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
          }
 
          if (zoom) {
-            _mesa_write_zoomed_stencil_span(ctx, (GLuint) spanWidth,
+            _swrast_write_zoomed_stencil_span(ctx, (GLuint) spanWidth,
                                             spanX, spanY, values, desty, 0);
          }
          else {
-            _mesa_write_stencil_span(ctx, (GLuint) spanWidth,
+            _swrast_write_stencil_span(ctx, (GLuint) spanWidth,
                                      spanX, spanY, values);
          }
       }
@@ -646,12 +646,12 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
    }
 
-   _mesa_span_default_color(ctx, &span);
+   _swrast_span_default_color(ctx, &span);
 
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledUnits)
-      _mesa_span_default_texcoords(ctx, &span);
+      _swrast_span_default_texcoords(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
        && !bias_or_scale && !zoom && ctx->Visual.rgbMode
@@ -668,7 +668,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < width; i++)
             span.array->z[i] = zptr[i];
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
       }
    }
    else if (type == GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
@@ -684,7 +684,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
          MEMCPY(span.array->z, zptr, width * sizeof(GLdepth));
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
       }
    }
    else {
@@ -705,7 +705,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                                                     GL_DEPTH_COMPONENT, type,
                                                     0, row, skipPixels);
 
-            /* Set these for each row since the _mesa_write_* function may
+            /* Set these for each row since the _swrast_write_* function may
              * change them while clipping.
              */
             span.x = spanX;
@@ -724,18 +724,18 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             }
             if (ctx->Visual.rgbMode) {
                if (zoom) {
-                  _mesa_write_zoomed_rgba_span(ctx, &span,
+                  _swrast_write_zoomed_rgba_span(ctx, &span,
                                      (const GLchan (*)[4]) span.array->rgba,
                                      desty, skipPixels);
                }
                else
-                  _mesa_write_rgba_span(ctx, &span);
+                  _swrast_write_rgba_span(ctx, &span);
             }
             else {
                if (zoom)
-                  _mesa_write_zoomed_index_span(ctx, &span, desty, 0);
+                  _swrast_write_zoomed_index_span(ctx, &span, desty, 0);
                else
-                  _mesa_write_index_span(ctx, &span);
+                  _swrast_write_index_span(ctx, &span);
             }
          }
          skipPixels += spanEnd;
@@ -774,11 +774,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledUnits)
-      _mesa_span_default_texcoords(ctx, &span);
+      _swrast_span_default_texcoords(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= (GLint) ctx->DrawBuffer->Width
@@ -861,7 +861,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             const GLvoid *source = _mesa_image_address(unpack,
                      pixels, width, height, format, type, 0, row, skipPixels);
 
-            /* Set these for each row since the _mesa_write_* function may
+            /* Set these for each row since the _swrast_write_* function may
              * change them while clipping.
              */
             span.x = spanX;
@@ -889,11 +889,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                  (CONST GLchan (*)[4]) span.array->rgba, NULL);
             }
             else if (zoom) {
-               _mesa_write_zoomed_rgba_span(ctx, &span,
+               _swrast_write_zoomed_rgba_span(ctx, &span,
                     (CONST GLchan (*)[4]) span.array->rgba, desty, skipPixels);
             }
             else {
-               _mesa_write_rgba_span(ctx, &span);
+               _swrast_write_rgba_span(ctx, &span);
             }
          }
 

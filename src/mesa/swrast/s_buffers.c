@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.16 2002/11/13 16:46:19 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.17 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,7 +66,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          for (j = 0; j < width; j++) {
             COPY_CHAN4(rgba[j], clearColor);
          }
-         _mesa_mask_rgba_array( ctx, width, x, y + i, rgba );
+         _swrast_mask_rgba_array( ctx, width, x, y + i, rgba );
          (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,
                                           (CONST GLchan (*)[4]) rgba, NULL );
       }
@@ -81,7 +81,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          for (j=0;j<width;j++) {
             span[j] = ctx->Color.ClearIndex;
          }
-         _mesa_mask_index_array( ctx, width, x, y + i, span );
+         _swrast_mask_index_array( ctx, width, x, y + i, span );
          (*swrast->Driver.WriteCI32Span)( ctx, width, x, y + i, span, mask );
       }
    }
@@ -190,16 +190,16 @@ _swrast_Clear( GLcontext *ctx, GLbitfield mask,
    /* do software clearing here */
    if (mask) {
       if (mask & ctx->Color._DrawDestMask)   clear_color_buffers(ctx);
-      if (mask & GL_DEPTH_BUFFER_BIT)    _mesa_clear_depth_buffer(ctx);
-      if (mask & GL_ACCUM_BUFFER_BIT)    _mesa_clear_accum_buffer(ctx);
-      if (mask & GL_STENCIL_BUFFER_BIT)  _mesa_clear_stencil_buffer(ctx);
+      if (mask & GL_DEPTH_BUFFER_BIT)    _swrast_clear_depth_buffer(ctx);
+      if (mask & GL_ACCUM_BUFFER_BIT)    _swarst_clear_accum_buffer(ctx);
+      if (mask & GL_STENCIL_BUFFER_BIT)  _swrast_clear_stencil_buffer(ctx);
    }
 
    /* clear software-based alpha buffer(s) */
    if ( (mask & GL_COLOR_BUFFER_BIT)
 	&& ctx->DrawBuffer->UseSoftwareAlphaBuffers
 	&& ctx->Color.ColorMask[ACOMP]) {
-      _mesa_clear_alpha_buffers( ctx );
+      _swrast_clear_alpha_buffers( ctx );
    }
 
    RENDER_FINISH(swrast,ctx);
@@ -211,16 +211,16 @@ _swrast_alloc_buffers( GLframebuffer *buffer )
 {
    /* Reallocate other buffers if needed. */
    if (buffer->UseSoftwareDepthBuffer) {
-      _mesa_alloc_depth_buffer( buffer );
+      _swrast_alloc_depth_buffer( buffer );
    }
    if (buffer->UseSoftwareStencilBuffer) {
-      _mesa_alloc_stencil_buffer( buffer );
+      _swrast_alloc_stencil_buffer( buffer );
    }
    if (buffer->UseSoftwareAccumBuffer) {
-      _mesa_alloc_accum_buffer( buffer );
+      _swrast_alloc_accum_buffer( buffer );
    }
    if (buffer->UseSoftwareAlphaBuffers) {
-      _mesa_alloc_alpha_buffers( buffer );
+      _swrast_alloc_alpha_buffers( buffer );
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.30 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.31 2003/03/25 02:23:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -461,7 +461,7 @@ spec_multitex_aa_tri(GLcontext *ctx,
  * appropriate antialiased triangle rasterizer function.
  */
 void
-_mesa_set_aa_triangle_function(GLcontext *ctx)
+_swrast_set_aa_triangle_function(GLcontext *ctx)
 {
    ASSERT(ctx->Polygon.SmoothFlag);
 

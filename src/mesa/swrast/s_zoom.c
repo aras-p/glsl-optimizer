@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.23 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.24 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 
 
 /*
- * Helper function called from _mesa_write_zoomed_rgba/rgb/index_span().
+ * Helper function called from _swrast_write_zoomed_rgba/rgb/index_span().
  */
 static void
 zoom_span( GLcontext *ctx, const struct sw_span *span,
@@ -219,7 +219,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    /* write the span in rows [r0, r1) */
    if (format == GL_RGBA || format == GL_RGB) {
       /* Writing the span may modify the colors, so make a backup now if we're
-       * going to call _mesa_write_zoomed_span() more than once.
+       * going to call _swrast_write_zoomed_span() more than once.
        * Also, clipping may change the span end value, so store it as well.
        */
       const GLint end = zoomed.end; /* save */
@@ -227,7 +227,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * 4 * sizeof(GLchan));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
-         _mesa_write_rgba_span(ctx, &zoomed);
+         _swrast_write_rgba_span(ctx, &zoomed);
          zoomed.end = end;  /* restore */
          if (r1 - r0 > 1) {
             /* restore the colors */
@@ -241,7 +241,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
-         _mesa_write_index_span(ctx, &zoomed);
+         _swrast_write_index_span(ctx, &zoomed);
          zoomed.end = end;  /* restore */
          if (r1 - r0 > 1) {
             /* restore the colors */
@@ -253,7 +253,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
 
 
 void
-_mesa_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
                               CONST GLchan rgba[][4], GLint y0,
                               GLint skipPixels )
 {
@@ -262,7 +262,7 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
 
 
 void
-_mesa_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
                              CONST GLchan rgb[][3], GLint y0,
                              GLint skipPixels )
 {
@@ -271,7 +271,7 @@ _mesa_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
 
 
 void
-_mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
                                GLint y0, GLint skipPixels )
 {
   zoom_span(ctx, span, (const GLvoid *) span->array->index, y0,
@@ -283,7 +283,7 @@ _mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
  * As above, but write stencil values.
  */
 void
-_mesa_write_zoomed_stencil_span( GLcontext *ctx,
+_swrast_write_zoomed_stencil_span( GLcontext *ctx,
                                  GLuint n, GLint x, GLint y,
                                  const GLstencil stencil[], GLint y0,
                                  GLint skipPixels )
@@ -365,6 +365,6 @@ _mesa_write_zoomed_stencil_span( GLcontext *ctx,
 
    /* write the span */
    for (r=r0; r<r1; r++) {
-      _mesa_write_stencil_span( ctx, m, x+skipcol, r, zstencil );
+      _swrast_write_stencil_span( ctx, m, x+skipcol, r, zstencil );
    }
 }

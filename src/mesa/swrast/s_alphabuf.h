@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.h,v 1.4 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_alphabuf.h,v 1.5 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,46 +34,46 @@
 
 
 extern void
-_mesa_alloc_alpha_buffers( GLframebuffer *buffer );
+_swrast_alloc_alpha_buffers( GLframebuffer *buffer );
 
 
 extern void
-_mesa_clear_alpha_buffers( GLcontext *ctx );
+_swrast_clear_alpha_buffers( GLcontext *ctx );
 
 
 extern void
-_mesa_write_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_swrast_write_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                         CONST GLchan rgba[][4], const GLubyte mask[] );
 
 
 extern void
-_mesa_write_mono_alpha_span( GLcontext *ctx,
+_swrast_write_mono_alpha_span( GLcontext *ctx,
                              GLuint n, GLint x, GLint y,
                              GLchan alpha, const GLubyte mask[] );
 
 
 
 extern void
-_mesa_write_alpha_pixels( GLcontext* ctx,
+_swrast_write_alpha_pixels( GLcontext* ctx,
                           GLuint n, const GLint x[], const GLint y[],
                           CONST GLchan rgba[][4],
                           const GLubyte mask[] );
 
 
 extern void
-_mesa_write_mono_alpha_pixels( GLcontext* ctx,
+_swrast_write_mono_alpha_pixels( GLcontext* ctx,
                                GLuint n, const GLint x[],
                                const GLint y[], GLchan alpha,
                                const GLubyte mask[] );
 
 
 extern void
-_mesa_read_alpha_span( GLcontext* ctx,
+_swrast_read_alpha_span( GLcontext* ctx,
                        GLuint n, GLint x, GLint y, GLchan rgba[][4] );
 
 
 extern void
-_mesa_read_alpha_pixels( GLcontext* ctx,
+_swrast_read_alpha_pixels( GLcontext* ctx,
                          GLuint n, const GLint x[], const GLint y[],
                          GLchan rgba[][4], const GLubyte mask[] );
 

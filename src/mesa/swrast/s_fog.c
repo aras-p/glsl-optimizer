@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.24 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_fog.c,v 1.25 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@
  * Used to convert current raster distance to a fog factor in [0,1].
  */
 GLfloat
-_mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z)
+_swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z)
 {
    GLfloat d, f;
 
@@ -62,7 +62,7 @@ _mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z)
       f = (GLfloat) exp(-(d * d * z * z));
       return f;
    default:
-      _mesa_problem(ctx, "Bad fog mode in _mesa_z_to_fogfactor");
+      _mesa_problem(ctx, "Bad fog mode in _swrast_z_to_fogfactor");
       return 0.0; 
    }
 }
@@ -222,7 +222,7 @@ compute_fog_factors_from_z( const GLcontext *ctx,
  * fog factors per vertex.
  */
 void
-_mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
+_swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
@@ -240,7 +240,7 @@ _mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
    if (swrast->_PreferPixelFog) {
       /* compute fog factor from each fragment's Z value */
       if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
-         _mesa_span_interpolate_z(ctx, span);
+         _swrast_span_interpolate_z(ctx, span);
       compute_fog_factors_from_z(ctx, n, span->array->z, span->array->fog);
       span->arrayMask |= SPAN_FOG;
    }
@@ -275,7 +275,7 @@ _mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
  * As above, but color index mode.
  */
 void
-_mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
+_swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = span->end;
@@ -288,7 +288,7 @@ _mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span )
    if (swrast->_PreferPixelFog) {
       /* compute fog factor from each fragment's Z value */
       if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
-         _mesa_span_interpolate_z(ctx, span);
+         _swrast_span_interpolate_z(ctx, span);
       compute_fog_factors_from_z(ctx, n, span->array->z, span->array->fog);
       span->arrayMask |= SPAN_FOG;
    }

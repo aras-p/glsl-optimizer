@@ -1,10 +1,10 @@
-/* $Id: s_triangle.h,v 1.7 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_triangle.h,v 1.8 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef S_TRIANGLES_H
 #define S_TRIANGLES_H
 
@@ -36,16 +33,16 @@
 #include "swrast.h"
 
 
-GLboolean _mesa_cull_triangle( GLcontext *ctx,
-			    const SWvertex *v0,
-			    const SWvertex *v1,
-			    const SWvertex *v2);
+extern GLboolean
+_swrast_culltriangle( GLcontext *ctx,
+                     const SWvertex *v0,
+                     const SWvertex *v1,
+                     const SWvertex *v2);
 
-
-void
+extern void
 _swrast_choose_triangle( GLcontext *ctx );
 
-void
+extern void
 _swrast_add_spec_terms_triangle( GLcontext *ctx,
 				 const SWvertex *v0,
 				 const SWvertex *v1,

@@ -1,10 +1,10 @@
-/* $Id: s_copypix.c,v 1.43 2002/12/05 04:46:54 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.44 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,13 +28,13 @@
 #include "glheader.h"
 #include "context.h"
 #include "convolve.h"
+#include "histogram.h"
 #include "macros.h"
 #include "imports.h"
 #include "pixel.h"
 
 #include "s_context.h"
 #include "s_depth.h"
-#include "s_histogram.h"
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
@@ -108,9 +108,9 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
 
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
@@ -153,7 +153,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    for (row = 0; row < height; row++) {
       GLchan rgba[MAX_WIDTH][4];
       GLint i;
-      _mesa_read_rgba_span(ctx, ctx->ReadBuffer, width, srcx, srcy + row, rgba);
+      _swrast_read_rgba_span(ctx, ctx->ReadBuffer, width, srcx, srcy + row, rgba);
       /* convert GLchan to GLfloat */
       for (i = 0; i < width; i++) {
          *dest++ = (GLfloat) rgba[i][RCOMP] * (1.0F / CHAN_MAXF);
@@ -258,7 +258,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_zoomed_rgba_span(ctx, &span, 
+         _swrast_write_zoomed_rgba_span(ctx, &span, 
                                      (CONST GLchan (*)[4])span.array->rgba,
                                      desty, 0);
       }
@@ -266,7 +266,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
       }
    }
 
@@ -316,9 +316,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0
        && !zoom
@@ -347,7 +347,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* read the source image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
+         _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
                             (GLchan (*)[4]) p );
          p += width * 4;
       }
@@ -376,7 +376,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
          ASSERT(width < MAX_WIDTH);
-         _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy,
+         _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy,
                                span.array->rgba );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
@@ -476,7 +476,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_zoomed_rgba_span(ctx, &span,
+         _swrast_write_zoomed_rgba_span(ctx, &span,
                                      (CONST GLchan (*)[4]) span.array->rgba,
                                      desty, 0);
       }
@@ -484,7 +484,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
       }
    }
 
@@ -527,9 +527,9 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
 
    /* If read and draw buffer are different we must do buffer switching */
    changeBuffer = ctx->Pixel.ReadBuffer != ctx->Color.DrawBuffer
@@ -548,7 +548,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       /* read the image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, ssy, p );
+         _swrast_read_index_span( ctx, ctx->ReadBuffer, width, srcx, ssy, p );
          p += width;
       }
       p = tmpImage;
@@ -572,7 +572,7 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       else {
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
-         _mesa_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy,
+         _swrast_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy,
                                 span.array->index );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
@@ -591,9 +591,9 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.y = dy;
       span.end = width;
       if (zoom)
-         _mesa_write_zoomed_index_span(ctx, &span, desty, 0);
+         _swrast_write_zoomed_index_span(ctx, &span, desty, 0);
       else
-         _mesa_write_index_span(ctx, &span);
+         _swrast_write_index_span(ctx, &span);
    }
 
    if (overlapping)
@@ -641,9 +641,9 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
-   _mesa_span_default_color(ctx, &span);
+   _swrast_span_default_color(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
 
    if (overlapping) {
       GLint ssy = sy;
@@ -654,7 +654,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _mesa_read_depth_span_float(ctx, width, srcx, ssy, p);
+         _swrast_read_depth_span_float(ctx, width, srcx, ssy, p);
          p += width;
       }
       p = tmpImage;
@@ -673,7 +673,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          p += width;
       }
       else {
-         _mesa_read_depth_span_float(ctx, width, srcx, sy, depth);
+         _swrast_read_depth_span_float(ctx, width, srcx, sy, depth);
       }
 
       /* apply scale and bias */
@@ -688,16 +688,16 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.end = width;
       if (ctx->Visual.rgbMode) {
          if (zoom)
-            _mesa_write_zoomed_rgba_span( ctx, &span, 
+            _swrast_write_zoomed_rgba_span( ctx, &span, 
                             (const GLchan (*)[4])span.array->rgba, desty, 0 );
          else
-            _mesa_write_rgba_span(ctx, &span);
+            _swrast_write_rgba_span(ctx, &span);
       }
       else {
          if (zoom)
-            _mesa_write_zoomed_index_span( ctx, &span, desty, 0 );
+            _swrast_write_zoomed_index_span( ctx, &span, desty, 0 );
          else
-            _mesa_write_index_span(ctx, &span);
+            _swrast_write_index_span(ctx, &span);
       }
    }
 
@@ -750,7 +750,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _mesa_read_stencil_span( ctx, width, srcx, ssy, p );
+         _swrast_read_stencil_span( ctx, width, srcx, ssy, p );
          p += width;
       }
       p = tmpImage;
@@ -769,7 +769,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          p += width;
       }
       else {
-         _mesa_read_stencil_span( ctx, width, srcx, sy, stencil );
+         _swrast_read_stencil_span( ctx, width, srcx, sy, stencil );
       }
 
       /* Apply shift, offset, look-up table */
@@ -782,11 +782,11 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       /* Write stencil values */
       if (zoom) {
-         _mesa_write_zoomed_stencil_span( ctx, width, destx, dy,
+         _swrast_write_zoomed_stencil_span( ctx, width, destx, dy,
                                           stencil, desty, 0 );
       }
       else {
-         _mesa_write_stencil_span( ctx, width, destx, dy, stencil );
+         _swrast_write_stencil_span( ctx, width, destx, dy, stencil );
       }
    }
 

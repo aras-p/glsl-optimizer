@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.35 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_lines.c,v 1.36 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,11 +89,11 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
                y[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _mesa_write_texture_span(ctx, span);
+            _swrast_write_texture_span(ctx, span);
          else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
-            _mesa_write_rgba_span(ctx, span);
+            _swrast_write_rgba_span(ctx, span);
          else
-            _mesa_write_index_span(ctx, span);
+            _swrast_write_index_span(ctx, span);
       }
    }
    else {
@@ -110,11 +110,11 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
                x[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _mesa_write_texture_span(ctx, span);
+            _swrast_write_texture_span(ctx, span);
          else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
-            _mesa_write_rgba_span(ctx, span);
+            _swrast_write_rgba_span(ctx, span);
          else
-            _mesa_write_index_span(ctx, span);
+            _swrast_write_index_span(ctx, span);
       }
    }
 }
@@ -129,14 +129,14 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
 /* Simple color index line (no stipple, width=1, no Z, no fog, no tex)*/
 #define NAME simple_ci_line
 #define INTERP_INDEX
-#define RENDER_SPAN(span) _mesa_write_index_span(ctx, &span)
+#define RENDER_SPAN(span) _swrast_write_index_span(ctx, &span)
 #include "s_linetemp.h"
 
 
 /* Simple RGBA index line (no stipple, width=1, no Z, no fog, no tex)*/
 #define NAME simple_rgba_line
 #define INTERP_RGBA
-#define RENDER_SPAN(span) _mesa_write_rgba_span(ctx, &span);
+#define RENDER_SPAN(span) _swrast_write_rgba_span(ctx, &span);
 #include "s_linetemp.h"
 
 
@@ -154,7 +154,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, dx > dy);			\
    }								\
    else {							\
-      _mesa_write_index_span(ctx, &span);			\
+      _swrast_write_index_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
@@ -173,7 +173,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, dx > dy);			\
    }								\
    else {							\
-      _mesa_write_rgba_span(ctx, &span);			\
+      _swrast_write_rgba_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
@@ -193,7 +193,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, dx > dy);			\
    }								\
    else {							\
-      _mesa_write_texture_span(ctx, &span);			\
+      _swrast_write_texture_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
@@ -214,7 +214,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       draw_wide_line(ctx, &span, dx > dy);			\
    }								\
    else {							\
-      _mesa_write_texture_span(ctx, &span);			\
+      _swrast_write_texture_span(ctx, &span);			\
    }
 #include "s_linetemp.h"
 
@@ -332,11 +332,11 @@ _swrast_choose_line( GLcontext *ctx )
       }
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
-      USE(_mesa_feedback_line);
+      USE(_swrast_feedback_line);
    }
    else {
       ASSERT(ctx->RenderMode == GL_SELECT);
-      USE(_mesa_select_line);
+      USE(_swrast_select_line);
    }
 
    /*_mesa_print_line_function(ctx);*/

@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.11 2003/03/19 07:15:35 joukj Exp $ */
+/* $Id: s_nvfragprog.c,v 1.12 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
    const GLfloat texH = (GLfloat) texImg->HeightScale;
    GLchan rgba[4];
 
-   GLfloat lambda = _mesa_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
+   GLfloat lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
                                          texdx[1], texdy[1], /* dt/dx, dt/dy */
                                          texdx[3], texdy[2], /* dq/dx, dq/dy */
                                          texW, texH,

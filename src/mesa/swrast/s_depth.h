@@ -1,4 +1,4 @@
-/* $Id: s_depth.h,v 1.7 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_depth.h,v 1.8 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,31 +34,31 @@
 
 
 extern GLvoid *
-_mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
+_swrast_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
 
 
 
 extern GLuint
-_mesa_depth_test_span( GLcontext *ctx, struct sw_span *span);
+_swrast_depth_test_span( GLcontext *ctx, struct sw_span *span);
 
 
 
 extern void
-_mesa_read_depth_span( GLcontext *ctx,
+_swrast_read_depth_span( GLcontext *ctx,
                        GLint n, GLint x, GLint y, GLdepth depth[] );
 
 
 extern void
-_mesa_read_depth_span_float( GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_read_depth_span_float( GLcontext *ctx, GLint n, GLint x, GLint y,
                              GLfloat depth[] );
 
 
 extern void
-_mesa_alloc_depth_buffer( GLframebuffer *buffer );
+_swrast_alloc_depth_buffer( GLframebuffer *buffer );
 
 
 extern void
-_mesa_clear_depth_buffer( GLcontext *ctx );
+_swrast_clear_depth_buffer( GLcontext *ctx );
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.17 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.18 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,7 +126,7 @@ read_depth_pixels( GLcontext *ctx,
          GLushort *dst = (GLushort*) _mesa_image_address( packing, pixels,
                          width, height, GL_DEPTH_COMPONENT, type, 0, j, 0 );
          GLint i;
-         _mesa_read_depth_span(ctx, width, x, y, depth);
+         _swrast_read_depth_span(ctx, width, x, y, depth);
          for (i = 0; i < width; i++)
             dst[i] = depth[i];
       }
@@ -138,7 +138,7 @@ read_depth_pixels( GLcontext *ctx,
       for (j=0;j<height;j++,y++) {
          GLdepth *dst = (GLdepth *) _mesa_image_address( packing, pixels,
                          width, height, GL_DEPTH_COMPONENT, type, 0, j, 0 );
-         _mesa_read_depth_span(ctx, width, x, y, dst);
+         _swrast_read_depth_span(ctx, width, x, y, dst);
       }
    }
    else {
@@ -148,7 +148,7 @@ read_depth_pixels( GLcontext *ctx,
          GLfloat depth[MAX_WIDTH];
          GLvoid *dest;
 
-         _mesa_read_depth_span_float(ctx, readWidth, x, y, depth);
+         _swrast_read_depth_span_float(ctx, readWidth, x, y, depth);
 
          dest = _mesa_image_address(packing, pixels, width, height,
                                     GL_DEPTH_COMPONENT, type, 0, j, 0);
@@ -195,7 +195,7 @@ read_stencil_pixels( GLcontext *ctx,
       GLvoid *dest;
       GLstencil stencil[MAX_WIDTH];
 
-      _mesa_read_stencil_span(ctx, readWidth, x, y, stencil);
+      _swrast_read_stencil_span(ctx, readWidth, x, y, stencil);
 
       dest = _mesa_image_address(packing, pixels, width, height,
                                  GL_STENCIL_INDEX, type, 0, j, 0);
@@ -292,7 +292,7 @@ read_fast_rgba_pixels( GLcontext *ctx,
             (*swrast->Driver.ReadRGBASpan)(ctx, readWidth, srcX, srcY,
                                         (GLchan (*)[4]) dest);
             if (ctx->DrawBuffer->UseSoftwareAlphaBuffers) {
-               _mesa_read_alpha_span(ctx, readWidth, srcX, srcY,
+               _swrast_read_alpha_span(ctx, readWidth, srcX, srcY,
                                      (GLchan (*)[4]) dest);
             }
             dest += rowLength * 4;
@@ -390,7 +390,7 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
          if (ctx->Visual.rgbMode) {
-            _mesa_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
+            _swrast_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];
@@ -436,7 +436,7 @@ read_rgba_pixels( GLcontext *ctx,
          GLchan rgba[MAX_WIDTH][4];
          GLvoid *dst;
          if (ctx->Visual.rgbMode) {
-            _mesa_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
+            _swrast_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
             GLuint index[MAX_WIDTH];

@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.23 2003/03/04 16:34:02 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.24 2003/03/25 02:23:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,11 +101,11 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 
    if (line->span.end == MAX_WIDTH) {
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-      _mesa_write_texture_span(ctx, &(line->span));
+      _swrast_write_texture_span(ctx, &(line->span));
 #elif defined(DO_RGBA)
-      _mesa_write_rgba_span(ctx, &(line->span));
+      _swrast_write_rgba_span(ctx, &(line->span));
 #else
-      _mesa_write_index_span(ctx, &(line->span));
+      _swrast_write_index_span(ctx, &(line->span));
 #endif
       line->span.end = 0; /* reset counter */
    }
@@ -294,11 +294,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    }
 
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-   _mesa_write_texture_span(ctx, &(line.span));
+   _swrast_write_texture_span(ctx, &(line.span));
 #elif defined(DO_RGBA)
-   _mesa_write_rgba_span(ctx, &(line.span));
+   _swrast_write_rgba_span(ctx, &(line.span));
 #else
-   _mesa_write_index_span(ctx, &(line.span));
+   _swrast_write_index_span(ctx, &(line.span));
 #endif
 }
 

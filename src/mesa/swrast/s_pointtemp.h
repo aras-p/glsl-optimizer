@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.22 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.23 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -193,13 +193,13 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
           (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
 #if FLAGS & (TEXTURE | SPRITE)
          if (ctx->Texture._EnabledUnits)
-            _mesa_write_texture_span(ctx, span);
+            _swrast_write_texture_span(ctx, span);
          else
-            _mesa_write_rgba_span(ctx, span);
+            _swrast_write_rgba_span(ctx, span);
 #elif FLAGS & RGBA
-         _mesa_write_rgba_span(ctx, span);
+         _swrast_write_rgba_span(ctx, span);
 #else
-         _mesa_write_index_span(ctx, span);
+         _swrast_write_index_span(ctx, span);
 #endif
          span->end = 0;
       }
@@ -322,13 +322,13 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
           (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
 #if FLAGS & (TEXTURE | SPRITE)
          if (ctx->Texture._EnabledUnits)
-            _mesa_write_texture_span(ctx, span);
+            _swrast_write_texture_span(ctx, span);
          else
-            _mesa_write_rgba_span(ctx, span);
+            _swrast_write_rgba_span(ctx, span);
 #elif FLAGS & RGBA
-         _mesa_write_rgba_span(ctx, span);
+         _swrast_write_rgba_span(ctx, span);
 #else
-         _mesa_write_index_span(ctx, span);
+         _swrast_write_index_span(ctx, span);
 #endif
          span->end = 0;
       }

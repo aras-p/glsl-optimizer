@@ -1,4 +1,4 @@
-/* $Id: s_accum.h,v 1.4 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: s_accum.h,v 1.5 2003/03/25 02:23:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,11 +34,11 @@
 
 
 extern void
-_mesa_alloc_accum_buffer( GLframebuffer *buffer );
+_swrast_alloc_accum_buffer( GLframebuffer *buffer );
 
 
 extern void
-_mesa_clear_accum_buffer( GLcontext *ctx );
+_swarst_clear_accum_buffer( GLcontext *ctx );
 
 
 #endif

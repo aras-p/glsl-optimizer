@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.47 2003/03/16 22:02:40 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.48 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -701,7 +701,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   }
 #  ifdef DEPTH_TYPE
                   zRow = (DEPTH_TYPE *)
-                    _mesa_zbuffer_address(ctx, FixedToInt(fxLeftEdge), span.y);
+                    _swrast_zbuffer_address(ctx, FixedToInt(fxLeftEdge), span.y);
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }

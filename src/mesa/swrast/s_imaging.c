@@ -1,4 +1,4 @@
-/* $Id: s_imaging.c,v 1.6 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: s_imaging.c,v 1.7 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
-   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
@@ -67,7 +67,7 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
-   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
@@ -90,7 +90,7 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
    RENDER_START( swrast, ctx );
 
    /* read the data from framebuffer */
-   _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y,
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y,
 				(GLchan (*)[4]) rgba );
    
    RENDER_FINISH( swrast, ctx );
@@ -121,7 +121,7 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    
    /* read pixels from framebuffer */
    for (i = 0; i < height; i++) {
-      _mesa_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
+      _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
 				(GLchan (*)[4]) rgba[i] );
    }
 

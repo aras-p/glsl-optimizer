@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.h,v 1.3 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_aatriangle.h,v 1.4 2003/03/25 02:23:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,7 @@
 
 
 extern void
-_mesa_set_aa_triangle_function(GLcontext *ctx);
+_swrast_set_aa_triangle_function(GLcontext *ctx);
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.h,v 1.9 2002/10/02 23:24:04 brianp Exp $ */
+/* $Id: s_stencil.h,v 1.10 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,26 +35,26 @@
 
 
 extern GLboolean
-_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span);
+_swrast_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span);
 
 
 
 extern void
-_mesa_read_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_read_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
                          GLstencil stencil[] );
 
 
 extern void
-_mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
                           const GLstencil stencil[] );
 
 
 extern void
-_mesa_alloc_stencil_buffer( GLframebuffer *buffer );
+_swrast_alloc_stencil_buffer( GLframebuffer *buffer );
 
 
 extern void
-_mesa_clear_stencil_buffer( GLcontext *ctx );
+_swrast_clear_stencil_buffer( GLcontext *ctx );
 
 
 #endif

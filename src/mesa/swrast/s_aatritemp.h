@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.35 2003/02/21 21:00:20 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.36 2003/03/25 02:23:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -350,11 +350,11 @@
          span.end = (GLuint) ix - (GLuint) startX;
          ASSERT(span.interpMask == 0);
 #if defined(DO_MULTITEX) || defined(DO_TEX)
-         _mesa_write_texture_span(ctx, &span);
+         _swrast_write_texture_span(ctx, &span);
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, &span);
+         _swrast_write_index_span(ctx, &span);
 #endif
       }
    }
@@ -511,11 +511,11 @@
          span.end = n;
          ASSERT(span.interpMask == 0);
 #if defined(DO_MULTITEX) || defined(DO_TEX)
-         _mesa_write_texture_span(ctx, &span);
+         _swrast_write_texture_span(ctx, &span);
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, &span);
+         _swrast_write_rgba_span(ctx, &span);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, &span);
+         _swrast_write_index_span(ctx, &span);
 #endif
       }
    }

@@ -1,4 +1,4 @@
-/* $Id: s_blend.h,v 1.7 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_blend.h,v 1.8 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
 
 
 extern void
-_mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_blend_span( GLcontext *ctx, const struct sw_span *span,
                   GLchan rgba[][4] );
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.12 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_logic.c,v 1.13 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -166,7 +166,7 @@ index_logicop( GLcontext *ctx, GLuint n, GLuint index[], const GLuint dest[],
  * used if the device driver can't do logic ops.
  */
 void
-_mesa_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_logicop_ci_span( GLcontext *ctx, const struct sw_span *span,
                        GLuint index[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -463,7 +463,7 @@ rgba_logicop_chan( const GLcontext *ctx, GLuint n, const GLubyte mask[],
  * pixel coordinates.
  */
 void
-_mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
                          GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -477,13 +477,13 @@ _mesa_logicop_rgba_span( GLcontext *ctx, const struct sw_span *span,
                                        span->array->x, span->array->y,
                                        dest, span->array->mask);
       if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-         _mesa_read_alpha_pixels(ctx, span->end,
+         _swrast_read_alpha_pixels(ctx, span->end,
                                  span->array->x, span->array->y,
                                  dest, span->array->mask);
       }
    }
    else {
-      _mesa_read_rgba_span(ctx, ctx->DrawBuffer, span->end,
+      _swrast_read_rgba_span(ctx, ctx->DrawBuffer, span->end,
                            span->x, span->y, dest);
    }
 

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.28 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.29 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -477,7 +477,7 @@ stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span, GLuint face)
       MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
       /* apply the depth test */
-      _mesa_depth_test_span(ctx, span);
+      _swrast_depth_test_span(ctx, span);
 
       /* Set the stencil pass/fail flags according to result of depth testing.
        * if oldmask[i] == 0 then
@@ -927,7 +927,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
                           n, stencil, mask);
       }
       else {
-         _mesa_depth_test_span(ctx, span);
+         _swrast_depth_test_span(ctx, span);
 
          if (ctx->Stencil.ZFailFunc[face] != GL_KEEP) {
             GLubyte failmask[MAX_WIDTH];
@@ -976,7 +976,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
-         _mesa_depth_test_span(ctx, span);
+         _swrast_depth_test_span(ctx, span);
 
          for (i=0;i<n;i++) {
             ASSERT(mask[i] == 0 || mask[i] == 1);
@@ -1006,7 +1006,7 @@ stencil_and_ztest_pixels( GLcontext *ctx, struct sw_span *span, GLuint face )
  * GL_FALSE = all fragments failed.
  */
 GLboolean
-_mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
+_swrast_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
 {
    /* span->facing can only be non-zero if using two-sided stencil */
    ASSERT(ctx->Stencil.TestTwoSide || span->facing == 0);
@@ -1025,7 +1025,7 @@ _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
  * Output:  stencil - the array of stencil values
  */
 void
-_mesa_read_stencil_span( GLcontext *ctx,
+_swrast_read_stencil_span( GLcontext *ctx,
                          GLint n, GLint x, GLint y, GLstencil stencil[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1078,7 +1078,7 @@ _mesa_read_stencil_span( GLcontext *ctx,
  *         stencil - the array of stencil values
  */
 void
-_mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+_swrast_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
                           const GLstencil stencil[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1127,7 +1127,7 @@ _mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
  * deallocated first.  The new stencil buffer will be uninitialized.
  */
 void
-_mesa_alloc_stencil_buffer( GLframebuffer *buffer )
+_swrast_alloc_stencil_buffer( GLframebuffer *buffer )
 {
    /* deallocate current stencil buffer if present */
    if (buffer->Stencil) {
@@ -1140,7 +1140,7 @@ _mesa_alloc_stencil_buffer( GLframebuffer *buffer )
       MESA_PBUFFER_ALLOC(buffer->Width * buffer->Height * sizeof(GLstencil));
    if (!buffer->Stencil) {
       /* out of memory */
-      _mesa_error( NULL, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
+      _mesa_error( NULL, GL_OUT_OF_MEMORY, "_swrast_alloc_stencil_buffer" );
    }
 }
 
@@ -1314,7 +1314,7 @@ clear_hardware_stencil_buffer( GLcontext *ctx )
  * Clear the stencil buffer (hardware or software).
  */
 void
-_mesa_clear_stencil_buffer( GLcontext *ctx )
+_swrast_clear_stencil_buffer( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.WriteStencilSpan) {

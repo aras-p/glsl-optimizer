@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.16 2002/11/26 02:58:43 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.17 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@
  * Allocate a new front and back alpha buffer.
  */
 void
-_mesa_alloc_alpha_buffers( GLframebuffer *buffer )
+_swrast_alloc_alpha_buffers( GLframebuffer *buffer )
 {
    const GLint bytes = buffer->Width * buffer->Height * sizeof(GLchan);
 
@@ -102,7 +102,7 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
  * Clear all the alpha buffers
  */
 void
-_mesa_clear_alpha_buffers( GLcontext *ctx )
+_swrast_clear_alpha_buffers( GLcontext *ctx )
 {
    GLchan aclear;
    GLuint bufferBit;
@@ -198,7 +198,7 @@ GLchan *get_alpha_buffer( GLcontext *ctx )
 
 
 void
-_mesa_write_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_swrast_write_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                         CONST GLchan rgba[][4], const GLubyte mask[] )
 {
    GLchan *buffer, *aptr;
@@ -224,7 +224,7 @@ _mesa_write_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 void
-_mesa_write_mono_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_swrast_write_mono_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                              GLchan alpha, const GLubyte mask[] )
 {
    GLchan *buffer, *aptr;
@@ -250,7 +250,7 @@ _mesa_write_mono_alpha_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 void
-_mesa_write_alpha_pixels( GLcontext *ctx,
+_swrast_write_alpha_pixels( GLcontext *ctx,
                           GLuint n, const GLint x[], const GLint y[],
                           CONST GLchan rgba[][4], const GLubyte mask[] )
 {
@@ -277,7 +277,7 @@ _mesa_write_alpha_pixels( GLcontext *ctx,
 
 
 void
-_mesa_write_mono_alpha_pixels( GLcontext *ctx,
+_swrast_write_mono_alpha_pixels( GLcontext *ctx,
                                GLuint n, const GLint x[], const GLint y[],
                                GLchan alpha, const GLubyte mask[] )
 {
@@ -305,7 +305,7 @@ _mesa_write_mono_alpha_pixels( GLcontext *ctx,
 
 
 void
-_mesa_read_alpha_span( GLcontext *ctx,
+_swrast_read_alpha_span( GLcontext *ctx,
                        GLuint n, GLint x, GLint y, GLchan rgba[][4] )
 {
    const GLchan *buffer, *aptr;
@@ -320,7 +320,7 @@ _mesa_read_alpha_span( GLcontext *ctx,
 
 
 void
-_mesa_read_alpha_pixels( GLcontext *ctx,
+_swrast_read_alpha_pixels( GLcontext *ctx,
                          GLuint n, const GLint x[], const GLint y[],
                          GLchan rgba[][4], const GLubyte mask[] )
 {

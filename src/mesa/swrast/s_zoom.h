@@ -1,4 +1,4 @@
-/* $Id: s_zoom.h,v 1.8 2002/12/05 04:48:53 brianp Exp $ */
+/* $Id: s_zoom.h,v 1.9 2003/03/25 02:23:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,21 +31,21 @@
 #include "swrast.h"
 
 extern void
-_mesa_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
                               CONST GLchan rgb[][4], GLint y0,
                               GLint skipPixels );
 
 extern void
-_mesa_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
                              CONST GLchan rgb[][3], GLint y0,
                              GLint skipPixels );
 
 extern void
-_mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
                                GLint y0, GLint skipPixels );
 
 extern void
-_mesa_write_zoomed_stencil_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_swrast_write_zoomed_stencil_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                                  const GLstencil stencil[], GLint y0,
                                  GLint skipPixels );
 

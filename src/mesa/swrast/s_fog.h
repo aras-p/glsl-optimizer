@@ -1,4 +1,4 @@
-/* $Id: s_fog.h,v 1.9 2002/02/17 17:30:58 brianp Exp $ */
+/* $Id: s_fog.h,v 1.10 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,13 +34,13 @@
 
 
 extern GLfloat
-_mesa_z_to_fogfactor(GLcontext *ctx, GLfloat z);
+_swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z);
 
 extern void
-_mesa_fog_rgba_span( const GLcontext *ctx, struct sw_span *span );
+_swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span );
 
 extern void
-_mesa_fog_ci_span( const GLcontext *ctx, struct sw_span *span );
+_swrast_fog_ci_span( const GLcontext *ctx, struct sw_span *span );
 
 
 #endif

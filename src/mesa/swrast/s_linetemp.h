@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.17 2003/02/25 19:26:01 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.18 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,7 +153,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       return;
 
 #ifdef DEPTH_TYPE
-   zPtr = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, x0, y0);
+   zPtr = (DEPTH_TYPE *) _swrast_zbuffer_address(ctx, x0, y0);
 #endif
 #ifdef PIXEL_ADDRESS
    pixelPtr = (PIXEL_TYPE *) PIXEL_ADDRESS(x0,y0);

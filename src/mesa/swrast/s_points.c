@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.20 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_points.c,v 1.21 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,10 +268,10 @@ _swrast_choose_point( GLcontext *ctx )
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      USE(_mesa_feedback_point);
+      USE(_swrast_feedback_point);
    }
    else {
       /* GL_SELECT mode */
-      USE(_mesa_select_point);
+      USE(_swrast_select_point);
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.47 2003/03/15 17:33:27 brianp Exp $ */
+/* $Id: s_context.c,v 1.48 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -601,12 +601,12 @@ _swrast_flush( GLcontext *ctx )
    if (swrast->PointSpan.end > 0) {
       if (ctx->Visual.rgbMode) {
          if (ctx->Texture._EnabledUnits)
-            _mesa_write_texture_span(ctx, &(swrast->PointSpan));
+            _swrast_write_texture_span(ctx, &(swrast->PointSpan));
          else
-            _mesa_write_rgba_span(ctx, &(swrast->PointSpan));
+            _swrast_write_rgba_span(ctx, &(swrast->PointSpan));
       }
       else {
-         _mesa_write_index_span(ctx, &(swrast->PointSpan));
+         _swrast_write_index_span(ctx, &(swrast->PointSpan));
       }
       swrast->PointSpan.end = 0;
    }

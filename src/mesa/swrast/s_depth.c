@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.25 2002/10/30 19:49:30 brianp Exp $ */
+/* $Id: s_depth.c,v 1.26 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,7 @@
  * Return address of depth buffer value for given window coord.
  */
 GLvoid *
-_mesa_zbuffer_address(GLcontext *ctx, GLint x, GLint y)
+_swrast_zbuffer_address(GLcontext *ctx, GLint x, GLint y)
 {
    if (ctx->Visual.depthBits <= 16)
       return (GLushort *) ctx->DrawBuffer->DepthBuffer
@@ -1355,7 +1355,7 @@ depth_test_pixels( GLcontext *ctx, struct sw_span *span )
  * \return approx number of pixels that passed (only zero is reliable)
  */
 GLuint
-_mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
+_swrast_depth_test_span( GLcontext *ctx, struct sw_span *span)
 {
    if (span->arrayMask & SPAN_XY)
       return depth_test_pixels(ctx, span);
@@ -1375,7 +1375,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
  * This function does clipping before calling the device driver function.
  */
 void
-_mesa_read_depth_span( GLcontext *ctx,
+_swrast_read_depth_span( GLcontext *ctx,
                        GLint n, GLint x, GLint y, GLdepth depth[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1448,7 +1448,7 @@ _mesa_read_depth_span( GLcontext *ctx,
  * Output:  depth - the array of depth values
  */
 void
-_mesa_read_depth_span_float( GLcontext *ctx,
+_swrast_read_depth_span_float( GLcontext *ctx,
                              GLint n, GLint x, GLint y, GLfloat depth[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -1529,7 +1529,7 @@ _mesa_read_depth_span_float( GLcontext *ctx,
  * This function is only called through Driver.alloc_depth_buffer.
  */
 void
-_mesa_alloc_depth_buffer( GLframebuffer *buffer )
+_swrast_alloc_depth_buffer( GLframebuffer *buffer )
 {
    GLint bytesPerValue;
 
@@ -1568,7 +1568,7 @@ _mesa_alloc_depth_buffer( GLframebuffer *buffer )
  * This function is only called through Driver.clear_depth_buffer.
  */
 void
-_mesa_clear_depth_buffer( GLcontext *ctx )
+_swrast_clear_depth_buffer( GLcontext *ctx )
 {
    if (ctx->Visual.depthBits == 0
        || !ctx->DrawBuffer->DepthBuffer

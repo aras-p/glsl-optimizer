@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.21 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.22 2003/03/25 02:23:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -79,11 +79,11 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    }
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledUnits)
-      _mesa_span_default_texcoords(ctx, &span);
+      _swrast_span_default_texcoords(ctx, &span);
 
    for (row = 0; row < height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
@@ -138,9 +138,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
          /* flush the span */
          span.end = count;
          if (ctx->Visual.rgbMode)
-            _mesa_write_rgba_span(ctx, &span);
+            _swrast_write_rgba_span(ctx, &span);
          else
-            _mesa_write_index_span(ctx, &span);
+            _swrast_write_index_span(ctx, &span);
          span.end = 0;
          count = 0;
       }
@@ -195,11 +195,11 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    }
 
    if (ctx->Depth.Test)
-      _mesa_span_default_z(ctx, &span);
+      _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
-      _mesa_span_default_fog(ctx, &span);
+      _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledUnits)
-      _mesa_span_default_texcoords(ctx, &span);
+      _swrast_span_default_texcoords(ctx, &span);
 
    for (row=0; row<height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
@@ -220,9 +220,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
          }
 
          if (ctx->Visual.rgbMode)
-            _mesa_write_rgba_span(ctx, &span);
+            _swrast_write_rgba_span(ctx, &span);
          else
-	    _mesa_write_index_span(ctx, &span);
+	    _swrast_write_index_span(ctx, &span);
 
          /* get ready for next row */
          if (mask != 1)
@@ -243,9 +243,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
          }
 
          if (ctx->Visual.rgbMode)
-            _mesa_write_rgba_span(ctx, &span);
+            _swrast_write_rgba_span(ctx, &span);
          else
-            _mesa_write_index_span(ctx, &span);
+            _swrast_write_index_span(ctx, &span);
 
          /* get ready for next row */
          if (mask != 128)

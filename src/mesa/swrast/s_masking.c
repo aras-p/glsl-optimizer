@@ -1,4 +1,4 @@
-/* $Id: s_masking.c,v 1.8 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_masking.c,v 1.9 2003/03/25 02:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,7 +42,7 @@
 
 
 void
-_mesa_mask_rgba_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_mask_rgba_span( GLcontext *ctx, const struct sw_span *span,
                      GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -68,12 +68,12 @@ _mesa_mask_rgba_span( GLcontext *ctx, const struct sw_span *span,
       (*swrast->Driver.ReadRGBAPixels)(ctx, n, span->array->x, span->array->y,
                                        dest, span->array->mask);
       if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
-         _mesa_read_alpha_pixels(ctx, n, span->array->x, span->array->y,
+         _swrast_read_alpha_pixels(ctx, n, span->array->x, span->array->y,
                                  dest, span->array->mask);
       }
    }
    else {
-      _mesa_read_rgba_span(ctx, ctx->DrawBuffer, n, span->x, span->y, dest);
+      _swrast_read_rgba_span(ctx, ctx->DrawBuffer, n, span->x, span->y, dest);
    }
 
 #if CHAN_BITS == 8
@@ -97,7 +97,7 @@ _mesa_mask_rgba_span( GLcontext *ctx, const struct sw_span *span,
  * Apply glColorMask to a span of RGBA pixels.
  */
 void
-_mesa_mask_rgba_array( GLcontext *ctx,
+_swrast_mask_rgba_array( GLcontext *ctx,
                        GLuint n, GLint x, GLint y, GLchan rgba[][4] )
 {
    GLchan dest[MAX_WIDTH][4];
@@ -110,7 +110,7 @@ _mesa_mask_rgba_array( GLcontext *ctx,
    GLuint *rgba32 = (GLuint *) rgba;
    GLuint *dest32 = (GLuint *) dest;
 
-   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _swrast_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
    for (i = 0; i < n; i++) {
       rgba32[i] = (rgba32[i] & srcMask) | (dest32[i] & dstMask);
    }
@@ -122,7 +122,7 @@ _mesa_mask_rgba_array( GLcontext *ctx,
    const GLint bMask = ctx->Color.ColorMask[BCOMP];
    const GLint aMask = ctx->Color.ColorMask[ACOMP];
 
-   _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _swrast_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
    for (i = 0; i < n; i++) {
       if (!rMask)  rgba[i][RCOMP] = dest[i][RCOMP];
       if (!gMask)  rgba[i][GCOMP] = dest[i][GCOMP];
@@ -136,7 +136,7 @@ _mesa_mask_rgba_array( GLcontext *ctx,
 
 
 void
-_mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
+_swrast_mask_index_span( GLcontext *ctx, const struct sw_span *span,
                        GLuint index[] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -159,7 +159,7 @@ _mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
       }
    }
    else {
-      _mesa_read_index_span(ctx, ctx->DrawBuffer, span->end, span->x, span->y,
+      _swrast_read_index_span(ctx, ctx->DrawBuffer, span->end, span->x, span->y,
                             fbindexes );
 
       for (i = 0; i < span->end; i++) {
@@ -174,14 +174,14 @@ _mesa_mask_index_span( GLcontext *ctx, const struct sw_span *span,
  * Apply glIndexMask to a span of CI pixels.
  */
 void
-_mesa_mask_index_array( GLcontext *ctx,
+_swrast_mask_index_array( GLcontext *ctx,
                         GLuint n, GLint x, GLint y, GLuint index[] )
 {
    GLuint i;
    GLuint fbindexes[MAX_WIDTH];
    GLuint msrc, mdest;
 
-   _mesa_read_index_span( ctx, ctx->DrawBuffer, n, x, y, fbindexes );
+   _swrast_read_index_span( ctx, ctx->DrawBuffer, n, x, y, fbindexes );
 
    msrc = ctx->Color.IndexMask;
    mdest = ~msrc;

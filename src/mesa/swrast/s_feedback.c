@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.10 2003/03/01 01:50:25 brianp Exp $ */
+/* $Id: s_feedback.c,v 1.11 2003/03/25 02:23:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,12 +85,12 @@ static void feedback_vertex( GLcontext *ctx,
 /*
  * Put triangle in feedback buffer.
  */
-void _mesa_feedback_triangle( GLcontext *ctx,
+void _swrast_feedback_triangle( GLcontext *ctx,
                            const SWvertex *v0,
                            const SWvertex *v1,
 			   const SWvertex *v2)
 {
-   if (_mesa_cull_triangle( ctx, v0, v1, v2 )) {
+   if (_swrast_culltriangle( ctx, v0, v1, v2 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
 
@@ -107,7 +107,7 @@ void _mesa_feedback_triangle( GLcontext *ctx,
 }
 
 
-void _mesa_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+void _swrast_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    GLenum token = GL_LINE_TOKEN;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -129,19 +129,19 @@ void _mesa_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1
 }
 
 
-void _mesa_feedback_point( GLcontext *ctx, const SWvertex *v )
+void _swrast_feedback_point( GLcontext *ctx, const SWvertex *v )
 {
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
    feedback_vertex( ctx, v, v );
 }
 
 
-void _mesa_select_triangle( GLcontext *ctx,
+void _swrast_select_triangle( GLcontext *ctx,
                          const SWvertex *v0,
                          const SWvertex *v1,
 			 const SWvertex *v2)
 {
-   if (_mesa_cull_triangle( ctx, v0, v1, v2 )) {
+   if (_swrast_culltriangle( ctx, v0, v1, v2 )) {
       const GLfloat zs = 1.0F / ctx->DepthMaxF;
 
       _mesa_update_hitflag( ctx, v0->win[2] * zs );
@@ -151,7 +151,7 @@ void _mesa_select_triangle( GLcontext *ctx,
 }
 
 
-void _mesa_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
+void _swrast_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    const GLfloat zs = 1.0F / ctx->DepthMaxF;
    _mesa_update_hitflag( ctx, v0->win[2] * zs );
@@ -159,7 +159,7 @@ void _mesa_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 }
 
 
-void _mesa_select_point( GLcontext *ctx, const SWvertex *v )
+void _swrast_select_point( GLcontext *ctx, const SWvertex *v )
 {
    const GLfloat zs = 1.0F / ctx->DepthMaxF;
    _mesa_update_hitflag( ctx, v->win[2] * zs );
