@@ -805,6 +805,9 @@ static void TAG(init)( void )
       setup_tab[IND].vertex_size = 8;
       setup_tab[IND].vertex_stride_shift = 5; 
    }
+
+   assert(setup_tab[IND].vertex_size * 4 <=
+          1 << setup_tab[IND].vertex_stride_shift);
 }
 
 
