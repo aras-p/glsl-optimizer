@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.11 1999/12/10 19:09:22 brianp Exp $ */
+/* $Id: depth.c,v 1.12 2000/02/02 22:16:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -370,8 +370,8 @@ depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  * Apply depth test to span of fragments.  Hardware or software z buffer.
  */
 GLuint
-gl_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                    const GLdepth z[], GLubyte mask[] )
+_mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       const GLdepth z[], GLubyte mask[] )
 {
    GLdepth zbuffer[MAX_WIDTH];
    GLdepth *zptr;
@@ -881,9 +881,10 @@ hardware_depth_test_pixels( GLcontext *ctx, GLuint n, GLdepth zbuffer[],
 
 
 
-void gl_depth_test_pixels( GLcontext *ctx,
-                           GLuint n, const GLint x[], const GLint y[],
-                           const GLdepth z[], GLubyte mask[] )
+void
+_mesa_depth_test_pixels( GLcontext *ctx,
+                         GLuint n, const GLint x[], const GLint y[],
+                         const GLdepth z[], GLubyte mask[] )
 {
    if (ctx->Driver.ReadDepthPixels) {
       /* read depth values from hardware Z buffer */
@@ -918,8 +919,9 @@ void gl_depth_test_pixels( GLcontext *ctx,
  *         x,y - location of first pixel
  * Output:  depth - the array of depth values
  */
-void gl_read_depth_span_float( GLcontext* ctx,
-                               GLuint n, GLint x, GLint y, GLfloat depth[] )
+void
+_mesa_read_depth_span_float( GLcontext* ctx,
+                             GLuint n, GLint x, GLint y, GLfloat depth[] )
 {
    const GLfloat scale = 1.0F / DEPTH_SCALE;
 
@@ -960,7 +962,8 @@ void gl_read_depth_span_float( GLcontext* ctx,
  * it will be free()'d.  The new depth buffer will be uniniitalized.
  * This function is only called through Driver.alloc_depth_buffer.
  */
-void gl_alloc_depth_buffer( GLcontext* ctx )
+void
+_mesa_alloc_depth_buffer( GLcontext* ctx )
 {
    /* deallocate current depth buffer if present */
    if (ctx->DrawBuffer->UseSoftwareDepthBuffer) {
@@ -990,7 +993,8 @@ void gl_alloc_depth_buffer( GLcontext* ctx )
  * allocate it now.
  * This function is only called through Driver.clear_depth_buffer.
  */
-void gl_clear_depth_buffer( GLcontext* ctx )
+void
+_mesa_clear_depth_buffer( GLcontext* ctx )
 {
    GLdepth clear_value = (GLdepth) (ctx->Depth.Clear * DEPTH_SCALE);
    

@@ -1,10 +1,10 @@
-/* $Id: stencil.c,v 1.13 1999/12/10 19:09:22 brianp Exp $ */
+/* $Id: stencil.c,v 1.14 2000/02/02 22:16:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -580,7 +580,7 @@ stencil_and_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
       MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
       /* apply the depth test */
-      gl_depth_test_span(ctx, n, x, y, z, mask);
+      _mesa_depth_test_span(ctx, n, x, y, z, mask);
 
       /* Set the stencil pass/fail flags according to result of depth testing.
        * if oldmask[i] == 0 then
@@ -1059,7 +1059,7 @@ gl_stencil_and_depth_test_pixels( GLcontext *ctx,
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
-         gl_depth_test_pixels(ctx, n, x, y, z, mask);
+         _mesa_depth_test_pixels(ctx, n, x, y, z, mask);
 
          for (i=0;i<n;i++) {
             ASSERT(mask[i] == 0 || mask[i] == 1);
@@ -1099,7 +1099,7 @@ gl_stencil_and_depth_test_pixels( GLcontext *ctx,
 
          MEMCPY(oldmask, mask, n * sizeof(GLubyte));
 
-         gl_depth_test_pixels(ctx, n, x, y, z, mask);
+         _mesa_depth_test_pixels(ctx, n, x, y, z, mask);
 
          for (i=0;i<n;i++) {
             ASSERT(mask[i] == 0 || mask[i] == 1);

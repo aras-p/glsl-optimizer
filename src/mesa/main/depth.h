@@ -1,4 +1,4 @@
-/* $Id: depth.h,v 1.5 1999/12/10 19:09:22 brianp Exp $ */
+/* $Id: depth.h,v 1.6 2000/02/02 22:16:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,26 +60,26 @@ _mesa_DepthMask( GLboolean flag );
 
 
 extern GLuint
-gl_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            const GLdepth z[], GLubyte mask[] );
+_mesa_depth_test_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                       const GLdepth z[], GLubyte mask[] );
 
 extern void
-gl_depth_test_pixels( GLcontext *ctx,
-                      GLuint n, const GLint x[], const GLint y[],
-                      const GLdepth z[], GLubyte mask[] );
-
-
-extern void
-gl_read_depth_span_float( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                          GLfloat depth[] );
+_mesa_depth_test_pixels( GLcontext *ctx,
+                         GLuint n, const GLint x[], const GLint y[],
+                         const GLdepth z[], GLubyte mask[] );
 
 
 extern void
-gl_alloc_depth_buffer( GLcontext* ctx );
+_mesa_read_depth_span_float( GLcontext *ctx, GLuint n, GLint x, GLint y,
+                             GLfloat depth[] );
 
 
 extern void
-gl_clear_depth_buffer( GLcontext* ctx );
+_mesa_alloc_depth_buffer( GLcontext* ctx );
+
+
+extern void
+_mesa_clear_depth_buffer( GLcontext* ctx );
 
 
 
