@@ -1,0 +1,100 @@
+# Configuration for BeOS
+# Written by Philippe Houdoin
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = beos
+
+
+DEFINES = 	\
+	-DBEOS_THREADS 
+
+MACHINE=$(shell uname -m)
+ifeq ($(MACHINE), BePC)
+	CPU = x86
+else
+	CPU = ppc
+endif
+
+ifeq ($(CPU), x86)
+	# BeOS x86 settings
+
+	DEFINES += \
+		-DGNU_ASSEMBLER \
+		-DUSE_X86_ASM \
+		-DUSE_MMX_ASM \
+		-DUSE_3DNOW_ASM \
+		-DUSE_SSE_ASM
+	
+	ASM_SOURCES = $(X86_SOURCES) $(X86_API)
+
+	CC = gcc
+	CXX = g++
+	LD = gcc
+	
+	CFLAGS = \
+		-Wall -Wno-multichar -Wno-ctor-dtor-privacy \
+		$(DEFINES)
+
+	CXXFLAGS = $(CFLAGS)
+
+	LDFLAGS += -Xlinker
+
+	ifdef DEBUG
+		CFLAGS   += -g -O0
+		CXXFLAGS += -g -O0
+		LDFLAGS += -g
+	else
+		CFLAGS   += -O2
+		CXXFLAGS += -O2
+	endif
+
+	GLUT_CFLAGS = -fexceptions
+
+else
+	# BeOS PPC settings
+
+	CC = mwcc
+	CXX = $(CC)
+	LD = mwldppc
+
+	CFLAGS = \
+		-w on -requireprotos \
+		$(DEFINES)
+
+	CXXFLAGS = $(CFLAGS)
+
+	LDFLAGS += \
+		-export pragma \
+		-init _init_routine_ \
+		-term _term_routine_ \
+		-lroot \
+		/boot/develop/lib/ppc/glue-noinit.a \
+		/boot/develop/lib/ppc/init_term_dyn.o \
+		/boot/develop/lib/ppc/start_dyn.o 
+
+	ifdef DEBUG
+		CFLAGS   += -g -O0
+		CXXFLAGS += -g -O0
+		LDFLAGS += -g
+	else
+		CFLAGS   += -O7
+		CXXFLAGS += -O7
+	endif
+
+	GLUT_CFLAGS = -fexceptions
+endif
+
+# Directories
+SRC_DIRS = mesa glut/beos
+GLU_DIRS = # sgi
+DRIVER_DIRS = beos
+PROGRAM_DIRS = beos samples redbook tests demos
+
+# Library/program dependencies
+GL_LIB_DEPS = 
+OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
+GLU_LIB_DEPS =  
+GLUT_LIB_DEPS = -lgame -L$(LIB_DIR) -lGL
+APP_LIB_DEPS = -lbe -L$(LIB_DIR) -lGL -lglut
+
