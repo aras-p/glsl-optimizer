@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.2 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: texformat.c,v 1.3 2001/03/18 13:31:52 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -420,11 +420,10 @@ const struct gl_texture_format _mesa_null_texformat = {
 
 
 
-/*
- * Given an internal texture format enum or 1, 2, 3, 4 return the
- * corresponding _base_ internal format:  GL_ALPHA, GL_LUMINANCE,
- * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.
- * Return -1 if invalid enum.
+/* Given an internal texture format or 1, 2, 3, 4 initialize the texture
+ * image structure's default format and type information.  Drivers will
+ * initialize these fields accordingly if they override the default
+ * storage format.
  */
 void _mesa_init_tex_format( GLcontext *ctx, GLenum internalFormat,
 			    struct gl_texture_image *texImage )
