@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.6 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_alphabuf.c,v 1.7 2001/05/11 18:58:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -164,6 +164,7 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
             GLint j;
             GLint rowLen = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin + 1;
             GLint rows = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin + 1;
+            GLint width = ctx->DrawBuffer->Width;
             GLchan *aptr = buffer
                           + ctx->DrawBuffer->_Ymin * ctx->DrawBuffer->Width
                           + ctx->DrawBuffer->_Xmin;
@@ -175,13 +176,19 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
 #else
 #error unexpected CHAN_BITS value
 #endif
-               aptr += rowLen;
+               aptr += width;
             }
          }
          else {
             /* clear whole buffer */
-            GLuint bytes = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
-            MEMSET( buffer, aclear, bytes );
+            GLuint pixels = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
+#if CHAN_BITS == 8
+            MEMSET(buffer, aclear, pixels);
+#elif CHAN_BITS == 16
+            MEMSET16(buffer, aclear, pixels);
+#else
+#error unexpected CHAN_BITS value
+#endif
          }
       }
    }
