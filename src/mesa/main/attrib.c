@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.4 1999/09/19 23:43:02 keithw Exp $ */
+/* $Id: attrib.c,v 1.5 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,15 +31,19 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "attrib.h"
 #include "context.h"
+#include "glmisc.h"
 #include "enable.h"
 #include "enums.h"
 #include "macros.h"
-#include "misc.h"
 #include "simple_list.h"
 #include "texstate.h"
 #include "types.h"

@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.3 1999/09/20 14:30:22 keithw Exp $ */
+/* $Id: polygon.c,v 1.4 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,13 +25,19 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/polygon.c,v 1.3 1999/04/04 00:20:29 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "image.h"
 #include "enums.h"

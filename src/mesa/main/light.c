@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.3 1999/09/30 11:18:22 keithw Exp $ */
+/* $Id: light.c,v 1.4 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,10 +31,15 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#include <float.h>
+#ifndef XFree86Server
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include <stdio.h>
 #include "context.h"
 #include "enums.h"
@@ -46,9 +51,6 @@
 #include "types.h"
 #include "vb.h"
 #include "xform.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: matrix.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: matrix.h,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,6 +110,10 @@ extern void gl_matrix_mul( GLmatrix *dest,
 
 extern void gl_matrix_analyze( GLmatrix *mat );
 
+
+extern void gl_MultMatrixd( GLcontext *ctx, const GLdouble *m );
+extern GLboolean gl_matrix_invert( GLmatrix *mat );
+extern void gl_print_matrix( const GLmatrix *m );
 
 
 #endif

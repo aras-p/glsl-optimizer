@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: macros.h,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,9 +36,12 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-
+#if defined( XFree86LOADER ) && defined( XFree86Server )
+#include <GL/glx_ansic.h>
+#else
 #include <math.h>
 #include <string.h>
+#endif
 
 
 #ifdef DEBUG
@@ -49,7 +52,7 @@
 #endif
 
 
-#if defined(__GNUC__) || defined(__MWERKS__)
+#if defined(__GNUC__)
 #define INLINE __inline__
 #elif defined(__MSC__)
 #define INLINE __inline

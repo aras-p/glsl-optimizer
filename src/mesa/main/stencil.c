@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.3 1999/09/19 02:03:19 tjump Exp $ */
+/* $Id: stencil.c,v 1.4 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,11 +25,17 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/stencil.c,v 1.3 1999/04/04 00:20:32 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "macros.h"
 #include "pb.h"

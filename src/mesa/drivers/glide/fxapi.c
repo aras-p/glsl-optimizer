@@ -824,328 +824,196 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,GrScreenResolution_t res
 					   GrScreenRefresh_t ref,
 					   const GLint attribList[])
 {
-  fxMesaContext fxMesa = NULL;
-  int i,type;
-  int aux;
-  GLboolean doubleBuffer=GL_FALSE;
-  GLboolean alphaBuffer=GL_FALSE;
-  GLboolean verbose=GL_FALSE;
-  GLint depthSize=0;
-  GLint stencilSize=0;
-  GLint accumSize=0;
-  GLcontext *shareCtx = NULL;
-  GLcontext *ctx = 0;
-  FX_GrContext_t glideContext = 0;
-  char *errorstr;
+   fxMesaContext fxMesa = NULL;
+   int i,type;
+   int aux;
+   GLboolean doubleBuffer=GL_FALSE;
+   GLboolean alphaBuffer=GL_FALSE;
+   GLboolean verbose=GL_FALSE;
+   GLint depthSize=0;
+   GLint stencilSize=0;
+   GLint accumSize=0;
+   GLcontext *shareCtx = NULL;
+   GLcontext *ctx = 0;
+   FX_GrContext_t glideContext = 0;
+   char *errorstr;
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxMesaCreateContext() Start\n");
-  }
+   if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxMesaCreateContext() Start\n");
+   }
 
-  if(getenv("MESA_FX_INFO"))
-    verbose=GL_TRUE;
+   if(getenv("MESA_FX_INFO"))
+      verbose=GL_TRUE;
 
-  aux=0;
-  i=0;
-  while(attribList[i]!=FXMESA_NONE) {
-    switch (attribList[i]) {
-    case FXMESA_DOUBLEBUFFER:
-      doubleBuffer=GL_TRUE;
-      break;
-    case FXMESA_ALPHA_SIZE:
-      i++;
-      alphaBuffer=attribList[i]>0;
-      if(alphaBuffer)
-        aux=1;
-      break;
-    case FXMESA_DEPTH_SIZE:
-      i++;
-      depthSize=attribList[i];
-      if(depthSize)
-        aux=1;
-      break;
-    case FXMESA_STENCIL_SIZE:
-      i++;
-      stencilSize=attribList[i];
-      break;
-    case FXMESA_ACCUM_SIZE:
-      i++;
-      accumSize=attribList[i];
-      break;
-      /* XXX ugly hack here for sharing display lists */
+   aux=0;
+   i=0;
+   while(attribList[i]!=FXMESA_NONE) {
+      switch (attribList[i]) {
+      case FXMESA_DOUBLEBUFFER:
+	 doubleBuffer=GL_TRUE;
+	 break;
+      case FXMESA_ALPHA_SIZE:
+	 i++;
+	 alphaBuffer=attribList[i]>0;
+	 if(alphaBuffer)
+	    aux=1;
+	 break;
+      case FXMESA_DEPTH_SIZE:
+	 i++;
+	 depthSize=attribList[i];
+	 if(depthSize)
+	    aux=1;
+	 break;
+      case FXMESA_STENCIL_SIZE:
+	 i++;
+	 stencilSize=attribList[i];
+	 break;
+      case FXMESA_ACCUM_SIZE:
+	 i++;
+	 accumSize=attribList[i];
+	 break;
+	 /* XXX ugly hack here for sharing display lists */
 #define FXMESA_SHARE_CONTEXT 990099  /* keep in sync with xmesa1.c! */
-    case FXMESA_SHARE_CONTEXT:
+      case FXMESA_SHARE_CONTEXT:
+	 i++;
+	 {
+	    const void *vPtr = &attribList[i];
+	    GLcontext **ctx = (GLcontext **) vPtr;
+	    shareCtx = *ctx;
+	 }
+	 break;
+      default:
+	 if (MESA_VERBOSE&VERBOSE_DRIVER) {
+	    fprintf(stderr,"fxmesa: fxMesaCreateContext() End (defualt)\n");
+	 }
+	 return NULL;
+      }
       i++;
-      {
-        const void *vPtr = &attribList[i];
-        GLcontext **ctx = (GLcontext **) vPtr;
-        shareCtx = *ctx;
-      }
-      break;
-    default:
-      if (MESA_VERBOSE&VERBOSE_DRIVER) {
-	fprintf(stderr,"fxmesa: fxMesaCreateContext() End (defualt)\n");
-      }
+   }
+
+   /* A workaround for Linux GLQuake */
+   if(depthSize && alphaBuffer)
+      alphaBuffer=0;
+
+   if(verbose)
+      fprintf(stderr,"Mesa fx Voodoo Device Driver v0.30\nWritten by David Bucciarelli (davibu@tin.it.it)\n");
+
+   if((type=fxQueryHardware()) < 0) {
+      fprintf(stderr,"fx Driver: ERROR no Voodoo1/2 Graphics or Voodoo Rush !\n");
       return NULL;
-    }
-    i++;
-  }
+   }
 
-  /* A workaround for Linux GLQuake */
-  if(depthSize && alphaBuffer)
-    alphaBuffer=0;
-
-  if(verbose)
-    fprintf(stderr,"Mesa fx Voodoo Device Driver v0.30\nWritten by David Bucciarelli (davibu@tin.it.it)\n");
-
-  if((type=fxQueryHardware()) >= 0) {
-    if(type==GR_SSTTYPE_VOODOO)
+   if(type==GR_SSTTYPE_VOODOO)
       win=0;
 
-    grSstSelect(glbCurrentBoard);
+   grSstSelect(glbCurrentBoard);
 
-#if  FXMESA_USE_ARGB
-    glideContext = FX_grSstWinOpen((FxU32)win,res,ref,
-                     GR_COLORFORMAT_ARGB,GR_ORIGIN_LOWER_LEFT,2,aux);
-
-#else
-    glideContext = FX_grSstWinOpen((FxU32)win,res,ref,
-                     GR_COLORFORMAT_ABGR,GR_ORIGIN_LOWER_LEFT,2,aux);
-#endif
-   if (!glideContext){
-      errorstr = "grSstWinOpen"; 
+   fxMesa=(fxMesaContext)calloc(1,sizeof(struct tfxMesaContext));
+   if(!fxMesa) {
+      errorstr = "malloc";
       goto errorhandler;
-    }
+   }
 
-    if(verbose)
+   if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO)
+      fxMesa->haveTwoTMUs=(glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx > 1);
+   else if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96)
+      fxMesa->haveTwoTMUs=(glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.nTexelfx > 1);
+   else
+      fxMesa->haveTwoTMUs=GL_FALSE;
+
+   fxMesa->haveDoubleBuffer=doubleBuffer;
+   fxMesa->haveAlphaBuffer=alphaBuffer;
+   fxMesa->haveGlobalPaletteTexture=GL_FALSE;
+   fxMesa->haveZBuffer=depthSize ? 1 : 0;
+   fxMesa->verbose=verbose;
+   fxMesa->width=FX_grSstScreenWidth();
+   fxMesa->height=FX_grSstScreenHeight();
+   fxMesa->board=glbCurrentBoard;
+
+   if(verbose)
       fprintf(stderr,"Glide screen size: %dx%d\n",
               (int)FX_grSstScreenWidth(),(int)FX_grSstScreenHeight());
-  } else {
-    fprintf(stderr,"fx Driver: ERROR no Voodoo1/2 Graphics or Voodoo Rush !\n");
-    return NULL;
-  }
 
-  fxMesa=(fxMesaContext)calloc(1,sizeof(struct tfxMesaContext));
-  if(!fxMesa) {
-    errorstr = "malloc";
-    goto errorhandler;
-  }
+   fxMesa->glVis=gl_create_visual(GL_TRUE,     /* RGB mode */
+				  alphaBuffer,
+				  doubleBuffer,
+				  GL_FALSE,    /* stereo */
+				  depthSize,   /* depth_size */
+				  stencilSize, /* stencil_size */
+				  accumSize,   /* accum_size */
+				  0,           /* index bits */
+				  5,6,5,0);    /* RGBA bits */
+   if (!fxMesa->glVis) {
+      errorstr = "gl_create_visual";
+      goto errorhandler;
+   }
+
+   ctx = fxMesa->glCtx=gl_create_context(fxMesa->glVis,
+					 shareCtx,  /* share list context */
+					 (void *) fxMesa, GL_TRUE);
+   if (!ctx) {
+      errorstr = "gl_create_context";
+      goto errorhandler;
+   }
+
+
+   if (!fxDDInitFxMesaContext( fxMesa, win, res, ref, aux )) {
+      errorstr = "fxDDInitFxMesaContext failed"; 
+      goto errorhandler;
+   }
+
+
+   fxMesa->glBuffer=gl_create_framebuffer(fxMesa->glVis);
+   if (!fxMesa->glBuffer) {
+      errorstr = "gl_create_framebuffer";
+      goto errorhandler;
+   }
   
-  FX_setupGrVertexLayout();
-  
-  fxMesa->glideContext = glideContext;
-  fxMesa->board=glbCurrentBoard;
-  fxMesa->width=FX_grSstScreenWidth();
-  fxMesa->height=FX_grSstScreenHeight();
+   glbTotNumCtx++;
 
-  fxMesa->verbose=verbose;
-
-  if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO)
-    fxMesa->haveTwoTMUs=(glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx > 1);
-  else if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96)
-    fxMesa->haveTwoTMUs=(glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.nTexelfx > 1);
-  else
-    fxMesa->haveTwoTMUs=GL_FALSE;
-
-  if (getenv("FX_EMULATE_SINGLE_TMU")) {
-     if (MESA_VERBOSE&VERBOSE_DRIVER) 
-       fprintf(stderr, "\n\nEmulating single tmu\n\n");
-     fxMesa->haveTwoTMUs = GL_FALSE;
-  }
-
-  fxMesa->emulateTwoTMUs = fxMesa->haveTwoTMUs;
-  
-  if (!getenv("FX_DONT_FAKE_MULTITEX")) {
-     if (MESA_VERBOSE&VERBOSE_DRIVER) {
-	  if (!fxMesa->haveTwoTMUs)
-	    fprintf(stderr, "\n\nEmulating multitexture\n\n");
-     }
-     fxMesa->emulateTwoTMUs = GL_TRUE;
-  }
-
-
-  fxMesa->haveDoubleBuffer=doubleBuffer;
-  fxMesa->haveAlphaBuffer=alphaBuffer;
-  fxMesa->haveGlobalPaletteTexture=GL_FALSE;
-
-  if(getenv("FX_GLIDE_SWAPINTERVAL"))
-    fxMesa->swapInterval=atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
-  else
-    fxMesa->swapInterval=1;
-
-  if(getenv("MESA_FX_SWAP_PENDING"))
-    fxMesa->maxPendingSwapBuffers=atoi(getenv("MESA_FX_SWAP_PENDING"));
-  else
-    fxMesa->maxPendingSwapBuffers=2;
-
-  fxMesa->color=0xffffffff;
-  fxMesa->clearC=0;
-  fxMesa->clearA=0;
-
-  fxMesa->stats.swapBuffer=0;
-  fxMesa->stats.reqTexUpload=0;
-  fxMesa->stats.texUpload=0;
-  fxMesa->stats.memTexUpload=0;
-
-  fxMesa->tmuSrc=FX_TMU_NONE;
-  fxMesa->lastUnitsMode=FX_UM_NONE;
-  fxTMInit(fxMesa);
-
-  /* FX units setup */
-
-  fxMesa->unitsState.alphaTestEnabled=GL_FALSE;
-  fxMesa->unitsState.alphaTestFunc=GR_CMP_ALWAYS;
-  fxMesa->unitsState.alphaTestRefValue=0;
-
-  fxMesa->unitsState.blendEnabled=GL_FALSE;
-  fxMesa->unitsState.blendSrcFuncRGB=GR_BLEND_ONE;
-  fxMesa->unitsState.blendDstFuncRGB=GR_BLEND_ZERO;
-  fxMesa->unitsState.blendSrcFuncAlpha=GR_BLEND_ONE;
-  fxMesa->unitsState.blendDstFuncAlpha=GR_BLEND_ZERO;
-
-  fxMesa->unitsState.depthTestEnabled	=GL_FALSE;
-  fxMesa->unitsState.depthMask		=GL_TRUE;
-  fxMesa->unitsState.depthTestFunc	=GR_CMP_LESS;
-
-  grColorMask(FXTRUE,alphaBuffer ? FXTRUE : FXFALSE);
-  if(doubleBuffer) {
-    fxMesa->currentFB=GR_BUFFER_BACKBUFFER;
-    grRenderBuffer(GR_BUFFER_BACKBUFFER);
-  } else {
-    fxMesa->currentFB=GR_BUFFER_FRONTBUFFER;
-    grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-  }
-  
-  fxMesa->state 	= NULL;
-  fxMesa->fogTable 	= NULL;
-  
-  fxMesa->state 	= malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
-  fxMesa->fogTable 	= malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES)*sizeof(GrFog_t));
-  
-  if (!fxMesa->state || !fxMesa->fogTable) {
-     errorstr = "malloc";
-     goto errorhandler;
-  }
-
-  if(depthSize)
-    grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
-    
-#if (!FXMESA_USE_ARGB)
-  grLfbWriteColorFormat(GR_COLORFORMAT_ABGR); /* Not every Glide supports this  */
-#endif
-
-  fxMesa->glVis=gl_create_visual(GL_TRUE,     /* RGB mode */
-                                 alphaBuffer,
-                                 doubleBuffer,
-                                 GL_FALSE,    /* stereo */
-                                 depthSize,   /* depth_size */
-                                 stencilSize, /* stencil_size */
-                                 accumSize,   /* accum_size */
-                                 0,           /* index bits */
-                                 5,6,5,0);    /* RGBA bits */
-  if (!fxMesa->glVis) {
-     errorstr = "gl_create_visual";
-     goto errorhandler;
-  }
-
-  ctx = fxMesa->glCtx=gl_create_context(fxMesa->glVis,
-					shareCtx,  /* share list context */
-					(void *) fxMesa, GL_TRUE);
-  if (!ctx) {
-     errorstr = "gl_create_context";
-     goto errorhandler;
-  }
-
-  fxMesa->glBuffer=gl_create_framebuffer(fxMesa->glVis);
-  if (!fxMesa->glBuffer) {
-    errorstr = "gl_create_framebuffer";
-    goto errorhandler;
-  }
-
-  fxMesa->glCtx->Const.MaxTextureLevels=9;
-  fxMesa->glCtx->Const.MaxTextureSize=256;
-  fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;
-
-  fxMesa->glCtx->NewState|=NEW_DRVSTATE1;
-  fxMesa->new_state = NEW_ALL;
-  
-  fxDDSetupInit();
-  fxDDCvaInit();
-  fxDDClipInit();
-  fxDDTrifuncInit();
-  fxDDFastPathInit();
-
-  fxSetupDDPointers(fxMesa->glCtx);
-  fxDDRenderInit(fxMesa->glCtx);
-  fxDDInitExtensions(fxMesa->glCtx);  
-
-  fxDDSetNearFar(fxMesa->glCtx,1.0,100.0);
-  
-  grGlideGetState((GrState*)fxMesa->state);
-
-  /* XXX Fix me: callback not registered when main VB is created.
-   */
-  if (fxMesa->glCtx->VB) 
-     fxDDRegisterVB( fxMesa->glCtx->VB );
-  
-  /* XXX Fix me too: need to have the 'struct dd' prepared prior to
-   * creating the context... The below is broken if you try to insert
-   * new stages.  
-   */
-  if (ctx->NrPipelineStages)
-     ctx->NrPipelineStages = fxDDRegisterPipelineStages( ctx->PipelineStage,
-							 ctx->PipelineStage,
-							 ctx->NrPipelineStages);
-
-  
-  glbTotNumCtx++;
-
-  /* Run the config file */
-  gl_context_initialize( fxMesa->glCtx );
-
-  /* install signal handlers */
+   /* install signal handlers */
 #if defined(__linux__)
-  if (fxMesa->glCtx->CatchSignals) {
-     signal(SIGINT,cleangraphics_handler);
-     signal(SIGHUP,cleangraphics_handler);
-     signal(SIGPIPE,cleangraphics_handler);
-     signal(SIGFPE,cleangraphics_handler);
-     signal(SIGBUS,cleangraphics_handler);
-     signal(SIGILL,cleangraphics_handler);
-     signal(SIGSEGV,cleangraphics_handler);
-     signal(SIGTERM,cleangraphics_handler);
-  }
+   if (fxMesa->glCtx->CatchSignals) {
+      signal(SIGINT,cleangraphics_handler);
+      signal(SIGHUP,cleangraphics_handler);
+      signal(SIGPIPE,cleangraphics_handler);
+      signal(SIGFPE,cleangraphics_handler);
+      signal(SIGBUS,cleangraphics_handler);
+      signal(SIGILL,cleangraphics_handler);
+      signal(SIGSEGV,cleangraphics_handler);
+      signal(SIGTERM,cleangraphics_handler);
+   }
 #endif
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxMesaCreateContext() End\n");
-  }
+   if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxMesaCreateContext() End\n");
+   }
 
-  return fxMesa;
+   return fxMesa;
 
-errorhandler:
+ errorhandler:
    if (fxMesa) {
       if (fxMesa->glideContext)
-      	FX_grSstWinClose(fxMesa->glideContext);
+	 FX_grSstWinClose(fxMesa->glideContext);
       fxMesa->glideContext = 0;
       
       if (fxMesa->state)  
-     	free(fxMesa->state);
+	 free(fxMesa->state);
       if (fxMesa->fogTable)
-     	free(fxMesa->fogTable);
+	 free(fxMesa->fogTable);
       if (fxMesa->glBuffer)
-      	gl_destroy_framebuffer(fxMesa->glBuffer);
+	 gl_destroy_framebuffer(fxMesa->glBuffer);
       if (fxMesa->glVis)
-      	gl_destroy_visual(fxMesa->glVis);
+	 gl_destroy_visual(fxMesa->glVis);
       if (fxMesa->glCtx)
-      	gl_destroy_context(fxMesa->glCtx);
+	 gl_destroy_context(fxMesa->glCtx);
       free(fxMesa);
    }
    
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
+   if (MESA_VERBOSE&VERBOSE_DRIVER) {
       fprintf(stderr,"fxmesa: fxMesaCreateContext() End (%s)\n",errorstr);
-  }
-  return NULL;
+   }
+   return NULL;
 }
 
 

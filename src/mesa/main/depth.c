@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.3 1999/09/19 23:43:02 keithw Exp $ */
+/* $Id: depth.c,v 1.4 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,6 +25,8 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/depth.c,v 1.3 1999/04/04 00:20:22 dawes Exp $ */
+
 /*
  * Depth buffer functions
  */
@@ -33,9 +35,13 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "enums.h"
 #include "depth.h"

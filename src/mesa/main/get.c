@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.3 1999/09/16 15:46:05 brianp Exp $ */
+/* $Id: get.c,v 1.4 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,12 +25,18 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/get.c,v 1.3 1999/04/04 00:20:25 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
@@ -40,9 +46,6 @@
 #include "mmath.h"
 #include "types.h"
 #include "vb.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

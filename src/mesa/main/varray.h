@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.2 1999/09/09 23:48:02 brianp Exp $ */
+/* $Id: varray.h,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,10 @@ extern void gl_EdgeFlagPointer( GLcontext *ctx,
                                 GLsizei stride, const GLboolean *ptr );
 
 
+extern void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params );
+
+
+
 extern void gl_DrawArrays( GLcontext *ctx,
                            GLenum mode, GLint first, GLsizei count );
 
@@ -88,7 +92,6 @@ extern void gl_save_InterleavedArrays( GLcontext *ctx,
 extern void gl_DrawRangeElements( GLcontext *ctx, GLenum mode, GLuint start,
                                   GLuint end, GLsizei count, GLenum type,
                                   const GLvoid *indices );
-
 
 extern void gl_save_DrawRangeElements( GLcontext *ctx, GLenum mode,
                                        GLuint start, GLuint end, GLsizei count,

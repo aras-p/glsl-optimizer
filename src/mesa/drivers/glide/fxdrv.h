@@ -29,11 +29,16 @@
  * you turn debugging on/off from the debugger.
  */
 
+#ifndef XFree86Server
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <assert.h>
+#else 
+#include "GL/xf86glx.h"
+#endif
+
 
 #if defined(__linux__)
 #include <signal.h>
@@ -378,8 +383,14 @@ struct tfxMesaVertexBuffer {
 };
 
 #define FX_DRIVER_DATA(vb) ((struct tfxMesaVertexBuffer *)((vb)->driver_data))
-#define FX_CONTEXT(ctx) ((struct tfxMesaContext *)((ctx)->DriverCtx))
+#define FX_CONTEXT(ctx) ((fxMesaContext)((ctx)->DriverCtx))
 #define FX_TEXTURE_DATA(t) ((tfxTexInfo *) ((t)->Current->DriverData))
+
+#if defined(XFree86Server) || defined(GLX_DIRECT_RENDERING)
+#include "tdfx_init.h"
+#else
+#define DRI_FX_CONTEXT
+#endif
 
 struct tfxMesaContext {
   GuTexPalette glbPalette;
@@ -458,12 +469,16 @@ struct tfxMesaContext {
   GLboolean haveTwoTMUs;	/* True if we really have 2 tmu's  */
   GLboolean emulateTwoTMUs;	/* True if we present 2 tmu's to mesa.  */
   GLboolean haveAlphaBuffer;
+  GLboolean haveZBuffer;
   GLboolean haveDoubleBuffer;
   GLboolean haveGlobalPaletteTexture;
   GLint swapInterval;
   GLint maxPendingSwapBuffers;
   
   FX_GrContext_t glideContext;
+
+  DRI_FX_CONTEXT
+
 };
 
 typedef void (*tfxSetupFunc)(struct vertex_buffer *, GLuint, GLuint);
@@ -475,10 +490,10 @@ extern void fxSetupFXUnits(GLcontext *);
 extern void fxSetupDDPointers(GLcontext *);
 extern void fxDDSetNearFar(GLcontext *, GLfloat, GLfloat);
 
-extern void fxDDSetupInit();
-extern void fxDDCvaInit();
-extern void fxDDTrifuncInit();
-extern void fxDDFastPathInit();
+extern void fxDDSetupInit(void);
+extern void fxDDCvaInit(void);
+extern void fxDDTrifuncInit(void);
+extern void fxDDFastPathInit(void);
 
 extern void fxDDChooseRenderState( GLcontext *ctx );
 
@@ -498,7 +513,7 @@ extern quad_func fxDDChooseQuadFunction(GLcontext *);
 extern render_func **fxDDChooseRenderVBTables(GLcontext *);
 
 extern void fxDDRenderInit(GLcontext *);
-extern void fxDDClipInit();
+extern void fxDDClipInit(void);
 
 extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
@@ -554,8 +569,8 @@ extern void fxDDRenderVBIndirectDirect( struct vertex_buffer *VB );
 
 extern void fxDDInitExtensions( GLcontext *ctx );
 
-extern void fxTMInit(fxMesaContext);
-extern void fxTMClose(fxMesaContext);
+extern void fxTMInit(fxMesaContext ctx);
+extern void fxTMClose(fxMesaContext ctx);
 extern void fxTMMoveInTM(fxMesaContext, struct gl_texture_object *, GLint);
 extern void fxTMMoveOutTM(fxMesaContext, struct gl_texture_object *);
 extern void fxTMFreeTexture(fxMesaContext, struct gl_texture_object *);
@@ -603,5 +618,7 @@ extern void fxPrintHintState( const char *msg, GLuint state );
 
 extern void fxDDDoRenderVB( struct vertex_buffer *VB );
 
+extern int fxDDInitFxMesaContext( fxMesaContext fxMesa, 
+				  int win, int res, int ref, int aux );
 
 #endif

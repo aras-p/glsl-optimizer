@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.3 1999/09/30 11:18:21 keithw Exp $ */
+/* $Id: blend.c,v 1.4 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,9 +29,13 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#include <stdio.h>
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "alphabuf.h"
 #include "blend.h"
 #include "context.h"

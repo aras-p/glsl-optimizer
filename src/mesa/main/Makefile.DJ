@@ -1,4 +1,4 @@
-# $Id: Makefile.DJ,v 1.1 1999/08/19 00:55:41 jtg Exp $
+# $Id: Makefile.DJ,v 1.2 1999/10/08 09:27:09 keithw Exp $
 
 # Makefile for core library for MS-DOS using djgpp
 
@@ -22,8 +22,11 @@
 
 
 # $Log: Makefile.DJ,v $
-# Revision 1.1  1999/08/19 00:55:41  jtg
-# Initial revision
+# Revision 1.2  1999/10/08 09:27:09  keithw
+# Fixed includes & added a few hooks for the DRI.
+#
+# Revision 1.1.1.1  1999/08/19 00:55:41  jtg
+# Imported sources
 #
 # Revision 1.1  1999/01/01 14:35:09  brianp
 # Initial revision
@@ -48,7 +51,7 @@ CORE_SOURCES = accum.c alpha.c alphabuf.c api1.c api2.c apiext.c attrib.c \
 	bitmap.c blend.c clip.c colortab.c context.c copypix.c depth.c \
 	dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
 	get.c hash.c image.c light.c lines.c logic.c masking.c matrix.c \
-	misc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
+	glmisc.c mmath.c mthreads.c pb.c pixel.c points.c pointers.c polygon.c \
 	quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
 	stencil.c teximage.c texobj.c texstate.c texture.c triangle.c \
 	varray.c winpos.c vb.c vbfill.c vbrender.c vbxform.c xform.c \

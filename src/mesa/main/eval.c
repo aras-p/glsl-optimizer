@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: eval.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,9 +44,13 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "eval.h"
 #include "macros.h"
@@ -1988,7 +1992,7 @@ void gl_GetMapiv( GLcontext* ctx, GLenum target, GLenum query, GLint *v )
 
 
 
-void eval_points1( GLfloat outcoord[][4], 
+static void eval_points1( GLfloat outcoord[][4], 
 		   GLfloat coord[][4],
 		   const GLuint *flags,
 		   GLfloat du, GLfloat u1 )
@@ -2003,7 +2007,7 @@ void eval_points1( GLfloat outcoord[][4],
       }
 }
 
-void eval_points2( GLfloat outcoord[][4], 
+static void eval_points2( GLfloat outcoord[][4], 
 		   GLfloat coord[][4],
 		   const GLuint *flags,
 		   GLfloat du, GLfloat u1,
@@ -2030,11 +2034,11 @@ static const GLubyte dirty_flags[5] = {
 };
 
 
-GLvector4f *eval1_4f( GLvector4f *dest, 
-		      GLfloat coord[][4], 
-		      const GLuint *flags, 
-		      GLuint dimension,
-		      struct gl_1d_map *map )
+static GLvector4f *eval1_4f( GLvector4f *dest, 
+			     GLfloat coord[][4], 
+			     const GLuint *flags, 
+			     GLuint dimension,
+			     struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2055,10 +2059,10 @@ GLvector4f *eval1_4f( GLvector4f *dest,
 }
 
 
-GLvector1ui *eval1_1ui( GLvector1ui *dest, 
-		       GLfloat coord[][4], 
-		       const GLuint *flags, 
-		       struct gl_1d_map *map )
+static GLvector1ui *eval1_1ui( GLvector1ui *dest, 
+			       GLfloat coord[][4], 
+			       const GLuint *flags, 
+			       struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2077,7 +2081,7 @@ GLvector1ui *eval1_1ui( GLvector1ui *dest,
    return dest;
 }
 
-GLvector3f *eval1_norm( GLvector3f *dest, 
+static GLvector3f *eval1_norm( GLvector3f *dest, 
 			GLfloat coord[][4],
 			GLuint *flags, /* not const */
 			struct gl_1d_map *map )
@@ -2098,7 +2102,7 @@ GLvector3f *eval1_norm( GLvector3f *dest,
    return dest;
 }
 
-GLvector4ub *eval1_color( GLvector4ub *dest, 
+static GLvector4ub *eval1_color( GLvector4ub *dest, 
 			  GLfloat coord[][4],
 			  GLuint *flags, /* not const */
 			  struct gl_1d_map *map )
@@ -2124,12 +2128,12 @@ GLvector4ub *eval1_color( GLvector4ub *dest,
 
 
 
-GLvector4f *eval2_obj_norm( GLvector4f *obj_ptr, 
-			    GLvector3f *norm_ptr,
-			    GLfloat coord[][4], 
-			    GLuint *flags, 
-			    GLuint dimension,
-			    struct gl_2d_map *map )
+static GLvector4f *eval2_obj_norm( GLvector4f *obj_ptr, 
+				   GLvector3f *norm_ptr,
+				   GLfloat coord[][4], 
+				   GLuint *flags, 
+				   GLuint dimension,
+				   struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2161,11 +2165,11 @@ GLvector4f *eval2_obj_norm( GLvector4f *obj_ptr,
 }
 
 
-GLvector4f *eval2_4f( GLvector4f *dest, 
-		      GLfloat coord[][4], 
-		      const GLuint *flags, 
-		      GLuint dimension,
-		      struct gl_2d_map *map )
+static GLvector4f *eval2_4f( GLvector4f *dest, 
+			     GLfloat coord[][4], 
+			     const GLuint *flags, 
+			     GLuint dimension,
+			     struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2189,10 +2193,10 @@ GLvector4f *eval2_4f( GLvector4f *dest,
 }
 
 
-GLvector3f *eval2_norm( GLvector3f *dest, 
-			GLfloat coord[][4], 
-			GLuint *flags, 
-			struct gl_2d_map *map )
+static GLvector3f *eval2_norm( GLvector3f *dest, 
+			       GLfloat coord[][4], 
+			       GLuint *flags, 
+			       struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2215,10 +2219,10 @@ GLvector3f *eval2_norm( GLvector3f *dest,
 }
 
 
-GLvector1ui *eval2_1ui( GLvector1ui *dest, 
-		       GLfloat coord[][4], 
-		       const GLuint *flags, 
-		       struct gl_2d_map *map )
+static GLvector1ui *eval2_1ui( GLvector1ui *dest, 
+			       GLfloat coord[][4], 
+			       const GLuint *flags, 
+			       struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2244,10 +2248,10 @@ GLvector1ui *eval2_1ui( GLvector1ui *dest,
 
 
 
-GLvector4ub *eval2_color( GLvector4ub *dest,
-			  GLfloat coord[][4], 
-			  GLuint *flags,
-			  struct gl_2d_map *map )
+static GLvector4ub *eval2_color( GLvector4ub *dest,
+				 GLfloat coord[][4], 
+				 GLuint *flags,
+				 struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -2272,8 +2276,8 @@ GLvector4ub *eval2_color( GLvector4ub *dest,
 }
 
 
-GLvector4f *copy_4f( GLvector4f *out, CONST GLvector4f *in, 
-		     const GLuint *flags)
+static GLvector4f *copy_4f( GLvector4f *out, CONST GLvector4f *in, 
+			    const GLuint *flags)
 {
    GLfloat (*to)[4] = out->data;
    GLfloat (*from)[4] = in->data;
@@ -2286,8 +2290,8 @@ GLvector4f *copy_4f( GLvector4f *out, CONST GLvector4f *in,
    return out;
 }
 
-GLvector3f *copy_3f( GLvector3f *out, CONST GLvector3f *in, 
-		     const GLuint *flags)
+static GLvector3f *copy_3f( GLvector3f *out, CONST GLvector3f *in, 
+			    const GLuint *flags)
 {
    GLfloat (*to)[3] = out->data;
    GLfloat (*from)[3] = in->data;
@@ -2300,8 +2304,8 @@ GLvector3f *copy_3f( GLvector3f *out, CONST GLvector3f *in,
    return out;
 }
 
-GLvector4ub *copy_4ub( GLvector4ub *out, CONST GLvector4ub *in, 
-		       const GLuint *flags )
+static GLvector4ub *copy_4ub( GLvector4ub *out, CONST GLvector4ub *in, 
+			      const GLuint *flags )
 {
    GLubyte (*to)[4] = out->data;
    GLubyte (*from)[4] = in->data;
@@ -2314,8 +2318,8 @@ GLvector4ub *copy_4ub( GLvector4ub *out, CONST GLvector4ub *in,
    return out;
 }
 
-GLvector1ui *copy_1ui( GLvector1ui *out, CONST GLvector1ui *in, 
-		       const GLuint *flags )
+static GLvector1ui *copy_1ui( GLvector1ui *out, CONST GLvector1ui *in, 
+			      const GLuint *flags )
 {
    GLuint *to = out->data;
    CONST GLuint *from = in->data;

@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.3 1999/09/07 22:31:30 brianp Exp $ */
+/* $Id: varray.c,v 1.4 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,9 +27,13 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "api.h"
 #include "cva.h"
@@ -53,6 +57,11 @@
 #ifdef XFree86Server
 #include "GL/xf86glx.h"
 #endif
+#endif
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server) && !defined(GLX_USE_DLOPEN)
+#define NEED_MESA_FUNCS_WRAPPED
+#include "mesa_api.h"
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: points.c,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/lib/GL/mesa/src/points.c,v 1.4 1999/04/04 00:20:29 dawes Exp $ */
 
 
 
@@ -31,18 +32,22 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
+#include <math.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "feedback.h"
 #include "macros.h"
+#include "mmath.h"
 #include "pb.h"
+#include "points.h"
 #include "span.h"
 #include "texstate.h"
 #include "types.h"
 #include "vb.h"
 #include "mmath.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.4 1999/09/16 16:47:35 brianp Exp $ */
+/* $Id: extensions.c,v 1.5 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,10 +46,11 @@ struct extension {
 
 static struct { int enabled; const char *name; } default_extensions[] = {
    { ALWAYS_ENABLED, "GL_EXT_blend_color" },
-   { ALWAYS_ENABLED, "GL_EXT_blend_minmax" },
-   { ALWAYS_ENABLED, "GL_EXT_blend_logic_op" },
-   { ALWAYS_ENABLED, "GL_EXT_blend_subtract" },
-   { ALWAYS_ENABLED, "GL_EXT_paletted_texture" },
+   { DEFAULT_OFF,    "ARB_imaging" },
+   { DEFAULT_ON,     "GL_EXT_blend_minmax" },
+   { DEFAULT_ON,     "GL_EXT_blend_logic_op" },
+   { DEFAULT_ON,     "GL_EXT_blend_subtract" },
+   { DEFAULT_ON,     "GL_EXT_paletted_texture" },
    { DEFAULT_ON,     "GL_EXT_point_parameters" },
    { ALWAYS_ENABLED, "GL_EXT_polygon_offset" },
    { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
@@ -62,7 +63,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { ALWAYS_ENABLED, "GL_SGIS_texture_edge_clamp" },
    { ALWAYS_ENABLED, "GL_EXT_stencil_wrap" },
-   { ALWAYS_ENABLED, "GL_INGR_blend_func_separate" },
+   { DEFAULT_ON,     "GL_INGR_blend_func_separate" },
    { DEFAULT_ON,     "GL_ARB_multitexture" },
    { ALWAYS_ENABLED, "GL_NV_texgen_reflection" },
    { DEFAULT_ON,     "GL_PGI_misc_hints" },
@@ -140,6 +141,7 @@ void gl_extensions_dtr( GLcontext *ctx )
 
    if (ctx->Extensions.ext_list) {
       foreach_s( i, nexti, ctx->Extensions.ext_list ) {
+	 remove_from_list( i );
 	 free( i );
       }
    
@@ -205,7 +207,7 @@ const char *gl_extensions_get_string( GLcontext *ctx )
  * Also, this function does not yet do per-context function searches.
  * Not applicable to Mesa at this time.
  */
-GLfunction gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName )
+void (* gl_GetProcAddress( GLcontext *ctx, const GLubyte *procName ))()
 {
    struct proc {
       const char *name;

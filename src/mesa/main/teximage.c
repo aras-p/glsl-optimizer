@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: teximage.c,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,13 +25,19 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/teximage.c,v 1.3 1999/04/04 00:20:32 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "image.h"
 #include "macros.h"

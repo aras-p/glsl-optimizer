@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.2 1999/08/19 11:54:28 brianp Exp $ */
+/* $Id: accum.c,v 1.3 1999/10/08 09:27:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,14 +25,18 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/accum.c,v 1.3 1999/04/04 00:20:17 dawes Exp $ */
 
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#include <assert.h>
+#ifndef XFree86Server
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "accum.h"
 #include "context.h"
 #include "macros.h"

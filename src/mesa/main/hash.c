@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: hash.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,13 +31,14 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "hash.h"
-#ifdef XFree86Server
+#else
 #include "GL/xf86glx.h"
 #endif
+#include "hash.h"
 #endif
 
 

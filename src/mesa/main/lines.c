@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: lines.c,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,11 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "depth.h"
 #include "feedback.h"

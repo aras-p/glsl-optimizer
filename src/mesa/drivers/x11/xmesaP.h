@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: xmesaP.h,v 1.2 1999/10/08 09:27:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/lib/GL/mesa/src/X/xmesaP.h,v 1.5 1999/07/06 14:51:28 dawes Exp $ */
+
+
 
 
 #ifndef XMESAP_H
@@ -30,17 +33,30 @@
 
 
 #ifdef XFree86Server
-#include "xf86glx_util.h"
+# include "GL/xf86glx.h"
+# include "xf86glx_util.h"
 #else
-#ifdef SHM
-#include <X11/extensions/XShm.h>
-#endif
+# ifdef GLX_DIRECT_RENDERING
+#  include "dri_mesa.h"
+# endif
+# ifdef SHM
+#  include <X11/extensions/XShm.h>
+# endif
 #endif
 #include "GL/xmesa.h"
 #include "types.h"
-#ifdef FX
+#if defined(FX) && !defined(GLX_DIRECT_RENDERING)
 #include "GL/fxmesa.h"
 #include "../FX/fxdrv.h"
+#endif
+
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
+#  include "xdriP.h"
+#else
+#  define DRI_DRAWABLE_ARG
+#  define DRI_DRAWABLE_PARM
+#  define DRI_CTX_ARG
 #endif
 
 
@@ -52,13 +68,17 @@ typedef struct {
 } bgr_t;
 
 
+
+
 /*
  * "Derived" from gl_visual.  Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
    GLvisual *gl_visual;		/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
-#ifndef XFree86Server
+#ifdef XFree86Server
+   GLint screen_depth;	/* The depth of the screen */
+#else
    XVisualInfo *vishandle;	/* The pointer returned by glXChooseVisual */
 #endif
    XMesaVisualInfo visinfo;	/* X's visual info */
@@ -119,6 +139,13 @@ struct xmesa_context {
 
    GLubyte clearcolor[4];		/* current clearing color */
    unsigned long clearpixel;		/* current clearing pixel value */
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
+  __DRIcontextPrivate *driContextPriv; /* back pointer to DRI context
+					* used for locking
+					*/
+  void *private;			/* device-specific private context */
+#endif
 };
 
 
@@ -194,7 +221,14 @@ struct xmesa_buffer {
    int num_alloced;
    unsigned long alloced_colors[256];
 
-#ifdef FX
+#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
+  __DRIdrawablePrivate *driDrawPriv;	/* back pointer to DRI drawable
+					 * used for direct access to framebuffer
+					 */
+  void *private;			/* device-specific private drawable */
+#endif
+
+#if defined( FX ) && !defined(GLX_DIRECT_RENDERING)
    /* For 3Dfx Glide only */
    GLboolean FXisHackUsable;	/* Can we render into window? */
    GLboolean FXwindowHack;	/* Are we rendering into a window? */
@@ -278,6 +312,7 @@ struct xmesa_buffer {
 
 
 
+
 /*
  * If pixelformat==PF_DITHER:
  *
@@ -287,6 +322,7 @@ struct xmesa_buffer {
 #undef _R
 #undef _G
 #undef _B
+#undef _D
 #ifdef DITHER666
 # define _R   6
 # define _G   6
@@ -484,8 +520,9 @@ extern triangle_func xmesa_get_triangle_func( GLcontext *ctx );
 /* XXX this is a hack to implement shared display lists with 3Dfx */
 extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
 					     XMesaWindow w,
-					     XMesaContext c );
-
+					     XMesaContext c
+					     DRI_DRAWABLE_ARG
+					   );
 
 /*
  * These are the extra routines required for integration with XFree86.

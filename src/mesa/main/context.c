@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.9 1999/09/19 23:43:02 keithw Exp $ */
+/* $Id: context.c,v 1.10 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,6 +25,8 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/context.c,v 1.4 1999/04/04 00:20:21 dawes Exp $ */
+
 /*
  * If multi-threading is enabled (-DTHREADS) then each thread has it's
  * own rendering context.  A thread obtains the pointer to its GLcontext
@@ -38,11 +40,15 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "accum.h"
 #include "alphabuf.h"
 #include "api.h"

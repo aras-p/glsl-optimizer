@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: fog.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,11 +25,17 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/fog.c,v 1.4 1999/04/04 00:20:24 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <math.h>
 #include <stdlib.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "fog.h"
 #include "macros.h"

@@ -29,6 +29,7 @@
 
 #if defined(FX)
 
+#include "types.h"
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
@@ -354,53 +355,159 @@ void fxDDSetNearFar(GLcontext *ctx, GLfloat n, GLfloat f)
  */
 static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 {
-  static char *extensions="GL_EXT_blend_color GL_EXT_blend_minmax GL_EXT_blend_logic_op GL_EXT_blend_subtract GL_EXT_paletted_texture GL_EXT_point_parameters GL_EXT_polygon_offset GL_EXT_vertex_array GL_EXT_texture_object GL_EXT_texture3D GL_MESA_window_pos GL_MESA_resize_buffers GL_EXT_shared_texture_palette GL_EXT_rescale_normal GL_EXT_abgr GL_SGIS_texture_edge_clamp 3DFX_set_global_palette GL_FXMESA_global_texture_lod_bias";
-
-  static char buf[MAX_NUM_SST][64];
-
-  fxQueryHardware();
-
-  switch (name) {
-    case GL_RENDERER:
-      if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) {
-        sprintf(buf[glbCurrentBoard],"Mesa Glide v0.30 Voodoo_Graphics %d CARD/%d FB/%d TM/%d TMU/%s",
-                glbCurrentBoard,
-
-                (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.sliDetect ?
-                 (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.fbRam*2) :
-                 glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.fbRam),
-
-                glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.tmuConfig[GR_TMU0].tmuRam+
-                ((glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx>1) ?
-                 glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.tmuConfig[GR_TMU1].tmuRam :
-                 0),
-
-                glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx,
-
-                (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.sliDetect ? "SLI" : "NOSLI")
-                );
-      }
-      else {
-        if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96)
-          sprintf(buf[glbCurrentBoard],"Glide v0.30 Voodoo_Rush %d CARD/%d FB/%d TM/%d TMU/NOSLI",
-                  glbCurrentBoard,
-
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.fbRam,
-
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.tmuConfig.tmuRam,
-
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.nTexelfx	      
-                  );
-        else
-          strcpy(buf[glbCurrentBoard],"Glide v0.30 UNKNOWN");
-      }
-      return (GLubyte *) buf[glbCurrentBoard];
-    case GL_EXTENSIONS:
-      return (GLubyte *) extensions;
-    default:
+   switch (name) {
+   case GL_RENDERER:
+#if defined(GLX_DIRECT_RENDERING)
+      return "Mesa Glide - DRI VB/V3";
+#else
+      return "Mesa Glide";
+#endif
+   default:
       return NULL;
-  }
+   }
 }
+
+
+int fxDDInitFxMesaContext( fxMesaContext fxMesa, 
+			   int win, 
+			   int res,
+			   int ref, 
+			   int aux )
+{
+   FX_GrContext_t glideContext =  FX_grSstWinOpen((FxU32)win,res,ref,
+#if  FXMESA_USE_ARGB
+						  GR_COLORFORMAT_ARGB,
+#else
+						  GR_COLORFORMAT_ABGR,
+#endif
+						  GR_ORIGIN_LOWER_LEFT,
+						  2,
+						  aux);
+   
+   if (!glideContext) return 0;
+  
+   FX_setupGrVertexLayout();
+   
+   fxMesa->glideContext = glideContext;
+   
+   if (getenv("FX_EMULATE_SINGLE_TMU")) 
+      fxMesa->haveTwoTMUs = GL_FALSE;
+      
+   fxMesa->emulateTwoTMUs = fxMesa->haveTwoTMUs;
+   
+   if (!getenv("FX_DONT_FAKE_MULTITEX")) 
+      fxMesa->emulateTwoTMUs = GL_TRUE;
+      
+   if(getenv("FX_GLIDE_SWAPINTERVAL"))
+      fxMesa->swapInterval=atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
+   else
+      fxMesa->swapInterval=1;
+
+   if(getenv("MESA_FX_SWAP_PENDING"))
+      fxMesa->maxPendingSwapBuffers=atoi(getenv("MESA_FX_SWAP_PENDING"));
+   else
+      fxMesa->maxPendingSwapBuffers=2;
+   
+   fxMesa->color=0xffffffff;
+   fxMesa->clearC=0;
+   fxMesa->clearA=0;
+
+   fxMesa->stats.swapBuffer=0;
+   fxMesa->stats.reqTexUpload=0;
+   fxMesa->stats.texUpload=0;
+   fxMesa->stats.memTexUpload=0;
+
+   fxMesa->tmuSrc=FX_TMU_NONE;
+   fxMesa->lastUnitsMode=FX_UM_NONE;
+   fxTMInit(fxMesa);
+
+   /* FX units setup */
+
+   fxMesa->unitsState.alphaTestEnabled=GL_FALSE;
+   fxMesa->unitsState.alphaTestFunc=GR_CMP_ALWAYS;
+   fxMesa->unitsState.alphaTestRefValue=0;
+
+   fxMesa->unitsState.blendEnabled=GL_FALSE;
+   fxMesa->unitsState.blendSrcFuncRGB=GR_BLEND_ONE;
+   fxMesa->unitsState.blendDstFuncRGB=GR_BLEND_ZERO;
+   fxMesa->unitsState.blendSrcFuncAlpha=GR_BLEND_ONE;
+   fxMesa->unitsState.blendDstFuncAlpha=GR_BLEND_ZERO;
+
+   fxMesa->unitsState.depthTestEnabled	=GL_FALSE;
+   fxMesa->unitsState.depthMask		=GL_TRUE;
+   fxMesa->unitsState.depthTestFunc	=GR_CMP_LESS;
+
+   grColorMask(FXTRUE, fxMesa->haveAlphaBuffer ? FXTRUE : FXFALSE);
+   if(fxMesa->haveDoubleBuffer) {
+      fxMesa->currentFB=GR_BUFFER_BACKBUFFER;
+      grRenderBuffer(GR_BUFFER_BACKBUFFER);
+   } else {
+      fxMesa->currentFB=GR_BUFFER_FRONTBUFFER;
+      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+   }
+  
+   fxMesa->state 	= NULL;
+   fxMesa->fogTable 	= NULL;
+  
+   fxMesa->state 	= malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
+   fxMesa->fogTable 	= malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES)*sizeof(GrFog_t));
+  
+   if (!fxMesa->state || !fxMesa->fogTable) {
+      if (fxMesa->state) free(fxMesa->state);
+      if (fxMesa->fogTable) free(fxMesa->fogTable);
+      return 0;
+   }
+
+   if(fxMesa->haveZBuffer)
+      grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
+    
+#if (!FXMESA_USE_ARGB)
+   grLfbWriteColorFormat(GR_COLORFORMAT_ABGR); /* Not every Glide has this  */
+#endif
+
+   fxMesa->glCtx->Const.MaxTextureLevels=9;
+   fxMesa->glCtx->Const.MaxTextureSize=256;
+   fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;
+   fxMesa->glCtx->NewState|=NEW_DRVSTATE1;
+   fxMesa->new_state = NEW_ALL;
+  
+   fxDDSetupInit();
+   fxDDCvaInit();
+   fxDDClipInit();
+   fxDDTrifuncInit();
+   fxDDFastPathInit();
+
+   fxSetupDDPointers(fxMesa->glCtx);
+   fxDDRenderInit(fxMesa->glCtx);
+   fxDDInitExtensions(fxMesa->glCtx);  
+
+   fxDDSetNearFar(fxMesa->glCtx,1.0,100.0);
+  
+   grGlideGetState((GrState*)fxMesa->state);
+
+   /* XXX Fix me: callback not registered when main VB is created.
+    */
+   if (fxMesa->glCtx->VB) 
+      fxDDRegisterVB( fxMesa->glCtx->VB );
+  
+   /* XXX Fix me too: need to have the 'struct dd' prepared prior to
+    * creating the context... The below is broken if you try to insert
+    * new stages.  
+    */
+   if (fxMesa->glCtx->NrPipelineStages)
+      fxMesa->glCtx->NrPipelineStages = fxDDRegisterPipelineStages( 
+	 fxMesa->glCtx->PipelineStage,
+	 fxMesa->glCtx->PipelineStage,
+	 fxMesa->glCtx->NrPipelineStages);
+
+   /* Run the config file */
+   gl_context_initialize( fxMesa->glCtx );
+
+   return 1;
+}
+
+
+
 
 
 void fxDDInitExtensions( GLcontext *ctx )

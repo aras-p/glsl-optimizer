@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.3 1999/09/19 02:03:19 tjump Exp $ */
+/* $Id: feedback.c,v 1.4 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,8 +31,12 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdio.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "enums.h"
 #include "feedback.h"

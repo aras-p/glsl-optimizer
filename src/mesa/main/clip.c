@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: clip.c,v 1.3 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,12 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "clip.h"
 #include "context.h"
 #include "macros.h"

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.5 1999/09/20 14:30:22 keithw Exp $ */
+/* $Id: dlist.c,v 1.6 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,13 +25,19 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/dlist.c,v 1.3 1999/04/04 00:20:22 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "accum.h"
 #include "api.h"
 #include "alpha.h"
@@ -52,6 +58,7 @@
 #include "feedback.h"
 #include "fog.h"
 #include "get.h"
+#include "glmisc.h"
 #include "hash.h"
 #include "image.h"
 #include "light.h"
@@ -61,7 +68,6 @@
 #include "macros.h"
 #include "masking.h"
 #include "matrix.h"
-#include "misc.h"
 #include "pipeline.h"
 #include "pixel.h"
 #include "points.h"

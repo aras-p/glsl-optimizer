@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.5 1999/09/18 20:41:23 keithw Exp $ */
+/* $Id: enable.c,v 1.6 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,11 +25,17 @@
  */
 
 
+/* $XFree86: xc/lib/GL/mesa/src/enable.c,v 1.3 1999/04/04 00:20:23 dawes Exp $ */
+
 #ifdef PC_HEADER
 #include "all.h"
 #else
-#include <string.h>
+#ifndef XFree86Server
 #include <stdio.h>
+#include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "enable.h"
 #include "light.h"

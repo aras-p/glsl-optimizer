@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: colortab.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/lib/GL/mesa/src/colortab.c,v 1.2 1999/04/04 00:20:21 dawes Exp $ */
 
 
 
@@ -31,6 +32,9 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifdef XFree86Server
+#include "GL/xf86glx.h"
+#endif
 #include "colortab.h"
 #include "context.h"
 #include "macros.h"

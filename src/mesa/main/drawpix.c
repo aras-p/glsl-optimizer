@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
+/* $Id: drawpix.c,v 1.3 1999/10/08 09:27:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,13 @@
 #ifdef PC_HEADER
 #include "all.h"
 #else
+#ifndef XFree86Server
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "GL/xf86glx.h"
+#endif
 #include "context.h"
 #include "drawpix.h"
 #include "feedback.h"
