@@ -371,8 +371,7 @@ static void _save_copy_to_current( GLcontext *ctx )
    for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++) {
       if (tnl->save.attrsz[i]) {
 	 tnl->save.currentsz[i][0] = tnl->save.attrsz[i];
-	 ASSIGN_4V(tnl->save.current[i], 0, 0, 0, 1);
-	 COPY_SZ_4V(tnl->save.current[i], 
+	 COPY_CLEAN_4V(tnl->save.current[i], 
 		    tnl->save.attrsz[i], 
 		    tnl->save.attrptr[i]);
       }
@@ -502,8 +501,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 	    if (tnl->save.attrsz[j]) {
 	       if (j == attr) {
 		  if (oldsz) {
-		     ASSIGN_4V( dest, 0, 0, 0, 1 );
-		     COPY_SZ_4V( dest, oldsz, data );
+		     COPY_CLEAN_4V( dest, oldsz, data );
 		     data += oldsz;
 		     dest += newsz;
 		  }

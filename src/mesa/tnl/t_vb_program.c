@@ -133,8 +133,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 	    const GLuint size = VB->AttribPtr[attr]->size;
 	    const GLuint stride = VB->AttribPtr[attr]->stride;
 	    const GLfloat *data = (GLfloat *) (ptr + stride * i);
-	    ASSIGN_4V(ctx->VertexProgram.Inputs[attr], 0, 0, 0, 1);
-	    COPY_SZ_4V(ctx->VertexProgram.Inputs[attr], size, data);
+	    COPY_CLEAN_4V(ctx->VertexProgram.Inputs[attr], size, data);
 	 }
       }
 

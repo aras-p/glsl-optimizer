@@ -147,8 +147,7 @@ static void _tnl_copy_to_current( GLcontext *ctx )
          /* Note: the tnl->vtx.current[i] pointers points to
           * the ctx->Current fields.  The first 16 or so, anyway.
           */
-	 ASSIGN_4V( tnl->vtx.current[i], 0, 0, 0, 1 );
-	 COPY_SZ_4V(tnl->vtx.current[i], 
+	 COPY_CLEAN_4V(tnl->vtx.current[i], 
 		    tnl->vtx.attrsz[i], 
 		    tnl->vtx.attrptr[i]);
       }
@@ -278,8 +277,7 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
 	    if (tnl->vtx.attrsz[j]) {
 	       if (j == attr) {
 		  if (oldsz) {
-		     ASSIGN_4V( dest, 0, 0, 0, 1 );
-		     COPY_SZ_4V( dest, oldsz, data );
+		     COPY_CLEAN_4V( dest, oldsz, data );
 		     data += oldsz;
 		     dest += newsz;
 		  } else {

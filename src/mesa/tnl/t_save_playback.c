@@ -131,8 +131,7 @@ static void _playback_copy_to_current( GLcontext *ctx,
 
    for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++) {
       if (node->attrsz[i]) {
-	 ASSIGN_4V(tnl->vtx.current[i], 0, 0, 0, 1);
-	 COPY_SZ_4V(tnl->vtx.current[i], node->attrsz[i], data);
+	 COPY_CLEAN_4V(tnl->vtx.current[i], node->attrsz[i], data);
 	 data += node->attrsz[i];
       }
    }
