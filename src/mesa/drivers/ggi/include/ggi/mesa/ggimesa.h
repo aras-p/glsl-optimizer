@@ -59,6 +59,7 @@ struct ggi_mesa_context
 	ggi_pixel clearcolor;
 	void *lfb[2];			/* Linear frame buffers	*/
 	int active_buffer;
+	int bufsize;
 	int viewport_init;
 };
 
