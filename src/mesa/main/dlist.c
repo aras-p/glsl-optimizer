@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.14 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: dlist.c,v 1.15 1999/11/09 17:00:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2544,7 +2544,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
 
 	    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
 		(MESA_VERBOSE & VERBOSE_IMMEDIATE))
-	       gl_print_cassette( (struct immediate *) n[1].data, 0, ~0 );
+	       gl_print_cassette( (struct immediate *) n[1].data );
 
 	    if (0)
 	       fprintf(stderr, "Run cassette %d, rows %d..%d, beginstate %x\n",
@@ -3583,8 +3583,6 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 		    ((struct immediate *) n[1].data)->id,
 		    n[2].ui,
 		    n[3].ui);
-/*  	    gl_print_cassette( (struct immediate *) n[1].data, */
-/*  			       0, ~0 ); */
 	    break;
 	 case OPCODE_CONTINUE:
             fprintf(f,"DISPLAY-LIST-CONTINUE\n");

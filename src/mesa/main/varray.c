@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.11 1999/11/09 10:12:34 keithw Exp $ */
+/* $Id: varray.c,v 1.12 1999/11/09 17:00:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -475,9 +475,6 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
 
 
 
-/* KW:  I think this is moving in the right direction, but it still feels 
- *      like we are doing way too much work.
- */
 void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 {
    struct vertex_buffer *VB = ctx->VB;
@@ -494,14 +491,12 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
    {
       GLint remaining = count;
       GLint i;
-      GLvector4f obj;
-      GLvector3f norm;
-      GLvector4f tc[MAX_TEXTURE_UNITS];
-      GLvector4ub col;
-      GLvector1ub edge;
-      GLvector1ui index;
+      struct gl_client_array *Normal;
+      struct gl_client_array *Color;
+      struct gl_client_array *Index;
+      struct gl_client_array *TexCoord[MAX_TEXTURE_UNITS];
+      struct gl_client_array *EdgeFlag;
       struct immediate *IM = VB->IM;
-      struct gl_client_array *client_data;
       struct gl_pipeline *elt = &ctx->CVA.elt;
       GLboolean relock;
       GLuint fallback, required;
@@ -509,7 +504,8 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
       if (ctx->NewState)
 	 gl_update_state( ctx );	
 
-      /* This will die miserably with CVA...  Need more work to support this.
+      /* Just turn off cva on this path.  Could be useful for multipass
+       * rendering to keep it turned on.
        */
       relock = ctx->CompileCVAFlag;
       ctx->CompileCVAFlag = 0;
@@ -522,16 +518,21 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 
       if (required & VERT_RGBA) 
       {
-	 client_data = &ctx->Array.Color;
-	 if (fallback & VERT_RGBA)
-	    client_data = &ctx->Fallback.Color;
+	 Color = &ctx->Array.Color;
+	 if (fallback & VERT_RGBA) {
+	    Color = &ctx->Fallback.Color;
+	    ctx->Array.ColorFunc = 
+	       gl_trans_4ub_tab[4][TYPE_IDX(GL_UNSIGNED_BYTE)];
+	 }
       }
    
       if (required & VERT_INDEX) 
       {
-	 client_data = &ctx->Array.Index;
-	 if (fallback & VERT_INDEX)
-	    client_data = &ctx->Fallback.Index;
+	 Index = &ctx->Array.Index;
+	 if (fallback & VERT_INDEX) {
+	    Index = &ctx->Fallback.Index;
+	    ctx->Array.IndexFunc = gl_trans_1ui_tab[TYPE_IDX(GL_UNSIGNED_INT)];
+	 }
       }
 
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) 
@@ -539,36 +540,48 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 GLuint flag = VERT_TEX_ANY(i);
 
 	 if (required & flag) {
-	    client_data = &ctx->Array.TexCoord[i];
+	    TexCoord[i] = &ctx->Array.TexCoord[i];
 
 	    if (fallback & flag) 
 	    {
-	       client_data = &ctx->Fallback.TexCoord[i];
-	       client_data->Size = gl_texcoord_size( ctx->Current.Flag, i );
+	       TexCoord[i] = &ctx->Fallback.TexCoord[i];
+	       TexCoord[i]->Size = gl_texcoord_size( ctx->Current.Flag, i );
+
+	       ctx->Array.TexCoordFunc[i] = 
+		  gl_trans_4f_tab[TexCoord[i]->Size][TYPE_IDX(GL_FLOAT)];
 	    }
 	 }
       }
 
       if (ctx->Array.Flags != ctx->Array.Flag[0])
-	 for (i = 0 ; i < VB_MAX ; i++) 
+ 	 for (i = 0 ; i < VB_MAX ; i++) 
 	    ctx->Array.Flag[i] = ctx->Array.Flags;
 
 
       if (required & VERT_NORM) 
       {
-	 client_data = &ctx->Array.Normal;
-	 if (fallback & VERT_NORM) 
-	    client_data = &ctx->Fallback.Normal;
+	 Normal = &ctx->Array.Normal;
+	 if (fallback & VERT_NORM) {
+	    Normal = &ctx->Fallback.Normal;
+	    ctx->Array.NormalFunc = gl_trans_3f_tab[TYPE_IDX(GL_FLOAT)];
+	 }
       }
 
-      if ( (required & VERT_EDGE) && 
-	   (mode == GL_TRIANGLES || 
-	    mode == GL_QUADS || 
-	    mode == GL_POLYGON)) 
+      if ( required & VERT_EDGE )
       {
-	 client_data = &ctx->Array.EdgeFlag;
-	 if (fallback & VERT_EDGE) 
-	    client_data = &ctx->Fallback.EdgeFlag;
+	 if (mode == GL_TRIANGLES || 
+	     mode == GL_QUADS || 
+	     mode == GL_POLYGON)
+	 {
+	    EdgeFlag = &ctx->Array.EdgeFlag;
+	    if (fallback & VERT_EDGE) {
+	       EdgeFlag = &ctx->Fallback.EdgeFlag;
+	       ctx->Array.EdgeFlagFunc = 
+		  gl_trans_1ub_tab[TYPE_IDX(GL_UNSIGNED_BYTE)];
+	    }
+	 }
+	 else
+	    required &= ~VERT_EDGE;
       }
 
       VB->Primitive = IM->Primitive; 
@@ -591,41 +604,39 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	 
 	 VB->CullMode = 0;
 	 
-	 if (required & VERT_OBJ_ANY) {
-	    ctx->Array.VertexFunc( IM->Obj + VB_START, 
-				   &ctx->Array.Vertex, start, n );
-	 }
+	 ctx->Array.VertexFunc( IM->Obj + VB_START, 
+				&ctx->Array.Vertex, start, n );
 	 
 	 if (required & VERT_NORM) {
 	    ctx->Array.NormalFunc( IM->Normal + VB_START, 
-				   &ctx->Array.Normal, start, n );
+				   Normal, start, n );
 	 }
 	 
 	 if (required & VERT_EDGE) {
 	    ctx->Array.EdgeFlagFunc( IM->EdgeFlag + VB_START, 
-				     &ctx->Array.EdgeFlag, start, n );
+				     EdgeFlag, start, n );
 	 }
 	 
 	 if (required & VERT_RGBA) {
 	    ctx->Array.ColorFunc( IM->Color + VB_START, 
-				  &ctx->Array.Color, start, n );
+				  Color, start, n );
 	 }
 	 
 	 if (required & VERT_INDEX) {
 	    ctx->Array.IndexFunc( IM->Index + VB_START, 
-				  &ctx->Array.Index, start, n );
+				  Index, start, n );
 	 }
 	 
 	 if (required & VERT_TEX0_ANY) {
-	    IM->v.TexCoord[0].size = tc[0].size;
+	    IM->v.TexCoord[0].size = TexCoord[0]->Size;
 	    ctx->Array.TexCoordFunc[0]( IM->TexCoord[0] + VB_START, 
-					&ctx->Array.TexCoord[0], start, n );
+					TexCoord[0], start, n );
 	 }
 	 
 	 if (required & VERT_TEX1_ANY) {
-	    IM->v.TexCoord[1].size = tc[1].size;
+	    IM->v.TexCoord[1].size = TexCoord[1]->Size;
 	    ctx->Array.TexCoordFunc[1]( IM->TexCoord[1] + VB_START, 
-					&ctx->Array.TexCoord[1], start, n );
+					TexCoord[1], start, n );
 	 }
 
 	 VB->ObjPtr = &IM->v.Obj;
@@ -664,6 +675,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 
          /* Transform and render.
 	  */
+	 if (0) gl_print_cassette_flags( IM, VB->Flag );
          gl_run_pipeline( VB );
 	 gl_reset_vb( VB );
 
