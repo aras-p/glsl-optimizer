@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.31 2000/05/10 14:39:53 brianp Exp $ */
+/* $Id: image.c,v 1.32 2000/05/19 22:35:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -519,16 +519,19 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
    else {
       /* Non-BITMAP data */
       const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
+      GLint bytesPerRow, remainder;
       if (bytesPerPixel <= 0)
          return -1;  /* error */
       if (packing->RowLength == 0) {
-         GLint bytes = bytesPerPixel * width;
-         return bytes;
+         bytesPerRow = bytesPerPixel * width;
       }
       else {
-         GLint bytes = bytesPerPixel * packing->RowLength;
-         return bytes;
+         bytesPerRow = bytesPerPixel * packing->RowLength;
       }
+      remainder = bytesPerRow % packing->Alignment;
+      if (remainder > 0)
+         bytesPerRow += (packing->Alignment - remainder);
+      return bytesPerRow;
    }
 }
 
