@@ -1,0 +1,113 @@
+# progs/tests/Makefile
+
+
+# These programs aren't intended to be included with the normal distro.
+# They're not too interesting but they're good for testing.
+
+TOP = ../..
+include $(TOP)/configs/current
+
+
+LIBS = $(APP_LIB_DEPS)
+
+SOURCES = antialias.c \
+	arbfpspec.c \
+	arbfptest1.c \
+	arbfptexture.c \
+	arbfptrig.c \
+	arbvptest1.c \
+	arbvptest3.c \
+	arbvptorus.c \
+	arbvpwarpmesh.c \
+	bufferobj.c \
+	cva.c \
+	dinoshade.c \
+	fogcoord.c \
+	fptest1.c \
+	fptexture.c \
+	getprocaddress.c \
+	manytex.c \
+	multipal.c \
+	pbo.c \
+	projtex.c \
+	seccolor.c \
+	sharedtex.c \
+	stencilwrap.c \
+	tex1d.c \
+	texline.c \
+	texrect.c \
+	texwrap.c \
+	vparray.c \
+	vptest1.c \
+	vptest2.c \
+	vptest3.c \
+	vptorus.c \
+	vpwarpmesh.c \
+	yuvrect.c \
+	yuvsquare.c
+
+PROGS = $(SOURCES:%.c=%)
+
+INCLUDES = -I. -I$(TOP)/include
+
+
+##### RULES #####
+
+.SUFFIXES:
+.SUFFIXES: .c
+
+.c:
+	$(CC) $(INCLUDES) $(CFLAGS) $< $(LIBS) -o $@
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+default: depend $(PROGS)
+
+clean:
+	rm -f $(PROGS)
+	rm -f *.o
+	rm -f getproclist.h
+
+
+# auto code generation
+getprocaddress: getprocaddress.c getproclist.h
+
+getproclist.h: $(TOP)/src/mesa/glapi/APIspec getprocaddress.c getprocaddress.py
+	python getprocaddress.py > getproclist.h
+
+
+texrect: texrect.o readtex.o
+	$(CC) texrect.o readtex.o $(LIBS) -o $@
+
+texrect.o: texrect.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+readtex.o: readtex.c
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+readtex.h: $(TOP)/progs/util/readtex.h
+	ln -s $(TOP)/progs/util/readtex.h .
+
+readtex.c: $(TOP)/progs/util/readtex.c
+	ln -s $(TOP)/progs/util/readtex.c .
+
+
+# Update dependencies
+depend: $(SOURCES)
+	makedepend -fdepend -Y $(INCLUDES) $(SOURCES)
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+include depend
