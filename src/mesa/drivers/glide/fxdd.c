@@ -52,7 +52,7 @@
 #if defined(FX)
 
 #include "image.h"
-#include "types.h"
+#include "mtypes.h"
 #include "fxdrv.h"
 #include "enums.h"
 #include "extensions.h"
@@ -135,7 +135,7 @@ static void fxDDClearColor(GLcontext *ctx, GLubyte red, GLubyte green,
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxDDClearColor(%d,%d,%d,%d)\n",red,green,blue,alpha);
   }
- 
+
   fxMesa->clearC=FXCOLOR4( col );
   fxMesa->clearA=alpha;
 }
@@ -329,7 +329,7 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
       ctx->Color.ColorLogicOpEnabled ||
       ctx->Stencil.Enabled ||
       ctx->Scissor.Enabled ||
-      (  ctx->DrawBuffer->UseSoftwareAlphaBuffers && 
+      (  ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
          ctx->Color.ColorMask[ACOMP]) ||
       ctx->Color.MultiDrawBuffer)
     return GL_FALSE;
@@ -372,7 +372,7 @@ static GLboolean fxDDDrawBitmap(GLcontext *ctx, GLint px, GLint py,
 
     if (width <= 0 || height <= 0)
       return GL_TRUE;  /* totally scissored away */
-  }  
+  }
   else {
     finalUnpack = unpack;
   }
@@ -609,7 +609,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
         static char buf[80];
 
         if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) {
-          GrVoodooConfig_t *vc = 
+          GrVoodooConfig_t *vc =
             &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
 
           sprintf(buf,
@@ -623,7 +623,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
                   (vc->sliDetect ? "SLI" : "NOSLI"));
         }
         else if (glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96) {
-          GrSst96Config_t *sc = 
+          GrSst96Config_t *sc =
             &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
 
           sprintf(buf,
@@ -647,17 +647,17 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 
 int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 {
-  
+
    FX_setupGrVertexLayout();
-   
-   if (getenv("FX_EMULATE_SINGLE_TMU")) 
+
+   if (getenv("FX_EMULATE_SINGLE_TMU"))
       fxMesa->haveTwoTMUs = GL_FALSE;
-      
+
    fxMesa->emulateTwoTMUs = fxMesa->haveTwoTMUs;
-   
-   if (!getenv("FX_DONT_FAKE_MULTITEX")) 
+
+   if (!getenv("FX_DONT_FAKE_MULTITEX"))
       fxMesa->emulateTwoTMUs = GL_TRUE;
-      
+
    if(getenv("FX_GLIDE_SWAPINTERVAL"))
       fxMesa->swapInterval=atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
    else
@@ -667,7 +667,7 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
       fxMesa->maxPendingSwapBuffers=atoi(getenv("MESA_FX_SWAP_PENDING"));
    else
       fxMesa->maxPendingSwapBuffers=2;
-   
+
    if(getenv("MESA_FX_INFO"))
       fxMesa->verbose=GL_TRUE;
    else
@@ -710,13 +710,13 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
       fxMesa->currentFB=GR_BUFFER_FRONTBUFFER;
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
    }
-  
+
    fxMesa->state 	= NULL;
    fxMesa->fogTable 	= NULL;
-  
+
    fxMesa->state 	= malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
    fxMesa->fogTable 	= malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES)*sizeof(GrFog_t));
-  
+
    if (!fxMesa->state || !fxMesa->fogTable) {
       if (fxMesa->state) free(fxMesa->state);
       if (fxMesa->fogTable) free(fxMesa->fogTable);
@@ -725,7 +725,7 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 
    if(fxMesa->haveZBuffer)
       FX_grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
-    
+
 #if (!FXMESA_USE_ARGB)
    FX_grLfbWriteColorFormat(GR_COLORFORMAT_ABGR); /* Not every Glide has this */
 #endif
@@ -735,7 +735,7 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    fxMesa->glCtx->Const.MaxTextureSize=256;
    fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;
    fxMesa->new_state = _NEW_ALL;
-  
+
    fxDDSetupInit();
    fxDDTrifuncInit();
    fxDDFastPathInit();
@@ -756,13 +756,13 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    _swrast_allow_vertex_fog( fxMesa->glCtx, GL_FALSE );
    _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
 
-   fxDDInitExtensions(fxMesa->glCtx);  
+   fxDDInitExtensions(fxMesa->glCtx);
 
    FX_grGlideGetState((GrState*)fxMesa->state);
 
    /* XXX Fix me too: need to have the 'struct dd' prepared prior to
     * creating the context... The below is broken if you try to insert
-    * new stages.  
+    * new stages.
     */
    fxDDRegisterPipelineStages( fxMesa->glCtx );
 
@@ -786,11 +786,11 @@ void fxDDInitExtensions( GLcontext *ctx )
    gl_extensions_disable(ctx, "GL_EXT_fog_coord");
 
    gl_extensions_add(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
-   
+
    if (!fxMesa->haveTwoTMUs)
       gl_extensions_disable(ctx, "GL_EXT_texture_env_add");
-   
-   if (!fxMesa->emulateTwoTMUs) 
+
+   if (!fxMesa->emulateTwoTMUs)
       gl_extensions_disable(ctx, "GL_ARB_multitexture");
 }
 
@@ -799,7 +799,7 @@ void fxDDInitExtensions( GLcontext *ctx )
 /************************************************************************/
 /************************************************************************/
 
-/* Check if the hardware supports the current context 
+/* Check if the hardware supports the current context
  *
  * Performs similar work to fxDDChooseRenderState() - should be merged.
  */
@@ -830,7 +830,7 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
   if(fxMesa->emulateTwoTMUs) {
     if((ctx->_Enabled & (TEXTURE0_3D | TEXTURE1_3D)) ||
        /* Not very well written ... */
-       ((ctx->_Enabled & (TEXTURE0_1D | TEXTURE1_1D)) && 
+       ((ctx->_Enabled & (TEXTURE0_1D | TEXTURE1_1D)) &&
         ((ctx->_Enabled & (TEXTURE0_2D | TEXTURE1_2D))!=(TEXTURE0_2D | TEXTURE1_2D)))
        ) {
       return GL_FALSE;
@@ -873,7 +873,7 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
       if (!fxMesa->haveTwoTMUs && ctx->Color.BlendEnabled) {
 	  return GL_FALSE;
       }
-	  
+	
        if ((ctx->Texture.Unit[0].EnvMode!=ctx->Texture.Unit[1].EnvMode) &&
 	   (ctx->Texture.Unit[0].EnvMode!=GL_MODULATE) &&
 	   (ctx->Texture.Unit[0].EnvMode!=GL_REPLACE)) /* q2, seems ok... */
@@ -886,13 +886,13 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
   } else {
     if((ctx->_Enabled & (TEXTURE1_1D | TEXTURE1_2D | TEXTURE1_3D)) ||
        /* Not very well written ... */
-       ((ctx->_Enabled & TEXTURE0_1D) && 
+       ((ctx->_Enabled & TEXTURE0_1D) &&
         (!(ctx->_Enabled & TEXTURE0_2D)))
        ) {
       return GL_FALSE;
     }
 
-    
+
     if((ctx->Texture._ReallyEnabled & TEXTURE0_2D) &&
        (ctx->Texture.Unit[0].EnvMode==GL_BLEND)) {
       return GL_FALSE;
@@ -927,15 +927,15 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
 
     if (new_state & _FX_NEW_IS_IN_HARDWARE)
       fxMesa->is_in_hardware = fxIsInHardware(ctx);
-    
+
     if (fxMesa->new_state)
       fxSetupFXUnits(ctx);
 
-    if (new_state & _FX_NEW_RENDERSTATE) 
+    if (new_state & _FX_NEW_RENDERSTATE)
       fxDDChooseRenderState( ctx );
-    
+
     if (new_state & _FX_NEW_SETUP_FUNCTION)
-      ctx->Driver.RasterSetup = fxDDChooseSetupFunction(ctx);      
+      ctx->Driver.RasterSetup = fxDDChooseSetupFunction(ctx);
   }
 }
 
@@ -953,7 +953,7 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.WriteDepthPixels=fxDDWriteDepthPixels;
   ctx->Driver.ReadDepthSpan=fxDDReadDepthSpan;
   ctx->Driver.ReadDepthPixels=fxDDReadDepthPixels;
-         
+
   ctx->Driver.GetString=fxDDGetString;
 
   ctx->Driver.ClearIndex=NULL;
@@ -998,8 +998,8 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.RegisterVB=fxDDRegisterVB;
   ctx->Driver.UnregisterVB=fxDDUnregisterVB;
 
-  if (!getenv("FX_NO_FAST")) 
-      ctx->Driver.BuildPrecalcPipeline = fxDDBuildPrecalcPipeline; 
+  if (!getenv("FX_NO_FAST"))
+      ctx->Driver.BuildPrecalcPipeline = fxDDBuildPrecalcPipeline;
 
   fxSetupDDSpanPointers(ctx);
   fxDDUpdateDDPointers(ctx);

@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.3 2000/08/02 20:29:03 brianp Exp $ */
+/* $Id: wgl.c,v 1.4 2000/11/22 08:55:53 joukj Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ extern "C" {
 #include <tchar.h>
 #include "wmesadef.h"
 #include "GL/wmesa.h"
-#include "types.h"
+#include "mtypes.h"
 
 #define MAX_MESA_ATTRS	20
 

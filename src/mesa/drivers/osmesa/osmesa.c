@@ -1,21 +1,21 @@
-/* $Id: osmesa.c,v 1.33 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: osmesa.c,v 1.34 2000/11/22 08:55:52 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -45,7 +45,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "matrix.h"
-#include "types.h"
+#include "mtypes.h"
 #include "extensions.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -316,7 +316,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 	 _swrast_CreateContext( ctx );
 	 _swsetup_CreateContext( ctx );
 	 _tnl_CreateContext( ctx );
-	 
+	
 	 osmesa_register_swrast_functions( ctx );
       }
    }
@@ -1242,7 +1242,7 @@ static void flat_rgba_line( GLcontext *ctx,
                             const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   GLubyte *color = vert0->color;
+   GLubyte *color = (GLubyte*) vert0->color;
    unsigned long pixel = PACK_RGBA( color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -1264,7 +1264,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 			      const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   GLubyte *color = vert0->color;
+   GLubyte *color = (GLubyte*) vert0->color;
    unsigned long pixel = PACK_RGBA( color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -1402,7 +1402,7 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
  * Analyze context state to see if we can provide a fast line drawing
  * function, like those in lines.c.  Otherwise, return NULL.
  */
-static swrast_line_func 
+static swrast_line_func
 osmesa_choose_line_function( GLcontext *ctx )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
@@ -1508,7 +1508,7 @@ osmesa_choose_line_function( GLcontext *ctx )
 /*
  * Smooth-shaded, z-less triangle, RGBA color.
  */
-static void smooth_rgba_z_triangle( GLcontext *ctx, 
+static void smooth_rgba_z_triangle( GLcontext *ctx,
 				    const SWvertex *v0,
                                     const SWvertex *v1,
                                     const SWvertex *v2 )
@@ -1552,7 +1552,7 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
 /*
  * Flat-shaded, z-less triangle, RGBA color.
  */
-static void flat_rgba_z_triangle( GLcontext *ctx, 
+static void flat_rgba_z_triangle( GLcontext *ctx,
 				  const SWvertex *v0,
                                   const SWvertex *v1,
                                   const SWvertex *v2 )
@@ -1593,13 +1593,13 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 /*
  * Return pointer to an accelerated triangle function if possible.
  */
-static swrast_tri_func 
+static swrast_tri_func
 osmesa_choose_triangle_function( GLcontext *ctx )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if ((osmesa->format==OSMESA_RGB)||(osmesa->format==OSMESA_BGR)) 
+   if ((osmesa->format==OSMESA_RGB)||(osmesa->format==OSMESA_BGR))
       return (swrast_tri_func)NULL;
 
    if (ctx->RenderMode != GL_RENDER)  return (swrast_tri_func) NULL;
@@ -1624,7 +1624,7 @@ osmesa_choose_triangle_function( GLcontext *ctx )
 
 /* Override for the swrast triangle-selection function.  Try to use one
  * of our internal triangle functions, otherwise fall back to the
- * standard swrast functions.  
+ * standard swrast functions.
  */
 static void osmesa_choose_triangle( GLcontext *ctx )
 {
@@ -1650,7 +1650,7 @@ static void osmesa_choose_line( GLcontext *ctx )
                            _NEW_LIGHT | \
                            _NEW_DEPTH | \
                            _NEW_RENDERMODE | \
-                           _SWRAST_NEW_RASTERMASK) 
+                           _SWRAST_NEW_RASTERMASK)
 
 #define OSMESA_NEW_TRIANGLE (_NEW_POLYGON | \
                              _NEW_TEXTURE | \
@@ -1660,16 +1660,16 @@ static void osmesa_choose_line( GLcontext *ctx )
                              _SWRAST_NEW_RASTERMASK)
 
 
-/* Extend the software rasterizer with our line and triangle 
+/* Extend the software rasterizer with our line and triangle
  * functions.
  */
 static void osmesa_register_swrast_functions( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   
+
    swrast->choose_line = osmesa_choose_line;
    swrast->choose_triangle = osmesa_choose_triangle;
-   
+
    swrast->invalidate_line |= OSMESA_NEW_LINE;
    swrast->invalidate_triangle |= OSMESA_NEW_TRIANGLE;
 }

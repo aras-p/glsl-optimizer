@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.11 2000/11/19 02:18:33 gareth Exp $ */
+/* $Id: 3dnow.c,v 1.12 2000/11/22 08:55:53 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "types.h"
+#include "mtypes.h"
 #include "3dnow.h"
 
 #include "math/m_vertices.h"

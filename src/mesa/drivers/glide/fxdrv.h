@@ -61,7 +61,7 @@
 #include "matrix.h"
 #include "mem.h"
 #include "texture.h"
-#include "types.h"
+#include "mtypes.h"
 
 #include "GL/fxmesa.h"
 #include "fxglidew.h"
@@ -70,7 +70,7 @@
 
 /* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of
  * WINGDIAPI/APIENTRY/CALLBACK, these are defined in mesa gl/gl.h -
- * tjump@spgs.com 
+ * tjump@spgs.com
  */
 
 
@@ -126,7 +126,7 @@ typedef union {
   ( ((unsigned int)(c[0]))<<16 ) | \
   ( ((unsigned int)(c[1]))<<8 )  | \
   (  (unsigned int)(c[2])) )
-  
+
 #else
 #ifdef __i386__
 #define FXCOLOR4( c )  (* (int *)c)
@@ -243,7 +243,7 @@ typedef struct tfxTexInfo_t {
 
   GLfloat sScale, tScale;
   GLint int_sScale, int_tScale;	/* x86 floating point trick for
-				 * multiplication by powers of 2.  
+				 * multiplication by powers of 2.
 				 * Used in fxfasttmp.h
 				 */
 
@@ -329,9 +329,9 @@ struct tfxMesaVertexBuffer {
 			        _NEW_STENCIL|		\
 			        _NEW_BUFFERS|		\
 			        _NEW_COLOR|		\
-			        _NEW_LIGHT) 
+			        _NEW_LIGHT)
 
-/* Covers the state referenced by fxDDChooseRenderState 
+/* Covers the state referenced by fxDDChooseRenderState
  */
 #define _FX_NEW_RENDERSTATE (_FX_NEW_IS_IN_HARDWARE |   \
 			     _DD_NEW_FLATSHADE |	\
@@ -397,7 +397,7 @@ struct tfxMesaContext {
   GLuint setupdone;
   GLuint stw_hint_state;		/* for grHints */
   GLuint is_in_hardware;
-  GLuint new_state;   
+  GLuint new_state;
   GLuint using_fast_path, passes, multipass;
 
   /* Texture Memory Manager Data */
@@ -432,7 +432,7 @@ struct tfxMesaContext {
   fx_point_func subsequent_point;
   fx_line_func subsequent_line;
   fx_tri_func subsequent_tri;
-   
+
 
    GLfloat inv_s0scale;
    GLfloat inv_s1scale;
@@ -454,7 +454,7 @@ struct tfxMesaContext {
   GLboolean haveGlobalPaletteTexture;
   GLint swapInterval;
   GLint maxPendingSwapBuffers;
-  
+
   FX_GrContext_t glideContext;
 
   int screen_width;
@@ -555,8 +555,8 @@ extern int fxTexGetInfo(int, int, GrLOD_t *, GrAspectRatio_t *,
 extern void fxDDScissor( GLcontext *ctx,
 			      GLint x, GLint y, GLsizei w, GLsizei h );
 extern void fxDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params );
-extern void fxDDColorMask(GLcontext *ctx, 
-                          GLboolean r, GLboolean g, 
+extern void fxDDColorMask(GLcontext *ctx,
+                          GLboolean r, GLboolean g,
                           GLboolean b, GLboolean a );
 
 extern void fxDDWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
@@ -589,8 +589,8 @@ extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
 
 
 extern void fxSetScissorValues(GLcontext *ctx);
-extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, 
-				struct gl_texture_object *tObj, 
+extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
+				struct gl_texture_object *tObj,
 				GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 

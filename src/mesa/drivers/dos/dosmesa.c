@@ -1,4 +1,4 @@
-/* $Id: dosmesa.c,v 1.2 2000/09/26 20:54:10 brianp Exp $ */
+/* $Id: dosmesa.c,v 1.3 2000/11/22 08:55:52 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,26 @@
 
 /*
  * $Log: dosmesa.c,v $
+ * Revision 1.3  2000/11/22 08:55:52  joukj
+ *
+ *
+ *  Modified Files:
+ *  	Mesa/src/Allegro/amesa.c Mesa/src/DOS/dosmesa.c
+ *  	Mesa/src/FX/fxdd.c Mesa/src/FX/fxdrv.h
+ *  	Mesa/src/FX/fxfastpath.c
+ *  	Mesa/src/GGI/include/ggi/mesa/ggimesa.h
+ *  	Mesa/src/OSmesa/osmesa.c Mesa/src/SVGA/svgamesa.c
+ *  	Mesa/src/Trace/tr_control.c Mesa/src/Windows/wgl.c
+ *  	Mesa/src/X/xmesaP.h Mesa/src/X86/3dnow.c Mesa/src/X86/katmai.c
+ *  	Mesa/src/X86/x86.c
+ *  Removed Files:
+ *  	Mesa/src/mms_depend
+ *
+ *  Oops,... all files containing Caps in directory name or file name were
+ *  missing in my types->mtypes commit.
+ *
+ * ----------------------------------------------------------------------
+ *
  * Revision 1.2  2000/09/26 20:54:10  brianp
  * First batch of OpenGL SI related changes:
  * Renamed struct gl_context to struct __GLcontextRec.
@@ -104,7 +124,7 @@
 #include "GL/DOSmesa.h"
 #include "context.h"
 #include "matrix.h"
-#include "types.h"
+#include "mtypes.h"
 
 #ifdef GLIDE
 

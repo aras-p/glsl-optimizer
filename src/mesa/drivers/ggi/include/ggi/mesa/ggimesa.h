@@ -1,5 +1,5 @@
 /* GGI-Driver for MESA
- * 
+ *
  * Copyright (C) 1997  Uwe Maurer
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  * This code was derived from the following source of information:
  *
  * svgamesa.c and ddsample.c by Brian Paul
- * 
+ *
  */
 
 #ifndef _GGIMESA_H
@@ -34,7 +34,7 @@
 #include "mem.h"
 #include "matrix.h"
 #include "state.h"
-#include "types.h"
+#include "mtypes.h"
 #include "macros.h"
 #include "depth.h"
 
@@ -47,13 +47,13 @@
 
 struct ggi_mesa_info;
 
-struct ggi_mesa_context 
+struct ggi_mesa_context
 {
 	GLcontext *gl_ctx;
 	GLvisual *gl_vis;
 	GLframebuffer *gl_buffer;
 	
-	ggi_visual_t ggi_vis; 
+	ggi_visual_t ggi_vis;
 	ggi_coord origin;
 	int flip_y;
 	int width, height, stride;	/* Stride is in pixels */

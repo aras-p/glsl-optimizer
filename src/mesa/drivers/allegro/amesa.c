@@ -23,7 +23,7 @@
 #include <allegro.h>
 #include "context.h"
 #include "matrix.h"
-#include "types.h"
+#include "mtypes.h"
 #include "GL/amesa.h"
 
 
