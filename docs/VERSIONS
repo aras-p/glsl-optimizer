@@ -1205,24 +1205,6 @@ Mesa Version History
 	- updated files for building on Windows
 
 
-6.1  Month day, 2004
-    New:
-	- Revamped Makefile system
-	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
-	- internal driver interface changes related to texture object
-	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
-	- option to walk triangle edges with double-precision floats
-	  (Justin Novosad of Discreet) (see config.h file)
-	- support for AUX buffers in software GLX driver
-    Changes:
-	- fragment fog interpolation is perspective corrected now
-    Bug fixes:
-	- everything in 6.0.1 plus TBD
-	- glArrayElement in display lists didn't handle generic vertex attribs
-	- glFogCoord didn't always work properly
-	- ARB_fragment_program fog options didn't work
-
-
 6.0.1  April 2, 2004
     New:
 	- upgraded glext.h to version 22
@@ -1255,3 +1237,21 @@ Mesa Version History
 	- fragment program XPD instruction was incorrect
 	- glGetMaterial() didn't work reliably
 	- ARB_fragment_program KIL instruction was incorrect
+
+
+6.1  Month day, 2004
+    New:
+	- Revamped Makefile system
+	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
+	- internal driver interface changes related to texture object
+	  allocation, vertex/fragment programs, BlendEquationSeparate, etc.
+	- option to walk triangle edges with double-precision floats
+	  (Justin Novosad of Discreet) (see config.h file)
+	- support for AUX buffers in software GLX driver
+    Changes:
+	- fragment fog interpolation is perspective corrected now
+    Bug fixes:
+	- everything in 6.0.1 plus TBD
+	- glArrayElement in display lists didn't handle generic vertex attribs
+	- glFogCoord didn't always work properly
+	- ARB_fragment_program fog options didn't work
