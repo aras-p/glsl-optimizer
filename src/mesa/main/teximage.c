@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.63 2000/11/19 23:10:25 brianp Exp $ */
+/* $Id: teximage.c,v 1.64 2000/11/21 23:25:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2620,6 +2620,8 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
                                  ctx->Pixel.DriverReadBuffer );
 
+   RENDER_START(ctx);
+
    dst = image;
    stride = width * 4;
    for (i = 0; i < height; i++) {
@@ -2627,6 +2629,8 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
                          (GLchan (*)[4]) dst );
       dst += stride;
    }
+
+   RENDER_FINISH(ctx);
 
    /* Read from draw buffer (the default) */
    (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
