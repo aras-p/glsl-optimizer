@@ -538,16 +538,16 @@ void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &mach64API);
-
-
-   create_context_modes = 
-       (PFNGLXCREATECONTEXTMODES) glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-   if ( create_context_modes != NULL ) {
-      ATIDRIPtr dri_priv = (ATIDRIPtr) psp->pDevPriv;
-      *driver_modes = mach64FillInModes( dri_priv->cpp * 8,
-					 16,
-					 0,
-					 1);
+   if ( psp != NULL ) {
+      create_context_modes = (PFNGLXCREATECONTEXTMODES)
+	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+      if ( create_context_modes != NULL ) {
+	 ATIDRIPtr dri_priv = (ATIDRIPtr) psp->pDevPriv;
+	 *driver_modes = mach64FillInModes( dri_priv->cpp * 8,
+					    16,
+					    0,
+					    1);
+      }
    }
 
    return (void *) psp;

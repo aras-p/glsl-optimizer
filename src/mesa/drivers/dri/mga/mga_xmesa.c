@@ -967,16 +967,16 @@ void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &mgaAPI);
-
-
-   create_context_modes = 
-       (PFNGLXCREATECONTEXTMODES) glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-   if ( create_context_modes != NULL ) {
-      MGADRIPtr dri_priv = (MGADRIPtr) psp->pDevPriv;
-      *driver_modes = mgaFillInModes( dri_priv->cpp * 8,
-				      (dri_priv->cpp == 2) ? 16 : 24,
-				      (dri_priv->cpp == 2) ? 0  : 8,
-				      (dri_priv->backOffset != dri_priv->depthOffset) );
+   if ( psp != NULL ) {
+      create_context_modes = (PFNGLXCREATECONTEXTMODES)
+	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+      if ( create_context_modes != NULL ) {
+	 MGADRIPtr dri_priv = (MGADRIPtr) psp->pDevPriv;
+	 *driver_modes = mgaFillInModes( dri_priv->cpp * 8,
+					 (dri_priv->cpp == 2) ? 16 : 24,
+					 (dri_priv->cpp == 2) ? 0  : 8,
+					 (dri_priv->backOffset != dri_priv->depthOffset) );
+      }
    }
 
    return (void *) psp;
