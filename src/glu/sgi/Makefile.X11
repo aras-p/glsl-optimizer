@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.4 2001/03/28 20:17:55 gareth Exp $
+# $Id: Makefile.X11,v 1.5 2001/08/13 16:51:08 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -135,6 +135,9 @@ default:
 
 clean:
 	-rm *.o */*.o */*/*.o
+	-rm *.lo */*.lo */*/*.lo
+	-rm *.la */*.la */*/*.la
+
 
 targets: $(LIBDIR)/$(GLU_LIB)
 
