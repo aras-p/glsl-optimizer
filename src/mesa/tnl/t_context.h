@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.41 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_context.h,v 1.42 2002/06/23 02:32:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -243,6 +243,7 @@ struct immediate
 
 struct vertex_arrays
 {
+   /* XXX move a bunch of these fields into the Attribs[] array??? */
    GLvector4f  Obj;
    GLvector4f  Normal;
    struct gl_client_array Color;
@@ -385,6 +386,8 @@ struct gl_pipeline {
 struct tnl_eval_store {
    GLuint EvalMap1Flags;
    GLuint EvalMap2Flags;
+   GLuint EvalMap1AttribFlags;  /* GL_NV_vertex_program */
+   GLuint EvalMap2AttribFlags;  /* GL_NV_vertex_program */
    GLuint EvalNewState;
    struct immediate *im;	/* used for temporary data */
 };
