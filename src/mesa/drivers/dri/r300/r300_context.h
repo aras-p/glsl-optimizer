@@ -630,7 +630,12 @@ struct r300_pixel_shader_program {
 #define MAX_PIXEL_SHADER_PARAMS 32
 struct r300_pixel_shader_state {
 	struct r300_pixel_shader_program program;
-
+	
+	int translated;
+	int have_sample;
+	GLuint color_reg;
+	GLuint src_previous;
+	
 	/* parameters */
 	int param_length;  /* to limit the number of unnecessary writes */
 	struct {

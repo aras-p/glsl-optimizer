@@ -536,8 +536,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the
 // color register index. */
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
-#       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  (1 << 17)
-#       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 6) /* GUESS */
+#       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  17
+#       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 17) /* GUESS */
 /* END */
 
 /* BEGIN: Scissors and cliprects

@@ -61,6 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_fixed_pipelines.h"
 #include "r300_tex.h"
 #include "r300_maos.h"
+#include "r300_texprog.h"
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
@@ -1380,7 +1381,7 @@ void r300_setup_textures(GLcontext *ctx)
 			max_texture_unit=i;
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter);
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter) | (i << 28); 
 			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
 			
 			/* No idea why linear filtered textures shake when puting random data */
@@ -1409,14 +1410,57 @@ void r300_setup_textures(GLcontext *ctx)
 void r300_setup_rs_unit(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int i;
-
+	int i, cur_reg;
+	GLuint interp_magic[8] = {
+		0x00,
+		0x40,
+		0x80,
+		0xC0,
+		0x00,
+		0x00,
+		0x00,
+		0x00
+	};
+	
 	/* This needs to be rewritten - it is a hack at best */
 
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
+	
+#if 1
+	cur_reg = 0;
+	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
+		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
+				| R300_RS_INTERP_USED
+				| (cur_reg << R300_RS_INTERP_SRC_SHIFT)
+				| interp_magic[i];
+//		fprintf(stderr, "RS_INTERP[%d] = 0x%x\n", i, r300->hw.ri.cmd[R300_RI_INTERP_0+i]);
 
+		if (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
+			r300->hw.rr.cmd[R300_RR_ROUTE_0 + cur_reg] = 0
+					| R300_RS_ROUTE_ENABLE
+					| i /* source INTERP */
+					| (cur_reg << R300_RS_ROUTE_DEST_SHIFT);
+//			fprintf(stderr, "RS_ROUTE[%d] = 0x%x\n", cur_reg, r300->hw.rr.cmd[R300_RR_ROUTE_0 + cur_reg]);
+			cur_reg++;
+		} 
+	}
+	if (r300->state.render_inputs & _TNL_BIT_COLOR0)
+		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
+				| R300_RS_ROUTE_0_COLOR
+				| (cur_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, cur_reg);
+//	fprintf(stderr, "ADJ_RR0 = 0x%x\n", r300->hw.rr.cmd[R300_RR_ROUTE_0]);
+
+//	fprintf(stderr, "rendering with %d texture co-ordinate sets\n", cur_reg);
+
+	r300->hw.rc.cmd[1] = 0
+			| (cur_reg /* count */ << R300_RS_CNTL_TC_CNT_SHIFT)
+			| R300_RS_CNTL_0_UNKNOWN_7
+			| R300_RS_CNTL_0_UNKNOWN_18;
+	r300->hw.rc.cmd[2] = (0xC0 | (cur_reg-1) /* index of highest */ );
+#else
 	for(i = 1; i <= 8; ++i)
 		r300->hw.ri.cmd[i] = 0x00d10000;
 	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
@@ -1455,6 +1499,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x4000;
 
 		}
+#endif
 }
 
 #define vpucount(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
@@ -1815,7 +1860,7 @@ void r300GenerateTexturePixelShader(r300ContextPtr r300)
 
 		alu_inst++;
 		}
-
+	
 	r300->state.pixel_shader.program.tex.length=tex_inst;
 	r300->state.pixel_shader.program.tex_offset=0;
 	r300->state.pixel_shader.program.tex_end=tex_inst-1;
@@ -1839,12 +1884,16 @@ int i,k;
 
 	/* textures enabled ? */
 	if(rmesa->state.texture.tc_count>0){
+#if 1
+		r300GenerateTextureFragmentShader(rmesa);
+#else
 		rmesa->state.pixel_shader=SINGLE_TEXTURE_PIXEL_SHADER;
 		r300GenerateTexturePixelShader(rmesa);
+#endif
 		} else {
 		rmesa->state.pixel_shader=FLAT_COLOR_PIXEL_SHADER;
 		}
-
+	
 	R300_STATECHANGE(rmesa, fpt);
 	for(i=0;i<rmesa->state.pixel_shader.program.tex.length;i++)
 		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rmesa->state.pixel_shader.program.tex.inst[i];
