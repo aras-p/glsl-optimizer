@@ -617,6 +617,18 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
 	imesa->cmdBuf.write = imesa->cmdBuf.base;
 	savageEmitOldState(imesa);
 	imesa->cmdBuf.start = imesa->cmdBuf.write;
+
+	/* Timestamp current texture objects for texture heap aging.
+	 * Only useful with long-lived 32-bit event tags available
+	 * with Savage DRM 2.3.x or later. */
+	if ((imesa->CurrentTexObj[0] || imesa->CurrentTexObj[1]) &&
+	    imesa->savageScreen->driScrnPriv->drmMinor >= 3) {
+	    unsigned int e = savageEmitEventLocked(imesa, 0);
+	    if (imesa->CurrentTexObj[0])
+		imesa->CurrentTexObj[0]->timestamp = e;
+	    if (imesa->CurrentTexObj[1])
+		imesa->CurrentTexObj[1]->timestamp = e;
+	}
     }
 
     if (discard) {

@@ -770,7 +770,14 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
       savageFlushVertices (imesa);
       LOCK_HARDWARE(imesa);
       savageFlushCmdBufLocked (imesa, GL_FALSE);
-      WAIT_IDLE_EMPTY_LOCKED(imesa);
+      /* Heap timestamps are only reliable with Savage DRM 2.3.x or
+       * later. Earlier versions had only 16 bit time stamps which
+       * would wrap too frequently. */
+      if (imesa->savageScreen->driScrnPriv->drmMinor >= 3) {
+	  unsigned int heap = t->base.heap->heapId;
+	  savageWaitEvent (imesa, imesa->textureHeaps[heap]->timestamp);
+      } else
+	  WAIT_IDLE_EMPTY_LOCKED(imesa);
 
       for (i = 0 ; i < numLevels ; i++) {
          const GLint j = t->base.firstLevel + i;  /* the texObj's level */

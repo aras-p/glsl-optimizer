@@ -742,6 +742,7 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
    int me = imesa->hHWContext;
    int stamp = dPriv->lastStamp; 
    int heap;
+   unsigned int timestamp = 0;
 
   
 
@@ -781,6 +782,15 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
    }
 
    for (heap = 0; heap < imesa->lastTexHeap; ++heap) {
+      /* If a heap was changed, update its timestamp. Do this before
+       * DRI_AGE_TEXTURES updates the local_age. */
+      if (imesa->textureHeaps[heap] &&
+	  imesa->textureHeaps[heap]->global_age[0] >
+	  imesa->textureHeaps[heap]->local_age) {
+	 if (timestamp == 0)
+	    timestamp = savageEmitEventLocked(imesa, 0);
+	 imesa->textureHeaps[heap]->timestamp = timestamp;
+      }
       DRI_AGE_TEXTURES( imesa->textureHeaps[heap] );
    }
 
