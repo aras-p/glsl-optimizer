@@ -589,6 +589,85 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->SecondaryColor3usvEXT = __indirect_glSecondaryColor3usvEXT;
     glAPI->SecondaryColorPointerEXT = __indirect_glSecondaryColorPointerEXT;
 
+    /* GL_NV_vertex_program */
+
+    glAPI->AreProgramsResidentNV = __indirect_glAreProgramsResidentNV;
+    glAPI->BindProgramNV = __indirect_glBindProgramNV;
+    glAPI->DeleteProgramsNV = __indirect_glDeleteProgramsNV;
+    glAPI->ExecuteProgramNV = __indirect_glExecuteProgramNV;
+    glAPI->GenProgramsNV = __indirect_glGenProgramsNV;
+    glAPI->GetProgramParameterdvNV = __indirect_glGetProgramParameterdvNV;
+    glAPI->GetProgramParameterfvNV = __indirect_glGetProgramParameterfvNV;
+    glAPI->GetProgramivNV = __indirect_glGetProgramivNV;
+    glAPI->GetProgramStringNV = __indirect_glGetProgramStringNV;
+    glAPI->GetTrackMatrixivNV = __indirect_glGetTrackMatrixivNV;
+
+    /* GL_ARB_vertex_program */
+
+    glAPI->GetVertexAttribdvARB = __indirect_glGetVertexAttribdvARB;
+    glAPI->GetVertexAttribfvARB = __indirect_glGetVertexAttribfvARB;
+    glAPI->GetVertexAttribivARB = __indirect_glGetVertexAttribivARB;
+
+    /* GL_NV_vertex_program */
+
+    glAPI->GetVertexAttribPointervNV = __indirect_glGetVertexAttribPointervNV;
+    glAPI->IsProgramNV = __indirect_glIsProgramNV;
+    glAPI->LoadProgramNV = __indirect_glLoadProgramNV;
+    glAPI->ProgramParameter4dNV = __indirect_glProgramParameter4dNV;
+    glAPI->ProgramParameter4dvNV = __indirect_glProgramParameter4dvNV;
+    glAPI->ProgramParameter4fNV = __indirect_glProgramParameter4fNV;
+    glAPI->ProgramParameter4fvNV = __indirect_glProgramParameter4fvNV;
+    glAPI->ProgramParameters4dvNV = __indirect_glProgramParameters4dvNV;
+    glAPI->ProgramParameters4fvNV = __indirect_glProgramParameters4fvNV;
+    glAPI->RequestResidentProgramsNV = __indirect_glRequestResidentProgramsNV;
+    glAPI->TrackMatrixNV = __indirect_glTrackMatrixNV;
+    glAPI->VertexAttribPointerNV = __indirect_glVertexAttribPointerNV;
+
+    /* GL_ARB_vertex_program */
+
+    glAPI->VertexAttrib1dARB = __indirect_glVertexAttrib1dARB;
+    glAPI->VertexAttrib1dvARB = __indirect_glVertexAttrib1dvARB;
+    glAPI->VertexAttrib1fARB = __indirect_glVertexAttrib1fARB;
+    glAPI->VertexAttrib1fvARB = __indirect_glVertexAttrib1fvARB;
+    glAPI->VertexAttrib1sARB = __indirect_glVertexAttrib1sARB;
+    glAPI->VertexAttrib1svARB = __indirect_glVertexAttrib1svARB;
+    glAPI->VertexAttrib2dARB = __indirect_glVertexAttrib2dARB;
+    glAPI->VertexAttrib2dvARB = __indirect_glVertexAttrib2dvARB;
+    glAPI->VertexAttrib2fARB = __indirect_glVertexAttrib2fARB;
+    glAPI->VertexAttrib2fvARB = __indirect_glVertexAttrib2fvARB;
+    glAPI->VertexAttrib2sARB = __indirect_glVertexAttrib2sARB;
+    glAPI->VertexAttrib2svARB = __indirect_glVertexAttrib2svARB;
+    glAPI->VertexAttrib3dARB = __indirect_glVertexAttrib3dARB;
+    glAPI->VertexAttrib3dvARB = __indirect_glVertexAttrib3dvARB;
+    glAPI->VertexAttrib3fARB = __indirect_glVertexAttrib3fARB;
+    glAPI->VertexAttrib3fvARB = __indirect_glVertexAttrib3fvARB;
+    glAPI->VertexAttrib3sARB = __indirect_glVertexAttrib3sARB;
+    glAPI->VertexAttrib3svARB = __indirect_glVertexAttrib3svARB;
+    glAPI->VertexAttrib4dARB = __indirect_glVertexAttrib4dARB;
+    glAPI->VertexAttrib4dvARB = __indirect_glVertexAttrib4dvARB;
+    glAPI->VertexAttrib4fARB = __indirect_glVertexAttrib4fARB;
+    glAPI->VertexAttrib4fvARB = __indirect_glVertexAttrib4fvARB;
+    glAPI->VertexAttrib4sARB = __indirect_glVertexAttrib4sARB;
+    glAPI->VertexAttrib4svARB = __indirect_glVertexAttrib4svARB;
+    glAPI->VertexAttrib4NubARB = __indirect_glVertexAttrib4NubARB;
+    glAPI->VertexAttrib4NubvARB = __indirect_glVertexAttrib4NubvARB;
+
+    /* GL_NV_vertex_program */
+
+    glAPI->VertexAttribs1dvNV = __indirect_glVertexAttribs1dvNV;
+    glAPI->VertexAttribs1fvNV = __indirect_glVertexAttribs1fvNV;
+    glAPI->VertexAttribs1svNV = __indirect_glVertexAttribs1svNV;
+    glAPI->VertexAttribs2dvNV = __indirect_glVertexAttribs2dvNV;
+    glAPI->VertexAttribs2fvNV = __indirect_glVertexAttribs2fvNV;
+    glAPI->VertexAttribs2svNV = __indirect_glVertexAttribs2svNV;
+    glAPI->VertexAttribs3dvNV = __indirect_glVertexAttribs3dvNV;
+    glAPI->VertexAttribs3fvNV = __indirect_glVertexAttribs3fvNV;
+    glAPI->VertexAttribs3svNV = __indirect_glVertexAttribs3svNV;
+    glAPI->VertexAttribs4dvNV = __indirect_glVertexAttribs4dvNV;
+    glAPI->VertexAttribs4fvNV = __indirect_glVertexAttribs4fvNV;
+    glAPI->VertexAttribs4svNV = __indirect_glVertexAttribs4svNV;
+    glAPI->VertexAttribs4ubvNV = __indirect_glVertexAttribs4ubvNV;
+
     /* GL_NV_point_sprite */
 
     glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
@@ -602,6 +681,77 @@ __GLapi * __glXNewIndirectAPI( void )
     /* EXT_stencil_two_side */
 
     glAPI->ActiveStencilFaceEXT = __indirect_glActiveStencilFaceEXT;
+
+    /* GL_ARB_vertex_program */
+
+    glAPI->VertexAttrib4ivARB = __indirect_glVertexAttrib4ivARB;
+    glAPI->VertexAttrib4ubvARB = __indirect_glVertexAttrib4ubvARB;
+    glAPI->VertexAttrib4usvARB = __indirect_glVertexAttrib4usvARB;
+    glAPI->VertexAttrib4uivARB = __indirect_glVertexAttrib4uivARB;
+    glAPI->VertexAttrib4NbvARB = __indirect_glVertexAttrib4NbvARB;
+    glAPI->VertexAttrib4NsvARB = __indirect_glVertexAttrib4NsvARB;
+    glAPI->VertexAttrib4NivARB = __indirect_glVertexAttrib4NivARB;
+    glAPI->VertexAttrib4NusvARB = __indirect_glVertexAttrib4NusvARB;
+    glAPI->VertexAttrib4NuivARB = __indirect_glVertexAttrib4NuivARB;
+    glAPI->VertexAttribPointerARB = __indirect_glVertexAttribPointerARB;
+    glAPI->EnableVertexAttribArrayARB = __indirect_glEnableVertexAttribArrayARB;
+    glAPI->DisableVertexAttribArrayARB = __indirect_glDisableVertexAttribArrayARB;
+    glAPI->ProgramStringARB = __indirect_glProgramStringARB;
+    glAPI->ProgramEnvParameter4dARB = __indirect_glProgramEnvParameter4dARB;
+    glAPI->ProgramEnvParameter4dvARB = __indirect_glProgramEnvParameter4dvARB;
+    glAPI->ProgramEnvParameter4fARB = __indirect_glProgramEnvParameter4fARB;
+    glAPI->ProgramEnvParameter4fvARB = __indirect_glProgramEnvParameter4fvARB;
+    glAPI->ProgramLocalParameter4dARB = __indirect_glProgramLocalParameter4dARB;
+    glAPI->ProgramLocalParameter4dvARB = __indirect_glProgramLocalParameter4dvARB;
+    glAPI->ProgramLocalParameter4fARB = __indirect_glProgramLocalParameter4fARB;
+    glAPI->ProgramLocalParameter4fvARB = __indirect_glProgramLocalParameter4fvARB;
+    glAPI->GetProgramEnvParameterdvARB = __indirect_glGetProgramEnvParameterdvARB;
+    glAPI->GetProgramEnvParameterfvARB = __indirect_glGetProgramEnvParameterfvARB;
+    glAPI->GetProgramLocalParameterdvARB = __indirect_glGetProgramLocalParameterdvARB;
+    glAPI->GetProgramLocalParameterfvARB = __indirect_glGetProgramLocalParameterfvARB;
+    glAPI->GetProgramivARB = __indirect_glGetProgramivARB;
+    glAPI->GetProgramStringARB = __indirect_glGetProgramStringARB;
+
+    /* GL_NV_fragment_program */
+
+    glAPI->ProgramNamedParameter4fNV = __indirect_glProgramNamedParameter4fNV;
+    glAPI->ProgramNamedParameter4dNV = __indirect_glProgramNamedParameter4dNV;
+    glAPI->ProgramNamedParameter4fvNV = __indirect_glProgramNamedParameter4fvNV;
+    glAPI->ProgramNamedParameter4dvNV = __indirect_glProgramNamedParameter4dvNV;
+    glAPI->GetProgramNamedParameterfvNV = __indirect_glGetProgramNamedParameterfvNV;
+    glAPI->GetProgramNamedParameterdvNV = __indirect_glGetProgramNamedParameterdvNV;
+
+    /* GL_NV_vertex_program */
+
+    glAPI->GetVertexAttribdvNV = __indirect_glGetVertexAttribdvNV;
+    glAPI->GetVertexAttribfvNV = __indirect_glGetVertexAttribfvNV;
+    glAPI->GetVertexAttribivNV = __indirect_glGetVertexAttribivNV;
+    glAPI->VertexAttrib1dNV = __indirect_glVertexAttrib1dNV;
+    glAPI->VertexAttrib1dvNV = __indirect_glVertexAttrib1dvNV;
+    glAPI->VertexAttrib1fNV = __indirect_glVertexAttrib1fNV;
+    glAPI->VertexAttrib1fvNV = __indirect_glVertexAttrib1fvNV;
+    glAPI->VertexAttrib1sNV = __indirect_glVertexAttrib1sNV;
+    glAPI->VertexAttrib1svNV = __indirect_glVertexAttrib1svNV;
+    glAPI->VertexAttrib2dNV = __indirect_glVertexAttrib2dNV;
+    glAPI->VertexAttrib2dvNV = __indirect_glVertexAttrib2dvNV;
+    glAPI->VertexAttrib2fNV = __indirect_glVertexAttrib2fNV;
+    glAPI->VertexAttrib2fvNV = __indirect_glVertexAttrib2fvNV;
+    glAPI->VertexAttrib2sNV = __indirect_glVertexAttrib2sNV;
+    glAPI->VertexAttrib2svNV = __indirect_glVertexAttrib2svNV;
+    glAPI->VertexAttrib3dNV = __indirect_glVertexAttrib3dNV;
+    glAPI->VertexAttrib3dvNV = __indirect_glVertexAttrib3dvNV;
+    glAPI->VertexAttrib3fNV = __indirect_glVertexAttrib3fNV;
+    glAPI->VertexAttrib3fvNV = __indirect_glVertexAttrib3fvNV;
+    glAPI->VertexAttrib3sNV = __indirect_glVertexAttrib3sNV;
+    glAPI->VertexAttrib3svNV = __indirect_glVertexAttrib3svNV;
+    glAPI->VertexAttrib4dNV = __indirect_glVertexAttrib4dNV;
+    glAPI->VertexAttrib4dvNV = __indirect_glVertexAttrib4dvNV;
+    glAPI->VertexAttrib4fNV = __indirect_glVertexAttrib4fNV;
+    glAPI->VertexAttrib4fvNV = __indirect_glVertexAttrib4fvNV;
+    glAPI->VertexAttrib4sNV = __indirect_glVertexAttrib4sNV;
+    glAPI->VertexAttrib4svNV = __indirect_glVertexAttrib4svNV;
+    glAPI->VertexAttrib4ubNV = __indirect_glVertexAttrib4ubNV;
+    glAPI->VertexAttrib4ubvNV = __indirect_glVertexAttrib4ubvNV;
 
     return glAPI;
 }

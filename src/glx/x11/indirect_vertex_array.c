@@ -104,6 +104,12 @@ struct array_state {
     GLint count;
 
     /**
+     * "Normalized" data is on the range [0,1] (unsigned) or [-1,1] (signed).
+     * This is used for mapping integral types to floating point types.
+     */
+    GLboolean normalized;
+
+    /**
      * Pre-calculated GLX protocol command header.
      */
     uint32_t header[2];
@@ -297,6 +303,14 @@ struct array_state_vector {
     unsigned num_texture_units;
 
     /**
+     * Number of generic vertex program attribs.  If GL_ARB_vertex_program
+     * is not supported, this will be zero.  Otherwise it will be the value
+     * queries by calling \c glGetProgramiv with \c GL_VERTEX_PROGRAM_ARB
+     * and \c GL_MAX_PROGRAM_ATTRIBS_ARB.
+     */
+    unsigned num_vertex_program_attribs;
+
+    /**
      * \n Methods for implementing various GL functions.
      * 
      * These method pointers are only valid \c array_info_cache_valid is set.
@@ -337,8 +351,8 @@ static GLubyte * emit_element_old( GLubyte * dst,
 static struct array_state * get_array_entry(
     const struct array_state_vector * arrays, GLenum key, unsigned index );
 static void fill_array_info_cache( struct array_state_vector * arrays );
-static GLboolean glx_validate_array_args(__GLXcontext *gc, GLenum mode,
-    GLsizei count);
+static GLboolean validate_mode(__GLXcontext *gc, GLenum mode);
+static GLboolean validate_count(__GLXcontext *gc, GLsizei count);
 
 
 /**
@@ -380,6 +394,8 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     unsigned array_count;
     unsigned texture_units = 1;
     unsigned i;
+    unsigned j;
+    unsigned vertex_program_attribs;
 
     GLboolean got_fog = GL_FALSE;
     GLboolean got_secondary_color = GL_FALSE;
@@ -432,8 +448,14 @@ __glXInitVertexArrayState( __GLXcontext * gc )
 	texture_units = 1;
     }
 
+    if ( __glExtensionBitIsEnabled( gc, GL_ARB_vertex_program_bit ) ) {
+	glGetProgramivARB( GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ATTRIBS_ARB,
+			   & vertex_program_attribs );
+    }
+
     arrays->num_texture_units = texture_units;
-    array_count += texture_units;
+    arrays->num_vertex_program_attribs = vertex_program_attribs;
+    array_count += texture_units + vertex_program_attribs;
     arrays->num_arrays = array_count;
     arrays->arrays = malloc( sizeof( struct array_state ) * array_count );
     
@@ -444,11 +466,13 @@ __glXInitVertexArrayState( __GLXcontext * gc )
     arrays->arrays[0].data_type = GL_FLOAT;
     arrays->arrays[0].count = 3;
     arrays->arrays[0].key = GL_NORMAL_ARRAY;
+    arrays->arrays[0].normalized = GL_TRUE;
     arrays->arrays[0].old_DrawArrays_possible = GL_TRUE;
 
     arrays->arrays[1].data_type = GL_FLOAT;
     arrays->arrays[1].count = 4;
     arrays->arrays[1].key = GL_COLOR_ARRAY;
+    arrays->arrays[1].normalized = GL_TRUE;
     arrays->arrays[1].old_DrawArrays_possible = GL_TRUE;
 
     arrays->arrays[2].data_type = GL_FLOAT;
@@ -465,7 +489,7 @@ __glXInitVertexArrayState( __GLXcontext * gc )
 	arrays->arrays[4 + i].data_type = GL_FLOAT;
 	arrays->arrays[4 + i].count = 4;
 	arrays->arrays[4 + i].key = GL_TEXTURE_COORD_ARRAY;
-	
+
 	arrays->arrays[4 + i].old_DrawArrays_possible = (i == 0);
 	arrays->arrays[4 + i].index = i;
 
@@ -487,8 +511,26 @@ __glXInitVertexArrayState( __GLXcontext * gc )
 	arrays->arrays[i].count = 3;
 	arrays->arrays[i].key = GL_SECONDARY_COLOR_ARRAY;
 	arrays->arrays[i].old_DrawArrays_possible = GL_TRUE;
+	arrays->arrays[i].normalized = GL_TRUE;
 	i++;
     }
+
+
+    for ( j = 0 ; j < vertex_program_attribs ; j++ ) {
+	const unsigned idx = (vertex_program_attribs - (j + 1));
+
+
+	arrays->arrays[idx + i].data_type = GL_FLOAT;
+	arrays->arrays[idx + i].count = 4;
+	arrays->arrays[idx + i].key = GL_VERTEX_ATTRIB_ARRAY_POINTER;
+
+	arrays->arrays[idx + i].old_DrawArrays_possible = 0;
+	arrays->arrays[idx + i].index = idx;
+
+	arrays->arrays[idx + i].header[1] = idx;
+    }
+
+    i += vertex_program_attribs;
 
 
     /* Vertex array *must* be last becuase of the way that
@@ -521,8 +563,7 @@ calculate_single_vertex_size_none( const struct array_state_vector * arrays )
 
     for ( i = 0 ; i < arrays->num_arrays ; i++ ) {
     	if ( arrays->arrays[i].enabled ) {
-	    single_vertex_size += __GLX_PAD(arrays->arrays[i].element_size)
-	      + arrays->arrays[i].header_size;
+	    single_vertex_size += ((uint16_t *)arrays->arrays[i].header)[0];
 	}
     }
     
@@ -544,6 +585,15 @@ emit_element_none( GLubyte * dst,
     for ( i = 0 ; i < arrays->num_arrays ; i++ ) {
 	if ( arrays->arrays[i].enabled ) {
 	    const size_t offset = index * arrays->arrays[i].true_stride;
+
+	    /* The generic attributes can have more data than is in the
+	     * elements.  This is because a vertex array can be a 2 element,
+	     * normalized, unsigned short, but the "closest" immediate mode
+	     * protocol is for a 4Nus.  Since the sizes are small, the
+	     * performance impact on modern processors should be negligible.
+	     */
+	    (void) memset( dst, 0,
+			   ((uint16_t *)arrays->arrays[i].header)[0] );
 
 	    (void) memcpy( dst, arrays->arrays[i].header, 
 			   arrays->arrays[i].header_size );
@@ -1635,6 +1685,139 @@ void __indirect_glFogCoordPointerEXT( GLenum type, GLsizei stride,
 }
 
 
+void __indirect_glVertexAttribPointerARB(GLuint index, GLint size,
+					 GLenum type, GLboolean normalized,
+					 GLsizei stride,
+					 const GLvoid * pointer)
+{
+    static const uint16_t short_ops[5]  = { 0, 4189, 4190, 4191, 4192 };
+    static const uint16_t float_ops[5]  = { 0, 4193, 4194, 4195, 4196 };
+    static const uint16_t double_ops[5] = { 0, 4197, 4198, 4199, 4200 };
+
+    uint16_t opcode;
+    __GLXcontext *gc = __glXGetCurrentContext();
+    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
+    struct array_state_vector * arrays = state->array_state;
+    struct array_state * a;
+    unsigned true_immediate_count;
+    unsigned true_immediate_size;
+
+
+    if ( (size < 1) || (size > 4) || (stride < 0) 
+	 || (index > arrays->num_vertex_program_attribs) ){
+        __glXSetError(gc, GL_INVALID_VALUE);
+        return;
+    }
+
+    if ( normalized && (type != GL_FLOAT) && (type != GL_DOUBLE)) {
+	switch( type ) {
+	case GL_BYTE:           opcode = X_GLrop_VertexAttrib4NbvARB;  break;
+	case GL_UNSIGNED_BYTE:  opcode = X_GLrop_VertexAttrib4NubvARB; break;
+	case GL_SHORT:          opcode = X_GLrop_VertexAttrib4NsvARB;  break;
+	case GL_UNSIGNED_SHORT: opcode = X_GLrop_VertexAttrib4NusvARB; break;
+	case GL_INT:            opcode = X_GLrop_VertexAttrib4NivARB;  break;
+	case GL_UNSIGNED_INT:   opcode = X_GLrop_VertexAttrib4NuivARB; break;
+	default:
+	    __glXSetError(gc, GL_INVALID_ENUM);
+	    return;
+	}
+	
+	true_immediate_count = 4;
+    }
+    else {
+	switch( type ) {
+	case GL_BYTE:
+	    opcode = X_GLrop_VertexAttrib4bvARB;
+	    true_immediate_count = 4;
+	    break;
+	case GL_UNSIGNED_BYTE:
+	    opcode = X_GLrop_VertexAttrib4ubvARB;
+	    true_immediate_count = 4;
+	    break;
+	case GL_SHORT:
+	    opcode = short_ops[size];
+	    break;
+	case GL_UNSIGNED_SHORT:
+	    opcode = X_GLrop_VertexAttrib4usvARB;
+	    true_immediate_count = 4;
+	    break;
+	case GL_INT:
+            opcode = X_GLrop_VertexAttrib4ivARB;
+	    true_immediate_count = 4;
+	    break;
+	case GL_UNSIGNED_INT:
+	    opcode = X_GLrop_VertexAttrib4uivARB;
+	    true_immediate_count = 4;
+	    break;
+	case GL_FLOAT:
+	    opcode = float_ops[size];
+	    break;
+	case GL_DOUBLE:
+	    opcode = double_ops[size];
+	    break;
+	default:
+	    __glXSetError(gc, GL_INVALID_ENUM);
+	    return;
+	}
+    }
+
+    a = get_array_entry( arrays, GL_VERTEX_ATTRIB_ARRAY_POINTER, index );
+    if ( a == NULL ) {
+        __glXSetError(gc, GL_INVALID_OPERATION);
+        return;
+    }
+
+    COMMON_ARRAY_DATA_INIT( a, pointer, type, stride, size, 8, opcode );
+
+    true_immediate_size = __glXTypeSize(type) * true_immediate_count;
+    ((uint16_t *) (a)->header)[0] = __GLX_PAD(a->header_size 
+					      + true_immediate_size);
+
+    if ( a->enabled ) {
+	arrays->array_info_cache_valid = GL_FALSE;
+    }
+}
+
+
+/**
+ * I don't have 100% confidence that this is correct.  The different rules
+ * about whether or not generic vertex attributes alias "classic" vertex
+ * attributes (i.e., attrib1 ?= primary color) between ARB_vertex_program,
+ * ARB_vertex_shader, and NV_vertex_program are a bit confusing.  My
+ * feeling is that the client-side doesn't have to worry about it.  The
+ * client just sends all the data to the server and lets the server deal
+ * with it.
+ */
+void __indirect_glVertexAttribPointerNV( GLuint index, GLint size,
+					 GLenum type, GLsizei stride,
+					 const GLvoid * pointer)
+{
+    __GLXcontext *gc = __glXGetCurrentContext();
+    GLboolean normalized = GL_FALSE;
+
+
+    switch( type ) {
+    case GL_UNSIGNED_BYTE:
+	if ( size != 4 ) {
+	    __glXSetError(gc, GL_INVALID_VALUE);
+	    return;
+	}
+	normalized = GL_TRUE;
+
+    case GL_SHORT:
+    case GL_FLOAT:
+    case GL_DOUBLE:
+	__indirect_glVertexAttribPointerARB(index, size, type,
+					    normalized,
+					    stride, pointer);
+	return;
+    default:
+	__glXSetError(gc, GL_INVALID_ENUM);
+	return;
+    }
+}
+
+
 void __indirect_glClientActiveTextureARB(GLenum texture)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
@@ -1776,7 +1959,26 @@ __glXGetArrayPointer( const __GLXattribute * const state,
 
 
     if ( a != NULL ) {
-	*dest = a->data;
+	*dest = (void *) (a->data);
+    }
+
+    return (a != NULL);
+}
+
+
+/**
+ */
+GLboolean
+__glXGetArrayNormalized( const __GLXattribute * const state,
+			 GLenum key, unsigned index, GLintptr * dest )
+{
+    const struct array_state_vector * arrays = state->array_state;
+    const struct array_state * a = get_array_entry( (struct array_state_vector *) arrays,
+						    key, index );
+
+
+    if ( a != NULL ) {
+	*dest = (GLintptr) a->normalized;
     }
 
     return (a != NULL);

@@ -5317,13 +5317,39 @@ glx:
 
 <category name="GL_ARB_vertex_program" number="26">
     <enum name="COLOR_SUM_ARB"                            value="0x8458"/>
-    <enum name="VERTEX_PROGRAM_ARB"                       value="0x8620"/>
-    <enum name="VERTEX_ATTRIB_ARRAY_ENABLED_ARB"          value="0x8622"/>
-    <enum name="VERTEX_ATTRIB_ARRAY_SIZE_ARB"             value="0x8623"/>
-    <enum name="VERTEX_ATTRIB_ARRAY_STRIDE_ARB"           value="0x8624"/>
-    <enum name="VERTEX_ATTRIB_ARRAY_TYPE_ARB"             value="0x8625"/>
-    <enum name="CURRENT_VERTEX_ATTRIB_ARB"                value="0x8626"/>
-    <enum name="PROGRAM_LENGTH_ARB"                       value="0x8627"/>
+    <enum name="VERTEX_PROGRAM_ARB"            count="1"  value="0x8620">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_ENABLED_ARB" count="1" value="0x8622">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_SIZE_ARB"  count="1"  value="0x8623">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_STRIDE_ARB" count="1" value="0x8624">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_TYPE_ARB"  count="1"  value="0x8625">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="CURRENT_VERTEX_ATTRIB_ARB"     count="1"  value="0x8626">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_LENGTH_ARB"            count="1"  value="0x8627">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
     <enum name="PROGRAM_STRING_ARB"                       value="0x8628"/>
     <enum name="MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB"       value="0x862E"/>
     <enum name="MAX_PROGRAM_MATRICES_ARB"                 value="0x862F"/>
@@ -5333,35 +5359,85 @@ glx:
     <enum name="VERTEX_PROGRAM_TWO_SIDE_ARB"              value="0x8643"/>
     <enum name="VERTEX_ATTRIB_ARRAY_POINTER_ARB"          value="0x8645"/>
     <enum name="PROGRAM_ERROR_POSITION_ARB"               value="0x864B"/>
-    <enum name="PROGRAM_BINDING_ARB"                      value="0x8677"/>
+    <enum name="PROGRAM_BINDING_ARB"           count="1"  value="0x8677">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
     <enum name="MAX_VERTEX_ATTRIBS_ARB"                   value="0x8869"/>
     <enum name="VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB"       value="0x886A"/>
     <enum name="PROGRAM_ERROR_STRING_ARB"                 value="0x8874"/>
     <enum name="PROGRAM_FORMAT_ASCII_ARB"                 value="0x8875"/>
-    <enum name="PROGRAM_FORMAT_ARB"                       value="0x8876"/>
-    <enum name="PROGRAM_INSTRUCTIONS_ARB"                 value="0x88A0"/>
-    <enum name="MAX_PROGRAM_INSTRUCTIONS_ARB"             value="0x88A1"/>
-    <enum name="PROGRAM_NATIVE_INSTRUCTIONS_ARB"          value="0x88A2"/>
-    <enum name="MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB"      value="0x88A3"/>
-    <enum name="PROGRAM_TEMPORARIES_ARB"                  value="0x88A4"/>
-    <enum name="MAX_PROGRAM_TEMPORARIES_ARB"              value="0x88A5"/>
-    <enum name="PROGRAM_NATIVE_TEMPORARIES_ARB"           value="0x88A6"/>
-    <enum name="MAX_PROGRAM_NATIVE_TEMPORARIES_ARB"       value="0x88A7"/>
-    <enum name="PROGRAM_PARAMETERS_ARB"                   value="0x88A8"/>
-    <enum name="MAX_PROGRAM_PARAMETERS_ARB"               value="0x88A9"/>
-    <enum name="PROGRAM_NATIVE_PARAMETERS_ARB"            value="0x88AA"/>
-    <enum name="MAX_PROGRAM_NATIVE_PARAMETERS_ARB"        value="0x88AB"/>
-    <enum name="PROGRAM_ATTRIBS_ARB"                      value="0x88AC"/>
-    <enum name="MAX_PROGRAM_ATTRIBS_ARB"                  value="0x88AD"/>
-    <enum name="PROGRAM_NATIVE_ATTRIBS_ARB"               value="0x88AE"/>
-    <enum name="MAX_PROGRAM_NATIVE_ATTRIBS_ARB"           value="0x88AF"/>
-    <enum name="PROGRAM_ADDRESS_REGISTERS_ARB"            value="0x88B0"/>
-    <enum name="MAX_PROGRAM_ADDRESS_REGISTERS_ARB"        value="0x88B1"/>
-    <enum name="PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB"     value="0x88B2"/>
-    <enum name="MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" value="0x88B3"/>
-    <enum name="MAX_PROGRAM_LOCAL_PARAMETERS_ARB"         value="0x88B4"/>
-    <enum name="MAX_PROGRAM_ENV_PARAMETERS_ARB"           value="0x88B5"/>
-    <enum name="PROGRAM_UNDER_NATIVE_LIMITS_ARB"          value="0x88B6"/>
+    <enum name="PROGRAM_FORMAT_ARB"            count="1"  value="0x8876">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_INSTRUCTIONS_ARB"      count="1"  value="0x88A0">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_INSTRUCTIONS_ARB"  count="1"  value="0x88A1">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_INSTRUCTIONS_ARB" count="1" value="0x88A2">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB" count="1" value="0x88A3">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_TEMPORARIES_ARB"       count="1"  value="0x88A4">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_TEMPORARIES_ARB"   count="1"  value="0x88A5">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_TEMPORARIES_ARB" count="1" value="0x88A6">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_TEMPORARIES_ARB" count="1" value="0x88A7">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_PARAMETERS_ARB"        count="1"  value="0x88A8">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_PARAMETERS_ARB"    count="1"  value="0x88A9">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_PARAMETERS_ARB" count="1"  value="0x88AA">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_PARAMETERS_ARB" count="1" value="0x88AB">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_ATTRIBS_ARB"           count="1"  value="0x88AC">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_ATTRIBS_ARB"       count="1"  value="0x88AD">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_ATTRIBS_ARB"    count="1"  value="0x88AE">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_ATTRIBS_ARB" count="1" value="0x88AF">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_ADDRESS_REGISTERS_ARB" count="1"  value="0x88B0">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_ADDRESS_REGISTERS_ARB" count="1" value="0x88B1">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" count="1" value="0x88B2">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" count="1" value="0x88B3">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_LOCAL_PARAMETERS_ARB" count="1" value="0x88B4">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_ENV_PARAMETERS_ARB" count="1" value="0x88B5">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_UNDER_NATIVE_LIMITS_ARB" count="1" value="0x88B6">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
     <enum name="TRANSPOSE_CURRENT_MATRIX_ARB"             value="0x88B7"/>
     <enum name="MATRIX0_ARB"                              value="0x88C0"/>
     <enum name="MATRIX1_ARB"                              value="0x88C1"/>
@@ -5399,97 +5475,91 @@ glx:
     <function name="GetVertexAttribdvARB" offset="588">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
+        <glx handcode="client" vendorpriv="1301"/>
     </function>
 
     <function name="GetVertexAttribfvARB" offset="589">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx handcode="client" vendorpriv="1302"/>
     </function>
 
     <function name="GetVertexAttribivARB" offset="590">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx handcode="client" vendorpriv="1303"/>
     </function>
 
     <function name="VertexAttrib1dARB" offset="603" vectorequiv="VertexAttrib1dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1dvARB" offset="604">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
-        <glx ignore="true"/>
+        <glx rop="4197"/>
     </function>
 
     <function name="VertexAttrib1fARB" offset="605" vectorequiv="VertexAttrib1fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1fvARB" offset="606">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
-        <glx ignore="true"/>
+        <glx rop="4193"/>
     </function>
 
     <function name="VertexAttrib1sARB" offset="607" vectorequiv="VertexAttrib1svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1svARB" offset="608">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
-        <glx ignore="true"/>
+        <glx rop="4189"/>
     </function>
 
     <function name="VertexAttrib2dARB" offset="609" vectorequiv="VertexAttrib2dvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2dvARB" offset="610">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
-        <glx ignore="true"/>
+        <glx rop="4198"/>
     </function>
 
     <function name="VertexAttrib2fARB" offset="611" vectorequiv="VertexAttrib2fvARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2fvARB" offset="612">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
-        <glx ignore="true"/>
+        <glx rop="4194"/>
     </function>
 
     <function name="VertexAttrib2sARB" offset="613" vectorequiv="VertexAttrib2svARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2svARB" offset="614">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
-        <glx ignore="true"/>
+        <glx rop="4190"/>
     </function>
 
     <function name="VertexAttrib3dARB" offset="615" vectorequiv="VertexAttrib3dvARB">
@@ -5497,13 +5567,12 @@ glx:
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3dvARB" offset="616">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
-        <glx ignore="true"/>
+        <glx rop="4199"/>
     </function>
 
     <function name="VertexAttrib3fARB" offset="617" vectorequiv="VertexAttrib3fvARB">
@@ -5511,13 +5580,12 @@ glx:
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3fvARB" offset="618">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
-        <glx ignore="true"/>
+        <glx rop="4195"/>
     </function>
 
     <function name="VertexAttrib3sARB" offset="619" vectorequiv="VertexAttrib3svARB">
@@ -5525,13 +5593,12 @@ glx:
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3svARB" offset="620">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
-        <glx ignore="true"/>
+        <glx rop="4191"/>
     </function>
 
     <function name="VertexAttrib4dARB" offset="621" vectorequiv="VertexAttrib4dvARB">
@@ -5540,13 +5607,12 @@ glx:
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4dvARB" offset="622">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
-        <glx ignore="true"/>
+        <glx rop="4200"/>
     </function>
 
     <function name="VertexAttrib4fARB" offset="623" vectorequiv="VertexAttrib4fvARB">
@@ -5555,13 +5621,12 @@ glx:
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4fvARB" offset="624">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
-        <glx ignore="true"/>
+        <glx rop="4196"/>
     </function>
 
     <function name="VertexAttrib4sARB" offset="625" vectorequiv="VertexAttrib4svARB">
@@ -5570,13 +5635,12 @@ glx:
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
         <param name="w" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4svARB" offset="626">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
-        <glx ignore="true"/>
+        <glx rop="4192"/>
     </function>
 
     <function name="VertexAttrib4NubARB" offset="627" vectorequiv="VertexAttrib4NubvARB">
@@ -5585,13 +5649,12 @@ glx:
         <param name="y" type="GLubyte"/>
         <param name="z" type="GLubyte"/>
         <param name="w" type="GLubyte"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4NubvARB" offset="628">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
-        <glx ignore="true"/>
+        <glx rop="4201"/>
     </function>
 
     <function name="VertexAttrib4bvARB" offset="654">
@@ -5603,55 +5666,55 @@ glx:
     <function name="VertexAttrib4ivARB" offset="655">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
-        <glx rop="4231" ignore="true"/>
+        <glx rop="4231"/>
     </function>
 
     <function name="VertexAttrib4ubvARB" offset="656">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
-        <glx rop="4232" ignore="true"/>
+        <glx rop="4232"/>
     </function>
 
     <function name="VertexAttrib4usvARB" offset="657">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
-        <glx rop="4233" ignore="true"/>
+        <glx rop="4233"/>
     </function>
 
     <function name="VertexAttrib4uivARB" offset="658">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
-        <glx rop="4234" ignore="true"/>
+        <glx rop="4234"/>
     </function>
 
     <function name="VertexAttrib4NbvARB" offset="659">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
-        <glx rop="4235" ignore="true"/>
+        <glx rop="4235"/>
     </function>
 
     <function name="VertexAttrib4NsvARB" offset="660">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
-        <glx rop="4236" ignore="true"/>
+        <glx rop="4236"/>
     </function>
 
     <function name="VertexAttrib4NivARB" offset="661">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
-        <glx rop="4237" ignore="true"/>
+        <glx rop="4237"/>
     </function>
 
     <function name="VertexAttrib4NusvARB" offset="662">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *" count="4"/>
-        <glx rop="4238" ignore="true"/>
+        <glx rop="4238"/>
     </function>
 
     <function name="VertexAttrib4NuivARB" offset="663">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLuint *" count="4"/>
-        <glx rop="4239" ignore="true"/>
+        <glx rop="4239"/>
     </function>
 
     <function name="VertexAttribPointerARB" offset="664">
@@ -5661,25 +5724,25 @@ glx:
         <param name="normalized" type="GLboolean"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
-        <glx handcode="true" ignore="true"/>
+        <glx handcode="true"/>
     </function>
 
     <function name="EnableVertexAttribArrayARB" offset="665">
         <param name="index" type="GLuint"/>
-        <glx handcode="true" ignore="true"/>
+        <glx handcode="true"/>
     </function>
 
     <function name="DisableVertexAttribArrayARB" offset="666">
         <param name="index" type="GLuint"/>
-        <glx handcode="true" ignore="true"/>
+        <glx handcode="true"/>
     </function>
 
     <function name="ProgramStringARB" offset="667">
         <param name="target" type="GLenum"/>
         <param name="format" type="GLenum"/>
-        <param name="len" type="GLsizei"/>
-        <param name="string" type="const GLvoid *"/>
-        <glx rop="4217" handcode="true" ignore="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="string" type="const GLvoid *" count="len"/>
+        <glx rop="4217" large="true"/>
     </function>
 
     <function name="BindProgramARB" alias="BindProgramNV">
@@ -5702,7 +5765,6 @@ glx:
         <return type="GLboolean"/>
     </function>
 
-    <!-- FIXME: This should alias to ProgramParameter*NV -->
     <function name="ProgramEnvParameter4dARB" offset="668" vectorequiv="ProgramEnvParameter4dvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
@@ -5710,18 +5772,15 @@ glx:
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
-    <!-- FIXME: This should alias to ProgramParameter*NV -->
     <function name="ProgramEnvParameter4dvARB" offset="669">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
-        <glx rop="4185" doubles_in_order="true" ignore="true"/>
+        <glx rop="4185" doubles_in_order="true"/>
     </function>
 
-    <!-- FIXME: This should alias to ProgramParameter*NV -->
     <function name="ProgramEnvParameter4fARB" offset="670" vectorequiv="ProgramEnvParameter4fvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
@@ -5729,15 +5788,13 @@ glx:
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
-    <!-- FIXME: This should alias to ProgramParameter*NV -->
     <function name="ProgramEnvParameter4fvARB" offset="671">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
-        <glx rop="4184" ignore="true"/>
+        <glx rop="4184"/>
     </function>
 
     <function name="ProgramLocalParameter4dARB" offset="672" vectorequiv="ProgramLocalParameter4dvARB">
@@ -5747,14 +5804,13 @@ glx:
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="ProgramLocalParameter4dvARB" offset="673">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
-        <glx rop="4216" doubles_in_order="true" ignore="true"/>
+        <glx rop="4216" doubles_in_order="true"/>
     </function>
 
     <function name="ProgramLocalParameter4fARB" offset="674" vectorequiv="ProgramLocalParameter4fvARB">
@@ -5764,58 +5820,68 @@ glx:
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="ProgramLocalParameter4fvARB" offset="675">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
-        <glx rop="4215" ignore="true"/>
+        <glx rop="4215"/>
     </function>
 
-    <!-- FIXME: This should alias to GetProgramParameter*NV -->
+    <!-- The GetProgramEnvParameter[df]vARB are handcoded because there
+         is an extra CARD32 of padding after the "index" field.  Originally,
+         GetProgranEnvParameter[df]vARB and GetProgramParameter[df]vNV
+         shared the same GLX protocol.  The pad field was where the pname
+         parameter was in the NV functions.  When this error was discovered
+         and fixed, there was already at least one implementation of
+         GLX protocol for ARB_vertex_program, but there were no
+         implementations of NV_vertex_program.  The sollution was to renumber
+         the opcodes for NV_vertex_program and convert the unused field in
+         the ARB_vertex_program protocol to unused padding.
+      -->
+
     <function name="GetProgramEnvParameterdvARB" offset="676">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1297" doubles_in_order="true" ignore="true"/>
+        <glx vendorpriv="1297" handcode="true" doubles_in_order="true"/>
     </function>
 
-    <!-- FIXME: This should alias to GetProgramParameter*NV -->
     <function name="GetProgramEnvParameterfvARB" offset="677">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1296" ignore="true"/>
+        <glx vendorpriv="1296" handcode="true"/>
     </function>
 
     <function name="GetProgramLocalParameterdvARB" offset="678">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1306" doubles_in_order="true" ignore="true"/>
+        <glx vendorpriv="1306" handcode="true" doubles_in_order="true"/>
     </function>
 
     <function name="GetProgramLocalParameterfvARB" offset="679">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1305" ignore="true"/>
+        <glx vendorpriv="1305" handcode="true"/>
     </function>
+
 
     <function name="GetProgramivARB" offset="680">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx vendorpriv="1307" ignore="true"/>
+        <param name="params" type="GLint *" output="true" varaible_param="pname"/>
+        <glx vendorpriv="1307"/>
     </function>
 
     <function name="GetProgramStringARB" offset="681">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="string" type="GLvoid *" output="true"/>
-        <glx vendorpriv="1308" handcode="true" ignore="true"/>
+        <glx vendorpriv="1308" handcode="server" always_array="true"/>
     </function>
 
     <function name="GetVertexAttribPointervARB" alias="GetVertexAttribPointervNV">
@@ -9456,109 +9522,221 @@ glx:
 </category>
 
 <category name="GL_NV_vertex_program" number="233">
+    <enum name="VERTEX_PROGRAM_NV"                        value="0x8620"/>
+    <enum name="VERTEX_STATE_PROGRAM_NV"                  value="0x8621"/>
+    <enum name="ATTRIB_ARRAY_SIZE_NV"          count="1"  value="0x8623">
+        <size name="GetVertexAttribdvNV" mode="get"/>
+        <size name="GetVertexAttribfvNV" mode="get"/>
+        <size name="GetVertexAttribivNV" mode="get"/>
+    </enum>
+    <enum name="ATTRIB_ARRAY_STRIDE_NV"        count="1"  value="0x8624">
+        <size name="GetVertexAttribdvNV" mode="get"/>
+        <size name="GetVertexAttribfvNV" mode="get"/>
+        <size name="GetVertexAttribivNV" mode="get"/>
+    </enum>
+    <enum name="ATTRIB_ARRAY_TYPE_NV"          count="1"  value="0x8625">
+        <size name="GetVertexAttribdvNV" mode="get"/>
+        <size name="GetVertexAttribfvNV" mode="get"/>
+        <size name="GetVertexAttribivNV" mode="get"/>
+    </enum>
+    <enum name="CURRENT_ATTRIB_NV"             count="1"  value="0x8626">
+        <size name="GetVertexAttribdvNV" mode="get"/>
+        <size name="GetVertexAttribfvNV" mode="get"/>
+        <size name="GetVertexAttribivNV" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_LENGTH_NV"             count="1"  value="0x8627">
+        <size name="GetProgramivNV" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_STRING_NV"                        value="0x8628"/>
+    <enum name="MODELVIEW_PROJECTION_NV"                  value="0x8629"/>
+    <enum name="IDENTITY_NV"                              value="0x862A"/>
+    <enum name="INVERSE_NV"                               value="0x862B"/>
+    <enum name="TRANSPOSE_NV"                             value="0x862C"/>
+    <enum name="INVERSE_TRANSPOSE_NV"                     value="0x862D"/>
+    <enum name="MAX_TRACK_MATRIX_STACK_DEPTH_NV"          value="0x862E"/>
+    <enum name="MAX_TRACK_MATRICES_NV"                    value="0x862F"/>
+    <enum name="MATRIX0_NV"                               value="0x8630"/>
+    <enum name="MATRIX1_NV"                               value="0x8631"/>
+    <enum name="MATRIX2_NV"                               value="0x8632"/>
+    <enum name="MATRIX3_NV"                               value="0x8633"/>
+    <enum name="MATRIX4_NV"                               value="0x8634"/>
+    <enum name="MATRIX5_NV"                               value="0x8635"/>
+    <enum name="MATRIX6_NV"                               value="0x8636"/>
+    <enum name="MATRIX7_NV"                               value="0x8637"/>
+    <enum name="CURRENT_MATRIX_STACK_DEPTH_NV"            value="0x8640"/>
+    <enum name="CURRENT_MATRIX_NV"                        value="0x8641"/>
+    <enum name="VERTEX_PROGRAM_POINT_SIZE_NV"             value="0x8642"/>
+    <enum name="VERTEX_PROGRAM_TWO_SIDE_NV"               value="0x8643"/>
+    <enum name="PROGRAM_PARAMETER_NV"                     value="0x8644"/>
+    <enum name="ATTRIB_ARRAY_POINTER_NV"                  value="0x8645"/>
+    <enum name="PROGRAM_TARGET_NV"             count="1"  value="0x8646">
+        <size name="GetProgramivNV" mode="get"/>
+    </enum>
+    <enum name="PROGRAM_RESIDENT_NV"           count="1"  value="0x8647">
+        <size name="GetProgramivNV" mode="get"/>
+    </enum>
+    <enum name="TRACK_MATRIX_NV"                          value="0x8648"/>
+    <enum name="TRACK_MATRIX_TRANSFORM_NV"                value="0x8649"/>
+    <enum name="VERTEX_PROGRAM_BINDING_NV"                value="0x864A"/>
+    <enum name="PROGRAM_ERROR_POSITION_NV"                value="0x864B"/>
+    <enum name="VERTEX_ATTRIB_ARRAY0_NV"                  value="0x8650"/>
+    <enum name="VERTEX_ATTRIB_ARRAY1_NV"                  value="0x8651"/>
+    <enum name="VERTEX_ATTRIB_ARRAY2_NV"                  value="0x8652"/>
+    <enum name="VERTEX_ATTRIB_ARRAY3_NV"                  value="0x8653"/>
+    <enum name="VERTEX_ATTRIB_ARRAY4_NV"                  value="0x8654"/>
+    <enum name="VERTEX_ATTRIB_ARRAY5_NV"                  value="0x8655"/>
+    <enum name="VERTEX_ATTRIB_ARRAY6_NV"                  value="0x8656"/>
+    <enum name="VERTEX_ATTRIB_ARRAY7_NV"                  value="0x8657"/>
+    <enum name="VERTEX_ATTRIB_ARRAY8_NV"                  value="0x8658"/>
+    <enum name="VERTEX_ATTRIB_ARRAY9_NV"                  value="0x8659"/>
+    <enum name="VERTEX_ATTRIB_ARRAY10_NV"                 value="0x865A"/>
+    <enum name="VERTEX_ATTRIB_ARRAY11_NV"                 value="0x865B"/>
+    <enum name="VERTEX_ATTRIB_ARRAY12_NV"                 value="0x865C"/>
+    <enum name="VERTEX_ATTRIB_ARRAY13_NV"                 value="0x865D"/>
+    <enum name="VERTEX_ATTRIB_ARRAY14_NV"                 value="0x865E"/>
+    <enum name="VERTEX_ATTRIB_ARRAY15_NV"                 value="0x865F"/>
+    <enum name="MAP1_VERTEX_ATTRIB0_4_NV"                 value="0x8660"/>
+    <enum name="MAP1_VERTEX_ATTRIB1_4_NV"                 value="0x8661"/>
+    <enum name="MAP1_VERTEX_ATTRIB2_4_NV"                 value="0x8662"/>
+    <enum name="MAP1_VERTEX_ATTRIB3_4_NV"                 value="0x8663"/>
+    <enum name="MAP1_VERTEX_ATTRIB4_4_NV"                 value="0x8664"/>
+    <enum name="MAP1_VERTEX_ATTRIB5_4_NV"                 value="0x8665"/>
+    <enum name="MAP1_VERTEX_ATTRIB6_4_NV"                 value="0x8666"/>
+    <enum name="MAP1_VERTEX_ATTRIB7_4_NV"                 value="0x8667"/>
+    <enum name="MAP1_VERTEX_ATTRIB8_4_NV"                 value="0x8668"/>
+    <enum name="MAP1_VERTEX_ATTRIB9_4_NV"                 value="0x8669"/>
+    <enum name="MAP1_VERTEX_ATTRIB10_4_NV"                value="0x866A"/>
+    <enum name="MAP1_VERTEX_ATTRIB11_4_NV"                value="0x866B"/>
+    <enum name="MAP1_VERTEX_ATTRIB12_4_NV"                value="0x866C"/>
+    <enum name="MAP1_VERTEX_ATTRIB13_4_NV"                value="0x866D"/>
+    <enum name="MAP1_VERTEX_ATTRIB14_4_NV"                value="0x866E"/>
+    <enum name="MAP1_VERTEX_ATTRIB15_4_NV"                value="0x866F"/>
+    <enum name="MAP2_VERTEX_ATTRIB0_4_NV"                 value="0x8670"/>
+    <enum name="MAP2_VERTEX_ATTRIB1_4_NV"                 value="0x8671"/>
+    <enum name="MAP2_VERTEX_ATTRIB2_4_NV"                 value="0x8672"/>
+    <enum name="MAP2_VERTEX_ATTRIB3_4_NV"                 value="0x8673"/>
+    <enum name="MAP2_VERTEX_ATTRIB4_4_NV"                 value="0x8674"/>
+    <enum name="MAP2_VERTEX_ATTRIB5_4_NV"                 value="0x8675"/>
+    <enum name="MAP2_VERTEX_ATTRIB6_4_NV"                 value="0x8676"/>
+    <enum name="MAP2_VERTEX_ATTRIB7_4_NV"                 value="0x8677"/>
+    <enum name="MAP2_VERTEX_ATTRIB8_4_NV"                 value="0x8678"/>
+    <enum name="MAP2_VERTEX_ATTRIB9_4_NV"                 value="0x8679"/>
+    <enum name="MAP2_VERTEX_ATTRIB10_4_NV"                value="0x867A"/>
+    <enum name="MAP2_VERTEX_ATTRIB11_4_NV"                value="0x867B"/>
+    <enum name="MAP2_VERTEX_ATTRIB12_4_NV"                value="0x867C"/>
+    <enum name="MAP2_VERTEX_ATTRIB13_4_NV"                value="0x867D"/>
+    <enum name="MAP2_VERTEX_ATTRIB14_4_NV"                value="0x867E"/>
+    <enum name="MAP2_VERTEX_ATTRIB15_4_NV"                value="0x867F"/>
+
     <function name="AreProgramsResidentNV" offset="578">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="1293" ignore="true"/>
+        <glx vendorpriv="1293"/>
     </function>
 
     <function name="BindProgramNV" offset="579">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
-        <glx rop="4108" ignore="true"/>
+        <glx rop="4180"/>
     </function>
 
     <function name="DeleteProgramsNV" offset="580">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="const GLuint *" count="n"/>
-        <glx vendorpriv="1294" ignore="true"/>
+        <glx vendorpriv="1294"/>
     </function>
 
     <function name="ExecuteProgramNV" offset="581">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
-        <param name="params" type="const GLfloat *" variable_param="target"/>
-        <glx rop="4181" ignore="true"/>
+        <param name="params" type="const GLfloat *" count="4"/>
+        <glx rop="4181"/>
     </function>
 
     <function name="GenProgramsNV" offset="582">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="ids" type="GLuint *" output="true" counter="n"/>
-        <glx vendorpriv="1295" ignore="true"/>
+        <param name="ids" type="GLuint *" output="true" count="n"/>
+        <glx vendorpriv="1295"/>
     </function>
+
+    <!-- This isn't 100% correct.  Currently, the only valid value of pname
+         is GL_PROGRAM_PARAMETER_NV, and the count for that pname is always
+         4.  This is why the pname parameter was removed in the ARB version
+         of these functions.
+      -->
 
     <function name="GetProgramParameterdvNV" offset="583">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1297" ignore="true"/>
+        <param name="params" type="GLdouble *" output="true" count="4"/>
+        <glx vendorpriv="1297"/>
     </function>
 
     <function name="GetProgramParameterfvNV" offset="584">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1296" ignore="true"/>
+        <param name="params" type="GLfloat *" output="true" count="4"/>
+        <glx vendorpriv="1296"/>
     </function>
 
     <function name="GetProgramivNV" offset="585">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx vendorpriv="1307" ignore="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx vendorpriv="1298"/>
     </function>
 
     <function name="GetProgramStringNV" offset="586">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="program" type="GLubyte *" output="true"/>
-        <glx vendorpriv="1308" handcode="true" ignore="true"/>
+        <glx vendorpriv="1299" handcode="server" always_array="true"/>
     </function>
 
     <function name="GetTrackMatrixivNV" offset="587">
         <param name="target" type="GLenum"/>
         <param name="address" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx vendorpriv="1300" ignore="true"/>
+        <param name="params" type="GLint *" output="true" count="1"/>
+        <glx vendorpriv="1300"/>
     </function>
 
     <function name="GetVertexAttribdvNV" offset="753">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1301" ignore="true"/>
+        <param name="params" type="GLdouble *" output="true" variable_param="pname"/>
+        <glx vendorpriv="1301"/>
     </function>
 
     <function name="GetVertexAttribfvNV" offset="754">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1302" ignore="true"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx vendorpriv="1302"/>
     </function>
 
     <function name="GetVertexAttribivNV" offset="755">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
-        <glx vendorpriv="1303" ignore="true"/>
+        <glx vendorpriv="1303"/>
     </function>
 
     <function name="GetVertexAttribPointervNV" offset="591">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="pointer" type="GLvoid **" output="true"/>
-        <glx handcode="true" ignore="true"/>
+        <glx handcode="true"/>
     </function>
 
     <function name="IsProgramNV" offset="592">
         <param name="id" type="GLuint"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="1304" ignore="true"/>
+        <glx vendorpriv="1304"/>
     </function>
 
     <function name="LoadProgramNV" offset="593">
@@ -9566,7 +9744,7 @@ glx:
         <param name="id" type="GLuint"/>
         <param name="len" type="GLsizei" counter="true"/>
         <param name="program" type="const GLubyte *" count="len"/>
-        <glx rop="4183" ignore="true"/>
+        <glx rop="4183"/>
     </function>
 
     <function name="ProgramParameter4dNV" offset="594" vectorequiv="ProgramParameter4dvNV">
@@ -9576,14 +9754,13 @@ glx:
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="ProgramParameter4dvNV" offset="595">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLdouble *" count="4"/>
-        <glx rop="4185" doubles_in_order="true" ignore="true"/>
+        <glx rop="4185" doubles_in_order="true"/>
     </function>
 
     <function name="ProgramParameter4fNV" offset="596" vectorequiv="ProgramParameter4fvNV">
@@ -9593,44 +9770,35 @@ glx:
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="ProgramParameter4fvNV" offset="597">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="params" type="const GLfloat *" count="4"/>
-        <glx rop="4184" ignore="true"/>
+        <glx rop="4184"/>
     </function>
 
     <function name="ProgramParameters4dvNV" offset="598">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="num" type="GLuint"/>
-        <param name="params" type="const GLdouble *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'params' is 4*num.
-        -->
-        <glx rop="4187" handcode="true" ignore="true"/>
+        <param name="params" type="const GLdouble *" count="num" count_scale="4"/>
+        <glx rop="4187"/>
     </function>
 
     <function name="ProgramParameters4fvNV" offset="599">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="num" type="GLuint" counter="true"/>
-        <param name="params" type="const GLfloat *" count="num"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'params' is 4*num.
-        -->
-        <glx rop="4186" handcode="true" ignore="true"/>
+        <param name="params" type="const GLfloat *" count="num" count_scale="4"/>
+        <glx rop="4186"/>
     </function>
 
     <function name="RequestResidentProgramsNV" offset="600">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="const GLuint *"/>
-        <glx rop="4182" handcode="true" ignore="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="const GLuint *" count="n"/>
+        <glx rop="4182"/>
     </function>
 
     <function name="TrackMatrixNV" offset="601">
@@ -9638,7 +9806,7 @@ glx:
         <param name="address" type="GLuint"/>
         <param name="matrix" type="GLenum"/>
         <param name="transform" type="GLenum"/>
-        <glx rop="4188" ignore="true"/>
+        <glx rop="4188"/>
     </function>
 
     <function name="VertexAttribPointerNV" offset="602">
@@ -9647,110 +9815,30 @@ glx:
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
-        <glx handcode="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib1dNV" offset="756" vectorequiv="VertexAttrib1dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLdouble"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib1dvNV" offset="757">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="1"/>
-        <glx rop="4197" doubles_in_order="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib1fNV" offset="758" vectorequiv="VertexAttrib1fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLfloat"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib1fvNV" offset="759">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="1"/>
-        <glx rop="4193" ignore="true"/>
+        <glx handcode="true"/>
     </function>
 
     <function name="VertexAttrib1sNV" offset="760" vectorequiv="VertexAttrib1svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib1svNV" offset="761">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
-        <glx rop="4189" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib2dNV" offset="762" vectorequiv="VertexAttrib2dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLdouble"/>
-        <param name="y" type="GLdouble"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib2dvNV" offset="763">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="2"/>
-        <glx rop="4198" doubles_in_order="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib2fNV" offset="764" vectorequiv="VertexAttrib2fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLfloat"/>
-        <param name="y" type="GLfloat"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib2fvNV" offset="765">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="2"/>
-        <glx rop="4194" ignore="true"/>
+        <glx rop="4189"/>
     </function>
 
     <function name="VertexAttrib2sNV" offset="766" vectorequiv="VertexAttrib2svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib2svNV" offset="767">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
-        <glx rop="4190" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib3dNV" offset="768" vectorequiv="VertexAttrib3dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLdouble"/>
-        <param name="y" type="GLdouble"/>
-        <param name="z" type="GLdouble"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib3dvNV" offset="769">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="3"/>
-        <glx rop="4199" doubles_in_order="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib3fNV" offset="770" vectorequiv="VertexAttrib3fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLfloat"/>
-        <param name="y" type="GLfloat"/>
-        <param name="z" type="GLfloat"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib3fvNV" offset="771">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="3"/>
-        <glx rop="4195" ignore="true"/>
+        <glx rop="4190"/>
     </function>
 
     <function name="VertexAttrib3sNV" offset="772" vectorequiv="VertexAttrib3svNV">
@@ -9758,43 +9846,12 @@ glx:
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib3svNV" offset="773">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
-        <glx rop="4191" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4dNV" offset="774" vectorequiv="VertexAttrib4dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLdouble"/>
-        <param name="y" type="GLdouble"/>
-        <param name="z" type="GLdouble"/>
-        <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4dvNV" offset="775">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="4"/>
-        <glx rop="4200" doubles_in_order="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4fNV" offset="776" vectorequiv="VertexAttrib4fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="x" type="GLfloat"/>
-        <param name="y" type="GLfloat"/>
-        <param name="z" type="GLfloat"/>
-        <param name="w" type="GLfloat"/>
-        <glx ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4fvNV" offset="777">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="4"/>
-        <glx rop="4196" ignore="true"/>
+        <glx rop="4191"/>
     </function>
 
     <function name="VertexAttrib4sNV" offset="778" vectorequiv="VertexAttrib4svNV">
@@ -9803,13 +9860,112 @@ glx:
         <param name="y" type="GLshort"/>
         <param name="z" type="GLshort"/>
         <param name="w" type="GLshort"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4svNV" offset="779">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
-        <glx rop="4192" ignore="true"/>
+        <glx rop="4192"/>
+    </function>
+
+    <function name="VertexAttrib1fNV" offset="758" vectorequiv="VertexAttrib1fvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib1fvNV" offset="759">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="1"/>
+        <glx rop="4193"/>
+    </function>
+
+    <function name="VertexAttrib2fNV" offset="764" vectorequiv="VertexAttrib2fvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib2fvNV" offset="765">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="2"/>
+        <glx rop="4194"/>
+    </function>
+
+    <function name="VertexAttrib3fNV" offset="770" vectorequiv="VertexAttrib3fvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib3fvNV" offset="771">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="3"/>
+        <glx rop="4195"/>
+    </function>
+
+    <function name="VertexAttrib4fNV" offset="776" vectorequiv="VertexAttrib4fvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <param name="w" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib4fvNV" offset="777">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="4"/>
+        <glx rop="4196"/>
+    </function>
+
+    <function name="VertexAttrib1dNV" offset="756" vectorequiv="VertexAttrib1dvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+    </function>
+
+    <function name="VertexAttrib1dvNV" offset="757">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *" count="1"/>
+        <glx rop="4197" doubles_in_order="true"/>
+    </function>
+
+    <function name="VertexAttrib2dNV" offset="762" vectorequiv="VertexAttrib2dvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+    </function>
+
+    <function name="VertexAttrib2dvNV" offset="763">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *" count="2"/>
+        <glx rop="4198" doubles_in_order="true"/>
+    </function>
+
+    <function name="VertexAttrib3dNV" offset="768" vectorequiv="VertexAttrib3dvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+        <param name="z" type="GLdouble"/>
+    </function>
+
+    <function name="VertexAttrib3dvNV" offset="769">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *" count="3"/>
+        <glx rop="4199" doubles_in_order="true"/>
+    </function>
+
+    <function name="VertexAttrib4dNV" offset="774" vectorequiv="VertexAttrib4dvNV">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLdouble"/>
+        <param name="y" type="GLdouble"/>
+        <param name="z" type="GLdouble"/>
+        <param name="w" type="GLdouble"/>
+    </function>
+
+    <function name="VertexAttrib4dvNV" offset="775">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *" count="4"/>
+        <glx rop="4200" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttrib4ubNV" offset="780" vectorequiv="VertexAttrib4ubvNV">
@@ -9818,144 +9974,103 @@ glx:
         <param name="y" type="GLubyte"/>
         <param name="z" type="GLubyte"/>
         <param name="w" type="GLubyte"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="VertexAttrib4ubvNV" offset="781">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
-        <glx rop="4201" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs1dvNV" offset="629">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei" counter="true"/>
-        <param name="v" type="const GLdouble *" count="n"/>
-        <glx rop="4210" doubles_in_order="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs1fvNV" offset="630">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei" counter="true"/>
-        <param name="v" type="const GLfloat *" count="n"/>
-        <glx rop="4206" ignore="true"/>
+        <glx rop="4201"/>
     </function>
 
     <function name="VertexAttribs1svNV" offset="631">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n"/>
-        <glx rop="4202" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs2dvNV" offset="632">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLdouble *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 2*n.
-        -->
-        <glx rop="4211" handcode="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs2fvNV" offset="633">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLfloat *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 2*n.
-        -->
-        <glx rop="4207" handcode="true" ignore="true"/>
+        <glx rop="4202"/>
     </function>
 
     <function name="VertexAttribs2svNV" offset="634">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLshort *"/>
-        <glx rop="4203" handcode="true" ignore="true"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 2*n.
-        -->
-    </function>
-
-    <function name="VertexAttribs3dvNV" offset="635">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLdouble *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 3*n.
-        -->
-        <glx rop="4212" handcode="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs3fvNV" offset="636">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLfloat *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 3*n.
-        -->
-        <glx rop="4208" handcode="true" ignore="true"/>
+        <param name="v" type="const GLshort *" count="n" count_scale="2"/>
+        <glx rop="4203"/>
     </function>
 
     <function name="VertexAttribs3svNV" offset="637">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLshort *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 3*n.
-        -->
-        <glx rop="4204" handcode="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs4dvNV" offset="638">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLdouble *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 4*n.
-        -->
-        <glx rop="4213" handcode="true" ignore="true"/>
-    </function>
-
-    <function name="VertexAttribs4fvNV" offset="639">
-        <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLfloat *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 4*n.
-        -->
-        <glx rop="4209" handcode="true" ignore="true"/>
+        <param name="v" type="const GLshort *" count="n" count_scale="3"/>
+        <glx rop="4204"/>
     </function>
 
     <function name="VertexAttribs4svNV" offset="640">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLshort *"/>
+        <param name="v" type="const GLshort *" count="n" count_scale="4"/>
+        <glx rop="4205"/>
+    </function>
 
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 4*n.
-        -->
-        <glx rop="4205" handcode="true" ignore="true"/>
+    <function name="VertexAttribs1fvNV" offset="630">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="v" type="const GLfloat *" count="n"/>
+        <glx rop="4206"/>
+    </function>
+
+    <function name="VertexAttribs2fvNV" offset="633">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLfloat *" count="n" count_scale="2"/>
+        <glx rop="4207"/>
+    </function>
+
+    <function name="VertexAttribs3fvNV" offset="636">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLfloat *" count="n" count_scale="3"/>
+        <glx rop="4208"/>
+    </function>
+
+    <function name="VertexAttribs4fvNV" offset="639">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLfloat *" count="n" count_scale="4"/>
+        <glx rop="4209"/>
+    </function>
+
+    <function name="VertexAttribs1dvNV" offset="629">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="v" type="const GLdouble *" count="n"/>
+        <glx rop="4210" doubles_in_order="true"/>
+    </function>
+
+    <function name="VertexAttribs2dvNV" offset="632">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="2"/>
+        <glx rop="4211"/>
+    </function>
+
+    <function name="VertexAttribs3dvNV" offset="635">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="3"/>
+        <glx rop="4212"/>
+    </function>
+
+    <function name="VertexAttribs4dvNV" offset="638">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLsizei"/>
+        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="4"/>
+        <glx rop="4213"/>
     </function>
 
     <function name="VertexAttribs4ubvNV" offset="641">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei"/>
-        <param name="v" type="const GLubyte *"/>
-
-        <!-- This is hand coded because the number of array elements
-             pointed to by 'v' is 4*n.
-        -->
-        <glx rop="4214" handcode="true" ignore="true"/>
+        <param name="v" type="const GLubyte *" count="n" count_scale="4"/>
+        <glx rop="4214"/>
     </function>
 </category>
 
@@ -10240,56 +10355,54 @@ glx:
 <category name="GL_NV_fragment_program" number="282">
     <function name="ProgramNamedParameter4fNV" offset="682" vectorequiv="ProgramNamedParameter4fvNV">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
         <param name="w" type="GLfloat"/>
-        <glx rop="4218" handcode="true" ignore="true"/>
     </function>
 
     <function name="ProgramNamedParameter4dNV" offset="683" vectorequiv="ProgramNamedParameter4dvNV">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *" variable_param="len"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
         <param name="w" type="GLdouble"/>
-        <glx ignore="true"/>
     </function>
 
     <function name="ProgramNamedParameter4fvNV" offset="684">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *"/>
-        <param name="v" type="const GLfloat *"/>
-        <glx rop="4218" handcode="true" ignore="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
+        <param name="v" type="const GLfloat *" count="4"/>
+        <glx rop="4218"/>
     </function>
 
     <function name="ProgramNamedParameter4dvNV" offset="685">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *"/>
-        <param name="v" type="const GLdouble *"/>
-        <glx rop="4219" handcode="true" ignore="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
+        <param name="v" type="const GLdouble *" count="4"/>
+        <glx rop="4219"/>
     </function>
 
     <function name="GetProgramNamedParameterfvNV" offset="686">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *"/>
-        <param name="params" type="GLfloat *" output="true"/>
-        <glx vendorpriv="1310" handcode="true" ignore="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
+        <param name="params" type="GLfloat *" output="true" count="4"/>
+        <glx vendorpriv="1310" always_array="true"/>
     </function>
 
     <function name="GetProgramNamedParameterdvNV" offset="687">
         <param name="id" type="GLuint"/>
-        <param name="len" type="GLsizei"/>
-        <param name="name" type="const GLubyte *"/>
-        <param name="params" type="GLdouble *" output="true"/>
-        <glx vendorpriv="1311" handcode="true" ignore="true"/>
+        <param name="len" type="GLsizei" counter="true"/>
+        <param name="name" type="const GLubyte *" count="len"/>
+        <param name="params" type="GLdouble *" output="true" count="4"/>
+        <glx vendorpriv="1311" always_array="true"/>
     </function>
 </category>
 
@@ -10357,6 +10470,41 @@ glx:
     <enum name="PIXEL_UNPACK_BUFFER_EXT"                  value="0x88EC"/>
     <enum name="PIXEL_PACK_BUFFER_BINDING_EXT"            value="0x88ED"/>
     <enum name="PIXEL_UNPACK_BUFFER_BINDING_EXT"          value="0x88EF"/>
+</category>
+
+<category name="GL_NV_fragment_program_option" number="303">
+    <!-- No new functions, types, enums. -->
+</category>
+
+<category name="GL_NV_fragment_program2" number="304">
+    <enum name="MAX_PROGRAM_EXEC_INSTRUCTIONS_NV" count="1" value="0x88F4">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_CALL_DEPTH_NV"      count="1"  value="0x88F5">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_IF_DEPTH_NV"        count="1"  value="0x88F6">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_LOOP_DEPTH_NV"      count="1"  value="0x88F7">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_LOOP_COUNT_NV"      count="1"  value="0x88F8">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+</category>
+
+<category name="GL_NV_vertex_program2_option" number="305">
+    <enum name="MAX_PROGRAM_EXEC_INSTRUCTIONS_NV" count="1" value="0x88F4">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+    <enum name="MAX_PROGRAM_CALL_DEPTH_NV"      count="1"  value="0x88F5">
+        <size name="GetProgramivARB" mode="get"/>
+    </enum>
+</category>
+
+<category name="GL_NV_vertex_program3" number="306">
+    <enum name="MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB" count="1" value="0x8B4C"/>
 </category>
 
 <category name="GL_EXT_framebuffer_object" number="310">

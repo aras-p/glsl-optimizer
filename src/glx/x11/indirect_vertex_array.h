@@ -46,6 +46,8 @@ extern GLboolean __glXGetArrayStride( const __GLXattribute * const state,
     GLenum key, unsigned index, GLintptr * dest );
 extern GLboolean __glXGetArrayPointer( const __GLXattribute * const state,
     GLenum key, unsigned index, void ** dest );
+extern GLboolean __glXGetArrayNormalized( const __GLXattribute * const state,
+    GLenum key, unsigned index, GLintptr * dest );
 
 extern void __glXPushArrayState( __GLXattribute * state );
 extern void __glXPopArrayState( __GLXattribute * state );
