@@ -35,7 +35,7 @@
 #define DMESA_H_included
 
 #define DMESA_MAJOR_VERSION 6
-#define DMESA_MINOR_VERSION 1
+#define DMESA_MINOR_VERSION 3
 
 /* Sample Usage:
  *
