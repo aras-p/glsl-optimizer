@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.6 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: x86_cliptest.S,v 1.7 2001/05/13 18:55:15 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,7 +149,12 @@ LLBL( ctp4_clip_table_ready ):
 ALIGNTEXT16
 LLBL( ctp4_top ):
 
-	FLD1			/* F3 */
+	MOV_L( SRC(3), ECX )
+	FLD1				/* F3 */
+
+	TEST_L( ECX, ECX )		/* GH: If src[3] is zero, abort */
+	JZ( LLBL( ctp4_noproj ) )
+
 	FDIV_S( SRC(3) )
 
 	MOV_L( SRC(3), EBP )
@@ -198,7 +203,15 @@ LLBL( ctp4_top ):
 
 	JZ( LLBL( ctp4_proj ) )
 
-	FSTP( ST(0) )			/* */
+LLBL( ctp4_noproj ):
+
+	FLDZ				/* F0 F3 */
+
+	FST_S( DST(0) )			/* F0 F3 */
+	FST_S( DST(1) )			/* F0 F3 */
+	FSTP_S( DST(2) )		/* F3 */
+	FSTP_S( DST(3) )		/* */
+
 	JMP( LLBL( ctp4_next ) )
 
 LLBL( ctp4_proj ):
