@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.26 2001/05/16 09:28:32 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.27 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -244,6 +244,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    /* TexCoordPtr's are zeroed in loop below.
     */
    VB->NormalPtr = 0;
+   VB->NormalLengthPtr = 0;
    VB->FogCoordPtr = 0;
    VB->EdgeFlag = 0;
    VB->IndexPtr[0] = 0;
@@ -280,6 +281,8 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Normal.start = (GLfloat *)(IM->Normal + start);
       tmp->Normal.count = count;
       VB->NormalPtr = &tmp->Normal;
+      if (IM->NormalLengthPtr)
+	 VB->NormalLengthPtr = IM->NormalLengthPtr + start;
    }
 
    if (inputs & VERT_INDEX) {

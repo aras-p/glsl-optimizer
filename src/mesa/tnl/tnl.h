@@ -1,4 +1,4 @@
-/* $Id: tnl.h,v 1.7 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: tnl.h,v 1.8 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,10 +61,15 @@ _tnl_wakeup_exec( GLcontext *ctx );
 extern void
 _tnl_wakeup_save_exec( GLcontext *ctx );
 
+/* Driver configuration options:
+ */
 extern void
 _tnl_need_projected_coords( GLcontext *ctx, GLboolean flag );
 
 extern void
 _tnl_need_dlist_loopback( GLcontext *ctx, GLboolean flag );
+
+extern void
+_tnl_need_dlist_norm_lengths( GLcontext *ctx, GLboolean flag );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.19 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: t_context.c,v 1.20 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,6 +104,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
    tnl->NeedProjCoords = GL_TRUE;
    tnl->LoopbackDListCassettes = GL_FALSE;
+   tnl->CalcDListNormalLengths = GL_TRUE;
 
    /* Hook our functions into exec and compile dispatch tables.
     */
@@ -220,5 +221,14 @@ _tnl_need_dlist_loopback( GLcontext *ctx, GLboolean mode )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    if (tnl->LoopbackDListCassettes != mode) {
       tnl->LoopbackDListCassettes = mode;
+   }
+}
+
+void
+_tnl_need_dlist_norm_lengths( GLcontext *ctx, GLboolean mode )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   if (tnl->CalcDListNormalLengths != mode) {
+      tnl->CalcDListNormalLengths = mode;
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.7 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: m_norm_tmp.h,v 1.8 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,13 +140,9 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
       }
    }
    else {
-      /* scale has been snapped to 1.0 if it is close.
-       */
-      if (scale != 1.0) {
-	 m0 *= scale;
-	 m5 *= scale;
-	 m10 *= scale;
-      }
+      m0 *= scale;
+      m5 *= scale;
+      m10 *= scale;
 
       STRIDE_LOOP {
 	 GLfloat tx, ty, tz;

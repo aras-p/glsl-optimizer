@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.8 2001/05/09 13:53:36 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.9 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,7 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
    IM->MaterialMask = 0;
    IM->MaxTextureUnits = ctx->Const.MaxTextureUnits;
    IM->TexSize = 0;
+   IM->NormalLengthPtr = 0;
 
    IM->CopyTexSize = 0;
    IM->CopyStart = IM->Start;
@@ -96,6 +97,8 @@ static void real_free_immediate( struct immediate *IM )
    for (j = 1; j < IM->MaxTextureUnits; j++)
       ALIGN_FREE( IM->TexCoord[j] );
 
+   if (IM->NormalLengthPtr)
+      ALIGN_FREE( IM->NormalLengthPtr );
 
    ALIGN_FREE( IM );
    freed++;

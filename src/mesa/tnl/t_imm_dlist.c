@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.20 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.21 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,6 +66,55 @@ static void execute_compiled_cassette( GLcontext *ctx, void *data );
 static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM );
 
 
+static void build_normal_lengths( struct immediate *IM )
+{
+   GLuint i;
+   GLfloat len;
+   GLfloat (*data)[3] = IM->Normal + IM->Start;
+   GLfloat *dest = IM->NormalLengthPtr;
+   GLuint *flags = IM->Flag + IM->Start;
+   GLuint count = IM->Count - IM->Start;
+
+   if (!dest) {
+      dest = IM->NormalLengthPtr = ALIGN_MALLOC( IMM_SIZE*sizeof(GLfloat), 32 );
+      if (!dest) return;
+   }
+   dest += IM->Start;
+
+   len = (GLfloat) LEN_3FV( data[0] );
+   if (len > 0.0) len = 1.0/len;
+   
+   for (i = 0 ; i < count ; ) {
+      dest[i] = len;
+      if (flags[++i] & VERT_NORM) {
+	 len = (GLfloat) LEN_3FV( data[i] );
+	 if (len > 0.0) len = 1.0/len;
+      }
+   } 
+}
+
+static void fixup_normal_lengths( struct immediate *IM ) 
+{
+   GLuint i;
+   GLfloat len;
+   GLfloat (*data)[3] = IM->Normal;
+   GLfloat *dest = IM->NormalLengthPtr;
+   GLuint *flags = IM->Flag;
+
+   for (i = IM->CopyStart ; i <= IM->Start ; i++) {
+      len = (GLfloat) LEN_3FV( data[i] );
+      if (len > 0.0) len = 1.0/len;
+      dest[i] = len;
+   } 
+
+   while (!(flags[i] & (VERT_NORM|VERT_END_VB))) {
+      dest[i] = len;
+      i++;
+   }
+}
+
+
+
 /* Insert the active immediate struct onto the display list currently
  * being built.
  */
@@ -84,14 +133,14 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
 
    _tnl_compute_orflag( IM, IM->Start );
 
-   /* Need to clear this flag, or fixup gets confused.  (The elements
-    * have been translated away by now.)  
+   /* Need to clear this flag, or fixup gets confused.  (The
+    * array-elements have been translated away by now, so it's ok to
+    * remove it.)
     */
    IM->OrFlag &= ~VERT_ELT;	
    IM->AndFlag &= ~VERT_ELT;	
 
    _tnl_fixup_input( ctx, IM );
-/*     _tnl_print_cassette( IM ); */
 
    node = (TNLvertexcassette *)
       _mesa_alloc_instruction(ctx,
@@ -113,6 +162,10 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    node->LastMaterial = im->LastMaterial;
    node->MaterialOrMask = im->MaterialOrMask;
    node->MaterialAndMask = im->MaterialAndMask;
+   
+   if (tnl->CalcDListNormalLengths) {
+      build_normal_lengths( im );
+   }
 
    if (ctx->ExecuteFlag) {
       execute_compiled_cassette( ctx, (void *)node );
@@ -308,6 +361,10 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
 	    IM->Primitive[IM->LastPrimitive] & PRIM_MODE_MASK;
 
       _tnl_get_exec_copy_verts( ctx, IM );
+
+      if (IM->NormalLengthPtr) 
+	 fixup_normal_lengths( IM );
+      
       _tnl_run_cassette( ctx, IM );
 
       restore_compiled_primitives( ctx, IM );
@@ -365,6 +422,7 @@ _tnl_BeginCallList( GLcontext *ctx, GLuint list )
 void
 _tnl_EndCallList( GLcontext *ctx )
 {
+   (void) ctx;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.21 2001/06/13 14:57:55 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.22 2001/06/28 17:34:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -505,7 +505,8 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 
 /* Revive a compiled immediate struct - propogate new 'Current'
  * values.  Often this is redundant because the current values were
- * known and fixed up at compile time.
+ * known and fixed up at compile time (or in the first execution of
+ * the cassette).
  */
 void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 {
