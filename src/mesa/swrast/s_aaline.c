@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.7 2001/03/28 21:37:24 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.8 2001/04/10 15:46:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,10 +120,18 @@ compute_plane(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1,
    const GLfloat b = pz * py;
    const GLfloat c = px * px + py * py;
    const GLfloat d = -(a * x0 + b * y0 + c * z0);
-   plane[0] = a;
-   plane[1] = b;
-   plane[2] = c;
-   plane[3] = d;
+   if (a == 0.0 && b == 0.0 && c == 0.0 && d == 0.0) {
+      plane[0] = 0.0;
+      plane[1] = 0.0;
+      plane[2] = 1.0;
+      plane[3] = 0.0;
+   }
+   else {
+      plane[0] = a;
+      plane[1] = b;
+      plane[2] = c;
+      plane[3] = d;
+   }
 #endif
 }
 
@@ -141,7 +149,7 @@ constant_plane(GLfloat value, GLfloat plane[4])
 static INLINE GLfloat
 solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
+   const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
    return z;
 }
 
@@ -155,8 +163,11 @@ solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 static INLINE GLfloat
 solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   GLfloat z = -plane[2] / (plane[3] + plane[0] * x + plane[1] * y);
-   return z;
+   const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
+   if (denom == 0.0)
+      return 0.0;
+   else
+      return -plane[2] / denom;
 }
 
 

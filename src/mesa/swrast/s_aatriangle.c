@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.12 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.13 2001/04/10 15:46:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,7 @@ do {					\
 static INLINE GLfloat
 solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
+   const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
    return z;
 }
 
@@ -107,8 +107,11 @@ solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 static INLINE GLfloat
 solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   GLfloat z = -plane[2] / (plane[3] + plane[0] * x + plane[1] * y);
-   return z;
+   const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
+   if (denom == 0.0F)
+      return 0.0F;
+   else
+      return -plane[2] / denom;
 }
 
 
