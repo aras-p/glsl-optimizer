@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.21 2000/08/21 14:25:25 brianp Exp $
+# $Id: Makefile.X11,v 1.22 2000/09/07 15:42:13 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -106,10 +106,11 @@ DRIVER_SOURCES = \
 	X/glxapi.c \
 	X/fakeglx.c \
 	X/xfonts.c \
-	X/xmesa1.c \
-	X/xmesa2.c \
-	X/xmesa3.c \
-	X/xmesa4.c \
+	X/xm_api.c \
+	X/xm_dd.c \
+	X/xm_line.c \
+	X/xm_span.c \
+	X/xm_tri.c \
 	OSmesa/osmesa.c \
 	SVGA/svgamesa.c \
 	SVGA/svgamesa8.c \
@@ -159,13 +160,15 @@ X/fakeglx.o: X/fakeglx.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X/xfonts.o: X/xfonts.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xmesa1.o: X/xmesa1.c
+X/xm_api.o: X/xm_api.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xmesa2.o: X/xmesa2.c
+X/xm_dd.o: X/xm_dd.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xmesa3.o: X/xmesa3.c
+X/xm_span.o: X/xm_span.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xmesa4.o: X/xmesa4.c
+X/xm_line.o: X/xm_line.c
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+X/xm_tri.o: X/xm_tri.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 SVGA/svgamesa.o: SVGA/svgamesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@

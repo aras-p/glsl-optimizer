@@ -61,9 +61,11 @@ vb.c \
 vertex.c \
 xfonts.c \
 xform.c \
-xmesa1.c \
-xmesa2.c \
-xmesa3.c
+xm_api.c \
+xm_dd.c \
+xm_line.c \
+xm_span.c \
+xm_tri.c
 
 OBJS = \
 accum.o \
@@ -113,10 +115,11 @@ vb.o \
 vertex.o \
 xfonts.o \
 xform.o \
-xmesa1.o \
-xmesa2.o \
-xmesa3.o
-xmesa4.o
+xm_api.o \
+xm_dd.o \
+xm_line.o \
+xm_span.o \
+xm_tri.o
 
 LINTLIBS =
 
