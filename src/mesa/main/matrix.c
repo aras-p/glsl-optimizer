@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.42 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: matrix.c,v 1.43 2002/06/23 02:52:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,6 +85,10 @@ _mesa_Ortho( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glFrustum(%f, %f, %f, %f, %f, %f)\n",
+                  left, right, bottom, top, nearval, farval);
 
    if (left == right ||
        bottom == top ||
@@ -200,6 +204,10 @@ _mesa_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLoadIdentity()");
+
    _math_matrix_set_identity( ctx->CurrentStack->Top );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
 }
@@ -210,6 +218,14 @@ _mesa_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (!m) return;
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx,
+          "glLoadMatrix(%f %f %f %f, %f %f %f %f, %f %f %f %f, %f %f %f %f\n",
+          m[0], m[4], m[8], m[12],
+          m[1], m[5], m[9], m[13],
+          m[2], m[6], m[10], m[14],
+          m[3], m[7], m[11], m[15]);
+
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    _math_matrix_loadf( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
@@ -237,6 +253,13 @@ _mesa_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (!m) return;
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx,
+          "glMultMatrix(%f %f %f %f, %f %f %f %f, %f %f %f %f, %f %f %f %f\n",
+          m[0], m[4], m[8], m[12],
+          m[1], m[5], m[9], m[13],
+          m[2], m[6], m[10], m[14],
+          m[3], m[7], m[11], m[15]);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    _math_matrix_mul_floats( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
