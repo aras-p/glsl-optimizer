@@ -59,6 +59,12 @@
 #include "sarea.h"               /* for XF86DRISAREAPtr */
 #include "GL/internal/glcore.h"  /* for __GLcontextModes */
 
+/* This is a temporary relic.  Once all drivers are converted to support
+ * the new interface, it can go away.
+ */
+#ifdef DRI_NEW_INTERFACE_ONLY
+#define USE_NEW_INTERFACE
+#endif
 
 typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;
 typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;
