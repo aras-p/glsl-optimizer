@@ -825,8 +825,25 @@
 #define _gloffset_AlphaFragmentOp2ATI 793
 #define _gloffset_AlphaFragmentOp3ATI 794
 #define _gloffset_SetFragmentShaderConstantATI 795
-#define _gloffset_StencilFuncSeparate 796
-#define _gloffset_StencilOpSeparate 797
-#define _gloffset_StencilMaskSeparate 798
+#define _gloffset_IsRenderbufferEXT 796
+#define _gloffset_BindRenderbufferEXT 797
+#define _gloffset_DeleteRenderbuffersEXT 798
+#define _gloffset_GenRenderbuffersEXT 799
+#define _gloffset_RenderbufferStorageEXT 800
+#define _gloffset_GetRenderbufferParameterivEXT 801
+#define _gloffset_IsFramebufferEXT 802
+#define _gloffset_BindFramebufferEXT 803
+#define _gloffset_DeleteFramebuffersEXT 804
+#define _gloffset_GenFramebuffersEXT 805
+#define _gloffset_CheckFramebufferStatusEXT 806
+#define _gloffset_FramebufferTexture1DEXT 807
+#define _gloffset_FramebufferTexture2DEXT 808
+#define _gloffset_FramebufferTexture3DEXT 809
+#define _gloffset_FramebufferRenderbufferEXT 810
+#define _gloffset_GetFramebufferAttachmentParameterivEXT 811
+#define _gloffset_GenerateMipmapEXT 812
+#define _gloffset_StencilFuncSeparate 813
+#define _gloffset_StencilOpSeparate 814
+#define _gloffset_StencilMaskSeparate 815
 
 #endif /* !defined( _GLAPI_OFFSETS_H_ ) */
