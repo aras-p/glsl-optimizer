@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.2 1999/09/15 15:11:24 brianp Exp $
+# $Id: Makefile.X11,v 1.3 2002/08/17 00:20:48 brianp Exp $
 
 # Makefile for GLUT
 #
@@ -15,20 +15,11 @@
 # GLUT source included with Mesa with permission from Mark Kilgard.
 
 
-# $Log: Makefile.X11,v $
-# Revision 1.2  1999/09/15 15:11:24  brianp
-# added third, tiny version number to mklib scripts
-#
-# Revision 1.1  1999/08/19 14:00:01  brianp
-# initial check-in (post crash)
-#
-
-
 ##### MACROS #####
 
 GLUT_MAJOR = 3
 GLUT_MINOR = 7
-GLUT_TINY = 0
+GLUT_TINY = 1
 
 VPATH = RCS
 
@@ -102,7 +93,10 @@ default:
 	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~
+	-rm -f *.o *~
+	-rm -f *.lo
+	-rm -f *.la
+	-rm -rf .libs
 
 targets: $(LIBDIR)/$(GLUT_LIB)
 
