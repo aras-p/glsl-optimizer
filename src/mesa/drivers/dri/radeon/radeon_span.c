@@ -189,46 +189,58 @@ do {								\
  * manner as the engine.  In each case, the linear block address (ba)
  * is calculated, and then wired with x and y to produce the final
  * memory address.
+ * The chip will do address translation on its own if the surface registers
+ * are set up correctly. It is not quite enough to get it working with hyperz too...
  */
 
 static GLuint radeon_mba_z32( radeonContextPtr rmesa,
 				       GLint x, GLint y )
 {
    GLuint pitch = rmesa->radeonScreen->frontPitch;
-   GLuint ba, address = 0;			/* a[0..1] = 0           */
+   if (rmesa->radeonScreen->depthHasSurface) {
+      return 4*(x + y*pitch);
+   }
+   else {
+      GLuint ba, address = 0;			/* a[0..1] = 0           */
 
-   ba = (y / 16) * (pitch / 16) + (x / 16);
+      ba = (y / 16) * (pitch / 16) + (x / 16);
 
-   address |= (x & 0x7) << 2;			/* a[2..4] = x[0..2]     */
-   address |= (y & 0x3) << 5;			/* a[5..6] = y[0..1]     */
-   address |=
-      (((x & 0x10) >> 2) ^ (y & 0x4)) << 5;	/* a[7]    = x[4] ^ y[2] */
-   address |= (ba & 0x3) << 8;			/* a[8..9] = ba[0..1]    */
+      address |= (x & 0x7) << 2;			/* a[2..4] = x[0..2]     */
+      address |= (y & 0x3) << 5;			/* a[5..6] = y[0..1]     */
+      address |=
+         (((x & 0x10) >> 2) ^ (y & 0x4)) << 5;	/* a[7]    = x[4] ^ y[2] */
+      address |= (ba & 0x3) << 8;			/* a[8..9] = ba[0..1]    */
 
-   address |= (y & 0x8) << 7;			/* a[10]   = y[3]        */
-   address |=
-      (((x & 0x8) << 1) ^ (y & 0x10)) << 7;	/* a[11]   = x[3] ^ y[4] */
-   address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
+      address |= (y & 0x8) << 7;			/* a[10]   = y[3]        */
+      address |=
+         (((x & 0x8) << 1) ^ (y & 0x10)) << 7;	/* a[11]   = x[3] ^ y[4] */
+      address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
 
-   return address;
+      return address;
+   }
 }
 
 static __inline GLuint radeon_mba_z16( radeonContextPtr rmesa, GLint x, GLint y )
 {
    GLuint pitch = rmesa->radeonScreen->frontPitch;
-   GLuint ba, address = 0;			/* a[0]    = 0           */
+   if (rmesa->radeonScreen->depthHasSurface) {
+      return 2*(x + y*pitch);
+   }
+   else {
+      GLuint ba, address = 0;			/* a[0]    = 0           */
 
-   ba = (y / 16) * (pitch / 32) + (x / 32);
+      ba = (y / 16) * (pitch / 32) + (x / 32);
 
-   address |= (x & 0x7) << 1;			/* a[1..3] = x[0..2]     */
-   address |= (y & 0x7) << 4;			/* a[4..6] = y[0..2]     */
-   address |= (x & 0x8) << 4;			/* a[7]    = x[3]        */
-   address |= (ba & 0x3) << 8;			/* a[8..9] = ba[0..1]    */
-   address |= (y & 0x8) << 7;			/* a[10]   = y[3]        */
-   address |= ((x & 0x10) ^ (y & 0x10)) << 7;	/* a[11]   = x[4] ^ y[4] */
-   address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
+      address |= (x & 0x7) << 1;			/* a[1..3] = x[0..2]     */
+      address |= (y & 0x7) << 4;			/* a[4..6] = y[0..2]     */
+      address |= (x & 0x8) << 4;			/* a[7]    = x[3]        */
+      address |= (ba & 0x3) << 8;			/* a[8..9] = ba[0..1]    */
+      address |= (y & 0x8) << 7;			/* a[10]   = y[3]        */
+      address |= ((x & 0x10) ^ (y & 0x10)) << 7;	/* a[11]   = x[4] ^ y[4] */
+      address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
 
-   return address;
+      return address;
+   }
 }
 
 

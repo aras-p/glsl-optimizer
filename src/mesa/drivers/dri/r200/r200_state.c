@@ -1818,6 +1818,9 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
 					       rmesa->r200Screen->fbLocation)
 					      & R200_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+   }
 }
 
 

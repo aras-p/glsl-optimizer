@@ -355,6 +355,10 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->depthOffset	= dri_priv->depthOffset;
    screen->depthPitch	= dri_priv->depthPitch;
 
+   /* Check if ddx has set up a surface reg to cover depth buffer */
+   screen->depthHasSurface = ((sPriv->ddxMajor > 4) &&
+      (screen->chipset & RADEON_CHIPSET_TCL));
+
    screen->texOffset[RADEON_LOCAL_TEX_HEAP] = dri_priv->textureOffset
 				       + screen->fbLocation;
    screen->texSize[RADEON_LOCAL_TEX_HEAP] = dri_priv->textureSize;
@@ -538,11 +542,11 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 3, 0 };
 
-   if ( ! driCheckDriDdxDrmVersions2( "Radeon",
+   if ( ! driCheckDriDdxDrmVersions3( "Radeon",
 				      dri_version, & dri_expected,
 				      ddx_version, & ddx_expected,
 				      drm_version, & drm_expected ) ) {

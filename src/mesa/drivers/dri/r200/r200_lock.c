@@ -109,6 +109,12 @@ void r200GetLock( r200ContextPtr rmesa, GLuint flags )
       rmesa->lastStamp = dPriv->lastStamp;
    }
 
+   R200_STATECHANGE( rmesa, ctx );
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+   }
+   else rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &= ~R200_COLOR_TILE_ENABLE;
+
    if ( sarea->ctx_owner != rmesa->dri.hwContext ) {
       sarea->ctx_owner = rmesa->dri.hwContext;
    }

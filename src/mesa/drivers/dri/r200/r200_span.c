@@ -154,6 +154,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * manner as the engine.  In each case, the linear block address (ba)
  * is calculated, and then wired with x and y to produce the final
  * memory address.
+ * The chip will do address translation on its own if the surface registers
+ * are set up correctly. It is not quite enough to get it working with hyperz too...
  */
 
 #define BIT(x,b) ((x & (1<<b))>>b)
@@ -161,40 +163,50 @@ static GLuint r200_mba_z32( r200ContextPtr rmesa,
 				       GLint x, GLint y )
 {
    GLuint pitch = rmesa->r200Screen->frontPitch;
-   GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x7FF) >> 5);
-   GLuint a = 
-      (BIT(x,0) << 2) |
-      (BIT(y,0) << 3) |
-      (BIT(x,1) << 4) |
-      (BIT(y,1) << 5) |
-      (BIT(x,3) << 6) |
-      (BIT(x,4) << 7) |
-      (BIT(x,2) << 8) |
-      (BIT(y,2) << 9) |
-      (BIT(y,3) << 10) |
-      (((pitch & 0x20) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
-      ((b >> 1) << 12);
-   return a;
+   if (rmesa->r200Screen->depthHasSurface) {
+      return 4*(x + y*pitch);
+   }
+   else {
+      GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x7FF) >> 5);
+      GLuint a = 
+         (BIT(x,0) << 2) |
+         (BIT(y,0) << 3) |
+         (BIT(x,1) << 4) |
+         (BIT(y,1) << 5) |
+         (BIT(x,3) << 6) |
+         (BIT(x,4) << 7) |
+         (BIT(x,2) << 8) |
+         (BIT(y,2) << 9) |
+         (BIT(y,3) << 10) |
+         (((pitch & 0x20) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
+         ((b >> 1) << 12);
+      return a;
+   }
 }
 
 static GLuint r200_mba_z16( r200ContextPtr rmesa, GLint x, GLint y )
 {
    GLuint pitch = rmesa->r200Screen->frontPitch;
-   GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x7FF) >> 6);
-   GLuint a = 
-      (BIT(x,0) << 1) |
-      (BIT(y,0) << 2) |
-      (BIT(x,1) << 3) |
-      (BIT(y,1) << 4) |
-      (BIT(x,2) << 5) |
-      (BIT(x,4) << 6) |
-      (BIT(x,5) << 7) |
-      (BIT(x,3) << 8) |
-      (BIT(y,2) << 9) |
-      (BIT(y,3) << 10) |
-      (((pitch & 0x40) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
-      ((b >> 1) << 12);
-   return a;
+   if (rmesa->r200Screen->depthHasSurface) {
+      return 2*(x + y*pitch);
+   }
+   else {
+      GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x7FF) >> 6);
+      GLuint a = 
+         (BIT(x,0) << 1) |
+         (BIT(y,0) << 2) |
+         (BIT(x,1) << 3) |
+         (BIT(y,1) << 4) |
+         (BIT(x,2) << 5) |
+         (BIT(x,4) << 6) |
+         (BIT(x,5) << 7) |
+         (BIT(x,3) << 8) |
+         (BIT(y,2) << 9) |
+         (BIT(y,3) << 10) |
+         (((pitch & 0x40) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
+         ((b >> 1) << 12);
+      return a;
+   }
 }
 
 

@@ -116,6 +116,12 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
       rmesa->lastStamp = dPriv->lastStamp;
    }
 
+   RADEON_STATECHANGE( rmesa, ctx );
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
+   }
+   else rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &= ~RADEON_COLOR_TILE_ENABLE;
+
    if ( sarea->ctx_owner != rmesa->dri.hwContext ) {
       int i;
       sarea->ctx_owner = rmesa->dri.hwContext;

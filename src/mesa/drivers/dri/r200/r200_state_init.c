@@ -499,6 +499,10 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
 					      R200_COLORPITCH_MASK) |
 					     R200_COLOR_ENDIAN_NO_SWAP);
+   /* (fixed size) sarea is initialized to zero afaics so can omit version check. Phew! */
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+   }
 
    rmesa->hw.set.cmd[SET_SE_CNTL] = (R200_FFACE_CULL_CCW |
 				     R200_BFACE_SOLID |

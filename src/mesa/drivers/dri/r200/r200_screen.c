@@ -342,10 +342,11 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 	 /* Check if kernel module is new enough to support cube maps */
 	 screen->drmSupportsCubeMaps = (sPriv->drmMinor >= 7);
 	 /* Check if kernel module is new enough to support blend color and
-            separate blend functions/equations */
-         screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
-
+	    separate blend functions/equations */
+	 screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
       }
+      /* Check if ddx has set up a surface reg to cover depth buffer */
+      screen->depthHasSurface = (sPriv->ddxMajor > 4);
    }
 
    screen->mmio.handle = dri_priv->registerHandle;
@@ -622,17 +623,17 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 5, 0 };
 
-   if ( ! driCheckDriDdxDrmVersions2( "R200",
+   if ( ! driCheckDriDdxDrmVersions3( "R200",
 				      dri_version, & dri_expected,
 				      ddx_version, & ddx_expected,
 				      drm_version, & drm_expected ) ) {
       return NULL;
    }
-      
+
    psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,

@@ -96,6 +96,8 @@ typedef struct {
    unsigned int gart_buffer_offset;	/* offset in card memory space */
    unsigned int gart_texture_offset;	/* offset in card memory space */
 
+   GLboolean depthHasSurface;
+
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
 } radeonScreenRec, *radeonScreenPtr;

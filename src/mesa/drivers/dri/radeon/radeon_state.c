@@ -1686,6 +1686,9 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 					       rmesa->radeonScreen->fbLocation)
 					      & RADEON_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = rmesa->state.color.drawPitch;
+   if (rmesa->sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
+   }
 }
 
 static void radeonReadBuffer( GLcontext *ctx, GLenum mode )
