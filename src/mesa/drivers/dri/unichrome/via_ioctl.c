@@ -1469,6 +1469,8 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	}
 
     }
+
+#if 0
     /*=* John Sheng [2003.6.20] debug pci *=*/
     if (VIA_DEBUG) {
         GLuint *pnEngBase = (GLuint *)((GLuint)pnMMIOBase + 0x400);
@@ -1520,5 +1522,7 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
         }
     }
     dmaLow = vmesa->dmaLow; 
+#endif
+
     return 0;
 }
