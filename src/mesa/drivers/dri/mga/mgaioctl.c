@@ -27,6 +27,7 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.16 2002/12/16 16:18:52 dawes Exp $ */
 
+#include <errno.h>
 #include "mtypes.h"
 #include "macros.h"
 #include "dd.h"
