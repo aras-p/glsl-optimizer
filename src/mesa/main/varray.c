@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.8 1999/11/08 07:36:45 brianp Exp $ */
+/* $Id: varray.c,v 1.9 1999/11/09 07:59:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -591,7 +591,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 	       tc[i].stride = client_data->StrideB;
 	       tc[i].size = client_data->Size;
 	       tc[i].flags = VEC_NOT_WRITABLE|VEC_GOOD_STRIDE;
-	       if (tc[i].stride |= 4 * sizeof(GLfloat))
+	       if (tc[i].stride != 4 * sizeof(GLfloat))
 		  tc[i].flags ^= VEC_STRIDE_FLAGS;
 	       update |= flag;
 	    } else {
