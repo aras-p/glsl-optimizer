@@ -324,6 +324,7 @@ static void fxDDWriteMonoRGBASpan(const GLcontext *ctx,
 }
 
 
+#if 0
 static void fxDDReadRGBASpan(const GLcontext *ctx, 
                              GLuint n, GLint x, GLint y, GLubyte rgba[][4])
 {
@@ -350,6 +351,7 @@ static void fxDDReadRGBASpan(const GLcontext *ctx,
     rgba[i][ACOMP] = 255;
   }
 }
+#endif
 
 
 /*
