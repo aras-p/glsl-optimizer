@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.2 2001/03/29 03:41:40 gareth Exp $ */
+/* $Id: gen_matypes.c,v 1.3 2001/07/28 19:28:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,7 +106,6 @@ int main( int argc, char **argv )
    OFFSET( "CTX_LIGHT_NEED_VERTS        ", GLcontext, Light._NeedVertices );
    OFFSET( "CTX_LIGHT_FLAGS             ", GLcontext, Light._Flags );
    OFFSET( "CTX_LIGHT_BASE_COLOR        ", GLcontext, Light._BaseColor );
-   OFFSET( "CTX_LIGHT_BASE_ALPHA        ", GLcontext, Light._BaseAlpha );
 
 
    /* struct vertex_buffer offsets:

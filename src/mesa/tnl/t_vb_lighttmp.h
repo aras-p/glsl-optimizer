@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.13 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.14 2001/07/28 19:28:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,8 +116,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    (void) vstride;
 
 
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light._BaseAlpha[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light._BaseAlpha[1]);
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
 
@@ -134,10 +132,12 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
    VB->ColorPtr[0] = &store->LitColor[0];
    VB->SecondaryColorPtr[0] = &store->LitSecondary[0];
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
 
    if (IDX & LIGHT_TWOSIDE) {
       VB->ColorPtr[1] = &store->LitColor[1];
       VB->SecondaryColorPtr[1] = &store->LitSecondary[1];
+      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
    }
 
    /* Side-effects done, can we finish now?
@@ -158,8 +158,12 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
-      if ( CHECK_VALIDATE(j) )
+      if ( CHECK_VALIDATE(j) ) {
 	 _mesa_validate_all_lighting_tables( ctx );
+	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	 if (IDX & LIGHT_TWOSIDE) 
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+      }
 
       COPY_3V(sum[0], base[0]);
       ZERO_3V(spec[0]);
@@ -331,9 +335,6 @@ static void TAG(light_rgba)( GLcontext *ctx,
    color[0] = Fcolor;
    color[1] = Bcolor;
 
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light._BaseAlpha[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light._BaseAlpha[1]);
-
    if (IDX & LIGHT_COLORMATERIAL) {
       if (VB->ColorPtr[0]->Type != GL_FLOAT)
 	 import_color_material( ctx, stage );
@@ -343,8 +344,12 @@ static void TAG(light_rgba)( GLcontext *ctx,
    }
 
    VB->ColorPtr[0] = &store->LitColor[0];
-   if (IDX & LIGHT_TWOSIDE)
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+
+   if (IDX & LIGHT_TWOSIDE) {
       VB->ColorPtr[1] = &store->LitColor[1];
+      UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+   }
 
    if (stage->changed_inputs == 0)
       return;
@@ -362,8 +367,12 @@ static void TAG(light_rgba)( GLcontext *ctx,
       if ( CHECK_MATERIAL(j) )
 	 _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
-      if ( CHECK_VALIDATE(j) )
+      if ( CHECK_VALIDATE(j) ) {
 	 _mesa_validate_all_lighting_tables( ctx );
+	 UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	 if (IDX & LIGHT_TWOSIDE)
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
+      }
 
       COPY_3V(sum[0], base[0]);
 
@@ -565,13 +574,15 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       COPY_3V(base[0], light->_MatAmbient[0]);
       ACC_3V(base[0], ctx->Light._BaseColor[0] );
       UNCLAMPED_FLOAT_TO_RGB_CHAN( basechan[0], base[0] );
-      UNCLAMPED_FLOAT_TO_CHAN(basechan[0][3], ctx->Light._BaseAlpha[0]);
+      UNCLAMPED_FLOAT_TO_CHAN(basechan[0][3], 
+			      ctx->Light.Material[0].Diffuse[3]);
 
       if (IDX & LIGHT_TWOSIDE) {
 	 COPY_3V(base[1], light->_MatAmbient[1]);
 	 ACC_3V(base[1], ctx->Light._BaseColor[1]);
 	 UNCLAMPED_FLOAT_TO_RGB_CHAN( basechan[1], base[1]);
-	 UNCLAMPED_FLOAT_TO_CHAN(basechan[1][3], ctx->Light._BaseAlpha[1]);
+	 UNCLAMPED_FLOAT_TO_CHAN(basechan[1][3], 
+				 ctx->Light.Material[1].Diffuse[3]);
       }
 
       do {
@@ -652,8 +663,8 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    (void) nr;
    (void) nstride;
 
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light._BaseAlpha[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light._BaseAlpha[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+   UNCLAMPED_FLOAT_TO_CHAN(sumA[1], ctx->Light.Material[1].Diffuse[3]);
 
    if (IDX & LIGHT_COLORMATERIAL) {
       if (VB->ColorPtr[0]->Type != GL_FLOAT)
@@ -680,9 +691,13 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	 if ( CHECK_MATERIAL(j) )
 	    _mesa_update_material( ctx, new_material[j], new_material_mask[j] );
 
-	 if ( CHECK_VALIDATE(j) )
+	 if ( CHECK_VALIDATE(j) ) {
 	    _mesa_validate_all_lighting_tables( ctx );
-
+	    UNCLAMPED_FLOAT_TO_CHAN(sumA[0], ctx->Light.Material[0].Diffuse[3]);
+	    if (IDX & LIGHT_TWOSIDE)
+	       UNCLAMPED_FLOAT_TO_CHAN(sumA[1], 
+				       ctx->Light.Material[1].Diffuse[3]);
+	 }
 
 	 COPY_3V(sum[0], ctx->Light._BaseColor[0]);
 	 if (IDX & LIGHT_TWOSIDE)

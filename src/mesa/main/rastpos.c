@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.29 2001/07/05 15:31:21 brianp Exp $ */
+/* $Id: rastpos.c,v 1.30 2001/07/28 19:28:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -126,7 +126,6 @@ shade_rastpos(GLcontext *ctx,
               GLuint *Rindex)
 {
    GLfloat (*base)[3] = ctx->Light._BaseColor;
-   const GLfloat *sumA = ctx->Light._BaseAlpha;
    struct gl_light *light;
    GLfloat diffuseColor[4], specularColor[4];
    GLfloat diffuse = 0, specular = 0;
@@ -135,7 +134,7 @@ shade_rastpos(GLcontext *ctx,
       _mesa_validate_all_lighting_tables( ctx );
 
    COPY_3V(diffuseColor, base[0]);
-   diffuseColor[3] = sumA[0];
+   diffuseColor[3] = CLAMP( ctx->Light.Material[0].Diffuse[3], 0.0, 1.0 );
    ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 0.0);
 
    foreach (light, &ctx->Light.EnabledList) {

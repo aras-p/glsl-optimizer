@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.49 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: mtypes.h,v 1.50 2001/07/28 19:28:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -496,7 +496,6 @@ struct gl_light_attrib {
    GLboolean _NeedVertices;		/* Use fast shader? */
    GLuint  _Flags;		        /* LIGHT_* flags, see below */
    GLfloat _BaseColor[2][3];
-   GLfloat _BaseAlpha[2];
 };
 
 

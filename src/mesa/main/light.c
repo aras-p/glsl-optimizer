@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.44 2001/05/09 12:24:51 keithw Exp $ */
+/* $Id: light.c,v 1.45 2001/07/28 19:28:49 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -664,7 +664,6 @@ void _mesa_update_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
       }
-      ctx->Light._BaseAlpha[0] = CLAMP( mat->Diffuse[3], 0.0, 1.0 );
    }
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
@@ -672,7 +671,6 @@ void _mesa_update_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
       }
-      ctx->Light._BaseAlpha[1] = CLAMP( mat->Diffuse[3], 0.0, 1.0 );
    }
 
    /* update material specular values */
@@ -801,7 +799,6 @@ void _mesa_update_color_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
       }
-      ctx->Light._BaseAlpha[0] = CLAMP( mat->Diffuse[3], 0.0, 1.0 );
    }
 
    if (bitmask & BACK_DIFFUSE_BIT) {
@@ -810,7 +807,6 @@ void _mesa_update_color_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
       }
-      ctx->Light._BaseAlpha[1] = CLAMP( mat->Diffuse[3], 0.0, 1.0 );
    }
 
    /* update light->_MatSpecular = light's specular * material's specular */
@@ -1216,9 +1212,6 @@ _mesa_update_lighting( GLcontext *ctx )
 	 ACC_SCALE_3V(ctx->Light._BaseColor[side],
 		      ctx->Light.Model.Ambient,
 		      mat->Ambient);
-
-	 ctx->Light._BaseAlpha[side] = 
-	    CLAMP( ctx->Light.Material[side].Diffuse[3], 0.0, 1.0 );
       }
 
       foreach (light, &ctx->Light.EnabledList) {
