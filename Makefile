@@ -25,6 +25,10 @@ realclean:
 	$(MAKE) clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
+	-rm -f `find . -name \*.o`
+	-rm -f `find . -name \*.a`
+	-rm -f `find . -name \*.so`
+
 
 
 install:
