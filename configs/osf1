@@ -11,8 +11,8 @@ CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM
 CXXFLAGS = -O2 -std ansi -ieee
 
 GL_LIB_DEPS = -lX11 -lXext -lm -lpthread
-GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
+GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXt -lXi -lm
 APP_LIB_DEPS = -L$(LIB_DIR) -lX11 -lXext -lXmu -lXi -lm
 
 

@@ -92,8 +92,8 @@ PROGRAM_DIRS = beos samples redbook demos tests
 
 # Library/program dependencies
 GL_LIB_DEPS = 
-OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
+OSMESA_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS =  
-GLUT_LIB_DEPS = -lgame -L$(LIB_DIR) -lGL
-APP_LIB_DEPS = -lbe -L$(LIB_DIR) -lGL -lglut
+GLUT_LIB_DEPS = -lgame -L$(LIB_DIR) -l$(GL_LIB)
+APP_LIB_DEPS = -lbe -L$(LIB_DIR) -l$(GL_LIB) -l$(GLUT_LIB)
 

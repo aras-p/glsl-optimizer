@@ -19,9 +19,9 @@ ASM_SOURCES = $(X86_SOURCES)
 
 # Library/program dependencies
 GL_LIB_DEPS = -lm -lpthread -lexpat -ldl
-GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm -lpthread
+GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
 
 # Directories
 SRC_DIRS = mesa glx glu glut/mini

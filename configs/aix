@@ -20,9 +20,9 @@ GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
 GL_LIB_DEPS = -lX11 -lXext -lm
-GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm -lC
-GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lXi -lXmu -lX11 -lm
-GLW_LIB_DEPS = -L$(TOP)/lib -lGL -lXt -lX11
-OSMESA_LIB_DEPS = -L$(TOP)/lib -lGL
-APP_LIB_DEPS = -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm -lC
+GLU_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lm -lC
+GLUT_LIB_DEPS = -L$(TOP)/lib -l$(GLU_LIB) -l$(GL_LIB) -lXi -lXmu -lX11 -lm
+GLW_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB) -lXt -lX11
+OSMESA_LIB_DEPS = -L$(TOP)/lib -l$(GL_LIB)
+APP_LIB_DEPS = -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm -lC
 

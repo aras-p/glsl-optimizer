@@ -27,4 +27,4 @@ OSMESA_LIB_DEPS =
 GLU_LIB_DEPS = 
 GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
-APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lpthread -lm -lstdc++
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lpthread -lm -lstdc++

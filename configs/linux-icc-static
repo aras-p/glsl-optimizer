@@ -20,9 +20,8 @@ GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
 MKLIB_OPTIONS = -arch icc
 
 ASM_SOURCES = $(X86_SOURCES) $(X86_API)

@@ -13,9 +13,9 @@ GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -static
 
 GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread
-GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -R/usr/openwin/lib -lglut -lGLU -lGL -lm
+GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -R/usr/openwin/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a

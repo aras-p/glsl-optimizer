@@ -15,7 +15,7 @@ GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
 
 LIB_DIR = $(TOP)/lib32
 
-APP_LIB_DEPS = -L$(LIB_DIR) -32 -glut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -32 -glut -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXext -lXmu -lXi -lm
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a

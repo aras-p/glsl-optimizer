@@ -14,9 +14,7 @@ GLUT_CFLAGS = -fexceptions
 
 
 # Library/program dependencies
+# Need to have -L/usr/X11R6/lib in these:
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
-GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -L/usr/X11R6/lib -lXt -lX11
-APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib -lXt -lX11
