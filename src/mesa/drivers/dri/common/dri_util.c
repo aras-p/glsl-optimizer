@@ -783,6 +783,8 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
     __DRIdrawablePrivate *pdp;
 
 
+    pdraw->private = NULL;
+
     /* Since pbuffers are not yet supported, no drawable attributes are
      * supported either.
      */
@@ -1174,9 +1176,9 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 
 
 #ifdef DRI_NEW_INTERFACE_ONLY
-    if ( internal_api_version < 20040415 ) {
+    if ( internal_api_version < 20040602 ) {
 	fprintf( stderr, "libGL error: libGL.so version (%08u) is too old.  "
-		 "20040415 or later is required.\n", internal_api_version );
+		 "20040602 or later is required.\n", internal_api_version );
 	return NULL;
     }
 #else
