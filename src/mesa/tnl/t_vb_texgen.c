@@ -550,9 +550,9 @@ static GLboolean run_validate_texgen_stage( GLcontext *ctx,
       if (texUnit->TexGenEnabled) {
 	 GLuint sz;
 
-	 if (texUnit->TexGenEnabled & R_BIT)
+	 if (texUnit->TexGenEnabled & Q_BIT)
 	    sz = 4;
-	 else if (texUnit->TexGenEnabled & Q_BIT)
+	 else if (texUnit->TexGenEnabled & R_BIT)
 	    sz = 3;
 	 else if (texUnit->TexGenEnabled & T_BIT)
 	    sz = 2;
