@@ -35,6 +35,7 @@
 #include "mtypes.h"
 #include "nvvertexec.h"
 #include "nvvertprog.h"
+#include "program.h"
 #include "math/m_matrix.h"
 
 

@@ -35,6 +35,7 @@
 #endif
 #define GL_GLEXT_LEGACY
 #include "GL/glut.h"
+#include "GL/glext.h"
 
 #include "readtex.c"   /* I know, this is a hack.  KW: me too. */
 #define TEXTURE_FILE "../images/reflect.rgb"
