@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.10 2001/05/11 12:08:15 keithw Exp $ */
+/* $Id: isosurf.c,v 1.11 2001/05/11 15:47:02 keithw Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -84,6 +84,7 @@ static float compressed_data[MAXVERTS][6];
 static float expanded_data[MAXVERTS*3][6];
 static GLuint indices[MAXVERTS];
 static GLuint tri_indices[MAXVERTS*3];
+static GLuint strip_indices[MAXVERTS];
 static GLfloat col[100][4];
 static GLint numverts, num_tri_verts, numuniq;
 
@@ -352,6 +353,9 @@ static void make_tri_indices( void )
       col[j][1] = myrand(1);
       col[j][0] = myrand(1);
    }
+
+   for (i = 0; i < numverts ; i++)
+      strip_indices[i] = i;
 }
 
 #define MIN(x,y) (x < y) ? x : y
@@ -431,7 +435,8 @@ static void draw_surface( int with_state )
       glDrawArraysEXT( GL_TRIANGLE_STRIP, 0, numverts );
       break;
    case (DRAW_ELTS|STRIPS):
-      glDrawElements( GL_TRIANGLE_STRIP, numverts, GL_UNSIGNED_INT, indices );
+      glDrawElements( GL_TRIANGLE_STRIP, numverts,
+		      GL_UNSIGNED_INT, strip_indices );
       break;
 
       /* Uses the original arrays (including duplicate elements):
@@ -796,8 +801,6 @@ static void Init(int argc, char *argv[])
    glEnable( GL_VERTEX_ARRAY_EXT );
    glEnable( GL_NORMAL_ARRAY_EXT );
 
-   InitMaterials();
-
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glFrustum( -1.0, 1.0, -1.0, 1.0, 5, 25 );
@@ -805,6 +808,8 @@ static void Init(int argc, char *argv[])
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glClipPlane(GL_CLIP_PLANE0, plane);
+
+   InitMaterials();
 
    set_matrix();
 
