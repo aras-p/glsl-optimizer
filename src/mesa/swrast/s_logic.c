@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_logic.c,v 1.3 2001/02/13 23:50:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@ static void index_logicop( GLcontext *ctx, GLuint n,
       case GL_SET:
          for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       index[i] = 1;
+	       index[i] = ~0;
 	    }
 	 }
 	 break;
@@ -155,7 +155,7 @@ static void index_logicop( GLcontext *ctx, GLuint n,
 	 }
 	 break;
       default:
-	 gl_error( ctx, GL_INVALID_ENUM, "gl_logic error" );
+	 gl_problem(ctx, "bad mode in index_logic()");
    }
 }
 
@@ -221,7 +221,7 @@ static void rgba_logicop( const GLcontext *ctx, GLuint n,
       case GL_SET:
          for (i=0;i<n;i++) {
             if (mask[i]) {
-               src[i] = 0xffffffff;
+               src[i] = ~0;
             }
          }
          break;
