@@ -1,4 +1,4 @@
-/* $Id: gloss.c,v 1.5 2000/08/29 21:17:38 brianp Exp $ */
+/* $Id: gloss.c,v 1.6 2000/12/24 22:53:54 pesco Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
@@ -24,7 +24,7 @@
 #include <math.h>
 #include <GL/glut.h>
 
-#include "../util/readtex.c"   /* I know, this is a hack. */
+#include "readtex.c"   /* I know, this is a hack. */
 
 #define SPECULAR_TEXTURE_FILE "../images/reflect.rgb"
 #define BASE_TEXTURE_FILE "../images/tile.rgb"

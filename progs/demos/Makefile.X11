@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.15 2000/11/01 16:02:52 brianp Exp $
+# $Id: Makefile.X11,v 1.16 2000/12/24 22:53:54 pesco Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -67,7 +67,7 @@ PROGS = bounce \
 
 # make executable from .c file:
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+	$(CC) -I$(INCDIR) -I../util $(CFLAGS) $< $(GL_LIBS) -o $@
 
 # special case: need the -lOSMesa library:
 osdemo: osdemo.c

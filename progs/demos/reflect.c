@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.4 2000/09/15 16:43:57 brianp Exp $ */
+/* $Id: reflect.c,v 1.5 2000/12/24 22:53:54 pesco Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -32,8 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "GL/glut.h"
-#include "../util/showbuffer.c"
-#include "../util/readtex.c"
+#include "showbuffer.c"
+#include "readtex.c"
 
 
 #define DEG2RAD (3.14159/180.0)

@@ -17,7 +17,7 @@
 #endif
 
 #include <GL/glut.h>
-#include "../util/readtex.c"
+#include "readtex.c"
 
 #ifdef XMESA
 #include "GL/xmesa.h"

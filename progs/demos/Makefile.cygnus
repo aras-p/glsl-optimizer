@@ -1,4 +1,4 @@
-# $Id: Makefile.cygnus,v 1.11 2000/06/27 16:54:18 brianp Exp $
+# $Id: Makefile.cygnus,v 1.12 2000/12/24 22:53:54 pesco Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -66,7 +66,7 @@ PROGS = bounce \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(GL_LIBS) -o $@
+	$(CC) -I$(INCDIR) -I../util $(CFLAGS) $< $(GL_LIBS) -o $@
 
 
 ##### TARGETS #####

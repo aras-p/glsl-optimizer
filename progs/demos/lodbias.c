@@ -33,7 +33,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 
-#include "../util/readtex.c"   /* I know, this is a hack. */
+#include "readtex.c"   /* I know, this is a hack. */
 
 #define TEXTURE_FILE "../images/girl.rgb"
 

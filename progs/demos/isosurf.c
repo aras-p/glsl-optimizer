@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.6 2000/06/27 17:04:43 brianp Exp $ */
+/* $Id: isosurf.c,v 1.7 2000/12/24 22:53:54 pesco Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.  
@@ -33,7 +33,7 @@
 #define GL_GLEXT_LEGACY
 #include "GL/glut.h"
 
-#include "../util/readtex.c"   /* I know, this is a hack.  KW: me too. */
+#include "readtex.c"   /* I know, this is a hack.  KW: me too. */
 #define TEXTURE_FILE "../images/reflect.rgb"
 
 #define LIT                 0x1

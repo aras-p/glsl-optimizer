@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.4 2000/09/08 21:45:21 brianp Exp $ */
+/* $Id: drawpix.c,v 1.5 2000/12/24 22:53:54 pesco Exp $ */
 
 /*
  * glDrawPixels demo/test/benchmark
@@ -8,6 +8,32 @@
 
 /*
  * $Log: drawpix.c,v $
+ * Revision 1.5  2000/12/24 22:53:54  pesco
+ * * demos/Makefile.am (INCLUDES): Added -I$(top_srcdir)/util.
+ * * demos/Makefile.X11, demos/Makefile.BeOS-R4, demos/Makefile.cygnus:
+ * Essentially the same.
+ * Program files updated to include "readtex.c", not "../util/readtex.c".
+ * * demos/reflect.c: Likewise for "showbuffer.c".
+ *
+ *
+ * * Makefile.am (EXTRA_DIST): Added top-level regular files.
+ *
+ * * include/GL/Makefile.am (INC_X11): Added glxext.h.
+ *
+ *
+ * * src/GGI/include/ggi/mesa/Makefile.am (EXTRA_HEADERS): Include
+ * Mesa GGI headers in dist even if HAVE_GGI is not given.
+ *
+ * * configure.in: Look for GLUT and demo source dirs in $srcdir.
+ *
+ * * src/swrast/Makefile.am (libMesaSwrast_la_SOURCES): Set to *.[ch].
+ * More source list updates in various Makefile.am's.
+ *
+ * * Makefile.am (dist-hook): Remove CVS directory from distribution.
+ * (DIST_SUBDIRS): List all possible subdirs here.
+ * (SUBDIRS): Only list subdirs selected for build again.
+ * The above two applied to all subdir Makefile.am's also.
+ *
  * Revision 1.4  2000/09/08 21:45:21  brianp
  * added dither key option
  *
@@ -40,7 +66,7 @@
 #include <math.h>
 #include <GL/glut.h>
 
-#include "../util/readtex.c"  /* a hack, I know */
+#include "readtex.c"
 
 #define IMAGE_FILE "../images/girl.rgb"
 
