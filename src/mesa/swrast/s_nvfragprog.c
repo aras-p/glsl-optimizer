@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.1 2003/01/14 04:57:47 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.2 2003/02/17 15:38:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,73 @@
 #include "mmath.h"
 
 #include "s_nvfragprog.h"
+
+
+/**
+ * Fetch a texel.
+ */
+static void
+fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
+             GLenum target, GLfloat color[4] )
+{
+   const struct gl_texture_object *texObj;
+
+   /* XXX Use swrast->TextureSample[texUnit]() to sample texture.
+    * Needs to be swrast->TextureSample[target][texUnit]() though.
+    */
+
+   switch (target) {
+      case GL_TEXTURE_1D:
+         texObj = ctx->Texture.Unit[unit].Current1D;
+         break;
+      case GL_TEXTURE_2D:
+         texObj = ctx->Texture.Unit[unit].Current2D;
+         break;
+      case GL_TEXTURE_3D:
+         texObj = ctx->Texture.Unit[unit].Current3D;
+         break;
+      case GL_TEXTURE_CUBE_MAP:
+         texObj = ctx->Texture.Unit[unit].CurrentCubeMap;
+         break;
+      case GL_TEXTURE_RECTANGLE_NV:
+         texObj = ctx->Texture.Unit[unit].CurrentRect;
+         break;
+      default:
+         _mesa_problem(ctx, "Invalid target in fetch_texel");
+   }
+
+   if (texObj->Complete) {
+      const struct gl_texture_image *texImage;
+      GLint col, row, img;
+      GLchan texel[4];
+      col = IROUND(texcoord[0] * texImage->Width); /* XXX temporary! */
+      row = IROUND(texcoord[1] * texImage->Height); /* XXX temporary! */
+      img = 0;
+      texImage->FetchTexel(texImage, col, row, img, texel);
+      /* XXX texture format? */
+      color[0] = CHAN_TO_FLOAT(texel[0]);
+      color[1] = CHAN_TO_FLOAT(texel[1]);
+      color[2] = CHAN_TO_FLOAT(texel[2]);
+      color[3] = CHAN_TO_FLOAT(texel[3]);
+   }
+   else {
+      ASSIGN_4V(color, 0.0, 0.0, 0.0, 0.0);
+   }
+}
+
+
+/**
+ * Fetch a texel w/ partial derivatives.
+ */
+static void
+fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
+                   const GLfloat dtdx[4], const GLfloat dtdy[4],
+                   GLuint unit, GLenum target, GLfloat color[4] )
+{
+   /* XXX to do */
+
+}
+
 
 
 /**
@@ -312,6 +379,44 @@ execute_program(GLcontext *ctx, const struct fragment_program *program)
                result[2] = (a[2] == b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] == b[3]) ? 1.0F : 0.0F;
                store_vector4( &inst->DstReg, machine, result, inst->Saturate,
+                              inst->UpdateCondRegister );
+            }
+            break;
+         case FP_OPCODE_TEX:
+            /* Texel lookup */
+            {
+               GLfloat texcoord[4], color[4];
+               fetch_vector4( &inst->SrcReg[0], machine, texcoord );
+               fetch_texel( ctx, texcoord, inst->TexSrcUnit,
+                            inst->TexSrcTarget, color );
+               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
+                              inst->UpdateCondRegister );
+            }
+            break;
+         case FP_OPCODE_TXD:
+            /* Texture lookup w/ partial derivatives for LOD */
+            {
+               GLfloat texcoord[4], dtdx[4], dtdy[4], color[4];
+               fetch_vector4( &inst->SrcReg[0], machine, texcoord );
+               fetch_vector4( &inst->SrcReg[1], machine, dtdx );
+               fetch_vector4( &inst->SrcReg[2], machine, dtdy );
+               fetch_texel_deriv( ctx, texcoord, dtdx, dtdy, inst->TexSrcUnit,
+                                  inst->TexSrcTarget, color );
+               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
+                              inst->UpdateCondRegister );
+            }
+            break;
+         case FP_OPCODE_TXP:
+            /* Texture lookup w/ perspective divide */
+            {
+               GLfloat texcoord[4], color[4];
+               fetch_vector4( &inst->SrcReg[0], machine, texcoord );
+               texcoord[0] /= texcoord[3];
+               texcoord[1] /= texcoord[3];
+               texcoord[2] /= texcoord[3];
+               fetch_texel( ctx, texcoord, inst->TexSrcUnit,
+                            inst->TexSrcTarget, color );
+               store_vector4( &inst->DstReg, machine, color, inst->Saturate,
                               inst->UpdateCondRegister );
             }
             break;

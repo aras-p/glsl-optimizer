@@ -1,4 +1,4 @@
-/* $Id: nvfragprog.h,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: nvfragprog.h,v 1.2 2003/02/17 15:38:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ enum fp_opcode {
    FP_OPCODE_STR,
    FP_OPCODE_SUB,
    FP_OPCODE_TEX,
-   FP_OPCODE_TXC,
+   FP_OPCODE_TXD,
    FP_OPCODE_TXP,
    FP_OPCODE_UP2H,
    FP_OPCODE_UP2US,
