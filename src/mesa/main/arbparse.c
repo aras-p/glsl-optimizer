@@ -2916,7 +2916,7 @@ parse_float (GLubyte ** inst, struct arb_program *Program)
 	* the .). We can have leading 0's here, which parse_integer will ignore, 
 	* so we'll check for those first
 	*/
-   while (**inst == '0')
+   while ((**inst == '0') && ( *(*inst+1) != 0))
    {
 	  leading_zeros++;
 	  (*inst)++;
