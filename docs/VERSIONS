@@ -1170,3 +1170,4 @@ Mesa Version History
 	- dropped API trace feature (src/Trace/)
 	- documentation overhaul.  merged with website content.  more html.
 	- glxgears.c demo updated to use GLX swap rate extensions
+	- glTexImage1/2/3D now allows width/height/depth = 0
