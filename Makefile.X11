@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.33 2000/07/31 13:59:22 brianp Exp $
+# $Id: Makefile.X11,v 1.34 2000/08/02 20:14:23 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -388,6 +388,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/glu_mangle.h	\
 	$(DIRECTORY)/include/GL/glx.h		\
 	$(DIRECTORY)/include/GL/glx_mangle.h	\
+	$(DIRECTORY)/include/GL/mesa_wgl.h	\
 	$(DIRECTORY)/include/GL/mglmesa.h	\
 	$(DIRECTORY)/include/GL/osmesa.h	\
 	$(DIRECTORY)/include/GL/svgamesa.h	\
