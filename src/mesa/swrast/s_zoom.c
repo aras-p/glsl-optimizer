@@ -1,8 +1,8 @@
-/* $Id: s_zoom.c,v 1.18 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.19 2002/12/05 04:48:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -40,7 +40,7 @@
  */
 static void
 zoom_span( GLcontext *ctx, const struct sw_span *span,
-           const GLvoid *src, GLint y0, GLenum format )
+           const GLvoid *src, GLint y0, GLenum format, GLint skipPixels )
 {
    GLint r0, r1, row;
    GLint c0, c1, skipCol;
@@ -61,19 +61,15 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
    zoomed.array = &zoomed_arrays;
 
+   zoomed.z = span->z;
+   zoomed.zStep = span->z;
+   zoomed.fog = span->fog;
+   zoomed.fogStep = span->fogStep;
    if (format == GL_RGBA || format == GL_RGB) {
-      zoomed.z = span->z;
-      zoomed.zStep = span->z;
-      zoomed.fog = span->fog;
-      zoomed.fogStep = span->fogStep;
       zoomed.interpMask = span->interpMask & ~SPAN_RGBA;
       zoomed.arrayMask |= SPAN_RGBA;
    }
    else if (format == GL_COLOR_INDEX) {
-      zoomed.z = span->z;
-      zoomed.zStep = span->z;
-      zoomed.fog = span->fog;
-      zoomed.fogStep = span->fogStep;
       zoomed.interpMask = span->interpMask & ~SPAN_INDEX;
       zoomed.arrayMask |= SPAN_INDEX;
    }
@@ -81,8 +77,13 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    /*
     * Compute which columns to draw: [c0, c1)
     */
+#if 0
    c0 = (GLint) span->x;
    c1 = (GLint) (span->x + span->end * ctx->Pixel.ZoomX);
+#else
+   c0 = (GLint) span->x + skipPixels * ctx->Pixel.ZoomX;
+   c1 = (GLint) (span->x + (skipPixels + span->end) * ctx->Pixel.ZoomX);
+#endif
    if (c0 == c1) {
       return;
    }
@@ -152,8 +153,12 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
-            if (i < 0)
+            if (ctx->Pixel.ZoomX < 0.0) {
+               ASSERT(i <= 0);
                i = span->end + i - 1;
+            }
+            ASSERT(i >= 0);
+            ASSERT(i < span->end);
             COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
          }
       }
@@ -174,8 +179,12 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
-            if (i < 0)
+            if (ctx->Pixel.ZoomX < 0.0) {
+               ASSERT(i <= 0);
                i = span->end + i - 1;
+            }
+            ASSERT(i >= 0);
+            ASSERT(i < span->end);
             zoomed.array->rgba[j][0] = rgb[i][0];
             zoomed.array->rgba[j][1] = rgb[i][1];
             zoomed.array->rgba[j][2] = rgb[i][2];
@@ -196,8 +205,12 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
          for (j = (GLint) zoomed.start; j < (GLint) zoomed.end; j++) {
             i = (GLint) ((j + skipCol) * xscale);
-            if (i < 0)
+            if (ctx->Pixel.ZoomX < 0.0) {
+               ASSERT(i <= 0);
                i = span->end + i - 1;
+            }
+            ASSERT(i >= 0);
+            ASSERT(i < span->end);
             zoomed.array->index[j] = indexes[i];
          }
       }
@@ -236,25 +249,28 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
 
 void
 _mesa_write_zoomed_rgba_span( GLcontext *ctx, const struct sw_span *span,
-                              CONST GLchan rgba[][4], GLint y0 )
+                              CONST GLchan rgba[][4], GLint y0,
+                              GLint skipPixels )
 {
-   zoom_span(ctx, span, (const GLvoid *) rgba, y0, GL_RGBA);
+   zoom_span(ctx, span, (const GLvoid *) rgba, y0, GL_RGBA, skipPixels);
 }
 
 
 void
 _mesa_write_zoomed_rgb_span( GLcontext *ctx, const struct sw_span *span,
-                             CONST GLchan rgb[][3], GLint y0 )
+                             CONST GLchan rgb[][3], GLint y0,
+                             GLint skipPixels )
 {
-   zoom_span(ctx, span, (const GLvoid *) rgb, y0, GL_RGB);
+   zoom_span(ctx, span, (const GLvoid *) rgb, y0, GL_RGB, skipPixels);
 }
 
 
 void
 _mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
-                               GLint y0 )
+                               GLint y0, GLint skipPixels )
 {
-  zoom_span(ctx, span, (const GLvoid *) span->array->index, y0, GL_COLOR_INDEX);
+  zoom_span(ctx, span, (const GLvoid *) span->array->index, y0,
+            GL_COLOR_INDEX, skipPixels);
 }
 
 
@@ -264,13 +280,16 @@ _mesa_write_zoomed_index_span( GLcontext *ctx, const struct sw_span *span,
 void
 _mesa_write_zoomed_stencil_span( GLcontext *ctx,
                                  GLuint n, GLint x, GLint y,
-                                 const GLstencil stencil[], GLint y0 )
+                                 const GLstencil stencil[], GLint y0,
+                                 GLint skipPixels )
 {
    GLint m;
    GLint r0, r1, row, r;
    GLint i, j, skipcol;
    GLstencil zstencil[MAX_WIDTH];  /* zoomed stencil values */
    GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
+
+   (void) skipPixels;  /* XXX this shouldn't be ignored */
 
    /* compute width of output row */
    m = (GLint) ABSF( n * ctx->Pixel.ZoomX );
@@ -283,7 +302,7 @@ _mesa_write_zoomed_stencil_span( GLcontext *ctx,
    }
 
    /* compute which rows to draw */
-   row = y-y0;
+   row = y - y0;
    r0 = y0 + (GLint) (row * ctx->Pixel.ZoomY);
    r1 = y0 + (GLint) ((row+1) * ctx->Pixel.ZoomY);
    if (r0==r1) {

@@ -1,8 +1,8 @@
-/* $Id: s_drawpix.c,v 1.40 2002/11/25 20:26:59 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.41 2002/12/05 04:48:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -26,7 +26,6 @@
 
 
 #include "glheader.h"
-#include "colormac.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
@@ -40,7 +39,6 @@
 #include "s_pixeltex.h"
 #include "s_span.h"
 #include "s_stencil.h"
-#include "s_texture.h"
 #include "s_zoom.h"
 
 
@@ -193,7 +191,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          /* setup array of fragment Z value to pass to zoom function */
          GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMaxF);
          GLint i;
-         ASSERT(drawWidth < MAX_WIDTH);
+         if (drawWidth < MAX_WIDTH)
+            return GL_FALSE; /* take the general path solution */
          for (i=0; i<drawWidth; i++)
             zSpan[i] = z;
 
@@ -243,7 +242,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.y = destY;
                   span.end = drawWidth;
                   _mesa_write_zoomed_rgba_span(ctx, &span,
-                                            (CONST GLchan (*)[4]) src, zoomY0);
+                                        (CONST GLchan (*)[4]) src, zoomY0, 0);
                   src += rowLength * 4;
                   destY++;
                }
@@ -283,7 +282,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.y = destY;
                   span.end = drawWidth;
                   _mesa_write_zoomed_rgb_span(ctx, &span, 
-                                            (CONST GLchan (*)[3]) src, zoomY0);
+                                         (CONST GLchan (*)[3]) src, zoomY0, 0);
                   src += rowLength * 3;
                   destY++;
                }
@@ -308,7 +307,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgb[i][2] = src[i];
 		  }
                   (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
-                                   (CONST GLchan (*)[3]) span.array->rgb, NULL);
+                                  (CONST GLchan (*)[3]) span.array->rgb, NULL);
                   src += rowLength;
                   destY++;
                }
@@ -326,7 +325,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                   destY--;
                   (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
-                                              (CONST GLchan (*)[3]) span.array->rgb, NULL);
+                                  (CONST GLchan (*)[3]) span.array->rgb, NULL);
                   src += rowLength;
                }
             }
@@ -345,7 +344,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.y = destY;
                   span.end = drawWidth;
                   _mesa_write_zoomed_rgb_span(ctx, &span,
-                                 (CONST GLchan (*)[3]) span.array->rgb, zoomY0);
+                             (CONST GLchan (*)[3]) span.array->rgb, zoomY0, 0);
                   src += rowLength;
                   destY++;
                }
@@ -372,7 +371,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgba[i][3] = *ptr++;
 		  }
                   (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                             (CONST GLchan (*)[4]) span.array->rgba, NULL);
+                                 (CONST GLchan (*)[4]) span.array->rgba, NULL);
                   src += rowLength*2;
                   destY++;
                }
@@ -392,7 +391,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                   destY--;
                   (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                             (CONST GLchan (*)[4]) span.array->rgba, NULL);
+                                 (CONST GLchan (*)[4]) span.array->rgba, NULL);
                   src += rowLength*2;
                }
             }
@@ -413,7 +412,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.y = destY;
                   span.end = drawWidth;
                   _mesa_write_zoomed_rgba_span(ctx, &span,
-                               (CONST GLchan (*)[4]) span.array->rgba, zoomY0);
+                            (CONST GLchan (*)[4]) span.array->rgba, zoomY0, 0);
                   src += rowLength*2;
                   destY++;
                }
@@ -432,7 +431,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   ASSERT(drawWidth < MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, span.array->rgba);
                   (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                  (const GLchan (*)[4]) span.array->rgba, NULL);
+                                 (const GLchan (*)[4]) span.array->rgba, NULL);
                   src += rowLength;
                   destY++;
                }
@@ -461,7 +460,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   span.y = destY;
                   span.end = drawWidth;
                   _mesa_write_zoomed_rgba_span(ctx, &span,
-                               (CONST GLchan (*)[4]) span.array->rgba, zoomY0);
+                            (CONST GLchan (*)[4]) span.array->rgba, zoomY0, 0);
                   src += rowLength;
                   destY++;
                }
@@ -500,7 +499,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
 
 
 /*
- * Do glDrawPixels of index pixels.
+ * Draw color index image.
  */
 static void
 draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
@@ -508,11 +507,10 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                    GLenum type, const GLvoid *pixels )
 {
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
-   const GLint desty = y;
-   GLint row, drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
+   GLint row, skipPixels;
    struct sw_span span;
 
-   INIT_SPAN(span, GL_BITMAP, drawWidth, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
    if (ctx->Depth.Test)
       _mesa_span_default_z(ctx, &span);
@@ -522,28 +520,34 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    /*
     * General solution
     */
-   for (row = 0; row < height; row++, y++) {
-      const GLvoid *source = _mesa_image_address(&ctx->Unpack,
-                    pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
-      _mesa_unpack_index_span(ctx, drawWidth, GL_UNSIGNED_INT,
-                              span.array->index,
-                              type, source, &ctx->Unpack,
-                              ctx->_ImageTransferState);
-      span.x = x;
+   skipPixels = 0;
+   while (skipPixels < width) {
+      span.x = x + (zoom ? 0 : skipPixels);
       span.y = y;
-      span.end = drawWidth;
-      if (zoom)
-         _mesa_write_zoomed_index_span(ctx, &span, desty);
-      else
-         _mesa_write_index_span(ctx, &span);
+      span.end = (width - skipPixels > MAX_WIDTH)
+               ? MAX_WIDTH : (width - skipPixels);
+      ASSERT(span.end <= MAX_WIDTH);
+      for (row = 0; row < height; row++, span.y++) {
+         const GLvoid *source = _mesa_image_address(&ctx->Unpack, pixels,
+                                                    width, height,
+                                                    GL_COLOR_INDEX, type,
+                                                    0, row, skipPixels);
+         _mesa_unpack_index_span(ctx, span.end, GL_UNSIGNED_INT,
+                                 span.array->index, type, source, &ctx->Unpack,
+                                 ctx->_ImageTransferState);
+         if (zoom)
+            _mesa_write_zoomed_index_span(ctx, &span, y, skipPixels);
+         else
+            _mesa_write_index_span(ctx, &span);
+      }
+      skipPixels += span.end;
    }
 }
 
 
 
 /*
- * Do glDrawPixels of stencil image.  The image datatype may either
- * be GLubyte or GLbitmap.
+ * Draw stencil image.
  */
 static void
 draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
@@ -552,7 +556,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
 {
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
-   GLint row, drawWidth;
+   GLint row, skipPixels;
 
    if (type != GL_BYTE &&
        type != GL_UNSIGNED_BYTE &&
@@ -571,37 +575,48 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
    }
 
-   drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
+   /* if width > MAX_WIDTH, have to process image in chunks */
+   skipPixels = 0;
+   while (skipPixels < width) {
+      GLint spanX = x;
+      GLint spanY = y;
+      GLint spanWidth = (width - skipPixels > MAX_WIDTH)
+                      ? MAX_WIDTH : (width - skipPixels);
 
-   for (row = 0; row < height; row++, y++) {
-      GLstencil values[MAX_WIDTH];
-      GLenum destType = (sizeof(GLstencil) == sizeof(GLubyte))
-                      ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-      const GLvoid *source = _mesa_image_address(&ctx->Unpack,
-                    pixels, width, height, GL_COLOR_INDEX, type, 0, row, 0);
-      _mesa_unpack_index_span(ctx, drawWidth, destType, values,
-                              type, source, &ctx->Unpack,
-                              ctx->_ImageTransferState);
-      if (ctx->_ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
-         _mesa_shift_and_offset_stencil( ctx, drawWidth, values );
-      }
-      if (ctx->Pixel.MapStencilFlag) {
-         _mesa_map_stencil( ctx, drawWidth, values );
-      }
+      for (row = 0; row < height; row++, spanY++) {
+         GLstencil values[MAX_WIDTH];
+         GLenum destType = (sizeof(GLstencil) == sizeof(GLubyte))
+                         ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+         const GLvoid *source = _mesa_image_address(&ctx->Unpack, pixels,
+                                                    width, height,
+                                                    GL_COLOR_INDEX, type,
+                                                    0, row, skipPixels);
+         _mesa_unpack_index_span(ctx, spanWidth, destType, values,
+                                 type, source, &ctx->Unpack,
+                                 ctx->_ImageTransferState);
+         if (ctx->_ImageTransferState & IMAGE_SHIFT_OFFSET_BIT) {
+            _mesa_shift_and_offset_stencil(ctx, spanWidth, values);
+         }
+         if (ctx->Pixel.MapStencilFlag) {
+            _mesa_map_stencil(ctx, spanWidth, values);
+         }
 
-      if (zoom) {
-         _mesa_write_zoomed_stencil_span( ctx, (GLuint) drawWidth, x, y,
-                                       values, desty );
+         if (zoom) {
+            _mesa_write_zoomed_stencil_span(ctx, (GLuint) spanWidth,
+                                            spanX, spanY, values, desty, 0);
+         }
+         else {
+            _mesa_write_stencil_span(ctx, (GLuint) spanWidth,
+                                     spanX, spanY, values);
+         }
       }
-      else {
-         _mesa_write_stencil_span( ctx, (GLuint) drawWidth, x, y, values );
-      }
+      skipPixels += spanWidth;
    }
 }
 
 
 /*
- * Do a glDrawPixels of depth values.
+ * Draw depth image.
  */
 static void
 draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
@@ -611,10 +626,9 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
-   GLint drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
    struct sw_span span;
 
-   INIT_SPAN(span, GL_BITMAP, drawWidth, 0, SPAN_Z);
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
    if (type != GL_BYTE
        && type != GL_UNSIGNED_BYTE
@@ -634,79 +648,92 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    if (ctx->Texture._EnabledUnits)
       _mesa_span_default_texcoords(ctx, &span);
 
-   if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
-       && !bias_or_scale && !zoom && ctx->Visual.rgbMode) {
+   if (type == GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
+       && !bias_or_scale && !zoom && ctx->Visual.rgbMode
+       && width < MAX_WIDTH) {
       /* Special case: directly write 16-bit depth values */
       GLint row;
       span.x = x;
       span.y = y;
-      span.end = drawWidth;
+      span.end = width;
       for (row = 0; row < height; row++, span.y++) {
          const GLushort *zptr = (const GLushort *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
          GLint i;
-         for (i = 0; i < drawWidth; i++)
+         for (i = 0; i < width; i++)
             span.array->z[i] = zptr[i];
          _mesa_write_rgba_span(ctx, &span);
       }
    }
-   else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
-       && !bias_or_scale && !zoom && ctx->Visual.rgbMode) {
+   else if (type == GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
+            && !bias_or_scale && !zoom && ctx->Visual.rgbMode
+            && width < MAX_WIDTH) {
       /* Special case: directly write 32-bit depth values */
       GLint row;
       span.x = x;
       span.y = y;
-      span.end = drawWidth;
+      span.end = width;
       for (row = 0; row < height; row++, span.y++) {
          const GLuint *zptr = (const GLuint *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
-         MEMCPY(span.array->z, zptr, drawWidth * sizeof(GLdepth));
+         MEMCPY(span.array->z, zptr, width * sizeof(GLdepth));
          _mesa_write_rgba_span(ctx, &span);
       }
    }
    else {
       /* General case */
-      GLint row;
-      span.x = x;
-      span.y = y;
-      span.end = drawWidth;
-      for (row = 0; row < height; row++, span.y++) {
-         GLfloat fspan[MAX_WIDTH];
-         const GLvoid *src = _mesa_image_address(&ctx->Unpack,
-                pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         _mesa_unpack_depth_span( ctx, drawWidth, fspan, type, src,
-                                  &ctx->Unpack );
-         /* clamp depth values to [0,1] and convert from floats to integers */
-         {
-            const GLfloat zs = ctx->DepthMaxF;
-            GLint i;
-            for (i = 0; i < drawWidth; i++) {
-               span.array->z[i] = (GLdepth) (fspan[i] * zs + 0.5F);
+      GLint row, skipPixels = 0;
+
+      /* in case width > MAX_WIDTH do the copy in chunks */
+      while (skipPixels < width) {
+         span.x = x + (zoom ? 0 : skipPixels);
+         span.y = y;
+         span.end = (width - skipPixels > MAX_WIDTH)
+                  ? MAX_WIDTH : (width - skipPixels);
+         ASSERT(span.end <= MAX_WIDTH);
+         for (row = 0; row < height; row++, span.y++) {
+            GLfloat floatSpan[MAX_WIDTH];
+            const GLvoid *src = _mesa_image_address(&ctx->Unpack,
+                                                    pixels, width, height,
+                                                    GL_DEPTH_COMPONENT, type,
+                                                    0, row, skipPixels);
+            _mesa_unpack_depth_span(ctx, span.end, floatSpan, type,
+                                    src, &ctx->Unpack);
+            /* clamp depth values to [0,1] and convert from floats to ints */
+            {
+               const GLfloat zs = ctx->DepthMaxF;
+               GLint i;
+               for (i = 0; i < span.end; i++) {
+                  span.array->z[i] = (GLdepth) (floatSpan[i] * zs + 0.5F);
+               }
+            }
+            if (ctx->Visual.rgbMode) {
+               if (zoom) {
+                  _mesa_write_zoomed_rgba_span(ctx, &span,
+                                     (const GLchan (*)[4]) span.array->rgba,
+                                     desty, skipPixels);
+               }
+               else
+                  _mesa_write_rgba_span(ctx, &span);
+            }
+            else {
+               if (zoom)
+                  _mesa_write_zoomed_index_span(ctx, &span, desty, 0);
+               else
+                  _mesa_write_index_span(ctx, &span);
             }
          }
-         if (ctx->Visual.rgbMode) {
-            if (zoom) {
-               _mesa_write_zoomed_rgba_span(ctx, &span,
-                                 (const GLchan (*)[4]) span.array->rgba, desty);
-            }
-            else
-               _mesa_write_rgba_span(ctx, &span);
-         }
-         else {
-            if (zoom)
-               _mesa_write_zoomed_index_span(ctx, &span, desty);
-            else
-               _mesa_write_index_span(ctx, &span);
-         }
+         skipPixels += span.end;
       }
    }
 }
 
 
+
 /*
- * Do glDrawPixels of RGBA pixels.
+ * Draw RGBA image.
  */
 static void
 draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
@@ -805,45 +832,46 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
     * General solution
     */
    {
-      GLint row;
-      if (width > MAX_WIDTH)
-         width = MAX_WIDTH;
+      GLint row, skipPixels = 0;
 
-      for (row = 0; row < height; row++, y++) {
-         const GLvoid *source = _mesa_image_address(unpack,
-                  pixels, width, height, format, type, 0, row, 0);
+      /* if the span is wider than MAX_WIDTH we have to do it in chunks */
+      while (skipPixels < width) {
+         span.x = x + (zoom ? 0 : skipPixels);
+         span.y = y;
+         span.end = (width - skipPixels > MAX_WIDTH)
+                  ? MAX_WIDTH : (width - skipPixels);
+         ASSERT(span.end <= MAX_WIDTH);
 
-         _mesa_unpack_chan_color_span(ctx, width, GL_RGBA,
-                                      (GLchan *) span.array->rgba,
-                                      format, type, source, unpack,
-                                      transferOps);
+         for (row = 0; row < height; row++, span.y++) {
+            const GLvoid *source = _mesa_image_address(unpack,
+                     pixels, width, height, format, type, 0, row, skipPixels);
 
-         if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
-             (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
-            continue;
+            _mesa_unpack_chan_color_span(ctx, span.end, GL_RGBA,
+                                         (GLchan *) span.array->rgba,
+                                         format, type, source, unpack,
+                                         transferOps);
 
-         if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
-            span.end = width;
-            _swrast_pixel_texture(ctx, &span);
-         }
+            if ((ctx->Pixel.MinMaxEnabled && ctx->MinMax.Sink) ||
+                (ctx->Pixel.HistogramEnabled && ctx->Histogram.Sink))
+               continue;
 
-         if (quickDraw) {
-            (*swrast->Driver.WriteRGBASpan)(ctx, width, x, y,
+            if (ctx->Pixel.PixelTextureEnabled && ctx->Texture._EnabledUnits) {
+               _swrast_pixel_texture(ctx, &span);
+            }
+
+            if (quickDraw) {
+               (*swrast->Driver.WriteRGBASpan)(ctx, span.end, span.x, span.y,
                                  (CONST GLchan (*)[4]) span.array->rgba, NULL);
+            }
+            else if (zoom) {
+               _mesa_write_zoomed_rgba_span(ctx, &span,
+                    (CONST GLchan (*)[4]) span.array->rgba, desty, skipPixels);
+            }
+            else {
+               _mesa_write_rgba_span(ctx, &span);
+            }
          }
-         else if (zoom) {
-            span.x = x;
-            span.y = y;
-            span.end = width;
-            _mesa_write_zoomed_rgba_span(ctx, &span,
-                                (CONST GLchan (*)[4]) span.array->rgba, desty);
-         }
-         else {
-            span.x = x;
-            span.y = y;
-            span.end = width;
-            _mesa_write_rgba_span(ctx, &span);
-         }
+         skipPixels += span.end;
       }
    }
 
