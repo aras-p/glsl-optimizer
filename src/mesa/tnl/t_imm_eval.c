@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.24 2002/06/23 02:47:38 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.25 2002/06/25 02:56:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -540,12 +540,13 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Color.Flags = 0;
       tnl->vb.importable_data &= ~VERT_BIT_COLOR0;
 
-#if 1
-      /*tmp->Attribs[0].count = count;*/
-      tmp->Attribs[3].data = store->Attrib[3] + IM->CopyStart;
-      tmp->Attribs[3].start = (GLfloat *) tmp->Attribs[3].data;
-      tmp->Attribs[3].size = 0;
-#endif
+      if (ctx->VertexProgram.Enabled) {
+         tmp->Attribs[VERT_ATTRIB_COLOR0].data =
+            store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart;
+         tmp->Attribs[VERT_ATTRIB_COLOR0].start =
+            (GLfloat *) tmp->Attribs[VERT_ATTRIB_COLOR0].data;
+         tmp->Attribs[VERT_ATTRIB_COLOR0].size = 0;
+      }
 
       /* Vertex program maps have priority over conventional attribs */
       if (any_eval1) {
@@ -588,6 +589,14 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       tmp->TexCoord[0].data = store->Attrib[VERT_ATTRIB_TEX0] + IM->CopyStart;
       tmp->TexCoord[0].start = (GLfloat *)tmp->TexCoord[0].data;
+
+      if (ctx->VertexProgram.Enabled) {
+         tmp->Attribs[VERT_ATTRIB_TEX0].data =
+            store->Attrib[VERT_ATTRIB_TEX0] + IM->CopyStart;
+         tmp->Attribs[VERT_ATTRIB_TEX0].start =
+            (GLfloat *) tmp->Attribs[VERT_ATTRIB_TEX0].data;
+         tmp->Attribs[VERT_ATTRIB_TEX0].size = 0;
+      }
 
       /* Vertex program maps have priority over conventional attribs */
       if (any_eval1) {
@@ -659,6 +668,14 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       tmp->Normal.data = store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart;
       tmp->Normal.start = (GLfloat *)tmp->Normal.data;
+
+      if (ctx->VertexProgram.Enabled) {
+         tmp->Attribs[VERT_ATTRIB_NORMAL].data =
+            store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart;
+         tmp->Attribs[VERT_ATTRIB_NORMAL].start =
+            (GLfloat *) tmp->Attribs[VERT_ATTRIB_NORMAL].data;
+         tmp->Attribs[VERT_ATTRIB_NORMAL].size = 0;
+      }
 
       if (any_eval1) {
          if (ctx->VertexProgram.Enabled &&
@@ -763,8 +780,10 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
 
-   if (0/*ctx->VertexProgram.Enabled*/) {
-      /* we already evaluated position, normal, color and texture 0 above */
+   if (ctx->VertexProgram.Enabled) {
+      /* We already evaluated position, normal, color and texture 0 above.
+       * now evaluate any other generic attributes.
+       */
       const GLuint skipBits = (VERT_BIT_POS |
                                VERT_BIT_NORMAL |
                                VERT_BIT_COLOR0 |
