@@ -127,13 +127,68 @@ DRI_CONF_SECTION_BEGIN \
 	DRI_CONF_DESC(en,"Image Quality") \
 	DRI_CONF_DESC(de,"Bildqualität")
 
-#define DRI_CONF_PREFERRED_BPT(def,valid) \
-DRI_CONF_OPT_BEGIN_V(preferred_bpt,enum,def,valid) \
-	DRI_CONF_DESC_BEGIN(en,"Preferred texture color depth") \
-                DRI_CONF_ENUM(0,"Same as frame buffer") \
+#define DRI_CONF_TEXTURE_DEPTH_FB       0
+#define DRI_CONF_TEXTURE_DEPTH_32       1
+#define DRI_CONF_TEXTURE_DEPTH_16       2
+#define DRI_CONF_TEXTURE_DEPTH_FORCE_16 3
+#define DRI_CONF_TEXTURE_DEPTH(def) \
+DRI_CONF_OPT_BEGIN_V(texture_depth,enum,def,"0:3") \
+	DRI_CONF_DESC_BEGIN(en,"Texture color depth") \
+                DRI_CONF_ENUM(0,"Prefer frame buffer color depth") \
+                DRI_CONF_ENUM(1,"Prefer 32 bits") \
+                DRI_CONF_ENUM(2,"Prefer 16 bits") \
+                DRI_CONF_ENUM(3,"Force 16 bits") \
         DRI_CONF_DESC_END \
-	DRI_CONF_DESC_BEGIN(de,"Bevorzugte Textur Farbtiefe") \
-                DRI_CONF_ENUM(0,"So wie der Framebuffer") \
+	DRI_CONF_DESC_BEGIN(de,"Texturfarbtiefe") \
+                DRI_CONF_ENUM(0,"Bevorzugt so wie Frambuffer") \
+                DRI_CONF_ENUM(1,"Bevorzugt 32 Bits") \
+                DRI_CONF_ENUM(2,"Bevorzugt 16 Bits") \
+                DRI_CONF_ENUM(3,"Höchstens 16 Bits") \
+        DRI_CONF_DESC_END \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_COLOR_REDUCTION_ROUND 0
+#define DRI_CONF_COLOR_REDUCTION_DITHER 1
+#define DRI_CONF_COLOR_REDUCTION(def) \
+DRI_CONF_OPT_BEGIN_V(color_reduction,enum,def,"0:1") \
+        DRI_CONF_DESC_BEGIN(en,"Default color reduction method") \
+                DRI_CONF_ENUM(0,"Round or truncate") \
+                DRI_CONF_ENUM(1,"Dither") \
+        DRI_CONF_DESC_END \
+        DRI_CONF_DESC_BEGIN(de,"Standardmethode zur Farbreduktion") \
+                DRI_CONF_ENUM(0,"Runden oder Abschneiden") \
+                DRI_CONF_ENUM(1,"Rastern") \
+        DRI_CONF_DESC_END \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_ROUND_TRUNC 0
+#define DRI_CONF_ROUND_ROUND 1
+#define DRI_CONF_ROUND_MODE(def) \
+DRI_CONF_OPT_BEGIN_V(round_mode,enum,def,"0:1") \
+	DRI_CONF_DESC_BEGIN(en,"Round or truncate colors") \
+                DRI_CONF_ENUM(0,"Truncate") \
+                DRI_CONF_ENUM(1,"Round") \
+        DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(de,"Farben runden oder abschneiden") \
+                DRI_CONF_ENUM(0,"Abschneiden") \
+                DRI_CONF_ENUM(1,"Runden") \
+        DRI_CONF_DESC_END \
+DRI_CONF_OPT_END
+
+#define DRI_CONF_DITHER_XERRORDIFF 0
+#define DRI_CONF_DITHER_XERRORDIFFRESET 1
+#define DRI_CONF_DITHER_ORDERED 2
+#define DRI_CONF_DITHER_MODE(def) \
+DRI_CONF_OPT_BEGIN_V(dither_mode,enum,def,"0:2") \
+	DRI_CONF_DESC_BEGIN(en,"Color dithering") \
+                DRI_CONF_ENUM(0,"Horizontal error diffusion") \
+                DRI_CONF_ENUM(1,"Horizontal error diffusion, reset error at line start") \
+                DRI_CONF_ENUM(2,"Ordered 2D dithering") \
+        DRI_CONF_DESC_END \
+	DRI_CONF_DESC_BEGIN(de,"Farben rastern") \
+                DRI_CONF_ENUM(0,"Horizontale Fehlerstreuung") \
+                DRI_CONF_ENUM(1,"Horizontale Fehlerstreuung, Fehler am Zeilenanfang zurücksetzen") \
+                DRI_CONF_ENUM(2,"Geordnete 2D Farbrasterung") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
