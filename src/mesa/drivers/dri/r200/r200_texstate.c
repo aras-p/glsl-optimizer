@@ -279,304 +279,6 @@ static void r200SetTexImages( r200ContextPtr rmesa,
  * Texture combine functions
  */
 
-#define R200_DISABLE		0
-#define R200_REPLACE		1
-#define R200_MODULATE		2
-#define R200_DECAL		3
-#define R200_BLEND		4
-#define R200_ADD		5
-#define R200_MAX_COMBFUNC	6
-
-static GLuint r200_color_combine[][R200_MAX_COMBFUNC] =
-{
-   /* Unit 0:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXC_ARG_A_ZERO  |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_DIFFUSE_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_REPLACE = 0x00802800
-       */
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R0_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_MODULATE = 0x00800142
-       */
-      (R200_TXC_ARG_A_DIFFUSE_COLOR | /* current starts in DIFFUSE */
-       R200_TXC_ARG_B_R0_COLOR |
-       R200_TXC_ARG_C_ZERO |
-       R200_TXC_OP_MADD),
-
-      /* GL_DECAL = 0x008c2d42
-       */
-      (R200_TXC_ARG_A_DIFFUSE_COLOR |
-       R200_TXC_ARG_B_R0_COLOR |
-       R200_TXC_ARG_C_R0_ALPHA |
-       R200_TXC_OP_LERP),
-
-      /* GL_BLEND = 0x008c2902
-       */
-      (R200_TXC_ARG_A_DIFFUSE_COLOR |
-       R200_TXC_ARG_B_TFACTOR_COLOR |
-       R200_TXC_ARG_C_R0_COLOR |
-       R200_TXC_OP_LERP),
-
-      /* GL_ADD = 0x00812802
-       */
-      (R200_TXC_ARG_A_DIFFUSE_COLOR |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R0_COLOR |
-       R200_TXC_COMP_ARG_B |
-       R200_TXC_OP_MADD),
-   },
-
-   /* Unit 1:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R0_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_REPLACE = 0x00803000
-       */
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R1_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_MODULATE = 0x00800182
-       */
-      (R200_TXC_ARG_A_R0_COLOR | /* current in R0 thereafter */
-       R200_TXC_ARG_B_R1_COLOR |
-       R200_TXC_ARG_C_ZERO |
-       R200_TXC_OP_MADD),
-
-      /* GL_DECAL = 0x008c3582
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_R1_COLOR |
-       R200_TXC_ARG_C_R1_ALPHA |
-       R200_TXC_OP_LERP),
-
-      /* GL_BLEND = 0x008c3102
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_TFACTOR_COLOR |
-       R200_TXC_ARG_C_R1_COLOR |
-       R200_TXC_OP_LERP),
-
-      /* GL_ADD = 0x00813002
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R1_COLOR |
-       R200_TXC_COMP_ARG_B |
-       R200_TXC_OP_MADD),
-   },
-
-   /* Unit 2:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R0_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_REPLACE = 0x00803800
-       */
-      (R200_TXC_ARG_A_ZERO |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R2_COLOR |
-       R200_TXC_OP_MADD),
-
-      /* GL_MODULATE = 0x008001c2
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_R2_COLOR |
-       R200_TXC_ARG_C_ZERO |
-       R200_TXC_OP_MADD),
-
-      /* GL_DECAL = 0x008c3dc2
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_R2_COLOR |
-       R200_TXC_ARG_C_R2_ALPHA |
-       R200_TXC_OP_LERP),
-
-      /* GL_BLEND = 0x008c3902
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_TFACTOR_COLOR |
-       R200_TXC_ARG_C_R2_COLOR |
-       R200_TXC_OP_LERP),
-
-      /* GL_ADD = 0x00813802
-       */
-      (R200_TXC_ARG_A_R0_COLOR |
-       R200_TXC_ARG_B_ZERO |
-       R200_TXC_ARG_C_R2_COLOR |
-       R200_TXC_COMP_ARG_B |
-       R200_TXC_OP_MADD),
-   }
-};
-
-static GLuint r200_alpha_combine[][R200_MAX_COMBFUNC] =
-{
-   /* Unit 0:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_DIFFUSE_ALPHA |
-       R200_TXA_OP_MADD),
-
-
-      /* GL_REPLACE = 0x00800500
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_MODULATE = 0x00800051
-       */
-      (R200_TXA_ARG_A_DIFFUSE_ALPHA |
-       R200_TXA_ARG_B_R0_ALPHA |
-       R200_TXA_ARG_C_ZERO |
-       R200_TXA_OP_MADD),
-
-      /* GL_DECAL = 0x00800100
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_DIFFUSE_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_BLEND = 0x00800051
-       */
-      (R200_TXA_ARG_A_DIFFUSE_ALPHA |
-       R200_TXA_ARG_B_TFACTOR_ALPHA |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_LERP),
-
-      /* GL_ADD = 0x00800051
-       */
-      (R200_TXA_ARG_A_DIFFUSE_ALPHA |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_COMP_ARG_B |
-       R200_TXA_OP_MADD),
-   },
-
-   /* Unit 1:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_REPLACE = 0x00800600
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R1_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_MODULATE = 0x00800061
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_R1_ALPHA |
-       R200_TXA_ARG_C_ZERO |
-       R200_TXA_OP_MADD),
-
-      /* GL_DECAL = 0x00800100
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_BLEND = 0x00800061
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_TFACTOR_ALPHA |
-       R200_TXA_ARG_C_R1_ALPHA |
-       R200_TXA_OP_LERP),
-
-      /* GL_ADD = 0x00800061
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R1_ALPHA |
-       R200_TXA_COMP_ARG_B |
-       R200_TXA_OP_MADD),
-   },
-
-   /* Unit 2:
-    */
-   {
-      /* Disable combiner stage
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_REPLACE = 0x00800700
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R2_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_MODULATE = 0x00800071
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_R2_ALPHA |
-       R200_TXA_ARG_C_ZERO |
-       R200_TXA_OP_MADD),
-
-      /* GL_DECAL = 0x00800100
-       */
-      (R200_TXA_ARG_A_ZERO |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R0_ALPHA |
-       R200_TXA_OP_MADD),
-
-      /* GL_BLEND = 0x00800071
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_TFACTOR_ALPHA |
-       R200_TXA_ARG_C_R2_ALPHA |
-       R200_TXA_OP_LERP),
-
-      /* GL_ADD = 0x00800021
-       */
-      (R200_TXA_ARG_A_R0_ALPHA |
-       R200_TXA_ARG_B_ZERO |
-       R200_TXA_ARG_C_R2_ALPHA |
-       R200_TXA_COMP_ARG_B |
-       R200_TXA_OP_MADD),
-   }
-};
-
-
 /* GL_ARB_texture_env_combine support
  */
 
@@ -731,443 +433,283 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
        */
       rmesa->state.texture.unit[unit].format = 0;
       rmesa->state.texture.unit[unit].envMode = 0;
-      color_combine = r200_color_combine[unit][R200_DISABLE];
-      alpha_combine = r200_alpha_combine[unit][R200_DISABLE];
+      if ( unit == 0 ) {
+	 color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
+	     | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
+	 alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
+	     | R200_TXA_ARG_C_DIFFUSE_ALPHA | R200_TXA_OP_MADD;
+      }
+      else {
+	 color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
+	     | R200_TXC_ARG_C_R0_COLOR | R200_TXC_OP_MADD;
+	 alpha_combine = R200_TXA_ARG_A_ZERO | R200_TXA_ARG_B_ZERO
+	     | R200_TXA_ARG_C_R0_ALPHA | R200_TXA_OP_MADD;
+      }
    }
    else {
-      const struct gl_texture_object *tObj = texUnit->_Current;
-      const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
       GLuint color_arg[3], alpha_arg[3];
-      GLuint i, numColorArgs = 0, numAlphaArgs = 0;
-      GLuint RGBshift = texUnit->CombineScaleShiftRGB;
-      GLuint Ashift = texUnit->CombineScaleShiftA;
+      GLuint i;
+      const GLuint numColorArgs = texUnit->_CurrentCombine->_NumArgsRGB;
+      const GLuint numAlphaArgs = texUnit->_CurrentCombine->_NumArgsA;
+      GLuint RGBshift = texUnit->_CurrentCombine->ScaleShiftRGB;
+      GLuint Ashift = texUnit->_CurrentCombine->ScaleShiftA;
 
-      switch ( texUnit->EnvMode ) {
+      /* Don't cache these results.
+       */
+      rmesa->state.texture.unit[unit].format = 0;
+      rmesa->state.texture.unit[unit].envMode = 0;
+
+
+      /* Step 1:
+       * Extract the color and alpha combine function arguments.
+       */
+      for ( i = 0 ; i < numColorArgs ; i++ ) {
+	 const GLuint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+	 assert(op >= 0);
+	 assert(op <= 3);
+	 switch ( texUnit->_CurrentCombine->SourceRGB[i] ) {
+	 case GL_TEXTURE:
+	    color_arg[i] = r200_register_color[op][unit];
+	    break;
+	 case GL_CONSTANT:
+	    color_arg[i] = r200_tfactor_color[op];
+	    break;
+	 case GL_PRIMARY_COLOR:
+	    color_arg[i] = r200_primary_color[op];
+	    break;
+	 case GL_PREVIOUS:
+	    if (unit == 0)
+		color_arg[i] = r200_primary_color[op];
+	    else
+		color_arg[i] = r200_register_color[op][0];
+	    break;
+	 case GL_ZERO:
+	    color_arg[i] = r200_zero_color[op];
+	    break;
+	 case GL_ONE:
+	    color_arg[i] = r200_zero_color[op+1];
+	    break;
+	 default:
+	    return GL_FALSE;
+	 }
+      }
+
+      for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+	 const GLuint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+	 assert(op >= 0);
+	 assert(op <= 1);
+	 switch ( texUnit->_CurrentCombine->SourceA[i] ) {
+	 case GL_TEXTURE:
+	    alpha_arg[i] = r200_register_alpha[op][unit];
+	    break;
+	 case GL_CONSTANT:
+	    alpha_arg[i] = r200_tfactor_alpha[op];
+	    break;
+	 case GL_PRIMARY_COLOR:
+	    alpha_arg[i] = r200_primary_alpha[op];
+	    break;
+	 case GL_PREVIOUS:
+	    if (unit == 0)
+		alpha_arg[i] = r200_primary_alpha[op];
+	    else
+		alpha_arg[i] = r200_register_alpha[op][0];
+	    break;
+	 case GL_ZERO:
+	    alpha_arg[i] = r200_zero_alpha[op];
+	    break;
+	 case GL_ONE:
+	    alpha_arg[i] = r200_zero_alpha[op+1];
+	    break;
+	 default:
+	    return GL_FALSE;
+	 }
+      }
+
+      /* Step 2:
+       * Build up the color and alpha combine functions.
+       */
+      switch ( texUnit->_CurrentCombine->ModeRGB ) {
       case GL_REPLACE:
-	 switch ( format ) {
-	 case GL_RGBA:
-	 case GL_LUMINANCE_ALPHA:
-	 case GL_INTENSITY:
-	    color_combine = r200_color_combine[unit][R200_REPLACE];
-	    alpha_combine = r200_alpha_combine[unit][R200_REPLACE];
-	    break;
-	 case GL_ALPHA:
-	    color_combine = r200_color_combine[unit][R200_DISABLE];
-	    alpha_combine = r200_alpha_combine[unit][R200_REPLACE];
-	    break;
-	 case GL_LUMINANCE:
-	 case GL_RGB:
-	 case GL_YCBCR_MESA:
-	    color_combine = r200_color_combine[unit][R200_REPLACE];
-	    alpha_combine = r200_alpha_combine[unit][R200_DISABLE];
-	    break;
-	 case GL_COLOR_INDEX:
-	 default:
-	    return GL_FALSE;
-	 }
+	 color_combine = (R200_TXC_ARG_A_ZERO |
+			  R200_TXC_ARG_B_ZERO |
+			  R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, C );
 	 break;
-
       case GL_MODULATE:
-	 switch ( format ) {
-	 case GL_RGBA:
-	 case GL_LUMINANCE_ALPHA:
-	 case GL_INTENSITY:
-	    color_combine = r200_color_combine[unit][R200_MODULATE];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_ALPHA:
-	    color_combine = r200_color_combine[unit][R200_DISABLE];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_RGB:
-	 case GL_LUMINANCE:
-	 case GL_YCBCR_MESA:
-	    color_combine = r200_color_combine[unit][R200_MODULATE];
-	    alpha_combine = r200_alpha_combine[unit][R200_DISABLE];
-	    break;
-	 case GL_COLOR_INDEX:
-	 default:
-	    return GL_FALSE;
-	 }
+	 color_combine = (R200_TXC_ARG_C_ZERO |
+			  R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, B );
 	 break;
-
-      case GL_DECAL:
-	 switch ( format ) {
-	 case GL_RGBA:
-	 case GL_RGB:
-	 case GL_YCBCR_MESA:
-	    color_combine = r200_color_combine[unit][R200_DECAL];
-	    alpha_combine = r200_alpha_combine[unit][R200_DISABLE];
-	    break;
-	 case GL_ALPHA:
-	 case GL_LUMINANCE:
-	 case GL_LUMINANCE_ALPHA:
-	 case GL_INTENSITY:
-	    color_combine = r200_color_combine[unit][R200_DISABLE];
-	    alpha_combine = r200_alpha_combine[unit][R200_DISABLE];
-	    break;
-	 case GL_COLOR_INDEX:
-	 default:
-	    return GL_FALSE;
-	 }
-	 break;
-
-      case GL_BLEND:
-	 switch ( format ) {
-	 case GL_RGBA:
-	 case GL_RGB:
-	 case GL_LUMINANCE:
-	 case GL_LUMINANCE_ALPHA:
-	 case GL_YCBCR_MESA:
-	    color_combine = r200_color_combine[unit][R200_BLEND];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_ALPHA:
-	    color_combine = r200_color_combine[unit][R200_DISABLE];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_INTENSITY:
-	    color_combine = r200_color_combine[unit][R200_BLEND];
-	    alpha_combine = r200_alpha_combine[unit][R200_BLEND];
-	    break;
-	 case GL_COLOR_INDEX:
-	 default:
-	    return GL_FALSE;
-	 }
-	 break;
-
       case GL_ADD:
-	 switch ( format ) {
-	 case GL_RGBA:
-	 case GL_RGB:
-	 case GL_LUMINANCE:
-	 case GL_LUMINANCE_ALPHA:
-	 case GL_YCBCR_MESA:
-	    color_combine = r200_color_combine[unit][R200_ADD];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_ALPHA:
-	    color_combine = r200_color_combine[unit][R200_DISABLE];
-	    alpha_combine = r200_alpha_combine[unit][R200_MODULATE];
-	    break;
-	 case GL_INTENSITY:
-	    color_combine = r200_color_combine[unit][R200_ADD];
-	    alpha_combine = r200_alpha_combine[unit][R200_ADD];
-	    break;
-	 case GL_COLOR_INDEX:
-	 default:
-	    return GL_FALSE;
-	 }
+	 color_combine = (R200_TXC_ARG_B_ZERO |
+			  R200_TXC_COMP_ARG_B | 
+			  R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 break;
+      case GL_ADD_SIGNED:
+	 color_combine = (R200_TXC_ARG_B_ZERO |
+			  R200_TXC_COMP_ARG_B |
+			  R200_TXC_BIAS_ARG_C |	/* new */
+			  R200_TXC_OP_MADD); /* was ADDSIGNED */
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 break;
+      case GL_SUBTRACT:
+	 color_combine = (R200_TXC_ARG_B_ZERO |
+			  R200_TXC_COMP_ARG_B | 
+			  R200_TXC_NEG_ARG_C |
+			  R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 break;
+      case GL_INTERPOLATE:
+	 color_combine = (R200_TXC_OP_LERP);
+	 R200_COLOR_ARG( 0, B );
+	 R200_COLOR_ARG( 1, A );
+	 R200_COLOR_ARG( 2, C );
 	 break;
 
-      case GL_COMBINE:
-	 /* Don't cache these results.
+      case GL_DOT3_RGB_EXT:
+      case GL_DOT3_RGBA_EXT:
+	 /* The EXT version of the DOT3 extension does not support the
+	  * scale factor, but the ARB version (and the version in OpenGL
+	  * 1.3) does.
 	  */
-	 rmesa->state.texture.unit[unit].format = 0;
-	 rmesa->state.texture.unit[unit].envMode = 0;
+	 RGBshift = 0;
+	 Ashift = 0;
+	 /* FALLTHROUGH */
 
-	 /* Step 0:
-	  * Calculate how many arguments we need to process.
+      case GL_DOT3_RGB:
+      case GL_DOT3_RGBA:
+	 /* DOT3 works differently on R200 than on R100.  On R100, just
+	  * setting the DOT3 mode did everything for you.  On R200, the
+	  * driver has to enable the biasing and scale in the inputs to
+	  * put them in the proper [-1,1] range.  This is what the 4x and
+	  * the -0.5 in the DOT3 spec do.  The post-scale is then set
+	  * normally.
 	  */
-	 switch ( texUnit->CombineModeRGB ) {
-	 case GL_REPLACE:
-	    numColorArgs = 1;
-	    break;
-	 case GL_MODULATE:
-	 case GL_ADD:
-	 case GL_ADD_SIGNED:
-	 case GL_SUBTRACT:
-	 case GL_DOT3_RGB:
-	 case GL_DOT3_RGBA:
-	 case GL_DOT3_RGB_EXT:
-	 case GL_DOT3_RGBA_EXT:
-	    numColorArgs = 2;
-	    break;
-	 case GL_INTERPOLATE:
-	 case GL_MODULATE_ADD_ATI:
-	 case GL_MODULATE_SIGNED_ADD_ATI:
-	 case GL_MODULATE_SUBTRACT_ATI:
-	    numColorArgs = 3;
-	    break;
-	 default:
-	    return GL_FALSE;
-	 }
 
-	 switch ( texUnit->CombineModeA ) {
-	 case GL_REPLACE:
-	    numAlphaArgs = 1;
-	    break;
-	 case GL_MODULATE:
-	 case GL_ADD:
-	 case GL_ADD_SIGNED:
-	 case GL_SUBTRACT:
-	    numAlphaArgs = 2;
-	    break;
-	 case GL_INTERPOLATE:
-	 case GL_MODULATE_ADD_ATI:
-	 case GL_MODULATE_SIGNED_ADD_ATI:
-	 case GL_MODULATE_SUBTRACT_ATI:
-	    numAlphaArgs = 3;
-	    break;
-	 default:
-	    return GL_FALSE;
-	 }
+	 RGBshift++;
+	 Ashift = RGBshift;
 
-	 /* Step 1:
-	  * Extract the color and alpha combine function arguments.
-	  */
-	 for ( i = 0 ; i < numColorArgs ; i++ ) {
-	    const GLuint op = texUnit->CombineOperandRGB[i] - GL_SRC_COLOR;
-	    assert(op >= 0);
-	    assert(op <= 3);
-	    switch ( texUnit->CombineSourceRGB[i] ) {
-	    case GL_TEXTURE:
-	       color_arg[i] = r200_register_color[op][unit];
-	       break;
-	    case GL_CONSTANT:
-	       color_arg[i] = r200_tfactor_color[op];
-	       break;
-	    case GL_PRIMARY_COLOR:
-	       color_arg[i] = r200_primary_color[op];
-	       break;
-	    case GL_PREVIOUS:
-	       if (unit == 0)
-		  color_arg[i] = r200_primary_color[op];
-	       else
-		  color_arg[i] = r200_register_color[op][0];
-	       break;
-	    case GL_ZERO:
-	       color_arg[i] = r200_zero_color[op];
-	       break;
-	    case GL_ONE:
-	       color_arg[i] = r200_zero_color[op+1];
-	       break;
-	    default:
-	       return GL_FALSE;
-	    }
-	 }
-
-	 for ( i = 0 ; i < numAlphaArgs ; i++ ) {
-	    const GLuint op = texUnit->CombineOperandA[i] - GL_SRC_ALPHA;
-	    assert(op >= 0);
-	    assert(op <= 1);
-	    switch ( texUnit->CombineSourceA[i] ) {
-	    case GL_TEXTURE:
-	       alpha_arg[i] = r200_register_alpha[op][unit];
-	       break;
-	    case GL_CONSTANT:
-	       alpha_arg[i] = r200_tfactor_alpha[op];
-	       break;
-	    case GL_PRIMARY_COLOR:
-	       alpha_arg[i] = r200_primary_alpha[op];
-	       break;
-	    case GL_PREVIOUS:
-	       if (unit == 0)
-		  alpha_arg[i] = r200_primary_alpha[op];
-	       else
-		  alpha_arg[i] = r200_register_alpha[op][0];
-	       break;
-	    case GL_ZERO:
-	       alpha_arg[i] = r200_zero_alpha[op];
-	       break;
-	    case GL_ONE:
-	       alpha_arg[i] = r200_zero_alpha[op+1];
-	       break;
-	    default:
-	       return GL_FALSE;
-	    }
-	 }
-
-	 /* Step 2:
-	  * Build up the color and alpha combine functions.
-	  */
-	 switch ( texUnit->CombineModeRGB ) {
-	 case GL_REPLACE:
-	    color_combine = (R200_TXC_ARG_A_ZERO |
-			     R200_TXC_ARG_B_ZERO |
-			     R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, C );
-	    break;
-	 case GL_MODULATE:
-	    color_combine = (R200_TXC_ARG_C_ZERO |
-			     R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, B );
-	    break;
-	 case GL_ADD:
-	    color_combine = (R200_TXC_ARG_B_ZERO |
-			     R200_TXC_COMP_ARG_B | 
-			     R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    break;
-	 case GL_ADD_SIGNED:
-	    color_combine = (R200_TXC_ARG_B_ZERO |
-			     R200_TXC_COMP_ARG_B |
-			     R200_TXC_BIAS_ARG_C |	/* new */
-			     R200_TXC_OP_MADD); /* was ADDSIGNED */
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    break;
-	 case GL_SUBTRACT:
-	    color_combine = (R200_TXC_ARG_B_ZERO |
-			     R200_TXC_COMP_ARG_B | 
-			     R200_TXC_NEG_ARG_C |
-			     R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    break;
-	 case GL_INTERPOLATE:
-	    color_combine = (R200_TXC_OP_LERP);
-	    R200_COLOR_ARG( 0, B );
-	    R200_COLOR_ARG( 1, A );
-	    R200_COLOR_ARG( 2, C );
-	    break;
-
-	 case GL_DOT3_RGB_EXT:
-	 case GL_DOT3_RGBA_EXT:
-	    /* The EXT version of the DOT3 extension does not support the
-	     * scale factor, but the ARB version (and the version in OpenGL
-	     * 1.3) does.
-	     */
-	    RGBshift = 0;
-	    Ashift = 0;
-	    /* FALLTHROUGH */
-
-	 case GL_DOT3_RGB:
-	 case GL_DOT3_RGBA:
-	    /* DOT3 works differently on R200 than on R100.  On R100, just
-	     * setting the DOT3 mode did everything for you.  On R200, the
-	     * driver has to enable the biasing and scale in the inputs to
-	     * put them in the proper [-1,1] range.  This is what the 4x and
-	     * the -0.5 in the DOT3 spec do.  The post-scale is then set
-	     * normally.
-	     */
-
-	    RGBshift++;
-	    Ashift = RGBshift;
-
-	    color_combine = (R200_TXC_ARG_C_ZERO |
-			     R200_TXC_OP_DOT3 |
-			     R200_TXC_BIAS_ARG_A |
-			     R200_TXC_BIAS_ARG_B |
-			     R200_TXC_SCALE_ARG_A |
-			     R200_TXC_SCALE_ARG_B);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, B );
-	    break;
-
-	 case GL_MODULATE_ADD_ATI:
-	    color_combine = (R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    R200_COLOR_ARG( 2, B );
-	    break;
-	 case GL_MODULATE_SIGNED_ADD_ATI:
-	    color_combine = (R200_TXC_BIAS_ARG_C |	/* new */
-			     R200_TXC_OP_MADD); /* was ADDSIGNED */
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    R200_COLOR_ARG( 2, B );
-	    break;
-	 case GL_MODULATE_SUBTRACT_ATI:
-	    color_combine = (R200_TXC_NEG_ARG_C |
-			     R200_TXC_OP_MADD);
-	    R200_COLOR_ARG( 0, A );
-	    R200_COLOR_ARG( 1, C );
-	    R200_COLOR_ARG( 2, B );
-	    break;
-	 default:
-	    return GL_FALSE;
-	 }
-
-	 switch ( texUnit->CombineModeA ) {
-	 case GL_REPLACE:
-	    alpha_combine = (R200_TXA_ARG_A_ZERO |
-			     R200_TXA_ARG_B_ZERO |
-			     R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, C );
-	    break;
-	 case GL_MODULATE:
-	    alpha_combine = (R200_TXA_ARG_C_ZERO |
-			     R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, B );
-	    break;
-	 case GL_ADD:
-	    alpha_combine = (R200_TXA_ARG_B_ZERO |
-			     R200_TXA_COMP_ARG_B |
-			     R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    break;
-	 case GL_ADD_SIGNED:
-	    alpha_combine = (R200_TXA_ARG_B_ZERO |
-			     R200_TXA_COMP_ARG_B |
-			     R200_TXA_BIAS_ARG_C |	/* new */
-			     R200_TXA_OP_MADD); /* was ADDSIGNED */
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    break;
-	 case GL_SUBTRACT:
-	    alpha_combine = (R200_TXA_ARG_B_ZERO |
-			     R200_TXA_COMP_ARG_B |
-			     R200_TXA_NEG_ARG_C |
-			     R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    break;
-	 case GL_INTERPOLATE:
-	    alpha_combine = (R200_TXA_OP_LERP);
-	    R200_ALPHA_ARG( 0, B );
-	    R200_ALPHA_ARG( 1, A );
-	    R200_ALPHA_ARG( 2, C );
-	    break;
-
-	 case GL_MODULATE_ADD_ATI:
-	    alpha_combine = (R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    R200_ALPHA_ARG( 2, B );
-	    break;
-	 case GL_MODULATE_SIGNED_ADD_ATI:
-	    alpha_combine = (R200_TXA_BIAS_ARG_C |	/* new */
-			     R200_TXA_OP_MADD); /* was ADDSIGNED */
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    R200_ALPHA_ARG( 2, B );
-	    break;
-	 case GL_MODULATE_SUBTRACT_ATI:
-	    alpha_combine = (R200_TXA_NEG_ARG_C |
-			     R200_TXA_OP_MADD);
-	    R200_ALPHA_ARG( 0, A );
-	    R200_ALPHA_ARG( 1, C );
-	    R200_ALPHA_ARG( 2, B );
-	    break;
-	 default:
-	    return GL_FALSE;
-	 }
-
-	 if ( (texUnit->CombineModeRGB == GL_DOT3_RGB_EXT)
-	      || (texUnit->CombineModeRGB == GL_DOT3_RGB) ) {
-	    alpha_scale |= R200_TXA_DOT_ALPHA;
-	 }
-
-	 /* Step 3:
-	  * Apply the scale factor.
-	  */
-	 color_scale &= ~R200_TXC_SCALE_MASK;
-	 alpha_scale &= ~R200_TXA_SCALE_MASK;
-	 color_scale |= (RGBshift << R200_TXC_SCALE_SHIFT);
-	 alpha_scale |= (Ashift   << R200_TXA_SCALE_SHIFT);
-
-	 /* All done!
-	  */
+	 color_combine = (R200_TXC_ARG_C_ZERO |
+			  R200_TXC_OP_DOT3 |
+			  R200_TXC_BIAS_ARG_A |
+			  R200_TXC_BIAS_ARG_B |
+			  R200_TXC_SCALE_ARG_A |
+			  R200_TXC_SCALE_ARG_B);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, B );
 	 break;
 
+      case GL_MODULATE_ADD_ATI:
+	 color_combine = (R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 R200_COLOR_ARG( 2, B );
+	 break;
+      case GL_MODULATE_SIGNED_ADD_ATI:
+	 color_combine = (R200_TXC_BIAS_ARG_C |	/* new */
+			  R200_TXC_OP_MADD); /* was ADDSIGNED */
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 R200_COLOR_ARG( 2, B );
+	 break;
+      case GL_MODULATE_SUBTRACT_ATI:
+	 color_combine = (R200_TXC_NEG_ARG_C |
+			  R200_TXC_OP_MADD);
+	 R200_COLOR_ARG( 0, A );
+	 R200_COLOR_ARG( 1, C );
+	 R200_COLOR_ARG( 2, B );
+	 break;
       default:
 	 return GL_FALSE;
       }
+
+      switch ( texUnit->_CurrentCombine->ModeA ) {
+      case GL_REPLACE:
+	 alpha_combine = (R200_TXA_ARG_A_ZERO |
+			  R200_TXA_ARG_B_ZERO |
+			  R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, C );
+	 break;
+      case GL_MODULATE:
+	 alpha_combine = (R200_TXA_ARG_C_ZERO |
+			  R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, B );
+	 break;
+      case GL_ADD:
+	 alpha_combine = (R200_TXA_ARG_B_ZERO |
+			  R200_TXA_COMP_ARG_B |
+			  R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 break;
+      case GL_ADD_SIGNED:
+	 alpha_combine = (R200_TXA_ARG_B_ZERO |
+			  R200_TXA_COMP_ARG_B |
+			  R200_TXA_BIAS_ARG_C |	/* new */
+			  R200_TXA_OP_MADD); /* was ADDSIGNED */
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 break;
+      case GL_SUBTRACT:
+	 alpha_combine = (R200_TXA_ARG_B_ZERO |
+			  R200_TXA_COMP_ARG_B |
+			  R200_TXA_NEG_ARG_C |
+			  R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 break;
+      case GL_INTERPOLATE:
+	 alpha_combine = (R200_TXA_OP_LERP);
+	 R200_ALPHA_ARG( 0, B );
+	 R200_ALPHA_ARG( 1, A );
+	 R200_ALPHA_ARG( 2, C );
+	 break;
+
+      case GL_MODULATE_ADD_ATI:
+	 alpha_combine = (R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 R200_ALPHA_ARG( 2, B );
+	 break;
+      case GL_MODULATE_SIGNED_ADD_ATI:
+	 alpha_combine = (R200_TXA_BIAS_ARG_C |	/* new */
+			  R200_TXA_OP_MADD); /* was ADDSIGNED */
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 R200_ALPHA_ARG( 2, B );
+	 break;
+      case GL_MODULATE_SUBTRACT_ATI:
+	 alpha_combine = (R200_TXA_NEG_ARG_C |
+			  R200_TXA_OP_MADD);
+	 R200_ALPHA_ARG( 0, A );
+	 R200_ALPHA_ARG( 1, C );
+	 R200_ALPHA_ARG( 2, B );
+	 break;
+      default:
+	 return GL_FALSE;
+      }
+
+      if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGB_EXT)
+	   || (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGB) ) {
+	 alpha_scale |= R200_TXA_DOT_ALPHA;
+      }
+
+      /* Step 3:
+       * Apply the scale factor.
+       */
+      color_scale &= ~R200_TXC_SCALE_MASK;
+      alpha_scale &= ~R200_TXA_SCALE_MASK;
+      color_scale |= (RGBshift << R200_TXC_SCALE_SHIFT);
+      alpha_scale |= (Ashift   << R200_TXA_SCALE_SHIFT);
+
+      /* All done!
+       */
    }
 
    if ( rmesa->hw.pix[unit].cmd[PIX_PP_TXCBLEND] != color_combine ||

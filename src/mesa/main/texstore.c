@@ -1425,9 +1425,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
             const GLint rowAb1 = (rowA[k] >> 11) & 0x1f;
             const GLint rowBb0 = (rowB[j] >> 11) & 0x1f;
             const GLint rowBb1 = (rowB[k] >> 11) & 0x1f;
-            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
-            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
-            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
             dst[i] = (blue << 11) | (green << 5) | red;
          }
       }
@@ -1456,10 +1456,10 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
             const GLint rowAa1 = (rowA[k] >> 12) & 0xf;
             const GLint rowBa0 = (rowB[j] >> 12) & 0xf;
             const GLint rowBa1 = (rowB[k] >> 12) & 0xf;
-            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
-            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
-            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
-            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 4;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 2;
             dst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
          }
       }
@@ -1488,10 +1488,10 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
             const GLint rowAa1 = (rowA[k] >> 15) & 0x1;
             const GLint rowBa0 = (rowB[j] >> 15) & 0x1;
             const GLint rowBa1 = (rowB[k] >> 15) & 0x1;
-            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
-            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
-            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
-            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 4;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 2;
             dst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
          }
       }
@@ -1531,9 +1531,9 @@ do_row(const struct gl_texture_format *format, GLint srcWidth,
             const GLint rowAb1 = (rowA[k] >> 5) & 0x7;
             const GLint rowBb0 = (rowB[j] >> 5) & 0x7;
             const GLint rowBb1 = (rowB[k] >> 5) & 0x7;
-            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
-            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
-            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
             dst[i] = (blue << 5) | (green << 2) | red;
          }
       }

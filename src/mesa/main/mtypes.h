@@ -1164,6 +1164,25 @@ struct gl_texture_object {
    /*@}*/
 };
 
+/**
+ * Texture combine environment state.
+ * 
+ * \todo
+ * If GL_NV_texture_env_combine4 is ever supported, the arrays in this
+ * structure will need to be expanded for 4 elements.
+ */
+struct gl_tex_env_combine_state {
+   GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+   GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+   GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum SourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum OperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
+   GLenum OperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+   GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
+   GLuint ScaleShiftA;   /**< 0, 1 or 2 */
+   GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
+   GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
+};
 
 /**
  * Texture unit record 
@@ -1201,16 +1220,19 @@ struct gl_texture_unit {
    /** 
     * \name GL_EXT_texture_env_combine 
     */
-   /*@{*/
-   GLenum CombineModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum CombineModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum CombineSourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum CombineSourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum CombineOperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
-   GLenum CombineOperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
-   GLuint CombineScaleShiftRGB; /**< 0, 1 or 2 */
-   GLuint CombineScaleShiftA;   /**< 0, 1 or 2 */
-   /*@}*/
+   struct gl_tex_env_combine_state Combine;
+
+   /**
+    * Derived state based on \c EnvMode and the \c BaseFormat of the
+    * currently enabled texture.
+    */
+   struct gl_tex_env_combine_state _EnvMode;
+
+   /**
+    * Currently enabled combiner state.  This will point to either
+    * \c Combine or \c _EnvMode.
+    */
+   struct gl_tex_env_combine_state *_CurrentCombine;
 
    struct gl_texture_object *Current1D;
    struct gl_texture_object *Current2D;

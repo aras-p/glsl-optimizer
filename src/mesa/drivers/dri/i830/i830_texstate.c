@@ -1021,14 +1021,14 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
    GLuint args_RGB[3];
    GLuint args_A[3];
    GLuint texel_op = GetTexelOp(unit);
-   GLuint rgb_shift = texUnit->CombineScaleShiftRGB;
-   GLuint alpha_shift = texUnit->CombineScaleShiftA;
+   GLuint rgb_shift = texUnit->Combine.ScaleShiftRGB;
+   GLuint alpha_shift = texUnit->Combine.ScaleShiftA;
    int i;
 
    if(I830_DEBUG&DEBUG_TEXTURE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   switch(texUnit->CombineModeRGB) {
+   switch(texUnit->Combine.ModeRGB) {
    case GL_REPLACE: 
       blendop = TEXBLENDOP_ARG1;
       break;
@@ -1067,7 +1067,7 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
 
    blendop |= (rgb_shift << TEXOP_SCALE_SHIFT);
 
-   switch(texUnit->CombineModeA) {
+   switch(texUnit->Combine.ModeA) {
    case GL_REPLACE: 
       ablendop = TEXBLENDOP_ARG1;
       break;
@@ -1090,8 +1090,8 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
       return;
    }
 
-   if ( (texUnit->CombineModeRGB == GL_DOT3_RGBA_EXT)
-	|| (texUnit->CombineModeRGB == GL_DOT3_RGBA) ) {
+   if ( (texUnit->Combine.ModeRGB == GL_DOT3_RGBA_EXT)
+	|| (texUnit->Combine.ModeRGB == GL_DOT3_RGBA) ) {
       ablendop = TEXBLENDOP_DOT3;
    }
 
@@ -1099,7 +1099,7 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
 
    /* Handle RGB args */
    for(i = 0; i < 3; i++) {
-      switch(texUnit->CombineSourceRGB[i]) {
+      switch(texUnit->Combine.SourceRGB[i]) {
       case GL_TEXTURE: 
 	 args_RGB[i] = texel_op;
 	 break;
@@ -1117,7 +1117,7 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
 	 
       }
 
-      switch(texUnit->CombineOperandRGB[i]) {
+      switch(texUnit->Combine.OperandRGB[i]) {
       case GL_SRC_COLOR: 
 	 args_RGB[i] |= 0;
 	 break;
@@ -1138,7 +1138,7 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
 
    /* Handle A args */
    for(i = 0; i < 3; i++) {
-      switch(texUnit->CombineSourceA[i]) {
+      switch(texUnit->Combine.SourceA[i]) {
       case GL_TEXTURE: 
 	 args_A[i] = texel_op;
 	 break;
@@ -1156,7 +1156,7 @@ static void i830SetTexEnvCombine(i830ContextPtr imesa,
 	 
       }
 
-      switch(texUnit->CombineOperandA[i]) {
+      switch(texUnit->Combine.OperandA[i]) {
       case GL_SRC_ALPHA: 
 	 args_A[i] |= 0;
 	 break;

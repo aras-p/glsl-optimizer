@@ -52,7 +52,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
    int args[3];
    int i;
 
-   switch (texUnit->CombineModeRGB) {
+   switch (texUnit->Combine.ModeRGB) {
    case GL_REPLACE:
       numColorArgs = 1;
       break;
@@ -72,7 +72,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       return GL_FALSE;
    }
 
-   switch (texUnit->CombineModeA) {
+   switch (texUnit->Combine.ModeA) {
    case GL_REPLACE:
       numAlphaArgs = 1;
       break;
@@ -97,7 +97,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
    }
 
    for (i = 0;i < numColorArgs; i++) {
-      switch (texUnit->CombineSourceRGB[i]) {
+      switch (texUnit->Combine.SourceRGB[i]) {
       case GL_TEXTURE:
          arg1[i] |= 0;
          arg2[i] |= ARG_DISABLE;
@@ -181,11 +181,11 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          return GL_FALSE;
       }
 
-      switch (texUnit->CombineOperandRGB[i]) {
+      switch (texUnit->Combine.OperandRGB[i]) {
       case GL_SRC_COLOR:
          arg1[i] |= 0;
          arg2[i] |= 0;
-         if (texUnit->CombineSourceRGB[i] == GL_CONSTANT &&
+         if (texUnit->Combine.SourceRGB[i] == GL_CONSTANT &&
              RGBA_EQUAL( mmesa->envcolor[source] )) {
             alpha[i] |= 0;
          } else {
@@ -195,7 +195,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       case GL_ONE_MINUS_SRC_COLOR:
          arg1[i] |= TD0_color_arg1_inv_enable;
          arg2[i] |= TD0_color_arg2_inv_enable;
-         if (texUnit->CombineSourceRGB[i] == GL_CONSTANT &&
+         if (texUnit->Combine.SourceRGB[i] == GL_CONSTANT &&
              RGBA_EQUAL( mmesa->envcolor[source] )) {
             alpha[i] |= (TD0_color_alpha1inv_enable |
                          TD0_color_alpha2inv_enable);
@@ -219,7 +219,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       }
    }
 
-   switch (texUnit->CombineModeRGB) {
+   switch (texUnit->Combine.ModeRGB) {
    case GL_MODULATE_ADD_ATI:
    case GL_MODULATE_SIGNED_ADD_ATI:
       /* Special handling for ATI_texture_env_combine3.
@@ -302,12 +302,12 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          args[0] = MGA_ARG1; args[1] = MGA_ARG2; args[2] = MGA_ALPHA;
       } else
       if ((arg1[1] | arg2[0] | alpha[2]) != ARG_DISABLE &&
-          texUnit->CombineModeRGB != GL_MODULATE_SUBTRACT_ATI) {
+          texUnit->Combine.ModeRGB != GL_MODULATE_SUBTRACT_ATI) {
          *reg |= arg1[1] | arg2[0] | alpha[2];
          args[0] = MGA_ARG2; args[1] = MGA_ARG1; args[2] = MGA_ALPHA;
       } else
       if ((arg1[1] | arg2[2] | alpha[0]) != ARG_DISABLE &&
-          texUnit->CombineModeRGB != GL_MODULATE_SUBTRACT_ATI) {
+          texUnit->Combine.ModeRGB != GL_MODULATE_SUBTRACT_ATI) {
          *reg |= arg1[1] | arg2[2] | alpha[0];
          args[0] = MGA_ALPHA; args[1] = MGA_ARG1; args[2] = MGA_ARG2;
       } else
@@ -328,9 +328,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       }
    }
 
-   switch (texUnit->CombineModeRGB) {
+   switch (texUnit->Combine.ModeRGB) {
    case GL_REPLACE:
-      if (texUnit->CombineScaleShiftRGB) {
+      if (texUnit->Combine.ScaleShiftRGB) {
          return GL_FALSE;
       }
 
@@ -344,9 +344,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       }
       break;
    case GL_MODULATE:
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_modbright_2x;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          *reg |= TD0_color_modbright_4x;
       }
 
@@ -368,9 +368,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          /* Can't get alpha to the adder */
          return GL_FALSE;
       }
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_add2x_enable;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          return GL_FALSE;
       }
 
@@ -382,9 +382,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          /* Only alpha can function as Arg2 */
          return GL_FALSE;
       }
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_add2x_enable;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          return GL_FALSE;
       }
 
@@ -422,9 +422,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          /* Can't get alpha to the adder */
          return GL_FALSE;
       }
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_add2x_enable;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          return GL_FALSE;
       }
 
@@ -445,9 +445,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          /* Can't get alpha to the adder */
          return GL_FALSE;
       }
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_add2x_enable;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          return GL_FALSE;
       }
 
@@ -487,9 +487,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          /* Can't swap arguments */
          return GL_FALSE;
       }
-      if (texUnit->CombineScaleShiftRGB == 1) {
+      if (texUnit->Combine.ScaleShiftRGB == 1) {
          *reg |= TD0_color_add2x_enable;
-      } else if (texUnit->CombineScaleShiftRGB == 2) {
+      } else if (texUnit->Combine.ScaleShiftRGB == 2) {
          return GL_FALSE;
       }
 
@@ -515,7 +515,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
    }
 
    for (i = 0; i < numAlphaArgs; i++) {
-      switch (texUnit->CombineSourceA[i]) {
+      switch (texUnit->Combine.SourceA[i]) {
       case GL_TEXTURE:
          arg1[i] |= 0;
          arg2[i] |= ARG_DISABLE;
@@ -589,7 +589,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          return GL_FALSE;
       }
 
-      switch (texUnit->CombineOperandA[i]) {
+      switch (texUnit->Combine.OperandA[i]) {
       case GL_SRC_ALPHA:
          arg1[i] |= 0;
          arg2[i] |= 0;
@@ -614,9 +614,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       return GL_FALSE;
    }
 
-   switch (texUnit->CombineModeA) {
+   switch (texUnit->Combine.ModeA) {
    case GL_REPLACE:
-      if (texUnit->CombineScaleShiftA) {
+      if (texUnit->Combine.ScaleShiftA) {
          return GL_FALSE;
       }
 
@@ -627,9 +627,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       }
       break;
    case GL_MODULATE:
-      if (texUnit->CombineScaleShiftA == 1) {
+      if (texUnit->Combine.ScaleShiftA == 1) {
          *reg |= TD0_alpha_modbright_2x;
-      } else if (texUnit->CombineScaleShiftA == 2) {
+      } else if (texUnit->Combine.ScaleShiftA == 2) {
          *reg |= TD0_alpha_modbright_4x;
       }
 
@@ -639,9 +639,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       *reg |= TD0_alpha_addbias_enable;
       /* fallthrough */
    case GL_ADD:
-      if (texUnit->CombineScaleShiftA == 1) {
+      if (texUnit->Combine.ScaleShiftA == 1) {
          *reg |= TD0_alpha_add2x_enable;
-      } else if (texUnit->CombineScaleShiftA == 2) {
+      } else if (texUnit->Combine.ScaleShiftA == 2) {
          return GL_FALSE;
       }
 
@@ -649,9 +649,9 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
                TD0_alpha_sel_add);
       break;
    case GL_SUBTRACT:
-      if (texUnit->CombineScaleShiftA == 1) {
+      if (texUnit->Combine.ScaleShiftA == 1) {
          *reg |= TD0_alpha_add2x_enable;
-      } else if (texUnit->CombineScaleShiftA == 2) {
+      } else if (texUnit->Combine.ScaleShiftA == 2) {
          return GL_FALSE;
       }
 

@@ -3113,7 +3113,9 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
 /**
  * Do texture application for GL_ARB/EXT_texture_env_combine.
  * This function also supports GL_{EXT,ARB}_texture_env_dot3 and
- * GL_ATI_texture_env_combine3
+ * GL_ATI_texture_env_combine3.  Since "classic" texture environments are
+ * implemented using GL_ARB_texture_env_combine-like state, this same function
+ * is used for classic texture environment application as well.
  *
  * \param ctx          rendering context
  * \param textureUnit  the texture unit to apply
@@ -3132,8 +3134,8 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
    const GLchan (*argRGB [3])[4];
    const GLchan (*argA [3])[4];
-   const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
-   const GLuint Ashift   = textureUnit->CombineScaleShiftA;
+   const GLuint RGBshift = textureUnit->_CurrentCombine->ScaleShiftRGB;
+   const GLuint Ashift   = textureUnit->_CurrentCombine->ScaleShiftA;
 #if CHAN_TYPE == GL_FLOAT
    const GLchan RGBmult = (GLfloat) (1 << RGBshift);
    const GLchan Amult = (GLfloat) (1 << Ashift);
@@ -3159,67 +3161,22 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
    /*
    printf("modeRGB 0x%x  modeA 0x%x  srcRGB1 0x%x  srcA1 0x%x  srcRGB2 0x%x  srcA2 0x%x\n",
-          textureUnit->CombineModeRGB,
-          textureUnit->CombineModeA,
-          textureUnit->CombineSourceRGB[0],
-          textureUnit->CombineSourceA[0],
-          textureUnit->CombineSourceRGB[1],
-          textureUnit->CombineSourceA[1]);
+          textureUnit->_CurrentCombine->ModeRGB,
+          textureUnit->_CurrentCombine->ModeA,
+          textureUnit->_CurrentCombine->SourceRGB[0],
+          textureUnit->_CurrentCombine->SourceA[0],
+          textureUnit->_CurrentCombine->SourceRGB[1],
+          textureUnit->_CurrentCombine->SourceA[1]);
    */
 
    /*
     * Do operand setup for up to 3 operands.  Loop over the terms.
     */
-   switch (textureUnit->CombineModeRGB) {
-      case GL_REPLACE:
-	 numColorArgs = 1;
-	 break;
-      case GL_MODULATE:
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-      case GL_SUBTRACT:
-      case GL_DOT3_RGB:
-      case GL_DOT3_RGBA:
-      case GL_DOT3_RGB_EXT:
-      case GL_DOT3_RGBA_EXT:
-	 numColorArgs = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 numColorArgs = 3;
-	 break;
-      default:
-	 numColorArgs = 0;
-	 ASSERT(0);
-	 break;
-   }
-
-   switch (textureUnit->CombineModeA) {
-      case GL_REPLACE:
-	 numAlphaArgs = 1;
-	 break;
-      case GL_MODULATE:
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-      case GL_SUBTRACT:
-	 numAlphaArgs = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 numAlphaArgs = 3;
-	 break;
-      default:
-	 numAlphaArgs = 0;
-	 ASSERT(0);
-	 break;
-   }
+   numColorArgs = textureUnit->_CurrentCombine->_NumArgsRGB;
+   numAlphaArgs = textureUnit->_CurrentCombine->_NumArgsA;
 
    for (j = 0; j < numColorArgs; j++) {
-      const GLenum srcRGB = textureUnit->CombineSourceRGB[j];
+      const GLenum srcRGB = textureUnit->_CurrentCombine->SourceRGB[j];
 
 
       switch (srcRGB) {
@@ -3270,21 +3227,21 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             }
       }
 
-      if (textureUnit->CombineOperandRGB[j] != GL_SRC_COLOR) {
+      if (textureUnit->_CurrentCombine->OperandRGB[j] != GL_SRC_COLOR) {
          const GLchan (*src)[4] = argRGB[j];
          GLchan (*dst)[4] = ccolor[j];
 
          /* point to new arg[j] storage */
          argRGB[j] = (const GLchan (*)[4]) ccolor[j];
 
-         if (textureUnit->CombineOperandRGB[j] == GL_ONE_MINUS_SRC_COLOR) {
+         if (textureUnit->_CurrentCombine->OperandRGB[j] == GL_ONE_MINUS_SRC_COLOR) {
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = CHAN_MAX - src[i][RCOMP];
                dst[i][GCOMP] = CHAN_MAX - src[i][GCOMP];
                dst[i][BCOMP] = CHAN_MAX - src[i][BCOMP];
             }
          }
-         else if (textureUnit->CombineOperandRGB[j] == GL_SRC_ALPHA) {
+         else if (textureUnit->_CurrentCombine->OperandRGB[j] == GL_SRC_ALPHA) {
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = src[i][ACOMP];
                dst[i][GCOMP] = src[i][ACOMP];
@@ -3292,7 +3249,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             }
          }
          else {
-            ASSERT(textureUnit->CombineOperandRGB[j] ==GL_ONE_MINUS_SRC_ALPHA);
+            ASSERT(textureUnit->_CurrentCombine->OperandRGB[j] ==GL_ONE_MINUS_SRC_ALPHA);
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = CHAN_MAX - src[i][ACOMP];
                dst[i][GCOMP] = CHAN_MAX - src[i][ACOMP];
@@ -3304,7 +3261,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
 
    for (j = 0; j < numAlphaArgs; j++) {
-      const GLenum srcA = textureUnit->CombineSourceA[j];
+      const GLenum srcA = textureUnit->_CurrentCombine->SourceA[j];
 
       switch (srcA) {
          case GL_TEXTURE:
@@ -3346,7 +3303,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             }
       }
 
-      if (textureUnit->CombineOperandA[j] == GL_ONE_MINUS_SRC_ALPHA) {
+      if (textureUnit->_CurrentCombine->OperandA[j] == GL_ONE_MINUS_SRC_ALPHA) {
          const GLchan (*src)[4] = argA[j];
          GLchan (*dst)[4] = ccolor[j];
          argA[j] = (const GLchan (*)[4]) ccolor[j];
@@ -3359,7 +3316,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    /*
     * Do the texture combine.
     */
-   switch (textureUnit->CombineModeRGB) {
+   switch (textureUnit->_CurrentCombine->ModeRGB) {
       case GL_REPLACE:
          {
             const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
@@ -3651,7 +3608,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          _mesa_problem(ctx, "invalid combine mode");
    }
 
-   switch (textureUnit->CombineModeA) {
+   switch (textureUnit->_CurrentCombine->ModeA) {
       case GL_REPLACE:
          {
             const GLchan (*arg0)[4] = (const GLchan (*)[4]) argA[0];
@@ -3823,8 +3780,8 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
     * were written such that the GL_COMBINE_ALPHA value could be set to
     * GL_DOT3.
     */
-   if (textureUnit->CombineModeRGB == GL_DOT3_RGBA_EXT ||
-       textureUnit->CombineModeRGB == GL_DOT3_RGBA) {
+   if (textureUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT ||
+       textureUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) {
       for (i = 0; i < n; i++) {
 	 rgba[i][ACOMP] = rgba[i][RCOMP];
       }
@@ -3832,20 +3789,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    UNDEFARRAY(ccolor);  /* mac 32k limitation */
 }
 #undef PROD
-
-
-/**
- * Implement NVIDIA's GL_NV_texture_env_combine4 extension when
- * texUnit->EnvMode == GL_COMBINE4_NV.
- */
-static INLINE void
-texture_combine4( const GLcontext *ctx, GLuint unit, GLuint n,
-                  CONST GLchan (*primary_rgba)[4],
-                  CONST GLchan *texelBuffer,
-                  GLchan (*rgba)[4] )
-{
-}
-
 
 
 /**
@@ -4276,19 +4219,11 @@ _swrast_texture_span( GLcontext *ctx, struct sw_span *span )
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         if (texUnit->EnvMode == GL_COMBINE) {
-            /* GL_ARB/EXT_texture_env_combine */
+         if (texUnit->_CurrentCombine != &texUnit->_EnvMode ) {
             texture_combine( ctx, unit, span->end,
                              (CONST GLchan (*)[4]) primary_rgba,
                              swrast->TexelBuffer,
                              span->array->rgba );
-         }
-         else if (texUnit->EnvMode == GL_COMBINE4_NV) {
-            /* GL_NV_texture_env_combine4 */
-            texture_combine4( ctx, unit, span->end,
-                              (CONST GLchan (*)[4]) primary_rgba,
-                              swrast->TexelBuffer,
-                              span->array->rgba );
          }
          else {
             /* conventional texture blend */

@@ -782,8 +782,8 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
       const GLenum format = tObj->Image[0][tObj->BaseLevel]->Format;
       GLuint color_arg[3], alpha_arg[3];
       GLuint i, numColorArgs = 0, numAlphaArgs = 0;
-      GLuint RGBshift = texUnit->CombineScaleShiftRGB;
-      GLuint Ashift = texUnit->CombineScaleShiftA;
+      GLuint RGBshift = texUnit->Combine.ScaleShiftRGB;
+      GLuint Ashift = texUnit->Combine.ScaleShiftA;
 
       switch ( texUnit->EnvMode ) {
       case GL_REPLACE:
@@ -912,7 +912,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 /* Step 0:
 	  * Calculate how many arguments we need to process.
 	  */
-	 switch ( texUnit->CombineModeRGB ) {
+	 switch ( texUnit->Combine.ModeRGB ) {
 	 case GL_REPLACE:
 	    numColorArgs = 1;
 	    break;
@@ -936,7 +936,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	    return GL_FALSE;
 	 }
 
-	 switch ( texUnit->CombineModeA ) {
+	 switch ( texUnit->Combine.ModeA ) {
 	 case GL_REPLACE:
 	    numAlphaArgs = 1;
 	    break;
@@ -960,10 +960,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	  * Extract the color and alpha combine function arguments.
 	  */
 	 for ( i = 0 ; i < numColorArgs ; i++ ) {
-	    const GLuint op = texUnit->CombineOperandRGB[i] - GL_SRC_COLOR;
+	    const GLuint op = texUnit->Combine.OperandRGB[i] - GL_SRC_COLOR;
 	    assert(op >= 0);
 	    assert(op <= 3);
-	    switch ( texUnit->CombineSourceRGB[i] ) {
+	    switch ( texUnit->Combine.SourceRGB[i] ) {
 	    case GL_TEXTURE:
 	       color_arg[i] = radeon_texture_color[op][unit];
 	       break;
@@ -988,10 +988,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 }
 
 	 for ( i = 0 ; i < numAlphaArgs ; i++ ) {
-	    const GLuint op = texUnit->CombineOperandA[i] - GL_SRC_ALPHA;
+	    const GLuint op = texUnit->Combine.OperandA[i] - GL_SRC_ALPHA;
 	    assert(op >= 0);
 	    assert(op <= 1);
-	    switch ( texUnit->CombineSourceA[i] ) {
+	    switch ( texUnit->Combine.SourceA[i] ) {
 	    case GL_TEXTURE:
 	       alpha_arg[i] = radeon_texture_alpha[op][unit];
 	       break;
@@ -1018,7 +1018,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 /* Step 2:
 	  * Build up the color and alpha combine functions.
 	  */
-	 switch ( texUnit->CombineModeRGB ) {
+	 switch ( texUnit->Combine.ModeRGB ) {
 	 case GL_REPLACE:
 	    color_combine = (RADEON_COLOR_ARG_A_ZERO |
 			     RADEON_COLOR_ARG_B_ZERO |
@@ -1119,7 +1119,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	    return GL_FALSE;
 	 }
 
-	 switch ( texUnit->CombineModeA ) {
+	 switch ( texUnit->Combine.ModeA ) {
 	 case GL_REPLACE:
 	    alpha_combine = (RADEON_ALPHA_ARG_A_ZERO |
 			     RADEON_ALPHA_ARG_B_ZERO |
@@ -1191,8 +1191,8 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	    return GL_FALSE;
 	 }
 
-	 if ( (texUnit->CombineModeRGB == GL_DOT3_RGB_EXT)
-	      || (texUnit->CombineModeRGB == GL_DOT3_RGB) ) {
+	 if ( (texUnit->Combine.ModeRGB == GL_DOT3_RGB_EXT)
+	      || (texUnit->Combine.ModeRGB == GL_DOT3_RGB) ) {
 	    alpha_combine |= RADEON_DOT_ALPHA_DONT_REPLICATE;
 	 }
 

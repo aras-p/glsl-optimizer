@@ -652,38 +652,38 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       }
       if (ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine) {
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,
-                       unit->CombineModeRGB);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT,
-                       unit->CombineModeA);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT,
-                       unit->CombineSourceRGB[0]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT,
-                       unit->CombineSourceRGB[1]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_EXT,
-                       unit->CombineSourceRGB[2]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT,
-                       unit->CombineSourceA[0]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT,
-                       unit->CombineSourceA[1]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_EXT,
-                       unit->CombineSourceA[2]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT,
-                       unit->CombineOperandRGB[0]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT,
-                       unit->CombineOperandRGB[1]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_EXT,
-                       unit->CombineOperandRGB[2]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT,
-                       unit->CombineOperandA[0]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT,
-                       unit->CombineOperandA[1]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_EXT,
-                       unit->CombineOperandA[2]);
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT,
-                       1 << unit->CombineScaleShiftRGB);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB,
+                       unit->Combine.ModeRGB);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA,
+                       unit->Combine.ModeA);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB,
+                       unit->Combine.SourceRGB[0]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB,
+                       unit->Combine.SourceRGB[1]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB,
+                       unit->Combine.SourceRGB[2]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA,
+                       unit->Combine.SourceA[0]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA,
+                       unit->Combine.SourceA[1]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA,
+                       unit->Combine.SourceA[2]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB,
+                       unit->Combine.OperandRGB[0]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB,
+                       unit->Combine.OperandRGB[1]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB,
+                       unit->Combine.OperandRGB[2]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
+                       unit->Combine.OperandA[0]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA,
+                       unit->Combine.OperandA[1]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA,
+                       unit->Combine.OperandA[2]);
+         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE,
+                       1 << unit->Combine.ScaleShiftRGB);
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE,
-                       1 << unit->CombineScaleShiftA);
+                       1 << unit->Combine.ScaleShiftA);
       }
 
       /* Restore texture object state */
