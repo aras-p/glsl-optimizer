@@ -1,10 +1,10 @@
-/* $Id: convolve.c,v 1.18 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: convolve.c,v 1.19 2001/02/06 17:22:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1420,3 +1420,34 @@ _mesa_convolve_sep_image(const GLcontext *ctx,
          ;
    }
 }
+
+
+
+/*
+ * This function computes an image's size after convolution.
+ * If the convolution border mode is GL_REDUCE, the post-convolution
+ * image will be smaller than the original.
+ */
+void
+_mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
+                                   GLsizei *width, GLsizei *height)
+{
+   if (ctx->Pixel.Convolution1DEnabled
+       && dimensions == 1
+       && ctx->Pixel.ConvolutionBorderMode[0] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Convolution1D.Width, 1) - 1);
+   }
+   else if (ctx->Pixel.Convolution2DEnabled
+            && dimensions > 1
+            && ctx->Pixel.ConvolutionBorderMode[1] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Convolution2D.Width, 1) - 1);
+      *height = *height - (MAX2(ctx->Convolution2D.Height, 1) - 1);
+   }
+   else if (ctx->Pixel.Separable2DEnabled
+            && dimensions > 1
+            && ctx->Pixel.ConvolutionBorderMode[2] == GL_REDUCE) {
+      *width = *width - (MAX2(ctx->Separable2D.Width, 1) - 1);
+      *height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
+   }
+}
+

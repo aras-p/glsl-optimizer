@@ -1,10 +1,10 @@
-/* $Id: convolve.h,v 1.3 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: convolve.h,v 1.4 2001/02/06 17:22:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,6 +98,11 @@ extern void
 _mesa_convolve_sep_image(const GLcontext *ctx,
                          GLsizei *width, GLsizei *height,
                          const GLfloat *srcImage, GLfloat *dstImage);
+
+
+extern void
+_mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
+                                   GLsizei *width, GLsizei *height);
 
 
 #endif
