@@ -8,9 +8,14 @@ INCDIR = $(TOP)/include
 LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME) $(LIB_DIR)/$(GLUT_LIB_NAME)
 
 PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
-	font line logo nurb oglinfo olympic overlay point prim quad select \
+	font line logo nurb olympic overlay point prim quad select \
 	shape sphere star stencil stretch texture tri wave
 
+ifeq ($(CONFIG_NAME), beos)
+	LIB_DEP = $(APP_LIB_DEPS)
+else
+	PROGS += oglinfo
+endif
 
 ##### RULES #####
 
