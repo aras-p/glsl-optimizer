@@ -78,6 +78,8 @@ extern void _tnl_generic_attr_table_init( attrfv_func (*tab)[4] );
  */
 extern void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen );
 
+extern void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx );
+
 
 
 

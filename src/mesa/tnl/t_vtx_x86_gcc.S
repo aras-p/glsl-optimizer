@@ -31,10 +31,24 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #if defined(USE_X86_ASM) && !defined(HAVE_NONSTANDARD_GLAPIENTRY)
-			
+
+#if !defined (__DJGPP__)
+
 #define GLOBL( x )	\
 .globl x;		\
 x:
+
+#define EXTRN( x )	x
+
+#else  /* defined(__DJGPP__) */
+
+#define GLOBL( x )	\
+.globl _##x;		\
+_##x:
+
+#define EXTRN( x )	_##x
+
+#endif /* defined(__DJGPP__) */
 
 .data
 .align 4
@@ -47,6 +61,10 @@ x:
 #define SUBST( x ) (0x10101010 + x)	
 	
 
+
+// [dBorca] TODO
+// Unfold functions for each vertex size?
+// Build super-specialized MMX/SSE versions?
 
 GLOBL ( _x86_Vertex1fv )
 	movl    4(%esp), %ecx	
@@ -217,9 +235,9 @@ GLOBL( _x86_choose_fv)
 	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
 	movl	$SUBST(0), (%esp)	// arg 0 - attrib
 	movl	$SUBST(1), 4(%esp)	// arg 1 - N
-	call    _do_choose	// new function returned in %eax
-	add     $12, %esp	// tear down stack frame
-	jmp     *%eax		// jump to new func
+	call    EXTRN(_do_choose)	// new function returned in %eax
+	add     $12, %esp		// tear down stack frame
+	jmp     *%eax			// jump to new func
 GLOBL ( _x86_choosefv_end )
 	
 	
@@ -251,7 +269,7 @@ GLOBL( _x86_dispatch_attrf )
 	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
 	leal	16(%esp), %edx	// address of first float on stack
 	movl	%edx, (%esp)	// save as 'v'
-	call	SUBST(0)	// 0x0 --> tabfv[attr][n]
+	call	*SUBST(0)	// 0x0 --> tabfv[attr][n]
 	addl	$12, %esp	// tear down frame
 	ret			// return
 GLOBL( _x86_dispatch_attrf_end )
@@ -259,7 +277,7 @@ GLOBL( _x86_dispatch_attrf_end )
 // The fv case is simpler:
 // 
 GLOBL( _x86_dispatch_attrfv )
-	jmp	SUBST(0)	// 0x0 --> tabfv[attr][n]
+	jmp	*SUBST(0)	// 0x0 --> tabfv[attr][n]
 GLOBL( _x86_dispatch_attrfv_end )
 
 
@@ -294,7 +312,7 @@ GLOBL( _x86_dispatch_vertexattribf )
 	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	cmovge	%ecx, %eax
+	cmovge	%ecx, %eax	// [dBorca] BADBAD! might not be supported
 	leal	8(%esp), %ecx	// calculate 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
@@ -305,7 +323,7 @@ GLOBL( _x86_dispatch_vertexattribfv )
 	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	cmovge	%ecx, %eax
+	cmovge	%ecx, %eax	// [dBorca] BADBAD! might not be supported
 	movl	8(%esp), %ecx	// load 'v'
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax

@@ -59,8 +59,6 @@ EXTERN( _x86_Vertex2fv );
 EXTERN( _x86_Vertex3fv );
 EXTERN( _x86_Vertex4fv );
 
-/* None of these used yet:
- */
 EXTERN( _x86_dispatch_attrf );
 EXTERN( _x86_dispatch_attrfv );
 EXTERN( _x86_dispatch_multitexcoordf );
@@ -258,6 +256,77 @@ void _tnl_InitX86Codegen( struct _tnl_dynfn_generators *gen )
 
 void _do_choose( void )
 {
+}
+
+
+/* [dBorca] I purposely avoided one single macro, since they might need to
+ * be handled in different ways. Ohwell, once things get much clearer, they
+ * could collapse...
+ */
+#define MAKE_DISPATCH_ATTR(FUNC, SIZE, TYPE, ATTR)			\
+do {									\
+   char *code;								\
+   char *start = (char *)&_x86_dispatch_attr##TYPE;			\
+   char *end = (char *)&_x86_dispatch_attr##TYPE##_end;			\
+   int offset = 0;							\
+   code = ALIGN_MALLOC( end - start, 16 );				\
+   memcpy (code, start, end - start);					\
+   FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[ATTR][SIZE-1]));\
+   vfmt->FUNC##SIZE##TYPE = code;					\
+} while (0)
+
+
+#define MAKE_DISPATCH_MULTITEXCOORD(FUNC, SIZE, TYPE, ATTR)		\
+do {									\
+   char *code;								\
+   char *start = (char *)&_x86_dispatch_multitexcoord##TYPE;		\
+   char *end = (char *)&_x86_dispatch_multitexcoord##TYPE##_end;	\
+   int offset = 0;							\
+   code = ALIGN_MALLOC( end - start, 16 );				\
+   memcpy (code, start, end - start);					\
+   FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[_TNL_ATTRIB_TEX0][SIZE-1]));\
+   vfmt->FUNC##SIZE##TYPE##ARB = code;					\
+} while (0)
+
+
+#define MAKE_DISPATCH_VERTEXATTRIB(FUNC, SIZE, TYPE, ATTR)		\
+do {									\
+   char *code;								\
+   char *start = (char *)&_x86_dispatch_vertexattrib##TYPE;		\
+   char *end = (char *)&_x86_dispatch_vertexattrib##TYPE##_end;		\
+   int offset = 0;							\
+   code = ALIGN_MALLOC( end - start, 16 );				\
+   memcpy (code, start, end - start);					\
+   FIXUP(code, 0, 0, (int)&(TNL_CONTEXT(ctx)->vtx.tabfv[0][SIZE-1]));	\
+   vfmt->FUNC##SIZE##TYPE##NV = code;					\
+} while (0)
+
+/* [dBorca] Install the codegen'ed versions of the 2nd level dispatch
+ * functions.  We should keep a list and free them in the end...
+ */
+void _tnl_x86_exec_vtxfmt_init( GLcontext *ctx )
+{
+   GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->exec_vtxfmt);
+
+   MAKE_DISPATCH_ATTR(Color,3,f,     _TNL_ATTRIB_COLOR0);
+   MAKE_DISPATCH_ATTR(Color,3,fv,    _TNL_ATTRIB_COLOR0);
+   MAKE_DISPATCH_ATTR(Color,4,f,     _TNL_ATTRIB_COLOR0);
+   MAKE_DISPATCH_ATTR(Color,4,fv,    _TNL_ATTRIB_COLOR0);
+   MAKE_DISPATCH_ATTR(Normal,3,f,    _TNL_ATTRIB_NORMAL);
+   MAKE_DISPATCH_ATTR(Normal,3,fv,   _TNL_ATTRIB_NORMAL);
+   MAKE_DISPATCH_ATTR(TexCoord,2,f,  _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(TexCoord,2,fv, _TNL_ATTRIB_TEX0);
+   MAKE_DISPATCH_ATTR(Vertex,3,f,    _TNL_ATTRIB_POS);
+   MAKE_DISPATCH_ATTR(Vertex,3,fv,   _TNL_ATTRIB_POS);
+   /* just add more */
+
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,f,  0);
+   MAKE_DISPATCH_MULTITEXCOORD(MultiTexCoord,2,fv, 0);
+   /* just add more */
+
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,f,  0);
+   MAKE_DISPATCH_VERTEXATTRIB(VertexAttrib,2,fv, 0);
+   /* just add more */
 }
 
 #else 

@@ -901,6 +901,7 @@ void _tnl_vtx_init( GLcontext *ctx )
    _tnl_current_init( ctx );
    _tnl_exec_vtxfmt_init( ctx );
    _tnl_generic_exec_vtxfmt_init( ctx );
+   _tnl_x86_exec_vtxfmt_init( ctx ); /* [dBorca] x86 DISPATCH_ATTRFV */
 
    _mesa_install_exec_vtxfmt( ctx, &tnl->exec_vtxfmt );
 

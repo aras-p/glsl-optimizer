@@ -409,8 +409,7 @@ static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index,
 
 
 /* Install the generic versions of the 2nd level dispatch functions.
- * There's currently no codegen alternative to these, though one is in
- * the works.
+ * [dBorca] Some of these have a codegen alternative.
  */
 void _tnl_generic_exec_vtxfmt_init( GLcontext *ctx )
 {
