@@ -584,86 +584,70 @@ struct _glapi_table
    void (*SecondaryColor3usEXT)(GLushort red, GLushort green, GLushort blue); /* 575 */
    void (*SecondaryColor3usvEXT)(const GLushort * v); /* 576 */
    void (*SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 577 */
-   void (*WindowPos2dARB)(GLdouble x, GLdouble y); /* 578 */
-   void (*WindowPos2fARB)(GLfloat x, GLfloat y); /* 579 */
-   void (*WindowPos2iARB)(GLint x, GLint y); /* 580 */
-   void (*WindowPos2sARB)(GLshort x, GLshort y); /* 581 */
-   void (*WindowPos2dvARB)(const GLdouble * p); /* 582 */
-   void (*WindowPos2fvARB)(const GLfloat * p); /* 583 */
-   void (*WindowPos2ivARB)(const GLint * p); /* 584 */
-   void (*WindowPos2svARB)(const GLshort * p); /* 585 */
-   void (*WindowPos3dARB)(GLdouble x, GLdouble y, GLdouble z); /* 586 */
-   void (*WindowPos3fARB)(GLfloat x, GLfloat y, GLfloat z); /* 587 */
-   void (*WindowPos3iARB)(GLint x, GLint y, GLint z); /* 588 */
-   void (*WindowPos3sARB)(GLshort x, GLshort y, GLshort z); /* 589 */
-   void (*WindowPos3dvARB)(const GLdouble * p); /* 590 */
-   void (*WindowPos3fvARB)(const GLfloat * p); /* 591 */
-   void (*WindowPos3ivARB)(const GLint * p); /* 592 */
-   void (*WindowPos3svARB)(const GLshort * p); /* 593 */
-   void (*BindProgramNV)(GLenum target, GLuint id); /* 594 */
-   void (*DeleteProgramsNV)(GLsizei n, const GLuint * ids); /* 595 */
-   void (*ExecuteProgramNV)(GLenum target, GLuint id, const GLfloat * params); /* 596 */
-   void (*GenProgramsNV)(GLsizei n, GLuint * ids); /* 597 */
-   GLboolean (*AreProgramsResidentNV)(GLsizei n, const GLuint * ids, GLboolean * residences); /* 598 */
-   void (*RequestResidentProgramsNV)(GLsizei n, const GLuint * ids); /* 599 */
-   void (*GetProgramParameterfvNV)(GLenum target, GLuint index, GLenum pname, GLfloat * params); /* 600 */
-   void (*GetProgramParameterdvNV)(GLenum target, GLuint index, GLenum pname, GLdouble * params); /* 601 */
-   void (*GetProgramivNV)(GLuint id, GLenum pname, GLint * params); /* 602 */
-   void (*GetProgramStringNV)(GLuint id, GLenum pname, GLubyte * program); /* 603 */
-   void (*GetTrackMatrixivNV)(GLenum target, GLuint address, GLenum pname, GLint * params); /* 604 */
-   void (*GetVertexAttribdvNV)(GLuint index, GLenum pname, GLdouble * params); /* 605 */
-   void (*GetVertexAttribfvNV)(GLuint index, GLenum pname, GLfloat * params); /* 606 */
-   void (*GetVertexAttribivNV)(GLuint index, GLenum pname, GLint * params); /* 607 */
-   void (*GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** pointer); /* 608 */
-   GLboolean (*IsProgramNV)(GLuint id); /* 609 */
-   void (*LoadProgramNV)(GLenum target, GLuint id, GLsizei len, const GLubyte * program); /* 610 */
-   void (*ProgramParameter4fNV)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 611 */
-   void (*ProgramParameter4dNV)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 612 */
-   void (*ProgramParameter4dvNV)(GLenum target, GLuint index, const GLdouble * params); /* 613 */
-   void (*ProgramParameter4fvNV)(GLenum target, GLuint index, const GLfloat * params); /* 614 */
-   void (*ProgramParameters4dvNV)(GLenum target, GLuint index, GLuint num, const GLdouble * params); /* 615 */
-   void (*ProgramParameters4fvNV)(GLenum target, GLuint index, GLuint num, const GLfloat * params); /* 616 */
-   void (*TrackMatrixNV)(GLenum target, GLuint address, GLenum matrix, GLenum transform); /* 617 */
-   void (*VertexAttribPointerNV)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 618 */
-   void (*VertexAttrib1sNV)(GLuint index, GLshort x); /* 619 */
-   void (*VertexAttrib1fNV)(GLuint index, GLfloat x); /* 620 */
-   void (*VertexAttrib1dNV)(GLuint index, GLdouble x); /* 621 */
-   void (*VertexAttrib2sNV)(GLuint index, GLshort x, GLshort y); /* 622 */
-   void (*VertexAttrib2fNV)(GLuint index, GLfloat x, GLfloat y); /* 623 */
-   void (*VertexAttrib2dNV)(GLuint index, GLdouble x, GLdouble y); /* 624 */
-   void (*VertexAttrib3sNV)(GLuint index, GLshort x, GLshort y, GLshort z); /* 625 */
-   void (*VertexAttrib3fNV)(GLuint index, GLfloat x, GLfloat y, GLfloat z); /* 626 */
-   void (*VertexAttrib3dNV)(GLuint index, GLdouble x, GLdouble y, GLdouble z); /* 627 */
-   void (*VertexAttrib4sNV)(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w); /* 628 */
-   void (*VertexAttrib4fNV)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 629 */
-   void (*VertexAttrib4dNV)(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 630 */
-   void (*VertexAttrib4ubNV)(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w); /* 631 */
-   void (*VertexAttrib1svNV)(GLuint index, const GLshort * v); /* 632 */
-   void (*VertexAttrib1fvNV)(GLuint index, const GLfloat * v); /* 633 */
-   void (*VertexAttrib1dvNV)(GLuint index, const GLdouble * v); /* 634 */
-   void (*VertexAttrib2svNV)(GLuint index, const GLshort * v); /* 635 */
-   void (*VertexAttrib2fvNV)(GLuint index, const GLfloat * v); /* 636 */
-   void (*VertexAttrib2dvNV)(GLuint index, const GLdouble * v); /* 637 */
-   void (*VertexAttrib3svNV)(GLuint index, const GLshort * v); /* 638 */
-   void (*VertexAttrib3fvNV)(GLuint index, const GLfloat * v); /* 639 */
-   void (*VertexAttrib3dvNV)(GLuint index, const GLdouble * v); /* 640 */
-   void (*VertexAttrib4svNV)(GLuint index, const GLshort * v); /* 641 */
-   void (*VertexAttrib4fvNV)(GLuint index, const GLfloat * v); /* 642 */
-   void (*VertexAttrib4dvNV)(GLuint index, const GLdouble * v); /* 643 */
-   void (*VertexAttrib4ubvNV)(GLuint index, const GLubyte * v); /* 644 */
-   void (*VertexAttribs1svNV)(GLuint index, GLsizei n, const GLshort * v); /* 645 */
-   void (*VertexAttribs1fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 646 */
-   void (*VertexAttribs1dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 647 */
-   void (*VertexAttribs2svNV)(GLuint index, GLsizei n, const GLshort * v); /* 648 */
-   void (*VertexAttribs2fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 649 */
-   void (*VertexAttribs2dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 650 */
-   void (*VertexAttribs3svNV)(GLuint index, GLsizei n, const GLshort * v); /* 651 */
-   void (*VertexAttribs3fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 652 */
-   void (*VertexAttribs3dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 653 */
-   void (*VertexAttribs4svNV)(GLuint index, GLsizei n, const GLshort * v); /* 654 */
-   void (*VertexAttribs4fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 655 */
-   void (*VertexAttribs4dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 656 */
-   void (*VertexAttribs4ubvNV)(GLuint index, GLsizei n, const GLubyte * v); /* 657 */
+   GLboolean (*AreProgramsResidentNV)(GLsizei n, const GLuint * ids, GLboolean * residences); /* 578 */
+   void (*BindProgramNV)(GLenum target, GLuint id); /* 579 */
+   void (*DeleteProgramsNV)(GLsizei n, const GLuint * ids); /* 580 */
+   void (*ExecuteProgramNV)(GLenum target, GLuint id, const GLfloat * params); /* 581 */
+   void (*GenProgramsNV)(GLsizei n, GLuint * ids); /* 582 */
+   void (*GetProgramParameterdvNV)(GLenum target, GLuint index, GLenum pname, GLdouble * params); /* 583 */
+   void (*GetProgramParameterfvNV)(GLenum target, GLuint index, GLenum pname, GLfloat * params); /* 584 */
+   void (*GetProgramivNV)(GLuint id, GLenum pname, GLint * params); /* 585 */
+   void (*GetProgramStringNV)(GLuint id, GLenum pname, GLubyte * program); /* 586 */
+   void (*GetTrackMatrixivNV)(GLenum target, GLuint address, GLenum pname, GLint * params); /* 587 */
+   void (*GetVertexAttribdvNV)(GLuint index, GLenum pname, GLdouble * params); /* 588 */
+   void (*GetVertexAttribfvNV)(GLuint index, GLenum pname, GLfloat * params); /* 589 */
+   void (*GetVertexAttribivNV)(GLuint index, GLenum pname, GLint * params); /* 590 */
+   void (*GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** pointer); /* 591 */
+   GLboolean (*IsProgramNV)(GLuint id); /* 592 */
+   void (*LoadProgramNV)(GLenum target, GLuint id, GLsizei len, const GLubyte * program); /* 593 */
+   void (*ProgramParameter4dNV)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 594 */
+   void (*ProgramParameter4dvNV)(GLenum target, GLuint index, const GLdouble * params); /* 595 */
+   void (*ProgramParameter4fNV)(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 596 */
+   void (*ProgramParameter4fvNV)(GLenum target, GLuint index, const GLfloat * params); /* 597 */
+   void (*ProgramParameters4dvNV)(GLenum target, GLuint index, GLuint num, const GLdouble * params); /* 598 */
+   void (*ProgramParameters4fvNV)(GLenum target, GLuint index, GLuint num, const GLfloat * params); /* 599 */
+   void (*RequestResidentProgramsNV)(GLsizei n, const GLuint * ids); /* 600 */
+   void (*TrackMatrixNV)(GLenum target, GLuint address, GLenum matrix, GLenum transform); /* 601 */
+   void (*VertexAttribPointerNV)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 602 */
+   void (*VertexAttrib1dNV)(GLuint index, GLdouble x); /* 603 */
+   void (*VertexAttrib1dvNV)(GLuint index, const GLdouble * v); /* 604 */
+   void (*VertexAttrib1fNV)(GLuint index, GLfloat x); /* 605 */
+   void (*VertexAttrib1fvNV)(GLuint index, const GLfloat * v); /* 606 */
+   void (*VertexAttrib1sNV)(GLuint index, GLshort x); /* 607 */
+   void (*VertexAttrib1svNV)(GLuint index, const GLshort * v); /* 608 */
+   void (*VertexAttrib2dNV)(GLuint index, GLdouble x, GLdouble y); /* 609 */
+   void (*VertexAttrib2dvNV)(GLuint index, const GLdouble * v); /* 610 */
+   void (*VertexAttrib2fNV)(GLuint index, GLfloat x, GLfloat y); /* 611 */
+   void (*VertexAttrib2fvNV)(GLuint index, const GLfloat * v); /* 612 */
+   void (*VertexAttrib2sNV)(GLuint index, GLshort x, GLshort y); /* 613 */
+   void (*VertexAttrib2svNV)(GLuint index, const GLshort * v); /* 614 */
+   void (*VertexAttrib3dNV)(GLuint index, GLdouble x, GLdouble y, GLdouble z); /* 615 */
+   void (*VertexAttrib3dvNV)(GLuint index, const GLdouble * v); /* 616 */
+   void (*VertexAttrib3fNV)(GLuint index, GLfloat x, GLfloat y, GLfloat z); /* 617 */
+   void (*VertexAttrib3fvNV)(GLuint index, const GLfloat * v); /* 618 */
+   void (*VertexAttrib3sNV)(GLuint index, GLshort x, GLshort y, GLshort z); /* 619 */
+   void (*VertexAttrib3svNV)(GLuint index, const GLshort * v); /* 620 */
+   void (*VertexAttrib4dNV)(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 621 */
+   void (*VertexAttrib4dvNV)(GLuint index, const GLdouble * v); /* 622 */
+   void (*VertexAttrib4fNV)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w); /* 623 */
+   void (*VertexAttrib4fvNV)(GLuint index, const GLfloat * v); /* 624 */
+   void (*VertexAttrib4sNV)(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w); /* 625 */
+   void (*VertexAttrib4svNV)(GLuint index, const GLshort * v); /* 626 */
+   void (*VertexAttrib4ubNV)(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w); /* 627 */
+   void (*VertexAttrib4ubvNV)(GLuint index, const GLubyte * v); /* 628 */
+   void (*VertexAttribs1dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 629 */
+   void (*VertexAttribs1fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 630 */
+   void (*VertexAttribs1svNV)(GLuint index, GLsizei n, const GLshort * v); /* 631 */
+   void (*VertexAttribs2dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 632 */
+   void (*VertexAttribs2fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 633 */
+   void (*VertexAttribs2svNV)(GLuint index, GLsizei n, const GLshort * v); /* 634 */
+   void (*VertexAttribs3dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 635 */
+   void (*VertexAttribs3fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 636 */
+   void (*VertexAttribs3svNV)(GLuint index, GLsizei n, const GLshort * v); /* 637 */
+   void (*VertexAttribs4dvNV)(GLuint index, GLsizei n, const GLdouble * v); /* 638 */
+   void (*VertexAttribs4fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 639 */
+   void (*VertexAttribs4svNV)(GLuint index, GLsizei n, const GLshort * v); /* 640 */
+   void (*VertexAttribs4ubvNV)(GLuint index, GLsizei n, const GLubyte * v); /* 641 */
 };
 
 #endif
