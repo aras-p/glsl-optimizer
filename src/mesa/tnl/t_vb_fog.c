@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,8 +82,15 @@ static void init_static_data( void )
 }
 
 
-static void make_win_fog_coords( GLcontext *ctx, GLvector4f *out,
-				 const GLvector4f *in )
+/**
+ * Compute per-vertex fog blend factors from fog coordinates by
+ * evaluating the GL_LINEAR, GL_EXP or GL_EXP2 fog function.
+ * Fog coordinates are distances from the eye (typically between the
+ * near and far clip plane distances).
+ * Fog blend factors are in the range [0,1].
+ */
+static void compute_fog_blend_factors( GLcontext *ctx, GLvector4f *out,
+                                       const GLvector4f *in )
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat *v = in->start;
@@ -184,7 +190,8 @@ static GLboolean run_fog_stage( GLcontext *ctx,
       VB->FogCoordPtr = &store->fogcoord;
    }
 
-   make_win_fog_coords( ctx, VB->FogCoordPtr, input );
+   /* compute blend factors from fog coordinates */
+   compute_fog_blend_factors( ctx, VB->FogCoordPtr, input );
 
    VB->AttribPtr[_TNL_ATTRIB_FOG] = VB->FogCoordPtr;
    return GL_TRUE;
