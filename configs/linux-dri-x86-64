@@ -1,40 +1,20 @@
 # -*-makefile-*-
 # Configuration for linux-dri: Linux DRI hardware drivers for XFree86 & others
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux-dri
 
 CONFIG_NAME = linux-dri-x86-64
 
-# Compiler and flags
-CC = gcc
-CXX = g++
-
-DEFINES = -DDRI_NEW_INTERFACE_ONLY -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS -D_GNU_SOURCE 
-
-CFLAGS = -m64 -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math $(DEFINES)
-CXXFLAGS = -m64 -Wall -g -ansi -pedantic -fPIC $(DEFINES)
-
-X11_INCLUDES = -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
-
-#ASM_SOURCES = $(X86_SOURCES)
+ARCH_FLAGS = -m64
 
 LIB_DIR = $(TOP)/lib64
 
 # Library/program dependencies
-DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl
-GL_LIB_DEPS = -L/usr/X11R6/lib64 -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib64 -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib64 -lXt -lX11
+EXTRA_LIB_PATH=-L/usr/X11R6/lib64
 
-# Directories
-SRC_DIRS = mesa glu glut/glx glw glx/x11
-DRIVER_DIRS = dri
-PROGRAM_DIRS = 
-WINDOW_SYSTEM=dri
-
-# ffb, gamma, and sis are missing because they have
-# not be converted to use the new interface.  Do i810 & i830 really
-# need to be included here?
+# ffb, gamma, and sis are missing because they have not be converted to use
+# the new interface.  i810 and i830 are missing because there is no x86-64
+# system where they could *ever* be used.
 #
-DRI_DIRS = dri_client i810 i830 i915 mach64 mga r128 r200 radeon tdfx unichrome savage
+DRI_DIRS = dri_client i915 mach64 mga r128 r200 radeon tdfx unichrome savage
 

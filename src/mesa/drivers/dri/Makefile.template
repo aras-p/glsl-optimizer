@@ -69,7 +69,7 @@ default: depend symlinks $(LIBNAME) $(LIB_DIR)/$(LIBNAME)
 
 $(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	rm -f $@ 
-	gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+	gcc $(ARCH_FLAGS) -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
 $(LIB_DIR)/$(LIBNAME): $(LIBNAME)
