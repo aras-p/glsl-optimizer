@@ -17,6 +17,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -35,6 +38,21 @@ static int Redraw = 0;
 static int Sides = 5;
 static int MinSides = 3;
 static int MaxSides = 20;
+
+
+/* return current time (in seconds) */
+static double
+current_time(void)
+{
+   struct timeval tv;
+#ifdef __VMS
+   (void) gettimeofday(&tv, NULL );
+#else
+   struct timezone tz;
+   (void) gettimeofday(&tv, &tz);
+#endif
+   return (double) tv.tv_sec + tv.tv_usec / 1000000.0;
+}
 
 
 /*
@@ -136,17 +154,6 @@ static void display(Display *dpy, Window win)
    glPopMatrix();
 
    glXSwapBuffers(dpy, win);
-}
-
-
-/*
- * Called when no events are pending.
- */
-static void idle(void)
-{
-   Xangle += 2.0;
-   Yangle += 3.3;
-   Redraw = 1;
 }
 
 
@@ -262,11 +269,15 @@ static void event_loop(Display *dpy, Window win)
          }
       }
       else {
-         idle();
-         if (Redraw) {
-            display(dpy, win);
-            Redraw = 0;
-         }
+         static double t0 = -1.0;
+         double dt, t = current_time();
+         if (t0 < 0.0)
+            t0 = t;
+         dt = t - t0;
+         Xangle += 90.0 * dt;  /* 90 degrees per second */
+         Yangle += 70.0 * dt;
+         t0 = t;
+         display(dpy, win);
       }
    }
 }
