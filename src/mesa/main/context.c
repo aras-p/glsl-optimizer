@@ -1,8 +1,8 @@
-/* $Id: context.c,v 1.188 2002/10/30 19:49:29 brianp Exp $ */
+/* $Id: context.c,v 1.189 2002/11/19 15:25:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -49,7 +49,9 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#if FEATURE_NV_vertex_program
 #include "vpstate.h"
+#endif
 #include "vtxfmt.h"
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
