@@ -64,7 +64,7 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
    }
    else {
       GLuint last_prim = tnl->vtx.prim[tnl->vtx.prim_count-1].mode;
-      GLuint last_count = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
+      GLuint last_count;
 
       if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
 	 GLint i = tnl->vtx.prim_count - 1;
@@ -73,6 +73,8 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
 				    tnl->vtx.counter) - 
 				   tnl->vtx.prim[i].start);
       }
+
+      last_count = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
 
       /* Execute the buffer and save copied vertices.
        */
