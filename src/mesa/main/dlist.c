@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.84 2001/12/19 02:36:05 brianp Exp $ */
+/* $Id: dlist.c,v 1.85 2002/04/02 16:15:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -6216,7 +6216,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
    table->GetCompressedTexImageARB = exec_GetCompressedTexImageARB;
 
-   /* ARB ??. GL_ARB_window_pos */
+   /* ARB 14. GL_ARB_point_parameters */
+   /* re-use EXT_point_parameters functions */
+
+   /* ARB 25. GL_ARB_window_pos */
    table->WindowPos2dARB = save_WindowPos2dARB;
    table->WindowPos2dvARB = save_WindowPos2dvARB;
    table->WindowPos2fARB = save_WindowPos2fARB;

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.71 2002/03/23 16:33:53 brianp Exp $ */
+/* $Id: extensions.c,v 1.72 2002/04/02 16:15:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,7 @@ static struct {
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
+   { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
@@ -142,6 +143,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_ARB_depth_texture",
       "GL_ARB_imaging",
       "GL_ARB_multitexture",
+      "GL_ARB_point_parameters",
       "GL_ARB_shadow",
       "GL_ARB_shadow_ambient",
       "GL_ARB_texture_border_clamp",
