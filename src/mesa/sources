@@ -23,6 +23,7 @@ MAIN_SOURCES = \
 	main/enums.c \
 	main/eval.c \
 	main/extensions.c \
+	main/fbobject.c \
 	main/feedback.c \
 	main/fog.c \
 	main/get.c \

@@ -38,6 +38,7 @@ SOURCES =accum.c \
 	enums.c \
 	eval.c \
 	extensions.c \
+	fbobject.c \
 	feedback.c \
 	fog.c \
 	get.c \
@@ -90,6 +91,7 @@ enable.obj,\
 enums.obj,\
 eval.obj,\
 extensions.obj,\
+fbobject.obj,\
 feedback.obj,\
 fog.obj,\
 get.obj,\
@@ -156,6 +158,7 @@ enable.obj : enable.c
 enums.obj : enums.c
 eval.obj : eval.c
 extensions.obj : extensions.c
+fbobject.obj : fbobject.c
 feedback.obj : feedback.c
 fog.obj : fog.c
 get.obj : get.c
