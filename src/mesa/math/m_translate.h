@@ -1,4 +1,4 @@
-/* $Id: m_translate.h,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: m_translate.h,v 1.5 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #define _M_TRANSLATE_H_
 
 #include "config.h"
+#include "mtypes.h"		/* hack for GLchan */
 
 
 
@@ -60,6 +61,14 @@ extern void _math_trans_4ub(GLubyte (*to)[4],
 			    GLuint size,
 			    GLuint start,
 			    GLuint n );
+
+extern void _math_trans_4chan( GLchan (*to)[4],
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLenum type,
+			       GLuint size,
+			       GLuint start,
+			       GLuint n );
 
 extern void _math_trans_4us(GLushort (*to)[4],
 			    CONST void *ptr,

@@ -1,4 +1,4 @@
-/* $Id: m_translate.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: m_translate.c,v 1.5 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 
 
 #include "glheader.h"
+#include "mtypes.h"		/* GLchan hack */
 #include "colormac.h"
 #include "mem.h"
 #include "mmath.h"
@@ -601,6 +602,23 @@ void _math_trans_4ub(GLubyte (*to)[4],
 		     GLuint n )
 {
    _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+
+void _math_trans_4chan( GLchan (*to)[4],
+			CONST void *ptr,
+			GLuint stride,
+			GLenum type,
+			GLuint size,
+			GLuint start,
+			GLuint n )
+{
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+   _math_trans_4ub( to, ptr, stride, type, size, start, n );
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   _math_trans_4us( to, ptr, stride, type, size, start, n );
+#elif CHAN_TYPE == GL_FLOAT
+   _math_trans_4f( to, ptr, stride, type, size, start, n );
+#endif
 }
 
 void _math_trans_4us(GLushort (*to)[4],

@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.8 2001/02/16 18:14:42 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.9 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,16 +49,8 @@ typedef void (*light_func)( GLcontext *ctx,
 			    GLvector4f *input );
 
 struct light_stage_data {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   GLvector4ub LitColor[2];
-   GLvector4ub LitSecondary[2];
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   GLvector4us LitColor[2];
-   GLvector4us LitSecondary[2];
-#elif CHAN_TYPE == GL_FLOAT
-   GLvector4f LitColor[2];
-   GLvector4f LitSecondary[2];
-#endif
+   GLvector4chan LitColor[2];
+   GLvector4chan LitSecondary[2];
    GLvector1ui LitIndex[2];
    light_func *light_func_tab;
 };
@@ -226,22 +218,10 @@ static GLboolean run_init_lighting( GLcontext *ctx,
     */
    init_lighting();
 
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   gl_vector4ub_alloc( &store->LitColor[0], 0, size, 32 );
-   gl_vector4ub_alloc( &store->LitColor[1], 0, size, 32 );
-   gl_vector4ub_alloc( &store->LitSecondary[0], 0, size, 32 );
-   gl_vector4ub_alloc( &store->LitSecondary[1], 0, size, 32 );
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   gl_vector4us_alloc( &store->LitColor[0], 0, size, 32 );
-   gl_vector4us_alloc( &store->LitColor[1], 0, size, 32 );
-   gl_vector4us_alloc( &store->LitSecondary[0], 0, size, 32 );
-   gl_vector4us_alloc( &store->LitSecondary[1], 0, size, 32 );
-#elif CHAN_TYPE == GL_FLOAT
-   gl_vector4f_alloc( &store->LitColor[0], 0, size, 32 );
-   gl_vector4f_alloc( &store->LitColor[1], 0, size, 32 );
-   gl_vector4f_alloc( &store->LitSecondary[0], 0, size, 32 );
-   gl_vector4f_alloc( &store->LitSecondary[1], 0, size, 32 );
-#endif
+   gl_vector4chan_alloc( &store->LitColor[0], 0, size, 32 );
+   gl_vector4chan_alloc( &store->LitColor[1], 0, size, 32 );
+   gl_vector4chan_alloc( &store->LitSecondary[0], 0, size, 32 );
+   gl_vector4chan_alloc( &store->LitSecondary[1], 0, size, 32 );
    gl_vector1ui_alloc( &store->LitIndex[0], 0, size, 32 );
    gl_vector1ui_alloc( &store->LitIndex[1], 0, size, 32 );
 
@@ -281,22 +261,10 @@ static void dtr( struct gl_pipeline_stage *stage )
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
 
    if (store) {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      gl_vector4ub_free( &store->LitColor[0] );      
-      gl_vector4ub_free( &store->LitColor[1] );      
-      gl_vector4ub_free( &store->LitSecondary[0] );  
-      gl_vector4ub_free( &store->LitSecondary[1] );  
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      gl_vector4us_free( &store->LitColor[0] );      
-      gl_vector4us_free( &store->LitColor[1] );      
-      gl_vector4us_free( &store->LitSecondary[0] );  
-      gl_vector4us_free( &store->LitSecondary[1] );  
-#elif CHAN_TYPE == GL_FLOAT
-      gl_vector4f_free( &store->LitColor[0] );      
-      gl_vector4f_free( &store->LitColor[1] );      
-      gl_vector4f_free( &store->LitSecondary[0] );  
-      gl_vector4f_free( &store->LitSecondary[1] );  
-#endif
+      gl_vector4chan_free( &store->LitColor[0] );      
+      gl_vector4chan_free( &store->LitColor[1] );      
+      gl_vector4chan_free( &store->LitSecondary[0] );  
+      gl_vector4chan_free( &store->LitSecondary[1] );  
       gl_vector1ui_free( &store->LitIndex[0] );      
       gl_vector1ui_free( &store->LitIndex[1] );      
       FREE( store );

@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.5 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,14 +144,7 @@ static void eval1_norm( GLvector3f *dest,
       }
 }
 
-static void eval1_color(
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-                         GLvector4ub *dest,
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-                         GLvector4us *dest,
-#elif CHAN_TYPE == GL_FLOAT
-                         GLvector4f *dest,
-#endif
+static void eval1_color( GLvector4chan *dest,
 			 GLfloat coord[][4],
 			 const GLuint *flags,
 			 struct gl_1d_map *map )
@@ -283,14 +276,7 @@ static void eval2_1ui( GLvector1ui *dest,
 
 
 
-static void eval2_color(
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-                         GLvector4ub *dest,
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-                         GLvector4us *dest,
-#elif CHAN_TYPE == GL_FLOAT
-                         GLvector4f *dest,
-#endif
+static void eval2_color( GLvector4chan *dest,
 			 GLfloat coord[][4],
 			 GLuint *flags,
 			 struct gl_2d_map *map )

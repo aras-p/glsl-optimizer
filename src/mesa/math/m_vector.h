@@ -1,4 +1,4 @@
-/* $Id: m_vector.h,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: m_vector.h,v 1.4 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 #define _M_VECTOR_H_
 
 #include "glheader.h"
+#include "mtypes.h"		/* hack for GLchan */
 
 
 #define VEC_DIRTY_0        0x1	
@@ -130,6 +131,25 @@ extern void gl_vector4ub_init( GLvector4ub *v, GLuint flags,
 extern void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
 				GLuint alignment );
 extern void gl_vector4ub_free( GLvector4ub * );
+
+
+/* For 4 * GLchan values.
+ */
+typedef struct {
+   GLchan (*data)[4];
+   GLchan *start;
+   GLuint count;
+   GLuint stride;		 
+   GLuint flags; 
+   void *storage;
+} GLvector4chan;
+
+extern void gl_vector4chan_init( GLvector4chan *v, GLuint flags, 
+				 GLchan (*storage)[4] );
+extern void gl_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
+				  GLuint alignment );
+extern void gl_vector4chan_free( GLvector4chan * );
+
 
 
 

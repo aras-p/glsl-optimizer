@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.4 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -705,6 +705,27 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
 					
 }
 
+static void _tnl_trans_elt_4chan(GLubyte (*to)[4],
+                               const struct gl_client_array *from,
+                               GLuint *flags,
+                               GLuint *elts,
+                               GLuint match,
+                               GLuint start,
+                               GLuint n )
+{
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+      _tnl_trans_elt_4ub( to, from, flags, elts, match, start, n );
+      (void)_tnl_trans_elt_4us;
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+      _tnl_trans_elt_4us( to, from, flags, elts, match, start, n );
+#elif CHAN_TYPE == GL_FLOAT
+      _tnl_trans_elt_4f( to, from, flags, elts, match, start, n );
+      (void)_tnl_trans_elt_4us;
+#endif
+}
+
+
+
 static void _tnl_trans_elt_3f(GLfloat (*to)[3],
 		       const struct gl_client_array *from,
 		       GLuint *flags,
@@ -769,41 +790,17 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 			  start, count);
 
    if (translate & VERT_RGBA) {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      _tnl_trans_elt_4ub( IM->Color,
+      _tnl_trans_elt_4chan( IM->Color,
                           &ctx->Array.Color,
                           flags, elts, (VERT_ELT|VERT_RGBA),
                           start, count);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      _tnl_trans_elt_4us( IM->Color,
-                          &ctx->Array.Color,
-                          flags, elts, (VERT_ELT|VERT_RGBA),
-                          start, count);
-#elif CHAN_TYPE == GL_FLOAT
-      _tnl_trans_elt_4f( IM->Color,
-                         &ctx->Array.Color,
-                         flags, elts, (VERT_ELT|VERT_RGBA),
-                         start, count);
-#endif
    }
 
    if (translate & VERT_SPEC_RGB) {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      _tnl_trans_elt_4ub( IM->SecondaryColor,
-                          &ctx->Array.SecondaryColor,
-                          flags, elts, (VERT_ELT|VERT_SPEC_RGB),
-                          start, count);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      _tnl_trans_elt_4us( IM->SecondaryColor,
-                          &ctx->Array.SecondaryColor,
-                          flags, elts, (VERT_ELT|VERT_SPEC_RGB),
-                          start, count);
-#elif CHAN_TYPE == GL_FLOAT
-      _tnl_trans_elt_4f( IM->SecondaryColor,
-                         &ctx->Array.SecondaryColor,
-                         flags, elts, (VERT_ELT|VERT_SPEC_RGB),
-                         start, count);
-#endif
+      _tnl_trans_elt_4chan( IM->SecondaryColor,
+			    &ctx->Array.SecondaryColor,
+			    flags, elts, (VERT_ELT|VERT_SPEC_RGB),
+			    start, count);
    }
 
    if (translate & VERT_FOG_COORD)

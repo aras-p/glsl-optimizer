@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.6 2001/02/07 16:00:58 keithw Exp $ */
+/* $Id: ac_import.c,v 1.7 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -270,31 +270,13 @@ static void import_color( GLcontext *ctx,
    ASSERT(type == CHAN_TYPE);
    ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
 
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   _math_trans_4ub( to->Ptr,
-		    from->Ptr,
-		    from->StrideB,
-		    from->Type,
-		    from->Size,
-		    0, 
-		    ac->count - ac->start);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   _math_trans_4us( to->Ptr,
-                    from->Ptr,
-                    from->StrideB,
-                    from->Type,
-                    from->Size,
-                    0, 
-                    ac->count - ac->start);
-#elif CHAN_TYPE == GL_FLOAT
-   _math_trans_4f( to->Ptr,
-                   from->Ptr,
-                   from->StrideB,
-                   from->Type,
-                   from->Size,
-                   0, 
-                   ac->count - ac->start);
-#endif
+   _math_trans_4chan( to->Ptr,
+		      from->Ptr,
+		      from->StrideB,
+		      from->Type,
+		      from->Size,
+		      0, 
+		      ac->count - ac->start);
 
    to->Size = from->Size;
    to->StrideB = 4 * sizeof(GLchan);
@@ -338,31 +320,13 @@ static void import_secondarycolor( GLcontext *ctx,
    ASSERT(type == CHAN_TYPE);
    ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
 
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   _math_trans_4ub( to->Ptr,
-                    from->Ptr,
-                    from->StrideB,
-                    from->Type,
-                    from->Size,
-                    0, 
-                    ac->count - ac->start);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   _math_trans_4us( to->Ptr,
-                    from->Ptr,
-                    from->StrideB,
-                    from->Type,
-                    from->Size,
-                    0, 
-                    ac->count - ac->start);
-#elif CHAN_TYPE == GL_FLOAT
-   _math_trans_4f( to->Ptr,
-                   from->Ptr,
-                   from->StrideB,
-                   from->Type,
-                   from->Size,
-                   0, 
-                   ac->count - ac->start);
-#endif
+   _math_trans_4chan( to->Ptr,
+		      from->Ptr,
+		      from->StrideB,
+		      from->Type,
+		      from->Size,
+		      0, 
+		      ac->count - ac->start);
 
    to->StrideB = 4 * sizeof(GLchan);
    to->Type = CHAN_TYPE;

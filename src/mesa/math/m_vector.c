@@ -1,4 +1,4 @@
-/* $Id: m_vector.c,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: m_vector.c,v 1.4 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,6 +115,15 @@ void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
    v->flags = flags ;
 }
 
+void gl_vector4chan_init( GLvector4chan *v, GLuint flags, GLchan (*storage)[4] )
+{
+   v->stride = 4 * sizeof(GLchan);
+   v->data = storage;
+   v->start = (GLchan *) storage;
+   v->count = 0;
+   v->flags = flags ;
+}
+
 void gl_vector4us_init( GLvector4us *v, GLuint flags, GLushort (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLushort);
@@ -198,6 +207,17 @@ void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
+void gl_vector4chan_alloc( GLvector4chan *v, GLuint flags, GLuint count,
+			   GLuint alignment )
+{
+   v->stride = 4 * sizeof(GLchan);
+   v->storage = ALIGN_MALLOC( count * 4 * sizeof(GLchan), alignment );
+   v->start = (GLchan *) v->storage;
+   v->data = (GLchan (*)[4]) v->storage;
+   v->count = 0;
+   v->flags = flags | VEC_MALLOC ;
+}
+
 void gl_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
                          GLuint alignment )
 {
@@ -274,6 +294,17 @@ void gl_vector1f_free( GLvector1f *v )
 }
 
 void gl_vector4ub_free( GLvector4ub *v )
+{
+   if (v->flags & VEC_MALLOC) {
+      ALIGN_FREE( v->storage );
+      v->data = NULL;
+      v->start = NULL;
+      v->storage = NULL;
+      v->flags &= ~VEC_MALLOC;
+   }
+}
+
+void gl_vector4chan_free( GLvector4chan *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.8 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.9 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -467,53 +467,21 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
    }
 	
    if (required & VERT_RGBA) {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      _math_trans_4ub( IM->Color + IM->Start,
+      _math_trans_4chan( IM->Color + IM->Start,
 		       ctx->Array.Color.Ptr, 
 		       ctx->Array.Color.StrideB,
 		       ctx->Array.Color.Type,
 		       ctx->Array.Color.Size,
 		       start, n );
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      _math_trans_4us( IM->Color + IM->Start,
-		       ctx->Array.Color.Ptr, 
-		       ctx->Array.Color.StrideB,
-		       ctx->Array.Color.Type,
-		       ctx->Array.Color.Size,
-		       start, n );
-#elif CHAN_TYPE == GL_FLOAT
-      _math_trans_4f( IM->Color + IM->Start,
-                      ctx->Array.Color.Ptr, 
-                      ctx->Array.Color.StrideB,
-                      ctx->Array.Color.Type,
-                      ctx->Array.Color.Size,
-                      start, n );
-#endif
    }
 
    if (required & VERT_SPEC_RGB) {
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      _math_trans_4ub( IM->SecondaryColor + IM->Start,
-		       ctx->Array.SecondaryColor.Ptr,
-		       ctx->Array.SecondaryColor.StrideB, 
-		       ctx->Array.SecondaryColor.Type, 
-		       ctx->Array.SecondaryColor.Size, 
-		       start, n );
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      _math_trans_4us( IM->SecondaryColor + IM->Start,
-		       ctx->Array.SecondaryColor.Ptr,
-		       ctx->Array.SecondaryColor.StrideB, 
-		       ctx->Array.SecondaryColor.Type, 
-		       ctx->Array.SecondaryColor.Size, 
-		       start, n );
-#elif CHAN_TYPE == GL_FLOAT
-      _math_trans_4f( IM->SecondaryColor + IM->Start,
-		       ctx->Array.SecondaryColor.Ptr,
-		       ctx->Array.SecondaryColor.StrideB, 
-		       ctx->Array.SecondaryColor.Type, 
-		       ctx->Array.SecondaryColor.Size, 
-		       start, n );
-#endif
+      _math_trans_4chan( IM->SecondaryColor + IM->Start,
+			 ctx->Array.SecondaryColor.Ptr,
+			 ctx->Array.SecondaryColor.StrideB, 
+			 ctx->Array.SecondaryColor.Type, 
+			 ctx->Array.SecondaryColor.Size, 
+			 start, n );
    }
 
    if (required & VERT_FOG_COORD) {

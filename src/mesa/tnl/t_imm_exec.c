@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.12 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.13 2001/02/20 18:28:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -472,16 +472,8 @@ void _tnl_imm_init( GLcontext *ctx )
 
    gl_vector4f_init( &tmp->Obj, 0, 0 );
    gl_vector3f_init( &tmp->Normal, 0, 0 );
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   gl_vector4ub_init( &tmp->Color, 0, 0 );
-   gl_vector4ub_init( &tmp->SecondaryColor, 0, 0 );
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   gl_vector4us_init( &tmp->Color, 0, 0 );
-   gl_vector4us_init( &tmp->SecondaryColor, 0, 0 );
-#elif CHAN_TYPE == GL_FLOAT
-   gl_vector4f_init( &tmp->Color, 0, 0 );
-   gl_vector4f_init( &tmp->SecondaryColor, 0, 0 );
-#endif
+   gl_vector4chan_init( &tmp->Color, 0, 0 );
+   gl_vector4chan_init( &tmp->SecondaryColor, 0, 0 );
    gl_vector1f_init( &tmp->FogCoord, 0, 0 );
    gl_vector1ui_init( &tmp->Index, 0, 0 );
    gl_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
