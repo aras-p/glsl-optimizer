@@ -1,4 +1,4 @@
-/* $Id: geartrain.c,v 1.2 2000/03/22 23:14:54 brianp Exp $ */
+/* $Id: geartrain.c,v 1.3 2000/03/29 17:56:02 brianp Exp $ */
 
 /*
  * Geartrain simulation 
@@ -145,6 +145,11 @@ getdata (char filename[])
     int gear_count = 0, axle_count = 0, belt_count = 0, i;
     
     mainfile = fopen (filename, "r");
+    if (!mainfile) {
+       printf("Error: couldn't open %s\n", filename);
+       exit(-1);
+    }
+
     do
     {
 	Clear_Buffers ();
