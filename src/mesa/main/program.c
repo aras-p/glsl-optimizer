@@ -798,8 +798,7 @@ _mesa_BindProgram(GLenum target, GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   /* texture state is dependent on current fragment and vertex programs */
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if ((target == GL_VERTEX_PROGRAM_NV
         && ctx->Extensions.NV_vertex_program) ||

@@ -2703,6 +2703,10 @@ update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
 
+   ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
+				   * actual changes. 
+				   */
+
    ctx->Texture._EnabledUnits = 0;
    ctx->Texture._GenFlags = 0;
    ctx->Texture._TexMatEnabled = 0;
@@ -2834,7 +2838,7 @@ void _mesa_update_texture( GLcontext *ctx, GLuint new_state )
    if (new_state & _NEW_TEXTURE_MATRIX)
       update_texture_matrices( ctx );
 
-   if (new_state & _NEW_TEXTURE)
+   if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM))
       update_texture_state( ctx );
 }
 

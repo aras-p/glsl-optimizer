@@ -409,14 +409,6 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	 ctx->Light.Model.ColorControl = newenum;
-
-	 if ((ctx->Light.Enabled &&
-	      ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
-	     || ctx->Fog.ColorSumEnabled)
-	    ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-	 else
-	    ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
-
          break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(pname=0x%x)", pname );

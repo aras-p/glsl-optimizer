@@ -32,4 +32,8 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
                                  const GLubyte * str, GLsizei len,
                                  struct fragment_program *program);
 
+extern void
+_mesa_debug_fp_inst(GLint num, struct fp_instruction *fp);
+
+
 #endif

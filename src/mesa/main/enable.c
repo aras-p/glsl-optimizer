@@ -353,13 +353,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          else
  	   ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
  
-         if ((ctx->Light.Enabled &&
-              ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
-             || ctx->Fog.ColorSumEnabled)
-            ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-         else
-            ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
-
          break;
       case GL_LINE_SMOOTH:
          if (ctx->Line.SmoothFlag == state)
@@ -791,14 +784,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
          ctx->Fog.ColorSumEnabled = state;
-
-         if ((ctx->Light.Enabled &&
-              ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
-             || ctx->Fog.ColorSumEnabled)
-            ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-         else
-            ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
-
          break;
 
       /* GL_ARB_multisample */
@@ -861,21 +846,21 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(NV_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_TRANSFORM | _NEW_PROGRAM);  /* XXX OK? */
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.Enabled = state;
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
          CHECK_EXTENSION(NV_vertex_program, cap);
          if (ctx->VertexProgram.PointSizeEnabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_POINT | _NEW_PROGRAM);
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->VertexProgram.PointSizeEnabled = state;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
          CHECK_EXTENSION(NV_vertex_program, cap);
          if (ctx->VertexProgram.TwoSideEnabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM);  /* XXX OK? */
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.TwoSideEnabled = state;
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
@@ -931,7 +916,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(NV_fragment_program, cap);
          if (ctx->FragmentProgram.Enabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->FragmentProgram.Enabled = state;
          break;
 #endif /* FEATURE_NV_fragment_program */
@@ -967,7 +952,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          CHECK_EXTENSION(ARB_fragment_program, cap);
          if (ctx->FragmentProgram.Enabled == state)
             return;
-         FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->FragmentProgram.Enabled = state;
          break;
 #endif /* FEATURE_ARB_fragment_program */

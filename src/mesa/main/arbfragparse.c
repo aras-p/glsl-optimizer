@@ -38,8 +38,8 @@
 #include "arbparse.h"
 #include "arbfragparse.h"
 
-static void
-debug_fp_inst(GLint num, struct fp_instruction *fp)
+void
+_mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
 {
    GLint a;
  
@@ -228,9 +228,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    }
 
 #if DEBUG_FP
-   debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
-#else
-   (void) debug_fp_inst;
+   _mesa_debug_fp_inst(ap.Base.NumInstructions, ap.FPInstructions);
 #endif
 
    program->Instructions   = ap.FPInstructions;
