@@ -1,0 +1,80 @@
+INTRODUCTION
+
+A helper module which provides glue to bind the software rasterizer to
+the software t&l module.  The main task of this module is to build
+swrast vertices from the t&l vertex_buffer structs, and to use them to
+perform triangle setup functions not implemented in the software
+rasterizer.
+
+The module provides a RasterSetup function to plug into the t&l driver
+interface.  This hook had previously been used for hardware
+rasterizers, with the software rasterizer taking its data directly
+from the vertex buffer.  
+
+There are strong advantages to decoupling the software rasterizer from
+the t&l module, primarily allowing hardware drivers better control
+over fallbacks, the removal of implicit knowledge about the software
+rasterizer in the t&l module, allowing the two modules to evolve
+independently and allowing either to be substituted with equivalent
+functionality from another codebase.
+
+This module provides helpers for triangle/quad setup for offset,
+unfilled and twoside-lit triangles.  The software rasterizer doesn't
+handle these primitives directly.
+
+Hardware rasterization drivers probably have little use for this
+module.  Rather, they might provide a layer that translates their
+native (hardware) vertices to swrast vertices before calling into the
+swrast module for fallbacks. 
+
+STATE
+
+This module associates an array of SWvertex structs with each VB.
+Thus there are:
+
+	GLboolean _swsetup_RegisterVB( struct vertex_buffer *VB );
+	void _swsetup_UnregisterVB( struct vertex_buffer *VB );
+
+Which must be called to create and destroy internal vertex storage for
+this module.
+
+To create and destroy the module itself:
+
+	GLboolean _swsetup_CreateContext( GLcontext *ctx );
+	void _swsetup_DestroyContext( GLcontext *ctx );
+
+Like the software rasterizer, this module tracks state changes
+internally and maintains a set of entry points which will always
+reflect the current state.  For this to work, the driver must call:
+
+	void _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
+
+SERVICES
+
+The module provides the following entrypoints:
+
+   void _swrast_RasterSetup( struct vertex_buffer *VB, 
+	                     GLuint start, GLuint end );
+
+Build SWvertices for <VB> between indices start and end.
+
+   void _swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, 
+		       GLuint v2, GLuint v3, GLuint pv );
+
+   void _swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, 
+			   GLuint v2, GLuint pv );
+
+   void _swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv );
+
+
+   void _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
+
+Draw quad, triangle, line, points.  Note that these are in the format
+expected by core mesa.  The Quad and Triangle functions handle
+unfilled, offset, twoside-lit and flat-shaded primitives correctly.
+
+These functions can thus be plugged into the ctx->Driver struct and
+left permanently in place, providing the InvalidateState() routine is
+correctly called on state changes.
+
+     
