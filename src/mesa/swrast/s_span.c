@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.31 2002/02/04 15:59:29 brianp Exp $ */
+/* $Id: s_span.c,v 1.32 2002/02/06 03:22:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,7 +26,7 @@
 
 
 /**
- * \file vpstate.c
+ * \file swrast/s_span.c
  * \brief Span processing functions used by all rasterization functions.
  * This is where all the per-fragment tests are performed
  * \author Brian Paul
@@ -801,11 +801,15 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT((span->interpMask | span->arrayMask) & SPAN_RGBA);
+#ifdef DEBUG
    if (ctx->Fog.Enabled)
       ASSERT((span->interpMask | span->arrayMask) & SPAN_FOG);
+   if (ctx->Depth.Test)
+      ASSERT((span->interpMask | span->arrayMask) & SPAN_Z);
+#endif
 
    /*
-     printf("%s()  interp 0x%x  array 0x%x  p=0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask, primitive);
+   printf("%s()  interp 0x%x  array 0x%x  p=0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask, primitive);
    */
 
    if (span->arrayMask & SPAN_MASK) {
