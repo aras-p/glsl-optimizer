@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.84 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxdd.c,v 1.85 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,19 +103,22 @@ fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 
 /* Return buffer size information */
 static void
-fxDDBufferSize(GLcontext * ctx, GLuint * width, GLuint * height)
+fxDDBufferSize(GLframebuffer *buffer, GLuint * width, GLuint * height)
 {
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GET_CURRENT_CONTEXT(ctx);
+   if (ctx && ctx->DriverCtx) {
+      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDBufferSize(...) Start\n");
-   }
+      if (MESA_VERBOSE & VERBOSE_DRIVER) {
+         fprintf(stderr, "fxmesa: fxDDBufferSize(...) Start\n");
+      }
 
-   *width = fxMesa->width;
-   *height = fxMesa->height;
+      *width = fxMesa->width;
+      *height = fxMesa->height;
 
-   if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDBufferSize(...) End\n");
+      if (MESA_VERBOSE & VERBOSE_DRIVER) {
+         fprintf(stderr, "fxmesa: fxDDBufferSize(...) End\n");
+      }
    }
 }
 
@@ -1002,7 +1005,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = fxDDReadPixels;
-   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
    ctx->Driver.ChooseTextureFormat = fxDDChooseTextureFormat;

@@ -1,4 +1,4 @@
-/* $Id: s_depth.h,v 1.5 2002/02/04 15:59:29 brianp Exp $ */
+/* $Id: s_depth.h,v 1.6 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,11 +54,11 @@ _mesa_read_depth_span_float( GLcontext *ctx, GLint n, GLint x, GLint y,
 
 
 extern void
-_mesa_alloc_depth_buffer( GLcontext* ctx );
+_mesa_alloc_depth_buffer( GLframebuffer *buffer );
 
 
 extern void
-_mesa_clear_depth_buffer( GLcontext* ctx );
+_mesa_clear_depth_buffer( GLcontext *ctx );
 
 
 #endif

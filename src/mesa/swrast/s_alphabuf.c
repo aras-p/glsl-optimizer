@@ -1,10 +1,10 @@
-/* $Id: s_alphabuf.c,v 1.8 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.9 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0.2
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,8 +38,6 @@
 #include "s_alphabuf.h"
 
 
-
-
 #define ALPHA_DRAW_ADDR(X,Y) \
    (ctx->DrawBuffer->Alpha + (Y) * ctx->DrawBuffer->Width + (X))
 
@@ -47,85 +45,72 @@
    (ctx->ReadBuffer->Alpha + (Y) * ctx->ReadBuffer->Width + (X))
 
 
-
-/*
- * Allocate new front/back/left/right alpha buffers.
- * Input: ctx - the context
- *
- */
-static void
-alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
-{
-   GLint bytes = buf->Width * buf->Height * sizeof(GLchan);
-
-   ASSERT(ctx->DrawBuffer->UseSoftwareAlphaBuffers);
-
-   if (buf->FrontLeftAlpha) {
-      FREE( buf->FrontLeftAlpha );
-   }
-   buf->FrontLeftAlpha = (GLchan *) MALLOC( bytes );
-   if (!buf->FrontLeftAlpha) {
-      /* out of memory */
-      _mesa_error( ctx, GL_OUT_OF_MEMORY,
-                "Couldn't allocate front-left alpha buffer" );
-   }
-
-   if (ctx->Visual.doubleBufferMode) {
-      if (buf->BackLeftAlpha) {
-         FREE( buf->BackLeftAlpha );
-      }
-      buf->BackLeftAlpha = (GLchan *) MALLOC( bytes );
-      if (!buf->BackLeftAlpha) {
-         /* out of memory */
-         _mesa_error( ctx, GL_OUT_OF_MEMORY,
-                      "Couldn't allocate back-left alpha buffer" );
-      }
-   }
-
-   if (ctx->Visual.stereoMode) {
-      if (buf->FrontRightAlpha) {
-         FREE( buf->FrontRightAlpha );
-      }
-      buf->FrontRightAlpha = (GLchan *) MALLOC( bytes );
-      if (!buf->FrontRightAlpha) {
-         /* out of memory */
-         _mesa_error( ctx, GL_OUT_OF_MEMORY,
-                   "Couldn't allocate front-right alpha buffer" );
-      }
-
-      if (ctx->Visual.doubleBufferMode) {
-         if (buf->BackRightAlpha) {
-            FREE( buf->BackRightAlpha );
-         }
-         buf->BackRightAlpha = (GLchan *) MALLOC( bytes );
-         if (!buf->BackRightAlpha) {
-            /* out of memory */
-            _mesa_error( ctx, GL_OUT_OF_MEMORY,
-                      "Couldn't allocate back-right alpha buffer" );
-         }
-      }
-   }
-
-   if (ctx->Color.DriverDrawBuffer == GL_FRONT_LEFT)
-      buf->Alpha = buf->FrontLeftAlpha;
-   else if (ctx->Color.DriverDrawBuffer == GL_BACK_LEFT)
-      buf->Alpha = buf->BackLeftAlpha;
-   else if (ctx->Color.DriverDrawBuffer == GL_FRONT_RIGHT)
-      buf->Alpha = buf->FrontRightAlpha;
-   else if (ctx->Color.DriverDrawBuffer == GL_BACK_RIGHT)
-      buf->Alpha = buf->BackRightAlpha;
-}
-
-
 /*
  * Allocate a new front and back alpha buffer.
  */
 void
-_mesa_alloc_alpha_buffers( GLcontext *ctx )
+_mesa_alloc_alpha_buffers( GLframebuffer *buffer )
 {
-   alloc_alpha_buffers( ctx, ctx->DrawBuffer );
-   if (ctx->ReadBuffer != ctx->DrawBuffer) {
-      alloc_alpha_buffers( ctx, ctx->ReadBuffer );
+   GET_CURRENT_CONTEXT(ctx);
+   const GLint bytes = buffer->Width * buffer->Height * sizeof(GLchan);
+
+   ASSERT(buffer->UseSoftwareAlphaBuffers);
+
+   if (buffer->FrontLeftAlpha) {
+      FREE( buffer->FrontLeftAlpha );
+   }
+   buffer->FrontLeftAlpha = (GLchan *) MALLOC( bytes );
+   if (!buffer->FrontLeftAlpha) {
+      /* out of memory */
+      _mesa_error( NULL, GL_OUT_OF_MEMORY,
+                   "Couldn't allocate front-left alpha buffer" );
+   }
+
+   if (buffer->Visual.doubleBufferMode) {
+      if (buffer->BackLeftAlpha) {
+         FREE( buffer->BackLeftAlpha );
+      }
+      buffer->BackLeftAlpha = (GLchan *) MALLOC( bytes );
+      if (!buffer->BackLeftAlpha) {
+         /* out of memory */
+         _mesa_error( NULL, GL_OUT_OF_MEMORY,
+                      "Couldn't allocate back-left alpha buffer" );
+      }
+   }
+
+   if (buffer->Visual.stereoMode) {
+      if (buffer->FrontRightAlpha) {
+         FREE( buffer->FrontRightAlpha );
+      }
+      buffer->FrontRightAlpha = (GLchan *) MALLOC( bytes );
+      if (!buffer->FrontRightAlpha) {
+         /* out of memory */
+         _mesa_error( NULL, GL_OUT_OF_MEMORY,
+                      "Couldn't allocate front-right alpha buffer" );
+      }
+
+      if (buffer->Visual.doubleBufferMode) {
+         if (buffer->BackRightAlpha) {
+            FREE( buffer->BackRightAlpha );
+         }
+         buffer->BackRightAlpha = (GLchan *) MALLOC( bytes );
+         if (!buffer->BackRightAlpha) {
+            /* out of memory */
+            _mesa_error( NULL, GL_OUT_OF_MEMORY,
+                         "Couldn't allocate back-right alpha buffer" );
+         }
+      }
+   }
+
+   if (ctx) {
+      if (ctx->Color.DriverDrawBuffer == GL_FRONT_LEFT)
+         buffer->Alpha = buffer->FrontLeftAlpha;
+      else if (ctx->Color.DriverDrawBuffer == GL_BACK_LEFT)
+         buffer->Alpha = buffer->BackLeftAlpha;
+      else if (ctx->Color.DriverDrawBuffer == GL_FRONT_RIGHT)
+         buffer->Alpha = buffer->FrontRightAlpha;
+      else if (ctx->Color.DriverDrawBuffer == GL_BACK_RIGHT)
+         buffer->Alpha = buffer->BackRightAlpha;
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.20 2002/02/04 15:59:30 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.21 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1112,22 +1112,20 @@ _mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
  * deallocated first.  The new stencil buffer will be uninitialized.
  */
 void
-_mesa_alloc_stencil_buffer( GLcontext *ctx )
+_mesa_alloc_stencil_buffer( GLframebuffer *buffer )
 {
-   GLuint buffersize = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
-
    /* deallocate current stencil buffer if present */
-   if (ctx->DrawBuffer->Stencil) {
-      FREE(ctx->DrawBuffer->Stencil);
-      ctx->DrawBuffer->Stencil = NULL;
+   if (buffer->Stencil) {
+      FREE(buffer->Stencil);
+      buffer->Stencil = NULL;
    }
 
    /* allocate new stencil buffer */
-   ctx->DrawBuffer->Stencil = (GLstencil *) MALLOC(buffersize * sizeof(GLstencil));
-   if (!ctx->DrawBuffer->Stencil) {
+   buffer->Stencil = (GLstencil *) MALLOC(buffer->Width * buffer->Height
+                                          * sizeof(GLstencil));
+   if (!buffer->Stencil) {
       /* out of memory */
-/*        _mesa_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE ); */
-      _mesa_error( ctx, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
+      _mesa_error( NULL, GL_OUT_OF_MEMORY, "_mesa_alloc_stencil_buffer" );
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.74 2002/03/01 04:23:36 brianp Exp $ */
+/* $Id: osmesa.c,v 1.75 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -875,11 +875,15 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 
 
-static void buffer_size( GLcontext *ctx, GLuint *width, GLuint *height )
+static void buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
-   OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   *width = osmesa->width;
-   *height = osmesa->height;
+   GET_CURRENT_CONTEXT(ctx);
+   (void) buffer;
+   if (ctx) {
+      OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+      *width = osmesa->width;
+      *height = osmesa->height;
+   }
 }
 
 
@@ -2023,7 +2027,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.GetString = get_string;
    ctx->Driver.UpdateState = osmesa_update_state;
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
-   ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.GetBufferSize = buffer_size;
 
    ctx->Driver.Accum = _swrast_Accum;

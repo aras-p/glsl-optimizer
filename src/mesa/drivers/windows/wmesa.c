@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.25 2002/01/16 15:42:17 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.26 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -583,8 +583,9 @@ static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 
 
 /* Return characteristics of the output buffer. */
-static void buffer_size( GLcontext* ctx, GLuint *width, GLuint *height )
+static void buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
+  GET_CURRENT_CONTEXT(ctx);
   int New_Size;
   RECT CR;
   
@@ -1021,7 +1022,7 @@ static void SetFunctionPointers(GLcontext *ctx)
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
   ctx->Driver.SetDrawBuffer = set_draw_buffer;
-  ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+  ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
   ctx->Driver.GetBufferSize = buffer_size;
   
   ctx->Driver.Accum = _swrast_Accum;
@@ -1100,7 +1101,7 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
   ctx->Driver.SetDrawBuffer = set_draw_buffer;
-  ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+  ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
   ctx->Driver.GetBufferSize = buffer_size;
   
   ctx->Driver.Accum = _swrast_Accum;

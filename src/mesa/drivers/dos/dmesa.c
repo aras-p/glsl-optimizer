@@ -540,8 +540,13 @@ static GLboolean set_draw_buffer (GLcontext *ctx, GLenum mode)
  * If anything special has to been done when the buffer/window is
  * resized, do it now.
  */
-static void get_buffer_size (GLcontext *ctx, GLuint *width, GLuint *height)
+static void get_buffer_size (GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
+ /* XXX this may not be right.  We should query the size of the DOS window
+  * associated with <buffer>.    This function should work whether or
+  * not there is a current context.
+  */
+ GET_CURRENT_CONTEXT(ctx);
  DMesaContext c = (DMesaContext)ctx->DriverCtx;
 
  *width  = c->Buffer->width;
@@ -636,7 +641,7 @@ void dmesa_init_pointers (GLcontext *ctx)
  ctx->Driver.Accum = _swrast_Accum;
  ctx->Driver.Bitmap = _swrast_Bitmap;
  ctx->Driver.Clear = clear;
- ctx->Driver.ResizeBuffersMESA = _swrast_alloc_buffers;
+ ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
  ctx->Driver.CopyPixels = _swrast_CopyPixels;
  ctx->Driver.DrawPixels = _swrast_DrawPixels;
  ctx->Driver.ReadPixels = _swrast_ReadPixels;

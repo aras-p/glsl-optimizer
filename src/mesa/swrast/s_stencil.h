@@ -1,4 +1,4 @@
-/* $Id: s_stencil.h,v 1.6 2002/02/02 21:40:34 brianp Exp $ */
+/* $Id: s_stencil.h,v 1.7 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,7 @@ _mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
 
 
 extern void
-_mesa_alloc_stencil_buffer( GLcontext *ctx );
+_mesa_alloc_stencil_buffer( GLframebuffer *buffer );
 
 
 extern void

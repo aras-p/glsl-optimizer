@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.16 2001/09/23 16:11:27 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.17 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -210,7 +210,7 @@ static void copy_buffer( const GLubyte * buffer) {
  }
 }
 
-static void get_buffer_size( GLcontext *ctx, GLuint *width, GLuint *height )
+static void get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
    *width = SVGAMesa->width = vga_getxdim();
    *height = SVGAMesa->height = vga_getydim();
@@ -286,6 +286,7 @@ static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
 
    ctx->Driver.GetBufferSize = get_buffer_size;
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
+   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
 
    /* Software rasterizer pixel paths:
     */

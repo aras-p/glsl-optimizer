@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.66 2002/03/13 04:33:16 brianp Exp $ */
+/* $Id: mtypes.h,v 1.67 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1312,7 +1312,7 @@ struct gl_shared_state {
 struct gl_frame_buffer {
    GLvisual Visual;		/* The corresponding visual */
 
-   GLint Width, Height;		/* size of frame buffer in pixels */
+   GLuint Width, Height;	/* size of frame buffer in pixels */
 
    GLboolean UseSoftwareDepthBuffer;
    GLboolean UseSoftwareAccumBuffer;

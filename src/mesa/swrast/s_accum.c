@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.14 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_accum.c,v 1.15 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,36 +67,36 @@
 #endif
 
 
-
 void
-_mesa_alloc_accum_buffer( GLcontext *ctx )
+_mesa_alloc_accum_buffer( GLframebuffer *buffer )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GET_CURRENT_CONTEXT(ctx);
    GLint n;
 
-   if (ctx->DrawBuffer->Accum) {
-      FREE( ctx->DrawBuffer->Accum );
-      ctx->DrawBuffer->Accum = NULL;
+   if (buffer->Accum) {
+      FREE( buffer->Accum );
+      buffer->Accum = NULL;
    }
 
    /* allocate accumulation buffer if not already present */
-   n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4 * sizeof(GLaccum);
-   ctx->DrawBuffer->Accum = (GLaccum *) MALLOC( n );
-   if (!ctx->DrawBuffer->Accum) {
+   n = buffer->Width * buffer->Height * 4 * sizeof(GLaccum);
+   buffer->Accum = (GLaccum *) MALLOC( n );
+   if (!buffer->Accum) {
       /* unable to setup accumulation buffer */
-      _mesa_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
+      _mesa_error( NULL, GL_OUT_OF_MEMORY, "glAccum" );
    }
+
+   if (ctx) {
+      SWcontext *swrast = SWRAST_CONTEXT(ctx);
+      /* XXX these fields should probably be in the GLframebuffer */
 #ifdef USE_OPTIMIZED_ACCUM
-   swrast->_IntegerAccumMode = GL_TRUE;
+      swrast->_IntegerAccumMode = GL_TRUE;
 #else
-   swrast->_IntegerAccumMode = GL_FALSE;
+      swrast->_IntegerAccumMode = GL_FALSE;
 #endif
-   swrast->_IntegerAccumScaler = 0.0;
+      swrast->_IntegerAccumScaler = 0.0;
+   }
 }
-
-
-
-
 
 
 /*

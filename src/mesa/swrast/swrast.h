@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.20 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: swrast.h,v 1.21 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,9 +134,10 @@ struct sw_span {
    GLfixed index, indexStep;
    GLfixed z, zStep;
    GLfloat fog, fogStep;
-   GLfloat tex[MAX_TEXTURE_UNITS][4], texStep[MAX_TEXTURE_UNITS][4];
+   GLfloat tex[MAX_TEXTURE_UNITS][4];
+   GLfloat texStepX[MAX_TEXTURE_UNITS][4];
+   GLfloat texStepY[MAX_TEXTURE_UNITS][4];
    GLfixed intTex[2], intTexStep[2];
-   GLfloat rho[MAX_TEXTURE_UNITS]; /* for texture lambda/lod computation */
 
    /**
     * This bitmask (of SPAN_* flags) indicates which of the fragment arrays
@@ -182,7 +183,7 @@ struct swrast_device_driver;
 /* These are the public-access functions exported from swrast.
  */
 extern void
-_swrast_alloc_buffers( GLcontext *ctx );
+_swrast_alloc_buffers( GLframebuffer *buffer );
 
 extern GLboolean
 _swrast_CreateContext( GLcontext *ctx );

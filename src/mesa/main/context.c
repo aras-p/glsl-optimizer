@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.155 2002/03/13 04:33:32 brianp Exp $ */
+/* $Id: context.c,v 1.156 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2083,6 +2083,9 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
       }
       fprintf(stderr, "Mesa user error: %s in %s\n", errstr, where);
    }
+
+   if (!ctx)
+      return;
 
    if (ctx->ErrorValue == GL_NO_ERROR) {
       ctx->ErrorValue = error;

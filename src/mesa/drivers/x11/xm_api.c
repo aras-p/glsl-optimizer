@@ -1,8 +1,8 @@
-/* $Id: xm_api.c,v 1.34 2002/03/12 21:55:50 brianp Exp $ */
+/* $Id: xm_api.c,v 1.35 2002/03/16 00:53:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  4.0.2
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -2329,9 +2329,8 @@ void XMesaSwapBuffers( XMesaBuffer b )
    /* If we're swapping the buffer associated with the current context
     * we have to flush any pending rendering commands first.
     */
-   if (ctx && ctx->DrawBuffer == &(b->mesa_buffer)) {
+   if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
       _mesa_swapbuffers(ctx);
-   }
 
    if (b->db_state) {
 #ifdef FX
@@ -2629,4 +2628,14 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
    return 0;
 }
 
+
+/*
+ * This is typically called when the window size changes and we need
+ * to reallocate the buffer's back/depth/stencil/accum buffers.
+ */
+void XMesaResizeBuffers( XMesaBuffer b )
+{
+   xmesa_resize_buffers( &(b->mesa_buffer) );
+
+}
 
