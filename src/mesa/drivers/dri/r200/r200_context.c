@@ -410,7 +410,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    if(driQueryOptionb(&rmesa->optionCache, "arb_vertex_program"))
       _mesa_enable_extension( ctx, "GL_ARB_vertex_program");
    if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
-      _mesa_enable_extension( ctx, "GL_NV_VERTEX_PROGRAM");
+      _mesa_enable_extension( ctx, "GL_NV_vertex_program");
 
 #if 0
    r200InitDriverFuncs( ctx );

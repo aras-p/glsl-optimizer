@@ -80,7 +80,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NV_VERTEX_PROGRAM(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 11;
+static const GLuint __driNConfigOptions = 13;
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
