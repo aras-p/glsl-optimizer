@@ -13,24 +13,27 @@ DRIVER_SRCS = $(OSMESA_SRCS)
 
 SRCS	= $(OSMESA_SRCS)
 
-all	: osmesalib
+all	: osmesadll
 
 !include "$(TOP)/mesawin32.mak"
 
-osmesalib: $(OSMESALIB)
+osmesadll: $(OSMESADLL)
 
-# Undefine _DLL because osmesa is a LIB, not a DLL
-CFLAGS	= $(cvarsdll) $(CFLAGS) -U_DLL -D_OPENGL32_ -I$(TOP)/src
-LFLAGS	= /LIB
+CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -DBUILD_GL32 -I$(TOP)/src
+LFLAGS	= $(LFLAGS) $(dlllflags)
 
 OBJS	= $(ASM_SRCS:.S=.obj) $(CORE_SRCS:.c=.obj) $(DRIVER_SRCS:.c=.obj)
-LIBS	= $(TOP)/lib/$(MESALIB)
+LIBS	= $(guilibsdll) $(TOP)/lib/$(MESALIB)
 
-$(OSMESALIB)	: $(OBJS)
-	$(link) $(LFLAGS) -out:$(OSMESALIB) $(OBJS) $(LIBS)
+$(OSMESADLL)	: $(OBJS) osmesa.def
+	$(link) $(LFLAGS) -def:osmesa.def -out:$(OSMESADLL) $(OBJS) $(LIBS)
 	@echo "copying OSMesa library to library directory..."
 	-copy $(OSMESALIB) $(TOP)\lib
+	@echo "copying OSMesa dll to library directory..."
+	-copy $(OSMESADLL) $(TOP)\lib
 
-install	: $(OSMESALIB)
+install	: $(OSMESADLL)
 	@echo "copying OSMesa library to system library directory..."
 	-copy $(OSMESALIB) $(LIBINSTALL)
+	@echo "copying OSMesa dll to system library directory..."
+	-copy $(OSMESADLL) $(DLLINSTALL)

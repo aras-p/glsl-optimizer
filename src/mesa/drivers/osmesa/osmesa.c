@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.68 2001/09/18 16:51:45 kschultz Exp $ */
+/* $Id: osmesa.c,v 1.69 2001/09/21 21:32:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,7 +112,7 @@ static void osmesa_register_swrast_functions( GLcontext *ctx );
  *                     display lists.  NULL indicates no sharing.
  * Return:  an OSMesaContext or 0 if error
  */
-OSMesaContext GLAPIENTRY
+GLAPI OSMesaContext GLAPIENTRY
 OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
 {
    return OSMesaCreateContextExt(format, DEFAULT_SOFTWARE_DEPTH_BITS,
@@ -126,7 +126,7 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
  *
  * Create context and specify size of ancillary buffers.
  */
-OSMesaContext GLAPIENTRY
+GLAPI OSMesaContext GLAPIENTRY
 OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                         GLint accumBits, OSMesaContext sharelist )
 {
@@ -357,7 +357,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
  *
  * Input:  ctx - the context to destroy
  */
-void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx )
+GLAPI void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx )
 {
    if (ctx) {
       _swsetup_DestroyContext( &ctx->gl_ctx );
@@ -444,7 +444,7 @@ static void compute_row_addresses( OSMesaContext ctx )
  *          invalid buffer address, type!=GL_UNSIGNED_BYTE, width<1, height<1,
  *          width>internal limit or height>internal limit.
  */
-GLboolean GLAPIENTRY
+GLAPI GLboolean GLAPIENTRY
 OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
                    GLsizei width, GLsizei height )
 {
@@ -488,7 +488,7 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
 
 
 
-OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
+GLAPI OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
 {
    GLcontext *ctx = _mesa_get_current_context();
    if (ctx)
@@ -499,7 +499,7 @@ OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
 
 
 
-void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
+GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
 {
    OSMesaContext ctx = OSMesaGetCurrentContext();
 
@@ -525,7 +525,7 @@ void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
 }
 
 
-void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
+GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
 {
    OSMesaContext ctx = OSMesaGetCurrentContext();
 
@@ -568,7 +568,7 @@ void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
  *          buffer - pointer to depth buffer values
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
-GLboolean GLAPIENTRY
+GLAPI GLboolean GLAPIENTRY
 OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
                       GLint *bytesPerValue, void **buffer )
 {
@@ -599,7 +599,7 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
  *          buffer - pointer to color buffer values
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
-GLboolean GLAPIENTRY
+GLAPI GLboolean GLAPIENTRY
 OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
                       GLint *height, GLint *format, void **buffer )
 {
