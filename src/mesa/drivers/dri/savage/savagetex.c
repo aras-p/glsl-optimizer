@@ -46,6 +46,11 @@
 
 #include "xmlpool.h"
 
+/* On Savage4 the texure LOD-bias needs an offset of ~ 0.3 to get
+ * somewhere close to software rendering.
+ */
+#define SAVAGE4_LOD_OFFSET 10
+
 /* Size 1, 2 and 4 images are packed into the last subtile. Each image
  * is repeated to fill a 4x4 pixel area. The figure below shows the
  * layout of those 4x4 pixel areas in the 8x8 subtile.
@@ -101,19 +106,6 @@ SUBTILE_FUNC(8, 8)
 SUBTILE_FUNC(16, 8)
 SUBTILE_FUNC(32, 8) /* 4 bytes per pixel, 8 pixels wide */
 
-/** \brief Table of subtile upload functions
- *
- * Indexed by the binary logarithm of the width in bytes.
- */
-static GLubyte *(*savageSubtileTab[]) (GLubyte *, GLubyte *, GLuint) = {
-    NULL,
-    savageUploadSubtile_2x8,
-    savageUploadSubtile_4x8,
-    savageUploadSubtile_8x8,
-    savageUploadSubtile_16x8,
-    savageUploadSubtile_32x8
-};
-
 /** \brief Upload a complete tile from src (srcStride) to dest
  *
  * \param tileInfo     Pointer to tiling information
@@ -138,10 +130,16 @@ static void savageUploadTile (const savageTileInfo *tileInfo,
 			      GLubyte *src, GLuint srcStride, GLubyte *dest) {
     GLuint subStride = tileInfo->subWidth * bpp;
     GLubyte *srcSRow = src, *srcSTile = src;
-    GLubyte *(*subtileFunc) (GLubyte *, GLubyte *, GLuint) =
-	savageSubtileTab[(tileInfo->subWidth == 4 ? 2 : 3) + 
-			 ((bpp == 1) ? 0 : (bpp == 2) ? 1 : 2)];
+    GLubyte *(*subtileFunc) (GLubyte *, GLubyte *, GLuint);
     GLuint sx, sy;
+    switch (subStride) {
+    case  2: subtileFunc = savageUploadSubtile_2x8; break;
+    case  4: subtileFunc = savageUploadSubtile_4x8; break;
+    case  8: subtileFunc = savageUploadSubtile_8x8; break;
+    case 16: subtileFunc = savageUploadSubtile_16x8; break;
+    case 32: subtileFunc = savageUploadSubtile_32x8; break;
+    default: assert(0);
+    }
     for (sy = 0; sy < hInSub; ++sy) {
 	srcSTile = srcSRow;
 	for (sx = 0; sx < wInSub; ++sx) {
@@ -1036,7 +1034,8 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
     if((ctx->Texture.Unit[0].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[0].ni.dBias != 0))
     {
-	int bias = (int)(ctx->Texture.Unit[0].LodBias * 32.0);
+	int bias = (int)(ctx->Texture.Unit[0].LodBias * 32.0) +
+	    SAVAGE4_LOD_OFFSET;
 	if (bias < -256)
 	    bias = -256;
 	else if (bias > 255)
@@ -1237,7 +1236,8 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
     if((ctx->Texture.Unit[1].LodBias !=0.0F) ||
        (imesa->regs.s4.texCtrl[1].ni.dBias != 0))
     {
-	int bias = (int)(ctx->Texture.Unit[1].LodBias * 32.0);
+	int bias = (int)(ctx->Texture.Unit[1].LodBias * 32.0) +
+	    SAVAGE4_LOD_OFFSET;
 	if (bias < -256)
 	    bias = -256;
 	else if (bias > 255)
