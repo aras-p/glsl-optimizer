@@ -1,10 +1,8 @@
-/* $Id: ac_import.c,v 1.23 2003/03/01 01:50:24 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -183,61 +181,13 @@ static void reset_edgeflag( GLcontext *ctx )
 static void reset_attrib( GLcontext *ctx, GLuint index )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   GLboolean fallback = GL_FALSE;
 
-   /*
-    * The 16 NV vertex attribute arrays have top priority.  If one of those
-    * is not enabled, look if a corresponding conventional array is enabled.
-    * If nothing else, use the fallback (ctx->Current.Attrib) values.
-    */
-   if (ctx->Array._Enabled & _NEW_ARRAY_ATTRIB(index)) {
+   if (ctx->Array.VertexAttrib[index].Enabled) {
       ac->Raw.Attrib[index] = ctx->Array.VertexAttrib[index];
       STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
    }
-   else if (ctx->Array._Enabled & (1 << index)) {
-      /* use conventional vertex array if possible */
-      if (index == VERT_ATTRIB_POS) {
-         ac->Raw.Attrib[index] = ctx->Array.Vertex;
-      }
-      else if (index == VERT_ATTRIB_NORMAL) {
-         ac->Raw.Attrib[index] = ctx->Array.Normal;
-      }
-      else if (index == VERT_ATTRIB_COLOR0) {
-         ac->Raw.Attrib[index] = ctx->Array.Color;
-      }
-      else if (index == VERT_ATTRIB_COLOR1) {
-         ac->Raw.Attrib[index] = ctx->Array.SecondaryColor;
-      }
-      else if (index == VERT_ATTRIB_FOG) {
-         ac->Raw.Attrib[index] = ctx->Array.FogCoord;
-      }
-      else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
-         GLuint unit = index - VERT_ATTRIB_TEX0;
-         ASSERT(unit < MAX_TEXTURE_COORD_UNITS);
-         ac->Raw.Attrib[index] = ctx->Array.TexCoord[unit];
-      }
-      else {
-         /* missing conventional array (vertex weight, for example) */
-         fallback = GL_TRUE;
-      }
-      if (!fallback)
-         STRIDE_ARRAY(ac->Raw.Attrib[index], ac->start);
-   }
-   else {
-      fallback = GL_TRUE;
-   }
-
-   if (fallback) {
-      /* fallback to ctx->Current.Attrib values */
+   else
       ac->Raw.Attrib[index] = ac->Fallback.Attrib[index];
-
-      if (ctx->Current.Attrib[index][3] != 1.0)
-	 ac->Raw.Attrib[index].Size = 4;
-      else if (ctx->Current.Attrib[index][2] != 0.0)
-	 ac->Raw.Attrib[index].Size = 3;
-      else
-	 ac->Raw.Attrib[index].Size = 2;
-   }
 
    ac->IsCached.Attrib[index] = GL_FALSE;
    ac->NewArrayState &= ~_NEW_ARRAY_ATTRIB(index);
@@ -806,13 +756,8 @@ struct gl_client_array *_ac_import_attrib( GLcontext *ctx,
 
    /* Can we keep the existing version?
     */
-   if (ac->NewArrayState & _NEW_ARRAY_ATTRIB(index)) {
+   if (ac->NewArrayState & _NEW_ARRAY_ATTRIB(index))
       reset_attrib( ctx, index );
-   }
-   else if (ac->NewArrayState & (1 << index)) {
-      /* Also need to check conventional attributes */
-      reset_attrib( ctx, index );
-   }
 
    /* Is the request impossible?
     */

@@ -1,5 +1,3 @@
-/* $Id: nvfragparse.c,v 1.19 2003/04/07 23:12:00 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -24,7 +22,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 /**
  * \file nvfragparse.c
  * \brief NVIDIA fragment program parser.
@@ -40,20 +37,6 @@
 #include "nvfragprog.h"
 #include "nvfragparse.h"
 #include "nvprogram.h"
-
-
-/* XXX move into imports.[ch] eventually */
-static void *
-_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
-{
-   size_t copySize = MIN2(oldSize, newSize);
-   void *newBuffer = _mesa_malloc(newSize);
-   if (newBuffer && copySize > 0)
-      _mesa_memcpy(newBuffer, oldBuffer, copySize);
-   if (oldBuffer)
-      _mesa_free(oldBuffer);
-   return newBuffer;
-}
 
 
 #define INPUT_1V     1

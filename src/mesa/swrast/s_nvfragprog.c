@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.13 2003/04/05 00:38:10 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.14 2003/04/08 02:27:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,7 +25,6 @@
  */
 
 
-
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -37,20 +36,23 @@
 #include "s_texture.h"
 
 
+/* if 1, print some debugging info */
+#define DEBUG_FRAG 0
+
+
 /**
  * Fetch a texel.
  */
 static void
-fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLuint unit,
-             GLfloat color[4] )
+fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+             GLuint unit, GLfloat color[4] )
 {
-   const GLfloat *lambda = NULL;
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    swrast->TextureSample[unit](ctx, unit, ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat (*)[4]) texcoord,
-                               lambda, &rgba);
+                               &lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
    color[1] = CHAN_TO_FLOAT(rgba[1]);
    color[2] = CHAN_TO_FLOAT(rgba[2]);
@@ -347,6 +349,15 @@ store_vector4( const struct fp_instruction *inst,
    const GLboolean *writeMask = dest->WriteMask;
    GLboolean condWriteMask[4];
 
+#if DEBUG_FRAG
+   if (value[0] > 1.0e10 ||
+       IS_INF_OR_NAN(value[0]) ||
+       IS_INF_OR_NAN(value[1]) ||
+       IS_INF_OR_NAN(value[2]) ||
+       IS_INF_OR_NAN(value[3])  )
+      printf("store %g %g %g %g\n", value[0], value[1], value[2], value[3]);
+#endif
+
    if (clamp) {
       clampedValue[0] = CLAMP(value[0], 0.0F, 1.0F);
       clampedValue[1] = CLAMP(value[1], 0.0F, 1.0F);
@@ -501,9 +512,14 @@ init_machine_deriv( GLcontext *ctx,
 static GLboolean
 execute_program( GLcontext *ctx,
                  const struct fragment_program *program, GLuint maxInst,
-                 struct fp_machine *machine, const struct sw_span *span )
+                 struct fp_machine *machine, const struct sw_span *span,
+                 GLuint column )
 {
-   GLuint pc = 0;
+   GLuint pc;
+
+#if DEBUG_FRAG
+   printf("execute fragment program --------------------\n");
+#endif
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct fp_instruction *inst = program->Instructions + pc;
@@ -542,7 +558,7 @@ execute_program( GLcontext *ctx,
                    */
                   init_machine_deriv(ctx, machine, program, span,
                                      'X', &dMachine);
-                  execute_program(ctx, program, pc, &dMachine, span);
+                  execute_program(ctx, program, pc, &dMachine, span, column);
                   fetch_vector4( &inst->SrcReg[0], &dMachine, program, aNext );
                   result[0] = aNext[0] - a[0];
                   result[1] = aNext[1] - a[1];
@@ -559,7 +575,7 @@ execute_program( GLcontext *ctx,
                if (!fetch_vector4_deriv(&inst->SrcReg[0], span, 'Y', result)) {
                   init_machine_deriv(ctx, machine, program, span,
                                      'Y', &dMachine);
-                  execute_program(ctx, program, pc, &dMachine, span);
+                  execute_program(ctx, program, pc, &dMachine, span, column);
                   fetch_vector4( &inst->SrcReg[0], &dMachine, program, aNext );
                   result[0] = aNext[0] - a[0];
                   result[1] = aNext[1] - a[1];
@@ -575,8 +591,12 @@ execute_program( GLcontext *ctx,
                fetch_vector4( &inst->SrcReg[0], machine, program, a );
                fetch_vector4( &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = 
-                  a[0] + b[0] + a[1] * b[1] + a[2] * b[2];
+                  a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("DP3 %g = (%g %g %g) . (%g %g %g)\n",
+                      result[0], a[0], a[1], a[2], b[0], b[1], b[2]);
+#endif
             }
             break;
          case FP_OPCODE_DP4:
@@ -585,7 +605,7 @@ execute_program( GLcontext *ctx,
                fetch_vector4( &inst->SrcReg[0], machine, program, a );
                fetch_vector4( &inst->SrcReg[1], machine, program, b );
                result[0] = result[1] = result[2] = result[3] = 
-                  a[0] + b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+                  a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
                store_vector4( inst, machine, result );
             }
             break;
@@ -734,6 +754,12 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] * b[2];
                result[3] = a[3] * b[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("MUL (%g %g %g %g) = (%g %g %g %g) * (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3], 
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+#endif
             }
             break;
          case FP_OPCODE_PK2H: /* pack two 16-bit floats */
@@ -812,6 +838,12 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                fetch_vector1( &inst->SrcReg[0], machine, program, a );
+#if DEBUG_FRAG
+               if (a[0] == 0)
+                  printf("RCP(0)\n");
+               else if (IS_INF_OR_NAN(a[0]))
+                  printf("RCP(inf)\n");
+#endif
                result[0] = result[1] = result[2] = result[3]
                   = 1.0F / a[0];
                store_vector4( inst, machine, result );
@@ -841,6 +873,9 @@ execute_program( GLcontext *ctx,
                fetch_vector1( &inst->SrcReg[0], machine, program, a );
                result[0] = result[1] = result[2] = result[3] = INV_SQRTF(a[0]);
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("RSQ %g = 1/sqrt(%g)\n", result[0], a[0]);
+#endif
             }
             break;
          case FP_OPCODE_SEQ: /* set on equal */
@@ -953,7 +988,9 @@ execute_program( GLcontext *ctx,
                GLfloat texcoord[4], color[4];
                fetch_vector4( &inst->SrcReg[0], machine, program, texcoord );
                /* XXX: Undo perspective divide from interpolate_texcoords() */
-               fetch_texel( ctx, texcoord, inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord,
+                            span->array->lambda[inst->TexSrcUnit][column],
+                            inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -975,7 +1012,9 @@ execute_program( GLcontext *ctx,
                GLfloat texcoord[4], color[4];
                fetch_vector4( &inst->SrcReg[0], machine, program, texcoord );
                /* Already did perspective divide in interpolate_texcoords() */
-               fetch_texel( ctx, texcoord, inst->TexSrcUnit, color );
+               fetch_texel( ctx, texcoord,
+                            span->array->lambda[inst->TexSrcUnit][column],
+                            inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
@@ -1103,12 +1142,9 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
       if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
          GLfloat *tex = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_TEX0+u];
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            COPY_4V(tex, span->array->texcoords[u][col]);
-         }
-         else {
-            COPY_4V(tex, ctx->Current.Attrib[VERT_ATTRIB_TEX0 + u]);
-         }
+         ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));
+         COPY_4V(tex, span->array->texcoords[u][col]);
+         ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);
       }
    }
 }
@@ -1126,7 +1162,7 @@ _swrast_exec_nv_fragment_program( GLcontext *ctx, struct sw_span *span )
                       ctx->FragmentProgram.Current, span, i);
 
          if (!execute_program(ctx, program, ~0,
-                              &ctx->FragmentProgram.Machine, span))
+                              &ctx->FragmentProgram.Machine, span, i))
             span->array->mask[i] = GL_FALSE;  /* killed fragment */
 
          /* Store output registers */

@@ -753,7 +753,8 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    GLuint *flags = IM->Flag;
    const GLuint *elts = IM->Elt;
    GLuint translate = ctx->Array._Enabled;
-   GLuint i, attr;
+   GLuint translateConventional;
+   GLuint attr;
 
    if (MESA_VERBOSE & VERBOSE_IMMEDIATE)
       _mesa_debug(ctx, "exec_array_elements %d .. %d\n", start, count);
@@ -774,57 +775,97 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
       }
    }
 
+   translateConventional = translate;
 
-   if (translate & VERT_BIT_POS) {
+   /*
+    * When vertex program mode is enabled, the generic vertex attribute arrays
+    * have priority over the conventional arrays.  Process those arrays now.
+    * When we're done here, translateConventional will indicate which
+    * conventional arrays still have to be translated when we're done.
+    */
+   if (ctx->VertexProgram.Enabled) {
+      for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
+         const GLuint attrBit = 1 << attr;
+         if ((translate & attrBit) && ctx->Array.VertexAttrib[attr].Enabled) {
+            _tnl_trans_elt_4f( IM->Attrib[attr],
+                               &ctx->Array.VertexAttrib[attr],
+                               flags, elts, (VERT_BIT_ELT | attrBit),
+                               start, count);
+            /* special case stuff */
+            if (attr == VERT_ATTRIB_POS) {
+               if (ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Size == 4)
+                  translate |= VERT_BITS_OBJ_234;
+               else if (ctx->Array.VertexAttrib[VERT_ATTRIB_POS].Size == 3)
+                  translate |= VERT_BITS_OBJ_23;
+            }
+            else if (attr >= VERT_ATTRIB_TEX0 && attr <= VERT_ATTRIB_TEX7) {
+               if (ctx->Array.VertexAttrib[attr].Size == 4)
+                  IM->TexSize |= TEX_SIZE_4(attr - VERT_ATTRIB_TEX0);
+               else if (ctx->Array.VertexAttrib[attr].Size == 3)
+                  IM->TexSize |= TEX_SIZE_3(attr - VERT_ATTRIB_TEX0);
+            }
+            /* override the conventional array */
+            translateConventional &= ~attrBit;
+         }
+      }
+   }
+
+   /*
+    * Check which conventional arrays are needed.
+    */
+   if (translateConventional & VERT_BIT_POS) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_POS],
-			 &ctx->Array.Vertex,
-			 flags, elts, (VERT_BIT_ELT|VERT_BIT_POS),
-			 start, count);
+                         &ctx->Array.Vertex,
+                         flags, elts, (VERT_BIT_ELT|VERT_BIT_POS),
+                         start, count);
 
       if (ctx->Array.Vertex.Size == 4)
-	 translate |= VERT_BITS_OBJ_234;
+         translate |= VERT_BITS_OBJ_234;
       else if (ctx->Array.Vertex.Size == 3)
-	 translate |= VERT_BITS_OBJ_23;
+         translate |= VERT_BITS_OBJ_23;
    }
 
-   if (translate & VERT_BIT_NORMAL)
+   if (translateConventional & VERT_BIT_NORMAL) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_NORMAL],
-			 &ctx->Array.Normal,
-			 flags, elts, (VERT_BIT_ELT|VERT_BIT_NORMAL),
-			 start, count);
+                         &ctx->Array.Normal,
+                         flags, elts, (VERT_BIT_ELT|VERT_BIT_NORMAL),
+                         start, count);
+   }
 
-   if (translate & VERT_BIT_COLOR0) {
+   if (translateConventional & VERT_BIT_COLOR0) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR0],
-			 &ctx->Array.Color,
-			 flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR0),
-			 start, count);
+                         &ctx->Array.Color,
+                         flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR0),
+                         start, count);
    }
 
-   if (translate & VERT_BIT_COLOR1) {
+   if (translateConventional & VERT_BIT_COLOR1) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR1],
-			 &ctx->Array.SecondaryColor,
-			 flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR1),
-			 start, count);
+                         &ctx->Array.SecondaryColor,
+                         flags, elts, (VERT_BIT_ELT|VERT_BIT_COLOR1),
+                         start, count);
    }
 
-   if (translate & VERT_BIT_FOG)
+   if (translateConventional & VERT_BIT_FOG) {
       _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_FOG],
-			 &ctx->Array.FogCoord,
-			 flags, elts, (VERT_BIT_ELT|VERT_BIT_FOG),
-			 start, count);
+                         &ctx->Array.FogCoord,
+                         flags, elts, (VERT_BIT_ELT|VERT_BIT_FOG),
+                         start, count);
+   }
 
-   if (translate & VERT_BITS_TEX_ANY) {
+   if (translateConventional & VERT_BITS_TEX_ANY) {
+      GLuint i;
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 if (translate & VERT_BIT_TEX(i)) {
-	    _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i],
-			       &ctx->Array.TexCoord[i],
-			       flags, elts, (VERT_BIT_ELT|VERT_BIT_TEX(i)),
-			       start, count);
+	 if (translateConventional & VERT_BIT_TEX(i)) {
+            _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i],
+                               &ctx->Array.TexCoord[i],
+                               flags, elts, (VERT_BIT_ELT|VERT_BIT_TEX(i)),
+                               start, count);
 
-	    if (ctx->Array.TexCoord[i].Size == 4)
-	       IM->TexSize |= TEX_SIZE_4(i);
-	    else if (ctx->Array.TexCoord[i].Size == 3)
-	       IM->TexSize |= TEX_SIZE_3(i);
+            if (ctx->Array.TexCoord[i].Size == 4)
+               IM->TexSize |= TEX_SIZE_4(i);
+            else if (ctx->Array.TexCoord[i].Size == 3)
+               IM->TexSize |= TEX_SIZE_3(i);
 	 }
    }
 
@@ -840,9 +881,12 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 			  flags, elts, (VERT_BIT_ELT|VERT_BIT_EDGEFLAG),
 			  start, count);
 
-   for (i = start ; i < count ; i++)
-      if (flags[i] & VERT_BIT_ELT)
-         flags[i] |= translate;
+   {
+      GLuint i;
+      for (i = start ; i < count ; i++)
+         if (flags[i] & VERT_BIT_ELT)
+            flags[i] |= translate;
+   }
 
    IM->FlushElt = 0;
 }

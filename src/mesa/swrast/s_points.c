@@ -1,10 +1,8 @@
-/* $Id: s_points.c,v 1.21 2003/03/25 02:23:47 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -214,7 +212,7 @@ _swrast_choose_point( GLcontext *ctx )
             if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
                USE(atten_antialiased_rgba_point);
             }
-            else if (ctx->Texture._EnabledUnits) {
+            else if (ctx->Texture._EnabledCoordUnits) {
                USE(antialiased_tex_rgba_point);
             }
             else {
@@ -227,7 +225,7 @@ _swrast_choose_point( GLcontext *ctx )
       }
       else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
          if (rgbMode) {
-            if (ctx->Texture._EnabledUnits) {
+            if (ctx->Texture._EnabledCoordUnits) {
                if (ctx->Point.SmoothFlag) {
                   USE(atten_antialiased_rgba_point);
                }
@@ -244,7 +242,7 @@ _swrast_choose_point( GLcontext *ctx )
             USE(atten_general_ci_point);
          }
       }
-      else if (ctx->Texture._EnabledUnits && rgbMode) {
+      else if (ctx->Texture._EnabledCoordUnits && rgbMode) {
          /* textured */
          USE(textured_rgba_point);
       }

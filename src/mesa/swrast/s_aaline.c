@@ -1,8 +1,6 @@
-/* $Id: s_aaline.c,v 1.21 2003/03/14 15:38:04 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  5.0.3
  *
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
@@ -519,8 +517,8 @@ _swrast_choose_aa_line_function(GLcontext *ctx)
 
    if (ctx->Visual.rgbMode) {
       /* RGBA */
-      if (ctx->Texture._EnabledUnits != 0) {
-         if (ctx->Texture._EnabledUnits > 1) {
+      if (ctx->Texture._EnabledCoordUnits != 0) {
+         if (ctx->Texture._EnabledCoordUnits > 1) {
             /* Multitextured! */
             if (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR || 
                 ctx->Fog.ColorSumEnabled)

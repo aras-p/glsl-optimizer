@@ -1,5 +1,3 @@
-/* $Id: s_context.c,v 1.48 2003/03/25 02:23:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -600,7 +598,7 @@ _swrast_flush( GLcontext *ctx )
    /* flush any pending fragments from rendering points */
    if (swrast->PointSpan.end > 0) {
       if (ctx->Visual.rgbMode) {
-         if (ctx->Texture._EnabledUnits)
+         if (ctx->Texture._EnabledCoordUnits)
             _swrast_write_texture_span(ctx, &(swrast->PointSpan));
          else
             _swrast_write_rgba_span(ctx, &(swrast->PointSpan));

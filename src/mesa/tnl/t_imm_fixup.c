@@ -367,7 +367,8 @@ _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 
    if ((prev->CopyOrFlag & VERT_BITS_DATA) == VERT_BIT_ELT &&
        ctx->Array.LockCount &&
-       ctx->Array.Vertex.Enabled)
+       (ctx->Array.Vertex.Enabled ||
+        (ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled)))
    {
       /* Copy Elt values only
        */

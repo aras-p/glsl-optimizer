@@ -1,5 +1,3 @@
-/* $Id: s_drawpix.c,v 1.47 2003/03/25 02:23:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -111,11 +109,11 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledUnits)
+   if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
 
    if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
-       && ctx->Texture._EnabledUnits == 0
+       && ctx->Texture._EnabledCoordUnits == 0
        && unpack->Alignment == 1
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
@@ -650,7 +648,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
 
    if (ctx->Fog.Enabled)
       _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledUnits)
+   if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
@@ -777,7 +775,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       _swrast_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledUnits)
+   if (ctx->Texture._EnabledCoordUnits)
       _swrast_span_default_texcoords(ctx, &span);
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0

@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.31 2003/02/04 14:40:56 brianp Exp $ */
+/* $Id: t_context.c,v 1.32 2003/04/08 02:27:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,7 +162,9 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       IM->ArrayEltFlags = ~ctx->Array._Enabled;
       IM->ArrayEltFlush = (ctx->Array.LockCount 
 			   ? FLUSH_ELT_LAZY : FLUSH_ELT_EAGER);
-      IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;
+      IM->ArrayEltIncr = (ctx->Array.Vertex.Enabled ||
+                          (ctx->VertexProgram.Enabled &&
+                           ctx->Array.VertexAttrib[0].Enabled)) ? 1 : 0;
       tnl->pipeline.run_input_changes |= ctx->Array.NewState; /* overkill */
    }
 

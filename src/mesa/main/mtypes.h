@@ -1,10 +1,8 @@
-/* $Id: mtypes.h,v 1.109 2003/04/05 00:38:09 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1006,6 +1004,7 @@ struct gl_texture_attrib {
    GLuint CurrentUnit;	        /* Active texture unit */
 
    GLuint _EnabledUnits;        /* one bit set for each really-enabled unit */
+   GLuint _EnabledCoordUnits;   /* one bit per enabled coordinate unit */
    GLuint _GenFlags;            /* for texgen */
    GLuint _TexGenEnabled;	
    GLuint _TexMatEnabled;
@@ -1562,7 +1561,7 @@ struct matrix_stack
 #define _NEW_ARRAY_TEXCOORD_5       VERT_BIT_TEX5
 #define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
 #define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
-#define _NEW_ARRAY_ATTRIB_0         0x10000  /* start at bit 16 */
+#define _NEW_ARRAY_ATTRIB_0         0x1  /* alias conventional arrays */
 #define _NEW_ARRAY_ALL              0xffffffff
 
 

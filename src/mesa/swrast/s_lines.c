@@ -1,5 +1,3 @@
-/* $Id: s_lines.c,v 1.36 2003/03/25 02:23:46 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -305,9 +303,10 @@ _swrast_choose_line( GLcontext *ctx )
          _swrast_choose_aa_line_function(ctx);
          ASSERT(swrast->Line);
       }
-      else if (ctx->Texture._EnabledUnits) {
+      else if (ctx->Texture._EnabledCoordUnits) {
          /* textured lines */
-         if (ctx->Texture._EnabledUnits > 0x1 || (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)) {
+         if (ctx->Texture._EnabledCoordUnits > 0x1
+             || (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)) {
             /* multi-texture and/or separate specular color */
             USE(multitextured_line);
          }

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.102 2003/03/29 17:01:01 brianp Exp $ */
+/* $Id: state.c,v 1.103 2003/04/08 02:27:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,9 @@
 #include "varray.h"
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "nvprogram.h"
+#endif
+#if FEATURE_NV_fragment_program
+#include "nvfragprog.h"
 #endif
 
 #include "math/m_matrix.h"
@@ -943,8 +946,29 @@ update_texture_state( GLcontext *ctx )
    if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) {
       ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
    }
+
+   ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
+   /* Fragment programs may need texture coordinates but not the
+    * corresponding texture images.
+    */
+   if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+      ctx->Texture._EnabledCoordUnits |=
+         (ctx->FragmentProgram.Current->InputsRead >> FRAG_ATTRIB_TEX0);
+   }
 }
 
+
+/*
+ * Update items which depend on vertex/fragment programs.
+ */
+static void
+update_program( GLcontext *ctx )
+{
+   if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+      if (ctx->FragmentProgram.Current->InputsRead & (1 << FRAG_ATTRIB_COL1))
+         ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
+   }
+}
 
 
 /*
@@ -1015,6 +1039,8 @@ void _mesa_update_state( GLcontext *ctx )
 	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
    }
 
+   if (new_state & _NEW_PROGRAM)
+      update_program( ctx );
 
 #if 0
    /* XXX this is a bit of a hack.  We should be checking elsewhere if

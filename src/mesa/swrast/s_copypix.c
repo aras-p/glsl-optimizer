@@ -1,5 +1,3 @@
-/* $Id: s_copypix.c,v 1.44 2003/03/25 02:23:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1

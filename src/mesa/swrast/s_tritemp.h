@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.48 2003/03/25 02:23:48 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.49 2003/04/08 02:27:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,7 +86,7 @@
    {								\
       GLuint u;							\
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {		\
+         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {	\
             CODE						\
          }							\
       }								\

@@ -1,5 +1,3 @@
-/* $Id: nvprogram.c,v 1.11 2003/04/05 00:38:09 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -1060,7 +1058,6 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 
    fragProg = (struct fragment_program *) prog;
    for (i = 0; i < fragProg->NumParameters; i++) {
-      printf("test %d %s\n", i, fragProg->Parameters[i].Name);
       if (!_mesa_strcmp(fragProg->Parameters[i].Name, (const char *) name)) {
          ASSERT(!fragProg->Parameters[i].Constant);
          fragProg->Parameters[i].Values[0] = x;

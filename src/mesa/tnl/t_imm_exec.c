@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.45 2003/04/07 14:53:28 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.46 2003/04/08 02:27:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,9 @@ static void reset_input( GLcontext *ctx,
       IM->MaterialMask[IM->Start] = 0;
 
    IM->ArrayEltFlags = ~ctx->Array._Enabled;
-   IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;
+   IM->ArrayEltIncr = (ctx->Array.Vertex.Enabled ||
+                       (ctx->VertexProgram.Enabled &&
+                        ctx->Array.VertexAttrib[0].Enabled)) ? 1 : 0;
    IM->ArrayEltFlush = ctx->Array.LockCount ? FLUSH_ELT_LAZY : FLUSH_ELT_EAGER;
 }
   
@@ -486,7 +488,9 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    }
    else if ((IM->CopyOrFlag & VERT_BITS_DATA) == VERT_BIT_ELT &&
 	    ctx->Array.LockCount &&
-	    ctx->Array.Vertex.Enabled) {
+	    (ctx->Array.Vertex.Enabled ||
+             (ctx->VertexProgram.Enabled &&
+              ctx->Array.VertexAttrib[0].Enabled))) {
       exec_elt_cassette( ctx, IM );
    }
    else {

@@ -1,10 +1,8 @@
-/* $Id: ss_vb.c,v 1.22 2002/10/29 20:29:00 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -389,9 +387,9 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
       if (ctx->Visual.rgbMode) {
          funcindex = COLOR;
 
-         if (ctx->Texture._EnabledUnits > 1)
+         if (ctx->Texture._EnabledCoordUnits > 1)
             funcindex |= MULTITEX; /* a unit above unit[0] is enabled */
-         else if (ctx->Texture._EnabledUnits == 1)
+         else if (ctx->Texture._EnabledCoordUnits == 1)
             funcindex |= TEX0;  /* only unit 0 is enabled */
 
          if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)

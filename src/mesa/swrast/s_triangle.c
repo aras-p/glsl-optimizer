@@ -1,10 +1,8 @@
-/* $Id: s_triangle.c,v 1.70 2003/03/25 02:23:48 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -105,7 +103,7 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE				\
-   ASSERT(ctx->Texture._EnabledUnits == 0);	\
+   ASSERT(ctx->Texture._EnabledCoordUnits == 0);\
    ASSERT(ctx->Light.ShadeModel==GL_FLAT);	\
    span.interpMask |= SPAN_RGBA;		\
    span.red = ChanToFixed(v2->color[0]);	\
@@ -133,7 +131,7 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
 #define SETUP_CODE				\
    {						\
       /* texturing must be off */		\
-      ASSERT(ctx->Texture._EnabledUnits == 0);	\
+      ASSERT(ctx->Texture._EnabledCoordUnits == 0);	\
       ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);	\
    }
 #define RENDER_SPAN( span )  _swrast_write_rgba_span(ctx, &span);
@@ -1053,7 +1051,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._EnabledUnits) {
+      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram.Enabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
 	 const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
@@ -1067,7 +1065,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
-         if (ctx->Texture._EnabledUnits == 1
+         if (ctx->Texture._EnabledCoordUnits == 1
              && !ctx->FragmentProgram.Enabled
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS==GL_REPEAT
@@ -1112,7 +1110,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            if (ctx->Texture._EnabledUnits > 1) {
+            if (ctx->Texture._EnabledCoordUnits > 1) {
                USE(multitextured_triangle);
             }
             else {
@@ -1121,7 +1119,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
       else {
-         ASSERT(!ctx->Texture._EnabledUnits);
+         ASSERT(!ctx->Texture._EnabledCoordUnits);
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {

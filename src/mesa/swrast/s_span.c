@@ -1,5 +1,3 @@
-/* $Id: s_span.c,v 1.60 2003/03/25 02:23:47 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -353,21 +351,30 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
    ASSERT(span->interpMask & SPAN_TEXTURE);
    ASSERT(!(span->arrayMask & SPAN_TEXTURE));
 
-   if (ctx->Texture._EnabledUnits > 1) {
+   if (ctx->Texture._EnabledCoordUnits > 1) {
       /* multitexture */
       GLuint u;
       span->arrayMask |= SPAN_TEXTURE;
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
             const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
-            const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
-            const GLboolean needLambda = (obj->MinFilter != obj->MagFilter)
-               || ctx->FragmentProgram.Enabled;
+            GLfloat texW, texH;
+            GLboolean needLambda;
+            if (obj) {
+               const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+               needLambda = (obj->MinFilter != obj->MagFilter)
+                  || ctx->FragmentProgram.Enabled;
+               texW = img->WidthScale;
+               texH = img->HeightScale;
+            }
+            else {
+               texW = 1.0;
+               texH = 1.0;
+               needLambda = GL_FALSE;
+            }
             if (needLambda) {
                GLfloat (*texcoord)[4] = span->array->texcoords[u];
                GLfloat *lambda = span->array->lambda[u];
-               const GLfloat texW = (GLfloat) img->WidthScale;
-               const GLfloat texH = (GLfloat) img->HeightScale;
                const GLfloat dsdx = span->texStepX[u][0];
                const GLfloat dsdy = span->texStepY[u][0];
                const GLfloat dtdx = span->texStepX[u][1];
@@ -415,6 +422,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                      texcoord[i][0] = s * invQ;
                      texcoord[i][1] = t * invQ;
                      texcoord[i][2] = r * invQ;
+                     texcoord[i][3] = q;
                      lambda[i] = 0.0;
                      s += dsdx;
                      t += dtdx;
@@ -427,6 +435,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                      texcoord[i][0] = s * invQ;
                      texcoord[i][1] = t * invQ;
                      texcoord[i][2] = r * invQ;
+                     texcoord[i][3] = q;
                      lambda[i] = 0.0;
                      s += dsdx;
                      t += dtdx;
@@ -441,16 +450,24 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
    else {
       /* single texture */
       const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
-      const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
-      const GLboolean needLambda = (obj->MinFilter != obj->MagFilter)
-         || ctx->FragmentProgram.Enabled;
+      GLfloat texW, texH;
+      GLboolean needLambda;
+      if (obj) {
+         const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+         needLambda = (obj->MinFilter != obj->MagFilter)
+            || ctx->FragmentProgram.Enabled;
+         texW = (GLfloat) img->WidthScale;
+         texH = (GLfloat) img->HeightScale;
+      }
+      else {
+         needLambda = GL_FALSE;
+         texW = texH = 1.0;
+      }
       span->arrayMask |= SPAN_TEXTURE;
       if (needLambda) {
          /* just texture unit 0, with lambda */
          GLfloat (*texcoord)[4] = span->array->texcoords[0];
          GLfloat *lambda = span->array->lambda[0];
-         const GLfloat texW = (GLfloat) img->WidthScale;
-         const GLfloat texH = (GLfloat) img->HeightScale;
          const GLfloat dsdx = span->texStepX[0][0];
          const GLfloat dsdy = span->texStepY[0][0];
          const GLfloat dtdx = span->texStepX[0][1];
@@ -972,6 +989,9 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_colors(ctx, span);
          span->interpMask &= ~SPAN_RGBA;
       }
+      if (span->interpMask & SPAN_SPEC) {
+         interpolate_specular(ctx, span);
+      }
       _swrast_exec_nv_fragment_program(ctx, span);
       monoColor = GL_FALSE;
    }
@@ -1154,7 +1174,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
-   ASSERT(ctx->Texture._EnabledUnits);
+   ASSERT(ctx->Texture._EnabledCoordUnits);
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);
@@ -1206,6 +1226,10 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);
+
+      if (span->interpMask & SPAN_SPEC) {
+         interpolate_specular(ctx, span);
+      }
 
       /* Texturing without alpha is done after depth-testing which
        * gives a potential speed-up.
@@ -1261,6 +1285,10 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
       /* Now we need the rgba array, fill it in if needed */
       if ((span->interpMask & SPAN_RGBA) && (span->arrayMask & SPAN_RGBA) == 0)
          interpolate_colors(ctx, span);
+
+      if (span->interpMask & SPAN_SPEC) {
+         interpolate_specular(ctx, span);
+      }
 
       if (ctx->FragmentProgram.Enabled)
          _swrast_exec_nv_fragment_program( ctx, span );

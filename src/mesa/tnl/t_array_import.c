@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.28 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.29 2003/04/08 02:27:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -363,6 +363,22 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 
    _ac_import_range( ctx, start, count );
 
+   /* When vertex program mode is enabled, the generic vertex program
+    * attribute arrays have priority over the conventional attributes.
+    * Try to use them now.
+    */
+   if (ctx->VertexProgram.Enabled) {
+      GLuint index;
+      for (index = 0; index < VERT_ATTRIB_MAX; index++) {
+         /* XXX check program->InputsRead to reduce work here */
+         _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
+         VB->AttribPtr[index] = &tmp->Attribs[index];
+      }
+   }
+
+   /*
+    * Conventional attributes
+    */
    if (inputs & VERT_BIT_POS) {
       _tnl_import_vertex( ctx, 0, 0 );
       tmp->Obj.count = VB->Count;
@@ -416,16 +432,6 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 	 _tnl_import_secondarycolor( ctx, 0, 0, 0 );
 	 VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
 	 VB->SecondaryColorPtr[1] = 0;
-      }
-   }
-
-   /* XXX not 100% sure this is finished.  Keith should probably inspect. */
-   if (ctx->VertexProgram.Enabled) {
-      GLuint index;
-      for (index = 0; index < VERT_ATTRIB_MAX; index++) {
-         /* XXX check program->InputsRead to reduce work here */
-         _tnl_import_attrib( ctx, index, GL_FALSE, GL_TRUE );
-         VB->AttribPtr[index] = &tmp->Attribs[index];
       }
    }
 }

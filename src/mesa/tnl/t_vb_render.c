@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.34 2003/03/01 01:50:27 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.35 2003/04/08 02:27:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -352,9 +352,9 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
 	 inputs |= VERT_BIT_COLOR1;
 
-      if (ctx->Texture._EnabledUnits) {
+      if (ctx->Texture._EnabledCoordUnits) {
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	    if (ctx->Texture.Unit[i]._ReallyEnabled)
+	    if (ctx->Texture._EnabledCoordUnits & (1 << i))
 	       inputs |= VERT_BIT_TEX(i);
 	 }
       }
