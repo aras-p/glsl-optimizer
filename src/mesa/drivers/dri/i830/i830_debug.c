@@ -325,15 +325,15 @@ void i830EmitHwStateLockedDebug( i830ContextPtr imesa )
 	 switch( i ) {
 	 case 0:
 	 case 1:
-	    TexState = & imesa->sarea->TexState[i];
+	    TexState = imesa->sarea->TexState[i];
 	    break;
 
 	 case 2:
-	    TexState = & imesa->sarea->TexState2;
+	    TexState = imesa->sarea->TexState2;
 	    break;
 
 	 case 3:
-	    TexState = & imesa->sarea->TexState3;
+	    TexState = imesa->sarea->TexState3;
 	    break;
 	 }
 

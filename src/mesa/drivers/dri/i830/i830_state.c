@@ -1410,7 +1410,7 @@ void i830DDInitState( GLcontext *ctx )
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);   
    i830ScreenPrivate *i830Screen = imesa->i830Screen;
-   int i, j;
+   int i;
 
    imesa->clear_red = 0;
    imesa->clear_green = 0;
