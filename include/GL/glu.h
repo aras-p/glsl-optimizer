@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.18 1999/11/23 22:41:10 brianp Exp $ */
+/* $Id: glu.h,v 1.19 1999/11/24 13:06:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,7 +506,7 @@ gluBuild3DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
 GLUAPI GLint GLAPIENTRY
 gluUnProject4( GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
                const GLdouble modelMatrix[16], const GLdouble projMatrix[16],
-               const GLint viewport[4], GLclampd near, GLclampd far,
+               const GLint viewport[4], GLclampd zNear, GLclampd zFar,
                GLdouble *objx, GLdouble *objy, GLdouble *objz,
                GLdouble *objw );
 
