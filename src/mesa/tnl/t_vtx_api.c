@@ -904,7 +904,9 @@ void _tnl_vtx_init( GLcontext *ctx )
       tnl->vtx.gen.Attribute[i] = no_codegen;
    }
 
+#ifdef USE_X86_ASM
    _tnl_InitX86Codegen( &tnl->vtx.gen );
+#endif
 
    _tnl_current_init( ctx );
    _tnl_exec_vtxfmt_init( ctx );
