@@ -45,15 +45,15 @@ static void TAG(WriteDepthSpan)( GLcontext *ctx,
 	       GLint i = 0;
 	       CLIPSPAN( x, y, n, x1, n1, i );
 
-	       if ( DBG ) fprintf( stderr, "WriteDepthSpan %d..%d (x1 %d)\n",
-				   (int)i, (int)n1, (int)x1 );
+	       if ( DBG ) fprintf( stderr, "WriteDepthSpan %d..%d (x1 %d) (mask %p)\n",
+				   (int)i, (int)n1, (int)x1, mask );
 
 	       if ( mask ) {
-		  for ( ; i < n1 ; i++, x1++ ) {
+		  for ( ; n1>0 ; i++, x1++, n1-- ) {
 		     if ( mask[i] ) WRITE_DEPTH( x1, y, depth[i] );
 		  }
 	       } else {
-		  for ( ; i < n1 ; i++, x1++ ) {
+		  for ( ; n1>0 ; i++, x1++, n1-- ) {
 		     WRITE_DEPTH( x1, y, depth[i] );
 		  }
 	       }
@@ -87,11 +87,11 @@ static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
 				   __FUNCTION__, (int)i, (int)n1, (int)x1, (GLuint)depth );
 
 	       if ( mask ) {
-		  for ( ; i < n1 ; i++, x1++ ) {
+		  for ( ; n1>0 ; i++, x1++, n1-- ) {
 		     if ( mask[i] ) WRITE_DEPTH( x1, y, depth );
 		  }
 	       } else {
-		  for ( ; i < n1 ; i++, x1++ ) {
+		  for ( ; n1>0 ; x1++, n1-- ) {
 		     WRITE_DEPTH( x1, y, depth );
 		  }
 	       }
@@ -162,8 +162,9 @@ static void TAG(ReadDepthSpan)( GLcontext *ctx,
 	    {
 	       GLint i = 0;
 	       CLIPSPAN( x, y, n, x1, n1, i );
-	       for ( ; i < n1 ; i++ )
-		  READ_DEPTH( depth[i], (x1+i), y );
+	       for ( ; n1>0 ; i++, n1-- ) {
+		  READ_DEPTH( depth[i], x+i, y );
+	       }
 	    }
 	 HW_ENDCLIPLOOP();
 #endif

@@ -41,13 +41,13 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 
 	       if (mask)
 	       {
-		  for (;i<n1;i++,x1++)
+		  for (;n1>0;i++,x1++,n1--)
 		     if (mask[i])
 			WRITE_STENCIL( x1, y, stencil[i] );
 	       }
 	       else
 	       {
-		  for (;i<n1;i++,x1++)
+		  for (;n1>0;i++,x1++,n1--)
 		     WRITE_STENCIL( x1, y, stencil[i] );
 	       }
 	    }
@@ -107,8 +107,8 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
 	    {
 	       GLint i = 0;
 	       CLIPSPAN(x,y,n,x1,n1,i);
-	       for (;i<n1;i++)
-		  READ_STENCIL( stencil[i], (x1+i), y );
+	       for (;n1>0;i++,n1--)
+		  READ_STENCIL( stencil[i], (x+i), y );
 	    }
 	 HW_ENDCLIPLOOP();
       }
