@@ -329,7 +329,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    /* Disable fast write entirely - too many lockups.
     */
    mode &= ~RADEON_AGP_MODE_MASK;
-   switch (info->gartMode) {
+   switch (ctx->agpmode) {
    case 4:          mode |= RADEON_AGP_4X_MODE;
    case 2:          mode |= RADEON_AGP_2X_MODE;
    case 1: default: mode |= RADEON_AGP_1X_MODE;
@@ -340,6 +340,8 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       drmAgpRelease(ctx->drmFD);
       return 0;
    }
+   else
+     fprintf(stderr, "[gart] AGP enabled at %dx\n", ctx->agpmode);
 
    /* Workaround for some hardware bugs */
    if (info->ChipFamily < CHIP_FAMILY_R200)
@@ -919,7 +921,7 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    pRADEONDRI->depth             = ctx->bpp; /* XXX: depth */
    pRADEONDRI->bpp               = ctx->bpp;
    pRADEONDRI->IsPCI             = 0;
-   pRADEONDRI->AGPMode           = info->gartMode;
+   pRADEONDRI->AGPMode           = ctx->agpmode;
    pRADEONDRI->frontOffset       = info->frontOffset;
    pRADEONDRI->frontPitch        = info->frontPitch;
    pRADEONDRI->backOffset        = info->backOffset;
@@ -1147,7 +1149,6 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
    ctx->driverPrivate = (void *)info;
    
    info->gartFastWrite  = RADEON_DEFAULT_AGP_FAST_WRITE;
-   info->gartMode       = RADEON_DEFAULT_AGP_MODE;
    info->gartSize       = RADEON_DEFAULT_AGP_SIZE;
    info->gartTexSize    = RADEON_DEFAULT_AGP_TEX_SIZE;
    info->bufSize       = RADEON_DEFAULT_BUFFER_SIZE;
