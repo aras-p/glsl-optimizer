@@ -104,7 +104,7 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
    int count = mmesa->vert_used;
    int prim = mmesa->hw_primitive;
    int fd = mmesa->driScreen->fd;
-   drmMach64Vertex vertex;
+   drm_mach64_vertex_t vertex;
    int i, ret;
 
    mmesa->num_verts = 0;
@@ -133,7 +133,7 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
       vertex.buf = buffer;
       vertex.used = count;
       vertex.discard = 1;
-      ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drmMach64Vertex) );
+      ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drm_mach64_vertex_t) );
       if ( ret ) {
 	 UNLOCK_HARDWARE( mmesa );
 	 fprintf( stderr, "Error flushing vertex buffer: return = %d\n", ret );
@@ -164,7 +164,7 @@ void mach64FlushVerticesLocked( mach64ContextPtr mmesa )
 	 vertex.buf = buffer;
 	 vertex.used = count;
 	 vertex.discard = discard;
-	 ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drmMach64Vertex) );
+	 ret = drmCommandWrite( fd, DRM_MACH64_VERTEX, &vertex, sizeof(drm_mach64_vertex_t) );
 	 if ( ret ) {
 	    UNLOCK_HARDWARE( mmesa );
 	    fprintf( stderr, "Error flushing vertex buffer: return = %d\n", ret );
@@ -184,7 +184,7 @@ void mach64FireBlitLocked( mach64ContextPtr mmesa, drmBufPtr buffer,
 			   GLint offset, GLint pitch, GLint format,
 			   GLint x, GLint y, GLint width, GLint height )
 {
-   drmMach64Blit blit;
+   drm_mach64_blit_t blit;
    GLint ret;
 
    blit.idx = buffer->idx;
@@ -197,7 +197,7 @@ void mach64FireBlitLocked( mach64ContextPtr mmesa, drmBufPtr buffer,
    blit.height = height;
 
    ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_BLIT, 
-                          &blit, sizeof(drmMach64Blit) );
+                          &blit, sizeof(drm_mach64_blit_t) );
 
    if ( ret ) {
       UNLOCK_HARDWARE( mmesa );
@@ -229,7 +229,7 @@ static int mach64WaitForFrameCompletion( mach64ContextPtr mmesa )
    int frames;
 
    while ( 1 ) {
-      drmMach64GetParam gp;
+      drm_mach64_getparam_t gp;
       int ret;
 
       if ( mmesa->sarea->frames_queued < MACH64_MAX_QUEUED_FRAMES ) {
@@ -388,7 +388,7 @@ void mach64PerformanceCounters( mach64ContextPtr mmesa )
 void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
 {
    GLint ret;
-   drmMach64Clear clear;
+   drm_mach64_clear_t clear;
    GLint x, y, w, h;
    GLuint color;
    GLint nbox;
@@ -427,7 +427,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-			     &clear, sizeof(drmMach64Clear) );
+			     &clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -452,7 +452,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-			     &clear, sizeof(drmMach64Clear) );
+			     &clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -481,7 +481,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
 	 clear.clear_color = color;
 
 	 ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
 	 if (ret < 0) {
 	    UNLOCK_HARDWARE( mmesa );
@@ -506,7 +506,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
 	 clear.clear_color = color;
 
 	 ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
 	 if (ret < 0) {
 	    UNLOCK_HARDWARE( mmesa );
@@ -532,7 +532,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -565,7 +565,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -595,7 +595,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -627,7 +627,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
       clear.clear_color = color;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-				&clear, sizeof(drmMach64Clear) );
+				&clear, sizeof(drm_mach64_clear_t) );
 
       if (ret < 0) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -656,7 +656,7 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
-   drmMach64Clear clear;
+   drm_mach64_clear_t clear;
    GLuint flags = 0;
    GLint i;
    GLint ret;
@@ -771,7 +771,7 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       clear.clear_depth = mmesa->ClearDepth;
 
       ret = drmCommandWrite( mmesa->driFd, DRM_MACH64_CLEAR,
-			     &clear, sizeof(drmMach64Clear) );
+			     &clear, sizeof(drm_mach64_clear_t) );
 
       if ( ret ) {
 	 UNLOCK_HARDWARE( mmesa );
@@ -831,9 +831,9 @@ void mach64FlushDMALocked( mach64ContextPtr mmesa )
 /* For client-side state emits - currently unused */
 void mach64UploadHwStateLocked( mach64ContextPtr mmesa )
 {
-   ATISAREAPrivPtr sarea = mmesa->sarea;
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
    
-   mach64_context_regs_t *regs = &sarea->ContextState;
+   drm_mach64_context_regs_t *regs = &sarea->context_state;
    unsigned int dirty = sarea->dirty;
    CARD32 offset = ((regs->tex_size_pitch & 0xf0) >> 2);
 

@@ -52,7 +52,7 @@ void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
    __DRIscreenPrivate *sPriv = mmesa->driScreen;
-   ATISAREAPrivPtr sarea = mmesa->sarea;
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
    int i;
 
    drmGetLock( mmesa->driFd, mmesa->hHWContext, flags );
@@ -80,13 +80,13 @@ void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
 		    | MACH64_UPLOAD_MISC
 		    | MACH64_UPLOAD_CLIPRECTS);
 
-   if ( sarea->ctxOwner != mmesa->hHWContext ) {
-      sarea->ctxOwner = mmesa->hHWContext;
+   if ( sarea->ctx_owner != mmesa->hHWContext ) {
+      sarea->ctx_owner = mmesa->hHWContext;
       mmesa->dirty = MACH64_UPLOAD_ALL;
    }
 
    for ( i = mmesa->firstTexHeap ; i < mmesa->lastTexHeap ; i++ ) {
-      if ( mmesa->texHeap[i] && (sarea->texAge[i] != mmesa->lastTexAge[i]) ) {
+      if ( mmesa->texHeap[i] && (sarea->tex_age[i] != mmesa->lastTexAge[i]) ) {
 	 mach64AgeTextures( mmesa, i );
       }
    }

@@ -60,13 +60,13 @@ void mach64DestroyTexObj( mach64ContextPtr mmesa, mach64TexObjPtr t )
    if ( t->tObj && t->memBlock && mmesa ) {
       /* not a placeholder, so release from global LRU if necessary */
       int heap = t->heap;
-      drmTextureRegion *list = mmesa->sarea->texList[heap];
+      drmTextureRegion *list = mmesa->sarea->tex_list[heap];
       int log2sz = mmesa->mach64Screen->logTexGranularity[heap];
       int start = t->memBlock->ofs >> log2sz;
       int end = (t->memBlock->ofs + t->memBlock->size - 1) >> log2sz;
       int i;
 
-      mmesa->lastTexAge[heap] = ++mmesa->sarea->texAge[heap];
+      mmesa->lastTexAge[heap] = ++mmesa->sarea->tex_age[heap];
 
       /* Update the global LRU */
       for ( i = start ; i <= end ; i++ ) {
@@ -114,13 +114,13 @@ void mach64SwapOutTexObj( mach64ContextPtr mmesa,
    if ( t->tObj && t->memBlock && mmesa ) {
       /* not a placeholder, so release from global LRU if necessary */
       int heap = t->heap;
-      drmTextureRegion *list = mmesa->sarea->texList[heap];
+      drmTextureRegion *list = mmesa->sarea->tex_list[heap];
       int log2sz = mmesa->mach64Screen->logTexGranularity[heap];
       int start = t->memBlock->ofs >> log2sz;
       int end = (t->memBlock->ofs + t->memBlock->size - 1) >> log2sz;
       int i;
 
-      mmesa->lastTexAge[heap] = ++mmesa->sarea->texAge[heap];
+      mmesa->lastTexAge[heap] = ++mmesa->sarea->tex_age[heap];
 
       /* Update the global LRU */
       for ( i = start ; i <= end ; i++ ) {
@@ -174,7 +174,7 @@ void mach64PrintLocalLRU( mach64ContextPtr mmesa, int heap )
 
 void mach64PrintGlobalLRU( mach64ContextPtr mmesa, int heap )
 {
-   drmTextureRegion *list = mmesa->sarea->texList[heap];
+   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
    int i, j;
 
    fprintf( stderr, "\nGlobal LRU, heap %d list %p:\n", heap, list );
@@ -202,7 +202,7 @@ void mach64PrintGlobalLRU( mach64ContextPtr mmesa, int heap )
 /* NOTE: This function is only called while holding the hardware lock */
 static void mach64ResetGlobalLRU( mach64ContextPtr mmesa, int heap )
 {
-   drmTextureRegion *list = mmesa->sarea->texList[heap];
+   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
    int sz = 1 << mmesa->mach64Screen->logTexGranularity[heap];
    int i;
 
@@ -224,7 +224,7 @@ static void mach64ResetGlobalLRU( mach64ContextPtr mmesa, int heap )
    list[i].next = MACH64_NR_TEX_REGIONS;
    list[MACH64_NR_TEX_REGIONS].prev = i;
    list[MACH64_NR_TEX_REGIONS].next = 0;
-   mmesa->sarea->texAge[heap] = 0;
+   mmesa->sarea->tex_age[heap] = 0;
 }
 
 /* Update the local and global texture LRUs.
@@ -234,13 +234,13 @@ void mach64UpdateTexLRU( mach64ContextPtr mmesa,
 			 mach64TexObjPtr t )
 {
    int heap = t->heap;
-   drmTextureRegion *list = mmesa->sarea->texList[heap];
+   drmTextureRegion *list = mmesa->sarea->tex_list[heap];
    int log2sz = mmesa->mach64Screen->logTexGranularity[heap];
    int start = t->memBlock->ofs >> log2sz;
    int end = (t->memBlock->ofs + t->memBlock->size - 1) >> log2sz;
    int i;
 
-   mmesa->lastTexAge[heap] = ++mmesa->sarea->texAge[heap];
+   mmesa->lastTexAge[heap] = ++mmesa->sarea->tex_age[heap];
 
    if ( !t->memBlock ) {
       fprintf( stderr, "no memblock\n\n" );
@@ -328,9 +328,9 @@ static void mach64TexturesGone( mach64ContextPtr mmesa, int heap,
  */
 void mach64AgeTextures( mach64ContextPtr mmesa, int heap )
 {
-   ATISAREAPrivPtr sarea = mmesa->sarea;
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
 
-   if ( sarea->texAge[heap] != mmesa->lastTexAge[heap] ) {
+   if ( sarea->tex_age[heap] != mmesa->lastTexAge[heap] ) {
       int sz = 1 << mmesa->mach64Screen->logTexGranularity[heap];
       int nr = 0;
       int idx;
@@ -338,9 +338,9 @@ void mach64AgeTextures( mach64ContextPtr mmesa, int heap )
       /* Have to go right round from the back to ensure stuff ends up
        * LRU in our local list...  Fix with a cursor pointer.
        */
-      for ( idx = sarea->texList[heap][MACH64_NR_TEX_REGIONS].prev ;
+      for ( idx = sarea->tex_list[heap][MACH64_NR_TEX_REGIONS].prev ;
 	    idx != MACH64_NR_TEX_REGIONS && nr < MACH64_NR_TEX_REGIONS ;
-	    idx = sarea->texList[heap][idx].prev, nr++ )
+	    idx = sarea->tex_list[heap][idx].prev, nr++ )
       {
 	 /* If switching texturing schemes, then the SAREA might not
 	  * have been properly cleared, so we need to reset the
@@ -351,9 +351,9 @@ void mach64AgeTextures( mach64ContextPtr mmesa, int heap )
 	    break;
 	 }
 
-	 if ( sarea->texList[heap][idx].age > mmesa->lastTexAge[heap] ) {
+	 if ( sarea->tex_list[heap][idx].age > mmesa->lastTexAge[heap] ) {
 	    mach64TexturesGone( mmesa, heap, idx * sz, sz,
-				sarea->texList[heap][idx].in_use );
+				sarea->tex_list[heap][idx].in_use );
 	 }
       }
 
@@ -375,7 +375,7 @@ void mach64AgeTextures( mach64ContextPtr mmesa, int heap )
       mmesa->dirty |= (MACH64_UPLOAD_CONTEXT |
 		       MACH64_UPLOAD_TEX0IMAGE |
 		       MACH64_UPLOAD_TEX1IMAGE);
-      mmesa->lastTexAge[heap] = sarea->texAge[heap];
+      mmesa->lastTexAge[heap] = sarea->tex_age[heap];
    }
 }
 

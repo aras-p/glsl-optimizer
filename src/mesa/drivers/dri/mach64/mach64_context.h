@@ -36,11 +36,9 @@
 
 #include "dri_util.h"
 #include "drm.h"
-#include "xf86drm.h"
-#include "mach64_common.h"
+#include "mach64_drm.h"
 
 #include "mtypes.h"
-#include "mm.h"
 
 #include "mach64_reg.h"
 
@@ -227,7 +225,7 @@ struct mach64_context {
     */
    GLuint new_state;
    GLuint dirty;			/* Hardware state to be updated */
-   mach64_context_regs_t setup;
+   drm_mach64_context_regs_t setup;
 
    GLuint NewGLState;
    GLuint Fallback;
@@ -310,7 +308,7 @@ struct mach64_context {
    int driFd;
 
    mach64ScreenPtr mach64Screen;	/* Screen private DRI data */
-   ATISAREAPrivPtr sarea;		/* Private SAREA data */
+   drm_mach64_sarea_t *sarea;		/* Private SAREA data */
 
    GLuint hardwareWentIdle;
 

@@ -379,8 +379,8 @@ void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
 			       mach64TexObjPtr t0,
 			       mach64TexObjPtr t1 )
 {
-   ATISAREAPrivPtr sarea = mmesa->sarea;
-   mach64_context_regs_t *regs = &(mmesa->setup);
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
+   drm_mach64_context_regs_t *regs = &(mmesa->setup);
 
    /* for multitex, both textures must be local or AGP */
    if ( t0 && t1 )
@@ -405,7 +405,7 @@ void mach64EmitTexStateLocked( mach64ContextPtr mmesa,
       mmesa->setup.secondary_tex_off = t1->offset;
    }
 
-   memcpy( &sarea->ContextState.tex_size_pitch, &regs->tex_size_pitch,
+   memcpy( &sarea->context_state.tex_size_pitch, &regs->tex_size_pitch,
 	   MACH64_NR_TEXTURE_REGS * sizeof(GLuint) );
 }
 

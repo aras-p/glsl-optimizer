@@ -916,8 +916,8 @@ static void mach64DDPrintDirty( const char *msg, GLuint state )
  */
 void mach64EmitHwStateLocked( mach64ContextPtr mmesa )
 {
-   ATISAREAPrivPtr sarea = mmesa->sarea;
-   mach64_context_regs_t *regs = &(mmesa->setup);
+   drm_mach64_sarea_t *sarea = mmesa->sarea;
+   drm_mach64_context_regs_t *regs = &(mmesa->setup);
    mach64TexObjPtr t0 = mmesa->CurrentTexObj[0];
    mach64TexObjPtr t1 = mmesa->CurrentTexObj[1];
 
@@ -940,7 +940,7 @@ void mach64EmitHwStateLocked( mach64ContextPtr mmesa )
    }
 
    if ( mmesa->dirty & (MACH64_UPLOAD_CONTEXT | MACH64_UPLOAD_MISC) ) {
-      memcpy( &sarea->ContextState, regs,
+      memcpy( &sarea->context_state, regs,
 	      MACH64_NR_CONTEXT_REGS * sizeof(GLuint) );
    }
 

@@ -34,8 +34,6 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include "mach64_sarea.h"
-#include "drm_sarea.h"
 #include "xmlconfig.h"
 
 typedef struct {

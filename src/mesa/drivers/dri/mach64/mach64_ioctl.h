@@ -38,9 +38,6 @@
 #include "mach64_reg.h"
 #include "mach64_lock.h"
 
-#include "xf86drm.h"
-#include "mach64_common.h"
-
 #define MACH64_BUFFER_MAX_DWORDS	(MACH64_BUFFER_SIZE / sizeof(CARD32))
 
 

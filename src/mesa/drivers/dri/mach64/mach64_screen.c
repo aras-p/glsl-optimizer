@@ -230,7 +230,7 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
    mach64Screen->IsPCI = serverInfo->IsPCI;
 
    {
-      drmMach64GetParam gp;
+      drm_mach64_getparam_t gp;
       int ret;
 
       gp.param = MACH64_PARAM_IRQ_NR;

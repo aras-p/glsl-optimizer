@@ -143,8 +143,8 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
    driParseConfigFiles (&mmesa->optionCache, &mach64Screen->optionCache,
                         mach64Screen->driScreen->myNum, "mach64");
 
-   mmesa->sarea = (ATISAREAPrivPtr)((char *)driScreen->pSAREA +
-				    sizeof(drm_sarea_t));
+   mmesa->sarea = (drm_mach64_sarea_t *)((char *)driScreen->pSAREA +
+				    sizeof(drm_mach64_sarea_t));
 
    mmesa->CurrentTexObj[0] = NULL;
    mmesa->CurrentTexObj[1] = NULL;
