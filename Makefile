@@ -55,8 +55,10 @@ freebsd \
 hpux10 \
 hpux10-gcc \
 hpux10-static \
+hpux11-32 \
 hpux11-32-static \
 hpux11-32-static-nothreads \
+hpux11-64 \
 hpux11-64-static \
 hpux9 \
 hpux9-gcc \
