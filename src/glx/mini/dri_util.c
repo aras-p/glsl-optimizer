@@ -602,6 +602,7 @@ __driUtilCreateScreenNoDRM(struct DRIDriverRec *driver,
 	psp->pFB = driverContext->FBAddress;
 	psp->pSAREA = driverContext->pSAREA;
     } else {
+	int id;
 	psp->fd = open("/dev/mem", O_RDWR, 0);
 	/*
        * Map the framebuffer region.  
@@ -618,7 +619,6 @@ __driUtilCreateScreenNoDRM(struct DRIDriverRec *driver,
 	/*
        * Map the SAREA region.  Non-DRM drivers use a shmem SAREA
        */
-	int id;
 	id = shmget(driverContext->shared.hSAREA, driverContext->shared.SAREASize, 0);
 	driverContext->pSAREA = shmat(id, NULL, 0);
 	if (!driverContext->pSAREA) {
