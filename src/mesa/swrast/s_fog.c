@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +31,6 @@
 #include "s_context.h"
 #include "s_fog.h"
 #include "s_span.h"
-
-
 
 
 /**
@@ -99,7 +96,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, struct sw_span *span )
       /* The span's fog values are fog coordinates, now compute blend factors
        * and blend the fragment colors with the fog color.
        */
-      switch (ctx->Fog.Mode) {
+      switch (swrast->_FogMode) {
       case GL_LINEAR:
          {
             const GLfloat fogEnd = ctx->Fog.End;

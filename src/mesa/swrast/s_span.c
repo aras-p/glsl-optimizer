@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1473,15 +1473,17 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   /* Add base and specular colors */
-   if (ctx->Fog.ColorSumEnabled ||
-       (ctx->Light.Enabled &&
-        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
-      if (span->interpMask & SPAN_SPEC) {
-         interpolate_specular(ctx, span);
+   if (!ctx->FragmentProgram._Enabled) {
+      /* Add base and specular colors */
+      if (ctx->Fog.ColorSumEnabled ||
+          (ctx->Light.Enabled &&
+           ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
+         if (span->interpMask & SPAN_SPEC) {
+            interpolate_specular(ctx, span);
+         }
+         ASSERT(span->arrayMask & SPAN_SPEC);
+         add_colors( span->end, span->array->rgba, span->array->spec );
       }
-      ASSERT(span->arrayMask & SPAN_SPEC);
-      add_colors( span->end, span->array->rgba, span->array->spec );
    }
 
    /* Fog */

@@ -286,6 +286,7 @@ typedef struct
    GLboolean _AnyTextureCombine;
    GLchan _FogColor[3];
    GLboolean _FogEnabled;
+   GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
    /* Accum buffer temporaries.
     */

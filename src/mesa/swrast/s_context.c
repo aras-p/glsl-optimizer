@@ -196,18 +196,21 @@ _swrast_update_fog_state( GLcontext *ctx )
    CLAMPED_FLOAT_TO_CHAN(swrast->_FogColor[GCOMP], ctx->Fog.Color[GCOMP]);
    CLAMPED_FLOAT_TO_CHAN(swrast->_FogColor[BCOMP], ctx->Fog.Color[BCOMP]);
 
-   /* determine if fog is needed */
+   /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = GL_FALSE;
-   if (ctx->Fog.Enabled) {
-      swrast->_FogEnabled = GL_TRUE;
-   }
-   else if (ctx->FragmentProgram._Enabled &&
-        ctx->FragmentProgram.Current->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
-      const struct fragment_program *p;
-      p = (struct fragment_program *) ctx->FragmentProgram.Current;
-      if (p->FogOption != GL_NONE) {
-         swrast->_FogEnabled = GL_TRUE;
+   if (ctx->FragmentProgram._Enabled) {
+      if (ctx->FragmentProgram.Current->Base.Target==GL_FRAGMENT_PROGRAM_ARB) {
+         const struct fragment_program *p
+            = (struct fragment_program *) ctx->FragmentProgram.Current;
+         if (p->FogOption != GL_NONE) {
+            swrast->_FogEnabled = GL_TRUE;
+            swrast->_FogMode = p->FogOption;
+         }
       }
+   }
+   else if (ctx->Fog.Enabled) {
+      swrast->_FogEnabled = GL_TRUE;
+      swrast->_FogMode = ctx->Fog.Mode;
    }
 }
 
@@ -480,7 +483,7 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & _SWRAST_NEW_TEXTURE_ENV_MODE)
 	 _swrast_update_texture_env( ctx );
 
-      if (swrast->NewState & _NEW_FOG)
+      if (swrast->NewState & (_NEW_FOG | _NEW_PROGRAM))
          _swrast_update_fog_state( ctx );
 
       if (swrast->NewState & _NEW_PROGRAM)
