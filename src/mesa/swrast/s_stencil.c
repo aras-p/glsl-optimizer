@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.6 2001/02/23 20:08:29 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.7 2001/02/23 23:14:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -921,12 +921,9 @@ _mesa_stencil_and_ztest_pixels( GLcontext *ctx,
       ASSERT(ctx->Driver.ReadStencilPixels);
       (*ctx->Driver.ReadStencilPixels)(ctx, n, x, y, stencil);
 
-      if (do_stencil_test(ctx, n, stencil, mask) == GL_FALSE) {
-         /* all fragments failed the stencil test, we're done. */
-         return GL_FALSE;
-      }
-
       MEMCPY(origMask, mask, n * sizeof(GLubyte));
+
+      (void) do_stencil_test(ctx, n, stencil, mask);
 
       if (ctx->Depth.Test == GL_FALSE) {
          apply_stencil_op(ctx, ctx->Stencil.ZPassFunc, n, stencil, mask);
