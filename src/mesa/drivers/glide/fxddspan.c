@@ -100,7 +100,7 @@
 
 #define HW_WRITE_CLIPLOOP()						\
     do {								\
-	int _nc = 1; /* numcliprects */					\
+	const int _nc = 1; /* numcliprects */				\
 	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\
@@ -112,7 +112,7 @@
 
 #define HW_READ_CLIPLOOP()						\
     do {								\
-	int _nc = 1; /* numcliprects */					\
+	const int _nc = 1; /* numcliprects */				\
 	/* [dBorca] Hack alert: */					\
 	/* remember, we need to flip the scissor, too */		\
 	/* is it better to do it inside fxDDScissor? */			\

@@ -503,10 +503,7 @@ fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
          tex1.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
          tex1.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
 
-	 /* [dBorca] Hack alert:
-          * don't use GR_COMBINE_FUNCTION_SCALE_OTHER
-          * such that Glide recognizes TMU0 in passthrough mode
-          */
+	 /* correct values to set TMU0 in passthrough mode */
          tex0.FunctionRGB   = GR_COMBINE_FUNCTION_BLEND;
          tex0.FactorRGB     = GR_COMBINE_FACTOR_ONE;
          tex0.FunctionAlpha = GR_COMBINE_FUNCTION_BLEND;
@@ -1374,7 +1371,7 @@ fxDDBlendFuncSeparate(GLcontext * ctx, GLenum sfactor, GLenum dfactor, GLenum as
    GLboolean haveAlpha = fxMesa->haveHwAlpha;
    GrAlphaBlendFnc_t sfact, dfact, asfact, adfact;
 
-   /* [dBorca] Hack alert:
+   /*
     * 15/16 BPP alpha channel alpha blending modes
     *   0x0	AZERO		Zero
     *   0x4	AONE		One

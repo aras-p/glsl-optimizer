@@ -882,6 +882,7 @@ static void fx_render_vb_triangles( GLcontext *ctx,
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrVertex *fxVB = fxMesa->verts;
+   GLuint j;
    (void) flags;
 
    if (TDFX_DEBUG & VERBOSE_VARRAY) {
@@ -890,23 +891,9 @@ static void fx_render_vb_triangles( GLcontext *ctx,
 
    INIT(GL_TRIANGLES);
 
-#if 0
-   /* [dBorca]
-    * apparently, this causes troubles with some programs (GLExcess);
-    * might be a bug in Glide... However, "grDrawVertexArrayContiguous"
-    * eventually calls "grDrawTriangle" for GR_TRIANGLES, so we're better
-    * off doing it by hand...
-    */
-   grDrawVertexArrayContiguous( GR_TRIANGLES, count-start,
-                                fxVB + start, sizeof(GrVertex));
-#else
-   {
-    GLuint j;
-    for (j=start+2; j<count; j+=3) {
-        grDrawTriangle(fxVB + (j-2), fxVB + (j-1), fxVB + j);
-    }
+   for (j=start+2; j<count; j+=3) {
+      grDrawTriangle(fxVB + (j-2), fxVB + (j-1), fxVB + j);
    }
-#endif
 }
 
 
@@ -1200,10 +1187,7 @@ void fxDDChooseRenderState(GLcontext *ctx)
       fxMesa->draw_line = fx_draw_line;
       fxMesa->draw_tri = fx_draw_triangle;
 
-      /* Hook in fallbacks for specific primitives.
-       * [dBorca] Hack alert:
-       * If we're in FSAA mode, we always do anti-aliased primitives.
-       */
+      /* Hook in fallbacks for specific primitives. */
       if (flags & (POINT_FALLBACK|
 		   LINE_FALLBACK|
 		   TRI_FALLBACK))
