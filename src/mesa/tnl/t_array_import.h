@@ -1,4 +1,4 @@
-/* $Id: t_array_import.h,v 1.3 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_array_import.h,v 1.4 2001/08/13 22:15:54 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,10 +31,6 @@
 #include "t_context.h"
 
 extern void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count );
-
-extern void _tnl_fill_immediate_drawarrays( GLcontext *ctx,
-					    struct immediate *IM,
-					    GLuint start, GLuint count ) ;
 
 extern void _tnl_array_import_init( GLcontext *ctx );
 

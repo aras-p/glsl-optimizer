@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.17 2001/08/02 21:30:10 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.18 2001/08/13 22:15:54 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,38 +48,6 @@
 static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 				 GLsizei count )
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
-   /* Need to produce immediate structs, either for compiling or
-    * because the array range is too large to process in a single
-    * VB.  In GL_EXECUTE mode, this introduces two redundant
-    * operations: producing the flag array and computing the orflag
-    * of the flag array.
-    */
-#if 0
-   /* Buggy - see sgl testGeoSets.exe polygon mode
-    */
-   if (_tnl_hard_begin( ctx, mode )) {
-      GLint i;
-      for (i = 0 ; i < count ; ) {
-	 struct immediate *IM = TNL_CURRENT_IM(ctx);
-	 GLuint start = IM->Start;
-	 GLuint nr = MIN2( IMM_MAXDATA - start, (GLuint) (count - i) );
-
-	 _tnl_fill_immediate_drawarrays( ctx, IM, i, i+nr );
-
-	 IM->Count = start + nr;
-	 i += nr;
-
-	 if (i == count)
-	    _tnl_end( ctx );
-
-	 _tnl_flush_immediate( IM );
-      }
-   }
-#else
-   /* Simple alternative to above code.
-    */
    if (_tnl_hard_begin( ctx, mode ))
    {
       GLuint i;
@@ -88,46 +56,12 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
       }
       _tnl_end( ctx );
    }
-#endif
 }
 
 
 static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 				   const GLuint *indices)
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
-#if 0
-   /* Optimized code that fakes the effect of calling
-    * _tnl_array_element for each index in the list.
-    *
-    * Possibly buggy, see above.
-    */
-   if (_tnl_hard_begin( ctx, mode )) {
-      GLint i, j;
-      for (i = 0 ; i < count ; ) {
-	 struct immediate *IM = TNL_CURRENT_IM(ctx);
-	 GLuint start = IM->Start;
-	 GLint end = MIN2( IMM_MAXDATA, (count - i) + start);
-	 GLuint sf = IM->Flag[start];
-	 IM->FlushElt = IM->ArrayEltFlush;
-
-	 for (j = start ; j < end ; j++) {
-	    IM->Elt[j] = (GLuint) *indices++;
-	    IM->Flag[j] = VERT_ELT;
-	 }
-
-	 IM->Flag[start] |= (sf & IM->ArrayEltFlags);
-	 IM->Count = end;
-	 i += end - start;
-
-	 if (i == count)
-	    _tnl_end( ctx );
-
-	 _tnl_flush_immediate( IM );
-      }
-   }
-#else
    /* Simple version of the above code.
     */
    if (_tnl_hard_begin(ctx, mode)) {
@@ -136,7 +70,6 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 	 _tnl_array_element( ctx, indices[i] );
       _tnl_end( ctx );
    }
-#endif
 }
 
 
