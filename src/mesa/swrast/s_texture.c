@@ -3846,6 +3846,9 @@ texture_apply( const GLcontext *ctx,
    else if (format == GL_DEPTH_COMPONENT) {
       format = texUnit->_Current->DepthMode;
    }
+   else if (texUnit->ColorTableEnabled) {
+      format = texUnit->ColorTable.Format;
+   }
 
    switch (texUnit->EnvMode) {
       case GL_REPLACE:
