@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.21 2001/04/27 21:18:25 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.22 2001/05/01 22:01:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -223,7 +223,11 @@ struct xmesa_buffer {
 
    /* Used to do XAllocColor/XFreeColors accounting: */
    int num_alloced;
+#if defined(XFree86Server)
+   Pixel alloced_colors[256];
+#else
    unsigned long alloced_colors[256];
+#endif
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
   __DRIdrawablePrivate *driDrawPriv;	/* back pointer to DRI drawable
