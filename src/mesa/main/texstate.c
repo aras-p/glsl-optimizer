@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.14 2000/06/27 21:42:13 brianp Exp $ */
+/* $Id: texstate.c,v 1.15 2000/07/05 16:14:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -216,12 +216,9 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                switch (operand) {
                   case GL_SRC_COLOR:
                   case GL_ONE_MINUS_SRC_COLOR:
-                     texUnit->CombineOperandRGB[s] = operand;
-                     ctx->NewState |= NEW_TEXTURE_ENV;
-                     break;
                   case GL_SRC_ALPHA:
                   case GL_ONE_MINUS_SRC_ALPHA:
-                     texUnit->CombineOperandA[s] = operand;
+                     texUnit->CombineOperandRGB[s] = operand;
                      ctx->NewState |= NEW_TEXTURE_ENV;
                      break;
                   default:
