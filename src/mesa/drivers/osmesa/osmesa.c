@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.3 1999/11/11 01:28:41 brianp Exp $ */
+/* $Id: osmesa.c,v 1.4 1999/11/25 17:37:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -541,7 +541,7 @@ GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint 
 
 
 
-static GLboolean set_buffer( GLcontext *ctx, GLenum mode )
+static GLboolean set_draw_buffer( GLcontext *ctx, GLenum mode )
 {
    (void) ctx;
    if (mode==GL_FRONT_LEFT) {
@@ -550,6 +550,14 @@ static GLboolean set_buffer( GLcontext *ctx, GLenum mode )
    else {
       return GL_FALSE;
    }
+}
+
+
+static void set_read_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
+{
+   /* separate read buffer not supported */
+   ASSERT(buffer == ctx->DrawBuffer);
+   ASSERT(mode == GL_FRONT_LEFT);
 }
 
 
@@ -1539,7 +1547,8 @@ static void osmesa_update_state( GLcontext *ctx )
    ctx->Driver.GetString = get_string;
    ctx->Driver.UpdateState = osmesa_update_state;
 
-   ctx->Driver.SetBuffer = set_buffer;
+   ctx->Driver.SetDrawBuffer = set_draw_buffer;
+   ctx->Driver.SetReadBuffer = set_read_buffer;
    ctx->Driver.Color = set_color;
    ctx->Driver.Index = set_index;
    ctx->Driver.ClearIndex = clear_index;

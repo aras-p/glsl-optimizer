@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.13 1999/11/24 18:48:31 brianp Exp $ */
+/* $Id: teximage.c,v 1.14 1999/11/25 17:36:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1627,7 +1627,8 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
       return NULL;
 
    /* Select buffer to read from */
-   (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Pixel.DriverReadBuffer );
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
 
    dst = image;
    stride = width * 4 * sizeof(GLubyte);
@@ -1637,8 +1638,9 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
       dst += stride;
    }
 
-   /* Restore drawing buffer */
-   (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+   /* Read from draw buffer (the default) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
 
    return image;
 }
@@ -1728,7 +1730,8 @@ copy_tex_sub_image( GLcontext *ctx, struct gl_texture_image *dest,
    components = components_in_intformat( format );
 
    /* Select buffer to read from */
-   (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Pixel.DriverReadBuffer );
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                 ctx->Pixel.DriverReadBuffer );
 
    for (i = 0;i < height; i++) {
       GLubyte rgba[MAX_WIDTH][4];
@@ -1740,8 +1743,9 @@ copy_tex_sub_image( GLcontext *ctx, struct gl_texture_image *dest,
                                     &packing, GL_TRUE);
    }
 
-   /* Restore drawing buffer */
-   (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+   /* Read from draw buffer (the default) */
+   (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                 ctx->Color.DriverDrawBuffer );
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.12 1999/11/24 18:48:30 brianp Exp $ */
+/* $Id: accum.c,v 1.13 1999/11/25 17:36:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -221,7 +221,8 @@ _mesa_Accum( GLenum op, GLfloat value )
 	 break;
 
       case GL_ACCUM:
-         (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Pixel.DriverReadBuffer );
+         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                       ctx->Pixel.DriverReadBuffer );
 
          /* May have to leave optimized accum buffer mode */
          if (ctx->IntegerAccumScaler == 0.0 && value > 0.0 && value <= 1.0)
@@ -269,11 +270,14 @@ _mesa_Accum( GLenum op, GLfloat value )
                ypos++;
             }
          }
-         (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+         /* restore read buffer = draw buffer (the default) */
+         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                       ctx->Color.DriverDrawBuffer );
 	 break;
 
       case GL_LOAD:
-         (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Pixel.DriverReadBuffer );
+         (*ctx->Driver.SetReadBuffer)( ctx, ctx->ReadBuffer,
+                                       ctx->Pixel.DriverReadBuffer );
 
          /* This is a change to go into optimized accum buffer mode */
          if (value > 0.0 && value <= 1.0) {
@@ -328,7 +332,10 @@ _mesa_Accum( GLenum op, GLfloat value )
                ypos++;
             }
          }
-         (void) (*ctx->Driver.SetBuffer)( ctx, ctx->Color.DriverDrawBuffer );
+
+         /* restore read buffer = draw buffer (the default) */
+         (*ctx->Driver.SetReadBuffer)( ctx, ctx->DrawBuffer,
+                                       ctx->Color.DriverDrawBuffer );
 	 break;
 
       case GL_RETURN:

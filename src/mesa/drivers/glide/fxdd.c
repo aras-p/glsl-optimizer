@@ -242,8 +242,9 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 
-/*  Set the buffer used in double buffering */
-static GLboolean fxDDSetBuffer(GLcontext *ctx, GLenum mode )
+/* Set the buffer used for drawing */
+/* XXX support for separate read/draw buffers hasn't been tested */
+static GLboolean fxDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
@@ -263,6 +264,29 @@ static GLboolean fxDDSetBuffer(GLcontext *ctx, GLenum mode )
   }
   else {
     return GL_FALSE;
+  }
+}
+
+
+/* Set the buffer used for reading */
+/* XXX support for separate read/draw buffers hasn't been tested */
+static void fxDDSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer,
+                              GLenum mode )
+{
+  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+  (void) buffer;
+
+  if (MESA_VERBOSE&VERBOSE_DRIVER) {
+    fprintf(stderr,"fxmesa: fxDDSetBuffer(%x)\n",mode);
+  }
+
+  if (mode == GL_FRONT_LEFT) {
+    fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
+    FX_grRenderBuffer(fxMesa->currentFB);
+  }
+  else if (mode == GL_BACK_LEFT) {
+    fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
+    FX_grRenderBuffer(fxMesa->currentFB);
   }
 }
 
@@ -808,7 +832,8 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.Index=NULL;
   ctx->Driver.Color=fxDDSetColor;
 
-  ctx->Driver.SetBuffer=fxDDSetBuffer;
+  ctx->Driver.SetDrawBuffer=fxDDSetDrawBuffer;
+  ctx->Driver.SetReadBuffer=fxDDSetReadBuffer;
   ctx->Driver.GetBufferSize=fxDDBufferSize;
 
   ctx->Driver.Bitmap=fxDDDrawBitMap;
