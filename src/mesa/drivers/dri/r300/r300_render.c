@@ -210,10 +210,12 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
    /* A packet cannot have more than 16383 data words.. */
    if(((end-start)*8+4*rmesa->state.texture.tc_count)>16380){
    	fprintf(stderr, "%s:%s: Too many vertices to paint. Fix me !\n");
-	return;
-   	}
+	return;   	
+	}
 
-   start_immediate_packet(end-start, type, 8+4*rmesa->state.texture.tc_count);
+   //fprintf(stderr, "aos_count=%d start=%d end=%d\n", rmesa->state.aos_count, start, end);
+	
+   start_immediate_packet(end-start, type, 4*rmesa->state.aos_count);
 
 	for(i=start;i<end;i++){
 		#if 0
@@ -232,15 +234,29 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 		
 		
 		/* coordinates */
-		output_vector(VB->ObjPtr, i);
+		if(tnl->render_inputs & _TNL_BIT_POS)
+			output_vector(VB->ObjPtr, i);
+		if(tnl->render_inputs & _TNL_BIT_NORMAL)
+			output_vector(VB->NormalPtr, i);
 		
 		/* color components */
-		output_vector(VB->ColorPtr[0], i);
-		
+		if(tnl->render_inputs & _TNL_BIT_COLOR0)
+			output_vector(VB->ColorPtr[0], i);
+		if(tnl->render_inputs & _TNL_BIT_COLOR1)
+			output_vector(VB->ColorPtr[1], i);
+
+		if(tnl->render_inputs & _TNL_BIT_FOG)
+			output_vector(VB->FogCoordPtr, i);
+					
 		/* texture coordinates */
 		for(k=0;k < ctx->Const.MaxTextureUnits;k++)
-			if(ctx->Texture.Unit[k].Enabled)
+			if(tnl->render_inputs & (_TNL_BIT_TEX0<<k))
 				output_vector(VB->TexCoordPtr[k], i);
+		
+		if(tnl->render_inputs & _TNL_BIT_INDEX)
+			output_vector(VB->IndexPtr[0], i);
+		if(tnl->render_inputs & _TNL_BIT_POINTSIZE)
+			output_vector(VB->PointSizePtr, i);
 		}
 
 }

@@ -139,8 +139,8 @@ static __inline__ uint32_t cmdcpdelay(unsigned short count)
 		cmd[cmd_written].i=(dword); \
 		cmd_written++; \
 		} else { \
-		fprintf(stderr, "e32 but no previous packet declaration.. Aborting! in %s::%s at line %d\n", \
-			__FILE__, __FUNCTION__, __LINE__); \
+		fprintf(stderr, "e32 but no previous packet declaration.. Aborting! in %s::%s at line %d, cmd_written=%d cmd_reserved=%d\n", \
+			__FILE__, __FUNCTION__, __LINE__, cmd_written, cmd_reserved); \
 		exit(-1); \
 		} \
 	}

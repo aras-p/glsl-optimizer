@@ -815,6 +815,7 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	
 	#define CONFIGURE_AOS(v, o, r, f) \
 		{\
+		if (RADEON_DEBUG & DEBUG_STATE)fprintf(stderr, "Enabling "#r "\n"); \
 		if(immediate){ \
 			r300->state.aos[count].element_size=4; \
 			r300->state.aos[count].stride=4; \
@@ -834,11 +835,27 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	
 		/* All offsets are 0 - for use by immediate mode. 
 		Should change later to handle vertex buffers */
-	CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-	CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+	if(tnl->render_inputs & _TNL_BIT_POS)
+		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
+	if(tnl->render_inputs & _TNL_BIT_NORMAL)
+		CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
+	
+	if(tnl->render_inputs & _TNL_BIT_COLOR0)
+		CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+	if(tnl->render_inputs & _TNL_BIT_COLOR1)
+		CONFIGURE_AOS(VB->ColorPtr[1], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
+
+	if(tnl->render_inputs & _TNL_BIT_FOG)
+		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
+		
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(ctx->Texture.Unit[i].Enabled)
+		if(tnl->render_inputs & (_TNL_BIT_TEX0<<i))
 			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
+
+	if(tnl->render_inputs & _TNL_BIT_INDEX)
+		CONFIGURE_AOS(VB->IndexPtr[0], 0, i_index, AOS_FORMAT_FLOAT);
+	if(tnl->render_inputs & _TNL_BIT_POINTSIZE)
+		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
 			
 	r300->state.aos_count=count;
 	

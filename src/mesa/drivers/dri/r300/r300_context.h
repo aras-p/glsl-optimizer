@@ -475,8 +475,12 @@ struct r300_depthbuffer_state {
 struct r300_vap_reg_state {
 	   /* input register assigments */
 	   int i_coords;
+	   int i_normal;
 	   int i_color[2];
+	   int i_fog;
 	   int i_tex[R300_MAX_TEXTURE_UNITS];
+	   int i_index;
+	   int i_pointsize;
 	};
 
 /* Vertex shader state */
