@@ -1,3 +1,5 @@
+LIBRARY OpenGL32
+DESCRIPTION "Mesa 5.1"
 EXPORTS
  glAccum
  glActiveStencilFaceEXT

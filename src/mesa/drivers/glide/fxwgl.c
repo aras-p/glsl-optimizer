@@ -164,53 +164,6 @@ struct __pixelformat__ pix[] = {
      FXMESA_NONE}
    }
    ,
-#if 0
-  /* 24bit RGB888 single buffer with depth */
-   {
-    {sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
-     PFD_TYPE_RGBA,
-     24,
-     8, 0, 8, 8, 8, 16, 0, 0,
-     0, 0, 0, 0, 0,
-     24,
-     8,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {FXMESA_COLORDEPTH, 32,
-     FXMESA_ALPHA_SIZE, 8,
-     FXMESA_DEPTH_SIZE, 24,
-     FXMESA_STENCIL_SIZE, 8,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-   }
-   ,
-   /* 24bit RGB888 double buffer with depth */
-   {
-    {sizeof(PIXELFORMATDESCRIPTOR), 1,
-     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-     PFD_DOUBLEBUFFER | PFD_SWAP_COPY,
-     PFD_TYPE_RGBA,
-     24,
-     8, 0, 8, 8, 8, 16, 0, 0,
-     0, 0, 0, 0, 0,
-     24,
-     8,
-     0,
-     PFD_MAIN_PLANE,
-     0, 0, 0, 0}
-    ,
-    {FXMESA_COLORDEPTH, 32,
-     FXMESA_DOUBLEBUFFER,
-     FXMESA_ALPHA_SIZE, 8,
-     FXMESA_DEPTH_SIZE, 24,
-     FXMESA_STENCIL_SIZE, 8,
-     FXMESA_ACCUM_SIZE, 0,
-     FXMESA_NONE}
-   },
-#endif
    /* 32bit ARGB8888 single buffer with depth */
    {
     {sizeof(PIXELFORMATDESCRIPTOR), 1,

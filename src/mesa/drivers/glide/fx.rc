@@ -2,7 +2,7 @@
 
 #define PRODNAME                "Mesa 5.1"
 #define CONTACTSTR              "http://www.mesa3d.org"
-#define HWSTR                   "3dfx Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
+#define HWSTR                   "3dfx Voodoo^2, Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
 #define COPYRIGHTSTR            "Copyright \251 Brian E. Paul"
 
 #define VERSIONSTR              "5.1.0.1"

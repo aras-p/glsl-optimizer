@@ -1311,7 +1311,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          pxMip.data[0] = texImage->Data;
          fxMesa->Glide.txMipQuantize(&pxMip, &txMip, mml->glideFormat, TX_DITHER_ERR, TX_COMPRESSION_STATISTICAL);
          fxMesa->Glide.txPalToNcc((GuNccTable *)(&(ti->palette)), pxMip.pal);
-         MEMCPY((char *)texImage->Data + texImage->CompressedSize - 12 * 4, &(ti->palette), 12 * 4);
+         MEMCPY((char *)texImage->Data + texImage->CompressedSize - 12 * 4, &(ti->palette.data[16]), 12 * 4);
       } else
 #endif
       fxMesa->Glide.txImgQuantize(texImage->Data, _final_texImage_Data, mml->width, mml->height, mml->glideFormat, TX_DITHER_NONE);
@@ -1525,7 +1525,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
 #if FX_TC_NCC
    if ((mml->glideFormat == GR_TEXFMT_AYIQ_8422) ||
        (mml->glideFormat == GR_TEXFMT_YIQ_422)) {
-      MEMCPY(&(ti->palette), (char *)texImage->Data + imageSize - 12 * 4, 12 * 4);
+      MEMCPY(&(ti->palette.data[16]), (char *)data + imageSize - 12 * 4, 12 * 4);
    }
 #endif
 
