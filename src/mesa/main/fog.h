@@ -1,4 +1,4 @@
-/* $Id: fog.h,v 1.3 2000/02/02 22:21:39 brianp Exp $ */
+/* $Id: fog.h,v 1.4 2000/04/05 22:08:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,9 @@
 
 
 #include "types.h"
+
+
+extern struct gl_pipeline_stage gl_fog_coord_stage;
 
 
 extern void
