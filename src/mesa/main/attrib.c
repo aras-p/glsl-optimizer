@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.18 2000/03/03 18:55:45 brianp Exp $ */
+/* $Id: attrib.c,v 1.19 2000/03/10 22:12:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -429,19 +429,37 @@ _mesa_PopAttrib(void)
                if (ctx->Color.DrawBuffer != oldDrawBuffer) {
                   _mesa_DrawBuffer( ctx->Color.DrawBuffer);
                }
-               if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
-                    ctx->Color.AlphaRef != oldAlphaRef) &&
-                   ctx->Driver.AlphaFunc)
-                  (*ctx->Driver.AlphaFunc)( ctx, ctx->Color.AlphaFunc,
-                                            ctx->Color.AlphaRef / 255.0F);
                if ((ctx->Color.BlendSrcRGB != oldBlendSrc ||
-                    ctx->Color.BlendSrcRGB != oldBlendDst) &&
+                    ctx->Color.BlendDstRGB != oldBlendDst) &&
                    ctx->Driver.BlendFunc)
                   (*ctx->Driver.BlendFunc)( ctx, ctx->Color.BlendSrcRGB,
                                             ctx->Color.BlendDstRGB);
 	       if (ctx->Color.LogicOp != oldLogicOp &&
-		   ctx->Driver.LogicOpcode)
+		   ctx->Driver.LogicOpcode) {
 		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
+               }
+               if (ctx->Visual->RGBAflag) {
+                  GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
+                  GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
+                  GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
+                  GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
+                  (*ctx->Driver.ClearColor)( ctx, r, g, b, a );
+                  if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
+                       ctx->Color.AlphaRef != oldAlphaRef) &&
+                      ctx->Driver.AlphaFunc)
+                     (*ctx->Driver.AlphaFunc)( ctx, ctx->Color.AlphaFunc,
+                                               ctx->Color.AlphaRef / 255.0F);
+                  if (ctx->Driver.ColorMask) {
+                     (*ctx->Driver.ColorMask)(ctx,
+                                              ctx->Color.ColorMask[0],
+                                              ctx->Color.ColorMask[1],
+                                              ctx->Color.ColorMask[2],
+                                              ctx->Color.ColorMask[3]);
+                  }
+               }
+               else {
+                  (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex);
+               }
             }
             break;
          case GL_CURRENT_BIT:
