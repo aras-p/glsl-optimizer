@@ -34,6 +34,7 @@
 #include "mga_xmesa.h"
 
 void mgaSwapBuffers( __DRIdrawablePrivate *dPriv );
+void mgaWaitForVBlank( mgaContextPtr mmesa );
 
 GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords );
 
@@ -41,7 +42,6 @@ GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords );
 void mgaGetILoadBufferLocked( mgaContextPtr mmesa );
 drmBufPtr mgaGetBufferLocked( mgaContextPtr mmesa );
 
-void mgaWaitForVBlank( mgaContextPtr mmesa );
 
 void mgaFireILoadLocked( mgaContextPtr mmesa,
 			 GLuint offset, GLuint length );
@@ -104,8 +104,9 @@ do {									\
    if ( ret < 0 ) {							\
       drmCommandNone( mmesa->driFd, DRM_MGA_RESET );			\
       UNLOCK_HARDWARE( mmesa );						\
-      fprintf( stderr, "%s: flush ret=%d\n", __FUNCTION__, ret );	\
-      /*fprintf( stderr, "drmMGAFlushDMA: return = %d\n", ret );*/	\
+      fprintf( stderr, "%s: flush return = %s (%d), flags = 0x%08x\n",	\
+	       __FUNCTION__, strerror( -ret ), -ret,			\
+	       (unsigned)(flags) );					\
       exit( 1 );							\
    }									\
 } while (0)

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.79 2003/08/22 18:06:59 brianp Exp $
+# $Id: Makefile.X11,v 1.80 2003/08/22 20:11:43 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -73,6 +73,7 @@ default:
 	@echo "  make linux-sparc-ultra    for Linux with UltraSparc optimizations"
 	@echo "  make linux-osmesa16       for 16-bit/channel OSMesa"
 	@echo "  make linux-osmesa32       for 32-bit/channel OSMesa"
+	@echo "  make linux-solo           for Linux standalone with dri drivers"
 	@echo "  make linux-icc            for Linux with the Intel C/C++ compiler"
 	@echo "  make lynxos               for LynxOS systems with GCC"
 	@echo "  make mklinux              for Linux on Power Macintosh"
@@ -227,21 +228,47 @@ linux-osmesa16 linux-osmesa32:
 	if [ -d src ] ; then touch src/depend ; fi
 	if [ -d src ] ; then cd src ; $(MAKE) -f Makefile.OSMesa16 $@ ; fi
 	
+linux-solo:
+	-mkdir lib
+	if [ -d src/mesa     ] ; then touch src/mesa/depend     ; fi
+	if [ -d src/glx/mini ] ; then touch src/glx/mini/depend  ; fi
+	if [ -d src/glu/mini ] ; then touch src/glu/mini/depend  ; fi
+	if [ -d src/glut/mini ] ; then touch src/glut/mini/depend  ; fi
+	if [ -d src/mesa      ] ; then cd src/mesa      ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/r200 ] ; then cd src/mesa/drivers/dri/r200     ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/r128 ] ; then cd src/mesa/drivers/dri/r128     ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/radeon ] ; then cd src/mesa/drivers/dri/radeon ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/mga ] ; then cd src/mesa/drivers/dri/mga       ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/mesa/drivers/dri/fb ] ; then cd src/mesa/drivers/dri/fb         ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/glx/mini  ] ; then cd src/glx/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/glu/mini  ] ; then cd src/glu/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d src/glut/mini ] ; then cd src/glut/mini  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/demos   ] ; then cd progs/miniglx ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/demos   ] ; then cd progs/tests   ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/demos   ] ; then cd progs/demos   ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/xdemos  ] ; then cd progs/xdemos  ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
+	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.X11 $@ ; fi
 
 # Remove .o files, emacs backup files, etc.
 clean:
 	-rm -f src/mesa/*/*.o
 	-rm -f src/mesa/drivers/*/*.o
-	-rm -f src/mesa/drivers/*/*.o
+	-rm -f src/mesa/drivers/*/*/*.o
+	-rm -f src/mesa/drivers/*/*/*/*.o
 	-rm -f include/*~
 	-rm -f include/GL/*~
 	-rm -f src/glu/mesa/*.o src/glu/mesa/*~ src-glu/*.a
 	-rm -f src/glu/sgi/*/*.o src/glu/sgi/*/*/*.o
 	-rm -f src/glut/glx/*.o
+	-rm -f src/miniglx/*.o
+	-rm -f src/miniglu/*.o
+	-rm -f src/miniglut/*.o
 	-rm -f progs/demos/*.o
 	-rm -f progs/redbook/*.o progs/redbook/*~
 	-rm -f progs/xdemos/*.o progs/xdemos/*~
 	-rm -f progs/samples/*.o progs/samples/*~
+	-rm -f progs/tests/*.o progs/tests/*~
 	-rm -f src/glw/*.o
 
 # Remove everything that can be remade

@@ -615,7 +615,7 @@ struct r200_swtcl_info {
    GLuint vertex_size;
    GLuint vertex_stride_shift;
    GLuint vertex_format;
-   char *verts;
+   GLubyte *verts;
 
    /* Fallback rasterization functions
     */

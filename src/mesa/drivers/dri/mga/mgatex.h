@@ -40,23 +40,10 @@ typedef struct mga_texture_object_s *mgaTextureObjectPtr;
  */
 void mgaUpdateTextureState( GLcontext *ctx );
 
-void mgaConvertTexture( GLuint *dest, int texelBytes,
-			struct gl_texture_image *image,
-			int x, int y, int width, int height );
-
-
-void mgaUploadSubImageLocked( mgaContextPtr mmesa,
-			      mgaTextureObjectPtr t,
-			      int level,
-			      int x, int y, int width, int height );
-
 int mgaUploadTexImages( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
 void mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
-void mgaAgeTextures( mgaContextPtr mmesa, int heap );
-
 void mgaDDInitTextureFuncs( GLcontext *ctx );
-
 
 #endif

@@ -1,24 +1,4 @@
-/**
- * \file server/radeon_reg.h
- * \brief Registers and register definitions for the Radeon.
- * 
- * \authors Kevin E. Martin <martin@xfree86.org>
- * \authors Rickard E. Faith <faith@valinux.com>
- * \authors Alan Hourihane <alanh@fairlite.demon.co.uk>
- *
- * \par References
- *
- * - RAGE 128 VR/ RAGE 128 GL Register Reference Manual (Technical
- *   Reference Manual P/N RRG-G04100-C Rev. 0.04), ATI Technologies: April
- *   1999.
- * - RAGE 128 Software Development Manual (Technical Reference Manual P/N
- *   SDK-G04000 Rev. 0.01), ATI Technologies: June 1999.
- *
- * \note !!!! FIXME !!!! THIS FILE HAS BEEN CONVERTED FROM r128_reg.h
- * AND CONTAINS REGISTERS AND REGISTER DEFINITIONS THAT ARE NOT CORRECT
- * ON THE RADEON.  A FULL AUDIT OF THIS CODE IS NEEDED!
- */
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.25 2003/02/07 18:08:59 martin Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -47,7 +27,28 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.20 2002/10/12 01:38:07 martin Exp $ */
+/*
+ * Authors:
+ *   Kevin E. Martin <martin@xfree86.org>
+ *   Rickard E. Faith <faith@valinux.com>
+ *   Alan Hourihane <alanh@fairlite.demon.co.uk>
+ *
+ * References:
+ *
+ * !!!! FIXME !!!!
+ *   RAGE 128 VR/ RAGE 128 GL Register Reference Manual (Technical
+ *   Reference Manual P/N RRG-G04100-C Rev. 0.04), ATI Technologies: April
+ *   1999.
+ *
+ * !!!! FIXME !!!!
+ *   RAGE 128 Software Development Manual (Technical Reference Manual P/N
+ *   SDK-G04000 Rev. 0.01), ATI Technologies: June 1999.
+ *
+ */
+
+/* !!!! FIXME !!!!  NOTE: THIS FILE HAS BEEN CONVERTED FROM r128_reg.h
+ * AND CONTAINS REGISTERS AND REGISTER DEFINITIONS THAT ARE NOT CORRECT
+ * ON THE RADEON.  A FULL AUDIT OF THIS CODE IS NEEDED!  */
 
 #ifndef _RADEON_REG_H_
 #define _RADEON_REG_H_
@@ -216,6 +217,10 @@
 #define RADEON_CONFIG_APER_SIZE             0x0108
 #define RADEON_CONFIG_BONDS                 0x00e8
 #define RADEON_CONFIG_CNTL                  0x00e0
+#       define RADEON_CFG_ATI_REV_A11       (0   << 16)
+#       define RADEON_CFG_ATI_REV_A12       (1   << 16)
+#       define RADEON_CFG_ATI_REV_A13       (2   << 16)
+#       define RADEON_CFG_ATI_REV_ID_MASK   (0xf << 16)
 #define RADEON_CONFIG_MEMSIZE               0x00f8
 #define RADEON_CONFIG_MEMSIZE_EMBEDDED      0x0114
 #define RADEON_CONFIG_REG_1_BASE            0x010c
@@ -302,6 +307,10 @@
 #define RADEON_CRTC2_PITCH                  0x032c
 #define RADEON_CRTC_STATUS                  0x005c
 #       define RADEON_CRTC_VBLANK_SAVE      (1 <<  1)
+#       define RADEON_CRTC_VBLANK_SAVE_CLEAR  (1 <<  1)
+#define RADEON_CRTC2_STATUS                  0x03fc
+#       define RADEON_CRTC2_VBLANK_SAVE      (1 <<  1)
+#       define RADEON_CRTC2_VBLANK_SAVE_CLEAR  (1 <<  1)
 #define RADEON_CRTC_V_SYNC_STRT_WID         0x020c
 #       define RADEON_CRTC_V_SYNC_STRT        (0x7ff <<  0)
 #       define RADEON_CRTC_V_SYNC_STRT_SHIFT  0
@@ -492,6 +501,7 @@
 #define RADEON_DST_LINE_START               0x1600
 #define RADEON_DST_LINE_END                 0x1604
 #define RADEON_DST_LINE_PATCOUNT            0x1608
+#       define RADEON_BRES_CNTL_SHIFT       8
 #define RADEON_DST_OFFSET                   0x1404
 #define RADEON_DST_PITCH                    0x1408
 #define RADEON_DST_PITCH_OFFSET             0x142c
@@ -554,6 +564,7 @@
 #define RADEON_FP_GEN_CNTL                  0x0284
 #       define RADEON_FP_FPON                  (1 <<  0)
 #       define RADEON_FP_TMDS_EN               (1 <<  2)
+#       define RADEON_FP_PANEL_FORMAT          (1 <<  3)
 #       define RADEON_FP_EN_TMDS               (1 <<  7)
 #       define RADEON_FP_DETECT_SENSE          (1 <<  8)
 #       define RADEON_FP_SEL_CRTC2             (1 << 13)
@@ -612,6 +623,8 @@
 #define RADEON_GEN_INT_STATUS               0x0044
 #       define RADEON_VSYNC_INT_AK          (1 <<  2)
 #       define RADEON_VSYNC_INT             (1 <<  2)
+#       define RADEON_VSYNC2_INT_AK         (1 <<  6)
+#       define RADEON_VSYNC2_INT            (1 <<  6)
 #define RADEON_GENENB                       0x03c3 /* VGA */
 #define RADEON_GENFC_RD                     0x03ca /* VGA */
 #define RADEON_GENFC_WT                     0x03da /* VGA, 0x03ba */
@@ -708,6 +721,9 @@
 #define RADEON_MM_DATA                      0x0004
 #define RADEON_MM_INDEX                     0x0000
 #define RADEON_MPLL_CNTL                    0x000e /* PLL */
+#define RADEON_MPP_TB_CONFIG                0x01c0 /* ? */
+#define RADEON_MPP_GP_CONFIG                0x01c8 /* ? */
+
 
 #define RADEON_N_VIF_COUNT                  0x0248
 
@@ -863,6 +879,8 @@
 #       define RADEON_P2PLL_REF_DIV_MASK    0x03ff
 #       define RADEON_P2PLL_ATOMIC_UPDATE_R (1 << 15) /* same as _W */
 #       define RADEON_P2PLL_ATOMIC_UPDATE_W (1 << 15) /* same as _R */
+#       define R300_PPLL_REF_DIV_ACC_MASK   (0x3ff < 18)
+#       define R300_PPLL_REF_DIV_ACC_SHIFT  18
 #define RADEON_PALETTE_DATA                 0x00b4
 #define RADEON_PALETTE_30_DATA              0x00b8
 #define RADEON_PALETTE_INDEX                0x00b0
@@ -1122,6 +1140,10 @@
 #       define RADEON_LOD_BIAS_SHIFT                       8
 #       define RADEON_MAX_MIP_LEVEL_MASK                   (0x0f << 16)
 #       define RADEON_MAX_MIP_LEVEL_SHIFT                  16
+#       define RADEON_YUV_TO_RGB                           (1  << 20)
+#       define RADEON_YUV_TEMPERATURE_COOL                 (0  << 21)
+#       define RADEON_YUV_TEMPERATURE_HOT                  (1  << 21)
+#       define RADEON_YUV_TEMPERATURE_MASK                 (1  << 21)
 #       define RADEON_WRAPEN_S                             (1  << 22)
 #       define RADEON_CLAMP_S_WRAP                         (0  << 23)
 #       define RADEON_CLAMP_S_MIRROR                       (1  << 23)
@@ -1129,6 +1151,8 @@
 #       define RADEON_CLAMP_S_MIRROR_CLAMP_LAST            (3  << 23)
 #       define RADEON_CLAMP_S_CLAMP_BORDER                 (4  << 23)
 #       define RADEON_CLAMP_S_MIRROR_CLAMP_BORDER          (5  << 23)
+#       define RADEON_CLAMP_S_CLAMP_GL                     (6  << 23)
+#       define RADEON_CLAMP_S_MIRROR_CLAMP_GL              (7  << 23)
 #       define RADEON_CLAMP_S_MASK                         (7  << 23)
 #       define RADEON_WRAPEN_T                             (1  << 26)
 #       define RADEON_CLAMP_T_WRAP                         (0  << 27)
@@ -1137,6 +1161,8 @@
 #       define RADEON_CLAMP_T_MIRROR_CLAMP_LAST            (3  << 27)
 #       define RADEON_CLAMP_T_CLAMP_BORDER                 (4  << 27)
 #       define RADEON_CLAMP_T_MIRROR_CLAMP_BORDER          (5  << 27)
+#       define RADEON_CLAMP_T_CLAMP_GL                     (6  << 27)
+#       define RADEON_CLAMP_T_MIRROR_CLAMP_GL              (7  << 27)
 #       define RADEON_CLAMP_T_MASK                         (7  << 27)
 #       define RADEON_BORDER_MODE_OGL                      (0  << 31)
 #       define RADEON_BORDER_MODE_D3D                      (1  << 31)
@@ -1152,6 +1178,11 @@
 #       define RADEON_TXFORMAT_ARGB8888           (6  <<  0)
 #       define RADEON_TXFORMAT_RGBA8888           (7  <<  0)
 #       define RADEON_TXFORMAT_Y8                 (8  <<  0)
+#       define RADEON_TXFORMAT_VYUY422            (10 <<  0)
+#       define RADEON_TXFORMAT_YVYU422            (11 <<  0)
+#       define RADEON_TXFORMAT_DXT1               (12 <<  0)
+#       define RADEON_TXFORMAT_DXT23              (14 <<  0)
+#       define RADEON_TXFORMAT_DXT45              (15 <<  0)
 #       define RADEON_TXFORMAT_FORMAT_MASK        (31 <<  0)
 #       define RADEON_TXFORMAT_FORMAT_SHIFT       0
 #       define RADEON_TXFORMAT_APPLE_YUV_MODE     (1  <<  5)
@@ -1161,6 +1192,10 @@
 #       define RADEON_TXFORMAT_WIDTH_SHIFT        8
 #       define RADEON_TXFORMAT_HEIGHT_MASK        (15 << 12)
 #       define RADEON_TXFORMAT_HEIGHT_SHIFT       12
+#       define RADEON_TXFORMAT_F5_WIDTH_MASK      (15 << 16)
+#       define RADEON_TXFORMAT_F5_WIDTH_SHIFT     16
+#       define RADEON_TXFORMAT_F5_HEIGHT_MASK     (15 << 20)
+#       define RADEON_TXFORMAT_F5_HEIGHT_SHIFT    20
 #       define RADEON_TXFORMAT_ST_ROUTE_STQ0      (0  << 24)
 #       define RADEON_TXFORMAT_ST_ROUTE_MASK      (3  << 24)
 #       define RADEON_TXFORMAT_ST_ROUTE_STQ1      (1  << 24)
@@ -1173,6 +1208,26 @@
 #       define RADEON_TXFORMAT_CHROMA_KEY_ENABLE  (1  << 29)
 #       define RADEON_TXFORMAT_CUBIC_MAP_ENABLE   (1  << 30)
 #       define RADEON_TXFORMAT_PERSPECTIVE_ENABLE (1  << 31)
+#define RADEON_PP_CUBIC_FACES_0             0x1d24
+#define RADEON_PP_CUBIC_FACES_1             0x1d28
+#define RADEON_PP_CUBIC_FACES_2             0x1d2c
+#       define RADEON_FACE_WIDTH_1_SHIFT          0
+#       define RADEON_FACE_HEIGHT_1_SHIFT         4
+#       define RADEON_FACE_WIDTH_1_MASK           (0xf << 0)
+#       define RADEON_FACE_HEIGHT_1_MASK          (0xf << 4)
+#       define RADEON_FACE_WIDTH_2_SHIFT          8
+#       define RADEON_FACE_HEIGHT_2_SHIFT         12
+#       define RADEON_FACE_WIDTH_2_MASK           (0xf << 8)
+#       define RADEON_FACE_HEIGHT_2_MASK          (0xf << 12)
+#       define RADEON_FACE_WIDTH_3_SHIFT          16
+#       define RADEON_FACE_HEIGHT_3_SHIFT         20
+#       define RADEON_FACE_WIDTH_3_MASK           (0xf << 16)
+#       define RADEON_FACE_HEIGHT_3_MASK          (0xf << 20)
+#       define RADEON_FACE_WIDTH_4_SHIFT          24
+#       define RADEON_FACE_HEIGHT_4_SHIFT         28
+#       define RADEON_FACE_WIDTH_4_MASK           (0xf << 24)
+#       define RADEON_FACE_HEIGHT_4_MASK          (0xf << 28)
+
 #define RADEON_PP_TXOFFSET_0                0x1c5c
 #define RADEON_PP_TXOFFSET_1                0x1c74
 #define RADEON_PP_TXOFFSET_2                0x1c8c
@@ -1187,6 +1242,39 @@
 #       define RADEON_TXO_MICRO_TILE_OPT     (2 << 3)
 #       define RADEON_TXO_OFFSET_MASK        0xffffffe0
 #       define RADEON_TXO_OFFSET_SHIFT       5
+
+#define RADEON_PP_CUBIC_OFFSET_T0_0         0x1dd0  /* bits [31:5] */
+#define RADEON_PP_CUBIC_OFFSET_T0_1         0x1dd4
+#define RADEON_PP_CUBIC_OFFSET_T0_2         0x1dd8
+#define RADEON_PP_CUBIC_OFFSET_T0_3         0x1ddc
+#define RADEON_PP_CUBIC_OFFSET_T0_4         0x1de0
+#define RADEON_PP_CUBIC_OFFSET_T1_0         0x1e00
+#define RADEON_PP_CUBIC_OFFSET_T1_1         0x1e04
+#define RADEON_PP_CUBIC_OFFSET_T1_2         0x1e08
+#define RADEON_PP_CUBIC_OFFSET_T1_3         0x1e0c
+#define RADEON_PP_CUBIC_OFFSET_T1_4         0x1e10
+#define RADEON_PP_CUBIC_OFFSET_T2_0         0x1e14
+#define RADEON_PP_CUBIC_OFFSET_T2_1         0x1e18
+#define RADEON_PP_CUBIC_OFFSET_T2_2         0x1e1c
+#define RADEON_PP_CUBIC_OFFSET_T2_3         0x1e20
+#define RADEON_PP_CUBIC_OFFSET_T2_4         0x1e24
+
+#define RADEON_PP_TEX_SIZE_0                0x1d04  /* NPOT */
+#define RADEON_PP_TEX_SIZE_1                0x1d0c
+#define RADEON_PP_TEX_SIZE_2                0x1d14
+#       define RADEON_TEX_USIZE_MASK        (0x7ff << 0)
+#       define RADEON_TEX_USIZE_SHIFT       0
+#       define RADEON_TEX_VSIZE_MASK        (0x7ff << 16)
+#       define RADEON_TEX_VSIZE_SHIFT       16
+#       define RADEON_SIGNED_RGB_MASK       (1 << 30)
+#       define RADEON_SIGNED_RGB_SHIFT      30
+#       define RADEON_SIGNED_ALPHA_MASK     (1 << 31)
+#       define RADEON_SIGNED_ALPHA_SHIFT    31
+#define RADEON_PP_TEX_PITCH_0               0x1d08  /* NPOT */
+#define RADEON_PP_TEX_PITCH_1               0x1d10  /* NPOT */
+#define RADEON_PP_TEX_PITCH_2               0x1d18  /* NPOT */
+/* note: bits 13-5: 32 byte aligned stride of texture map */
+
 #define RADEON_PP_TXCBLEND_0                0x1c60
 #define RADEON_PP_TXCBLEND_1                0x1c78
 #define RADEON_PP_TXCBLEND_2                0x1c90

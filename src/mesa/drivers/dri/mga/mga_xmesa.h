@@ -29,8 +29,9 @@
 #ifndef _MGA_INIT_H_
 #define _MGA_INIT_H_
 
+#ifdef GLX_DIRECT_RENDERING
+
 #include <sys/time.h>
-#include <linux/types.h>
 #include "dri_util.h"
 #include "mtypes.h"
 #include "mgaregs.h"
@@ -46,6 +47,9 @@ typedef struct mga_screen_private_s {
    int cpp;			/* for front and back buffers */
    GLint agpMode;
    unsigned int irq;		/* IRQ number (0 means none) */
+   GLboolean  linecomp_sane;    /* GL_TRUE if line comp. programmed correctly
+				 * by the DDX driver.
+				 */
 
    unsigned int mAccess;
 
@@ -136,8 +140,9 @@ do {						\
 #define MGA_BASE( reg )		((unsigned long)(mmesa->mgaScreen->mmio.map))
 #define MGA_ADDR( reg )		(MGA_BASE(reg) + reg)
 
-#define MGA_DEREF( reg )	*(volatile __u32 *)MGA_ADDR( reg )
+#define MGA_DEREF( reg )	*(volatile CARD32 *)MGA_ADDR( reg )
 #define MGA_READ( reg )		MGA_DEREF( reg )
 #define MGA_WRITE( reg, val )	do { MGA_DEREF( reg ) = val; } while (0)
 
+#endif
 #endif

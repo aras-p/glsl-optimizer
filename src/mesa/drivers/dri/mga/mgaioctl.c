@@ -27,7 +27,7 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.16 2002/12/16 16:18:52 dawes Exp $ */
 
-#include <stdio.h>
+#include <sched.h>
 #include <errno.h>
 
 #include "mtypes.h"
@@ -43,11 +43,10 @@
 #include "mgavb.h"
 #include "mgaioctl.h"
 #include "mgatris.h"
-#include "mgabuffers.h"
-
-
-#include "xf86drm.h"
 #include "mga_common.h"
+
+#include "vblank.h"
+
 
 static void mga_iload_dma_ioctl(mgaContextPtr mmesa,
 				unsigned long dest,
@@ -60,6 +59,13 @@ static void mga_iload_dma_ioctl(mgaContextPtr mmesa,
    if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)
       fprintf(stderr, "DRM_IOCTL_MGA_ILOAD idx %d dst %x length %d\n",
 	      buf->idx, (int) dest, length);
+
+   if ( (length & MGA_ILOAD_MASK) != 0 ) {
+      UNLOCK_HARDWARE( mmesa );
+      fprintf( stderr, "%s: Invalid ILOAD datasize (%d), must be "
+	       "multiple of %u.\n", __FUNCTION__, length, MGA_ILOAD_ALIGN );
+      exit( 1 );
+   }
 
    iload.idx = buf->idx;
    iload.dstorg = dest;
@@ -278,65 +284,11 @@ mgaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 
-int nrswaps;
-
-
-void mgaWaitForVBlank( mgaContextPtr mmesa )
+static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 {
-#if 0
-    drmVBlank vbl;
-    int ret;
-
-    if ( !mmesa->mgaScreen->irq )
-	return;
-
-    if ( getenv("LIBGL_SYNC_REFRESH") ) {
-	/* Wait for until the next vertical blank */
-	vbl.request.type = DRM_VBLANK_RELATIVE;
-	vbl.request.sequence = 1;
-    } else if ( getenv("LIBGL_THROTTLE_REFRESH") ) {
-	/* Wait for at least one vertical blank since the last call */
-	vbl.request.type = DRM_VBLANK_ABSOLUTE;
-	vbl.request.sequence = mmesa->vbl_seq + 1;
-    } else {
-	return;
-    }
-
-    if ((ret = drmWaitVBlank( mmesa->driFd, &vbl ))) {
-	fprintf(stderr, "%s: drmWaitVBlank returned %d, IRQs don't seem to be"
-		" working correctly.\nTry running with LIBGL_THROTTLE_REFRESH"
-		" and LIBL_SYNC_REFRESH unset.\n", __FUNCTION__, ret);
-	exit(1);
-    }
-
-    mmesa->vbl_seq = vbl.reply.sequence;
-#endif
-}
-
-
-/*
- * Copy the back buffer to the front buffer.
- */
-void mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
-{
-   mgaContextPtr mmesa;
-   XF86DRIClipRectPtr pbox;
-   GLint nbox;
-   GLint ret, wait = 0;
-   GLint i;
+   unsigned wait = 0;
    GLuint last_frame, last_wrap;
 
-   assert(dPriv);
-   assert(dPriv->driContextPriv);
-   assert(dPriv->driContextPriv->driverPrivate);
-
-   mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
-
-   FLUSH_BATCH( mmesa );
-
-   mgaWaitForVBlank( mmesa );
-
-   LOCK_HARDWARE( mmesa );
 
    last_frame = mmesa->sarea->last_frame.head;
    last_wrap = mmesa->sarea->last_frame.wrap;
@@ -360,12 +312,46 @@ void mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
       }
       UPDATE_LOCK( mmesa, DRM_LOCK_FLUSH );
 
-      for ( i = 0 ; i < 1024 ; i++ ) {
-	 /* Don't just hammer the register... */
-      }
+      UNLOCK_HARDWARE( mmesa );
+      DO_USLEEP( 1 );
+      LOCK_HARDWARE( mmesa );
    }
    if ( wait )
       fprintf( stderr, "\n" );
+}
+
+
+/*
+ * Copy the back buffer to the front buffer.
+ */
+void mgaSwapBuffers( __DRIdrawablePrivate *dPriv )
+{
+   mgaContextPtr mmesa;
+   XF86DRIClipRectPtr pbox;
+   GLint nbox;
+   GLint ret;
+   GLint i;
+   GLboolean   missed_target;
+
+
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
+
+   mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
+
+   FLUSH_BATCH( mmesa );
+
+   LOCK_HARDWARE( mmesa );
+   mgaWaitForFrameCompletion( mmesa );
+   UNLOCK_HARDWARE( mmesa );
+   driWaitForVBlank( dPriv, & mmesa->vbl_seq, mmesa->vblank_flags,
+		     & missed_target );
+   if ( missed_target ) {
+      mmesa->swap_missed_count++;
+      (void) (*mmesa->get_ust)( & mmesa->swap_missed_ust );
+   }
+   LOCK_HARDWARE( mmesa );
 
    /* Use the frontbuffer cliprects
     */
@@ -399,6 +385,8 @@ void mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
    UNLOCK_HARDWARE( mmesa );
 
    mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
+   mmesa->swap_count++;
+   (void) (*mmesa->get_ust)( & mmesa->swap_ust );
 }
 
 
@@ -442,18 +430,17 @@ void mgaWaitAge( mgaContextPtr mmesa, int age  )
 }
 
 
-static int intersect_rect( XF86DRIClipRectPtr out,
-			   XF86DRIClipRectPtr a,
-			   XF86DRIClipRectPtr b )
+static GLboolean intersect_rect( XF86DRIClipRectPtr out,
+				 const XF86DRIClipRectPtr a,
+				 const XF86DRIClipRectPtr b )
 {
    *out = *a;
    if (b->x1 > out->x1) out->x1 = b->x1;
    if (b->y1 > out->y1) out->y1 = b->y1;
    if (b->x2 < out->x2) out->x2 = b->x2;
    if (b->y2 < out->y2) out->y2 = b->y2;
-   if (out->x1 > out->x2) return 0;
-   if (out->y1 > out->y2) return 0;
-   return 1;
+
+   return ((out->x1 < out->x2) && (out->y1 < out->y2));
 }
 
 
@@ -559,7 +546,7 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
          vertex.idx = buffer->idx;
          vertex.used = buffer->used;
          vertex.discard = discard;
-         drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX, 
+         drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX,
                           &vertex, sizeof(drmMGAVertex) );
 
 	 age_mmesa(mmesa, mmesa->sarea->last_enqueue);

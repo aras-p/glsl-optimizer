@@ -320,7 +320,7 @@ static CARD32 r200GetLastFrame(r200ContextPtr rmesa)
    CARD32 frame;
 
    gp.param = RADEON_PARAM_LAST_FRAME;
-   gp.value = (int *)&frame;
+   gp.value = &frame;
    ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
 			      &gp, sizeof(gp) );
    if ( ret ) {
@@ -404,7 +404,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv )
    r200ContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
-   int64_t     ust;
+   uint64_t     ust;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -616,7 +616,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       int clear;
 
       gp.param = RADEON_PARAM_LAST_CLEAR;
-      gp.value = (int *)&clear;
+      gp.value = &clear;
       ret = drmCommandWriteRead( rmesa->dri.fd,
 		      DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
 

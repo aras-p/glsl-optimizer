@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "driver.h"
 #include "drm.h"
@@ -22,9 +23,6 @@
 #include "radeon_reg.h"
 #include "radeon_sarea.h"
 #include "sarea.h"
-
-#include <unistd.h>
-
 
 
 /* HACK - for now, put this here... */
@@ -735,7 +733,7 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
  * Setups a RADEONDRIRec structure to be passed to radeon_dri.so for its
  * initialization.
  */
-static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
+static int RADEONScreenInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
 {
    RADEONDRIPtr   pRADEONDRI;
    int err;

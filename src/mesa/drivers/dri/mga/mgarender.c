@@ -42,9 +42,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-/*//#include "mem.h"*/
+#include "imports.h"
 #include "mtypes.h"
-/*#include "mmath.h" */
 
 #include "tnl/t_context.h"
 
@@ -165,7 +164,7 @@ static GLboolean mga_run_render( GLcontext *ctx,
 
 static void mga_check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_POS | VERT_BIT_CLIP | VERT_BIT_COLOR0;
+   GLuint inputs = VERT_BIT_CLIP | VERT_BIT_COLOR0;
 
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) 

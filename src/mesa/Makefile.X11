@@ -296,7 +296,7 @@ default:
 	@echo "Specify a target configuration"
 
 
-targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
+targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB) $(LIBMESA)
 
 
 # Make the GL library
@@ -321,7 +321,9 @@ libmesa: $(LIBDIR)/$(MESA_LIB)
 
 $(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
-
+mesa.a:	$(CORE_OBJECTS)
+	rm -f $@ && ar rcv $@ $(CORE_OBJECTS) && ranlib $@
+  
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
 # what's included by any source file.
 dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_DRIVER_SOURCES) $(ASM_SOURCES)
@@ -336,9 +338,9 @@ tags:
 
 # Remove .o and backup files
 clean:
+	-rm *.a
 	-rm -f */*.o */*~ */*.o */*~
 	-rm -f drivers/*/*.o
-	-rm -f drivers/dri/*/*.o
 
 
 include $(TOP)/Make-config

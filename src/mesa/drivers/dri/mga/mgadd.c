@@ -29,10 +29,6 @@
 
 #include "mtypes.h"
 
-
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mm.h"
 #include "mgacontext.h"
 #include "mgadd.h"
@@ -42,12 +38,9 @@
 #include "mgatris.h"
 #include "mgavb.h"
 #include "mga_xmesa.h"
-#include "extensions.h"
-#if defined(USE_X86_ASM)
-#include "X86/common_x86_asm.h"
-#endif
+#include "utils.h"
 
-#define MGA_DATE	"20020221"
+#define DRIVER_DATE	"20030328"
 
 
 /***************************************
@@ -59,52 +52,19 @@ static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    static char buffer[128];
+   unsigned   offset;
 
    switch ( name ) {
    case GL_VENDOR:
       return (GLubyte *) "VA Linux Systems Inc.";
 
    case GL_RENDERER:
-      sprintf( buffer, "Mesa DRI %s " MGA_DATE,
-	       MGA_IS_G400(mmesa) ? "G400" :
-	       MGA_IS_G200(mmesa) ? "G200" : "MGA" );
+      offset = driGetRendererString( buffer, 
+				     MGA_IS_G400(mmesa) ? "G400" :
+				     MGA_IS_G200(mmesa) ? "G200" : "MGA",
+				     DRIVER_DATE,
+				     mmesa->mgaScreen->agpMode );
 
-      /* Append any AGP-specific information.
-       */
-      switch ( mmesa->mgaScreen->agpMode ) {
-      case 1:
-	 strncat( buffer, " AGP 1x", 7 );
-	 break;
-      case 2:
-	 strncat( buffer, " AGP 2x", 7 );
-	 break;
-      case 4:
-	 strncat( buffer, " AGP 4x", 7 );
-	 break;
-      }
-
-      /* Append any CPU-specific information.
-       */
-#ifdef USE_X86_ASM
-      if ( _mesa_x86_cpu_features ) {
-	 strncat( buffer, " x86", 4 );
-      }
-#endif
-#ifdef USE_MMX_ASM
-      if ( cpu_has_mmx ) {
-	 strncat( buffer, "/MMX", 4 );
-      }
-#endif
-#ifdef USE_3DNOW_ASM
-      if ( cpu_has_3dnow ) {
-	 strncat( buffer, "/3DNow!", 7 );
-      }
-#endif
-#ifdef USE_SSE_ASM
-      if ( cpu_has_xmm ) {
-	 strncat( buffer, "/SSE", 4 );
-      }
-#endif
       return (GLubyte *)buffer;
 
    default:
@@ -128,40 +88,6 @@ static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
    *height = mmesa->driDrawable->h;
    UNLOCK_HARDWARE( mmesa );
 }
-
-void mgaDDExtensionsInit( GLcontext *ctx )
-{
-   /* paletted_textures currently doesn't work, but we could fix them later */
-   /*
-   _mesa_enable_extension( ctx, "GL_EXT_shared_texture_palette" );
-   _mesa_enable_extension( ctx, "GL_EXT_paletted_texture" );
-   */
-
-   _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
-   _mesa_enable_extension( ctx, "GL_ARB_multisample" );
-
-   _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
-
-   /* Turn on multitexture and texenv_add for the G400.
-    */
-   if (MGA_IS_G400(MGA_CONTEXT(ctx))) {
-      _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
-      _mesa_enable_extension( ctx, "GL_ARB_texture_env_add" );
-
-      _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
-
-#if defined (MESA_packed_depth_stencil)
-      _mesa_enable_extension( ctx, "GL_MESA_packed_depth_stencil" );
-#endif
-
-#if defined (MESA_experimetal_agp_allocator)
-      if (!getenv("MGA_DISABLE_AGP_ALLOCATOR"))  
-	 _mesa_enable_extension( ctx, "GL_MESA_experimental_agp_allocator" );
-#endif
-   }
-}
-
-
 
 void mgaDDInitDriverFuncs( GLcontext *ctx )
 {

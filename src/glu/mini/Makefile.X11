@@ -1,0 +1,65 @@
+
+
+TOP = ../../..
+
+default: linux-solo
+
+LIBDIR = $(TOP)/lib
+
+INCLUDES = -I$(TOP)/include 
+CFLAGS = -c -g $(INCLUDES) -MD 
+
+SOURCES = glu.c \
+	mipmap.c \
+	nurbs.c \
+	polytest.c \
+	project.c \
+	quadric.c \
+	tess.c \
+	tesselat.c
+
+
+OBJS =  $(SOURCES:.c=.o)
+
+LIBS=-L$(TOP)/lib -lGL -lm
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+targets: depend libGLU.so.1.1 install 
+
+libGLU.so.1.1: $(OBJS) Makefile.X11
+	gcc -shared -Wl,-soname,libGLU.so -Wl,-Bsymbolic $(OBJS) $(LIBS) -o $@ 
+
+install:
+	rm -f $(TOP)/lib/libGLU.so*
+	install -D libGLU.so.1.1 $(TOP)/lib/libGLU.so.1.1
+	ln -s libGLU.so.1.1 $(TOP)/lib/libGLU.so.1
+	ln -s libGLU.so.1 $(TOP)/lib/libGLU.so
+
+# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# what's included by any source file.
+depend: $(SOURCES) 
+	makedepend -fdepend -Y $(INCLUDES) \
+		$(SOURCES)
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o *~ *.o *~ *.so
+
+include $(TOP)/Make-config
+
+include depend

@@ -296,9 +296,9 @@ typedef struct {
     /** \brief Texture regions. 
      * Last element is sentinal
      */
-    radeon_tex_region_t texList[RADEON_NR_TEX_HEAPS][RADEON_NR_TEX_REGIONS+1];
+    drmTextureRegion texList[RADEON_NR_TEX_HEAPS][RADEON_NR_TEX_REGIONS+1];
     /** \brief last time texture was uploaded */
-    int texAge[RADEON_NR_TEX_HEAPS];
+    unsigned int texAge[RADEON_NR_TEX_HEAPS];
     /*@}*/
 
     int ctxOwner;		/**< \brief last context to upload state */

@@ -446,7 +446,7 @@ static __inline void *r200AllocDmaLowVerts( r200ContextPtr rmesa,
 
 
    {
-      GLubyte *head = rmesa->dma.current.address + rmesa->dma.current.ptr;
+      char *head = rmesa->dma.current.address + rmesa->dma.current.ptr;
       rmesa->dma.current.ptr += bytes;
       rmesa->swtcl.numverts += nverts;
       return head;
@@ -1260,7 +1260,7 @@ void r200InitSwtcl( GLcontext *ctx )
    tnl->Driver.Render.ResetLineStipple = r200ResetLineStipple;
    tnl->Driver.Render.BuildVertices = r200BuildVertices;
 
-   rmesa->swtcl.verts = (char *)ALIGN_MALLOC( size * 16 * 4, 32 );
+   rmesa->swtcl.verts = (GLubyte *)ALIGN_MALLOC( size * 16 * 4, 32 );
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->swtcl.render_primitive = GL_TRIANGLES;
    rmesa->swtcl.hw_primitive = 0;

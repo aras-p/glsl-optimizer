@@ -32,12 +32,17 @@
 #include "mtypes.h"
 
 extern void mgaDDInitTriFuncs( GLcontext *ctx );
-
+extern void mgaChooseRenderState( GLcontext *ctx );
 extern void mgaRasterPrimitive( GLcontext *ctx, GLenum prim, GLuint hwprim );
 
 extern void mgaFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( ctx, bit, mode ) mgaFallback( ctx, bit, mode )
 
-
+#define _MGA_NEW_RENDERSTATE (_DD_NEW_LINE_STIPPLE |		\
+			       _DD_NEW_TRI_UNFILLED |		\
+			       _DD_NEW_TRI_LIGHT_TWOSIDE |	\
+			       _DD_NEW_TRI_OFFSET |		\
+			       _DD_NEW_TRI_STIPPLE |		\
+			       _NEW_POLYGONSTIPPLE)
 
 #endif

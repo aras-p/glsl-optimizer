@@ -492,8 +492,9 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
           * texture object data.
           */
          int i;
-
-	 assert( is_empty_list( & rmesa->swapped ) );
+	 
+	 /* this assert is wrong. The default textures are always on swap list
+	 assert( is_empty_list( & rmesa->swapped ) ); */
 
          for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
 	    driDestroyTextureHeap( rmesa->texture_heaps[ i ] );

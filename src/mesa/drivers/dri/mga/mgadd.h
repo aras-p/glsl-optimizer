@@ -32,6 +32,5 @@
 #include "context.h"
 
 void mgaDDInitDriverFuncs( GLcontext *ctx );
-void mgaDDExtensionsInit( GLcontext *ctx );
 
 #endif

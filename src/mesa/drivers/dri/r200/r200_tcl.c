@@ -102,33 +102,23 @@ static GLboolean discrete_prim[0x10] = {
 };
    
 
-#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx);rmesa = rmesa
-#define ELTS_VARS  GLushort *dest
+#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx)
+#define ELT_TYPE  GLushort
 
 #define ELT_INIT(prim, hw_prim) \
    r200TclPrimitive( ctx, prim, hw_prim | R200_VF_PRIM_WALK_IND )
 
-#define GET_ELTS() rmesa->tcl.Elts
+#define GET_MESA_ELTS() rmesa->tcl.Elts
 
-
-#define NEW_PRIMITIVE()  R200_NEWPRIM( rmesa )
-#define NEW_BUFFER()  r200RefillCurrentDmaRegion( rmesa )
 
 /* Don't really know how many elts will fit in what's left of cmdbuf,
  * as there is state to emit, etc:
  */
 
-#if 0
-#define GET_CURRENT_VB_MAX_ELTS() \
-   ((R200_CMD_BUF_SZ - (rmesa->store.cmd_used + 16)) / 2) 
-#define GET_SUBSEQUENT_VB_MAX_ELTS() ((R200_CMD_BUF_SZ - 16) / 2) 
-#else
 /* Testing on isosurf shows a maximum around here.  Don't know if it's
  * the card or driver or kernel module that is causing the behaviour.
  */
-#define GET_CURRENT_VB_MAX_ELTS() 300
-#define GET_SUBSEQUENT_VB_MAX_ELTS() 300
-#endif
+#define GET_MAX_HW_ELTS() 300
 
 #define RESET_STIPPLE() do {			\
    R200_STATECHANGE( rmesa, lin );		\
@@ -147,32 +137,22 @@ static GLboolean discrete_prim[0x10] = {
 } while (0)
 
 
-/* How do you extend an existing primitive?
- */
-#define ALLOC_ELTS(nr)							\
-do {									\
-   if (rmesa->dma.flush == r200FlushElts &&				\
-       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {		\
-									\
-      dest = (GLushort *)(rmesa->store.cmd_buf + 			\
-			  rmesa->store.cmd_used);			\
-      rmesa->store.cmd_used += nr*2;					\
-   }									\
-   else {								\
-      if (rmesa->dma.flush)						\
-	 rmesa->dma.flush( rmesa );					\
-									\
-      r200EmitAOS( rmesa,						\
-	  	     rmesa->tcl.aos_components,				\
-		     rmesa->tcl.nr_aos_components,			\
-		     0 );						\
-									\
-      dest = r200AllocEltsOpenEnded( rmesa,				\
-				       rmesa->tcl.hw_primitive,		\
-				       nr );				\
-   }									\
-} while (0) 
+#define ALLOC_ELTS(nr)	r200AllocElts( rmesa, nr )
 
+static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
+{
+   if (rmesa->dma.flush)
+      rmesa->dma.flush( rmesa );
+
+   r200EmitAOS( rmesa,
+		rmesa->tcl.aos_components,
+		rmesa->tcl.nr_aos_components, 0 );
+
+   return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
+}
+
+
+#define CLOSE_ELTS()  R200_NEWPRIM( rmesa )
 
 
 /* TODO: Try to extend existing primitive if both are identical,
@@ -217,17 +197,15 @@ static void EMIT_PRIM( GLcontext *ctx,
 
 #ifdef MESA_BIG_ENDIAN
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
-#define EMIT_ELT(offset, x) do {                                \
+#define EMIT_ELT(dest, offset, x) do {                                \
         int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );     \
         GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );    \
         (des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x); } while (0)
 #else
-#define EMIT_ELT(offset, x) (dest)[offset] = (GLushort) (x)
+#define EMIT_ELT(dest, offset, x) (dest)[offset] = (GLushort) (x)
 #endif
-#define EMIT_TWO_ELTS(offset, x, y)  *(GLuint *)(dest+offset) = ((y)<<16)|(x);
-#define INCR_ELTS( nr ) dest += nr
-#define RELEASE_ELT_VERTS() \
-   r200ReleaseArrays( ctx, ~0 )
+
+#define EMIT_TWO_ELTS(dest, offset, x, y)  *(GLuint *)((dest)+offset) = ((y)<<16)|(x);
 
 
 

@@ -35,12 +35,12 @@
 #include "mgacontext.h"
 #include "mgaioctl.h"
 #include "mgapixel.h"
-#include "mgabuffers.h"
+#include "mgastate.h"
 
-#include "xf86drm.h"
 #include "mga_common.h"
 
 #include "swrast/swrast.h"
+#include "imports.h"
 
 #define IS_AGP_MEM( mmesa, p )						  \
    ((unsigned long)mmesa->mgaScreen->buffers.map <= ((unsigned long)p) && \
@@ -134,7 +134,7 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 		    !ctx->Color.ColorMask[2] ||
 		    !ctx->Color.ColorMask[3] ||
 		    ctx->Color.ColorLogicOpEnabled ||
-		    ctx->Texture.Unit[0]._ReallyEnabled ||
+		    ctx->Texture._EnabledUnits ||
 		    ctx->Depth.OcclusionTest
            ) &&
 	   ctx->Current.RasterPosValid &&
@@ -596,7 +596,7 @@ mgaTryDrawPixels( GLcontext *ctx,
 	    }
 	 }
 #else
-	 memcpy( address, pixels, rows*bufferpitch );
+	 MEMCPY( address, pixels, rows*bufferpitch );
 #endif
 
 	 do_draw_pix( ctx, x, y, width, rows,
@@ -639,42 +639,8 @@ mgaDDDrawPixels( GLcontext *ctx,
  * the same block of agp space which isn't used for anything else at
  * present.
  */
-#if defined(MESA_hacked_agp_allocator)
-static void mgaDDFreeAgpMemory( GLcontext *ctx, void *ptr )
-{
-   (void) ptr;
-}
-
-static void *mgaDDAllocateAgpMemory( GLcontext *ctx, GLsizei size )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   if (size < mmesa->mgaScreen->textureSize[MGA_AGP_HEAP])
-      return mmesa->mgaScreen->texVirtual[MGA_AGP_HEAP];
-   else
-      return 0;
-}
-
-static GLint mgaDDGetAgpOffset( GLcontext *ctx, const void *ptr )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   if (!IS_AGP_MEM(mmesa, ptr))
-      return -1;
-
-   return AGP_OFFSET(mmesa, ptr);
-}
-#endif
-
-
 void mgaDDInitPixelFuncs( GLcontext *ctx )
 {
-#if defined (MESA_experimetal_agp_allocator)
-   ctx->Driver.AllocateAgpMemory = mgaDDAllocateAgpMemory;
-   ctx->Driver.GetAgpOffset = mgaDDGetAgpOffset;
-   ctx->Driver.FreeAgpMemory = mgaDDFreeAgpMemory;
-#endif
-
    /* Pixel path fallbacks.
     */
    ctx->Driver.Accum = _swrast_Accum;

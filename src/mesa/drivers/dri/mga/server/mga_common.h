@@ -146,7 +146,7 @@ typedef struct {
 
 typedef struct {
 	int param;
-	int *value;
+	void *value;
 } drmMGAGetParam;
 
 #endif

@@ -1,0 +1,79 @@
+# Build a subset DRI-based libGL.so library.
+# Indirect rendering not supported, etc.
+
+TOP = ../../..
+
+default: linux-solo
+
+C_SOURCES = dispatch.c \
+	  dri_util.c \
+	  ../../mesa/glapi/glapi.c \
+	  ../../mesa/glapi/glthread.c \
+	  miniglx.c \
+	  miniglx_events.c \
+	  xf86drm.c 
+
+OBJECTS = $(C_SOURCES:.c=.o)
+
+INCLUDES = -I. $(INCLUDE_DIRS)
+LIBS = -ldl 
+
+### Include directories
+
+INCLUDE_DIRS = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup
+
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+targets: depend libGL.so.1.2
+
+libGL.so.1.2:  $(OBJECTS) Makefile.X11
+	rm -f $@ && gcc -shared -Wl,-soname,libGL.so -Wl,-Bsymbolic $(OBJECTS) $(LIBS) -o $@ 
+	rm -f $(TOP)/lib/libGL.so* 
+	rm -f $(TOP)/lib/miniglx.conf
+	install -D libGL.so.1.2 $(TOP)/lib/libGL.so.1.2
+	ln -s libGL.so.1.2 $(TOP)/lib/libGL.so.1
+	ln -s libGL.so.1 $(TOP)/lib/libGL.so
+	install example.miniglx.conf $(TOP)/lib/miniglx.conf
+
+drmtest: xf86drm.o drmtest.o
+	rm -f drmtest && $(CC) -o drmtest xf86drm.o drmtest.o
+
+# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# what's included by any source file.
+depend: $(C_SOURCES) $(ASM_SOURCES)
+	makedepend -fdepend -Y $(INCLUDES) \
+		$(C_SOURCES) $(ASM_SOURCES)
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f drmtest $(TOP)/lib/libGL.so*
+	-rm -f */*.o */*~ */*.o */*~
+
+
+include $(TOP)/Make-config
+
+include depend

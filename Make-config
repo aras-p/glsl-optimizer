@@ -664,6 +664,22 @@ linux-osmesa32:
 	"GL_LIB_DEPS = -lm -lpthread" \
 	"APP_LIB_DEPS = -lOSMesa32 -lGL"
 
+# standalone Mesa -- embedded
+# change -g to -O3 for non-debug
+linux-solo:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"LIBMESA = mesa.a" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"CC = gcc" \
+	"CXX = g++" \
+	"CFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CXXFLAGS = $(CFLAGS)" \
+	"GL_LIB_DEPS = -lm -lpthread" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
+	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -lm  -lpthread -Wl,-rpath,$(TOP)/lib" 
+
 # May want to add these CFLAGS for better performance under LynxOS and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DUSE_XSHM -funroll-loops
 # -fexpensive-optimizations -fomit-frame-pointer -ffast-math

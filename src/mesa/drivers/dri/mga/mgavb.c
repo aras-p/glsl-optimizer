@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.15 2003/03/26 20:43:49 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.14 2002/10/30 12:51:36 alanh Exp $ */
 
 #include "mgacontext.h"
 #include "mgavb.h"
@@ -34,17 +34,13 @@
 
 #include "glheader.h"
 #include "mtypes.h"
-/*#include "mem.h" */
+#include "imports.h"
 #include "macros.h"
 #include "colormac.h"
-/*#include "mmath.h"*/
 
 #include "tnl/t_context.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/swrast.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 
 
 #define MGA_TEX1_BIT       0x1
@@ -93,7 +89,7 @@ static struct {
 #define GET_VIEWPORT_MAT() mmesa->hw_viewport
 #define GET_TEXSOURCE(n)  mmesa->tmu_source[n]
 #define GET_VERTEX_FORMAT() mmesa->vertex_format
-#define GET_VERTEX_STORE() ((GLubyte *)mmesa->verts)
+#define GET_VERTEX_STORE() mmesa->verts
 #define GET_VERTEX_STRIDE_SHIFT() mmesa->vertex_stride_shift
 #define GET_UBYTE_COLOR_STORE() &mmesa->UbyteColor
 #define GET_UBYTE_SPEC_COLOR_STORE() &mmesa->UbyteSecondaryColor
@@ -407,15 +403,18 @@ void mgaChooseVertexState( GLcontext *ctx )
    if (ctx->Fog.Enabled) 
       ind |= MGA_FOG_BIT;
    
-   if (ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
-      if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
+   if (ctx->Texture._EnabledUnits & 0x2) {
+      /* unit 1 enabled */
+      if (ctx->Texture._EnabledUnits & 0x1) {
+         /* unit 0 enabled */
 	 ind |= MGA_TEX1_BIT|MGA_TEX0_BIT;
       }
       else {
 	 ind |= MGA_TEX0_BIT;
       }
    }
-   else if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
+   else if (ctx->Texture._EnabledUnits & 0x1) {
+      /* unit 0 enabled */
       ind |= MGA_TEX0_BIT;
    }
    
@@ -431,7 +430,6 @@ void mgaChooseVertexState( GLcontext *ctx )
 
    if (setup_tab[ind].vertex_format != mmesa->vertex_format) {
       FLUSH_BATCH(mmesa);      
-      mmesa->new_state |= MGA_NEW_WARP;
       mmesa->dirty |= MGA_UPLOAD_PIPE;
       mmesa->vertex_format = setup_tab[ind].vertex_format;
       mmesa->vertex_size = setup_tab[ind].vertex_size;
@@ -458,7 +456,7 @@ void mgaInitVB( GLcontext *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   mmesa->verts = (char *)ALIGN_MALLOC(size * sizeof(mgaVertex), 32);
+   mmesa->verts = ALIGN_MALLOC(size * sizeof(mgaVertex), 32);
 
    {
       static int firsttime = 1;
@@ -468,7 +466,6 @@ void mgaInitVB( GLcontext *ctx )
       }
    }
 
-   mmesa->new_state |= MGA_NEW_WARP;
    mmesa->dirty |= MGA_UPLOAD_PIPE;
    mmesa->vertex_format = setup_tab[0].vertex_format;
    mmesa->vertex_size = setup_tab[0].vertex_size;

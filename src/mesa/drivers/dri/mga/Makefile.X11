@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/08/06 18:01:13 keithw Exp $
+# $Id: Makefile.X11,v 1.2 2003/08/22 20:11:44 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -6,8 +6,10 @@
 
 TOP = ../../../../..
 
+default: linux-solo
+
 SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
-MINIGLX_INCLUDES = -I$(TOP)/src/miniglx 
+MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 
 DEFINES += \
 	-D_HAVE_SWRAST=1 \
@@ -16,24 +18,27 @@ DEFINES += \
 	-D_HAVE_CODEGEN=1 \
 	-D_HAVE_LIGHTING=1 \
 	-D_HAVE_TEXGEN=1 \
-	-D_HAVE_USERCLIP=1
+	-D_HAVE_USERCLIP=1 \
+	-DGLX_DIRECT_RENDERING
 
 MINIGLX_SOURCES = server/mga_dri.c 
 
-DRIVER_SOURCES = mgabuffers.c \
-		 mgadd.c \
+DRIVER_SOURCES = mgadd.c \
 		 mgaioctl.c \
 		 mgarender.c \
 		 mgastate.c \
 		 mgatris.c \
-		 ../common/mm.c 
+		 ../common/mm.c \
+		 ../common/utils.c \
+		 ../common/texmem.c \
+		 ../common/vblank.c
 
 FULL_DRIVER_SOURCES = 	\
 		 mgapixel.c \
 		 mgaspan.c \
 		 mgatex.c \
-		 mgatexcnv.c \
 		 mgatexmem.c \
+		 mga_texstate.c \
 		 mgavb.c \
 		 mga_xmesa.c
 
@@ -54,7 +59,7 @@ WINOBJ=$(MESABUILDDIR)/dri/dri.a
 WINLIB=
 else
 WINOBJ=
-WINLIB=-L$(MESA)/src/miniglx
+WINLIB=-L$(MESA)/src/glx/mini
 endif
 
 ASM_SOURCES = 
@@ -87,7 +92,7 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: mga_dri.so
+targets: depend mga_dri.so
 
 mga_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
@@ -96,7 +101,7 @@ mga_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
 # what's included by any source file.
-dep: $(C_SOURCES) $(ASM_SOURCES)
+depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(SHARED_INCLUDES) \
 		$(C_SOURCES) $(ASM_SOURCES)
 
@@ -108,7 +113,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o *~ *.o *~ *.so
+	-rm -f *.o *~ *.o *~ *.so server/*.o
 
 
 include $(TOP)/Make-config
