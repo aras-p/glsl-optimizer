@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.32 2000/04/10 21:13:19 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.33 2000/04/19 01:44:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,9 @@
 #include "context.h"
 #include "config.h"
 #include "macros.h"
+#include "mmath.h"
 #include "types.h"
+#include "xfonts.h"
 #include "xmesaP.h"
 
 
@@ -454,21 +456,6 @@ static int transparent_pixel( XMesaVisual glxvis )
 
 
 /*
- * Return number of bits set in n.
- */
-static int bitcount( unsigned long n )
-{
-   int bits;
-   for (bits=0; n>0; n=n>>1) {
-      if (n&1) {
-         bits++;
-      }
-   }
-   return bits;
-}
-
-
-/*
  * Try to get an X visual which matches the given arguments.
  */
 static XVisualInfo *get_visual( Display *dpy, int scr,
@@ -501,9 +488,9 @@ static XVisualInfo *get_visual( Display *dpy, int scr,
     * 10 bits per color channel.  Mesa's limited to a max of 8 bits/channel.
     */
    if (vis && depth > 24 && (xclass==TrueColor || xclass==DirectColor)) {
-      if (bitcount(vis->red_mask) <= 8
-          && bitcount(vis->green_mask) <= 8
-          && bitcount(vis->blue_mask) <= 8) {
+      if (_mesa_bitcount((GLuint) vis->red_mask  ) <= 8 &&
+          _mesa_bitcount((GLuint) vis->green_mask) <= 8 &&
+          _mesa_bitcount((GLuint) vis->blue_mask ) <= 8) {
          return vis;
       }
       else {
@@ -1837,9 +1824,6 @@ Fake_glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 
 
 
-extern void Fake_glXUseXFont( Font font, int first, int count, int listbase );
-
-
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
 {
@@ -1895,6 +1879,7 @@ struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
    glx.DestroyWindow = Fake_glXDestroyWindow;
    /*glx.GetCurrentReadDrawable = Fake_glXGetCurrentReadDrawable;*/
    glx.GetFBConfigAttrib = Fake_glXGetFBConfigAttrib;
+   glx.GetFBConfigs = Fake_glXGetFBConfigs;
    glx.GetSelectedEvent = Fake_glXGetSelectedEvent;
    glx.GetVisualFromFBConfig = Fake_glXGetVisualFromFBConfig;
    glx.MakeContextCurrent = Fake_glXMakeContextCurrent;

@@ -1,10 +1,10 @@
-/* $Id: xfonts.c,v 1.5 1999/12/12 17:04:50 brianp Exp $ */
+/* $Id: xfonts.c,v 1.6 2000/04/19 01:44:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,9 @@
 #include "GL/xmesa.h"
 #include "context.h"
 #include "mem.h"
+#include "xfonts.h"
 #include "xmesaP.h"
+
 
 /* Some debugging info.  */
 
@@ -373,7 +375,7 @@ bm_height);
       glEndList ();
     }
 
-  free (bm);
+  FREE(bm);
   XFreeFontInfo( NULL, fs, 0 );
   XFreeGC (dpy, gc);
 
@@ -386,6 +388,8 @@ bm_height);
   glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 }
 
+
+extern void xmesa_xfonts_dummy( void );
 void xmesa_xfonts_dummy( void )
 {
    /* silence unused var warnings */
