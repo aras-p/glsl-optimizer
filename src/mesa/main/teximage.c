@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.60 2000/11/07 16:40:37 brianp Exp $ */
+/* $Id: teximage.c,v 1.61 2000/11/10 15:32:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1838,15 +1838,6 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          }
       }
 
-#define OLD_DD_TEXTURE
-#ifdef OLD_DD_TEXTURE
-      /* XXX this will be removed in the future */
-      if (ctx->Driver.TexImage) {
-         (*ctx->Driver.TexImage)( ctx, target, texObj, level, internalFormat,
-                                  texImage );
-      }
-#endif
-
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
       ctx->NewState |= _NEW_TEXTURE;
@@ -2206,6 +2197,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!texImage) {
       /* invalid mipmap level, not an error */
       return;
@@ -2528,19 +2520,6 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
          FREE(texImage->Data);
          texImage->Data = NULL;
       }
-
-#ifdef OLD_DD_TEXTURE
-      /* XXX this will be removed in the future */
-      if (ctx->Driver.TexSubImage) {
-         (*ctx->Driver.TexSubImage)(ctx, target, texObj, level,
-                                    xoffset, yoffset, width, height,
-                                    texImage->IntFormat, texImage);
-      }
-      else if (ctx->Driver.TexImage) {
-         (*ctx->Driver.TexImage)(ctx, GL_TEXTURE_2D, texObj,
-                                 level, texImage->IntFormat, texImage );
-      }
-#endif
    }
 }
 
