@@ -30,6 +30,9 @@
 #include <ggi/mesa/debug.h>
 #include "extensions.h"
 #include "matrix.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
 
 #undef VIS
 #undef FLIP
@@ -204,6 +207,21 @@ static void gl_ggiFlush(GLcontext *ctx)
 	ggiFlush(VIS);
 }
 
+static void gl_ggiIndexMask(GLcontext *ctx, GLuint mask)
+{
+	GGIMESADPRINT_CORE("gl_ggiIndexMask() called\n");
+}
+
+static void gl_ggiColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
+{
+	GGIMESADPRINT_CORE("gl_ggiColorMask() called\n");
+}
+
+static void gl_ggiEnable(GLcontext *ctx, GLenum pname, GLboolean state)
+{
+	GGIMESADPRINT_CORE("gl_ggiEnable() called\n");
+}
+
 static void gl_ggiSetupPointers(GLcontext *ctx)
 {
 	GGIMESADPRINT_CORE("gl_ggiSetupPointers() called\n");
@@ -217,13 +235,28 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
 	ctx->Driver.ClearColor = gl_ggiSetClearColor;
 	ctx->Driver.Clear = gl_ggiClear;
+	ctx->Driver.IndexMask = gl_ggiIndexMask;
+	ctx->Driver.ColorMask = gl_ggiColorMask;
+	ctx->Driver.Enable = gl_ggiEnable;
 	
 	ctx->Driver.SetDrawBuffer = gl_ggiSetDrawBuffer;
 	ctx->Driver.SetReadBuffer = gl_ggiSetReadBuffer;
 	
 	ctx->Driver.GetBufferSize = gl_ggiGetSize;
+	
 	ctx->Driver.Finish = gl_ggiFlush;
-	ctx->Driver.Flush = gl_ggiFlush;	
+	ctx->Driver.Flush = gl_ggiFlush;
+
+	ctx->Driver.RenderStart = 0;
+	ctx->Driver.RenderFinish = _swrast_flush;
+	
+	ctx->Driver.PointsFunc = _swsetup_Points;
+	ctx->Driver.LineFunc = _swsetup_Line;
+	ctx->Driver.TriangleFunc = _swsetup_Triangle;
+	ctx->Driver.QuadFunc = _swsetup_Quad;
+	ctx->Driver.RasterSetup = _swsetup_RasterSetup;
+	ctx->Driver.RegisterVB = _swsetup_RegisterVB;
+	ctx->Driver.UnregisterVB = _swsetup_UnregisterVB;
 }
 
 static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
@@ -258,7 +291,7 @@ static int gl_ggiInitInfo(GGIMesaContext ctx, struct ggi_mesa_info *info)
 		info->red_bits = info->green_bits = 
 		  info->blue_bits = info->alpha_bits = 0;
 	}
-
+	
 	return 0;
 }
 
@@ -336,7 +369,11 @@ GGIMesaContext GGIMesaCreateContext(void)
 	  return NULL;
 	
         _mesa_enable_sw_extensions(ctx->gl_ctx);
-
+	
+	_swrast_CreateContext(ctx->gl_ctx);
+	_swsetup_CreateContext(ctx->gl_ctx);
+	_tnl_CreateContext(ctx->gl_ctx);
+	
 	return ctx;
 }
 
@@ -548,6 +585,13 @@ static void gl_ggiUpdateState(GLcontext *ctx)
 	void *func;
 
 	GGIMESADPRINT_CORE("gl_ggiUpdateState() called\n");
+		
+	/* Propogate statechange information to swrast and swrast_setup
+	 * modules.  The GGI driver has no internal GL-dependent state.
+	 */
+	_swrast_InvalidateState(ctx, ctx->NewState);
+	_swsetup_InvalidateState(ctx, ctx->NewState);
+	_tnl_InvalidateState(ctx, ctx->NewState);
 	
 	func = (void *)CTX_OPMESA(ctx)->update_state;
 
@@ -563,7 +607,7 @@ static void gl_ggiUpdateState(GLcontext *ctx)
 static int changed(ggi_visual_t vis, int whatchanged)
 {
 	GGIMESADPRINT_CORE("changed() called\n");
-	
+		
 	switch (whatchanged)
 	{
 		case GGI_CHG_APILIST:
