@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.11 2001/05/11 15:47:02 keithw Exp $ */
+/* $Id: isosurf.c,v 1.12 2001/06/04 15:34:31 keithw Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -449,15 +449,20 @@ static void draw_surface( int with_state )
       break;
 
    case (DRAW_ARRAYS|POINTS):
-      glDrawArraysEXT( GL_POINTS, 0, numverts );
+      glDrawArraysEXT( GL_POINTS, 0, numuniq );
       break;
    case (DRAW_ELTS|POINTS):
-      glDrawElements( GL_POINTS, numverts, GL_UNSIGNED_INT, indices );
+      /* can use numuniq with strip_indices as strip_indices[i] == i.
+       */
+      glDrawElements( GL_POINTS, numuniq, 
+		      GL_UNSIGNED_INT, strip_indices );
       break;
    case (ARRAY_ELT|POINTS):
+      /* just emit each unique element once:
+       */
       glBegin( GL_POINTS );
-      for (i = 0 ; i < numverts ; i++)
-	 glArrayElement( indices[i] );
+      for (i = 0 ; i < numuniq ; i++)
+	 glArrayElement( i );
       glEnd();
       break;
 #endif
@@ -487,10 +492,14 @@ static void draw_surface( int with_state )
       break;
 
    case (GLVERTEX|POINTS):
+      /* Renders all points, but not in strip order...  Shouldn't be a
+       * problem, but people may be confused as to why points are so
+       * much faster in this demo...  And why cva doesn't help them...
+       */
       glBegin( GL_POINTS );
-      for ( i = 0 ; i < numverts ; i++ ) {
-         glNormal3fv( &data[i][3] );
-         glVertex3fv( &data[i][0] );
+      for ( i = 0 ; i < numuniq ; i++ ) {
+         glNormal3fv( &compressed_data[i][3] );
+         glVertex3fv( &compressed_data[i][0] );
       }
       glEnd();
       break;
@@ -713,24 +722,16 @@ static void ModeMenu(int m)
       print_flags("primitive", state & PRIMITIVE_MASK);
       print_flags("render style", state & RENDER_STYLE_MASK);
 
-      if ((state & PRIMITIVE_MASK) != TRIANGLES)
-      {
-	 fprintf(stderr, "enabling normal arrays\n");
-	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numverts, data );
-	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numverts, &data[0][3]);
-#ifdef GL_EXT_compiled_vertex_array
-	 if (allowed & LOCKED) {
-	    if (state & LOCKED) {
-	       glLockArraysEXT( 0, numverts );
-	    } else {
-	       glUnlockArraysEXT();
-	    }
-	 }
-#endif
-      }
-      else if ((state & RENDER_STYLE_MASK) != DRAW_ARRAYS) 
+      if ((state & PRIMITIVE_MASK) != STRIPS &&
+	  ((state & RENDER_STYLE_MASK) == DRAW_ELTS ||
+	   (state & RENDER_STYLE_MASK) == ARRAY_ELT || 
+	   (state & PRIMITIVE_MASK) == POINTS))
       {
 	 fprintf(stderr, "enabling small arrays\n");
+	 /* Rendering any primitive with draw-element/array-element
+	  *  --> Can't do strips here as ordering has been lost in
+	  *  compaction process...
+	  */
 	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numuniq,
 			     compressed_data );
 	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numuniq,
@@ -745,9 +746,10 @@ static void ModeMenu(int m)
 	 }
 #endif
       }
-      else {
+      else if ((state & PRIMITIVE_MASK) == TRIANGLES &&
+	       (state & RENDER_STYLE_MASK) == DRAW_ARRAYS) {
 	 fprintf(stderr, "enabling big arrays\n");
-	 /* Only get here for DRAW_ARRAYS + TRIANGLES
+	 /* Only get here for TRIANGLES and drawarrays
 	  */
 	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), (numverts-2) * 3,
 			     expanded_data );
@@ -758,6 +760,20 @@ static void ModeMenu(int m)
 	 if (allowed & LOCKED) {
 	    if (state & LOCKED) {
 	       glLockArraysEXT( 0, (numverts-2)*3 );
+	    } else {
+	       glUnlockArraysEXT();
+	    }
+	 }
+#endif
+      }
+      else {
+	 fprintf(stderr, "enabling normal arrays\n");
+	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numverts, data );
+	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numverts, &data[0][3]);
+#ifdef GL_EXT_compiled_vertex_array
+	 if (allowed & LOCKED) {
+	    if (state & LOCKED) {
+	       glLockArraysEXT( 0, numverts );
 	    } else {
 	       glUnlockArraysEXT();
 	    }
