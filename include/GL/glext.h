@@ -3,7 +3,6 @@
 
 
 /*
- * XXX Many extensions need to be added yet.
  * XXX Some token values aren't known (grep for ?)
  * XXX This file may be automatically generated in the future.
  */
@@ -46,8 +45,10 @@ extern "C" {
  *      Added GL_ARB_texture_compression
  *   6. Brian Paul, 5 Apr 2000
  *      Added GL_ARB_multisample tokens, added GL_ARB_texture_env_add
+ *   7. Brian Paul, 7 Apr 2000
+ *      Minor clean-ups, temporaty token values for GL_SGIS_pixel_texture
  */
-#define GL_GLEXT_VERSION_EXT 6
+#define GL_GLEXT_VERSION_EXT 7
 
 
 /*
@@ -379,22 +380,25 @@ typedef void (APIENTRY * PFNGLSEPARABLEFILTER2DEXTPROC) (GLenum target, GLenum i
 #ifndef GL_SGI_color_table
 #define GL_SGI_color_table 1
 
-#define COLOR_TABLE_SGI				0x80D0
-#define POST_CONVOLUTION_COLOR_TABLE_SGI	0x80D1
-#define POST_COLOR_MATRIX_COLOR_TABLE_SGI	0x80D2
-#define PROXY_COLOR_TABLE_SGI			0x80D3
-#define PROXY_POST_CONVOLUTION_COLOR_TABLE_SGI	0x80D4
-#define PROXY_POST_COLOR_MATRIX_COLOR_TABLE_SGI	0x80D5
-#define COLOR_TABLE_SCALE_SGI			0x80D6
-#define COLOR_TABLE_BIAS_SGI			0x80D7
-#define COLOR_TABLE_FORMAT_SGI			0x80D8
-#define COLOR_TABLE_WIDTH_SGI			0x80D9
-#define COLOR_TABLE_RED_SIZE_SGI		0x80DA
-#define COLOR_TABLE_GREEN_SIZE_SGI		0x80DB
-#define COLOR_TABLE_BLUE_SIZE_SGI		0x80DC
-#define COLOR_TABLE_ALPHA_SIZE_SGI		0x80DD
-#define COLOR_TABLE_LUMINANCE_SIZE_SGI		0x80DE
-#define COLOR_TABLE_INTENSITY_SIZE_SGI		0x80DF
+/* XXX this symbol collides with the same in GL_SGI_texture_color_tabled
+** and they have different values!
+#define GL_COLOR_TABLE_SGI				0x80D0
+**/
+#define GL_POST_CONVOLUTION_COLOR_TABLE_SGI		0x80D1
+#define GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI		0x80D2
+#define GL_PROXY_COLOR_TABLE_SGI			0x80D3
+#define GL_PROXY_POST_CONVOLUTION_COLOR_TABLE_SGI	0x80D4
+#define GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE_SGI	0x80D5
+#define GL_COLOR_TABLE_SCALE_SGI			0x80D6
+#define GL_COLOR_TABLE_BIAS_SGI				0x80D7
+#define GL_COLOR_TABLE_FORMAT_SGI			0x80D8
+#define GL_COLOR_TABLE_WIDTH_SGI			0x80D9
+#define GL_COLOR_TABLE_RED_SIZE_SGI			0x80DA
+#define GL_COLOR_TABLE_GREEN_SIZE_SGI			0x80DB
+#define GL_COLOR_TABLE_BLUE_SIZE_SGI			0x80DC
+#define GL_COLOR_TABLE_ALPHA_SIZE_SGI			0x80DD
+#define GL_COLOR_TABLE_LUMINANCE_SIZE_SGI		0x80DE
+#define GL_COLOR_TABLE_INTENSITY_SIZE_SGI		0x80DF
 
 GLAPI void APIENTRY glColorTableParameterfvSGI(GLenum target, GLenum pname, const GLfloat *params);
 GLAPI void APIENTRY glColorTableParameterivSGI(GLenum target, GLenum pname, const GLint *params);
@@ -439,10 +443,10 @@ typedef void (APIENTRY * PFNGLPIXELTEXGENSGIXPROC) (GLenum mode);
 #ifndef GL_SGIS_pixel_texture
 #define GL_SGIS_pixel_texture 1
 
-#define GL_PIXEL_TEXTURE_SGIS			?
-#define GL_PIXEL_FRAGMENT_RGB_SOURCE_SGIS	?
-#define GL_PIXEL_FRAGMENT_ALPHA_SOURCE_SGIS	?
-#define GL_PIXEL_GROUP_COLOR_SGIS		?
+#define GL_PIXEL_TEXTURE_SGIS			0x1000  /*?*/
+#define GL_PIXEL_FRAGMENT_RGB_SOURCE_SGIS	0x1001  /*?*/
+#define GL_PIXEL_FRAGMENT_ALPHA_SOURCE_SGIS	0x1002  /*?*/
+#define GL_PIXEL_GROUP_COLOR_SGIS		0x1003  /*?*/
 
 GLAPI void APIENTRY glPixelTexGenParameterfSGIS(GLenum target, GLfloat value);
 GLAPI void APIENTRY glPixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value);
@@ -763,7 +767,7 @@ typedef void (APIENTRY * PFNGLVERTEXPOINTEREXTPROC) (GLint size, GLenum type, GL
 #ifndef GL_EXT_misc_attribute
 #define GL_EXT_misc_attribute 1
 
-#define MISC_BIT_EXT				?
+#define GL_MISC_BIT_EXT				?
 
 #endif /* GL_EXT_misc_attribute */
 
@@ -1819,10 +1823,10 @@ typedef void (APIENTRY * PFNGLTEXTUREMATERIALEXTPROC) (GLenum face, GLenum mode)
 #ifndef GL_INTEL_texture_scissor
 #define GL_INTEL_texture_scissor 1
 
-#define TEXTURE_SCISSOR_INTEL			?
-#define TEXTURE_SCISSOR_S_INTEL			?
-#define TEXTURE_SCISSOR_T_INTEL			?
-#define TEXTURE_SCISSOR_R_INTEL 		?
+#define GL_TEXTURE_SCISSOR_INTEL			?
+#define GL_TEXTURE_SCISSOR_S_INTEL			?
+#define GL_TEXTURE_SCISSOR_T_INTEL			?
+#define GL_TEXTURE_SCISSOR_R_INTEL			?
 
 GLAPI void APIENTRY glTexScissorINTEL(GLenum target, GLclampf tlow, GLclampf thigh);
 GLAPI void APIENTRY glTexScissorFuncINTEL(GLenum target, GLenum lfunc, GLenum hfunc);
@@ -1958,7 +1962,7 @@ GLAPI void APIENTRY glGetPixelTransformParameterfvEXT(GLenum target, GLenum pnam
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
 
-#define GLCOLOR_SUM_EXT				0x8458
+#define GL_COLOR_SUM_EXT			0x8458
 #define GL_CURRENT_SECONDARY_COLOR_EXT		0x8459
 #define GL_SECONDARY_COLOR_ARRAY_SIZE_EXT	0x845A
 #define GL_SECONDARY_COLOR_ARRAY_TYPE_EXT	0x845B
