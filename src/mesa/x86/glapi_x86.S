@@ -1,4 +1,3 @@
-/* $Id: glapi_x86.S,v 1.4 2000/01/28 22:18:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4017,5 +4016,305 @@ GL_PREFIX(MultTransposeMatrixfARB):
 	TEST_L(EAX, EAX)
 	JZ(GLNAME(_glapi_fallback_MultTransposeMatrixfARB))
 	JMP(GL_OFFSET(_gloffset_MultTransposeMatrixfARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PixelTexGenParameterfSGIS))
+GL_PREFIX(PixelTexGenParameterfSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_PixelTexGenParameterfSGIS))
+	JMP(GL_OFFSET(_gloffset_PixelTexGenParameterfSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PixelTexGenParameteriSGIS))
+GL_PREFIX(PixelTexGenParameteriSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_PixelTexGenParameteriSGIS))
+	JMP(GL_OFFSET(_gloffset_PixelTexGenParameteriSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterfvSGIS))
+GL_PREFIX(GetPixelTexGenParameterfvSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetPixelTexGenParameterfvSGIS))
+	JMP(GL_OFFSET(_gloffset_GetPixelTexGenParameterfvSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetPixelTexGenParameterivSGIS))
+GL_PREFIX(GetPixelTexGenParameterivSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetPixelTexGenParameterivSGIS))
+	JMP(GL_OFFSET(_gloffset_GetPixelTexGenParameterivSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(TexImage4DSGIS))
+GL_PREFIX(TexImage4DSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_TexImage4DSGIS))
+	JMP(GL_OFFSET(_gloffset_TexImage4DSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(TexSubImage4DSGIS))
+GL_PREFIX(TexSubImage4DSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_TexSubImage4DSGIS))
+	JMP(GL_OFFSET(_gloffset_TexSubImage4DSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DetailTexFuncSGIS))
+GL_PREFIX(DetailTexFuncSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_DetailTexFuncSGIS))
+	JMP(GL_OFFSET(_gloffset_DetailTexFuncSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetDetailTexFuncSGIS))
+GL_PREFIX(GetDetailTexFuncSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetDetailTexFuncSGIS))
+	JMP(GL_OFFSET(_gloffset_GetDetailTexFuncSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetSharpenTexFuncSGIS))
+GL_PREFIX(GetSharpenTexFuncSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetSharpenTexFuncSGIS))
+	JMP(GL_OFFSET(_gloffset_GetSharpenTexFuncSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SharpenTexFuncSGIS))
+GL_PREFIX(SharpenTexFuncSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SharpenTexFuncSGIS))
+	JMP(GL_OFFSET(_gloffset_SharpenTexFuncSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SampleMaskSGIS))
+GL_PREFIX(SampleMaskSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SampleMaskSGIS))
+	JMP(GL_OFFSET(_gloffset_SampleMaskSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SamplePatternSGIS))
+GL_PREFIX(SamplePatternSGIS):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SamplePatternSGIS))
+	JMP(GL_OFFSET(_gloffset_SamplePatternSGIS))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SpriteParameterfSGIX))
+GL_PREFIX(SpriteParameterfSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SpriteParameterfSGIX))
+	JMP(GL_OFFSET(_gloffset_SpriteParameterfSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SpriteParameteriSGIX))
+GL_PREFIX(SpriteParameteriSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SpriteParameteriSGIX))
+	JMP(GL_OFFSET(_gloffset_SpriteParameteriSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SpriteParameterfvSGIX))
+GL_PREFIX(SpriteParameterfvSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SpriteParameterfvSGIX))
+	JMP(GL_OFFSET(_gloffset_SpriteParameterfvSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(SpriteParameterivSGIX))
+GL_PREFIX(SpriteParameterivSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_SpriteParameterivSGIX))
+	JMP(GL_OFFSET(_gloffset_SpriteParameterivSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(InstrumentsBufferSGIX))
+GL_PREFIX(InstrumentsBufferSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_InstrumentsBufferSGIX))
+	JMP(GL_OFFSET(_gloffset_InstrumentsBufferSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(StartInstrumentsSGIX))
+GL_PREFIX(StartInstrumentsSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_StartInstrumentsSGIX))
+	JMP(GL_OFFSET(_gloffset_StartInstrumentsSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(StopInstrumentsSGIX))
+GL_PREFIX(StopInstrumentsSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_StopInstrumentsSGIX))
+	JMP(GL_OFFSET(_gloffset_StopInstrumentsSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ReadInstrumentsSGIX))
+GL_PREFIX(ReadInstrumentsSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ReadInstrumentsSGIX))
+	JMP(GL_OFFSET(_gloffset_ReadInstrumentsSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(PollInstrumentsSGIX))
+GL_PREFIX(PollInstrumentsSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_PollInstrumentsSGIX))
+	JMP(GL_OFFSET(_gloffset_PollInstrumentsSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetInstrumentsSGIX))
+GL_PREFIX(GetInstrumentsSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetInstrumentsSGIX))
+	JMP(GL_OFFSET(_gloffset_GetInstrumentsSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FrameZoomSGIX))
+GL_PREFIX(FrameZoomSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_FrameZoomSGIX))
+	JMP(GL_OFFSET(_gloffset_FrameZoomSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ReferencePlaneSGIX))
+GL_PREFIX(ReferencePlaneSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ReferencePlaneSGIX))
+	JMP(GL_OFFSET(_gloffset_ReferencePlaneSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(FlushRasterSGIX))
+GL_PREFIX(FlushRasterSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_FlushRasterSGIX))
+	JMP(GL_OFFSET(_gloffset_FlushRasterSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CopyColorSubTableEXT))
+GL_PREFIX(CopyColorSubTableEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_CopyColorSubTableEXT))
+	JMP(GL_OFFSET(_gloffset_CopyColorSubTableEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetListParameterfvSGIX))
+GL_PREFIX(GetListParameterfvSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetListParameterfvSGIX))
+	JMP(GL_OFFSET(_gloffset_GetListParameterfvSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetListParameterivSGIX))
+GL_PREFIX(GetListParameterivSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_GetListParameterivSGIX))
+	JMP(GL_OFFSET(_gloffset_GetListParameterivSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ListParameterfSGIX))
+GL_PREFIX(ListParameterfSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ListParameterfSGIX))
+	JMP(GL_OFFSET(_gloffset_ListParameterfSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ListParameterfvSGIX))
+GL_PREFIX(ListParameterfvSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ListParameterfvSGIX))
+	JMP(GL_OFFSET(_gloffset_ListParameterfvSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ListParameteriSGIX))
+GL_PREFIX(ListParameteriSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ListParameteriSGIX))
+	JMP(GL_OFFSET(_gloffset_ListParameteriSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(ListParameterivSGIX))
+GL_PREFIX(ListParameterivSGIX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_ListParameterivSGIX))
+	JMP(GL_OFFSET(_gloffset_ListParameterivSGIX))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IndexMaterialEXT))
+GL_PREFIX(IndexMaterialEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_IndexMaterialEXT))
+	JMP(GL_OFFSET(_gloffset_IndexMaterialEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IndexFuncEXT))
+GL_PREFIX(IndexFuncEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_IndexFuncEXT))
+	JMP(GL_OFFSET(_gloffset_IndexFuncEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CullParameterdvEXT))
+GL_PREFIX(CullParameterdvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_CullParameterdvEXT))
+	JMP(GL_OFFSET(_gloffset_CullParameterdvEXT))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(CullParameterfvEXT))
+GL_PREFIX(CullParameterfvEXT):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_CullParameterfvEXT))
+	JMP(GL_OFFSET(_gloffset_CullParameterfvEXT))
+
+
+#if 0
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(XXX))
+GL_PREFIX(XXX):
+	MOV_L(GLNAME(_glapi_Dispatch), EAX)
+	TEST_L(EAX, EAX)
+	JZ(GLNAME(_glapi_fallback_XXX))
+	JMP(GL_OFFSET(_gloffset_XXX))
+
+#endif
 
 #endif  /* __WIN32__ */
