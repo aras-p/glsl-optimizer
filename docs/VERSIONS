@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.45 2000/10/23 19:46:11 brianp Exp $
+$Id: VERSIONS,v 1.46 2000/10/27 18:32:55 brianp Exp $
 
 
 Mesa Version History
@@ -763,6 +763,8 @@ Mesa Version History
 	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
 	- GL_MAX_TEXTURE_UNITS_ARB now defaults to three.
 	- libOSMesa.so now created, contains the OSMesa driver interface
+	- GL_EXT_fog_coord extension (Keith Whitwell)
+	- GL_EXT_secondary_color extension (Keith Whitwell)
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
