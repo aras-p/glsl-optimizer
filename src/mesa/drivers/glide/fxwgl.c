@@ -860,9 +860,7 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
       if (!(pfd.dwFlags & PFD_DOUBLEBUFFER_DONTCARE)
 	  && ((pfd.dwFlags & PFD_DOUBLEBUFFER) !=
 	      (pix[i].pfd.dwFlags & PFD_DOUBLEBUFFER))) continue;
-#if 0 /* [dBorca] Hack alert:
-       * Doom3 fails here!
-       * Can we get away by implementing WGL_ARB_pixel_format?
+#if 1 /* [dBorca] Hack alert: Doom3 fails here!
        */
       if (!(pfd.dwFlags & PFD_STEREO_DONTCARE)
 	  && ((pfd.dwFlags & PFD_STEREO) !=
