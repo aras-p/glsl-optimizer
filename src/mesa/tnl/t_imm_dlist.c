@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.21 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.22 2001/07/13 16:39:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,7 +96,7 @@ static void build_normal_lengths( struct immediate *IM )
 static void fixup_normal_lengths( struct immediate *IM ) 
 {
    GLuint i;
-   GLfloat len;
+   GLfloat len = 1.0;  /* just to silence warnings */
    GLfloat (*data)[3] = IM->Normal;
    GLfloat *dest = IM->NormalLengthPtr;
    GLuint *flags = IM->Flag;
