@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.22 2003/04/17 19:20:55 brianp Exp $
+# $Id: Makefile.X11,v 1.23 2003/04/21 14:04:27 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -98,7 +98,7 @@ readtex.c:
 	cp ../util/readtex.c .
 
 readtex.h:
-	cp ../util/readtex.c .
+	cp ../util/readtex.h .
 
 
 # execute all programs
