@@ -58,7 +58,9 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
    array->Ptr = (const GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    array->BufferObj->RefCount--;
-   /* XXX free buffer object if RefCount == 0 ? */
+   if (array->BufferObj->RefCount <= 0) {
+      (*ctx->Driver.DeleteBuffer)( ctx, array->BufferObj );
+   }
    array->BufferObj = ctx->Array.ArrayBufferObj;
    array->BufferObj->RefCount++;
    /* Compute the index of the last array element that's inside the buffer.

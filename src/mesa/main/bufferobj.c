@@ -329,7 +329,13 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 {
    GLuint i;
 
+   /* Allocate the default buffer object and set refcount so high that
+    * it never gets deleted.
+    */
    ctx->Array.NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
+   if (ctx->Array.NullBufferObj)
+      ctx->Array.NullBufferObj->RefCount = 1000;
+
    ctx->Array.ArrayBufferObj = ctx->Array.NullBufferObj;
    ctx->Array.ElementArrayBufferObj = ctx->Array.NullBufferObj;
 
