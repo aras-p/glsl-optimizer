@@ -19,6 +19,7 @@ LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
 SOURCES = \
+	atifragshader.c \
 	arbfragparse.c \
 	arbprogparse.c \
 	arbprogram.c \
@@ -32,6 +33,7 @@ SOURCES = \
 	shaderobjects.c
 
 OBJECTS = \
+	atifragshader.obj,\
 	arbfragparse.obj,\
 	arbprogparse.obj,\
 	arbprogram.obj,\
@@ -58,7 +60,7 @@ clean :
 	purge
 	delete *.obj;*
 
-
+atifragshader.obj : atifragshader.c
 arbfragparse.obj : arbfragparse.c
 arbprogparse.obj : arbprogparse.c
 arbprogram.obj : arbprogram.c
