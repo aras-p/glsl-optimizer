@@ -49,11 +49,45 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2002/04/12 */
+/* glext.h last updated 2002/05/30 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 13
+#define GL_GLEXT_VERSION 15
 
 #ifndef GL_VERSION_1_2
+#define GL_UNSIGNED_BYTE_3_3_2            0x8032
+#define GL_UNSIGNED_SHORT_4_4_4_4         0x8033
+#define GL_UNSIGNED_SHORT_5_5_5_1         0x8034
+#define GL_UNSIGNED_INT_8_8_8_8           0x8035
+#define GL_UNSIGNED_INT_10_10_10_2        0x8036
+#define GL_RESCALE_NORMAL                 0x803A
+#define GL_UNSIGNED_BYTE_2_3_3_REV        0x8362
+#define GL_UNSIGNED_SHORT_5_6_5           0x8363
+#define GL_UNSIGNED_SHORT_5_6_5_REV       0x8364
+#define GL_UNSIGNED_SHORT_4_4_4_4_REV     0x8365
+#define GL_UNSIGNED_SHORT_1_5_5_5_REV     0x8366
+#define GL_UNSIGNED_INT_8_8_8_8_REV       0x8367
+#define GL_UNSIGNED_INT_2_10_10_10_REV    0x8368
+#define GL_BGR                            0x80E0
+#define GL_BGRA                           0x80E1
+#define GL_MAX_ELEMENTS_VERTICES          0x80E8
+#define GL_MAX_ELEMENTS_INDICES           0x80E9
+#define GL_CLAMP_TO_EDGE                  0x812F
+#define GL_TEXTURE_MIN_LOD                0x813A
+#define GL_TEXTURE_MAX_LOD                0x813B
+#define GL_TEXTURE_BASE_LEVEL             0x813C
+#define GL_TEXTURE_MAX_LEVEL              0x813D
+#define GL_LIGHT_MODEL_COLOR_CONTROL      0x81F8
+#define GL_SINGLE_COLOR                   0x81F9
+#define GL_SEPARATE_SPECULAR_COLOR        0x81FA
+#define GL_SMOOTH_POINT_SIZE_RANGE        0x0B12
+#define GL_SMOOTH_POINT_SIZE_GRANULARITY  0x0B13
+#define GL_SMOOTH_LINE_WIDTH_RANGE        0x0B22
+#define GL_SMOOTH_LINE_WIDTH_GRANULARITY  0x0B23
+#define GL_ALIASED_POINT_SIZE_RANGE       0x846D
+#define GL_ALIASED_LINE_WIDTH_RANGE       0x846E
+#endif
+
+#ifndef GL_ARB_imaging
 #define GL_CONSTANT_COLOR                 0x8001
 #define GL_ONE_MINUS_CONSTANT_COLOR       0x8002
 #define GL_CONSTANT_ALPHA                 0x8003
@@ -99,19 +133,6 @@ extern "C" {
 #define GL_MINMAX_FORMAT                  0x802F
 #define GL_MINMAX_SINK                    0x8030
 #define GL_TABLE_TOO_LARGE                0x8031
-#define GL_UNSIGNED_BYTE_3_3_2            0x8032
-#define GL_UNSIGNED_SHORT_4_4_4_4         0x8033
-#define GL_UNSIGNED_SHORT_5_5_5_1         0x8034
-#define GL_UNSIGNED_INT_8_8_8_8           0x8035
-#define GL_UNSIGNED_INT_10_10_10_2        0x8036
-#define GL_RESCALE_NORMAL                 0x803A
-#define GL_UNSIGNED_BYTE_2_3_3_REV        0x8362
-#define GL_UNSIGNED_SHORT_5_6_5           0x8363
-#define GL_UNSIGNED_SHORT_5_6_5_REV       0x8364
-#define GL_UNSIGNED_SHORT_4_4_4_4_REV     0x8365
-#define GL_UNSIGNED_SHORT_1_5_5_5_REV     0x8366
-#define GL_UNSIGNED_INT_8_8_8_8_REV       0x8367
-#define GL_UNSIGNED_INT_2_10_10_10_REV    0x8368
 #define GL_COLOR_MATRIX                   0x80B1
 #define GL_COLOR_MATRIX_STACK_DEPTH       0x80B2
 #define GL_MAX_COLOR_MATRIX_STACK_DEPTH   0x80B3
@@ -122,6 +143,7 @@ extern "C" {
 #define GL_POST_COLOR_MATRIX_RED_BIAS     0x80B8
 #define GL_POST_COLOR_MATRIX_GREEN_BIAS   0x80B9
 #define GL_POST_COLOR_MATRIX_BLUE_BIAS    0x80BA
+#define GL_POST_COLOR_MATIX_ALPHA_BIAS    0x80BB
 #define GL_COLOR_TABLE                    0x80D0
 #define GL_POST_CONVOLUTION_COLOR_TABLE   0x80D1
 #define GL_POST_COLOR_MATRIX_COLOR_TABLE  0x80D2
@@ -138,29 +160,11 @@ extern "C" {
 #define GL_COLOR_TABLE_ALPHA_SIZE         0x80DD
 #define GL_COLOR_TABLE_LUMINANCE_SIZE     0x80DE
 #define GL_COLOR_TABLE_INTENSITY_SIZE     0x80DF
-#define GL_BGR                            0x80E0
-#define GL_BGRA                           0x80E1
-#define GL_MAX_ELEMENTS_VERTICES          0x80E8
-#define GL_MAX_ELEMENTS_INDICES           0x80E9
-#define GL_CLAMP_TO_EDGE                  0x812F
-#define GL_TEXTURE_MIN_LOD                0x813A
-#define GL_TEXTURE_MAX_LOD                0x813B
-#define GL_TEXTURE_BASE_LEVEL             0x813C
-#define GL_TEXTURE_MAX_LEVEL              0x813D
 #define GL_IGNORE_BORDER                  0x8150
 #define GL_CONSTANT_BORDER                0x8151
 #define GL_WRAP_BORDER                    0x8152
 #define GL_REPLICATE_BORDER               0x8153
 #define GL_CONVOLUTION_BORDER_COLOR       0x8154
-#define GL_LIGHT_MODEL_COLOR_CONTROL      0x81F8
-#define GL_SINGLE_COLOR                   0x81F9
-#define GL_SEPARATE_SPECULAR_COLOR        0x81FA
-#define GL_SMOOTH_POINT_SIZE_RANGE        0x0B12
-#define GL_SMOOTH_POINT_SIZE_GRANULARITY  0x0B13
-#define GL_SMOOTH_LINE_WIDTH_RANGE        0x0B22
-#define GL_SMOOTH_LINE_WIDTH_GRANULARITY  0x0B23
-#define GL_ALIASED_POINT_SIZE_RANGE       0x846D
-#define GL_ALIASED_LINE_WIDTH_RANGE       0x846E
 #endif
 
 #ifndef GL_VERSION_1_3
@@ -3695,22 +3699,22 @@ GLAPI void APIENTRY glTexCoord2fColor4fNormal3fVertex3fSUN (GLfloat, GLfloat, GL
 GLAPI void APIENTRY glTexCoord2fColor4fNormal3fVertex3fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
 GLAPI void APIENTRY glTexCoord4fColor4fNormal3fVertex4fSUN (GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
 GLAPI void APIENTRY glTexCoord4fColor4fNormal3fVertex4fvSUN (const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiVertex3fvSUN (const GLenum *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fSUN (GLenum, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fvSUN (const GLenum *, const GLubyte *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLenum, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
-GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLenum *, const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiVertex3fvSUN (const GLuint *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fSUN (GLuint, GLubyte, GLubyte, GLubyte, GLubyte, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor4ubVertex3fvSUN (const GLuint *, const GLubyte *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor3fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiNormal3fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiColor4fNormal3fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *, const GLfloat *);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN (GLuint, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+GLAPI void APIENTRY glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN (const GLuint *, const GLfloat *, const GLfloat *, const GLfloat *, const GLfloat *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRY * PFNGLCOLOR4UBVERTEX2FSUNPROC) (GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y);
 typedef void (APIENTRY * PFNGLCOLOR4UBVERTEX2FVSUNPROC) (const GLubyte *c, const GLfloat *v);
@@ -3736,22 +3740,22 @@ typedef void (APIENTRY * PFNGLTEXCOORD2FCOLOR4FNORMAL3FVERTEX3FSUNPROC) (GLfloat
 typedef void (APIENTRY * PFNGLTEXCOORD2FCOLOR4FNORMAL3FVERTEX3FVSUNPROC) (const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
 typedef void (APIENTRY * PFNGLTEXCOORD4FCOLOR4FNORMAL3FVERTEX4FSUNPROC) (GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 typedef void (APIENTRY * PFNGLTEXCOORD4FCOLOR4FNORMAL3FVERTEX4FVSUNPROC) (const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUIVERTEX3FSUNPROC) (GLenum rc, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUIVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4UBVERTEX3FSUNPROC) (GLenum rc, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4UBVERTEX3FVSUNPROC) (const GLenum *rc, const GLubyte *c, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR3FVERTEX3FSUNPROC) (GLenum rc, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR3FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *c, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUINORMAL3FVERTEX3FSUNPROC) (GLenum rc, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUINORMAL3FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *n, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4FNORMAL3FVERTEX3FSUNPROC) (GLenum rc, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4FNORMAL3FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FVERTEX3FSUNPROC) (GLenum rc, GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *tc, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FNORMAL3FVERTEX3FSUNPROC) (GLenum rc, GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FNORMAL3FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *tc, const GLfloat *n, const GLfloat *v);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3FSUNPROC) (GLenum rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
-typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3FVSUNPROC) (const GLenum *rc, const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUIVERTEX3FSUNPROC) (GLuint rc, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUIVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4UBVERTEX3FSUNPROC) (GLuint rc, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4UBVERTEX3FVSUNPROC) (const GLuint *rc, const GLubyte *c, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR3FVERTEX3FSUNPROC) (GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR3FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *c, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUINORMAL3FVERTEX3FSUNPROC) (GLuint rc, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUINORMAL3FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *n, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4FNORMAL3FVERTEX3FSUNPROC) (GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUICOLOR4FNORMAL3FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FVERTEX3FSUNPROC) (GLuint rc, GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *tc, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FNORMAL3FVERTEX3FSUNPROC) (GLuint rc, GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FNORMAL3FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *tc, const GLfloat *n, const GLfloat *v);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3FSUNPROC) (GLuint rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * PFNGLREPLACEMENTCODEUITEXCOORD2FCOLOR4FNORMAL3FVERTEX3FVSUNPROC) (const GLuint *rc, const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v);
 #endif
 
 #ifndef GL_EXT_blend_func_separate
