@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.55 2001/07/23 16:10:03 brianp Exp $ */
+/* $Id: texstate.c,v 1.56 2001/08/20 16:43:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1005,7 +1005,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             texObj->MaxAnisotropy = params[0];
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_MAX_TEXTURE_ANISOTROPY_EXT)");
             return;
          }
          break;
@@ -1014,7 +1015,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_TEXTURE_COMPARE_SGIX)");
             return;
          }
          break;
@@ -1030,7 +1032,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             }
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                    "glTexParameter(pname=GL_TEXTURE_COMPARE_OPERATOR_SGIX)");
             return;
          }
          break;
@@ -1039,7 +1042,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             UNCLAMPED_FLOAT_TO_CHAN(texObj->ShadowAmbient, params[0]);
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_SHADOW_AMBIENT_SGIX)");
             return;
          }
          break;
@@ -1048,12 +1052,17 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_GENERATE_MIPMAP_SGIS)");
             return;
          }
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(pname)" );
+         {
+            char s[100];
+            sprintf(s, "glTexParameter(pname=0x%x)", pname);
+            _mesa_error( ctx, GL_INVALID_ENUM, s);
+         }
          return;
    }
 
