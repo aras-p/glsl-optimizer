@@ -1003,7 +1003,7 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
 {
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLfloat luminance[MAX_WIDTH];
-   GLfloat (*rgba)[4];
+   const GLfloat (*rgba)[4];
    GLuint i;
 
    if (transferOps) {
@@ -1012,10 +1012,8 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
       CHECKARRAY(rgbaCopy, return);  /* mac 32k limitation */
 
       _mesa_memcpy(rgbaCopy, rgbaIn, n * 4 * sizeof(GLfloat));
-
-      rgba = (GLfloat (*)[4]) rgbaCopy;
-
-      _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgba);
+      _mesa_apply_rgba_transfer_ops(ctx, transferOps, n, rgbaCopy);
+      rgba = (const GLfloat (*)[4]) rgbaCopy;
 
       if ((transferOps & IMAGE_MIN_MAX_BIT) && ctx->MinMax.Sink) {
          UNDEFARRAY(rgbaCopy);  /* mac 32k limitation */
@@ -1025,12 +1023,13 @@ _mesa_pack_rgba_span_float( GLcontext *ctx,
    }
    else {
       /* use incoming data, not a copy */
-      rgba = (GLfloat (*)[4]) rgbaIn;
+      rgba = (const GLfloat (*)[4]) rgbaIn;
    }
 
    /* XXX clamp rgba to [0,1]? */
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
+      /* compute luminance values */
       for (i = 0; i < n; i++) {
          GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
 #if CHAN_TYPE == GL_FLOAT
@@ -1984,7 +1983,7 @@ _mesa_pack_rgba_span_chan( GLcontext *ctx,
 
       assert(n <= MAX_WIDTH);
       /* convert color components to floating point */
-      for (i=0;i<n;i++) {
+      for (i = 0; i < n; i++) {
          rgba[i][RCOMP] = CHAN_TO_FLOAT(srcRgba[i][RCOMP]);
          rgba[i][GCOMP] = CHAN_TO_FLOAT(srcRgba[i][GCOMP]);
          rgba[i][BCOMP] = CHAN_TO_FLOAT(srcRgba[i][BCOMP]);
@@ -2707,8 +2706,8 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 /*
  * Unpack a row of color image data from a client buffer according to
  * the pixel unpacking parameters.
- * Return GLubyte values in the specified dest image format.
- * This is (or will be) used by glDrawPixels and glTexImage?D().
+ * Return GLchan values in the specified dest image format.
+ * This is used by glDrawPixels and glTexImage?D().
  * \param ctx - the context
  *         n - number of pixels in the span
  *         dstFormat - format of destination color array
@@ -3060,6 +3059,10 @@ _mesa_unpack_color_span_chan( GLcontext *ctx,
 }
 
 
+/**
+ * Same as _mesa_unpack_color_span_chan(), but return GLfloat data
+ * instead of GLchan.
+ */
 void
 _mesa_unpack_color_span_float( GLcontext *ctx,
                                GLuint n, GLenum dstFormat, GLfloat dest[],
@@ -3167,7 +3170,9 @@ _mesa_unpack_color_span_float( GLcontext *ctx,
       }
 
 #if CHAN_TYPE != GL_FLOAT
-      transferOps |= IMAGE_CLAMP_BIT;
+      if (clamp) {
+         transferOps |= IMAGE_CLAMP_BIT;
+      }
 #endif
 
       if (transferOps) {
