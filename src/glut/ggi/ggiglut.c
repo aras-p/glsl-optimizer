@@ -55,7 +55,7 @@ char *__glutProgramName = "GGI";
 
 static ggi_visual_t __glut_vis;
 
-static GGIMesaContext __glut_ctx;
+static ggi_mesa_context_t __glut_ctx;
 
 //static int __glut_width = WIDTH;
 //static int __glut_height = HEIGHT;
