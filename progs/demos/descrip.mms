@@ -9,7 +9,7 @@
 
 ##### MACROS #####
 
-INCDIR = [-.include]
+INCDIR = ([-.include],[-.util])
 CFLAGS = /include=$(INCDIR)/prefix=all/name=(as_is,short)
 
 .ifdef SHARE

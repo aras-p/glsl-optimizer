@@ -19,7 +19,8 @@ CORE_SOURCES =accum.c \
 	alpha.c \
 	api_loopback.c \
 	api_noop.c \
-	attrib.c \
+	api_validate.c \
+ 	attrib.c \
 	bitmap.c \
 	blend.c \
 	buffers.c \
@@ -81,12 +82,14 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.x]xm_api.c [.x]xm_dd.c [.x]xm_line.c [.x]xm_span.c [.x]xm_tri.c \
 [.osmesa]osmesa.c \
 [.svga]svgamesa.c \
-[.fx]fxapi.c [.fx]fxdd.c [.fx]fxddtex.c [.fx]fxvsetup.c [.fx]fxsetup.c \
-[.fx]fxtrifuncs.c [.fx]fxfastpath.c [.fx]fxpipeline.c\
-[.fx]fxtexman.c [.fx]fxddspan.c\
-[.fx]fxglidew.c \
-[.fx]fxvtxfmt.c \
-[.fx]fxvtxprims.c
+[.fx]fxapi.c [.fx]fxdd.c [.fx]fxddtex.c \
+[.fx]fxddspan.c\
+[.fx]fxsetup.c \
+[.fx]fxtexman.c \
+[.fx]fxtris.c \
+[.fx]fxvb.c \
+[.fx]fxsimplerender.c \
+[.fx]fxglidew.c
 
 RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_aaline.c \
@@ -123,39 +126,45 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 
 ASM_SOURCES =
 
-TNL_SOURCES=[.tnl]t_bbox.c \
-[.tnl]t_clip.c \
+TNL_SOURCES=[.tnl]t_array_api.c \
+[.tnl]t_array_import.c \
 [.tnl]t_context.c \
-[.tnl]t_cva.c \
-[.tnl]t_debug.c \
-[.tnl]t_dlist.c \
-[.tnl]t_eval.c \
-[.tnl]t_fog.c \
-[.tnl]t_light.c \
+[.tnl]t_eval_api.c \
+[.tnl]t_imm_alloc.c \
+[.tnl]t_imm_api.c \
+[.tnl]t_imm_debug.c \
+[.tnl]t_imm_dlist.c \
+[.tnl]t_imm_elt.c \
+[.tnl]t_imm_eval.c \
+[.tnl]t_imm_exec.c \
+[.tnl]t_imm_fixup.c \
 [.tnl]t_pipeline.c \
-[.tnl]t_shade.c \
-[.tnl]t_stages.c \
-[.tnl]t_texture.c \
-[.tnl]t_trans_elt.c \
-[.tnl]t_varray.c \
-[.tnl]t_vb.c \
-[.tnl]t_vbcull.c \
-[.tnl]t_vbindirect.c \
-[.tnl]t_vbrender.c \
-[.tnl]t_vbxform.c \
-[.tnl]t_vtxfmt.c
+[.tnl]t_vb_fog.c \
+[.tnl]t_vb_light.c \
+[.tnl]t_vb_material.c \
+[.tnl]t_vb_normals.c \
+[.tnl]t_vb_points.c \
+[.tnl]t_vb_render.c \
+[.tnl]t_vb_texgen.c \
+[.tnl]t_vb_texmat.c \
+[.tnl]t_vb_vertex.c
 
 MATH_SOURCES=[.math]m_debug_xform.c \
+[.math]m_eval.c \
 [.math]m_matrix.c \
 [.math]m_translate.c \
 [.math]m_vector.c \
 [.math]m_vertices.c \
 [.math]m_xform.c  
 
+CACHE_SOURCES=[.array_cache]ac_context.c \
+	[.array_cache]ac_import.c
+ 
 OBJECTS1=accum.obj,\
 alpha.obj,\
 api_loopback.obj,\
 api_noop.obj,\
+api_validate.obj,\
 attrib.obj,\
 bitmap.obj,\
 blend.obj,\
@@ -170,11 +179,11 @@ debug.obj,\
 depth.obj,\
 dispatch.obj,\
 dlist.obj,\
-drawpix.obj,\
-enable.obj,\
-enums.obj
+drawpix.obj
 
-OBJECTS2=eval.obj,\
+OBJECTS2=enable.obj,\
+enums.obj,\
+eval.obj,\
 extensions.obj,\
 feedback.obj,\
 fog.obj,\
@@ -194,10 +203,10 @@ logic.obj,\
 lowpc.obj,\
 masking.obj,\
 matrix.obj,\
-mem.obj,\
-mmath.obj
+mem.obj
 
-OBJECTS3=pixel.obj,\
+OBJECTS3=mmath.obj,\
+pixel.obj,\
 pixeltex.obj,\
 points.obj,\
 polygon.obj,\
@@ -221,12 +230,15 @@ OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
 [.osmesa]osmesa.obj,\
 [.svga]svgamesa.obj
 
-OBJECTS5=[.fx]fxapi.obj,[.fx]fxdd.obj,[.fx]fxddtex.obj,[.fx]fxvsetup.obj,\
-[.fx]fxsetup.obj,[.fx]fxfastpath.obj,[.fx]fxpipeline.obj,[.fx]fxvtxfmt.obj,\
-[.fx]fxvtxprims.obj
+OBJECTS5=[.fx]fxapi.obj,[.fx]fxdd.obj,[.fx]fxddtex.obj
 
-OBJECTS6=[.fx]fxtrifuncs.obj,[.fx]fxglidew.obj,\
-[.fx]fxtexman.obj,[.fx]fxddspan.obj
+OBJECTS6=[.fx]fxddspan.obj,\
+[.fx]fxsetup.obj,\
+[.fx]fxtexman.obj,\
+[.fx]fxtris.obj,\
+[.fx]fxvb.obj,\
+[.fx]fxsimplerender.obj,\
+[.fx]fxglidew.obj
 
 OBJECTS7=[.swrast]s_aatriangle.obj,\
 [.swrast]s_accum.obj,\
@@ -264,35 +276,40 @@ OBJECTS10=[.swrast_setup]ss_context.obj,\
 [.swrast_setup]ss_triangle.obj,\
 [.swrast_setup]ss_vb.obj 
 
-OBJECTS11=[.tnl]t_bbox.obj,\
-[.tnl]t_clip.obj,\
+OBJECTS11=[.tnl]t_array_api.obj,\
+[.tnl]t_array_import.obj,\
 [.tnl]t_context.obj,\
-[.tnl]t_cva.obj,\
-[.tnl]t_debug.obj,\
-[.tnl]t_dlist.obj,\
-[.tnl]t_eval.obj,\
-[.tnl]t_fog.obj,\
-[.tnl]t_light.obj,\
-[.tnl]t_pipeline.obj
+[.tnl]t_eval_api.obj,\
+[.tnl]t_imm_alloc.obj,\
+[.tnl]t_imm_api.obj,\
+[.tnl]t_imm_debug.obj,\
+[.tnl]t_imm_dlist.obj,\
+[.tnl]t_imm_elt.obj,\
+[.tnl]t_imm_eval.obj,\
+[.tnl]t_imm_exec.obj
 
-OBJECTS12=[.tnl]t_shade.obj,\
-[.tnl]t_stages.obj,\
-[.tnl]t_texture.obj,\
-[.tnl]t_trans_elt.obj,\
-[.tnl]t_varray.obj,\
-[.tnl]t_vb.obj,\
-[.tnl]t_vbcull.obj,\
-[.tnl]t_vbindirect.obj,\
-[.tnl]t_vbrender.obj,\
-[.tnl]t_vbxform.obj,\
-[.tnl]t_vtxfmt.obj
+OBJECTS12=[.tnl]t_imm_fixup.obj,\
+[.tnl]t_pipeline.obj,\
+[.tnl]t_vb_fog.obj,\
+[.tnl]t_vb_light.obj,\
+[.tnl]t_vb_material.obj,\
+[.tnl]t_vb_normals.obj,\
+[.tnl]t_vb_points.obj,\
+[.tnl]t_vb_render.obj,\
+[.tnl]t_vb_texgen.obj,\
+[.tnl]t_vb_texmat.obj,\
+[.tnl]t_vb_vertex.obj
 
 OBJECTS13=[.math]m_debug_xform.obj,\
+[.math]m_eval.obj,\
 [.math]m_matrix.obj,\
 [.math]m_translate.obj,\
 [.math]m_vector.obj,\
 [.math]m_vertices.obj,\
 [.math]m_xform.obj 
+
+OBJECTS14=[.array_cache]ac_context.obj,\
+	[.array_cache]ac_import.obj
 
 ##### RULES #####
 
@@ -302,7 +319,7 @@ VERSION=Mesa V3.4
 # Make the library
 $(LIBDIR)$(GL_LIB) : $(OBJECTS1),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
 	$(OBJECTS5) $(OBJECTS6) $(OBJECTS7) $(OBJECTS8) $(OBJECTS9)\
-	$(OBJECTS10) $(OBJECTS11) $(OBJECTS12) $(OBJECTS13)
+	$(OBJECTS10) $(OBJECTS11) $(OBJECTS12) $(OBJECTS13) $(OBJECTS14)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -324,6 +341,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS1),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "$(OBJECTS11)"
   @ WRITE_ FILE "$(OBJECTS12)"
   @ WRITE_ FILE "$(OBJECTS13)"
+  @ WRITE_ FILE "$(OBJECTS14)"
   @ write_ file "sys$share:decw$xextlibshr/share"
   @ write_ file "sys$share:decw$xlibshr/share"
   @ write_ file "sys$share:pthread$rtl/share"
@@ -348,6 +366,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS1),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ library $(GL_LIB) $(OBJECTS11)
   @ library $(GL_LIB) $(OBJECTS12)
   @ library $(GL_LIB) $(OBJECTS13)
+  @ library $(GL_LIB) $(OBJECTS14)
 .endif
   @ rename $(GL_LIB)* $(LIBDIR)
 
@@ -387,27 +406,20 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxdd.obj [.fx]fxdd.c
 [.fx]fxddtex.obj : [.fx]fxddtex.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxddtex.obj [.fx]fxddtex.c
-[.fx]fxfastpath.obj : [.fx]fxfastpath.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxfastpath.obj [.fx]fxfastpath.c
-[.fx]fxpipeline.obj : [.fx]fxpipeline.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxpipeline.obj [.fx]fxpipeline.c
-[.fx]fxvsetup.obj : [.fx]fxvsetup.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxvsetup.obj [.fx]fxvsetup.c
-[.fx]fxsetup.obj : [.fx]fxsetup.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxsetup.obj [.fx]fxsetup.c
-[.fx]fxtrifuncs.obj : [.fx]fxtrifuncs.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxtrifuncs.obj [.fx]fxtrifuncs.c
-[.fx]fxtexman.obj : [.fx]fxtexman.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxtexman.obj [.fx]fxtexman.c
 [.fx]fxddspan.obj : [.fx]fxddspan.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxddspan.obj [.fx]fxddspan.c
+[.fx]fxsetup.obj : [.fx]fxsetup.c
+	$(CC) $(CFLAGS) /obj=[.fx]fxsetup.obj [.fx]fxsetup.c
+[.fx]fxtexman.obj : [.fx]fxtexman.c
+	$(CC) $(CFLAGS) /obj=[.fx]fxtexman.obj [.fx]fxtexman.c
+[.fx]fxtris.obj : [.fx]fxtris.c
+	$(CC) $(CFLAGS) /obj=[.fx]fxtris.obj [.fx]fxtris.c
+[.fx]fxvb.obj : [.fx]fxvb.c
+	$(CC) $(CFLAGS) /obj=[.fx]fxvb.obj [.fx]fxvb.c
+[.fx]fxsimplerender.obj : [.fx]fxsimplerender.c
+	$(CC) $(CFLAGS) /obj=[.fx]fxsimplerender.obj [.fx]fxsimplerender.c
 [.fx]fxglidew.obj : [.fx]fxglidew.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxglidew.obj [.fx]fxglidew.c
-[.fx]fxvtxfmt.obj : [.fx]fxvtxfmt.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxvtxfmt.obj [.fx]fxvtxfmt.c
-[.fx]fxvtxprims.obj : [.fx]fxvtxprims.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxvtxprims.obj [.fx]fxvtxprims.c
-
 [.swrast]s_aaline.obj : [.swrast]s_aaline.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_aaline.obj [.swrast]s_aaline.c
 [.swrast]s_aatriangle.obj : [.swrast]s_aatriangle.c
@@ -472,50 +484,54 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_triangle.obj [.swrast_setup]ss_triangle.c
 [.swrast_setup]ss_vb.obj : [.swrast_setup]ss_vb.c
 	$(CC) $(CFLAGS) /obj=[.swrast_setup]ss_vb.obj [.swrast_setup]ss_vb.c
-[.tnl]t_bbox.obj : [.tnl]t_bbox.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_bbox.obj [.tnl]t_bbox.c
-[.tnl]t_clip.obj : [.tnl]t_clip.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_clip.obj [.tnl]t_clip.c
+[.tnl]t_array_api.obj : [.tnl]t_array_api.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_array_api.obj [.tnl]t_array_api.c
+[.tnl]t_array_import.obj : [.tnl]t_array_import.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_array_import.obj [.tnl]t_array_import.c
 [.tnl]t_context.obj : [.tnl]t_context.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_context.obj [.tnl]t_context.c
-[.tnl]t_cva.obj : [.tnl]t_cva.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_cva.obj [.tnl]t_cva.c
-[.tnl]t_debug.obj : [.tnl]t_debug.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_debug.obj [.tnl]t_debug.c
-[.tnl]t_dlist.obj : [.tnl]t_dlist.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_dlist.obj [.tnl]t_dlist.c
-[.tnl]t_eval.obj : [.tnl]t_eval.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_eval.obj [.tnl]t_eval.c
-[.tnl]t_fog.obj : [.tnl]t_fog.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_fog.obj [.tnl]t_fog.c
-[.tnl]t_light.obj : [.tnl]t_light.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_light.obj [.tnl]t_light.c
+[.tnl]t_eval_api.obj : [.tnl]t_eval_api.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_eval_api.obj [.tnl]t_eval_api.c
+[.tnl]t_imm_alloc.obj : [.tnl]t_imm_alloc.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_alloc.obj [.tnl]t_imm_alloc.c
+[.tnl]t_imm_api.obj : [.tnl]t_imm_api.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_api.obj [.tnl]t_imm_api.c
+[.tnl]t_imm_debug.obj : [.tnl]t_imm_debug.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_debug.obj [.tnl]t_imm_debug.c
+[.tnl]t_imm_dlist.obj : [.tnl]t_imm_dlist.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_dlist.obj [.tnl]t_imm_dlist.c
+[.tnl]t_imm_elt.obj : [.tnl]t_imm_elt.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_elt.obj [.tnl]t_imm_elt.c
+[.tnl]t_imm_eval.obj : [.tnl]t_imm_eval.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_eval.obj [.tnl]t_imm_eval.c
+[.tnl]t_imm_exec.obj : [.tnl]t_imm_exec.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_exec.obj [.tnl]t_imm_exec.c
+[.tnl]t_imm_fixup.obj : [.tnl]t_imm_fixup.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_imm_fixup.obj [.tnl]t_imm_fixup.c
 [.tnl]t_pipeline.obj : [.tnl]t_pipeline.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_pipeline.obj [.tnl]t_pipeline.c
-[.tnl]t_shade.obj : [.tnl]t_shade.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_shade.obj [.tnl]t_shade.c
-[.tnl]t_stages.obj : [.tnl]t_stages.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_stages.obj [.tnl]t_stages.c
-[.tnl]t_texture.obj : [.tnl]t_texture.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_texture.obj [.tnl]t_texture.c
-[.tnl]t_trans_elt.obj : [.tnl]t_trans_elt.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_trans_elt.obj [.tnl]t_trans_elt.c
-[.tnl]t_varray.obj : [.tnl]t_varray.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_varray.obj [.tnl]t_varray.c
-[.tnl]t_vb.obj : [.tnl]t_vb.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vb.obj [.tnl]t_vb.c
-[.tnl]t_vbcull.obj : [.tnl]t_vbcull.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vbcull.obj [.tnl]t_vbcull.c
-[.tnl]t_vbindirect.obj : [.tnl]t_vbindirect.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vbindirect.obj [.tnl]t_vbindirect.c
-[.tnl]t_vbrender.obj : [.tnl]t_vbrender.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vbrender.obj [.tnl]t_vbrender.c
-[.tnl]t_vbxform.obj : [.tnl]t_vbxform.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vbxform.obj [.tnl]t_vbxform.c
-[.tnl]t_vtxfmt.obj : [.tnl]t_vtxfmt.c
-	$(CC) $(CFLAGS) /obj=[.tnl]t_vtxfmt.obj [.tnl]t_vtxfmt.c
+[.tnl]t_vb_fog.obj : [.tnl]t_vb_fog.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_fog.obj [.tnl]t_vb_fog.c
+[.tnl]t_vb_light.obj : [.tnl]t_vb_light.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_light.obj [.tnl]t_vb_light.c
+[.tnl]t_vb_material.obj : [.tnl]t_vb_material.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_material.obj [.tnl]t_vb_material.c
+[.tnl]t_vb_normals.obj : [.tnl]t_vb_normals.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_normals.obj [.tnl]t_vb_normals.c
+[.tnl]t_vb_points.obj : [.tnl]t_vb_points.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_points.obj [.tnl]t_vb_points.c
+[.tnl]t_vb_render.obj : [.tnl]t_vb_render.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_render.obj [.tnl]t_vb_render.c
+[.tnl]t_vb_texgen.obj : [.tnl]t_vb_texgen.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_texgen.obj [.tnl]t_vb_texgen.c
+[.tnl]t_vb_texmat.obj : [.tnl]t_vb_texmat.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_texmat.obj [.tnl]t_vb_texmat.c
+[.tnl]t_vb_vertex.obj : [.tnl]t_vb_vertex.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_vertex.obj [.tnl]t_vb_vertex.c
 [.math]m_debug_xform.obj : [.math]m_debug_xform.c
 	$(CC) $(CFLAGS) /obj=[.math]m_debug_xform.obj [.math]m_debug_xform.c
+[.math]m_eval.obj : [.math]m_eval.c
+	$(CC) $(CFLAGS) /obj=[.math]m_eval.obj [.math]m_eval.c
 [.math]m_matrix.obj : [.math]m_matrix.c
 	$(CC) $(CFLAGS) /obj=[.math]m_matrix.obj [.math]m_matrix.c
 [.math]m_translate.obj : [.math]m_translate.c
@@ -526,4 +542,9 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.math]m_vertices.obj [.math]m_vertices.c
 [.math]m_xform.obj : [.math]m_xform.c
 	$(CC) $(CFLAGS) /obj=[.math]m_xform.obj [.math]m_xform.c
-
+[.array_cache]ac_context.obj : [.array_cache]ac_context.c
+	$(CC) $(CFLAGS) /obj=[.array_cache]ac_context.obj \
+	[.array_cache]ac_context.c
+[.array_cache]ac_import.obj : [.array_cache]ac_import.c
+	$(CC) $(CFLAGS) /obj=[.array_cache]ac_import.obj \
+	[.array_cache]ac_import.c

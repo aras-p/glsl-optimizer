@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.17 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: dispatch.c,v 1.18 2001/01/02 10:07:34 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,6 +48,7 @@
 #include "glheader.h"
 #include "glapi.h"
 #include "glapitable.h"
+#include "glthread.h"
 #endif
 
 
