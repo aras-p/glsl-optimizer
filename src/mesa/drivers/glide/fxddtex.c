@@ -928,7 +928,17 @@ static void
 fetch_index8(const struct gl_texture_image *texImage,
 	     GLint i, GLint j, GLint k, GLvoid * texelOut)
 {
-   /* XXX todo */
+   GLchan *indexOut = (GLchan *) texelOut;
+   const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+   const GLubyte *texel;
+
+   i = i * mml->wScale;
+   j = j * mml->hScale;
+   i = i * mml->width / texImage->Width;
+   j = j * mml->height / texImage->Height;
+
+   texel = ((GLubyte *) texImage->Data) + j * mml->width + i;
+   *indexOut = *texel;
 }
 
 
@@ -1183,14 +1193,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    mml->width = width * mml->wScale;
    mml->height = height * mml->hScale;
 
-   if (mml->wScale != 1 || mml->hScale != 1) {
-      /* rescale image to overcome 1:8 aspect limitation */
-
-      /* XXX TO-DO! */
-   }
-
-
-   /*** This code basically comes from _mesa_store_teximage2d() ***/
 
    /* choose the texture format */
    assert(ctx->Driver.ChooseTextureFormat);
@@ -1199,22 +1201,54 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->TexFormat);
 
    texelBytes = texImage->TexFormat->TexelBytes;
+   assert(texelBytes == 1 || texelBytes == 2);
 
-   /* allocate memory */
-   texImage->Data = MALLOC(mml->width * mml->height * texelBytes);
-   if (!texImage->Data) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-      return;
+   if (mml->wScale != 1 || mml->hScale != 1) {
+      /* rescale image to overcome 1:8 aspect limitation */
+      GLvoid *tempImage;
+      tempImage = MALLOC(width * height * texelBytes);
+      if (!tempImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
+      /* unpack image, apply transfer ops and store in tempImage */
+      _mesa_transfer_teximage(ctx, 2, texImage->Format,
+                              texImage->TexFormat,
+                              tempImage,
+                              width, height, 1, 0, 0, 0,
+                              width * texelBytes,
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
+      assert(!texImage->Data);
+      texImage->Data = MALLOC(mml->width * mml->height * texelBytes);
+      if (!texImage->Data) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         FREE(tempImage);
+         return;
+      }
+      _mesa_rescale_teximage2d(texelBytes,
+                               mml->width * texelBytes, /* dst stride */
+                               width, height,
+                               mml->width, mml->height,
+                               tempImage /*src*/, texImage->Data /*dst*/ );
+      FREE(tempImage);
    }
-
-   /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 2, _mesa_base_tex_format(ctx, internalFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, height, 1, 0, 0, 0,
-                           texImage->Width * texelBytes,
-                           0, /* dstImageStride */
-                           format, type, pixels, packing);
-
+   else {
+      /* no rescaling needed */
+      assert(!texImage->Data);
+      texImage->Data = MALLOC(mml->width * mml->height * texelBytes);
+      if (!texImage->Data) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
+      /* unpack image, apply transfer ops and store in texImage->Data */
+      _mesa_transfer_teximage(ctx, 2, texImage->Format,
+                              texImage->TexFormat, texImage->Data,
+                              width, height, 1, 0, 0, 0,
+                              texImage->Width * texelBytes,
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
+   }
 
    mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
    texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
@@ -1244,6 +1278,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    tfxTexInfo *ti;
    tfxMipMapLevel *mml;
+   GLint texelBytes;
 
    if (!texObj->DriverData) {
       _mesa_problem(ctx, "problem in fxDDTexSubImage2D");
@@ -1258,96 +1293,62 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    assert(texImage->Data);	/* must have an existing texture image! */
    assert(texImage->Format);
 
-#if 000
-   /* XXX redo all of this */
+   texelBytes = texImage->TexFormat->TexelBytes;
 
+   if (mml->wScale != 1 || mml->hScale != 1) {
+      /* need to rescale subimage to match mipmap level's rescale factors */
+      const GLint newWidth = width * mml->wScale;
+      const GLint newHeight = height * mml->hScale;
+      GLvoid *scaledImage, *tempImage;
+      GLubyte *destAddr;
+      tempImage = MALLOC(width * height * texelBytes);
+      if (!tempImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
+         return;
+      }
 
-   /* check for image rescale */
-   if (ctx->_ImageTransferState ||
-       texImage->Width != mml->width ||
-       texImage->Height != mml->height) {
-      success = GL_FALSE;
+      _mesa_transfer_teximage(ctx, 2, texImage->Format,/* Tex int format */
+                              texImage->TexFormat,     /* dest format */
+                              (GLubyte *) tempImage,   /* dest */
+                              width, height, 1,        /* subimage size */
+                              0, 0, 0,                 /* subimage pos */
+                              width * texelBytes,      /* dest row stride */
+                              0,                       /* dst image stride */
+                              format, type, pixels, packing);
+
+      /* now rescale */
+      scaledImage = MALLOC(newWidth * newHeight * texelBytes);
+      if (!scaledImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
+         FREE(tempImage);
+         return;
+      }
+
+      /* compute address of dest subimage within the overal tex image */
+      destAddr = (GLubyte *) texImage->Data
+         + (yoffset * mml->hScale * mml->width
+            + xoffset * mml->wScale) * texelBytes;
+
+      _mesa_rescale_teximage2d(texelBytes,
+                               mml->width * texelBytes, /* dst stride */
+                               width, height,
+                               newWidth, newHeight,
+                               tempImage, destAddr);
+
+      FREE(tempImage);
+      FREE(scaledImage);
    }
    else {
-      success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
-                                            xoffset, yoffset,
-                                            width, height,
-                                            mml->width,
-                                            format, type, packing,
-                                            pixels, texImage->Data);
+      /* no rescaling needed */
+      _mesa_transfer_teximage(ctx, 2, texImage->Format,  /* Tex int format */
+                              texImage->TexFormat,       /* dest format */
+                              (GLubyte *) texImage->Data,/* dest */
+                              width, height, 1,          /* subimage size */
+                              xoffset, yoffset, 0,       /* subimage pos */
+                              mml->width * texelBytes,   /* dest row stride */
+                              0,                         /* dst image stride */
+                              format, type, pixels, packing);
    }
-
-   if (!success) {
-      /* Incoming image might need scale/bias or is in an uncommon format
-       * that _mesa_convert_texsubimage() can't deal with.  Convert it to
-       * a simpler format now.
-       */
-
-      GLenum simpleFormat = texImage->TexFormat->BaseFormat;
-      GLint comps = _mesa_components_in_format(simpleFormat);
-      GLubyte *tempImage;
-      GLboolean success;
-
-      tempImage = MALLOC(width * height * comps * sizeof(GLubyte));
-
-      /* Apply pixel transfer ops and convert image format to something
-       * simple (format = simpleFormat, type = CHAN_TYPE).
-       */
-#if 0
-      /* XXX this has to be rewritten! */
-      _mesa_transfer_teximage(ctx, 2,	/* dimensions */
-			      simpleFormat,	/* base int format */
-			      simpleFormat,	/* dest format */
-			      tempImage,	/* dest addr */
-			      width, height, 1,	/* src size */
-			      0, 0, 0,	/* dst offsets */
-			      width * comps,	/* dstRowStride */
-			      0,	/* dstImageStride */
-			      format, type, pixels, packing /* src info */ );
-#endif
-
-      if (texImage->Width != mml->width || texImage->Height != mml->height) {
-         /* Upscale image to accomodate Glide's image aspect limitations. */
-         const GLint wScale = mml->width / texImage->Width;
-         const GLint hScale = mml->height / texImage->Height;
-         const GLint newWidth = width * wScale;
-         const GLint newHeight = height *hScale;
-         GLvoid *rescaledImage = MALLOC(newWidth * newHeight
-                                        * texImage->TexFormat->TexelBytes);
-         assert(mml->width >= texImage->Width);
-         assert(mml->height >= texImage->Height);
-         if (!rescaledImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
-            return;
-         }
-         _mesa_rescale_teximage2d(texImage->TexFormat,
-                                  width, height, newWidth, newHeight,
-                                  tempImage, rescaledImage);
-         success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
-                                            xoffset * wScale, yoffset * hScale,
-                                            newWidth, newHeight,
-                                            mml->width,   /* destImageWidth */
-                                            simpleFormat, /* source format */
-                                            CHAN_TYPE,    /* source type */
-                                            &_mesa_native_packing,
-                                            rescaledImage, texImage->Data);
-         FREE(rescaledImage);
-      }
-      else {
-         success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
-					       xoffset, yoffset,
-					       width, height,
-					       mml->width,
-					       simpleFormat, CHAN_TYPE,
-					       &_mesa_native_packing,
-					       tempImage, texImage->Data);
-      }
-      /* the conversion had better of worked! */
-      assert(success);
-      FREE(tempImage);
-   }
-#endif
-
 
    if (ti->validated && ti->isInTM)
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
@@ -1356,8 +1357,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-#else
-
+#else /* FX */
 
 /*
  * Need this to provide at least one external definition.

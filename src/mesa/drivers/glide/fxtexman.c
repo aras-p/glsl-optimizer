@@ -499,6 +499,9 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
 
    assert(mml);
+   assert(mml->width > 0);
+   assert(mml->height > 0);
+   assert(mml->glideFormat > 0);
 
    if (!ti->validated) {
       fprintf(stderr,
@@ -714,13 +717,15 @@ fxTMFreeTexture(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 
    for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
       struct gl_texture_image *texImage = tObj->Image[i];
-      if (texImage->Data) {
-	 FREE(texImage->Data);
-	 texImage->Data = NULL;
-      }
-      if (texImage->DriverData) {
-	 FREE(texImage->DriverData);
-	 texImage->DriverData = NULL;
+      if (texImage) {
+         if (texImage->Data) {
+            FREE(texImage->Data);
+            texImage->Data = NULL;
+         }
+         if (texImage->DriverData) {
+            FREE(texImage->DriverData);
+            texImage->DriverData = NULL;
+         }
       }
    }
    switch (ti->whichTMU) {
