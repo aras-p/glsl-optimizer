@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.27 2000/10/30 13:32:02 keithw Exp $ */
+/* $Id: varray.c,v 1.28 2000/10/30 16:30:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -299,8 +299,6 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   fprintf(stderr, "%s\n", __FUNCTION__);
-   
    if (size != 3 && size != 4) {
       gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
       return;
