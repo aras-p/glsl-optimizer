@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.35 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: light.c,v 1.36 2001/02/13 23:55:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1100,10 +1100,12 @@ gl_validate_all_lighting_tables( GLcontext *ctx )
    GLfloat shininess;
 
    shininess = ctx->Light.Material[0].Shininess;
-   if (!ctx->_ShineTable[0]) validate_shine_table( ctx, 0, shininess );
+   if (!ctx->_ShineTable[0] || ctx->_ShineTable[0]->shininess != shininess)
+      validate_shine_table( ctx, 0, shininess );
 
    shininess = ctx->Light.Material[1].Shininess;
-   if (!ctx->_ShineTable[1]) validate_shine_table( ctx, 1, shininess );
+   if (!ctx->_ShineTable[1] || ctx->_ShineTable[1]->shininess != shininess)
+      validate_shine_table( ctx, 1, shininess );
 
    for (i = 0 ; i < MAX_LIGHTS ; i++) 
       if (ctx->Light.Light[i]._SpotExpTable[0][0] == -1)
