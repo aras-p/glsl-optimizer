@@ -380,6 +380,8 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  )
 	      current->ptr);
 
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
+	 radeonEnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
+			          rmesa->hw.max_state_size + VBUF_BUFSZ );
 	 radeonEmitVertexAOS( rmesa,
 			      rmesa->swtcl.vertex_size,
 			      current_offset);

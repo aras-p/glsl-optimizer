@@ -260,6 +260,8 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
 	      current->ptr);
 
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
+	 r200EnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
+			        rmesa->hw.max_state_size + VBUF_BUFSZ );
 	 r200EmitVertexAOS( rmesa,
 			      rmesa->swtcl.vertex_size,
 			      current_offset);

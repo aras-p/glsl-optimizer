@@ -205,6 +205,7 @@ void r200InitState( r200ContextPtr rmesa )
    make_empty_list(&(rmesa->hw.dirty)); rmesa->hw.dirty.name = "DIRTY";
    make_empty_list(&(rmesa->hw.clean)); rmesa->hw.clean.name = "CLEAN";
 
+   rmesa->hw.max_state_size = 0;
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
    do {								\
@@ -215,6 +216,7 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.idx = IDX;					\
       rmesa->hw.ATOM.check = check_##CHK;				\
       insert_at_head(&(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
+      rmesa->hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
       
       

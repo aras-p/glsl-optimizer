@@ -528,6 +528,8 @@ struct r200_hw_state {
    struct r200_state_atom grd; /* guard band clipping */
    struct r200_state_atom fog; 
    struct r200_state_atom glt; 
+
+   int max_state_size;	/* Number of bytes necessary for a full state emit. */
 };
 
 struct r200_state {

@@ -169,6 +169,31 @@ do {							\
    }							\
 } while (0)
 
+/* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
+ * are available, you will also be adding an rmesa->state.max_state_size because
+ * r200EmitState is called from within r200EmitVbufPrim and r200FlushElts.
+ */
+#define AOS_BUFSZ(nr)	((3 + ((nr / 2) * 3) + ((nr & 1) * 2)) * sizeof(int))
+#define VERT_AOS_BUFSZ	(5 * sizeof(int))
+#define ELTS_BUFSZ(nr)	(12 + nr * 2)
+#define VBUF_BUFSZ	(3 * sizeof(int))
+
+/* Ensure that a minimum amount of space is available in the command buffer.
+ * This is used to ensure atomicity of state updates with the rendering requests
+ * that rely on them.
+ *
+ * An alternative would be to implement a "soft lock" such that when the buffer
+ * wraps at an inopportune time, we grab the lock, flush the current buffer,
+ * and hang on to the lock until the critical section is finished and we flush
+ * the buffer again and unlock.
+ */
+static __inline void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
+{
+   if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
+      r200FlushCmdBuf( rmesa, __FUNCTION__ );
+   assert( bytes <= R200_CMD_BUF_SZ );
+}
+
 /* Alloc space in the command buffer
  */
 static __inline char *r200AllocCmdBuf( r200ContextPtr rmesa,

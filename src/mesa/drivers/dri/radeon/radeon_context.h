@@ -426,6 +426,8 @@ struct radeon_hw_state {
    struct radeon_state_atom fog; 
    struct radeon_state_atom glt; 
    struct radeon_state_atom txr[2]; /* for NPOT */
+
+   int max_state_size;	/* Number of bytes necessary for a full state emit. */
 };
 
 struct radeon_state {

@@ -132,7 +132,6 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
    rmesa->store.statenr = 0;
    rmesa->store.cmd_used = 0;
    rmesa->dma.nr_released_bufs = 0;
-   rmesa->lost_context = 1;	
    return ret;
 }
 
@@ -563,8 +562,6 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       if ( dPriv->numClipRects == 0 ) 
 	 return;
    }
-
-   r200EmitState( rmesa );
 
    /* Need to cope with lostcontext here as kernel relies on
     * some residual state:

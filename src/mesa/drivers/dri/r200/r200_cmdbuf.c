@@ -183,7 +183,7 @@ extern void r200EmitVbufPrim( r200ContextPtr rmesa,
       fprintf(stderr, "%s cmd_used/4: %d prim %x nr %d\n", __FUNCTION__,
 	      rmesa->store.cmd_used/4, primitive, vertex_nr);
    
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 3 * sizeof(*cmd),
+   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, VBUF_BUFSZ,
 						  __FUNCTION__ );
    cmd[0].i = 0;
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3_CLIP;
@@ -236,8 +236,7 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    r200EmitState( rmesa );
    
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 
-						12 + min_nr*2,
+   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, ELTS_BUFSZ(min_nr),
 						__FUNCTION__ );
    cmd[0].i = 0;
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3_CLIP;
@@ -275,7 +274,7 @@ void r200EmitVertexAOS( r200ContextPtr rmesa,
       fprintf(stderr, "%s:  vertex_size 0x%x offset 0x%x \n",
 	      __FUNCTION__, vertex_size, offset);
 
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 5 * sizeof(int),
+   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, VERT_AOS_BUFSZ,
 						  __FUNCTION__ );
 
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
@@ -292,18 +291,17 @@ void r200EmitAOS( r200ContextPtr rmesa,
 		    GLuint offset )
 {
    drm_radeon_cmd_header_t *cmd;
-   int sz = 3 + ((nr/2)*3) + ((nr&1)*2);
+   int sz = AOS_BUFSZ(nr);
    int i;
    int *tmp;
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s nr arrays: %d\n", __FUNCTION__, nr);
 
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, sz * sizeof(int),
-						  __FUNCTION__ );
+   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, sz, __FUNCTION__ );
    cmd[0].i = 0;
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
-   cmd[1].i = R200_CP_CMD_3D_LOAD_VBPNTR | ((sz-3) << 16);
+   cmd[1].i = R200_CP_CMD_3D_LOAD_VBPNTR | (((sz / sizeof(int)) - 3) << 16);
    cmd[2].i = nr;
    tmp = &cmd[0].i;
    cmd += 3;

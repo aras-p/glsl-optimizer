@@ -149,6 +149,9 @@ static GLushort *radeonAllocElts( radeonContextPtr rmesa, GLuint nr )
    if (rmesa->dma.flush)
       rmesa->dma.flush( rmesa );
 
+   radeonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			   rmesa->hw.max_state_size + ELTS_BUFSZ(nr));
+
    radeonEmitAOS( rmesa,
 		rmesa->tcl.aos_components,
 		rmesa->tcl.nr_aos_components, 0 );
@@ -175,6 +178,9 @@ static void EMIT_PRIM( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    radeonTclPrimitive( ctx, prim, hwprim );
    
+   radeonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			    rmesa->hw.max_state_size + VBUF_BUFSZ );
+
    radeonEmitAOS( rmesa,
 		  rmesa->tcl.aos_components,
 		  rmesa->tcl.nr_aos_components,
