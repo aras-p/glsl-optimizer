@@ -1,5 +1,3 @@
-/* $Id: gl.h,v 1.75 2003/02/28 16:31:32 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -2704,6 +2702,13 @@ glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
 GLAPI void GLAPIENTRY
 glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
 
+
+typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4FNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4DNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4FVNVPROC) (GLuint id, GLsizei len, const GLubyte * name, const GLfloat *v);
+typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4DVNVPROC) (GLuint id, GLsizei len, const GLubyte * name, const GLdouble *v);   
+typedef void (APIENTRY * PFNGLGETPROGRAMNAMEDPARAMETERFVNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLfloat *params);
+typedef void (APIENTRY * PFNGLGETPROGRAMNAMEDPARAMETERDVNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLdouble *params);
 
 #endif /* GL_NV_fragment_program */
 
