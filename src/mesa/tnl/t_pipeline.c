@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.5 2000/11/24 15:22:00 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.6 2000/11/27 09:05:52 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@
 void _tnl_print_pipe_ops( const char *msg, GLuint flags )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   flags,
 	   (flags & PIPE_OP_CVA_PREPARE)   ? "cva-prepare, " : "",

@@ -219,8 +219,10 @@ _tnl_wakeup_exec( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    
+#ifndef VMS
    fprintf(stderr, "%s\n", __FUNCTION__);
-
+#endif
+   
    install_driver_callbacks(ctx);
 
    /* Hook our functions into exec and compile dispatch tables.
@@ -252,8 +254,10 @@ _tnl_wakeup_save_exec( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
+#ifndef VMS
    fprintf(stderr, "%s\n", __FUNCTION__);
-
+#endif
+   
    _tnl_wakeup_exec( ctx );
    _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
    ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
