@@ -1,4 +1,4 @@
-/* $Id: svgamesa15.c,v 1.9 2001/02/06 00:03:47 brianp Exp $ */
+/* $Id: svgamesa15.c,v 1.10 2002/10/04 19:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,9 +56,13 @@ static unsigned long __svga_getpixel15(int x, int y)
     return shortBuffer[offset];
 }
 
-void __clear_color15( GLcontext *ctx, const GLchan color[4] )
+void __clear_color15( GLcontext *ctx, const GLfloat color[4] )
 {
-   SVGAMesa->clear_hicolor=(color[0]>>3)<<10 | (color[1]>>3)<<5 | (color[2]>>3);  
+   GLubyte col[3];
+   CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+   SVGAMesa->clear_hicolor=(col[0]>>3)<<10 | (col[1]>>3)<<5 | (col[2]>>3);  
 /*   SVGAMesa->clear_hicolor=(red)<<10 | (green)<<5 | (blue);*/
 }   
 

@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.57 2002/06/29 19:48:16 brianp Exp $ */
+/* $Id: texobj.c,v 1.58 2002/10/04 19:10:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,7 +99,7 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
       obj->CompareMode = GL_LUMINANCE;    /* ARB_shadow */
       obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
       obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
-      obj->ShadowAmbient = 0;             /* ARB/SGIX_shadow_ambient */
+      obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
       _mesa_init_colortable(&obj->Palette);
 
       /* insert into linked list */

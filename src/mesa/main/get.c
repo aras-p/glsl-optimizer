@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.92 2002/09/27 02:45:37 brianp Exp $ */
+/* $Id: get.c,v 1.93 2002/10/04 19:10:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,7 +173,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_BOOL((GLfloat) ctx->Color.AlphaRef / CHAN_MAXF);
+         *params = ctx->Color.AlphaRef ? GL_TRUE : GL_FALSE;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = INT_TO_BOOL(ctx->AttribStackDepth);
@@ -1537,7 +1537,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLdouble) ctx->Color.AlphaRef / CHAN_MAXF;
+         *params = (GLdouble) ctx->Color.AlphaRef;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLdouble ) (ctx->AttribStackDepth);
@@ -1602,10 +1602,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = 0.0;
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
-         params[1] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
-         params[2] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
-         params[3] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
+         params[0] = (GLdouble) ctx->Color.ClearColor[0];
+         params[1] = (GLdouble) ctx->Color.ClearColor[1];
+         params[2] = (GLdouble) ctx->Color.ClearColor[2];
+         params[3] = (GLdouble) ctx->Color.ClearColor[3];
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLdouble) ctx->Light.ColorMaterialEnabled;
@@ -2898,7 +2898,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF;
+         *params = (GLfloat) ctx->Color.AlphaRef;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLfloat) (ctx->AttribStackDepth);
@@ -2963,10 +2963,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = 0.0;
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
-         params[1] = CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
-         params[2] = CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
-         params[3] = CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
+         params[0] = ctx->Color.ClearColor[0];
+         params[1] = ctx->Color.ClearColor[1];
+         params[2] = ctx->Color.ClearColor[2];
+         params[3] = ctx->Color.ClearColor[3];
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLfloat) ctx->Light.ColorMaterialEnabled;
@@ -4233,7 +4233,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Color.AlphaEnabled;
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_INT( (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF );
+         *params = FLOAT_TO_INT(ctx->Color.AlphaRef);
          break;
       case GL_ALPHA_TEST_FUNC:
          *params = (GLint) ctx->Color.AlphaFunc;

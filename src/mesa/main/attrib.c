@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.71 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: attrib.c,v 1.72 2002/10/04 19:10:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,7 +739,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
          }
          if (ctx->Extensions.SGIX_shadow_ambient) {
             _mesa_TexParameterf(target, GL_SHADOW_AMBIENT_SGIX,
-                                CHAN_TO_FLOAT(obj->ShadowAmbient));
+                                obj->ShadowAmbient);
          }
 
       }
@@ -809,10 +809,10 @@ _mesa_PopAttrib(void)
                const struct gl_colorbuffer_attrib *color;
                color = (const struct gl_colorbuffer_attrib *) attr->data;
                _mesa_ClearIndex((GLfloat) color->ClearIndex);
-               _mesa_ClearColor(CHAN_TO_FLOAT(color->ClearColor[0]),
-                                CHAN_TO_FLOAT(color->ClearColor[1]),
-                                CHAN_TO_FLOAT(color->ClearColor[2]),
-                                CHAN_TO_FLOAT(color->ClearColor[3]));
+               _mesa_ClearColor(color->ClearColor[0],
+                                color->ClearColor[1],
+                                color->ClearColor[2],
+                                color->ClearColor[3]);
                _mesa_IndexMask(color->IndexMask);
                _mesa_ColorMask((GLboolean) (color->ColorMask[0] != 0),
                                (GLboolean) (color->ColorMask[1] != 0),
@@ -820,8 +820,7 @@ _mesa_PopAttrib(void)
                                (GLboolean) (color->ColorMask[3] != 0));
                _mesa_DrawBuffer(color->DrawBuffer);
                _mesa_set_enable(ctx, GL_ALPHA_TEST, color->AlphaEnabled);
-               _mesa_AlphaFunc(color->AlphaFunc,
-                               CHAN_TO_FLOAT(color->AlphaRef));
+               _mesa_AlphaFunc(color->AlphaFunc, color->AlphaRef);
                _mesa_set_enable(ctx, GL_BLEND, color->BlendEnabled);
                _mesa_BlendFuncSeparateEXT(color->BlendSrcRGB,
                                           color->BlendDstRGB,

@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.36 2002/09/27 02:45:39 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.37 2002/10/04 19:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 
 #include "glxheader.h"
 #include "context.h"
+#include "colormac.h"
 #include "depth.h"
 #include "drawpix.h"
 #include "extensions.h"
@@ -176,15 +177,18 @@ clear_index( GLcontext *ctx, GLuint index )
 
 
 static void
-clear_color( GLcontext *ctx, const GLchan color[4] )
+clear_color( GLcontext *ctx, const GLfloat color[4] )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   xmesa->clearcolor[0] = color[0];
-   xmesa->clearcolor[1] = color[1];
-   xmesa->clearcolor[2] = color[2];
-   xmesa->clearcolor[3] = color[3];
-   xmesa->clearpixel = xmesa_color_to_pixel( xmesa, color[0], color[1],
-                                             color[2], color[3],
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
+   xmesa->clearpixel = xmesa_color_to_pixel( xmesa,
+                                             xmesa->clearcolor[0],
+                                             xmesa->clearcolor[1],
+                                             xmesa->clearcolor[2],
+                                             xmesa->clearcolor[3],
                                              xmesa->xm_visual->undithered_pf );
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XMesaSetForeground( xmesa->display, xmesa->xm_draw_buffer->cleargc,

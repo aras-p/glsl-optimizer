@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.37 2002/10/04 15:58:33 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.38 2002/10/04 19:10:11 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -371,9 +371,13 @@ static void clear_index(GLcontext* ctx, GLuint index)
 /*
  * Set the color used to clear the color buffer.
  */
-static void clear_color( GLcontext* ctx, const GLchan color[4] )
+static void clear_color( GLcontext* ctx, const GLfloat color[4] )
 {
-  Current->clearpixel = RGB(color[0], color[1], color[2]);
+  GLubyte col[4];
+  CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+  CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+  CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+  Current->clearpixel = RGB(col[0], col[1], col[2]);
 }
 
 

@@ -96,17 +96,22 @@ static void gl_ggiSetClearIndex(GLcontext *ctx, GLuint ci)
 	ggi_ctx->clearcolor = (ggi_pixel)ci;
 }
 
-static void gl_ggiSetClearColor(GLcontext *ctx, const GLchan color[4])
+static void gl_ggiSetClearColor(GLcontext *ctx, const GLfloat color[4])
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	ggi_color rgb;
 	ggi_pixel col;
-	
+	GLubyte byteColor[3];
+
 	GGIMESADPRINT_CORE("gl_ggiSetClearColor() called\n");
 	
-	rgb.r = (uint16)color[0] << SHIFT;
-	rgb.g = (uint16)color[1] << SHIFT;
-	rgb.b = (uint16)color[2] << SHIFT;
+	CLAMPED_FLOAT_TO_UBYTE(byteColor[0], color[0]);
+	CLAMPED_FLOAT_TO_UBYTE(byteColor[1], color[1]);
+	CLAMPED_FLOAT_TO_UBYTE(byteColor[2], color[2]);
+
+	rgb.r = (uint16)byteColor[0] << SHIFT;
+	rgb.g = (uint16)byteColor[1] << SHIFT;
+	rgb.b = (uint16)byteColor[2] << SHIFT;
 	col = ggiMapColor(ggi_ctx->ggi_visual, &rgb);
 	ggiSetGCForeground(ggi_ctx->ggi_visual, col);
 	ggi_ctx->clearcolor = col;

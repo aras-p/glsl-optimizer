@@ -18,13 +18,14 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-static void clear_color_generic(GLcontext *ctx,
-                                GLubyte red,  GLubyte green,
-                                GLubyte blue, GLubyte alpha)
+static void clear_color_generic(GLcontext *ctx, const GLfloat color[4])
     {
     AMesaContext context = (AMesaContext)(ctx->DriverCtx);
-
-    context->ClearColor = makecol(red, green, blue);
+    GLubyte r, g, b;
+    CLAMPED_FLOAT_TO_UBYTE(r, color[0]);
+    CLAMPED_FLOAT_TO_UBYTE(g, color[1]);
+    CLAMPED_FLOAT_TO_UBYTE(b, color[2]);
+    context->ClearColor = makecol(r, g, b);
     }
 
 

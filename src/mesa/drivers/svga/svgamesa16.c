@@ -1,4 +1,4 @@
-/* $Id: svgamesa16.c,v 1.9 2001/02/06 00:03:48 brianp Exp $ */
+/* $Id: svgamesa16.c,v 1.10 2002/10/04 19:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,9 +59,13 @@ static unsigned long __svga_getpixel16(int x, int y)
 
 void __clear_color16( GLcontext *ctx, const GLchan color[4] )
 {
-    SVGAMesa->clear_hicolor = (color[0] >> 3) << 11 |
-                              (color[1] >> 2) << 5 |
-                              (color[2] >> 3); 
+   GLubyte col[3];
+   CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+   SVGAMesa->clear_hicolor = (col[0] >> 3) << 11 |
+                              (col[1] >> 2) << 5 |
+                              (col[2] >> 3); 
 /*    SVGAMesa->clear_hicolor=(red)<<11 | (green)<<5 | (blue); */
 }   
 

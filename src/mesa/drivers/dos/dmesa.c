@@ -467,8 +467,13 @@ static void dmesa_choose_tri (GLcontext *ctx)
 
 static void clear_color (GLcontext *ctx, const GLchan color[4])
 {
+ const GLubyte col[4];
  DMesaContext c = (DMesaContext)ctx->DriverCtx;
- c->ClearColor = vl_mixrgba(color);
+ CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+ CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+ CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+ CLAMPED_FLOAT_TO_UBYTE(col[3], color[3]);
+ c->ClearColor = vl_mixrgba(col);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.11 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_alpha.c,v 1.12 2002/10/04 19:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,10 +50,12 @@ GLint
 _mesa_alpha_test( const GLcontext *ctx, struct sw_span *span )
 {
    const GLchan (*rgba)[4] = (const GLchan (*)[4]) span->array->rgba;
-   const GLchan ref = ctx->Color.AlphaRef;
+   GLchan ref;
    const GLuint n = span->end;
    GLubyte *mask = span->array->mask;
    GLuint i;
+
+   CLAMPED_FLOAT_TO_CHAN(ref, ctx->Color.AlphaRef);
 
    if (span->arrayMask & SPAN_RGBA) {
       /* Use the array values */

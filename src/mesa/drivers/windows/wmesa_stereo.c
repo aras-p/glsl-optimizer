@@ -153,10 +153,14 @@ static void clear_index(GLcontext* ctx, GLuint index)
 /*
  * Set the color used to clear the color buffer.
  */
-static void clear_color( GLcontext* ctx, const GLchan color[4] )
+static void clear_color( GLcontext* ctx, const GLfloat color[4] )
 {
   STARTPROFILE
-  Current->clearpixel = RGB(color[0], color[1], color[2]);
+  GLubyte col[4];
+  CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+  CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+  CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+  Current->clearpixel = RGB(col[0], col[1], col[2]);
   ENDPROFILE(clear_color)
 }
 

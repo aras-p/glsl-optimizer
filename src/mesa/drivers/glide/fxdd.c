@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.91 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: fxdd.c,v 1.92 2002/10/04 19:10:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,17 +125,21 @@ fxDDBufferSize(GLframebuffer *buffer, GLuint * width, GLuint * height)
 
 /* Implements glClearColor() */
 static void
-fxDDClearColor(GLcontext * ctx, const GLchan color[4])
+fxDDClearColor(GLcontext * ctx, const GLfloat color[4])
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    GLubyte col[4];
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDClearColor(%d,%d,%d,%d)\n",
+      fprintf(stderr, "fxmesa: fxDDClearColor(%f,%f,%f,%f)\n",
 	      color[0], color[1], color[2], color[3]);
    }
 
-   ASSIGN_4V(col, color[0], color[1], color[2], 255);
+   CLAMPED_FLOAT_TO_UBYTE(col[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(col[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(col[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(col[3], color[3]);
+
    fxMesa->clearC = FXCOLOR4(col);
    fxMesa->clearA = color[3];
 }

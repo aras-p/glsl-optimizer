@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.12 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.13 2002/10/04 19:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,7 @@
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "macros.h"
 #include "mem.h"
 
@@ -53,19 +54,17 @@ clear_color_buffer_with_masking( GLcontext *ctx )
 
    if (ctx->Visual.rgbMode) {
       /* RGBA mode */
-      const GLchan r = ctx->Color.ClearColor[0];
-      const GLchan g = ctx->Color.ClearColor[1];
-      const GLchan b = ctx->Color.ClearColor[2];
-      const GLchan a = ctx->Color.ClearColor[3];
+      GLchan clearColor[4];
       GLint i;
+      CLAMPED_FLOAT_TO_CHAN(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
       for (i = 0; i < height; i++) {
          GLchan rgba[MAX_WIDTH][4];
          GLint j;
          for (j = 0; j < width; j++) {
-            rgba[j][RCOMP] = r;
-            rgba[j][GCOMP] = g;
-            rgba[j][BCOMP] = b;
-            rgba[j][ACOMP] = a;
+            COPY_CHAN4(rgba[j], clearColor);
          }
          _mesa_mask_rgba_array( ctx, width, x, y + i, rgba );
          (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,
@@ -104,20 +103,19 @@ clear_color_buffer(GLcontext *ctx)
 
    if (ctx->Visual.rgbMode) {
       /* RGBA mode */
-      const GLchan r = ctx->Color.ClearColor[0];
-      const GLchan g = ctx->Color.ClearColor[1];
-      const GLchan b = ctx->Color.ClearColor[2];
-      const GLchan a = ctx->Color.ClearColor[3];
+      GLchan clearColor[4];
       GLchan span[MAX_WIDTH][4];
       GLint i;
+
+      CLAMPED_FLOAT_TO_CHAN(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+      CLAMPED_FLOAT_TO_CHAN(clearColor[ACOMP], ctx->Color.ClearColor[3]);
 
       ASSERT(*((GLuint *) &ctx->Color.ColorMask) == 0xffffffff);
 
       for (i = 0; i < width; i++) {
-         span[i][RCOMP] = r;
-         span[i][GCOMP] = g;
-         span[i][BCOMP] = b;
-         span[i][ACOMP] = a;
+         COPY_CHAN4(span[i], clearColor);
       }
       for (i = 0; i < height; i++) {
          (*swrast->Driver.WriteRGBASpan)( ctx, width, x, y + i,

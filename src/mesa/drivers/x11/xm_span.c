@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.15 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: xm_span.c,v 1.16 2002/10/04 19:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,15 +26,16 @@
 /* $XFree86: xc/extras/Mesa/src/X/xm_span.c,v 1.3 2002/02/27 21:07:54 tsi Exp $ */
 
 #include "glxheader.h"
+#include "colormac.h"
 #include "context.h"
-#include "drawpix.h"
-#include "mem.h"
-#include "state.h"
 #include "depth.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "xmesaP.h"
+#include "drawpix.h"
 #include "extensions.h"
+#include "macros.h"
+#include "mem.h"
+#include "mtypes.h"
+#include "state.h"
+#include "xmesaP.h"
 
 #include "swrast/swrast.h"
 
@@ -4163,14 +4164,17 @@ static void read_color_pixels( const GLcontext *ctx,
 
 
 static void
-clear_color_HPCR_ximage( GLcontext *ctx, const GLchan color[4] )
+clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
 {
    int i;
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
-   COPY_4V(xmesa->clearcolor, color);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
 
-   if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
+   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
       /* black is black */
       MEMSET( xmesa->xm_visual->hpcr_clear_ximage_pattern, 0x0 ,
               sizeof(xmesa->xm_visual->hpcr_clear_ximage_pattern));
@@ -4178,24 +4182,33 @@ clear_color_HPCR_ximage( GLcontext *ctx, const GLchan color[4] )
    else {
       /* build clear pattern */
       for (i=0; i<16; i++) {
-         xmesa->xm_visual->hpcr_clear_ximage_pattern[0][i]    =
-            DITHER_HPCR(i, 0, color[0], color[1], color[2]);
+         xmesa->xm_visual->hpcr_clear_ximage_pattern[0][i] =
+            DITHER_HPCR(i, 0,
+                        xmesa->clearcolor[0],
+                        xmesa->clearcolor[1],
+                        xmesa->clearcolor[2]);
          xmesa->xm_visual->hpcr_clear_ximage_pattern[1][i]    =
-            DITHER_HPCR(i, 1, color[0], color[1], color[2]);
+            DITHER_HPCR(i, 1,
+                        xmesa->clearcolor[0],
+                        xmesa->clearcolor[1],
+                        xmesa->clearcolor[2]);
       }
    }
 }
 
 
 static void
-clear_color_HPCR_pixmap( GLcontext *ctx, const GLchan color[4] )
+clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
 {
    int i;
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
-   COPY_4V(xmesa->clearcolor, color);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
 
-   if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
+   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
       /* black is black */
       for (i=0; i<16; i++) {
          XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0, 0);
@@ -4205,9 +4218,15 @@ clear_color_HPCR_pixmap( GLcontext *ctx, const GLchan color[4] )
    else {
       for (i=0; i<16; i++) {
          XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0,
-                       DITHER_HPCR(i, 0, color[0], color[1], color[2]));
+                       DITHER_HPCR(i, 0,
+                                   xmesa->clearcolor[0],
+                                   xmesa->clearcolor[1],
+                                   xmesa->clearcolor[2]));
          XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1,
-                       DITHER_HPCR(i, 1, color[0], color[1], color[2]));
+                       DITHER_HPCR(i, 1,
+                                   xmesa->clearcolor[0],
+                                   xmesa->clearcolor[1],
+                                   xmesa->clearcolor[2]));
       }
    }
    /* change tile pixmap content */

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.37 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: buffers.c,v 1.38 2002/10/04 19:10:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,20 +67,20 @@ _mesa_ClearIndex( GLfloat c )
 void
 _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
-   GLchan tmp[4];
+   GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   UNCLAMPED_FLOAT_TO_CHAN(tmp[0], red);
-   UNCLAMPED_FLOAT_TO_CHAN(tmp[1], green);
-   UNCLAMPED_FLOAT_TO_CHAN(tmp[2], blue);
-   UNCLAMPED_FLOAT_TO_CHAN(tmp[3], alpha);
+   tmp[0] = CLAMP(red,   0.0F, 1.0F);
+   tmp[1] = CLAMP(green, 0.0F, 1.0F);
+   tmp[2] = CLAMP(blue,  0.0F, 1.0F);
+   tmp[3] = CLAMP(alpha, 0.0F, 1.0F);
 
    if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
-      return;
+      return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
-   COPY_CHAN4(ctx->Color.ClearColor, tmp);
+   COPY_4V(ctx->Color.ClearColor, tmp);
 
    if (ctx->Visual.rgbMode && ctx->Driver.ClearColor) {
       /* it's OK to call glClearColor in CI mode but it should be a NOP */
