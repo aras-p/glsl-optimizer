@@ -238,8 +238,8 @@ Init( GLboolean ciMode )
 
 #ifdef GL_OES_read_format
    if ( glutExtensionSupported( "GL_OES_read_format" ) ) {
-      glGetIntegerv( GL_IMPLEMENTATION_COLOR_READ_TYPE_OES,   & ReadType );
-      glGetIntegerv( GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, & ReadFormat );
+      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE_OES,   (GLint *) &ReadType);
+      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, (GLint *) &ReadFormat);
 
       have_read_format = GL_TRUE;
    }
