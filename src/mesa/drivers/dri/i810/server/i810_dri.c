@@ -207,7 +207,7 @@ static int I810DRIAgpInit( const DRIDriverContext *ctx, I810Ptr info)
    int pitch_idx = 0;
    int back_size = 0;
    int sysmem_size = 0;
-   int width = ctx->shared.virtualWidth;
+   int width = ctx->shared.virtualWidth * ctx->cpp;
 
 
    info->backHandle = DRM_AGP_NO_HANDLE;
@@ -537,7 +537,7 @@ static int I810MemoryInit( const DRIDriverContext *ctx, I810Ptr info )
 	     info->LpRing.mem.Size / 1024, info->LpRing.mem.Size);
      
      info->LpRing.tail_mask = info->LpRing.mem.Size - 1;
-     info->LpRing.virtual_start = info->FbBase + info->LpRing.mem.Start;
+     info->LpRing.virtual_start = info->LpRing.mem.Start;
      info->LpRing.head = 0;
      info->LpRing.tail = 0;
      info->LpRing.space = 0;
@@ -743,10 +743,6 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
    fprintf(stderr, "[drm] framebuffer handle = 0x%08lx\n",
 	   ctx->shared.hFrameBuffer);
 
-
-
- 
-
    /* Check the i810 DRM version */
    if (!I810CheckDRMVersion(ctx, info)) {
       return 0;
@@ -763,6 +759,16 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
       return 0;
    }
 
+   /* Initialize the SAREA private data structure */
+   {
+      I810SAREAPtr pSAREAPriv;
+      pSAREAPriv = (I810SAREAPtr)(((char*)ctx->pSAREA) + 
+					sizeof(drm_sarea_t));
+      memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
+      //      pSAREAPriv->pf_enabled=1;
+   }
+
+
    /* Create a 'server' context so we can grab the lock for
     * initialization ioctls.
     */
@@ -773,13 +779,6 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
 
    DRM_LOCK(ctx->drmFD, ctx->pSAREA, ctx->serverContext, 0); 
 
-   /* Initialize the kernel data structures */
-   if (!I810DRIKernelInit(ctx, info)) {
-      fprintf(stderr, "I810DRIKernelInit failed\n");
-      DRM_UNLOCK(ctx->drmFD, ctx->pSAREA, ctx->serverContext);
-      return 0;
-   }
-
    /* Initialize the vertex buffers list */
    if (!I810DRIBufInit(ctx, info)) {
       fprintf(stderr, "I810DRIBufInit failed\n");
@@ -787,18 +786,15 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
       return 0;
    }
 
-   /* Initialize IRQ */
-   I810DRIIrqInit(ctx, info);
-
-   /* Initialize the SAREA private data structure */
-   {
-      I810SAREAPtr pSAREAPriv;
-      pSAREAPriv = (I810SAREAPtr)(((char*)ctx->pSAREA) + 
-					sizeof(drm_sarea_t));
-      memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
-      //      pSAREAPriv->pf_enabled=1;
+   /* Initialize the kernel data structures */
+   if (!I810DRIKernelInit(ctx, info)) {
+      fprintf(stderr, "I810DRIKernelInit failed\n");
+      DRM_UNLOCK(ctx->drmFD, ctx->pSAREA, ctx->serverContext);
+      return 0;
    }
 
+   /* Initialize IRQ */
+   I810DRIIrqInit(ctx, info);
 
    /* Quick hack to clear the front & back buffers.  Could also use
     * the clear ioctl to do this, but would need to setup hw state
