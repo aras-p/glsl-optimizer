@@ -1274,3 +1274,10 @@ Mesa Version History
 	- vertex program state references were broken
 	- fixed triangle color interpolation bug on AIX (Shane Blackett)
 	- fixed a number of minor memory leaks (bug #1002030)
+
+
+6.2  Month, day, 2004
+    New:
+    Changes:
+    Bug fixes:
+	- OpenGL version 1.5 doesn't need GL_ARB_texture_non_power_of_two
