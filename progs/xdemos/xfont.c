@@ -1,4 +1,4 @@
-/* $Id: xfont.c,v 1.2 1999/11/05 08:00:49 brianp Exp $ */
+/* $Id: xfont.c,v 1.3 1999/11/05 08:12:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,6 @@ static GLuint FontBase = 0;
 static void redraw( Display *dpy, Window w )
 {
    static const char *text = "This is glXUseXFont()";
-   printf("Redraw event\n");
 
    glClear( GL_COLOR_BUFFER_BIT );
 
@@ -74,7 +73,6 @@ static void redraw( Display *dpy, Window w )
 
 static void resize( unsigned int width, unsigned int height )
 {
-   printf("Resize event\n");
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
