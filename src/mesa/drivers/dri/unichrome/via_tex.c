@@ -42,21 +42,6 @@
 #include "via_ioctl.h"
 
 
-/*
- * Compute the 'S2.4' lod bias factor from the floating point OpenGL bias.
- */
-/* 
-static GLuint viaComputeLodBias(GLfloat bias)
-{
-    int b = (int)(bias * 16.0) + 12;
-    if (b > 63)
-        b = 63;
-    else if (b < -64)
-        b = -64;
-    return (GLuint)(b & MLC_LOD_BIAS_MASK);
-}
-*/
-
 viaTextureObjectPtr viaAllocTextureObject(struct gl_texture_object *texObj)
 {
     viaTextureObjectPtr t;
@@ -75,25 +60,6 @@ viaTextureObjectPtr viaAllocTextureObject(struct gl_texture_object *texObj)
 
     return t;
 }
-
-static void viaTexParameter(GLcontext *ctx, GLenum target,
-                            struct gl_texture_object *texObj,
-                            GLenum pname, const GLfloat *params)
-{
-    viaTextureObjectPtr t = (viaTextureObjectPtr)texObj->DriverData;
-    if (!t)
-        return;
-
-    if (target != GL_TEXTURE_2D)
-        return;
-}
-
-static void viaTexEnv(GLcontext *ctx, GLenum target,
-                      GLenum pname, const GLfloat *param)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    vmesa = vmesa;
-} 
 
 static void viaTexImage1D(GLcontext *ctx, GLenum target, GLint level,
                           GLint internalFormat,
@@ -356,27 +322,17 @@ viaChooseTexFormat(GLcontext *ctx, GLint internalFormat,
 void viaInitTextureFuncs(struct dd_function_table * functions)
 {
     if (VIA_DEBUG) fprintf(stderr, "viaInitTextureFuncs - in\n");
-    functions->TexEnv = viaTexEnv;
     functions->ChooseTextureFormat = viaChooseTexFormat;
     functions->TexImage1D = viaTexImage1D;
     functions->TexImage2D = viaTexImage2D;
-    functions->TexImage3D = _mesa_store_teximage3d;
     functions->TexSubImage1D = viaTexSubImage1D;
     functions->TexSubImage2D = viaTexSubImage2D;
-    functions->TexSubImage3D = _mesa_store_texsubimage3d;
-    functions->CopyTexImage1D = _swrast_copy_teximage1d;
-    functions->CopyTexImage2D = _swrast_copy_teximage2d;
-    functions->CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-    functions->CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-    functions->CopyTexSubImage3D = _swrast_copy_texsubimage3d;
 
     functions->NewTextureObject = _mesa_new_texture_object;
     functions->BindTexture = viaBindTexture;
     functions->DeleteTexture = viaDeleteTexture;
-    functions->TexParameter = viaTexParameter;
     functions->UpdateTexturePalette = 0;
     functions->IsTextureResident = viaIsTextureResident;
-    functions->TestProxyTexImage = _mesa_test_proxy_teximage;
 
     if (VIA_DEBUG) fprintf(stderr, "viaInitTextureFuncs - out\n");
 }
