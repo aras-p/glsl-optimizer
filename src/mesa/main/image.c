@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.46 2000/10/30 16:32:43 brianp Exp $ */
+/* $Id: image.c,v 1.47 2000/11/09 23:25:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -340,7 +340,6 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
       case GL_LUMINANCE:
       case GL_LUMINANCE_ALPHA:
       case GL_DEPTH_COMPONENT:
-      case GL_BGR:
          switch (type) {
             case GL_BYTE:
             case GL_UNSIGNED_BYTE:
@@ -354,6 +353,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
                return GL_FALSE;
          }
       case GL_RGB:
+      case GL_BGR:
          switch (type) {
             case GL_BYTE:
             case GL_UNSIGNED_BYTE:
