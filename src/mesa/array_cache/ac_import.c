@@ -45,7 +45,8 @@ do {									\
 /* Set the array pointer back to its source when the cached data is
  * invalidated:
  */
-static void reset_texcoord( GLcontext *ctx, GLuint unit )
+static void
+reset_texcoord( GLcontext *ctx, GLuint unit )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -68,7 +69,8 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
    ac->NewArrayState &= ~_NEW_ARRAY_TEXCOORD(unit);
 }
 
-static void reset_vertex( GLcontext *ctx )
+static void
+reset_vertex( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
    ASSERT(ctx->Array.Vertex.Enabled
@@ -80,7 +82,8 @@ static void reset_vertex( GLcontext *ctx )
 }
 
 
-static void reset_normal( GLcontext *ctx )
+static void
+reset_normal( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -97,10 +100,10 @@ static void reset_normal( GLcontext *ctx )
 }
 
 
-static void reset_color( GLcontext *ctx )
+static void
+reset_color( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-
 
    if (ctx->Array.Color.Enabled) {
       ac->Raw.Color = ctx->Array.Color;
@@ -114,7 +117,8 @@ static void reset_color( GLcontext *ctx )
 }
 
 
-static void reset_secondarycolor( GLcontext *ctx )
+static void
+reset_secondarycolor( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -130,7 +134,8 @@ static void reset_secondarycolor( GLcontext *ctx )
 }
 
 
-static void reset_index( GLcontext *ctx )
+static void
+reset_index( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -146,7 +151,8 @@ static void reset_index( GLcontext *ctx )
 }
 
 
-static void reset_fogcoord( GLcontext *ctx )
+static void
+reset_fogcoord( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -162,7 +168,8 @@ static void reset_fogcoord( GLcontext *ctx )
 }
 
 
-static void reset_edgeflag( GLcontext *ctx )
+static void
+reset_edgeflag( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -178,7 +185,8 @@ static void reset_edgeflag( GLcontext *ctx )
 }
 
 
-static void reset_attrib( GLcontext *ctx, GLuint index )
+static void
+reset_attrib( GLcontext *ctx, GLuint index )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -194,31 +202,24 @@ static void reset_attrib( GLcontext *ctx, GLuint index )
 }
 
 
-/*
+/**
  * Generic import function for color data
  */
-static void import( GLcontext *ctx,
-		    GLenum type,
-		    struct gl_client_array *to,
-		    struct gl_client_array *from )
+static void
+import( const GLcontext *ctx,
+        GLenum destType,
+        struct gl_client_array *to,
+        const struct gl_client_array *from )
 {
-   GLubyte *dest;
-   const GLubyte *src;
-   ACcontext *ac = AC_CONTEXT(ctx);
+   const ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (type == 0) 
-      type = from->Type;
+   if (destType == 0) 
+      destType = from->Type;
 
-   /* The dest and source data addresses are the sum of the buffer
-    * object's start plus the vertex array pointer/offset.
-    */
-   dest = ADD_POINTERS(to->BufferObj->Data, to->Ptr);
-   src = ADD_POINTERS(from->BufferObj->Data, from->Ptr);
-
-   switch (type) {
+   switch (destType) {
    case GL_FLOAT:
-      _math_trans_4fc( (GLfloat (*)[4]) dest,
-                       src,
+      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
+                       from->Ptr,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,
@@ -230,8 +231,8 @@ static void import( GLcontext *ctx,
       break;
       
    case GL_UNSIGNED_BYTE:
-      _math_trans_4ub( (GLubyte (*)[4]) dest,
-                       src,
+      _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
+                       from->Ptr,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,
@@ -243,8 +244,8 @@ static void import( GLcontext *ctx,
       break;
 
    case GL_UNSIGNED_SHORT:
-      _math_trans_4us( (GLushort (*)[4]) dest,
-                       src,
+      _math_trans_4us( (GLushort (*)[4]) to->Ptr,
+                       from->Ptr,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,
@@ -256,7 +257,7 @@ static void import( GLcontext *ctx,
       break;
       
    default:
-      ASSERT(0);
+      _mesa_problem(ctx, "Unexpected dest format in import()");
       break;
    }
 }
@@ -269,11 +270,11 @@ static void import( GLcontext *ctx,
  * we'll use an import function to do the data conversion.
  */
 
-static void import_texcoord( GLcontext *ctx, GLuint unit,
-			     GLenum type, GLuint stride )
+static void
+import_texcoord( GLcontext *ctx, GLuint unit, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.TexCoord[unit];
+   const struct gl_client_array *from = &ac->Raw.TexCoord[unit];
    struct gl_client_array *to = &ac->Cache.TexCoord[unit];
 
    ASSERT(unit < ctx->Const.MaxTextureCoordUnits);
@@ -298,11 +299,11 @@ static void import_texcoord( GLcontext *ctx, GLuint unit,
    ac->IsCached.TexCoord[unit] = GL_TRUE;
 }
 
-static void import_vertex( GLcontext *ctx,
-			   GLenum type, GLuint stride )
+static void
+import_vertex( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.Vertex;
+   const struct gl_client_array *from = &ac->Raw.Vertex;
    struct gl_client_array *to = &ac->Cache.Vertex;
 
    /* Limited choices at this stage:
@@ -324,11 +325,11 @@ static void import_vertex( GLcontext *ctx,
    ac->IsCached.Vertex = GL_TRUE;
 }
 
-static void import_normal( GLcontext *ctx,
-			   GLenum type, GLuint stride )
+static void
+import_normal( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.Normal;
+   const struct gl_client_array *from = &ac->Raw.Normal;
    struct gl_client_array *to = &ac->Cache.Normal;
 
    /* Limited choices at this stage:
@@ -348,11 +349,11 @@ static void import_normal( GLcontext *ctx,
    ac->IsCached.Normal = GL_TRUE;
 }
 
-static void import_color( GLcontext *ctx,
-			  GLenum type, GLuint stride )
+static void
+import_color( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.Color;
+   const struct gl_client_array *from = &ac->Raw.Color;
    struct gl_client_array *to = &ac->Cache.Color;
 
    import( ctx, type, to, from );
@@ -360,11 +361,11 @@ static void import_color( GLcontext *ctx,
    ac->IsCached.Color = GL_TRUE;
 }
 
-static void import_index( GLcontext *ctx,
-			  GLenum type, GLuint stride )
+static void
+import_index( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.Index;
+   const struct gl_client_array *from = &ac->Raw.Index;
    struct gl_client_array *to = &ac->Cache.Index;
 
    /* Limited choices at this stage:
@@ -384,11 +385,11 @@ static void import_index( GLcontext *ctx,
    ac->IsCached.Index = GL_TRUE;
 }
 
-static void import_secondarycolor( GLcontext *ctx,
-				   GLenum type, GLuint stride )
+static void
+import_secondarycolor( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.SecondaryColor;
+   const struct gl_client_array *from = &ac->Raw.SecondaryColor;
    struct gl_client_array *to = &ac->Cache.SecondaryColor;
 
    import( ctx, type, to, from );
@@ -396,11 +397,11 @@ static void import_secondarycolor( GLcontext *ctx,
    ac->IsCached.SecondaryColor = GL_TRUE;
 }
 
-static void import_fogcoord( GLcontext *ctx,
-			     GLenum type, GLuint stride )
+static void
+import_fogcoord( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.FogCoord;
+   const struct gl_client_array *from = &ac->Raw.FogCoord;
    struct gl_client_array *to = &ac->Cache.FogCoord;
 
    /* Limited choices at this stage:
@@ -420,11 +421,11 @@ static void import_fogcoord( GLcontext *ctx,
    ac->IsCached.FogCoord = GL_TRUE;
 }
 
-static void import_edgeflag( GLcontext *ctx,
-			     GLenum type, GLuint stride )
+static void
+import_edgeflag( GLcontext *ctx, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.EdgeFlag;
+   const struct gl_client_array *from = &ac->Raw.EdgeFlag;
    struct gl_client_array *to = &ac->Cache.EdgeFlag;
 
    /* Limited choices at this stage:
@@ -444,11 +445,11 @@ static void import_edgeflag( GLcontext *ctx,
    ac->IsCached.EdgeFlag = GL_TRUE;
 }
 
-static void import_attrib( GLcontext *ctx, GLuint index,
-                           GLenum type, GLuint stride )
+static void
+import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
-   struct gl_client_array *from = &ac->Raw.Attrib[index];
+   const struct gl_client_array *from = &ac->Raw.Attrib[index];
    struct gl_client_array *to = &ac->Cache.Attrib[index];
 
    ASSERT(index < VERT_ATTRIB_MAX);
@@ -480,13 +481,14 @@ static void import_attrib( GLcontext *ctx, GLuint index,
  */
 
 
-struct gl_client_array *_ac_import_texcoord( GLcontext *ctx,
-					     GLuint unit,
-					     GLenum type,
-					     GLuint reqstride,
-					     GLuint reqsize,
-					     GLboolean reqwriteable,
-					     GLboolean *writeable )
+struct gl_client_array *
+_ac_import_texcoord( GLcontext *ctx,
+                     GLuint unit,
+                     GLenum type,
+                     GLuint reqstride,
+                     GLuint reqsize,
+                     GLboolean reqwriteable,
+                     GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -519,12 +521,13 @@ struct gl_client_array *_ac_import_texcoord( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_vertex( GLcontext *ctx,
-					   GLenum type,
-					   GLuint reqstride,
-					   GLuint reqsize,
-					   GLboolean reqwriteable,
-					   GLboolean *writeable )
+struct gl_client_array *
+_ac_import_vertex( GLcontext *ctx,
+                   GLenum type,
+                   GLuint reqstride,
+                   GLuint reqsize,
+                   GLboolean reqwriteable,
+                   GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -555,11 +558,12 @@ struct gl_client_array *_ac_import_vertex( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_normal( GLcontext *ctx,
-					   GLenum type,
-					   GLuint reqstride,
-					   GLboolean reqwriteable,
-					   GLboolean *writeable )
+struct gl_client_array *
+_ac_import_normal( GLcontext *ctx,
+                   GLenum type,
+                   GLuint reqstride,
+                   GLboolean reqwriteable,
+                   GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -585,12 +589,13 @@ struct gl_client_array *_ac_import_normal( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_color( GLcontext *ctx,
-					  GLenum type,
-					  GLuint reqstride,
-					  GLuint reqsize,
-					  GLboolean reqwriteable,
-					  GLboolean *writeable )
+struct gl_client_array *
+_ac_import_color( GLcontext *ctx,
+                  GLenum type,
+                  GLuint reqstride,
+                  GLuint reqsize,
+                  GLboolean reqwriteable,
+                  GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -611,8 +616,9 @@ struct gl_client_array *_ac_import_color( GLcontext *ctx,
        (reqstride != 0 && ac->Raw.Color.StrideB != (GLint) reqstride) ||
        reqwriteable)
    {
-      if (!ac->IsCached.Color)
-	 import_color(ctx, type, reqstride );
+      if (!ac->IsCached.Color) {
+      	 import_color(ctx, type, reqstride );
+      }
       *writeable = GL_TRUE;
       return &ac->Cache.Color;
    }
@@ -622,11 +628,12 @@ struct gl_client_array *_ac_import_color( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_index( GLcontext *ctx,
-					  GLenum type,
-					  GLuint reqstride,
-					  GLboolean reqwriteable,
-					  GLboolean *writeable )
+struct gl_client_array *
+_ac_import_index( GLcontext *ctx,
+                  GLenum type,
+                  GLuint reqstride,
+                  GLboolean reqwriteable,
+                  GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -653,12 +660,13 @@ struct gl_client_array *_ac_import_index( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
-						   GLenum type,
-						   GLuint reqstride,
-						   GLuint reqsize,
-						   GLboolean reqwriteable,
-						   GLboolean *writeable )
+struct gl_client_array *
+_ac_import_secondarycolor( GLcontext *ctx,
+                           GLenum type,
+                           GLuint reqstride,
+                           GLuint reqsize,
+                           GLboolean reqwriteable,
+                           GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -689,11 +697,12 @@ struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_fogcoord( GLcontext *ctx,
-					     GLenum type,
-					     GLuint reqstride,
-					     GLboolean reqwriteable,
-					     GLboolean *writeable )
+struct gl_client_array *
+_ac_import_fogcoord( GLcontext *ctx,
+                     GLenum type,
+                     GLuint reqstride,
+                     GLboolean reqwriteable,
+                     GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -719,11 +728,12 @@ struct gl_client_array *_ac_import_fogcoord( GLcontext *ctx,
    }
 }
 
-struct gl_client_array *_ac_import_edgeflag( GLcontext *ctx,
-					     GLenum type,
-					     GLuint reqstride,
-					     GLboolean reqwriteable,
-					     GLboolean *writeable )
+struct gl_client_array *
+_ac_import_edgeflag( GLcontext *ctx,
+                     GLenum type,
+                     GLuint reqstride,
+                     GLboolean reqwriteable,
+                     GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -750,13 +760,14 @@ struct gl_client_array *_ac_import_edgeflag( GLcontext *ctx,
 }
 
 /* GL_NV_vertex_program */
-struct gl_client_array *_ac_import_attrib( GLcontext *ctx,
-                                           GLuint index,
-                                           GLenum type,
-                                           GLuint reqstride,
-                                           GLuint reqsize,
-                                           GLboolean reqwriteable,
-                                           GLboolean *writeable )
+struct gl_client_array *
+_ac_import_attrib( GLcontext *ctx,
+                   GLuint index,
+                   GLenum type,
+                   GLuint reqstride,
+                   GLuint reqsize,
+                   GLboolean reqwriteable,
+                   GLboolean *writeable )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
@@ -793,7 +804,8 @@ struct gl_client_array *_ac_import_attrib( GLcontext *ctx,
 /* Clients must call this function to validate state and set bounds
  * before importing any data:
  */
-void _ac_import_range( GLcontext *ctx, GLuint start, GLuint count )
+void
+_ac_import_range( GLcontext *ctx, GLuint start, GLuint count )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
