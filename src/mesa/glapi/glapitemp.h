@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.8 2000/01/10 04:29:10 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.9 2000/01/28 19:01:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,12 +50,39 @@
  */
 
 
+#ifndef KEYWORD1
+#define KEYWORD1
+#endif
+
+#ifndef KEYWORD2
+#define KEYWORD2
+#endif
+
+#ifndef NAME
+#define NAME(func)  gl##func
+#endif
+
+#ifndef DISPATCH
+#define DISPATCH(func, args, msg)					\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   (dispatch->func) args
+#endif
+
+#ifndef RETURN_DISPATCH
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   return (dispatch->func) args
+#endif
+
 
 /*
  * XXX
  * Most functions need the msg (printf-message) parameter to be finished.
  * I.e. replace ";\n" with the real info.
  */
+
 
 
 /* GL 1.0 */
