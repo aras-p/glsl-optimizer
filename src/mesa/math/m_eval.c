@@ -1,4 +1,4 @@
-/* $Id: m_eval.c,v 1.5 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_eval.c,v 1.6 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ _math_horner_bezier_curve(const GLfloat * cp, GLfloat * out, GLfloat t,
 
    if (order >= 2) {
       bincoeff = (GLfloat) (order - 1);
-      s = 1.0 - t;
+      s = 1.0F - t;
 
       for (k = 0; k < dim; k++)
 	 out[k] = s * cp[k] + bincoeff * t * cp[dim + k];
@@ -134,7 +134,7 @@ _math_horner_bezier_surf(GLfloat * cn, GLfloat * out, GLfloat u, GLfloat v,
 	    /* Each control point is the point for parameter u on a */
 	    /* curve defined by the control polygons in u-direction */
 	    bincoeff = (GLfloat) (uorder - 1);
-	    s = 1.0 - u;
+	    s = 1.0F - u;
 
 	    for (k = 0; k < dim; k++)
 	       cp[j * dim + k] = s * ucp[k] + bincoeff * u * ucp[uinc + k];
@@ -198,7 +198,7 @@ _math_de_casteljau_surf(GLfloat * cn, GLfloat * out, GLfloat * du,
 			GLuint uorder, GLuint vorder)
 {
    GLfloat *dcn = cn + uorder * vorder * dim;
-   GLfloat us = 1.0 - u, vs = 1.0 - v;
+   GLfloat us = 1.0F - u, vs = 1.0F - v;
    GLuint h, i, j, k;
    GLuint minorder = uorder < vorder ? uorder : vorder;
    GLuint uinc = vorder * dim;
@@ -458,5 +458,5 @@ _math_init_eval(void)
    /* KW: precompute 1/x for useful x.
     */
    for (i = 1; i < MAX_EVAL_ORDER; i++)
-      inv_tab[i] = 1.0 / i;
+      inv_tab[i] = 1.0F / i;
 }

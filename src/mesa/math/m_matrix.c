@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.8 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_matrix.c,v 1.9 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -242,11 +242,11 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    /* last check */
    if (0.0 == r3[3]) return GL_FALSE;
 
-   s = 1.0/r3[3];              /* now back substitute row 3 */
+   s = 1.0F/r3[3];             /* now back substitute row 3 */
    r3[4] *= s; r3[5] *= s; r3[6] *= s; r3[7] *= s;
 
    m2 = r2[3];                 /* now back substitute row 2 */
-   s  = 1.0/r2[2];
+   s  = 1.0F/r2[2];
    r2[4] = s * (r2[4] - r3[4] * m2), r2[5] = s * (r2[5] - r3[5] * m2),
    r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
    m1 = r1[3];
@@ -257,7 +257,7 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
 
    m1 = r1[2];                 /* now back substitute row 1 */
-   s  = 1.0/r1[1];
+   s  = 1.0F/r1[1];
    r1[4] = s * (r1[4] - r2[4] * m1), r1[5] = s * (r1[5] - r2[5] * m1),
    r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
    m0 = r0[2];
@@ -265,7 +265,7 @@ static GLboolean invert_matrix_general( GLmatrix *mat )
    r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
 
    m0 = r0[1];                 /* now back substitute row 0 */
-   s  = 1.0/r0[0];
+   s  = 1.0F/r0[0];
    r0[4] = s * (r0[4] - r1[4] * m0), r0[5] = s * (r0[5] - r1[5] * m0),
    r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
 
@@ -319,7 +319,7 @@ static GLboolean invert_matrix_3d_general( GLmatrix *mat )
    if (det*det < 1e-25)
       return GL_FALSE;
 
-   det = 1.0 / det;
+   det = 1.0F / det;
    MAT(out,0,0) = (  (MAT(in,1,1)*MAT(in,2,2) - MAT(in,2,1)*MAT(in,1,2) )*det);
    MAT(out,0,1) = (- (MAT(in,0,1)*MAT(in,2,2) - MAT(in,2,1)*MAT(in,0,2) )*det);
    MAT(out,0,2) = (  (MAT(in,0,1)*MAT(in,1,2) - MAT(in,1,1)*MAT(in,0,2) )*det);
@@ -362,7 +362,7 @@ static GLboolean invert_matrix_3d( GLmatrix *mat )
       if (scale == 0.0)
          return GL_FALSE;
 
-      scale = 1.0 / scale;
+      scale = 1.0F / scale;
 
       /* Transpose and scale the 3 by 3 upper-left submatrix. */
       MAT(out,0,0) = scale * MAT(in,0,0);
@@ -433,9 +433,9 @@ static GLboolean invert_matrix_3d_no_rot( GLmatrix *mat )
       return GL_FALSE;
 
    MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
-   MAT(out,0,0) = 1.0 / MAT(in,0,0);
-   MAT(out,1,1) = 1.0 / MAT(in,1,1);
-   MAT(out,2,2) = 1.0 / MAT(in,2,2);
+   MAT(out,0,0) = 1.0F / MAT(in,0,0);
+   MAT(out,1,1) = 1.0F / MAT(in,1,1);
+   MAT(out,2,2) = 1.0F / MAT(in,2,2);
 
    if (mat->flags & MAT_FLAG_TRANSLATION) {
       MAT(out,0,3) = - (MAT(in,0,3) * MAT(out,0,0));
@@ -456,8 +456,8 @@ static GLboolean invert_matrix_2d_no_rot( GLmatrix *mat )
       return GL_FALSE;
 
    MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
-   MAT(out,0,0) = 1.0 / MAT(in,0,0);
-   MAT(out,1,1) = 1.0 / MAT(in,1,1);
+   MAT(out,0,0) = 1.0F / MAT(in,0,0);
+   MAT(out,1,1) = 1.0F / MAT(in,1,1);
 
    if (mat->flags & MAT_FLAG_TRANSLATION) {
       MAT(out,0,3) = - (MAT(in,0,3) * MAT(out,0,0));
@@ -478,8 +478,8 @@ static GLboolean invert_matrix_perspective( GLmatrix *mat )
 
    MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
 
-   MAT(out,0,0) = 1.0 / MAT(in,0,0);
-   MAT(out,1,1) = 1.0 / MAT(in,1,1);
+   MAT(out,0,0) = 1.0F / MAT(in,0,0);
+   MAT(out,1,1) = 1.0F / MAT(in,1,1);
 
    MAT(out,0,3) = MAT(in,0,2);
    MAT(out,1,3) = MAT(in,1,2);
@@ -487,7 +487,7 @@ static GLboolean invert_matrix_perspective( GLmatrix *mat )
    MAT(out,2,2) = 0;
    MAT(out,2,3) = -1;
 
-   MAT(out,3,2) = 1.0 / MAT(in,2,3);
+   MAT(out,3,2) = 1.0F / MAT(in,2,3);
    MAT(out,3,3) = MAT(in,2,2) * MAT(out,3,2);
 
    return GL_TRUE;
@@ -538,10 +538,10 @@ _math_matrix_rotate( GLmatrix *mat,
    GLfloat xx, yy, zz, xy, yz, zx, xs, ys, zs, one_c;
    GLfloat m[16];
 
-   s = sin( angle * DEG2RAD );
-   c = cos( angle * DEG2RAD );
+   s = (GLfloat) sin( angle * DEG2RAD );
+   c = (GLfloat) cos( angle * DEG2RAD );
 
-   mag = GL_SQRT( x*x + y*y + z*z );
+   mag = (GLfloat) GL_SQRT( x*x + y*y + z*z );
 
    if (mag <= 1.0e-4) {
       /* generate an identity matrix and return */
@@ -654,12 +654,12 @@ _math_matrix_frustum( GLmatrix *mat,
    GLfloat x, y, a, b, c, d;
    GLfloat m[16];
 
-   x = (2.0*nearval) / (right-left);
-   y = (2.0*nearval) / (top-bottom);
+   x = (2.0F*nearval) / (right-left);
+   y = (2.0F*nearval) / (top-bottom);
    a = (right+left) / (right-left);
    b = (top+bottom) / (top-bottom);
    c = -(farval+nearval) / ( farval-nearval);
-   d = -(2.0*farval*nearval) / (farval-nearval);  /* error? */
+   d = -(2.0F*farval*nearval) / (farval-nearval);  /* error? */
 
 #define M(row,col)  m[col*4+row]
    M(0,0) = x;     M(0,1) = 0.0F;  M(0,2) = a;      M(0,3) = 0.0F;
@@ -681,9 +681,9 @@ _math_matrix_ortho( GLmatrix *mat,
    GLfloat tx, ty, tz;
    GLfloat m[16];
 
-   x = 2.0 / (right-left);
-   y = 2.0 / (top-bottom);
-   z = -2.0 / (farval-nearval);
+   x = 2.0F / (right-left);
+   y = 2.0F / (top-bottom);
+   z = -2.0F / (farval-nearval);
    tx = -(right+left) / (right-left);
    ty = -(top+bottom) / (top-bottom);
    tz = -(farval+nearval) / (farval-nearval);
@@ -1095,20 +1095,20 @@ _math_transposed( GLdouble to[16], const GLdouble from[16] )
 void
 _math_transposefd( GLfloat to[16], const GLdouble from[16] )
 {
-   to[0] = from[0];
-   to[1] = from[4];
-   to[2] = from[8];
-   to[3] = from[12];
-   to[4] = from[1];
-   to[5] = from[5];
-   to[6] = from[9];
-   to[7] = from[13];
-   to[8] = from[2];
-   to[9] = from[6];
-   to[10] = from[10];
-   to[11] = from[14];
-   to[12] = from[3];
-   to[13] = from[7];
-   to[14] = from[11];
-   to[15] = from[15];
+   to[0] = (GLfloat) from[0];
+   to[1] = (GLfloat) from[4];
+   to[2] = (GLfloat) from[8];
+   to[3] = (GLfloat) from[12];
+   to[4] = (GLfloat) from[1];
+   to[5] = (GLfloat) from[5];
+   to[6] = (GLfloat) from[9];
+   to[7] = (GLfloat) from[13];
+   to[8] = (GLfloat) from[2];
+   to[9] = (GLfloat) from[6];
+   to[10] = (GLfloat) from[10];
+   to[11] = (GLfloat) from[14];
+   to[12] = (GLfloat) from[3];
+   to[13] = (GLfloat) from[7];
+   to[14] = (GLfloat) from[11];
+   to[15] = (GLfloat) from[15];
 }

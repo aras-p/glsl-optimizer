@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.103 2001/07/26 20:02:10 brianp Exp $ */
+/* $Id: teximage.c,v 1.104 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -924,17 +924,17 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    if (compressed) {
-      if (xoffset != -destTex->Border) {
+      if (xoffset != -((GLint)destTex->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage1/2/3D(xoffset != -border");
          return GL_TRUE;
       }
-      if (dimensions > 1 && yoffset != -destTex->Border) {
+      if (dimensions > 1 && yoffset != -((GLint)destTex->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage2/3D(yoffset != -border");
          return GL_TRUE;
       }
-      if (dimensions > 2 && zoffset != -destTex->Border) {
+      if (dimensions > 2 && zoffset != -((GLint)destTex->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexSubImage3D(zoffset != -border");
          return GL_TRUE;
@@ -1164,17 +1164,17 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
 
    compressed = is_compressed_format(ctx, teximage->IntFormat);
    if (compressed) {
-      if (xoffset != -teximage->Border) {
+      if (xoffset != -((GLint)teximage->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage1/2/3D(xoffset != -border");
          return GL_TRUE;
       }
-      if (dimensions > 1 && yoffset != -teximage->Border) {
+      if (dimensions > 1 && yoffset != -((GLint)teximage->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage2/3D(yoffset != -border");
          return GL_TRUE;
       }
-      if (dimensions > 2 && zoffset != -teximage->Border) {
+      if (dimensions > 2 && zoffset != -((GLint)teximage->Border)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glCopyTexSubImage3D(zoffset != -border");
          return GL_TRUE;

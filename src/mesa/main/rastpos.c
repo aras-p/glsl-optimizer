@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.30 2001/07/28 19:28:49 keithw Exp $ */
+/* $Id: rastpos.c,v 1.31 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,7 +134,7 @@ shade_rastpos(GLcontext *ctx,
       _mesa_validate_all_lighting_tables( ctx );
 
    COPY_3V(diffuseColor, base[0]);
-   diffuseColor[3] = CLAMP( ctx->Light.Material[0].Diffuse[3], 0.0, 1.0 );
+   diffuseColor[3] = CLAMP( ctx->Light.Material[0].Diffuse[3], 0.0F, 1.0F );
    ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 0.0);
 
    foreach (light, &ctx->Light.EnabledList) {
@@ -154,7 +154,7 @@ shade_rastpos(GLcontext *ctx,
 	 GLfloat d;
 
 	 SUB_3V(VP, light->_Position, vertex);
-	 d = LEN_3FV( VP );
+	 d = (GLfloat) LEN_3FV( VP );
 
 	 if ( d > 1e-6) {
 	    GLfloat invd = 1.0F / d;
@@ -383,7 +383,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void
 _mesa_RasterPos2d(GLdouble x, GLdouble y)
 {
-   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 void
@@ -395,7 +395,7 @@ _mesa_RasterPos2f(GLfloat x, GLfloat y)
 void
 _mesa_RasterPos2i(GLint x, GLint y)
 {
-   _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 void
@@ -407,7 +407,7 @@ _mesa_RasterPos2s(GLshort x, GLshort y)
 void
 _mesa_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-   _mesa_RasterPos4f(x, y, z, 1.0F);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 void
@@ -419,7 +419,7 @@ _mesa_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 void
 _mesa_RasterPos3i(GLint x, GLint y, GLint z)
 {
-   _mesa_RasterPos4f(x, y, z, 1.0F);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 void
@@ -431,7 +431,7 @@ _mesa_RasterPos3s(GLshort x, GLshort y, GLshort z)
 void
 _mesa_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_RasterPos4f(x, y, z, w);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void
@@ -444,7 +444,7 @@ _mesa_RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void
 _mesa_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
-   _mesa_RasterPos4f(x, y, z, w);
+   _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void
@@ -456,7 +456,7 @@ _mesa_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 void
 _mesa_RasterPos2dv(const GLdouble *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 void
@@ -468,7 +468,7 @@ _mesa_RasterPos2fv(const GLfloat *v)
 void
 _mesa_RasterPos2iv(const GLint *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 void
@@ -480,7 +480,7 @@ _mesa_RasterPos2sv(const GLshort *v)
 void
 _mesa_RasterPos3dv(const GLdouble *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 void
@@ -492,7 +492,7 @@ _mesa_RasterPos3fv(const GLfloat *v)
 void
 _mesa_RasterPos3iv(const GLint *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 void
@@ -504,7 +504,8 @@ _mesa_RasterPos3sv(const GLshort *v)
 void
 _mesa_RasterPos4dv(const GLdouble *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void
@@ -516,7 +517,8 @@ _mesa_RasterPos4fv(const GLfloat *v)
 void
 _mesa_RasterPos4iv(const GLint *v)
 {
-   _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
+   _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 
+		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void
@@ -586,7 +588,7 @@ _mesa_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 void
 _mesa_WindowPos2dMESA(GLdouble x, GLdouble y)
 {
-   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 void
@@ -598,7 +600,7 @@ _mesa_WindowPos2fMESA(GLfloat x, GLfloat y)
 void
 _mesa_WindowPos2iMESA(GLint x, GLint y)
 {
-   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
 void
@@ -610,7 +612,7 @@ _mesa_WindowPos2sMESA(GLshort x, GLshort y)
 void
 _mesa_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
 {
-   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 void
@@ -622,7 +624,7 @@ _mesa_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
 void
 _mesa_WindowPos3iMESA(GLint x, GLint y, GLint z)
 {
-   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 void
@@ -634,13 +636,13 @@ _mesa_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
 void
 _mesa_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_WindowPos4fMESA(x, y, z, w);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void
 _mesa_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
 {
-   _mesa_WindowPos4fMESA(x, y, z, w);
+   _mesa_WindowPos4fMESA((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void
@@ -652,7 +654,7 @@ _mesa_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
 void
 _mesa_WindowPos2dvMESA(const GLdouble *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 void
@@ -664,7 +666,7 @@ _mesa_WindowPos2fvMESA(const GLfloat *v)
 void
 _mesa_WindowPos2ivMESA(const GLint *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
 void
@@ -676,7 +678,7 @@ _mesa_WindowPos2svMESA(const GLshort *v)
 void
 _mesa_WindowPos3dvMESA(const GLdouble *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 void
@@ -688,7 +690,7 @@ _mesa_WindowPos3fvMESA(const GLfloat *v)
 void
 _mesa_WindowPos3ivMESA(const GLint *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
 void
@@ -700,7 +702,8 @@ _mesa_WindowPos3svMESA(const GLshort *v)
 void
 _mesa_WindowPos4dvMESA(const GLdouble *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+			 (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void
@@ -712,7 +715,8 @@ _mesa_WindowPos4fvMESA(const GLfloat *v)
 void
 _mesa_WindowPos4ivMESA(const GLint *v)
 {
-   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+   _mesa_WindowPos4fMESA((GLfloat) v[0], (GLfloat) v[1], 
+			 (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void

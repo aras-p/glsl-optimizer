@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.11 2001/05/21 18:13:43 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.12 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -204,7 +204,7 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
    if (rho2 == 0.0F)
       return 0.0;
    else
-      return log(rho2) * 1.442695 * 0.5;       /* 1.442695 = 1/log(2) */
+      return (GLfloat) (log(rho2) * 1.442695 * 0.5);/* 1.442695 = 1/log(2) */
 }
 
 
@@ -248,8 +248,8 @@ make_sample_table(GLint xSamples, GLint ySamples, GLfloat samples[][2])
          else {
             j = i++;
          }
-         samples[j][0] = x * dx + 0.5 * dx;
-         samples[j][1] = y * dy + 0.5 * dy;
+         samples[j][0] = x * dx + 0.5F * dx;
+         samples[j][1] = y * dy + 0.5F * dy;
       }
    }
 }
@@ -376,24 +376,24 @@ segment(GLcontext *ctx,
          xLeft = x0 - line->halfWidth;
          xRight = x1 + line->halfWidth;
          if (line->dy >= 0.0) {
-            yBot = y0 - 3.0 * line->halfWidth;
+            yBot = y0 - 3.0F * line->halfWidth;
             yTop = y0 + line->halfWidth;
          }
          else {
             yBot = y0 - line->halfWidth;
-            yTop = y0 + 3.0 * line->halfWidth;
+            yTop = y0 + 3.0F * line->halfWidth;
          }
       }
       else {
          xLeft = x1 - line->halfWidth;
          xRight = x0 + line->halfWidth;
          if (line->dy <= 0.0) {
-            yBot = y1 - 3.0 * line->halfWidth;
+            yBot = y1 - 3.0F * line->halfWidth;
             yTop = y1 + line->halfWidth;
          }
          else {
             yBot = y1 - line->halfWidth;
-            yTop = y1 + 3.0 * line->halfWidth;
+            yTop = y1 + 3.0F * line->halfWidth;
          }
       }
 
@@ -422,24 +422,24 @@ segment(GLcontext *ctx,
          yBot = y0 - line->halfWidth;
          yTop = y1 + line->halfWidth;
          if (line->dx >= 0.0) {
-            xLeft = x0 - 3.0 * line->halfWidth;
+            xLeft = x0 - 3.0F * line->halfWidth;
             xRight = x0 + line->halfWidth;
          }
          else {
             xLeft = x0 - line->halfWidth;
-            xRight = x0 + 3.0 * line->halfWidth;
+            xRight = x0 + 3.0F * line->halfWidth;
          }
       }
       else {
          yBot = y1 - line->halfWidth;
          yTop = y0 + line->halfWidth;
          if (line->dx <= 0.0) {
-            xLeft = x1 - 3.0 * line->halfWidth;
+            xLeft = x1 - 3.0F * line->halfWidth;
             xRight = x1 + line->halfWidth;
          }
          else {
             xLeft = x1 - line->halfWidth;
-            xRight = x1 + 3.0 * line->halfWidth;
+            xRight = x1 + 3.0F * line->halfWidth;
          }
       }
 

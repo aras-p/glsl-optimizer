@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.56 2001/08/20 16:43:02 brianp Exp $ */
+/* $Id: texstate.c,v 1.57 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1733,10 +1733,10 @@ void
 _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 {
    GLfloat p[4];
-   p[0] = params[0];
-   p[1] = params[1];
-   p[2] = params[2];
-   p[3] = params[3];
+   p[0] = (GLfloat) params[0];
+   p[1] = (GLfloat) params[1];
+   p[2] = (GLfloat) params[2];
+   p[3] = (GLfloat) params[3];
    _mesa_TexGenfv(coord, pname, p);
 }
 
@@ -1753,10 +1753,10 @@ void
 _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 {
    GLfloat p[4];
-   p[0] = params[0];
-   p[1] = params[1];
-   p[2] = params[2];
-   p[3] = params[3];
+   p[0] = (GLfloat) params[0];
+   p[1] = (GLfloat) params[1];
+   p[2] = (GLfloat) params[2];
+   p[3] = (GLfloat) params[3];
    _mesa_TexGenfv( coord, pname, p );
 }
 

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.68 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: state.c,v 1.69 2001/09/18 23:06:14 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -531,9 +531,9 @@ update_modelview_scale( GLcontext *ctx )
       GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
       if (f < 1e-12) f = 1.0;
       if (ctx->_NeedEyeCoords)
-	 ctx->_ModelViewInvScale = 1.0/GL_SQRT(f);
+	 ctx->_ModelViewInvScale = (GLfloat) (1.0/GL_SQRT(f));
       else
-	 ctx->_ModelViewInvScale = GL_SQRT(f);
+	 ctx->_ModelViewInvScale = (GLfloat) GL_SQRT(f);
    }
 }
 
