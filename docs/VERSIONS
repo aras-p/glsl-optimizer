@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.78 2002/01/09 00:14:13 brianp Exp $
+$Id: VERSIONS,v 1.79 2002/01/09 00:30:01 brianp Exp $
 
 
 Mesa Version History
@@ -937,5 +937,6 @@ Mesa Version History
 	- GL_ARB_shadow_ambient extension
     Bug fixes:
 	- GL_BLEND with non-black texture env color wasn't always correct
+	- GL_REPLACE with GL_RGB texture format wasn't always correct (alpha)
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
