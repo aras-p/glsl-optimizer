@@ -35,6 +35,10 @@
 #include "mtypes.h"
 
 
+/* for GL_ARB_v_p and GL_ARB_f_p SWZ instruction */
+#define SWIZZLE_ZERO 100
+#define SWIZZLE_ONE  101
+
 
 /*
  * Internal functions

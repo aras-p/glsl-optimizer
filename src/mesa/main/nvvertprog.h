@@ -34,11 +34,6 @@
 #define NVVERTPROG_H
 
 
-/* for GL_ARB_v_p SWZ instruction */
-#define SWIZZLE_ZERO 100
-#define SWIZZLE_ONE  101
-
-
 /* Vertex program opcodes */
 enum vp_opcode
 {
