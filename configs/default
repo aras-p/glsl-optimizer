@@ -17,7 +17,11 @@ CXX = CC
 CFLAGS = -O
 CXXFLAGS = -O
 GLU_CFLAGS = 
+
+# Misc tools and flags
 MKLIB_OPTIONS = 
+MKDEP = makedepend
+MKDEP_OPTIONS = -Y -fdepend
 
 
 # Library names (base name)

@@ -154,7 +154,7 @@ SUBDIRS = array_cache drivers/dri glapi main math sparc swrast swrast_setup \
 # Update dependencies
 depend: $(ALL_SOURCES)
 	touch depend
-	makedepend -fdepend -Y $(INCLUDE_DIRS) $(ALL_SOURCES) >& /dev/null
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(ALL_SOURCES) >& /dev/null
 
 
 # Emacs tags

@@ -106,6 +106,6 @@ clean:
 
 depend: $(SOURCES)
 	touch depend
-	makedepend -fdepend -Y -I$(TOP)/include $(SOURCES)
+	$(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES)
 
 include depend
