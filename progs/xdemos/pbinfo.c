@@ -33,7 +33,7 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
    printf("Number of fbconfigs: %d\n", nConfigs);
 
    if (horizFormat) {
-      printf("  ID  VisualType  Depth Lvl RGB CI DB Stereo  R  G  B  A");
+      printf("  ID        VisualType  Depth Lvl RGB CI DB Stereo  R  G  B  A");
       printf("   Z  S  AR AG AB AA  MSbufs MSnum  Pbuffer  Float\n");
    }
 

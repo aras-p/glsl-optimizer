@@ -26,6 +26,7 @@
 int
 QueryPbuffers(Display *dpy, int screen)
 {
+   return 1;
 #if defined(GLX_VERSION_1_3)
    {
       /* GLX 1.3 supports pbuffers */
@@ -125,7 +126,7 @@ GetVisualFromFBConfig(Display *dpy, int screen, FBCONFIG config)
  * to query an fbconfig attribute.
  */
 static int
-GetFBConfigAttrib(Display *dpy,
+GetFBConfigAttrib(Display *dpy, int screen,
 #if defined(GLX_VERSION_1_3)
                   const GLXFBConfig config,
 #elif defined(GLX_SGIX_fbconfig)
@@ -134,12 +135,11 @@ GetFBConfigAttrib(Display *dpy,
                   int attrib
                   )
 {
-   int value;
+   int pbSupport = QueryPbuffers(dpy, screen);
+   int value = 0;
 
 #if defined(GLX_VERSION_1_3)
-   int glxVersionMajor, glxVersionMinor;
-   if (glXQueryVersion(dpy, &glxVersionMajor, &glxVersionMinor)
-       && glxVersionMajor * 100 + glxVersionMinor >= 103) {
+   if (pbSupport == 1) {
       /* ok */
       if (glXGetFBConfigAttrib(dpy, config, attrib, &value) != 0) {
          value = 0;
@@ -150,13 +150,15 @@ GetFBConfigAttrib(Display *dpy,
 #endif
 
 #if defined(GLX_SGIX_fbconfig) && defined(GLX_SGIX_pbuffer)
-   if (glXGetFBConfigAttribSGIX(dpy, config, attrib, &value) != 0) {
-      value = 0;
+   if (pbSupport == 2) {
+      if (glXGetFBConfigAttribSGIX(dpy, config, attrib, &value) != 0) {
+         value = 0;
+      }
+      return value;
    }
-   return value;
 #endif
    
-   return 0;
+   return value;
 }
 
 
@@ -181,52 +183,52 @@ PrintFBConfigInfo(Display *dpy, int screen, FBCONFIG config, Bool horizFormat)
    int drawableType, renderType, xRenderable, xVisual, id;
    int maxWidth, maxHeight, maxPixels;
    int optWidth, optHeight;
-   int floatComponents;
+   int floatComponents = 0;
 
    /* do queries using the GLX 1.3 tokens (same as the SGIX tokens) */
-   bufferSize     = GetFBConfigAttrib(dpy, config, GLX_BUFFER_SIZE);
-   level          = GetFBConfigAttrib(dpy, config, GLX_LEVEL);
-   doubleBuffer   = GetFBConfigAttrib(dpy, config, GLX_DOUBLEBUFFER);
-   stereo         = GetFBConfigAttrib(dpy, config, GLX_STEREO);
-   auxBuffers     = GetFBConfigAttrib(dpy, config, GLX_AUX_BUFFERS);
-   redSize        = GetFBConfigAttrib(dpy, config, GLX_RED_SIZE);
-   greenSize      = GetFBConfigAttrib(dpy, config, GLX_GREEN_SIZE);
-   blueSize       = GetFBConfigAttrib(dpy, config, GLX_BLUE_SIZE);
-   alphaSize      = GetFBConfigAttrib(dpy, config, GLX_ALPHA_SIZE);
-   depthSize      = GetFBConfigAttrib(dpy, config, GLX_DEPTH_SIZE);
-   stencilSize    = GetFBConfigAttrib(dpy, config, GLX_STENCIL_SIZE);
-   accumRedSize   = GetFBConfigAttrib(dpy, config, GLX_ACCUM_RED_SIZE);
-   accumGreenSize = GetFBConfigAttrib(dpy, config, GLX_ACCUM_GREEN_SIZE);
-   accumBlueSize  = GetFBConfigAttrib(dpy, config, GLX_ACCUM_BLUE_SIZE);
-   accumAlphaSize = GetFBConfigAttrib(dpy, config, GLX_ACCUM_ALPHA_SIZE);
-   sampleBuffers  = GetFBConfigAttrib(dpy, config, GLX_SAMPLE_BUFFERS);
-   samples        = GetFBConfigAttrib(dpy, config, GLX_SAMPLES);
-   drawableType   = GetFBConfigAttrib(dpy, config, GLX_DRAWABLE_TYPE);
-   renderType     = GetFBConfigAttrib(dpy, config, GLX_RENDER_TYPE);
-   xRenderable    = GetFBConfigAttrib(dpy, config, GLX_X_RENDERABLE);
-   xVisual        = GetFBConfigAttrib(dpy, config, GLX_X_VISUAL_TYPE);
+   bufferSize     = GetFBConfigAttrib(dpy, screen, config, GLX_BUFFER_SIZE);
+   level          = GetFBConfigAttrib(dpy, screen, config, GLX_LEVEL);
+   doubleBuffer   = GetFBConfigAttrib(dpy, screen, config, GLX_DOUBLEBUFFER);
+   stereo         = GetFBConfigAttrib(dpy, screen, config, GLX_STEREO);
+   auxBuffers     = GetFBConfigAttrib(dpy, screen, config, GLX_AUX_BUFFERS);
+   redSize        = GetFBConfigAttrib(dpy, screen, config, GLX_RED_SIZE);
+   greenSize      = GetFBConfigAttrib(dpy, screen, config, GLX_GREEN_SIZE);
+   blueSize       = GetFBConfigAttrib(dpy, screen, config, GLX_BLUE_SIZE);
+   alphaSize      = GetFBConfigAttrib(dpy, screen, config, GLX_ALPHA_SIZE);
+   depthSize      = GetFBConfigAttrib(dpy, screen, config, GLX_DEPTH_SIZE);
+   stencilSize    = GetFBConfigAttrib(dpy, screen, config, GLX_STENCIL_SIZE);
+   accumRedSize   = GetFBConfigAttrib(dpy, screen, config, GLX_ACCUM_RED_SIZE);
+   accumGreenSize = GetFBConfigAttrib(dpy, screen, config, GLX_ACCUM_GREEN_SIZE);
+   accumBlueSize  = GetFBConfigAttrib(dpy, screen, config, GLX_ACCUM_BLUE_SIZE);
+   accumAlphaSize = GetFBConfigAttrib(dpy, screen, config, GLX_ACCUM_ALPHA_SIZE);
+   sampleBuffers  = GetFBConfigAttrib(dpy, screen, config, GLX_SAMPLE_BUFFERS);
+   samples        = GetFBConfigAttrib(dpy, screen, config, GLX_SAMPLES);
+   drawableType   = GetFBConfigAttrib(dpy, screen, config, GLX_DRAWABLE_TYPE);
+   renderType     = GetFBConfigAttrib(dpy, screen, config, GLX_RENDER_TYPE);
+   xRenderable    = GetFBConfigAttrib(dpy, screen, config, GLX_X_RENDERABLE);
+   xVisual        = GetFBConfigAttrib(dpy, screen, config, GLX_X_VISUAL_TYPE);
    if (!xRenderable || !(drawableType & GLX_WINDOW_BIT_SGIX))
       xVisual = -1;
 
-   id        = GetFBConfigAttrib(dpy, config, GLX_FBCONFIG_ID);
-   maxWidth  = GetFBConfigAttrib(dpy, config, GLX_MAX_PBUFFER_WIDTH);
-   maxHeight = GetFBConfigAttrib(dpy, config, GLX_MAX_PBUFFER_HEIGHT);
-   maxPixels = GetFBConfigAttrib(dpy, config, GLX_MAX_PBUFFER_PIXELS);
+   id        = GetFBConfigAttrib(dpy, screen, config, GLX_FBCONFIG_ID);
+   maxWidth  = GetFBConfigAttrib(dpy, screen, config, GLX_MAX_PBUFFER_WIDTH);
+   maxHeight = GetFBConfigAttrib(dpy, screen, config, GLX_MAX_PBUFFER_HEIGHT);
+   maxPixels = GetFBConfigAttrib(dpy, screen, config, GLX_MAX_PBUFFER_PIXELS);
 #if defined(GLX_SGIX_pbuffer)
-   optWidth  = GetFBConfigAttrib(dpy, config, GLX_OPTIMAL_PBUFFER_WIDTH_SGIX);
-   optHeight = GetFBConfigAttrib(dpy, config, GLX_OPTIMAL_PBUFFER_HEIGHT_SGIX);
+   optWidth  = GetFBConfigAttrib(dpy, screen, config, GLX_OPTIMAL_PBUFFER_WIDTH_SGIX);
+   optHeight = GetFBConfigAttrib(dpy, screen, config, GLX_OPTIMAL_PBUFFER_HEIGHT_SGIX);
 #else
    optWidth = optHeight = 0;
 #endif
 #if defined(GLX_NV_float_buffer)
-   floatComponents = GetFBConfigAttrib(dpy, config, GLX_FLOAT_COMPONENTS_NV);
+   floatComponents = GetFBConfigAttrib(dpy, screen, config, GLX_FLOAT_COMPONENTS_NV);
 #endif
 
    /* See if we can create a pbuffer with this config */
    pBuffer = CreatePbuffer(dpy, screen, config, width, height, False, False);
 
    if (horizFormat) {
-      printf("0x%03x ", id);
+      printf("0x%-9x ", id);
       if (xVisual==GLX_STATIC_GRAY)        printf("StaticGray  ");
       else if (xVisual==GLX_GRAY_SCALE)    printf("GrayScale   ");
       else if (xVisual==GLX_STATIC_COLOR)  printf("StaticColor ");
@@ -235,17 +237,17 @@ PrintFBConfigInfo(Display *dpy, int screen, FBCONFIG config, Bool horizFormat)
       else if (xVisual==GLX_DIRECT_COLOR)  printf("DirectColor ");
       else                            printf("  -none-    ");
       printf(" %3d %3d   %s   %s  %s   %2s   ", bufferSize, level,
-	     (renderType & GLX_RGBA_BIT_SGIX) ? "y" : "n",
-	     (renderType & GLX_COLOR_INDEX_BIT_SGIX) ? "y" : "n",
-	     doubleBuffer ? "y" : "n",
-	     stereo ? "y" : "n");
+	     (renderType & GLX_RGBA_BIT_SGIX) ? "y" : ".",
+	     (renderType & GLX_COLOR_INDEX_BIT_SGIX) ? "y" : ".",
+	     doubleBuffer ? "y" : ".",
+	     stereo ? "y" : ".");
       printf("%2d %2d %2d %2d  ", redSize, greenSize, blueSize, alphaSize);
       printf("%2d %2d  ", depthSize, stencilSize);
       printf("%2d %2d %2d %2d", accumRedSize, accumGreenSize, accumBlueSize,
 	     accumAlphaSize);
       printf("    %2d    %2d", sampleBuffers, samples);
-      printf("       %s       %c", pBuffer ? "y" : "n",
-             "ny"[floatComponents]);
+      printf("       %s       %c", pBuffer ? "y" : ".",
+             ".y"[floatComponents]);
       printf("\n");
    }
    else {
