@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.26 2001/05/31 23:03:05 brianp Exp $ */
+/* $Id: t_context.h,v 1.27 2001/06/01 16:29:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -436,7 +436,9 @@ struct tnl_device_driver {
    render_func          *RenderTabElts;
    /* Render whole unclipped primitives (points, lines, linestrips,
     * lineloops, etc).  The tables are indexed by the GL enum of the
-    * primitive to be rendered.
+    * primitive to be rendered.  RenderTabVerts is used for non-indexed
+    * arrays of vertices.  RenderTabElts is used for indexed arrays of
+    * vertices.
     */
 
    void (*ResetLineStipple)( GLcontext *ctx );
