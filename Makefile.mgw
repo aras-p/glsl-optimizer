@@ -40,6 +40,9 @@
 #			As a consequence, you'll need the Win32 Glide3
 #			library to build any application.
 #			default = no
+#	ICD=1		build the installable client driver interface
+#			(windows opengl driver interface)
+#			default = no
 #	X86=1		optimize for x86 (if possible, use MMX, SSE, 3DNow).
 #			default = no
 #

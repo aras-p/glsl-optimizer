@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.3 2004/01/07 12:34:28 dborca Exp $ */
+/* $Id: wgl.c,v 1.4 2004/08/25 14:59:45 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ typedef struct {
 static MesaWglCtx wgl_ctx[MESAWGL_CTX_MAX_COUNT];
 
 static unsigned ctx_count = 0;
-static unsigned ctx_current = -1;
+static int ctx_current = -1;
 static unsigned curPFD = 0;
 
 WGLAPI BOOL GLAPIENTRY wglCopyContext(HGLRC hglrcSrc,HGLRC hglrcDst,UINT mask)
