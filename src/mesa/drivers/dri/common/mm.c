@@ -54,7 +54,7 @@ memHeap_t *mmInit(int ofs,
    PMemBlock blocks;
   
    if (size <= 0) {
-      return 0;
+      return NULL;
    }
    blocks = (TMemBlock *) calloc(1,sizeof(TMemBlock));
    if (blocks) {
@@ -63,7 +63,7 @@ memHeap_t *mmInit(int ofs,
       blocks->free = 1;
       return (memHeap_t *)blocks;
    } else
-      return 0;
+      return NULL;
 }
 
 
