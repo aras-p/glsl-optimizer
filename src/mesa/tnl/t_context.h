@@ -248,9 +248,27 @@ struct tnl_copied_vtx {
 
 #define VERT_BUFFER_SIZE 2048	/* 8kbytes */
 
-#define ERROR_ATTRIB _TNL_ATTRIB_MAX /* error path for t_vtx_api.c */
 
 typedef void (*attrfv_func)( const GLfloat * );
+
+struct dynfn {
+   struct dynfn *next, *prev;
+   int key;
+   char *code;
+};
+
+struct dynfn_lists {
+   struct dynfn Vertex[4];
+   struct dynfn Attribute[4];
+};
+
+struct dynfn_generators {
+   struct dynfn *(*Vertex[4])( GLcontext *ctx, int key );
+   struct dynfn *(*Attribute[4])( GLcontext *ctx, int key );
+};
+
+#define _TNL_MAX_ATTR_CODEGEN 16 
+
 
 /* The assembly of vertices in immediate mode is separated from
  * display list compilation.  This allows a simpler immediate mode
@@ -269,7 +287,12 @@ struct tnl_vtx {
    GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->Current, etc */
    GLuint counter, initial_counter;
    struct tnl_copied_vtx copied;
-   attrfv_func tabfv[_TNL_ATTRIB_MAX+1][4]; /* +1 for ERROR_ATTRIB */
+
+   attrfv_func tabfv[_TNL_MAX_ATTR_CODEGEN+1][4]; /* plus 1 for ERROR_ATTRIB */
+
+   struct dynfn_lists cache;
+   struct dynfn_generators gen;
+
    struct tnl_eval eval;
    GLboolean *edgeflag_tmp;
    GLboolean have_materials;
@@ -714,6 +737,7 @@ typedef struct
    GLboolean IsolateMaterials;
    GLboolean AllowVertexFog;
    GLboolean AllowPixelFog;
+   GLboolean AllowCodegen;
 
    GLboolean _DoVertexFog;  /* eval fog function at each vertex? */
 

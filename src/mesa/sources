@@ -132,6 +132,8 @@ TNL_SOURCES = \
 	tnl/t_vb_vertex.c \
 	tnl/t_vertex.c \
 	tnl/t_vtx_api.c \
+	tnl/t_vtx_generic.c \
+	tnl/t_vtx_x86.c \
 	tnl/t_vtx_eval.c \
 	tnl/t_vtx_exec.c 
 
@@ -159,7 +161,8 @@ X86_SOURCES =			\
 	x86/sse_xform2.S	\
 	x86/sse_xform3.S	\
 	x86/sse_xform4.S	\
-	x86/sse_normal.S
+	x86/sse_normal.S \
+	tnl/t_vtx_x86_gcc.S
 
 SPARC_SOURCES =			\
 	sparc/clip.S		\

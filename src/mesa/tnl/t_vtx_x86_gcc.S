@@ -25,9 +25,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-	
+/*
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ */
 
-	
 			
 #define GLOBL( x )	\
 .globl x;		\
@@ -36,113 +38,127 @@ x:
 .data
 .align 4
 
+// Someone who knew a lot about this sort of thing would use this
+// macro to note current offsets, etc in a special region of the
+// object file & just make everything work out neat.  I don't know
+// enough to do that...
 	
+#define SUBST( x ) (0x10101010 + x)	
 	
+
+
 GLOBL ( _x86_Vertex1fv )
-	;; v already in eax
+	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
-	movl	(0x0), %edi	; load vbptr
-	movl	(%eax), %edx	; load v[0]
-	movl	%edx, (%edi)	; vbptr[0] = v[0]
-	addl	$4, %edi	; vbptr += 1
-	movl	$0x0, %ecx	; vertex_size - 1
-	movl	$0x0, %esi	; tnl->vtx.vertex + 1
+	movl	SUBST(0), %edi	// 0x0 --> tnl->vtx.vbptr
+	movl	(%ecx), %edx	// load v[0]
+	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
+	addl	$4, %edi	// tnl->vtx.vbptr += 1
+	movl	$SUBST(1), %ecx	// 0x1 --> (tnl->vtx.vertex_size - 1)
+	movl	$SUBST(2), %esi	// 0x2 --> (tnl->vtx.vertex + 1)
 	repz
-	movsl %ds:(%esi), %es:(%edi)
-	movl	%edi, (0)	; save vbptr
-	movl	(0), %edx	; load counter
+	movsl   %ds:(%esi), %es:(%edi)
+	movl	%edi, SUBST(0)	// 0x0 --> tnl->vtx.vbptr
+	movl	SUBST(3), %edx	// 0x3 --> counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		; counter--
-	movl	%edx, (0)	; save counter
-	je	.5		; if (counter != 0)
-	ret			;    return
-.5:	jmp    *0		; else notify();
+	dec	%edx		// counter--
+	movl	%edx, SUBST(3)	// 0x3 --> counter 
+	je	.5		// if (counter != 0)
+	ret			//    return
+.5:	mov     $SUBST(4), %eax	// else notify()
+        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
 GLOBL ( _x86_Vertex1fv_end )
 
 
+.align 4
 GLOBL ( _x86_Vertex2fv )
-	;; v already in eax
+	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
-	movl	(0x0), %edi	; load vbptr
-	movl	(%eax), %edx	; load v[0]
-	movl	4(%eax), %ecx	; load v[1]
-	movl	%edx, (%edi)	; vbptr[0] = v[0]
-	movl	%ecx, 4(%edi)	; vbptr[1] = v[1]
-	addl	$8, %edi	; vbptr += 2
-	movl	$0x0, %ecx	; vertex_size - 2
-	movl	$0x0, %esi	; tnl->vtx.vertex + 2
+	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
+	movl	(%ecx), %edx	// load v[0]
+	movl	4(%ecx), %eax	// load v[1]
+	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
+	addl	$8, %edi	// tnl->vtx.vbptr += 2
+	movl	$SUBST(1), %ecx	// vertex_size - 2
+	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 2
 	repz
 	movsl %ds:(%esi), %es:(%edi)
-	movl	%edi, (0)	; save vbptr
-	movl	(0), %edx	; load counter
+	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	// load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		; counter--
-	movl	%edx, (0)	; save counter
-	je	.6		; if (counter != 0)
-	ret			;    return
-.6:	jmp    *0		; else notify();
-GLOBL ( _x86_Vertex3fv_end )
+	dec	%edx		// counter--
+	movl	%edx, SUBST(3)	// save counter
+	je	.6		// if (counter != 0)
+	ret			//    return
+.6:	mov     $SUBST(4), %eax	// else notify()
+        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+GLOBL ( _x86_Vertex2fv_end )
 
+.align 4
 GLOBL ( _x86_Vertex3fv )
-	;; v already in eax
+	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
-	movl	(0x0), %edi	; load vbptr
-	movl	(%eax), %edx	; load v[0]
-	movl	4(%eax), %ecx	; load v[1]
-	movl	8(%eax), %esi	; load v[2]
-	movl	%edx, (%edi)	; vbptr[0] = v[0]
-	movl	%ecx, 4(%edi)	; vbptr[1] = v[1]
-	movl	%esi, 8(%edi)	; vbptr[2] = v[2]
-	addl	$12, %edi	; vbptr += 3
-	movl	$0x0, %ecx	; vertex_size - 3
-	movl	$0x0, %esi	; tnl->vtx.vertex + 3
+	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
+	movl	(%ecx), %edx	// load v[0]
+	movl	4(%ecx), %eax	// load v[1]
+	movl	8(%ecx), %esi	// load v[2]
+	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
+	movl	%esi, 8(%edi)	// tnl->vtx.vbptr[2] = v[2]
+	addl	$12, %edi	// tnl->vtx.vbptr += 3
+	movl	$SUBST(1), %ecx	// vertex_size - 3
+	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
 	repz
 	movsl %ds:(%esi), %es:(%edi)
-	movl	%edi, (0)	; save vbptr
-	movl	(0), %edx	; load counter
+	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	// load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		; counter--
-	movl	%edx, (0)	; save counter
-	je	.7		; if (counter != 0)
-	ret			;    return
-.7:	jmp    *0		; else notify();
+	dec	%edx		// counter--
+	movl	%edx, SUBST(3)	// save counter
+	je	.7		// if (counter != 0)
+	ret			//    return
+.7:	mov     $SUBST(4), %eax	// else notify()
+        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
 GLOBL ( _x86_Vertex3fv_end )
 
 			
+.align 4
 GLOBL ( _x86_Vertex4fv )
-	;; v already in eax
+	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
-	movl	(0x0), %edi	; load vbptr
-	movl	(%eax), %edx	; load v[0]
-	movl	4(%eax), %ecx	; load v[1]
-	movl	8(%eax), %esi	; load v[2]
-	movl	%edx, (%edi)	; vbptr[0] = v[0]
-	movl	%ecx, 4(%edi)	; vbptr[1] = v[1]
-	movl	%esi, 8(%edi)	; vbptr[2] = v[2]
-	movl	12(%eax), %esi	; load v[3]
-	movl	%esi, 12(%edi)	; vbptr[3] = v[3]
-	addl	$16, %edi	; vbptr += 4
-	movl	$0x0, %ecx	; vertex_size - 4
-	movl	$0x0, %esi	; tnl->vtx.vertex + 3
+	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
+	movl	(%ecx), %edx	// load v[0]
+	movl	4(%ecx), %eax	// load v[1]
+	movl	8(%ecx), %esi	// load v[2]
+	movl	12(%ecx), %ecx	// load v[3]
+	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
+	movl	%esi, 8(%edi)	// tnl->vtx.vbptr[2] = v[2]
+	movl	%ecx, 12(%edi)	// tnl->vtx.vbptr[3] = v[3]
+	addl	$16, %edi	// tnl->vtx.vbptr += 4
+	movl	$SUBST(1), %ecx	// vertex_size - 4
+	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
 	repz
-	movsl %ds:(%esi), %es:(%edi)
-	movl	%edi, (0)	; save vbptr
-	movl	(0), %edx	; load counter
+	movsl   %ds:(%esi), %es:(%edi)
+	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	// load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		; counter--
-	movl	%edx, (0)	; save counter
-	je	.6		; if (counter != 0)
-	ret			;    return
-.6:	jmp    *0		; else notify();
-GLOBL ( _x86_Vertex3fv_end )
+	dec	%edx		// counter--
+	movl	%edx, SUBST(3)	// save counter
+	je	.6		// if (counter != 0)
+	ret			//    return
+.8:	mov     $SUBST(4), %eax	// else notify()
+        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+GLOBL ( _x86_Vertex4fv_end )
 
 
 	
@@ -151,92 +167,151 @@ GLOBL ( _x86_Vertex3fv_end )
  */
 
 GLOBL( _x86_Attribute1fv)
-	/* 'v' is already in eax */
-	movl (%eax), %ecx       /* load v[0] */
-	movl %ecx, 0      	/* store v[0] to current vertex */
+	movl 4(%esp), %ecx	
+	movl (%ecx), %eax       /* load v[0] */
+	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
 	ret
-GLOBL ( _x86_Attribute2fv_end )
+GLOBL ( _x86_Attribute1fv_end )
 
 GLOBL( _x86_Attribute2fv)
-	/* 'v' is already in eax */
-	movl (%eax), %ecx       /* load v[0] */
-	movl 4(%eax), %eax      /* load v[1] */
-	movl %ecx, 0      	/* store v[0] to current vertex */
-	movl %eax, 4      	/* store v[1] to current vertex */
+	movl 4(%esp), %ecx	
+	movl (%ecx), %eax       /* load v[0] */
+	movl 4(%ecx), %edx      /* load v[1] */
+	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
+	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
 	ret
 GLOBL ( _x86_Attribute2fv_end )
 
 
 GLOBL( _x86_Attribute3fv)
-	/* 'v' is already in eax */
-	movl (%eax), %ecx       /* load v[0] */
-	movl 4(%eax), %edx      /* load v[1] */
-	movl 8(%eax), %eax      /* load v[2] */
-	movl %ecx, 0      	/* store v[0] to current vertex */
-	movl %edx, 4      	/* store v[1] to current vertex */
-	movl %eax, 8      	/* store v[2] to current vertex */
+	movl 4(%esp), %ecx	
+	movl (%ecx), %eax       /* load v[0] */
+	movl 4(%ecx), %edx      /* load v[1] */
+	movl 8(%ecx), %ecx      /* load v[2] */
+	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
+	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
+	movl %ecx, SUBST(2)   	/* store v[2] to current vertex */
 	ret
 GLOBL ( _x86_Attribute3fv_end )
 
 GLOBL( _x86_Attribute4fv)
-	/* 'v' is already in eax */
-	movl (%eax), %ecx       /* load v[0] */
-	movl 4(%eax), %edx      /* load v[1] */
-	movl %ecx, 0      	/* store v[0] to current vertex */
-	movl %edx, 4      	/* store v[1] to current vertex */
-	movl 8(%eax), %ecx      /* load v[2] */
-	movl 12(%eax), %edx      /* load v[3] */
-	movl %ecx, 8      	/* store v[2] to current vertex */
-	movl %edx, 12      	/* store v[3] to current vertex */
+	movl 4(%esp), %ecx	
+	movl (%ecx), %eax       /* load v[0] */
+	movl 4(%ecx), %edx      /* load v[1] */
+	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
+	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
+	movl 8(%ecx), %eax      /* load v[2] */
+	movl 12(%ecx), %edx     /* load v[3] */
+	movl %eax, SUBST(2)    	/* store v[2] to current vertex */
+	movl %edx, SUBST(3)    	/* store v[3] to current vertex */
 	ret
-GLOBL ( _x86_Attribute3fv_end )
+GLOBL ( _x86_Attribute4fv_end )
 
 
-;;; In the 1st level dispatch functions, switch to a different
-;;; calling convention -- (const GLfloat *v) in %eax.
-;;; 
-;;; As with regular (x86) dispatch, don't create a new stack frame -
-;;; just let the 'ret' in the dispatched function return straight
-;;; back to the original caller.
+// Choosers:
+
+// Must generate all of these ahead of first usage.  Generate at
+// compile-time?  
+	
+// NOT CURRENTLY USED
+
+
+GLOBL( _x86_choose_fv)
+	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
+	movl	$SUBST(0), (%esp)	// arg 0 - attrib
+	movl	$SUBST(1), 4(%esp)	// arg 1 - N
+	call    _do_choose	// new function returned in %eax
+	add     $12, %esp	// tear down stack frame
+	jmp     *%eax		// jump to new func
+GLOBL ( _x86_choosefv_end )
+	
+	
+
+
+// FIRST LEVEL FUNCTIONS -- these are plugged directly into GL dispatch.
+	
+
+// NOT CURRENTLY USED
+
+	
+		
+// In the 1st level dispatch functions, switch to a different
+// calling convention -- (const GLfloat *v) in %ecx.
+// 
+// As with regular (x86) dispatch, don't create a new stack frame -
+// just let the 'ret' in the dispatched function return straight
+// back to the original caller.
 
 
 	
-;;; Vertex/Normal/Color, etc: the address of the function pointer
-;;; is known at codegen time.
-	
+// Vertex/Normal/Color, etc: the address of the function pointer
+// is known at codegen time.
+
+
+// Unfortunately, have to play with the stack in the non-fv case:
+// 
 GLOBL( _x86_dispatch_attrf )
-	leal	4(%esp), %eax
-	jmp	*foo
+	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
+	leal	16(%esp), %edx	// address of first float on stack
+	movl	%edx, (%esp)	// save as 'v'
+	call	SUBST(0)	// 0x0 --> tabfv[attr][n]
+	addl	$12, %esp	// tear down frame
+	ret			// return
 GLOBL( _x86_dispatch_attrf_end )
 
+// The fv case is simpler:
+// 
 GLOBL( _x86_dispatch_attrfv )
-	movl	4(%esp), %eax
-	jmp	*foo
-GLOBL( _x86_dispatch_attr1f_end )
+	jmp	SUBST(0)	// 0x0 --> tabfv[attr][n]
+GLOBL( _x86_dispatch_attrfv_end )
 
-;;; MultiTexcoord: the address of the function pointer must be
-;;; calculated.
-	
+
+// MultiTexcoord: the address of the function pointer must be
+// calculated, but can use the index argument slot to hold 'v', and
+// avoid setting up a new stack frame.
+
+// Also, will only need a maximum of four of each of these per context:
+// 
 GLOBL( _x86_dispatch_multitexcoordf )
-	leal	4(%esp), %eax
-	jmp	*foo
+	movl	4(%esp), %ecx
+	leal	8(%esp), %edx
+	andl	$7, %ecx
+	movl	%edx, 4(%esp)
+	sall	$4, %ecx
+	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
 GLOBL( _x86_dispatch_multitexcoordf_end )
 
 GLOBL( _x86_dispatch_multitexcoordfv )
-	movl	4(%esp), %eax
-	jmp	*foo
+	movl	4(%esp), %ecx
+	movl	8(%esp), %edx
+	andl	$7, %ecx
+	movl	%edx, 4(%esp)
+	sall	$4, %ecx
+	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
 GLOBL( _x86_dispatch_multitexcoordfv_end )
 				
-;;; VertexAttrib: the address of the function pointer must be
-;;; calculated.
+// VertexAttrib: the address of the function pointer must be
+// calculated.
 
 GLOBL( _x86_dispatch_vertexattribf )
-	leal	4(%esp), %eax
-	jmp	*foo
+	movl	$16, %ecx
+	movl	4(%esp), %eax
+	cmpl	$16, %eax
+	cmovge	%ecx, %eax
+	leal	8(%esp), %ecx	// calculate 'v'
+	movl	%ecx, 4(%esp)	// save in 1st arg slot
+	sall	$4, %eax
+	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
 GLOBL( _x86_dispatch_vertexattribf_end )
 
 GLOBL( _x86_dispatch_vertexattribfv )
+	movl	$16, %ecx
 	movl	4(%esp), %eax
-	jmp	*foo
+	cmpl	$16, %eax
+	cmovge	%ecx, %eax
+	movl	8(%esp), %ecx	// load 'v'
+	movl	%ecx, 4(%esp)	// save in 1st arg slot
+	sall	$4, %eax
+	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
 GLOBL( _x86_dispatch_vertexattribfv_end )
-	
+

@@ -121,6 +121,10 @@ _tnl_CreateContext( GLcontext *ctx )
    tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
    tnl->Driver.NotifyMaterialChange = _mesa_validate_all_lighting_tables;
    
+
+   if (getenv("MESA_CODEGEN"))
+      tnl->AllowCodegen = GL_TRUE;
+
    return GL_TRUE;
 }
 
