@@ -1078,7 +1078,7 @@ GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
   }
 
   if (ti->validated && ti->isInTM)
-    fxTMReloadSubMipMapLevel(fxMesa, texObj, level, yoffset, height);
+    fxTMReloadMipMapLevel(fxMesa, texObj, level);
   else
     fxTexInvalidate(ctx, texObj);
 
