@@ -113,6 +113,7 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004, 2005", "IBM")
 		self.generic_sizes = [3, 4, 6, 8, 12, 16, 24, 32]
 		self.pixel_stubs = {}
+		self.debug = 0
 		return
 
 	def printRealHeader(self):
@@ -217,7 +218,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 		return
 
 	def printFunction(self, f):
-		if f.fn_offset < 0 or f.handcode or f.ignore: return
+		if f.fn_offset < 0 or f.client_handcode or f.ignore: return
 
 		if f.glx_rop != 0 or f.vectorequiv != None:
 			if f.image:
@@ -375,6 +376,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 	def printSingleFunction(self, f):
 		self.common_func_print_header(f)
 
+		if self.debug:
+			print '        printf( "Enter %%s...\\n", "gl%s" );' % (f.name)
+
 		if f.fn_parameters != []:
 			pc_decl = "GLubyte const * pc ="
 		else:
@@ -406,6 +410,14 @@ generic_%u_byte( GLint rop, const void * ptr )
 				aa = "GL_FALSE"
 
 			print "       %s read_reply(dpy, %s, %s, %s);" % (return_str, output_size, output_str, aa)
+		elif self.debug:
+			# Only emit the extra glFinish call for functions
+			# that don't already require a reply from the server.
+			print '        __indirect_glFinish();'
+
+		if self.debug:
+			print '        printf( "Exit %%s.\\n", "gl%s" );' % (f.name)
+
 
 		print '        UnlockDisplay(dpy); SyncHandle();'
 		print '    }'
@@ -628,6 +640,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 			indent = ""
 			trailer = None
 
+		if self.debug:
+			print '%s    printf( "Enter %%s...\\n", "gl%s" );' % (indent, f.name)
+
 		if f.can_be_large:
 			print '%s    if (cmdlen <= gc->maxSmallRenderCommandSize) {' % (indent)
 			print '%s        if ( (gc->pc + cmdlen) > gc->bufEnd ) {' % (indent)
@@ -647,10 +662,14 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 			self.large_emit_begin(indent, f)
 			offset = self.common_emit_args(f, "pc", indent, 8, 1)
-			
+
 			p = f.variable_length_parameter()
 			print '%s    __glXSendLargeCommand(gc, pc, %u, %s, %s);' % (indent, offset + 8, p.name, p.size_string())
 			print '%s}' % (indent)
+
+		if self.debug:
+			print '%s    __indirect_glFinish();' % (indent)
+			print '%s    printf( "Exit %%s.\\n", "gl%s" );' % (indent, f.name)
 
 		if trailer: print trailer
 		print '}'
@@ -768,7 +787,9 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
 
 
 def show_usage():
-	print "Usage: %s [-f input_file_name] [-m output_mode]" % sys.argv[0]
+	print "Usage: %s [-f input_file_name] [-m output_mode] [-d]" % sys.argv[0]
+	print "    -m output_mode   Output mode can be one of 'proto', 'init_c' or 'init_h'."
+	print "    -d               Enable extra debug information in the generated code."
 	sys.exit(1)
 
 
@@ -776,16 +797,19 @@ if __name__ == '__main__':
 	file_name = "gl_API.xml"
 
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:")
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:d")
 	except Exception,e:
 		show_usage()
 
+	debug = 0
 	mode = "proto"
 	for (arg,val) in args:
 		if arg == "-f":
 			file_name = val
 		elif arg == "-m":
 			mode = val
+		elif arg == "-d":
+			debug = 1
 
 	if mode == "proto":
 		dh = PrintGlxProtoStubs()
@@ -802,6 +826,7 @@ if __name__ == '__main__':
 
 	f = open(file_name)
 
+	dh.debug = debug
 	dh.printHeader()
 	parser.parse(f)
 	dh.printFooter()
