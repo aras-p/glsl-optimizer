@@ -692,7 +692,7 @@ void Init(void)
     float lmodel_twoside[] = {GL_TRUE};
     int w, h;
     GLenum format;
-    char *image;
+    GLubyte *image;
 
     printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
