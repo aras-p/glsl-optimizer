@@ -430,7 +430,11 @@ ATTRS( 15 )
 
 static void init_attrfv( TNLcontext *tnl )
 {
+#ifdef WIN32
+   if (0) fprintf(stderr, "%s %d\n", "init_attrfv", tnl->vtx.vertex_size);
+#else
    if (0) fprintf(stderr, "%s %d\n", __FUNCTION__, tnl->vtx.vertex_size);
+#endif
    
    if (tnl->vtx.vertex_size) {
       GLuint i;
@@ -503,177 +507,177 @@ static void enum_error( void )
    _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttrib" );
 }
 
-static void _tnl_Vertex2f( GLfloat x, GLfloat y )
+static void GLAPIENTRY _tnl_Vertex2f( GLfloat x, GLfloat y )
 {
    DISPATCH_ATTR2F( _TNL_ATTRIB_POS, x, y );
 }
 
-static void _tnl_Vertex2fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Vertex2fv( const GLfloat *v )
 {
    DISPATCH_ATTR2FV( _TNL_ATTRIB_POS, v );
 }
 
-static void _tnl_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
 {
    DISPATCH_ATTR3F( _TNL_ATTRIB_POS, x, y, z );
 }
 
-static void _tnl_Vertex3fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Vertex3fv( const GLfloat *v )
 {
    DISPATCH_ATTR3FV( _TNL_ATTRIB_POS, v );
 }
 
-static void _tnl_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void GLAPIENTRY _tnl_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    DISPATCH_ATTR4F( _TNL_ATTRIB_POS, x, y, z, w );
 }
 
-static void _tnl_Vertex4fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Vertex4fv( const GLfloat *v )
 {
    DISPATCH_ATTR4FV( _TNL_ATTRIB_POS, v );
 }
 
-static void _tnl_TexCoord1f( GLfloat x )
+static void GLAPIENTRY _tnl_TexCoord1f( GLfloat x )
 {
    DISPATCH_ATTR1F( _TNL_ATTRIB_TEX0, x );
 }
 
-static void _tnl_TexCoord1fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_TexCoord1fv( const GLfloat *v )
 {
    DISPATCH_ATTR1FV( _TNL_ATTRIB_TEX0, v );
 }
 
-static void _tnl_TexCoord2f( GLfloat x, GLfloat y )
+static void GLAPIENTRY _tnl_TexCoord2f( GLfloat x, GLfloat y )
 {
    DISPATCH_ATTR2F( _TNL_ATTRIB_TEX0, x, y );
 }
 
-static void _tnl_TexCoord2fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_TexCoord2fv( const GLfloat *v )
 {
    DISPATCH_ATTR2FV( _TNL_ATTRIB_TEX0, v );
 }
 
-static void _tnl_TexCoord3f( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_TexCoord3f( GLfloat x, GLfloat y, GLfloat z )
 {
    DISPATCH_ATTR3F( _TNL_ATTRIB_TEX0, x, y, z );
 }
 
-static void _tnl_TexCoord3fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_TexCoord3fv( const GLfloat *v )
 {
    DISPATCH_ATTR3FV( _TNL_ATTRIB_TEX0, v );
 }
 
-static void _tnl_TexCoord4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void GLAPIENTRY _tnl_TexCoord4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    DISPATCH_ATTR4F( _TNL_ATTRIB_TEX0, x, y, z, w );
 }
 
-static void _tnl_TexCoord4fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_TexCoord4fv( const GLfloat *v )
 {
    DISPATCH_ATTR4FV( _TNL_ATTRIB_TEX0, v );
 }
 
-static void _tnl_Normal3f( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_Normal3f( GLfloat x, GLfloat y, GLfloat z )
 {
    DISPATCH_ATTR3F( _TNL_ATTRIB_NORMAL, x, y, z );
 }
 
-static void _tnl_Normal3fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Normal3fv( const GLfloat *v )
 {
    DISPATCH_ATTR3FV( _TNL_ATTRIB_NORMAL, v );
 }
 
-static void _tnl_FogCoordfEXT( GLfloat x )
+static void GLAPIENTRY _tnl_FogCoordfEXT( GLfloat x )
 {
    DISPATCH_ATTR1F( _TNL_ATTRIB_FOG, x );
 }
 
-static void _tnl_FogCoordfvEXT( const GLfloat *v )
+static void GLAPIENTRY _tnl_FogCoordfvEXT( const GLfloat *v )
 {
    DISPATCH_ATTR1FV( _TNL_ATTRIB_FOG, v );
 }
 
-static void _tnl_Color3f( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_Color3f( GLfloat x, GLfloat y, GLfloat z )
 {
    DISPATCH_ATTR3F( _TNL_ATTRIB_COLOR0, x, y, z );
 }
 
-static void _tnl_Color3fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Color3fv( const GLfloat *v )
 {
    DISPATCH_ATTR3FV( _TNL_ATTRIB_COLOR0, v );
 }
 
-static void _tnl_Color4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+static void GLAPIENTRY _tnl_Color4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    DISPATCH_ATTR4F( _TNL_ATTRIB_COLOR0, x, y, z, w );
 }
 
-static void _tnl_Color4fv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Color4fv( const GLfloat *v )
 {
    DISPATCH_ATTR4FV( _TNL_ATTRIB_COLOR0, v );
 }
 
-static void _tnl_SecondaryColor3fEXT( GLfloat x, GLfloat y, GLfloat z )
+static void GLAPIENTRY _tnl_SecondaryColor3fEXT( GLfloat x, GLfloat y, GLfloat z )
 {
    DISPATCH_ATTR3F( _TNL_ATTRIB_COLOR1, x, y, z );
 }
 
-static void _tnl_SecondaryColor3fvEXT( const GLfloat *v )
+static void GLAPIENTRY _tnl_SecondaryColor3fvEXT( const GLfloat *v )
 {
    DISPATCH_ATTR3FV( _TNL_ATTRIB_COLOR1, v );
 }
 
-static void _tnl_MultiTexCoord1f( GLenum target, GLfloat x  )
+static void GLAPIENTRY _tnl_MultiTexCoord1f( GLenum target, GLfloat x  )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR1F( attr, x );
 }
 
-static void _tnl_MultiTexCoord1fv( GLenum target, const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord1fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR1FV( attr, v );
 }
 
-static void _tnl_MultiTexCoord2f( GLenum target, GLfloat x, GLfloat y )
+static void GLAPIENTRY _tnl_MultiTexCoord2f( GLenum target, GLfloat x, GLfloat y )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR2F( attr, x, y );
 }
 
-static void _tnl_MultiTexCoord2fv( GLenum target, const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord2fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR2FV( attr, v );
 }
 
-static void _tnl_MultiTexCoord3f( GLenum target, GLfloat x, GLfloat y,
+static void GLAPIENTRY _tnl_MultiTexCoord3f( GLenum target, GLfloat x, GLfloat y,
 				    GLfloat z)
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR3F( attr, x, y, z );
 }
 
-static void _tnl_MultiTexCoord3fv( GLenum target, const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord3fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR3FV( attr, v );
 }
 
-static void _tnl_MultiTexCoord4f( GLenum target, GLfloat x, GLfloat y,
+static void GLAPIENTRY _tnl_MultiTexCoord4f( GLenum target, GLfloat x, GLfloat y,
 				    GLfloat z, GLfloat w )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR4F( attr, x, y, z, w );
 }
 
-static void _tnl_MultiTexCoord4fv( GLenum target, const GLfloat *v )
+static void GLAPIENTRY _tnl_MultiTexCoord4fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + _TNL_ATTRIB_TEX0;
    DISPATCH_ATTR4FV( attr, v );
 }
 
-static void _tnl_VertexAttrib1fNV( GLuint index, GLfloat x )
+static void GLAPIENTRY _tnl_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR1F( index, x );
@@ -681,7 +685,7 @@ static void _tnl_VertexAttrib1fNV( GLuint index, GLfloat x )
       enum_error(); 
 }
 
-static void _tnl_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR1FV( index, v );
@@ -689,7 +693,7 @@ static void _tnl_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
       enum_error();
 }
 
-static void _tnl_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
+static void GLAPIENTRY _tnl_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR2F( index, x, y );
@@ -697,7 +701,7 @@ static void _tnl_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
       enum_error();
 }
 
-static void _tnl_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR2FV( index, v );
@@ -705,7 +709,7 @@ static void _tnl_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
       enum_error();
 }
 
-static void _tnl_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, 
+static void GLAPIENTRY _tnl_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, 
 				  GLfloat z )
 {
    if (index < VERT_ATTRIB_MAX)
@@ -714,7 +718,7 @@ static void _tnl_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y,
       enum_error();
 }
 
-static void _tnl_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR3FV( index, v );
@@ -722,7 +726,7 @@ static void _tnl_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
       enum_error();
 }
 
-static void _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
+static void GLAPIENTRY _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
 				  GLfloat z, GLfloat w )
 {
    if (index < VERT_ATTRIB_MAX)
@@ -731,7 +735,7 @@ static void _tnl_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y,
       enum_error();
 }
 
-static void _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
+static void GLAPIENTRY _tnl_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
       DISPATCH_ATTR4FV( index, v );
@@ -782,7 +786,7 @@ do {							\
 /* NOTE: Have to remove/deal-with colormaterial crossovers, probably
  * later on - in the meantime just store everything.  
  */
-static void _tnl_Materialfv( GLenum face, GLenum pname, 
+static void GLAPIENTRY _tnl_Materialfv( GLenum face, GLenum pname, 
 			       const GLfloat *params )
 {
    GET_CURRENT_CONTEXT( ctx ); 
@@ -846,29 +850,29 @@ do {							\
 } while (0)
 
 
-static void _tnl_EdgeFlag( GLboolean b )
+static void GLAPIENTRY _tnl_EdgeFlag( GLboolean b )
 {
    IDX_ATTR( _TNL_ATTRIB_EDGEFLAG, (GLfloat)b );
 }
 
-static void _tnl_EdgeFlagv( const GLboolean *v )
+static void GLAPIENTRY _tnl_EdgeFlagv( const GLboolean *v )
 {
    IDX_ATTR( _TNL_ATTRIB_EDGEFLAG, (GLfloat)v[0] );
 }
 
-static void _tnl_Indexf( GLfloat f )
+static void GLAPIENTRY _tnl_Indexf( GLfloat f )
 {
    IDX_ATTR( _TNL_ATTRIB_INDEX, f );
 }
 
-static void _tnl_Indexfv( const GLfloat *v )
+static void GLAPIENTRY _tnl_Indexfv( const GLfloat *v )
 {
    IDX_ATTR( _TNL_ATTRIB_INDEX, v[0] );
 }
 
 /* Eval
  */
-static void _tnl_EvalCoord1f( GLfloat u )
+static void GLAPIENTRY _tnl_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -896,7 +900,7 @@ static void _tnl_EvalCoord1f( GLfloat u )
 	   tnl->vtx.vertex_size * sizeof(GLfloat));
 }
 
-static void _tnl_EvalCoord2f( GLfloat u, GLfloat v )
+static void GLAPIENTRY _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_CURRENT_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -927,17 +931,17 @@ static void _tnl_EvalCoord2f( GLfloat u, GLfloat v )
 	   tnl->vtx.vertex_size * sizeof(GLfloat));
 }
 
-static void _tnl_EvalCoord1fv( const GLfloat *u )
+static void GLAPIENTRY _tnl_EvalCoord1fv( const GLfloat *u )
 {
    _tnl_EvalCoord1f( u[0] );
 }
 
-static void _tnl_EvalCoord2fv( const GLfloat *u )
+static void GLAPIENTRY _tnl_EvalCoord2fv( const GLfloat *u )
 {
    _tnl_EvalCoord2f( u[0], u[1] );
 }
 
-static void _tnl_EvalPoint1( GLint i )
+static void GLAPIENTRY _tnl_EvalPoint1( GLint i )
 {
    GET_CURRENT_CONTEXT( ctx );
    GLfloat du = ((ctx->Eval.MapGrid1u2 - ctx->Eval.MapGrid1u1) /
@@ -948,7 +952,7 @@ static void _tnl_EvalPoint1( GLint i )
 }
 
 
-static void _tnl_EvalPoint2( GLint i, GLint j )
+static void GLAPIENTRY _tnl_EvalPoint2( GLint i, GLint j )
 {
    GET_CURRENT_CONTEXT( ctx );
    GLfloat du = ((ctx->Eval.MapGrid2u2 - ctx->Eval.MapGrid2u1) / 
@@ -965,7 +969,7 @@ static void _tnl_EvalPoint2( GLint i, GLint j )
 /* Build a list of primitives on the fly.  Keep
  * ctx->Driver.CurrentExecPrimitive uptodate as well.
  */
-static void _tnl_Begin( GLenum mode )
+static void GLAPIENTRY _tnl_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
@@ -999,7 +1003,7 @@ static void _tnl_Begin( GLenum mode )
       
 }
 
-static void _tnl_End( void )
+static void GLAPIENTRY _tnl_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
