@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.18 2002/10/29 20:29:00 brianp Exp $ */
+/* $Id: ss_tritmp.h,v 1.19 2002/10/29 22:25:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,14 +112,14 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      _swsetup_render_point_tri( ctx, e0, e1, e2 );
+      _swsetup_render_point_tri( ctx, e0, e1, e2, facing );
    } else if (mode == GL_LINE) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
 	 v[0]->win[2] += offset;
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      _swsetup_render_line_tri( ctx, e0, e1, e2 );
+      _swsetup_render_line_tri( ctx, e0, e1, e2, facing );
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
 	 v[0]->win[2] += offset;

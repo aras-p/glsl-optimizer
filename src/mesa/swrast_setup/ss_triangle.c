@@ -1,4 +1,4 @@
-/* $Id: ss_triangle.c,v 1.19 2002/10/29 20:29:00 brianp Exp $ */
+/* $Id: ss_triangle.c,v 1.20 2002/10/29 22:25:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,8 @@ static quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
 static void _swsetup_render_line_tri( GLcontext *ctx,
-				      GLuint e0, GLuint e1, GLuint e2 )
+				      GLuint e0, GLuint e1, GLuint e2,
+                                      GLuint facing )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -60,6 +61,14 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
    GLchan c[2][4];
    GLchan s[2][4];
    GLuint i[2];
+
+   /* cull testing */
+   if (ctx->Polygon.CullFlag) {
+      if (facing == 1 && ctx->Polygon.CullFaceMode != GL_FRONT)
+         return;
+      if (facing == 0 && ctx->Polygon.CullFaceMode != GL_BACK)
+         return;
+   }
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       COPY_CHAN4(c[0], v0->color);
@@ -98,7 +107,8 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
 }
 
 static void _swsetup_render_point_tri( GLcontext *ctx,
-				       GLuint e0, GLuint e1, GLuint e2 )
+				       GLuint e0, GLuint e1, GLuint e2,
+                                       GLuint facing )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -110,6 +120,14 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    GLchan c[2][4];
    GLchan s[2][4];
    GLuint i[2];
+
+   /* cull testing */
+   if (ctx->Polygon.CullFlag) {
+      if (facing == 1 && ctx->Polygon.CullFaceMode != GL_FRONT)
+         return;
+      if (facing == 0 && ctx->Polygon.CullFaceMode != GL_BACK)
+         return;
+   }
 
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       COPY_CHAN4(c[0], v0->color);
