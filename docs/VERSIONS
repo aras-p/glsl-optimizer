@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.50 2001/02/20 17:08:55 brianp Exp $
+$Id: VERSIONS,v 1.51 2001/03/17 00:47:19 brianp Exp $
 
 
 Mesa Version History
@@ -829,4 +829,4 @@ Mesa Version History
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
-	- ?? SGI SI GLU ??
+	- SGI's Sample Implementation (SI) 1.3 GLU library replaces Mesa GLU
