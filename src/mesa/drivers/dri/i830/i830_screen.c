@@ -62,7 +62,9 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 const GLuint __driNConfigOptions = 1;
 
+#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+#endif /*USE_NEW_INTERFACE*/
 
 static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
 {
@@ -401,6 +403,7 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 #endif
 
 
+#ifdef USE_NEW_INTERFACE
 static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 					 unsigned pixel_bits, 
 					 unsigned depth_bits,
@@ -465,8 +468,10 @@ static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
     
     return modes;
 }
+#endif /* USE_NEW_INTERFACE */
 
 
+#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -532,6 +537,7 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
 
    return modes;
 }
+#endif /* USE_NEW_INTERFACE */
 
 
 /**
@@ -544,6 +550,7 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
+#ifdef USE_NEW_INTERFACE
 void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
@@ -575,3 +582,4 @@ void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 
    return (void *) psp;
 }
+#endif /* USE_NEW_INTERFACE */
