@@ -75,6 +75,12 @@ Details and Notes
 - No assembly code is compiled or assembled.  Again, this may need
   some work to turn it back on or use it again.
 
+- To build "mangled" Mesa, add the preprocessor define USE_MGL_NAMESPACE
+  to the project settings.  You will also need to edit src/mesa.def to change
+  all the gl* symbols to mgl*.  Because this is easy to do with a global
+  replace operation in a text editor, no additional mangled version of mesa.def
+  is maintained or shipped.
+
 If you have a Windows-related build problem or question, it is
 probably better to direct it to me (kschultz@users.sourceforge.net),
 rather than directly to the other Mesa developers.  I will help you
