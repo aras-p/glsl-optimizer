@@ -26,7 +26,6 @@
 /**
  * \file texcompress_fxt1.c
  * GL_EXT_texture_compression_fxt1 support.
- * \author Daniel Borca
  */
 
 
