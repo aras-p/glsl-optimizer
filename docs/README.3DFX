@@ -1,10 +1,6 @@
 
-                     3Dfx Glide device driver for Mesa 3.1
+                     3Dfx Glide device driver for Mesa 3.3
 				(see below for FAQ)
-
-
-This software is distributed under the terms of the GNU Library
-General Public License, see the LICENSE file for details.
 
 
 
@@ -327,6 +323,11 @@ The Mesa/Voodoo Environment Variables:
 		export MESA_FX_INFO=1
           you will get some useful statistic.
 
+        - If you define the env. var. MESA_FX_NO_SIGNALS:
+		export MESA_FX_NO_SIGNALS=1
+          Mesa/FX will not install atexit() or signal() handlers.
+
+
 
 Know BUGS and Problems:
 -----------------------
@@ -541,9 +542,7 @@ No because the Linux Glide doesn't (yet) support the Voodoo Rush.
 a binary copy of the Mesa in order to make the software
 working out of the box ?
 
-Yes, you have simply to include some informations about authors
-and where the library sources are available (check the LICENSE
-file for more informations about the GNU GPL).
+Yes.
 
 
 11. Which is the best make target for compiling the Mesa for
