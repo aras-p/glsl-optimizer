@@ -219,6 +219,8 @@ UGL_LOCAL void drawGL (void)
 
     glPopMatrix ();
 
+    glFlush();
+    
     uglMesaSwapBuffers ();
 
 #ifdef COUNT_FRAMES
@@ -360,15 +362,15 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLGears (void);
+void windMLGears (UGL_BOOL windMLMode);
 
 void uglgears (void)
     {
     taskSpawn ("tGears", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLGears,
-	       0,1,2,3,4,5,6,7,8,9);
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLGears (void)
+void windMLGears (UGL_BOOL windMLMode)
     {
     GLsizei width, height;
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -390,8 +392,12 @@ void windMLGears (void)
     qId = uglEventQCreate (eventServiceId, 100);
 
     /* Double buffering */
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
 
-    umc = uglMesaCreateNewContext (UGL_MESA_DOUBLE, NULL);
     if (umc == NULL)
 	{
 	uglDeinitialize ();

@@ -8,6 +8,9 @@
 
 /*
  * $Log: ugltexcyl.c,v $
+ * Revision 1.2  2001/09/10 19:21:13  brianp
+ * WindML updates (Stephane Raimbault)
+ *
  * Revision 1.1  2001/08/20 16:07:11  brianp
  * WindML driver (Stephane Raimbault)
  *
@@ -309,7 +312,7 @@ UGL_LOCAL void initGL(void)
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
     glTranslatef( 0.0, 0.0, -70.0 );
-    
+
     printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
     printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
     printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
@@ -330,15 +333,15 @@ UGL_LOCAL void cleanUp (void)
     uglDeinitialize ();
     }
 
-void windMLTexCyl (void);
+void windMLTexCyl (UGL_BOOL windMLMode);
 
 void ugltexcyl (void)
     {
     taskSpawn ("tTexCyl", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLTexCyl,
-              0,1,2,3,4,5,6,7,8,9);
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLTexCyl (void)
+void windMLTexCyl (UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     GLsizei displayWidth, displayHeight;
@@ -365,7 +368,12 @@ void windMLTexCyl (void)
     qId = uglEventQCreate (eventServiceId, 100);
     
     /* Double buffering */
-    umc = uglMesaCreateNewContext (UGL_MESA_DOUBLE, NULL);
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    
     if (umc == NULL)
         {
 	uglDeinitialize ();

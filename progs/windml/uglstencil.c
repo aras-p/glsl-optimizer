@@ -177,15 +177,15 @@ UGL_LOCAL int getEvent(void)
     return(retVal);
     }
 
-void windMLStencil (void);
+void windMLStencil (UGL_BOOL windMLMode);
 
 void uglstencil (void)
     {
     taskSpawn("tStencil", 210, VX_FP_TASK, 100000,
-	      (FUNCPTR)windMLStencil, 0,1,2,3,4,5,6,7,8,9);
+	      (FUNCPTR)windMLStencil,UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLStencil(void)
+void windMLStencil(UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     GLsizei width, height;
@@ -197,12 +197,21 @@ void windMLStencil(void)
     uglDriverFind (UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&eventServiceId);
 	    
     qId = uglEventQCreate (eventServiceId, 100);
-    
-    umc = uglMesaCreateNewContextExt(GL_FALSE,
-				     16,
-				     8,
-				     0,0,0,0,
-				     NULL);
+
+    if (windMLMode)
+       umc = uglMesaCreateNewContextExt(UGL_MESA_SINGLE
+					| UGL_MESA_WINDML_EXCLUSIVE,
+					16,
+					8,
+					0,0,0,0,
+					NULL);
+    else
+       umc = uglMesaCreateNewContextExt(UGL_MESA_SINGLE,
+					16,
+					8,
+					0,0,0,0,
+					NULL);
+
     if (umc == NULL)
 	{
 	uglDeinitialize();

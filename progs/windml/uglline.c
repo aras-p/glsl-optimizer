@@ -213,16 +213,16 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLLine (void);
+void windMLLine (UGL_BOOL windMLMode);
 
 void uglline (void)
     {
     taskSpawn("tLine", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLLine,
-              0,1,2,3,4,5,6,7,8,9);
+              UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
 
-void windMLLine(void)
+void windMLLine(UGL_BOOL windMLMode)
     {
 
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -239,7 +239,11 @@ void windMLLine(void)
 
     /* Double buffer */
 
-    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+	else
+	   umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
 
     if (umc == NULL)
         {

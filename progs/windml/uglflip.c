@@ -171,15 +171,15 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLFlip (void);
+void windMLFlip (UGL_BOOL windMLMode);
 
 void uglflip (void)
     {
-    taskSpawn("tFlip", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLFlip,
-              0,1,2,3,4,5,6,7,8,9);
+    taskSpawn ("tFlip", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLFlip,
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLFlip(void)
+void windMLFlip (UGL_BOOL windMLMode)
     {
 
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -192,13 +192,18 @@ void windMLFlip(void)
 
     qId = uglEventQCreate (eventServiceId, 100);
 
-    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE_SW, NULL);
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_SINGLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE_SOFTWARE, NULL);
 
     if (umc == NULL)
         {
 	uglDeinitialize();
 	return;
         }
+
     uglMesaMakeCurrentContext(umc, 0, 0, UGL_MESA_FULLSCREEN_WIDTH,
 			      UGL_MESA_FULLSCREEN_HEIGHT);
     

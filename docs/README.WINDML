@@ -12,6 +12,7 @@ gives better performance than double buffer software so if you can
 compile your WindML driver with this option, just do it. I/O
 redirection is adviced in target server.
 
+
 Tested on
 ---------
 
@@ -53,6 +54,9 @@ ld < c:\Tornado\target\lib\objMesaGLU.o
 ld < c:\Tornado\target\lib\objGLUTshapes.o
 ld < c:\Tornado\target\lib\objMesaOS.o
 
+You can put the previous lines in a file and use:
+< filename
+
 6. Download the application modules.
 
 7. In WindShell, run:
@@ -82,18 +86,16 @@ input driver), you must do the following to use the UGL/Mesa interface:
 
 5. Before the UGL is destroyed, call MesaDestroyContext().
 
-6. Before exiting, call if required uglEventQDestroy and then uglDeinitialize();
+6. Before exiting, call if required uglEventQDestroy and then
+   uglDeinitialize();
 
 Limitations
 -----------
 
 I found the following limitations in my driver :
  - Color Indexed management is only in 8 bits
- - The front and the back buffer must have the structure (mode and
- size). A structure umc->buffer is requisite if the front and back
- buffers are different.
- - It isn't possible to mix UGL/OpenGL application with a software
-   double buffer (to fix)
+ - It's possible to mix UGL/OpenGL application with a software
+   double buffer
 
 Modifications
 ------------

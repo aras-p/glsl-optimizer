@@ -47,7 +47,9 @@ Draw a textured cube
 #include <GL/uglmesa.h>
 #include <GL/glu.h>
 
-#define IMAGE_FILE "Mesa/windmldemos/wrs_logo.bmp"
+#include "../util/readtex.h"
+
+#define IMAGE_FILE "Mesa/images/wrs_logo.rgb"
 
 UGL_LOCAL UGL_EVENT_SERVICE_ID eventServiceId;
 UGL_LOCAL UGL_EVENT_Q_ID qId;
@@ -58,102 +60,12 @@ UGL_LOCAL GLuint texture[1];
 UGL_LOCAL GLuint theTexCube;
 
 typedef struct {
-    unsigned long sizeX;
-    unsigned long sizeY;
-    char *data;
-    } TEX_IMAGE;
+   GLubyte *data;
+   int width, height;
+   GLenum format;
+   } TEX_IMAGE;
 
 UGL_LOCAL void cleanUp (void);
-
-UGL_LOCAL GLboolean imageLoad(char *filename, TEX_IMAGE * texImage)
-    {
-    FILE * file = NULL;
-    unsigned long size;
-    unsigned long i;
-    unsigned short int planes;
-    unsigned short int bpp;
-    char temp;		
-    
-    if ((file = fopen(filename, "rb")) == NULL)
-	{
-	printf("File Not Found : %s\n", filename);
-	return GL_FALSE;
-	}
-    
-    fseek(file, 18, SEEK_CUR);
-    
-    if ((i = fread(&texImage->sizeX, 4, 1, file)) != 1)
-	{
-	printf("Error reading width from %s.\n", filename);
-	return GL_FALSE;
-	}
-    
-    printf("Width of %s: %lu\n", filename, texImage->sizeX);
-		    
-    if ((i = fread(&texImage->sizeY, 4, 1, file)) != 1)
-	{
-	printf("Error reading height from %s.\n", filename);
-	return GL_FALSE;
-	}
-
-    printf("Height of %s: %lu\n", filename, texImage->sizeY);
-    size = texImage->sizeX * texImage->sizeY * 3;
-    
-    if ((fread(&planes, 2, 1, file)) != 1)
-	{
-	printf("Error reading planes from %s.\n", filename);
-	return GL_FALSE;
-	}
-    
-    if (planes != 1)
-	{
-	printf("Planes from %s is not 1: %u\n", filename, planes);
-	return GL_FALSE;
-	}
-	
-    if ((i = fread(&bpp, 2, 1, file)) != 1)
-	{
-	printf("Error reading bpp from %s.\n", filename);
-	return GL_FALSE;
-	}
-    
-    if (bpp != 24)
-	{
-	printf("Bpp from %s is not 24: %u\n", filename, bpp);
-	return GL_FALSE;
-	}
-	
-    fseek(file, 24, SEEK_CUR);
-    
-    texImage->data = (char *) malloc(size);
-
-    if (texImage->data == NULL)
-	{
-	printf("Error allocating memory for color-corrected texImage data");
-	return GL_FALSE;
-	}
-    
-    if ((i = fread(texImage->data, size, 1, file)) != 1)
-	{
-	printf("Error reading texImage data from %s.\n", filename);
-	free(texImage->data);
-	return GL_FALSE;
-	}
-    
-    /* bgr -> rgb */
-    
-    for (i=0; i<size; i+=3)
-	{
-	temp = texImage->data[i];
-	texImage->data[i] = texImage->data[i + 2];
-	texImage->data[i + 2] = temp;
-	}
-
-    fclose(file);
-    
-    return GL_TRUE;
-    }
-
 
 UGL_LOCAL void loadGLTexture()
     {
@@ -167,10 +79,12 @@ UGL_LOCAL void loadGLTexture()
 	cleanUp();
 	exit(1);
 	}
-	
-    if (!imageLoad(IMAGE_FILE, texImage))
+    
+    texImage->data = LoadRGBImage(IMAGE_FILE, &texImage->width,
+				  &texImage->height, &texImage->format);
+    if (!texImage->data)
 	{
-	printf("Error allocating space for image data");
+	printf("Couldn't read %s\n", IMAGE_FILE);
 	free(texImage);
 	cleanUp();
 	exit(1);
@@ -180,7 +94,7 @@ UGL_LOCAL void loadGLTexture()
     glGenTextures(1, &texture[0]);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
     glTexImage2D(GL_TEXTURE_2D, 0, 3,
-		 texImage->sizeX, texImage->sizeY,
+		 texImage->width, texImage->height,
 		 0, GL_RGB, GL_UNSIGNED_BYTE, texImage->data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -330,7 +244,8 @@ UGL_LOCAL void initGL(int width, int height)
 						   
     glEnd();		/* done with the polygon */
     glEndList();
-    
+
+    glDisable(GL_DITHER);
     glMatrixMode(GL_PROJECTION);
     /* Reset the projection matrix */
     glLoadIdentity();
@@ -403,16 +318,16 @@ UGL_LOCAL void cleanUp (void)
     uglDeinitialize();
     }
 
-void windMLTexCube (void);
+void windMLTexCube (UGL_BOOL windMLMode);
 
 void ugltexcube (void)
     {
     taskSpawn("tTexCube", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLTexCube,
-	      0,1,2,3,4,5,6,7,8,9);
+	      UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
 
-void windMLTexCube(void)
+void windMLTexCube(UGL_BOOL windMLMode)
     {
     GLuint width, height;
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -430,8 +345,12 @@ void windMLTexCube(void)
         {
         eventServiceId = UGL_NULL;
         }
-
-    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
 
     if (umc == NULL)
         {

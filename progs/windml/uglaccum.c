@@ -185,15 +185,15 @@ UGL_LOCAL int getEvent(void)
     return(retVal);
     }
 
-void windMLAccum (void);
+void windMLAccum (UGL_BOOL windMLMode);
 
 void uglaccum (void)
     {
     taskSpawn("tAccum", 210, VX_FP_TASK, 100000,
-	      (FUNCPTR)windMLAccum, 0,1,2,3,4,5,6,7,8,9);
+	      (FUNCPTR)windMLAccum,UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLAccum(void)
+void windMLAccum (UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     GLsizei width, height;
@@ -205,12 +205,21 @@ void windMLAccum(void)
     uglDriverFind (UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&eventServiceId);
 	    
     qId = uglEventQCreate (eventServiceId, 100);
+
+    if (windMLMode)
+        umc = uglMesaCreateNewContextExt(UGL_MESA_DOUBLE
+					 | UGL_MESA_WINDML_EXCLUSIVE,
+					 16,
+					 0,
+					 8,8,8,0,
+					 NULL);
+    else
+	umc = uglMesaCreateNewContextExt(UGL_MESA_DOUBLE,
+					 16,
+					 0,
+					 8,8,8,0,
+					 NULL);
     
-    umc = uglMesaCreateNewContextExt(GL_TRUE,
-				     16,
-				     0,
-				     8,8,8,0,
-				     NULL);
     if (umc == NULL)
 	{
 	uglDeinitialize();
@@ -228,8 +237,9 @@ void windMLAccum(void)
 
     initGL(width, height);
 
-    while (!getEvent())
-	    drawGL();
+    drawGL();
+    
+    while (!getEvent());
     
     uglEventQDestroy (eventServiceId, qId);
     

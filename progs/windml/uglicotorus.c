@@ -246,15 +246,15 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLIcoTorus (void);
+void windMLIcoTorus (UGL_BOOL windMLMode);
 
 void uglicotorus (void)
     {
     taskSpawn ("tIcoTorus", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLIcoTorus,
-              0,1,2,3,4,5,6,7,8,9);
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLIcoTorus (void)
+void windMLIcoTorus (UGL_BOOL windMLMode)
     {
     GLsizei width, height;
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -279,8 +279,12 @@ void windMLIcoTorus (void)
         }
 
     /* Double buffering */
-    umc = uglMesaCreateNewContext (UGL_MESA_DOUBLE, NULL);
-
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    
     if (umc == NULL)
         {
 	uglDeinitialize ();

@@ -127,12 +127,12 @@ UGL_LOCAL void drawGL (void)
     glRotatef(angleT, 1.0, -1.0, 0.0);
     angleT = angleT++ % 360;
     glBegin(GL_TRIANGLES);
-            (rgb) ? glColor3f(1.0, 0.0, 0.0): glIndexi(RED);  
-	    glVertex2f(0.75, 0.25);
-	    (rgb) ? glColor3f(0.0, 1.0, 0.0): glIndexi(GREEN);  
-	    glVertex2f(0.75, 0.75);
-	    (rgb) ? glColor3f(0.0, 0.0, 1.0): glIndexi(BLUE);  
-	    glVertex2f(0.25, 0.75);
+    (rgb) ? glColor3f(1.0, 0.0, 0.0): glIndexi(RED);  
+    glVertex2f(0.75, 0.25);
+    (rgb) ? glColor3f(0.0, 1.0, 0.0): glIndexi(GREEN);  
+    glVertex2f(0.75, 0.75);
+    (rgb) ? glColor3f(0.0, 0.0, 1.0): glIndexi(BLUE);  
+    glVertex2f(0.25, 0.75);
     glEnd();
     glPopMatrix();
 
@@ -140,8 +140,7 @@ UGL_LOCAL void drawGL (void)
 
     glFlush();
     
-    if(DOUBLE_BUFFER)
-	uglMesaSwapBuffers();
+    uglMesaSwapBuffers();
     }
 
 /************************************************************************
@@ -175,15 +174,15 @@ UGL_LOCAL int getEvent(void)
     return(retVal);
     }
 
-void windMLPoint (void);
+void windMLPoint (UGL_BOOL windMLMode);
 
 void uglpoint (void)
     {
-    taskSpawn("tPoint", 210, VX_FP_TASK, 100000,
-	      (FUNCPTR)windMLPoint, 0,1,2,3,4,5,6,7,8,9);
+    taskSpawn ("tPoint", 210, VX_FP_TASK, 100000,
+	       (FUNCPTR)windMLPoint, UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLPoint(void)
+void windMLPoint (UGL_BOOL windMLMode)
     {
     GLubyte pPixels[4];
     GLsizei width, height;
@@ -206,9 +205,21 @@ void windMLPoint(void)
         }
     
     if (DOUBLE_BUFFER)
-	umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+	{
+	if (windMLMode)
+	    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+					  | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+	else
+	    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+	}
     else
-	umc = uglMesaCreateNewContext(UGL_MESA_SINGLE, NULL);
+	{
+	if (windMLMode)
+	    umc = uglMesaCreateNewContext(UGL_MESA_SINGLE
+					  | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+	else
+	    umc = uglMesaCreateNewContext(UGL_MESA_SINGLE, NULL);
+	}
 
     if (umc == NULL)
         {

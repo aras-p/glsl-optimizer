@@ -8,6 +8,9 @@
 
 /*
  * $Log: ugldrawpix.c,v $
+ * Revision 1.2  2001/09/10 19:21:13  brianp
+ * WindML updates (Stephane Raimbault)
+ *
  * Revision 1.1  2001/08/20 16:07:11  brianp
  * WindML driver (Stephane Raimbault)
  *
@@ -79,7 +82,7 @@
 
 #include "../util/readtex.h"
 
-#define IMAGE_FILE "Mesa/images/girl.rgb"
+#define IMAGE_FILE "Mesa/images/wrs_logo.rgb"
 
 UGL_LOCAL UGL_EVENT_SERVICE_ID eventServiceId;
 UGL_LOCAL UGL_EVENT_Q_ID qId;
@@ -373,15 +376,15 @@ UGL_LOCAL void cleanUp (void)
     uglDeinitialize ();
     }
 
-void windMLDrawPix (void);
+void windMLDrawPix (UGL_BOOL windMLMode);
 
 void ugldrawpix (void)
     {
     taskSpawn ("tDrawPix", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLDrawPix,
-              0,1,2,3,4,5,6,7,8,9);
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLDrawPix (void)
+void windMLDrawPix (UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     GLuint ciMode;
@@ -402,7 +405,12 @@ void windMLDrawPix (void)
     qId = uglEventQCreate (eventServiceId, 100);
 
     /* Double buffering */
-    umc = uglMesaCreateNewContext (UGL_MESA_DOUBLE, NULL);
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    
     if (umc == NULL)
         {
 	uglDeinitialize ();
@@ -424,6 +432,7 @@ void windMLDrawPix (void)
     loopEvent();
 
     cleanUp();
-        
+    free(Image);
+    
     return;
     }

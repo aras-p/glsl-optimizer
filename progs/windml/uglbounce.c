@@ -200,15 +200,15 @@ UGL_LOCAL int getEvent(void)
     return(retVal);
     }
 
-void windMLBounce (void);
+void windMLBounce (UGL_BOOL windMLMode);
 
 void uglbounce (void)
     {
     taskSpawn("tBounce", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLBounce,
-              0,1,2,3,4,5,6,7,8,9);
+              UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLBounce(void)
+void windMLBounce(UGL_BOOL windMLMode)
     {
     GLsizei width, height;
     UGL_INPUT_DEVICE_ID keyboardDevId;
@@ -231,8 +231,12 @@ void windMLBounce(void)
     uglDriverFind (UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&eventServiceId);
    
     qId = uglEventQCreate (eventServiceId, 100);
-    
-    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
     
     if (umc == NULL)
 	{

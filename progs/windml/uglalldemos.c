@@ -30,6 +30,7 @@
 /*
 modification history
 --------------------
+02a,29aug01,sra  WindML mode added
 01a,17jul01,sra  written
 */
 
@@ -38,23 +39,42 @@ DESCRIPTION
 Show all the UGL/Mesa demos
 */
 
+#include <stdio.h>
 #include <vxWorks.h>
 #include <taskLib.h>
+#include <ugl/ugl.h>
+#include <ugl/uglinput.h>
+#include <ugl/uglevent.h>
+#include <ugl/uglfont.h>
 
-void windMLPoint (void);
-void windMLLine (void);
-void windMLFlip (void);
-void windMLCube (void);
-void windMLBounce (void);
-void windMLGears (void);
-void windMLIcoTorus (void);
-void windMLOlympic (void);
-void windMLTexCube (void);
-void windMLTexCyl (void);
-void windMLTeapot (void);
-void windMLStencil (void);
-void windMLDrawPix (void);
-void windMLAccum (void);
+#define BLACK 0
+#define RED   1
+
+struct _colorStruct
+    {
+    UGL_RGB rgbColor;
+    UGL_COLOR uglColor;
+    }
+colorTable[] =
+    {
+    { UGL_MAKE_RGB(0, 0, 0), 0},
+    { UGL_MAKE_RGB(255, 0, 0), 0},
+    };
+
+void windMLPoint (UGL_BOOL windMLMode);
+void windMLLine (UGL_BOOL windMLMode);
+void windMLFlip (UGL_BOOL windMLMode);
+void windMLCube (UGL_BOOL windMLMode);
+void windMLBounce (UGL_BOOL windMLMode);
+void windMLGears (UGL_BOOL windMLMode);
+void windMLIcoTorus (UGL_BOOL windMLMode);
+void windMLOlympic (UGL_BOOL windMLMode);
+void windMLTexCube (UGL_BOOL windMLMode);
+void windMLTexCyl (UGL_BOOL windMLMode);
+void windMLTeapot (UGL_BOOL windMLMode);
+void windMLStencil (UGL_BOOL windMLMode);
+void windMLDrawPix (UGL_BOOL windMLMode);
+void windMLAccum (UGL_BOOL windMLMode);
 void windMLAllDemos (void);
 
 void uglalldemos (void)
@@ -65,34 +85,114 @@ void uglalldemos (void)
 
 void windMLAllDemos(void)
     {
-
-    windMLPoint();
-
-    windMLLine();
+    UGL_BOOL windMLFlag = UGL_FALSE;
+    UGL_FB_INFO fbInfo;
+    UGL_EVENT event;
+    UGL_EVENT_SERVICE_ID eventServiceId;
+    UGL_EVENT_Q_ID qId;
+    UGL_INPUT_EVENT * pInputEvent;
+    UGL_INPUT_DEVICE_ID keyboardDevId;
+    UGL_DEVICE_ID devId;
+    UGL_GC_ID gc;
+    UGL_FONT_ID fontId;
+    UGL_FONT_DEF fontDef;
+    UGL_FONT_DRIVER_ID fontDrvId;
+    UGL_ORD textOrigin = UGL_FONT_TEXT_UPPER_LEFT;
+    int displayHeight, displayWidth;
+    int textWidth, textHeight;
+    static UGL_CHAR * message =
+	"Do you want to use WindML exclusively ? (y/n) ";
     
-    windMLFlip();
+    uglInitialize();
 
-    windMLCube();
-
-    windMLBounce();
-
-    windMLGears();
-
-    windMLIcoTorus();
-
-    windMLOlympic();
-
-    windMLTexCube();
+    uglDriverFind (UGL_DISPLAY_TYPE, 0, (UGL_UINT32 *)&devId);
+    uglDriverFind (UGL_KEYBOARD_TYPE, 0, (UGL_UINT32 *)&keyboardDevId);
+    uglDriverFind (UGL_EVENT_SERVICE_TYPE, 0, (UGL_UINT32 *)&eventServiceId);
+    qId = uglEventQCreate (eventServiceId, 100);
     
-    windMLTexCyl();
+    gc = uglGcCreate(devId);
 
-    windMLTeapot();
+    uglDriverFind (UGL_FONT_ENGINE_TYPE, 0, (UGL_UINT32 *)&fontDrvId);
+    uglFontDriverInfo(fontDrvId, UGL_FONT_TEXT_ORIGIN, &textOrigin);
 
-    windMLStencil();
+    uglFontFindString(fontDrvId, "familyName=Helvetica; pixelSize = 18",
+		      &fontDef);
 
-    windMLDrawPix();
+    if ((fontId = uglFontCreate(fontDrvId, &fontDef)) == UGL_NULL)
+        {
+ 	printf("Font not found. Exiting.\n");
+	return;       
+        }
 
-    windMLAccum();
+    uglInfo(devId, UGL_FB_INFO_REQ, &fbInfo);
+    displayWidth = fbInfo.width;
+    displayHeight = fbInfo.height;
+
+    uglColorAlloc (devId, &colorTable[BLACK].rgbColor, UGL_NULL, 
+                   &colorTable[BLACK].uglColor, 1);
+    uglColorAlloc(devId, &colorTable[RED].rgbColor, UGL_NULL,
+		  &colorTable[RED].uglColor, 1);
+    
+    uglBackgroundColorSet(gc, colorTable[BLACK].uglColor);
+    uglForegroundColorSet(gc, colorTable[RED].uglColor);
+    uglFontSet(gc, fontId);
+    uglTextSizeGet(fontId, &textWidth, &textHeight, -1, message);
+    uglTextDraw(gc, (displayWidth - textWidth) / 2, 
+		(displayHeight - textHeight) / 2  - textHeight, -1, message);
+/*    flushQ();
+ */   
+    if (uglEventGet (qId, &event, sizeof (event), UGL_WAIT_FOREVER)
+	!= UGL_STATUS_Q_EMPTY)
+	{
+	pInputEvent = (UGL_INPUT_EVENT *)&event;
+	    
+	if (pInputEvent->header.type == UGL_EVENT_TYPE_KEYBOARD &&
+	    pInputEvent->modifiers & UGL_KEYBOARD_KEYDOWN)
+	    {
+	    switch(pInputEvent->type.keyboard.key)
+		{
+		case 'Y':
+		case 'y':
+		    windMLFlag = UGL_TRUE;
+		    break;
+		default:
+		    windMLFlag = UGL_FALSE;
+		}
+	    }
+	}
+    
+    uglFontDestroy (fontId);
+    uglGcDestroy (gc);
+    uglEventQDestroy (eventServiceId, qId);
+    uglDeinitialize();
+		   
+    windMLPoint(windMLFlag);
+
+    windMLLine(windMLFlag);
+    
+    windMLFlip(windMLFlag);
+
+    windMLCube(windMLFlag);
+
+    windMLBounce(windMLFlag);
+
+    windMLGears(windMLFlag);
+
+    windMLIcoTorus(windMLFlag);
+
+    windMLOlympic(windMLFlag);
+
+    windMLTexCube(windMLFlag);
+    
+    windMLTexCyl(windMLFlag);
+
+    windMLTeapot(windMLFlag);
+
+    windMLStencil(windMLFlag);
+
+    windMLDrawPix(windMLFlag);
+
+    windMLAccum(windMLFlag);
 
     return;
     }

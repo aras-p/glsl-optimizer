@@ -419,7 +419,7 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLOlympic (void);
+void windMLOlympic (UGL_BOOL windMLMode);
 
 void uglolympic (void)
     {
@@ -427,7 +427,7 @@ void uglolympic (void)
               0,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLOlympic(void)
+void windMLOlympic(UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     
@@ -444,8 +444,13 @@ void windMLOlympic(void)
         {
         eventServiceId = UGL_NULL;
         }
+
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
     
-    umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
     if (umc == NULL)
         {
 	uglDeinitialize();

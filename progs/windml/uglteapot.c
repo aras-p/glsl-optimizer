@@ -222,15 +222,15 @@ UGL_LOCAL void loopEvent(void)
 	}
     }
 
-void windMLTeapot (void);
+void windMLTeapot (UGL_BOOL windMLMode);
 
 void uglteapot (void)
     {
     taskSpawn ("tTeapot", 210, VX_FP_TASK, 100000, (FUNCPTR)windMLTeapot,
-              0,1,2,3,4,5,6,7,8,9);
+	       UGL_FALSE,1,2,3,4,5,6,7,8,9);
     }
 
-void windMLTeapot (void)
+void windMLTeapot (UGL_BOOL windMLMode)
     {
     UGL_INPUT_DEVICE_ID keyboardDevId;
     GLsizei displayWidth, displayHeight;
@@ -252,7 +252,12 @@ void windMLTeapot (void)
     qId = uglEventQCreate (eventServiceId, 100);
 
     /* Double buffering */
-    umc = uglMesaCreateNewContext (UGL_MESA_DOUBLE, NULL);
+    if (windMLMode)
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE
+				     | UGL_MESA_WINDML_EXCLUSIVE, NULL);
+    else
+       umc = uglMesaCreateNewContext(UGL_MESA_DOUBLE, NULL);
+    
     if (umc == NULL)
         {
 	uglDeinitialize ();
