@@ -247,7 +247,7 @@ static void
 PrintInfo(const struct head *h)
 {
    printf("Name: %s\n", h->DisplayName);
-   printf("  Display:     %p\n", h->Dpy);
+   printf("  Display:     %p\n", (void *) h->Dpy);
    printf("  Window:      0x%x\n", (int) h->Win);
    printf("  Context:     0x%lx\n", (long) h->Context);
    printf("  GL_VERSION:  %s\n", h->Version);

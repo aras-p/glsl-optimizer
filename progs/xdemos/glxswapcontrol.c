@@ -576,7 +576,7 @@ event_loop(Display *dpy, Window win)
 static void
 show_refresh_rate( Display * dpy )
 {
-#if defined(GLX_OML_sync_control) && (__STDC_VERSION__ >= 199901L)
+#if defined(GLX_OML_sync_control) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
    PFNGLXGETMSCRATEOMLPROC  get_msc_rate;
    int32_t  n;
    int32_t  d;
