@@ -393,7 +393,7 @@ fxMesaCreateContext(GLuint win,
         case GR_SSTTYPE_SST96:
         case GR_SSTTYPE_Banshee:
              fxMesa->bgrOrder = GL_TRUE;
-             fxMesa->snapVertices = GL_TRUE;
+             fxMesa->snapVertices = (getenv("MESA_FX_NOSNAP") == NULL);
              break;
         case GR_SSTTYPE_Voodoo2:
              fxMesa->bgrOrder = GL_TRUE;
