@@ -34,7 +34,6 @@
 #include <expat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#define __USE_GNU /* defines program_invocation_short_name */
 #include <errno.h>
 #include "imports.h"
 #include "dri_util.h"
