@@ -1,10 +1,10 @@
-/* $Id: ac_import.c,v 1.2 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: ac_import.c,v 1.3 2001/01/16 15:25:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@
 #include "mtypes.h"
 
 #include "array_cache/ac_context.h"
+#include "math/m_translate.h"
 
 
 
@@ -282,7 +283,7 @@ static void import_color( GLcontext *ctx,
 
    to->Size = from->Size;
    to->StrideB = 4 * sizeof(GLubyte);
-   to->Type = GL_FLOAT;
+   to->Type = GL_UNSIGNED_BYTE;
    ac->Current.Color = to;
    ac->Writeable.Color = GL_TRUE;
 }
