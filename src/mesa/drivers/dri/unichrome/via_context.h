@@ -303,8 +303,6 @@ struct via_context_t {
    GLuint swap_count;
    GLuint swap_missed_count;
 
-   GLuint stipple[32];
-
    PFNGLXGETUSTPROC get_ust;
 
 };

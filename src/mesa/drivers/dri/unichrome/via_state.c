@@ -466,7 +466,7 @@ void viaEmitState(viaContextPtr vmesa)
    }
     
    if (ctx->Polygon.StippleFlag) {
-      GLuint *stipple = &vmesa->stipple[0];
+      GLuint *stipple = &ctx->PolygonStipple[0];
         
       BEGIN_RING(38);
       OUT_RING( HC_HEADER2 );             
@@ -505,8 +505,8 @@ void viaEmitState(viaContextPtr vmesa)
       OUT_RING( stipple[0] );             
       OUT_RING( HC_HEADER2 );                     
       OUT_RING( (HC_ParaType_NotTex << 16) );
-      OUT_RING( ((HC_SubA_HSPXYOS << 24) | (0x20 - (vmesa->driDrawable->h & 0x1F))) );
-      OUT_RING( ((HC_SubA_HSPXYOS << 24) | (0x20 - (vmesa->driDrawable->h & 0x1F))) );
+      OUT_RING( ((HC_SubA_HSPXYOS << 24) | (((31 - vmesa->drawX) & 0x1f) << HC_HSPXOS_SHIFT)));
+      OUT_RING( ((HC_SubA_HSPXYOS << 24) | (((31 - vmesa->drawX) & 0x1f) << HC_HSPXOS_SHIFT)));
       ADVANCE_RING();
    }
    
@@ -775,25 +775,6 @@ flip_bytes( GLubyte *p, GLuint n )
    }
 }
 #endif
-
-static void viaPolygonStipple( GLcontext *ctx, const GLubyte *mask )
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    GLubyte *s = (GLubyte *)vmesa->stipple;
-    int i;
-
-    /* Fallback for the CLE266 case.  Stipple works on the CLE266, but
-     * the stipple x/y offset registers don't seem to be respected,
-     * meaning that when drawXoff != 0, the stipple is rotated left or
-     * right by a few pixels, giving incorrect results.
-     */
-    if (vmesa->viaScreen->deviceID == VIA_CLE266) {
-   	FALLBACK( vmesa, VIA_FALLBACK_STIPPLE, ctx->Polygon.StippleFlag);
-    } else {
-    	for (i=0;i<128;i++) 
-       	    s[i] = mask[i];
-    }
-}
 
 void viaInitState(GLcontext *ctx)
 {
@@ -1424,13 +1405,11 @@ static void viaChoosePolygonState(GLcontext *ctx)
         }
     }
 
-    if (vmesa->viaScreen->deviceID != VIA_CLE266) {
-        if (ctx->Polygon.StippleFlag) {
-            vmesa->regEnable |= HC_HenSP_MASK;
-        }
-        else {
-            vmesa->regEnable &= ~HC_HenSP_MASK;
-        }
+    if (ctx->Polygon.StippleFlag) {
+        vmesa->regEnable |= HC_HenSP_MASK;
+    }
+    else {
+        vmesa->regEnable &= ~HC_HenSP_MASK;
     }
 
     if (ctx->Polygon.CullFlag) {
@@ -1634,7 +1613,6 @@ void viaInitStateFuncs(GLcontext *ctx)
     ctx->Driver.DepthRange = viaDepthRange;
     ctx->Driver.Viewport = viaViewport;
     ctx->Driver.Enable = viaEnable;
-    ctx->Driver.PolygonStipple = viaPolygonStipple;
 
     /* Pixel path fallbacks.
      */
