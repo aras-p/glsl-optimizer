@@ -628,7 +628,11 @@ generate_entrypoint(GLuint functionOffset)
    if (code) {
       memcpy(code, insn_template, sizeof(insn_template));
 
+#if defined( THREADS )
       *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_DispatchTSD;
+#else
+      *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_Dispatch;
+#endif
       *(unsigned int *)(code + 0x0b) = (unsigned int)functionOffset * 4;
       next_insn = (unsigned int)(code + 0x14);
       *(unsigned int *)(code + 0x10) = (unsigned int)_glapi_get_dispatch - next_insn;
