@@ -129,6 +129,9 @@ void MoveStars(void)
         if (stars[n].rotation > MAXANGLES) {
             stars[n].rotation = 0.0;
 	}
+        else if (stars[n].rotation < 0.0) {
+           stars[n].rotation += 360.0;
+        }
     }
 }
 
