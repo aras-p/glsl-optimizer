@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.37 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_context.c,v 1.38 2002/09/17 15:46:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -558,6 +558,24 @@ _swrast_GetDeviceDriverReference( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    return &swrast->Driver;
 }
+
+
+void
+_swrast_render_start( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.SpanRenderStart)
+      swrast->Driver.SpanRenderStart( ctx );
+}
+ 
+void
+_swrast_render_finish( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.SpanRenderFinish)
+      swrast->Driver.SpanRenderFinish( ctx );
+}
+
 
 #define SWRAST_DEBUG_VERTICES 0
 

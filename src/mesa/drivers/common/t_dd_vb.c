@@ -1,4 +1,3 @@
-/* $Id: t_dd_vb.c,v 1.16 2001/12/13 10:51:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,22 +194,78 @@ void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
    LOCALVARS
    GLuint format = GET_VERTEX_FORMAT();
 
-   if (format == TINY_VERTEX_FORMAT) {
-      fprintf(stderr, "x %f y %f z %f\n", v->v.x, v->v.y, v->v.z);
-      fprintf(stderr, "r %d g %d b %d a %d\n",
+   fprintf(stderr, "(%x) ", format);
+
+   switch (format) {
+#if HAVE_TINY_VERTICES
+   case TINY_VERTEX_FORMAT:
+      fprintf(stderr, "xyz %.4f,%.4f,%.4f rgba %x:%x:%x:%x\n",
+	      v->v.x, v->v.y, v->v.z,
 	      v->tv.color.red,
 	      v->tv.color.green,
 	      v->tv.color.blue,
 	      v->tv.color.alpha);
-   }
-   else {
-      fprintf(stderr, "x %f y %f z %f oow %f\n",
-	      v->v.x, v->v.y, v->v.z, v->v.w);
-      fprintf(stderr, "r %d g %d b %d a %d\n",
+      break;
+#endif
+#if HAVE_NOTEX_VERTICES
+   case NOTEX_VERTEX_FORMAT:
+      fprintf(stderr, "xyzw %.4f,%.4f,%.4f,%.4f rgba %x:%x:%x:%x spec %x:%x:%x:%x\n",
+	      v->v.x, v->v.y, v->v.z, v->v.w,
 	      v->v.color.red,
 	      v->v.color.green,
 	      v->v.color.blue,
-	      v->v.color.alpha);
+	      v->v.color.alpha,
+	      v->v.specular.red,
+	      v->v.specular.green,
+	      v->v.specular.blue,
+	      v->v.specular.alpha);
+      break;
+#endif
+#if HAVE_TEX0_VERTICES
+   case TEX0_VERTEX_FORMAT:
+      fprintf(stderr, "xyzw %.4f,%.4f,%.4f,%.4f rgba %x:%x:%x:%x st %.4f,%.4f\n",
+	      v->v.x, v->v.y, v->v.z, v->v.w,
+	      v->v.color.red,
+	      v->v.color.green,
+	      v->v.color.blue,
+	      v->v.color.alpha,
+	      v->v.u0,
+	      v->v.v0);
+      break;
+#endif
+#if HAVE_TEX1_VERTICES
+   case TEX1_VERTEX_FORMAT:
+      fprintf(stderr, "xyzw %.4f,%.4f,%.4f,%.4f rgba %x:%x:%x:%x st %.4f,%.4f st %.4f,%.4f\n",
+	      v->v.x, v->v.y, v->v.z, v->v.w,
+	      v->v.color.red,
+	      v->v.color.green,
+	      v->v.color.blue,
+	      v->v.color.alpha,
+	      v->v.u0,
+	      v->v.v0,
+	      v->v.u1,
+	      v->v.u2);
+      break;
+#endif
+#if HAVE_PTEX_VERTICES
+   case PROJ_TEX1_VERTEX_FORMAT:
+      fprintf(stderr, "xyzw %.4f,%.4f,%.4f,%.4f rgba %x:%x:%x:%x stq %.4f,%.4f,%.4f stq %.4f,%.4f,%.4f\n",
+	      v->v.x, v->v.y, v->v.z, v->v.w,
+	      v->v.color.red,
+	      v->v.color.green,
+	      v->v.color.blue,
+	      v->v.color.alpha,
+	      v->pv.u0,
+	      v->pv.v0,
+	      v->pv.q0,
+	      v->pv.u1,
+	      v->pv.v1,
+	      v->pv.q1);
+      break;
+#endif      
+   default:
+      fprintf(stderr, "???\n");
+      break;
    }
 
    fprintf(stderr, "\n");

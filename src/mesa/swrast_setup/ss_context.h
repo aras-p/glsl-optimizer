@@ -1,4 +1,3 @@
-/* $Id: ss_context.h,v 1.9 2001/07/17 19:39:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,12 +43,6 @@ typedef struct {
     */
    struct gl_client_array ChanColor;
    struct gl_client_array ChanSecondaryColor;
-
-
-   struct {
-      void (*Start)( GLcontext * );
-      void (*Finish)( GLcontext * );
-   } Driver;
 } SScontext;
 
 #define SWSETUP_CONTEXT(ctx) ((SScontext *)ctx->swsetup_context)

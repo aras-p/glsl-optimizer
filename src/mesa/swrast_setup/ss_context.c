@@ -1,4 +1,3 @@
-/* $Id: ss_context.c,v 1.16 2002/08/08 00:41:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +46,6 @@
 			    _NEW_POINT)
 
 #define _SWSETUP_NEW_RENDERINDEX (_NEW_POLYGON|_NEW_LIGHT)
-
 
 
 GLboolean
@@ -117,19 +115,13 @@ _swsetup_RenderStart( GLcontext *ctx )
 
    swsetup->NewState = 0;
 
-   if (swsetup->Driver.Start) 
-      swsetup->Driver.Start( ctx );
+   _swrast_render_start( ctx );
 }
 
 static void
 _swsetup_RenderFinish( GLcontext *ctx )
 {
-   SScontext *swsetup = SWSETUP_CONTEXT(ctx);
-
-   _swrast_flush( ctx );
-
-   if (swsetup->Driver.Finish) 
-      swsetup->Driver.Finish( ctx );
+   _swrast_render_finish( ctx );
 }
 
 void

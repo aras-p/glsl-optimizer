@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.19 2002/08/21 02:59:00 brianp Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.20 2002/09/17 15:46:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,7 +61,10 @@
  *    unsigned char ub4[4][16];
  * }
  *
-
+ 
+ * VERTEX:   hw vertex type as above
+ * VERTEX_COLOR: hw color struct type in VERTEX
+ *
  * DO_XYZW:  Emit xyz and maybe w coordinates.
  * DO_RGBA:  Emit color.
  * DO_SPEC:  Emit specular color.
@@ -459,11 +462,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	       *(GLuint *)&v[3] = LE32_TO_CPU(*(GLuint *)col);
 	    }
 	    else {
-	       GLubyte *b = (GLubyte *)&v[3];
-	       b[0] = col[0][2];
-	       b[1] = col[0][1];
-	       b[2] = col[0][0];
-	       b[3] = col[0][3];
+	       VERTEX_COLOR *c = (VERTEX_COLOR *)&v[3];
+	       c->blue  = col[0][2];
+	       c->green = col[0][1];
+	       c->red   = col[0][0];
+	       c->alpha = col[0][3];
 	    }
 	    STRIDE_4UB( col, col_stride );
 	 }
@@ -483,11 +486,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	       *(GLuint *)&v[3] = LE32_TO_CPU(*(GLuint *)&col[i]);
 	    }
 	    else {
-	       GLubyte *b = (GLubyte *)&v[3];
-	       b[0] = col[i][2];
-	       b[1] = col[i][1];
-	       b[2] = col[i][0];
-	       b[3] = col[i][3];
+	       VERTEX_COLOR *c = (VERTEX_COLOR *)&v[3];
+	       c->blue  = col[i][2];
+	       c->green = col[i][1];
+	       c->red   = col[i][0];
+	       c->alpha = col[i][3];
 	    }
 	 }
 /*  	 fprintf(stderr, "vert %d: %.2f %.2f %.2f %x\n",  */
@@ -528,11 +531,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	 *(GLuint *)v = LE32_TO_CPU(*(GLuint *)col[0]);
       }
       else {
-	 GLubyte *b = (GLubyte *)v;
-	 b[0] = col[0][2];
-	 b[1] = col[0][1];
-	 b[2] = col[0][0];
-	 b[3] = col[0][3];
+	 VERTEX_COLOR *c = (VERTEX_COLOR *)v;
+	 c->blue  = col[0][2];
+	 c->green = col[0][1];
+	 c->red   = col[0][0];
+	 c->alpha = col[0][3];
       }
       STRIDE_4UB( col, col_stride );
    }

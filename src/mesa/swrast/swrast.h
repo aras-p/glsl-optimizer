@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.26 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: swrast.h,v 1.27 2002/09/17 15:46:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -302,6 +302,11 @@ _swrast_Quad( GLcontext *ctx,
 extern void
 _swrast_flush( GLcontext *ctx );
 
+extern void
+_swrast_render_start( GLcontext *ctx );
+
+extern void
+_swrast_render_finish( GLcontext *ctx );
 
 /* Tell the software rasterizer about core state changes.
  */
