@@ -296,7 +296,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
    for (i=0; i<NumVisuals; i++) {
       XMesaVisual v = VisualTable[i];
       if (v->display == dpy
-          && v->level == level
+          && v->mesa_visual.level == level
           && v->ximage_flag == ximageFlag
           && v->mesa_visual.rgbMode == rgbFlag
           && v->mesa_visual.doubleBufferMode == dbFlag
@@ -1559,7 +1559,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
 	 *value = xmvis->visinfo->depth;
 	 return 0;
       case GLX_LEVEL:
-	 *value = xmvis->level;
+	 *value = xmvis->mesa_visual.level;
 	 return 0;
       case GLX_RGBA:
 	 if (xmvis->mesa_visual.rgbMode) {
@@ -1623,11 +1623,11 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          }
          return 0;
       case GLX_TRANSPARENT_TYPE_EXT:
-         if (xmvis->level==0) {
+         if (xmvis->mesa_visual.level==0) {
             /* normal planes */
             *value = GLX_NONE_EXT;
          }
-         else if (xmvis->level>0) {
+         else if (xmvis->mesa_visual.level>0) {
             /* overlay */
             if (xmvis->mesa_visual.rgbMode) {
                *value = GLX_TRANSPARENT_RGB_EXT;
@@ -1636,7 +1636,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
                *value = GLX_TRANSPARENT_INDEX_EXT;
             }
          }
-         else if (xmvis->level<0) {
+         else if (xmvis->mesa_visual.level<0) {
             /* underlay */
             *value = GLX_NONE_EXT;
          }
@@ -1668,8 +1668,8 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
        */
       case GLX_VISUAL_CAVEAT_EXT:
          /* test for zero, just in case */
-         if (xmvis->VisualCaveat > 0)
-            *value = xmvis->VisualCaveat;
+         if (xmvis->mesa_visual.visualRating > 0)
+            *value = xmvis->mesa_visual.visualRating;
          else
             *value = GLX_NONE_EXT;
          return 0;

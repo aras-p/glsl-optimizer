@@ -86,16 +86,14 @@ enum pixel_format {
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
-#ifdef XFree86Server
-   GLint screen_depth;		/* The depth of the screen */
-#else
+#ifndef XFree86Server
    XVisualInfo *vishandle;	/* Only used in fakeglx.c */
-#endif
    XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
+#else
+   GLint ColormapEntries;
+   GLint nplanes;
+#endif
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
-
-   GLint level;			/* 0=normal, 1=overlay, etc */
-   GLint VisualCaveat;          /* for GLX_EXT_visual_rating extension */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
 
@@ -105,9 +103,6 @@ struct xmesa_visual {
    GLfloat RedGamma;		/* Gamma values, 1.0 is default */
    GLfloat GreenGamma;
    GLfloat BlueGamma;
-
-   GLint rmult, gmult, bmult;	/* Range of color values */
-   GLint index_bits;		/* Bits per pixel in CI mode */
 
    /* For PF_TRUECOLOR */
    GLint rshift, gshift, bshift;/* Pixel color component shifts */

@@ -174,12 +174,11 @@ do { \
     FreeScratchGC(__gc); \
 } while (0)
 
-#define GET_COLORMAP_SIZE(__v)  __v->visinfo->ColormapEntries
-#define GET_REDMASK(__v)        __v->visinfo->redMask
-#define GET_GREENMASK(__v)      __v->visinfo->greenMask
-#define GET_BLUEMASK(__v)       __v->visinfo->blueMask
-#define GET_VISUAL_CLASS(__v)   __v->visinfo->class
-#define GET_VISUAL_DEPTH(__v)   __v->visinfo->nplanes
+#define GET_COLORMAP_SIZE(__v)  __v->ColormapEntries
+#define GET_REDMASK(__v)        __v->mesa_visual.redMask
+#define GET_GREENMASK(__v)      __v->mesa_visual.greenMask
+#define GET_BLUEMASK(__v)       __v->mesa_visual.blueMask
+#define GET_VISUAL_DEPTH(__v)   __v->nplanes
 #define GET_BLACK_PIXEL(__v)    __v->display->blackPixel
 #define CHECK_BYTE_ORDER(__v)   GL_TRUE
 #define CHECK_FOR_HPCR(__v)     GL_FALSE

@@ -48,6 +48,9 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
+#ifdef XFree86Server
+#include <GL/glxtokens.h>
+#endif
 
 /*
  * Return the size (width, height) of the X window for the given GLframebuffer.
@@ -214,10 +217,10 @@ color_mask(GLcontext *ctx,
            GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   int xclass = GET_VISUAL_CLASS(xmesa->xm_visual);
+   const int xclass = xmesa->xm_visual->mesa_visual.visualType;
    (void) amask;
 
-   if (xclass == TrueColor || xclass == DirectColor) {
+   if (xclass == GLX_TRUE_COLOR || xclass == GLX_DIRECT_COLOR) {
       unsigned long m;
       if (rmask && gmask && bmask) {
          m = ((unsigned long)~0L);

@@ -74,16 +74,11 @@ typedef XColor       XMesaColor;
 #define XMesaFreeGC            XFreeGC
 
 #define GET_COLORMAP_SIZE(__v)  __v->visinfo->colormap_size
-#define GET_REDMASK(__v)        __v->visinfo->red_mask
-#define GET_GREENMASK(__v)      __v->visinfo->green_mask
-#define GET_BLUEMASK(__v)       __v->visinfo->blue_mask
-#if defined(__cplusplus) || defined(c_plusplus)
-#define GET_VISUAL_CLASS(__v)   __v->visinfo->c_class
-#else
-#define GET_VISUAL_CLASS(__v)   __v->visinfo->class
-#endif
+#define GET_REDMASK(__v)        __v->mesa_visual.redMask
+#define GET_GREENMASK(__v)      __v->mesa_visual.greenMask
+#define GET_BLUEMASK(__v)       __v->mesa_visual.blueMask
 #define GET_VISUAL_DEPTH(__v)   __v->visinfo->depth
-#define GET_BLACK_PIXEL(__v)    BlackPixel(__v->display, __v->visinfo->screen)
+#define GET_BLACK_PIXEL(__v)    BlackPixel(__v->display, __v->mesa_visual.screen)
 #define CHECK_BYTE_ORDER(__v)   host_byte_order()==ImageByteOrder(__v->display)
 #define CHECK_FOR_HPCR(__v)     XInternAtom(__v->display, "_HP_RGB_SMOOTH_MAP_LIST", True)
 
