@@ -432,10 +432,18 @@ case $ARCH in
 	;;
 
     'BeOS')
-	LIBNAME="lib${LIBNAME}.so"
-	echo "mklib: Making BeOS shared library: " ${LIBNAME}
-	gcc -nostart -Xlinker -soname=${LIBNAME} -L/Be/develop/lib/x86 ${OBJECTS} -lbe -o ${LIBNAME}
-	FINAL_LIBS=${LIBNAME}
+        if [ $STATIC = 1 ] ; then
+            LIBNAME="lib${LIBNAME}.a"
+            echo "mklib: Making BeOS static library: " ${LIBNAME}
+            ar -cru "${LIBNAME}" ${OBJECTS}
+        else
+			LIBNAME="lib${LIBNAME}.so"
+			echo "mklib: Making BeOS shared library: " ${LIBNAME}
+			gcc -nostart -Xlinker "-soname=${LIBNAME}" -L/Be/develop/lib/x86 -lbe ${DEPS} ${OBJECTS} -o "${LIBNAME}"
+			mimeset -f "${LIBNAME}"
+			setversion "${LIBNAME}" -app ${MAJOR} ${MINOR} ${PATCH} -short "Powered by Mesa3D!" -long "Powered by Mesa3D!"
+		fi
+		FINAL_LIBS=${LIBNAME}
 	;;
 
     'QNX')
