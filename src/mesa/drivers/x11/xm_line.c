@@ -1,10 +1,10 @@
-/* $Id: xm_line.c,v 1.1 2000/09/07 15:40:30 brianp Exp $ */
+/* $Id: xm_line.c,v 1.2 2000/09/12 17:03:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -100,14 +100,14 @@ points_func xmesa_get_points_func( GLcontext *ctx )
    if (ctx->Point.Size==1.0F && !ctx->Point.SmoothFlag && ctx->RasterMask==0
        && !ctx->Texture.Enabled) {
       if (xmesa->xm_buffer->buffer==XIMAGE) {
-         return NULL; /*draw_points_ximage;*/
+         return (points_func) NULL; /*draw_points_ximage;*/
       }
       else {
          return draw_points_ANY_pixmap;
       }
    }
    else {
-      return NULL;
+      return (points_func) NULL;
    }
 }
 
@@ -673,11 +673,11 @@ line_func xmesa_get_line_func( GLcontext *ctx )
    (void) DitherValues;  /* silence unused var warning */
    (void) kernel1;  /* silence unused var warning */
 
-   if (ctx->Line.SmoothFlag)              return NULL;
-   if (ctx->Texture.Enabled)              return NULL;
-   if (ctx->Light.ShadeModel!=GL_FLAT)    return NULL;
+   if (ctx->Line.SmoothFlag)              return (line_func)NULL;
+   if (ctx->Texture.Enabled)              return (line_func)NULL;
+   if (ctx->Light.ShadeModel!=GL_FLAT)    return (line_func)NULL;
    /* X line stippling doesn't match OpenGL stippling */
-   if (ctx->Line.StippleFlag==GL_TRUE)    return NULL;
+   if (ctx->Line.StippleFlag==GL_TRUE)    return (line_func)NULL;
 
    if (xmesa->xm_buffer->buffer==XIMAGE
        && ctx->RasterMask==DEPTH_BIT
@@ -699,13 +699,13 @@ line_func xmesa_get_line_func( GLcontext *ctx )
          case PF_DITHER_5R6G5B:
             return flat_DITHER_5R6G5B_z_line;
          case PF_DITHER:
-            return (depth==8) ? flat_DITHER8_z_line : NULL;
+            return (depth==8) ? flat_DITHER8_z_line : (line_func)NULL;
          case PF_LOOKUP:
-            return (depth==8) ? flat_LOOKUP8_z_line : NULL;
+            return (depth==8) ? flat_LOOKUP8_z_line : (line_func)NULL;
          case PF_HPCR:
             return flat_HPCR_z_line;
          default:
-            return NULL;
+            return (line_func)NULL;
       }
    }
    if (xmesa->xm_buffer->buffer==XIMAGE
@@ -725,13 +725,13 @@ line_func xmesa_get_line_func( GLcontext *ctx )
          case PF_DITHER_5R6G5B:
             return flat_DITHER_5R6G5B_line;
          case PF_DITHER:
-            return (depth==8) ? flat_DITHER8_line : NULL;
+            return (depth==8) ? flat_DITHER8_line : (line_func)NULL;
          case PF_LOOKUP:
-            return (depth==8) ? flat_LOOKUP8_line : NULL;
+            return (depth==8) ? flat_LOOKUP8_line : (line_func)NULL;
          case PF_HPCR:
             return flat_HPCR_line;
 	 default:
-	    return NULL;
+	    return (line_func)NULL;
       }
    }
 #if 0
@@ -744,5 +744,5 @@ line_func xmesa_get_line_func( GLcontext *ctx )
       return flat_pixmap_line;
    }
 #endif
-   return NULL;
+   return (line_func)NULL;
 }
