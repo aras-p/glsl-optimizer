@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/monoChain.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/monoChain.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
 */
 
 #include "gluos.h"
@@ -63,7 +63,7 @@ extern Int deleteRepeatDiagonals(Int num_diagonals, directedLine** diagonal_vert
 //for debug purpose only
 static void drawDiagonals(Int num_diagonals, directedLine** diagonal_vertices)
 {
-  Int i,k;
+  Int i;
   for(i=0; i<num_diagonals; i++)
     {
       glBegin(GL_LINE);

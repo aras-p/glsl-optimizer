@@ -35,8 +35,8 @@
 /*
  * curve.c++
  *
- * $Date: 2001/08/13 16:52:18 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/curve.cc,v 1.2 2001/08/13 16:52:18 brianp Exp $
+ * $Date: 2004/05/12 15:29:36 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/curve.cc,v 1.3 2004/05/12 15:29:36 brianp Exp $
  */
 
 #include "glimports.h"
@@ -67,7 +67,6 @@ Curve::Curve( Quilt_ptr geo, REAL pta, REAL ptb, Curve *c )
     Quiltspec_ptr qs = geo->qspec;
     ps += qs->offset;
     ps += qs->index * qs->order * qs->stride;
-    REAL *pend = ps + qs->order * qs->stride;
 
     if( needsSampling )
 	mapdesc->xformSampling( ps, qs->order, qs->stride, spts, stride );

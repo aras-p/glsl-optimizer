@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2002/11/08 17:38:13 $ $Revision: 1.3 $
+** $Date: 2004/05/12 15:29:36 $ $Revision: 1.4 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleMonoPoly.cc,v 1.3 2002/11/08 17:38:13 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleMonoPoly.cc,v 1.4 2004/05/12 15:29:36 brianp Exp $
 */
 
 #include "gluos.h"
@@ -980,8 +980,10 @@ void findLeftGridIndices(directedLine* topEdge, Int firstGridIndex, Int lastGrid
   Int n_ulines = grid->get_n_ulines();
   Real uMin = grid->get_u_min();
   Real uMax = grid->get_u_max();
+  /*
   Real vMin = grid->get_v_min();
   Real vMax = grid->get_v_max();
+  */
   Real slop, uinterc;
 
 #ifdef SHORTEN_GRID_LINE
@@ -1096,8 +1098,10 @@ void findRightGridIndices(directedLine* topEdge, Int firstGridIndex, Int lastGri
   Int n_ulines = grid->get_n_ulines();
   Real uMin = grid->get_u_min();
   Real uMax = grid->get_u_max();
+  /*
   Real vMin = grid->get_v_min();
   Real vMax = grid->get_v_max();
+  */
   Real slop, uinterc;
 
 #ifdef SHORTEN_GRID_LINE

@@ -35,8 +35,8 @@
 /*
  * bin.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/bin.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/bin.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
  */
 
 #include "glimports.h"
@@ -154,12 +154,12 @@ Bin::listBezier( void )
     for( Arc_ptr jarc=firstarc(); jarc; jarc=nextarc() ) {
 	if( jarc->isbezier( ) ) {
     	    assert( jarc->pwlArc->npts == 2 );	
+#ifndef NDEBUG
 	    TrimVertex  *pts = jarc->pwlArc->pts;
     	    REAL s1 = pts[0].param[0];
     	    REAL t1 = pts[0].param[1];
     	    REAL s2 = pts[1].param[0];
     	    REAL t2 = pts[1].param[1];
-#ifndef NDEBUG
 	   dprintf( "arc (%g,%g) (%g,%g)\n", s1, t1, s2, t2 );
 #endif
 	}

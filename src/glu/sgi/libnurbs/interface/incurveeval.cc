@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
+** $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/incurveeval.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/incurveeval.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
 */
 
 #include <stdlib.h>
@@ -97,7 +97,7 @@ void OpenGLCurveEvaluator::inMap1f(int which, //0: vert, 1: norm, 2: color, 3: t
 				   int uorder,
 				   REAL *ctlpoints)
 {
-  int i,j,x;
+  int i,x;
   curveEvalMachine *temp_em;
   switch(which){
   case 0: //vertex
@@ -139,7 +139,6 @@ void OpenGLCurveEvaluator::inDoDomain1(curveEvalMachine *em, REAL u, REAL *retPo
 {
   int j, row;
   REAL the_uprime;
-  REAL p;
   REAL *data;
   
   if(em->u2 == em->u1)

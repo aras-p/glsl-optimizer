@@ -35,8 +35,8 @@
 /*
  * intersect.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/intersect.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/intersect.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
  */
 
 #include "glimports.h"
@@ -175,7 +175,7 @@ int
 Subdivider::arc_split( Arc_ptr jarc, int param, REAL value, int dir )
 {
     int		maxvertex = jarc->pwlArc->npts;
-    Arc_ptr	jarc1, jarc2, jarc3;
+    Arc_ptr	jarc1;
     TrimVertex* v = jarc->pwlArc->pts;
 
     int		loc[3];
@@ -258,7 +258,8 @@ Subdivider::arc_split( Arc_ptr jarc, int param, REAL value, int dir )
 #endif //not NOTDEF
 		// JEB: This is the original version:
 #ifdef NOTDEF
-
+            Arc_ptr    jarc2, jarc3;
+	    
 	    TrimVertex *newjunk = trimvertexpool.get(3);
 	    v[i].nuid = jarc->nuid;
 	    v[j].nuid = jarc->nuid;

@@ -719,7 +719,6 @@ sampledLine*  DBG_collectSampledLinesAllPoly(directedLine *polygonList)
 void  DBG_collectSampledLinesPoly(directedLine *polygon, sampledLine*& retHead, sampledLine*& retTail)
 {
   directedLine *temp;
-  sampledLine *ret = NULL;
   retHead = NULL;
   retTail = NULL;
   if(polygon == NULL)

@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2002/03/23 02:29:37 $ $Revision: 1.2 $
+** $Date: 2004/05/12 15:29:36 $ $Revision: 1.3 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/insurfeval.cc,v 1.2 2002/03/23 02:29:37 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/insurfeval.cc,v 1.3 2004/05/12 15:29:36 brianp Exp $
 */
 
 #include "gluos.h"
@@ -403,7 +403,6 @@ void OpenGLSurfaceEvaluator::inEvalMesh2(int lowU, int lowV, int highU, int high
 {
   REAL du, dv;
   int i,j;
-  int row;
   REAL point[4];
   REAL normal[3];
   if(global_grid_nu == 0 || global_grid_nv == 0)
@@ -874,7 +873,7 @@ void OpenGLSurfaceEvaluator::inDoDomain2WithDerivsBU(int k, REAL u, REAL v,
 						      REAL *baseData,
 						      REAL *retPoint, REAL* retdu, REAL *retdv)
 {
-  int j, row, col;
+  int j, col;
 
   REAL vprime;
 
@@ -909,7 +908,7 @@ void OpenGLSurfaceEvaluator::inDoDomain2WithDerivsBV(int k, REAL u, REAL v,
 						      REAL *baseData,
 						      REAL *retPoint, REAL* retdu, REAL *retdv)
 {
-  int j, row, col;
+  int j, row;
   REAL uprime;
 
 
@@ -1828,7 +1827,7 @@ void OpenGLSurfaceEvaluator::inDoEvalCoord2EM(REAL u, REAL v)
 
 void OpenGLSurfaceEvaluator::inBPMEvalEM(bezierPatchMesh* bpm)
 {
-  int i,j,k,l;
+  int i,j,k;
   float u,v;
 
   int ustride;

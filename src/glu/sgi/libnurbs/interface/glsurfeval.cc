@@ -970,7 +970,6 @@ if(output_triangles)
 
   REAL du, dv;
   long i,j;
-  long row;
   if(global_grid_nu == 0 || global_grid_nv == 0)
     return; /*no points need to be output*/
   du = (global_grid_u1 - global_grid_u0) / (REAL)global_grid_nu;

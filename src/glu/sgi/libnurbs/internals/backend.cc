@@ -35,8 +35,8 @@
 /*
  * backend.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/backend.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/backend.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
  */
 
 /* Bezier surface backend
@@ -326,7 +326,9 @@ void
 Backend::tmeshvert( TrimVertex *t )
 {
 
+#ifndef NOWIREFRAME
     const long nuid = t->nuid;
+#endif
     const REAL u = t->param[0];
     const REAL v = t->param[1];
 
@@ -365,11 +367,9 @@ Backend::tmeshvert( TrimVertex *t )
 void
 Backend::tmeshvert( REAL u, REAL v )
 {
-
-    const long nuid = 0;
-
-
 #ifndef NOWIREFRAME
+    const long nuid = 0;
+    
     npts++;
     if( wireframetris ) {
 	if( npts >= 3 ) {

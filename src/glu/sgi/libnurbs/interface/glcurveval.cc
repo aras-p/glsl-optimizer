@@ -35,8 +35,8 @@
 /*
  * glcurveval.c++
  *
- * $Date: 2003/04/30 15:20:37 $ $Revision: 1.5 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.5 2003/04/30 15:20:37 brianp Exp $
+ * $Date: 2004/05/12 15:29:36 $ $Revision: 1.6 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.6 2004/05/12 15:29:36 brianp Exp $
  */
 
 /* Polynomial Evaluator Interface */
@@ -208,8 +208,8 @@ OpenGLCurveEvaluator::map1f(
 {
   if(output_triangles)
     {
-      int dimension;
-      int which;
+      int dimension = 0;
+      int which = 0;
       switch(type){
       case GL_MAP1_VERTEX_3:
 	which = 0;

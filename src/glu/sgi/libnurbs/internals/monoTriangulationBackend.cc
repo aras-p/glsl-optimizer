@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2004/05/12 15:29:36 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/monoTriangulationBackend.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/monoTriangulationBackend.cc,v 1.2 2004/05/12 15:29:36 brianp Exp $
 */
 
 #include "monoTriangulation.h"
@@ -45,7 +45,9 @@
 void reflexChain::outputFan(Real v[2], Backend* backend)
 {
   Int i;
+  /*
   TrimVertex trimVert;
+  */
   backend->bgntfan();
 
   /*
