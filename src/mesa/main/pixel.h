@@ -36,7 +36,7 @@
 
 
 /** \name API functions */
-/*@*/
+/*@{*/
 
 extern void GLAPIENTRY
 _mesa_GetPixelMapfv( GLenum map, GLfloat *values );

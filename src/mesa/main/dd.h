@@ -703,9 +703,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /*@}*/
-
-
    /** 
     * \name State-query functions
     *

@@ -116,6 +116,9 @@
 /** Number of texture units - GL_ARB_multitexture */
 #define MAX_TEXTURE_UNITS 8
 
+/*@}*/
+
+
 /**
  * \name Separate numbers of texture coordinates and texture image units.
  *
