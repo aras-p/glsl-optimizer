@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.16 2000/01/13 00:32:12 brianp Exp $ */
+/* $Id: image.c,v 1.17 2000/02/21 16:33:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1579,10 +1579,17 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
           srcType == GL_INT ||
           srcType == GL_FLOAT ||
           srcType == GL_UNSIGNED_BYTE_3_3_2 ||
+          srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5 ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5_REV ||
           srcType == GL_UNSIGNED_SHORT_4_4_4_4 ||
+          srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ||
           srcType == GL_UNSIGNED_SHORT_5_5_5_1 ||
+          srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ||
           srcType == GL_UNSIGNED_INT_8_8_8_8 ||
-          srcType == GL_UNSIGNED_INT_10_10_10_2);
+          srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
+          srcType == GL_UNSIGNED_INT_10_10_10_2 ||
+          srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
    rComp = gComp = bComp = aComp = -1;
 
@@ -1980,10 +1987,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
                SWAP4BYTE(p);
-               rgba[i][rComp] = ((p      ) & 0x3  ) * (1.0F /    3.0F);
-               rgba[i][gComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
-               rgba[i][bComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
-               rgba[i][aComp] = ((p >> 22)        ) * (1.0F / 1023.0F);
+               rgba[i][rComp] = ((p >> 22)        ) * (1.0F / 1023.0F);
+               rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
+               rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
+               rgba[i][aComp] = ((p      ) & 0x3  ) * (1.0F /    3.0F);
             }
          }
          else {
@@ -1991,10 +1998,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = ((p      ) & 0x3  ) * (1.0F /    3.0F);
-               rgba[i][gComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
-               rgba[i][bComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
-               rgba[i][aComp] = ((p >> 22)        ) * (1.0F / 1023.0F);
+               rgba[i][rComp] = ((p >> 22)        ) * (1.0F / 1023.0F);
+               rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
+               rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
+               rgba[i][aComp] = ((p      ) & 0x3  ) * (1.0F /    3.0F);
             }
          }
          break;
@@ -2088,10 +2095,17 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
           srcType == GL_INT ||
           srcType == GL_FLOAT ||
           srcType == GL_UNSIGNED_BYTE_3_3_2 ||
+          srcType == GL_UNSIGNED_BYTE_2_3_3_REV ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5 ||
+          srcType == GL_UNSIGNED_SHORT_5_6_5_REV ||
           srcType == GL_UNSIGNED_SHORT_4_4_4_4 ||
+          srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV ||
           srcType == GL_UNSIGNED_SHORT_5_5_5_1 ||
+          srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV ||
           srcType == GL_UNSIGNED_INT_8_8_8_8 ||
-          srcType == GL_UNSIGNED_INT_10_10_10_2);
+          srcType == GL_UNSIGNED_INT_8_8_8_8_REV ||
+          srcType == GL_UNSIGNED_INT_10_10_10_2 ||
+          srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
    /* this is intended for RGBA mode */
    assert(ctx->Visual->RGBAflag);
