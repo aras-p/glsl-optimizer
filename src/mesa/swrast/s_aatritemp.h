@@ -164,10 +164,10 @@
 #ifdef DO_INDEX
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(p0, p1, p2, (GLfloat) v0->index,
-                    (GLfloat) v1->index, (GLfloat) v2->index, iPlane);
+                    v1->index, v2->index, iPlane);
    }
    else {
-      constant_plane((GLfloat) v2->index, iPlane);
+      constant_plane(v2->index, iPlane);
    }
    span.arrayMask |= SPAN_INDEX;
 #endif
