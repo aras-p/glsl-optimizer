@@ -463,19 +463,30 @@ _mesa_BindProgramARB(GLenum target, GLuint program)
    }
    else {
       prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, program);
-   }
-   if (!prog && program > 0){
-      /* allocate new program */
-      prog = _mesa_alloc_program(ctx, target, program);
-      if (!prog) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramARB");
-         return;
+      if (prog) {
+         if (prog->Target == 0) {
+            /* prog was allocated with glGenProgramsARB */
+            prog->Target = target;
+         }
+         else if (prog->Target != target) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBindProgramARB(target mismatch)");
+            return;
+         }
       }
-      prog->Id = program;
-      prog->Target = target;
-      prog->Resident = GL_TRUE;
-      prog->RefCount = 1;
-      _mesa_HashInsert(ctx->Shared->Programs, program, prog);
+      else {
+         /* allocate a new program now */
+         prog = _mesa_alloc_program(ctx, target, program);
+         if (!prog) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramARB");
+            return;
+         }
+         prog->Id = program;
+         prog->Target = target;
+         prog->Resident = GL_TRUE;
+         prog->RefCount = 1;
+         _mesa_HashInsert(ctx->Shared->Programs, program, prog);
+      }
    }
 
    /* bind now */

@@ -227,12 +227,24 @@ _mesa_BindProgramNV(GLenum target, GLuint id)
     */
    if (id == 0) {
       /* OK, the null program object */
+      /* XXX use the ARB_vertex/fragment prorgram default objects??? */
       prog = NULL;
    }
    else {
       prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
-      if (!prog && id > 0){
-         /* allocate new program */
+      if (prog) {
+         if (prog->Target == 0) {
+            /* prog was allocated with glGenProgramsNV */
+            prog->Target = target;
+         }
+         else if (prog->Target != target) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBindProgramNV(target mismatch)");
+            return;
+         }
+      }
+      else {
+         /* allocate a new program now */
          prog = _mesa_alloc_program(ctx, target, id);
          if (!prog) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindProgramNV");
