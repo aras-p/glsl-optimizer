@@ -165,6 +165,55 @@ void __glXInitVertexArrayState(__GLXcontext *gc)
 
 /*****************************************************************************/
 
+/**
+ * \name Vertex array pointer bridge functions
+ *
+ * When EXT_vertex_array was moved into the core GL spec, the \c count
+ * parameter was lost.  This libGL really only wants to implement the GL 1.1
+ * version, but we need to support applications that were written to the old
+ * interface.  These bridge functions are part of the glue that makes this
+ * happen.
+ */
+/*@{*/
+void __indirect_glColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+			    GLsizei count, const GLvoid * pointer )
+{
+    (void) count; __indirect_glColorPointer( size, type, stride, pointer );
+}
+
+void __indirect_glEdgeFlagPointerEXT(GLsizei stride,
+			       GLsizei count, const GLboolean * pointer )
+{
+    (void) count; __indirect_glEdgeFlagPointer( stride, pointer );
+}
+
+void __indirect_glIndexPointerEXT(GLenum type, GLsizei stride,
+			    GLsizei count, const GLvoid * pointer )
+{
+    (void) count; __indirect_glIndexPointer( type, stride, pointer );
+}
+
+void __indirect_glNormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+			     const GLvoid * pointer )
+{
+    (void) count; __indirect_glNormalPointer( type, stride, pointer );
+}
+
+void __indirect_glTexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
+			       GLsizei count, const GLvoid * pointer )
+{
+    (void) count; __indirect_glTexCoordPointer( size, type, stride, pointer );
+}
+
+void __indirect_glVertexPointerEXT(GLint size, GLenum type, GLsizei stride,
+			    GLsizei count, const GLvoid * pointer )
+{
+    (void) count; __indirect_glVertexPointer( size, type, stride, pointer );
+}
+/*@}*/
+
+/*****************************************************************************/
+
 void __indirect_glVertexPointer(GLint size, GLenum type, GLsizei stride,
 		     const GLvoid *pointer)
 {

@@ -45,53 +45,6 @@ static int NoOp(void)
     return 0;
 }
 
-/**
- * \name Vertex array pointer bridge functions
- *
- * When EXT_vertex_array was moved into the core GL spec, the \c count
- * parameter was lost.  This libGL really only wants to implement the GL 1.1
- * version, but we need to support applications that were written to the old
- * interface.  These bridge functions are part of the glue that makes this
- * happen.
- */
-/*@{*/
-static void ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
-			    GLsizei count, const GLvoid * pointer )
-{
-    (void) count; __indirect_glColorPointer( size, type, stride, pointer );
-}
-
-static void EdgeFlagPointerEXT(GLsizei stride,
-			       GLsizei count, const GLboolean * pointer )
-{
-    (void) count; __indirect_glEdgeFlagPointer( stride, pointer );
-}
-
-static void IndexPointerEXT(GLenum type, GLsizei stride,
-			    GLsizei count, const GLvoid * pointer )
-{
-    (void) count; __indirect_glIndexPointer( type, stride, pointer );
-}
-
-static void NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
-			     const GLvoid * pointer )
-{
-    (void) count; __indirect_glNormalPointer( type, stride, pointer );
-}
-
-static void TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
-			       GLsizei count, const GLvoid * pointer )
-{
-    (void) count; __indirect_glTexCoordPointer( size, type, stride, pointer );
-}
-
-static void VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
-			    GLsizei count, const GLvoid * pointer )
-{
-    (void) count; __indirect_glVertexPointer( size, type, stride, pointer );
-}
-/*@}*/
-
 
 __GLapi *__glXNewIndirectAPI(void)
 {
@@ -492,8 +445,8 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->SeparableFilter2D = __indirect_glSeparableFilter2D;
 
     /* 1.4 */
-    glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArrays;
-    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElements;
+    glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
+    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
 
     /* ARB 1. GL_ARB_multitexture */
     glAPI->ActiveTextureARB = __indirect_glActiveTextureARB;
@@ -577,12 +530,12 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->SamplePatternSGIS = __indirect_glSamplePatternSGIS;
 
     /* 30. GL_EXT_vertex_array */
-    glAPI->ColorPointerEXT    = ColorPointerEXT;
-    glAPI->EdgeFlagPointerEXT = EdgeFlagPointerEXT;
-    glAPI->IndexPointerEXT    = IndexPointerEXT;
-    glAPI->NormalPointerEXT   = NormalPointerEXT;
-    glAPI->TexCoordPointerEXT = TexCoordPointerEXT;
-    glAPI->VertexPointerEXT   = VertexPointerEXT;
+    glAPI->ColorPointerEXT    = __indirect_glColorPointerEXT;
+    glAPI->EdgeFlagPointerEXT = __indirect_glEdgeFlagPointerEXT;
+    glAPI->IndexPointerEXT    = __indirect_glIndexPointerEXT;
+    glAPI->NormalPointerEXT   = __indirect_glNormalPointerEXT;
+    glAPI->TexCoordPointerEXT = __indirect_glTexCoordPointerEXT;
+    glAPI->VertexPointerEXT   = __indirect_glVertexPointerEXT;
 
     /* 145. GL_EXT_secondary_color / GL 1.4 */
     glAPI->SecondaryColor3bEXT       = __indirect_glSecondaryColor3bEXT;

@@ -563,8 +563,8 @@ void __indirect_glWindowPos3dvARB(const GLdouble * p);
 void __indirect_glWindowPos3ivARB(const GLint * p);
 void __indirect_glWindowPos3svARB(const GLshort * p);
 
-void __indirect_glMultiDrawArrays(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
-void __indirect_glMultiDrawElements(GLenum mode, const GLsizei *count, GLenum type, const GLvoid ** indices, GLsizei primcount);
+void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
+void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type, const GLvoid ** indices, GLsizei primcount);
 
 void __indirect_glSampleMaskSGIS( GLfloat value, GLboolean invert );
 void __indirect_glSamplePatternSGIS( GLenum pass );
@@ -594,6 +594,19 @@ void __indirect_glCompressedTexSubImage3DARB( GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLint zoffset,
     GLsizei width, GLsizei height, GLsizei depth,
     GLenum format, GLsizei image_size, const GLvoid *data );
+
+void __indirect_glColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+    GLsizei count, const GLvoid * pointer );
+void __indirect_glEdgeFlagPointerEXT(GLsizei stride,
+    GLsizei count, const GLboolean * pointer );
+void __indirect_glIndexPointerEXT(GLenum type, GLsizei stride,
+    GLsizei count, const GLvoid * pointer );
+void __indirect_glNormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+    const GLvoid * pointer );
+void __indirect_glTexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
+    GLsizei count, const GLvoid * pointer );
+void __indirect_glVertexPointerEXT(GLint size, GLenum type, GLsizei stride,
+    GLsizei count, const GLvoid * pointer );
 
 /* 145. GL_EXT_secondary_color / GL 1.4 */
 
