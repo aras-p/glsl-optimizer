@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.16 2000/02/12 17:26:15 brianp Exp $ */
+/* $Id: teximage.c,v 1.17 2000/02/21 16:34:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -967,7 +967,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   teximage = texUnit->CurrentD[3]->Image[level];
+   teximage = texUnit->CurrentD[dimensions]->Image[level];
    if (!teximage) {
       char message[100];
       sprintf(message, "glCopyTexSubImage%dD(undefined texture)", dimensions);
