@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.5 2001/12/14 02:48:10 brianp Exp $
+# $Id: APIspec,v 1.6 2002/05/27 16:58:24 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -6719,52 +6719,52 @@ return		void
 param		x	GLdouble
 param		y	GLdouble
 category	GL_ARB_window_pos
-offset		578	# unofficial
+alias		WindowPos2dMESA
 
 name		WindowPos2fARB
 return		void
 param		x	GLfloat
 param		y	GLfloat
 category	GL_ARB_window_pos
-offset		579	# unofficial
+alias		WindowPos2fMESA
 
 name		WindowPos2iARB
 return		void
 param		x	GLint
 param		y	GLint
 category	GL_ARB_window_pos
-offset		580	# unofficial
+alias		WindowPos2iMESA
 
 name		WindowPos2sARB
 return		void
 param		x	GLshort
 param		y	GLshort
 category	GL_ARB_window_pos
-offset		581	# unofficial
+alias		WindowPos2sMESA
 
 name		WindowPos2dvARB
 return		void
 param		p	const GLdouble *
 category	GL_ARB_window_pos
-offset		582	# unofficial
+alias		WindowPos2dvMESA
 
 name		WindowPos2fvARB
 return		void
 param		p	const GLfloat *
 category	GL_ARB_window_pos
-offset		583	# unofficial
+alias		WindowPos2fvMESA
 
 name		WindowPos2ivARB
 return		void
 param		p	const GLint *
 category	GL_ARB_window_pos
-offset		584	# unofficial
+alias		WindowPos2ivMESA
 
 name		WindowPos2svARB
 return		void
 param		p	const GLshort *
 category	GL_ARB_window_pos
-offset		585	# unofficial
+alias		WindowPos2svMESA
 
 name		WindowPos3dARB
 return		void
@@ -6772,7 +6772,7 @@ param		x	GLdouble
 param		y	GLdouble
 param		z	GLdouble
 category	GL_ARB_window_pos
-offset		586	# unofficial
+alias		WindowPos3dMESA
 
 name		WindowPos3fARB
 return		void
@@ -6780,7 +6780,7 @@ param		x	GLfloat
 param		y	GLfloat
 param		z	GLfloat
 category	GL_ARB_window_pos
-offset		587	# unofficial
+alias		WindowPos3fMESA
 
 name		WindowPos3iARB
 return		void
@@ -6788,7 +6788,7 @@ param		x	GLint
 param		y	GLint
 param		z	GLint
 category	GL_ARB_window_pos
-offset		588	# unofficial
+alias		WindowPos3iMESA
 
 name		WindowPos3sARB
 return		void
@@ -6796,63 +6796,34 @@ param		x	GLshort
 param		y	GLshort
 param		z	GLshort
 category	GL_ARB_window_pos
-offset		589	# unofficial
+alias		WindowPos3sMESA
 
 name		WindowPos3dvARB
 return		void
 param		p	const GLdouble *
 category	GL_ARB_window_pos
-offset		590	# unofficial
+alias		WindowPos3dvMESA
 
 name		WindowPos3fvARB
 return		void
 param		p	const GLfloat *
 category	GL_ARB_window_pos
-offset		591	# unofficial
+alias		WindowPos3fvMESA
 
 name		WindowPos3ivARB
 return		void
 param		p	const GLint *
 category	GL_ARB_window_pos
-offset		592	# unofficial
+alias		WindowPos3ivMESA
 
 name		WindowPos3svARB
 return		void
 param		p	const GLshort *
 category	GL_ARB_window_pos
-offset		593	# unofficial
+alias		WindowPos3svMESA
 
 
 # GL_NV_vertex_program
-
-name		BindProgramNV
-return		void
-param		target	GLenum
-param		id	GLuint
-category	GL_NV_vertex_program
-offset		594
-
-name		DeleteProgramsNV
-return		void
-param		n	GLsizei
-param		ids	const GLuint *
-category	GL_NV_vertex_program
-offset		595
-
-name		ExecuteProgramNV
-return		void
-param		target	GLenum
-param		id	GLuint
-param		params	const GLfloat *
-category	GL_NV_vertex_program
-offset		596
-
-name		GenProgramsNV
-return		void
-param		n	GLsizei
-param		ids	GLuint *
-category	GL_NV_vertex_program
-offset		597
 
 name		AreProgramsResidentNV
 return		GLboolean
@@ -6860,23 +6831,36 @@ param		n		GLsizei
 param		ids		const GLuint *
 param		residences	GLboolean *
 category	GL_NV_vertex_program
-offset		598
+offset		578
 
-name		RequestResidentProgramsNV
+name		BindProgramNV
+return		void
+param		target	GLenum
+param		id	GLuint
+category	GL_NV_vertex_program
+offset		579
+
+name		DeleteProgramsNV
 return		void
 param		n	GLsizei
 param		ids	const GLuint *
 category	GL_NV_vertex_program
-offset		599
+offset		580
 
-name		GetProgramParameterfvNV
+name		ExecuteProgramNV
 return		void
 param		target	GLenum
-param		index	GLuint
-param		pname	GLenum
-param		params	GLfloat *
+param		id	GLuint
+param		params	const GLfloat *
 category	GL_NV_vertex_program
-offset		600
+offset		581
+
+name		GenProgramsNV
+return		void
+param		n	GLsizei
+param		ids	GLuint *
+category	GL_NV_vertex_program
+offset		582
 
 name		GetProgramParameterdvNV
 return		void
@@ -6885,7 +6869,16 @@ param		index	GLuint
 param		pname	GLenum
 param		params	GLdouble *
 category	GL_NV_vertex_program
-offset		601
+offset		583
+
+name		GetProgramParameterfvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_vertex_program
+offset		584
 
 name		GetProgramivNV
 return		void
@@ -6893,7 +6886,7 @@ param		id	GLuint
 param		pname	GLenum
 param		params	GLint *
 category	GL_NV_vertex_program
-offset		602
+offset		585
 
 name		GetProgramStringNV
 return		void
@@ -6901,7 +6894,7 @@ param		id	GLuint
 param		pname	GLenum
 param		program GLubyte *
 category	GL_NV_vertex_program
-offset		603
+offset		586
 
 name		GetTrackMatrixivNV
 return		void
@@ -6910,7 +6903,7 @@ param		address GLuint
 param		pname	GLenum
 param		params	GLint *
 category	GL_NV_vertex_program
-offset		604
+offset		587
 
 name		GetVertexAttribdvNV
 return		void
@@ -6918,7 +6911,7 @@ param		index	GLuint
 param		pname	GLenum
 param		params	GLdouble *
 category	GL_NV_vertex_program
-offset		605
+offset		588
 
 name		GetVertexAttribfvNV
 return		void
@@ -6926,7 +6919,7 @@ param		index	GLuint
 param		pname	GLenum
 param		params	GLfloat *
 category	GL_NV_vertex_program
-offset		606
+offset		589
 
 name		GetVertexAttribivNV
 return		void
@@ -6934,7 +6927,7 @@ param		index	GLuint
 param		pname	GLenum
 param		params	GLint *
 category	GL_NV_vertex_program
-offset		607
+offset		590
 
 name		GetVertexAttribPointervNV
 return		void
@@ -6942,13 +6935,13 @@ param		index		GLuint
 param		pname		GLenum
 param		pointer 	GLvoid **
 category	GL_NV_vertex_program
-offset		608
+offset		591
 
 name		IsProgramNV
 return		GLboolean
 param		id	GLuint
 category	GL_NV_vertex_program
-offset		609
+offset		592
 
 name		LoadProgramNV
 return		void
@@ -6957,18 +6950,7 @@ param		id		GLuint
 param		len		GLsizei
 param		program		const GLubyte *
 category	GL_NV_vertex_program
-offset		610
-
-name		ProgramParameter4fNV
-return		void
-param		target	GLenum
-param		index	GLuint
-param		x	GLfloat
-param		y	GLfloat
-param		z	GLfloat
-param		w	GLfloat
-category	GL_NV_vertex_program
-offset		611
+offset		593
 
 name		ProgramParameter4dNV
 return		void
@@ -6979,7 +6961,7 @@ param		y	GLdouble
 param		z	GLdouble
 param		w	GLdouble
 category	GL_NV_vertex_program
-offset		612
+offset		594
 
 name		ProgramParameter4dvNV
 return		void
@@ -6987,7 +6969,18 @@ param		target		GLenum
 param		index		GLuint
 param		params		const GLdouble *
 category	GL_NV_vertex_program
-offset		613
+offset		595
+
+name		ProgramParameter4fNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+offset		596
 
 name		ProgramParameter4fvNV
 return		void
@@ -6995,7 +6988,7 @@ param		target		GLenum
 param		index		GLuint
 param		params		const GLfloat *
 category	GL_NV_vertex_program
-offset		614
+offset		597
 
 name		ProgramParameters4dvNV
 return		void
@@ -7004,7 +6997,7 @@ param		index		GLuint
 param		num		GLuint
 param		params		const GLdouble *
 category	GL_NV_vertex_program
-offset		615
+offset		598
 
 name		ProgramParameters4fvNV
 return		void
@@ -7013,7 +7006,14 @@ param		index		GLuint
 param		num		GLuint
 param		params		const GLfloat *
 category	GL_NV_vertex_program
-offset		616
+offset		599
+
+name		RequestResidentProgramsNV
+return		void
+param		n	GLsizei
+param		ids	const GLuint *
+category	GL_NV_vertex_program
+offset		600
 
 name		TrackMatrixNV
 return		void
@@ -7022,7 +7022,7 @@ param		address		GLuint
 param		matrix		GLenum
 param		transform	GLenum
 category	GL_NV_vertex_program
-offset		617
+offset		601
 
 name		VertexAttribPointerNV
 return		void
@@ -7032,44 +7032,49 @@ param		type		GLenum
 param		stride		GLsizei
 param		pointer 	const GLvoid *
 category	GL_NV_vertex_program
-offset		618
-
-name		VertexAttrib1sNV
-return		void
-param		index	GLuint
-param		x	GLshort
-category	GL_NV_vertex_program
-offset		619
-
-name		VertexAttrib1fNV
-return		void
-param		index	GLuint
-param		x	GLfloat
-category	GL_NV_vertex_program
-offset		620
+offset		602
 
 name		VertexAttrib1dNV
 return		void
 param		index	GLuint
 param		x	GLdouble
 category	GL_NV_vertex_program
-offset		621
+offset		603
 
-name		VertexAttrib2sNV
+name		VertexAttrib1dvNV
 return		void
 param		index	GLuint
-param		x	GLshort
-param		y	GLshort
+param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		622
+offset		604
 
-name		VertexAttrib2fNV
+name		VertexAttrib1fNV
 return		void
 param		index	GLuint
 param		x	GLfloat
-param		y	GLfloat
 category	GL_NV_vertex_program
-offset		623
+offset		605
+
+name		VertexAttrib1fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		606
+
+name		VertexAttrib1sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+category	GL_NV_vertex_program
+offset		607
+
+name		VertexAttrib1svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		608
 
 name		VertexAttrib2dNV
 return		void
@@ -7077,25 +7082,44 @@ param		index	GLuint
 param		x	GLdouble
 param		y	GLdouble
 category	GL_NV_vertex_program
-offset		624
+offset		609
 
-name		VertexAttrib3sNV
+name		VertexAttrib2dvNV
 return		void
 param		index	GLuint
-param		x	GLshort
-param		y	GLshort
-param		z	GLshort
+param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		625
+offset		610
 
-name		VertexAttrib3fNV
+name		VertexAttrib2fNV
 return		void
 param		index	GLuint
 param		x	GLfloat
 param		y	GLfloat
-param		z	GLfloat
 category	GL_NV_vertex_program
-offset		626
+offset		611
+
+name		VertexAttrib2fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		612
+
+name		VertexAttrib2sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+category	GL_NV_vertex_program
+offset		613
+
+name		VertexAttrib2svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		614
 
 name		VertexAttrib3dNV
 return		void
@@ -7104,27 +7128,46 @@ param		x	GLdouble
 param		y	GLdouble
 param		z	GLdouble
 category	GL_NV_vertex_program
-offset		627
+offset		615
 
-name		VertexAttrib4sNV
+name		VertexAttrib3dvNV
 return		void
 param		index	GLuint
-param		x	GLshort
-param		y	GLshort
-param		z	GLshort
-param		w	GLshort
+param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		628
+offset		616
 
-name		VertexAttrib4fNV
+name		VertexAttrib3fNV
 return		void
 param		index	GLuint
 param		x	GLfloat
 param		y	GLfloat
 param		z	GLfloat
-param		w	GLfloat
 category	GL_NV_vertex_program
-offset		629
+offset		617
+
+name		VertexAttrib3fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		618
+
+name		VertexAttrib3sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+category	GL_NV_vertex_program
+offset		619
+
+name		VertexAttrib3svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		620
 
 name		VertexAttrib4dNV
 return		void
@@ -7134,7 +7177,48 @@ param		y	GLdouble
 param		z	GLdouble
 param		w	GLdouble
 category	GL_NV_vertex_program
-offset		630
+offset		621
+
+name		VertexAttrib4dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+offset		622
+
+name		VertexAttrib4fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+offset		623
+
+name		VertexAttrib4fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		624
+
+name		VertexAttrib4sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+param		w	GLshort
+category	GL_NV_vertex_program
+offset		625
+
+name		VertexAttrib4svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		626
 
 name		VertexAttrib4ubNV
 return		void
@@ -7144,114 +7228,14 @@ param		y	GLubyte
 param		z	GLubyte
 param		w	GLubyte
 category	GL_NV_vertex_program
-offset		631
-
-name		VertexAttrib1svNV
-return		void
-param		index	GLuint
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		632
-
-name		VertexAttrib1fvNV
-return		void
-param		index	GLuint
-param		v	const GLfloat *
-category	GL_NV_vertex_program
-offset		633
-
-name		VertexAttrib1dvNV
-return		void
-param		index	GLuint
-param		v	const GLdouble *
-category	GL_NV_vertex_program
-offset		634
-
-name		VertexAttrib2svNV
-return		void
-param		index	GLuint
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		635
-
-name		VertexAttrib2fvNV
-return		void
-param		index	GLuint
-param		v	const GLfloat *
-category	GL_NV_vertex_program
-offset		636
-
-name		VertexAttrib2dvNV
-return		void
-param		index	GLuint
-param		v	const GLdouble *
-category	GL_NV_vertex_program
-offset		637
-
-name		VertexAttrib3svNV
-return		void
-param		index	GLuint
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		638
-
-name		VertexAttrib3fvNV
-return		void
-param		index	GLuint
-param		v	const GLfloat *
-category	GL_NV_vertex_program
-offset		639
-
-name		VertexAttrib3dvNV
-return		void
-param		index	GLuint
-param		v	const GLdouble *
-category	GL_NV_vertex_program
-offset		640
-
-name		VertexAttrib4svNV
-return		void
-param		index	GLuint
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		641
-
-name		VertexAttrib4fvNV
-return		void
-param		index	GLuint
-param		v	const GLfloat *
-category	GL_NV_vertex_program
-offset		642
-
-name		VertexAttrib4dvNV
-return		void
-param		index	GLuint
-param		v	const GLdouble *
-category	GL_NV_vertex_program
-offset		643
+offset		627
 
 name		VertexAttrib4ubvNV
 return		void
 param		index	GLuint
 param		v	const GLubyte *
 category	GL_NV_vertex_program
-offset		644
-
-name		VertexAttribs1svNV
-return		void
-param		index	GLuint
-param		n	GLsizei
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		645
-
-name		VertexAttribs1fvNV
-return		void
-param		index	GLuint
-param		n	GLsizei
-param		v	const GLfloat *
-category	GL_NV_vertex_program
-offset		646
+offset		628
 
 name		VertexAttribs1dvNV
 return		void
@@ -7259,23 +7243,23 @@ param		index	GLuint
 param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		647
+offset		629
 
-name		VertexAttribs2svNV
-return		void
-param		index	GLuint
-param		n	GLsizei
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		648
-
-name		VertexAttribs2fvNV
+name		VertexAttribs1fvNV
 return		void
 param		index	GLuint
 param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
-offset		649
+offset		630
+
+name		VertexAttribs1svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		631
 
 name		VertexAttribs2dvNV
 return		void
@@ -7283,23 +7267,23 @@ param		index	GLuint
 param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		650
+offset		632
 
-name		VertexAttribs3svNV
-return		void
-param		index	GLuint
-param		n	GLsizei
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		651
-
-name		VertexAttribs3fvNV
+name		VertexAttribs2fvNV
 return		void
 param		index	GLuint
 param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
-offset		652
+offset		633
+
+name		VertexAttribs2svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		634
 
 name		VertexAttribs3dvNV
 return		void
@@ -7307,23 +7291,23 @@ param		index	GLuint
 param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		653
+offset		635
 
-name		VertexAttribs4svNV
-return		void
-param		index	GLuint
-param		n	GLsizei
-param		v	const GLshort *
-category	GL_NV_vertex_program
-offset		654
-
-name		VertexAttribs4fvNV
+name		VertexAttribs3fvNV
 return		void
 param		index	GLuint
 param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
-offset		655
+offset		636
+
+name		VertexAttribs3svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		637
 
 name		VertexAttribs4dvNV
 return		void
@@ -7331,7 +7315,23 @@ param		index	GLuint
 param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
-offset		656
+offset		638
+
+name		VertexAttribs4fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+offset		639
+
+name		VertexAttribs4svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+offset		640
 
 name		VertexAttribs4ubvNV
 return		void
@@ -7339,7 +7339,7 @@ param		index	GLuint
 param		n	GLsizei
 param		v	const GLubyte *
 category	GL_NV_vertex_program
-offset		657
+offset		641
 
 
 name		dummy
