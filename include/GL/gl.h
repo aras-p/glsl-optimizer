@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.33 2000/02/25 21:01:41 brianp Exp $ */
+/* $Id: gl.h,v 1.34 2000/03/20 19:26:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,7 +99,7 @@
 
 /* compatability guard so we don't need to change client code */
 
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(OPENSTEP)
+#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP)
 #	define CALLBACK GLCALLBACK
 typedef int (GLAPIENTRY *PROC)();
 typedef void *HGLRC;
@@ -107,9 +107,10 @@ typedef void *HDC;
 typedef unsigned long COLORREF;
 #endif
 
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(OPENSTEP)
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
 #	define WGL_FONT_LINES      0
 #	define WGL_FONT_POLYGONS   1
+#ifndef _GNU_H_WINDOWS32_FUNCTIONS
 #	ifdef UNICODE
 #		define wglUseFontBitmaps  wglUseFontBitmapsW
 #		define wglUseFontOutlines  wglUseFontOutlinesW
@@ -117,6 +118,7 @@ typedef unsigned long COLORREF;
 #		define wglUseFontBitmaps  wglUseFontBitmapsA
 #		define wglUseFontOutlines  wglUseFontOutlinesA
 #	endif /* !UNICODE */
+#endif /* _GNU_H_WINDOWS32_FUNCTIONS */
 typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
 typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
 typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
@@ -2321,40 +2323,6 @@ GLAPI void GLAPIENTRY glWindowPos4dvMESA( const GLdouble *p );
 GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #endif /* GL_MESA_resize_bufffers */
-
-
-
-/*
- * GL_ARB_tranpose_matrix (ARB 2)
- */
-#ifndef GL_ARB_transpose_matrix
-#define GL_ARB_transpose_matrix 1
-
-#define GL_TRANSPOSE_MODELVIEW_MATRIX_ARB		0x84E3
-#define GL_TRANSPOSE_PROJECTION_MATRIX_ARB		0x84E4
-#define GL_TRANSPOSE_TEXTURE_MATRIX_ARB			0x84E5
-#define GL_TRANSPOSE_COLOR_MATRIX_ARB			0x84E6
-
-GLAPI void GLAPIENTRY glLoadTransposeMatrixdARB( const GLdouble m[16] );
-GLAPI void GLAPIENTRY glLoadTransposeMatrixfARB( const GLfloat m[16] );
-GLAPI void GLAPIENTRY glMultTransposeMatrixdARB( const GLdouble m[16] );
-GLAPI void GLAPIENTRY glMultTransposeMatrixfARB( const GLfloat m[16] );
-
-#endif /* GL_ARB_tranpose_matrix */
-
-
-
-/*
- * GL_ARB_multisample (ARB 4)
- */
-#ifndef GL_ARB_multisample
-#define GL_ARB_multisample 1
-
-GLAPI void GLAPIENTRY glSampleCoverageARB(GLclampf value, GLboolean invert);
-
-GLAPI void GLAPIENTRY glSamplePassARB(GLenum pass);
-
-#endif /* GL_ARB_multisample */
 
 
 
