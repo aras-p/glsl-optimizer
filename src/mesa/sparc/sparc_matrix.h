@@ -1,4 +1,4 @@
-/* $Id: sparc_matrix.h,v 1.2 2001/06/05 23:54:01 davem69 Exp $ */
+/* $Id: sparc_matrix.h,v 1.3 2001/06/06 11:46:04 davem69 Exp $ */
 
 #ifndef _SPARC_MATRIX_H
 #define _SPARC_MATRIX_H
@@ -145,6 +145,11 @@
 	ld	[BASE + (10 * 0x4)], M10;	\
 	ldd	[BASE + (12 * 0x4)], M12;	\
 	ld	[BASE + (14 * 0x4)], M14
+
+#define LDMATRIX_0_5_10(BASE) 			\
+	ld	[BASE + ( 0 * 0x4)], M0;	\
+	ld	[BASE + ( 5 * 0x4)], M5;	\
+	ld	[BASE + (10 * 0x4)], M10;	\
 
 #define LDMATRIX_0_5_10_12_13_14(BASE) 		\
 	ld	[BASE + ( 0 * 0x4)], M0;	\

@@ -1,4 +1,4 @@
-/* $Id: sparc.c,v 1.3 2001/06/05 23:54:01 davem69 Exp $ */
+/* $Id: sparc.c,v 1.4 2001/06/06 11:46:04 davem69 Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,6 +86,22 @@ extern GLvector4f  *_mesa_sparc_cliptest_points4_np(GLvector4f *clip_vec,
 						    GLubyte clipMask[],
 						    GLubyte *orMask,
 						    GLubyte *andMask);
+
+#define NORM_ARGS	const GLmatrix *mat,				\
+			GLfloat scale,					\
+			const GLvector3f *in,				\
+			const GLfloat *lengths,				\
+			GLvector3f *dest
+
+extern void _mesa_sparc_transform_normalize_normals(NORM_ARGS);
+extern void _mesa_sparc_transform_normalize_normals_no_rot(NORM_ARGS);
+extern void _mesa_sparc_transform_rescale_normals_no_rot(NORM_ARGS);
+extern void _mesa_sparc_transform_rescale_normals(NORM_ARGS);
+extern void _mesa_sparc_transform_normals_no_rot(NORM_ARGS);
+extern void _mesa_sparc_transform_normals(NORM_ARGS);
+extern void _mesa_sparc_normalize_normals(NORM_ARGS);
+extern void _mesa_sparc_rescale_normals(NORM_ARGS);
+
 #endif
 
 void _mesa_init_all_sparc_transform_asm(void)
@@ -99,9 +115,27 @@ void _mesa_init_all_sparc_transform_asm(void)
    _mesa_clip_tab[4] = _mesa_sparc_cliptest_points4;
    _mesa_clip_np_tab[4] = _mesa_sparc_cliptest_points4_np;
 
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE] =
+	   _mesa_sparc_transform_normalize_normals;
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE] =
+	   _mesa_sparc_transform_normalize_normals_no_rot;
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE] =
+	   _mesa_sparc_transform_rescale_normals_no_rot;
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE] =
+	   _mesa_sparc_transform_rescale_normals;
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT] =
+	   _mesa_sparc_transform_normals_no_rot;
+   _mesa_normal_tab[NORM_TRANSFORM] =
+	   _mesa_sparc_transform_normals;
+   _mesa_normal_tab[NORM_NORMALIZE] =
+	   _mesa_sparc_normalize_normals;
+   _mesa_normal_tab[NORM_RESCALE] =
+	   _mesa_sparc_rescale_normals;
+
 #ifdef DEBUG
    _math_test_all_transform_functions("sparc");
    _math_test_all_cliptest_functions("sparc");
+   _math_test_all_normal_transform_functions("sparc");
 #endif
 
 #endif
