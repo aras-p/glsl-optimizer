@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.3 2000/01/27 16:53:55 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.4 2000/02/02 20:57:51 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -131,11 +131,20 @@ static void
 print_screen_info(Display *dpy, int scrnum)
 {
    Window win;
-   int attrib[] = { GLX_RGBA,
-		    GLX_RED_SIZE, 1,
-		    GLX_GREEN_SIZE, 1,
-		    GLX_BLUE_SIZE, 1,
-		    None };
+   int attribSingle[] = {
+      GLX_RGBA,
+      GLX_RED_SIZE, 1,
+      GLX_GREEN_SIZE, 1,
+      GLX_BLUE_SIZE, 1,
+      None };
+   int attribDouble[] = {
+      GLX_RGBA,
+      GLX_RED_SIZE, 1,
+      GLX_GREEN_SIZE, 1,
+      GLX_BLUE_SIZE, 1,
+      GLX_DOUBLEBUFFER,
+      None };
+
    XSetWindowAttributes attr;
    unsigned long mask;
    Window root;
@@ -145,10 +154,13 @@ print_screen_info(Display *dpy, int scrnum)
 
    root = RootWindow(dpy, scrnum);
 
-   visinfo = glXChooseVisual(dpy, scrnum, attrib);
+   visinfo = glXChooseVisual(dpy, scrnum, attribSingle);
    if (!visinfo) {
-      fprintf(stderr, "Error: couldn't find RGB GLX visual!\n");
-      return;
+      visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
+      if (!visinfo) {
+         fprintf(stderr, "Error: couldn't find RGB GLX visual!\n");
+         return;
+      }
    }
 
    attr.background_pixel = 0;
