@@ -241,16 +241,16 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
-static void Init( GLboolean ciMode )
+static void Init( GLboolean ciMode, const char *filename )
 {
    static const GLfloat fogColor[4] = {0, 1, 0, 0};
 
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
-   Image = LoadRGBImage( IMAGE_FILE, &ImgWidth, &ImgHeight, &ImgFormat );
+   Image = LoadRGBImage( filename, &ImgWidth, &ImgHeight, &ImgFormat );
    if (!Image) {
-      printf("Couldn't read %s\n", IMAGE_FILE);
+      printf("Couldn't read %s\n", filename);
       exit(0);
    }
 
@@ -320,9 +320,15 @@ static void Usage(void)
 int main( int argc, char *argv[] )
 {
    GLboolean ciMode = GL_FALSE;
+   const char *filename = IMAGE_FILE;
+   int i = 1;
 
-   if (argc > 1 && strcmp(argv[1], "-ci")==0) {
+   if (argc > i && strcmp(argv[i], "-ci")==0) {
       ciMode = GL_TRUE;
+      i++;
+   }
+   if (argc > i) {
+      filename = argv[i];
    }
 
    glutInit( &argc, argv );
@@ -336,7 +342,7 @@ int main( int argc, char *argv[] )
 
    glutCreateWindow(argv[0]);
 
-   Init(ciMode);
+   Init(ciMode, filename);
    Usage();
 
    glutReshapeFunc( Reshape );
