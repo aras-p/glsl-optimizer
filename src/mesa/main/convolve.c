@@ -954,10 +954,10 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
 
    /* unpack column filter */
    if (column) {
-     _mesa_unpack_color_span_float(ctx, height, GL_RGBA,
-                                   &ctx->Separable2D.Filter[colStart],
-                                   format, type, column, &ctx->Unpack,
-                                   0); /* transferOps */
+      _mesa_unpack_color_span_float(ctx, height, GL_RGBA,
+                                    &ctx->Separable2D.Filter[colStart],
+                                    format, type, column, &ctx->Unpack,
+                                    0); /* transferOps */
 
       _mesa_scale_and_bias_rgba(height,
                        (GLfloat (*)[4]) (ctx->Separable2D.Filter + colStart),
