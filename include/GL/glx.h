@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: glx.h,v 1.2 1999/09/11 11:33:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,8 +27,11 @@
 
 /*
  * $Log: glx.h,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/09/11 11:33:45  brianp
+ * added GLX_EXT_get_proc_address
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.3  1999/02/14 03:39:09  brianp
  * new copyright
@@ -154,13 +157,12 @@ enum _GLX_CONFIGS {
 /*
  * Compile-time extension tests
  */
-#ifdef MESA
 #define GLX_EXT_visual_info		1
 #define GLX_MESA_pixmap_colormap	1
 #define GLX_MESA_release_buffers	1
 #define GLX_MESA_copy_sub_buffer	1
 #define GLX_SGI_video_sync		1
-#endif
+#define GLX_EXT_get_proc_address	1
 
 
 
@@ -226,6 +228,9 @@ extern const char *glXQueryServerString( Display *dpy, int screen, int name );
 
 extern const char *glXGetClientString( Display *dpy, int name );
 
+
+/* GLX_EXT_get_proc_address */
+extern GLfunction glXGetProcAddressEXT(const GLubyte *procName);
 
 
 /*

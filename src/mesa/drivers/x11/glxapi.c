@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: glxapi.c,v 1.2 1999/09/11 11:35:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -402,4 +402,15 @@ int glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
    return 0;
 }
 
+#endif
+
+
+#ifdef GLX_EXT_get_proc_address
+GLfunction glXGetProcAddressEXT( const GLubyte *procName )
+{
+#ifdef REALGLX
+   return 0;  /* XXX todo */
+#endif
+   return Fake_glXGetProcAddress( procName );
+}
 #endif

@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.2 1999/09/03 11:53:33 keithw Exp $ */
+/* $Id: fakeglx.c,v 1.3 1999/09/11 11:35:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1471,4 +1471,30 @@ void Fake_glXDummyFunc( void )
    (void) DitherValues;
    (void) HPCR_DRGB;
    (void) kernel1;
+}
+
+
+GLfunction Fake_glXGetProcAddress( const GLubyte *procName )
+{
+    struct proc {
+      const char *name;
+      void *address;
+   };
+   static struct proc procTable[] = {
+      { "glXGetProcAddressEXT", glXGetProcAddressEXT },  /* myself! */
+      { "glXReleaseBuffersMESA", glXReleaseBuffersMESA },
+      { "glXReleaseBuffersMESA", glXReleaseBuffersMESA },
+      { "glXCopySubBufferMESA", glXCopySubBufferMESA },
+      /* NOTE: GLX_SGI_video_sync not implemented in Mesa */
+      { NULL, NULL }  /* end of list token */
+   };
+   GLuint i;
+
+   /* First, look for core library functions */
+   for (i = 0; procTable[i].address; i++) {
+      if (strcmp((const char *) procName, procTable[i].name) == 0)
+	  return (GLfunction) procTable[i].address;
+   }
+
+   return NULL;
 }
