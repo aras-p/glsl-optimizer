@@ -1,4 +1,4 @@
-/* $Id: fxapi.c,v 1.33 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: fxapi.c,v 1.34 2002/10/14 17:08:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -742,7 +742,7 @@ fxMesaSwapBuffers(void)
    }
 
    if (fxMesaCurrentCtx) {
-      _mesa_swapbuffers(fxMesaCurrentCtx->glCtx);
+      _mesa_notifySwapBuffers(fxMesaCurrentCtx->glCtx);
 
       if (fxMesaCurrentCtx->haveDoubleBuffer) {
 

@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.38 2002/10/11 17:41:06 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.39 2002/10/14 17:08:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -146,7 +146,7 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
       ASSERT(target->db_state);
       if (target->backpixmap) {
          /* back buffer is a pixmape */
-         target->buffer = target->backpixmap;
+         target->buffer = target->backpixmap; /* incompatible types? */
       }
       else if (target->backimage) {
          /* back buffer is an XImage */

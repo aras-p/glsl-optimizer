@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.39 2002/10/11 17:41:05 brianp Exp $ */
+/* $Id: wmesa.c,v 1.40 2002/10/14 17:08:28 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -1459,7 +1459,7 @@ void WMesaSwapBuffers( void )
    * we have to flush any pending rendering commands first.
    */
   if (Current && Current->gl_ctx == ctx)
-    _mesa_swapbuffers(ctx);
+    _mesa_notifySwapBuffers(ctx);
   
   if (Current->db_flag)
     wmFlush(Current);

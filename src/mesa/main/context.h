@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.33 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: context.h,v 1.34 2002/10/14 17:08:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -215,10 +215,6 @@ extern void
 _mesa_endDispatchOverride(__GLcontext *gc);
 
 
-
-
-extern void
-_mesa_swapbuffers(GLcontext *ctx);
 
 extern struct _glapi_table *
 _mesa_get_dispatch(GLcontext *ctx);

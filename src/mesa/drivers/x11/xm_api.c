@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.44 2002/10/09 19:35:11 brianp Exp $ */
+/* $Id: xm_api.c,v 1.45 2002/10/14 17:08:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1642,6 +1642,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    _mesa_enable_sw_extensions(ctx);
    _mesa_enable_1_3_extensions(ctx);
+   /*_mesa_enable_1_4_extensions(ctx);*/
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
@@ -2329,7 +2330,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
     * we have to flush any pending rendering commands first.
     */
    if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
-      _mesa_swapbuffers(ctx);
+      _mesa_notifySwapBuffers(ctx);
 
    if (b->db_state) {
 #ifdef FX
@@ -2395,7 +2396,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
     * we have to flush any pending rendering commands first.
     */
    if (ctx && ctx->DrawBuffer == &(b->mesa_buffer))
-      _mesa_swapbuffers(ctx);
+      _mesa_notifySwapBuffers(ctx);
 
    if (b->db_state) {
       int yTop = b->height - y - height;

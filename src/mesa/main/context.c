@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.183 2002/10/11 17:41:03 brianp Exp $ */
+/* $Id: context.c,v 1.184 2002/10/14 17:08:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,19 +75,6 @@ int MESA_VERBOSE = 0;
 
 #ifndef MESA_DEBUG_FLAGS
 int MESA_DEBUG_FLAGS = 0;
-#endif
-
-/* XFree86 stuff */
-#ifdef getenv
-#undef getenv
-#endif
-#ifdef calloc
-#undef calloc
-extern void *calloc(size_t, size_t);
-#endif
-#ifdef free
-#undef free
-extern void free(void *);
 #endif
 
 
@@ -186,6 +173,8 @@ _mesa_notifyResize(__GLcontext *gc)
 void
 _mesa_notifyDestroy(__GLcontext *gc)
 {
+   /* Called when the context's window/buffer is going to be destroyed. */
+   /* Unbind from it. */
 }
 
 /* Called by window system just before swapping buffers.
@@ -250,28 +239,10 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
     if (ctx == NULL) {
 	return NULL;
     }
-    ctx->Driver.CurrentExecPrimitive=0;  /* XXX why is this here??? */
+
     ctx->imports = *imports;
     _mesa_init_default_exports(&(ctx->exports));
-
-    _mesa_initialize_visual(&ctx->Visual,
-                            modes->rgbMode,
-                            modes->doubleBufferMode,
-                            modes->stereoMode,
-                            modes->redBits,
-                            modes->greenBits,
-                            modes->blueBits,
-                            modes->alphaBits,
-                            modes->indexBits,
-                            modes->depthBits,
-                            modes->stencilBits,
-                            modes->accumRedBits,
-                            modes->accumGreenBits,
-                            modes->accumBlueBits,
-                            modes->accumAlphaBits,
-                            0);
-
-    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports);
+    _mesa_initialize_context(ctx, modes, NULL, imports);
 
     return ctx;
 }
@@ -590,7 +561,7 @@ one_time_init( GLcontext *ctx )
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();
 #endif
-      if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
+      if ((*ctx->imports.getenv)(ctx, "MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
 #ifndef GLX_DIRECT_RENDERING
          /* libGL from before 2002/06/28 don't have this function.  Someday,
@@ -1499,13 +1470,13 @@ init_attrib_groups( GLcontext *ctx )
    ctx->_Facing = 0;
 
    /* For debug/development only */
-   ctx->NoRaster = ctx->imports.getenv(ctx, "MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
+   ctx->NoRaster = (*ctx->imports.getenv)(ctx, "MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
    ctx->FirstTimeCurrent = GL_TRUE;
 
    /* Dither disable */
-   ctx->NoDither = ctx->imports.getenv(ctx, "MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
+   ctx->NoDither = (*ctx->imports.getenv)(ctx, "MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
    if (ctx->NoDither) {
-      if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
+      if ((*ctx->imports.getenv)(ctx, "MESA_DEBUG")) {
          _mesa_debug(ctx, "MESA_NO_DITHER set - dithering disabled\n");
       }
       ctx->Color.DitherFlag = GL_FALSE;
@@ -1660,6 +1631,7 @@ _mesa_initialize_context( GLcontext *ctx,
                           const __GLimports *imports )
 {
    GLuint dispatchSize;
+   const char *c;
 
    ASSERT(imports);
    ASSERT(imports->other); /* other points to the device driver's context */
@@ -1881,41 +1853,13 @@ _mesa_initialize_context( GLcontext *ctx,
    }
    ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
 
+   c = (*ctx->imports.getenv)(ctx, "MESA_DEBUG");
+   if (c)
+      add_debug_flags(c);
 
-#if defined(MESA_TRACE)
-   ctx->TraceCtx = (trace_context_t *) CALLOC( sizeof(trace_context_t) );
-#if 0
-   /* Brian: do you want to have CreateContext fail here,
-       or should we just trap in NewTrace (currently done)? */
-   if (!(ctx->TraceCtx)) {
-      free_shared_state(ctx, ctx->Shared);
-      FREE( ctx->Exec );
-      FREE( ctx->Save );
-      return GL_FALSE;
-   }
-#endif
-   trInitContext(ctx->TraceCtx);
-
-   ctx->TraceDispatch = (struct _glapi_table *)
-                        CALLOC(dispatchSize * sizeof(void*));
-#if 0
-   if (!(ctx->TraceCtx)) {
-      free_shared_state(ctx, ctx->Shared);
-      FREE( ctx->Exec );
-      FREE( ctx->Save );
-      FREE( ctx->TraceCtx );
-      return GL_FALSE;
-   }
-#endif
-   trInitDispatch(ctx->TraceDispatch);
-#endif
-
-
-   if (ctx->imports.getenv(ctx, "MESA_DEBUG"))
-      add_debug_flags(ctx->imports.getenv(ctx, "MESA_DEBUG"));
-
-   if (ctx->imports.getenv(ctx, "MESA_VERBOSE"))
-      add_debug_flags(ctx->imports.getenv(ctx, "MESA_VERBOSE"));
+   c = (*ctx->imports.getenv)(ctx, "MESA_VERBOSE");
+   if (c)
+      add_debug_flags(c);
 
    return GL_TRUE;
 }
@@ -1940,17 +1884,15 @@ _mesa_create_context( const GLvisual *visual,
    ASSERT(imports);
    ASSERT(imports->calloc);
 
-   ctx = (GLcontext *) imports->calloc(NULL, 1, sizeof(GLcontext));
+   ctx = (GLcontext *) (*imports->calloc)(NULL, 1, sizeof(GLcontext));
    if (!ctx)
       return NULL;
-
-   ctx->Driver.CurrentExecPrimitive = 0;  /* XXX why is this here??? */
 
    if (_mesa_initialize_context(ctx, visual, share_list, imports)) {
       return ctx;
    }
    else {
-      imports->free(NULL, ctx);
+      (*imports->free)(NULL, ctx);
       return NULL;
    }
 }
@@ -2330,7 +2272,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
        * information.
        */
       if (newCtx->FirstTimeCurrent) {
-	 if (newCtx->imports.getenv(newCtx, "MESA_INFO")) {
+	 if ((*newCtx->imports.getenv)(newCtx, "MESA_INFO")) {
 	    print_info();
 	 }
 	 newCtx->FirstTimeCurrent = GL_FALSE;
@@ -2350,20 +2292,6 @@ _mesa_get_current_context( void )
 {
    return (GLcontext *) _glapi_get_context();
 }
-
-
-
-/*
- * This should be called by device drivers just before they do a
- * swapbuffers.  Any pending rendering commands will be executed.
- * XXX we should really rename this function to _mesa_flush() or something.
- */
-void
-_mesa_swapbuffers(GLcontext *ctx)
-{
-   FLUSH_VERTICES( ctx, 0 );
-}
-
 
 
 /*

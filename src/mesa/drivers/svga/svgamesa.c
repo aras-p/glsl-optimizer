@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.20 2002/07/09 01:22:51 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.21 2002/10/14 17:08:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -482,7 +482,7 @@ void SVGAMesaSwapBuffers( void )
    copy_buffer(SVGABuffer.BackBuffer);
 
 #ifndef DEV
-   _mesa_swapbuffers( SVGAMesa->gl_ctx );
+   _mesa_notifySwapBuffers( SVGAMesa->gl_ctx );
    if (SVGAMesa->gl_vis->doubleBufferMode)
 #endif /* DEV */
    {

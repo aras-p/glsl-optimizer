@@ -936,6 +936,6 @@ void DMesaSwapBuffers (DMesaBuffer b)
 {
  /* copy/swap back buffer to front if applicable */
  GET_CURRENT_CONTEXT(ctx);
- _mesa_swapbuffers(ctx);
+ _mesa_notifySwapBuffers(ctx);
  vl_flip(b->the_window, b->stride, b->height);
 }

@@ -554,7 +554,7 @@ void ggiMesaSwapBuffers(void)
 	
 	GGIMESADPRINT_CORE("ggiMesaSwapBuffers() called\n");	
 	
-	_mesa_swapbuffers(ctx);
+	_mesa_notifySwapBuffers(ctx);
 	gl_ggiFlush(ctx);
 
 	ggiSetDisplayFrame(ggi_ctx->ggi_visual,

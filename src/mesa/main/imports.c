@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.18 2002/08/03 16:19:20 kschultz Exp $ */
+/* $Id: imports.c,v 1.19 2002/10/14 17:08:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,12 +84,11 @@ static char * CAPI
 _mesa_getenv(__GLcontext *gc, const char *var)
 {
    (void) gc;
-/* Whacko XFree86 macro:
- */
-#ifdef getenv
-#undef getenv
-#endif
+#ifdef XFree86LOADER
+   return xf86getenv(var);
+#else
    return getenv(var);
+#endif
 }
 
 
