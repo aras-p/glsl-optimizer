@@ -1,4 +1,4 @@
-/* $Id: t_dd_vertex.h,v 1.10 2002/06/03 16:06:35 brianp Exp $ */
+/* $Id: t_dd_vertex.h,v 1.11 2002/06/05 16:48:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@ typedef struct {
 
 #ifdef COLOR_IS_RGBA
 typedef struct {
-#ifdef __BIG_ENDIAN
+#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
    GLubyte alpha, blue, green, red;
 #else
    GLubyte red, green, blue, alpha;
@@ -41,7 +41,7 @@ typedef struct {
 } TAG(_color_t);
 #else
 typedef struct {
-#ifdef __BIG_ENDIAN
+#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
    GLubyte alpha, red, green, blue;
 #else
    GLubyte blue, green, red, alpha;
