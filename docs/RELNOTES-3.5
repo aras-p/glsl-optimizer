@@ -193,19 +193,19 @@ interface structures like __GLimports and __GLexports.
 
 
 
-Internal color values
+16-bit color channels
 ---------------------
 
-Previously, Mesa treated color channel values as GLubytes in [0,255].
-Mesa 3.5 uses the GLchan datatype for color channel values.  In the
-future it will be possible to define GLchan to be larger than a byte
-in order to support high-precision colors.
+There's experimental support for 16-bit color channels (64-bit pixels)
+in Mesa 3.5.  Only the OSMesa interface can be used for 16-bit rendering.
+Type "make linux-osmesa16" in the top-level directory to build the
+special libOSMesa16.so library.
 
-Many, many occurances of GLubyte have been replaced with GLchan
-and many occurances of the number 255 have been replaced with CHAN_MAX.
+This hasn't been tested very thoroughly yet so please file bug reports
+if you have trouble.
 
-Support for CHAN_BITS > 8 is not ready yet but will be eventually.
-
+In the future I hope to implement support for 32-bit, floating point
+color channels.
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.11 2001/04/20 02:34:12 brianp Exp $
+$Id: RELNOTES-3.5,v 1.12 2001/04/26 22:33:34 brianp Exp $
