@@ -55,8 +55,6 @@
 
 #include <inttypes.h>
 #include "glxclient.h"           /* for GLXDrawable */
-/* temporary */
-/* typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator); */
 #include "drm.h"             /* for drm_clip_rect_t */
 #include "sarea.h"               /* for XF86DRISAREAPtr */
 #include "GL/internal/glcore.h"  /* for __GLcontextModes */
@@ -372,7 +370,7 @@ struct __DRIcontextPrivateRec {
     /**
      * Kernel context handle used to access the device lock.
      */
-    XID contextID;
+    __DRIid contextID;
 
     /**
      * Kernel context handle used to access the device lock.
