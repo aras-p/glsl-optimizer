@@ -24,12 +24,10 @@ C_SOURCES = \
 	  compsize.c \
 	  dispatch.c \
 	  eval.c \
-	  g_render.c \
-	  g_single.c \
-	  g_vendpriv.c \
 	  glxcmds.c \
 	  glxext.c \
 	  glxextensions.c \
+	  indirect.c \
 	  indirect_init.c \
 	  indirect_size.c \
 	  indirect_window_pos.c \

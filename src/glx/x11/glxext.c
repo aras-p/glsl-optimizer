@@ -44,7 +44,7 @@
  * \author Kevin E. Martin <kevin@precisioninsight.com>
  */     
 
-#include "packrender.h"
+#include "glxclient.h"
 #include <stdio.h>
 #include <Xext.h>
 #include <extutil.h>

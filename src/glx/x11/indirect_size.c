@@ -171,6 +171,7 @@ __glTexParameterfv_size( GLenum e )
         case GL_GENERATE_MIPMAP:
 /*      case GL_GENERATE_MIPMAP_SGIS:*/
         case GL_TEXTURE_LOD_BIAS:
+/*      case GL_TEXTURE_LOD_BIAS_EXT:*/
         case GL_DEPTH_TEXTURE_MODE:
 /*      case GL_DEPTH_TEXTURE_MODE_ARB:*/
         case GL_TEXTURE_COMPARE_MODE:

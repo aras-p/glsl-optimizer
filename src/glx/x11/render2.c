@@ -44,31 +44,6 @@
 ** use the pixel header.  See renderpix.c for those routines.
 */
 
-void __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
-{
-    __GLX_DECLARE_VARIABLES();
-    __GLX_LOAD_VARIABLES();
-
-    compsize = (n <= 0) ? 0 : __glCallLists_size(type) * n;
-    cmdlen = __GLX_PAD(12 + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE(X_GLrop_CallLists,cmdlen);
-	__GLX_PUT_LONG(4,n);
-	__GLX_PUT_LONG(8,type);
-	__GLX_PUT_CHAR_ARRAY(12,lists,compsize);
-	__GLX_END(cmdlen);
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE(X_GLrop_CallLists,cmdlen+4);
-	__GLX_PUT_LONG(8,n);
-	__GLX_PUT_LONG(12,type);
-	__glXSendLargeCommand(gc, pc, 16, lists, compsize);
-    }
-}
-
 void __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 	     GLint order, const GLdouble *pnts)
 {
@@ -333,93 +308,6 @@ void __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr, GLint
     }
 }
 
-void __indirect_glPixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (mapsize < 0) {
-	__glXSetError(gc, GL_INVALID_VALUE);
-	return;
-    }
-    compsize = mapsize * __GLX_SIZE_FLOAT32;
-    cmdlen = 12+compsize;
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE(X_GLrop_PixelMapfv,cmdlen);
-	__GLX_PUT_LONG(4,map);
-	__GLX_PUT_LONG(8,mapsize);
-	__GLX_PUT_FLOAT_ARRAY(12,values,mapsize);
-	__GLX_END(cmdlen);
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE(X_GLrop_PixelMapfv,cmdlen+4);
-	__GLX_PUT_LONG(8,map);
-	__GLX_PUT_LONG(12,mapsize);
-	__glXSendLargeCommand(gc, pc, 16, values, compsize);
-    }
-}
-
-void __indirect_glPixelMapuiv(GLenum map, GLint mapsize, const GLuint *values)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (mapsize < 0) {
-	__glXSetError(gc, GL_INVALID_VALUE);
-	return;
-    }
-    compsize = mapsize * __GLX_SIZE_CARD32;
-    cmdlen = 12+compsize;
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE(X_GLrop_PixelMapuiv,cmdlen);
-	__GLX_PUT_LONG(4,map);
-	__GLX_PUT_LONG(8,mapsize);
-	__GLX_PUT_LONG_ARRAY(12,values,mapsize);
-	__GLX_END(cmdlen);
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE(X_GLrop_PixelMapuiv,cmdlen+4);
-	__GLX_PUT_LONG(8,map);
-	__GLX_PUT_LONG(12,mapsize);
-	__glXSendLargeCommand(gc, pc, 16, values, compsize);
-    }
-}
-
-void __indirect_glPixelMapusv(GLenum map, GLint mapsize, const GLushort *values)
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (mapsize < 0) {
-	__glXSetError(gc, GL_INVALID_VALUE);
-	return;
-    }
-    compsize = mapsize * __GLX_SIZE_CARD16;
-    cmdlen = __GLX_PAD(12 + compsize);
-    if (!gc->currentDpy) return;
-
-    if (cmdlen <= gc->maxSmallRenderCommandSize) {
-	/* Use GLXRender protocol to send small command */
-	__GLX_BEGIN_VARIABLE(X_GLrop_PixelMapusv,cmdlen);
-	__GLX_PUT_LONG(4,map);
-	__GLX_PUT_LONG(8,mapsize);
-	__GLX_PUT_SHORT_ARRAY(12,values,mapsize);
-	__GLX_END(cmdlen);
-    } else {
-	/* Use GLXRenderLarge protocol to send command */
-	__GLX_BEGIN_VARIABLE_LARGE(X_GLrop_PixelMapusv,cmdlen+4);
-	__GLX_PUT_LONG(8,map);
-	__GLX_PUT_LONG(12,mapsize);
-	__glXSendLargeCommand(gc, pc, 16, values, compsize);
-    }
-}
-
 void __indirect_glEnable(GLenum cap)
 {
     __GLX_DECLARE_VARIABLES();
@@ -471,43 +359,5 @@ void __indirect_glDisable(GLenum cap)
 
     __GLX_BEGIN(X_GLrop_Disable,8);
     __GLX_PUT_LONG(4,cap);
-    __GLX_END(8);
-}
-
-void __indirect_glSampleCoverageARB( GLfloat value, GLboolean invert )
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (!gc->currentDpy) return;
-
-    __GLX_BEGIN(X_GLrop_SampleCoverageARB,12);
-    __GLX_PUT_FLOAT(4,value);
-    __GLX_PUT_CHAR(8,invert);
-    __GLX_END(12);
-}
-
-void __indirect_glSampleMaskSGIS( GLfloat value, GLboolean invert )
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (!gc->currentDpy) return;
-
-    __GLX_BEGIN(X_GLvop_SampleMaskSGIS,12);
-    __GLX_PUT_FLOAT(4,value);
-    __GLX_PUT_CHAR(8,invert);
-    __GLX_END(12);
-}
-
-void __indirect_glSamplePatternSGIS( GLenum pass )
-{
-    __GLX_DECLARE_VARIABLES();
-
-    __GLX_LOAD_VARIABLES();
-    if (!gc->currentDpy) return;
-
-    __GLX_BEGIN(X_GLvop_SamplePatternSGIS,8);
-    __GLX_PUT_LONG(4,pass);
     __GLX_END(8);
 }

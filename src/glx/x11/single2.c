@@ -113,20 +113,6 @@ GLenum __indirect_glGetError(void)
     return retval;
 }
 
-void __indirect_glGetClipPlane(GLenum plane, GLdouble *equation)
-{
-    __GLX_SINGLE_DECLARE_VARIABLES();
-    xGLXSingleReply reply;
-    __GLX_SINGLE_LOAD_VARIABLES();
-    __GLX_SINGLE_BEGIN(X_GLsop_GetClipPlane,4);
-    __GLX_SINGLE_PUT_LONG(0,plane);
-    __GLX_SINGLE_READ_XREPLY();
-    if (reply.length == 8) {
-	__GLX_SINGLE_GET_DOUBLE_ARRAY(equation,4);
-    }
-    __GLX_SINGLE_END();
-}
-
 #define CASE_ARRAY_ENABLE(enum_name,array,dest,gl_type) \
     case GL_ ## enum_name ## _ARRAY: \
       *dest = (gl_type) (IS_ARRAY_ENABLED(state, array)); break
