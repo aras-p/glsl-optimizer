@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.27 2000/01/08 10:51:20 brianp Exp $ */
+/* $Id: gl.h,v 1.28 2000/01/17 18:05:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -794,6 +794,14 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_TEXTURE_MAX_LOD			0x813B
 #define GL_TEXTURE_BASE_LEVEL			0x813C
 #define GL_TEXTURE_MAX_LEVEL			0x813D
+#define GL_SMOOTH_POINT_SIZE_RANGE		0x0B12
+#define GL_SMOOTH_POINT_SIZE_GRANULARITY	0x0B13
+#define GL_SMOOTH_LINE_WIDTH_RANGE		0x0B22
+#define GL_SMOOTH_LINE_WIDTH_GRANULARITY	0x0B23
+#define GL_ALIASED_POINT_SIZE_RANGE		0x846D
+#define GL_ALIASED_LINE_WIDTH_RANGE		0x846E
+
+
 
 /*
  * OpenGL 1.2 imaging subset (NOT IMPLEMENTED BY MESA)
