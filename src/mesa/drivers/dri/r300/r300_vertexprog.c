@@ -39,6 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define SCALAR_FLAG (1<<31)
 #define FLAG_MASK (1<<31)
+#define OP_MASK	(0xf)  /* we are unlikely to have more than 15 */
 #define OPN(operator, ip, op) {#operator, VP_OPCODE_##operator, ip, op}
 
 struct{
@@ -430,7 +431,7 @@ static unsigned long op_operands(enum vp_opcode opcode)
 	/* Can we trust mesas opcodes to be in order ? */
 	for(i=0; i < sizeof(op_names) / sizeof(*op_names); i++)
 		if(op_names[i].opcode == opcode)
-			return op_names[i].ip;
+			return op_names[i].ip & OP_MASK;
 	
 	fprintf(stderr, "op %d not found in op_names\n", opcode);
 	exit(-1);
