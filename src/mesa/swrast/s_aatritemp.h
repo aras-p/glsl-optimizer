@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.17 2001/05/30 17:44:14 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.18 2001/06/05 21:41:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -198,7 +198,6 @@
       compute_plane(p0, p1, p2, v0->specular[2], v1->specular[2], v2->specular[2],sbPlane);
    }
    else {
-      /* KW: added this */
       constant_plane(v2->specular[RCOMP], srPlane);
       constant_plane(v2->specular[GCOMP], sgPlane);
       constant_plane(v2->specular[BCOMP], sbPlane);
@@ -271,18 +270,18 @@
     */
    yMin = vMin->win[1];
    yMax = vMax->win[1];
-   iyMin = (int) yMin;
-   iyMax = (int) yMax + 1;
+   iyMin = (GLint) yMin;
+   iyMax = (GLint) yMax + 1;
 
    if (ltor) {
       /* scan left to right */
-      const float *pMin = vMin->win;
-      const float *pMid = vMid->win;
-      const float *pMax = vMax->win;
-      const float dxdy = majDx / majDy;
-      const float xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
-      float x = pMin[0] - (yMin - iyMin) * dxdy;
-      int iy;
+      const GLfloat *pMin = vMin->win;
+      const GLfloat *pMid = vMid->win;
+      const GLfloat *pMax = vMax->win;
+      const GLfloat dxdy = majDx / majDy;
+      const GLfloat xAdj = dxdy < 0.0F ? -dxdy : 0.0F;
+      GLfloat x = pMin[0] - (yMin - iyMin) * dxdy;
+      GLint iy;
       for (iy = iyMin; iy < iyMax; iy++, x += dxdy) {
          GLint ix, startX = (GLint) (x - xAdj);
          GLuint count, n;
