@@ -28,6 +28,7 @@
 #include "context.h"
 #include "nvfragprog.h"
 #include "macros.h"
+#include "program.h"
 
 #include "s_nvfragprog.h"
 #include "s_span.h"
@@ -123,8 +124,8 @@ fetch_vector4( GLcontext *ctx,
          src = ctx->FragmentProgram.Parameters[source->Index];
          break;
       case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < program->NumParameters);
-         src = program->Parameters[source->Index].Values;
+         ASSERT(source->Index < program->Parameters->NumParameters);
+         src = program->Parameters->Parameters[source->Index].Values;
          break;
       case PROGRAM_STATE_VAR:
          abort();
@@ -316,8 +317,8 @@ fetch_vector1( GLcontext *ctx,
          src = ctx->FragmentProgram.Parameters[source->Index];
          break;
       case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < program->NumParameters);
-         src = program->Parameters[source->Index].Values;
+         ASSERT(source->Index < program->Parameters->NumParameters);
+         src = program->Parameters->Parameters[source->Index].Values;
          break;
       case PROGRAM_STATE_VAR:
          abort();
