@@ -1107,6 +1107,7 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
 
+   tnl->Driver.RunPipeline = _tnl_run_pipeline;
    tnl->Driver.RenderStart = fxDDRenderStart;
    tnl->Driver.RenderFinish = fxDDRenderFinish;
    tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;

@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.23 2001/04/27 21:18:25 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.24 2001/05/10 12:22:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,6 +43,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
 
 
 /*
@@ -990,6 +991,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    /* Initialize the TNL driver interface:
     */
    tnl = TNL_CONTEXT(ctx);
+   tnl->Driver.RunPipeline = _tnl_run_pipeline;
    tnl->Driver.RenderStart = _swsetup_RenderStart;
    tnl->Driver.RenderFinish = _swsetup_RenderFinish;
    tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;

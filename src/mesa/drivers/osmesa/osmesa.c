@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.53 2001/04/04 21:54:21 brianp Exp $ */
+/* $Id: osmesa.c,v 1.54 2001/05/10 12:22:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,6 +57,7 @@
 #include "swrast/s_triangle.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
 
 
 
@@ -1857,6 +1858,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 
    swdd->SetReadBuffer = set_read_buffer;
 
+   tnl->Driver.RunPipeline = _tnl_run_pipeline;
    tnl->Driver.RenderStart = _swsetup_RenderStart;
    tnl->Driver.RenderFinish = _swsetup_RenderFinish;
    tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
