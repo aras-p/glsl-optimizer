@@ -3615,11 +3615,12 @@ parse_result_binding (GLcontext * ctx, byte ** inst, GLuint * binding,
          /* for vtx programs, this is VERTEX_RESULT_COLOR */
          else {
             GLint color_type;
+            GLuint face_type = parse_face_type(inst);
+	    GLint color_type_ret = parse_color_type(ctx, inst, Program, &color_type);
 
             /* back face */
-            if (parse_face_type (inst)) {
-               if (parse_color_type (ctx, inst, Program, &color_type))
-                  return 1;
+            if (face_type) {
+               if (color_type_ret) return 1; 
 
                /* secondary color */
                if (color_type) {
