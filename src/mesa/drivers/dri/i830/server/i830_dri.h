@@ -3,7 +3,8 @@
 #ifndef _I830_DRI_H
 #define _I830_DRI_H
 
-#include "xf86drm.h"
+#include "drm.h"		/* HACK!!! why doesn't xf86drm.h work??? */
+/* #include "xf86drm.h" */
 #include "i830_common.h"
 
 #define I830_MAX_DRAWABLES 256
