@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.34 2001/03/28 20:40:51 gareth Exp $ */
+/* $Id: mtypes.h,v 1.35 2001/03/28 21:36:31 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -804,6 +804,7 @@ struct gl_texture_image {
 				 * GL_INTENSITY, GL_RGB, GL_RGBA,
                                  * GL_COLOR_INDEX or GL_DEPTH_COMPONENT only.
 				 */
+   GLint IntFormat;		/* Internal format as given by the user */
    GLuint Border;		/* 0 or 1 */
    GLuint Width;		/* = 2^WidthLog2 + 2*Border */
    GLuint Height;		/* = 2^HeightLog2 + 2*Border */

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.40 2001/03/28 20:40:51 gareth Exp $ */
+/* $Id: texstate.c,v 1.41 2001/03/28 21:36:31 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -957,7 +957,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Depth;
          return;
       case GL_TEXTURE_INTERNAL_FORMAT:
-         *params = img->TexFormat->IntFormat;
+         *params = img->IntFormat;
          return;
       case GL_TEXTURE_BORDER:
          *params = img->Border;

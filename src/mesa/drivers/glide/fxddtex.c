@@ -1211,7 +1211,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       success = GL_FALSE;
    }
    else {
-      success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+      success = _mesa_convert_texsubimage2d(mesaTexFormat->MesaFormat,
                                             0, 0, /* xoffset, yoffset */
                                             mml->width, mml->height,
                                             mml->width, /* destImageWidth */
@@ -1256,7 +1256,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          _mesa_rescale_teximage2d(texFormat,
                                   width, height, mml->width, mml->height,
                                   tempImage, rescaledImage);
-         success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+         success = _mesa_convert_texsubimage2d(mesaTexFormat->MesaFormat,
                                             0, 0, /* xoffset, yoffset */
                                             mml->width, mml->height,
                                             mml->width,   /* destImageWidth */
@@ -1267,7 +1267,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          FREE(rescaledImage);
       }
       else {
-         success = _mesa_convert_texsubimage2d(mesaTexFormat->IntFormat,
+         success = _mesa_convert_texsubimage2d(mesaTexFormat->MesaFormat,
                                             0, 0, /* xoffset, yoffset */
                                             mml->width, mml->height,
                                             mml->width,   /* destImageWidth */
@@ -1326,7 +1326,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
       success = GL_FALSE;
    }
    else {
-      success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+      success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
                                             xoffset, yoffset,
                                             width, height,
                                             mml->width,
@@ -1376,7 +1376,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
          _mesa_rescale_teximage2d(texImage->TexFormat,
                                   width, height, newWidth, newHeight,
                                   tempImage, rescaledImage);
-         success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
+         success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
                                             xoffset * wScale, yoffset * hScale,
                                             newWidth, newHeight,
                                             mml->width,   /* destImageWidth */
@@ -1387,13 +1387,13 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
          FREE(rescaledImage);
       }
       else {
-         success = _mesa_convert_texsubimage2d(texImage->TexFormat->IntFormat,
-                                            xoffset, yoffset,
-                                            width, height,
-                                            mml->width,
-                                            simpleFormat, CHAN_TYPE,
-                                            &_mesa_native_packing,
-                                            tempImage, texImage->Data);
+         success = _mesa_convert_texsubimage2d(texImage->TexFormat->MesaFormat,
+					       xoffset, yoffset,
+					       width, height,
+					       mml->width,
+					       simpleFormat, CHAN_TYPE,
+					       &_mesa_native_packing,
+					       tempImage, texImage->Data);
       }
       /* the conversion had better of worked! */
       assert(success);

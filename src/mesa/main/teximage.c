@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.88 2001/03/28 20:40:51 gareth Exp $ */
+/* $Id: teximage.c,v 1.89 2001/03/28 21:36:31 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -558,6 +558,7 @@ clear_teximage_fields(struct gl_texture_image *img)
 {
    ASSERT(img);
    img->Format = 0;
+   img->IntFormat = 0;
    img->Border = 0;
    img->Width = 0;
    img->Height = 0;
@@ -587,6 +588,7 @@ init_teximage_fields(GLcontext *ctx,
 {
    ASSERT(img);
    img->Format = _mesa_base_tex_format( ctx, internalFormat );
+   img->IntFormat = internalFormat;
    img->Border = border;
    img->Width = width;
    img->Height = height;
@@ -872,7 +874,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-   if (!is_compressed_format(ctx, destTex->TexFormat->IntFormat) &&
+   if (!is_compressed_format(ctx, destTex->IntFormat) &&
        !_mesa_is_legal_format_and_type(format, type)) {
       char message[100];
       sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
