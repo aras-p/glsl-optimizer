@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.59 2001/05/03 23:55:38 brianp Exp $ */
+/* $Id: get.c,v 1.60 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1280,6 +1280,17 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
 
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = ENUM_TO_BOOL(ctx->Hint.GenerateMipmap);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+	    return;
+         }
+         break;
+
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
@@ -2484,6 +2495,17 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          break;
 
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLdouble) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+	    return;
+         }
+         break;
+
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3659,6 +3681,17 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          else {
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
             return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLfloat) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+	    return;
          }
          break;
 
@@ -4886,6 +4919,17 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          else {
             _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
             return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLint) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+	    return;
          }
          break;
 

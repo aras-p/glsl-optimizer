@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.137 2001/05/07 16:32:51 brianp Exp $ */
+/* $Id: context.c,v 1.138 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -918,6 +918,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Hint.Fog = GL_DONT_CARE;
    ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
    ctx->Hint.TextureCompression = GL_DONT_CARE;
+   ctx->Hint.GenerateMipmap = GL_DONT_CARE;
 
    /* Histogram group */
    ctx->Histogram.Width = 0;

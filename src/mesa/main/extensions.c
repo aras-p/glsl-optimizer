@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.58 2001/04/24 21:52:36 brianp Exp $ */
+/* $Id: extensions.c,v 1.59 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,6 +106,7 @@ static struct {
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
    { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
    { OFF, "GL_SGI_color_table",                F(SGI_color_table) },
+   /*{ OFF, "GL_SGIS_generate_mipmap",           F(SGIS_generate_mipmap) },*/
    { OFF, "GL_SGIS_pixel_texture",             F(SGIS_pixel_texture) },
    { OFF, "GL_SGIS_texture_border_clamp",      F(ARB_texture_border_clamp) },
    { OFF, "GL_SGIS_texture_edge_clamp",        F(SGIS_texture_edge_clamp) },
@@ -158,6 +159,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_NV_texgen_reflection",
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",
+      "GL_SGIS_generate_mipmap",
       "GL_SGIS_pixel_texture",
       "GL_SGIS_texture_edge_clamp",
       "GL_SGIS_texture_border_clamp",

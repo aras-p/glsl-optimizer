@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.50 2001/05/18 22:10:49 brianp Exp $ */
+/* $Id: texstate.c,v 1.51 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1043,6 +1043,15 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             return;
          }
          break;
+      case GL_GENERATE_MIPMAP_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            return;
+         }
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(pname)" );
          return;
@@ -1272,25 +1281,25 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
 	 *params = ENUM_TO_FLOAT(obj->MagFilter);
-	 break;
+	 return;
       case GL_TEXTURE_MIN_FILTER:
          *params = ENUM_TO_FLOAT(obj->MinFilter);
-         break;
+         return;
       case GL_TEXTURE_WRAP_S:
          *params = ENUM_TO_FLOAT(obj->WrapS);
-         break;
+         return;
       case GL_TEXTURE_WRAP_T:
          *params = ENUM_TO_FLOAT(obj->WrapT);
-         break;
+         return;
       case GL_TEXTURE_WRAP_R_EXT:
          *params = ENUM_TO_FLOAT(obj->WrapR);
-         break;
+         return;
       case GL_TEXTURE_BORDER_COLOR:
          params[0] = obj->BorderColor[0] / CHAN_MAXF;
          params[1] = obj->BorderColor[1] / CHAN_MAXF;
          params[2] = obj->BorderColor[2] / CHAN_MAXF;
          params[3] = obj->BorderColor[3] / CHAN_MAXF;
-         break;
+         return;
       case GL_TEXTURE_RESIDENT:
          {
             GLboolean resident;
@@ -1300,52 +1309,51 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
                resident = GL_TRUE;
             *params = ENUM_TO_FLOAT(resident);
          }
-         break;
+         return;
       case GL_TEXTURE_PRIORITY:
          *params = obj->Priority;
-         break;
+         return;
       case GL_TEXTURE_MIN_LOD:
          *params = obj->MinLod;
-         break;
+         return;
       case GL_TEXTURE_MAX_LOD:
          *params = obj->MaxLod;
-         break;
+         return;
       case GL_TEXTURE_BASE_LEVEL:
          *params = (GLfloat) obj->BaseLevel;
-         break;
+         return;
       case GL_TEXTURE_MAX_LEVEL:
          *params = (GLfloat) obj->MaxLevel;
-         break;
+         return;
       case GL_TEXTURE_COMPARE_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             *params = (GLfloat) obj->CompareFlag;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
             return;
          }
          break;
       case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             *params = (GLfloat) obj->CompareOperator;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
             return;
          }
          break;
       case GL_SHADOW_AMBIENT_SGIX:
          if (ctx->Extensions.SGIX_shadow_ambient) {
             *params = CHAN_TO_FLOAT(obj->ShadowAmbient);
+            return;
          }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)");
+         break;
+      case GL_GENERATE_MIPMAP_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLfloat) obj->GenerateMipmap;
             return;
          }
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
+         ; /* silence warnings */
    }
+   /* If we get here, pname was an unrecognized enum */
+   _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
 }
 
 
@@ -1366,19 +1374,19 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
          *params = (GLint) obj->MagFilter;
-         break;
+         return;
       case GL_TEXTURE_MIN_FILTER:
          *params = (GLint) obj->MinFilter;
-         break;
+         return;
       case GL_TEXTURE_WRAP_S:
          *params = (GLint) obj->WrapS;
-         break;
+         return;
       case GL_TEXTURE_WRAP_T:
          *params = (GLint) obj->WrapT;
-         break;
+         return;
       case GL_TEXTURE_WRAP_R_EXT:
          *params = (GLint) obj->WrapR;
-         break;
+         return;
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat color[4];
@@ -1391,7 +1399,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             params[2] = FLOAT_TO_INT( color[2] );
             params[3] = FLOAT_TO_INT( color[3] );
          }
-         break;
+         return;
       case GL_TEXTURE_RESIDENT:
          {
             GLboolean resident;
@@ -1401,37 +1409,31 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
                resident = GL_TRUE;
             *params = (GLint) resident;
          }
-         break;
+         return;
       case GL_TEXTURE_PRIORITY:
          *params = (GLint) obj->Priority;
-         break;
+         return;
       case GL_TEXTURE_MIN_LOD:
          *params = (GLint) obj->MinLod;
-         break;
+         return;
       case GL_TEXTURE_MAX_LOD:
          *params = (GLint) obj->MaxLod;
-         break;
+         return;
       case GL_TEXTURE_BASE_LEVEL:
          *params = obj->BaseLevel;
-         break;
+         return;
       case GL_TEXTURE_MAX_LEVEL:
          *params = obj->MaxLevel;
-         break;
+         return;
       case GL_TEXTURE_COMPARE_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             *params = (GLint) obj->CompareFlag;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
             return;
          }
          break;
       case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             *params = (GLint) obj->CompareOperator;
-         }
-         else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
             return;
          }
          break;
@@ -1439,15 +1441,20 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          if (ctx->Extensions.SGIX_shadow_ambient) {
             /* XXX range? */
             *params = (GLint) CHAN_TO_FLOAT(obj->ShadowAmbient);
+            return;
          }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)");
+         break;
+      case GL_GENERATE_MIPMAP_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLint) obj->GenerateMipmap;
             return;
          }
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
+         ; /* silence warnings */
    }
+   /* If we get here, pname was an unrecognized enum */
+   _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
 }
 
 

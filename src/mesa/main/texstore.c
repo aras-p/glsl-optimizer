@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.24 2001/04/20 16:46:04 brianp Exp $ */
+/* $Id: texstore.c,v 1.25 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -642,6 +642,12 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                            0, /* dstRowStride */
                            0, /* dstImageStride */
                            format, type, pixels, packing);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -674,6 +680,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
@@ -691,6 +698,12 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                            texImage->Width * texelBytes,
                            0, /* dstImageStride */
                            format, type, pixels, packing);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -735,6 +748,12 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                            texImage->Width * texelBytes,
                            texImage->Width * texImage->Height * texelBytes,
                            format, type, pixels, packing);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -759,6 +778,12 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                            0, /* dstRowStride */
                            0, /* dstImageStride */
                            format, type, pixels, packing);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -782,6 +807,12 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                            texImage->Width * texImage->TexFormat->TexelBytes,
                            0, /* dstImageStride */
                            format, type, pixels, packing);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -806,6 +837,11 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                            texImage->Width * texelBytes,
                            texImage->Width * texImage->Height * texelBytes,
                            format, type, pixels, packing);
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
 }
 
 
@@ -897,4 +933,376 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
    assert(texImage->TexFormat);
 
    return GL_TRUE;
+}
+
+
+
+/*
+ * Average together two rows of a source image to produce a single new
+ * row in the dest image.  It's legal for the two source rows to point
+ * to the same data.  The source rows are to be twice as long as the
+ * dest row.
+ */
+static void
+do_row(const struct gl_texture_format *format, GLint dstWidth,
+       const GLvoid *srcRowA, const GLvoid *srcRowB, GLvoid *dstRow)
+{
+   switch (format->MesaFormat) {
+   case MESA_FORMAT_RGBA:
+      {
+         GLuint i, j;
+         const GLchan (*rowA)[4] = (const GLchan (*)[4]) srcRowA;
+         const GLchan (*rowB)[4] = (const GLchan (*)[4]) srcRowB;
+         GLchan (*dst)[4] = (GLchan (*)[4]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
+                         rowB[j][2] + rowB[j+1][2]) >> 2;
+            dst[i][3] = (rowA[j][3] + rowA[j+1][3] +
+                         rowB[j][3] + rowB[j+1][3]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_RGB:
+      {
+         GLuint i, j;
+         const GLchan (*rowA)[3] = (const GLchan (*)[3]) srcRowA;
+         const GLchan (*rowB)[3] = (const GLchan (*)[3]) srcRowB;
+         GLchan (*dst)[3] = (GLchan (*)[3]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
+                         rowB[j][2] + rowB[j+1][2]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_ALPHA:
+   case MESA_FORMAT_LUMINANCE:
+   case MESA_FORMAT_INTENSITY:
+   case MESA_FORMAT_COLOR_INDEX:
+      {
+         GLuint i, j;
+         const GLchan *rowA = (const GLchan *) srcRowA;
+         const GLchan *rowB = (const GLchan *) srcRowB;
+         GLchan *dst = (GLchan *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_LUMINANCE_ALPHA:
+      {
+         GLuint i, j;
+         const GLchan (*rowA)[2] = (const GLchan (*)[2]) srcRowA;
+         const GLchan (*rowB)[2] = (const GLchan (*)[2]) srcRowB;
+         GLchan (*dst)[2] = (GLchan (*)[2]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_DEPTH_COMPONENT:
+
+   /* XXX do hardware texture formats */
+
+   default:
+      _mesa_problem(NULL, "bad format in do_row()");
+   }
+}
+
+
+
+
+static void
+make_1d_mipmap(const struct gl_texture_format *format, GLint border,
+               GLint srcWidth, const GLubyte *srcPtr,
+               GLint dstWidth, GLubyte *dstPtr)
+{
+   const GLint bpt = format->TexelBytes;
+   const GLubyte *src;
+   GLubyte *dst;
+
+   /* skip the border pixel, if any */
+   src = srcPtr + border * bpt;
+   dst = dstPtr + border * bpt;
+
+   /* we just duplicate the input row, kind of hack, saves code */
+   do_row(format, dstWidth - 2 * border, src, src, dst);
+
+   if (border) {
+      /* copy left-most pixel from source */
+      MEMCPY(dstPtr, srcPtr, bpt);
+      /* copy right-most pixel from source */
+      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+             srcPtr + (srcWidth - 1) * bpt,
+             bpt);
+   }
+}
+
+
+static void
+make_2d_mipmap(const struct gl_texture_format *format, GLint border,
+               GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
+               GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
+{
+   const GLint bpt = format->TexelBytes;
+   const GLint srcRowStride = bpt * srcWidth;
+   const GLint dstRowStride = bpt * dstWidth;
+   const GLubyte *srcA, *srcB;
+   GLubyte *dst;
+   GLint row;
+
+   /* Compute src and dst pointers, skipping any border */
+   srcA = srcPtr + border * ((srcWidth + 1) * bpt);
+   if (srcHeight > 1)
+      srcB = srcA + srcRowStride;
+   else
+      srcB = srcA;
+   dst = dstPtr + border * ((dstWidth + 1) * bpt);
+
+   for (row = 0; row < dstHeight - 2 * border; row++) {
+      do_row(format, dstWidth - 2 * border, srcA, srcB, dst);
+      srcA += 2 * srcRowStride;
+      srcB += 2 * srcRowStride;
+      dst += dstRowStride;
+   }
+
+   if (border > 0) {
+      /* fill in dest border */
+      /* lower-left border pixel */
+      MEMCPY(dstPtr, srcPtr, bpt);
+      /* lower-right border pixel */
+      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+             srcPtr + (srcWidth - 1) * bpt, bpt);
+      /* upper-left border pixel */
+      MEMCPY(dstPtr + dstWidth * (dstHeight - 1) * bpt,
+             srcPtr + srcWidth * (srcHeight - 1) * bpt, bpt);
+      /* upper-right border pixel */
+      MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
+             srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
+      /* lower border */
+      do_row(format, dstWidth - 2 * border,
+             srcPtr + bpt, srcPtr + bpt, dstPtr + bpt);
+      /* upper border */
+      do_row(format, dstWidth - 2 * border,
+             srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
+             srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
+             dstPtr + (dstWidth * (dstHeight - 1) + 1) * bpt);
+      /* left and right borders */
+      for (row = 0; row < dstHeight - 2 * border; row += 2) {
+         GLubyte tempPixel[32];
+         GLint srcOffset;
+         srcOffset = (srcWidth * (row * 2 + 1)) * bpt;
+         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
+         srcOffset = (srcWidth * (row * 2 + 2)) * bpt;
+         MEMCPY(tempPixel + bpt, srcPtr + srcOffset, bpt);
+         do_row(format, 1, tempPixel, tempPixel,
+                dstPtr + (dstWidth * row + 1) * bpt);
+         srcOffset = (srcWidth * (row * 2 + 1) + srcWidth - 1) * bpt;
+         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
+         srcOffset = (srcWidth * (row * 2 + 2) + srcWidth - 1) * bpt;
+         MEMCPY(tempPixel, srcPtr + srcOffset, bpt);
+         do_row(format, 1, tempPixel, tempPixel,
+               dstPtr + (dstWidth * row + 1 + dstWidth - 1) * bpt);
+      }
+   }
+}
+
+
+static void
+make_3d_mipmap(const struct gl_texture_format *format, GLint border,
+               GLint srcWidth, GLint srcHeight, GLint srcDepth,
+               const GLubyte *srcPtr,
+               GLint dstWidth, GLint dstHeight, GLint dstDepth,
+               GLubyte *dstPtr)
+{
+   GLvoid *tmpRowA = MALLOC(dstWidth * format->TexelBytes);
+   GLvoid *tmpRowB = MALLOC(dstWidth * format->TexelBytes);
+   const GLubyte *srcA, *srcB, *srcC, *srcD;
+   GLint img, row;
+
+   if (!tmpRowA || !tmpRowB) {
+      if (tmpRowA)
+         FREE(tmpRowA);
+      return;
+   }
+
+   /*
+    * XXX lots of work to do here yet
+    */
+
+   for (img = 0; img < dstDepth - 2 * border; img++) {
+
+      for (row = 0; row < dstHeight - 2 * border; row++) {
+         do_row(format, dstWidth - 2 * border, srcA, srcB, tmpRowA);
+         do_row(format, dstWidth - 2 * border, srcC, srcD, tmpRowB);
+
+
+      }
+   }
+
+   FREE(tmpRowA);
+   FREE(tmpRowB);
+}
+
+
+/*
+ * For GL_SGIX_generate_mipmap:
+ * Generate a complete set of mipmaps from texObj's base-level image.
+ * Stop at texObj's MaxLevel or when we get to the 1x1 texture.
+ */
+void
+_mesa_generate_mipmap(GLcontext *ctx,
+                      const struct gl_texture_unit *texUnit,
+                      struct gl_texture_object *texObj)
+{
+   const GLenum targets1D[] = { GL_TEXTURE_1D, 0 };
+   const GLenum targets2D[] = { GL_TEXTURE_2D, 0 };
+   const GLenum targets3D[] = { GL_TEXTURE_3D, 0 };
+   const GLenum targetsCube[] = { GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
+                                  GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
+                                  GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
+                                  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
+                                  GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
+                                  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
+                                  0 };
+   const GLenum *targets;
+   GLuint level;
+
+   ASSERT(texObj);
+   ASSERT(texObj->Image[texObj->BaseLevel]);
+
+   switch (texObj->Dimensions) {
+   case 1:
+      targets = targets1D;
+      break;
+   case 2:
+      targets = targets2D;
+      break;
+   case 3:
+      targets = targets3D;
+      break;
+   case 6:
+      targets = targetsCube;
+      break;
+   default:
+      _mesa_problem(ctx,
+                    "Bad texture object dimension in _mesa_generate_mipmaps");
+      return;
+   }
+
+   for (level = texObj->BaseLevel; level < texObj->MaxLevel; level++) {
+      /* generate level+1 from level */
+      const struct gl_texture_image *srcImage;
+      struct gl_texture_image *dstImage;
+      GLint srcWidth, srcHeight, srcDepth;
+      GLint dstWidth, dstHeight, dstDepth;
+      GLint border, bytesPerTexel;
+      GLint t;
+
+      srcImage = texObj->Image[level];
+      ASSERT(srcImage);
+      srcWidth = srcImage->Width;
+      srcHeight = srcImage->Height;
+      srcDepth = srcImage->Depth;
+      border = srcImage->Border;
+      bytesPerTexel = srcImage->TexFormat->TexelBytes;
+
+      /* compute next (level+1) image size */
+      if (srcWidth - 2 * border > 1) {
+         dstWidth = (srcWidth - 2 * border) / 2 + 2 * border;
+      }
+      else {
+         dstWidth = srcWidth; /* can't go smaller */
+      }
+      if (srcHeight - 2 * border > 1) {
+         dstHeight = (srcHeight - 2 * border) / 2 + 2 * border;
+      }
+      else {
+         dstHeight = srcHeight; /* can't go smaller */
+      }
+      if (srcDepth - 2 * border > 1) {
+         dstDepth = (srcDepth - 2 * border) / 2 + 2 * border;
+      }
+      else {
+         dstDepth = srcDepth; /* can't go smaller */
+      }
+
+      if (dstWidth == srcWidth &&
+          dstHeight == srcHeight &&
+          dstDepth == srcDepth) {
+         /* all done */
+         return;
+      }
+
+      /* Need this loop just because of cubemaps */
+      for (t = 0; targets[t]; t++) {
+         ASSERT(t < 6);
+
+         dstImage = _mesa_select_tex_image(ctx, texUnit, targets[t], level+1);
+         if (!dstImage) {
+            dstImage = _mesa_alloc_texture_image();
+            if (!dstImage) {
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+               return;
+            }
+            _mesa_set_tex_image(texObj, targets[t], level + 1, dstImage);
+         }
+
+         /* Free old image data */
+         if (dstImage->Data)
+            FREE(dstImage->Data);
+
+         /* initialize new image */
+         _mesa_init_teximage_fields(ctx, dstImage, dstWidth, dstHeight,
+                                    dstDepth, border, srcImage->Format);
+         dstImage->DriverData = NULL;
+         dstImage->TexFormat = srcImage->TexFormat;
+         dstImage->FetchTexel = srcImage->FetchTexel;
+
+         ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
+
+         /* alloc new image buffer */
+         dstImage->Data = MALLOC(dstWidth * dstHeight * dstDepth
+                                 * bytesPerTexel);
+         if (!dstImage->Data) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+            return;
+         }
+
+         /*
+          * We use simple 2x2 averaging to compute the next mipmap level.
+          */
+         switch (texObj->Dimensions) {
+         case 1:
+            make_1d_mipmap(srcImage->TexFormat, border,
+               srcWidth, (const GLubyte *) srcImage->Data,
+               dstWidth, (GLubyte *) dstImage->Data);
+            break;
+         case 2:
+         case 6:
+            make_2d_mipmap(srcImage->TexFormat, border,
+               srcWidth, srcHeight, (const GLubyte *) srcImage->Data,
+               dstWidth, dstHeight, (GLubyte *) dstImage->Data);
+            break;
+         case 3:
+            make_3d_mipmap(srcImage->TexFormat, border,
+               srcWidth, srcHeight, srcDepth, (const GLubyte *) srcImage->Data,
+               dstWidth, dstHeight, dstDepth, (GLubyte *) dstImage->Data);
+            break;
+         default:
+            _mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
+            return;
+         }
+      } /* loop over tex image targets */
+   } /* loop over tex levels */
 }

@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.9 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: hint.c,v 1.10 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,14 +99,26 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.ARB_texture_compression) {
+         if (!ctx->Extensions.ARB_texture_compression) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return GL_TRUE;
+	    return GL_FALSE;
          }
 	 if (ctx->Hint.TextureCompression == mode)
 	    return GL_TRUE;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);
 	 ctx->Hint.TextureCompression = mode;
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (!ctx->Extensions.SGIS_generate_mipmap) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+	    return GL_FALSE;
+         }
+         if (ctx->Hint.GenerateMipmap == mode)
+            return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
+	 ctx->Hint.GenerateMipmap = mode;
          break;
 
       default:

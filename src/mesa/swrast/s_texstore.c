@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.4 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.5 2001/05/21 16:41:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,7 @@
 #include "mem.h"
 #include "texformat.h"
 #include "teximage.h"
+#include "texstore.h"
 
 #include "s_context.h"
 #include "s_depth.h"
@@ -190,6 +191,11 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
                                 &_mesa_native_packing, texObj, texImage);
       FREE(image);
    }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, texUnit, texObj);
+   }
 }
 
 
@@ -243,6 +249,11 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
                                 GL_RGBA, CHAN_TYPE, image,
                                 &_mesa_native_packing, texObj, texImage);
       FREE(image);
+   }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, texUnit, texObj);
    }
 }
 
@@ -310,6 +321,11 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                                    GL_DEPTH_COMPONENT, GL_FLOAT, image,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
+   }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, texUnit, texObj);
    }
 }
 
@@ -382,6 +398,11 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
    }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, texUnit, texObj);
+   }
 }
 
 
@@ -451,5 +472,10 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
                                    GL_DEPTH_COMPONENT, GL_FLOAT, image,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
+   }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, texUnit, texObj);
    }
 }

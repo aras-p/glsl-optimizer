@@ -1,4 +1,4 @@
-/* $Id: texstore.h,v 1.7 2001/04/20 16:46:04 brianp Exp $ */
+/* $Id: texstore.h,v 1.8 2001/05/21 16:41:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,5 +140,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
                          GLint internalFormat, GLenum format, GLenum type,
                          GLint width, GLint height, GLint depth, GLint border);
 
+
+extern void
+_mesa_generate_mipmap(GLcontext *ctx,
+                      const struct gl_texture_unit *texUnit,
+                      struct gl_texture_object *texObj);
 
 #endif

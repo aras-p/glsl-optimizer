@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.41 2001/04/28 08:39:17 keithw Exp $ */
+/* $Id: mtypes.h,v 1.42 2001/05/21 16:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -430,12 +430,9 @@ struct gl_hint_attrib {
    GLenum LineSmooth;
    GLenum PolygonSmooth;
    GLenum Fog;
-
-   /* GL_EXT_clip_volume_hint */
-   GLenum ClipVolumeClipping;
-
-   /* GL_ARB_texture_compression */
-   GLenum TextureCompression;
+   GLenum ClipVolumeClipping;   /* GL_EXT_clip_volume_hint */
+   GLenum TextureCompression;   /* GL_ARB_texture_compression */
+   GLenum GenerateMipmap;       /* GL_SGIS_generate_mipmap */
 };
 
 
@@ -826,6 +823,8 @@ struct gl_texture_object {
    GLchan ShadowAmbient;	/* GL_SGIX_shadow_ambient */
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
+   GLboolean GenerateMipmap;    /* GL_SGIS_generate_mipmap */
+
    struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
 
    /* Texture cube faces */
@@ -1218,6 +1217,7 @@ struct gl_extensions {
    GLboolean NV_texgen_reflection;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
+   GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIX_depth_texture;
