@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.21 2003/11/24 22:30:32 brianp Exp $
+# $Id: APIspec,v 1.22 2003/11/24 23:03:29 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -6089,7 +6089,7 @@ param		sfactorRGB	GLenum
 param		dfactorRGB	GLenum
 param		sfactorAlpha	GLenum
 param		dfactorAlpha	GLenum
-category	GL_EXT_blend_func_separate
+category	GL_INGR_blend_func_separate
 
 
 # GL_EXT_vertex_weighting
@@ -8446,6 +8446,7 @@ name		BufferSubData
 alias		BufferSubDataARB
 return		void
 param		target		GLenum
+param		offset		GLintptrARB
 param		size		GLsizeiptrARB
 param		data		const GLvoid *
 category	1.5
@@ -8484,6 +8485,7 @@ name		GetBufferSubData
 alias		GetBufferSubDataARB
 return		void
 param		target		GLenum
+param		offset		GLintptrARB
 param		size		GLsizeiptrARB
 param		data		void *
 category	1.5
@@ -8555,7 +8557,7 @@ return		void
 param		id		GLuint
 param		pname		GLenum
 param		params		GLint *
-category	GL_ARB_occlusion_query
+category	1.5
 
 name		GetQueryObjectuiv
 alias		GetQueryObjectuivARB
@@ -8563,7 +8565,7 @@ return		void
 param		id		GLuint
 param		pname		GLenum
 param		params		GLuint *
-category	GL_ARB_occlusion_query
+category	1.5
 
 
 

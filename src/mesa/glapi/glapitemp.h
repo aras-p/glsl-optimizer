@@ -4682,9 +4682,9 @@ KEYWORD1 void KEYWORD2 NAME(BufferData)(GLenum target, GLsizeiptrARB size, const
    DISPATCH(BufferDataARB, (target, size, data, usage), (F, "glBufferData(0x%x, %p, %p, 0x%x);\n", target, (const void *) size, (const void *) data, usage));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BufferSubData)(GLenum target, GLsizeiptrARB size, const GLvoid * data)
+KEYWORD1 void KEYWORD2 NAME(BufferSubData)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data)
 {
-   DISPATCH(BufferSubDataARB, (target, size, data), (F, "glBufferSubData(0x%x, %p, %p);\n", target, (const void *) size, (const void *) data));
+   DISPATCH(BufferSubDataARB, (target, offset, size, data), (F, "glBufferSubData(0x%x, %p, %p, %p);\n", target, (const void *) offset, (const void *) size, (const void *) data));
 }
 
 KEYWORD1 void KEYWORD2 NAME(DeleteBuffers)(GLsizei n, const GLuint * buffer)
@@ -4707,9 +4707,9 @@ KEYWORD1 void KEYWORD2 NAME(GetBufferPointerv)(GLenum target, GLenum pname, GLvo
    DISPATCH(GetBufferPointervARB, (target, pname, params), (F, "glGetBufferPointerv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetBufferSubData)(GLenum target, GLsizeiptrARB size, void * data)
+KEYWORD1 void KEYWORD2 NAME(GetBufferSubData)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data)
 {
-   DISPATCH(GetBufferSubDataARB, (target, size, data), (F, "glGetBufferSubData(0x%x, %p, %p);\n", target, (const void *) size, (const void *) data));
+   DISPATCH(GetBufferSubDataARB, (target, offset, size, data), (F, "glGetBufferSubData(0x%x, %p, %p, %p);\n", target, (const void *) offset, (const void *) size, (const void *) data));
 }
 
 KEYWORD1 GLboolean KEYWORD2 NAME(IsBuffer)(GLuint buffer)
