@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.66 2001/08/20 16:42:40 brianp Exp $ */
+/* $Id: get.c,v 1.67 2001/08/28 22:46:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5310,7 +5310,8 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version = "1.2 Mesa 3.5.1";
+   static const char *version_1_2 = "1.2 Mesa 3.5.1";
+   static const char *version_1_3 = "1.3 Mesa 3.5.1";
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
@@ -5327,7 +5328,16 @@ _mesa_GetString( GLenum name )
           case GL_RENDERER:
              return (const GLubyte *) renderer;
           case GL_VERSION:
-             return (const GLubyte *) version;
+             if (ctx->Extensions.ARB_multitexture &&
+                 ctx->Extensions.ARB_multisample &&
+                 ctx->Extensions.ARB_texture_border_clamp &&
+                 ctx->Extensions.ARB_texture_compression &&
+                 ctx->Extensions.EXT_texture_env_add &&
+                 ctx->Extensions.ARB_texture_env_combine &&
+                 ctx->Extensions.ARB_texture_env_dot3)
+                return (const GLubyte *) version_1_3;
+             else
+                return (const GLubyte *) version_1_2;
           case GL_EXTENSIONS:
              return (const GLubyte *) _mesa_extensions_get_string(ctx);
           default:

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.63 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: osmesa.c,v 1.64 2001/08/28 22:46:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -306,6 +306,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       }
 
       _mesa_enable_sw_extensions(&(osmesa->gl_ctx));
+      _mesa_enable_1_3_extensions(&(osmesa->gl_ctx));
 
       osmesa->gl_buffer = _mesa_create_framebuffer( osmesa->gl_visual,
                                           osmesa->gl_visual->depthBits > 0,
