@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.12 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.13 2002/03/16 18:02:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,7 +120,6 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
    span.interpMask |= SPAN_TEXTURE;
-   span.arrayMask |= SPAN_LAMBDA;
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
       if (ctx->Texture.Unit[u]._ReallyEnabled) {
          const GLfloat q = vert->texcoord[u][3];
@@ -129,11 +128,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
          span.tex[u][1] = vert->texcoord[u][1] * invQ;
          span.tex[u][2] = vert->texcoord[u][2] * invQ;
          span.tex[u][3] = q;
-         span.texStep[u][0] = 0.0;
-         span.texStep[u][1] = 0.0;
-         span.texStep[u][2] = 0.0;
-         span.texStep[u][3] = 0.0;
-         span.rho[u] = 0.0;
+         span.texStepX[u][0] = span.texStepY[u][0] = 0.0;
+         span.texStepX[u][1] = span.texStepY[u][1] = 0.0;
+         span.texStepX[u][2] = span.texStepY[u][2] = 0.0;
+         span.texStepX[u][3] = span.texStepY[u][3] = 0.0;
       }
    }
 #endif

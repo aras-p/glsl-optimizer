@@ -1,10 +1,10 @@
-/* $Id: s_aatriangle.c,v 1.22 2002/01/27 18:32:03 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.23 2002/03/16 18:02:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.1
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -122,7 +122,6 @@ solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
    else
       return -plane[2] / denom;
 }
-
 
 
 /*
@@ -352,23 +351,36 @@ index_aa_tri(GLcontext *ctx,
 
 /*
  * Compute mipmap level of detail.
+ * XXX we should really include the R coordinate in this computation
+ * in order to do 3-D texture mipmapping.
  */
 static INLINE GLfloat
 compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
-               GLfloat invQ, GLfloat width, GLfloat height)
+               const GLfloat qPlane[4], GLfloat cx, GLfloat cy,
+               GLfloat invQ, GLfloat texWidth, GLfloat texHeight)
 {
-   GLfloat dudx = sPlane[0] / sPlane[2] * invQ * width;
-   GLfloat dudy = sPlane[1] / sPlane[2] * invQ * width;
-   GLfloat dvdx = tPlane[0] / tPlane[2] * invQ * height;
-   GLfloat dvdy = tPlane[1] / tPlane[2] * invQ * height;
-   GLfloat r1 = dudx * dudx + dudy * dudy;
-   GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
-   GLfloat rho2 = r1 + r2;
-   /* return log base 2 of rho */
-   if (rho2 == 0.0F)
-      return 0.0;
-   else
-      return (GLfloat) (log(rho2) * 1.442695 * 0.5); /* 1.442695 = 1/log(2) */
+   const GLfloat s = solve_plane(cx, cy, sPlane);
+   const GLfloat t = solve_plane(cx, cy, tPlane);
+   const GLfloat invQ_x1 = solve_plane_recip(cx+1.0, cy, qPlane);
+   const GLfloat invQ_y1 = solve_plane_recip(cx, cy+1.0, qPlane);
+   const GLfloat s_x1 = s - sPlane[0] / sPlane[2];
+   const GLfloat s_y1 = s - sPlane[1] / sPlane[2];
+   const GLfloat t_x1 = t - tPlane[0] / tPlane[2];
+   const GLfloat t_y1 = t - tPlane[1] / tPlane[2];
+   GLfloat dsdx = s_x1 * invQ_x1 - s * invQ;
+   GLfloat dsdy = s_y1 * invQ_y1 - s * invQ;
+   GLfloat dtdx = t_x1 * invQ_x1 - t * invQ;
+   GLfloat dtdy = t_y1 * invQ_y1 - t * invQ;
+   GLfloat maxU, maxV, rho, lambda;
+   dsdx = FABSF(dsdx);
+   dsdy = FABSF(dsdy);
+   dtdx = FABSF(dtdx);
+   dtdy = FABSF(dtdy);
+   maxU = MAX2(dsdx, dsdy) * texWidth;
+   maxV = MAX2(dtdx, dtdy) * texHeight;
+   rho = MAX2(maxU, maxV);
+   lambda = LOG2(rho);
+   return lambda;
 }
 
 

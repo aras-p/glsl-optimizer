@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.26 2002/01/28 03:42:28 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.27 2002/03/16 18:02:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,10 +76,10 @@
    GLfloat sPlane[4], tPlane[4], uPlane[4], vPlane[4];
    GLfloat texWidth, texHeight;
 #elif defined(DO_MULTITEX)
-   GLfloat sPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat tPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat uPlane[MAX_TEXTURE_UNITS][4];
-   GLfloat vPlane[MAX_TEXTURE_UNITS][4];
+   GLfloat sPlane[MAX_TEXTURE_UNITS][4];  /* texture S */
+   GLfloat tPlane[MAX_TEXTURE_UNITS][4];  /* texture T */
+   GLfloat uPlane[MAX_TEXTURE_UNITS][4];  /* texture R */
+   GLfloat vPlane[MAX_TEXTURE_UNITS][4];  /* texture Q */
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
 #endif
    GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
@@ -316,7 +316,8 @@
                span.texcoords[0][count][0] = solve_plane(cx, cy, sPlane) * invQ;
                span.texcoords[0][count][1] = solve_plane(cx, cy, tPlane) * invQ;
                span.texcoords[0][count][2] = solve_plane(cx, cy, uPlane) * invQ;
-               span.lambda[0][count] = compute_lambda(sPlane, tPlane, invQ,
+               span.lambda[0][count] = compute_lambda(sPlane, tPlane, vPlane,
+                                                      cx, cy, invQ,
                                                       texWidth, texHeight);
             }
 #elif defined(DO_MULTITEX)
@@ -329,7 +330,8 @@
                      span.texcoords[unit][count][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
                      span.texcoords[unit][count][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      span.lambda[unit][count] = compute_lambda(sPlane[unit],
-                                                               tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
+                                      tPlane[unit], vPlane[unit], cx, cy, invQ,
+                                      texWidth[unit], texHeight[unit]);
                   }
                }
             }
@@ -419,8 +421,8 @@
                span.texcoords[0][ix][0] = solve_plane(cx, cy, sPlane) * invQ;
                span.texcoords[0][ix][1] = solve_plane(cx, cy, tPlane) * invQ;
                span.texcoords[0][ix][2] = solve_plane(cx, cy, uPlane) * invQ;
-               span.lambda[0][ix] = compute_lambda(sPlane, tPlane, invQ,
-                                              texWidth, texHeight);
+               span.lambda[0][ix] = compute_lambda(sPlane, tPlane, vPlane,
+                                          cx, cy, invQ, texWidth, texHeight);
             }
 #elif defined(DO_MULTITEX)
             {
@@ -433,7 +435,8 @@
                      span.texcoords[unit][ix][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      span.lambda[unit][ix] = compute_lambda(sPlane[unit],
                                                             tPlane[unit],
-                                                            invQ,
+                                                            vPlane[unit],
+                                                            cx, cy, invQ,
                                                             texWidth[unit],
                                                             texHeight[unit]);
                   }

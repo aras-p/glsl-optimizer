@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.36 2002/02/17 17:30:57 brianp Exp $ */
+/* $Id: s_span.c,v 1.37 2002/03/16 18:02:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
+#include "mmath.h"
 #include "mem.h"
 
 #include "s_alpha.h"
@@ -263,51 +264,50 @@ _mesa_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
 
 
 /*
- * Return log_base_2(x) / 2.
- * We divide by two here since we didn't square rho in the triangle function.
+ * This the ideal solution, as given in the OpenGL spec.
  */
-#ifdef USE_IEEE
-
 #if 0
-/* This is pretty fast, but not accurate enough (only 2 fractional bits).
- * Based on code from http://www.stereopsis.com/log2.html
- */
-static INLINE GLfloat HALF_LOG2(GLfloat x)
+static GLfloat
+compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
+               GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
+               GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
 {
-   const GLfloat y = x * x * x * x;
-   const GLuint ix = *((GLuint *) &y);
-   const GLuint exp = (ix >> 23) & 0xFF;
-   const GLint log2 = ((GLint) exp) - 127;
-   return (GLfloat) log2 * (0.5 / 4.0);  /* 4, because of x^4 above */
+   GLfloat dudx = texW * ((s + dsdx) / (q + dqdx) - s * invQ);
+   GLfloat dvdx = texH * ((t + dtdx) / (q + dqdx) - t * invQ);
+   GLfloat dudy = texW * ((s + dsdy) / (q + dqdy) - s * invQ);
+   GLfloat dvdy = texH * ((t + dtdy) / (q + dqdy) - t * invQ);
+   GLfloat x = sqrt(dudx * dudx + dvdx * dvdx);
+   GLfloat y = sqrt(dudy * dudy + dvdy * dvdy);
+   GLfloat rho = MAX2(x, y);
+   GLfloat lambda = LOG2(rho);
+   return lambda;
 }
 #endif
 
-/* Pretty fast, and accurate.
- * Based on code from http://www.flipcode.com/totd/
+
+/*
+ * This is a faster approximation
  */
-static INLINE GLfloat HALF_LOG2(GLfloat val)
+static GLfloat
+compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
+               GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
+               GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
 {
-   GLint *exp_ptr = (GLint *) &val;
-   GLint x = *exp_ptr;
-   const GLint log_2 = ((x >> 23) & 255) - 128;
-   x &= ~(255 << 23);
-   x += 127 << 23;
-   *exp_ptr = x;
-   val = ((-1.0f/3) * val + 2) * val - 2.0f/3;
-   return 0.5F * (val + log_2);
+   GLfloat dsdx2 = (s + dsdx) / (q + dqdx) - s * invQ;
+   GLfloat dtdx2 = (t + dtdx) / (q + dqdx) - t * invQ;
+   GLfloat dsdy2 = (s + dsdy) / (q + dqdy) - s * invQ;
+   GLfloat dtdy2 = (t + dtdy) / (q + dqdy) - t * invQ;
+   GLfloat maxU, maxV, rho, lambda;
+   dsdx2 = FABSF(dsdx2);
+   dsdy2 = FABSF(dsdy2);
+   dtdx2 = FABSF(dtdx2);
+   dtdy2 = FABSF(dtdy2);
+   maxU = MAX2(dsdx2, dsdy2) * texW;
+   maxV = MAX2(dtdx2, dtdy2) * texH;
+   rho = MAX2(maxU, maxV);
+   lambda = LOG2(rho);
+   return lambda;
 }
-
-#else /* USE_IEEE */
-
-/* Slow, portable solution.
- * NOTE: log_base_2(x) = log(x) / log(2)
- * NOTE: 1.442695 = 1/log(2).
- */
-#define HALF_LOG2(x)  ((GLfloat) (log(x) * (1.442695F * 0.5F)))
-
-#endif /* USE_IEEE */
-
-
 
 /*
  * Fill in the span.texcoords array from the interpolation values.
@@ -320,33 +320,64 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
    ASSERT(span->interpMask & SPAN_TEXTURE);
 
    if (ctx->Texture._ReallyEnabled & ~TEXTURE0_ANY) {
-      if (span->interpMask & SPAN_LAMBDA) {
-         /* multitexture, lambda */
-         GLuint u;
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u]._ReallyEnabled) {
-               const GLfloat rho = span->rho[u];
-               const GLfloat ds = span->texStep[u][0];
-               const GLfloat dt = span->texStep[u][1];
-               const GLfloat dr = span->texStep[u][2];
-               const GLfloat dq = span->texStep[u][3];
+      /* multitexture */
+      GLuint u;
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
+            const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+            GLboolean needLambda = (obj->MinFilter != obj->MagFilter);
+            if (needLambda) {
+               const GLfloat texW = (GLfloat) img->Width;
+               const GLfloat texH = (GLfloat) img->Height;
+               const GLfloat dsdx = span->texStepX[u][0];
+               const GLfloat dsdy = span->texStepY[u][0];
+               const GLfloat dtdx = span->texStepX[u][1];
+               const GLfloat dtdy = span->texStepY[u][1];
+               const GLfloat drdx = span->texStepX[u][2];
+               const GLfloat dqdx = span->texStepX[u][3];
+               const GLfloat dqdy = span->texStepY[u][3];
                GLfloat s = span->tex[u][0];
                GLfloat t = span->tex[u][1];
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (dq == 0.0) {
+               for (i = 0; i < span->end; i++) {
+                  const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+                  span->texcoords[u][i][0] = s * invQ;
+                  span->texcoords[u][i][1] = t * invQ;
+                  span->texcoords[u][i][2] = r * invQ;
+                  span->lambda[u][i] = compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                      dqdx, dqdy, texW, texH,
+                                                      s, t, q, invQ);
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+                  q += dqdx;
+               }
+               span->arrayMask |= SPAN_LAMBDA;
+            }
+            else {
+               const GLfloat dsdx = span->texStepX[u][0];
+               const GLfloat dtdx = span->texStepX[u][1];
+               const GLfloat drdx = span->texStepX[u][2];
+               const GLfloat dqdx = span->texStepX[u][3];
+               GLfloat s = span->tex[u][0];
+               GLfloat t = span->tex[u][1];
+               GLfloat r = span->tex[u][2];
+               GLfloat q = span->tex[u][3];
+               GLuint i;
+               if (dqdx == 0.0) {
                   /* Ortho projection or polygon's parallel to window X axis */
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  const GLfloat lambda = HALF_LOG2(rho * invQ * invQ);
                   for (i = 0; i < span->end; i++) {
                      span->texcoords[u][i][0] = s * invQ;
                      span->texcoords[u][i][1] = t * invQ;
                      span->texcoords[u][i][2] = r * invQ;
-                     span->lambda[u][i] = lambda;
-                     s += ds;
-                     t += dt;
-                     r += dr;
+                     span->lambda[u][i] = 0.0;
+                     s += dsdx;
+                     t += dtdx;
+                     r += drdx;
                   }
                }
                else {
@@ -355,122 +386,74 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                      span->texcoords[u][i][0] = s * invQ;
                      span->texcoords[u][i][1] = t * invQ;
                      span->texcoords[u][i][2] = r * invQ;
-                     span->lambda[u][i] = HALF_LOG2(rho * invQ * invQ);
-                     s += ds;
-                     t += dt;
-                     r += dr;
-                     q += dq;
+                     span->lambda[u][i] = 0.0;
+                     s += dsdx;
+                     t += dtdx;
+                     r += drdx;
+                     q += dqdx;
                   }
                }
-            }
-         }
-         span->arrayMask |= SPAN_LAMBDA;
-      }
-      else {
-         /* multitexture, no lambda */
-         GLuint u;
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u]._ReallyEnabled) {
-               const GLfloat ds = span->texStep[u][0];
-               const GLfloat dt = span->texStep[u][1];
-               const GLfloat dr = span->texStep[u][2];
-               const GLfloat dq = span->texStep[u][3];
-               GLfloat s = span->tex[u][0];
-               GLfloat t = span->tex[u][1];
-               GLfloat r = span->tex[u][2];
-               GLfloat q = span->tex[u][3];
-               GLuint i;
-               if (dq == 0.0) {
-                  /* Ortho projection or polygon's parallel to window X axis */
-                  const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  for (i = 0; i < span->end; i++) {
-                     span->texcoords[u][i][0] = s * invQ;
-                     span->texcoords[u][i][1] = t * invQ;
-                     span->texcoords[u][i][2] = r * invQ;
-                     s += ds;
-                     t += dt;
-                     r += dr;
-                  }
-               }
-               else {
-                  for (i = 0; i < span->end; i++) {
-                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                     span->texcoords[u][i][0] = s * invQ;
-                     span->texcoords[u][i][1] = t * invQ;
-                     span->texcoords[u][i][2] = r * invQ;
-                     s += ds;
-                     t += dt;
-                     r += dr;
-                     q += dq;
-                  }
-               }
-            }
-         }
-      }
+            } /* lambda */
+         } /* if */
+      } /* for */
    }
    else {
-      if (span->interpMask & SPAN_LAMBDA) {
+      /* single texture */
+      const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
+      const struct gl_texture_image *img = obj->Image[obj->BaseLevel];
+      GLboolean needLambda = (obj->MinFilter != obj->MagFilter);
+      if (needLambda) {
          /* just texture unit 0, with lambda */
-         const GLfloat rho = span->rho[0];
-         const GLfloat ds = span->texStep[0][0];
-         const GLfloat dt = span->texStep[0][1];
-         const GLfloat dr = span->texStep[0][2];
-         const GLfloat dq = span->texStep[0][3];
+         const GLfloat texW = (GLfloat) img->Width;
+         const GLfloat texH = (GLfloat) img->Height;
+         const GLfloat dsdx = span->texStepX[0][0];
+         const GLfloat dsdy = span->texStepY[0][0];
+         const GLfloat dtdx = span->texStepX[0][1];
+         const GLfloat dtdy = span->texStepY[0][1];
+         const GLfloat drdx = span->texStepX[0][2];
+         const GLfloat dqdx = span->texStepX[0][3];
+         const GLfloat dqdy = span->texStepY[0][3];
          GLfloat s = span->tex[0][0];
          GLfloat t = span->tex[0][1];
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (dq == 0.0) {
-            /* Ortho projection or polygon's parallel to window X axis */
+         for (i = 0; i < span->end; i++) {
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            const GLfloat lambda = HALF_LOG2(rho * invQ * invQ);
-            for (i = 0; i < span->end; i++) {
-               span->texcoords[0][i][0] = s * invQ;
-               span->texcoords[0][i][1] = t * invQ;
-               span->texcoords[0][i][2] = r * invQ;
-               span->lambda[0][i] = lambda;
-               s += ds;
-               t += dt;
-               r += dr;
-            }
-         }
-         else {
-            for (i = 0; i < span->end; i++) {
-               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-               span->texcoords[0][i][0] = s * invQ;
-               span->texcoords[0][i][1] = t * invQ;
-               span->texcoords[0][i][2] = r * invQ;
-               span->lambda[0][i] = HALF_LOG2(rho * invQ * invQ);
-               s += ds;
-               t += dt;
-               r += dr;
-               q += dq;
-            }
+            span->lambda[0][i] = compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                dqdx, dqdy, texW, texH,
+                                                s, t, q, invQ);
+            span->texcoords[0][i][0] = s * invQ;
+            span->texcoords[0][i][1] = t * invQ;
+            span->texcoords[0][i][2] = r * invQ;
+            s += dsdx;
+            t += dtdx;
+            r += drdx;
+            q += dqdx;
          }
          span->arrayMask |= SPAN_LAMBDA;
       }
       else {
          /* just texture 0, without lambda */
-         const GLfloat ds = span->texStep[0][0];
-         const GLfloat dt = span->texStep[0][1];
-         const GLfloat dr = span->texStep[0][2];
-         const GLfloat dq = span->texStep[0][3];
+         const GLfloat dsdx = span->texStepX[0][0];
+         const GLfloat dtdx = span->texStepX[0][1];
+         const GLfloat drdx = span->texStepX[0][2];
+         const GLfloat dqdx = span->texStepX[0][3];
          GLfloat s = span->tex[0][0];
          GLfloat t = span->tex[0][1];
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (dq == 0.0) {
+         if (dqdx == 0.0) {
             /* Ortho projection or polygon's parallel to window X axis */
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
             for (i = 0; i < span->end; i++) {
                span->texcoords[0][i][0] = s * invQ;
                span->texcoords[0][i][1] = t * invQ;
                span->texcoords[0][i][2] = r * invQ;
-               s += ds;
-               t += dt;
-               r += dr;
+               s += dsdx;
+               t += dtdx;
+               r += drdx;
             }
          }
          else {
@@ -479,10 +462,10 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                span->texcoords[0][i][0] = s * invQ;
                span->texcoords[0][i][1] = t * invQ;
                span->texcoords[0][i][2] = r * invQ;
-               s += ds;
-               t += dt;
-               r += dr;
-               q += dq;
+               s += dsdx;
+               t += dtdx;
+               r += drdx;
+               q += dqdx;
             }
          }
       }

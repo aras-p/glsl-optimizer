@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.54 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.55 2002/03/16 18:02:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -722,13 +722,13 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    GLfloat tex_coord[3], tex_step[3];
    GLchan *dest = span->color.rgba[0];
 
-   tex_coord[0] = span->tex[0][0]  * (info->smask + 1),
-     tex_step[0] = span->texStep[0][0] * (info->smask + 1);
-   tex_coord[1] = span->tex[0][1] * (info->tmask + 1),
-     tex_step[1] = span->texStep[0][1] * (info->tmask + 1);
+   tex_coord[0] = span->tex[0][0]  * (info->smask + 1);
+   tex_step[0] = span->texStepX[0][0] * (info->smask + 1);
+   tex_coord[1] = span->tex[0][1] * (info->tmask + 1);
+   tex_step[1] = span->texStepX[0][1] * (info->tmask + 1);
    /* span->tex[0][2] only if 3D-texturing, here only 2D */
-   tex_coord[2] = span->tex[0][3],
-     tex_step[2] = span->texStep[0][3];
+   tex_coord[2] = span->tex[0][3];
+   tex_step[2] = span->texStepX[0][3];
 
    switch (info->filter) {
    case GL_NEAREST:
@@ -935,43 +935,15 @@ static void general_textured_triangle( GLcontext *ctx,
 
 
 /*
- * Render a smooth-shaded, textured, RGBA triangle.
- * Interpolate S,T,R with perspective correction and compute lambda for
- * each fragment.  Lambda is used to determine whether to use the
- * minification or magnification filter.  If minification and using
- * mipmaps, lambda is also used to select the texture level of detail.
- */
-static void lambda_textured_triangle( GLcontext *ctx,
-				      const SWvertex *v0,
-				      const SWvertex *v1,
-				      const SWvertex *v2 )
-{
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define INTERP_RGB 1
-#define INTERP_SPEC 1
-#define INTERP_ALPHA 1
-#define INTERP_TEX 1
-#define INTERP_LAMBDA 1
-
-#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
-
-#include "s_tritemp.h"
-}
-
-
-/*
  * This is the big one!
- * Interpolate Z, RGB, Alpha, specular, fog, and N sets of texture coordinates
- * with lambda (LOD).
+ * Interpolate Z, RGB, Alpha, specular, fog, and N sets of texture coordinates.
  * Yup, it's slow.
  */
 static void
-lambda_multitextured_triangle( GLcontext *ctx,
-                               const SWvertex *v0,
-                               const SWvertex *v1,
-                               const SWvertex *v2 )
+multitextured_triangle( GLcontext *ctx,
+                        const SWvertex *v0,
+                        const SWvertex *v1,
+                        const SWvertex *v2 )
 {
 
 #define INTERP_Z 1
@@ -981,7 +953,6 @@ lambda_multitextured_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_SPEC 1
 #define INTERP_MULTITEX 1
-#define INTERP_LAMBDA 1
 
 #define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
 
@@ -1201,24 +1172,12 @@ _swrast_choose_triangle( GLcontext *ctx )
 	    }
 	 }
          else {
-            /* More complicated textures (mipmap, multi-tex, sep specular) */
-            GLboolean needLambda;
-            /* if mag filter != min filter we need to compute lambda */
-            const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
-            if (obj && obj->MinFilter != obj->MagFilter)
-               needLambda = GL_TRUE;
-            else
-               needLambda = GL_FALSE;
+            /* general case textured triangles */
             if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
-               USE(lambda_multitextured_triangle);
+               USE(multitextured_triangle);
             }
             else {
-               if (needLambda) {
-		  USE(lambda_textured_triangle);
-	       }
-               else {
-                  USE(general_textured_triangle);
-	       }
+               USE(general_textured_triangle);
             }
          }
       }

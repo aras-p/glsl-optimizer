@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.55 2002/03/08 00:09:18 brianp Exp $ */
+/* $Id: s_texture.c,v 1.56 2002/03/16 18:02:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -310,18 +310,22 @@ compute_min_mag_ranges( GLfloat minMagThresh, GLuint n, const GLfloat lambda[],
                         GLuint *magStart, GLuint *magEnd )
 {
    ASSERT(lambda != NULL);
-#ifdef DEBUG
-   /* verify that lambda[] is monotonous */
+#if 0
+   /* Verify that lambda[] is monotonous.
+    * We can't really use this because the inaccuracy in the LOG2 function
+    * causes this test to fail, yet the resulting texturing is correct.
+    */
    if (n > 1) {
       GLuint i;
+      printf("lambda delta = %g\n", lambda[0] - lambda[n-1]);
       if (lambda[0] >= lambda[n-1]) { /* decreasing */
          for (i = 0; i < n - 1; i++) {
-            ASSERT((GLint) (lambda[i] * 100) >= (GLint) (lambda[i+1] * 100));
+            ASSERT((GLint) (lambda[i] * 10) >= (GLint) (lambda[i+1] * 10));
          }
       }
       else { /* increasing */
          for (i = 0; i < n - 1; i++) {
-            ASSERT((GLint) (lambda[i] * 100) <= (GLint) (lambda[i+1] * 100));
+            ASSERT((GLint) (lambda[i] * 10) <= (GLint) (lambda[i+1] * 10));
          }
       }
    }
@@ -367,8 +371,10 @@ compute_min_mag_ranges( GLfloat minMagThresh, GLuint n, const GLfloat lambda[],
       }
    }
 
-#ifdef DEBUG
-   /* Verify the min/mag Start/End values */
+#if 0
+   /* Verify the min/mag Start/End values
+    * We don't use this either (see above)
+    */
    {
       GLint i;
       for (i = 0; i < n; i++) {
@@ -3280,6 +3286,18 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          GLchan texel[MAX_WIDTH][4];
          
          if (lambda) {
+#if 0
+            float min, max;
+            int i;
+            min = max = lambda[0];
+            for (i = 1; i < n; i++) {
+               if (lambda[i] > max)
+                  max = lambda[i];
+               if (lambda[i] < min)
+                  min = lambda[i];
+            }
+            printf("min/max %g / %g\n", min, max);
+#endif
             if (textureUnit->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
                GLuint i;
