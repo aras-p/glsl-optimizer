@@ -7,10 +7,6 @@
 
 #include <stdlib.h>
 
-#if !defined(_WIN32)
-#include <GL/glx.h>
-#endif
-
 #ifdef __sgi
 #include <dlfcn.h>
 #endif
@@ -20,8 +16,10 @@
 /* Grumble.  The IRIX 6.3 and early IRIX 6.4 OpenGL headers
    support the video resize extension, but failed to define
    GLX_SGIX_video_resize. */
+#if 0
 #ifdef GLX_SYNC_FRAME_SGIX
 #define GLX_SGIX_video_resize 1
+#endif
 #endif
 
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
@@ -43,7 +41,7 @@ static int dx = -1, dy = -1, dw = -1, dh = -1;
 static volatile int errorCaught;
 
 /* ARGSUSED */
-static
+static int
 catchXSGIvcErrors(Display * dpy, XErrorEvent * event)
 {
   errorCaught = 1;
@@ -94,6 +92,8 @@ glutVideoResizeGet(GLenum param)
 
         errorCaught = 0;
 
+#if defined(GLX_GLXEXT_PROTOTYPES)
+#endif
         glXQueryChannelDeltasSGIX(__glutDisplay, __glutScreen,
           videoResizeChannel, &dx, &dy, &dw, &dh);
 

@@ -398,7 +398,7 @@ __glutDetermineVisual(
   return vis;
 }
 
-void GLUTCALLBACK
+static void GLUTCALLBACK
 __glutDefaultDisplay(void)
 {
   /* XXX Remove the warning after GLUT 3.0. */

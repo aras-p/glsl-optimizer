@@ -17,7 +17,6 @@
 extern unsigned __glutMenuButton;
 extern GLUTidleCB __glutIdleFunc;
 extern GLUTtimer *__glutTimerList;
-extern void handleTimeouts(void);
 extern GLUTmenuItem *__glutGetUniqueMenuItem(GLUTmenu * menu, int unique);
 static HMENU __glutHMenu;
 

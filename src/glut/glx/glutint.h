@@ -22,6 +22,7 @@
 #else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #endif
 
@@ -671,6 +672,7 @@ extern GLUTwindow *__glutMenuWindow;
 extern GLUTmenu *__glutCurrentMenu;
 extern int __glutWindowListSize;
 extern void (*__glutFreeOverlayFunc) (GLUToverlay *);
+extern void __glutFreeOverlay(GLUToverlay * overlay);
 extern XVisualInfo *__glutDetermineWindowVisual(Bool * treatAsSingle,
   Bool * visAlloced, void **fbc);
 
@@ -703,6 +705,7 @@ extern void __glutPutOnWorkList(GLUTwindow * window,
   int work_mask);
 extern void __glutRegisterEventParser(GLUTeventParser * parser);
 extern void __glutPostRedisplay(GLUTwindow * window, int layerMask);
+extern void handleTimeouts(void);
 
 /* private routines from glut_init.c */
 #if !defined(_WIN32)
