@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.26 2000/12/14 17:44:42 brianp Exp $ */
+/* $Id: glx.h,v 1.27 2001/05/24 19:07:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -163,11 +163,11 @@ extern "C" {
 
 
 
-typedef void * GLXContext;
+typedef struct __GLXcontextRec *GLXContext;
 typedef XID GLXPixmap;
 typedef XID GLXDrawable;
 /* GLX 1.3 and later */
-typedef void * GLXFBConfig;
+typedef struct __GLXFBConfigRec *GLXFBConfig;
 typedef XID GLXFBConfigID;
 typedef XID GLXContextID;
 typedef XID GLXWindow;
