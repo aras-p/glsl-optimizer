@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.31 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.32 2003/04/10 10:03:30 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,7 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   int i;
    FLUSH_CURRENT( ctx, 0 );
    
    /*  _mesa_debug(ctx, "%s\n", __FUNCTION__); */
@@ -90,6 +91,9 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    tnl->vb.PrimitiveLength[0] = count;
    tnl->vb.Elts = (GLuint *)indices;
 
+   for (i = 0 ; i < count ; i++)
+      indices[i] -= start;
+
    if (ctx->Array.LockCount)
       tnl->Driver.RunPipeline( ctx );
    else {
@@ -99,6 +103,9 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
       tnl->Driver.RunPipeline( ctx );
       tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
    }
+
+   for (i = 0 ; i < count ; i++)
+      indices[i] += start;
 }
 
 
