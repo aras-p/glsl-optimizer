@@ -817,7 +817,7 @@ static int radeon_emit_scalars2(
       fprintf(stderr, "emit scalars2, start %d stride %d nr %d (end %d)\n",
 	      start, stride, sz, start + stride * sz);
 
-   if (start + stride * sz > 257) {
+   if (start + stride * sz > 258) {
       fprintf(stderr, "emit scalars OVERFLOW %d/%d/%d\n", start, stride, sz);
       return -1;
    }
