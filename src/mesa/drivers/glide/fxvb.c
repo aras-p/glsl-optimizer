@@ -58,10 +58,10 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 #if FX_PACKEDCOLOR
    *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
 #else  /* !FX_PACKEDCOLOR */
-   *(GLuint *)&dst->r = *(GLuint *)&src->r;
-   *(GLuint *)&dst->g = *(GLuint *)&src->g;
-   *(GLuint *)&dst->b = *(GLuint *)&src->b;
-   *(GLuint *)&dst->a = *(GLuint *)&src->a;
+   COPY_FLOAT(dst->r, src->r);
+   COPY_FLOAT(dst->g, src->g);
+   COPY_FLOAT(dst->b, src->b);
+   COPY_FLOAT(dst->a, src->a);
 #endif /* !FX_PACKEDCOLOR */
 }
 
@@ -75,13 +75,13 @@ static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
    *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
    *(GLuint *)&dst->pspec = *(GLuint *)&src->pspec;
 #else  /* !FX_PACKEDCOLOR */
-   *(GLuint *)&dst->r = *(GLuint *)&src->r;
-   *(GLuint *)&dst->g = *(GLuint *)&src->g;
-   *(GLuint *)&dst->b = *(GLuint *)&src->b;
-   *(GLuint *)&dst->a = *(GLuint *)&src->a;
-   *(GLuint *)&dst->r1 = *(GLuint *)&src->r1;
-   *(GLuint *)&dst->g1 = *(GLuint *)&src->g1;
-   *(GLuint *)&dst->b1 = *(GLuint *)&src->b1;
+   COPY_FLOAT(dst->r, src->r);
+   COPY_FLOAT(dst->g, src->g);
+   COPY_FLOAT(dst->b, src->b);
+   COPY_FLOAT(dst->a, src->a);
+   COPY_FLOAT(dst->r1, src->r1);
+   COPY_FLOAT(dst->g1, src->g1);
+   COPY_FLOAT(dst->b1, src->b1);
 #endif /* !FX_PACKEDCOLOR */
 }
 
@@ -104,6 +104,10 @@ static void interp_extras( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
+   /* If stride is zero, ColorPtr[1] is constant across the VB, so
+    * there is no point interpolating between two values as they will
+    * be identical.
+    */
    if (VB->ColorPtr[1]) {
       assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
 

@@ -535,13 +535,8 @@ static struct {
 #define VERT_X(_v) _v->x
 #define VERT_Y(_v) _v->y
 #define VERT_Z(_v) _v->ooz
+#define AREA_IS_CCW( a ) IS_NEGATIVE( a )
 #define GET_VERTEX(e) (fxMesa->verts + e)
-
-#ifdef USE_IEEE
-#define AREA_IS_CCW( a ) (((fi_type *)&(a))->i < 0)
-#else
-#define AREA_IS_CCW( a ) (a < 0)
-#endif
 
 
 #if FX_PACKEDCOLOR
@@ -595,26 +590,26 @@ do {				\
 
 #define VERT_COPY_RGBA( v0, v1 ) 		\
 do {						\
-   *(GLuint *)&v0->r = *(GLuint *)&v1->r;	\
-   *(GLuint *)&v0->g = *(GLuint *)&v1->g;	\
-   *(GLuint *)&v0->b = *(GLuint *)&v1->b;	\
-   *(GLuint *)&v0->a = *(GLuint *)&v1->a;	\
+   COPY_FLOAT(v0->r, v1->r);			\
+   COPY_FLOAT(v0->g, v1->g);			\
+   COPY_FLOAT(v0->b, v1->b);			\
+   COPY_FLOAT(v0->a, v1->a);			\
 } while (0)
 
 #define VERT_SAVE_RGBA( idx )  			\
 do {						\
-   *(GLuint *)&color[idx][0] = *(GLuint *)&v[idx]->r;\
-   *(GLuint *)&color[idx][1] = *(GLuint *)&v[idx]->g;\
-   *(GLuint *)&color[idx][2] = *(GLuint *)&v[idx]->b;\
-   *(GLuint *)&color[idx][3] = *(GLuint *)&v[idx]->a;\
+   COPY_FLOAT(color[idx][0], v[idx]->r);	\
+   COPY_FLOAT(color[idx][1], v[idx]->g);	\
+   COPY_FLOAT(color[idx][2], v[idx]->b);	\
+   COPY_FLOAT(color[idx][3], v[idx]->a);	\
 } while (0)
 
 #define VERT_RESTORE_RGBA( idx )		\
 do {						\
-   *(GLuint *)&v[idx]->r = *(GLuint *)&color[idx][0];\
-   *(GLuint *)&v[idx]->g = *(GLuint *)&color[idx][1];\
-   *(GLuint *)&v[idx]->b = *(GLuint *)&color[idx][2];\
-   *(GLuint *)&v[idx]->a = *(GLuint *)&color[idx][3];\
+   COPY_FLOAT(v[idx]->r, color[idx][0]);	\
+   COPY_FLOAT(v[idx]->g, color[idx][1]);	\
+   COPY_FLOAT(v[idx]->b, color[idx][2]);	\
+   COPY_FLOAT(v[idx]->a, color[idx][3]);	\
 } while (0)
 
 
@@ -627,29 +622,29 @@ do {				\
 
 #define VERT_COPY_SPEC( v0, v1 ) 		\
 do {						\
-   *(GLuint *)&v0->r1 = *(GLuint *)&v1->r1;	\
-   *(GLuint *)&v0->g1 = *(GLuint *)&v1->g1;	\
-   *(GLuint *)&v0->b1 = *(GLuint *)&v1->b1;	\
+   COPY_FLOAT(v0->r1, v1->r1);			\
+   COPY_FLOAT(v0->g1, v1->g1);			\
+   COPY_FLOAT(v0->b1, v1->b1);			\
 } while (0)
 
 #define VERT_SAVE_SPEC( idx )  			\
 do {						\
-   *(GLuint *)&spec[idx][0] = *(GLuint *)&v[idx]->r1;\
-   *(GLuint *)&spec[idx][1] = *(GLuint *)&v[idx]->g1;\
-   *(GLuint *)&spec[idx][2] = *(GLuint *)&v[idx]->b1;\
+   COPY_FLOAT(spec[idx][0], v[idx]->r1);	\
+   COPY_FLOAT(spec[idx][1], v[idx]->g1);	\
+   COPY_FLOAT(spec[idx][2], v[idx]->b1);	\
 } while (0)
 
 #define VERT_RESTORE_SPEC( idx )		\
 do {						\
-   *(GLuint *)&v[idx]->r1 = *(GLuint *)&spec[idx][0];\
-   *(GLuint *)&v[idx]->g1 = *(GLuint *)&spec[idx][1];\
-   *(GLuint *)&v[idx]->b1 = *(GLuint *)&spec[idx][2];\
+   COPY_FLOAT(v[idx]->r1, spec[idx][0]);	\
+   COPY_FLOAT(v[idx]->g1, spec[idx][1]);	\
+   COPY_FLOAT(v[idx]->b1, spec[idx][2]);	\
 } while (0)
 
 
 #define LOCAL_VARS(n)				\
    fxMesaContext fxMesa = FX_CONTEXT(ctx);	\
-   GLuint color[n][4], spec[n][4];		\
+   GLfloat color[n][4], spec[n][4];		\
    (void) color; (void) spec;
 #endif /* !FX_PACKEDCOLOR */
 
