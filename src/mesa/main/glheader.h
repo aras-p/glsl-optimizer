@@ -102,24 +102,12 @@
 #    endif
 #  endif
 #  if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
-#    define GLAPI __declspec(dllexport)
 #    define WGLAPI __declspec(dllexport)
 #  elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
-#    define GLAPI __declspec(dllimport)
 #    define WGLAPI __declspec(dllimport)
 #  else /* for use with static link lib build of Win32 edition only */
-#    define GLAPI extern
 #    define WGLAPI __declspec(dllimport)
 #  endif /* _STATIC_MESA support */
-#  define GLAPIENTRY __stdcall
-#  define GLAPIENTRYP GLAPIENTRY *
-#elif !defined(BUILD_FOR_SNAP)
-/* non-Windows compilation */
-#  define GLAPI extern
-#  define GLAPIENTRY
-#  ifndef GLAPIENTRYP
-#    define GLAPIENTRYP *
-#  endif
 #endif /* WIN32 / CYGWIN bracket */
 
 
