@@ -15,7 +15,8 @@ COMMON_SOURCES = \
         ../common/texmem.c \
         ../common/vblank.c \
 	../common/dri_util.c \
-	../common/glcontextmodes.c
+	../common/glcontextmodes.c \
+	../common/xmlconfig.c
 
 DRIVER_SOURCES = \
 	i810context.c \
