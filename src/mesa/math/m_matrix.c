@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.2 2000/11/18 08:10:24 jtaylor Exp $ */
+/* $Id: m_matrix.c,v 1.3 2000/11/20 15:16:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,9 +33,6 @@
  * 2. Points/vertices are to be thought of as column vectors.
  * 3. Transformation of a point p by a matrix M is: p' = M * p
  */
-
-#include <math.h>
-#include <tgmath.h>
 
 #include "glheader.h"
 #include "macros.h"
