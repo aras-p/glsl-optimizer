@@ -5,7 +5,7 @@ TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = r300_dri.so
-DEFINES += -DCOMPILE_R300
+DEFINES += -DCOMPILE_R300 -DGLX_DIRECT_RENDERING
 
 MINIGLX_SOURCES = server/radeon_dri.c
 

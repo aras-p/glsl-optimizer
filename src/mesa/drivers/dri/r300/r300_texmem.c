@@ -47,6 +47,7 @@ SOFTWARE.
 #include "radeon_reg.h"		/* gets definition for usleep */
 #include "r300_context.h"
 #include "r300_state.h"
+#include "r300_cmdbuf.h"
 #include "radeon_ioctl.h"
 /*
 #include "r300_swtcl.h"

@@ -864,47 +864,42 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 
 		/* All offsets are 0 - for use by immediate mode.
 		Should change later to handle vertex buffers */
-	if(r300->current_vp){
+	if(r300->current_vp!=NULL){
 
 	/* VERT_ATTRIB_WEIGHT, VERT_ATTRIB_SIX, VERT_ATTRIB_SEVEN, VERT_ATTRIB_GENERIC0,
 	   VERT_ATTRIB_GENERIC1, VERT_ATTRIB_GENERIC2, VERT_ATTRIB_GENERIC3 */
-	
+	r300->state.render_inputs = 0;
+	   
 	if(r300->current_vp->inputs[VERT_ATTRIB_POS] != -1){
-	   	if(tnl->render_inputs & _TNL_BIT_POS){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_POS];
-			CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-		}else WARN_ONCE("vp expects pos but none was given\n");
+		reg=r300->current_vp->inputs[VERT_ATTRIB_POS];
+		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
+		r300->state.render_inputs |= _TNL_BIT_POS;
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1){
-		if(tnl->render_inputs & _TNL_BIT_NORMAL){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_NORMAL];
-			CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
-		}else WARN_ONCE("vp expects normal but none was given\n");
+		reg=r300->current_vp->inputs[VERT_ATTRIB_NORMAL];
+		CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
+		r300->state.render_inputs |= _TNL_BIT_NORMAL;
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1){
-		if(tnl->render_inputs & _TNL_BIT_COLOR0){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR0];
-			CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
-		}else WARN_ONCE("vp expects primary color but none was given\n");
+		reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR0];
+		CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
+		r300->state.render_inputs |= _TNL_BIT_COLOR0;
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1){
-		if(tnl->render_inputs & _TNL_BIT_COLOR1){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR1];
-			CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
-		}else WARN_ONCE("vp expects secondary color but none was given\n");
+		reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR1];
+		CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
+		r300->state.render_inputs |= _TNL_BIT_COLOR1;
 	}
 	if(r300->current_vp->inputs[VERT_ATTRIB_FOG] != -1){
-		if(tnl->render_inputs & _TNL_BIT_FOG){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_FOG];
-			CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
-		}else WARN_ONCE("vp expects fog but none was given\n");
+		reg=r300->current_vp->inputs[VERT_ATTRIB_FOG];
+		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
+		r300->state.render_inputs |= _TNL_BIT_FOG;
 	}
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++) // tex 7 is last 
 		if(r300->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1){
-			if(tnl->render_inputs & (_TNL_BIT_TEX0<<i)){
-				reg=r300->current_vp->inputs[VERT_ATTRIB_TEX0+i];
-				CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
-			}else fprintf(stderr, "vp expects tex%d but none was given\n", i);
+			reg=r300->current_vp->inputs[VERT_ATTRIB_TEX0+i];
+			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
+			r300->state.render_inputs |= _TNL_BIT_TEX0<<i;
 		}
 #if 0
 	if((tnl->render_inputs & _TNL_BIT_INDEX))
@@ -914,6 +909,8 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
 #endif	
 	}else{
+	
+	r300->state.render_inputs = tnl->render_inputs;
 	
 	if(tnl->render_inputs & _TNL_BIT_POS)
 		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
@@ -941,7 +938,8 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	r300->state.aos_count=count;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "aos_count=%d\n", count);
+		fprintf(stderr, "aos_count=%d render_inputs=%08x\n", count, r300->state.render_inputs);
+		
 
 	if(count>R300_MAX_AOS_ARRAYS){
 		fprintf(stderr, "Aieee ! AOS array count exceeded !\n");
@@ -1025,11 +1023,19 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 	R300_STATECHANGE(r300, vic);
 	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
 
-	r300->hw.vic.cmd[R300_VIC_CNTL_1]=R300_INPUT_CNTL_POS
-					| R300_INPUT_CNTL_COLOR;
+	r300->hw.vic.cmd[R300_VIC_CNTL_1]=0;
+	
+	if(r300->state.render_inputs & _TNL_BIT_POS)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_POS;
+	
+	if(r300->state.render_inputs & _TNL_BIT_NORMAL)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_NORMAL;
+	
+	if(r300->state.render_inputs & _TNL_BIT_COLOR0)
+		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_COLOR;
 
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(ctx->Texture.Unit[i].Enabled)
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
 			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
 
 	/* Stage 3: VAP output */
@@ -1039,7 +1045,7 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 
 	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
 	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(ctx->Texture.Unit[i].Enabled)
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
 			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
 
 }
@@ -1181,7 +1187,10 @@ void r300_setup_textures(GLcontext *ctx)
 		exit(-1);
 		}
 	for(i=0;i<mtu;i++){
-		if(ctx->Texture.Unit[i].Enabled){
+		if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
+			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value.\n");
+			}
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){
 			t=r300->state.texture.unit[i].texobj;
 			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			r300->state.texture.tc_count++;
@@ -1323,10 +1332,11 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
 	
-	if(rmesa->current_vp){
+	if(rmesa->current_vp != NULL){
 		r300SetupVertexProgram(rmesa);
 		return ;
 	}	
+	
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
@@ -1540,9 +1550,9 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300UpdateCulling(ctx);
 
-	r300_setup_routing(ctx, GL_TRUE);
-
 	r300UpdateTextureState(ctx);
+	
+	r300_setup_routing(ctx, GL_TRUE);
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);
 

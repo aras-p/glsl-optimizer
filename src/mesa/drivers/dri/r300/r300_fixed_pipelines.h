@@ -263,7 +263,7 @@ static struct r300_pixel_shader_state SINGLE_TEXTURE_PIXEL_SHADER={
 			
 			tex_offset: 0,
 			tex_end: 0,
-			alu_offset: 1,
+			alu_offset: 0,
 			alu_end: 0
 			},
 			

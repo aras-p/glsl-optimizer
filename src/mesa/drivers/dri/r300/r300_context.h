@@ -642,6 +642,8 @@ struct r300_state {
 	struct r300_pixel_shader_state pixel_shader;
 	struct r300_aos_rec aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
+	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
+				 They are the same as tnl->render_inputs for fixed pipeline */
 
 	int hw_stencil;
 };

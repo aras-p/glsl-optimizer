@@ -190,7 +190,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
+   GLuint i, render_inputs;
    int k, type;
    LOCAL_VARS
 		   
@@ -224,6 +224,13 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 	return;
    	}
    
+   render_inputs = rmesa->state.render_inputs;
+
+   if(!render_inputs){
+   	WARN_ONCE("Aeiee ! render_inputs==0. Skipping rendering.\n");
+	return;
+   	}
+
    start_immediate_packet(end-start, type, 4*rmesa->state.aos_count);
 
 	for(i=start;i<end;i++){
@@ -243,28 +250,28 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 		
 		
 		/* coordinates */
-		if(tnl->render_inputs & _TNL_BIT_POS)
+		if(render_inputs & _TNL_BIT_POS)
 			output_vector(VB->ObjPtr, i);
-		if(tnl->render_inputs & _TNL_BIT_NORMAL)
+		if(render_inputs & _TNL_BIT_NORMAL)
 			output_vector(VB->NormalPtr, i);
 		
 		/* color components */
-		if(tnl->render_inputs & _TNL_BIT_COLOR0)
+		if(render_inputs & _TNL_BIT_COLOR0)
 			output_vector(VB->ColorPtr[0], i);
-		if(tnl->render_inputs & _TNL_BIT_COLOR1)
+		if(render_inputs & _TNL_BIT_COLOR1)
 			output_vector(VB->SecondaryColorPtr[0], i);
 
-		if(tnl->render_inputs & _TNL_BIT_FOG)
+		if(render_inputs & _TNL_BIT_FOG)
 			output_vector(VB->FogCoordPtr, i);
 					
 		/* texture coordinates */
 		for(k=0;k < ctx->Const.MaxTextureUnits;k++)
-			if(tnl->render_inputs & (_TNL_BIT_TEX0<<k))
+			if(render_inputs & (_TNL_BIT_TEX0<<k))
 				output_vector(VB->TexCoordPtr[k], i);
 		
-		if(tnl->render_inputs & _TNL_BIT_INDEX)
+		if(render_inputs & _TNL_BIT_INDEX)
 			output_vector(VB->IndexPtr[0], i);
-		if(tnl->render_inputs & _TNL_BIT_POINTSIZE)
+		if(render_inputs & _TNL_BIT_POINTSIZE)
 			output_vector(VB->PointSizePtr, i);
 		}
 
@@ -290,12 +297,12 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
+		
    #if 1 /* we need this, somehow */
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
    /* Make sure we have enough space */
-   #else 0
+   #else
    /* Count is very imprecize, but should be good upper bound */
    r300EnsureCmdBufSpace(rmesa, rmesa->hw.max_state_size + 4+2+30
    	+VB->PrimitiveCount*(1+8)+VB->Count*4*rmesa->state.texture.tc_count+4, __FUNCTION__);
