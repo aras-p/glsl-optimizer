@@ -457,19 +457,6 @@ fx_null_tri( GLcontext *ctx,
 
 
 
-#define POINT_FALLBACK	(DD_POINT_SMOOTH )
-#define LINE_FALLBACK	(DD_LINE_STIPPLE)
-#define TRI_FALLBACK	(DD_TRI_SMOOTH | DD_TRI_STIPPLE )
-#define ANY_FALLBACK	(POINT_FALLBACK | LINE_FALLBACK | TRI_FALLBACK)
-			 
-
-#define ANY_RENDER_FLAGS (DD_FLATSHADE | 		\
-			  DD_TRI_LIGHT_TWOSIDE | 	\
-			  DD_TRI_OFFSET |		\
-			  DD_TRI_UNFILLED)
-
-
-
 
 /**********************************************************************/
 /*                 Render whole begin/end objects                     */
@@ -517,6 +504,24 @@ fx_null_tri( GLcontext *ctx,
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	
 #include "tnl/t_vb_rendertmp.h"
 
+
+/**********************************************************************/
+/*                    Choose render functions                         */
+/**********************************************************************/
+
+
+
+
+#define POINT_FALLBACK	(DD_POINT_SMOOTH )
+#define LINE_FALLBACK	(DD_LINE_STIPPLE)
+#define TRI_FALLBACK	(DD_TRI_SMOOTH | DD_TRI_STIPPLE )
+#define ANY_FALLBACK	(POINT_FALLBACK | LINE_FALLBACK | TRI_FALLBACK)
+			 
+
+#define ANY_RENDER_FLAGS (DD_FLATSHADE | 		\
+			  DD_TRI_LIGHT_TWOSIDE | 	\
+			  DD_TRI_OFFSET |		\
+			  DD_TRI_UNFILLED)
 
 
 

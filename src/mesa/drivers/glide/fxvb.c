@@ -288,12 +288,13 @@ void fxDDSetupInit( void )
 void fx_validate_BuildProjVerts(GLcontext *ctx, GLuint start, GLuint count,
 				GLuint newinputs )
 {
-   GLuint setupindex = SETUP_XYZW;
    fxMesaContext fxMesa = (fxMesaContext)ctx->DriverCtx;
 
    if (!fxMesa->is_in_hardware) 
-     ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+      ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
    else {
+      GLuint setupindex = SETUP_XYZW;
+
       fxMesa->tmu_source[0] = 0;
       fxMesa->tmu_source[1] = 1;
       fxMesa->tex_dest[0] = SETUP_TMU0;
@@ -357,20 +358,13 @@ void fx_BuildProjVerts( GLcontext *ctx, GLuint start, GLuint count,
 	 ind &= fxMesa->setupindex;
       }
 
-      if (0) {
-	 _tnl_print_vert_flags("newinputs", newinputs);
-	 fxPrintSetupFlags("setup function", ind); 
-      }
-
       if (ind) {
 	 if (fxMesa->new_state) 
-	    fxSetupFXUnits( ctx );
-      
-	 if (VB->importable_data)
+	    fxSetupFXUnits( ctx ); /* why? */
+	 
+	 if (VB->importable_data & newinputs)
 	    VB->import_data( ctx, VB->importable_data & newinputs,
-			     (VB->ClipOrMask
-			      ? VEC_NOT_WRITEABLE|VEC_BAD_STRIDE
-			      : VEC_BAD_STRIDE));
+			     VEC_BAD_STRIDE );
       
 	 setupfuncs[ind]( ctx, start, count );   
       }

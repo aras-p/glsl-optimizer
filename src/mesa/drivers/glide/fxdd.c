@@ -1026,6 +1026,10 @@ static void fxDDUpdateDDPointers(GLcontext *ctx, GLuint new_state)
 #endif
 }
 
+static void fxDDRenderPrimitive( GLcontext *ctx, GLenum mode )
+{
+   (void) ctx; (void) mode;
+}
 
 
 void fxSetupDDPointers(GLcontext *ctx)
@@ -1061,6 +1065,7 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.RenderStart=fxSetupFXUnits;
   ctx->Driver.RenderFinish=_swrast_flush;
   ctx->Driver.ResetLineStipple=_swrast_ResetLineStipple;
+  ctx->Driver.RenderPrimitive=fxDDRenderPrimitive;
 
   ctx->Driver.TexImage2D = fxDDTexImage2D;
   ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
