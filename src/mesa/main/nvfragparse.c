@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.15 2003/03/19 05:34:25 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.16 2003/04/01 16:17:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,16 +42,16 @@
 #include "nvprogram.h"
 
 
-/* XXX move */
+/* XXX move into imports.[ch] eventually */
 static void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
 {
+   size_t copySize = MIN2(oldSize, newSize);
    void *newBuffer = _mesa_malloc(newSize);
-   size_t bytes = MIN2(oldSize, newSize);
-   if (newBuffer && bytes > 0) {
-      _mesa_memcpy(newBuffer, oldBuffer, bytes);
-   }
-   _mesa_free(oldBuffer);
+   if (newBuffer && copySize > 0)
+      _mesa_memcpy(newBuffer, oldBuffer, copySize);
+   if (oldBuffer)
+      _mesa_free(oldBuffer);
    return newBuffer;
 }
 
