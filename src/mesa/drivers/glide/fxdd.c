@@ -178,9 +178,9 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
   GLbitfield softwareMask = mask & (DD_STENCIL_BIT | DD_ACCUM_BIT);
   GLbitfield newMask = mask & ~(DD_STENCIL_BIT | DD_ACCUM_BIT);
 
-
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDClear(%d,%d,%d,%d)\n",x,y,width,height);
+    fprintf(stderr,"fxmesa: fxDDClear(%d,%d,%d,%d)\n", (int) x, (int) y,
+            (int) width, (int) height);
   }
 
   if (mask == (DD_BACK_LEFT_BIT | DD_DEPTH_BIT)
@@ -209,6 +209,20 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
   if (newMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
     if (newMask & DD_FRONT_LEFT_BIT) {
+      if (mask & DD_DEPTH_BIT) {
+        /* XXX it appears that the depth buffer isn't cleared when
+         * glRenderBuffer(GR_BUFFER_FRONTBUFFER) is set.
+         * This is a work-around/
+         */
+        FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+        FX_grColorMask(FXFALSE,FXFALSE);
+        FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
+                         (FxU16)(ctx->Depth.Clear*0xffff));
+        FX_grColorMask(ctx->Color.ColorMask[RCOMP] ||
+                       ctx->Color.ColorMask[GCOMP] ||
+                       ctx->Color.ColorMask[BCOMP],
+                       ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+      }
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
                        (FxU16)(ctx->Depth.Clear*0xffff));
@@ -254,7 +268,7 @@ static GLboolean fxDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDSetBuffer(%x)\n",mode);
+    fprintf(stderr,"fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
   }
 
   if (mode == GL_FRONT_LEFT) {
@@ -282,7 +296,7 @@ static void fxDDSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer,
   (void) buffer;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDSetBuffer(%x)\n",mode);
+    fprintf(stderr,"fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
   }
 
   if (mode == GL_FRONT_LEFT) {
@@ -455,7 +469,7 @@ static GLint fxDDGetParameteri(const GLcontext *ctx, GLint param)
   case DD_HAVE_HARDWARE_FOG:
     return 1;
   default:
-    fprintf(stderr,"fx Driver: internal error in fxDDGetParameteri(): %x\n",param);
+    fprintf(stderr,"fx Driver: internal error in fxDDGetParameteri(): %x\n", (int) param);
     fxCloseHardware();
     exit(-1);
     return 0;
@@ -669,18 +683,6 @@ void fxDDInitExtensions( GLcontext *ctx )
   window. This modifies the viewport command to add our X,Y offset to all
   drawn objects that go through the viewport transformation.
 */
-
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-
-/* This is a no-op, since the z-buffer is in hardware */
-static void fxAllocDepthBuffer(GLcontext *ctx)
-{
-   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxAllocDepthBuffer()\n");
-   }
-}
 
 /************************************************************************/
 /************************************************************************/
