@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.20 2001/08/20 16:41:47 brianp Exp $ */
+/* $Id: s_lines.c,v 1.21 2001/08/20 21:45:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1015,7 +1015,7 @@ do {                                    \
 
 #else
 
-#define USE(lineFunc)  swrast->Line = lineFunc;
+#define USE(lineFunc)  swrast->Line = lineFunc
 
 #endif
 
