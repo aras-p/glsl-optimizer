@@ -423,12 +423,6 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
 }
 
-
-/* This is necessary to avoid very jerky animation on my ProSavageDDR.
- * Seems to work fine on other Savages though. Make this configurable!
- */
-#define SYNC_FRAMES 1
-
 /*
  * Copy the back buffer to the front buffer. 
  */
@@ -449,9 +443,9 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
 
    FLUSH_BATCH(imesa);
 
-#if SYNC_FRAMES
-   imesa->lastSwap = savageEmitEvent( imesa, 0 );
-#endif
+   if (imesa->sync_frames)
+       imesa->lastSwap = savageEmitEvent( imesa, 0 );
+
    if (imesa->lastSwap != 0)
        savageWaitEvent( imesa, imesa->lastSwap );
 
@@ -463,9 +457,9 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
        imesa->inSwap = GL_FALSE;
    }
 
-#if !SYNC_FRAMES
-   imesa->lastSwap = savageEmitEvent( imesa, 0 );
-#endif
+   if (!imesa->sync_frames)
+       /* don't sync, but limit the lag to one frame. */
+       imesa->lastSwap = savageEmitEvent( imesa, 0 );
 }
 
 unsigned int savageEmitEventLocked( savageContextPtr imesa, unsigned int flags )

@@ -69,6 +69,11 @@ DRI_CONF_OPT_BEGIN(enable_fastpath,bool,def) \
 	DRI_CONF_DESC(en,"Use fast path for unclipped primitives") \
 	DRI_CONF_DESC(de,"Schneller Codepfad für ungeschnittene Polygone") \
 DRI_CONF_OPT_END
+#define SAVAGE_SYNC_FRAMES(def) \
+DRI_CONF_OPT_BEGIN(sync_frames,bool,def) \
+	DRI_CONF_DESC(en,"Synchronize with graphics hardware after each frame") \
+	DRI_CONF_DESC(de,"Synchronisiere nach jedem Frame mit Grafikhardware") \
+DRI_CONF_OPT_END
 
 /* Configuration
  */
@@ -80,16 +85,17 @@ DRI_CONF_BEGIN
         DRI_CONF_FLOAT_DEPTH(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_PERFORMANCE
-        DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
         SAVAGE_ENABLE_VDMA(true)
         SAVAGE_ENABLE_FASTPATH(true)
+        SAVAGE_SYNC_FRAMES(false)
+        DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
     	DRI_CONF_TEXTURE_HEAPS(DRI_CONF_TEXTURE_HEAPS_ALL)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 8;
+static const GLuint __driNConfigOptions = 9;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -498,6 +504,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
        imesa->enable_vdma = GL_FALSE;
    else
        imesa->enable_vdma = driQueryOptionb(&imesa->optionCache, "enable_vdma");
+
+   imesa->sync_frames = driQueryOptionb(&imesa->optionCache, "sync_frames");
 
    /* Configure swrast to match hardware characteristics:
     */

@@ -301,6 +301,7 @@ struct savage_context_t {
     GLboolean float_depth;
     GLboolean enable_fastpath;
     GLboolean enable_vdma;
+    GLboolean sync_frames;
 };
 
 #define SAVAGE_CONTEXT(ctx) ((savageContextPtr)(ctx->DriverCtx))
