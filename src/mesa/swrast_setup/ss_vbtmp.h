@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.20 2002/01/06 03:54:12 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.21 2002/04/19 00:42:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,14 +84,14 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       if (VB->ColorPtr[0]->Type != CHAN_TYPE)
 	 import_float_colors( ctx );
 
-      color = VB->ColorPtr[0]->Ptr;
+      color = (GLchan *) VB->ColorPtr[0]->Ptr;
       color_stride = VB->ColorPtr[0]->StrideB;
    }
    if (IND & SPEC) {
       if (VB->SecondaryColorPtr[0]->Type != CHAN_TYPE)
 	 import_float_spec_colors( ctx );
 
-      spec = VB->SecondaryColorPtr[0]->Ptr;
+      spec = (GLchan *) VB->SecondaryColorPtr[0]->Ptr;
       spec_stride = VB->SecondaryColorPtr[0]->StrideB;
    }
    if (IND & INDEX) {
