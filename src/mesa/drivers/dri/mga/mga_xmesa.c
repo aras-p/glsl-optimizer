@@ -180,20 +180,22 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
     };
 
-    int depth_buffer_modes[2][2];
+    int depth_buffer_modes[3][2];
 
 
-    depth_buffer_modes[0][0] = depth_bits;
+    depth_buffer_modes[0][0] = 0;
     depth_buffer_modes[1][0] = depth_bits;
+    depth_buffer_modes[2][0] = depth_bits;
 
     /* Just like with the accumulation buffer, always provide some modes
      * with a stencil buffer.  It will be a sw fallback, but some apps won't
      * care about that.
      */
     depth_buffer_modes[0][1] = 0;
-    depth_buffer_modes[1][1] = (stencil_bits == 0) ? 8 : stencil_bits;
+    depth_buffer_modes[1][1] = 0;
+    depth_buffer_modes[2][1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
-    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
     num_modes = depth_buffer_factor * back_buffer_factor * 4;
