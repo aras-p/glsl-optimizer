@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.8 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_imm_elt.c,v 1.9 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -816,6 +816,4 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 
    for (i = start ; i < count ; i++)
       if (flags[i] & VERT_ELT) flags[i] |= translate;
-
-   IM->CopyOrFlag |= translate;
 }

@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.12 2001/04/29 08:48:43 keithw Exp $ */
+/* $Id: t_dd_vb.c,v 1.13 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,10 @@
 
 #ifndef LOCALVARS
 #define LOCALVARS
+#endif
+
+#ifndef CHECK_HW_DIVIDE
+#define CHECK_HW_DIVIDE 1
 #endif
 
 /* These don't need to be duplicated, but there's currently nowhere

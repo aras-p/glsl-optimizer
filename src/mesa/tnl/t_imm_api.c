@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.11 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.12 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,6 +51,11 @@
 void _tnl_flush_immediate( struct immediate *IM )
 {
    GLcontext *ctx = IM->backref;
+
+   /* Mark the last primitive:
+    */
+   IM->PrimitiveLength[IM->LastPrimitive] = IM->Count - IM->LastPrimitive;
+   IM->Primitive[IM->LastPrimitive] |= PRIM_LAST;
 
    if (ctx->CompileFlag)
       _tnl_compile_cassette( ctx, IM );
@@ -107,17 +112,15 @@ _tnl_begin( GLcontext *ctx, GLenum p )
       GLuint count = IM->Count;
       GLuint last = IM->LastPrimitive;
 
-      ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
-
       state |= (VERT_BEGIN_0|VERT_BEGIN_1);
       IM->Flag[count] |= VERT_BEGIN;
-      IM->Primitive[IM->LastPrimitive] &= ~PRIM_LAST;
-      IM->Primitive[count] = p | PRIM_BEGIN | PRIM_LAST;
+      IM->Primitive[count] = p | PRIM_BEGIN;
       IM->PrimitiveLength[IM->LastPrimitive] = count - IM->LastPrimitive;
       IM->LastPrimitive = count;
 
       /* Not quite right.  Need to use the fallback '_aa_ArrayElement'
-       * when not known to be inside begin/end and arrays are unlocked.
+       * when not known to be inside begin/end and arrays are
+       * unlocked.  
        */
       if (IM->FlushElt) {
 	 _tnl_translate_array_elts( ctx, IM, last, count );
@@ -156,8 +159,10 @@ _tnl_Begin( GLenum mode )
       else if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
 	 ctx->Driver.CurrentSavePrimitive = mode;
       }
-   else if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END)
+   else if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
+/*        fprintf(stderr, "setting cep %x in %s\n", mode, __FUNCTION__); */
       ctx->Driver.CurrentExecPrimitive = mode;
+   }
 }
 
 
@@ -178,6 +183,8 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       /* Set this for the duration:
        */
       ctx->Driver.CurrentExecPrimitive = p;
+/*        fprintf(stderr, "setting cep %x in %s\n",  */
+/*  	      ctx->Driver.CurrentExecPrimitive, __FUNCTION__); */
       return GL_TRUE;
    }
 
@@ -217,11 +224,8 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       count = IM->Count;
       last = IM->LastPrimitive;
 
-      ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
-
       IM->Flag[count] |= VERT_BEGIN;
-      IM->Primitive[last] &= ~PRIM_LAST;
-      IM->Primitive[count] = p | PRIM_BEGIN | PRIM_LAST;
+      IM->Primitive[count] = p | PRIM_BEGIN;
       IM->PrimitiveLength[last] = count - last;
       IM->LastPrimitive = count;
 
@@ -252,7 +256,7 @@ _tnl_save_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
 
-    if (mode > GL_POLYGON) {
+   if (mode > GL_POLYGON) {
       _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
       return;
    }
@@ -294,14 +298,11 @@ _tnl_end( GLcontext *ctx )
       GLuint count = IM->Count;
       GLuint last = IM->LastPrimitive;
 
-      ASSERT(IM->Primitive[IM->LastPrimitive] & PRIM_LAST);
-
       state &= ~(VERT_BEGIN_0|VERT_BEGIN_1); /* update state */
       IM->Flag[count] |= VERT_END;
       IM->Primitive[last] |= PRIM_END;
-      IM->Primitive[last] &= ~PRIM_LAST;
       IM->PrimitiveLength[last] = count - last;
-      IM->Primitive[count] = (GL_POLYGON+1) | PRIM_LAST;
+      IM->Primitive[count] = PRIM_OUTSIDE_BEGIN_END;
       IM->LastPrimitive = count;
 
       if (IM->FlushElt) {
@@ -312,9 +313,11 @@ _tnl_end( GLcontext *ctx )
 
    IM->BeginState = state;
 
-   if (!ctx->CompileFlag)
+   if (!ctx->CompileFlag) {
       ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
-
+/*        fprintf(stderr, "setting cep %x in %s\n",  */
+/*  	      ctx->Driver.CurrentExecPrimitive, __FUNCTION__); */
+   }
 
    /* You can set this flag to get the old 'flush_vb on glEnd()'
     * behaviour.
@@ -1115,6 +1118,8 @@ static void
 _tnl_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    GET_CURRENT_CONTEXT(ctx);
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    if (_tnl_hard_begin( ctx, GL_QUADS )) {
       _tnl_vertex2f( ctx, x1, y1 );

@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.h,v 1.2 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_eval.h,v 1.3 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,6 @@
 
 extern void _tnl_eval_init( void );
 
-extern void _tnl_eval_vb( GLcontext *ctx, GLfloat (*coord)[4],
-			  GLuint orflag, GLuint andflag );
+extern void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM );
 
 #endif

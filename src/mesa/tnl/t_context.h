@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.21 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_context.h,v 1.22 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -484,7 +484,6 @@ typedef struct {
     * objects.  
     */
    GLboolean ReplayHardBeginEnd;
-   GLenum CurrentPrimitive;
 
    /* Note which vertices need copying over succesive immediates.
     * Will add save versions to precompute vertex copying where
@@ -499,6 +498,10 @@ typedef struct {
    GLuint DlistPrimitive;
    GLuint DlistPrimitiveLength;
    GLuint DlistLastPrimitive;
+
+   /* Cache a single free immediate (refcount == 0)
+    */
+   struct immediate *freed_immediate;   
 
    /* Probably need a better configuration mechanism:
     */

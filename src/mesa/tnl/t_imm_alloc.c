@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.6 2001/04/26 14:53:48 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.7 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 
    static int id = 0;
 
-struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
+static struct immediate *real_alloc_immediate( GLcontext *ctx )
 {
    struct immediate *IM = ALIGN_MALLOC_STRUCT( immediate, 32 );
    GLuint j;
@@ -81,7 +81,7 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
 }
 
 
-void _tnl_free_immediate( struct immediate *IM )
+static void real_free_immediate( struct immediate *IM )
 {
    static int freed = 0;
    GLuint j;
@@ -100,4 +100,32 @@ void _tnl_free_immediate( struct immediate *IM )
    ALIGN_FREE( IM );
    freed++;
 /*     printf("outstanding %d\n", id - freed);    */
+}
+
+
+/* Cache a single allocated immediate struct.
+ */
+struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct immediate *tmp = tnl->freed_immediate;
+   
+   if (tmp) {
+      tnl->freed_immediate = 0;
+      return tmp;
+   }
+   else
+      return real_alloc_immediate( ctx );
+}
+
+void _tnl_free_immediate( struct immediate *IM )
+{
+   TNLcontext *tnl = TNL_CONTEXT(IM->backref);
+
+   ASSERT(IM->ref_count == 0);
+
+   if (tnl->freed_immediate)
+      real_free_immediate( tnl->freed_immediate );
+   
+   tnl->freed_immediate = IM;
 }

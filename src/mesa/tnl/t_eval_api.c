@@ -1,4 +1,4 @@
-/* $Id: t_eval_api.c,v 1.4 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_eval_api.c,v 1.5 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,6 +61,8 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
    GLenum prim;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   fprintf(stderr, "%s\n", __FUNCTION__);
+
    switch (mode) {
       case GL_POINT:
          prim = GL_POINTS;
@@ -95,6 +97,7 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
       if (compiling) {
 	 FLUSH_VERTICES( ctx, 0 );
 	 SET_IMMEDIATE( ctx, _tnl_alloc_immediate( ctx ) );
+	 TNL_CURRENT_IM(ctx)->ref_count++;	 
 	 ctx->CompileFlag = GL_FALSE;
       }
 
@@ -104,8 +107,12 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
       }
       _tnl_end(ctx);
 
+      /* Need this for replay *and* compile:
+       */
+      FLUSH_VERTICES( ctx, 0 );
+
       if (compiling) {
-	 FLUSH_VERTICES( ctx, 0 );
+	 TNL_CURRENT_IM(ctx)->ref_count--;
 	 ASSERT( TNL_CURRENT_IM(ctx)->ref_count == 0 );
 	 _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
 	 SET_IMMEDIATE( ctx, im );
@@ -123,6 +130,8 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
    GLint i, j;
    GLfloat u, du, v, dv, v1, u1;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   fprintf(stderr, "%s\n", __FUNCTION__);
 
    /* No effect if vertex maps disabled.
     */
@@ -146,6 +155,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
       if (compiling) {
 	 FLUSH_VERTICES( ctx, 0 );
 	 SET_IMMEDIATE( ctx, _tnl_alloc_immediate( ctx ) );
+	 TNL_CURRENT_IM(ctx)->ref_count++;	 
 	 ctx->CompileFlag = GL_FALSE;
       }
 
@@ -190,8 +200,12 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	 return;
       }
 
+      /* Need this for replay *and* compile:
+       */
+      FLUSH_VERTICES( ctx, 0 );
+	 
       if (compiling) {
-	 FLUSH_VERTICES( ctx, 0 );
+	 TNL_CURRENT_IM(ctx)->ref_count--;
 	 _tnl_free_immediate( TNL_CURRENT_IM( ctx ) );
 	 SET_IMMEDIATE( ctx, im );
 	 ctx->CompileFlag = GL_TRUE;

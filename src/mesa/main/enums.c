@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.18 2001/04/17 21:25:53 brianp Exp $ */
+/* $Id: enums.c,v 1.19 2001/04/30 21:08:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -925,7 +925,7 @@ const char *_mesa_lookup_enum_by_nr( int nr )
    }
    else {
       /* this isn't re-entrant safe, no big deal here */
-      sprintf(token_tmp, "0x%x\n", nr);
+      sprintf(token_tmp, "0x%x", nr);
       return token_tmp;
    }
 }

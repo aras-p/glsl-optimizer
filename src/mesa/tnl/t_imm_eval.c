@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.8 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.9 2001/04/30 21:08:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "math/m_eval.h"
 
 #include "t_context.h"
+#include "t_imm_debug.h"
 #include "t_imm_eval.h"
 #include "t_imm_exec.h"
 #include "t_imm_fixup.h"
@@ -63,13 +64,16 @@ static void eval_points2( GLfloat outcoord[][4],
 			  GLfloat dv, GLfloat v1 )
 {
    GLuint i;
+   fprintf(stderr, "%p %p\n", coord, outcoord);
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
       if (flags[i] & VERT_EVAL_ANY) {
 	 outcoord[i][0] = coord[i][0];
 	 outcoord[i][1] = coord[i][1];
 	 if (flags[i] & VERT_EVAL_P2) {
+	    fprintf(stderr, "point %f %f ==>", coord[i][0], coord[i][1]);
 	    outcoord[i][0] = coord[i][0] * du + u1;
 	    outcoord[i][1] = coord[i][1] * dv + v1;
+	    fprintf(stderr, "%f %f\n", outcoord[i][0], outcoord[i][1]);
 	 }
       }
    }
@@ -189,6 +193,8 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
    GLfloat (*normal)[3] = norm_ptr->data;
    GLuint i;
 
+   fprintf(stderr, "%s\n", __FUNCTION__);
+
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
@@ -225,6 +231,8 @@ static void eval2_4f( GLvector4f *dest,
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
+	 fprintf(stderr, "coord %d: %f %f\n", i, coord[i][0], coord[i][1]);
+
 	 _math_horner_bezier_surf(map->Points, to[i], u, v, dimension,
 				  map->Uorder, map->Vorder);
       }
@@ -318,6 +326,20 @@ static void copy_4f( GLfloat to[][4], GLfloat from[][4], GLuint count )
    MEMCPY( to, from, count * sizeof(to[0]));
 }
 
+static void copy_4f_stride( GLfloat to[][4], GLfloat *from, 
+			    GLuint stride, GLuint count )
+{
+   if (stride == 4 * sizeof(GLfloat))
+      MEMCPY( to, from, count * sizeof(to[0]));
+   else {
+      int i;
+      fprintf(stderr, "%s stride %d count %d\n", __FUNCTION__,
+	      stride, count);
+      for (i = 0 ; i < count ; i++, STRIDE_F(from, stride))
+	 COPY_4FV( to[i], from );
+   }
+}
+
 static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
 {
    MEMCPY( to, from, (count) * sizeof(to[0]));
@@ -400,24 +422,27 @@ static void update_eval( GLcontext *ctx )
  * Really want to cache the results of this function in display lists,
  * at least for EvalMesh commands.
  */
-void _tnl_eval_vb( GLcontext *ctx,
-		   GLfloat (*coord)[4],
-		   GLuint orflag,
-		   GLuint andflag )
+void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_arrays *tmp = &tnl->imm_inputs;
    struct immediate *store = tnl->eval.im;
-   GLuint *flags = tnl->vb.Flag;
-   GLuint count = tnl->vb.Count;
+   GLuint *flags = IM->Flag + IM->CopyStart;
+   GLuint copycount;
+   GLuint orflag = IM->OrFlag;
    GLuint any_eval1 = orflag & (VERT_EVAL_C1|VERT_EVAL_P1);
    GLuint any_eval2 = orflag & (VERT_EVAL_C2|VERT_EVAL_P2);
-   GLuint all_eval = andflag & VERT_EVAL_ANY; /* may have false negatives */
    GLuint req = 0;
    GLuint purge_flags = 0;
+   GLfloat (*coord)[4] = IM->Obj + IM->CopyStart;
 
-/*     if (input->writable) */
-/*        store = input; */
+   if (IM->AndFlag & VERT_EVAL_ANY)
+      copycount = IM->Start - IM->CopyStart; /* just copy copied vertices */
+   else
+      copycount = IM->Count - IM->CopyStart; /* copy all vertices */
+
+   fprintf(stderr, "%s copystart %d start %d count %d copycount %d\n",
+	   __FUNCTION__, IM->CopyStart, IM->Start, IM->Count, copycount);
 
    if (!store)
       store = tnl->eval.im = _tnl_alloc_immediate( ctx );
@@ -425,44 +450,42 @@ void _tnl_eval_vb( GLcontext *ctx,
    if (tnl->eval.EvalNewState & _NEW_EVAL)
       update_eval( ctx );
 
-   /* Handle the degenerate cases.
-    */
-   if (any_eval1 && !ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
-      purge_flags = (VERT_EVAL_P1|VERT_EVAL_C1);
-
-   if (any_eval2 && !ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
-      purge_flags |= (VERT_EVAL_P1|VERT_EVAL_C1);
-
-   if (any_eval1)
+   if (any_eval1) {
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap1Flags;
 
-   if (any_eval2)
+      if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
+	 purge_flags = (VERT_EVAL_P1|VERT_EVAL_C1);
+
+      if (orflag & VERT_EVAL_P1) {
+	 eval_points1( store->Obj + IM->CopyStart, 
+		       coord, flags,
+		       ctx->Eval.MapGrid1du,
+		       ctx->Eval.MapGrid1u1);
+	 
+	 coord = store->Obj + IM->CopyStart;
+      }
+   }
+
+   if (any_eval2) {
       req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
 
+      if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
+	 purge_flags |= (VERT_EVAL_P2|VERT_EVAL_C2);
 
-   /* Translate points into coords.  Use store->Obj to hold the
-    * new data.
-    */
-   if (any_eval1 && (orflag & VERT_EVAL_P1))
-   {
-      eval_points1( store->Obj, coord, flags,
-		    ctx->Eval.MapGrid1du,
-		    ctx->Eval.MapGrid1u1);
+      if (orflag & VERT_EVAL_P2) {
+	 eval_points2( store->Obj + IM->CopyStart, 
+		       coord, flags,
+		       ctx->Eval.MapGrid2du,
+		       ctx->Eval.MapGrid2u1,
+		       ctx->Eval.MapGrid2dv,
+		       ctx->Eval.MapGrid2v1 );
 
-      coord = store->Obj;
+	 coord = store->Obj + IM->CopyStart;
+      }
    }
 
-   if (any_eval2 && (orflag & VERT_EVAL_P2))
-   {
-      eval_points2( store->Obj, coord, flags,
-		    ctx->Eval.MapGrid2du,
-		    ctx->Eval.MapGrid2u1,
-		    ctx->Eval.MapGrid2dv,
-		    ctx->Eval.MapGrid2v1 );
 
-      coord = store->Obj;
-   }
-
+   _tnl_print_vert_flags(__FUNCTION__, req);
 
    /* Perform the evaluations on active data elements.
     */
@@ -470,11 +493,11 @@ void _tnl_eval_vb( GLcontext *ctx,
    {
       GLuint generated = 0;
 
-      if (!all_eval)
-	 copy_1ui( store->Index, tmp->Index.data, count );
+      if (copycount)
+	 copy_1ui( store->Index + IM->CopyStart, tmp->Index.data, copycount );
 
-      tmp->Index.data = store->Index;
-      tmp->Index.start = store->Index;
+      tmp->Index.data = store->Index + IM->CopyStart;
+      tmp->Index.start = store->Index + IM->CopyStart;
 
       if (ctx->Eval.Map1Index && any_eval1) {
 	 eval1_1ui( &tmp->Index, coord, flags, &ctx->EvalMap.Map1Index );
@@ -490,7 +513,7 @@ void _tnl_eval_vb( GLcontext *ctx,
        * maps are disabled.
        */
       if (purge_flags & generated)
-	 _tnl_fixup_1ui( store->Index, flags, 0, 
+	 _tnl_fixup_1ui( tmp->Index.data, flags, 0, 
 			 VERT_INDEX|
 			 VERT_OBJ|
 			 generated|
@@ -501,10 +524,16 @@ void _tnl_eval_vb( GLcontext *ctx,
    {
       GLuint generated = 0;
 
-      if (!all_eval)
-	 copy_4f( store->Color, (GLfloat (*)[4])tmp->Color.Ptr, count );
+      if (copycount) 
+	 copy_4f_stride( store->Color + IM->CopyStart, 
+			 (GLfloat *)tmp->Color.Ptr, 
+			 tmp->Color.StrideB,
+			 copycount );
 
-      tmp->Color.Ptr = store->Color;
+      tmp->Color.Ptr = store->Color + IM->CopyStart;
+      tmp->Color.StrideB = 4 * sizeof(GLfloat);
+      tmp->Color.Flags = 0;
+      tnl->vb.importable_data &= ~VERT_RGBA;
 
       if (ctx->Eval.Map1Color4 && any_eval1) {
 	 eval1_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map1Color4 );
@@ -520,7 +549,8 @@ void _tnl_eval_vb( GLcontext *ctx,
        * maps are disabled.
        */
       if (purge_flags & generated)
-	 _tnl_fixup_4f( store->Color, flags, 0, 
+	 _tnl_fixup_4f( store->Color + IM->CopyStart, 
+			flags, 0, 
 			VERT_RGBA|
 			VERT_OBJ|
 			generated|
@@ -532,13 +562,14 @@ void _tnl_eval_vb( GLcontext *ctx,
    {
       GLuint generated = 0;
 
-      if (!all_eval)
-	 copy_4f( store->TexCoord[0], tmp->TexCoord[0].data, count );
+      if (copycount)
+	 copy_4f( store->TexCoord[0] + IM->CopyStart, 
+		  tmp->TexCoord[0].data, copycount );
       else
 	 tmp->TexCoord[0].size = 0;
 
-      tmp->TexCoord[0].data = store->TexCoord[0];
-      tmp->TexCoord[0].start = (GLfloat *)store->TexCoord[0];
+      tmp->TexCoord[0].data = store->TexCoord[0] + IM->CopyStart;
+      tmp->TexCoord[0].start = (GLfloat *)tmp->TexCoord[0].data;
 
       if (any_eval1) {
 	 if (ctx->Eval.Map1TextureCoord4) {
@@ -590,7 +621,7 @@ void _tnl_eval_vb( GLcontext *ctx,
        * maps are disabled.
        */
       if (purge_flags & generated)
-	 _tnl_fixup_4f( store->TexCoord[0], flags, 0, 
+	 _tnl_fixup_4f( tmp->TexCoord[0].data, flags, 0, 
 			VERT_TEX0|
 			VERT_OBJ|
 			generated|
@@ -602,11 +633,14 @@ void _tnl_eval_vb( GLcontext *ctx,
    {
       GLuint generated = 0;
 
-      if (!all_eval)
-	 copy_3f( store->Normal, tmp->Normal.data, count );
+      if (copycount) {
+	 fprintf(stderr, "%s: Copy normals\n", __FUNCTION__);
+	 copy_3f( store->Normal + IM->CopyStart, tmp->Normal.data, 
+		  copycount );
+      }
 
-      tmp->Normal.data = store->Normal;
-      tmp->Normal.start = (GLfloat *)store->Normal;
+      tmp->Normal.data = store->Normal + IM->CopyStart;
+      tmp->Normal.start = (GLfloat *)tmp->Normal.data;
 
       if (ctx->Eval.Map1Normal && any_eval1) {
 	 eval1_norm( &tmp->Normal, coord, flags,
@@ -624,7 +658,7 @@ void _tnl_eval_vb( GLcontext *ctx,
        * maps are disabled.
        */
       if (purge_flags & generated)
-	 _tnl_fixup_3f( store->Normal, flags, 0, 
+	 _tnl_fixup_3f( tmp->Normal.data, flags, 0, 
 			VERT_NORM|
 			VERT_OBJ|
 			generated|
@@ -638,13 +672,20 @@ void _tnl_eval_vb( GLcontext *ctx,
     */
    if (req & VERT_OBJ)
    {
-      if (!all_eval) {
-	 copy_4f( store->Obj, tmp->Obj.data, count );
+      if (copycount) {
+	 /* This copy may already have occurred when eliminating
+	  * glEvalPoint calls:
+	  */
+	 if  (coord != store->Obj + IM->CopyStart)
+	    copy_4f( store->Obj + IM->CopyStart, tmp->Obj.data, copycount );
       } else
 	 tmp->Obj.size = 0;
 
-      tmp->Obj.data = store->Obj;
-      tmp->Obj.start = (GLfloat *)store->Obj;
+      tmp->Obj.data = store->Obj + IM->CopyStart;
+      tmp->Obj.start = (GLfloat *)tmp->Obj.data;
+
+      /* Note: Normal data is already prepared above.
+       */
 
       if (any_eval1) {
 	 if (ctx->Eval.Map1Vertex4) {
@@ -689,10 +730,12 @@ void _tnl_eval_vb( GLcontext *ctx,
       GLuint last_new_prim = 0;
       GLuint new_prim_length = 0;
       GLuint next_old_prim = 0;
-      GLuint i,j;
       struct vertex_buffer *VB = &tnl->vb;
+      GLuint i,j,count = VB->Count;
 
-      for (i = 0, j = 0 ; i < tnl->vb.Count ; i++) {
+      fprintf(stderr, "PURGING\n");
+
+      for (i = 0, j = 0 ; i < count ; i++) {
 	 if (flags[i] & vertex) {
 	    store->Elt[j++] = i;
 	    new_prim_length++;
@@ -706,17 +749,17 @@ void _tnl_eval_vb( GLcontext *ctx,
       }
       
       VB->Elts = store->Elt;
-
-      _tnl_fixup_purged_eval( ctx, store );
+      _tnl_get_purged_copy_verts( ctx, store );
    }
 
    /* Produce new flags array:
     */
    {
-      GLuint i;
+      GLuint i, count = tnl->vb.Count;
       copy_1ui( store->Flag, flags, count );
       tnl->vb.Flag = store->Flag;
       for (i = 0 ; i < count ; i++)
 	 store->Flag[i] |= req;
+      IM->CopyOrFlag |= req;	/* hack for copying. */
    }
 }
