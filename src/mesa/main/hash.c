@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.14 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: hash.c,v 1.15 2002/12/12 13:03:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,6 +94,7 @@ void _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 	 entry = next;
       }
    }
+   _glthread_DESTROY_MUTEX(table->Mutex);
    FREE(table);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.62 2002/10/24 23:57:21 brianp Exp $ */
+/* $Id: texobj.c,v 1.63 2002/12/12 13:03:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -163,6 +163,9 @@ void _mesa_free_texture_object( struct gl_shared_state *shared,
          }
       }
    }
+
+   /* destroy the mutex -- it may have allocated memory (eg on bsd) */
+   _glthread_DESTROY_MUTEX(t->Mutex);
 
    /* free this object */
    FREE( t );

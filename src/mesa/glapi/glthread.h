@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.11 2002/03/07 21:50:41 brianp Exp $ */
+/* $Id: glthread.h,v 1.12 2002/12/12 13:03:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,6 +101,9 @@ typedef pthread_mutex_t _glthread_Mutex;
 #define _glthread_INIT_MUTEX(name) \
    pthread_mutex_init(&(name), NULL)
 
+#define _glthread_DESTROY_MUTEX(name) \
+   pthread_mutex_destroy(&(name))
+
 #define _glthread_LOCK_MUTEX(name) \
    (void) pthread_mutex_lock(&(name))
 
@@ -134,6 +137,7 @@ typedef mutex_t _glthread_Mutex;
 /* XXX need to really implement mutex-related macros */
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 #define _glthread_INIT_MUTEX(name)  (void) name
+#define _glthread_DESTROY_MUTEX(name) (void) name
 #define _glthread_LOCK_MUTEX(name)  (void) name
 #define _glthread_UNLOCK_MUTEX(name)  (void) name
 
@@ -162,6 +166,7 @@ typedef CRITICAL_SECTION _glthread_Mutex;
 /* XXX need to really implement mutex-related macros */
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 #define _glthread_INIT_MUTEX(name)  (void) name
+#define _glthread_DESTROY_MUTEX(name)  (void) name
 #define _glthread_LOCK_MUTEX(name)  (void) name
 #define _glthread_UNLOCK_MUTEX(name)  (void) name
 
@@ -196,6 +201,9 @@ typedef xmutex_rec _glthread_Mutex;
 
 #define _glthread_INIT_MUTEX(name) \
    xmutex_init(&(name))
+
+#define _glthread_DESTROY_MUTEX(name) \
+   xmutex_clear(&(name))
 
 #define _glthread_LOCK_MUTEX(name) \
    (void) xmutex_lock(&(name))
@@ -253,6 +261,8 @@ typedef GLuint _glthread_Mutex;
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 
 #define _glthread_INIT_MUTEX(name)  (void) name
+
+#define _glthread_DESTROY_MUTEX(name)  (void) name
 
 #define _glthread_LOCK_MUTEX(name)  (void) name
 
