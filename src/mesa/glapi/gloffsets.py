@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: gloffsets.py,v 1.2 2000/02/22 23:59:25 brianp Exp $
+# $Id: gloffsets.py,v 1.3 2000/02/24 18:36:32 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -88,13 +88,21 @@ def PrintDefines():
 				if funcOffset > maxOffset:
 					maxOffset = funcOffset
 				s = GenerateDefine(funcName, funcOffset)
-				offsetInfo[funcOffset] = s;
+				if offsetInfo.has_key(funcOffset):
+					print 'ERROR: offset', funcOffset, 'already used!'
+					raise ERROR
+				else:
+					offsetInfo[funcOffset] = s;
 		#endif
 	#endfor
 
 	# Now print the #defines in order of dispatch offset
 	for i in range(0, maxOffset + 1):
-		print offsetInfo[i]
+		if offsetInfo.has_key(i):
+			print offsetInfo[i]
+		else:
+			print 'ERROR: missing offset:', i
+			raise ERROR
 
 #enddef
 
