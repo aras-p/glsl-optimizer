@@ -907,7 +907,6 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          format, type, unpack, pixels);
    }
 }
-#endif /* XFree86Server */
 
 
 
@@ -950,6 +949,7 @@ xmesa_CopyPixels( GLcontext *ctx,
       _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type );
    }
 }
+#endif /* XFree86Server */
 
 
 
@@ -1116,10 +1116,11 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Bitmap = _swrast_Bitmap;
    ctx->Driver.Clear = clear_buffers;
    ctx->Driver.ResizeBuffers = xmesa_resize_buffers;
-   ctx->Driver.CopyPixels = xmesa_CopyPixels;
 #ifdef XFree86Server
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
 #else
+   ctx->Driver.CopyPixels = xmesa_CopyPixels;
    if (xmesa->xm_visual->undithered_pf == PF_8R8G8B &&
        xmesa->xm_visual->dithered_pf == PF_8R8G8B) {
       ctx->Driver.DrawPixels = xmesa_DrawPixels_8R8G8B;
