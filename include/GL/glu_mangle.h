@@ -1,4 +1,4 @@
-/* $Id: glu_mangle.h,v 1.2 1999/09/10 02:08:19 gareth Exp $ */
+/* $Id: glu_mangle.h,v 1.3 2001/09/20 22:18:47 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu_mangle.h,v $
+ * Revision 1.3  2001/09/20 22:18:47  kschultz
+ * add mangling for new entry points
+ *
  * Revision 1.2  1999/09/10 02:08:19  gareth
  * Added GLU 1.3 tessellation (except winding rule code).
  *
@@ -92,5 +95,11 @@
 #define gluNextContour mgluNextContour
 #define gluEndPolygon mgluEndPolygon
 #define gluGetString mgluGetString
+#define gluBuild1DMipmapLevels mgluBuild1DMipmapLevels
+#define gluBuild2DMipmapLevels mgluBuild2DMipmapLevels
+#define gluBuild3DMipmapLevels mgluBuild3DMipmapLevels
+#define gluBuild3DMipmaps mgluBuild3DMipmaps
+#define gluCheckExtension mgluCheckExtension
+#define gluUnProject4 mgluUnProject4
 
 #endif
