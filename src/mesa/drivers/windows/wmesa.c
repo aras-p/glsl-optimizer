@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.2 2000/02/17 20:52:02 brianp Exp $ */
+/* $Id: wmesa.c,v 1.3 2000/03/03 23:21:57 brianp Exp $ */
 
 /*
 *   File name   :   wmesa.c
@@ -22,6 +22,9 @@
 
 /*
  * $Log: wmesa.c,v $
+ * Revision 1.3  2000/03/03 23:21:57  brianp
+ * removed obsolete logicop function
+ *
  * Revision 1.2  2000/02/17 20:52:02  brianp
  * replaced renderer_string() with get_string() func
  *
@@ -572,18 +575,6 @@ static GLboolean color_mask( GLcontext* ctx,
     return GL_FALSE;
 }
 
-
-
-/*
-* Set the pixel logic operation.  Return GL_TRUE if the device driver
-* can perform the operation, otherwise return GL_FALSE.  If GL_FALSE
-* is returned, the logic op will be done in software by Mesa.
-*/
-GLboolean logicop( GLcontext* ctx, GLenum op )
-{
-    /* can't implement */
-    return GL_FALSE;
-}
 
 
 static void dither( GLcontext* ctx, GLboolean enable )
@@ -1183,7 +1174,6 @@ void setup_DD_pointers( GLcontext* ctx )
     ctx->Driver.IndexMask = index_mask;
     ctx->Driver.ColorMask = color_mask;
 
-    ctx->Driver.LogicOp = logicop;
     ctx->Driver.Dither = dither;
 
     ctx->Driver.SetBuffer = set_buffer;
