@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.5 2001/02/13 23:59:34 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.6 2001/02/14 23:00:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -894,7 +894,10 @@ static void TAG(light_ci)( GLcontext *ctx,
 	 }
 	 else if (light->_Flags & LIGHT_POSITIONAL) {
 	    h = VP;
-	    ACC_3V(h, ctx->_EyeZDir);
+            /* Strangely, disabling this addition fixes a conformance
+             * problem.  If this code is enabled, l_sed.c fails.
+             */
+	    /*ACC_3V(h, ctx->_EyeZDir);*/
 	    NORMALIZE_3FV(h);
 	 }
          else {
