@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.3 1999/09/09 18:49:36 miklos Exp $ */
+/* $Id: matrix.c,v 1.4 1999/09/19 23:06:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1332,7 +1332,7 @@ void gl_Viewport( GLcontext *ctx,
    gl_ResizeBuffersMESA(ctx);
 
 
-   ctx->RasterMask &= WINCLIP_BIT;
+   ctx->RasterMask &= ~WINCLIP_BIT;
 
    if (   ctx->Viewport.X<0
        || ctx->Viewport.X + ctx->Viewport.Width > ctx->Buffer->Width
