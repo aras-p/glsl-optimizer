@@ -110,6 +110,7 @@ static const char *const card_extensions[] =
 };
 
 extern const struct tnl_pipeline_stage _savage_texnorm_stage;
+extern const struct tnl_pipeline_stage _savage_render_stage;
 
 static const struct tnl_pipeline_stage *savage_pipeline[] = {
 
@@ -120,6 +121,7 @@ static const struct tnl_pipeline_stage *savage_pipeline[] = {
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_savage_texnorm_stage,
+   &_savage_render_stage,
    &_tnl_render_stage,
    0,
 };
@@ -426,10 +428,10 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->dmaVtxBuf.used = 0;
    imesa->dmaVtxBuf.flushed = 0;
 
-   imesa->clientVtxBuf.total = 16384;
+   imesa->clientVtxBuf.total = imesa->bufferSize / 4;
    imesa->clientVtxBuf.used = 0;
    imesa->clientVtxBuf.flushed = 0;
-   imesa->clientVtxBuf.buf = (u_int32_t *)malloc(16384*4);
+   imesa->clientVtxBuf.buf = (u_int32_t *)malloc(imesa->bufferSize);
 
    imesa->vtxBuf = &imesa->clientVtxBuf;
 

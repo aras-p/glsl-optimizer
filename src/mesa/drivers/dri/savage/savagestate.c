@@ -825,7 +825,7 @@ static void savageUpdateCull( GLcontext *ctx )
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     GLuint cullMode;
     if (ctx->Polygon.CullFlag &&
-	imesa->raster_primitive == GL_TRIANGLES &&
+	imesa->raster_primitive >= GL_TRIANGLES &&
 	ctx->Polygon.CullFaceMode != GL_FRONT_AND_BACK)
 	cullMode = imesa->LcsCullMode;
     else

@@ -24,6 +24,7 @@ DRIVER_SOURCES = \
 	savagestate.c \
 	savagetex.c \
 	savagetris.c \
+	savagerender.c \
 	savageioctl.c \
 	savagespan.c
 

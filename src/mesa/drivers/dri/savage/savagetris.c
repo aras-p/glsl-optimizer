@@ -762,16 +762,6 @@ static void savageChooseRenderState(GLcontext *ctx)
 
       imesa->RenderIndex = index;
    }
-
-   if (imesa->savageScreen->chipset < S3_SAVAGE4 && (flags & DD_FLATSHADE)) {
-      if (imesa->HwPrim != SAVAGE_PRIM_TRILIST_201)
-	 savageFlushVertices(imesa);
-      imesa->HwPrim = SAVAGE_PRIM_TRILIST_201;
-   } else {
-      if (imesa->HwPrim != SAVAGE_PRIM_TRILIST)
-	 savageFlushVertices(imesa);
-      imesa->HwPrim = SAVAGE_PRIM_TRILIST;
-   }
 }
 
 /**********************************************************************/
@@ -788,9 +778,21 @@ static void savageRunPipeline( GLcontext *ctx )
    if (imesa->new_state)
       savageDDUpdateHwState( ctx );
 
-   if (!imesa->Fallback && imesa->new_gl_state) {
+   if (!imesa->Fallback) {
       if (imesa->new_gl_state & _SAVAGE_NEW_RENDER_STATE)
 	 savageChooseRenderState( ctx );
+
+      /* choose the correct primitive type for tnl rendering */
+      if (imesa->savageScreen->chipset < S3_SAVAGE4 &&
+	  (ctx->_TriangleCaps & DD_FLATSHADE)) {
+	 if (imesa->HwPrim != SAVAGE_PRIM_TRILIST_201)
+	    savageFlushVertices(imesa);
+	 imesa->HwPrim = SAVAGE_PRIM_TRILIST_201;
+      } else {
+	 if (imesa->HwPrim != SAVAGE_PRIM_TRILIST)
+	    savageFlushVertices(imesa);
+	 imesa->HwPrim = SAVAGE_PRIM_TRILIST;
+      }
 
       imesa->new_gl_state = 0;
    }
@@ -1288,162 +1290,3 @@ void savageInitTriFuncs( GLcontext *ctx )
    
    SAVAGE_CONTEXT(ctx)->verts = (char *)tnl->clipspace.vertex_buf;
 }
-
-
-/***
- * Pipeline stage for texture coordinate normalization
- * This should probably go somewhere else.
- ***/
-struct texnorm_stage_data {
-   GLvector4f texcoord[MAX_TEXTURE_UNITS];
-};
-
-#define TEXNORM_STAGE_DATA(stage) ((struct texnorm_stage_data *)stage->privatePtr)
-
-
-static GLboolean run_texnorm_stage( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
-{
-   struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
-   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-
-   if (imesa->Fallback)
-      return GL_TRUE;
-
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      if (!(stage->inputs & stage->changed_inputs & VERT_BIT_TEX(i)) ||
-	  VB->TexCoordPtr[i]->size == 4)
-	 /* Never try to normalize homogenous tex coords! */
-	 continue;
-
-      GLuint reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
-      struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-      GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
-      GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
-	 (texObj->WrapT == GL_REPEAT);
-      GLfloat *in = (GLfloat *)VB->TexCoordPtr[i]->data;
-      GLint instride = VB->TexCoordPtr[i]->stride;
-      GLfloat (*out)[4] = store->texcoord[i].data;
-      GLint j;
-
-      if (normalizeS && normalizeT) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionS = -floor(in[0]+0.5);
-	 GLfloat correctionT = -floor(in[1]+0.5);
-	 for (j = 0; j < VB->Count; ++j) {
-	    out[j][0] = in[0] + correctionS;
-	    out[j][1] = in[1] + correctionT;
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-      } else if (normalizeS) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionS = -floor(in[0]+0.5);
-	 if (reallyEnabled & TEXTURE_2D_BIT) {
-	    for (j = 0; j < VB->Count; ++j) {
-	       out[j][0] = in[0] + correctionS;
-	       out[j][1] = in[1];
-	       in = (GLfloat *)((GLubyte *)in + instride);
-	    }
-	 } else {
-	    for (j = 0; j < VB->Count; ++j) {
-	       out[j][0] = in[0] + correctionS;
-	       in = (GLfloat *)((GLubyte *)in + instride);
-	    }
-	 }
-      } else if (normalizeT) {
-	 /* take first texcoords as rough estimate of mean value */
-	 GLfloat correctionT = -floor(in[1]+0.5);
-	 for (j = 0; j < VB->Count; ++j) {
-	    out[j][0] = in[0];
-	    out[j][1] = in[1] + correctionT;
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-      }
-
-      if (normalizeS || normalizeT)
-	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
-   }
-
-   return GL_TRUE;
-}
-
-
-/* Called the first time stage->run() is invoked.
- */
-static GLboolean alloc_texnorm_data( GLcontext *ctx,
-				     struct tnl_pipeline_stage *stage )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct texnorm_stage_data *store;
-   GLuint i;
-
-   stage->privatePtr = CALLOC(sizeof(*store));
-   store = TEXNORM_STAGE_DATA(stage);
-   if (!store)
-      return GL_FALSE;
-
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
-
-   /* Now run the stage.
-    */
-   stage->run = run_texnorm_stage;
-   return stage->run( ctx, stage );
-}
-
-
-static void check_texnorm( GLcontext *ctx,
-			   struct tnl_pipeline_stage *stage )
-{
-   GLuint flags = 0;
-
-   if (((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[0]._Current->WrapS == GL_REPEAT)) ||
-       ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[0]._Current->WrapT == GL_REPEAT)))
-      flags |= VERT_BIT_TEX0;
-
-   if (((ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[1]._Current->WrapS == GL_REPEAT)) ||
-       ((ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[1]._Current->WrapT == GL_REPEAT)))
-      flags |= VERT_BIT_TEX1;
-
-   stage->inputs = flags;
-   stage->outputs = flags;
-   stage->active = (flags != 0);
-}
-
-
-static void free_texnorm_data( struct tnl_pipeline_stage *stage )
-{
-   struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
-   GLuint i;
-
-   if (store) {
-      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
-	 if (store->texcoord[i].data)
-	    _mesa_vector4f_free( &store->texcoord[i] );
-      FREE( store );
-      stage->privatePtr = 0;
-   }
-}
-
-
-const struct tnl_pipeline_stage _savage_texnorm_stage =
-{
-   "savage texture coordinate normalization stage", /* name */
-   _NEW_TEXTURE,	/* check_state */
-   _NEW_TEXTURE,	/* run_state */
-   GL_TRUE,				/* active? */
-   0,					/* inputs */
-   0,					/* outputs */
-   0,					/* changed_inputs */
-   NULL,				/* private data */
-   free_texnorm_data,			/* destructor */
-   check_texnorm,			/* check */
-   alloc_texnorm_data,			/* run -- initially set to init */
-};
