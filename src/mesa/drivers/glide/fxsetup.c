@@ -1343,7 +1343,7 @@ GLboolean fxDDColorMask(GLcontext *ctx,
   fxMesa->new_state |= FX_NEW_COLOR_MASK;
   ctx->Driver.RenderStart = fxSetupFXUnits;
   (void) r; (void) g; (void) b; (void) a;
-  return 1;
+  return GL_FALSE;
 }
 
 static void fxSetupColorMask(GLcontext *ctx)
