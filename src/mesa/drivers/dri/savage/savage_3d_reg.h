@@ -637,7 +637,7 @@ typedef struct savage_registers_s4_t {
     savageRegTexBlendCtrl      texBlendCtrl[2];   /* 0x24, 0x25 */
     savageRegTexXprClr         texXprClr;         /* 0x26 */
     savageRegTexDescr_s4       texDescr;          /* 0x27 */
-    uint8_t                    fogTable[32];      /* 0x28-0x2f (8dwords) */
+    u_int8_t                   fogTable[32];      /* 0x28-0x2f (8dwords) */
     savageRegFogCtrl           fogCtrl;           /* 0x30 */
     savageRegStencilCtrl       stencilCtrl;       /* 0x31 */
     savageRegZBufCtrl_s4       zBufCtrl;          /* 0x32 */
@@ -655,8 +655,8 @@ typedef struct savage_registers_s3d_t {
     savageRegTexAddr           texAddr;           /* 0x1a */
     savageRegTexDescr_s3d      texDescr;          /* 0x1b */
     savageRegTexCtrl_s3d       texCtrl;           /* 0x1c */
-    u_int32_t                   unused1[3];        /* 0x1d-0x1f */
-    uint8_t                    fogTable[64];      /* 0x20-0x2f (16dwords) */
+    u_int32_t                  unused1[3];        /* 0x1d-0x1f */
+    u_int8_t                   fogTable[64];      /* 0x20-0x2f (16dwords) */
     savageRegFogCtrl           fogCtrl;           /* 0x30 */
     savageRegDrawCtrl          drawCtrl;          /* 0x31 */
     savageRegZBufCtrl_s3d      zBufCtrl;          /* 0x32 */

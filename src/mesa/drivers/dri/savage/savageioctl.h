@@ -89,7 +89,7 @@ u_int32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
       UNLOCK_HARDWARE(imesa);
    }
 
-   head = (u_int32_t *)((uint8_t *)imesa->vertex_dma_buffer->address +
+   head = (u_int32_t *)((u_int8_t *)imesa->vertex_dma_buffer->address +
 		       imesa->vertex_dma_buffer->used);
 
    imesa->vertex_dma_buffer->used += bytes;
