@@ -349,6 +349,7 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
    FLUSH_BATCH(imesa);
 
    LOCK_HARDWARE( imesa );
+   WAIT_IDLE_EMPTY;
    PAGE_PENDING(pending);
 
    if(!pending)
