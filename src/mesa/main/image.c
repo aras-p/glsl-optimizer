@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.65 2002/03/19 16:47:04 brianp Exp $ */
+/* $Id: image.c,v 1.66 2002/04/26 13:59:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -184,17 +184,17 @@ GLint _mesa_sizeof_packed_type( GLenum type )
       case GL_UNSIGNED_BYTE_2_3_3_REV:
          return sizeof(GLubyte);
       case GL_UNSIGNED_SHORT_5_6_5:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_5_6_5_REV:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_4_4_4_4:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_5_5_5_1:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-         return sizeof(GLshort);
+         return sizeof(GLushort);
       case GL_UNSIGNED_INT_8_8_8_8:
          return sizeof(GLuint);
       case GL_UNSIGNED_INT_8_8_8_8_REV:
@@ -284,7 +284,7 @@ GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
       case GL_UNSIGNED_SHORT_5_6_5:
       case GL_UNSIGNED_SHORT_5_6_5_REV:
          if (format == GL_RGB || format == GL_BGR)
-            return sizeof(GLshort);
+            return sizeof(GLushort);
          else
             return -1;  /* error */
       case GL_UNSIGNED_SHORT_4_4_4_4:
