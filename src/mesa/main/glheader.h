@@ -111,6 +111,7 @@
 #endif /* WIN32 / CYGWIN bracket */
 
 
+#ifndef __MINGW32__
 /* XXX why is this here?
  * It should probaby be somewhere in src/mesa/drivers/windows/
  */
@@ -143,6 +144,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #include <GL/mesa_wgl.h>
 #endif
 #endif
+#endif /* !__MINGW32__ */
 
 
 /*
