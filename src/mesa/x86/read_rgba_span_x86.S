@@ -451,3 +451,226 @@ _generic_read_RGBA_span_BGRA8888_REV_SSE2:
 	popl	%esi
 	ret
 	.size	_generic_read_RGBA_span_BGRA8888_REV_SSE2, .-_generic_read_RGBA_span_BGRA8888_REV_SSE2
+
+
+
+	.section	.rodata
+
+	.align	16
+mask_565:
+	.word	0xf800
+	.word	0x07e0
+	.word	0x001f
+	.word	0x0000
+
+/* Setting SCALE_ADJUST to 5 gives a perfect match with the classic C
+ * implementation in Mesa.  Setting SCALE_ADJUST to 0 is slightly faster but
+ * at a small cost to accuracy.
+ */
+
+#define SCALE_ADJUST	5
+#if SCALE_ADJUST == 5
+prescale:
+	.word	0x0001
+	.word	0x0010
+	.word	0x0200
+	.word	0x0000
+
+scale:
+	.word	0x20e8		/* (0x00ff0000 / 0x000007c0) + 1 */
+	.word	0x40c5		/* (0x00ff0000 / 0x000003f0) + 1 */
+	.word	0x839d		/* (0x00ff0000 / 0x000001f0) + 1 */
+	.word	0x0000
+#elif SCALE_ADJUST == 0
+prescale:
+	.word	0x0001
+	.word	0x0020
+	.word	0x0800
+	.word	0x0000
+
+scale:
+	.word	0x0108		/* (0x00ff0000 / 0x0000f800) + 1 */
+	.word	0x0104		/* (0x00ff0000 / 0x0000fc00) + 1 */
+	.word	0x0108		/* (0x00ff0000 / 0x0000f800) + 1 */
+	.word	0x0000
+#else
+#error SCALE_ADJUST must either be 5 or 0.
+#endif
+
+
+alpha:	.long	0x00000000
+	.long	0x00ff0000
+
+/**
+ * MMX optimized version of the RGB565 to RGBA copy routine.
+ */
+
+	.text
+	.globl	_generic_read_RGBA_span_RGB565_MMX
+	.type	_generic_read_RGBA_span_RGB565_MMX, @function
+
+_generic_read_RGBA_span_RGB565_MMX:
+
+#ifdef USE_INNER_EMMS
+	emms
+#endif
+
+	movl	4(%esp), %eax	/* source pointer */
+	movl	8(%esp), %edx	/* destination pointer */
+	movl	12(%esp), %ecx	/* number of pixels to copy */
+
+	movq	mask_565, %mm5
+	movq	prescale, %mm6
+	movq	scale, %mm7
+
+	shrl	$2, %ecx
+	jmp	.L02
+
+.L03:
+	/* Fetch 4 RGB565 pixels into %mm4.  Distribute the first and
+	 * second pixels into the four words of %mm0 and %mm2.
+      	 */
+
+	movq	(%eax), %mm4
+	addl	$8, %eax
+
+	pshufw	$0x00, %mm4, %mm0
+	pshufw	$0x55, %mm4, %mm2
+
+
+	/* Mask the pixels so that each word of each register contains only
+	 * one color component.
+	 */
+
+	pand	%mm5, %mm0
+	pand	%mm5, %mm2
+
+
+	/* Adjust the component values so that they are as small as possible,
+	 * but large enough so that we can multiply them by an unsigned 16-bit
+	 * number and get a value as large as 0x00ff0000.
+ 	 */
+
+	pmullw	%mm6, %mm0
+	pmullw	%mm6, %mm2
+#if SCALE_ADJUST > 0
+	psrlw	$SCALE_ADJUST, %mm0
+	psrlw	$SCALE_ADJUST, %mm2
+#endif
+
+	/* Scale the input component values to be on the range
+	 * [0, 0x00ff0000].  This it the real magic of the whole routine.
+	 */
+
+	pmulhuw	%mm7, %mm0
+	pmulhuw	%mm7, %mm2
+
+
+	/* Always set the alpha value to 0xff.
+	 */
+
+	por	alpha, %mm0
+	por	alpha, %mm2
+
+
+	/* Pack the 16-bit values to 8-bit values and store the converted
+	 * pixel data.
+	 */
+
+	packuswb	%mm2, %mm0
+	movq	%mm0, (%edx)
+	addl	$8, %edx
+
+
+
+	pshufw	$0xaa, %mm4, %mm0
+	pshufw	$0xff, %mm4, %mm2
+
+	pand	%mm5, %mm0
+	pand	%mm5, %mm2
+	pmullw	%mm6, %mm0
+	pmullw	%mm6, %mm2
+#if SCALE_ADJUST > 0
+	psrlw	$SCALE_ADJUST, %mm0
+	psrlw	$SCALE_ADJUST, %mm2
+#endif
+	pmulhuw	%mm7, %mm0
+	pmulhuw	%mm7, %mm2
+
+	por	alpha, %mm0
+	por	alpha, %mm2
+
+	packuswb	%mm2, %mm0
+
+	movq	%mm0, (%edx)
+	addl	$8, %edx
+
+	subl	$1, %ecx
+.L02:
+	jne	.L03
+
+
+	/* At this point there can be at most 3 pixels left to process.  If
+	 * there is either 2 or 3 left, process 2.
+         */
+
+	movl	12(%esp), %ecx
+	testl	$0x02, %ecx
+	je	.L04
+
+	movd	(%eax), %mm4
+	addl	$4, %eax
+
+	pshufw	$0x00, %mm4, %mm0
+	pshufw	$0x55, %mm4, %mm2
+
+	pand	%mm5, %mm0
+	pand	%mm5, %mm2
+	pmullw	%mm6, %mm0
+	pmullw	%mm6, %mm2
+#if SCALE_ADJUST > 0
+	psrlw	$SCALE_ADJUST, %mm0
+	psrlw	$SCALE_ADJUST, %mm2
+#endif
+	pmulhuw	%mm7, %mm0
+	pmulhuw	%mm7, %mm2
+
+	por	alpha, %mm0
+	por	alpha, %mm2
+
+	packuswb	%mm2, %mm0
+
+	movq	%mm0, (%edx)
+	addl	$8, %edx
+
+.L04:
+	/* At this point there can be at most 1 pixel left to process.
+	 * Process it if needed.
+         */
+
+	testl	$0x01, %ecx
+	je	.L01
+
+	movzxw	(%eax), %ecx
+	movd	%ecx, %mm4
+
+	pshufw	$0x00, %mm4, %mm0
+
+	pand	%mm5, %mm0
+	pmullw	%mm6, %mm0
+#if SCALE_ADJUST > 0
+	psrlw	$SCALE_ADJUST, %mm0
+#endif
+	pmulhuw	%mm7, %mm0
+
+	por	alpha, %mm0
+
+	packuswb	%mm0, %mm0
+
+	movd	%mm0, (%edx)
+
+.L01:
+#ifdef USE_INNER_EMMS
+	emms
+#endif
+	ret

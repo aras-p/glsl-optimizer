@@ -48,6 +48,9 @@ extern void _generic_read_RGBA_span_BGRA8888_REV_SSE( const unsigned char *,
 #if defined(USE_MMX_ASM)
 extern void _generic_read_RGBA_span_BGRA8888_REV_MMX( const unsigned char *,
     unsigned char *, unsigned );
+
+extern void _generic_read_RGBA_span_RGB565_MMX( const unsigned char *,
+    unsigned char *, unsigned );
 #endif
 
 #endif /* READ_RGBA_SPAN_X86_H */

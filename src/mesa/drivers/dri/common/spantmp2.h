@@ -377,8 +377,10 @@ static void TAG(ReadRGBASpan)( const GLcontext *ctx,
 
 
 #if defined(USE_MMX_ASM) && \
-   (SPANTMP_PIXEL_FMT == GL_BGRA) && \
-     (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
+   (((SPANTMP_PIXEL_FMT == GL_BGRA) && \
+	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)) || \
+    ((SPANTMP_PIXEL_FMT == GL_RGB) && \
+	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)))
 static void TAG2(ReadRGBASpan,_MMX)( const GLcontext *ctx,
 			       GLuint n, GLint x, GLint y,
 			       GLubyte rgba[][4])
@@ -406,7 +408,12 @@ static void TAG2(ReadRGBASpan,_MMX)( const GLcontext *ctx,
 
 	       {
 		  const char * src = GET_SRC_PTR( x1, y );
+#if (SPANTMP_PIXEL_FMT == GL_RGB) && \
+		  (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
+		  _generic_read_RGBA_span_RGB565_MMX( src, rgba[i], n1 );
+#else
 		  _generic_read_RGBA_span_BGRA8888_REV_MMX( src, rgba[i], n1 );
+#endif
 	       }
 	  }
 	HW_ENDCLIPLOOP();
@@ -539,29 +546,34 @@ static void TAG(InitPointers)(struct swrast_device_driver *swdd)
    swdd->WriteMonoRGBAPixels = TAG(WriteMonoRGBAPixels);
    swdd->ReadRGBAPixels = TAG(ReadRGBAPixels);
 
-#if (SPANTMP_PIXEL_FMT == GL_BGRA) && \
+#if defined(USE_SSE_ASM) && \
+   (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
-#if defined(USE_SSE_ASM)
    if ( cpu_has_xmm2 ) {
       if (DBG) fprintf( stderr, "Using %s version of ReadRGBASpan\n", "SSE2" );
       swdd->ReadRGBASpan = TAG2(ReadRGBASpan, _SSE2);
    }
    else
 #endif
-#if defined(USE_SSE_ASM)
+#if defined(USE_SSE_ASM) && \
+   (SPANTMP_PIXEL_FMT == GL_BGRA) && \
+     (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
    if ( cpu_has_xmm ) {
       if (DBG) fprintf( stderr, "Using %s version of ReadRGBASpan\n", "SSE" );
       swdd->ReadRGBASpan = TAG2(ReadRGBASpan, _SSE);
    }
    else
 #endif
-#if defined(USE_MMX_ASM)
+#if defined(USE_MMX_ASM) && \
+   (((SPANTMP_PIXEL_FMT == GL_BGRA) && \
+	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)) || \
+    ((SPANTMP_PIXEL_FMT == GL_RGB) && \
+	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)))
    if ( cpu_has_mmx ) {
       if (DBG) fprintf( stderr, "Using %s version of ReadRGBASpan\n", "MMX" );
       swdd->ReadRGBASpan = TAG2(ReadRGBASpan, _MMX);
    }
    else
-#endif
 #endif
    {
       if (DBG) fprintf( stderr, "Using %s version of ReadRGBASpan\n", "C" );
