@@ -1959,9 +1959,16 @@ static GLXWindow
 Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
                       const int *attribList )
 {
+   XMesaVisual xmvis = (XMesaVisual) config;
+   XMesaBuffer xmbuf;
+   if (!xmvis)
+      return 0;
+
+   xmbuf = XMesaCreateWindowBuffer2(xmvis, win, NULL);
+   if (!xmbuf)
+      return 0;
+
    (void) dpy;
-   (void) config;
-   (void) win;
    (void) attribList;  /* Ignored in GLX 1.3 */
 
    return win;  /* A hack for now */
