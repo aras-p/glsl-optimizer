@@ -87,8 +87,6 @@ static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
 {
    GLuint nr_released_bufs;
    struct r200_store store;
-   struct r200_hw_state temp_state;
-   static int count = 0;
 
    rmesa->lost_context = GL_FALSE;
 

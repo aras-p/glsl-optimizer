@@ -101,7 +101,7 @@ static GLboolean discrete_prim[0x10] = {
 };
    
 
-#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx)
+#define LOCAL_VARS r200ContextPtr rmesa = R200_CONTEXT(ctx); (void)rmesa
 #define ELT_TYPE  GLushort
 
 #define ELT_INIT(prim, hw_prim) \

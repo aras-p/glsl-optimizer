@@ -1272,7 +1272,6 @@ void r200UpdateTextureState( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLboolean ok;
    GLuint dbg;
-   int i;
 
    ok = (r200UpdateTextureUnit( ctx, 0 ) &&
 	 r200UpdateTextureUnit( ctx, 1 ) &&

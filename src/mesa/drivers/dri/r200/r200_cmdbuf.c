@@ -109,7 +109,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 void r200EmitState( r200ContextPtr rmesa )
 {
    char *dest;
-   int i, mtu;
+   int mtu;
    struct r200_state_atom *atom;
 
    if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
