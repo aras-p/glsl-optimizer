@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.11 2000/05/23 15:17:13 brianp Exp $ */
+/* $Id: texstate.c,v 1.12 2000/05/23 17:14:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -472,13 +472,12 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    }
 
    dimensions = tex_image_dimensions(ctx, target);  /* 1, 2 or 3 */
-   img = _mesa_select_tex_image(ctx, texUnit, target, level);
-
    if (dimensions == 0) {
       gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(target)");
       return;
    }
 
+   img = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!img) {
       if (pname == GL_TEXTURE_COMPONENTS)
          *params = 1;
@@ -553,19 +552,10 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameterfv");
 
-   switch (target) {
-      case GL_TEXTURE_1D:
-         obj = texUnit->CurrentD[1];
-         break;
-      case GL_TEXTURE_2D:
-         obj = texUnit->CurrentD[2];
-         break;
-      case GL_TEXTURE_3D_EXT:
-         obj = texUnit->CurrentD[3];
-         break;
-      default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(target)");
-         return;
+   obj = _mesa_select_tex_object(ctx, texUnit, target);
+   if (!obj) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(target)");
+      return;
    }
 
    switch (pname) {
@@ -623,19 +613,10 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameteriv");
 
-   switch (target) {
-      case GL_TEXTURE_1D:
-         obj = texUnit->CurrentD[1];
-         break;
-      case GL_TEXTURE_2D:
-         obj = texUnit->CurrentD[2];
-         break;
-      case GL_TEXTURE_3D_EXT:
-         obj = texUnit->CurrentD[3];
-         break;
-      default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(target)");
-         return;
+   obj = _mesa_select_tex_object(ctx, texUnit, target);
+   if (!obj) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(target)");
+      return;
    }
 
    switch (pname) {
@@ -764,30 +745,30 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_T:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
-	    switch(mode) {
-	    case GL_OBJECT_LINEAR:
-	       texUnit->GenModeT = GL_OBJECT_LINEAR;
-	       texUnit->GenBitT = TEXGEN_OBJ_LINEAR;
-	       break;
-	    case GL_EYE_LINEAR:
-	       texUnit->GenModeT = GL_EYE_LINEAR;
-	       texUnit->GenBitT = TEXGEN_EYE_LINEAR;
-	       break;
-	    case GL_REFLECTION_MAP_NV:
-	       texUnit->GenModeT = GL_REFLECTION_MAP_NV;
-	       texUnit->GenBitT = TEXGEN_REFLECTION_MAP_NV;
-	       break;
-	    case GL_NORMAL_MAP_NV:
-	       texUnit->GenModeT = GL_NORMAL_MAP_NV;
-	       texUnit->GenBitT = TEXGEN_NORMAL_MAP_NV;
-	       break;
-	    case GL_SPHERE_MAP:
-	       texUnit->GenModeT = GL_SPHERE_MAP;
-	       texUnit->GenBitT = TEXGEN_SPHERE_MAP;
-	       break;
-	    default:
-	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
-	       return;
+	    switch (mode) {
+               case GL_OBJECT_LINEAR:
+                  texUnit->GenModeT = GL_OBJECT_LINEAR;
+                  texUnit->GenBitT = TEXGEN_OBJ_LINEAR;
+                  break;
+               case GL_EYE_LINEAR:
+                  texUnit->GenModeT = GL_EYE_LINEAR;
+                  texUnit->GenBitT = TEXGEN_EYE_LINEAR;
+                  break;
+               case GL_REFLECTION_MAP_NV:
+                  texUnit->GenModeT = GL_REFLECTION_MAP_NV;
+                  texUnit->GenBitT = TEXGEN_REFLECTION_MAP_NV;
+                  break;
+               case GL_NORMAL_MAP_NV:
+                  texUnit->GenModeT = GL_NORMAL_MAP_NV;
+                  texUnit->GenBitT = TEXGEN_NORMAL_MAP_NV;
+                  break;
+               case GL_SPHERE_MAP:
+                  texUnit->GenModeT = GL_SPHERE_MAP;
+                  texUnit->GenBitT = TEXGEN_SPHERE_MAP;
+                  break;
+               default:
+                  gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
+                  return;
 	    }
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
@@ -954,7 +935,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGendv");
 
-   switch( coord ) {
+   switch (coord) {
       case GL_S:
          if (pname==GL_TEXTURE_GEN_MODE) {
             params[0] = ENUM_TO_DOUBLE(texUnit->GenModeS);
@@ -1032,7 +1013,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGenfv");
 
-   switch( coord ) {
+   switch (coord) {
       case GL_S:
          if (pname==GL_TEXTURE_GEN_MODE) {
             params[0] = ENUM_TO_FLOAT(texUnit->GenModeS);
@@ -1110,7 +1091,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGeniv");
 
-   switch( coord ) {
+   switch (coord) {
       case GL_S:
          if (pname==GL_TEXTURE_GEN_MODE) {
             params[0] = texUnit->GenModeS;
@@ -1316,8 +1297,8 @@ void gl_update_dirty_texobjs( GLcontext *ctx )
    struct gl_texture_object *t, *next;
    for (t = ctx->Shared->DirtyTexObjList; t; t = next) {
       next = t->NextDirty;
-      gl_test_texture_object_completeness(ctx, t);
-      gl_set_texture_sampler(t);
+      _mesa_test_texobj_completeness(ctx, t);
+      _mesa_set_texture_sampler(t);
       t->NextDirty = NULL;
       t->Dirty = GL_FALSE;
    }

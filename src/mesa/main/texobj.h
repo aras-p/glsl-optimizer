@@ -1,4 +1,4 @@
-/* $Id: texobj.h,v 1.2 1999/11/11 01:22:28 brianp Exp $ */
+/* $Id: texobj.h,v 1.3 2000/05/23 17:14:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,9 +32,6 @@
 #include "types.h"
 
 
-#ifdef VMS
-#define gl_test_texture_object_completeness gl_test_texture_object_complete
-#endif
 
 /*
  * Internal functions
@@ -49,7 +46,9 @@ extern void gl_free_texture_object( struct gl_shared_state *shared,
                                     struct gl_texture_object *t );
 
 
-extern void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_texture_object *t );
+extern void
+_mesa_test_texobj_completeness( const GLcontext *ctx,
+                                struct gl_texture_object *t );
 
 
 /*

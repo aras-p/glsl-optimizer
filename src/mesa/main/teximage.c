@@ -385,34 +385,6 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
 }
 
 
-/*
- * Given a texture unit and a texture target, return the corresponding
- * texture object.
- */
-static struct gl_texture_object *
-select_tex_object(struct gl_texture_unit *unit, GLenum target)
-{
-   switch (target) {
-      case GL_TEXTURE_1D:
-         return unit->CurrentD[1];
-      case GL_TEXTURE_2D:
-         return unit->CurrentD[2];
-      case GL_TEXTURE_3D:
-         return unit->CurrentD[3];
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         return unit->CurrentCubeMap;
-      default:
-         gl_problem(NULL, "bad target in select_tex_object()");
-         return NULL;
-   }
-}
-
-
 static void
 set_tex_image(struct gl_texture_object *tObj,
               GLenum target, GLint level,
@@ -504,6 +476,45 @@ _mesa_free_texture_image( struct gl_texture_image *teximage )
    FREE( teximage );
 }
 
+
+
+/*
+ * Given a texture unit and a texture target, return the corresponding
+ * texture object.
+ */
+struct gl_texture_object *
+_mesa_select_tex_object(GLcontext *ctx, struct gl_texture_unit *texUnit,
+                        GLenum target)
+{
+   switch (target) {
+      case GL_TEXTURE_1D:
+         return texUnit->CurrentD[1];
+      case GL_PROXY_TEXTURE_1D:
+         return ctx->Texture.Proxy1D;
+      case GL_TEXTURE_2D:
+         return texUnit->CurrentD[2];
+      case GL_PROXY_TEXTURE_2D:
+         return ctx->Texture.Proxy2D;
+      case GL_TEXTURE_3D:
+         return texUnit->CurrentD[3];
+      case GL_PROXY_TEXTURE_3D:
+         return ctx->Texture.Proxy3D;
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+         return ctx->Extensions.HaveTextureCubeMap
+                ? texUnit->CurrentCubeMap : NULL;
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+         return ctx->Extensions.HaveTextureCubeMap
+                ? ctx->Texture.ProxyCubeMap : NULL;
+      default:
+         gl_problem(NULL, "bad target in _mesa_select_tex_object()");
+         return NULL;
+   }
+}
 
 
 /*
@@ -1349,7 +1360,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = select_tex_object(texUnit, target);
+      texObj = _mesa_select_tex_object(ctx, texUnit, target);
       texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
 
       if (!texImage) {
@@ -1917,7 +1928,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    }
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = select_tex_object(texUnit, target);
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
    texImage = texObj->Image[level];
    assert(texImage);
 

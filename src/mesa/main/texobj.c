@@ -159,7 +159,9 @@ void gl_free_texture_object( struct gl_shared_state *shared,
  * Examine a texture object to determine if it is complete or not.
  * The t->Complete flag will be set to GL_TRUE or GL_FALSE accordingly.
  */
-void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_texture_object *t )
+void
+_mesa_test_texobj_completeness( const GLcontext *ctx,
+                                struct gl_texture_object *t )
 {
    t->Complete = GL_TRUE;  /* be optimistic */
 

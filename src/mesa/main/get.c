@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.27 2000/05/23 15:17:13 brianp Exp $ */
+/* $Id: get.c,v 1.28 2000/05/23 17:14:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4309,10 +4309,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_STRICT_SCISSOR_HINT_PGI:
       case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = (GL_TRUE);
+	 *params = GL_TRUE;
 	 break;
       case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = (GL_FALSE);
+	 *params = GL_FALSE;
 	 break;
       case GL_ALWAYS_FAST_HINT_PGI:
 	 *params = (ctx->Hint.AllowDrawWin == GL_TRUE &&
@@ -4344,7 +4344,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = GL_DONT_CARE;
 	 break;
       case GL_BACK_NORMALS_HINT_PGI:
-	 *params = (GL_TRUE);
+	 *params = GL_TRUE;
 	 break;
       case GL_NATIVE_GRAPHICS_HANDLE_PGI:
 	 *params = 0;
