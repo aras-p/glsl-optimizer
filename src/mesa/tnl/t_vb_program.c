@@ -1,8 +1,8 @@
-/* $Id: t_vb_program.c,v 1.15 2002/10/24 23:57:25 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.16 2002/10/31 17:14:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -180,7 +180,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (VB->Flag) {
          /* the traditional glBegin/glVertex/glEnd case */
          for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
-            if (VB->Flag[i] & (1 << attr)) {
+            if (attr == 0 || (VB->Flag[i] & (1 << attr))) {
                COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
                        VB->AttribPtr[attr]->data[i]);
             }
@@ -267,7 +267,6 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
                                             store->clipmask,
                                             &store->ormask,
                                             &store->andmask );
-
    }
    else {
       VB->NdcPtr = 0;
