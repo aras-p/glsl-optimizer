@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.4 1999/09/15 15:20:50 brianp Exp $
+# $Id: Makefile.X11,v 1.5 1999/09/15 19:38:28 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -335,15 +335,15 @@ LIB_FILES =	\
 	$(DIRECTORY)/missing			\
 	$(DIRECTORY)/mkinstalldirs		\
 	$(DIRECTORY)/stamp-h.in			\
-	$(DIRECTORY)/INSTALL			\
-	$(DIRECTORY)/INSTALL.GNU		\
 	$(DIRECTORY)/configure			\
 	$(DIRECTORY)/docs/CONFIG		\
 	$(DIRECTORY)/docs/CONFORM		\
+	$(DIRECTORY)/docs/COPYING		\
 	$(DIRECTORY)/docs/COPYRIGHT		\
 	$(DIRECTORY)/docs/DEVINFO		\
 	$(DIRECTORY)/docs/IAFA-PACKAGE		\
-	$(DIRECTORY)/docs/LICENSE		\
+	$(DIRECTORY)/docs/INSTALL		\
+	$(DIRECTORY)/docs/INSTALL.GNU		\
 	$(DIRECTORY)/docs/README		\
 	$(DIRECTORY)/docs/README.*		\
 	$(DIRECTORY)/docs/RELNOTES		\
@@ -459,9 +459,6 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src-glut/mms_depend	\
 	$(DIRECTORY)/src-glut/*.[ch]		\
 	$(DIRECTORY)/src-glut.dja/*		\
-	$(DIRECTORY)/src-glut.beos/Makefile	\
-	$(DIRECTORY)/src-glut.beos/*.cpp	\
-	$(DIRECTORY)/src-glut.beos/*.h		\
 	$(DIRECTORY)/images/*			\
 	$(DIRECTORY)/demos/Makefile*		\
 	$(DIRECTORY)/demos/descrip.mms		\
@@ -481,6 +478,10 @@ DEMO_FILES =	\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
 
+#	$(DIRECTORY)/src-glut.beos/Makefile	\
+#	$(DIRECTORY)/src-glut.beos/*.cpp	\
+#	$(DIRECTORY)/src-glut.beos/*.h		\
+#
 
 lib_tar:
 	cd .. ; \
