@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.4 2000/12/14 20:25:59 brianp Exp $ */
+/* $Id: s_texture.c,v 1.5 2001/01/02 22:02:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,7 +109,7 @@ static void palette_sample(const struct gl_texture_object *tObj,
 {									\
    if (wrapMode == GL_REPEAT) {						\
       U = S * SIZE - 0.5F;						\
-      I0 = ((GLint) myFloor(U)) & (SIZE - 1);				\
+      I0 = IFLOOR(U) & (SIZE - 1);					\
       I1 = (I0 + 1) & (SIZE - 1);					\
    }									\
    else {								\
@@ -119,7 +119,7 @@ static void palette_sample(const struct gl_texture_object *tObj,
       else if (U >= SIZE)						\
          U = SIZE;							\
       U -= 0.5F;							\
-      I0 = (GLint) myFloor(U);						\
+      I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
       if (wrapMode == GL_CLAMP_TO_EDGE) {				\
          if (I0 < 0)							\
@@ -213,26 +213,6 @@ static void palette_sample(const struct gl_texture_object *tObj,
 /**********************************************************************/
 /*                    1-D Texture Sampling Functions                  */
 /**********************************************************************/
-
-
-/*
- * Return floor of x, being careful of negative values.
- */
-static GLfloat myFloor(GLfloat x)
-{
-   if (x < 0.0F)
-      return (GLfloat) ((GLint) x - 1);
-   else
-      return (GLfloat) (GLint) x;
-}
-
-
-/*
- * Return the fractional part of x.
- */
-#define myFrac(x)  ( (x) - myFloor(x) )
-
-
 
 
 /*
@@ -373,7 +353,7 @@ static void sample_1d_linear( const struct gl_texture_object *tObj,
    }
 
    {
-      const GLfloat a = myFrac(u);
+      const GLfloat a = FRAC(u);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w0 = (GLint) ((1.0F-a) * WEIGHT_SCALE + 0.5F);
       const GLint w1 = (GLint) (      a  * WEIGHT_SCALE + 0.5F);
@@ -438,7 +418,7 @@ sample_1d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_1d_nearest( tObj, tObj->Image[level  ], s, t0 );
       sample_1d_nearest( tObj, tObj->Image[level+1], s, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -464,7 +444,7 @@ sample_1d_linear_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_1d_linear( tObj, tObj->Image[level  ], s, t0 );
       sample_1d_linear( tObj, tObj->Image[level+1], s, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -731,8 +711,8 @@ static void sample_2d_linear( const struct gl_texture_object *tObj,
    }
 
    {
-      const GLfloat a = myFrac(u);
-      const GLfloat b = myFrac(v);
+      const GLfloat a = FRAC(u);
+      const GLfloat b = FRAC(v);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w00 = (GLint) ((1.0F-a)*(1.0F-b) * WEIGHT_SCALE + 0.5F);
       const GLint w10 = (GLint) (      a *(1.0F-b) * WEIGHT_SCALE + 0.5F);
@@ -816,7 +796,7 @@ sample_2d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_2d_nearest( tObj, tObj->Image[level  ], s, t, t0 );
       sample_2d_nearest( tObj, tObj->Image[level+1], s, t, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -842,7 +822,7 @@ sample_2d_linear_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_2d_linear( tObj, tObj->Image[level  ], s, t, t0 );
       sample_2d_linear( tObj, tObj->Image[level+1], s, t, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -1196,9 +1176,9 @@ static void sample_3d_linear( const struct gl_texture_object *tObj,
    }
 
    {
-      const GLfloat a = myFrac(u);
-      const GLfloat b = myFrac(v);
-      const GLfloat c = myFrac(w);
+      const GLfloat a = FRAC(u);
+      const GLfloat b = FRAC(v);
+      const GLfloat c = FRAC(w);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       GLint w000 = (GLint) ((1.0F-a)*(1.0F-b)*(1.0F-c) * WEIGHT_SCALE + 0.5F);
       GLint w100 = (GLint) (      a *(1.0F-b)*(1.0F-c) * WEIGHT_SCALE + 0.5F);
@@ -1319,7 +1299,7 @@ sample_3d_nearest_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_3d_nearest( tObj, tObj->Image[level  ], s, t, r, t0 );
       sample_3d_nearest( tObj, tObj->Image[level+1], s, t, r, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -1344,7 +1324,7 @@ sample_3d_linear_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_3d_linear( tObj, tObj->Image[level  ], s, t, r, t0 );
       sample_3d_linear( tObj, tObj->Image[level+1], s, t, r, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -1607,7 +1587,7 @@ sample_cube_nearest_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];  /* texels */
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_2d_nearest( tObj, images[level  ], newS, newT, t0 );
       sample_2d_nearest( tObj, images[level+1], newS, newT, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
@@ -1636,7 +1616,7 @@ sample_cube_linear_mipmap_linear( const struct gl_texture_object *tObj,
    }
    else {
       GLchan t0[4], t1[4];
-      const GLfloat f = myFrac(lambda);
+      const GLfloat f = FRAC(lambda);
       sample_2d_linear( tObj, images[level  ], newS, newT, t0 );
       sample_2d_linear( tObj, images[level+1], newS, newT, t1 );
       rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);

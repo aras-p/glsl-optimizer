@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.4 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: api_loopback.c,v 1.5 2001/01/02 22:02:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,9 +88,9 @@ loopback_Color3d( GLdouble red, GLdouble green, GLdouble blue )
    GLfloat r = red;
    GLfloat g = green;
    GLfloat b = blue;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
    col[3] = 255;
    COLORUBV( col );
 }
@@ -158,10 +158,10 @@ loopback_Color4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha )
    GLfloat g = green;
    GLfloat b = blue;
    GLfloat a = alpha;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[3], a);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[3], a);
    COLORUBV( col );
 }
 
@@ -1178,9 +1178,9 @@ loopback_SecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue )
    GLfloat r = red;
    GLfloat g = green;
    GLfloat b = blue;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
    SECONDARYCOLORUB( col[0], col[1], col[2] );
 }
 
@@ -1219,9 +1219,10 @@ loopback_SecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue )
 static void
 loopback_SecondaryColor3bvEXT( const GLbyte *v )
 {
-   SECONDARYCOLORUB(BYTE_TO_UBYTE(v[0]),
-		    BYTE_TO_UBYTE(v[1]),
-		    BYTE_TO_UBYTE(v[2]));
+   const GLfloat r = BYTE_TO_FLOAT(v[0]);
+   const GLfloat g = BYTE_TO_FLOAT(v[1]);
+   const GLfloat b = BYTE_TO_FLOAT(v[2]);
+   SECONDARYCOLORF(r, g, b);
 }
 
 static void
@@ -1231,9 +1232,9 @@ loopback_SecondaryColor3dvEXT( const GLdouble *v )
    GLfloat r = v[0];
    GLfloat g = v[1];
    GLfloat b = v[2];
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
    SECONDARYCOLORUB( col[0], col[1], col[2] );
 }
 

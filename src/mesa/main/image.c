@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.50 2000/11/28 00:07:51 brianp Exp $ */
+/* $Id: image.c,v 1.51 2001/01/02 22:02:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2337,10 +2337,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
-               rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
-               rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
-               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
+               rgba[i][rComp] = UBYTE_TO_FLOAT((p      ) & 0xff);
+               rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+               rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+               rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24)       );
             }
          }
          else {
@@ -2348,10 +2348,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
-               rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
-               rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
-               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
+               rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24)       );
+               rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+               rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+               rgba[i][aComp] = UBYTE_TO_FLOAT((p      ) & 0xff);
             }
          }
          break;
@@ -2361,10 +2361,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
-               rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
-               rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
-               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
+               rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24)       );
+               rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+               rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+               rgba[i][aComp] = UBYTE_TO_FLOAT((p      ) & 0xff);
             }
          }
          else {
@@ -2372,10 +2372,10 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
             GLuint i;
             for (i = 0; i < n; i ++) {
                GLuint p = uisrc[i];
-               rgba[i][rComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p      ) & 0xff);
-               rgba[i][gComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >>  8) & 0xff);
-               rgba[i][bComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 16) & 0xff);
-               rgba[i][aComp] = UBYTE_COLOR_TO_FLOAT_COLOR((p >> 24)       );
+               rgba[i][rComp] = UBYTE_TO_FLOAT((p      ) & 0xff);
+               rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+               rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+               rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24)       );
             }
          }
          break;

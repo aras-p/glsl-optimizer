@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.48 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: get.c,v 1.49 2001/01/02 22:02:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2509,9 +2509,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
-         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
-         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]);
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLdouble) ctx->Array.SecondaryColor.Enabled;
@@ -3721,9 +3721,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
-         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
-         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]);
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLfloat) ctx->Array.SecondaryColor.Enabled;
@@ -4962,9 +4962,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[0] ) );
-         params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[1] ) );
-         params[2] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[2] ) );
+         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[0]) );
+         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[1]) );
+         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Current.SecondaryColor[2]) );
 	 break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          *params = (GLint) ctx->Array.SecondaryColor.Enabled;

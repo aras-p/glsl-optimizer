@@ -347,9 +347,9 @@ _tnl_Color3f( GLfloat red, GLfloat green, GLfloat blue )
 #if CHAN_BITS == 8
    GLubyte col[4];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], red);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], green);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], blue);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], red);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], green);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], blue);
    col[3] = CHAN_MAX;
    COLORV( IM, col );
 #else
@@ -388,10 +388,10 @@ _tnl_Color4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 #if CHAN_BITS == 8
    GLubyte col[4];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], red);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], green);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], blue);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[3], alpha);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], red);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], green);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], blue);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[3], alpha);
    COLORV( IM, col );
 #else
    GET_IMMEDIATE;
@@ -426,9 +426,9 @@ _tnl_Color3fv( const GLfloat *v )
 #if CHAN_BITS == 8
    GLubyte col[4];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], v[0]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], v[1]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], v[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], v[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], v[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], v[2]);
    col[3] = CHAN_MAX;
    COLORV( IM, col );
 #else
@@ -466,10 +466,10 @@ _tnl_Color4fv( const GLfloat *v )
 #if CHAN_BITS == 8
    GLubyte col[4];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], v[0]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], v[1]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], v[2]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[3], v[3]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], v[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], v[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], v[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[3], v[3]);
    COLORV( IM, col );
 #else
    GET_IMMEDIATE;
@@ -529,9 +529,9 @@ _tnl_SecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue )
 #if CHAN_BITS == 8
    GLubyte col[3];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], red);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], green);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], blue);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], red);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], green);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], blue);
    SECONDARY_COLORV( IM, col );
 #else
    GET_IMMEDIATE;
@@ -568,9 +568,9 @@ _tnl_SecondaryColor3fvEXT( const GLfloat *v )
 #if CHAN_BITS == 8
    GLubyte col[3];
    GET_IMMEDIATE;
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], v[0]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], v[1]);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], v[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], v[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], v[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], v[2]);
    SECONDARY_COLORV( IM, col );
 #else
    GET_IMMEDIATE;

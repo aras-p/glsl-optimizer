@@ -63,6 +63,9 @@
 
 #include "tnl/t_pipeline.h"
 
+
+float gl_ubyte_to_float_255_color_tab[256];
+
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
  */
@@ -667,7 +670,12 @@ static const struct gl_pipeline_stage *fx_pipeline[] = {
 
 int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 {
+   int i;
    static int firsttime = 1;
+
+   for (i = 0 ; i < 256 ; i++) {
+      gl_ubyte_to_float_255_color_tab[i] = (float) i;
+   }
 
    if (firsttime) {
       fxDDSetupInit();

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.35 2000/12/26 05:09:30 keithw Exp $ */
+/* $Id: osmesa.c,v 1.36 2001/01/02 22:02:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,7 @@
 #include "macros.h"
 #include "mem.h"
 #include "matrix.h"
+#include "mmath.h"
 #include "mtypes.h"
 #include "extensions.h"
 #include "swrast/swrast.h"

@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+/* $Id: t_imm_elt.c,v 1.2 2001/01/02 22:02:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -388,7 +388,7 @@ static trans_elt_4f_func  _tnl_trans_elt_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_DOUBLE)
 #define TRX_3F(f,n)   PTR_ELT(f,n)
 #define TRX_4F(f,n)   PTR_ELT(f,n)
-#define TRX_UB(ub,f,n) FLOAT_COLOR_TO_CHAN(ub, PTR_ELT(f,n))
+#define TRX_UB(ub,f,n) UNCLAMPED_FLOAT_TO_CHAN(ub, PTR_ELT(f,n))
 #define TRX_UI(f,n)  (GLuint) (GLint) PTR_ELT(f,n)
 #define TRX_1F(f,n)   PTR_ELT(f,n)
 

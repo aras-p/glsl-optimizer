@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.31 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: light.c,v 1.32 2001/01/02 22:02:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -616,7 +616,7 @@ void gl_update_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
       }
-      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
@@ -627,7 +627,7 @@ void gl_update_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
       }
-      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update material specular values */
@@ -760,7 +760,7 @@ void gl_update_color_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
       }
-      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
 
    if (bitmask & BACK_DIFFUSE_BIT) {
@@ -769,7 +769,7 @@ void gl_update_color_material( GLcontext *ctx,
       foreach (light, list) {
 	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
       }
-      FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
+      UNCLAMPED_FLOAT_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update light->_MatSpecular = light's specular * material's specular */
@@ -1173,8 +1173,8 @@ gl_update_lighting( GLcontext *ctx )
 		      ctx->Light.Model.Ambient,
 		      mat->Ambient);
 
-	 FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[side],
-                             ctx->Light.Material[side].Diffuse[3] );
+	 UNCLAMPED_FLOAT_TO_CHAN(ctx->Light._BaseAlpha[side],
+                                 ctx->Light.Material[side].Diffuse[3] );
       }
 
       foreach (light, &ctx->Light.EnabledList) {	

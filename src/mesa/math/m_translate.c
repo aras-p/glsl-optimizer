@@ -1,4 +1,4 @@
-/* $Id: m_translate.c,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_translate.c,v 1.3 2001/01/02 22:02:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,6 +110,8 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 
 /* GL_BYTE
  */
+#define BYTE_TO_UBYTE(b)   (b < 0 ? 0 : (GLubyte) b)
+
 #define SRC GLbyte
 #define SRC_IDX TYPE_IDX(GL_BYTE)
 #define TRX_3F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
@@ -362,7 +364,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_DOUBLE)
 #define TRX_3F(f,n)   PTR_ELT(f,n)
 #define TRX_4F(f,n)   PTR_ELT(f,n)
-#define TRX_UB(ub,f,n) FLOAT_COLOR_TO_CHAN(ub, PTR_ELT(f,n))
+#define TRX_UB(ub,f,n) UNCLAMPED_FLOAT_TO_CHAN(ub, PTR_ELT(f,n))
 #define TRX_UI(f,n)  (GLuint) (GLint) PTR_ELT(f,n)
 #define TRX_1F(f,n)   PTR_ELT(f,n)
 

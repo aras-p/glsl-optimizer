@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.8 2000/12/27 22:52:45 keithw Exp $ */
+/* $Id: mtypes.h,v 1.9 2001/01/02 22:02:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 
 #include "glheader.h"
 #include "config.h"		/* Hardwired parameters */
-#include "fixed.h"		/* GLfixed */
 #include "glapitable.h"
 #include "glthread.h"
 
@@ -101,15 +100,17 @@
 #endif
 
 
-/* Maximum number of temporary vertices required for clipping.  (Used
- * in array_cache and tnl modules).
- */
-#define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
-
 /*
  * Depth buffer data type:
  */
 typedef GLuint GLdepth;  /* Must be 32-bits! */
+
+
+/*
+ * Fixed point data type:
+ */
+typedef int GLfixed;
+
 
 
 /*
@@ -121,6 +122,12 @@ typedef struct gl_visual GLvisual;
 typedef struct gl_frame_buffer GLframebuffer;
 typedef struct __GLcontextRec GLcontext;
 
+
+
+/* Maximum number of temporary vertices required for clipping.  (Used
+ * in array_cache and tnl modules).
+ */
+#define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
 
 
 /* Data structure for color tables */
@@ -1386,7 +1393,6 @@ struct gl_extensions {
 
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT|		\
                                             _NEW_TEXTURE)
-
 #define _IMAGE_NEW_TRANSFER_STATE        (_NEW_PIXEL|_NEW_COLOR_MATRIX)
 
 

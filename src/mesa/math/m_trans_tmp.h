@@ -1,8 +1,8 @@
-/* $Id: m_trans_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_trans_tmp.h,v 1.2 2001/01/02 22:02:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.5
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 

@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.14 2000/12/13 16:24:39 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.15 2001/01/02 22:02:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
+#include "mmath.h"
 #include "mtypes.h"
 #include "xmesaP.h"
 

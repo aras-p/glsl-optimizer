@@ -151,17 +151,19 @@ void _mesa_noop_Color4f( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.Color;
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[0], a);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[1], b);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[2], c);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[3], d);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[0], a);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[1], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[2], c);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[3], d);
 }
 
 void _mesa_noop_Color4fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.Color;
-   FLOAT_RGBA_TO_CHAN_RGBA( color, v );
+   UNCLAMPED_FLOAT_TO_CHAN(color[0], v[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[1], v[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[2], v[2]);
 }
 
 void _mesa_noop_Color3ub( GLubyte a, GLubyte b, GLubyte c )
@@ -188,9 +190,9 @@ void _mesa_noop_Color3f( GLfloat a, GLfloat b, GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.Color;
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[0], a);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[1], b);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[2], c);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[0], a);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[1], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[2], c);
    color[3] = 255;
 }
 
@@ -198,7 +200,9 @@ void _mesa_noop_Color3fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.Color;
-   FLOAT_RGB_TO_CHAN_RGB( color, v );
+   UNCLAMPED_FLOAT_TO_CHAN(color[0], v[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[1], v[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[2], v[2]);
    color[3] = 255;
 }
 
@@ -363,9 +367,9 @@ void _mesa_noop_SecondaryColor3fEXT( GLfloat a, GLfloat b, GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.SecondaryColor;
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[0], a);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[1], b);
-   FLOAT_COLOR_TO_UBYTE_COLOR(color[2], c);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[0], a);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[1], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(color[2], c);
    color[3] = 255;
 }
 
@@ -373,7 +377,9 @@ void _mesa_noop_SecondaryColor3fvEXT( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *color = ctx->Current.SecondaryColor;
-   FLOAT_RGB_TO_CHAN_RGB( color, v );
+   UNCLAMPED_FLOAT_TO_CHAN(color[0], v[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[1], v[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[2], v[2]);
    color[3] = 255;
 }
 
