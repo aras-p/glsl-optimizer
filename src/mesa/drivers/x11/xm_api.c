@@ -1,10 +1,10 @@
-/* $Id: xm_api.c,v 1.51 2002/11/10 17:07:06 brianp Exp $ */
+/* $Id: xm_api.c,v 1.52 2003/01/24 15:33:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -908,14 +908,14 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
          /* Allocate X colors and initialize color_table[], red_table[], etc */
          int r, g, b, i;
          int colorsfailed = 0;
-         for (r = 0; r < _R; r++) {
-            for (g = 0; g < _G; g++) {
-               for (b = 0; b < _B; b++) {
+         for (r = 0; r < DITH_R; r++) {
+            for (g = 0; g < DITH_G; g++) {
+               for (b = 0; b < DITH_B; b++) {
                   XMesaColor xcol;
                   int exact, alloced;
-                  xcol.red  =gamma_adjust(v->RedGamma,   r*65535/(_R-1),65535);
-                  xcol.green=gamma_adjust(v->GreenGamma, g*65535/(_G-1),65535);
-                  xcol.blue =gamma_adjust(v->BlueGamma,  b*65535/(_B-1),65535);
+                  xcol.red  =gamma_adjust(v->RedGamma,   r*65535/(DITH_R-1),65535);
+                  xcol.green=gamma_adjust(v->GreenGamma, g*65535/(DITH_G-1),65535);
+                  xcol.blue =gamma_adjust(v->BlueGamma,  b*65535/(DITH_B-1),65535);
                   noFaultXAllocColor( client, v->display,
                                       cmap, GET_COLORMAP_SIZE(v),
                                       &xcol, &exact, &alloced );
@@ -927,13 +927,13 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
                      buffer->alloced_colors[buffer->num_alloced] = xcol.pixel;
                      buffer->num_alloced++;
                   }
-                  i = _MIX( r, g, b );
+                  i = DITH_MIX( r, g, b );
                   assert(i < 576);
                   buffer->color_table[i] = xcol.pixel;
                   assert(xcol.pixel < 65536);
-                  buffer->pixel_to_r[xcol.pixel] = r * 255 / (_R-1);
-                  buffer->pixel_to_g[xcol.pixel] = g * 255 / (_G-1);
-                  buffer->pixel_to_b[xcol.pixel] = b * 255 / (_B-1);
+                  buffer->pixel_to_r[xcol.pixel] = r * 255 / (DITH_R-1);
+                  buffer->pixel_to_g[xcol.pixel] = g * 255 / (DITH_G-1);
+                  buffer->pixel_to_b[xcol.pixel] = b * 255 / (DITH_B-1);
                }
             }
          }
@@ -941,7 +941,7 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
          if (colorsfailed && _mesa_getenv("MESA_DEBUG")) {
             _mesa_warning(NULL,
                   "Note: %d out of %d needed colors do not match exactly.\n",
-                  colorsfailed, _R*_G*_B );
+                  colorsfailed, DITH_R * DITH_G * DITH_B );
          }
       }
    }

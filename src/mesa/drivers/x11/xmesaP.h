@@ -1,10 +1,10 @@
-/* $Id: xmesaP.h,v 1.32 2002/11/10 17:07:06 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.33 2003/01/24 15:33:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -316,36 +316,31 @@ struct xmesa_buffer {
  * Improved 8-bit RGB dithering code contributed by Bob Mercier
  * (mercier@hollywood.cinenet.net).  Thanks Bob!
  */
-#undef _R
-#undef _G
-#undef _B
-#undef _D
 #ifdef DITHER666
-# define _R   6
-# define _G   6
-# define _B   6
-# define _MIX(r,g,b)  (((r)*_G+(g))*_B+(b))
+# define DITH_R   6
+# define DITH_G   6
+# define DITH_B   6
+# define DITH_MIX(r,g,b)  (((r) * DITH_G + (g)) * DITH_B + (b))
 #else
-# define _R	5
-# define _G	9
-# define _B	5
-# define _MIX(r,g,b)	( ((g)<<6) | ((b)<<3) | (r) )
+# define DITH_R	5
+# define DITH_G	9
+# define DITH_B	5
+# define DITH_MIX(r,g,b)  (((g) << 6) | ((b) << 3) | (r))
 #endif
-#define _DX	4
-#define _DY	4
-#define _D	(_DX*_DY)
+#define DITH_DX	4
+#define DITH_DY	4
+#define DITH_N	(DITH_DX * DITH_DY)
 
-/*#define _DITH(C,c,d)	(((unsigned)((_D*(C-1)+1)*c+d))/(_D*256))*/
-#define _DITH(C,c,d)	(((unsigned)((_D*(C-1)+1)*c+d)) >> 12)
+/*#define _dither(C,c,d)	(((unsigned)((DITH_N*(C-1)+1)*c+d))/(DITH_N*256))*/
+#define _dither(C, c, d)   (((unsigned)((DITH_N * (C - 1) + 1) * c + d)) >> 12)
 
 #define MAXC	256
-static int kernel8[_DY*_DX] = {
+static int kernel8[DITH_DY * DITH_DX] = {
     0 * MAXC,  8 * MAXC,  2 * MAXC, 10 * MAXC,
    12 * MAXC,  4 * MAXC, 14 * MAXC,  6 * MAXC,
     3 * MAXC, 11 * MAXC,  1 * MAXC,  9 * MAXC,
    15 * MAXC,  7 * MAXC, 13 * MAXC,  5 * MAXC,
 };
-/*static int __d;*/
 
 /* Dither for random X,Y */
 #define DITHER_SETUP						\
@@ -354,9 +349,9 @@ static int kernel8[_DY*_DX] = {
 
 #define DITHER( X, Y, R, G, B )				\
 	(__d = kernel8[(((Y)&3)<<2) | ((X)&3)],		\
-	 ctable[_MIX(_DITH(_R, (R), __d),		\
-		     _DITH(_G, (G), __d),		\
-		     _DITH(_B, (B), __d))])
+	 ctable[DITH_MIX(_dither(DITH_R, (R), __d),	\
+		         _dither(DITH_G, (G), __d),	\
+		         _dither(DITH_B, (B), __d))])
 
 /* Dither for random X, fixed Y */
 #define XDITHER_SETUP(Y)					\
@@ -366,9 +361,9 @@ static int kernel8[_DY*_DX] = {
 
 #define XDITHER( X, R, G, B )				\
 	(__d = kernel[(X)&3],				\
-	ctable[_MIX(_DITH(_R, (R), __d),		\
-		    _DITH(_G, (G), __d),		\
-		    _DITH(_B, (B), __d))])
+	ctable[DITH_MIX(_dither(DITH_R, (R), __d),	\
+		        _dither(DITH_G, (G), __d),	\
+		        _dither(DITH_B, (B), __d))])
 
 
 
@@ -381,13 +376,13 @@ static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
 #define FLAT_DITHER_SETUP( R, G, B )					\
 	{								\
 	   unsigned long *ctable = xmesa->xm_buffer->color_table;	\
-	   int msdr = (_D*((_R)-1)+1) * (R);				\
-	   int msdg = (_D*((_G)-1)+1) * (G);				\
-	   int msdb = (_D*((_B)-1)+1) * (B);				\
+	   int msdr = (DITH_N*((DITH_R)-1)+1) * (R);			\
+	   int msdg = (DITH_N*((DITH_G)-1)+1) * (G);			\
+	   int msdb = (DITH_N*((DITH_B)-1)+1) * (B);			\
 	   int i;							\
 	   for (i=0;i<16;i++) {						\
 	      int k = kernel8[i];					\
-	      int j = _MIX( (msdr+k)>>12, (msdg+k)>>12, (msdb+k)>>12 );	\
+	      int j = DITH_MIX( (msdr+k)>>12, (msdg+k)>>12, (msdb+k)>>12 );	\
 	      DitherValues[i] = (GLushort) ctable[j];			\
 	   }								\
         }
@@ -402,15 +397,15 @@ static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
 /*
  * If pixelformat==PF_LOOKUP:
  */
-#define _DITH0(C,c)	(((unsigned)((_D*(C-1)+1)*c)) >> 12)
+#define _dither_lookup(C, c)   (((unsigned)((DITH_N * (C - 1) + 1) * c)) >> 12)
 
 #define LOOKUP_SETUP						\
 	unsigned long *ctable = xmesa->xm_buffer->color_table
 
-#define LOOKUP( R, G, B )			\
-	ctable[_MIX(_DITH0(_R, (R)),		\
-		    _DITH0(_G, (G)),		\
-		    _DITH0(_B, (B)))]
+#define LOOKUP( R, G, B )				\
+	ctable[DITH_MIX(_dither_lookup(DITH_R, (R)),	\
+		        _dither_lookup(DITH_G, (G)),	\
+		        _dither_lookup(DITH_B, (B)))]
 
 
 
