@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.21 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: s_span.c,v 1.22 2002/01/16 16:00:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1205,6 +1205,146 @@ add_colors(CONST struct sw_span *span, GLchan rgba[][4])
       rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
 #endif
    }
+}
+
+
+/*
+ * Write a horizontal span of textured pixels to the frame buffer.
+ * The color of each pixel is different.
+ * Alpha-testing, stenciling, depth-testing, and blending are done
+ * as needed.
+ * Input:  span - contains span-data with the exception of
+ *         fog - array of fog factor values in [0,1]
+ *         primitive - either GL_POINT, GL_LINE, GL_POLYGON or GL_BITMAP.
+ */
+void
+_mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
+			  const GLfloat fog[], GLenum primitive )
+{
+   const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
+   GLchan rgbaBackup[MAX_WIDTH][4];
+   GLchan (*rgba)[4];   /* points to either rgbaIn or rgbaBackup */
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   SET_MASK_TO_ONE(span);
+
+   if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
+      if (clip_span(ctx,span) == GL_FALSE) {
+	 return;
+      }
+   }
+
+   /* Do the scissor test */
+   if (ctx->Scissor.Enabled) {
+      if (_mesa_scissor_span( ctx, span ) == GL_FALSE) {
+         return;
+      }
+   }
+
+   /* Polygon Stippling */
+   if (ctx->Polygon.StippleFlag && primitive==GL_POLYGON) {
+      stipple_polygon_span( ctx, span);
+   }
+
+
+   if (primitive==GL_BITMAP || (swrast->_RasterMask & MULTI_DRAW_BIT)) {
+      /* must make a copy of the colors since they may be modified */
+      MEMCPY(rgbaBackup, span->color.rgba, 4 * span->end * sizeof(GLchan));
+      rgba = rgbaBackup;
+   }
+   else {
+      rgba = span->color.rgba;
+   }
+
+
+   /* Texture with alpha test */
+   if (ctx->Color.AlphaEnabled) {
+      /* Texturing without alpha is done after depth-testing which
+         gives a potential speed-up. */
+      ASSERT(ctx->Texture._ReallyEnabled);
+      _swrast_texture_fragments( ctx, 0, span, rgba );
+
+      /* Do the alpha test */
+      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4]) rgba, span->mask ) == 0) {
+         return;
+      }
+      span->write_all = GL_FALSE;
+   }
+
+   if (ctx->Stencil.Enabled) {
+      /* first stencil test */
+      if (_mesa_stencil_and_ztest_span(ctx, span) == GL_FALSE)
+	 return;
+   }
+   else if (ctx->Depth.Test) {
+      /* regular depth testing */
+      if (_mesa_depth_test_span(ctx, span) == 0)
+	 return;
+   }
+
+   /* if we get here, something passed the depth test */
+   ctx->OcclusionResult = GL_TRUE;
+
+   /* Texture without alpha test */
+   if (! ctx->Color.AlphaEnabled) {
+      ASSERT(ctx->Texture._ReallyEnabled);
+      _swrast_texture_fragments( ctx, 0, span, rgba );
+   }
+
+
+   /* Add base and specular colors */
+   if ((span->activeMask & SPAN_SPEC) && /* Is this right test ???*/
+       (ctx->Fog.ColorSumEnabled ||
+	(ctx->Light.Enabled &&
+         ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
+      add_colors(span, rgba);   /* rgba = rgba + spec */
+   
+   /* Per-pixel fog */
+   if (ctx->Fog.Enabled) {
+      /* Is this the right 'if' ?? */
+      if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+	 _old_fog_rgba_pixels( ctx, span->end, fog, rgba );
+      else
+	 _mesa_depth_fog_rgba_pixels(ctx, span, rgba);
+   }
+
+
+   /* Antialias coverage application */
+#if 0
+   if (span->coverage) {
+      GLuint i;
+      for (i = 0; i < span->end; i++) {
+         rgba[i][ACOMP] = (GLchan) (rgba[i][ACOMP] * span->coverage[i]);
+      }
+   }
+#endif
+
+   if (swrast->_RasterMask & MULTI_DRAW_BIT) {
+      multi_write_rgba_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba, span->mask );
+   }
+   else {
+      /* normal: write to exactly one buffer */
+      if (ctx->Color.ColorLogicOpEnabled) {
+         _mesa_logicop_rgba_span( ctx, span->end, span->x, span->y, rgba, span->mask );
+      }
+      else  if (ctx->Color.BlendEnabled) {
+         _mesa_blend_span( ctx, span->end, span->x, span->y, rgba, span->mask );
+      }
+      if (colorMask == 0x0) {
+         return;
+      }
+      else if (colorMask != 0xffffffff) {
+         _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
+      }
+
+      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y, (const GLchan (*)[4])rgba,
+				    span->write_all ? NULL : span->mask );
+      if (swrast->_RasterMask & ALPHABUF_BIT) {
+         _mesa_write_alpha_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba,
+                                 span->write_all ? NULL : span->mask );
+      }
+   }
+
 }
 
 

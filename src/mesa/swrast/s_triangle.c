@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.46 2002/01/09 00:27:49 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.47 2002/01/16 16:00:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -959,15 +959,8 @@ static void general_textured_triangle( GLcontext *ctx,
       span.tex[0][2] += span.texStep[0][2];				\
       span.tex[0][3] += span.texStep[0][3];				\
    }									\
-   _old_write_texture_span( ctx, span.end, span.x, span.y,		\
-                            span.depth, fogSpan,			\
-			    span.texcoords[0],				\
-                            NULL, span.color.rgba, NULL, NULL, GL_POLYGON );
-
-#define CLEANUP_CODE				\
-   UNDEFARRAY(sSpan);  /* mac 32k limitation */	\
-   UNDEFARRAY(tSpan);				\
-   UNDEFARRAY(uSpan);
+   _mesa_write_texture_span( ctx, &span, fogSpan,			\
+                             GL_POLYGON );
 
 #include "s_tritemp.h"
 }
