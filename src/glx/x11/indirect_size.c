@@ -256,22 +256,34 @@ __glMap1d_size( GLenum e )
     switch( e ) {
         case GL_MAP1_INDEX:
         case GL_MAP1_TEXTURE_COORD_1:
-        case GL_MAP2_INDEX:
-        case GL_MAP2_TEXTURE_COORD_1:
             return 1;
         case GL_MAP1_TEXTURE_COORD_2:
-        case GL_MAP2_TEXTURE_COORD_2:
             return 2;
         case GL_MAP1_NORMAL:
         case GL_MAP1_TEXTURE_COORD_3:
         case GL_MAP1_VERTEX_3:
-        case GL_MAP2_NORMAL:
-        case GL_MAP2_TEXTURE_COORD_3:
-        case GL_MAP2_VERTEX_3:
             return 3;
         case GL_MAP1_COLOR_4:
         case GL_MAP1_TEXTURE_COORD_4:
         case GL_MAP1_VERTEX_4:
+            return 4;
+        default: return 0;
+    }
+}
+
+INTERNAL PURE FASTCALL GLint
+__glMap2d_size( GLenum e )
+{
+    switch( e ) {
+        case GL_MAP2_INDEX:
+        case GL_MAP2_TEXTURE_COORD_1:
+            return 1;
+        case GL_MAP2_TEXTURE_COORD_2:
+            return 2;
+        case GL_MAP2_NORMAL:
+        case GL_MAP2_TEXTURE_COORD_3:
+        case GL_MAP2_VERTEX_3:
+            return 3;
         case GL_MAP2_COLOR_4:
         case GL_MAP2_TEXTURE_COORD_4:
         case GL_MAP2_VERTEX_4:
@@ -350,8 +362,7 @@ ALIAS( TexEnviv, TexEnvfv )
 ALIAS( TexGenfv, TexGendv )
 ALIAS( TexGeniv, TexGendv )
 ALIAS( Map1f, Map1d )
-ALIAS( Map2d, Map1d )
-ALIAS( Map2f, Map1d )
+ALIAS( Map2f, Map2d )
 ALIAS( ColorTableParameteriv, ColorTableParameterfv )
 ALIAS( ConvolutionParameteriv, ConvolutionParameterfv )
 ALIAS( PointParameterivNV, PointParameterfvEXT )

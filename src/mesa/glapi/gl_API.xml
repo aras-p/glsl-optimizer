@@ -326,108 +326,72 @@
     <enum name="MAP1_COLOR_4"                             value="0x0D90">
         <size name="Map1d" count="4"/>
         <size name="Map1f" count="4"/>
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
     </enum>
     <enum name="MAP1_INDEX"                               value="0x0D91">
         <size name="Map1d" count="1"/>
         <size name="Map1f" count="1"/>
-        <size name="Map2d" count="1"/>
-        <size name="Map2f" count="1"/>
     </enum>
     <enum name="MAP1_NORMAL"                              value="0x0D92">
         <size name="Map1d" count="3"/>
         <size name="Map1f" count="3"/>
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_1"                     value="0x0D93">
         <size name="Map1d" count="1"/>
         <size name="Map1f" count="1"/>
-        <size name="Map2d" count="1"/>
-        <size name="Map2f" count="1"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_2"                     value="0x0D94">
         <size name="Map1d" count="2"/>
         <size name="Map1f" count="2"/>
-        <size name="Map2d" count="2"/>
-        <size name="Map2f" count="2"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_3"                     value="0x0D95">
         <size name="Map1d" count="3"/>
         <size name="Map1f" count="3"/>
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP1_TEXTURE_COORD_4"                     value="0x0D96">
         <size name="Map1d" count="4"/>
         <size name="Map1f" count="4"/>
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
     </enum>
     <enum name="MAP1_VERTEX_3"                            value="0x0D97">
         <size name="Map1d" count="3"/>
         <size name="Map1f" count="3"/>
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP1_VERTEX_4"                            value="0x0D98">
         <size name="Map1d" count="4"/>
         <size name="Map1f" count="4"/>
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
     </enum>
     <enum name="MAP2_COLOR_4"                             value="0x0DB0">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
         <size name="Map2d" count="4"/>
         <size name="Map2f" count="4"/>
     </enum>
     <enum name="MAP2_INDEX"                               value="0x0DB1">
-        <size name="Map1d" count="1"/>
-        <size name="Map1f" count="1"/>
         <size name="Map2d" count="1"/>
         <size name="Map2f" count="1"/>
     </enum>
     <enum name="MAP2_NORMAL"                              value="0x0DB2">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
         <size name="Map2d" count="3"/>
         <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_1"                     value="0x0DB3">
-        <size name="Map1d" count="1"/>
-        <size name="Map1f" count="1"/>
         <size name="Map2d" count="1"/>
         <size name="Map2f" count="1"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_2"                     value="0x0DB4">
-        <size name="Map1d" count="2"/>
-        <size name="Map1f" count="2"/>
         <size name="Map2d" count="2"/>
         <size name="Map2f" count="2"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_3"                     value="0x0DB5">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
         <size name="Map2d" count="3"/>
         <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP2_TEXTURE_COORD_4"                     value="0x0DB6">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
         <size name="Map2d" count="4"/>
         <size name="Map2f" count="4"/>
     </enum>
     <enum name="MAP2_VERTEX_3"                            value="0x0DB7">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
         <size name="Map2d" count="3"/>
         <size name="Map2f" count="3"/>
     </enum>
     <enum name="MAP2_VERTEX_4"                            value="0x0DB8">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
         <size name="Map2d" count="4"/>
         <size name="Map2f" count="4"/>
     </enum>
