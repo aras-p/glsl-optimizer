@@ -815,7 +815,7 @@ wglDescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes,
    if (iPixelFormat < 1 || iPixelFormat > qt_valid_pix ||
        ((nBytes != sizeof(PIXELFORMATDESCRIPTOR)) && (nBytes != 0))) {
       SetLastError(0);
-      return (0);
+      return (qt_valid_pix);
    }
 
    if (nBytes != 0)

@@ -1320,6 +1320,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          return;
       }
       /* unpack image, apply transfer ops and store in tempImage */
+#if !NEWTEXSTORE
       _mesa_transfer_teximage(ctx, 2, texImage->Format,
                               _final_texImage_TexFormat,
                               tempImage,
@@ -1327,6 +1328,15 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                               width * texelBytes, /* dstRowStride */
                               0, /* dstImageStride */
                               format, type, pixels, packing);
+#else
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      _final_texImage_TexFormat, tempImage,
+                                      0, 0, 0, /* dstX/Y/Zoffset */
+                                      width * texelBytes, /* dstRowStride */
+                                      0, /* dstImageStride */
+                                      width, height, 1,
+                                      format, type, pixels, packing);
+#endif
       _mesa_rescale_teximage2d(texelBytes,
                                mml->width * texelBytes, /* dst stride */
                                width, height, /* src */
@@ -1337,12 +1347,22 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    else {
       /* no rescaling needed */
       /* unpack image, apply transfer ops and store in texImage->Data */
+#if !NEWTEXSTORE
       _mesa_transfer_teximage(ctx, 2, texImage->Format,
                               _final_texImage_TexFormat, _final_texImage_Data,
                               width, height, 1, 0, 0, 0,
                               mml->width * texelBytes,
                               0, /* dstImageStride */
                               format, type, pixels, packing);
+#else
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      _final_texImage_TexFormat, _final_texImage_Data,
+                                      0, 0, 0, /* dstX/Y/Zoffset */
+                                      mml->width * texelBytes, /* dstRowStride */
+                                      0, /* dstImageStride */
+                                      width, height, 1,
+                                      format, type, pixels, packing);
+#endif
    }
 
    /* now compress */
@@ -1431,6 +1451,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
          return;
       }
 
+#if !NEWTEXSTORE
       _mesa_transfer_teximage(ctx, 2, texImage->Format,/* Tex int format */
                               texImage->TexFormat,     /* dest format */
                               (GLubyte *) tempImage,   /* dest */
@@ -1439,6 +1460,15 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                               width * texelBytes,      /* dest row stride */
                               0,                       /* dst image stride */
                               format, type, pixels, packing);
+#else
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      texImage->TexFormat, tempImage,
+                                      0, 0, 0, /* dstX/Y/Zoffset */
+                                      width * texelBytes, /* dstRowStride */
+                                      0, /* dstImageStride */
+                                      width, height, 1,
+                                      format, type, pixels, packing);
+#endif
 
       /* now rescale */
       /* compute address of dest subimage within the overal tex image */
@@ -1456,6 +1486,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
    else {
       /* no rescaling needed */
+#if !NEWTEXSTORE
       _mesa_transfer_teximage(ctx, 2, texImage->Format,  /* Tex int format */
                               texImage->TexFormat,       /* dest format */
                               (GLubyte *) texImage->Data,/* dest */
@@ -1464,6 +1495,15 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                               mml->width * texelBytes,   /* dest row stride */
                               0,                         /* dst image stride */
                               format, type, pixels, packing);
+#else
+      texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
+                                      texImage->TexFormat, (GLubyte *) texImage->Data,
+                                      xoffset, yoffset, 0, /* dstX/Y/Zoffset */
+                                      mml->width * texelBytes, /* dstRowStride */
+                                      0, /* dstImageStride */
+                                      width, height, 1,
+                                      format, type, pixels, packing);
+#endif
    }
 
    /* [dBorca]

@@ -968,6 +968,8 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,  /* dest */
    return convert_texsubimage3d_tab[mesaFormat]( &convert );
 }
 
+#endif
+
 
 
 /* Nearest filtering only (for broken hardware that can't support
@@ -1036,5 +1038,3 @@ do {									\
       _mesa_problem(NULL,"unexpected bytes/pixel in _mesa_rescale_teximage2d");
    }
 }
-
-#endif
