@@ -649,6 +649,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
         }
         return GR_TEXTABLE_PALETTE_6666_EXT;
     }
+    abort();
 }
 
 
