@@ -1,0 +1,104 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "core"=".\src\mesa\drivers\windows\core\core.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "gdi"=".\src\mesa\drivers\windows\gdi\gdi.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name core
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name swrast
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tnl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "glu"=".\src\glu\sgi\glu.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gdi
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "glut"=".\src\glut\glx\glut.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name glu
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "swrast"=".\src\mesa\drivers\windows\swrast\swrast.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tnl"=".\src\mesa\drivers\windows\tnl\tnl.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
