@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,6 +57,17 @@ read_index_pixels( GLcontext *ctx,
    /* error checking */
    if (ctx->Visual.rgbMode) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
+      return;
+   }
+
+   if (type != GL_BYTE &&
+       type != GL_UNSIGNED_BYTE &&
+       type != GL_SHORT &&
+       type != GL_UNSIGNED_SHORT &&
+       type != GL_INT &&
+       type != GL_UNSIGNED_INT &&
+       type != GL_FLOAT) {
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glReadPixels(index type)");
       return;
    }
 
