@@ -1584,6 +1584,7 @@ void savageEmitHwStateLocked( savageContextPtr imesa )
 
     if (imesa->dirty & ~SAVAGE_UPLOAD_CLIPRECTS)
     {
+        savageUpdateCull(imesa->glCtx);
         if (imesa->dirty & (SAVAGE_UPLOAD_CTX | SAVAGE_UPLOAD_TEX0  | \
                             SAVAGE_UPLOAD_TEX1 | SAVAGE_UPLOAD_BUFFERS))
         {
@@ -1832,7 +1833,6 @@ void savageDDRenderStart(GLcontext *ctx)
         /* set scissor to the first clip box*/
         savageDDScissor(ctx,pbox->x1,pbox->y1,pbox->x2,pbox->y2);
 
-        savageUpdateCull(ctx);
         savageDDUpdateHwState(ctx); /* update to hardware register*/
     }
     else /* need not render at all*/

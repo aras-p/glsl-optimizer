@@ -412,6 +412,10 @@ void savageFlushVerticesLocked( savageContextPtr imesa )
      * in savagedma.c that emits drawing commands. Cliprects are not handled
      * yet. */
     if (buffer->used) {
+	/* State must be updated "per primitive" because hardware
+	 * culling must be disabled for unfilled primitives, points
+	 * and lines. */
+	savageEmitHwStateLocked (imesa);
 	savageFakeVertices (imesa, buffer);
     }
 }

@@ -56,6 +56,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void savageRasterPrimitive( GLcontext *ctx, GLuint prim );
 static void savageRenderPrimitive( GLcontext *ctx, GLenum prim );
+
+
+static GLenum reduced_prim[GL_POLYGON+1] = {
+   GL_POINTS,
+   GL_LINES,
+   GL_LINES,
+   GL_LINES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES,
+   GL_TRIANGLES
+};
+
  
 /***********************************************************************
  *                    Emit primitives                                  *
@@ -311,7 +326,8 @@ do {								\
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-#define RASTERIZE(x)
+#define RASTERIZE(x) if (imesa->raster_primitive != reduced_prim[x]) \
+                        savageRasterPrimitive( ctx, x )
 #define RENDER_PRIMITIVE imesa->render_primitive
 #define IND SAVAGE_FALLBACK_BIT
 #define TAG(x) x
@@ -644,19 +660,6 @@ static void savageRunPipeline( GLcontext *ctx )
 /*                 High level hooks for t_vb_render.c                 */
 /**********************************************************************/
 
-static GLenum reduced_prim[GL_POLYGON+1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
-};
-
 /* This is called when Mesa switches between rendering triangle
  * primitives (such as GL_POLYGON, GL_QUADS, GL_TRIANGLE_STRIP, etc),
  * and lines, points and bitmaps.
@@ -669,6 +672,8 @@ static GLenum reduced_prim[GL_POLYGON+1] = {
 static void savageRasterPrimitive( GLcontext *ctx, GLuint prim )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
+
+   FLUSH_BATCH(imesa);
 
    /* Update culling */
    if (imesa->raster_primitive != prim)
@@ -794,6 +799,11 @@ static void savageRenderFinish( GLcontext *ctx )
 {
    /* Release the lock */
    savageDDRenderEnd( ctx );
+
+   /* Flush the last primitive now, before any state is changed.
+    * Alternatively state could be emitted in all state-changing
+    * functions in savagestate.c. */
+   FLUSH_BATCH(SAVAGE_CONTEXT(ctx));
 
    if (SAVAGE_CONTEXT(ctx)->RenderIndex & SAVAGE_FALLBACK_BIT)
       _swrast_flush( ctx );
