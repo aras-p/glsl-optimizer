@@ -78,8 +78,6 @@ SYMLINKS = \
 	server/radeon.h \
 	server/radeon_macros.h \
 	server/radeon_reg.h
-#	server/radeon_sarea.h \
-#	server/radeon_common.h \
 
 
 $(SYMLINKS):
