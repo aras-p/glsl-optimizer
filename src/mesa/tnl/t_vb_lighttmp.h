@@ -36,7 +36,7 @@
 
 
 /* define TRACE to trace lighting code */
-#define TRACE 1
+/* #define TRACE 1 */
 
 /*
  * ctx is the current context
