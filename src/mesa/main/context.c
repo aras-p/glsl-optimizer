@@ -507,33 +507,35 @@ _mesa_free_framebuffer_data( GLframebuffer *buffer )
    if (!buffer)
       return;
 
-   if (buffer->DepthBuffer) {
+   if (buffer->UseSoftwareDepthBuffer && buffer->DepthBuffer) {
       MESA_PBUFFER_FREE( buffer->DepthBuffer );
       buffer->DepthBuffer = NULL;
    }
-   if (buffer->Accum) {
+   if (buffer->UseSoftwareAccumBuffer && buffer->Accum) {
       MESA_PBUFFER_FREE( buffer->Accum );
       buffer->Accum = NULL;
    }
-   if (buffer->Stencil) {
+   if (buffer->UseSoftwareStencilBuffer && buffer->Stencil) {
       MESA_PBUFFER_FREE( buffer->Stencil );
       buffer->Stencil = NULL;
    }
-   if (buffer->FrontLeftAlpha) {
-      MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
-      buffer->FrontLeftAlpha = NULL;
-   }
-   if (buffer->BackLeftAlpha) {
-      MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
-      buffer->BackLeftAlpha = NULL;
-   }
-   if (buffer->FrontRightAlpha) {
-      MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
-      buffer->FrontRightAlpha = NULL;
-   }
-   if (buffer->BackRightAlpha) {
-      MESA_PBUFFER_FREE( buffer->BackRightAlpha );
-      buffer->BackRightAlpha = NULL;
+   if (buffer->UseSoftwareAlphaBuffers){
+      if (buffer->FrontLeftAlpha) {
+         MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
+         buffer->FrontLeftAlpha = NULL;
+      }
+      if (buffer->BackLeftAlpha) {
+         MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
+         buffer->BackLeftAlpha = NULL;
+      }
+      if (buffer->FrontRightAlpha) {
+         MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
+         buffer->FrontRightAlpha = NULL;
+      }
+      if (buffer->BackRightAlpha) {
+         MESA_PBUFFER_FREE( buffer->BackRightAlpha );
+         buffer->BackRightAlpha = NULL;
+      }
    }
 }
 
