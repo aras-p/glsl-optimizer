@@ -1,10 +1,10 @@
-/* $Id: texstate.c,v 1.6 1999/11/12 02:07:56 brianp Exp $ */
+/* $Id: texstate.c,v 1.7 2000/02/08 01:45:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -165,6 +165,9 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexEnvfv");
+
    if (target!=GL_TEXTURE_ENV) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(target)" );
       return;
@@ -187,6 +190,9 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexEnviv");
+
    if (target!=GL_TEXTURE_ENV) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(target)" );
       return;
@@ -228,6 +234,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    GLenum eparam = (GLenum) (GLint) params[0];
    struct gl_texture_object *texObj;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexParameterfv");
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "texPARAM %s %s %d...\n", 
@@ -408,6 +416,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexLevelParameter");
+
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       gl_error( ctx, GL_INVALID_VALUE, "glGetTexLevelParameter[if]v" );
       return;
@@ -515,6 +525,8 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *obj;
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameterfv");
+
    switch (target) {
       case GL_TEXTURE_1D:
          obj = texUnit->CurrentD[1];
@@ -583,6 +595,8 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *obj;
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameteriv");
+
    switch (target) {
       case GL_TEXTURE_1D:
          obj = texUnit->CurrentD[1];
@@ -594,7 +608,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          obj = texUnit->CurrentD[3];
          break;
       default:
-         gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(target)");
+         gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(target)");
          return;
    }
 
@@ -1269,7 +1283,7 @@ void gl_remove_texobj_from_dirty_list( struct gl_shared_state *shared,
 
 /*
  * This is called by gl_update_state() if the NEW_TEXTURING bit in
- * ctx->NewState is unit.
+ * ctx->NewState is set.
  */
 void gl_update_dirty_texobjs( GLcontext *ctx )
 {
