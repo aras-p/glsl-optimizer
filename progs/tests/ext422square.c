@@ -60,7 +60,7 @@ static void Display( void )
    glBindTexture(GL_TEXTURE_2D, yuvObj);
 
    glPushMatrix();
-      glEnable(GL_FRAGMENT_PROGRAM_ARB);
+      glEnable(GL_FRAGMENT_PROGRAM_ARB); 
       glTranslatef( -1.1, 0.0, -15.0 );
       glRotatef(Xrot, 1.0, 0.0, 0.0);
       glRotatef(Yrot, 0.0, 1.0, 0.0);
@@ -140,10 +140,10 @@ static void Init( int argc, char *argv[] )
 {
    const char *file;
    const GLfloat yuvtorgb[16] = {
-      1.164, 1.596, 0,      (.06*1.164 + -.5*1.596),
-      1.164, -.813, -.391,  (.06*1.164 + -.5*-.813 + -.5*-.391),
-      1.164, 0,     2.018,  (.06*1.164 + -.5*-2.018),
-      0,     0,     0,      1 
+      1.164,   1.164,    1.164,      0,
+      0,       -.391,    2.018,      0,
+      1.596,   -.813,    0.0,        0,
+      (-.0625*1.164 + -.5*1.596),     (-.0625*1.164 + -.5*-.813 + -.5*-.391),     (-.0625*1.164 + -.5*2.018),      1  
    };
 
    if (!glutExtensionSupported("GL_ARB_fragment_program")) {
@@ -230,6 +230,7 @@ static void Init( int argc, char *argv[] )
 		GL_UNSIGNED_BYTE, ImageYUV);
 
    glLoadIdentity();
+   glMatrixMode( GL_MODELVIEW );
 
    glEnable(GL_TEXTURE_2D);
 
