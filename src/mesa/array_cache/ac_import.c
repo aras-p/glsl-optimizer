@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.5 2001/02/04 00:47:28 keithw Exp $ */
+/* $Id: ac_import.c,v 1.6 2001/02/07 16:00:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,9 +59,9 @@ static void reset_texcoord( GLcontext *ctx, GLuint unit )
    else {
       ac->Raw.TexCoord[unit] = ac->Fallback.TexCoord[unit];
 
-      if (ctx->Current.Texcoord[unit][4] != 1.0)
+      if (ctx->Current.Texcoord[unit][3] != 1.0) 
 	 ac->Raw.TexCoord[unit].Size = 4;
-      else if (ctx->Current.Texcoord[unit][3] != 0.0)
+      else if (ctx->Current.Texcoord[unit][2] != 0.0)
 	 ac->Raw.TexCoord[unit].Size = 3;
       else
 	 ac->Raw.TexCoord[unit].Size = 2;
