@@ -1058,7 +1058,9 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 
    fragProg = (struct fragment_program *) prog;
    for (i = 0; i < fragProg->NumParameters; i++) {
-      if (!_mesa_strcmp(fragProg->Parameters[i].Name, (const char *) name)) {
+      if (!_mesa_strncmp(fragProg->Parameters[i].Name,
+                         (const char *) name, len) &&
+          fragProg->Parameters[i].Name[len] == 0) {
          ASSERT(!fragProg->Parameters[i].Constant);
          fragProg->Parameters[i].Values[0] = x;
          fragProg->Parameters[i].Values[1] = y;
@@ -1121,7 +1123,9 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 
    fragProg = (struct fragment_program *) prog;
    for (i = 0; i < fragProg->NumParameters; i++) {
-      if (!_mesa_strcmp(fragProg->Parameters[i].Name, (const char *) name)) {
+      if (!_mesa_strncmp(fragProg->Parameters[i].Name,
+                         (const char *) name, len) &&
+          fragProg->Parameters[i].Name[len] == 0) {
          ASSERT(!fragProg->Parameters[i].Constant);
          params[0] = fragProg->Parameters[i].Values[0];
          params[1] = fragProg->Parameters[i].Values[1];
