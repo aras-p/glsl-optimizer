@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.24 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.25 2002/06/25 08:44:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1531,6 +1531,9 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    if (ctx->Polygon.SmoothFlag)       return (swrast_tri_func) NULL;
    if (ctx->Texture._EnabledUnits)    return (swrast_tri_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_tri_func) NULL;
+   if (ctx->Polygon.CullFlag && 
+       ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK))
+                                        return (swrast_tri_func) NULL;
 
    if (xmesa->xm_buffer->buffer==XIMAGE) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH
