@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
+** $Date: 2002/03/23 02:29:37 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/insurfeval.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/insurfeval.cc,v 1.2 2002/03/23 02:29:37 brianp Exp $
 */
 
 #include "gluos.h"
@@ -528,11 +528,11 @@ void OpenGLSurfaceEvaluator::inComputeNormal2(REAL *pu, REAL *pv, REAL *n)
 
   mag = sqrt(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
 
-  assert(mag > 0.0); /*better be some threshold*/
-  n[0] /= mag; 
-  n[1] /= mag;
-  n[2] /= mag;
-
+  if (mag > 0.0) {
+     n[0] /= mag; 
+     n[1] /= mag;
+     n[2] /= mag;
+  }
 }
  
 
