@@ -127,6 +127,9 @@ void r200EmitState( r200ContextPtr rmesa )
    dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
    r200EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size );
 
+   /* we need to recalculate dest after EnsureCmdBufSpace
+      as we may flush the buffer - airlied */
+   dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
    if (R200_DEBUG & DEBUG_STATE) {
       foreach( atom, &rmesa->hw.atomlist ) {
 	 if ( atom->dirty || rmesa->hw.all_dirty ) {
