@@ -1,0 +1,72 @@
+# DO NOT DELETE
+
+glut_8x13.obj : glutbitmap.h [-.include.gl]gl.h
+glut_9x15.obj : glutbitmap.h [-.include.gl]gl.h
+glut_bitmap.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_bitmap.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_bitmap.obj : glutbitmap.h
+glut_bwidth.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_bwidth.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_bwidth.obj : glutbitmap.h
+glut_cindex.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_cindex.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_cindex.obj : layerutil.h
+glut_cursor.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_cursor.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_dials.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_dials.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h [-.include.gl]glu.h
+glut_dstr.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_dstr.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h [-.include.gl]glu.h
+glut_event.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_event.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_ext.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_ext.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_fullscrn.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_fullscrn.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h
+glut_fullscrn.obj : [-.include.gl]glu.h
+glut_get.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_get.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_hel10.obj : glutbitmap.h [-.include.gl]gl.h
+glut_hel12.obj : glutbitmap.h [-.include.gl]gl.h
+glut_hel18.obj : glutbitmap.h [-.include.gl]gl.h
+glut_init.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_init.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_menu.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_menu.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h layerutil.h
+glut_mesa.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_mesa.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h [-.include.gl]glu.h
+glut_modifier.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_modifier.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h
+glut_modifier.obj : [-.include.gl]glu.h
+glut_mroman.obj : glutstroke.h
+glut_overlay.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_overlay.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_overlay.obj : layerutil.h
+glut_roman.obj : glutstroke.h
+glut_shapes.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_shapes.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_space.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_space.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h [-.include.gl]glu.h
+glut_stroke.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_stroke.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_stroke.obj : glutstroke.h
+glut_swidth.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_swidth.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_swidth.obj : glutstroke.h
+glut_tablet.obj : glutint.h [-.include.gl]glx.h [-.include.gl]gl.h
+glut_tablet.obj : [-.include.gl]xmesa.h [-.include.gl]glut.h [-.include.gl]glu.h
+glut_teapot.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_tr10.obj : glutbitmap.h [-.include.gl]gl.h
+glut_tr24.obj : glutbitmap.h [-.include.gl]gl.h
+glut_util.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_util.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_vidresize.obj : [-.include.gl]glx.h [-.include.gl]gl.h
+glut_vidresize.obj : [-.include.gl]xmesa.h glutint.h [-.include.gl]glut.h
+glut_vidresize.obj : [-.include.gl]glu.h
+glut_warp.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_warp.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_win.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_win.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+glut_winmisc.obj : [-.include.gl]glut.h [-.include.gl]gl.h [-.include.gl]glu.h
+glut_winmisc.obj : glutint.h [-.include.gl]glx.h [-.include.gl]xmesa.h
+layerutil.obj : layerutil.h
