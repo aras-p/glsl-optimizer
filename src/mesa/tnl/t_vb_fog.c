@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.1 2000/12/26 05:09:33 keithw Exp $ */
+/* $Id: t_vb_fog.c,v 1.2 2001/01/03 22:56:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,10 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
 
    switch (ctx->Fog.Mode) {
    case GL_LINEAR:
-      d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      if (ctx->Fog.Start == ctx->Fog.End)
+         d = 1.0F;
+      else
+         d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) 
 	 data[i] = (end - ABSF(*v)) * d;
       break;
