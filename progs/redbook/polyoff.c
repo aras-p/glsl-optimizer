@@ -47,11 +47,14 @@
 
 #ifdef GL_VERSION_1_1
 GLuint list;
-GLint spinx = 0;
-GLint spiny = 0;
+GLint fill = 1;
+GLfloat spinx = 0;
+GLfloat spiny = 0;
 GLfloat tdist = 0.0;
 GLfloat polyfactor = 1.0;
 GLfloat polyunits = 1.0;
+GLboolean doubleBuffer;
+
 
 /*  display() draws two spheres, one with a gray, diffuse material,
  *  the other sphere with a magenta material with a specular highlight.
@@ -70,22 +73,34 @@ void display (void)
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gray);
     glMaterialfv(GL_FRONT, GL_SPECULAR, black);
     glMaterialf(GL_FRONT, GL_SHININESS, 0.0);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(polyfactor, polyunits);
-    glCallList (list);
-    glDisable(GL_POLYGON_OFFSET_FILL);
+    if (fill) { 
+       glEnable(GL_LIGHTING);
+       glEnable(GL_LIGHT0);
+       glEnable(GL_POLYGON_OFFSET_FILL);
+       glPolygonOffset(polyfactor, polyunits);
+       glCallList (list);
+       glDisable(GL_POLYGON_OFFSET_FILL);
+    }
 
     glDisable(GL_LIGHTING);
     glDisable(GL_LIGHT0);
     glColor3f (1.0, 1.0, 1.0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonOffset(-polyfactor, -polyunits);
+    if (!fill) glEnable(GL_POLYGON_OFFSET_LINE); 
     glCallList (list);
+    glDisable(GL_POLYGON_OFFSET_LINE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    if (!fill) { 
+       glEnable(GL_LIGHTING);
+       glEnable(GL_LIGHT0);
+       glCallList (list);
+    }
 
     glPopMatrix ();
     glFlush ();
+    if (doubleBuffer) glutSwapBuffers();
 }
 
 /*  specify initial properties
@@ -130,6 +145,32 @@ void reshape(int width, int height)
     gluLookAt (0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 }
 
+static void Benchmark( float xdiff, float ydiff )
+{
+   int startTime, endTime;
+   int draws;
+   double seconds, fps, triPerSecond;
+
+   printf("Benchmarking...\n");
+
+   draws = 0;
+   startTime = glutGet(GLUT_ELAPSED_TIME);
+   spinx = spiny = 0.0;
+   do {
+      spinx += xdiff;
+      spiny += ydiff;
+      display();
+      draws++;
+      endTime = glutGet(GLUT_ELAPSED_TIME);
+   } while (endTime - startTime < 5000);   /* 5 seconds */
+
+   /* Results */
+   seconds = (double) (endTime - startTime) / 1000.0;
+   fps = draws / seconds;
+   printf("Result:  fps: %g\n", fps);
+}
+
+
 /*  call when mouse button is pressed  */
 /* ARGSUSED2 */
 void mouse(int button, int state, int x, int y) {
@@ -137,7 +178,7 @@ void mouse(int button, int state, int x, int y) {
 	case GLUT_LEFT_BUTTON:
 	    switch (state) {
 		case GLUT_DOWN:
-		    spinx = (spinx + 5) % 360;
+		    spinx += 5;
                     glutPostRedisplay();
 		    break;
 		default:
@@ -147,7 +188,7 @@ void mouse(int button, int state, int x, int y) {
 	case GLUT_MIDDLE_BUTTON:
 	    switch (state) {
 		case GLUT_DOWN:
-		    spiny = (spiny + 5) % 360;
+		    spiny += 5;
                     glutPostRedisplay();
 		    break;
 		default:
@@ -204,6 +245,20 @@ void keyboard (unsigned char key, int x, int y)
 	 printf ("polyunits is %f\n", polyunits);
          glutPostRedisplay();
          break;
+      case 'b':
+	 Benchmark(5.0, 0);
+	 break;
+      case 'B':
+	 Benchmark(0, 5.0);
+	 break;
+      case ' ':
+	 fill = !fill;
+	 printf ("fill/line: %d\n", fill);
+         glutPostRedisplay();
+         break;
+      case 27:  /* Escape */
+         exit(0);
+         break;
       default:
          break;
    }
@@ -222,21 +277,47 @@ key(unsigned char k, int x, int y)
   glutPostRedisplay();
 }
 
+GLenum Args(int argc, char **argv)
+{
+    GLint i;
+
+    doubleBuffer = GL_FALSE;
+
+    for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-sb") == 0) {
+	    doubleBuffer = GL_FALSE;
+	} else if (strcmp(argv[i], "-db") == 0) {
+	    doubleBuffer = GL_TRUE;
+	} else {
+	    printf("%s (Bad option).\n", argv[i]);
+	    return GL_FALSE;
+	}
+    }
+    return GL_TRUE;
+}
+
+
 /*  Main Loop
  *  Open window with initial window size, title bar,
  *  RGBA display mode, and handle input events.
  */
 int main(int argc, char** argv)
 {
+    GLuint type;
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
-    glutCreateWindow(argv[0]);
+
+    Args(argc, argv);
+
+    type = GLUT_DEPTH | GLUT_RGB;
+     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
+
+    glutInitDisplayMode(type);
+    glutCreateWindow("polyoff");
     glutReshapeFunc(reshape);
     glutDisplayFunc(display);
     glutMouseFunc(mouse);
     glutKeyboardFunc(keyboard);
     gfxinit();
-    glutKeyboardFunc(key);
     glutMainLoop();
     return 0;
 }
