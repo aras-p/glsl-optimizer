@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.13 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.14 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,8 +55,9 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
 
    /* no pixel arrays! */
    ASSERT((span->arrayMask & SPAN_XY) == 0);
+   ASSERT(span->primitive == GL_BITMAP);
 
-   INIT_SPAN(zoomed);
+   INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
    if (format == GL_RGBA || format == GL_RGB) {
       zoomed.z = span->z;
       zoomed.zStep = span->z;
@@ -208,7 +209,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          MEMCPY(rgbaSave, zoomed.color.rgba, zoomed.end * 4 * sizeof(GLchan));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
-         _mesa_write_rgba_span(ctx, &zoomed, GL_BITMAP);
+         _mesa_write_rgba_span(ctx, &zoomed);
          if (r1 - r0 > 1) {
             /* restore the colors */
             MEMCPY(zoomed.color.rgba, rgbaSave, zoomed.end*4 * sizeof(GLchan));
@@ -220,7 +221,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
          MEMCPY(indexSave, zoomed.color.index, zoomed.end * sizeof(GLuint));
       }
       for (zoomed.y = r0; zoomed.y < r1; zoomed.y++) {
-         _mesa_write_index_span(ctx, &zoomed, GL_BITMAP);
+         _mesa_write_index_span(ctx, &zoomed);
          if (r1 - r0 > 1) {
             /* restore the colors */
             MEMCPY(zoomed.color.index, indexSave, zoomed.end * sizeof(GLuint));

@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.56 2002/03/25 17:24:43 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.57 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@ static void flat_ci_triangle( GLcontext *ctx,
    span.index = IntToFixed(v2->index);			\
    span.indexStep = 0;
 
-#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span, GL_POLYGON )
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -104,7 +104,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
 
-#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span, GL_POLYGON)
+#define RENDER_SPAN( span )  _mesa_write_index_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -136,7 +136,7 @@ static void flat_rgba_triangle( GLcontext *ctx,
    span.blueStep = 0;				\
    span.alphaStep = 0;
 
-#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span, GL_POLYGON )
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -165,7 +165,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
       ASSERT(ctx->Light.ShadeModel==GL_SMOOTH);	\
    }
 
-#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span, GL_POLYGON)
+#define RENDER_SPAN( span )  _mesa_write_rgba_span(ctx, &span);
 
 #include "s_tritemp.h"
 
@@ -550,7 +550,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    }
    span->interpMask &= ~SPAN_RGBA;
    ASSERT(span->arrayMask & SPAN_RGBA);
-   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, span);
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
@@ -822,7 +822,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    }
    
    ASSERT(span->arrayMask & SPAN_RGBA);
-   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, span);
 
 
 #undef SPAN_NEAREST
@@ -926,7 +926,7 @@ static void general_textured_triangle( GLcontext *ctx,
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
 
-#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span);
 
 #include "s_tritemp.h"
 }
@@ -953,7 +953,7 @@ multitextured_triangle( GLcontext *ctx,
 #define INTERP_SPEC 1
 #define INTERP_MULTITEX 1
 
-#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+#define RENDER_SPAN( span )   _mesa_write_texture_span(ctx, &span);
 
 #include "s_tritemp.h"
 

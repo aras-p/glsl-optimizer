@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.58 2002/04/04 16:56:24 brianp Exp $ */
+/* $Id: s_texture.c,v 1.59 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3329,26 +3329,30 @@ apply_texture( const GLcontext *ctx,
  * Apply a unit of texture mapping to the incoming fragments.
  */
 void
-_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
-			       GLfloat texcoords[][4], GLfloat lambda[],
-			       CONST GLchan primary_rgba[][4],
-			       GLchan rgba[][4] )
+_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
+			   struct sw_span *span,
+			   CONST GLchan primary_rgba[][4])
 {
    const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
+   GLfloat (*texcoords)[4] = span->texcoords[texUnit];
+   GLfloat *lambda = span->lambda[texUnit];
+
 
    if (ctx->Texture._ReallyEnabled & mask) {
       const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
+
+      ASSERT(span->arrayMask & SPAN_TEXTURE);
       
       if (textureUnit->_Current) {   /* XXX need this? */
          const struct gl_texture_object *curObj = textureUnit->_Current;
          GLchan texel[MAX_WIDTH][4];
          
-         if (lambda) {
+         if (span->arrayMask | SPAN_LAMBDA) {
 #if 0
             float min, max;
             int i;
             min = max = lambda[0];
-            for (i = 1; i < n; i++) {
+            for (i = 1; i < span->end; i++) {
                if (lambda[i] > max)
                   max = lambda[i];
                if (lambda[i] < min)
@@ -3359,7 +3363,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
             if (textureUnit->LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
                GLuint i;
-               for (i=0;i<n;i++) {
+               for (i=0;i<span->end;i++) {
                   lambda[i] += textureUnit->LodBias;
                }
             }
@@ -3369,7 +3373,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
                const GLfloat min = curObj->MinLod;
                const GLfloat max = curObj->MaxLod;
                GLuint i;
-               for (i=0;i<n;i++) {
+               for (i=0;i<span->end;i++) {
                   GLfloat l = lambda[i];
                   lambda[i] = CLAMP(l, min, max);
                }
@@ -3379,11 +3383,11 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          /* Sample the texture for n fragments */
          SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
                                                       textureUnit->_Current,
-                                                      n, texcoords,
+                                                      span->end, texcoords,
                                                       lambda, texel );
 
-         apply_texture( ctx, textureUnit, n, primary_rgba,
-                        (const GLchan (*)[4]) texel, rgba );
+         apply_texture( ctx, textureUnit, span->end, primary_rgba,
+                        (const GLchan (*)[4]) texel, span->color.rgba );
       }
    }
 }
@@ -3405,6 +3409,7 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
       GLuint unit;
 
       ASSERT(span->end < MAX_WIDTH);
+      ASSERT(span->arrayMask & SPAN_TEXTURE);
 
       /* save copy of the span colors (the GL_PRIMARY_COLOR) */
       MEMCPY(primary_rgba, span->color.rgba, 4 * span->end * sizeof(GLchan));
@@ -3412,12 +3417,8 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
       /* loop over texture units, modifying the span->color.rgba values */
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            _swrast_texture_fragments( ctx, unit, span->end,
-                                           span->texcoords[unit],
-                                           (span->arrayMask & SPAN_LAMBDA) ?
-                                              span->lambda[unit] : NULL,
-                                           (CONST GLchan (*)[4]) primary_rgba,
-                                           span->color.rgba );
+            _swrast_texture_fragments( ctx, unit, span,
+				       (CONST GLchan (*)[4]) primary_rgba);
          }
       }
    }
@@ -3425,11 +3426,7 @@ _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span )
       /* Just unit 0 enabled */
       ASSERT(ctx->Texture._ReallyEnabled & TEXTURE0_ANY);
 
-      _swrast_texture_fragments( ctx, 0, span->end,
-                                     span->texcoords[0],
-                                     (span->arrayMask & SPAN_LAMBDA) ?
-                                        span->lambda[0] : NULL,
-                                     (CONST GLchan (*)[4]) span->color.rgba,
-                                     span->color.rgba );
+      _swrast_texture_fragments( ctx, 0, span,
+				 (CONST GLchan (*)[4]) span->color.rgba);
    }
 }

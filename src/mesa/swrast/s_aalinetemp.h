@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.18 2002/03/28 16:24:14 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.19 2002/04/12 15:39:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,11 +101,11 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 
    if (line->span.end == MAX_WIDTH) {
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-      _mesa_write_texture_span(ctx, &line->span, GL_LINE);
+      _mesa_write_texture_span(ctx, &line->span);
 #elif defined(DO_RGBA)
-      _mesa_write_rgba_span(ctx, &line->span, GL_LINE);
+      _mesa_write_rgba_span(ctx, &line->span);
 #else
-      _mesa_write_index_span(ctx, &line->span, GL_LINE);
+      _mesa_write_index_span(ctx, &line->span);
 #endif
       line->span.end = 0; /* reset counter */
    }
@@ -138,8 +138,8 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
       return;
 
-   INIT_SPAN(line.span);
-   line.span.arrayMask |= (SPAN_XY | SPAN_COVERAGE);
+   INIT_SPAN(line.span, GL_LINE, 0, 0, SPAN_XY | SPAN_COVERAGE);
+   /*line.span.arrayMask |= (SPAN_XY | SPAN_COVERAGE);*/
 
    line.xAdj = line.dx / line.len * line.halfWidth;
    line.yAdj = line.dy / line.len * line.halfWidth;
@@ -295,11 +295,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    }
 
 #if defined(DO_TEX) || defined(DO_MULTITEX)
-   _mesa_write_texture_span(ctx, &line.span, GL_LINE);
+   _mesa_write_texture_span(ctx, &line.span);
 #elif defined(DO_RGBA)
-   _mesa_write_rgba_span(ctx, &line.span, GL_LINE);
+   _mesa_write_rgba_span(ctx, &line.span);
 #else
-   _mesa_write_index_span(ctx, &line.span, GL_LINE);
+   _mesa_write_index_span(ctx, &line.span);
 #endif
 }
 

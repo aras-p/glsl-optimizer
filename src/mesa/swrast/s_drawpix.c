@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.31 2002/02/17 17:30:23 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.32 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,8 +104,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   /*span.arrayMask |= SPAN_RGBA;*/
 
    if (!ctx->Current.RasterPosValid) {
       return GL_TRUE;      /* no-op */
@@ -511,8 +511,8 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    GLint row, drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_INDEX;
+   INIT_SPAN(span, GL_BITMAP, drawWidth, 0, SPAN_INDEX);
+   /*span.arrayMask |= SPAN_INDEX;*/
 
    if (ctx->Depth.Test)
       _mesa_span_default_z(ctx, &span);
@@ -535,7 +535,7 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
       if (zoom)
          _mesa_write_zoomed_index_span(ctx, &span, desty);
       else
-         _mesa_write_index_span(ctx, &span, GL_BITMAP);
+         _mesa_write_index_span(ctx, &span);
    }
 }
 
@@ -614,9 +614,9 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    GLint drawWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_Z;
-   span.end = drawWidth;
+   INIT_SPAN(span, GL_BITMAP, drawWidth, 0, SPAN_Z);
+   /*span.arrayMask |= SPAN_Z;
+     span.end = drawWidth;*/
 
    if (type != GL_BYTE
        && type != GL_UNSIGNED_BYTE
@@ -648,7 +648,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < drawWidth; i++)
             span.zArray[i] = zptr[i];
-         _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
    else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
@@ -663,7 +663,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
          MEMCPY(span.zArray, zptr, drawWidth * sizeof(GLdepth));
-         _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
    else {
@@ -691,13 +691,13 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                _mesa_write_zoomed_rgba_span(ctx, &span,
                                  (const GLchan (*)[4]) span.color.rgba, desty);
             else
-               _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+               _mesa_write_rgba_span(ctx, &span);
          }
          else {
             if (zoom)
                _mesa_write_zoomed_index_span(ctx, &span, desty);
             else
-               _mesa_write_index_span(ctx, &span, GL_BITMAP);
+               _mesa_write_index_span(ctx, &span);
          }
       }
    }
@@ -721,8 +721,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    GLuint transferOps = ctx->_ImageTransferState;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   /*span.arrayMask |= SPAN_RGBA;*/
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
@@ -838,7 +838,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
             span.x = x;
             span.y = y;
             span.end = width;
-            _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+            _mesa_write_rgba_span(ctx, &span);
          }
       }
    }

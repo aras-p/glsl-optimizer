@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.13 2002/03/16 18:02:08 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.14 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,10 +87,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 	 return;
    }
 
-   INIT_SPAN(span);
+   INIT_SPAN(span, GL_POINT, 0, SPAN_FOG, SPAN_XY | SPAN_Z);
 
-   span.arrayMask |= (SPAN_XY | SPAN_Z);
-   span.interpMask |= SPAN_FOG;
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z);
+     span.interpMask |= SPAN_FOG;*/
    span.fog = vert->fog;
    span.fogStep = 0.0;
 
@@ -314,13 +314,13 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 
 #if FLAGS & TEXTURE
    if (ctx->Texture._ReallyEnabled)
-      _mesa_write_texture_span(ctx, &span, GL_POINT);
+      _mesa_write_texture_span(ctx, &span);
    else
-      _mesa_write_rgba_span(ctx, &span, GL_POINT);
+      _mesa_write_rgba_span(ctx, &span);
 #elif FLAGS & RGBA
-   _mesa_write_rgba_span(ctx, &span, GL_POINT);
+   _mesa_write_rgba_span(ctx, &span);
 #else
-   _mesa_write_index_span(ctx, &span, GL_POINT);
+   _mesa_write_index_span(ctx, &span);
 #endif
 }
 

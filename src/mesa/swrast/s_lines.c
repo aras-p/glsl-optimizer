@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.26 2002/02/15 03:39:37 brianp Exp $ */
+/* $Id: s_lines.c,v 1.27 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,11 +88,11 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
                span->yArray[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _mesa_write_texture_span(ctx, span, GL_LINE);
+            _mesa_write_texture_span(ctx, span);
          else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
-            _mesa_write_rgba_span(ctx, span, GL_LINE);
+            _mesa_write_rgba_span(ctx, span);
          else
-            _mesa_write_index_span(ctx, span, GL_LINE);
+            _mesa_write_index_span(ctx, span);
       }
    }
    else {
@@ -107,11 +107,11 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
                span->xArray[i]++;
          }
          if ((span->interpMask | span->arrayMask) & SPAN_TEXTURE)
-            _mesa_write_texture_span(ctx, span, GL_LINE);
+            _mesa_write_texture_span(ctx, span);
          else if ((span->interpMask | span->arrayMask) & SPAN_RGBA)
-            _mesa_write_rgba_span(ctx, span, GL_LINE);
+            _mesa_write_rgba_span(ctx, span);
          else
-            _mesa_write_index_span(ctx, span, GL_LINE);
+            _mesa_write_index_span(ctx, span);
       }
    }
 }
@@ -134,9 +134,9 @@ static void flat_ci_line( GLcontext *ctx,
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_XY;
-   span.interpMask |= SPAN_INDEX;
+   INIT_SPAN(span, GL_LINE, 0, SPAN_INDEX, SPAN_XY);
+   /*span.arrayMask |= SPAN_XY;
+     span.interpMask |= SPAN_INDEX;*/
    span.index = IntToFixed(vert1->index);
    span.indexStep = 0;
 
@@ -150,7 +150,7 @@ static void flat_ci_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   _mesa_write_index_span(ctx, &span, GL_LINE);
+   _mesa_write_index_span(ctx, &span);
 }
 
 
@@ -165,9 +165,9 @@ static void flat_rgba_line( GLcontext *ctx,
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_XY;
-   span.interpMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA, SPAN_XY);
+   /*span.arrayMask |= SPAN_XY;
+     span.interpMask |= SPAN_RGBA;*/
    span.red = ChanToFixed(vert1->color[0]);
    span.green = ChanToFixed(vert1->color[1]);
    span.blue = ChanToFixed(vert1->color[2]);
@@ -187,7 +187,7 @@ static void flat_rgba_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   _mesa_write_rgba_span(ctx, &span, GL_LINE);
+   _mesa_write_rgba_span(ctx, &span);
 }
 
 
@@ -202,8 +202,8 @@ static void smooth_ci_line( GLcontext *ctx,
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_INDEX);
+   INIT_SPAN(span, GL_LINE, 0, 0, SPAN_XY | SPAN_INDEX);
+   /*span.arrayMask |= (SPAN_XY | SPAN_INDEX);*/
 
 #define INTERP_XY 1
 #define INTERP_INDEX 1
@@ -217,7 +217,7 @@ static void smooth_ci_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   _mesa_write_index_span(ctx, &span, GL_LINE);
+   _mesa_write_index_span(ctx, &span);
 }
 
 
@@ -232,8 +232,8 @@ static void smooth_rgba_line( GLcontext *ctx,
    ASSERT(!ctx->Line.StippleFlag);
    ASSERT(ctx->Line.Width == 1.0F);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_RGBA);
+   INIT_SPAN(span, GL_LINE, 0, 0, SPAN_XY | SPAN_RGBA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_RGBA);*/
 
 #define INTERP_XY 1
 #define INTERP_RGB 1
@@ -251,7 +251,7 @@ static void smooth_rgba_line( GLcontext *ctx,
 
 #include "s_linetemp.h"
 
-   _mesa_write_rgba_span(ctx, &span, GL_LINE);
+   _mesa_write_rgba_span(ctx, &span);
 }
 
 
@@ -265,8 +265,9 @@ static void general_smooth_ci_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_INDEX);
+   INIT_SPAN(span, GL_LINE, 0, 0,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_INDEX);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_INDEX);*/
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -293,7 +294,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_index_span(ctx, &span, GL_LINE);
+      _mesa_write_index_span(ctx, &span);
    }
 }
 
@@ -308,9 +309,10 @@ static void general_flat_ci_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG);
-   span.interpMask |= SPAN_INDEX;
+   INIT_SPAN(span, GL_LINE, 0, SPAN_INDEX,
+	     SPAN_XY | SPAN_Z | SPAN_FOG);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG);
+     span.interpMask |= SPAN_INDEX;*/
    span.index = IntToFixed(vert1->index);
    span.indexStep = 0;
 
@@ -337,7 +339,7 @@ static void general_flat_ci_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_index_span(ctx, &span, GL_LINE);
+      _mesa_write_index_span(ctx, &span);
    }
 }
 
@@ -352,8 +354,9 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA);
+   INIT_SPAN(span, GL_LINE, 0, 0,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA);*/
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -384,7 +387,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_rgba_span(ctx, &span, GL_LINE);
+      _mesa_write_rgba_span(ctx, &span);
    }
 }
 
@@ -398,9 +401,10 @@ static void general_flat_rgba_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG);
-   span.interpMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA,
+	     SPAN_XY | SPAN_Z | SPAN_FOG);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG);
+     span.interpMask |= SPAN_RGBA;*/
    span.red = ChanToFixed(vert1->color[0]);
    span.green = ChanToFixed(vert1->color[1]);
    span.blue = ChanToFixed(vert1->color[2]);
@@ -433,7 +437,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_rgba_span(ctx, &span, GL_LINE);
+      _mesa_write_rgba_span(ctx, &span);
    }
 }
 
@@ -448,9 +452,10 @@ static void flat_textured_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
-   span.interpMask |= (SPAN_RGBA | SPAN_SPEC);
+   INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA | SPAN_SPEC,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_RGBA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
+     span.interpMask |= (SPAN_RGBA | SPAN_SPEC);*/
    span.red = ChanToFixed(vert1->color[0]);
    span.green = ChanToFixed(vert1->color[1]);
    span.blue = ChanToFixed(vert1->color[2]);
@@ -494,7 +499,7 @@ static void flat_textured_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, &span, GL_LINE);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -510,8 +515,9 @@ static void smooth_textured_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_TEXTURE | SPAN_LAMBDA);
+   INIT_SPAN(span, GL_LINE, 0, 0,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_TEXTURE | SPAN_LAMBDA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_TEXTURE | SPAN_LAMBDA);*/
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -547,7 +553,7 @@ static void smooth_textured_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, &span, GL_LINE);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -565,8 +571,9 @@ static void smooth_multitextured_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_SMOOTH);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_SPEC | SPAN_TEXTURE | SPAN_LAMBDA);
+   INIT_SPAN(span, GL_LINE, 0, 0,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_SPEC | SPAN_TEXTURE | SPAN_LAMBDA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_RGBA | SPAN_SPEC | SPAN_TEXTURE | SPAN_LAMBDA);*/
 
 #define SET_XMAJOR 1
 #define INTERP_XY 1
@@ -610,7 +617,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, &span, GL_LINE);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 
@@ -628,9 +635,10 @@ static void flat_multitextured_line( GLcontext *ctx,
 
    ASSERT(ctx->Light.ShadeModel == GL_FLAT);
 
-   INIT_SPAN(span);
-   span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
-   span.interpMask |= (SPAN_RGBA | SPAN_SPEC);
+   INIT_SPAN(span, GL_LINE, 0, SPAN_RGBA | SPAN_SPEC,
+	     SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
+   /*span.arrayMask |= (SPAN_XY | SPAN_Z | SPAN_FOG | SPAN_TEXTURE | SPAN_LAMBDA);
+     span.interpMask |= (SPAN_RGBA | SPAN_SPEC);*/
    span.red = ChanToFixed(vert1->color[0]);
    span.green = ChanToFixed(vert1->color[1]);
    span.blue = ChanToFixed(vert1->color[2]);
@@ -678,7 +686,7 @@ static void flat_multitextured_line( GLcontext *ctx,
       draw_wide_line(ctx, &span, xMajor);
    }
    else {
-      _mesa_write_texture_span(ctx, &span, GL_LINE);
+      _mesa_write_texture_span(ctx, &span);
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.19 2002/03/19 16:47:05 brianp Exp $ */
+/* $Id: s_depth.c,v 1.20 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -567,8 +567,18 @@ depth_test_span( GLcontext *ctx, struct sw_span *span)
          GLuint *zptr = (GLuint *) Z_ADDRESS32(ctx, x, y);
          passed = depth_test_span32(ctx, n, zptr, span->zArray, span->mask);
       }
-      if (passed < span->end)
-         span->writeAll = GL_FALSE;
+#if 0
+      /* this causes a glDrawPixels(GL_DEPTH_COMPONENT) conformance failure */
+      if (passed < span->end) {
+	  span->writeAll = GL_FALSE;
+	  if (passed == 0) {
+	      span->end = 0;
+	      return 0;
+	  }
+	  while (span->end > 0  &&  span->mask[span->end - 1] == 0)
+	      span->end --;
+      }
+#endif
       return passed;
    }
 }

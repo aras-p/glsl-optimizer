@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.21 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: swrast.h,v 1.22 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,6 +108,9 @@ struct sw_span {
    /* This flag indicates that only a part of the span is visible */
    GLboolean writeAll;
 
+   /* either GL_POLYGON, GL_LINE, GL_POLYGON, GL_BITMAP */
+   GLenum primitive;
+
    /**
     * This bitmask (of SPAN_* flags) indicates which of the x/xStep
     * variables are relevant.
@@ -168,11 +171,13 @@ struct sw_span {
 };
 
 
-#define INIT_SPAN(S)	\
-do {			\
-   S.interpMask = 0;	\
-   S.arrayMask = 0;	\
-   S.start = S.end = 0;	\
+#define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)  \
+do {                              \
+   S.primitive = (PRIMITIVE);     \
+   S.interpMask = (INTERP_MASK);  \
+   S.arrayMask = (ARRAY_MASK);    \
+   S.start = 0;                   \
+   S.end = (END);                 \
 } while (0)
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_texture.h,v 1.11 2002/01/28 04:25:56 brianp Exp $ */
+/* $Id: s_texture.h,v 1.12 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,11 +38,12 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
 				    GLuint texUnit,
 				    const struct gl_texture_object *tObj );
 
+
 extern void
-_swrast_texture_fragments( GLcontext *ctx, GLuint texSet, GLuint n,
-			       GLfloat texcoords[][4], GLfloat lambda[],
-			       CONST GLchan primary_rgba[][4],
-                               GLchan rgba[][4] );
+_swrast_texture_fragments( GLcontext *ctx, GLuint texUnit,
+			   struct sw_span *span,
+			   CONST GLchan primary_rgba[][4]);
+
 
 extern void
 _swrast_multitexture_fragments( GLcontext *ctx, struct sw_span *span );

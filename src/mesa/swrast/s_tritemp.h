@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.35 2002/03/16 18:02:08 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.36 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,7 +120,7 @@
 
    struct sw_span span;
 
-   INIT_SPAN(span);
+   INIT_SPAN(span, GL_POLYGON, 0, 0, 0);
 
 #ifdef INTERP_Z
    (void) fixedToDepthShift;

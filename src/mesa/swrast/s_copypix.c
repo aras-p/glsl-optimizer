@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.34 2002/03/14 22:09:25 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.35 2002/04/12 15:39:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -109,8 +109,8 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *dest, *tmpImage, *convImage;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   /*span.arrayMask |= SPAN_RGBA;*/
 
    if (ctx->Depth.Test)
       _mesa_span_default_z(ctx, &span);
@@ -282,7 +282,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
 
@@ -308,8 +308,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    const GLuint transferOps = ctx->_ImageTransferState;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_RGBA;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   /*span.arrayMask |= SPAN_RGBA;*/
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
@@ -523,7 +523,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          span.x = destx;
          span.y = dy;
          span.end = width;
-         _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+         _mesa_write_rgba_span(ctx, &span);
       }
    }
 
@@ -550,8 +550,8 @@ static void copy_ci_pixels( GLcontext *ctx,
    GLint overlapping;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_INDEX;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
+   /*span.arrayMask |= SPAN_INDEX;*/
 
    /* Determine if copy should be bottom-to-top or top-to-bottom */
    if (srcy<desty) {
@@ -638,7 +638,7 @@ static void copy_ci_pixels( GLcontext *ctx,
       if (zoom)
          _mesa_write_zoomed_index_span(ctx, &span, desty);
       else
-         _mesa_write_index_span(ctx, &span, GL_BITMAP);
+         _mesa_write_index_span(ctx, &span);
    }
 
    /* Restore pixel source to be the draw buffer (for blending, etc) */
@@ -666,8 +666,8 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint overlapping;
    struct sw_span span;
 
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_Z;
+   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
+   /*span.arrayMask |= SPAN_Z;*/
 
    if (!ctx->Visual.depthBits) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
@@ -737,13 +737,13 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                                           (const GLchan (*)[4])span.color.rgba,
                                           desty );
          else
-            _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
+            _mesa_write_rgba_span(ctx, &span);
       }
       else {
          if (zoom)
             _mesa_write_zoomed_index_span( ctx, &span, desty );
          else
-            _mesa_write_index_span(ctx, &span, GL_BITMAP);
+            _mesa_write_index_span(ctx, &span);
       }
    }
 

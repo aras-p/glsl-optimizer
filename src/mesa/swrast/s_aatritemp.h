@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.27 2002/03/16 18:02:07 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.28 2002/04/12 15:39:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,8 +85,8 @@
    GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
    
    
-   INIT_SPAN(span);
-   span.arrayMask |= SPAN_COVERAGE;
+   INIT_SPAN(span, GL_POLYGON, 0, 0, SPAN_COVERAGE);
+   /*span.arrayMask |= SPAN_COVERAGE;*/
 
    /* determine bottom to top order of vertices */
    {
@@ -349,11 +349,11 @@
          span.end = (GLuint) ix - (GLuint) startX;
          ASSERT(span.interpMask == 0);
 #if defined(DO_MULTITEX) || defined(DO_TEX)
-         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+         _mesa_write_texture_span(ctx, &span);
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
+         _mesa_write_rgba_span(ctx, &span);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, &span, GL_POLYGON);
+         _mesa_write_index_span(ctx, &span);
 #endif
       }
    }
@@ -507,11 +507,11 @@
          span.end = n;
          ASSERT(span.interpMask == 0);
 #if defined(DO_MULTITEX) || defined(DO_TEX)
-         _mesa_write_texture_span(ctx, &span, GL_POLYGON);
+         _mesa_write_texture_span(ctx, &span);
 #elif defined(DO_RGBA)
-         _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
+         _mesa_write_rgba_span(ctx, &span);
 #elif defined(DO_INDEX)
-         _mesa_write_index_span(ctx, &span, GL_POLYGON);
+         _mesa_write_index_span(ctx, &span);
 #endif
       }
    }
