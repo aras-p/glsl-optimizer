@@ -92,20 +92,17 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 }
 
 
-
 /**
- * Fetch a 4-element float vector from the given source register.
- * Apply swizzling and negating as needed.
+ * Return a pointer to the 4-element float vector specified by the given
+ * source register.
  */
-static void
-fetch_vector4( GLcontext *ctx,
-               const struct fp_src_register *source,
-               struct fp_machine *machine,
-               const struct fragment_program *program,
-               GLfloat result[4] )
+static INLINE const GLfloat *
+get_register_pointer( GLcontext *ctx,
+                      const struct fp_src_register *source,
+                      const struct fp_machine *machine,
+                      const struct fragment_program *program )
 {
    const GLfloat *src;
-
    switch (source->File) {
       case PROGRAM_TEMPORARY:
          ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_TEMPS);
@@ -128,11 +125,29 @@ fetch_vector4( GLcontext *ctx,
          src = program->Parameters->Parameters[source->Index].Values;
          break;
       case PROGRAM_STATE_VAR:
-         abort();
+         src = NULL;
+         break;
       default:
          _mesa_problem(ctx, "Invalid input register file in fetch_vector4");
-         return;
+         src = NULL;
    }
+   return src;
+}
+
+
+/**
+ * Fetch a 4-element float vector from the given source register.
+ * Apply swizzling and negating as needed.
+ */
+static void
+fetch_vector4( GLcontext *ctx,
+               const struct fp_src_register *source,
+               const struct fp_machine *machine,
+               const struct fragment_program *program,
+               GLfloat result[4] )
+{
+   const GLfloat *src = get_register_pointer(ctx, source, machine, program);
+   ASSERT(src);
 
    result[0] = src[source->Swizzle[0]];
    result[1] = src[source->Swizzle[1]];
@@ -297,35 +312,8 @@ fetch_vector1( GLcontext *ctx,
                const struct fragment_program *program,
                GLfloat result[4] )
 {
-   const GLfloat *src;
-
-   switch (source->File) {
-      case PROGRAM_TEMPORARY:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_TEMPS);
-         src = machine->Temporaries[source->Index];
-         break;
-      case PROGRAM_INPUT:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
-         src = machine->Inputs[source->Index];
-         break;
-      case PROGRAM_LOCAL_PARAM:
-         ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
-         src = program->Base.LocalParams[source->Index];
-         break;
-      case PROGRAM_ENV_PARAM:
-         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
-         src = ctx->FragmentProgram.Parameters[source->Index];
-         break;
-      case PROGRAM_NAMED_PARAM:
-         ASSERT(source->Index < program->Parameters->NumParameters);
-         src = program->Parameters->Parameters[source->Index].Values;
-         break;
-      case PROGRAM_STATE_VAR:
-         abort();
-      default:
-         _mesa_problem(ctx, "Invalid input register file in fetch_vector1");
-         return;
-   }
+   const GLfloat *src = get_register_pointer(ctx, source, machine, program);
+   ASSERT(src);
 
    result[0] = src[source->Swizzle[0]];
 
@@ -1104,7 +1092,24 @@ execute_program( GLcontext *ctx,
             break;
          case FP_OPCODE_SWZ:
             {
-               /* XXX to do: extended swizzle */
+               const struct fp_src_register *source = &inst->SrcReg[0];
+               const GLfloat *src = get_register_pointer(ctx, source,
+                                                         machine, program);
+               GLfloat result[4];
+               GLuint i;
+
+               /* do extended swizzling here */
+               for (i = 0; i < 3; i++) {
+                  if (source->Swizzle[i] == SWIZZLE_ZERO)
+                     result[i] = 0.0;
+                  else if (source->Swizzle[i] == SWIZZLE_ONE)
+                     result[i] = -1.0;
+                  else
+                     result[i] = -src[source->Swizzle[i]];
+                  if (source->NegateBase)
+                     result[i] = -result[i];
+               }
+               store_vector4( inst, machine, result );
             }
             break;
          case FP_OPCODE_TEX:
@@ -1122,11 +1127,15 @@ execute_program( GLcontext *ctx,
          case FP_OPCODE_TXB:
             /* Texel lookup with LOD bias */
             {
-               GLfloat texcoord[4], color[4];
+               GLfloat texcoord[4], color[4], bias, lambda;
+
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               /* XXX: apply bias from texcoord[3]!!! */
-               fetch_texel( ctx, texcoord,
-                            span->array->lambda[inst->TexSrcUnit][column],
+               /* texcoord[3] is the bias to add to lambda */
+               bias = ctx->Texture.Unit[inst->TexSrcUnit].LodBias
+                    + ctx->Texture.Unit[inst->TexSrcUnit]._Current->LodBias
+                    + texcoord[3];
+               lambda = span->array->lambda[inst->TexSrcUnit][column] + bias;
+               fetch_texel( ctx, texcoord, lambda,
                             inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
