@@ -1,39 +1,17 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.3 2003/06/10 14:54:37 brianp Exp $
+# $Id: getprocaddress.py,v 1.4 2004/10/29 19:12:08 brianp Exp $
 
 # Helper for the getprocaddress.c test.
 
+from xml.sax import saxutils
+from xml.sax import make_parser
+from xml.sax.handler import feature_namespaces
 
-import re, string
-
-
-def PrintHead():
-	print """
-struct name_test_pair {
-   const char *name;
-   GLboolean (*test)(void *);
-};
-   
-static struct name_test_pair functions[] = {"""
-
-
-def PrintTail():
-	print"""
-   { NULL, NULL }
-};
-"""
-
-
-def HaveTest(function):
-	testFuncs = [
-		"glActiveTextureARB",
-		"glSampleCoverageARB"
-	]
-	if function in testFuncs:
-		return 1
-	else:
-		return 0
+import sys, getopt, re
+sys.path.append("../../src/mesa/glapi/" )
+import gl_XML
+import license
 
 
 def FindTestFunctions():
@@ -52,45 +30,66 @@ def FindTestFunctions():
 	return functions
 
 
-def PrintFunctions(specFile, tests):
+class PrintExports(gl_XML.FilterGLAPISpecBase):
+	name = "gl_exports.py (from Mesa)"
 
-	# init some vars
-	prevCategory = ''
-	funcName = ''
+	def __init__(self):
+		gl_XML.FilterGLAPISpecBase.__init__(self)
+		self.license = license.bsd_license_template % ( \
+"""Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+(C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+		self.tests = FindTestFunctions()
+		self.prevCategory = ""
 
-	f = open(specFile)
-	for line in f.readlines():
+	def printRealHeader(self):
+		print """
+struct name_test_pair {
+   const char *name;
+   GLboolean (*test)(void *);
+};
+   
+static struct name_test_pair functions[] = {"""
 
-		# split line into tokens
-		tokens = string.split(line)
+	def printRealFooter(self):
+		print"""
+   { NULL, NULL }
+};
+"""
 
-		if len(tokens) > 0 and line[0] != '#':
-
-			if tokens[0] == 'name':
-				if funcName != '':
-					if category != prevCategory:
-						print '   { "-%s", NULL},' % category
-						prevCategory = category
-
-					if funcName in tests:
-						test = "test_%s" % funcName
-					else:
-						test = "NULL"
-					print '   { "gl%s", %s },' % (funcName, test)
-				funcName = tokens[1]
-
-			elif tokens[0] == 'category':
-				category = tokens[1]
-
-			#endif
-		#endif
-	#endfor
-#enddef
-
-
-tests = FindTestFunctions()
-PrintHead()
-PrintFunctions("../../src/mesa/glapi/APIspec", tests)
-PrintTail()
+	def printFunction(self, f):
+		if f.category != self.prevCategory:
+			print '   { "-%s", NULL},' % f.category
+			self.prevCategory = f.category
+			
+		if f.name in self.tests:
+			test = "test_%s" % f.name
+		else:
+			test = "NULL"
+		print '   { "gl%s", %s }, /* %s */' % (f.name, test, f.category)
+		return
 
 
+if __name__ == '__main__':
+	file_name = "../../src/mesa/glapi/gl_API.xml"
+    
+	try:
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
+	except Exception,e:
+		show_usage()
+
+	for (arg,val) in args:
+		if arg == "-f":
+			file_name = val
+
+	dh = PrintExports()
+
+	parser = make_parser()
+	parser.setFeature(feature_namespaces, 0)
+	parser.setContentHandler(dh)
+
+	f = open(file_name)
+
+	parser.parse(f)
+	dh.printHeader()
+	dh.printFunctions()
+	dh.printFooter()
