@@ -70,10 +70,13 @@ class results:
 	def compare_results(self, other):
 		for name in self.cycles:
 			if other.cycles.has_key(name):
-				a = float(self.cycles[name])  / self.iterations
-				b = float(other.cycles[name]) / other.iterations
-				p = (100.0 * b / a) - 100.0
-				print "%- 20s %7.2f - %7.2f = % -6.2f (%+.1f%%)" % (name, a, b, a - b, p)
+				a = float(self.cycles[name])  / float(self.iterations)
+				b = float(other.cycles[name]) / float(other.iterations)
+				if abs( a ) < 0.000001:
+				    print "a = %f, b = %f" % (a, b)
+				else:
+				    p = (100.0 * b / a) - 100.0
+				    print "%- 20s %7.2f - %7.2f = % -6.2f (%+.1f%%)" % (name, a, b, a - b, p)
 		return
 
 
