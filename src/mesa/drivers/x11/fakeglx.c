@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.42 2000/12/15 04:02:50 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.43 2001/01/08 04:06:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1090,7 +1090,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
                        GLXContext share_list, Bool direct )
 {
    XMesaVisual glxvis;
-   XMesaContext xmctx;
+   struct __GLcontextRec *ctx;
 
    /* deallocate unused windows/buffers */
    XMesaGarbageCollect();
@@ -1105,12 +1105,13 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       }
    }
 
-   xmctx = XMesaCreateContext( glxvis, (XMesaContext) share_list );
-   if (xmctx) {
+   ctx = XMesaCreateContext( glxvis, (struct __GLcontextRec *) share_list );
+   if (ctx) {
+      XMesaContext xmctx = (XMesaContext)(ctx->DriverCtx);
       /* set the direct/indirect flag */
       xmctx->direct = direct;
    }
-   return (GLXContext) xmctx;
+   return (GLXContext) ctx;
 }
 
 
@@ -1123,15 +1124,16 @@ static XMesaBuffer MakeCurrent_PrevReadBuffer = 0;
 /* GLX 1.3 and later */
 static Bool
 Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
-                            GLXDrawable read, GLXContext ctx )
+                            GLXDrawable read, GLXContext glxctx )
 {
-   if (ctx && draw && read) {
+   if (glxctx && draw && read) {
       XMesaBuffer drawBuffer, readBuffer;
-      XMesaContext xmctx = (XMesaContext) ctx;
+      GLcontext *ctx = (GLcontext *) glxctx;
+      XMesaContext xmctx = (XMesaContext)(ctx->DriverCtx);
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'draw' */
-      if (ctx == MakeCurrent_PrevContext
-          && draw == MakeCurrent_PrevDrawable) {
+      if (glxctx == MakeCurrent_PrevContext && 
+	  draw == MakeCurrent_PrevDrawable) {
          drawBuffer = MakeCurrent_PrevDrawBuffer;
       }
       else {
@@ -1139,7 +1141,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!drawBuffer) {
          /* drawable must be a new window! */
-         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, (XMesaContext) ctx );
+         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, xmctx );
          if (!drawBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
@@ -1147,7 +1149,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'read' */
-      if (ctx == MakeCurrent_PrevContext
+      if (glxctx == MakeCurrent_PrevContext
           && read == MakeCurrent_PrevReadable) {
          readBuffer = MakeCurrent_PrevReadBuffer;
       }
@@ -1156,23 +1158,23 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!readBuffer) {
          /* drawable must be a new window! */
-         readBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, read, (XMesaContext) ctx );
+         readBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, read, xmctx );
          if (!readBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
       }
 
-      MakeCurrent_PrevContext = ctx;
+      MakeCurrent_PrevContext = glxctx;
       MakeCurrent_PrevDrawable = draw;
       MakeCurrent_PrevReadable = read;
       MakeCurrent_PrevDrawBuffer = drawBuffer;
       MakeCurrent_PrevReadBuffer = readBuffer;
 
       /* Now make current! */
-      return (Bool) XMesaMakeCurrent2((XMesaContext) ctx, drawBuffer, readBuffer);
+      return (Bool) XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer);
    }
-   else if (!ctx && !draw && !read) {
+   else if (!glxctx && !draw && !read) {
       /* release current context w/out assigning new one. */
       XMesaMakeCurrent( NULL, NULL );
       MakeCurrent_PrevContext = 0;
@@ -1267,10 +1269,10 @@ static void
 Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                      unsigned long mask )
 {
-   XMesaContext xm_src = (XMesaContext) src;
-   XMesaContext xm_dst = (XMesaContext) dst;
+   struct __GLcontextRec *csrc = (struct __GLcontextRec *) src;
+   struct __GLcontextRec *cdst = (struct __GLcontextRec *) dst;
    (void) dpy;
-   _mesa_copy_context( xm_src->gl_ctx, xm_dst->gl_ctx, (GLuint) mask );
+   _mesa_copy_context( csrc, cdst, (GLuint) mask );
 }
 
 
@@ -1297,13 +1299,14 @@ void _kw_ungrab_all( Display *dpy )
 static void
 Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 {
+   XMesaContext xmctx = (XMesaContext)(((GLcontext *)ctx)->DriverCtx);
    (void) dpy;
    MakeCurrent_PrevContext = 0;
    MakeCurrent_PrevDrawable = 0;
    MakeCurrent_PrevReadable = 0;
    MakeCurrent_PrevDrawBuffer = 0;
    MakeCurrent_PrevReadBuffer = 0;
-   XMesaDestroyContext( (XMesaContext) ctx );
+   XMesaDestroyContext( xmctx );
    XMesaGarbageCollect();
 }
 
@@ -1312,8 +1315,9 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 static Bool
 Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
+   XMesaContext xmctx = (XMesaContext)(((GLcontext *)ctx)->DriverCtx);
    (void) dpy;
-   return ((XMesaContext) ctx)->direct;
+   return xmctx->direct;
 }
 
 

@@ -1,8 +1,8 @@
-/* $Id: xm_dd.c,v 1.8 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.9 2001/01/08 04:06:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -923,6 +923,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Finish = finish;
 
    ctx->Driver.RenderStart = 0;
+   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimNoop;
    ctx->Driver.RenderFinish = _swrast_flush;
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;

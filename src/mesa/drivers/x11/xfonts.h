@@ -1,8 +1,8 @@
-/* $Id: xfonts.h,v 1.2 2000/08/22 13:31:04 joukj Exp $ */
+/* $Id: xfonts.h,v 1.3 2001/01/08 04:06:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
