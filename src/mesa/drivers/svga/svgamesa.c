@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.24 2004/11/27 22:48:00 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.25 2004/11/29 17:30:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -508,7 +508,7 @@ void SVGAMesaSwapBuffers( void )
  * Need this to provide at least one external definition when SVGA is
  * not defined on the compiler command line.
  */
-
+extern int gl_svga_dummy_function(void);
 int gl_svga_dummy_function(void)
 {
    return 0;
