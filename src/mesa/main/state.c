@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.10 2000/05/04 13:48:49 brianp Exp $ */
+/* $Id: state.c,v 1.11 2000/05/04 14:09:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -799,7 +799,8 @@ static void update_rasterflags( GLcontext *ctx )
    if (ctx->Stencil.Enabled)		ctx->RasterMask |= STENCIL_BIT;
    if (ctx->Color.SWmasking)		ctx->RasterMask |= MASKING_BIT;
 
-   if (ctx->Visual->SoftwareAlpha && ctx->Color.ColorMask[ACOMP]
+   if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
+       && ctx->Color.ColorMask[ACOMP]
        && ctx->Color.DrawBuffer != GL_NONE)
       ctx->RasterMask |= ALPHABUF_BIT;
 
