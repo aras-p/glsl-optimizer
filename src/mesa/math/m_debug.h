@@ -1,10 +1,10 @@
-/* $Id: m_debug.h,v 1.1 2001/02/03 08:41:04 gareth Exp $ */
+/* $Id: m_debug.h,v 1.2 2001/02/05 19:17:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,5 +33,7 @@
 extern void _math_test_all_transform_functions( char *description );
 extern void _math_test_all_normal_transform_functions( char *description );
 extern void _math_test_all_vertex_functions( char *description );
+
+extern char *mesa_profile;
 
 #endif
