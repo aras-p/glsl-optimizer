@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.13 1999/12/15 15:02:30 brianp Exp $ */
+/* $Id: glapi.c,v 1.14 1999/12/16 12:38:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,10 +41,13 @@
 #include <string.h>
 #include "glapi.h"
 #include "glapinoop.h"
+#include "glapioffsets.h"
+#include "glapitable.h"
+
 
 
 /* Flag to indicate whether thread-safe dispatch is enabled */
-static GLboolean ThreadSafe = GL_FALSE;
+static GLboolean ThreadSafe = GL_TRUE;
 
 /* This is used when thread safety is disabled */
 static struct _glapi_table *Dispatch = &__glapi_noop_table;
@@ -154,11 +157,290 @@ struct name_address_pair {
    GLvoid *Address;
 };
 
+static struct name_address_pair static_functions[1000];
+
+
+
+/*
+ * Return dispatch table offset of the named static (built-in) function.
+ * Return -1 if function not found.
+ */
+static GLint
+get_static_proc_offset(const char *funcName)
+{
+   GLuint i;
+   for (i = 0; static_functions[i].Name; i++) {
+      if (strcmp(static_functions[i].Name, funcName) == 0) {
+         return i;
+      }
+   }
+   return -1;
+}
+
+
+/*
+ * Return dispatch function address the named static (built-in) function.
+ * Return NULL if function not found.
+ */
+static GLvoid *
+get_static_proc_address(const char *funcName)
+{
+   GLuint i = get_static_proc_offset(funcName);
+   if (i >= 0)
+      return static_functions[i].Address;
+   else
+      return NULL;
+}
+
+
+
+/**********************************************************************
+ * Extension function management.
+ **********************************************************************/
+
+
+struct _glapi_ext_entrypoint {
+   const char *Name;   /* the extension function's name */
+   GLuint Offset;      /* relative to start of dispatch table */
+   GLvoid *Address;    /* address of dispatch function */
+};
+
+static struct _glapi_ext_entrypoint ExtEntryTable[_GLAPI_EXTRA_SLOTS];
+static GLuint NumExtEntryPoints = 0;
+
+
+
+/*
+ * Generate a dispatch function (entrypoint) which jumps through
+ * the given slot number (offset) in the current dispatch table.
+ */
+static void *
+generate_entrypoint(GLuint offset)
+{
+   /* XXX need to generate some assembly code here */
+
+   return NULL;
+}
+
+
+
+/*
+ * Add a new extension function entrypoint.
+ * Return: GL_TRUE = success or GL_FALSE = failure
+ */
+GLboolean
+_glapi_add_entrypoint(const char *funcName, GLuint offset)
+{
+   GLint index;
+
+   /* Make sure we don't try to add a new entrypoint after someone
+    * has already called _glapi_get_dispatch_table_size()!  If that's
+    * happened the caller's information will now be out of date.
+    */
+   assert(!GetSizeCalled);
+
+   /* first check if the named function is already statically present */
+   index = get_static_proc_offset(funcName);
+
+   if (index >= 0) {
+      assert(index == offset);
+      return GL_TRUE;
+   }
+   /* else if (offset < _glapi_get_dispatch_table_size()) { */
+   else {
+      /* be sure index and name match known data */
+      GLuint i;
+      for (i = 0; i < NumExtEntryPoints; i++) {
+         if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
+            /* function already registered with api */
+            if (ExtEntryTable[i].Offset == offset) {
+               return GL_TRUE;  /* offsets match */
+            }
+            else {
+               return GL_FALSE;  /* bad offset! */
+            }
+         }
+      }
+      assert(NumExtEntryPoints < _GLAPI_EXTRA_SLOTS);
+      ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
+      ExtEntryTable[NumExtEntryPoints].Offset = offset;
+      ExtEntryTable[NumExtEntryPoints].Address = generate_entrypoint(offset);
+      NumExtEntryPoints++;
+
+      if (offset > MaxDispatchOffset)
+         MaxDispatchOffset = offset;
+
+      return GL_TRUE;      
+   }
+/*
+   else {
+      return GL_FALSE;
+   }
+*/
+}
+
+
+
+/*
+ * Return offset of entrypoint for named function within dispatch table.
+ */
+GLint
+_glapi_get_proc_offset(const char *funcName)
+{
+   /* search extension functions first */
+   GLint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
+         return ExtEntryTable[i].Offset;
+      }
+   }
+
+   /* search static functions */
+   return get_static_proc_offset(funcName);
+}
+
+
+
+/*
+ * Return entrypoint for named function.
+ */
+const GLvoid *
+_glapi_get_proc_address(const char *funcName)
+{
+   /* search extension functions first */
+   GLint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
+         return ExtEntryTable[i].Address;
+      }
+   }
+
+   /* search static functions */
+   return get_static_proc_address(funcName);
+}
+
+
+
+
+/*
+ * Return the name of the function at the given dispatch offset.
+ * This is only intended for debugging.
+ */
+const char *
+_glapi_get_proc_name(GLuint offset)
+{
+   GLuint n = sizeof(static_functions) / sizeof(struct name_address_pair);
+   if (offset < n) {
+      return static_functions[offset].Name;
+   }
+   else {
+      /* search added extension functions */
+      GLuint i;
+      for (i = 0; i < NumExtEntryPoints; i++) {
+         if (ExtEntryTable[i].Offset == offset) {
+            return ExtEntryTable[i].Name;
+         }
+      }
+      return NULL;
+   }
+}
+
+
+
+/*
+ * Make sure there are no NULL pointers in the given dispatch table.
+ * Intented for debugging purposes.
+ */
+void
+_glapi_check_table(const struct _glapi_table *table)
+{
+   const GLuint entries = _glapi_get_dispatch_table_size();
+   const void **tab = (const void **) table;
+   GLuint i;
+   for (i = 1; i < entries; i++) {
+      assert(tab[i]);
+   }
+
+   /* Do some spot checks to be sure that the dispatch table
+    * slots are assigned correctly.
+    */
+   {
+      GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
+      char *BeginFunc = (char*) &table->Begin;
+      GLuint offset = (BeginFunc - (char *) table) / sizeof(void *);
+      assert(BeginOffset == _gloffset_Begin);
+      assert(BeginOffset == offset);
+   }
+   {
+      GLuint viewportOffset = _glapi_get_proc_offset("glViewport");
+      char *viewportFunc = (char*) &table->Viewport;
+      GLuint offset = (viewportFunc - (char *) table) / sizeof(void *);
+      assert(viewportOffset == _gloffset_Viewport);
+      assert(viewportOffset == offset);
+   }
+   {
+      GLuint VertexPointerOffset = _glapi_get_proc_offset("glVertexPointer");
+      char *VertexPointerFunc = (char*) &table->VertexPointer;
+      GLuint offset = (VertexPointerFunc - (char *) table) / sizeof(void *);
+      assert(VertexPointerOffset == _gloffset_VertexPointer);
+      assert(VertexPointerOffset == offset);
+   }
+   {
+      GLuint ResetMinMaxOffset = _glapi_get_proc_offset("glResetMinmax");
+      char *ResetMinMaxFunc = (char*) &table->ResetMinmax;
+      GLuint offset = (ResetMinMaxFunc - (char *) table) / sizeof(void *);
+      assert(ResetMinMaxOffset == _gloffset_ResetMinmax);
+      assert(ResetMinMaxOffset == offset);
+   }
+   {
+      GLuint blendColorOffset = _glapi_get_proc_offset("glBlendColorEXT");
+      char *blendColorFunc = (char*) &table->BlendColorEXT;
+      GLuint offset = (blendColorFunc - (char *) table) / sizeof(void *);
+      assert(blendColorOffset == _gloffset_BlendColorEXT);
+      assert(blendColorOffset == offset);
+   }
+   {
+      GLuint istextureOffset = _glapi_get_proc_offset("glIsTextureEXT");
+      char *istextureFunc = (char*) &table->IsTextureEXT;
+      GLuint offset = (istextureFunc - (char *) table) / sizeof(void *);
+      assert(istextureOffset == _gloffset_IsTextureEXT);
+      assert(istextureOffset == offset);
+   }
+}
+
+
+
+/*
+ * Generate the GL entrypoint functions here.
+ */
+
+#define KEYWORD1
+#define KEYWORD2 GLAPIENTRY
+#ifdef USE_MGL_NAMESPACE
+#define NAME(func)  mgl##func
+#else
+#define NAME(func)  gl##func
+#endif
+
+#include "glapitemp.h"
+
+
+
+/*
+ * For each entry in static_functions[] which use this function
+ * we should implement a dispatch function in glapitemp.h and
+ * in glapinoop.c
+ */
+static void NotImplemented(void)
+{
+}
+
+
+
 static struct name_address_pair static_functions[] = {
-	{ "glAccum", (GLvoid *) glAccum },
-	{ "glAlphaFunc", (GLvoid *) glAlphaFunc },
-	{ "glBegin", (GLvoid *) glBegin },
-	{ "glBitmap", (GLvoid *) glBitmap },
+	{ "NotImplemented", (GLvoid *) NotImplemented },
+
+	/* GL 1.1 */
 	{ "glAccum", (GLvoid *) glAccum },
 	{ "glAlphaFunc", (GLvoid *) glAlphaFunc },
 	{ "glBegin", (GLvoid *) glBegin },
@@ -467,7 +749,7 @@ static struct name_address_pair static_functions[] = {
 	{ "glVertex4sv", (GLvoid *) glVertex4sv },
 	{ "glViewport", (GLvoid *) glViewport },
 
-#ifdef _GLAPI_VERSION_1_1
+	/* GL 1.1 */
 	{ "glAreTexturesResident", (GLvoid *) glAreTexturesResident },
 	{ "glArrayElement", (GLvoid *) glArrayElement },
 	{ "glBindTexture", (GLvoid *) glBindTexture },
@@ -497,15 +779,14 @@ static struct name_address_pair static_functions[] = {
 	{ "glTexSubImage1D", (GLvoid *) glTexSubImage1D },
 	{ "glTexSubImage2D", (GLvoid *) glTexSubImage2D },
 	{ "glVertexPointer", (GLvoid *) glVertexPointer },
-#endif
 
-#ifdef _GLAPI_VERSION_1_2
+	/* GL 1.2 */
 	{ "glCopyTexSubImage3D", (GLvoid *) glCopyTexSubImage3D },
 	{ "glDrawRangeElements", (GLvoid *) glDrawRangeElements },
 	{ "glTexImage3D", (GLvoid *) glTexImage3D },
 	{ "glTexSubImage3D", (GLvoid *) glTexSubImage3D },
 
-#ifdef _GLAPI_ARB_imaging
+	/* GL_ARB_imaging */
 	{ "glBlendColor", (GLvoid *) glBlendColor },
 	{ "glBlendEquation", (GLvoid *) glBlendEquation },
 	{ "glColorSubTable", (GLvoid *) glColorSubTable },
@@ -540,8 +821,6 @@ static struct name_address_pair static_functions[] = {
 	{ "glResetHistogram", (GLvoid *) glResetHistogram },
 	{ "glResetMinmax", (GLvoid *) glResetMinmax },
 	{ "glSeparableFilter2D", (GLvoid *) glSeparableFilter2D },
-#endif
-#endif
 
 	/* GL_ARB_multitexture */
 	{ "glActiveTextureARB", (GLvoid *) glActiveTextureARB },
@@ -585,23 +864,174 @@ static struct name_address_pair static_functions[] = {
 	/* 3. GL_EXT_polygon_offset */
 	{ "glPolygonOffsetEXT", (GLvoid *) glPolygonOffsetEXT },
 
+	/* 6. GL_EXT_texture3D */
+	{ "glCopyTexSubImage3DEXT", (GLvoid *) glCopyTexSubImage3DEXT },
+	{ "glTexImage3DEXT", (GLvoid *) glTexImage3DEXT },
+	{ "glTexSubImage3DEXT", (GLvoid *) glTexSubImage3DEXT },
+
+	/* 7. GL_SGI_texture_filter4 */
+	{ "glGetTexFilterFuncSGIS", (GLvoid *) glGetTexFilterFuncSGIS },
+	{ "glTexFilterFuncSGIS", (GLvoid *) glTexFilterFuncSGIS },
+
+	/* 9. GL_EXT_subtexture */
+	{ "glTexSubImage1DEXT", (GLvoid *) glTexSubImage1DEXT },
+	{ "glTexSubImage2DEXT", (GLvoid *) glTexSubImage2DEXT },
+
+	/* 10. GL_EXT_copy_texture */
+	{ "glCopyTexImage1DEXT", (GLvoid *) glCopyTexImage1DEXT },
+	{ "glCopyTexImage2DEXT", (GLvoid *) glCopyTexImage2DEXT },
+	{ "glCopyTexSubImage1DEXT", (GLvoid *) glCopyTexSubImage1DEXT },
+	{ "glCopyTexSubImage2DEXT", (GLvoid *) glCopyTexSubImage2DEXT },
+                              
+	/* 11. GL_EXT_histogram */
+	{ "glGetHistogramEXT", (GLvoid *) glGetHistogramEXT },
+	{ "glGetHistogramParameterfvEXT", (GLvoid *) glGetHistogramParameterfvEXT },
+	{ "glGetHistogramParameterivEXT", (GLvoid *) glGetHistogramParameterivEXT },
+	{ "glGetMinmaxEXT", (GLvoid *) glGetMinmaxEXT },
+	{ "glGetMinmaxParameterfvEXT", (GLvoid *) glGetMinmaxParameterfvEXT },
+	{ "glGetMinmaxParameterivEXT", (GLvoid *) glGetMinmaxParameterivEXT },
+	{ "glHistogramEXT", (GLvoid *) glHistogramEXT },
+	{ "glMinmaxEXT", (GLvoid *) glMinmaxEXT },
+	{ "glResetHistogramEXT", (GLvoid *) glResetHistogramEXT },
+	{ "glResetMinmaxEXT", (GLvoid *) glResetMinmaxEXT },
+
+	/* 12. GL_EXT_convolution */
+	{ "glConvolutionFilter1DEXT", (GLvoid *) glConvolutionFilter1DEXT },
+	{ "glConvolutionFilter2DEXT", (GLvoid *) glConvolutionFilter2DEXT },
+	{ "glConvolutionParameterfEXT", (GLvoid *) glConvolutionParameterfEXT },
+	{ "glConvolutionParameterfvEXT", (GLvoid *) glConvolutionParameterfvEXT },
+	{ "glConvolutionParameteriEXT", (GLvoid *) glConvolutionParameteriEXT },
+	{ "glConvolutionParameterivEXT", (GLvoid *) glConvolutionParameterivEXT },
+	{ "glCopyConvolutionFilter1DEXT", (GLvoid *) glCopyConvolutionFilter1DEXT },
+	{ "glCopyConvolutionFilter2DEXT", (GLvoid *) glCopyConvolutionFilter2DEXT },
+	{ "glGetConvolutionFilterEXT", (GLvoid *) glGetConvolutionFilterEXT },
+	{ "glGetConvolutionParameterivEXT", (GLvoid *) glGetConvolutionParameterivEXT },
+	{ "glGetConvolutionParameterfvEXT", (GLvoid *) glGetConvolutionParameterfvEXT },
+	{ "glGetSeparableFilterEXT", (GLvoid *) glGetSeparableFilterEXT },
+	{ "glSeparableFilter2DEXT", (GLvoid *) glSeparableFilter2DEXT },
+                    
+	/* 14. GL_SGI_color_table */
+	{ "glColorTableSGI", (GLvoid *) NotImplemented },
+	{ "glColorTableParameterfvSGI", (GLvoid *) NotImplemented },
+	{ "glColorTableParameterivSGI", (GLvoid *) NotImplemented },
+	{ "glCopyColorTableSGI", (GLvoid *) NotImplemented },
+	{ "glGetColorTableSGI", (GLvoid *) NotImplemented },
+	{ "glGetColorTableParameterfvSGI", (GLvoid *) NotImplemented },
+	{ "glGetColorTableParameterivSGI", (GLvoid *) NotImplemented },
+
+	/* 15. GL_SGIS_pixel_texture */
+	{ "glPixelTexGenParameterfSGIS", (GLvoid *) NotImplemented },
+	{ "glPixelTexGenParameteriSGIS", (GLvoid *) NotImplemented },
+	{ "glGetPixelTexGenParameterfvSGIS", (GLvoid *) NotImplemented },
+	{ "glGetPixelTexGenParameterivSGIS", (GLvoid *) NotImplemented },
+
+	/* 16. GL_SGIS_texture4D */
+	{ "glTexImage4DSGIS", (GLvoid *) NotImplemented },
+	{ "glTexSubImage4DSGIS", (GLvoid *) NotImplemented },
+
+	/* 20. GL_EXT_texture_object */
+	{ "glAreTexturesResidentEXT", (GLvoid *) glAreTexturesResidentEXT },
+	{ "glBindTextureEXT", (GLvoid *) glBindTextureEXT },
+	{ "glDeleteTexturesEXT", (GLvoid *) glDeleteTexturesEXT },
+	{ "glGenTexturesEXT", (GLvoid *) glGenTexturesEXT },
+	{ "glIsTextureEXT", (GLvoid *) glIsTextureEXT },
+	{ "glPrioritizeTexturesEXT", (GLvoid *) glPrioritizeTexturesEXT },
+
+	/* 21. GL_SGIS_detail_texture */
+	{ "glDetailTexFuncSGIS", (GLvoid *) NotImplemented },
+	{ "glGetDetailTexFuncSGIS", (GLvoid *) NotImplemented },
+
+	/* 22. GL_SGIS_sharpen_texture */
+	{ "glGetSharpenTexFuncSGIS", (GLvoid *) NotImplemented },
+	{ "glSharpenTexFuncSGIS", (GLvoid *) NotImplemented },
+
+	/* 25. GL_SGIS_multisample */
+	{ "glSampleMaskSGIS", (GLvoid *) NotImplemented },
+	{ "glSamplePatternSGIS", (GLvoid *) NotImplemented },
+
+	/* 30. GL_EXT_vertex_array */
+	{ "glArrayElementEXT", (GLvoid *) glArrayElementEXT },
+	{ "glColorPointerEXT", (GLvoid *) glColorPointerEXT },
+	{ "glDrawArraysEXT", (GLvoid *) glDrawArraysEXT },
+	{ "glEdgeFlagPointerEXT", (GLvoid *) glEdgeFlagPointerEXT },
+	{ "glGetPointervEXT", (GLvoid *) glGetPointervEXT },
+	{ "glIndexPointerEXT", (GLvoid *) glIndexPointerEXT },
+	{ "glNormalPointerEXT", (GLvoid *) glNormalPointerEXT },
+	{ "glTexCoordPointerEXT", (GLvoid *) glTexCoordPointerEXT },
+	{ "glVertexPointerEXT", (GLvoid *) glVertexPointerEXT },
+
+	/* 37. GL_EXT_blend_minmax */
+	{ "glBlendEquationEXT", (GLvoid *) glBlendEquationEXT },
+
+	/* 52. GL_SGIX_sprite */
+	{ "glSpriteParameterfSGIX", (GLvoid *) NotImplemented },
+	{ "glSpriteParameterfvSGIX", (GLvoid *) NotImplemented },
+	{ "glSpriteParameteriSGIX", (GLvoid *) NotImplemented },
+	{ "glSpriteParameterivSGIX", (GLvoid *) NotImplemented },
+
 	/* 54. GL_EXT_point_parameters */
-	{ "glPointParameterfEXT", (GLvoid *) glPointParameterfEXT },
-	{ "glPointParameterfvEXT", (GLvoid *) glPointParameterfvEXT },
+	{ "glPointParameterfEXT", (GLvoid *) NotImplemented },
+	{ "glPointParameterfvEXT", (GLvoid *) NotImplemented },
+
+	/* 55. GL_SGIX_instruments */
+	{ "glInstrumentsBufferSGIX", (GLvoid *) NotImplemented },
+	{ "glStartInstrumentsSGIX", (GLvoid *) NotImplemented },
+	{ "glStopInstrumentsSGIX", (GLvoid *) NotImplemented },
+	{ "glReadInstrumentsSGIX", (GLvoid *) NotImplemented },
+	{ "glPollInstrumentsSGIX", (GLvoid *) NotImplemented },
+	{ "glGetInstrumentsSGIX", (GLvoid *) NotImplemented },
+
+	/* 57. GL_SGIX_framezoom */
+	{ "glFrameZoomSGIX", (GLvoid *) NotImplemented },
+
+	/* 60. GL_SGIX_reference_plane */
+	{ "glReferencePlaneSGIX", (GLvoid *) NotImplemented },
+
+	/* 61. GL_SGIX_flush_raster */
+	{ "glFlushRasterSGIX", (GLvoid *) NotImplemented },
+
+	/* 66. GL_HP_image_transform */
+	{ "glGetImageTransformParameterfvHP", (GLvoid *) NotImplemented },
+	{ "glGetImageTransformParameterivHP", (GLvoid *) NotImplemented },
+	{ "glImageTransformParameterfHP", (GLvoid *) NotImplemented },
+	{ "glImageTransformParameterfvHP", (GLvoid *) NotImplemented },
+	{ "glImageTransformParameteriHP", (GLvoid *) NotImplemented },
+	{ "glImageTransformParameterivHP", (GLvoid *) NotImplemented },
+
+	/* 74. GL_EXT_color_subtable */
+	{ "glColorSubTableEXT", (GLvoid *) NotImplemented },
+	{ "glCopyColorSubTableEXT", (GLvoid *) NotImplemented },
+
+	/* 77. GL_PGI_misc_hints */
+	{ "glHintPGI", (GLvoid *) NotImplemented },
 
 	/* 78. GL_EXT_paletted_texture */
 	{ "glColorTableEXT", (GLvoid *) glColorTableEXT },
-	{ "glColorSubTableEXT", (GLvoid *) glColorSubTableEXT },
 	{ "glGetColorTableEXT", (GLvoid *) glGetColorTableEXT },
 	{ "glGetColorTableParameterfvEXT", (GLvoid *) glGetColorTableParameterfvEXT },
 	{ "glGetColorTableParameterivEXT", (GLvoid *) glGetColorTableParameterivEXT },
+
+	/* 80. GL_SGIX_list_priority */
+	{ "glGetListParameterfvSGIX", (GLvoid *) NotImplemented },
+	{ "glGetListParameterivSGIX", (GLvoid *) NotImplemented },
+	{ "glListParameterfSGIX", (GLvoid *) NotImplemented },
+	{ "glListParameterfvSGIX", (GLvoid *) NotImplemented },
+	{ "glListParameteriSGIX", (GLvoid *) NotImplemented },
+	{ "glListParameterivSGIX", (GLvoid *) NotImplemented },
+
+	/* 94. GL_EXT_index_material */
+	{ "glIndexMaterialEXT", (GLvoid *) NotImplemented },
+
+	/* 95. GL_EXT_index_func */
+	{ "glIndexFuncEXT", (GLvoid *) NotImplemented },
 
 	/* 97. GL_EXT_compiled_vertex_array */
 	{ "glLockArraysEXT", (GLvoid *) glLockArraysEXT },
 	{ "glUnlockArraysEXT", (GLvoid *) glUnlockArraysEXT },
 
-	/* 37. GL_EXT_blend_minmax */
-	{ "glBlendEquationEXT", (GLvoid *) glBlendEquationEXT },
+	/* 98. GL_EXT_cull_vertex */
+	{ "glCullParameterfvEXT", (GLvoid *) NotImplemented },
+	{ "glCullParameterdvEXT", (GLvoid *) NotImplemented },
 
 	/* 173. GL_EXT/INGR_blend_func_separate */
 	{ "glBlendFuncSeparateINGR", (GLvoid *) glBlendFuncSeparateINGR },
@@ -620,659 +1050,4 @@ static struct name_address_pair static_functions[] = {
 
 	{ NULL, NULL }  /* end of list marker */
 };
-
-
-
-/*
- * Return dispatch table offset of the named static (built-in) function.
- * Return -1 if function not found.
- */
-static GLint
-get_static_proc_offset(const char *funcName)
-{
-   GLuint i;
-   for (i = 0; static_functions[i].Name; i++) {
-      if (strcmp(static_functions[i].Name, funcName) == 0) {
-         return i;
-      }
-   }
-   return -1;
-}
-
-
-/*
- * Return dispatch function address the named static (built-in) function.
- * Return NULL if function not found.
- */
-static GLvoid *
-get_static_proc_address(const char *funcName)
-{
-   GLuint i = get_static_proc_offset(funcName);
-   if (i >= 0)
-      return static_functions[i].Address;
-   else
-      return NULL;
-}
-
-
-
-/**********************************************************************
- * Extension function management.
- **********************************************************************/
-
-
-struct _glapi_ext_entrypoint {
-   const char *Name;   /* the extension function's name */
-   GLuint Offset;      /* relative to start of dispatch table */
-   GLvoid *Address;    /* address of dispatch function */
-};
-
-static struct _glapi_ext_entrypoint ExtEntryTable[_GLAPI_EXTRA_SLOTS];
-static GLuint NumExtEntryPoints = 0;
-
-
-
-/*
- * Generate a dispatch function (entrypoint) which jumps through
- * the given slot number (offset) in the current dispatch table.
- */
-static void *
-generate_entrypoint(GLuint offset)
-{
-   /* XXX need to generate some assembly code here */
-
-   return NULL;
-}
-
-
-
-/*
- * Add a new extension function entrypoint.
- * Return: GL_TRUE = success or GL_FALSE = failure
- */
-GLboolean
-_glapi_add_entrypoint(const char *funcName, GLuint offset)
-{
-   GLint index;
-
-   /* Make sure we don't try to add a new entrypoint after someone
-    * has already called _glapi_get_dispatch_table_size()!  If that's
-    * happened the caller's information will now be out of date.
-    */
-   assert(!GetSizeCalled);
-
-   /* first check if the named function is already statically present */
-   index = get_static_proc_offset(funcName);
-
-   if (index >= 0) {
-      assert(index == offset);
-      return GL_TRUE;
-   }
-   /* else if (offset < _glapi_get_dispatch_table_size()) { */
-   else {
-      /* be sure index and name match known data */
-      GLuint i;
-      for (i = 0; i < NumExtEntryPoints; i++) {
-         if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-            /* function already registered with api */
-            if (ExtEntryTable[i].Offset == offset) {
-               return GL_TRUE;  /* offsets match */
-            }
-            else {
-               return GL_FALSE;  /* bad offset! */
-            }
-         }
-      }
-      assert(NumExtEntryPoints < _GLAPI_EXTRA_SLOTS);
-      ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
-      ExtEntryTable[NumExtEntryPoints].Offset = offset;
-      ExtEntryTable[NumExtEntryPoints].Address = generate_entrypoint(offset);
-      NumExtEntryPoints++;
-
-      if (offset > MaxDispatchOffset)
-         MaxDispatchOffset = offset;
-
-      return GL_TRUE;      
-   }
-/*
-   else {
-      return GL_FALSE;
-   }
-*/
-}
-
-
-
-/*
- * Return offset of entrypoint for named function within dispatch table.
- */
-GLint
-_glapi_get_proc_offset(const char *funcName)
-{
-   /* search extension functions first */
-   GLint i;
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-         return ExtEntryTable[i].Offset;
-      }
-   }
-
-   /* search static functions */
-   return get_static_proc_offset(funcName);
-}
-
-
-
-/*
- * Return entrypoint for named function.
- */
-const GLvoid *
-_glapi_get_proc_address(const char *funcName)
-{
-   /* search extension functions first */
-   GLint i;
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-         return ExtEntryTable[i].Address;
-      }
-   }
-
-   /* search static functions */
-   return get_static_proc_address(funcName);
-}
-
-
-
-/*
- * Make sure there are no NULL pointers in the given dispatch table.
- * Intented for debugging purposes.
- */
-void
-_glapi_check_table(const struct _glapi_table *table)
-{
-   const GLuint entries = _glapi_get_dispatch_table_size();
-   const void **tab = (const void **) table;
-   GLuint i;
-   for (i = 0; i < entries; i++) {
-      assert(tab[i]);
-   }
-#if 000
-   assert(table->Accum);
-   assert(table->AlphaFunc);
-   assert(table->Begin);
-   assert(table->Bitmap);
-   assert(table->BlendFunc);
-   assert(table->CallList);
-   assert(table->CallLists);
-   assert(table->Clear);
-   assert(table->ClearAccum);
-   assert(table->ClearColor);
-   assert(table->ClearDepth);
-   assert(table->ClearIndex);
-   assert(table->ClearStencil);
-   assert(table->ClipPlane);
-   assert(table->Color3b);
-   assert(table->Color3bv);
-   assert(table->Color3d);
-   assert(table->Color3dv);
-   assert(table->Color3f);
-   assert(table->Color3fv);
-   assert(table->Color3i);
-   assert(table->Color3iv);
-   assert(table->Color3s);
-   assert(table->Color3sv);
-   assert(table->Color3ub);
-   assert(table->Color3ubv);
-   assert(table->Color3ui);
-   assert(table->Color3uiv);
-   assert(table->Color3us);
-   assert(table->Color3usv);
-   assert(table->Color4b);
-   assert(table->Color4bv);
-   assert(table->Color4d);
-   assert(table->Color4dv);
-   assert(table->Color4f);
-   assert(table->Color4fv);
-   assert(table->Color4i);
-   assert(table->Color4iv);
-   assert(table->Color4s);
-   assert(table->Color4sv);
-   assert(table->Color4ub);
-   assert(table->Color4ubv);
-   assert(table->Color4ui);
-   assert(table->Color4uiv);
-   assert(table->Color4us);
-   assert(table->Color4usv);
-   assert(table->ColorMask);
-   assert(table->ColorMaterial);
-   assert(table->CopyPixels);
-   assert(table->CullFace);
-   assert(table->DeleteLists);
-   assert(table->DepthFunc);
-   assert(table->DepthMask);
-   assert(table->DepthRange);
-   assert(table->Disable);
-   assert(table->DrawBuffer);
-   assert(table->DrawElements);
-   assert(table->DrawPixels);
-   assert(table->EdgeFlag);
-   assert(table->EdgeFlagv);
-   assert(table->Enable);
-   assert(table->End);
-   assert(table->EndList);
-   assert(table->EvalCoord1d);
-   assert(table->EvalCoord1dv);
-   assert(table->EvalCoord1f);
-   assert(table->EvalCoord1fv);
-   assert(table->EvalCoord2d);
-   assert(table->EvalCoord2dv);
-   assert(table->EvalCoord2f);
-   assert(table->EvalCoord2fv);
-   assert(table->EvalMesh1);
-   assert(table->EvalMesh2);
-   assert(table->EvalPoint1);
-   assert(table->EvalPoint2);
-   assert(table->FeedbackBuffer);
-   assert(table->Finish);
-   assert(table->Flush);
-   assert(table->Fogf);
-   assert(table->Fogfv);
-   assert(table->Fogi);
-   assert(table->Fogiv);
-   assert(table->FrontFace);
-   assert(table->Frustum);
-   assert(table->GenLists);
-   assert(table->GetBooleanv);
-   assert(table->GetClipPlane);
-   assert(table->GetDoublev);
-   assert(table->GetError);
-   assert(table->GetFloatv);
-   assert(table->GetIntegerv);
-   assert(table->GetLightfv);
-   assert(table->GetLightiv);
-   assert(table->GetMapdv);
-   assert(table->GetMapfv);
-   assert(table->GetMapiv);
-   assert(table->GetMaterialfv);
-   assert(table->GetMaterialiv);
-   assert(table->GetPixelMapfv);
-   assert(table->GetPixelMapuiv);
-   assert(table->GetPixelMapusv);
-   assert(table->GetPolygonStipple);
-   assert(table->GetString);
-   assert(table->GetTexEnvfv);
-   assert(table->GetTexEnviv);
-   assert(table->GetTexGendv);
-   assert(table->GetTexGenfv);
-   assert(table->GetTexGeniv);
-   assert(table->GetTexImage);
-   assert(table->GetTexLevelParameterfv);
-   assert(table->GetTexLevelParameteriv);
-   assert(table->GetTexParameterfv);
-   assert(table->GetTexParameteriv);
-   assert(table->Hint);
-   assert(table->IndexMask);
-   assert(table->Indexd);
-   assert(table->Indexdv);
-   assert(table->Indexf);
-   assert(table->Indexfv);
-   assert(table->Indexi);
-   assert(table->Indexiv);
-   assert(table->Indexs);
-   assert(table->Indexsv);
-   assert(table->InitNames);
-   assert(table->IsEnabled);
-   assert(table->IsList);
-   assert(table->LightModelf);
-   assert(table->LightModelfv);
-   assert(table->LightModeli);
-   assert(table->LightModeliv);
-   assert(table->Lightf);
-   assert(table->Lightfv);
-   assert(table->Lighti);
-   assert(table->Lightiv);
-   assert(table->LineStipple);
-   assert(table->LineWidth);
-   assert(table->ListBase);
-   assert(table->LoadIdentity);
-   assert(table->LoadMatrixd);
-   assert(table->LoadMatrixf);
-   assert(table->LoadName);
-   assert(table->LogicOp);
-   assert(table->Map1d);
-   assert(table->Map1f);
-   assert(table->Map2d);
-   assert(table->Map2f);
-   assert(table->MapGrid1d);
-   assert(table->MapGrid1f);
-   assert(table->MapGrid2d);
-   assert(table->MapGrid2f);
-   assert(table->Materialf);
-   assert(table->Materialfv);
-   assert(table->Materiali);
-   assert(table->Materialiv);
-   assert(table->MatrixMode);
-   assert(table->MultMatrixd);
-   assert(table->MultMatrixf);
-   assert(table->NewList);
-   assert(table->Normal3b);
-   assert(table->Normal3bv);
-   assert(table->Normal3d);
-   assert(table->Normal3dv);
-   assert(table->Normal3f);
-   assert(table->Normal3fv);
-   assert(table->Normal3i);
-   assert(table->Normal3iv);
-   assert(table->Normal3s);
-   assert(table->Normal3sv);
-   assert(table->Ortho);
-   assert(table->PassThrough);
-   assert(table->PixelMapfv);
-   assert(table->PixelMapuiv);
-   assert(table->PixelMapusv);
-   assert(table->PixelStoref);
-   assert(table->PixelStorei);
-   assert(table->PixelTransferf);
-   assert(table->PixelTransferi);
-   assert(table->PixelZoom);
-   assert(table->PointSize);
-   assert(table->PolygonMode);
-   assert(table->PolygonOffset);
-   assert(table->PolygonStipple);
-   assert(table->PopAttrib);
-   assert(table->PopMatrix);
-   assert(table->PopName);
-   assert(table->PushAttrib);
-   assert(table->PushMatrix);
-   assert(table->PushName);
-   assert(table->RasterPos2d);
-   assert(table->RasterPos2dv);
-   assert(table->RasterPos2f);
-   assert(table->RasterPos2fv);
-   assert(table->RasterPos2i);
-   assert(table->RasterPos2iv);
-   assert(table->RasterPos2s);
-   assert(table->RasterPos2sv);
-   assert(table->RasterPos3d);
-   assert(table->RasterPos3dv);
-   assert(table->RasterPos3f);
-   assert(table->RasterPos3fv);
-   assert(table->RasterPos3i);
-   assert(table->RasterPos3iv);
-   assert(table->RasterPos3s);
-   assert(table->RasterPos3sv);
-   assert(table->RasterPos4d);
-   assert(table->RasterPos4dv);
-   assert(table->RasterPos4f);
-   assert(table->RasterPos4fv);
-   assert(table->RasterPos4i);
-   assert(table->RasterPos4iv);
-   assert(table->RasterPos4s);
-   assert(table->RasterPos4sv);
-   assert(table->ReadBuffer);
-   assert(table->ReadPixels);
-   assert(table->Rectd);
-   assert(table->Rectdv);
-   assert(table->Rectf);
-   assert(table->Rectfv);
-   assert(table->Recti);
-   assert(table->Rectiv);
-   assert(table->Rects);
-   assert(table->Rectsv);
-   assert(table->RenderMode);
-   assert(table->Rotated);
-   assert(table->Rotatef);
-   assert(table->Scaled);
-   assert(table->Scalef);
-   assert(table->Scissor);
-   assert(table->SelectBuffer);
-   assert(table->ShadeModel);
-   assert(table->StencilFunc);
-   assert(table->StencilMask);
-   assert(table->StencilOp);
-   assert(table->TexCoord1d);
-   assert(table->TexCoord1dv);
-   assert(table->TexCoord1f);
-   assert(table->TexCoord1fv);
-   assert(table->TexCoord1i);
-   assert(table->TexCoord1iv);
-   assert(table->TexCoord1s);
-   assert(table->TexCoord1sv);
-   assert(table->TexCoord2d);
-   assert(table->TexCoord2dv);
-   assert(table->TexCoord2f);
-   assert(table->TexCoord2fv);
-   assert(table->TexCoord2i);
-   assert(table->TexCoord2iv);
-   assert(table->TexCoord2s);
-   assert(table->TexCoord2sv);
-   assert(table->TexCoord3d);
-   assert(table->TexCoord3dv);
-   assert(table->TexCoord3f);
-   assert(table->TexCoord3fv);
-   assert(table->TexCoord3i);
-   assert(table->TexCoord3iv);
-   assert(table->TexCoord3s);
-   assert(table->TexCoord3sv);
-   assert(table->TexCoord4d);
-   assert(table->TexCoord4dv);
-   assert(table->TexCoord4f);
-   assert(table->TexCoord4fv);
-   assert(table->TexCoord4i);
-   assert(table->TexCoord4iv);
-   assert(table->TexCoord4s);
-   assert(table->TexCoord4sv);
-   assert(table->TexEnvf);
-   assert(table->TexEnvfv);
-   assert(table->TexEnvi);
-   assert(table->TexEnviv);
-   assert(table->TexGend);
-   assert(table->TexGendv);
-   assert(table->TexGenf);
-   assert(table->TexGenfv);
-   assert(table->TexGeni);
-   assert(table->TexGeniv);
-   assert(table->TexImage1D);
-   assert(table->TexImage2D);
-   assert(table->TexParameterf);
-   assert(table->TexParameterfv);
-   assert(table->TexParameteri);
-   assert(table->TexParameteriv);
-   assert(table->Translated);
-   assert(table->Translatef);
-   assert(table->Vertex2d);
-   assert(table->Vertex2dv);
-   assert(table->Vertex2f);
-   assert(table->Vertex2fv);
-   assert(table->Vertex2i);
-   assert(table->Vertex2iv);
-   assert(table->Vertex2s);
-   assert(table->Vertex2sv);
-   assert(table->Vertex3d);
-   assert(table->Vertex3dv);
-   assert(table->Vertex3f);
-   assert(table->Vertex3fv);
-   assert(table->Vertex3i);
-   assert(table->Vertex3iv);
-   assert(table->Vertex3s);
-   assert(table->Vertex3sv);
-   assert(table->Vertex4d);
-   assert(table->Vertex4dv);
-   assert(table->Vertex4f);
-   assert(table->Vertex4fv);
-   assert(table->Vertex4i);
-   assert(table->Vertex4iv);
-   assert(table->Vertex4s);
-   assert(table->Vertex4sv);
-   assert(table->Viewport);
-
-#ifdef _GLAPI_VERSION_1_1
-   assert(table->AreTexturesResident);
-   assert(table->ArrayElement);
-   assert(table->BindTexture);
-   assert(table->ColorPointer);
-   assert(table->CopyTexImage1D);
-   assert(table->CopyTexImage2D);
-   assert(table->CopyTexSubImage1D);
-   assert(table->CopyTexSubImage2D);
-   assert(table->DeleteTextures);
-   assert(table->DisableClientState);
-   assert(table->DrawArrays);
-   assert(table->EdgeFlagPointer);
-   assert(table->EnableClientState);
-   assert(table->GenTextures);
-   assert(table->GetPointerv);
-   assert(table->IndexPointer);
-   assert(table->Indexub);
-   assert(table->Indexubv);
-   assert(table->InterleavedArrays);
-   assert(table->IsTexture);
-   assert(table->NormalPointer);
-   assert(table->PopClientAttrib);
-   assert(table->PrioritizeTextures);
-   assert(table->PushClientAttrib);
-   assert(table->TexCoordPointer);
-   assert(table->TexSubImage1D);
-   assert(table->TexSubImage2D);
-   assert(table->VertexPointer);
-#endif
-
-#ifdef _GLAPI_VERSION_1_2
-   assert(table->CopyTexSubImage3D);
-   assert(table->DrawRangeElements);
-   assert(table->TexImage3D);
-   assert(table->TexSubImage3D);
-#ifdef _GLAPI_ARB_imaging
-   assert(table->BlendColor);
-   assert(table->BlendEquation);
-   assert(table->ColorSubTable);
-   assert(table->ColorTable);
-   assert(table->ColorTableParameterfv);
-   assert(table->ColorTableParameteriv);
-   assert(table->ConvolutionFilter1D);
-   assert(table->ConvolutionFilter2D);
-   assert(table->ConvolutionParameterf);
-   assert(table->ConvolutionParameterfv);
-   assert(table->ConvolutionParameteri);
-   assert(table->ConvolutionParameteriv);
-   assert(table->CopyColorSubTable);
-   assert(table->CopyColorTable);
-   assert(table->CopyConvolutionFilter1D);
-   assert(table->CopyConvolutionFilter2D);
-   assert(table->GetColorTable);
-   assert(table->GetColorTableParameterfv);
-   assert(table->GetColorTableParameteriv);
-   assert(table->GetConvolutionFilter);
-   assert(table->GetConvolutionParameterfv);
-   assert(table->GetConvolutionParameteriv);
-   assert(table->GetHistogram);
-   assert(table->GetHistogramParameterfv);
-   assert(table->GetHistogramParameteriv);
-   assert(table->GetMinmax);
-   assert(table->GetMinmaxParameterfv);
-   assert(table->GetMinmaxParameteriv);
-   assert(table->Histogram);
-   assert(table->Minmax);
-   assert(table->ResetHistogram);
-   assert(table->ResetMinmax);
-   assert(table->SeparableFilter2D);
-#endif
-#endif
-
-
-#ifdef _GLAPI_EXT_paletted_texture
-   assert(table->ColorTableEXT);
-   assert(table->ColorSubTableEXT);
-   assert(table->GetColorTableEXT);
-   assert(table->GetColorTableParameterfvEXT);
-   assert(table->GetColorTableParameterivEXT);
-#endif
-
-#ifdef _GLAPI_EXT_compiled_vertex_array
-   assert(table->LockArraysEXT);
-   assert(table->UnlockArraysEXT);
-#endif
-
-#ifdef _GLAPI_EXT_point_parameter
-   assert(table->PointParameterfEXT);
-   assert(table->PointParameterfvEXT);
-#endif
-
-#ifdef _GLAPI_EXT_polygon_offset
-   assert(table->PolygonOffsetEXT);
-#endif
-
-#ifdef _GLAPI_ARB_multitexture
-   assert(table->ActiveTextureARB);
-   assert(table->ClientActiveTextureARB);
-   assert(table->MultiTexCoord1dARB);
-   assert(table->MultiTexCoord1dvARB);
-   assert(table->MultiTexCoord1fARB);
-   assert(table->MultiTexCoord1fvARB);
-   assert(table->MultiTexCoord1iARB);
-   assert(table->MultiTexCoord1ivARB);
-   assert(table->MultiTexCoord1sARB);
-   assert(table->MultiTexCoord1svARB);
-   assert(table->MultiTexCoord2dARB);
-   assert(table->MultiTexCoord2dvARB);
-   assert(table->MultiTexCoord2fARB);
-   assert(table->MultiTexCoord2fvARB);
-   assert(table->MultiTexCoord2iARB);
-   assert(table->MultiTexCoord2ivARB);
-   assert(table->MultiTexCoord2sARB);
-   assert(table->MultiTexCoord2svARB);
-   assert(table->MultiTexCoord3dARB);
-   assert(table->MultiTexCoord3dvARB);
-   assert(table->MultiTexCoord3fARB);
-   assert(table->MultiTexCoord3fvARB);
-   assert(table->MultiTexCoord3iARB);
-   assert(table->MultiTexCoord3ivARB);
-   assert(table->MultiTexCoord3sARB);
-   assert(table->MultiTexCoord3svARB);
-   assert(table->MultiTexCoord4dARB);
-   assert(table->MultiTexCoord4dvARB);
-   assert(table->MultiTexCoord4fARB);
-   assert(table->MultiTexCoord4fvARB);
-   assert(table->MultiTexCoord4iARB);
-   assert(table->MultiTexCoord4ivARB);
-   assert(table->MultiTexCoord4sARB);
-   assert(table->MultiTexCoord4svARB);
-#endif
-
-#ifdef _GLAPI_INGR_blend_func_separate
-   assert(table->BlendFuncSeparateINGR);
-#endif
-
-#ifdef _GLAPI_MESA_window_pos
-   assert(table->WindowPos4fMESA);
-#endif
-
-#ifdef _GLAPI_MESA_resize_buffers
-   assert(table->ResizeBuffersMESA);
-#endif
-
-#ifdef _GLAPI_ARB_transpose_matrix
-   assert(table->LoadTransposeMatrixdARB);
-   assert(table->LoadTransposeMatrixfARB);
-   assert(table->MultTransposeMatrixdARB);
-   assert(table->MultTransposeMatrixfARB);
-#endif
-#endif
-}
-
-
-
-/*
- * Generate the GL entrypoint functions here.
- */
-
-#define KEYWORD1
-#define KEYWORD2 GLAPIENTRY
-#ifdef USE_MGL_NAMESPACE
-#define NAME(func)  mgl##func
-#else
-#define NAME(func)  gl##func
-#endif
-
-#include "glapitemp.h"
 
