@@ -1,0 +1,495 @@
+;****************************************************************************
+;*
+;*                        Mesa 3-D graphics library
+;*                        Direct3D Driver Interface
+;*
+;*  ========================================================================
+;*
+;*   Copyright (C) 1991-2004 SciTech Software, Inc. All rights reserved.
+;*
+;*   Permission is hereby granted, free of charge, to any person obtaining a
+;*   copy of this software and associated documentation files (the "Software"),
+;*   to deal in the Software without restriction, including without limitation
+;*   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+;*   and/or sell copies of the Software, and to permit persons to whom the
+;*   Software is furnished to do so, subject to the following conditions:
+;*
+;*   The above copyright notice and this permission notice shall be included
+;*   in all copies or substantial portions of the Software.
+;*
+;*   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+;*   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;*   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+;*   SCITECH SOFTWARE INC BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+;*   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+;*   OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;*   SOFTWARE.
+;*
+;*  ======================================================================
+;*
+;* Language:     ANSI C
+;* Environment:  Windows 9x/2000/XP/XBox (Win32)
+;*
+;* Description:  DLL Module definition file
+;*
+;****************************************************************************/
+
+DESCRIPTION 'GLDirect'
+
+VERSION 3.0
+
+EXPORTS
+ glAccum
+ glAlphaFunc
+ glAreTexturesResident
+ glArrayElement
+ glBegin
+ glBindTexture
+ glBitmap
+ glBlendFunc
+ glCallList
+ glCallLists
+ glClear
+ glClearAccum
+ glClearIndex
+ glClearColor
+ glClearDepth
+ glClearStencil
+ glClipPlane
+ glColor3b
+ glColor3d
+ glColor3f
+ glColor3i
+ glColor3s
+ glColor3ub
+ glColor3ui
+ glColor3us
+ glColor4b
+ glColor4d
+ glColor4f
+ glColor4i
+ glColor4s
+ glColor4ub
+ glColor4ui
+ glColor4us
+ glColor3bv
+ glColor3dv
+ glColor3fv
+ glColor3iv
+ glColor3sv
+ glColor3ubv
+ glColor3uiv
+ glColor3usv
+ glColor4bv
+ glColor4dv
+ glColor4fv
+ glColor4iv
+ glColor4sv
+ glColor4ubv
+ glColor4uiv
+ glColor4usv
+ glColorMask
+ glColorMaterial
+ glColorPointer
+ glColorTableEXT
+ glColorSubTableEXT
+ glCopyPixels
+ glCopyTexImage1D
+ glCopyTexImage2D
+ glCopyTexSubImage1D
+ glCopyTexSubImage2D
+ glCullFace
+ glDepthFunc
+ glDepthMask
+ glDepthRange
+ glDeleteLists
+ glDeleteTextures
+ glDisable
+ glDisableClientState
+ glDrawArrays
+ glDrawBuffer
+ glDrawElements
+ glDrawPixels
+ glEnable
+ glEnableClientState
+ glEnd
+ glEndList
+ glEvalCoord1d
+ glEvalCoord1f
+ glEvalCoord1dv
+ glEvalCoord1fv
+ glEvalCoord2d
+ glEvalCoord2f
+ glEvalCoord2dv
+ glEvalCoord2fv
+ glEvalPoint1
+ glEvalPoint2
+ glEvalMesh1
+ glEdgeFlag
+ glEdgeFlagv
+ glEdgeFlagPointer
+ glEvalMesh2
+ glFeedbackBuffer
+ glFinish
+ glFlush
+ glFogf
+ glFogi
+ glFogfv
+ glFogiv
+ glFrontFace
+ glFrustum
+ glGenLists
+ glGenTextures
+ glGetBooleanv
+ glGetClipPlane
+ glGetColorTableEXT
+ glGetColorTableParameterivEXT
+ glGetColorTableParameterfvEXT
+ glGetDoublev
+ glGetError
+ glGetFloatv
+ glGetIntegerv
+ glGetLightfv
+ glGetLightiv
+ glGetMapdv
+ glGetMapfv
+ glGetMapiv
+ glGetMaterialfv
+ glGetMaterialiv
+ glGetPixelMapfv
+ glGetPixelMapuiv
+ glGetPixelMapusv
+ glGetPointerv
+ glGetPolygonStipple
+ glGetString
+ glGetTexEnvfv
+ glGetTexEnviv
+ glGetTexGeniv
+ glGetTexGendv
+ glGetTexGenfv
+ glGetTexImage
+ glGetTexLevelParameterfv
+ glGetTexLevelParameteriv
+ glGetTexParameterfv
+ glGetTexParameteriv
+ glHint
+ glIndexd
+ glIndexf
+ glIndexi
+ glIndexs
+ glIndexub
+ glIndexdv
+ glIndexfv
+ glIndexiv
+ glIndexsv
+ glIndexubv
+ glIndexMask
+ glIndexPointer
+ glInterleavedArrays
+ glInitNames
+ glIsList
+ glIsTexture
+ glLightf
+ glLighti
+ glLightfv
+ glLightiv
+ glLightModelf
+ glLightModeli
+ glLightModelfv
+ glLightModeliv
+ glLineWidth
+ glLineStipple
+ glListBase
+ glLoadIdentity
+ glLoadMatrixd
+ glLoadMatrixf
+ glLoadName
+ glLogicOp
+ glMap1d
+ glMap1f
+ glMap2d
+ glMap2f
+ glMapGrid1d
+ glMapGrid1f
+ glMapGrid2d
+ glMapGrid2f
+ glMaterialf
+ glMateriali
+ glMaterialfv
+ glMaterialiv
+ glMatrixMode
+ glMultMatrixd
+ glMultMatrixf
+ glNewList
+ glNormal3b
+ glNormal3d
+ glNormal3f
+ glNormal3i
+ glNormal3s
+ glNormal3bv
+ glNormal3dv
+ glNormal3fv
+ glNormal3iv
+ glNormal3sv
+ glNormalPointer
+ glOrtho
+ glPassThrough
+ glPixelMapfv
+ glPixelMapuiv
+ glPixelMapusv
+ glPixelStoref
+ glPixelStorei
+ glPixelTransferf
+ glPixelTransferi
+ glPixelZoom
+ glPointSize
+ glPolygonMode
+ glPolygonOffset
+ glPolygonOffsetEXT
+ glPolygonStipple
+ glPopAttrib
+ glPopClientAttrib
+ glPopMatrix
+ glPopName
+ glPrioritizeTextures
+ glPushMatrix
+ glRasterPos2d
+ glRasterPos2f
+ glRasterPos2i
+ glRasterPos2s
+ glRasterPos3d
+ glRasterPos3f
+ glRasterPos3i
+ glRasterPos3s
+ glRasterPos4d
+ glRasterPos4f
+ glRasterPos4i
+ glRasterPos4s
+ glRasterPos2dv
+ glRasterPos2fv
+ glRasterPos2iv
+ glRasterPos2sv
+ glRasterPos3dv
+ glRasterPos3fv
+ glRasterPos3iv
+ glRasterPos3sv
+ glRasterPos4dv
+ glRasterPos4fv
+ glRasterPos4iv
+ glRasterPos4sv
+ glReadBuffer
+ glReadPixels
+ glRectd
+ glRectf
+ glRecti
+ glRects
+ glRectdv
+ glRectfv
+ glRectiv
+ glRectsv
+ glScissor
+ glIsEnabled
+ glPushAttrib
+ glPushClientAttrib
+ glPushName
+ glRenderMode
+ glRotated
+ glRotatef
+ glSelectBuffer
+ glScaled
+ glScalef
+ glShadeModel
+ glStencilFunc
+ glStencilMask
+ glStencilOp
+ glTexCoord1d
+ glTexCoord1f
+ glTexCoord1i
+ glTexCoord1s
+ glTexCoord2d
+ glTexCoord2f
+ glTexCoord2i
+ glTexCoord2s
+ glTexCoord3d
+ glTexCoord3f
+ glTexCoord3i
+ glTexCoord3s
+ glTexCoord4d
+ glTexCoord4f
+ glTexCoord4i
+ glTexCoord4s
+ glTexCoord1dv
+ glTexCoord1fv
+ glTexCoord1iv
+ glTexCoord1sv
+ glTexCoord2dv
+ glTexCoord2fv
+ glTexCoord2iv
+ glTexCoord2sv
+ glTexCoord3dv
+ glTexCoord3fv
+ glTexCoord3iv
+ glTexCoord3sv
+ glTexCoord4dv
+ glTexCoord4fv
+ glTexCoord4iv
+ glTexCoord4sv
+ glTexCoordPointer
+ glTexGend
+ glTexGenf
+ glTexGeni
+ glTexGendv
+ glTexGeniv
+ glTexGenfv
+ glTexEnvf
+ glTexEnvi
+ glTexEnvfv
+ glTexEnviv
+ glTexImage1D
+ glTexImage2D
+ glTexParameterf
+ glTexParameteri
+ glTexParameterfv
+ glTexParameteriv
+ glTexSubImage1D
+ glTexSubImage2D
+ glTranslated
+ glTranslatef
+ glVertex2d
+ glVertex2f
+ glVertex2i
+ glVertex2s
+ glVertex3d
+ glVertex3f
+ glVertex3i
+ glVertex3s
+ glVertex4d
+ glVertex4f
+ glVertex4i
+ glVertex4s
+ glVertex2dv
+ glVertex2fv
+ glVertex2iv
+ glVertex2sv
+ glVertex3dv
+ glVertex3fv
+ glVertex3iv
+ glVertex3sv
+ glVertex4dv
+ glVertex4fv
+ glVertex4iv
+ glVertex4sv
+ glVertexPointer
+ glViewport
+
+ glBlendEquationEXT
+ glBlendColorEXT
+ glVertexPointerEXT
+ glNormalPointerEXT
+ glColorPointerEXT
+ glIndexPointerEXT
+ glTexCoordPointerEXT
+ glEdgeFlagPointerEXT
+ glGetPointervEXT
+ glArrayElementEXT
+ glDrawArraysEXT
+ glBindTextureEXT
+ glDeleteTexturesEXT
+ glGenTexturesEXT
+ glPrioritizeTexturesEXT
+ glCopyTexSubImage3DEXT
+ glTexImage3DEXT
+ glTexSubImage3DEXT
+
+ glWindowPos4fMESA
+ glWindowPos2iMESA
+ glWindowPos2sMESA
+ glWindowPos2fMESA
+ glWindowPos2dMESA
+ glWindowPos2ivMESA
+ glWindowPos2svMESA
+ glWindowPos2fvMESA
+ glWindowPos2dvMESA
+ glWindowPos3iMESA
+ glWindowPos3sMESA
+ glWindowPos3fMESA
+ glWindowPos3dMESA
+ glWindowPos3ivMESA
+ glWindowPos3svMESA
+ glWindowPos3fvMESA
+ glWindowPos3dvMESA
+ glWindowPos4iMESA
+ glWindowPos4sMESA
+ glWindowPos4dMESA
+ glWindowPos4ivMESA
+ glWindowPos4svMESA
+ glWindowPos4fvMESA
+ glWindowPos4dvMESA
+ glResizeBuffersMESA
+
+ wglCopyContext
+ wglCreateContext
+ wglCreateLayerContext
+ wglDeleteContext
+ wglDescribeLayerPlane
+ wglGetCurrentContext
+ wglGetCurrentDC
+ wglGetLayerPaletteEntries
+ wglGetProcAddress
+ wglMakeCurrent
+ wglRealizeLayerPalette
+ wglSetLayerPaletteEntries
+ wglShareLists
+ wglSwapLayerBuffers
+ wglUseFontBitmapsA
+ wglUseFontBitmapsW
+ wglUseFontOutlinesA
+ wglUseFontOutlinesW
+
+;These functions are identical and therefore share the same addresses
+ ChoosePixelFormat = wglChoosePixelFormat
+ DescribePixelFormat = wglDescribePixelFormat
+ GetPixelFormat = wglGetPixelFormat
+ SetPixelFormat = wglSetPixelFormat 
+ SwapBuffers = wglSwapBuffers
+
+ wglChoosePixelFormat
+ wglDescribePixelFormat
+ wglGetPixelFormat
+ wglSetPixelFormat
+ wglSwapBuffers
+
+ glActiveTextureARB
+ glClientActiveTextureARB
+ glMultiTexCoord1dARB
+ glMultiTexCoord1dvARB
+ glMultiTexCoord1fARB
+ glMultiTexCoord1fvARB
+ glMultiTexCoord1iARB
+ glMultiTexCoord1ivARB
+ glMultiTexCoord1sARB
+ glMultiTexCoord1svARB
+ glMultiTexCoord2dARB
+ glMultiTexCoord2dvARB
+ glMultiTexCoord2fARB
+ glMultiTexCoord2fvARB
+ glMultiTexCoord2iARB
+ glMultiTexCoord2ivARB
+ glMultiTexCoord2sARB
+ glMultiTexCoord2svARB
+ glMultiTexCoord3dARB
+ glMultiTexCoord3dvARB
+ glMultiTexCoord3fARB
+ glMultiTexCoord3fvARB
+ glMultiTexCoord3iARB
+ glMultiTexCoord3ivARB
+ glMultiTexCoord3sARB
+ glMultiTexCoord3svARB
+ glMultiTexCoord4dARB
+ glMultiTexCoord4dvARB
+ glMultiTexCoord4fARB
+ glMultiTexCoord4fvARB
+ glMultiTexCoord4iARB
+ glMultiTexCoord4ivARB
+ glMultiTexCoord4sARB
+ glMultiTexCoord4svARB
