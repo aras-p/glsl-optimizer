@@ -23,6 +23,10 @@ extern "C" {
 #define GLAPI extern
 #endif
 
+#ifdef GLAPIENTRY
+#define APIENTRY GLAPIENTRY
+#endif
+
 #ifndef APIENTRY
 #define APIENTRY
 #endif
