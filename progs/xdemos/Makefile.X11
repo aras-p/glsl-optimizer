@@ -55,6 +55,11 @@ pbdemo.o: pbdemo.c pbutil.h
 pbutil.o: pbutil.c pbutil.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
 
+glxgears_fbconfig.o: glxgears_fbconfig.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) glxgears_fbconfig.c
+
+glxgears_fbconfig: glxgears_fbconfig.o pbutil.o
+	$(CC) glxgears_fbconfig.o pbutil.o $(LIBS) -o $@
 
 xrotfontdemo: xrotfontdemo.o xuserotfont.o
 	$(CC) xrotfontdemo.o xuserotfont.o $(LIBS) -o $@
