@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -131,6 +130,7 @@ _tnl_DestroyContext( GLcontext *ctx )
    _tnl_vtx_destroy( ctx );
    _tnl_save_destroy( ctx );
    _tnl_destroy_pipeline( ctx );
+   _ae_destroy_context( ctx );
 
    FREE(tnl);
    ctx->swtnl_context = 0;
@@ -145,6 +145,8 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    if (new_state & _NEW_ARRAY) {
       tnl->pipeline.run_input_changes |= ctx->Array.NewState; /* overkill */
    }
+
+   _ae_invalidate_state(ctx, new_state);
 
    tnl->pipeline.run_state_changes |= new_state;
    tnl->pipeline.build_state_changes |= (new_state &
