@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.19 2000/04/07 16:28:38 brianp Exp $
+# $Id: Makefile.X11,v 1.20 2000/07/14 14:55:04 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -210,11 +210,7 @@ FX/fxvsetup.o: FX/fxvsetup.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 FX/fxglidew.o: FX/fxglidew.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/X86/fx_3dnow_fastpath.o: FX/X86/fx_3dnow_fastpath.S FX/X86/fx_regoff.h
-FX/X86/fx_regoff.h: FX/X86/fx_gen_regoff
-	$< > $@
-FX/X86/fx_gen_regoff : FX/X86/fx_gen_regoff.c
-	$(CC) -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+FX/X86/fx_3dnow_fastpath.o: FX/X86/fx_3dnow_fastpath.S
 GGI/ggimesa.o: GGI/ggimesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/x86.o: X86/x86.c
