@@ -451,8 +451,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( tex.unknown5, variable, mtu+1, "tex_unknown5", 0 );
 		r300->hw.tex.unknown5.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK5_0, 0);
 		
-	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
-		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_BORDER_COLOR_0, 0);
+	//ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
+	//	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_BORDER_COLOR_0, 0);
 	
 
 	/* Setup the atom linked list */
@@ -531,7 +531,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.offset);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown4);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.unknown5);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.border_color);
+	//insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.border_color);
 
 	r300->hw.is_dirty = GL_TRUE;
 	r300->hw.all_dirty = GL_TRUE;
