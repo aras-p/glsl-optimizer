@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.7 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: macros.h,v 1.8 1999/11/22 18:57:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,16 +53,48 @@
 #endif
 
 
+/* Limits: */
+#define MAX_GLUSHORT	0xffff
+#define MAX_GLUINT	0xffffffff
+
+
+/* Some compilers don't like some of Mesa's const usage */
+#ifdef NO_CONST
+#  define CONST
+#else
+#  define CONST const
+#endif
+
+
+/* Pi */
+#ifndef M_PI
+#define M_PI (3.1415926)
+#endif
+
+
+/* Degrees to radians conversion: */
+#define DEG2RAD (M_PI/180.0)
+
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+
+
+/*
+ * Bitmask helpers
+ */
+#define SET_BITS(WORD, BITS)    (WORD) |= (BITS)
+#define CLEAR_BITS(WORD, BITS)  (WORD) &= ~(BITS)
+#define TEST_BITS(WORD, BITS)   ((WORD) & (BITS))
+
+
 /* Stepping a GLfloat pointer by a byte stride 
  */
 #define STRIDE_F(p, i)  (p = (GLfloat *)((GLubyte *)p + i))
 #define STRIDE_UI(p, i)  (p = (GLuint *)((GLubyte *)p + i))
 #define STRIDE_T(p, t, i)  (p = (t *)((GLubyte *)p + i))
-
-
-/* Limits: */
-#define MAX_GLUSHORT	0xffff
-#define MAX_GLUINT	0xffffffff
 
 
 #define ZERO_2V( DST )	(DST)[0] = (DST)[1] = 0
@@ -413,17 +445,11 @@ do {						\
  * Integer / float conversion for colors, normals, etc.
  */
 
-
-
-
 #define BYTE_TO_UBYTE(b)   (b < 0 ? 0 : (GLubyte) b)
 #define SHORT_TO_UBYTE(s)  (s < 0 ? 0 : (GLubyte) (s >> 7))
 #define USHORT_TO_UBYTE(s)              (GLubyte) (s >> 8)
 #define INT_TO_UBYTE(i)    (i < 0 ? 0 : (GLubyte) (i >> 23))
 #define UINT_TO_UBYTE(i)                (GLubyte) (i >> 24)
-
-
-
 
 /* Convert GLubyte in [0,255] to GLfloat in [0.0,1.0] */
 #define UBYTE_TO_FLOAT(B)	((GLfloat) (B) * (1.0F / 255.0F))
@@ -469,32 +495,6 @@ do {						\
 */
 /* a close approximation: */
 #define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
-
-
-
-/* Some compilers don't like some of Mesa's const usage */
-#ifdef NO_CONST
-#  define CONST
-#else
-#  define CONST const
-#endif
-
-
-
-/* Pi */
-#ifndef M_PI
-#define M_PI (3.1415926)
-#endif
-
-
-/* Degrees to radians conversion: */
-#define DEG2RAD (M_PI/180.0)
-
-
-#ifndef NULL
-#define NULL 0
-#endif
-
 
 
 #endif /*MACROS_H*/
