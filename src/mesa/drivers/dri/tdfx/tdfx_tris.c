@@ -709,10 +709,7 @@ static void tdfx_render_vb_tri_strip( GLcontext *ctx,
 /*     fprintf(stderr, "%s/%d\n", __FUNCTION__, 1<<shift); */
 /*     if(!prevLockLine) abort(); */
 
-   if (flags & PRIM_PARITY) 
-      mode = GR_TRIANGLE_STRIP_CONTINUE;
-   else
-      mode = GR_TRIANGLE_STRIP;
+   mode = GR_TRIANGLE_STRIP;
 
    fxMesa->Glide.grDrawVertexArrayContiguous( mode, count-start,
                                               fxVB, 1<<shift);

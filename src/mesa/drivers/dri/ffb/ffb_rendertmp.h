@@ -325,8 +325,6 @@ static void TAG(ffb_vb_tri_strip)(GLcontext *ctx, GLuint start, GLuint count, GL
 		__FUNCTION__, start, count, flags);
 #endif
 	ffbRenderPrimitive(ctx, GL_TRIANGLE_STRIP);
-	if ((flags & PRIM_PARITY) != 0)
-		parity = 1;
 
 	i = start + 2;
 	goto something_clipped;
