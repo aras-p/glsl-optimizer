@@ -66,5 +66,5 @@ typedef union {
    } tv;
    float f[16];
    unsigned int ui[16];
-   unsigned char ub4[4][16];
+   unsigned char ub4[16][4];
 } TAG(Vertex), *TAG(VertexPtr);

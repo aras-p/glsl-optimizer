@@ -125,8 +125,6 @@ static void TAG(emit)( GLcontext *ctx,
    const GLubyte *mask = VB->ClipMask;
    int i;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-
    if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE) {
       (void) s;
       coord = VB->ClipPtr->data;
@@ -139,16 +137,6 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (DO_TEX3) {
       const GLuint t3 = GET_TEXSOURCE(3);
-
-      if (VB->TexCoordPtr[2] == 0) {
-	 if (VB->TexCoordPtr[1] == 0) {
-	    if (VB->TexCoordPtr[0] == 0) 
-	       VB->TexCoordPtr[0] = VB->TexCoordPtr[t3];
-	    VB->TexCoordPtr[1] = VB->TexCoordPtr[t3];
-	 }
-	 VB->TexCoordPtr[2] = VB->TexCoordPtr[t3];
-      }
-
       tc3 = VB->TexCoordPtr[t3]->data;
       tc3_stride = VB->TexCoordPtr[t3]->stride;
       if (DO_PTEX)
@@ -157,28 +145,18 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (DO_TEX2) {
       const GLuint t2 = GET_TEXSOURCE(2);
-
-      if (VB->TexCoordPtr[1] == 0) {
-	 if (VB->TexCoordPtr[0] == 0)
-	    VB->TexCoordPtr[0] = VB->TexCoordPtr[t2];
-	 VB->TexCoordPtr[1] = VB->TexCoordPtr[t2];
-      }
-
       tc2 = VB->TexCoordPtr[t2]->data;
       tc2_stride = VB->TexCoordPtr[t2]->stride;
       if (DO_PTEX)
 	 tc2_size = VB->TexCoordPtr[t2]->size;
    }
 
-
    if (DO_TEX1) {
       const GLuint t1 = GET_TEXSOURCE(1);
-      if (VB->TexCoordPtr[0] == 0)
-	 VB->TexCoordPtr[0] = VB->TexCoordPtr[t1];
-      tc1 = VB->TexCoordPtr[1]->data;
-      tc1_stride = VB->TexCoordPtr[1]->stride;
+      tc1 = VB->TexCoordPtr[t1]->data;
+      tc1_stride = VB->TexCoordPtr[t1]->stride;
       if (DO_PTEX)
-	 tc1_size = VB->TexCoordPtr[1]->size;
+	 tc1_size = VB->TexCoordPtr[t1]->size;
    }
 
    if (DO_TEX0) {
@@ -422,8 +400,6 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    (void) s;
 
-/*     fprintf(stderr, "%s (template 2)\n", __FUNCTION__); */
-
    ASSERT(stride == 4);
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
@@ -523,6 +499,15 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
+   if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
+      VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
+
+   if (DO_TEX2 && VB->TexCoordPtr[1] == 0)
+      VB->TexCoordPtr[1] = VB->TexCoordPtr[2];
+
+   if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
+      VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
+
    if (DO_PTEX)
       return GL_TRUE;
    
@@ -538,6 +523,15 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+
+   if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
+      VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
+
+   if (DO_TEX2 && VB->TexCoordPtr[1] == 0)
+      VB->TexCoordPtr[1] = VB->TexCoordPtr[2];
+
+   if (DO_TEX1 && VB->TexCoordPtr[0] == 0)
+      VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
 
    if (DO_PTEX) 
       return GL_TRUE;
@@ -582,7 +576,6 @@ static void TAG(interp)( GLcontext *ctx,
 
    (void)s;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
    
    if (!HAVE_HW_DIVIDE) {
       w = 1.0 / dstclip[3];
@@ -599,9 +592,8 @@ static void TAG(interp)( GLcontext *ctx,
 
    if (HAVE_HW_DIVIDE || DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 || 
        DO_TEX2 || DO_TEX3) {
-      
-      if (!HAVE_HW_VIEWPORT || !HAVE_HW_DIVIDE)
-	 dst->v.w = w;	
+
+      dst->v.w = w;	
    
       INTERP_UB( t, dst->ub4[4][0], out->ub4[4][0], in->ub4[4][0] );
       INTERP_UB( t, dst->ub4[4][1], out->ub4[4][1], in->ub4[4][1] );
