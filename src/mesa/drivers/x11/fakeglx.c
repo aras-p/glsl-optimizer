@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.16 1999/11/22 22:17:06 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.17 1999/11/25 17:37:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1056,18 +1056,24 @@ GLXContext Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
 }
 
 
-static GLXDrawable MakeCurrent_PrevDrawable = 0;
 static GLXContext MakeCurrent_PrevContext = 0;
-static XMesaBuffer MakeCurrent_PrevBuffer = 0;
+static GLXDrawable MakeCurrent_PrevDrawable = 0;
+static GLXDrawable MakeCurrent_PrevReadable = 0;
+static XMesaBuffer MakeCurrent_PrevDrawBuffer = 0;
+static XMesaBuffer MakeCurrent_PrevReadBuffer = 0;
 
 Bool Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
+#if 1
+   return Fake_glXMakeContextCurrent( dpy, drawable, drawable, ctx );
+#endif
+#if 0
    if (ctx && drawable) {
       XMesaBuffer buffer;
       XMesaContext xmctx = (XMesaContext) ctx;
 
       if (drawable==MakeCurrent_PrevDrawable && ctx==MakeCurrent_PrevContext) {
-         buffer = MakeCurrent_PrevBuffer;
+         buffer = MakeCurrent_PrevDrawBuffer;
       }
       else {
          buffer = XMesaFindBuffer( dpy, drawable );
@@ -1082,7 +1088,7 @@ Bool Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
       }
       MakeCurrent_PrevContext = ctx;
       MakeCurrent_PrevDrawable = drawable;
-      MakeCurrent_PrevBuffer = buffer;
+      MakeCurrent_PrevDrawBuffer = buffer;
 
       /* Now make current! */
       return (Bool) XMesaMakeCurrent( (XMesaContext) ctx, buffer );
@@ -1092,12 +1098,97 @@ Bool Fake_glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
       XMesaMakeCurrent( NULL, NULL );
       MakeCurrent_PrevContext = 0;
       MakeCurrent_PrevDrawable = 0;
-      MakeCurrent_PrevBuffer = 0;
+      MakeCurrent_PrevDrawBuffer = 0;
       return True;
    }
    else {
       /* ctx XOR drawable is NULL, this is an error */
       return False;
+   }
+#endif
+}
+
+
+
+/* GLX 1.3 and later */
+Bool Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
+                                 GLXDrawable read, GLXContext ctx )
+{
+   if (ctx && draw && read) {
+      XMesaBuffer drawBuffer, readBuffer;
+      XMesaContext xmctx = (XMesaContext) ctx;
+
+      /* Find the XMesaBuffer which corresponds to the GLXDrawable 'draw' */
+      if (ctx == MakeCurrent_PrevContext
+          && draw == MakeCurrent_PrevDrawable) {
+         drawBuffer = MakeCurrent_PrevDrawBuffer;
+      }
+      else {
+         drawBuffer = XMesaFindBuffer( dpy, draw );
+      }
+      if (!drawBuffer) {
+         /* drawable must be a new window! */
+         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, ctx );
+         if (!drawBuffer) {
+            /* Out of memory, or context/drawable depth mismatch */
+            return False;
+         }
+      }
+
+      /* Find the XMesaBuffer which corresponds to the GLXDrawable 'read' */
+      if (ctx == MakeCurrent_PrevContext
+          && read == MakeCurrent_PrevReadable) {
+         readBuffer = MakeCurrent_PrevReadBuffer;
+      }
+      else {
+         readBuffer = XMesaFindBuffer( dpy, read );
+      }
+      if (!readBuffer) {
+         /* drawable must be a new window! */
+         readBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, read, ctx );
+         if (!readBuffer) {
+            /* Out of memory, or context/drawable depth mismatch */
+            return False;
+         }
+      }
+
+      MakeCurrent_PrevContext = ctx;
+      MakeCurrent_PrevDrawable = draw;
+      MakeCurrent_PrevReadable = read;
+      MakeCurrent_PrevDrawBuffer = drawBuffer;
+      MakeCurrent_PrevReadBuffer = readBuffer;
+
+      /* Now make current! */
+      return (Bool) XMesaMakeCurrent2((XMesaContext) ctx, drawBuffer, readBuffer);
+   }
+   else if (!ctx && !draw && !read) {
+      /* release current context w/out assigning new one. */
+      XMesaMakeCurrent( NULL, NULL );
+      MakeCurrent_PrevContext = 0;
+      MakeCurrent_PrevDrawable = 0;
+      MakeCurrent_PrevReadable = 0;
+      MakeCurrent_PrevDrawBuffer = 0;
+      MakeCurrent_PrevReadBuffer = 0;
+      return True;
+   }
+   else {
+      /* The args must either all be non-zero or all zero.
+       * This is an error.
+       */
+      return False;
+   }
+}
+
+
+/* GLX 1.3 and later */
+GLXDrawable Fake_glXGetCurrentReadDrawable( void )
+{
+   XMesaBuffer b = XMesaGetCurrentReadBuffer();
+   if (b) {
+      return b->frontbuffer;
+   }
+   else {
+      return 0;
    }
 }
 
@@ -1198,7 +1289,9 @@ void Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
    (void) dpy;
    MakeCurrent_PrevContext = 0;
    MakeCurrent_PrevDrawable = 0;
-   MakeCurrent_PrevBuffer = 0;
+   MakeCurrent_PrevReadable = 0;
+   MakeCurrent_PrevDrawBuffer = 0;
+   MakeCurrent_PrevReadBuffer = 0;
    XMesaDestroyContext( (XMesaContext) ctx );
    XMesaGarbageCollect();
 }

@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.6 1999/11/23 19:54:27 brianp Exp $ */
+/* $Id: glxapi.c,v 1.7 1999/11/25 17:37:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -476,17 +476,23 @@ GLXContext glXCreateNewContext( Display *dpy, GLXFBConfig config,
 Bool glXMakeContextCurrent( Display *dpy, GLXDrawable draw, GLXDrawable read,
                             GLXContext ctx )
 {
-   (void) dpy;
-   (void) draw;
-   (void) read;
-   (void) ctx;
-   return 0;
+#ifdef REALGX
+   if (display_has_glx(dpy))
+      return Real_glXMakeContextCurrent(dpy, draw, read, ctx);
+   else
+#endif
+      return Fake_glXMakeContextCurrent(dpy, draw, read, ctx);
 }
 
 
 GLXDrawable glXGetCurrentReadDrawable( void )
 {
-   return 0;
+#ifdef REALGX
+   if (display_has_glx(dpy))
+      return Real_glXGetCurrentReadDrawable();
+   else
+#endif
+      return Fake_glXGetCurrentReadDrawable();
 }
 
 
