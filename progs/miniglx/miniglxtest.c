@@ -1,4 +1,4 @@
-/* $Id: miniglxtest.c,v 1.2 2003/08/23 01:28:59 jonsmirl Exp $ */
+/* $Id: miniglxtest.c,v 1.3 2004/03/25 14:58:39 brianp Exp $ */
 
 /*
  * Test the mini GLX interface.
@@ -80,7 +80,7 @@ static Window make_rgb_db_window( Display *dpy,
 		    GLX_RED_SIZE, 1,
 		    GLX_GREEN_SIZE, 1,
 		    GLX_BLUE_SIZE, 1,
-#if !FRONT_BUFFER
+#if !FRONTBUFFER
  		    GLX_DOUBLEBUFFER, 
 #endif
 		    None };
@@ -142,7 +142,7 @@ static void event_loop( Display *dpy, Window win )
 }
 
 
-int foo( )
+static int foo( void )
 {
    Display *dpy;
    Window win;
