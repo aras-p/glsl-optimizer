@@ -516,34 +516,45 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 }
 
 /* vertex buffer implementation */
-void emit_elts(GLcontext * ctx, GLuint *elts, int oec, int ec);
+void emit_elts(GLcontext * ctx, GLuint *elts,
+		unsigned long n_elts, unsigned long n_fake_elts, int align);
 
 #    define R300_EB_UNK1_SHIFT 24
 #    define R300_EB_UNK1 (0x80<<24)
 #    define R300_EB_UNK2 0x0810
 
+//#define PLAY_WITH_MAGIC_1
+
 unsigned long get_num_elts(unsigned long count)
 {
-	unsigned long magic_1;
-	
+#ifdef PLAY_WITH_MAGIC_1
+	return count;
+#else	
 	/* round up elt count so that magic_1 is 0 (divisable by 4)*/
 	return (count+3) & (~3);
 	//return count - (count % 4);
+#endif
+}
+
+int get_align(int vertex_count)
+{
+	unsigned char magic1_tbl[4]={ 0, 6, 4, 2 };
+
+	return magic1_tbl[vertex_count % 4];
 }
 
 static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type)
 {
 	LOCAL_VARS
 	unsigned long magic_1;
-	unsigned char magic1_tbl[4]={ 0, 6, 4, 2 };
 
-	magic_1 = magic1_tbl[vertex_count % 4];
-
+	magic_1 = get_align(vertex_count);
+#ifndef PLAY_WITH_MAGIC_1
 	if(magic_1 != 0){
 		WARN_ONCE("Dont know how to handle this yet!\n");
 		return ;
 	}
-	
+#endif	
 	check_space(6);
 	
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
@@ -552,7 +563,7 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
 	e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
 	e32(addr);
-	e32(((vertex_count+1) / 2) + magic_1);
+	e32(((vertex_count+1) / 2) + magic_1); /* This still fails once in a while */
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa, 
@@ -579,7 +590,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 	
 	elt_count=get_num_elts(num_verts);
 	//emit_elts(ctx, rmesa->state.Elts, VB->Count, get_num_elts(VB->Count));
-	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count);
+	emit_elts(ctx, rmesa->state.Elts+start, num_verts, elt_count, get_align(elt_count));
 	fire_EB(PASS_PREFIX rsp->gartTextures.handle/*rmesa->state.elt_ao.aos_offset*/, elt_count, type);
    }else
 	   fire_AOS(PASS_PREFIX num_verts, type);
@@ -622,9 +633,10 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 		GLuint prim = VB->Primitive[i].mode;
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
-
-		r300EmitAOS(rmesa, rmesa->state.aos_count, start);   
-
+		if(rmesa->state.Elts)
+			r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
+		else
+			r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
 	}
 
