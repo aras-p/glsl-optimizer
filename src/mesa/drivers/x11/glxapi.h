@@ -1,4 +1,4 @@
-/* $Id: glxapi.h,v 1.9 2001/05/24 19:06:21 brianp Exp $ */
+/* $Id: glxapi.h,v 1.10 2001/05/25 21:51:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,7 +61,7 @@ typedef struct __GLXcontextRec {
  * the DRI.  Red Hat, however, has used it for their custom libGL.
  */
 struct _glxapi_table {
-   /* GLX 1.0 functions */
+   /*** GLX_VERSION_1_0 ***/
    XVisualInfo *(*ChooseVisual)(Display *dpy, int screen, int *list);
    void (*CopyContext)(Display *dpy, GLXContext src, GLXContext dst, unsigned long mask);
    GLXContext (*CreateContext)(Display *dpy, XVisualInfo *visinfo, GLXContext shareList, Bool direct);
@@ -80,17 +80,15 @@ struct _glxapi_table {
    void (*WaitGL)(void);
    void (*WaitX)(void);
 
-#ifdef GLX_VERSION_1_1
+   /*** GLX_VERSION_1_1 ***/
    const char *(*GetClientString)(Display *dpy, int name);
    const char *(*QueryExtensionsString)(Display *dpy, int screen);
    const char *(*QueryServerString)(Display *dpy, int screen, int name);
-#endif
 
-#ifdef GLX_VERSION_1_2
+   /*** GLX_VERSION_1_2 ***/
    /*Display *(*GetCurrentDisplay)(void);*/
-#endif
 
-#ifdef GLX_VERSION_1_3
+   /*** GLX_VERSION_1_3 ***/
    GLXFBConfig *(*ChooseFBConfig)(Display *dpy, int screen, const int *attribList, int *nitems);
    GLXContext (*CreateNewContext)(Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct);
    GLXPbuffer (*CreatePbuffer)(Display *dpy, GLXFBConfig config, const int *attribList);
@@ -108,96 +106,87 @@ struct _glxapi_table {
    int (*QueryContext)(Display *dpy, GLXContext ctx, int attribute, int *value);
    void (*QueryDrawable)(Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
    void (*SelectEvent)(Display *dpy, GLXDrawable drawable, unsigned long mask);
-#endif
 
-#ifdef GLX_SGI_swap_control
+   /*** GLX_SGI_swap_control ***/
    int (*SwapIntervalSGI)(int);
-#endif
 
-#ifdef GLX_SGI_video_sync
+   /*** GLX_SGI_video_sync ***/
    int (*GetVideoSyncSGI)(unsigned int *count);
    int (*WaitVideoSyncSGI)(int divisor, int remainder, unsigned int *count);
-#endif
 
-#ifdef GLX_SGI_make_current_read
+   /*** GLX_SGI_make_current_read ***/
    Bool (*MakeCurrentReadSGI)(Display *, GLXDrawable, GLXDrawable, GLXContext);
    /*GLXDrawable (*GetCurrentReadDrawableSGI)(void);*/
-#endif
 
-#if defined(_VL_H) && defined(GLX_SGIX_video_source)
+   /*** GLX_SGIX_video_source (needs video library) ***/
+#if defined(_VL_H_)
    GLXVideoSourceSGIX (*CreateGLXVideoSourceSGIX)(Display *, int, VLServer, VLPath, int, VLNode);
    void (*DestroyGLXVideoSourceSGIX)(Display *, GLXVideoSourceSGIX);
+#else
+   void *CreateGLXVideoSourceSGIX;
+   void *DestroyGLXVideoSourceSGIX;
 #endif
 
-#ifdef GLX_EXT_import_context
+   /*** GLX_EXT_import_context ***/
    void (*FreeContextEXT)(Display *dpy, GLXContext context);
    GLXContextID (*GetContextIDEXT)(const GLXContext context);
    /*Display *(*GetCurrentDisplayEXT)(void);*/
    GLXContext (*ImportContextEXT)(Display *dpy, GLXContextID contextID);
    int (*QueryContextInfoEXT)(Display *dpy, GLXContext context, int attribute,int *value);
-#endif
 
-#ifdef GLX_SGIX_fbconfig
+   /*** GLX_SGIX_fbconfig ***/
    int (*GetFBConfigAttribSGIX)(Display *, GLXFBConfigSGIX, int, int *);
    GLXFBConfigSGIX * (*ChooseFBConfigSGIX)(Display *, int, int *, int *);
    GLXPixmap (*CreateGLXPixmapWithConfigSGIX)(Display *, GLXFBConfigSGIX, Pixmap);
    GLXContext (*CreateContextWithConfigSGIX)(Display *, GLXFBConfigSGIX, int, GLXContext, Bool);
    XVisualInfo * (*GetVisualFromFBConfigSGIX)(Display *, GLXFBConfigSGIX);
    GLXFBConfigSGIX (*GetFBConfigFromVisualSGIX)(Display *, XVisualInfo *);
-#endif
 
-#ifdef GLX_SGIX_pbuffer
+   /*** GLX_SGIX_pbuffer ***/
    GLXPbufferSGIX (*CreateGLXPbufferSGIX)(Display *, GLXFBConfigSGIX, unsigned int, unsigned int, int *);
    void (*DestroyGLXPbufferSGIX)(Display *, GLXPbufferSGIX);
    int (*QueryGLXPbufferSGIX)(Display *, GLXPbufferSGIX, int, unsigned int *);
    void (*SelectEventSGIX)(Display *, GLXDrawable, unsigned long);
    void (*GetSelectedEventSGIX)(Display *, GLXDrawable, unsigned long *);
-#endif
 
-#ifdef GLX_SGI_cushion
+   /*** GLX_SGI_cushion ***/
    void (*CushionSGI)(Display *, Window, float);
-#endif
 
-#ifdef GLX_SGIX_video_resize
+   /*** GLX_SGIX_video_resize ***/
    int (*BindChannelToWindowSGIX)(Display *, int, int, Window);
    int (*ChannelRectSGIX)(Display *, int, int, int, int, int, int);
    int (*QueryChannelRectSGIX)(Display *, int, int, int *, int *, int *, int *);
    int (*QueryChannelDeltasSGIX)(Display *, int, int, int *, int *, int *, int *);
    int (*ChannelRectSyncSGIX)(Display *, int, int, GLenum);
-#endif
 
-#if defined (_DM_BUFFER_H_) && defined(GLX_SGIX_dmbuffer)
+   /*** GLX_SGIX_dmbuffer (needs dmedia library) ***/
+#if defined (_DM_BUFFER_H_)
    Bool (*AssociateDMPbufferSGIX)(Display *, GLXPbufferSGIX, DMparams *, DMbuffer);
+#else
+   void *AssociciateDMPbufferSGIX;
 #endif
 
-#ifdef GLX_SGIX_swap_group
+   /*** GLX_SGIX_swap_group ***/
    void (*JoinSwapGroupSGIX)(Display *, GLXDrawable, GLXDrawable);
-#endif
 
-#ifdef GLX_SGIX_swap_barrier
+   /*** GLX_SGIX_swap_barrier ***/
    void (*BindSwapBarrierSGIX)(Display *, GLXDrawable, int);
    Bool (*QueryMaxSwapBarriersSGIX)(Display *, int, int *);
-#endif
 
-#ifdef GLX_SUN_get_transparent_index
+   /*** GLX_SUN_get_transparent_index ***/
    Status (*GetTransparentIndexSUN)(Display *, Window, Window, long *);
-#endif
 
-#ifdef GLX_MESA_copy_sub_buffer
+   /*** GLX_MESA_copy_sub_buffer ***/
    void (*CopySubBufferMESA)(Display *dpy, GLXDrawable drawable, int x, int y, int width, int height);
-#endif
 
-#ifdef GLX_MESA_release_buffers
+   /*** GLX_MESA_release_buffers ***/
    Bool (*ReleaseBuffersMESA)(Display *dpy, Window w);
-#endif
 
-#ifdef GLX_MESA_pixmap_colormap
+   /*** GLX_MESA_pixmap_colormap ***/
    GLXPixmap (*CreateGLXPixmapMESA)(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap, Colormap cmap);
-#endif
 
-#ifdef GLX_MESA_set_3dfx_mode
+   /*** GLX_MESA_set_3dfx_mode ***/
    Bool (*Set3DfxModeMESA)(int mode);
-#endif
 
 };
 
