@@ -2727,7 +2727,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
             ASSERT(t->MinFilter == GL_NEAREST);
             return &sample_nearest_1d;
          }
-         break;
       case GL_TEXTURE_2D:
          if (format == GL_DEPTH_COMPONENT) {
             return &sample_depth_texture;
@@ -2759,7 +2758,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
                return &sample_nearest_2d;
             }
          }
-         break;
       case GL_TEXTURE_3D:
          if (needLambda) {
             return &sample_lambda_3d;
@@ -2771,7 +2769,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
             ASSERT(t->MinFilter == GL_NEAREST);
             return &sample_nearest_3d;
          }
-         break;
       case GL_TEXTURE_CUBE_MAP:
          if (needLambda) {
             return &sample_lambda_cube;
@@ -2783,7 +2780,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
             ASSERT(t->MinFilter == GL_NEAREST);
             return &sample_nearest_cube;
          }
-         break;
       case GL_TEXTURE_RECTANGLE_NV:
          if (needLambda) {
             return &sample_lambda_rect;
@@ -2795,7 +2791,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
             ASSERT(t->MinFilter == GL_NEAREST);
             return &sample_nearest_rect;
          }
-         break;
       default:
          _mesa_problem(ctx,
                        "invalid target in _swrast_choose_texture_sample_func");

@@ -162,9 +162,12 @@ XVisualInfo PUBLIC *
 glXChooseVisual(Display *dpy, int screen, int *list)
 {
    struct _glxapi_table *t;
+printf("1\n");
    GET_DISPATCH(dpy, t);
+printf("2\n");
    if (!t)
       return NULL;
+printf("3\n");
    return (t->ChooseVisual)(dpy, screen, list);
 }
 

@@ -886,11 +886,9 @@ _mesa_max_texture_levels(GLcontext *ctx, GLenum target)
    case GL_TEXTURE_CUBE_MAP_ARB:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       return ctx->Const.MaxCubeTextureLevels;
-      break;
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
       return 1;
-      break;
    default:
       return 0; /* bad target */
    }

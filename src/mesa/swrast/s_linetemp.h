@@ -425,6 +425,8 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    RENDER_SPAN( span );
 #endif
 
+   (void)span;
+
 }
 
 

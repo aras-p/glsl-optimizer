@@ -36,7 +36,7 @@
 
 
 /* define TRACE to trace lighting code */
-/* #define TRACE 1 */
+#define TRACE 1
 
 /*
  * ctx is the current context
@@ -253,8 +253,9 @@ static void TAG(light_rgba)( GLcontext *ctx,
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
    GLfloat (*Fcolor)[4] = (GLfloat (*)[4]) store->LitColor[0].data;
+#if IDX & LIGHT_TWOSIDE
    GLfloat (*Bcolor)[4] = (GLfloat (*)[4]) store->LitColor[1].data;
-   GLfloat (*color[2])[4];
+#endif
 
    const GLuint nr = VB->Count;
 
@@ -264,9 +265,6 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
    (void) nstride;
    (void) vstride;
-
-   color[0] = Fcolor;
-   color[1] = Bcolor;
 
    VB->ColorPtr[0] = &store->LitColor[0];
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];

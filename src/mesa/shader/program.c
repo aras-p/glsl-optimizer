@@ -541,8 +541,7 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             _mesa_problem(ctx, "Invalid material state in fetch_state");
             return;
          }
-      };
-      return;
+      }
    case STATE_LIGHT:
       {
          /* state[1] is the light number */
@@ -590,7 +589,6 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             return;
          }
       }
-      return;
    case STATE_LIGHTMODEL_AMBIENT:
       COPY_4V(value, ctx->Light.Model.Ambient);
       return;
@@ -650,7 +648,6 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
                return;
          }
       }
-      return;
    case STATE_TEXGEN:
       {
          /* state[1] is the texture unit */
@@ -686,7 +683,6 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             return;
          }
       }
-      return;
    case STATE_TEXENV_COLOR:
       {		
          /* state[1] is the texture unit */
