@@ -34,6 +34,7 @@
 
 
 static GLfloat Xpos = 0;
+static GLboolean Anim = GL_TRUE;
 
 
 static void
@@ -171,6 +172,13 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
+      case 'a':
+         Anim = !Anim;
+         if (Anim)
+            glutIdleFunc( Idle );
+         else
+            glutIdleFunc( NULL );
+         break;
       case 27:
          exit(0);
          break;
