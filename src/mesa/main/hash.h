@@ -1,10 +1,10 @@
-/* $Id: hash.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: hash.h,v 1.3 2000/01/24 16:19:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,21 +36,21 @@ struct HashTable;
 
 
 
-extern struct HashTable *NewHashTable(void);
+extern struct _mesa_HashTable *_mesa_NewHashTable(void);
 
-extern void DeleteHashTable(struct HashTable *table);
+extern void _mesa_DeleteHashTable(struct _mesa_HashTable *table);
 
-extern void *HashLookup(const struct HashTable *table, GLuint key);
+extern void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key);
 
-extern void HashInsert(struct HashTable *table, GLuint key, void *data);
+extern void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data);
 
-extern void HashRemove(struct HashTable *table, GLuint key);
+extern void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key);
 
-extern GLuint HashFirstEntry(const struct HashTable *table);
+extern GLuint _mesa_HashFirstEntry(const struct _mesa_HashTable *table);
 
-extern void HashPrint(const struct HashTable *table);
+extern void _mesa_HashPrint(const struct _mesa_HashTable *table);
 
-extern GLuint HashFindFreeKeyBlock(const struct HashTable *table, GLuint numKeys);
+extern GLuint _mesa_HashFindFreeKeyBlock(const struct _mesa_HashTable *table, GLuint numKeys);
 
 
 #endif

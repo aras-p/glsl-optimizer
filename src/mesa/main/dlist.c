@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.24 2000/01/13 00:24:48 brianp Exp $ */
+/* $Id: dlist.c,v 1.25 2000/01/24 16:19:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -339,7 +339,7 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
    if (list==0)
       return;
 
-   block = (Node *) HashLookup(ctx->Shared->DisplayList, list);
+   block = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
    n = block;
 
    done = block ? GL_FALSE : GL_TRUE;
@@ -419,7 +419,7 @@ void gl_destroy_list( GLcontext *ctx, GLuint list )
       }
    }
 
-   HashRemove(ctx->Shared->DisplayList, list);
+   _mesa_HashRemove(ctx->Shared->DisplayList, list);
 }
 
 
@@ -3190,7 +3190,7 @@ void gl_save_error( GLcontext *ctx, GLenum error, const char *s )
 static GLboolean
 islist(GLcontext *ctx, GLuint list)
 {
-   if (list > 0 && HashLookup(ctx->Shared->DisplayList, list)) {
+   if (list > 0 && _mesa_HashLookup(ctx->Shared->DisplayList, list)) {
       return GL_TRUE;
    }
    else {
@@ -3224,7 +3224,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
 
    ctx->CallDepth++;
 
-   n = (Node *) HashLookup(ctx->Shared->DisplayList, list);
+   n = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
 
    done = GL_FALSE;
    while (!done) {
@@ -3849,12 +3849,12 @@ _mesa_GenLists(GLsizei range )
       return 0;
    }
 
-   base = HashFindFreeKeyBlock(ctx->Shared->DisplayList, range);
+   base = _mesa_HashFindFreeKeyBlock(ctx->Shared->DisplayList, range);
    if (base) {
       /* reserve the list IDs by with empty/dummy lists */
       GLint i;
       for (i=0; i<range; i++) {
-         HashInsert(ctx->Shared->DisplayList, base+i, make_empty_list());
+         _mesa_HashInsert(ctx->Shared->DisplayList, base+i, make_empty_list());
       }
    }
    return base;
@@ -3934,7 +3934,7 @@ _mesa_EndList( void )
    /* Destroy old list, if any */
    gl_destroy_list(ctx, ctx->CurrentListNum);
    /* Install the list */
-   HashInsert(ctx->Shared->DisplayList, ctx->CurrentListNum, ctx->CurrentListPtr);
+   _mesa_HashInsert(ctx->Shared->DisplayList, ctx->CurrentListNum, ctx->CurrentListPtr);
 
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
@@ -4542,7 +4542,7 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
       return;
    }
 
-   n = (Node *) HashLookup(ctx->Shared->DisplayList, list);
+   n = (Node *) _mesa_HashLookup(ctx->Shared->DisplayList, list);
 
    fprintf( f, "START-LIST %u, address %p\n", list, (void*)n );
 

@@ -1,10 +1,10 @@
-/* $Id: hash.c,v 1.5 2000/01/04 08:14:36 brianp Exp $ */
+/* $Id: hash.c,v 1.6 2000/01/24 16:19:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ struct HashEntry {
    struct HashEntry *Next;
 };
 
-struct HashTable {
+struct _mesa_HashTable {
    struct HashEntry *Table[TABLE_SIZE];
    GLuint MaxKey;
 };
@@ -60,9 +60,9 @@ struct HashTable {
 /*
  * Return pointer to a new, empty hash table.
  */
-struct HashTable *NewHashTable(void)
+struct _mesa_HashTable *_mesa_NewHashTable(void)
 {
-   return CALLOC_STRUCT(HashTable);
+   return CALLOC_STRUCT(_mesa_HashTable);
 }
 
 
@@ -70,7 +70,7 @@ struct HashTable *NewHashTable(void)
 /*
  * Delete a hash table.
  */
-void DeleteHashTable(struct HashTable *table)
+void _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 {
    GLuint i;
    assert(table);
@@ -93,7 +93,7 @@ void DeleteHashTable(struct HashTable *table)
  *         key - the key
  * Return:  user data pointer or NULL if key not in table
  */
-void *HashLookup(const struct HashTable *table, GLuint key)
+void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;
    const struct HashEntry *entry;
@@ -121,7 +121,7 @@ void *HashLookup(const struct HashTable *table, GLuint key)
  *         key - the key (not zero)
  *         data - pointer to user data
  */
-void HashInsert(struct HashTable *table, GLuint key, void *data)
+void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 {
    /* search for existing entry with this key */
    GLuint pos;
@@ -159,7 +159,7 @@ void HashInsert(struct HashTable *table, GLuint key, void *data)
  * Input:  table - the hash table
  *         key - key of entry to remove
  */
-void HashRemove(struct HashTable *table, GLuint key)
+void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;
    struct HashEntry *entry, *prev;
@@ -194,7 +194,7 @@ void HashRemove(struct HashTable *table, GLuint key)
  * By calling this function until zero is returned we can get
  * the keys of all entries in the table.
  */
-GLuint HashFirstEntry(const struct HashTable *table)
+GLuint _mesa_HashFirstEntry(const struct _mesa_HashTable *table)
 {
    GLuint pos;
    assert(table);
@@ -210,7 +210,7 @@ GLuint HashFirstEntry(const struct HashTable *table)
 /*
  * Dump contents of hash table for debugging.
  */
-void HashPrint(const struct HashTable *table)
+void _mesa_HashPrint(const struct _mesa_HashTable *table)
 {
    GLuint i;
    assert(table);
@@ -231,7 +231,7 @@ void HashPrint(const struct HashTable *table)
  *         numKeys - number of keys needed
  * Return:  starting key of free block or 0 if failure
  */
-GLuint HashFindFreeKeyBlock(const struct HashTable *table, GLuint numKeys)
+GLuint _mesa_HashFindFreeKeyBlock(const struct _mesa_HashTable *table, GLuint numKeys)
 {
    GLuint maxKey = ~((GLuint) 0);
    if (maxKey - numKeys > table->MaxKey) {
@@ -244,7 +244,7 @@ GLuint HashFindFreeKeyBlock(const struct HashTable *table, GLuint numKeys)
       GLuint freeStart = 1;
       GLuint key;
       for (key=1; key!=maxKey; key++) {
-	 if (HashLookup(table, key)) {
+	 if (_mesa_HashLookup(table, key)) {
 	    /* darn, this key is already in use */
 	    freeCount = 0;
 	    freeStart = key+1;
@@ -273,15 +273,15 @@ int main(int argc, char *argv[])
    printf("&a = %p\n", &a);
    printf("&b = %p\n", &b);
 
-   t = NewHashTable();
-   HashInsert(t, 501, &a);
-   HashInsert(t, 10, &c);
-   HashInsert(t, 0xfffffff8, &b);
-   HashPrint(t);
-   printf("Find 501: %p\n", HashLookup(t,501));
-   printf("Find 1313: %p\n", HashLookup(t,1313));
-   printf("Find block of 100: %d\n", HashFindFreeKeyBlock(t, 100));
-   DeleteHashTable(t);
+   t = _mesa_NewHashTable();
+   _mesa_HashInsert(t, 501, &a);
+   _mesa_HashInsert(t, 10, &c);
+   _mesa_HashInsert(t, 0xfffffff8, &b);
+   _mesa_HashPrint(t);
+   printf("Find 501: %p\n", _mesa_HashLookup(t,501));
+   printf("Find 1313: %p\n", _mesa_HashLookup(t,1313));
+   printf("Find block of 100: %d\n", _mesa_HashFindFreeKeyBlock(t, 100));
+   _mesa_DeleteHashTable(t);
 
    return 0;
 }

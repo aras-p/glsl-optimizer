@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.33 2000/01/18 17:36:16 brianp Exp $ */
+/* $Id: context.c,v 1.34 2000/01/24 16:19:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -472,9 +472,9 @@ static struct gl_shared_state *alloc_shared_state( void )
    if (!ss)
       return NULL;
 
-   ss->DisplayList = NewHashTable();
+   ss->DisplayList = _mesa_NewHashTable();
 
-   ss->TexObjects = NewHashTable();
+   ss->TexObjects = _mesa_NewHashTable();
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
@@ -490,9 +490,9 @@ static struct gl_shared_state *alloc_shared_state( void )
    if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
       /* Ran out of memory at some point.  Free everything and return NULL */
       if (ss->DisplayList)
-         DeleteHashTable(ss->DisplayList);
+         _mesa_DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
-         DeleteHashTable(ss->TexObjects);
+         _mesa_DeleteHashTable(ss->TexObjects);
       if (ss->DefaultD[1])
          gl_free_texture_object(ss, ss->DefaultD[1]);
       if (ss->DefaultD[2])
@@ -515,7 +515,7 @@ static void free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 {
    /* Free display lists */
    while (1) {
-      GLuint list = HashFirstEntry(ss->DisplayList);
+      GLuint list = _mesa_HashFirstEntry(ss->DisplayList);
       if (list) {
          gl_destroy_list(ctx, list);
       }
@@ -523,7 +523,7 @@ static void free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
          break;
       }
    }
-   DeleteHashTable(ss->DisplayList);
+   _mesa_DeleteHashTable(ss->DisplayList);
 
    /* Free texture objects */
    while (ss->TexObjectList)
@@ -533,7 +533,7 @@ static void free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
       /* this function removes from linked list too! */
       gl_free_texture_object(ss, ss->TexObjectList);
    }
-   DeleteHashTable(ss->TexObjects);
+   _mesa_DeleteHashTable(ss->TexObjects);
 
    FREE(ss);
 }
