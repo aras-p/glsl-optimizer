@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.16 1999/10/19 18:37:02 keithw Exp $ */
+/* $Id: context.c,v 1.17 1999/10/30 08:22:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1011,14 +1011,18 @@ static void initialize_context( GLcontext *ctx )
       /* Pixel transfer */
       ctx->Pack.Alignment = 4;
       ctx->Pack.RowLength = 0;
+      ctx->Pack.ImageHeight = 0;
       ctx->Pack.SkipPixels = 0;
       ctx->Pack.SkipRows = 0;
+      ctx->Pack.SkipImages = 0;
       ctx->Pack.SwapBytes = GL_FALSE;
       ctx->Pack.LsbFirst = GL_FALSE;
       ctx->Unpack.Alignment = 4;
       ctx->Unpack.RowLength = 0;
+      ctx->Unpack.ImageHeight = 0;
       ctx->Unpack.SkipPixels = 0;
       ctx->Unpack.SkipRows = 0;
+      ctx->Unpack.SkipImages = 0;
       ctx->Unpack.SwapBytes = GL_FALSE;
       ctx->Unpack.LsbFirst = GL_FALSE;
 
