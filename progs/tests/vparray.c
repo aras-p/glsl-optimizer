@@ -69,13 +69,21 @@ static void Display(void)
          if (useProgram) {
             glVertexAttribPointerNV( 0, 3, GL_FLOAT, 6 * sizeof(GLfloat), data );
             glEnableClientState( GL_VERTEX_ATTRIB_ARRAY0_NV );
+            glVertexAttribPointerNV( 2, 3, GL_FLOAT, 6 * sizeof(GLfloat), ((GLfloat *) data) + 3);
+            glEnableClientState( GL_VERTEX_ATTRIB_ARRAY2_NV);
+
+            glDisableClientState( GL_VERTEX_ARRAY );
+            glDisableClientState( GL_NORMAL_ARRAY );
          }
          else {
             glVertexPointer( 3, GL_FLOAT, 6 * sizeof(GLfloat), data );
             glEnableClientState( GL_VERTEX_ARRAY );
+            glNormalPointer( GL_FLOAT, 6 * sizeof(GLfloat), ((GLfloat *) data) + 3);
+            glEnableClientState( GL_NORMAL_ARRAY );
+
+            glDisableClientState( GL_VERTEX_ATTRIB_ARRAY0_NV );
+            glDisableClientState( GL_VERTEX_ATTRIB_ARRAY2_NV);
          }
-         glNormalPointer( GL_FLOAT, 6 * sizeof(GLfloat), ((GLfloat *) data) + 3);
-         glEnableClientState( GL_NORMAL_ARRAY );
 
          glDrawArrays(GL_TRIANGLE_STRIP, 0, numverts);
 
