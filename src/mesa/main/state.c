@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.85 2002/06/15 03:03:09 brianp Exp $ */
+/* $Id: state.c,v 1.86 2002/06/16 01:14:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -630,7 +630,7 @@ update_drawbuffer( GLcontext *ctx )
 /* NOTE: This routine references Tranform attribute values to compute
  * userclip positions in clip space, but is only called on
  * _NEW_PROJECTION.  The _mesa_ClipPlane() function keeps these values
- * uptodate across changes to the Transform attributes.
+ * up to date across changes to the Transform attributes.
  */
 static void
 update_projection( GLcontext *ctx )
