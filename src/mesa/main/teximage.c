@@ -1189,6 +1189,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
 {
    const GLboolean isProxy = is_proxy_target(target);
    GLboolean sizeOK;
+   GLboolean colorFormat, indexFormat;
 
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
@@ -1318,8 +1319,10 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    /* make sure internal format and format basically agree */
-   if ((is_color_format(internalFormat) != is_color_format(format)) ||
-       (is_index_format(internalFormat) != is_index_format(format)) ||
+   colorFormat = is_color_format(format);
+   indexFormat = is_index_format(format);
+   if ((is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
+       (is_index_format(internalFormat) && !indexFormat) ||
        (is_depth_format(internalFormat) != is_depth_format(format)) ||
        (is_ycbcr_format(internalFormat) != is_ycbcr_format(format))) {
       if (!isProxy)
