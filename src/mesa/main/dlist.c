@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.72 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: dlist.c,v 1.73 2001/06/11 19:17:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1186,7 +1186,7 @@ save_CopyColorSubTable(GLenum target, GLsizei start,
    Node *n;
 
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 5 );
    if (n) {
       n[1].e = target;
       n[2].i = start;
@@ -1208,7 +1208,7 @@ save_CopyColorTable(GLenum target, GLenum internalformat,
    Node *n;
 
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_TABLE, 5 );
    if (n) {
       n[1].e = target;
       n[2].e = internalformat;
@@ -1350,7 +1350,7 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_FV, 6 );
    if (n) {
       n[1].e = target;
       n[2].e = pname;
@@ -3657,7 +3657,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 8 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3701,7 +3701,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 9 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3746,7 +3746,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          return;
       }
       MEMCPY(image, data, imageSize);
-      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 10 );
+      n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9 );
       if (n) {
          n[1].e = target;
          n[2].i = level;
@@ -3787,7 +3787,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 8 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3826,7 +3826,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 10 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
@@ -3867,7 +3867,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       return;
    }
    MEMCPY(image, data, imageSize);
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 12 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11 );
    if (n) {
       n[1].e = target;
       n[2].i = level;
