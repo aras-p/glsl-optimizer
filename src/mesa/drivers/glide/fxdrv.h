@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.59 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.60 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,6 +145,90 @@
 #define FX_UM_COLOR_CONSTANT        0x02000000
 #define FX_UM_ALPHA_ITERATED        0x04000000
 #define FX_UM_ALPHA_CONSTANT        0x08000000
+
+
+/* for Voodoo3/Banshee's grColorCombine() and grAlphaCombine() */
+struct tdfx_combine {
+   GrCombineFunction_t Function;	/* Combine function */
+   GrCombineFactor_t Factor;		/* Combine scale factor */
+   GrCombineLocal_t Local;		/* Local combine source */
+   GrCombineOther_t Other;		/* Other combine source */
+   FxBool Invert;			/* Combine result inversion flag */
+};
+
+/* for Voodoo3's grTexCombine() */
+struct tdfx_texcombine {
+   GrCombineFunction_t FunctionRGB;
+   GrCombineFactor_t FactorRGB;
+   GrCombineFunction_t FunctionAlpha;
+   GrCombineFactor_t FactorAlpha;
+   FxBool InvertRGB;
+   FxBool InvertAlpha;
+};
+
+
+/* for Voodoo5's grColorCombineExt() */
+struct tdfx_combine_color_ext {
+   GrCCUColor_t SourceA;
+   GrCombineMode_t ModeA;
+   GrCCUColor_t SourceB;
+   GrCombineMode_t ModeB;
+   GrCCUColor_t SourceC;
+   FxBool InvertC;
+   GrCCUColor_t SourceD;
+   FxBool InvertD;
+   FxU32 Shift;
+   FxBool Invert;
+};
+
+/* for Voodoo5's grAlphaCombineExt() */
+struct tdfx_combine_alpha_ext {
+   GrACUColor_t SourceA;
+   GrCombineMode_t ModeA;
+   GrACUColor_t SourceB;
+   GrCombineMode_t ModeB;
+   GrACUColor_t SourceC;
+   FxBool InvertC;
+   GrACUColor_t SourceD;
+   FxBool InvertD;
+   FxU32 Shift;
+   FxBool Invert;
+};
+
+/* for Voodoo5's grTexColorCombineExt() */
+struct tdfx_color_texenv {
+   GrTCCUColor_t SourceA;
+   GrCombineMode_t ModeA;
+   GrTCCUColor_t SourceB;
+   GrCombineMode_t ModeB;
+   GrTCCUColor_t SourceC;
+   FxBool InvertC;
+   GrTCCUColor_t SourceD;
+   FxBool InvertD;
+   FxU32 Shift;
+   FxBool Invert;
+};
+
+/* for Voodoo5's grTexAlphaCombineExt() */
+struct tdfx_alpha_texenv {
+   GrTACUColor_t SourceA;
+   GrCombineMode_t ModeA;
+   GrTACUColor_t SourceB;
+   GrCombineMode_t ModeB;
+   GrTACUColor_t SourceC;
+   FxBool InvertC;
+   GrTCCUColor_t SourceD;
+   FxBool InvertD;
+   FxU32 Shift;
+   FxBool Invert;
+};
+
+/* Voodoo5's texture combine environment */
+struct tdfx_texcombine_ext {
+   struct tdfx_alpha_texenv Alpha;
+   struct tdfx_color_texenv Color;
+   GrColor_t EnvColor;
+};
 
 
 /*
@@ -570,15 +654,18 @@ extern int fxDDInitFxMesaContext(fxMesaContext fxMesa);
 extern void fxDDDestroyFxMesaContext(fxMesaContext fxMesa);
 
 
-void fxColorMask (fxMesaContext fxMesa, GLboolean enable);
-
-
 extern void fxSetScissorValues(GLcontext * ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 				struct gl_texture_object *tObj, GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 extern void fxCheckIsInHardware(GLcontext *ctx);
+
+/* fxsetup:
+ * semi-private functions
+ */
+void fxSetupScissor (GLcontext * ctx);
+void fxSetupColorMask (GLcontext * ctx);
 
 /* Flags for software fallback cases */
 #define FX_FALLBACK_TEXTURE_1D_3D	0x0001
@@ -594,5 +681,12 @@ extern void fxCheckIsInHardware(GLcontext *ctx);
 #define FX_FALLBACK_TEXTURE_MULTI	0x0400
 
 extern GLuint fx_check_IsInHardware(GLcontext *ctx);
+
+/* run-time debugging */
+#if FX_DEBUG
+extern int TDFX_DEBUG;
+#else
+#define TDFX_DEBUG		0
+#endif
 
 #endif

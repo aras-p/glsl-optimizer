@@ -1,4 +1,4 @@
-/* $Id: fxtexman.c,v 1.17 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxtexman.c,v 1.18 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,7 @@
 #include "fxdrv.h"
 
 int texSwaps = 0;
+static FxU32 texBoundMask;
 
 #define FX_2MB_SPLIT 0x200000
 
@@ -120,30 +121,37 @@ fxTMNewRangeNode(fxMesaContext fxMesa, FxU32 start, FxU32 end)
 	 fxCloseHardware();
 	 exit(-1);
       }
-      result->next = NULL;
    }
    result->startAddr = start;
    result->endAddr = end;
    return result;
 }
 
+#if 1
+#define fxTMDeleteRangeNode(fxMesa, range) \
+   do {                                    \
+       range->next = fxMesa->tmPool;       \
+       fxMesa->tmPool = range;             \
+   } while (0);
+#else
 static void
 fxTMDeleteRangeNode(fxMesaContext fxMesa, MemRange * range)
 {
    range->next = fxMesa->tmPool;
    fxMesa->tmPool = range;
 }
+#endif
 
 static void
 fxTMUInit(fxMesaContext fxMesa, int tmu)
 {
    MemRange *tmn, *last;
-   FxU32 start, end, blockstart, blockend, boundary;
+   FxU32 start, end, blockstart, blockend, chunk;
 
    start = grTexMinAddress(tmu);
    end = grTexMaxAddress(tmu);
 
-   boundary = (fxMesa->type >= GR_SSTTYPE_Banshee) ? (end - start) : FX_2MB_SPLIT;
+   chunk = (fxMesa->type >= GR_SSTTYPE_Banshee) ? (end - start) : FX_2MB_SPLIT;
 	
    if (fxMesa->verbose) {
       fprintf(stderr, "Voodoo %s configuration:\n",
@@ -152,7 +160,7 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
 	      (unsigned int) start);
       fprintf(stderr, "Voodoo  Higher texture memory address (%u)\n",
 	      (unsigned int) end);
-      fprintf(stderr, "Voodoo  Splitting Texture memory in %luMB blocks:\n", boundary >> 20);
+      fprintf(stderr, "Voodoo  Splitting Texture memory in %luMB blocks:\n", chunk >> 20);
    }
 
    fxMesa->freeTexMem[tmu] = end - start;
@@ -161,16 +169,18 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
    last = 0;
    blockstart = start;
    while (blockstart < end) {
-      if (blockstart + boundary > end)
+      if (blockstart + chunk > end)
 	 blockend = end;
       else
-	 blockend = blockstart + boundary;
+	 blockend = blockstart + chunk;
 
       if (fxMesa->verbose)
 	 fprintf(stderr, "Voodoo    %07u-%07u\n",
 		 (unsigned int) blockstart, (unsigned int) blockend);
 
       tmn = fxTMNewRangeNode(fxMesa, blockstart, blockend);
+      tmn->next = NULL;
+
 
       if (last)
 	 last->next = tmn;
@@ -178,7 +188,7 @@ fxTMUInit(fxMesaContext fxMesa, int tmu)
 	 fxMesa->tmFree[tmu] = tmn;
       last = tmn;
 
-      blockstart += boundary;
+      blockstart += chunk;
    }
 }
 
@@ -229,7 +239,6 @@ static void
 fxTMRemoveRange(fxMesaContext fxMesa, GLint tmu, MemRange * range)
 {
    MemRange *tmp, *prev;
-   FxU32 boundary = (fxMesa->type >= GR_SSTTYPE_Banshee) ? -1 : (FX_2MB_SPLIT - 1);
 
    if (range->startAddr == range->endAddr) {
       fxTMDeleteRangeNode(fxMesa, range);
@@ -252,7 +261,7 @@ fxTMRemoveRange(fxMesaContext fxMesa, GLint tmu, MemRange * range)
    range->next = tmp;
    if (tmp) {
       if (range->endAddr == tmp->startAddr
-	  && tmp->startAddr & boundary) {
+	  && tmp->startAddr & texBoundMask) {
 	 /* Combine */
 	 tmp->startAddr = range->startAddr;
 	 fxTMDeleteRangeNode(fxMesa, range);
@@ -261,7 +270,7 @@ fxTMRemoveRange(fxMesaContext fxMesa, GLint tmu, MemRange * range)
    }
    if (prev) {
       if (prev->endAddr == range->startAddr
-	  && range->startAddr & boundary) {
+	  && range->startAddr & texBoundMask) {
 	 /* Combine */
 	 prev->endAddr = range->endAddr;
 	 prev->next = range->next;
@@ -312,7 +321,7 @@ fxTMFindOldestObject(fxMesaContext fxMesa, int tmu)
 	 }
 
          /* examine priority */
-         if (obj->Priority < lowestPriority) {
+         if (tmp->Priority < lowestPriority) {
             lowestPriority = tmp->Priority;
             lowestPriorityObj = tmp;
          }
@@ -320,8 +329,7 @@ fxTMFindOldestObject(fxMesaContext fxMesa, int tmu)
       tmp = tmp->Next;
    }
 
-   if (lowestPriority < 1.0) {
-       ASSERT(lowestPriorityObj);
+   if (lowestPriorityObj != NULL) {
        if (TDFX_DEBUG & VERBOSE_TEXTURE) {
           fprintf(stderr, "fxTMFindOldestObject: %d pri=%f\n", lowestPriorityObj->Name, lowestPriority);
        }
@@ -753,6 +761,8 @@ fxTMInit(fxMesaContext fxMesa)
 
    if (fxMesa->haveTwoTMUs)
       fxTMUInit(fxMesa, FX_TMU1);
+
+   texBoundMask = (fxMesa->type >= GR_SSTTYPE_Banshee) ? -1 : (FX_2MB_SPLIT - 1);
 }
 
 void

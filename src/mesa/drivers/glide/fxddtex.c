@@ -1,4 +1,4 @@
-/* $Id: fxddtex.c,v 1.48 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxddtex.c,v 1.49 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #if defined(FX)
 
 #include "fxdrv.h"
+#include "enums.h"
 #include "image.h"
 #include "teximage.h"
 #include "texformat.h"
@@ -192,8 +193,10 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
    tfxTexInfo *ti;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(%d, %x, %x, %x)\n", __FUNCTION__,
-                      tObj->Name, (GLuint) tObj->DriverData, pname, param);
+      fprintf(stderr, "fxDDTexParam(%d, %x, %s, %s)\n",
+                      tObj->Name, (GLuint) tObj->DriverData,
+                      _mesa_lookup_enum_by_nr(pname),
+                      _mesa_lookup_enum_by_nr(param));
    }
 
    if (target != GL_TEXTURE_2D)
@@ -279,6 +282,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
       case GL_MIRRORED_REPEAT:
          ti->sClamp = GR_TEXTURECLAMP_MIRROR_EXT;
          break;
+      case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
       case GL_CLAMP:
 	 ti->sClamp = GR_TEXTURECLAMP_CLAMP;
 	 break;
@@ -296,6 +300,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
       case GL_MIRRORED_REPEAT:
          ti->tClamp = GR_TEXTURECLAMP_MIRROR_EXT;
          break;
+      case GL_CLAMP_TO_EDGE: /* CLAMP discarding border */
       case GL_CLAMP:
 	 ti->tClamp = GR_TEXTURECLAMP_CLAMP;
 	 break;
@@ -623,125 +628,6 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
 
 
    return 1;
-}
-
-/*
- * Given an OpenGL internal texture format, return the corresponding
- * Glide internal texture format and base texture format.
- */
-void
-fxTexGetFormat(GLcontext *ctx, GLenum glformat, GrTextureFormat_t * tfmt, GLint * ifmt) /* [koolsmoky] */
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLboolean allow32bpt = fxMesa->HaveTexFmt;
-
-   switch (glformat) {
-   case 1:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE4:
-   case GL_LUMINANCE8:
-   case GL_LUMINANCE12:
-   case GL_LUMINANCE16:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_INTENSITY_8;
-      if (ifmt)
-	 (*ifmt) = GL_LUMINANCE;
-      break;
-   case 2:
-   case GL_LUMINANCE_ALPHA:
-   case GL_LUMINANCE4_ALPHA4:
-   case GL_LUMINANCE6_ALPHA2:
-   case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
-   case GL_LUMINANCE12_ALPHA12:
-   case GL_LUMINANCE16_ALPHA16:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_ALPHA_INTENSITY_88;
-      if (ifmt)
-	 (*ifmt) = GL_LUMINANCE_ALPHA;
-      break;
-   case GL_INTENSITY:
-   case GL_INTENSITY4:
-   case GL_INTENSITY8:
-   case GL_INTENSITY12:
-   case GL_INTENSITY16:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_ALPHA_8;
-      if (ifmt)
-	 (*ifmt) = GL_INTENSITY;
-      break;
-   case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_ALPHA_8;
-      if (ifmt)
-	 (*ifmt) = GL_ALPHA;
-      break;
-   case GL_R3_G3_B2:
-   case GL_RGB4:
-   case GL_RGB5:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_RGB_565;
-      if (ifmt)
-	 (*ifmt) = GL_RGB;
-      break;
-   case 3:
-   case GL_RGB:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      if (tfmt)
-	 (*tfmt) = allow32bpt ? GR_TEXFMT_ARGB_8888 : GR_TEXFMT_RGB_565;
-      if (ifmt)
-	 (*ifmt) = GL_RGB;
-      break;
-   case GL_RGBA2:
-   case GL_RGBA4:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_ARGB_4444;
-      if (ifmt)
-	 (*ifmt) = GL_RGBA;
-      break;
-   case 4:
-   case GL_RGBA:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      if (tfmt)
-	 (*tfmt) = allow32bpt ? GR_TEXFMT_ARGB_8888 : GR_TEXFMT_ARGB_4444;
-      if (ifmt)
-	 (*ifmt) = GL_RGBA;
-      break;
-   case GL_RGB5_A1:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_ARGB_1555;
-      if (ifmt)
-	 (*ifmt) = GL_RGBA;
-      break;
-   case GL_COLOR_INDEX:
-   case GL_COLOR_INDEX1_EXT:
-   case GL_COLOR_INDEX2_EXT:
-   case GL_COLOR_INDEX4_EXT:
-   case GL_COLOR_INDEX8_EXT:
-   case GL_COLOR_INDEX12_EXT:
-   case GL_COLOR_INDEX16_EXT:
-      if (tfmt)
-	 (*tfmt) = GR_TEXFMT_P_8;
-      if (ifmt)
-	 (*ifmt) = GL_RGBA;	/* XXX why is this RGBA? */
-      break;
-   default:
-      fprintf(stderr, "%s: ERROR: unsupported internalFormat (0x%x)\n",
-	              __FUNCTION__, glformat);
-      fxCloseHardware();
-      exit(-1);
-      break;
-   }
 }
 
 static GLboolean

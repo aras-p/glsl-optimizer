@@ -1,4 +1,4 @@
-/* $Id: fxglidew.h,v 1.16 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxglidew.h,v 1.17 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -213,14 +213,6 @@ extern FxBool FX_grSstControl(FxU32 code);
     grBufferClear(c, a, d);		\
     END_CLIP_LOOP();			\
   } while (0)
-
-
-
-#if FX_DEBUG
-extern int TDFX_DEBUG;
-#else
-#define TDFX_DEBUG		0
-#endif
 
 
 

@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.24 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxtris.c,v 1.25 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1097,8 +1097,6 @@ static GLenum reduced_prim[GL_POLYGON+1] = {
  */
 static void fxRasterPrimitive( GLcontext *ctx, GLenum prim )
 {
- extern void fxSetupCull (GLcontext *ctx);
-
    fxMesaContext fxMesa = FX_CONTEXT( ctx );
 
    fxMesa->raster_primitive = prim;
@@ -1176,7 +1174,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
    if (newfallback) {
       if (oldfallback == 0) {
          if (fxMesa->verbose) {
-            fprintf(stderr, "Voodoo ! begin SW 0x08%x %s\n", newfallback, getFallbackString(newfallback));
+            fprintf(stderr, "Voodoo ! begin SW 0x%08x %s\n", newfallback, getFallbackString(newfallback));
          }
 	 _swsetup_Wakeup( ctx );
       }
@@ -1197,7 +1195,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 fxChooseVertexState(ctx);
 	 fxDDChooseRenderState(ctx);
          if (fxMesa->verbose) {
-            fprintf(stderr, "Voodoo ! end SW 0x08%x %s\n", oldfallback, getFallbackString(oldfallback));
+            fprintf(stderr, "Voodoo ! end SW 0x%08x %s\n", oldfallback, getFallbackString(oldfallback));
          }
       }
    }

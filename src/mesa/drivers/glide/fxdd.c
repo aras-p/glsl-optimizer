@@ -2,7 +2,7 @@
  * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
  */
 
-/* $Id: fxdd.c,v 1.100 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxdd.c,v 1.101 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,6 +130,21 @@ fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 }
 
 
+/*
+ * Disable color by masking out R, G, B, A
+ */
+static void fxDisableColor (fxMesaContext fxMesa)
+{
+ if (fxMesa->colDepth != 16) {
+    /* 32bpp mode or 15bpp mode */
+    fxMesa->Glide.grColorMaskExt(FXFALSE, FXFALSE, FXFALSE, FXFALSE);
+ } else {
+    /* 16 bpp mode */
+    grColorMask(FXFALSE, FXFALSE);
+ }
+}
+
+
 /**********************************************************************/
 /*****                 Miscellaneous functions                    *****/
 /**********************************************************************/
@@ -190,25 +205,31 @@ static void fxDDClear( GLcontext *ctx,
 	       __FUNCTION__, (int) x, (int) y, (int) width, (int) height );
    }
 
-/*jejeje*/
    /* Need this check to respond to glScissor and clipping updates */
+   /* should also take care of FX_NEW_COLOR_MASK, FX_NEW_STENCIL, depth? */
    if (fxMesa->new_state & FX_NEW_SCISSOR) {
-      extern void fxSetupScissor(GLcontext * ctx);
       fxSetupScissor(ctx);
+      fxMesa->new_state &= ~FX_NEW_SCISSOR;
    }
 
    /* we can't clear accum buffers */
    mask &= ~(DD_ACCUM_BIT);
 
+   /*
+    * As per GL spec, stencil masking should be obeyed when clearing
+    */
    if (mask & DD_STENCIL_BIT) {
       if (!fxMesa->haveHwStencil || fxMesa->unitsState.stencilWriteMask != 0xff) {
          /* Napalm seems to have trouble with stencil write masks != 0xff */
          /* do stencil clear in software */
-         mask &= ~(DD_STENCIL_BIT);
          softwareMask |= DD_STENCIL_BIT;
+         mask &= ~(DD_STENCIL_BIT);
       }
    }
 
+   /*
+    * As per GL spec, color masking should be obeyed when clearing
+    */
    if (ctx->Visual.greenBits != 8 && ctx->Visual.greenBits != 5) {
       /* can only do color masking if running in 24/32bpp on Napalm */
       if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
@@ -252,7 +273,7 @@ static void fxDDClear( GLcontext *ctx,
       switch (mask & ~DD_STENCIL_BIT) {
       case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
 	 /* back buffer & depth */
-	 fxColorMask(fxMesa, GL_TRUE); /* work around Voodoo3 bug */
+	 /* FX_grColorMaskv_NoLock(ctx, true4); */ /* work around Voodoo3 bug */
 	 grDepthMask(FXTRUE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
 	 if (stencil_size > 0) {
@@ -264,7 +285,7 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (!ctx->Depth.Mask || !ctx->Depth.Test) {
+	 if (!fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXFALSE);
 	 }
 	 break;
@@ -276,7 +297,7 @@ static void fxDDClear( GLcontext *ctx,
 	 /* clear depth */
 	 grDepthMask(FXTRUE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
-	 fxColorMask(fxMesa, GL_FALSE);
+         fxDisableColor(fxMesa);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
                                            fxMesa->clearA,
@@ -286,7 +307,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 /* clear front */
-	 fxColorMask(fxMesa, GL_TRUE);
+	 fxSetupColorMask(ctx);
 	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
@@ -296,7 +317,7 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (!ctx->Depth.Mask || !ctx->Depth.Test) {
+	 if (!fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXFALSE);
 	 }
 	 break;
@@ -312,7 +333,7 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+	 if (fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXTRUE);
 	 }
 	 break;
@@ -328,7 +349,7 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+	 if (fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXTRUE);
 	 }
 	 break;
@@ -353,7 +374,7 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (ctx->Depth.Mask && ctx->Depth.Test) {
+	 if (fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXTRUE);
 	 }
 	 break;
@@ -380,14 +401,14 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (!ctx->Depth.Mask || !ctx->Depth.Mask) {
+	 if (!fxMesa->unitsState.depthTestEnabled) {
             grDepthMask(FXFALSE);
 	 }
 	 break;
       case DD_DEPTH_BIT:
 	 /* just the depth buffer */
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
-	 fxColorMask(fxMesa, GL_FALSE);
+         fxDisableColor(fxMesa);
 	 grDepthMask(FXTRUE);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
@@ -397,11 +418,13 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 fxColorMask(fxMesa, GL_TRUE);
-	 if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+	 fxSetupColorMask(ctx);
+	 if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT) {
             grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-	 if (!ctx->Depth.Test || !ctx->Depth.Mask)
+         }
+	 if (!fxMesa->unitsState.depthTestEnabled) {
 	    grDepthMask(FXFALSE);
+         }
 	 break;
       default:
          /* clear no color buffers or depth buffer but might clear stencil */
@@ -409,16 +432,17 @@ static void fxDDClear( GLcontext *ctx,
             /* XXX need this RenderBuffer call to work around Glide bug */
             grRenderBuffer(GR_BUFFER_BACKBUFFER);
             grDepthMask(FXFALSE);
-            fxColorMask(fxMesa, GL_FALSE);
+            fxDisableColor(fxMesa);
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
                                            fxMesa->clearA,
                                            clearD, clearS);
-            if (ctx->Depth.Mask && ctx->Depth.Test) {
+            if (fxMesa->unitsState.depthTestEnabled) {
                grDepthMask(FXTRUE);
             }
-            fxColorMask(fxMesa, GL_TRUE);
-            if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT)
+            fxSetupColorMask(ctx);
+            if (ctx->Color._DrawDestMask & FRONT_LEFT_BIT) {
                grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+            }
          }
       }
    }
@@ -456,7 +480,7 @@ fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
       grRenderBuffer(fxMesa->currentFB);
    }
    else if (mode == GL_NONE) {
-      fxColorMask(fxMesa, GL_FALSE);
+      fxDisableColor(fxMesa);
    }
    else {
       /* we'll need a software fallback */
@@ -1015,15 +1039,16 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->unitsState.stencilWriteMask = 0xff;
 
-   fxColorMask(fxMesa, GL_TRUE);
-   if (fxMesa->haveDoubleBuffer) {
-      fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
-      grRenderBuffer(GR_BUFFER_BACKBUFFER);
+   if (fxMesa->colDepth != 16) {
+      /* 32bpp mode or 15bpp mode */
+      fxMesa->Glide.grColorMaskExt(FXTRUE, FXTRUE, FXTRUE, fxMesa->haveHwAlpha);
+   } else {
+      /* 16 bpp mode */
+      grColorMask(FXTRUE, fxMesa->haveHwAlpha);
    }
-   else {
-      fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
-      grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-   }
+
+   fxMesa->currentFB = fxMesa->haveDoubleBuffer ? GR_BUFFER_BACKBUFFER : GR_BUFFER_FRONTBUFFER;
+   grRenderBuffer(fxMesa->currentFB);
 
    fxMesa->state = MALLOC(FX_grGetInteger(GR_GLIDE_STATE_SIZE));
    fxMesa->fogTable = (GrFog_t *) MALLOC(FX_grGetInteger(GR_FOG_TABLE_ENTRIES) *
@@ -1212,6 +1237,7 @@ fx_check_IsInHardware(GLcontext * ctx)
 	 return FX_FALLBACK_TEXTURE_1D_3D;
 
       if (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) {
+#if 0
 	 if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
 	     (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT ||
 	      ctx->Texture.Unit[0].EnvColor[0] != 0 ||
@@ -1220,13 +1246,16 @@ fx_check_IsInHardware(GLcontext * ctx)
 	      ctx->Texture.Unit[0].EnvColor[3] != 1)) {
 	    return FX_FALLBACK_TEXTURE_ENV;
 	 }
+#endif
 	 if (ctx->Texture.Unit[0]._Current->Image[0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
 
       if (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) {
+#if 0
 	 if (ctx->Texture.Unit[1].EnvMode == GL_BLEND)
 	    return FX_FALLBACK_TEXTURE_ENV;
+#endif
 	 if (ctx->Texture.Unit[1]._Current->Image[0]->Border > 0)
 	    return FX_FALLBACK_TEXTURE_BORDER;
       }
@@ -1264,10 +1293,12 @@ fx_check_IsInHardware(GLcontext * ctx)
 	 return FX_FALLBACK_TEXTURE_MULTI;
       }
 
+#if 0
       if ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
 	  (ctx->Texture.Unit[0].EnvMode == GL_BLEND)) {
 	 return FX_FALLBACK_TEXTURE_ENV;
       }
+#endif
    }
 
    return 0;

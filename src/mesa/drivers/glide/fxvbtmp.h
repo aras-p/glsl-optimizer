@@ -1,4 +1,4 @@
-/* $Id: fxvbtmp.h,v 1.13 2003/10/02 17:36:45 brianp Exp $ */
+/* $Id: fxvbtmp.h,v 1.14 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,6 +28,10 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
+
+#define VIEWPORT_X(dst,x) dst = s[0]  * x + s[12]
+#define VIEWPORT_Y(dst,y) dst = s[5]  * y + s[13]
+#define VIEWPORT_Z(dst,z) dst = s[10] * z + s[14]
 
 static void TAG(emit)( GLcontext *ctx,
 		       GLuint start, GLuint end,
@@ -89,9 +93,9 @@ static void TAG(emit)( GLcontext *ctx,
       if (IND & SETUP_XYZW) {
          if (mask[i] == 0) {
 	    /* unclipped */
-	    v->x   = s[0]  * proj[0][0] + s[12];
-	    v->y   = s[5]  * proj[0][1] + s[13];
-	    v->ooz = s[10] * proj[0][2] + s[14];
+	    VIEWPORT_X(v->x,   proj[0][0]);
+	    VIEWPORT_Y(v->y,   proj[0][1]);
+	    VIEWPORT_Z(v->ooz, proj[0][2]);
 	    v->oow = proj[0][3];
          } else {
             /* clipped */
@@ -122,32 +126,24 @@ static void TAG(emit)( GLcontext *ctx,
       }
       if (IND & SETUP_TMU0) {
 	 GLfloat w = v->oow;
+         v->tmuvtx[0].sow = tc0[0][0] * u0scale * w;
+         v->tmuvtx[0].tow = tc0[0][1] * v0scale * w;
 	 if (IND & SETUP_PTEX) {
-	    v->tmuvtx[0].sow = tc0[0][0] * u0scale * w;
-	    v->tmuvtx[0].tow = tc0[0][1] * v0scale * w;
 	    v->tmuvtx[0].oow = w;
 	    if (tc0_size == 4) 
-	       v->tmuvtx[0].oow = tc0[0][3] * w;
-	 } 
-	 else {
-	    v->tmuvtx[0].sow = tc0[0][0] * u0scale * w;
-	    v->tmuvtx[0].tow = tc0[0][1] * v0scale * w;
+	       v->tmuvtx[0].oow *= tc0[0][3];
 	 } 
 	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
       }
       if (IND & SETUP_TMU1) {
 	 GLfloat w = v->oow;
+         v->tmuvtx[1].sow = tc1[0][0] * u1scale * w;
+         v->tmuvtx[1].tow = tc1[0][1] * v1scale * w;
 	 if (IND & SETUP_PTEX) {
-	    v->tmuvtx[1].sow = tc1[0][0] * u1scale * w;
-	    v->tmuvtx[1].tow = tc1[0][1] * v1scale * w;
 	    v->tmuvtx[1].oow = w;
 	    if (tc1_size == 4) 
-	       v->tmuvtx[1].oow = tc1[0][3] * w;
+	       v->tmuvtx[1].oow *= tc1[0][3];
 	 } 
-	 else {
-	    v->tmuvtx[1].sow = tc1[0][0] * u1scale * w;
-	    v->tmuvtx[1].tow = tc1[0][1] * v1scale * w;
-	 }
 	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
       } 
    }
@@ -197,9 +193,9 @@ static void TAG(interp)( GLcontext *ctx,
    const GLfloat wout = 1.0F / out->oow;
    const GLfloat win = 1.0F / in->oow;
 
-   dst->x   = s[0]  * dstclip[0] * oow + s[12];	
-   dst->y   = s[5]  * dstclip[1] * oow + s[13];	
-   dst->ooz = s[10] * dstclip[2] * oow + s[14];	
+   VIEWPORT_X(dst->x,   dstclip[0] * oow);
+   VIEWPORT_Y(dst->y,   dstclip[1] * oow);
+   VIEWPORT_Z(dst->ooz, dstclip[2] * oow);
    dst->oow = oow;	
    
    if (IND & SETUP_SNAP) {

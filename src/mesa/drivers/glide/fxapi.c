@@ -1,4 +1,4 @@
-/* $Id: fxapi.c,v 1.38 2003/10/02 17:36:44 brianp Exp $ */
+/* $Id: fxapi.c,v 1.39 2003/10/09 15:12:21 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -520,16 +520,19 @@ fxMesaCreateContext(GLuint win,
 
    fxInitPixelTables(fxMesa, useBGR);
 
-   fxMesa->width = FX_grSstScreenWidth();
-   fxMesa->height = FX_grSstScreenHeight();
+   /* screen */
+   fxMesa->screen_width = FX_grSstScreenWidth();
+   fxMesa->screen_height = FX_grSstScreenHeight();
 
+   /* window inside screen */
+   fxMesa->width = fxMesa->screen_width;
+   fxMesa->height = fxMesa->screen_height;
+
+   /* scissor inside window */
    fxMesa->clipMinX = 0;
    fxMesa->clipMaxX = fxMesa->width;
    fxMesa->clipMinY = 0;
    fxMesa->clipMaxY = fxMesa->height;
-
-   fxMesa->screen_width = fxMesa->width;
-   fxMesa->screen_height = fxMesa->height;
 
    if (verbose) {
       char buf[80];
