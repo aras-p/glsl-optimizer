@@ -983,6 +983,7 @@ void r300_setup_textures(GLcontext *ctx)
 	R300_STATECHANGE(r300, tex.offset);
 	R300_STATECHANGE(r300, tex.unknown4);
 	R300_STATECHANGE(r300, tex.unknown5);
+	R300_STATECHANGE(r300, tex.border_color);
 	
 	r300->state.texture.tc_count=0;
 	
@@ -1011,10 +1012,12 @@ void r300_setup_textures(GLcontext *ctx)
 			max_texture_unit=i;
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
-			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
+			/* Turn off rest of the bits that are wrong. Im going to get rid of this soon, dont worry :) */
+			t->filter &= R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK
+					|R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK |
+					R300_TX_WRAP_Q_MASK | R300_TX_MAX_ANISO_MASK;
 			
-			/* Turn off rest of the bits that are wrong */
-			t->filter &= R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK;
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=t->filter;
 			
 			/* No idea why linear filtered textures shake when puting random data */
 			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
@@ -1023,6 +1026,7 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
+			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
 
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
@@ -1096,6 +1100,7 @@ void r300_setup_textures(GLcontext *ctx)
 	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.unknown5.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->unchecked_state.count = max_texture_unit+1;
 	
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);

@@ -565,31 +565,44 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // TX_OFFSET_0 + (4*N) */
 #define R300_TX_FILTER_0                    0x4400
 #       define R300_TX_REPEAT                    0
-#       define R300_TX_CLAMP_TO_EDGE             1
-#       define R300_TX_CLAMP                     2
-#       define R300_TX_CLAMP_TO_BORDER           3
-
-#       define R300_TX_WRAP_S_SHIFT              1
-#       define R300_TX_WRAP_S_MASK               (3 << 1)
-#       define R300_TX_WRAP_T_SHIFT              4
-#       define R300_TX_WRAP_T_MASK               (3 << 4)
+#       define R300_TX_MIRRORED                  1
+#       define R300_TX_CLAMP                     4
+#       define R300_TX_CLAMP_TO_EDGE             2
+#       define R300_TX_CLAMP_TO_BORDER           6
+#       define R300_TX_WRAP_S_SHIFT              0
+#       define R300_TX_WRAP_S_MASK               (7 << 0)
+#       define R300_TX_WRAP_T_SHIFT              3
+#       define R300_TX_WRAP_T_MASK               (7 << 3)
+#       define R300_TX_WRAP_Q_SHIFT              6
+#       define R300_TX_WRAP_Q_MASK               (7 << 6)
 #       define R300_TX_MAG_FILTER_NEAREST        (1 << 9)
 #       define R300_TX_MAG_FILTER_LINEAR         (2 << 9)
 #       define R300_TX_MAG_FILTER_MASK           (3 << 9)
 #       define R300_TX_MIN_FILTER_NEAREST        (1 << 11)
 #       define R300_TX_MIN_FILTER_LINEAR         (2 << 11)
-/* TODO: Test and verify R300_TX_MIN_FILTER_MASK */
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (2  <<  12)
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (3  <<  12)
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  12)
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (7  <<  12)
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST             (8  <<  12)
-#	define R300_TX_MIN_FILTER_ANISO_LINEAR              (9  <<  12)
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST (10 <<  12)
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR  (11 <<  12)
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (5  <<  11)
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (9  <<  11)
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  11)
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (10 <<  11)
 
-#       define R300_TX_MIN_FILTER_MASK           (0x0000f800)
+/* NOTE: NEAREST doesnt seem to exist.
+   Im not seting MAG_FILTER_MASK and (3 << 11) on for all
+   anisotropy modes because that would void selected mag filter */
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST             ((0 << 13) /*|R300_TX_MAG_FILTER_MASK|(3<<11)*/)
+#	define R300_TX_MIN_FILTER_ANISO_LINEAR              ((0 << 13) /*|R300_TX_MAG_FILTER_MASK|(3<<11)*/)
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST ((1 << 13) /*|R300_TX_MAG_FILTER_MASK|(3<<11)*/)
+#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR  ((2 << 13) /*|R300_TX_MAG_FILTER_MASK|(3<<11)*/)
+#       define R300_TX_MIN_FILTER_MASK           ( (15 << 11) | (3 << 13) )
+#	define R300_TX_MAX_ANISO_1_TO_1  (0 << 21)
+#	define R300_TX_MAX_ANISO_2_TO_1  (2 << 21)
+#	define R300_TX_MAX_ANISO_4_TO_1  (4 << 21)
+#	define R300_TX_MAX_ANISO_8_TO_1  (6 << 21)
+#	define R300_TX_MAX_ANISO_16_TO_1 (8 << 21)
+#	define R300_TX_MAX_ANISO_MASK    (14 << 21)
+
 #define R300_TX_UNK1_0                      0x4440
+#	define R300_LOD_BIAS_MASK	    0x1fff
+
 #define R300_TX_SIZE_0                      0x4480
 #       define R300_TX_WIDTHMASK_SHIFT           0
 #       define R300_TX_WIDTHMASK_MASK            (2047 << 0)
@@ -684,6 +697,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 /* END */
 #define R300_TX_UNK4_0                      0x4580
 #define R300_TX_UNK5_0                      0x45C0
+#define R300_TX_BORDER_COLOR_0              0x45F0 //ff00ff00 == { 0, 1.0, 0, 1.0 }
+
 /* END */
 
 /* BEGIN: Fragment program instruction set

@@ -441,7 +441,8 @@ struct r300_hw_state {
 		struct r300_state_atom format;
 		struct r300_state_atom offset;
 		struct r300_state_atom unknown4;
-		struct r300_state_atom unknown5;		
+		struct r300_state_atom unknown5;
+		struct r300_state_atom border_color;
 		} tex;
 	struct r300_state_atom txe;	/* tex enable (4104) */
 };

@@ -60,46 +60,42 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \param swrap Wrap mode for the \a s texture coordinate
  * \param twrap Wrap mode for the \a t texture coordinate
  */
-
+ 
 static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 			   GLenum rwrap)
 {
 	GLboolean is_clamp = GL_FALSE;
-	GLboolean is_clamp_to_border = GL_FALSE;
-	
-/* Most of these seem to be incorrect so disable for now */
-#if 0	
+	unsigned long hw_swrap=0, hw_twrap=0, hw_qwrap=0;
+			
 	t->filter &=
-	    ~(R200_CLAMP_S_MASK | R200_CLAMP_T_MASK | R200_BORDER_MODE_D3D);
-
+	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_Q_MASK);
+	
 	switch (swrap) {
 	case GL_REPEAT:
-		t->filter |= R200_CLAMP_S_WRAP;
+		hw_swrap |= R300_TX_REPEAT;
 		break;
 	case GL_CLAMP:
-		t->filter |= R200_CLAMP_S_CLAMP_GL;
+		hw_swrap |= R300_TX_CLAMP;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
-		t->filter |= R200_CLAMP_S_CLAMP_LAST;
+		hw_swrap |= R300_TX_CLAMP_TO_EDGE;
 		break;
 	case GL_CLAMP_TO_BORDER:
-		t->filter |= R200_CLAMP_S_CLAMP_GL;
-		is_clamp_to_border = GL_TRUE;
+		hw_swrap |= R300_TX_CLAMP_TO_BORDER;
 		break;
 	case GL_MIRRORED_REPEAT:
-		t->filter |= R200_CLAMP_S_MIRROR;
+		hw_swrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_EXT:
-		t->filter |= R200_CLAMP_S_MIRROR_CLAMP_GL;
+		hw_swrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		t->filter |= R200_CLAMP_S_MIRROR_CLAMP_LAST;
+		hw_swrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		t->filter |= R200_CLAMP_S_MIRROR_CLAMP_GL;
-		is_clamp_to_border = GL_TRUE;
+		hw_swrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
 		break;
 	default:
 		_mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
@@ -107,76 +103,72 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 
 	switch (twrap) {
 	case GL_REPEAT:
-		t->filter |= R200_CLAMP_T_WRAP;
+		hw_twrap |= R300_TX_REPEAT;
 		break;
 	case GL_CLAMP:
-		t->filter |= R200_CLAMP_T_CLAMP_GL;
+		hw_twrap |= R300_TX_CLAMP;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
-		t->filter |= R200_CLAMP_T_CLAMP_LAST;
+		hw_twrap |= R300_TX_CLAMP_TO_EDGE;
 		break;
 	case GL_CLAMP_TO_BORDER:
-		t->filter |= R200_CLAMP_T_CLAMP_GL | R200_BORDER_MODE_D3D;
-		is_clamp_to_border = GL_TRUE;
+		hw_twrap |= R300_TX_CLAMP_TO_BORDER;
 		break;
 	case GL_MIRRORED_REPEAT:
-		t->filter |= R200_CLAMP_T_MIRROR;
+		hw_twrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_EXT:
-		t->filter |= R200_CLAMP_T_MIRROR_CLAMP_GL;
+		hw_twrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		t->filter |= R200_CLAMP_T_MIRROR_CLAMP_LAST;
+		hw_twrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		t->filter |= R200_CLAMP_T_MIRROR_CLAMP_GL;
-		is_clamp_to_border = GL_TRUE;
+		hw_twrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
 		break;
 	default:
 		_mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
 	}
 
-	t->format_x &= ~R200_CLAMP_Q_MASK;
-
 	switch (rwrap) {
 	case GL_REPEAT:
-		t->format_x |= R200_CLAMP_Q_WRAP;
+		hw_qwrap |= R300_TX_REPEAT;
 		break;
 	case GL_CLAMP:
-		t->format_x |= R200_CLAMP_Q_CLAMP_GL;
+		hw_qwrap |= R300_TX_CLAMP;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_CLAMP_TO_EDGE:
-		t->format_x |= R200_CLAMP_Q_CLAMP_LAST;
+		hw_qwrap |= R300_TX_CLAMP_TO_EDGE;
 		break;
 	case GL_CLAMP_TO_BORDER:
-		t->format_x |= R200_CLAMP_Q_CLAMP_GL;
-		is_clamp_to_border = GL_TRUE;
+		hw_qwrap |= R300_TX_CLAMP_TO_BORDER;
 		break;
 	case GL_MIRRORED_REPEAT:
-		t->format_x |= R200_CLAMP_Q_MIRROR;
+		hw_qwrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_EXT:
-		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
+		hw_qwrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
 		is_clamp = GL_TRUE;
 		break;
 	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_LAST;
+		hw_qwrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
 		break;
 	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		t->format_x |= R200_CLAMP_Q_MIRROR_CLAMP_GL;
-		is_clamp_to_border = GL_TRUE;
+		hw_qwrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
 		break;
 	default:
 		_mesa_problem(NULL, "bad R wrap mode in %s", __FUNCTION__);
 	}
 	
-	if (is_clamp_to_border) {
-		t->filter |= R200_BORDER_MODE_D3D;
-	}
-
+	t->filter |= hw_swrap << R300_TX_WRAP_S_SHIFT;
+	t->filter |= hw_twrap << R300_TX_WRAP_T_SHIFT;
+	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
+	
+#if 0
+	t->format_x &= ~R200_CLAMP_Q_MASK;
 	t->border_fallback = (is_clamp && is_clamp_to_border);
 #endif	
 }
@@ -184,22 +176,19 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 {
 	
-/* Needs testing */	
-#if 0	
-	t->filter &= ~R200_MAX_ANISO_MASK;
+	t->filter &= ~R300_TX_MAX_ANISO_MASK;
 
 	if (max == 1.0) {
-		t->filter |= R200_MAX_ANISO_1_TO_1;
+		t->filter |= R300_TX_MAX_ANISO_1_TO_1;
 	} else if (max <= 2.0) {
-		t->filter |= R200_MAX_ANISO_2_TO_1;
+		t->filter |= R300_TX_MAX_ANISO_2_TO_1;
 	} else if (max <= 4.0) {
-		t->filter |= R200_MAX_ANISO_4_TO_1;
+		t->filter |= R300_TX_MAX_ANISO_4_TO_1;
 	} else if (max <= 8.0) {
-		t->filter |= R200_MAX_ANISO_8_TO_1;
+		t->filter |= R300_TX_MAX_ANISO_8_TO_1;
 	} else {
-		t->filter |= R200_MAX_ANISO_16_TO_1;
+		t->filter |= R300_TX_MAX_ANISO_16_TO_1;
 	}
-#endif	
 }
 
 /**
@@ -212,14 +201,14 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
 
 static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 {
-	GLuint anisotropy = 0; //(t->filter & R200_MAX_ANISO_MASK);
+	GLuint anisotropy = (t->filter & R300_TX_MAX_ANISO_MASK);
 
 	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
 #if 0	
 	//t->format_x &= ~R200_VOLUME_FILTER_MASK;
 #endif	
 	
-	if (anisotropy == R200_MAX_ANISO_1_TO_1) {
+	if (anisotropy == R300_TX_MAX_ANISO_1_TO_1) {
 		switch (minf) {
 		case GL_NEAREST:
 			t->filter |= R300_TX_MIN_FILTER_NEAREST;
@@ -836,7 +825,7 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 			GLfloat bias, min;
 			GLuint b;
 
-			/* The R200's LOD bias is a signed 2's complement value with a
+			/* The R300's LOD bias is a signed 2's complement value with a
 			 * range of -16.0 <= bias < 16.0.
 			 *
 			 * NOTE: Add a small bias to the bias for conform mipsel.c test.
@@ -847,13 +836,9 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 					    "no_neg_lod_bias") ? 0.0 : -16.0;
 			bias = CLAMP(bias, min, 16.0);
 			
-#define R300_LOD_BIAS_MASK	0x1fff
-			
-			/* 1.0 is 0x00000100 and 10.0 is 0x00000a00 --aet */
-
+			/* 0.0 - 16.0 == 0x0 - 0x1000 */
+			/* 0.0 - -16.0 == 0x1001 - 0x1fff */
 			b = 0x1000 / 16.0 * bias;
-			/* No clue about negative biases but this would 
-			   seem logical if positive max is 0x1000 */
 			b &= R300_LOD_BIAS_MASK;
 			
 			if(b != (rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] & R300_LOD_BIAS_MASK)){
