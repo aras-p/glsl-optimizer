@@ -7,6 +7,57 @@
 <H1>News</H1>
 
 
+<h2>April 2, 2004</h2>
+
+<p>
+Mesa 6.0.1 has been released.
+This release basically just fixes bugs since the 6.0. release.
+</p>
+<pre>
+    New:
+	- upgraded glext.h to version 22
+	- new build targets (Dan Schikore)
+	- new linux-x86-opteron build target (Heath Feather)
+    Bug fixes:
+	- glBindProgramARB didn't update all necessary state
+	- fixed build problems on OpenBSD
+	- omit CVS directories from tarballs
+	- glGetTexImage(GL_COLOR_INDEX) was broken
+	- fixed an infinite loop in t&l module
+	- silenced some valgrind warnings about using unitialized memory
+	- fixed some compilation/link glitches on IRIX (Mike Stephens)
+	- glBindProgram wasn't getting compiled into display lists
+	- GLX_FBCONFIG_ID wasn't recognized in glXChooseFBConfig() (bug 888079)
+	- two-sided lighting and vertex program didn't work (bug 887330)
+	- stores to program parameter registers in vertex state programs
+	  didn't work.
+	- fixed glOrtho bug found with gcc 3.2.2 (RH9)
+	- glXCreateWindow() wasn't fully implemented (bug 890894)
+	- generic vertex attribute arrays didn't work in display lists
+	- vertex buffer objects' default usage and access fields were wrong
+	- glDrawArrays with start!=0 was broken
+	- fragment program PK2H, UP2H, UP4B and UP4UB instructions were broken
+	- linux-osmesa16-static config didn't work
+	- fixed a few color index rendering problems (bug 910687)
+	- glInterleavedArrays didn't respect GL_CLIENT_ACTIVE_TEXTURE
+	- OSMesa RGB and BGR modes were broken
+	- glProgramStringARB mistakenly required a null-terminated string
+	- fragment program XPD instruction was incorrect
+	- glGetMaterial() didn't work reliably
+</pre>
+The MD5 checksums are:
+</p>
+<pre>
+011be0e79666c7a6eb9693fbf9348653  MesaLib-6.0.1.tar.gz
+b7f14088c5c2f14490d2739a91102112  MesaLib-6.0.1.tar.bz2
+bf0510cf0a2b87d64cdd317eca3f1db1  MesaLib-6.0.1.zip
+b7b648599e0aaee1c4ffc554a2a9139e  MesaDemos-6.0.1.tar.gz
+dd6aadfd9ca8e1cfa90c6ee492bc6f43  MesaDemos-6.0.1.tar.bz2
+eff71d59c211825e949199852f5a2316  MesaDemos-6.0.1.zip
+</pre>
+
+
+
 <h2>January 16, 2004</h2>
 
 <p>
@@ -780,6 +831,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.12 2004/01/15 15:47:57 brianp Exp $
+$Id: news.html,v 3.13 2004/04/02 23:37:02 brianp Exp $
 </body>
 </html>
