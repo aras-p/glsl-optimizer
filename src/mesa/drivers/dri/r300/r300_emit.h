@@ -86,6 +86,16 @@ static __inline__ uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
+static __inline__ uint32_t cmdpacket3(int packet)
+{
+	drm_r300_cmd_header_t cmd;
+
+	cmd.packet3.cmd_type = R300_CMD_PACKET3;
+	cmd.packet3.packet = packet;
+
+	return cmd.u;
+}
+
 /* Prepare to write a register value to register at address reg.
    If num_extra > 0 then the following extra values are written
    to registers with address +4, +8 and so on.. */
@@ -104,6 +114,8 @@ static __inline__ uint32_t cmdvpu(int addr, int count)
 /* Prepare to write a register value to register at address reg.
    If num_extra > 0 then the following extra values are written
    into the same register. */
+/* It is here to permit r300_lib to compile and link anyway, but
+   complain if actually called */
 #define reg_start_pump(reg, num_extra) \
 	{ \
 	fprintf(stderr, "I am not defined.. Error ! in %s::%s at line %d\n", \
@@ -135,6 +147,26 @@ static __inline__ uint32_t cmdvpu(int addr, int count)
 	cmd_reserved=_n+2; \
 	cmd_written=1; \
 	cmd[0].i=cmdvpu((dest), _n/4); \
+	}
+
+#define start_packet3(packet, count)	\
+	{ \
+	int _n; \
+	CARD32 _p; \
+	_n=(count); \
+	_p=(packet); \
+	cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
+					(_n+3), \
+					__FUNCTION__); \
+	cmd_reserved=_n+3; \
+	cmd_written=2; \
+	if(_n>0x3fff) {\
+		fprintf(stderr,"Too big packet3 %08x: cannot store %d dwords\n", \
+			_p, _n); \
+		exit(-1); \
+		} \
+	cmd[0].i=cmdpacket3(R300_CMD_PACKET3_RAW); \
+	cmd[1].i=_p | ((_n & 0x3fff)<<16); \
 	}
 
 	/* must be sent to switch to 2d commands */

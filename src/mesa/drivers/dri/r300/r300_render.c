@@ -162,6 +162,9 @@ static void r300_render_primitive(r300ContextPtr rmesa,
          	break;
    		}
    end_3d(PASS_PREFIX_VOID);
+   
+   start_packet3(RADEON_CP_PACKET3_NOP, 0);
+   e32(0x0);
 }
 
 /**
