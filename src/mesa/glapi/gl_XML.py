@@ -29,7 +29,7 @@ from xml.sax import saxutils
 from xml.sax import make_parser
 from xml.sax.handler import feature_namespaces
 
-import sys, re
+import re
 
 class glItem:
 	"""Generic class on which all other API entity types are based."""
@@ -74,7 +74,6 @@ class glItem:
 			return 1
 		else:
 			return 0
-		return
 
 	def get_category_define(self):
 		return self.category
