@@ -478,9 +478,11 @@ init_machine_deriv( GLcontext *ctx,
    /* copy existing machine */
    _mesa_memcpy(dMachine, machine, sizeof(struct fp_machine));
 
-   /* Clear temporary registers */
-   _mesa_bzero( (void*) machine->Temporaries,
-               MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
+      /* Clear temporary registers (undefined for ARB_f_p) */
+      _mesa_bzero( (void*) machine->Temporaries,
+                   MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   }
 
    /* Add derivatives */
    if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
@@ -1307,9 +1309,11 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    if (ctx->FragmentProgram.CallbackEnabled)
       inputsRead = ~0;
 
-   /* Clear temporary registers */
-   _mesa_bzero(machine->Temporaries,
-               MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
+      /* Clear temporary registers (undefined for ARB_f_p) */
+      _mesa_bzero(machine->Temporaries,
+                  MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   }
 
    /* Load input registers */
    if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
