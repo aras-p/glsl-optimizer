@@ -1,4 +1,4 @@
-/* $Id: glthread.c,v 1.4 2000/02/10 21:27:25 brianp Exp $ */
+/* $Id: glthread.c,v 1.5 2000/02/10 21:54:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,8 +35,8 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "glthread.h" 
 #endif
-
 
 
 /*
@@ -45,8 +45,6 @@
  */
 #ifdef THREADS
 #include <errno.h>
-#include "glthread.h" 
-
 
 /*
  * Error messages
@@ -293,6 +291,42 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 #endif /* XTHREAD */
 
 
+
+#else  /* THREADS */
+
+
+/*
+ * no-op functions
+ */
+
+unsigned long
+_glthread_GetID(void)
+{
+   return 0;
+}
+
+
+void
+_glthread_InitTSD(_glthread_TSD *tsd)
+{
+   (void) tsd;
+}
+
+
+void *
+_glthread_GetTSD(_glthread_TSD *tsd)
+{
+   (void) tsd;
+   return NULL;
+}
+
+
+void
+_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
+{
+   (void) tsd;
+   (void) ptr;
+}
+
+
 #endif /* THREADS */
-
-

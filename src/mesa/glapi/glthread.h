@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.3 2000/02/10 21:27:25 brianp Exp $ */
+/* $Id: glthread.h,v 1.4 2000/02/10 21:54:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,22 +56,19 @@
  *
  */
 
-
-#ifndef GLTHREAD_H
-#define GLTHREAD_H
-
-
 /*
  * If this file is accidentally included by a non-threaded build, 
  * it should not cause the build to fail, or otherwise cause problems.
  * In general, it should only be included when needed however.
  */
-#ifdef THREADS
-/*
- * It is an error not to select a specific threads API when compiling.
- */
-#if !defined(PTHREADS) && !defined(SOLARIS_THREADS) && !defined(WIN32) && !defined(XTHREADS)
-#error One of PTHREADS, SOLARIS_THREADS, WIN32 or XTHREADS must be defined.
+
+
+#ifndef GLTHREAD_H
+#define GLTHREAD_H
+
+
+#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(XTHREADS)
+#define THREADS
 #endif
 
 
@@ -85,7 +82,7 @@
  * compiler flag.  On Solaris with gcc, use -D_REENTRANT to enable
  * proper compiling for MT-safe libc etc.
  */
-#ifdef PTHREADS
+#if defined(PTHREADS)
 #include <pthread.h> /* POSIX threads headers */
 
 typedef struct {
@@ -204,8 +201,8 @@ typedef xmutex_rec _glthread_Mutex;
 
 
 
-#else /* THREADS */
 
+#ifndef THREADS
 
 /*
  * THREADS not defined
@@ -224,7 +221,6 @@ typedef GLuint _glthread_Mutex;
 #define _glthread_LOCK_MUTEX(name)  (void) name
 
 #define _glthread_UNLOCK_MUTEX(name)  (void) name
-
 
 #endif /* THREADS */
 
@@ -248,7 +244,6 @@ _glthread_GetTSD(_glthread_TSD *);
 
 extern void
 _glthread_SetTSD(_glthread_TSD *, void *);
-
 
 
 
