@@ -1,86 +1,20 @@
-/* $Id: wmesa.c,v 1.6 2000/09/08 21:44:56 brianp Exp $ */
+/* $Id: wmesa.c,v 1.7 2000/09/12 15:46:43 brianp Exp $ */
 
 /*
-*   File name   :   wmesa.c
-*  Version      :   2.3
-*
-*  Display driver for Mesa 2.3  under
-*   Windows95 and WindowsNT
-*
-*   Copyright (C) 1996-  Li Wei
-*  Address      :       Institute of Artificial Intelligence
-*               :           & Robotics
-*               :       Xi'an Jiaotong University
-*  Email        :       liwei@aiar.xjtu.edu.cn
-*  Web page :       http://sun.aiar.xjtu.edu.cn
-*
-*  This file and its associations are partially borrowed from the
-*  Windows NT driver for Mesa 1.8 , written by Mark Leaming
-*  (mark@rsinc.com).
-*/
-
-
-/*
- * $Log: wmesa.c,v $
- * Revision 1.6  2000/09/08 21:44:56  brianp
- * removed ctx->Driver.Dither function
+ * Windows (Win32) device driver for Mesa 3.4
  *
- * Revision 1.5  2000/09/07 15:45:28  brianp
- * Removed ctx->Driver.LogicOp().
- * ctx->Driver.Index/ColorMask() now return void.
- * Removed SWmasking and SWLogicOpEnabled variables.
- * LogicOps and color/index masking are no longer special-case device
- * driver functions.  The Xlib driver was the only driver that used
- * them.  Things are more uniform now.
+ * Original author:
  *
- * Revision 1.4  2000/08/02 20:29:03  brianp
- * updates from mesa3d@billbaxter.com
+ *  Copyright (C) 1996-  Li Wei
+ *  Address      :       Institute of Artificial Intelligence
+ *               :           & Robotics
+ *               :       Xi'an Jiaotong University
+ *  Email        :       liwei@aiar.xjtu.edu.cn
+ *  Web page :       http://sun.aiar.xjtu.edu.cn
  *
- * Revision 1.3.4.1  2000/08/02 20:28:19  brianp
- * updates from mesa3d@billbaxter.com
- *
- * Revision 1.3  2000/03/03 23:21:57  brianp
- * removed obsolete logicop function
- *
- * Revision 1.2  2000/02/17 20:52:02  brianp
- * replaced renderer_string() with get_string() func
- *
- * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
- * Imported sources
- *
- * Revision 3.10  1999/06/15 01:35:06  brianp
- * small change to wmSetPixel() from TWILMOT@cpr.fr
- *
- * Revision 3.9  1999/05/11 19:06:01  brianp
- * fixed a few VB->Index bugs (mikec@ensoniq.com)
- *
- * Revision 3.8  1999/05/08 15:15:23  brianp
- * various updates from mikec@ensoniq.com
- *
- * Revision 3.7  1999/04/01 01:27:34  brianp
- * always flip Y coord in read_rgba_span()
- *
- * Revision 3.6  1999/03/28 21:17:27  brianp
- * updated SetBuffer driver function
- *
- * Revision 3.5  1999/03/16 01:36:42  brianp
- * patched dither() to check if Current is NULL, per xzhou@nyx.net
- *
- * Revision 3.4  1999/02/25 14:12:33  keithw
- * Merged in kw3 patch
- *
- * Revision 3.3  1999/01/03 03:08:57  brianp
- * Ted Jump's changes
- *
- * Revision 3.2  1998/08/29 00:26:01
- * updated for Mesa 3.0 to accomodate EGCS-Mingw32 build
- *
- * Revision 3.1  1998/06/11 01:42:08  brianp
- * updated for Mesa 3.0 device driver interface (but not tested)
- *
- * Revision 3.0  1998/06/11 01:18:25  brianp
- * initial revision
- *
+ *  This file and its associations are partially borrowed from the
+ *  Windows NT driver for Mesa 1.8 , written by Mark Leaming
+ *  (mark@rsinc.com).
  */
 
 
@@ -597,7 +531,7 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 
 
 
-static GLboolean set_buffer( GLcontext* ctx, GLenum mode )
+static GLboolean set_draw_buffer( GLcontext* ctx, GLenum mode )
 {
    STARTPROFILE
    /* TODO: this could be better */
@@ -607,7 +541,15 @@ static GLboolean set_buffer( GLcontext* ctx, GLenum mode )
    else {
       return GL_FALSE;
    }
-   ENDPROFILE(set_buffer)
+   ENDPROFILE(set_draw_buffer)
+}
+
+
+static void set_read_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+                            GLenum buffer )
+{
+   /* XXX todo */
+   return;
 }
 
 
@@ -1172,7 +1114,8 @@ void setup_DD_pointers( GLcontext* ctx )
 
     ctx->Driver.Enable = enable;
 
-    ctx->Driver.SetBuffer = set_buffer;
+    ctx->Driver.SetDrawBuffer = set_draw_buffer;
+    ctx->Driver.SetReadBuffer = set_read_buffer;
     ctx->Driver.GetBufferSize = buffer_size;
 
     ctx->Driver.PointsFunc = choose_points_function(ctx);
@@ -1360,7 +1303,11 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
         return NULL;
     }
 
-    c->gl_buffer = gl_create_framebuffer( c->gl_visual );
+    c->gl_buffer = gl_create_framebuffer( c->gl_visual,
+                                          c->gl_visual->DepthBits > 0,
+                                          c->gl_visual->StencilBits > 0,
+                                          c->gl_visual->AccumRedBits > 0,
+                                          c->gl_visual->AlphaBits > 0 );
     if (!c->gl_buffer) {
         gl_destroy_visual( c->gl_visual );
         gl_destroy_context( c->gl_ctx );
@@ -2149,6 +2096,7 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
 {
     WMesaContext wmesa = (WMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define PIXEL_ADDRESS(X,Y) PIXELADDR4(X,Y)
 #define PIXEL_TYPE GLuint
