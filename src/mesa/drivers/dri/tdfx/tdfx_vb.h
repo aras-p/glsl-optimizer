@@ -63,7 +63,7 @@ extern void tdfxCheckTexSizes( GLcontext *ctx );
 
 extern void tdfxChooseVertexState( GLcontext *ctx );
 
-extern void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+extern void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint end,
                                GLuint newinputs );
 
 #endif
