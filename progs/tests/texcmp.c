@@ -305,6 +305,9 @@ static void Key( unsigned char key, int x, int y )
          }
          ReInit(Tx->TC, Tx);
          break;
+      case '9':
+         ReInit(GL_RGB, Tx);
+         break;
       case '0':
          ReInit(GL_RGBA, Tx);
          break;

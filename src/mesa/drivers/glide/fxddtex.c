@@ -43,6 +43,7 @@
 #include "image.h"
 #include "teximage.h"
 #include "texformat.h"
+#include "texcompress.h"
 #include "texobj.h"
 #include "texstore.h"
 #include "texutil.h"
@@ -663,9 +664,6 @@ fxIsTexSupported(GLenum target, GLint internalFormat,
  * may get defined in texutil.c) but we have to account for scaled texture
  * images on tdfx hardware (the 8:1 aspect ratio limit).
  * Hence, we need special functions here.
- *
- * [dBorca]
- * this better be right, if we will advertise GL_SGIS_generate_mipmap!
  */
 
 static void
@@ -828,6 +826,84 @@ fetch_a8r8g8b8(const struct gl_texture_image *texImage,
 
 
 static void
+fetch_rgb_fxt1(const struct gl_texture_image *texImage,
+	       GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgb_fxt1.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
+fetch_rgba_fxt1(const struct gl_texture_image *texImage,
+		GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgba_fxt1.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
+fetch_rgb_dxt1(const struct gl_texture_image *texImage,
+	       GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgb_dxt1.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
+fetch_rgba_dxt1(const struct gl_texture_image *texImage,
+		GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgba_dxt1.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
+fetch_rgba_dxt3(const struct gl_texture_image *texImage,
+		GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgba_dxt3.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
+fetch_rgba_dxt5(const struct gl_texture_image *texImage,
+		GLint i, GLint j, GLint k, GLchan *rgba)
+{
+    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+
+    i = i * mml->wScale;
+    j = j * mml->hScale;
+
+    _mesa_texformat_rgba_dxt5.FetchTexel2D(texImage, i, j, k, rgba);
+}
+
+
+static void
 PrintTexture(int w, int h, int c, const GLubyte * data)
 {
    int i, j;
@@ -896,56 +972,15 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
  width *= wScale;
  height *= hScale;
 
+#if FX_TC_NAPALM || FX_TC_NCC
  switch (format) {
- case GL_COMPRESSED_RGB_FXT1_3DFX:
- case GL_COMPRESSED_RGBA_FXT1_3DFX:
-    /* round up width to next multiple of 8, height to next multiple of 4 */
-    width = (width + 7) & ~7;
-    height = (height + 3) & ~3;
-    /* 16 bytes per 8x4 tile of RGB[A] texels */
-    size = width * height / 2;
-    /* Textures smaller than 8x4 will effectively be made into 8x4 and
-     * take 16 bytes.
-     */
-    if (size < 16)
-       size = 16;
-    return size;
- case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
- case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
- case GL_RGB_S3TC:
- case GL_RGB4_S3TC:
-    /* round up width, height to next multiple of 4 */
-    width = (width + 3) & ~3;
-    height = (height + 3) & ~3;
-    /* 8 bytes per 4x4 tile of RGB[A] texels */
-    size = width * height / 2;
-    /* Textures smaller than 4x4 will effectively be made into 4x4 and
-     * take 8 bytes.
-     */
-    if (size < 8)
-       size = 8;
-    return size;
- case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
- case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
- case GL_RGBA_S3TC:
- case GL_RGBA4_S3TC:
-    /* round up width, height to next multiple of 4 */
-    width = (width + 3) & ~3;
-    height = (height + 3) & ~3;
-    /* 16 bytes per 4x4 tile of RGBA texels */
-    size = width * height; /* simple! */
-    /* Textures smaller than 4x4 will effectively be made into 4x4 and
-     * take 16 bytes.
-     */
-    if (size < 16)
-       size = 16;
-    return size;
  case GL_COMPRESSED_RGB:
 #if FX_TC_NAPALM
     {
      fxMesaContext fxMesa = FX_CONTEXT(ctx);
      if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-        return fxDDCompressedTextureSize(ctx, width, height, 1, GL_COMPRESSED_RGB_FXT1_3DFX);
+        format = GL_COMPRESSED_RGB_FXT1_3DFX;
+        break;
      }
     }
 #endif
@@ -957,17 +992,22 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
     {
      fxMesaContext fxMesa = FX_CONTEXT(ctx);
      if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-        return fxDDCompressedTextureSize(ctx, width, height, 1, GL_COMPRESSED_RGBA_FXT1_3DFX);
+        format = GL_COMPRESSED_RGBA_FXT1_3DFX;
+        break;
      }
     }
 #endif
 #if FX_TC_NCC
     return (width * height * 16 >> 3) + 12 * 4;
 #endif
- default:
-    _mesa_problem(ctx, "bad texformat in fxDDCompressedTextureSize");
-    return 0;
  }
+#endif
+
+ return _mesa_compressed_texture_size(ctx,
+                                      width,
+                                      height,
+                                      depth,
+                                      format);
 }
 
 
@@ -1170,12 +1210,17 @@ fxFetchFunction(GLint mesaFormat)
    case MESA_FORMAT_ARGB8888:
       return &fetch_a8r8g8b8;
    case MESA_FORMAT_RGB_FXT1:
+      return &fetch_rgb_fxt1;
    case MESA_FORMAT_RGBA_FXT1:
+      return &fetch_rgba_fxt1;
    case MESA_FORMAT_RGB_DXT1:
+      return &fetch_rgb_dxt1;
    case MESA_FORMAT_RGBA_DXT1:
+      return &fetch_rgba_dxt1;
    case MESA_FORMAT_RGBA_DXT3:
+      return &fetch_rgba_dxt3;
    case MESA_FORMAT_RGBA_DXT5:
-     return &fetch_r4g4b4a4;
+      return &fetch_rgba_dxt5;
    default:
       _mesa_problem(NULL, "Unexpected format in fxFetchFunction");
       return NULL;
