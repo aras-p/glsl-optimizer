@@ -98,6 +98,7 @@ MAIN_SOURCES = \
 	main/api_noop.c \
 	main/api_validate.c \
 	main/accum.c \
+	main/arbparse.c \
 	main/arbprogram.c \
 	main/arbfragparse.c \
 	main/arbvertparse.c \
