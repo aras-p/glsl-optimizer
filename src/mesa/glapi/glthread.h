@@ -1,4 +1,4 @@
-/* $Id: glthread.h,v 1.1 1999/12/16 17:31:06 brianp Exp $ */
+/* $Id: glthread.h,v 1.2 2000/01/31 23:10:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,8 @@
  * Adapted for new gl dispatcher by Brian Paul
  */
 
+#ifndef GLTHREAD_H
+#define GLTHREAD_H
 
 
 /*
@@ -68,8 +70,21 @@ typedef struct {
    pthread_once_t once;
 } _glthread_TSD;
 
-typedef pthread_mutex_t _glthread_Mutex;
 typedef pthread_t _glthread_Thread;
+
+typedef pthread_mutex_t _glthread_Mutex;
+
+#define _glthread_DECLARE_STATIC_MUTEX(name) \
+   static _glthread_Mutex name = PTHREAD_MUTEX_INITIALIZER
+
+#define _glthread_INIT_MUTEX(name) \
+   pthread_mutex_init(&(name), NULL)
+
+#define _glthread_LOCK_MUTEX(name) \
+   (void) pthread_mutex_lock(&(name))
+
+#define _glthread_UNLOCK_MUTEX(name) \
+   (void) pthread_mutex_unlock(&(name))
 
 #endif /* PTHREADS */
 
@@ -91,8 +106,15 @@ typedef struct {
    int          initfuncCalled;
 } _glthread_TSD;
 
-typedef mutex_t _glthread_Mutex;
 typedef thread_t _glthread_Thread;
+
+typedef mutex_t _glthread_Mutex;
+
+/* XXX need to really implement mutex-related macros */
+#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
+#define _glthread_INIT_MUTEX(name)  (void) name
+#define _glthread_LOCK_MUTEX(name)  (void) name
+#define _glthread_UNLOCK_MUTEX(name)  (void) name
 
 #endif /* SOLARIS_THREADS */
 
@@ -113,10 +135,18 @@ typedef struct {
    int   initfuncCalled;
 } _glthread_TSD;
 
-typedef CRITICAL_SECTION _glthread_Mutex;
 typedef HANDLE _glthread_Thread;
 
+typedef CRITICAL_SECTION _glthread_Mutex;
+
+/* XXX need to really implement mutex-related macros */
+#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
+#define _glthread_INIT_MUTEX(name)  (void) name
+#define _glthread_LOCK_MUTEX(name)  (void) name
+#define _glthread_UNLOCK_MUTEX(name)  (void) name
+
 #endif /* WIN32 */
+
 
 
 
@@ -142,4 +172,29 @@ _glthread_SetTSD(_glthread_TSD *, void *, void (*initfunc)(void));
 
 
 
-#endif
+#else /* THREADS */
+
+
+/*
+ * THREADS not defined
+ */
+
+typedef GLuint _glthread_TSD;
+
+typedef GLuint _glthread_Thread;
+
+typedef GLuint _glthread_Mutex;
+
+#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
+
+#define _glthread_INIT_MUTEX(name)  (void) name
+
+#define _glthread_LOCK_MUTEX(name)  (void) name
+
+#define _glthread_UNLOCK_MUTEX(name)  (void) name
+
+
+#endif /* THREADS */
+
+#endif /* THREADS_H */
+
