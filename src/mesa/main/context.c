@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.48 2000/03/19 01:10:11 brianp Exp $ */
+/* $Id: context.c,v 1.49 2000/03/19 23:35:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -287,7 +287,6 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
     * bad value now (a 1-bit depth buffer!?!).
     */
    assert(depthBits == 0 || depthBits > 1);
-printf("depthbits %d\n", depthBits);
 
    if (depthBits < 0 || depthBits > 32) {
       return NULL;
