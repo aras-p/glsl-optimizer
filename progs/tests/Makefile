@@ -6,30 +6,28 @@
 
 
 CC = gcc
-CFLAGS = -c -g -I../include
+CFLAGS = -g -I../include
 LIBS = -L../lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lm
 
+PROGS = cva \
+	manytex \
+	sharedtex \
+	texline
 
-PROGRAMS = manytex sharedtex
+
+##### RULES #####
+
+.SUFFIXES:
+.SUFFIXES: .c
+
+.c:
+	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 
-default: $(PROGRAMS)
+##### TARGETS #####
+
+default: $(PROGS)
 
 clean:
-	rm -f $(PROGRAMS)
+	rm -f $(PROGS)
 	rm -f *.o
-
-
-
-manytex: manytex.o
-	$(CC) manytex.o $(LIBS) -o $@
-
-manytex.o: manytex.c
-	$(CC) $(CFLAGS) manytex.c
-
-
-sharedtex: sharedtex.o
-	$(CC) sharedtex.o $(LIBS) -o $@
-
-sharedtex.o: sharedtex.c
-	$(CC) $(CFLAGS) sharedtex.c
