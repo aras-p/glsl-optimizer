@@ -92,7 +92,7 @@ struct via_texture_object_t {
 };              
 
 viaTextureObjectPtr viaAllocTextureObject(struct gl_texture_object *texObj);
-void viaUpdateTextureState(GLcontext *ctx);
+GLboolean viaUpdateTextureState(GLcontext *ctx);
 void viaInitTextureFuncs(struct dd_function_table * functions);
 void viaInitTextures(GLcontext *ctx);
 

@@ -1038,8 +1038,8 @@
 #define HC_HTXnTBA_MASK         0x000000ff
 #define HC_HTXnTRAH_SHIFT       16
 #define HC_HTXnTRAL_SHIFT       8
-/* HC_SubA_HTXnTBLCsat     0x0080
- *-- Define the input texture.
+
+/*-- Define the input texture, for below
  */
 #define HC_XTC_TOPC             0x00000000
 #define HC_XTC_InvTOPC          0x00000010
@@ -1057,7 +1057,7 @@
 #define HC_XTC_Acur             0x00000008
 #define HC_XTC_HTXnTBLRC        0x00000009
 #define HC_XTC_Ctexnext         0x0000000a 
-/*--
+/** HC_SubA_HTXnTBLCsat     0x0080 
  */
 #define HC_HTXnTBLCsat_MASK     0x00800000
 #define HC_HTXnTBLCa_MASK       0x000fc000
@@ -1137,8 +1137,6 @@
 #define HC_HTXnTBLCshift_2      0x00000800
 #define HC_HTXnTBLCshift_No     0x00001000
 #define HC_HTXnTBLCshift_DotP   0x00001800
-/*=* John Sheng [2003.7.18] texture combine *=*/
-
 #define HC_HTXnTBLAop_Add       0x00000000
 #define HC_HTXnTBLAop_Sub       0x00000080
 #define HC_HTXnTBLAop_Min       0x00000100

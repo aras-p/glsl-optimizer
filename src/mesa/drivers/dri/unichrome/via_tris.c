@@ -1052,6 +1052,7 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
         vmesa->Fallback |= bit;
         if (oldfallback == 0) {
 	    VIA_FLUSH_DMA(vmesa);
+	    if (0) fprintf(stderr, "ENTER FALLBACK %x\n", bit);
             _swsetup_Wakeup(ctx);
             vmesa->renderIndex = ~0;
         }
@@ -1060,6 +1061,8 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
         vmesa->Fallback &= ~bit;
         if (oldfallback == bit) {
 	    _swrast_flush( ctx );
+
+	    if (0) fprintf(stderr, "LEAVE FALLBACK %x\n", bit);
 
 	    tnl->Driver.Render.Start = viaRenderStart;
             tnl->Driver.Render.PrimitiveNotify = viaRenderPrimitive;
@@ -1082,6 +1085,18 @@ void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode)
     }    
 }
 
+static void viaRunPipeline( GLcontext *ctx )
+{
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+
+   if (vmesa->newState) {
+      vmesa->newRenderState |= vmesa->newState;
+      viaValidateState( ctx );
+   }
+
+   _tnl_run_pipeline( ctx );
+}
+
 
 /**********************************************************************/
 /*                            Initialization.                         */
@@ -1099,7 +1114,7 @@ void viaInitTriFuncs(GLcontext *ctx)
         firsttime = 0;
     }
 
-    tnl->Driver.RunPipeline = _tnl_run_pipeline;
+    tnl->Driver.RunPipeline = viaRunPipeline;
     tnl->Driver.Render.Start = viaRenderStart;
     tnl->Driver.Render.Finish = viaRenderFinish;
     tnl->Driver.Render.PrimitiveNotify = viaRenderPrimitive;

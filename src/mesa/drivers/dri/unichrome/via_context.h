@@ -355,8 +355,9 @@ extern void viaXMesaSetFrontClipRects(viaContextPtr vmesa);
 extern void viaReAllocateBuffers(GLframebuffer *drawbuffer);
 extern void viaXMesaWindowMoved(viaContextPtr vmesa);
 
-extern void viaTexCombineState(viaContextPtr vmesa,
-    const struct gl_tex_env_combine_state * combine, unsigned unit );
+extern GLboolean viaTexCombineState(viaContextPtr vmesa,
+				    const struct gl_tex_env_combine_state * combine, 
+				    unsigned unit );
 
 /* Via hw already adjusted for GL pixel centers:
  */

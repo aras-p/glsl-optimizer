@@ -250,11 +250,11 @@ static const char * const card_extensions[] =
    "GL_ARB_point_parameters",
    "GL_ARB_texture_env_add",
    "GL_ARB_texture_env_combine",
-   "GL_ARB_texture_env_dot3",
+/*    "GL_ARB_texture_env_dot3", */
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_stencil_wrap",
    "GL_EXT_texture_env_combine",
-   "GL_EXT_texture_env_dot3",
+/*    "GL_EXT_texture_env_dot3", */
    "GL_EXT_texture_lod_bias",
    "GL_EXT_secondary_color",
    "GL_EXT_fog_coord",
@@ -273,7 +273,9 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
     &_tnl_texgen_stage,
     &_tnl_texture_transform_stage,
     /* REMOVE: point attenuation stage */
+#if 0
     &_via_fastrender_stage,     /* ADD: unclipped rastersetup-to-dma */
+#endif
     &_tnl_render_stage,
     0,
 };
