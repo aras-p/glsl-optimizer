@@ -580,7 +580,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfixed zLeft = 0, fdzOuter = 0, fdzInner;
 #endif
 #ifdef INTERP_W
-         GLfloat wLeft, dwOuter, dwInner;
+         GLfloat wLeft = 0, dwOuter = 0, dwInner;
 #endif
 #ifdef INTERP_FOG
          GLfloat fogLeft = 0, dfogOuter = 0, dfogInner;
