@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.16 1999/12/16 17:33:43 brianp Exp $ */
+/* $Id: glapi.c,v 1.17 1999/12/17 12:20:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,6 +124,10 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 
 #if defined(THREADS)
    _glthread_SetTSD(&DispatchTSD, (void*) dispatch, dispatch_thread_init);
+   if (ThreadSafe)
+      Dispatch = NULL;  /* to help with debugging */
+   else
+      Dispatch = dispatch;
 #else
    Dispatch = dispatch;
 #endif
@@ -141,8 +145,10 @@ _glapi_get_dispatch(void)
    if (ThreadSafe) {
       return (struct _glapi_table *) _glthread_GetTSD(&DispatchTSD);
    }
-   else
+   else {
+      assert(Dispatch);
       return Dispatch;
+   }
 #else
    return Dispatch;
 #endif
@@ -449,7 +455,6 @@ _glapi_check_table(const struct _glapi_table *table)
    const struct _glapi_table *dispatch;	\
    if (ThreadSafe) {			\
       dispatch = _glapi_get_dispatch();	\
-      assert(dispatch);			\
    }					\
    else {				\
       dispatch = Dispatch;		\
