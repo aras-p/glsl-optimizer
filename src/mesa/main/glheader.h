@@ -20,7 +20,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -70,19 +70,22 @@
 #include <stdarg.h>
 
 
+/* This is no longer uses since we dumped autoconf/automake! */
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
 #endif
 
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-#	define __WIN32__
-#	define finite _finite
+#  define __WIN32__
+#  define finite _finite
 #endif
 
 #if defined(__WATCOMC__)
-#	define finite _finite
+#  define finite _finite
+#  pragma disable_message(201) /* Disable unreachable code warnings */
 #endif
+
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
 #  if !defined(__GNUC__) /* mingw environment */
@@ -133,23 +136,20 @@
 #  define GLWINAPIV
 #endif /* WIN32 / CYGWIN bracket */
 
-/* compatibility guard so we don't need to change client code */
 
+/* XXX why is this here?
+ * It should probaby be somewhere in src/mesa/drivers/windows/
+ */
+/* compatibility guard so we don't need to change client code */
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-#if 0
-#	define CALLBACK GLCALLBACK
-typedef void *HGLRC;
-typedef void *HDC;
-#endif
 typedef int (GLAPIENTRY *PROC)();
 typedef unsigned long COLORREF;
 #endif
 
 
-/* Make sure we include glext.h from gl.h */
-#define GL_GLEXT_PROTOTYPES
-
-
+/* XXX why is this here?
+ * It should probaby be somewhere in src/mesa/drivers/windows/
+ */
 #if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(BUILD_FOR_SNAP) 
 #	define WGL_FONT_LINES      0
 #	define WGL_FONT_POLYGONS   1
@@ -192,23 +192,13 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #define LE32_TO_CPU( x )	CPU_TO_LE32( x )
 
 
-/* This is a macro on IRIX */
-#ifdef _P
-#undef _P
-#endif
-
-
-
+#define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
 
 
-#ifndef CAPI
-#if defined(WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
-#else
-#define CAPI
-#endif
 #endif
 #include <GL/internal/glcore.h>
 
@@ -258,9 +248,9 @@ typedef GLushort GLhalfARB;
 
 
 
-/* Disable unreachable code warnings for Watcom C++ */
-#ifdef	__WATCOMC__
-#pragma disable_message(201)
+/* This is a macro on IRIX */
+#ifdef _P
+#undef _P
 #endif
 
 
@@ -313,6 +303,16 @@ typedef GLushort GLhalfARB;
 #endif
 
 
+/* If we build the library with gcc's -fvisibility=hidden flag, we'll
+ * use the PUBLIC macro to mark functions that are to be exported.
+ */
+#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  define PUBLIC __attribute__((visibility("default")))
+#else
+#  define PUBLIC
+#endif
+
+
 /* Some compilers don't like some of Mesa's const usage */
 #ifdef NO_CONST
 #  define CONST
@@ -331,20 +331,8 @@ typedef GLushort GLhalfARB;
 
 
 #if !defined __GNUC__ || __GNUC__ < 3
-# define __builtin_expect(x, y) x
+#  define __builtin_expect(x, y) x
 #endif
-
-
-
-/**
- * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
- * as a int (thereby using integer registers instead of FP registers) is
- * a performance win.  Typically, this can be done with ordinary casts.
- * But with gcc's -fstrict-aliasing flag (which defaults to on in gcc 3.0)
- * these casts generate warnings.
- * The following union typedef is used to solve that.
- */
-typedef union { GLfloat f; GLint i; } fi_type;
 
 
 #include "config.h"
