@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.42 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: image.c,v 1.43 2000/10/05 16:22:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2373,7 +2373,8 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+         if (dstFormat == GL_COLOR_INDEX
+             && (transferOps & IMAGE_MAP_COLOR_BIT)) {
             _mesa_map_ci(ctx, n, indexes);
          }
          if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
@@ -2630,7 +2631,8 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
-         if (transferOps & IMAGE_MAP_COLOR_BIT) {
+         if (dstFormat == GL_COLOR_INDEX
+             && (transferOps & IMAGE_MAP_COLOR_BIT)) {
             _mesa_map_ci(ctx, n, indexes);
          }
          if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {

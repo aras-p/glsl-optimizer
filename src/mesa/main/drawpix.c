@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.36 2000/09/30 18:42:29 brianp Exp $ */
+/* $Id: drawpix.c,v 1.37 2000/10/05 16:22:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,17 +104,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                  GLsizei width, GLsizei height,
                  GLenum format, GLenum type, const GLvoid *pixels)
 {
-   const GLuint cantTransferBits =
-      IMAGE_SCALE_BIAS_BIT |
-      IMAGE_SHIFT_OFFSET_BIT |
-      IMAGE_MAP_COLOR_BIT |
-      IMAGE_COLOR_TABLE_BIT |
-      IMAGE_CONVOLUTION_BIT |
-      IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT |
-      IMAGE_COLOR_MATRIX_BIT |
-      IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |
-      IMAGE_HISTOGRAM_BIT |
-      IMAGE_MIN_MAX_BIT;
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
    GLubyte rgb[MAX_WIDTH][3];
    GLubyte rgba[MAX_WIDTH][4];
@@ -128,7 +117,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    if ((ctx->RasterMask&(~(SCISSOR_BIT|WINCLIP_BIT)))==0
-       && (ctx->ImageTransferState & cantTransferBits) == 0
        && ctx->Texture.ReallyEnabled == 0
        && unpack->Alignment == 1
        && !unpack->SwapBytes
@@ -221,7 +209,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        * skip "skipRows" rows and skip "skipPixels" pixels/row.
        */
 
-      if (format==GL_RGBA && type==GL_UNSIGNED_BYTE) {
+      if (format==GL_RGBA && type==GL_UNSIGNED_BYTE
+          && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels) * 4;
@@ -258,7 +247,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_RGB && type==GL_UNSIGNED_BYTE) {
+      else if (format==GL_RGB && type==GL_UNSIGNED_BYTE
+               && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels) * 3;
@@ -294,7 +284,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_LUMINANCE && type==GL_UNSIGNED_BYTE) {
+      else if (format==GL_LUMINANCE && type==GL_UNSIGNED_BYTE
+               && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels);
@@ -352,7 +343,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          return GL_TRUE;
       }
-      else if (format==GL_LUMINANCE_ALPHA && type==GL_UNSIGNED_BYTE) {
+      else if (format==GL_LUMINANCE_ALPHA && type==GL_UNSIGNED_BYTE
+               && ctx->ImageTransferState==0) {
          if (ctx->Visual.RGBAflag) {
             GLubyte *src = (GLubyte *) pixels
                + (skipRows * rowLength + skipPixels)*2;
@@ -418,7 +410,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       }
       else if (format==GL_COLOR_INDEX && type==GL_UNSIGNED_BYTE) {
          GLubyte *src = (GLubyte *) pixels + skipRows * rowLength + skipPixels;
-         if (ctx->Visual.RGBAflag) {
+         if (ctx->Visual.RGBAflag
+             && ctx->ImageTransferState==IMAGE_MAP_COLOR_BIT) {
             /* convert CI data to RGBA */
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -462,7 +455,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                return GL_TRUE;
             }
          }
-         else {
+         else if (ctx->ImageTransferState==0) {
             /* write CI data to CI frame buffer */
             GLint row;
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
