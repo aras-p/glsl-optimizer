@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.66 2000/12/08 18:09:33 brianp Exp $ */
+/* $Id: teximage.c,v 1.67 2000/12/09 21:30:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1610,11 +1610,10 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border, GLenum format,
                   GLenum type, const GLvoid *pixels )
 {
-   GLsizei postConvWidth;
+   GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage1D");
 
-   postConvWidth = width;
    adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
 
    if (target==GL_TEXTURE_1D) {
@@ -1742,12 +1741,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                   GLenum format, GLenum type,
                   const GLvoid *pixels )
 {
-   GLsizei postConvWidth, postConvHeight;
+   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage2D");
 
-   postConvWidth = width;
-   postConvHeight = height;
    adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
 
    if (target==GL_TEXTURE_2D ||
@@ -2392,14 +2389,13 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
+   GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
-   GLsizei postConvWidth;
 
-   postConvWidth = width;
    adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
@@ -2462,15 +2458,13 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
+   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean success = GL_FALSE;
-   GLsizei postConvWidth, postConvHeight;
 
-   postConvWidth = width;
-   postConvHeight = height;
    adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
@@ -2652,15 +2646,18 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
                       GLint x, GLint y,
                       GLsizei width, GLint border )
 {
+   GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage1D");
 
-   if (copytexture_error_check(ctx, 1, target, level, internalFormat,
-                               width, 1, border))
-      return;
-
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
+
+   adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
+
+   if (copytexture_error_check(ctx, 1, target, level, internalFormat,
+                               postConvWidth, 1, border))
+      return;
 
    if (ctx->_ImageTransferState || !ctx->Driver.CopyTexImage1D
        || !(*ctx->Driver.CopyTexImage1D)(ctx, target, level,
@@ -2692,15 +2689,18 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                       GLint x, GLint y, GLsizei width, GLsizei height,
                       GLint border )
 {
+   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage2D");
 
-   if (copytexture_error_check(ctx, 2, target, level, internalFormat,
-                               width, height, border))
-      return;
-
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
+
+   adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+
+   if (copytexture_error_check(ctx, 2, target, level, internalFormat,
+                               postConvWidth, postConvHeight, border))
+      return;
 
    if (ctx->_ImageTransferState || !ctx->Driver.CopyTexImage2D
        || !(*ctx->Driver.CopyTexImage2D)(ctx, target, level,
@@ -2731,15 +2731,18 @@ void
 _mesa_CopyTexSubImage1D( GLenum target, GLint level,
                          GLint xoffset, GLint x, GLint y, GLsizei width )
 {
+   GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage1D");
 
-   if (copytexsubimage_error_check(ctx, 1, target, level,
-                                   xoffset, 0, 0, width, 1))
-      return;
-
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
+
+   adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
+
+   if (copytexsubimage_error_check(ctx, 1, target, level,
+                                   xoffset, 0, 0, postConvWidth, 1))
+      return;
 
    if (ctx->_ImageTransferState || !ctx->Driver.CopyTexSubImage1D
        || !(*ctx->Driver.CopyTexSubImage1D)(ctx, target, level,
@@ -2756,7 +2759,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       /* get image from frame buffer */
       image = read_color_image(ctx, x, y, width, 1);
       if (!image) {
-         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         gl_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
          return;
       }
 
@@ -2778,15 +2781,18 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage2D");
 
-   if (copytexsubimage_error_check(ctx, 2, target, level,
-                                   xoffset, yoffset, 0, width, height))
-      return;
-
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
+
+   adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+
+   if (copytexsubimage_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
+                                   postConvWidth, postConvHeight))
+      return;
 
    if (ctx->_ImageTransferState || !ctx->Driver.CopyTexSubImage2D
        || !(*ctx->Driver.CopyTexSubImage2D)(ctx, target, level,
@@ -2825,15 +2831,18 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset, GLint zoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage3D");
 
-   if (copytexsubimage_error_check(ctx, 3, target, level,
-                    xoffset, yoffset, zoffset, width, height))
-      return;
-
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
+
+   adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
+
+   if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
+                                   zoffset, postConvWidth, postConvHeight))
+      return;
 
    if (ctx->_ImageTransferState || !ctx->Driver.CopyTexSubImage3D
        || !(*ctx->Driver.CopyTexSubImage3D)(ctx, target, level,
