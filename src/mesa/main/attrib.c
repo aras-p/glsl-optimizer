@@ -1017,6 +1017,10 @@ _mesa_PopAttrib(void)
                   _mesa_set_enable(ctx, GL_POINT_SPRITE_NV,point->PointSprite);
                   _mesa_PointParameteriNV(GL_POINT_SPRITE_R_MODE_NV,
                                           ctx->Point.SpriteRMode);
+#if GL_VERSION_2_0
+                  _mesa_PointParameterfEXT(GL_POINT_SPRITE_COORD_ORIGIN,
+                                           (GLfloat)ctx->Point.SpriteOrigin);
+#endif
                }
             }
             break;

@@ -292,7 +292,13 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                if (ctx->Texture.Unit[u]._ReallyEnabled) {
                   if (ctx->Point.CoordReplace[u]) {
                      GLfloat s = 0.5F + (x + 0.5F - vert->win[0]) / size;
-                     GLfloat t = 0.5F - (y + 0.5F - vert->win[1]) / size;
+                     GLfloat t;
+#if GL_VERSION_2_0
+                     if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
+                        t = 0.5F + (y + 0.5F - vert->win[1]) / size;
+                     else /* GL_UPPER_LEFT */
+#endif
+                        t = 0.5F - (y + 0.5F - vert->win[1]) / size;
                      span->array->texcoords[u][count][0] = s;
                      span->array->texcoords[u][count][1] = t;
                      span->array->texcoords[u][count][3] = 1.0F;

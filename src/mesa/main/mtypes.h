@@ -890,6 +890,7 @@ struct gl_point_attrib {
    GLboolean PointSprite;	/**< GL_NV_point_sprite / GL_NV_point_sprite */
    GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV_point_sprite / GL_NV_point_sprite */
    GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
+   GLenum SpriteOrigin;		/**< GL_ARB_point_sprite */
 };
 
 

@@ -56,7 +56,7 @@ static GLfloat pointTime[MAX_POINTS];
 static GLfloat pointVelocity[MAX_POINTS][2];
 static GLfloat pointDirection[MAX_POINTS][2];
 static int colorList[MAX_POINTS];
-static int animate = 1, motion = 0;
+static int animate = 1, motion = 0, org = 0, sprite = 1, smooth = 1;
 
 static GLfloat colorSet[][4] = {
   /* Shades of red. */
@@ -240,17 +240,19 @@ redraw(void)
   if (blend)
      glEnable(GL_BLEND);
 
-  glEnable(GL_TEXTURE_2D);
+  if (sprite) {
+     glEnable(GL_TEXTURE_2D);
 #ifdef GL_ARB_point_sprite
-  glEnable(GL_POINT_SPRITE_ARB);
+     glEnable(GL_POINT_SPRITE_ARB);
 #endif
+  }
 
   glColor3f(1,1,1);
   glBegin(GL_POINTS);
     for (i=0; i<numPoints; i++) {
       /* Draw alive particles. */
       if (colorList[i] != DEAD) {
-         /*glColor4fv(colorSet[colorList[i]]);*/
+        if (!sprite) glColor4fv(colorSet[colorList[i]]);
         glVertex3fv(pointList[i]);
       }
     }
@@ -326,9 +328,11 @@ menu(int option)
 #endif
   case 8:
     glEnable(GL_POINT_SMOOTH);
+    smooth = 1;
     break;
   case 9:
     glDisable(GL_POINT_SMOOTH);
+    smooth = 0;
     break;
   case 10:
     glPointSize(4.0);
@@ -382,6 +386,47 @@ key(unsigned char c, int x, int y)
     animate = 1;
     makePointList();
     glutIdleFunc(idle);
+    break;
+  case 'o':
+  case 'O':
+    org ^= 1;
+#if GL_VERSION_2_0
+#if GL_ARB_point_parameters
+    glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,
+                      org ? GL_LOWER_LEFT : GL_UPPER_LEFT);
+#endif
+#endif
+    glutPostRedisplay();
+    break;
+  case 't':
+  case 'T':
+    sprite ^= 1;
+    glutPostRedisplay();
+    break;
+  case 's':
+  case 'S':
+    (smooth ^= 1) ? glEnable(GL_POINT_SMOOTH) : glDisable(GL_POINT_SMOOTH);
+    glutPostRedisplay();
+    break;
+  case '0':
+    glPointSize(1.0);
+    glutPostRedisplay();
+    break;
+  case '1':
+    glPointSize(2.0);
+    glutPostRedisplay();
+    break;
+  case '2':
+    glPointSize(4.0);
+    glutPostRedisplay();
+    break;
+  case '3':
+    glPointSize(8.0);
+    glutPostRedisplay();
+    break;
+  case '4':
+    glPointSize(16.0);
+    glutPostRedisplay();
     break;
   case 27:
     exit(0);

@@ -1390,6 +1390,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXTENSION_B(NV_point_sprite, pname);
          *params = ENUM_TO_BOOL(ctx->Point.SpriteRMode);
          break;
+#if GL_VERSION_2_0
+      case GL_POINT_SPRITE_COORD_ORIGIN:
+         CHECK_EXTENSION_B(ARB_point_sprite, pname);
+         *params = ENUM_TO_BOOL(ctx->Point.SpriteOrigin);
+         break;
+#endif
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -2942,6 +2948,12 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          CHECK_EXTENSION_D(NV_point_sprite, pname);
          *params = (GLdouble) ctx->Point.SpriteRMode;
          break;
+#if GL_VERSION_2_0
+      case GL_POINT_SPRITE_COORD_ORIGIN:
+         CHECK_EXTENSION_D(ARB_point_sprite, pname);
+         *params = (GLdouble) ctx->Point.SpriteOrigin;
+         break;
+#endif
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -4468,6 +4480,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXTENSION_F(NV_point_sprite, pname);
          *params = (GLfloat) ctx->Point.SpriteRMode;
          break;
+#if GL_VERSION_2_0
+      case GL_POINT_SPRITE_COORD_ORIGIN:
+         CHECK_EXTENSION_F(ARB_point_sprite, pname);
+         *params = (GLfloat) ctx->Point.SpriteOrigin;
+         break;
+#endif
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
@@ -6032,6 +6050,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXTENSION_I(NV_point_sprite, pname);
          *params = (GLint) ctx->Point.SpriteRMode;
          break;
+#if GL_VERSION_2_0
+      case GL_POINT_SPRITE_COORD_ORIGIN:
+         CHECK_EXTENSION_I(ARB_point_sprite, pname);
+         *params = (GLint) ctx->Point.SpriteOrigin;
+         break;
+#endif
 
       /* GL_SGIS_generate_mipmap */
       case GL_GENERATE_MIPMAP_HINT_SGIS:
