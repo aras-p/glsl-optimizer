@@ -9,7 +9,7 @@
 
 #include "glutint.h"
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutTabletMotionFunc(GLUTtabletMotionCB tabletMotionFunc)
 {
   __glutCurrentWindow->tabletMotion = tabletMotionFunc;
@@ -23,7 +23,7 @@ glutTabletMotionFunc(GLUTtabletMotionCB tabletMotionFunc)
   }
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutTabletButtonFunc(GLUTtabletButtonCB tabletButtonFunc)
 {
   __glutCurrentWindow->tabletButton = tabletButtonFunc;

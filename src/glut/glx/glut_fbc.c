@@ -18,7 +18,7 @@
 
 /* Set a Fortran callback function. */
 
-void APIENTRY
+void GLUTAPIENTRY
 __glutSetFCB(int which, void *func)
 {
 #ifdef SUPPORT_FORTRAN
@@ -100,7 +100,7 @@ __glutSetFCB(int which, void *func)
 
 /* Get a Fortran callback function. */
 
-void* APIENTRY
+void* GLUTAPIENTRY
 __glutGetFCB(int which)
 {
 #ifdef SUPPORT_FORTRAN

@@ -180,7 +180,7 @@ __glutSetCursor(GLUTwindow *window)
 }
 
 /* CENTRY */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSetCursor(int cursor)
 {
 #ifdef _WIN32

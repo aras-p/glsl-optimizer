@@ -11,7 +11,7 @@
 #define CLAMP(i) ((i) > 1.0 ? 1.0 : ((i) < 0.0 ? 0.0 : (i)))
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
 {
   GLUTcolormap *cmap, *newcmap;
@@ -126,7 +126,7 @@ glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
   XStoreColor(__glutDisplay, cmap->cmap, &color);
 }
 
-GLfloat APIENTRY
+GLfloat GLUTAPIENTRY
 glutGetColor(int ndx, int comp)
 {
   GLUTcolormap *colormap;
@@ -161,7 +161,7 @@ glutGetColor(int ndx, int comp)
   return colormap->cells[ndx].component[comp];
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutCopyColormap(int winnum)
 {
   GLUTwindow *window = __glutWindowList[winnum - 1];

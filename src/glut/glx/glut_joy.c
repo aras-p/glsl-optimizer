@@ -15,7 +15,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutJoystickFunc(GLUTjoystickCB joystickFunc, int pollInterval)
 {
 #ifdef _WIN32
@@ -48,7 +48,7 @@ glutJoystickFunc(GLUTjoystickCB joystickFunc, int pollInterval)
 #endif
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutForceJoystickFunc(void)
 {
 #ifdef _WIN32

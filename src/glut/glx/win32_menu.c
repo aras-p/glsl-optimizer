@@ -29,13 +29,13 @@ static int menuListSize = 0;
 static UINT uniqueMenuHandler = 1;
 
 /* DEPRICATED, use glutMenuStatusFunc instead. */
-void APIENTRY
+void GLUTAPIENTRY
 glutMenuStateFunc(GLUTmenuStateCB menuStateFunc)
 {
   __glutMenuStatusFunc = (GLUTmenuStatusCB) menuStateFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutMenuStatusFunc(GLUTmenuStatusCB menuStatusFunc)
 {
   __glutMenuStatusFunc = menuStatusFunc;
@@ -231,7 +231,7 @@ menuModificationError(void)
   __glutFatalError("menu manipulation not allowed while menus in use.");
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 glutCreateMenu(GLUTselectCB selectFunc)
 {
   GLUTmenu *menu;
@@ -259,14 +259,14 @@ glutCreateMenu(GLUTselectCB selectFunc)
   return menuid + 1;
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 __glutCreateMenuWithExit(GLUTselectCB selectFunc, void (__cdecl *exitfunc)(int))
 {
   __glutExitFunc = exitfunc;
   return glutCreateMenu(selectFunc);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutDestroyMenu(int menunum)
 {
   GLUTmenu *menu = __glutGetMenuByNum(menunum);
@@ -293,7 +293,7 @@ glutDestroyMenu(int menunum)
   free(menu);
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 glutGetMenu(void)
 {
   if (__glutCurrentMenu) {
@@ -303,7 +303,7 @@ glutGetMenu(void)
   }
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSetMenu(int menuid)
 {
   GLUTmenu *menu;
@@ -342,7 +342,7 @@ setMenuItem(GLUTmenuItem * item, const char *label,
   }
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutAddMenuEntry(const char *label, int value)
 {
   GLUTmenuItem *entry;
@@ -361,7 +361,7 @@ glutAddMenuEntry(const char *label, int value)
   __glutCurrentMenu->list = entry;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutAddSubMenu(const char *label, int menu)
 {
   GLUTmenuItem *submenu;
@@ -386,7 +386,7 @@ glutAddSubMenu(const char *label, int menu)
   __glutCurrentMenu->list = submenu;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutChangeToMenuEntry(int num, const char *label, int value)
 {
   GLUTmenuItem *item;
@@ -426,7 +426,7 @@ glutChangeToMenuEntry(int num, const char *label, int value)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutChangeToSubMenu(int num, const char *label, int menu)
 {
   GLUTmenu *popupmenu;
@@ -468,7 +468,7 @@ glutChangeToSubMenu(int num, const char *label, int menu)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutRemoveMenuItem(int num)
 {
   GLUTmenuItem *item, **prev;
@@ -501,7 +501,7 @@ glutRemoveMenuItem(int num)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutAttachMenu(int button)
 {
   if (__glutCurrentWindow == __glutGameModeWindow) {
@@ -517,7 +517,7 @@ glutAttachMenu(int button)
   __glutCurrentWindow->menu[button] = __glutCurrentMenu->id + 1;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutDetachMenu(int button)
 {
   if (__glutMappedMenu) {

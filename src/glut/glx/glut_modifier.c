@@ -8,7 +8,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-int APIENTRY
+int GLUTAPIENTRY
 glutGetModifiers(void)
 {
   int modifiers;

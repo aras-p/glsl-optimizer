@@ -65,7 +65,7 @@ initQuadObj(void)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireSphere(GLdouble radius, GLint slices, GLint stacks)
 {
   QUAD_OBJ_INIT();
@@ -77,7 +77,7 @@ glutWireSphere(GLdouble radius, GLint slices, GLint stacks)
   gluSphere(quadObj, radius, slices, stacks);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidSphere(GLdouble radius, GLint slices, GLint stacks)
 {
   QUAD_OBJ_INIT();
@@ -89,7 +89,7 @@ glutSolidSphere(GLdouble radius, GLint slices, GLint stacks)
   gluSphere(quadObj, radius, slices, stacks);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutWireCone(GLdouble base, GLdouble height,
   GLint slices, GLint stacks)
 {
@@ -102,7 +102,7 @@ glutWireCone(GLdouble base, GLdouble height,
   gluCylinder(quadObj, base, 0.0, height, slices, stacks);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidCone(GLdouble base, GLdouble height,
   GLint slices, GLint stacks)
 {
@@ -160,13 +160,13 @@ drawBox(GLfloat size, GLenum type)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireCube(GLdouble size)
 {
   drawBox(size, GL_LINE_LOOP);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidCube(GLdouble size)
 {
   drawBox(size, GL_QUADS);
@@ -216,7 +216,7 @@ doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireTorus(GLdouble innerRadius, GLdouble outerRadius,
   GLint nsides, GLint rings)
 {
@@ -226,7 +226,7 @@ glutWireTorus(GLdouble innerRadius, GLdouble outerRadius,
   glPopAttrib();
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidTorus(GLdouble innerRadius, GLdouble outerRadius,
   GLint nsides, GLint rings)
 {
@@ -349,13 +349,13 @@ dodecahedron(GLenum type)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireDodecahedron(void)
 {
   dodecahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidDodecahedron(void)
 {
   dodecahedron(GL_TRIANGLE_FAN);
@@ -466,13 +466,13 @@ octahedron(GLenum shadeType)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireOctahedron(void)
 {
   octahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidOctahedron(void)
 {
   octahedron(GL_TRIANGLES);
@@ -537,13 +537,13 @@ icosahedron(GLenum shadeType)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireIcosahedron(void)
 {
   icosahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidIcosahedron(void)
 {
   icosahedron(GL_TRIANGLES);
@@ -581,13 +581,13 @@ tetrahedron(GLenum shadeType)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWireTetrahedron(void)
 {
   tetrahedron(GL_LINE_LOOP);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSolidTetrahedron(void)
 {
   tetrahedron(GL_TRIANGLES);

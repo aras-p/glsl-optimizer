@@ -12,7 +12,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutWarpPointer(int x, int y)
 {
   XWarpPointer(__glutDisplay, None, __glutCurrentWindow->win,

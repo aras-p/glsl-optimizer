@@ -9,7 +9,7 @@
 #include "glutstroke.h"
 
 /* CENTRY */
-int APIENTRY 
+int GLUTAPIENTRY 
 glutStrokeWidth(GLUTstrokeFont font, int c)
 {
   StrokeFontPtr fontinfo;
@@ -30,7 +30,7 @@ glutStrokeWidth(GLUTstrokeFont font, int c)
     return 0;
 }
 
-int APIENTRY 
+int GLUTAPIENTRY 
 glutStrokeLength(GLUTstrokeFont font, const unsigned char *string)
 {
   int c, length;

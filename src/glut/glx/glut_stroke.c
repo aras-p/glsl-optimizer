@@ -8,7 +8,7 @@
 #include "glutint.h"
 #include "glutstroke.h"
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutStrokeCharacter(GLUTstrokeFont font, int c)
 {
   const StrokeCharRec *ch;

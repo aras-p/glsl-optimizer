@@ -8,7 +8,7 @@
 #include "glutint.h"
 #include "glutbitmap.h"
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutBitmapCharacter(GLUTbitmapFont font, int c)
 {
   const BitmapCharRec *ch;

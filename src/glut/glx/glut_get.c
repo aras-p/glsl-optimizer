@@ -10,7 +10,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-int APIENTRY 
+int GLUTAPIENTRY 
 glutGet(GLenum param)
 {
   Window win, root;

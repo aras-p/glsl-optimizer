@@ -23,7 +23,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSetWindowTitle(const char *title)
 {
   XTextProperty textprop;
@@ -39,7 +39,7 @@ glutSetWindowTitle(const char *title)
   XFlush(__glutDisplay);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSetIconTitle(const char *title)
 {
   XTextProperty textprop;
@@ -55,7 +55,7 @@ glutSetIconTitle(const char *title)
   XFlush(__glutDisplay);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutPositionWindow(int x, int y)
 {
   IGNORE_IN_GAME_MODE();
@@ -65,7 +65,7 @@ glutPositionWindow(int x, int y)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_CONFIGURE_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutReshapeWindow(int w, int h)
 {
   IGNORE_IN_GAME_MODE();
@@ -78,7 +78,7 @@ glutReshapeWindow(int w, int h)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_CONFIGURE_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutPopWindow(void)
 {
   IGNORE_IN_GAME_MODE();
@@ -87,7 +87,7 @@ glutPopWindow(void)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_CONFIGURE_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutPushWindow(void)
 {
   IGNORE_IN_GAME_MODE();
@@ -96,7 +96,7 @@ glutPushWindow(void)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_CONFIGURE_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutIconifyWindow(void)
 {
   IGNORE_IN_GAME_MODE();
@@ -105,7 +105,7 @@ glutIconifyWindow(void)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_MAP_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutShowWindow(void)
 {
   IGNORE_IN_GAME_MODE();
@@ -113,7 +113,7 @@ glutShowWindow(void)
   __glutPutOnWorkList(__glutCurrentWindow, GLUT_MAP_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutHideWindow(void)
 {
   IGNORE_IN_GAME_MODE();

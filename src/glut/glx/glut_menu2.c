@@ -29,19 +29,19 @@
 
 /* CENTRY */
 /* DEPRICATED, use glutMenuStatusFunc instead. */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutMenuStateFunc(GLUTmenuStateCB menuStateFunc)
 {
   __glutMenuStatusFunc = (GLUTmenuStatusCB) menuStateFunc;
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutMenuStatusFunc(GLUTmenuStatusCB menuStatusFunc)
 {
   __glutMenuStatusFunc = menuStatusFunc;
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutDestroyMenu(int menunum)
 {
   GLUTmenu *menu = __glutGetMenuByNum(menunum);
@@ -68,7 +68,7 @@ glutDestroyMenu(int menunum)
   free(menu);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutChangeToMenuEntry(int num, const char *label, int value)
 {
   GLUTmenuItem *item;
@@ -95,7 +95,7 @@ glutChangeToMenuEntry(int num, const char *label, int value)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutChangeToSubMenu(int num, const char *label, int menu)
 {
   GLUTmenuItem *item;
@@ -122,7 +122,7 @@ glutChangeToSubMenu(int num, const char *label, int menu)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutRemoveMenuItem(int num)
 {
   GLUTmenuItem *item, **prev, *remaining;
@@ -173,7 +173,7 @@ glutRemoveMenuItem(int num)
   __glutWarning("Current menu has no %d item.", num);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutDetachMenu(int button)
 {
   if (__glutMappedMenu)

@@ -8,13 +8,13 @@
 #include "glutint.h"
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutIgnoreKeyRepeat(int ignore)
 {
   __glutCurrentWindow->ignoreKeyRepeat = ignore;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSetKeyRepeat(int repeatMode)
 {
 #if !defined(_WIN32)

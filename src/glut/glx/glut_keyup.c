@@ -10,7 +10,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutKeyboardUpFunc(GLUTkeyboardCB keyboardUpFunc)
 {
   __glutChangeWindowEventMask(KeyReleaseMask,
@@ -18,7 +18,7 @@ glutKeyboardUpFunc(GLUTkeyboardCB keyboardUpFunc)
   __glutCurrentWindow->keyboardUp = keyboardUpFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutSpecialUpFunc(GLUTspecialCB specialUpFunc)
 {
   __glutChangeWindowEventMask(KeyReleaseMask,

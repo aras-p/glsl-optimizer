@@ -186,7 +186,7 @@ removeArgs(int *argcp, char **argv, int numToRemove)
   *argcp -= numToRemove;
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutInit(int *argcp, char **argv)
 {
   char *display = NULL;
@@ -344,7 +344,7 @@ glutInit(int *argcp, char **argv)
 }
 
 #ifdef _WIN32
-void APIENTRY 
+void GLUTAPIENTRY 
 __glutInitWithExit(int *argcp, char **argv, void (__cdecl *exitfunc)(int))
 {
   __glutExitFunc = exitfunc;
@@ -353,7 +353,7 @@ __glutInitWithExit(int *argcp, char **argv, void (__cdecl *exitfunc)(int))
 #endif
 
 /* CENTRY */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutInitWindowPosition(int x, int y)
 {
   __glutInitX = x;
@@ -367,7 +367,7 @@ glutInitWindowPosition(int x, int y)
   }
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutInitWindowSize(int width, int height)
 {
   __glutInitWidth = width;
@@ -381,7 +381,7 @@ glutInitWindowSize(int width, int height)
   }
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutInitDisplayMode(unsigned int mask)
 {
   __glutDisplayMode = mask;

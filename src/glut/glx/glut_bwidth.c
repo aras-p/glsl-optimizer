@@ -9,7 +9,7 @@
 #include "glutbitmap.h"
 
 /* CENTRY */
-int APIENTRY 
+int GLUTAPIENTRY 
 glutBitmapWidth(GLUTbitmapFont font, int c)
 {
   BitmapFontPtr fontinfo;
@@ -30,7 +30,7 @@ glutBitmapWidth(GLUTbitmapFont font, int c)
     return 0;
 }
 
-int APIENTRY 
+int GLUTAPIENTRY 
 glutBitmapLength(GLUTbitmapFont font, const unsigned char *string)
 {
   int c, length;

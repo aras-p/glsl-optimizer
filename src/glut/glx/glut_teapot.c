@@ -195,13 +195,13 @@ teapot(GLint grid, GLdouble scale, GLenum type)
 }
 
 /* CENTRY */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSolidTeapot(GLdouble scale)
 {
   teapot(7, scale, GL_FILL);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutWireTeapot(GLdouble scale)
 {
   teapot(10, scale, GL_LINE);

@@ -130,7 +130,7 @@ __glutGetWindow(Window win)
 }
 
 /* CENTRY */
-int APIENTRY
+int GLUTAPIENTRY
 glutGetWindow(void)
 {
   if (__glutCurrentWindow) {
@@ -177,7 +177,7 @@ __glutSetWindow(GLUTwindow * window)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutSetWindow(int win)
 {
   GLUTwindow *window;
@@ -695,7 +695,7 @@ __glutCreateWindow(GLUTwindow * parent,
 }
 
 /* CENTRY */
-int APIENTRY
+int GLUTAPIENTRY
 glutCreateWindow(const char *title)
 {
   static int firstWindow = 1;
@@ -742,7 +742,7 @@ glutCreateWindow(const char *title)
 }
 
 #ifdef _WIN32
-int APIENTRY
+int GLUTAPIENTRY
 __glutCreateWindowWithExit(const char *title, void (__cdecl *exitfunc)(int))
 {
   __glutExitFunc = exitfunc;
@@ -750,7 +750,7 @@ __glutCreateWindowWithExit(const char *title, void (__cdecl *exitfunc)(int))
 }
 #endif
 
-int APIENTRY
+int GLUTAPIENTRY
 glutCreateSubWindow(int win, int x, int y, int width, int height)
 {
   GLUTwindow *window;
@@ -842,7 +842,7 @@ __glutDestroyWindow(GLUTwindow * window,
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutDestroyWindow(int win)
 {
   GLUTwindow *window = __glutWindowList[win - 1];
@@ -886,7 +886,7 @@ __glutChangeWindowEventMask(long eventMask, Bool add)
   }
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutDisplayFunc(GLUTdisplayCB displayFunc)
 {
   /* XXX Remove the warning after GLUT 3.0. */
@@ -895,7 +895,7 @@ glutDisplayFunc(GLUTdisplayCB displayFunc)
   __glutCurrentWindow->display = displayFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutMouseFunc(GLUTmouseCB mouseFunc)
 {
   if (__glutCurrentWindow->mouse) {
@@ -917,7 +917,7 @@ glutMouseFunc(GLUTmouseCB mouseFunc)
   __glutCurrentWindow->mouse = mouseFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutMotionFunc(GLUTmotionCB motionFunc)
 {
   /* Hack.  Some window managers (4Dwm by default) will mask
@@ -948,7 +948,7 @@ glutMotionFunc(GLUTmotionCB motionFunc)
   __glutCurrentWindow->motion = motionFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutPassiveMotionFunc(GLUTpassiveCB passiveMotionFunc)
 {
   __glutChangeWindowEventMask(PointerMotionMask,
@@ -963,7 +963,7 @@ glutPassiveMotionFunc(GLUTpassiveCB passiveMotionFunc)
   __glutCurrentWindow->passive = passiveMotionFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutEntryFunc(GLUTentryCB entryFunc)
 {
   __glutChangeWindowEventMask(EnterWindowMask | LeaveWindowMask,
@@ -974,7 +974,7 @@ glutEntryFunc(GLUTentryCB entryFunc)
   }
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutWindowStatusFunc(GLUTwindowStatusCB windowStatusFunc)
 {
   __glutChangeWindowEventMask(VisibilityChangeMask,
@@ -995,7 +995,7 @@ visibilityHelper(int status)
     __glutCurrentWindow->visibility(GLUT_VISIBLE);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutVisibilityFunc(GLUTvisibilityCB visibilityFunc)
 {
   __glutCurrentWindow->visibility = visibilityFunc;
@@ -1005,7 +1005,7 @@ glutVisibilityFunc(GLUTvisibilityCB visibilityFunc)
     glutWindowStatusFunc(NULL);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutReshapeFunc(GLUTreshapeCB reshapeFunc)
 {
   if (reshapeFunc) {

@@ -50,7 +50,7 @@ catchXSGIvcErrors(Display * dpy, XErrorEvent * event)
 #endif
 
 /* CENTRY */
-int APIENTRY 
+int GLUTAPIENTRY 
 glutVideoResizeGet(GLenum param)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
@@ -160,7 +160,7 @@ glutVideoResizeGet(GLenum param)
   }
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSetupVideoResizing(void)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
@@ -173,7 +173,7 @@ glutSetupVideoResizing(void)
     __glutFatalError("glutEstablishVideoResizing: video resizing not possible.\n");
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutStopVideoResizing(void)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
@@ -188,7 +188,7 @@ glutStopVideoResizing(void)
 }
 
 /* ARGSUSED */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutVideoResize(int x, int y, int width, int height)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)
@@ -207,7 +207,7 @@ glutVideoResize(int x, int y, int width, int height)
 }
 
 /* ARGSUSED */
-void APIENTRY 
+void GLUTAPIENTRY 
 glutVideoPan(int x, int y, int width, int height)
 {
 #if defined(GLX_VERSION_1_1) && defined(GLX_SGIX_video_resize)

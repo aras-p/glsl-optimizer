@@ -356,7 +356,7 @@ determineOverlayVisual(int *treatAsSingle, Bool * visAlloced, void **fbc)
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutEstablishOverlay(void)
 {
   GLUToverlay *overlay;
@@ -458,7 +458,7 @@ glutEstablishOverlay(void)
   }
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutRemoveOverlay(void)
 {
   GLUTwindow *window = __glutCurrentWindow;
@@ -481,7 +481,7 @@ glutRemoveOverlay(void)
 #endif
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutUseLayer(GLenum layer)
 {
   GLUTwindow *window = __glutCurrentWindow;
@@ -511,7 +511,7 @@ glutUseLayer(GLenum layer)
   __glutSetWindow(window);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutPostOverlayRedisplay(void)
 {
   __glutPostRedisplay(__glutCurrentWindow, GLUT_OVERLAY_REDISPLAY_WORK);
@@ -521,13 +521,13 @@ glutPostOverlayRedisplay(void)
    glutSetWindow call (entailing an expensive OpenGL context
    switch), particularly useful when multiple windows need
    redisplays posted at the same times. */
-void APIENTRY
+void GLUTAPIENTRY
 glutPostWindowOverlayRedisplay(int win)
 {
   __glutPostRedisplay(__glutWindowList[win - 1], GLUT_OVERLAY_REDISPLAY_WORK);
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutOverlayDisplayFunc(GLUTdisplayCB displayFunc)
 {
   if (!__glutCurrentWindow->overlay) {
@@ -537,7 +537,7 @@ glutOverlayDisplayFunc(GLUTdisplayCB displayFunc)
   __glutCurrentWindow->overlay->display = displayFunc;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutHideOverlay(void)
 {
   if (!__glutCurrentWindow->overlay) {
@@ -548,7 +548,7 @@ glutHideOverlay(void)
   __glutCurrentWindow->overlay->shownState = 0;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutShowOverlay(void)
 {
   if (!__glutCurrentWindow->overlay) {
@@ -559,7 +559,7 @@ glutShowOverlay(void)
   __glutCurrentWindow->overlay->shownState = 1;
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 glutLayerGet(GLenum param)
 {
   switch (param) {

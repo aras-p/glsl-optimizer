@@ -59,7 +59,7 @@ __glutCloseDownGameMode(void)
   __glutGameModeWindow = NULL;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutLeaveGameMode(void)
 {
   if (__glutGameModeWindow == NULL) {
@@ -548,7 +548,7 @@ parseDisplayString(const char *display, int *ncriteria)
   return criteria;
 }
 
-void APIENTRY
+void GLUTAPIENTRY
 glutGameModeString(const char *string)
 {
   Criterion *criteria;
@@ -560,7 +560,7 @@ glutGameModeString(const char *string)
   free(criteria);
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 glutEnterGameMode(void)
 {
   GLUTwindow *window;
@@ -654,7 +654,7 @@ glutEnterGameMode(void)
   return window->num + 1;
 }
 
-int APIENTRY
+int GLUTAPIENTRY
 glutGameModeGet(GLenum mode)
 {
   switch (mode) {

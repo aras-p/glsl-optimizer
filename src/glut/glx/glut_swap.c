@@ -13,7 +13,7 @@ GLint __glutSwapCount = 0;
 GLint __glutSwapTime = 0;
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutSwapBuffers(void)
 {
   GLUTwindow *window = __glutCurrentWindow;

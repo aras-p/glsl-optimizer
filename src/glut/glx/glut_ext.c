@@ -11,7 +11,7 @@
 #include "glutint.h"
 
 /* CENTRY */
-int APIENTRY 
+int GLUTAPIENTRY 
 glutExtensionSupported(const char *extension)
 {
   static const GLubyte *extensions = NULL;
@@ -177,7 +177,7 @@ static struct name_address_pair glut_functions[] = {
 
 
 /* XXX This isn't an official GLUT function, yet */
-void * APIENTRY 
+void * GLUTAPIENTRY 
 glutGetProcAddress(const char *procName)
 {
    /* Try GLUT functions first */

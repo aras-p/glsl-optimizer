@@ -7,7 +7,7 @@
 
 #include "glutint.h"
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSpaceballMotionFunc(GLUTspaceMotionCB spaceMotionFunc)
 {
   __glutCurrentWindow->spaceMotion = spaceMotionFunc;
@@ -16,7 +16,7 @@ glutSpaceballMotionFunc(GLUTspaceMotionCB spaceMotionFunc)
     GLUT_DEVICE_MASK_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSpaceballRotateFunc(GLUTspaceRotateCB spaceRotateFunc)
 {
   __glutCurrentWindow->spaceRotate = spaceRotateFunc;
@@ -25,7 +25,7 @@ glutSpaceballRotateFunc(GLUTspaceRotateCB spaceRotateFunc)
     GLUT_DEVICE_MASK_WORK);
 }
 
-void APIENTRY 
+void GLUTAPIENTRY 
 glutSpaceballButtonFunc(GLUTspaceButtonCB spaceButtonFunc)
 {
   __glutCurrentWindow->spaceButton = spaceButtonFunc;

@@ -1478,7 +1478,7 @@ getVisualInfoFromString(char *string, Bool * treatAsSingle,
 }
 
 /* CENTRY */
-void APIENTRY
+void GLUTAPIENTRY
 glutInitDisplayString(const char *string)
 {
 #ifdef _WIN32
