@@ -29,7 +29,8 @@ INCDIR = ../include
 LIBDIR = ../lib
 
 SOURCES = glu.c mipmap.c nurbs.c nurbscrv.c nurbssrf.c nurbsutl.c \
-	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c
+	project.c quadric.c tess.c tess_fist.c tess_hash.c tess_heap.c \
+	tess_winding.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
