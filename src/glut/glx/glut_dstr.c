@@ -1548,7 +1548,7 @@ main(int argc, char **argv)
   while (!feof(stdin)) {
     if (tty)
       printf("dstr> ");
-    str = gets(buffer);
+    str = fgets(buffer, 1023, stdin);
     if (str) {
       printf("\n");
       if (!strcmp("v", str)) {
