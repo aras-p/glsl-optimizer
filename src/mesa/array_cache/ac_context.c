@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.1 2000/12/26 15:14:04 keithw Exp $ */
+/* $Id: ac_context.c,v 1.2 2001/02/04 00:47:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -188,30 +188,30 @@ static void _ac_elts_init( GLcontext *ctx )
    ac->elt_size = size;
 }
 
-static void _ac_current_init( GLcontext *ctx )
+static void _ac_raw_init( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
    GLuint i;
 
-   ac->Current.Color = &ac->Fallback.Color;
-   ac->Current.EdgeFlag = &ac->Fallback.EdgeFlag;
-   ac->Current.FogCoord = &ac->Fallback.FogCoord;
-   ac->Current.Index = &ac->Fallback.Index;
-   ac->Current.Normal = &ac->Fallback.Normal;
-   ac->Current.SecondaryColor = &ac->Fallback.SecondaryColor;
-   ac->Current.Vertex = &ctx->Array.Vertex;
+   ac->Raw.Color = ac->Fallback.Color;
+   ac->Raw.EdgeFlag = ac->Fallback.EdgeFlag;
+   ac->Raw.FogCoord = ac->Fallback.FogCoord;
+   ac->Raw.Index = ac->Fallback.Index;
+   ac->Raw.Normal = ac->Fallback.Normal;
+   ac->Raw.SecondaryColor = ac->Fallback.SecondaryColor;
+   ac->Raw.Vertex = ctx->Array.Vertex;
 
-   ac->Writeable.Color = GL_FALSE;
-   ac->Writeable.EdgeFlag = GL_FALSE;
-   ac->Writeable.FogCoord = GL_FALSE;
-   ac->Writeable.Index = GL_FALSE;
-   ac->Writeable.Normal = GL_FALSE;
-   ac->Writeable.SecondaryColor = GL_FALSE;
-   ac->Writeable.Vertex = GL_FALSE;
+   ac->IsCached.Color = GL_FALSE;
+   ac->IsCached.EdgeFlag = GL_FALSE;
+   ac->IsCached.FogCoord = GL_FALSE;
+   ac->IsCached.Index = GL_FALSE;
+   ac->IsCached.Normal = GL_FALSE;
+   ac->IsCached.SecondaryColor = GL_FALSE;
+   ac->IsCached.Vertex = GL_FALSE;
 
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
-      ac->Current.TexCoord[i] = &ac->Fallback.TexCoord[i];
-      ac->Writeable.TexCoord[i] = GL_FALSE;
+      ac->Raw.TexCoord[i] = ac->Fallback.TexCoord[i];
+      ac->IsCached.TexCoord[i] = GL_FALSE;
    }
 
 }
@@ -222,7 +222,7 @@ GLboolean _ac_CreateContext( GLcontext *ctx )
    if (ctx->acache_context) {
       _ac_cache_init( ctx );
       _ac_fallbacks_init( ctx );
-      _ac_current_init( ctx );
+      _ac_raw_init( ctx );
       _ac_elts_init( ctx );
       return GL_TRUE;
    }

@@ -1,5 +1,5 @@
 
-/* $Id: ac_context.h,v 1.1 2000/12/26 15:14:04 keithw Exp $ */
+/* $Id: ac_context.h,v 1.2 2001/02/04 00:47:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,8 +81,8 @@ typedef struct {
     */
    struct ac_arrays Fallback;
    struct ac_arrays Cache;
-   struct ac_array_pointers Current;
-   struct ac_array_flags Writeable;
+   struct ac_arrays Raw;
+   struct ac_array_flags IsCached;
    GLuint start;
    GLuint count;
    
