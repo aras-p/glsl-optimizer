@@ -1,8 +1,8 @@
-/* $Id: drawpix.c,v 1.56 2001/06/26 21:15:35 brianp Exp $ */
+/* $Id: drawpix.c,v 1.57 2001/12/13 19:12:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -72,20 +72,13 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {
-	 GLfloat texcoord[4], invq;
-
 	 FLUSH_CURRENT(ctx, 0);
-         invq = 1.0F / ctx->Current.Texcoord[0][3];
-         texcoord[0] = ctx->Current.Texcoord[0][0] * invq;
-         texcoord[1] = ctx->Current.Texcoord[0][1] * invq;
-         texcoord[2] = ctx->Current.Texcoord[0][2] * invq;
-         texcoord[3] = ctx->Current.Texcoord[0][3];
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
          _mesa_feedback_vertex( ctx,
 				ctx->Current.RasterPos,
-				ctx->Current.Color,
-				ctx->Current.Index, 
-				texcoord );
+				ctx->Current.RasterColor,
+				ctx->Current.RasterIndex, 
+				ctx->Current.RasterTexCoord );
       }
    }
    else if (ctx->RenderMode==GL_SELECT) {
@@ -152,13 +145,15 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
 			      type );
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
-      FLUSH_CURRENT( ctx, 0 );
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
-      _mesa_feedback_vertex( ctx, 
-			     ctx->Current.RasterPos,
-			     ctx->Current.Color, 
-			     ctx->Current.Index,
-			     ctx->Current.Texcoord[0] );
+      if (ctx->Current.RasterPosValid) {
+	 FLUSH_CURRENT(ctx, 0);
+         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
+         _mesa_feedback_vertex( ctx,
+				ctx->Current.RasterPos,
+				ctx->Current.RasterColor,
+				ctx->Current.RasterIndex, 
+				ctx->Current.RasterTexCoord );
+      }
    }
    else if (ctx->RenderMode == GL_SELECT) {
       _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
@@ -174,7 +169,6 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
 
    /* Error checking */
    if (width < 0 || height < 0) {
@@ -201,24 +195,15 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      GLfloat color[4], texcoord[4], invq;
-
-      color[0] = ctx->Current.RasterColor[0];
-      color[1] = ctx->Current.RasterColor[1];
-      color[2] = ctx->Current.RasterColor[2];
-      color[3] = ctx->Current.RasterColor[3];
-      if (ctx->Current.Texcoord[0][3] == 0.0)
-         invq = 1.0F;
-      else
-         invq = 1.0F / ctx->Current.RasterTexCoord[3];
-      texcoord[0] = ctx->Current.RasterTexCoord[0] * invq;
-      texcoord[1] = ctx->Current.RasterTexCoord[1] * invq;
-      texcoord[2] = ctx->Current.RasterTexCoord[2] * invq;
-      texcoord[3] = ctx->Current.RasterTexCoord[3];
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
-      _mesa_feedback_vertex( ctx,
-                          ctx->Current.RasterPos,
-			  color, ctx->Current.RasterIndex, texcoord );
+      if (ctx->Current.RasterPosValid) {
+	 FLUSH_CURRENT(ctx, 0);
+         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
+         _mesa_feedback_vertex( ctx,
+				ctx->Current.RasterPos,
+				ctx->Current.RasterColor,
+				ctx->Current.RasterIndex, 
+				ctx->Current.RasterTexCoord );
+      }
    }
    else if (ctx->RenderMode==GL_SELECT) {
       /* Bitmaps don't generate selection hits.  See appendix B of 1.1 spec. */
