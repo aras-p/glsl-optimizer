@@ -64,8 +64,11 @@
 
 #ifdef WIN32
 #define vsnprintf _vsnprintf
-#elif defined(__IBMC__) || defined(__IBMCPP__) || defined(VMS)
+#elif defined(__IBMC__) || defined(__IBMCPP__) || ( defined(__VMS) && __CRTL_VER < 70312000 )
 extern int vsnprintf(char *str, size_t count, const char *fmt, va_list arg);
+#ifdef __VMS
+#include "vsnprintf.c"
+#endif
 #endif
 
 

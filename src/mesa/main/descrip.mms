@@ -71,8 +71,7 @@ SOURCES =accum.c \
 	texstore.c \
 	texutil.c \
 	varray.c \
-	vtxfmt.c \
-	vsnprintf.c
+	vtxfmt.c
 
 OBJECTS=accum.obj,\
 api_loopback.obj,\
@@ -129,8 +128,7 @@ texstate.obj,\
 texstore.obj,\
 texutil.obj,\
 varray.obj,\
-vtxfmt.obj,\
-vsnprintf.obj
+vtxfmt.obj
 
 ##### RULES #####
 
@@ -177,7 +175,7 @@ hash.obj : hash.c
 hint.obj : hint.c
 histogram.obj : histogram.c
 image.obj : image.c
-imports.obj : imports.c
+imports.obj : imports.c vsnprintf.c
 light.obj : light.c
 lines.obj : lines.c
 matrix.obj : matrix.c
@@ -202,4 +200,3 @@ texstore.obj : texstore.c
 texutil.obj : texutil.c
 varray.obj : varray.c
 vtxfmt.obj : vtxfmt.c
-vsnprintf.obj : vsnprintf.c
