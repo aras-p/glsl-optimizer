@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.6 1999/10/19 20:36:20 brianp Exp $ */
+/* $Id: teximage.c,v 1.7 1999/10/21 12:45:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -563,6 +563,7 @@ image_to_texture( GLcontext *ctx, const struct gl_image *image,
                      /* a paletted texture */
                      GLint index = ((GLubyte*)image->Data)[pixel];
                      red = index;
+                     green = blue = alpha = 0;  /* silence compiler warnings */
                   }
                   else {
                      /* convert color index to RGBA */
@@ -623,6 +624,7 @@ image_to_texture( GLcontext *ctx, const struct gl_image *image,
                   alpha = ((GLubyte*) image->Data)[pixel*2+1];
                   break;
               default:
+                 red = green = blue = alpha = 0;
                  gl_problem(ctx,"Bad format (2) in image_to_texture");
                  return NULL;
             }
@@ -706,6 +708,7 @@ image_to_texture( GLcontext *ctx, const struct gl_image *image,
                      /* a paletted texture */
                      GLint index = (GLint) ((GLfloat*) image->Data)[pixel];
                      red = index;
+                     green = blue = alpha = 0;  /* silence compiler warning */
                   }
                   else {
                      GLint shift = ctx->Pixel.IndexShift;
