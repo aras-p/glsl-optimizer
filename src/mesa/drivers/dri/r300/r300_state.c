@@ -1175,6 +1175,78 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 	#endif
 }
 
+void r300SetupPixelShader(r300ContextPtr rmesa)
+{
+int i,k;
+
+	/* This needs to be replaced by pixel shader generation code */
+
+	
+	/* Watch out ! This is buggy .. but will do for now */
+	
+	/* At least one sanity check is in order */
+	if(sizeof(rmesa->state.pixel_shader) != sizeof(FLAT_COLOR_PIPELINE.pixel_shader)){
+		fprintf(stderr, "Aieee ! pixel_shader sizes don't match.\n");
+		exit(-1);
+		}
+	/* textures enabled ? */
+	if(rmesa->state.texture.tc_count>0){
+   		memcpy(&rmesa->state.pixel_shader, &(SINGLE_TEXTURE_PIPELINE.pixel_shader), sizeof(rmesa->state.pixel_shader));
+		} else {
+   		memcpy(&rmesa->state.pixel_shader, &(FLAT_COLOR_PIPELINE.pixel_shader), sizeof(rmesa->state.pixel_shader));
+		}
+
+	R300_STATECHANGE(rmesa, fpt);
+	for(i=0;i<rmesa->state.pixel_shader.program.tex.length;i++)
+		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rmesa->state.pixel_shader.program.tex.inst[i];
+	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmducs(R300_PFS_TEXI_0, rmesa->state.pixel_shader.program.tex.length);
+
+	#define OUTPUT_FIELD(st, reg, field)  \
+		R300_STATECHANGE(rmesa, st); \
+		for(i=0;i<rmesa->state.pixel_shader.program.alu.length;i++) \
+			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=rmesa->state.pixel_shader.program.alu.inst[i].field;\
+		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmducs(reg, rmesa->state.pixel_shader.program.alu.length);
+	
+	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
+	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
+	OUTPUT_FIELD(fpi[2], R300_PFS_INSTR2_0, inst2);
+	OUTPUT_FIELD(fpi[3], R300_PFS_INSTR3_0, inst3);
+	#undef OUTPUT_FIELD
+
+	R300_STATECHANGE(rmesa, fp);
+	for(i=0;i<4;i++){
+		rmesa->hw.fp.cmd[R300_FP_NODE0+i]=
+		(rmesa->state.pixel_shader.program.node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
+		| (rmesa->state.pixel_shader.program.node[i].alu_end  << R300_PFS_NODE_ALU_END_SHIFT)
+		| (rmesa->state.pixel_shader.program.node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
+		| (rmesa->state.pixel_shader.program.node[i].tex_end  << R300_PFS_NODE_TEX_END_SHIFT)
+		| ( (i==3) ? R300_PFS_NODE_LAST_NODE : 0);
+		}
+
+		/*  PFS_CNTL_0 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL0]=
+		(rmesa->state.pixel_shader.program.active_nodes-1) 
+		| (rmesa->state.pixel_shader.program.first_node_has_tex<<3);
+		/* PFS_CNTL_1 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL1]=rmesa->state.pixel_shader.program.temp_register_count;
+		/* PFS_CNTL_2 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL2]=
+		(rmesa->state.pixel_shader.program.alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
+		| (rmesa->state.pixel_shader.program.alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
+		| (rmesa->state.pixel_shader.program.tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
+		| (rmesa->state.pixel_shader.program.tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
+	
+	R300_STATECHANGE(rmesa, fpp);
+	for(i=0;i<rmesa->state.pixel_shader.param_length;i++){
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+0]=r300PackFloat32(rmesa->state.pixel_shader.param[i].x);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+1]=r300PackFloat32(rmesa->state.pixel_shader.param[i].y);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat32(rmesa->state.pixel_shader.param[i].z);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat32(rmesa->state.pixel_shader.param[i].w);
+		}
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length);
+
+}
+
 /**
  * Called by Mesa after an internal state update.
  */
@@ -1225,6 +1297,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300_setup_rs_unit(ctx);
 	
 	r300SetupVertexShader(r300);
+	r300SetupPixelShader(r300);
 	
 	r300_set_blend_state(ctx);
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);

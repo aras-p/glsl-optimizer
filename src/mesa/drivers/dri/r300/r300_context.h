@@ -300,9 +300,17 @@ struct r300_state_atom {
 #define R300_FP_NODE3		8
 #define R300_FP_CMDSIZE		9
 
+#define R300_FPT_CMD_0		0
+#define R300_FPT_INSTR_0	1
+#define R300_FPT_CMDSIZE	65
+
 #define R300_FPI_CMD_0		0
 #define R300_FPI_INSTR_0	1
 #define R300_FPI_CMDSIZE	65
+
+#define R300_FPP_CMD_0		0
+#define R300_FPP_PARAM_0	1
+#define R300_FPP_CMDSIZE	(32*4+1)
 
 #define R300_AT_CMD_0		0
 #define R300_AT_ALPHA_TEST	1
@@ -398,12 +406,14 @@ struct r300_hw_state {
 	struct r300_state_atom unk43A4;	/* (43A4) */
 	struct r300_state_atom unk43E8;	/* (43E8) */
 	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
+	struct r300_state_atom fpt;     /* texi - (4620) */
 	struct r300_state_atom unk46A4;	/* (46A4) */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
 	struct r300_state_atom unk4BC0;	/* (4BC0) */
 	struct r300_state_atom unk4BC8;	/* (4BC8) */
 	struct r300_state_atom at;	/* alpha test (4BD4) */
 	struct r300_state_atom unk4BD8;	/* (4BD8) */
+	struct r300_state_atom fpp;     /* 0x4C00 and following */
 	struct r300_state_atom unk4E00;	/* (4E00) */
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */

@@ -356,6 +356,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( fp, always, R300_FP_CMDSIZE, "fp", 0 );
 		r300->hw.fp.cmd[R300_FP_CMD_0] = cmducs(R300_PFS_CNTL_0, 3);
 		r300->hw.fp.cmd[R300_FP_CMD_1] = cmducs(R300_PFS_NODE_0, 4);
+	ALLOC_STATE( fpt, variable, R300_FPT_CMDSIZE, "fpt", 0 );
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmducs(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE( unk46A4, always, 6, "unk46A4", 0 );
 		r300->hw.unk46A4.cmd[0] = cmducs(0x46A4, 5);
 	ALLOC_STATE( fpi[0], variable, R300_FPI_CMDSIZE, "fpi/0", 0 );
@@ -374,6 +376,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.at.cmd[R300_AT_CMD_0] = cmducs(R300_PP_ALPHA_TEST, 1);
 	ALLOC_STATE( unk4BD8, always, 2, "unk4BD8", 0 );
 		r300->hw.unk4BD8.cmd[0] = cmducs(0x4BD8, 1);
+	ALLOC_STATE( fpp, variable, R300_FPP_CMDSIZE, "fpp", 0 );
+		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmducs(R300_PFS_PARAM_0_X, 0);
 	ALLOC_STATE( unk4E00, always, 2, "unk4E00", 0 );
 		r300->hw.unk4E00.cmd[0] = cmducs(0x4E00, 1);
 	ALLOC_STATE( bld, always, R300_BLD_CMDSIZE, "bld", 0 );
@@ -477,6 +481,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43A4);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43E8);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fp);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpt);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk46A4);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[0]);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[1]);
@@ -486,6 +491,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BC8);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.at);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BD8);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpp);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E00);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.bld);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.cmk);
@@ -644,62 +650,4 @@ if(count & 1){
 e32(RADEON_CP_PACKET2);
 e32(RADEON_CP_PACKET2);
 #endif
-}
-
-void r300EmitPixelShader(r300ContextPtr rmesa)
-{
-int i,k;
-LOCAL_VARS
-
-if(rmesa->state.pixel_shader.program.tex.length>0){
-	reg_start(R300_PFS_TEXI_0, rmesa->state.pixel_shader.program.tex.length-1);
-	for(i=0;i<rmesa->state.pixel_shader.program.tex.length;i++)
-		e32(rmesa->state.pixel_shader.program.tex.inst[i]);
-	}
-
-if(rmesa->state.pixel_shader.program.alu.length>0){
-	#define OUTPUT_FIELD(reg, field)  \
-		reg_start(reg,rmesa->state.pixel_shader.program.alu.length-1); \
-		for(i=0;i<rmesa->state.pixel_shader.program.alu.length;i++) \
-			e32(rmesa->state.pixel_shader.program.alu.inst[i].field);
-	
-	OUTPUT_FIELD(R300_PFS_INSTR0_0, inst0);
-	OUTPUT_FIELD(R300_PFS_INSTR1_0, inst1);
-	OUTPUT_FIELD(R300_PFS_INSTR2_0, inst2);
-	OUTPUT_FIELD(R300_PFS_INSTR3_0, inst3);
-	#undef OUTPUT_FIELD
-	}
-
-reg_start(R300_PFS_NODE_0, 3);
-for(i=0;i<4;i++){
-	e32(  (rmesa->state.pixel_shader.program.node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
-	    | (rmesa->state.pixel_shader.program.node[i].alu_end  << R300_PFS_NODE_ALU_END_SHIFT)
-	    | (rmesa->state.pixel_shader.program.node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
-	    | (rmesa->state.pixel_shader.program.node[i].tex_end  << R300_PFS_NODE_TEX_END_SHIFT)
-	    | ( (i==3) ? R300_PFS_NODE_LAST_NODE : 0)
-	    );
-	}
-
-reg_start(R300_PFS_CNTL_0, 2);
-	/*  PFS_CNTL_0 */
-e32((rmesa->state.pixel_shader.program.active_nodes-1) | (rmesa->state.pixel_shader.program.first_node_has_tex<<3));
-	/* PFS_CNTL_1 */
-e32(rmesa->state.pixel_shader.program.temp_register_count);
-	/* PFS_CNTL_2 */
-e32( 	  (rmesa->state.pixel_shader.program.alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
-	| (rmesa->state.pixel_shader.program.alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
-	| (rmesa->state.pixel_shader.program.tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
-	| (rmesa->state.pixel_shader.program.tex_end << R300_PFS_CNTL_TEX_END_SHIFT) 
-   );
-	
-if(rmesa->state.pixel_shader.param_length>0){
-	reg_start(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length*4-1);
-	for(i=0;i<rmesa->state.pixel_shader.param_length;i++){
-		efloat(rmesa->state.pixel_shader.param[i].x);
-		efloat(rmesa->state.pixel_shader.param[i].y);
-		efloat(rmesa->state.pixel_shader.param[i].z);
-		efloat(rmesa->state.pixel_shader.param[i].w);
-		}
-	}
-	
 }

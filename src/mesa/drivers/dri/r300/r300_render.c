@@ -298,8 +298,8 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 				| R300_VPORT_Y_SCALE_ENA
 				| R300_VPORT_Y_OFFSET_ENA
 				| R300_VTX_W0_FMT;
-	#endif
    R300_STATECHANGE(rmesa, vte);
+	#endif
    
       
    /* Magic register - note it is right after 20b0 */
@@ -308,15 +308,12 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    	reg_start(0x20b4,0);
 		e32(0x0000000c);
    
-	   assign_pipeline(rmesa, &SINGLE_TEXTURE_PIPELINE);
-	} else {
-	   assign_pipeline(rmesa, &FLAT_COLOR_PIPELINE);
 	}
- 
+	
    r300SetupVertexShader(rmesa);
+   r300SetupPixelShader(rmesa);
       
    r300EmitState(rmesa);
-   r300EmitPixelShader(rmesa);
    
    #if 0
    reg_start(R300_RB3D_COLORMASK, 0);
