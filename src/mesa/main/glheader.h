@@ -127,7 +127,7 @@
 
 /* compatibility guard so we don't need to change client code */
 
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__)
 #if 0
 #	define CALLBACK GLCALLBACK
 typedef void *HGLRC;
@@ -142,7 +142,7 @@ typedef unsigned long COLORREF;
 #define GL_GLEXT_PROTOTYPES
 
 
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WINGDI_H) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP)
 #	define WGL_FONT_LINES      0
 #	define WGL_FONT_POLYGONS   1
 #ifndef _GNU_H_WINDOWS32_FUNCTIONS

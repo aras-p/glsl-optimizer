@@ -1,0 +1,337 @@
+# Mesa 3-D graphics library
+# Version:  5.1
+# 
+# Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# MinGW core makefile v1.0 for Mesa
+#
+#  Copyright (C) 2002 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	CFLAGS
+#
+#	GLIDE		path to Glide3 SDK; used with FX.
+#			default = $(TOP)/glide3
+#	FX=1		build for 3dfx Glide3. Note that this disables
+#			compilation of most WMesa code and requires fxMesa.
+#			As a consequence, you'll need the Win32 Glide3
+#			library to build any application.
+#			default = no
+#	HAVE_X86=1	optimize for i386.
+#			default = no
+#	HAVE_MMX=1	allow MMX specializations, provided your assembler
+#			supports MMX instruction set. However, the true CPU
+#			capabilities are checked at run-time to avoid crashes.
+#			default = no
+#	HAVE_SSE=1	(see HAVE_MMX)
+#			default = no
+#	HAVE_3DNOW=1	(see HAVE_MMX)
+#			default = no
+#
+#    Targets:
+#	all:		build GL
+#	clean:		remove object files
+#
+
+
+
+.PHONY: all clean
+.INTERMEDIATE: x86/gen_matypes.exe
+
+TOP = ../..
+GLIDE ?= $(TOP)/glide3
+LIBDIR = $(TOP)/lib
+GL_DLL = opengl32.dll
+GL_IMP = libopengl32.a
+
+LDLIBS = -lgdi32
+
+CC = mingw32-gcc
+CFLAGS += -DBUILD_GL32 -D_OPENGL32_ -D_MSC_VER
+CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
+ifeq ($(FX),1)
+CFLAGS += -DH3
+CFLAGS += -I$(GLIDE)/include -DFX
+LDLIBS += -L$(GLIDE)/lib -lglide3
+GL_DEF = drivers/glide/fxopengl.def
+else
+GL_DEF = drivers/windows/gdi/mesa.def
+endif
+
+AR = ar
+ARFLAGS = rus
+
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
+else
+UNLINK = $(RM) $(1)
+endif
+
+MAIN_SOURCES = \
+	main/api_arrayelt.c \
+	main/api_loopback.c \
+	main/api_noop.c \
+	main/api_validate.c \
+	main/accum.c \
+	main/arbprogram.c \
+	main/attrib.c \
+	main/blend.c \
+	main/bufferobj.c \
+	main/buffers.c \
+	main/clip.c \
+	main/colortab.c \
+	main/context.c \
+	main/convolve.c \
+	main/debug.c \
+	main/depth.c \
+	main/dispatch.c \
+	main/dlist.c \
+	main/drawpix.c \
+	main/enable.c \
+	main/enums.c \
+	main/eval.c \
+	main/extensions.c \
+	main/feedback.c \
+	main/fog.c \
+	main/get.c \
+	main/hash.c \
+	main/hint.c \
+	main/histogram.c \
+	main/image.c \
+	main/imports.c \
+	main/light.c \
+	main/lines.c \
+	main/matrix.c \
+	main/nvprogram.c \
+	main/nvfragparse.c \
+	main/nvvertexec.c \
+	main/nvvertparse.c \
+	main/occlude.c \
+	main/pixel.c \
+	main/points.c \
+	main/polygon.c \
+	main/rastpos.c \
+	main/state.c \
+	main/stencil.c \
+	main/texcompress.c \
+	main/texformat.c \
+	main/teximage.c \
+	main/texobj.c \
+	main/texstate.c \
+	main/texstore.c \
+	main/texutil.c \
+	main/varray.c \
+	main/vtxfmt.c
+
+GLAPI_SOURCES = \
+	glapi/glapi.c \
+	glapi/glthread.c
+
+MATH_SOURCES = \
+	math/m_debug_clip.c \
+	math/m_debug_norm.c \
+	math/m_debug_xform.c \
+	math/m_eval.c \
+	math/m_matrix.c \
+	math/m_translate.c \
+	math/m_vector.c \
+	math/m_xform.c
+
+ARRAY_CACHE_SOURCES = \
+	array_cache/ac_context.c \
+	array_cache/ac_import.c
+
+SWRAST_SOURCES = \
+	swrast/s_aaline.c \
+	swrast/s_aatriangle.c \
+	swrast/s_accum.c \
+	swrast/s_alpha.c \
+	swrast/s_alphabuf.c \
+	swrast/s_bitmap.c \
+	swrast/s_blend.c \
+	swrast/s_buffers.c \
+	swrast/s_copypix.c \
+	swrast/s_context.c \
+	swrast/s_depth.c \
+	swrast/s_drawpix.c \
+	swrast/s_feedback.c \
+	swrast/s_fog.c \
+	swrast/s_imaging.c \
+	swrast/s_lines.c \
+	swrast/s_logic.c \
+	swrast/s_masking.c \
+	swrast/s_nvfragprog.c \
+	swrast/s_pixeltex.c \
+	swrast/s_points.c \
+	swrast/s_readpix.c \
+	swrast/s_span.c \
+	swrast/s_stencil.c \
+	swrast/s_texture.c \
+	swrast/s_texstore.c \
+	swrast/s_triangle.c \
+	swrast/s_zoom.c
+
+SWRAST_SETUP_SOURCES = \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c
+
+TNL_SOURCES = \
+	tnl/t_array_api.c \
+	tnl/t_array_import.c \
+	tnl/t_context.c \
+	tnl/t_eval_api.c \
+	tnl/t_imm_alloc.c \
+	tnl/t_imm_api.c \
+	tnl/t_imm_debug.c \
+	tnl/t_imm_dlist.c \
+	tnl/t_imm_elt.c \
+	tnl/t_imm_eval.c \
+	tnl/t_imm_exec.c \
+	tnl/t_imm_fixup.c \
+	tnl/t_pipeline.c \
+	tnl/t_vb_fog.c \
+	tnl/t_vb_light.c \
+	tnl/t_vb_normals.c \
+	tnl/t_vb_points.c \
+	tnl/t_vb_program.c \
+	tnl/t_vb_render.c \
+	tnl/t_vb_texgen.c \
+	tnl/t_vb_texmat.c \
+	tnl/t_vb_vertex.c
+
+X86_SOURCES = \
+	x86/x86.c \
+	x86/glapi_x86.S \
+	x86/common_x86.c \
+	x86/common_x86_asm.S \
+	x86/x86_xform2.S \
+	x86/x86_xform3.S \
+	x86/x86_xform4.S \
+	x86/x86_cliptest.S
+
+MMX_SOURCES = \
+	x86/mmx_blend.S
+
+SSE_SOURCES = \
+	x86/sse.c \
+	x86/sse_xform2.S \
+	x86/sse_xform3.S \
+	x86/sse_xform4.S \
+	x86/sse_normal.S
+
+K3D_SOURCES = \
+	x86/3dnow.c \
+	x86/3dnow_xform2.S \
+	x86/3dnow_xform3.S \
+	x86/3dnow_xform4.S \
+	x86/3dnow_normal.S
+
+CORE_SOURCES = \
+	$(MAIN_SOURCES) \
+	$(GLAPI_SOURCES) \
+	$(MATH_SOURCES) \
+	$(ARRAY_CACHE_SOURCES) \
+	$(SWRAST_SOURCES) \
+	$(SWRAST_SETUP_SOURCES) \
+	$(TNL_SOURCES)
+
+ifeq ($(HAVE_MMX),1)
+X86_SOURCES += $(MMX_SOURCES)
+CFLAGS += -DUSE_MMX_ASM
+HAVE_X86 = 1
+endif
+ifeq ($(HAVE_SSE),1)
+X86_SOURCES += $(SSE_SOURCES)
+CFLAGS += -DUSE_SSE_ASM
+HAVE_X86 = 1
+endif
+ifeq ($(HAVE_3DNOW),1)
+X86_SOURCES += $(K3D_SOURCES)
+CFLAGS += -DUSE_3DNOW_ASM
+HAVE_X86 = 1
+endif
+ifeq ($(HAVE_X86),1)
+CFLAGS += -DUSE_X86_ASM
+else
+X86_SOURCES =
+endif
+
+ifeq ($(FX),1)
+DRIVER_SOURCES = \
+	drivers/glide/fxapi.c \
+	drivers/glide/fxdd.c \
+	drivers/glide/fxddspan.c \
+	drivers/glide/fxddtex.c \
+	drivers/glide/fxsetup.c \
+	drivers/glide/fxtexman.c \
+	drivers/glide/fxtris.c \
+	drivers/glide/fxvb.c \
+	drivers/glide/fxglidew.c \
+	drivers/glide/fxwgl.c
+else
+DRIVER_SOURCES = \
+	drivers/windows/gdi/wmesa.c \
+	drivers/windows/gdi/wgl.c
+endif
+
+SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
+
+OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
+
+X86_OBJECTS = $(addsuffix .o,$(basename $(X86_SOURCES)))
+
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+.S.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+.s.o:
+	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
+
+all: $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP)
+
+$(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP): $(OBJECTS)
+	dllwrap -o $(LIBDIR)/$(GL_DLL) --output-lib $(LIBDIR)/$(GL_IMP) --target i386-mingw32 --def $(GL_DEF) $^ $(LDLIBS)
+
+$(X86_OBJECTS): x86/matypes.h
+
+x86/matypes.h: x86/gen_matypes.exe
+	$(subst /,\,$< > $@)
+
+x86/gen_matypes.exe: x86/gen_matypes.c
+	$(CC) -o $@ $(CFLAGS) -s $<
+
+clean:
+	-$(call UNLINK,array_cache/*.o)
+	-$(call UNLINK,glapi/*.o)
+	-$(call UNLINK,main/*.o)
+	-$(call UNLINK,math/*.o)
+	-$(call UNLINK,swrast/*.o)
+	-$(call UNLINK,swrast_setup/*.o)
+	-$(call UNLINK,tnl/*.o)
+	-$(call UNLINK,x86/*.o)
+	-$(call UNLINK,drivers/windows/gdi/*.o)
+	-$(call UNLINK,drivers/glide/*.o)

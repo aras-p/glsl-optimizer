@@ -1,0 +1,91 @@
+# Mesa 3-D graphics library
+# Version:  4.0
+# 
+# Copyright (C) 1999  Brian Paul   All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# MinGW makefile v1.0 for Mesa
+#
+#  Copyright (C) 2002 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	CPU		optimize for the given processor.
+#			default = k6
+#	GLIDE		path to Glide3 SDK; used with FX.
+#			default = $(TOP)/glide3
+#	FX=1		build for 3dfx Glide3. Note that this disables
+#			compilation of most WMesa code and requires fxMesa.
+#			As a consequence, you'll need the Win32 Glide3
+#			library to build any application.
+#			default = no
+#	HAVE_X86=1	optimize for i386.
+#			default = no
+#	HAVE_MMX=1	allow MMX specializations, provided your assembler
+#			supports MMX instruction set. However, the true CPU
+#			capabilities are checked at run-time to avoid crashes.
+#			default = no
+#	HAVE_SSE=1	(see HAVE_MMX)
+#			default = no
+#	HAVE_3DNOW=1	(see HAVE_MMX)
+#			default = no
+#
+#    Targets:
+#	all:		build everything
+#	libgl:		build GL
+#	clean:		remove object files
+#	realclean:	remove all generated files
+#
+
+
+
+.PHONY : all libgl clean realclean
+
+CPU ?= k6
+
+CFLAGS = -Wall -W -pedantic
+CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
+
+export CFLAGS
+
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
+else
+UNLINK = $(RM) $(1)
+endif
+
+all: libgl
+
+libgl: lib
+	$(MAKE) -f Makefile.mgw -C src/mesa
+
+lib:
+	mkdir lib
+
+clean:
+	$(MAKE) -f Makefile.mgw clean -C src/mesa
+
+realclean: clean
+	-$(call UNLINK,lib/*.a)
+	-$(call UNLINK,lib/*.dll)
