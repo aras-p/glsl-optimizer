@@ -1,5 +1,3 @@
-/* $Id: imports.h,v 1.20 2003/04/03 20:34:38 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -578,6 +576,9 @@ _mesa_align_calloc( size_t bytes, unsigned long alignment );
 
 extern void
 _mesa_align_free( void *ptr );
+
+extern void *
+_mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 
 extern void *
 _mesa_memcpy( void *dest, const void *src, size_t n );

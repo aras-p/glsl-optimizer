@@ -1,5 +1,3 @@
-/* $Id: imports.c,v 1.33 2003/03/04 16:33:53 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -177,6 +175,19 @@ _mesa_align_free(void *ptr)
    void *realAddr = *cubbyHole;
    _mesa_free(realAddr);
 #endif
+}
+
+
+void *
+_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
+{
+   const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
+   void *newBuffer = _mesa_malloc(newSize);
+   if (newBuffer && copySize > 0)
+      _mesa_memcpy(newBuffer, oldBuffer, copySize);
+   if (oldBuffer)
+      _mesa_free(oldBuffer);
+   return newBuffer;
 }
 
 
