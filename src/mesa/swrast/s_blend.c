@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.17 2002/04/04 01:40:18 brianp Exp $ */
+/* $Id: s_blend.c,v 1.18 2002/04/04 16:53:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -274,11 +274,20 @@ blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
          rgba[i][GCOMP] = rgba[i][GCOMP] * dest[i][GCOMP];
          rgba[i][BCOMP] = rgba[i][BCOMP] * dest[i][BCOMP];
          rgba[i][ACOMP] = rgba[i][ACOMP] * dest[i][ACOMP];
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+         GLint r = (rgba[i][RCOMP] * dest[i][RCOMP] + 65535) >> 16;
+         GLint g = (rgba[i][GCOMP] * dest[i][GCOMP] + 65535) >> 16;
+         GLint b = (rgba[i][BCOMP] * dest[i][BCOMP] + 65535) >> 16;
+         GLint a = (rgba[i][ACOMP] * dest[i][ACOMP] + 65535) >> 16;
+         rgba[i][RCOMP] = (GLchan) r;
+         rgba[i][GCOMP] = (GLchan) g;
+         rgba[i][BCOMP] = (GLchan) b;
+         rgba[i][ACOMP] = (GLchan) a;
 #else
-         GLint r = (rgba[i][RCOMP] * dest[i][RCOMP]) >> 8;
-         GLint g = (rgba[i][GCOMP] * dest[i][GCOMP]) >> 8;
-         GLint b = (rgba[i][BCOMP] * dest[i][BCOMP]) >> 8;
-         GLint a = (rgba[i][ACOMP] * dest[i][ACOMP]) >> 8;
+         GLint r = (rgba[i][RCOMP] * dest[i][RCOMP] + 255) >> 8;
+         GLint g = (rgba[i][GCOMP] * dest[i][GCOMP] + 255) >> 8;
+         GLint b = (rgba[i][BCOMP] * dest[i][BCOMP] + 255) >> 8;
+         GLint a = (rgba[i][ACOMP] * dest[i][ACOMP] + 255) >> 8;
          rgba[i][RCOMP] = (GLchan) r;
          rgba[i][GCOMP] = (GLchan) g;
          rgba[i][BCOMP] = (GLchan) b;
