@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.10 2000/11/10 17:45:15 brianp Exp $ */
+/* $Id: convolve.c,v 1.11 2000/11/10 18:31:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -171,7 +171,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
       }
    }
 
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -251,7 +251,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
       }
    }
 
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -875,7 +875,7 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
       }
    }
    
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 

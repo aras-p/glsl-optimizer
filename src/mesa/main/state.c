@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.41 2000/11/10 18:06:14 brianp Exp $ */
+/* $Id: state.c,v 1.42 2000/11/10 18:31:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -695,7 +695,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 void gl_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
@@ -708,7 +708,6 @@ void gl_print_state( const char *msg, GLuint state )
 	   (state & _NEW_EVAL)            ? "ctx->Eval/EvalMap, " : "",
 	   (state & _NEW_FOG)             ? "ctx->Fog, " : "",
 	   (state & _NEW_HINT)            ? "ctx->Hint, " : "",
-	   (state & _NEW_IMAGING)         ? "ctx->Histogram/MinMax/Convolve/Seperable, ": "",
 	   (state & _NEW_LIGHT)           ? "ctx->Light, " : "",
 	   (state & _NEW_LINE)            ? "ctx->Line, " : "",
 	   (state & _NEW_FEEDBACK_SELECT) ? "ctx->Feedback/Select, " : "",

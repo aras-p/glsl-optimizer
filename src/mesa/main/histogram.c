@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.1 2000/11/10 18:06:14 brianp Exp $ */
+/* $Id: histogram.c,v 1.2 2000/11/10 18:31:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -746,7 +746,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       ctx->Histogram.LuminanceSize = 0xffffffff;
    }
    
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -772,7 +772,7 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
    }
 
    ctx->MinMax.Sink = sink;
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -800,7 +800,7 @@ _mesa_ResetHistogram(GLenum target)
       ctx->Histogram.Count[i][3] = 0;
    }
 
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -824,5 +824,5 @@ _mesa_ResetMinmax(GLenum target)
    ctx->MinMax.Min[GCOMP] = 1000;    ctx->MinMax.Max[GCOMP] = -1000;
    ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
-   ctx->NewState |= _NEW_IMAGING;
+   ctx->NewState |= _NEW_PIXEL;
 }
