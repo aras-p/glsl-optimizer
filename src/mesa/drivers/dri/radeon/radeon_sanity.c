@@ -138,6 +138,7 @@ static struct {
    { RADEON_PP_TEX_SIZE_0, 2, "RADEON_PP_TEX_SIZE_0" },
    { RADEON_PP_TEX_SIZE_1, 2, "RADEON_PP_TEX_SIZE_1" },
    { RADEON_PP_TEX_SIZE_2, 2, "RADEON_PP_TEX_SIZE_2" },
+	{ 0, 3, "R200_RB3D_BLENDCOLOR" },
 };
 
 struct reg_names {
