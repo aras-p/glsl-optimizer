@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.19 2000/02/23 01:14:11 brianp Exp $
+$Id: VERSIONS,v 1.20 2000/03/06 23:35:51 brianp Exp $
 
 
 Mesa Version History
@@ -674,7 +674,7 @@ Mesa Version History
 	- glCopyPixels with pixel zooming now works
 
 
-3.2 (Stabilization of 3.1)  January ??, 2000
+3.2 (Stabilization of 3.1)  March ??, 2000
     Bug Fixes:
 	(TBD)
 
@@ -688,6 +688,7 @@ Mesa Version History
 	- improved glxinfo program
 	- demos/texdown program to measure texture download performance
 	- glext.h header file
+	- demos/geartrain program
     Bug Fixes:
 	- 
     Changes:
