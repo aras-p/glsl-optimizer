@@ -34,6 +34,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sis_context.h"
 #include "sis_span.h"
+#include "sis_lock.h"
+#include "sis_tris.h"
 
 #include "swrast/swrast.h"
 
@@ -216,16 +218,21 @@ static void sisDDSetBuffer( GLcontext *ctx,
    }
 }
 
-static void sisSpanRenderStart( GLcontext *ctx )
+void sisSpanRenderStart( GLcontext *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
+   SIS_FIREVERTICES(smesa);
+   LOCK_HARDWARE();
    WaitEngIdle( smesa );
 }
 
-static void sisSpanRenderFinish( GLcontext *ctx )
+void sisSpanRenderFinish( GLcontext *ctx )
 {
+   sisContextPtr smesa = SIS_CONTEXT(ctx);
+
    _swrast_flush( ctx );
+   UNLOCK_HARDWARE();
 }
 
 void

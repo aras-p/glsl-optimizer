@@ -34,6 +34,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  
 #ifdef GLX_DIRECT_RENDERING
 
+extern void sisSpanRenderStart( GLcontext *ctx );
+extern void sisSpanRenderFinish( GLcontext *ctx );
+
 extern void sisDDInitSpanFuncs( GLcontext *ctx );
 
 #endif

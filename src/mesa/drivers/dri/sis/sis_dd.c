@@ -38,12 +38,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 #include "sis_alloc.h"
 #include "sis_state.h"
+#include "sis_tris.h"
 
 #include "swrast/swrast.h"
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20030810"
+#define DRIVER_DATE	"20040608"
 
 /* Return the width and height of the given buffer.
  */
@@ -85,12 +86,14 @@ sisGetString( GLcontext *ctx, GLenum name )
    }
 }
 
-/* Send all commands to the hardware.  No-op, due to mmio.
+/* Send all commands to the hardware.
  */
 static void
 sisFlush( GLcontext *ctx )
 {
-   /* Do nothing */
+   sisContextPtr smesa = SIS_CONTEXT(ctx);
+
+   SIS_FIREVERTICES(smesa);
 }
 
 /* Make sure all commands have been sent to the hardware and have
@@ -101,8 +104,10 @@ sisFinish( GLcontext *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
-   sisFlush( ctx );
+   SIS_FIREVERTICES(smesa);
+   LOCK_HARDWARE();
    WaitEngIdle( smesa );
+   UNLOCK_HARDWARE();
 }
 
 void

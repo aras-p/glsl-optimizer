@@ -230,6 +230,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define MASK_VertexDWSize			0xf0000000
 #define MASK_VertexDataFormat			0x0fff0000
+/* Because the original MASK_PsVertex_* names of these bits appared to be
+ * wrong, new names SiS_PS_* based off of the 4.3.0 driver and research are
+ * below.
+ */
+#define SiS_PS_HAS_XYZ				0x08000000
+#define SiS_PS_HAS_W				0x04000000
+#define SiS_PS_HAS_SPECULAR			0x02000000 /* XXX ? */
+#define SiS_PS_HAS_DIFFUSE			0x01000000
+#define SiS_PS_HAS_UV0				0x00400000
+#define SiS_PS_HAS_UV1				0x00200000
 #define MASK_PsVertex_HAS_RHW			0x08000000
 #define MASK_PsVertex_HAS_NORMALXYZ		0x04000000
 #define MASK_PsVertex_HAS_DIFFUSE		0x02000000

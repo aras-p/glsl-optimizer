@@ -629,51 +629,6 @@ sisDDEnable( GLcontext * ctx, GLenum cap, GLboolean state )
     }
 }
 
-/* =============================================================
- * Pixel functions
- */
-
-static void
-sisDDDrawPixels( GLcontext *ctx,
-		 GLint x, GLint y, GLsizei width, GLsizei height,
-		 GLenum format, GLenum type,
-		 const struct gl_pixelstore_attrib *unpack,
-		 const GLvoid *pixels )
-{
-   sisContextPtr smesa = SIS_CONTEXT(ctx);
-
-   LOCK_HARDWARE();
-   _swrast_DrawPixels( ctx, x, y, width, height, format, type, unpack, pixels );
-   UNLOCK_HARDWARE();
-}
-
-static void
-sisDDReadPixels( GLcontext *ctx,
-		 GLint x, GLint y, GLsizei width, GLsizei height,
-		 GLenum format, GLenum type,
-		 const struct gl_pixelstore_attrib *pack,
-		 GLvoid *pixels )
-{
-   sisContextPtr smesa = SIS_CONTEXT(ctx);
-
-   LOCK_HARDWARE();
-   _swrast_ReadPixels( ctx, x, y, width, height, format, type, pack, 
-		       pixels);
-   UNLOCK_HARDWARE();
-}
-
-static void
-sisDDBitmap( GLcontext *ctx, GLint px, GLint py,
-	     GLsizei width, GLsizei height,
-	     const struct gl_pixelstore_attrib *unpack,
-	     const GLubyte *bitmap )
-{
-   sisContextPtr smesa = SIS_CONTEXT(ctx);
-
-   LOCK_HARDWARE();
-   _swrast_Bitmap( ctx, px, py, width, height, unpack, bitmap );
-   UNLOCK_HARDWARE();
-}
 
 /* =============================================================
  * State initialization, management
@@ -686,9 +641,6 @@ sisUpdateHWState( GLcontext *ctx )
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *prev = &smesa->prev;
    __GLSiSHardware *current = &smesa->current;
-
-   if (smesa->NewGLState & _NEW_TEXTURE)
-      sisUpdateTextureState( ctx );
 
    /* enable setting 1 */
    if (current->hwCapEnable ^ prev->hwCapEnable) {
@@ -822,7 +774,7 @@ void sisDDInitState( sisContextPtr smesa )
 
    smesa->clearColorPattern = 0;
 
-   smesa->AGPParseSet = MASK_PsTexture1FromB;
+   smesa->AGPParseSet = MASK_PsTexture1FromB | MASK_PsBumpTextureFromC;
    smesa->dwPrimitiveSet = OP_3D_Texture1FromB | OP_3D_TextureBumpFromC;
 
    sisUpdateZStencilPattern( smesa, 1.0, 0 );
@@ -848,7 +800,6 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.ClearStencil	 = sisDDClearStencil;
 
    ctx->Driver.AlphaFunc	 = sisDDAlphaFunc;
-   ctx->Driver.Bitmap		 = sisDDBitmap;
    ctx->Driver.BlendFuncSeparate = sisDDBlendFuncSeparate;
    ctx->Driver.ColorMask	 = sisDDColorMask;
    ctx->Driver.CullFace		 = sisDDCullFace;
@@ -856,7 +807,6 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.DepthFunc	 = sisDDDepthFunc;
    ctx->Driver.DepthRange	 = sisDDDepthRange;
    ctx->Driver.DrawBuffer	 = sisDDDrawBuffer;
-   ctx->Driver.DrawPixels	 = sisDDDrawPixels;
    ctx->Driver.Enable		 = sisDDEnable;
    ctx->Driver.FrontFace	 = sisDDFrontFace;
    ctx->Driver.Fogfv		 = sisDDFogfv;
@@ -866,16 +816,17 @@ void sisDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.PolygonMode	 = NULL;
    ctx->Driver.PolygonStipple	 = NULL;
    ctx->Driver.ReadBuffer	 = NULL;
-   ctx->Driver.ReadPixels	 = sisDDReadPixels;
    ctx->Driver.RenderMode	 = NULL;
    ctx->Driver.Scissor		 = sisDDScissor;
    ctx->Driver.ShadeModel	 = sisDDShadeModel;
    ctx->Driver.Viewport		 = sisDDViewport;
 
-  /* Pixel path fallbacks.
-   */
-  ctx->Driver.Accum		 = _swrast_Accum;
-  ctx->Driver.CopyPixels	 = _swrast_CopyPixels;
+   /* Pixel path fallbacks. */
+   ctx->Driver.Accum		 = _swrast_Accum;
+   ctx->Driver.Bitmap		 = _swrast_Bitmap;
+   ctx->Driver.CopyPixels	 = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels	 = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels	 = _swrast_ReadPixels;
 
   /* Swrast hooks for imaging extensions:
    */

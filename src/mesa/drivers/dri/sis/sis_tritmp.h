@@ -29,122 +29,42 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Eric Anholt <anholt@FreeBSD.org>
  */
 
-#define AGP_VERT_REG_COUNT (5 + \
-   ((SIS_STATES & SIS_VERT_TEX0) != 0) * 2 + \
-   ((SIS_STATES & SIS_VERT_TEX1) != 0) * 2)
-
-static void TAG(sis_draw_quad_mmio)( sisContextPtr smesa,
-				     sisVertexPtr v0,
-				     sisVertexPtr v1,
-				     sisVertexPtr v2,
-				     sisVertexPtr v3 )
+static void TAG(sis_draw_tri_mmio)(sisContextPtr smesa, char *verts)
 {
-   float *MMIOBase = (float *)GET_IOBase (smesa);
+   sisVertexPtr v0 = (sisVertexPtr)verts;
+   sisVertexPtr v1 = (sisVertexPtr)(verts + smesa->vertex_size * 4);
+   sisVertexPtr v2 = (sisVertexPtr)(verts + smesa->vertex_size * 4 * 2);
 
-   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 6 + 1);
-   ((GLint *) MMIOBase)[REG_3D_PrimitiveSet / 4] = smesa->dwPrimitiveSet;
-   SIS_MMIO_WRITE_VERTEX(v0, 0, 0);
-   SIS_MMIO_WRITE_VERTEX(v1, 1, 0);
-   SIS_MMIO_WRITE_VERTEX(v3, 2, 1);
-   SIS_MMIO_WRITE_VERTEX(v1, 0, 0);
-   SIS_MMIO_WRITE_VERTEX(v2, 1, 0);
-   SIS_MMIO_WRITE_VERTEX(v3, 2, 1);
-}
-
-static void TAG(sis_draw_tri_mmio)( sisContextPtr smesa,
-				    sisVertexPtr v0,
-				    sisVertexPtr v1,
-				    sisVertexPtr v2 )
-{
-   float *MMIOBase = (float *)GET_IOBase (smesa);
-
-   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 3 + 1);
-   ((GLint *) MMIOBase)[REG_3D_PrimitiveSet / 4] = smesa->dwPrimitiveSet;
+   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 3);
    SIS_MMIO_WRITE_VERTEX(v0, 0, 0);
    SIS_MMIO_WRITE_VERTEX(v1, 1, 0);
    SIS_MMIO_WRITE_VERTEX(v2, 2, 1);
 }
 
-static void TAG(sis_draw_line_mmio)( sisContextPtr smesa,
-				     sisVertexPtr v0,
-				     sisVertexPtr v1 )
+static void TAG(sis_draw_line_mmio)(sisContextPtr smesa, char *verts)
 {
-   float *MMIOBase = (float *)GET_IOBase (smesa);
+   sisVertexPtr v0 = (sisVertexPtr)verts;
+   sisVertexPtr v1 = (sisVertexPtr)(verts + smesa->vertex_size * 4);
 
-   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 2 + 1);
-   ((GLint *) MMIOBase)[REG_3D_PrimitiveSet / 4] = smesa->dwPrimitiveSet;
+   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 2);
    SIS_MMIO_WRITE_VERTEX(v0, 0, 0);
    SIS_MMIO_WRITE_VERTEX(v1, 1, 1);
 }
 
-static void TAG(sis_draw_point_mmio)( sisContextPtr smesa,
-				      sisVertexPtr v0 )
+static void TAG(sis_draw_point_mmio)(sisContextPtr smesa, char *verts)
 {
-   float *MMIOBase = (float *)GET_IOBase (smesa);
+   sisVertexPtr v0 = (sisVertexPtr)verts;
 
-   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 1 + 1);
-   ((GLint *) MMIOBase)[REG_3D_PrimitiveSet / 4] = smesa->dwPrimitiveSet;
+   mWait3DCmdQueue (MMIO_VERT_REG_COUNT * 1);
    SIS_MMIO_WRITE_VERTEX(v0, 1, 1);
-}
-
-static void TAG(sis_draw_quad_agp)( sisContextPtr smesa,
-				     sisVertexPtr v0,
-				     sisVertexPtr v1,
-				     sisVertexPtr v2,
-				     sisVertexPtr v3 )
-{
-   sisMakeRoomAGP(smesa, AGP_VERT_REG_COUNT * 6);
-
-   SIS_AGP_WRITE_VERTEX(v0);
-   SIS_AGP_WRITE_VERTEX(v1);
-   SIS_AGP_WRITE_VERTEX(v3);
-   SIS_AGP_WRITE_VERTEX(v1);
-   SIS_AGP_WRITE_VERTEX(v2);
-   SIS_AGP_WRITE_VERTEX(v3);
-}
-
-static void TAG(sis_draw_tri_agp)( sisContextPtr smesa,
-				    sisVertexPtr v0,
-				    sisVertexPtr v1,
-				    sisVertexPtr v2 )
-{
-   sisMakeRoomAGP(smesa, AGP_VERT_REG_COUNT * 3);
-
-   SIS_AGP_WRITE_VERTEX(v0);
-   SIS_AGP_WRITE_VERTEX(v1);
-   SIS_AGP_WRITE_VERTEX(v2);
-}
-
-static void TAG(sis_draw_line_agp)( sisContextPtr smesa,
-				     sisVertexPtr v0,
-				     sisVertexPtr v1 )
-{
-   sisMakeRoomAGP(smesa, AGP_VERT_REG_COUNT * 2);
-
-   SIS_AGP_WRITE_VERTEX(v0);
-   SIS_AGP_WRITE_VERTEX(v1);
-}
-
-static void TAG(sis_draw_point_agp)( sisContextPtr smesa,
-				      sisVertexPtr v0 )
-{
-   sisMakeRoomAGP(smesa, AGP_VERT_REG_COUNT * 1);
-
-   SIS_AGP_WRITE_VERTEX(v0);
 }
 
 static __inline void TAG(sis_vert_init)( void )
 {
-   sis_quad_func_agp[SIS_STATES] = TAG(sis_draw_quad_agp);
-   sis_tri_func_agp[SIS_STATES] = TAG(sis_draw_tri_agp);
-   sis_line_func_agp[SIS_STATES] = TAG(sis_draw_line_agp);
-   sis_point_func_agp[SIS_STATES] = TAG(sis_draw_point_agp);
-   sis_quad_func_mmio[SIS_STATES] = TAG(sis_draw_quad_mmio);
    sis_tri_func_mmio[SIS_STATES] = TAG(sis_draw_tri_mmio);
    sis_line_func_mmio[SIS_STATES] = TAG(sis_draw_line_mmio);
    sis_point_func_mmio[SIS_STATES] = TAG(sis_draw_point_mmio);
 }
 
-#undef AGP_VERT_REG_COUNT
 #undef TAG
 #undef SIS_STATES

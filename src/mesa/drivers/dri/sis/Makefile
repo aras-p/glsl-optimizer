@@ -32,8 +32,7 @@ DRIVER_SOURCES = \
 	sis_stencil.c \
 	sis_tex.c \
 	sis_texstate.c \
-	sis_tris.c \
-	sis_vb.c
+	sis_tris.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

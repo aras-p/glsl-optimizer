@@ -32,13 +32,39 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __SIS_TRIS_H__
 #define __SIS_TRIS_H__
 
+#include "sis_lock.h"
 #include "mtypes.h"
 
 extern void sisInitTriFuncs( GLcontext *ctx );
-
-
+extern void sisFlushPrims( sisContextPtr smesa );
+extern void sisFlushPrimsLocked( sisContextPtr smesa );
 extern void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+
 #define FALLBACK( smesa, bit, mode ) sisFallback( smesa->glCtx, bit, mode )
 
+#define SIS_FIREVERTICES(smesa)				\
+do {							\
+   if (smesa->vb_cur != smesa->vb_last)			\
+      sisFlushPrims(smesa);				\
+} while (0)
+
+static __inline GLuint *sisAllocDmaLow(sisContextPtr smesa, int bytes)
+{
+   GLuint *start;
+   if (smesa->vb_cur + bytes >= smesa->vb_end) {
+      LOCK_HARDWARE();
+      sisFlushPrimsLocked(smesa);
+      if (smesa->using_agp) {
+	 WaitEngIdle(smesa);
+	 smesa->vb_cur = smesa->vb;
+	 smesa->vb_last = smesa->vb_cur;
+      }
+      UNLOCK_HARDWARE();
+   }
+
+   start = (GLuint *)smesa->vb_cur;
+   smesa->vb_cur += bytes;
+   return start;
+}
 
 #endif /* __SIS_TRIS_H__ */

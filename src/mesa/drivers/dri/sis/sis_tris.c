@@ -39,14 +39,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
+#include "sis_context.h"
 #include "sis_tris.h"
 #include "sis_state.h"
-#include "sis_vb.h"
 #include "sis_lock.h"
+#include "sis_span.h"
+#include "sis_alloc.h"
+#include "sis_tex.h"
 
 static const GLuint hw_prim[GL_POLYGON+1] = {
    OP_3D_POINT_DRAW,		/* GL_POINTS */
@@ -87,145 +89,243 @@ static const GLuint hw_prim_agp_shade[OP_3D_TRIANGLE_DRAW+1] = {
 
 static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim );
 static void sisRenderPrimitive( GLcontext *ctx, GLenum prim );
-static void sisMakeRoomAGP( sisContextPtr smesa, GLint num );
-static void sisUpdateAGP( sisContextPtr smesa );
-static void sisFireVertsAGP( sisContextPtr smesa );
-
-static float *AGP_StartPtr;
-static float *AGP_WritePtr;		/* Current write position */
-static float *AGP_ReadPtr;		/* Last known engine readposition */
-static long AGP_SpaceLeft;		/* Last known engine readposition */
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
 
-/* Future optimizations:
- *
- * The previous code only emitted W when fog or textures were enabled.
- */
+#define HAVE_QUADS 0
+#define HAVE_LINES 1
+#define HAVE_POINTS 1
+#define CTX_ARG sisContextPtr smesa
+#define CTX_ARG2 smesa
+#define GET_VERTEX_DWORDS() smesa->vertex_size
+#define ALLOC_VERTS( n, size ) sisAllocDmaLow( smesa, n * size * sizeof(int) )
+#undef LOCAL_VARS
+#define LOCAL_VARS						\
+   sisContextPtr smesa = SIS_CONTEXT(ctx);			\
+   const char *vertptr = smesa->verts;
+#define VERT(x) (sisVertex *)(vertptr + (x * vertsize * sizeof(int)))
+#define VERTEX sisVertex 
+#undef TAG
+#define TAG(x) sis_##x
+#include "tnl_dd/t_dd_triemit.h"
+#undef TAG
+#undef LOCAL_VARS
 
+/***********************************************************************
+ *             Dispatch vertices to hardware through MMIO              *
+ ***********************************************************************/
+
+/* The ARGB write of the last vertex of the primitive fires the 3d engine, so
+ * save it until the end.
+ */
 #define SIS_MMIO_WRITE_VERTEX(_v, i, lastvert)			\
 do {								\
-   MMIOBase[(REG_3D_TSXa+(i)*0x30)/4] = _v->v.x;		\
-   MMIOBase[(REG_3D_TSYa+(i)*0x30)/4] = _v->v.y;	        \
-   MMIOBase[(REG_3D_TSZa+(i)*0x30)/4] = _v->v.z;		\
-   MMIOBase[(REG_3D_TSWGa+(i)*0x30)/4] = _v->v.w;		\
-   /*((GLint *) MMIOBase)[(REG_3D_TSFSa+(i)*0x30)/4] = _v->ui[5];*/ \
-   if (SIS_STATES & SIS_VERT_TEX0) {				\
-      MMIOBase[(REG_3D_TSUAa+(i)*0x30)/4] = _v->v.u0;		\
-      MMIOBase[(REG_3D_TSVAa+(i)*0x30)/4] = _v->v.v0;		\
+   GLuint __color, __i = 0;					\
+   MMIO(REG_3D_TSXa+(i)*0x30, _v->ui[__i++]);			\
+   MMIO(REG_3D_TSYa+(i)*0x30, _v->ui[__i++]);			\
+   MMIO(REG_3D_TSZa+(i)*0x30, _v->ui[__i++]);			\
+   if (SIS_STATES & VERT_W)					\
+      MMIO(REG_3D_TSWGa+(i)*0x30, _v->ui[__i++]);		\
+   __color = _v->ui[__i++];					\
+   if (SIS_STATES & VERT_SPEC)					\
+      MMIO(REG_3D_TSFSa+(i)*0x30, _v->ui[__i++]);		\
+   if (SIS_STATES & VERT_UV0) {					\
+      MMIO(REG_3D_TSUAa+(i)*0x30, _v->ui[__i++]);		\
+      MMIO(REG_3D_TSVAa+(i)*0x30, _v->ui[__i++]);		\
    }								\
-   if (SIS_STATES & SIS_VERT_TEX1) {				\
-      MMIOBase[(REG_3D_TSUBa+(i)*0x30)/4] = _v->v.u1;		\
-      MMIOBase[(REG_3D_TSVBa+(i)*0x30)/4] = _v->v.v1;		\
+   if (SIS_STATES & VERT_UV1) {					\
+      MMIO(REG_3D_TSUBa+(i)*0x30, _v->ui[__i++]);		\
+      MMIO(REG_3D_TSVBa+(i)*0x30, _v->ui[__i++]);		\
    }								\
-   /*MMIOBase[(REG_3D_TSUCa+(i)*0x30)/4] = _v->v.u2;		\
-   MMIOBase[(REG_3D_TSVCa+(i)*0x30)/4] = _v->v.v2;*/		\
-   /* the ARGB write of the last vertex of the primitive fires the 3d engine*/ \
-   if (lastvert || (SIS_STATES & SIS_VERT_SMOOTH))		\
-      ((GLint *) MMIOBase)[(REG_3D_TSARGBa+(i)*0x30)/4] = _v->ui[4]; \
-} while (0);
-
-#define SIS_AGP_WRITE_VERTEX(_v)				\
-do {								\
-   AGP_WritePtr[0] = _v->v.x;					\
-   AGP_WritePtr[1] = _v->v.y;					\
-   AGP_WritePtr[2] = _v->v.z;					\
-   AGP_WritePtr[3] = _v->v.w;					\
-   ((GLint *)AGP_WritePtr)[4] = _v->ui[4];			\
-   AGP_WritePtr += 5;						\
-   if (SIS_STATES & SIS_VERT_TEX0) {				\
-      AGP_WritePtr[0] = _v->v.u0;				\
-      AGP_WritePtr[1] = _v->v.v0;				\
-      AGP_WritePtr += 2;					\
-   }								\
-   if (SIS_STATES & SIS_VERT_TEX1) {				\
-      AGP_WritePtr[0] = _v->v.u1;				\
-      AGP_WritePtr[1] = _v->v.v1;				\
-      AGP_WritePtr += 2;					\
-   }								\
-} while(0)
+   if (lastvert || (SIS_STATES & VERT_SMOOTH))			\
+      MMIO(REG_3D_TSARGBa+(i)*0x30, __color);			\
+} while (0)
 
 #define MMIO_VERT_REG_COUNT 10
 
-#define SIS_VERT_SMOOTH	0x01
-#define SIS_VERT_TEX0	0x02
-#define SIS_VERT_TEX1	0x04
+#define VERT_SMOOTH	0x01
+#define VERT_W		0x02
+#define VERT_SPEC	0x04
+#define VERT_UV0	0x08
+#define VERT_UV1	0x10
 
-static sis_quad_func sis_quad_func_agp[8];
-static sis_tri_func sis_tri_func_agp[8];
-static sis_line_func sis_line_func_agp[8];
-static sis_point_func sis_point_func_agp[8];
-static sis_quad_func sis_quad_func_mmio[8];
-static sis_tri_func sis_tri_func_mmio[8];
-static sis_line_func sis_line_func_mmio[8];
-static sis_point_func sis_point_func_mmio[8];
-
-/* XXX: These definitions look questionable */
-#define USE_XYZ		MASK_PsVertex_HAS_RHW
-#define USE_W		MASK_PsVertex_HAS_NORMALXYZ
-#define USE_RGB		MASK_PsVertex_HAS_SPECULAR
-#define USE_UV1		MASK_PsVertex_HAS_UVSet2
-#define USE_UV2		MASK_PsVertex_HAS_UVSet3
-
-static GLint AGPParsingValues[8] = {
-  (5 << 28) | USE_XYZ | USE_W | USE_RGB,
-  (5 << 28) | USE_XYZ | USE_W | USE_RGB,
-  (7 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV1,
-  (7 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV1,
-  (7 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV2,
-  (7 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV2,
-  (9 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV1 | USE_UV2,
-  (9 << 28) | USE_XYZ | USE_W | USE_RGB | USE_UV1 | USE_UV2,
-};
+typedef void (*mmio_draw_func)(sisContextPtr smesa, char *verts);
+static mmio_draw_func sis_tri_func_mmio[32];
+static mmio_draw_func sis_line_func_mmio[32];
+static mmio_draw_func sis_point_func_mmio[32];
 
 #define SIS_STATES (0)
 #define TAG(x) x##_none
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_SMOOTH)
+#define SIS_STATES (VERT_SMOOTH)
+#define TAG(x) x##_g
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W)
+#define TAG(x) x##_w
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W)
+#define TAG(x) x##_gw
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SPEC)
 #define TAG(x) x##_s
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_TEX0)
+#define SIS_STATES (VERT_SMOOTH | VERT_SPEC)
+#define TAG(x) x##_gs
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_SPEC)
+#define TAG(x) x##_ws
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_SPEC)
+#define TAG(x) x##_gws
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_UV0)
 #define TAG(x) x##_t0
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_SMOOTH | SIS_VERT_TEX0)
+#define SIS_STATES (VERT_SMOOTH | VERT_UV0)
+#define TAG(x) x##_gt0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_UV0)
+#define TAG(x) x##_wt0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_UV0)
+#define TAG(x) x##_gwt0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SPEC | VERT_UV0)
 #define TAG(x) x##_st0
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_TEX1)
+#define SIS_STATES (VERT_SMOOTH | VERT_SPEC | VERT_UV0)
+#define TAG(x) x##_gst0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_SPEC | VERT_UV0)
+#define TAG(x) x##_wst0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_SPEC | VERT_UV0)
+#define TAG(x) x##_gwst0
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_UV1)
 #define TAG(x) x##_t1
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_SMOOTH | SIS_VERT_TEX1)
+#define SIS_STATES (VERT_SMOOTH | VERT_UV1)
+#define TAG(x) x##_gt1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_UV1)
+#define TAG(x) x##_wt1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_UV1)
+#define TAG(x) x##_gwt1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SPEC | VERT_UV1)
 #define TAG(x) x##_st1
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_TEX0 | SIS_VERT_TEX1)
+#define SIS_STATES (VERT_SMOOTH | VERT_SPEC | VERT_UV1)
+#define TAG(x) x##_gst1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_SPEC | VERT_UV1)
+#define TAG(x) x##_wst1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_SPEC | VERT_UV1)
+#define TAG(x) x##_gwst1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_UV0 | VERT_UV1)
 #define TAG(x) x##_t0t1
 #include "sis_tritmp.h"
 
-#define SIS_STATES (SIS_VERT_SMOOTH | SIS_VERT_TEX0 | SIS_VERT_TEX1)
+#define SIS_STATES (VERT_SMOOTH | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_gt0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_wt0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_gwt0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SPEC | VERT_UV0 | VERT_UV1)
 #define TAG(x) x##_st0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_SPEC | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_gst0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_W | VERT_SPEC | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_wst0t1
+#include "sis_tritmp.h"
+
+#define SIS_STATES (VERT_SMOOTH | VERT_W | VERT_SPEC | VERT_UV0 | VERT_UV1)
+#define TAG(x) x##_gwst0t1
 #include "sis_tritmp.h"
 
 /***********************************************************************
  *          Macros for t_dd_tritmp.h to draw basic primitives          *
  ***********************************************************************/
 
-#define POINT( v0 ) smesa->draw_point( smesa, v0 )
-#define LINE( v0, v1 ) smesa->draw_line( smesa, v0, v1 )
-#define TRI( a, b, c ) smesa->draw_tri( smesa, a, b, c )
-#define QUAD( a, b, c, d ) smesa->draw_quad( smesa, a, b, c, d )
+#define TRI( a, b, c )				\
+do { 						\
+   if (DO_FALLBACK)				\
+      smesa->draw_tri( smesa, a, b, c );	\
+   else						\
+      sis_triangle( smesa, a, b, c );		\
+} while (0)
+
+#define QUAD( a, b, c, d )			\
+do { 						\
+   if (DO_FALLBACK) {				\
+      smesa->draw_tri( smesa, a, b, d );	\
+      smesa->draw_tri( smesa, b, c, d );	\
+   } else					\
+      sis_quad( smesa, a, b, c, d );		\
+} while (0)
+
+#define LINE( v0, v1 )				\
+do { 						\
+   if (DO_FALLBACK)				\
+      smesa->draw_line( smesa, v0, v1 );	\
+   else						\
+      sis_line( smesa, v0, v1 );		\
+} while (0)
+
+#define POINT( v0 )				\
+do { 						\
+   if (DO_FALLBACK)				\
+      smesa->draw_point( smesa, v0 );		\
+   else						\
+      sis_point( smesa, v0 );			\
+} while (0)
 
 /***********************************************************************
  *              Build render functions from dd templates               *
  ***********************************************************************/
 
-#define SIS_OFFSET_BIT		0x01
+#define SIS_OFFSET_BIT 		0x01
 #define SIS_TWOSIDE_BIT		0x02
 #define SIS_UNFILLED_BIT	0x04
 #define SIS_FALLBACK_BIT	0x08
@@ -258,7 +358,7 @@ static struct {
 #define VERTEX sisVertex
 #define TAB rast_tab
 
-#define DEPTH_SCALE 1.0
+#define DEPTH_SCALE smesa->depth_scale
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x
@@ -337,7 +437,7 @@ do {							\
 #define TAG(x) x##_twoside
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_OFFSET_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_OFFSET_BIT)
 #define TAG(x) x##_twoside_offset
 #include "tnl_dd/t_dd_tritmp.h"
 
@@ -345,15 +445,15 @@ do {							\
 #define TAG(x) x##_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_OFFSET_BIT | SIS_UNFILLED_BIT)
+#define IND (SIS_OFFSET_BIT|SIS_UNFILLED_BIT)
 #define TAG(x) x##_offset_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_UNFILLED_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_UNFILLED_BIT)
 #define TAG(x) x##_twoside_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_OFFSET_BIT | SIS_UNFILLED_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_OFFSET_BIT|SIS_UNFILLED_BIT)
 #define TAG(x) x##_twoside_offset_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
 
@@ -361,31 +461,31 @@ do {							\
 #define TAG(x) x##_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_OFFSET_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_OFFSET_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_offset_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_twoside_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_OFFSET_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_OFFSET_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_UNFILLED_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_UNFILLED_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_unfilled_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_OFFSET_BIT | SIS_UNFILLED_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_OFFSET_BIT|SIS_UNFILLED_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_offset_unfilled_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_UNFILLED_BIT | SIS_FALLBACK_BIT)
+#define IND (SIS_TWOSIDE_BIT|SIS_UNFILLED_BIT|SIS_FALLBACK_BIT)
 #define TAG(x) x##_twoside_unfilled_fallback
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (SIS_TWOSIDE_BIT | SIS_OFFSET_BIT | SIS_UNFILLED_BIT |  \
+#define IND (SIS_TWOSIDE_BIT|SIS_OFFSET_BIT|SIS_UNFILLED_BIT| \
 	     SIS_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_fallback
 #include "tnl_dd/t_dd_tritmp.h"
@@ -422,22 +522,6 @@ static void init_rast_tab( void )
  * primitives are being drawn, and only for the unaccelerated
  * primitives.
  */
-static void
-sis_fallback_quad( sisContextPtr smesa,
-		   sisVertex *v0,
-		   sisVertex *v1,
-		   sisVertex *v2,
-		   sisVertex *v3 )
-{
-   GLcontext *ctx = smesa->glCtx;
-   SWvertex v[4];
-   sis_translate_vertex( ctx, v0, &v[0] );
-   sis_translate_vertex( ctx, v1, &v[1] );
-   sis_translate_vertex( ctx, v2, &v[2] );
-   sis_translate_vertex( ctx, v3, &v[3] );
-   _swrast_Triangle( ctx, &v[0], &v[1], &v[3] );
-   _swrast_Triangle( ctx, &v[1], &v[2], &v[3] );
-}
 
 static void
 sis_fallback_tri( sisContextPtr smesa,
@@ -447,10 +531,13 @@ sis_fallback_tri( sisContextPtr smesa,
 {
    GLcontext *ctx = smesa->glCtx;
    SWvertex v[3];
-   sis_translate_vertex( ctx, v0, &v[0] );
-   sis_translate_vertex( ctx, v1, &v[1] );
-   sis_translate_vertex( ctx, v2, &v[2] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v2, &v[2] );
+   sisSpanRenderStart( ctx );
    _swrast_Triangle( ctx, &v[0], &v[1], &v[2] );
+   sisSpanRenderFinish( ctx );
+   _swrast_flush( ctx );
 }
 
 
@@ -461,9 +548,12 @@ sis_fallback_line( sisContextPtr smesa,
 {
    GLcontext *ctx = smesa->glCtx;
    SWvertex v[2];
-   sis_translate_vertex( ctx, v0, &v[0] );
-   sis_translate_vertex( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
+   sisSpanRenderStart( ctx );
    _swrast_Line( ctx, &v[0], &v[1] );
+   sisSpanRenderFinish( ctx );
+   _swrast_flush( ctx );
 }
 
 
@@ -473,8 +563,11 @@ sis_fallback_point( sisContextPtr smesa,
 {
    GLcontext *ctx = smesa->glCtx;
    SWvertex v[1];
-   sis_translate_vertex( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   sisSpanRenderStart( ctx );
    _swrast_Point( ctx, &v[0] );
+   sisSpanRenderFinish( ctx );
+   _swrast_flush( ctx );
 }
 
 
@@ -483,21 +576,20 @@ sis_fallback_point( sisContextPtr smesa,
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (sisVertex *)(sisverts + (x * vertsize * sizeof(int)))
+#define IND 0
+#define V(x) (sisVertex *)(vertptr + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
-      smesa->draw_point( smesa, VERT(start) )
-#define RENDER_LINE( v0, v1 ) smesa->draw_line( smesa, VERT(v0), VERT(v1) )
-#define RENDER_TRI( v0, v1, v2 ) smesa->draw_tri( smesa, VERT(v0), VERT(v1), \
-   VERT(v2) )
-#define RENDER_QUAD( v0, v1, v2, v3 ) smesa->draw_quad( smesa, VERT(v0), \
-   VERT(v1), VERT(v2), VERT(v3))
+      POINT( V(ELT(start)) )
+#define RENDER_LINE( v0, v1 )         LINE( V(v0), V(v1) )
+#define RENDER_TRI(  v0, v1, v2 )     TRI(  V(v0), V(v1), V(v2) )
+#define RENDER_QUAD( v0, v1, v2, v3 ) QUAD( V(v0), V(v1), V(v2), V(v3) )
 #define INIT(x) sisRenderPrimitive( ctx, x )
 #undef LOCAL_VARS
 #define LOCAL_VARS				\
     sisContextPtr smesa = SIS_CONTEXT(ctx);	\
     const GLuint vertsize = smesa->vertex_size;		\
-    const char *sisverts = (char *)smesa->verts;		\
+    const char *vertptr = (char *)smesa->verts;		\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 #define RESET_STIPPLE
@@ -514,65 +606,16 @@ sis_fallback_point( sisContextPtr smesa,
 
 
 /**********************************************************************/
-/*                    Render clipped primitives                       */
-/**********************************************************************/
-
-static void sisRenderClippedPoly( GLcontext *ctx, const GLuint *elts, GLuint n )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-
-   /* Render the new vertices as an unclipped polygon.
-    */
-   {
-      GLuint *tmp = VB->Elts;
-      VB->Elts = (GLuint *)elts;
-      tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n, PRIM_BEGIN|PRIM_END );
-      VB->Elts = tmp;
-   }
-}
-
-static void sisRenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.Line( ctx, ii, jj );
-}
-
-#if 0
-static void sisFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
-				      GLuint n )
-{
-   sisContextPtr smesa = SIS_CONTEXT( ctx );
-   GLuint vertsize = smesa->vertex_size;
-   GLuint *vb = r128AllocDmaLow( rmesa, (n-2) * 3 * 4 * vertsize );
-   GLubyte *sisverts = (GLubyte *)smesa->verts;
-   const GLuint *start = (const GLuint *)VERT(elts[0]);
-   int i,j;
-
-   smesa->num_verts += (n-2) * 3;
-
-   for (i = 2 ; i < n ; i++) {
-      COPY_DWORDS( j, vb, vertsize, (sisVertexPtr) VERT(elts[i-1]) );
-      COPY_DWORDS( j, vb, vertsize, (sisVertexPtr) VERT(elts[i]) );
-      COPY_DWORDS( j, vb, vertsize, (sisVertexPtr) start );
-   }
-}
-#endif
-
-
-
-
-/**********************************************************************/
 /*                    Choose render functions                         */
 /**********************************************************************/
 
 #define _SIS_NEW_RENDER_STATE (_DD_NEW_LINE_STIPPLE |	\
-			          _DD_NEW_LINE_SMOOTH |		\
-			          _DD_NEW_POINT_SMOOTH |	\
-			          _DD_NEW_TRI_SMOOTH |		\
-			          _DD_NEW_TRI_UNFILLED |	\
-			          _DD_NEW_TRI_LIGHT_TWOSIDE |	\
-			          _DD_NEW_TRI_OFFSET)		\
+			       _DD_NEW_LINE_SMOOTH |		\
+			       _DD_NEW_POINT_SMOOTH |	\
+			       _DD_NEW_TRI_SMOOTH |		\
+			       _DD_NEW_TRI_UNFILLED |	\
+			       _DD_NEW_TRI_LIGHT_TWOSIDE |	\
+			       _DD_NEW_TRI_OFFSET)		\
 
 
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
@@ -584,31 +627,10 @@ static void sisFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 
 static void sisChooseRenderState(GLcontext *ctx)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT( ctx );
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
-   GLuint vertindex = 0;
-   
-   if (ctx->Texture.Unit[0]._ReallyEnabled)
-      vertindex |= SIS_VERT_TEX0;
-   if (ctx->Texture.Unit[1]._ReallyEnabled)
-      vertindex |= SIS_VERT_TEX1;
-   if (ctx->Light.ShadeModel == GL_SMOOTH)
-      vertindex |= SIS_VERT_SMOOTH;
-
-   if (smesa->AGPCmdModeEnabled) {
-      smesa->draw_quad = sis_quad_func_agp[vertindex];
-      smesa->draw_tri = sis_tri_func_agp[vertindex];
-      smesa->draw_line = sis_line_func_agp[vertindex];
-      smesa->draw_point = sis_point_func_agp[vertindex];
-   } else {
-      smesa->draw_quad = sis_quad_func_mmio[vertindex];
-      smesa->draw_tri = sis_tri_func_mmio[vertindex];
-      smesa->draw_line = sis_line_func_mmio[vertindex];
-      smesa->draw_point = sis_point_func_mmio[vertindex];
-   }
-   smesa->AGPParseSet &= ~(MASK_VertexDWSize | MASK_VertexDataFormat);
-   smesa->AGPParseSet |= AGPParsingValues[vertindex];
 
    if (flags & (ANY_RASTER_FLAGS|ANY_FALLBACK_FLAGS)) {
 
@@ -618,6 +640,9 @@ static void sisChooseRenderState(GLcontext *ctx)
 	 if (flags & DD_TRI_UNFILLED)      index |= SIS_UNFILLED_BIT;
       }
 
+      smesa->draw_point = sis_point;
+      smesa->draw_line = sis_line;
+      smesa->draw_tri = sis_triangle;
       /* Hook in fallbacks for specific primitives.
        */
       if (flags & ANY_FALLBACK_FLAGS) {
@@ -625,35 +650,30 @@ static void sisChooseRenderState(GLcontext *ctx)
             smesa->draw_point = sis_fallback_point;
 	 if (flags & LINE_FALLBACK)
             smesa->draw_line = sis_fallback_line;
-	 if (flags & TRI_FALLBACK) {
-            smesa->draw_quad = sis_fallback_quad;
+	 if (flags & TRI_FALLBACK)
             smesa->draw_tri = sis_fallback_tri;
-         }
 	 index |= SIS_FALLBACK_BIT;
       }
    }
 
    if (index != smesa->RenderIndex) {
-      TNLcontext *tnl = TNL_CONTEXT(ctx);
+      smesa->RenderIndex = index;
+
       tnl->Driver.Render.Points = rast_tab[index].points;
       tnl->Driver.Render.Line = rast_tab[index].line;
+      tnl->Driver.Render.ClippedLine = rast_tab[index].line;
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
       if (index == 0) {
 	 tnl->Driver.Render.PrimTabVerts = sis_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = sis_render_tab_elts;
-	 tnl->Driver.Render.ClippedLine = rast_tab[index].line;
-         /*XXX: sisFastRenderClippedPoly*/
-	 tnl->Driver.Render.ClippedPolygon = sisRenderClippedPoly;
+	 tnl->Driver.Render.ClippedPolygon = sis_fast_clipped_poly;
       } else {
 	 tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-	 tnl->Driver.Render.ClippedLine = sisRenderClippedLine;
-	 tnl->Driver.Render.ClippedPolygon = sisRenderClippedPoly;
+	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
       }
-
-      smesa->RenderIndex = index;
    }
 }
 
@@ -706,20 +726,11 @@ static void sisRunPipeline( GLcontext *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT( ctx );
 
-   LOCK_HARDWARE();
-   sisUpdateHWState( ctx );
-
-   if (smesa->AGPCmdModeEnabled) {
-      AGP_WritePtr = (GLfloat *)smesa->AGPCmdBufBase + *smesa->pAGPCmdBufNext;
-      AGP_StartPtr = AGP_WritePtr;
-      AGP_ReadPtr = (GLfloat *)((long)MMIO_READ(REG_3D_AGPCmBase) -
-         (long)smesa->AGPCmdBufAddr + (long)smesa->AGPCmdBufBase);
-      sisUpdateAGP( smesa );
-   }
-
    if (!smesa->Fallback && smesa->NewGLState) {
-      if (smesa->NewGLState & _SIS_NEW_VERTEX_STATE)
-	 sisChooseVertexState( ctx );
+      if (smesa->NewGLState & _NEW_TEXTURE) {
+	 SIS_FIREVERTICES(smesa);
+	 sisUpdateTextureState(ctx);
+      }
 
       if (smesa->NewGLState & (_SIS_NEW_RENDER_STATE | _NEW_TEXTURE))
 	 sisChooseRenderState( ctx );
@@ -729,11 +740,10 @@ static void sisRunPipeline( GLcontext *ctx )
 
    _tnl_run_pipeline( ctx );
 
-   if (smesa->AGPCmdModeEnabled)
-      sisFireVertsAGP( smesa );
-   else
-      mEndPrimitive();
-   UNLOCK_HARDWARE();
+   /* XXX: If we put flushing in sis_state.c and friends, we can avoid this.
+    * Is it worth it?
+    */
+   SIS_FIREVERTICES(smesa);
 }
 
 /**********************************************************************/
@@ -749,26 +759,21 @@ static void sisRasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    if (smesa->hw_primitive != hwprim) {
-      if (smesa->AGPCmdModeEnabled) {
-         sisFireVertsAGP( smesa );
-         smesa->AGPParseSet &= ~(MASK_PsDataType | MASK_PsShadingMode);
-         smesa->AGPParseSet |= hw_prim_agp_type[hwprim];
-         if (ctx->Light.ShadeModel == GL_FLAT)
-            smesa->AGPParseSet |= hw_prim_agp_shade[hwprim];
-         else
-            smesa->AGPParseSet |= MASK_PsShadingSmooth;
+      SIS_FIREVERTICES(smesa);
+      smesa->hw_primitive = hwprim;
+      smesa->AGPParseSet &= ~(MASK_PsDataType | MASK_PsShadingMode);
+      smesa->dwPrimitiveSet &= ~(MASK_DrawPrimitiveCommand |
+	 MASK_SetFirePosition | MASK_ShadingMode);
+      smesa->AGPParseSet |= hw_prim_agp_type[hwprim];
+      smesa->dwPrimitiveSet |= hwprim | hw_prim_mmio_fire[hwprim];
+      if (ctx->Light.ShadeModel == GL_FLAT) {
+	 smesa->AGPParseSet |= hw_prim_agp_shade[hwprim];
+	 smesa->dwPrimitiveSet |= hw_prim_mmio_shade[hwprim];
       } else {
-         mEndPrimitive();
-         smesa->dwPrimitiveSet &= ~(MASK_DrawPrimitiveCommand | 
-            MASK_SetFirePosition | MASK_ShadingMode);
-         smesa->dwPrimitiveSet |= hwprim | hw_prim_mmio_fire[hwprim];
-         if (ctx->Light.ShadeModel == GL_FLAT)
-            smesa->dwPrimitiveSet |= hw_prim_mmio_shade[hwprim];
-         else
-            smesa->dwPrimitiveSet |= SHADE_GOURAUD;
+	 smesa->AGPParseSet |= MASK_PsShadingSmooth;
+	 smesa->dwPrimitiveSet |= SHADE_GOURAUD;
       }
    }
-   smesa->hw_primitive = hwprim;
 }
 
 static void sisRenderPrimitive( GLcontext *ctx, GLenum prim )
@@ -776,21 +781,38 @@ static void sisRenderPrimitive( GLcontext *ctx, GLenum prim )
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
    smesa->render_primitive = prim;
+
    if (prim >= GL_TRIANGLES && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
       return;
    sisRasterPrimitive( ctx, hw_prim[prim] );
 }
 
+#define EMIT_ATTR( ATTR, STYLE)						\
+do {									\
+   smesa->vertex_attrs[smesa->vertex_attr_count].attrib = (ATTR);	\
+   smesa->vertex_attrs[smesa->vertex_attr_count].format = (STYLE);	\
+   smesa->vertex_attr_count++;						\
+} while (0)
 
+#define EMIT_PAD( N )							\
+do {									\
+   smesa->vertex_attrs[smesa->vertex_attr_count].attrib = 0;		\
+   smesa->vertex_attrs[smesa->vertex_attr_count].format = EMIT_PAD;	\
+   smesa->vertex_attrs[smesa->vertex_attr_count].offset = (N);		\
+   smesa->vertex_attr_count++;						\
+} while (0)
+
+#define SIS_TCL_STATE_BITS \
+	(_TNL_BITS_TEX_ANY | _TNL_BIT_COLOR1 | _TNL_BIT_FOG)
+				
 static void sisRenderStart( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-
-   /* Check for projective texturing.  Make sure all texcoord
-    * pointers point to something.  (fix in mesa?)
-    */
-   sisCheckTexSizes( ctx );
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint index = tnl->render_inputs;
+   GLuint AGPParseSet = smesa->AGPParseSet;
+   GLboolean tex_fallback = GL_FALSE;
 
    if (ctx->Color._DrawDestMask == DD_FRONT_LEFT_BIT && 
       smesa->driDrawable->numClipRects != 0)
@@ -803,83 +825,143 @@ static void sisRenderStart( GLcontext *ctx )
    } else {
       tnl->Driver.Render.Multipass = NULL;
    }
+
+   /* Important:
+    */
+   VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+   smesa->vertex_attr_count = 0;
+
+   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to build up a
+    * hardware vertex.
+    */
+
+   AGPParseSet &= ~(MASK_VertexDWSize | MASK_VertexDataFormat);
+   AGPParseSet |= SiS_PS_HAS_XYZ | SiS_PS_HAS_DIFFUSE;
+   if (index & _TNL_BITS_TEX_ANY) {
+      EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_4F_VIEWPORT);
+      AGPParseSet |= SiS_PS_HAS_W;
+   } else {
+      EMIT_ATTR(_TNL_ATTRIB_POS, EMIT_3F_VIEWPORT);
+   }
+
+   EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA);
+
+   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+      AGPParseSet |= SiS_PS_HAS_SPECULAR;
+
+      if (index & _TNL_BIT_COLOR1) {
+	 EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR);
+      } else {
+	 EMIT_PAD(3);
+      }
+
+      if (index & _TNL_BIT_FOG)
+	 EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1UB_1F);
+      else 
+	 EMIT_PAD(1);
+   }
+
+   /* projective textures are not supported by the hardware */
+   if (index & _TNL_BIT_TEX(0)) {
+      if (VB->TexCoordPtr[0]->size > 2)
+	 tex_fallback = GL_TRUE;
+      EMIT_ATTR(_TNL_ATTRIB_TEX0, EMIT_2F);
+      AGPParseSet |= SiS_PS_HAS_UV0;
+   }
+   if (index & _TNL_BIT_TEX(1)) {
+      if (VB->TexCoordPtr[1]->size > 2)
+	 tex_fallback = GL_TRUE;
+      EMIT_ATTR(_TNL_ATTRIB_TEX1, EMIT_2F);
+      AGPParseSet |= SiS_PS_HAS_UV1;
+   }
+   FALLBACK(smesa, SIS_FALLBACK_TEXTURE, tex_fallback);
+
+   if (smesa->last_tcl_state != index) {
+      smesa->AGPParseSet = AGPParseSet;
+
+      smesa->vertex_size =  _tnl_install_attrs( ctx, smesa->vertex_attrs, 
+	 smesa->vertex_attr_count, smesa->hw_viewport, 0 );
+
+      smesa->vertex_size >>= 2;
+      smesa->AGPParseSet |= smesa->vertex_size << 28;
+   }
 }
 
 static void sisRenderFinish( GLcontext *ctx )
 {
 }
 
-/* Update SpaceLeft after an engine or current write pointer update */
-static void sisUpdateAGP( sisContextPtr smesa )
-{
-   /* ReadPtr == WritePtr is the empty case */
-   if (AGP_ReadPtr <= AGP_WritePtr)
-      AGP_SpaceLeft = (long)smesa->AGPCmdBufBase + (long)smesa->AGPCmdBufSize - 
-         (long)AGP_WritePtr;
-   else
-      AGP_SpaceLeft = AGP_ReadPtr - AGP_WritePtr - 4;
-}
+/**********************************************************************/
+/*                    AGP/PCI vertex submission                       */
+/**********************************************************************/
 
-/* Fires a set of vertices that have been written from AGP_StartPtr to
- * AGP_WritePtr, using the smesa->AGPParseSet format.
- */
 void
-sisFireVertsAGP( sisContextPtr smesa )
+sisFlushPrimsLocked(sisContextPtr smesa)
 {
-   if (AGP_WritePtr == AGP_StartPtr)
-      return;
+   GLuint *start;
 
-   mWait3DCmdQueue(5);
-   mEndPrimitive();
-   MMIO(REG_3D_AGPCmBase, (long)AGP_StartPtr - (long)smesa->AGPCmdBufBase +
-      (long)smesa->AGPCmdBufAddr);
-   MMIO(REG_3D_AGPTtDwNum, (((long)AGP_WritePtr - (long)AGP_StartPtr) >> 2) |
-      0x50000000);
-   MMIO(REG_3D_ParsingSet, smesa->AGPParseSet);
-   
-   MMIO(REG_3D_AGPCmFire, (GLint)(-1));
-   mEndPrimitive();
+   sisUpdateHWState(smesa->glCtx);
 
-   *(smesa->pAGPCmdBufNext) = (((long)AGP_WritePtr -
-      (long)smesa->AGPCmdBufBase) + 0xf) & ~0xf;
-   AGP_StartPtr = AGP_WritePtr;
-   sisUpdateAGP( smesa );
+   if (smesa->using_agp) {
+      mWait3DCmdQueue(8);
+      mEndPrimitive();
+      MMIO(REG_3D_AGPCmBase, (smesa->vb_last - smesa->vb) +
+         smesa->vb_agp_offset);
+      MMIO(REG_3D_AGPTtDwNum, (smesa->vb_cur - smesa->vb_last) / 4 |
+	 0x50000000);
+      MMIO(REG_3D_ParsingSet, smesa->AGPParseSet);
+      MMIO(REG_3D_AGPCmFire, (GLint)(-1));
+      mEndPrimitive();
+   } else {
+      int mmio_index = 0, incr = 0;
+      void (*emit_func)(sisContextPtr smesa, char *verts) = NULL;
+
+      if (smesa->AGPParseSet & MASK_PsShadingSmooth)
+	 mmio_index |= VERT_SMOOTH;
+      if (smesa->AGPParseSet & SiS_PS_HAS_SPECULAR)
+	 mmio_index |= VERT_SPEC;
+      if (smesa->AGPParseSet & SiS_PS_HAS_W)
+	 mmio_index |= VERT_W;
+      if (smesa->AGPParseSet & SiS_PS_HAS_UV0)
+	 mmio_index |= VERT_UV0;
+      if (smesa->AGPParseSet & SiS_PS_HAS_UV1)
+	 mmio_index |= VERT_UV1;
+
+      switch (smesa->AGPParseSet & MASK_PsDataType) {
+      case MASK_PsPointList:
+         incr = smesa->vertex_size * 4;
+	 emit_func = sis_point_func_mmio[mmio_index];
+	 break;
+      case MASK_PsLineList:
+         incr = smesa->vertex_size * 4 * 2;
+	 emit_func = sis_line_func_mmio[mmio_index];
+	 break;
+      case MASK_PsTriangleList:
+         incr = smesa->vertex_size * 4 * 3;
+	 emit_func = sis_tri_func_mmio[mmio_index];
+	 break;
+      }
+      
+      mWait3DCmdQueue(1);
+      MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
+      while (smesa->vb_last < smesa->vb_cur) {
+	 emit_func(smesa, smesa->vb_last);
+	 smesa->vb_last += incr;
+      }
+      mWait3DCmdQueue(1);
+      mEndPrimitive();
+
+      /* With PCI, we can just start writing to the start of the VB again. */
+      smesa->vb_cur = smesa->vb;
+   }
+   smesa->vb_last = smesa->vb_cur;
 }
 
-/* Make sure there are more than num dwords left in the AGP queue. */
-static void
-sisMakeRoomAGP( sisContextPtr smesa, GLint num )
+void sisFlushPrims(sisContextPtr smesa)
 {
-   int size = num * 4;
-   
-   if (size <= AGP_SpaceLeft) {
-      AGP_SpaceLeft -= size;
-      return;
-   }
-   /* Wrapping */
-   if (AGP_WritePtr + num > (GLfloat *)(smesa->AGPCmdBufBase +
-      smesa->AGPCmdBufSize))
-   {
-      sisFireVertsAGP( smesa );
-      AGP_WritePtr = (GLfloat *)smesa->AGPCmdBufBase;
-      AGP_StartPtr = AGP_WritePtr;
-      sisUpdateAGP( smesa );
-      WaitEngIdle( smesa ); /* XXX Why is this necessary? */
-   }
-
-   if (size > AGP_SpaceLeft) {
-      /* Update the cached engine read pointer */
-      AGP_ReadPtr = (GLfloat *)((long)MMIO_READ(REG_3D_AGPCmBase) -
-         (long)smesa->AGPCmdBufAddr + (long)smesa->AGPCmdBufBase);
-      sisUpdateAGP( smesa );
-      while (size > AGP_SpaceLeft) {
-         /* Spin until space is available. */
-         AGP_ReadPtr = (GLfloat *)((long)MMIO_READ(REG_3D_AGPCmBase) -
-            (long)smesa->AGPCmdBufAddr + (long)smesa->AGPCmdBufBase);
-         sisUpdateAGP( smesa );
-      }
-   }
-   AGP_SpaceLeft -= size;
+   LOCK_HARDWARE();
+   sisFlushPrimsLocked(smesa);
+   UNLOCK_HARDWARE();
 }
 
 /**********************************************************************/
@@ -895,6 +977,7 @@ void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    if (mode) {
       smesa->Fallback |= bit;
       if (oldfallback == 0) {
+	 SIS_FIREVERTICES(smesa);
 	 _swsetup_Wakeup( ctx );
 	 smesa->RenderIndex = ~0;
       }
@@ -906,9 +989,19 @@ void sisFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.Start = sisRenderStart;
 	 tnl->Driver.Render.PrimitiveNotify = sisRenderPrimitive;
 	 tnl->Driver.Render.Finish = sisRenderFinish;
-	 tnl->Driver.Render.BuildVertices = sisBuildVertices;
-	 smesa->NewGLState |= (_SIS_NEW_RENDER_STATE|
-			       _SIS_NEW_VERTEX_STATE);
+
+	 tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+	 tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+	 tnl->Driver.Render.Interp = _tnl_interp;
+
+	 _tnl_invalidate_vertex_state( ctx, ~0 );
+	 _tnl_invalidate_vertices( ctx, ~0 );
+	 _tnl_install_attrs( ctx, 
+			     smesa->vertex_attrs, 
+			     smesa->vertex_attr_count,
+			     smesa->hw_viewport, 0 ); 
+
+	 smesa->NewGLState |= _SIS_NEW_RENDER_STATE;
       }
    }
 }
@@ -929,22 +1022,38 @@ void sisInitTriFuncs( GLcontext *ctx )
       firsttime = 0;
 
       sis_vert_init_none();
+      sis_vert_init_g();
+      sis_vert_init_w();
+      sis_vert_init_gw();
       sis_vert_init_s();
+      sis_vert_init_gs();
+      sis_vert_init_ws();
+      sis_vert_init_gws();
       sis_vert_init_t0();
+      sis_vert_init_gt0();
+      sis_vert_init_wt0();
+      sis_vert_init_gwt0();
       sis_vert_init_st0();
+      sis_vert_init_gst0();
+      sis_vert_init_wst0();
+      sis_vert_init_gwst0();
       sis_vert_init_t1();
+      sis_vert_init_gt1();
+      sis_vert_init_wt1();
+      sis_vert_init_gwt1();
       sis_vert_init_st1();
+      sis_vert_init_gst1();
+      sis_vert_init_wst1();
+      sis_vert_init_gwst1();
       sis_vert_init_t0t1();
+      sis_vert_init_gt0t1();
+      sis_vert_init_wt0t1();
+      sis_vert_init_gwt0t1();
       sis_vert_init_st0t1();
+      sis_vert_init_gst0t1();
+      sis_vert_init_wst0t1();
+      sis_vert_init_gwst0t1();
    }
-
-   tnl->Driver.RunPipeline = sisRunPipeline;
-   tnl->Driver.Render.Start = sisRenderStart;
-   tnl->Driver.Render.Finish = sisRenderFinish;
-   tnl->Driver.Render.PrimitiveNotify = sisRenderPrimitive;
-   tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.Render.BuildVertices = sisBuildVertices;
-   tnl->Driver.Render.Multipass		= NULL;
 
    if (driQueryOptionb(&smesa->optionCache, "fallback_force"))
       sisFallback(ctx, SIS_FALLBACK_FORCE, 1);
@@ -952,6 +1061,20 @@ void sisInitTriFuncs( GLcontext *ctx )
       sisFallback(ctx, SIS_FALLBACK_FORCE, 0);
 
    smesa->RenderIndex = ~0;
-   smesa->NewGLState |= (_SIS_NEW_RENDER_STATE|
-			 _SIS_NEW_VERTEX_STATE);
+   smesa->NewGLState |= _SIS_NEW_RENDER_STATE;
+
+   tnl->Driver.RunPipeline = sisRunPipeline;
+   tnl->Driver.Render.Start = sisRenderStart;
+   tnl->Driver.Render.Finish = sisRenderFinish;
+   tnl->Driver.Render.PrimitiveNotify = sisRenderPrimitive;
+   tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
+
+   tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+   tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+   tnl->Driver.Render.Interp = _tnl_interp;
+
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+		       (6 + 2*ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
+
+   smesa->verts = (char *)tnl->clipspace.vertex_buf;
 }

@@ -41,7 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_stencil.h"
 #include "sis_tex.h"
 #include "sis_tris.h"
-#include "sis_vb.h"
+#include "sis_alloc.h"
 
 #include "imports.h"
 #include "matrix.h"
@@ -199,18 +199,29 @@ sisCreateContext( const __GLcontextModes *glVisual,
    smesa->AGPBase = sisScreen->agp.map;
    smesa->AGPAddr = sisScreen->agp.handle;
 
-   /* set AGP command buffer */
-   if (smesa->AGPSize != 0 && sisScreen->AGPCmdBufSize != 0 &&
+   /* Create AGP command buffer */
+   if (smesa->AGPSize != 0 && 
       !driQueryOptionb(&smesa->optionCache, "agp_disable"))
-   {	
-      smesa->AGPCmdBufBase = smesa->AGPBase + sisScreen->AGPCmdBufOffset;
-      smesa->AGPCmdBufAddr = smesa->AGPAddr + sisScreen->AGPCmdBufOffset;
-      smesa->AGPCmdBufSize = sisScreen->AGPCmdBufSize;
-
-      smesa->pAGPCmdBufNext = (GLint *)&(smesa->sarea->AGPCmdBufNext);
-      smesa->AGPCmdModeEnabled = GL_TRUE;
-   } else {
-      smesa->AGPCmdModeEnabled = GL_FALSE;
+   {
+      smesa->vb = sisAllocAGP(smesa, 64 * 1024, &smesa->vb_agp_handle);
+      if (smesa->vb != NULL) {
+	 smesa->using_agp = GL_TRUE;
+	 smesa->vb_cur = smesa->vb;
+	 smesa->vb_last = smesa->vb;
+	 smesa->vb_end = smesa->vb + 64 * 1024;
+	 smesa->vb_agp_offset = ((long)smesa->vb - (long)smesa->AGPBase +
+	    (long)smesa->AGPAddr);
+      }
+   }
+   if (!smesa->using_agp) {
+      smesa->vb = malloc(64 * 1024);
+      if (smesa->vb == NULL) {
+	 FREE(smesa);
+	 return GL_FALSE;
+      }
+      smesa->vb_cur = smesa->vb;
+      smesa->vb_last = smesa->vb;
+      smesa->vb_end = smesa->vb + 64 * 1024;
    }
 
    smesa->GlobalFlag = 0L;
@@ -232,7 +243,6 @@ sisCreateContext( const __GLcontextModes *glVisual,
    /* XXX these should really go right after _mesa_init_driver_functions() */
    sisDDInitStateFuncs( ctx );
    sisDDInitState( smesa );	/* Initializes smesa->zFormat, important */
-   sisInitVB( ctx );
    sisInitTriFuncs( ctx );
    sisDDInitSpanFuncs( ctx );
    sisDDInitStencilFuncs( ctx );
@@ -263,6 +273,9 @@ sisDestroyContext ( __DRIcontextPrivate *driContextPriv )
       _tnl_DestroyContext( smesa->glCtx );
       _ac_DestroyContext( smesa->glCtx );
       _swrast_DestroyContext( smesa->glCtx );
+
+      if (smesa->using_agp)
+	 sisFreeAGP(smesa, smesa->vb_agp_handle);
 
       /* free the Mesa context */
       /* XXX: Is the next line needed?  The DriverCtx (smesa) reference is
