@@ -857,25 +857,22 @@ PrintTexture(int w, int h, int c, const GLubyte * data)
 }
 
 
-#define fxDDIsCompressedFormatMacro(internalFormat) (\
-          ((internalFormat) == GL_COMPRESSED_RGB_FXT1_3DFX) ||      \
-          ((internalFormat) == GL_COMPRESSED_RGBA_FXT1_3DFX) ||     \
-          ((internalFormat) == GL_COMPRESSED_RGB_S3TC_DXT1_EXT) ||  \
-          ((internalFormat) == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) || \
-          ((internalFormat) == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) || \
-          ((internalFormat) == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT))
+GLboolean fxDDIsCompressedFormat ( GLcontext *ctx, GLenum internalFormat )
+{
+ if ((internalFormat == GL_COMPRESSED_RGB_FXT1_3DFX) ||
+     (internalFormat == GL_COMPRESSED_RGBA_FXT1_3DFX) ||
+     (internalFormat == GL_COMPRESSED_RGB_S3TC_DXT1_EXT) ||
+     (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
+     (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
+     (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)) {
+    return GL_TRUE;
+ }
 
 /* [dBorca]
  * we are handling differently the above formats from the generic
- * GL_COMPRESSED_RGB[A]. For this, we will never call the function
- * below! It is just a callback for core functions.
+ * GL_COMPRESSED_RGB[A]. For this, we will always separately
+ * check for the ones below!
  */
-
-GLboolean fxDDIsCompressedFormat ( GLcontext *ctx, GLenum internalFormat )
-{
- if (fxDDIsCompressedFormatMacro(internalFormat)) {
-    return GL_TRUE;
- }
 
 #if FX_TC_NCC || FX_TC_NAPALM
  if ((internalFormat == GL_COMPRESSED_RGB) || (internalFormat == GL_COMPRESSED_RGBA)) {
@@ -955,7 +952,6 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
     }
 #endif
 #if FX_TC_NCC
-    /* should really use `txBitsPerPixel' instead of 8; also add NCC table */
     return (width * height * 8 >> 3) + 12 * 4;
 #endif
  case GL_COMPRESSED_RGBA:
@@ -968,7 +964,6 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
     }
 #endif
 #if FX_TC_NCC
-    /* should really use `txBitsPerPixel' instead of 16; also add NCC table */
     return (width * height * 16 >> 3) + 12 * 4;
 #endif
  default:
@@ -1198,7 +1193,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
    GLvoid *_final_texImage_Data;
    const struct gl_texture_format *_final_texImage_TexFormat;
-   GLboolean isCompressed = fxDDIsCompressedFormatMacro(internalFormat);
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
        fprintf(stderr, "fxDDTexImage2D: id=%d int 0x%x  format 0x%x  type 0x%x  %dx%d\n",
@@ -1249,23 +1243,19 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 #if FX_TC_NCC || FX_TC_NAPALM
    if (internalFormat == GL_COMPRESSED_RGB) {
 #if FX_TC_NCC
-      isCompressed = GL_TRUE;
       mml->glideFormat = GR_TEXFMT_YIQ_422;
 #endif
 #if FX_TC_NAPALM
       if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         isCompressed = GL_TRUE;
          mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
       }
 #endif
    } else if (internalFormat == GL_COMPRESSED_RGBA) {
 #if FX_TC_NCC
-      isCompressed = GL_TRUE;
       mml->glideFormat = GR_TEXFMT_AYIQ_8422;
 #endif
 #if FX_TC_NAPALM
       if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         isCompressed = GL_TRUE;
          mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
       }
 #endif
@@ -1274,7 +1264,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
    /* allocate mipmap buffer */
    assert(!texImage->Data);
-   if (isCompressed) {
+   if (texImage->IsCompressed) {
       texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
       texelBytes = 4;
       _final_texImage_TexFormat = &_mesa_texformat_argb8888;
@@ -1328,7 +1318,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
 
    /* now compress */
-   if (isCompressed) {
+   if (texImage->IsCompressed) {
 #if FX_TC_NCC
       if ((mml->glideFormat == GR_TEXFMT_AYIQ_8422) ||
           (mml->glideFormat == GR_TEXFMT_YIQ_422)) {
@@ -1438,6 +1428,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
    else {
       /* no rescaling needed */
+      /* [dBorca] Hack alert: compute address of dest subimage within the overal tex image */
       _mesa_transfer_teximage(ctx, 2, texImage->Format,  /* Tex int format */
                               texImage->TexFormat,       /* dest format */
                               (GLubyte *) texImage->Data,/* dest */
@@ -1467,10 +1458,8 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
                           struct gl_texture_image *texImage)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GrTextureFormat_t gldFormat;
    tfxTexInfo *ti;
    tfxMipMapLevel *mml;
-   GLint dstWidth, dstHeight, wScale, hScale;
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
        fprintf(stderr, "fxDDCompressedTexImage2D: id=%d int 0x%x  %dx%d\n",
@@ -1478,16 +1467,10 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
                        width, height);
    }
 
+   assert(texImage->IsCompressed);
+
    if (!fxIsTexSupported(target, internalFormat, texImage)) {
       _mesa_problem(NULL, "fx Driver: unsupported texture in fxDDCompressedTexImg()\n");
-      return;
-   }
-
-#if FX_TC_NCC || FX_TC_NAPALM
-   if ((internalFormat != GL_COMPRESSED_RGB) && (internalFormat != GL_COMPRESSED_RGBA))
-#endif
-   if (!fxDDIsCompressedFormatMacro(internalFormat)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glCompressedTexImage2D(format)");
       return;
    }
 
@@ -1509,42 +1492,44 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    }
    mml = FX_MIPMAP_DATA(texImage);
 
+   fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
+		&mml->wScale, &mml->hScale);
+
+   mml->width = width * mml->wScale;
+   mml->height = height * mml->hScale;
+
+
+   /* choose the texture format */
+   assert(ctx->Driver.ChooseTextureFormat);
+   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
+                                          internalFormat, format, type);
+   assert(texImage->TexFormat);
+
    /* Determine the appropriate Glide texel format,
     * given the user's internal texture format hint.
     */
-   gldFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
+   mml->glideFormat = fxGlideFormat(texImage->TexFormat->MesaFormat);
 #if FX_TC_NCC || FX_TC_NAPALM
    if (internalFormat == GL_COMPRESSED_RGB) {
 #if FX_TC_NCC
-      gldFormat = GR_TEXFMT_YIQ_422;
+      mml->glideFormat = GR_TEXFMT_YIQ_422;
 #endif
 #if FX_TC_NAPALM
       if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         gldFormat = GR_TEXFMT_ARGB_CMP_FXT1;
+         mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
       }
 #endif
    } else if (internalFormat == GL_COMPRESSED_RGBA) {
 #if FX_TC_NCC
-      gldFormat = GR_TEXFMT_AYIQ_8422;
+      mml->glideFormat = GR_TEXFMT_AYIQ_8422;
 #endif
 #if FX_TC_NAPALM
       if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-         gldFormat = GR_TEXFMT_ARGB_CMP_FXT1;
+         mml->glideFormat = GR_TEXFMT_ARGB_CMP_FXT1;
       }
 #endif
    }
 #endif
-
-   /* Determine width and height scale factors for texture.
-    * Remember, Glide is limited to 8:1 aspect ratios.
-    */
-   fxTexGetInfo(width, height,
-                NULL,       /* lod level          */
-                NULL,       /* aspect ratio       */
-                NULL, NULL, /* sscale, tscale     */
-                &wScale, &hScale);
-   dstWidth = width * wScale;
-   dstHeight = height * hScale;
 
    /* allocate new storage for texture image, if needed */
    if (!texImage->Data) {
@@ -1558,8 +1543,8 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    /* save the texture data */
    MEMCPY(texImage->Data, data, imageSize);
 #if FX_TC_NCC
-   if ((gldFormat == GR_TEXFMT_AYIQ_8422) ||
-       (gldFormat == GR_TEXFMT_YIQ_422)) {
+   if ((mml->glideFormat == GR_TEXFMT_AYIQ_8422) ||
+       (mml->glideFormat == GR_TEXFMT_YIQ_422)) {
       MEMCPY(&(ti->palette), (char *)texImage->Data + imageSize - 12 * 4, 12 * 4);
    }
 #endif
@@ -1567,15 +1552,19 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    /* [dBorca] Hack alert:
     * what about different size/texel? other anomalies? SW rescaling?
     */
-   if (1 || mml->glideFormat != gldFormat ||
-      mml->width != dstWidth || mml->height != dstHeight ||
-      !ti->validated || !ti->isInTM || (fxMesa->new_state & FX_NEW_TEXTURING)) {
-      mml->glideFormat = gldFormat;
-      mml->width = dstWidth;
-      mml->height = dstHeight;
-      fxTexInvalidate(ctx, texObj);
-   } else {
+   ti->info.format = mml->glideFormat;
+   texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
+
+   /* [dBorca]
+    * Hack alert: unsure...
+    */
+   if (0 && ti->validated && ti->isInTM) {
+      /*fprintf(stderr, "reloadmipmaplevels\n"); */
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
+   }
+   else {
+      /*fprintf(stderr, "invalidate2\n"); */
+      fxTexInvalidate(ctx, texObj);
    }
 }
 

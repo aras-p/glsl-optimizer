@@ -41,11 +41,9 @@
 #include "fxg.h"
 
 /* texus.h */
-FX_ENTRY int FX_CALL txBitsPerPixel (GrTextureFormat_t format);
 FX_ENTRY void FX_CALL txImgQuantize (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
 FX_ENTRY void FX_CALL txMipQuantize (TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
 FX_ENTRY void FX_CALL txPalToNcc (GuNccTable *ncc_table, const FxU32 *pal);
-FX_ENTRY void FX_CALL txErrorSetCallback (TxErrorCallbackFnc_t fnc, TxErrorCallbackFnc_t *old_fnc);
 /* texus.h */
 
 
@@ -2160,17 +2158,6 @@ void FX_CALL trap_grTBufferWriteMaskExt (FxU32 tmask)
 /*
 ** texus functions
 */
-int FX_CALL trap_txBitsPerPixel (GrTextureFormat_t format)
-{
-#define FN_NAME "txBitsPerPixel"
- int rv;
- TRAP_LOG("%s(%s)\n", FN_NAME, TRP_TEXFMT(format));
- rv = txBitsPerPixel(format);
- TRAP_LOG(GOT "%d\n", rv);
- return rv;
-#undef FN_NAME
-}
-
 void FX_CALL trap_txImgQuantize (char  *dst,
                                  char  *src,
                                  int   w,
@@ -2202,15 +2189,6 @@ void FX_CALL trap_txPalToNcc (GuNccTable *ncc_table,
 #define FN_NAME "txPalToNcc"
  TRAP_LOG("%s(%p, %p)\n", FN_NAME, (void *)ncc_table, (void *)pal);
  txPalToNcc(ncc_table, pal);
-#undef FN_NAME
-}
-
-void FX_CALL trap_txErrorSetCallback (TxErrorCallbackFnc_t fnc,
-                                      TxErrorCallbackFnc_t *old_fnc)
-{
-#define FN_NAME "txErrorSetCallback"
- TRAP_LOG("%s(%p, %p)\n", FN_NAME, (void *)fnc, (void *)old_fnc);
- txErrorSetCallback(fnc, old_fnc);
 #undef FN_NAME
 }
 #endif
@@ -2293,11 +2271,9 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  /*
  ** texus
  */
- GET_TXS_ADDR(txBitsPerPixel);
  GET_TXS_ADDR(txImgQuantize);
  GET_TXS_ADDR(txMipQuantize);
  GET_TXS_ADDR(txPalToNcc);
- GET_TXS_ADDR(txErrorSetCallback);
 
  /* housekeeping: make sure the pointcast always point to something valid */
  if (grGetProcAddress("grTexDownloadTableExt") == NULL) {

@@ -371,11 +371,9 @@ struct tdfx_glide {
    /*
    ** Texus2 functions
    */
-   int (FX_CALL *txBitsPerPixel) (GrTextureFormat_t format);
    void (FX_CALL *txImgQuantize) (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
    void (FX_CALL *txMipQuantize) (TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
    void (FX_CALL *txPalToNcc) (GuNccTable *ncc_table, const FxU32 *pal);
-   void (FX_CALL *txErrorSetCallback) (TxErrorCallbackFnc_t fnc, TxErrorCallbackFnc_t *old_fnc);
 };
 
 void tdfx_hook_glide (struct tdfx_glide *Glide);

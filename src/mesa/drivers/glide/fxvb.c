@@ -393,7 +393,7 @@ void fxFreeVB( GLcontext *ctx )
    }
 
    if (fxMesa->UbyteColor.Ptr) {
-      ALIGN_FREE(fxMesa->UbyteColor.Ptr);
+      ALIGN_FREE((void *)fxMesa->UbyteColor.Ptr);
       fxMesa->UbyteColor.Ptr = 0;
    }
 }
