@@ -1,5 +1,0 @@
-# DO NOT DELETE
-
-GLwDrawA.o: ../../include/GL/glx.h ../../include/GL/gl.h
-GLwDrawA.o: ../../include/GL/glext.h ../../include/GL/glxext.h GLwDrawAP.h
-GLwDrawA.o: GLwDrawA.h
