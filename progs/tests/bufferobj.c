@@ -161,10 +161,28 @@ static void MakeObject1(struct object *obj)
    GLfloat *v, *c;
    void *p;
    int i;
+   GLubyte buffer[500];
+
+   for (i = 0; i < 500; i++)
+      buffer[i] = i & 0xff;
 
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
-   glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
+   glBufferDataARB(GL_ARRAY_BUFFER_ARB, 500, buffer, GL_STATIC_DRAW_ARB);
+
+   for (i = 0; i < 500; i++)
+      buffer[i] = 0;
+
+   glGetBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, 500, buffer);
+
+   for (i = 0; i < 500; i++)
+      assert(buffer[i] == (i & 0xff));
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAPPED_ARB, &i);
+   assert(!i);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_USAGE_ARB, &i);
+
    v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
 
    /* do some sanity tests */
@@ -172,13 +190,13 @@ static void MakeObject1(struct object *obj)
    assert(p == v);
 
    glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &i);
-   assert(i == 1000);
-
-   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_ACCESS_ARB, &i);
-   assert(i == GL_WRITE_ONLY_ARB);
+   assert(i == 500);
 
    glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_USAGE_ARB, &i);
    assert(i == GL_STATIC_DRAW_ARB);
+
+   glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_ACCESS_ARB, &i);
+   assert(i == GL_WRITE_ONLY_ARB);
 
    glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAPPED_ARB, &i);
    assert(i);
