@@ -653,8 +653,13 @@ GLboolean
 _glapi_add_entrypoint(const char *funcName, GLuint offset)
 {
    /* trivial rejection test */
+#ifdef MANGLE
+   if (!funcName || funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
+      return NULL;
+#else
    if (!funcName || funcName[0] != 'g' || funcName[1] != 'l')
       return GL_FALSE;
+#endif
 
    /* first check if the named function is already statically present */
    {
@@ -742,8 +747,13 @@ _glapi_get_proc_address(const char *funcName)
 {
    GLuint i;
 
+#ifdef MANGLE
+   if (funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
+      return NULL;
+#else
    if (funcName[0] != 'g' || funcName[1] != 'l')
       return NULL;
+#endif
 
    /* search extension functions first */
    for (i = 0; i < NumExtEntryPoints; i++) {
