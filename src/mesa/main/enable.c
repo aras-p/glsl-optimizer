@@ -1,10 +1,10 @@
-/* $Id: enable.c,v 1.76 2003/03/15 17:33:25 brianp Exp $ */
+/* $Id: enable.c,v 1.77 2003/03/21 13:18:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -236,9 +236,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          if (ctx->Light.ColorMaterialEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_LIGHT);
+         FLUSH_CURRENT(ctx, 0);
          ctx->Light.ColorMaterialEnabled = state;
          if (state) {
-            FLUSH_CURRENT(ctx, 0);
             _mesa_update_color_material( ctx,
                                   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
          }
