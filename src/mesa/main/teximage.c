@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.95 2001/05/24 14:47:56 brianp Exp $ */
+/* $Id: teximage.c,v 1.96 2001/06/12 22:05:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1151,89 +1151,10 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (ctx->NewState & _NEW_PIXEL)
-      _mesa_update_state(ctx);
-
-   if (is_color_format(format) &&
-       ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      /* convert texture image to GL_RGBA, GL_FLOAT */
-      GLint width = texImage->Width;
-      GLint height = texImage->Height;
-      GLint depth = texImage->Depth;
-      GLint img, row;
-      GLfloat *tmpImage, *convImage;
-      tmpImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
-      if (!tmpImage) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
-         return;
-      }
-      convImage = (GLfloat *) MALLOC(width * height * 4 * sizeof(GLfloat));
-      if (!convImage) {
-         FREE(tmpImage);
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
-         return;
-      }
-
-      for (img = 0; img < depth; img++) {
-         GLint convWidth, convHeight;
-
-         /* convert texture data to GLfloat/GL_RGBA */
-         for (row = 0; row < height; row++) {
-            GLchan texels[1 << MAX_TEXTURE_LEVELS][4];
-            GLint col;
-            GLfloat *dst = tmpImage + row * width * 4;
-            for (col = 0; col < width; col++) {
-               (*texImage->FetchTexel)(texImage, col, row, img,
-                                       texels[col]);
-            }
-            _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dst,
-                         GL_RGBA, CHAN_TYPE, texels,
-                         &_mesa_native_packing,
-                         ctx->_ImageTransferState & IMAGE_PRE_CONVOLUTION_BITS,
-                         GL_FALSE);
-         }
-
-         convWidth = width;
-         convHeight = height;
-
-         /* convolve */
-         if (target == GL_TEXTURE_1D) {
-            if (ctx->Pixel.Convolution1DEnabled) {
-               _mesa_convolve_1d_image(ctx, &convWidth, tmpImage, convImage);
-            }
-         }
-         else {
-            if (ctx->Pixel.Convolution2DEnabled) {
-               _mesa_convolve_2d_image(ctx, &convWidth, &convHeight,
-                                       tmpImage, convImage);
-            }
-            else if (ctx->Pixel.Separable2DEnabled) {
-               _mesa_convolve_sep_image(ctx, &convWidth, &convHeight,
-                                        tmpImage, convImage);
-            }
-         }
-
-         /* pack convolved image */
-         for (row = 0; row < convHeight; row++) {
-            const GLfloat *src = convImage + row * convWidth * 4;
-            GLvoid *dest = _mesa_image_address(&ctx->Pack, pixels,
-                                               convWidth, convHeight,
-                                               format, type, img, row, 0);
-            _mesa_pack_float_rgba_span(ctx, convWidth,
-                       (const GLfloat(*)[4]) src,
-                       format, type, dest, &ctx->Pack,
-                       ctx->_ImageTransferState & IMAGE_POST_CONVOLUTION_BITS);
-         }
-      }
-
-      FREE(tmpImage);
-      FREE(convImage);
-   }
-   else {
-      /* no convolution, or non-rgba image */
-      GLint width = texImage->Width;
-      GLint height = texImage->Height;
-      GLint depth = texImage->Depth;
+   {
+      const GLint width = texImage->Width;
+      const GLint height = texImage->Height;
+      const GLint depth = texImage->Depth;
       GLint img, row;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
@@ -1278,7 +1199,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
             } /* format */
          } /* row */
       } /* img */
-   } /* convolution */
+   }
 }
 
 
