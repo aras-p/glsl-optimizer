@@ -878,18 +878,18 @@ static void NAME( GLcontext *ctx,					\
       }									\
       									\
       if (NR > 2) {							\
-	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
-	 a[1].inputptr += a[1].inputstride;				\
+	 F2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );	\
+	 a[2].inputptr += a[2].inputstride;				\
       }									\
       									\
       if (NR > 3) {							\
-	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
-	 a[1].inputptr += a[1].inputstride;				\
+	 F3( &a[3], v + a[3].vertoffset, (GLfloat *)a[3].inputptr );	\
+	 a[3].inputptr += a[3].inputstride;				\
       }									\
 									\
       if (NR > 4) {							\
-	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
-	 a[1].inputptr += a[1].inputstride;				\
+	 F4( &a[4], v + a[4].vertoffset, (GLfloat *)a[4].inputptr );	\
+	 a[4].inputptr += a[4].inputstride;				\
       }									\
    }									\
 }
@@ -898,10 +898,10 @@ static void NAME( GLcontext *ctx,					\
 #define EMIT2(F0, F1, NAME) EMIT5(2, F0, F1, insert_null, \
 				  insert_null, insert_null, NAME)
 
-#define EMIT3(F0, F1, F2, NAME) EMIT5(2, F0, F1, F2, insert_null, \
+#define EMIT3(F0, F1, F2, NAME) EMIT5(3, F0, F1, F2, insert_null, \
 				      insert_null, NAME)
    
-#define EMIT4(F0, F1, F2, F3, NAME) EMIT5(2, F0, F1, F2, F3, \
+#define EMIT4(F0, F1, F2, F3, NAME) EMIT5(4, F0, F1, F2, F3, \
 				          insert_null, NAME)
    
 
