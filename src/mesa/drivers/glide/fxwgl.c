@@ -55,6 +55,7 @@ extern "C"
 {
 #endif
 
+#include "fxdrv.h"
 #include <windows.h>
 #include "GL/gl.h"
 
@@ -64,7 +65,6 @@ extern "C"
 
 #include <stdio.h>
 #include "GL/fxmesa.h"
-#include "fxdrv.h"
 
 #define MAX_MESA_ATTRS  20
 
