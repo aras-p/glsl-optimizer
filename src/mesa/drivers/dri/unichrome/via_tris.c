@@ -222,7 +222,7 @@ static struct {
     } while (0)
 
 
-#define DEPTH_SCALE (1.0 / 0xffff)
+#define DEPTH_SCALE vmesa->polygon_offset_scale
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
 #define VERT_X(_v) _v->v.x

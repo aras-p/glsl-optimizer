@@ -356,6 +356,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        vmesa->depth_max = (GLfloat)0xffff;
        vmesa->depth_clear_mask = 0xf << 28;
        vmesa->ClearDepth = 0xffff;
+       vmesa->polygon_offset_scale = 1.0 / vmesa->depth_max;
        break;
     case 24:
        vmesa->hasDepth = GL_TRUE;
@@ -370,6 +371,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        vmesa->have_hw_stencil = GL_TRUE;
        vmesa->stencilBits = mesaVis->stencilBits;
        vmesa->stencil_clear_mask = 0x1 << 28;
+       vmesa->polygon_offset_scale = 2.0 / vmesa->depth_max;
        break;
     case 32:
        vmesa->hasDepth = GL_TRUE;
@@ -380,6 +382,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        vmesa->depth_clear_mask = 0;
        vmesa->ClearDepth = 0xffffffff;
        vmesa->depth_clear_mask = 0xf << 28;
+       vmesa->polygon_offset_scale = 2.0 / vmesa->depth_max;
        break;
     default:
        assert(0); 

@@ -103,6 +103,7 @@ struct via_context_t {
    GLuint depth_clear_mask;
    GLuint stencil_clear_mask;
    GLfloat depth_max;
+   GLfloat polygon_offset_scale;
 
     GLubyte    *dma;
     viaRegion tex;
