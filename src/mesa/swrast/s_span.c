@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.34 2002/02/15 16:27:13 brianp Exp $ */
+/* $Id: s_span.c,v 1.35 2002/02/17 01:49:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -262,8 +262,58 @@ interpolate_z(GLcontext *ctx, struct sw_span *span)
 }
 
 
+/*
+ * Return log_base_2(x) / 2.
+ * We divide by two here since we didn't square rho in the triangle function.
+ */
+#ifdef USE_IEEE
 
-/* Fill in the span.texcoords array from the interpolation values */
+#if 0
+/* This is pretty fast, but not accurate enough (only 2 fractional bits).
+ * Based on code from http://www.stereopsis.com/log2.html
+ */
+static INLINE GLfloat HALF_LOG2(GLfloat x)
+{
+   const GLfloat y = x * x * x * x;
+   const GLuint ix = *((GLuint *) &y);
+   const GLuint exp = (ix >> 23) & 0xFF;
+   const GLint log2 = ((GLint) exp) - 127;
+   return (GLfloat) log2 * (0.5 / 4.0);  /* 4, because of x^4 above */
+}
+#endif
+
+/* Pretty fast, and accurate.
+ * Based on code from http://www.flipcode.com/totd/
+ */
+static INLINE GLfloat HALF_LOG2(GLfloat val)
+{
+   GLint *exp_ptr = (GLint *) &val;
+   GLint x = *exp_ptr;
+   const GLint log_2 = ((x >> 23) & 255) - 128;
+   x &= ~(255 << 23);
+   x += 127 << 23;
+   *exp_ptr = x;
+   val = ((-1.0f/3) * val + 2) * val - 2.0f/3;
+   return 0.5F * (val + log_2);
+}
+
+#else /* USE_IEEE */
+
+/* Slow, portable solution.
+ * NOTE: log_base_2(x) = log(x) / log(2)
+ * NOTE: 1.442695 = 1/log(2).
+ */
+#define HALF_LOG2(x)  ((GLfloat) (log(x) * (1.442695F * 0.5F)))
+
+#endif /* USE_IEEE */
+
+
+
+/*
+ * Fill in the span.texcoords array from the interpolation values.
+ * XXX We could optimize here for the case when dq = 0.  That would
+ * usually be the case when using an orthographic projection.
+ */
 static void
 interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
 {
@@ -275,6 +325,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLuint u;
          for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
             if (ctx->Texture.Unit[u]._ReallyEnabled) {
+               const GLfloat rho = span->rho[u];
                const GLfloat ds = span->texStep[u][0];
                const GLfloat dt = span->texStep[u][1];
                const GLfloat dr = span->texStep[u][2];
@@ -284,17 +335,32 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               for (i = 0; i < span->end; i++) {
+               if (dq == 0.0) {
+                  /* Ortho projection or polygon's parallel to window X axis */
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  span->texcoords[u][i][0] = s * invQ;
-                  span->texcoords[u][i][1] = t * invQ;
-                  span->texcoords[u][i][2] = r * invQ;
-                  span->lambda[u][i] = (GLfloat) 
-                     (log(span->rho[u] * invQ * invQ) * 1.442695F * 0.5F);
-                  s += ds;
-                  t += dt;
-                  r += dr;
-                  q += dq;
+                  const GLfloat lambda = HALF_LOG2(rho * invQ * invQ);
+                  for (i = 0; i < span->end; i++) {
+                     span->texcoords[u][i][0] = s * invQ;
+                     span->texcoords[u][i][1] = t * invQ;
+                     span->texcoords[u][i][2] = r * invQ;
+                     span->lambda[u][i] = lambda;
+                     s += ds;
+                     t += dt;
+                     r += dr;
+                  }
+               }
+               else {
+                  for (i = 0; i < span->end; i++) {
+                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+                     span->texcoords[u][i][0] = s * invQ;
+                     span->texcoords[u][i][1] = t * invQ;
+                     span->texcoords[u][i][2] = r * invQ;
+                     span->lambda[u][i] = HALF_LOG2(rho * invQ * invQ);
+                     s += ds;
+                     t += dt;
+                     r += dr;
+                     q += dq;
+                  }
                }
             }
          }
@@ -314,15 +380,29 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               for (i = 0; i < span->end; i++) {
+               if (dq == 0.0) {
+                  /* Ortho projection or polygon's parallel to window X axis */
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  span->texcoords[u][i][0] = s * invQ;
-                  span->texcoords[u][i][1] = t * invQ;
-                  span->texcoords[u][i][2] = r * invQ;
-                  s += ds;
-                  t += dt;
-                  r += dr;
-                  q += dq;
+                  for (i = 0; i < span->end; i++) {
+                     span->texcoords[u][i][0] = s * invQ;
+                     span->texcoords[u][i][1] = t * invQ;
+                     span->texcoords[u][i][2] = r * invQ;
+                     s += ds;
+                     t += dt;
+                     r += dr;
+                  }
+               }
+               else {
+                  for (i = 0; i < span->end; i++) {
+                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+                     span->texcoords[u][i][0] = s * invQ;
+                     span->texcoords[u][i][1] = t * invQ;
+                     span->texcoords[u][i][2] = r * invQ;
+                     s += ds;
+                     t += dt;
+                     r += dr;
+                     q += dq;
+                  }
                }
             }
          }
@@ -331,6 +411,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
    else {
       if (span->interpMask & SPAN_LAMBDA) {
          /* just texture unit 0, with lambda */
+         const GLfloat rho = span->rho[0];
          const GLfloat ds = span->texStep[0][0];
          const GLfloat dt = span->texStep[0][1];
          const GLfloat dr = span->texStep[0][2];
@@ -340,17 +421,32 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         for (i = 0; i < span->end; i++) {
+         if (dq == 0.0) {
+            /* Ortho projection or polygon's parallel to window X axis */
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            span->texcoords[0][i][0] = s * invQ;
-            span->texcoords[0][i][1] = t * invQ;
-            span->texcoords[0][i][2] = r * invQ;
-            span->lambda[0][i] = (GLfloat)
-               (log(span->rho[0] * invQ * invQ) * 1.442695F * 0.5F);
-            s += ds;
-            t += dt;
-            r += dr;
-            q += dq;
+            const GLfloat lambda = HALF_LOG2(rho * invQ * invQ);
+            for (i = 0; i < span->end; i++) {
+               span->texcoords[0][i][0] = s * invQ;
+               span->texcoords[0][i][1] = t * invQ;
+               span->texcoords[0][i][2] = r * invQ;
+               span->lambda[0][i] = lambda;
+               s += ds;
+               t += dt;
+               r += dr;
+            }
+         }
+         else {
+            for (i = 0; i < span->end; i++) {
+               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+               span->texcoords[0][i][0] = s * invQ;
+               span->texcoords[0][i][1] = t * invQ;
+               span->texcoords[0][i][2] = r * invQ;
+               span->lambda[0][i] = HALF_LOG2(rho * invQ * invQ);
+               s += ds;
+               t += dt;
+               r += dr;
+               q += dq;
+            }
          }
          span->arrayMask |= SPAN_LAMBDA;
       }
@@ -365,15 +461,29 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         for (i = 0; i < span->end; i++) {
+         if (dq == 0.0) {
+            /* Ortho projection or polygon's parallel to window X axis */
             const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            span->texcoords[0][i][0] = s * invQ;
-            span->texcoords[0][i][1] = t * invQ;
-            span->texcoords[0][i][2] = r * invQ;
-            s += ds;
-            t += dt;
-            r += dr;
-            q += dq;
+            for (i = 0; i < span->end; i++) {
+               span->texcoords[0][i][0] = s * invQ;
+               span->texcoords[0][i][1] = t * invQ;
+               span->texcoords[0][i][2] = r * invQ;
+               s += ds;
+               t += dt;
+               r += dr;
+            }
+         }
+         else {
+            for (i = 0; i < span->end; i++) {
+               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+               span->texcoords[0][i][0] = s * invQ;
+               span->texcoords[0][i][1] = t * invQ;
+               span->texcoords[0][i][2] = r * invQ;
+               s += ds;
+               t += dt;
+               r += dr;
+               q += dq;
+            }
          }
       }
    }
