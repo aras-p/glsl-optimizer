@@ -1517,7 +1517,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
-      /* GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
          *params = INT_TO_BOOL(ctx->Array.ArrayBufferBinding);
@@ -1562,6 +1562,36 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
          *params = INT_TO_BOOL(ctx->Array.ElementArrayBufferBinding);
          break;
+#endif
+
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXTENSION_B(ARB_fragment_program, pname);
+         *params = ctx->FragmentProgram.Enabled;
+         break;
+      case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
+         CHECK_EXTENSION_B(ARB_fragment_program, pname);
+         params[0] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[0]);
+         params[1] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[4]);
+         params[2] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[8]);
+         params[3] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[12]);
+         params[4] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[1]);
+         params[5] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[5]);
+         params[6] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[9]);
+         params[7] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[13]);
+         params[8] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[2]);
+         params[9] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[6]);
+         params[10] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[10]);
+         params[11] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[14]);
+         params[12] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[3]);
+         params[13] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[7]);
+         params[14] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[11]);
+         params[15] = FLOAT_TO_BOOL(ctx->CurrentStack->Top->m[15]);
+         break;
+      /* Remaining ARB_fragment_program queries alias with
+       * the GL_NV_fragment_program queries.
+       */
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
@@ -2973,7 +3003,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
-      /* GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
          *params = (GLdouble) ctx->Array.ArrayBufferBinding;
@@ -3018,6 +3048,36 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
          *params = (GLdouble) ctx->Array.ElementArrayBufferBinding;
          break;
+#endif
+
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXTENSION_D(ARB_fragment_program, pname);
+         *params = (GLdouble) ctx->FragmentProgram.Enabled;
+         break;
+      case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
+         CHECK_EXTENSION_D(ARB_fragment_program, pname);
+         params[0] = ctx->CurrentStack->Top->m[0];
+         params[1] = ctx->CurrentStack->Top->m[4];
+         params[2] = ctx->CurrentStack->Top->m[8];
+         params[3] = ctx->CurrentStack->Top->m[12];
+         params[4] = ctx->CurrentStack->Top->m[1];
+         params[5] = ctx->CurrentStack->Top->m[5];
+         params[6] = ctx->CurrentStack->Top->m[9];
+         params[7] = ctx->CurrentStack->Top->m[13];
+         params[8] = ctx->CurrentStack->Top->m[2];
+         params[9] = ctx->CurrentStack->Top->m[6];
+         params[10] = ctx->CurrentStack->Top->m[10];
+         params[11] = ctx->CurrentStack->Top->m[14];
+         params[12] = ctx->CurrentStack->Top->m[3];
+         params[13] = ctx->CurrentStack->Top->m[7];
+         params[14] = ctx->CurrentStack->Top->m[11];
+         params[15] = ctx->CurrentStack->Top->m[15];
+         break;
+      /* Remaining ARB_fragment_program queries alias with
+       * the GL_NV_fragment_program queries.
+       */
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
@@ -4405,7 +4465,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
-      /* GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
          *params = (GLfloat) ctx->Array.ArrayBufferBinding;
@@ -4450,6 +4510,36 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXTENSION_F(ARB_vertex_buffer_object, pname);
          *params = (GLfloat) ctx->Array.ElementArrayBufferBinding;
          break;
+#endif
+
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXTENSION_F(ARB_fragment_program, pname);
+         *params = (GLfloat) ctx->FragmentProgram.Enabled;
+         break;
+      case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
+         CHECK_EXTENSION_F(ARB_fragment_program, pname);
+         params[0] = ctx->CurrentStack->Top->m[0];
+         params[1] = ctx->CurrentStack->Top->m[4];
+         params[2] = ctx->CurrentStack->Top->m[8];
+         params[3] = ctx->CurrentStack->Top->m[12];
+         params[4] = ctx->CurrentStack->Top->m[1];
+         params[5] = ctx->CurrentStack->Top->m[5];
+         params[6] = ctx->CurrentStack->Top->m[9];
+         params[7] = ctx->CurrentStack->Top->m[13];
+         params[8] = ctx->CurrentStack->Top->m[2];
+         params[9] = ctx->CurrentStack->Top->m[6];
+         params[10] = ctx->CurrentStack->Top->m[10];
+         params[11] = ctx->CurrentStack->Top->m[14];
+         params[12] = ctx->CurrentStack->Top->m[3];
+         params[13] = ctx->CurrentStack->Top->m[7];
+         params[14] = ctx->CurrentStack->Top->m[11];
+         params[15] = ctx->CurrentStack->Top->m[15];
+         break;
+      /* Remaining ARB_fragment_program queries alias with
+       * the GL_NV_fragment_program queries.
+       */
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(0x%x)", pname);
@@ -5875,7 +5965,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
-      /* GL_ARB_vertex_buffer_object */
+#if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
          *params = (GLint) ctx->Array.ArrayBufferBinding;
@@ -5920,6 +6010,36 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXTENSION_I(ARB_vertex_buffer_object, pname);
          *params = (GLint) ctx->Array.ElementArrayBufferBinding;
          break;
+#endif
+
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXTENSION_I(ARB_fragment_program, pname);
+         *params = ctx->FragmentProgram.Enabled;
+         break;
+      case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
+         CHECK_EXTENSION_I(ARB_fragment_program, pname);
+         params[0] = (GLint) ctx->CurrentStack->Top->m[0];
+         params[1] = (GLint) ctx->CurrentStack->Top->m[4];
+         params[2] = (GLint) ctx->CurrentStack->Top->m[8];
+         params[3] = (GLint) ctx->CurrentStack->Top->m[12];
+         params[4] = (GLint) ctx->CurrentStack->Top->m[1];
+         params[5] = (GLint) ctx->CurrentStack->Top->m[5];
+         params[6] = (GLint) ctx->CurrentStack->Top->m[9];
+         params[7] = (GLint) ctx->CurrentStack->Top->m[13];
+         params[8] = (GLint) ctx->CurrentStack->Top->m[2];
+         params[9] = (GLint) ctx->CurrentStack->Top->m[6];
+         params[10] = (GLint) ctx->CurrentStack->Top->m[10];
+         params[11] = (GLint) ctx->CurrentStack->Top->m[14];
+         params[12] = (GLint) ctx->CurrentStack->Top->m[3];
+         params[13] = (GLint) ctx->CurrentStack->Top->m[7];
+         params[14] = (GLint) ctx->CurrentStack->Top->m[11];
+         params[15] = (GLint) ctx->CurrentStack->Top->m[15];
+         break;
+      /* Remaining ARB_fragment_program queries alias with
+       * the GL_NV_fragment_program queries.
+       */
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);

@@ -1,5 +1,3 @@
-/* $Id: enable.c,v 1.77 2003/03/21 13:18:33 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -915,6 +913,16 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Stencil.TestTwoSide = state;
          break;
 
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         CHECK_EXTENSION(ARB_fragment_program, cap);
+         if (ctx->FragmentProgram.Enabled == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_TEXTURE);
+         ctx->FragmentProgram.Enabled = state;
+         break;
+#endif /* FEATURE_ARB_fragment_program */
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
@@ -1305,6 +1313,11 @@ _mesa_IsEnabled( GLenum cap )
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
          CHECK_EXTENSION(EXT_stencil_two_side);
          return ctx->Stencil.TestTwoSide;
+
+#if FEATURE_ARB_fragment_program
+      case GL_FRAGMENT_PROGRAM_ARB:
+         return ctx->FragmentProgram.Enabled;
+#endif /* FEATURE_ARB_fragment_program */
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
