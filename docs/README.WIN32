@@ -1,13 +1,14 @@
 
     Mesa/Readme.win32
 
-    Last Updated: Sun, Dec 06 1998, 08:49 EST - tjump@spgs.com
-
-    Note: While this build set supports generation of a 3Dfx specific
-          DLL using Mesa, David Bucciarelli's original build files
-          are the "supported" method. -Ted
+    Last Updated: Friday, July 9th, 1999 - tjump@tertius.com
 
 *** What's New
+
+- Updated for Mesa 3.1beta2/CVS.
+
+- DevStudio projects suspended for compatability reasons: projects modified
+  by DevStudio 6 are not compatible with DevStudio 5.
 
 - Build environment change: The Glide SDK is no longer assumed to be in
   the global INCLUDE/LIB environment vars, it is required that you set the
@@ -31,129 +32,6 @@
   so (change the directories to match):
 
        SET GLIDE2SDK=G:\SDK\GLIDE2X
-
-- Static build/link of all non-3Dfx targets works now, cool. Required some
-  nontrivial chicanery in the GLUT headers though to allow it to use the
-  mesa 'wgl' functions statically linked instead of always importing the
-  sytem wgl functions from GDI32. Mostly this was an extension of an
-  existing method used in the headers, just taking into account more
-  functions.
-
-- Handled an undocumented change in how Microsoft NMAKE for DevStudio 6
-  defines _NMAKE_VER so that the makefiles should work properly.
-
-- Microsoft Compiler/Win32 specific build tuneups in the header files
-  providing for dramatically faster compilation times of mesa itself and of
-  code using Mesa. Primarily via the removal of any call sequence which
-  would invoke WINDOWS.H (which triggers ~6-10K lines of code inclusion).
-
-  Supporting this, a macro name change was made in the gl.h/glu.h/glut.h
-  header files which should be client-code transparent. The change was to
-  specify function prototypes with the (newly created) macro GLAPI instead
-  of WINGDIAPI to ease conflicts with multiple definitions of WINGDIAPI
-  (needs to be one thing to access Win32 API calls, another to define
-  export funcs when building a Mesa/GLU/GLUT DLL which themselves need to
-  import functions from Win32, etc.).
-
-  Similarly, call sequence definition usage of APIENTRY, CALLBACK, and
-  WINAPI were renamed to prevent collision/need for windows.h.
-
-  Lastly, these changes were incorporated into the GLUT source to
-  facilitate same compile-time performance increases.
-
-  All of these changes should be transparent to code USING
-  mesa/mesaglu/glut, and in most cases did not require changes in their
-  source files within the Mesa/GLUT code base (but there were a few).
-
-- 'wgl' function prototypes and supporting data types declared in gl/gl.h
-  to provide for the usage of these from client Windows code without
-  requiring WINDOWS.H to be included. If you're using non-trivial functions
-  (such as any that pass structures around) you will need to include
-  WINDOWS.H *before* gl/gl.h, however in that case you needed them anyway.
-
-  One benefit of this is that glut-based code on Windows may now use
-  wglGetProcAddress to get the function pointers for all supported OpenGL
-  extensions, preventing the need for directly importing them into
-  code. The 3Dfx/Demos/glbpaltx.c has been modified to use this mechanism
-  by way of example.
-
-  This code has also been copied into gl/glut.h to support glut programs on
-  Windows that do not use Mesa.
-
-- new command line build target: all.debug
-
-  Builds all DLL files and test programs in release, then debug builds,
-  emplacing the requried DLL files in the EXE directories for ready test
-  runs.
-
-- Expanded MESA_WGL_FX options. When setting it to instruct fxMesa to
-  render windowed you may provide it a clue to your system's display, or
-  instruct it to try to detect the pixel format. This information is used
-  in constructing the windowed-rendering hack to try for optimal
-  performance, such as it is. You specify this by adding one of the
-  following tags in the envvar prefixed by a colon.
-
-    noconv    - does not do any pixel format conversion
-                This is synonymous to '16bgr'.
-    16bgr     - uses a 16-bit RGB sequenced dib section and does no pixel
-                format conversion as this is the internal format of the
-                3Dfx hardware when used by fxMesa.
-                This is synonymous to 'noconv'.
-    16rgb     - uses a 16-bit RGB sequenced dib section and does pixel
-                format conversion each frame from the 3Dfx internal format
-                to 5:6:5 RGB.
-    15rgb     - uses a 16-bit RGB sequenced dib section and does pixel
-                format conversion each frame from the 3Dfx internal format
-                to 5:5:5 RGB.
-    15bgr     - uses a 16-bit RGB sequenced dib section and does pixel
-                format conversion each frame from the 3Dfx internal format
-                to 5:5:5 RGB.
-    24rgb     - uses a 24-bit RGB sequenced dib section and does pixel
-                format conversion each frame from the 3Dfx internal format
-                to 8:8:8 RGB. Also suitable for a 32-bpp display.
-    24bgr     - uses a 24-bit BGR sequenced dib section and does pixel
-                format conversion each frame from the 3Dfx internal format
-                to 8:8:8 RGB. Also suitable for a 32-bpp display.
-    query     - Queries Windows for the displays pixel format and attempts
-                to adjust accordingly. This query is done by using
-                DirectDraw to allocate a "Primary" surface and then
-                checking what that surface's pixel format is (as the Win32
-                API for getting the pixel format from a window device or
-                screen device context is useless as far as I have been able
-                to determine).  This does *NOT* mean that fxMesa is now
-                requiring DDraw, however it will use it if found. This
-                prevents system incompatabilities with WinNT 4SP2 and
-                earlier systems.
-
-    Example, put this in your AUTOEXEC.BAT to have fxMesa detect a best
-    case match on context creation:
-
-         set MESA_WGL_FX=windowed:query
-
-    Additionally, if you wish to find out *what* it detected, you may add a
-    ":logged" to this which will cause it to create/append to a file named
-    FXMESAGL32.LOG whenever a context is created, e.g.:
-
-         set MESA_WGL_FX=windowed:query:logged
-
-    *** WARNING: Some display drivers/windows version combinations do not
-        support all of the possible DIB section formats that can be
-        requested, and thanks to Microsoft there is no way of detecting
-        (that I have yet discovered) that the requested DIB section will
-        not work and when it is utilized the application crashes.
-
-  Eventually I hope to incorporate support for DirectDraw Overlay surfaces
-  to facilitate less data crunch overhead when dealing with the in-window
-  hack. For example: if a primary display support overlays of BGR565
-  sequence then the data could be read from the 3Dfx framebuffer into a
-  DDraw "System Memory" or "Non-Local Video Memory" surface - both of which
-  actually reside in on-board DRAM (the latter in AGP space) which could
-  then be blitted/flipped in a much faster fashion than the current DIB
-  section handling.
-
-  The DIB section handling will always be the default, as that's much more
-  compatible since it utilizes GDI features sets that have more longevity
-  to them.
 
 *** Legalese
 
@@ -184,8 +62,8 @@ dang hard to answer any mail w/in 24 hours.  I may be contacted at the
 above email address for the forseeable future.
 
 -Ted
-mailto://tjump@spgs.com
-http://www.i21.com/~tjump
+mailto://tjump@tertius.com
+http://www.tertius.com/tjump
 
 *** General Information
 
@@ -425,17 +303,6 @@ Microsoft-assigned default values.
     ... should work.  This arose because my initial build tests for the
     demo files were done before MesaDemos 2.6 had been released.
 
-- To enable use of MMX instructions by the VC5 compiler you may add the
-  "USE_MMX=1" option to the NMAKE command line, or edit the default in the
-  NMAKE.MAK file.  This does appear to have some affect on the performance
-  on the library and does not seem to harm it in any way *but* I have done
-  *no* verification of this. I have an MMX processor so I figured what the
-  heck. This option is only available with VC5 when building from the
-  command line.
-
-  This is probably required if you are going to modify the code to include
-  inline MMX instructions though.
-
 - With the exception of the static link libraries generated by this file
   set (mesagl.lib, mesaglu.lib, mesaglut.lib) all DLLs and executables are
   built against the "Multithreaded DLL" runtime - this means that they
@@ -520,7 +387,6 @@ The most likely [options] values you will use may be any combination of the
 following:
 
     DEBUG=1 or DEBUG=0
-    USE_MMX=1 or USE_MMX=0
     USE_CRTDLL=1 or USE_CRTDLL=0
 
     Note that all three of these options are OFF by default.
@@ -737,3 +603,4 @@ name on the command line as the target. Examples:
 11/21/98 - Updated files for Mesa 3.1 beta 1
            Updated fxMesa window-hack code
            Updated fxMesa resolution support to handle 1600x1200 & 1280x1024
+7/9/99  - Rev'd for Mesa 3.1 beta 2
