@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.77 2003/01/26 14:37:15 brianp Exp $ */
+/* $Id: attrib.c,v 1.78 2003/02/05 15:24:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -631,7 +631,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       }
       if (ctx->Extensions.SGI_texture_color_table) {
          _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
-                          texAttrib->Unit[i].ColorTableEnabled);
+                          unit->ColorTableEnabled);
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
