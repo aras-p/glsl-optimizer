@@ -96,7 +96,10 @@
 #define APIENTRY GLAPIENTRY
 #endif
 #define APIENTRYP APIENTRY *
+
+#ifndef GLAPIENTRYP
 #define GLAPIENTRYP GLAPIENTRY *
+#endif
 
 #ifdef CENTERLINE_CLPP
 #define signed
