@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.3 2000/03/03 23:21:57 brianp Exp $ */
+/* $Id: wmesa.c,v 1.4 2000/08/02 20:29:03 brianp Exp $ */
 
 /*
 *   File name   :   wmesa.c
@@ -22,6 +22,12 @@
 
 /*
  * $Log: wmesa.c,v $
+ * Revision 1.4  2000/08/02 20:29:03  brianp
+ * updates from mesa3d@billbaxter.com
+ *
+ * Revision 1.3.4.1  2000/08/02 20:28:19  brianp
+ * updates from mesa3d@billbaxter.com
+ *
  * Revision 1.3  2000/03/03 23:21:57  brianp
  * removed obsolete logicop function
  *
@@ -84,7 +90,7 @@
 #include "depth.h"
 #include "wmesadef.h"
 
-#pragma warning ( disable : 4133 4761 )
+#pragma warning ( disable : 4100 4133 4761 )
 
 #ifdef PROFILE
 //  #include "profile.h"
@@ -430,9 +436,9 @@ static void clear_color( GLcontext* ctx, GLubyte r, GLubyte g, GLubyte b, GLubyt
 */
 //static void clear(GLcontext* ctx,
 //                  GLboolean all,GLint x, GLint y, GLint width, GLint height )
-// TODO: I modified this function to match the prototype in dd.h. (swansma@geocities.com)
-//       dd.h does not explain what the return type is so I could not set this to the proper
-//       value.
+// TODO: I modified this function to match the prototype in
+//       dd.h. (swansma@geocities.com)
+
 static GLbitfield clear(GLcontext* ctx, GLbitfield mask,
                   GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {

@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.2 1999/09/19 09:59:20 tjump Exp $ */
+/* $Id: wgl.c,v 1.3 2000/08/02 20:29:03 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -30,8 +30,9 @@ extern "C" {
 #endif
 
 #include <windows.h>
-
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
+#include <GL/glext.h>
 //#include <GL/glu.h>
 
 #ifdef __cplusplus
@@ -90,7 +91,7 @@ struct __extensions__	ext[] = {
    { (PROC)glGetColorTableParameterivEXT,	"glGetColorTableParameterivEXT"	},
    { (PROC)glPointParameterfEXT,		"glPointParameterfEXT"		},
    { (PROC)glPointParameterfvEXT,		"glPointParameterfvEXT"		},
-   { (PROC)glBlendFuncSeparateINGR,		"glBlendFuncSeparateINGR"	},
+   { (PROC)glBlendFuncSeparateEXT,		"glBlendFuncSeparateEXT"	},
    { (PROC)glLockArraysEXT,			"glLockArraysEXT"		},
    { (PROC)glUnlockArraysEXT,			"glUnlockArraysEXT"		}
 };
