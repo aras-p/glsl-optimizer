@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.51 2001/02/27 00:13:25 brianp Exp $ */
+/* $Id: extensions.c,v 1.52 2001/03/15 18:21:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ static struct {
    { OFF, "GL_ARB_multitexture",              F(ARB_multitexture) },
    { OFF, "GL_ARB_texture_compression",       F(ARB_texture_compression) },
    { OFF, "GL_ARB_texture_cube_map",          F(ARB_texture_cube_map) },
-   { OFF, "GL_ARB_texture_env_add",           F(ARB_texture_env_add) },
+   { OFF, "GL_ARB_texture_env_add",           F(EXT_texture_env_add) },
    { ON,  "GL_ARB_tranpose_matrix",           0 },
    { ON,  "GL_EXT_abgr",                      0 },
    { ON,  "GL_EXT_bgra",                      0 },
