@@ -9782,7 +9782,7 @@ glx:
     <function name="ProgramParameters4dvNV" offset="598">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="num" type="GLuint"/>
+        <param name="num" type="GLuint" counter="true"/>
         <param name="params" type="const GLdouble *" count="num" count_scale="4"/>
         <glx rop="4187"/>
     </function>
@@ -9991,21 +9991,21 @@ glx:
 
     <function name="VertexAttribs2svNV" offset="634">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="2"/>
         <glx rop="4203"/>
     </function>
 
     <function name="VertexAttribs3svNV" offset="637">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="3"/>
         <glx rop="4204"/>
     </function>
 
     <function name="VertexAttribs4svNV" offset="640">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLshort *" count="n" count_scale="4"/>
         <glx rop="4205"/>
     </function>
@@ -10019,21 +10019,21 @@ glx:
 
     <function name="VertexAttribs2fvNV" offset="633">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="4207"/>
     </function>
 
     <function name="VertexAttribs3fvNV" offset="636">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="3"/>
         <glx rop="4208"/>
     </function>
 
     <function name="VertexAttribs4fvNV" offset="639">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLfloat *" count="n" count_scale="4"/>
         <glx rop="4209"/>
     </function>
@@ -10047,28 +10047,28 @@ glx:
 
     <function name="VertexAttribs2dvNV" offset="632">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="2"/>
         <glx rop="4211"/>
     </function>
 
     <function name="VertexAttribs3dvNV" offset="635">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="3"/>
         <glx rop="4212"/>
     </function>
 
     <function name="VertexAttribs4dvNV" offset="638">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="4"/>
         <glx rop="4213"/>
     </function>
 
     <function name="VertexAttribs4ubvNV" offset="641">
         <param name="index" type="GLuint"/>
-        <param name="n" type="GLsizei"/>
+        <param name="n" type="GLsizei" counter="true"/>
         <param name="v" type="const GLubyte *" count="n" count_scale="4"/>
         <glx rop="4214"/>
     </function>

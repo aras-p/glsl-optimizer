@@ -6063,13 +6063,15 @@ __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLuint num, con
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 16 + __GLX_PAD((num * 8));
-    emit_header(gc->pc, X_GLrop_ProgramParameters4dvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&target), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(&num), 4);
-    (void) memcpy((void *)(gc->pc + 16), (void *)(params), (num * 8));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(num >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_ProgramParameters4dvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&target), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(&num), 4);
+        (void) memcpy((void *)(gc->pc + 16), (void *)(params), (num * 8));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_ProgramParameters4fvNV 4186
@@ -6532,12 +6534,14 @@ __indirect_glVertexAttribs2dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
-    emit_header(gc->pc, X_GLrop_VertexAttribs2dvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs2dvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs2fvNV 4207
@@ -6546,12 +6550,14 @@ __indirect_glVertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
-    emit_header(gc->pc, X_GLrop_VertexAttribs2fvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs2fvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs2svNV 4203
@@ -6560,12 +6566,14 @@ __indirect_glVertexAttribs2svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 2));
-    emit_header(gc->pc, X_GLrop_VertexAttribs2svNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs2svNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs3dvNV 4212
@@ -6574,12 +6582,14 @@ __indirect_glVertexAttribs3dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
-    emit_header(gc->pc, X_GLrop_VertexAttribs3dvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs3dvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs3fvNV 4208
@@ -6588,12 +6598,14 @@ __indirect_glVertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
-    emit_header(gc->pc, X_GLrop_VertexAttribs3fvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs3fvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs3svNV 4204
@@ -6602,12 +6614,14 @@ __indirect_glVertexAttribs3svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 2));
-    emit_header(gc->pc, X_GLrop_VertexAttribs3svNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs3svNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs4dvNV 4213
@@ -6616,12 +6630,14 @@ __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, const GLdouble * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 8));
-    emit_header(gc->pc, X_GLrop_VertexAttribs4dvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs4dvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 8));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs4fvNV 4209
@@ -6630,12 +6646,14 @@ __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 4));
-    emit_header(gc->pc, X_GLrop_VertexAttribs4fvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs4fvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 4));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs4svNV 4205
@@ -6644,12 +6662,14 @@ __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 2));
-    emit_header(gc->pc, X_GLrop_VertexAttribs4svNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs4svNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 2));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_VertexAttribs4ubvNV 4214
@@ -6658,12 +6678,14 @@ __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte * v)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12 + __GLX_PAD((n * 1));
-    emit_header(gc->pc, X_GLrop_VertexAttribs4ubvNV, cmdlen);
-    (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
-    (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 1));
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    if (__builtin_expect(n >= 0, 1)) {
+        emit_header(gc->pc, X_GLrop_VertexAttribs4ubvNV, cmdlen);
+        (void) memcpy((void *)(gc->pc + 4), (void *)(&index), 4);
+        (void) memcpy((void *)(gc->pc + 8), (void *)(&n), 4);
+        (void) memcpy((void *)(gc->pc + 12), (void *)(v), (n * 1));
+        gc->pc += cmdlen;
+        if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
+    }
 }
 
 #define X_GLrop_PointParameteriNV 4221
