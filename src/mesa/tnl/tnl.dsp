@@ -149,6 +149,10 @@ SOURCE=.\t_vb_vertex.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\t_vertex.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\t_vtx_api.c
 # End Source File
 # Begin Source File
