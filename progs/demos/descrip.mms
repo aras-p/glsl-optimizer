@@ -10,7 +10,7 @@
 ##### MACROS #####
 
 INCDIR = [-.include]
-CFLAGS = /include=$(INCDIR)/prefix=all
+CFLAGS = /include=$(INCDIR)/prefix=all/name=(as_is,short)
 
 .ifdef SHARE
 GL_LIBS = $(XLIBS)
