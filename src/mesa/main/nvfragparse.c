@@ -1,10 +1,10 @@
-/* $Id: nvfragparse.c,v 1.2 2003/01/19 15:27:37 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.3 2003/02/08 15:56:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -484,7 +484,7 @@ Parse_ScalarConstant(const char **s, GLfloat *number)
 {
    char *end;
 
-   *number = _mesa_strtof(*s, &end);
+   *number = (GLfloat) _mesa_strtod(*s, &end);
 
    if (end && end > *s) {
       /* got a number */
