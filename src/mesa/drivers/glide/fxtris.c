@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.21 2002/10/29 20:28:57 brianp Exp $ */
+/* $Id: fxtris.c,v 1.22 2003/06/16 14:30:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -355,7 +355,7 @@ do {						\
 #define RENDER_PRIMITIVE fxMesa->render_primitive
 #define IND FX_FALLBACK_BIT
 #define TAG(x) x
-#include "tnl_dd/t_dd_unfilled.h"
+#include "../common/t_dd_unfilled.h"
 #undef IND
 
 /***********************************************************************
@@ -364,136 +364,136 @@ do {						\
 
 #define IND (0)
 #define TAG(x) x
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT)
 #define TAG(x) x##_offset
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT)
 #define TAG(x) x##_twoside
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT)
 #define TAG(x) x##_twoside_offset
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT)
 #define TAG(x) x##_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_offset_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_twoside_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT)
 #define TAG(x) x##_twoside_offset_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_FALLBACK_BIT)
 #define TAG(x) x##_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_offset_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_offset_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT| \
 	     FX_FALLBACK_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_fallback
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 
 /* Fx doesn't support provoking-vertex flat-shading?
  */
 #define IND (FX_FLAT_BIT)
 #define TAG(x) x##_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_unfilled_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_unfilled_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_unfilled_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_unfilled_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_OFFSET_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_offset_unfilled_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_UNFILLED_BIT|FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_unfilled_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 #define IND (FX_TWOSIDE_BIT|FX_OFFSET_BIT|FX_UNFILLED_BIT| \
 	     FX_FALLBACK_BIT|FX_FLAT_BIT)
 #define TAG(x) x##_twoside_offset_unfilled_fallback_flat
-#include "tnl_dd/t_dd_tritmp.h"
+#include "../common/t_dd_tritmp.h"
 
 
 static void init_rast_tab( void )
@@ -574,7 +574,7 @@ static void init_rast_tab( void )
 #undef TAG
 #define TAG(x) fx_##x##_elts
 #define ELT(x) elt[x]
-#include "tnl_dd/t_dd_rendertmp.h"
+#include "../common/t_dd_rendertmp.h"
 
 /* Verts, no clipping.
  */
@@ -582,7 +582,7 @@ static void init_rast_tab( void )
 #undef TAG
 #define TAG(x) fx_##x##_verts
 #define ELT(x) x
-#include "tnl_dd/t_dd_rendertmp.h"
+#include "../common/t_dd_rendertmp.h"
 
 
 

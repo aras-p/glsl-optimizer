@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.96 2003/03/01 01:50:23 brianp Exp $ */
+/* $Id: fxdd.c,v 1.97 2003/06/16 14:30:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,6 +47,7 @@
 #include "extensions.h"
 #include "macros.h"
 #include "texstore.h"
+#include "teximage.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
