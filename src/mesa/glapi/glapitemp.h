@@ -1,10 +1,10 @@
-/* $Id: glapitemp.h,v 1.4 1999/12/16 12:36:30 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.5 2000/01/07 06:09:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -660,7 +660,7 @@ KEYWORD1 void KEYWORD2 NAME(GetPolygonStipple)(GLubyte *mask)
    DISPATCH(GetPolygonStipple, (mask));
 }
 
-KEYWORD1 const GLubyte * KEYWORD2 glGetString(GLenum name)
+KEYWORD1 const GLubyte * KEYWORD2 NAME(GetString)(GLenum name)
 {
    DISPATCH_SETUP;
    return DISPATCH(GetString, (name));
@@ -2762,6 +2762,51 @@ KEYWORD1 void KEYWORD2 NAME(SeparableFilter2DEXT)(GLenum target, GLenum internal
 {
    DISPATCH_SETUP;
    DISPATCH(SeparableFilter2DEXT, (target, internalformat, width, height, format, type, row, column));
+}
+
+
+
+/* 14. GL_SGI_color_table */
+
+KEYWORD1 void KEYWORD2 NAME(ColorTableParameterfvSGI)(GLenum target, GLenum pname, const GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ColorTableParameterfvSGI, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorTableParameterivSGI)(GLenum target, GLenum pname, const GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ColorTableParameterivSGI, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorTableSGI)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ColorTableSGI, (target, internalformat, width, format, type, table));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CopyColorTableSGI)(GLenum target, GLenum internalFormat, GLint x, GLint y, GLsizei width)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyColorTableSGI, (target, internalFormat, x, y, width));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetColorTableSGI)(GLenum target, GLenum format, GLenum type, GLvoid *table)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetColorTableSGI, (target, format, type, table));
+}
+KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfvSGI)(GLenum target, GLenum pname, GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetColorTableParameterfvSGI, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterivSGI)(GLenum target, GLenum pname, GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetColorTableParameterivSGI, (target, pname, params));
 }
 
 
