@@ -453,8 +453,33 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          struct gl_buffer_object *bufObj = (struct gl_buffer_object *)
             _mesa_HashLookup(ctx->Shared->BufferObjects, ids[i]);
          if (bufObj) {
+            /* unbind any vertex pointers bound to this buffer */
+            GLuint j;
+            if (ctx->Array.Vertex.BufferObj == bufObj)
+               ctx->Array.Vertex.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.Normal.BufferObj == bufObj)
+               ctx->Array.Normal.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.Color.BufferObj == bufObj)
+               ctx->Array.Color.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.SecondaryColor.BufferObj == bufObj)
+               ctx->Array.SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.FogCoord.BufferObj == bufObj)
+               ctx->Array.FogCoord.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.Index.BufferObj == bufObj)
+               ctx->Array.Index.BufferObj = ctx->Array.NullBufferObj;
+            if (ctx->Array.EdgeFlag.BufferObj == bufObj)
+               ctx->Array.EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
+            for (j = 0; j < MAX_TEXTURE_UNITS; j++) {
+               if (ctx->Array.TexCoord[j].BufferObj == bufObj)
+                  ctx->Array.TexCoord[j].BufferObj = ctx->Array.NullBufferObj;
+            }
+            for (j = 0; j < VERT_ATTRIB_MAX; j++) {
+               if (ctx->Array.VertexAttrib[j].BufferObj == bufObj)
+                  ctx->Array.VertexAttrib[j].BufferObj = ctx->Array.NullBufferObj;
+            }
+
             if ( (bufObj->Target == GL_ARRAY_BUFFER_ARB)
-		 || (bufObj->Target == GL_ELEMENT_ARRAY_BUFFER_ARB) ) {
+               || (bufObj->Target == GL_ELEMENT_ARRAY_BUFFER_ARB) ) {
 	       _mesa_BindBufferARB( bufObj->Target, 0 );
             }
 	    else if (bufObj->Target == 0) {
