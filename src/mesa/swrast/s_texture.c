@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.16 2001/03/15 16:45:30 brianp Exp $ */
+/* $Id: s_texture.c,v 1.17 2001/03/21 16:04:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2405,17 +2405,17 @@ sample_depth_texture(const GLcontext *ctx,
          COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], width, col);
          COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], height, row);
          depthSample = *((const GLfloat *) texImage->Data + row * width + col);
-         if ((depthSample <= r[i] && lequal) ||
-             (depthSample >= r[i] && gequal)) {
-            texel[i][RCOMP] = ambient;
-            texel[i][GCOMP] = ambient;
-            texel[i][BCOMP] = ambient;
-            texel[i][ACOMP] = CHAN_MAX;
-         }
-         else {
+         if ((r[i] <= depthSample && lequal) ||
+             (r[i] >= depthSample && gequal)) {
             texel[i][RCOMP] = CHAN_MAX;
             texel[i][GCOMP] = CHAN_MAX;
             texel[i][BCOMP] = CHAN_MAX;
+            texel[i][ACOMP] = CHAN_MAX;
+         }
+         else {
+            texel[i][RCOMP] = ambient;
+            texel[i][GCOMP] = ambient;
+            texel[i][BCOMP] = ambient;
             texel[i][ACOMP] = CHAN_MAX;
          }
       }
