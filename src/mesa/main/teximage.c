@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.7 1999/10/21 12:45:03 brianp Exp $ */
+/* $Id: teximage.c,v 1.8 1999/10/22 10:43:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1674,12 +1674,31 @@ void gl_TexSubImage2D( GLcontext *ctx,
          /* row by row. */
          GLubyte *dst = destTex->Data 
                       + (yoffsetb * destTex->Width + xoffsetb) * texcomponents;
-         GLubyte *src = (GLubyte *) image->Data;
+         const GLubyte *src = (const GLubyte *) image->Data;
          GLint  j;
          for (j=0;j<height;j++) {
             MEMCPY( dst, src, width * texcomponents );
             dst += destTex->Width * texcomponents * sizeof(GLubyte);
             src += width * texcomponents * sizeof(GLubyte);
+         }
+      }
+      else if (image->Type==GL_UNSIGNED_BYTE
+               && texcomponents==3 && image->Components == 4 ) {
+         /* 32 bit (padded) to 24 bit case, used heavily by quake */
+         GLubyte *dst = destTex->Data 
+                      + (yoffsetb * destTex->Width + xoffsetb) * texcomponents;
+         const GLubyte *src = (const GLubyte *) image->Data;
+         GLint j;
+         for (j=0;j<height;j++) {
+            const GLubyte *stop = src + (width << 2);
+            for ( ; src != stop ; ) {
+               dst[0] = src[0];
+               dst[1] = src[1];
+               dst[2] = src[2];
+               dst += 3;
+               src += 4;
+            }
+            dst += (destTex->Width - width) * texcomponents * sizeof(GLubyte);
          }
       }
       else {
@@ -1688,7 +1707,7 @@ void gl_TexSubImage2D( GLcontext *ctx,
                                         destTex->IntFormat, destTex->Border);
          GLubyte *dst = destTex->Data
                   + (yoffsetb * destTex->Width + xoffsetb) * texcomponents;
-         GLubyte *src = subTexImg->Data;
+         const GLubyte *src = subTexImg->Data;
          GLint j;
          for (j=0;j<height;j++) {
             MEMCPY( dst, src, width * texcomponents );
