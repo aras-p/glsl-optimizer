@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.93 2002/10/04 19:10:08 brianp Exp $ */
+/* $Id: get.c,v 1.94 2002/10/10 18:03:44 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -907,6 +907,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Unpack.ImageHeight;
+         break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = ctx->Unpack.ClientStorage;
          break;
       case GL_VIEWPORT:
 	 params[0] = INT_TO_BOOL(ctx->Viewport.X);
@@ -2268,6 +2271,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = (GLdouble) ctx->Unpack.ImageHeight;
+         break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = (GLdouble) ctx->Unpack.ClientStorage;
          break;
       case GL_VIEWPORT:
 	 params[0] = (GLdouble) ctx->Viewport.X;
@@ -3632,6 +3638,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = (GLfloat) ctx->Unpack.ImageHeight;
          break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = (GLfloat) ctx->Unpack.ClientStorage;
+         break;
       case GL_VIEWPORT:
 	 params[0] = (GLfloat) ctx->Viewport.X;
 	 params[1] = (GLfloat) ctx->Viewport.Y;
@@ -4967,6 +4976,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Unpack.ImageHeight;
+         break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = ctx->Unpack.ClientStorage;
          break;
       case GL_VIEWPORT:
          params[0] = (GLint) ctx->Viewport.X;
