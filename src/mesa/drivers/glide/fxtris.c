@@ -174,7 +174,6 @@ fx_fallback_tri( fxMesaContext fxMesa,
 {
    GLcontext *ctx = fxMesa->glCtx;
    SWvertex v[3];
-   fprintf(stderr, "%s\n", __FUNCTION__);
 
    fx_translate_vertex( ctx, v0, &v[0] );
    fx_translate_vertex( ctx, v1, &v[1] );
@@ -628,7 +627,6 @@ static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
    GrVertex *vertptr = fxMesa->verts;			
    const GrVertex *start = VERT(elts[0]);
    int i;
-
    for (i = 2 ; i < n ; i++) {
       grDrawTriangle( start, VERT(elts[i-1]), VERT(elts[i]) );
    }
@@ -641,10 +639,10 @@ static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
 #define LINE_FALLBACK (DD_LINE_STIPPLE)
-#define TRI_FALLBACK (DD_TRI_SMOOTH)
-#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK|DD_TRI_STIPPLE)
-#define ANY_RASTER_FLAGS (DD_FLATSHADE|DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET| \
-			  DD_TRI_UNFILLED)
+#define TRI_FALLBACK (DD_TRI_SMOOTH | DD_TRI_STIPPLE)
+#define ANY_FALLBACK_FLAGS (POINT_FALLBACK | LINE_FALLBACK | TRI_FALLBACK)
+#define ANY_RASTER_FLAGS (DD_FLATSHADE | DD_TRI_LIGHT_TWOSIDE | DD_TRI_OFFSET \
+			  | DD_TRI_UNFILLED)
 
 
 
@@ -704,6 +702,9 @@ void fxDDChooseRenderState(GLcontext *ctx)
       tnl->Driver.Render.PrimTabVerts = fx_render_tab_verts;
       tnl->Driver.Render.PrimTabElts = fx_render_tab_elts;
       tnl->Driver.Render.ClippedPolygon = fxFastRenderClippedPoly;
+
+      tnl->Driver.Render.ClippedPolygon = fxRenderClippedPoly;
+
    } else {
       tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
       tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
