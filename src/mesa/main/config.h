@@ -286,6 +286,9 @@
 #define FEATURE_userclip  _HAVE_FULL_GL
 #define FEATURE_texgen  _HAVE_FULL_GL
 #define FEATURE_windowpos  _HAVE_FULL_GL
+#define FEATURE_ARB_vertex_shader _HAVE_FULL_GL
+#define FEATURE_ARB_fragment_shader _HAVE_FULL_GL
+#define FEATURE_ARB_shader_objects (FEATURE_ARB_vertex_shader || FEATURE_ARB_fragment_shader)
 
 /*@}*/
 
