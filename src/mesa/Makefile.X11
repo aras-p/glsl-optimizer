@@ -9,8 +9,9 @@ GL_MAJOR = 1
 GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
-GL_LIB_NAME = "GL"  # may be overridden in Make-config
-OSMESA_LIB_NAME = "OSMesa"  # may be overridden in Make-config
+# These may be overridden in Make-config
+GL_LIB_NAME = GL
+OSMESA_LIB_NAME = OSMesa
 
 LIBDIR = $(TOP)/lib
 
@@ -104,7 +105,8 @@ $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
 	if [ ${OSMESA_LIB} ] ; then \
 		$(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) -major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(GL_TINY) -L$(LIBDIR) \
-			-l$(GL_LIB_NAME) -install $(LIBDIR) \
+			-l$(GL_LIB_NAME) $(OSMESA_LIB_DEPS) \
+			-install $(LIBDIR) \
 			$(MKLIB_OPTIONS) $(OSMESA_OBJECTS) ; \
 	fi
 
