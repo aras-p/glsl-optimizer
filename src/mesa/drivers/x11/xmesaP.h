@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.23 2001/05/29 19:48:47 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.24 2001/09/01 20:23:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -147,6 +147,7 @@ struct xmesa_buffer {
    XMesaContext xm_context;     /* the context associated with this buffer */
    XMesaDisplay *display;
    GLboolean pixmap_flag;	/* is the buffer a Pixmap? */
+   GLboolean pbuffer_flag;	/* is the buffer a Pbuffer? */
    XMesaDrawable frontbuffer;	/* either a window or pixmap */
    XMesaPixmap backpixmap;	/* back buffer Pixmap */
    XMesaImage *backimage;	/* back buffer simulated XImage */
