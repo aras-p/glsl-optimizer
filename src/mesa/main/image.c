@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.32 2000/05/19 22:35:44 brianp Exp $ */
+/* $Id: image.c,v 1.33 2000/06/22 21:26:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2995,6 +2995,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
          break;
       default:
          gl_problem(NULL, "bad type in _mesa_unpack_depth_span()");
+         FREE(depth);
          return;
    }
 
