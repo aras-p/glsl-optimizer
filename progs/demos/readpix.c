@@ -207,6 +207,8 @@ Key( unsigned char key, int x, int y )
 static void
 Init( GLboolean ciMode )
 {
+   GLboolean have_read_format = GL_FALSE;
+
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
@@ -233,6 +235,20 @@ Init( GLboolean ciMode )
          glutSetColor(i, g, g, g);
       }
    }
+
+#ifdef GL_OES_read_format
+   if ( glutExtensionSupported( "GL_OES_read_format" ) ) {
+      glGetIntegerv( GL_IMPLEMENTATION_COLOR_READ_TYPE_OES,   & ReadType );
+      glGetIntegerv( GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES, & ReadFormat );
+
+      have_read_format = GL_TRUE;
+   }
+#endif
+
+   printf( "GL_OES_read_format %ssupported.  "
+	   "Using type / format = 0x%04x / 0x%04x\n",
+	   (have_read_format) ? "" : "not ",
+	   ReadType, ReadFormat );
 
    printf("Loaded %d by %d image\n", ImgWidth, ImgHeight );
 

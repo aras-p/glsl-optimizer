@@ -1114,6 +1114,9 @@ _mesa_init_constants( GLcontext *ctx )
 
    ctx->Const.MaxDrawBuffers = MAX_DRAW_BUFFERS;
 
+   ctx->Const.ColorReadFormat = GL_RGBA;
+   ctx->Const.ColorReadType = GL_UNSIGNED_BYTE;
+
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits));
 }

@@ -1723,6 +1723,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
 
+      case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+         *params = INT_TO_BOOL(ctx->Const.ColorReadType);
+         return;
+      case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+         *params = INT_TO_BOOL(ctx->Const.ColorReadFormat);
+         return;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3317,6 +3324,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          break;
 
+      case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+         *params = (GLdouble) ctx->Const.ColorReadType;
+         return;
+      case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+         *params = (GLdouble) ctx->Const.ColorReadFormat;
+         return;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
    }
@@ -4886,6 +4900,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             *params = (GLfloat) ctx->Color.DrawBuffer[i];
          }
          break;
+
+      case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+         *params = (GLfloat) ctx->Const.ColorReadType;
+         return;
+      case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+         *params = (GLfloat) ctx->Const.ColorReadFormat;
+         return;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(0x%x)", pname);
@@ -6494,6 +6515,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             *params = (GLint) ctx->Color.DrawBuffer[i];
          }
          break;
+
+      case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
+         *params = ctx->Const.ColorReadType;
+         return;
+      case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
+         *params = ctx->Const.ColorReadFormat;
+         return;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);

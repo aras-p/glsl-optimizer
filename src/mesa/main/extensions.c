@@ -141,6 +141,7 @@ static const struct {
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },
    { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
+   { ON,  "GL_OES_read_format",                F(OES_read_format) },
    { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
    { OFF, "GL_SGI_color_table",                F(SGI_color_table) },
    { OFF, "GL_SGI_texture_color_table",        F(SGI_texture_color_table) },

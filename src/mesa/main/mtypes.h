@@ -1913,6 +1913,9 @@ struct gl_constants
    GLboolean CheckArrayBounds;
    /* GL_ARB_draw_buffers */
    GLuint MaxDrawBuffers;
+   /* GL_OES_read_format */
+   GLenum ColorReadFormat;
+   GLenum ColorReadType;
 };
 
 
@@ -2015,6 +2018,7 @@ struct gl_extensions
    GLboolean NV_texture_rectangle;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
+   GLboolean OES_read_format;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
    GLboolean SGI_texture_color_table;
