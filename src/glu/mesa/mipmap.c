@@ -1,4 +1,4 @@
-/* $Id: mipmap.c,v 1.2 1999/09/14 00:30:28 brianp Exp $ */
+/* $Id: mipmap.c,v 1.3 1999/11/09 06:16:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: mipmap.c,v $
+ * Revision 1.3  1999/11/09 06:16:59  brianp
+ * replace GLint with GLsizei in a gluScaleImage, gluBuild1/2DMipmaps()
+ *
  * Revision 1.2  1999/09/14 00:30:28  brianp
  * fixed pixel packing/unpacking code in gluBuild2DMipmaps()
  *
@@ -105,9 +108,9 @@ void dummy(GLuint j, GLuint k){
 
 
 GLint GLAPIENTRY gluScaleImage( GLenum format,
-                              GLint widthin, GLint heightin,
+                              GLsizei widthin, GLsizei heightin,
                               GLenum typein, const void *datain,
-                              GLint widthout, GLint heightout,
+                              GLsizei widthout, GLsizei heightout,
                               GLenum typeout, void *dataout )
 {
    GLint components, i, j, k;
@@ -633,7 +636,7 @@ static GLint bytes_per_pixel( GLenum format, GLenum type )
  * WARNING: This function isn't finished and has never been tested!!!!
  */
 GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
-                                  GLint width, GLenum format,
+                                  GLsizei width, GLenum format,
                                   GLenum type, const void *data )
 {
    GLubyte *texture;
@@ -711,7 +714,7 @@ GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
 
 
 GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
-                                  GLint width, GLint height, GLenum format,
+                                  GLsizei width, GLsizei height, GLenum format,
                                   GLenum type, const void *data )
 {
    GLint w, h, maxsize;

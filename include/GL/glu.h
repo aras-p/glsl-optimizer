@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.13 1999/10/27 09:43:48 brianp Exp $ */
+/* $Id: glu.h,v 1.14 1999/11/09 06:17:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,17 +290,17 @@ GLUAPI const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode );
  */
 
 GLUAPI GLint GLAPIENTRY gluScaleImage( GLenum format,
-                                     GLint widthin, GLint heightin,
+                                     GLsizei widthin, GLsizei heightin,
                                      GLenum typein, const void *datain,
-                                     GLint widthout, GLint heightout,
+                                     GLsizei widthout, GLsizei heightout,
                                      GLenum typeout, void *dataout );
 
 GLUAPI GLint GLAPIENTRY gluBuild1DMipmaps( GLenum target, GLint components,
-                                         GLint width, GLenum format,
+                                         GLsizei width, GLenum format,
                                          GLenum type, const void *data );
 
 GLUAPI GLint GLAPIENTRY gluBuild2DMipmaps( GLenum target, GLint components,
-                                         GLint width, GLint height,
+                                         GLsizei width, GLsizei height,
                                          GLenum format,
                                          GLenum type, const void *data );
 
