@@ -33,6 +33,9 @@
 #include "image.h"
 #include "macros.h"
 
+/* Compute ceiling of integer quotient of A divided by B: */
+#define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
+
 #undef FFB_BITMAP_TRACE
 
 static void

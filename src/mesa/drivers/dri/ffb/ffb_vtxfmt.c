@@ -48,8 +48,6 @@
 
 #define TNL_VERTEX			ffbTnlVertex
 
-#define LINTERP( T, A, B )		((A) + (T) * ((B) - (A)))
-
 #define INTERP_RGBA(t, out, a, b)		\
 do {						\
    GLint i;					\
