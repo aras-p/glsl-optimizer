@@ -146,10 +146,10 @@ static void fxTMUInit(fxMesaContext fxMesa, int tmu)
   end=FX_grTexMaxAddress(tmu);
 
   if(fxMesa->verbose) {
-    fprintf(stderr,"%s configuration:",(tmu==FX_TMU0) ? "TMU0" : "TMU1");
-    fprintf(stderr,"  Lower texture memory address (%u)\n",(unsigned int)start);
-    fprintf(stderr,"  Higher texture memory address (%u)\n",(unsigned int)end);
-    fprintf(stderr,"  Splitting Texture memory in 2b blocks:\n");
+    fprintf(stderr,"Voodoo %s configuration:",(tmu==FX_TMU0) ? "TMU0" : "TMU1");
+    fprintf(stderr,"Voodoo  Lower texture memory address (%u)\n",(unsigned int)start);
+    fprintf(stderr,"Voodoo  Higher texture memory address (%u)\n",(unsigned int)end);
+    fprintf(stderr,"Voodoo  Splitting Texture memory in 2b blocks:\n");
   }
 
   fxMesa->freeTexMem[tmu]=end-start;
@@ -162,7 +162,7 @@ static void fxTMUInit(fxMesaContext fxMesa, int tmu)
     else blockend=blockstart+FX_2MB_SPLIT;
 
     if(fxMesa->verbose)
-      fprintf(stderr,"    %07u-%07u\n",
+      fprintf(stderr,"Voodoo    %07u-%07u\n",
 	      (unsigned int)blockstart,(unsigned int)blockend);
 
     tmn=fxTMNewRangeNode(fxMesa, blockstart, blockend);
