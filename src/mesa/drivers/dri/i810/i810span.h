@@ -3,4 +3,7 @@
 
 extern void i810InitSpanFuncs( GLcontext *ctx );
 
+extern void i810SpanRenderFinish( GLcontext *ctx );
+extern void i810SpanRenderStart( GLcontext *ctx );
+
 #endif
