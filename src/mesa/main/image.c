@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.62 2001/06/13 14:55:25 brianp Exp $ */
+/* $Id: image.c,v 1.63 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -790,6 +790,11 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
 
 
 
+/*
+ * Used to pack an array [][4] of RGBA GLchan colors as specified
+ * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
+ * glGetConvolutionFilter(), etc.
+ */
 void
 _mesa_pack_float_rgba_span( GLcontext *ctx,
                             GLuint n, CONST GLfloat rgbaIn[][4],
@@ -886,7 +891,11 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       for (i = 0; i < n; i++) {
          GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
+#if CHAN_TYPE == GL_FLOAT
+         luminance[i] = sum;
+#else
          luminance[i] = CLAMP(sum, 0.0F, 1.0F);
+#endif
       }
    }
 
@@ -2666,6 +2675,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
       }
 
       /* clamp to [0,1] */
+#if CHAN_TYPE != GL_FLOAT
       {
          GLuint i;
          for (i = 0; i < n; i++) {
@@ -2675,6 +2685,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
             rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0F, 1.0F);
          }
       }
+#endif
 
       /* Now determine which color channels we need to produce.
        * And determine the dest index (offset) within each color tuple.
@@ -2941,6 +2952,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
       }
 
       /* clamp to [0,1] */
+#if CHAN_TYPE != GL_FLOAT
       if (clamp) {
          GLuint i;
          for (i = 0; i < n; i++) {
@@ -2950,6 +2962,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
             rgba[i][ACOMP] = CLAMP(rgba[i][ACOMP], 0.0F, 1.0F);
          }
       }
+#endif
 
       /* Now determine which color channels we need to produce.
        * And determine the dest index (offset) within each color tuple.

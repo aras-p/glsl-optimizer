@@ -1,4 +1,4 @@
-/* $Id: s_trispan.h,v 1.1 2001/05/14 16:23:04 brianp Exp $ */
+/* $Id: s_trispan.h,v 1.2 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,6 +58,15 @@ struct triangle_span {
    GLint x, y;
    GLuint count;
    GLuint activeMask;  /* OR of the SPAN_* flags */
+#if CHAN_TYPE == GL_FLOAT
+   GLfloat red, redStep;
+   GLfloat green, greenStep;
+   GLfloat blue, blueStep;
+   GLfloat alpha, alphaStep;
+   GLfloat specRed, specRedStep;
+   GLfloat specGreen, specGreenStep;
+   GLfloat specBlue, specBlueStep;
+#else
    GLfixed red, redStep;
    GLfixed green, greenStep;
    GLfixed blue, blueStep;
@@ -65,6 +74,7 @@ struct triangle_span {
    GLfixed specRed, specRedStep;
    GLfixed specGreen, specGreenStep;
    GLfixed specBlue, specBlueStep;
+#endif
    GLfixed index, indexStep;
    GLfixed z, zStep;
    GLfloat fog, fogStep;

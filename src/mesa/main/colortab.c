@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.40 2001/04/20 19:21:41 brianp Exp $ */
+/* $Id: colortab.c,v 1.41 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -127,7 +127,6 @@ _mesa_free_colortable_data( struct gl_color_table *p )
 static void
 set_component_sizes( struct gl_color_table *table )
 {
-   /* XXX what about GLfloat tables? */
    switch (table->Format) {
       case GL_ALPHA:
          table->RedSize = 0;

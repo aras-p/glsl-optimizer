@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.21 2001/07/14 16:05:44 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.22 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,8 @@
  *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
  *    INTERP_LAMBDA   - if defined, compute lambda value (for mipmapping)
  *                         a lambda value for every texture unit
+ *    INTERP_FLOAT_RGBA - if defined, interpolate RGBA with floating point
+ *    INTERP_FLOAT_SPEC - if defined, interpolate specular with floating point
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to compute pixel addresses during
@@ -69,6 +71,27 @@
  *
  * Inspired by triangle rasterizer code written by Allen Akin.  Thanks Allen!
  */
+
+
+/*
+ * This is a bit of a hack, but it's a centralized place to enable floating-
+ * point color interpolation when GLchan is actually floating point.
+ */
+#if CHAN_TYPE == GL_FLOAT
+
+#if defined(INTERP_RGB)
+#undef INTERP_RGB
+#undef INTERP_ALPHA
+#define INTERP_FLOAT_RGBA
+#endif
+
+#if defined(INTERP_SPEC)
+#undef INTERP_SPEC
+#define INTERP_FLOAT_SPEC
+#endif
+
+#endif
+
 
 /*void triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )*/
 {
@@ -264,15 +287,15 @@
 #ifdef INTERP_FOG
       GLfloat dfogdy;
 #endif
-#ifdef INTERP_RGB
+#if defined(INTERP_RGB) || defined(INTERP_FLOAT_RGBA)
       GLfloat drdx, drdy;
       GLfloat dgdx, dgdy;
       GLfloat dbdx, dbdy;
 #endif
-#ifdef INTERP_ALPHA
+#if defined(INTERP_ALPHA) || defined(INTERP_FLOAT_RGBA)
       GLfloat dadx, dady;
 #endif
-#ifdef INTERP_SPEC
+#if defined(INTERP_SPEC) || defined(INTERP_FLOAT_SPEC)
       GLfloat dsrdx, dsrdy;
       GLfloat dsgdx, dsgdy;
       GLfloat dsbdx, dsbdy;
@@ -376,26 +399,51 @@
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
       }
 #endif
+#ifdef INTERP_FLOAT_RGBA
+      span.activeMask |= SPAN_RGBA;
+      {
+         GLfloat eMaj_dr, eBot_dr;
+         GLfloat eMaj_dg, eBot_dg;
+         GLfloat eMaj_db, eBot_db;
+         GLfloat eMaj_da, eBot_da;
+         eMaj_dr = (GLint) vMax->color[0] - (GLint) vMin->color[0];
+         eBot_dr = (GLint) vMid->color[0] - (GLint) vMin->color[0];
+         drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
+         span.redStep = drdx;
+         drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
+         eMaj_dg = (GLint) vMax->color[1] - (GLint) vMin->color[1];
+	 eBot_dg = (GLint) vMid->color[1] - (GLint) vMin->color[1];
+         dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
+         span.greenStep = dgdx;
+         dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
+         eMaj_db = (GLint) vMax->color[2] - (GLint) vMin->color[2];
+         eBot_db = (GLint) vMid->color[2] - (GLint) vMin->color[2];
+         dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
+         span.blueStep = dbdx;
+	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
+         eMaj_da = (GLint) vMax->color[3] - (GLint) vMin->color[3];
+         eBot_da = (GLint) vMid->color[3] - (GLint) vMin->color[3];
+         dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
+         span.alphaStep = dadx;
+         dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
+      }
+#endif
 #ifdef INTERP_SPEC
       span.activeMask |= SPAN_SPEC;
       {
          GLfloat eMaj_dsr, eBot_dsr;
+         GLfloat eMaj_dsg, eBot_dsg;
+         GLfloat eMaj_dsb, eBot_dsb;
          eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
          eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
          dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
          span.specRedStep = SignedFloatToFixed(dsrdx);
          dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dsg, eBot_dsg;
          eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
 	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
          dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
          span.specGreenStep = SignedFloatToFixed(dsgdx);
          dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dsb, eBot_dsb;
          eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
          eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
          dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
@@ -403,6 +451,30 @@
 	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
       }
 #endif
+#ifdef INTERP_FLOAT_SPEC
+      span.activeMask |= SPAN_SPEC;
+      {
+         GLfloat eMaj_dsr, eBot_dsr;
+         GLfloat eMaj_dsg, eBot_dsg;
+         GLfloat eMaj_dsb, eBot_dsb;
+         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
+         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
+         dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
+         span.specRedStep = dsrdx;
+         dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
+         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
+	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
+         dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
+         span.specGreenStep = dsgdx;
+         dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
+         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
+         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
+         dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
+         span.specBlueStep = dsbdx;
+	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
+      }
+#endif
+
 #ifdef INTERP_INDEX
       span.activeMask |= SPAN_INDEX;
       {
@@ -626,10 +698,21 @@
 #ifdef INTERP_ALPHA
          GLfixed fa=0, fdaOuter=0, fdaInner;
 #endif
+#ifdef INTERP_FLOAT_RGBA
+         GLfloat fr, fdrOuter, fdrInner;
+         GLfloat fg, fdgOuter, fdgInner;
+         GLfloat fb, fdbOuter, fdbInner;
+         GLfloat fa, fdaOuter, fdaInner;
+#endif
 #ifdef INTERP_SPEC
          GLfixed fsr=0, fdsrOuter=0, fdsrInner;
          GLfixed fsg=0, fdsgOuter=0, fdsgInner;
          GLfixed fsb=0, fdsbOuter=0, fdsbInner;
+#endif
+#ifdef INTERP_FLOAT_SPEC
+         GLfloat fsr=0, fdsrOuter=0, fdsrInner;
+         GLfloat fsg=0, fdsgOuter=0, fdsgInner;
+         GLfloat fsb=0, fdsbOuter=0, fdsbInner;
 #endif
 #ifdef INTERP_INDEX
          GLfixed fi=0, fdiOuter=0, fdiInner;
@@ -770,35 +853,49 @@
                dfogOuter = dfogdy + dxOuter * span.fogStep;
 #endif
 #ifdef INTERP_RGB
-               fr = (GLfixed)(ChanToFixed(vLower->color[0])
-                              + drdx * adjx + drdy * adjy) + FIXED_HALF;
+               fr = (GLfixed) (ChanToFixed(vLower->color[0])
+                                + drdx * adjx + drdy * adjy) + FIXED_HALF;
                fdrOuter = SignedFloatToFixed(drdy + dxOuter * drdx);
-
-               fg = (GLfixed)(ChanToFixed(vLower->color[1])
-                              + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
+               fg = (GLfixed) (ChanToFixed(vLower->color[1])
+                                + dgdx * adjx + dgdy * adjy) + FIXED_HALF;
                fdgOuter = SignedFloatToFixed(dgdy + dxOuter * dgdx);
-
-               fb = (GLfixed)(ChanToFixed(vLower->color[2])
-                              + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
+               fb = (GLfixed) (ChanToFixed(vLower->color[2])
+                                 + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
                fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
 #endif
 #ifdef INTERP_ALPHA
-               fa = (GLfixed)(ChanToFixed(vLower->color[3])
-                              + dadx * adjx + dady * adjy) + FIXED_HALF;
+               fa = (GLfixed) (ChanToFixed(vLower->color[3])
+                                + dadx * adjx + dady * adjy) + FIXED_HALF;
                fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
 #endif
+#ifdef INTERP_FLOAT_RGBA
+               fr = vLower->color[0] + drdx * adjx + drdy * adjy;
+               fdrOuter = drdy + dxOuter * drdx;
+               fg = vLower->color[1] + dgdx * adjx + dgdy * adjy;
+               fdgOuter = dgdy + dxOuter * dgdx;
+               fb = vLower->color[2] + dbdx * adjx + dbdy * adjy;
+               fdbOuter = dbdy + dxOuter * dbdx;
+               fa = vLower->color[3] + dadx * adjx + dady * adjy;
+               fdaOuter = dady + dxOuter * dadx;
+#endif
 #ifdef INTERP_SPEC
-               fsr = (GLfixed)(ChanToFixed(vLower->specular[0])
-                               + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
+               fsr = (GLfixed) (ChanToFixed(vLower->specular[0])
+                                 + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
                fdsrOuter = SignedFloatToFixed(dsrdy + dxOuter * dsrdx);
-
-               fsg = (GLfixed)(ChanToFixed(vLower->specular[1])
-                               + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
+               fsg = (GLfixed) (ChanToFixed(vLower->specular[1])
+                                 + dsgdx * adjx + dsgdy * adjy) + FIXED_HALF;
                fdsgOuter = SignedFloatToFixed(dsgdy + dxOuter * dsgdx);
-
-               fsb = (GLfixed)(ChanToFixed(vLower->specular[2])
-                               + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
+               fsb = (GLfixed) (ChanToFixed(vLower->specular[2])
+                                 + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
                fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
+#endif
+#ifdef INTERP_FLOAT_SPEC
+               fsr = vLower->specular[0] + dsrdx * adjx + dsrdy * adjy;
+               fdsrOuter = dsrdy + dxOuter * dsrdx;
+               fsg = vLower->specular[1] + dsgdx * adjx + dsgdy * adjy;
+               fdsgOuter = dsgdy + dxOuter * dsgdx;
+               fsb = vLower->specular[2] + dsbdx * adjx + dsbdy * adjy;
+               fdsbOuter = dsbdy + dxOuter * dsbdx;
 #endif
 #ifdef INTERP_INDEX
                fi = (GLfixed)(vLower->index * FIXED_SCALE
@@ -895,15 +992,15 @@
 #ifdef INTERP_FOG
             dfogInner = dfogOuter + span.fogStep;
 #endif
-#ifdef INTERP_RGB
+#if defined(INTERP_RGB) || defined(INTERP_FLOAT_RGBA)
             fdrInner = fdrOuter + span.redStep;
             fdgInner = fdgOuter + span.greenStep;
             fdbInner = fdbOuter + span.blueStep;
 #endif
-#ifdef INTERP_ALPHA
+#if defined(INTERP_ALPHA) || defined(INTERP_FLOAT_RGBA)
             fdaInner = fdaOuter + span.alphaStep;
 #endif
-#ifdef INTERP_SPEC
+#if defined(INTERP_SPEC) || defined(INTERP_FLOAT_SPEC)
             fdsrInner = fdsrOuter + span.specRedStep;
             fdsgInner = fdsgOuter + span.specGreenStep;
             fdsbInner = fdsbOuter + span.specBlueStep;
@@ -951,15 +1048,15 @@
 #ifdef INTERP_FOG
                span.fog = fogLeft;
 #endif
-#ifdef INTERP_RGB
+#if defined(INTERP_RGB) || defined(INTERP_FLOAT_RGBA)
                span.red = fr;
                span.green = fg;
                span.blue = fb;
 #endif
-#ifdef INTERP_ALPHA
+#if defined(INTERP_ALPHA) || defined(INTERP_FLOAT_RGBA)
                span.alpha = fa;
 #endif
-#ifdef INTERP_SPEC
+#if defined(INTERP_SPEC) || defined(INTERP_FLOAT_SPEC)
                span.specRed = fsr;
                span.specGreen = fsg;
                span.specBlue = fsb;
@@ -1089,15 +1186,15 @@
 #ifdef INTERP_FOG
                   fogLeft += dfogOuter;
 #endif
-#ifdef INTERP_RGB
+#if defined(INTERP_RGB) || defined(INTERP_FLOAT_RGBA)
                   fr += fdrOuter;
                   fg += fdgOuter;
                   fb += fdbOuter;
 #endif
-#ifdef INTERP_ALPHA
+#if defined(INTERP_ALPHA) || defined(INTERP_FLOAT_RGBA)
                   fa += fdaOuter;
 #endif
-#ifdef INTERP_SPEC
+#if defined(INTERP_SPEC) || defined(INTERP_FLOAT_SPEC)
                   fsr += fdsrOuter;
                   fsg += fdsgOuter;
                   fsb += fdsbOuter;
@@ -1142,15 +1239,15 @@
 #ifdef INTERP_FOG
                   fogLeft += dfogInner;
 #endif
-#ifdef INTERP_RGB
+#if defined(INTERP_RGB) || defined(INTERP_FLOAT_RGBA)
                   fr += fdrInner;
                   fg += fdgInner;
                   fb += fdbInner;
 #endif
-#ifdef INTERP_ALPHA
+#if defined(INTERP_ALPHA) || defined(INTERP_FLOAT_RGBA)
                   fa += fdaInner;
 #endif
-#ifdef INTERP_SPEC
+#if defined(INTERP_SPEC) || defined(INTERP_FLOAT_SPEC)
                   fsr += fdsrInner;
                   fsg += fdsgInner;
                   fsb += fdsbInner;
@@ -1211,6 +1308,8 @@
 #undef INTERP_TEX
 #undef INTERP_MULTITEX
 #undef INTERP_LAMBDA
+#undef INTERP_FLOAT_RGBA
+#undef INTERP_FLOAT_SPEC
 
 #undef S_SCALE
 #undef T_SCALE

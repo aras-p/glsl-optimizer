@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.33 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.34 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -186,10 +186,10 @@ static void smooth_rgba_triangle( GLcontext *ctx,
    GLfloat fogSpan[MAX_WIDTH];					\
    GLuint i;				        	        \
    for (i = 0; i < span.count; i++) {				\
-      rgbaSpan[i][RCOMP] = FixedToInt(span.red);		\
-      rgbaSpan[i][GCOMP] = FixedToInt(span.green);		\
-      rgbaSpan[i][BCOMP] = FixedToInt(span.blue);		\
-      rgbaSpan[i][ACOMP] = FixedToInt(span.alpha);		\
+      rgbaSpan[i][RCOMP] = FixedToChan(span.red);		\
+      rgbaSpan[i][GCOMP] = FixedToChan(span.green);		\
+      rgbaSpan[i][BCOMP] = FixedToChan(span.blue);		\
+      rgbaSpan[i][ACOMP] = FixedToChan(span.alpha);		\
       span.red += span.redStep;					\
       span.green += span.greenStep;				\
       span.blue += span.blueStep;				\
@@ -683,7 +683,6 @@ static void affine_textured_triangle( GLcontext *ctx,
 
 }
 
-#endif /* CHAN_BITS != GL_FLOAT */
 
 
 struct persp_info
@@ -984,6 +983,8 @@ static void persp_textured_triangle( GLcontext *ctx,
 }
 
 
+#endif /* CHAN_BITS != GL_FLOAT */
+
 
 /*
  * Generate arrays of fragment colors, z, fog, texcoords, etc from a
@@ -1023,16 +1024,23 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
    CHECKARRAY(mLambda, return);
 
    if (span->activeMask & SPAN_RGBA) {
+#if CHAN_TYPE == GL_FLOAT
+      GLfloat r = span->red;
+      GLfloat g = span->green;
+      GLfloat b = span->blue;
+      GLfloat a = span->alpha;
+#else
       GLfixed r = span->red;
       GLfixed g = span->green;
       GLfixed b = span->blue;
       GLfixed a = span->alpha;
+#endif
       GLuint i;
       for (i = 0; i < span->count; i++) {
-         rgba[i][RCOMP] = FixedToInt(r);
-         rgba[i][GCOMP] = FixedToInt(g);
-         rgba[i][BCOMP] = FixedToInt(b);
-         rgba[i][ACOMP] = FixedToInt(a);
+         rgba[i][RCOMP] = FixedToChan(r);
+         rgba[i][GCOMP] = FixedToChan(g);
+         rgba[i][BCOMP] = FixedToChan(b);
+         rgba[i][ACOMP] = FixedToChan(a);
          r += span->redStep;
          g += span->greenStep;
          b += span->blueStep;
@@ -1040,14 +1048,20 @@ rasterize_span(GLcontext *ctx, const struct triangle_span *span)
       }
    }
    if (span->activeMask & SPAN_SPEC) {
+#if CHAN_TYPE == GL_FLOAT
+      GLfloat r = span->specRed;
+      GLfloat g = span->specGreen;
+      GLfloat b = span->specBlue;
+#else
       GLfixed r = span->specRed;
       GLfixed g = span->specGreen;
       GLfixed b = span->specBlue;
+#endif
       GLuint i;
       for (i = 0; i < span->count; i++) {
-         spec[i][RCOMP] = FixedToInt(r);
-         spec[i][GCOMP] = FixedToInt(g);
-         spec[i][BCOMP] = FixedToInt(b);
+         spec[i][RCOMP] = FixedToChan(r);
+         spec[i][GCOMP] = FixedToChan(g);
+         spec[i][BCOMP] = FixedToChan(b);
          r += span->specRedStep;
          g += span->specGreenStep;
          b += span->specBlueStep;
@@ -1315,10 +1329,10 @@ static void general_textured_triangle( GLcontext *ctx,
       span.z += span.zStep;						\
       fogSpan[i] = span.fog;			          		\
       span.fog += span.fogStep;						\
-      rgbaSpan[i][RCOMP] = FixedToInt(span.red);			\
-      rgbaSpan[i][GCOMP] = FixedToInt(span.green);			\
-      rgbaSpan[i][BCOMP] = FixedToInt(span.blue);			\
-      rgbaSpan[i][ACOMP] = FixedToInt(span.alpha);			\
+      rgbaSpan[i][RCOMP] = FixedToChan(span.red);			\
+      rgbaSpan[i][GCOMP] = FixedToChan(span.green);			\
+      rgbaSpan[i][BCOMP] = FixedToChan(span.blue);			\
+      rgbaSpan[i][ACOMP] = FixedToChan(span.alpha);			\
       span.red += span.redStep;						\
       span.green += span.greenStep;					\
       span.blue += span.blueStep;					\
@@ -1736,24 +1750,19 @@ _swrast_choose_triangle( GLcontext *ctx )
 		  }
 	       }
 	       else {
-#if CHAN_TYPE != GL_FLOAT
-                  if (ctx->Texture.Unit[0].EnvMode != GL_ADD) {
-                     USE(affine_textured_triangle);
-                  }
-                  else
+#if CHAN_TYPE == GL_FLOAT
+                  USE(general_textured_triangle);
+#else
+                  USE(affine_textured_triangle);
 #endif
-                  {
-                     USE(general_textured_triangle);
-                  }
 	       }
 	    }
 	    else {
-	       if (ctx->Texture.Unit[0].EnvMode==GL_ADD) {
-		  USE(general_textured_triangle);
-	       }
-	       else {
-		  USE(persp_textured_triangle);
-	       }
+#if CHAN_TYPE == GL_FLOAT
+               USE(general_textured_triangle);
+#else
+               USE(persp_textured_triangle);
+#endif
 	    }
 	 }
          else {

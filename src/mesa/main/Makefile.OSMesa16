@@ -1,4 +1,4 @@
-# $Id: Makefile.OSMesa16,v 1.4 2001/07/13 20:07:37 brianp Exp $
+# $Id: Makefile.OSMesa16,v 1.5 2001/07/14 17:53:04 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -121,7 +121,6 @@ CORE_SOURCES = \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c \
 	swrast_setup/ss_vb.c \
-	swrast_setup/ss_interp.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \

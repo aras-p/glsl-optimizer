@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.33 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_texture.c,v 1.34 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -324,7 +324,7 @@ sample_1d_linear(GLcontext *ctx,
    {
       const GLfloat a = FRAC(u);
 
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       const GLfloat w0 = (1.0F-a);
       const GLfloat w1 =       a ;
 #else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
@@ -354,7 +354,7 @@ sample_1d_linear(GLcontext *ctx,
          }
       }
 
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       rgba[0] = w0 * t0[0] + w1 * t1[0];
       rgba[1] = w0 * t0[1] + w1 * t1[1];
       rgba[2] = w0 * t0[2] + w1 * t1[2];
@@ -395,6 +395,16 @@ sample_1d_linear_mipmap_nearest(GLcontext *ctx,
 
 
 
+/*
+ * This is really just needed in order to prevent warnings with some compilers.
+ */
+#if CHAN_TYPE == GL_FLOAT
+#define INTCAST
+#else
+#define INTCAST (GLint)
+#endif
+
+
 static void
 sample_1d_nearest_mipmap_linear(GLcontext *ctx,
                                 const struct gl_texture_object *tObj,
@@ -413,10 +423,10 @@ sample_1d_nearest_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_1d_nearest(ctx, tObj, tObj->Image[level  ], s, t0);
       sample_1d_nearest(ctx, tObj, tObj->Image[level+1], s, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -440,10 +450,10 @@ sample_1d_linear_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_1d_linear(ctx, tObj, tObj->Image[level  ], s, t0);
       sample_1d_linear(ctx, tObj, tObj->Image[level+1], s, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -637,7 +647,7 @@ sample_2d_linear(GLcontext *ctx,
       const GLfloat a = FRAC(u);
       const GLfloat b = FRAC(v);
 
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       const GLfloat w00 = (1.0F-a) * (1.0F-b);
       const GLfloat w10 =       a  * (1.0F-b);
       const GLfloat w01 = (1.0F-a) *       b ;
@@ -691,7 +701,7 @@ sample_2d_linear(GLcontext *ctx,
             palette_sample(ctx, tObj, t11[0], t11);
          }
       }
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       rgba[0] = w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0];
       rgba[1] = w00 * t00[1] + w10 * t10[1] + w01 * t01[1] + w11 * t11[1];
       rgba[2] = w00 * t00[2] + w10 * t10[2] + w01 * t01[2] + w11 * t11[2];
@@ -753,10 +763,10 @@ sample_2d_nearest_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_2d_nearest(ctx, tObj, tObj->Image[level  ], s, t, t0);
       sample_2d_nearest(ctx, tObj, tObj->Image[level+1], s, t, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -780,10 +790,10 @@ sample_2d_linear_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_2d_linear(ctx, tObj, tObj->Image[level  ], s, t, t0);
       sample_2d_linear(ctx, tObj, tObj->Image[level+1], s, t, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -1082,7 +1092,7 @@ sample_3d_linear(GLcontext *ctx,
       const GLfloat b = FRAC(v);
       const GLfloat c = FRAC(w);
 
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       GLfloat w000 = (1.0F-a) * (1.0F-b) * (1.0F-c);
       GLfloat w100 =       a  * (1.0F-b) * (1.0F-c);
@@ -1181,7 +1191,7 @@ sample_3d_linear(GLcontext *ctx,
          }
       }
 
-#if CHAN_BITS == 32
+#if CHAN_TYPE == GL_FLOAT
       rgba[0] = w000*t000[0] + w010*t010[0] + w001*t001[0] + w011*t011[0] +
                 w100*t100[0] + w110*t110[0] + w101*t101[0] + w111*t111[0];
       rgba[1] = w000*t000[1] + w010*t010[1] + w001*t001[1] + w011*t011[1] +
@@ -1257,10 +1267,10 @@ sample_3d_nearest_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_3d_nearest(ctx, tObj, tObj->Image[level  ], s, t, r, t0);
       sample_3d_nearest(ctx, tObj, tObj->Image[level+1], s, t, r, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -1283,10 +1293,10 @@ sample_3d_linear_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_3d_linear(ctx, tObj, tObj->Image[level  ], s, t, r, t0);
       sample_3d_linear(ctx, tObj, tObj->Image[level+1], s, t, r, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -1562,10 +1572,10 @@ sample_cube_nearest_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_2d_nearest(ctx, tObj, images[level  ], newS, newT, t0);
       sample_2d_nearest(ctx, tObj, images[level+1], newS, newT, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -1592,10 +1602,10 @@ sample_cube_linear_mipmap_linear(GLcontext *ctx,
       const GLfloat f = FRAC(lambda);
       sample_2d_linear(ctx, tObj, images[level  ], newS, newT, t0);
       sample_2d_linear(ctx, tObj, images[level+1], newS, newT, t1);
-      rgba[RCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
-      rgba[GCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
-      rgba[BCOMP] = (GLchan) (GLint) ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
-      rgba[ACOMP] = (GLchan) (GLint) ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
+      rgba[RCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[RCOMP] + f * t1[RCOMP]);
+      rgba[GCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[GCOMP] + f * t1[GCOMP]);
+      rgba[BCOMP] = (GLchan) INTCAST ((1.0F-f) * t0[BCOMP] + f * t1[BCOMP]);
+      rgba[ACOMP] = (GLchan) INTCAST ((1.0F-f) * t0[ACOMP] + f * t1[ACOMP]);
    }
 }
 
@@ -1676,6 +1686,7 @@ sample_lambda_cube( GLcontext *ctx, GLuint texUnit,
    }
 }
 
+
 static void
 null_sample_func( GLcontext *ctx, GLuint texUnit,
 		  const struct gl_texture_object *tObj, GLuint n,
@@ -1684,6 +1695,8 @@ null_sample_func( GLcontext *ctx, GLuint texUnit,
 		  GLchan rgba[][4])
 {
 }
+
+
 
 /**********************************************************************/
 /*                       Texture Sampling Setup                       */
@@ -1936,17 +1949,17 @@ texture_combine(const GLcontext *ctx,
             if (RGBshift) {
                for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-                  GLchan r = arg0[i][RCOMP] * RGBmult;
-                  GLchan g = arg0[i][GCOMP] * RGBmult;
-                  GLchan b = arg0[i][BCOMP] * RGBmult;
+                  rgba[i][RCOMP] = arg0[i][RCOMP] * RGBmult;
+                  rgba[i][GCOMP] = arg0[i][GCOMP] * RGBmult;
+                  rgba[i][BCOMP] = arg0[i][BCOMP] * RGBmult;
 #else
                   GLuint r = (GLuint) arg0[i][RCOMP] << RGBshift;
                   GLuint g = (GLuint) arg0[i][GCOMP] << RGBshift;
                   GLuint b = (GLuint) arg0[i][BCOMP] << RGBshift;
-#endif
                   rgba[i][RCOMP] = MIN2(r, CHAN_MAX);
                   rgba[i][GCOMP] = MIN2(g, CHAN_MAX);
                   rgba[i][BCOMP] = MIN2(b, CHAN_MAX);
+#endif
                }
             }
             else {
@@ -1967,17 +1980,17 @@ texture_combine(const GLcontext *ctx,
 #endif
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan r = arg0[i][RCOMP] * arg1[i][RCOMP] * RGBmult;
-               GLuint g = arg0[i][GCOMP] * arg1[i][GCOMP] * RGBmult;
-               GLuint b = arg0[i][BCOMP] * arg1[i][BCOMP] * RGBmult;
+               rgba[i][RCOMP] = arg0[i][RCOMP] * arg1[i][RCOMP] * RGBmult;
+               rgba[i][GCOMP] = arg0[i][GCOMP] * arg1[i][GCOMP] * RGBmult;
+               rgba[i][BCOMP] = arg0[i][BCOMP] * arg1[i][BCOMP] * RGBmult;
 #else
                GLuint r = PROD(arg0[i][RCOMP], arg1[i][RCOMP]) >> shift;
                GLuint g = PROD(arg0[i][GCOMP], arg1[i][GCOMP]) >> shift;
                GLuint b = PROD(arg0[i][BCOMP], arg1[i][BCOMP]) >> shift;
-#endif
                rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
                rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
                rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -1987,17 +2000,17 @@ texture_combine(const GLcontext *ctx,
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan r = (arg0[i][RCOMP] + arg1[i][RCOMP]) * RGBmult;
-               GLchan g = (arg0[i][GCOMP] + arg1[i][GCOMP]) * RGBmult;
-               GLchan b = (arg0[i][BCOMP] + arg1[i][BCOMP]) * RGBmult;
+               rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP]) * RGBmult;
+               rgba[i][GCOMP] = (arg0[i][GCOMP] + arg1[i][GCOMP]) * RGBmult;
+               rgba[i][BCOMP] = (arg0[i][BCOMP] + arg1[i][BCOMP]) * RGBmult;
 #else
                GLint r = ((GLint) arg0[i][RCOMP] + (GLint) arg1[i][RCOMP]) << RGBshift;
                GLint g = ((GLint) arg0[i][GCOMP] + (GLint) arg1[i][GCOMP]) << RGBshift;
                GLint b = ((GLint) arg0[i][BCOMP] + (GLint) arg1[i][BCOMP]) << RGBshift;
-#endif
                rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
                rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
                rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2007,9 +2020,9 @@ texture_combine(const GLcontext *ctx,
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan r = (arg0[i][RCOMP] + arg1[i][RCOMP] - 0.5) * RGBmult;
-               GLchan g = (arg0[i][GCOMP] + arg1[i][GCOMP] - 0.5) * RGBmult;
-               GLchan b = (arg0[i][BCOMP] + arg1[i][BCOMP] - 0.5) * RGBmult;
+               rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP] - 0.5) * RGBmult;
+               rgba[i][GCOMP] = (arg0[i][GCOMP] + arg1[i][GCOMP] - 0.5) * RGBmult;
+               rgba[i][BCOMP] = (arg0[i][BCOMP] + arg1[i][BCOMP] - 0.5) * RGBmult;
 #else
                GLint r = (GLint) arg0[i][RCOMP] + (GLint) arg1[i][RCOMP] -half;
                GLint g = (GLint) arg0[i][GCOMP] + (GLint) arg1[i][GCOMP] -half;
@@ -2017,10 +2030,10 @@ texture_combine(const GLcontext *ctx,
                r = (r < 0) ? 0 : r << RGBshift;
                g = (g < 0) ? 0 : g << RGBshift;
                b = (b < 0) ? 0 : b << RGBshift;
-#endif
                rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
                rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
                rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2034,11 +2047,11 @@ texture_combine(const GLcontext *ctx,
 #endif
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan r = (arg0[i][RCOMP] * arg2[i][RCOMP] +
+               rgba[i][RCOMP] = (arg0[i][RCOMP] * arg2[i][RCOMP] +
                       arg1[i][RCOMP] * (CHAN_MAXF - arg2[i][RCOMP])) * RGBmult;
-               GLchan g = (arg0[i][GCOMP] * arg2[i][GCOMP] +
+               rgba[i][GCOMP] = (arg0[i][GCOMP] * arg2[i][GCOMP] +
                       arg1[i][GCOMP] * (CHAN_MAXF - arg2[i][GCOMP])) * RGBmult;
-               GLchan b = (arg0[i][BCOMP] * arg2[i][BCOMP] +
+               rgba[i][BCOMP] = (arg0[i][BCOMP] * arg2[i][BCOMP] +
                       arg1[i][BCOMP] * (CHAN_MAXF - arg2[i][BCOMP])) * RGBmult;
 #else
                GLuint r = (PROD(arg0[i][RCOMP], arg2[i][RCOMP])
@@ -2050,10 +2063,10 @@ texture_combine(const GLcontext *ctx,
                GLuint b = (PROD(arg0[i][BCOMP], arg2[i][BCOMP])
                            + PROD(arg1[i][BCOMP], CHAN_MAX - arg2[i][BCOMP]))
                               >> shift;
-#endif
                rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
                rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
                rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2063,17 +2076,17 @@ texture_combine(const GLcontext *ctx,
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan r = (arg0[i][RCOMP] - arg1[i][RCOMP]) * RGBmult;
-               GLchan g = (arg0[i][GCOMP] - arg1[i][GCOMP]) * RGBmult;
-               GLchan b = (arg0[i][BCOMP] - arg1[i][BCOMP]) * RGBmult;
+               rgba[i][RCOMP] = (arg0[i][RCOMP] - arg1[i][RCOMP]) * RGBmult;
+               rgba[i][GCOMP] = (arg0[i][GCOMP] - arg1[i][GCOMP]) * RGBmult;
+               rgba[i][BCOMP] = (arg0[i][BCOMP] - arg1[i][BCOMP]) * RGBmult;
 #else
                GLint r = ((GLint) arg0[i][RCOMP] - (GLint) arg1[i][RCOMP]) << RGBshift;
                GLint g = ((GLint) arg0[i][GCOMP] - (GLint) arg1[i][GCOMP]) << RGBshift;
                GLint b = ((GLint) arg0[i][BCOMP] - (GLint) arg1[i][BCOMP]) << RGBshift;
-#endif
                rgba[i][RCOMP] = (GLchan) CLAMP(r, 0, CHAN_MAX);
                rgba[i][GCOMP] = (GLchan) CLAMP(g, 0, CHAN_MAX);
                rgba[i][BCOMP] = (GLchan) CLAMP(b, 0, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2141,11 +2154,11 @@ texture_combine(const GLcontext *ctx,
 #endif
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan a = arg0[i][ACOMP] * arg1[i][ACOMP] * Amult;
+               rgba[i][ACOMP] = arg0[i][ACOMP] * arg1[i][ACOMP] * Amult;
 #else
                GLuint a = (PROD(arg0[i][ACOMP], arg1[i][ACOMP]) >> shift);
-#endif
                rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2155,8 +2168,7 @@ texture_combine(const GLcontext *ctx,
             const GLchan  (*arg1)[4] = (const GLchan (*)[4]) argA[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan a = (arg0[i][ACOMP] + arg1[i][ACOMP]) * Amult;
-               rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAXF);
+               rgba[i][ACOMP] = (arg0[i][ACOMP] + arg1[i][ACOMP]) * Amult;
 #else
                GLint a = ((GLint) arg0[i][ACOMP] + arg1[i][ACOMP]) << Ashift;
                rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAX);
@@ -2170,12 +2182,12 @@ texture_combine(const GLcontext *ctx,
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argA[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan a = (arg0[i][ACOMP] + arg1[i][ACOMP] - 0.5F) * Amult;
+               rgba[i][ACOMP] = (arg0[i][ACOMP] + arg1[i][ACOMP] - 0.5F) * Amult;
 #else
                GLint a = (GLint) arg0[i][ACOMP] + (GLint) arg1[i][ACOMP] -half;
                a = (a < 0) ? 0 : a << Ashift;
-#endif
                rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2189,15 +2201,15 @@ texture_combine(const GLcontext *ctx,
 #endif
             for (i=0; i<n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan a = (arg0[i][ACOMP] * arg2[i][ACOMP] +
-                           arg1[i][ACOMP] * (CHAN_MAXF - arg2[i][ACOMP]))
-                          * Amult;
+               rgba[i][ACOMP] = (arg0[i][ACOMP] * arg2[i][ACOMP] +
+                                 arg1[i][ACOMP] * (CHAN_MAXF - arg2[i][ACOMP]))
+                                * Amult;
 #else
                GLuint a = (PROD(arg0[i][ACOMP], arg2[i][ACOMP])
                            + PROD(arg1[i][ACOMP], CHAN_MAX - arg2[i][ACOMP]))
                               >> shift;
-#endif
                rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2207,11 +2219,11 @@ texture_combine(const GLcontext *ctx,
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
-               GLchan a = (arg0[i][ACOMP] - arg1[i][ACOMP]) * Amult;
+               rgba[i][ACOMP] = (arg0[i][ACOMP] - arg1[i][ACOMP]) * Amult;
 #else
                GLint a = ((GLint) arg0[i][ACOMP] - (GLint) arg1[i][ACOMP]) << RGBshift;
-#endif
                rgba[i][ACOMP] = (GLchan) CLAMP(a, 0, CHAN_MAX);
+#endif
             }
          }
          break;
@@ -2502,6 +2514,8 @@ apply_texture( const GLcontext *ctx,
                return;
 	 }
 	 break;
+
+     /* XXX don't clamp results if GLchan is float??? */
 
       case GL_ADD:  /* GL_EXT_texture_add_env */
          switch (format) {

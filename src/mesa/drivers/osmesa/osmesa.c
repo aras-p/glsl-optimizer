@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.62 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: osmesa.c,v 1.63 2001/07/14 17:53:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1809,9 +1809,9 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
    for (i = 0; i < span.count; i++, img += 4) {			\
       const GLdepth z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {					\
-         PACK_RGBA(img, FixedToInt(span.red),			\
-            FixedToInt(span.green), FixedToInt(span.blue),	\
-            FixedToInt(span.alpha));				\
+         PACK_RGBA(img, FixedToChan(span.red),			\
+            FixedToChan(span.green), FixedToChan(span.blue),	\
+            FixedToChan(span.alpha));				\
          zRow[i] = z;						\
       }								\
       span.red += span.redStep;					\
