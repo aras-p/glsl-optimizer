@@ -26,8 +26,6 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "mga_common.h"
 #include "mga_xmesa.h"
 #include "context.h"
@@ -70,8 +68,12 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
     DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+        DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+    DRI_CONF_SECTION_END
 DRI_CONF_END;
-const GLuint __driNConfigOptions = 1;
+const GLuint __driNConfigOptions = 3;
 
 #ifndef MGA_DEBUG
 int MGA_DEBUG = 0;
@@ -130,10 +132,12 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
 	 }
 
+	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
 	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       }
    }
 #endif
+
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {
       FREE(mgaScreen);
@@ -301,6 +305,7 @@ static const char * const card_extensions[] =
 {
    "GL_ARB_multisample",
    "GL_ARB_texture_compression",
+   "GL_EXT_blend_logic_op",
    "GL_EXT_fog_coord",
    /* paletted_textures currently doesn't work, but we could fix them later */
 #if 0
@@ -328,7 +333,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static int
-get_ust_nop( uint64_t * ust )
+get_ust_nop( int64_t * ust )
 {
    *ust = 1;
    return 0;
@@ -378,7 +383,6 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mmesa->mgaScreen = mgaScreen;
    mmesa->driScreen = sPriv;
    mmesa->sarea = (void *)saPriv;
-   mmesa->glBuffer = NULL;
 
    /* Parse configuration files */
    driParseConfigFiles (&mmesa->optionCache, &mgaScreen->optionCache,
@@ -432,7 +436,11 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 10.0;
    ctx->Const.LineWidthGranularity = 1.0;
 
-   mmesa->default32BitTextures = (mesaVis->rgbBits >= 24);
+   mmesa->texture_depth = driQueryOptioni (&mmesa->optionCache,
+					   "texture_depth");
+   if (mmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+      mmesa->texture_depth = ( mesaVis->rgbBits >= 24 ) ?
+	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
    mmesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
 
    switch (mesaVis->depthBits) {
@@ -616,6 +624,24 @@ mgaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
 }
 
+static void
+mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
+{
+   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+      mgaContextPtr mmesa;
+      GLcontext *ctx;
+      mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
+      ctx = mmesa->glCtx;
+
+      if (ctx->Visual.doubleBufferMode) {
+         _mesa_notifySwapBuffers( ctx );
+         mgaCopyBuffer( dPriv );
+      }
+   } else {
+      /* XXX this shouldn't be an error but we can't handle it for now */
+      _mesa_problem(NULL, "%s: drawable has no context!\n", __FUNCTION__);
+   }
+}
 
 static GLboolean
 mgaUnbindContext(__DRIcontextPrivate *driContextPriv)
@@ -653,7 +679,10 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 
+	 mmesa->mesa_drawable = driDrawPriv;
       }
+
+      mmesa->driReadable = driReadPriv;
 
       _mesa_make_current2(mmesa->glCtx,
                           (GLframebuffer *) driDrawPriv->driverPrivate,
@@ -775,4 +804,3 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 
    return 0;
 }
-#endif

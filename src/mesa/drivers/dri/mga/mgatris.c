@@ -830,7 +830,7 @@ static const char * const fallbackStrings[] = {
    "Texture mode",
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "read buffer",
-   "LogicOp != GL_COPY",
+   "glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ZERO)",
    "glRenderMode(selection or feedback)",
    "No hardware stencil",
    "glDepthFunc( GL_NEVER )",

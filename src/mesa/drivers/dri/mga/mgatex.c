@@ -46,6 +46,8 @@
 
 #include "swrast/swrast.h"
 
+#include "xmlpool.h"
+
 /**
  * Set the texture wrap modes.
  * Currently \c GL_REPEAT, \c GL_CLAMP and \c GL_CLAMP_TO_EDGE are supported.
@@ -134,9 +136,9 @@ mgaSetTexFilter( mgaTextureObjectPtr t, GLenum minf, GLenum magf )
    /* See OpenGL 1.2 specification */
    if (magf == GL_LINEAR && (minf == GL_NEAREST_MIPMAP_NEAREST ||
 			     minf == GL_NEAREST_MIPMAP_LINEAR)) {
-      val |= (0x20 << TF_fthres_SHIFT); /* c = 0.5 */
+      val |= MGA_FIELD( TF_fthres, 0x20 ); /* c = 0.5 */
    } else {
-      val |= (0x10 << TF_fthres_SHIFT); /* c = 0 */
+      val |= MGA_FIELD( TF_fthres, 0x10 ); /* c = 0 */
    }
 
 
@@ -163,38 +165,53 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 		        GLenum format, GLenum type )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   const GLboolean do32bpt = mmesa->default32BitTextures;
+   const GLboolean do32bpt =
+       ( mmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+   const GLboolean force16bpt =
+       ( mmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
+   (void) format;
 
    switch ( internalFormat ) {
    case 4:
    case GL_RGBA:
    case GL_COMPRESSED_RGBA:
-      if ( format == GL_BGRA ) {
-	 if ( type == GL_UNSIGNED_INT_8_8_8_8_REV ) {
-	    return &_mesa_texformat_argb8888;
-	 }
-         else if ( type == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
-            return &_mesa_texformat_argb4444;
-	 }
-         else if ( type == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-	    return &_mesa_texformat_argb1555;
-	 }
+      switch ( type ) {
+      case GL_UNSIGNED_INT_10_10_10_2:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
+	 return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      default:
+         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
       }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
 
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
-      if ( format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5 ) {
+      switch ( type ) {
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
 	 return &_mesa_texformat_rgb565;
+      default:
+         return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
       }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
 
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return !force16bpt ?
+	  &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
 
    case GL_RGBA4:
    case GL_RGBA2:
@@ -207,7 +224,7 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
 
    case GL_RGB5:
    case GL_RGB4:
@@ -303,10 +320,7 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 
       t->setup.texctl = TMC_takey_1 | TMC_tamask_0;
       t->setup.texctl2 = TMC_ckstransdis_enable;
-      t->setup.texfilter = (TF_minfilter_nrst 
-			    | TF_magfilter_nrst
-			    | TF_filteralpha_enable
-			    | TF_uvoffset_OGL);
+      t->setup.texfilter = TF_filteralpha_enable | TF_uvoffset_OGL;
 
       t->border_fallback = GL_FALSE;
       t->texenv_fallback = GL_FALSE;
@@ -334,27 +348,7 @@ static void mgaDDTexEnv( GLcontext *ctx, GLenum target,
       GLubyte c[4];
 
       UNCLAMPED_FLOAT_TO_RGBA_CHAN( c, texUnit->EnvColor );
-      mmesa->envcolor = PACK_COLOR_8888( c[3], c[0], c[1], c[2] );
-
-      if (mmesa->setup.fcol != mmesa->envcolor) {
-	 FLUSH_BATCH(mmesa);
-	 mmesa->setup.fcol = mmesa->envcolor;
-	 mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-
-	 mmesa->blend_flags = 0;
-
-         if ((mmesa->envcolor & 0xffffff) == 0x0) {
-            mmesa->blend_flags |= MGA_BLEND_RGB_ZERO;
-         } else if ((mmesa->envcolor & 0xffffff) == 0xffffff) {
-            mmesa->blend_flags |= MGA_BLEND_RGB_ONE;
-         }
-
-	 if ((mmesa->envcolor >> 24) == 0x0) {
-            mmesa->blend_flags |= MGA_BLEND_ALPHA_ZERO;
-         } else if ((mmesa->envcolor >> 24) == 0xff) {
-            mmesa->blend_flags |= MGA_BLEND_ALPHA_ONE;
-         }
-      }
+      mmesa->envcolor[unit] = PACK_COLOR_8888( c[3], c[0], c[1], c[2] );
       break;
    }
    }

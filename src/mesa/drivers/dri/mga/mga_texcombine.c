@@ -143,9 +143,16 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          }
          break;
       case GL_CONSTANT:
+         if (mmesa->fcol_used &&
+             mmesa->envcolor[source] != mmesa->envcolor[!source])
+            return GL_FALSE;
+
          arg1[i] |= ARG_DISABLE;
          arg2[i] |= TD0_color_arg2_fcol;
          alpha[i] |= TD0_color_alpha_fcol;
+
+         mmesa->setup.fcol = mmesa->envcolor[source];
+         mmesa->fcol_used = GL_TRUE;
          break;
       case GL_PRIMARY_COLOR:
          arg1[i] |= ARG_DISABLE;
@@ -178,12 +185,23 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       case GL_SRC_COLOR:
          arg1[i] |= 0;
          arg2[i] |= 0;
-         alpha[i] |= ARG_DISABLE;
+         if (texUnit->CombineSourceRGB[i] == GL_CONSTANT &&
+             RGBA_EQUAL( mmesa->envcolor[source] )) {
+            alpha[i] |= 0;
+         } else {
+            alpha[i] |= ARG_DISABLE;
+         }
          break;
       case GL_ONE_MINUS_SRC_COLOR:
          arg1[i] |= TD0_color_arg1_inv_enable;
          arg2[i] |= TD0_color_arg2_inv_enable;
-         alpha[i] |= ARG_DISABLE;
+         if (texUnit->CombineSourceRGB[i] == GL_CONSTANT &&
+             RGBA_EQUAL( mmesa->envcolor[source] )) {
+            alpha[i] |= (TD0_color_alpha1inv_enable |
+                         TD0_color_alpha2inv_enable);
+         } else {
+            alpha[i] |= ARG_DISABLE;
+         }
          break;
       case GL_SRC_ALPHA:
          arg1[i] |= TD0_color_arg1_replicatealpha_enable;
@@ -346,7 +364,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
       *reg |= TD0_color_addbias_enable;
       /* fallthrough */
    case GL_ADD:
-      if (args[0] == MGA_ALPHA || args[1] == MGA_ALPHA){
+      if (args[0] == MGA_ALPHA || args[1] == MGA_ALPHA) {
          /* Can't get alpha to the adder */
          return GL_FALSE;
       }
@@ -396,7 +414,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
                      TD0_color_sel_arg2 |
                      TD0_alpha_arg2_prevstage |
                      TD0_alpha_sel_arg2);
-         mmesa->dualtex_env = GL_TRUE;
+         mmesa->force_dualtex = GL_TRUE;
       }
       break;
    case GL_SUBTRACT:
@@ -538,8 +556,15 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          }
          break;
       case GL_CONSTANT:
+         if (mmesa->fcol_used &&
+             mmesa->envcolor[source] != mmesa->envcolor[!source])
+            return GL_FALSE;
+
          arg1[i] |= ARG_DISABLE;
          arg2[i] |= TD0_alpha_arg2_fcol;
+
+         mmesa->setup.fcol = mmesa->envcolor[source];
+         mmesa->fcol_used = GL_TRUE;
          break;
       case GL_PRIMARY_COLOR:
          arg1[i] |= ARG_DISABLE;
@@ -595,7 +620,7 @@ GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit )
          return GL_FALSE;
       }
 
-      if (args[0] == MGA_ARG1){
+      if (args[0] == MGA_ARG1) {
          *reg |= TD0_alpha_sel_arg1;
       } else if (args[0] == MGA_ARG2) {
          *reg |= TD0_alpha_sel_arg2;

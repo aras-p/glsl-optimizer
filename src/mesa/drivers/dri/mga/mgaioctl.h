@@ -33,7 +33,7 @@
 #include "mgacontext.h"
 #include "mga_xmesa.h"
 
-void mgaSwapBuffers( __DRIdrawablePrivate *dPriv );
+void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv );
 void mgaWaitForVBlank( mgaContextPtr mmesa );
 
 GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords );

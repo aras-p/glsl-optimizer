@@ -37,7 +37,7 @@
 
 
 #define LOCAL_VARS					\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;	\
+   __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;	\
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
    GLuint pitch = mgaScreen->frontPitch;		\
@@ -56,7 +56,7 @@
 
 
 #define LOCAL_DEPTH_VARS						\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
+   __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;			\
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
    GLuint pitch = mgaScreen->frontPitch;				\
@@ -242,20 +242,22 @@ static void mgaDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
                            GLuint bufferBit)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   unsigned int   offset;
 
-   if (bufferBit == FRONT_LEFT_BIT) 
-   {
-      mmesa->drawOffset = mmesa->mgaScreen->frontOffset;
-      mmesa->readOffset = mmesa->mgaScreen->frontOffset;
-   } 
-   else if (bufferBit == BACK_LEFT_BIT)
-   {
-      mmesa->drawOffset = mmesa->mgaScreen->backOffset;
-      mmesa->readOffset = mmesa->mgaScreen->backOffset;
-   }
-   else {
-      assert(0);
-   }
+   assert( (bufferBit == FRONT_LEFT_BIT) || (bufferBit == BACK_LEFT_BIT) );
+
+   offset = (bufferBit == FRONT_LEFT_BIT)
+       ? mmesa->mgaScreen->frontOffset
+       : mmesa->mgaScreen->backOffset;
+
+   mmesa->drawOffset = offset;
+   mmesa->readOffset = offset;
+
+   assert( (buffer == mmesa->driDrawable->driverPrivate)
+	   || (buffer == mmesa->driReadable->driverPrivate) );
+
+   mmesa->mesa_drawable = (buffer == mmesa->driDrawable->driverPrivate)
+       ? mmesa->driDrawable : mmesa->driReadable;
 }
 
 void mgaDDInitSpanFuncs( GLcontext *ctx )

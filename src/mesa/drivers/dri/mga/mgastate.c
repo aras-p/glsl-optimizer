@@ -48,13 +48,10 @@
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "xmlpool.h"
 
 static void updateSpecularLighting( GLcontext *ctx );
 
-
-/* Some outstanding problems with accelerating logic ops...
- */
-#if defined(ACCEL_ROP)
 static const GLuint mgarop_NoBLK[16] = {
    DC_atype_rpl  | 0x00000000, DC_atype_rstr | 0x00080000,
    DC_atype_rstr | 0x00040000, DC_atype_rpl  | 0x000c0000,
@@ -65,8 +62,6 @@ static const GLuint mgarop_NoBLK[16] = {
    DC_atype_rpl  | 0x00030000, DC_atype_rstr | 0x000b0000,
    DC_atype_rstr | 0x00070000, DC_atype_rpl  | 0x000f0000
 };
-#endif
-
 
 /* =============================================================
  * Alpha blending
@@ -111,27 +106,32 @@ static void mgaDDAlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
       break;
    }
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.alpha_func = a | MGA_FIELD( AC_atref, refByte );
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+}
+
+static void updateBlendLogicOp(GLcontext *ctx)
+{
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
+
+   mmesa->hw.blend_func_enable =
+      (ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled) ? ~0 : 0;
+
+   FALLBACK( ctx, MGA_FALLBACK_BLEND,
+             ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled &&
+             mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
 static void mgaDDBlendEquation(GLcontext *ctx, GLenum mode)
 {
-   FLUSH_BATCH( MGA_CONTEXT(ctx) );
-
-   /* BlendEquation sets ColorLogicOpEnabled in an unexpected 
-    * manner.  
-    */
-   FALLBACK( ctx, MGA_FALLBACK_LOGICOP,
-	     (ctx->Color.ColorLogicOpEnabled && 
-	      ctx->Color.LogicOp != GL_COPY));
+   updateBlendLogicOp( ctx );
 }
 
 static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;
    GLuint   src;
    GLuint   dst;
 
@@ -150,11 +150,11 @@ static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
    case GL_ONE_MINUS_SRC_ALPHA:
       src = AC_src_om_src_alpha; break;
    case GL_DST_ALPHA:
-      src = (mgaScreen->cpp == 4) 
+      src = (ctx->Visual.alphaBits > 0)
 	  ? AC_src_dst_alpha : AC_src_one;
       break;
    case GL_ONE_MINUS_DST_ALPHA:
-      src = (mgaScreen->cpp == 4)
+      src = (ctx->Visual.alphaBits > 0)
 	  ? AC_src_om_dst_alpha : AC_src_zero;
       break;
    case GL_SRC_ALPHA_SATURATE:
@@ -178,18 +178,21 @@ static void mgaDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
    case GL_ONE_MINUS_SRC_COLOR:
       dst = AC_dst_om_src_color; break;
    case GL_DST_ALPHA:
-      dst = (mgaScreen->cpp == 4)
+      dst = (ctx->Visual.alphaBits > 0)
 	  ? AC_dst_dst_alpha : AC_dst_one;
       break;
    case GL_ONE_MINUS_DST_ALPHA:
-      dst = (mgaScreen->cpp == 4)
+      dst = (ctx->Visual.alphaBits > 0)
 	  ? AC_dst_om_dst_alpha : AC_dst_zero;
       break;
    }
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.blend_func = (src | dst);
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+
+   FALLBACK( ctx, MGA_FALLBACK_BLEND,
+             ctx->Color.BlendEnabled && !ctx->Color._LogicOpEnabled &&
+             mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
 static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
@@ -198,7 +201,6 @@ static void mgaDDBlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
 {
    mgaDDBlendFunc( ctx, sfactorRGB, dfactorRGB );
 }
-
 
 /* =============================================================
  * Depth testing
@@ -233,10 +235,9 @@ static void mgaDDDepthFunc(GLcontext *ctx, GLenum func)
       zmode = 0; break;
    }
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.zmode &= DC_zmode_MASK;
    mmesa->hw.zmode |= zmode;
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 }
 
 static void mgaDDDepthMask(GLcontext *ctx, GLboolean flag)
@@ -244,10 +245,9 @@ static void mgaDDDepthMask(GLcontext *ctx, GLboolean flag)
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.zmode &= DC_atype_MASK;
    mmesa->hw.zmode |= (flag) ? DC_atype_zi : DC_atype_i;
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 }
 
 
@@ -343,8 +343,7 @@ static void mgaDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
-
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode != GL_FRONT_AND_BACK) 
    {
@@ -363,8 +362,6 @@ static void mgaDDCullFaceFrontFace(GLcontext *ctx, GLenum unused)
       mmesa->hw.cull = _CULL_DISABLE;
       mmesa->hw.cull_dualtex = _CULL_DISABLE;
    }
-
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 }
 
 
@@ -494,8 +491,6 @@ static void updateSpecularLighting( GLcontext *ctx )
    if ( specen != mmesa->hw.specen ) {
       mmesa->hw.specen = specen;
       mmesa->dirty |= MGA_UPLOAD_TEX0 | MGA_UPLOAD_TEX1;
-      
-      mgaChooseVertexState( ctx );
    }
 }
 
@@ -527,7 +522,7 @@ static void mgaDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref,
    GLuint  stencil;
    GLuint  stencilctl;
 
-   stencil = (ref << S_sref_SHIFT) | (mask << S_smsk_SHIFT);
+   stencil = MGA_FIELD( S_sref, ref ) | MGA_FIELD( S_smsk, mask );
    switch (func)
    {
    case GL_NEVER:
@@ -557,22 +552,20 @@ static void mgaDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref,
       break;
    }
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.stencil &= (S_sref_MASK & S_smsk_MASK);
    mmesa->hw.stencil |= stencil;
    mmesa->hw.stencilctl &= SC_smode_MASK;
    mmesa->hw.stencilctl |= stencilctl;
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 }
 
 static void mgaDDStencilMask(GLcontext *ctx, GLuint mask)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.stencil &= S_swtmsk_MASK;
-   mmesa->hw.stencil |= (mask << S_swtmsk_SHIFT);
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+   mmesa->hw.stencil |= MGA_FIELD( S_swtmsk, mask );
 }
 
 static void mgaDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
@@ -672,11 +665,10 @@ static void mgaDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
       break;
    }
 
-   FLUSH_BATCH( mmesa );
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.stencilctl &= (SC_sfailop_MASK & SC_szfailop_MASK 
 			    & SC_szpassop_MASK);
    mmesa->hw.stencilctl |= stencilctl;
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 }
 
 
@@ -747,14 +739,8 @@ static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
-   FLUSH_BATCH( mmesa );
-#if defined(ACCEL_ROP)
+   MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
    mmesa->hw.rop = mgarop_NoBLK[ opcode & 0x0f ];
-   mmesa->dirty |= MGA_UPLOAD_CONTEXT;
-#else
-   FALLBACK( ctx, MGA_FALLBACK_LOGICOP,
-	     (ctx->Color.ColorLogicOpEnabled && opcode != GL_COPY) );
-#endif
 }
 
 
@@ -884,27 +870,24 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
    switch(cap) {
+   case GL_DITHER:
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
+      if (!ctx->Color.DitherFlag)
+	 mmesa->setup.maccess |= MA_nodither_enable;
+      else
+	 mmesa->setup.maccess &= ~MA_nodither_enable;
+      break;
    case GL_LIGHTING:
    case GL_COLOR_SUM_EXT:
       FLUSH_BATCH( mmesa );
       updateSpecularLighting( ctx );
       break;
    case GL_ALPHA_TEST:
-      FLUSH_BATCH( mmesa );
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
       mmesa->hw.alpha_func_enable = (state) ? ~0 : 0;
       break;
-   case GL_BLEND:
-      FLUSH_BATCH( mmesa );
-      mmesa->hw.blend_func_enable = (state) ? ~0 : 0;
-
-      /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
-       */
-      FALLBACK( ctx, MGA_FALLBACK_LOGICOP,
-		(ctx->Color.ColorLogicOpEnabled && 
-		 ctx->Color.LogicOp != GL_COPY));
-      break;
    case GL_DEPTH_TEST:
-      FLUSH_BATCH( mmesa );
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
       FALLBACK (ctx, MGA_FALLBACK_DEPTH,
 		ctx->Depth.Func == GL_NEVER && ctx->Depth.Test);
       break;
@@ -921,8 +904,6 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 	 mmesa->setup.maccess |= MA_fogen_enable;
       else
 	 mmesa->setup.maccess &= ~MA_fogen_enable;
-      
-      mgaChooseVertexState( ctx );
       break;
    case GL_CULL_FACE:
       mgaDDCullFaceFrontFace( ctx, 0 );
@@ -933,22 +914,20 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       break;
    case GL_POLYGON_STIPPLE:
       if (mmesa->haveHwStipple && mmesa->raster_primitive == GL_TRIANGLES) {
-	 FLUSH_BATCH(mmesa);
-	 mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+	 MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
 	 mmesa->setup.dwgctl &= ~(0xf<<20);
 	 if (state)
 	    mmesa->setup.dwgctl |= mmesa->poly_stipple;
       }
       break;
+
+   case GL_BLEND:
    case GL_COLOR_LOGIC_OP:
-      FLUSH_BATCH( mmesa );
-#if !defined(ACCEL_ROP)
-      FALLBACK( ctx, MGA_FALLBACK_LOGICOP, 
-		(state && ctx->Color.LogicOp != GL_COPY));
-#endif
+      updateBlendLogicOp( ctx );
       break;
+
    case GL_STENCIL_TEST:
-      FLUSH_BATCH( mmesa );
+      MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
       if (mmesa->hw_stencil) {
 	 mmesa->hw.stencil_enable = ( state ) ? ~0 : 0;
       }
@@ -1013,23 +992,17 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
       mmesa->setup.dwgctl |= (ctx->Depth.Test)
 	  ? mmesa->hw.zmode : (DC_zmode_nozcmp | DC_atype_i);
 
-#if defined(ACCEL_ROP)
       mmesa->setup.dwgctl &= DC_bop_MASK;
-      mmesa->setup.dwgctl |= (ctx->Color.ColorLogicOpEnabled)
+      mmesa->setup.dwgctl |= (ctx->Color._LogicOpEnabled)
 	  ? mmesa->hw.rop : mgarop_NoBLK[ GL_COPY & 0x0f ];
-#endif
 
       mmesa->setup.alphactrl &= AC_src_MASK & AC_dst_MASK & AC_atmode_MASK
-	  & AC_atref_MASK & AC_alphasel_MASK;
+	 & AC_atref_MASK & AC_alphasel_MASK;
       mmesa->setup.alphactrl |= 
-	  ((mmesa->hw.alpha_func & mmesa->hw.alpha_func_enable)
-	   | ((mmesa->hw.blend_func & mmesa->hw.blend_func_enable)
-	      | ((AC_src_one | AC_dst_zero) & ~mmesa->hw.blend_func_enable))
-	   | mmesa->hw.alpha_sel
-	   | (AC_amode_alpha_channel
-	      | AC_astipple_disable 
-	      | AC_aten_disable 
-	      | AC_atmode_noacmp));
+	 (mmesa->hw.alpha_func & mmesa->hw.alpha_func_enable) |
+	 (mmesa->hw.blend_func & mmesa->hw.blend_func_enable) |
+	 ((AC_src_one | AC_dst_zero) & ~mmesa->hw.blend_func_enable) |
+	 mmesa->hw.alpha_sel;
 
       memcpy( &sarea->ContextState, &mmesa->setup, sizeof(mmesa->setup));
    }
@@ -1046,19 +1019,11 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 	     sizeof(sarea->TexState[1]));
    }
 
-   if (mmesa->dualtex_env) {
-      sarea->TexState[0].texctl2 |= TMC_dualtex_enable;
-      memcpy( &sarea->TexState[1], &sarea->TexState[0],
-	      sizeof(sarea->TexState[0]) );
-      mmesa->dirty |= MGA_UPLOAD_TEX1|MGA_UPLOAD_TEX0;
-   } else if ( (sarea->TexState[0].texctl2 & TMC_borderen_MASK) !=
-               (sarea->TexState[1].texctl2 & TMC_borderen_MASK) ) {
-      const int borderen = sarea->TexState[1].texctl2 & ~TMC_borderen_MASK;
-
-      memcpy( &sarea->TexState[1], &sarea->TexState[0],
-	      sizeof(sarea->TexState[0]) );
-      sarea->TexState[1].texctl2 |= borderen;
-      mmesa->dirty |= MGA_UPLOAD_TEX1|MGA_UPLOAD_TEX0;
+   if (mmesa->dirty & (MGA_UPLOAD_TEX0 | MGA_UPLOAD_TEX1)) {
+      sarea->TexState[0].texctl2 &= ~TMC_specen_enable;
+      sarea->TexState[1].texctl2 &= ~TMC_specen_enable;
+      sarea->TexState[0].texctl2 |= mmesa->hw.specen;
+      sarea->TexState[1].texctl2 |= mmesa->hw.specen;
    }
 
    if (mmesa->dirty & MGA_UPLOAD_PIPE) {
@@ -1069,13 +1034,7 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 
    mmesa->sarea->dirty |= mmesa->dirty;
    mmesa->dirty &= MGA_UPLOAD_CLIPRECTS;
-
-   sarea->TexState[0].texctl2 &= ~TMC_specen_enable;
-   sarea->TexState[1].texctl2 &= ~TMC_specen_enable;
-   sarea->TexState[0].texctl2 |= mmesa->hw.specen;
-   sarea->TexState[1].texctl2 |= mmesa->hw.specen;
 }
-
 
 /* =============================================================
  */
@@ -1155,6 +1114,9 @@ void mgaInitState( mgaContextPtr mmesa )
 			   MA_tlutload_disable |
 			   MA_nodither_disable |
 			   MA_dit555_disable);
+   if (driQueryOptioni (&mmesa->optionCache, "color_reduction") !=
+       DRI_CONF_COLOR_REDUCTION_DITHER)
+      mmesa->setup.maccess |= MA_nodither_enable;
 
    switch (mmesa->mgaScreen->cpp) {
    case 2:
@@ -1182,14 +1144,20 @@ void mgaInitState( mgaContextPtr mmesa )
    }
 
    mmesa->hw.blend_func = AC_src_one | AC_dst_zero;
+   mmesa->hw.blend_func_enable = 0;
+   mmesa->hw.alpha_func = AC_atmode_noacmp | MGA_FIELD( AC_atref, 0x00 );
+   mmesa->hw.alpha_func_enable = 0;
+   mmesa->hw.rop = mgarop_NoBLK[ GL_COPY & 0x0f ];
    mmesa->hw.zmode = DC_zmode_zlt | DC_atype_zi;
-   mmesa->hw.stencil = (0x0ff << S_smsk_SHIFT) | (0x0ff << S_swtmsk_SHIFT);
+   mmesa->hw.stencil = MGA_FIELD( S_sref, 0x00) | MGA_FIELD( S_smsk, 0xff ) |
+      MGA_FIELD( S_swtmsk, 0xff );
    mmesa->hw.stencilctl = SC_smode_salways | SC_sfailop_keep 
-       | SC_szfailop_keep | SC_szpassop_keep;
+      | SC_szfailop_keep | SC_szpassop_keep;
    mmesa->hw.stencil_enable = 0;
    mmesa->hw.cull = _CULL_DISABLE;
    mmesa->hw.cull_dualtex = _CULL_DISABLE;
    mmesa->hw.specen = 0;
+   mmesa->hw.alpha_sel = AC_alphasel_diffused;
 
    mmesa->setup.dwgctl = (DC_opcod_trap |
 			  DC_linear_xy |
@@ -1197,22 +1165,17 @@ void mgaInitState( mgaContextPtr mmesa )
 			  DC_arzero_disable |
 			  DC_sgnzero_disable |
 			  DC_shftzero_enable |
-			  (0xC << DC_bop_SHIFT) |
-			  (0x0 << DC_trans_SHIFT) |
+			  MGA_FIELD( DC_bop, 0xC ) |
+			  MGA_FIELD( DC_trans, 0x0 ) |
 			  DC_bltmod_bmonolef |
 			  DC_pattern_disable |
 			  DC_transc_disable |
 			  DC_clipdis_disable);
 
-
    mmesa->setup.plnwt = ~0;
-   mmesa->setup.alphactrl = ( AC_src_one |
-			      AC_dst_zero |
-			      AC_amode_FCOL |
-			      AC_astipple_disable |
-			      AC_aten_disable |
-			      AC_atmode_noacmp |
-			      AC_alphasel_fromtex );
+   mmesa->setup.alphactrl = (AC_amode_alpha_channel |
+			     AC_astipple_disable |
+			     AC_aten_disable);
 
    mmesa->setup.fogcolor = PACK_COLOR_888((GLubyte)(ctx->Fog.Color[0]*255.0F),
 					  (GLubyte)(ctx->Fog.Color[1]*255.0F),
@@ -1224,9 +1187,8 @@ void mgaInitState( mgaContextPtr mmesa )
    mmesa->setup.fcol = 0;
    mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 
-   mmesa->envcolor = 0;
-   mmesa->blend_flags = MGA_BLEND_RGB_ZERO | MGA_BLEND_ALPHA_ZERO;
-   mmesa->dualtex_env = GL_FALSE;
+   mmesa->envcolor[0] = 0;
+   mmesa->envcolor[1] = 0;
 }
 
 

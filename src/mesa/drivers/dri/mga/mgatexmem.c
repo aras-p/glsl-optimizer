@@ -131,10 +131,6 @@ static void mgaUploadSubImage( mgaContextPtr mmesa,
       for ( i = 0 ; i < hwlevel ; i++ ) {
 	 offset += (t->offsets[1] >> (i * 2));
       }
-
-      /* Each mipmap must be DWORD aligned.
-       */
-      offset &= ~0x03;
    }
 
 
