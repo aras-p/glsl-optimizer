@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.6 2001/05/09 20:45:00 brianp Exp $ */
+/* $Id: wgl.c,v 1.7 2001/07/27 14:03:55 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -247,6 +247,116 @@ static FIXED FixedFromDouble(double d)
    return *(FIXED *)&l;
 }
 
+
+/*
+** This is cribbed from FX/fxwgl.c, and seems to implement support
+** for bitmap fonts where the wglUseFontBitmapsA() code implements
+** support for outline fonts.  In combination they hopefully give
+** fairly generic support for fonts.
+*/
+static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
+                                 DWORD numChars, DWORD listBase)
+{
+#define VERIFY(a) a
+
+  TEXTMETRIC metric;
+  BITMAPINFO *dibInfo;
+  HDC bitDevice;
+  COLORREF tempColor;
+  int i;
+
+  VERIFY(GetTextMetrics(fontDevice, &metric));
+
+  dibInfo = (BITMAPINFO *) calloc(sizeof(BITMAPINFO) + sizeof(RGBQUAD), 1);
+  dibInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  dibInfo->bmiHeader.biPlanes = 1;
+  dibInfo->bmiHeader.biBitCount = 1;
+  dibInfo->bmiHeader.biCompression = BI_RGB;
+
+  bitDevice = CreateCompatibleDC(fontDevice);
+  // HDC bitDevice = CreateDC("DISPLAY", NULL, NULL, NULL);
+  // VERIFY(bitDevice);
+
+  // Swap fore and back colors so the bitmap has the right polarity
+  tempColor = GetBkColor(bitDevice);
+  SetBkColor(bitDevice, GetTextColor(bitDevice));
+  SetTextColor(bitDevice, tempColor);
+
+  // Place chars based on base line
+  VERIFY(SetTextAlign(bitDevice, TA_BASELINE) >= 0 ? 1 : 0);
+
+  for(i = 0; i < numChars; i++) {
+    SIZE size;
+    char curChar;
+    int charWidth,charHeight,bmapWidth,bmapHeight,numBytes,res;
+    HBITMAP bitObject;
+    HGDIOBJ origBmap;
+    unsigned char *bmap;
+
+    curChar = i + firstChar;
+
+    // Find how high/wide this character is
+    VERIFY(GetTextExtentPoint32(bitDevice, &curChar, 1, &size));
+
+    // Create the output bitmap
+    charWidth = size.cx;
+    charHeight = size.cy;
+    bmapWidth = ((charWidth + 31) / 32) * 32;   // Round up to the next multiple of 32 bits
+    bmapHeight = charHeight;
+    bitObject = CreateCompatibleBitmap(bitDevice,
+                                       bmapWidth,
+                                       bmapHeight);
+    //VERIFY(bitObject);
+
+    // Assign the output bitmap to the device
+    origBmap = SelectObject(bitDevice, bitObject);
+    VERIFY(origBmap);
+
+    VERIFY( PatBlt( bitDevice, 0, 0, bmapWidth, bmapHeight,BLACKNESS ) );
+
+    // Use our source font on the device
+    VERIFY(SelectObject(bitDevice, GetCurrentObject(fontDevice,OBJ_FONT)));
+
+    // Draw the character
+    VERIFY(TextOut(bitDevice, 0, metric.tmAscent, &curChar, 1));
+
+    // Unselect our bmap object
+    VERIFY(SelectObject(bitDevice, origBmap));
+
+    // Convert the display dependant representation to a 1 bit deep DIB
+    numBytes = (bmapWidth * bmapHeight) / 8;
+    bmap = malloc(numBytes);
+    dibInfo->bmiHeader.biWidth = bmapWidth;
+    dibInfo->bmiHeader.biHeight = bmapHeight;
+    res = GetDIBits(bitDevice, bitObject, 0, bmapHeight, bmap,
+                    dibInfo,
+                    DIB_RGB_COLORS);
+    //VERIFY(res);
+
+    // Create the GL object
+    glNewList(i + listBase, GL_COMPILE);
+    glBitmap(bmapWidth, bmapHeight, 0.0, metric.tmDescent,
+             charWidth, 0.0,
+             bmap);
+    glEndList();
+    // CheckGL();
+
+    // Destroy the bmap object
+    DeleteObject(bitObject);
+
+    // Deallocate the bitmap data
+    free(bmap);
+  }
+
+  // Destroy the DC
+  VERIFY(DeleteDC(bitDevice));
+
+  free(dibInfo);
+
+  return TRUE;
+#undef VERIFY
+}
+
 GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
                                        DWORD count, DWORD listBase)
 {
@@ -257,6 +367,7 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
    HANDLE hBits;
    LPSTR lpBits;
    MAT2 mat;
+   int  success = TRUE;
 
    if (first<0)
       return FALSE;
@@ -274,6 +385,19 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
 
    memset(&gm,0,sizeof(gm));
 
+   /*
+   ** If we can't get the glyph outline, it may be because this is a fixed
+   ** font.  Try processing it that way.
+   */
+   if( GetGlyphOutline(hdc, first, GGO_BITMAP, &gm, 0, NULL, &mat)
+       == GDI_ERROR )
+   {
+       return wglUseFontBitmaps_FX( hdc, first, count, listBase );
+   }
+
+   /*
+   ** Otherwise process all desired characters.
+   */
    for (i = 0; i < count; i++)
    {
        DWORD err;
@@ -284,8 +408,10 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
       size = GetGlyphOutline(hdc, first + i, GGO_BITMAP, &gm, 0, NULL, &mat);
       if (size == GDI_ERROR)
       {
+         glEndList( );
          err = GetLastError();
-         return(FALSE);
+         success = FALSE;
+         continue;
       }
 
       hBits  = GlobalAlloc(GHND, size+1);
@@ -304,12 +430,13 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
 
       if (err == GDI_ERROR)
       {
-         err = GetLastError();
-
          GlobalUnlock(hBits);
          GlobalFree(hBits);
-
-         return(FALSE);
+         
+         glEndList( );
+         err = GetLastError();
+         success = FALSE;
+         continue;
       }
 
       glBitmap(gm.gmBlackBoxX,gm.gmBlackBoxY,
@@ -324,8 +451,9 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
       glEndList( );
    }
 
-   return TRUE;
+   return success;
 }
+
 
 GLAPI BOOL GLWINAPI wglUseFontBitmapsW(HDC hdc,DWORD first,DWORD count,DWORD listBase)
 {
