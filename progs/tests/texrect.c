@@ -1,4 +1,4 @@
-/* $Id: texrect.c,v 1.4 2003/05/30 15:37:47 brianp Exp $ */
+/* $Id: texrect.c,v 1.5 2004/05/06 20:27:32 brianp Exp $ */
 
 /* GL_NV_texture_rectangle test
  *
@@ -21,9 +21,14 @@
 #define TEX0 1
 #define TEX7 8
 #define ANIMATE 10
+#define CLAMP 20
+#define CLAMP_TO_EDGE 21
+#define CLAMP_TO_BORDER 22
+#define LINEAR_FILTER 30
+#define NEAREST_FILTER 31
 #define QUIT 100
 
-static GLboolean Animate = GL_TRUE;
+static GLboolean Animate = GL_FALSE;
 static GLint NumUnits = 2;
 static GLboolean TexEnabled[8];
 static GLint Width[8], Height[8];  /* image sizes */
@@ -34,7 +39,7 @@ static GLfloat Xrot = 00.0, Yrot = 00.0, Zrot = 0.0;
 
 static void Idle( void )
 {
-   Zrot += 1.0;
+   Zrot = glutGet(GLUT_ELAPSED_TIME) * 0.01;
    glutPostRedisplay();
 }
 
@@ -42,7 +47,7 @@ static void Idle( void )
 static void DrawObject(void)
 {
    GLint i;
-   GLfloat d = 0;  /* set this >0 to test clamping */
+   GLfloat d = 10;  /* so we can see how borders are handled */
 
    glColor3f(.1, .1, .1);  /* modulate this */
 
@@ -57,11 +62,11 @@ static void DrawObject(void)
       glVertex2f(-1.0, -1.0);
 
       for (i = 0; i < NumUnits; i++)
-         glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, Width[i]+d, -3);
+         glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, Width[i]+d, -d);
       glVertex2f(1.0, -1.0);
 
       for (i = 0; i < NumUnits; i++)
-         glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, Width[i]+d, Height[i]+3);
+         glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, Width[i]+d, Height[i]+d);
       glVertex2f(1.0, 1.0);
 
       for (i = 0; i < NumUnits; i++)
@@ -103,9 +108,10 @@ static void Reshape( int width, int height )
 
 static void ModeMenu(int entry)
 {
+   GLint i;
    if (entry >= TEX0 && entry < TEX0 + NumUnits) {
       /* toggle */
-      GLint i = entry - TEX0;
+      i = entry - TEX0;
       TexEnabled[i] = !TexEnabled[i];
       glActiveTextureARB(GL_TEXTURE0_ARB + i);
       if (TexEnabled[i]) {
@@ -126,6 +132,42 @@ static void ModeMenu(int entry)
       else
          glutIdleFunc(NULL);
    }
+   else if (entry==CLAMP) {
+      for (i = 0; i < NumUnits; i++) {
+         glActiveTextureARB(GL_TEXTURE0_ARB + i);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_S, GL_CLAMP);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      }
+   }
+   else if (entry==CLAMP_TO_EDGE) {
+      for (i = 0; i < NumUnits; i++) {
+         glActiveTextureARB(GL_TEXTURE0_ARB + i);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      }
+   }
+   else if (entry==CLAMP_TO_BORDER) {
+      for (i = 0; i < NumUnits; i++) {
+         glActiveTextureARB(GL_TEXTURE0_ARB + i);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+      }
+   }
+   else if (entry==NEAREST_FILTER) {
+      for (i = 0; i < NumUnits; i++) {
+         glActiveTextureARB(GL_TEXTURE0_ARB + i);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
+   }
+   else if (entry==LINEAR_FILTER) {
+      for (i = 0; i < NumUnits; i++) {
+         glActiveTextureARB(GL_TEXTURE0_ARB + i);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      }
+   }
+
    else if (entry==QUIT) {
       exit(0);
    }
@@ -139,6 +181,19 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
+      case 'z':
+         Zrot -= 1.0;
+         break;
+      case 'Z':
+         Zrot += 1.0;
+         break;
+      case 'a':
+         Animate = !Animate;
+         if (Animate)
+            glutIdleFunc(Idle);
+         else
+            glutIdleFunc(NULL);
+         break;
       case 27:
          exit(0);
          break;
@@ -173,6 +228,7 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( int argc, char *argv[] )
 {
+   const GLenum wrap = GL_CLAMP;
    GLuint texObj[8];
    GLint size, i;
 
@@ -213,6 +269,8 @@ static void Init( int argc, char *argv[] )
                       GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_RECTANGLE_NV,
                       GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_S, wrap);
+      glTexParameteri(GL_TEXTURE_RECTANGLE_NV, GL_TEXTURE_WRAP_T, wrap);
 
       if (i == 0) {
          GLubyte *img = LoadRGBImage(TEXTURE_0_FILE, &Width[0], &Height[0],
@@ -289,6 +347,11 @@ int main( int argc, char *argv[] )
       glutAddMenuEntry(s, TEX0 + i);
    }
    glutAddMenuEntry("Toggle Animation", ANIMATE);
+   glutAddMenuEntry("GL_CLAMP", CLAMP);
+   glutAddMenuEntry("GL_CLAMP_TO_EDGE", CLAMP_TO_EDGE);
+   glutAddMenuEntry("GL_CLAMP_TO_BORDER", CLAMP_TO_BORDER);
+   glutAddMenuEntry("GL_NEAREST", NEAREST_FILTER);
+   glutAddMenuEntry("GL_LINEAR", LINEAR_FILTER);
    glutAddMenuEntry("Quit", QUIT);
    glutAttachMenu(GLUT_RIGHT_BUTTON);
 
