@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.81 2001/03/03 20:33:28 brianp Exp $ */
+/* $Id: teximage.c,v 1.82 2001/03/05 22:18:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1637,6 +1637,8 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
    if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
@@ -1678,6 +1680,8 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
@@ -1721,6 +1725,8 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
@@ -2243,6 +2249,8 @@ _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
                               width, 1, 1, format, GL_NONE)) {
       return;   /* error was detected */
@@ -2277,6 +2285,8 @@ _mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                               width, height, 1, format, GL_NONE)) {
       return;   /* error was detected */
@@ -2310,6 +2320,8 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
                               width, height, depth, format, GL_NONE)) {
