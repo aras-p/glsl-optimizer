@@ -13,7 +13,7 @@ default: $(LIB_DIR) subdirs
 subdirs:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir ; make) ; \
+			(cd $$dir ; make) || exit 1 ; \
 		fi \
 	done
 
