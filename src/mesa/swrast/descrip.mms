@@ -43,3 +43,32 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+s_aaline.obj : s_aaline.c
+s_aatriangle.obj : s_aatriangle.c
+s_accum.obj : s_accum.c
+s_alpha.obj : s_alpha.c
+s_alphabuf.obj : s_alphabuf.c
+s_bitmap.obj : s_bitmap.c
+s_blend.obj : s_blend.c
+s_buffers.obj : s_buffers.c
+s_context.obj : s_context.c
+s_copypix.obj : s_copypix.c
+s_depth.obj : s_depth.c
+s_drawpix.obj : s_drawpix.c
+s_feedback.obj : s_feedback.c
+s_fog.obj : s_fog.c
+s_imaging.obj : s_imaging.c
+s_lines.obj : s_lines.c
+s_logic.obj : s_logic.c
+s_masking.obj : s_masking.c
+s_nvfragprog.obj : s_nvfragprog.c
+s_pixeltex.obj : s_pixeltex.c
+s_points.obj : s_points.c
+s_readpix.obj : s_readpix.c
+s_span.obj : s_span.c
+s_stencil.obj : s_stencil.c
+s_texstore.obj : s_texstore.c
+s_texture.obj : s_texture.c
+s_triangle.obj : s_triangle.c
+s_zoom.obj : s_zoom.c

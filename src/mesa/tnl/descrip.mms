@@ -42,3 +42,26 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+t_array_api.obj : t_array_api.c
+t_array_import.obj : t_array_import.c
+t_context.obj : t_context.c
+t_eval_api.obj : t_eval_api.c
+t_imm_alloc.obj : t_imm_alloc.c
+t_imm_api.obj : t_imm_api.c
+t_imm_debug.obj : t_imm_debug.c
+t_imm_dlist.obj : t_imm_dlist.c
+t_imm_elt.obj : t_imm_elt.c
+t_imm_eval.obj : t_imm_eval.c
+t_imm_exec.obj : t_imm_exec.c
+t_imm_fixup.obj : t_imm_fixup.c
+t_pipeline.obj : t_pipeline.c
+t_vb_fog.obj : t_vb_fog.c
+t_vb_light.obj : t_vb_light.c
+t_vb_normals.obj : t_vb_normals.c
+t_vb_points.obj : t_vb_points.c
+t_vb_program.obj : t_vb_program.c
+t_vb_render.obj : t_vb_render.c
+t_vb_texgen.obj : t_vb_texgen.c
+t_vb_texmat.obj : t_vb_texmat.c
+t_vb_vertex.obj : t_vb_vertex.c

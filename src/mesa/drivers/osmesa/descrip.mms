@@ -36,3 +36,5 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+osmesa.obj : osmesa.c

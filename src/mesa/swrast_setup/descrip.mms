@@ -34,3 +34,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+ss_context.obj : ss_context.c
+ss_triangle.obj : ss_triangle.c
+ss_vb.obj : ss_vb.c

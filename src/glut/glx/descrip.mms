@@ -159,3 +159,50 @@ clean :
 	purge
 
 include mms_depend.
+
+glut_8x13.obj : glut_8x13.c
+glut_9x15.obj : glut_9x15.c
+glut_bitmap.obj : glut_bitmap.c
+glut_bwidth.obj : glut_bwidth.c
+glut_cindex.obj : glut_cindex.c
+glut_cmap.obj : glut_cmap.c
+glut_cursor.obj : glut_cursor.c
+glut_dials.obj : glut_dials.c
+glut_dstr.obj : glut_dstr.c
+glut_event.obj : glut_event.c
+glut_ext.obj : glut_ext.c
+glut_fullscrn.obj : glut_fullscrn.c
+glut_gamemode.obj : glut_gamemode.c
+glut_get.obj : glut_get.c
+glut_glxext.obj : glut_glxext.c
+glut_hel10.obj : glut_hel10.c
+glut_hel12.obj : glut_hel12.c
+glut_hel18.obj : glut_hel18.c
+glut_init.obj : glut_init.c
+glut_input.obj : glut_input.c
+glut_joy.obj : glut_joy.c
+glut_key.obj : glut_key.c
+glut_keyctrl.obj : glut_keyctrl.c
+glut_keyup.obj : glut_keyup.c
+glut_menu.obj : glut_menu.c
+glut_menu2.obj : glut_menu2.c
+glut_mesa.obj : glut_mesa.c
+glut_modifier.obj : glut_modifier.c
+glut_mroman.obj : glut_mroman.c
+glut_overlay.obj : glut_overlay.c
+glut_roman.obj : glut_roman.c
+glut_shapes.obj : glut_shapes.c
+glut_space.obj : glut_space.c
+glut_stroke.obj : glut_stroke.c
+glut_swap.obj : glut_swap.c
+glut_swidth.obj : glut_swidth.c
+glut_tablet.obj : glut_tablet.c
+glut_teapot.obj : glut_teapot.c
+glut_tr10.obj : glut_tr10.c
+glut_tr24.obj : glut_tr24.c
+glut_util.obj : glut_util.c
+glut_vidresize.obj : glut_vidresize.c
+glut_warp.obj : glut_warp.c
+glut_win.obj : glut_win.c
+glut_winmisc.obj : glut_winmisc.c
+layerutil.obj : layerutil.c

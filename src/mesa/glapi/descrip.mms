@@ -31,3 +31,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+glapi.obj : glapi.c
+
+glthread.obj : glthread.c

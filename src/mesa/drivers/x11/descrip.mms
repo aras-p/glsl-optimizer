@@ -38,3 +38,12 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+fakeglx.obj : fakeglx.c
+glxapi.obj : glxapi.c
+xfonts.obj : xfonts.c
+xm_api.obj : xm_api.c
+xm_dd.obj : xm_dd.c
+xm_line.obj : xm_line.c
+xm_span.obj : xm_span.c
+xm_tri.obj : xm_tri.c

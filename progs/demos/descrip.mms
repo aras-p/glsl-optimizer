@@ -62,3 +62,25 @@ texcyl.exe; : texcyl.obj $(LIB_DEP)
 texobj.exe; : texobj.obj $(LIB_DEP)
 trispd.exe; : trispd.obj $(LIB_DEP)
 winpos.exe; : winpos.obj $(LIB_DEP)
+
+
+bounce.obj : bounce.c
+clearspd.obj : clearspd.c
+drawpix.obj : drawpix.c
+gamma.obj : gamma.c
+gears.obj : gears.c
+glinfo.obj : glinfo.c
+glutfx.obj : glutfx.c
+isosurf.obj : isosurf.c
+morph3d.obj : morph3d.c
+osdemo.obj : osdemo.c
+paltex.obj : paltex.c
+pointblast.obj : pointblast.c
+reflect.obj : reflect.c
+spectex.obj : spectex.c
+stex3d.obj : stex3d.c
+tessdemo.obj : tessdemo.c
+texcyl.obj : texcyl.c
+texobj.obj : texobj.c
+trispd.obj : trispd.c
+winpos.obj : winpos.c

@@ -66,3 +66,18 @@ wincopy.exe : wincopy.obj $(LIB_DEP)
 xdemo.exe : xdemo.obj $(LIB_DEP)
 xfont.exe :xfont.obj $(LIB_DEP)
 
+
+glthreads.obj : glthreads.c 
+glxdemo.obj : glxdemo.c
+glxgears.obj : glxgears.c
+glxheads.obj : glxheads.c
+glxinfo.obj : glxinfo.c
+glxpixmap.obj : glxpixmap.c
+manywin.obj : manywin.c
+offset.obj : offset.c
+pbinfo.obj : pbinfo.c
+pbutil.obj : pbutil.c
+pbdemo.obj : pbdemo.c
+wincopy.obj : wincopy.c
+xdemo.obj : xdemo.c
+xfont.obj :xfont.c

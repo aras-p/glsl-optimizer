@@ -32,3 +32,6 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS)
 clean :
 	purge
 	delete *.obj;*
+
+ac_context.obj : ac_context.c
+ac_import.obj : ac_import.c

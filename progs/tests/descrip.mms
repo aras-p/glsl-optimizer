@@ -66,3 +66,19 @@ vptest2.exe : vptest2.obj $(LIB_DEP)
 vptest3.exe : vptest3.obj $(LIB_DEP)
 vptorus.exe : vptorus.obj $(LIB_DEP)
 vpwarpmesh.exe : vpwarpmesh.obj $(LIB_DEP)
+
+cva.obj : cva.c
+dinoshade.obj : dinoshade.c
+fogcoord.obj : fogcoord.c
+manytex.obj : manytex.c
+multipal.obj : multipal.c
+projtex.obj : projtex.c
+seccolor.obj : seccolor.c
+sharedtex.obj : sharedtex.c
+texline.obj : texline.c
+texwrap.obj : texwrap.c
+vptest1.obj : vptest1.c
+vptest2.obj : vptest2.c
+vptest3.obj : vptest3.c
+vptorus.obj : vptorus.c
+vpwarpmesh.obj : vpwarpmesh.c
