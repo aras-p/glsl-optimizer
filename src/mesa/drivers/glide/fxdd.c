@@ -797,6 +797,7 @@ fxDDReadPixels565 (GLcontext * ctx,
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
+      info.size = sizeof(info);
       if (grLfbLock(GR_LFB_READ_ONLY,
 		    fxMesa->currentFB,
 		    GR_LFBWRITEMODE_ANY,
@@ -909,6 +910,7 @@ fxDDReadPixels555 (GLcontext * ctx,
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
+      info.size = sizeof(info);
       if (grLfbLock(GR_LFB_READ_ONLY,
 		    fxMesa->currentFB,
 		    GR_LFBWRITEMODE_ANY,
@@ -1021,6 +1023,7 @@ fxDDReadPixels8888 (GLcontext * ctx,
       GrLfbInfo_t info;
 
       BEGIN_BOARD_LOCK();
+      info.size = sizeof(info);
       if (grLfbLock(GR_LFB_READ_ONLY,
 		    fxMesa->currentFB,
 		    GR_LFBWRITEMODE_ANY,
@@ -1338,17 +1341,25 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxMesa->textureAlign = FX_grGetInteger(GR_TEXTURE_ALIGN);
    /* [koolsmoky] */
    {
+    char *env;
     int textureLevels = 0;
     int textureSize = FX_grGetInteger(GR_MAX_TEXTURE_SIZE);
     do {
         textureLevels++;
     } while ((textureSize >>= 0x1) & 0x7ff);
+    fxMesa->textureMaxLod = textureLevels - 1;
     ctx->Const.MaxTextureLevels = textureLevels;
+    if ((env = getenv("MESA_FX_MAXLOD")) != NULL) {
+       int maxLevels = atoi(env) + 1;
+       if ((maxLevels <= MAX_TEXTURE_LEVELS) && (maxLevels > textureLevels)) {
+          ctx->Const.MaxTextureLevels = maxLevels;
+       }
+    }
    }
-   ctx->Const.MaxTextureCoordUnits = fxMesa->haveTwoTMUs ? 2 : 1;
+   ctx->Const.MaxTextureCoordUnits =
    ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    ctx->Const.MaxTextureUnits = MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
-
+   
    fxMesa->new_state = _NEW_ALL;
    if (!fxMesa->haveHwStencil) {
       /* don't touch stencil if there is none */

@@ -462,6 +462,7 @@ struct tfxMesaContext
    GLfloat fogStart, fogEnd;
    GrFog_t *fogTable;
    GLint textureAlign;
+   GLint textureMaxLod;
 
    /* Vertex building and storage:
     */

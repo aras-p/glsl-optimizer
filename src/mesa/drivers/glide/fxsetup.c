@@ -65,6 +65,88 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
    minl = ti->minLevel = tObj->BaseLevel;
    maxl = ti->maxLevel = MIN2(tObj->MaxLevel, tObj->Image[0]->MaxLog2);
 
+#if 1||FX_RESCALE_BIG_TEXURES
+{
+   extern void _mesa_rescale_teximage2d( GLuint bytesPerPixel,
+                                         GLuint dstRowStride,
+                                         GLint srcWidth, GLint srcHeight,
+                                         GLint dstWidth, GLint dstHeight,
+                                         const GLvoid *srcImage, GLvoid *dstImage );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   if (maxl - minl > fxMesa->textureMaxLod) {
+      /* [dBorca]
+       * Ooooooook! Here's a(nother) long story.
+       * We get here because we need to handle a texture larger
+       * than hardware can support. Two cases:
+       * 1) we have mipmaps. Then we just push up to the first supported
+       *    LOD. A possible drawback is that Mesa will ignore the skipped
+       *    LODs on further texture handling (including memory freeing).
+       *    Will this interfere with GL_TEXTURE_[MIN|BASE]_LEVEL? How?
+       * 2) we don't have mipmaps. We need to rescale texture; two ways:
+       *    a) create a new LOD and push up ti->minLevel and tObj->BaseLevel
+       *       but this means we need to rescale on both axes, which
+       *       yield unnecessary ugly texture. Also, same issues as 1)
+       *    b) rescale the biggest LOD in place and go two ways:
+       *       - update texImage->Width and texImage->Height, then
+       *         decrease maxLevel, so we won't rescale again on the
+       *         next validation. Changing texImage-> parameters is
+       *         not quite legal here (see convolution), but...
+       *       - leaving texImage-> parameters alone, while rescaling
+       *         texture and decreasing maxLevel makes Mesa puke. Also
+       *         this approach requires that mml->[wh]Scale go below 1,
+       *         otherwise bad ju-ju will be in our future (see fetch_texel)
+       *       Will this interfere with GL_TEXTURE_MAX_LEVEL? How?
+       *       The above approach is somehow dumb! we might have rescaled
+       *       once in TexImage2D to accomodate aspect ratio, and now we
+       *       are rescaling again. The thing is, in TexImage2D we don't
+       *       know whether we'll hit 1) or 2) by the time of validation.
+       * NB: we could handle mml->[wh]Scale nicely, using (biased) shifts.
+       *
+       * Which brings me to another issue. How can we handle NPOT textures?
+       * - rescaling NPOT to the next bigger POT (mml->[wh]Scale can't shift)
+       * - upping the max LOD to the next power-of-two, in fxTexGetInfo; then
+       *   choosing non-power-of-two values for ti->[st]Scale... Anyhow, we
+       *   still need to align mipmaps correctly in texture memory!
+       */
+      if ((tObj->MinFilter == GL_NEAREST) || (tObj->MinFilter == GL_LINEAR)) {
+         /* no mipmaps! need to rescale */
+         struct gl_texture_image *texImage = tObj->Image[minl];
+         tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+         GLint texelBytes = texImage->TexFormat->TexelBytes;
+         GLvoid *texImage_Data = texImage->Data;
+         GLint _w = MIN2(mml->width, 1 << fxMesa->textureMaxLod);
+         GLint _h = MIN2(mml->height, 1 << fxMesa->textureMaxLod);
+         if (TDFX_DEBUG & VERBOSE_TEXTURE) {
+            fprintf(stderr, "fxTexValidate: rescaling %d x %d -> %d x %d\n",
+                            mml->width, mml->height,
+                            _w, _h);
+         }
+         fxTexGetInfo(_w, _h, NULL, NULL, NULL, NULL,
+                      &(mml->wScale), &(mml->hScale));
+         texImage->Width = _w / mml->wScale;
+         texImage->Height = _h / mml->hScale;
+         texImage->Data = MESA_PBUFFER_ALLOC(_w * _h * texelBytes);
+         _mesa_rescale_teximage2d(texelBytes,
+                                  _w * texelBytes, /* dst stride */
+                                  mml->width, mml->height, /* src */
+                                  _w, _h, /* dst */
+                                  texImage_Data /*src*/, texImage->Data /*dst*/ );
+         MESA_PBUFFER_FREE(texImage_Data);
+         mml->width = _w;
+         mml->height = _h;
+         maxl = ti->maxLevel = tObj->Image[0]->MaxLog2 = minl + fxMesa->textureMaxLod;
+      } else {
+         /* skip a certain number of LODs */
+         minl += maxl - fxMesa->textureMaxLod;
+         if (TDFX_DEBUG & VERBOSE_TEXTURE) {
+            fprintf(stderr, "fxTexValidate: skipping %d LODs\n", minl - ti->minLevel);
+         }
+         ti->minLevel = tObj->BaseLevel = minl;
+      }
+   }
+}
+#endif
+
    fxTexGetInfo(tObj->Image[minl]->Width, tObj->Image[minl]->Height,
 		&(FX_largeLodLog2(ti->info)), &(FX_aspectRatioLog2(ti->info)),
 		&(ti->sScale), &(ti->tScale),
