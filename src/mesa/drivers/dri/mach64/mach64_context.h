@@ -355,7 +355,14 @@ extern GLboolean mach64UnbindContext( __DRIcontextPrivate *driContextPriv );
 /* ================================================================
  * Byte ordering
  */
+#ifdef __linux__
 #include <endian.h>
+#else
+#include <sys/endian.h>
+#define __BYTE_ORDER BYTE_ORDER
+#define __LITTLE_ENDIAN LITTLE_ENDIAN
+#define __BIG_ENDIAN BIG_ENDIAN
+#endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define LE32_IN( x )		( *(GLuint *)(x) )
