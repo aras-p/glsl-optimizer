@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.10 2001/03/30 14:44:44 gareth Exp $ */
+/* $Id: t_vb_fog.c,v 1.11 2001/05/15 20:52:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,7 @@ struct fog_stage_data {
 #define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->privatePtr)
 
 #define FOG_EXP_TABLE_SIZE 256
-#define FOG_MAX (5.0)
+#define FOG_MAX (10.0)
 #define EXP_FOG_MAX .0006595
 #define FOG_INCR (FOG_MAX/FOG_EXP_TABLE_SIZE)
 static GLfloat exp_table[FOG_EXP_TABLE_SIZE];
@@ -112,13 +112,13 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride))
-	 NEG_EXP( data[i], d*ABSF(*v) );
+         NEG_EXP( data[i], d * ABSF(*v) );
       break;
    case GL_EXP2:
       d = ctx->Fog.Density*ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-	 GLfloat z = *v;
-	 NEG_EXP( data[i], d*z*z );
+         GLfloat z = *v;
+         NEG_EXP( data[i], d * z * z );
       }
       break;
    default:
