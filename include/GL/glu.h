@@ -40,6 +40,10 @@
 #define GLAPIENTRY
 #endif
 
+#ifndef GLAPIENTRYP
+#define GLAPIENTRYP
+#endif
+
 #ifndef GLAPI
 #define GLAPI
 #endif

@@ -66,7 +66,7 @@ gammaDestroyContext(__DRIcontextPrivate *driContextPriv)
       gmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context(gmesa->glCtx);
 
-      Xfree(gmesa);
+      FREE(gmesa);
       driContextPriv->driverPrivate = NULL;
     }
 }

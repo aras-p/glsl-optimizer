@@ -57,7 +57,7 @@ static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
    drmBufPtr buf;
    int i;
 
-   buffer = ALIGN_MALLOC(I830_DMA_BUF_SZ);
+   buffer = ALIGN_MALLOC(I830_DMA_BUF_SZ, 32);
    if(buffer == NULL) return -1;
    for(i = 0; i < I830_DMA_BUF_NR; i++) {
       buf = &(buffers->list[i]);
@@ -71,12 +71,12 @@ static drmBufMapPtr i830_create_empty_buffers(void)
 {
    drmBufMapPtr retval;
 
-   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap));
+   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap), 32);
    if(retval == NULL) return NULL;
    memset(retval, 0, sizeof(drmBufMap));
-   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I830_DMA_BUF_NR);
+   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I830_DMA_BUF_NR, 32);
    if(retval->list == NULL) {
-      Xfree(retval);
+      FREE(retval);
       return NULL;
    }
 
@@ -182,7 +182,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    if(i830Screen->bufs == NULL) {
       fprintf(stderr,"\nERROR: Failed to create empty buffers in %s \n",
 	      __FUNCTION__);
-      Xfree(i830Screen);
+      FREE(i830Screen);
       return GL_FALSE;
    }
 
@@ -203,7 +203,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
 	      (drmAddress *)&i830Screen->back.map) != 0) {
       fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n",
 	      __LINE__, __FUNCTION__, __FILE__);
-      Xfree(i830Screen);
+      FREE(i830Screen);
       sPriv->private = NULL;
       return GL_FALSE;
    }
@@ -217,7 +217,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
 	      (drmAddress *)&i830Screen->depth.map) != 0) {
       fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n", 
 	      __LINE__, __FUNCTION__, __FILE__);
-      Xfree(i830Screen);
+      FREE(i830Screen);
       drmUnmap(i830Screen->back.map, i830Screen->back.size);
       sPriv->private = NULL;
       return GL_FALSE;
@@ -232,7 +232,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
 	      (drmAddress *)&i830Screen->tex.map) != 0) {
       fprintf(stderr, "\nERROR: line %d, Function %s, File %s\n",
 	      __LINE__, __FUNCTION__, __FILE__);
-      Xfree(i830Screen);
+      FREE(i830Screen);
       drmUnmap(i830Screen->back.map, i830Screen->back.size);
       drmUnmap(i830Screen->depth.map, i830Screen->depth.size);
       sPriv->private = NULL;
@@ -288,7 +288,7 @@ static void i830DestroyScreen(__DRIscreenPrivate *sPriv)
    drmUnmap(i830Screen->back.map, i830Screen->back.size);
    drmUnmap(i830Screen->depth.map, i830Screen->depth.size);
    drmUnmap(i830Screen->tex.map, i830Screen->tex.size);
-   Xfree(i830Screen);
+   FREE(i830Screen);
    sPriv->private = NULL;
 }
 

@@ -237,11 +237,13 @@ CORE_SOURCES = \
 # This will probably get set to $(X86_SOURCES) in Make-config:
 ASM_SOURCES =
 
+ifndef SOLO
 # This should get set in Make-config someday:
 DRIVER_SOURCES = \
 	$(X11_DRIVER_SOURCES) \
 	$(GLIDE_DRIVER_SOURCES) \
 	$(SVGA_DRIVER_SOURCES)
+endif
 
 
 ### Object files

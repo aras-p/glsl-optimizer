@@ -34,6 +34,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "matrix.h"
 #include "simple_list.h"
@@ -68,12 +69,12 @@ static drmBufMapPtr i810_create_empty_buffers(void)
 {
    drmBufMapPtr retval;
 
-   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap));
+   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap), 32);
    if(retval == NULL) return NULL;
    memset(retval, 0, sizeof(drmBufMap));
-   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I810_DMA_BUF_NR);
+   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I810_DMA_BUF_NR, 32);
    if(retval->list == NULL) {
-      Xfree(retval);
+      FREE(retval);
       return NULL;
    }
    memset(retval->list, 0, sizeof(drmBuf) * I810_DMA_BUF_NR);
@@ -143,7 +144,7 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
    i810Screen->bufs = i810_create_empty_buffers();
    if (i810Screen->bufs == NULL) {
       __driUtilMessage("i810InitDriver: i810_create_empty_buffers() failed");
-      Xfree(i810Screen);
+      FREE(i810Screen);
       return GL_FALSE;
    }
 
@@ -154,7 +155,7 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
 	      i810Screen->back.handle,
 	      i810Screen->back.size,
 	      (drmAddress *)&i810Screen->back.map) != 0) {
-      Xfree(i810Screen);
+      FREE(i810Screen);
       sPriv->private = NULL;
       __driUtilMessage("i810InitDriver: drmMap failed");
       return GL_FALSE;
@@ -167,7 +168,7 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
 	      i810Screen->depth.handle,
 	      i810Screen->depth.size,
 	      (drmAddress *)&i810Screen->depth.map) != 0) {
-      Xfree(i810Screen);
+      FREE(i810Screen);
       drmUnmap(i810Screen->back.map, i810Screen->back.size);
       sPriv->private = NULL;
       __driUtilMessage("i810InitDriver: drmMap (2) failed");
@@ -181,7 +182,7 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
 	      i810Screen->tex.handle,
 	      i810Screen->tex.size,
 	      (drmAddress *)&i810Screen->tex.map) != 0) {
-      Xfree(i810Screen);
+      FREE(i810Screen);
       drmUnmap(i810Screen->back.map, i810Screen->back.size);
       drmUnmap(i810Screen->depth.map, i810Screen->depth.size);
       sPriv->private = NULL;
@@ -205,7 +206,7 @@ i810DestroyScreen(__DRIscreenPrivate *sPriv)
    drmUnmap(i810Screen->depth.map, i810Screen->depth.size);
    drmUnmap(i810Screen->tex.map, i810Screen->tex.size);
 
-   Xfree(i810Screen);
+   FREE(i810Screen);
    sPriv->private = NULL;
 }
 
