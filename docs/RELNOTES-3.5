@@ -50,6 +50,16 @@ GL_NV_blend_square
 
 
 
+libOSMesa.so
+------------
+
+libOSMesa.so is a new library which contains the OSMesa interface for
+off-screen rendering.  Apps which need the OSMesa interface should link
+with both -lOSMesa and -lGL.  This change was made so that stand-alone
+Mesa works the same way as XFree86/DRI's libGL.
+
+
+
 Device Driver Changes / Core Mesa Changes
 -----------------------------------------
 
@@ -75,5 +85,64 @@ The NEW_DRVSTATE[0123] flags have been removed.  They weren't being used
 and are obsolete w.r.t. the way state updates are done in DRI drivers.
 
 
+Removed obsolete gl_create_visual() and gl_destroy_visual().
+
+Renamed functions (new namespace):
+
+old				new
+gl_create_framebuffer		_mesa_create_framebuffer
+gl_destroy_framebuffer		_mesa_destroy_framebuffer
+gl_create_context		_mesa_create_context
+gl_destroy_context		_mesa_destroy_context
+gl_context_initialize		_mesa_context_initialize
+gl_copy_context			_mesa_copy_context
+gl_make_current			_mesa_make_current
+gl_make_current2		_mesa_make_current2
+gl_get_current_context		_mesa_get_current_context
+gl_flush_vb			_mesa_flush_vb
+gl_warning			_mesa_warning
+gl_compile_error		_mesa_compile_error
+
+
+All the drivers have been updated, but not all of them have been
+tested since I can't test some platforms (DOS, Windows, Allegro, etc).
+
+
+Multitexture
+------------
+
+Three texture units are now supported by default.  We'll allow more
+than three texture units when we fix some bitfield issues.  In at least
+one place we have a 32-bit bitfield which is fully allocated, leaving
+no space for texture unit #3 or higher.
+
+The TEXTURE1_1D, TEXTURE1_2D, etc constants may go away in the future.
+Currently, they're only used in the ctx->Texture.ReallyEnabled field.
+This bitfield is just a conglomerate of ctx->Texture.Unit[i].ReallyEnabled
+for all <i> texture units.  ctx->Texture.ReallyEnabled may become a
+GLboolean.  Then, drivers will have to loop over the texture units to
+examine ctx->Texture.Unit[i].ReallyEnabled.
+
+
+
+
+OpenGL SI related changes
+-------------------------
+
+In an effort to make Mesa's internal interfaces more like the OpenGL
+SI interfaces, a number of changes have been made:
+
+1. Importing the SI's glcore.h file which defines a number of
+interface structures like __GLimports and __GLexports.
+
+2. Renamed "struct gl_context" to "struct __GLcontextRec".
+
+3. Added __glCoreCreateContext() and __glCoreNopDispatch() functions.
+
+4. The GLcontext member Visual is no longer a pointer.
+
+5. New file: imports.c to setup default import functions for Mesa.
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.5 2000/09/25 16:04:35 brianp Exp $
+$Id: RELNOTES-3.5,v 1.6 2000/10/23 19:46:11 brianp Exp $
