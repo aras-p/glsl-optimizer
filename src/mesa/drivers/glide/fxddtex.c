@@ -1238,7 +1238,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 #if 0 && FX_COMPRESS_S3TC_AS_FXT1_HACK
    /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
-   /* [dborca] we should update texture's attribute, then,
+   /* [dBorca] we should update texture's attribute, then,
     * because if the application asks us to decompress, we
     * have to know the REAL format! Also, DXT3/5 might not
     * be correct, since it would mess with "compressedSize".
@@ -1261,7 +1261,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    }
 #endif
 #if 1 || FX_COMPRESS_DXT5_AS_DXT3_HACK
-   /* [dborca] either VSA is stupid at DXT5, 
+   /* [dBorca] either VSA is stupid at DXT5, 
     * or our compression tool is broken. See
     * above for caveats.
     */

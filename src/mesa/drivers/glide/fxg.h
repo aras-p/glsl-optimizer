@@ -320,7 +320,7 @@ typedef struct _TxMip {
         void *data[TX_MAX_LEVEL];
         FxU32 pal[256];
 } TxMip;
-typedef void (*TxErrorCallbackFnc_t) (const char *string, FxBool fatal);
+
 #define TX_DITHER_NONE                                  0x00000000
 #define TX_DITHER_4x4                                   0x00000001
 #define TX_DITHER_ERR                                   0x00000002
