@@ -47,6 +47,7 @@ static const struct {
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
    { OFF, "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
+   { OFF, "GL_ARB_fragment_shader",            F(ARB_fragment_shader) },
    { OFF, "GL_MESAX_half_float_pixel",         F(ARB_half_float_pixel) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
@@ -54,6 +55,7 @@ static const struct {
    { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_point_sprite",               F(ARB_point_sprite) },
+   { OFF, "GL_ARB_shader_objects",             F(ARB_shader_objects) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
@@ -70,6 +72,7 @@ static const struct {
    { ON,  "GL_ARB_transpose_matrix",           F(ARB_transpose_matrix) },
    { OFF, "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
    { OFF, "GL_ARB_vertex_program",             F(ARB_vertex_program) },
+   { OFF, "GL_ARB_vertex_shader",              F(ARB_vertex_shader) },
    { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
    { ON,  "GL_EXT_abgr",                       F(EXT_abgr) },
    { ON,  "GL_EXT_bgra",                       F(EXT_bgra) },
@@ -193,6 +196,15 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+#endif
+#if FEATURE_ARB_shader_objects
+   ctx->Extensions.ARB_shader_objects = GL_TRUE;
+#if FEATURE_ARB_fragment_shader
+   ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+#endif
+#if FEATURE_ARB_vertex_shader
+   ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+#endif
 #endif
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
@@ -344,7 +356,15 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
-   /* Also, shading language */
+#if FEATURE_ARB_shader_objects
+   ctx->Extensions.ARB_shader_objects = GL_TRUE;
+#if FEATURE_ARB_fragment_shader
+   ctx->Extensions.ARB_fragment_shader = GL_TRUE;
+#endif
+#if FEATURE_ARB_vertex_shader
+   ctx->Extensions.ARB_vertex_shader = GL_TRUE;
+#endif
+#endif
 }
 
 

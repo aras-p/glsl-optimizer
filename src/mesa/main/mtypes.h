@@ -1934,12 +1934,14 @@ struct gl_extensions
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
+   GLboolean ARB_fragment_shader;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
    GLboolean ARB_point_sprite;
+   GLboolean ARB_shader_objects;
    GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
@@ -1953,6 +1955,7 @@ struct gl_extensions
    GLboolean ARB_transpose_matrix;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
+   GLboolean ARB_vertex_shader;
    GLboolean ARB_window_pos;
    GLboolean EXT_abgr;
    GLboolean EXT_bgra;
