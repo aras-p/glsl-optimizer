@@ -1,36 +1,13 @@
-/* $Id: bounce.c,v 1.2 2000/06/27 17:04:43 brianp Exp $ */
+/* $Id: bounce.c,v 1.3 2000/08/16 20:36:34 brianp Exp $ */
 
 /*
- * Bouncing ball demo.  Color index mode only!
+ * Bouncing ball demo.
  *
  * This program is in the public domain
  *
  * Brian Paul
- */
-
-/* Conversion to GLUT by Mark J. Kilgard */
-
-/*
- * $Log: bounce.c,v $
- * Revision 1.2  2000/06/27 17:04:43  brianp
- * fixed compiler warnings
  *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.3  1999/03/18 08:16:14  joukj
- *
- *     cmpstr needs string.h to included to avoid warnings
- *
- * Revision 3.2  1998/11/28 01:13:02  brianp
- * now sets an initial window position and size
- *
- * Revision 3.1  1998/11/28 01:06:57  brianp
- * now works in RGB mode by default
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
+ * Conversion to GLUT by Mark J. Kilgard
  */
 
 
@@ -84,9 +61,9 @@ make_ball(void)
         glColor3f(1, 1, 1);
       }
 
-      x = COS(b) * COS(a);
-      y = SIN(b) * COS(a);
-      z = SIN(a);
+      x = radius * COS(b) * COS(a);
+      y = radius * SIN(b) * COS(a);
+      z = radius * SIN(a);
       glVertex3f(x, y, z);
 
       x = radius * COS(b) * COS(a + da);
