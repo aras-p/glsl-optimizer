@@ -1,10 +1,10 @@
-/* $Id: texstate.c,v 1.92 2003/01/21 15:49:17 brianp Exp $ */
+/* $Id: texstate.c,v 1.93 2003/01/21 23:58:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -421,6 +421,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 		  return;
 	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	       texUnit->CombineOperandRGB[2] = operand;
+               break;
 	    default:
                TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
