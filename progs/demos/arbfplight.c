@@ -34,6 +34,7 @@ static PFNGLGENPROGRAMSARBPROC glGenProgramsARB_func;
 static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB_func;
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB_func;
 static PFNGLISPROGRAMARBPROC glIsProgramARB_func;
+static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB_func;
 
 /* These must match the indexes used in the fragment program */
 #define DIFFUSE 1
@@ -128,6 +129,8 @@ static void Key( unsigned char key, int x, int y )
          }
          break;
       case 27:
+         glDeleteProgramsARB_func(1, &VertProg);
+         glDeleteProgramsARB_func(1, &FragProg);
          exit(0);
          break;
    }
@@ -260,6 +263,9 @@ static void Init( void )
 
    glIsProgramARB_func = (PFNGLISPROGRAMARBPROC) glutGetProcAddress("glIsProgramARB");
    assert(glIsProgramARB_func);
+
+   glDeleteProgramsARB_func = (PFNGLDELETEPROGRAMSARBPROC) glutGetProcAddress("glDeleteProgramsARB");
+   assert(glDeleteProgramsARB_func);
 
    /*
     * Fragment program
