@@ -35,16 +35,16 @@
 /*
  * glcurveval.h
  *
- * $Date: 2001/07/17 15:39:13 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.3 2001/07/17 15:39:13 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.4 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.h,v 1.4 2001/08/07 17:34:11 brianp Exp $
  */
 
 #ifndef __gluglcurveval_h_
 #define __gluglcurveval_h_
 
 #include "gluos.h"
-#include "GL/gl.h"
-#include "GL/glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include "basiccrveval.h"
 
 class CurveMap;
@@ -94,7 +94,11 @@ public:
       {
 	output_triangles = flag;
       }
+#ifdef _WIN32
+    void               putCallBack(GLenum which, void (APIENTRY *fn)() );
+#else
     void               putCallBack(GLenum which, _GLUfuncptr fn );
+#endif
     void               set_callback_userData(void *data)
       {
 	userData = data;

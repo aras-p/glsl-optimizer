@@ -35,8 +35,8 @@
 /*
  * reader.h
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/reader.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/reader.h,v 1.2 2001/08/07 17:34:11 brianp Exp $
  */
 
 #ifndef __glureader_h_
@@ -51,7 +51,7 @@ struct Property;
 struct O_surface;
 struct O_nurbssurface;
 struct O_trim;
-struct O_pwlcurve;
+class O_pwlcurve;
 struct O_nurbscurve;
 struct O_curve;
 class  Quilt;

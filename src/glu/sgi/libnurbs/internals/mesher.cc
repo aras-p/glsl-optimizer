@@ -35,14 +35,13 @@
 /*
  * mesher.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mesher.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mesher.cc,v 1.2 2001/08/07 17:34:11 brianp Exp $
  */
 
 #include "glimports.h"
 #include "myassert.h"
 #include "mystdio.h"
-#include "mesher.h"
 #include "gridvertex.h"
 #include "gridtrimvertex.h"
 #include "jarcloc.h"
@@ -50,6 +49,7 @@
 #include "trimline.h"
 #include "uarray.h"
 #include "backend.h"
+#include "mesher.h"
 
 
 const float Mesher::ZERO = 0.0;

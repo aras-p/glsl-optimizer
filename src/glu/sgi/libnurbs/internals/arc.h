@@ -35,8 +35,8 @@
 /*
  * arc.h
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.h,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.h,v 1.2 2001/08/07 17:34:11 brianp Exp $
  */
 
 #ifndef __gluarc_h_
@@ -51,7 +51,7 @@
 
 class Bin;
 class Arc;
-class BezierArc;	
+struct BezierArc;	
 
 typedef class Arc *Arc_ptr; 
 

@@ -35,8 +35,8 @@
 /*
  * glcurveval.c++
  *
- * $Date: 2001/07/18 11:17:35 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.2 2001/07/18 11:17:35 joukj Exp $
+ * $Date: 2001/08/07 17:34:10 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glcurveval.cc,v 1.3 2001/08/07 17:34:10 brianp Exp $
  */
 
 /* Polynomial Evaluator Interface */
@@ -300,7 +300,11 @@ void OpenGLCurveEvaluator::evalcoord1f(long, REAL u)
 }
 
 void
-OpenGLCurveEvaluator::putCallBack(GLenum which, _GLUfuncptr fn )
+#ifdef _WIN32
+OpenGLCurveEvaluator::putCallBack(GLenum which, void (GLAPIENTRY *fn)())
+#else
+OpenGLCurveEvaluator::putCallBack(GLenum which, _GLUfuncptr fn)
+#endif
 {
   switch(which)
   {

@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/mipmap.c,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2001/08/07 17:34:11 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/mipmap.c,v 1.2 2001/08/07 17:34:11 brianp Exp $
 */
 
 #include "gluos.h"
@@ -6567,6 +6567,65 @@ static void halve1DimagePackedPixel(int components,
 
 /*===========================================================================*/
 
+#ifdef RESOLVE_3D_TEXTURE_SUPPORT
+/*
+ * This section ensures that GLU 1.3 will load and run on
+ * a GL 1.1 implementation. It dynamically resolves the
+ * call to glTexImage3D() which might not be available.
+ * Or is it might be supported as an extension.
+ * Contributed by Gerk Huisma <gerk@five-d.demon.nl>.
+ */
+ 
+typedef GLAPI void (GLAPIENTRY *TexImage3Dproc)( GLenum target, GLint level,
+                                                 GLenum internalFormat,
+                                                 GLsizei width, GLsizei height,
+                                                 GLsizei depth, GLint border,
+                                                 GLenum format, GLenum type,
+                                                 const GLvoid *pixels );
+
+static TexImage3Dproc pTexImage3D;
+
+#ifndef WIN32
+#  include <dlfcn.h>
+#  include <sys/types.h>
+#else
+  WINGDIAPI PROC  WINAPI wglGetProcAddress(LPCSTR);
+#endif
+
+static void gluTexImage3D( GLenum target, GLint level,
+                           GLenum internalFormat,
+                           GLsizei width, GLsizei height,
+                           GLsizei depth, GLint border,
+                           GLenum format, GLenum type,
+                           const GLvoid *pixels )
+{
+   if (!pTexImage3D) {
+#ifdef WIN32
+      pTexImage3D = (TexImage3Dproc) wglGetProcAddress("glTexImage3D");
+      if (!pTexImage3D) 
+         pTexImage3D = (TexImage3Dproc) wglGetProcAddress("glTexImage3DEXT");
+#else
+      void *libHandle = dlopen("libgl.so", RTLD_LAZY);
+      pTexImage3D = TexImage3Dproc) dlsym(libHandle, "glTexImage3D" );
+      if (!pTexImage3D) 
+         pTexImage3D = (TexImage3Dproc) dlsym(libHandle,"glTexImage3DEXT");
+      dlclose(libHandle);
+#endif
+   }
+
+   /* Now call glTexImage3D */
+   if (pTexImage3D) 
+      pTexImage3D(target, level, internalFormat, width, height, 
+                  depth, border, format, type, pixels);
+}
+
+#else
+
+/* Only bind to a GL 1.2 implementation: */
+#define gluTexImage3D glTexImage3D
+
+#endif
+
 static GLint imageSize3D(GLint width, GLint height, GLint depth,
 			 GLenum format, GLenum type) 
 {
@@ -7330,7 +7389,7 @@ static void closestFit3D(GLenum target, GLint width, GLint height, GLint depth,
       /* does width x height x depth at level 1 & all their mipmaps fit? */
       if (target == GL_TEXTURE_3D || target == GL_PROXY_TEXTURE_3D) {
 	 proxyTarget = GL_PROXY_TEXTURE_3D;
-	 glTexImage3D(proxyTarget, 1, /* must be non-zero */
+	 gluTexImage3D(proxyTarget, 1, /* must be non-zero */
 		      internalFormat,
 		      widthAtLevelOne,heightAtLevelOne,depthAtLevelOne,
 		      0,format,type,NULL);
@@ -7705,7 +7764,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
    if (width == newWidth && height == newHeight && depth == newDepth) {
        /* Use usersImage for level userLevel */
        if (baseLevel <= level && level <= maxLevel) {
-          glTexImage3D(target, level, internalFormat, width, 
+          gluTexImage3D(target, level, internalFormat, width, 
 		       height, depth, 0, format, type,
 		       usersImage);
        }
@@ -8143,7 +8202,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
 
    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
    if (baseLevel <= level && level <= maxLevel) {
-     glTexImage3D(target, level, internalFormat, newWidth, newHeight, newDepth,
+     gluTexImage3D(target, level, internalFormat, newWidth, newHeight, newDepth,
 		  0,format, type, (void *)srcImage);
    }
    level++; /* update current level for the loop */
@@ -8318,7 +8377,7 @@ static int gluBuild3DMipmapLevelsCore(GLenum target, GLint internalFormat,
        {
 	  /* call tex image with srcImage untouched since it's not padded */
 	  if (baseLevel <= level && level <= maxLevel) {
-	    glTexImage3D(target, level, internalFormat, newWidth, newHeight,
+	    gluTexImage3D(target, level, internalFormat, newWidth, newHeight,
 			 newDepth,0, format, type, (void *) srcImage);
 	  }
        }

@@ -35,8 +35,8 @@
 /*
  * glrenderer.h
  *
- * $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.2 2001/07/16 15:46:42 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.h,v 1.3 2001/08/07 17:34:11 brianp Exp $
  */
 
 #ifndef __gluglrenderer_h_
@@ -73,8 +73,11 @@ public:
     void	(APIENTRY *errorCallback)( GLenum );
     void	postError( int which ) 
 		    { if (errorCallback) (errorCallback)( (GLenum)which ); }
-
+#ifdef _WIN32
+    void        putSurfCallBack(GLenum which, void (GLAPIENTRY *fn)() )
+#else
     void        putSurfCallBack(GLenum which, _GLUfuncptr fn )
+#endif
       {
 	curveEvaluator.putCallBack(which, fn);
 	surfaceEvaluator.putCallBack(which, fn);

@@ -35,8 +35,8 @@
 /*
  * glsurfeval.h
  *
- * $Date: 2001/07/17 15:39:13 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.3 2001/07/17 15:39:13 brianp Exp $
+ * $Date: 2001/08/07 17:34:11 $ $Revision: 1.4 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.h,v 1.4 2001/08/07 17:34:11 brianp Exp $
  */
 
 #ifndef __gluglsurfeval_h_
@@ -44,8 +44,8 @@
 
 #include "basicsurfeval.h"
 #include "bezierPatchMesh.h" //in case output triangles
-#include "GL/gl.h"
-#include "GL/glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 class SurfaceMap;
 class OpenGLSurfaceEvaluator;
@@ -146,7 +146,12 @@ public:
     void		newtmeshvert( REAL, REAL );
     void		newtmeshvert( long, long );
 
+#ifdef _WIN32
+    void 	        putCallBack(GLenum which, void (APIENTRY *fn)() );
+#else
     void 	        putCallBack(GLenum which, _GLUfuncptr fn );
+#endif
+
     int                 get_vertices_call_back()
       {
 	return output_triangles;
