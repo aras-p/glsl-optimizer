@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.5 1999/11/08 07:36:44 brianp Exp $ */
+/* $Id: polygon.c,v 1.6 1999/11/08 15:28:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,7 +82,7 @@ void gl_FrontFace( GLcontext *ctx, GLenum mode )
    }
 
    ctx->Polygon.FrontFace = mode;
-   ctx->Polygon.FrontBit = (mode == GL_CW);
+   ctx->Polygon.FrontBit = (GLboolean) (mode == GL_CW);
    ctx->NewState |= NEW_POLYGON;
 
    if (ctx->Driver.FrontFace)

@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.6 1999/11/08 07:36:43 brianp Exp $ */
+/* $Id: blend.c,v 1.7 1999/11/08 15:28:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -259,10 +259,10 @@ void gl_BlendEquation( GLcontext *ctx, GLenum mode )
 void gl_BlendColor( GLcontext *ctx, GLclampf red, GLclampf green,
 		    GLclampf blue, GLclampf alpha )
 {
-   ctx->Color.BlendColor[0] = CLAMP( red,   0.0, 1.0 );
-   ctx->Color.BlendColor[1] = CLAMP( green, 0.0, 1.0 );
-   ctx->Color.BlendColor[2] = CLAMP( blue,  0.0, 1.0 );
-   ctx->Color.BlendColor[3] = CLAMP( alpha, 0.0, 1.0 );
+   ctx->Color.BlendColor[0] = CLAMP( red,   0.0F, 1.0F );
+   ctx->Color.BlendColor[1] = CLAMP( green, 0.0F, 1.0F );
+   ctx->Color.BlendColor[2] = CLAMP( blue,  0.0F, 1.0F );
+   ctx->Color.BlendColor[3] = CLAMP( alpha, 0.0F, 1.0F );
 }
 
 
@@ -301,10 +301,10 @@ static void blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             ASSERT(g <= 255);
             ASSERT(b <= 255);
             ASSERT(a <= 255);
-            rgba[i][RCOMP] = r;
-            rgba[i][GCOMP] = g;
-            rgba[i][BCOMP] = b;
-            rgba[i][ACOMP] = a;
+            rgba[i][RCOMP] = (GLubyte) r;
+            rgba[i][GCOMP] = (GLubyte) g;
+            rgba[i][BCOMP] = (GLubyte) b;
+            rgba[i][ACOMP] = (GLubyte) a;
          }
       }
    }
@@ -330,10 +330,10 @@ static void blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
          GLint g = rgba[i][GCOMP] + dest[i][GCOMP];
          GLint b = rgba[i][BCOMP] + dest[i][BCOMP];
          GLint a = rgba[i][ACOMP] + dest[i][ACOMP];
-         rgba[i][RCOMP] = MIN2( r, 255 );
-         rgba[i][GCOMP] = MIN2( g, 255 );
-         rgba[i][BCOMP] = MIN2( b, 255 );
-         rgba[i][ACOMP] = MIN2( a, 255 );
+         rgba[i][RCOMP] = (GLubyte) MIN2( r, 255 );
+         rgba[i][GCOMP] = (GLubyte) MIN2( g, 255 );
+         rgba[i][BCOMP] = (GLubyte) MIN2( b, 255 );
+         rgba[i][ACOMP] = (GLubyte) MIN2( a, 255 );
       }
    }
 }
@@ -352,10 +352,10 @@ static void blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         rgba[i][RCOMP] = MIN2( rgba[i][RCOMP], dest[i][RCOMP] );
-         rgba[i][GCOMP] = MIN2( rgba[i][GCOMP], dest[i][GCOMP] );
-         rgba[i][BCOMP] = MIN2( rgba[i][BCOMP], dest[i][BCOMP] );
-         rgba[i][ACOMP] = MIN2( rgba[i][ACOMP], dest[i][ACOMP] );
+         rgba[i][RCOMP] = (GLubyte) MIN2( rgba[i][RCOMP], dest[i][RCOMP] );
+         rgba[i][GCOMP] = (GLubyte) MIN2( rgba[i][GCOMP], dest[i][GCOMP] );
+         rgba[i][BCOMP] = (GLubyte) MIN2( rgba[i][BCOMP], dest[i][BCOMP] );
+         rgba[i][ACOMP] = (GLubyte) MIN2( rgba[i][ACOMP], dest[i][ACOMP] );
       }
    }
 }
@@ -374,10 +374,10 @@ static void blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         rgba[i][RCOMP] = MAX2( rgba[i][RCOMP], dest[i][RCOMP] );
-         rgba[i][GCOMP] = MAX2( rgba[i][GCOMP], dest[i][GCOMP] );
-         rgba[i][BCOMP] = MAX2( rgba[i][BCOMP], dest[i][BCOMP] );
-         rgba[i][ACOMP] = MAX2( rgba[i][ACOMP], dest[i][ACOMP] );
+         rgba[i][RCOMP] = (GLubyte) MAX2( rgba[i][RCOMP], dest[i][RCOMP] );
+         rgba[i][GCOMP] = (GLubyte) MAX2( rgba[i][GCOMP], dest[i][GCOMP] );
+         rgba[i][BCOMP] = (GLubyte) MAX2( rgba[i][BCOMP], dest[i][BCOMP] );
+         rgba[i][ACOMP] = (GLubyte) MAX2( rgba[i][ACOMP], dest[i][ACOMP] );
       }
    }
 }
@@ -399,10 +399,10 @@ static void blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
          GLint g = (rgba[i][GCOMP] * dest[i][GCOMP]) >> 8;
          GLint b = (rgba[i][BCOMP] * dest[i][BCOMP]) >> 8;
          GLint a = (rgba[i][ACOMP] * dest[i][ACOMP]) >> 8;
-         rgba[i][RCOMP] = r;
-         rgba[i][GCOMP] = g;
-         rgba[i][BCOMP] = b;
-         rgba[i][ACOMP] = a;
+         rgba[i][RCOMP] = (GLubyte) r;
+         rgba[i][GCOMP] = (GLubyte) g;
+         rgba[i][BCOMP] = (GLubyte) b;
+         rgba[i][ACOMP] = (GLubyte) a;
       }
    }
 }
@@ -695,10 +695,10 @@ static void blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* final clamping */
-         rgba[i][RCOMP] = (GLint) CLAMP( r, 0.0F, 255.0F );
-         rgba[i][GCOMP] = (GLint) CLAMP( g, 0.0F, 255.0F );
-         rgba[i][BCOMP] = (GLint) CLAMP( b, 0.0F, 255.0F );
-         rgba[i][ACOMP] = (GLint) CLAMP( a, 0.0F, 255.0F );
+         rgba[i][RCOMP] = (GLubyte) (GLint) CLAMP( r, 0.0F, 255.0F );
+         rgba[i][GCOMP] = (GLubyte) (GLint) CLAMP( g, 0.0F, 255.0F );
+         rgba[i][BCOMP] = (GLubyte) (GLint) CLAMP( b, 0.0F, 255.0F );
+         rgba[i][ACOMP] = (GLubyte) (GLint) CLAMP( a, 0.0F, 255.0F );
       }
    }
 }

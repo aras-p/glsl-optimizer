@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: rastpos.c,v 1.3 1999/11/08 15:28:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,7 +107,7 @@ void gl_RasterPos4f( GLcontext *ctx,
    }
 
    /* compute raster distance */
-   ctx->Current.RasterDistance =
+   ctx->Current.RasterDistance = (GLfloat)
                       GL_SQRT( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
 
    /* apply projection matrix:  clip = Proj * eye */

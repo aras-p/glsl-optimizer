@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.7 1999/11/05 06:43:10 brianp Exp $ */
+/* $Id: stencil.c,v 1.8 1999/11/08 15:28:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,9 +42,6 @@
 #include "stencil.h"
 #include "types.h"
 #include "enable.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 
@@ -340,7 +337,7 @@ static void apply_stencil_op_to_span( GLcontext *ctx,
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
 		  GLstencil s = stencil[i];
-		  stencil[i] = ~s;
+		  stencil[i] = (GLstencil) ~s;
 	       }
 	    }
 	 }
@@ -500,7 +497,7 @@ GLint gl_stencil_span( GLcontext *ctx,
 	 }
 	 break;
       case GL_NOTEQUAL:
-	 r = ctx->Stencil.Ref & ctx->Stencil.ValueMask;
+	 r = (GLstencil) (ctx->Stencil.Ref & ctx->Stencil.ValueMask);
 	 for (i=0;i<n;i++) {
 	    if (mask[i]) {
 	       s = (GLstencil) (stencil[i] & ctx->Stencil.ValueMask);

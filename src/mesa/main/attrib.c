@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.9 1999/11/08 07:36:43 brianp Exp $ */
+/* $Id: attrib.c,v 1.10 1999/11/08 15:28:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -581,10 +581,10 @@ void gl_PopAttrib( GLcontext* ctx )
             break;
          case GL_FOG_BIT:
             {
-               GLboolean anyChange = (memcmp( &ctx->Fog, attr->data, sizeof(struct gl_fog_attrib) ) != 0);
+               GLboolean anyChange = (GLboolean) (memcmp( &ctx->Fog, attr->data, sizeof(struct gl_fog_attrib) ) != 0);
                MEMCPY( &ctx->Fog, attr->data, sizeof(struct gl_fog_attrib) );
                if (anyChange && ctx->Driver.Fogfv) {
-                  const GLfloat mode = ctx->Fog.Mode;
+                  const GLfloat mode = (GLfloat) ctx->Fog.Mode;
                   const GLfloat density = ctx->Fog.Density;
                   const GLfloat start = ctx->Fog.Start;
                   const GLfloat end = ctx->Fog.End;
