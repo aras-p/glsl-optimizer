@@ -3825,7 +3825,7 @@ KEYWORD1 void KEYWORD2 NAME(BindAttribLocationARB)(GLhandleARB programObj, GLuin
    DISPATCH(BindAttribLocationARB, (programObj, index, name), (F, "glBindAttribLocationARB(%d, %d, %p);\n", programObj, index, (const void *) name));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetActiveAttribARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, const GLcharARB * name)
+KEYWORD1 void KEYWORD2 NAME(GetActiveAttribARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, GLcharARB * name)
 {
    DISPATCH(GetActiveAttribARB, (programObj, index, maxLength, length, size, type, name), (F, "glGetActiveAttribARB(%d, %d, %d, %p, %p, %p, %p);\n", programObj, index, maxLength, (const void *) length, (const void *) size, (const void *) type, (const void *) name));
 }

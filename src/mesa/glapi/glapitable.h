@@ -786,7 +786,7 @@ struct _glapi_table
    void (GLAPIENTRYP GetUniformivARB)(GLhandleARB programObj, GLint location, GLint * params); /* 748 */
    void (GLAPIENTRYP GetShaderSourceARB)(GLhandleARB obj, GLsizei maxLength, GLsizei * length, GLcharARB * source); /* 749 */
    void (GLAPIENTRYP BindAttribLocationARB)(GLhandleARB programObj, GLuint index, const GLcharARB * name); /* 750 */
-   void (GLAPIENTRYP GetActiveAttribARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, const GLcharARB * name); /* 751 */
+   void (GLAPIENTRYP GetActiveAttribARB)(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei * length, GLint * size, GLenum * type, GLcharARB * name); /* 751 */
    GLint (GLAPIENTRYP GetAttribLocationARB)(GLhandleARB programObj, const GLcharARB * name); /* 752 */
 };
 

@@ -5528,7 +5528,7 @@
         <param name="length" type="GLsizei *" output="true"/>
         <param name="size" type="GLint *" output="true"/>
         <param name="type" type="GLenum *" output="true"/>
-        <param name="name" type="const GLcharARB *"/>
+        <param name="name" type="GLcharARB *"/>
     </function>
 
     <function name="GetAttribLocationARB" offset="752">
