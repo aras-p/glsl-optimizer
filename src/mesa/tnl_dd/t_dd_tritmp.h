@@ -41,6 +41,7 @@
  * DO_FLAT:      For hardware without native flatshading, copy provoking colors
  *               into the other vertices.  Restore after rendering.
  * DO_UNFILLED:  Decompose triangles to lines and points where appropriate.
+ * DO_TWOSTENCIL:Gross hack for two-sided stencil.
  *
  * HAVE_RGBA: Vertices have rgba values (otherwise index values).
  * HAVE_SPEC: Vertices have secondary rgba values.
@@ -107,6 +108,20 @@
 #define VERT_Z_ADD(v,val) VERT_Z(v) += val
 #endif
 
+/* disable twostencil for un-aware drivers */
+#ifndef HAVE_STENCIL_TWOSIDE
+#define HAVE_STENCIL_TWOSIDE 0
+#endif
+#ifndef DO_TWOSTENCIL
+#define DO_TWOSTENCIL 0
+#endif
+#ifndef SETUP_STENCIL
+#define SETUP_STENCIL(f)
+#endif
+#ifndef UNSET_STENCIL
+#define UNSET_STENCIL(f)
+#endif
+
 #if DO_TRI
 static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 {
@@ -124,7 +139,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    v[1] = (VERTEX *)GET_VERTEX(e1);
    v[2] = (VERTEX *)GET_VERTEX(e2);
 
-   if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED)
+   if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED || DO_TWOSTENCIL)
    {
       GLfloat ex = VERT_X(v[0]) - VERT_X(v[2]);
       GLfloat ey = VERT_Y(v[0]) - VERT_Y(v[2]);
@@ -132,9 +147,13 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       GLfloat fy = VERT_Y(v[1]) - VERT_Y(v[2]);
       GLfloat cc = ex*fy - ey*fx;
 
-      if (DO_TWOSIDE || DO_UNFILLED)
+      if (DO_TWOSIDE || DO_UNFILLED || DO_TWOSTENCIL)
       {
 	 facing = AREA_IS_CCW( cc ) ^ ctx->Polygon._FrontBit;
+
+         if (DO_TWOSTENCIL && ctx->Stencil.TestTwoSide) {
+            ctx->_Facing = facing; /* mixed mode rendering: for 2-sided stencil test */
+         }
 
 	 if (DO_UNFILLED) {
 	    if (facing) {
@@ -267,14 +286,26 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 VERT_Z_ADD(v[1], offset);
 	 VERT_Z_ADD(v[2], offset);
       }
-      UNFILLED_TRI( ctx, GL_POINT, e0, e1, e2 );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         UNFILLED_TRI( ctx, GL_POINT, e0, e1, e2 );
+         UNSET_STENCIL(facing);
+      } else {
+         UNFILLED_TRI( ctx, GL_POINT, e0, e1, e2 );
+      }
    } else if (mode == GL_LINE) {
       if (DO_OFFSET && ctx->Polygon.OffsetLine) {
 	 VERT_Z_ADD(v[0], offset);
 	 VERT_Z_ADD(v[1], offset);
 	 VERT_Z_ADD(v[2], offset);
       }
-      UNFILLED_TRI( ctx, GL_LINE, e0, e1, e2 );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         UNFILLED_TRI( ctx, GL_LINE, e0, e1, e2 );
+         UNSET_STENCIL(facing);
+      } else {
+         UNFILLED_TRI( ctx, GL_LINE, e0, e1, e2 );
+      }
    } else {
       if (DO_OFFSET && ctx->Polygon.OffsetFill) {
 	 VERT_Z_ADD(v[0], offset);
@@ -283,7 +314,13 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       }
       if (DO_UNFILLED)
 	 RASTERIZE( GL_TRIANGLES );
-      TRI( v[0], v[1], v[2] );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         TRI( v[0], v[1], v[2] );
+         UNSET_STENCIL(facing);
+      } else {
+         TRI( v[0], v[1], v[2] );
+      }
    }
 
    if (DO_OFFSET)
@@ -354,7 +391,7 @@ static void TAG(quad)( GLcontext *ctx,
    v[2] = (VERTEX *)GET_VERTEX(e2);
    v[3] = (VERTEX *)GET_VERTEX(e3);
 
-   if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED)
+   if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED || DO_TWOSTENCIL)
    {
       GLfloat ex = VERT_X(v[2]) - VERT_X(v[0]);
       GLfloat ey = VERT_Y(v[2]) - VERT_Y(v[0]);
@@ -362,9 +399,13 @@ static void TAG(quad)( GLcontext *ctx,
       GLfloat fy = VERT_Y(v[3]) - VERT_Y(v[1]);
       GLfloat cc = ex*fy - ey*fx;
 
-      if (DO_TWOSIDE || DO_UNFILLED)
+      if (DO_TWOSIDE || DO_UNFILLED || DO_TWOSTENCIL)
       {
 	 facing = AREA_IS_CCW( cc ) ^ ctx->Polygon._FrontBit;
+
+         if (DO_TWOSTENCIL && ctx->Stencil.TestTwoSide) {
+            ctx->_Facing = facing; /* mixed mode rendering: for 2-sided stencil test */
+         }
 
 	 if (DO_UNFILLED) {
 	    if (facing) {
@@ -515,7 +556,13 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z_ADD(v[2], offset);
 	 VERT_Z_ADD(v[3], offset);
       }
-      UNFILLED_QUAD( ctx, GL_POINT, e0, e1, e2, e3 );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         UNFILLED_QUAD( ctx, GL_POINT, e0, e1, e2, e3 );
+         UNSET_STENCIL(facing);
+      } else {
+         UNFILLED_QUAD( ctx, GL_POINT, e0, e1, e2, e3 );
+      }
    } else if (mode == GL_LINE) {
       if (DO_OFFSET && ctx->Polygon.OffsetLine) {
 	 VERT_Z_ADD(v[0], offset);
@@ -523,7 +570,13 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z_ADD(v[2], offset);
 	 VERT_Z_ADD(v[3], offset);
       }
-      UNFILLED_QUAD( ctx, GL_LINE, e0, e1, e2, e3 );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         UNFILLED_QUAD( ctx, GL_LINE, e0, e1, e2, e3 );
+         UNSET_STENCIL(facing);
+      } else {
+         UNFILLED_QUAD( ctx, GL_LINE, e0, e1, e2, e3 );
+      }
    } else {
       if (DO_OFFSET && ctx->Polygon.OffsetFill) {
 	 VERT_Z_ADD(v[0], offset);
@@ -532,7 +585,13 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z_ADD(v[3], offset);
       }
       RASTERIZE( GL_TRIANGLES );
-      QUAD( (v[0]), (v[1]), (v[2]), (v[3]) );
+      if (DO_TWOSTENCIL && !HAVE_STENCIL_TWOSIDE && ctx->Stencil.TestTwoSide) {
+         SETUP_STENCIL(facing);
+         QUAD( (v[0]), (v[1]), (v[2]), (v[3]) );
+         UNSET_STENCIL(facing);
+      } else {
+         QUAD( (v[0]), (v[1]), (v[2]), (v[3]) );
+      }
    }
 
    if (DO_OFFSET)
