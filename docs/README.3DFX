@@ -244,7 +244,7 @@ Doing more with Mesa & Linux Glide:
   	Rendering into an X window with the X11 software driver:
         --------------------------------------------------------
 
-	Undefine the MESA_GLX_FX env var and your GLX-based program will use
+	Set the MESA_GLX_FX variable to "disable" your GLX-based program will use
 	the X11 software driver (the 3Dfx hardware isn't used at all).
 
 
@@ -330,6 +330,8 @@ The Mesa/Voodoo Environment Variables:
 
 Know BUGS and Problems:
 -----------------------
+
+	- fog doesn't work in the right way when using the glDepthRange() function;
 
 	- Maximum texture size: 256x256 (this is an hardware limit);
 
@@ -584,7 +586,7 @@ the Mesa mailing list and my driver WEB page
 (http://www-hmw.caribel.pisa.it/fxmesa/index.shtml)
 
 
-David Bucciarelli (humanware@plus.it)
+David Bucciarelli (davibu@tin.it)
 
 Humanware s.r.l. 
 Via XXIV Maggio 62
