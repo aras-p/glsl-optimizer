@@ -1,4 +1,4 @@
-/* $Id: gen_matypes.c,v 1.7 2002/02/15 16:32:36 brianp Exp $ */
+/* $Id: gen_matypes.c,v 1.8 2002/09/19 16:19:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,11 +66,21 @@ do {									\
    printf( "\n" );							\
 } while (0)
 
+#if defined(__BEOS__)
+#define OFFSET( s, t, m )						\
+   printf( "#define %s\t%ld\n", s, offsetof( t, m ) );
+#else
 #define OFFSET( s, t, m )						\
    printf( "#define %s\t%d\n", s, offsetof( t, m ) );
+#endif
 
+#if defined(__BEOS__)
+#define SIZEOF( s, t )							\
+   printf( "#define %s\t%ld\n", s, sizeof(t) );
+#else
 #define SIZEOF( s, t )							\
    printf( "#define %s\t%d\n", s, sizeof(t) );
+#endif
 
 #define DEFINE( s, d )							\
    printf( "#define %s\t0x%x\n", s, d );

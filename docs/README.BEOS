@@ -3,61 +3,71 @@
 
 
 
-Introduction
+* Introduction
 
-Mesa 3.1 features a new driver for the BeOS.  The new driver implements
+Mesa 4.1 features a driver for the BeOS.  The driver implements
 a clone of the BGLView class.  This class, derived from BView, allows
 OpenGL rendering into a BeOS window.
+The 4.1 BeOS driver is an update of Brian Paul's BeOS driver released in Mesa 3.1.
 
 Any application which uses the BGLView should be able to use Mesa
 instead of Be's OpenGL without changing any code.
 
-Since Be's OpenGL implementation (as of R4) is basically just the
+Since Be's OpenGL implementation (as of R5) is basically just the
 SGI sample implementation, it's pretty slow.  You'll see that Mesa
 is considerably faster.
 
 
 
-Source Code
+* Source Code
 
-The source code for the driver is in Mesa-3.1/src/BeOS/GLView.cpp
+The source code for the driver is in Mesa-4.1/src/BeOS/ directory.
 It's not 100% finished at this time but many GLUT-based demos are
 working.  No optimizations have been made at this time.
 
 
 
-Compiling
+* Compiling
 
-In the Mesa-3.x directory type "make -f Makefile.X11 beos-r4".
-When it finishes the libMesaGL.so and libMesaGLU.so libraries for
-BeOS will be in the Mesa-3.x/lib/ directory.
+Requirements:
+  - gcc version 2.95.3 for BeOS 
+  You can find it here: http://www.bebits.com/app/2157
+
+Move to the Mesa-4.x src sub-directory and then type "make -f Makefile.BeOS-R5".
+When it finishes the Mesa based libGL.so library for
+BeOS will be in the Mesa-4.x/src/obj.{x86|ppc}/ directory.
+
+To install it as Be's default libGL.so replacement, put it in your 
+/boot/home/config/lib/ directory. All your GL/GLUTapps will use 
+the Mesa based then. 
+
+By default, it build a non-debug version library.
+The x86 (MMX, SSE and 3DNOW) optimizations are also supported for x86 target.
+Sorry, Mesa don't have ppc (Altivec) optimizations yet.
 
 
+* Example Programs
 
-Example Programs
-
-Look in the Mesa-3.x/BeOS/ directory for one or two BGLView demo
+Look in the Mesa-4.x/BeOS/ directory for one or two BGLView demo
 programs.  They should have been compiled along with the Mesa
 library.
 
 
+* GLUT
 
-GLUT
-
-A version of GLUT 2.5 for BeOS can be found in src-glut.beos/.
+A beta version of GLUT 3.7 port for BeOS can be found at 
+http://anobject.com/jehamby/Code/Glut-3.7-x86.zip.
+ 
+There's is a 2.5 version in src-glut.beos/, too.
 The original distribution can be obtained from
 http://home.beoscentral.com/jehamby/Glut-3.5-x86.zip
 
-This is a special version of GLUT adapted for the BeOS.  I don't
+They are special version of GLUT adapted for the BeOS.  I don't
 believe Mark Kilgard's normal GLUT distribution includes BeOS
 support.
 
-It seems that you have to recompile GLUT with libMesaGL.so instead
-of libGL.so in order for everything to work.  I'm not sure why.
 
-
-
-Special Features
+* Special Features
 
 Mesa's implementation of the BGLView class has an extra member
 function:  CopySubBufferMESA().  It basically works like SwapBuffers()
@@ -69,7 +79,9 @@ cause a fatal error when running with Be's OpenGL.
 
 
 
-Work Left To Do
+* Work Left To Do
+
+BDirectWindow single buffering support is not implemented yet.
 
 Color index mode is not implemented yet.
 
@@ -80,7 +92,7 @@ rendering.  This should also be implemented for Mesa.
 
 
 
-Old BeOS Driver
+* Old BeOS Driver
 
 Mesa 2.6 had an earlier BeOS driver.  It was based on Mesa's Off-screen
 rendering interface, not BGLView.  If you're interested in the older
@@ -88,7 +100,7 @@ driver you should get Mesa 2.6.
 
 
 
-BeOS and Glide
+* BeOS and Glide
 
 Mesa 3.0 supported the 3Dfx/Glide library on Beos.  Download Mesa 3.0
 if interested.  Ideally, the 3Dfx/Glide support should be updated to
@@ -99,4 +111,4 @@ of February, 1999.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.6 1999/11/27 01:40:40 brianp Exp $
+$Id: README.BEOS,v 1.7 2002/09/19 16:19:44 brianp Exp $

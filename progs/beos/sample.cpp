@@ -32,7 +32,7 @@ class SampleGLWindow : public BWindow
 {
 public:
    SampleGLWindow(BRect frame, uint32 type);
-   virtual bool   QuitRequested() { return true; }
+   virtual bool   QuitRequested() { be_app->PostMessage(B_QUIT_REQUESTED); return true; }
    
 private:
    SampleGLView   *theView;
@@ -135,7 +135,7 @@ void SampleGLView::gInit(void)
    use_stipple_mode = GL_FALSE;
    use_smooth_mode = GL_TRUE;
    linesize = 2;
-   pointsize = 4;
+   pointsize = 6;
 }
 
 
@@ -147,35 +147,46 @@ void SampleGLView::gDraw(void)
    glClear(GL_COLOR_BUFFER_BIT);
    glLineWidth(linesize);
    
+/*
+
    if (use_stipple_mode) {
       glEnable(GL_LINE_STIPPLE);
    } else {
       glDisable(GL_LINE_STIPPLE);
    }
-   
-   if (use_smooth_mode) {
-      glEnable(GL_LINE_SMOOTH);
-      glEnable(GL_BLEND);
-   } else {
-      glDisable(GL_LINE_SMOOTH);
-      glDisable(GL_BLEND);
-   }
-   
+*/
+
+   glDisable(GL_POINT_SMOOTH);
+
+
    glPushMatrix();
    
+   glPointSize(pointsize);         // Set size for point
+
    for (i = 0; i < 360; i += 5) {
       glRotatef(5.0, 0,0,1);         // Rotate right 5 degrees
+
+	  if (use_smooth_mode) {
+		glEnable(GL_LINE_SMOOTH);
+	    glEnable(GL_BLEND);
+	   } else {
+	      glDisable(GL_LINE_SMOOTH);
+	      glDisable(GL_BLEND);
+	   }
+
       glColor3f(1.0, 1.0, 0.0);      // Set color for line
       glBegin(GL_LINE_STRIP);         // And create the line
-      glVertex3fv(pntA);
-      glVertex3fv(pntB);
+      	glVertex3fv(pntA);
+      	glVertex3fv(pntB);
       glEnd();
-      
-      glPointSize(pointsize);         // Set size for point
+
+      glDisable(GL_POINT_SMOOTH);
+      glDisable(GL_BLEND);
+
       glColor3f(0.0, 1.0, 0.0);      // Set color for point
       glBegin(GL_POINTS);
-      glVertex3fv(pntA);         // Draw point at one end
-      glVertex3fv(pntB);         // Draw point at other end
+      	glVertex3fv(pntA);         // Draw point at one end
+      	glVertex3fv(pntB);         // Draw point at other end
       glEnd();
    }
    

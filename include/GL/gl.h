@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.69 2002/09/06 02:52:23 brianp Exp $ */
+/* $Id: gl.h,v 1.70 2002/09/19 16:19:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,6 +63,10 @@
 #  define GLAPIENTRY
 #endif /* WIN32 / CYGWIN bracket */
 
+#if (defined(__BEOS__) && defined(__POWERPC__)) || defined(__QUICKDRAW__)
+#  define PRAGMA_EXPORT_SUPPORTED		1
+#endif
+
 #if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(__CYGWIN__)
 #include <gl/mesa_wgl.h>
 #endif
@@ -79,10 +83,10 @@
 #define signed
 #endif
 
-
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
+#if defined(PRAGMA_EXPORT_SUPPORTED)
 #pragma export on
 #endif
+
 /*
  * End system-specific stuff.
  **********************************************************************/
@@ -724,6 +728,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_CLIENT_VERTEX_ARRAY_BIT		0x00000002
 #define GL_ALL_CLIENT_ATTRIB_BITS 		0xFFFFFFFF
 #define GL_CLIENT_ALL_ATTRIB_BITS 		0xFFFFFFFF
+
 
 
 /*
@@ -2593,7 +2598,7 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 /**********************************************************************
  * Begin system-specific stuff
  */
-#if defined(__BEOS__) || defined(__QUICKDRAW__)
+#if defined(PRAGMA_EXPORT_SUPPORTED)
 #pragma export off
 #endif
 
