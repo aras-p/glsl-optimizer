@@ -170,7 +170,7 @@ gcc-sl:
 	"CFLAGS = -fPIC -O3" \
 	"CXXFLAGS = -fPIC -O3" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = ../bin/mklib.gcc-sl" \
+	"MAKELIB = $(TOP)/bin/mklib.gcc-sl" \
 	"APP_LIB_DEPS = -lX11 -lm"
 
 #special hidden target, to make a shared lib for ONLY Mesa "core"
@@ -832,7 +832,6 @@ solaris-x86:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -Xa -xO3 -xpentium -KPIC -I/usr/openwin/include -DUSE_XSHM" \
-	"MAKELIB = $(TOP)/bin/mklib.solaris" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 solaris-x86-gcc:
@@ -847,7 +846,6 @@ solaris-x86-gcc:
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM" \
 	"CXXFLAGS = -O3 -m486 -fPIC" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"MAKELIB = $(TOP)/bin/mklib.solaris" \
 	"APP_LIB_DEPS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4:
@@ -953,7 +951,6 @@ sunos5-smp:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
-	"MAKELIB = ../bin/mklib.solaris" \
 	"APP_LIB_DEPS = -lX11 -lglut -lGLU -lGL -lm -lCrun"
 
 sunos5-gcc:
@@ -989,7 +986,6 @@ sunos5-smp:
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm" \
 	"GLW_LIB_DEPS = -L$(TOP)/lib -lGL -L/usr/openwin/lib -lXt -lX11" \
-	"MAKELIB = ../bin/mklib.solaris" \
 	"APP_LIB_DEPS = -xautopar -xreduction -lX11 -lglut -lGLU -lGL -lm -lCrun -lthread"
 
 ultrix-gcc:
@@ -1030,7 +1026,6 @@ unixware-shared:
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -KPIC,inline -DUSE_XSHM" \
 	"CXXFLAGS = -O -KPIC,inline" \
-	"MAKELIB = $(TOP)/bin/mklib.solaris" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
 # for debugging on IRIX 5.x systems
