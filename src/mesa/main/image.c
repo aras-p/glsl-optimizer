@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.23 2000/03/21 16:09:37 brianp Exp $ */
+/* $Id: image.c,v 1.24 2000/03/29 15:56:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -224,6 +224,7 @@ GLint _mesa_components_in_format( GLenum format )
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
          return 1;
       case GL_LUMINANCE_ALPHA:
 	 return 2;
