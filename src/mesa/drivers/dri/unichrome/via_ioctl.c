@@ -242,6 +242,16 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 }
       }
    }
+
+   /* 16bpp doesn't support masked clears */
+   if (vmesa->viaScreen->bytesPerPixel == 2 &&
+       vmesa->ClearMask & 0xf0000000) {
+      if (flag & VIA_FRONT)
+         mask |= DD_FRONT_LEFT_BIT;
+      if (flag & VIA_BACK)
+         mask |= DD_BACK_LEFT_BIT;
+      flag &= ~(VIA_FRONT | VIA_BACK);
+   }
     
    if (flag) {
       drm_clip_rect_t *boxes, *tmp_boxes = 0;
