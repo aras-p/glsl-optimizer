@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.23 2004/01/27 18:52:40 idr Exp $
+# $Id: APIspec,v 1.24 2004/10/27 15:06:18 michal Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -8567,13 +8567,351 @@ param		pname		GLenum
 param		params		GLuint *
 category	1.5
 
+# GL_ARB_shader_objects
+
+name		DeleteObjectARB
+return		void
+param		obj		GLhandleARB
+category	GL_ARB_shader_objects
+offset		710
+
+name		GetHandleARB
+return		GLhandleARB
+param		pname		GLenum
+category	GL_ARB_shader_objects
+offset		711
+
+name		DetachObjectARB
+return		void
+param		containerObj	GLhandleARB
+param		attachedObj	GLhandleARB
+category	GL_ARB_shader_objects
+offset		712
+
+name		CreateShaderObjectARB
+return		GLhandleARB
+param		shaderType	GLenum
+category	GL_ARB_shader_objects
+offset		713
+
+name		ShaderSourceARB
+return		void
+param		shaderObj	GLhandleARB
+param		count		GLsizei
+param		string		const GLcharARB **
+param		length		const GLint *
+category	GL_ARB_shader_objects
+offset		714
+
+name		CompileShaderARB
+return		void
+param		shaderObj	GLhandleARB
+category	GL_ARB_shader_objects
+offset		715
+
+name		CreateProgramObjectARB
+return		GLhandleARB
+category	GL_ARB_shader_objects
+offset		716
+
+name		AttachObjectARB
+return		void
+param		containerObj	GLhandleARB
+param		obj		GLhandleARB
+category	GL_ARB_shader_objects
+offset		717
+
+name		LinkProgramARB
+return		void
+param		programObj	GLhandleARB
+category	GL_ARB_shader_objects
+offset		718
+
+name		UseProgramObjectARB
+return		void
+param		programObj	GLhandleARB
+category	GL_ARB_shader_objects
+offset		719
+
+name		ValidateProgramARB
+return		void
+param		programObj	GLhandleARB
+category	GL_ARB_shader_objects
+offset		720
+
+name		Uniform1fARB
+return		void
+param		location	GLint
+param		v0		GLfloat
+category	GL_ARB_shader_objects
+offset		721
+
+name		Uniform2fARB
+return		void
+param		location	GLint
+param		v0		GLfloat
+param		v1		GLfloat
+category	GL_ARB_shader_objects
+offset		722
+
+name		Uniform3fARB
+return		void
+param		location	GLint
+param		v0		GLfloat
+param		v1		GLfloat
+param		v2		GLfloat
+category	GL_ARB_shader_objects
+offset		723
+
+name		Uniform4fARB
+return		void
+param		location	GLint
+param		v0		GLfloat
+param		v1		GLfloat
+param		v2		GLfloat
+param		v3		GLfloat
+category	GL_ARB_shader_objects
+offset		724
+
+name		Uniform1iARB
+return		void
+param		location	GLint
+param		v0		GLint
+category	GL_ARB_shader_objects
+offset		725
+
+name		Uniform2iARB
+return		void
+param		location	GLint
+param		v0		GLint
+param		v1		GLint
+category	GL_ARB_shader_objects
+offset		726
+
+name		Uniform3iARB
+return		void
+param		location	GLint
+param		v0		GLint
+param		v1		GLint
+param		v2		GLint
+category	GL_ARB_shader_objects
+offset		727
+
+name		Uniform4iARB
+return		void
+param		location	GLint
+param		v0		GLint
+param		v1		GLint
+param		v2		GLint
+param		v3		GLint
+category	GL_ARB_shader_objects
+offset		728
+
+name		Uniform1fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		729
+
+name		Uniform2fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		730
+
+name		Uniform3fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		731
+
+name		Uniform4fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		732
+
+name		Uniform1ivARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLint *
+category	GL_ARB_shader_objects
+offset		733
+
+name		Uniform2ivARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLint *
+category	GL_ARB_shader_objects
+offset		734
+
+name		Uniform3ivARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLint *
+category	GL_ARB_shader_objects
+offset		735
+
+name		Uniform4ivARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		value		const GLint *
+category	GL_ARB_shader_objects
+offset		736
+
+name		UniformMatrix2fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		transpose	GLboolean
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		737
+
+name		UniformMatrix3fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		transpose	GLboolean
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		738
+
+name		UniformMatrix4fvARB
+return		void
+param		location	GLint
+param		count		GLsizei
+param		transpose	GLboolean
+param		value		const GLfloat *
+category	GL_ARB_shader_objects
+offset		739
+
+name		GetObjectParameterfvARB
+return		void
+param		obj		GLhandleARB
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_ARB_shader_objects
+offset		740
+
+name		GetObjectParameterivARB
+return		void
+param		obj		GLhandleARB
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_shader_objects
+offset		741
+
+name		GetInfoLogARB
+return		void
+param		obj		GLhandleARB
+param		maxLength	GLsizei
+param		length		GLsizei *
+param		infoLog		GLcharARB *
+category	GL_ARB_shader_objects
+offset		742
+
+name		GetAttachedObjectsARB
+return		void
+param		containerObj	GLhandleARB
+param		maxCount	GLsizei
+param		count		GLsizei *
+param		obj		GLhandleARB *
+category	GL_ARB_shader_objects
+offset		743
+
+name		GetUniformLocationARB
+return		GLint
+param		programObj	GLhandleARB
+param		name		const GLcharARB *
+category	GL_ARB_shader_objects
+offset		744
+
+name		GetActiveUniformARB
+return		void
+param		programObj	GLhandleARB
+param		index		GLuint
+param		maxLength	GLsizei
+param		length		GLsizei *
+param		size		GLint *
+param		type		GLenum *
+param		name		GLcharARB *
+category	GL_ARB_shader_objects
+offset		745
+
+name		GetUniformfvARB
+return		void
+param		programObj	GLhandleARB
+param		location	GLint
+param		params		GLfloat *
+category	GL_ARB_shader_objects
+offset		746
+
+name		GetUniformivARB
+return		void
+param		programObj	GLhandleARB
+param		location	GLint
+param		params		GLint *
+category	GL_ARB_shader_objects
+offset		747
+
+name		GetShaderSourceARB
+return		void
+param		obj		GLhandleARB
+param		maxLength	GLsizei
+param		length		GLsizei *
+param		source		GLcharARB *
+category	GL_ARB_shader_objects
+offset		748
+
+# ARB_vertex_shader
+
+name		BindAttribLocationARB
+return		void
+param		programObj	GLhandleARB
+param		index		GLuint
+param		name		const GLcharARB *
+category	ARB_vertex_shader
+offset		749
+
+name		GetActiveAttribARB
+return		void
+param		programObj	GLhandleARB
+param		index		GLuint
+param		maxLength	GLsizei
+param		length		GLsizei *
+param		size		GLint *
+param		type		GLenum *
+param		name		GLcharARB *
+category	ARB_vertex_shader
+offset		750
+
+name		GetAttribLocationARB
+return		GLint
+param		programObj	GLhandleARB
+param		name		const GLcharARB *
+category	ARB_vertex_shader
+offset		751
+
 # EXT_blend_equation_separate
 
 name		BlendEquationSeparateEXT
 return		void
 param		modeRGB		GLenum
 param		modeA		GLenum
-offset		710
+offset		752
 category	GL_EXT_blend_equation_separate
 
 # ATI_blend_equation_separate

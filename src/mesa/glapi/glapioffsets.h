@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically by gl_offsets.py (from Mesa) script */
+/* DO NOT EDIT - This file generated automatically by gloffsets.py script */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -25,7 +25,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+ 
 #ifndef _GLAPI_OFFSETS_H_
 #define _GLAPI_OFFSETS_H_
 
@@ -442,7 +442,7 @@
 #define _gloffset_MultTransposeMatrixfARB 410
 #define _gloffset_MultTransposeMatrixdARB 411
 #define _gloffset_SampleCoverageARB 412
-#define _gloffset_DrawBuffersARB 413
+#define _gloffset___unused413 413
 #define _gloffset_PolygonOffsetEXT 414
 #define _gloffset_GetTexFilterFuncSGIS 415
 #define _gloffset_TexFilterFuncSGIS 416
@@ -739,6 +739,48 @@
 #define _gloffset_GetQueryObjectuivARB 707
 #define _gloffset_MultiModeDrawArraysIBM 708
 #define _gloffset_MultiModeDrawElementsIBM 709
-#define _gloffset_BlendEquationSeparateEXT 710
+#define _gloffset_DeleteObjectARB 710
+#define _gloffset_GetHandleARB 711
+#define _gloffset_DetachObjectARB 712
+#define _gloffset_CreateShaderObjectARB 713
+#define _gloffset_ShaderSourceARB 714
+#define _gloffset_CompileShaderARB 715
+#define _gloffset_CreateProgramObjectARB 716
+#define _gloffset_AttachObjectARB 717
+#define _gloffset_LinkProgramARB 718
+#define _gloffset_UseProgramObjectARB 719
+#define _gloffset_ValidateProgramARB 720
+#define _gloffset_Uniform1fARB 721
+#define _gloffset_Uniform2fARB 722
+#define _gloffset_Uniform3fARB 723
+#define _gloffset_Uniform4fARB 724
+#define _gloffset_Uniform1iARB 725
+#define _gloffset_Uniform2iARB 726
+#define _gloffset_Uniform3iARB 727
+#define _gloffset_Uniform4iARB 728
+#define _gloffset_Uniform1fvARB 729
+#define _gloffset_Uniform2fvARB 730
+#define _gloffset_Uniform3fvARB 731
+#define _gloffset_Uniform4fvARB 732
+#define _gloffset_Uniform1ivARB 733
+#define _gloffset_Uniform2ivARB 734
+#define _gloffset_Uniform3ivARB 735
+#define _gloffset_Uniform4ivARB 736
+#define _gloffset_UniformMatrix2fvARB 737
+#define _gloffset_UniformMatrix3fvARB 738
+#define _gloffset_UniformMatrix4fvARB 739
+#define _gloffset_GetObjectParameterfvARB 740
+#define _gloffset_GetObjectParameterivARB 741
+#define _gloffset_GetInfoLogARB 742
+#define _gloffset_GetAttachedObjectsARB 743
+#define _gloffset_GetUniformLocationARB 744
+#define _gloffset_GetActiveUniformARB 745
+#define _gloffset_GetUniformfvARB 746
+#define _gloffset_GetUniformivARB 747
+#define _gloffset_GetShaderSourceARB 748
+#define _gloffset_BindAttribLocationARB 749
+#define _gloffset_GetActiveAttribARB 750
+#define _gloffset_GetAttribLocationARB 751
+#define _gloffset_BlendEquationSeparateEXT 752
 
 #endif
