@@ -57,29 +57,27 @@ Mesa is available in at least three archive formats:
 After unpacking you'll have these directories (and more):
 </p>
 <pre>
-Makefile.X11	- "old" top-level Makefile for X11-based systems
+Makefile.X11	- top-level Makefile for X11-based systems
 Make-config	- system configurations used by the Makefile.X11
-configure	- the GNU autoconf script
-bin/		- shell scripts for making shared libraries, etc
 include/	- GL header (include) files
-lib/		- client libraries, created during installation
-src/		- source code for the main libGL library
-si-glu/		- SGI Sample Implementation of libGLU
-src-glu/	- old source code for libGLU (obsolete)
+bin/		- shell scripts for making shared libraries, etc
+lib/		- final client libraries, created during compilation
 docs/		- documentation
-util/		- handly utility functions
-widgets-mesa/	- Mesa widgets for Xt/Motif (obsolete)
-widgets-sgi/	- SGI OpenGL widgets for Xt/Motif
+src/		- source code for libraries
+src/mesa	- sources for the main Mesa library and device drivers
+src/glu		- libGLU source code
+src/glw		- Xt/Motif/OpenGL widget code
+
 
 and if you downloaded and unpacked the MesaDemos.X.Y archive:
 
-src-glut/	- source code for GLUT toolkit
-demos/		- GLUT demos
-xdemos/		- X11 and SVGA demo programs
-samples/	- sample OpenGL programs from SGI
-book/		- example programs from the OpenGL Programming Guide,
-		  converted to GLUT by Mark Kilgard, from GLUT distribution.
-images/		- image files
+src/glut	- GLUT source code
+progs/		- OpenGL programs
+progs/demos	- original Mesa demos
+progs/xdemos	- GLX OpenGL/Mesa demos
+progs/redbook	- examples from the OpenGL Programming Guide
+progs/samples	- examples from SGI
+progs/images/	- image files
 
 </pre>
 
