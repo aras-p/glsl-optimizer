@@ -59,6 +59,9 @@
 #include "light.h"
 #include "lines.h"
 #include "matrix.h"
+#if FEATURE_ARB_occlusion_query
+#include "occlude.h"
+#endif
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
@@ -643,6 +646,17 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->IsBufferARB = _mesa_IsBufferARB;
    exec->MapBufferARB = _mesa_MapBufferARB;
    exec->UnmapBufferARB = _mesa_UnmapBufferARB;
+#endif
+
+#if FEATURE_ARB_occlusion_query
+   exec->GenQueriesARB = _mesa_GenQueriesARB;
+   exec->DeleteQueriesARB = _mesa_DeleteQueriesARB;
+   exec->IsQueryARB = _mesa_IsQueryARB;
+   exec->BeginQueryARB = _mesa_BeginQueryARB;
+   exec->EndQueryARB = _mesa_EndQueryARB;
+   exec->GetQueryivARB = _mesa_GetQueryivARB;
+   exec->GetQueryObjectivARB = _mesa_GetQueryObjectivARB;
+   exec->GetQueryObjectuivARB = _mesa_GetQueryObjectuivARB;
 #endif
 }
 

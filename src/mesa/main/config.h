@@ -243,5 +243,6 @@
 
 #define FEATURE_ARB_fragment_program 1
 
+#define FEATURE_ARB_occlusion_query 1
 
 #endif /* CONFIG_H */

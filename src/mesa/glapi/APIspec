@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.17 2003/05/10 04:35:36 brianp Exp $
+# $Id: APIspec,v 1.18 2003/06/13 02:37:28 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -8343,6 +8343,67 @@ param		zmin		GLclampd
 param		zmax		GLclampd
 category	GL_EXT_depth_bounds_test
 offset		699
+
+
+
+# GL_ARB_occlusion_query
+
+name		GenQueriesARB
+return		void
+param		n		GLsizei
+param		ids		GLuint *
+category	GL_ARB_occlusion_query
+offset		700
+
+name		DeleteQueriesARB
+return		void
+param		n		GLsizei
+param		ids		const GLuint *
+category	GL_ARB_occlusion_query
+offset		701
+
+name		IsQueryARB
+return		GLboolean
+param		id		GLuint
+category	GL_ARB_occlusion_query
+offset		702
+
+name		BeginQueryARB
+return		void
+param		target		GLenum
+param		id		GLuint
+category	GL_ARB_occlusion_query
+offset		703
+
+name		EndQueryARB
+return		void
+param		target		GLenum
+category	GL_ARB_occlusion_query
+offset		704
+
+name		GetQueryivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_occlusion_query
+offset		705
+
+name		GetQueryObjectivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_occlusion_query
+offset		706
+
+name		GetQueryObjectuivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLuint *
+category	GL_ARB_occlusion_query
+offset		707
 
 
 

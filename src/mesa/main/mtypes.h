@@ -1315,6 +1315,18 @@ struct fragment_program_state
 
 
 /*
+ * State for GL_ARB_occlusion_query
+ */
+struct occlusion_state
+{
+   GLboolean Active;
+   GLuint CurrentQueryObject;
+   GLuint PassedCounter;
+   struct _mesa_HashTable *QueryObjects;
+};
+
+
+/*
  * State which can be shared by multiple contexts:
  */
 struct gl_shared_state {
@@ -1449,6 +1461,7 @@ struct gl_extensions {
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
+   GLboolean ARB_occlusion_query;
    GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
@@ -1826,6 +1839,8 @@ struct __GLcontextRec {
    struct program_state Program;             /* for vertex or fragment progs */
    struct vertex_program_state VertexProgram;      /* GL_NV_vertex_program */
    struct fragment_program_state FragmentProgram;  /* GL_NV_fragment_program */
+
+   struct occlusion_state Occlusion;  /* GL_ARB_occlusion_query */
 
    GLenum ErrorValue;        /* Last error code */
    GLenum RenderMode;        /* either GL_RENDER, GL_SELECT, GL_FEEDBACK */

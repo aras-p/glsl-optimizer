@@ -79,7 +79,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       RasterMask |= CLIP_BIT;
    }
 
-   if (ctx->Depth.OcclusionTest)
+   if (ctx->Depth.OcclusionTest || ctx->Occlusion.Active)
       RasterMask |= OCCLUSION_BIT;
 
 

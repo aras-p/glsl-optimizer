@@ -54,6 +54,7 @@ static const struct {
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
+   { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
    { OFF, "GL_ARB_point_parameters",           F(EXT_point_parameters) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
@@ -163,6 +164,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
       "GL_ARB_imaging",
       "GL_ARB_multitexture",
+#if FEATURE_ARB_occlusion_query
+      "GL_ARB_occlusion_query",
+#endif
       "GL_ARB_point_parameters",
       "GL_ARB_shadow",
       "GL_ARB_shadow_ambient",

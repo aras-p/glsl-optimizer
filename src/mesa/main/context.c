@@ -1562,6 +1562,10 @@ init_attrib_groups( GLcontext *ctx )
    ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
+#if FEATURE_ARB_occlusion_query
+   ctx->Occlusion.QueryObjects = _mesa_NewHashTable();
+#endif
+
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;

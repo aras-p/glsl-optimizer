@@ -4624,6 +4624,46 @@ KEYWORD1 void KEYWORD2 NAME(DepthBoundsEXT)(GLclampd zmin, GLclampd zmax)
    DISPATCH(DepthBoundsEXT, (zmin, zmax), (F, "glDepthBoundsEXT(%f, %f);\n", zmin, zmax));
 }
 
+KEYWORD1 void KEYWORD2 NAME(GenQueriesARB)(GLsizei n, GLuint * ids)
+{
+   DISPATCH(GenQueriesARB, (n, ids), (F, "glGenQueriesARB(%d, %p);\n", n, (const void *) ids));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteQueriesARB)(GLsizei n, const GLuint * ids)
+{
+   DISPATCH(DeleteQueriesARB, (n, ids), (F, "glDeleteQueriesARB(%d, %p);\n", n, (const void *) ids));
+}
+
+KEYWORD1 GLboolean KEYWORD2 NAME(IsQueryARB)(GLuint id)
+{
+   RETURN_DISPATCH(IsQueryARB, (id), (F, "glIsQueryARB(%d);\n", id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BeginQueryARB)(GLenum target, GLuint id)
+{
+   DISPATCH(BeginQueryARB, (target, id), (F, "glBeginQueryARB(0x%x, %d);\n", target, id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EndQueryARB)(GLenum target)
+{
+   DISPATCH(EndQueryARB, (target), (F, "glEndQueryARB(0x%x);\n", target));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryivARB)(GLenum target, GLenum pname, GLint * params)
+{
+   DISPATCH(GetQueryivARB, (target, pname, params), (F, "glGetQueryivARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjectivARB)(GLuint id, GLenum pname, GLint * params)
+{
+   DISPATCH(GetQueryObjectivARB, (id, pname, params), (F, "glGetQueryObjectivARB(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetQueryObjectuivARB)(GLuint id, GLenum pname, GLuint * params)
+{
+   DISPATCH(GetQueryObjectuivARB, (id, pname, params), (F, "glGetQueryObjectuivARB(%d, 0x%x, %p);\n", id, pname, (const void *) params));
+}
+
 
 
 /*
@@ -5337,6 +5377,14 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(MapBufferARB),
    TABLE_ENTRY(UnmapBufferARB),
    TABLE_ENTRY(DepthBoundsEXT),
+   TABLE_ENTRY(GenQueriesARB),
+   TABLE_ENTRY(DeleteQueriesARB),
+   TABLE_ENTRY(IsQueryARB),
+   TABLE_ENTRY(BeginQueryARB),
+   TABLE_ENTRY(EndQueryARB),
+   TABLE_ENTRY(GetQueryivARB),
+   TABLE_ENTRY(GetQueryObjectivARB),
+   TABLE_ENTRY(GetQueryObjectuivARB),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

@@ -841,6 +841,14 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
 
+#if FEATURE_ARB_occlusion_query
+   if (ctx->Occlusion.Active) {
+      GLuint i;
+      for (i = 0; i < span->end; i++)
+         ctx->Occlusion.PassedCounter += span->array->mask[i];
+   }
+#endif
+
    /* we have to wait until after occlusion to do this test */
    if (ctx->Color.DrawBuffer == GL_NONE || ctx->Color.IndexMask == 0) {
       /* write no pixels */
@@ -1045,6 +1053,14 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
    /* if we get here, something passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
+
+#if FEATURE_ARB_occlusion_query
+   if (ctx->Occlusion.Active) {
+      GLuint i;
+      for (i = 0; i < span->end; i++)
+         ctx->Occlusion.PassedCounter += span->array->mask[i];
+   }
+#endif
 
    /* can't abort span-writing until after occlusion testing */
    if (colorMask == 0x0) {
@@ -1287,6 +1303,14 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 
    /* if we get here, some fragments passed the depth test */
    ctx->OcclusionResult = GL_TRUE;
+
+#if FEATURE_ARB_occlusion_query
+   if (ctx->Occlusion.Active) {
+      GLuint i;
+      for (i = 0; i < span->end; i++)
+         ctx->Occlusion.PassedCounter += span->array->mask[i];
+   }
+#endif
 
    /* We had to wait until now to check for glColorMask(F,F,F,F) because of
     * the occlusion test.

@@ -58,6 +58,7 @@ MAIN_SOURCES = \
 	main/nvfragparse.c \
 	main/nvvertexec.c \
 	main/nvvertparse.c \
+	main/occlude.c \
 	main/pixel.c \
 	main/points.c \
 	main/polygon.c \

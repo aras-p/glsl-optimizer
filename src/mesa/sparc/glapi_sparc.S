@@ -18626,6 +18626,174 @@ glDepthBoundsEXT:
 #endif
 	jmpl	%g3, %g0
 	nop
+
+.globl glGenQueriesARB
+.type glGenQueriesARB,#function
+glGenQueriesARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GenQueriesARB), %g2
+	or	%g2, %lo(8 * _gloffset_GenQueriesARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GenQueriesARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glDeleteQueriesARB
+.type glDeleteQueriesARB,#function
+glDeleteQueriesARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_DeleteQueriesARB), %g2
+	or	%g2, %lo(8 * _gloffset_DeleteQueriesARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_DeleteQueriesARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glIsQueryARB
+.type glIsQueryARB,#function
+glIsQueryARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_IsQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_IsQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_IsQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glBeginQueryARB
+.type glBeginQueryARB,#function
+glBeginQueryARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_BeginQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_BeginQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_BeginQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glEndQueryARB
+.type glEndQueryARB,#function
+glEndQueryARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_EndQueryARB), %g2
+	or	%g2, %lo(8 * _gloffset_EndQueryARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_EndQueryARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryivARB
+.type glGetQueryivARB,#function
+glGetQueryivARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryObjectivARB
+.type glGetQueryObjectivARB,#function
+glGetQueryObjectivARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryObjectivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryObjectivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryObjectivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
+
+.globl glGetQueryObjectuivARB
+.type glGetQueryObjectuivARB,#function
+glGetQueryObjectuivARB:
+#ifdef __sparc_v9__
+	sethi	%hi(0x00000000), %g2
+	sethi	%hi(0x00000000), %g1
+	or	%g2, %lo(0x00000000), %g2
+	or	%g1, %lo(0x00000000), %g1
+	sllx	%g2, 32, %g2
+	ldx	[%g1 + %g2], %g1
+	sethi	%hi(8 * _gloffset_GetQueryObjectuivARB), %g2
+	or	%g2, %lo(8 * _gloffset_GetQueryObjectuivARB), %g2
+	ldx	[%g1 + %g2], %g3
+#else
+	sethi	%hi(0x00000000), %g1
+	ld	[%g1 + %lo(0x00000000)], %g1
+	ld	[%g1 + (4 * _gloffset_GetQueryObjectuivARB)], %g3
+#endif
+	jmpl	%g3, %g0
+	nop
 	 nop
 
 .globl _mesa_sparc_glapi_end

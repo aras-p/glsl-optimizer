@@ -706,6 +706,14 @@ struct _glapi_table
    void * (*MapBufferARB)(GLenum target, GLenum access); /* 697 */
    GLboolean (*UnmapBufferARB)(GLenum target); /* 698 */
    void (*DepthBoundsEXT)(GLclampd zmin, GLclampd zmax); /* 699 */
+   void (*GenQueriesARB)(GLsizei n, GLuint * ids); /* 700 */
+   void (*DeleteQueriesARB)(GLsizei n, const GLuint * ids); /* 701 */
+   GLboolean (*IsQueryARB)(GLuint id); /* 702 */
+   void (*BeginQueryARB)(GLenum target, GLuint id); /* 703 */
+   void (*EndQueryARB)(GLenum target); /* 704 */
+   void (*GetQueryivARB)(GLenum target, GLenum pname, GLint * params); /* 705 */
+   void (*GetQueryObjectivARB)(GLuint id, GLenum pname, GLint * params); /* 706 */
+   void (*GetQueryObjectuivARB)(GLuint id, GLenum pname, GLuint * params); /* 707 */
 };
 
 #endif

@@ -890,5 +890,13 @@ static struct name_address_offset static_functions[] = {
    { "glMapBufferARB", (GLvoid *) glMapBufferARB, _gloffset_MapBufferARB },
    { "glUnmapBufferARB", (GLvoid *) glUnmapBufferARB, _gloffset_UnmapBufferARB },
    { "glDepthBoundsEXT", (GLvoid *) glDepthBoundsEXT, _gloffset_DepthBoundsEXT },
+   { "glGenQueriesARB", (GLvoid *) glGenQueriesARB, _gloffset_GenQueriesARB },
+   { "glDeleteQueriesARB", (GLvoid *) glDeleteQueriesARB, _gloffset_DeleteQueriesARB },
+   { "glIsQueryARB", (GLvoid *) glIsQueryARB, _gloffset_IsQueryARB },
+   { "glBeginQueryARB", (GLvoid *) glBeginQueryARB, _gloffset_BeginQueryARB },
+   { "glEndQueryARB", (GLvoid *) glEndQueryARB, _gloffset_EndQueryARB },
+   { "glGetQueryivARB", (GLvoid *) glGetQueryivARB, _gloffset_GetQueryivARB },
+   { "glGetQueryObjectivARB", (GLvoid *) glGetQueryObjectivARB, _gloffset_GetQueryObjectivARB },
+   { "glGetQueryObjectuivARB", (GLvoid *) glGetQueryObjectuivARB, _gloffset_GetQueryObjectuivARB },
    { NULL, NULL }  /* end of list marker */
 };

@@ -899,13 +899,16 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 
 
 
+/*
+ * Special tri function for occlusion testing
+ */
 #define NAME occlusion_zless_triangle
 #define DO_OCCLUSION_TEST
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define SETUP_CODE			\
-   if (ctx->OcclusionResult) {		\
-      return;				\
+#define SETUP_CODE						\
+   if (ctx->OcclusionResult && !ctx->Occlusion.Active) {	\
+      return;							\
    }
 #define RENDER_SPAN( span )				\
    GLuint i;						\
@@ -913,7 +916,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       GLdepth z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {				\
          ctx->OcclusionResult = GL_TRUE;		\
-         return;					\
+         ctx->Occlusion.PassedCounter++;		\
       }							\
       span.z += span.zStep;				\
    }
@@ -1034,7 +1037,8 @@ _swrast_choose_triangle( GLcontext *ctx )
          return;
       }
 
-      if (ctx->Depth.OcclusionTest &&
+      /* special case for occlusion testing */
+      if ((ctx->Depth.OcclusionTest || ctx->Occlusion.Active) &&
           ctx->Depth.Test &&
           ctx->Depth.Mask == GL_FALSE &&
           ctx->Depth.Func == GL_LESS &&

@@ -2640,6 +2640,39 @@ typedef void (APIENTRY * PFNGLDEPTHBOUNDSEXTPROC)(GLclampd zmin, GLclampd zmax);
 
 
 
+/* XXX temporary until glext.h is updated! */
+#ifndef GL_ARB_occlusion_query
+#define GL_ARB_occlusion_query 1
+
+#define GL_SAMPLES_PASSED_ARB         0x8914
+#define GL_QUERY_COUNTER_BITS_ARB     0x8864
+#define GL_CURRENT_QUERY_ARB          0x8865
+#define GL_QUERY_RESULT_ARB           0x8866
+#define GL_QUERY_RESULT_AVAILABLE_ARB 0x8867
+
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void GLAPIENTRY glGenQueriesARB(GLsizei n, GLuint *ids);
+GLAPI void GLAPIENTRY glDeleteQueriesARB(GLsizei n, const GLuint *ids);
+GLAPI GLboolean GLAPIENTRY glIsQueryARB(GLuint id);
+GLAPI void GLAPIENTRY glBeginQueryARB(GLenum target, GLuint id);
+GLAPI void GLAPIENTRY glEndQueryARB(GLenum target);
+GLAPI void GLAPIENTRY glGetQueryivARB(GLenum target, GLenum pname, GLint *params);
+GLAPI void GLAPIENTRY glGetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
+GLAPI void GLAPIENTRY glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
+#endif
+
+typedef void (APIENTRY * PFNGLGENQUERIESARBPROC)(GLsizei n, GLuint *ids);
+typedef void (APIENTRY * PFNGLDELETEQUERIESARBPROC)(GLsizei n, const GLuint *ids);
+typedef GLboolean (APIENTRY * PFNGLISQUERYARBPROC)(GLuint id);
+typedef void (APIENTRY * PFNGLBEGINQUERYARBPROC)(GLenum target, GLuint id);
+typedef void (APIENTRY * PFNGLENDQUERYARBPROC)(GLenum target);
+typedef void (APIENTRY * PFNGLGETQUERYIVARBPROC)(GLenum target, GLenum pname, GLint *params);
+typedef void (APIENTRY * PFNGLGETQUERYOBJECTIVARBPROC)(GLuint id, GLenum pname, GLint *params);
+typedef void (APIENTRY * PFNGLGETQUERYOBJECTUIVARBPROC)(GLuint id, GLenum pname, GLuint *params);
+
+#endif /* GL_ARB_occlusion_query */
+
+
 /**********************************************************************
  * Begin system-specific stuff
  */

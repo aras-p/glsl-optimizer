@@ -1126,6 +1126,7 @@ Mesa Version History
 	- GL_NV_fragment_program extension
 	- GL_NV_light_max_exponent
 	- GL_EXT_texture_rectangle (identical to GL_NV_texture_rectangle)
+	- GL_ARB_occlusion_query
 	- new X86 feature detection code (Petr Sebor)
 	- less memory used for display lists and vertex buffers
 	- demo of per-pixel lighting with a fragment program (demos/fplight.c)

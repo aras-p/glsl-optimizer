@@ -702,5 +702,13 @@
 #define _gloffset_MapBufferARB 697
 #define _gloffset_UnmapBufferARB 698
 #define _gloffset_DepthBoundsEXT 699
+#define _gloffset_GenQueriesARB 700
+#define _gloffset_DeleteQueriesARB 701
+#define _gloffset_IsQueryARB 702
+#define _gloffset_BeginQueryARB 703
+#define _gloffset_EndQueryARB 704
+#define _gloffset_GetQueryivARB 705
+#define _gloffset_GetQueryObjectivARB 706
+#define _gloffset_GetQueryObjectuivARB 707
 
 #endif

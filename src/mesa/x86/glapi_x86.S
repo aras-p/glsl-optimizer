@@ -5337,5 +5337,53 @@ GL_PREFIX(DepthBoundsEXT):
 	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
 	JMP(GL_OFFSET(_gloffset_DepthBoundsEXT))
 
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GenQueriesARB))
+GL_PREFIX(GenQueriesARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GenQueriesARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(DeleteQueriesARB))
+GL_PREFIX(DeleteQueriesARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_DeleteQueriesARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(IsQueryARB))
+GL_PREFIX(IsQueryARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_IsQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(BeginQueryARB))
+GL_PREFIX(BeginQueryARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_BeginQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(EndQueryARB))
+GL_PREFIX(EndQueryARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_EndQueryARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryivARB))
+GL_PREFIX(GetQueryivARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryObjectivARB))
+GL_PREFIX(GetQueryObjectivARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryObjectivARB))
+
+ALIGNTEXT16
+GLOBL_FN(GL_PREFIX(GetQueryObjectuivARB))
+GL_PREFIX(GetQueryObjectuivARB):
+	MOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX)
+	JMP(GL_OFFSET(_gloffset_GetQueryObjectuivARB))
+
 
 #endif  /* __WIN32__ */
