@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.18 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: image.c,v 1.19 2000/03/13 18:31:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -493,22 +493,25 @@ GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
  * Unpack a 32x32 pixel polygon stipple from user memory using the
  * current pixel unpack settings.
  */
-void gl_unpack_polygon_stipple( const GLcontext *ctx,
-                                const GLubyte *pattern, GLuint dest[32] )
+void
+_mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
+                              const struct gl_pixelstore_attrib *unpacking )
 {
-   GLint i;
-   for (i = 0; i < 32; i++) {
-      GLubyte *src = (GLubyte *) gl_pixel_addr_in_image( &ctx->Unpack, pattern,
-                                  32, 32, GL_COLOR_INDEX, GL_BITMAP, 0, i, 0 );
-      dest[i] = (src[0] << 24)
-              | (src[1] << 16)
-              | (src[2] <<  8)
-              | (src[3]      );
-   }
-
-   /* Bit flipping within each byte */
-   if (ctx->Unpack.LsbFirst) {
-      gl_flip_bytes( (GLubyte *) dest, 32 * 4 );
+   GLubyte *ptrn = _mesa_unpack_bitmap( 32, 32, pattern, unpacking );
+   if (ptrn) {
+      /* Convert pattern from GLubytes to GLuints and handle big/little
+       * endian differences
+       */
+      GLubyte *p = ptrn;
+      GLint i;
+      for (i = 0; i < 32; i++) {
+         dest[i] = (p[0] << 24)
+                 | (p[1] << 16)
+                 | (p[2] <<  8)
+                 | (p[3]      );
+         p += 4;
+      }
+      FREE(ptrn);
    }
 }
 
@@ -518,24 +521,23 @@ void gl_unpack_polygon_stipple( const GLcontext *ctx,
  * Pack polygon stipple into user memory given current pixel packing
  * settings.
  */
-void gl_pack_polygon_stipple( const GLcontext *ctx,
-                              const GLuint pattern[32],
-                              GLubyte *dest )
+void
+_mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
+                            const struct gl_pixelstore_attrib *packing )
 {
+   /* Convert pattern from GLuints to GLubytes to handle big/little
+    * endian differences.
+    */
+   GLubyte ptrn[32*4];
    GLint i;
    for (i = 0; i < 32; i++) {
-      GLubyte *dst = (GLubyte *) gl_pixel_addr_in_image( &ctx->Pack, dest,
-                                  32, 32, GL_COLOR_INDEX, GL_BITMAP, 0, i, 0 );
-      dst[0] = (pattern[i] >> 24) & 0xff;
-      dst[1] = (pattern[i] >> 16) & 0xff;
-      dst[2] = (pattern[i] >>  8) & 0xff;
-      dst[3] = (pattern[i]      ) & 0xff;
-
-      /* Bit flipping within each byte */
-      if (ctx->Pack.LsbFirst) {
-         gl_flip_bytes( (GLubyte *) dst, 4 );
-      }
+      ptrn[i * 4 + 0] = (GLubyte) ((pattern[i] >> 24) & 0xff);
+      ptrn[i * 4 + 1] = (GLubyte) ((pattern[i] >> 16) & 0xff);
+      ptrn[i * 4 + 2] = (GLubyte) ((pattern[i] >> 8 ) & 0xff);
+      ptrn[i * 4 + 3] = (GLubyte) ((pattern[i]      ) & 0xff);
    }
+
+   _mesa_pack_bitmap(32, 32, ptrn, dest, packing);
 }
 
 
@@ -2826,4 +2828,95 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
    }
 
    return buffer;
+}
+
+
+/*
+ * Pack bitmap data.
+ */
+void
+_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
+                   GLubyte *dest, const struct gl_pixelstore_attrib *packing )
+{
+   GLint row, width_in_bytes;
+   const GLubyte *src;
+
+   if (!source)
+      return;
+
+   width_in_bytes = CEILING( width, 8 );
+   src = source;
+   for (row = 0; row < height; row++) {
+      GLubyte *dst = gl_pixel_addr_in_image( packing, dest, width, height,
+                                             GL_COLOR_INDEX, GL_BITMAP,
+                                             0, row, 0 );
+      if (!dst)
+         return;
+
+      if (packing->SkipPixels == 0) {
+         MEMCPY( dst, src, width_in_bytes );
+         if (packing->LsbFirst) {
+            gl_flip_bytes( dst, width_in_bytes );
+         }
+      }
+      else {
+         /* handling SkipPixels is a bit tricky (no pun intended!) */
+         GLint i;
+         if (packing->LsbFirst) {
+            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            const GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 128) {
+                  srcMask = 1;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask << 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
+         else {
+            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
+            GLubyte dstMask = 128;
+            const GLubyte *s = src;
+            GLubyte *d = dst;
+            *d = 0;
+            for (i = 0; i < width; i++) {
+               if (*s & srcMask) {
+                  *d |= dstMask;
+               }
+               if (srcMask == 1) {
+                  srcMask = 128;
+                  s++;
+               }
+               else {
+                  srcMask = srcMask >> 1;
+               }
+               if (dstMask == 1) {
+                  dstMask = 128;
+                  d++;
+                  *d = 0;
+               }
+               else {
+                  dstMask = dstMask >> 1;
+               }
+            }
+         }
+      }
+      src += width_in_bytes;
+   }
 }

@@ -1,10 +1,10 @@
-/* $Id: image.h,v 1.3 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: image.h,v 1.4 2000/03/13 18:31:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,15 +62,13 @@ gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
 
 
 extern void
-gl_unpack_polygon_stipple( const GLcontext *ctx,
-                           const GLubyte *pattern,
-                           GLuint dest[32] );
+_mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
+                              const struct gl_pixelstore_attrib *unpacking );
 
 
 extern void
-gl_pack_polygon_stipple( const GLcontext *ctx,
-                         const GLuint pattern[32],
-                         GLubyte *dest );
+_mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
+                            const struct gl_pixelstore_attrib *packing );
 
 
 extern void
@@ -122,6 +120,10 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
 extern GLvoid *
 _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
                      const struct gl_pixelstore_attrib *packing );
+
+extern void
+_mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
+                   GLubyte *dest, const struct gl_pixelstore_attrib *packing );
 
 
 #endif
