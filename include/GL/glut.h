@@ -223,9 +223,11 @@ WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
  video resize subAPI, glutPostWindowRedisplay, glutKeyboardUpFunc,
  glutSpecialUpFunc, glutIgnoreKeyRepeat, glutSetKeyRepeat,
  glutJoystickFunc, glutForceJoystickFunc (NOT FINALIZED!).
+
+ GLUT_API_VERSION=5  glutGetProcAddress (added by BrianP)
 **/
 #ifndef GLUT_API_VERSION  /* allow this to be overriden */
-#define GLUT_API_VERSION		3
+#define GLUT_API_VERSION		5
 #endif
 
 /**
@@ -660,6 +662,9 @@ GLUTAPI int GLUTAPIENTRY glutExtensionSupported(const char *name);
 #if (GLUT_API_VERSION >= 3)
 GLUTAPI int GLUTAPIENTRY glutGetModifiers(void);
 GLUTAPI int GLUTAPIENTRY glutLayerGet(GLenum type);
+#endif
+#if (GLUT_API_VERSION >= 5)
+GLUTAPI void * GLUTAPIENTRY glutGetProcAddress(const char *procName);
 #endif
 
 /* GLUT font sub-API */
