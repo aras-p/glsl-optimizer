@@ -45,7 +45,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static XExtensionInfo _xf86dri_info_data;
 static XExtensionInfo *xf86dri_info = &_xf86dri_info_data;
-static char *xf86dri_extension_name = XF86DRINAME;
+static char xf86dri_extension_name[] = XF86DRINAME;
 
 #define XF86DRICheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xf86dri_extension_name, val)
