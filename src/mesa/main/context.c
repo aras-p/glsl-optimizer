@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.180 2002/10/08 23:59:33 brianp Exp $ */
+/* $Id: context.c,v 1.181 2002/10/09 19:36:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,6 +75,19 @@ int MESA_VERBOSE = 0;
 
 #ifndef MESA_DEBUG_FLAGS
 int MESA_DEBUG_FLAGS = 0;
+#endif
+
+/* XFree86 stuff */
+#ifdef getenv
+#undef getenv
+#endif
+#ifdef calloc
+#undef calloc
+extern void *calloc(size_t, size_t);
+#endif
+#ifdef free
+#undef free
+extern void free(void *);
 #endif
 
 
