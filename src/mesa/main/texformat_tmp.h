@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -190,7 +190,7 @@ static void FETCH(luminance)( const struct gl_texture_image *texImage,
    texel[ACOMP] = CHAN_MAX;
 }
 
-/* Fetch texel from 1D, 2D or 3D LUMIN texture, returning 4 GLchans */
+/* Fetch texel from 1D, 2D or 3D LUMIN texture, returning 4 GLfloats */
 static void FETCH(f_luminance)( const struct gl_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
