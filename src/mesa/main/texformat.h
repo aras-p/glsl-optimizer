@@ -81,18 +81,6 @@ enum _format {
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    /*@}*/
 
-   /**
-    * \name Compressed texture formats.
-    */
-   /*@{*/
-   MESA_FORMAT_RGB_FXT1,
-   MESA_FORMAT_RGBA_FXT1,
-   MESA_FORMAT_RGB_DXT1,
-   MESA_FORMAT_RGBA_DXT1,
-   MESA_FORMAT_RGBA_DXT3,
-   MESA_FORMAT_RGBA_DXT5,
-   /*@}*/
-
 #if 0
    /** 
     * \name Upcoming little-endian formats 
@@ -110,6 +98,18 @@ enum _format {
    MESA_FORMAT_BGR233,		/*                               BBGG GRRR */
    /*@}*/
 #endif
+
+   /**
+    * \name Compressed texture formats.
+    */
+   /*@{*/
+   MESA_FORMAT_RGB_FXT1,
+   MESA_FORMAT_RGBA_FXT1,
+   MESA_FORMAT_RGB_DXT1,
+   MESA_FORMAT_RGBA_DXT1,
+   MESA_FORMAT_RGBA_DXT3,
+   MESA_FORMAT_RGBA_DXT5,
+   /*@}*/
 
    /**
     * \name Generic GLchan-based formats.
@@ -159,7 +159,7 @@ enum _format {
 };
 
 
-/** The default formats, GLchan per component */
+/** GLchan-valued formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgba;
 extern const struct gl_texture_format _mesa_texformat_rgb;
@@ -192,7 +192,7 @@ extern const struct gl_texture_format _mesa_texformat_intensity_float32;
 extern const struct gl_texture_format _mesa_texformat_intensity_float16;
 /*@}*/
 
-/** \name The hardware-friendly formats */
+/** \name Assorted hardware-friendly formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgba8888;
 extern const struct gl_texture_format _mesa_texformat_argb8888;
@@ -206,8 +206,16 @@ extern const struct gl_texture_format _mesa_texformat_a8;
 extern const struct gl_texture_format _mesa_texformat_l8;
 extern const struct gl_texture_format _mesa_texformat_i8;
 extern const struct gl_texture_format _mesa_texformat_ci8;
+/*@}*/
+
+/** \name YCbCr formats */
+/*@{*/
 extern const struct gl_texture_format _mesa_texformat_ycbcr;
 extern const struct gl_texture_format _mesa_texformat_ycbcr_rev;
+/*@}*/
+
+/** \name Compressed formats */
+/*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgb_fxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_fxt1;
 extern const struct gl_texture_format _mesa_texformat_rgb_dxt1;
@@ -222,17 +230,8 @@ extern const struct gl_texture_format _mesa_null_texformat;
 /*@}*/
 
 
-#if !NEWTEXSTORE
-extern GLboolean
-_mesa_is_hardware_tex_format( const struct gl_texture_format *format );
-#endif
-
 extern const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type );
-
-extern GLint
-_mesa_base_compressed_texformat(GLcontext *ctx, GLint intFormat);
-
 
 #endif

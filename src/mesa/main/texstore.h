@@ -70,6 +70,23 @@ extern GLboolean _mesa_texstore_ci8(STORE_PARAMS);
 extern GLboolean _mesa_texstore_ycbcr(STORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_float32(STORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_float16(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb_fxt1(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_fxt1(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb_dxt1(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt1(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt3(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_dxt5(STORE_PARAMS);
+
+
+extern GLchan *
+_mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
+                           GLenum logicalBaseFormat,
+                           GLenum textureBaseFormat,
+                           GLint srcWidth, GLint srcHeight, GLint srcDepth,
+                           GLenum srcFormat, GLenum srcType,
+                           const GLvoid *srcAddr,
+                           const struct gl_pixelstore_attrib *srcPacking);
+
 
 #if !NEWTEXSTORE
 

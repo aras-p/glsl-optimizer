@@ -28,6 +28,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "program.h"
+#include "texcompress.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texobj.h"
@@ -90,8 +91,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
    driver->CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
    driver->CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-   driver->IsCompressedFormat = NULL; /* XXX?? */
-   driver->CompressedTextureSize = NULL; /* XXX?? */
+   driver->CompressedTextureSize = _mesa_compressed_texture_size;
    driver->BindTexture = NULL;
    driver->NewTextureObject = _mesa_new_texture_object;
    driver->DeleteTexture = _mesa_delete_texture_object;

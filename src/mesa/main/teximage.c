@@ -255,8 +255,6 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
             return GL_RGB;
          case GL_COMPRESSED_RGBA_FXT1_3DFX:
             return GL_RGBA;
-         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-            return GL_RGB;
          default:
             ; /* fallthrough */
       }
@@ -264,6 +262,8 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
       switch (internalFormat) {
+         case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+            return GL_RGB;
          case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
          case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
          case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
@@ -312,7 +312,7 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
          case GL_LUMINANCE_ALPHA32F_ARB:
             return GL_LUMINANCE_ALPHA;
          default:
-            ; /* nothing */
+            ; /* fallthrough */
       }
    }
 
@@ -474,9 +474,6 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
       case GL_RGBA4_S3TC:
          return GL_TRUE;
       default:
-         if (ctx->Driver.IsCompressedFormat) {
-            return ctx->Driver.IsCompressedFormat(ctx, internalFormat);
-         }
          return GL_FALSE;
    }
 }
@@ -1000,8 +997,8 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
    img->IsCompressed = is_compressed_format(ctx, internalFormat);
    if (img->IsCompressed)
-      img->CompressedSize = _mesa_compressed_texture_size(ctx, width, height,
-                                                       depth, internalFormat);
+      img->CompressedSize = ctx->Driver.CompressedTextureSize(ctx, width,
+                                               height, depth, internalFormat);
    else
       img->CompressedSize = 0;
 
@@ -2756,8 +2753,8 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
-   expectedSize = _mesa_compressed_texture_size(ctx, width, height, depth,
-                                                internalFormat);
+   expectedSize = ctx->Driver.CompressedTextureSize(ctx, width, height, depth,
+                                                    internalFormat);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
 
@@ -2833,8 +2830,8 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    if ((height & 3) != 0 && height != 2 && height != 1)
       return GL_INVALID_VALUE;
 
-   expectedSize = _mesa_compressed_texture_size(ctx, width, height, depth,
-                                                format);
+   expectedSize = ctx->Driver.CompressedTextureSize(ctx, width, height, depth,
+                                                    format);
    if (expectedSize != imageSize)
       return GL_INVALID_VALUE;
 
