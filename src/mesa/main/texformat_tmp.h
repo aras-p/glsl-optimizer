@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1023,9 +1023,9 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
 			GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   const GLuint index = *src;
    const struct gl_color_table *palette;
    const GLchan *table;
+   GLuint index;
    GET_CURRENT_CONTEXT(ctx);
 
    if (ctx->Texture.SharedPalette) {
@@ -1038,6 +1038,9 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
       return; /* undefined results */
    ASSERT(palette->Type != GL_FLOAT);
    table = (const GLchan *) palette->Table;
+
+   /* Mask the index against size of palette to avoid going out of bounds */
+   index = (*src) & (palette->Size - 1);
 
    switch (palette->Format) {
       case GL_ALPHA:
