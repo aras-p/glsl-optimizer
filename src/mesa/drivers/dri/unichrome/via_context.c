@@ -469,6 +469,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->texHeap = mmInit(0, viaScreen->textureSize);
     vmesa->renderIndex = ~0;
     vmesa->setupIndex = ~0;
+    vmesa->hwPrimitive = GL_POLYGON+1;
 
     /* KW: Hardwire this.  Was previously set bogusly in
      * viaCreateBuffer.  Needs work before PBUFFER can be used:

@@ -168,7 +168,6 @@ struct via_context_t {
 
     /* Hardware register
      */
-    GLuint regCmdA;
     GLuint regCmdA_End;
     GLuint regCmdB;
 

@@ -780,7 +780,6 @@ void viaInitState(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
-    vmesa->regCmdA = HC_ACMD_HCmdA;
     vmesa->regCmdB = HC_ACMD_HCmdB;
     vmesa->regEnable = HC_HenCW_MASK;
 
@@ -1355,18 +1354,6 @@ static void viaChooseDepthState(GLcontext *ctx)
     }
 }
 
-static void viaChooseLightState(GLcontext *ctx) 
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-
-    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-        vmesa->regCmdA |= HC_HShading_Gouraud;
-    }
-    else {
-        vmesa->regCmdA &= ~HC_HShading_Gouraud;
-    }
-}
-
 static void viaChooseLineState(GLcontext *ctx) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
@@ -1558,9 +1545,6 @@ void viaValidateState( GLcontext *ctx )
 
     if (vmesa->newState & _NEW_FOG)
         viaChooseFogState(ctx);
-
-    if (vmesa->newState & _NEW_LIGHT)
-        viaChooseLightState(ctx);
 
     if (vmesa->newState & _NEW_LINE)
         viaChooseLineState(ctx);

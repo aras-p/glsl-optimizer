@@ -837,10 +837,7 @@ static void viaRenderStart(GLcontext *ctx)
 
 static void viaRenderFinish(GLcontext *ctx)
 {
-    if (VIA_CONTEXT(ctx)->renderIndex & VIA_FALLBACK_BIT)
-        _swrast_flush(ctx);
-    else
-        VIA_FINISH_PRIM(VIA_CONTEXT(ctx));
+   VIA_FINISH_PRIM(VIA_CONTEXT(ctx));
 }
 
 
@@ -870,42 +867,46 @@ void viaRasterPrimitive(GLcontext *ctx,
 	 viaEmitState(vmesa);
       }
        
+      vmesa->regCmdA_End = HC_ACMD_HCmdA;
+
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
+	 vmesa->regCmdA_End |= HC_HShading_Gouraud;
+      }
 
       regCmdB = vmesa->regCmdB;
 
       switch (hwprim) {
       case GL_POINTS:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Point | HC_HVCycle_Full;
-	 if (ctx->Light.ShadeModel == GL_FLAT)
-            vmesa->regCmdA_End |= HC_HShading_FlatA;
+	 vmesa->regCmdA_End |= HC_HPMType_Point | HC_HVCycle_Full;
+	 vmesa->regCmdA_End |= HC_HShading_Gouraud; /* always Gouraud shade points?!? */
 	 break;
       case GL_LINES:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_Full;
+	 vmesa->regCmdA_End |= HC_HPMType_Line | HC_HVCycle_Full;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
 	 break;
       case GL_LINE_LOOP:
       case GL_LINE_STRIP:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_AFP |
+	 vmesa->regCmdA_End |= HC_HPMType_Line | HC_HVCycle_AFP |
 	    HC_HVCycle_AB | HC_HVCycle_NewB;
 	 regCmdB |= HC_HVCycle_AB | HC_HVCycle_NewB | HC_HLPrst_MASK;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
 	 break;
       case GL_TRIANGLES:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_Full;
+	 vmesa->regCmdA_End |= HC_HPMType_Tri | HC_HVCycle_Full;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
 	 break;
       case GL_TRIANGLE_STRIP:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	 vmesa->regCmdA_End |= HC_HPMType_Tri | HC_HVCycle_AFP |
 	    HC_HVCycle_AC | HC_HVCycle_BB | HC_HVCycle_NewC;
 	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
 	 break;
       case GL_TRIANGLE_FAN:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	 vmesa->regCmdA_End |= HC_HPMType_Tri | HC_HVCycle_AFP |
 	    HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
@@ -918,7 +919,7 @@ void viaRasterPrimitive(GLcontext *ctx,
 	 abort();
 	 return;
       case GL_POLYGON:
-	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	 vmesa->regCmdA_End |= HC_HPMType_Tri | HC_HVCycle_AFP |
 	    HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
 	 if (ctx->Light.ShadeModel == GL_FLAT)
@@ -962,6 +963,9 @@ void viaRasterPrimitive(GLcontext *ctx,
 
       vmesa->hwPrimitive = hwprim;        
       vmesa->dmaLastPrim = vmesa->dmaLow;
+   }
+   else {
+      assert(!vmesa->newEmitState);
    }
 }
 
