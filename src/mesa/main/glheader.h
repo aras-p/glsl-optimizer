@@ -1,10 +1,10 @@
-/* $Id: glheader.h,v 1.24 2001/12/20 18:59:39 kschultz Exp $ */
+/* $Id: glheader.h,v 1.25 2002/03/23 01:49:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -259,14 +259,6 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
  * The following union typedef is used to solve that.
  */
 typedef union { GLfloat f; GLint i; } fi_type;
-
-
-#ifndef GL_MIRRORED_REPEAT_ARB
-#define GL_MIRRORED_REPEAT_ARB  0x8370
-#endif
-#ifndef GL_ARB_texture_mirrored_repeat
-#define GL_ARB_texture_mirrored_repeat 1
-#endif
 
 
 #endif /* GLHEADER_H */
