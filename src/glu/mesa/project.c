@@ -1,4 +1,4 @@
-/* $Id: project.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: project.c,v 1.2 1999/09/14 00:10:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,11 @@
 
 /*
  * $Log: project.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  1999/09/14 00:10:31  brianp
+ * added gluUnProject4()
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.7  1999/01/03 03:23:15  brianp
  * now using GLAPIENTRY and GLCALLBACK keywords (Ted Jump)
@@ -121,14 +124,6 @@ static void matmul( GLdouble *product, const GLdouble *a, const GLdouble *b )
 #undef T
    MEMCPY( product, temp, 16*sizeof(GLdouble) );
 }
-
-
-static GLdouble Identity[16] = {
-   1.0, 0.0, 0.0, 0.0,
-   0.0, 1.0, 0.0, 0.0,
-   0.0, 0.0, 1.0, 0.0,
-   0.0, 0.0, 0.0, 1.0
-};
 
 
 
@@ -316,3 +311,41 @@ GLint GLAPIENTRY gluUnProject(GLdouble winx,GLdouble winy,GLdouble winz,
     return GL_TRUE;
 }
 
+
+/*
+ * New in GLU 1.3
+ * This is like gluUnProject but also takes near and far DepthRange values.
+ */
+GLint GLAPIENTRY
+gluUnProject4( GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
+               const GLdouble modelMatrix[16],
+               const GLdouble projMatrix[16],
+               const GLint viewport[4],
+               GLclampd nearZ, GLclampd farZ,
+               GLdouble *objx, GLdouble *objy, GLdouble *objz, GLdouble *objw )
+{
+    /* matrice de transformation */
+    GLdouble m[16], A[16];
+    GLdouble in[4],out[4];
+    GLdouble z = nearZ + winz * (farZ - nearZ);
+
+    /* transformation coordonnees normalisees entre -1 et 1 */
+    in[0] = (winx-viewport[0])*2/viewport[2] - 1.0;
+    in[1] = (winy-viewport[1])*2/viewport[3] - 1.0;
+    in[2] = 2.0 * z - 1.0;
+    in[3] = clipw;
+
+    /* calcul transformation inverse */
+    matmul(A,projMatrix,modelMatrix);
+    invert_matrix(A,m);
+
+    /* d'ou les coordonnees objets */
+    transform_point(out,m,in);
+    if (out[3]==0.0)
+       return GL_FALSE;
+    *objx=out[0]/out[3];
+    *objy=out[1]/out[3];
+    *objz=out[2]/out[3];
+    *objw=out[3];
+    return GL_TRUE;
+}
