@@ -1149,6 +1149,7 @@ Mesa Version History
 5.1  Month day, 2003  (NOT RELEASED YET)
     New:
 	- reorganized directory tree
+	- GL_ARB_vertex/fragment_program extensions (Michal Krol & Karl Rasche)
 	- GL_ATI_texture_env_combine3 extension (Ian Romanick)
 	- GL_SGI_texture_color_table extension (Eric Plante)
 	- GL_NV_fragment_program extension

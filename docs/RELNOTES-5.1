@@ -24,6 +24,10 @@ See the VERSIONS file for a list of bugs fixed in this release.
 New Features in Mesa 5.1
 ------------------------
 
+GL_ARB_vertex_program / GL_ARB_fragment_program
+   Michal Krol and Karl Rasche implemented these extensions.  Thanks!
+   Be aware that there may be some rough edges and lurking bugs.
+
 GL_ATI_texture_env_combine3 extension
    This adds a few new texture combine modes.
    Contributed by Ian Romanick.
@@ -189,6 +193,11 @@ The ctx->_TriangleCaps field is deprecated.
    functions like NEED_SECONDARY_COLOR() at the bottom of context.h
    While testing _TriangleCaps bits was fast, it was kludgey, and setting
    the bits in the first place could be error prone.
+
+New vertex processing code.
+   The code behind glBegin, glEnd, glVertex, glNormal, etc. has been
+   totally rewritten.  It's a cleaner implementation now and should use
+   less memory. (Keith)
 
 
 
