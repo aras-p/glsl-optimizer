@@ -80,9 +80,9 @@ texstore_rgb_fxt1(STORE_PARAMS)
    ASSERT(dstZoffset     == 0);
 
    /* [dBorca]
-    * we still need to pass a 4byte/pixel texture to the codec
+    * we still need to pass 4byte/texel to the codec
     */
-   if (srcFormat != GL_RGB ||
+   if (1 || srcFormat != GL_RGB ||
        srcType != CHAN_TYPE ||
        ctx->_ImageTransferState ||
        srcPacking->SwapBytes) {

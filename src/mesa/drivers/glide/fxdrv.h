@@ -575,7 +575,6 @@ extern void fxPrintTextureData(tfxTexInfo * ti);
 extern const struct gl_texture_format *
 fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                          GLenum srcFormat, GLenum srcType );
-extern GLboolean fxDDIsCompressedFormat (GLcontext *ctx, GLenum internalFormat);
 extern GLuint fxDDCompressedTextureSize (GLcontext *ctx,
                                          GLsizei width, GLsizei height, GLsizei depth,
                                          GLenum format);
