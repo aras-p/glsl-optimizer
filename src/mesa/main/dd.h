@@ -1,7 +1,8 @@
+/* $Id: dd.h,v 1.27 2000/08/08 16:15:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -906,6 +907,16 @@ struct dd_function_table {
    void (*StencilMask)(GLcontext *ctx, GLuint mask);
    void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
    void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
+   /* State-query functions
+    *
+    * Return GL_TRUE if query was completed, GL_FALSE otherwise.
+    */
+   GLboolean (*GetBooleanv)(GLcontext *ctx, GLenum pname, GLboolean *result);
+   GLboolean (*GetDoublev)(GLcontext *ctx, GLenum pname, GLdouble *result);
+   GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
+   GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
+   GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
 };
 
 

@@ -1,8 +1,8 @@
-/* $Id: get.c,v 1.30 2000/07/21 15:41:08 brianp Exp $ */
+/* $Id: get.c,v 1.31 2000/08/08 16:15:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -92,8 +92,15 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetBooleanv");
 
+   if (!params)
+      return;
+
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "glGetBooleanv %s\n", gl_lookup_enum_by_nr(pname));
+
+   if (ctx->Driver.GetBooleanv
+       && (*ctx->Driver.GetBooleanv)(ctx, pname, params))
+      return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
@@ -1235,8 +1242,14 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetDoublev");
 
+   if (!params)
+      return;
+
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "glGetDoublev %s\n", gl_lookup_enum_by_nr(pname));
+
+   if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
+      return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
@@ -2378,8 +2391,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetFloatv");
 
+   if (!params)
+      return;
+
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "glGetFloatv %s\n", gl_lookup_enum_by_nr(pname));
+
+   if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
+      return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
@@ -3492,8 +3511,15 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetIntegerv");
 
+   if (!params)
+      return;
+
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "glGetIntegerv %s\n", gl_lookup_enum_by_nr(pname));
+
+   if (ctx->Driver.GetIntegerv
+       && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
+      return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
@@ -4629,10 +4655,18 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   /*GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;*/
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetPointerv");
+
+   if (!params)
+      return;
 
    if (MESA_VERBOSE & VERBOSE_API) 
       fprintf(stderr, "glGetPointerv %s\n", gl_lookup_enum_by_nr(pname));
+
+   if (ctx->Driver.GetPointerv
+       && (*ctx->Driver.GetPointerv)(ctx, pname, params))
+      return;
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
@@ -4673,7 +4707,7 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version = "1.2 Mesa 3.3";
+   static const char *version = "1.2 Mesa 3.5 beta";
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
 
