@@ -689,16 +689,10 @@ static void i830RunPipeline( GLcontext *ctx )
 
 static void set_projective_texturing( i830ContextPtr imesa, 
 				      GLuint i,
-				      GLuint sz)
+				      GLuint mcs)
 {
-   GLuint mcs = (imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS] & 
-		 ~TEXCOORDTYPE_MASK);
-
-   if (sz == 4) {
-      mcs |= TEXCOORDTYPE_HOMOGENEOUS;
-   } else {
-      mcs |= TEXCOORDTYPE_CARTESIAN;
-   }
+   mcs |= (imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS] & 
+	   ~TEXCOORDTYPE_MASK);
 
    if (mcs != imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS]) {
       I830_STATECHANGE(imesa, I830_UPLOAD_TEX_N(i));
@@ -717,6 +711,13 @@ do {									\
    v0 |= V0;								\
 } while (0)
 
+#define EMIT_PAD( N )							\
+do {									\
+   imesa->vertex_attrs[imesa->vertex_attr_count].attrib = 0;		\
+   imesa->vertex_attrs[imesa->vertex_attr_count].format = EMIT_PAD;	\
+   imesa->vertex_attrs[imesa->vertex_attr_count].offset = (N);		\
+   imesa->vertex_attr_count++;						\
+} while (0)
 
 #define VRTX_TEX_SET_FMT(n, x)          ((x)<<((n)*2))
 
@@ -749,8 +750,15 @@ static void i830RenderStart( GLcontext *ctx )
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, VRTX_HAS_DIFFUSE );
       
    if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
-      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, VRTX_HAS_SPEC );
-      EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VRTX_HAS_SPEC );
+      if (index & _TNL_BIT_COLOR1) 
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, VRTX_HAS_SPEC );
+      else 
+	 EMIT_PAD( 3 );
+
+      if (index & _TNL_BIT_FOG) 
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VRTX_HAS_SPEC );
+      else 
+	 EMIT_PAD( 1 );
    }
 
    if (index & _TNL_BITS_TEX_ANY) {
@@ -766,12 +774,33 @@ static void i830RenderStart( GLcontext *ctx )
 
       for (i = 0; i < last_stage; i++) {
 	 GLuint sz = VB->TexCoordPtr[i]->size;
+	 GLuint emit;
+	 GLuint mcs;
+
+	 /* i830 doesn't like 1D or 4D texcoords:
+	  */
+	 switch (sz) {
+	 case 1: 
+	 case 2: 
+	 case 3: 		/* no attempt at cube texturing so far */
+	    emit = EMIT_2F; 
+	    sz = 2; 
+	    mcs = TEXCOORDTYPE_CARTESIAN; 
+	    break;
+	 case 4: 
+	    emit = EMIT_3F_XYW; 
+	    sz = 3;     
+	    mcs = TEXCOORDTYPE_HOMOGENEOUS;
+	    break;
+	 default: 
+	    continue;
+	 };
 	
 	 v2 |= VRTX_TEX_SET_FMT(i, SZ_TO_HW(sz));
 	 EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_SZ(sz), 0 );
 
-	 if (imesa->CurrentTexObj[i])
-	    set_projective_texturing( imesa, i, sz );
+	 if (imesa->CurrentTexObj[i]) 
+	    set_projective_texturing( imesa, i, mcs );
       }
 
       v0 |= VRTX_TEX_COORD_COUNT(last_stage);
