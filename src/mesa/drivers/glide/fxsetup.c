@@ -1050,10 +1050,6 @@ fxSetupTexture_NoLock(GLcontext * ctx)
       fprintf(stderr, "fxmesa: fxSetupTexture(...)\n");
    }
 
-   /* Disable multipass texturing.
-    */
-   ctx->Driver.MultipassFunc = 0;
-
    /* Texture Combine, Color Combine and Alpha Combine.
     */
    tex2Denabled = (ctx->Texture._ReallyEnabled & TEXTURE0_2D);
@@ -1076,7 +1072,7 @@ fxSetupTexture_NoLock(GLcontext * ctx)
 	    fprintf(stderr, "fxmesa: enabling fake multitexture\n");
 
 	 fxSetupTextureSingleTMU_NoLock(ctx, 0);
-	 ctx->Driver.MultipassFunc = fxMultipassTexture;
+	 /*ctx->Driver.MultipassFunc = fxMultipassTexture;*/
       }
       break;
    default:
