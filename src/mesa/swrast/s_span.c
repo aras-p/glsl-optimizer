@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.47 2002/09/06 02:56:09 brianp Exp $ */
+/* $Id: s_span.c,v 1.48 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -803,8 +803,7 @@ _mesa_write_index_span( GLcontext *ctx, struct sw_span *span)
          _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
-         const GLuint face = 0;  /* XXX stencil two side */
-         if (!_mesa_stencil_and_ztest_span(ctx, span, face)) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
          }
@@ -983,8 +982,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
-         const GLuint face = 0;  /* XXX stencil two side */
-         if (!_mesa_stencil_and_ztest_span(ctx, span, face)) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
             span->interpMask = origInterpMask;
             span->arrayMask = origArrayMask;
             return;
@@ -1214,8 +1212,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span)
          _mesa_span_interpolate_z(ctx, span);
 
       if (ctx->Stencil.Enabled) {
-         const GLuint face = 0;  /* XXX stencil two side */
-         if (!_mesa_stencil_and_ztest_span(ctx, span, face)) {
+         if (!_mesa_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
          }

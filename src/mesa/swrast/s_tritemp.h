@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.38 2002/08/07 15:18:42 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.39 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -215,6 +215,7 @@
 #ifndef DO_OCCLUSION_TEST
    ctx->OcclusionResult = GL_TRUE;
 #endif
+   span.facing = ctx->_Facing; /* for 2-sided stencil test */
 
    /* Edge setup.  For a triangle strip these could be reused... */
    {

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.91 2002/10/02 22:05:55 brianp Exp $ */
+/* $Id: mtypes.h,v 1.92 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1786,6 +1786,10 @@ struct __GLcontextRec {
 
    GLboolean OcclusionResult;       /**< for GL_HP_occlusion_test */
    GLboolean OcclusionResultSaved;  /**< for GL_HP_occlusion_test */
+   GLuint _Facing; /* This is a hack for 2-sided stencil test.  We don't */
+                   /* have a better way to communicate this value from */
+                   /* swrast_setup to swrast. */
+
 
    /* Z buffer stuff */
    GLuint DepthMax;	/**< Max depth buffer value */

@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.27 2002/09/17 15:46:36 brianp Exp $ */
+/* $Id: swrast.h,v 1.28 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -147,6 +147,9 @@ struct sw_span {
    /** either GL_POLYGON, GL_LINE, GL_POLYGON, GL_BITMAP */
    GLenum primitive;
 
+   /** 0 = front-facing span, 1 = back-facing span (for two-sided stencil) */
+   GLuint facing;
+
    /**
     * This bitmask (of SPAN_* flags) indicates which of the x/xStep
     * variables are relevant.
@@ -201,6 +204,7 @@ do {								\
    (S).arrayMask = (ARRAY_MASK);				\
    (S).start = 0;						\
    (S).end = (END);						\
+   (S).facing = 0;						\
    (S).array = SWRAST_CONTEXT(ctx)->span_data;			\
 } while (0)
 

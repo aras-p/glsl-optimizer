@@ -1,4 +1,4 @@
-/* $Id: ss_tritmp.h,v 1.15 2001/09/14 21:36:43 brianp Exp $ */
+/* $Id: ss_tritmp.h,v 1.16 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
       {
 	 facing = (cc < 0.0) ^ ctx->Polygon._FrontBit;
+         ctx->_Facing = facing; /* for 2-sided stencil test */
 
 	 if (IND & SS_UNFILLED_BIT)
 	    mode = facing ? ctx->Polygon.BackMode : ctx->Polygon.FrontMode;

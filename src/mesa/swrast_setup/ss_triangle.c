@@ -1,4 +1,4 @@
-/* $Id: ss_triangle.c,v 1.16 2002/10/02 21:44:08 brianp Exp $ */
+/* $Id: ss_triangle.c,v 1.17 2002/10/02 23:24:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -273,8 +273,14 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
       ind |= SS_TWOSIDE_BIT;
 
-   if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+   /* We piggyback the two-sided stencil front/back determination on the
+    * unfilled triangle path.
+    */
+   if ((ctx->_TriangleCaps & DD_TRI_UNFILLED) ||
+       (ctx->Stencil.Enabled && ctx->Stencil.TestTwoSide))
       ind |= SS_UNFILLED_BIT;
+
+   ctx->_Facing = 0;
 
    if (ctx->Visual.rgbMode)
       ind |= SS_RGBA_BIT;
