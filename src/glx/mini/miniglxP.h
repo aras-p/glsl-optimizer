@@ -151,8 +151,6 @@ struct MiniGLXDisplayRec {
     * Visuals (configs) in this screen.
     */
    /*@{*/
-   int numModes;		/**< \brief Number of modes. */
-   const __GLcontextModes *modes;	/**< \brief Modes list pointer. */
    const __GLcontextModes *driver_modes; /**< \brief Modes filtered by driver. */
    /*@}*/
     

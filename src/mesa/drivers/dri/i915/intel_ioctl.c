@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sched.h>
 
 #include "mtypes.h"
 #include "context.h"

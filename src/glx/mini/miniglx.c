@@ -1014,10 +1014,6 @@ __miniglx_StartServer( const char *display_name )
       return NULL;
    }
 
-   /* Ask the driver for a list of supported configs:
-   */
-   dpy->driver->initContextModes( &dpy->driverContext, &dpy->numModes, &dpy->modes );
-
    /* Perform the initialization normally done in the X server 
     */
    if (!dpy->driver->initFBDev( &dpy->driverContext )) {
@@ -1063,8 +1059,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     drm_handle_t hSAREA;
     drmAddress pSAREA;
     const char *BusID;
-    __GLcontextModes *modes;
-    __GLcontextModes *temp;
     int   i;
     __DRIversion   ddx_version;
     __DRIversion   dri_version;
@@ -1077,28 +1071,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     drmVersionPtr version;
     drm_handle_t  hFB;
     int        junk;
-
-
-    /* Create the linked list of context modes, and populate it with the
-     * GLX visual information passed in by libGL.
-     */
-
-    modes = _gl_context_modes_create( dpy->numModes, sizeof(__GLcontextModes) );
-    if ( modes == NULL ) {
-        return NULL;
-    }
-
-    temp = modes;
-    for ( i = 0 ; i < dpy->numModes ; i++ ) {
-        __GLcontextModes * next;
-        assert( temp != NULL );
-        next = temp->next;
-        *temp = dpy->modes[i];
-        temp->next = next;
-        temp->screen = scrn;
-
-        temp = temp->next;
-    }
 
     err_msg = "XF86DRIOpenConnection";
     err_extra = NULL;
@@ -1194,7 +1166,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
 
         err_msg = "InitDriver";
         err_extra = NULL;
-        psp = dpy->createNewScreen(dpy, scrn, psc, modes,
+        psp = dpy->createNewScreen(dpy, scrn, psc, NULL,
                 & ddx_version,
                 & dri_version,
                 & drm_version,
@@ -1203,13 +1175,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
                 fd,
                 (get_ver != NULL) ? (*get_ver)() : 20040602,
                 (__GLcontextModes **) &dpy->driver_modes);
-        if (dpy->driver_modes == NULL) {
-            dpy->driver_modes = modes;
-        }
-        else {
-            _gl_context_modes_destroy(modes);
-            modes = NULL;
-        }
     }
 
 done:
@@ -1228,10 +1193,6 @@ done:
 
         if ( fd >= 0 ) {
             (void)drmClose(fd);
-        }
-
-        if ( modes != NULL ) {
-            _gl_context_modes_destroy( modes );
         }
 
         if ( err_extra != NULL ) {
@@ -1306,10 +1267,6 @@ XOpenDisplay( const char *display_name )
       return NULL;
    }
 
-   /* Ask the driver for a list of supported configs:
-   */
-   dpy->driver->initContextModes( &dpy->driverContext, &dpy->numModes, &dpy->modes );
-   
    /* Perform the client-side initialization.  
     *
     * Clearly there is a limit of one on the number of windows in
@@ -1631,6 +1588,7 @@ XFree( void *data )
 XVisualInfo *
 XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int *nitens_return )
 {
+   const __GLcontextModes *mode;
    XVisualInfo *results;
    Visual *visResults;
    int i, n;
@@ -1638,7 +1596,10 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
    ASSERT(vinfo_mask == VisualScreenMask);
    ASSERT(vinfo_template.screen == 0);
 
-   n = dpy->numModes;
+   n = 0;
+   for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next )
+       n++;
+
    results = (XVisualInfo *)calloc(1, n * sizeof(XVisualInfo));
    if (!results) {
       *nitens_return = 0;
@@ -1652,8 +1613,8 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
       return NULL;
    }
 
-   for (i = 0; i < n; i++) {
-      visResults[i].mode = dpy->modes + i;
+   for ( mode = dpy->driver_modes, i = 0 ; mode != NULL ; mode = mode->next, i++ ) {
+      visResults[i].mode = mode;
       visResults[i].visInfo = results + i;
       visResults[i].dpy = dpy;
 
@@ -1669,10 +1630,10 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
 #else
       results[i].class = TrueColor;
 #endif
-      results[i].depth = dpy->modes[i].redBits +
-                         dpy->modes[i].redBits +
-                         dpy->modes[i].redBits +
-                         dpy->modes[i].redBits;
+      results[i].depth = mode->redBits +
+                         mode->redBits +
+                         mode->redBits +
+                         mode->redBits;
       results[i].bits_per_rgb = dpy->driverContext.bpp;
    }
    *nitens_return = n;
@@ -1734,6 +1695,7 @@ XGetVisualInfo( Display *dpy, long vinfo_mask, XVisualInfo *vinfo_template, int 
 XVisualInfo*
 glXChooseVisual( Display *dpy, int screen, int *attribList )
 {
+   const __GLcontextModes *mode;
    Visual *vis;
    XVisualInfo *visInfo;
    const int *attrib;
@@ -1834,8 +1796,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    (void) blueBits;
    (void) alphaBits;
    (void) stereoFlag;
-   for (i = 0; i < dpy->numModes; i++) {
-      const __GLcontextModes *mode = dpy->modes + i;
+   for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next ) {
       if (mode->rgbMode == rgbFlag &&
           mode->redBits >= redBits &&
           mode->greenBits >= greenBits &&
@@ -2278,6 +2239,7 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
       { "__glXCreateContextWithConfig", (void *) __glXCreateContextWithConfig },
       { "__glXGetDrawableInfo", (void *) __glXGetDrawableInfo },
       { "__glXWindowExists", (void *) __glXWindowExists },
+      { "__glXCreateContextModes", (void *) _gl_context_modes_create },
       { NULL, NULL }
    };
    const struct name_address *entry;

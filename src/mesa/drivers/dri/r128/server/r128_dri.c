@@ -66,49 +66,6 @@
 # define DRM_PAGE_SIZE 4096
 #endif
 
-/**
- * \brief Establish the set of modes available for the display.
- *
- * \param ctx display handle.
- * \param numModes will receive the number of supported modes.
- * \param modes will point to the list of supported modes.
- *
- * \return one on success, or zero on failure.
- * 
- * Allocates a single visual and fills it with information according to the
- * display bit depth. Supports only 16 and 32 bpp bit depths, aborting
- * otherwise.
- */
-const __GLcontextModes __glModes[] = {
-    
-    /* 32 bit, RGBA Depth=24 Stencil=8 */
-    {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
-     .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_TRUE,
-     .redBits = 8, .greenBits = 8, .blueBits = 8, .alphaBits = 8,
-     .redMask = 0xff0000, .greenMask = 0xff00, .blueMask = 0xff, .alphaMask = 0xff000000,
-     .rgbBits = 32, .indexBits = 0,
-     .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
-     .depthBits = 24, .stencilBits = 8,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_FALSE, },
-
-    /* 16 bit, RGB Depth=16 */
-    {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
-     .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_FALSE,
-     .redBits = 5, .greenBits = 6, .blueBits = 5, .alphaBits = 0,
-     .redMask = 0xf800, .greenMask = 0x07e0, .blueMask = 0x001f, .alphaMask = 0x0,
-     .rgbBits = 16, .indexBits = 0,
-     .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
-     .depthBits = 16, .stencilBits = 0,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_FALSE, },
-};
-static int R128InitContextModes( const DRIDriverContext *ctx,
-				   int *numModes, const __GLcontextModes **modes)
-{
-   *numModes = sizeof(__glModes)/sizeof(__GLcontextModes *);
-   *modes = &__glModes[0];
-   return 1;
-}
-
 /* Compute log base 2 of val. */
 static int R128MinBits(int val)
 {
@@ -1153,7 +1110,6 @@ static int R128EngineRestore( const DRIDriverContext *ctx )
  * \sa DRIDriverRec.
  */
 const struct DRIDriverRec __driDriver = {
-   R128InitContextModes,
    R128ValidateMode,
    R128PostValidateMode,
    R128InitFBDev,

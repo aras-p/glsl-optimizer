@@ -407,39 +407,6 @@ static int VIADRIMapInit(DRIDriverContext * ctx, VIAPtr pVia)
     return GL_TRUE;
 }
 
-const __GLcontextModes __glModes[] =
-{
-    /* 32 bit, RGBA Depth=16 Stencil=8 */
-    {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
-     .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_TRUE,
-     .redBits = 8, .greenBits = 8, .blueBits = 8, .alphaBits = 8,
-     .redMask = 0xff0000, .greenMask = 0xff00, .blueMask = 0xff, .alphaMask = 0xff000000,
-     .rgbBits = 32, .indexBits = 0,
-     .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
-     .depthBits = 16, .stencilBits = 8,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_TRUE, },
-
-#if 0
-    /* 16 bit, RGB Depth=16 */
-    {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
-     .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_FALSE,
-     .redBits = 5, .greenBits = 6, .blueBits = 5, .alphaBits = 0,
-     .redMask = 0xf800, .greenMask = 0x07e0, .blueMask = 0x001f, .alphaMask = 0x0,
-     .rgbBits = 16, .indexBits = 0,
-     .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
-     .depthBits = 16, .stencilBits = 0,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_TRUE, },
-#endif
-};
-
-static int viaInitContextModes(const DRIDriverContext *ctx,
-                                  int *numModes, const __GLcontextModes **modes)
-{
-    *numModes = sizeof(__glModes)/sizeof(__glModes[0]);
-    *modes = &__glModes[0];
-    return 1;
-}
-
 static int viaValidateMode(const DRIDriverContext *ctx)
 {
     VIAPtr pVia = VIAPTR(ctx);
@@ -1134,7 +1101,6 @@ static int viaEngineRestore(const DRIDriverContext *ctx)
 
 const struct DRIDriverRec __driDriver =
 {
-    viaInitContextModes,
     viaValidateMode,
     viaPostValidateMode,
     viaInitFBDev,

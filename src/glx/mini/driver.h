@@ -125,11 +125,6 @@ typedef struct DRIDriverContextRec {
  */
 typedef struct DRIDriverRec { 
    /**
-    * \brief Get the list of supported gl context modes.
-    */
-   int (*initContextModes)( const DRIDriverContext *context,
-			     int *numModes, const __GLcontextModes **modes );
-   /**
     * \brief Validate the framebuffer device mode
     */
    int (*validateMode)( const DRIDriverContext *context );
