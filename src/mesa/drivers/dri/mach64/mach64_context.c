@@ -296,6 +296,9 @@ mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newMach64Ctx->dirty = MACH64_UPLOAD_ALL;
       }
 
+      
+      driDrawableInitVBlank( driDrawPriv, newMach64Ctx->vblank_flags );
+
       if ( newMach64Ctx->driDrawable != driDrawPriv ) {
 	 newMach64Ctx->driDrawable = driDrawPriv;
 	 mach64CalcViewport( newMach64Ctx->glCtx );
