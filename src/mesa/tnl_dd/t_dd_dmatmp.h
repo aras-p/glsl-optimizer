@@ -623,7 +623,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 
       INIT(GL_TRIANGLES);
 
-      for (j = start; j < count; j += 4) {
+      for (j = start; j < count-3; j += 4) {
 	 void *tmp = ALLOC_VERTS( 6 );
 	 /* Send v0, v1, v3
 	  */
@@ -1236,7 +1236,7 @@ static GLboolean TAG(validate_render)( GLcontext *ctx,
 	    ok = (GLint) count < GET_SUBSEQUENT_VB_MAX_ELTS();
 	 }
 	 else {
-	    ok = HAVE_TRIANGLES; /* for gears... */
+	    ok = HAVE_TRIANGLES; /* flatshading is ok. */
 	 }
 	 break;
       default:
