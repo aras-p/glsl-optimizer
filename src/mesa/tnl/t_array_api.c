@@ -77,9 +77,14 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 }
 
 
+/* Note this function no longer takes a 'start' value, the range is
+ * assumed to start at zero.  The old trick of subtracting 'start'
+ * from each index won't work if the indices are not in writeable
+ * memory.
+ */
 static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
-				      GLuint start, GLuint end,
-				      GLsizei count, GLuint *indices )
+				      GLuint max_index,
+				      GLsizei index_count, GLuint *indices )
 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -89,26 +94,15 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   /* XXX is "end" correct?  Looking at the implementation of
-    * _tnl_vb_bind_arrays(), perhaps we should pass end-start.
-    */
-   _tnl_vb_bind_arrays( ctx, start, end );
+   _tnl_vb_bind_arrays( ctx, 0, max_index );
 
    tnl->vb.Primitive = &prim;
    tnl->vb.Primitive[0].mode = mode | PRIM_BEGIN | PRIM_END;
    tnl->vb.Primitive[0].start = 0;
-   tnl->vb.Primitive[0].count = count;
+   tnl->vb.Primitive[0].count = index_count;
    tnl->vb.PrimitiveCount = 1;
 
    tnl->vb.Elts = (GLuint *)indices;
-
-   assert (start == 0);
-   
-/* XXX - indices may be read only 
-   if (start)
-      for (i = 0 ; i < count ; i++)
-	 indices[i] -= start;
-*/
 
    if (ctx->Array.LockCount)
       tnl->Driver.RunPipeline( ctx );
@@ -120,16 +114,10 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
       GLuint enabledArrays = ctx->Array._Enabled | (ctx->Array._Enabled >> 16);
       /* Note that arrays may have changed before/after execution.
        */
-      tnl->pipeline.run_input_changes |= enabledArrays;
+      tnl->pipeline.run_input_changes |= enabledArrays & 0xffff;
       tnl->Driver.RunPipeline( ctx );
-      tnl->pipeline.run_input_changes |= enabledArrays;
+      tnl->pipeline.run_input_changes |= enabledArrays & 0xffff;
    }
-
-/* XXX - indices may be read only
-   if (start)
-      for (i = 0 ; i < count ; i++)
-	 indices[i] += start;
-*/
 }
 
 
@@ -164,8 +152,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
       */
       fallback_drawarrays( ctx, mode, start, start + count );
    } 
-   else if (ctx->Array.LockCount && 
-	    count <= (GLint) ctx->Const.MaxArrayLockSize) {
+   else if (start >= ctx->Array.LockFirst &&
+	    start + count <= ctx->Array.LockFirst + ctx->Array.LockCount) {
       
       struct tnl_prim prim;
 
@@ -173,14 +161,10 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
        */
       FLUSH_CURRENT( ctx, 0 );
 
-      if (start < (GLint) ctx->Array.LockFirst)
-	 start = ctx->Array.LockFirst;
-      if (start + count > (GLint) ctx->Array.LockCount)
-	 count = ctx->Array.LockCount - start;
-      
       /* Locked drawarrays.  Reuse any previously transformed data.
        */
-      _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, ctx->Array.LockCount );
+      _tnl_vb_bind_arrays( ctx, ctx->Array.LockFirst, 
+			   ctx->Array.LockFirst + ctx->Array.LockCount );
 
       tnl->vb.Primitive = &prim;
       tnl->vb.Primitive[0].mode = mode | PRIM_BEGIN | PRIM_END;
@@ -340,34 +324,21 @@ _tnl_DrawRangeElements(GLenum mode,
       /* Are the arrays already locked?  If so we currently have to look
        * at the whole locked range.
        */
-      if (start == 0 &&
-	  start >= ctx->Array.LockFirst && end <= ctx->Array.LockCount)
+
+      if (start == 0 && ctx->Array.LockFirst == 0 && 
+	  end < (ctx->Array.LockFirst + ctx->Array.LockCount))
 	 _tnl_draw_range_elements( ctx, mode,
-				   ctx->Array.LockFirst,
 				   ctx->Array.LockCount,
 				   count, ui_indices );
       else {
-	 /* The spec says referencing elements outside the locked
-	  * range is undefined.  I'm going to make it a noop this time
-	  * round, maybe come up with something beter before 3.6.
-	  *
-	  * May be able to get away with just setting LockCount==0,
-	  * though this raises the problems of dependent state.  May
-	  * have to call glUnlockArrays() directly?
-	  *
-	  * Or scan the list and replace bad indices?
-	  */
-	 _mesa_problem( ctx,
-		     "DrawRangeElements references "
-		     "elements outside locked range.");
+	 fallback_drawelements( ctx, mode, count, ui_indices );
       }
    }
-   else if (start == 0 &&
-	    end - start + 1 <= ctx->Const.MaxArrayLockSize) {
+   else if (start == 0 && end < ctx->Const.MaxArrayLockSize) {
       /* The arrays aren't locked but we can still fit them inside a
        * single vertexbuffer.
        */
-      _tnl_draw_range_elements( ctx, mode, start, end + 1, count, ui_indices );
+      _tnl_draw_range_elements( ctx, mode, end + 1, count, ui_indices );
    }
    else {
       /* Range is too big to optimize:
@@ -407,12 +378,13 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    assert(!ctx->CompileFlag);
 
-   if (ctx->Array.LockFirst == 0 &&
-       ctx->Array.LockCount) {
-      _tnl_draw_range_elements( ctx, mode,
-				ctx->Array.LockFirst,
-				ctx->Array.LockCount,
-				count, ui_indices );
+   if (ctx->Array.LockCount) {
+      if (ctx->Array.LockFirst == 0)
+	 _tnl_draw_range_elements( ctx, mode,
+				   ctx->Array.LockCount,
+				   count, ui_indices );
+      else
+	 fallback_drawelements( ctx, mode, count, ui_indices );
    }
    else {
       /* Scan the index list and see if we can use the locked path anyway.
@@ -424,10 +396,9 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 	 if (ui_indices[i] > max_elt)
             max_elt = ui_indices[i];
 
-      /* XXX should this < really be <= ??? */
       if (max_elt < ctx->Const.MaxArrayLockSize && /* can we use it? */
 	  max_elt < (GLuint) count) 	           /* do we want to use it? */
-	 _tnl_draw_range_elements( ctx, mode, 0, max_elt+1, count, ui_indices );
+	 _tnl_draw_range_elements( ctx, mode, max_elt+1, count, ui_indices );
       else
 	 fallback_drawelements( ctx, mode, count, ui_indices );
    }

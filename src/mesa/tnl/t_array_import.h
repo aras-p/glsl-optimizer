@@ -29,7 +29,7 @@
 #include "mtypes.h"
 #include "t_context.h"
 
-extern void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count );
+extern void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end );
 
 extern void _tnl_array_import_init( GLcontext *ctx );
 
