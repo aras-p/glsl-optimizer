@@ -497,7 +497,7 @@ GLint __glConvolutionParameteriv_size(GLenum pname)
     return __glConvolutionParameterfv_size(pname);
 }
 
-GLint __glPointParameterfvARB_size(GLenum e)
+GLint __glPointParameterfvEXT_size(GLenum e)
 {
     switch (e) {
       case GL_POINT_SIZE_MIN:
@@ -516,7 +516,7 @@ GLint __glPointParameterfvARB_size(GLenum e)
     }
 }
 
-GLint __glPointParameteriv_size(GLenum e)
+GLint __glPointParameterivNV_size(GLenum e)
 {
-    return __glPointParameterfvARB_size(e);
+    return __glPointParameterfvEXT_size(e);
 }

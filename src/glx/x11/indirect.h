@@ -404,8 +404,13 @@ glxvendr_enum1_4(MultiTexCoord4i,  X_GLrop_MultiTexCoord4ivARB, GLint,    ARB)
 glxvendr_enum1_4(MultiTexCoord4f,  X_GLrop_MultiTexCoord4fvARB, GLfloat,  ARB)
 glxvendr_enum1_4(MultiTexCoord4d,  X_GLrop_MultiTexCoord4dvARB, GLdouble, ARB)
 
-glxvendr_enum1_V(PointParameterf, X_GLrop_PointParameterf, GLfloat, ARB)
-glxproto_enum1_V(PointParameteri, X_GLrop_PointParameteri, GLint)
+#define X_GLrop_PointParameterfEXT  2065
+#define X_GLrop_PointParameterfvEXT 2066
+#define X_GLrop_PointParameteriNV   4221
+#define X_GLrop_PointParameterivNV  4222
+
+glxvendr_enum1_V(PointParameterf, X_GLrop_PointParameterf, GLfloat, EXT)
+glxvendr_enum1_V(PointParameteri, X_GLrop_PointParameteri, GLint,   NV)
 
 glxvendr_3(WindowPos3f, X_GLrop_WindowPos3fARB, GLfloat, MESA)
 

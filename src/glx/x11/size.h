@@ -66,7 +66,7 @@ extern GLint __glTexImage2D_size(GLenum format, GLenum type, GLsizei w, GLsizei 
 extern GLint __glTexImage3D_size(GLenum format, GLenum type, GLsizei w, GLsizei h, GLsizei d);
 extern GLint __glTexParameterfv_size(GLenum e);
 extern GLint __glTexParameteriv_size(GLenum e);
-extern GLint __glPointParameterfvARB_size(GLenum e);
-extern GLint __glPointParameteriv_size(GLenum e);
+extern GLint __glPointParameterfvEXT_size(GLenum e);
+extern GLint __glPointParameterivNV_size(GLenum e);
 
 #endif /* _size_h_ */

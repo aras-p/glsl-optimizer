@@ -503,8 +503,8 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->CompressedTexSubImage3DARB = __indirect_glCompressedTexSubImage3DARB;
 
     /* ARB 14. GL_ARB_point_parameters */
-    glAPI->PointParameterfEXT = __indirect_glPointParameterfARB;
-    glAPI->PointParameterfvEXT = __indirect_glPointParameterfvARB;
+    glAPI->PointParameterfEXT = __indirect_glPointParameterfEXT;
+    glAPI->PointParameterfvEXT = __indirect_glPointParameterfvEXT;
 
     /* ARB 15. GL_ARB_window_pos */
     glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
@@ -567,8 +567,8 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparate;
 
     /* 262. GL_NV_point_sprite / GL 1.4 */
-    glAPI->PointParameteriNV = __indirect_glPointParameteri;
-    glAPI->PointParameterivNV = __indirect_glPointParameteriv;
+    glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
+    glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
 
     /* 268. GL_EXT_stencil_two_side */
     glAPI->ActiveStencilFaceEXT = __indirect_glActiveStencilFaceEXT;
