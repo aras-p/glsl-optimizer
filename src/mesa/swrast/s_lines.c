@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.18 2001/05/21 18:13:43 brianp Exp $ */
+/* $Id: s_lines.c,v 1.19 2001/06/11 19:44:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -548,6 +548,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    const GLchan *color = vert1->color;
+   GLuint count;
    PB_SET_COLOR( PB, color[0], color[1], color[2], color[3] );
 
    if (ctx->Line.StippleFlag) {
@@ -557,7 +558,10 @@ static void general_flat_rgba_line( GLcontext *ctx,
 #define INTERP_FOG 1
 #define WIDE 1
 #define STIPPLE 1
-#define PLOT(X,Y)  PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
+#define PLOT(X,Y)                       \
+    PB_WRITE_PIXEL(PB, X, Y, Z, fog0);  \
+    count = PB->count;                  \
+    CHECK_FULL(count);
 #include "s_linetemp.h"
    }
    else {
@@ -579,7 +583,10 @@ static void general_flat_rgba_line( GLcontext *ctx,
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define WIDE 1
-#define PLOT(X,Y) PB_WRITE_PIXEL(PB, X, Y, Z, fog0);
+#define PLOT(X,Y)                       \
+    PB_WRITE_PIXEL(PB, X, Y, Z, fog0);  \
+    count = PB->count;                  \
+    CHECK_FULL(count);
 #include "s_linetemp.h"
       }
    }
