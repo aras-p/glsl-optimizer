@@ -78,7 +78,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Vertex.Size = size;
    ctx->Array.Vertex.Type = type;
    ctx->Array.Vertex.Stride = stride;
-   ctx->Array.Vertex.Ptr = (void *) ptr;
+   ctx->Array.Vertex.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.Vertex.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -131,7 +131,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ctx->Array.Normal.Size = 3;
    ctx->Array.Normal.Type = type;
    ctx->Array.Normal.Stride = stride;
-   ctx->Array.Normal.Ptr = (void *) ptr;
+   ctx->Array.Normal.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.Normal.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -198,7 +198,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Color.Size = size;
    ctx->Array.Color.Type = type;
    ctx->Array.Color.Stride = stride;
-   ctx->Array.Color.Ptr = (void *) ptr;
+   ctx->Array.Color.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.Color.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -239,7 +239,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.FogCoord.Size = 1;
    ctx->Array.FogCoord.Type = type;
    ctx->Array.FogCoord.Stride = stride;
-   ctx->Array.FogCoord.Ptr = (void *) ptr;
+   ctx->Array.FogCoord.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.FogCoord.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -289,7 +289,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Index.Size = 1;
    ctx->Array.Index.Type = type;
    ctx->Array.Index.Stride = stride;
-   ctx->Array.Index.Ptr = (void *) ptr;
+   ctx->Array.Index.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.Index.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -357,7 +357,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Array.SecondaryColor.Size = 3; /* hardwire */
    ctx->Array.SecondaryColor.Type = type;
    ctx->Array.SecondaryColor.Stride = stride;
-   ctx->Array.SecondaryColor.Ptr = (void *) ptr;
+   ctx->Array.SecondaryColor.Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.SecondaryColor.BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -415,7 +415,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
    ctx->Array.TexCoord[texUnit].Size = size;
    ctx->Array.TexCoord[texUnit].Type = type;
    ctx->Array.TexCoord[texUnit].Stride = stride;
-   ctx->Array.TexCoord[texUnit].Ptr = (void *) ptr;
+   ctx->Array.TexCoord[texUnit].Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.TexCoord[texUnit].BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -505,7 +505,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    ctx->Array.VertexAttrib[index].Stride = stride;
    ctx->Array.VertexAttrib[index].Size = size;
    ctx->Array.VertexAttrib[index].Type = type;
-   ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
+   ctx->Array.VertexAttrib[index].Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.VertexAttrib[index].BufferObj = ctx->Array.ArrayBufferObj;
 #endif
@@ -586,7 +586,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
    ctx->Array.VertexAttrib[index].Size = size;
    ctx->Array.VertexAttrib[index].Type = type;
    ctx->Array.VertexAttrib[index].Normalized = normalized;
-   ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
+   ctx->Array.VertexAttrib[index].Ptr = (GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
    ctx->Array.VertexAttrib[index].BufferObj = ctx->Array.ArrayBufferObj;
 #endif
