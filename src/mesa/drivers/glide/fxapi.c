@@ -397,6 +397,7 @@ fxMesaCreateContext(GLuint win,
  sliaa = 0;
  switch (voodoo->type) {
         case GR_SSTTYPE_VOODOO:
+        case GR_SSTTYPE_SST96:
         case GR_SSTTYPE_Banshee:
              fxMesa->bgrOrder = GL_TRUE;
              fxMesa->snapVertices = GL_TRUE;

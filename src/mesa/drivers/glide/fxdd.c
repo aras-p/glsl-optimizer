@@ -1331,8 +1331,18 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
       return 0;
    }
 
-   if (fxMesa->haveZBuffer)
-      grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
+   /* [dBorca] Hack alert:
+    * Unlike the rest of the Voodoo family, the Rush
+    * doesn't support ZBUFFER with WBUFFER-like depth functions!
+    * I guess we could use WBUFFER, which is better, but we can't
+    * because the depth span functions would need to translate
+    * depth values to 4.12 floating point...
+    */
+   if (fxMesa->haveZBuffer) {
+      grDepthBufferMode((fxMesa->type == GR_SSTTYPE_SST96)
+                        ? GR_DEPTHBUFFER_WBUFFER
+                        : GR_DEPTHBUFFER_ZBUFFER);
+   }
 
    if (!fxMesa->bgrOrder) {
       grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
