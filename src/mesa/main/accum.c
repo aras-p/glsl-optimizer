@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.21 2000/06/19 00:42:24 brianp Exp $ */
+/* $Id: accum.c,v 1.22 2000/07/14 04:15:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -348,7 +348,8 @@ _mesa_Accum( GLenum op, GLfloat value )
          if (ctx->IntegerAccumMode && value != 1.0)
             rescale_accum(ctx);
 
-         if (ctx->IntegerAccumMode && ctx->IntegerAccumScaler > 0) {
+         if (ctx->IntegerAccumMode && ctx->IntegerAccumScaler > 0
+             && (GLint) (256 / ctx->IntegerAccumScaler) <= 32768) {
             /* build lookup table to avoid many floating point multiplies */
             const GLfloat mult = ctx->IntegerAccumScaler;
             static GLchan multTable[32768];
