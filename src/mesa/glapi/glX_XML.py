@@ -62,6 +62,10 @@ def printNoinline():
 #    define NOINLINE
 #  endif"""
 
+def printHaveAlias():
+	print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
+#    define HAVE_ALIAS
+#  endif"""
 
 class glXItemFactory(gl_XML.glItemFactory):
 	"""Factory to create GLX protocol oriented objects derived from glItem."""
@@ -369,6 +373,28 @@ class glXFunction(gl_XML.glFunction):
 
 		else:
 			gl_XML.glFunction.startElement(self, name, attrs)
+
+
+	def endElement(self, name):
+		if name == "function":
+			# Mark any function that does not have GLX protocol
+			# defined as "ignore".  This prevents bad things from
+			# happening when people add new functions to the GL
+			# API XML without adding any GLX section.
+			#
+			# This will also mark functions that don't have a
+			# dispatch offset at ignored.
+
+			if (self.fn_offset == -1 and not self.fn_alias) or not (self.handcode or self.glx_rop or self.glx_sop or self.glx_vendorpriv or self.vectorequiv or self.fn_alias):
+				#if not self.ignore:
+				#	if self.fn_offset == -1:
+				#		print '/* %s ignored becuase no offset assigned. */' % (self.name)
+				#	else:
+				#		print '/* %s ignored becuase no GLX opcode assigned. */' % (self.name)
+
+				self.ignore = 1
+
+		return gl_XML.glFunction.endElement(self, name)
 
 
 	def append(self, tag_name, p):

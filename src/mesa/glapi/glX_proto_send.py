@@ -790,6 +790,8 @@ class PrintGlxSizeStubs(glX_XML.GlxProto):
 		print '#include "indirect_size.h"'
 		
 		print ''
+		glX_XML.printHaveAlias()
+		print ''
 		glX_XML.printPure()
 		print ''
 		glX_XML.printFastcall()
