@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.6 1999/09/16 16:43:38 brianp Exp $
+# $Id: Makefile.X11,v 1.7 1999/09/17 00:54:27 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -459,6 +459,9 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src-glut/mms_depend	\
 	$(DIRECTORY)/src-glut/*.[ch]		\
 	$(DIRECTORY)/src-glut.dja/*		\
+	$(DIRECTORY)/src-glut.beos/Makefile	\
+	$(DIRECTORY)/src-glut.beos/*.cpp	\
+	$(DIRECTORY)/src-glut.beos/*.h		\
 	$(DIRECTORY)/images/*			\
 	$(DIRECTORY)/demos/Makefile*		\
 	$(DIRECTORY)/demos/descrip.mms		\
@@ -478,10 +481,6 @@ DEMO_FILES =	\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
 
-#	$(DIRECTORY)/src-glut.beos/Makefile	\
-#	$(DIRECTORY)/src-glut.beos/*.cpp	\
-#	$(DIRECTORY)/src-glut.beos/*.h		\
-#
 
 lib_tar:
 	cd .. ; \
