@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.70 2001/09/23 21:17:03 brianp Exp $ */
+/* $Id: osmesa.c,v 1.71 2001/09/25 17:38:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1548,7 +1548,7 @@ static void
 flat_rgba_line( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLchan *color = vert0->color;
+   const GLchan *color = vert1->color;
 
 #define INTERP_XY 1
 #define CLIP_HACK 1
@@ -1573,7 +1573,7 @@ static void
 flat_rgba_z_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLchan *color = vert0->color;
+   const GLchan *color = vert1->color;
 
 #define INTERP_XY 1
 #define INTERP_Z 1
@@ -1612,9 +1612,9 @@ flat_blend_rgba_line( GLcontext *ctx,
    const GLint bshift = osmesa->bshift;
    const GLint avalue = vert0->color[3];
    const GLint msavalue = CHAN_MAX - avalue;
-   const GLint rvalue = vert0->color[0]*avalue;
-   const GLint gvalue = vert0->color[1]*avalue;
-   const GLint bvalue = vert0->color[2]*avalue;
+   const GLint rvalue = vert1->color[0]*avalue;
+   const GLint gvalue = vert1->color[1]*avalue;
+   const GLint bvalue = vert1->color[2]*avalue;
 
 #define INTERP_XY 1
 #define CLIP_HACK 1
@@ -1661,9 +1661,9 @@ flat_blend_rgba_z_line( GLcontext *ctx,
    const GLint bshift = osmesa->bshift;
    const GLint avalue = vert0->color[3];
    const GLint msavalue = 256 - avalue;
-   const GLint rvalue = vert0->color[0]*avalue;
-   const GLint gvalue = vert0->color[1]*avalue;
-   const GLint bvalue = vert0->color[2]*avalue;
+   const GLint rvalue = vert1->color[0]*avalue;
+   const GLint gvalue = vert1->color[1]*avalue;
+   const GLint bvalue = vert1->color[2]*avalue;
 
 #define INTERP_XY 1
 #define INTERP_Z 1
@@ -1712,9 +1712,9 @@ flat_blend_rgba_z_line_write( GLcontext *ctx,
    const GLint bshift = osmesa->bshift;
    const GLint avalue = vert0->color[3];
    const GLint msavalue = 256 - avalue;
-   const GLint rvalue = vert0->color[0]*avalue;
-   const GLint gvalue = vert0->color[1]*avalue;
-   const GLint bvalue = vert0->color[2]*avalue;
+   const GLint rvalue = vert1->color[0]*avalue;
+   const GLint gvalue = vert1->color[1]*avalue;
+   const GLint bvalue = vert1->color[2]*avalue;
 
 #define INTERP_XY 1
 #define INTERP_Z 1
@@ -1881,8 +1881,8 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define SETUP_CODE						\
    GLuint pixel;						\
-   PACK_RGBA((GLchan *) &pixel, v0->color[0], v0->color[1],	\
-                                v0->color[2], v0->color[3]);
+   PACK_RGBA((GLchan *) &pixel, v2->color[0], v2->color[1],	\
+                                v2->color[2], v2->color[3]);
 
 #define RENDER_SPAN( span )				\
    GLuint i;						\
