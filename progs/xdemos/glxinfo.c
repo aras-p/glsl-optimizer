@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.7 2000/04/03 15:45:34 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.8 2000/04/22 20:31:23 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -176,14 +176,16 @@ print_screen_info(Display *dpy, int scrnum)
 		       visinfo->visual, mask, &attr);
 
    ctx = glXCreateContext( dpy, visinfo, NULL, True );
+   if (!ctx) {
+      XDestroyWindow(dpy, win);
+      return;
+   }
 
-   glXMakeCurrent( dpy, win, ctx );
-
-
-   {
+   if (glXMakeCurrent( dpy, win, ctx )) {
       const char *serverVendor = glXQueryServerString(dpy, scrnum, GLX_VENDOR);
       const char *serverVersion = glXQueryServerString(dpy, scrnum, GLX_VERSION);
       const char *serverExtensions = glXQueryServerString(dpy, scrnum, GLX_EXTENSIONS);
+      const char *clientVendor = glXGetClientString(dpy, GLX_VENDOR);
       const char *clientVersion = glXGetClientString(dpy, GLX_VERSION);
       const char *clientExtensions = glXGetClientString(dpy, GLX_EXTENSIONS);
       const char *glxExtensions = glXQueryExtensionsString(dpy, scrnum);
@@ -198,7 +200,8 @@ print_screen_info(Display *dpy, int scrnum)
       printf("server glx version string: %s\n", serverVersion);
       printf("server glx extensions:\n");
       print_extension_list(serverExtensions);
-      printf("client glx version: %s\n", clientVersion);
+      printf("client glx vendor string: %s\n", clientVendor);
+      printf("client glx version string: %s\n", clientVersion);
       printf("client glx extensions:\n");
       print_extension_list(clientExtensions);
       printf("GLX extensions:\n");
