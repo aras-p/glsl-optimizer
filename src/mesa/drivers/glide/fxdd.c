@@ -535,7 +535,7 @@ static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
                                  const struct gl_pixelstore_attrib *packing,
                                  GLvoid *dstImage )
 {
-  if (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag) {
+  if (ctx->ImageTransferState) {
     return GL_FALSE;  /* can't do this */
   }
   else {
