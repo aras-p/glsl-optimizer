@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.60 2001/12/14 02:55:08 brianp Exp $
+# $Id: Makefile.X11,v 1.61 2001/12/14 16:35:55 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -198,71 +198,6 @@ OSMESA_OBJECTS = OSmesa/osmesa.o
 	$(CC) -c -I. $(CFLAGS) $< -o $@
 
 
-# UGH! These rules shouldn't be needed but IRIX's make (and others?) needs them
-X/glxapi.o: X/glxapi.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/fakeglx.o: X/fakeglx.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xfonts.o: X/xfonts.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xm_api.o: X/xm_api.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xm_dd.o: X/xm_dd.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xm_span.o: X/xm_span.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xm_line.o: X/xm_line.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X/xm_tri.o: X/xm_tri.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
-SVGA/svgamesa.o: SVGA/svgamesa.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-SVGA/svgamesa8.o: SVGA/svgamesa8.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-SVGA/svgamesa15.o: SVGA/svgamesa15.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-SVGA/svgamesa16.o: SVGA/svgamesa16.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-SVGA/svgamesa24.o: SVGA/svgamesa24.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-SVGA/svgamesa32.o: SVGA/svgamesa32.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
-OSmesa/osmesa.o: OSmesa/osmesa.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
-FX/fxapi.o: FX/fxapi.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxclip.o: FX/fxclip.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxdd.o: FX/fxdd.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxddspan.o: FX/fxddspan.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxddtex.o: FX/fxddtex.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxfastpath.o: FX/fxfastpath.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxpipeline.o: FX/fxpipeline.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxrender.o: FX/fxrender.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxsanity.o: FX/fxsanity.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxsetup.o: FX/fxsetup.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxtrifuncs.o: FX/fxtrifuncs.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxtexman.o: FX/fxtexman.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxvsetup.o: FX/fxvsetup.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-FX/fxglidew.o: FX/fxglidew.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
-FX/X86/fx_3dnow_fastpath.o: FX/X86/fx_3dnow_fastpath.S
-
 X86/x86.o: X86/x86.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/common_x86.o: X86/common_x86.c
@@ -280,25 +215,6 @@ X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
 # We have X86/matypes.h depend on X86/matypes.h so that if ASM_SOURCES
 # is empty we don't get an invalid Makefile.
 $(ASM_SOURCES) X86/matypes.h: X86/matypes.h
-
-GGI/ggimesa.o: GGI/ggimesa.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
-Trace/tr_2string.o: Trace/tr_2string.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_attrib.o: Trace/tr_attrib.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_context.o: Trace/tr_context.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_control.o: Trace/tr_control.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_error.o: Trace/tr_error.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_print.o: Trace/tr_print.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-Trace/tr_wrapper.o: Trace/tr_wrapper.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-
 
 
 ##### TARGETS #####
