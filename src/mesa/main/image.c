@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.58 2001/03/07 05:06:11 brianp Exp $ */
+/* $Id: image.c,v 1.59 2001/04/04 23:22:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2023,8 +2023,7 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
          stride = 2;
          break;
       case GL_INTENSITY:
-         redIndex = 0;
-         greenIndex = blueIndex = alphaIndex = -1;
+         redIndex = greenIndex = blueIndex = alphaIndex = 0;
          stride = 1;
          break;
       case GL_RGB:
