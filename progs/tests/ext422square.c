@@ -24,6 +24,7 @@ static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLint ImgWidth, ImgHeight;
 static GLushort *ImageYUV = NULL;
 static const GLuint yuvObj = 100;
+static const GLuint rgbObj = 101;
 
 static void Init( int argc, char *argv[] );
 
@@ -64,6 +65,7 @@ static void Display( void )
       glRotatef(Xrot, 1.0, 0.0, 0.0);
       glRotatef(Yrot, 0.0, 1.0, 0.0);
       glRotatef(Zrot, 0.0, 0.0, 1.0);
+      glBindTexture(GL_TEXTURE_2D, yuvObj);
       DrawObject();
    glPopMatrix();
 
@@ -73,6 +75,7 @@ static void Display( void )
       glRotatef(Xrot, 1.0, 0.0, 0.0);
       glRotatef(Yrot, 0.0, 1.0, 0.0);
       glRotatef(Zrot, 0.0, 0.0, 1.0);
+      glBindTexture(GL_TEXTURE_2D, rgbObj);
       DrawObject();
    glPopMatrix();
 
@@ -136,6 +139,12 @@ static void SpecialKey( int key, int x, int y )
 static void Init( int argc, char *argv[] )
 {
    const char *file;
+   const GLfloat yuvtorgb[16] = {
+      1.164, 1.596, 0,      (.06*1.164 + -.5*1.596),
+      1.164, -.813, -.391,  (.06*1.164 + -.5*-.813 + -.5*-.391),
+      1.164, 0,     2.018,  (.06*1.164 + -.5*-2.018),
+      0,     0,     0,      1 
+   };
 
    if (!glutExtensionSupported("GL_ARB_fragment_program")) {
       printf("Error: GL_ARB_fragment_program not supported!\n");
@@ -203,6 +212,29 @@ static void Init( int argc, char *argv[] )
       assert(glIsProgramARB(modulateProg));
 
    }
+
+   /* Now the same, but use a color matrix to do the conversion at
+    * upload time:
+    */
+   glBindTexture(GL_TEXTURE_2D, rgbObj);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+   glMatrixMode( GL_COLOR_MATRIX );
+   glLoadMatrixf( yuvtorgb );
+   
+   glTexImage2D(GL_TEXTURE_2D, 0,
+                GL_RGB,
+		ImgWidth, ImgHeight, 0,
+                GL_422_EXT,
+		GL_UNSIGNED_BYTE, ImageYUV);
+
+   glLoadIdentity();
+
+   glEnable(GL_TEXTURE_2D);
+
+   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
 
    glShadeModel(GL_FLAT);
    glClearColor(0.3, 0.3, 0.4, 1.0);
