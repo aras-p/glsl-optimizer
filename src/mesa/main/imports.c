@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.16 2002/07/01 08:26:00 joukj Exp $ */
+/* $Id: imports.c,v 1.17 2002/08/01 15:10:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,6 +46,8 @@
 #include "context.h"
 #include "imports.h"
 #include "mem.h"
+
+#define MAXSTRING 4000  /* for vsnprintf() */
 
 
 static void *
@@ -173,10 +175,10 @@ _mesa_GetDrawablePrivate(__GLcontext *gc)
 void
 _mesa_warning(__GLcontext *gc, const char *fmtString, ...)
 {
-   char str[1000];
+   char str[MAXSTRING];
    va_list args;
    va_start( args, fmtString );  
-   (void) vsprintf( str, fmtString, args );
+   (void) vsnprintf( str, MAXSTRING, fmtString, args );
    va_end( args );
    warning(gc, str);
 }
@@ -238,11 +240,11 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 
    if (debug) {
       va_list args;
-      char where[1000];
+      char where[MAXSTRING];
       const char *errstr;
 
       va_start( args, fmtString );  
-      vsprintf( where, fmtString, args );
+      vsnprintf( where, MAXSTRING, fmtString, args );
       va_end( args );
 
       switch (error) {
@@ -287,10 +289,10 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 void
 _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 {
-   char s[1000];
+   char s[MAXSTRING];
    va_list args;
    va_start(args, fmtString);
-   vsprintf(s, fmtString, args);
+   vsnprintf(s, MAXSTRING, fmtString, args);
    if (ctx)
       (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, s );
    else
@@ -305,10 +307,10 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 void
 _mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
 {
-   char s[1000];
+   char s[MAXSTRING];
    va_list args;
    va_start( args, fmtString );  
-   vsprintf(s, fmtString, args);
+   vsnprintf(s, MAXSTRING, fmtString, args);
    if (ctx)
       (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, s );
    else
