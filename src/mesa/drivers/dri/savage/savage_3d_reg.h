@@ -461,7 +461,15 @@ typedef union
         unsigned drawUpdateEn     : 1;
         unsigned zUpdateEn        : 1;
         unsigned zBufEn           : 1;
+
+        /**
+	 * We suspect that, in conjunction with
+	 * \c savageRegZBufOffset::zDepthSelect, these 2 bits are actually
+	 * \c stencilUpdateEn and \c stencilBufEn.  If not, then some of
+	 * the bits in \c reserved2 may fulfill that purpose.
+	 */
         unsigned reserved1        : 2;
+
         unsigned zExpOffset       : 8;
         unsigned wrZafterAlphaTst : 1;
         unsigned reserved2        : 15;
@@ -478,6 +486,13 @@ typedef union
         unsigned offset           : 14;
         unsigned reserved         : 11; /* 12-bits in Utah-driver */
         unsigned zBufWidthInTiles : 6;
+       
+        /**
+	 * 0 selects 16-bit depth buffer.  On Savage4 hardware, 1 selects
+	 * 24-bit depth buffer (with 8-bits for stencil).  Though it has never
+	 * been tried, we suspect that on Savage3D hardware, 1 selects 15-bit
+	 * depth buffer (with 1-bit for stencil).
+	 */
         unsigned zDepthSelect     : 1;
     }ni;
     uint32_t ui;
