@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.7 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: s_fog.c,v 1.8 2001/01/03 22:55:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,8 +119,13 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
    const GLfloat p10 = ctx->ProjectionMatrix.m[10];
    const GLfloat p14 = ctx->ProjectionMatrix.m[14];
    const GLfloat tz = ctx->Viewport._WindowMap.m[MAT_TZ];
-   const GLfloat szInv = 1.0F / ctx->Viewport._WindowMap.m[MAT_SZ];
+   GLfloat szInv;
    GLuint i;
+
+   if (ctx->Viewport._WindowMap.m[MAT_SZ] == 0.0)
+      szInv = 1.0F;
+   else
+      szInv = 1.0F / ctx->Viewport._WindowMap.m[MAT_SZ];
 
    /*
     * Note: to compute eyeZ from the ndcZ we have to solve the following:
@@ -149,7 +154,11 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
       case GL_LINEAR:
          {
             GLfloat fogEnd = ctx->Fog.End;
-            GLfloat fogScale = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+            GLfloat fogScale;
+            if (ctx->Fog.Start == ctx->Fog.End)
+               fogScale = 1.0;
+            else
+               fogScale = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
             if (ortho) {
                for (i=0;i<n;i++) {
                   GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
