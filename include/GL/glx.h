@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.36 2002/08/22 21:10:38 brianp Exp $ */
+/* $Id: glx.h,v 1.37 2002/10/08 22:47:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -297,16 +297,6 @@ extern void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
 extern void (*glXGetProcAddress(const GLubyte *procname))();
 
 
-/*
- * AGP memory allocator.
- */
-extern void *glXAllocateMemoryNV(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
-extern void glXFreeMemoryNV(GLvoid *pointer);
-typedef void * ( * PFNGLXALLOCATEMEMORYNVPROC) (GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
-typedef void ( * PFNGLXFREEMEMORYNVPROC) (GLvoid *pointer);
-
-
-
 #ifndef GLX_GLXEXT_LEGACY
 
 #include <GL/glxext.h>
@@ -460,6 +450,38 @@ extern void (*glXGetProcAddressARB(const GLubyte *procName))();
 
 
 #endif /* GLX_GLXEXT_LEGACY */
+
+
+/**
+ ** The following aren't in glxext.h yet.
+ **/
+
+
+/*
+ * ???. GLX_NV_vertex_array_range
+ */
+#ifndef GLX_NV_vertex_array_range
+#define GLX_NV_vertex_array_range
+
+extern void *glXAllocateMemoryNV(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
+extern void glXFreeMemoryNV(GLvoid *pointer);
+typedef void * ( * PFNGLXALLOCATEMEMORYNVPROC) (GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
+typedef void ( * PFNGLXFREEMEMORYNVPROC) (GLvoid *pointer);
+
+#endif /* GLX_NV_vertex_array_range */
+
+
+
+/*
+ * ???. GLX_MESA_agp_offset
+ */ 
+#ifndef GLX_MESA_agp_offset
+#define GLX_MESA_agp_offset 1
+
+extern GLuint glXGetAGPOffsetMESA(const GLvoid *pointer);
+typedef GLuint (* PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *pointer);
+
+#endif /* GLX_MESA_agp_offset */
 
 
 
