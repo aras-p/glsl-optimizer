@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.11 1999/11/02 10:11:44 brianp Exp $
+# $Id: Makefile.X11,v 1.12 1999/11/04 03:57:28 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -309,7 +309,7 @@ realclean: clean
 	cd xdemos      && $(MAKE) -f Makefile.X11 realclean || true
 	cd book        && $(MAKE) -f Makefile.X11 realclean || true
 	cd samples     && $(MAKE) -f Makefile.X11 realclean || true
-	cd ggi/demos   && ($MAKE) -f Makefile.X11 realclean || true
+	cd ggi/demos   && $(MAKE) -f Makefile.X11 realclean || true
 	cd src/GGI/default && $(MAKE) -f Makefile.X11 realclean || true
 
 
