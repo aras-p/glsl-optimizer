@@ -45,6 +45,8 @@
 #include "tnl.h"
 #include "tnl/t_context.h"
 #include "swrast.h"
+#include "texstore.h"
+
 
 static void
 fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
@@ -69,13 +71,6 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 
 #if FX_RESCALE_BIG_TEXURES_HACK
 {
-extern void
-_mesa_rescale_teximage2d (GLuint bytesPerPixel,
-			  GLuint srcStrideInPixels,
-			  GLuint dstRowStride,
-			  GLint srcWidth, GLint srcHeight,
-			  GLint dstWidth, GLint dstHeight,
-			  const GLvoid *srcImage, GLvoid *dstImage);
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    /* [dBorca]
     * Fake textures larger than HW supports:
@@ -386,15 +381,6 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 	 }
 	 grTexDownloadTable(ti->paltype, &(ti->palette));
       }
-#if FX_TC_NCC
-      if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
-          (ti->info.format == GR_TEXFMT_YIQ_422)) {
-	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading NCC table\n");
-	 }
-	 grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
-      }
-#endif
 
       grTexClampMode(GR_TMU0, ti->sClamp, ti->tClamp);
       grTexClampMode(GR_TMU1, ti->sClamp, ti->tClamp);
@@ -422,15 +408,6 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(tmu, ti->paltype, &(ti->palette));
       }
-#if FX_TC_NCC
-      if ((ti->info.format == GR_TEXFMT_AYIQ_8422) ||
-          (ti->info.format == GR_TEXFMT_YIQ_422)) {
-	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "fxSetupSingleTMU_NoLock: uploading NCC table\n");
-	 }
-	 fxMesa->Glide.grTexDownloadTableExt(tmu, GR_TEXTABLE_NCC0, &(ti->palette));
-      }
-#endif
 
       /* KW: The alternative is to do the download to the other tmu.  If
        * we get to this point, I think it means we are thrashing the
@@ -879,23 +856,6 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
 	 fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, ti0->paltype, &(ti0->palette));
       }
    }
-#if FX_TC_NCC
-   /* pointcast */
-   if ((ti1->info.format == GR_TEXFMT_AYIQ_8422) ||
-       (ti1->info.format == GR_TEXFMT_YIQ_422)) {
-      if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading NCC0 table for TMU1\n");
-      }
-      fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, GR_TEXTABLE_NCC0, &(ti1->palette));
-   }
-   if ((ti0->info.format == GR_TEXFMT_AYIQ_8422) ||
-       (ti0->info.format == GR_TEXFMT_YIQ_422)) {
-      if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "fxSetupDoubleTMU_NoLock: uploading NCC0 table for TMU0\n");
-      }
-      fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, GR_TEXTABLE_NCC0, &(ti0->palette));
-   }
-#endif
 
    grTexSource(tmu0, ti0->tm[tmu0]->startAddr,
 			 GR_MIPMAPLEVELMASK_BOTH, &(ti0->info));
