@@ -148,6 +148,18 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 	    VB->EyePtr = TransformRaw( &store->eye,
                                        ctx->ModelviewMatrixStack.Top,
 				       VB->ObjPtr);
+#if 0
+         /* examine some eye coordinates */
+         {
+            GLuint i;
+            GLfloat *v = VB->EyePtr->start;
+            for (i = 0; i < 4; i++) {
+               _mesa_printf("eye[%d] = %g, %g, %g, %g\n",
+                            i, v[0], v[1], v[2], v[3]);
+               v += 4;
+            }
+         }
+#endif
       }
 
       VB->ClipPtr = TransformRaw( &store->clip,
@@ -168,6 +180,19 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
       case 4:
 	 break;
       }
+
+#if 0
+      /* examine some clip coordinates */
+      {
+         GLuint i;
+         GLfloat *v = VB->ClipPtr->start;
+         for (i = 0; i < 4; i++) {
+            _mesa_printf("clip[%d] = %g, %g, %g, %g\n",
+                         i, v[0], v[1], v[2], v[3]);
+            v += 4;
+         }
+      }
+#endif
 
       /* Cliptest and perspective divide.  Clip functions must clear
        * the clipmask.
