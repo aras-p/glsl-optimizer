@@ -136,7 +136,6 @@ typedef struct _OverlayInfo {
 
 
 
-
 /*
  * Test if the given XVisualInfo is usable for Mesa rendering.
  */
@@ -169,7 +168,53 @@ is_usable_visual( XVisualInfo *vinfo )
 
 
 
-/*
+/**
+ * Get an array OverlayInfo records for specified screen.
+ * \param dpy  the display
+ * \param screen  screen number
+ * \param numOverlays  returns numver of OverlayInfo records
+ * \return  pointer to OverlayInfo array, free with XFree()
+ */
+static OverlayInfo *
+GetOverlayInfo(Display *dpy, int screen, int *numOverlays)
+{
+   Atom overlayVisualsAtom;
+   Atom actualType;
+   Status status;
+   unsigned char *ovInfo;
+   unsigned long sizeData, bytesLeft;
+   int actualFormat;
+
+   /*
+    * The SERVER_OVERLAY_VISUALS property on the root window contains
+    * a list of overlay visuals.  Get that list now.
+    */
+   overlayVisualsAtom = XInternAtom(dpy,"SERVER_OVERLAY_VISUALS", True);
+   if (overlayVisualsAtom == None) {
+      return 0;
+   }
+
+   status = XGetWindowProperty(dpy, RootWindow(dpy, screen),
+                               overlayVisualsAtom, 0L, (long) 10000, False,
+                               overlayVisualsAtom, &actualType, &actualFormat,
+                               &sizeData, &bytesLeft,
+                               &ovInfo);
+
+   if (status != Success || actualType != overlayVisualsAtom ||
+       actualFormat != 32 || sizeData < 4) {
+      /* something went wrong */
+      XFree((void *) ovInfo);
+      *numOverlays = 0;
+      return NULL;
+   }
+
+   *numOverlays = sizeData / 4;
+   return (OverlayInfo *) ovInfo;
+}
+
+
+
+/**
  * Return the level (overlay, normal, underlay) of a given XVisualInfo.
  * Input:  dpy - the X display
  *         vinfo - the XVisualInfo to test
@@ -181,43 +226,18 @@ is_usable_visual( XVisualInfo *vinfo )
 static int
 level_of_visual( Display *dpy, XVisualInfo *vinfo )
 {
-   Atom overlayVisualsAtom;
-   OverlayInfo *overlay_info = NULL;
-   int numOverlaysPerScreen;
-   Status status;
-   Atom actualType;
-   int actualFormat;
-   unsigned long sizeData, bytesLeft;
-   int i;
+   OverlayInfo *overlay_info;
+   int numOverlaysPerScreen, i;
 
-   /*
-    * The SERVER_OVERLAY_VISUALS property on the root window contains
-    * a list of overlay visuals.  Get that list now.
-    */
-   overlayVisualsAtom = XInternAtom(dpy,"SERVER_OVERLAY_VISUALS", True);
-   if (overlayVisualsAtom == None) {
-      return 0;
-   }
-
-   status = XGetWindowProperty(dpy, RootWindow( dpy, vinfo->screen ),
-                               overlayVisualsAtom, 0L, (long) 10000, False,
-                               overlayVisualsAtom, &actualType, &actualFormat,
-                               &sizeData, &bytesLeft,
-                               (unsigned char **) &overlay_info );
-
-   if (status != Success || actualType != overlayVisualsAtom ||
-       actualFormat != 32 || sizeData < 4) {
-      /* something went wrong */
-      XFree((void *) overlay_info);
+   overlay_info = GetOverlayInfo(dpy, vinfo->screen, &numOverlaysPerScreen);
+   if (!overlay_info) {
       return 0;
    }
 
    /* search the overlay visual list for the visual ID of interest */
-   numOverlaysPerScreen = (int) (sizeData / 4);
-   for (i=0;i<numOverlaysPerScreen;i++) {
-      OverlayInfo *ov;
-      ov = overlay_info + i;
-      if (ov->overlay_visual==vinfo->visualid) {
+   for (i = 0; i < numOverlaysPerScreen; i++) {
+      const OverlayInfo *ov = overlay_info + i;
+      if (ov->overlay_visual == vinfo->visualid) {
          /* found the visual */
          if (/*ov->transparent_type==1 &&*/ ov->layer!=0) {
             int level = ov->layer;
@@ -462,7 +482,7 @@ find_glx_visual( Display *dpy, XVisualInfo *vinfo )
 
 
 
-/*
+/**
  * Return the transparent pixel value for a GLX visual.
  * Input:  glxvis - the glx_visual
  * Return:  a pixel value or -1 if no transparent pixel
@@ -472,45 +492,19 @@ transparent_pixel( XMesaVisual glxvis )
 {
    Display *dpy = glxvis->display;
    XVisualInfo *vinfo = glxvis->visinfo;
-   Atom overlayVisualsAtom;
-   OverlayInfo *overlay_info = NULL;
-   int numOverlaysPerScreen;
-   Status status;
-   Atom actualType;
-   int actualFormat;
-   unsigned long sizeData, bytesLeft;
-   int i;
+   OverlayInfo *overlay_info;
+   int numOverlaysPerScreen, i;
 
-   /*
-    * The SERVER_OVERLAY_VISUALS property on the root window contains
-    * a list of overlay visuals.  Get that list now.
-    */
-   overlayVisualsAtom = XInternAtom(dpy,"SERVER_OVERLAY_VISUALS", True);
-   if (overlayVisualsAtom == None) {
+   overlay_info = GetOverlayInfo(dpy, vinfo->screen, &numOverlaysPerScreen);
+   if (!overlay_info) {
       return -1;
    }
 
-   status = XGetWindowProperty(dpy, RootWindow( dpy, vinfo->screen ),
-                               overlayVisualsAtom, 0L, (long) 10000, False,
-                               overlayVisualsAtom, &actualType, &actualFormat,
-                               &sizeData, &bytesLeft,
-                               (unsigned char **) &overlay_info );
-
-   if (status != Success || actualType != overlayVisualsAtom ||
-       actualFormat != 32 || sizeData < 4) {
-      /* something went wrong */
-      XFree((void *) overlay_info);
-      return -1;
-   }
-
-   /* search the overlay visual list for the visual ID of interest */
-   numOverlaysPerScreen = (int) (sizeData / 4);
-   for (i=0;i<numOverlaysPerScreen;i++) {
-      OverlayInfo *ov;
-      ov = overlay_info + i;
-      if (ov->overlay_visual==vinfo->visualid) {
+   for (i = 0; i < numOverlaysPerScreen; i++) {
+      const OverlayInfo *ov = overlay_info + i;
+      if (ov->overlay_visual == vinfo->visualid) {
          /* found it! */
-         if (ov->transparent_type==0) {
+         if (ov->transparent_type == 0) {
             /* type 0 indicates no transparency */
             XFree((void *) overlay_info);
             return -1;
@@ -530,7 +524,7 @@ transparent_pixel( XMesaVisual glxvis )
 
 
 
-/*
+/**
  * Try to get an X visual which matches the given arguments.
  */
 static XVisualInfo *
@@ -808,13 +802,8 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
                          int level, int trans_type, int trans_value,
                          int min_depth, int preferred_class )
 {
-   Atom overlayVisualsAtom;
    OverlayInfo *overlay_info;
    int numOverlaysPerScreen;
-   Status status;
-   Atom actualType;
-   int actualFormat;
-   unsigned long sizeData, bytesLeft;
    int i;
    XVisualInfo *deepvis;
    int deepest;
@@ -831,24 +820,8 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
       default:                    preferred_class = DONT_CARE;
    }
 
-   /*
-    * The SERVER_OVERLAY_VISUALS property on the root window contains
-    * a list of overlay visuals.  Get that list now.
-    */
-   overlayVisualsAtom = XInternAtom(dpy,"SERVER_OVERLAY_VISUALS", True);
-   if (overlayVisualsAtom == (Atom) None) {
-      return NULL;
-   }
-
-   status = XGetWindowProperty(dpy, RootWindow( dpy, scr ),
-                               overlayVisualsAtom, 0L, (long) 10000, False,
-                               overlayVisualsAtom, &actualType, &actualFormat,
-                               &sizeData, &bytesLeft,
-                               (unsigned char **) &overlay_info );
-
-   if (status != Success || actualType != overlayVisualsAtom ||
-       actualFormat != 32 || sizeData < 4) {
-      /* something went wrong */
+   overlay_info = GetOverlayInfo(dpy, scr, &numOverlaysPerScreen);
+   if (!overlay_info) {
       return NULL;
    }
 
@@ -856,12 +829,10 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
    deepest = min_depth;
    deepvis = NULL;
 
-   numOverlaysPerScreen = (int) (sizeData / 4);
-   for (i=0;i<numOverlaysPerScreen;i++) {
+   for (i = 0; i < numOverlaysPerScreen; i++) {
+      const OverlayInfo *ov = overlay_info + i;
       XVisualInfo *vislist, vistemplate;
       int count;
-      OverlayInfo *ov;
-      ov = overlay_info + i;
 
       if (ov->layer!=level) {
          /* failed overlay level criteria */
