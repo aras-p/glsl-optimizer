@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.14 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: enums.c,v 1.15 2001/03/22 04:57:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -836,6 +836,10 @@ enum_elt all_enums[] =
    /* GL_EXT_texture_env_dot3 */
    { "GL_DOT3_RGB_EXT", 0x8740 },
    { "GL_DOT3_RGBA_EXT", 0x8741 },
+
+   /* GL_ARB_texture_env_dot3 */
+   { "GL_DOT3_RGB_EXT", 0x86ae },
+   { "GL_DOT3_RGBA_EXT", 0x86af },
 
 };
 
