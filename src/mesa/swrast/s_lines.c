@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.16 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_lines.c,v 1.17 2001/05/17 09:32:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1018,7 +1018,7 @@ _swrast_choose_line( GLcontext *ctx )
          ASSERT(swrast->Triangle);
       }
       else if (ctx->Texture._ReallyEnabled) {
-         if (swrast->_MultiTextureEnabled ||
+         if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY ||	     
 	     (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)) {
             /* multi-texture and/or separate specular color */
             if (ctx->Light.ShadeModel==GL_SMOOTH)

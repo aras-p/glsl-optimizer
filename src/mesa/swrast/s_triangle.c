@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.28 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.29 2001/05/17 09:32:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2377,7 +2377,7 @@ _swrast_choose_triangle( GLcontext *ctx )
                needLambda = GL_TRUE;
             else
                needLambda = GL_FALSE;
-            if (swrast->_MultiTextureEnabled) {
+            if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
                USE(lambda_multitextured_triangle);
             }
             else if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {

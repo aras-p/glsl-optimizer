@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.20 2001/03/29 17:08:27 keithw Exp $ */
+/* $Id: s_context.c,v 1.21 2001/05/17 09:32:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -351,10 +351,6 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
 
-      if (swrast->NewState & _NEW_TEXTURE)
-	 swrast->_MultiTextureEnabled =
-            ctx->Texture._ReallyEnabled > TEXTURE0_ANY;
-
       if (swrast->NewState & _NEW_POLYGON)
 	 _swrast_update_polygon( ctx );
 
@@ -383,8 +379,8 @@ _swrast_Quad( GLcontext *ctx,
       _swrast_print_vertex( ctx, v2 );
       _swrast_print_vertex( ctx, v3 );
    }
-   SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2 );
-   SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v2, v3 );
+   SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v1, v3 );
+   SWRAST_CONTEXT(ctx)->Triangle( ctx, v1, v2, v3 );
 }
 
 void

@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.7 2001/05/15 21:30:27 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.8 2001/05/17 09:32:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -245,7 +245,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                                             sRed, sGreen, sBlue,
                                             texcoord);
 #elif FLAGS & TEXTURE
-	       if (swrast->_MultiTextureEnabled) {
+	       if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
 		  PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, vert->fog,
 					  red, green, blue, alpha,
 					  texcoord);
@@ -292,7 +292,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                                    sRed, sGreen, sBlue,
                                    texcoord);
 #elif FLAGS & TEXTURE
-      if (swrast->_MultiTextureEnabled) {
+      if (ctx->Texture._ReallyEnabled > TEXTURE0_ANY) {
          PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, vert->fog,
                                  red, green, blue, alpha, texcoord );
       }

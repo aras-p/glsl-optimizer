@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.9 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: s_context.h,v 1.10 2001/05/17 09:32:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,7 +114,6 @@ typedef struct
     * _swrast_validate_derived():
     */
    GLuint _RasterMask;
-   GLboolean _MultiTextureEnabled;
    GLfloat _MinMagThresh[MAX_TEXTURE_UNITS];
    GLfloat _backface_sign;
    GLboolean _PreferPixelFog;
