@@ -449,6 +449,8 @@ EXPORTS
 	_swrast_GetDeviceDriverReference
 	_swrast_Clear
 	_glapi_get_context
+	_mesa_ResizeBuffersMESA
+	_glapi_get_proc_address
 	wglCopyContext
 	wglCreateContext
 	wglDeleteContext
