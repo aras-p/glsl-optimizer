@@ -2258,14 +2258,14 @@ typedef void (APIENTRY * PFNGLGETQUERYOBJECTUIVARBPROC)(GLuint id, GLenum pname,
 #ifndef GL_MESA_program_debug
 #define GL_MESA_program_debug 1
 
-#define GL_FRAGMENT_PROGRAM_POSITION_MESA       0x9900
-#define GL_FRAGMENT_PROGRAM_CALLBACK_MESA       0x9901
-#define GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA  0x9902
-#define GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA  0x9903
-#define GL_VERTEX_PROGRAM_POSITION_MESA         0x9904
-#define GL_VERTEX_PROGRAM_CALLBACK_MESA         0x9905
-#define GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA    0x9906
-#define GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA    0x9907
+#define GL_FRAGMENT_PROGRAM_POSITION_MESA       0x8bb0
+#define GL_FRAGMENT_PROGRAM_CALLBACK_MESA       0x8bb1
+#define GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA  0x8bb2
+#define GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA  0x8bb3
+#define GL_VERTEX_PROGRAM_POSITION_MESA         0x8bb4
+#define GL_VERTEX_PROGRAM_CALLBACK_MESA         0x8bb5
+#define GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA    0x8bb6
+#define GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA    0x8bb7
 
 typedef void (*GLprogramcallbackMESA)(GLenum target, GLvoid *data);
 
@@ -2274,8 +2274,7 @@ glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
                       GLvoid *data);
 
 extern void
-glGetProgramRegisterfvMESA(GLenum target,
-                           GLsizei len, const GLubyte *registerName,
+glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name,
                            GLfloat *v);
 
 #endif /* GL_MESA_program_debug */
