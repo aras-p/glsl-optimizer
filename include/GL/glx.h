@@ -483,6 +483,21 @@ typedef GLuint (* PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *pointer);
 
 
 /*
+ * ???. GLX_MESA_allocate_memory
+ */ 
+#ifndef GLX_MESA_allocate_memory
+#define GLX_MESA_allocate_memory 1
+
+extern void *glXAllocateMemoryMESA(Display *dpy, int scrn, size_t size, float readfreq, float writefreq, float priority);
+extern void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer);
+extern GLuint glXGetMemoryOffsetMESA(Display *dpy, int scrn, const void *pointer);
+typedef void * ( * PFNGLXALLOCATEMEMORYMESAPROC) (Display *dpy, int scrn, size_t size, float readfreq, float writefreq, float priority);
+typedef void ( * PFNGLXFREEMEMORYMESAPROC) (Display *dpy, int scrn, void *pointer);
+typedef GLuint (* PFNGLXGETMEMORYOFFSETMESAPROC) (Display *dpy, int scrn, const void *pointer);
+
+#endif /* GLX_MESA_allocate_memory */
+
+/*
  * ARB ?. GLX_ARB_render_texture
  */
 #ifndef GLX_ARB_render_texture
