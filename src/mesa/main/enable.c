@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.18 2000/05/07 20:37:40 brianp Exp $ */
+/* $Id: enable.c,v 1.19 2000/05/07 20:41:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

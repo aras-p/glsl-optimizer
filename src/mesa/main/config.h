@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.12 2000/05/07 20:37:40 brianp Exp $ */
+/* $Id: config.h,v 1.13 2000/05/07 20:41:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
