@@ -1283,3 +1283,6 @@ Mesa Version History
     Bug fixes:
 	- OpenGL version 1.5 doesn't need GL_ARB_texture_non_power_of_two
 	- fixed a few compilation issues on IRIX
+	- fixed a matrix classification bug (reported by Wes Bethel)
+	- we weren't reseting the vertex/fragment program error state
+	   before parsing (Dave Reveman)
