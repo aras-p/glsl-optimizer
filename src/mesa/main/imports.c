@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.22 2002/10/25 21:06:28 brianp Exp $ */
+/* $Id: imports.c,v 1.23 2002/10/30 19:40:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,9 +104,14 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (unsigned long) _mesa_malloc( bytes + alignment );
+   /* Allocate extra memory to accomodate rounding up the address for
+    * alignment and to record the real malloc address.
+    */
+   ptr = (unsigned long) _mesa_malloc(bytes + alignment + sizeof(void *));
+   if (!ptr)
+      return NULL;
 
-   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   buf = (ptr + alignment + sizeof(void *)) & ~(unsigned long)(alignment - 1);
    *(unsigned long *)(buf - sizeof(void *)) = ptr;
 
 #ifdef DEBUG
@@ -117,7 +122,7 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
    }
 #endif
 
-   return (void *)buf;
+   return (void *) buf;
 }
 
 
@@ -128,9 +133,11 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (unsigned long) _mesa_calloc( bytes + alignment );
+   ptr = (unsigned long) _mesa_calloc(bytes + alignment + sizeof(void *));
+   if (!ptr)
+      return NULL;
 
-   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   buf = (ptr + alignment + sizeof(void *)) & ~(unsigned long)(alignment - 1);
    *(unsigned long *)(buf - sizeof(void *)) = ptr;
 
 #ifdef DEBUG
