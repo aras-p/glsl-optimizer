@@ -624,5 +624,6 @@ extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 extern void fxDDCheckVtxfmt( GLcontext *ctx );
 extern void fx_update_lighting( GLcontext *ctx );
+extern void fxDDInitVtxfmt( GLcontext *ctx );
 
 #endif
