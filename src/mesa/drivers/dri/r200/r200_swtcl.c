@@ -334,7 +334,7 @@ static const GLuint reduced_hw_prim[GL_POLYGON+1] = {
    R200_VF_PRIM_TRIANGLES,
    R200_VF_PRIM_TRIANGLES,
    R200_VF_PRIM_TRIANGLES,
-   R200_VF_PRIM_QUADS,
+   R200_VF_PRIM_TRIANGLES,
    R200_VF_PRIM_TRIANGLES,
    R200_VF_PRIM_TRIANGLES
 };
@@ -354,7 +354,7 @@ static void r200ResetLineStipple( GLcontext *ctx );
 #define HAVE_TRI_STRIPS  1
 #define HAVE_TRI_STRIP_1 0
 #define HAVE_TRI_FANS    1
-#define HAVE_QUADS       1
+#define HAVE_QUADS       0
 #define HAVE_QUAD_STRIPS 0
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        0
