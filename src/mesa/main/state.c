@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.18 2000/06/24 11:57:35 keithw Exp $ */
+/* $Id: state.c,v 1.19 2000/06/26 23:38:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1179,14 +1179,9 @@ void gl_update_state( GLcontext *ctx )
       ctx->NeedEyeNormals = GL_FALSE;
 
       if (ctx->Light.Enabled) {
-	 if (ctx->Light.Flags & LIGHT_POSITIONAL) {
-	    /* Need length for attenuation */
-	    if (!TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
-	       ctx->NeedEyeCoords = GL_TRUE;
-	 } else if (ctx->Light.NeedVertices) {
-	    /* Need angle for spot calculations */
-	    if (!TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_ANGLE_PRESERVING))
-	       ctx->NeedEyeCoords = GL_TRUE;
+	 if ((ctx->Light.Flags & LIGHT_POSITIONAL) || ctx->Light.NeedVertices){
+	    /* Need length for attenuation or need angle for spotlights */
+            ctx->NeedEyeCoords = GL_TRUE;
 	 }
 	 ctx->NeedEyeNormals = ctx->NeedEyeCoords;
       }
