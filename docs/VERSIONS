@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.47 2000/12/13 00:48:02 brianp Exp $
+$Id: VERSIONS,v 1.48 2001/02/14 22:59:50 brianp Exp $
 
 
 Mesa Version History
@@ -748,9 +748,59 @@ Mesa Version History
 	- moved programs from 3Dfx/demos/ into demos/ directory
 
 
-3.4  Month ??, 2000
-    XXX copy from 3.4's VERSION file
+3.4  November 3, 2000
+    New:
+	- optimized glDrawPixels for glPixelZoom(1,-1)
+    Bug Fixes:
+	- widgets-mesa/src/*.c files were missing from 3.3 distro
+	- include/GL/mesa_wgl.h file was missing from 3.3 distro
+	- fixed some Win32 compile problems
+	- texture object priorities weren't getting initialized to 1.0
+	- glAreTexturesResident return value was wrong when using hardware
+	- glXUseXFont segfaulted when using 3dfx driver (via MESA_GLX_FX)
+	- glReadPixels with GLushort packed types was broken
+	- fixed a few bugs in the GL_EXT_texture_env_combine texture code
+	- glPush/PopAttrib(GL_ENABLE_BIT) mishandled multi-texture enables
+	- fixed some typos/bugs in the VB code
+	- glDrawPixels(GL_COLOR_INDEX) to RGB window didn't work
+	- optimized glDrawPixels paths weren't being used
+	- per-fragment fog calculation didn't work without a Z buffer
+	- improved blending accuracy, fixes Glean blendFunc test failures
+	- glPixelStore(GL_PACK/UNPACK_SKIP_IMAGES) wasn't handled correctly
+	- glXGetProcAddressARB() didn't always return the right address
+	- gluBuild[12]DMipmaps() didn't grok the GL_BGR pixel format
+	- texture matrix changes weren't always detected (GLUT projtex demo)
+	- fixed random color problem in vertex fog code
+	- fixed Glide-related bug that let Quake get a 24-bit Z buffer
+    Changes:
+	- finished internal support for compressed textures for DRI
 
+
+3.4.1  February 14, 2001
+    New:
+	- fixed some Linux build problems
+	- fixed some Windows build problems
+	- GL_EXT_texture_env_dot3 extension (Gareth Hughes)
+    Bug fixes:
+	- added RENDER_START/RENDER_FINISH macros for glCopyTexImage in DRI
+	- various state-update code changes needed for DRI bugs
+	- disabled pixel transfer ops in glColorTable commands, not needed
+	- fixed bugs in glCopyConvolutionFilter1D/2D, glGetConvolutionFilter
+	- updated sources and fixed compile problems in widgets-mesa/
+	- GLX_PBUFFER enum value was wrong in glx.h
+	- fixed a glColorMaterial lighting bug
+	- fixed bad args to Read/WriteStencilSpan in h/w stencil clear function
+	- glXCopySubBufferMESA() Y position was off by one
+	- Error checking of glTexSubImage3D() was broken (bug 128775)
+	- glPopAttrib() didn't restore all derived Mesa state correctly
+	- Better glReadPixels accuracy for 16bpp color - fixes lots of OpenGL
+	  conformance problems at 16bpp.
+	- clearing depth buffer with scissoring was broken, would segfault
+	- OSMesaGetDepthBuffer() returned bad bytesPerValue value
+	- fixed a line clipping bug (reported by Craig McDaniel)
+	- fixed RGB color over/underflow bug for very tiny triangles
+    Known problems:
+	- NURBS or evaluator surfaces inside display lists don't always work
 
 
 3.5  Month ??, 2000
@@ -768,6 +818,7 @@ Mesa Version History
 	- GL/glxext.h header file for GLX extensions
 	- Improved precision in glReadPixels, improves conformance for 16bpp
 	- somewhat faster software texturing, fogging, depth testing
+	- all color-index conformance tests now pass (only 8bpp tested)
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
