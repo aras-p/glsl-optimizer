@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.29 2000/03/31 01:17:52 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.30 2000/03/31 18:17:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1516,7 +1516,11 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
        */
       case GLX_VISUAL_CAVEAT_EXT:
          /* test for zero, just in case */
-         return (glxvis->VisualCaveat > 0) ? glxvis->VisualCaveat : GLX_NONE_EXT;
+         if (glxvis->VisualCaveat > 0)
+            *value = glxvis->VisualCaveat;
+         else
+            *value = GLX_NONE_EXT;
+         return 0;
 
       /*
        * Extensions
