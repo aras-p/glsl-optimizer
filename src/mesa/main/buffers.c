@@ -371,11 +371,14 @@ _mesa_ReadBuffer( GLenum mode )
 }
 
 
-/*
- * GL_MESA_resize_buffers extension
+/**
  * When this function is called, we'll ask the window system how large
- * the current window is.  If it's not what we expect, we'll have to
- * resize/reallocate the software accum/stencil/depth/alpha buffers.
+ * the current window is.  If it's a new size, we'll call the driver's
+ * ResizeBuffers function.  The driver will then resize its color buffers
+ * as needed, and maybe call the swrast's routine for reallocating
+ * swrast-managed depth/stencil/accum/etc buffers.
+ * \note This function may be called from within Mesa or called by the
+ * user directly (see the GL_MESA_resize_buffers extension).
  */
 void
 _mesa_ResizeBuffersMESA( void )

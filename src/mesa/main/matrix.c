@@ -414,9 +414,13 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 }
 
 
-/*
- * Define a new viewport and reallocate auxillary buffers if the size of
- * the window (color buffer) has changed.
+/**
+ * Set new viewport parameters and update derived state (the _WindowMap
+ * matrix).  Usually called from _mesa_Viewport().
+ * \note  We also call _mesa_ResizeBuffersMESA() because this is a good
+ * time to check if the window has been resized.  Many device drivers
+ * can't get direct notification from the window system of size changes
+ * so this is an ad-hoc solution to that problem.
  */
 void
 _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
@@ -458,7 +462,10 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->NewState |= _NEW_VIEWPORT;
 
    /* Check if window/buffer has been resized and if so, reallocate the
-    * ancillary buffers.
+    * ancillary buffers.  This is an ad-hoc solution to detecting window
+    * size changes.  99% of all GL apps call glViewport when a window is
+    * resized so this is a good time to check for new window dims and
+    * reallocate color buffers and ancilliary buffers.
     */
    _mesa_ResizeBuffersMESA();
 
