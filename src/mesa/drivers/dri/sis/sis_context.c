@@ -65,6 +65,7 @@ static const char * const card_extensions[] =
 {
    "GL_ARB_multitexture",
    "GL_EXT_texture_lod_bias",
+   "GL_NV_blend_square",
    NULL
 };
 
