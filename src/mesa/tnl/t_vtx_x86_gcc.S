@@ -49,7 +49,7 @@ _##x:
 
 // Someone who knew a lot about this sort of thing would use this
 // macro to note current offsets, etc in a special region of the
-// object file & just make everything work out neat.  I don't know
+// object file & just make everything work out neat.  I do not know
 // enough to do that...
 
 #define SUBST( x ) (0x10101010 + x)
@@ -67,27 +67,27 @@ GLOBL ( _tnl_x86_Vertex1fv )
 	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
-	movl	SUBST(0), %edi	// 0x0 --> tnl->vtx.vbptr
-	movl	(%ecx), %edx	// load v[0]
-	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
-	addl	$4, %edi	// tnl->vtx.vbptr += 1
-	movl	$SUBST(1), %ecx	// 0x1 --> (tnl->vtx.vertex_size - 1)
-	movl	$SUBST(2), %esi	// 0x2 --> (tnl->vtx.vertex + 1)
+	movl	SUBST(0), %edi	# 0x0 --> tnl->vtx.vbptr
+	movl	(%ecx), %edx	# load v[0]
+	movl	%edx, (%edi)	# tnl->vtx.vbptr[0] = v[0]
+	addl	$4, %edi	# tnl->vtx.vbptr += 1
+	movl	$SUBST(1), %ecx	# 0x1 --> (tnl->vtx.vertex_size - 1)
+	movl	$SUBST(2), %esi	# 0x2 --> (tnl->vtx.vertex + 1)
 	repz
 	movsl	%ds:(%esi), %es:(%edi)
-	movl	%edi, SUBST(0)	// 0x0 --> tnl->vtx.vbptr
-	movl	SUBST(3), %edx	// 0x3 --> counter
+	movl	%edi, SUBST(0)	# 0x0 --> tnl->vtx.vbptr
+	movl	SUBST(3), %edx	# 0x3 --> counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		// counter--
-	movl	%edx, SUBST(3)	// 0x3 --> counter
-	jne	.0		// if (counter != 0) return
-	pushl	$SUBST(4)	// 0x4 --> ctx
-	.byte	0xe8		// call ...
-	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	dec	%edx		# counter--
+	movl	%edx, SUBST(3)	# 0x3 --> counter
+	jne	.0		# if (counter != 0) return
+	pushl	$SUBST(4)	# 0x4 --> ctx
+	.byte	0xe8		# call ...
+	.long	SUBST(5)	# ... _tnl_wrap_filled_vertex(ctx)
 	pop	%eax
 .0:
-	ret			// return
+	ret			# return
 GLOBL ( _tnl_x86_Vertex1fv_end )
 
 
@@ -96,29 +96,29 @@ GLOBL ( _tnl_x86_Vertex2fv )
 	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
-	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
-	movl	(%ecx), %edx	// load v[0]
-	movl	4(%ecx), %eax	// load v[1]
-	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
-	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
-	addl	$8, %edi	// tnl->vtx.vbptr += 2
-	movl	$SUBST(1), %ecx	// vertex_size - 2
-	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 2
+	movl	SUBST(0), %edi	# load tnl->vtx.vbptr
+	movl	(%ecx), %edx	# load v[0]
+	movl	4(%ecx), %eax	# load v[1]
+	movl	%edx, (%edi)	# tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	# tnl->vtx.vbptr[1] = v[1]
+	addl	$8, %edi	# tnl->vtx.vbptr += 2
+	movl	$SUBST(1), %ecx	# vertex_size - 2
+	movl	$SUBST(2), %esi	# tnl->vtx.vertex + 2
 	repz
 	movsl	%ds:(%esi), %es:(%edi)
-	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
-	movl	SUBST(3), %edx	// load counter
+	movl	%edi, SUBST(0)	# save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	# load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		// counter--
-	movl	%edx, SUBST(3)	// save counter
-	jne	.1		// if (counter != 0) return
-	pushl	$SUBST(4)	// load ctx
-	.byte	0xe8		// call ...
-	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	dec	%edx		# counter--
+	movl	%edx, SUBST(3)	# save counter
+	jne	.1		# if (counter != 0) return
+	pushl	$SUBST(4)	# load ctx
+	.byte	0xe8		# call ...
+	.long	SUBST(5)	# ... _tnl_wrap_filled_vertex(ctx)
 	pop	%eax
 .1:
-	ret			// return
+	ret			# return
 GLOBL ( _tnl_x86_Vertex2fv_end )
 
 .align 4
@@ -126,31 +126,31 @@ GLOBL ( _tnl_x86_Vertex3fv )
 	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
-	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
-	movl	(%ecx), %edx	// load v[0]
-	movl	4(%ecx), %eax	// load v[1]
-	movl	8(%ecx), %esi	// load v[2]
-	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
-	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
-	movl	%esi, 8(%edi)	// tnl->vtx.vbptr[2] = v[2]
-	addl	$12, %edi	// tnl->vtx.vbptr += 3
-	movl	$SUBST(1), %ecx	// vertex_size - 3
-	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
+	movl	SUBST(0), %edi	# load tnl->vtx.vbptr
+	movl	(%ecx), %edx	# load v[0]
+	movl	4(%ecx), %eax	# load v[1]
+	movl	8(%ecx), %esi	# load v[2]
+	movl	%edx, (%edi)	# tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	# tnl->vtx.vbptr[1] = v[1]
+	movl	%esi, 8(%edi)	# tnl->vtx.vbptr[2] = v[2]
+	addl	$12, %edi	# tnl->vtx.vbptr += 3
+	movl	$SUBST(1), %ecx	# vertex_size - 3
+	movl	$SUBST(2), %esi	# tnl->vtx.vertex + 3
 	repz
 	movsl	%ds:(%esi), %es:(%edi)
-	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
-	movl	SUBST(3), %edx	// load counter
+	movl	%edi, SUBST(0)	# save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	# load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		// counter--
-	movl	%edx, SUBST(3)	// save counter
-	jne	.2		// if (counter != 0) return
-	pushl	$SUBST(4)	// load ctx
-	.byte	0xe8		// call ...
-	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	dec	%edx		# counter--
+	movl	%edx, SUBST(3)	# save counter
+	jne	.2		# if (counter != 0) return
+	pushl	$SUBST(4)	# load ctx
+	.byte	0xe8		# call ...
+	.long	SUBST(5)	# ... _tnl_wrap_filled_vertex(ctx)
 	pop	%eax
 .2:
-	ret			// return
+	ret			# return
 GLOBL ( _tnl_x86_Vertex3fv_end )
 
 
@@ -159,33 +159,33 @@ GLOBL ( _tnl_x86_Vertex4fv )
 	movl	4(%esp), %ecx
 	push	%edi
 	push	%esi
-	movl	SUBST(0), %edi	// load tnl->vtx.vbptr
-	movl	(%ecx), %edx	// load v[0]
-	movl	4(%ecx), %eax	// load v[1]
-	movl	8(%ecx), %esi	// load v[2]
-	movl	12(%ecx), %ecx	// load v[3]
-	movl	%edx, (%edi)	// tnl->vtx.vbptr[0] = v[0]
-	movl	%eax, 4(%edi)	// tnl->vtx.vbptr[1] = v[1]
-	movl	%esi, 8(%edi)	// tnl->vtx.vbptr[2] = v[2]
-	movl	%ecx, 12(%edi)	// tnl->vtx.vbptr[3] = v[3]
-	addl	$16, %edi	// tnl->vtx.vbptr += 4
-	movl	$SUBST(1), %ecx	// vertex_size - 4
-	movl	$SUBST(2), %esi	// tnl->vtx.vertex + 3
+	movl	SUBST(0), %edi	# load tnl->vtx.vbptr
+	movl	(%ecx), %edx	# load v[0]
+	movl	4(%ecx), %eax	# load v[1]
+	movl	8(%ecx), %esi	# load v[2]
+	movl	12(%ecx), %ecx	# load v[3]
+	movl	%edx, (%edi)	# tnl->vtx.vbptr[0] = v[0]
+	movl	%eax, 4(%edi)	# tnl->vtx.vbptr[1] = v[1]
+	movl	%esi, 8(%edi)	# tnl->vtx.vbptr[2] = v[2]
+	movl	%ecx, 12(%edi)	# tnl->vtx.vbptr[3] = v[3]
+	addl	$16, %edi	# tnl->vtx.vbptr += 4
+	movl	$SUBST(1), %ecx	# vertex_size - 4
+	movl	$SUBST(2), %esi	# tnl->vtx.vertex + 3
 	repz
 	movsl	%ds:(%esi), %es:(%edi)
-	movl	%edi, SUBST(0)	// save tnl->vtx.vbptr
-	movl	SUBST(3), %edx	// load counter
+	movl	%edi, SUBST(0)	# save tnl->vtx.vbptr
+	movl	SUBST(3), %edx	# load counter
 	pop	%esi
 	pop	%edi
-	dec	%edx		// counter--
-	movl	%edx, SUBST(3)	// save counter
-	jne	.3		// if (counter != 0) return
-	pushl	$SUBST(4)	// load ctx
-	.byte	0xe8		// call ...
-	.long	SUBST(5)	// ... _tnl_wrap_filled_vertex(ctx)
+	dec	%edx		# counter--
+	movl	%edx, SUBST(3)	# save counter
+	jne	.3		# if (counter != 0) return
+	pushl	$SUBST(4)	# load ctx
+	.byte	0xe8		# call ...
+	.long	SUBST(5)	# ... _tnl_wrap_filled_vertex(ctx)
 	pop	%eax
 .3:
-	ret			// return
+	ret			# return
 GLOBL ( _tnl_x86_Vertex4fv_end )
 
 
@@ -243,13 +243,13 @@ GLOBL ( _tnl_x86_Attribute4fv_end )
 
 
 GLOBL( _tnl_x86_choose_fv)
-	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
-	movl	$SUBST(0), (%esp)	// arg 0 - attrib
-	movl	$SUBST(1), 4(%esp)	// arg 1 - N
-	.byte	0xe8			// call ...
-	.long	SUBST(2)		// ... do_choose
-	add	$12, %esp		// tear down stack frame
-	jmp	*%eax			// jump to new func
+	subl	$12, %esp	# gcc does 16 byte alignment of stack frames?
+	movl	$SUBST(0), (%esp)	# arg 0 - attrib
+	movl	$SUBST(1), 4(%esp)	# arg 1 - N
+	.byte	0xe8			# call ...
+	.long	SUBST(2)		# ... do_choose
+	add	$12, %esp		# tear down stack frame
+	jmp	*%eax			# jump to new func
 GLOBL ( _tnl_x86_choose_fv_end )
 
 
@@ -261,7 +261,7 @@ GLOBL ( _tnl_x86_choose_fv_end )
 // In the 1st level dispatch functions, switch to a different
 // calling convention -- (const GLfloat *v) in %ecx.
 // 
-// As with regular (x86) dispatch, don't create a new stack frame -
+// As with regular (x86) dispatch, do not create a new stack frame -
 // just let the 'ret' in the dispatched function return straight
 // back to the original caller.
 
@@ -274,18 +274,18 @@ GLOBL ( _tnl_x86_choose_fv_end )
 // Unfortunately, have to play with the stack in the non-fv case:
 // 
 GLOBL( _tnl_x86_dispatch_attrf )
-	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
-	leal	16(%esp), %edx	// address of first float on stack
-	movl	%edx, (%esp)	// save as 'v'
-	call	*SUBST(0)	// 0x0 --> tabfv[attr][n]
-	addl	$12, %esp	// tear down frame
-	ret			// return
+	subl	$12, %esp	# gcc does 16 byte alignment of stack frames?
+	leal	16(%esp), %edx	# address of first float on stack
+	movl	%edx, (%esp)	# save as 'v'
+	call	*SUBST(0)	# 0x0 --> tabfv[attr][n]
+	addl	$12, %esp	# tear down frame
+	ret			# return
 GLOBL( _tnl_x86_dispatch_attrf_end )
 
 // The fv case is simpler:
 // 
 GLOBL( _tnl_x86_dispatch_attrfv )
-	jmp	*SUBST(0)	// 0x0 --> tabfv[attr][n]
+	jmp	*SUBST(0)	# 0x0 --> tabfv[attr][n]
 GLOBL( _tnl_x86_dispatch_attrfv_end )
 
 
@@ -296,9 +296,9 @@ GLOBL( _tnl_x86_dispatch_attrfv_end )
 // [dBorca]
 // right, this would be the preferred approach, but gcc does not
 // clean up the stack after each function call when optimizing (-fdefer-pop);
-// can it make assumptions about what's already on the stack?  I dunno,
+// can it make assumptions about what is already on the stack?  I dunno,
 // but in this case, we can't mess with the caller's stack frame, and
-// we must use a model like `_x86_dispatch_attrfv' above.  Caveat emptor!
+// we must use a model like '_x86_dispatch_attrfv' above.  Caveat emptor!
 
 // Also, will only need a maximum of four of each of these per context:
 // 
@@ -308,7 +308,7 @@ GLOBL( _tnl_x86_dispatch_multitexcoordf )
 	andl	$7, %ecx
 	movl	%edx, 4(%esp)
 	sall	$4, %ecx
-	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
+	jmp	*SUBST(0)(%ecx)	# 0x0 - tabfv[tex0][n]
 GLOBL( _tnl_x86_dispatch_multitexcoordf_end )
 
 GLOBL( _tnl_x86_dispatch_multitexcoordfv )
@@ -317,7 +317,7 @@ GLOBL( _tnl_x86_dispatch_multitexcoordfv )
 	andl	$7, %ecx
 	movl	%edx, 4(%esp)
 	sall	$4, %ecx
-	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
+	jmp	*SUBST(0)(%ecx)	# 0x0 - tabfv[tex0][n]
 GLOBL( _tnl_x86_dispatch_multitexcoordfv_end )
 
 // VertexAttrib: the address of the function pointer must be
@@ -326,23 +326,23 @@ GLOBL( _tnl_x86_dispatch_multitexcoordfv_end )
 GLOBL( _tnl_x86_dispatch_vertexattribf )
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	jb	.8		// "cmovge" is not supported on all CPUs
+	jb	.8		# "cmovge" is not supported on all CPUs
 	movl	$16, %eax
 .8:
-	leal	8(%esp), %ecx	// calculate 'v'
-	movl	%ecx, 4(%esp)	// save in 1st arg slot
+	leal	8(%esp), %ecx	# calculate 'v'
+	movl	%ecx, 4(%esp)	# save in 1st arg slot
 	sall	$4, %eax
-	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
+	jmp	*SUBST(0)(%eax)	# 0x0 - tabfv[0][n]
 GLOBL( _tnl_x86_dispatch_vertexattribf_end )
 
 GLOBL( _tnl_x86_dispatch_vertexattribfv )
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
-	jb	.9		// "cmovge" is not supported on all CPUs
+	jb	.9		# "cmovge" is not supported on all CPUs
 	movl	$16, %eax
 .9:
-	movl	8(%esp), %ecx	// load 'v'
-	movl	%ecx, 4(%esp)	// save in 1st arg slot
+	movl	8(%esp), %ecx	# load 'v'
+	movl	%ecx, 4(%esp)	# save in 1st arg slot
 	sall	$4, %eax
-	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
+	jmp	*SUBST(0)(%eax)	# 0x0 - tabfv[0][n]
 GLOBL( _tnl_x86_dispatch_vertexattribfv_end )
