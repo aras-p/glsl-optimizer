@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -36,6 +36,7 @@
 
 
 #include "glheader.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
@@ -1950,11 +1951,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (!texImage->Data) {
-      /* no image data, not an error */
-      return;
-   }
-
    /* Make sure the requested image format is compatible with the
     * texture's format.
     */
@@ -1976,6 +1972,31 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    else if (is_ycbcr_format(format)
        && !is_ycbcr_format(texImage->TexFormat->BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return;
+   }
+
+   if (ctx->Pack.BufferObj->Name) {
+      /* pack texture imaage into a PBO */
+      GLubyte *buf;
+      if (!_mesa_validate_pbo_access(&ctx->Pack, texImage->Width,
+                                     texImage->Height, texImage->Depth,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetTexImage(invalid PBO access)");
+         return;
+      }
+      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                                              GL_WRITE_ONLY_ARB,
+                                              ctx->Pack.BufferObj);
+      if (!buf) {
+         /* buffer is already mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION,"glGetTexImage(PBO is mapped)");
+         return;
+      }
+      pixels = ADD_POINTERS(buf, pixels);
+   }
+   else if (!pixels) {
+      /* not an error */
       return;
    }
 
@@ -2016,7 +2037,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                else {
                   _mesa_problem(ctx,
                                 "Color index problem in _mesa_GetTexImage");
-                  return;
                }
                _mesa_pack_index_span(ctx, width, type, dest,
                                      indexRow, &ctx->Pack,
@@ -2064,6 +2084,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
             } /* format */
          } /* row */
       } /* img */
+   }
+
+   if (ctx->Pack.BufferObj->Name) {
+      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
+                              ctx->Pack.BufferObj);
    }
 }
 
