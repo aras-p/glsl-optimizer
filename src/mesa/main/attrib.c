@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.17 2000/02/27 20:38:15 keithw Exp $ */
+/* $Id: attrib.c,v 1.18 2000/03/03 18:55:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -639,6 +639,11 @@ _mesa_PopAttrib(void)
                (*ctx->Driver.Enable)( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
                (*ctx->Driver.Enable)( ctx, GL_LINE_STIPPLE, ctx->Line.StippleFlag );
             }
+            if (ctx->Driver.LineStipple)
+               (*ctx->Driver.LineStipple)(ctx, ctx->Line.StippleFactor,
+                                          ctx->Line.StipplePattern);
+            if (ctx->Driver.LineWidth)
+               (*ctx->Driver.LineWidth)(ctx, ctx->Line.Width);
             break;
          case GL_LIST_BIT:
             MEMCPY( &ctx->List, attr->data, sizeof(struct gl_list_attrib) );
