@@ -1000,19 +1000,12 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_REF_ALPHA_MASK               0x000000ff
 #       define R300_ALPHA_TEST_FAIL              (0 << 8)
 #       define R300_ALPHA_TEST_LESS              (1 << 8)
-#       define R300_ALPHA_TEST_LEQUAL            (2 << 8)
-#       define R300_ALPHA_TEST_EQUAL             (3 << 8)
-#       define R300_ALPHA_TEST_GEQUAL            (4 << 8)
-#       define R300_ALPHA_TEST_GREATER           (5 << 8)
-#       define R300_ALPHA_TEST_NEQUAL            (6 << 8)
-#       define R300_ALPHA_TEST_PASS              (7 << 8)
-/* // Possibly more correct values:
 #       define R300_ALPHA_TEST_LEQUAL            (3 << 8)
 #       define R300_ALPHA_TEST_EQUAL             (2 << 8)
 #       define R300_ALPHA_TEST_GEQUAL            (6 << 8)
 #       define R300_ALPHA_TEST_GREATER           (4 << 8)
 #       define R300_ALPHA_TEST_NEQUAL            (5 << 8)
-*/
+#       define R300_ALPHA_TEST_PASS              (7 << 8)
 #       define R300_ALPHA_TEST_OP_MASK           (7 << 8)
 #       define R300_ALPHA_TEST_ENABLE            (1 << 11)
 
