@@ -67,7 +67,7 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print 'GLOBL_FN(fn) ; fn:\t\t\t\t\t\\'
 		print '\tsethi\t%hi(0x00000000), %g1 ;\t\t\t\\'
 		print '\tld\t[%g1 + %lo(0x00000000)], %g1 ;\t\t\\'
-		print '\tld\t[%g1 + (4 * _gloffset_NewList)], %g3 ;\t\\'
+		print '\tld\t[%g1 + (4 * off)], %g3 ;\t\t\\'
 		print '\tjmpl\t%g3, %g0 ;\t\t\t\t\\'
 		print '\tnop'
 		print '#endif'
