@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.23 1999/11/18 20:23:31 brianp Exp $ */
+/* $Id: gl.h,v 1.24 1999/12/10 19:54:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -301,11 +301,11 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 /* Depth buffer */
 #define GL_NEVER				0x0200
 #define GL_LESS					0x0201
-#define GL_GEQUAL				0x0206
+#define GL_EQUAL				0x0202
 #define GL_LEQUAL				0x0203
 #define GL_GREATER				0x0204
 #define GL_NOTEQUAL				0x0205
-#define GL_EQUAL				0x0202
+#define GL_GEQUAL				0x0206
 #define GL_ALWAYS				0x0207
 #define GL_DEPTH_TEST				0x0B71
 #define GL_DEPTH_BITS				0x0D56
@@ -2315,6 +2315,26 @@ GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #endif /* GL_MESA_resize_bufffers */
 
+
+
+/*
+ * GL_ARB_tranpose_matrix (number ?)
+ */
+#ifndef GL_ARB_transpose_matrix
+#define GL_ARB_transpose_matrix 1
+
+/* XXX these aren't the final enum values!!! */
+#define GL_TRANSPOSE_MODELVIEW_MATRIX_ARB		0xffff0001
+#define GL_TRANSPOSE_PROJECTION_MATRIX_ARB		0xffff0002
+#define GL_TRANSPOSE_TEXTURE_MATRIX_ARB			0xffff0003
+#define GL_TRANSPOSE_COLOR_MATRIX_ARB			0xffff0004
+
+GLAPI void GLAPIENTRY glLoadTransposeMatrixdARB( const GLdouble m[16] );
+GLAPI void GLAPIENTRY glLoadTransposeMatrixfARB( const GLfloat m[16] );
+GLAPI void GLAPIENTRY glMultTransposeMatrixdARB( const GLdouble m[16] );
+GLAPI void GLAPIENTRY glMultTransposeMatrixfARB( const GLfloat m[16] );
+
+#endif
 
 
 
