@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.28 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: state.c,v 1.29 2000/09/28 22:44:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -671,7 +671,7 @@ static void update_fog_mode( GLcontext *ctx )
    int old_mode = ctx->FogMode;
 
    if (ctx->Fog.Enabled) {
-      if (ctx->Texture.Enabled)
+      if (ctx->Texture.ReallyEnabled)
          ctx->FogMode = FOG_FRAGMENT;
       else if (ctx->Hint.Fog == GL_NICEST)
          ctx->FogMode = FOG_FRAGMENT;
@@ -818,7 +818,7 @@ void gl_update_state( GLcontext *ctx )
       gl_update_client_state( ctx );
 
    if ((ctx->NewState & NEW_TEXTURE_ENABLE) &&
-       (ctx->Enabled & ENABLE_TEX_ANY) != ctx->Texture.Enabled)
+       (ctx->Enabled & ENABLE_TEX_ANY) != ctx->Texture.ReallyEnabled)
       ctx->NewState |= NEW_TEXTURING | NEW_RASTER_OPS;
 
    if (ctx->NewState & NEW_TEXTURE_ENV) {
@@ -872,7 +872,6 @@ void gl_update_state( GLcontext *ctx )
 	 }
       }
 
-      ctx->Texture.Enabled = ctx->Enabled & ENABLE_TEX_ANY;
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
@@ -1072,7 +1071,7 @@ void gl_update_state( GLcontext *ctx )
 	 }
 	 ctx->NeedEyeNormals = ctx->NeedEyeCoords;
       }
-      if (ctx->Texture.Enabled || ctx->RenderMode==GL_FEEDBACK) {
+      if (ctx->Texture.ReallyEnabled || ctx->RenderMode==GL_FEEDBACK) {
 	 if (ctx->Texture.NeedEyeCoords) ctx->NeedEyeCoords = GL_TRUE;
 	 if (ctx->Texture.NeedNormals)
 	    ctx->NeedNormals = ctx->NeedEyeNormals = GL_TRUE;

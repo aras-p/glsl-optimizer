@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.3 2000/09/26 20:54:13 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.4 2000/09/28 22:44:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1541,7 +1541,7 @@ triangle_func xmesa_get_triangle_func( GLcontext *ctx )
    (void) kernel1;
 
    if (ctx->Polygon.SmoothFlag)     return (triangle_func)NULL;
-   if (ctx->Texture.Enabled)        return (triangle_func)NULL;
+   if (ctx->Texture.ReallyEnabled)  return (triangle_func)NULL;
 
    if (xmesa->xm_buffer->buffer==XIMAGE) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH

@@ -420,7 +420,7 @@ extern points_func choose_points_function( GLcontext* ctx )
 {
    STARTPROFILE
    if (ctx->Point.Size==1.0 && !ctx->Point.SmoothFlag && ctx->RasterMask==0
-       && !ctx->Texture.Enabled  && ctx->Visual->RGBAflag) {
+       && !ctx->Texture.ReallyEnabled  && ctx->Visual->RGBAflag) {
    ENDPROFILE(choose_points_function)
       return fast_rgb_points;
    }
@@ -478,7 +478,7 @@ static line_func choose_line_function( GLcontext* ctx )
 	STARTPROFILE
    if (ctx->Line.Width==1.0 && !ctx->Line.SmoothFlag && !ctx->Line.StippleFlag
        && ctx->Light.ShadeModel==GL_FLAT && ctx->RasterMask==0
-       && !ctx->Texture.Enabled && Current->rgb_flag) {
+       && !ctx->Texture.ReallyEnabled && Current->rgb_flag) {
    ENDPROFILE(choose_line_function)
       return fast_flat_rgb_line;
    }
@@ -589,7 +589,7 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
 {
    if (ctx->Polygon.SmoothFlag)     return NULL;
    if (ctx->Polygon.StippleFlag)    return NULL;
-   if (ctx->Texture.Enabled)        return NULL;
+   if (ctx->Texture.ReallyEnabled)  return NULL;
 
    if (ctx->RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
@@ -657,15 +657,15 @@ static void fast_flat_rgb_polygon( GLcontext* ctx, GLuint n, GLuint vlist[], GLu
 /* Return pointer to accerated polygon function */
 static polygon_func choose_polygon_function( GLcontext* ctx )
 {
-	STARTPROFILE
+   STARTPROFILE
    if (!ctx->Polygon.SmoothFlag && !ctx->Polygon.StippleFlag
        && ctx->Light.ShadeModel==GL_FLAT && ctx->RasterMask==0
-       && !ctx->Texture.Enabled && Current->rgb_flag==GL_TRUE) {
-   ENDPROFILE(choose_polygon_function)
+       && !ctx->Texture.ReallyEnabled && Current->rgb_flag==GL_TRUE) {
+      ENDPROFILE(choose_polygon_function)
       return fast_flat_rgb_polygon;
    }
    else {
-   ENDPROFILE(choose_polygon_function)
+      ENDPROFILE(choose_polygon_function)
       return NULL;
    }
 }
@@ -679,18 +679,18 @@ static polygon_func choose_polygon_function( GLcontext* ctx )
 
 /* Write a horizontal span of color-index pixels with a boolean mask. */
 static void write_index_span( GLcontext* ctx,
-							  GLuint n, GLint x, GLint y,
-							  const GLuint index[],
+                              GLuint n, GLint x, GLint y,
+                              const GLuint index[],
                               const GLubyte mask[] )
 {
-	  STARTPROFILE
-	  GLuint i;
-	  char *Mem=Current->ScreenMem+y*Current->ScanWidth+x;
-	  assert(Current->rgb_flag==GL_FALSE);
-	  for (i=0; i<n; i++)
-		if (mask[i])
-		  Mem[i]=index[i];
-	   ENDPROFILE(write_index_span)
+   STARTPROFILE
+   GLuint i;
+   char *Mem=Current->ScreenMem+y*Current->ScanWidth+x;
+   assert(Current->rgb_flag==GL_FALSE);
+   for (i=0; i<n; i++)
+      if (mask[i])
+         Mem[i]=index[i];
+   ENDPROFILE(write_index_span)
 }
 
 

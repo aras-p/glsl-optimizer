@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.90 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: context.c,v 1.91 2000/09/28 22:44:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1178,7 +1178,6 @@ init_attrib_groups( GLcontext *ctx )
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture.CurrentTransformUnit = 0; /* multitexture */
-   ctx->Texture.Enabled = 0;
    ctx->Texture.ReallyEnabled = 0;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );

@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.3 2000/09/26 20:54:13 brianp Exp $ */
+/* $Id: xm_line.c,v 1.4 2000/09/28 22:44:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,7 +98,7 @@ points_func xmesa_get_points_func( GLcontext *ctx )
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
    if (ctx->Point.Size==1.0F && !ctx->Point.SmoothFlag && ctx->RasterMask==0
-       && !ctx->Texture.Enabled) {
+       && !ctx->Texture.ReallyEnabled) {
       if (xmesa->xm_buffer->buffer==XIMAGE) {
          return (points_func) NULL; /*draw_points_ximage;*/
       }
@@ -674,7 +674,7 @@ line_func xmesa_get_line_func( GLcontext *ctx )
    (void) kernel1;  /* silence unused var warning */
 
    if (ctx->Line.SmoothFlag)              return (line_func)NULL;
-   if (ctx->Texture.Enabled)              return (line_func)NULL;
+   if (ctx->Texture.ReallyEnabled)        return (line_func)NULL;
    if (ctx->Light.ShadeModel!=GL_FLAT)    return (line_func)NULL;
    /* X line stippling doesn't match OpenGL stippling */
    if (ctx->Line.StippleFlag==GL_TRUE)    return (line_func)NULL;

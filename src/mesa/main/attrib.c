@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.27 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: attrib.c,v 1.28 2000/09/28 22:44:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -213,8 +213,8 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->RescaleNormals = ctx->Transform.RescaleNormals;
       attr->Scissor = ctx->Scissor.Enabled;
       attr->Stencil = ctx->Stencil.Enabled;
-      attr->Texture = ctx->Texture.Enabled;
       for (i=0; i<MAX_TEXTURE_UNITS; i++) {
+         attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
       }
       newnode = new_attrib_node( GL_ENABLE_BIT );
@@ -393,6 +393,147 @@ _mesa_PushAttrib(GLbitfield mask)
 
 
 
+static void
+pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
+{
+   GLuint i;
+
+#define TEST_AND_UPDATE(VALUE, NEWVALUE, ENUM)		\
+	if ((VALUE) != (NEWVALUE)) {			\
+	   _mesa_set_enable( ctx, ENUM, (NEWVALUE) );	\
+	}
+
+   TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
+   TEST_AND_UPDATE(ctx->Transform.Normalize, enable->AutoNormal, GL_NORMALIZE);
+   TEST_AND_UPDATE(ctx->Color.BlendEnabled, enable->Blend, GL_BLEND);
+
+   for (i=0;i<MAX_CLIP_PLANES;i++) {
+      if (ctx->Transform.ClipEnabled[i] != enable->ClipPlane[i])
+         _mesa_set_enable(ctx, (GLenum) (GL_CLIP_PLANE0 + i),
+                          enable->ClipPlane[i]);
+   }
+
+   TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
+                   GL_COLOR_MATERIAL);
+   TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
+   TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
+   TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
+   TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D,
+                   GL_CONVOLUTION_1D);
+   TEST_AND_UPDATE(ctx->Pixel.Convolution2DEnabled, enable->Convolution2D,
+                   GL_CONVOLUTION_2D);
+   TEST_AND_UPDATE(ctx->Pixel.Separable2DEnabled, enable->Separable2D,
+                   GL_SEPARABLE_2D);
+   TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
+   TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);
+   TEST_AND_UPDATE(ctx->Line.SmoothFlag, enable->LineSmooth, GL_LINE_SMOOTH);
+   TEST_AND_UPDATE(ctx->Line.StippleFlag, enable->LineStipple,
+                   GL_LINE_STIPPLE);
+   TEST_AND_UPDATE(ctx->Color.IndexLogicOpEnabled, enable->IndexLogicOp,
+                   GL_INDEX_LOGIC_OP);
+   TEST_AND_UPDATE(ctx->Color.ColorLogicOpEnabled, enable->ColorLogicOp,
+                   GL_COLOR_LOGIC_OP);
+   TEST_AND_UPDATE(ctx->Eval.Map1Color4, enable->Map1Color4, GL_MAP1_COLOR_4);
+   TEST_AND_UPDATE(ctx->Eval.Map1Index, enable->Map1Index, GL_MAP1_INDEX);
+   TEST_AND_UPDATE(ctx->Eval.Map1Normal, enable->Map1Normal, GL_MAP1_NORMAL);
+   TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord1, enable->Map1TextureCoord1,
+                   GL_MAP1_TEXTURE_COORD_1);
+   TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord2, enable->Map1TextureCoord2,
+                   GL_MAP1_TEXTURE_COORD_2);
+   TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord3, enable->Map1TextureCoord3,
+                   GL_MAP1_TEXTURE_COORD_3);
+   TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord4, enable->Map1TextureCoord4,
+                   GL_MAP1_TEXTURE_COORD_4);
+   TEST_AND_UPDATE(ctx->Eval.Map1Vertex3, enable->Map1Vertex3,
+                   GL_MAP1_VERTEX_3);
+   TEST_AND_UPDATE(ctx->Eval.Map1Vertex4, enable->Map1Vertex4,
+                   GL_MAP1_VERTEX_4);
+   TEST_AND_UPDATE(ctx->Eval.Map2Color4, enable->Map2Color4, GL_MAP2_COLOR_4);
+   TEST_AND_UPDATE(ctx->Eval.Map2Index, enable->Map2Index, GL_MAP2_INDEX);
+   TEST_AND_UPDATE(ctx->Eval.Map2Normal, enable->Map2Normal, GL_MAP2_NORMAL);
+   TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord1, enable->Map2TextureCoord1,
+                   GL_MAP2_TEXTURE_COORD_1);
+   TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord2, enable->Map2TextureCoord2,
+                   GL_MAP2_TEXTURE_COORD_2);
+   TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord3, enable->Map2TextureCoord3,
+                   GL_MAP2_TEXTURE_COORD_3);
+   TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord4, enable->Map2TextureCoord4,
+                   GL_MAP2_TEXTURE_COORD_4);
+   TEST_AND_UPDATE(ctx->Eval.Map2Vertex3, enable->Map2Vertex3,
+                   GL_MAP2_VERTEX_3);
+   TEST_AND_UPDATE(ctx->Eval.Map2Vertex4, enable->Map2Vertex4,
+                   GL_MAP2_VERTEX_4);
+   TEST_AND_UPDATE(ctx->Transform.Normalize, enable->Normalize, GL_NORMALIZE);
+   TEST_AND_UPDATE(ctx->Transform.RescaleNormals, enable->RescaleNormals,
+                   GL_RESCALE_NORMAL_EXT);
+   TEST_AND_UPDATE(ctx->Pixel.PixelTextureEnabled, enable->PixelTexture,
+                   GL_POINT_SMOOTH);
+   TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth,
+                   GL_POINT_SMOOTH);
+   TEST_AND_UPDATE(ctx->Polygon.OffsetPoint, enable->PolygonOffsetPoint,
+                   GL_POLYGON_OFFSET_POINT);
+   TEST_AND_UPDATE(ctx->Polygon.OffsetLine, enable->PolygonOffsetLine,
+                   GL_POLYGON_OFFSET_LINE);
+   TEST_AND_UPDATE(ctx->Polygon.OffsetFill, enable->PolygonOffsetFill,
+                   GL_POLYGON_OFFSET_FILL);
+   TEST_AND_UPDATE(ctx->Polygon.SmoothFlag, enable->PolygonSmooth,
+                   GL_POLYGON_SMOOTH);
+   TEST_AND_UPDATE(ctx->Polygon.StippleFlag, enable->PolygonStipple,
+                   GL_POLYGON_STIPPLE);
+   TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
+   TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
+#undef TEST_AND_UPDATE
+
+   /* texture unit enables */
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->Texture.Unit[i].Enabled != enable->Texture[i]) {
+         ctx->Texture.Unit[i].Enabled = enable->Texture[i];
+         if (ctx->Driver.Enable) {
+            if (ctx->Driver.ActiveTexture) {
+               (*ctx->Driver.ActiveTexture)(ctx, i);
+            }
+            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_1D,
+                             (GLboolean) (enable->Texture[i] & TEXTURE0_1D) );
+            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_2D,
+                             (GLboolean) (enable->Texture[i] & TEXTURE0_2D) );
+            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_3D,
+                             (GLboolean) (enable->Texture[i] & TEXTURE0_3D) );
+         }
+      }
+
+      if (ctx->Texture.Unit[i].TexGenEnabled != enable->TexGen[i]) {
+         ctx->Texture.Unit[i].TexGenEnabled = enable->TexGen[i];
+         if (ctx->Driver.Enable) {
+            if (ctx->Driver.ActiveTexture) {
+               (*ctx->Driver.ActiveTexture)(ctx, i);
+            }
+            if (enable->TexGen[i] & S_BIT)
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_TRUE);
+            else
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_FALSE);
+            if (enable->TexGen[i] & T_BIT)
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_TRUE);
+            else
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_FALSE);
+            if (enable->TexGen[i] & R_BIT)
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_TRUE);
+            else
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_FALSE);
+            if (enable->TexGen[i] & Q_BIT)
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_TRUE);
+            else
+               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
+         }
+      }
+   }
+
+   if (ctx->Driver.ActiveTexture) {
+      (*ctx->Driver.ActiveTexture)(ctx, ctx->Texture.CurrentUnit);
+   }
+}
+
+
+
 /*
  * This function is kind of long just because we have to call a lot
  * of device driver functions to update device driver state.
@@ -495,116 +636,7 @@ _mesa_PopAttrib(void)
             {
                const struct gl_enable_attrib *enable;
                enable = (const struct gl_enable_attrib *) attr->data;
-
-#define TEST_AND_UPDATE(VALUE, NEWVALUE, ENUM)		\
-	if ((VALUE) != (NEWVALUE)) {			\
-	   _mesa_set_enable( ctx, ENUM, (NEWVALUE) );	\
-	}
-
-               TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
-               TEST_AND_UPDATE(ctx->Transform.Normalize, enable->AutoNormal, GL_NORMALIZE);
-               TEST_AND_UPDATE(ctx->Color.BlendEnabled, enable->Blend, GL_BLEND);
-               {
-                  GLuint i;
-                  for (i=0;i<MAX_CLIP_PLANES;i++) {
-                     if (ctx->Transform.ClipEnabled[i] != enable->ClipPlane[i])
-                        _mesa_set_enable( ctx, (GLenum) (GL_CLIP_PLANE0 + i), enable->ClipPlane[i] );
-                  }
-               }
-               TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial, GL_COLOR_MATERIAL);
-               TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
-               TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
-               TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
-               TEST_AND_UPDATE(ctx->Pixel.Convolution1DEnabled, enable->Convolution1D, GL_CONVOLUTION_1D);
-               TEST_AND_UPDATE(ctx->Pixel.Convolution2DEnabled, enable->Convolution2D, GL_CONVOLUTION_2D);
-               TEST_AND_UPDATE(ctx->Pixel.Separable2DEnabled, enable->Separable2D, GL_SEPARABLE_2D);
-               TEST_AND_UPDATE(ctx->Fog.Enabled, enable->Fog, GL_FOG);
-               TEST_AND_UPDATE(ctx->Light.Enabled, enable->Lighting, GL_LIGHTING);
-               TEST_AND_UPDATE(ctx->Line.SmoothFlag, enable->LineSmooth, GL_LINE_SMOOTH);
-               TEST_AND_UPDATE(ctx->Line.StippleFlag, enable->LineStipple, GL_LINE_STIPPLE);
-               TEST_AND_UPDATE(ctx->Color.IndexLogicOpEnabled, enable->IndexLogicOp, GL_INDEX_LOGIC_OP);
-               TEST_AND_UPDATE(ctx->Color.ColorLogicOpEnabled, enable->ColorLogicOp, GL_COLOR_LOGIC_OP);
-               TEST_AND_UPDATE(ctx->Eval.Map1Color4, enable->Map1Color4, GL_MAP1_COLOR_4);
-               TEST_AND_UPDATE(ctx->Eval.Map1Index, enable->Map1Index, GL_MAP1_INDEX);
-               TEST_AND_UPDATE(ctx->Eval.Map1Normal, enable->Map1Normal, GL_MAP1_NORMAL);
-               TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord1, enable->Map1TextureCoord1, GL_MAP1_TEXTURE_COORD_1);
-               TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord2, enable->Map1TextureCoord2, GL_MAP1_TEXTURE_COORD_2);
-               TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord3, enable->Map1TextureCoord3, GL_MAP1_TEXTURE_COORD_3);
-               TEST_AND_UPDATE(ctx->Eval.Map1TextureCoord4, enable->Map1TextureCoord4, GL_MAP1_TEXTURE_COORD_4);
-               TEST_AND_UPDATE(ctx->Eval.Map1Vertex3, enable->Map1Vertex3, GL_MAP1_VERTEX_3);
-               TEST_AND_UPDATE(ctx->Eval.Map1Vertex4, enable->Map1Vertex4, GL_MAP1_VERTEX_4);
-               TEST_AND_UPDATE(ctx->Eval.Map2Color4, enable->Map2Color4, GL_MAP2_COLOR_4);
-               TEST_AND_UPDATE(ctx->Eval.Map2Index, enable->Map2Index, GL_MAP2_INDEX);
-               TEST_AND_UPDATE(ctx->Eval.Map2Normal, enable->Map2Normal, GL_MAP2_NORMAL);
-               TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord1, enable->Map2TextureCoord1, GL_MAP2_TEXTURE_COORD_1);
-               TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord2, enable->Map2TextureCoord2, GL_MAP2_TEXTURE_COORD_2);
-               TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord3, enable->Map2TextureCoord3, GL_MAP2_TEXTURE_COORD_3);
-               TEST_AND_UPDATE(ctx->Eval.Map2TextureCoord4, enable->Map2TextureCoord4, GL_MAP2_TEXTURE_COORD_4);
-               TEST_AND_UPDATE(ctx->Eval.Map2Vertex3, enable->Map2Vertex3, GL_MAP2_VERTEX_3);
-               TEST_AND_UPDATE(ctx->Eval.Map2Vertex4, enable->Map2Vertex4, GL_MAP2_VERTEX_4);
-               TEST_AND_UPDATE(ctx->Transform.Normalize, enable->Normalize, GL_NORMALIZE);
-               TEST_AND_UPDATE(ctx->Transform.RescaleNormals, enable->RescaleNormals, GL_RESCALE_NORMAL_EXT);
-               TEST_AND_UPDATE(ctx->Pixel.PixelTextureEnabled, enable->PixelTexture, GL_POINT_SMOOTH);
-               TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth, GL_POINT_SMOOTH);
-               TEST_AND_UPDATE(ctx->Polygon.OffsetPoint, enable->PolygonOffsetPoint, GL_POLYGON_OFFSET_POINT);
-               TEST_AND_UPDATE(ctx->Polygon.OffsetLine, enable->PolygonOffsetLine, GL_POLYGON_OFFSET_LINE);
-               TEST_AND_UPDATE(ctx->Polygon.OffsetFill, enable->PolygonOffsetFill, GL_POLYGON_OFFSET_FILL);
-               TEST_AND_UPDATE(ctx->Polygon.SmoothFlag, enable->PolygonSmooth, GL_POLYGON_SMOOTH);
-               TEST_AND_UPDATE(ctx->Polygon.StippleFlag, enable->PolygonStipple, GL_POLYGON_STIPPLE);
-               TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
-               TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
-               if (ctx->Texture.Enabled != enable->Texture) {
-                  ctx->Texture.Enabled = enable->Texture;
-                  if (ctx->Driver.Enable) {
-                     if (ctx->Driver.ActiveTexture)
-                        (*ctx->Driver.ActiveTexture)( ctx, 0 );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_1D, (GLboolean) (enable->Texture & TEXTURE0_1D) );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_2D, (GLboolean) (enable->Texture & TEXTURE0_2D) );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_3D, (GLboolean) (enable->Texture & TEXTURE0_3D) );
-                     if (ctx->Driver.ActiveTexture)
-                        (*ctx->Driver.ActiveTexture)( ctx, 1 );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_1D, (GLboolean) (enable->Texture & TEXTURE1_1D) );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_2D, (GLboolean) (enable->Texture & TEXTURE1_2D) );
-                     (*ctx->Driver.Enable)( ctx, GL_TEXTURE_3D, (GLboolean) (enable->Texture & TEXTURE1_3D) );
-                     if (ctx->Driver.ActiveTexture)
-                        (*ctx->Driver.ActiveTexture)( ctx, ctx->Texture.CurrentUnit );
-                  }
-               }
-#undef TEST_AND_UPDATE
-               {
-                  GLuint i;
-                  for (i=0; i<MAX_TEXTURE_UNITS; i++) {
-                     if (ctx->Texture.Unit[i].TexGenEnabled != enable->TexGen[i]) {
-                        ctx->Texture.Unit[i].TexGenEnabled = enable->TexGen[i];
-
-			/* ctx->Enabled recalculated in state change
-                           processing */
-			
-                        if (ctx->Driver.Enable) {
-                           if (ctx->Driver.ActiveTexture)
-                              (*ctx->Driver.ActiveTexture)( ctx, i );
-                           if (enable->TexGen[i] & S_BIT)
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_TRUE);
-                           else
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-                           if (enable->TexGen[i] & T_BIT)
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_TRUE);
-                           else
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-                           if (enable->TexGen[i] & R_BIT)
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_TRUE);
-                           else
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-                           if (enable->TexGen[i] & Q_BIT)
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_TRUE);
-                           else
-                              (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
-                        }
-                     }
-                  }
-                  if (ctx->Driver.ActiveTexture)
-                     (*ctx->Driver.ActiveTexture)( ctx, ctx->Texture.CurrentUnit );
-               }
+               pop_enable_group(ctx, enable);
             }
             break;
          case GL_EVAL_BIT:
