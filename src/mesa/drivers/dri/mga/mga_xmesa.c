@@ -573,12 +573,12 @@ mgaDestroyContext(__DRIcontextPrivate *driContextPriv)
           */
          int i;
 
-	 assert( is_empty_list( & mmesa->swapped ) );
-
          for ( i = 0 ; i < mmesa->nr_heaps ; i++ ) {
 	    driDestroyTextureHeap( mmesa->texture_heaps[ i ] );
 	    mmesa->texture_heaps[ i ] = NULL;
          }
+
+	 assert( is_empty_list( & mmesa->swapped ) );
       }
 
       /* free the option cache */

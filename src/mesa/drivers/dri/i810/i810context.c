@@ -320,12 +320,12 @@ i810DestroyContext(__DRIcontextPrivate *driContextPriv)
           */
          int i;
 
-	 assert( is_empty_list( & imesa->swapped ) );
-
          for ( i = 0 ; i < imesa->nr_heaps ; i++ ) {
 	    driDestroyTextureHeap( imesa->texture_heaps[ i ] );
 	    imesa->texture_heaps[ i ] = NULL;
          }
+
+	 assert( is_empty_list( & imesa->swapped ) );
       }
 
       Xfree(imesa);
