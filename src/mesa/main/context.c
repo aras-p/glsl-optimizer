@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.75 2000/06/28 04:20:21 brianp Exp $ */
+/* $Id: context.c,v 1.76 2000/06/29 18:55:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1964,6 +1964,9 @@ void gl_error( GLcontext *ctx, GLenum error, const char *s )
 	 case GL_OUT_OF_MEMORY:
 	    strcpy( errstr, "GL_OUT_OF_MEMORY" );
 	    break;
+         case GL_TABLE_TOO_LARGE:
+            strcpy( errstr, "GL_TABLE_TOO_LARGE" );
+            break;
 	 default:
 	    strcpy( errstr, "unknown" );
 	    break;
