@@ -68,9 +68,6 @@ char *prevLockFile;
 int prevLockLine;
 #endif
 
-const char __driConfigOptions[] = { 0 };
-const GLuint __driNConfigOptions = 0;
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/

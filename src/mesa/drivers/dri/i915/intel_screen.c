@@ -43,6 +43,9 @@
 
 #include "i830_dri.h"
 
+const char __driConfigOptions[] = { 0 };
+const GLuint __driNConfigOptions = 0;
+
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE*/
