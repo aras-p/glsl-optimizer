@@ -1504,6 +1504,105 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 
 void r300SetupVertexProgram(r300ContextPtr rmesa);
 
+/* just a skeleton for now.. */
+
+/* Generate a vertex shader that simply transforms vertex and texture coordinates,
+   while leaving colors intact. Nothing fancy (like lights) 
+   
+   If implementing lights make a copy first, so it is easy to switch between the two versions */
+void r300GenerateSimpleVertexShader(r300ContextPtr r300)
+{
+	int i;
+
+	/* Allocate parameters */
+	r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
+	r300->state.vertex_shader.param_offset=0x0;
+	r300->state.vertex_shader.param_count=0x4;  /* 4 vector values - 4x4 matrix */
+	
+	r300->state.vertex_shader.program_start=0x0;
+	r300->state.vertex_shader.unknown_ptr1=0x4; /* magic value ? */
+	r300->state.vertex_shader.program_end=0x0;
+	
+	r300->state.vertex_shader.unknown_ptr2=0x0; /* magic value */
+	r300->state.vertex_shader.unknown_ptr3=0x4; /* magic value */
+	
+	/* Initialize matrix and vector parameters.. these should really be restructured */
+	/* TODO: fix vertex_shader structure */
+	r300->state.vertex_shader.matrix[0].length=16;
+	r300->state.vertex_shader.matrix[1].length=0;
+	r300->state.vertex_shader.matrix[2].length=0;
+	r300->state.vertex_shader.vector[0].length=0;
+	r300->state.vertex_shader.vector[1].length=0;
+	r300->state.vertex_shader.unknown1.length=0;
+	r300->state.vertex_shader.unknown2.length=0;
+	
+#define WRITE_OP(oper,source1,source2,source3)	{\
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].op=(oper); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src1=(source1); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src2=(source2); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src3=(source3); \
+	r300->state.vertex_shader.program_end++; \
+	}
+
+	/* Multiply vertex coordinates with transform matrix */
+			
+	WRITE_OP(
+		EASY_VSF_OP(MUL, 0, ALL, TMP),
+		VSF_PARAM(3),
+		VSF_ATTR_W(0),
+		EASY_VSF_SOURCE(0, W, W, W, W, NONE, NONE)
+		)
+	
+	WRITE_OP(
+		EASY_VSF_OP(MUL, 1, ALL, RESULT),
+		VSF_REG(1),
+		VSF_ATTR_UNITY(1),
+		VSF_UNITY(1)
+		)
+	
+	WRITE_OP(
+		EASY_VSF_OP(MAD, 0, ALL, TMP),
+		VSF_PARAM(2),
+		VSF_ATTR_Z(0),
+		VSF_TMP(0)
+		)
+	
+	WRITE_OP(
+		EASY_VSF_OP(MAD, 0, ALL, TMP),
+		VSF_PARAM(1),
+		VSF_ATTR_Y(0),
+		VSF_TMP(0)
+		)
+	
+	WRITE_OP(
+		EASY_VSF_OP(MAD, 0, ALL, RESULT),
+		VSF_PARAM(0),
+		VSF_ATTR_X(0),
+		VSF_TMP(0)
+		)
+		
+	/* Pass through texture coordinates, if any */
+	for(i=0;i < r300->radeon.glCtx->Const.MaxTextureUnits;i++)
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){
+			// fprintf(stderr, "i_tex[%d]=%d\n", i, r300->state.vap_reg.i_tex[i]);
+			WRITE_OP(
+				EASY_VSF_OP(MUL, 2+i, ALL, RESULT),
+				VSF_REG(r300->state.vap_reg.i_tex[i]),
+				VSF_ATTR_UNITY(r300->state.vap_reg.i_tex[i]),
+				VSF_UNITY(r300->state.vap_reg.i_tex[i])
+				)
+			}
+	
+	r300->state.vertex_shader.program_end--; /* r300 wants program length to be one more - no idea why */
+	r300->state.vertex_shader.program.length=(r300->state.vertex_shader.program_end+1)*4;
+	
+	r300->state.vertex_shader.unknown_ptr1=r300->state.vertex_shader.program_end; /* magic value ? */
+	r300->state.vertex_shader.unknown_ptr2=r300->state.vertex_shader.program_end; /* magic value ? */
+	r300->state.vertex_shader.unknown_ptr3=r300->state.vertex_shader.program_end; /* magic value ? */
+	
+}
+
+
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
@@ -1522,13 +1621,16 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 /* This needs to be replaced by vertex shader generation code */
 
 
+#if 0
 	/* textures enabled ? */
 	if(rmesa->state.texture.tc_count>0){
 		rmesa->state.vertex_shader=SINGLE_TEXTURE_VERTEX_SHADER;
 		} else {
 		rmesa->state.vertex_shader=FLAT_COLOR_VERTEX_SHADER;
 		}
+#endif
 
+	r300GenerateSimpleVertexShader(rmesa);
 
         rmesa->state.vertex_shader.matrix[0].length=16;
         memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);

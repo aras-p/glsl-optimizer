@@ -666,7 +666,10 @@ struct r300_state {
 	struct r300_dma_region elt_ao;
 	
 	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
-				 They are the same as tnl->render_inputs for fixed pipeline */
+				 They are the same as tnl->render_inputs for fixed pipeline */	
+	struct {
+		int transform_offset;  /* Transform matrix offset, -1 if none */
+		} vap_param;  /* vertex processor parameter allocation - tells where to write parameters */
 
 	int hw_stencil;
 };

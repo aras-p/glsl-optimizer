@@ -304,7 +304,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	GLuint i;
 	GLuint inputs = 0;
 
-#define CONFIGURE_AOS(f, v, sz, cn) { \
+#define CONFIGURE_AOS(r, f, v, sz, cn) { \
 		if (RADEON_DEBUG & DEBUG_STATE) \
 			fprintf(stderr, "Enabling "#v "\n"); \
 		if (++nr >= R300_MAX_AOS_ARRAYS) { \
@@ -326,6 +326,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 						sz, \
 						v->stride, \
 						cn); \
+		rmesa->state.vap_reg.r=rmesa->state.aos[nr-1].aos_reg; \
 		} \
 }
 
@@ -362,7 +363,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	rmesa->state.render_inputs = inputs;
 
 	if (inputs & _TNL_BIT_POS) {
-		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+		CONFIGURE_AOS(i_coords,	AOS_FORMAT_FLOAT,
 						VB->ObjPtr,
 						immd ? 4 : VB->ObjPtr->size,
 						count);
@@ -371,7 +372,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 
 	if (inputs & _TNL_BIT_NORMAL) {
-		CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+		CONFIGURE_AOS(i_normal,	AOS_FORMAT_FLOAT,
 						VB->NormalPtr,
 						immd ? 4 : VB->NormalPtr->size,
 						count);
@@ -392,7 +393,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			}
 		}
 
-		CONFIGURE_AOS(	AOS_FORMAT_FLOAT_COLOR,
+		CONFIGURE_AOS(i_color[0], AOS_FORMAT_FLOAT_COLOR,
 						VB->ColorPtr[0],
 						immd ? 4 : emitsize,
 						count);
@@ -401,7 +402,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 
 	if (inputs & _TNL_BIT_COLOR1) {
-		CONFIGURE_AOS(	AOS_FORMAT_FLOAT_COLOR,
+		CONFIGURE_AOS(i_color[1], AOS_FORMAT_FLOAT_COLOR,
 						VB->SecondaryColorPtr[0],
 						immd ? 4 : VB->SecondaryColorPtr[0]->size,
 						count);
@@ -418,7 +419,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (inputs & (_TNL_BIT_TEX0 << i)) {
-			CONFIGURE_AOS(	AOS_FORMAT_FLOAT,
+			CONFIGURE_AOS(i_tex[i], AOS_FORMAT_FLOAT,
 							VB->TexCoordPtr[i],
 							immd ? 4 : VB->TexCoordPtr[i]->size,
 							count);
