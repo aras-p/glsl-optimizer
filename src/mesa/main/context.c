@@ -980,7 +980,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 static void
 _mesa_init_current( GLcontext *ctx )
 {
-   int i;
+   GLuint i;
 
    /* Current group */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
@@ -990,10 +990,9 @@ _mesa_init_current( GLcontext *ctx )
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_WEIGHT], 1.0, 0.0, 0.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_NORMAL], 0.0, 0.0, 1.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR0], 1.0, 1.0, 1.0, 1.0 );
-   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_COLOR1], 0.0, 0.0, 0.0, 1.0 );
    ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_FOG], 0.0, 0.0, 0.0, 0.0 );
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
-      ASSIGN_4V( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i], 0.0, 0.0, 0.0, 1.0);
+
    ctx->Current.Index = 1;
    ctx->Current.EdgeFlag = GL_TRUE;
 }
