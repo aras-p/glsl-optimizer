@@ -1,4 +1,4 @@
-/* $Id: svgamesa24.c,v 1.4 2000/01/25 00:03:02 brianp Exp $ */
+/* $Id: svgamesa24.c,v 1.5 2000/01/25 20:21:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 
 
 #if 0
+/* this doesn't compile with GCC on RedHat 6.1 */
 static inline int RGB2BGR24(int c)
 {
 	asm("rorw  $8, %0\n"	 
@@ -44,13 +45,10 @@ static inline int RGB2BGR24(int c)
     return c;
 }
 #else
-static int RGB2BGR24(int c)
+static unsigned long RGB2BGR24(unsigned long color)
 {
-   /* XXX this isn't right */
-   return c;
+   return (color & 0xff00)|(color>>16)|((color & 0xff)<<16);
 }
-
-
 #endif
 
 static void __svga_drawpixel24(int x, int y, GLubyte r, GLubyte g, GLubyte b)
