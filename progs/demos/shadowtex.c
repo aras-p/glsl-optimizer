@@ -1,4 +1,4 @@
-/* $Id: shadowtex.c,v 1.2 2001/02/20 17:06:35 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.3 2001/02/26 18:26:32 brianp Exp $ */
 
 /*
  * Shadow demo using the GL_SGIX_depth_texture, GL_SGIX_shadow and
@@ -55,6 +55,7 @@ static GLfloat ShadowNear = 4.0, ShadowFar = 24.0;
 static GLint ShadowTexWidth = 256, ShadowTexHeight = 256;
 
 static GLboolean ShowDepth = GL_FALSE;
+static GLboolean LinearFilter = GL_FALSE;
 
 static GLfloat ShadowImage[256*256];
 
@@ -215,22 +216,30 @@ Display(void)
     * Step 3: render scene from point of view of the camera
     */
    glViewport(0, 0, WindowWidth, WindowHeight);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glFrustum(-ar, ar, -1.0, 1.0, 4.0, 50.0);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   glTranslatef(0.0, 0.0, -22.0);
-   glRotatef(Xrot, 1, 0, 0);
-   glRotatef(Yrot, 0, 1, 0);
-   glRotatef(Zrot, 0, 0, 1);
    if (ShowDepth) {
       ShowDepthBuffer(WindowWidth, WindowHeight, 1, 0);
    }
    else {
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-ar, ar, -1.0, 1.0, 4.0, 50.0);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glTranslatef(0.0, 0.0, -22.0);
+      glRotatef(Xrot, 1, 0, 0);
+      glRotatef(Yrot, 0, 1, 0);
+      glRotatef(Zrot, 0, 0, 1);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glLightfv(GL_LIGHT0, GL_POSITION, LightPos);
       glEnable(GL_TEXTURE_2D);
+      if (LinearFilter) {
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      }
+      else {
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
       ShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
       EnableTexgen();
       DrawScene();
@@ -247,6 +256,16 @@ Reshape(int width, int height)
 {
    WindowWidth = width;
    WindowHeight = height;
+   if (width >= 512 && height >= 512) {
+      ShadowTexWidth = ShadowTexHeight = 512;
+   }
+   else if (width >= 256 && height >= 256) {
+      ShadowTexWidth = ShadowTexHeight = 256;
+   }
+   else {
+      ShadowTexWidth = ShadowTexHeight = 128;
+   }
+   printf("Using %d x %d depth texture\n", ShadowTexWidth, ShadowTexHeight);
 }
 
 
@@ -275,12 +294,18 @@ Key(unsigned char key, int x, int y)
          break;
       case 'b':
          Bias -= 0.01;
+         printf("Bias %g\n", Bias);
          break;
       case 'B':
          Bias += 0.01;
+         printf("Bias %g\n", Bias);
          break;
       case 'd':
          ShowDepth = !ShowDepth;
+         break;
+      case 'f':
+         LinearFilter = !LinearFilter;
+         printf("%s filtering\n", LinearFilter ? "Bilinear" : "Nearest");
          break;
       case 'z':
          Zrot -= step;
@@ -293,7 +318,6 @@ Key(unsigned char key, int x, int y)
          break;
    }
    glutPostRedisplay();
-   printf("Bias %g\n", Bias);
 }
 
 
@@ -343,8 +367,6 @@ Init(void)
       exit(1);
    }
 
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 #ifdef GL_SGIX_shadow
@@ -369,6 +391,7 @@ PrintHelp(void)
    printf("Keys:\n");
    printf("  a = toggle animation\n");
    printf("  d = toggle display of depth texture\n");
+   printf("  f = toggle nearest/bilinear texture filtering\n");
    printf("  b/B = decrease/increase shadow map Z bias\n");
    printf("  cursor keys = rotate scene\n");
    printf("  <shift> + cursor keys = rotate light source\n");
