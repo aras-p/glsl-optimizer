@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.3 2001/03/18 13:37:18 gareth Exp $ */
+/* $Id: texformat_tmp.h,v 1.4 2002/05/09 20:51:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -214,9 +214,9 @@ static void FETCH(argb1555)( const struct gl_texture_image *texImage,
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
-   rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 10) & 0xf8) * 255 / 0xf8 );
-   rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  5) & 0xf8) * 255 / 0xf8 );
-   rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf8) * 255 / 0xf8 );
+   rgba[RCOMP] = UBYTE_TO_CHAN( ((s >> 10) & 0x1f) * 255 / 0x1f );
+   rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  5) & 0x1f) * 255 / 0x1f );
+   rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0x1f) * 255 / 0x1f );
    rgba[ACOMP] = UBYTE_TO_CHAN( ((s >> 15) & 0x01) * 255 );
 }
 
