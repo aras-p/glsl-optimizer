@@ -2754,7 +2754,7 @@ int grammar_destroy (grammar id)
 
 void grammar_get_last_error (byte *text, unsigned int size, int *pos)
 {
-    unsigned int len = 0, dots_made = 0;
+    int len = 0, dots_made = 0;
     const byte *p = error_message;
 
     *text = '\0';
