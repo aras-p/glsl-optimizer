@@ -515,6 +515,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                texcoord[i][0] = s * invQ;
                texcoord[i][1] = t * invQ;
                texcoord[i][2] = r * invQ;
+               texcoord[i][3] = q;
                s += dsdx;
                t += dtdx;
                r += drdx;
@@ -526,6 +527,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                texcoord[i][0] = s * invQ;
                texcoord[i][1] = t * invQ;
                texcoord[i][2] = r * invQ;
+               texcoord[i][3] = q;
                s += dsdx;
                t += dtdx;
                r += drdx;
