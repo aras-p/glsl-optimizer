@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.7 1999/10/19 20:31:08 brianp Exp $ */
+/* $Id: image.c,v 1.8 1999/10/22 10:59:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1683,8 +1683,20 @@ void gl_pack_rgba_span( const GLcontext *ctx,
    /* Test for optimized case first */
    if (!ctx->Pixel.ScaleOrBiasRGBA && !ctx->Pixel.MapColorFlag &&
        format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
-      /* simple case */
+      /* common simple case */
       MEMCPY( destination, rgba, n * 4 * sizeof(GLubyte) );
+   }
+   else if (!ctx->Pixel.ScaleOrBiasRGBA && !ctx->Pixel.MapColorFlag &&
+       format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+      /* common simple case */
+      GLint i;
+      GLubyte *dest = (GLubyte *) destination;
+      for (i = 0; i < n; i++) {
+         dest[i+0] = rgba[i][RCOMP];
+         dest[i+1] = rgba[i][GCOMP];
+         dest[i+2] = rgba[i][BCOMP];
+         dest += 3;
+      }
    }
    else {
       GLfloat red[MAX_WIDTH], green[MAX_WIDTH], blue[MAX_WIDTH];
