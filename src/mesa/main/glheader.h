@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.10 2000/05/26 15:52:06 brianp Exp $ */
+/* $Id: glheader.h,v 1.11 2000/06/12 15:40:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -161,6 +161,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 
 
 /* Make sure we include glext.h */
+#define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
 
