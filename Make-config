@@ -61,6 +61,23 @@ aix-sl:
 	"MAKELIB = $(TOP)/bin/mklib.aix" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
+aix-gcc:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = gcc" \
+	"CFLAGS = -O -DAIXV3" \
+	"CXX = g++" \
+	"CXXFLAGS = -O -DAIXV3" \
+	"MKLIB_OPTIONS = -arch aix-gcc" \
+	"GL_LIB_DEPS = -lX11 -lXext -lm" \
+	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLUT -lGL" \
+	"APP_LIB_DEPS = -Wl,-brtl -lX11 -lXext -lXmu -lXi -lm"
+
 beos-r4:
 	$(MAKE) -f Makefile.BeOS-R4 targets \
 	"GL_LIB = libGL.so" \

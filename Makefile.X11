@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.105 2004/01/05 16:42:34 brianp Exp $
+# $Id: Makefile.X11,v 1.106 2004/01/10 22:14:51 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  6.0
@@ -33,8 +33,9 @@ SHELL = /bin/sh
 
 default:
 	@echo "Type one of the following:"
-	@echo "  make aix                   for IBM RS/6000 with AIX"
-	@echo "  make aix-sl                for IBM RS/6000, make shared libs"
+	@echo "  make aix                   for AIX systems with xlc"
+	@echo "  make aix-sl                for AIX systems, make shared libs"
+	@echo "  make aix-gcc               for AIX sytems with gcc"
 	@echo "  make beos-r4               for BeOS R4"
 	@echo "  make cygnus                for Win95/NT using Cygnus-Win32"
 	@echo "  make cygnus-linux          for Win95/NT using Cygnus-Win32 under Linux"
@@ -104,8 +105,8 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl darwin freebsd freebsd-386 gcc-sl \
-cygnus cygnus-linux:
+aix aix-sl aix-gcc darwin freebsd freebsd-386 gcc-sl \
+cygnus cygnus-linux \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 linux linux-debug \
