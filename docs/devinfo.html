@@ -39,7 +39,7 @@ To add a new GL extension to Mesa you have to do at least the following.
    extension is rather large, try to implement it in a new source file.
 </li>
 <li>
-   If hew extension adds new GL state, the functions in get.c, enable.c
+   If the new extension adds new GL state, the functions in get.c, enable.c
    and attrib.c will most likely require new code.
 </li>
 </ul>
@@ -94,7 +94,7 @@ Constants and macros are ALL_UPPERCASE, with _ between words
 </p>
 
 <p>
-Global vars not allowed.
+Global variables are not allowed.
 </p>
 
 <p>
@@ -109,31 +109,22 @@ Function name examples:
 </pre>
 
 
-<H2>Writing a Device Driver</H2>
-
-<p>
-XXX to do
-</p>
-
-
-
 <H2>Making a New Mesa Release</H2>
 
 <p>
 These are the instructions for making a new Mesa release.
 </p>
 
+<H3>Get latest source files</H3>
 <p>
-Be sure to do a "cvs update -d ." in the Mesa directory to
-get all the latest files.
+Use "cvs update -dAP " to get the latest Mesa files from CVS.
 </p>
 
-<p>
-Update the version definitions in src/mesa/main/version.h
-</p>
 
+<H3>Verify and update version info</H3>
 <p>
 Create/edit the docs/RELNOTES-X.Y file to document what's new in the release.
+Add the new RELNOTES-X.Y file to <a href="relnotes.html">relnotes.html</a>.
 Update the docs/VERSIONS file too.
 </p>
 
@@ -143,14 +134,32 @@ version numbers.
 </p>
 
 <p>
+Make sure the values in src/mesa/main/version.h is correct.
+</p>
+
+<p>
 Edit the top-level Makefile and verify that DIRECTORY, LIB_NAME and
 DEMO_NAME are correct.
 </p>
 
 <p>
+Update the docs/news.html file and docs/contents.html files.
+</p>
+
+<p>
+Check in all updates to CVS.
+</p>
+
+<p>
+Tag the CVS files with the release name (in the form <b>mesa_X_Y</b>).
+</p>
+
+
+<H3>Make the tarballs</H3>
+<p>
 Make a symbolic link from $(DIRECTORY) to 'Mesa'.  For example,
-ln -s Mesa Mesa-6.3    This is needed in order to make a correct
-tar file in the next step.
+ln -s Mesa Mesa-6.3
+This is needed in order to make a correct tar file in the next step.
 </p>
 
 <p>
@@ -160,16 +169,25 @@ Make the distribution files.  From inside the Mesa directory:
 </pre>
 
 <p>
+After the tarballs are created, the md5 checksums for the files will
+be computed.
+Add them to the docs/news.html file.
+</p>
+
+<p>
 Copy the distribution files to a temporary directory, unpack them,
 compile everything, and run some demos to be sure everything works.
 </p>
 
+<H3>Update the website and announce the release</H3>
 <p>
-Upload the *.tar.gz and *.zip files to ftp.mesa3d.org
+Follow the directions on SourceForge for creating a new "release" and
+uploading the tarballs.
 </p>
 
 <p>
-Update the web site.
+Update the web site by copying the docs/ directory's files to 
+/home/users/b/br/brianp/mesa-www/htdocs/
 </p>
 
 <p>
