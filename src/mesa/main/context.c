@@ -588,6 +588,10 @@ _mesa_destroy_visual( GLvisual *vis )
  * A GLframebuffer is a structure which encapsulates the depth, stencil and
  * accum buffers and related parameters.
  * 
+ * Note that the actual depth/stencil/accum/etc buffers are not allocated
+ * at this time.  It's up to the device driver and/or swrast module to
+ * allocate them as needed.
+ *
  * \param visual a GLvisual pointer (we copy the struct contents)
  * \param softwareDepth create/use a software depth buffer?
  * \param softwareStencil create/use a software stencil buffer?
@@ -1137,7 +1141,6 @@ init_attrib_groups( GLcontext *ctx )
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
-   ctx->CatchSignals = GL_TRUE;
    ctx->_Facing = 0;
 #if CHAN_TYPE == GL_FLOAT
    ctx->ClampFragmentColors = GL_FALSE; /* XXX temporary */

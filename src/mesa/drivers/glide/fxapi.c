@@ -700,7 +700,7 @@ fxMesaCreateContext(GLuint win,
    /* install signal handlers */
 #if defined(__linux__)
    /* Only install if environment var. is not set. */
-   if (fxMesa->glCtx->CatchSignals && !getenv("MESA_FX_NO_SIGNALS")) {
+   if (!getenv("MESA_FX_NO_SIGNALS")) {
       signal(SIGINT, cleangraphics_handler);
       signal(SIGHUP, cleangraphics_handler);
       signal(SIGPIPE, cleangraphics_handler);

@@ -2378,9 +2378,6 @@ struct __GLcontextRec {
    GLboolean ClampVertexColors;
    /*@}*/
 
-   /** Should 3Dfx Glide driver catch signals? */
-   GLboolean CatchSignals;
-
    /** \name For debugging/development only */
    /*@{*/
    GLboolean FirstTimeCurrent;
