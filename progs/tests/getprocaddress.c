@@ -287,7 +287,14 @@ check_functions( const char *extensions )
    for (entry = functions; entry->name; entry++) {
       if (entry->name[0] == '-') {
          if (entry->name[1] == '1') {
-            doTests = 1;
+            /* check GL version X.Y */
+            const char *version = (const char *) glGetString(GL_VERSION);
+            if (version[0] == entry->name[1] &&
+                version[1] == entry->name[2] &&
+                version[2] >= entry->name[3])
+               doTests = 1;
+            else
+               doTests = 0;
          }
          else {
             /* check if the named extension is available */
