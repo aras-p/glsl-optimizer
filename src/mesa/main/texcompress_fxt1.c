@@ -414,8 +414,8 @@ fxt1_choose (float vec[][MAX_COMP], int nv,
    int i, j, k;
    int minSum = 1000; /* big enough */
    int maxSum = -1; /* small enough */
-   int minCol;
-   int maxCol;
+   int minCol = 0; /* phoudoin: silent compiler! */
+   int maxCol = 0; /* phoudoin: silent compiler! */
 
    struct {
       int flag;
@@ -876,14 +876,15 @@ fxt1_quantize_HI (unsigned long *cc,
 {
    const int n_vect = 6; /* highest vector number */
    const int n_comp = 3; /* 3 components: R, G, B */
-   float b, iv[MAX_COMP]; /* interpolation vector */
+   float b = 0.0;		/* phoudoin: silent compiler! */
+   float iv[MAX_COMP]; /* interpolation vector */
    int i, k;
    unsigned long hihi; /* high quadword: hi dword */
 
    int minSum = 1000; /* big enough */
    int maxSum = -1; /* small enough */
-   int minCol;
-   int maxCol;
+   int minCol = 0;	/* phoudoin: silent compiler! */
+   int maxCol = 0;	/* phoudoin: silent compiler! */
 
    /* Our solution here is to find the darkest and brightest colors in
     * the 8x4 tile and use those as the two representative colors.
