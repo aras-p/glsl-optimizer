@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.61 2001/11/19 00:13:45 brianp Exp $ */
+/* $Id: gl.h,v 1.62 2001/12/05 22:01:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -504,8 +504,6 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 /* Evaluators */
 #define GL_AUTO_NORMAL				0x0D80
 #define GL_MAP1_COLOR_4				0x0D90
-#define GL_MAP1_GRID_DOMAIN			0x0DD0
-#define GL_MAP1_GRID_SEGMENTS			0x0DD1
 #define GL_MAP1_INDEX				0x0D91
 #define GL_MAP1_NORMAL				0x0D92
 #define GL_MAP1_TEXTURE_COORD_1			0x0D93
@@ -515,8 +513,6 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_MAP1_VERTEX_3			0x0D97
 #define GL_MAP1_VERTEX_4			0x0D98
 #define GL_MAP2_COLOR_4				0x0DB0
-#define GL_MAP2_GRID_DOMAIN			0x0DD2
-#define GL_MAP2_GRID_SEGMENTS			0x0DD3
 #define GL_MAP2_INDEX				0x0DB1
 #define GL_MAP2_NORMAL				0x0DB2
 #define GL_MAP2_TEXTURE_COORD_1			0x0DB3
@@ -525,6 +521,10 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_MAP2_TEXTURE_COORD_4			0x0DB6
 #define GL_MAP2_VERTEX_3			0x0DB7
 #define GL_MAP2_VERTEX_4			0x0DB8
+#define GL_MAP1_GRID_DOMAIN			0x0DD0
+#define GL_MAP1_GRID_SEGMENTS			0x0DD1
+#define GL_MAP2_GRID_DOMAIN			0x0DD2
+#define GL_MAP2_GRID_SEGMENTS			0x0DD3
 #define GL_COEFF				0x0A00
 #define GL_DOMAIN				0x0A02
 #define GL_ORDER				0x0A01
@@ -2504,38 +2504,56 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 
 /* XXX not finalized yet - just testing */
 GLAPI void GLAPIENTRY glWindowPos2dARB(GLdouble x, GLdouble y);
-
 GLAPI void GLAPIENTRY glWindowPos2fARB(GLfloat x, GLfloat y);
-
 GLAPI void GLAPIENTRY glWindowPos2iARB(GLint x, GLint y);
-
 GLAPI void GLAPIENTRY glWindowPos2sARB(GLshort x, GLshort y);
-
 GLAPI void GLAPIENTRY glWindowPos2dvARB(const GLdouble *p);
-
 GLAPI void GLAPIENTRY glWindowPos2fvARB(const GLfloat *p);
-
 GLAPI void GLAPIENTRY glWindowPos2ivARB(const GLint *p);
-
 GLAPI void GLAPIENTRY glWindowPos2svARB(const GLshort *p);
-
 GLAPI void GLAPIENTRY glWindowPos3dARB(GLdouble x, GLdouble y, GLdouble z);
-
 GLAPI void GLAPIENTRY glWindowPos3fARB(GLfloat x, GLfloat y, GLfloat z);
-
 GLAPI void GLAPIENTRY glWindowPos3iARB(GLint x, GLint y, GLint z);
-
 GLAPI void GLAPIENTRY glWindowPos3sARB(GLshort x, GLshort y, GLshort z);
-
 GLAPI void GLAPIENTRY glWindowPos3dvARB(const GLdouble *p);
-
 GLAPI void GLAPIENTRY glWindowPos3fvARB(const GLfloat *p);
-
 GLAPI void GLAPIENTRY glWindowPos3ivARB(const GLint *p);
-
 GLAPI void GLAPIENTRY glWindowPos3svARB(const GLshort *p);
 
 #endif /* GL_ARB_window_pos */
+
+
+#ifndef GL_ARB_shadow
+#define GL_ARB_shadow 1
+
+/* XXX not finalized yet - just testing */
+#define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
+#define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
+#define GL_TEXTURE_COMPARE_RESULT_ARB  0x9992
+#define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
+
+#endif
+
+
+#ifndef GL_ARB_shadow_ambient
+#define GL_ARB_shadow_ambient 1
+
+/* XXX not finalized yet - just testing */
+#define GL_TEXTURE_COMPARE_FAIL_VALUE_ARB    0x80BF
+
+#endif
+
+
+#ifndef GL_ARB_depth_texture
+#define GL_ARB_depth_texture 1
+
+/* XXX not finalized yet - just testing */
+#define GL_DEPTH_COMPONENT16_ARB         0x81A5
+#define GL_DEPTH_COMPONENT24_ARB         0x81A6
+#define GL_DEPTH_COMPONENT32_ARB         0x81A7
+
+#endif
+
 
 
 /**********************************************************************
