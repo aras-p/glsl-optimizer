@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.14 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.15 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,6 +48,8 @@
 static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 				 GLsizei count )
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    /* Need to produce immediate structs, either for compiling or
     * because the array range is too large to process in a single
     * VB.  In GL_EXECUTE mode, this introduces two redundant
@@ -56,20 +58,18 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
     */
 #if 1
    if (_tnl_hard_begin( ctx, mode )) {
-      GLint j;
-      for (j = 0 ; j < count ; ) {
+      GLint i;
+      for (i = 0 ; i < count ; ) {
 	 struct immediate *IM = TNL_CURRENT_IM(ctx);
-	 GLuint nr = MIN2( IMM_MAXDATA - IM->Start, (GLuint) (count - j) );
-	 GLuint sf = IM->Flag[IM->Start];
+	 GLuint start = IM->Start;
+	 GLuint nr = MIN2( IMM_MAXDATA - start, (GLuint) (count - i) );
 
-	 _tnl_fill_immediate_drawarrays( ctx, IM, j, j+nr );
+	 _tnl_fill_immediate_drawarrays( ctx, IM, i, i+nr );
 
-	 if (j == 0) IM->Flag[IM->Start] |= sf;
+	 IM->Count = start + nr;
+	 i += nr;
 
-	 IM->Count = IM->Start + nr;
-	 j += nr;
-
-	 if (j == count)
+	 if (i == count)
 	    _tnl_end( ctx );
 
 	 _tnl_flush_immediate( IM );
@@ -93,30 +93,31 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 				   const GLuint *indices)
 {
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
 #if 1
    /* Optimized code that fakes the effect of calling
     * _tnl_array_element for each index in the list.
     */
    if (_tnl_hard_begin( ctx, mode )) {
       GLint i, j;
-      for (j = 0 ; j < count ; ) {
+      for (i = 0 ; i < count ; ) {
 	 struct immediate *IM = TNL_CURRENT_IM(ctx);
 	 GLuint start = IM->Start;
-	 GLint nr = MIN2( (GLint) (IMM_MAXDATA - start), count - j ) + start;
+	 GLint end = MIN2( IMM_MAXDATA, (count - i) + start);
 	 GLuint sf = IM->Flag[start];
 	 IM->FlushElt = IM->ArrayEltFlush;
 
-	 for (i = start ; i < nr ; i++) {
-	    IM->Elt[i] = (GLuint) *indices++;
-	    IM->Flag[i] = VERT_ELT;
+	 for (j = start ; j < end ; j++) {
+	    IM->Elt[j] = (GLuint) *indices++;
+	    IM->Flag[j] = VERT_ELT;
 	 }
 
-	 if (j == 0) IM->Flag[start] |= sf;
+	 IM->Flag[start] |= (sf & IM->ArrayEltFlags);
+	 IM->Count = end;
+	 i += end - start;
 
-	 IM->Count = nr;
-	 j += nr - start;
-
-	 if (j == count)
+	 if (i == count)
 	    _tnl_end( ctx );
 
 	 _tnl_flush_immediate( IM );
@@ -171,6 +172,8 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+   
    /* Check arguments, etc.
     */
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
@@ -277,11 +280,14 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
 /*        fprintf(stderr, "start %d count %d min %d modulo %d skip %d\n", */
 /*  	      start, count, minimum, modulo, skip); */
+
       
+      bufsz -= bufsz % modulo;
+      bufsz -= minimum;
+
       for (j = start + minimum ; j < count ; j += nr + skip ) {
 
 	 nr = MIN2( bufsz, count - j );
-	 nr -= nr % modulo;
 
 /*  	 fprintf(stderr, "%d..%d\n", j - minimum, j+nr); */
 
@@ -306,6 +312,8 @@ _tnl_DrawRangeElements(GLenum mode,
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint *ui_indices;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    /* Check arguments, etc.
     */
@@ -366,6 +374,8 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint *ui_indices;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    /* Check arguments, etc.
     */

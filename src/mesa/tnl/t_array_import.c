@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.15 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.16 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -492,6 +492,7 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
    }
 
    IM->Count = IM->Start + n;
+   IM->Flag[IM->Start] &= IM->ArrayEltFlags;
    IM->Flag[IM->Start] |= required;
    for (i = IM->Start+1 ; i < IM->Count ; i++)
       IM->Flag[i] = required;

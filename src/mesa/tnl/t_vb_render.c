@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.19 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.20 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -318,7 +318,8 @@ static GLboolean run_render( GLcontext *ctx,
 
 
    tnl->Driver.RenderFinish( ctx );
-/*     usleep(100000); */
+/*     _swrast_flush(ctx); */
+/*     usleep(1000000); */
    return GL_FALSE;		/* finished the pipe */
 }
 

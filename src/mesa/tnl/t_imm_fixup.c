@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.15 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.16 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,9 +290,9 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       if (fixup & VERT_RGBA) {
 	 if (orflag & VERT_RGBA)
 	    _tnl_fixup_4f( IM->Color, IM->Flag, start, VERT_RGBA );
-/*  	 else */
-/*  	    fixup_first_4f( IM->Color, IM->Flag, VERT_END_VB, start,  */
-/*  			    IM->Color[start] ); */
+	 /* No need for else case as the drivers understand stride
+	  * zero here.  (TODO - propogate this)
+	  */
       }
       
       if (fixup & VERT_SPEC_RGB) {

@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.17 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.18 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,6 +82,13 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    }
 
    _tnl_compute_orflag( IM, IM->Start );
+
+   /* Need to clear this flag, or fixup gets confused.  (The elements
+    * have been translated away by now.)  
+    */
+   IM->OrFlag &= ~VERT_ELT;	
+   IM->AndFlag &= ~VERT_ELT;	
+
    _tnl_fixup_input( ctx, IM );
 /*     _tnl_print_cassette( IM ); */
 

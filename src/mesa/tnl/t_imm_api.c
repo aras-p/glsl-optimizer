@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.13 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.14 2001/05/11 15:53:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,6 +78,11 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
 }
 
 
+
+
+/* Note the ctx argument.  This function called only by _tnl_Begin,
+ * _tnl_save_Begin and _tnl_hard_begin() in this file.  
+ */
 static void
 _tnl_begin( GLcontext *ctx, GLenum p )
 {
@@ -136,6 +141,25 @@ _tnl_begin( GLcontext *ctx, GLenum p )
 }
 
 
+void
+_tnl_save_Begin( GLenum mode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (mode > GL_POLYGON) {
+      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
+      return;
+   }
+
+   _tnl_begin( ctx, mode );
+
+   /* Update save_primitive now.
+    */
+   if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN)
+      ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
+   else if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
+      ctx->Driver.CurrentSavePrimitive = mode;
+}
 
 static void
 _tnl_Begin( GLenum mode )
@@ -149,135 +173,100 @@ _tnl_Begin( GLenum mode )
 
    _tnl_begin(ctx, mode);
 
-   /* If compiling update SavePrimitive now.
-    *
-    * In compile_and_exec mode, exec_primitive will be updated when
-    * the cassette is finished.
-    *
-    * If not compiling, update exec_primitive now.
+   /* Update exec_primitive now.
     */
-   if (ctx->CompileFlag) {
-      if (ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN)
-	 ctx->Driver.CurrentSavePrimitive = PRIM_INSIDE_UNKNOWN_PRIM;
-      else if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
-	 ctx->Driver.CurrentSavePrimitive = mode;
-      }
-   else if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
-/*        fprintf(stderr, "setting cep %x in %s\n", mode, __FUNCTION__); */
+   ASSERT (!ctx->CompileFlag);
+   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
       ctx->Driver.CurrentExecPrimitive = mode;
    }
 }
 
 
+/* Function which allows operations like 'glRectf' to decompose to a
+ * begin/end object and vertices without worrying about what happens
+ * with display lists.
+ */
 GLboolean
 _tnl_hard_begin( GLcontext *ctx, GLenum p )
 {
-   struct immediate *IM = TNL_CURRENT_IM(ctx);
-   GLuint count, last;
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* If not compiling, treat as a normal begin().
-    */
    if (!ctx->CompileFlag) {
+      /* If not compiling, treat as a normal begin().
+       */
       _tnl_begin( ctx, p );
-
-      /* Set this for the duration:
-       */
+      ASSERT(ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END);
       ctx->Driver.CurrentExecPrimitive = p;
-/*        fprintf(stderr, "setting cep %x in %s\n",  */
-/*  	      ctx->Driver.CurrentExecPrimitive, __FUNCTION__); */
       return GL_TRUE;
    }
-
-   if (IM->Count > IMM_MAXDATA-8) {
-      _tnl_flush_immediate( IM );
-      IM = TNL_CURRENT_IM(ctx);
-   }
-
-   switch (IM->BeginState & (VERT_BEGIN_0|VERT_BEGIN_1)) {
-   case VERT_BEGIN_0|VERT_BEGIN_1:
-      /* This is an immediate known to be inside a begin/end object.
+   else {
+      /* Otherwise, need to do special processing to preserve the
+       * condition that these vertices will only be replayed outside
+       * future begin/end objects.
        */
-      IM->BeginState |= (VERT_ERROR_1|VERT_ERROR_0);
-      return GL_FALSE;
+      struct immediate *IM = TNL_CURRENT_IM(ctx);
 
-   case VERT_BEGIN_0:
-   case VERT_BEGIN_1:
-      /* This is a display-list immediate in an unknown begin/end
-       * state.  Assert it is empty and conviert it to a 'hard' one.
-       */
-      ASSERT (IM->SavedBeginState == 0);
-
-      /* Push current beginstate, to be restored later.  Don't worry
-       * about raising errors.
-       */
-      IM->SavedBeginState = IM->BeginState;
-
-      /* FALLTHROUGH */
-   case 0:
-      /* Unless we have fallen through, this is an immediate known to
-       * be outside begin/end objects.
-       */
-
-      IM->BeginState |= VERT_BEGIN_0|VERT_BEGIN_1;
-
-
-      count = IM->Count;
-      last = IM->LastPrimitive;
-
-      IM->Flag[count] |= VERT_BEGIN;
-      IM->Primitive[count] = p | PRIM_BEGIN;
-      IM->PrimitiveLength[last] = count - last;
-      IM->LastPrimitive = count;
-
-      ASSERT (IM->FlushElt != FLUSH_ELT_EAGER);
-
-      /* This is necessary as this immediate will not be flushed in
-       * _tnl_end() -- we leave it active, hoping to pick up more
-       * vertices before the next state change.
-       */
-      ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-
-      return GL_TRUE;
-
-   default:
-      ASSERT (0);
-      return GL_TRUE;
-   }
-}
-
-
-
-/* Need to do this to get the correct begin/end error behaviour from
- * functions like ColorPointerEXT which are still active in
- * SAVE_AND_EXEC modes.
- */
-void
-_tnl_save_Begin( GLenum mode )
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (mode > GL_POLYGON) {
-      _mesa_compile_error( ctx, GL_INVALID_ENUM, "glBegin" );
-      return;
-   }
-
-   if (ctx->ExecuteFlag) {
-      /* Preserve vtxfmt invarient:
-       */
       if (ctx->NewState)
-	 _mesa_update_state( ctx );
+	 _mesa_update_state(ctx);
 
-      /* Slot in geomexec: No need to call setdispatch as we know
-       * CurrentDispatch is Save.
+      if (IM->Count > IMM_MAXDATA-8) {
+	 _tnl_flush_immediate( IM );
+	 IM = TNL_CURRENT_IM(ctx);
+      }
+
+      /* A lot depends on the degree to which the display list has
+       * constrained the possible begin/end states at this point:
        */
-      ASSERT(ctx->CurrentDispatch == ctx->Save);
-   }
+      switch (IM->BeginState & (VERT_BEGIN_0|VERT_BEGIN_1)) {
+      case VERT_BEGIN_0|VERT_BEGIN_1:
+	 /* This is an immediate known to be inside a begin/end object.
+	  */
+	 ASSERT(ctx->Driver.CurrentSavePrimitive <= GL_POLYGON);
+	 IM->BeginState |= (VERT_ERROR_1|VERT_ERROR_0);
+	 return GL_FALSE;
 
-   _tnl_begin( ctx, mode );
+      case VERT_BEGIN_0:
+      case VERT_BEGIN_1:
+	 /* This is a display-list immediate in an unknown begin/end
+	  * state.  Assert it is empty and convert it to a 'hard' one.
+	  */
+	 ASSERT(IM->SavedBeginState == 0);
+	 ASSERT(ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN);
+
+	 /* Push current beginstate, to be restored later.  Don't worry
+	  * about raising errors.
+	  */
+	 IM->SavedBeginState = IM->BeginState;
+
+	 /* FALLTHROUGH */
+
+      case 0:
+	 /* Unless we have fallen through, this is an immediate known to
+	  * be outside begin/end objects.
+	  */
+	 ASSERT(ctx->Driver.CurrentSavePrimitive == PRIM_UNKNOWN ||
+		ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END);
+	 ASSERT (IM->FlushElt != FLUSH_ELT_EAGER);
+
+	 IM->BeginState |= VERT_BEGIN_0|VERT_BEGIN_1;
+	 IM->Flag[IM->Count] |= VERT_BEGIN;
+	 IM->Primitive[IM->Count] = p | PRIM_BEGIN;
+	 IM->PrimitiveLength[IM->LastPrimitive] = IM->Count - IM->LastPrimitive;
+	 IM->LastPrimitive = IM->Count;
+
+	 /* This is necessary as this immediate will not be flushed in
+	  * _tnl_end() -- we leave it active, hoping to pick up more
+	  * vertices before the next state change.
+	  */
+	 ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+	 return GL_TRUE;
+
+      default:
+	 ASSERT (0);
+	 return GL_TRUE;
+      }
+   }
 }
+
+
 
 
 
@@ -317,8 +306,6 @@ _tnl_end( GLcontext *ctx )
 
    if (!ctx->CompileFlag) {
       ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
-/*        fprintf(stderr, "setting cep %x in %s\n",  */
-/*  	      ctx->Driver.CurrentExecPrimitive, __FUNCTION__); */
    }
 
    /* You can set this flag to get the old 'flush_vb on glEnd()'
@@ -1113,8 +1100,8 @@ _tnl_vertex2f( GLcontext *ctx, GLfloat x, GLfloat y )
 
 /* Execute a glRectf() function.  _tnl_hard_begin() ensures the check
  * on outside_begin_end is executed even in compiled lists.  These
- * vertices can now participate in the same VB as regular ones, even
- * in most display lists.
+ * vertices can now participate in the same immediate as regular ones,
+ * even in most display lists.  
  */
 static void
 _tnl_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
