@@ -149,6 +149,7 @@ static const char * const card_extensions[] =
    "GL_ARB_texture_env_dot3",
    "GL_ARB_texture_mirrored_repeat",
    "GL_EXT_blend_color",
+   "GL_EXT_blend_equation_separate",
    "GL_EXT_blend_func_separate",
    "GL_EXT_blend_minmax",
    "GL_EXT_blend_subtract",
@@ -161,6 +162,7 @@ static const char * const card_extensions[] =
    "GL_EXT_texture_filter_anisotropic",
    "GL_EXT_texture_lod_bias",
    "GL_EXT_texture_rectangle",
+   "GL_NV_blend_square",
    "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
    NULL
