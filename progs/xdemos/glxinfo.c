@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.20 2002/10/14 13:57:23 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.21 2002/11/04 16:24:18 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
@@ -422,9 +422,17 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
      glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_INDEX_VALUE, &attribs->transparentIndexValue);
    }
 
-   /* multisample tests not implemented yet */
-   attribs->numSamples = 0;
-   attribs->numMultisample = 0;
+   /* multisample attribs */
+#ifdef GLX_ARB_multisample
+   if (strstr("GLX_ARB_multisample", ext) == 0) {
+      glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_ARB, &attribs->numMultisample);
+      glXGetConfig(dpy, vInfo, GLX_SAMPLES_ARB, &attribs->numSamples);
+   }
+#endif
+   else {
+      attribs->numSamples = 0;
+      attribs->numMultisample = 0;
+   }
 
 #if defined(GLX_EXT_visual_rating)
    if (ext && strstr(ext, "GLX_EXT_visual_rating")) {
