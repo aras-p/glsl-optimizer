@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.24 2001/07/23 16:08:59 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.25 2001/07/26 16:04:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -555,8 +555,8 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    GLuint *flags = IM->Flag;
    GLuint orflag = IM->OrFlag;
    GLuint j;
-   void (*vertex)( const GLfloat * );
-   void (*texcoordfv[MAX_TEXTURE_UNITS])( GLenum, const GLfloat * );
+   void (GLAPIENTRY *vertex)( const GLfloat * );
+   void (GLAPIENTRY *texcoordfv[MAX_TEXTURE_UNITS])( GLenum, const GLfloat * );
    GLuint maxtex = 0;
    GLuint p, length, prim = 0;
    
