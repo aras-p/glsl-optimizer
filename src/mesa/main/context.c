@@ -77,7 +77,6 @@
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
-/*#include "clip.h"*/
 #include "colortab.h"
 #include "context.h"
 #include "debug.h"
@@ -90,6 +89,7 @@
 #include "fog.h"
 #include "get.h"
 #include "glthread.h"
+#include "glapioffsets.h"
 #include "histogram.h"
 #include "hint.h"
 #include "hash.h"
@@ -1124,6 +1124,187 @@ init_attrib_groups( GLcontext *ctx )
 }
 
 
+/**
+ * If the DRI libGL.so library is old, it may not have the entrypoints for
+ * some recent OpenGL extensions.  Dynamically add them now.
+ * If we're building stand-alone Mesa where libGL.so has both the dispatcher
+ * and driver code, this won't be an issue (and calling this function won't
+ * do any harm).
+ */
+static void
+add_newer_entrypoints(void)
+{
+   /* GL_ARB_window_pos aliases with GL_MESA_window_pos */
+   _glapi_add_entrypoint("glWindowPos2dARB", 513);
+   _glapi_add_entrypoint("glWindowPos2dvARB", 514);
+   _glapi_add_entrypoint("glWindowPos2fARB", 515);
+   _glapi_add_entrypoint("glWindowPos2fvARB", 516);
+   _glapi_add_entrypoint("glWindowPos2iARB", 517);
+   _glapi_add_entrypoint("glWindowPos2ivARB", 518);
+   _glapi_add_entrypoint("glWindowPos2sARB", 519);
+   _glapi_add_entrypoint("glWindowPos2svARB", 520);
+   _glapi_add_entrypoint("glWindowPos3dARB", 521);
+   _glapi_add_entrypoint("glWindowPos3dvARB", 522);
+   _glapi_add_entrypoint("glWindowPos3fARB", 523);
+   _glapi_add_entrypoint("glWindowPos3fvARB", 524);
+   _glapi_add_entrypoint("glWindowPos3iARB", 525);
+   _glapi_add_entrypoint("glWindowPos3ivARB", 526);
+   _glapi_add_entrypoint("glWindowPos3sARB", 527);
+   _glapi_add_entrypoint("glWindowPos3svARB", 528);
+#if FEATURE_NV_vertex_program
+   _glapi_add_entrypoint("glAreProgramsResidentNV", 578);
+   _glapi_add_entrypoint("glBindProgramNV", 579);
+   _glapi_add_entrypoint("glDeleteProgramsNV", 580);
+   _glapi_add_entrypoint("glExecuteProgramNV", 581);
+   _glapi_add_entrypoint("glGenProgramsNV", 582);
+   _glapi_add_entrypoint("glGetProgramParameterdvNV", 583);
+   _glapi_add_entrypoint("glGetProgramParameterfvNV", 584);
+   _glapi_add_entrypoint("glGetProgramivNV", 585);
+   _glapi_add_entrypoint("glGetProgramStringNV", 586);
+   _glapi_add_entrypoint("glGetTrackMatrixivNV", 587);
+   _glapi_add_entrypoint("glGetVertexAttribdvNV", 588);
+   _glapi_add_entrypoint("glGetVertexAttribfvNV", 589);
+   _glapi_add_entrypoint("glGetVertexAttribivNV", 590);
+   _glapi_add_entrypoint("glGetVertexAttribPointervNV", 591);
+   _glapi_add_entrypoint("glIsProgramNV", 592);
+   _glapi_add_entrypoint("glLoadProgramNV", 593);
+   _glapi_add_entrypoint("glProgramParameter4dNV", 594);
+   _glapi_add_entrypoint("glProgramParameter4dvNV", 595);
+   _glapi_add_entrypoint("glProgramParameter4fNV", 596);
+   _glapi_add_entrypoint("glProgramParameter4fvNV", 597);
+   _glapi_add_entrypoint("glProgramParameters4dvNV", 598);
+   _glapi_add_entrypoint("glProgramParameters4fvNV", 599);
+   _glapi_add_entrypoint("glRequestResidentProgramsNV", 600);
+   _glapi_add_entrypoint("glTrackMatrixNV", 601);
+   _glapi_add_entrypoint("glVertexAttribPointerNV", 602);
+   _glapi_add_entrypoint("glVertexAttrib1dNV", 603);
+   _glapi_add_entrypoint("glVertexAttrib1dvNV", 604);
+   _glapi_add_entrypoint("glVertexAttrib1fNV", 605);
+   _glapi_add_entrypoint("glVertexAttrib1fvNV", 606);
+   _glapi_add_entrypoint("glVertexAttrib1sNV", 607);
+   _glapi_add_entrypoint("glVertexAttrib1svNV", 608);
+   _glapi_add_entrypoint("glVertexAttrib2dNV", 609);
+   _glapi_add_entrypoint("glVertexAttrib2dvNV", 610);
+   _glapi_add_entrypoint("glVertexAttrib2fNV", 611);
+   _glapi_add_entrypoint("glVertexAttrib2fvNV", 612);
+   _glapi_add_entrypoint("glVertexAttrib2sNV", 613);
+   _glapi_add_entrypoint("glVertexAttrib2svNV", 614);
+   _glapi_add_entrypoint("glVertexAttrib3dNV", 615);
+   _glapi_add_entrypoint("glVertexAttrib3dvNV", 616);
+   _glapi_add_entrypoint("glVertexAttrib3fNV", 617);
+   _glapi_add_entrypoint("glVertexAttrib3fvNV", 618);
+   _glapi_add_entrypoint("glVertexAttrib3sNV", 619);
+   _glapi_add_entrypoint("glVertexAttrib3svNV", 620);
+   _glapi_add_entrypoint("glVertexAttrib4dNV", 621);
+   _glapi_add_entrypoint("glVertexAttrib4dvNV", 622);
+   _glapi_add_entrypoint("glVertexAttrib4fNV", 623);
+   _glapi_add_entrypoint("glVertexAttrib4fvNV", 624);
+   _glapi_add_entrypoint("glVertexAttrib4sNV", 625);
+   _glapi_add_entrypoint("glVertexAttrib4svNV", 626);
+   _glapi_add_entrypoint("glVertexAttrib4ubNV", 627);
+   _glapi_add_entrypoint("glVertexAttrib4ubvNV", 628);
+   _glapi_add_entrypoint("glVertexAttribs1dvNV", 629);
+   _glapi_add_entrypoint("glVertexAttribs1fvNV", 630);
+   _glapi_add_entrypoint("glVertexAttribs1svNV", 631);
+   _glapi_add_entrypoint("glVertexAttribs2dvNV", 632);
+   _glapi_add_entrypoint("glVertexAttribs2fvNV", 633);
+   _glapi_add_entrypoint("glVertexAttribs2svNV", 634);
+   _glapi_add_entrypoint("glVertexAttribs3dvNV", 635);
+   _glapi_add_entrypoint("glVertexAttribs3fvNV", 636);
+   _glapi_add_entrypoint("glVertexAttribs3svNV", 637);
+   _glapi_add_entrypoint("glVertexAttribs4dvNV", 638);
+   _glapi_add_entrypoint("glVertexAttribs4fvNV", 639);
+   _glapi_add_entrypoint("glVertexAttribs4svNV", 640);
+   _glapi_add_entrypoint("glVertexAttribs4ubvNV", 641);
+#endif
+   _glapi_add_entrypoint("glPointParameteriNV", 642);
+   _glapi_add_entrypoint("glPointParameterivNV", 643);
+   _glapi_add_entrypoint("glMultiDrawArraysEXT", 644);
+   _glapi_add_entrypoint("glMultiDrawElementsEXT", 645);
+   _glapi_add_entrypoint("glActiveStencilFaceEXT", 646);
+#if FEATURE_NV_fence
+   _glapi_add_entrypoint("glDeleteFencesNV", 647);
+   _glapi_add_entrypoint("glGenFencesNV", 648);
+   _glapi_add_entrypoint("glIsFenceNV", 649);
+   _glapi_add_entrypoint("glTestFenceNV", 650);
+   _glapi_add_entrypoint("glGetFenceivNV", 651);
+   _glapi_add_entrypoint("glFinishFenceNV", 652);
+   _glapi_add_entrypoint("glSetFenceNV", 653);
+#endif
+#if FEATURE_NV_fragment_program
+   _glapi_add_entrypoint("glProgramNamedParameter4fNV", 682);
+   _glapi_add_entrypoint("glProgramNamedParameter4dNV", 683);
+   _glapi_add_entrypoint("glProgramNamedParameter4fvNV", 683);
+   _glapi_add_entrypoint("glProgramNamedParameter4dvNV", 684);
+   _glapi_add_entrypoint("glGetProgramNamedParameterfvNV", 685);
+   _glapi_add_entrypoint("glGetProgramNamedParameterdvNV", 686);
+#endif
+#if FEATURE_ARB_vertex_program
+   _glapi_add_entrypoint("glVertexAttrib1sARB", _gloffset_VertexAttrib1sNV);
+   _glapi_add_entrypoint("glVertexAttrib1fARB", _gloffset_VertexAttrib1fNV);
+   _glapi_add_entrypoint("glVertexAttrib1dARB", _gloffset_VertexAttrib1dNV);
+   _glapi_add_entrypoint("glVertexAttrib2sARB", _gloffset_VertexAttrib2sNV);
+   _glapi_add_entrypoint("glVertexAttrib2fARB", _gloffset_VertexAttrib2fNV);
+   _glapi_add_entrypoint("glVertexAttrib2dARB", _gloffset_VertexAttrib2dNV);
+   _glapi_add_entrypoint("glVertexAttrib3sARB", _gloffset_VertexAttrib3sNV);
+   _glapi_add_entrypoint("glVertexAttrib3fARB", _gloffset_VertexAttrib3fNV);
+   _glapi_add_entrypoint("glVertexAttrib3dARB", _gloffset_VertexAttrib3dNV);
+   _glapi_add_entrypoint("glVertexAttrib4sARB", _gloffset_VertexAttrib4sNV);
+   _glapi_add_entrypoint("glVertexAttrib4fARB", _gloffset_VertexAttrib4fNV);
+   _glapi_add_entrypoint("glVertexAttrib4dARB", _gloffset_VertexAttrib4dNV);
+   _glapi_add_entrypoint("glVertexAttrib4NubARB", _gloffset_VertexAttrib4ubNV);
+   _glapi_add_entrypoint("glVertexAttrib1svARB", _gloffset_VertexAttrib1svNV);
+   _glapi_add_entrypoint("glVertexAttrib1fvARB", _gloffset_VertexAttrib1fvNV);
+   _glapi_add_entrypoint("glVertexAttrib1dvARB", _gloffset_VertexAttrib1dvNV);
+   _glapi_add_entrypoint("glVertexAttrib2svARB", _gloffset_VertexAttrib2svNV);
+   _glapi_add_entrypoint("glVertexAttrib2fvARB", _gloffset_VertexAttrib2fvNV);
+   _glapi_add_entrypoint("glVertexAttrib2dvARB", _gloffset_VertexAttrib2dvNV);
+   _glapi_add_entrypoint("glVertexAttrib3svARB", _gloffset_VertexAttrib3svNV);
+   _glapi_add_entrypoint("glVertexAttrib3fvARB", _gloffset_VertexAttrib3fvNV);
+   _glapi_add_entrypoint("glVertexAttrib3dvARB", _gloffset_VertexAttrib3dvNV);
+   _glapi_add_entrypoint("glVertexAttrib4bvARB", _gloffset_VertexAttrib4bvARB);
+   _glapi_add_entrypoint("glVertexAttrib4svARB", _gloffset_VertexAttrib4svNV);
+   _glapi_add_entrypoint("glVertexAttrib4ivARB", _gloffset_VertexAttrib4ivARB);
+   _glapi_add_entrypoint("glVertexAttrib4ubvARB", _gloffset_VertexAttrib4ubvARB);
+   _glapi_add_entrypoint("glVertexAttrib4usvARB", _gloffset_VertexAttrib4usvARB);
+   _glapi_add_entrypoint("glVertexAttrib4uivARB", _gloffset_VertexAttrib4uivARB);
+   _glapi_add_entrypoint("glVertexAttrib4fvARB", _gloffset_VertexAttrib4fvNV);
+   _glapi_add_entrypoint("glVertexAttrib4dvARB", _gloffset_VertexAttrib4dvNV);
+   _glapi_add_entrypoint("glVertexAttrib4NbvARB", _gloffset_VertexAttrib4NbvARB);
+   _glapi_add_entrypoint("glVertexAttrib4NsvARB", _gloffset_VertexAttrib4NsvARB);
+   _glapi_add_entrypoint("glVertexAttrib4NivARB", _gloffset_VertexAttrib4NivARB);
+   _glapi_add_entrypoint("glVertexAttrib4NubvARB", _gloffset_VertexAttrib4ubvNV);
+   _glapi_add_entrypoint("glVertexAttrib4NusvARB", _gloffset_VertexAttrib4NusvARB);
+   _glapi_add_entrypoint("glVertexAttrib4NuivARB", _gloffset_VertexAttrib4NuivARB);
+   _glapi_add_entrypoint("glVertexAttribPointerARB", _gloffset_VertexAttribPointerARB);
+   _glapi_add_entrypoint("glEnableVertexAttribArrayARB", _gloffset_EnableVertexAttribArrayARB);
+   _glapi_add_entrypoint("glDisableVertexAttribArrayARB", _gloffset_DisableVertexAttribArrayARB);
+   _glapi_add_entrypoint("glProgramStringARB", _gloffset_ProgramStringARB);
+   _glapi_add_entrypoint("glBindProgramARB", _gloffset_BindProgramNV);
+   _glapi_add_entrypoint("glDeleteProgramsARB", _gloffset_DeleteProgramsNV);
+   _glapi_add_entrypoint("glGenProgramsARB", _gloffset_GenProgramsNV);
+   _glapi_add_entrypoint("glIsProgramARB", _gloffset_IsProgramNV);
+   _glapi_add_entrypoint("glProgramEnvParameter4dARB", _gloffset_ProgramEnvParameter4dARB);
+   _glapi_add_entrypoint("glProgramEnvParameter4dvARB", _gloffset_ProgramEnvParameter4dvARB);
+   _glapi_add_entrypoint("glProgramEnvParameter4fARB", _gloffset_ProgramEnvParameter4fARB);
+   _glapi_add_entrypoint("glProgramEnvParameter4fvARB", _gloffset_ProgramEnvParameter4fvARB);
+   _glapi_add_entrypoint("glProgramLocalParameter4dARB", _gloffset_ProgramLocalParameter4dARB);
+   _glapi_add_entrypoint("glProgramLocalParameter4dvARB", _gloffset_ProgramLocalParameter4dvARB);
+   _glapi_add_entrypoint("glProgramLocalParameter4fARB", _gloffset_ProgramLocalParameter4fARB);
+   _glapi_add_entrypoint("glProgramLocalParameter4fvARB", _gloffset_ProgramLocalParameter4fvARB);
+   _glapi_add_entrypoint("glGetProgramEnvParameterdvARB", _gloffset_GetProgramEnvParameterdvARB);
+   _glapi_add_entrypoint("glGetProgramEnvParameterfvARB", _gloffset_GetProgramEnvParameterfvARB);
+   _glapi_add_entrypoint("glGetProgramLocalParameterdvARB", _gloffset_GetProgramLocalParameterdvARB);
+   _glapi_add_entrypoint("glGetProgramLocalParameterfvARB", _gloffset_GetProgramLocalParameterfvARB);
+   _glapi_add_entrypoint("glGetProgramivARB", _gloffset_GetProgramivARB);
+   _glapi_add_entrypoint("glGetProgramStringARB", _gloffset_GetProgramStringARB);
+   _glapi_add_entrypoint("glGetVertexAttribdvARB", _gloffset_GetVertexAttribdvNV);
+   _glapi_add_entrypoint("glGetVertexAttribfvARB", _gloffset_GetVertexAttribfvNV);
+   _glapi_add_entrypoint("glGetVertexAttribivARB", _gloffset_GetVertexAttribivNV);
+   _glapi_add_entrypoint("glGetVertexAttribPointervARB", _gloffset_GetVertexAttribPointervNV);
+#endif
+}
+
 
 /**
  * Initialize a GLcontext struct. 
@@ -1198,87 +1379,8 @@ _mesa_initialize_context( GLcontext *ctx,
       return GL_FALSE;
    }
 
-
-   /* TODO: move this to somewhere program-specific.
-    */
-   _glapi_add_entrypoint("glAreProgramsResidentNV", 578);
-   _glapi_add_entrypoint("glBindProgramNV", 579);
-   _glapi_add_entrypoint("glDeleteProgramsNV", 580);
-   _glapi_add_entrypoint("glExecuteProgramNV", 581);
-   _glapi_add_entrypoint("glGenProgramsNV", 582);
-   _glapi_add_entrypoint("glGetProgramParameterdvNV", 583);
-   _glapi_add_entrypoint("glGetProgramParameterfvNV", 584);
-   _glapi_add_entrypoint("glGetProgramivNV", 585);
-   _glapi_add_entrypoint("glGetProgramStringNV", 586);
-   _glapi_add_entrypoint("glGetTrackMatrixivNV", 587);
-   _glapi_add_entrypoint("glGetVertexAttribdvNV", 588);
-   _glapi_add_entrypoint("glGetVertexAttribfvNV", 589);
-   _glapi_add_entrypoint("glGetVertexAttribivNV", 590);
-   _glapi_add_entrypoint("glGetVertexAttribPointervNV", 591);
-   _glapi_add_entrypoint("glIsProgramNV", 592);
-   _glapi_add_entrypoint("glLoadProgramNV", 593);
-   _glapi_add_entrypoint("glProgramParameter4dNV", 594);
-   _glapi_add_entrypoint("glProgramParameter4dvNV", 595);
-   _glapi_add_entrypoint("glProgramParameter4fNV", 596);
-   _glapi_add_entrypoint("glProgramParameter4fvNV", 597);
-   _glapi_add_entrypoint("glProgramParameters4dvNV", 598);
-   _glapi_add_entrypoint("glProgramParameters4fvNV", 599);
-   _glapi_add_entrypoint("glRequestResidentProgramsNV", 600);
-   _glapi_add_entrypoint("glTrackMatrixNV", 601);
-   _glapi_add_entrypoint("glVertexAttribPointerNV", 602);
-   _glapi_add_entrypoint("glVertexAttrib1dNV", 603);
-   _glapi_add_entrypoint("glVertexAttrib1dvNV", 604);
-   _glapi_add_entrypoint("glVertexAttrib1fNV", 605);
-   _glapi_add_entrypoint("glVertexAttrib1fvNV", 606);
-   _glapi_add_entrypoint("glVertexAttrib1sNV", 607);
-   _glapi_add_entrypoint("glVertexAttrib1svNV", 608);
-   _glapi_add_entrypoint("glVertexAttrib2dNV", 609);
-   _glapi_add_entrypoint("glVertexAttrib2dvNV", 610);
-   _glapi_add_entrypoint("glVertexAttrib2fNV", 611);
-   _glapi_add_entrypoint("glVertexAttrib2fvNV", 612);
-   _glapi_add_entrypoint("glVertexAttrib2sNV", 613);
-   _glapi_add_entrypoint("glVertexAttrib2svNV", 614);
-   _glapi_add_entrypoint("glVertexAttrib3dNV", 615);
-   _glapi_add_entrypoint("glVertexAttrib3dvNV", 616);
-   _glapi_add_entrypoint("glVertexAttrib3fNV", 617);
-   _glapi_add_entrypoint("glVertexAttrib3fvNV", 618);
-   _glapi_add_entrypoint("glVertexAttrib3sNV", 619);
-   _glapi_add_entrypoint("glVertexAttrib3svNV", 620);
-   _glapi_add_entrypoint("glVertexAttrib4dNV", 621);
-   _glapi_add_entrypoint("glVertexAttrib4dvNV", 622);
-   _glapi_add_entrypoint("glVertexAttrib4fNV", 623);
-   _glapi_add_entrypoint("glVertexAttrib4fvNV", 624);
-   _glapi_add_entrypoint("glVertexAttrib4sNV", 625);
-   _glapi_add_entrypoint("glVertexAttrib4svNV", 626);
-   _glapi_add_entrypoint("glVertexAttrib4ubNV", 627);
-   _glapi_add_entrypoint("glVertexAttrib4ubvNV", 628);
-   _glapi_add_entrypoint("glVertexAttribs1dvNV", 629);
-   _glapi_add_entrypoint("glVertexAttribs1fvNV", 630);
-   _glapi_add_entrypoint("glVertexAttribs1svNV", 631);
-   _glapi_add_entrypoint("glVertexAttribs2dvNV", 632);
-   _glapi_add_entrypoint("glVertexAttribs2fvNV", 633);
-   _glapi_add_entrypoint("glVertexAttribs2svNV", 634);
-   _glapi_add_entrypoint("glVertexAttribs3dvNV", 635);
-   _glapi_add_entrypoint("glVertexAttribs3fvNV", 636);
-   _glapi_add_entrypoint("glVertexAttribs3svNV", 637);
-   _glapi_add_entrypoint("glVertexAttribs4dvNV", 638);
-   _glapi_add_entrypoint("glVertexAttribs4fvNV", 639);
-   _glapi_add_entrypoint("glVertexAttribs4svNV", 640);
-   _glapi_add_entrypoint("glVertexAttribs4ubvNV", 641);
-   _glapi_add_entrypoint("glPointParameteriNV", 642);
-   _glapi_add_entrypoint("glPointParameterivNV", 643);
-   _glapi_add_entrypoint("glMultiDrawArraysEXT", 644);
-   _glapi_add_entrypoint("glMultiDrawElementsEXT", 645);
-   _glapi_add_entrypoint("glActiveStencilFaceEXT", 646);
-   _glapi_add_entrypoint("glDeleteFencesNV", 647);
-   _glapi_add_entrypoint("glGenFencesNV", 648);
-   _glapi_add_entrypoint("glIsFenceNV", 649);
-   _glapi_add_entrypoint("glTestFenceNV", 650);
-   _glapi_add_entrypoint("glGetFenceivNV", 651);
-   _glapi_add_entrypoint("glFinishFenceNV", 652);
-   _glapi_add_entrypoint("glSetFenceNV", 653);
-   /* XXX add NV_fragment_program and ARB_vertex_program functions */
-
+   /* libGL ABI coordination */
+   add_newer_entrypoints();
 
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
