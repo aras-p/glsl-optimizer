@@ -400,7 +400,6 @@ static struct {
 
 #define HAVE_RGBA   1
 #define HAVE_SPEC   1
-#define HAVE_INDEX  0
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
 #define TAB rast_tab
