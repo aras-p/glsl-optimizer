@@ -1115,6 +1115,15 @@ DMesaVisual DMesaCreateVisual (GLint width,
     freopen("MESA.LOG", "w", stderr);
  }
 
+ if (((env = getenv("FX_GLIDE_REFRESH")) == NULL) || !atoi(env)) {
+    /* FX_GLIDE_REFRESH=0 has a special meaning for DJGPP Glide3x
+     * (switch via VESA, using default refresh) and we'll not override that.
+     */
+    char tmp[256];
+    sprintf(tmp, "FX_GLIDE_REFRESH=%u", refresh);
+    putenv(tmp);
+ }
+
  return (DMesaVisual)fxMesaCreateBestContext(-1, width, height, fx_attrib);
 #endif /* FX */
 }

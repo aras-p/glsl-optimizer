@@ -80,7 +80,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
        * than hardware can support. Two cases:
        * 1) we have mipmaps. Then we just push up to the first supported
        *    LOD. A possible drawback is that Mesa will ignore the skipped
-       *    LODs on further texture handling (including memory freeing).
+       *    LODs on further texture handling.
        *    Will this interfere with GL_TEXTURE_[MIN|BASE]_LEVEL? How?
        * 2) we don't have mipmaps. We need to rescale texture; two ways:
        *    a) create a new LOD and push up ti->minLevel and tObj->BaseLevel

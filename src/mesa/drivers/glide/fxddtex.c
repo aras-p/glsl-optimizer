@@ -43,6 +43,7 @@
 #include "image.h"
 #include "teximage.h"
 #include "texformat.h"
+#include "texobj.h"
 #include "texstore.h"
 #include "texutil.h"
 
@@ -365,6 +366,9 @@ fxDDTexDel(GLcontext * ctx, struct gl_texture_object *tObj)
 
    FREE(ti);
    tObj->DriverData = NULL;
+
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, tObj);
 }
 
 /*

@@ -203,8 +203,10 @@ gl3DfxSetPaletteEXT(GLuint * pal)
 static GrScreenResolution_t fxBestResolution (int width, int height)
 {
  static int resolutions[][5] = {
+#if 1 /* Voodoo^2 can't fullscreen these, because of Glide */
         { 320,  200, GR_RESOLUTION_320x200  },
         { 320,  240, GR_RESOLUTION_320x240  },
+#endif
         { 512,  384, GR_RESOLUTION_512x384  },
         { 640,  400, GR_RESOLUTION_640x400  },
         { 640,  480, GR_RESOLUTION_640x480  },

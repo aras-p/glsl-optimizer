@@ -324,18 +324,14 @@ wglCreateContext(HDC hdc)
       SetWindowLong(hWnd, GWL_WNDPROC, (LONG) __wglMonitor);
    }
 
-#if FX_DEBUG
-   /* always log when debugging */
-   freopen("MESA.LOG", "w", stderr);
-#else
-   /* log only if user wants */
    {
-    char *env = getenv("MESA_FX_INFO");
-    if (env && env[0] == 'r') {
-      freopen("MESA.LOG", "w", stderr);
-    }
-   }
+    char *env;
+    /* always log when debugging, or if user demands */
+#if !FX_DEBUG
+    if ((env = getenv("MESA_FX_INFO")) && env[0] == 'r')
 #endif
+      freopen("MESA.LOG", "w", stderr);
+   }
 
    {
      RECT cliRect;
