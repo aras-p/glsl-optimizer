@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0.1
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -2397,7 +2397,7 @@ Fake_glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 
    (void) dpy;
 
-   for (attrib = attribList; *attrib; attrib++) {
+   for (attrib = attribList; attrib && *attrib; attrib++) {
       switch (*attrib) {
          case GLX_PRESERVED_CONTENTS_SGIX:
             attrib++;
