@@ -40,3 +40,4 @@ EXTRA_HEADERS = amesa.h dosmesa.h foomesa.h glut_h.dja mesa_wgl.h mglmesa.h \
 GLinclude_HEADERS = gl.h glext.h gl_mangle.h glu.h glu_mangle.h \
 	$(sel_inc_fx) $(sel_inc_ggi) $(sel_inc_osmesa) $(sel_inc_svga) \
 	$(sel_inc_x11) $(sel_inc_glut)
+include $(top_srcdir)/common_rules.make
