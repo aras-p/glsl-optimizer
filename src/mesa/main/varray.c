@@ -527,12 +527,25 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
    }
 
    /* check for valid 'type' and compute StrideB right away */
+   /* NOTE: more types are supported here than in the NV extension */
    switch (type) {
+      case GL_BYTE:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLbyte);
+         break;
       case GL_UNSIGNED_BYTE:
          ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLubyte);
          break;
       case GL_SHORT:
          ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLshort);
+         break;
+      case GL_UNSIGNED_SHORT:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLushort);
+         break;
+      case GL_INT:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLint);
+         break;
+      case GL_UNSIGNED_INT:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLuint);
          break;
       case GL_FLOAT:
          ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLfloat);
