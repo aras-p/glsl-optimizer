@@ -163,10 +163,17 @@ static void set_color_mask( i830ContextPtr i830, GLboolean state )
  */
 static void set_no_texture( i830ContextPtr i830 )
 {
-   i830->meta.TexBlendWordsUsed[0] = 
-      i830SetBlend_GL1_2( i830, 0, GL_NONE, 0, 
-			  TEXBLENDARG_TEXEL0,
-			  i830->meta.TexBlend[0], 0 );
+   static const struct gl_tex_env_combine_state comb = {
+      GL_NONE, GL_NONE,
+      { GL_TEXTURE, 0, 0, }, { GL_TEXTURE, 0, 0, },
+      { GL_SRC_COLOR, 0, 0 }, { GL_SRC_ALPHA, 0, 0 },
+      0, 0, 0, 0
+   };
+
+   i830->meta.TexBlendWordsUsed[0] =
+     i830SetTexEnvCombine( i830, & comb, 0, TEXBLENDARG_TEXEL0,
+			   i830->meta.TexBlend[0], NULL);
+
    i830->meta.TexBlend[0][0] |= TEXOP_LAST_STAGE;
    i830->meta.emitted &= ~I830_UPLOAD_TEXBLEND(0);
 }
@@ -177,10 +184,17 @@ static void set_no_texture( i830ContextPtr i830 )
 static void enable_texture_blend_replace( i830ContextPtr i830,
 					  GLenum format )
 {
-   i830->meta.TexBlendWordsUsed[0] = 
-      i830SetBlend_GL1_2( i830, 0, GL_REPLACE, format, 
-			  TEXBLENDARG_TEXEL0,
-			  i830->meta.TexBlend[0], 0 );
+   static const struct gl_tex_env_combine_state comb = {
+      GL_REPLACE, GL_REPLACE,
+      { GL_TEXTURE, 0, 0, }, { GL_TEXTURE, 0, 0, },
+      { GL_SRC_COLOR, 0, 0 }, { GL_SRC_ALPHA, 0, 0 },
+      0, 0, 1, 1
+   };
+
+   i830->meta.TexBlendWordsUsed[0] =
+     i830SetTexEnvCombine( i830, & comb, 0, TEXBLENDARG_TEXEL0,
+			   i830->meta.TexBlend[0], NULL);
+
    i830->meta.TexBlend[0][0] |= TEXOP_LAST_STAGE;
    i830->meta.emitted &= ~I830_UPLOAD_TEXBLEND(0);
 

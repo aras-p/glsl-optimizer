@@ -263,11 +263,15 @@ static void i830AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 					ALPHA_REF_VALUE(refInt));
 }
 
-/* This function makes sure that the proper enables are
- * set for LogicOp, Independant Alpha Blend, and Blending.
- * It needs to be called from numerous places where we
+/**
+ * Makes sure that the proper enables are set for LogicOp, Independant Alpha
+ * Blend, and Blending.  It needs to be called from numerous places where we
  * could change the LogicOp or Independant Alpha Blend without subsequent
  * calls to glEnable.
+ * 
+ * \todo
+ * This function is substantially different from the old i830-specific driver.
+ * I'm not sure which is correct.
  */
 static void i830EvalLogicOpBlendState(GLcontext *ctx)
 {
@@ -310,48 +314,16 @@ static void i830BlendColor(GLcontext *ctx, const GLfloat color[4])
    i830->state.Ctx[I830_CTXREG_BLENDCOLOR1] = (a<<24) | (r<<16) | (g<<8) | b;
 }
 
-static void i830BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB,
-				      GLenum modeA) 
-{
-   i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int func = ENABLE_ALPHA_BLENDFUNC;
 
-   assert( modeRGB == modeA );
-
-   if (INTEL_DEBUG&DEBUG_DRI)
-     fprintf(stderr, "%s %s\n", __FUNCTION__,
-	     _mesa_lookup_enum_by_nr(modeRGB));
-
-   /* This will catch a logicop blend equation */
-   i830EvalLogicOpBlendState(ctx);
-
-   switch(modeRGB) {
-   case GL_FUNC_ADD: 
-      func |= BLENDFUNC_ADD; 
-      break;
-   case GL_MIN: 
-      func |= BLENDFUNC_MIN; 
-      break;
-   case GL_MAX: 
-      func |= BLENDFUNC_MAX; 
-      break;
-   case GL_FUNC_SUBTRACT: 
-      func |= BLENDFUNC_SUB; 
-      break;
-   case GL_FUNC_REVERSE_SUBTRACT: 
-      func |= BLENDFUNC_RVRSE_SUB; 
-      break;
-   case GL_LOGIC_OP:
-   default: return;
-   }
-
-   I830_STATECHANGE(i830, I830_UPLOAD_CTX);
-   i830->state.Ctx[I830_CTXREG_STATE1] &= ~BLENDFUNC_MASK;
-   i830->state.Ctx[I830_CTXREG_STATE1] |= func;
-}
-
-
-
+/**
+ * Calculate the hardware blend factor setting.  This same function is used
+ * for source and destination of both alpha and RGB.  
+ *
+ * \returns
+ * The hardware register value for the specified blend factor.  This value
+ * will need to be shifted into the correct position for either source or
+ * destination factor.
+ */
 static int translate_blend_factor( GLenum factor )
 {
    switch(factor) {
@@ -390,35 +362,89 @@ static int translate_blend_factor( GLenum factor )
    }
 }
 
-static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, 
-				  GLenum dfactorRGB, GLenum sfactorA,
-				  GLenum dfactorA )
+
+/**
+ * Sets both the blend equation (called "function" in i830 docs) and the
+ * blend function (called "factor" in i830 docs).  This is done in a single
+ * function because some blend equations (i.e., \c GL_MIN and \c GL_MAX)
+ * change the interpretation of the blend function.
+ */
+static void i830_set_blend_state( GLcontext * ctx )
 {
    i830ContextPtr i830 = I830_CONTEXT(ctx);
-   int iab = i830->state.Ctx[I830_CTXREG_IALPHAB];
-   int s1 = i830->state.Ctx[I830_CTXREG_STATE1];
+   int funcA;
+   int funcRGB;
+   int eqnA;
+   int eqnRGB;
+   int iab;
+   int s1;
 
-   if (INTEL_DEBUG&DEBUG_DRI)
-      fprintf(stderr, "%s\n", __FUNCTION__);
 
+   funcRGB = SRC_BLND_FACT( translate_blend_factor( ctx->Color.BlendSrcRGB ) )
+       | DST_BLND_FACT( translate_blend_factor( ctx->Color.BlendDstRGB ) );
 
-   iab &= ~(SRC_DST_ABLEND_MASK|ENABLE_INDPT_ALPHA_BLEND);
-   s1 &= ~SRC_DST_BLND_MASK;
-      
-   iab |= (ENABLE_SRC_ABLEND_FACTOR|ENABLE_DST_ABLEND_FACTOR);
-   s1 |= (ENABLE_SRC_BLND_FACTOR|ENABLE_DST_BLND_FACTOR);
-
-   if (ctx->Color.BlendEquationRGB == GL_MIN ||
-       ctx->Color.BlendEquationRGB == GL_MAX) {
-      sfactorA = sfactorRGB = dfactorA = dfactorRGB = GL_ONE;
+   switch(ctx->Color.BlendEquationRGB) {
+   case GL_FUNC_ADD:
+      eqnRGB = BLENDFUNC_ADD; 
+      break;
+   case GL_MIN:
+      eqnRGB = BLENDFUNC_MIN;
+      funcRGB = SRC_BLND_FACT(BLENDFACT_ONE) | DST_BLND_FACT(BLENDFACT_ONE);
+      break;
+   case GL_MAX: 
+      eqnRGB = BLENDFUNC_MAX;
+      funcRGB = SRC_BLND_FACT(BLENDFACT_ONE) | DST_BLND_FACT(BLENDFACT_ONE);
+      break;
+   case GL_FUNC_SUBTRACT: 
+      eqnRGB = BLENDFUNC_SUB; 
+      break;
+   case GL_FUNC_REVERSE_SUBTRACT:
+      eqnRGB = BLENDFUNC_RVRSE_SUB; 
+      break;
+   default:
+      fprintf( stderr, "[%s:%u] Invalid RGB blend equation (0x%04x).\n",
+	       __func__, __LINE__, ctx->Color.BlendEquationRGB );
+      return;
    }
 
-   iab |= SRC_ABLEND_FACT(translate_blend_factor(sfactorA)); 
-   iab |= DST_ABLEND_FACT(translate_blend_factor(dfactorA)); 
-   s1 |= SRC_BLND_FACT(translate_blend_factor(sfactorRGB)); 
-   s1 |= DST_BLND_FACT(translate_blend_factor(dfactorRGB)); 
 
-   if (sfactorA != sfactorRGB || dfactorA != dfactorRGB) 
+   funcA = SRC_ABLEND_FACT( translate_blend_factor( ctx->Color.BlendSrcA ) )
+       | DST_ABLEND_FACT( translate_blend_factor( ctx->Color.BlendDstA ) );
+
+   switch(ctx->Color.BlendEquationA) {
+   case GL_FUNC_ADD:
+      eqnA = BLENDFUNC_ADD; 
+      break;
+   case GL_MIN: 
+      eqnA = BLENDFUNC_MIN;
+      funcA = SRC_BLND_FACT(BLENDFACT_ONE) | DST_BLND_FACT(BLENDFACT_ONE);
+      break;
+   case GL_MAX: 
+      eqnA = BLENDFUNC_MAX;
+      funcA = SRC_BLND_FACT(BLENDFACT_ONE) | DST_BLND_FACT(BLENDFACT_ONE);
+      break;
+   case GL_FUNC_SUBTRACT: 
+      eqnA = BLENDFUNC_SUB; 
+      break;
+   case GL_FUNC_REVERSE_SUBTRACT:
+      eqnA = BLENDFUNC_RVRSE_SUB; 
+      break;
+   default:
+      fprintf( stderr, "[%s:%u] Invalid alpha blend equation (0x%04x).\n",
+	       __func__, __LINE__, ctx->Color.BlendEquationA );
+      return;
+   }
+
+   iab = eqnA | funcA
+       | _3DSTATE_INDPT_ALPHA_BLEND_CMD
+       | ENABLE_SRC_ABLEND_FACTOR | ENABLE_DST_ABLEND_FACTOR
+       | ENABLE_ALPHA_BLENDFUNC;
+   s1 = eqnRGB | funcRGB
+       | _3DSTATE_MODES_1_CMD
+       | ENABLE_SRC_BLND_FACTOR | ENABLE_DST_BLND_FACTOR
+       | ENABLE_COLR_BLND_FUNC;
+
+   if ( (eqnA | funcA) != (eqnRGB | funcRGB) )
       iab |= ENABLE_INDPT_ALPHA_BLEND;
    else
       iab |= DISABLE_INDPT_ALPHA_BLEND;
@@ -429,6 +455,54 @@ static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
       i830->state.Ctx[I830_CTXREG_IALPHAB] = iab;
       i830->state.Ctx[I830_CTXREG_STATE1] = s1;
    }
+
+   /* This will catch a logicop blend equation.  It will also ensure
+    * independant alpha blend is really in the correct state (either enabled
+    * or disabled) if blending is already enabled.
+    */
+
+   i830EvalLogicOpBlendState(ctx);
+
+   if (0) {
+      fprintf(stderr, "[%s:%u] STATE1: 0x%08x IALPHAB: 0x%08x blend is %sabled\n",
+	      __func__, __LINE__,
+	      i830->state.Ctx[I830_CTXREG_STATE1],
+	      i830->state.Ctx[I830_CTXREG_IALPHAB],
+	      (ctx->Color.BlendEnabled) ? "en" : "dis");
+   }
+}
+
+
+static void i830BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB,
+				      GLenum modeA) 
+{
+   if (INTEL_DEBUG&DEBUG_DRI)
+     fprintf(stderr, "%s -> %s, %s\n", __FUNCTION__,
+	     _mesa_lookup_enum_by_nr(modeRGB),
+	     _mesa_lookup_enum_by_nr(modeA));
+
+   (void) modeRGB;
+   (void) modeA;
+   i830_set_blend_state( ctx );
+}
+
+
+static void i830BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, 
+				  GLenum dfactorRGB, GLenum sfactorA,
+				  GLenum dfactorA )
+{
+   if (INTEL_DEBUG&DEBUG_DRI)
+     fprintf(stderr, "%s -> RGB(%s, %s) A(%s, %s)\n", __FUNCTION__,
+	     _mesa_lookup_enum_by_nr(sfactorRGB),
+	     _mesa_lookup_enum_by_nr(dfactorRGB),
+	     _mesa_lookup_enum_by_nr(sfactorA),
+	     _mesa_lookup_enum_by_nr(dfactorA));
+
+   (void) sfactorRGB;
+   (void) dfactorRGB;
+   (void) sfactorA;
+   (void) dfactorA;
+   i830_set_blend_state( ctx );
 }
 
 

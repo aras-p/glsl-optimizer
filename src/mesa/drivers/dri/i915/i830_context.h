@@ -169,12 +169,9 @@ i830AllocTexObj( struct gl_texture_object *tObj );
 
 /* i830_texblend.c
  */
-extern GLuint 
-i830SetBlend_GL1_2(i830ContextPtr i830, int unit, 
-		   GLenum envMode, GLenum format,
-		   GLuint texel_op,
-		   GLuint *state,
-		   const GLfloat *envcolor );
+extern GLuint i830SetTexEnvCombine(i830ContextPtr i830,
+    const struct gl_tex_env_combine_state * combine, GLint blendUnit,
+     GLuint texel_op, GLuint *state, const GLfloat *factor );
 
 extern void 
 i830EmitTextureBlend( i830ContextPtr i830 );

@@ -38,54 +38,12 @@
  * Mesa's Driver Functions
  ***************************************/
 
-/* This is the extension list explicitly enabled by the client and
- * excludes functionality available in Mesa and also excludes legacy
- * extensions.  It is recognized that in an open source driver, those
- * extensions will probably be re-enabled.
- */
-static const GLubyte *i830GetString( GLcontext *ctx, GLenum name )
+static const char * const card_extensions[] =
 {
-#if 0
-   if (name == GL_EXTENSIONS)
-      return 
-	 "GL_ARB_multitexture "
-	 "GL_ARB_texture_border_clamp "
-	 "GL_ARB_texture_compression "
-	 "GL_ARB_texture_env_add "
-	 "GL_ARB_texture_env_combine "
-	 "GL_ARB_texture_env_dot3 "
-	 "GL_ARB_texture_mirrored_repeat "
-	 "GL_ARB_transpose_matrix "
-	 "GL_ARB_vertex_buffer_object "
-	 "GL_ARB_vertex_program "
-	 "GL_ARB_window_pos "
-	 "GL_EXT_abgr "
-	 "GL_EXT_bgra "
-	 "GL_EXT_blend_color "
-	 "GL_EXT_blend_func_separate "
-	 "GL_EXT_blend_minmax "
-	 "GL_EXT_blend_subtract "
-	 "GL_EXT_clip_volume_hint "
-	 "GL_EXT_compiled_vertex_array "
-	 "GL_EXT_draw_range_elements "
-	 "GL_EXT_fog_coord "
-	 "GL_EXT_multi_draw_arrays "
-	 "GL_EXT_packed_pixels "
-	 "GL_EXT_rescale_normal "
-	 "GL_EXT_secondary_color "
-	 "GL_EXT_separate_specular_color "
-	 "GL_EXT_stencil_wrap "
-	 "GL_EXT_texture_env_add "
-	 "GL_EXT_texture_env_combine "
-	 "GL_EXT_texture_filter_anisotropic "
-	 "GL_IBM_texture_mirrored_repeat "
-	 "GL_MESA_ycbcr_texture "
-	 "GL_MESA_window_pos "
-	 "GL_NV_texgen_reflection "
-	 "GL_SGIS_generate_mipmap ";
-#endif 
-   return intelGetString( ctx, name );
-}
+   "GL_ARB_texture_env_crossbar",
+   "GL_NV_blend_square",
+   NULL
+};
 
 
 static void i830InitDriverFunctions( struct dd_function_table *functions )
@@ -93,7 +51,6 @@ static void i830InitDriverFunctions( struct dd_function_table *functions )
    intelInitDriverFunctions( functions );
    i830InitStateFuncs( functions );
    i830InitTextureFuncs( functions );
-   functions->GetString = i830GetString;
 }
 
 
@@ -152,6 +109,8 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 		       18 * sizeof(GLfloat) );
 
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
+
+   driInitExtensions( ctx, card_extensions, GL_FALSE );
 
    i830InitState( i830 );
 

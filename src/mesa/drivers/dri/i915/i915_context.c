@@ -45,14 +45,11 @@
  * Mesa's Driver Functions
  ***************************************/
 
-
 static const char * const card_extensions[] =
 {
    "GL_ARB_fragment_program",
-   "GL_ARB_texture_cube_map",
-   "GL_EXT_blend_equation_separate",
-   "GL_ATI_blend_equation_separate",
    "GL_ARB_point_parameters",
+   "GL_ARB_texture_cube_map",
    NULL
 };
 

@@ -113,640 +113,35 @@ static __inline__ GLuint GetTexelOp(GLint unit)
 }
 
 
-GLuint i830SetBlend_GL1_2(i830ContextPtr i830, int blendUnit, 
-			  GLenum envMode, GLenum format, GLuint texel_op,
-			  GLuint *state, const GLfloat *factor)
+/**
+ * Calculate the hardware instuctions to setup the current texture enviromnemt
+ * settings.  Since \c gl_texture_unit::_CurrentCombine is used, both
+ * "classic" texture enviroments and GL_ARB_texture_env_combine type texture
+ * environments are treated identically.
+ *
+ * \todo
+ * This function should return \c GLboolean.  When \c GL_FALSE is returned,
+ * it means that an environment is selected that the hardware cannot do.  This
+ * is the way the Radeon and R200 drivers work.
+ * 
+ * \todo
+ * Looking at i830_3d_regs.h, it seems the i830 can do part of
+ * GL_ATI_texture_env_combine3.  It can handle using \c GL_ONE and
+ * \c GL_ZERO as combine inputs (which the code already supports).  It can
+ * also handle the \c GL_MODULATE_ADD_ATI mode.  Is it worth investigating
+ * partial support for the extension?
+ */
+GLuint
+i830SetTexEnvCombine(i830ContextPtr i830,
+		     const struct gl_tex_env_combine_state * combine,
+		     GLint blendUnit,
+		     GLuint texel_op,
+		     GLuint *state,
+		     const GLfloat *factor )
 {
-   if(INTEL_DEBUG&DEBUG_TEXTURE)
-      fprintf(stderr, "%s %s %s texel_op(0x%x)\n",
-	      __FUNCTION__,
-	      _mesa_lookup_enum_by_nr(format),
-	      _mesa_lookup_enum_by_nr(envMode),
-	      texel_op);
+   const GLuint numColorArgs = combine->_NumArgsRGB;
+   const GLuint numAlphaArgs = combine->_NumArgsA;
 
-   switch(envMode) {
-   case GL_REPLACE:
-      switch(format) {
-      case GL_ALPHA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 return 4;
-
-      case GL_LUMINANCE:
-      case GL_RGB:
-      case GL_YCBCR_MESA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 4;
-
-      case GL_INTENSITY:
-      case GL_LUMINANCE_ALPHA:
-      case GL_RGBA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 return 4;
-
-      default:
-	 /* Always set to passthru if something is funny */
-	 return pass_through( state, blendUnit );
-      }
-
-   case GL_MODULATE:
-      switch(format) {
-      case GL_ALPHA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 5;
-
-      case GL_LUMINANCE:
-      case GL_RGB:
-      case GL_YCBCR_MESA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 5;
-
-      case GL_INTENSITY:
-      case GL_LUMINANCE_ALPHA:
-      case GL_RGBA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 6;
-
-      default:
-	 /* Always set to passthru if something is funny */
-	 return pass_through( state, blendUnit );
-      }
-
-   case GL_DECAL:
-      switch(format) {
-      case GL_RGB:
-      case GL_YCBCR_MESA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 4;
-
-      case GL_RGBA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_BLEND);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG0 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_REPLICATE_ALPHA |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 6;
-      default:
-	 /* Always set to passthru if something is funny */
-	 return pass_through( state, blendUnit );
-      }
-
-   case GL_BLEND:
-      switch(format) {
-      case GL_ALPHA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 5;
-
-      case GL_LUMINANCE:
-      case GL_RGB:
-      case GL_YCBCR_MESA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_BLEND);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG0 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_FACTOR_N);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return emit_factor( blendUnit, state, 6, factor );
-
-      case GL_INTENSITY:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_BLEND);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_BLEND);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG0 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_FACTOR_N);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG0 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[6] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_FACTOR_N);
-	 state[7] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return emit_factor( blendUnit, state, 8, factor );
-
-
-      case GL_LUMINANCE_ALPHA:
-      case GL_RGBA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_BLEND);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG0 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_FACTOR_N);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[6] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return emit_factor( blendUnit, state, 7, factor );
-
-      default:
-	 /* Always set to passthru if something is funny */
-	 return pass_through( state, blendUnit );
-      }
-
-   case GL_ADD:
-      switch(format) {
-      case GL_ALPHA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 5;
-
-      case GL_LUMINANCE:
-      case GL_RGB:
-      case GL_YCBCR_MESA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ADD);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ARG1);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 5;
-
-      case GL_INTENSITY:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ADD);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ADD);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 6;
-
-      case GL_LUMINANCE_ALPHA:
-      case GL_RGBA:
-	 state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     DISABLE_TEX_CNTRL_STAGE |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_ADD);
-	 state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     ENABLE_TEXOUTPUT_WRT_SEL |
-		     TEXOP_OUTPUT_CURRENT |
-		     TEXOP_SCALE_1X |
-		     TEXOP_MODIFY_PARMS |
-		     TEXBLENDOP_MODULATE);
-	 state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_COLOR |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 state[4] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG1 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     texel_op);
-	 state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		     TEXPIPE_ALPHA |
-		     TEXBLEND_ARG2 |
-		     TEXBLENDARG_MODIFY_PARMS |
-		     TEXBLENDARG_CURRENT);
-	 return 6;
-
-      default:
-	 /* Always set to passthru if something is funny */
-	 return pass_through( state, blendUnit );
-      }
-
-   default:
-      /* Always set to passthru if something is funny */
-      return pass_through( state, blendUnit );
-   }
-}
-
-static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
-				   const struct gl_texture_unit *texUnit, 
-				   GLint blendUnit,
-				   GLuint texel_op,
-				   GLuint *state,
-				   const GLfloat *factor )
-{
    GLuint blendop;
    GLuint ablendop;
    GLuint args_RGB[3];
@@ -755,6 +150,23 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
    GLuint alpha_shift;
    GLboolean need_factor = 0;
    int i;
+   unsigned used;
+   static const GLuint tex_blend_rgb[3] = {
+      TEXPIPE_COLOR | TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS,
+      TEXPIPE_COLOR | TEXBLEND_ARG2 | TEXBLENDARG_MODIFY_PARMS,
+      TEXPIPE_COLOR | TEXBLEND_ARG0 | TEXBLENDARG_MODIFY_PARMS,
+   };
+   static const GLuint tex_blend_a[3] = {
+      TEXPIPE_ALPHA | TEXBLEND_ARG1 | TEXBLENDARG_MODIFY_PARMS,
+      TEXPIPE_ALPHA | TEXBLEND_ARG2 | TEXBLENDARG_MODIFY_PARMS,
+      TEXPIPE_ALPHA | TEXBLEND_ARG0 | TEXBLENDARG_MODIFY_PARMS,
+   };
+   static const GLuint op_rgb[4] = {
+      0,
+      TEXBLENDARG_INV_ARG,
+      TEXBLENDARG_REPLICATE_ALPHA,
+      TEXBLENDARG_REPLICATE_ALPHA | TEXBLENDARG_INV_ARG,
+   };
 
    if(INTEL_DEBUG&DEBUG_TEXTURE)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -764,9 +176,9 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
     * scale factor, but the ARB version (and the version in OpenGL
     * 1.3) does.
     */
-   switch (texUnit->Combine.ModeRGB) {
+   switch (combine->ModeRGB) {
    case GL_DOT3_RGB_EXT:
-      alpha_shift = texUnit->Combine.ScaleShiftA;
+      alpha_shift = combine->ScaleShiftA;
       rgb_shift = 0;
       break;
 
@@ -776,13 +188,13 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
       break;
 
    default:
-      rgb_shift = texUnit->Combine.ScaleShiftRGB;
-      alpha_shift = texUnit->Combine.ScaleShiftA;
+      rgb_shift = combine->ScaleShiftRGB;
+      alpha_shift = combine->ScaleShiftA;
       break;
    }
 
 
-   switch(texUnit->Combine.ModeRGB) {
+   switch(combine->ModeRGB) {
    case GL_REPLACE: 
       blendop = TEXBLENDOP_ARG1;
       break;
@@ -818,9 +230,15 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
 
    /* Handle RGB args */
    for(i = 0; i < 3; i++) {
-      switch(texUnit->Combine.SourceRGB[i]) {
+      switch(combine->SourceRGB[i]) {
       case GL_TEXTURE: 
 	 args_RGB[i] = texel_op;
+	 break;
+      case GL_TEXTURE0:
+      case GL_TEXTURE1:
+      case GL_TEXTURE2:
+      case GL_TEXTURE3:
+	 args_RGB[i] = GetTexelOp( combine->SourceRGB[i] - GL_TEXTURE0 );
 	 break;
       case GL_CONSTANT:
 	 args_RGB[i] = TEXBLENDARG_FACTOR_N; 
@@ -836,7 +254,7 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
 	 return pass_through( state, blendUnit );
       }
 
-      switch(texUnit->Combine.OperandRGB[i]) {
+      switch(combine->OperandRGB[i]) {
       case GL_SRC_COLOR: 
 	 args_RGB[i] |= 0;
 	 break;
@@ -863,15 +281,15 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
     * Note - the global factor is set up with alpha == .5, so 
     * the alpha part of the DOT4 calculation should be zero.
     */
-   if ( texUnit->Combine.ModeRGB == GL_DOT3_RGBA_EXT || 
-	texUnit->Combine.ModeRGB == GL_DOT3_RGBA ) {
+   if ( combine->ModeRGB == GL_DOT3_RGBA_EXT || 
+	combine->ModeRGB == GL_DOT3_RGBA ) {
       ablendop = TEXBLENDOP_DOT4;
       args_A[0] = TEXBLENDARG_FACTOR; /* the global factor */
       args_A[1] = TEXBLENDARG_FACTOR;
       args_A[2] = TEXBLENDARG_FACTOR;
    }
    else {
-      switch(texUnit->Combine.ModeA) {
+      switch(combine->ModeA) {
       case GL_REPLACE: 
 	 ablendop = TEXBLENDOP_ARG1;
 	 break;
@@ -899,9 +317,15 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
 
       /* Handle A args */
       for(i = 0; i < 3; i++) {
-	 switch(texUnit->Combine.SourceA[i]) {
+	 switch(combine->SourceA[i]) {
 	 case GL_TEXTURE: 
 	    args_A[i] = texel_op;
+	    break;
+	 case GL_TEXTURE0:
+	 case GL_TEXTURE1:
+	 case GL_TEXTURE2:
+	 case GL_TEXTURE3:
+	    args_A[i] = GetTexelOp( combine->SourceA[i] - GL_TEXTURE0 );
 	    break;
 	 case GL_CONSTANT:
 	    args_A[i] = TEXBLENDARG_FACTOR_N; 
@@ -917,7 +341,7 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
 	    return pass_through( state, blendUnit );
 	 }
 
-	 switch(texUnit->Combine.OperandA[i]) {
+	 switch(combine->OperandA[i]) {
 	 case GL_SRC_ALPHA: 
 	    args_A[i] |= 0;
 	    break;
@@ -941,59 +365,38 @@ static GLuint i830SetTexEnvCombine(i830ContextPtr i830,
     */
 
 
-   /* Build color pipeline */
+   /* Build color & alpha pipelines */
 
-   state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       ENABLE_TEXOUTPUT_WRT_SEL |
-	       TEXOP_OUTPUT_CURRENT |
-	       DISABLE_TEX_CNTRL_STAGE |
-	       TEXOP_MODIFY_PARMS |
-	       blendop);
-   state[1] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       TEXBLEND_ARG1 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_RGB[0]);
-   state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       TEXBLEND_ARG2 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_RGB[1]);
-   state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       TEXBLEND_ARG0 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_RGB[2]);
+   used = 0;
+   state[used++] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
+		    TEXPIPE_COLOR |
+		    ENABLE_TEXOUTPUT_WRT_SEL |
+		    TEXOP_OUTPUT_CURRENT |
+		    DISABLE_TEX_CNTRL_STAGE |
+		    TEXOP_MODIFY_PARMS |
+		    blendop);
+   state[used++] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
+		    TEXPIPE_ALPHA |
+		    ENABLE_TEXOUTPUT_WRT_SEL |
+		    TEXOP_OUTPUT_CURRENT |
+		    TEXOP_MODIFY_PARMS |
+		    ablendop);
 
-   /* Build Alpha pipeline */
-   state[4] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       ENABLE_TEXOUTPUT_WRT_SEL |
-	       TEXOP_OUTPUT_CURRENT |
-	       TEXOP_MODIFY_PARMS |
-	       ablendop);
-   state[5] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       TEXBLEND_ARG1 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_A[0]);
-   state[6] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       TEXBLEND_ARG2 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_A[1]);
-   state[7] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       TEXBLEND_ARG0 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       args_A[2]);
+   for ( i = 0 ; i < numColorArgs ; i++ ) {
+      state[used++] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
+		       tex_blend_rgb[i] | args_RGB[i]);
+   }
+
+   for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+      state[used++] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
+		       tex_blend_a[i] | args_A[i]);
+   }
 
 
    if (need_factor) 
-      return emit_factor( blendUnit, state, 8, factor );
+      return emit_factor( blendUnit, state, used, factor );
    else 
-      return 8;
+      return used;
 }
 
 
@@ -1010,17 +413,9 @@ static void emit_texblend( i830ContextPtr i830, GLuint unit, GLuint blendUnit,
 
    /* Update i830->state.TexBlend
     */ 
-   if (texUnit->EnvMode == GL_COMBINE) {
-      tmp_sz = i830SetTexEnvCombine(i830, texUnit, blendUnit, 
-				    GetTexelOp(unit), tmp,
-				    texUnit->EnvColor );
-   } 
-   else {
-      tmp_sz = i830SetBlend_GL1_2(i830, blendUnit, texUnit->EnvMode,
-				  t->intel.image[0][0].internalFormat, 
-				  GetTexelOp(unit), tmp,
-				  texUnit->EnvColor );
-   }
+   tmp_sz = i830SetTexEnvCombine(i830, texUnit->_CurrentCombine, blendUnit, 
+				 GetTexelOp(unit), tmp,
+				 texUnit->EnvColor );
 
    if (last_stage) 
       tmp[0] |= TEXOP_LAST_STAGE;
