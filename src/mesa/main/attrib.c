@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.53 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: attrib.c,v 1.54 2001/08/07 21:46:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1127,17 +1127,17 @@ _mesa_PopClientAttrib(void)
          case GL_CLIENT_PACK_BIT:
             MEMCPY( &ctx->Pack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
-	    ctx->NewState = _NEW_PACKUNPACK;
+	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_UNPACK_BIT:
             MEMCPY( &ctx->Unpack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
-	    ctx->NewState = _NEW_PACKUNPACK;
+	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_VERTEX_ARRAY_BIT:
             MEMCPY( &ctx->Array, attr->data,
 		    sizeof(struct gl_array_attrib) );
-	    ctx->NewState = _NEW_ARRAY;
+	    ctx->NewState |= _NEW_ARRAY;
             break;
          default:
             _mesa_problem( ctx, "Bad attrib flag in PopClientAttrib");
