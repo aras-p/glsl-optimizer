@@ -448,7 +448,7 @@ struct _glapi_table
    void (GLAPIENTRYP MultTransposeMatrixfARB)(const GLfloat * m); /* 410 */
    void (GLAPIENTRYP MultTransposeMatrixdARB)(const GLdouble * m); /* 411 */
    void (GLAPIENTRYP SampleCoverageARB)(GLclampf value, GLboolean invert); /* 412 */
-   void (GLAPIENTRYP __unused413)(void); /* 413 */
+   void (GLAPIENTRYP DrawBuffersARB)(GLsizei n, const GLenum * bufs); /* 413 */
    void (GLAPIENTRYP PolygonOffsetEXT)(GLfloat factor, GLfloat bias); /* 414 */
    void (GLAPIENTRYP GetTexFilterFuncSGIS)(GLenum target, GLenum filter, GLfloat * weights); /* 415 */
    void (GLAPIENTRYP TexFilterFuncSGIS)(GLenum target, GLenum filter, GLsizei n, const GLfloat * weights); /* 416 */
