@@ -13,6 +13,7 @@ CFLAGS = -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -D_POSIX_SO
 
 CXXFLAGS = -Wall -g -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE 
 
+ASM_SOURCES = $(X86_SOURCES)
 
 # Library/program dependencies
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lexpat -ldl

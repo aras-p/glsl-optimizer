@@ -15,7 +15,7 @@ CXXFLAGS = -Wall -g -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=1993
 
 
 
-#ASM_SOURCES = $(X86_SOURCES)
+ASM_SOURCES = 
 
 # Library/program dependencies
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lexpat -ldl
