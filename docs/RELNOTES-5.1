@@ -79,6 +79,41 @@ will advertise GL_VERSION = "1.5".
  
 
 
+Vertex/Fragment program debugger
+--------------------------------
+
+GL_MESA_program_debug is an experimental extension to support
+interactive debugging of vertex and fragment programs.  See the
+docs/MESA_program_debug.spec file for details.
+
+The bulk of the vertex/fragment program debugger is implemented
+outside of Mesa.  The GL_MESA_program_debug extension just has minimal
+hooks for stopping running programs and inspecting programs.
+
+The progs/tests/debugger.c (only in CVS) program is an example of how
+the extension can be used.  Presently, the debugger code and demo code
+is in the same file.  Eventually the debugger code should be moved
+into a reusable module.
+
+As it is now, the demo lets you set breakpoings in vertex/fragment
+programs, single step, and print intermediate register values.  It's
+basically just a proof of concept.
+
+
+
+Directory tree reorganization
+-----------------------------
+
+The directory structure for Mesa has been overhauled to improve its layout.
+All source code for Mesa, GLU, GLUT, etc is now under the src/ directory
+in appropriate subdirectories.
+
+The Mesa source code and drivers has been reorganized under src/mesa/.
+
+All demonstration programs and tests are now in subdirectories under progs/.
+
+
+
 Build System Changes
 --------------------
 
@@ -96,19 +131,6 @@ The "old style" makefile system has been updated:
       bugs in it, but it's been tested on Linux, SunOS 5.8 and IRIX 6.5.
       Improvements/contributes are greatly appreciated.
    3. The Makefile.X11 files have been cleaned up in various ways
-
-
-
-Directory tree reorganization
------------------------------
-
-The directory structure for Mesa has been overhauled to improve its layout.
-All source code for Mesa, GLU, GLUT, etc is now under the src/ directory
-in appropriate subdirectories.
-
-The Mesa source code and drivers has been reorganized under src/mesa/.
-
-All demonstration programs and tests are now in subdirectories under progs/.
 
 
 
