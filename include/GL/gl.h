@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.14 1999/10/20 06:56:40 tjump Exp $ */
+/* $Id: gl.h,v 1.15 1999/10/21 06:04:20 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,7 @@
 #endif
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
+#  pragma warning( disable : 4068 ) /* unknown pragma */
 #	pragma warning( disable : 4244 ) /* '=' : conversion from 'const double ' to 'float ', possible loss of data */
 #	pragma warning( disable : 4018 ) /* '<' : signed/unsigned mismatch */
 #	pragma warning( disable : 4305 ) /* '=' : truncation from 'const double ' to 'float ' */
