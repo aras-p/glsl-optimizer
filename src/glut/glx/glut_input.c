@@ -266,6 +266,10 @@ __glutProcessDeviceEvents(XEvent * event)
     JOYINFOEX info;
     JOYCAPS joyCaps;
 
+    memset(&info, 0, sizeof(JOYINFOEX)); 
+    info.dwSize = sizeof(JOYINFOEX); 
+    info.dwFlags = JOY_RETURNALL;
+
     if (joyGetPosEx(JOYSTICKID1,&info) != JOYERR_NOERROR) {
       __glutHasJoystick = 1;
       joyGetDevCaps(JOYSTICKID1, &joyCaps, sizeof(joyCaps));
