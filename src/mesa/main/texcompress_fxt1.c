@@ -40,14 +40,15 @@
 #include "texstore.h"
 
 
-GLint compress_fxt1 (GLcontext *ctx,
-                     GLint srcWidth,
-                     GLint srcHeight,
-                     GLenum srcFormat,
-                     const GLvoid *pixels,
-                     GLint srcRowStride,
-                     GLvoid *dst,
-                     GLint dstRowStride);
+static GLint
+compress_fxt1 (GLcontext *ctx,
+               GLint srcWidth,
+               GLint srcHeight,
+               GLenum srcFormat,
+               const GLvoid *pixels,
+               GLint srcRowStride,
+               GLvoid *dst,
+               GLint dstRowStride);
 
 
 /**
@@ -268,14 +269,15 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
 };
 
 
-GLint compress_fxt1 (GLcontext *ctx,
-                     GLint srcWidth,
-                     GLint srcHeight,
-                     GLenum srcFormat,
-                     const GLvoid *pixels,
-                     GLint srcRowStride,
-                     GLvoid *dst,
-                     GLint dstRowStride)
+static GLint
+compress_fxt1 (GLcontext *ctx,
+               GLint srcWidth,
+               GLint srcHeight,
+               GLenum srcFormat,
+               const GLvoid *pixels,
+               GLint srcRowStride,
+               GLvoid *dst,
+               GLint dstRowStride)
 {
    /* here be dragons */
    return -1;
