@@ -33,7 +33,8 @@ default:
 # BeOS driver target
 beos: depend subdirs mesa.a
 	cd drivers/beos; $(MAKE)
-	
+
+
 ######################################################################
 # Linux solo DRI drivers
 
@@ -175,9 +176,8 @@ tags:
 
 clean:
 	-rm -f */*.o
-	rm -f depend mesa.a
-	for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE) clean) ; \
-	done
+	-rm -f depend mesa.a
+	-rm -f drivers/*/*.o
+	(cd drivers/dri ; $(MAKE) clean)
 
 include depend
