@@ -210,7 +210,7 @@ void _tnl_do_EvalCoord2f( GLcontext* ctx, GLfloat u, GLfloat v )
       ASSIGN_4V(vertex, 0, 0, 0, 1);
 
       if (ctx->Eval.AutoNormal) {
-	 GLfloat normal[3];
+	 GLfloat normal[4];
          GLfloat du[4], dv[4];
 
          _math_de_casteljau_surf(map->Points, vertex, du, dv, uu, vv, 
