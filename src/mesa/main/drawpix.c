@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.33 2000/09/08 21:28:04 brianp Exp $ */
+/* $Id: drawpix.c,v 1.34 2000/09/12 21:09:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -712,6 +712,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    GLboolean quickDraw;
    GLfloat *convImage = NULL;
    GLuint transferOps = ctx->ImageTransferState;
+
+   if (!_mesa_is_legal_format_and_type(format, type)) {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
+      return;
+   }
 
    /* Try an optimized glDrawPixels first */
    if (fast_draw_pixels(ctx, x, y, width, height, format, type, pixels))
