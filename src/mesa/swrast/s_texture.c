@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.80 2003/02/23 04:10:54 brianp Exp $ */
+/* $Id: s_texture.c,v 1.81 2003/02/27 19:40:45 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2928,34 +2928,34 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
    const GLenum format = t->Image[t->BaseLevel]->Format;
 
    if (!t->Complete) {
-      return null_sample_func;
+      return &null_sample_func;
    }
 
    switch (t->Target) {
    case GL_TEXTURE_1D:
       if (format == GL_DEPTH_COMPONENT) {
-         return sample_depth_texture;
+         return &sample_depth_texture;
       }
       else if (needLambda) {
-         return sample_lambda_1d;
+         return &sample_lambda_1d;
       }
       else if (t->MinFilter == GL_LINEAR) {
-         return sample_linear_1d;
+         return &sample_linear_1d;
       }
       else {
          ASSERT(t->MinFilter == GL_NEAREST);
-         return sample_nearest_1d;
+         return &sample_nearest_1d;
       }
       break;
    case GL_TEXTURE_2D:
       if (format == GL_DEPTH_COMPONENT) {
-         return sample_depth_texture;
+         return &sample_depth_texture;
       }
       else if (needLambda) {
-         return sample_lambda_2d;
+         return &sample_lambda_2d;
       }
       else if (t->MinFilter == GL_LINEAR) {
-         return sample_linear_2d;
+         return &sample_linear_2d;
       }
       else {
          GLint baseLevel = t->BaseLevel;
@@ -2964,59 +2964,59 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
              t->WrapT == GL_REPEAT &&
              t->Image[baseLevel]->Border == 0 &&
              t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGB) {
-            return opt_sample_rgb_2d;
+            return &opt_sample_rgb_2d;
          }
          else if (t->WrapS == GL_REPEAT &&
                   t->WrapT == GL_REPEAT &&
                   t->Image[baseLevel]->Border == 0 &&
                   t->Image[baseLevel]->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
-            return opt_sample_rgba_2d;
+            return &opt_sample_rgba_2d;
          }
          else {
-            return sample_nearest_2d;
+            return &sample_nearest_2d;
          }
       }
       break;
    case GL_TEXTURE_3D:
       if (needLambda) {
-         return sample_lambda_3d;
+         return &sample_lambda_3d;
       }
       else if (t->MinFilter == GL_LINEAR) {
-         return sample_linear_3d;
+         return &sample_linear_3d;
       }
       else {
          ASSERT(t->MinFilter == GL_NEAREST);
-         return sample_nearest_3d;
+         return &sample_nearest_3d;
       }
       break;
    case GL_TEXTURE_CUBE_MAP:
       if (needLambda) {
-         return sample_lambda_cube;
+         return &sample_lambda_cube;
       }
       else if (t->MinFilter == GL_LINEAR) {
-         return sample_linear_cube;
+         return &sample_linear_cube;
       }
       else {
          ASSERT(t->MinFilter == GL_NEAREST);
-         return sample_nearest_cube;
+         return &sample_nearest_cube;
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
       if (needLambda) {
-         return sample_lambda_rect;
+         return &sample_lambda_rect;
       }
       else if (t->MinFilter == GL_LINEAR) {
-         return sample_linear_rect;
+         return &sample_linear_rect;
       }
       else {
          ASSERT(t->MinFilter == GL_NEAREST);
-         return sample_nearest_rect;
+         return &sample_nearest_rect;
       }
       break;
    default:
       _mesa_problem(ctx,
                     "invalid target in _swrast_choose_texture_sample_func");
-      return null_sample_func;
+      return &null_sample_func;
    }
 }
 
