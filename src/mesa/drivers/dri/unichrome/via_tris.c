@@ -79,9 +79,6 @@ static void __inline__ via_draw_triangle(viaContextPtr vmesa,
     int j;
     
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     COPY_DWORDS(j, vb, vertsize, v0);
     COPY_DWORDS(j, vb, vertsize, v1);
     COPY_DWORDS(j, vb, vertsize, v2);
@@ -101,9 +98,6 @@ static void __inline__ via_draw_quad(viaContextPtr vmesa,
     GLuint *vb = viaCheckDma(vmesa, 6 * 4 * vertsize);
     int j;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     COPY_DWORDS(j, vb, vertsize, v0);
     COPY_DWORDS(j, vb, vertsize, v1);
     COPY_DWORDS(j, vb, vertsize, v3);
@@ -125,9 +119,6 @@ static __inline__ void via_draw_point(viaContextPtr vmesa,
     GLuint *vb = viaCheckDma(vmesa, 4 * vertsize);
     int j;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     COPY_DWORDS(j, vb, vertsize, v0);
     vmesa->dmaLow += 4 * vertsize;
     vmesa->primitiveRendered = GL_TRUE;
@@ -147,9 +138,6 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
     GLuint *vb = viaCheckDma(vmesa, 2 * 4 * vertsize);
     int j;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     COPY_DWORDS(j, vb, vertsize, v0);
     COPY_DWORDS(j, vb, vertsize, v1);
     vmesa->dmaLow += 2 * 4 * vertsize;
@@ -425,9 +413,6 @@ via_fallback_tri(viaContextPtr vmesa,
 {    
     GLcontext *ctx = vmesa->glCtx;
     SWvertex v[3];
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     via_translate_vertex(ctx, v0, &v[0]);
     via_translate_vertex(ctx, v1, &v[1]);
     via_translate_vertex(ctx, v2, &v[2]);
@@ -442,9 +427,6 @@ via_fallback_line(viaContextPtr vmesa,
 {
     GLcontext *ctx = vmesa->glCtx;
     SWvertex v[2];
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     via_translate_vertex(ctx, v0, &v[0]);
     via_translate_vertex(ctx, v1, &v[1]);
     _swrast_Line(ctx, &v[0], &v[1]);
@@ -457,9 +439,6 @@ via_fallback_point(viaContextPtr vmesa,
 {
     GLcontext *ctx = vmesa->glCtx;
     SWvertex v[1];
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     via_translate_vertex(ctx, v0, &v[0]);
     _swrast_Point(ctx, &v[0]);
 }
@@ -570,9 +549,6 @@ static void viaRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     /* Render the new vertices as an unclipped polygon.
      */
     {
@@ -590,9 +566,6 @@ static void viaRenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj)
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     vmesa->primitiveRendered = GL_TRUE;
     
     tnl->Driver.Render.Line(ctx, ii, jj);
@@ -612,9 +585,6 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
     GLuint *temp2;
     int i,j;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     vmesa->primitiveRendered = GL_TRUE;
 
     for (i = 2; i < n; i++) {
@@ -743,9 +713,6 @@ static void emit_all_state(viaContextPtr vmesa)
     GLuint i = 0;
     GLuint j = 0;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     
     *vb++ = HC_HEADER2;
     *vb++ = (HC_ParaType_NotTex << 16);
@@ -1413,16 +1380,8 @@ void viaRasterPrimitiveFinish(GLcontext *ctx)
         volatile GLuint *pnEngBase = (volatile GLuint *)((GLuint)pnMMIOBase + 0x400);
         int nStatus = *pnEngBase;
 	if (((nStatus & 0xFFFEFFFF) == 0x00020000)) {
-#ifdef PERFORMANCE_MEASURE    
-	    idle++;
-#endif
 	    viaFlushPrims(vmesa);        
 	}
-#ifdef PERFORMANCE_MEASURE    
-	else {
-	    busy++;
-	}
-#endif
     }	
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }

@@ -123,9 +123,6 @@ TAG(clip_line)(GLcontext *ctx, GLuint i, GLuint j, GLubyte mask)
     GLfloat (*coord)[4] = VB->ClipPtr->data;
     GLuint ii = i, jj = j, p;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif
     VB->LastClipped = VB->Count;
 
     if (mask & 0x3f) {
@@ -173,9 +170,6 @@ TAG(clip_tri)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask)
     GLubyte *clipmask = VB->ClipMask;
     GLuint n = 3;
 
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     ASSIGN_3V(inlist, v2, v0, v1); /* pv rotated to slot zero */
 
     VB->LastClipped = VB->Count;
@@ -229,9 +223,6 @@ TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
     GLubyte *clipmask = VB->ClipMask;
     GLuint n = 4;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     ASSIGN_4V(inlist, v3, v0, v1, v2); /* pv rotated to slot zero */
 
     VB->LastClipped = VB->Count;

@@ -69,12 +69,7 @@
 GLuint VIA_DEBUG = 0;
 #endif
 #define DMA_SIZE 2
-GLuint VIA_PERFORMANCE = 0;
-#ifdef PERFORMANCE_MEASURE
-GLuint busy = 0;
-GLuint idle = 0;
-hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
-#endif
+
 /*=* John Sheng [2003.5.31]  agp tex *=*/
 
 static GLboolean
@@ -557,22 +552,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
 
 	
-#ifdef PERFORMANCE_MEASURE
-    if (getenv("VIA_PERFORMANCE"))
-	VIA_PERFORMANCE = 1;
-    else
-	VIA_PERFORMANCE = 0;	
-	
-    {
-	int i, j;
-	for (i = 0; i < HASH_TABLE_SIZE; i++) {
-	    for (j = 0; j < HASH_TABLE_DEPTH; j ++) {
-		hash_table[i][j].count = 0;
-		sprintf(hash_table[i][j].func, "%s", "NULL");
-	    }
-	}
-    }
-#endif	
 
     /* I don't understand why this isn't working:
      */
@@ -639,12 +618,6 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
         FREE(vmesa);
     }
     
-    P_M_R;
-
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) fprintf(stderr, "idle = %d\n", idle);
-    if (VIA_PERFORMANCE) fprintf(stderr, "busy = %d\n", busy);
-#endif    
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 

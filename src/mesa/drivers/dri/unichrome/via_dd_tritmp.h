@@ -77,9 +77,6 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
     LOCAL_VARS(3);
 
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif
     
     v[0] = (VERTEX *)GET_VERTEX(e0);
     v[1] = (VERTEX *)GET_VERTEX(e1);
@@ -308,9 +305,6 @@ static void TAG(quad)(GLcontext *ctx,
     GLuint facing;
     LOCAL_VARS(4);
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif        
     v[0] = (VERTEX *)GET_VERTEX(e0);
     v[1] = (VERTEX *)GET_VERTEX(e1);
     v[2] = (VERTEX *)GET_VERTEX(e2);
@@ -554,9 +548,6 @@ static void TAG(quad)(GLcontext *ctx, GLuint e0,
 		      GLuint e1, GLuint e2, GLuint e3)
 {
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     if (DO_UNFILLED) {
         struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
         GLubyte ef1 = VB->EdgeFlag[e1];
@@ -584,9 +575,6 @@ static void TAG(line)(GLcontext *ctx, GLuint e0, GLuint e1)
     VERTEX *v[2];
     LOCAL_VARS(2);
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     v[0] = (VERTEX *)GET_VERTEX(e0);
     v[1] = (VERTEX *)GET_VERTEX(e1);
 
@@ -631,9 +619,6 @@ static void TAG(points)(GLcontext *ctx, GLuint first, GLuint last)
     int i;
     LOCAL_VARS(1);
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     if (VB->Elts == 0) {
         for (i = first; i < last; i++) {
 	    if (VB->ClipMask[i] == 0) {

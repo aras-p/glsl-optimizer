@@ -66,9 +66,6 @@ static void TAG(render_points)(GLcontext *ctx,
 {
     LOCAL_VARS;
     (void)flags;
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif
 
     RESET_OCCLUSION;
     INIT(GL_POINTS);
@@ -85,9 +82,6 @@ static void TAG(render_lines)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif
     RESET_OCCLUSION;
     INIT(GL_LINES);
     for (j = start + 1; j < count; j += 2) {
@@ -106,9 +100,6 @@ static void TAG(render_line_strip)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif
     RESET_OCCLUSION;
     INIT(GL_LINES);
 
@@ -132,9 +123,6 @@ static void TAG(render_line_loop)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     RESET_OCCLUSION;
     INIT(GL_LINES);
 
@@ -166,9 +154,6 @@ static void TAG(render_triangles)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     if (NEED_EDGEFLAG_SETUP) {
         for (j = start + 2; j < count; j += 3) {
@@ -196,9 +181,6 @@ static void TAG(render_tri_strip)(GLcontext *ctx,
     GLuint parity = 0;
     LOCAL_VARS;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     
     if (NEED_EDGEFLAG_SETUP) {
@@ -239,9 +221,6 @@ static void TAG(render_tri_fan)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     if (NEED_EDGEFLAG_SETUP) {
         for (j = start + 2; j < count; j++) {
@@ -284,9 +263,6 @@ static void TAG(render_poly)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     
     if (NEED_EDGEFLAG_SETUP) {
@@ -360,9 +336,6 @@ static void TAG(render_quads)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     if (NEED_EDGEFLAG_SETUP) {
         for (j = start + 3; j < count; j += 4) {
@@ -390,9 +363,6 @@ static void TAG(render_quad_strip)(GLcontext *ctx,
     LOCAL_VARS;
     (void)flags;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE    
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     INIT(GL_TRIANGLES);
     if (NEED_EDGEFLAG_SETUP) {
         for (j = start + 3; j < count; j += 2) {

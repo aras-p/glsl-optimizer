@@ -291,70 +291,7 @@ struct via_context_t {
 };
 /*#define DMA_OFFSET 16*/
 #define DMA_OFFSET 32
-/*#define PERFORMANCE_MEASURE*/
 
-extern GLuint VIA_PERFORMANCE;
-
-#ifdef PERFORMANCE_MEASURE
-#define HASH_TABLE_SIZE 1000
-#define HASH_TABLE_DEPTH 10
-typedef struct {
-    char func[50];
-    GLuint count;
-} hash_element;
-extern hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
-#define P_M                                                                      \
-    do {                                                                         \
-	GLuint h_index,h_depth;                                                  \
-	h_index = (GLuint)(((GLuint) __FUNCTION__)%HASH_TABLE_SIZE);             \
-	for (h_depth = 0; h_depth < HASH_TABLE_DEPTH; h_depth++) {                \
-	    if (!strcmp(hash_table[h_index][h_depth].func, "NULL")) {             \
-		sprintf(hash_table[h_index][h_depth].func, "%s", __FUNCTION__);  \
-		hash_table[h_index][h_depth].count++;                            \
-		break;                                                           \
-	    }                                                                    \
-	    else if (!strcmp(hash_table[h_index][h_depth].func, __FUNCTION__)) {  \
-		hash_table[h_index][h_depth].count++;                            \
-		break;                                                           \
-	    }                                                                    \
-	}                                                                        \
-    } while (0)
-
-#define P_M_X                                                                    	\
-    do {                                                                         	\
-	GLuint h_index,h_depth;                                                  	\
-	char str[80];                                                            	\
-	strcpy(str, __FUNCTION__);                                               	\
-	h_index = (GLuint)(((GLuint) __FUNCTION__)%HASH_TABLE_SIZE);             	\
-	for (h_depth = 0; h_depth < HASH_TABLE_DEPTH; h_depth++) {                	\
-	    if (!strcmp(hash_table[h_index][h_depth].func, "NULL")) {             	\
-		sprintf(hash_table[h_index][h_depth].func, "%s_X", __FUNCTION__);  	\
-		hash_table[h_index][h_depth].count++;                              	\
-		break;                                                           	\
-	    }                                                                    	\
-	    else if (!strcmp(hash_table[h_index][h_depth].func, strcat(str, "_X"))) {  	\
-		hash_table[h_index][h_depth].count++;                            	\
-		break;                                                           	\
-	    }                                                                    	\
-	}                                                                        	\
-    } while (0)
-
-#define P_M_R                                                                                                                 	\
-    do {                                                                                                                      	\
-	GLuint h_size, h_depth;                                                                                               	\
-	for (h_size = 0; h_size < HASH_TABLE_SIZE; h_size++) {                                                                 	\
-	    for (h_depth = 0; h_depth < HASH_TABLE_DEPTH; h_depth++) {                                                         	\
-		if (hash_table[h_size][h_depth].count) {                                                                       	\
-		    fprintf(stderr, "func:%s count:%d\n", hash_table[h_size][h_depth].func, hash_table[h_size][h_depth].count); \
-		}                                                                                                             	\
-	    }                                                                                                                 	\
-	}                                                                                                                     	\
-    } while (0)
-#else /* PERFORMANCE_MEASURE */
-#define P_M {}
-#define P_M_X {}
-#define P_M_R {}
-#endif
 
 #define VIA_CONTEXT(ctx)   ((viaContextPtr)(ctx->DriverCtx))
 

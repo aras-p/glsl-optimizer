@@ -74,9 +74,6 @@ static void TAG(render_points_verts)(GLcontext *ctx,
                                      GLuint count,
                                      GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_POINTS) {
         LOCAL_VARS;
@@ -108,9 +105,6 @@ static void TAG(render_lines_verts)(GLcontext *ctx,
                                     GLuint count,
                                     GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_LINES) {
         LOCAL_VARS;
@@ -149,9 +143,6 @@ static void TAG(render_line_strip_verts)(GLcontext *ctx,
                                          GLuint count,
                                          GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_LINE_STRIPS) {
         LOCAL_VARS;
@@ -184,9 +175,6 @@ static void TAG(render_line_loop_verts)(GLcontext *ctx,
                                         GLuint count,
                                         GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_LINE_STRIPS) {
         LOCAL_VARS;
@@ -237,9 +225,6 @@ static void TAG(render_triangles_verts)(GLcontext *ctx,
     int currentsz = (GET_CURRENT_VB_MAX_VERTS() / 3) * 3;
     GLuint j, nr;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif    
     INIT(GL_TRIANGLES);
 
     /* Emit whole number of tris in total.  dmasz is already a multiple
@@ -265,9 +250,6 @@ static void TAG(render_tri_strip_verts)(GLcontext *ctx,
                                         GLuint count,
                                         GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_TRI_STRIPS) {
         LOCAL_VARS;
@@ -307,9 +289,6 @@ static void TAG(render_tri_fan_verts)(GLcontext *ctx,
                                       GLuint flags)
 {
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif    
     if (HAVE_TRI_FANS) {
 	LOCAL_VARS;
         GLuint j, nr;
@@ -347,9 +326,6 @@ static void TAG(render_poly_verts)(GLcontext *ctx,
                                    GLuint count,
                                    GLuint flags)
 {
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_POLYGONS) {
         LOCAL_VARS;
@@ -388,9 +364,6 @@ static void TAG(render_quad_strip_verts)(GLcontext *ctx,
                                          GLuint flags)
 {
     GLuint j, nr;
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (HAVE_QUAD_STRIPS) {
         LOCAL_VARS;
@@ -459,9 +432,6 @@ static void TAG(render_quads_verts)(GLcontext *ctx,
                                     GLuint flags)
 {
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M_X;
-#endif    
     if (HAVE_QUADS) {
         LOCAL_VARS;
         int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS() / 4) * 4;

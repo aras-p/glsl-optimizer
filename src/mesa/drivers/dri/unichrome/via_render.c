@@ -141,10 +141,6 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     
     /* Don't handle clipping or indexed vertices.
      */
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
-    
     if (VB->ClipOrMask || vmesa->renderIndex != 0 || VB->Elts) {
 	if (VIA_DEBUG) { 
 	    fprintf(stderr, "slow path\n");    
@@ -352,9 +348,6 @@ static void clip_elt_triangles(GLcontext *ctx,
     GLuint last = count-2;
     GLuint j;
     (void)flags;
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif    
     tnl->Driver.Render.PrimitiveNotify(ctx, GL_TRIANGLES);
 
     for (j = start; j < last; j += 3) {
@@ -417,9 +410,6 @@ static GLboolean via_run_render(GLcontext *ctx,
     GLuint pass = 0;
     
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-#ifdef PERFORMANCE_MEASURE
-    if (VIA_PERFORMANCE) P_M;
-#endif
     tnl->Driver.Render.Start(ctx);
     tnl->Driver.Render.BuildVertices(ctx, 0, VB->Count, newInputs);
     if (VB->ClipOrMask) {
