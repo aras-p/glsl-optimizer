@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.3
+ * Version:  6.0
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -159,8 +159,8 @@ do {                                    \
 
 /** Copy a 4-element unsigned byte vector */
 #if defined(__i386__)
-#define COPY_4UBV(DST, SRC)         \
-do {                                \
+#define COPY_4UBV(DST, SRC)                 \
+do {                                        \
    *((GLuint*)(DST)) = *((GLuint*)(SRC));   \
 } while (0)
 #else
@@ -185,27 +185,27 @@ do {                                \
 
 
 /** Copy \p SZ elements into a 4-element vector */
-#define COPY_SZ_4V(DST, SZ, SRC)        \
-do {                        \
-   switch (SZ) {                \
-   case 4: (DST)[3] = (SRC)[3];         \
-   case 3: (DST)[2] = (SRC)[2];         \
-   case 2: (DST)[1] = (SRC)[1];         \
-   case 1: (DST)[0] = (SRC)[0];         \
-   }                        \
+#define COPY_SZ_4V(DST, SZ, SRC)  \
+do {                              \
+   switch (SZ) {                  \
+   case 4: (DST)[3] = (SRC)[3];   \
+   case 3: (DST)[2] = (SRC)[2];   \
+   case 2: (DST)[1] = (SRC)[1];   \
+   case 1: (DST)[0] = (SRC)[0];   \
+   }                              \
 } while(0)
 
 /** Copy \p SZ elements into a homegeneous (4-element) vector, giving
  * default values to the remaining */
-#define COPY_CLEAN_4V(DST, SZ, SRC)         \
-do {                        \
-      ASSIGN_4V( DST, 0, 0, 0, 1 );     \
-      COPY_SZ_4V( DST, SZ, SRC );       \
+#define COPY_CLEAN_4V(DST, SZ, SRC)  \
+do {                                 \
+      ASSIGN_4V( DST, 0, 0, 0, 1 );  \
+      COPY_SZ_4V( DST, SZ, SRC );    \
 } while (0)
 
 /** Subtraction */
-#define SUB_4V( DST, SRCA, SRCB )       \
-do {                        \
+#define SUB_4V( DST, SRCA, SRCB )           \
+do {                                        \
       (DST)[0] = (SRCA)[0] - (SRCB)[0];     \
       (DST)[1] = (SRCA)[1] - (SRCB)[1];     \
       (DST)[2] = (SRCA)[2] - (SRCB)[2];     \
@@ -213,8 +213,8 @@ do {                        \
 } while (0)
 
 /** Addition */
-#define ADD_4V( DST, SRCA, SRCB )       \
-do {                        \
+#define ADD_4V( DST, SRCA, SRCB )           \
+do {                                        \
       (DST)[0] = (SRCA)[0] + (SRCB)[0];     \
       (DST)[1] = (SRCA)[1] + (SRCB)[1];     \
       (DST)[2] = (SRCA)[2] + (SRCB)[2];     \
@@ -222,8 +222,8 @@ do {                        \
 } while (0)
 
 /** Element-wise multiplication */
-#define SCALE_4V( DST, SRCA, SRCB )     \
-do {                        \
+#define SCALE_4V( DST, SRCA, SRCB )         \
+do {                                        \
       (DST)[0] = (SRCA)[0] * (SRCB)[0];     \
       (DST)[1] = (SRCA)[1] * (SRCB)[1];     \
       (DST)[2] = (SRCA)[2] * (SRCB)[2];     \
@@ -232,7 +232,7 @@ do {                        \
 
 /** In-place addition */
 #define ACC_4V( DST, SRC )          \
-do {                        \
+do {                                \
       (DST)[0] += (SRC)[0];         \
       (DST)[1] += (SRC)[1];         \
       (DST)[2] += (SRC)[2];         \
@@ -241,7 +241,7 @@ do {                        \
 
 /** Element-wise multiplication and addition */
 #define ACC_SCALE_4V( DST, SRCA, SRCB )     \
-do {                        \
+do {                                        \
       (DST)[0] += (SRCA)[0] * (SRCB)[0];    \
       (DST)[1] += (SRCA)[1] * (SRCB)[1];    \
       (DST)[2] += (SRCA)[2] * (SRCB)[2];    \
@@ -250,16 +250,16 @@ do {                        \
 
 /** In-place scalar multiplication and addition */
 #define ACC_SCALE_SCALAR_4V( DST, S, SRCB ) \
-do {                        \
-      (DST)[0] += S * (SRCB)[0];        \
-      (DST)[1] += S * (SRCB)[1];        \
-      (DST)[2] += S * (SRCB)[2];        \
-      (DST)[3] += S * (SRCB)[3];        \
+do {                                        \
+      (DST)[0] += S * (SRCB)[0];            \
+      (DST)[1] += S * (SRCB)[1];            \
+      (DST)[2] += S * (SRCB)[2];            \
+      (DST)[3] += S * (SRCB)[3];            \
 } while (0)
 
 /** Scalar multiplication */
-#define SCALE_SCALAR_4V( DST, S, SRCB )     \
-do {                        \
+#define SCALE_SCALAR_4V( DST, S, SRCB ) \
+do {                                    \
       (DST)[0] = S * (SRCB)[0];         \
       (DST)[1] = S * (SRCB)[1];         \
       (DST)[2] = S * (SRCB)[2];         \
@@ -267,21 +267,21 @@ do {                        \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SELF_SCALE_SCALAR_4V( DST, S )      \
-do {                        \
-      (DST)[0] *= S;                \
-      (DST)[1] *= S;                \
-      (DST)[2] *= S;                \
-      (DST)[3] *= S;                \
+#define SELF_SCALE_SCALAR_4V( DST, S ) \
+do {                                   \
+      (DST)[0] *= S;                   \
+      (DST)[1] *= S;                   \
+      (DST)[2] *= S;                   \
+      (DST)[3] *= S;                   \
 } while (0)
 
 /** Assignment */
-#define ASSIGN_4V( V, V0, V1, V2, V3 )      \
-do {                        \
-    V[0] = V0;                  \
-    V[1] = V1;                  \
-    V[2] = V2;                  \
-    V[3] = V3;                  \
+#define ASSIGN_4V( V, V0, V1, V2, V3 )  \
+do {                                    \
+    V[0] = V0;                          \
+    V[1] = V1;                          \
+    V[2] = V2;                          \
+    V[3] = V3;                          \
 } while(0)
 
 /*@}*/
@@ -295,62 +295,63 @@ do {                        \
 #define ZERO_3V( DST )  (DST)[0] = (DST)[1] = (DST)[2] = 0
 
 /** Test for equality */
-#define TEST_EQ_3V(a,b)  ((a)[0] == (b)[0] &&   \
-              (a)[1] == (b)[1] &&   \
-              (a)[2] == (b)[2])
+#define TEST_EQ_3V(a,b)  \
+   ((a)[0] == (b)[0] &&  \
+    (a)[1] == (b)[1] &&  \
+    (a)[2] == (b)[2])
 
 /** Copy a 3-element vector */
 #define COPY_3V( DST, SRC )         \
-do {                        \
+do {                                \
    (DST)[0] = (SRC)[0];             \
    (DST)[1] = (SRC)[1];             \
    (DST)[2] = (SRC)[2];             \
 } while (0)
 
 /** Copy a 3-element vector with cast */
-#define COPY_3V_CAST( DST, SRC, CAST )      \
-do {                        \
+#define COPY_3V_CAST( DST, SRC, CAST )  \
+do {                                    \
    (DST)[0] = (CAST)(SRC)[0];           \
    (DST)[1] = (CAST)(SRC)[1];           \
    (DST)[2] = (CAST)(SRC)[2];           \
 } while (0)
 
 /** Copy a 3-element float vector */
-#define COPY_3FV( DST, SRC )            \
-do {                        \
-   const GLfloat *_tmp = (SRC);         \
+#define COPY_3FV( DST, SRC )        \
+do {                                \
+   const GLfloat *_tmp = (SRC);     \
    (DST)[0] = _tmp[0];              \
    (DST)[1] = _tmp[1];              \
    (DST)[2] = _tmp[2];              \
 } while (0)
 
 /** Subtraction */
-#define SUB_3V( DST, SRCA, SRCB )       \
-do {                        \
-      (DST)[0] = (SRCA)[0] - (SRCB)[0];     \
-      (DST)[1] = (SRCA)[1] - (SRCB)[1];     \
-      (DST)[2] = (SRCA)[2] - (SRCB)[2];     \
+#define SUB_3V( DST, SRCA, SRCB )        \
+do {                                     \
+      (DST)[0] = (SRCA)[0] - (SRCB)[0];  \
+      (DST)[1] = (SRCA)[1] - (SRCB)[1];  \
+      (DST)[2] = (SRCA)[2] - (SRCB)[2];  \
 } while (0)
 
 /** Addition */
 #define ADD_3V( DST, SRCA, SRCB )       \
-do {                        \
-      (DST)[0] = (SRCA)[0] + (SRCB)[0];     \
-      (DST)[1] = (SRCA)[1] + (SRCB)[1];     \
-      (DST)[2] = (SRCA)[2] + (SRCB)[2];     \
+do {                                    \
+      (DST)[0] = (SRCA)[0] + (SRCB)[0]; \
+      (DST)[1] = (SRCA)[1] + (SRCB)[1]; \
+      (DST)[2] = (SRCA)[2] + (SRCB)[2]; \
 } while (0)
 
 /** In-place scalar multiplication */
 #define SCALE_3V( DST, SRCA, SRCB )     \
-do {                        \
-      (DST)[0] = (SRCA)[0] * (SRCB)[0];     \
-      (DST)[1] = (SRCA)[1] * (SRCB)[1];     \
-      (DST)[2] = (SRCA)[2] * (SRCB)[2];     \
+do {                                    \
+      (DST)[0] = (SRCA)[0] * (SRCB)[0]; \
+      (DST)[1] = (SRCA)[1] * (SRCB)[1]; \
+      (DST)[2] = (SRCA)[2] * (SRCB)[2]; \
 } while (0)
 
 /** In-place element-wise multiplication */
-#define SELF_SCALE_3V( DST, SRC )       \
-do {                        \
+#define SELF_SCALE_3V( DST, SRC )   \
+do {                                \
       (DST)[0] *= (SRC)[0];         \
       (DST)[1] *= (SRC)[1];         \
       (DST)[2] *= (SRC)[2];         \
@@ -358,7 +359,7 @@ do {                        \
 
 /** In-place addition */
 #define ACC_3V( DST, SRC )          \
-do {                        \
+do {                                \
       (DST)[0] += (SRC)[0];         \
       (DST)[1] += (SRC)[1];         \
       (DST)[2] += (SRC)[2];         \
@@ -366,15 +367,15 @@ do {                        \
 
 /** Element-wise multiplication and addition */
 #define ACC_SCALE_3V( DST, SRCA, SRCB )     \
-do {                        \
+do {                                        \
       (DST)[0] += (SRCA)[0] * (SRCB)[0];    \
       (DST)[1] += (SRCA)[1] * (SRCB)[1];    \
       (DST)[2] += (SRCA)[2] * (SRCB)[2];    \
 } while (0)
 
 /** Scalar multiplication */
-#define SCALE_SCALAR_3V( DST, S, SRCB )     \
-do {                        \
+#define SCALE_SCALAR_3V( DST, S, SRCB ) \
+do {                                    \
       (DST)[0] = S * (SRCB)[0];         \
       (DST)[1] = S * (SRCB)[1];         \
       (DST)[2] = S * (SRCB)[2];         \
@@ -382,23 +383,23 @@ do {                        \
 
 /** In-place scalar multiplication and addition */
 #define ACC_SCALE_SCALAR_3V( DST, S, SRCB ) \
-do {                        \
-      (DST)[0] += S * (SRCB)[0];        \
-      (DST)[1] += S * (SRCB)[1];        \
-      (DST)[2] += S * (SRCB)[2];        \
+do {                                        \
+      (DST)[0] += S * (SRCB)[0];            \
+      (DST)[1] += S * (SRCB)[1];            \
+      (DST)[2] += S * (SRCB)[2];            \
 } while (0)
 
 /** In-place scalar multiplication */
-#define SELF_SCALE_SCALAR_3V( DST, S )      \
-do {                        \
-      (DST)[0] *= S;                \
-      (DST)[1] *= S;                \
-      (DST)[2] *= S;                \
+#define SELF_SCALE_SCALAR_3V( DST, S ) \
+do {                                   \
+      (DST)[0] *= S;                   \
+      (DST)[1] *= S;                   \
+      (DST)[2] *= S;                   \
 } while (0)
 
 /** In-place scalar addition */
-#define ACC_SCALAR_3V( DST, S )         \
-do {                        \
+#define ACC_SCALAR_3V( DST, S )     \
+do {                                \
       (DST)[0] += S;                \
       (DST)[1] += S;                \
       (DST)[2] += S;                \
@@ -406,10 +407,10 @@ do {                        \
 
 /** Assignment */
 #define ASSIGN_3V( V, V0, V1, V2 )  \
-do {                    \
-    V[0] = V0;              \
-    V[1] = V1;              \
-    V[2] = V2;              \
+do {                                \
+    V[0] = V0;                      \
+    V[1] = V1;                      \
+    V[2] = V2;                      \
 } while(0)
 
 /*@}*/

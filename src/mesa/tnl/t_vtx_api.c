@@ -107,13 +107,20 @@ static void _tnl_wrap_filled_vertex( GLcontext *ctx )
    tnl->vtx.copied.nr = 0;
 }
 
+
+/*
+ * Copy the active vertex's values to the ctx->Current fields.
+ */
 static void _tnl_copy_to_current( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    GLuint i;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++) 
+   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++)
       if (tnl->vtx.attrsz[i]) {
+         /* Note: the tnl->vtx.current[i] pointers points to
+          * the ctx->Current fields.  The first 16 or so, anyway.
+          */
 	 ASSIGN_4V( tnl->vtx.current[i], 0, 0, 0, 1 );
 	 COPY_SZ_4V(tnl->vtx.current[i], 
 		    tnl->vtx.attrsz[i], 
@@ -164,9 +171,6 @@ static void _tnl_copy_from_current( GLcontext *ctx )
 
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
-
-
-
 
 
 /* Flush existing data, set new attrib size, replay copied vertices.
@@ -1120,22 +1124,23 @@ void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
    ctx->Driver.NeedFlush = 0;
 }
 
+
 static void _tnl_current_init( GLcontext *ctx ) 
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLint i;
 
+   /* setup the pointers for the typical 16 vertex attributes */
    for (i = 0; i < VERT_ATTRIB_MAX; i++) 
       tnl->vtx.current[i] = ctx->Current.Attrib[i];
 
+   /* setup pointers for the 12 material attributes */
    for (i = 0; i < MAT_ATTRIB_MAX; i++)
       tnl->vtx.current[_TNL_ATTRIB_MAT_FRONT_AMBIENT + i] = 
 	 ctx->Light.Material.Attrib[i];
 
    tnl->vtx.current[_TNL_ATTRIB_INDEX] = &ctx->Current.Index;
 }
-
-
 
 
 void _tnl_vtx_init( GLcontext *ctx )

@@ -83,6 +83,11 @@
 #define MAX_PIPELINE_STAGES     30
 
 
+/*
+ * Note: The first attributes match the VERT_ATTRIB_* definitions
+ * in mtypes.h.  However, the tnl module has additional attributes
+ * for materials, color indexes, edge flags, etc.
+ */
 enum {
 	_TNL_ATTRIB_POS = 0,
 	_TNL_ATTRIB_WEIGHT = 1,
