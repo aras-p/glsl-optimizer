@@ -1,4 +1,4 @@
-/* $Id: t_dd_tritmp.h,v 1.10 2001/04/28 15:47:48 keithw Exp $ */
+/* $Id: t_dd_tritmp.h,v 1.11 2001/06/01 12:07:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -388,31 +388,57 @@ static void TAG(quad)( GLcontext *ctx,
 	       GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->Ptr;
 	       (void)vbcolor;
 
-	       if (!DO_FLAT) {
-		  VERT_SAVE_RGBA( 0 );
-		  VERT_SAVE_RGBA( 1 );
-		  VERT_SAVE_RGBA( 2 );
-		  VERT_SET_RGBA( v[0], vbcolor[e0] );
-		  VERT_SET_RGBA( v[1], vbcolor[e1] );
-		  VERT_SET_RGBA( v[2], vbcolor[e2] );
-	       }
-	       VERT_SAVE_RGBA( 3 );
-	       VERT_SET_RGBA( v[3], vbcolor[e3] );
-
-	       if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
-		  GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
-		  ASSERT(VB->SecondaryColorPtr[1]->StrideB==4*sizeof(GLfloat));
-
-		  if (!DO_FLAT) {
-		     VERT_SAVE_SPEC( 0 );
-		     VERT_SAVE_SPEC( 1 );
-		     VERT_SAVE_SPEC( 2 );
-		     VERT_SET_SPEC( v[0], vbspec[e0] );
-		     VERT_SET_SPEC( v[1], vbspec[e1] );
-		     VERT_SET_SPEC( v[2], vbspec[e2] );
+	       if (HAVE_BACK_COLORS) {
+                  if (!DO_FLAT) {
+                     VERT_SAVE_RGBA( 0 );
+                     VERT_SAVE_RGBA( 1 );
+                     VERT_SAVE_RGBA( 2 );
+		     VERT_COPY_RGBA1( v[0] );
+		     VERT_COPY_RGBA1( v[1] );
+		     VERT_COPY_RGBA1( v[2] );
 		  }
-		  VERT_SAVE_SPEC( 3 );
-		  VERT_SET_SPEC( v[3], vbspec[e3] );
+		  VERT_SAVE_RGBA( 3 );
+		  VERT_COPY_RGBA1( v[3] );
+		  if (HAVE_SPEC) {
+                     if (!DO_FLAT) {
+                        VERT_SAVE_SPEC( 0 );
+                        VERT_SAVE_SPEC( 1 );
+                        VERT_SAVE_SPEC( 2 );
+			VERT_COPY_SPEC1( v[0] );
+			VERT_COPY_SPEC1( v[1] );
+			VERT_COPY_SPEC1( v[2] );
+		     }
+		     VERT_SAVE_SPEC( 3 );
+		     VERT_COPY_SPEC1( v[3] );
+		  }
+	       }
+	       else {
+	          if (!DO_FLAT) {
+		     VERT_SAVE_RGBA( 0 );
+		     VERT_SAVE_RGBA( 1 );
+		     VERT_SAVE_RGBA( 2 );
+		     VERT_SET_RGBA( v[0], vbcolor[e0] );
+		     VERT_SET_RGBA( v[1], vbcolor[e1] );
+		     VERT_SET_RGBA( v[2], vbcolor[e2] );
+	          }
+	          VERT_SAVE_RGBA( 3 );
+	          VERT_SET_RGBA( v[3], vbcolor[e3] );
+
+	          if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
+		     GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->Ptr;
+		     ASSERT(VB->SecondaryColorPtr[1]->StrideB==4*sizeof(GLfloat));
+
+		     if (!DO_FLAT) {
+		        VERT_SAVE_SPEC( 0 );
+		        VERT_SAVE_SPEC( 1 );
+		        VERT_SAVE_SPEC( 2 );
+		        VERT_SET_SPEC( v[0], vbspec[e0] );
+		        VERT_SET_SPEC( v[1], vbspec[e1] );
+		        VERT_SET_SPEC( v[2], vbspec[e2] );
+		     }
+		     VERT_SAVE_SPEC( 3 );
+		     VERT_SET_SPEC( v[3], vbspec[e3] );
+	          }
 	       }
 	    }
 	    else {
