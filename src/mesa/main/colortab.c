@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.30 2000/11/23 02:50:56 jtaylor Exp $ */
+/* $Id: colortab.c,v 1.31 2000/12/09 20:51:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,7 +113,7 @@ _mesa_init_colortable( struct gl_color_table *p )
       t[2] = CHAN_MAX;
       t[3] = CHAN_MAX;
    }
-   p->Size = 1;
+   p->Size = 0;
    p->IntFormat = GL_RGBA;
    p->Format = GL_RGBA;
    p->RedSize = CHAN_BITS;
@@ -314,14 +314,17 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (width < 0 || _mesa_bitcount(width) != 1) {
+   if (width < 0 || (width != 0 && _mesa_bitcount(width) != 1)) {
+      /* error */
       if (proxy) {
          table->Size = 0;
          table->IntFormat = (GLenum) 0;
          table->Format = (GLenum) 0;
       }
       else {
-         gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
+         char msg[100];
+         sprintf(msg, "glColorTable(width=%d)", width);
+         gl_error(ctx, GL_INVALID_VALUE, msg);
       }
       return;
    }
@@ -335,8 +338,11 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       else {
          if (width > ctx->Const.MaxColorTableSize)
             gl_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
-         else
-            gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
+         else {
+            char msg[100];
+            sprintf(msg, "glColorTable(width=%d)", width);
+            gl_error(ctx, GL_INVALID_VALUE, msg);
+         }
       }
       return;
    }
