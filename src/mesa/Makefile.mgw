@@ -74,7 +74,6 @@ CC = mingw32-gcc
 CFLAGS += -DBUILD_GL32 -D_OPENGL32_ -D_MSC_VER
 CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
 ifeq ($(FX),1)
-CFLAGS += -DH3
 CFLAGS += -I$(GLIDE)/include -DFX
 LDLIBS += -L$(GLIDE)/lib -lglide3x
 GL_DEF = drivers/glide/fxopengl.def

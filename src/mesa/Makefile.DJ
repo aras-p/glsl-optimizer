@@ -73,7 +73,7 @@ export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR);$(GLIDE)/lib
 CC = gcc
 CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
 ifeq ($(FX),1)
-CFLAGS += -D__DOS__ -DH3
+CFLAGS += -D__DOS__
 CFLAGS += -I$(GLIDE)/include -DFX
 LIBNAME = "Mesa/FX DJGPP"
 else

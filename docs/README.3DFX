@@ -6,9 +6,9 @@
 Mesa-6.0 release notes:
 -----------------------
 
-1) Glide2 support has been ceased; in order to keep Voodoo Graphics
-   and Voodoo Rush compatibility, please visit the Glide SourceForge
-   and help us to fix Glide3 for those cards.
+1) Glide2 support has been ceased; in order to keep Voodoo Rush
+   compatibility, please visit the Glide SourceForge and help us
+   to fix Glide3 for those cards.
 2) The current release is a WIP; among other things, the Linux build works
    only to some extent. Any help will be appreciated.
 3) Glide3 can be found at http://sourceforge.net/projects/glide/

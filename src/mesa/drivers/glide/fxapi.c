@@ -203,34 +203,65 @@ gl3DfxSetPaletteEXT(GLuint * pal)
 
 static GrScreenResolution_t fxBestResolution (int width, int height)
 {
- static int resolutions[][5] = {
-#if 1 /* Voodoo^2 can't fullscreen these, because of Glide */
-        { 320,  200, GR_RESOLUTION_320x200  },
-        { 320,  240, GR_RESOLUTION_320x240  },
-#endif
-        { 512,  384, GR_RESOLUTION_512x384  },
-        { 640,  400, GR_RESOLUTION_640x400  },
-        { 640,  480, GR_RESOLUTION_640x480  },
-        { 800,  600, GR_RESOLUTION_800x600  },
-        {1024,  768, GR_RESOLUTION_1024x768 },
-        {1280, 1024, GR_RESOLUTION_1280x1024},
-        {1600, 1200, GR_RESOLUTION_1600x1200},
+ static int resolutions[][3] = {
+        { GR_RESOLUTION_320x200,    320,  200 },
+        { GR_RESOLUTION_320x240,    320,  240 },
+        { GR_RESOLUTION_400x256,    400,  256 },
+        { GR_RESOLUTION_512x384,    512,  384 },
+        { GR_RESOLUTION_640x200,    640,  200 },
+        { GR_RESOLUTION_640x350,    640,  350 },
+        { GR_RESOLUTION_640x400,    640,  400 },
+        { GR_RESOLUTION_640x480,    640,  480 },
+        { GR_RESOLUTION_800x600,    800,  600 },
+        { GR_RESOLUTION_960x720,    960,  720 },
+        { GR_RESOLUTION_856x480,    856,  480 },
+        { GR_RESOLUTION_512x256,    512,  256 },
+        { GR_RESOLUTION_1024x768,  1024,  768 },
+        { GR_RESOLUTION_1280x1024, 1280, 1024 },
+        { GR_RESOLUTION_1600x1200, 1600, 1200 },
+        { GR_RESOLUTION_400x300,    400,  300 },
+        { GR_RESOLUTION_1152x864,  1152,  864 },
+        { GR_RESOLUTION_1280x960,  1280,  960 },
+        { GR_RESOLUTION_1600x1024, 1600, 1024 },
+        { GR_RESOLUTION_1792x1344, 1792, 1344 },
+        { GR_RESOLUTION_1856x1392, 1856, 1392 },
+        { GR_RESOLUTION_1920x1440, 1920, 1440 },
+        { GR_RESOLUTION_2048x1536, 2048, 1536 },
+        { GR_RESOLUTION_2048x2048, 2048, 2048 }
  };
 
- int i, NUM_RESOLUTIONS = sizeof(resolutions) / sizeof(resolutions[0]);
- int lastvalidres = 4;  /* set default to GR_RESOLUTION_640x480 */
+ int i, size;
+ int lastvalidres = GR_RESOLUTION_640x480;
  int min = 2048 * 2048; /* max is GR_RESOLUTION_2048x2048 */
+ GrResolution resTemplate = {
+              GR_QUERY_ANY,
+              GR_QUERY_ANY,
+              2 /*GR_QUERY_ANY */,
+              GR_QUERY_ANY
+ };
+ GrResolution *presSupported;
 
- for (i = 0; i < NUM_RESOLUTIONS; i++) {
-     if ((width <= resolutions[i][0]) && (height <= resolutions[i][1])) {
-        if (min > (resolutions[i][0] * resolutions[i][1])) {
-           min = resolutions[i][0] * resolutions[i][1];
-           lastvalidres = i;
+ fxQueryHardware();
+
+ size = grQueryResolutions(&resTemplate, NULL);
+ presSupported = malloc(size);
+        
+ size /= sizeof(GrResolution);
+ grQueryResolutions(&resTemplate, presSupported);
+
+ for (i = 0; i < size; i++) {
+     int r = presSupported[i].resolution;
+     if ((width <= resolutions[r][1]) && (height <= resolutions[r][2])) {
+        if (min > (resolutions[r][1] * resolutions[r][2])) {
+           min = resolutions[r][1] * resolutions[r][2];
+           lastvalidres = r;
         }
      }
  }
 
- return resolutions[lastvalidres][2];
+ free(presSupported);
+
+ return resolutions[lastvalidres][0];
 }
 
 
@@ -770,6 +801,25 @@ fxMesaDestroyContext(fxMesaContext fxMesa)
 
    glbTotNumCtx--;
 
+   if (!glbTotNumCtx && getenv("MESA_FX_INFO")) {
+      GrSstPerfStats_t st;
+
+      FX_grSstPerfStats(&st);
+
+      fprintf(stderr, "Pixels Stats:\n");
+      fprintf(stderr, "  # pixels processed (minus buffer clears): %u\n",
+              (unsigned) st.pixelsIn);
+      fprintf(stderr, "  # pixels not drawn due to chroma key test failure: %u\n",
+              (unsigned) st.chromaFail);
+      fprintf(stderr, "  # pixels not drawn due to depth test failure: %u\n",
+              (unsigned) st.zFuncFail);
+      fprintf(stderr,
+              "  # pixels not drawn due to alpha test failure: %u\n",
+              (unsigned) st.aFuncFail);
+      fprintf(stderr, "  # pixels drawn (including buffer clears and LFB writes): %u\n",
+              (unsigned) st.pixelsOut);
+   }
+
    /* [dBorca]
     * close the hardware first, so we can debug
     * atexit problems (memory leaks, etc).
@@ -886,27 +936,6 @@ void GLAPIENTRY
 fxCloseHardware(void)
 {
    if (glbGlideInitialized) {
-      if (getenv("MESA_FX_INFO")) {
-	 GrSstPerfStats_t st;
-
-	 FX_grSstPerfStats(&st);
-	 fprintf(stderr, "Pixels Stats:\n");
-	 fprintf(stderr, "  # pixels processed (minus buffer clears): %u\n",
-		 (unsigned) st.pixelsIn);
-	 fprintf(stderr,
-		 "  # pixels not drawn due to chroma key test failure: %u\n",
-		 (unsigned) st.chromaFail);
-	 fprintf(stderr,
-		 "  # pixels not drawn due to depth test failure: %u\n",
-		 (unsigned) st.zFuncFail);
-	 fprintf(stderr,
-		 "  # pixels not drawn due to alpha test failure: %u\n",
-		 (unsigned) st.aFuncFail);
-	 fprintf(stderr,
-		 "  # pixels drawn (including buffer clears and LFB writes): %u\n",
-		 (unsigned) st.pixelsOut);
-      }
-
       if (glbTotNumCtx == 0) {
 	 grGlideShutdown();
 	 glbGlideInitialized = 0;

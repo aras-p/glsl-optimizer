@@ -1360,44 +1360,7 @@ int DMesaGetIntegerv (GLenum pname, GLint *params)
              #ifndef FX
              return vl_get(VL_GET_VIDEO_MODES, params);
              #else
-             {
-              /* `vmode' struct must be sync'ed with `internal.h' (vl_mode)
-               * `vmode' list must be sync'ed with `fxapi.c'
-               * `hw >= 6' means Napalm and can do 32bit rendering
-               * TODO: we should take an envvar for `fxMesaSelectCurrentBoard'
-               */
-              static struct {
-                     int width, height;
-                     int bpp;
-              } vmode[] = {
-                     { 320,  200, 16 },
-                     { 320,  240, 16 },
-                     { 512,  384, 16 },
-                     { 640,  400, 16 },
-                     { 640,  480, 16 },
-                     { 800,  600, 16 },
-                     {1024,  768, 16 },
-
-                     { 320,  200, 32 },
-                     { 320,  240, 32 },
-                     { 512,  384, 32 },
-                     { 640,  400, 32 },
-                     { 640,  480, 32 },
-                     { 800,  600, 32 },
-                     {1024,  768, 32 }
-              };
-              int hw = fxMesaSelectCurrentBoard(0);
-              int i, n = sizeof(vmode) / sizeof(vmode[0]);
-              if (hw < 6) {
-                 n /= 2;
-              }
-              if (params) {
-                 for (i = 0; i < n; i++) {
-                     params[i] = (GLint)(&vmode[i]);
-                 }
-              }
-              return n;
-             }
+             return -1; /* TODO */
              #endif
         case DMESA_GET_BUFFER_ADDR:
              #ifndef FX

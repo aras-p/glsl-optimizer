@@ -746,8 +746,10 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
       if (pfd.cAlphaBits > 0 && pix[i].pfd.cAlphaBits == 0)
 	 continue;		/* need alpha buffer */
 
+#if 0 /* [dBorca] regression bug? */
       if (pfd.cStencilBits > 0 && pix[i].pfd.cStencilBits == 0)
 	 continue;		/* need stencil buffer */
+#endif
 
       if (pfd.iPixelType == pix[i].pfd.iPixelType) {
 	 best = i + 1;

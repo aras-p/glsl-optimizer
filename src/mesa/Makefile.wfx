@@ -59,7 +59,7 @@ HAVE_3DNOW = 1
 ##################################
 # build flags
 ##################################
-FLAGS = -DH3 -DFX -DBUILD_GL32
+FLAGS = -DFX -DBUILD_GL32
 
 !if "$(USE_IEEE)"=="1"
 FLAGS = $(FLAGS) -D__i386__
