@@ -315,10 +315,6 @@ static void drawSample( int x, int y, int w, int h,
          glEnd();
          break;
       case 1:
-      /* why doesn't this case work with software mesa? The S/T tex coords
-         should turn out as 0 and 1 if dot product of vertex coordinates with
-         ObjPlaneS3/T3 is calculated, and Q coord should be default value (1.0), no?
-         Submitting one dummy tex coordinate fixes this? */
          glTranslatef( -0.8, -0.8, 0.0 );
          glScalef( 1.6, 1.6, 1.0 );
          glTexGeni( GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
@@ -333,8 +329,11 @@ static void drawSample( int x, int y, int w, int h,
          glEnable( GL_TEXTURE_GEN_S );
          glEnable( GL_TEXTURE_GEN_T );
 
+         /* Issue a texcoord here to be sure Q isn't left over from a
+          * previous sample.
+          */
+         glTexCoord1f( 0.0 );
          glBegin( GL_QUADS );
-/*         glTexCoord1f( 0.0 );*/
          glVertex2f( 0.0, 0.0 );
          glVertex2f( 1.0, 0.0 );
          glVertex2f( 1.0, 1.0 );
@@ -407,6 +406,7 @@ static void drawSample( int x, int y, int w, int h,
          glEnable( GL_TEXTURE_GEN_T );
          glEnable( GL_TEXTURE_GEN_R );
 
+         glTexCoord1f( 0.0 ); /* to make sure Q is 1.0 */
          glBegin( GL_QUADS );
          glVertex3f( 0.0, 0.0, 0.5 );
          glVertex3f( 1.0, 0.0, 0.5 );
