@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.9 2000/05/10 22:36:05 brianp Exp $ */
+/* $Id: points.c,v 1.10 2000/06/28 23:11:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -359,7 +359,7 @@ textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          green = VB->ColorPtr->data[i][1];
          blue  = VB->ColorPtr->data[i][2];
          alpha = VB->ColorPtr->data[i][3];
-	 
+
 	 switch (VB->TexCoordPtr[0]->size) {
 	 case 4:
 	    s = VB->TexCoordPtr[0]->data[i][0]/VB->TexCoordPtr[0]->data[i][3];
@@ -387,15 +387,13 @@ textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             gl_problem(ctx, "unexpected texcoord size in textured_rgba_points()");
 	 }
 
-/*    don't think this is needed
-         PB_SET_COLOR( red, green, blue, alpha );
-*/
-
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha, s, t, u );
+               PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha,
+                                   s, t, u );
             }
          }
+
          PB_CHECK_FLUSH(ctx, PB);
       }
    }
@@ -418,6 +416,7 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint ix, iy;
          GLint radius;
          GLint red, green, blue, alpha;
+         GLint sRed, sGreen, sBlue;
          GLfloat s, t, u;
          GLfloat s1, t1, u1;
 
@@ -450,6 +449,9 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          green = VB->ColorPtr->data[i][1];
          blue  = VB->ColorPtr->data[i][2];
          alpha = VB->ColorPtr->data[i][3];
+	 sRed   = VB->Specular ? VB->Specular[i][0] : 0;
+	 sGreen = VB->Specular ? VB->Specular[i][1] : 0;
+	 sBlue  = VB->Specular ? VB->Specular[i][2] : 0;
 	 
 	 switch (VB->TexCoordPtr[0]->size) {
 	 case 4:
@@ -507,8 +509,10 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy=y0;iy<=y1;iy++) {
             for (ix=x0;ix<=x1;ix++) {
-               PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha,
-                                        s, t, u, s1, t1, u1 );
+               PB_WRITE_MULTITEX_SPEC_PIXEL( PB, ix, iy, z,
+                                             red, green, blue, alpha,
+                                             sRed, sGreen, sBlue,
+                                             s, t, u, s1, t1, u1 );
             }
          }
          PB_CHECK_FLUSH(ctx, PB);
@@ -1325,7 +1329,8 @@ void gl_set_point_function( GLcontext *ctx )
             ctx->Driver.PointsFunc = antialiased_rgba_points;
          }
          else if (ctx->Texture.ReallyEnabled) {
-            if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
+            if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D ||
+                ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
 	       ctx->Driver.PointsFunc = multitextured_rgba_points;
             }
             else {
