@@ -248,6 +248,8 @@ struct tnl_copied_vtx {
 
 #define VERT_BUFFER_SIZE 2048	/* 8kbytes */
 
+#define ERROR_ATTRIB _TNL_ATTRIB_MAX /* error path for t_vtx_api.c */
+
 typedef void (*attrfv_func)( const GLfloat * );
 
 /* The assembly of vertices in immediate mode is separated from
@@ -267,7 +269,7 @@ struct tnl_vtx {
    GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->Current, etc */
    GLuint counter, initial_counter;
    struct tnl_copied_vtx copied;
-   attrfv_func tabfv[_TNL_ATTRIB_MAX][4];
+   attrfv_func tabfv[_TNL_ATTRIB_MAX+1][4]; /* +1 for ERROR_ATTRIB */
    struct tnl_eval eval;
    GLboolean *edgeflag_tmp;
    GLboolean have_materials;
