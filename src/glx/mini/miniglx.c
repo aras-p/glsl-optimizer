@@ -1543,15 +1543,15 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
          attrib++;
          break;
       case GLX_GREEN_SIZE:
-         redBits = attrib[1];
+         greenBits = attrib[1];
          attrib++;
          break;
       case GLX_BLUE_SIZE:
-         redBits = attrib[1];
+         blueBits = attrib[1];
          attrib++;
          break;
       case GLX_ALPHA_SIZE:
-         redBits = attrib[1];
+         alphaBits = attrib[1];
          attrib++;
          break;
       case GLX_STENCIL_SIZE:
@@ -1603,6 +1603,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    for (i = 0; i < dpy->numModes; i++) {
       const __GLcontextModes *mode = dpy->modes + i;
       if (mode->rgbMode == rgbFlag &&
+	  (mode->redBits+mode->greenBits+mode->blueBits+mode->alphaBits) == dpy->driverContext.bpp &&
           mode->redBits >= redBits &&
           mode->greenBits >= greenBits &&
           mode->blueBits >= blueBits &&
