@@ -11,6 +11,7 @@ LIBS = -L../lib -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXext -lm
 PROGS = cva \
 	dinoshade \
 	fogcoord \
+	getprocaddress \
 	manytex \
 	multipal \
 	projtex \
@@ -42,3 +43,11 @@ default: $(PROGS)
 clean:
 	rm -f $(PROGS)
 	rm -f *.o
+
+
+# auto code generation
+getprocaddress: getprocaddress.c getproclist.h
+
+getproclist.h: ../bin/APIspec getprocaddress.c getprocaddress.py
+	python getprocaddress.py > getproclist.h
+
