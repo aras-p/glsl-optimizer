@@ -40,15 +40,7 @@
 #			As a consequence, you'll need the DJGPP Glide3
 #			library to build any application.
 #			default = no
-#	HAVE_X86=1	optimize for i386.
-#			default = no
-#	HAVE_MMX=1	allow MMX specializations, provided your assembler
-#			supports MMX instruction set. However, the true CPU
-#			capabilities are checked at run-time to avoid crashes.
-#			default = no
-#	HAVE_SSE=1	(see HAVE_MMX)
-#			default = no
-#	HAVE_3DNOW=1	(see HAVE_MMX)
+#	X86=1		optimize for x86 (if possible, use MMX, SSE, 3DNow).
 #			default = no
 #
 #    Targets:
@@ -71,7 +63,7 @@ GL_IMP = libigl.a
 export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH);$(LIBDIR);$(GLIDE)/lib
 
 CC = gcc
-CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
+CFLAGS += $(INCLUDE_DIRS)
 ifeq ($(FX),1)
 CFLAGS += -D__DOS__
 CFLAGS += -I$(GLIDE)/include -DFX
@@ -93,59 +85,11 @@ endif
 
 include sources
 
-X86_SOURCES = \
-	x86/x86.c \
-	x86/glapi_x86.S \
-	x86/common_x86.c \
-	x86/common_x86_asm.S \
-	x86/x86_xform2.S \
-	x86/x86_xform3.S \
-	x86/x86_xform4.S \
-	x86/x86_cliptest.S
-
-MMX_SOURCES = \
-	x86/mmx_blend.S
-
-SSE_SOURCES = \
-	x86/sse.c \
-	x86/sse_xform2.S \
-	x86/sse_xform3.S \
-	x86/sse_xform4.S \
-	x86/sse_normal.S
-
-K3D_SOURCES = \
-	x86/3dnow.c \
-	x86/3dnow_xform2.S \
-	x86/3dnow_xform3.S \
-	x86/3dnow_xform4.S \
-	x86/3dnow_normal.S
-
-CORE_SOURCES = \
-	$(MAIN_SOURCES) \
-	$(GLAPI_SOURCES) \
-	$(MATH_SOURCES) \
-	$(ARRAY_CACHE_SOURCES) \
-	$(TNL_SOURCES) \
-	$(SWRAST_SOURCES) \
-	$(SWRAST_SETUP_SOURCES)
-
-ifeq ($(HAVE_MMX),1)
-X86_SOURCES += $(MMX_SOURCES)
-CFLAGS += -DUSE_MMX_ASM
-HAVE_X86 = 1
-endif
-ifeq ($(HAVE_SSE),1)
-X86_SOURCES += $(SSE_SOURCES)
-CFLAGS += -DUSE_SSE_ASM
-HAVE_X86 = 1
-endif
-ifeq ($(HAVE_3DNOW),1)
-X86_SOURCES += $(K3D_SOURCES)
-CFLAGS += -DUSE_3DNOW_ASM
-HAVE_X86 = 1
-endif
-ifeq ($(HAVE_X86),1)
+ifeq ($(X86),1)
 CFLAGS += -DUSE_X86_ASM
+CFLAGS += -DUSE_MMX_ASM
+CFLAGS += -DUSE_SSE_ASM
+CFLAGS += -DUSE_3DNOW_ASM
 else
 X86_SOURCES =
 endif
@@ -154,16 +98,7 @@ DRIVER_SOURCES = \
 	drivers/dos/dmesa.c
 ifeq ($(FX),1)
 DRIVER_SOURCES += \
-	drivers/glide/fxapi.c \
-	drivers/glide/fxdd.c \
-	drivers/glide/fxddspan.c \
-	drivers/glide/fxddtex.c \
-	drivers/glide/fxsetup.c \
-	drivers/glide/fxtexman.c \
-	drivers/glide/fxtris.c \
-	drivers/glide/fxvb.c \
-	drivers/glide/fxglidew.c \
-	drivers/glide/fxg.c
+	$(GLIDE_DRIVER_SOURCES)
 else
 DRIVER_SOURCES += \
 	drivers/dos/video.c \

@@ -36,13 +36,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 .globl x;		\
 x:
 
-#else  /* defined(__DJGPP__) */
+#else  /* defined(__DJGPP__) || defined (__MINGW32__) */
 
 #define GLOBL( x )	\
 .globl _##x;		\
 _##x:
 
-#endif /* defined(__DJGPP__) */
+#endif /* defined(__DJGPP__) || defined (__MINGW32__) */
 
 .data
 .align 4

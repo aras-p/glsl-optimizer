@@ -1,0 +1,26 @@
+# Configuration for Linux with 3Dfx Glide driver and x86 optimizations
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-x86-glide
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+
+CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include -DFX -I/usr/include/glide -I/usr/local/glide/include
+
+CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+
+GLUT_CFLAGS = -fexceptions
+
+
+ASM_SOURCES = $(X86_SOURCES)
+
+# Library/program dependencies
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -L/usr/local/glide/lib -lglide3x -lm -lpthread
+OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
+GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -L/usr/X11R6/lib -lXt -lXm -lX11
+APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -L/usr/local/glide/lib -lglide3x -lm

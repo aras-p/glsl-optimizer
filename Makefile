@@ -64,6 +64,7 @@ linux \
 linux-alpha \
 linux-alpha-static \
 linux-debug \
+linux-glide \
 linux-icc \
 linux-icc-static \
 linux-osmesa16 \
@@ -79,6 +80,7 @@ linux-ultrasparc \
 linux-x86 \
 linux-x86-64 \
 linux-x86-64-static \
+linux-x86-glide \
 linux-x86-static \
 netbsd \
 openbsd \
