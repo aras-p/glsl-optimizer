@@ -130,7 +130,7 @@ _mesa_DetachObjectARB (GLhandleARB containerObj, GLhandleARB attachedObj)
 GLhandleARB GLAPIENTRY
 _mesa_CreateShaderObjectARB (GLenum shaderType)
 {
-#if 0
+#if FEATURE_shading_language
 	return _mesa_3dlabs_create_shader_object (shaderType);
 #endif
 }
@@ -235,7 +235,7 @@ _mesa_CompileShaderARB (GLhandleARB shaderObj)
 GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB (void)
 {
-#if 0
+#if FEATURE_shading_language
 	return _mesa_3dlabs_create_program_object ();
 #endif
 }
@@ -1181,7 +1181,7 @@ _mesa_init_shaderobjects (GLcontext *ctx)
 {
 	ctx->ShaderObjects.current_program = NULL;
 
-#if 0  /* disable for now */
+#if FEATURE_shading_language
 	_mesa_init_shaderobjects_3dlabs (ctx);
 #endif
 }
