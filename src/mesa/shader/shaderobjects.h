@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,9 @@
 #ifndef SHADEROBJECTS_H
 #define SHADEROBJECTS_H
 
-
 #include "mtypes.h"
 
-#if _HAVE_FULL_GL
+#if FEATURE_ARB_shader_objects
 
 extern void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj);
@@ -147,7 +146,7 @@ _mesa_GetUniformivARB (GLhandleARB, GLint, GLint *);
 extern void GLAPIENTRY
 _mesa_GetShaderSourceARB (GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
 
-/* GL_ARB_vertex_shader */
+#if FEATURE_ARB_vertex_shader
 
 extern void GLAPIENTRY
 _mesa_BindAttribLocationARB (GLhandleARB, GLuint, const GLcharARB *);
@@ -158,14 +157,12 @@ _mesa_GetActiveAttribARB (GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLen
 extern GLint GLAPIENTRY
 _mesa_GetAttribLocationARB (GLhandleARB, const GLcharARB *);
 
+#endif
 
-
-extern void _mesa_init_shaderobjects( GLcontext * ctx );
-
-#else
-
-/** No-op */
+extern void
+_mesa_init_shaderobjects (GLcontext *ctx);
 
 #endif
 
 #endif
+
