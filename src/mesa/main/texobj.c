@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.14 2000/02/12 01:59:19 brianp Exp $ */
+/* $Id: texobj.c,v 1.15 2000/03/21 17:42:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -325,6 +325,8 @@ void gl_test_texture_object_completeness( const GLcontext *ctx, struct gl_textur
 }
 
 
+_glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
+
 
 /*
  * Execute glGenTextures
@@ -342,6 +344,12 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
       return;
    }
 
+
+   /*
+    * This must be atomic (generation and allocation of texture IDs)
+    */
+   _glthread_LOCK_MUTEX(GenTexturesLock);
+
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->TexObjects, n);
 
    /* Return the texture names */
@@ -355,6 +363,8 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
       GLuint dims = 0;
       (void) gl_alloc_texture_object(ctx->Shared, name, dims);
    }
+
+   _glthread_UNLOCK_MUTEX(GenTexturesLock);
 }
 
 

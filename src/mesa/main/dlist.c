@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.35 2000/03/19 01:10:11 brianp Exp $ */
+/* $Id: dlist.c,v 1.36 2000/03/21 17:42:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3957,6 +3957,11 @@ _mesa_GenLists(GLsizei range )
       return 0;
    }
 
+   /*
+    * Make this an atomic operation
+    */
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+
    base = _mesa_HashFindFreeKeyBlock(ctx->Shared->DisplayList, range);
    if (base) {
       /* reserve the list IDs by with empty/dummy lists */
@@ -3965,6 +3970,9 @@ _mesa_GenLists(GLsizei range )
          _mesa_HashInsert(ctx->Shared->DisplayList, base+i, make_empty_list());
       }
    }
+
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
    return base;
 }
 
