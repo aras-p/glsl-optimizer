@@ -17,14 +17,47 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
 
-// BEGIN: Wild guesses
+/* This register is written directly and also starts data section in many 3d CP_PACKET3's */
+#define R300_VAP_VF_CNTL	0x2084
+
+#	define	R300_VAP_VF_CNTL__PRIM_TYPE__SHIFT                       0
+#	define  R300_VAP_VF_CNTL__PRIM_NONE				 (0<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_POINTS				 (1<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_LINES				 (2<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_LINE_STRIP			 (3<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_TRIANGLES			 (4<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN			 (5<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP			 (6<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_LINE_LOOP			 (12<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_QUADS			 	 (13<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_QUAD_STRIP			 (14<<0)
+#	define  R300_VAP_VF_CNTL__PRIM_POLYGON			 	 (15<<0)
+
+#	define	R300_VAP_VF_CNTL__PRIM_WALK__SHIFT                       4
+	/* State based - direct writes to registers trigger vertex generation */
+#	define	R300_VAP_VF_CNTL__PRIM_WALK_STATE_BASED                      (0<<4)
+#	define	R300_VAP_VF_CNTL__PRIM_WALK_INDICES                          (1<<4)
+#	define	R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST                      (2<<4)
+#	define	R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED                  (3<<4)
+
+		/* I don't think I saw these three used.. */
+#	define	R300_VAP_VF_CNTL__COLOR_ORDER__SHIFT                     6
+#	define	R300_VAP_VF_CNTL__TCL_OUTPUT_CTL_ENA__SHIFT              9
+#	define	R300_VAP_VF_CNTL__PROG_STREAM_ENA__SHIFT                 10
+                
+		/* index size - when not set the indices are assumed to be 16 bit */
+#	define	R300_VAP_VF_CNTL__INDEX_SIZE_32bit                      (1<<11)
+                /* number of vertices */
+#	define	R300_VAP_VF_CNTL__NUM_VERTICES__SHIFT                    16
+
+/* BEGIN: Wild guesses */
 #define R300_VAP_OUTPUT_VTX_FMT_0           0x2090
 #       define R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT     (1<<0)
 #       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT   (1<<1)
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT (1<<2) // GUESS
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT (1<<3) // GUESS
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT (1<<4) // GUESS
-#       define R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT (1<<16) // GUESS
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT (1<<2) /* GUESS */
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT (1<<3) /* GUESS */
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT (1<<4) /* GUESS */
+#       define R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT (1<<16) /* GUESS */
 
 #define R300_VAP_OUTPUT_VTX_FMT_1           0x2094
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_0_COMP_CNT_SHIFT 0
@@ -35,11 +68,11 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_5_COMP_CNT_SHIFT 15
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT 18
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT 21
-// END
+/* END */
 
-// BEGIN: Vertex data assembly - lots of uncertainties
+/* BEGIN: Vertex data assembly - lots of uncertainties */
 /* gap */
-// Where do we get our vertex data?
+/* Where do we get our vertex data?
 //
 // Vertex data either comes either from immediate mode registers or from
 // vertex arrays.
@@ -60,29 +93,30 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // The corresponding input is routed into the register with the given index.
 // The list is ended by a word with INPUT_ROUTE_END set.
 //
-// Always set COMPONENTS_4 in immediate mode.
+// Always set COMPONENTS_4 in immediate mode. */
+
 #define R300_VAP_INPUT_ROUTE_0_0            0x2150
 #       define R300_INPUT_ROUTE_COMPONENTS_1     (0 << 0)
 #       define R300_INPUT_ROUTE_COMPONENTS_2     (1 << 0)
 #       define R300_INPUT_ROUTE_COMPONENTS_3     (2 << 0)
 #       define R300_INPUT_ROUTE_COMPONENTS_4     (3 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_RGBA  (4 << 0) // GUESS
+#       define R300_INPUT_ROUTE_COMPONENTS_RGBA  (4 << 0) /* GUESS */
 #       define R300_VAP_INPUT_ROUTE_IDX_SHIFT    8
-#       define R300_VAP_INPUT_ROUTE_IDX_MASK     (31 << 8) // GUESS
+#       define R300_VAP_INPUT_ROUTE_IDX_MASK     (31 << 8) /* GUESS */
 #       define R300_VAP_INPUT_ROUTE_END          (1 << 13)
-#       define R300_INPUT_ROUTE_IMMEDIATE_MODE   (0 << 14) // GUESS
-#       define R300_INPUT_ROUTE_FLOAT            (1 << 14) // GUESS
-#       define R300_INPUT_ROUTE_UNSIGNED_BYTE    (2 << 14) // GUESS
-#       define R300_INPUT_ROUTE_FLOAT_COLOR      (3 << 14) // GUESS
+#       define R300_INPUT_ROUTE_IMMEDIATE_MODE   (0 << 14) /* GUESS */
+#       define R300_INPUT_ROUTE_FLOAT            (1 << 14) /* GUESS */
+#       define R300_INPUT_ROUTE_UNSIGNED_BYTE    (2 << 14) /* GUESS */
+#       define R300_INPUT_ROUTE_FLOAT_COLOR      (3 << 14) /* GUESS */
 #define R300_VAP_INPUT_ROUTE_0_1            0x2154
 #define R300_VAP_INPUT_ROUTE_0_2            0x2158
 #define R300_VAP_INPUT_ROUTE_0_3            0x215C
 
 /* gap */
-// Notes:
+/* Notes:
 //  - always set up to produce at least two attributes:
 //    if vertex program uses only position, fglrx will set normal, too
-//  - INPUT_CNTL_0_COLOR and INPUT_CNTL_COLOR bits are always equal
+//  - INPUT_CNTL_0_COLOR and INPUT_CNTL_COLOR bits are always equal */
 #define R300_VAP_INPUT_CNTL_0               0x2180
 #       define R300_INPUT_CNTL_0_COLOR           0x00000001
 #define R300_VAP_INPUT_CNTL_1               0x2184
@@ -91,20 +125,20 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_INPUT_CNTL_COLOR             0x00000004
 #       define R300_INPUT_CNTL_TC0               0x00000400
 #       define R300_INPUT_CNTL_TC1               0x00000800
-#       define R300_INPUT_CNTL_TC2               0x00001000 // GUESS
-#       define R300_INPUT_CNTL_TC3               0x00002000 // GUESS
-#       define R300_INPUT_CNTL_TC4               0x00004000 // GUESS
-#       define R300_INPUT_CNTL_TC5               0x00008000 // GUESS
-#       define R300_INPUT_CNTL_TC6               0x00010000 // GUESS
-#       define R300_INPUT_CNTL_TC7               0x00020000 // GUESS
+#       define R300_INPUT_CNTL_TC2               0x00001000 /* GUESS */
+#       define R300_INPUT_CNTL_TC3               0x00002000 /* GUESS */
+#       define R300_INPUT_CNTL_TC4               0x00004000 /* GUESS */
+#       define R300_INPUT_CNTL_TC5               0x00008000 /* GUESS */
+#       define R300_INPUT_CNTL_TC6               0x00010000 /* GUESS */
+#       define R300_INPUT_CNTL_TC7               0x00020000 /* GUESS */
 
 /* gap */
-// Words parallel to INPUT_ROUTE_0; All words that are active in INPUT_ROUTE_0
+/* Words parallel to INPUT_ROUTE_0; All words that are active in INPUT_ROUTE_0
 // are set to a swizzling bit pattern, other words are 0.
 //
 // In immediate mode, the pattern is always set to xyzw. In vertex array
 // mode, the swizzling pattern is e.g. used to set zw components in texture
-// coordinates with only tweo components.
+// coordinates with only tweo components. */
 #define R300_VAP_INPUT_ROUTE_1_0            0x21E0
 #       define R300_INPUT_ROUTE_SELECT_X    0
 #       define R300_INPUT_ROUTE_SELECT_Y    1
@@ -122,10 +156,10 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VAP_INPUT_ROUTE_1_2            0x21E8
 #define R300_VAP_INPUT_ROUTE_1_3            0x21EC
 
-// END
+/* END */
 
 /* gap */
-// BEGIN: Upload vertex program and data
+/* BEGIN: Upload vertex program and data
 // The programmable vertex shader unit has a memory bank of unknown size
 // that can be written to in 16 byte units by writing the address into
 // UPLOAD_ADDRESS, followed by data in UPLOAD_DATA (multiples of 4 DWORDs).
@@ -147,37 +181,37 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // as there is also the R300_RE_POINTSIZE register.
 //
 // Multiple vertex programs and parameter sets can be loaded at once,
-// which could explain the size discrepancy.
+// which could explain the size discrepancy. */
 #define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
 #       define R300_PVS_UPLOAD_PROGRAM           0x00000000
 #       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
 #       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
 /* gap */
 #define R300_VAP_PVS_UPLOAD_DATA            0x2208
-// END
+/* END */
 
 /* gap */
-// I do not know the purpose of this register. However, I do know that
+/* I do not know the purpose of this register. However, I do know that
 // it is set to 221C_CLEAR for clear operations and to 221C_NORMAL
-// for normal rendering.
+// for normal rendering. */
 #define R300_VAP_UNKNOWN_221C               0x221C
 #       define R300_221C_NORMAL                  0x00000000
 #       define R300_221C_CLEAR                   0x0001C000
 
 /* gap */
-// Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
+/* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
 // rendering commands and overwriting vertex program parameters.
 // Therefore, I suspect writing zero to 0x2284 synchronizes the engine and
-// avoids bugs caused by still running shaders reading bad data from memory.
-#define R300_VAP_PVS_WAITIDLE               0x2284 // GUESS
+// avoids bugs caused by still running shaders reading bad data from memory. */
+#define R300_VAP_PVS_WAITIDLE               0x2284 /* GUESS */
 
-// Absolutely no clue what this register is about.
+/* Absolutely no clue what this register is about. */
 #define R300_VAP_UNKNOWN_2288               0x2288
-#       define R300_2288_R300                    0x00750000 // -- nh
-#       define R300_2288_RV350                   0x0000FFFF // -- Vladimir
+#       define R300_2288_R300                    0x00750000 /* -- nh */
+#       define R300_2288_RV350                   0x0000FFFF /* -- Vladimir */
 
 /* gap */
-// Addresses are relative to the vertex program instruction area of the
+/* Addresses are relative to the vertex program instruction area of the
 // memory bank. PROGRAM_END points to the last instruction of the active
 // program
 //
@@ -185,58 +219,166 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // experiments so far have shown that both *must* point to an instruction
 // inside the vertex program, otherwise the GPU locks up.
 // fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
-// CNTL_1_UNKNOWN somewhere in the middle, but the criteria are not clear.
+// CNTL_1_UNKNOWN somewhere in the middle, but the criteria are not clear. */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
 #       define R300_PVS_CNTL_1_UNKNOWN_SHIFT         10
 #       define R300_PVS_CNTL_1_PROGRAM_END_SHIFT     20
-// Addresses are relative the the vertex program parameters area.
+/* Addresses are relative the the vertex program parameters area. */
 #define R300_VAP_PVS_CNTL_2                 0x22D4
 #       define R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT 0
 #       define R300_PVS_CNTL_2_PARAM_COUNT_SHIFT  16
 #define R300_VAP_PVS_CNTL_3	           0x22D8
 #       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT 10
+#       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT 0
 
-// The entire range from 0x2300 to 0x2AC inclusive seems to be used for
-// immediate vertices
+/* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
+// immediate vertices */
 #define R300_VAP_VTX_COLOR_R                0x2464
 #define R300_VAP_VTX_COLOR_G                0x2468
 #define R300_VAP_VTX_COLOR_B                0x246C
-#define R300_VAP_VTX_POS_0_X_1              0x2490 // used for glVertex2*()
+#define R300_VAP_VTX_POS_0_X_1              0x2490 /* used for glVertex2*() */
 #define R300_VAP_VTX_POS_0_Y_1              0x2494
-#define R300_VAP_VTX_COLOR_PKD              0x249C // RGBA
-#define R300_VAP_VTX_POS_0_X_2              0x24A0 // used for glVertex3*()
+#define R300_VAP_VTX_COLOR_PKD              0x249C /* RGBA */
+#define R300_VAP_VTX_POS_0_X_2              0x24A0 /* used for glVertex3*() */
 #define R300_VAP_VTX_POS_0_Y_2              0x24A4
 #define R300_VAP_VTX_POS_0_Z_2              0x24A8
-#define R300_VAP_VTX_END_OF_PKT             0x24AC // write 0 to indicate end of packet?
+#define R300_VAP_VTX_END_OF_PKT             0x24AC /* write 0 to indicate end of packet? */
 
 /* gap */
-// BEGIN: !unverified!
-#define R300_GB_TILE_CONFIG                 0x4018
-#define R300_GB_TILE_ENABLE                      (1 << 0)
-#define R300_GB_TILE_PIPE_COUNT_R300             (0 << 1)
-#define R300_GB_TILE_PIPE_COUNT_RV300            (3 << 1)
-#define R300_GB_TILE_SIZE_8                      (0 << 4)
-#define R300_GB_TILE_SIZE_16                     (1 << 4)
-#define R300_GB_TILE_SIZE_32                     (2 << 4)
-#define R300_GB_SUPER_SIZE_1                     (0 << 6)
-#define R300_GB_SUPER_SIZE_2                     (1 << 6)
-#define R300_GB_SUPER_SIZE_4                     (2 << 6)
-#define R300_GB_SUPER_SIZE_8                     (3 << 6)
-#define R300_GB_SUPER_SIZE_16                    (4 << 6)
-#define R300_GB_SUPER_SIZE_32                    (5 << 6)
-#define R300_GB_SUPER_SIZE_64                    (6 << 6)
-#define R300_GB_SUPER_SIZE_128                   (7 << 6)
-#define R300_GB_SUPER_X_SHIFT                    9	// 3 bits wide
-#define R300_GB_SUPER_Y_SHIFT                    12	// 3 bits wide
-#define R300_GB_SUPER_TILE_A                     (0 << 15)
-#define R300_GB_SUPER_TILE_B                     (1 << 15)
-#define R300_GB_SUBPIXEL_1_12                    (0 << 16)
-#define R300_GB_SUBPIXEL_1_16                    (1 << 16)
-// END
+
+/* These are values from r300_reg/r300_reg.h - they are known to be correct
+   and are here so we can use one register file instead of several 
+   - Vladimir */
+#define R300_GB_VAP_RASTER_VTX_FMT_0	0x4000
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__POS_PRESENT	(1<<0)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__COLOR_0_PRESENT	(1<<1)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__COLOR_1_PRESENT	(1<<2)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__COLOR_2_PRESENT	(1<<3)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__COLOR_3_PRESENT	(1<<4)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__COLOR_SPACE	(0xf<<5)
+#	define R300_GB_VAP_RASTER_VTX_FMT_0__PT_SIZE_PRESENT	(0x1<<16)
+
+#define R300_GB_VAP_RASTER_VTX_FMT_1	0x4004
+	/* each of the following is 3 bits wide, specifies number
+	   of components */
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_0_COMP_CNT_SHIFT	0
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_1_COMP_CNT_SHIFT	3
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_2_COMP_CNT_SHIFT	6
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_3_COMP_CNT_SHIFT	9
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_4_COMP_CNT_SHIFT	12
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_5_COMP_CNT_SHIFT	15
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT	18
+#	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT	21
+
+#define R300_GB_ENABLE	0x4008
+#	define R300_GB_POINT_STUFF_ENABLE	(1<<0)
+#	define R300_GB_LINE_STUFF_ENABLE	(1<<1)
+#	define R300_GB_TRIANGLE_STUFF_ENABLE	(1<<2)
+#	define R300_GB_STENCIL_AUTO_ENABLE	(1<<4)
+	/* each of the following is 2 bits wide */
+	#define R300_GB_TEX_REPLICATE	0
+	#define R300_GB_TEX_ST		1
+	#define R300_GB_TEX_STR		2
+#	define R300_GB_TEX0_SOURCE_SHIFT	16
+#	define R300_GB_TEX1_SOURCE_SHIFT	18
+#	define R300_GB_TEX2_SOURCE_SHIFT	20
+#	define R300_GB_TEX3_SOURCE_SHIFT	22
+#	define R300_GB_TEX4_SOURCE_SHIFT	24
+#	define R300_GB_TEX5_SOURCE_SHIFT	26
+#	define R300_GB_TEX6_SOURCE_SHIFT	28
+#	define R300_GB_TEX7_SOURCE_SHIFT	30
+
+/* MSPOS - positions for multisample antialiasing (?) */
+#define R300_GB_MSPOS0	0x4010
+	/* shifts - each of the fields is 4 bits */
+#	define R300_GB_MSPOS0__MS_X0_SHIFT	0
+#	define R300_GB_MSPOS0__MS_Y0_SHIFT	4
+#	define R300_GB_MSPOS0__MS_X1_SHIFT	8
+#	define R300_GB_MSPOS0__MS_Y1_SHIFT	12
+#	define R300_GB_MSPOS0__MS_X2_SHIFT	16
+#	define R300_GB_MSPOS0__MS_Y2_SHIFT	20
+#	define R300_GB_MSPOS0__MSBD0_Y		24
+#	define R300_GB_MSPOS0__MSBD0_X		28
+
+#define R300_GB_MSPOS1	0x4014
+#	define R300_GB_MSPOS1__MS_X3_SHIFT	0
+#	define R300_GB_MSPOS1__MS_Y3_SHIFT	4
+#	define R300_GB_MSPOS1__MS_X4_SHIFT	8
+#	define R300_GB_MSPOS1__MS_Y4_SHIFT	12
+#	define R300_GB_MSPOS1__MS_X5_SHIFT	16
+#	define R300_GB_MSPOS1__MS_Y5_SHIFT	20
+#	define R300_GB_MSPOS1__MSBD1		24
+
+   
+#define R300_GB_TILE_CONFIG	0x4018
+#	define R300_GB_TILE_ENABLE	(1<<0)
+#	define R300_GB_TILE_PIPE_COUNT_RV300	0
+#	define R300_GB_TILE_PIPE_COUNT_R300	(3<<1)
+#	define R300_GB_TILE_SIZE_8		0
+#	define R300_GB_TILE_SIZE_16		(1<<4)
+#	define R300_GB_TILE_SIZE_32		(2<<4)
+#	define R300_GB_SUPER_SIZE_1		(0<<6)
+#	define R300_GB_SUPER_SIZE_2		(1<<6)
+#	define R300_GB_SUPER_SIZE_4		(2<<6)
+#	define R300_GB_SUPER_SIZE_8		(3<<6)
+#	define R300_GB_SUPER_SIZE_16		(4<<6)
+#	define R300_GB_SUPER_SIZE_32		(5<<6)
+#	define R300_GB_SUPER_SIZE_64		(6<<6)
+#	define R300_GB_SUPER_SIZE_128		(7<<6)
+#	define R300_GB_SUPER_X_SHIFT		9	/* 3 bits wide */
+#	define R300_GB_SUPER_Y_SHIFT		12	/* 3 bits wide */
+#	define R300_GB_SUPER_TILE_A		0
+#	define R300_GB_SUPER_TILE_B		(1<<15)
+#	define R300_GB_SUBPIXEL_1_12		0
+#	define R300_GB_SUBPIXEL_1_16		(1<<16)
+
+#define R300_GB_FIFO_SIZE	0x4024
+	/* each of the following is 2 bits wide */
+	#define R300_GB_FIFO_SIZE_32	0
+	#define R300_GB_FIFO_SIZE_64	1
+	#define R300_GB_FIFO_SIZE_128	2
+	#define R300_GB_FIFO_SIZE_256	3
+#	define R300_SC_IFIFO_SIZE_SHIFT	0
+#	define R300_SC_TZFIFO_SIZE_SHIFT	2
+#	define R300_SC_BFIFO_SIZE_SHIFT	4
+
+#	define R300_US_OFIFO_SIZE_SHIFT	12
+#	define R300_US_WFIFO_SIZE_SHIFT	14
+	/* the following use the same constants as above, but meaning is 
+	   is times 2 (i.e. instead of 32 words it means 64 */
+#	define R300_RS_TFIFO_SIZE_SHIFT	6
+#	define R300_RS_CFIFO_SIZE_SHIFT	8
+#	define R300_US_RAM_SIZE_SHIFT		10
+	/* watermarks, 3 bits wide */
+#	define R300_RS_HIGHWATER_COL_SHIFT	16
+#	define R300_RS_HIGHWATER_TEX_SHIFT	19
+#	define R300_OFIFO_HIGHWATER_SHIFT	22	/* two bits only */
+#	define R300_CUBE_FIFO_HIGHWATER_COL_SHIFT	24
+
+#define R300_GB_SELECT	0x401C
+#	define R300_GB_FOG_SELECT_C0A		0
+#	define R300_GB_FOG_SELECT_C1A		1
+#	define R300_GB_FOG_SELECT_C2A		2
+#	define R300_GB_FOG_SELECT_C3A		3
+#	define R300_GB_FOG_SELECT_1_1_W	4
+#	define R300_GB_FOG_SELECT_Z		5
+#	define R300_GB_DEPTH_SELECT_Z		0
+#	define R300_GB_DEPTH_SELECT_1_1_W	(1<<3)
+#	define R300_GB_W_SELECT_1_W		0
+#	define R300_GB_W_SELECT_1		(1<<4)
+
+#define R300_GB_AA_CONFIG		0x4020
+#	define R300_AA_ENABLE			0x01
+#	define R300_AA_SUBSAMPLES_2		0
+#	define R300_AA_SUBSAMPLES_3		(1<<1)
+#	define R300_AA_SUBSAMPLES_4		(2<<1)
+#	define R300_AA_SUBSAMPLES_6		(3<<1)
+
+/* END */
 
 /* gap */
-// The upper enable bits are guessed, based on fglrx reported limits.
+/* The upper enable bits are guessed, based on fglrx reported limits. */
 #define R300_TX_ENABLE                      0x4104
 #       define R300_TX_ENABLE_0                  (1 << 0)
 #       define R300_TX_ENABLE_1                  (1 << 1)
@@ -255,14 +397,21 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_ENABLE_14                 (1 << 14)
 #       define R300_TX_ENABLE_15                 (1 << 15)
 
-// The pointsize is given in multiples of 6. The pointsize can be
+/* The pointsize is given in multiples of 6. The pointsize can be
 // enormous: Clear() renders a single point that fills the entire
-// framebuffer.
+// framebuffer. */
 #define R300_RE_POINTSIZE                   0x421C
 #       define R300_POINTSIZE_Y_SHIFT            0
-#       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) // GUESS
+#       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) /* GUESS */
 #       define R300_POINTSIZE_X_SHIFT            16
-#       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) // GUESS
+#       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
+
+/* This register needs to be set to (1<<1) for RV350 to correctly
+   perform depth test (see --vb-triangles in r300_demo) 
+   Don't know about other chips. - Vladimir
+    */
+#define R300_RE_OCCLUSION_CNTL		    0x42B4
+#	define R300_OCCLUSION_ON		(1<<1)
 
 #define R300_RE_CULL_CNTL                   0x42B8
 #       define R300_CULL_FRONT                   (1 << 0)
@@ -271,21 +420,21 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FRONT_FACE_CW                (1 << 2)
 
 
-// BEGIN: Rasterization / Interpolators - many guesses
+/* BEGIN: Rasterization / Interpolators - many guesses
 // So far, 0_UNKOWN_7 has always been set.
 // 0_UNKNOWN_18 has always been set except for clear operations.
 // TC_CNT is the number of incoming texture coordinate sets (i.e. it depends
-// on the vertex program, *not* the fragment program)
+// on the vertex program, *not* the fragment program) */
 #define R300_RS_CNTL_0                      0x4300
 #       define R300_RS_CNTL_TC_CNT_SHIFT         2
 #       define R300_RS_CNTL_TC_CNT_MASK          (7 << 2)
 #       define R300_RS_CNTL_0_UNKNOWN_7          (1 << 7)
 #       define R300_RS_CNTL_0_UNKNOWN_18         (1 << 18)
-// Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n register.
+/* Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n register. */
 #define R300_RS_CNTL_1                      0x4304
 
 /* gap */
-// Only used for texture coordinates (color seems to be always interpolated).
+/* Only used for texture coordinates (color seems to be always interpolated).
 // Use the source field to route texture coordinate input from the vertex program
 // to the desired interpolator. Note that the source field is relative to the
 // outputs the vertex program *actually* writes. If a vertex program only writes
@@ -295,7 +444,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // I haven't seen it used that way.
 //
 // Note: The _UNKNOWN constants are always set in their respective register.
-// I don't know if this is necessary.
+// I don't know if this is necessary. */
 #define R300_RS_INTERP_0                    0x4310
 #define R300_RS_INTERP_1                    0x4314
 #       define R300_RS_INTERP_1_UNKNOWN          0x40
@@ -311,37 +460,37 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RS_INTERP_SRC_MASK           (7 << 2)
 #       define R300_RS_INTERP_USED               0x00D10000
 
-// These DWORDs control how vertex data is routed into fragment program
-// registers, after interpolators.
+/* These DWORDs control how vertex data is routed into fragment program
+// registers, after interpolators. */
 #define R300_RS_ROUTE_0                     0x4330
 #define R300_RS_ROUTE_1                     0x4334
 #define R300_RS_ROUTE_2                     0x4338
-#define R300_RS_ROUTE_3                     0x433C // GUESS
-#define R300_RS_ROUTE_4                     0x4340 // GUESS
-#define R300_RS_ROUTE_5                     0x4344 // GUESS
-#define R300_RS_ROUTE_6                     0x4348 // GUESS
-#define R300_RS_ROUTE_7                     0x434C // GUESS
+#define R300_RS_ROUTE_3                     0x433C /* GUESS */
+#define R300_RS_ROUTE_4                     0x4340 /* GUESS */
+#define R300_RS_ROUTE_5                     0x4344 /* GUESS */
+#define R300_RS_ROUTE_6                     0x4348 /* GUESS */
+#define R300_RS_ROUTE_7                     0x434C /* GUESS */
 #       define R300_RS_ROUTE_SOURCE_INTERP_0     0
 #       define R300_RS_ROUTE_SOURCE_INTERP_1     1
 #       define R300_RS_ROUTE_SOURCE_INTERP_2     2
 #       define R300_RS_ROUTE_SOURCE_INTERP_3     3
 #       define R300_RS_ROUTE_SOURCE_INTERP_4     4
-#       define R300_RS_ROUTE_SOURCE_INTERP_5     5 // GUESS
-#       define R300_RS_ROUTE_SOURCE_INTERP_6     6 // GUESS
-#       define R300_RS_ROUTE_SOURCE_INTERP_7     7 // GUESS
-#       define R300_RS_ROUTE_ENABLE              (1 << 3) // GUESS
+#       define R300_RS_ROUTE_SOURCE_INTERP_5     5 /* GUESS */
+#       define R300_RS_ROUTE_SOURCE_INTERP_6     6 /* GUESS */
+#       define R300_RS_ROUTE_SOURCE_INTERP_7     7 /* GUESS */
+#       define R300_RS_ROUTE_ENABLE              (1 << 3) /* GUESS */
 #       define R300_RS_ROUTE_DEST_SHIFT          6
-#       define R300_RS_ROUTE_DEST_MASK           (31 << 6) // GUESS
+#       define R300_RS_ROUTE_DEST_MASK           (31 << 6) /* GUESS */
 
-// Special handling for color: When the fragment program uses color,
+/* Special handling for color: When the fragment program uses color,
 // the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the
-// color register index.
+// color register index. */
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
 #       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  (1 << 17)
-#       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 6) // GUESS
-// END
+#       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 6) /* GUESS */
+/* END */
 
-// BEGIN: Scissors and cliprects
+/* BEGIN: Scissors and cliprects
 // There are four clipping rectangles. Their corner coordinates are inclusive.
 // Every pixel is assigned a number from 0 and 15 by setting bits 0-3 depending
 // on whether the pixel is inside cliprects 0-3, respectively. For example,
@@ -354,7 +503,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // scissors rectangle are drawn. (coordinates are inclusive)
 //
 // For some reason, the top-left corner of the framebuffer is at (1440, 1440)
-// for the purpose of clipping and scissors.
+// for the purpose of clipping and scissors. */
 #define R300_RE_CLIPRECT_TL_0               0x43B0
 #define R300_RE_CLIPRECT_BR_0               0x43B4
 #define R300_RE_CLIPRECT_TL_1               0x43B8
@@ -395,12 +544,12 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_SCISSORS_X_MASK              (0x1FFF << 0)
 #       define R300_SCISSORS_Y_SHIFT             13
 #       define R300_SCISSORS_Y_MASK              (0x1FFF << 13)
-// END
+/* END */
 
-// BEGIN: Texture specification
+/* BEGIN: Texture specification
 // The texture specification dwords are grouped by meaning and not by texture unit.
 // This means that e.g. the offset for texture image unit N is found in register
-// TX_OFFSET_0 + (4*N)
+// TX_OFFSET_0 + (4*N) */
 #define R300_TX_FILTER_0                    0x4400
 #       define R300_TX_REPEAT                    0
 #       define R300_TX_CLAMP_TO_EDGE             1
@@ -422,23 +571,23 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_WIDTHMASK_MASK            (2047 << 0)
 #       define R300_TX_HEIGHTMASK_SHIFT          11
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
-#       define R300_TX_SIZE_SHIFT                26 // largest of width, height
+#       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
 #define R300_TX_FORMAT_0                    0x44C0
 #define R300_TX_OFFSET_0                    0x4540
-// BEGIN: Guess from R200
+/* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
 #       define R300_TXO_ENDIAN_HALFDW_SWAP       (3 << 0)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
-// END
+/* END */
 #define R300_TX_UNK4_0                      0x4580
 #define R300_TX_UNK5_0                      0x45C0
-// END
+/* END */
 
-// BEGIN: Fragment program instruction set
+/* BEGIN: Fragment program instruction set
 // Fragment programs are written directly into register space.
 // There are separate instruction streams for texture instructions and ALU
 // instructions.
@@ -453,32 +602,32 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // 1 node, a value of 3 means 4 nodes.
 // The total amount of instructions is defined in PFS_CNTL_2. The offsets are
 // offsets into the respective instruction streams, while *_END points to the
-// last instruction relative to this offset.
+// last instruction relative to this offset. */
 #define R300_PFS_CNTL_0                     0x4600
 #       define R300_PFS_CNTL_LAST_NODES_SHIFT    0
 #       define R300_PFS_CNTL_LAST_NODES_MASK     (3 << 0)
 #       define R300_PFS_CNTL_FIRST_NODE_HAS_TEX  (1 << 3)
 #define R300_PFS_CNTL_1                     0x4604
-// There is an unshifted value here which has so far always been equal to the
-// index of the highest used temporary register.
+/* There is an unshifted value here which has so far always been equal to the
+// index of the highest used temporary register. */
 #define R300_PFS_CNTL_2                     0x4608
 #       define R300_PFS_CNTL_ALU_OFFSET_SHIFT    0
 #       define R300_PFS_CNTL_ALU_OFFSET_MASK     (63 << 0)
 #       define R300_PFS_CNTL_ALU_END_SHIFT       6
 #       define R300_PFS_CNTL_ALU_END_MASK        (63 << 0)
 #       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    12
-#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 12) // GUESS
+#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 12) /* GUESS */
 #       define R300_PFS_CNTL_TEX_END_SHIFT       18
-#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18) // GUESS
+#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18) /* GUESS */
 
 /* gap */
-// Nodes are stored backwards. The last active node is always stored in
+/* Nodes are stored backwards. The last active node is always stored in
 // PFS_NODE_3.
 // Example: In a 2-node program, NODE_0 and NODE_1 are set to 0. The
 // first node is stored in NODE_2, the second node is stored in NODE_3.
 //
 // Offsets are relative to the master offset from PFS_CNTL_2.
-// LAST_NODE is set for the last node, and only for the last node.
+// LAST_NODE is set for the last node, and only for the last node. */
 #define R300_PFS_NODE_0                     0x4610
 #define R300_PFS_NODE_1                     0x4614
 #define R300_PFS_NODE_2                     0x4618
@@ -493,20 +642,20 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
 #       define R300_PFS_NODE_LAST_NODE           (1 << 22)
 
-// TEX
+/* TEX
 // As far as I can tell, texture instructions cannot write into output
 // registers directly. A subsequent ALU instruction is always necessary,
-// even if it's just MAD o0, r0, 1, 0
+// even if it's just MAD o0, r0, 1, 0 */
 #define R300_PFS_TEXI_0                     0x4620
 #       define R300_FPITX_SRC_SHIFT              0
 #       define R300_FPITX_SRC_MASK               (31 << 0)
-#       define R300_FPITX_SRC_CONST              (1 << 5) // GUESS
+#       define R300_FPITX_SRC_CONST              (1 << 5) /* GUESS */
 #       define R300_FPITX_DST_SHIFT              6
 #       define R300_FPITX_DST_MASK               (31 << 6)
 #       define R300_FPITX_IMAGE_SHIFT            11
-#       define R300_FPITX_IMAGE_MASK             (15 << 11) // GUESS based on layout and native limits
+#       define R300_FPITX_IMAGE_MASK             (15 << 11) /* GUESS based on layout and native limits */
 
-// ALU
+/* ALU
 // The ALU instructions register blocks are enumerated according to the order
 // in which fglrx. I assume there is space for 64 instructions, since
 // each block has space for a maximum of 64 DWORDs, and this matches reported
@@ -556,7 +705,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // The destination register index is in FPI1 (color) and FPI3 (alpha) together
 // with enable bits.
 // There are separate enable bits for writing into temporary registers
-// (DSTC_REG_*/DSTA_REG) and and program output registers (DSTC_OUTPUT_*/DSTA_OUTPUT).
+// (DSTC_REG_* /DSTA_REG) and and program output registers (DSTC_OUTPUT_* /DSTA_OUTPUT).
 // You can write to both at once, or not write at all (the same index
 // must be used for both).
 //
@@ -565,7 +714,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 //  - Operation is MAD
 //  - ARG1 is set to ARGC_SRC1C_LRP/ARGC_SRC1A_LRP
 //  - Set FPI0/FPI2_SPECIAL_LRP
-// Arbitrary LRP (including support for swizzling) requires vanilla MAD+MAD
+// Arbitrary LRP (including support for swizzling) requires vanilla MAD+MAD */
 #define R300_PFS_INSTR1_0                   0x46C0
 #       define R300_FPI1_SRC0C_SHIFT             0
 #       define R300_FPI1_SRC0C_MASK              (31 << 0)
@@ -619,7 +768,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI0_ARGC_SRC1C_LRP          15
 #       define R300_FPI0_ARGC_ZERO               20
 #       define R300_FPI0_ARGC_ONE                21
-#       define R300_FPI0_ARGC_HALF               22 // GUESS
+#       define R300_FPI0_ARGC_HALF               22 /* GUESS */
 #       define R300_FPI0_ARGC_SRC0C_YZX          23
 #       define R300_FPI0_ARGC_SRC1C_YZX          24
 #       define R300_FPI0_ARGC_SRC2C_YZX          25
@@ -670,7 +819,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI2_ARGA_SRC1A_LRP          15
 #       define R300_FPI2_ARGA_ZERO               16
 #       define R300_FPI2_ARGA_ONE                17
-#       define R300_FPI2_ARGA_HALF               18 // GUESS
+#       define R300_FPI2_ARGA_HALF               18 /* GUESS */
 
 #       define R300_FPI2_ARG0A_SHIFT             0
 #       define R300_FPI2_ARG0A_MASK              (31 << 0)
@@ -694,7 +843,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI2_OUTA_RSQ                (11 << 23)
 #       define R300_FPI2_OUTA_SAT                (1 << 30)
 #       define R300_FPI2_UNKNOWN_31              (1 << 31)
-// END
+/* END */
 
 /* gap */
 #define R300_PP_ALPHA_TEST                  0x4BD4
@@ -711,22 +860,22 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_ALPHA_TEST_ENABLE            (1 << 11)
 
 /* gap */
-// Fragment program parameters in 7.16 floating point
+/* Fragment program parameters in 7.16 floating point */
 #define R300_PFS_PARAM_0_X                  0x4C00
 #define R300_PFS_PARAM_0_Y                  0x4C04
 #define R300_PFS_PARAM_0_Z                  0x4C08
 #define R300_PFS_PARAM_0_W                  0x4C0C
-// GUESS: PARAM_31 is last, based on native limits reported by fglrx
+/* GUESS: PARAM_31 is last, based on native limits reported by fglrx */
 #define R300_PFS_PARAM_31_X                 0x4DF0
 #define R300_PFS_PARAM_31_Y                 0x4DF4
 #define R300_PFS_PARAM_31_Z                 0x4DF8
 #define R300_PFS_PARAM_31_W                 0x4DFC
 
-// Notes:
+/* Notes:
 // - AFAIK fglrx always sets BLEND_UNKNOWN when blending is used in the application
 // - AFAIK fglrx always sets BLEND_NO_SEPARATE when CBLEND and ABLEND are set to the same
 //   function (both registers are always set up completely in any case)
-// - Most blend flags are simply copied from R200 and not tested yet
+// - Most blend flags are simply copied from R200 and not tested yet */
 #define R300_RB3D_CBLEND                    0x4E04
 #define R300_RB3D_ABLEND                    0x4E08
  /* the following only appear in CBLEND */
@@ -770,61 +919,63 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 
 /* gap */
 #define R300_RB3D_COLOROFFSET0              0x4E28
-#       define R300_COLOROFFSET_MASK             0xFFFFFFF0 // GUESS
-#define R300_RB3D_COLOROFFSET1              0x4E2C // GUESS
-#define R300_RB3D_COLOROFFSET2              0x4E30 // GUESS
-#define R300_RB3D_COLOROFFSET3              0x4E34 // GUESS
+#       define R300_COLOROFFSET_MASK             0xFFFFFFF0 /* GUESS */
+#define R300_RB3D_COLOROFFSET1              0x4E2C /* GUESS */
+#define R300_RB3D_COLOROFFSET2              0x4E30 /* GUESS */
+#define R300_RB3D_COLOROFFSET3              0x4E34 /* GUESS */
 /* gap */
-// Bit 16: Larger tiles
+/* Bit 16: Larger tiles
 // Bit 17: 4x2 tiles
-// Bit 18: Extremely weird tile like, but some pixels duplicated?
+// Bit 18: Extremely weird tile like, but some pixels duplicated? */
 #define R300_RB3D_COLORPITCH0               0x4E38
-#       define R300_COLORPITCH_MASK              0x00001FF8 // GUESS
-#       define R300_COLOR_TILE_ENABLE            (1 << 16) // GUESS
-#       define R300_COLOR_MICROTILE_ENABLE       (1 << 17) // GUESS
-#       define R300_COLOR_ENDIAN_NO_SWAP         (0 << 18) // GUESS
-#       define R300_COLOR_ENDIAN_WORD_SWAP       (1 << 18) // GUESS
-#       define R300_COLOR_ENDIAN_DWORD_SWAP      (2 << 18) // GUESS
-#       define R300_COLOR_UNKNOWN_22_23          (3 << 22) // GUESS: Format?
-#define R300_RB3D_COLORPITCH1               0x4E3C // GUESS
-#define R300_RB3D_COLORPITCH2               0x4E40 // GUESS
-#define R300_RB3D_COLORPITCH3               0x4E44 // GUESS
+#       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS */
+#       define R300_COLOR_TILE_ENABLE            (1 << 16) /* GUESS */
+#       define R300_COLOR_MICROTILE_ENABLE       (1 << 17) /* GUESS */
+#       define R300_COLOR_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
+#       define R300_COLOR_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
+#       define R300_COLOR_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
+#       define R300_COLOR_UNKNOWN_22_23          (3 << 22) /* GUESS: Format? */
+#define R300_RB3D_COLORPITCH1               0x4E3C /* GUESS */
+#define R300_RB3D_COLORPITCH2               0x4E40 /* GUESS */
+#define R300_RB3D_COLORPITCH3               0x4E44 /* GUESS */
 
 /* gap */
-// Guess by Vladimir.
-// Set to 0A before 3D operations, set to 02 afterwards.
+/* Guess by Vladimir.
+// Set to 0A before 3D operations, set to 02 afterwards. */
 #define R300_RB3D_DSTCACHE_CTLSTAT          0x4E4C
 #       define R300_RB3D_DSTCACHE_02             0x00000002
 #       define R300_RB3D_DSTCACHE_0A             0x0000000A
 
 /* gap */
-// There seems to be no "write only" setting, so use Z-test = ALWAYS for this.
+/* There seems to be no "write only" setting, so use Z-test = ALWAYS for this. */
+/* Bit (1<<8) is the "test" bit. so plain write is 6  - vd */
 #define R300_RB3D_ZCNTL_0                   0x4F00
-#       define R300_RB3D_Z_DISABLED_1            0x00000010 // GUESS
-#       define R300_RB3D_Z_DISABLED_2            0x00000014 // GUESS
+#       define R300_RB3D_Z_DISABLED_1            0x00000010 /* GUESS */
+#       define R300_RB3D_Z_DISABLED_2            0x00000014 /* GUESS */
 #       define R300_RB3D_Z_TEST                  0x00000012
 #       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
+#       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
 #define R300_RB3D_ZCNTL_1                   0x4F04
-#       define R300_Z_TEST_NEVER                 (0 << 0) // GUESS (based on R200)
+#       define R300_Z_TEST_NEVER                 (0 << 0) /* GUESS (based on R200) */
 #       define R300_Z_TEST_LESS                  (1 << 0)
 #       define R300_Z_TEST_LEQUAL                (2 << 0)
-#       define R300_Z_TEST_EQUAL                 (3 << 0) // GUESS
-#       define R300_Z_TEST_GEQUAL                (4 << 0) // GUESS
-#       define R300_Z_TEST_GREATER               (5 << 0) // GUESS
+#       define R300_Z_TEST_EQUAL                 (3 << 0) /* GUESS */
+#       define R300_Z_TEST_GEQUAL                (4 << 0) /* GUESS */
+#       define R300_Z_TEST_GREATER               (5 << 0) /* GUESS */
 #       define R300_Z_TEST_NEQUAL                (6 << 0)
 #       define R300_Z_TEST_ALWAYS                (7 << 0)
 #       define R300_Z_TEST_MASK                  (7 << 0)
 /* gap */
 #define R300_RB3D_DEPTHOFFSET               0x4F20
 #define R300_RB3D_DEPTHPITCH                0x4F24
-#       define R300_DEPTHPITCH_MASK              0x00001FF8 // GUESS
-#       define R300_DEPTH_TILE_ENABLE            (1 << 16) // GUESS
-#       define R300_DEPTH_MICROTILE_ENABLE       (1 << 17) // GUESS
-#       define R300_DEPTH_ENDIAN_NO_SWAP         (0 << 18) // GUESS
-#       define R300_DEPTH_ENDIAN_WORD_SWAP       (1 << 18) // GUESS
-#       define R300_DEPTH_ENDIAN_DWORD_SWAP      (2 << 18) // GUESS
+#       define R300_DEPTHPITCH_MASK              0x00001FF8 /* GUESS */
+#       define R300_DEPTH_TILE_ENABLE            (1 << 16) /* GUESS */
+#       define R300_DEPTH_MICROTILE_ENABLE       (1 << 17) /* GUESS */
+#       define R300_DEPTH_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
+#       define R300_DEPTH_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
+#       define R300_DEPTH_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
 
-// BEGIN: Vertex program instruction set
+/* BEGIN: Vertex program instruction set
 // Every instruction is four dwords long:
 //  DWORD 0: output and opcode
 //  DWORD 1: first argument
@@ -851,7 +1002,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 //   Second argument: xyzx
 //   Third argument: xyzw
 //  Whenever the result is used later in the fragment program, fglrx forces x and w
-//  to be 1.0 in the input selection; I don't know whether this is strictly necessary
+//  to be 1.0 in the input selection; I don't know whether this is strictly necessary */
 #define R300_VPI_OUT_OP_DOT                     (1 << 0)
 #define R300_VPI_OUT_OP_MUL                     (2 << 0)
 #define R300_VPI_OUT_OP_ADD                     (3 << 0)
@@ -876,7 +1027,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_REG_CLASS_MASK             (31 << 8)
 
 #define R300_VPI_OUT_REG_INDEX_SHIFT            13
-#define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13) // GUESS based on fglrx native limits
+#define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13) /* GUESS based on fglrx native limits */
 
 #define R300_VPI_OUT_WRITE_X                    (1 << 20)
 #define R300_VPI_OUT_WRITE_Y                    (1 << 21)
@@ -887,14 +1038,14 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_IN_REG_CLASS_ATTRIBUTE         (1 << 0)
 #define R300_VPI_IN_REG_CLASS_PARAMETER         (2 << 0)
 #define R300_VPI_IN_REG_CLASS_NONE              (9 << 0)
-#define R300_VPI_IN_REG_CLASS_MASK              (31 << 0) // GUESS
+#define R300_VPI_IN_REG_CLASS_MASK              (31 << 0) /* GUESS */
 
 #define R300_VPI_IN_REG_INDEX_SHIFT             5
-#define R300_VPI_IN_REG_INDEX_MASK              (255 << 5) // GUESS based on fglrx native limits
+#define R300_VPI_IN_REG_INDEX_MASK              (255 << 5) /* GUESS based on fglrx native limits */
 
-// The R300 can select components from the input register arbitrarily.
+/* The R300 can select components from the input register arbitrarily.
 // Use the following constants, shifted by the component shift you
-// want to select
+// want to select */
 #define R300_VPI_IN_SELECT_X    0
 #define R300_VPI_IN_SELECT_Y    1
 #define R300_VPI_IN_SELECT_Z    2
@@ -912,6 +1063,6 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_IN_NEG_Y                       (1 << 26)
 #define R300_VPI_IN_NEG_Z                       (1 << 27)
 #define R300_VPI_IN_NEG_W                       (1 << 28)
-// END
+/* END */
 
-#endif // _R300_REG_H
+#endif /* _R300_REG_H */
