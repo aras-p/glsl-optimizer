@@ -210,10 +210,12 @@ static void r300_set_blend_cntl(r300ContextPtr rmesa, int func, int eqn, int cbi
 	GLuint new_ablend, new_cblend;
 
 	new_ablend = eqnA | funcA;
-	new_cblend = eqn | func | cbits;
-	if(rmesa->hw.bld.cmd[R300_BLD_ABLEND] == rmesa->hw.bld.cmd[R300_BLD_CBLEND]){
+	new_cblend = eqn | func;
+	if(funcA == func){
 		new_cblend |=  R300_BLEND_NO_SEPARATE;
 		}
+	new_cblend |= cbits;
+	
 	if((new_ablend != rmesa->hw.bld.cmd[R300_BLD_ABLEND])
 		|| (new_cblend != rmesa->hw.bld.cmd[R300_BLD_CBLEND])){
 		R300_STATECHANGE(rmesa, bld);
@@ -1113,6 +1115,7 @@ void r300_setup_textures(GLcontext *ctx)
 				//exit(-1);
 				t=&default_tex_obj;
 				}
+			fprintf(stderr, "t->format=%08x\n", t->format);
 			if (RADEON_DEBUG & DEBUG_STATE)
 				fprintf(stderr, "Activating texture unit %d\n", i);
 			max_texture_unit=i;
@@ -1129,7 +1132,6 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
 			//r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
 			}
-
 		}
 	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->unchecked_state.count = max_texture_unit+1;
