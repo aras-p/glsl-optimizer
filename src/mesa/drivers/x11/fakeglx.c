@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.62 2002/04/02 23:52:53 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.63 2002/04/19 00:47:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1795,7 +1795,11 @@ Fake_glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
          *value = False; /* XXX ??? */
          break;
       case GLX_X_VISUAL_TYPE:
+#if defined(__cplusplus) || defined(c_plusplus)
+         switch (v->vishandle->c_class) {
+#else
          switch (v->vishandle->class) {
+#endif
             case GrayScale:
                *value = GLX_GRAY_SCALE;
                break;
