@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.32 2000/02/25 03:55:39 keithw Exp $ */
+/* $Id: dlist.c,v 1.33 2000/03/03 17:45:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4510,8 +4510,8 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    /* Not all are supported */
    table->BlendColor = save_BlendColor;
    table->BlendEquation = save_BlendEquation;
-   table->ColorSubTable = _mesa_ColorSubTable;
-   table->ColorTable = _mesa_ColorTable;
+   table->ColorSubTable = save_ColorSubTable;
+   table->ColorTable = save_ColorTable;
    table->ColorTableParameterfv = _mesa_ColorTableParameterfv;
    table->ColorTableParameteriv = _mesa_ColorTableParameteriv;
    table->ConvolutionFilter1D = _mesa_ConvolutionFilter1D;
