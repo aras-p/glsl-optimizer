@@ -53,6 +53,7 @@ extern int driWaitForVBlank( const __DRIdrawablePrivate *priv,
 
 #undef usleep
 #include <unistd.h>  /* for usleep() */
+#include <sched.h>   /* for sched_yield() */
 
 #define DO_USLEEP(nr)							\
    do {								 	\
