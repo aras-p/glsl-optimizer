@@ -617,12 +617,18 @@ static void intelUploadTexImage( intelContextPtr intel,
       GLubyte *src = (GLubyte *)image->Data;
       GLuint j;
 
-      if ((image->IntFormat == GL_COMPRESSED_RGB_FXT1_3DFX || image->IntFormat == GL_COMPRESSED_RGBA_FXT1_3DFX))
+      switch(image->IntFormat)
 	{
+	case GL_COMPRESSED_RGB_FXT1_3DFX:
+	case GL_COMPRESSED_RGBA_FXT1_3DFX:
 	  for (j = 0 ; j < image->Height/4 ; j++, dst += (t->Pitch)) {
 	    __memcpy(dst, src, row_len );
 	    src += row_len;
 	  }
+	  break;
+	default:
+	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->IntFormat);
+	  break;
 	}
    }
    else {
