@@ -10,9 +10,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -951,22 +951,28 @@ _math_matrix_ortho( GLmatrix *mat,
 		    GLfloat bottom, GLfloat top,
 		    GLfloat nearval, GLfloat farval )
 {
-   GLfloat x, y, z;
-   GLfloat tx, ty, tz;
    GLfloat m[16];
 
-   x = 2.0F / (right-left);
-   y = 2.0F / (top-bottom);
-   z = -2.0F / (farval-nearval);
-   tx = -(right+left) / (right-left);
-   ty = -(top+bottom) / (top-bottom);
-   tz = -(farval+nearval) / (farval-nearval);
-
 #define M(row,col)  m[col*4+row]
-   M(0,0) = x;     M(0,1) = 0.0F;  M(0,2) = 0.0F;  M(0,3) = tx;
-   M(1,0) = 0.0F;  M(1,1) = y;     M(1,2) = 0.0F;  M(1,3) = ty;
-   M(2,0) = 0.0F;  M(2,1) = 0.0F;  M(2,2) = z;     M(2,3) = tz;
-   M(3,0) = 0.0F;  M(3,1) = 0.0F;  M(3,2) = 0.0F;  M(3,3) = 1.0F;
+   M(0,0) = 2.0F / (right-left);
+   M(0,1) = 0.0F;
+   M(0,2) = 0.0F;
+   M(0,3) = -(right+left) / (right-left);
+
+   M(1,0) = 0.0F;
+   M(1,1) = 2.0F / (top-bottom);
+   M(1,2) = 0.0F;
+   M(1,3) = -(top+bottom) / (top-bottom);
+
+   M(2,0) = 0.0F;
+   M(2,1) = 0.0F;
+   M(2,2) = -2.0F / (farval-nearval);
+   M(2,3) = -(farval+nearval) / (farval-nearval);
+
+   M(3,0) = 0.0F;
+   M(3,1) = 0.0F;
+   M(3,2) = 0.0F;
+   M(3,3) = 1.0F;
 #undef M
 
    matrix_multf( mat, m, (MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION));
