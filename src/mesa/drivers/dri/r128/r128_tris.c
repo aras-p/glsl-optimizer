@@ -47,7 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_tris.h"
 #include "r128_state.h"
 #include "r128_tex.h"
-#include "r128_vb.h"
 #include "r128_ioctl.h"
 
 static const GLuint hw_prim[GL_POLYGON+1] = {
@@ -70,84 +69,27 @@ static void r128RenderPrimitive( GLcontext *ctx, GLenum prim );
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
+	
+#define HAVE_QUADS 0
+#define HAVE_LINES 1
+#define HAVE_POINTS 1
+#define HAVE_LE32_VERTS 1
+#define CTX_ARG r128ContextPtr rmesa
+#define CTX_ARG2 rmesa
+#define GET_VERTEX_DWORDS() rmesa->vertex_size
+#define ALLOC_VERTS( n, size ) r128AllocDmaLow( rmesa, (n), (size) * 4 )
+#undef LOCAL_VARS
+#define LOCAL_VARS						\
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);			\
+   const char *vertptr = rmesa->verts;
+#define VERT(x) (r128Vertex *)(vertptr + ((x) * vertsize * 4))
+#define VERTEX r128Vertex
+#undef TAG
+#define TAG(x) r128_##x
+#include "tnl_dd/t_dd_triemit.h"
+#undef TAG
+#undef LOCAL_VARS
 
-#if defined(USE_X86_ASM)
-#define COPY_DWORDS( j, vb, vertsize, v )				\
-do {									\
-	int __tmp;							\
-	__asm__ __volatile__( "rep ; movsl"				\
-			      : "=%c" (j), "=D" (vb), "=S" (__tmp)	\
-			      : "0" (vertsize),				\
-			        "D" ((long)vb),				\
-			        "S" ((long)v) );			\
-} while (0)
-#else
-#define COPY_DWORDS( j, vb, vertsize, v )				\
-do {									\
-   for ( j = 0 ; j < vertsize ; j++ )					\
-      vb[j] = CPU_TO_LE32(((GLuint *)v)[j]);				\
-   vb += vertsize;							\
-} while (0)
-#endif
-
-static __inline void r128_draw_quad( r128ContextPtr rmesa,
-				     r128VertexPtr v0,
-				     r128VertexPtr v1,
-				     r128VertexPtr v2,
-				     r128VertexPtr v3 )
-{
-   GLuint vertsize = rmesa->vertex_size;
-   GLuint *vb = (GLuint *)r128AllocDmaLow( rmesa, 6 * vertsize * 4 );
-   GLuint j;
-
-   rmesa->num_verts += 6;
-   COPY_DWORDS( j, vb, vertsize, v0 );
-   COPY_DWORDS( j, vb, vertsize, v1 );
-   COPY_DWORDS( j, vb, vertsize, v3 );
-   COPY_DWORDS( j, vb, vertsize, v1 );
-   COPY_DWORDS( j, vb, vertsize, v2 );
-   COPY_DWORDS( j, vb, vertsize, v3 );
-}
-
-
-static __inline void r128_draw_triangle( r128ContextPtr rmesa,
-					 r128VertexPtr v0,
-					 r128VertexPtr v1,
-					 r128VertexPtr v2 )
-{
-   GLuint vertsize = rmesa->vertex_size;
-   GLuint *vb = (GLuint *)r128AllocDmaLow( rmesa, 3 * vertsize * 4 );
-   GLuint j;
-
-   rmesa->num_verts += 3;
-   COPY_DWORDS( j, vb, vertsize, v0 );
-   COPY_DWORDS( j, vb, vertsize, v1 );
-   COPY_DWORDS( j, vb, vertsize, v2 );
-}
-
-static __inline void r128_draw_line( r128ContextPtr rmesa,
-				     r128VertexPtr v0,
-				     r128VertexPtr v1 )
-{
-   GLuint vertsize = rmesa->vertex_size;
-   GLuint *vb = (GLuint *)r128AllocDmaLow( rmesa, 2 * vertsize * 4 );
-   GLuint j;
-
-   rmesa->num_verts += 2;
-   COPY_DWORDS( j, vb, vertsize, v0 );
-   COPY_DWORDS( j, vb, vertsize, v1 );
-}
-
-static __inline void r128_draw_point( r128ContextPtr rmesa,
-				      r128VertexPtr v0 )
-{
-   int vertsize = rmesa->vertex_size;
-   GLuint *vb = (GLuint *)r128AllocDmaLow( rmesa, vertsize * 4 );
-   int j;
-
-   rmesa->num_verts += 1;
-   COPY_DWORDS( j, vb, vertsize, v0 );
-}
 
 /***********************************************************************
  *          Macros for t_dd_tritmp.h to draw basic primitives          *
@@ -158,7 +100,7 @@ do {						\
    if (DO_FALLBACK)				\
       rmesa->draw_tri( rmesa, a, b, c );	\
    else						\
-      r128_draw_triangle( rmesa, a, b, c );	\
+      r128_triangle( rmesa, a, b, c );		\
 } while (0)
 
 #define QUAD( a, b, c, d )			\
@@ -167,7 +109,7 @@ do {						\
       rmesa->draw_tri( rmesa, a, b, d );	\
       rmesa->draw_tri( rmesa, b, c, d );	\
    } else 					\
-      r128_draw_quad( rmesa, a, b, c, d );	\
+      r128_quad( rmesa, a, b, c, d );		\
 } while (0)
 
 #define LINE( v0, v1 )				\
@@ -175,7 +117,7 @@ do {						\
    if (DO_FALLBACK)				\
       rmesa->draw_line( rmesa, v0, v1 );	\
    else 					\
-      r128_draw_line( rmesa, v0, v1 );	\
+      r128_line( rmesa, v0, v1 );		\
 } while (0)
 
 #define POINT( v0 )				\
@@ -183,7 +125,7 @@ do {						\
    if (DO_FALLBACK)				\
       rmesa->draw_point( rmesa, v0 );		\
    else 					\
-      r128_draw_point( rmesa, v0 );		\
+      r128_point( rmesa, v0 );			\
 } while (0)
 
 
@@ -247,35 +189,40 @@ do {								\
 #define VERT_SET_SPEC( v0, c )					\
 do {								\
    if (havespec) {						\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+      r128_color_t *spec = (r128_color_t *)&((v0)->ui[specoffset]); \
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);		\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);		\
    }								\
 } while (0)
 #define VERT_COPY_SPEC( v0, v1 )			\
 do {							\
    if (havespec) {					\
-      v0->v.specular.red   = v1->v.specular.red;	\
-      v0->v.specular.green = v1->v.specular.green;	\
-      v0->v.specular.blue  = v1->v.specular.blue; 	\
+      r128_color_t *spec0 = (r128_color_t *)&((v0)->ui[specoffset]); \
+      r128_color_t *spec1 = (r128_color_t *)&((v1)->ui[specoffset]); \
+      spec0->red   = spec1->red;			\
+      spec0->green = spec1->green;			\
+      spec0->blue  = spec1->blue; 			\
    }							\
 } while (0)
 
-/* These don't need LE32_TO_CPU() as they used to save and restore
+/* These don't need LE32_TO_CPU() as they are used to save and restore
  * colors which are already in the correct format.
  */
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
-#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
+#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[specoffset]
+#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[specoffset] = spec[idx]
 
 
 #define LOCAL_VARS(n)						\
    r128ContextPtr rmesa = R128_CONTEXT(ctx);			\
    GLuint color[n], spec[n];					\
-   GLuint coloroffset = (rmesa->vertex_size == 4 ? 3 : 4);	\
-   GLboolean havespec = (rmesa->vertex_size == 4 ? 0 : 1);	\
-   (void) color; (void) spec; (void) coloroffset; (void) havespec;
+   GLuint coloroffset = rmesa->coloroffset;			\
+   GLuint specoffset = rmesa->specoffset;			\
+   GLboolean havespec = (rmesa->specoffset != 0);		\
+   (void) color; (void) spec; (void) specoffset;		\
+   (void) coloroffset; (void) havespec;
 
 /***********************************************************************
  *                Helpers for rendering unfilled primitives            *
@@ -400,9 +347,10 @@ r128_fallback_tri( r128ContextPtr rmesa,
 {
    GLcontext *ctx = rmesa->glCtx;
    SWvertex v[3];
-   r128_translate_vertex( ctx, v0, &v[0] );
-   r128_translate_vertex( ctx, v1, &v[1] );
-   r128_translate_vertex( ctx, v2, &v[2] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v2, &v[2] );
+   /* XXX: SpanRenderStart */
    _swrast_Triangle( ctx, &v[0], &v[1], &v[2] );
 }
 
@@ -414,8 +362,8 @@ r128_fallback_line( r128ContextPtr rmesa,
 {
    GLcontext *ctx = rmesa->glCtx;
    SWvertex v[2];
-   r128_translate_vertex( ctx, v0, &v[0] );
-   r128_translate_vertex( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
    _swrast_Line( ctx, &v[0], &v[1] );
 }
 
@@ -426,7 +374,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 {
    GLcontext *ctx = rmesa->glCtx;
    SWvertex v[1];
-   r128_translate_vertex( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v0, &v[0] );
    _swrast_Point( ctx, &v[0] );
 }
 
@@ -436,16 +384,15 @@ r128_fallback_point( r128ContextPtr rmesa,
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (r128Vertex *)(r128verts + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
-      r128_draw_point( rmesa, VERT(start) )
+      r128_point( rmesa, VERT(start) )
 #define RENDER_LINE( v0, v1 ) \
-   r128_draw_line( rmesa, VERT(v0), VERT(v1) )
+   r128_line( rmesa, VERT(v0), VERT(v1) )
 #define RENDER_TRI( v0, v1, v2 )  \
-   r128_draw_triangle( rmesa, VERT(v0), VERT(v1), VERT(v2) )
+   r128_triangle( rmesa, VERT(v0), VERT(v1), VERT(v2) )
 #define RENDER_QUAD( v0, v1, v2, v3 ) \
-   r128_draw_quad( rmesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
+   r128_quad( rmesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
 #define INIT(x) do {					\
    if (0) fprintf(stderr, "%s\n", __FUNCTION__);	\
    r128RenderPrimitive( ctx, x );			\
@@ -454,7 +401,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 #define LOCAL_VARS						\
     r128ContextPtr rmesa = R128_CONTEXT(ctx);		\
     const GLuint vertsize = rmesa->vertex_size;		\
-    const char *r128verts = (char *)rmesa->verts;		\
+    const char *vertptr = (char *)rmesa->verts;		\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 #define RESET_STIPPLE
@@ -471,72 +418,15 @@ r128_fallback_point( r128ContextPtr rmesa,
 
 
 /**********************************************************************/
-/*                    Render clipped primitives                       */
-/**********************************************************************/
-
-static void r128RenderClippedPoly( GLcontext *ctx, const GLuint *elts,
-				     GLuint n )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-
-   /* Render the new vertices as an unclipped polygon.
-    */
-   {
-      GLuint *tmp = VB->Elts;
-      VB->Elts = (GLuint *)elts;
-      tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n, PRIM_BEGIN|PRIM_END );
-      VB->Elts = tmp;
-   }
-}
-
-static void r128RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.Line( ctx, ii, jj );
-}
-
-static void r128FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
-					 GLuint n )
-{
-   r128ContextPtr rmesa = R128_CONTEXT( ctx );
-   GLuint vertsize = rmesa->vertex_size;
-   GLuint *vb = r128AllocDmaLow( rmesa, (n-2) * 3 * 4 * vertsize );
-   GLubyte *r128verts = (GLubyte *)rmesa->verts;
-   const GLuint *start = (const GLuint *)VERT(elts[0]);
-   int i,j;
-
-   rmesa->num_verts += (n-2) * 3;
-
-   for (i = 2 ; i < n ; i++) {
-      COPY_DWORDS( j, vb, vertsize, (r128VertexPtr) VERT(elts[i-1]) );
-      COPY_DWORDS( j, vb, vertsize, (r128VertexPtr) VERT(elts[i]) );
-      COPY_DWORDS( j, vb, vertsize, (r128VertexPtr) start );
-   }
-}
-
-
-
-
-/**********************************************************************/
 /*                    Choose render functions                         */
 /**********************************************************************/
-
-#define _R128_NEW_RENDER_STATE (_DD_NEW_LINE_STIPPLE |	\
-			          _DD_NEW_LINE_SMOOTH |		\
-			          _DD_NEW_POINT_SMOOTH |	\
-			          _DD_NEW_TRI_SMOOTH |		\
-			          _DD_NEW_TRI_UNFILLED |	\
-			          _DD_NEW_TRI_LIGHT_TWOSIDE |	\
-			          _DD_NEW_TRI_OFFSET)		\
-
 
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
 #define LINE_FALLBACK (DD_LINE_STIPPLE|DD_LINE_SMOOTH)
 #define TRI_FALLBACK (DD_TRI_SMOOTH)
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
-
+#define _R128_NEW_RENDER_STATE (ANY_FALLBACK_FLAGS | ANY_RASTER_FLAGS)
 
 static void r128ChooseRenderState(GLcontext *ctx)
 {
@@ -545,9 +435,9 @@ static void r128ChooseRenderState(GLcontext *ctx)
    GLuint index = 0;
 
    if (flags & (ANY_RASTER_FLAGS|ANY_FALLBACK_FLAGS)) {
-      rmesa->draw_point = r128_draw_point;
-      rmesa->draw_line = r128_draw_line;
-      rmesa->draw_tri = r128_draw_triangle;
+      rmesa->draw_point = r128_point;
+      rmesa->draw_line = r128_line;
+      rmesa->draw_tri = r128_triangle;
 
       if (flags & ANY_RASTER_FLAGS) {
 	 if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R128_TWOSIDE_BIT;
@@ -569,19 +459,18 @@ static void r128ChooseRenderState(GLcontext *ctx)
       TNLcontext *tnl = TNL_CONTEXT(ctx);
       tnl->Driver.Render.Points = rast_tab[index].points;
       tnl->Driver.Render.Line = rast_tab[index].line;
+      tnl->Driver.Render.ClippedLine = rast_tab[index].line;
       tnl->Driver.Render.Triangle = rast_tab[index].triangle;
       tnl->Driver.Render.Quad = rast_tab[index].quad;
 
       if (index == 0) {
 	 tnl->Driver.Render.PrimTabVerts = r128_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = r128_render_tab_elts;
-	 tnl->Driver.Render.ClippedLine = rast_tab[index].line;
-	 tnl->Driver.Render.ClippedPolygon = r128FastRenderClippedPoly;
+	 tnl->Driver.Render.ClippedPolygon = r128_fast_clipped_poly;
       } else {
 	 tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
 	 tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-	 tnl->Driver.Render.ClippedLine = r128RenderClippedLine;
-	 tnl->Driver.Render.ClippedPolygon = r128RenderClippedPoly;
+	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
       }
 
       rmesa->RenderIndex = index;
@@ -600,9 +489,6 @@ static void r128RunPipeline( GLcontext *ctx )
       r128DDUpdateHWState( ctx );
 
    if (!rmesa->Fallback && rmesa->NewGLState) {
-      if (rmesa->NewGLState & _R128_NEW_VERTEX_STATE)
-	 r128ChooseVertexState( ctx );
-
       if (rmesa->NewGLState & _R128_NEW_RENDER_STATE)
 	 r128ChooseRenderState( ctx );
 
@@ -657,13 +543,100 @@ static void r128RenderPrimitive( GLcontext *ctx, GLenum prim )
    r128RasterPrimitive( ctx, hw );
 }
 
+#define EMIT_ATTR( ATTR, STYLE, VF, SIZE )				\
+do {									\
+   rmesa->vertex_attrs[rmesa->vertex_attr_count].attrib = (ATTR);	\
+   rmesa->vertex_attrs[rmesa->vertex_attr_count].format = (STYLE);	\
+   rmesa->vertex_attr_count++;						\
+   vc_frmt |= (VF);							\
+   offset += (SIZE);							\
+} while (0)
+
+#define EMIT_PAD( SIZE )						\
+do {									\
+   rmesa->vertex_attrs[rmesa->vertex_attr_count].attrib = 0;		\
+   rmesa->vertex_attrs[rmesa->vertex_attr_count].format = EMIT_PAD;	\
+   rmesa->vertex_attrs[rmesa->vertex_attr_count].offset = (SIZE);	\
+   rmesa->vertex_attr_count++;						\
+   offset += (SIZE);							\
+} while (0)
 
 static void r128RenderStart( GLcontext *ctx )
 {
-   /* Check for projective texturing.  Make sure all texcoord
-    * pointers point to something.  (fix in mesa?)
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint index = tnl->render_inputs;
+   GLuint vc_frmt = 0;
+   GLboolean fallback_projtex = GL_FALSE;
+   GLuint offset = 0;
+
+   /* Important: */
+   VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+   rmesa->vertex_attr_count = 0;
+   rmesa->specoffset = 0;
+
+   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+    * build up a hardware vertex.
     */
-   r128CheckTexSizes( ctx );
+   if ( index & _TNL_BITS_TEX_ANY )
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, R128_CCE_VC_FRMT_RHW, 16 );
+   else
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 12 );
+
+   rmesa->coloroffset = offset;
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA,
+      R128_CCE_VC_FRMT_DIFFUSE_ARGB, 4 );
+
+   if ( index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG) ) {
+      if ( index & _TNL_BIT_COLOR1) {
+	 rmesa->specoffset = offset;
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
+	    R128_CCE_VC_FRMT_SPEC_FRGB, 3 );
+      } else 
+	 EMIT_PAD( 3 );
+
+      if (index & _TNL_BIT_FOG)
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R128_CCE_VC_FRMT_SPEC_FRGB,
+		    1 );
+      else
+	 EMIT_PAD( 1 );
+   }
+
+   if ( index & _TNL_BIT_TEX(0) ) {
+      if ( VB->TexCoordPtr[0]->size > 2 )
+	 fallback_projtex = GL_TRUE;
+      EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
+      if ( index & _TNL_BIT_TEX(1) ) {
+	 if ( VB->TexCoordPtr[1]->size > 2 )
+	    fallback_projtex = GL_TRUE;
+	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S2_T2, 8 );
+      }
+   } else if ( index & _TNL_BIT_TEX(1) ) {
+      if ( VB->TexCoordPtr[1]->size > 2 )
+	 fallback_projtex = GL_TRUE;
+      EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, R128_CCE_VC_FRMT_S_T, 8 );
+   }
+
+   /* projective textures are not supported by the hardware */
+   FALLBACK( rmesa, R128_FALLBACK_TEXTURE, fallback_projtex );
+
+   /* Only need to change the vertex emit code if there has been a
+    * statechange to a TNL index.
+    */
+   if ( index != rmesa->tnl_state ) {
+      FLUSH_BATCH( rmesa );
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
+
+      rmesa->vertex_size = 
+	 _tnl_install_attrs( ctx, 
+			     rmesa->vertex_attrs, 
+			     rmesa->vertex_attr_count,
+			     rmesa->hw_viewport, 0 );
+      rmesa->vertex_size >>= 2;
+
+      rmesa->vertex_format = vc_frmt;
+   }
 }
 
 static void r128RenderFinish( GLcontext *ctx )
@@ -698,9 +671,19 @@ void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.Start = r128RenderStart;
 	 tnl->Driver.Render.PrimitiveNotify = r128RenderPrimitive;
 	 tnl->Driver.Render.Finish = r128RenderFinish;
-	 tnl->Driver.Render.BuildVertices = r128BuildVertices;
-	 rmesa->NewGLState |= (_R128_NEW_RENDER_STATE|
-			       _R128_NEW_VERTEX_STATE);
+
+	 tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+	 tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+	 tnl->Driver.Render.Interp = _tnl_interp;
+
+	 _tnl_invalidate_vertex_state( ctx, ~0 );
+	 _tnl_invalidate_vertices( ctx, ~0 );
+	 _tnl_install_attrs( ctx, 
+			     rmesa->vertex_attrs, 
+			     rmesa->vertex_attr_count,
+			     rmesa->hw_viewport, 0 ); 
+
+	 rmesa->NewGLState |= _R128_NEW_RENDER_STATE;
       }
    }
 }
@@ -726,9 +709,16 @@ void r128InitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.Finish = r128RenderFinish;
    tnl->Driver.Render.PrimitiveNotify = r128RenderPrimitive;
    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.Render.BuildVertices = r128BuildVertices;
-   rmesa->NewGLState |= (_R128_NEW_RENDER_STATE|
-			 _R128_NEW_VERTEX_STATE);
+   tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+   tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+   tnl->Driver.Render.Interp = _tnl_interp;
+
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+		       (6 + 2 * ctx->Const.MaxTextureUnits) * sizeof(GLfloat) );
+   rmesa->verts = (char *)tnl->clipspace.vertex_buf;
+   rmesa->tnl_state = -1;
+
+   rmesa->NewGLState |= _R128_NEW_RENDER_STATE;
 
 /*     r128Fallback( ctx, 0x100000, 1 ); */
 }

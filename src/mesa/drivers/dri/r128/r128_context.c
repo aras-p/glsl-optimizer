@@ -56,7 +56,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_span.h"
 #include "r128_tex.h"
 #include "r128_tris.h"
-#include "r128_vb.h"
 
 #include "vblank.h"
 #include "utils.h"
@@ -180,6 +179,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    rmesa->RenderIndex = -1;		/* Impossible value */
    rmesa->vert_buf = NULL;
    rmesa->num_verts = 0;
+   rmesa->tnl_state = ~0;
 
    /* Set the maximum texture size small enough that we can guarentee that
     * all texture units can bind a maximal texture and have them both in
@@ -243,7 +243,6 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    if (sPriv->drmMinor >= 4)
       _mesa_enable_extension( ctx, "GL_MESA_ycbcr_texture" );
 
-   r128InitVB( ctx );
    r128InitTriFuncs( ctx );
    r128DDInitStateFuncs( ctx );
    r128DDInitSpanFuncs( ctx );
@@ -279,8 +278,6 @@ void r128DestroyContext( __DRIcontextPrivate *driContextPriv  )
       _tnl_DestroyContext( rmesa->glCtx );
       _ac_DestroyContext( rmesa->glCtx );
       _swrast_DestroyContext( rmesa->glCtx );
-
-      r128FreeVB( rmesa->glCtx );
 
       /* free the Mesa context */
       rmesa->glCtx->DriverCtx = NULL;

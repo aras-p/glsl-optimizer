@@ -38,7 +38,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_state.h"
 #include "r128_ioctl.h"
 #include "r128_tris.h"
-#include "r128_vb.h"
 #include "r128_tex.h"
 
 #include "context.h"

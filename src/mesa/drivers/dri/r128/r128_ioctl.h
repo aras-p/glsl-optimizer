@@ -47,9 +47,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa );
 extern void r128FlushVerticesLocked( r128ContextPtr rmesa );
 
-static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int bytes )
+static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int count,
+				       int vert_size )
 {
    uint32_t *head;
+   int bytes = count * vert_size;
 
    if ( !rmesa->vert_buf ) {
       LOCK_HARDWARE( rmesa );
@@ -64,6 +66,8 @@ static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int bytes )
 
    head = (uint32_t *)((char *)rmesa->vert_buf->address + rmesa->vert_buf->used);
    rmesa->vert_buf->used += bytes;
+   rmesa->num_verts += count;
+   
    return head;
 }
 

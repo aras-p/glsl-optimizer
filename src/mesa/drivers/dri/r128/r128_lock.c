@@ -104,7 +104,7 @@ void r128GetLock( r128ContextPtr rmesa, GLuint flags )
       r128UpdatePageFlipping( rmesa );
       rmesa->lastStamp = dPriv->lastStamp;
       rmesa->new_state |= R128_NEW_CLIP;
-      rmesa->SetupNewInputs = ~0;
+      rmesa->tnl_state = ~0;
    }
 
    rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_CLIPRECTS;

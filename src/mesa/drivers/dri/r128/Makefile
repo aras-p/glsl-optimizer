@@ -28,8 +28,7 @@ DRIVER_SOURCES = \
 	r128_tris.c \
 	r128_ioctl.c \
 	r128_span.c \
-	r128_texmem.c \
-	r128_vb.c
+	r128_texmem.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

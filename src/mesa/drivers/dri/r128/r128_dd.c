@@ -36,14 +36,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_context.h"
 #include "r128_ioctl.h"
 #include "r128_state.h"
-#include "r128_vb.h"
 #include "r128_dd.h"
+#include "swrast/swrast.h"
 
 #include "context.h"
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20030328"
+#define DRIVER_DATE	"20041001"
 
 
 /* Return the width and height of the current color buffer.

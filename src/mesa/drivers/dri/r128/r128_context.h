@@ -43,6 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_drm.h"
 
 #include "mtypes.h"
+#include "tnl/t_vertex.h"
 
 #include "r128_reg.h"
 
@@ -81,6 +82,7 @@ typedef struct r128_context *r128ContextPtr;
 #define R128_FALLBACK_SEP_SPECULAR	0x0080
 #define R128_FALLBACK_BLEND_EQ		0x0100
 #define R128_FALLBACK_BLEND_FUNC	0x0200
+#define R128_FALLBACK_PROJTEX		0x0400
 
 
 /* Use the templated vertex format:
@@ -122,18 +124,21 @@ struct r128_context {
    GLuint dirty;			/* Hardware state to be updated */
    drm_r128_context_regs_t setup;
 
+   /* Vertex state */
+   GLuint vertex_size;
+   GLuint vertex_format;
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+   GLuint vertex_attr_count;
+   char *verts;			/* points to tnl->clipspace.vertex_buf */
+   GLuint num_verts;
+   int coloroffset, specoffset;
+   int tnl_state;	/* tnl->render_inputs for this _tnl_install_attrs */
+
    GLuint NewGLState;
    GLuint Fallback;
-   GLuint SetupIndex;
-   GLuint SetupNewInputs;
    GLuint RenderIndex;
    GLfloat hw_viewport[16];
    GLfloat depth_scale;
-   GLuint vertex_size;
-   GLuint vertex_stride_shift;
-   GLuint vertex_format;
-   GLuint num_verts;
-   GLubyte *verts;		
 
    uint32_t ClearColor;			/* Color used to clear color buffer */
    uint32_t ClearDepth;			/* Value used to clear depth buffer */
