@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../src/mesa/main" /I "../../../../../src/mesa/glapi" /I "../../../../../src/mesa/math" /I "../../../../../src/mesa/transform" /I "../../../../../src/mesa/swrast" /I "../../../../../src/mesa/swrast_setup" /I "../../../../../include" /I "../../../../../src/mesa" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /D "BUILD_GL32" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../src/mesa/main" /I "../../../../../src/mesa/glapi" /I "../../../../../src/mesa/math" /I "../../../../../src/mesa/transform" /I "../../../../../src/mesa/swrast" /I "../../../../../src/mesa/swrast_setup" /I "../../../../../include" /I "../../../../../src/mesa" /I "../../../../../src/mesa/shader" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /D "BUILD_GL32" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -74,7 +74,7 @@ PostBuild_Cmds=if not exist ..\..\..\..\..\lib md ..\..\..\..\..\lib	copy Releas
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../src/mesa/main" /I "../../../../../src/mesa/glapi" /I "../../../../../src/mesa/math" /I "../../../../../src/mesa/transform" /I "../../../../../src/mesa/swrast" /I "../../../../../src/mesa/swrast_setup" /I "../../../../../include" /I "../../../../../src/mesa" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /D "BUILD_GL32" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../src/mesa/main" /I "../../../../../src/mesa/glapi" /I "../../../../../src/mesa/math" /I "../../../../../src/mesa/transform" /I "../../../../../src/mesa/swrast" /I "../../../../../src/mesa/swrast_setup" /I "../../../../../include" /I "../../../../../src/mesa" /I "../../../../../src/mesa/shader" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "GDI_EXPORTS" /D "BUILD_GL32" /FR /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"

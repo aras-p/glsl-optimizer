@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm1000 /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../../include" /I "../" /I "../glapi" /I "../shader" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../glapi" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FR /YX /FD /GZ /Zm1000 /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../glapi" /I "../shader" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FR /YX /FD /GZ /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -102,22 +102,6 @@ SOURCE=.\api_noop.c
 # Begin Source File
 
 SOURCE=.\api_validate.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbfragparse.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbparse.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbprogram.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbvertparse.c
 # End Source File
 # Begin Source File
 
@@ -233,22 +217,6 @@ SOURCE=.\matrix.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\nvfragparse.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvprogram.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvvertexec.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvvertparse.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\occlude.c
 # End Source File
 # Begin Source File
@@ -265,10 +233,6 @@ SOURCE=.\polygon.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\program.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\rastpos.c
 # End Source File
 # Begin Source File
@@ -282,6 +246,14 @@ SOURCE=.\stencil.c
 # Begin Source File
 
 SOURCE=.\texcompress.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\texcompress_fxt1.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\texcompress_s3tc.c
 # End Source File
 # Begin Source File
 
@@ -302,10 +274,6 @@ SOURCE=.\texstate.c
 # Begin Source File
 
 SOURCE=.\texstore.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\texutil.c
 # End Source File
 # Begin Source File
 
