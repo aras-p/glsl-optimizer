@@ -387,7 +387,7 @@ static void VFMT_FALLBACK( const char *caller )
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
    rmesa->vb.installed = GL_FALSE;
-   glBegin( prim );
+   GL_CALL(Begin)( prim );
    
    if (rmesa->vb.installed_color_3f_sz == 4)
       alpha = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
@@ -397,21 +397,21 @@ static void VFMT_FALLBACK( const char *caller )
    for (i = 0 ; i < nrverts; i++) {
       GLuint offset = 3;
       if (ind & RADEON_CP_VC_FRMT_N0) {
-	 glNormal3fv( &tmp[i][offset] ); 
+	 GL_CALL(Normal3fv)( &tmp[i][offset] ); 
 	 offset += 3;
       }
 
       if (ind & RADEON_CP_VC_FRMT_PKCOLOR) {
 	 radeon_color_t *col = (radeon_color_t *)&tmp[i][offset];
-	 glColor4ub( col->red, col->green, col->blue, col->alpha );
+	 GL_CALL(Color4ub)( col->red, col->green, col->blue, col->alpha );
 	 offset++;
       }
       else if (ind & RADEON_CP_VC_FRMT_FPALPHA) {
-	 glColor4fv( &tmp[i][offset] ); 
+	 GL_CALL(Color4fv)( &tmp[i][offset] ); 
 	 offset+=4;
       } 
       else if (ind & RADEON_CP_VC_FRMT_FPCOLOR) {
-	 glColor3fv( &tmp[i][offset] ); 
+	 GL_CALL(Color3fv)( &tmp[i][offset] ); 
 	 offset+=3;
       }
 
@@ -422,44 +422,44 @@ static void VFMT_FALLBACK( const char *caller )
       }
 
       if (ind & RADEON_CP_VC_FRMT_ST0) {
-	 glTexCoord2fv( &tmp[i][offset] ); 
+	 GL_CALL(TexCoord2fv)( &tmp[i][offset] ); 
 	 offset += 2;
       }
 
       if (ind & RADEON_CP_VC_FRMT_ST1) {
-	 glMultiTexCoord2fvARB( GL_TEXTURE1_ARB, &tmp[i][offset] );
+	 GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE1_ARB, &tmp[i][offset] );
 	 offset += 2;
       }
-      glVertex3fv( &tmp[i][0] );
+      GL_CALL(Vertex3fv)( &tmp[i][0] );
    }
 
    /* Replay current vertex
     */
    if (ind & RADEON_CP_VC_FRMT_N0) 
-      glNormal3fv( rmesa->vb.normalptr );
+      GL_CALL(Normal3fv)( rmesa->vb.normalptr );
 
    if (ind & RADEON_CP_VC_FRMT_PKCOLOR)
-      glColor4ub( rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha );
+      GL_CALL(Color4ub)( rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha );
    else if (ind & RADEON_CP_VC_FRMT_FPALPHA)
-      glColor4fv( rmesa->vb.floatcolorptr );
+      GL_CALL(Color4fv)( rmesa->vb.floatcolorptr );
    else if (ind & RADEON_CP_VC_FRMT_FPCOLOR) {
       if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0)
-	 glColor4f( rmesa->vb.floatcolorptr[0],
-		    rmesa->vb.floatcolorptr[1],
-		    rmesa->vb.floatcolorptr[2],
-		    alpha );
+	 GL_CALL(Color4f)( rmesa->vb.floatcolorptr[0],
+			   rmesa->vb.floatcolorptr[1],
+			   rmesa->vb.floatcolorptr[2],
+			   alpha );
       else
-	 glColor3fv( rmesa->vb.floatcolorptr );
+	 GL_CALL(Color3fv)( rmesa->vb.floatcolorptr );
    }
 
    if (ind & RADEON_CP_VC_FRMT_PKSPEC) 
        GL_CALL(SecondaryColor3ubEXT)( rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue ); 
 
    if (ind & RADEON_CP_VC_FRMT_ST0) 
-      glTexCoord2fv( rmesa->vb.texcoordptr[0] );
+      GL_CALL(TexCoord2fv)( rmesa->vb.texcoordptr[0] );
 
    if (ind & RADEON_CP_VC_FRMT_ST1) 
-      glMultiTexCoord2fvARB( GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1] );
+      GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1] );
 }
 
 
@@ -758,7 +758,7 @@ static void radeon_Materialfv( GLenum face, GLenum pname,
 
    if (rmesa->vb.prim[0] != GL_POLYGON+1) {
       VFMT_FALLBACK( __FUNCTION__ );
-      glMaterialfv( face, pname, params );
+      GL_CALL(Materialfv)( face, pname, params );
       return;
    }
    _mesa_noop_Materialfv( face, pname, params );
@@ -797,7 +797,7 @@ static void radeon_Begin( GLenum mode )
       radeonVtxfmtValidate( ctx );
 
    if (!rmesa->vb.installed) {
-      glBegin( mode );
+      GL_CALL(Begin)( mode );
       return;
    }
 
