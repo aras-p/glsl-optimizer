@@ -30,8 +30,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#if defined(USE_X86_ASM) && !defined(HAVE_NONSTANDARD_GLAPIENTRY)
-
 #if !defined (__DJGPP__)
 
 #define GLOBL( x )	\
@@ -66,7 +64,7 @@ _##x:
 // Unfold functions for each vertex size?
 // Build super-specialized MMX/SSE versions?
 
-GLOBL ( _x86_Vertex1fv )
+GLOBL ( _tnl_x86_Vertex1fv )
 	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
@@ -87,11 +85,11 @@ GLOBL ( _x86_Vertex1fv )
 	.short	0x840f		// if (counter == 0)
 	.long	SUBST(4)	//    notify()
 	ret			// return
-GLOBL ( _x86_Vertex1fv_end )
+GLOBL ( _tnl_x86_Vertex1fv_end )
 
 
 .align 4
-GLOBL ( _x86_Vertex2fv )
+GLOBL ( _tnl_x86_Vertex2fv )
 	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
@@ -114,10 +112,10 @@ GLOBL ( _x86_Vertex2fv )
 	.short	0x840f		// if (counter == 0)
 	.long	SUBST(4)	//    notify()
 	ret			// return
-GLOBL ( _x86_Vertex2fv_end )
+GLOBL ( _tnl_x86_Vertex2fv_end )
 
 .align 4
-GLOBL ( _x86_Vertex3fv )
+GLOBL ( _tnl_x86_Vertex3fv )
 	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
@@ -142,11 +140,11 @@ GLOBL ( _x86_Vertex3fv )
 	.short	0x840f		// if (counter == 0)
 	.long	SUBST(4)	//    notify()
 	ret			// return
-GLOBL ( _x86_Vertex3fv_end )
+GLOBL ( _tnl_x86_Vertex3fv_end )
 
 			
 .align 4
-GLOBL ( _x86_Vertex4fv )
+GLOBL ( _tnl_x86_Vertex4fv )
 	movl    4(%esp), %ecx	
 	push	%edi
 	push	%esi
@@ -173,7 +171,7 @@ GLOBL ( _x86_Vertex4fv )
 	.short	0x840f		// if (counter == 0)
 	.long	SUBST(4)	//    notify()
 	ret			// return
-GLOBL ( _x86_Vertex4fv_end )
+GLOBL ( _tnl_x86_Vertex4fv_end )
 
 
 	
@@ -181,24 +179,24 @@ GLOBL ( _x86_Vertex4fv_end )
  * Generic handlers for vector format data. 
  */
 
-GLOBL( _x86_Attribute1fv)
+GLOBL( _tnl_x86_Attribute1fv)
 	movl 4(%esp), %ecx	
 	movl (%ecx), %eax       /* load v[0] */
 	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
 	ret
-GLOBL ( _x86_Attribute1fv_end )
+GLOBL ( _tnl_x86_Attribute1fv_end )
 
-GLOBL( _x86_Attribute2fv)
+GLOBL( _tnl_x86_Attribute2fv)
 	movl 4(%esp), %ecx	
 	movl (%ecx), %eax       /* load v[0] */
 	movl 4(%ecx), %edx      /* load v[1] */
 	movl %eax, SUBST(0)    	/* store v[0] to current vertex */
 	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
 	ret
-GLOBL ( _x86_Attribute2fv_end )
+GLOBL ( _tnl_x86_Attribute2fv_end )
 
 
-GLOBL( _x86_Attribute3fv)
+GLOBL( _tnl_x86_Attribute3fv)
 	movl 4(%esp), %ecx	
 	movl (%ecx), %eax       /* load v[0] */
 	movl 4(%ecx), %edx      /* load v[1] */
@@ -207,9 +205,9 @@ GLOBL( _x86_Attribute3fv)
 	movl %edx, SUBST(1)    	/* store v[1] to current vertex */
 	movl %ecx, SUBST(2)   	/* store v[2] to current vertex */
 	ret
-GLOBL ( _x86_Attribute3fv_end )
+GLOBL ( _tnl_x86_Attribute3fv_end )
 
-GLOBL( _x86_Attribute4fv)
+GLOBL( _tnl_x86_Attribute4fv)
 	movl 4(%esp), %ecx	
 	movl (%ecx), %eax       /* load v[0] */
 	movl 4(%ecx), %edx      /* load v[1] */
@@ -220,7 +218,7 @@ GLOBL( _x86_Attribute4fv)
 	movl %eax, SUBST(2)    	/* store v[2] to current vertex */
 	movl %edx, SUBST(3)    	/* store v[3] to current vertex */
 	ret
-GLOBL ( _x86_Attribute4fv_end )
+GLOBL ( _tnl_x86_Attribute4fv_end )
 
 
 // Choosers:
@@ -231,14 +229,14 @@ GLOBL ( _x86_Attribute4fv_end )
 // NOT CURRENTLY USED
 
 
-GLOBL( _x86_choose_fv)
+GLOBL( _tnl_x86_choose_fv)
 	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
 	movl	$SUBST(0), (%esp)	// arg 0 - attrib
 	movl	$SUBST(1), 4(%esp)	// arg 1 - N
 	call    EXTRN(_do_choose)	// new function returned in %eax
 	add     $12, %esp		// tear down stack frame
 	jmp     *%eax			// jump to new func
-GLOBL ( _x86_choosefv_end )
+GLOBL ( _tnl_x86_choosefv_end )
 	
 	
 
@@ -265,20 +263,20 @@ GLOBL ( _x86_choosefv_end )
 
 // Unfortunately, have to play with the stack in the non-fv case:
 // 
-GLOBL( _x86_dispatch_attrf )
+GLOBL( _tnl_x86_dispatch_attrf )
 	subl	$12, %esp	// gcc does 16 byte alignment of stack frames?
 	leal	16(%esp), %edx	// address of first float on stack
 	movl	%edx, (%esp)	// save as 'v'
 	call	*SUBST(0)	// 0x0 --> tabfv[attr][n]
 	addl	$12, %esp	// tear down frame
 	ret			// return
-GLOBL( _x86_dispatch_attrf_end )
+GLOBL( _tnl_x86_dispatch_attrf_end )
 
 // The fv case is simpler:
 // 
-GLOBL( _x86_dispatch_attrfv )
+GLOBL( _tnl_x86_dispatch_attrfv )
 	jmp	*SUBST(0)	// 0x0 --> tabfv[attr][n]
-GLOBL( _x86_dispatch_attrfv_end )
+GLOBL( _tnl_x86_dispatch_attrfv_end )
 
 
 // MultiTexcoord: the address of the function pointer must be
@@ -287,28 +285,28 @@ GLOBL( _x86_dispatch_attrfv_end )
 
 // Also, will only need a maximum of four of each of these per context:
 // 
-GLOBL( _x86_dispatch_multitexcoordf )
+GLOBL( _tnl_x86_dispatch_multitexcoordf )
 	movl	4(%esp), %ecx
 	leal	8(%esp), %edx
 	andl	$7, %ecx
 	movl	%edx, 4(%esp)
 	sall	$4, %ecx
 	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
-GLOBL( _x86_dispatch_multitexcoordf_end )
+GLOBL( _tnl_x86_dispatch_multitexcoordf_end )
 
-GLOBL( _x86_dispatch_multitexcoordfv )
+GLOBL( _tnl_x86_dispatch_multitexcoordfv )
 	movl	4(%esp), %ecx
 	movl	8(%esp), %edx
 	andl	$7, %ecx
 	movl	%edx, 4(%esp)
 	sall	$4, %ecx
 	jmp	*SUBST(0)(%ecx)	// 0x0 - tabfv[tex0][n]
-GLOBL( _x86_dispatch_multitexcoordfv_end )
+GLOBL( _tnl_x86_dispatch_multitexcoordfv_end )
 				
 // VertexAttrib: the address of the function pointer must be
 // calculated.
 
-GLOBL( _x86_dispatch_vertexattribf )
+GLOBL( _tnl_x86_dispatch_vertexattribf )
 	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
@@ -317,9 +315,9 @@ GLOBL( _x86_dispatch_vertexattribf )
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
 	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
-GLOBL( _x86_dispatch_vertexattribf_end )
+GLOBL( _tnl_x86_dispatch_vertexattribf_end )
 
-GLOBL( _x86_dispatch_vertexattribfv )
+GLOBL( _tnl_x86_dispatch_vertexattribfv )
 	movl	$16, %ecx
 	movl	4(%esp), %eax
 	cmpl	$16, %eax
@@ -328,6 +326,5 @@ GLOBL( _x86_dispatch_vertexattribfv )
 	movl	%ecx, 4(%esp)	// save in 1st arg slot
 	sall	$4, %eax
 	jmp	*SUBST(0)(%eax)	// 0x0 - tabfv[0][n]
-GLOBL( _x86_dispatch_vertexattribfv_end )
+GLOBL( _tnl_x86_dispatch_vertexattribfv_end )
 
-#endif
