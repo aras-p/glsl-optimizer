@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.64 2002/02/25 22:18:14 brianp Exp $ */
+/* $Id: gl.h,v 1.65 2002/03/20 22:07:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1911,8 +1911,6 @@ GLAPI void GLAPIENTRY glMultTransposeMatrixd( const GLdouble m[16] );
 GLAPI void GLAPIENTRY glMultTransposeMatrixf( const GLfloat m[16] );
 
 GLAPI void GLAPIENTRY glSampleCoverage( GLclampf value, GLboolean invert );
-
-GLAPI void GLAPIENTRY glSamplePass( GLenum pass );
 
 
 /*
