@@ -62,11 +62,26 @@ static void radeonWaitForIdle( radeonContextPtr rmesa );
 static int radeonFlushCmdBufLocked( radeonContextPtr rmesa, 
 				    const char * caller );
 
+static void print_state_atom( struct radeon_state_atom *state )
+{
+   int i;
+
+   fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
+
+   if (RADEON_DEBUG & DEBUG_VERBOSE) 
+      for (i = 0 ; i < state->cmd_size ; i++) 
+	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
+
+}
+
 static void radeonSaveHwState( radeonContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
    char * dest = rmesa->backup_store.cmd_buf;
 
+   if (RADEON_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "%s\n", __FUNCTION__);
+   
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
@@ -75,10 +90,14 @@ static void radeonSaveHwState( radeonContextPtr rmesa )
 	 memcpy( dest, atom->cmd, size);
 	 dest += size;
 	 rmesa->backup_store.cmd_used += size;
+	 if (RADEON_DEBUG & DEBUG_STATE)
+	    print_state_atom( atom );
       }
    }
 
    assert( rmesa->backup_store.cmd_used <= RADEON_CMD_BUF_SZ );
+   if (RADEON_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "Returning to radeonEmitState\n");
 }
 
 /* At this point we were in FlushCmdBufLocked but we had lost our context, so
@@ -88,7 +107,7 @@ static void radeonSaveHwState( radeonContextPtr rmesa )
  */
 static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
 {
-   GLuint nr_released_bufs, saved_cmd_used;
+   GLuint nr_released_bufs;
    struct radeon_store saved_store;
 
    if (rmesa->backup_store.cmd_used == 0)
@@ -103,9 +122,7 @@ static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
    saved_store = rmesa->store;
    rmesa->dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
-   saved_cmd_used = rmesa->backup_store.cmd_used;
    radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
-   rmesa->backup_store.cmd_used = saved_cmd_used;
    rmesa->dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
@@ -113,18 +130,6 @@ static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
 /* =============================================================
  * Kernel command buffer handling
  */
-
-static void print_state_atom( struct radeon_state_atom *state )
-{
-   int i;
-
-   fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
-
-   if (RADEON_DEBUG & DEBUG_VERBOSE) 
-      for (i = 0 ; i < state->cmd_size ; i++) 
-	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
-
-}
 
 /* The state atoms will be emitted in the order they appear in the atom list,
  * so this step is important.
@@ -1016,7 +1021,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       __FUNCTION__, all, cx, cy, cw, ch );
    }
 
-   RADEON_FIREVERTICES( rmesa ); 
+   radeonFlush( ctx ); 
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
       flags |= RADEON_FRONT;
