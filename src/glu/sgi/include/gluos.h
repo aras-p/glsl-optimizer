@@ -1,18 +1,38 @@
 /*
 ** gluos.h - operating system dependencies for GLU
 **
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.5 2003/02/12 16:04:07 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/include/gluos.h,v 1.6 2003/10/14 23:48:57 kendallb Exp $
 */
 #ifdef __VMS
-#ifdef __cplusplus 
+#ifdef __cplusplus
 #pragma message disable nocordel
 #pragma message disable codeunreachable
 #pragma message disable codcauunr
 #endif
 #endif
 
-#ifdef _WIN32
-#include <stdlib.h>         /* For _MAX_PATH definition */
+#ifdef __WATCOMC__
+/* Disable *lots* of warnings to get a clean build. I can't be bothered fixing the
+ * code at the moment, as it is pretty ugly.
+ */
+#pragma warning 7   10
+#pragma warning 13  10
+#pragma warning 14  10
+#pragma warning 367 10
+#pragma warning 379 10
+#pragma warning 726 10
+#pragma warning 836 10
+#endif
+
+#ifdef BUILD_FOR_SNAP
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+
+#elif defined(_WIN32)
+
+#include <stdlib.h>	    /* For _MAX_PATH definition */
 #include <stdio.h>
 #include <malloc.h>
 

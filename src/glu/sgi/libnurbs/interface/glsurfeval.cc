@@ -35,8 +35,8 @@
 /*
  * glsurfeval.c++
  *
- * $Date: 2001/07/16 15:46:42 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.cc,v 1.2 2001/07/16 15:46:42 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glsurfeval.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
  */
 
 /* Polynomial Evaluator Interface */
@@ -58,14 +58,14 @@
 /*#define NO_EVALUATION*/
 
 //#define USE_LOD //for LOD test, have to turn on USE_LOD in insurfeval.c++ too
- 
+
 /*for statistics*/
 //#define STATISTICS
 #ifdef STATISTICS
 static int STAT_num_of_triangles=0;
 static int STAT_num_of_eval_vertices=0;
 static int STAT_num_of_quad_strips=0;
-#endif 
+#endif
 
 /*for output triangles*/
 /*#define OUTPUT_TRIANGLES*/
@@ -74,16 +74,16 @@ static int STAT_num_of_quad_strips=0;
 /*#define FOR_CHRIS*/
 #ifdef FOR_CHRIS
 extern "C"  {  void                evalUStripExt(int n_upper, REAL v_upper, REAL* upper_val,
-                                   int n_lower, REAL v_lower, REAL* lower_val);}
+				   int n_lower, REAL v_lower, REAL* lower_val);}
 
 extern "C" {   void                evalVStripExt(int n_left, REAL u_left, REAL* left_val,
-                                   int n_right, REAL u_right, REAL* right_val);
+				   int n_right, REAL u_right, REAL* right_val);
 	     }
 #endif
 
 
 /**************begin for LOD_eval_list***********/
-void OpenGLSurfaceEvaluator::LOD_eval_list(int level) 
+void OpenGLSurfaceEvaluator::LOD_eval_list(int level)
 {
   if(level == 0)
     LOD_eval_level = 1;
@@ -98,8 +98,8 @@ void OpenGLSurfaceEvaluator::LOD_eval_list(int level)
 }
 
 
-OpenGLSurfaceEvaluator::OpenGLSurfaceEvaluator() 
-{ 
+OpenGLSurfaceEvaluator::OpenGLSurfaceEvaluator()
+{
     int i;
 
     for (i=0; i<VERTEX_CACHE_SIZE; i++) {
@@ -120,7 +120,7 @@ OpenGLSurfaceEvaluator::OpenGLSurfaceEvaluator()
     global_uorder_BV = 0;
     global_vorder_BV = 0;
     global_baseData = NULL;
-	
+        
     global_bpm = NULL;
     output_triangles = 0; //don't output triangles by default
 
@@ -161,8 +161,8 @@ OpenGLSurfaceEvaluator::OpenGLSurfaceEvaluator()
 #endif
 }
 
-OpenGLSurfaceEvaluator::~OpenGLSurfaceEvaluator() 
-{ 
+OpenGLSurfaceEvaluator::~OpenGLSurfaceEvaluator()
+{
    for (int ii= 0; ii< VERTEX_CACHE_SIZE; ii++) {
       delete vertexCache[ii];
       vertexCache[ii]= 0;
@@ -197,11 +197,11 @@ void
 OpenGLSurfaceEvaluator::mapgrid2f(long nu, REAL u0, REAL u1, long nv, REAL v0, REAL v1)
 {
 #ifdef USE_INTERNAL_EVAL
-  inMapGrid2f((int) nu, (REAL) u0, (REAL) u1, (int) nv, 
+  inMapGrid2f((int) nu, (REAL) u0, (REAL) u1, (int) nv,
 	      (REAL) v0, (REAL) v1);
 #else
 
-  if(output_triangles)	
+  if(output_triangles)  
     {
       global_grid_u0 = u0;
       global_grid_u1 = u1;
@@ -211,7 +211,7 @@ OpenGLSurfaceEvaluator::mapgrid2f(long nu, REAL u0, REAL u1, long nv, REAL v0, R
       global_grid_nv = nv;
     }
   else
-    glMapGrid2d((GLint) nu, (GLdouble) u0, (GLdouble) u1, (GLint) nv, 
+    glMapGrid2d((GLint) nu, (GLdouble) u0, (GLdouble) u1, (GLint) nv,
 	    (GLdouble) v0, (GLdouble) v1);
 
 #endif
@@ -225,7 +225,7 @@ OpenGLSurfaceEvaluator::polymode(long style)
       switch(style) {
       default:
       case N_MESHFILL:
-	
+        
 	glPolygonMode((GLenum) GL_FRONT_AND_BACK, (GLenum) GL_FILL);
 	break;
       case N_MESHLINE:
@@ -361,11 +361,11 @@ OpenGLSurfaceEvaluator::evalUStrip(int n_upper, REAL v_upper, REAL* upper_val, i
   /*
    *the algorithm works by scanning from left to right.
    *leftMostV: the left most of the remaining verteces (on both upper and lower).
-   *           it could an element of upperVerts or lowerVerts.
-   *i: upperVerts[i] is the first vertex to the right of leftMostV on upper line   
-   *j: lowerVerts[j] is the first vertex to the right of leftMostV on lower line   
+   *	       it could an element of upperVerts or lowerVerts.
+   *i: upperVerts[i] is the first vertex to the right of leftMostV on upper line
+   *j: lowerVerts[j] is the first vertex to the right of leftMostV on lower line
    */
-  
+
   /*initialize i,j,and leftMostV
    */
   if(upper_val[0] <= lower_val[0])
@@ -385,140 +385,140 @@ OpenGLSurfaceEvaluator::evalUStrip(int n_upper, REAL v_upper, REAL* upper_val, i
       leftMostV[1] = v_lower;
 
     }
-  
+
   /*the main loop.
-   *the invariance is that: 
-   *at the beginning of each loop, the meaning of i,j,and leftMostV are 
+   *the invariance is that:
+   *at the beginning of each loop, the meaning of i,j,and leftMostV are
    *maintained
    */
   while(1)
     {
       if(i >= n_upper) /*case1: no more in upper*/
-        {
-          if(j<n_lower-1) /*at least two vertices in lower*/
-            {
-              bgntfan();
+	{
+	  if(j<n_lower-1) /*at least two vertices in lower*/
+	    {
+	      bgntfan();
 	      coord2f(leftMostV[0], leftMostV[1]);
 //	      glNormal3fv(leftMostNormal);
-//              glVertex3fv(leftMostXYZ);
+//		glVertex3fv(leftMostXYZ);
 
-              while(j<n_lower){
+	      while(j<n_lower){
 		coord2f(lower_val[j], v_lower);
 //		glNormal3fv(lowerNormal[j]);
 //		glVertex3fv(lowerXYZ[j]);
 		j++;
 
-              }
-              endtfan();
-            }
-          break; /*exit the main loop*/
-        }
+	      }
+	      endtfan();
+	    }
+	  break; /*exit the main loop*/
+	}
       else if(j>= n_lower) /*case2: no more in lower*/
-        {
-          if(i<n_upper-1) /*at least two vertices in upper*/
-            {
-              bgntfan();
+	{
+	  if(i<n_upper-1) /*at least two vertices in upper*/
+	    {
+	      bgntfan();
 	      coord2f(leftMostV[0], leftMostV[1]);
 //	      glNormal3fv(leftMostNormal);
 //	      glVertex3fv(leftMostXYZ);
-	      
-              for(k=n_upper-1; k>=i; k--) /*reverse order for two-side lighting*/
+        
+	      for(k=n_upper-1; k>=i; k--) /*reverse order for two-side lighting*/
 		{
 		  coord2f(upper_val[k], v_upper);
 //		  glNormal3fv(upperNormal[k]);
 //		  glVertex3fv(upperXYZ[k]);
 		}
 
-              endtfan();
-            }
-          break; /*exit the main loop*/
-        }
+	      endtfan();
+	    }
+	  break; /*exit the main loop*/
+	}
       else /* case3: neither is empty, plus the leftMostV, there is at least one triangle to output*/
-        {
-          if(upper_val[i] <= lower_val[j])
-            {
+	{
+	  if(upper_val[i] <= lower_val[j])
+	    {
 	      bgntfan();
 	      coord2f(lower_val[j], v_lower);
 //	      glNormal3fv(lowerNormal[j]);
 //	      glVertex3fv(lowerXYZ[j]);
 
-              /*find the last k>=i such that 
-               *upperverts[k][0] <= lowerverts[j][0]
-               */
-              k=i;
+	      /*find the last k>=i such that
+	       *upperverts[k][0] <= lowerverts[j][0]
+	       */
+	      k=i;
 
-              while(k<n_upper)
-                {
-                  if(upper_val[k] > lower_val[j])
-                    break;
-                  k++;
+	      while(k<n_upper)
+		{
+		  if(upper_val[k] > lower_val[j])
+		    break;
+		  k++;
 
-                }
-              k--;
+		}
+	      k--;
 
 
-              for(l=k; l>=i; l--)/*the reverse is for two-side lighting*/
-                {
+	      for(l=k; l>=i; l--)/*the reverse is for two-side lighting*/
+		{
 		  coord2f(upper_val[l], v_upper);
 //		  glNormal3fv(upperNormal[l]);
 //		  glVertex3fv(upperXYZ[l]);
 
-                }
+		}
 	      coord2f(leftMostV[0], leftMostV[1]);
 //	      glNormal3fv(leftMostNormal);
 //	      glVertex3fv(leftMostXYZ);
 
-              endtfan();
+	      endtfan();
 
-              /*update i and leftMostV for next loop
-               */
-              i = k+1;
+	      /*update i and leftMostV for next loop
+	       */
+	      i = k+1;
 
 	      leftMostV[0] = upper_val[k];
 	      leftMostV[1] = v_upper;
 //	      leftMostNormal = upperNormal[k];
 //	      leftMostXYZ = upperXYZ[k];
-            }
-          else /*upperVerts[i][0] > lowerVerts[j][0]*/
-            {
+	    }
+	  else /*upperVerts[i][0] > lowerVerts[j][0]*/
+	    {
 	      bgntfan();
 	      coord2f(upper_val[i], v_upper);
 //	      glNormal3fv(upperNormal[i]);
 //	      glVertex3fv(upperXYZ[i]);
-	
+        
 	      coord2f(leftMostV[0], leftMostV[1]);
-//              glNormal3fv(leftMostNormal);
+//		glNormal3fv(leftMostNormal);
 //	      glVertex3fv(leftMostXYZ);
-	      
+        
 
-              /*find the last k>=j such that
-               *lowerverts[k][0] < upperverts[i][0]
-               */
-              k=j;
-              while(k< n_lower)
-                {
-                  if(lower_val[k] >= upper_val[i])
-                    break;
+	      /*find the last k>=j such that
+	       *lowerverts[k][0] < upperverts[i][0]
+	       */
+	      k=j;
+	      while(k< n_lower)
+		{
+		  if(lower_val[k] >= upper_val[i])
+		    break;
 		  coord2f(lower_val[k], v_lower);
 //		  glNormal3fv(lowerNormal[k]);
 //		  glVertex3fv(lowerXYZ[k]);
 
-                  k++;
-                }
-              endtfan();
+		  k++;
+		}
+	      endtfan();
 
-              /*update j and leftMostV for next loop
-               */
-              j=k;
+	      /*update j and leftMostV for next loop
+	       */
+	      j=k;
 	      leftMostV[0] = lower_val[j-1];
 	      leftMostV[1] = v_lower;
 
 //	      leftMostNormal = lowerNormal[j-1];
 //	      leftMostXYZ = lowerXYZ[j-1];
-            }     
-        }
+	    }
+	}
     }
-  //clean up 
+  //clean up
 //  free(upperXYZ);
 //  free(lowerXYZ);
 //  free(upperNormal);
@@ -526,7 +526,7 @@ OpenGLSurfaceEvaluator::evalUStrip(int n_upper, REAL v_upper, REAL* upper_val, i
 #endif
 
 }
-  
+
 
 void
 OpenGLSurfaceEvaluator::evalVStrip(int n_left, REAL u_left, REAL* left_val, int n_right, REAL u_right, REAL* right_val)
@@ -548,11 +548,11 @@ OpenGLSurfaceEvaluator::evalVStrip(int n_left, REAL u_left, REAL* left_val, int 
   /*
    *the algorithm works by scanning from bot to top.
    *botMostV: the bot most of the remaining verteces (on both left and right).
-   *           it could an element of leftVerts or rightVerts.
-   *i: leftVerts[i] is the first vertex to the top of botMostV on left line   
+   *	       it could an element of leftVerts or rightVerts.
+   *i: leftVerts[i] is the first vertex to the top of botMostV on left line
    *j: rightVerts[j] is the first vertex to the top of botMostV on rightline
    */
-  
+
   /*initialize i,j,and botMostV
    */
   if(left_val[0] <= right_val[0])
@@ -573,142 +573,142 @@ OpenGLSurfaceEvaluator::evalVStrip(int n_left, REAL u_left, REAL* left_val, int 
     }
 
   /*the main loop.
-   *the invariance is that: 
-   *at the beginning of each loop, the meaning of i,j,and botMostV are 
+   *the invariance is that:
+   *at the beginning of each loop, the meaning of i,j,and botMostV are
    *maintained
    */
   while(1)
     {
       if(i >= n_left) /*case1: no more in left*/
-        {
-          if(j<n_right-1) /*at least two vertices in right*/
-            {
-              bgntfan();
+	{
+	  if(j<n_right-1) /*at least two vertices in right*/
+	    {
+	      bgntfan();
 	      coord2f(botMostV[0], botMostV[1]);
-              while(j<n_right){
+	      while(j<n_right){
 		coord2f(u_right, right_val[j]);
 //		glNormal3fv(rightNormal[j]);
 //		glVertex3fv(rightXYZ[j]);
 		j++;
 
-              }
-              endtfan();
-            }
-          break; /*exit the main loop*/
-        }
+	      }
+	      endtfan();
+	    }
+	  break; /*exit the main loop*/
+	}
       else if(j>= n_right) /*case2: no more in right*/
-        {
-          if(i<n_left-1) /*at least two vertices in left*/
-            {
-              bgntfan();
-              coord2f(botMostV[0], botMostV[1]);
+	{
+	  if(i<n_left-1) /*at least two vertices in left*/
+	    {
+	      bgntfan();
+	      coord2f(botMostV[0], botMostV[1]);
 //	      glNormal3fv(botMostNormal);
 //	      glVertex3fv(botMostXYZ);
-	      
-              for(k=n_left-1; k>=i; k--) /*reverse order for two-side lighting*/
+        
+	      for(k=n_left-1; k>=i; k--) /*reverse order for two-side lighting*/
 		{
 		  coord2f(u_left, left_val[k]);
 //		  glNormal3fv(leftNormal[k]);
 //		  glVertex3fv(leftXYZ[k]);
 		}
 
-              endtfan();
-            }
-          break; /*exit the main loop*/
-        }
+	      endtfan();
+	    }
+	  break; /*exit the main loop*/
+	}
       else /* case3: neither is empty, plus the botMostV, there is at least one triangle to output*/
-        {
-          if(left_val[i] <= right_val[j])
-            {
+	{
+	  if(left_val[i] <= right_val[j])
+	    {
 	      bgntfan();
 	      coord2f(u_right, right_val[j]);
 //	      glNormal3fv(rightNormal[j]);
 //	      glVertex3fv(rightXYZ[j]);
 
-              /*find the last k>=i such that 
-               *leftverts[k][0] <= rightverts[j][0]
-               */
-              k=i;
+	      /*find the last k>=i such that
+	       *leftverts[k][0] <= rightverts[j][0]
+	       */
+	      k=i;
 
-              while(k<n_left)
-                {
-                  if(left_val[k] > right_val[j])
-                    break;
-                  k++;
+	      while(k<n_left)
+		{
+		  if(left_val[k] > right_val[j])
+		    break;
+		  k++;
 
-                }
-              k--;
+		}
+	      k--;
 
 
-              for(l=k; l>=i; l--)/*the reverse is for two-side lighting*/
-                {
+	      for(l=k; l>=i; l--)/*the reverse is for two-side lighting*/
+		{
 		  coord2f(u_left, left_val[l]);
 //		  glNormal3fv(leftNormal[l]);
 //		  glVertex3fv(leftXYZ[l]);
 
-                }
+		}
 	      coord2f(botMostV[0], botMostV[1]);
 //	      glNormal3fv(botMostNormal);
 //	      glVertex3fv(botMostXYZ);
 
-              endtfan();
+	      endtfan();
 
-              /*update i and botMostV for next loop
-               */
-              i = k+1;
+	      /*update i and botMostV for next loop
+	       */
+	      i = k+1;
 
 	      botMostV[0] = u_left;
 	      botMostV[1] = left_val[k];
 //	      botMostNormal = leftNormal[k];
 //	      botMostXYZ = leftXYZ[k];
-            }
-          else /*left_val[i] > right_val[j])*/
-            {
+	    }
+	  else /*left_val[i] > right_val[j])*/
+	    {
 	      bgntfan();
 	      coord2f(u_left, left_val[i]);
 //	      glNormal3fv(leftNormal[i]);
 //	      glVertex3fv(leftXYZ[i]);
-	      
+        
 	      coord2f(botMostV[0], botMostV[1]);
-//            glNormal3fv(botMostNormal);
+//	      glNormal3fv(botMostNormal);
 //	      glVertex3fv(botMostXYZ);
-	      
+        
 
-              /*find the last k>=j such that
-               *rightverts[k][0] < leftverts[i][0]
-               */
-              k=j;
-              while(k< n_right)
-                {
-                  if(right_val[k] >= left_val[i])
-                    break;
+	      /*find the last k>=j such that
+	       *rightverts[k][0] < leftverts[i][0]
+	       */
+	      k=j;
+	      while(k< n_right)
+		{
+		  if(right_val[k] >= left_val[i])
+		    break;
 		  coord2f(u_right, right_val[k]);
 //		  glNormal3fv(rightNormal[k]);
 //		  glVertex3fv(rightXYZ[k]);
 
-                  k++;
-                }
-              endtfan();
+		  k++;
+		}
+	      endtfan();
 
-              /*update j and botMostV for next loop
-               */
-              j=k;
+	      /*update j and botMostV for next loop
+	       */
+	      j=k;
 	      botMostV[0] = u_right;
 	      botMostV[1] = right_val[j-1];
 
 //	      botMostNormal = rightNormal[j-1];
 //	      botMostXYZ = rightXYZ[j-1];
-            }     
-        }
+	    }
+	}
     }
-  //clean up 
+  //clean up
 //  free(leftXYZ);
 //  free(leftNormal);
 //  free(rightXYZ);
 //  free(rightNormal);
 #endif
 }
-  
+
 
 void
 OpenGLSurfaceEvaluator::bgnqstrip(void)
@@ -742,25 +742,25 @@ OpenGLSurfaceEvaluator::bgnmap2f(long)
 {
   if(output_triangles)
     {
-      /*deallocate the space which may has been 
+      /*deallocate the space which may has been
        *allocated by global_bpm previously
        */
       if(global_bpm != NULL) {
 	bezierPatchMeshListDelete(global_bpm);
 	global_bpm = NULL;
       }
-      
+
 
       /*
 	auto_normal_flag = 1; //always output normal in callback mode.
-	                      //we could have used the following code,
-	                      //but Inspector doesn't have gl context
-                              //before it calls tessellator.
-	                      //this way is temporary.
+			      //we could have used the following code,
+			      //but Inspector doesn't have gl context
+			      //before it calls tessellator.
+			      //this way is temporary.
 	*/
       //NEWCALLBACK
       //if one of the two normal callback functions are set,
-      //then set 
+      //then set
       if(normalCallBackN != NULL ||
 	 normalCallBackData != NULL)
 	auto_normal_flag = 1;
@@ -777,19 +777,19 @@ OpenGLSurfaceEvaluator::bgnmap2f(long)
       if(glIsEnabled(GL_AUTO_NORMAL) == GL_TRUE)
 	auto_normal_flag = 1;
       else if (callback_auto_normal == 1)
-        auto_normal_flag = 1;
+	auto_normal_flag = 1;
       else
 	auto_normal_flag = 0;
 	*/
 
       //NEWCALLBACK: no need to worry about gl states when gling clalback
     }
-  else 
+  else
     {
       glPushAttrib((GLbitfield) GL_EVAL_BIT);
-      
+
       /*to avoid side effect, we restor the opengl state for GL_POLYGON_MODE
-       */	
+       */       
       glGetIntegerv(GL_POLYGON_MODE, gl_polygon_mode);
     }
 
@@ -806,17 +806,17 @@ OpenGLSurfaceEvaluator::endmap2f(void)
   if(output_triangles)
     {
       //bezierPatchMeshListDelDeg(global_bpm);
-      
+
       //    bezierPatchMeshListEval(global_bpm);
 
       //surfcount++;
       //printf("surfcount=%i\n", surfcount);
       //if(surfcount == 8) exit(0);
-      
+
       inBPMListEvalEM(global_bpm);
-      
-      
-      
+
+
+
 /*
     global_bpm = bezierPatchMeshListReverse(global_bpm);
     {
@@ -837,7 +837,7 @@ OpenGLSurfaceEvaluator::endmap2f(void)
     //bezierPatchMeshListPrint(global_bpm);
     //bezierPatchMeshListDraw(global_bpm);
 
-//        printf("num triangles=%i\n", bezierPatchMeshListNumTriangles(global_bpm));
+//	  printf("num triangles=%i\n", bezierPatchMeshListNumTriangles(global_bpm));
 
 #ifdef USE_LOD
 #else
@@ -873,20 +873,20 @@ glPopAttrib();
 void
 OpenGLSurfaceEvaluator::map2f(
     long _type,
-    REAL _ulower,	/* u lower domain coord		*/
+    REAL _ulower,	/* u lower domain coord 	*/
     REAL _uupper,	/* u upper domain coord 	*/
     long _ustride,	/* interpoint distance		*/
     long _uorder,	/* parametric order		*/
-    REAL _vlower,	/* v lower domain coord		*/
-    REAL _vupper, 	/* v upper domain coord		*/
+    REAL _vlower,	/* v lower domain coord 	*/
+    REAL _vupper,	/* v upper domain coord 	*/
     long _vstride,	/* interpoint distance		*/
     long _vorder,	/* parametric order		*/
-    REAL *pts) 	/* control points		*/
+    REAL *pts)	/* control points		*/
 {
 #ifdef USE_INTERNAL_EVAL
-   inMap2f((int) _type, (REAL) _ulower, (REAL) _uupper, 
-	    (int) _ustride, (int) _uorder, (REAL) _vlower, 
-	    (REAL) _vupper, (int) _vstride, (int) _vorder, 
+   inMap2f((int) _type, (REAL) _ulower, (REAL) _uupper,
+	    (int) _ustride, (int) _uorder, (REAL) _vlower,
+	    (REAL) _vupper, (int) _vstride, (int) _vorder,
 	    (REAL *) pts);
 #else
 
@@ -897,7 +897,7 @@ OpenGLSurfaceEvaluator::map2f(
        if(global_bpm == NULL)
 	 global_bpm = bezierPatchMeshMake2(10,10);
        if(
-	  (global_bpm->bpatch == NULL && 
+	  (global_bpm->bpatch == NULL &&
 	  (_type == GL_MAP2_VERTEX_3 || _type == GL_MAP2_VERTEX_4))
 	  ||
 	  (global_bpm->bpatch_normal == NULL &&
@@ -922,7 +922,7 @@ OpenGLSurfaceEvaluator::map2f(
 	   global_bpm = bezierPatchMeshListInsert(global_bpm, temp);
 
 	   /*
-	   global_bpm = bezierPatchMeshListInsert(global_bpm, 
+	   global_bpm = bezierPatchMeshListInsert(global_bpm,
 						  bezierPatchMeshMake(
 								      (int) _type, _ulower, _uupper,(int)  _ustride, (int) _uorder, _vlower, _vupper, (int) _vstride, (int) _vorder, pts, 10, 10));
 	   */
@@ -930,12 +930,12 @@ OpenGLSurfaceEvaluator::map2f(
      }
    else /*not output triangles*/
      {
-       glMap2f((GLenum) _type, (GLfloat) _ulower, (GLfloat) _uupper, 
-	       (GLint) _ustride, (GLint) _uorder, (GLfloat) _vlower, 
-	       (GLfloat) _vupper, (GLint) _vstride, (GLint) _vorder, 
+       glMap2f((GLenum) _type, (GLfloat) _ulower, (GLfloat) _uupper,
+	       (GLint) _ustride, (GLint) _uorder, (GLfloat) _vlower,
+	       (GLfloat) _vupper, (GLint) _vstride, (GLint) _vorder,
 	       (const GLfloat *) pts);
      }
-   
+
 #endif
 }
 
@@ -976,18 +976,18 @@ if(output_triangles)
   if(global_grid_nu == 0 || global_grid_nv == 0)
     return; /*no points need to be output*/
   du = (global_grid_u1 - global_grid_u0) / (REAL)global_grid_nu;
-  dv = (global_grid_v1 - global_grid_v0) / (REAL)global_grid_nv;  
-  
+  dv = (global_grid_v1 - global_grid_v0) / (REAL)global_grid_nv;
+
   if(global_grid_nu >= global_grid_nv){
 
     for(i=umin; i<umax; i++){
       REAL u1 = (i==global_grid_nu)? global_grid_u1:(global_grid_u0 + i*du);
       REAL u2 = ((i+1) == global_grid_nu)? global_grid_u1: (global_grid_u0+(i+1)*du);
-      
+
       bgnqstrip();
       for(j=vmax; j>=vmin; j--){
 	REAL v1 = (j == global_grid_nv)? global_grid_v1: (global_grid_v0 +j*dv);
-	
+        
 	coord2f(u1, v1);
 	coord2f(u2, v1);
       }
@@ -999,10 +999,10 @@ if(output_triangles)
     for(i=vmin; i<vmax; i++){
       REAL v1 = (i==global_grid_nv)? global_grid_v1:(global_grid_v0 + i*dv);
       REAL v2 = ((i+1) == global_grid_nv)? global_grid_v1: (global_grid_v0+(i+1)*dv);
-      
+
       bgnqstrip();
       for(j=umax; j>=umin; j--){
-	REAL u1 = (j == global_grid_nu)? global_grid_u1: (global_grid_u0 +j*du);	
+	REAL u1 = (j == global_grid_nu)? global_grid_u1: (global_grid_u0 +j*du);        
 	coord2f(u1, v2);
 	coord2f(u1, v1);
       }
@@ -1016,15 +1016,15 @@ else
     switch(style) {
     default:
     case N_MESHFILL:
-	glEvalMesh2((GLenum) GL_FILL, (GLint) umin, (GLint) umax, 
+	glEvalMesh2((GLenum) GL_FILL, (GLint) umin, (GLint) umax,
 		(GLint) vmin, (GLint) vmax);
 	break;
     case N_MESHLINE:
-	glEvalMesh2((GLenum) GL_LINE, (GLint) umin, (GLint) umax, 
+	glEvalMesh2((GLenum) GL_LINE, (GLint) umin, (GLint) umax,
 		(GLint) vmin, (GLint) vmax);
 	break;
     case N_MESHPOINT:
-	glEvalMesh2((GLenum) GL_POINT, (GLint) umin, (GLint) umax, 
+	glEvalMesh2((GLenum) GL_POINT, (GLint) umin, (GLint) umax,
 		(GLint) vmin, (GLint) vmax);
 	break;
     }
@@ -1171,7 +1171,7 @@ return;
 	if (vcount == 2) {
 	    vertexCache[0]->invoke(this);
 	    vertexCache[1]->invoke(this);
-            coord2f(u,v);
+	    coord2f(u,v);
 
 	} else {
 	    vcount++;

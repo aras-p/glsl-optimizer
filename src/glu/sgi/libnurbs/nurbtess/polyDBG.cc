@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/polyDBG.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/polyDBG.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include <stdlib.h>
@@ -43,6 +43,11 @@
 #include "zlassert.h"
 #include "polyDBG.h"
 
+#ifdef __WATCOMC__
+#pragma warning 14  10
+#pragma warning 391 10
+#pragma warning 726 10
+#endif
 
 static Real area(Real A[2], Real B[2], Real C[2])
 {
@@ -71,7 +76,7 @@ Int DBG_is_U_monotone(directedLine* poly)
 {
   Int n_changes = 0;
   Int prev_sign;
-  Int cur_sign;  
+  Int cur_sign;
    directedLine* temp;
   cur_sign = compV2InX(poly->tail(), poly->head());
 
@@ -119,7 +124,7 @@ Int DBG_is_U_direction(directedLine* poly)
       if(temp->head()[0] == temp->tail()[0])
 	V_count += temp->get_npoints();
       else if(temp->head()[1] == temp->tail()[1])
-	U_count += temp->get_npoints();      
+	U_count += temp->get_npoints();
 	*/
     }
 
@@ -142,7 +147,7 @@ Int DBG_edgesIntersect(directedLine* l1, directedLine* l2)
 	     (l1->tail()[1] - l1->head()[1])*(l2->tail()[1]-l2->head()[1]) >=0)
 	    return 0; //not intersect
 	  else
-	    return 1;	    
+	    return 1;
 	}
       //else we use the normal code
     }
@@ -154,8 +159,8 @@ Int DBG_edgesIntersect(directedLine* l1, directedLine* l2)
 	     (l2->tail()[1] - l2->head()[1])*(l1->tail()[1]-l1->head()[1]) >=0)
 	    return 0; //not intersect
 	  else
-	    return 1;	    
-	}      
+	    return 1;
+	}
       //else we use the normal code
     }
   else //the two edges are not connected
@@ -165,11 +170,11 @@ Int DBG_edgesIntersect(directedLine* l1, directedLine* l2)
 	 (l1->tail()[0] == l2->tail()[0] &&
 	 l1->tail()[1] == l2->tail()[1]))
 	return 1;
-	
-    }
-  
 
-  if( 
+    }
+
+
+  if(
      (
       area(l1->head(), l1->tail(), l2->head())
       *
@@ -184,7 +189,7 @@ Int DBG_edgesIntersect(directedLine* l1, directedLine* l2)
       )
      )
     return 1;
-  else 
+  else
     return 0;
 }
 
@@ -207,7 +212,7 @@ Int DBG_edgesIntersectGen(Real A[2], Real B[2], Real C[2], Real D[2])
   else
     return 0;
 }
-	
+
 /*determien whether    (A,B) interesect chain[start] to [end]
  */
 Int DBG_intersectChain(vertexArray* chain, Int start, Int end, Real A[2], Real B[2])
@@ -216,13 +221,13 @@ Int DBG_intersectChain(vertexArray* chain, Int start, Int end, Real A[2], Real B
   for(i=start; i<=end-2; i++)
     if(DBG_edgesIntersectGen(chain->getVertex(i), chain->getVertex(i+1), A, B))
       return 1;
-  
+
   return 0;
 }
 
 /*determine whether a polygon intersect itself or not
  *return 1 is it does,
- *       0 otherwise
+ *	 0 otherwise
  */
 Int DBG_polygonSelfIntersect(directedLine* poly)
 {
@@ -235,7 +240,7 @@ Int DBG_polygonSelfIntersect(directedLine* poly)
 	{
 	  return 1;
 	}
-	  
+
     }
 
   for(temp1=poly->getNext(); temp1 != poly; temp1 = temp1->getNext())
@@ -261,7 +266,7 @@ Int DBG_edgeIntersectPoly(directedLine* edge, directedLine* poly)
       return 1;
   return 0;
 }
-  
+
 /*check whether two polygons intersect
  */
 Int DBG_polygonsIntersect(directedLine* p1, directedLine* p2)
@@ -291,7 +296,7 @@ Int DBG_polygonListIntersect(directedLine* pList)
 	if(DBG_polygonsIntersect(temp, temp2))
 	  return 1;
     }
-  
+
   return 0;
 }
 
@@ -303,16 +308,16 @@ Int DBG_isCounterclockwise(directedLine* poly)
 
 /*ray: v0 with direction (dx,dy).
  *edge: v1-v2.
- * the extra point v10[2] is given for the information at 
+ * the extra point v10[2] is given for the information at
  *v1. Basically this edge is connectd to edge
- * v10-v1. If v1 is on the ray, 
+ * v10-v1. If v1 is on the ray,
  * then we need v10  to determine whether this ray intersects
- * the edge or not (that is, return 1 or return 0). 
+ * the edge or not (that is, return 1 or return 0).
  * If v1 is on the ray, then if v2 and v10 are on the same side of the ray,
  * we return 0, otherwise return 1.
  *For v2, if v2 is on the ray, we always return 0.
  *Notice that v1 and v2 are not symmetric. So the edge is directed!!!
- * The purpose for this convention is such that: a point is inside a polygon 
+ * The purpose for this convention is such that: a point is inside a polygon
  * if and only if it intersets with odd number of edges.
  */
 Int DBG_rayIntersectEdge(Real v0[2], Real dx, Real dy, Real v10[2], Real v1[2], Real v2[2])
@@ -330,17 +335,17 @@ if( (v1[1] >= v0[1] && v2[1]<= v0[1] )
 
 
   /*if the ray is parallel to the edge, return 0: not intersect*/
-  if(denom == 0.0) 
+  if(denom == 0.0)
     return 0;
 
   /*if v0 is on the edge, return 0: not intersect*/
-  if(nomRay == 0.0) 
+  if(nomRay == 0.0)
     return 0;
-  
+
   /*if v1 is on the positive ray, and the neighbor of v1 crosses the ray
    *return 1: intersect
    */
-  if(nomEdge == 0) 
+  if(nomEdge == 0)
     { /*v1 is on the positive or negative ray*/
 
 /*
@@ -351,7 +356,7 @@ if( (v1[1] >= v0[1] && v2[1]<= v0[1] )
 	{
 	  if(area(v0, v1, v10) * area(v0, v1, v2) >0)
 	    return 0;
-	  else 
+	  else
 	    return 1;
 	}
       else /*v1 on negative ray*/
@@ -378,10 +383,10 @@ Int DBG_rayIntersectPoly(Real v0[2], Real dx, Real dy, directedLine* poly)
   Int count=0;
   if(DBG_rayIntersectEdge(v0, dx, dy, poly->getPrev()->head(), poly->head(), poly->tail()))
     count++;
-  
+
   for(temp=poly->getNext(); temp != poly; temp = temp->getNext())
     if(DBG_rayIntersectEdge(v0, dx, dy, temp->getPrev()->head(), temp->head(), temp->tail()))
-      count++;    
+      count++;
 /*printf("ray intersect poly: count=%i\n", count);*/
   return count;
 }
@@ -398,8 +403,8 @@ poly->printList();
 	 == (DBG_rayIntersectPoly(v,1,Real(0.1234), poly) % 2 )
 	 );
   if(DBG_rayIntersectPoly(v, 1, 0, poly) % 2 == 1)
-    return 1; 
-  else 
+    return 1;
+  else
     return 0;
 }
 
@@ -410,8 +415,8 @@ Int DBG_enclosingPolygons(directedLine* poly, directedLine* list)
 {
   directedLine* temp;
   Int count=0;
-/*  
-printf("%i\n", DBG_pointInsidePoly(poly->head(), 
+/*
+printf("%i\n", DBG_pointInsidePoly(poly->head(),
 				   list->getNextPolygon()
 				   ->getNextPolygon()
 				   ->getNextPolygon()
@@ -423,15 +428,15 @@ printf("%i\n", DBG_pointInsidePoly(poly->head(),
     {
       if(poly != temp)
 	if(DBG_pointInsidePoly(poly->head(), temp))
-	  count++;    
-/*      printf("count=%i\n", count);*/
+	  count++;
+/*	printf("count=%i\n", count);*/
     }
   return count;
 }
 
 void  DBG_reverse(directedLine* poly)
 {
-  if(poly->getDirection() == INCREASING) 
+  if(poly->getDirection() == INCREASING)
     poly->putDirection(DECREASING);
   else
     poly->putDirection(INCREASING);
@@ -443,7 +448,7 @@ void  DBG_reverse(directedLine* poly)
   directedLine* temp;
   for(temp=oldNext; temp!=poly; temp = oldNext)
     {
-      if(temp->getDirection() == INCREASING) 
+      if(temp->getDirection() == INCREASING)
 	temp->putDirection(DECREASING);
       else
 	temp->putDirection(INCREASING);
@@ -512,7 +517,7 @@ Int DBG_check(directedLine *polyList)
 	correctDir = 0; /*clockwise*/
 
       Int actualDir = DBG_isCounterclockwise(temp);
-      
+
       if(correctDir != actualDir)
 	{
 	  fprintf(stderr, "DBG_check: polygon with incorrect orientations. reversed\n");
@@ -526,7 +531,7 @@ Int DBG_check(directedLine *polyList)
 
 /**************handle self intersections*****************/
 //determine whether e interects [begin, end] or not
-static directedLine* DBG_edgeIntersectChainD(directedLine *e, 
+static directedLine* DBG_edgeIntersectChainD(directedLine *e,
 			       directedLine *begin, directedLine *end)
 {
   directedLine *temp;
@@ -537,10 +542,10 @@ static directedLine* DBG_edgeIntersectChainD(directedLine *e,
     }
   if(DBG_edgesIntersect(e, end))
     return end;
-  return NULL;      
+  return NULL;
 }
 
-//given a polygon, cut the edges off and finally obtain a 
+//given a polygon, cut the edges off and finally obtain a
 //a polygon without intersections. The cut-off edges are
 //dealloated. The new polygon is returned.
 directedLine* DBG_cutIntersectionPoly(directedLine *polygon, int& cutOccur)
@@ -563,7 +568,7 @@ directedLine* DBG_cutIntersectionPoly(directedLine *polygon, int& cutOccur)
 	       Int n=5;
 	       buf[0] = interc->tail()[0];
 	       buf[1] = interc->tail()[1];
-	       
+
 	       for(i=1; i<n; i++)
 		 {
 		   Real r = ((Real)i) / ((Real) n);
@@ -591,7 +596,7 @@ directedLine* DBG_cutIntersectionPoly(directedLine *polygon, int& cutOccur)
 	    {
 	      cutOccur = 1;
 	      begin->deleteSingleLine(next);
-	      
+
 	      if(begin != end)
 		{
 		  if(DBG_polygonSelfIntersect(begin))
@@ -615,7 +620,7 @@ directedLine* DBG_cutIntersectionPoly(directedLine *polygon, int& cutOccur)
   return begin;
 }
 
-//given a polygon, cut the edges off and finally obtain a 
+//given a polygon, cut the edges off and finally obtain a
 //a polygon without intersections. The cut-off edges are
 //dealloated. The new polygon is returned.
 static directedLine* DBG_cutIntersectionPoly_notwork(directedLine *polygon)
@@ -642,7 +647,7 @@ static directedLine* DBG_cutIntersectionPoly_notwork(directedLine *polygon)
 	  crt=crt->deleteChain(crt, crt->getNext());
 	}
       else
-	{	  
+	{
 	  //now we know crt and crt->getNext do not intersect
 	  begin = crt;
 	  end = crt->getNext();
@@ -651,8 +656,8 @@ static directedLine* DBG_cutIntersectionPoly_notwork(directedLine *polygon)
 	  for(temp=end->getNext(); temp!=begin; temp= temp->getNext())
 	    {
 //printf("temp=(%f,%f)\n", temp->head()[0], temp->head()[1]);
-               directedLine *intersect = DBG_edgeIntersectChainD(temp, begin, end);
-               if(intersect != NULL)
+	       directedLine *intersect = DBG_edgeIntersectChainD(temp, begin, end);
+	       if(intersect != NULL)
 		{
 		  crt = crt->deleteChain(intersect, temp);
 		  find=1;
@@ -686,7 +691,7 @@ directedLine* DBG_cutIntersectionAllPoly(directedLine* list)
       if(left != NULL)
 	ret=left->insertPolygon(ret);
     }
-  return ret;            
+  return ret;
 }
 
 sampledLine*  DBG_collectSampledLinesAllPoly(directedLine *polygonList)
@@ -709,7 +714,7 @@ sampledLine*  DBG_collectSampledLinesAllPoly(directedLine *polygonList)
       DBG_collectSampledLinesPoly(temp, tempHead, tempTail);
       cTail->insert(tempHead);
       cTail = tempTail;
-    }  
+    }
   return cHead;
 }
 
@@ -721,7 +726,7 @@ void  DBG_collectSampledLinesPoly(directedLine *polygon, sampledLine*& retHead, 
   retTail = NULL;
   if(polygon == NULL)
     return;
-    
+
   retHead = retTail = polygon->getSampledLine();
   for(temp = polygon->getNext(); temp != polygon; temp=temp->getNext())
     {

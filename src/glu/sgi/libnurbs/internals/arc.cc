@@ -35,8 +35,8 @@
 /*
  * arc.c++
  *
- * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include <stdio.h>
@@ -50,11 +50,11 @@
 #include "simplemath.h"
 
 /* local preprocessor definitions */
-#define	ZERO		0.00001/*0.000001*/
+#define ZERO		0.00001/*0.000001*/
 
-const int 	Arc::bezier_tag = (1<<13);
-const int 	Arc::arc_tag = (1<<3);
-const int 	Arc::tail_tag = (1<<6);
+const int	Arc::bezier_tag = (1<<13);
+const int	Arc::arc_tag = (1<<3);
+const int	Arc::tail_tag = (1<<6);
 
 /*--------------------------------------------------------------------------
  * makeSide - attach a pwl arc to an arc and mark it as a border arc
@@ -72,7 +72,7 @@ Arc::makeSide( PwlArc *pwl, arc_side side )
     clearbezier();
     setside( side );
 }
- 
+
 
 /*--------------------------------------------------------------------------
  * numpts - count number of points on arc loop
@@ -100,7 +100,7 @@ void
 Arc::markverts( void )
 {
     Arc_ptr jarc = this;
-	
+        
     do {
 	TrimVertex *p = jarc->pwlArc->pts;
 	for( int i=0; i<jarc->pwlArc->npts; i++ )
@@ -125,22 +125,22 @@ Arc::getextrema( Arc_ptr extrema[4] )
     botpt  = toppt   = this->tail()[1];
 
     for( Arc_ptr jarc = this->next; jarc != this; jarc = jarc->next ) {
-	if ( jarc->tail()[0] <  leftpt || 
+	if ( jarc->tail()[0] <	leftpt ||
 	    (jarc->tail()[0] <= leftpt && jarc->rhead()[0]<=leftpt))  {
 	    leftpt = jarc->pwlArc->pts->param[0];
 	    extrema[1] = jarc;
 	}
-	if ( jarc->tail()[0] >  rightpt || 
+	if ( jarc->tail()[0] >	rightpt ||
 	    (jarc->tail()[0] >= rightpt && jarc->rhead()[0] >= rightpt)) {
 	    rightpt = jarc->pwlArc->pts->param[0];
 	    extrema[3] = jarc;
 	}
-	if ( jarc->tail()[1] <  botpt || 
-            (jarc->tail()[1] <= botpt && jarc->rhead()[1] <= botpt ))  {
+	if ( jarc->tail()[1] <	botpt ||
+	    (jarc->tail()[1] <= botpt && jarc->rhead()[1] <= botpt ))  {
 	    botpt = jarc->pwlArc->pts->param[1];
 	    extrema[2] = jarc;
 	}
-	if ( jarc->tail()[1] >  toppt || 
+	if ( jarc->tail()[1] >	toppt ||
 	    (jarc->tail()[1] >= toppt && jarc->rhead()[1] >= toppt))  {
 	    toppt = jarc->pwlArc->pts->param[1];
 	    extrema[0] = jarc;
@@ -160,7 +160,7 @@ Arc::show()
 #ifndef NDEBUG
     dprintf( "\tPWLARC NP: %d FL: 1\n", pwlArc->npts );
     for( int i = 0; i < pwlArc->npts; i++ ) {
-         dprintf( "\t\tVERTEX %f %f\n", pwlArc->pts[i].param[0],
+	 dprintf( "\t\tVERTEX %f %f\n", pwlArc->pts[i].param[0],
 			pwlArc->pts[i].param[1] );
     }
 #endif
@@ -175,13 +175,6 @@ void
 Arc::print( void )
 {
     Arc_ptr jarc = this;
-
-    if( ! this ) {
-#ifndef NDEBUG
-	dprintf( "\n\nEMPTY TRIM\n\n" );
-#endif
-	return;
-    }
 
 #ifndef NDEBUG
     dprintf( "BGNTRIM\n" );
@@ -217,10 +210,10 @@ Arc::isDisconnected( void )
 #endif
 	return 1;
     } else {
-        /* average two points together */
-        p0[0] = p1[0] = (p1[0] + p0[0]) * 0.5;
-        p0[1] = p1[1] = (p1[1] + p0[1]) * 0.5;
-        return 0;
+	/* average two points together */
+	p0[0] = p1[0] = (p1[0] + p0[0]) * 0.5;
+	p0[1] = p1[1] = (p1[1] + p0[1]) * 0.5;
+	return 0;
     }
 }
 
@@ -251,29 +244,29 @@ Arc::check( void )
     do {
 	assert( (jarc->pwlArc != 0) || (jarc->bezierArc != 0) );
 
-        if (jarc->prev == 0 || jarc->next == 0) {
+	if (jarc->prev == 0 || jarc->next == 0) {
 #ifndef NDEBUG
 	    dprintf( "checkjarc:null next/prev pointer\n");
 	    jarc->print( );
 #endif
 	    return 0;
-        }
+	}
 
-        if (jarc->next->prev != jarc) {
+	if (jarc->next->prev != jarc) {
 #ifndef NDEBUG
 	    dprintf( "checkjarc: pointer linkage screwed up\n");
 	    jarc->print( );
 #endif
 	    return 0;
-        }
+	}
 
-        if( jarc->pwlArc ) {
+	if( jarc->pwlArc ) {
 #ifndef NDEBUG
 	    assert( jarc->pwlArc->npts >= 1 );
 	    assert( jarc->pwlArc->npts < 100000 );
 /*
 	    for( int i=0; i < jarc->pwlArc->npts-1; i++ )
-		assert( neq_vert( jarc->pwlArc->pts[i].param, 
+		assert( neq_vert( jarc->pwlArc->pts[i].param,
 			     jarc->pwlArc->pts[i+1].param) );
 */
 #endif
@@ -287,7 +280,7 @@ Arc::check( void )
 		    return 0;
 		}
 		if( jarc->tail()[0] != jarc->prev->rhead()[0] ) {
-		    
+	        
 #ifndef NDEBUG
 		    dprintf( "checkjarc: geometric linkage screwed up 2\n");
 		    jarc->prev->show();
@@ -316,13 +309,13 @@ Arc::check( void )
 	    }
 	    if( jarc->isbezier() ) {
 		assert( jarc->pwlArc->npts == 2 );
-    		assert( (jarc->pwlArc->pts[0].param[0] == \
-	    		jarc->pwlArc->pts[1].param[0]) ||\
-    	    		(jarc->pwlArc->pts[0].param[1] == \
-	    		jarc->pwlArc->pts[1].param[1]) );
+		assert( (jarc->pwlArc->pts[0].param[0] == \
+                        jarc->pwlArc->pts[1].param[0]) ||\
+                        (jarc->pwlArc->pts[0].param[1] == \
+                        jarc->pwlArc->pts[1].param[1]) );
 	    }
 	}
-        jarc = jarc->next;
+	jarc = jarc->next;
     } while (jarc != this);
     return 1;
 }
@@ -347,9 +340,9 @@ Arc::append( Arc_ptr jarc )
     if( jarc != 0 ) {
 	next = jarc->next;
 	prev = jarc;
-   	next->prev = prev->next = this;
+	next->prev = prev->next = this;
     } else {
-        next = prev = this;
+	next = prev = this;
     }
     return this;
 }

@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/directedLine.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/directedLine.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include <stdlib.h>
@@ -46,6 +46,10 @@
 #include "quicksort.h"
 #include "directedLine.h"
 #include "polyDBG.h"
+
+#ifdef __WATCOMC__
+#pragma warning 726 10
+#endif
 
 //we must return the newLine
 directedLine* directedLine::deleteChain(directedLine* begin, directedLine* end)
@@ -61,10 +65,10 @@ directedLine* directedLine::deleteChain(directedLine* begin, directedLine* end)
       delete end->sline;
       delete begin;
       delete end;
-      
+
       return ret;
     }
- 
+
   directedLine* newLine;
   sampledLine* sline = new sampledLine(begin->head(), end->tail());
   newLine =  new directedLine(INCREASING, sline);
@@ -85,9 +89,9 @@ directedLine* directedLine::deleteChain(directedLine* begin, directedLine* end)
 
 void directedLine::deleteSingleLine(directedLine* dline)
 {
-  //make sure that dline->prev->tail is the same as 
+  //make sure that dline->prev->tail is the same as
   //dline->next->head. This is for numerical erros.
-  //for example, if we delete a line which is almost degeneate 
+  //for example, if we delete a line which is almost degeneate
   //within (epsilon), then we want to make that the polygon after deletion
   //is still a valid polygon
 
@@ -107,18 +111,18 @@ static Int myequal(Real a[2], Real b[2])
   if(a[0]==b[0] && a[1] == b[1])
     return 1;
   else
-    return 0;    
+    return 0;
     */
-  
+
 
   if(fabs(a[0]-b[0]) < 0.00001 &&
      fabs(a[1]-b[1]) < 0.00001)
     return 1;
   else
     return 0;
-    
+
 }
-      
+
 directedLine* directedLine::deleteDegenerateLines()
 {
   //if there is only one edge or two edges, don't do anything
@@ -136,7 +140,7 @@ directedLine* directedLine::deleteDegenerateLines()
   head()[1] != tail()[1])
   */
     first = this;
-  else 
+  else
     {
       for(temp = this->next; temp != this; temp = temp->next)
 	{
@@ -149,7 +153,7 @@ directedLine* directedLine::deleteDegenerateLines()
 	      first = temp;
 	      break;
 	    }
-	  
+        
 	}
     }
 
@@ -164,17 +168,17 @@ directedLine* directedLine::deleteDegenerateLines()
   for(temp =first->next; temp != first; temp = tempNext)
     {
       tempNext = temp->getNext();
-/*      
+/*
       if(temp->head()[0] == temp->tail()[0] &&
 	 temp->head()[1] == temp->tail()[1])
-*/	 
+*/      
 
       if(myequal(temp->head(), temp->tail()))
 	deleteSingleLine(temp);
-    }	  
+    }   
   return first;
 }
-  
+
 directedLine* directedLine::deleteDegenerateLinesAllPolygons()
 {
   directedLine* temp;
@@ -188,7 +192,7 @@ directedLine* directedLine::deleteDegenerateLinesAllPolygons()
       if(ret == NULL)
 	{
 	  ret = retEnd = temp->deleteDegenerateLines();
-	  
+        
 	}
       else
 	{
@@ -277,7 +281,7 @@ void directedLine::deletePolygonList()
       temp->deleteSinglePolygon();
     }
 }
-      
+
 
 /*a loop by itself*/
 directedLine::directedLine(short dir, sampledLine* sl)
@@ -289,7 +293,7 @@ directedLine::directedLine(short dir, sampledLine* sl)
   nextPolygon = NULL;
 //  prevPolygon = NULL;
   rootBit = 0;/*important to initilzae to 0 meaning not root yet*/
-  
+
   rootLink = NULL;
 
 }
@@ -305,7 +309,7 @@ directedLine::directedLine()
   next = this;
   prev = this;
   nextPolygon = NULL;
-  rootBit = 0;/*important to initilzae to 0 meaning not root yet*/  
+  rootBit = 0;/*important to initilzae to 0 meaning not root yet*/
   rootLink = NULL;
 }
 
@@ -344,7 +348,7 @@ Int directedLine::numEdges()
   Int ret=0;
   directedLine* temp;
   if(next == this) return 1;
-  
+
   ret = 1;
   for(temp = next; temp != this; temp = temp->next)
     ret++;
@@ -373,7 +377,7 @@ short directedLine::isPolygon()
 
   /*check this edge*/
   if(! isConnected()) return 0;
-  
+
   /*check all other edges*/
   for(temp=next; temp != this; temp = temp->next){
     if(!isConnected()) return 0;
@@ -381,14 +385,14 @@ short directedLine::isPolygon()
   return 1;
 }
 
-/*check if the head of this edge is connected to 
+/*check if the head of this edge is connected to
  *the tail of the prev
  */
 short directedLine::isConnected()
 {
   if( (head()[0] == prev->tail()[0]) && (head()[1] == prev->tail()[1]))
     return 1;
-  else 
+  else
     return 0;
 }
 
@@ -410,9 +414,9 @@ Int compV2InX(Real A[2], Real B[2])
 
 /*compare two vertices NOT lines!
  *A vertex is the head of a directed line.
- *(x_1, y_1) <= (x_2, y_2) if 
+ *(x_1, y_1) <= (x_2, y_2) if
  *either y_1 < y_2
- *or     y_1 == y_2 && x_1 < x_2.
+ *or	 y_1 == y_2 && x_1 < x_2.
  *return -1 if this->head() <= nl->head(),
  *return  1 otherwise
  */
@@ -425,9 +429,9 @@ Int directedLine::compInY(directedLine* nl)
 
 /*compare two vertices NOT lines!
  *A vertex is the head of a directed line.
- *(x_1, y_1) <= (x_2, y_2) if 
+ *(x_1, y_1) <= (x_2, y_2) if
  *either x_1 < x_2
- *or     x_1 == x_2 && y_1 < y_2.
+ *or	 x_1 == x_2 && y_1 < y_2.
  *return -1 if this->head() <= nl->head(),
  *return  1 otherwise
  */
@@ -467,8 +471,8 @@ void directedLine::printSingle()
 {
   if(direction == INCREASING)
     printf("direction is INCREASING\n");
-  else 
-    printf("direction is DECREASING\n");    
+  else
+    printf("direction is DECREASING\n");
   printf("head=%f,%f)\n", head()[0], head()[1]);
   sline->print();
 }
@@ -515,7 +519,7 @@ directedLine* directedLine::cutoffPolygon(directedLine *p)
 
   for(temp=this; temp != p; temp = temp->nextPolygon)
     {
-      if(temp == NULL) 
+      if(temp == NULL)
 	{
 	  fprintf(stderr, "in cutoffPolygon, not found\n");
 	  exit(1);
@@ -531,7 +535,7 @@ directedLine* directedLine::cutoffPolygon(directedLine *p)
   else {
     prev_polygon->nextPolygon = p->nextPolygon;
     return this;
-  } 
+  }
 }
 
 Int directedLine::numPolygons()
@@ -539,9 +543,9 @@ Int directedLine::numPolygons()
   if(nextPolygon == NULL) return 1;
   else return 1+nextPolygon->numPolygons();
 }
-  
 
-/*let  array[index ...] denote 
+
+/*let  array[index ...] denote
  *all the edges in this polygon
  *return the next available index of array.
  */
@@ -555,8 +559,8 @@ Int directedLine::toArraySinglePolygon(directedLine** array, Int index)
     }
   return index;
 }
- 
-/*the space is allocated. The caller is responsible for 
+
+/*the space is allocated. The caller is responsible for
  *deallocate the space.
  *total_num_edges is set to be the total number of edges of all polygons
  */
@@ -602,14 +606,14 @@ Real directedLine::polyArea()
 /*******************split or combine polygons begin********************/
 /*conect a diagonal of a single simple polygon or  two simple polygons.
  *If the two vertices v1 (head) and v2 (head) are in the same simple polygon,
- *then we actually split the simple polygon into two polygons. 
+ *then we actually split the simple polygon into two polygons.
  *If instead two vertices velong to two difference polygons,
  *then we combine the  two polygons into one polygon.
- *It is upto the caller to decide whether this is a split or a 
+ *It is upto the caller to decide whether this is a split or a
  *combination.
  *
  *Case Split:
- *split a single simple polygon into two simple polygons by 
+ *split a single simple polygon into two simple polygons by
  *connecting a diagonal (two vertices).
  *v1, v2: the two vertices are the head() of the two directedLines.
  *  this routine generates one new sampledLine which is returned in
@@ -625,11 +629,11 @@ Real directedLine::polyArea()
  *the returned polygon is returned in ret_p1.
  */
 /*ARGSUSED*/
-void directedLine::connectDiagonal(directedLine* v1, directedLine* v2, 
-			   directedLine** ret_p1, 
+void directedLine::connectDiagonal(directedLine* v1, directedLine* v2,
+			   directedLine** ret_p1,
 			   directedLine** ret_p2,
 			   sampledLine** generatedLine,
-			   directedLine* polygonList				   				   )
+			   directedLine* polygonList								   )
 {
   sampledLine *nsline  = new sampledLine(2);
 
@@ -637,7 +641,7 @@ void directedLine::connectDiagonal(directedLine* v1, directedLine* v2,
 
   nsline->setPoint(0, v1->head());
   nsline->setPoint(1, v2->head());
-  
+
 
 
   /*the increasing line is from v1 head to v2 head*/
@@ -651,12 +655,12 @@ void directedLine::connectDiagonal(directedLine* v1, directedLine* v2,
   directedLine* v1Prev = v1->prev;
   directedLine* v2Prev = v2->prev;
 
-  v1        ->prev = newLineDec; 
+  v1	    ->prev = newLineDec;
   v2Prev    ->next = newLineDec;
   newLineDec->next = v1;
   newLineDec->prev = v2Prev;
 
-  v2        ->prev = newLineInc;
+  v2	    ->prev = newLineInc;
   v1Prev    ->next = newLineInc;
   newLineInc->next = v2;
   newLineInc->prev = v1Prev;
@@ -668,19 +672,19 @@ void directedLine::connectDiagonal(directedLine* v1, directedLine* v2,
 
 //see the function connectDiangle
 /*ARGSUSED*/
-void directedLine::connectDiagonal_2slines(directedLine* v1, directedLine* v2, 
-			   directedLine** ret_p1, 
+void directedLine::connectDiagonal_2slines(directedLine* v1, directedLine* v2,
+			   directedLine** ret_p1,
 			   directedLine** ret_p2,
-			   directedLine* polygonList				   				   )
+			   directedLine* polygonList								   )
 {
   sampledLine *nsline  = new sampledLine(2);
-  sampledLine *nsline2  = new sampledLine(2);
+  sampledLine *nsline2	= new sampledLine(2);
 
   nsline->setPoint(0, v1->head());
   nsline->setPoint(1, v2->head());
   nsline2->setPoint(0, v1->head());
   nsline2->setPoint(1, v2->head());
-  
+
   /*the increasing line is from v1 head to v2 head*/
   directedLine* newLineInc = new directedLine(INCREASING, nsline);
 
@@ -689,12 +693,12 @@ void directedLine::connectDiagonal_2slines(directedLine* v1, directedLine* v2,
   directedLine* v1Prev = v1->prev;
   directedLine* v2Prev = v2->prev;
 
-  v1        ->prev = newLineDec; 
+  v1	    ->prev = newLineDec;
   v2Prev    ->next = newLineDec;
   newLineDec->next = v1;
   newLineDec->prev = v2Prev;
 
-  v2        ->prev = newLineInc;
+  v2	    ->prev = newLineInc;
   v1Prev    ->next = newLineInc;
   newLineInc->next = v2;
   newLineInc->prev = v1Prev;
@@ -793,7 +797,7 @@ directedLine* readAllPolygons(char* filename)
   Int nPolygons;
   fscanf(fp, "%i", &nPolygons);
   directedLine *ret = NULL;
-  
+
   for(i=0; i<nPolygons; i++)
     {
       Int nEdges;
@@ -810,7 +814,7 @@ directedLine* readAllPolygons(char* filename)
       sampledLine *sLine = new sampledLine(2, vert);
       directedLine *thisPoly = new directedLine(INCREASING, sLine);
 thisPoly->rootLinkSet(NULL);
-      
+
       directedLine *dLine;
       for(j=2; j<nEdges; j++)
 	{
@@ -830,7 +834,7 @@ dLine->rootLinkSet(thisPoly);
       dLine = new directedLine(INCREASING, sLine);
 dLine->rootLinkSet(thisPoly);
       thisPoly->insert(dLine);
-      
+
       ret = thisPoly->insertPolygon(ret);
     }
   fclose(fp);

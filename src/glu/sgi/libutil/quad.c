@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -31,8 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2002/11/01 23:45:31 $ $Revision: 1.3 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.3 2002/11/01 23:45:31 brianp Exp $
+** $Date: 2003/10/14 23:48:58 $ $Revision: 1.4 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/quad.c,v 1.4 2003/10/14 23:48:58 kendallb Exp $
 */
 
 #include "gluos.h"
@@ -46,10 +46,11 @@
 /* Make it not a power of two to avoid cache thrashing on the chip */
 #define CACHE_SIZE	240
 
-#define PI            3.14159265358979323846
+#undef	PI
+#define PI	      3.14159265358979323846
 
 struct GLUquadric {
-    GLint 	normals;
+    GLint	normals;
     GLboolean	textureCoords;
     GLint	orientation;
     GLint	drawStyle;
@@ -70,7 +71,7 @@ gluNewQuadric(void)
     newstate->textureCoords = GL_FALSE;
     newstate->orientation = GLU_OUTSIDE;
     newstate->drawStyle = GLU_FILL;
-    newstate->errorCallback = NULL; 
+    newstate->errorCallback = NULL;
     return newstate;
 }
 
@@ -153,7 +154,7 @@ gluQuadricDrawStyle(GLUquadric *qobj, GLenum drawStyle)
 }
 
 void GLAPIENTRY
-gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius, 
+gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		GLdouble height, GLint slices, GLint stacks)
 {
     GLint i,j;
@@ -219,7 +220,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		sinCache2[i] = -xyNormalRatio * SIN(angle);
 		cosCache2[i] = -xyNormalRatio * COS(angle);
 	    }
-	} 
+	}
 	sinCache[i] = SIN(angle);
 	cosCache[i] = COS(angle);
     }
@@ -235,7 +236,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		cosCache3[i] = -xyNormalRatio * COS(angle);
 	    }
 	}
-    } 
+    }
 
     sinCache[slices] = sinCache[0];
     cosCache[slices] = cosCache[0];
@@ -252,8 +253,8 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
       case GLU_FILL:
 	/* Note:
 	** An argument could be made for using a TRIANGLE_FAN for the end
-	** of the cylinder of either radii is 0.0 (a cone).  However, a 
-	** TRIANGLE_FAN would not work in smooth shading mode (the common 
+	** of the cylinder of either radii is 0.0 (a cone).  However, a
+	** TRIANGLE_FAN would not work in smooth shading mode (the common
 	** case) because the normal for the apex is different for every
 	** triangle (and TRIANGLE_FAN doesn't let me respecify that normal).
 	** Now, my choice is GL_TRIANGLES, or leave the GL_QUAD_STRIP and
@@ -285,26 +286,26 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 			glTexCoord2f(1 - (float) i / slices,
 				(float) j / stacks);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], zLow);
 		    if (qobj->textureCoords) {
 			glTexCoord2f(1 - (float) i / slices,
 				(float) (j+1) / stacks);
 		    }
-		    glVertex3f(radiusHigh * sinCache[i], 
+		    glVertex3f(radiusHigh * sinCache[i],
 			    radiusHigh * cosCache[i], zHigh);
 		} else {
 		    if (qobj->textureCoords) {
 			glTexCoord2f(1 - (float) i / slices,
 				(float) (j+1) / stacks);
 		    }
-		    glVertex3f(radiusHigh * sinCache[i], 
+		    glVertex3f(radiusHigh * sinCache[i],
 			    radiusHigh * cosCache[i], zHigh);
 		    if (qobj->textureCoords) {
 			glTexCoord2f(1 - (float) i / slices,
 				(float) j / stacks);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], zLow);
 		}
 	    }
@@ -333,7 +334,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		    glTexCoord2f(1 - (float) i / slices,
 			    (float) j / stacks);
 		}
-		glVertex3f(radiusLow * sintemp, 
+		glVertex3f(radiusLow * sintemp,
 			radiusLow * costemp, zLow);
 	    }
 	}
@@ -361,7 +362,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		    glTexCoord2f(1 - (float) i / slices,
 			    (float) j / stacks);
 		}
-		glVertex3f(radiusLow * sinCache[i], 
+		glVertex3f(radiusLow * sinCache[i],
 			radiusLow * cosCache[i], zLow);
 	    }
 	    glEnd();
@@ -389,7 +390,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		    glTexCoord2f(1 - (float) i / slices,
 			    (float) j / stacks);
 		}
-		glVertex3f(radiusLow * sinCache[i], radiusLow * cosCache[i], 
+		glVertex3f(radiusLow * sinCache[i], radiusLow * cosCache[i],
 			zLow);
 	    }
 	    glEnd();
@@ -415,7 +416,7 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 		    glTexCoord2f(1 - (float) i / slices,
 			    (float) j / stacks);
 		}
-		glVertex3f(radiusLow * sintemp, 
+		glVertex3f(radiusLow * sintemp,
 			radiusLow * costemp, zLow);
 	    }
 	    glEnd();
@@ -427,14 +428,14 @@ gluCylinder(GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
 }
 
 void GLAPIENTRY
-gluDisk(GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius, 
+gluDisk(GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius,
 	    GLint slices, GLint loops)
 {
     gluPartialDisk(qobj, innerRadius, outerRadius, slices, loops, 0.0, 360.0);
 }
 
 void GLAPIENTRY
-gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius, 
+gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 		   GLdouble outerRadius, GLint slices, GLint loops,
 		   GLdouble startAngle, GLdouble sweepAngle)
 {
@@ -511,7 +512,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 		glTexCoord2f(0.5, 0.5);
 	    }
 	    glVertex3f(0.0, 0.0, 0.0);
-	    radiusLow = outerRadius - 
+	    radiusLow = outerRadius -
 		    deltaRadius * ((float) (loops-1) / loops);
 	    if (qobj->textureCoords) {
 		texLow = radiusLow / outerRadius / 2;
@@ -523,7 +524,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 			glTexCoord2f(texLow * sinCache[i] + 0.5,
 				texLow * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], 0.0);
 		}
 	    } else {
@@ -532,7 +533,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 			glTexCoord2f(texLow * sinCache[i] + 0.5,
 				texLow * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], 0.0);
 		}
 	    }
@@ -555,28 +556,28 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 			glTexCoord2f(texLow * sinCache[i] + 0.5,
 				texLow * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], 0.0);
 
 		    if (qobj->textureCoords) {
 			glTexCoord2f(texHigh * sinCache[i] + 0.5,
 				texHigh * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusHigh * sinCache[i], 
+		    glVertex3f(radiusHigh * sinCache[i],
 			    radiusHigh * cosCache[i], 0.0);
 		} else {
 		    if (qobj->textureCoords) {
 			glTexCoord2f(texHigh * sinCache[i] + 0.5,
 				texHigh * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusHigh * sinCache[i], 
+		    glVertex3f(radiusHigh * sinCache[i],
 			    radiusHigh * cosCache[i], 0.0);
 
 		    if (qobj->textureCoords) {
 			glTexCoord2f(texLow * sinCache[i] + 0.5,
 				texLow * cosCache[i] + 0.5);
 		    }
-		    glVertex3f(radiusLow * sinCache[i], 
+		    glVertex3f(radiusLow * sinCache[i],
 			    radiusLow * cosCache[i], 0.0);
 		}
 	    }
@@ -629,7 +630,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 		    glTexCoord2f(texLow * sinCache[i] + 0.5,
 			    texLow * cosCache[i] + 0.5);
 		}
-		glVertex3f(radiusLow * sinCache[i], 
+		glVertex3f(radiusLow * sinCache[i],
 			radiusLow * cosCache[i], 0.0);
 	    }
 	    glEnd();
@@ -684,7 +685,7 @@ gluPartialDisk(GLUquadric *qobj, GLdouble innerRadius,
 		    glTexCoord2f(texLow * sinCache[i] + 0.5,
 			    texLow * cosCache[i] + 0.5);
 		}
-		glVertex3f(radiusLow * sinCache[i], 
+		glVertex3f(radiusLow * sinCache[i],
 			radiusLow * cosCache[i], 0.0);
 	    }
 	    glEnd();
@@ -788,7 +789,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		cosCache3b[j] = -COS(angle);
 	    }
 	}
-    } 
+    }
 
     sinCache1a[slices] = sinCache1a[0];
     cosCache1a[slices] = cosCache1a[0];
@@ -969,7 +970,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		}
 		break;
 	      default:
-	        break;
+		break;
 	    }
 
 	    glBegin(GL_QUAD_STRIP);
@@ -1046,7 +1047,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		costemp2 = cosCache2b[j];
 		break;
 	      default:
-	        break;
+		break;
 	    }
 	    for (i = 0; i < slices; i++) {
 		switch(qobj->normals) {
@@ -1067,7 +1068,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		    glTexCoord2f(1 - (float) i / slices,
 			    1 - (float) j / stacks);
 		}
-		glVertex3f(sintemp1 * sinCache1a[i], 
+		glVertex3f(sintemp1 * sinCache1a[i],
 			sintemp1 * cosCache1a[i], costemp1);
 	    }
 	}
@@ -1109,7 +1110,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		    glTexCoord2f(1 - (float) i / slices,
 			    1 - (float) j / stacks);
 		}
-		glVertex3f(sintemp1 * sinCache1a[i], 
+		glVertex3f(sintemp1 * sinCache1a[i],
 			sintemp1 * cosCache1a[i], costemp1);
 	    }
 	    glEnd();
@@ -1149,7 +1150,7 @@ gluSphere(GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks)
 		    glTexCoord2f(1 - (float) i / slices,
 			    1 - (float) j / stacks);
 		}
-		glVertex3f(sintemp1 * sinCache1b[j], 
+		glVertex3f(sintemp1 * sinCache1b[j],
 			costemp1 * sinCache1b[j], cosCache1b[j]);
 	    }
 	    glEnd();

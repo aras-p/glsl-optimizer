@@ -35,15 +35,19 @@
 /*
  * basicsurfaceevaluator.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/basicsurfeval.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/basicsurfeval.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include "mystdio.h"
 #include "types.h"
 #include "basicsurfeval.h"
 
-void 
+#ifdef __WATCOMC__
+#pragma warning 726 10
+#endif
+
+void
 BasicSurfaceEvaluator::domain2f( REAL, REAL, REAL, REAL )
 {
 #ifndef NDEBUG
@@ -51,7 +55,7 @@ BasicSurfaceEvaluator::domain2f( REAL, REAL, REAL, REAL )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::polymode( long )
 {
 #ifndef NDEBUG
@@ -63,12 +67,12 @@ void
 BasicSurfaceEvaluator::range2f( long type, REAL *from, REAL *to )
 {
 #ifndef NDEBUG
-    dprintf( "range2f type %ld, from (%g,%g), to (%g,%g)\n", 
+    dprintf( "range2f type %ld, from (%g,%g), to (%g,%g)\n",
 		type, from[0], from[1], to[0], to[1] );
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::enable( long )
 {
 #ifndef NDEBUG
@@ -76,7 +80,7 @@ BasicSurfaceEvaluator::enable( long )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::disable( long )
 {
 #ifndef NDEBUG
@@ -84,7 +88,7 @@ BasicSurfaceEvaluator::disable( long )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::bgnmap2f( long )
 {
 #ifndef NDEBUG
@@ -92,7 +96,7 @@ BasicSurfaceEvaluator::bgnmap2f( long )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endmap2f( void )
 {
 #ifndef NDEBUG
@@ -100,8 +104,8 @@ BasicSurfaceEvaluator::endmap2f( void )
 #endif
 }
 
-void 
-BasicSurfaceEvaluator::map2f( long, REAL, REAL, long, long, 
+void
+BasicSurfaceEvaluator::map2f( long, REAL, REAL, long, long,
 				    REAL, REAL, long, long,
 			      REAL * )
 {
@@ -110,7 +114,7 @@ BasicSurfaceEvaluator::map2f( long, REAL, REAL, long, long,
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::mapgrid2f( long, REAL, REAL, long, REAL, REAL )
 {
 #ifndef NDEBUG
@@ -118,7 +122,7 @@ BasicSurfaceEvaluator::mapgrid2f( long, REAL, REAL, long, REAL, REAL )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::mapmesh2f( long, long, long, long, long )
 {
 #ifndef NDEBUG
@@ -126,7 +130,7 @@ BasicSurfaceEvaluator::mapmesh2f( long, long, long, long, long )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::evalcoord2f( long, REAL, REAL )
 {
 #ifndef NDEBUG
@@ -134,7 +138,7 @@ BasicSurfaceEvaluator::evalcoord2f( long, REAL, REAL )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::evalpoint2i( long, long )
 {
 #ifndef NDEBUG
@@ -142,7 +146,7 @@ BasicSurfaceEvaluator::evalpoint2i( long, long )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::bgnline( void )
 {
 #ifndef NDEBUG
@@ -150,7 +154,7 @@ BasicSurfaceEvaluator::bgnline( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endline( void )
 {
 #ifndef NDEBUG
@@ -158,7 +162,7 @@ BasicSurfaceEvaluator::endline( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::bgnclosedline( void )
 {
 #ifndef NDEBUG
@@ -166,7 +170,7 @@ BasicSurfaceEvaluator::bgnclosedline( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endclosedline( void )
 {
 #ifndef NDEBUG
@@ -174,7 +178,7 @@ BasicSurfaceEvaluator::endclosedline( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::bgntfan( void )
 {
 #ifndef NDEBUG
@@ -182,13 +186,13 @@ BasicSurfaceEvaluator::bgntfan( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endtfan( void )
 {
 }
 
 
-void 
+void
 BasicSurfaceEvaluator::bgntmesh( void )
 {
 #ifndef NDEBUG
@@ -196,7 +200,7 @@ BasicSurfaceEvaluator::bgntmesh( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::swaptmesh( void )
 {
 #ifndef NDEBUG
@@ -204,7 +208,7 @@ BasicSurfaceEvaluator::swaptmesh( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endtmesh( void )
 {
 #ifndef NDEBUG
@@ -212,7 +216,7 @@ BasicSurfaceEvaluator::endtmesh( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::bgnqstrip( void )
 {
 #ifndef NDEBUG
@@ -220,7 +224,7 @@ BasicSurfaceEvaluator::bgnqstrip( void )
 #endif
 }
 
-void 
+void
 BasicSurfaceEvaluator::endqstrip( void )
 {
 #ifndef NDEBUG

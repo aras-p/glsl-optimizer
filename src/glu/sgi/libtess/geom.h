@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -35,8 +35,8 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/geom.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/geom.h,v 1.2 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #ifndef __geom_h_
@@ -58,8 +58,8 @@
                          ((u)->s == (v)->s && (u)->t <= (v)->t))
 #endif
 
-#define EdgeEval(u,v,w)	__gl_edgeEval(u,v,w)
-#define EdgeSign(u,v,w)	__gl_edgeSign(u,v,w)
+#define EdgeEval(u,v,w) __gl_edgeEval(u,v,w)
+#define EdgeSign(u,v,w) __gl_edgeSign(u,v,w)
 
 /* Versions of VertLeq, EdgeSign, EdgeEval with s and t transposed. */
 
@@ -69,11 +69,12 @@
 #define TransSign(u,v,w)	__gl_transSign(u,v,w)
 
 
-#define EdgeGoesLeft(e)		VertLeq( (e)->Dst, (e)->Org )
+#define EdgeGoesLeft(e) 	VertLeq( (e)->Dst, (e)->Org )
 #define EdgeGoesRight(e)	VertLeq( (e)->Org, (e)->Dst )
 
+#undef	ABS
 #define ABS(x)	((x) < 0 ? -(x) : (x))
-#define VertL1dist(u,v)	(ABS(u->s - v->s) + ABS(u->t - v->t))
+#define VertL1dist(u,v) (ABS(u->s - v->s) + ABS(u->t - v->t))
 
 #define VertCCW(u,v,w)	__gl_vertCCW(u,v,w)
 

@@ -35,8 +35,8 @@
 /*
  * knotvector.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/knotvector.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/knotvector.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include "glimports.h"
@@ -45,17 +45,20 @@
 #include "knotvector.h"
 #include "defines.h"
 
+#ifdef __WATCOMC__
+#pragma warning 726 10
+#endif
 
 void Knotvector::init( long _knotcount, long _stride, long _order, INREAL *_knotlist )
 {
-    knotcount = _knotcount; 
-    stride = _stride; 
-    order = _order; 
+    knotcount = _knotcount;
+    stride = _stride;
+    order = _order;
     knotlist = new Knot[_knotcount];
     assert( knotlist != 0 );
 
     for( int i = 0; i != _knotcount; i++ )
-        knotlist[i] = (Knot) _knotlist[i]; 
+	knotlist[i] = (Knot) _knotlist[i];
 }
 
 Knotvector::Knotvector( void )
@@ -70,7 +73,7 @@ Knotvector::~Knotvector( void )
 
 int Knotvector::validate( void )
 {
-   /* kindex is used as an array index so subtract one first, 
+   /* kindex is used as an array index so subtract one first,
      * this propagates throughout the code so study carefully */
     long	kindex = knotcount-1;
 
@@ -85,7 +88,7 @@ int Knotvector::validate( void )
     }
 
     if( identical( knotlist[kindex-(order-1)], knotlist[order-1]) ) {
-	// valid knot range is empty 
+	// valid knot range is empty
 	return( 3 );
     }
 
@@ -94,33 +97,33 @@ int Knotvector::validate( void )
 	    // decreasing knot sequence
 	    return( 4 );
 	}
-	
+        
     /* check for valid multiplicity */
 
     /*	kindex is currently the index of the last knot.
      *	In the next loop  it is decremented to ignore the last knot
-     *	and the loop stops when kindex  is 2 so as to ignore the first
-     *  knot as well.  These knots are not used in computing 
-     *  knot multiplicities.
+     *	and the loop stops when kindex	is 2 so as to ignore the first
+     *	knot as well.  These knots are not used in computing
+     *	knot multiplicities.
      */
 
     long multi = 1;
     for( ; kindex >= 1; kindex-- ) {
 	if( knotlist[kindex] - knotlist[kindex-1] < TOLERANCE ) {
-	    multi++; 
+	    multi++;
 	    continue;
-	} 
+	}
 	if ( multi > order ) {
-            // knot multiplicity greater than order of spline
+	    // knot multiplicity greater than order of spline
 	    return( 5 );
-	} 
+	}
 	multi = 1;
     }
 
     if ( multi > order ) {
-        // knot multiplicity greater than order of spline
+	// knot multiplicity greater than order of spline
 	return( 5 );
-    } 
+    }
 
     return 0;
 }
@@ -128,7 +131,7 @@ int Knotvector::validate( void )
 void Knotvector::show( char *msg )
 {
 #ifndef NDEBUG
-    dprintf( "%s\n", msg ); 
+    dprintf( "%s\n", msg );
     dprintf( "order = %ld, count = %ld\n", order, knotcount );
 
     for( int i=0; i<knotcount; i++ )

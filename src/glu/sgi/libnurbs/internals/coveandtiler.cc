@@ -35,8 +35,8 @@
 /*
  * coveandtiler.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/coveandtiler.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/coveandtiler.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include "glimports.h"
@@ -52,7 +52,7 @@
 const int CoveAndTiler::MAXSTRIPSIZE = 1000;
 
 CoveAndTiler::CoveAndTiler( Backend& b )
-            : backend( b )
+	    : backend( b )
 { }
 
 CoveAndTiler::~CoveAndTiler( void )
@@ -76,19 +76,19 @@ CoveAndTiler::output( GridTrimVertex& g )
     backend.tmeshvert( &g );
 }
 
-void 
+void
 CoveAndTiler::coveAndTile( void )
 {
     long ustart = (top.ustart >= bot.ustart) ? top.ustart : bot.ustart;
-    long uend   = (top.uend <= bot.uend)     ? top.uend   : bot.uend;
+    long uend	= (top.uend <= bot.uend)     ? top.uend   : bot.uend;
     if( ustart <= uend ) {
 	tile( bot.vindex, ustart, uend );
-	if( top.ustart >= bot.ustart )  
+	if( top.ustart >= bot.ustart )
 	    coveUpperLeft();
-	else 
+	else
 	    coveLowerLeft();
-    
-	if( top.uend <= bot.uend )  
+
+	if( top.uend <= bot.uend )
 	    coveUpperRight();
 	else
 	    coveLowerRight();
@@ -126,7 +126,7 @@ CoveAndTiler::coveAndTile( void )
 	    } else {
 		tllv.set( bot.ustart-1, top.vindex );
 	    }
- 	    coveLowerLeftNoGrid( tl );
+	    coveLowerLeftNoGrid( tl );
 	}
 
 	TrimVertex brv, trv, *br, *tr;
@@ -158,7 +158,7 @@ CoveAndTiler::coveAndTile( void )
 	    br = rl;
 	    brrv.set( rl );
 	    if( rf->param[0] < uarray.uarray[bot.uend+1] ) {
-	        assert( rf->param[0] >= uarray.uarray[bot.uend] );
+		assert( rf->param[0] >= uarray.uarray[bot.uend] );
 		trrv.set( rf );
 	    } else {
 		trrv.set( bot.uend+1, top.vindex );
@@ -179,7 +179,7 @@ CoveAndTiler::coveAndTile( void )
     }
 }
 
-void 
+void
 CoveAndTiler::tile( long vindex, long ustart, long uend )
 {
     long numsteps = uend - ustart;
@@ -195,7 +195,7 @@ CoveAndTiler::tile( long vindex, long ustart, long uend )
     }
 }
 
-void 
+void
 CoveAndTiler::coveUpperRight( void )
 {
     GridVertex tgv( top.uend, top.vindex );
@@ -207,7 +207,7 @@ CoveAndTiler::coveUpperRight( void )
     output( tgv );
     backend.swaptmesh();
     output( gv );
-        coveUR();
+	coveUR();
     backend.endtmesh();
 }
 
@@ -215,15 +215,15 @@ void
 CoveAndTiler::coveUpperRightNoGrid( TrimVertex* br )
 {
     backend.bgntmesh( "coveUpperRight" );
-    output( right.first() ); 
+    output( right.first() );
     output( right.next() );
     backend.swaptmesh();
     output( br );
-        coveUR();
+	coveUR();
     backend.endtmesh();
 }
 
-void 
+void
 CoveAndTiler::coveUR( )
 {
     GridVertex gv( top.uend, bot.vindex );
@@ -238,7 +238,7 @@ CoveAndTiler::coveUR( )
 	    backend.swaptmesh();
 	}
     } else while( 1 ) {
-        if( vert->param[0] < uarray.uarray[gv.gparam[0]]  ) {
+	if( vert->param[0] < uarray.uarray[gv.gparam[0]]  ) {
 	    output( vert );
 	    backend.swaptmesh();
 	    vert = right.next();
@@ -250,7 +250,7 @@ CoveAndTiler::coveUR( )
 		for( ; vert; vert = right.next() ) {
 		    output( vert );
 		    backend.swaptmesh();
-    		}
+		}
 		break;
 	    }
 	}
@@ -269,7 +269,7 @@ CoveAndTiler::coveUpperLeft( void )
     output( left.next() );
     output( gv );
     backend.swaptmesh();
-        coveUL();
+	coveUL();
     backend.endtmesh();
 }
 
@@ -277,15 +277,15 @@ void
 CoveAndTiler::coveUpperLeftNoGrid( TrimVertex* bl )
 {
     backend.bgntmesh( "coveUpperLeftNoGrid" );
-    output( left.first() ); 
+    output( left.first() );
     output( left.next() );
     output( bl );
     backend.swaptmesh();
-        coveUL();
+	coveUL();
     backend.endtmesh();
 }
 
-void 
+void
 CoveAndTiler::coveUL()
 {
     GridVertex gv( top.ustart, bot.vindex );
@@ -318,7 +318,7 @@ CoveAndTiler::coveUL()
     }
 }
 
-void 
+void
 CoveAndTiler::coveLowerLeft( void )
 {
     GridVertex bgv( bot.ustart, bot.vindex );
@@ -330,7 +330,7 @@ CoveAndTiler::coveLowerLeft( void )
     output( bgv );
     backend.swaptmesh();
     output( gv );
-        coveLL();
+	coveLL();
     backend.endtmesh();
 }
 
@@ -338,15 +338,15 @@ void
 CoveAndTiler::coveLowerLeftNoGrid( TrimVertex* tl )
 {
     backend.bgntmesh( "coveLowerLeft" );
-    output( left.last() ); 
+    output( left.last() );
     output( left.prev() );
     backend.swaptmesh();
     output( tl );
-        coveLL( );
+	coveLL( );
     backend.endtmesh();
 }
 
-void 
+void
 CoveAndTiler::coveLL()
 {
     GridVertex gv( bot.ustart, top.vindex );
@@ -360,7 +360,7 @@ CoveAndTiler::coveLL()
 	    backend.swaptmesh();
 	}
     } else while( 1 ) {
-        if( vert->param[0] > uarray.uarray[gv.gparam[0]] ){
+	if( vert->param[0] > uarray.uarray[gv.gparam[0]] ){
 	    output( vert );
 	    backend.swaptmesh();
 	    vert = left.prev();
@@ -369,29 +369,29 @@ CoveAndTiler::coveLL()
 	    backend.swaptmesh();
 	    output( gv );
 	    if( gv.prevu() == top.ustart ) {
-    		for( ; vert; vert = left.prev() ) {
+		for( ; vert; vert = left.prev() ) {
 		    output( vert );
 		    backend.swaptmesh();
-    		}
-	        break;
+		}
+		break;
 	    }
 	}
     }
 }
 
-void 
+void
 CoveAndTiler::coveLowerRight( void )
 {
     GridVertex bgv( bot.uend, bot.vindex );
     GridVertex gv( bot.uend, top.vindex );
 
     right.last();
-    backend.bgntmesh( "coveLowerRight" );	
+    backend.bgntmesh( "coveLowerRight" );       
     output( bgv );
     output( right.prev() );
     output( gv );
     backend.swaptmesh();
-        coveLR();
+	coveLR();
     backend.endtmesh( );
 }
 
@@ -399,15 +399,15 @@ void
 CoveAndTiler::coveLowerRightNoGrid( TrimVertex* tr )
 {
     backend.bgntmesh( "coveLowerRIght" );
-    output( right.last() ); 
+    output( right.last() );
     output( right.prev() );
     output( tr );
     backend.swaptmesh();
-        coveLR();
+	coveLR();
     backend.endtmesh();
 }
 
-void 
+void
 CoveAndTiler::coveLR( )
 {
     GridVertex gv( bot.uend, top.vindex );
@@ -421,7 +421,7 @@ CoveAndTiler::coveLR( )
 	    output( vert );
 	}
     } else while( 1 ) {
-        if( vert->param[0] < uarray.uarray[gv.gparam[0]]  ) {
+	if( vert->param[0] < uarray.uarray[gv.gparam[0]]  ) {
 	    backend.swaptmesh();
 	    output( vert );
 	    vert = right.prev();
@@ -430,11 +430,11 @@ CoveAndTiler::coveLR( )
 	    output( gv );
 	    backend.swaptmesh();
 	    if( gv.nextu() == top.uend ) {
-    		for( ; vert; vert = right.prev() ) {
+		for( ; vert; vert = right.prev() ) {
 		    backend.swaptmesh();
 		    output( vert );
-    		}
-	        break;
+		}
+		break;
 	    }
 	}
     }

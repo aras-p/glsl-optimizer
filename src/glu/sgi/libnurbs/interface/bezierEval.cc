@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.3 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/bezierEval.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/bezierEval.cc,v 1.3 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include <stdlib.h>
@@ -42,6 +42,10 @@
 #include <assert.h>
 #include <math.h>
 #include "bezierEval.h"
+
+#ifdef __WATCOMC__
+#pragma warning 14  10
+#endif
 
 #define TOLERANCE 0.0001
 
@@ -88,7 +92,7 @@ void bezierCurveEval(float u0, float u1, int order, float *ctlpoints, int stride
   }
 }
 
-      
+
 
 /*order = degree +1 >=1.
  */
@@ -109,7 +113,7 @@ void bezierCurveEvalfast(float u0, float u1, int order, float *ctlpoints, int st
 	buf[r][i][j] = (1-uprime)*buf[r-1][i][j] + uprime*buf[r-1][i+1][j];
     }
   }
-  
+
   for(j=0; j<dimension; j++)
     retpoint[j] = buf[order-1][0][j];
 }
@@ -135,10 +139,10 @@ void bezierCurveEvalDer(float u0, float u1, int order, float *ctlpoints, int str
     }
     ctlptr += stride;
   }
-  
+
   bezierCurveEval(u0, u1, order-1, (float*) buf, MAX_DIMENSION,  dimension, u, retDer);
 }
-  
+
 void bezierCurveEvalDerGen(int der, float u0, float u1, int order, float *ctlpoints, int stride,  int dimension, float u, float retDer[])
 {
   int i,k,r;
@@ -179,12 +183,12 @@ void bezierSurfEvalDerGen(int uder, int vder, float u0, float u1, int uorder, fl
     bezierCurveEvalDerGen(vder, v0, v1, vorder, ctlpoints+ustride*i, vstride, dimension, v, newPoints[i]);
 
   }
-  
+
   bezierCurveEvalDerGen(uder, u0, u1, uorder, (float *) newPoints, MAX_DIMENSION, dimension, u, ret);
 }
 
 
-/*division by w is performed*/    
+/*division by w is performed*/
 void bezierSurfEval(float u0, float u1, int uorder, float v0, float v1, int vorder, int dimension, float *ctlpoints, int ustride, int vstride, float u, float v, float ret[])
 {
   bezierSurfEvalDerGen(0, 0, u0, u1, uorder, v0, v1, vorder, dimension, ctlpoints, ustride, vstride, u, v, ret);
@@ -192,7 +196,7 @@ void bezierSurfEval(float u0, float u1, int uorder, float v0, float v1, int vord
     ret[0] /= ret[3];
     ret[1] /= ret[3];
     ret[2] /= ret[3];
-  }    
+  }
 }
 
 void bezierSurfEvalNormal(float u0, float u1, int uorder, float v0, float v1, int vorder, int dimension, float *ctlpoints, int ustride, int vstride, float u, float v, float retNormal[])
@@ -202,7 +206,7 @@ void bezierSurfEvalNormal(float u0, float u1, int uorder, float v0, float v1, in
   assert(dimension>=3 && dimension <=4);
   bezierSurfEvalDerGen(1,0, u0, u1, uorder, v0, v1, vorder, dimension, ctlpoints, ustride, vstride, u, v, partialU);
   bezierSurfEvalDerGen(0,1, u0, u1, uorder, v0, v1, vorder, dimension, ctlpoints, ustride, vstride, u, v, partialV);
-  
+
   if(dimension == 3){/*inhomogeneous*/
     crossProduct(partialU, partialV, retNormal);
 
@@ -215,11 +219,11 @@ void bezierSurfEvalNormal(float u0, float u1, int uorder, float v0, float v1, in
     float newPartialU[MAX_DIMENSION];
     float newPartialV[MAX_DIMENSION];
     int i;
-    bezierSurfEvalDerGen(0,0, u0, u1, uorder, v0, v1, vorder, dimension, ctlpoints, ustride, vstride, u, v, val);    
+    bezierSurfEvalDerGen(0,0, u0, u1, uorder, v0, v1, vorder, dimension, ctlpoints, ustride, vstride, u, v, val);
 
     for(i=0; i<=2; i++){
       newPartialU[i] = partialU[i] * val[3] - val[i] * partialU[3];
-      newPartialV[i] = partialV[i] * val[3] - val[i] * partialV[3];      
+      newPartialV[i] = partialV[i] * val[3] - val[i] * partialV[3];
     }
     crossProduct(newPartialU, newPartialV, retNormal);
     normalize(retNormal);
@@ -231,7 +235,7 @@ static void normalize(float vec[3])
 {
   float size = (float)sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
-  if(size < TOLERANCE) 
+  if(size < TOLERANCE)
     {
 #ifdef DEBUG
       fprintf(stderr, "Warning: in oglBSpline.c normal is 0\n");
@@ -244,7 +248,7 @@ static void normalize(float vec[3])
     vec[2] = vec[2]/size;
   }
 }
-  
+
 
 static void crossProduct(float x[3], float y[3], float ret[3])
 {

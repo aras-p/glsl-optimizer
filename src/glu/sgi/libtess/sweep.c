@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -35,8 +35,8 @@
 /*
 ** Author: Eric Veach, July 1994.
 **
-** $Date: 2002/11/07 14:17:05 $ $Revision: 1.5 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/sweep.c,v 1.5 2002/11/07 14:17:05 brianp Exp $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.6 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libtess/sweep.c,v 1.6 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include "gluos.h"
@@ -92,6 +92,8 @@ extern void DebugEvent( GLUtesselator *tess );
  *   when it is necessary.)
  */
 
+#undef	MAX
+#undef	MIN
 #define MAX(x,y)	((x) >= (y) ? (x) : (y))
 #define MIN(x,y)	((x) <= (y) ? (x) : (y))
 
@@ -99,7 +101,7 @@ extern void DebugEvent( GLUtesselator *tess );
  * winding of the new edge.
  */
 #define AddWinding(eDst,eSrc)	(eDst->winding += eSrc->winding, \
-				 eDst->Sym->winding += eSrc->Sym->winding)
+                                 eDst->Sym->winding += eSrc->Sym->winding)
 
 static void SweepEvent( GLUtesselator *tess, GLUvertex *vEvent );
 static void WalkDirtyRegions( GLUtesselator *tess, ActiveRegion *regUp );
@@ -175,7 +177,7 @@ static int FixUpperEdge( ActiveRegion *reg, GLUhalfEdge *newEdge )
   reg->eUp = newEdge;
   newEdge->activeRegion = reg;
 
-  return 1; 
+  return 1;
 }
 
 static ActiveRegion *TopLeftRegion( ActiveRegion *reg )
@@ -225,7 +227,7 @@ static ActiveRegion *AddRegionBelow( GLUtesselator *tess,
   if (regNew == NULL) longjmp(tess->env,1);
 
   regNew->eUp = eNewUp;
-  /* __gl_dictListInsertBefore */ 
+  /* __gl_dictListInsertBefore */
   regNew->nodeUp = dictInsertBefore( tess->dict, regAbove->nodeUp, regNew );
   if (regNew->nodeUp == NULL) longjmp(tess->env,1);
   regNew->fixUpperEdge = FALSE;
@@ -292,7 +294,7 @@ static GLUhalfEdge *FinishLeftRegions( GLUtesselator *tess,
  * active region to the face, since at this point each face will belong
  * to at most one region (this was not necessarily true until this point
  * in the sweep).  The walk stops at the region above regLast; if regLast
- * is NULL we walk as far as possible.  At the same time we relink the
+ * is NULL we walk as far as possible.	At the same time we relink the
  * mesh if necessary, so that the ordering of edges around vOrg is the
  * same as in the dictionary.
  */
@@ -449,11 +451,11 @@ static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
   data[0] = e1->Org->data;
   data[1] = e2->Org->data;
   CallCombine( tess, e1->Org, data, weights, FALSE );
-  if ( !__gl_meshSplice( e1, e2 ) ) longjmp(tess->env,1); 
+  if ( !__gl_meshSplice( e1, e2 ) ) longjmp(tess->env,1);
 }
 
 static void VertexWeights( GLUvertex *isect, GLUvertex *org, GLUvertex *dst,
-                           GLfloat *weights )
+			   GLfloat *weights )
 /*
  * Find some weights which describe how the intersection vertex is
  * a linear combination of "org" and "dest".  Each of the two edges
@@ -596,7 +598,7 @@ static int CheckForLeftSplice( GLUtesselator *tess, ActiveRegion *regUp )
     /* eUp->Dst is below eLo, so splice eUp->Dst into eLo */
     regUp->dirty = regLo->dirty = TRUE;
     e = __gl_meshSplitEdge( eLo );
-    if (e == NULL) longjmp(tess->env,1);    
+    if (e == NULL) longjmp(tess->env,1);
     if ( !__gl_meshSplice( eUp->Lnext, eLo->Sym ) ) longjmp(tess->env,1);
     e->Rface->inside = regUp->inside;
   }
@@ -682,7 +684,7 @@ static int CheckForIntersect( GLUtesselator *tess, ActiveRegion *regUp )
     return FALSE;
   }
 
-  if(    (! VertEq( dstUp, tess->event )
+  if(	 (! VertEq( dstUp, tess->event )
 	  && EdgeSign( dstUp, tess->event, &isect ) >= 0)
       || (! VertEq( dstLo, tess->event )
 	  && EdgeSign( dstLo, tess->event, &isect ) <= 0 ))
@@ -705,7 +707,7 @@ static int CheckForIntersect( GLUtesselator *tess, ActiveRegion *regUp )
     if( dstUp == tess->event ) {
       /* Splice dstUp into eLo, and process the new region(s) */
       if (__gl_meshSplitEdge( eLo->Sym ) == NULL) longjmp(tess->env,1);
-      if ( !__gl_meshSplice( eUp->Lnext, eLo->Oprev ) ) longjmp(tess->env,1); 
+      if ( !__gl_meshSplice( eUp->Lnext, eLo->Oprev ) ) longjmp(tess->env,1);
       regLo = regUp;
       regUp = TopRightRegion( regUp );
       e = RegionBelow(regUp)->eUp->Rprev;
@@ -813,7 +815,7 @@ static void WalkDirtyRegions( GLUtesselator *tess, ActiveRegion *regUp )
     if( eUp->Org != eLo->Org ) {
       if(    eUp->Dst != eLo->Dst
 	  && ! regUp->fixUpperEdge && ! regLo->fixUpperEdge
-          && (eUp->Dst == tess->event || eLo->Dst == tess->event) )
+	  && (eUp->Dst == tess->event || eLo->Dst == tess->event) )
       {
 	/* When all else fails in CheckForIntersect(), it uses tess->event
 	 * as the intersection location.  To make this possible, it requires
@@ -822,7 +824,7 @@ static void WalkDirtyRegions( GLUtesselator *tess, ActiveRegion *regUp )
 	 * case it might splice one of these edges into tess->event, and
 	 * violate the invariant that fixable edges are the only right-going
 	 * edge from their associated vertex).
-         */
+	 */
 	if( CheckForIntersect( tess, regUp )) {
 	  /* WalkDirtyRegions() was called recursively; we're done */
 	  return;
@@ -846,7 +848,7 @@ static void WalkDirtyRegions( GLUtesselator *tess, ActiveRegion *regUp )
 
 
 static void ConnectRightVertex( GLUtesselator *tess, ActiveRegion *regUp,
-			        GLUhalfEdge *eBottomLeft )
+				GLUhalfEdge *eBottomLeft )
 /*
  * Purpose: connect a "right" vertex vEvent (one where all edges go left)
  * to the unprocessed portion of the mesh.  Since there are no right-going
@@ -959,7 +961,7 @@ static void ConnectLeftDegenerate( GLUtesselator *tess,
     SpliceMergeVertices( tess, e, vEvent->anEdge );
     return;
   }
-  
+
   if( ! VertEq( e->Dst, vEvent )) {
     /* General case -- splice vEvent into edge e which passes through it */
     if (__gl_meshSplitEdge( e->Sym ) == NULL) longjmp(tess->env,1);
@@ -969,7 +971,7 @@ static void ConnectLeftDegenerate( GLUtesselator *tess,
       regUp->fixUpperEdge = FALSE;
     }
     if ( !__gl_meshSplice( vEvent->anEdge, e ) ) longjmp(tess->env,1);
-    SweepEvent( tess, vEvent );	/* recurse */
+    SweepEvent( tess, vEvent ); /* recurse */
     return;
   }
 
@@ -1075,9 +1077,9 @@ static void SweepEvent( GLUtesselator *tess, GLUvertex *vEvent )
   ActiveRegion *regUp, *reg;
   GLUhalfEdge *e, *eTopLeft, *eBottomLeft;
 
-  tess->event = vEvent;		/* for access in EdgeLeq() */
+  tess->event = vEvent; 	/* for access in EdgeLeq() */
   DebugEvent( tess );
-  
+
   /* Check if this vertex is the right endpoint of an edge that is
    * already in the dictionary.  In this case we don't need to waste
    * time searching for the location to insert new edges.
@@ -1143,7 +1145,7 @@ static void AddSentinel( GLUtesselator *tess, GLdouble t )
   e->Org->t = t;
   e->Dst->s = -SENTINEL_COORD;
   e->Dst->t = t;
-  tess->event = e->Dst;		/* initialize it */
+  tess->event = e->Dst; 	/* initialize it */
 
   reg->eUp = e;
   reg->windingNumber = 0;
@@ -1193,7 +1195,7 @@ static void DoneEdgeDict( GLUtesselator *tess )
     DeleteRegion( tess, reg );
 /*    __gl_meshDelete( reg->eUp );*/
   }
-  dictDeleteDict( tess->dict );	/* __gl_dictListDeleteDict */
+  dictDeleteDict( tess->dict ); /* __gl_dictListDeleteDict */
 }
 
 
@@ -1209,10 +1211,10 @@ static void RemoveDegenerateEdges( GLUtesselator *tess )
   for( e = eHead->next; e != eHead; e = eNext ) {
     eNext = e->next;
     eLnext = e->Lnext;
-    
+
     if( VertEq( e->Org, e->Dst ) && e->Lnext->Lnext != e ) {
       /* Zero-length edge, contour has at least 3 edges */
-      
+
       SpliceMergeVertices( tess, eLnext, e );	/* deletes e->Org */
       if ( !__gl_meshDelete( e ) ) longjmp(tess->env,1); /* e is a self-loop */
       e = eLnext;
@@ -1220,7 +1222,7 @@ static void RemoveDegenerateEdges( GLUtesselator *tess )
     }
     if( eLnext->Lnext == e ) {
       /* Degenerate contour (one or two edges) */
-      
+
       if( eLnext != e ) {
 	if( eLnext == eNext || eLnext == eNext->Sym ) { eNext = eNext->next; }
 	if ( !__gl_meshDelete( eLnext ) ) longjmp(tess->env,1);
@@ -1327,7 +1329,7 @@ int __gl_computeInterior( GLUtesselator *tess )
     for( ;; ) {
       vNext = (GLUvertex *)pqMinimum( tess->pq ); /* __gl_pqSortMinimum */
       if( vNext == NULL || ! VertEq( vNext, v )) break;
-      
+
       /* Merge together all vertices at exactly the same location.
        * This is more efficient than processing them one at a time,
        * simplifies the code (see ConnectLeftDegenerate), and is also
@@ -1349,7 +1351,7 @@ int __gl_computeInterior( GLUtesselator *tess )
   }
 
   /* Set tess->event for debugging purposes */
-  /* __GL_DICTLISTKEY */ /* __GL_DICTLISTMIN */ 
+  /* __GL_DICTLISTKEY */ /* __GL_DICTLISTMIN */
   tess->event = ((ActiveRegion *) dictKey( dictMin( tess->dict )))->eUp->Org;
   DebugEvent( tess );
   DoneEdgeDict( tess );

@@ -6,21 +6,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
+** $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/glrenderer.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
 */
 
 #include "gluos.h"
@@ -99,7 +99,7 @@ GLUnurbs::GLUnurbs()
     //default autoloadmode is true
     autoloadmode = 1;
 
-    //default callbackFlag is 0 
+    //default callbackFlag is 0
     callbackFlag = 0;
 
     errorCallback = NULL;
@@ -127,8 +127,8 @@ GLUnurbs::errorHandler(int i)
     postError( gluError );
 }
 
-void 
-GLUnurbs::loadGLMatrices(void) 
+void
+GLUnurbs::loadGLMatrices(void)
 {
     GLfloat vmat[4][4];
     GLint viewport[4];
@@ -140,20 +140,20 @@ GLUnurbs::loadGLMatrices(void)
 }
 
 void
-GLUnurbs::useGLMatrices(const GLfloat modelMatrix[16], 
+GLUnurbs::useGLMatrices(const GLfloat modelMatrix[16],
 			  const GLfloat projMatrix[16],
 			  const GLint viewport[4])
 {
     GLfloat vmat[4][4];
 
-    multmatrix4d(vmat, (const GLfloat (*)[4]) modelMatrix, 
+    multmatrix4d(vmat, (const GLfloat (*)[4]) modelMatrix,
 	    (const GLfloat (*)[4]) projMatrix);
     loadCullingMatrix((GLfloat (*)[4]) vmat);
     loadSamplingMatrix((const GLfloat (*)[4]) vmat, (const GLint *) viewport);
 }
 
 /*--------------------------------------------------------------------------
- * grabGLMatrix  
+ * grabGLMatrix
  *--------------------------------------------------------------------------
  */
 
@@ -164,8 +164,8 @@ GLUnurbs::grabGLMatrix(GLfloat vmat[4][4])
 
     ::glGetFloatv((GLenum) GL_MODELVIEW_MATRIX, (GLfloat *) &(m1[0][0]));
     ::glGetFloatv((GLenum) GL_PROJECTION_MATRIX, (GLfloat *) &(m2[0][0]));
-    multmatrix4d((GLfloat (*)[4]) vmat, 
-	    (GLfloat (*)[4]) m1, (GLfloat (*)[4]) m2);
+    multmatrix4d((GLfloat (*)[4]) vmat,
+	    (const GLfloat (*)[4]) m1, (const GLfloat (*)[4]) m2);
 }
 
 //for object space tesselation: view independent
@@ -180,27 +180,27 @@ GLUnurbs::setSamplingMatrixIdentity( void )
   };
   const long rstride = sizeof(smat[0]) / sizeof(smat[0][0]);
   const long cstride = 1;
-  
-  setnurbsproperty(GL_MAP1_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+
+  setnurbsproperty(GL_MAP1_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 		   cstride);
-  setnurbsproperty(GL_MAP1_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+  setnurbsproperty(GL_MAP1_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 		   cstride);
-  setnurbsproperty(GL_MAP2_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+  setnurbsproperty(GL_MAP2_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 		   cstride);
-  setnurbsproperty(GL_MAP2_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+  setnurbsproperty(GL_MAP2_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 		   cstride);
 }
 
 
 void
-GLUnurbs::loadSamplingMatrix(const GLfloat vmat[4][4], 
+GLUnurbs::loadSamplingMatrix(const GLfloat vmat[4][4],
 			       const GLint viewport[4])
 {
 
     /* rescale the mapping to correspond to pixels in x/y */
     REAL xsize = 0.5 * (REAL) (viewport[2]);
     REAL ysize = 0.5 * (REAL) (viewport[3]);
- 
+
     INREAL smat[4][4];
     smat[0][0] = vmat[0][0] * xsize;
     smat[1][0] = vmat[1][0] * xsize;
@@ -225,13 +225,13 @@ GLUnurbs::loadSamplingMatrix(const GLfloat vmat[4][4],
     const long rstride = sizeof(smat[0]) / sizeof(smat[0][0]);
     const long cstride = 1;
 
-    setnurbsproperty(GL_MAP1_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+    setnurbsproperty(GL_MAP1_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 	    cstride);
-    setnurbsproperty(GL_MAP1_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+    setnurbsproperty(GL_MAP1_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 	    cstride);
-    setnurbsproperty(GL_MAP2_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+    setnurbsproperty(GL_MAP2_VERTEX_3, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 	    cstride);
-    setnurbsproperty(GL_MAP2_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride, 
+    setnurbsproperty(GL_MAP2_VERTEX_4, N_SAMPLINGMATRIX, &smat[0][0], rstride,
 	    cstride);
 }
 
@@ -263,14 +263,14 @@ GLUnurbs::loadCullingMatrix(GLfloat vmat[4][4])
     const long rstride = sizeof(cmat[0]) / sizeof(cmat[0][0]);
     const long cstride = 1;
 
-    setnurbsproperty(GL_MAP2_VERTEX_3, N_CULLINGMATRIX, &cmat[0][0], rstride, 
+    setnurbsproperty(GL_MAP2_VERTEX_3, N_CULLINGMATRIX, &cmat[0][0], rstride,
 	    cstride);
-    setnurbsproperty(GL_MAP2_VERTEX_4, N_CULLINGMATRIX, &cmat[0][0], rstride, 
+    setnurbsproperty(GL_MAP2_VERTEX_4, N_CULLINGMATRIX, &cmat[0][0], rstride,
 	    cstride);
 	//added for curves by zl
-    setnurbsproperty(GL_MAP1_VERTEX_3, N_CULLINGMATRIX, &cmat[0][0], rstride, 
+    setnurbsproperty(GL_MAP1_VERTEX_3, N_CULLINGMATRIX, &cmat[0][0], rstride,
 	    cstride);
-    setnurbsproperty(GL_MAP1_VERTEX_4, N_CULLINGMATRIX, &cmat[0][0], rstride, 
+    setnurbsproperty(GL_MAP1_VERTEX_4, N_CULLINGMATRIX, &cmat[0][0], rstride,
 	    cstride);
 }
 

@@ -35,15 +35,15 @@
 /*
  * basiccrveval.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/basiccrveval.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2003/10/14 23:48:57 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/basiccrveval.cc,v 1.2 2003/10/14 23:48:57 kendallb Exp $
  */
 
 #include "mystdio.h"
 #include "types.h"
 #include "basiccrveval.h"
 
-void 
+void
 BasicCurveEvaluator::domain1f( REAL, REAL )
 {
 #ifndef NDEBUG
@@ -51,15 +51,15 @@ BasicCurveEvaluator::domain1f( REAL, REAL )
 #endif
 }
 
-void 
-BasicCurveEvaluator::range1f( long type, REAL *, REAL * )
+void
+BasicCurveEvaluator::range1f( long , REAL *, REAL * )
 {
 #ifndef NDEBUG
     dprintf( "range1f\n" );
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::enable( long )
 {
 #ifndef NDEBUG
@@ -67,7 +67,7 @@ BasicCurveEvaluator::enable( long )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::disable( long )
 {
 #ifndef NDEBUG
@@ -75,7 +75,7 @@ BasicCurveEvaluator::disable( long )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::bgnmap1f( long )
 {
 #ifndef NDEBUG
@@ -83,7 +83,7 @@ BasicCurveEvaluator::bgnmap1f( long )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::map1f( long, REAL, REAL, long, long, REAL * )
 {
 #ifndef NDEBUG
@@ -91,7 +91,7 @@ BasicCurveEvaluator::map1f( long, REAL, REAL, long, long, REAL * )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::mapgrid1f( long, REAL, REAL )
 {
 #ifndef NDEBUG
@@ -99,7 +99,7 @@ BasicCurveEvaluator::mapgrid1f( long, REAL, REAL )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::mapmesh1f( long, long, long )
 {
 #ifndef NDEBUG
@@ -107,7 +107,7 @@ BasicCurveEvaluator::mapmesh1f( long, long, long )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::evalcoord1f( long, REAL )
 {
 #ifndef NDEBUG
@@ -115,7 +115,7 @@ BasicCurveEvaluator::evalcoord1f( long, REAL )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::endmap1f( void )
 {
 #ifndef NDEBUG
@@ -123,7 +123,7 @@ BasicCurveEvaluator::endmap1f( void )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::bgnline( void )
 {
 #ifndef NDEBUG
@@ -131,7 +131,7 @@ BasicCurveEvaluator::bgnline( void )
 #endif
 }
 
-void 
+void
 BasicCurveEvaluator::endline( void )
 {
 #ifndef NDEBUG
