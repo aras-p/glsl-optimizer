@@ -470,18 +470,13 @@ generic_%u_byte( GLint rop, const void * ptr )
 					indent += "    "
 
 				[dim, width, height, depth, extent] = pixel_func.dimensions()
-
-				if dim < 3:
-					adjust = 20 + 4
-				else:
-					adjust = 36 + 4
-
+				adjust = pixel_func.offset_of_first_parameter() + 4
 
 				print '%s    emit_header(gc->pc, opcode, cmdlen);' % (indent)
 
 				offset = self.pixel_emit_args(pixel_func, "gc->pc", indent, adjust, dim, 0)
 
-				[s, junk] = pixel_func.command_payload_length()
+				s = pixel_func.command_fixed_length()
 
 				pixHeaderPtr = "gc->pc + 4"
 				pcPtr = "gc->pc + %u" % (s + 4)
@@ -559,18 +554,13 @@ generic_%u_byte( GLint rop, const void * ptr )
 			indent += "    "
 
 		[dim, width, height, depth, extent] = f.dimensions()
-
-		if dim < 3:
-			adjust = 20 + 4
-		else:
-			adjust = 36 + 4
-
+		adjust = f.offset_of_first_parameter() + 4
 
 		print '%s    emit_header(gc->pc, %s, cmdlen);' % (indent, f.opcode_real_name())
 
 		offset = self.pixel_emit_args(f, "gc->pc", indent, adjust, dim, 0)
 
-		[s, junk] = f.command_payload_length()
+		s = f.command_fixed_length()
 
 		pixHeaderPtr = "gc->pc + 4"
 		pcPtr = "gc->pc + %u" % (s + 4)
@@ -623,7 +613,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		if f.variable_length_parameter() == None and len(f.fn_parameters) == 1:
 			p = f.fn_parameters[0]
 			if p.is_pointer:
-				[cmdlen, size_string] = f.command_payload_length()
+				cmdlen = f.command_fixed_length()
 				if cmdlen in self.generic_sizes:
 					self.common_func_print_just_header(f)
 					print '    generic_%u_byte( %s, %s );' % (cmdlen, f.opcode_real_name(), p.name)

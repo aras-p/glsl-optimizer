@@ -240,7 +240,7 @@ class glXEnumFunction:
 class glXEnum(gl_XML.glEnum):
 	def __init__(self, context, name, attrs):
 		gl_XML.glEnum.__init__(self, context, name, attrs)
-		self.glx_functions = []
+
 
 	def startElement(self, name, attrs):
 		if name == "size":
@@ -416,6 +416,7 @@ class glXFunction(gl_XML.glFunction):
 
 		return
 
+
 	def variable_length_parameter(self):
 		for param in self.fn_parameters:
 			if param.is_variable_length_array():
@@ -424,58 +425,70 @@ class glXFunction(gl_XML.glFunction):
 		return None
 
 
-	def command_payload_length(self):
-		size = 0
+	def offset_of_first_parameter(self):
+		"""Get the offset of the first parameter in the command.
+
+		Gets the offset of the first function parameter in the GLX
+		command packet.  This byte offset is measured from the end
+		of the Render / RenderLarge header.  The offset for all non-
+		pixel commends is zero.  The offset for pixel commands depends
+		on the number of dimensions of the pixel data."""
 
 		if self.image:
 			[dim, junk, junk, junk, junk] = self.dimensions()
-			
+
 			# The base size is the size of the pixel pack info
 			# header used by images with the specified number
 			# of dimensions.
 
 			if dim <=  2:
-				size = 20
+				return 20
 			elif dim <= 4:
-				size = 36
+				return 36
 			else:
 				raise RuntimeError('Invalid number of dimensions %u for parameter "%s" in function "%s".' % (dim, self.image.name, self.name))
+		else:
+			return 0
 
-			if self.image.img_null_flag:
-				size += 4
 
-			if self.image.img_pad_dimensions:
-				size += 4 * (dim & 1)
-				
-				# If the image has offset parameters, like
-				# TexSubImage1D or TexSubImage3D, they need to
-				# be padded out as well.
+	def command_fixed_length(self):
+		"""Return the length, in bytes as an integer, of the
+		fixed-size portion of the command."""
 
-				if self.image.img_xoff:
-					size += 4 * (dim & 1)
-					
+		size = self.offset_of_first_parameter()
 
-	
+		for p in gl_XML.glFunction.parameterIterator(self):
+			if not p.is_output:
+				size += p.size()
+				if self.pad_after(p):
+					size += 4
+
+		if self.image and self.image.img_null_flag:
+			size += 4
+
+		return size
+
+
+	def command_variable_length(self):
+		"""Return the length, as a string, of the variable-sized
+		portion of the command."""
+
 		size_string = ""
 		for p in gl_XML.glFunction.parameterIterator(self):
-			if p.is_output: continue
-			temp = p.size_string()
-			try:
-				s = int(temp)
-				size += s
-			except Exception,e:
-				size_string = size_string + " + __GLX_PAD(%s)" % (temp)
+			if (not p.is_output) and (p.size() == 0):
+				size_string = size_string + " + __GLX_PAD(%s)" % (p.size_string())
 
-		return [size, size_string]
+		return size_string
+
 
 	def command_length(self):
-		[size, size_string] = self.command_payload_length()
+		size = self.command_fixed_length()
 
 		if self.glx_rop != 0:
 			size += 4
 
 		size = ((size + 3) & ~3)
-		return "%u%s" % (size, size_string)
+		return "%u%s" % (size, self.command_variable_length())
 
 
 	def opcode_real_value(self):
