@@ -174,7 +174,7 @@ static struct {
 	     R200_CP_VC_FRMT_ST0|		\
 	     R200_CP_VC_FRMT_ST1|		\
 	     R200_CP_VC_FRMT_N0)
-#define TAG(x) x##_rgpa_spec_st_st_n
+#define TAG(x) x##_rgba_spec_st_st_n
 #include "r200_maos_vbtmp.h"
 
 #define IDX 10
@@ -208,7 +208,7 @@ static struct {
 	     R200_CP_VC_FRMT_ST1|		\
 	     R200_CP_VC_FRMT_Q1|		\
 	     R200_CP_VC_FRMT_N0)
-#define TAG(x) x##_w_rgpa_spec_stq_stq_n
+#define TAG(x) x##_w_rgba_spec_stq_stq_n
 #include "r200_maos_vbtmp.h"
 
 
@@ -231,10 +231,10 @@ static void init_tcl_verts( void )
    init_rgba_st_n();
    init_rgba_spec_st_st();
    init_st_st_n();
-   init_rgpa_spec_st_st_n();
+   init_rgba_spec_st_st_n();
    init_rgba_stq();
    init_rgba_stq_stq();
-   init_w_rgpa_spec_stq_stq_n();
+   init_w_rgba_spec_stq_stq_n();
 }
 
 
