@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  * 
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1092,6 +1092,8 @@ glXFreeMemoryNV( GLvoid *pointer )
 }
 
 
+
+
 /*** GLX_MESA_agp_offset */
 
 GLuint PUBLIC
@@ -1104,6 +1106,32 @@ glXGetAGPOffsetMESA( const GLvoid *pointer )
       return ~0;
    return (t->GetAGPOffsetMESA)(pointer);
 }
+
+
+/*** GLX_MESA_allocate_memory */
+
+void *
+glXAllocateMemoryMESA(Display *dpy, int scrn, size_t size,
+                      float readfreq, float writefreq, float priority)
+{
+   /* dummy */
+   return NULL;
+}
+
+void
+glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
+{
+   /* dummy */
+}
+
+
+GLuint
+glXGetMemoryOffsetMESA(Display *dpy, int scrn, const void *pointer)
+{
+   /* dummy */
+   return 0;
+}
+
 
 
 /**********************************************************************/
@@ -1148,9 +1176,6 @@ _glxapi_get_extensions(void)
 #endif
 #ifdef GLX_SGIX_pbuffer
       "GLX_SGIX_pbuffer",
-#endif
-#ifdef GLX_ARB_render_texture
-      "GLX_ARB_render_texture",
 #endif
       NULL
    };
@@ -1331,6 +1356,11 @@ static struct name_address_pair GLX_functions[] = {
 
    /*** GLX_MESA_agp_offset ***/
    { "glXGetAGPOffsetMESA", (__GLXextFuncPtr) glXGetAGPOffsetMESA },
+
+   /*** GLX_MESA_allocate_memory ***/
+   { "glXAllocateMemoryMESA", (__GLXextFuncPtr) glXAllocateMemoryMESA },
+   { "glXFreeMemoryMESA", (__GLXextFuncPtr) glXFreeMemoryMESA },
+   { "glXGetMemoryOffsetMESA", (__GLXextFuncPtr) glXGetMemoryOffsetMESA },
 
    { NULL, NULL }   /* end of list */
 };
