@@ -1,10 +1,10 @@
-/* $Id: eval.c,v 1.7 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: eval.c,v 1.8 2000/01/13 00:30:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2728,7 +2728,8 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
 
 /* Lame internal function:
  */
-void gl_EvalCoord1f( GLcontext *CC, GLfloat u )
+static void
+eval_coord1f( GLcontext *CC, GLfloat u )
 {
    struct immediate *i = CC->input;
    EVALCOORD1( i, u );
@@ -2785,7 +2786,8 @@ _mesa_EvalCoord2f( GLfloat u, GLfloat v )
 
 /* Lame internal function:
  */
-void gl_EvalCoord2f( GLcontext *CC, GLfloat u, GLfloat v )
+static void
+eval_coord2f( GLcontext *CC, GLfloat u, GLfloat v )
 {
    struct immediate *i = CC->input;
    EVALCOORD2( i, u, v );
@@ -2863,7 +2865,7 @@ _mesa_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 
    gl_Begin( ctx, prim );
    for (i=i1;i<=i2;i++,u+=du) {
-      gl_EvalCoord1f( ctx, u );
+      eval_coord1f( ctx, u );
    }
    gl_End(ctx);
 }
@@ -2896,7 +2898,7 @@ _mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
       gl_Begin( ctx, GL_POINTS );
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    gl_EvalCoord2f( ctx, u, v );
+	    eval_coord2f( ctx, u, v );
 	 }
       }
       gl_End(ctx);
@@ -2905,14 +2907,14 @@ _mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
 	 gl_Begin( ctx, GL_LINE_STRIP );
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    gl_EvalCoord2f( ctx, u, v );
+	    eval_coord2f( ctx, u, v );
 	 }
 	 gl_End(ctx);
       }
       for (u=u1,i=i1;i<=i2;i++,u+=du) {
 	 gl_Begin( ctx, GL_LINE_STRIP );
 	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	    gl_EvalCoord2f( ctx, u, v );
+	    eval_coord2f( ctx, u, v );
 	 }
 	 gl_End(ctx);
       }
@@ -2923,8 +2925,8 @@ _mesa_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	 /* can't be guaranteed to be coplanar! */
 	 gl_Begin( ctx, GL_TRIANGLE_STRIP );
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    gl_EvalCoord2f( ctx, u, v );
-	    gl_EvalCoord2f( ctx, u, v+dv );
+	    eval_coord2f( ctx, u, v );
+	    eval_coord2f( ctx, u, v+dv );
 	 }
 	 gl_End(ctx);
       }
