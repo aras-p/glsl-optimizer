@@ -493,7 +493,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 /* Why do we need this for immediate mode?? Vertex processor needs it to know proper regs */
 //	r300EmitLOAD_VBPNTR(rmesa, 0);
 /* Okay, it seems I misunderstood something, EmitAOS does the same thing */
-	r300EmitAOS(rmesa, 0);
+	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
 
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;
