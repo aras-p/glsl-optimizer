@@ -65,7 +65,6 @@
 #include "vblank.h"
 #include "utils.h"
 
-viaContextPtr current_mesa;
 #ifdef DEBUG
 GLuint VIA_DEBUG = 0;
 #endif
@@ -78,7 +77,6 @@ GLuint idle = 0;
 hash_element hash_table[HASH_TABLE_SIZE][HASH_TABLE_DEPTH];
 #endif
 /*=* John Sheng [2003.5.31]  agp tex *=*/
-extern GLuint agpFullCount;
 
 static GLboolean
 AllocateBuffer(viaContextPtr vmesa)
@@ -204,7 +202,8 @@ calculate_buffer_parameters( viaContextPtr vmesa )
       + extra;
     vmesa->back.size = vmesa->back.pitch * vmesa->driDrawable->h;
 
-    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent backbuffer: w = %d h = %d bpp = %d sizs = %d\n",
+    if (VIA_DEBUG) fprintf(stderr, "%s backbuffer: w = %d h = %d bpp = %d sizs = %d\n",
+			   __FUNCTION__,
 			   vmesa->back.pitch, 
 			   vmesa->driDrawable->h,
 			   8 << shift,
@@ -224,7 +223,8 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 	(void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
     }
 
-    if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
+    if (VIA_DEBUG) fprintf(stderr, "%s depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
+			   __FUNCTION__,
 			   vmesa->depth.pitch,
 			   vmesa->driDrawable->h,
 			   vmesa->depth.bpp,
@@ -254,10 +254,9 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 
 void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 {
-    GLcontext *ctx;
-    viaContextPtr vmesa = current_mesa;
+    GET_CURRENT_CONTEXT(ctx);
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
-    ctx = vmesa->glCtx;
     ctx->DrawBuffer->Width = drawbuffer->Width;
     ctx->DrawBuffer->Height = drawbuffer->Height;
 
@@ -273,11 +272,11 @@ void viaReAllocateBuffers(GLframebuffer *drawbuffer)
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
-static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 
-{	
-    /* MESA5.0 */
-    viaContextPtr vmesa = current_mesa;
+static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
+{
+    GET_CURRENT_CONTEXT(ctx);
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);       
     *width = vmesa->driDrawable->w;
     *height = vmesa->driDrawable->h;
 }
@@ -406,7 +405,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     driParseConfigFiles (&vmesa->optionCache, &viaScreen->optionCache,
 			 sPriv->myNum, "via");
 
-    current_mesa = vmesa;    
     /* pick back buffer */
     if (mesaVis->doubleBufferMode) {
 	vmesa->hasBack = GL_TRUE;
@@ -657,12 +655,12 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
     assert(vmesa); /* should never be null */
-    viaFlushPrimsLocked(vmesa);
+/*     viaFlushPrimsLocked(vmesa); */
     WAIT_IDLE
 
     if (vmesa) {
 	/*=* John Sheng [2003.5.31]  agp tex *=*/
-	if(VIA_DEBUG) fprintf(stderr, "agpFullCount = %d\n", agpFullCount);    
+	if(VIA_DEBUG) fprintf(stderr, "agpFullCount = %d\n", vmesa->agpFullCount);    
 	
 	_swsetup_DestroyContext(vmesa->glCtx);
         _tnl_DestroyContext(vmesa->glCtx);
@@ -927,8 +925,6 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
     if (driContextPriv) {
         viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
 
-	current_mesa = vmesa;
-
 	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
 	if ( vmesa->driDrawable != driDrawPriv ) {
@@ -963,8 +959,13 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     __DRIscreenPrivate *psp;
     pdp = dPriv;
     psp = sPriv;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);  
-    if (VIA_DEBUG) fprintf(stderr, "drmGetLock - in\n");
+    if (VIA_DEBUG) {
+       fprintf(stderr, "%s - in\n", __FUNCTION__);  
+       fprintf(stderr, "is: %x non-contend: %x want: %x\n",
+	       *(GLuint *)vmesa->driHwLock, vmesa->hHWContext, 
+	       (DRM_LOCK_HELD|vmesa->hHWContext));
+    }
+
     drmGetLock(vmesa->driFd, vmesa->hHWContext, flags);
 
     DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
@@ -972,11 +973,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     if (sarea->ctxOwner != me) {
         vmesa->uploadCliprects = GL_TRUE;
         sarea->ctxOwner = me;
-        vmesa->dirty |= (VIA_UPLOAD_CTX |
-			 VIA_UPLOAD_BUFFERS |
-			 VIA_UPLOAD_TEX0 |
-			 VIA_UPLOAD_TEX1 |
-			 VIA_UPLOAD_CLIPRECTS);
+	vmesa->needUploadAllState = 1;
     }
 
     viaXMesaWindowMoved(vmesa);

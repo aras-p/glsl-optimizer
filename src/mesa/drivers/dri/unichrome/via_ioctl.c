@@ -77,11 +77,7 @@ v * copy of this software and associated documentation files (the "Software"),
 typedef enum {VIABLIT_TRANSCOPY, VIABLIT_COPY, VIABLIT_FILL} ViaBlitOps;
 
 
-GLuint FrameCount = 0;
-GLuint dmaLow = 0;
 /*=* John Sheng [2003.5.31] flip *=*/
-GLuint nFirstSwap = GL_TRUE;
-GLuint nFirstFlip = GL_TRUE;
 #define SetReg2DAGP(nReg, nData) {              	\
     *((GLuint *)(vb)) = ((nReg) >> 2) | 0xF0000000;     \
     *((GLuint *)(vb) + 1) = (nData);          		\
@@ -475,10 +471,10 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 	}
 	SetReg2DAGP(0x214, nBackBase);
 	viaFlushPrimsLocked(vmesa);*/
-    	if (nFirstFlip) {
+    	if (!vmesa->nDoneFirstFlip) {
 	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x43c)) = 0x00fe0000;
 	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x440)) = 0x00001004;
-	    nFirstFlip = GL_FALSE;
+	    vmesa->nDoneFirstFlip = GL_TRUE;
 	}
 	*((GLuint *)((GLuint)vmesa->regMMIOBase + 0x214)) = nBackBase;
     }
@@ -486,14 +482,14 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     else {
 	viaFlushPrimsLocked(vmesa);
 	vb = viaCheckDma(vmesa, 8 * 4);
-	if (nFirstFlip) {
+	if (!vmesa->nDoneFirstFlip) {
     	    *vb++ = HALCYON_HEADER2;
     	    *vb++ = 0x00fe0000;
     	    *vb++ = 0x0000000e;
     	    *vb++ = 0x0000000e;
 	    vmesa->dmaLow += 16;
 
-    	    nFirstFlip = GL_FALSE;
+    	    vmesa->nDoneFirstFlip = GL_FALSE;
 	}
 	nBackBase = (vmesa->back.offset );
 
@@ -580,6 +576,10 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
     GLuint *vb = viaCheckDma(vmesa, 0);
     int i;
 
+    if (*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|vmesa->hHWContext) &&
+	*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext))
+       fprintf(stderr, "%s called without lock held\n", __FUNCTION__);
+
     if (vmesa->dmaLow == DMA_OFFSET) {
     	return;
     }
@@ -635,20 +635,7 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
     else if (nbox > VIA_NR_SAREA_CLIPRECTS) {
         vmesa->uploadCliprects = GL_TRUE;
     }
-/*=* John Sheng [2003.5.31] flip *=*/
-/*
-    if (VIA_DEBUG) {
-	GLuint i;
-	GLuint *data = (GLuint *)vmesa->dmaAddr;
-	for (i = 0; i < vmesa->dmaLow; i += 16) {
-            fprintf(stderr, "%08x  ", *data++);
-	    fprintf(stderr, "%08x  ", *data++);
-	    fprintf(stderr, "%08x  ", *data++);
-	    fprintf(stderr, "%08x\n", *data++);
-	}
-	fprintf(stderr, "******************************************\n");
-    }   
-*/
+
     if (!nbox || !vmesa->uploadCliprects) {
         if (nbox == 1)
             sarea->nbox = 0;
@@ -1294,7 +1281,6 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
 #define VIA_CMDBUF_MAX_LAG 50000
 
 int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf) 
-
 {
     GLuint *pnBuf;
     GLuint *pnEnd;
@@ -1372,15 +1358,24 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	    bSiz.size = VIA_CMDBUF_MAX_LAG;
 	    while ( -EAGAIN == (ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
 							  &bSiz, sizeof(bSiz))));
-	    if (ret) 
-		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, "viaCommandBufferLag"); 
+	    if (ret) {
+		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__); 
+		abort();
+	    }
 	    while ( -EAGAIN == (ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
 						      &bufI, sizeof(bufI))));
+	    if (ret) {
+	       abort();
+	    }
 	}
 	if (ret) {
 	    if (vmesa->useAgp) WAIT_IDLE;
+	    
+/* 	    for (i = 0; */
+
 	    if (drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI))) {
-		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, "viaCommandBufferFlush");
+		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__);
+		abort();
 	    }
 	}
     }
@@ -1450,16 +1445,22 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 		bSiz.size = VIA_CMDBUF_MAX_LAG;
 		while ( -EAGAIN == (ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
 							      &bSiz, sizeof(bSiz))));
-		if (ret) 
-		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, "viaCommandBufferLag"); 
-		    while ( -EAGAIN == (ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
-							  &bufI, sizeof(bufI))));
+		if (ret) {
+		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__); 
+		    abort();
+		}
+		while ( -EAGAIN == (ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
+							      &bufI, sizeof(bufI))));
+		if (ret) {
+		   abort();
+		}
 	    }
 	    
 	    if (ret) {
 		if (vmesa->useAgp) WAIT_IDLE;
 	        if (drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI))) {
-		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, "viaCommandBufferFlush");
+		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__);
+		    abort();
 		}
 	    }
 

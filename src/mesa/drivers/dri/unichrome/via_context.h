@@ -292,6 +292,9 @@ struct via_context_t {
     GLuint* agpBase;
     GLuint drawType;
 
+   GLuint nDoneFirstFlip;
+   GLuint agpFullCount;
+
    /* Configuration cache
     */
    driOptionCache optionCache;

@@ -60,8 +60,6 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 3;
 
 
-extern viaContextPtr current_mesa;
-
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /* USE_NEW_INTERFACE */
@@ -221,10 +219,17 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap)
 {
-    viaContextPtr vmesa = current_mesa;
+    /* KW: Bogus: Do this sort of thing in MakeCurrent or similar.
+     */
+    viaContextPtr vmesa;
+    GET_CURRENT_CONTEXT(ctx);
+
+    if (ctx)
+       vmesa = VIA_CONTEXT(ctx);
+    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     /*=* John Sheng [2003.7.2] for visual config & patch viewperf *=*/
-    if (mesaVis->depthBits == 32 && vmesa->depthBits == 16) {
+    if (vmesa && mesaVis->depthBits == 32 && vmesa->depthBits == 16) {
 	vmesa->depthBits = mesaVis->depthBits;
 	vmesa->depth.size *= 2;
 	vmesa->depth.pitch *= 2;

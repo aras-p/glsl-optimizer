@@ -40,7 +40,6 @@
 #include "via_ioctl.h"
 #include "via_fb.h"
 /*=* John Sheng [2003.5.31]  agp tex *=*/
-GLuint agpFullCount = 0;
 
 void viaDestroyTexObj(viaContextPtr vmesa, viaTextureObjectPtr t)
 {
@@ -410,7 +409,7 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
 	    if (via_alloc_texture(vmesa, t))
 		break;
 
-	    agpFullCount++; 
+	    vmesa->agpFullCount++; 
             if (vmesa->TexObjList.prev == vmesa->CurrentTexObj[0] ||
                 vmesa->TexObjList.prev == vmesa->CurrentTexObj[1]) {
                 if (VIA_DEBUG) fprintf(stderr, "Hit bound texture in upload\n");
