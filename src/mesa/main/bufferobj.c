@@ -310,7 +310,7 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 {
    (void) ctx; (void) target;
 
-   if (bufObj->Data && ((GLuint) (size + offset) <= bufObj->Size)) {
+   if (bufObj->Data && ((GLsizeiptrARB) (size + offset) <= bufObj->Size)) {
       _mesa_memcpy( data, (GLubyte *) bufObj->Data + offset, size );
    }
 }

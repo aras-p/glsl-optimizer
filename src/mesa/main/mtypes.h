@@ -1471,7 +1471,7 @@ struct gl_buffer_object
    GLenum Usage;
    GLenum Access;
    GLvoid *Pointer;          /**< Only valid while buffer is mapped */
-   GLuint Size;              /**< Size of storage in bytes */
+   GLsizeiptrARB Size;       /**< Size of storage in bytes */
    GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
    GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
 };
