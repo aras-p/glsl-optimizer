@@ -56,8 +56,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_program.h"
 #include "r300_tex.h"
 
-#include "r300_lib.h"
-
+#include "r300_emit.h"
 
 /**********************************************************************
 *                     Hardware rasterization
@@ -335,64 +334,57 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 /* We use the start part of GART texture buffer for vertices */
 
 
-static void upload_vertex_buffer(r300ContextPtr rmesa, 
-	GLcontext *ctx, AOS_DATA *array, int *n_arrays)
+static void upload_vertex_buffer(r300ContextPtr rmesa, GLcontext *ctx)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   int idx=0;
-   int i,j,k;
-   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
-   
-   /* A hack - we don't want to overwrite vertex buffers, so we
-      just use AGP space for them.. Fix me ! */
-   static int offset=0;
-   if(offset>2*1024*1024){
-   	//fprintf(stderr, "Wrapping agp vertex buffer offset\n");
-   	offset=0;
-	}
-   /* Not the most efficient implementation, but, for now, I just want something that
-      works */
-      /* to do - make single memcpy per column (is it possible ?) */
-      /* to do - use dirty flags to avoid redundant copies */
-#define UPLOAD_VECTOR(v, r, f)\
-	{ \
-	 /* Is the data dirty ? */ \
-	if (v->flags & ((1<<v->size)-1)) { \
-		/* fprintf(stderr, "size=%d vs stride=%d\n", v->size, v->stride); */ \
-		if(v->size*4==v->stride){\
-			/* fast path */  \
-			memcpy(rsp->gartTextures.map+offset, v->data, v->stride*VB->Count); \
-			} else { \
-			for(i=0;i<VB->Count;i++){ \
-				/* copy one vertex at a time*/ \
-				memcpy(rsp->gartTextures.map+offset+i*v->size*4, VEC_ELT(v, GLfloat, i), v->size*4); \
-				} \
-			} \
-		/* v->flags &= ~((1<<v->size)-1);*/ \
-		} \
-	array[idx].element_size=v->size; \
-	array[idx].stride=v->size; \
-	array[idx].format=(f); \
-	array[idx].ncomponents=v->size; \
-	array[idx].offset=rsp->gartTextures.handle+offset; \
-	array[idx].reg=r; \
-	offset+=v->size*4*VB->Count; \
-	idx++; \
-	}
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	int idx=0;
+	int i,j,k;
+	radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
 	
-UPLOAD_VECTOR(VB->ObjPtr, REG_COORDS, AOS_FORMAT_FLOAT);
-UPLOAD_VECTOR(VB->ColorPtr[0], REG_COLOR0, AOS_FORMAT_FLOAT_COLOR);
+	/* A hack - we don't want to overwrite vertex buffers, so we
+	just use AGP space for them.. Fix me ! */
+	static int offset=0;
+	if(offset>2*1024*1024){
+		//fprintf(stderr, "Wrapping agp vertex buffer offset\n");
+		offset=0;
+		}
+	/* Not the most efficient implementation, but, for now, I just want something that
+	works */
+	/* to do - make single memcpy per column (is it possible ?) */
+	/* to do - use dirty flags to avoid redundant copies */
+	#define UPLOAD_VECTOR(v)\
+		{ \
+		/* Is the data dirty ? */ \
+		if (v->flags & ((1<<v->size)-1)) { \
+			/* fprintf(stderr, "size=%d vs stride=%d\n", v->size, v->stride); */ \
+			if(v->size*4==v->stride){\
+				/* fast path */  \
+				memcpy(rsp->gartTextures.map+offset, v->data, v->stride*VB->Count); \
+				} else { \
+				for(i=0;i<VB->Count;i++){ \
+					/* copy one vertex at a time*/ \
+					memcpy(rsp->gartTextures.map+offset+i*v->size*4, VEC_ELT(v, GLfloat, i), v->size*4); \
+					} \
+				} \
+			/* v->flags &= ~((1<<v->size)-1);*/ \
+			} \
+		rmesa->state.aos[idx].offset=rsp->gartTextures.handle+offset; \
+		offset+=v->size*4*VB->Count; \
+		idx++; \
+		}
+		
+	UPLOAD_VECTOR(VB->ObjPtr);
+	UPLOAD_VECTOR(VB->ColorPtr[0]);
 	/* texture coordinates */
 	for(k=0;k < ctx->Const.MaxTextureUnits;k++)
 		if(ctx->Texture.Unit[k].Enabled)
-			UPLOAD_VECTOR(VB->TexCoordPtr[k], REG_TEX0+i, AOS_FORMAT_FLOAT);
+			UPLOAD_VECTOR(VB->TexCoordPtr[k]);
 
-*n_arrays=idx;
-if(idx>=R300_MAX_AOS_ARRAYS){
-	fprintf(stderr, "Aieee ! Maximum AOS arrays count exceeded.. \n");
-	exit(-1);
-	}
+	if(idx>=R300_MAX_AOS_ARRAYS){
+		fprintf(stderr, "Aieee ! Maximum AOS arrays count exceeded.. \n");
+		exit(-1);
+		}
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa, 
@@ -418,8 +410,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   int i, j, n_arrays;
-   AOS_DATA vb_arrays[R300_MAX_AOS_ARRAYS];
+   int i, j;
    LOCAL_VARS
 	
 	if (RADEON_DEBUG == DEBUG_PRIMS)
@@ -439,10 +430,8 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    /* setup array of structures data */
    LOCK_HARDWARE(&(rmesa->radeon));
 
-   upload_vertex_buffer(rmesa, ctx, vb_arrays, &n_arrays);
+   upload_vertex_buffer(rmesa, ctx);
    //fprintf(stderr, "Using %d AOS arrays\n", n_arrays);
-   for(i=0;i<n_arrays;i++)
-   	rmesa->state.aos[i].offset=vb_arrays[i].offset;
    
    for(i=0; i < VB->PrimitiveCount; i++){
        GLuint prim = VB->Primitive[i].mode;

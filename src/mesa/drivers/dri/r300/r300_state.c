@@ -56,6 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_program.h"
+#include "r300_emit.h"
 #include "r300_fixed_pipelines.h"
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
