@@ -55,7 +55,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*     drmBufPtr buf; */
 /*     int i; */
 
-/*     buffer = Xmalloc(I810_DMA_BUF_SZ); */
+/*     buffer = CALLOC(I810_DMA_BUF_SZ); */
 /*     if(buffer == NULL) return -1; */
 /*     for(i = 0; i < I810_DMA_BUF_NR; i++) { */
 /*        buf = &(buffers->list[i]); */
@@ -68,10 +68,10 @@ static drmBufMapPtr i810_create_empty_buffers(void)
 {
    drmBufMapPtr retval;
 
-   retval = (drmBufMapPtr)Xmalloc(sizeof(drmBufMap));
+   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap));
    if(retval == NULL) return NULL;
    memset(retval, 0, sizeof(drmBufMap));
-   retval->list = (drmBufPtr)Xmalloc(sizeof(drmBuf) * I810_DMA_BUF_NR);
+   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I810_DMA_BUF_NR);
    if(retval->list == NULL) {
       Xfree(retval);
       return NULL;
@@ -110,7 +110,7 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
    }
 
    /* Allocate the private area */
-   i810Screen = (i810ScreenPrivate *)Xmalloc(sizeof(i810ScreenPrivate));
+   i810Screen = (i810ScreenPrivate *)CALLOC(sizeof(i810ScreenPrivate));
    if (!i810Screen) {
       __driUtilMessage("i810InitDriver: alloc i810ScreenPrivate struct failed");
       return GL_FALSE;

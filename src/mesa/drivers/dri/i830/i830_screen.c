@@ -57,7 +57,7 @@ static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
    drmBufPtr buf;
    int i;
 
-   buffer = Xmalloc(I830_DMA_BUF_SZ);
+   buffer = ALIGN_MALLOC(I830_DMA_BUF_SZ);
    if(buffer == NULL) return -1;
    for(i = 0; i < I830_DMA_BUF_NR; i++) {
       buf = &(buffers->list[i]);
@@ -71,10 +71,10 @@ static drmBufMapPtr i830_create_empty_buffers(void)
 {
    drmBufMapPtr retval;
 
-   retval = (drmBufMapPtr)Xmalloc(sizeof(drmBufMap));
+   retval = (drmBufMapPtr)ALIGN_MALLOC(sizeof(drmBufMap));
    if(retval == NULL) return NULL;
    memset(retval, 0, sizeof(drmBufMap));
-   retval->list = (drmBufPtr)Xmalloc(sizeof(drmBuf) * I830_DMA_BUF_NR);
+   retval->list = (drmBufPtr)ALIGN_MALLOC(sizeof(drmBuf) * I830_DMA_BUF_NR);
    if(retval->list == NULL) {
       Xfree(retval);
       return NULL;
@@ -146,7 +146,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    }
 
    /* Allocate the private area */
-   i830Screen = (i830ScreenPrivate *)Xmalloc(sizeof(i830ScreenPrivate));
+   i830Screen = (i830ScreenPrivate *)CALLOC(sizeof(i830ScreenPrivate));
    if (!i830Screen) {
       fprintf(stderr,"\nERROR!  Allocating private area failed\n");
       return GL_FALSE;
