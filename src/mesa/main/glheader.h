@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.19 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: glheader.h,v 1.20 2001/05/14 23:11:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -213,6 +213,31 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #else
 #define _NORMAPI
 #define _NORMAPIP *
+#endif
+
+
+/* Function inlining */
+#if defined(__GNUC__)
+#  define INLINE __inline__
+#elif defined(__MSC__)
+#  define INLINE __inline
+#else
+#  define INLINE
+#endif
+
+
+/* Some compilers don't like some of Mesa's const usage */
+#ifdef NO_CONST
+#  define CONST
+#else
+#  define CONST const
+#endif
+
+
+#ifdef DEBUG
+#  define ASSERT(X)   assert(X)
+#else
+#  define ASSERT(X)
 #endif
 
 

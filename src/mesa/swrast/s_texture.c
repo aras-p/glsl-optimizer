@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.28 2001/05/03 14:11:53 brianp Exp $ */
+/* $Id: s_texture.c,v 1.29 2001/05/14 23:11:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -187,12 +187,13 @@
 
 /*
  * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
- * see 1-pixel bands of improperly weighted linear-sampled texels.
- * In particular, #define FRAC(f) ((f) - IFLOOR(f)) doesn't work.
+ * see 1-pixel bands of improperly weighted linear-sampled texels.  The
+ * tests/texwrap.c demo is a good test.
  * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
  * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
  */
-#define FRAC(f)  ((f) - floor(f))
+#define FRAC(f)  ((f) - IFLOOR(f))
+
 
 
 /*
@@ -321,7 +322,7 @@ sample_1d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u + 1.0F);
+      const GLfloat a = FRAC(u);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w0 = IROUND_POS((1.0F-a) * WEIGHT_SCALE);
       const GLint w1 = IROUND_POS(      a  * WEIGHT_SCALE);
@@ -619,8 +620,8 @@ sample_2d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u - 1.0);
-      const GLfloat b = FRAC(v - 1.0);
+      const GLfloat a = FRAC(u);
+      const GLfloat b = FRAC(v);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w00 = IROUND_POS((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
       const GLint w10 = IROUND_POS(      a  * (1.0F-b) * WEIGHT_SCALE);
@@ -1047,9 +1048,9 @@ sample_3d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u + 1.0F);
-      const GLfloat b = FRAC(v + 1.0F);
-      const GLfloat c = FRAC(w + 1.0F);
+      const GLfloat a = FRAC(u);
+      const GLfloat b = FRAC(v);
+      const GLfloat c = FRAC(w);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       GLint w000 = IROUND_POS((1.0F-a) * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
       GLint w100 = IROUND_POS(      a  * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.30 2001/05/14 16:25:18 brianp Exp $ */
+/* $Id: config.h,v 1.31 2001/05/14 23:11:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -179,34 +179,4 @@
 #define ACOMP 3
 
 
-
-/*
- * Language/compiler stuff
- */
-
-/* Some compilers don't like some of Mesa's const usage */
-#ifdef NO_CONST
-#  define CONST
-#else
-#  define CONST const
-#endif
-
-
-/* Function inlining */
-#if defined(__GNUC__)
-#  define INLINE __inline__
-#elif defined(__MSC__)
-#  define INLINE __inline
-#else
-#  define INLINE
-#endif
-
-
-#ifdef DEBUG
-#  define ASSERT(X)   assert(X)
-#else
-#  define ASSERT(X)
-#endif
-
-
-#endif
+#endif /* CONFIG_H */
