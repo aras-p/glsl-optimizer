@@ -400,9 +400,13 @@ fxMesaCreateContext(GLuint win,
    }
 
    /*
-    * Pixel tables are use during pixel read-back
+    * Pixel tables are used during pixel read-back
     * Either initialize them for RGB or BGR order.
+    * Also determine if we need vertex snapping.
     */
+
+   fxMesa->snapVertices = GL_TRUE; /* play it safe */
+
 #ifdef FXMESA_USE_ARGB
    useBGR = GL_FALSE;		/* Force RGB pixel order */
    system = "FXMESA_USE_ARGB";
@@ -432,6 +436,7 @@ fxMesaCreateContext(GLuint win,
 	 /* Voodoo 2 */
 	 useBGR = GL_TRUE;
 	 system = "Voodoo2";
+         fxMesa->snapVertices = GL_FALSE;
       }
       else if (voodoo->nTexelfx == 2 &&
 	       voodoo->fbiRev == 2 &&
@@ -457,22 +462,27 @@ fxMesaCreateContext(GLuint win,
 	 /* Presumed Voodoo3 */
 	 useBGR = GL_FALSE;
 	 system = "Voodoo3";
+         fxMesa->snapVertices = GL_FALSE;
       }
-      if (getenv("MESA_FX_INFO")) {
-	 printf
-	    ("Voodoo: Texelfx: %d / FBI Rev.: %d / TMU Rev.: %d / TMU RAM: %d\n",
-	     voodoo->nTexelfx, voodoo->fbiRev, voodoo->tmuConfig[0].tmuRev,
-	     voodoo->tmuConfig[0].tmuRam);
+      if (verbose) {
+	 fprintf(stderr,
+           "Voodoo: Texelfx: %d / FBI Rev.: %d / TMU Rev.: %d / TMU RAM: %d\n",
+                 voodoo->nTexelfx, voodoo->fbiRev, voodoo->tmuConfig[0].tmuRev,
+                 voodoo->tmuConfig[0].tmuRam);
       }
    }
    else {
       useBGR = GL_FALSE;	/* use RGB pixel order otherwise */
       system = "non-voodoo";
+      fxMesa->snapVertices = GL_FALSE;
    }
 #endif /*FXMESA_USE_ARGB */
 
-   if (getenv("MESA_FX_INFO"))
-      printf("Voodoo pixel order: %s (%s)\n", useBGR ? "BGR" : "RGB", system);
+   if (verbose) {
+      fprintf(stderr, "Voodoo pixel order: %s (%s)\n",
+              useBGR ? "BGR" : "RGB", system);
+      fprintf(stderr, "Vertex snapping: %d\n", fxMesa->snapVertices);
+   }
 
    fxInitPixelTables(fxMesa, useBGR);
 

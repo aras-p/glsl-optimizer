@@ -439,7 +439,7 @@ struct tfxMesaContext
    GLuint setup_gone;		/* for multipass */
    GLuint stw_hint_state;	/* for grHints */
    fxVertex *verts;
-
+   GLboolean snapVertices;      /* needed for older Voodoo hardware */
 
    /* Rasterization:
     */
