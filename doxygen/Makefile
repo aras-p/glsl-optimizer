@@ -1,12 +1,13 @@
+
 default: full
 
 all: full subset
-	
+
 %.tag: %.doxy
 	doxygen $<
 
 FULL = \
-	core.doxy \
+	main.doxy \
 	math.doxy \
 	array_cache.doxy \
 	swrast.doxy \
@@ -18,7 +19,7 @@ full: $(FULL:.doxy=.tag)
 	$(foreach FILE,$(FULL),doxygen $(FILE);)
 
 SUBSET = \
-	core.doxy \
+	main.doxy \
 	math.doxy \
 	miniglx.doxy
 

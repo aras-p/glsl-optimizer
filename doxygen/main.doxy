@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 # General configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "Mesa Core"
+PROJECT_NAME           = "Mesa Core / Main files"
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to the HTML output
 #---------------------------------------------------------------------------
-HTML_OUTPUT            = core
+HTML_OUTPUT            = main
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
@@ -45,4 +45,4 @@ TAGFILES		= tnl_dd.tag=../tnl_dd \
                          swrast.tag=../swrast \
                          swrast_setup.tag=../swrast_setup \
                          tnl.tag=../tnl
-GENERATE_TAGFILE       = core.tag
+GENERATE_TAGFILE       = main.tag
