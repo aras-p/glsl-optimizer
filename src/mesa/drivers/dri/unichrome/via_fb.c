@@ -76,7 +76,7 @@ via_alloc_dma_buffer(viaContextPtr vmesa)
     */
    init.func = VIA_DMA_INITIALIZED;
    vmesa->useAgp = 
-      ( 0 == drmCommandWrite(vmesa->driFd, VIA_INIT_DMA, 
+     ( 0 == drmCommandWrite(vmesa->driFd, DRM_VIA_DMA_INIT, 
 			     &init, sizeof(init)));
    if (vmesa->useAgp) 
       printf("unichrome_dri.so: Using AGP.\n");

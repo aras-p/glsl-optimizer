@@ -458,6 +458,7 @@ static int fire_buffer(viaContextPtr vmesa)
 				   &bSiz, sizeof(bSiz));
       } while (ret == -EAGAIN);
       if (ret) {
+	 UNLOCK_HARDWARE(vmesa);
 	 fprintf(stderr, "%s: DRM_VIA_CMDBUF_SIZE returned %d\n", __FUNCTION__, ret);
 	 abort();
 	 return ret;
@@ -470,6 +471,7 @@ static int fire_buffer(viaContextPtr vmesa)
 			       &bufI, sizeof(bufI));
       } while (ret == -EAGAIN);
       if (ret) {
+	 UNLOCK_HARDWARE(vmesa);
 	 fprintf(stderr, "%s: DRM_VIA_CMDBUFFER returned %d\n", __FUNCTION__, ret);
 	 abort();
 	 /* If this fails, the original code fell back to the PCI path. 
@@ -485,6 +487,7 @@ static int fire_buffer(viaContextPtr vmesa)
 	    
    ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
    if (ret) {
+      UNLOCK_HARDWARE(vmesa);
       dump_dma(vmesa);
       fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);      
       abort();

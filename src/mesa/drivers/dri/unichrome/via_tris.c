@@ -987,7 +987,7 @@ void viaFinishPrimitive(viaContextPtr vmesa)
 
       /* KW: modified 0x1 to 0x4 below:
        */
-      if ((vmesa->dmaLow & 0x1) || !vmesa->useAgp) {
+      if ((vmesa->dmaLow & 0x4) || !vmesa->useAgp) {
 	 BEGIN_RING_NOCHECK( 1 );
 	 OUT_RING( cmdA );
 	 ADVANCE_RING();
