@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.16 2003/01/09 23:43:02 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.17 2003/01/21 16:13:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
  * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
  *
  * Cleaned up and simplified by Gareth Hughes <gareth@valinux.com>
+ *
  */
 
 /*
@@ -43,140 +44,104 @@
 #include "matypes.h"
 #include "common_x86_features.h"
 
-
-/* Intel vendor string
- */
-#define GENU	0x756e6547	/* "Genu" */
-#define INEI	0x49656e69	/* "ineI" */
-#define NTEL	0x6c65746e	/* "ntel" */
-
-/* AMD vendor string
- */
-#define AUTH	0x68747541	/* "Auth" */
-#define ENTI	0x69746e65	/* "enti" */
-#define CAMD	0x444d4163	/* "cAMD" */
-
-
-	SEG_DATA
-
-/* We might want to print out some useful messages.
- */
-GLNAME( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
-GLNAME( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
-
-
 	SEG_TEXT
 
 ALIGNTEXT4
-GLOBL GLNAME( _mesa_identify_x86_cpu_features )
-GLNAME( _mesa_identify_x86_cpu_features ):
-
-	PUSH_L	( EBX )
-	PUSH_L	( ESI )
+GLOBL GLNAME(_mesa_x86_has_cpuid)
+GLNAME(_mesa_x86_has_cpuid):
 
 	/* Test for the CPUID command.  If the ID Flag bit in EFLAGS
-	 * (bit 21) is writable, the CPUID command is present.
-	 */
+	 * (bit 21) is writable, the CPUID command is present */
 	PUSHF_L
-	POP_L	( EAX )
-	MOV_L	( EAX, ECX )
-	XOR_L	( CONST(0x00200000), EAX )
-	PUSH_L	( EAX )
+	POP_L	(EAX)
+	MOV_L	(EAX, ECX)
+	XOR_L	(CONST(0x00200000), EAX)
+	PUSH_L	(EAX)
 	POPF_L
 	PUSHF_L
-	POP_L	( EAX )
+	POP_L	(EAX)
 
-	/* Verify the ID Flag bit has been written.
-	 */
-	CMP_L	( ECX, EAX )
-	JZ	( LLBL (cpuid_done) )
+	/* Verify the ID Flag bit has been written. */
+	CMP_L	(ECX, EAX)
+	SETNE	(AL)
+	XOR_L	(CONST(0xff), EAX)
 
-	/* Get the CPU vendor info.
-	 */
-	XOR_L	( EAX, EAX )
-	CPUID
-
-	/* Test for Intel processors.  We must look for the
-	 * "GenuineIntel" string in EBX, ECX and EDX.
-	 */
-	CMP_L	( CONST(GENU), EBX )
-	JNE	( LLBL(cpuid_amd) )
-	CMP_L	( CONST(INEI), EDX )
-	JNE	( LLBL(cpuid_amd) )
-	CMP_L	( CONST(NTEL), ECX )
-	JNE	( LLBL(cpuid_amd) )
-
-	/* We have an Intel processor, so we can get the feature
-	 * information with an CPUID input value of 1.
-	 */
-	MOV_L	( CONST(0x1), EAX )
-	CPUID
-	MOV_L	( EDX, EAX )
-
-	/* Mask out highest bit, which is used by AMD for 3dnow
-         * Newer Intel have this bit set, but do not support 3dnow 
- 	 */
-        AND_L   ( CONST(0X7FFFFFFF), EAX)
-	JMP	( LLBL(cpuid_done) )
-
-LLBL(cpuid_amd):
-
-	/* Test for AMD processors.  We must look for the
-	 * "AuthenticAMD" string in EBX, ECX and EDX.
-	 */
-	CMP_L	( CONST(AUTH), EBX )
-	JNE	( LLBL(cpuid_other) )
-	CMP_L	( CONST(ENTI), EDX )
-	JNE	( LLBL(cpuid_other) )
-	CMP_L	( CONST(CAMD), ECX )
-	JNE	( LLBL(cpuid_other) )
-
-	/* We have an AMD processor, so we can get the feature
-	 * information after we verify that the extended functions are
-	 * supported.
-	 */
-	/* The features we need are almost all in the extended set.  The
-	 * exception is SSE enable, which is in the standard set (0x1).
-	 */
-	MOV_L	( CONST(0x1), EAX )
-	CPUID
-	TEST_L	( EAX, EAX )
-	JZ	( LLBL (cpuid_failed) )
-	MOV_L	( EDX, ESI )
-
-	MOV_L	( CONST(0x80000000), EAX )
-	CPUID
-	TEST_L	( EAX, EAX )
-	JZ	( LLBL (cpuid_failed) )
-
-	MOV_L	( CONST(0x80000001), EAX )
-	CPUID
-	MOV_L	( EDX, EAX )
-	
-	AND_L	( CONST(0x02000000), ESI )	/* OR in the SSE bit */
-	OR_L	( ESI, EAX )
-	
-	JMP	( LLBL (cpuid_done) )
-
-LLBL(cpuid_other):
-
-	/* Test for other processors here when required.
-	 */
-
-LLBL(cpuid_failed):
-
-	/* If we can't determine the feature information, we must
-	 * return zero to indicate that no platform-specific
-	 * optimizations can be used.
-	 */
-	MOV_L	( CONST(0), EAX )
-
-LLBL (cpuid_done):
-
-	POP_L	( ESI )
-	POP_L	( EBX )
 	RET
 
+
+ALIGNTEXT4
+GLOBL GLNAME(_mesa_x86_cpuid)
+GLNAME(_mesa_x86_cpuid):
+
+	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
+	PUSH_L	(EDI)
+	PUSH_L	(EBX)
+
+	CPUID
+
+	MOV_L	(REGOFF(16, ESP), EDI)	/* *eax */
+	MOV_L	(EAX, REGIND(EDI))
+	MOV_L	(REGOFF(20, ESP), EDI)	/* *ebx */
+	MOV_L	(EBX, REGIND(EDI))
+	MOV_L	(REGOFF(24, ESP), EDI)	/* *ecx */
+	MOV_L	(ECX, REGIND(EDI))
+	MOV_L	(REGOFF(28, ESP), EDI)	/* *edx */
+	MOV_L	(EDX, REGIND(EDI))
+
+	POP_L	(EBX)
+	POP_L	(EDI)
+	RET
+
+ALIGNTEXT4
+GLOBL GLNAME(_mesa_x86_cpuid_eax)
+GLNAME(_mesa_x86_cpuid_eax):
+
+	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
+	PUSH_L	(EBX)
+
+	CPUID
+
+	POP_L	(EBX)
+	RET
+
+ALIGNTEXT4
+GLOBL GLNAME(_mesa_x86_cpuid_ebx)
+GLNAME(_mesa_x86_cpuid_ebx):
+
+	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
+	PUSH_L	(EBX)
+
+	CPUID
+	MOV_L	(EBX, EAX)			/* return EBX */
+
+	POP_L	(EBX)
+	RET
+
+ALIGNTEXT4
+GLOBL GLNAME(_mesa_x86_cpuid_ecx)
+GLNAME(_mesa_x86_cpuid_ecx):
+
+	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
+	PUSH_L	(EBX)
+
+	CPUID
+	MOV_L	(ECX, EAX)			/* return ECX */
+
+	POP_L	(EBX)
+	RET
+
+ALIGNTEXT4
+GLOBL GLNAME(_mesa_x86_cpuid_edx)
+GLNAME(_mesa_x86_cpuid_edx):
+
+	MOV_L	(REGOFF(4, ESP), EAX)		/* cpuid op */
+	PUSH_L	(EBX)
+
+	CPUID
+	MOV_L	(EDX, EAX)			/* return EDX */
+
+	POP_L	(EBX)
+	RET
 
 #ifdef USE_SSE_ASM
 /* Execute an SSE instruction to see if the operating system correctly
@@ -235,3 +200,4 @@ GLNAME( _mesa_test_os_sse_exception_support ):
 	RET
 
 #endif
+

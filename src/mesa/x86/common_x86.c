@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.20 2002/11/13 15:03:31 brianp Exp $ */
+/* $Id: common_x86.c,v 1.21 2003/01/21 16:13:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,8 +52,14 @@ int _mesa_x86_cpu_features = 0;
 
 /* No reason for this to be public.
  */
-extern int _mesa_identify_x86_cpu_features( void );
+extern int	_mesa_identify_x86_cpu_features(void);
 
+extern GLuint	_mesa_x86_has_cpuid(void);
+extern void	_mesa_x86_cpuid(GLuint op, GLuint *reg_eax, GLuint *reg_ebx, GLuint *reg_ecx, GLuint *reg_edx);
+extern GLuint	_mesa_x86_cpuid_eax(GLuint op);
+extern GLuint	_mesa_x86_cpuid_ebx(GLuint op);
+extern GLuint	_mesa_x86_cpuid_ecx(GLuint op);
+extern GLuint	_mesa_x86_cpuid_edx(GLuint op);
 
 static void message( const char *msg )
 {
@@ -240,8 +246,84 @@ void _mesa_init_all_x86_transform_asm( void )
 {
    (void) message; /* silence warning */
 #ifdef USE_X86_ASM
-   _mesa_x86_cpu_features = _mesa_identify_x86_cpu_features();
+   _mesa_x86_cpu_features = 0;
 
+   if (!_mesa_x86_has_cpuid()) {
+       message("CPUID not detected");
+   }
+   else {
+       GLuint cpu_features;
+       GLuint cpu_ext_features;
+       GLuint cpu_ext_info;
+       char cpu_vendor[13];
+       GLuint result;
+
+       /* get vendor name */
+       _mesa_x86_cpuid(0, &result, (GLuint *)(cpu_vendor + 0), (GLuint *)(cpu_vendor + 8), (GLuint *)(cpu_vendor + 4));
+       cpu_vendor[12] = '\0';
+
+       message("cpu vendor: ");
+       message(cpu_vendor);
+       message("\n");
+
+       /* get cpu features */
+       cpu_features = _mesa_x86_cpuid_edx(1);
+
+       if (cpu_features & X86_CPU_FPU)
+	   _mesa_x86_cpu_features |= X86_FEATURE_FPU;
+       if (cpu_features & X86_CPU_CMOV)
+	   _mesa_x86_cpu_features |= X86_FEATURE_CMOV;
+
+#ifdef USE_MMX_ASM
+       if (cpu_features & X86_CPU_MMX)
+	   _mesa_x86_cpu_features |= X86_FEATURE_MMX;
+#endif
+
+#ifdef USE_SSE_ASM
+       if (cpu_features & X86_CPU_XMM)
+	   _mesa_x86_cpu_features |= X86_FEATURE_XMM;
+       if (cpu_features & X86_CPU_XMM2)
+	   _mesa_x86_cpu_features |= X86_FEATURE_XMM2;
+#endif
+
+       /* query extended cpu features */
+       if ((cpu_ext_info = _mesa_x86_cpuid_eax(0x80000000)) > 0x80000000) {
+	   if (cpu_ext_info >= 0x80000001) {
+
+	       cpu_ext_features = _mesa_x86_cpuid_edx(0x80000001);
+
+	       if (cpu_features & X86_CPU_MMX) {
+
+#ifdef USE_3DNOW_ASM
+		   if (cpu_ext_features & X86_CPUEXT_3DNOW)
+		       _mesa_x86_cpu_features |= X86_FEATURE_3DNOW;
+		   if (cpu_ext_features & X86_CPUEXT_3DNOW_EXT)
+		       _mesa_x86_cpu_features |= X86_FEATURE_3DNOWEXT;
+#endif
+
+#ifdef USE_MMX_ASM
+		   if (cpu_ext_features & X86_CPUEXT_MMX_EXT)
+		       _mesa_x86_cpu_features |= X86_FEATURE_MMXEXT;
+#endif
+	       }
+	   }
+
+	   /* query cpu name */
+	   if (cpu_ext_info >= 0x80000002) {
+	       GLuint ofs;
+	       char cpu_name[49];
+	       for (ofs = 0; ofs < 3; ofs++)
+		   _mesa_x86_cpuid(0x80000002+ofs, (GLuint *)(cpu_name + (16*ofs)+0), (GLuint *)(cpu_name + (16*ofs)+4), (GLuint *)(cpu_name + (16*ofs)+8), (GLuint *)(cpu_name + (16*ofs)+12));
+	       cpu_name[48] = '\0'; /* the name should be NULL terminated, but just to be sure */
+
+	       message("cpu name: ");
+	       message(cpu_name);
+	       message("\n");
+	   }
+       }
+
+   }
+   
    if ( getenv( "MESA_NO_ASM" ) ) {
       _mesa_x86_cpu_features = 0;
    }
