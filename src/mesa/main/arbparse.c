@@ -46,7 +46,8 @@
 /* TODO:
  *    Fragment Program Stuff:
  *    -----------------------------------------------------
- *    - How does negating on SWZ work?? If any of the components have a -, negate?
+ *    - How does negating on SWZ work?? If any of the components have a -,
+ *      negate?
  *    - how does thing like 'foo[N]' work in src registers?
  *
  *    - things from Michal's email
@@ -56,7 +57,8 @@
  *       + fix multiple cases in switches, that might change 
  *          (these are things that are #defined to the same value, but occur 
  *           only on fp or vp's, which funkifies the switch statements)
- *          - STATE_TEX_* STATE_CLIP_PLANE, etc and PRECISION_HINT_FASTEST/PositionInvariant
+ *          - STATE_TEX_* STATE_CLIP_PLANE, etc and PRECISION_HINT_FASTEST/
+ *            PositionInvariant
  *          
  *    - check all limits of number of various variables
  *      + parameters
@@ -93,8 +95,9 @@
  *    Outstanding Questions:
  *    -----------------------------------------------------
  *    - palette matrix?  do we support this extension? what is the extention?
- *    - When can we fetch env/local params from their own register files, and when
- *        to we have to fetch them into the main state register file? (think arrays)
+ *    - When can we fetch env/local params from their own register files, and
+ *      when to we have to fetch them into the main state register file?
+ *      (think arrays)
  *
  *    Grammar Changes:
  *    -----------------------------------------------------
@@ -116,83 +119,104 @@ typedef byte *production;
 /* VERSION: 0.3 */
 
 /*
-	INTRODUCTION
-	------------
+INTRODUCTION
+------------
 
-	The task is to check the syntax of an input string. Input string is a stream of ASCII
-	characters terminated with null-character ('\0'). Checking it using C language is
-	difficult and hard to implement without bugs. It is hard to maintain and change prior
-	to further syntax changes.
+The task is to check the syntax of an input string. Input string is a
+stream of ASCII characters terminated with null-character
+('\0'). Checking it using C language is difficult and hard to
+implement without bugs. It is hard to maintain and change prior to
+further syntax changes.
 
-	This is because of high redundancy of the C code. Large blocks of code are duplicated with
-	only small changes. Even using macros does not solve the problem, because macros cannot
-	erase the complexity of the code.
+This is because of high redundancy of the C code. Large blocks of code
+are duplicated with only small changes. Even using macros does not
+solve the problem, because macros cannot erase the complexity of the
+code.
 
-	The resolution is to create a new language that will be highly oriented to our task. Once
-	we describe particular syntax, we are done. We can then focus on the code that implements
-	the language. The size and complexity of it is relatively small than the code that directly
-	checks the syntax.
+The resolution is to create a new language that will be highly
+oriented to our task. Once we describe particular syntax, we are
+done. We can then focus on the code that implements the language. The
+size and complexity of it is relatively small than the code that
+directly checks the syntax.
 
-	First, we must implement our new language. Here, the language is implemented in C, but it
-	could also be implemented in any other language. The code is listed below. We must take
-	a good care that it is bug free. This is simple because the code is simple and clean.
+First, we must implement our new language. Here, the language is
+implemented in C, but it could also be implemented in any other
+language. The code is listed below. We must take a good care that it
+is bug free. This is simple because the code is simple and clean.
 
-	Next, we must describe the syntax of our new language in itself. Once created and checked
-	manually that it is correct, we can use it to check another scripts.
+Next, we must describe the syntax of our new language in itself. Once
+created and checked manually that it is correct, we can use it to
+check another scripts.
 
-	Note that our new language loading code does not have to check the syntax. It is because we
-	assume that the script describing itself is correct, and other scripts can be syntactically
-	checked by the former script. The loading code must only do semantic checking which leads us to
-	simple resolving references.
+Note that our new language loading code does not have to check the
+syntax. It is because we assume that the script describing itself is
+correct, and other scripts can be syntactically checked by the former
+script. The loading code must only do semantic checking which leads us
+to simple resolving references.
 
-	THE LANGUAGE
-	------------
+THE LANGUAGE
+------------
 
-	Here I will describe the syntax of the new language (further called "Synek"). It is mainly a
-	sequence of declarations terminated by a semicolon. The declaration consists of a symbol,
-	which is an identifier, and its definition. A definition is in turn a sequence of specifiers
-	connected with ".and" or ".or" operator. These operators cannot be mixed together in a one
-	definition. Specifier can be a symbol, string, character, character range or a special
-	keyword ".true" or ".false".
+Here I will describe the syntax of the new language (further called
+"Synek"). It is mainly a sequence of declarations terminated by a
+semicolon. The declaration consists of a symbol, which is an
+identifier, and its definition. A definition is in turn a sequence of
+specifiers connected with ".and" or ".or" operator. These operators
+cannot be mixed together in a one definition. Specifier can be a
+symbol, string, character, character range or a special keyword
+".true" or ".false".
 
-	On the very beginning of the script there is a declaration of a root symbol and is in the form:
+On the very beginning of the script there is a declaration of a root
+symbol and is in the form:
 		.syntax <root_symbol>;
-	The <root_symbol> must be on of the symbols in declaration sequence. The syntax is correct if
-	the root symbol evaluates to true. A symbol evaluates to true if the definition associated with
-	the symbol evaluates to true. Definition evaluation depends on the operator used to connect
-	specifiers in the definition. If ".and" operator is used, definition evaluates to true if and
-	only if all the specifiers evaluate to true. If ".or" operator is used, definition evalutes to
-	true if any of the specifiers evaluates to true. If definition contains only one specifier,
-	it is evaluated as if it was connected with ".true" keyword by ".and" operator.
 
-	If specifier is a ".true" keyword, it always evaluates to true.
+The <root_symbol> must be on of the symbols in declaration
+sequence. The syntax is correct if the root symbol evaluates to
+true. A symbol evaluates to true if the definition associated with the
+symbol evaluates to true. Definition evaluation depends on the
+operator used to connect specifiers in the definition. If ".and"
+operator is used, definition evaluates to true if and only if all the
+specifiers evaluate to true. If ".or" operator is used, definition
+evalutes to true if any of the specifiers evaluates to true. If
+definition contains only one specifier, it is evaluated as if it was
+connected with ".true" keyword by ".and" operator.
 
-	If specifier is a ".false" keyword, it always evaluates to false. Specifier evaluates to false
-	when it does not evaluate to true.
+If specifier is a ".true" keyword, it always evaluates to true.
 
-	Character range specifier is in the form:
-		'<first_character>' - '<second_character>'
-	If specifier is a character range, it evaluates to true if character in the stream is greater
-	or equal to <first_character> and less or equal to <second_character>. In that situation 
-	the stream pointer is advanced to point to next character in the stream. All C-style escape
-	sequences are supported although trigraph sequences are not. The comparisions are performed
-	on 8-bit unsigned integers.
+If specifier is a ".false" keyword, it always evaluates to
+false. Specifier evaluates to false when it does not evaluate to true.
 
-	Character specifier is in the form:
-		'<single_character>'
-	It evaluates to true if the following character range specifier evaluates to true:
-		'<single_character>' - '<single_character>'
+Character range specifier is in the form:
+	'<first_character>' - '<second_character>'
 
-	String specifier is in the form:
+If specifier is a character range, it evaluates to true if character
+in the stream is greater or equal to <first_character> and less or
+equal to <second_character>. In that situation the stream pointer is
+advanced to point to next character in the stream. All C-style escape
+sequences are supported although trigraph sequences are not. The
+comparisions are performed on 8-bit unsigned integers.
+
+Character specifier is in the form:
+	'<single_character>'
+
+It evaluates to true if the following character range specifier evaluates to
+true:
+	'<single_character>' - '<single_character>'
+
+String specifier is in the form:
 		"<string>"
-	Let N be the number of characters in <string>. Let <string>[i] designate i-th character in
-	<string>. Then the string specifier evaluates to true if and only if for i in the range [0, N)
-	the following character specifier evaluates to true:
-		'<string>[i]'
-	If <string>[i] is a quotation mark, '<string>[i]' is replaced with '\<string>[i]'.
 
-	Symbol specifier can be optionally preceded by a ".loop" keyword in the form:
-		.loop <symbol>					(1)
+Let N be the number of characters in <string>. Let <string>[i]
+designate i-th character in <string>. Then the string specifier
+evaluates to true if and only if for i in the range [0, N) the
+following character specifier evaluates to true:
+	'<string>[i]'
+
+If <string>[i] is a quotation mark, '<string>[i]' is replaced with
+'\<string>[i]'.
+
+Symbol specifier can be optionally preceded by a ".loop" keyword in the form:
+	.loop <symbol>					(1)
 	where <symbol> is defined as follows:
 		<symbol> <definition>;			(2)
 	Construction (1) is replaced by the following code:
@@ -202,134 +226,148 @@ typedef byte *production;
 		<symbol$2> <symbol> .and <symbol$1>;
 		<symbol> <definition>;
 
-	ESCAPE SEQUENCES
-	----------------
 
-	Synek supports all escape sequences in character specifiers. The mapping table is listed below.
-	All occurences of the characters in the first column are replaced with the corresponding
-	character in the second column.
+ESCAPE SEQUENCES
+----------------
 
-		Escape sequence			Represents
-	------------------------------------------------------------------------------------------------
-		\a						Bell (alert)
-		\b						Backspace
-		\f						Formfeed
-		\n						New line
-		\r						Carriage return
-		\t						Horizontal tab
-		\v						Vertical tab
-		\'						Single quotation mark
-		\"						Double quotation mark
-		\\						Backslash
-		\?						Literal question mark
-		\ooo					ASCII character in octal notation
-		\xhhh					ASCII character in hexadecimal notation
-	------------------------------------------------------------------------------------------------
+Synek supports all escape sequences in character specifiers. The
+mapping table is listed below.  All occurences of the characters in
+the first column are replaced with the corresponding character in the
+second column.
 
-	RAISING ERRORS
-	--------------
+	Escape sequence			Represents
+	-----------------------------------------------------------------------
+	\a				Bell (alert)
+	\b				Backspace
+	\f				Formfeed
+	\n				New line
+	\r				Carriage return
+	\t				Horizontal tab
+	\v				Vertical tab
+	\'				Single quotation mark
+	\"				Double quotation mark
+	\\				Backslash
+	\?				Literal question mark
+	\ooo				ASCII character in octal notation
+	\xhhh				ASCII character in hexadecimal notation
+	-----------------------------------------------------------------------
 
-	Any specifier can be followed by a special construction that is executed when the specifier
-	evaluates to false. The construction is in the form:
-		.error <ERROR_TEXT>
-	<ERROR_TEXT> is an identifier declared earlier by error text declaration. The declaration is
-	in the form:
-		.errtext <ERROR_TEXT> "<error_desc>"
-	When specifier evaluates to false and this construction is present, parsing is stopped
-	immediately and <error_desc> is returned as a result of parsing. The error position is also
-	returned and it is meant as an offset from the beggining of the stream to the character that
-	was valid so far. Example:
 
-		(**** syntax script ****)
+RAISING ERRORS
+--------------
 
-		.syntax program;
-		.errtext MISSING_SEMICOLON		"missing ';'"
-		program			declaration .and .loop space .and ';' .error MISSING_SEMICOLON .and
-						.loop space .and '\0';
-		declaration		"declare" .and .loop space .and identifier;
-		space			' ';
+Any specifier can be followed by a special construction that is
+executed when the specifier evaluates to false. The construction is in
+the form:
+	.error <ERROR_TEXT>
 
+<ERROR_TEXT> is an identifier declared earlier by error text
+declaration. The declaration is in the form:
+
+	.errtext <ERROR_TEXT> "<error_desc>"
+
+When specifier evaluates to false and this construction is present,
+parsing is stopped immediately and <error_desc> is returned as a
+result of parsing. The error position is also returned and it is meant
+as an offset from the beggining of the stream to the character that
+was valid so far. Example:
+
+	(**** syntax script ****)
+
+	.syntax program;
+	.errtext MISSING_SEMICOLON		"missing ';'"
+	program			declaration .and .loop space .and ';'
+                                .error MISSING_SEMICOLON .and
+					.loop space .and '\0';
+	declaration		"declare" .and .loop space .and identifier;
+	space			' ';
 		(**** sample code ****)
+	declare foo ,
 
-		declare foo ,
+In the example above checking the sample code will result in error
+message "missing ';'" and error position 12. The sample code is not
+correct. Note the presence of '\0' specifier to assure that there is
+no code after semicolon - only spaces.  <error_desc> can optionally
+contain identifier surrounded by dollar signs $. In such a case, the
+identifier and dollar signs are replaced by a string retrieved by
+invoking symbol with the identifier name. The starting position is the
+error position. The lenght of the resulting string is the position
+after invoking the symbol.
 
-	In the example above checking the sample code will result in error message "missing ';'" and
-	error position 12. The sample code is not correct. Note the presence of '\0' specifier to
-	assure that there is no code after semicolon - only spaces.
-	<error_desc> can optionally contain identifier surrounded by dollar signs $. In such a case,
-	the identifier and dollar signs are replaced by a string retrieved by invoking symbol with
-	the identifier name. The starting position is the error position. The lenght of the resulting
-	string is the position after invoking the symbol.
 
-	PRODUCTION
-	----------
+PRODUCTION
+----------
 
-	Synek not only checks the syntax but it can also produce (emit) bytes associated with specifiers
-	that evaluate to true. That is, every specifier and optional error construction can be followed
-	by a number of emit constructions that are in the form:
-		.emit <parameter>
-	<paramater> can be a HEX number, identifier, a star * or a dollar $. HEX number is preceded by
-    0x or 0X. If <parameter> is an identifier, it must be earlier declared by emit code declaration
-    in the form:
+Synek not only checks the syntax but it can also produce (emit) bytes
+associated with specifiers that evaluate to true. That is, every
+specifier and optional error construction can be followed by a number
+of emit constructions that are in the form:
+	.emit <parameter>
+
+<paramater> can be a HEX number, identifier, a star * or a dollar
+$. HEX number is preceded by 0x or 0X. If <parameter> is an
+identifier, it must be earlier declared by emit code declaration in
+the form:
 		.emtcode <identifier> <hex_number>
 
-	When given specifier evaluates to true, all emits associated with the specifier are output
-	in order they were declared. A star means that last-read character should be output instead
-	of constant value. Example:
+When given specifier evaluates to true, all emits associated with the
+specifier are output in order they were declared. A star means that
+last-read character should be output instead of constant
+value. Example:
 
-		(**** syntax script ****)
+	(**** syntax script ****)
 
-		.syntax foobar;
-		.emtcode WORD_FOO		0x01
-		.emtcode WORD_BAR		0x02
-		foobar		FOO .emit WORD_FOO .or BAR .emit WORD_BAR .or .true .emit 0x00;
-		FOO			"foo" .and SPACE;
-		BAR			"bar" .and SPACE;
-		SPACE		' ' .or '\0';
+	.syntax foobar;
+	.emtcode WORD_FOO		0x01
+	.emtcode WORD_BAR		0x02
+	foobar		FOO .emit WORD_FOO .or BAR .emit WORD_BAR .or .true .emit 0x00;
+	FOO			"foo" .and SPACE;
+	BAR			"bar" .and SPACE;
+	SPACE		' ' .or '\0';
 
-		(**** sample text 1 ****)
+	(**** sample text 1 ****)
 
-		foo
+	foo
 
-		(**** sample text 2 ****)
+	(**** sample text 2 ****)
 
-		foobar
+	foobar
 
-	For both samples the result will be one-element array. For first sample text it will be
-	value 1, for second - 0. Note that every text will be accepted because of presence of
-	.true as an alternative.
+For both samples the result will be one-element array. For first
+sample text it will be value 1, for second - 0. Note that every text
+will be accepted because of presence of .true as an alternative.
 
-	Another example:
+Another example:
 
-		(**** syntax script ****)
+	(**** syntax script ****)
 
-		.syntax declaration;
-		.emtcode VARIABLE		0x01
-		declaration		"declare" .and .loop space .and
-						identifier .emit VARIABLE .and			(1)
-						.true .emit 0x00 .and					(2)
-						.loop space .and ';';
-		space			' ' .or '\t';
-		identifier		.loop id_char .emit *;					(3)
-		id_char			'a'-'z' .or 'A'-'Z' .or '_';
-
+	.syntax declaration;
+	.emtcode VARIABLE		0x01
+	declaration		"declare" .and .loop space .and
+				identifier .emit VARIABLE .and		(1)
+					.true .emit 0x00 .and		(2)
+					.loop space .and ';';
+	space			' ' .or '\t';
+	identifier		.loop id_char .emit *;			(3)
+	id_char			'a'-'z' .or 'A'-'Z' .or '_';
 		(**** sample code ****)
+	declare    fubar;
 
-		declare    fubar;
-
-	In specifier (1) symbol <identifier> is followed by .emit VARIABLE. If it evaluates to
-	true, VARIABLE constant and then production of the symbol is output. Specifier (2) is used
-	to terminate the string with null to signal when the string ends. Specifier (3) outputs
-	all characters that make declared identifier. The result of sample code will be the
-	following array:
+In specifier (1) symbol <identifier> is followed by .emit VARIABLE. If
+it evaluates to true, VARIABLE constant and then production of the
+symbol is output. Specifier (2) is used to terminate the string with
+null to signal when the string ends. Specifier (3) outputs all
+characters that make declared identifier. The result of sample code
+will be the following array:
 		{ 1, 'f', 'u', 'b', 'a', 'r', 0 }
 
-    If .emit is followed by dollar $, it means that current position should be output. Current
-    position is a 32-bit unsigned integer distance from the very beginning of the parsed string to
-    first character consumed by the specifier associated with the .emit instruction. Current
-    position is stored in the output buffer in Little-Endian convention (the lowest byte comes
-    first).
-*/
+If .emit is followed by dollar $, it means that current position
+should be output. Current position is a 32-bit unsigned integer
+distance from the very beginning of the parsed string to first
+character consumed by the specifier associated with the .emit
+instruction. Current position is stored in the output buffer in
+Little-Endian convention (the lowest byte comes first).  */
+
 
 /**
  * This is the text describing the rules to parse the grammar 
@@ -707,8 +745,8 @@ set_last_error (const byte * msg, byte * param, GLint pos)
 }
 
 /*
-	memory management routines
-*/
+ * memory management routines
+ */
 static GLvoid *
 mem_alloc (GLsizei size)
 {
@@ -741,8 +779,8 @@ str_duplicate (const byte * str)
 }
 
 /*
-	emit type typedef
-*/
+ * emit type typedef
+ */
 typedef enum emit_type_
 {
    et_byte,                     /* explicit number */
@@ -752,8 +790,8 @@ typedef enum emit_type_
 emit_type;
 
 /*
-	emit typedef
-*/
+ * emit typedef
+ */
 typedef struct emit_
 {
    emit_type m_emit_type;
@@ -1067,10 +1105,10 @@ barray_append (barray ** ba, barray ** nb)
    return 0;
 }
 
-/*
- * adds emit chain pointed by em to the end of array pointed by *ba,
- * returns 0 on success,
- * returns 1 otherwise
+
+/**
+ * Adds emit chain pointed by em to the end of array pointed by *ba.
+ * \return 0 on success, 1 otherwise.
  */
 static GLint
 barray_push (barray ** ba, emit * em, byte c, GLuint pos)
@@ -1117,7 +1155,7 @@ barray_push (barray ** ba, emit * em, byte c, GLuint pos)
    return 0;
 }
 
-/*
+/**
  * string to string map typedef
  */
 typedef struct map_str_
@@ -1159,11 +1197,10 @@ map_str_append (map_str ** ma, map_str ** nm)
       *ma = *nm;
 }
 
-/*
+/**
  * searches the map for specified key,
  * if the key is matched, *data is filled with data associated with the key,
- * returns 0 if the key is matched,
- * returns 1 otherwise
+ * \return 0 if the key is matched, 1 otherwise
  */
 static GLint
 map_str_find (map_str ** ma, const byte * key, byte ** data)
@@ -1184,7 +1221,7 @@ map_str_find (map_str ** ma, const byte * key, byte ** data)
    return 1;
 }
 
-/*
+/**
  * string to byte map typedef
  */
 typedef struct map_byte_
@@ -1224,11 +1261,10 @@ map_byte_append (map_byte ** ma, map_byte ** nm)
       *ma = *nm;
 }
 
-/*
- * searches the map for specified key,
- * if the key is matched, *data is filled with data associated with the key,
- * returns 0 if the is matched,
- * returns 1 otherwise
+/**
+ * Searches the map for specified key,
+ * If the key is matched, *data is filled with data associated with the key,
+ * \return 0 if the is matched, 1 otherwise
  */
 static GLint
 map_byte_find (map_byte ** ma, const byte * key, byte * data)
@@ -1286,11 +1322,10 @@ map_def_append (map_def ** ma, map_def ** nm)
       *ma = *nm;
 }
 
-/*
+/**
  * searches the map for specified key,
  * if the key is matched, *data is filled with data associated with the key,
- * returns 0 if the is matched,
- * returns 1 otherwise
+ * \return 0 if the is matched, 1 otherwise
  */
 static GLint
 map_def_find (map_def ** ma, const byte * key, defntn ** data)
