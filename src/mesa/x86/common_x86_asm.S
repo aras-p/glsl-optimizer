@@ -1,10 +1,10 @@
-/* $Id: common_x86_asm.S,v 1.13 2002/11/09 17:43:58 keithw Exp $ */
+/* $Id: common_x86_asm.S,v 1.14 2003/01/09 14:56:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.3
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -225,13 +225,13 @@ GLNAME( _mesa_test_os_sse_exception_support ):
 
 	MOVUPS	( REGIND( ESP ), XMM1 )
 
-	ADD_L	( CONST( 32 ), ESP )
-
 	DIVPS	( XMM0, XMM1 )
 
 	/* Restore the original MXCSR register value.
 	 */
 	LDMXCSR	( REGOFF( -4, EBP ) )
+
+	ADD_L	( CONST( 32 ), ESP )
 
 	LEAVE
 	RET
