@@ -1,10 +1,10 @@
-/* $Id: ac_context.c,v 1.6 2001/12/14 02:50:57 brianp Exp $ */
+/* $Id: ac_context.c,v 1.7 2002/04/21 19:39:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,11 @@
 
 #include "array_cache/ac_context.h"
 
+
+/*
+ * Initialize the array fallbacks.  That is, by default the fallback arrays
+ * point into the current vertex attribute values in ctx->Current.Attrib[]
+ */
 static void _ac_fallbacks_init( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
@@ -105,9 +110,23 @@ static void _ac_fallbacks_init( GLcontext *ctx )
    cl->Ptr = (void *) &ctx->Current.EdgeFlag;
    cl->Enabled = 1;
    cl->Flags = CA_CLIENT_DATA;	/* hack */
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      cl = &ac->Fallback.Attrib[i];
+      cl->Size = 4;
+      cl->Type = GL_FLOAT;
+      cl->Stride = 0;
+      cl->StrideB = 0;
+      cl->Ptr = (void *) ctx->Current.Attrib[i];
+      cl->Enabled = 1;
+      cl->Flags = CA_CLIENT_DATA; /* hack */
+   }
 }
 
 
+/*
+ * Initialize the array cache pointers, types, strides, etc.
+ */
 static void _ac_cache_init( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
@@ -169,7 +188,7 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Enabled = 1;
    cl->Flags = 0;
 
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       cl = &ac->Cache.TexCoord[i];
       cl->Size = 4;
       cl->Type = GL_FLOAT;
@@ -188,6 +207,17 @@ static void _ac_cache_init( GLcontext *ctx )
    cl->Ptr = MALLOC( cl->StrideB * size );
    cl->Enabled = 1;
    cl->Flags = 0;
+
+   for (i = 0 ; i < VERT_ATTRIB_MAX; i++) {
+      cl = &ac->Cache.Attrib[i];
+      cl->Size = 4;
+      cl->Type = GL_FLOAT;
+      cl->Stride = 0;
+      cl->StrideB = 4 * sizeof(GLfloat);
+      cl->Ptr = MALLOC( cl->StrideB * size );
+      cl->Enabled = 1;
+      cl->Flags = 0;
+   }
 }
 
 
@@ -229,6 +259,10 @@ static void _ac_raw_init( GLcontext *ctx )
       ac->IsCached.TexCoord[i] = GL_FALSE;
    }
 
+   for (i = 0 ; i < VERT_ATTRIB_MAX ; i++) {
+      ac->Raw.Attrib[i] = ac->Fallback.Attrib[i];
+      ac->IsCached.Attrib[i] = GL_FALSE;
+   }
 }
 
 GLboolean _ac_CreateContext( GLcontext *ctx )
@@ -260,6 +294,11 @@ void _ac_DestroyContext( GLcontext *ctx )
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       if (ac->Cache.TexCoord[i].Ptr)
 	 FREE( ac->Cache.TexCoord[i].Ptr );
+   }
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (ac->Cache.Attrib[i].Ptr)
+	 FREE( ac->Cache.Attrib[i].Ptr );
    }
 
    if (ac->Elts) FREE( ac->Elts );
