@@ -43,6 +43,7 @@ typedef struct savage_tileinfo_t {
 
 typedef struct {
     GLuint offset;
+    GLuint nTiles;
     GLuint *dirtyTiles;		/* bit vector of dirty tiles (still unused) */
 } savageTexImage;
 
@@ -53,6 +54,7 @@ typedef struct {
 
     GLuint age;
     savageTexImage image[SAVAGE_TEX_MAXLEVELS];
+    GLuint dirtySubImages;
 
     struct {
 	GLuint sWrapMode, tWrapMode;
@@ -76,6 +78,6 @@ typedef struct {
 void savageUpdateTextureState( GLcontext *ctx );
 void savageDDInitTextureFuncs( struct dd_function_table *functions );
 
-void savageDestroyTexObj( savageContextPtr imesa, driTextureObject *t );
+void savageDestroyTexObj( savageContextPtr imesa, savageTexObjPtr t );
 
 #endif

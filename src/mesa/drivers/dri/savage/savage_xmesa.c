@@ -100,7 +100,7 @@ static const struct dri_debug_control debug_control[] =
 {
     { "fall",  DEBUG_FALLBACKS },
     { "api",   DEBUG_VERBOSE_API },
-    { "lru",   DEBUG_VERBOSE_LRU },
+    { "tex",   DEBUG_VERBOSE_TEX },
     { "verb",  DEBUG_VERBOSE_MSG },
     { "dma",   DEBUG_DMA },
     { "state", DEBUG_STATE },

@@ -203,6 +203,9 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 		 (int) image->Border);
 
     if (width >= 8 && height >= tileInfo->subHeight) {
+	GLuint *dirtyPtr = t->image[level].dirtyTiles;
+	GLuint dirtyMask = 1;
+
 	if (width >= tileInfo->width && height >= tileInfo->height) {
 	    GLuint wInTiles = width / tileInfo->width;
 	    GLuint hInTiles = height / tileInfo->height;
@@ -212,13 +215,40 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 	    for (y = 0; y < hInTiles; ++y) {
 		src = srcTRow;
 		for (x = 0; x < wInTiles; ++x) {
-		    savageUploadTile (tileInfo,
-				      tileInfo->wInSub, tileInfo->hInSub, bpp,
-				      src, width * bpp, dest);
+		    if (*dirtyPtr & dirtyMask) {
+			savageUploadTile (tileInfo,
+					  tileInfo->wInSub, tileInfo->hInSub,
+					  bpp, src, width * bpp, dest);
+		    }
 		    src += tileInfo->width * bpp;
 		    dest += 2048; /* tile size is always 2k */
+		    if (dirtyMask == 1<<31) {
+			dirtyMask = 1;
+			dirtyPtr++;
+		    } else
+			dirtyMask <<= 1;
 		}
 		srcTRow += width * tileInfo->height * bpp;
+	    }
+	} else if (width >= tileInfo->width) {
+	    GLuint wInTiles = width / tileInfo->width;
+	    GLubyte *src = image->Data;
+	    GLubyte *dest = (GLubyte *)(t->bufAddr + t->image[level].offset);
+	    GLuint x;
+	    for (x = 0; x < wInTiles; ++x) {
+		if (*dirtyPtr & dirtyMask) {
+		    savageUploadTile (tileInfo,
+				      tileInfo->wInSub,
+				      height / tileInfo->subHeight,
+				      bpp, src, width * bpp, dest);
+		}
+		src += tileInfo->width * bpp;
+		dest += 2048; /* tile size is always 2k */
+		if (dirtyMask == 1<<31) {
+		    dirtyMask = 1;
+		    dirtyPtr++;
+		} else
+		    dirtyMask <<= 1;
 	    }
 	} else {
 	    savageUploadTile (tileInfo, width / tileInfo->subWidth,
@@ -270,6 +300,67 @@ static GLuint savageTexImageSize (GLuint width, GLuint height, GLuint bpp) {
 	return 64 * bpp;
 }
 
+/** \brief Compute the number of (partial) tiles of a texture image
+ */
+static GLuint savageTexImageTiles (GLuint width, GLuint height,
+				   const savageTileInfo *tileInfo)
+{
+   return (width + tileInfo->width - 1) / tileInfo->width *
+      (height + tileInfo->height - 1) / tileInfo->height;
+}
+
+/** \brief Mark dirty tiles
+ *
+ * Some care must be taken because tileInfo may not be set or not
+ * up-to-date. So we check if tileInfo is initialized and if the number
+ * of tiles in the bit vector matches the number of tiles computed from
+ * the current tileInfo.
+ */
+static void savageMarkDirtyTiles (savageTexObjPtr t, GLuint level,
+				  GLuint totalWidth, GLuint totalHeight,
+				  GLint xoffset, GLint yoffset,
+				  GLsizei width, GLsizei height)
+{
+   GLuint wInTiles, hInTiles;
+   GLuint x0, y0, x1, y1;
+   GLuint x, y;
+   if (!t->tileInfo)
+      return;
+   wInTiles = (totalWidth + t->tileInfo->width - 1) / t->tileInfo->width;
+   hInTiles = (totalHeight + t->tileInfo->height - 1) / t->tileInfo->height;
+   if (wInTiles * hInTiles != t->image[level].nTiles)
+      return;
+
+   x0 = xoffset / t->tileInfo->width;
+   y0 = yoffset / t->tileInfo->height;
+   x1 = (xoffset + width - 1) / t->tileInfo->width;
+   y1 = (yoffset + height - 1) / t->tileInfo->height;
+
+   for (y = y0; y <= y1; ++y) {
+      GLuint *ptr = t->image[level].dirtyTiles + (y * wInTiles + x0) / 32;
+      GLuint mask = 1 << (y * wInTiles + x0) % 32;
+      for (x = x0; x <= x1; ++x) {
+	 *ptr |= mask;
+	 if (mask == (1<<31)) {
+	    ptr++;
+	    mask = 1;
+	 } else {
+	    mask <<= 1;
+	 }
+      }
+   }
+}
+
+/** \brief Mark all tiles as dirty
+ */
+static void savageMarkAllTiles (savageTexObjPtr t, GLuint level)
+{
+   GLuint words = (t->image[level].nTiles + 31) / 32;
+   if (words)
+      memset(t->image[level].dirtyTiles, ~0, words*sizeof(GLuint));
+}
+
+
 static void savageSetTexWrapping(savageTexObjPtr tex, GLenum s, GLenum t)
 {
     tex->setup.sWrapMode = s;
@@ -301,10 +392,19 @@ savageAllocTexObj( struct gl_texture_object *texObj )
    t = (savageTexObjPtr) calloc(1,sizeof(*t));
    texObj->DriverData = t;
    if ( t != NULL ) {
+      GLuint i;
 
       /* Initialize non-image-dependent parts of the state:
        */
       t->base.tObj = texObj;
+      t->base.dirty_images[0] = 0;
+      t->dirtySubImages = 0;
+      t->tileInfo = NULL;
+
+      /* Initialize dirty tiles bit vectors
+       */
+      for (i = 0; i < SAVAGE_TEX_MAXLEVELS; ++i)
+	 t->image[i].nTiles = 0;
 
       /* FIXME Something here to set initial values for other parts of
        * FIXME t->setup?
@@ -521,12 +621,27 @@ static void savageSetTexImages( savageContextPtr imesa,
    firstLevel = t->base.firstLevel;
    lastLevel  = t->base.lastLevel;
 
-   /* Figure out the size now (and count the levels).  Upload won't be done
-    * until later.
+   /* Figure out the size now (and count the levels).  Upload won't be
+    * done until later. If the number of tiles changes, it means that
+    * this function is called for the first time on this tex object or
+    * the image or the destination color format changed. So all tiles
+    * are marked as dirty.
     */ 
    offset = 0;
    size = 1;
    for ( i = firstLevel ; i <= lastLevel && tObj->Image[0][i] ; i++ ) {
+      GLuint nTiles;
+      nTiles = savageTexImageTiles (image->Width2, image->Height2, t->tileInfo);
+      if (t->image[i].nTiles != nTiles) {
+	 GLuint words = (nTiles + 31) / 32;
+	 if (t->image[i].nTiles != 0) {
+	    free(t->image[i].dirtyTiles);
+	 }
+	 t->image[i].dirtyTiles = malloc(words*sizeof(GLuint));
+	 memset(t->image[i].dirtyTiles, ~0, words*sizeof(GLuint));
+      }
+      t->image[i].nTiles = nTiles;
+
       t->image[i].offset = offset;
 
       image = tObj->Image[0][i];
@@ -545,18 +660,24 @@ static void savageSetTexImages( savageContextPtr imesa,
    t->base.totalSize = (t->base.totalSize + 2047UL) & ~2047UL;
 }
 
-void savageDestroyTexObj(savageContextPtr imesa, driTextureObject *t)
+void savageDestroyTexObj(savageContextPtr imesa, savageTexObjPtr t)
 {
+    GLuint i;
+
+    /* Free dirty tiles bit vectors */
+    for (i = 0; i < SAVAGE_TEX_MAXLEVELS; ++i) {
+	if (t->image[i].nTiles)
+	    free (t->image[i].dirtyTiles);
+    }
+
     /* See if it was the driver's current object.
      */
-
     if ( imesa != NULL )
     { 
-	GLuint i;
 	for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ )
 	{
-	    if ( t == imesa->CurrentTexObj[ i ] ) {
-		assert( t->bound & (1 << i) );
+	    if ( &t->base == imesa->CurrentTexObj[ i ] ) {
+		assert( t->base.bound & (1 << i) );
 		imesa->CurrentTexObj[ i ] = NULL;
 	    }
 	}
@@ -600,21 +721,36 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
    driUpdateTextureLRU( &t->base );
    UNLOCK_HARDWARE(imesa);
 
-   if (t->base.dirty_images[0]) {
+   if (t->base.dirty_images[0] || t->dirtySubImages) {
+      if (SAVAGE_DEBUG & DEBUG_VERBOSE_TEX)
+	 fprintf(stderr, "Texture upload: |");
+
       savageFlushVertices (imesa);
       LOCK_HARDWARE(imesa);
       savageFlushCmdBufLocked (imesa, GL_FALSE);
       WAIT_IDLE_EMPTY_LOCKED(imesa);
-      if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
-	 fprintf(stderr, "*");
 
       for (i = 0 ; i < numLevels ; i++) {
          const GLint j = t->base.firstLevel + i;  /* the texObj's level */
-	 if (t->base.dirty_images[0] & (1<<j))
+	 if (t->base.dirty_images[0] & (1 << j)) {
+	    savageMarkAllTiles(t, j);
+	    if (SAVAGE_DEBUG & DEBUG_VERBOSE_TEX)
+		fprintf (stderr, "*");
+	 } else if ((SAVAGE_DEBUG & DEBUG_VERBOSE_TEX) &&
+		    t->dirtySubImages & (1 << j))
+	    fprintf (stderr, ".");
+	 else
+	    fprintf (stderr, " ");
+	 if ((t->base.dirty_images[0] | t->dirtySubImages) & (1 << j))
 	    savageUploadTexLevel( t, j );
       }
+
       UNLOCK_HARDWARE(imesa);
       t->base.dirty_images[0] = 0;
+      t->dirtySubImages = 0;
+
+      if (SAVAGE_DEBUG & DEBUG_VERBOSE_TEX)
+	 fprintf(stderr, "|\n");
    }
 }
 
@@ -657,7 +793,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    imesa->CurrentTexObj[0] = &t->base;
    t->base.bound |= 1;
 
-   if (t->base.dirty_images[0]) {
+   if (t->base.dirty_images[0] || t->dirtySubImages) {
        savageSetTexImages(imesa, tObj);
        savageUploadTexImages(imesa, t); 
    }
@@ -924,7 +1060,7 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
 
    t->base.bound |= 2;
 
-   if (t->base.dirty_images[0]) {
+   if (t->base.dirty_images[0] || t->dirtySubImages) {
        savageSetTexImages(imesa, tObj);
        savageUploadTexImages(imesa, t);
    }
@@ -1112,7 +1248,7 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     imesa->CurrentTexObj[0] = &t->base;
     t->base.bound |= 1;
 
-    if (t->base.dirty_images[0]) {
+    if (t->base.dirty_images[0] || t->dirtySubImages) {
 	savageSetTexImages(imesa, tObj);
 	savageUploadTexImages(imesa, t);
     }
@@ -1292,7 +1428,7 @@ static void savageTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      driSwapOutTextureObject( &t->base );
+      /* Do nothing. Marking the image as dirty below is sufficient. */
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1321,18 +1457,20 @@ static void savageTexSubImage1D( GLcontext *ctx,
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
-      driSwapOutTextureObject( &t->base );
+      savageMarkDirtyTiles(t, level, texImage->Width2, 1,
+			   xoffset, 0, width, 1);
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
          return;
       }
+      t->base.dirty_images[0] |= (1 << level);
    }
    _mesa_store_texsubimage1d(ctx, target, level, xoffset, width, 
 			     format, type, pixels, packing, texObj,
 			     texImage);
-   t->base.dirty_images[0] |= (1 << level);
+   t->dirtySubImages |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
@@ -1346,7 +1484,7 @@ static void savageTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    if (t) {
-      driSwapOutTextureObject( &t->base );
+      /* Do nothing. Marking the image as dirty below is sufficient. */
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
@@ -1375,18 +1513,20 @@ static void savageTexSubImage2D( GLcontext *ctx,
    savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
    assert( t ); /* this _should_ be true */
    if (t) {
-      driSwapOutTextureObject( &t->base );
+      savageMarkDirtyTiles(t, level, texImage->Width2, texImage->Height2,
+			   xoffset, yoffset, width, height);
    } else {
       t = savageAllocTexObj(texObj);
       if (!t) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
          return;
       }
+      t->base.dirty_images[0] |= (1 << level);
    }
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width, 
 			     height, format, type, pixels, packing, texObj,
 			     texImage);
-   t->base.dirty_images[0] |= (1 << level);
+   t->dirtySubImages |= (1 << level);
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 

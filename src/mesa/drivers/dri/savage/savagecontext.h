@@ -313,7 +313,7 @@ extern int SAVAGE_DEBUG;
 
 #define DEBUG_FALLBACKS      0x001
 #define DEBUG_VERBOSE_API    0x002
-#define DEBUG_VERBOSE_LRU    0x004
+#define DEBUG_VERBOSE_TEX    0x004
 #define DEBUG_VERBOSE_MSG    0x008
 #define DEBUG_DMA            0x010
 #define DEBUG_STATE          0x020
