@@ -285,7 +285,7 @@ void i915_disassemble_program( const GLuint *program, GLuint sz )
    for (i = 1 ; i < sz ; i+=3, program+=3) {
       GLuint opcode = program[0] & (0x1f<<24);
 
-      if (opcode >= A0_NOP && opcode <= A0_SLT)
+      if ((GLint) opcode >= A0_NOP && opcode <= A0_SLT)
 	 print_arith_op(opcode >> 24, program);
       else if (opcode >= T0_TEXLD && opcode <= T0_TEXKILL)
 	 print_tex_op(opcode >> 24, program);
