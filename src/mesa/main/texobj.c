@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.9 1999/11/12 04:57:04 kendallb Exp $ */
+/* $Id: texobj.c,v 1.10 1999/12/01 21:10:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,10 +56,10 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
 {
    struct gl_texture_object *obj;
 
-   assert(dimensions <= 3);
+   ASSERT(dimensions <= 3);
 
-   obj = (struct gl_texture_object *)
-                     calloc(1,sizeof(struct gl_texture_object));
+   obj = CALLOC_STRUCT(gl_texture_object);
+
    if (obj) {
       /* init the non-zero fields */
       obj->RefCount = 1;
@@ -420,14 +420,21 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBindTexture");
 
-   dim = (GLuint) (target - GL_TEXTURE_1D);
-
-   if (dim > 2) {
-      gl_error( ctx, GL_INVALID_ENUM, "glBindTexture" );
-      return;
+   switch (target) {
+      case GL_TEXTURE_1D:
+         dim = 1;
+         break;
+      case GL_TEXTURE_2D:
+         dim = 2;
+         break;
+      case GL_TEXTURE_3D:
+         dim = 3;
+         break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+         return;
    }
 
-   dim++;
    oldTexObj = texUnit->CurrentD[dim];
 
    if (oldTexObj->Name == texName)
@@ -444,6 +451,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
       if (newTexObj->Dimensions != dim) {
 	 if (newTexObj->Dimensions) {
+            /* the named texture object's dimensions don't match the target */
 	    gl_error( ctx, GL_INVALID_OPERATION, "glBindTexture" );
 	    return;
 	 }
