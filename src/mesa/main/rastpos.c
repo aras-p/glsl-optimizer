@@ -1,5 +1,3 @@
-/* $Id: rastpos.c,v 1.40 2003/03/01 01:50:22 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -329,8 +327,10 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    /* clip to view volume */
    if (ctx->Transform.RasterPositionUnclipped) {
       /* GL_IBM_rasterpos_clip: only clip against Z */
-      if (viewclip_point_z(clip) == 0)
+      if (viewclip_point_z(clip) == 0) {
          ctx->Current.RasterPosValid = GL_FALSE;
+         return;
+      }
    }
    else if (viewclip_point(clip) == 0) {
       /* Normal OpenGL behaviour */
