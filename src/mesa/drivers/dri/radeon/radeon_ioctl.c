@@ -1021,6 +1021,13 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	       __FUNCTION__, all, cx, cy, cw, ch );
    }
 
+   {
+      LOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( rmesa );
+      if ( dPriv->numClipRects == 0 ) 
+	 return;
+   }
+   
    radeonFlush( ctx ); 
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
