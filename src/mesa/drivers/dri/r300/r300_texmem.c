@@ -140,7 +140,7 @@ static void r300UploadGARTClientSubImage(r300ContextPtr rmesa,
 	width = texImage->Width;
 	height = texImage->Height;
 
-	r300EmitWait(rmesa, RADEON_WAIT_3D);
+	r300EmitWait(rmesa, R300_WAIT_3D);
 
 	r300EmitBlit(rmesa, blit_format,
 		     srcPitch,
@@ -152,7 +152,7 @@ static void r300UploadGARTClientSubImage(r300ContextPtr rmesa,
 		     t->image[0][hwlevel].x + x,
 		     t->image[0][hwlevel].y + y, width, height);
 
-	r300EmitWait(rmesa, RADEON_WAIT_2D);
+	r300EmitWait(rmesa, R300_WAIT_2D);
 }
 
 static void r300UploadRectSubImage(r300ContextPtr rmesa,
@@ -254,7 +254,7 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 				}
 			}
 
-			r300EmitWait(rmesa, RADEON_WAIT_3D);
+			r300EmitWait(rmesa, R300_WAIT_3D);
 
 			/* Blit to framebuffer
 			 */
@@ -264,7 +264,7 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 				     dstPitch, t->bufAddr,
 				     0, 0, 0, done, width, lines);
 
-			r300EmitWait(rmesa, RADEON_WAIT_2D);
+			r300EmitWait(rmesa, R300_WAIT_2D);
 
 			r300ReleaseDmaRegion(rmesa, &region, __FUNCTION__);
 			done += lines;

@@ -604,7 +604,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 8 * sizeof(int),
 							__FUNCTION__);
 
-	cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
+	cmd[0].header.cmd_type = R300_CMD_PACKET3;
 	cmd[1].i = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
 	cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
 		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |
@@ -627,7 +627,7 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 	if (rmesa->radeon.dri.drmMinor >= 6) {
 		drm_radeon_cmd_header_t *cmd;
 
-		assert(!(flags & ~(RADEON_WAIT_2D | RADEON_WAIT_3D)));
+		assert(!(flags & ~(R300_WAIT_2D | R300_WAIT_3D)));
 
 		cmd =
 		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
