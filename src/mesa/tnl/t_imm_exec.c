@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.24 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.25 2001/05/14 09:00:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,7 +82,7 @@ static void reset_input( GLcontext *ctx,
 
    IM->ArrayEltFlags = ~ctx->Array._Enabled;
    IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;
-   IM->ArrayEltFlush = !ctx->Array.LockCount;
+   IM->ArrayEltFlush = ctx->Array.LockCount ? FLUSH_ELT_LAZY : FLUSH_ELT_EAGER;
 }
   
 void _tnl_reset_exec_input( GLcontext *ctx,
@@ -377,7 +377,7 @@ static void exec_vert_cassette( GLcontext *ctx, struct immediate *IM )
    if (IM->FlushElt) {
       /* Orflag is computed twice, but only reach this code if app is
        * using a mixture of glArrayElement() and glVertex() while
-       * arrays are locked.
+       * arrays are locked (else would be in exec_elt_cassette now).
        */
       ASSERT(ctx->Array.LockCount);
       ASSERT(IM->FlushElt == FLUSH_ELT_LAZY);
@@ -440,7 +440,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    _tnl_compute_orflag( IM, IM->Start );
-   _tnl_copy_immediate_vertices( ctx, IM ); /* ?? flags, orflag above */
+   _tnl_copy_immediate_vertices( ctx, IM ); 
    _tnl_get_exec_copy_verts( ctx, IM );
 
    if (tnl->pipeline.build_state_changes)

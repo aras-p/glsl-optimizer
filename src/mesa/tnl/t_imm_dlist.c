@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.18 2001/05/11 15:53:06 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.19 2001/05/14 09:00:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -150,6 +150,8 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    TNLvertexcassette *node = (TNLvertexcassette *)data;
    struct immediate *IM = node->IM;
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
@@ -264,8 +266,6 @@ void
 _tnl_EndList( GLcontext *ctx )
 {
    struct immediate *IM = TNL_CURRENT_IM(ctx);
-
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    ctx->swtnl_im = 0;
    IM->ref_count--;

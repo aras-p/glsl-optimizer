@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.12 2001/05/09 11:06:30 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.13 2001/05/14 09:00:51 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +22,10 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
+ *
  */
 
 
