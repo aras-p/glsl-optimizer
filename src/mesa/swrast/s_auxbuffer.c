@@ -31,6 +31,11 @@
 
 
 
+/**
+ * Allocate memory for the software auxillary buffers associated with
+ * the given GLframebuffer.  Free any currently allocated aux buffers
+ * first.
+ */
 void
 _swrast_alloc_aux_buffers( GLframebuffer *buffer )
 {
