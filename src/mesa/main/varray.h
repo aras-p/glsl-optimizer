@@ -1,10 +1,10 @@
-/* $Id: varray.h,v 1.5 1999/11/11 01:22:28 brianp Exp $ */
+/* $Id: varray.h,v 1.6 2000/01/13 00:35:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,6 +56,10 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 
 extern void
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr);
+
+
+extern void
+_mesa_ArrayElement( GLint );
 
 
 extern void
