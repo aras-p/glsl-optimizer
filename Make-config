@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.15 2000/01/05 06:33:17 brianp Exp $
+# $Id: Make-config,v 1.16 2000/01/13 00:44:37 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -7,7 +7,7 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
 # Mesa 3-D graphics library
 # 
-# Copyright (C) 1999  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -1268,7 +1268,7 @@ linux-static-debug:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -DUSE_XSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -DUSE_XSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
@@ -1280,9 +1280,9 @@ linux-elf-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DDEBUG" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DTHREADS -DPTHREADS -DDEBUG" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm -lpthread" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-glide-debug:
@@ -1292,9 +1292,9 @@ linux-glide-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DTHREADS -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm -lpthread" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # for profiling on Linux systems
