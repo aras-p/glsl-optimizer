@@ -1,8 +1,8 @@
-/* $Id: s_alphabuf.c,v 1.15 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.16 2002/11/26 02:58:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -32,6 +32,7 @@
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "imports.h"
 
@@ -103,8 +104,10 @@ _mesa_alloc_alpha_buffers( GLframebuffer *buffer )
 void
 _mesa_clear_alpha_buffers( GLcontext *ctx )
 {
-   const GLchan aclear = (GLchan) ctx->Color.ClearColor[3];
+   GLchan aclear;
    GLuint bufferBit;
+
+   CLAMPED_FLOAT_TO_CHAN(aclear, ctx->Color.ClearColor[3]);
 
    ASSERT(ctx->DrawBuffer->UseSoftwareAlphaBuffers);
    ASSERT(ctx->Color.ColorMask[ACOMP]);
