@@ -1402,7 +1402,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
       program->IsPositionInvariant = parseState.isPositionInvariant;
       program->IsNVProgram = GL_TRUE;
 
-#ifdef DEBUG
+#ifdef DEBUG_foo
       _mesa_printf("--- glLoadProgramNV result ---\n");
       _mesa_print_nv_vertex_program(program);
       _mesa_printf("------------------------------\n");

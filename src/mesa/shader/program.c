@@ -278,8 +278,14 @@ _mesa_delete_program(GLcontext *ctx, struct program *prog)
    else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
             prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
       struct fragment_program *fprog = (struct fragment_program *) prog;
-      if (fprog->Instructions)
+      if (fprog->Instructions) {
+         GLuint i;
+         for (i = 0; i < fprog->Base.NumInstructions; i++) {
+            if (fprog->Instructions[i].Data)
+               _mesa_free(fprog->Instructions[i].Data);
+         }
          _mesa_free(fprog->Instructions);
+      }
       if (fprog->Parameters)
          _mesa_free_parameter_list(fprog->Parameters);
    }

@@ -120,6 +120,11 @@ get_register_pointer( GLcontext *ctx,
          ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
          src = machine->Inputs[source->Index];
          break;
+      case PROGRAM_OUTPUT:
+         /* This is only for PRINT */
+         ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
+         src = machine->Outputs[source->Index];
+         break;
       case PROGRAM_LOCAL_PARAM:
          ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
          src = program->Base.LocalParams[source->Index];
@@ -128,10 +133,8 @@ get_register_pointer( GLcontext *ctx,
          ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
          src = ctx->FragmentProgram.Parameters[source->Index];
          break;
-
       case PROGRAM_STATE_VAR:
-			/* Fallthrough */
-
+         /* Fallthrough */
       case PROGRAM_NAMED_PARAM:
          ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
          src = program->Parameters->Parameters[source->Index].Values;
@@ -342,7 +345,7 @@ fetch_vector1( GLcontext *ctx,
 }
 
 
-/*
+/**
  * Test value against zero and return GT, LT, EQ or UN if NaN.
  */
 static INLINE GLuint
@@ -357,7 +360,8 @@ generate_cc( float value )
    return COND_EQ;
 }
 
-/*
+
+/**
  * Test if the ccMaskRule is satisfied by the given condition code.
  * Used to mask destination writes according to the current condition codee.
  */
@@ -1304,6 +1308,19 @@ execute_program( GLcontext *ctx,
                result[2] = a[2] + b[0] * c[0] + b[1] * c[1];
                result[3] = a[3] + b[0] * c[2] + b[1] * c[3];
                store_vector4( inst, machine, result );
+            }
+            break;
+         case FP_OPCODE_PRINT:
+            {
+               if (inst->SrcReg[0].File != -1) {
+                  GLfloat a[4];
+                  fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a);
+                  _mesa_printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
+                               a[0], a[1], a[2], a[3]);
+               }
+               else {
+                  _mesa_printf("%s\n", (const char *) inst->Data);
+               }
             }
             break;
          case FP_OPCODE_END:

@@ -58,6 +58,7 @@
 #define INPUT_1V_T   7  /* one source vector, plus textureId */
 #define INPUT_3V_T   8  /* one source vector, plus textureId */
 #define INPUT_NONE   9
+#define INPUT_1V_S  10  /* a string and a vector register */
 #define OUTPUT_V    20
 #define OUTPUT_S    21
 #define OUTPUT_NONE 22
@@ -95,7 +96,7 @@ static const struct instruction_pattern Instructions[] = {
    { "EX2", FP_OPCODE_DP4, INPUT_1S, OUTPUT_S, _R | _H |      _C | _S },
    { "FLR", FP_OPCODE_FLR, INPUT_1V, OUTPUT_V, _R | _H | _X | _C | _S },
    { "FRC", FP_OPCODE_FRC, INPUT_1V, OUTPUT_V, _R | _H | _X | _C | _S },
-   { "KIL", FP_OPCODE_KIL_NV, INPUT_CC, OUTPUT_NONE, 0                   },
+   { "KIL", FP_OPCODE_KIL_NV, INPUT_CC, OUTPUT_NONE, 0                },
    { "LG2", FP_OPCODE_LG2, INPUT_1S, OUTPUT_S, _R | _H |      _C | _S },
    { "LIT", FP_OPCODE_LIT, INPUT_1V, OUTPUT_V, _R | _H |      _C | _S },
    { "LRP", FP_OPCODE_LRP, INPUT_3V, OUTPUT_V, _R | _H | _X | _C | _S },
@@ -124,12 +125,13 @@ static const struct instruction_pattern Instructions[] = {
    { "SUB", FP_OPCODE_SUB, INPUT_2V, OUTPUT_V, _R | _H | _X | _C | _S },
    { "TEX", FP_OPCODE_TEX, INPUT_1V_T, OUTPUT_V,              _C | _S },
    { "TXD", FP_OPCODE_TXD, INPUT_3V_T, OUTPUT_V,              _C | _S },
-   { "TXP", FP_OPCODE_TXP_NV, INPUT_1V_T, OUTPUT_V,              _C | _S },
+   { "TXP", FP_OPCODE_TXP_NV, INPUT_1V_T, OUTPUT_V,           _C | _S },
    { "UP2H",  FP_OPCODE_UP2H,  INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP2US", FP_OPCODE_UP2US, INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP4B",  FP_OPCODE_UP4B,  INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP4UB", FP_OPCODE_UP4UB, INPUT_1S, OUTPUT_V,            _C | _S },
    { "X2D", FP_OPCODE_X2D, INPUT_3V, OUTPUT_V, _R | _H |      _C | _S },
+   { "PRINT", FP_OPCODE_PRINT, INPUT_1V_S, OUTPUT_NONE, 0               },
    { NULL, (enum fp_opcode) -1, 0, 0, 0 }
 };
 
@@ -1190,6 +1192,60 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
 }
 
 
+static GLboolean
+Parse_PrintInstruction(struct parse_state *parseState,
+                       struct fp_instruction *inst)
+{
+   const GLubyte *str;
+   GLubyte *msg;
+   GLuint len;
+
+   /* The first argument is a literal string 'just like this' */
+   if (!Parse_String(parseState, "'"))
+      RETURN_ERROR1("Expected '");
+
+   str = parseState->pos;
+   for (len = 0; str[len] != '\''; len++) /* find closing quote */
+      ;
+   parseState->pos += len + 1;
+   msg = _mesa_malloc(len + 1);
+
+   _mesa_memcpy(msg, str, len);
+   msg[len] = 0;
+   inst->Data = msg;
+
+   if (Parse_String(parseState, ",")) {
+      /* got an optional register to print */
+      GLubyte token[100];
+      GetToken(parseState, token);
+      if (token[0] == 'o') {
+         /* dst reg */
+         if (!Parse_OutputReg(parseState, &inst->SrcReg[0].Index))
+            RETURN_ERROR;
+         inst->SrcReg[0].File = PROGRAM_OUTPUT;
+      }
+      else {
+         /* src reg */
+         if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
+            RETURN_ERROR;
+      }
+   }
+   else {
+      /* File = 0 indicates no register to print */
+      inst->SrcReg[0].File = -1;
+   }
+
+   inst->SrcReg[0].Swizzle[0] = 0;
+   inst->SrcReg[0].Swizzle[1] = 1;
+   inst->SrcReg[0].Swizzle[2] = 2;
+   inst->SrcReg[0].Swizzle[3] = 3;
+   inst->SrcReg[0].NegateBase = GL_FALSE;
+   inst->SrcReg[0].Abs = GL_FALSE;
+   inst->SrcReg[0].NegateAbs = GL_FALSE;
+
+   return GL_TRUE;
+}
+
 
 static GLboolean
 Parse_InstructionSequence(struct parse_state *parseState,
@@ -1209,6 +1265,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->DstReg.CondSwizzle[1] = 1;
       inst->DstReg.CondSwizzle[2] = 2;
       inst->DstReg.CondSwizzle[3] = 3;
+      inst->Data = NULL;
 
       /* special instructions */
       if (Parse_String(parseState, "DEFINE")) {
@@ -1291,10 +1348,16 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR1("Expected ,");
          }
          else if (instMatch.outputs == OUTPUT_NONE) {
-            ASSERT(instMatch.opcode == FP_OPCODE_KIL_NV);
-            /* This is a little weird, the cond code info is in the dest register */
-            if (!Parse_CondCodeMask(parseState, &inst->DstReg))
-               RETURN_ERROR;
+            if (instMatch.opcode == FP_OPCODE_KIL_NV) {
+               /* This is a little weird, the cond code info is in
+                * the dest register.
+                */
+               if (!Parse_CondCodeMask(parseState, &inst->DstReg))
+                  RETURN_ERROR;
+            }
+            else {
+               ASSERT(instMatch.opcode == FP_OPCODE_PRINT);
+            }
          }
 
          if (instMatch.inputs == INPUT_1V) {
@@ -1360,6 +1423,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR1("Expected ,");
             if (!Parse_TextureImageId(parseState, &inst->TexSrcUnit,
                                       &inst->TexSrcBit))
+               RETURN_ERROR;
+         }
+         else if (instMatch.inputs == INPUT_1V_S) {
+            if (!Parse_PrintInstruction(parseState, inst))
                RETURN_ERROR;
          }
 

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -117,6 +117,7 @@ enum fp_opcode {
    FP_OPCODE_UP4UB,          /* NV_f_p only */
    FP_OPCODE_X2D,            /* NV_f_p only - 2d mat mul */
    FP_OPCODE_XPD,            /* ARB_f_p only - cross product */
+   FP_OPCODE_PRINT,          /* Mesa only */
    FP_OPCODE_END /* private opcode */
 };
 
@@ -158,6 +159,7 @@ struct fp_instruction
 #if FEATURE_MESA_program_debug
    GLint StringPos;
 #endif
+   void *Data;  /* some arbitrary data, only used for PRINT instruction now */
 };
 
 
