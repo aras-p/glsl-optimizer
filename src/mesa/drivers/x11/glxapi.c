@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.24 2001/05/25 21:51:02 brianp Exp $ */
+/* $Id: glxapi.c,v 1.25 2001/05/29 16:23:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1237,6 +1237,7 @@ static struct name_address_pair GLX_functions[] = {
    { "glXDestroyWindow", (GLvoid *) glXDestroyWindow },
    { "glXGetCurrentReadDrawable", (GLvoid *) glXGetCurrentReadDrawable },
    { "glXGetFBConfigAttrib", (GLvoid *) glXGetFBConfigAttrib },
+   { "glXGetFBConfigs", (GLvoid *) glXGetFBConfigs },
    { "glXGetSelectedEvent", (GLvoid *) glXGetSelectedEvent },
    { "glXGetVisualFromFBConfig", (GLvoid *) glXGetVisualFromFBConfig },
    { "glXMakeContextCurrent", (GLvoid *) glXMakeContextCurrent },
@@ -1244,18 +1245,78 @@ static struct name_address_pair GLX_functions[] = {
    { "glXQueryDrawable", (GLvoid *) glXQueryDrawable },
    { "glXSelectEvent", (GLvoid *) glXSelectEvent },
 
+   /*** GLX_SGI_swap_control ***/
+   { "glXSwapIntervalSGI", (GLvoid *) glXSwapIntervalSGI },
+
    /*** GLX_SGI_video_sync ***/
    { "glXGetVideoSyncSGI", (GLvoid *) glXGetVideoSyncSGI },
    { "glXWaitVideoSyncSGI", (GLvoid *) glXWaitVideoSyncSGI },
 
+   /*** GLX_SGI_make_current_read ***/
+   { "glXMakeCurrentReadSGI", (GLvoid *) glXMakeCurrentReadSGI },
+   { "glXGetCurrentReadDrawableSGI", (GLvoid *) glXGetCurrentReadDrawableSGI },
+
+   /*** GLX_SGIX_video_source ***/
+#if defined(_VL_H)
+   { "glXCreateGLXVideoSourceSGIX", (GLvoid *) glXCreateGLXVideoSourceSGIX },
+   { "glXDestroyGLXVideoSourceSGIX", (GLvoid *) glXDestroyGLXVideoSourceSGIX },
+#endif
+
+   /*** GLX_EXT_import_context ***/
+   { "glXFreeContextEXT", (GLvoid *) glXFreeContextEXT },
+   { "glXGetContextIDEXT", (GLvoid *) glXGetContextIDEXT },
+   { "glXGetCurrentDisplayEXT", (GLvoid *) glXGetCurrentDisplayEXT },
+   { "glXImportContextEXT", (GLvoid *) glXImportContextEXT },
+   { "glXQueryContextInfoEXT", (GLvoid *) glXQueryContextInfoEXT },
+
+   /*** GLX_SGIX_fbconfig ***/
+   { "glXGetFBConfigAttribSGIX", (GLvoid *) glXGetFBConfigAttribSGIX },
+   { "glXChooseFBConfigSGIX", (GLvoid *) glXChooseFBConfigSGIX },
+   { "glXCreateGLXPixmapWithConfigSGIX", (GLvoid *) glXCreateGLXPixmapWithConfigSGIX },
+   { "glXCreateContextWithConfigSGIX", (GLvoid *) glXCreateContextWithConfigSGIX },
+   { "glXGetVisualFromFBConfigSGIX", (GLvoid *) glXGetVisualFromFBConfigSGIX },
+   { "glXGetFBConfigFromVisualSGIX", (GLvoid *) glXGetFBConfigFromVisualSGIX },
+
+   /*** GLX_SGIX_pbuffer ***/
+   { "glXCreateGLXPbufferSGIX", (GLvoid *) glXCreateGLXPbufferSGIX },
+   { "glXDestroyGLXPbufferSGIX", (GLvoid *) glXDestroyGLXPbufferSGIX },
+   { "glXQueryGLXPbufferSGIX", (GLvoid *) glXQueryGLXPbufferSGIX },
+   { "glXSelectEventSGIX", (GLvoid *) glXSelectEventSGIX },
+   { "glXGetSelectedEventSGIX", (GLvoid *) glXGetSelectedEventSGIX },
+
+   /*** GLX_SGI_cushion ***/
+   { "glXCushionSGI", (GLvoid *) glXCushionSGI },
+
+   /*** GLX_SGIX_video_resize ***/
+   { "glXBindChannelToWindowSGIX", (GLvoid *) glXBindChannelToWindowSGIX },
+   { "glXChannelRectSGIX", (GLvoid *) glXChannelRectSGIX },
+   { "glXQueryChannelRectSGIX", (GLvoid *) glXQueryChannelRectSGIX },
+   { "glXQueryChannelDeltasSGIX", (GLvoid *) glXQueryChannelDeltasSGIX },
+   { "glXChannelRectSyncSGIX", (GLvoid *) glXChannelRectSyncSGIX },
+
+   /*** GLX_SGIX_dmbuffer **/
+#if defined(_DM_BUFFER_H_)
+   { "glXAssociateDMPbufferSGIX", (GLvoid *) glXAssociateDMPbufferSGIX },
+#endif
+
+   /*** GLX_SGIX_swap_group ***/
+   { "glXJoinSwapGroupSGIX", (GLvoid *) glXJoinSwapGroupSGIX },
+
+   /*** GLX_SGIX_swap_barrier ***/
+   { "glXBindSwapBarrierSGIX", (GLvoid *) glXBindSwapBarrierSGIX },
+   { "glXQueryMaxSwapBarriersSGIX", (GLvoid *) glXQueryMaxSwapBarriersSGIX },
+
+   /*** GLX_SUN_get_transparent_index ***/
+   { "glXGetTransparentIndexSUN", (GLvoid *) glXGetTransparentIndexSUN },
+
    /*** GLX_MESA_copy_sub_buffer ***/
    { "glXCopySubBufferMESA", (GLvoid *) glXCopySubBufferMESA },
 
-   /*** GLX_MESA_release_buffers ***/
-   { "glXReleaseBuffersMESA", (GLvoid *) glXReleaseBuffersMESA },
-
    /*** GLX_MESA_pixmap_colormap ***/
    { "glXCreateGLXPixmapMESA", (GLvoid *) glXCreateGLXPixmapMESA },
+
+   /*** GLX_MESA_release_buffers ***/
+   { "glXReleaseBuffersMESA", (GLvoid *) glXReleaseBuffersMESA },
 
    /*** GLX_MESA_set_3dfx_mode ***/
    { "glXSet3DfxModeMESA", (GLvoid *) glXSet3DfxModeMESA },
