@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.41 2002/08/21 02:57:58 brianp Exp $ */
+/* $Id: xm_api.c,v 1.42 2002/10/05 03:02:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1196,8 +1196,7 @@ static GLboolean initialize_visual_and_buffer( int client,
                                                XMesaBuffer b,
                                                GLboolean rgb_flag,
                                                XMesaDrawable window,
-                                               XMesaColormap cmap
-                                             )
+                                               XMesaColormap cmap )
 {
 #ifndef XFree86Server
    XGCValues gcvalues;
@@ -1929,18 +1928,18 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 
 
 
-#if 0 /* not done */
 XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
                                 unsigned int width, unsigned int height )
 {
    int client = 0;
    XMesaBuffer b = alloc_xmesa_buffer();
    if (!b) {
+      printf("return NULL 1\n");
       return NULL;
    }
 
    b->xm_visual = v;
-   b->pbuffer_flag = GL_TRUE;
+   b->type = PBUFFER;
    b->display = v->display;
    b->cmap = cmap;
 
@@ -1969,12 +1968,12 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
 				     0, cmap)) {
       free_xmesa_buffer(client, b);
+      printf("return NULL\n");
       return NULL;
    }
 
    return b;
 }
-#endif
 
 
 

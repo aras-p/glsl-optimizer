@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.29 2002/07/09 01:22:52 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.30 2002/10/05 03:02:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -538,5 +538,6 @@ extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
 
 extern void xmesa_resize_buffers( GLframebuffer *buffer );
+
 
 #endif
