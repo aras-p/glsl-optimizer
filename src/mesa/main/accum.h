@@ -1,4 +1,4 @@
-/* $Id: accum.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: accum.h,v 1.3 2000/02/02 21:52:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-
-
-
 #ifndef ACCUM_H
 #define ACCUM_H
 
@@ -35,10 +32,12 @@
 #include "types.h"
 
 
-extern void gl_alloc_accum_buffer( GLcontext *ctx );
+extern void
+_mesa_alloc_accum_buffer( GLcontext *ctx );
 
 
-extern void gl_clear_accum_buffer( GLcontext *ctx );
+extern void
+_mesa_clear_accum_buffer( GLcontext *ctx );
 
 
 extern void

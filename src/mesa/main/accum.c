@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.14 2000/02/02 19:17:57 brianp Exp $ */
+/* $Id: accum.c,v 1.15 2000/02/02 21:52:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,7 +67,8 @@
 
 
 
-void gl_alloc_accum_buffer( GLcontext *ctx )
+void
+_mesa_alloc_accum_buffer( GLcontext *ctx )
 {
    GLint n;
 
@@ -420,7 +421,8 @@ _mesa_Accum( GLenum op, GLfloat value )
 /*
  * Clear the accumulation Buffer.
  */
-void gl_clear_accum_buffer( GLcontext *ctx )
+void
+_mesa_clear_accum_buffer( GLcontext *ctx )
 {
    GLuint buffersize;
    GLfloat acc_scale;
