@@ -50,7 +50,7 @@
 #include <unistd.h>
 
 /* return current time (in seconds) */
-static int
+static double
 current_time(void)
 {
    struct timeval tv;
@@ -60,16 +60,23 @@ current_time(void)
    struct timezone tz;
    (void) gettimeofday(&tv, &tz);
 #endif
-   return (int) tv.tv_sec;
+   return (double) tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
 #else /*BENCHMARK*/
 
 /* dummy */
-static int
+static double
 current_time(void)
 {
-   return 0;
+   /* update this function for other platforms! */
+   static double t = 0.0;
+   static int warn = 1;
+   if (warn) {
+      fprintf(stderr, "Warning: current_time() not implemented!!\n");
+      warn = 0;
+   }
+   return t += 1.0;
 }
 
 #endif /*BENCHMARK*/
@@ -499,31 +506,33 @@ event_loop(Display *dpy, Window win)
          }
       }
 
-      /* next frame */
-      angle += 2.0;
-      if (angle > 3600.0)
-	angle -= 3600.0;
-
-      draw();
-      glXSwapBuffers(dpy, win);
-
-      /* calc framerate */
       {
-         static int t0 = -1;
          static int frames = 0;
-         int t = current_time();
+         static double tRot0 = -1.0, tRate0 = -1.0;
+         double dt, t = current_time();
+         if (tRot0 < 0.0)
+            tRot0 = t;
+         dt = t - tRot0;
+         tRot0 = t;
 
-         if (t0 < 0)
-            t0 = t;
+         /* advance rotation for next frame */
+         angle += 70.0 * dt;  /* 70 degrees per second */
+         if (angle > 3600.0)
+             angle -= 3600.0;
+
+         draw();
+         glXSwapBuffers(dpy, win);
 
          frames++;
 
-         if (t - t0 >= 5.0) {
-            GLfloat seconds = t - t0;
+         if (tRate0 < 0.0)
+            tRate0 = t;
+         if (t - tRate0 >= 5.0) {
+            GLfloat seconds = t - tRate0;
             GLfloat fps = frames / seconds;
             printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
                    fps);
-            t0 = t;
+            tRate0 = t;
             frames = 0;
          }
       }
