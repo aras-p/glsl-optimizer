@@ -44,7 +44,7 @@
 /*#define DRI_NEW_INTERFACE_ONLY*/
 
 #ifndef GLX_OML_sync_control
-typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, GLXDrawable drawable, int32_t *numerator, int32_t *denominator);
+typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
 /**
@@ -78,7 +78,7 @@ static int driQueryFrameTracking( Display * dpy, void * priv,
     float * usage );
 
 static void *driCreateNewDrawable(Display *dpy, const __GLcontextModes *modes,
-    GLXDrawable draw, __DRIdrawable *pdraw, int renderType, const int *attrs);
+    __DRIid draw, __DRIdrawable *pdraw, int renderType, const int *attrs);
 
 static void driDestroyDrawable(Display *dpy, void *drawablePrivate);
 
@@ -194,7 +194,7 @@ static Bool __driAddDrawable(void *drawHash, __DRIdrawable *pdraw)
     return GL_TRUE;
 }
 
-static __DRIdrawable *__driFindDrawable(void *drawHash, GLXDrawable draw)
+static __DRIdrawable *__driFindDrawable(void *drawHash, __DRIid draw)
 {
     int retcode;
     __DRIdrawable *pdraw;
@@ -270,7 +270,7 @@ static Bool __driWindowExists(Display *dpy, GLXDrawable draw)
  */
 static void __driGarbageCollectDrawables(void *drawHash)
 {
-    GLXDrawable draw;
+    __DRIid draw;
     __DRIdrawable *pdraw;
     Display *dpy;
 
@@ -317,7 +317,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
  * into their respective real types it also assures they are not \c NULL. 
  */
 static Bool driUnbindContext3(Display *dpy, int scrn,
-			      GLXDrawable draw, GLXDrawable read,
+			      __DRIid draw, __DRIid read,
 			      __DRIcontext *ctx)
 {
     __DRIscreen *pDRIScreen;
@@ -408,7 +408,7 @@ static Bool driUnbindContext3(Display *dpy, int scrn,
  *      is added.  Is it safe to assume that the drawable is a window?
  */
 static Bool DoBindContext(Display *dpy,
-			  GLXDrawable draw, GLXDrawable read,
+			  __DRIid draw, __DRIid read,
 			  __DRIcontext *ctx, const __GLcontextModes * modes,
 			  __DRIscreenPrivate *psp)
 {
@@ -419,7 +419,7 @@ static Bool DoBindContext(Display *dpy,
     __DRIcontextPrivate * const pcp = ctx->private;
 
 
-    /* Find the _DRIdrawable which corresponds to the writing GLXDrawable */
+    /* Find the _DRIdrawable which corresponds to the writing drawable. */
     pdraw = __driFindDrawable(psp->drawHash, draw);
     if (!pdraw) {
 	/* Allocate a new drawable */
@@ -441,7 +441,7 @@ static Bool DoBindContext(Display *dpy,
     }
     pdp = (__DRIdrawablePrivate *) pdraw->private;
 
-    /* Find the _DRIdrawable which corresponds to the reading GLXDrawable */
+    /* Find the _DRIdrawable which corresponds to the reading drawable. */
     if (read == draw) {
         /* read buffer == draw buffer */
         prp = pdp;
@@ -499,7 +499,7 @@ static Bool DoBindContext(Display *dpy,
  * function.
  */
 static Bool driBindContext3(Display *dpy, int scrn,
-                            GLXDrawable draw, GLXDrawable read,
+                            __DRIid draw, __DRIid read,
                             __DRIcontext * ctx)
 {
     __DRIscreen *pDRIScreen;
@@ -773,7 +773,7 @@ static int64_t driSwapBuffersMSC( Display * dpy, void *drawablePriv,
  */
 static void *driCreateNewDrawable(Display *dpy,
 				  const __GLcontextModes *modes,
-				  GLXDrawable draw,
+				  __DRIid draw,
 				  __DRIdrawable *pdraw,
 				  int renderType,
 				  const int *attrs)
@@ -868,7 +868,7 @@ static void *driCreateNewDrawable(Display *dpy,
    return (void *) pdp;
 }
 
-static __DRIdrawable *driGetDrawable(Display *dpy, GLXDrawable draw,
+static __DRIdrawable *driGetDrawable(Display *dpy, __DRIid draw,
 					 void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;

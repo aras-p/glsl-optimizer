@@ -254,7 +254,7 @@ struct __DRIswapInfoRec {
 };
 
 
-typedef Bool (GetDrawableInfo)( Display *dpy, int scrn, Drawable draw,
+typedef Bool (GetDrawableInfo)( Display *dpy, int scrn, __DRIid draw,
     unsigned int * index, unsigned int * stamp,
     int * x, int * y, int * width, int * height,
     int * numClipRects, drm_clip_rect_t * pClipRects,
@@ -281,7 +281,7 @@ struct __DRIdrawablePrivateRec {
     /**
      * X's drawable ID associated with this private drawable.
      */
-    GLXDrawable draw;
+    __DRIid draw;
     __DRIdrawable *pdraw;
 
     /**
