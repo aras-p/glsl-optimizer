@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.90 2002/10/02 21:44:08 brianp Exp $ */
+/* $Id: mtypes.h,v 1.91 2002/10/02 22:05:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -699,7 +699,6 @@ struct gl_polygon_attrib {
    GLenum CullFaceMode;		/* Culling mode GL_FRONT or GL_BACK */
    GLfloat OffsetFactor;	/* Polygon offset factor, from user */
    GLfloat OffsetUnits;		/* Polygon offset units, from user */
-   GLfloat OffsetMRD;		/* = OffsetUnits * visual->MRD */
    GLboolean OffsetPoint;	/* Offset in GL_POINT mode */
    GLboolean OffsetLine;	/* Offset in GL_LINE mode */
    GLboolean OffsetFill;	/* Offset in GL_FILL mode */

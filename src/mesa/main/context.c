@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.177 2002/09/27 02:45:37 brianp Exp $ */
+/* $Id: context.c,v 1.178 2002/10/02 22:05:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1270,7 +1270,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Polygon.StippleFlag = GL_FALSE;
    ctx->Polygon.OffsetFactor = 0.0F;
    ctx->Polygon.OffsetUnits = 0.0F;
-   ctx->Polygon.OffsetMRD = 0.0F;
    ctx->Polygon.OffsetPoint = GL_FALSE;
    ctx->Polygon.OffsetLine = GL_FALSE;
    ctx->Polygon.OffsetFill = GL_FALSE;
