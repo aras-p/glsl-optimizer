@@ -513,8 +513,11 @@ struct r300_vap_reg_state {
 
 /* Vertex shader state */
 
-/* 64 appears to be the maximum */
-#define VSF_MAX_FRAGMENT_LENGTH (64*4)
+/* Tested with rv350 and verified from misc web pages. */
+#define VSF_MAX_FRAGMENT_LENGTH (256*4)
+	
+/* Tested with rv350 and verified from misc web pages. */
+#define VSF_MAX_FRAGMENT_TEMPS (32)
 
 
 struct r300_vertex_shader_fragment {

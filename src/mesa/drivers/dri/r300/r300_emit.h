@@ -200,13 +200,14 @@ static __inline__ uint32_t cmdpacify(void)
 	}
 
 	/* must be sent to switch to 2d commands */
+/*
 void static inline end_3d(PREFIX_VOID)
 {
 LOCAL_VARS
 (void)cmd_reserved; (void)cmd_written;
 
 cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
-					0, \
+					0, \ // ??!
 					__FUNCTION__); \
 
 cmd[0].header.cmd_type=R300_CMD_END3D;
@@ -218,11 +219,12 @@ LOCAL_VARS
 (void)cmd_reserved; (void)cmd_written;
 
 cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
-					0, \
+					0, \ // ??!
 					__FUNCTION__); \
 
 cmd[0].i=cmdcpdelay(count);
 }
+*/
 
 /* fire vertex buffer */
 static void inline fire_AOS(PREFIX int vertex_count, int type)

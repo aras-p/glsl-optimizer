@@ -422,7 +422,6 @@ static unsigned long t_opcode(enum vp_opcode opcode)
 		case VP_OPCODE_EXP: return R300_VPI_OUT_OP_EXP;
 		case VP_OPCODE_FRC: return R300_VPI_OUT_OP_FRC;
 		case VP_OPCODE_LG2: return R300_VPI_OUT_OP_LG2;
-		case VP_OPCODE_LIT: return R300_VPI_OUT_OP_LIT;
 		case VP_OPCODE_LOG: return R300_VPI_OUT_OP_LOG;
 		case VP_OPCODE_MAD: return R300_VPI_OUT_OP_MAD;
 		case VP_OPCODE_MAX: return R300_VPI_OUT_OP_MAX;
@@ -472,7 +471,10 @@ static void translate_program(struct r300_vertex_program *vp)
 	VERTEX_SHADER_INSTRUCTION t2rs[1024];
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
-	int u_temp_i=63; /* Initial value should be last tmp reg that hw supports */
+	/* Initial value should be last tmp reg that hw supports.
+	   Strangely enough r300 doesnt mind even though these would be out of range.
+	   Smart enough to realize that it doesnt need it? */
+	int u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1;
 #ifdef SRCS_WRITABLE
 	struct vp_src_register src[3];
 #else	
@@ -501,12 +503,12 @@ static void translate_program(struct r300_vertex_program *vp)
 				o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[2]),
 						SWIZZLE_X, SWIZZLE_Y,
 						SWIZZLE_Z, SWIZZLE_W,
-						t_src_class(src[0].File), VSF_FLAG_NONE);
+						t_src_class(src[2].File), VSF_FLAG_NONE);
 
 				o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[2]),
 						SWIZZLE_ZERO, SWIZZLE_ZERO,
 						SWIZZLE_ZERO, SWIZZLE_ZERO,
-						t_src_class(src[0].File), VSF_FLAG_NONE);
+						t_src_class(src[2].File), VSF_FLAG_NONE);
 				o_inst->src3=0;
 				o_inst++;
 						
@@ -601,7 +603,8 @@ static void translate_program(struct r300_vertex_program *vp)
 #ifdef SRCS_WRITABLE
 			vpi->Opcode=VP_OPCODE_MAX;
 			src[1]=src[0];
-			src[1].Negate=GL_TRUE;
+			src[1].Negate=!src[0].Negate;
+			operands=op_operands(vpi->Opcode);
 			break;
 #else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, vpi->DstReg.Index,
@@ -647,6 +650,33 @@ static void translate_program(struct r300_vertex_program *vp)
 			u_temp_i--;
 			goto next;
 			
+		case VP_OPCODE_LIT://LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W} 
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_LIT, vpi->DstReg.Index,
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			/* NOTE: Users swizzling might not work. */
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[0]), // x
+					t_swizzle(src[0].Swizzle[3]), // w
+					t_swizzle(src[0].Swizzle[2]), // z
+					t_swizzle(src[0].Swizzle[1]), // y
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[1]), // y
+					t_swizzle(src[0].Swizzle[3]), // w
+					t_swizzle(src[0].Swizzle[2]), // z
+					t_swizzle(src[0].Swizzle[0]), // x
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[1]), // y
+					t_swizzle(src[0].Swizzle[0]), // x
+					t_swizzle(src[0].Swizzle[2]), // z
+					t_swizzle(src[0].Swizzle[3]), // w
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			goto next;
+			
 		case VP_OPCODE_DPH://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -662,7 +692,7 @@ static void translate_program(struct r300_vertex_program *vp)
 			o_inst->src3=0;
 			goto next;
 			
-		case VP_OPCODE_XPD:
+		case VP_OPCODE_XPD: /* Broken due to swizzling */
 		/* ADD TMP 0.X Y Z PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
 		   MUL TMP 1.X Y Z W TMP 0{} {Z X Y ZERO} PARAM 1{} {Y Z X ZERO} 
 		   MAD RESULT 1.X Y Z W TMP 0{} {Y Z X ONE} PARAM 1{} {Z X Y ONE} TMP 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W*/

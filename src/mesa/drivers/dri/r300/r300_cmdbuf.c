@@ -601,7 +601,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 	assert(h < (1 << 16));
 
 	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 8 * sizeof(int),
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 8,
 							__FUNCTION__);
 
 	cmd[0].header.cmd_type = R300_CMD_PACKET3;
@@ -631,7 +631,7 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 
 		cmd =
 		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
-								1 * sizeof(int),
+								1,
 								__FUNCTION__);
 		cmd[0].i = 0;
 		cmd[0].wait.cmd_type = R300_CMD_WAIT;

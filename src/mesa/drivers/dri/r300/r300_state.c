@@ -1607,18 +1607,30 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext* ctx = rmesa->radeon.glCtx;
+	struct r300_vertex_shader_fragment unk4={
+			length: 4,
+			body: { f: {
+				/*0.0*/(rand()%100)/10.0,
+				/*0.0*/(rand()%100)/10.0,
+				/*1.0*/(rand()%100)/10.0,
+				/*0.0*/(rand()%100)/10.0
+				} }
+			};
 	LOCAL_VARS
-
-	if(rmesa->current_vp != NULL){
-		r300SetupVertexProgram(rmesa);
-		return ;
-	}
 
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
 
+	/* Not sure why this doesnt work...
+	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
+	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
+	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
+	if(rmesa->current_vp != NULL){
+		r300SetupVertexProgram(rmesa);
+		return ;
+	}
 
 /* This needs to be replaced by vertex shader generation code */
 
