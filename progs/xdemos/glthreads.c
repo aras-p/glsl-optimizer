@@ -1,4 +1,4 @@
-/* $Id: glthreads.c,v 1.1 2000/07/20 20:12:17 brianp Exp $ */
+/* $Id: glthreads.c,v 1.2 2002/03/08 19:44:28 brianp Exp $ */
 
 /*
  * Copyright (C) 2000  Brian Paul   All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <GL/glx.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <pthread.h>
 

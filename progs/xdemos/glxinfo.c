@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.14 2001/04/24 20:57:36 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.15 2002/03/08 19:44:28 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -408,7 +408,7 @@ print_visual_attribs_short_header(void)
 static void
 print_visual_attribs_short(const struct visual_attribs *attribs)
 {
-   char *caveat;
+   char *caveat = NULL;
 #ifdef GLX_EXT_visual_rating
    if (attribs->visualCaveat == GLX_NONE_EXT || attribs->visualCaveat == 0)
       caveat = "None";
