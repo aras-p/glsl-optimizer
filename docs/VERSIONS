@@ -1239,7 +1239,7 @@ Mesa Version History
 	- ARB_fragment_program KIL instruction was incorrect
 
 
-6.1  Month day, 2004
+6.1  August 18, 2004
     New:
 	- Revamped Makefile system
 	- glXUseRotatedXFont() utility (see xdemos/xuserotfont.c)
