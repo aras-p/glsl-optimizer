@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.7 2001/02/14 22:40:21 brianp Exp $ */
+/* $Id: s_span.c,v 1.8 2001/02/15 22:59:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,7 +99,7 @@ static GLuint clip_span( GLcontext *ctx,
       }
       else {
          /* partially off left side */
-         MEMSET(mask, 0, -x); 
+         BZERO(mask, -x * sizeof(GLubyte)); 
       }
    }
 
@@ -193,7 +193,7 @@ void gl_write_index_span( GLcontext *ctx,
 
    if ((swrast->_RasterMask & WINCLIP_BIT) || primitive==GL_BITMAP) {
       if ((n = clip_span(ctx,n,x,y,mask)) == 0) {
-	 return;
+         return;
       }
    }
 
@@ -210,8 +210,8 @@ void gl_write_index_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
    }
 
@@ -223,7 +223,7 @@ void gl_write_index_span( GLcontext *ctx,
    if (ctx->Stencil.Enabled) {
       /* first stencil test */
       if (_mesa_stencil_and_ztest_span(ctx, n, x, y, z, mask) == GL_FALSE) {
-	 return;
+         return;
       }
    }
    else if (ctx->Depth.Test) {
@@ -289,8 +289,8 @@ void gl_write_monoindex_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
    }
 
@@ -479,10 +479,11 @@ void gl_write_rgba_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+	write_all = GL_FALSE;
    }
 
    /* Polygon Stippling */
@@ -603,10 +604,11 @@ void gl_write_monocolor_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+         write_all = GL_FALSE;
    }
 
    /* Polygon Stippling */
@@ -797,10 +799,11 @@ void gl_write_texture_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+         write_all = GL_FALSE;
    }
 
    /* Polygon Stippling */
@@ -942,10 +945,11 @@ gl_write_multitexture_span( GLcontext *ctx,
 
    /* Do the scissor test */
    if (ctx->Scissor.Enabled) {
-      if (gl_scissor_span( ctx, n, x, y, mask ) == 0) {
-	 return;
+      if ((n = _mesa_scissor_span( ctx, n, x, y, mask )) == 0) {
+         return;
       }
-      write_all = GL_FALSE;
+      if (mask[0] == 0)
+         write_all = GL_FALSE;
    }
 
    /* Polygon Stippling */
