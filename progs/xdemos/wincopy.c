@@ -55,7 +55,7 @@ static GLfloat Angle = 0.0;
 
 static GLboolean DrawFront = GL_FALSE;
 
-
+PFNGLXMAKECURRENTREADSGIPROC make_context_current = NULL;
 
 static Window
 CreateWindow(Display *dpy, int scrnum, XVisualInfo *visinfo,
@@ -100,7 +100,7 @@ static void
 Redraw(void)
 {
    /* make the first window the current one */
-   if (!glXMakeContextCurrent(Dpy, Win[0], Win[0], Context)) {
+   if (! (*make_context_current)(Dpy, Win[0], Win[0], Context)) {
       printf("glXMakeContextCurrent failed in Redraw()\n");
       return;
    }
@@ -145,7 +145,7 @@ Redraw(void)
 
 
    /* copy image from window 0 to window 1 */
-   if (!glXMakeContextCurrent(Dpy, Win[1], Win[0], Context)) {
+   if (!(*make_context_current)(Dpy, Win[1], Win[0], Context)) {
       printf("glXMakeContextCurrent failed in Redraw()\n");
       return;
    }
@@ -259,8 +259,26 @@ Init(void)
    ScrNum = DefaultScreen(Dpy);
 
    glXQueryVersion(Dpy, &major, &minor);
-   if (major * 100 + minor < 103) {
-      fprintf(stderr, "Sorry, this program requires GLX 1.3\n");
+
+   if (major * 100 + minor >= 103) {
+      make_context_current = (PFNGLXMAKECURRENTREADSGIPROC)
+	  glXGetProcAddressARB( (GLubyte *) "glXMakeContextCurrent" );
+   }
+   else {
+      const char * const glxExtensions = glXQueryExtensionsString(Dpy, ScrNum);
+      const char * ext = strstr( glxExtensions, "GLX_SGI_make_current_read" );
+      const size_t len = strlen( "GLX_SGI_make_current_read" );
+      
+      if ( (ext != NULL) 
+	   && ((ext[len] == ' ') || (ext[len] == '\0')) ) {
+	 make_context_current = (PFNGLXMAKECURRENTREADSGIPROC) 
+	     glXGetProcAddressARB( (GLubyte *) "glXMakeCurrentReadSGI" );
+      }
+   }
+
+   if (make_context_current == NULL) {
+      fprintf(stderr, "Sorry, this program requires either GLX 1.3 "
+	      "or GLX_SGI_make_current_read.\n");
       exit(1);
    }
 
