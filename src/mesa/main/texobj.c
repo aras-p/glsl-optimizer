@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.29 2000/10/24 02:53:18 brianp Exp $ */
+/* $Id: texobj.c,v 1.30 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 #include "context.h"
 #include "enums.h"
 #include "hash.h"
+#include "macros.h"
 #include "mem.h"
 #include "teximage.h"
 #include "texstate.h"

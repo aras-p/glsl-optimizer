@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.11 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: macros.h,v 1.12 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,33 +37,9 @@
 #include "glheader.h"
 
 
-#ifdef DEBUG
-#  define ASSERT(X)   assert(X)
-#else
-#  define ASSERT(X)
-#endif
-
-
-#if defined(__GNUC__)
-#define INLINE __inline__
-#elif defined(__MSC__)
-#define INLINE __inline
-#else
-#define INLINE
-#endif
-
-
 /* Limits: */
 #define MAX_GLUSHORT	0xffff
 #define MAX_GLUINT	0xffffffff
-
-
-/* Some compilers don't like some of Mesa's const usage */
-#ifdef NO_CONST
-#  define CONST
-#else
-#  define CONST const
-#endif
 
 
 /* Pi */

@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.19 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: depth.c,v 1.20 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "context.h"
 #include "enums.h"
 #include "depth.h"
+#include "macros.h"
 #include "mem.h"
 #include "pb.h"
 #include "types.h"

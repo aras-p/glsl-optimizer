@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.19 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: stencil.c,v 1.20 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "depth.h"
+#include "macros.h"
 #include "mem.h"
 #include "pb.h"
 #include "stencil.h"

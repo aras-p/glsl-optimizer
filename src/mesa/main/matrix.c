@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.21 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: matrix.c,v 1.22 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "enums.h"
+#include "macros.h"
 #include "matrix.h"
 #include "mem.h"
 #include "mmath.h"

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.22 2000/10/29 18:12:14 brianp Exp $ */
+/* $Id: config.h,v 1.23 2000/10/29 18:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -197,11 +197,32 @@
 #define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
 
 
+/*
+ * Language/compiler stuff
+ */
+
 /* Some compilers don't like some of Mesa's const usage */
 #ifdef NO_CONST
 #  define CONST
 #else
 #  define CONST const
+#endif
+
+
+/* Function inlining */
+#if defined(__GNUC__)
+#  define INLINE __inline__
+#elif defined(__MSC__)
+#  define INLINE __inline
+#else
+#  define INLINE
+#endif
+
+
+#ifdef DEBUG
+#  define ASSERT(X)   assert(X)
+#else
+#  define ASSERT(X)
 #endif
 
 
