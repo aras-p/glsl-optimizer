@@ -269,7 +269,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 }
 
 
-static void
+static void GLAPIENTRY
 _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 			     const GLubyte mask[],
 			     GLchan src[][4],

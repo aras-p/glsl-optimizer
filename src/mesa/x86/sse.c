@@ -1,4 +1,4 @@
-/* $Id: sse.c,v 1.3 2002/04/09 14:58:03 keithw Exp $ */
+/* $Id: sse.c,v 1.4 2003/10/21 23:53:34 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,13 +48,13 @@ DECLARE_XFORM_GROUP( sse, 3 )
 
 #if 1
 /* Some functions are not written in SSE-assembly, because the fpu ones are faster */
-extern void _mesa_sse_transform_normals_no_rot( NORM_ARGS );
-extern void _mesa_sse_transform_rescale_normals( NORM_ARGS );
-extern void _mesa_sse_transform_rescale_normals_no_rot( NORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_normals_no_rot( NORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_rescale_normals( NORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_rescale_normals_no_rot( NORM_ARGS );
 
-extern void _mesa_sse_transform_points4_general( XFORM_ARGS );
-extern void _mesa_sse_transform_points4_3d( XFORM_ARGS );
-extern void _mesa_sse_transform_points4_identity( XFORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_points4_general( XFORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_points4_3d( XFORM_ARGS );
+extern void _ASMAPI _mesa_sse_transform_points4_identity( XFORM_ARGS );
 #else
 DECLARE_NORM_GROUP( sse )
 #endif
