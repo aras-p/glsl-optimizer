@@ -790,7 +790,7 @@ execute_program( GLcontext *ctx,
                   a[1] = 0.0F;
                result[0] = 1.0F;
                result[1] = a[0];
-               result[2] = (a[0] > 0.0F) ? (GLfloat)_mesa_pow(2.0, a[3]) : 0.0F;
+               result[2] = (a[0] > 0.0F) ? (GLfloat) exp(a[3] * log(a[1])) : 0.0F;
                result[3] = 1.0F;
                store_vector4( inst, machine, result );
             }
