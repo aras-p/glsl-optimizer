@@ -197,6 +197,47 @@ enum {
 #define VERT_BIT_TEX(u)  (1 << (VERT_ATTRIB_TEX0 + (u)))
 
 
+/* Fragment programs use a different but related set of attributes:
+ */
+
+/* Fragment input registers / attributes */
+#define FRAG_ATTRIB_WPOS  0
+#define FRAG_ATTRIB_COL0  1
+#define FRAG_ATTRIB_COL1  2
+#define FRAG_ATTRIB_FOGC  3
+#define FRAG_ATTRIB_TEX0  4
+#define FRAG_ATTRIB_TEX1  5
+#define FRAG_ATTRIB_TEX2  6
+#define FRAG_ATTRIB_TEX3  7
+#define FRAG_ATTRIB_TEX4  8
+#define FRAG_ATTRIB_TEX5  9
+#define FRAG_ATTRIB_TEX6  10
+#define FRAG_ATTRIB_TEX7  11
+
+/* Bitmasks for the above */
+#define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
+#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
+#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
+#define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
+#define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
+#define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
+#define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
+#define FRAG_BIT_TEX3  (1 << FRAG_ATTRIB_TEX3)
+#define FRAG_BIT_TEX4  (1 << FRAG_ATTRIB_TEX4)
+#define FRAG_BIT_TEX5  (1 << FRAG_ATTRIB_TEX5)
+#define FRAG_BIT_TEX6  (1 << FRAG_ATTRIB_TEX6)
+#define FRAG_BIT_TEX7  (1 << FRAG_ATTRIB_TEX7)
+
+#define FRAG_BITS_TEX_ANY (FRAG_BIT_TEX0|	\
+			   FRAG_BIT_TEX1|	\
+			   FRAG_BIT_TEX2|	\
+			   FRAG_BIT_TEX3|	\
+			   FRAG_BIT_TEX4|	\
+			   FRAG_BIT_TEX5|	\
+			   FRAG_BIT_TEX6|	\
+			   FRAG_BIT_TEX7)
+
+
 
 /**
  * Maximum number of temporary vertices required for clipping.  
