@@ -1,4 +1,4 @@
-			Mesa 5.1 DOS/DJGPP Port v1.4
+			Mesa 6.0 DOS/DJGPP Port v1.5
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -6,7 +6,7 @@
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 5.1, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 6.0, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -41,9 +41,6 @@ Available options:
 			compilation of most DMesa code and requires fxMesa.
 			As a consequence, you'll need the DJGPP Glide3
 			library to build any application.
-			default = no
-	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
-			This is experimental and not intensively tested.
 			default = no
 	HAVE_X86=1	optimize for i386.
 			default = no
@@ -103,9 +100,8 @@ FAQ:
 2. Using Mesa for DJGPP
 
    Q) DMesa is so SLOOOW! The Win32 OpenGL performs so much better...
-   A) Is that a question? If you have a 3dfx Voodoo Banshee or higher card,
-      you're lucky (check http://sourceforge.net/projects/glide for the DJGPP
-      port). If you have a Matrox Millennium I card, you just MIGHT be lucky...
+   A) Is that a question? If you have a 3dfx Voodoo^2 or higher card, you're
+      lucky (check http://sourceforge.net/projects/glide for the DJGPP port).
       If you haven't, sorry; everything is done in software. Suggestions?
 
    Q) I tried to set refresh rate w/ DMesa, but without success.
@@ -118,6 +114,23 @@ FAQ:
    A) Another weird "feature" is that buffer width must be multiple of 8 (I'm a
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
+
+   Q) How do I query for a list of available video modes to choose as a visual?
+   A) This is an ugly hack, for which I'm sure I'll burn in hell.
+      First, query for a list of modes:
+	n = DMesaGetIntegerv(DMESA_GET_VIDEO_MODES, NULL);
+      If `n' is strictly positive, you allocate an array of pointers to a given
+      struct (which is guaranteed to be extended only - not changed in future):
+	struct {
+		int xres, yres;
+		int bpp;
+	} **l = malloc(n * sizeof(void **));
+      Now pass the newly allocated buffer to fill in:
+	DMesaGetIntegerv(DMESA_GET_VIDEO_MODES, (GLint *)l);
+      And collect the info:
+	for (i = 0; i < n; i++) {
+	    printf("%dx%d:%d\n", l[i]->xres, l[i]->yres, l[i]->bpp);
+	}
 
    Q) The GLUT is incomplete.
    A) See below.
@@ -216,6 +229,10 @@ v1.4 (dec-2003)
 	* fixed some ALPHA issues
 	* minor changes to PC_HW/timer interface
 	x hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
+
+v1.5 (dec-2003)
+	+ added interface to query available "visuals" (GLFW - Marcus Geelnard)
+	- removed Matrox Millennium MGA2064W driver
 
 
 

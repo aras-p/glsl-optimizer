@@ -1799,8 +1799,8 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
        }
        attribs[numAttribs++] = FXMESA_NONE;
 
-       /* [dBorca] need to revise this ASAP!!! */
-       /*if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
+       /* [dBorca]  we should take an envvar for `fxMesaSelectCurrentBoard'!!! */
+       if ((hw = fxMesaSelectCurrentBoard(0))==GR_SSTTYPE_VOODOO) {
          b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
          if ((v->undithered_pf!=PF_Index) && (b->backimage)) {
 	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
@@ -1810,7 +1810,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 	     b->FXwindowHack = GL_FALSE;
          }
        }
-       else */{
+       else {
          if (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')
 	   b->FXctx = fxMesaCreateContext(w, GR_RESOLUTION_NONE,
 					  GR_REFRESH_75Hz, attribs);

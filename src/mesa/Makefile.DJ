@@ -40,9 +40,6 @@
 #			As a consequence, you'll need the DJGPP Glide3
 #			library to build any application.
 #			default = no
-#	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
-#			This is experimental and not intensively tested.
-#			default = no
 #	HAVE_X86=1	optimize for i386.
 #			default = no
 #	HAVE_MMX=1	allow MMX specializations, provided your assembler
@@ -80,12 +77,7 @@ CFLAGS += -D__DOS__ -DH3
 CFLAGS += -I$(GLIDE)/include -DFX
 LIBNAME = "Mesa/FX DJGPP"
 else
-ifeq ($(MATROX),1)
-CFLAGS += -DMATROX
-LIBNAME = "Mesa/MGA DJGPP"
-else
 LIBNAME = "Mesa DJGPP"
-endif
 endif
 
 AR = ar
@@ -305,13 +297,6 @@ DRIVER_SOURCES += \
 	drivers/glide/fxglidew.c \
 	drivers/glide/fxg.c
 else
-ifeq ($(MATROX),1)
-DRIVER_SOURCES += \
-	drivers/dos/mga/mga.c \
-	drivers/dos/mga/mga_hw.c \
-	drivers/dos/mga/mga_mode.c \
-	drivers/dos/dpmi.c
-else
 DRIVER_SOURCES += \
 	drivers/dos/video.c \
 	drivers/dos/virtual.S \
@@ -319,7 +304,6 @@ DRIVER_SOURCES += \
 	drivers/dos/blit.S \
 	drivers/dos/vga.c \
 	drivers/dos/dpmi.c
-endif
 endif
 
 SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
@@ -369,5 +353,4 @@ clean:
 	-$(call UNLINK,tnl/*.o)
 	-$(call UNLINK,x86/*.o)
 	-$(call UNLINK,drivers/dos/*.o)
-	-$(call UNLINK,drivers/dos/mga/*.o)
 	-$(call UNLINK,drivers/glide/*.o)

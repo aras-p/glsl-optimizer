@@ -77,6 +77,7 @@ struct __pixelformat__
 };
 
 WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
+static GLushort gammaTable[3*256];
 
 struct __pixelformat__ pix[] = {
    /* 16bit RGB565 single buffer with depth */
@@ -426,12 +427,34 @@ wglGetSwapIntervalEXT (void)
 GLAPI BOOL GLAPIENTRY
 wglGetDeviceGammaRamp3DFX (HDC hdc, LPVOID arrays)
 {
+ /* gammaTable should be per-context */
+ memcpy(arrays, gammaTable, 3*256*sizeof(GLushort));
  return TRUE;
 }
 
 GLAPI BOOL GLAPIENTRY
 wglSetDeviceGammaRamp3DFX (HDC hdc, LPVOID arrays)
 {
+ GLint i, tableSize, inc, index;
+ GLushort *red, *green, *blue;
+ FxU32 gammaTableR[256], gammaTableG[256], gammaTableB[256];
+
+ /* gammaTable should be per-context */
+ memcpy(gammaTable, arrays, 3*256*sizeof(GLushort));
+
+ tableSize = FX_grGetInteger(GR_GAMMA_TABLE_ENTRIES);
+ inc = 256 / tableSize;
+ red = (GLushort *)arrays;
+ green = (GLushort *)arrays + 256;
+ blue = (GLushort *)arrays + 512;
+ for (i = 0, index = 0; i < tableSize; i++, index += inc) {
+     gammaTableR[i] = red[index] >> 8;
+     gammaTableG[i] = green[index] >> 8;
+     gammaTableB[i] = blue[index] >> 8;
+ }
+
+ grLoadGammaTable(tableSize, gammaTableR, gammaTableG, gammaTableB);
+
  return TRUE;
 }
 

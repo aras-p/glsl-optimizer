@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -450,6 +450,7 @@ static void vesa_restore (void)
     r.x.ax = 0x4f02;
     r.x.bx = oldmode;
     __dpmi_int(0x10, &r);
+    oldmode = -1;
  }
 }
 

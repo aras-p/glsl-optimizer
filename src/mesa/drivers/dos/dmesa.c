@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.4 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -53,11 +53,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#ifndef MATROX
 #include "video.h"
-#else  /* MATROX */
-#include "mga/mga.h"
-#endif /* MATROX */
 #else  /* FX */
 #include "GL/fxmesa.h"
 #endif /* FX */
@@ -76,9 +72,6 @@ struct dmesa_visual {
    GLboolean rgb_flag;          /* RGB mode? */
    GLboolean sw_alpha;          /* use Mesa's alpha buffer? */
    GLuint depth;                /* bits per pixel (1, 8, 24, etc) */
-#ifdef MATROX
-   int stride_in_pixels;
-#endif
    int zbuffer;                 /* Z=buffer: 0=no, 1=SW, -1=HW */
 };
 
@@ -116,18 +109,7 @@ struct dmesa_context {
 #define FLIP(y)  (dmesa->Buffer->height - (y) - 1)
 #define FLIP2(y) (_b_ - (y))
 
-
-#ifndef MATROX
 #define DSTRIDE dmesa->Buffer->width
-#else
-#define DSTRIDE dmesa->visual->stride_in_pixels
-#define vl_putpixel mga_putpixel
-#define vl_mixrgba  mga_mixrgb
-#define vl_mixrgb   mga_mixrgb
-#define vl_getrgba  mga_getrgba
-#define vl_setz     mga_setz
-#define vl_getz     mga_getz
-#endif
 
 /****************************************************************************
  * RGB[A]
@@ -138,7 +120,6 @@ static void write_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
  const DMesaContext dmesa = (DMesaContext)ctx;
  GLuint i, offset;
 
-#ifndef MATROX
  offset = DSTRIDE * FLIP(y) + x;
  if (mask) {
     /* draw some pixels */
@@ -153,29 +134,6 @@ static void write_rgba_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
         vl_putpixel(offset, vl_mixrgba(rgba[i]));
     }
  }
-#else  /* MATROX */
- y = FLIP(y);
- if (mask) {
-    /* draw some pixels */
-    offset = 0;
-    for (i = 0; i < n; i++) {
-        if (mask[i]) {
-           ++offset;
-        } else {
-           if (offset != 0) {
-              mga_draw_span_rgb_tx32(x + i - offset, y, offset, (const unsigned long *)(&rgba[i-offset]));
-              offset = 0;
-           }
-        }
-    }
-    if (offset != 0) {
-       mga_draw_span_rgb_tx32(x + n - offset, y, offset, (const unsigned long *)(&rgba[n-offset]));
-    }
- } else {
-    /* draw all pixels */
-    mga_draw_span_rgb_tx32(x, y, n, (const unsigned long *)rgba);
- }
-#endif /* MATROX */
 }
 
 
@@ -319,7 +277,6 @@ static void read_rgba_pixels (const GLcontext *ctx,
 /****************************************************************************
  * Index
  ***************************************************************************/
-#ifndef MATROX
 static void write_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
                               const GLuint index[], const GLubyte mask[])
 {
@@ -477,90 +434,12 @@ static void read_index_pixels (const GLcontext *ctx,
     }
  }
 }
-#endif /* !MATROX */
 
 
 
 /****************************************************************************
  * Z-buffer
  ***************************************************************************/
-#ifdef MATROX
-static void write_depth_span (GLcontext *ctx, GLuint n, GLint x, GLint y,
-                              const GLdepth depth[], const GLubyte mask[])
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint i, offset;
-
- offset = DSTRIDE * FLIP(y) + x;
- if (mask) {
-    /* draw some values */
-    for (i=0; i<n; i++, offset++) {
-        if (mask[i]) {
-           vl_setz(offset, depth[i]);
-        }
-    }
- } else {
-    /* draw all values */
-    for (i=0; i<n; i++, offset++) {
-        vl_setz(offset, depth[i]);
-    }
- }
-}
-
-
-
-static void read_depth_span (GLcontext *ctx, GLuint n, GLint x, GLint y,
-                             GLdepth depth[])
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint i, offset;
-
- offset = DSTRIDE * FLIP(y) + x;
- /* read all values */
- for (i=0; i<n; i++, offset++) {
-     depth[i] = vl_getz(offset);
- }
-}
-
-
-
-static void write_depth_pixels (GLcontext *ctx, GLuint n,
-                                const GLint x[], const GLint y[],
-                                const GLdepth depth[], const GLubyte mask[])
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint i, _w_ = DSTRIDE, _b_ = dmesa->Buffer->height - 1;
-
- if (mask) {
-    /* draw some values */
-    for (i=0; i<n; i++) {
-        if (mask[i]) {
-           vl_setz(FLIP2(y[i])*_w_ + x[i], depth[i]);
-        }
-    }
- } else {
-    /* draw all values */
-    for (i=0; i<n; i++) {
-        vl_setz(FLIP2(y[i])*_w_ + x[i], depth[i]);
-    }
- }
-}
-
-
-
-static void read_depth_pixels (GLcontext *ctx, GLuint n,
-                               const GLint x[], const GLint y[],
-                               GLdepth depth[])
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint i, _w_ = DSTRIDE, _b_ = dmesa->Buffer->height - 1;
-
- /* read all values */
- for (i=0; i<n; i++) {
-     depth[i] = vl_getz(FLIP2(y[i])*_w_ + x[i]);
- }
-}
-#endif /* MATROX */
 
 
 
@@ -571,8 +450,6 @@ static void read_depth_pixels (GLcontext *ctx, GLuint n,
 /*
  * NON-depth-buffered flat triangle.
  */
-#ifndef MATROX
-
 #define NAME tri_rgb_flat
 
 #define SETUP_CODE \
@@ -589,34 +466,11 @@ static void read_depth_pixels (GLcontext *ctx, GLuint n,
 
 #include "swrast/s_tritemp.h"
 
-#else  /* MATROX */
-
-static void tri_rgb_flat (GLcontext *ctx,
-                          const SWvertex *v0,
-                          const SWvertex *v1,
-                          const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1, m2;
- m0.win[0] = v0->win[0];
- m0.win[1] = FLIP2(v0->win[1]);
- m1.win[0] = v1->win[0];
- m1.win[1] = FLIP2(v1->win[1]);
- m2.win[0] = v2->win[0];
- m2.win[1] = FLIP2(v2->win[1]);
- *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_flat((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
-}
-#endif /* MATROX */
-
 
 
 /*
  * Z-less flat triangle.
  */
-#ifndef MATROX
-
 #define NAME tri_rgb_flat_zless
 
 #define INTERP_Z 1
@@ -641,37 +495,11 @@ static void tri_rgb_flat (GLcontext *ctx,
 
 #include "swrast/s_tritemp.h"
 
-#else  /* MATROX */
-
-static void tri_rgb_flat_zless (GLcontext *ctx,
-                                const SWvertex *v0,
-                                const SWvertex *v1,
-                                const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1, m2;
- m0.win[0] = v0->win[0];
- m0.win[1] = FLIP2(v0->win[1]);
- m0.win[2] = v0->win[2];
- m1.win[0] = v1->win[0];
- m1.win[1] = FLIP2(v1->win[1]);
- m1.win[2] = v1->win[2];
- m2.win[0] = v2->win[0];
- m2.win[1] = FLIP2(v2->win[1]);
- m2.win[2] = v2->win[2];
- *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_flat_zless((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
-}
-#endif /* MATROX */
-
 
 
 /*
  * NON-depth-buffered iterated triangle.
  */
-#ifndef MATROX
-
 #define NAME tri_rgb_iter
 
 #define INTERP_RGB 1
@@ -692,36 +520,11 @@ static void tri_rgb_flat_zless (GLcontext *ctx,
 
 #include "swrast/s_tritemp.h"
 
-#else  /* MATROX */
-
-static void tri_rgb_iter (GLcontext *ctx,
-                          const SWvertex *v0,
-                          const SWvertex *v1,
-                          const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1, m2;
- m0.win[0] = v0->win[0];
- m0.win[1] = FLIP2(v0->win[1]);
- m1.win[0] = v1->win[0];
- m1.win[1] = FLIP2(v1->win[1]);
- m2.win[0] = v2->win[0];
- m2.win[1] = FLIP2(v2->win[1]);
- *(unsigned long *)m0.color = *(unsigned long *)v0->color;
- *(unsigned long *)m1.color = *(unsigned long *)v1->color;
- *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_iter((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
-}
-#endif /* MATROX */
-
 
 
 /*
  * Z-less iterated triangle.
  */
-#ifndef MATROX
-
 #define NAME tri_rgb_iter_zless
 
 #define INTERP_Z 1
@@ -748,32 +551,6 @@ static void tri_rgb_iter (GLcontext *ctx,
  }
 
 #include "swrast/s_tritemp.h"
-
-#else  /* MATROX */
-
-static void tri_rgb_iter_zless (GLcontext *ctx,
-                                const SWvertex *v0,
-                                const SWvertex *v1,
-                                const SWvertex *v2)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1, m2;
- m0.win[0] = v0->win[0];
- m0.win[1] = FLIP2(v0->win[1]);
- m0.win[2] = v0->win[2];
- m1.win[0] = v1->win[0];
- m1.win[1] = FLIP2(v1->win[1]);
- m1.win[2] = v1->win[2];
- m2.win[0] = v2->win[0];
- m2.win[1] = FLIP2(v2->win[1]);
- m2.win[2] = v2->win[2];
- *(unsigned long *)m0.color = *(unsigned long *)v0->color;
- *(unsigned long *)m1.color = *(unsigned long *)v1->color;
- *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_iter_zless((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
-}
-#endif /* MATROX */
 
 
 
@@ -828,41 +605,9 @@ static void dmesa_choose_tri (GLcontext *ctx)
  * Optimized line rendering
  ***************************************************************************/
 
-#ifdef MATROX
-static __inline void matrox_line_clip_hack (GLcontext *ctx, int _b_, MGAvertex *m0, const SWvertex *vert0, MGAvertex *m1, const SWvertex *vert1)
-{
- int x0 = vert0->win[0];
- int y0 = vert0->win[1];
- int x1 = vert1->win[0];
- int y1 = vert1->win[1];
- /* s_linetemp.h { */
- GLint w = ctx->DrawBuffer->Width;
- GLint h = ctx->DrawBuffer->Height;
- if ((x0==w) | (x1==w)) {
-    if ((x0==w) & (x1==w))
-       return;
-    x0 -= x0==w;
-    x1 -= x1==w;
- }
- if ((y0==h) | (y1==h)) {
-    if ((y0==h) & (y1==h))
-       return;
-    y0 -= y0==h;
-    y1 -= y1==h;
- }
- /* } s_linetemp.h */
- m0->win[0] = x0;
- m0->win[1] = FLIP2(y0);
- m1->win[0] = x1;
- m1->win[1] = FLIP2(y1);
-}
-#endif
-
 /*
  * NON-depth-buffered flat line.
  */
-#ifndef MATROX
-
 #define NAME line_rgb_flat
 
 #define INTERP_XY 1
@@ -878,28 +623,11 @@ static __inline void matrox_line_clip_hack (GLcontext *ctx, int _b_, MGAvertex *
 
 #include "swrast/s_linetemp.h"
 
-#else  /* MATROX */
-
-static void line_rgb_flat (GLcontext *ctx,
-                           const SWvertex *vert0,
-                           const SWvertex *vert1)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1;
- matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
- *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
- mga_draw_line_rgb_flat(&m0, &m1);
-}
-#endif /* MATROX */
-
 
 
 /*
  * Z-less flat line.
  */
-#ifndef MATROX
-
 #define NAME line_rgb_flat_zless
 
 #define INTERP_XY 1
@@ -921,65 +649,19 @@ static void line_rgb_flat (GLcontext *ctx,
 
 #include "swrast/s_linetemp.h"
 
-#else  /* MATROX */
-
-static void line_rgb_flat_zless (GLcontext *ctx,
-                                 const SWvertex *vert0,
-                                 const SWvertex *vert1)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1;
- matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
- m0.win[2] = vert0->win[2];
- m1.win[2] = vert1->win[2];
- *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
- mga_draw_line_rgb_flat_zless(&m0, &m1);
-}
-#endif /* MATROX */
 
 
-
-#ifndef MATROX
-#define line_rgb_iter NULL
-#define line_rgb_iter_zless NULL
-#else  /* MATROX */
 /*
  * NON-depth-buffered iterated line.
  */
-static void line_rgb_iter (GLcontext *ctx,
-                           const SWvertex *vert0,
-                           const SWvertex *vert1)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1;
- matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
- *(unsigned long *)m0.color = *(unsigned long *)vert0->color;
- *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
- mga_draw_line_rgb_iter(&m0, &m1);
-}
+#define line_rgb_iter NULL
 
 
 
 /*
  * Z-less iterated line.
  */
-static void line_rgb_iter_zless (GLcontext *ctx,
-                                 const SWvertex *vert0,
-                                 const SWvertex *vert1)
-{
- const DMesaContext dmesa = (DMesaContext)ctx;
- GLuint _b_ = dmesa->Buffer->height - 1;
- MGAvertex m0, m1;
- matrox_line_clip_hack(ctx, _b_, &m0, vert0, &m1, vert1);
- m0.win[2] = vert0->win[2];
- m1.win[2] = vert1->win[2];
- *(unsigned long *)m0.color = *(unsigned long *)vert0->color;
- *(unsigned long *)m1.color = *(unsigned long *)vert1->color;
- mga_draw_line_rgb_iter_zless(&m0, &m1);
-}
-#endif /* MATROX */
+#define line_rgb_iter_zless NULL
 
 
 
@@ -1067,7 +749,6 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 
  /* we can't handle color or index masking */
  if ((*colorMask == 0xffffffff) && (ctx->Color.IndexMask == 0xffffffff)) {
-#ifndef MATROX
     if (mask & DD_BACK_LEFT_BIT) {
        int color = c->visual->rgb_flag ? c->ClearColor : c->ClearIndex;
 
@@ -1079,27 +760,6 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 
        mask &= ~DD_BACK_LEFT_BIT;
     }
-#else  /* MATROX */
-    unsigned short z = -1;
-    int color = c->ClearColor;
-    if (mask & DD_DEPTH_BIT) {
-       z = ctx->Depth.Clear * 0xffff;
-    }
-    if (all) {
-       mga_clear(mask & DD_FRONT_LEFT_BIT,
-                 mask & DD_BACK_LEFT_BIT,
-                 mask & DD_DEPTH_BIT,
-                 0, 0, c->Buffer->width, c->Buffer->height,
-                 color, z);
-    } else {
-       mga_clear(mask & DD_FRONT_LEFT_BIT,
-                 mask & DD_BACK_LEFT_BIT,
-                 mask & DD_DEPTH_BIT,
-                 x, y, width, height,
-                 color, z);
-    }
-    mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT);
-#endif /* MATROX */
  }
 
  if (mask) {
@@ -1149,10 +809,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (const GLubyte *)"Mesa DJGPP"
-                                     #ifdef MATROX
-                                     " (MGA)"
-                                     #endif
-                                     "\0port (c) Borca Daniel oct-2003";
+                                     "\0port (c) Borca Daniel dec-2003";
         default:
              return NULL;
  }
@@ -1285,17 +942,7 @@ static void dmesa_init_pointers (GLcontext *ctx)
  /* The span functions should be in `dmesa_update_state', but I'm
   * pretty sure they will never change during the life of the Visual
   */
-#ifdef MATROX
- if (((DMesaContext)ctx)->visual->zbuffer == -1) {
-    /* Depth span/pixel functions */
-    dd->WriteDepthSpan = write_depth_span;
-    dd->WriteDepthPixels = write_depth_pixels;
-    dd->ReadDepthSpan = read_depth_span;
-    dd->ReadDepthPixels = read_depth_pixels;
- }
-#endif
 
-#ifndef MATROX
  /* Index span/pixel functions */
  dd->WriteCI32Span = write_index_span;
  dd->WriteCI8Span = write_index8_span;
@@ -1304,7 +951,6 @@ static void dmesa_init_pointers (GLcontext *ctx)
  dd->WriteMonoCIPixels = write_mono_index_pixels;
  dd->ReadCI32Span = read_index_span;
  dd->ReadCI32Pixels = read_index_pixels;
-#endif
 
  /* RGB(A) span/pixel functions */
  dd->WriteRGBASpan = write_rgba_span;
@@ -1355,15 +1001,9 @@ DMesaVisual DMesaCreateVisual (GLint width,
  GLint redBits, greenBits, blueBits, alphaBits, indexBits;
  GLboolean sw_alpha;
 
-#ifndef MATROX
  if (!dbFlag) {
     return NULL;
  }
-#else
- if (!rgbFlag) {
-    return NULL;
- }
-#endif
 
  alphaBits = 0;
 
@@ -1420,15 +1060,9 @@ DMesaVisual DMesaCreateVisual (GLint width,
  alphaBits = alphaSize;
  sw_alpha = (alphaBits > 0);
 
-#ifndef MATROX
  if ((colDepth=vl_video_init(width, height, colDepth, rgbFlag, refresh)) <= 0) {
     return NULL;
  }
-#else
- if (mga_open(width, height, colDepth, dbFlag ? 2 : 1, depthSize == 16, refresh) < 0) {
-    return NULL;
- }
-#endif
 
  if ((v=(DMesaVisual)CALLOC_STRUCT(dmesa_visual)) != NULL) {
     /* Create core visual */
@@ -1455,12 +1089,6 @@ DMesaVisual DMesaCreateVisual (GLint width,
     v->sw_alpha = sw_alpha;
 
     v->zbuffer = (depthSize > 0) ? 1 : 0;
-#ifdef MATROX
-    mga_get(MGA_GET_HPIXELS, &v->stride_in_pixels);
-    if (depthSize == 16) {
-       v->zbuffer = -1;
-    }
-#endif
  }
 
  return v;
@@ -1493,11 +1121,7 @@ void DMesaDestroyVisual (DMesaVisual v)
 #ifndef FX
  _mesa_destroy_visual((GLvisual *)v);
 
-#ifndef MATROX
  vl_video_exit();
-#else
- mga_close(1, 1);
-#endif
 
 #else
  fxMesaDestroyContext((fxMesaContext)v);
@@ -1537,9 +1161,7 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
 void DMesaDestroyBuffer (DMesaBuffer b)
 {
 #ifndef FX
-#ifndef MATROX
  free(b->the_window);
-#endif
  _mesa_destroy_framebuffer((GLframebuffer *)b);
 #endif
 }
@@ -1605,7 +1227,7 @@ void DMesaDestroyContext (DMesaContext c)
 
 GLboolean DMesaMoveBuffer (GLint xpos, GLint ypos)
 {
-#if !defined(FX) && !defined(MATROX)
+#ifndef FX
  GET_CURRENT_CONTEXT(ctx);
  DMesaBuffer b = ((DMesaContext)ctx)->Buffer;
 
@@ -1626,7 +1248,7 @@ GLboolean DMesaMoveBuffer (GLint xpos, GLint ypos)
 
 GLboolean DMesaResizeBuffer (GLint width, GLint height)
 {
-#if !defined(FX) && !defined(MATROX)
+#ifndef FX
  GET_CURRENT_CONTEXT(ctx);
  DMesaBuffer b = ((DMesaContext)ctx)->Buffer;
 
@@ -1652,11 +1274,9 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
 {
 #ifndef FX
  if ((c != NULL) && (b != NULL)) {
-#ifndef MATROX
     if (vl_sync_buffer(&b->the_window, b->xpos, b->ypos, b->width, b->height) != 0) {
        return GL_FALSE;
     }
-#endif
 
     c->Buffer = b;
 
@@ -1685,13 +1305,7 @@ void DMesaSwapBuffers (DMesaBuffer b)
 #ifndef FX
  GET_CURRENT_CONTEXT(ctx);
  _mesa_notifySwapBuffers(ctx);
-#ifndef MATROX
  vl_flip();
-#else
- if (((DMesaContext)ctx)->visual->db_flag) {
-    mga_swapbuffers(1);
- }
-#endif
 #else
  fxMesaSwapBuffers();
 #endif
@@ -1701,7 +1315,7 @@ void DMesaSwapBuffers (DMesaBuffer b)
 
 void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue)
 {
-#if !defined(FX) && !defined(MATROX)
+#ifndef FX
  vl_setCI(ndx, red, green, blue);
 #endif
 }
@@ -1722,33 +1336,64 @@ void *DMesaGetCurrentContext (void)
 
 int DMesaGetIntegerv (GLenum pname, GLint *params)
 {
- if (DMesaGetCurrentContext() == NULL) {
-    return -1;
- }
-
  switch (pname) {
         case DMESA_GET_SCREEN_SIZE:
              #ifndef FX
-             #ifndef MATROX
              vl_get(VL_GET_SCREEN_SIZE, params);
-             #else
-             mga_get(MGA_GET_SCREEN_SIZE, params);
-             #endif
              #else
              fxGetScreenGeometry(&params[0], &params[1]);
              #endif
              break;
         case DMESA_GET_DRIVER_CAPS:
              #ifndef FX
-             #ifndef MATROX
              params[0] = DMESA_DRIVER_SWDB_BIT;
-             #else
-             params[0] = 0;
-             #endif
              #else
              params[0] = DMESA_DRIVER_LLWO_BIT;
              #endif
              break;
+        case DMESA_GET_VIDEO_MODES:
+             #ifndef FX
+             return vl_get(VL_GET_VIDEO_MODES, params);
+             #else
+             {
+              /* `vmode' struct must be sync'ed with `internal.h' (vl_mode)
+               * `vmode' list must be sync'ed with `fxapi.c'
+               * `hw >= 6' means Napalm and can do 32bit rendering
+               * TODO: we should take an envvar for `fxMesaSelectCurrentBoard'
+               */
+              static struct {
+                     int width, height;
+                     int bpp;
+              } vmode[] = {
+                     { 320,  200, 16 },
+                     { 320,  240, 16 },
+                     { 512,  384, 16 },
+                     { 640,  400, 16 },
+                     { 640,  480, 16 },
+                     { 800,  600, 16 },
+                     {1024,  768, 16 },
+
+                     { 320,  200, 32 },
+                     { 320,  240, 32 },
+                     { 512,  384, 32 },
+                     { 640,  400, 32 },
+                     { 640,  480, 32 },
+                     { 800,  600, 32 },
+                     {1024,  768, 32 }
+              };
+              int hw = fxMesaSelectCurrentBoard(0);
+              int i, n = sizeof(vmode) / sizeof(vmode[0]);
+              if (hw < 6) {
+                 n /= 2;
+              }
+              if (params) {
+                 for (i = 0; i < n; i++) {
+                     params[i] = (GLint)(&vmode[i]);
+                 }
+              }
+              return n;
+             }
+             #endif
         default:
              return -1;
  }

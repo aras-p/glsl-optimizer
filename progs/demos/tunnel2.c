@@ -31,7 +31,7 @@ static int fullscreen = 1;
 #endif
 
 #ifdef FX
-GLboolean fxMesaSelectCurrentBoard(int);
+GLint fxMesaSelectCurrentBoard(int);
 #endif
 
 static int WIDTHC0 = 640;
@@ -549,7 +549,7 @@ main(int ac, char **av)
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 
 #ifdef FX
-   if (!fxMesaSelectCurrentBoard(0)) {
+   if (fxMesaSelectCurrentBoard(0) < 0) {
       fprintf(stderr, "The first Voodoo Graphics board is missing !?!?\n");
       return -1;
    }
@@ -568,7 +568,7 @@ main(int ac, char **av)
    glutSpecialFunc(special);
 
 #ifdef FX
-   if (!fxMesaSelectCurrentBoard(1)) {
+   if (fxMesaSelectCurrentBoard(1) < 0) {
       fprintf(stderr, "The second Voodoo Graphics board is missing !\n");
       exit(-1);
    }

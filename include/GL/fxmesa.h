@@ -73,7 +73,7 @@ GLAPI fxMesaContext GLAPIENTRY fxMesaCreateBestContext(GLuint win,
 						      const GLint attribList[]);
 GLAPI void GLAPIENTRY fxMesaDestroyContext(fxMesaContext ctx);
 
-GLAPI GLboolean GLAPIENTRY fxMesaSelectCurrentBoard(int n);
+GLAPI GLint GLAPIENTRY fxMesaSelectCurrentBoard(int n);
 
 GLAPI void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext ctx);
 
@@ -84,8 +84,6 @@ GLAPI void GLAPIENTRY fxMesaSwapBuffers(void);
 GLAPI void GLAPIENTRY fxMesaSetNearFar(GLfloat nearVal, GLfloat farVal);
 
 GLAPI void GLAPIENTRY fxMesaUpdateScreenSize(fxMesaContext ctx);
-
-GLAPI GLboolean GLAPIENTRY fxQueryHardware(void);
 
 GLAPI void GLAPIENTRY fxCloseHardware(void);
 

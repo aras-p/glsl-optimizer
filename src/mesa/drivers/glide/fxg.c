@@ -2212,6 +2212,7 @@ void FX_CALL fake_grTexDownloadTableExt (GrChipID_t   tmu,
                                          GrTexTable_t type,
                                          void         *data)
 {
+ (void)tmu;
  grTexDownloadTable(type, data);
 }
 
@@ -2221,12 +2222,14 @@ void FX_CALL fake_grTexDownloadTablePartialExt (GrChipID_t   tmu,
                                                 int          start,
                                                 int          end)
 {
+ (void)tmu;
  grTexDownloadTablePartial(type, data, start, end);
 }
 
 void FX_CALL fake_grTexNCCTableExt (GrChipID_t   tmu,
                                     GrNCCTable_t table)
 {
+ (void)tmu;
  grTexNCCTable(table);
 }
 

@@ -907,7 +907,6 @@ EXPORTS
 ;fxMesaSetNearFar
  fxMesaSwapBuffers
  fxMesaUpdateScreenSize
- fxQueryHardware
  wglChoosePixelFormat
  wglCopyContext
  wglCreateContext

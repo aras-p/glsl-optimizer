@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -152,6 +152,7 @@ static void vga_restore (void)
 {
  if (oldmode != -1) {
     __asm("int $0x10"::"a"(oldmode));
+    oldmode = -1;
  }
 }
 

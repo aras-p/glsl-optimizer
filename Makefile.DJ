@@ -43,9 +43,6 @@
 #			As a consequence, you'll need the DJGPP Glide3
 #			library to build any application.
 #			default = no
-#	MATROX=1	build for Matrox Millennium I (MGA2064W) cards.
-#			This is experimental and not intensively tested.
-#			default = no
 #	HAVE_X86=1	optimize for i386.
 #			default = no
 #	HAVE_MMX=1	allow MMX specializations, provided your assembler

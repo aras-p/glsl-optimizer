@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.4 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -416,6 +416,33 @@ void v_init_pixeltables (void)
 
 
 
+/* Desc: initialize hardware
+ *
+ * In  : -
+ * Out : list of available modes
+ *
+ * Note: when returning non-NULL, global variable `drv' is guaranteed to be ok
+ */
+static vl_mode *v_init_hw (void)
+{
+ static vl_mode *q = NULL;
+
+ if (q == NULL) {
+    /* initialize hardware */
+    if ((q = VESA.init()) != NULL) {
+       drv = &VESA;
+    } else if ((q = VGA.init()) != NULL) {
+       drv = &VGA;
+    } else {
+       drv = NULL;
+    }
+ }
+
+ return q;
+}
+
+
+
 /* Desc: sync buffer with video hardware
  *
  * In  : ptr to old buffer, position, size
@@ -456,7 +483,7 @@ int vl_sync_buffer (void **buffer, int x, int y, int width, int height)
 /* Desc: state retrieval
  *
  * In  : name, storage
- * Out : -
+ * Out : -1 for an error
  *
  * Note: -
  */
@@ -467,8 +494,28 @@ int vl_get (int pname, int *params)
              params[0] = video_mode->xres;
              params[1] = video_mode->yres;
              break;
+        case VL_GET_VIDEO_MODES:
+             {
+              int n;
+              vl_mode *q;
+              if ((q = v_init_hw()) == NULL) {
+                 return -1;
+              }
+              /* count available visuals */
+              for (n = 0; q->mode != 0xffff; q++) {
+                  if ((q + 1)->mode == (q->mode | 0x4000)) {
+                     /* same mode, but linear */
+                     q++;
+                  }
+                  if (params) {
+                     params[n] = (int)q;
+                  }
+                  n++;
+              }
+              return n;
+             }
         default:
-             return drv->get(pname, params);
+             return (drv != NULL) ? drv->get(pname, params) : -1;
  }
  return 0;
 }
@@ -541,6 +588,7 @@ void vl_video_exit (void)
 {
  drv->restore();
  drv->fini();
+ video_mode = NULL;
 }
 
 
@@ -571,12 +619,8 @@ int vl_video_init (int width, int height, int bpp, int rgb, int refresh)
 #endif
 
  /* initialize hardware */
- drv = &VESA;
- if ((q=drv->init()) == NULL) {
-    drv = &VGA;
-    if ((q=drv->init()) == NULL) {
-       return 0;
-    }
+ if ((q = v_init_hw()) == NULL) {
+    return 0;
  }
 
  /* search for a mode that fits our request */

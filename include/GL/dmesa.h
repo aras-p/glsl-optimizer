@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.4 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -135,6 +135,7 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
  */
 #define DMESA_GET_SCREEN_SIZE 0x0100
 #define DMESA_GET_DRIVER_CAPS 0x0200
+#define DMESA_GET_VIDEO_MODES 0x0300
 
 #define DMESA_DRIVER_SWDB_BIT 0x1 /* software double-buffered */
 #define DMESA_DRIVER_LLWO_BIT 0x2 /* lower-left window origin */

@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.4 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -59,10 +59,11 @@ typedef unsigned long word32;
  * video mode structure
  */
 typedef struct vl_mode {
-        int mode;
         int xres, yres;
-        int scanlen;
         int bpp;
+
+        int mode;
+        int scanlen;
 
         int sel;
         int gran;

@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 
@@ -41,6 +41,7 @@ typedef int fixed;
 #define VL_GET_CI_PREC     0x0200
 #define VL_GET_HPIXELS     0x0201
 #define VL_GET_SCREEN_SIZE 0x0202
+#define VL_GET_VIDEO_MODES 0x0300
 
 extern int (*vl_mixfix) (fixed r, fixed g, fixed b);
 extern int (*vl_mixrgb) (const unsigned char rgb[]);
