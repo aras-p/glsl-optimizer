@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.11 2001/05/07 16:01:59 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.12 2001/05/10 17:55:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -322,6 +322,9 @@
          }
 
          n = (GLuint) ix - (GLuint) startX;
+         if (n == 0)
+            continue;
+
 #ifdef DO_MULTITEX
 #  ifdef DO_SPEC
          _mesa_write_multitexture_span(ctx, n, startX, iy, z, fog,
@@ -440,6 +443,9 @@
          }
 
          n = (GLuint) startX - (GLuint) ix;
+         if (n == 0)
+            continue;
+
          left = ix + 1;
 #ifdef DO_MULTITEX
          {
