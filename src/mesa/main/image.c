@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.39 2000/08/31 15:24:07 brianp Exp $ */
+/* $Id: image.c,v 1.40 2000/09/12 21:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1305,7 +1305,7 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
          }
          break;
       case GL_UNSIGNED_SHORT_4_4_4_4:
-         if (dstFormat == GL_RGB) {
+         if (dstFormat == GL_RGBA) {
             GLushort *dst = (GLushort *) dstAddr;
             for (i=0;i<n;i++) {
                dst[i] = (((GLint) (rgba[i][RCOMP] * 15.0F)) << 12)
@@ -1314,9 +1314,27 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                       | (((GLint) (rgba[i][ACOMP] * 15.0F))      );
             }
          }
+         else if (dstFormat == GL_BGRA) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][BCOMP] * 15.0F)) << 12)
+                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  8)
+                      | (((GLint) (rgba[i][RCOMP] * 15.0F)) <<  4)
+                      | (((GLint) (rgba[i][ACOMP] * 15.0F))      );
+            }
+         }
+         else if (dstFormat == GL_ABGR_EXT) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][ACOMP] * 15.0F)) <<  4)
+                      | (((GLint) (rgba[i][BCOMP] * 15.0F)) <<  8)
+                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) << 12)
+                      | (((GLint) (rgba[i][RCOMP] * 15.0F))      );
+            }
+         }
          break;
       case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-         if (dstFormat == GL_RGB) {
+         if (dstFormat == GL_RGBA) {
             GLushort *dst = (GLushort *) dstAddr;
             for (i=0;i<n;i++) {
                dst[i] = (((GLint) (rgba[i][RCOMP] * 15.0F))      )
@@ -1325,9 +1343,27 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                       | (((GLint) (rgba[i][ACOMP] * 15.0F)) << 12);
             }
          }
+         else if (dstFormat == GL_BGRA) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][BCOMP] * 15.0F))      )
+                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  4)
+                      | (((GLint) (rgba[i][RCOMP] * 15.0F)) <<  8)
+                      | (((GLint) (rgba[i][ACOMP] * 15.0F)) << 12);
+            }
+         }
+         else if (dstFormat == GL_ABGR_EXT) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][ACOMP] * 15.0F))      )
+                      | (((GLint) (rgba[i][BCOMP] * 15.0F)) <<  4)
+                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  8)
+                      | (((GLint) (rgba[i][RCOMP] * 15.0F)) << 12);
+            }
+         }
          break;
       case GL_UNSIGNED_SHORT_5_5_5_1:
-         if (dstFormat == GL_RGB) {
+         if (dstFormat == GL_RGBA) {
             GLushort *dst = (GLushort *) dstAddr;
             for (i=0;i<n;i++) {
                dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F)) << 11)
@@ -1336,15 +1372,51 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
                       | (((GLint) (rgba[i][ACOMP] *  1.0F))      );
             }
          }
+         else if (dstFormat == GL_BGRA) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][BCOMP] * 31.0F)) << 11)
+                      | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  6)
+                      | (((GLint) (rgba[i][RCOMP] * 31.0F)) <<  1)
+                      | (((GLint) (rgba[i][ACOMP] *  1.0F))      );
+            }
+         }
+         else if (dstFormat == GL_ABGR_EXT) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][ACOMP] * 31.0F)) << 11)
+                      | (((GLint) (rgba[i][BCOMP] * 31.0F)) <<  6)
+                      | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  1)
+                      | (((GLint) (rgba[i][RCOMP] *  1.0F))      );
+            }
+         }
          break;
       case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-         if (dstFormat == GL_RGB) {
+         if (dstFormat == GL_RGBA) {
             GLushort *dst = (GLushort *) dstAddr;
             for (i=0;i<n;i++) {
                dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F))      )
                       | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  5)
                       | (((GLint) (rgba[i][BCOMP] * 31.0F)) << 10)
                       | (((GLint) (rgba[i][ACOMP] *  1.0F)) << 15);
+            }
+         }
+         else if (dstFormat == GL_BGRA) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][BCOMP] * 31.0F))      )
+                      | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  5)
+                      | (((GLint) (rgba[i][RCOMP] * 31.0F)) << 10)
+                      | (((GLint) (rgba[i][ACOMP] *  1.0F)) << 15);
+            }
+         }
+         else if (dstFormat == GL_ABGR_EXT) {
+            GLushort *dst = (GLushort *) dstAddr;
+            for (i=0;i<n;i++) {
+               dst[i] = (((GLint) (rgba[i][ACOMP] * 31.0F))      )
+                      | (((GLint) (rgba[i][BCOMP] * 31.0F)) <<  5)
+                      | (((GLint) (rgba[i][GCOMP] * 31.0F)) << 10)
+                      | (((GLint) (rgba[i][RCOMP] *  1.0F)) << 15);
             }
          }
          break;
