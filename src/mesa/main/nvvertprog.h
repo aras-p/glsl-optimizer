@@ -1,4 +1,4 @@
-/* $Id: nvvertprog.h,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: nvvertprog.h,v 1.2 2003/04/07 14:57:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,7 @@
 
 
 #define VP_NUM_INPUT_REGS   MAX_NV_VERTEX_PROGRAM_INPUTS
-#define VP_NUM_OUTPUT_REGS  MAX_NV_VERTEX_PROGRAM_INPUTS
+#define VP_NUM_OUTPUT_REGS  MAX_NV_VERTEX_PROGRAM_OUTPUTS
 #define VP_NUM_TEMP_REGS    MAX_NV_VERTEX_PROGRAM_TEMPS
 #define VP_NUM_PROG_REGS    MAX_NV_VERTEX_PROGRAM_PARAMS
 
