@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.12 2002/01/30 21:54:37 brianp Exp $
+# $Id: Makefile.X11,v 1.13 2002/10/05 18:30:46 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
-# Copyright (C) 1995-2001  Brian Paul
+# Copyright (C) 1995-2002  Brian Paul
 
 # Makefile for non-GLUT (X11, SVGA, etc) demo programs
 
@@ -24,6 +24,8 @@ PROGS = glthreads \
 	glxpixmap \
 	manywin \
 	offset \
+	pbinfo \
+	pbdemo \
 	wincopy \
 	xdemo \
 	xfont
@@ -65,4 +67,19 @@ exec: $(PROGS)
 
 
 include ../Make-config
+
+pbinfo: pbinfo.o pbutil.o
+	$(CC) pbinfo.o pbutil.o $(GL_LIBS) -o $@
+
+pbdemo: pbdemo.o pbutil.o
+	$(CC) pbdemo.o pbutil.o $(GL_LIBS) -o $@
+
+pbinfo.o: pbinfo.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
+
+pbdemo.o: pbdemo.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
+
+pbutil.o: pbutil.c pbutil.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $<
 
